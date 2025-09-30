@@ -21,20 +21,15 @@ table! {
     }
 }
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Hash, Default)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 #[PgType = "email_queue_status_enum"]
 pub enum EmailQueueStatus {
+    #[default]
     Queued,
     Sent,
     Errored, // Errored will be re-tried
     Failed,  // Failed will NOT be re-tried
-}
-
-impl Default for EmailQueueStatus {
-    fn default() -> Self {
-        EmailQueueStatus::Queued
-    }
 }
 
 #[derive(

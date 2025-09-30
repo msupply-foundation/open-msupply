@@ -28,10 +28,11 @@ allow_tables_to_appear_in_same_query!(reason_option, stock_line);
 allow_tables_to_appear_in_same_query!(reason_option, name_link);
 allow_tables_to_appear_in_same_query!(reason_option, name);
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 #[cfg_attr(test, derive(strum::EnumIter))]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum ReasonOptionType {
+    #[default]
     PositiveInventoryAdjustment,
     NegativeInventoryAdjustment,
     OpenVialWastage,
@@ -40,7 +41,7 @@ pub enum ReasonOptionType {
     RequisitionLineVariance,
 }
 
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq)]
+#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
 #[diesel(treat_none_as_null = true)]
 #[diesel(table_name = reason_option)]
 pub struct ReasonOptionRow {
@@ -49,17 +50,6 @@ pub struct ReasonOptionRow {
     pub r#type: ReasonOptionType,
     pub is_active: bool,
     pub reason: String,
-}
-
-impl Default for ReasonOptionRow {
-    fn default() -> Self {
-        Self {
-            r#type: ReasonOptionType::PositiveInventoryAdjustment,
-            id: Default::default(),
-            is_active: false,
-            reason: Default::default(),
-        }
-    }
 }
 
 pub struct ReasonOptionRowRepository<'a> {

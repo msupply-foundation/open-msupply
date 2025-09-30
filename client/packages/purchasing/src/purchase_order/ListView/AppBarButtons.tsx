@@ -6,25 +6,44 @@ import {
   Grid,
   useTranslation,
   useNotification,
-  useToggle,
   useNavigate,
+  LoadingButton,
+  DownloadIcon,
+  useExportCSV,
+  ToggleState,
+  ListIcon,
+  RouteBuilder,
 } from '@openmsupply-client/common';
 import {
   NameRowFragment,
   SupplierSearchModal,
 } from '@openmsupply-client/system';
 import { usePurchaseOrder } from '../api/hooks/usePurchaseOrder';
+import { PurchaseOrderRowFragment } from '../api';
+import { purchaseOrderToCsv } from '../../utils';
+import { AppRoute } from '@openmsupply-client/config';
 
-export const AppBarButtonsComponent = () => {
+interface AppBarButtonProps {
+  data?: PurchaseOrderRowFragment[];
+  isLoading: boolean;
+  modalController: ToggleState;
+  onCreate: () => void;
+}
+
+export const AppBarButtonsComponent = ({
+  data,
+  isLoading,
+  modalController,
+  onCreate,
+}: AppBarButtonProps) => {
   const t = useTranslation();
-  const modalController = useToggle();
   const navigate = useNavigate();
+  const exportCsv = useExportCSV();
+  const { error } = useNotification();
 
   const {
     create: { create },
   } = usePurchaseOrder();
-
-  const { error } = useNotification();
 
   const handleSupplierSelected = async (selected: NameRowFragment) => {
     try {
@@ -37,8 +56,13 @@ export const AppBarButtonsComponent = () => {
       );
       errorSnack();
     }
-
     modalController.toggleOff();
+  };
+
+  const handleCsvExportClick = async () => {
+    if (!data || !data.length) return error(t('error.no-data'))();
+    const csv = purchaseOrderToCsv(t, data);
+    await exportCsv(csv, t('filename.purchase-order'));
   };
 
   return (
@@ -47,13 +71,35 @@ export const AppBarButtonsComponent = () => {
         <ButtonWithIcon
           Icon={<PlusCircleIcon />}
           label={t('button.new-purchase-order')}
-          onClick={modalController.toggleOn}
+          onClick={onCreate}
         />
-        <SupplierSearchModal
-          open={modalController.isOn}
-          onClose={modalController.toggleOff}
-          onChange={handleSupplierSelected}
+        <ButtonWithIcon
+          Icon={<ListIcon />}
+          label={t('button.outstanding-lines')}
+          onClick={() =>
+            navigate(
+              RouteBuilder.create(AppRoute.Replenishment)
+                .addPart(AppRoute.PurchaseOrder)
+                .addPart(AppRoute.PurchaseOrderOutstandingLines)
+                .build()
+            )
+          }
         />
+        <LoadingButton
+          startIcon={<DownloadIcon />}
+          variant="outlined"
+          isLoading={isLoading}
+          label={t('button.export')}
+          onClick={handleCsvExportClick}
+        />
+        {modalController.isOn && (
+          <SupplierSearchModal
+            external
+            open={modalController.isOn}
+            onClose={modalController.toggleOff}
+            onChange={handleSupplierSelected}
+          />
+        )}
       </Grid>
     </AppBarButtonsPortal>
   );

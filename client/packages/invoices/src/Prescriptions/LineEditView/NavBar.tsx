@@ -35,6 +35,11 @@ export const NavBar = ({
   const totalCount =
     items.slice(-1)[0] === 'new' ? items.length - 1 : items.length;
 
+  const onClick = () => {
+    setItem(items[currentIndex + 1] ?? '');
+    scrollIntoView();
+  };
+
   const currentCount = currentIndex + 1;
 
   return (
@@ -61,10 +66,7 @@ export const NavBar = ({
         label={t('button.next')}
         Icon={<ArrowRightIcon />}
         disabled={!hasNext}
-        onClick={() => {
-          setItem(items[currentIndex + 1] ?? '');
-          scrollIntoView();
-        }}
+        onClick={onClick}
       />
     </Box>
   );

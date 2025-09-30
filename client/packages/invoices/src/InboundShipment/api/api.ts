@@ -3,7 +3,7 @@ import {
   RecordPatch,
   InvoiceNodeType,
   InvoiceSortFieldInput,
-  FilterByWithBoolean,
+  FilterBy,
   SortBy,
   InvoiceNodeStatus,
   UpdateInboundShipmentLineInput,
@@ -36,7 +36,7 @@ export type ListParams = {
   first: number;
   offset: number;
   sortBy: SortBy<InboundRowFragment>;
-  filterBy: FilterByWithBoolean | null;
+  filterBy: FilterBy | null;
 };
 
 const inboundParsers = {
@@ -144,9 +144,11 @@ const inboundParsers = {
     itemId: line.item.id,
     batch: line.batch,
     costPricePerPack: line.costPricePerPack,
-    expiryDate: line.expiryDate
-      ? Formatter.naiveDate(new Date(line.expiryDate))
-      : null,
+    expiryDate: {
+      value: line.expiryDate
+        ? Formatter.naiveDate(new Date(line.expiryDate))
+        : null,
+    },
     sellPricePerPack: line.sellPricePerPack,
     packSize: line.packSize,
     numberOfPacks: line.numberOfPacks,
@@ -378,7 +380,12 @@ export const getInboundQueries = (sdk: Sdk, storeId: string) => ({
   updateLines: async (draftInboundLine: DraftInboundLine[]) => {
     const input = {
       insertInboundShipmentLines: draftInboundLine
-        .filter(line => line.isCreated && !isInboundPlaceholderRow(line))
+        .filter(
+          line =>
+            line.isCreated &&
+            line.type === InvoiceLineNodeType.StockIn &&
+            !isInboundPlaceholderRow(line)
+        )
         .map(inboundParsers.toInsertLine),
       updateInboundShipmentLines: draftInboundLine
         .filter(

@@ -3,7 +3,9 @@ import {
   AppSxProp,
   DataTable,
   NothingHere,
+  PurchaseOrderLineStatusNode,
   useRowStyle,
+  useTableStore,
   useTranslation,
 } from '@openmsupply-client/common';
 import { PurchaseOrderLineFragment } from '../../api';
@@ -34,6 +36,17 @@ const useHighlightPlaceholderRows = (
   }, [rows, setRowStyles]);
 };
 
+const useDisableClosedLines = (lines: PurchaseOrderLineFragment[]) => {
+  const { setDisabledRows } = useTableStore();
+
+  useEffect(() => {
+    const disabledRows = lines
+      .filter(line => line.status === PurchaseOrderLineStatusNode.Closed)
+      .map(line => line.id);
+    setDisabledRows(disabledRows);
+  }, [lines, setDisabledRows]);
+};
+
 export const ContentArea = ({
   lines,
   isDisabled,
@@ -41,27 +54,25 @@ export const ContentArea = ({
   onRowClick,
 }: ContentAreaProps) => {
   const t = useTranslation();
-
   useHighlightPlaceholderRows(lines);
+  useDisableClosedLines(lines);
 
   const { columns } = usePurchaseOrderColumns();
 
   return (
-    <>
-      <DataTable
-        id="purchase-order-detail"
-        onRowClick={onRowClick}
-        columns={columns}
-        data={lines}
-        enableColumnSelection
-        noDataElement={
-          <NothingHere
-            body={t('error.no-purchase-order-items')}
-            onCreate={isDisabled ? undefined : onAddItem}
-            buttonText={t('button.add-item')}
-          />
-        }
-      />
-    </>
+    <DataTable
+      id="purchase-order-detail"
+      onRowClick={onRowClick}
+      columns={columns}
+      data={lines}
+      enableColumnSelection
+      noDataElement={
+        <NothingHere
+          body={t('error.no-purchase-order-items')}
+          onCreate={isDisabled ? undefined : onAddItem}
+          buttonText={t('button.add-item')}
+        />
+      }
+    />
   );
 };

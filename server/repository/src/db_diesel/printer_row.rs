@@ -5,14 +5,14 @@ use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 
 table! {
-printer (id) {
-id -> Text,
-description -> Text,
-address -> Text,
-port -> Integer,
-label_width -> Integer,
-label_height -> Integer,
-}
+    printer (id) {
+        id -> Text,
+        description -> Text,
+        address -> Text,
+        port -> Integer,
+        label_width -> Integer,
+        label_height -> Integer,
+    }
 }
 
 #[derive(

@@ -11,7 +11,7 @@ import {
   StocktakeNodeStatus,
   UpdateStocktakeStatusInput,
   setNullableInput,
-  FilterByWithBoolean,
+  FilterBy,
   StocktakeLineSortFieldInput,
 } from '@openmsupply-client/common';
 import {
@@ -27,14 +27,14 @@ export type ListParams = {
   first: number;
   offset: number;
   sortBy: SortBy<StocktakeRowFragment>;
-  filterBy: FilterByWithBoolean | null;
+  filterBy: FilterBy | null;
 };
 
 export type LinesParams = {
-  first: number;
-  offset: number;
-  sortBy: SortBy<StocktakeLineFragment>;
-  filterBy: FilterByWithBoolean | null;
+  first?: number;
+  offset?: number;
+  sortBy?: SortBy<StocktakeLineFragment>;
+  filterBy?: FilterBy | null;
 };
 
 const stocktakeParser = {
@@ -65,9 +65,11 @@ const stocktakeParser = {
       countedNumberOfPacks: line.countedNumberOfPacks,
       sellPricePerPack: line.sellPricePerPack,
       id: line.id,
-      expiryDate: line.expiryDate
-        ? Formatter.naiveDate(new Date(line.expiryDate))
-        : undefined,
+      expiryDate: {
+        value: line.expiryDate
+          ? Formatter.naiveDate(new Date(line.expiryDate))
+          : null,
+      },
       comment: line.comment ?? '',
       itemVariantId: setNullableInput('itemVariantId', {
         itemVariantId: line.itemVariantId,
@@ -162,10 +164,12 @@ export const getStocktakeQueries = (sdk: Sdk, storeId: string) => ({
         stocktakeId: id,
         storeId,
         page: { offset, first },
-        sort: {
-          key: sortBy.key as StocktakeLineSortFieldInput,
-          desc: !!sortBy.isDesc,
-        },
+        sort: sortBy
+          ? {
+              key: sortBy.key as StocktakeLineSortFieldInput,
+              desc: !!sortBy.isDesc,
+            }
+          : undefined,
         filter: filterBy,
       });
 

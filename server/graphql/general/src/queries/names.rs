@@ -7,7 +7,7 @@ use graphql_core::{
     ContextExt,
 };
 use graphql_types::types::{NameNode, NameNodeType};
-use repository::{EqualFilter, PaginationOption, StringFilter};
+use repository::{EqualFilter, NameType, PaginationOption, StringFilter};
 use repository::{Name, NameFilter, NameSort, NameSortField};
 
 use service::{
@@ -167,7 +167,7 @@ impl NameFilterInput {
             is_store,
             is_visible,
             is_system_name: is_system_name.or(Some(false)),
-            r#type: r#type.map(|t| map_filter!(t, NameNodeType::to_domain)),
+            r#type: r#type.map(|t| map_filter!(t, |r| NameType::from(r))),
             phone: phone.map(StringFilter::from),
             address1: address1.map(StringFilter::from),
             address2: address2.map(StringFilter::from),

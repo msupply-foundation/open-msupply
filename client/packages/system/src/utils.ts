@@ -47,7 +47,8 @@ export const masterListsToCsv = (
 
 export const stockLinesToCsv = (
   stockLines: StockLineRowFragment[],
-  t: TypedTFunction<LocaleKey>
+  t: TypedTFunction<LocaleKey>,
+  manageVvmStatusForStock: boolean
 ) => {
   const fields: string[] = [
     'id',
@@ -55,11 +56,12 @@ export const stockLinesToCsv = (
     t('label.name'),
     t('label.batch'),
     t('label.expiry'),
+    ...(manageVvmStatusForStock ? [t('label.vvm-status')] : []),
     t('label.location'),
     t('label.unit'),
     t('label.pack-size'),
     t('label.num-packs'),
-    t('label.available-packs'),
+    t('label.available-in-packs'),
     t('label.supplier'),
   ];
 
@@ -69,6 +71,7 @@ export const stockLinesToCsv = (
     node.item.name,
     node.batch,
     Formatter.csvDateString(node.expiryDate),
+    ...(manageVvmStatusForStock ? [node.vvmStatus?.description] : []),
     node.location?.code,
     node.item.unitName,
     node.packSize,

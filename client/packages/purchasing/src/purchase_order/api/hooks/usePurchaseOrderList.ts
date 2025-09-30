@@ -1,5 +1,5 @@
 import {
-  FilterByWithBoolean,
+  FilterBy,
   LIST_KEY,
   PurchaseOrderSortFieldInput,
   SortBy,
@@ -18,10 +18,10 @@ export type ListParams = {
   first?: number;
   offset?: number;
   sortBy?: SortBy<PurchaseOrderFragment>;
-  filterBy: FilterByWithBoolean | null;
+  filterBy: FilterBy | null;
 };
 
-export const usePurchaseOrderList = (queryParams: ListParams) => {
+export const usePurchaseOrderList = (queryParams?: ListParams) => {
   const { purchaseOrderApi, storeId, queryClient } = usePurchaseOrderGraphQL();
 
   const {
@@ -32,7 +32,7 @@ export const usePurchaseOrderList = (queryParams: ListParams) => {
     first,
     offset,
     filterBy,
-  } = queryParams;
+  } = queryParams ?? {};
 
   const queryKey = [
     PURCHASE_ORDER,
@@ -48,7 +48,6 @@ export const usePurchaseOrderList = (queryParams: ListParams) => {
     createdDatetime: PurchaseOrderSortFieldInput.CreatedDatetime,
     status: PurchaseOrderSortFieldInput.Status,
     number: PurchaseOrderSortFieldInput.Number,
-    // Add more as required
   };
 
   const queryFn = async (): Promise<{

@@ -7,9 +7,11 @@ mod add_campaign_and_program_to_stocktake_line;
 mod add_closed_vial_wastage_reason_option_type;
 mod add_comment_to_purchase_order_line;
 mod add_contact_table;
+mod add_extra_purchase_order_fields;
+mod add_goods_received_id_to_invoice;
 mod add_goods_received_line_table;
-mod add_goods_received_report_context;
 mod add_goods_received_permission_enum_values;
+mod add_goods_received_report_context;
 mod add_goods_received_table;
 mod add_item_store_join;
 mod add_more_dates_to_purchase_order;
@@ -28,6 +30,7 @@ mod delete_unused_number_type;
 mod reintegrate_location_volume;
 mod remove_use_campaigns_pref;
 mod rename_authorised_to_adjusted;
+mod rename_cold_storage_type_activity_log_enum;
 mod rename_cold_storage_type_fk;
 mod rename_cold_storage_type_to_location_type;
 mod rename_vvm_status_level_to_priority;
@@ -78,6 +81,9 @@ impl Migration for V2_10_00 {
             Box::new(add_purchase_order_activity_logs::Migrate),
             Box::new(add_goods_received_permission_enum_values::Migrate),
             Box::new(add_goods_received_report_context::Migrate),
+            Box::new(add_extra_purchase_order_fields::Migrate),
+            Box::new(add_goods_received_id_to_invoice::Migrate),
+            Box::new(rename_cold_storage_type_activity_log_enum::Migrate),
         ]
     }
 }

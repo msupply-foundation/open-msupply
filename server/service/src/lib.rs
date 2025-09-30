@@ -89,6 +89,7 @@ pub mod sensor;
 pub mod service_provider;
 pub mod settings;
 pub mod settings_service;
+pub mod shipping_method;
 pub mod standard_reports;
 pub mod static_files;
 pub mod stock_line;
@@ -133,7 +134,9 @@ pub enum ListError {
     DatabaseError(RepositoryError),
     LimitBelowMin(u32),
     LimitAboveMax(u32),
+    PluginError(String),
 }
+
 #[derive(PartialEq, Debug)]
 pub enum SingleRecordError {
     DatabaseError(RepositoryError),

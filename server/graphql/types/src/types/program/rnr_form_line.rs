@@ -2,7 +2,7 @@ use async_graphql::*;
 use chrono::NaiveDate;
 use dataloader::DataLoader;
 use graphql_core::{loader::ItemLoader, standard_graphql_error::StandardGraphqlError, ContextExt};
-use repository::{ItemRow, RequisitionLineRow, RnRFormLine, RnRFormLineRow, RnRFormLowStock};
+use repository::{ItemRow, RequisitionLineRow, RnRFormLine, RnRFormLineRow};
 use serde::Serialize;
 
 use crate::types::ItemNode;
@@ -88,7 +88,7 @@ impl RnRFormLineNode {
     }
 
     pub async fn low_stock(&self) -> LowStockStatus {
-        LowStockStatus::from_domain(&self.rnr_form_line_row.low_stock)
+        LowStockStatus::from(self.rnr_form_line_row.low_stock.clone())
     }
 
     pub async fn entered_requested_quantity(&self) -> Option<f64> {
@@ -143,25 +143,10 @@ impl RnRFormLineNode {
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")] // only needed to be comparable in tests
+#[graphql(remote = "repository::db_diesel::rnr_form_line_row
+::RnRFormLowStock")]
 pub enum LowStockStatus {
     BelowQuarter,
     BelowHalf,
     Ok,
-}
-impl LowStockStatus {
-    pub fn from_domain(low_stock: &RnRFormLowStock) -> Self {
-        match low_stock {
-            RnRFormLowStock::BelowQuarter => LowStockStatus::BelowQuarter,
-            RnRFormLowStock::BelowHalf => LowStockStatus::BelowHalf,
-            RnRFormLowStock::Ok => LowStockStatus::Ok,
-        }
-    }
-
-    pub fn to_domain(self) -> RnRFormLowStock {
-        match self {
-            LowStockStatus::BelowQuarter => RnRFormLowStock::BelowQuarter,
-            LowStockStatus::BelowHalf => RnRFormLowStock::BelowHalf,
-            LowStockStatus::Ok => RnRFormLowStock::Ok,
-        }
-    }
 }

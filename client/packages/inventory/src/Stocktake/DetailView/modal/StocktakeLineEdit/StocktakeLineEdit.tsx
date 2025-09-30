@@ -14,7 +14,6 @@ import {
   createQueryParamsStore,
   QueryParamsProvider,
   useAppTheme,
-  useRowHighlight,
   useMediaQuery,
   useNotification,
   useUrlQueryParams,
@@ -61,7 +60,6 @@ export const StocktakeLineEdit = ({
   const { draftLines, update, addLine, isSaving, save, nextItem } =
     useStocktakeLineEdit(currentItem);
   const t = useTranslation();
-  const { highlightRows } = useRowHighlight();
   const { error } = useNotification();
   const {
     updatePaginationQuery,
@@ -122,8 +120,6 @@ export const StocktakeLineEdit = ({
       return;
     }
 
-    const rowIds = draftLines.map(line => line.id);
-    highlightRows({ rowIds });
     onClose();
   };
 

@@ -11,8 +11,7 @@ use serde::{Deserialize, Serialize};
 table! {
     purchase_order_stats (purchase_order_id) {
         purchase_order_id -> Text,
-        line_total_before_discount -> Double,
-        line_total_after_discount -> Double,
+        order_total_before_discount -> Double,
         order_total_after_discount -> Double,
     }
 }
@@ -21,8 +20,7 @@ table! {
 #[diesel(table_name = purchase_order_stats)]
 pub struct PurchaseOrderStatsRow {
     pub purchase_order_id: String,
-    pub line_total_before_discount: f64,
-    pub line_total_after_discount: f64,
+    pub order_total_before_discount: f64,
     pub order_total_after_discount: f64,
 }
 
@@ -60,7 +58,7 @@ table! {
         freight_charge ->  Nullable<Double>,
         freight_conditions -> Nullable<Text>,
         supplier_discount_percentage -> Nullable<Double>,
-        authorised_datetime -> Nullable<Timestamp>,
+        request_approval_datetime -> Nullable<Timestamp>,
         finalised_datetime -> Nullable<Timestamp>,
     }
 }
@@ -109,19 +107,20 @@ pub struct PurchaseOrderRow {
     pub freight_charge: Option<f64>,
     pub freight_conditions: Option<String>,
     pub supplier_discount_percentage: Option<f64>,
-    pub authorised_datetime: Option<NaiveDateTime>,
+    pub request_approval_datetime: Option<NaiveDateTime>,
     pub finalised_datetime: Option<NaiveDateTime>,
 }
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default, Ord, PartialOrd)]
 #[cfg_attr(test, derive(strum::EnumIter))]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum PurchaseOrderStatus {
     #[default]
     New,
+    RequestApproval,
     Confirmed,
-    Authorised,
+    Sent,
     Finalised,
 }
 

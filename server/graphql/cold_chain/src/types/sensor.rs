@@ -9,8 +9,8 @@ use graphql_core::ContextExt;
 use graphql_core::{generic_filters::EqualFilterStringInput, loader::LocationByIdLoader};
 use graphql_types::types::LocationNode;
 use repository::{
-    DatetimeFilter, PaginationOption, SensorType, StringFilter, TemperatureBreachFilter,
-    TemperatureLogFilter, TemperatureLogSort, TemperatureLogSortField,
+    DatetimeFilter, PaginationOption, StringFilter, TemperatureBreachFilter, TemperatureLogFilter,
+    TemperatureLogSort, TemperatureLogSortField,
 };
 use repository::{EqualFilter, Sensor, SensorFilter, SensorRow, SensorSort, SensorSortField};
 use service::cold_chain::query_temperature_breach::temperature_breaches;
@@ -22,6 +22,7 @@ use super::temperature_log::TemperatureLogConnector;
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(rename_items = "camelCase")]
+#[graphql(remote = "repository::db_diesel::sensor::SensorSortField")]
 pub enum SensorSortFieldInput {
     Serial,
     Name,
@@ -67,6 +68,7 @@ pub struct SensorConnector {
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
+#[graphql(remote = "repository::db_diesel::sensor_row::SensorType")]
 pub enum SensorNodeType {
     BlueMaestro,
     Laird,
@@ -92,7 +94,7 @@ impl SensorNode {
     }
 
     pub async fn r#type(&self) -> SensorNodeType {
-        SensorNodeType::from_domain(&self.row().r#type)
+        SensorNodeType::from(self.row().r#type.clone())
     }
 
     pub async fn is_active(&self) -> bool {
@@ -181,7 +183,7 @@ impl SensorNode {
         .map_err(StandardGraphqlError::from_list_error)?;
 
         Ok(breach.rows.into_iter().next().map(|breach| {
-            TemperatureBreachNodeType::from_domain(&breach.temperature_breach_row.r#type)
+            TemperatureBreachNodeType::from(breach.temperature_breach_row.r#type.clone())
         }))
     }
 }
@@ -229,40 +231,9 @@ impl SensorConnector {
 
 impl SensorSortInput {
     pub fn to_domain(self) -> SensorSort {
-        use SensorSortField as to;
-        use SensorSortFieldInput as from;
-        let key = match self.key {
-            from::Name => to::Name,
-            from::Serial => to::Serial,
-        };
-
         SensorSort {
-            key,
+            key: SensorSortField::from(self.key),
             desc: self.desc,
-        }
-    }
-}
-
-impl SensorNodeType {
-    pub fn from_domain(from: &SensorType) -> SensorNodeType {
-        use SensorNodeType as to;
-        use SensorType as from;
-
-        match from {
-            from::BlueMaestro => to::BlueMaestro,
-            from::Laird => to::Laird,
-            from::Berlinger => to::Berlinger,
-        }
-    }
-
-    pub fn to_domain(self) -> SensorType {
-        use SensorNodeType as from;
-        use SensorType as to;
-
-        match self {
-            from::BlueMaestro => to::BlueMaestro,
-            from::Laird => to::Laird,
-            from::Berlinger => to::Berlinger,
         }
     }
 }

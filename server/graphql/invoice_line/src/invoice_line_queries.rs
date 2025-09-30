@@ -11,11 +11,11 @@ use graphql_core::{
 };
 use graphql_types::types::{
     DraftStockOutItemData, EqualFilterInvoiceStatusInput, EqualFilterInvoiceTypeInput,
-    InvoiceLineConnector, InvoiceLineNodeType, InvoiceNodeStatus, InvoiceNodeType,
+    InvoiceLineConnector, InvoiceLineNodeType,
 };
 use repository::{
     DatetimeFilter, EqualFilter, InvoiceLineFilter, InvoiceLineSort, InvoiceLineSortField,
-    PaginationOption,
+    InvoiceLineType, InvoiceStatus, InvoiceType, PaginationOption,
 };
 use service::{
     auth::{Resource, ResourceAccessRequest},
@@ -47,6 +47,7 @@ pub struct InvoiceLineFilterInput {
     pub inventory_adjustment_reason: Option<EqualFilterStringInput>,
     pub verified_datetime: Option<DatetimeFilterInput>,
     pub program_id: Option<EqualFilterStringInput>,
+    pub is_program_invoice: Option<bool>,
 }
 
 impl From<InvoiceLineFilterInput> for InvoiceLineFilter {
@@ -59,15 +60,15 @@ impl From<InvoiceLineFilterInput> for InvoiceLineFilter {
             item_id: f.item_id.map(EqualFilter::from),
             r#type: f
                 .r#type
-                .map(|t| map_filter!(t, InvoiceLineNodeType::to_domain)),
+                .map(|t| map_filter!(t, |r| InvoiceLineType::from(r))),
             requisition_id: f.requisition_id.map(EqualFilter::from),
             number_of_packs: f.number_of_packs.map(|t| map_filter!(t, f64::from)),
             invoice_type: f
                 .invoice_type
-                .map(|t| map_filter!(t, InvoiceNodeType::to_domain)),
+                .map(|t| map_filter!(t, |i| InvoiceType::from(i))),
             invoice_status: f
                 .invoice_status
-                .map(|t| map_filter!(t, InvoiceNodeStatus::to_domain)),
+                .map(|t| map_filter!(t, |i| InvoiceStatus::from(i))),
             stock_line_id: f.stock_line_id.map(EqualFilter::from),
             verified_datetime: f.verified_datetime.map(DatetimeFilter::from),
             reason_option: f
@@ -75,6 +76,7 @@ impl From<InvoiceLineFilterInput> for InvoiceLineFilter {
                 .map(EqualFilter::from)
                 .or(f.inventory_adjustment_reason.map(EqualFilter::from)),
             program_id: f.program_id.map(EqualFilter::from),
+            is_program_invoice: f.is_program_invoice,
             picked_datetime: None,
             delivered_datetime: None,
             has_prescribed_quantity: None,
@@ -86,6 +88,7 @@ impl From<InvoiceLineFilterInput> for InvoiceLineFilter {
 #[derive(Enum, Copy, Clone, PartialEq, Eq, serde::Serialize, strum::EnumIter)]
 #[serde(rename_all = "lowercase")]
 #[graphql(rename_items = "camelCase")]
+#[graphql(remote = "repository::db_diesel::invoice_line::InvoiceLineSortField")]
 pub enum InvoiceLineSortFieldInput {
     ItemCode,
     ItemName,
@@ -110,19 +113,8 @@ pub struct InvoiceLineSortInput {
 
 impl InvoiceLineSortInput {
     pub fn to_domain(self) -> InvoiceLineSort {
-        use InvoiceLineSortField as to;
-        use InvoiceLineSortFieldInput as from;
-        let key = match self.key {
-            from::ItemCode => to::ItemCode,
-            from::ItemName => to::ItemName,
-            from::Batch => to::Batch,
-            from::ExpiryDate => to::ExpiryDate,
-            from::PackSize => to::PackSize,
-            from::LocationName => to::LocationName,
-        };
-
         InvoiceLineSort {
-            key,
+            key: InvoiceLineSortField::from(self.key),
             desc: self.desc,
         }
     }

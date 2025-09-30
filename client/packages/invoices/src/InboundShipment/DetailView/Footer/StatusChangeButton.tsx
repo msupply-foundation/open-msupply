@@ -8,6 +8,8 @@ import {
   SplitButtonOption,
   useConfirmationModal,
   useDisabledNotificationToast,
+  UserPermission,
+  useAuthContext,
 } from '@openmsupply-client/common';
 import {
   getStatusTranslation,
@@ -227,8 +229,13 @@ export const validateEmptyInvoice = (lines: {
   totalCount: number;
   nodes: InboundLineFragment[];
 }): boolean => {
-  // Should only proceed if there is at least one line, with received or shipped packs defined
-  if (lines.totalCount === 0 || lines.nodes.every(isInboundPlaceholderRow))
+  // Should only proceed if there is at least one line
+  // If lines are from transfer, they can be 0
+  // Manually added lines must have either received or shipped packs defined
+  if (
+    lines.totalCount === 0 ||
+    lines.nodes.every(l => !l.linkedInvoiceId && isInboundPlaceholderRow(l))
+  )
     return false;
   return true;
 };
@@ -245,6 +252,16 @@ export const StatusChangeButton = () => {
   const isStatusChangeDisabled = useInbound.utils.isStatusChangeDisabled();
   const t = useTranslation();
 
+  const { userHasPermission } = useAuthContext();
+
+  const onVerify = () => {
+    if (userHasPermission(UserPermission.InboundShipmentVerify)) {
+      getConfirmation();
+    } else {
+      permissionDeniedNotification();
+    }
+  };
+
   const noLinesNotification = useDisabledNotificationToast(
     t('messages.no-lines')
   );
@@ -253,12 +270,17 @@ export const StatusChangeButton = () => {
     t('messages.on-hold')
   );
 
+  const permissionDeniedNotification = useDisabledNotificationToast(
+    t('auth.permission-denied')
+  );
+
   if (!selectedOption) return null;
   if (isStatusChangeDisabled) return null;
 
   const onStatusClick = () => {
     if (!validateEmptyInvoice(lines)) return noLinesNotification();
     if (onHold) return onHoldNotification();
+    if (selectedOption?.value === InvoiceNodeStatus.Verified) return onVerify();
     return getConfirmation();
   };
 

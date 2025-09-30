@@ -1,4 +1,5 @@
 export * from './PackSize';
+export * from './TableCell';
 export * from './ServiceItemSearchInput';
 export * from './StockItemSearchInput';
 export * from './ListItems';

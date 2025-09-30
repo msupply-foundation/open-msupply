@@ -20,6 +20,7 @@ pub enum ProgramsResponse {
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(rename_items = "camelCase")]
+#[graphql(remote = "repository::db_diesel::program::ProgramSortField")]
 pub enum ProgramSortFieldInput {
     Name,
 }
@@ -35,12 +36,8 @@ pub struct ProgramSortInput {
 
 impl ProgramSortInput {
     pub fn to_domain(self) -> ProgramSort {
-        let key = match self.key {
-            ProgramSortFieldInput::Name => ProgramSortField::Name,
-        };
-
         ProgramSort {
-            key,
+            key: ProgramSortField::from(self.key),
             desc: self.desc,
         }
     }

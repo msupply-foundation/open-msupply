@@ -1,6 +1,8 @@
 use async_graphql::*;
 use graphql_core::{
-    generic_filters::{DatetimeFilterInput, EqualFilterStringInput, StringFilterInput},
+    generic_filters::{
+        DateFilterInput, DatetimeFilterInput, EqualFilterStringInput, StringFilterInput,
+    },
     map_filter,
     pagination::PaginationInput,
     simple_generic_errors::RecordNotFound,
@@ -8,12 +10,15 @@ use graphql_core::{
     ContextExt,
 };
 use graphql_types::types::{PurchaseOrderConnector, PurchaseOrderNode, PurchaseOrderNodeStatus};
-use repository::{DatetimeFilter, EqualFilter, PaginationOption, StringFilter};
+use repository::{
+    DateFilter, DatetimeFilter, EqualFilter, PaginationOption, PurchaseOrderStatus, StringFilter,
+};
 use repository::{PurchaseOrderFilter, PurchaseOrderSort, PurchaseOrderSortField};
 use service::auth::{Resource, ResourceAccessRequest};
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(rename_items = "camelCase")]
+#[graphql(remote = "repository::db_diesel::purchase_order::PurchaseOrderSortField")]
 pub enum PurchaseOrderSortFieldInput {
     Number,
     CreatedDatetime,
@@ -42,6 +47,9 @@ pub struct PurchaseOrderFilterInput {
     pub status: Option<EqualFilterPurchaseOrderStatusInput>,
     pub supplier: Option<StringFilterInput>,
     pub store_id: Option<EqualFilterStringInput>,
+    pub confirmed_datetime: Option<DatetimeFilterInput>,
+    pub requested_delivery_date: Option<DateFilterInput>,
+    pub sent_datetime: Option<DatetimeFilterInput>,
 }
 
 #[derive(Union)]
@@ -128,29 +136,22 @@ impl PurchaseOrderFilterInput {
     pub fn to_domain(self) -> PurchaseOrderFilter {
         PurchaseOrderFilter {
             id: self.id.map(EqualFilter::from),
-            created_datetime: self.created_datetime.map(DatetimeFilter::from),
             status: self
                 .status
-                .map(|t| map_filter!(t, PurchaseOrderNodeStatus::to_domain)),
+                .map(|t| map_filter!(t, |s| PurchaseOrderStatus::from(s))),
             supplier: self.supplier.map(StringFilter::from),
             store_id: self.store_id.map(EqualFilter::from),
+            confirmed_datetime: self.confirmed_datetime.map(DatetimeFilter::from),
+            requested_delivery_date: self.requested_delivery_date.map(DateFilter::from),
+            sent_datetime: self.sent_datetime.map(DatetimeFilter::from),
         }
     }
 }
 
 impl PurchaseOrderSortInput {
     pub fn to_domain(self) -> PurchaseOrderSort {
-        use PurchaseOrderSortField as to;
-        use PurchaseOrderSortFieldInput as from;
-        let key = match self.key {
-            from::Number => to::Number,
-            from::TargetMonths => to::TargetMonths,
-            from::Status => to::Status,
-            from::CreatedDatetime => to::CreatedDatetime,
-        };
-
         PurchaseOrderSort {
-            key,
+            key: PurchaseOrderSortField::from(self.key),
             desc: self.desc,
         }
     }

@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { z } from 'zod';
 import { rankWith, ControlProps, uiTypeIs } from '@jsonforms/core';
-import { withJsonFormsControlProps } from '@jsonforms/react';
+import { useJsonForms, withJsonFormsControlProps } from '@jsonforms/react';
 import {
   createQueryParamsStore,
   DetailInputWithLabelRow,
+  extractProperty,
   QueryParamsProvider,
   Typography,
 } from '@openmsupply-client/common';
@@ -36,11 +37,12 @@ const UIComponent = (props: ControlProps) => {
     props.uischema.options
   );
   const { handleChange, label, path } = props;
-  const [otherParty, setOtherParty] = useState<NameRowFragment | null>(null);
+  const { core } = useJsonForms();
+
+  const otherPartyId = extractProperty(core?.data, 'otherPartyId');
   const nameType = schemaOptions?.nameType;
 
   const onChange = (newVal: NameRowFragment | null) => {
-    setOtherParty(newVal);
     handleChange(path, newVal ? newVal.id : null);
   };
 
@@ -50,17 +52,21 @@ const UIComponent = (props: ControlProps) => {
   const SearchInput =
     nameType === 'customer' ? (
       <CustomerSearchInput
-        value={otherParty}
+        value={null}
         onChange={onChange}
         width={250}
         disabled={false}
+        clearable={true}
+        currentId={otherPartyId}
       />
     ) : (
       <SupplierSearchInput
-        value={otherParty}
+        value={null}
         onChange={onChange}
         width={250}
         disabled={false}
+        clearable={true}
+        currentId={otherPartyId}
       />
     );
 

@@ -7,7 +7,7 @@ use graphql_core::{
     ContextExt,
 };
 use graphql_types::types::{ItemConnector, ItemNodeType};
-use repository::{EqualFilter, PaginationOption, StringFilter};
+use repository::{EqualFilter, ItemType, PaginationOption, StringFilter};
 use repository::{ItemFilter, ItemSort, ItemSortField};
 use service::{
     auth::{Resource, ResourceAccessRequest},
@@ -15,8 +15,8 @@ use service::{
 };
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
-#[graphql(remote = "repository::ItemSortField")]
 #[graphql(rename_items = "camelCase")]
+#[graphql(remote = "repository::ItemSortField")]
 pub enum ItemSortFieldInput {
     Name,
     Code,
@@ -57,6 +57,10 @@ pub struct ItemFilterInput {
     pub is_active: Option<bool>,
     pub is_vaccine: Option<bool>,
     pub master_list_id: Option<EqualFilterStringInput>,
+    pub is_program_item: Option<bool>,
+    pub ignore_for_orders: Option<bool>,
+    pub min_months_of_stock: Option<f64>,
+    pub max_months_of_stock: Option<f64>,
 }
 
 #[derive(Union)]
@@ -110,13 +114,17 @@ impl ItemFilterInput {
             has_stock_on_hand,
             is_visible_or_on_hand,
             master_list_id,
+            is_program_item,
+            ignore_for_orders,
+            min_months_of_stock,
+            max_months_of_stock,
         } = self;
 
         ItemFilter {
             id: id.map(EqualFilter::from),
             name: name.map(StringFilter::from),
             code: code.map(StringFilter::from),
-            r#type: r#type.map(|t| map_filter!(t, ItemNodeType::to_domain)),
+            r#type: r#type.map(|t| map_filter!(t, |r| ItemType::from(r))),
             category_id,
             category_name,
             is_visible,
@@ -126,22 +134,18 @@ impl ItemFilterInput {
             has_stock_on_hand,
             is_visible_or_on_hand,
             master_list_id: master_list_id.map(EqualFilter::from),
+            is_program_item,
+            ignore_for_orders,
+            min_months_of_stock,
+            max_months_of_stock,
         }
     }
 }
 
 impl ItemSortInput {
     pub fn to_domain(self) -> ItemSort {
-        use ItemSortField as to;
-        use ItemSortFieldInput as from;
-        let key = match self.key {
-            from::Name => to::Name,
-            from::Code => to::Code,
-            from::Type => to::Type,
-        };
-
         ItemSort {
-            key,
+            key: ItemSortField::from(self.key),
             desc: self.desc,
         }
     }

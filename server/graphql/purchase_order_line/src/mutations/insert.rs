@@ -21,13 +21,18 @@ use crate::mutations::errors::{
 pub struct InsertInput {
     pub id: String,
     pub purchase_order_id: String,
-    pub item_id: String,
+    pub item_id_or_code: String,
     pub requested_pack_size: Option<f64>,
     pub requested_number_of_units: Option<f64>,
     pub requested_delivery_date: Option<NaiveDate>,
     pub expected_delivery_date: Option<NaiveDate>,
-    pub price_per_unit_before_discount: Option<f64>,
-    pub price_per_unit_after_discount: Option<f64>,
+    pub price_per_pack_before_discount: Option<f64>,
+    pub price_per_pack_after_discount: Option<f64>,
+    pub manufacturer_id: Option<String>,
+    pub note: Option<String>,
+    pub unit: Option<String>,
+    pub supplier_item_code: Option<String>,
+    pub comment: Option<String>,
 }
 
 impl InsertInput {
@@ -35,25 +40,35 @@ impl InsertInput {
         let InsertInput {
             id,
             purchase_order_id,
-            item_id,
+            item_id_or_code,
             requested_pack_size,
             requested_number_of_units,
             requested_delivery_date,
             expected_delivery_date,
-            price_per_unit_after_discount,
-            price_per_unit_before_discount,
+            price_per_pack_after_discount,
+            price_per_pack_before_discount,
+            manufacturer_id,
+            note,
+            unit,
+            supplier_item_code,
+            comment,
         } = self;
 
         ServiceInput {
             id,
             purchase_order_id,
-            item_id,
+            item_id_or_code,
             requested_pack_size,
             requested_number_of_units,
             requested_delivery_date,
             expected_delivery_date,
-            price_per_unit_after_discount,
-            price_per_unit_before_discount,
+            price_per_pack_before_discount,
+            price_per_pack_after_discount,
+            manufacturer_id,
+            note,
+            unit,
+            supplier_item_code,
+            comment,
         }
     }
 }
@@ -107,9 +122,7 @@ pub fn insert_purchase_order_line(
 
 pub fn map_response(from: Result<PurchaseOrderLineRow, ServiceError>) -> Result<InsertResponse> {
     let result = match from {
-        Ok(purchase_order_line) => {
-            InsertResponse::Response(IdResponse::from_domain(purchase_order_line))
-        }
+        Ok(purchase_order_line) => InsertResponse::Response(IdResponse(purchase_order_line.id)),
         Err(error) => InsertResponse::Error(InsertError {
             error: map_error(error)?,
         }),
@@ -152,9 +165,12 @@ pub fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
                 CannnotFindItemByCode {},
             ));
         }
-        ServiceError::ItemDoesNotExist | ServiceError::IncorrectStoreId => {
-            BadUserInput(formatted_error)
-        }
+        ServiceError::ItemDoesNotExist
+        | ServiceError::IncorrectStoreId
+        | ServiceError::OtherPartyDoesNotExist
+        | ServiceError::OtherPartyNotAManufacturer
+        | ServiceError::ItemCannotBeOrdered
+        | ServiceError::OtherPartyNotVisible => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
     };
 

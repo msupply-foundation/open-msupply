@@ -5,10 +5,11 @@ use graphql_core::ContextExt;
 
 use crate::types::InsuranceProviderNode;
 use graphql_core::loader::InsuranceProviderByIdLoader;
-use repository::name_insurance_join_row::{InsurancePolicyType, NameInsuranceJoinRow};
+use repository::name_insurance_join_row::NameInsuranceJoinRow;
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
-
+#[graphql(remote = "repository::db_diesel::name_insurance_join_row
+::InsurancePolicyType")]
 pub enum InsurancePolicyNodeType {
     Personal,
     Business,
@@ -42,7 +43,7 @@ impl InsurancePolicyNode {
     }
 
     pub async fn policy_type(&self) -> InsurancePolicyNodeType {
-        InsurancePolicyNodeType::from_domain(&self.row().policy_type)
+        InsurancePolicyNodeType::from(self.row().policy_type.clone())
     }
 
     pub async fn discount_percentage(&self) -> &f64 {
@@ -67,22 +68,9 @@ impl InsurancePolicyNode {
         let result = loader.load_one(insurance_provider_id.clone()).await?;
         Ok(result.map(InsuranceProviderNode::from_domain))
     }
-}
 
-impl InsurancePolicyNodeType {
-    pub fn from_domain(policy_type: &InsurancePolicyType) -> InsurancePolicyNodeType {
-        use InsurancePolicyType::*;
-        match policy_type {
-            Personal => InsurancePolicyNodeType::Personal,
-            Business => InsurancePolicyNodeType::Business,
-        }
-    }
-
-    pub fn to_domain(&self) -> InsurancePolicyType {
-        match self {
-            InsurancePolicyNodeType::Personal => InsurancePolicyType::Personal,
-            InsurancePolicyNodeType::Business => InsurancePolicyType::Business,
-        }
+    pub async fn name_of_insured(&self) -> &Option<String> {
+        &self.row().name_of_insured
     }
 }
 

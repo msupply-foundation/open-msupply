@@ -1,23 +1,21 @@
-import {
-  PurchaseOrderNodeStatus,
-  PurchaseOrderNodeType,
-  RecordPatch,
-} from '@common/types';
+import { PurchaseOrderNodeStatus, RecordPatch } from '@common/types';
 import { setNullableInput } from '@common/utils';
 import { PurchaseOrderFragment } from '../operations.generated';
 
 export const mapStatus = (
   status?: PurchaseOrderNodeStatus
-): PurchaseOrderNodeType | undefined => {
+): PurchaseOrderNodeStatus | undefined => {
   switch (status) {
     case PurchaseOrderNodeStatus.New:
-      return PurchaseOrderNodeType.New;
-    case PurchaseOrderNodeStatus.Authorised:
-      return PurchaseOrderNodeType.Authorised;
+      return PurchaseOrderNodeStatus.New;
+    case PurchaseOrderNodeStatus.RequestApproval:
+      return PurchaseOrderNodeStatus.RequestApproval;
     case PurchaseOrderNodeStatus.Confirmed:
-      return PurchaseOrderNodeType.Confirmed;
+      return PurchaseOrderNodeStatus.Confirmed;
+    case PurchaseOrderNodeStatus.Sent:
+      return PurchaseOrderNodeStatus.Sent;
     case PurchaseOrderNodeStatus.Finalised:
-      return PurchaseOrderNodeType.Finalised;
+      return PurchaseOrderNodeStatus.Finalised;
     default:
       return undefined;
   }
@@ -44,6 +42,7 @@ export const parseUpdateInput = (input: RecordPatch<PurchaseOrderFragment>) => {
     freightCharge: input.freightCharge,
     // Supplier section fields
     supplierDiscountPercentage: input.supplierDiscountPercentage,
+    supplierDiscountAmount: input.supplierDiscountAmount,
     currencyId: input.currencyId,
     foreignExchangeRate: input.foreignExchangeRate,
     // Other fields

@@ -2,7 +2,7 @@ use async_graphql::*;
 use graphql_core::standard_graphql_error::StandardGraphqlError;
 use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
 use graphql_types::types::{IdResponse, InsurancePolicyNodeType};
-use repository::name_insurance_join_row::NameInsuranceJoinRow;
+use repository::name_insurance_join_row::{InsurancePolicyType, NameInsuranceJoinRow};
 use service::{
     auth::{Resource, ResourceAccessRequest},
     insurance::insert::{InsertInsurance as ServiceInput, InsertInsuranceError as ServiceError},
@@ -19,6 +19,7 @@ pub struct InsertInsuranceInput {
     pub discount_percentage: f64,
     pub expiry_date: chrono::NaiveDate,
     pub is_active: bool,
+    pub name_of_insured: Option<String>,
 }
 
 impl InsertInsuranceInput {
@@ -33,6 +34,7 @@ impl InsertInsuranceInput {
             discount_percentage,
             expiry_date,
             is_active,
+            name_of_insured,
         } = self;
 
         ServiceInput {
@@ -41,10 +43,11 @@ impl InsertInsuranceInput {
             insurance_provider_id,
             policy_number_family,
             policy_number_person,
-            policy_type: policy_type.to_domain(),
+            policy_type: InsurancePolicyType::from(policy_type),
             discount_percentage,
             expiry_date,
             is_active,
+            name_of_insured,
         }
     }
 }

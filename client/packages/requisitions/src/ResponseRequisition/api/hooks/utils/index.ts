@@ -6,6 +6,7 @@ import { useIsRemoteAuthorisation } from './useIsRemoteAuthorisation';
 import { useRequisitionPreferences } from './useRequisitionPreferences';
 import { useIsDisabledByAuthorisation } from './useIsDisabledByAuthorisation';
 import { useProgramRequisitionSettingsByCustomer } from './useProgramRequisitionSettingsByCustomer';
+import { useResponseAddFromMasterList } from './useAddFromMasterList';
 
 export const Utils = {
   useCreateOutboundFromResponse,
@@ -16,4 +17,5 @@ export const Utils = {
   useRequisitionPreferences,
   useIsDisabledByAuthorisation,
   useProgramRequisitionSettingsByCustomer,
+  useResponseAddFromMasterList,
 };

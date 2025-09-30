@@ -1,42 +1,21 @@
-use async_graphql::*;
+use async_graphql::{dataloader::DataLoader, *};
 use chrono::{DateTime, NaiveDate, Utc};
-use repository::{Name, NameRow, NameType, Store, StoreRow};
-
+use repository::{Name, NameRow, NameRowType, NameType, Store, StoreRow};
 use graphql_core::{
-    simple_generic_errors::NodeError, standard_graphql_error::StandardGraphqlError, ContextExt,
+    ContextExt, loader::CurrencyByIdLoader, simple_generic_errors::NodeError, standard_graphql_error::StandardGraphqlError
 };
 use serde::Serialize;
-
 use crate::types::CurrencyNode;
-
 use super::{patient::GenderTypeNode, StoreNode};
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")] // only needed to be comparable in tests
+#[graphql(remote = "repository::db_diesel::name::NameType")]
 pub enum NameNodeType {
     Facility,
     Invad,
     Repack,
     Store,
-}
-
-impl NameNodeType {
-    pub fn from_domain(name_type: &NameType) -> Self {
-        match name_type {
-            NameType::Facility => NameNodeType::Facility,
-            NameType::Invad => NameNodeType::Invad,
-            NameType::Repack => NameNodeType::Repack,
-            NameType::Store => NameNodeType::Store,
-        }
-    }
-    pub fn to_domain(self) -> NameType {
-        match self {
-            NameNodeType::Facility => NameType::Facility,
-            NameNodeType::Invad => NameType::Invad,
-            NameNodeType::Repack => NameType::Repack,
-            NameNodeType::Store => NameType::Store,
-        }
-    }
 }
 
 #[Object]
@@ -54,7 +33,9 @@ impl NameNode {
     }
 
     pub async fn r#type(&self) -> NameNodeType {
-        NameNodeType::from_domain(&self.row().r#type.clone().into())
+        NameNodeType::from(<NameRowType as Into<NameType>>::into(
+            self.row().r#type.clone(),
+        ))
     }
 
     pub async fn is_customer(&self) -> bool {
@@ -181,26 +162,19 @@ impl NameNode {
     }
 
     pub async fn currency(&self, ctx: &Context<'_>) -> Result<Option<CurrencyNode>> {
-        let service_provider = ctx.service_provider();
-        let currency_provider = &service_provider.currency_service;
-        let service_context = &service_provider.basic_context()?;
-
-        let currency_id = if let Some(currency_id) = &self.row().currency_id {
-            currency_id
-        } else {
-            return Ok(None);
+        let currency_id = match &self.row().currency_id {
+            Some(currency_id) => currency_id,
+            None => return Ok(None),
         };
 
-        let currency = currency_provider
-            .get_currency(service_context, currency_id)
-            .map_err(|e| StandardGraphqlError::from_repository_error(e).extend())?
-            .ok_or(StandardGraphqlError::InternalError(format!(
-                "Cannot find currency ({}) for name ({})",
-                currency_id,
-                self.row().id
-            )))?;
+        let loader = ctx.get_loader::<DataLoader<CurrencyByIdLoader>>();
 
-        Ok(Some(CurrencyNode::from_domain(currency)))
+        let result = loader
+            .load_one(currency_id.clone())
+            .await?
+            .map(CurrencyNode::from_domain);
+
+        Ok(result)
     }
 }
 

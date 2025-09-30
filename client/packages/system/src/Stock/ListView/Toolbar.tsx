@@ -1,14 +1,18 @@
-import React, { FC } from 'react';
+import React from 'react';
 import {
   AppBarContentPortal,
   useTranslation,
-  FilterController,
   Box,
   FilterMenu,
+  usePreferences,
+  FilterDefinition,
 } from '@openmsupply-client/common';
+import { useVvmStatusesEnabled } from '../api';
 
-export const Toolbar: FC<{ filter: FilterController }> = () => {
+export const Toolbar = () => {
   const t = useTranslation();
+  const { manageVvmStatusForStock } = usePreferences();
+  const { data: vmmStatuses } = useVvmStatusesEnabled();
 
   return (
     <AppBarContentPortal
@@ -24,9 +28,9 @@ export const Toolbar: FC<{ filter: FilterController }> = () => {
           filters={[
             {
               type: 'text',
-              name: t('label.code-or-name'),
-              urlParameter: 'itemCodeOrName',
-              placeholder: t('placeholder.enter-an-item-code-or-name'),
+              name: t('messages.search'),
+              urlParameter: 'search',
+              placeholder: t('messages.search'),
               isDefault: true,
             },
             {
@@ -59,6 +63,19 @@ export const Toolbar: FC<{ filter: FilterController }> = () => {
                 },
               ],
             },
+            ...(manageVvmStatusForStock
+              ? [
+                  {
+                    type: 'enum',
+                    name: t('label.vvm-status'),
+                    urlParameter: 'vvmStatusId',
+                    options: vmmStatuses?.map(status => ({
+                      label: status.description ?? '',
+                      value: status.id,
+                    })),
+                  } as FilterDefinition,
+                ]
+              : []),
           ]}
         />
       </Box>

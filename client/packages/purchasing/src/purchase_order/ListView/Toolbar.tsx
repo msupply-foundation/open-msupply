@@ -1,14 +1,13 @@
-import React, { FC } from 'react';
+import React, { ReactElement } from 'react';
 import {
   useTranslation,
   AppBarContentPortal,
   FilterMenu,
-  FilterController,
   Box,
   PurchaseOrderNodeStatus,
 } from '@openmsupply-client/common';
 
-export const Toolbar: FC<{ filter: FilterController }> = () => {
+export const Toolbar = (): ReactElement => {
   const t = useTranslation();
 
   return (
@@ -35,12 +34,16 @@ export const Toolbar: FC<{ filter: FilterController }> = () => {
               options: [
                 { label: t('label.new'), value: PurchaseOrderNodeStatus.New },
                 {
-                  label: t('label.authorised'),
-                  value: PurchaseOrderNodeStatus.Authorised,
+                  label: t('label.ready-for-approval'),
+                  value: PurchaseOrderNodeStatus.RequestApproval,
                 },
                 {
-                  label: t('label.confirmed'),
+                  label: t('label.ready-to-send'),
                   value: PurchaseOrderNodeStatus.Confirmed,
+                },
+                {
+                  label: t('label.sent'),
+                  value: PurchaseOrderNodeStatus.Sent,
                 },
                 {
                   label: t('label.finalised'),
@@ -52,21 +55,57 @@ export const Toolbar: FC<{ filter: FilterController }> = () => {
             },
             {
               type: 'group',
-              name: t('label.date'),
+              name: t('label.confirmed-datetime'),
+              elements: [
+                {
+                  type: 'dateTime',
+                  name: t('label.from-confirmed-datetime'),
+                  urlParameter: 'confirmedDatetime',
+                  range: 'from',
+                },
+                {
+                  type: 'dateTime',
+                  name: t('label.to-confirmed-datetime'),
+                  urlParameter: 'confirmedDatetime',
+                  range: 'to',
+                },
+              ],
+            },
+            {
+              type: 'group',
+              name: t('label.requested-delivery-date'),
               elements: [
                 {
                   type: 'date',
-                  name: t('label.from-date'),
-                  urlParameter: 'createdDatetime',
+                  name: t('label.from-requested-delivery-date'),
+                  urlParameter: 'requestedDeliveryDate',
                   range: 'from',
-                  isDefault: false,
+                  width: 240,
                 },
                 {
                   type: 'date',
-                  name: t('label.to-date'),
-                  urlParameter: 'createdDatetime',
+                  name: t('label.to-requested-delivery-date'),
+                  urlParameter: 'requestedDeliveryDate',
                   range: 'to',
-                  isDefault: false,
+                  width: 240,
+                },
+              ],
+            },
+            {
+              type: 'group',
+              name: t('label.sent-datetime'),
+              elements: [
+                {
+                  type: 'dateTime',
+                  name: t('label.from-sent-datetime'),
+                  urlParameter: 'sentDatetime',
+                  range: 'from',
+                },
+                {
+                  type: 'dateTime',
+                  name: t('label.to-sent-datetime'),
+                  urlParameter: 'sentDatetime',
+                  range: 'to',
                 },
               ],
             },

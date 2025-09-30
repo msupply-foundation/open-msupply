@@ -1,10 +1,16 @@
+use crate::types::{ItemNode, NameNode, PurchaseOrderNode};
 use async_graphql::{dataloader::DataLoader, *};
 use chrono::NaiveDate;
-use graphql_core::{loader::ItemLoader, standard_graphql_error::StandardGraphqlError, ContextExt};
+use graphql_core::{
+    loader::{
+        ItemLoader, NameByIdLoader, NameByIdLoaderInput, PurchaseOrderByIdLoader,
+        UnitsInOtherPurchaseOrdersLoader,
+    },
+    standard_graphql_error::StandardGraphqlError,
+    ContextExt,
+};
 use repository::{PurchaseOrderLine, PurchaseOrderLineRow};
 use service::{usize_to_u32, ListResult};
-
-use crate::types::ItemNode;
 
 #[derive(PartialEq, Debug)]
 pub struct PurchaseOrderLineNode {
@@ -15,6 +21,14 @@ pub struct PurchaseOrderLineNode {
 pub struct PurchaseOrderLineConnector {
     pub total_count: u32,
     pub nodes: Vec<PurchaseOrderLineNode>,
+}
+
+#[derive(Enum, Copy, Clone, PartialEq, Eq)]
+#[graphql(remote = "repository::db_diesel::purchase_order_line_row::PurchaseOrderLineStatus")]
+pub enum PurchaseOrderLineStatusNode {
+    New,
+    Sent,
+    Closed,
 }
 
 #[Object]
@@ -28,11 +42,11 @@ impl PurchaseOrderLineNode {
     pub async fn line_number(&self) -> i64 {
         self.row().line_number
     }
-    pub async fn price_per_unit_before_discount(&self) -> f64 {
-        self.row().price_per_unit_before_discount
+    pub async fn price_per_pack_before_discount(&self) -> f64 {
+        self.row().price_per_pack_before_discount
     }
-    pub async fn price_per_unit_after_discount(&self) -> f64 {
-        self.row().price_per_unit_after_discount
+    pub async fn price_per_pack_after_discount(&self) -> f64 {
+        self.row().price_per_pack_after_discount
     }
     pub async fn comment(&self) -> &Option<String> {
         &self.row().comment
@@ -77,6 +91,60 @@ impl PurchaseOrderLineNode {
     }
     pub async fn expected_delivery_date(&self) -> &Option<NaiveDate> {
         &self.row().expected_delivery_date
+    }
+
+    pub async fn manufacturer(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+    ) -> Result<Option<NameNode>> {
+        let loader = ctx.get_loader::<DataLoader<NameByIdLoader>>();
+
+        let Some(manufacturer_id) = &self.row().manufacturer_link_id else {
+            return Ok(None);
+        };
+
+        let result = loader
+            .load_one(NameByIdLoaderInput::new(&store_id, manufacturer_id))
+            .await?;
+
+        Ok(result.map(NameNode::from_domain))
+    }
+
+    pub async fn note(&self) -> &Option<String> {
+        &self.row().note
+    }
+
+    pub async fn unit(&self) -> &Option<String> {
+        &self.row().unit
+    }
+
+    pub async fn status(&self) -> PurchaseOrderLineStatusNode {
+        PurchaseOrderLineStatusNode::from(self.row().status.clone())
+    }
+
+    pub async fn purchase_order(&self, ctx: &Context<'_>) -> Result<Option<PurchaseOrderNode>> {
+        let loader = ctx.get_loader::<DataLoader<PurchaseOrderByIdLoader>>();
+        let purchase_order = loader
+            .load_one(self.row().purchase_order_id.clone())
+            .await?
+            .map(PurchaseOrderNode::from_domain);
+
+        Ok(purchase_order)
+    }
+
+    pub async fn units_ordered_in_others(&self, ctx: &Context<'_>) -> Result<f64> {
+        let loader = ctx.get_loader::<DataLoader<UnitsInOtherPurchaseOrdersLoader>>();
+
+        let result = loader.load_one(self.row().id.clone()).await?.ok_or(
+            StandardGraphqlError::InternalError(format!(
+                "Cannot find units in other confirmed purchase orders for purchase order line ({})",
+                &self.row().id
+            ))
+            .extend(),
+        )?;
+
+        Ok(result)
     }
 }
 

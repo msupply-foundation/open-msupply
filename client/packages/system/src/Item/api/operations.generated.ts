@@ -65,6 +65,8 @@ export type StockLineFragment = {
     unusable: boolean;
     description: string;
   } | null;
+  program?: { __typename: 'ProgramNode'; id: string; name: string } | null;
+  campaign?: { __typename: 'CampaignNode'; id: string; name: string } | null;
 };
 
 export type ItemRowFragment = {
@@ -140,7 +142,9 @@ export type ItemStockOnHandFragment = {
   itemStoreProperties?: {
     __typename: 'ItemStorePropertiesNode';
     defaultSellPricePerPack: number;
+    ignoreForOrders: boolean;
   } | null;
+  stats: { __typename: 'ItemStatsNode'; stockOnHand: number };
 };
 
 export type ItemRowWithStatsFragment = {
@@ -166,6 +170,7 @@ export type ItemRowWithStatsFragment = {
   itemStoreProperties?: {
     __typename: 'ItemStorePropertiesNode';
     defaultSellPricePerPack: number;
+    ignoreForOrders: boolean;
   } | null;
 };
 
@@ -387,6 +392,12 @@ export type ItemFragment = {
         unusable: boolean;
         description: string;
       } | null;
+      program?: { __typename: 'ProgramNode'; id: string; name: string } | null;
+      campaign?: {
+        __typename: 'CampaignNode';
+        id: string;
+        name: string;
+      } | null;
     }>;
   };
   stats: {
@@ -487,6 +498,7 @@ export type ItemFragment = {
   itemStoreProperties?: {
     __typename: 'ItemStorePropertiesNode';
     defaultSellPricePerPack: number;
+    ignoreForOrders: boolean;
   } | null;
 };
 
@@ -597,6 +609,16 @@ export type ItemsWithStockLinesQuery = {
             unusable: boolean;
             description: string;
           } | null;
+          program?: {
+            __typename: 'ProgramNode';
+            id: string;
+            name: string;
+          } | null;
+          campaign?: {
+            __typename: 'CampaignNode';
+            id: string;
+            name: string;
+          } | null;
         }>;
       };
       stats: {
@@ -697,6 +719,7 @@ export type ItemsWithStockLinesQuery = {
       itemStoreProperties?: {
         __typename: 'ItemStorePropertiesNode';
         defaultSellPricePerPack: number;
+        ignoreForOrders: boolean;
       } | null;
     }>;
   };
@@ -757,7 +780,9 @@ export type ItemStockOnHandQuery = {
       itemStoreProperties?: {
         __typename: 'ItemStorePropertiesNode';
         defaultSellPricePerPack: number;
+        ignoreForOrders: boolean;
       } | null;
+      stats: { __typename: 'ItemStatsNode'; stockOnHand: number };
     }>;
   };
 };
@@ -925,6 +950,16 @@ export type ItemByIdQuery = {
             unusable: boolean;
             description: string;
           } | null;
+          program?: {
+            __typename: 'ProgramNode';
+            id: string;
+            name: string;
+          } | null;
+          campaign?: {
+            __typename: 'CampaignNode';
+            id: string;
+            name: string;
+          } | null;
         }>;
       };
       restrictedLocationType?: {
@@ -1023,6 +1058,7 @@ export type ItemByIdQuery = {
       itemStoreProperties?: {
         __typename: 'ItemStorePropertiesNode';
         defaultSellPricePerPack: number;
+        ignoreForOrders: boolean;
       } | null;
     }>;
   };
@@ -1203,6 +1239,12 @@ export type GetHistoricalStockLinesQuery = {
         priority: number;
         unusable: boolean;
         description: string;
+      } | null;
+      program?: { __typename: 'ProgramNode'; id: string; name: string } | null;
+      campaign?: {
+        __typename: 'CampaignNode';
+        id: string;
+        name: string;
       } | null;
     }>;
   };
@@ -1505,6 +1547,10 @@ export const ItemStockOnHandFragmentDoc = gql`
     availableStockOnHand(storeId: $storeId)
     itemStoreProperties(storeId: $storeId) {
       defaultSellPricePerPack
+      ignoreForOrders
+    }
+    stats(storeId: $storeId) {
+      stockOnHand
     }
   }
   ${ItemWithPackSizeFragmentDoc}
@@ -1592,6 +1638,14 @@ export const StockLineFragmentDoc = gql`
       priority
       unusable
       description
+    }
+    program {
+      id
+      name
+    }
+    campaign {
+      id
+      name
     }
   }
   ${ItemDirectionFragmentDoc}
@@ -1716,6 +1770,7 @@ export const ItemFragmentDoc = gql`
     }
     itemStoreProperties(storeId: $storeId) {
       defaultSellPricePerPack
+      ignoreForOrders
     }
   }
   ${LocationTypeFragmentDoc}

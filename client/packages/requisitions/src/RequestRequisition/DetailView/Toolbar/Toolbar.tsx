@@ -68,7 +68,7 @@ export const Toolbar = () => {
                 <InternalSupplierSearchInput
                   disabled={isDisabled || isProgram}
                   value={otherParty ?? null}
-                  onChange={otherParty => update({ otherParty })}
+                  onChange={otherParty => update({ otherParty: otherParty ?? undefined })}
                 />
               }
             />

@@ -1,5 +1,5 @@
 import React, { FC } from 'react';
-import { Box, Tooltip, Typography } from '@mui/material';
+import { Box, SxProps, Tooltip, Typography } from '@mui/material';
 import { useFormatNumber } from '@common/intl';
 import { NumUtils } from '@common/utils';
 
@@ -15,39 +15,46 @@ interface NumericTextDisplayProps {
   defaultValue?: string | number;
   children?: React.ReactElement;
   width?: number | string;
+  packagingDisplay?: string;
+  decimalLimit?: number;
+  sx?: SxProps;
 }
 
 export const NumericTextDisplay: FC<NumericTextDisplayProps> = ({
   value,
   defaultValue = '',
   width = 50,
+  packagingDisplay,
+  decimalLimit = 2,
+  sx,
 }) => {
   const format = useFormatNumber();
   const tooltip = value ? format.round(value ?? undefined, 10) : null;
-  const formattedValue = format.round(value ?? 0, 2);
+  const formattedValue = format.round(value ?? 0, decimalLimit);
 
   const displayValue =
     value === undefined || value === null ? defaultValue : formattedValue;
 
   return (
-    <Box
-      sx={{
-        padding: '4px 8px',
-      }}
-    >
+    <Box sx={sx}>
       <Tooltip title={tooltip}>
         <Typography
-          style={{
+          sx={{
             minWidth: width,
             overflow: 'hidden',
             textOverflow: 'ellipsis',
             textAlign: 'right',
             fontSize: 'inherit',
+            color: 'inherit',
+            paddingX: '1px', // so overflow hidden doesn't cut off last digit
           }}
         >
-          {!!NumUtils.hasMoreThanTwoDp(value ?? 0)
+          {/* Show `...` if greater decimal precision available in tooltip */}
+          {decimalLimit > 0 && // But only show `...` if there are some decimal places shown (`3... units` looks silly)
+          !!NumUtils.hasMoreThanDp(value ?? 0, decimalLimit)
             ? `${displayValue}...`
             : displayValue}
+          {packagingDisplay ? ` ${packagingDisplay}` : ''}
         </Typography>
       </Tooltip>
     </Box>

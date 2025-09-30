@@ -64,21 +64,29 @@ const createStatusLog = (invoice: OutboundFragment) => {
 
 interface FooterComponentProps {
   onReturnLines: (selectedLines: StockOutLineFragment[]) => void;
+  selectedRows: StockOutLineFragment[];
+  resetRowSelection: () => void;
 }
 
 export const FooterComponent: FC<FooterComponentProps> = ({
   onReturnLines,
+  selectedRows,
+  resetRowSelection,
 }) => {
   const t = useTranslation();
   const { navigateUpOne } = useBreadcrumbs();
 
   const { data } = useOutbound.document.get();
-  const onDelete = useOutbound.line.deleteSelected();
-  const { onAllocate } = useOutbound.line.allocateSelected();
+  const onDelete = useOutbound.line.deleteSelected(
+    selectedRows,
+    resetRowSelection
+  );
+  const { onAllocate } = useOutbound.line.allocateSelected(
+    selectedRows,
+    resetRowSelection
+  );
 
-  const selectedLines = useOutbound.utils.selectedLines();
-
-  const selectedUnallocatedEmptyLines = selectedLines
+  const selectedUnallocatedEmptyLines = selectedRows
     .filter(
       ({ type, numberOfPacks }) =>
         type === InvoiceLineNodeType.UnallocatedStock && numberOfPacks === 0
@@ -97,7 +105,9 @@ export const FooterComponent: FC<FooterComponentProps> = ({
   const confirmAllocate = () => {
     if (selectedUnallocatedEmptyLines.length !== 0) {
       getConfirmation();
-    } else onAllocate();
+    } else {
+      onAllocate();
+    }
   };
 
   const actions: Action[] = [
@@ -115,7 +125,7 @@ export const FooterComponent: FC<FooterComponentProps> = ({
     {
       label: t('button.return-lines'),
       icon: <ArrowLeftIcon />,
-      onClick: () => onReturnLines(selectedLines),
+      onClick: () => onReturnLines(selectedRows),
       shouldShrink: false,
     },
   ];
@@ -124,13 +134,14 @@ export const FooterComponent: FC<FooterComponentProps> = ({
     <AppFooterPortal
       Content={
         <>
-          {selectedLines.length !== 0 && (
+          {selectedRows.length !== 0 && (
             <ActionsFooter
               actions={actions}
-              selectedRowCount={selectedLines.length}
+              selectedRowCount={selectedRows.length}
+              resetRowSelection={resetRowSelection}
             />
           )}
-          {data && selectedLines.length === 0 && (
+          {data && selectedRows.length === 0 && (
             <Box
               gap={2}
               display="flex"

@@ -17,6 +17,7 @@ use service::{
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(rename_items = "camelCase")]
+#[graphql(remote = "repository::db_diesel::clinician::ClinicianSortField")]
 pub enum ClinicianSortFieldInput {
     Code,
     FirstName,
@@ -147,20 +148,8 @@ impl ClinicianConnector {
 
 impl ClinicianSortInput {
     pub fn to_domain(self) -> ClinicianSort {
-        let key = match self.key {
-            ClinicianSortFieldInput::Code => ClinicianSortField::Code,
-            ClinicianSortFieldInput::FirstName => ClinicianSortField::FirstName,
-            ClinicianSortFieldInput::LastName => ClinicianSortField::LastName,
-            ClinicianSortFieldInput::Initials => ClinicianSortField::Initials,
-            ClinicianSortFieldInput::Address1 => ClinicianSortField::Address1,
-            ClinicianSortFieldInput::Address2 => ClinicianSortField::Address2,
-            ClinicianSortFieldInput::Phone => ClinicianSortField::Phone,
-            ClinicianSortFieldInput::Mobile => ClinicianSortField::Mobile,
-            ClinicianSortFieldInput::Email => ClinicianSortField::Email,
-        };
-
         ClinicianSort {
-            key,
+            key: ClinicianSortField::from(self.key),
             desc: self.desc,
         }
     }

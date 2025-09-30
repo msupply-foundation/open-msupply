@@ -1,12 +1,15 @@
-import React, { ReactElement, Suspense, useEffect } from 'react';
+import React, { ReactElement, Suspense, useCallback, useEffect } from 'react';
 import {
   AlertModal,
+  createQueryParamsStore,
   createTableStore,
   DetailTabs,
   DetailViewSkeleton,
+  GoodsReceivedNodeStatus,
   RouteBuilder,
   TableProvider,
   useBreadcrumbs,
+  useEditModal,
   useNavigate,
   useTranslation,
 } from '@openmsupply-client/common';
@@ -18,6 +21,8 @@ import { AppBarButtons } from './AppBarButtons';
 import { Footer } from './Footer';
 import { Toolbar } from './Toolbar';
 import { SidePanel } from './SidePanel';
+import { GoodsReceivedLineEditModal } from './LineEdit';
+import { GoodsReceivedLineFragment } from '../api/operations.generated';
 
 export const DetailViewInner = (): ReactElement => {
   const t = useTranslation();
@@ -26,9 +31,22 @@ export const DetailViewInner = (): ReactElement => {
 
   const {
     query: { data, isLoading },
+    lines: { sortedAndFilteredLines },
   } = useGoodsReceived();
 
-  console.info('Goods Received Detail View Data:', data);
+  const {
+    onOpen,
+    onClose,
+    isOpen,
+    entity: lineId,
+  } = useEditModal<string | null>();
+
+  const onRowClick = useCallback(
+    (line: GoodsReceivedLineFragment) => {
+      onOpen(line.id);
+    },
+    [onOpen]
+  );
 
   useEffect(() => {
     setCustomBreadcrumbs({ 1: data?.number.toString() ?? '' });
@@ -36,12 +54,19 @@ export const DetailViewInner = (): ReactElement => {
 
   if (isLoading) return <DetailViewSkeleton />;
 
+  const isDisabled = !data || data?.status !== GoodsReceivedNodeStatus.New;
+
   const tabs = [
     {
-      Component: <ContentArea />,
+      Component: (
+        <ContentArea
+          lines={sortedAndFilteredLines}
+          isDisabled={isDisabled}
+          onRowClick={onRowClick}
+        />
+      ),
       value: 'General',
     },
-    // Add more tabs as needed
   ];
 
   return (
@@ -51,11 +76,17 @@ export const DetailViewInner = (): ReactElement => {
       {data ? (
         <>
           <AppBarButtons />
-          <Toolbar />
+          <Toolbar isDisabled={isDisabled} />
           <DetailTabs tabs={tabs} />
           <Footer />
-          <SidePanel />
-          {/* Add Line Edit Modal */}
+          <SidePanel isDisabled={isDisabled} />
+          {isOpen && lineId && (
+            <GoodsReceivedLineEditModal
+              lineId={lineId}
+              onClose={onClose}
+              isOpen={isOpen}
+            />
+          )}
         </>
       ) : (
         <AlertModal
@@ -76,9 +107,15 @@ export const DetailViewInner = (): ReactElement => {
 };
 
 export const GoodsReceivedDetailView = () => {
-  // TODO: Add queryParamsStore
   return (
-    <TableProvider createStore={createTableStore}>
+    <TableProvider
+      createStore={createTableStore}
+      queryParamsStore={createQueryParamsStore<GoodsReceivedLineFragment>({
+        initialSortBy: {
+          key: 'itemName',
+        },
+      })}
+    >
       <DetailViewInner />
     </TableProvider>
   );

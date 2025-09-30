@@ -305,14 +305,14 @@ export const NumericTextInput = React.forwardRef<
                 sx: {
                   borderRadius: 2,
                   padding: 0.5,
-                  width: fullWidth ? undefined : `${width}px`,
+                  width: fullWidth ? undefined : width,
                 },
               },
               htmlInput: {
                 sx: {
                   backgroundColor: props.disabled
-                    ? 'background.toolbar'
-                    : 'background.menu',
+                    ? 'background.input.disabled'
+                    : 'background.input.main',
                 },
               },
             },
@@ -353,7 +353,7 @@ export const NumericTextInput = React.forwardRef<
           }}
           onKeyDown={e => {
             if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return;
-
+            e.stopPropagation();
             e.preventDefault();
             const change =
               (e.key === 'ArrowUp' ? step : -step) *

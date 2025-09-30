@@ -1,25 +1,30 @@
 use async_graphql::*;
 use graphql_core::{
     generic_filters::EqualFilterStringInput,
+    map_filter,
     pagination::PaginationInput,
     simple_generic_errors::RecordNotFound,
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
-use graphql_types::types::{PurchaseOrderLineConnector, PurchaseOrderLineNode};
+use graphql_types::types::{
+    PurchaseOrderLineConnector, PurchaseOrderLineNode, PurchaseOrderLineStatusNode,
+};
 use repository::{
     EqualFilter, PaginationOption, PurchaseOrderLineFilter, PurchaseOrderLineSort,
-    PurchaseOrderLineSortField,
+    PurchaseOrderLineSortField, PurchaseOrderLineStatus,
 };
 use service::auth::{Resource, ResourceAccessRequest};
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(rename_items = "camelCase")]
+#[graphql(remote = "repository::db_diesel::purchase_order_line::PurchaseOrderLineSortField")]
 pub enum PurchaseOrderLineSortFieldInput {
     ItemName,
     LineNumber,
     RequestedDeliveryDate,
     ExpectedDeliveryDate,
+    PurchaseOrderNumber,
 }
 
 #[derive(InputObject)]
@@ -33,6 +38,15 @@ pub struct PurchaseOrderLineSortInput {
 pub struct PurchaseOrderLineFilterInput {
     pub id: Option<EqualFilterStringInput>,
     pub purchase_order_id: Option<EqualFilterStringInput>,
+    pub status: Option<EqualFilterPurchaseOrderLineStatusInput>,
+    pub received_less_than_adjusted: Option<bool>,
+}
+
+#[derive(InputObject, Clone)]
+pub struct EqualFilterPurchaseOrderLineStatusInput {
+    pub equal_to: Option<PurchaseOrderLineStatusNode>,
+    pub equal_any: Option<Vec<PurchaseOrderLineStatusNode>>,
+    pub not_equal_to: Option<PurchaseOrderLineStatusNode>,
 }
 
 #[derive(Union)]
@@ -118,26 +132,23 @@ impl PurchaseOrderLineFilterInput {
         PurchaseOrderLineFilter {
             id: self.id.map(EqualFilter::from),
             purchase_order_id: self.purchase_order_id.map(EqualFilter::from),
+            status: self
+                .status
+                .map(|s| map_filter!(s, |t| PurchaseOrderLineStatus::from(t))),
+
+            received_less_than_adjusted: self.received_less_than_adjusted,
             store_id: None,
             requested_pack_size: None,
             item_id: None,
+            purchase_order: None,
         }
     }
 }
 
 impl PurchaseOrderLineSortInput {
     pub fn to_domain(self) -> PurchaseOrderLineSort {
-        use PurchaseOrderLineSortField as to;
-        use PurchaseOrderLineSortFieldInput as from;
-        let key = match self.key {
-            from::ItemName => to::ItemName,
-            from::LineNumber => to::LineNumber,
-            from::RequestedDeliveryDate => to::RequestedDeliveryDate,
-            from::ExpectedDeliveryDate => to::ExpectedDeliveryDate,
-        };
-
         PurchaseOrderLineSort {
-            key,
+            key: PurchaseOrderLineSortField::from(self.key),
             desc: self.desc,
         }
     }

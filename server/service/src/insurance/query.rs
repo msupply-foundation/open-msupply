@@ -111,6 +111,7 @@ mod query {
             expiry_date: NaiveDate::from_ymd_opt(2025, 12, 31).expect("Invalid date"),
             is_active: true,
             entered_by_id: Some("4".to_string()),
+            name_of_insured: Some("A".to_string()),
         };
 
         let insurance_b = NameInsuranceJoinRow {
@@ -125,6 +126,7 @@ mod query {
             expiry_date: NaiveDate::from_ymd_opt(2024, 11, 30).expect("Invalid date"),
             is_active: false,
             entered_by_id: Some("5".to_string()),
+            name_of_insured: Some("B".to_string()),
         };
 
         let insurance_repo = NameInsuranceJoinRowRepository::new(&context.connection);

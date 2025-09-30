@@ -66,6 +66,7 @@ pub(crate) mod requisition_line;
 pub(crate) mod rnr_form;
 pub(crate) mod rnr_form_line;
 pub(crate) mod sensor;
+pub(crate) mod shipping_method;
 pub(crate) mod special;
 pub(crate) mod stock_line;
 pub(crate) mod stocktake;
@@ -217,6 +218,8 @@ pub(crate) fn all_translators() -> SyncTranslators {
         goods_received::boxed(),
         // Goods Received
         goods_received_line::boxed(),
+        // Shipping Method
+        shipping_method::boxed(),
     ]
 }
 
@@ -302,12 +305,12 @@ impl PullTranslateResult {
         Self::upserts(vec![upsert])
     }
 
-    pub(crate) fn upserts<U>(upsert: Vec<U>) -> Self
+    pub(crate) fn upserts<U>(upserts: Vec<U>) -> Self
     where
         U: Upsert + 'static,
     {
         Self::IntegrationOperations(
-            upsert
+            upserts
                 .into_iter()
                 .map(|upsert| IntegrationOperation::Upsert(Box::new(upsert))) // Source site is added later using add_source_site_id
                 .collect(),
@@ -321,14 +324,14 @@ impl PullTranslateResult {
         Self::deletes(vec![upsert])
     }
 
-    pub(crate) fn deletes<U>(upsert: Vec<U>) -> Self
+    pub(crate) fn deletes<U>(deletes: Vec<U>) -> Self
     where
         U: Delete + 'static,
     {
         Self::IntegrationOperations(
-            upsert
+            deletes
                 .into_iter()
-                .map(|upsert| IntegrationOperation::Delete(Box::new(upsert))) // Source site is added later using add_source_site_id
+                .map(|delete| IntegrationOperation::Delete(Box::new(delete))) // Source site is added later using add_source_site_id
                 .collect(),
         )
     }

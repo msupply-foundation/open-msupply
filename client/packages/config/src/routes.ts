@@ -70,6 +70,7 @@ export enum AppRoute {
 
   PageNotFound = 'page-not-found',
   GoodsReceived = 'goods-received',
+  PurchaseOrderOutstandingLines = 'outstanding-lines',
   SyncMessage = 'sync-message',
 }
 

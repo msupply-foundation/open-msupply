@@ -49,7 +49,7 @@ pub struct PurchaseOrderOmsFields {
     #[serde(default)]
     pub supplier_discount_percentage: Option<f64>,
     #[serde(default)]
-    pub authorised_datetime: Option<NaiveDateTime>,
+    pub request_approval_datetime: Option<NaiveDateTime>,
     #[serde(default)]
     pub finalised_datetime: Option<NaiveDateTime>,
     #[serde(default)]
@@ -227,7 +227,7 @@ impl SyncTranslation for PurchaseOrderTranslation {
             curr_rate,
             order_total_before_discount,
             order_total_after_discount: _, // Not used, we calculate from the sum of the lines instead
-            is_authorised,
+            is_authorised: _,
         } = serde_json::from_str::<LegacyPurchaseOrderRow>(&sync_record.data)?;
 
         let created_datetime = match oms_fields.clone() {
@@ -256,9 +256,9 @@ impl SyncTranslation for PurchaseOrderTranslation {
                 }
             });
 
-        let authorised_datetime = oms_fields
+        let request_approval_datetime = oms_fields
             .clone()
-            .and_then(|oms_field| oms_field.authorised_datetime);
+            .and_then(|oms_field| oms_field.request_approval_datetime);
 
         let finalised_datetime = oms_fields
             .clone()
@@ -267,7 +267,7 @@ impl SyncTranslation for PurchaseOrderTranslation {
         let status = oms_fields
             .clone()
             .map(|oms_field| oms_field.status)
-            .unwrap_or_else(|| from_legacy_status(&status, is_authorised));
+            .unwrap_or_else(|| from_legacy_status(&status, sent_datetime));
 
         let result = PurchaseOrderRow {
             id,
@@ -302,7 +302,7 @@ impl SyncTranslation for PurchaseOrderTranslation {
             insurance_charge,
             freight_charge,
             freight_conditions,
-            authorised_datetime,
+            request_approval_datetime,
             finalised_datetime,
         };
         Ok(PullTranslateResult::upsert(result))
@@ -363,14 +363,13 @@ impl SyncTranslation for PurchaseOrderTranslation {
             insurance_charge,
             freight_charge,
             freight_conditions,
-            authorised_datetime,
+            request_approval_datetime,
             finalised_datetime,
         } = purchase_order.purchase_order_row;
 
         let PurchaseOrderStatsRow {
             purchase_order_id: _,
-            line_total_before_discount,
-            line_total_after_discount,
+            order_total_before_discount,
             order_total_after_discount,
         } = purchase_order.purchase_order_stats_row.unwrap_or_default();
 
@@ -379,7 +378,7 @@ impl SyncTranslation for PurchaseOrderTranslation {
             confirmed_datetime,
             sent_datetime,
             supplier_discount_percentage,
-            authorised_datetime,
+            request_approval_datetime,
             finalised_datetime,
             status: status.clone(),
         };
@@ -407,8 +406,11 @@ impl SyncTranslation for PurchaseOrderTranslation {
             communications_charge,
             insurance_charge,
             freight_charge,
-            supplier_discount_amount: line_total_after_discount
-                * (supplier_discount_percentage.unwrap_or(0.0) / 100.0),
+            supplier_discount_amount: if let Some(percentage) = supplier_discount_percentage {
+                order_total_before_discount * (percentage / 100.0)
+            } else {
+                0.0
+            },
             heading_message,
             requested_delivery_date,
             delivery_method: shipping_method,
@@ -420,7 +422,7 @@ impl SyncTranslation for PurchaseOrderTranslation {
             creation_date: created_datetime.date(),
             confirm_date: confirmed_datetime.map(|d| d.date()),
             curr_rate: foreign_exchange_rate,
-            order_total_before_discount: line_total_before_discount,
+            order_total_before_discount,
             order_total_after_discount,
             donor_id,
             is_authorised: check_is_authorised(&status),
@@ -445,36 +447,43 @@ impl SyncTranslation for PurchaseOrderTranslation {
 
 fn from_legacy_status(
     status: &LegacyPurchaseOrderStatus,
-    is_authorised: bool,
+    sent_datetime: Option<NaiveDateTime>,
 ) -> PurchaseOrderStatus {
     match status {
         LegacyPurchaseOrderStatus::Nw => PurchaseOrderStatus::New,
-        LegacyPurchaseOrderStatus::Sg => PurchaseOrderStatus::New,
+        LegacyPurchaseOrderStatus::Sg => PurchaseOrderStatus::RequestApproval, // TODO: if authorisation not needed should be new?
         LegacyPurchaseOrderStatus::Cn => {
-            if is_authorised {
-                PurchaseOrderStatus::Authorised
+            if sent_datetime.is_some() {
+                PurchaseOrderStatus::Sent
             } else {
                 PurchaseOrderStatus::Confirmed
             }
         }
         LegacyPurchaseOrderStatus::Fn => PurchaseOrderStatus::Finalised, // authorised might or might not be true in this case...
-        LegacyPurchaseOrderStatus::Others => PurchaseOrderStatus::New,   // Default to New for
+        LegacyPurchaseOrderStatus::Others => PurchaseOrderStatus::New, // Default to New for others
     }
 }
 
 fn to_legacy_status(status: &PurchaseOrderStatus) -> LegacyPurchaseOrderStatus {
     match status {
         PurchaseOrderStatus::New => LegacyPurchaseOrderStatus::Nw,
+        PurchaseOrderStatus::RequestApproval => LegacyPurchaseOrderStatus::Sg,
         PurchaseOrderStatus::Confirmed => LegacyPurchaseOrderStatus::Cn,
-        PurchaseOrderStatus::Authorised => LegacyPurchaseOrderStatus::Cn, // We will also set is_authorised to true (See check_is_authorised)
+        PurchaseOrderStatus::Sent => LegacyPurchaseOrderStatus::Cn,
         PurchaseOrderStatus::Finalised => LegacyPurchaseOrderStatus::Fn,
     }
 }
 
+/*
+Assuming Finalised is always authorised
+the action might be skipped if authorisation is not required due to global preference.
+N.B. if this logic changes, update the Purchase Order form's logic
+(the 'AUTHORISED/UNAUTHORISED' watermark in this file: .../open-msupply/standard_forms/purchase-order/latest/src/template.html)
+*/
 fn check_is_authorised(status: &PurchaseOrderStatus) -> bool {
     matches!(
         status,
-        PurchaseOrderStatus::Authorised | PurchaseOrderStatus::Finalised // Assuming Finalised is always authorised, but the action might be skipped if authorisation is not required due to global preference. N.B. if this logic changes, update the Purchase Order form's logic (the 'AUTHORISED/UNAUTHORISED' watermark in this file: .../open-msupply/standard_forms/purchase-order/latest/src/template.html)
+        PurchaseOrderStatus::Confirmed | PurchaseOrderStatus::Sent | PurchaseOrderStatus::Finalised
     )
 }
 

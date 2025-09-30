@@ -65,7 +65,7 @@ impl AssetPropertyNode {
         self.row().asset_type_id.clone()
     }
     pub async fn value_type(&self) -> PropertyNodeValueType {
-        PropertyNodeValueType::from_domain(&self.row().value_type)
+        PropertyNodeValueType::from(self.row().value_type.clone())
     }
     pub async fn allowed_values(&self) -> &Option<String> {
         &self.row().allowed_values

@@ -14,19 +14,22 @@ pub struct StorePrefUpdate<T> {
 pub struct UpsertPreferences {
     // Global preferences
     pub allow_tracking_of_stock_by_donor: Option<bool>,
-    pub gender_options: Option<Vec<GenderType>>,
-    pub show_contact_tracing: Option<bool>,
-    pub custom_translations: Option<BTreeMap<String, String>>,
-    pub sync_records_display_threshold: Option<i32>,
-    pub authorise_purchase_order: Option<bool>,
-    pub prevent_transfers_months_before_initialisation: Option<i32>,
     pub authorise_goods_received: Option<bool>,
+    pub authorise_purchase_order: Option<bool>,
+    pub custom_translations: Option<BTreeMap<String, String>>,
+    pub gender_options: Option<Vec<GenderType>>,
+    pub prevent_transfers_months_before_initialisation: Option<i32>,
+    pub show_contact_tracing: Option<bool>,
+    pub sync_records_display_threshold: Option<i32>,
+
     // Store preferences
     pub manage_vaccines_in_doses: Option<Vec<StorePrefUpdate<bool>>>,
     pub manage_vvm_status_for_stock: Option<Vec<StorePrefUpdate<bool>>>,
     pub order_in_packs: Option<Vec<StorePrefUpdate<bool>>>,
+    pub use_procurement_functionality: Option<Vec<StorePrefUpdate<bool>>>,
     pub sort_by_vvm_status_then_expiry: Option<Vec<StorePrefUpdate<bool>>>,
     pub use_simplified_mobile_ui: Option<Vec<StorePrefUpdate<bool>>>,
+    pub disable_manual_returns: Option<Vec<StorePrefUpdate<bool>>>,
 }
 
 pub fn upsert_preferences(
@@ -34,38 +37,44 @@ pub fn upsert_preferences(
     UpsertPreferences {
         // Global preferences
         allow_tracking_of_stock_by_donor: allow_tracking_of_stock_by_donor_input,
-        gender_options: gender_options_input,
-        show_contact_tracing: show_contact_tracing_input,
-        custom_translations: custom_translations_input,
-        sync_records_display_threshold: sync_records_display_threshold_input,
+        authorise_goods_received: authorise_goods_received_input,
         authorise_purchase_order: authorise_purchase_order_input,
+        custom_translations: custom_translations_input,
+        gender_options: gender_options_input,
         prevent_transfers_months_before_initialisation:
             prevent_transfers_months_before_initialisation_input,
-        authorise_goods_received: authorise_goods_received_input,
+        show_contact_tracing: show_contact_tracing_input,
+        sync_records_display_threshold: sync_records_display_threshold_input,
+
         // Store preferences
         manage_vaccines_in_doses: manage_vaccines_in_doses_input,
         manage_vvm_status_for_stock: manage_vvm_status_for_stock_input,
         order_in_packs: order_in_packs_input,
+        use_procurement_functionality: show_purchase_orders_and_goods_received_input,
         sort_by_vvm_status_then_expiry: sort_by_vvm_status_then_expiry_input,
         use_simplified_mobile_ui: use_simplified_mobile_ui_input,
+        disable_manual_returns: disable_manual_returns_input,
     }: UpsertPreferences,
 ) -> Result<(), UpsertPreferenceError> {
     let PreferenceProvider {
         // Global preferences
         allow_tracking_of_stock_by_donor,
-        gender_options,
-        show_contact_tracing,
-        custom_translations,
-        sync_records_display_threshold,
-        authorise_purchase_order,
-        prevent_transfers_months_before_initialisation,
         authorise_goods_received,
+        authorise_purchase_order,
+        custom_translations,
+        gender_options,
+        prevent_transfers_months_before_initialisation,
+        show_contact_tracing,
+        sync_records_display_threshold,
+
         // Store preferences
         manage_vaccines_in_doses,
         manage_vvm_status_for_stock,
         order_in_packs,
+        use_procurement_functionality,
         sort_by_vvm_status_then_expiry,
         use_simplified_mobile_ui,
+        disable_manual_returns,
     }: PreferenceProvider = get_preference_provider();
 
     ctx.connection
@@ -75,32 +84,32 @@ pub fn upsert_preferences(
                 allow_tracking_of_stock_by_donor.upsert(connection, input, None)?;
             }
 
-            if let Some(input) = gender_options_input {
-                gender_options.upsert(connection, input, None)?;
-            }
-
-            if let Some(input) = show_contact_tracing_input {
-                show_contact_tracing.upsert(connection, input, None)?;
-            }
-
-            if let Some(input) = custom_translations_input {
-                custom_translations.upsert(connection, input, None)?;
-            }
-
-            if let Some(input) = sync_records_display_threshold_input {
-                sync_records_display_threshold.upsert(connection, input, None)?;
+            if let Some(input) = authorise_goods_received_input {
+                authorise_goods_received.upsert(connection, input, None)?;
             }
 
             if let Some(input) = authorise_purchase_order_input {
                 authorise_purchase_order.upsert(connection, input, None)?;
             }
 
+            if let Some(input) = gender_options_input {
+                gender_options.upsert(connection, input, None)?;
+            }
+
+            if let Some(input) = custom_translations_input {
+                custom_translations.upsert(connection, input, None)?;
+            }
+
             if let Some(input) = prevent_transfers_months_before_initialisation_input {
                 prevent_transfers_months_before_initialisation.upsert(connection, input, None)?;
             }
 
-            if let Some(input) = authorise_goods_received_input {
-                authorise_goods_received.upsert(connection, input, None)?;
+            if let Some(input) = show_contact_tracing_input {
+                show_contact_tracing.upsert(connection, input, None)?;
+            }
+
+            if let Some(input) = sync_records_display_threshold_input {
+                sync_records_display_threshold.upsert(connection, input, None)?;
             }
 
             // Store preferences, input could be array of store IDs and values - iterate and insert...
@@ -130,6 +139,16 @@ pub fn upsert_preferences(
                 }
             }
 
+            if let Some(input) = show_purchase_orders_and_goods_received_input {
+                for update in input.into_iter() {
+                    use_procurement_functionality.upsert(
+                        connection,
+                        update.value,
+                        Some(update.store_id),
+                    )?;
+                }
+            }
+
             if let Some(input) = sort_by_vvm_status_then_expiry_input {
                 for update in input.into_iter() {
                     sort_by_vvm_status_then_expiry.upsert(
@@ -143,6 +162,16 @@ pub fn upsert_preferences(
             if let Some(input) = use_simplified_mobile_ui_input {
                 for update in input.into_iter() {
                     use_simplified_mobile_ui.upsert(
+                        connection,
+                        update.value,
+                        Some(update.store_id),
+                    )?;
+                }
+            }
+
+            if let Some(input) = disable_manual_returns_input {
+                for update in input.into_iter() {
+                    disable_manual_returns.upsert(
                         connection,
                         update.value,
                         Some(update.store_id),
