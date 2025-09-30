@@ -5,17 +5,12 @@ import {
   DataTable,
   useColumns,
   useTranslation,
-  getExpiryDateInputColumn,
   EnabledCheckboxCell,
   ColumnDescription,
   Theme,
   useTheme,
   useTableStore,
   CellProps,
-  getColumnLookupWithOverrides,
-  NumberInputCell,
-  ColumnAlign,
-  NumberCell,
   getReasonOptionTypes,
   usePreferences,
   useAuthContext,
@@ -25,6 +20,13 @@ import {
   ColumnDef,
   Typography,
   CheckBoxCell,
+  ColumnType,
+  DefaultCellProps,
+  ExpiryDateInput,
+  DateUtils,
+  Formatter,
+  RequiredNumberInputCell,
+  RecordWithId,
 } from '@openmsupply-client/common';
 import { DraftStocktakeLine } from './utils';
 import {
@@ -32,19 +34,18 @@ import {
   getDonorColumn,
   getLocationInputColumn,
   getVolumePerPackFromVariant,
-  ItemVariantInputCell,
-  PackSizeEntryCell,
+  ItemVariantInput,
   ReasonOptionRowFragment,
   ReasonOptionsSearchInput,
   useIsItemVariantsEnabled,
-  useReasonOptions,
-  VVMStatusInputCell,
+  VVMStatusSearchInput,
 } from '@openmsupply-client/system';
 import {
+  StocktakeLineError,
   useStocktakeLineErrorContext,
-  UseStocktakeLineErrors,
 } from '../../../context';
 // Need to be re-exported when Legacy cells are removed
+import { NumberInputCell } from '@openmsupply-client/common/src/ui/layout/tables/material-react-table/components/NumberInputCell';
 import { CurrencyInputCell } from '@openmsupply-client/common/src/ui/layout/tables/material-react-table/components/CurrencyInputCell';
 import { TextInputCell } from '@openmsupply-client/common/src/ui/layout/tables/material-react-table/components/TextInputCell';
 
@@ -52,12 +53,10 @@ interface StocktakeLineEditTableProps {
   isDisabled?: boolean;
   batches: DraftStocktakeLine[];
   update: (patch: RecordPatch<DraftStocktakeLine>) => void;
-  isInitialStocktake?: boolean;
+  isInitialStocktake: boolean;
   restrictedToLocationTypeId?: string | null;
   isVaccineItem?: boolean;
 }
-
-const expiryDateColumn = getExpiryDateInputColumn<DraftStocktakeLine>();
 
 type DraftLineSetter = (
   patch: Partial<DraftStocktakeLine> & { id: string }
@@ -79,7 +78,7 @@ const BatchInputCell = ({
   isAutoFocus,
   ...props
 }: CellProps<DraftStocktakeLine>): JSX.Element => (
-  <TextInputCell {...props} isAutoFocus={props.rowIndex === 0} />
+  <TextInputCell {...props} autoFocus={props.rowIndex === 0} />
 );
 
 const getBatchColumn = (
@@ -113,239 +112,249 @@ const getCountThisLineColumn = (
   };
 };
 
-const getInventoryAdjustmentReasonInputColumn = (
-  setter: DraftLineSetter,
-  { getError }: UseStocktakeLineErrors,
-  initialStocktake?: boolean
-): ColumnDescription<DraftStocktakeLine> => {
-  return {
-    key: 'inventoryAdjustmentReasonInput',
-    label: 'label.reason',
-    sortable: false,
-    width: 120,
-    accessor: ({ rowData }) => rowData.reasonOption || '',
-    Cell: ({ rowData, column, columnIndex, rowIndex }) => {
-      const { store } = useAuthContext();
+const InventoryAdjustmentReasonInputCell = ({
+  cell,
+  row,
+  updateFn,
+  initialStocktake,
+  error,
+}: DefaultCellProps<DraftStocktakeLine> & {
+  updateFn: (reasonOption: ReasonOptionRowFragment | null) => void;
+  initialStocktake: boolean;
+  error: StocktakeLineError | undefined;
+}) => {
+  const { store } = useAuthContext();
 
-      const value = column.accessor({
-        rowData,
-      }) as ReasonOptionRowFragment | null;
+  const value = cell.getValue<ReasonOptionRowFragment | null>();
 
-      const onChange = (reasonOption: ReasonOptionRowFragment | null) => {
-        setter({ ...rowData, reasonOption });
-      };
+  const isAdjustmentReasonError =
+    error?.__typename === 'AdjustmentReasonNotProvided' ||
+    error?.__typename === 'AdjustmentReasonNotValid';
 
-      const autoFocus = columnIndex === 0 && rowIndex === 0;
+  const { snapshotNumberOfPacks, countedNumberOfPacks, item, countThisLine } =
+    row.original;
 
-      const errorType = getError(rowData)?.__typename;
-      const isAdjustmentReasonError =
-        errorType === 'AdjustmentReasonNotProvided' ||
-        errorType === 'AdjustmentReasonNotValid';
+  const isInventoryReduction =
+    snapshotNumberOfPacks > (countedNumberOfPacks ?? 0);
 
-      const isInventoryReduction =
-        rowData.snapshotNumberOfPacks > (rowData?.countedNumberOfPacks ?? 0);
+  const disabled =
+    // Haven't entered a count for this line yet
+    typeof countedNumberOfPacks !== 'number' ||
+    !countThisLine ||
+    snapshotNumberOfPacks === countedNumberOfPacks;
 
-      const disabled =
-        // Haven't entered a count for this line yet
-        typeof rowData.countedNumberOfPacks !== 'number' ||
-        !rowData.countThisLine ||
-        rowData.snapshotNumberOfPacks === rowData.countedNumberOfPacks;
-
-      // https://github.com/openmsupply/open-msupply/pull/1252#discussion_r1119577142, this would ideally live in inventory package
-      // and instead of this method we do all of the logic in InventoryAdjustmentReasonSearchInput and use it in `Cell` field of the column
-      return (
-        <ReasonOptionsSearchInput
-          autoFocus={autoFocus}
-          value={value}
-          width={Number(column.width)}
-          onChange={onChange}
-          type={getReasonOptionTypes({
-            isInventoryReduction,
-            isVaccine: rowData.item.isVaccine,
-            isDispensary: store?.storeMode === StoreModeNodeType.Dispensary,
-          })}
-          inputProps={{
-            error: isAdjustmentReasonError,
-          }}
-          disabled={disabled}
-          initialStocktake={initialStocktake}
-        />
-      );
-    },
-  };
+  // https://github.com/openmsupply/open-msupply/pull/1252#discussion_r1119577142, this would ideally live in inventory package
+  // and instead of this method we do all of the logic in InventoryAdjustmentReasonSearchInput and use it in `Cell` field of the column
+  return (
+    <ReasonOptionsSearchInput
+      value={value}
+      onChange={updateFn}
+      type={getReasonOptionTypes({
+        isInventoryReduction,
+        isVaccine: item.isVaccine,
+        isDispensary: store?.storeMode === StoreModeNodeType.Dispensary,
+      })}
+      inputProps={{
+        error: isAdjustmentReasonError,
+      }}
+      disabled={disabled}
+      initialStocktake={initialStocktake}
+    />
+  );
 };
 
 export const BatchTable = ({
   batches,
   update,
-  isDisabled = false,
+  isDisabled: disabled = false,
   isInitialStocktake,
   isVaccineItem = false,
 }: StocktakeLineEditTableProps) => {
   const t = useTranslation();
-  const theme = useTheme();
   const itemVariantsEnabled = useIsItemVariantsEnabled();
   const { manageVvmStatusForStock } = usePreferences();
-  // useDisableStocktakeRows(batches);
-  const { data: reasonOptions, isLoading } = useReasonOptions();
-  const errorsContext = useStocktakeLineErrorContext();
+  const { errors } = useStocktakeLineErrorContext();
 
   const showVVMStatusColumn =
     (manageVvmStatusForStock && isVaccineItem) ?? false;
 
-  const columnDefinitions = useMemo(() => {
-    const columnDefinitions: ColumnDescription<DraftStocktakeLine>[] = [
-      getCountThisLineColumn(update, theme),
-      getBatchColumn(update, theme),
-      [
-        expiryDateColumn,
-        {
-          width: 160,
-          setter: patch => update({ ...patch, countThisLine: true }),
-        },
-      ],
-    ];
-
-    if (itemVariantsEnabled) {
-      columnDefinitions.push({
-        key: 'itemVariantId',
-        label: 'label.item-variant',
-        width: 170,
-        Cell: props => (
-          <ItemVariantInputCell {...props} itemId={props.rowData.item.id} />
+  const columns = useMemo(
+    (): ColumnDef<DraftStocktakeLine>[] => [
+      {
+        accessorKey: 'countThisLine',
+        header: t('label.count-this-line'),
+        size: 60,
+        Cell: ({ cell, row }) => (
+          <CheckBoxCell
+            cell={cell}
+            updateFn={value =>
+              update({ id: row.original.id, countThisLine: value })
+            }
+          />
         ),
-        setter: patch => {
-          update({
-            ...patch,
-            volumePerPack: getVolumePerPackFromVariant(patch) ?? 0,
-          });
+      },
+      {
+        accessorKey: 'batch',
+        header: t('label.batch'),
+        Cell: ({ cell, row }) => (
+          <TextInputCell
+            cell={cell}
+            updateFn={value => update({ id: row.original.id, batch: value })}
+            isDisabled={disabled || !row.original.countThisLine}
+            autoFocus={row.index === 0}
+          />
+        ),
+      },
+      {
+        id: 'expiryDate',
+        header: t('label.expiry-date'),
+        accessorFn: row => DateUtils.getDateOrNull(row.expiryDate),
+        Cell: ({ cell, row }) => {
+          const value = cell.getValue<Date | null>();
+          return (
+            <ExpiryDateInput
+              value={value}
+              onChange={date =>
+                update({
+                  id: row.original.id,
+                  expiryDate: Formatter.naiveDate(date),
+                })
+              }
+            />
+          );
         },
-      });
-    }
-
-    if (showVVMStatusColumn) {
-      columnDefinitions.push({
-        key: 'vvmStatus',
-        label: 'label.vvm-status',
-        width: 170,
-        cellProps: {
-          useDefault: true,
-        },
-        Cell: props => <VVMStatusInputCell {...props} />,
-        setter: patch => update({ ...patch }),
-      });
-    }
-
-    columnDefinitions.push(
-      getColumnLookupWithOverrides('packSize', {
-        Cell: PackSizeEntryCell<DraftStocktakeLine>,
-        label: 'label.pack-size',
-        cellProps: {
-          getIsDisabled: (rowData: DraftStocktakeLine) => !!rowData?.stockLine,
-        },
-        align: ColumnAlign.Left,
-        accessor: ({ rowData }) =>
-          rowData.packSize ?? rowData.item?.defaultPackSize,
+      },
+      {
+        id: 'itemVariant',
+        header: t('label.item-variant'),
+        accessorFn: row => row.itemVariant?.id || '',
+        Cell: ({
+          row: {
+            original: { id, packSize, countThisLine, itemVariant, item },
+          },
+        }) => (
+          <ItemVariantInput
+            disabled={disabled || !countThisLine}
+            selectedId={itemVariant?.id}
+            itemId={item.id}
+            width="100%"
+            onChange={itemVariant =>
+              update({
+                id,
+                itemVariantId: itemVariant?.id || null,
+                itemVariant,
+                volumePerPack: getVolumePerPackFromVariant({
+                  packSize,
+                  itemVariant,
+                }),
+              })
+            }
+          />
+        ),
+        includeColumn: itemVariantsEnabled,
+      },
+      {
+        id: 'vvmStatus',
+        header: t('label.vvm-status'),
+        accessorFn: row => row.vvmStatus || '',
+        Cell: ({
+          row: {
+            original: { id, vvmStatus, countThisLine, stockLine },
+          },
+        }) => (
+          <VVMStatusSearchInput
+            disabled={disabled || !countThisLine}
+            selected={vvmStatus ?? null}
+            onChange={vvmStatus => update({ id, vvmStatus })}
+            useDefault={!stockLine} // Use default VVM status if not linked to stock line (i.e. new line)
+          />
+        ),
+        includeColumn: showVVMStatusColumn,
+      },
+      {
+        accessorKey: 'packSize',
+        header: t('label.pack-size'),
+        size: 100,
+        accessorFn: row => row.packSize || row.item.defaultPackSize,
+        Cell: ({ cell, row: { original: row } }) => (
+          <RequiredNumberInputCell
+            cell={cell}
+            disabled={disabled || !row.countThisLine || !!row.stockLine}
+            defaultValue={row.item.defaultPackSize}
+            updateFn={packSize => update(getPackSizeChangePatch(row, packSize))}
+          />
+        ),
         defaultHideOnMobile: true,
-        setter: patch => {
-          const shouldClearSellPrice =
-            patch.item?.defaultPackSize !== patch.packSize &&
-            patch.item?.itemStoreProperties?.defaultSellPricePerPack ===
-              patch.sellPricePerPack;
-
-          update({
-            ...patch,
-            volumePerPack: getVolumePerPackFromVariant(patch) ?? 0,
-            sellPricePerPack: shouldClearSellPrice ? 0 : patch.sellPricePerPack,
-          });
-        },
-      }),
+      },
       {
-        key: 'snapshotNumberOfPacks',
-        label: 'label.snapshot-num-of-packs',
-        align: ColumnAlign.Right,
-        width: 100,
-        Cell: NumberCell,
+        accessorKey: 'snapshotNumberOfPacks',
+        header: t('label.snapshot-num-of-packs'),
+        columnType: ColumnType.Number,
+        size: 110,
         getIsError: rowData =>
-          errorsContext.getError(rowData)?.__typename ===
+          errors[rowData.id]?.__typename ===
           'SnapshotCountCurrentCountMismatchLine',
-        setter: patch => update({ ...patch, countThisLine: true }),
-        accessor: ({ rowData }) => rowData.snapshotNumberOfPacks || '0',
       },
       {
-        key: 'countedNumberOfPacks',
-        label: 'label.counted-num-of-packs',
-        width: 100,
+        accessorKey: 'countedNumberOfPacks',
+        header: t('label.counted-num-of-packs'),
+        size: 110,
         getIsError: rowData =>
-          errorsContext.getError(rowData)?.__typename ===
-          'StockLineReducedBelowZero',
-        Cell: NumberInputCell,
-        cellProps: { decimalLimit: 2, min: 0 },
-        setter: patch => {
-          // If counted number of packs was changed to result in no adjustment we
-          // should remove inventoryAdjustmentReason, otherwise could have a
-          // reason on a line with no adjustments
-          const reasonOption =
-            !patch.countedNumberOfPacks ||
-            patch.snapshotNumberOfPacks == patch.countedNumberOfPacks
-              ? null
-              : patch.reasonOption;
-          update({ ...patch, countThisLine: true, reasonOption });
-        },
-        accessor: ({ rowData }) => rowData.countedNumberOfPacks,
+          errors[rowData.id]?.__typename === 'StockLineReducedBelowZero',
+        Cell: ({ cell, row: { original: row } }) => (
+          <NumberInputCell
+            cell={cell}
+            disabled={disabled || !row.countThisLine}
+            updateFn={value => update(getCountedPacksChangePatch(row, value))}
+          />
+        ),
       },
       {
-        key: 'volumePerPack',
-        label: t('label.volume-per-pack'),
-        Cell: NumberInputCell,
-        cellProps: { decimalLimit: 10 },
-        width: 100,
-        accessor: ({ rowData }) => rowData?.volumePerPack,
-        setter: patch => update({ ...patch, countThisLine: true }),
+        accessorKey: 'volumePerPack',
+        header: t('label.volume-per-pack'),
+        size: 110,
+        Cell: ({ cell, row }) => (
+          <NumberInputCell
+            cell={cell}
+            disabled={disabled || !row.original.countThisLine}
+            decimalLimit={10}
+            updateFn={value =>
+              update({ id: row.original.id, volumePerPack: value })
+            }
+          />
+        ),
       },
-      getInventoryAdjustmentReasonInputColumn(
-        update,
-        errorsContext,
-        isInitialStocktake
-      )
-    );
-
-    return columnDefinitions;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    itemVariantsEnabled,
-    errorsContext,
-    reasonOptions,
-    isLoading,
-    isInitialStocktake,
-    showVVMStatusColumn,
-  ]);
-
-  const oldColumns = useColumns<DraftStocktakeLine>(columnDefinitions, {}, [
-    columnDefinitions,
-  ]);
-
-  const columns = useMemo((): ColumnDef<DraftStocktakeLine>[] => [], []);
-
-  // const table = useSimpleMaterialTable({
-  //   tableId: 'stocktake-batches',
-  //   columns,
-  //   data: batches,
-  // });
-
-  // return <MaterialTable table={table} />;
-
-  return (
-    <DataTable
-      id="stocktake-batch"
-      isDisabled={isDisabled}
-      columns={oldColumns}
-      data={batches}
-      noDataMessage={t('label.add-new-line')}
-      dense
-      gradientBottom={true}
-    />
+      {
+        id: 'inventoryAdjustmentReasonInput',
+        header: t('label.reason'),
+        accessorFn: row => row.reasonOption || '',
+        Cell: props => (
+          <InventoryAdjustmentReasonInputCell
+            updateFn={reasonOption =>
+              update({ id: props.row.original.id, reasonOption })
+            }
+            initialStocktake={isInitialStocktake}
+            error={errors[props.row.original.id]}
+            {...props}
+          />
+        ),
+      },
+    ],
+    [showVVMStatusColumn, itemVariantsEnabled, errors]
   );
+
+  const table = useSimpleMaterialTable({
+    tableId: 'stocktake-batches',
+    columns,
+    data: batches,
+    noDataElement: (
+      <Typography sx={{ color: 'gray.dark', padding: 2 }}>
+        {t('label.add-new-line')}
+      </Typography>
+    ),
+  });
+
+  return <MaterialTable table={table} />;
 };
 
 export const PricingTable = ({
@@ -381,7 +390,6 @@ export const PricingTable = ({
             autoFocus={row.index === 0}
           />
         ),
-        size: 150,
       },
       {
         accessorKey: 'sellPricePerPack',
@@ -499,4 +507,42 @@ export const LocationTable = ({
       gradientBottom={true}
     />
   );
+};
+
+const getPackSizeChangePatch = (
+  row: DraftStocktakeLine,
+  newPackSize: number
+): RecordWithId & Partial<DraftStocktakeLine> => {
+  const shouldClearSellPrice =
+    row.item.defaultPackSize !== newPackSize &&
+    row.item.itemStoreProperties?.defaultSellPricePerPack ===
+      row.sellPricePerPack;
+
+  return {
+    id: row.id,
+    packSize: newPackSize,
+    volumePerPack:
+      getVolumePerPackFromVariant({
+        packSize: newPackSize,
+        itemVariant: row.itemVariant,
+      }) ?? 0,
+    sellPricePerPack: shouldClearSellPrice ? 0 : row.sellPricePerPack,
+  };
+};
+
+const getCountedPacksChangePatch = (
+  row: DraftStocktakeLine,
+  countedPacks: number
+): RecordWithId & Partial<DraftStocktakeLine> => {
+  // Clear the reason if there is now no adjustment, or direction changed
+  const keepReason =
+    typeof row.countedNumberOfPacks === 'number' &&
+    countedPacks > row.snapshotNumberOfPacks ===
+      row.countedNumberOfPacks > row.snapshotNumberOfPacks;
+
+  return {
+    id: row.id,
+    countedNumberOfPacks: countedPacks,
+    reasonOption: keepReason ? row.reasonOption : null,
+  };
 };
