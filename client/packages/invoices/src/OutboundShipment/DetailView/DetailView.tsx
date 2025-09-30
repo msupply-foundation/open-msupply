@@ -110,7 +110,7 @@ export const DetailView = () => {
         // Also mark parent rows as placeholder if any subRows are placeholders
         row.subRows?.some(isPlaceholderRow)
       ),
-    renderEmptyRowsFallback: () => (
+    noDataElement: (
       <NothingHere
         body={t('error.no-outbound-items')}
         onCreate={isDisabled ? undefined : () => onAddItem()}
