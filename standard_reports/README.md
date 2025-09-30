@@ -304,6 +304,7 @@ Note that footers are currently not supported for Excel.
 - `excel-column="A"` - To customise which columns are shown, and in which order, use the `excel-column` attribute on the `<th>` elements. This will map the data to the specified column in the Excel worksheet.
   - Note that once any columns have this attribute, all other columns will be excluded from the Excel export. If no columns have this attribute, all columns will be included.
 - `excel-type="total-row"` - If your report includes a total row, add this attribute to the `<tr>` element of the total row. This ensures that the total row is rendered correctly in Excel (in bold, and after a blank row to allow for pivot tables).
+- `excel-bg-color="#FFFF00"` - Set the background color of a cell, using a hex color code.
 
 e.g.
 
