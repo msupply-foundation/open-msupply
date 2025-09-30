@@ -1,4 +1,11 @@
 /**
+ * This is an updated version of NumericTextInput, with the new error handling
+ * methodology in place. We should move to replacing existing usage of
+ * NumericTextInput with this component over time, then remove the old
+ * component.
+ */
+
+/**
  * PLEASE READ AND UNDERSTAND THE FOLLOWING BEFORE MAKING ANY CHANGES TO THIS
  * COMPONENT:
  *
