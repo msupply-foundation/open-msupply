@@ -1,19 +1,16 @@
-import React, { useEffect } from 'react';
+import React, { useMemo } from 'react';
 import {
   useNavigate,
-  DataTable,
-  useColumns,
-  TableProvider,
-  createTableStore,
   useTranslation,
-  useTableStore,
   NothingHere,
   useUrlQueryParams,
-  ColumnFormat,
-  GenericColumnKey,
-  getCommentPopoverColumn,
   useFormatDateTime,
   useAuthContext,
+  usePaginatedMaterialTable,
+  ColumnDef,
+  ColumnType,
+  StocktakeNodeStatus,
+  MaterialTable,
 } from '@openmsupply-client/common';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
@@ -23,38 +20,26 @@ import { Footer } from './Footer';
 import { useStocktake } from '../api/hooks/useStocktake';
 import { useStocktakeList } from '../api/hooks/useStocktakeList';
 
-const useDisableStocktakeRows = (rows?: StocktakeRowFragment[]) => {
-  const { setDisabledRows } = useTableStore();
-  useEffect(() => {
-    const disabledRows = rows?.filter(isStocktakeDisabled).map(({ id }) => id);
-    if (disabledRows) setDisabledRows(disabledRows);
-  }, [rows]);
-};
-
-export const StocktakeListView = () => {
+export const ListView = () => {
   const t = useTranslation();
   const navigate = useNavigate();
   const { localisedDate } = useFormatDateTime();
   const { user } = useAuthContext();
   const {
-    updateSortQuery,
-    updatePaginationQuery,
     filter,
-    queryParams: { sortBy, page, first, offset },
+    queryParams: { sortBy, first, offset },
   } = useUrlQueryParams({
     filters: [{ key: 'status', condition: 'equalTo' }],
   });
-  const pagination = { page, first, offset };
   const queryParams = { ...filter, sortBy, first, offset };
 
   const {
-    query: { data, isError, isLoading },
+    query: { data, isError, isFetching },
     hasStocktake,
   } = useStocktakeList(queryParams);
   const {
     create: { create, isCreating },
   } = useStocktake();
-  useDisableStocktakeRows(data?.nodes);
 
   const statusTranslator = getStocktakeTranslator(t);
   const description = t('stocktake.description-template', {
@@ -62,30 +47,78 @@ export const StocktakeListView = () => {
     date: localisedDate(new Date()),
   });
 
-  const columns = useColumns<StocktakeRowFragment>(
-    [
-      GenericColumnKey.Selection,
-      [
-        'stocktakeNumber',
-        { maxWidth: 75, sortable: false, defaultHideOnMobile: true },
-      ],
-      [
-        'status',
-        {
-          accessor: ({ rowData }) =>
-            rowData.isLocked
-              ? t('label.stocktake-on-hold')
-              : statusTranslator(rowData.status),
-        },
-      ],
-      ['description', { sortable: false }],
-      ['createdDatetime', { format: ColumnFormat.Date }],
-      ['stocktakeDate', { sortable: false, defaultHideOnMobile: true }],
-      getCommentPopoverColumn(),
+  const columns = useMemo(
+    (): ColumnDef<StocktakeRowFragment>[] => [
+      {
+        accessorKey: 'stocktakeNumber',
+        header: t('label.number'),
+        defaultHideOnMobile: true,
+      },
+      {
+        id: 'status',
+        header: t('label.status'),
+        enableSorting: true,
+        accessorFn: row =>
+          row.isLocked
+            ? t('label.stocktake-on-hold')
+            : statusTranslator(row.status),
+        enableColumnFilter: true,
+        filterVariant: 'select',
+        filterSelectOptions: [
+          { label: t('status.new'), value: StocktakeNodeStatus.New },
+          {
+            label: t('status.finalised'),
+            value: StocktakeNodeStatus.Finalised,
+          },
+        ],
+      },
+      {
+        accessorKey: 'description',
+        header: t('label.description'),
+      },
+      {
+        accessorKey: 'createdDatetime',
+        header: t('label.created'),
+        columnType: ColumnType.Date,
+        enableSorting: true,
+      },
+      {
+        accessorKey: 'stocktakeDate',
+        header: t('label.stocktake-date'),
+        defaultHideOnMobile: true,
+        columnType: ColumnType.Date,
+      },
+      {
+        accessorKey: 'comment',
+        header: t('label.comment'),
+        columnType: ColumnType.Comment,
+      },
     ],
-    { onChangeSortBy: updateSortQuery, sortBy },
-    [sortBy]
+    []
   );
+
+  const { table, selectedRows } =
+    usePaginatedMaterialTable<StocktakeRowFragment>({
+      tableId: 'stocktake-list',
+      isLoading: isFetching,
+      isError,
+      onRowClick: row => navigate(row.id),
+      columns,
+      data: data?.nodes,
+      totalCount: data?.totalCount ?? 0,
+      getIsRestrictedRow: isStocktakeDisabled,
+      noDataElement: (
+        <NothingHere
+          body={t('error.no-stocktakes')}
+          onCreate={() => createInitialStocktake(hasStocktake ?? false)}
+          buttonText={
+            hasStocktake
+              ? t('button.create-a-new-one')
+              : t('button.initial-stocktake')
+          }
+        />
+      ),
+    });
 
   const createInitialStocktake = (hasStockTake: boolean) => {
     const comment = hasStockTake
@@ -110,36 +143,11 @@ export const StocktakeListView = () => {
         onCreate={create}
         isCreating={isCreating}
       />
-      <DataTable
-        id="stocktake-list"
-        pagination={{ ...pagination, total: data?.totalCount ?? 0 }}
-        onChangePage={updatePaginationQuery}
-        columns={columns}
-        data={data?.nodes ?? []}
-        isError={isError}
-        isLoading={isLoading}
-        onRowClick={row => {
-          navigate(String(row.id));
-        }}
-        noDataElement={
-          <NothingHere
-            body={t('error.no-stocktakes')}
-            onCreate={() => createInitialStocktake(hasStocktake ?? false)}
-            buttonText={
-              hasStocktake
-                ? t('button.create-a-new-one')
-                : t('button.initial-stocktake')
-            }
-          />
-        }
+      <MaterialTable table={table} />
+      <Footer
+        selectedRows={selectedRows}
+        resetSelection={table.resetRowSelection}
       />
-      <Footer />
     </>
   );
 };
-
-export const ListView = () => (
-  <TableProvider createStore={createTableStore}>
-    <StocktakeListView />
-  </TableProvider>
-);
