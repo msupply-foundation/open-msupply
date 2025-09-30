@@ -17,6 +17,7 @@ import {
   useColumnSizing,
   useColumnVisibility,
   useColumnPinning,
+  useIsGrouped,
 } from './tableState';
 import { clearSavedState } from './tableState/utils';
 import { NothingHere } from '@common/components';
@@ -30,7 +31,14 @@ export interface BaseTableConfig<T extends MRT_RowData>
   getIsPlaceholderRow?: (row: T) => boolean;
   /** Whether row should be greyed out - still potentially clickable */
   getIsRestrictedRow?: (row: T) => boolean;
-  groupByField?: string;
+  grouping?: {
+    /** Defaults to false */
+    enabled: boolean;
+    /** Defaults to 'itemName' */
+    field?: string;
+    /** Defaults to false */
+    groupedByDefault?: boolean;
+  };
   columns: ColumnDef<T>[];
   initialSort?: { key: string; dir: 'asc' | 'desc' };
   noDataElement?: React.ReactNode;
@@ -45,7 +53,7 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
   getIsRestrictedRow,
   columns: omsColumns,
   data,
-  groupByField,
+  grouping,
   enableRowSelection = true,
   enableColumnResizing = true,
   manualFiltering = false,
@@ -63,9 +71,15 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
   const { columnFilters, onColumnFiltersChange } = useTableFiltering(columns);
   const { sorting, onSortingChange } = useUrlSortManagement(initialSort);
 
+  const { isGrouped, toggleGrouped, resetGrouped } = useIsGrouped(
+    tableId,
+    grouping?.groupedByDefault
+  );
+
   const processedData = useMemo(
-    () => getGroupedRows(data ?? [], groupByField, t),
-    [data, groupByField]
+    () =>
+      getGroupedRows(isGrouped, data ?? [], grouping?.field ?? 'itemName', t),
+    [data, isGrouped, t]
   );
 
   const density = useColumnDensity(tableId);
@@ -76,7 +90,7 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
     tableId,
     columns,
     enableRowSelection,
-    groupByField
+    isGrouped
   );
 
   const resetTableState = () => {
@@ -89,6 +103,7 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
     table.resetColumnOrder();
     table.resetColumnPinning();
     table.resetColumnSizing();
+    resetGrouped();
 
     // Visibility `initial` could change if prefs have come on/screen size changed
     // so reset to latest initial value rather than default initial mount state
@@ -98,13 +113,15 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
     table.setDensity(density.initial);
   };
 
-  const displayOptions = useTableDisplayOptions(
+  const displayOptions = useTableDisplayOptions({
     tableId,
+    isGrouped,
+    toggleGrouped: grouping?.enabled ? toggleGrouped : undefined,
     resetTableState,
     onRowClick,
     getIsPlaceholderRow,
-    getIsRestrictedRow
-  );
+    getIsRestrictedRow,
+  });
 
   const table = useMaterialReactTable<T>({
     columns,
@@ -126,7 +143,7 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
 
     // Disable bottom footer - use OMS custom action footer instead
     enableBottomToolbar: false,
-    enableExpanding: !!groupByField,
+    enableExpanding: isGrouped,
 
     // Disable selection Toolbar, we use our own custom footer for this
     positionToolbarAlertBanner: 'none',

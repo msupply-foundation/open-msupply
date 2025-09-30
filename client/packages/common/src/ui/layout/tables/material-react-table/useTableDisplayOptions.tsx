@@ -11,6 +11,8 @@ import {
   CheckboxCheckedIcon,
   CheckboxEmptyIcon,
   CheckboxIndeterminateIcon,
+  CollapseIcon,
+  ExpandIcon,
   RefreshIcon,
 } from '@common/icons';
 import { MenuItem, Typography } from '@mui/material';
@@ -19,13 +21,23 @@ import { IconButton } from '@common/components';
 import { useTranslation } from '@common/intl';
 import { hasSavedState } from './tableState/utils';
 
-export const useTableDisplayOptions = <T extends MRT_RowData>(
-  tableId: string,
-  resetTableState: () => void,
-  onRowClick?: (row: T) => void,
-  getIsPlaceholderRow: (row: T) => boolean = () => false,
-  getIsRestrictedRow: (row: T) => boolean = () => false
-): Partial<MRT_TableOptions<T>> => {
+export const useTableDisplayOptions = <T extends MRT_RowData>({
+  tableId,
+  resetTableState,
+  onRowClick,
+  isGrouped,
+  toggleGrouped,
+  getIsPlaceholderRow = () => false,
+  getIsRestrictedRow = () => false,
+}: {
+  tableId: string;
+  resetTableState: () => void;
+  onRowClick?: (row: T) => void;
+  isGrouped: boolean;
+  toggleGrouped?: () => void;
+  getIsPlaceholderRow?: (row: T) => boolean;
+  getIsRestrictedRow?: (row: T) => boolean;
+}): Partial<MRT_TableOptions<T>> => {
   const t = useTranslation();
   return {
     // Add description to column menu
@@ -54,6 +66,14 @@ export const useTableDisplayOptions = <T extends MRT_RowData>(
     // Add reset state button to toolbar
     renderToolbarInternalActions: ({ table }) => (
       <>
+        {toggleGrouped && (
+          <IconButton
+            icon={isGrouped ? <ExpandIcon /> : <CollapseIcon />}
+            onClick={toggleGrouped}
+            label={t('label.group-by-item')}
+            sx={iconButtonProps}
+          />
+        )}
         <MRT_ToggleFiltersButton table={table} />
         <MRT_ToggleDensePaddingButton table={table} />
         <MRT_ShowHideColumnsButton table={table} />
@@ -62,11 +82,7 @@ export const useTableDisplayOptions = <T extends MRT_RowData>(
           onClick={resetTableState}
           label={t('label.reset-table-defaults')}
           disabled={!hasSavedState(tableId)}
-          sx={{
-            width: '40px',
-            height: '40px',
-            '& svg': { fontSize: '1.2rem' },
-          }}
+          sx={iconButtonProps}
         />
         <MRT_ToggleFullScreenButton table={table} />
       </>
@@ -256,4 +272,10 @@ export const useTableDisplayOptions = <T extends MRT_RowData>(
       },
     },
   };
+};
+
+const iconButtonProps = {
+  width: '40px',
+  height: '40px',
+  '& svg': { fontSize: '1.2rem' },
 };

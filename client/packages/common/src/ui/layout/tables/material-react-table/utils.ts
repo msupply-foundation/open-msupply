@@ -43,11 +43,12 @@ export const mergeCellProps = <TData extends Record<string, any>>(
 };
 
 export const getGroupedRows = <T extends MRT_RowData>(
+  isGrouped: boolean,
   data: T[],
   groupByField: keyof T | undefined,
   t: TypedTFunction<LocaleKey>
 ): Groupable<T>[] => {
-  if (!groupByField) return data;
+  if (!isGrouped || !groupByField) return data;
 
   // Group rows by groupByField
   const grouped = data.reduce(
