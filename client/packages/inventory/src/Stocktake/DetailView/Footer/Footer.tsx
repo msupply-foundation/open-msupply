@@ -41,7 +41,10 @@ export const Footer = ({
   const t = useTranslation();
   const { data: stocktake } = useStocktakeOld.document.get();
   const isDisabled = useStocktakeOld.utils.isDisabled();
-  const onDelete = useStocktakeOld.line.deleteSelected(selectedRows);
+  const onDelete = useStocktakeOld.line.deleteSelected(
+    selectedRows,
+    resetRowSelection
+  );
   const { info } = useNotification();
 
   const reduceModal = useEditModal();

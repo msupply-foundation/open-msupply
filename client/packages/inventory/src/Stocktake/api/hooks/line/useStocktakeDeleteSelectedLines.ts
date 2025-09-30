@@ -5,7 +5,8 @@ import { useStocktakeDeleteLines } from './useStocktakeDeleteLines';
 import { useIsStocktakeDisabled } from '../utils/useIsStocktakeDisabled';
 
 export const useStocktakeDeleteSelectedLines = (
-  selectedRows: StocktakeLineFragment[]
+  selectedRows: StocktakeLineFragment[],
+  clearSelection: () => void
 ): (() => void) => {
   const t = useTranslation();
   const isDisabled = useIsStocktakeDisabled();
@@ -15,6 +16,7 @@ export const useStocktakeDeleteSelectedLines = (
     await mutateAsync(selectedRows).catch(err => {
       throw err;
     });
+    clearSelection();
   };
 
   const confirmAndDelete = useDeleteConfirmation({
