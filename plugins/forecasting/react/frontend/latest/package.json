@@ -6,7 +6,7 @@
   "omSupplyPlugin": {
     "target": "frontend",
     "types": [
-      "forecastQuantites"
+      "prescriptionPaymentForm"
     ]
   },
   "version": "1.0.0",
