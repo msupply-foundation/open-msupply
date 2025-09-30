@@ -229,7 +229,7 @@ pub(crate) mod test {
             is_ledger_fixed(&connection, "legacy_stock_line_with_invoice_line"),
             Ok(false)
         );
-        assert!(logs.contains("stock_line referenced in another table:"));
+        assert!(logs.contains("stock_line referenced in another table"));
 
         // No invoice lines but referenced in stocktake line
         let mut logs = String::new();
@@ -251,6 +251,6 @@ pub(crate) mod test {
             is_ledger_fixed(&connection, "legacy_stock_line_with_stock_take_line"),
             Ok(false)
         );
-        assert!(logs.contains("stock_line referenced in another table:"));
+        assert!(logs.contains("stock_line referenced in another table"));
     }
 }
