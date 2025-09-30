@@ -2,11 +2,9 @@ import React from 'react';
 import {
   ArrayElement,
   Plugins,
-  PreferenceKey,
   QueryClientProviderProxy,
   ThemeProviderProxy,
   UNDEFINED_STRING_VALUE,
-  usePreference,
   useTranslation,
 } from '@openmsupply-client/common';
 import { ValueInfoRow } from '@openmsupply-client/requisitions/src/common';
@@ -30,9 +28,6 @@ const ForecastQuantityField: ForecastQuantityFieldPlugin = ({
     },
     queryKey: [line.id],
   });
-  const { data: preferences } = usePreference(
-    PreferenceKey.ManageVaccinesInDoses
-  );
   const t = useTranslation();
 
   const parsed = JSON.parse(data?.[0]?.data ?? '{}');
@@ -52,7 +47,7 @@ const ForecastQuantityField: ForecastQuantityFieldPlugin = ({
           unitName={unitName ?? ''}
           defaultPackSize={1}
           nullDisplay={UNDEFINED_STRING_VALUE}
-          displayVaccinesInDoses={preferences?.manageVaccinesInDoses}
+          displayVaccinesInDoses={true}
           dosesPerUnit={line?.item?.doses}
         />
       </QueryClientProviderProxy>
