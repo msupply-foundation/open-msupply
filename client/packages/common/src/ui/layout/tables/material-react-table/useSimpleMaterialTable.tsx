@@ -18,7 +18,7 @@ export const useSimpleMaterialTable = <T extends MRT_RowData>({
 
   const table = useBaseMaterialTable<T>({
     enableRowSelection: false,
-    enableBottomToolbar: !!bottomToolbarContent,
+    enableBottomToolbar: true,
     enableTopToolbar: false,
     enableColumnActions: false,
     enableSorting: false,
