@@ -1,13 +1,13 @@
 use crate::validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors};
 
 use super::{InsertPurchaseOrderError, InsertPurchaseOrderInput};
-use repository::{PurchaseOrderRowRepository, StorageConnection};
+use repository::{NameRow, PurchaseOrderRowRepository, StorageConnection};
 
 pub fn validate(
     input: &InsertPurchaseOrderInput,
     store_id: &str,
     connection: &StorageConnection,
-) -> Result<(), InsertPurchaseOrderError> {
+) -> Result<NameRow, InsertPurchaseOrderError> {
     if PurchaseOrderRowRepository::new(connection)
         .find_one_by_id(&input.id)?
         .is_some()
@@ -15,7 +15,7 @@ pub fn validate(
         return Err(InsertPurchaseOrderError::PurchaseOrderAlreadyExists);
     }
 
-    check_other_party(
+    let other_party = check_other_party(
         connection,
         store_id,
         &input.supplier_id,
@@ -27,5 +27,5 @@ pub fn validate(
         _ => InsertPurchaseOrderError::SupplierDoesNotExist,
     })?;
 
-    Ok(())
+    Ok(other_party.name_row)
 }

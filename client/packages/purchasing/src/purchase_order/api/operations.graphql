@@ -8,7 +8,9 @@ fragment PurchaseOrderRow on PurchaseOrderNode {
   }
   createdDatetime
   confirmedDatetime
+  sentDatetime
   status
+  requestedDeliveryDate
   targetMonths
   reference
   lines {
@@ -17,20 +19,11 @@ fragment PurchaseOrderRow on PurchaseOrderNode {
   comment
 }
 
-fragment SyncFileReference on SyncFileReferenceNode {
-  __typename
-  id
-  fileName
-  recordId
-  createdDatetime
-}
-
 fragment PurchaseOrder on PurchaseOrderNode {
   __typename
   id
   number
   additionalInstructions
-  # advancePaidDatetime
   agentCommission
   authorisingOfficer1
   authorisingOfficer2
@@ -67,7 +60,7 @@ fragment PurchaseOrder on PurchaseOrderNode {
   supplierAgent
   supplierDiscountAmount
   supplierDiscountPercentage
-  lineTotalAfterDiscount
+  orderTotalBeforeDiscount
   orderTotalAfterDiscount
   targetMonths
   confirmedDatetime
@@ -75,7 +68,7 @@ fragment PurchaseOrder on PurchaseOrderNode {
   advancePaidDate
   receivedAtPortDate
   requestedDeliveryDate
-  authorisedDatetime
+  requestApprovalDatetime
   finalisedDatetime
   documents {
     __typename
@@ -85,6 +78,12 @@ fragment PurchaseOrder on PurchaseOrderNode {
   }
   donor {
     id
+  }
+  currency {
+    id
+    code
+    rate
+    isHomeCurrency
   }
 }
 
@@ -99,13 +98,17 @@ fragment PurchaseOrderLine on PurchaseOrderLineNode {
     code
     name
     unitName
+    stats(storeId: $storeId) {
+      stockOnHand
+    }
   }
   requestedPackSize
   requestedDeliveryDate
   requestedNumberOfUnits
+  receivedNumberOfUnits
   adjustedNumberOfUnits
-  pricePerUnitAfterDiscount
-  pricePerUnitBeforeDiscount
+  pricePerPackAfterDiscount
+  pricePerPackBeforeDiscount
   manufacturer(storeId: $storeId) {
     ...NameRow
   }
@@ -113,6 +116,28 @@ fragment PurchaseOrderLine on PurchaseOrderLineNode {
   unit
   comment
   supplierItemCode
+  status
+  purchaseOrder {
+    id
+    number
+    reference
+    confirmedDatetime
+    supplier {
+      code
+      name
+    }
+    user {
+      username
+    }
+    currencyId
+    currency {
+      id
+      code
+      rate
+      isHomeCurrency
+    }
+  }
+  unitsOrderedInOthers
 }
 
 query purchaseOrders(
@@ -163,6 +188,22 @@ mutation insertPurchaseOrder(
   }
 }
 
+fragment ItemCannotBeOrdered on ItemCannotBeOrdered {
+  __typename
+  description
+  line {
+    id
+  }
+}
+
+fragment ItemsCannotBeOrdered on ItemsCannotBeOrdered {
+  __typename
+  description
+  lines {
+    ...ItemCannotBeOrdered
+  }
+}
+
 mutation updatePurchaseOrder(
   $input: UpdatePurchaseOrderInput!
   $storeId: String!
@@ -170,6 +211,14 @@ mutation updatePurchaseOrder(
   updatePurchaseOrder(input: $input, storeId: $storeId) {
     ... on IdResponse {
       id
+    }
+    ... on UpdatePurchaseOrderError {
+      __typename
+      error {
+        ... on ItemsCannotBeOrdered {
+          ...ItemsCannotBeOrdered
+        }
+      }
     }
   }
 }
@@ -183,7 +232,7 @@ mutation deletePurchaseOrder($id: String!, $storeId: String!) {
           __typename
         }
         description
-        ... on CannotDeleteNonNewPurchaseOrder {
+        ... on CannotDeletePurchaseOrder {
           __typename
         }
       }
@@ -252,6 +301,32 @@ mutation insertPurchaseOrderLine(
     ... on IdResponse {
       id
     }
+    ... on InsertPurchaseOrderLineError {
+      __typename
+      error {
+        description
+        ... on CannnotFindItemByCode {
+          __typename
+          description
+        }
+        ... on CannotEditPurchaseOrder {
+          __typename
+          description
+        }
+        ... on ForeignKeyError {
+          __typename
+          description
+        }
+        ... on PackSizeCodeCombinationExists {
+          __typename
+          description
+        }
+        ... on PurchaseOrderLineWithIdExists {
+          __typename
+          description
+        }
+      }
+    }
   }
 }
 
@@ -287,46 +362,6 @@ mutation addToPurchaseOrderFromMasterList(
   }
 }
 
-mutation insertPurchaseOrderLineFromCsv(
-  $storeId: String!
-  $input: InsertPurchaseOrderLineFromCSVInput!
-) {
-  insertPurchaseOrderLineFromCsv(input: $input, storeId: $storeId) {
-    ... on InsertPurchaseOrderLineError {
-      __typename
-      error {
-        description
-        ... on CannnotFindItemByCode {
-          __typename
-          description
-        }
-        ... on ForeignKeyError {
-          __typename
-          description
-        }
-        ... on CannotEditPurchaseOrder {
-          __typename
-          description
-        }
-        ... on PackSizeCodeCombinationExists {
-          __typename
-          description
-          itemCode
-          requestedPackSize
-        }
-        ... on PurchaseOrderLineWithIdExists {
-          __typename
-          description
-        }
-      }
-    }
-    ... on IdResponse {
-      __typename
-      id
-    }
-  }
-}
-
 mutation updatePurchaseOrderLine(
   $input: UpdatePurchaseOrderLineInput!
   $storeId: String!
@@ -352,6 +387,13 @@ mutation updatePurchaseOrderLine(
           description
         }
         ... on PurchaseOrderLineNotFound {
+          __typename
+          description
+        }
+        ... on ItemCannotBeOrdered {
+          ...ItemCannotBeOrdered
+        }
+        ... on CannotEditQuantityBelowReceived {
           __typename
           description
         }

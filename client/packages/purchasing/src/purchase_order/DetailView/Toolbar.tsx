@@ -11,11 +11,18 @@ import {
   DateUtils,
   Formatter,
   useNotification,
+  NumericTextInput,
+  useConfirmationModal,
 } from '@openmsupply-client/common';
-import { InternalSupplierSearchInput } from '@openmsupply-client/system';
+import {
+  CurrencyAutocomplete,
+  CurrencyRowFragment,
+  SupplierSearchInput,
+} from '@openmsupply-client/system';
 import { usePurchaseOrder } from '../api/hooks/usePurchaseOrder';
 import { NameFragment } from 'packages/system/src/Name/api/operations.generated';
-import { PurchaseOrderFragment } from '../api';
+import { PurchaseOrderFragment, usePurchaseOrderLine } from '../api';
+import { isFieldDisabled, StatusGroup } from '../../utils';
 
 interface ToolbarProps {
   isDisabled?: boolean;
@@ -25,15 +32,35 @@ export const Toolbar = ({ isDisabled }: ToolbarProps) => {
   const t = useTranslation();
   const { error } = useNotification();
   const {
+    draft,
     query: { data, isLoading },
     lines: { itemFilter, setItemFilter },
     update: { update },
     handleChange,
   } = usePurchaseOrder();
+  const { updateLines } = usePurchaseOrderLine();
 
   const [requestedDeliveryDate, setRequestedDeliveryDate] = useState(
     DateUtils.getDateOrNull(data?.requestedDeliveryDate)
   );
+
+  const getMostRecentExpectedDate = () => {
+    const dates = data?.lines?.nodes
+      ?.map(line => line.expectedDeliveryDate)
+      .sort((a, b) => (b || '').localeCompare(a || ''));
+    return dates?.[0] ? dates[0] : null;
+  };
+
+  const [expectedDeliveryDate, setExpectedDeliveryDate] = useState(
+    DateUtils.getDateOrNull(getMostRecentExpectedDate())
+  );
+
+  const disabledRequestedDeliveryDate = data?.status
+    ? isFieldDisabled(data.status, StatusGroup.AfterConfirmed)
+    : false;
+  const disabledExpectedDeliveryDate = data?.status
+    ? isFieldDisabled(data.status, StatusGroup.AfterSent)
+    : false;
 
   const handleUpdate = (input: Partial<PurchaseOrderFragment>) => {
     try {
@@ -41,6 +68,42 @@ export const Toolbar = ({ isDisabled }: ToolbarProps) => {
     } catch (e) {
       error(t('messages.error-saving-purchase-order'))();
     }
+  };
+
+  const handleCurrencyChange = async (currency: CurrencyRowFragment | null) => {
+    if (!currency) return;
+
+    handleChange({
+      currencyId: currency.id,
+      foreignExchangeRate: currency.rate,
+    });
+  };
+
+  const updateExpectedDeliveryChange = async (date: Date | null) => {
+    if (!data) return;
+    const formattedDate = Formatter.naiveDate(date);
+    await updateLines(data?.lines?.nodes, {
+      expectedDeliveryDate: formattedDate,
+    });
+  };
+
+  const confirmModal = useConfirmationModal({
+    title: t('heading.are-you-sure'),
+    message: t(
+      'label.update-purchase-order-expected-delivery-date-for-all-lines'
+    ),
+    onConfirm: () => {},
+  });
+
+  const handleExpectedDeliveryDateChange = (newDate: Date | null) => {
+    if (!newDate) return;
+    const previousDate = expectedDeliveryDate;
+
+    setExpectedDeliveryDate(newDate);
+    confirmModal({
+      onConfirm: () => updateExpectedDeliveryChange(newDate),
+      onCancel: () => setExpectedDeliveryDate(previousDate),
+    });
   };
 
   return (
@@ -58,7 +121,8 @@ export const Toolbar = ({ isDisabled }: ToolbarProps) => {
             <InputWithLabelRow
               label={t('label.supplier-name')}
               Input={
-                <InternalSupplierSearchInput
+                <SupplierSearchInput
+                  external
                   disabled={isDisabled || isLoading}
                   value={(data?.supplier as NameFragment) ?? null}
                   onChange={supplier => {
@@ -86,23 +150,62 @@ export const Toolbar = ({ isDisabled }: ToolbarProps) => {
             }
           />
         </Grid>
-        <Grid display="flex" flexGrow={1} flexDirection="column" gap={1}>
+        <Grid display="flex" flexDirection="column" gap={1}>
           <InputWithLabelRow
-            label={t('label.requested-delivery-date')}
+            label={t('label.currency')}
             Input={
-              <DateTimePickerInput
-                value={requestedDeliveryDate}
-                onChange={date => {
-                  setRequestedDeliveryDate(date);
-                  const formattedDate = Formatter.naiveDate(date);
-                  handleUpdate({
-                    requestedDeliveryDate: formattedDate,
-                  });
-                }}
+              <CurrencyAutocomplete
+                currencyId={draft?.currencyId}
+                onChange={handleCurrencyChange}
+                width={150}
+                disabled={!!draft?.confirmedDatetime}
               />
             }
           />
-          <Grid sx={{ justifyContent: 'flex-end', display: 'flex' }}>
+          <InputWithLabelRow
+            label={t('label.foreign-exchange-rate')}
+            Input={
+              <NumericTextInput
+                value={draft?.foreignExchangeRate ?? 0}
+                decimalLimit={4}
+                disabled={true}
+                width={150}
+              />
+            }
+          />
+        </Grid>
+        <Grid display="flex" flexGrow={1} gap={1}>
+          <Grid display="flex" flexDirection="column" gap={1}>
+            <InputWithLabelRow
+              label={t('label.requested-delivery-date')}
+              Input={
+                <DateTimePickerInput
+                  value={requestedDeliveryDate}
+                  onChange={date => {
+                    setRequestedDeliveryDate(date);
+                    const formattedDate = Formatter.naiveDate(date);
+                    handleUpdate({
+                      requestedDeliveryDate: formattedDate,
+                    });
+                  }}
+                  width={250}
+                  disabled={disabledRequestedDeliveryDate}
+                />
+              }
+            />
+            <InputWithLabelRow
+              label={t('label.expected-delivery-date')}
+              Input={
+                <DateTimePickerInput
+                  value={expectedDeliveryDate}
+                  onChange={handleExpectedDeliveryDateChange}
+                  width={250}
+                  disabled={disabledExpectedDeliveryDate}
+                />
+              }
+            />
+          </Grid>
+          <Grid display="flex" flexGrow={1} justifyContent="flex-end">
             <SearchBar
               placeholder={t('placeholder.filter-items')}
               value={itemFilter ?? ''}

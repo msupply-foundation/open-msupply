@@ -1,12 +1,12 @@
 import {
   UpdatePurchaseOrderLineInput,
-  LIST_KEY,
   useMutation,
-  useNotification,
   usePatchState,
   useQuery,
   useTranslation,
   setNullableInput,
+  PurchaseOrderLineStatusNode,
+  InsertPurchaseOrderLineInput,
 } from '@openmsupply-client/common';
 import { usePurchaseOrderGraphQL } from '../usePurchaseOrderGraphQL';
 import { PURCHASE_ORDER, PURCHASE_ORDER_LINE } from './keys';
@@ -14,7 +14,7 @@ import { PurchaseOrderLineFragment } from '../operations.generated';
 
 export type DraftPurchaseOrderLine = Omit<
   PurchaseOrderLineFragment,
-  '__typename' | 'item'
+  '__typename'
 > & {
   purchaseOrderId: string;
   itemId: string;
@@ -39,18 +39,31 @@ const defaultPurchaseOrderLine: DraftPurchaseOrderLine = {
   expectedDeliveryDate: null,
   requestedDeliveryDate: null,
   adjustedNumberOfUnits: null,
+  pricePerPackBeforeDiscount: 0,
+  pricePerPackAfterDiscount: 0,
   lineNumber: 0,
-  pricePerUnitBeforeDiscount: 0,
-  pricePerUnitAfterDiscount: 0,
   manufacturer: null,
   note: null,
   unit: null,
   supplierItemCode: null,
   comment: null,
-  // These values not actually saved to DB
+  item: {
+    __typename: 'ItemNode',
+    id: '',
+    code: '',
+    name: '',
+    stats: {
+      __typename: 'ItemStatsNode',
+      stockOnHand: 0,
+    },
+  },
+  unitsOrderedInOthers: 0,
+  status: PurchaseOrderLineStatusNode.New,
   discountPercentage: 0,
+  // These values not actually saved to DB
   numberOfPacks: 0,
   requestedNumberOfPacks: 0,
+  receivedNumberOfUnits: 0,
 };
 
 export function usePurchaseOrderLine(id?: string | null) {
@@ -59,25 +72,28 @@ export function usePurchaseOrderLine(id?: string | null) {
   const { patch, updatePatch, resetDraft, isDirty } =
     usePatchState<DraftPurchaseOrderLine>({});
 
-  // The discount percentage is calculated from the price fields, but we want to
-  // insert it into the draft so it can be independently manipulated (with the
-  // other fields updated accordingly -- see the column definitions for how that
-  // works)
-  const initialDiscountPercentage =
-    data?.nodes[0]?.pricePerUnitBeforeDiscount &&
-    data?.nodes[0]?.pricePerUnitAfterDiscount
-      ? ((data?.nodes[0]?.pricePerUnitBeforeDiscount -
-          data?.nodes[0]?.pricePerUnitAfterDiscount) /
-          (data?.nodes[0]?.pricePerUnitBeforeDiscount || 1)) *
-        100
-      : 0;
+  const getDiscountPercentage = (): number => {
+    if (!data?.nodes[0]) return 0;
+    const { pricePerPackBeforeDiscount, pricePerPackAfterDiscount } =
+      data.nodes[0];
 
-  // Number of packs is not in the DB, so we derived it from the draft
-  const adjustedUnits = data?.nodes[0]?.adjustedNumberOfUnits;
-  const requestedUnits = data?.nodes[0]?.requestedNumberOfUnits ?? 0;
-  const requestedPackSize = data?.nodes[0]?.requestedPackSize ?? 1;
-  const initialNumberOfPacks =
-    (adjustedUnits ?? requestedUnits) / requestedPackSize;
+    return (
+      ((pricePerPackBeforeDiscount - pricePerPackAfterDiscount) /
+        pricePerPackBeforeDiscount) *
+      100
+    );
+  };
+  const initialDiscountPercentage = getDiscountPercentage();
+
+  const getNumberOfPacks = (): number => {
+    if (!data?.nodes[0]) return 0;
+    const { adjustedNumberOfUnits, requestedNumberOfUnits, requestedPackSize } =
+      data.nodes[0];
+
+    const numberOfUnits = adjustedNumberOfUnits ?? requestedNumberOfUnits ?? 0;
+    return numberOfUnits / (requestedPackSize ?? 1);
+  };
+  const initialNumberOfPacks = getNumberOfPacks();
 
   const draft: DraftPurchaseOrderLine = data
     ? {
@@ -97,8 +113,27 @@ export function usePurchaseOrderLine(id?: string | null) {
     error: createError,
   } = useCreate();
 
-  const create = async () => {
-    const result = await createMutation(draft);
+  const create = async (input?: InsertPurchaseOrderLineInput) => {
+    if (input) return await createMutation(input);
+
+    const parsedInput: InsertPurchaseOrderLineInput = {
+      id: draft.id,
+      itemIdOrCode: draft.itemId,
+      purchaseOrderId: draft.purchaseOrderId,
+      requestedPackSize: draft.requestedPackSize,
+      requestedNumberOfUnits: draft.requestedNumberOfUnits,
+      requestedDeliveryDate: draft.requestedDeliveryDate,
+      expectedDeliveryDate: draft.expectedDeliveryDate,
+      pricePerPackAfterDiscount: draft.pricePerPackAfterDiscount,
+      pricePerPackBeforeDiscount: draft.pricePerPackBeforeDiscount,
+      manufacturerId: draft.manufacturer?.id,
+      note: draft.note,
+      unit: draft.unit,
+      supplierItemCode: draft.supplierItemCode,
+      comment: draft.comment,
+    };
+
+    const result = await createMutation(parsedInput);
     resetDraft();
     return result;
   };
@@ -108,6 +143,7 @@ export function usePurchaseOrderLine(id?: string | null) {
     updatePurchaseOrderLine,
     isLoading: isUpdating,
     error: updateError,
+    updatePurchaseOrderLineThrowError,
   } = useUpdate();
 
   const update = async () => {
@@ -119,16 +155,32 @@ export function usePurchaseOrderLine(id?: string | null) {
       requestedDeliveryDate: draft.requestedDeliveryDate,
       requestedNumberOfUnits: draft.requestedNumberOfUnits,
       adjustedNumberOfUnits: draft.adjustedNumberOfUnits,
-      pricePerUnitBeforeDiscount: draft.pricePerUnitBeforeDiscount,
-      pricePerUnitAfterDiscount: draft.pricePerUnitAfterDiscount,
+      pricePerPackBeforeDiscount: draft.pricePerPackBeforeDiscount,
+      pricePerPackAfterDiscount: draft.pricePerPackAfterDiscount,
       manufacturerId: setNullableInput('id', draft.manufacturer),
       note: setNullableInput('note', draft),
       unit: draft.unit,
       supplierItemCode: setNullableInput('supplierItemCode', draft),
       comment: setNullableInput('comment', draft),
+      status: draft.status,
     };
+    const result = await updatePurchaseOrderLine(input);
     resetDraft();
-    return await updatePurchaseOrderLine(input);
+    return result;
+  };
+
+  const updateLines = async (
+    selectedRows: PurchaseOrderLineFragment[],
+    input: Partial<UpdatePurchaseOrderLineInput>
+  ) => {
+    return await Promise.allSettled(
+      selectedRows.map(row =>
+        updatePurchaseOrderLineThrowError({
+          id: row.id,
+          ...input,
+        })
+      )
+    );
   };
 
   // DELETE
@@ -143,19 +195,16 @@ export function usePurchaseOrderLine(id?: string | null) {
     resetDraft();
   };
 
-  // CREATE FROM CSV
-  const { mutateAsync, invalidateQueries } = useLineInsertFromCSV();
-
   return {
     query: { data: data?.nodes[0], isLoading, error },
     create: { create, isCreating, createError },
     update: { update, isUpdating, updateError },
     delete: { deleteLines, isDeletingLines, deleteError },
-    createFromCSV: { mutateAsync, invalidateQueries },
     draft,
     resetDraft,
     isDirty,
     updatePatch,
+    updateLines,
   };
 }
 
@@ -183,47 +232,62 @@ const useGet = (id: string) => {
 };
 
 const useCreate = () => {
+  const t = useTranslation();
   const { purchaseOrderApi, storeId, queryClient } = usePurchaseOrderGraphQL();
 
-  const mutationFn = async (draft: DraftPurchaseOrderLine) => {
-    return await purchaseOrderApi.insertPurchaseOrderLine({
+  const mutationFn = async (input: InsertPurchaseOrderLineInput) => {
+    const result = await purchaseOrderApi.insertPurchaseOrderLine({
       storeId,
-      input: {
-        id: draft.id,
-        itemId: draft.itemId,
-        purchaseOrderId: draft.purchaseOrderId,
-        requestedPackSize: draft.requestedPackSize,
-        requestedNumberOfUnits: draft.requestedNumberOfUnits,
-        requestedDeliveryDate: draft.requestedDeliveryDate,
-        expectedDeliveryDate: draft.expectedDeliveryDate,
-        pricePerUnitAfterDiscount: draft.pricePerUnitAfterDiscount,
-        pricePerUnitBeforeDiscount: draft.pricePerUnitBeforeDiscount,
-        manufacturerId: draft.manufacturer?.id,
-        note: draft.note,
-        unit: draft.unit,
-        supplierItemCode: draft.supplierItemCode,
-        comment: draft.comment,
-      },
+      input,
     });
+
+    if (
+      result.insertPurchaseOrderLine.__typename ===
+      'InsertPurchaseOrderLineError'
+    ) {
+      const errorType = result.insertPurchaseOrderLine.error.__typename;
+      let errorMessage: string;
+
+      switch (errorType) {
+        case 'CannnotFindItemByCode':
+          errorMessage = t('error.cannot-find-item-by-code');
+          break;
+        case 'CannotEditPurchaseOrder':
+          errorMessage = t('label.cannot-edit-purchase-order');
+          break;
+        case 'ForeignKeyError':
+          errorMessage = t('error.database-error');
+          break;
+        case 'PackSizeCodeCombinationExists':
+          errorMessage = t('error.pack-size-code-combinations-exists');
+          break;
+        case 'PurchaseOrderLineWithIdExists':
+          errorMessage = t('error.purchase-order-line-already-exists');
+          break;
+        default:
+          errorMessage = t('label.cannot-add-purchase-order-line');
+      }
+
+      throw new Error(errorMessage);
+    }
+
+    return result;
   };
 
   return useMutation({
     mutationFn,
-    onSuccess: () =>
-      queryClient.invalidateQueries([PURCHASE_ORDER, LIST_KEY, storeId]),
+    onSuccess: () => queryClient.invalidateQueries([PURCHASE_ORDER]),
   });
 };
 
 const useUpdate = () => {
-  const { purchaseOrderApi, storeId, queryClient } = usePurchaseOrderGraphQL();
   const t = useTranslation();
-  const { error } = useNotification();
-
+  const { purchaseOrderApi, storeId, queryClient } = usePurchaseOrderGraphQL();
   const mutationState = useMutation(purchaseOrderApi.updatePurchaseOrderLine);
 
   const updatePurchaseOrderLine = async (
     input: UpdatePurchaseOrderLineInput
-  ) => {
+  ): Promise<{ success: boolean; error?: string }> => {
     try {
       const result = await purchaseOrderApi.updatePurchaseOrderLine({
         storeId,
@@ -236,75 +300,55 @@ const useUpdate = () => {
         'UpdatePurchaseOrderLineError'
       ) {
         const errorType = result.updatePurchaseOrderLine.error.__typename;
+        let errorMessage: string;
+
         switch (errorType) {
           case 'CannotEditPurchaseOrder':
-            return error(t('label.cannot-edit-purchase-order'))();
+            errorMessage = t('label.cannot-edit-purchase-order');
+            break;
           case 'PurchaseOrderDoesNotExist':
-            return error(t('label.purchase-order-does-not-exist'))();
+            errorMessage = t('label.purchase-order-does-not-exist');
+            break;
           case 'PurchaseOrderLineNotFound':
-            return error(t('label.purchase-order-line-not-found'))();
+            errorMessage = t('label.purchase-order-line-not-found');
+            break;
           case 'UpdatedLineDoesNotExist':
-            return error(t('label.updated-line-does-not-exist'))();
+            errorMessage = t('label.updated-line-does-not-exist');
+            break;
+          case 'ItemCannotBeOrdered':
+            errorMessage = t('error.item-cannot-be-ordered-on-line');
+            break;
+          case 'CannotEditQuantityBelowReceived':
+            errorMessage = t('error.cannot-reduce-adjusted-quantity');
+            break;
           default:
-            return error(t('label.cannot-update-purchase-order-line'))();
+            errorMessage = t('label.cannot-update-purchase-order-line');
         }
+
+        return { success: false, error: errorMessage };
       }
       queryClient.invalidateQueries([PURCHASE_ORDER]);
+      return { success: true };
     } catch (e) {
       console.error('Error updating purchase order line:', e);
-      return error(t('label.cannot-update-purchase-order-line'))();
+      const errorMessage = t('label.cannot-update-purchase-order-line');
+      return { success: false, error: errorMessage };
     }
   };
 
-  return { ...mutationState, updatePurchaseOrderLine };
-};
-
-export const useLineInsertFromCSV = () => {
-  const { purchaseOrderApi, storeId, queryClient } = usePurchaseOrderGraphQL();
-  const t = useTranslation();
-
-  const { mutateAsync } = useMutation(
-    async (line: Partial<DraftPurchaseOrderLineFromCSV>) => {
-      const result = await purchaseOrderApi.insertPurchaseOrderLineFromCsv({
-        storeId,
-        input: {
-          itemCode: line.itemCode ?? '',
-          purchaseOrderId: line.purchaseOrderId ?? '',
-          requestedPackSize: line.requestedPackSize ?? 0.0,
-          requestedNumberOfUnits: line.requestedNumberOfUnits ?? 0,
-          pricePerUnitAfterDiscount: line.pricePerUnitAfterDiscount ?? 0.0,
-          pricePerUnitBeforeDiscount: line.pricePerUnitBeforeDiscount ?? 0.0,
-        },
-      });
-      if (result.insertPurchaseOrderLineFromCsv.__typename === 'IdResponse') {
-        return result.insertPurchaseOrderLineFromCsv.id;
-      }
-
-      switch (result.insertPurchaseOrderLineFromCsv.error.__typename) {
-        case 'PackSizeCodeCombinationExists':
-          const itemCode = result.insertPurchaseOrderLineFromCsv.error.itemCode;
-          const requestedPackSize =
-            result.insertPurchaseOrderLineFromCsv.error.requestedPackSize;
-          throw new Error(
-            t('error.line-combination-error', { itemCode, requestedPackSize })
-          );
-        case 'CannnotFindItemByCode':
-          throw new Error(t('error.cannot-find-item-by-code'));
-        case 'CannotEditPurchaseOrder':
-          throw new Error(t('error.cannot-edit-purchase-order'));
-        case 'ForeignKeyError':
-          throw new Error(t('error.foreign-key-error'));
-        case 'PurchaseOrderLineWithIdExists':
-          throw new Error(t('error.purchase-order-line-already-exists'));
-        default:
-          throw new Error(t('error.unknown-insert-error'));
-      }
+  const updatePurchaseOrderLineThrowError = async (
+    input: UpdatePurchaseOrderLineInput
+  ) => {
+    const result = await updatePurchaseOrderLine(input);
+    if (!result.success) {
+      throw new Error(result.error);
     }
-  );
+  };
 
   return {
-    mutateAsync,
-    invalidateQueries: () => queryClient.invalidateQueries([PURCHASE_ORDER]),
+    ...mutationState,
+    updatePurchaseOrderLine,
+    updatePurchaseOrderLineThrowError,
   };
 };
 

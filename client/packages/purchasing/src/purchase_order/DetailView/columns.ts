@@ -2,28 +2,43 @@ import {
   ColumnAlign,
   ColumnDescription,
   ColumnFormat,
+  CurrencyCell,
   GenericColumnKey,
+  getLinesFromRow,
   TooltipTextCell,
   useColumns,
   useUrlQueryParams,
 } from '@openmsupply-client/common';
 import { PackQuantityCell } from '@openmsupply-client/system';
 import { PurchaseOrderLineFragment } from '../api';
+import { usePurchaseOrderLineErrorContext } from '../context';
 
 export const usePurchaseOrderColumns = () => {
   const {
     updateSortQuery,
     queryParams: { sortBy },
   } = useUrlQueryParams({ initialSort: { key: 'itemName', dir: 'asc' } });
+  const { getError } = usePurchaseOrderLineErrorContext();
 
   const columnDefinitions: ColumnDescription<PurchaseOrderLineFragment>[] = [
     GenericColumnKey.Selection,
+    {
+      key: 'lineNumber',
+      label: 'label.line-number',
+      align: ColumnAlign.Right,
+      width: 100,
+      accessor: ({ rowData }) => rowData.lineNumber,
+    },
     [
       'itemCode',
       {
         width: 130,
         accessor: ({ rowData }) => rowData.item.code,
         getSortValue: rowData => rowData.item.code,
+        getIsError: row =>
+          getLinesFromRow(row).some(
+            r => getError(r)?.__typename === 'ItemCannotBeOrdered'
+          ),
       },
     ],
     [
@@ -41,14 +56,11 @@ export const usePurchaseOrderColumns = () => {
       align: ColumnAlign.Right,
       width: 150,
       Cell: PackQuantityCell,
-      accessor: rowData =>
-        Math.ceil(
-          (rowData.rowData.requestedNumberOfUnits ?? 0) /
-            (rowData.rowData.requestedPackSize &&
-            rowData.rowData.requestedPackSize !== 0
-              ? rowData.rowData.requestedPackSize
-              : 1)
-        ),
+      accessor: ({ rowData }) => {
+        const numUnits =
+          rowData.adjustedNumberOfUnits ?? rowData.requestedNumberOfUnits;
+        return Math.ceil(numUnits / rowData.requestedPackSize);
+      },
     },
     {
       key: 'packSize',
@@ -67,7 +79,7 @@ export const usePurchaseOrderColumns = () => {
     },
     {
       key: 'authorisedNumberOfUnits',
-      label: 'label.adjusted-quantity',
+      label: 'label.adjusted-units',
       align: ColumnAlign.Right,
       accessor: ({ rowData }) => rowData.adjustedNumberOfUnits,
       getSortValue: rowData => rowData.adjustedNumberOfUnits ?? 0,
@@ -81,27 +93,38 @@ export const usePurchaseOrderColumns = () => {
       // rowData.totalReceived,
       // getSortValue: rowData =>  //rowData.totalReceived ?? 0,
     },
-    // TO-DO: Figure out if this is snapshot value or current value
-    // {
-    //   key: 'availableStockOnHand',
-    //   label: 'label.available-soh',
-    //   description: 'description.available-soh',
-    //   align: ColumnAlign.Right,
-    //   width: 200,
-    //   accessor: ({ rowData }) => rowData.itemStats.availableStockOnHand,
-    //   getSortValue: rowData => rowData.itemStats.availableStockOnHand,
-    // },
-    // TO-DO: Include all orders or just POs?
-    //   {
-    //   key: 'onOrder',
-    //   label: 'label.on-order',
-    //   //   description: 'description.default-pack-size',
-    //   align: ColumnAlign.Right,
-    //   accessor: ({ rowData }) => rowData.totalReceived,
-    //   //   getSortValue: rowData => rowData.packSize,
-    //   //   defaultHideOnMobile: true,
-    // },
-    // TO-DO: Price extension column
+    {
+      key: 'stockOnHand',
+      label: 'label.soh',
+      align: ColumnAlign.Right,
+      accessor: ({ rowData }) => rowData.item.stats.stockOnHand,
+      getSortValue: rowData => rowData.item.stats.stockOnHand ?? 0,
+      defaultHideOnMobile: true,
+    },
+    {
+      key: 'onOrder',
+      label: 'label.on-order',
+      align: ColumnAlign.Right,
+      accessor: ({ rowData }) => rowData.unitsOrderedInOthers,
+    },
+    {
+      key: 'totalCost',
+      label: 'label.total-cost',
+      align: ColumnAlign.Right,
+      Cell: CurrencyCell,
+      accessor: ({ rowData }) => {
+        const units =
+          rowData.adjustedNumberOfUnits ?? rowData.requestedNumberOfUnits ?? 0;
+        const packSize = rowData.requestedPackSize || 1;
+        return (rowData.pricePerPackAfterDiscount ?? 0) * (units / packSize);
+      },
+      getSortValue: rowData => {
+        const units =
+          rowData.adjustedNumberOfUnits ?? rowData.requestedNumberOfUnits ?? 0;
+        const packSize = rowData.requestedPackSize || 1;
+        return (rowData.pricePerPackAfterDiscount ?? 0) * (units / packSize);
+      },
+    },
     {
       key: 'requestedDeliveryDate',
       label: 'label.requested-delivery-date',

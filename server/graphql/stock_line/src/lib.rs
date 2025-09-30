@@ -46,6 +46,7 @@ pub struct StockLineFilterInput {
     pub id: Option<EqualFilterStringInput>,
     pub is_available: Option<bool>,
     pub item_code_or_name: Option<StringFilterInput>,
+    pub search: Option<StringFilterInput>,
     pub item_id: Option<EqualFilterStringInput>,
     pub location_id: Option<EqualFilterStringInput>,
     pub vvm_status_id: Option<EqualFilterStringInput>,
@@ -54,6 +55,7 @@ pub struct StockLineFilterInput {
     pub location: Option<LocationFilterInput>,
     pub master_list: Option<MasterListFilterInput>,
     pub is_active: Option<bool>,
+    pub is_program_stock_line: Option<bool>,
 }
 
 impl From<StockLineFilterInput> for StockLineFilter {
@@ -63,6 +65,7 @@ impl From<StockLineFilterInput> for StockLineFilter {
             id: f.id.map(EqualFilter::from),
             is_available: f.is_available,
             item_code_or_name: f.item_code_or_name.map(StringFilterInput::into),
+            search: f.search.map(StringFilterInput::into),
             item_id: f.item_id.map(EqualFilter::from),
             location_id: f.location_id.map(EqualFilter::from),
             store_id: None,
@@ -71,6 +74,7 @@ impl From<StockLineFilterInput> for StockLineFilter {
             location: f.location.map(LocationFilter::from),
             master_list: f.master_list.map(|f| f.to_domain()),
             is_active: f.is_active,
+            is_program_stock_line: f.is_program_stock_line,
         }
     }
 }

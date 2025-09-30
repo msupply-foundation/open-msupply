@@ -56,6 +56,7 @@ pub enum PermissionType {
     // inbound shipment
     InboundShipmentQuery,
     InboundShipmentMutate,
+    InboundShipmentVerify,
     // supplier return
     SupplierReturnQuery,
     SupplierReturnMutate,

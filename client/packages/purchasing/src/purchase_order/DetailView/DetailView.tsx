@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import {
   AlertModal,
   createQueryParamsStore,
@@ -11,30 +11,34 @@ import {
   useEditModal,
   useNavigate,
   useTranslation,
+  useUrlQuery,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
-import { usePurchaseOrder } from '../api/hooks/usePurchaseOrder';
-import { PurchaseOrderLineFragment } from '../api';
-import { ContentArea, Details, Documents } from './Tabs';
+import { ActivityLogList } from '@openmsupply-client/system';
+
+import { canAddNewLines, isPurchaseOrderDisabled } from '../../utils';
+import { PurchaseOrderLineFragment, usePurchaseOrder } from '../api';
+import { PurchaseOrderLineErrorProvider } from '../context';
+import { ContentArea, Details, GoodsReceived, Documents } from './Tabs';
 import { AppBarButtons } from './AppBarButtons';
 import { Toolbar } from './Toolbar';
-import { canAddNewLines } from '../../utils';
 import { Footer } from './Footer';
 import { SidePanel } from './SidePanel';
 import { PurchaseOrderLineEditModal } from './LineEdit/PurchaseOrderLineEditModal';
-import { ActivityLogList } from 'packages/system/src';
 
 export const DetailViewInner = () => {
   const t = useTranslation();
   const navigate = useNavigate();
   const { setCustomBreadcrumbs } = useBreadcrumbs();
-  const [showStatusBar, setShowStatusBar] = useState(true);
+  const { urlQuery } = useUrlQuery();
+  const currentTab = urlQuery['tab'];
 
   const {
     query: { data, isLoading },
     lines: { sortedAndFilteredLines },
     draft,
     handleChange,
+    invalidateQueries,
   } = usePurchaseOrder();
 
   const {
@@ -67,7 +71,8 @@ export const DetailViewInner = () => {
 
   if (isLoading) return <DetailViewSkeleton />;
 
-  const isDisabled = !data || !canAddNewLines(data);
+  const disableNewLines = !data || !canAddNewLines(data);
+  const isDisabled = !data || isPurchaseOrderDisabled(data);
 
   const tabs = [
     {
@@ -76,28 +81,32 @@ export const DetailViewInner = () => {
           lines={sortedAndFilteredLines}
           isDisabled={isDisabled}
           onAddItem={onOpen}
-          onRowClick={!isDisabled ? onRowClick : null}
+          onRowClick={onRowClick}
         />
       ),
-      value: 'General',
+      value: t('label.general'),
+    },
+    {
+      Component: <GoodsReceived />,
+      value: t('label.goods-received'),
     },
     {
       Component: <Details draft={draft} onChange={handleChange} />,
-      value: 'Details',
+      value: t('label.details'),
     },
     {
       Component: (
         <Documents
-          purchaseOrderId={data?.id}
-          documents={data?.documents?.nodes}
-          setShowStatusBar={setShowStatusBar}
+          data={data}
+          disable={isDisabled}
+          invalidateQueries={invalidateQueries}
         />
       ),
-      value: 'Documents',
+      value: t('label.documents'),
     },
     {
       Component: <ActivityLogList recordId={data?.id ?? ''} />,
-      value: 'Log',
+      value: t('label.log'),
     },
   ];
 
@@ -107,10 +116,17 @@ export const DetailViewInner = () => {
     >
       {data ? (
         <>
-          <AppBarButtons isDisabled={isDisabled} onAddItem={onOpen} />
+          <AppBarButtons
+            isDisabled={isDisabled}
+            disableNewLines={disableNewLines}
+            onAddItem={onOpen}
+          />
           <Toolbar isDisabled={isDisabled} />
           <DetailTabs tabs={tabs} />
-          <Footer showStatusBar={showStatusBar} />
+          <Footer
+            showStatusBar={currentTab !== 'Documents'}
+            status={data.status}
+          />
           <SidePanel />
           {isOpen && (
             <PurchaseOrderLineEditModal
@@ -148,15 +164,17 @@ export const DetailViewInner = () => {
 
 export const PurchaseOrderDetailView = () => {
   return (
-    <TableProvider
-      createStore={createTableStore}
-      queryParamsStore={createQueryParamsStore<PurchaseOrderLineFragment>({
-        initialSortBy: {
-          key: 'itemName',
-        },
-      })}
-    >
-      <DetailViewInner />
-    </TableProvider>
+    <PurchaseOrderLineErrorProvider>
+      <TableProvider
+        createStore={createTableStore}
+        queryParamsStore={createQueryParamsStore<PurchaseOrderLineFragment>({
+          initialSortBy: {
+            key: 'itemName',
+          },
+        })}
+      >
+        <DetailViewInner />
+      </TableProvider>
+    </PurchaseOrderLineErrorProvider>
   );
 };

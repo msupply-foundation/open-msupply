@@ -5,12 +5,18 @@ use crate::sync::translations::{
 use chrono::NaiveDate;
 use repository::{
     ChangelogRow, ChangelogTableName, PurchaseOrderLineDelete, PurchaseOrderLineRow,
-    PurchaseOrderLineRowRepository, StorageConnection, SyncBufferRow,
+    PurchaseOrderLineRowRepository, PurchaseOrderLineStatus, StorageConnection, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
 use util::sync_serde::{
     date_option_to_isostring, empty_str_as_option, zero_date_as_option, zero_f64_as_none,
 };
+
+#[derive(Deserialize, Serialize, Debug, Clone)]
+pub struct LegacyPurchaseOrderLineRowOmsFields {
+    #[serde(default)]
+    pub status: PurchaseOrderLineStatus,
+}
 
 #[allow(non_snake_case)]
 #[derive(Deserialize, Serialize, Clone, Debug)]
@@ -56,11 +62,14 @@ pub struct LegacyPurchaseOrderLineRow {
     #[serde(deserialize_with = "empty_str_as_option")]
     pub supplier_item_code: Option<String>,
     #[serde(default)]
-    #[serde(rename = "price_extension_expected")]
-    pub price_per_unit_before_discount: f64,
+    #[serde(rename = "price_per_pack_before_discount")]
+    pub price_per_pack_before_discount: f64,
     #[serde(default)]
     #[serde(rename = "price_expected_after_discount")]
-    pub price_per_unit_after_discount: f64,
+    // Currently does not save in OMS database, but we calculate it when pushing to legacy
+    pub price_per_pack_after_discount: f64,
+    #[serde(rename = "price_extension_expected")]
+    pub price_extension_expected: f64,
     #[serde(deserialize_with = "empty_str_as_option")]
     pub comment: Option<String>,
     #[serde(deserialize_with = "empty_str_as_option")]
@@ -71,6 +80,8 @@ pub struct LegacyPurchaseOrderLineRow {
     #[serde(deserialize_with = "empty_str_as_option")]
     #[serde(rename = "pack_units")]
     pub unit: Option<String>,
+    #[serde(default)]
+    pub oms_fields: Option<LegacyPurchaseOrderLineRowOmsFields>,
 }
 
 #[deny(dead_code)]
@@ -116,12 +127,14 @@ impl SyncTranslation for PurchaseOrderLineTranslation {
             requested_delivery_date,
             expected_delivery_date,
             supplier_item_code,
-            price_per_unit_before_discount,
-            price_per_unit_after_discount,
+            price_per_pack_before_discount,
+            price_per_pack_after_discount,
+            price_extension_expected: _,
             comment,
             manufacturer_id,
             note,
             unit,
+            oms_fields,
         } = serde_json::from_str::<LegacyPurchaseOrderLineRow>(&sync_record.data)?;
 
         let result = PurchaseOrderLineRow {
@@ -139,12 +152,13 @@ impl SyncTranslation for PurchaseOrderLineTranslation {
             expected_delivery_date,
             stock_on_hand_in_units,
             supplier_item_code,
-            price_per_unit_before_discount,
-            price_per_unit_after_discount,
+            price_per_pack_before_discount,
+            price_per_pack_after_discount,
             comment,
             manufacturer_link_id: manufacturer_id,
             note,
             unit,
+            status: oms_fields.map_or(PurchaseOrderLineStatus::New, |f| f.status),
         };
         Ok(PullTranslateResult::upsert(result))
     }
@@ -179,15 +193,26 @@ impl SyncTranslation for PurchaseOrderLineTranslation {
             received_number_of_units,
             stock_on_hand_in_units,
             supplier_item_code,
-            price_per_unit_before_discount,
-            price_per_unit_after_discount,
+            price_per_pack_before_discount,
+            price_per_pack_after_discount,
             comment,
             manufacturer_link_id,
             note,
             unit,
+            status,
         } = PurchaseOrderLineRowRepository::new(connection)
             .find_one_by_id(&changelog.record_id)?
             .ok_or_else(|| anyhow::anyhow!("Purchase Order Line not found"))?;
+
+        // Total Cost calculated in Front End: price_per_pack_after_discount * number_of_packs
+        // Number of packs = (requested_number_of_units OR adjusted_number_of_units) / requested_pack_size
+        let price_extension_expected = if requested_pack_size > 0.0 {
+            price_per_pack_after_discount
+                * (adjusted_number_of_units.unwrap_or(requested_number_of_units)
+                    / requested_pack_size)
+        } else {
+            0.0
+        };
 
         let legacy_row = LegacyPurchaseOrderLineRow {
             id,
@@ -204,12 +229,14 @@ impl SyncTranslation for PurchaseOrderLineTranslation {
             requested_delivery_date,
             expected_delivery_date,
             supplier_item_code,
-            price_per_unit_before_discount,
-            price_per_unit_after_discount,
+            price_per_pack_before_discount,
+            price_per_pack_after_discount,
+            price_extension_expected,
             comment,
             manufacturer_id: manufacturer_link_id,
             note,
             unit,
+            oms_fields: Some(LegacyPurchaseOrderLineRowOmsFields { status }),
         };
 
         Ok(PushTranslateResult::upsert(

@@ -1,6 +1,6 @@
 use repository::{
-    EqualFilter, ItemRowRepository, NumberRowType, PurchaseOrderLineRow, PurchaseOrderRow,
-    RepositoryError, StockOnHandFilter, StockOnHandRepository,
+    EqualFilter, ItemRowRepository, NumberRowType, PurchaseOrderLineRow, PurchaseOrderLineStatus,
+    PurchaseOrderRow, RepositoryError, StockOnHandFilter, StockOnHandRepository,
 };
 use util::uuid::uuid;
 
@@ -38,6 +38,7 @@ pub fn generate_empty_purchase_order_lines(
                     item_link_id: item.id,
                     item_name: item.name,
                     store_id: purchase_order_row.store_id.clone(),
+                    status: PurchaseOrderLineStatus::New,
                     // Default
                     requested_delivery_date: None,
                     expected_delivery_date: None,
@@ -47,8 +48,8 @@ pub fn generate_empty_purchase_order_lines(
                     received_number_of_units: 0.0,
                     stock_on_hand_in_units: stock_on_hand,
                     supplier_item_code: None,
-                    price_per_unit_before_discount: 0.0,
-                    price_per_unit_after_discount: 0.0,
+                    price_per_pack_before_discount: 0.0,
+                    price_per_pack_after_discount: 0.0,
                     comment: None,
                     manufacturer_link_id: None,
                     note: None,

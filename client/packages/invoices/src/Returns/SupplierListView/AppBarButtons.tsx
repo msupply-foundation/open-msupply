@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 import { AppRoute } from '@openmsupply-client/config';
 import {
   DownloadIcon,
@@ -11,100 +11,92 @@ import {
   ToggleState,
   useNotification,
   FnUtils,
-  UserPermission,
-  useCallbackWithPermission,
   RouteBuilder,
   useNavigate,
   useExportCSV,
-  usePreferences,
 } from '@openmsupply-client/common';
 import { SupplierSearchModal } from '@openmsupply-client/system';
 import { useReturns } from '../api';
 import { supplierReturnsToCsv } from '../../utils';
 
-export const AppBarButtonsComponent: FC<{
+interface AppBarButtonsProps {
   modalController: ToggleState;
-}> = ({ modalController }) => {
-  const t = useTranslation();
-  const { error, info } = useNotification();
-  const exportCSV = useExportCSV();
-  const navigate = useNavigate();
-  const { disableManualReturns } = usePreferences();
+  onNew: () => void;
+}
 
-  const { mutateAsync: onCreate } = useReturns.document.insertSupplierReturn();
-  const { fetchAsync, isLoading } = useReturns.document.listAllSupplier({
-    key: 'createdDateTime',
-    direction: 'desc',
-    isDesc: true,
-  });
+export const AppBarButtonsComponent = ({
+  modalController,
+  onNew,
+}: AppBarButtonsProps) => {
+  {
+    const t = useTranslation();
+    const { error } = useNotification();
+    const exportCSV = useExportCSV();
+    const navigate = useNavigate();
 
-  const csvExport = async () => {
-    const data = await fetchAsync();
-    if (!data || !data?.nodes.length) {
-      error(t('error.no-data'))();
-      return;
-    }
-    const csv = supplierReturnsToCsv(data.nodes, t);
-    exportCSV(csv, t('filename.supplier-returns'));
-  };
+    const { mutateAsync: onCreate } =
+      useReturns.document.insertSupplierReturn();
+    const { fetchAsync, isLoading } = useReturns.document.listAllSupplier({
+      key: 'createdDateTime',
+      direction: 'desc',
+      isDesc: true,
+    });
 
-  const openModal = useCallbackWithPermission(
-    UserPermission.SupplierReturnMutate,
-    modalController.toggleOn
-  );
+    const csvExport = async () => {
+      const data = await fetchAsync();
+      if (!data || !data?.nodes.length) {
+        error(t('error.no-data'))();
+        return;
+      }
+      const csv = supplierReturnsToCsv(data.nodes, t);
+      exportCSV(csv, t('filename.supplier-returns'));
+    };
 
-  const handleClick = (): void => {
-    if (disableManualReturns) {
-      info(t('messages.manual-returns-preferences-disabled'))();
-      return;
-    }
-    openModal();
-  };
-
-  return (
-    <AppBarButtonsPortal>
-      <Grid container gap={1}>
-        <ButtonWithIcon
-          Icon={<PlusCircleIcon />}
-          label={t('button.new-return')}
-          onClick={handleClick}
-        />
-        <LoadingButton
-          startIcon={<DownloadIcon />}
-          isLoading={isLoading}
-          variant="outlined"
-          onClick={csvExport}
-          label={t('button.export')}
-        />
-      </Grid>
-      <SupplierSearchModal
-        open={modalController.isOn}
-        onClose={modalController.toggleOff}
-        onChange={async name => {
-          modalController.toggleOff();
-          try {
-            await onCreate({
-              id: FnUtils.generateUUID(),
-              supplierId: name?.id,
-              supplierReturnLines: [],
-            }).then(supplierReturn => {
-              navigate(
-                RouteBuilder.create(AppRoute.Replenishment)
-                  .addPart(AppRoute.SupplierReturn)
-                  .addPart(String(supplierReturn?.id))
-                  .build()
+    return (
+      <AppBarButtonsPortal>
+        <Grid container gap={1}>
+          <ButtonWithIcon
+            Icon={<PlusCircleIcon />}
+            label={t('button.new-return')}
+            onClick={onNew}
+          />
+          <LoadingButton
+            startIcon={<DownloadIcon />}
+            isLoading={isLoading}
+            variant="outlined"
+            onClick={csvExport}
+            label={t('button.export')}
+          />
+        </Grid>
+        <SupplierSearchModal
+          open={modalController.isOn}
+          onClose={modalController.toggleOff}
+          onChange={async name => {
+            modalController.toggleOff();
+            try {
+              await onCreate({
+                id: FnUtils.generateUUID(),
+                supplierId: name?.id,
+                supplierReturnLines: [],
+              }).then(supplierReturn => {
+                navigate(
+                  RouteBuilder.create(AppRoute.Replenishment)
+                    .addPart(AppRoute.SupplierReturn)
+                    .addPart(String(supplierReturn?.id))
+                    .build()
+                );
+              });
+            } catch (e) {
+              const errorSnack = error(
+                `${t('error.failed-to-create-return')} ${(e as Error).message}`
               );
-            });
-          } catch (e) {
-            const errorSnack = error(
-              `${t('error.failed-to-create-return')} ${(e as Error).message}`
-            );
-            errorSnack();
-          }
-        }}
-      />
-    </AppBarButtonsPortal>
-  );
+              errorSnack();
+            }
+          }}
+        />
+      </AppBarButtonsPortal>
+    );
+  }
 };
 
 export const AppBarButtons = React.memo(AppBarButtonsComponent);

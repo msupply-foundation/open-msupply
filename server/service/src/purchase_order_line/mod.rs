@@ -4,8 +4,7 @@ use crate::{
     purchase_order_line::{
         delete::{delete_purchase_order_line, DeletePurchaseOrderLineError},
         insert::{
-            insert_purchase_order_line, insert_purchase_order_line_from_csv,
-            InsertPurchaseOrderLineError, InsertPurchaseOrderLineInput,
+            insert_purchase_order_line, InsertPurchaseOrderLineError, InsertPurchaseOrderLineInput,
         },
         update::{
             update_purchase_order_line, UpdatePurchaseOrderLineInput,
@@ -54,21 +53,14 @@ pub trait PurchaseOrderLineServiceTrait: Sync + Send {
         insert_purchase_order_line(ctx, input)
     }
 
-    fn insert_purchase_order_line_from_csv(
-        &self,
-        ctx: &ServiceContext,
-        input: crate::purchase_order_line::insert::InsertPurchaseOrderLineFromCSVInput,
-    ) -> Result<PurchaseOrderLineRow, InsertPurchaseOrderLineError> {
-        insert_purchase_order_line_from_csv(ctx, input)
-    }
-
     fn update_purchase_order_line(
         &self,
         ctx: &ServiceContext,
         store_id: &str,
         input: UpdatePurchaseOrderLineInput,
+        user_has_permission: Option<bool>,
     ) -> Result<PurchaseOrderLine, UpdatePurchaseOrderLineInputError> {
-        update_purchase_order_line(ctx, store_id, input)
+        update_purchase_order_line(ctx, store_id, input, user_has_permission)
     }
 
     fn delete_purchase_order_line(

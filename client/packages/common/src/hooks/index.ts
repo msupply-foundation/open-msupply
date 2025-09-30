@@ -33,3 +33,4 @@ export * from './useStringFilter';
 export * from './useIsGapsStoreOnly';
 export * from './useKeyboardShortcut';
 export * from './useSimplifiedTabletUI';
+export * from './useFeatureFlags';

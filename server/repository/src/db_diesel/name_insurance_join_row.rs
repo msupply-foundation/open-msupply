@@ -37,6 +37,7 @@ table! {
     expiry_date -> Date,
     is_active -> Bool,
     entered_by_id -> Nullable<Text>,
+    name_of_insured -> Nullable<Text>,
   }
 }
 
@@ -60,6 +61,7 @@ pub struct NameInsuranceJoinRow {
     pub expiry_date: chrono::NaiveDate,
     pub is_active: bool,
     pub entered_by_id: Option<String>,
+    pub name_of_insured: Option<String>,
 }
 
 pub struct NameInsuranceJoinRowRepository<'a> {

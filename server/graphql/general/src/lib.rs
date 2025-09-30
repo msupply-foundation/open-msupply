@@ -4,12 +4,14 @@ mod queries;
 mod sync_api_error;
 pub mod types;
 
+use std::collections::HashMap;
+
 pub use self::queries::sync_status::*;
 use self::queries::*;
 
 use abbreviation::abbreviations;
 use diagnosis::diagnoses_active;
-use graphql_core::pagination::PaginationInput;
+use graphql_core::{pagination::PaginationInput, ContextExt};
 use service::sync::CentralServerConfig;
 
 use crate::store_preference::store_preferences;
@@ -49,6 +51,7 @@ use queries::{
     },
     insurance_providers::{insurance_providers, InsuranceProvidersResponse},
     requisition_line_chart::{ConsumptionOptionsInput, StockEvolutionOptionsInput},
+    shipping_method::{get_shipping_methods, ShippingMethodFilterInput, ShippingMethodsResponse},
     sync_settings::{sync_settings, SyncSettingsNode},
 };
 
@@ -98,6 +101,10 @@ impl GeneralQueries {
 
     pub async fn is_central_server(&self) -> bool {
         CentralServerConfig::is_central_server()
+    }
+
+    pub async fn feature_flags(&self, ctx: &Context<'_>) -> HashMap<String, bool> {
+        ctx.get_settings().features.clone().unwrap_or_default()
     }
 
     /// Query omSupply "name" entries
@@ -473,6 +480,15 @@ impl GeneralQueries {
         store_id: String,
     ) -> Result<InsuranceProvidersResponse> {
         insurance_providers(ctx, store_id)
+    }
+
+    pub async fn shipping_methods(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        filter: Option<ShippingMethodFilterInput>,
+    ) -> Result<ShippingMethodsResponse> {
+        get_shipping_methods(ctx, &store_id, filter)
     }
 }
 

@@ -8,10 +8,11 @@ use graphql_core::{
     },
     ContextExt,
 };
-use graphql_types::types::IdResponse;
-use repository::{PurchaseOrderRow, PurchaseOrderStatus};
-use serde::Serialize;
-
+use graphql_types::{
+    generic_errors::ItemCannotBeOrdered,
+    types::{IdResponse, PurchaseOrderNodeStatus},
+};
+use repository::{PurchaseOrderLine, PurchaseOrderRow};
 use service::{
     auth::{Resource, ResourceAccessRequest},
     purchase_order::update::{
@@ -20,44 +21,16 @@ use service::{
     NullableUpdate,
 };
 
-#[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
-#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-pub enum PurchaseOrderNodeType {
-    New,
-    Confirmed,
-    Authorised,
-    Finalised,
-}
-
-impl PurchaseOrderNodeType {
-    pub fn from_domain(domain_type: &PurchaseOrderStatus) -> Self {
-        match domain_type {
-            PurchaseOrderStatus::New => PurchaseOrderNodeType::New,
-            PurchaseOrderStatus::Confirmed => PurchaseOrderNodeType::Confirmed,
-            PurchaseOrderStatus::Authorised => PurchaseOrderNodeType::Authorised,
-            PurchaseOrderStatus::Finalised => PurchaseOrderNodeType::Finalised,
-        }
-    }
-
-    pub fn to_domain(self) -> PurchaseOrderStatus {
-        match self {
-            PurchaseOrderNodeType::New => PurchaseOrderStatus::New,
-            PurchaseOrderNodeType::Confirmed => PurchaseOrderStatus::Confirmed,
-            PurchaseOrderNodeType::Authorised => PurchaseOrderStatus::Authorised,
-            PurchaseOrderNodeType::Finalised => PurchaseOrderStatus::Finalised,
-        }
-    }
-}
-
 #[derive(InputObject)]
 #[graphql(name = "UpdatePurchaseOrderInput")]
 pub struct UpdateInput {
     pub id: String,
     pub supplier_id: Option<String>,
-    pub status: Option<PurchaseOrderNodeType>,
+    pub status: Option<PurchaseOrderNodeStatus>,
     pub confirmed_datetime: Option<NullableUpdateInput<NaiveDateTime>>,
     pub comment: Option<String>,
     pub supplier_discount_percentage: Option<f64>,
+    pub supplier_discount_amount: Option<f64>,
     pub donor_id: Option<NullableUpdateInput<String>>,
     pub reference: Option<String>,
     pub currency_id: Option<String>,
@@ -90,6 +63,7 @@ impl UpdateInput {
             confirmed_datetime,
             comment,
             supplier_discount_percentage,
+            supplier_discount_amount,
             donor_id,
             reference,
             currency_id,
@@ -116,10 +90,11 @@ impl UpdateInput {
         ServiceInput {
             id,
             supplier_id,
-            status: status.map(PurchaseOrderNodeType::to_domain),
+            status: status.map(PurchaseOrderNodeStatus::into),
             confirmed_datetime: confirmed_datetime.map(|c| NullableUpdate { value: c.value }),
             comment,
             supplier_discount_percentage,
+            supplier_discount_amount,
             donor_id: donor_id.map(|d| NullableUpdate { value: d.value }),
             reference,
             currency_id,
@@ -146,10 +121,40 @@ impl UpdateInput {
     }
 }
 
+pub struct ItemsCannotBeOrdered(pub Vec<PurchaseOrderLine>);
+#[Object]
+impl ItemsCannotBeOrdered {
+    pub async fn description(&self) -> &str {
+        "One or more items in the purchase order cannot be ordered. Please check the items and try again."
+    }
+
+    pub async fn lines(&self) -> Vec<ItemCannotBeOrdered> {
+        self.0
+            .clone()
+            .into_iter()
+            .map(ItemCannotBeOrdered::from_domain)
+            .collect()
+    }
+}
+
+#[derive(Interface)]
+#[graphql(name = "UpdatePurchaseOrderErrorInterface")]
+#[graphql(field(name = "description", ty = "String"))]
+pub enum UpdateErrorInterface {
+    ItemsCannotBeOrdered(ItemsCannotBeOrdered),
+}
+
+#[derive(SimpleObject)]
+#[graphql(name = "UpdatePurchaseOrderError")]
+pub struct UpdateError {
+    pub error: UpdateErrorInterface,
+}
+
 #[derive(Union)]
 #[graphql(name = "UpdatePurchaseOrderResponse")]
 pub enum UpdateResponse {
     Response(IdResponse),
+    Error(UpdateError),
 }
 
 pub fn update_purchase_order(
@@ -165,42 +170,56 @@ pub fn update_purchase_order(
         },
     )?;
 
-    if input.status == Some(PurchaseOrderNodeType::Authorised) {
-        validate_auth(
+    let service_provider = ctx.service_provider();
+    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
+    let user_has_auth_permission = input.status == Some(PurchaseOrderNodeStatus::Confirmed)
+        && validate_auth(
             ctx,
             &ResourceAccessRequest {
                 resource: Resource::AuthorisePurchaseOrder,
                 store_id: Some(store_id.to_string()),
             },
-        )?;
-    }
-
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
+        )
+        .is_ok();
 
     map_response(
         service_provider
             .purchase_order_service
-            .update_purchase_order(&service_context, store_id, input.to_domain()),
+            .update_purchase_order(
+                &service_context,
+                store_id,
+                input.to_domain(),
+                Some(user_has_auth_permission),
+            ),
     )
 }
 
 fn map_response(from: Result<PurchaseOrderRow, ServiceError>) -> Result<UpdateResponse> {
-    match from {
-        Ok(purchase_order) => Ok(UpdateResponse::Response(IdResponse(purchase_order.id))),
-        Err(error) => map_error(error),
-    }
+    let result = match from {
+        Ok(purchase_order) => UpdateResponse::Response(IdResponse(purchase_order.id)),
+        Err(error) => UpdateResponse::Error(UpdateError {
+            error: map_error(error)?,
+        }),
+    };
+
+    Ok(result)
 }
 
-fn map_error(error: ServiceError) -> Result<UpdateResponse> {
+fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
     let formatted_error = format!("{:#?}", error);
 
     let graphql_error = match error {
+        ServiceError::ItemsCannotBeOrdered(lines) => {
+            return Ok(UpdateErrorInterface::ItemsCannotBeOrdered(
+                ItemsCannotBeOrdered(lines),
+            ))
+        }
+
         ServiceError::SupplierDoesNotExist
         | ServiceError::PurchaseOrderDoesNotExist
         | ServiceError::NotASupplier
         | ServiceError::DonorDoesNotExist
-        | ServiceError::AuthorisationPreferenceNotSet => BadUserInput(formatted_error),
+        | ServiceError::UserUnableToAuthorisePurchaseOrder => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) | ServiceError::UpdatedRecordNotFound => {
             InternalError(formatted_error)
         }

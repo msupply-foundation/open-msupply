@@ -1,10 +1,11 @@
 use self::dataloader::DataLoader;
 use crate::types::{
-    NameNode, PurchaseOrderLineConnector, StoreNode, SyncFileReferenceConnector, UserNode,
+    CurrencyNode, NameNode, PurchaseOrderLineConnector, StoreNode, SyncFileReferenceConnector,
+    UserNode,
 };
 use async_graphql::*;
-use chrono::{NaiveDate, NaiveDateTime};
-use graphql_core::loader::PurchaseOrderLinesByPurchaseOrderIdLoader;
+use chrono::{DateTime, NaiveDate, Utc};
+use graphql_core::loader::{CurrencyByIdLoader, PurchaseOrderLinesByPurchaseOrderIdLoader};
 use graphql_core::loader::{
     NameByIdLoader, NameByIdLoaderInput, StoreByIdLoader, SyncFileReferenceLoader, UserLoader,
 };
@@ -55,13 +56,11 @@ impl PurchaseOrderNode {
         }
     }
 
-    pub async fn line_total_after_discount(&self) -> f64 {
-        let line_total_after_discount = match &self.stats {
-            Some(stats) => stats.line_total_after_discount,
+    pub async fn order_total_before_discount(&self) -> f64 {
+        match &self.stats {
+            Some(stats) => stats.order_total_before_discount,
             None => 0.0,
-        };
-
-        line_total_after_discount
+        }
     }
 
     pub async fn supplier(&self, ctx: &Context<'_>) -> Result<Option<NameNode>> {
@@ -75,11 +74,12 @@ impl PurchaseOrderNode {
             .map(NameNode::from_domain);
         return Ok(name);
     }
-    pub async fn created_datetime(&self) -> NaiveDateTime {
-        self.row().created_datetime
+    pub async fn created_datetime(&self) -> DateTime<Utc> {
+        DateTime::<Utc>::from_naive_utc_and_offset(self.row().created_datetime, Utc)
     }
-    pub async fn confirmed_datetime(&self) -> &Option<NaiveDateTime> {
-        &self.row().confirmed_datetime
+    pub async fn confirmed_datetime(&self) -> Option<DateTime<Utc>> {
+        let confirmed_datetime = self.row().confirmed_datetime;
+        confirmed_datetime.map(|v| DateTime::<Utc>::from_naive_utc_and_offset(v, Utc))
     }
     pub async fn status(&self) -> PurchaseOrderNodeStatus {
         PurchaseOrderNodeStatus::from(self.row().status.clone())
@@ -113,8 +113,9 @@ impl PurchaseOrderNode {
     pub async fn shipping_method(&self) -> &Option<String> {
         &self.row().shipping_method
     }
-    pub async fn sent_datetime(&self) -> &Option<NaiveDateTime> {
-        &self.row().sent_datetime
+    pub async fn sent_datetime(&self) -> Option<DateTime<Utc>> {
+        let sent_datetime = self.row().sent_datetime;
+        sent_datetime.map(|v| DateTime::<Utc>::from_naive_utc_and_offset(v, Utc))
     }
     pub async fn contract_signed_date(&self) -> &Option<NaiveDate> {
         &self.row().contract_signed_date
@@ -163,23 +164,25 @@ impl PurchaseOrderNode {
     }
 
     pub async fn supplier_discount_amount(&self) -> f64 {
-        let line_total_after_discount = match &self.stats {
-            Some(stats) => stats.line_total_after_discount,
+        let line_total_before_discount = match &self.stats {
+            Some(stats) => stats.order_total_before_discount,
             None => 0.0,
         };
 
         let discount_percentage = self.row().supplier_discount_percentage.unwrap_or(0.0) / 100.0;
 
-        line_total_after_discount * discount_percentage
+        line_total_before_discount * discount_percentage
     }
     pub async fn supplier_discount_percentage(&self) -> &Option<f64> {
         &self.row().supplier_discount_percentage
     }
-    pub async fn authorised_datetime(&self) -> &Option<NaiveDateTime> {
-        &self.row().authorised_datetime
+    pub async fn request_approval_datetime(&self) -> Option<DateTime<Utc>> {
+        let request_approval_datetime = self.row().request_approval_datetime;
+        request_approval_datetime.map(|v| DateTime::<Utc>::from_naive_utc_and_offset(v, Utc))
     }
-    pub async fn finalised_datetime(&self) -> &Option<NaiveDateTime> {
-        &self.row().finalised_datetime
+    pub async fn finalised_datetime(&self) -> Option<DateTime<Utc>> {
+        let finalised_datetime = self.row().finalised_datetime;
+        finalised_datetime.map(|v| DateTime::<Utc>::from_naive_utc_and_offset(v, Utc))
     }
 
     pub async fn documents(&self, ctx: &Context<'_>) -> Result<SyncFileReferenceConnector> {
@@ -198,6 +201,22 @@ impl PurchaseOrderNode {
 
         let result = result_option.unwrap_or(vec![]);
         Ok(PurchaseOrderLineConnector::from_vec(result))
+    }
+
+    pub async fn currency(&self, ctx: &Context<'_>) -> Result<Option<CurrencyNode>> {
+        let currency_id = match &self.row().currency_id {
+            Some(currency_id) => currency_id,
+            None => return Ok(None),
+        };
+
+        let loader = ctx.get_loader::<DataLoader<CurrencyByIdLoader>>();
+
+        let result = loader
+            .load_one(currency_id.clone())
+            .await?
+            .map(CurrencyNode::from_domain);
+
+        Ok(result)
     }
 }
 
@@ -221,8 +240,9 @@ impl PurchaseOrderNode {
 ::PurchaseOrderStatus")]
 pub enum PurchaseOrderNodeStatus {
     New,
+    RequestApproval,
     Confirmed,
-    Authorised,
+    Sent,
     Finalised,
 }
 

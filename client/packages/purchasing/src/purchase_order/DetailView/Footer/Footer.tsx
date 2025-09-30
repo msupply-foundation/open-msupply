@@ -11,6 +11,12 @@ import {
   useTableStore,
   usePreferences,
   useDeleteConfirmation,
+  CloseIcon,
+  useConfirmationModal,
+  useNotification,
+  EditIcon,
+  useToggle,
+  PurchaseOrderLineStatusNode,
 } from '@openmsupply-client/common';
 import {
   usePurchaseOrder,
@@ -19,18 +25,27 @@ import {
 } from '../../api';
 import { getStatusTranslator, purchaseOrderStatuses } from './utils';
 import { StatusChangeButton } from './StatusChangeButton';
+import { ExpectedDeliveryDateModal } from './ExpectedDeliveryDateModal';
 
 const createStatusLog = (
   purchaseOrder: PurchaseOrderFragment,
   requiresAuthorisation: boolean
 ) => {
+  const allocatePurchaseOrderSentStatus =
+    purchaseOrder.sentDatetime &&
+    (purchaseOrder.status === PurchaseOrderNodeStatus.Sent ||
+      purchaseOrder.status === PurchaseOrderNodeStatus.Finalised);
+
   const statusLog: Record<PurchaseOrderNodeStatus, null | undefined | string> =
     {
       [PurchaseOrderNodeStatus.New]: purchaseOrder.createdDatetime,
-      [PurchaseOrderNodeStatus.Authorised]: requiresAuthorisation
-        ? purchaseOrder.authorisedDatetime
+      [PurchaseOrderNodeStatus.RequestApproval]: requiresAuthorisation
+        ? purchaseOrder.requestApprovalDatetime
         : null,
       [PurchaseOrderNodeStatus.Confirmed]: purchaseOrder.confirmedDatetime,
+      [PurchaseOrderNodeStatus.Sent]: allocatePurchaseOrderSentStatus
+        ? purchaseOrder.sentDatetime
+        : null,
       [PurchaseOrderNodeStatus.Finalised]: purchaseOrder.finalisedDatetime,
     };
 
@@ -39,16 +54,25 @@ const createStatusLog = (
 
 interface FooterProps {
   showStatusBar: boolean;
+  status: PurchaseOrderNodeStatus;
 }
 
-export const Footer = ({ showStatusBar }: FooterProps): ReactElement => {
+export const Footer = ({
+  showStatusBar,
+  status,
+}: FooterProps): ReactElement => {
   const t = useTranslation();
+  const { success } = useNotification();
+  const { clearSelected } = useTableStore();
+  const { isOn, toggleOn, toggleOff } = useToggle();
+  const { authorisePurchaseOrder = false } = usePreferences();
+
   const {
     query: { data },
     isDisabled,
   } = usePurchaseOrder();
-  const { authorisePurchaseOrder = false } = usePreferences();
   const {
+    updateLines,
     delete: { deleteLines },
   } = usePurchaseOrderLine();
 
@@ -70,7 +94,7 @@ export const Footer = ({ showStatusBar }: FooterProps): ReactElement => {
     deleteAction,
     canDelete: !isDisabled,
     messages: {
-      confirmMessage: t('messages.confirm-delete-lines-goods-received', {
+      confirmMessage: t('messages.confirm-delete-lines-purchase-order', {
         count: selectedRows.length,
       }),
       deleteSuccess: t('messages.deleted-lines', {
@@ -85,12 +109,49 @@ export const Footer = ({ showStatusBar }: FooterProps): ReactElement => {
       icon: <DeleteIcon />,
       onClick: confirmAndDelete,
     },
+    {
+      label: t('label.update-expected-delivery-date'),
+      icon: <EditIcon />,
+      onClick: toggleOn,
+    },
   ];
+
+  const confirmAndClose = async () => {
+    try {
+      await updateLines(selectedRows, {
+        status: PurchaseOrderLineStatusNode.Closed,
+      });
+      success(
+        t('messages.closed-purchase-order-lines', {
+          count: selectedRows.length,
+        })
+      )();
+      clearSelected();
+    } catch (e) {
+      console.error('Error closing purchase order lines:', e);
+    }
+  };
+
+  const showCloseConfirmation = useConfirmationModal({
+    onConfirm: confirmAndClose,
+    message: t('messages.confirm-close-purchase-order-lines', {
+      count: selectedRows.length,
+    }),
+    title: t('heading.are-you-sure'),
+  });
+
+  if (status === PurchaseOrderNodeStatus.Sent) {
+    actions.push({
+      label: t('button.close-purchase-order-lines'),
+      onClick: showCloseConfirmation,
+      icon: <CloseIcon />,
+    });
+  }
 
   const filteredStatuses = authorisePurchaseOrder
     ? purchaseOrderStatuses
     : purchaseOrderStatuses.filter(
-        status => status !== PurchaseOrderNodeStatus.Authorised
+        status => status !== PurchaseOrderNodeStatus.RequestApproval
       );
 
   return (
@@ -115,12 +176,20 @@ export const Footer = ({ showStatusBar }: FooterProps): ReactElement => {
                 statuses={filteredStatuses}
                 statusLog={createStatusLog(data, authorisePurchaseOrder)}
                 statusFormatter={getStatusTranslator(t)}
+                width={280}
               />
               <Box flex={1} display="flex" justifyContent="flex-end" gap={2}>
                 <StatusChangeButton />
               </Box>
             </Box>
           ) : null}
+          {isOn && (
+            <ExpectedDeliveryDateModal
+              selectedRows={selectedRows}
+              isOpen={isOn}
+              onClose={toggleOff}
+            />
+          )}
         </>
       }
     />

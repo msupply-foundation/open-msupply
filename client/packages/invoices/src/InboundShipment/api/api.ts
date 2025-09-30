@@ -3,7 +3,7 @@ import {
   RecordPatch,
   InvoiceNodeType,
   InvoiceSortFieldInput,
-  FilterByWithBoolean,
+  FilterBy,
   SortBy,
   InvoiceNodeStatus,
   UpdateInboundShipmentLineInput,
@@ -36,7 +36,7 @@ export type ListParams = {
   first: number;
   offset: number;
   sortBy: SortBy<InboundRowFragment>;
-  filterBy: FilterByWithBoolean | null;
+  filterBy: FilterBy | null;
 };
 
 const inboundParsers = {
@@ -144,9 +144,11 @@ const inboundParsers = {
     itemId: line.item.id,
     batch: line.batch,
     costPricePerPack: line.costPricePerPack,
-    expiryDate: line.expiryDate
-      ? Formatter.naiveDate(new Date(line.expiryDate))
-      : null,
+    expiryDate: {
+      value: line.expiryDate
+        ? Formatter.naiveDate(new Date(line.expiryDate))
+        : null,
+    },
     sellPricePerPack: line.sellPricePerPack,
     packSize: line.packSize,
     numberOfPacks: line.numberOfPacks,

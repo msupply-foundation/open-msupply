@@ -1,5 +1,5 @@
 import {
-  FilterByWithBoolean,
+  FilterBy,
   GoodsReceivedSortFieldInput,
   SortBy,
   useMutation,
@@ -17,7 +17,7 @@ export type ListParams = {
   first?: number;
   offset?: number;
   sortBy?: SortBy<GoodsReceivedFragment>;
-  filterBy: FilterByWithBoolean | null;
+  filterBy: FilterBy | null;
 };
 
 export const useGoodsReceivedList = (queryParams?: ListParams) => {

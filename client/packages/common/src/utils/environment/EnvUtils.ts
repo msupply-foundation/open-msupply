@@ -112,6 +112,13 @@ const mapRoute = (route: string): RouteMapping => {
       return { title: 'r-and-r-forms', docs: '/replenishment/r-and-r-forms/' };
     case inRoute(AppRoute.Help):
       return { title: 'help', docs: '/help/help/' };
+    case inRoute(AppRoute.PurchaseOrder):
+      return {
+        title: 'purchase-order',
+        docs: '/replenishment/purchase_orders',
+      };
+    case inRoute(AppRoute.GoodsReceived):
+      return { title: 'goods-received', docs: '/replenishment/goods_received' };
     default:
       return { title: undefined, docs: '/introduction/introduction' };
   }
@@ -181,3 +188,5 @@ export const EnvUtils = {
   platform,
   printFormat: PrintFormat.Html, // platform === Platform.Android ? PrintFormat.Html : PrintFormat.Pdf,
 };
+
+export const ALT_KEY = EnvUtils.os === 'Mac OS' ? 'Option' : 'Alt';

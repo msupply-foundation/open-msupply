@@ -2,6 +2,7 @@ import * as Types from '@openmsupply-client/common';
 
 import { GraphQLClient, RequestOptions } from 'graphql-request';
 import gql from 'graphql-tag';
+import { SyncFileReferenceFragmentDoc } from '../../../../system/src/Documents/types.generated';
 import { NameRowFragmentDoc } from '../../../../system/src/Name/api/operations.generated';
 type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
 export type PurchaseOrderRowFragment = {
@@ -10,20 +11,14 @@ export type PurchaseOrderRowFragment = {
   number: number;
   createdDatetime: string;
   confirmedDatetime?: string | null;
+  sentDatetime?: string | null;
   status: Types.PurchaseOrderNodeStatus;
+  requestedDeliveryDate?: string | null;
   targetMonths?: number | null;
   reference?: string | null;
   comment?: string | null;
   supplier?: { __typename: 'NameNode'; id: string; name: string } | null;
   lines: { __typename: 'PurchaseOrderLineConnector'; totalCount: number };
-};
-
-export type SyncFileReferenceFragment = {
-  __typename: 'SyncFileReferenceNode';
-  id: string;
-  fileName: string;
-  recordId: string;
-  createdDatetime: string;
 };
 
 export type PurchaseOrderFragment = {
@@ -51,7 +46,7 @@ export type PurchaseOrderFragment = {
   supplierAgent?: string | null;
   supplierDiscountAmount: number;
   supplierDiscountPercentage?: number | null;
-  lineTotalAfterDiscount: number;
+  orderTotalBeforeDiscount: number;
   orderTotalAfterDiscount: number;
   targetMonths?: number | null;
   confirmedDatetime?: string | null;
@@ -59,7 +54,7 @@ export type PurchaseOrderFragment = {
   advancePaidDate?: string | null;
   receivedAtPortDate?: string | null;
   requestedDeliveryDate?: string | null;
-  authorisedDatetime?: string | null;
+  requestApprovalDatetime?: string | null;
   finalisedDatetime?: string | null;
   donor?: { __typename: 'NameNode'; id: string; name: string } | null;
   lines: {
@@ -74,19 +69,23 @@ export type PurchaseOrderFragment = {
       requestedPackSize: number;
       requestedDeliveryDate?: string | null;
       requestedNumberOfUnits: number;
+      receivedNumberOfUnits: number;
       adjustedNumberOfUnits?: number | null;
-      pricePerUnitAfterDiscount: number;
-      pricePerUnitBeforeDiscount: number;
+      pricePerPackAfterDiscount: number;
+      pricePerPackBeforeDiscount: number;
       note?: string | null;
       unit?: string | null;
       comment?: string | null;
       supplierItemCode?: string | null;
+      status: Types.PurchaseOrderLineStatusNode;
+      unitsOrderedInOthers: number;
       item: {
         __typename: 'ItemNode';
         id: string;
         code: string;
         name: string;
         unitName?: string | null;
+        stats: { __typename: 'ItemStatsNode'; stockOnHand: number };
       };
       manufacturer?: {
         __typename: 'NameNode';
@@ -97,6 +96,27 @@ export type PurchaseOrderFragment = {
         isOnHold: boolean;
         name: string;
         store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+      } | null;
+      purchaseOrder?: {
+        __typename: 'PurchaseOrderNode';
+        id: string;
+        number: number;
+        reference?: string | null;
+        confirmedDatetime?: string | null;
+        currencyId?: string | null;
+        supplier?: {
+          __typename: 'NameNode';
+          code: string;
+          name: string;
+        } | null;
+        user?: { __typename: 'UserNode'; username: string } | null;
+        currency?: {
+          __typename: 'CurrencyNode';
+          id: string;
+          code: string;
+          rate: number;
+          isHomeCurrency: boolean;
+        } | null;
       } | null;
     }>;
   };
@@ -111,6 +131,13 @@ export type PurchaseOrderFragment = {
       createdDatetime: string;
     }>;
   };
+  currency?: {
+    __typename: 'CurrencyNode';
+    id: string;
+    code: string;
+    rate: number;
+    isHomeCurrency: boolean;
+  } | null;
 };
 
 export type PurchaseOrderLineFragment = {
@@ -122,19 +149,23 @@ export type PurchaseOrderLineFragment = {
   requestedPackSize: number;
   requestedDeliveryDate?: string | null;
   requestedNumberOfUnits: number;
+  receivedNumberOfUnits: number;
   adjustedNumberOfUnits?: number | null;
-  pricePerUnitAfterDiscount: number;
-  pricePerUnitBeforeDiscount: number;
+  pricePerPackAfterDiscount: number;
+  pricePerPackBeforeDiscount: number;
   note?: string | null;
   unit?: string | null;
   comment?: string | null;
   supplierItemCode?: string | null;
+  status: Types.PurchaseOrderLineStatusNode;
+  unitsOrderedInOthers: number;
   item: {
     __typename: 'ItemNode';
     id: string;
     code: string;
     name: string;
     unitName?: string | null;
+    stats: { __typename: 'ItemStatsNode'; stockOnHand: number };
   };
   manufacturer?: {
     __typename: 'NameNode';
@@ -145,6 +176,23 @@ export type PurchaseOrderLineFragment = {
     isOnHold: boolean;
     name: string;
     store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+  } | null;
+  purchaseOrder?: {
+    __typename: 'PurchaseOrderNode';
+    id: string;
+    number: number;
+    reference?: string | null;
+    confirmedDatetime?: string | null;
+    currencyId?: string | null;
+    supplier?: { __typename: 'NameNode'; code: string; name: string } | null;
+    user?: { __typename: 'UserNode'; username: string } | null;
+    currency?: {
+      __typename: 'CurrencyNode';
+      id: string;
+      code: string;
+      rate: number;
+      isHomeCurrency: boolean;
+    } | null;
   } | null;
 };
 
@@ -168,7 +216,9 @@ export type PurchaseOrdersQuery = {
       number: number;
       createdDatetime: string;
       confirmedDatetime?: string | null;
+      sentDatetime?: string | null;
       status: Types.PurchaseOrderNodeStatus;
+      requestedDeliveryDate?: string | null;
       targetMonths?: number | null;
       reference?: string | null;
       comment?: string | null;
@@ -211,7 +261,7 @@ export type PurchaseOrderByIdQuery = {
         supplierAgent?: string | null;
         supplierDiscountAmount: number;
         supplierDiscountPercentage?: number | null;
-        lineTotalAfterDiscount: number;
+        orderTotalBeforeDiscount: number;
         orderTotalAfterDiscount: number;
         targetMonths?: number | null;
         confirmedDatetime?: string | null;
@@ -219,7 +269,7 @@ export type PurchaseOrderByIdQuery = {
         advancePaidDate?: string | null;
         receivedAtPortDate?: string | null;
         requestedDeliveryDate?: string | null;
-        authorisedDatetime?: string | null;
+        requestApprovalDatetime?: string | null;
         finalisedDatetime?: string | null;
         donor?: { __typename: 'NameNode'; id: string; name: string } | null;
         lines: {
@@ -234,19 +284,23 @@ export type PurchaseOrderByIdQuery = {
             requestedPackSize: number;
             requestedDeliveryDate?: string | null;
             requestedNumberOfUnits: number;
+            receivedNumberOfUnits: number;
             adjustedNumberOfUnits?: number | null;
-            pricePerUnitAfterDiscount: number;
-            pricePerUnitBeforeDiscount: number;
+            pricePerPackAfterDiscount: number;
+            pricePerPackBeforeDiscount: number;
             note?: string | null;
             unit?: string | null;
             comment?: string | null;
             supplierItemCode?: string | null;
+            status: Types.PurchaseOrderLineStatusNode;
+            unitsOrderedInOthers: number;
             item: {
               __typename: 'ItemNode';
               id: string;
               code: string;
               name: string;
               unitName?: string | null;
+              stats: { __typename: 'ItemStatsNode'; stockOnHand: number };
             };
             manufacturer?: {
               __typename: 'NameNode';
@@ -262,6 +316,27 @@ export type PurchaseOrderByIdQuery = {
                 code: string;
               } | null;
             } | null;
+            purchaseOrder?: {
+              __typename: 'PurchaseOrderNode';
+              id: string;
+              number: number;
+              reference?: string | null;
+              confirmedDatetime?: string | null;
+              currencyId?: string | null;
+              supplier?: {
+                __typename: 'NameNode';
+                code: string;
+                name: string;
+              } | null;
+              user?: { __typename: 'UserNode'; username: string } | null;
+              currency?: {
+                __typename: 'CurrencyNode';
+                id: string;
+                code: string;
+                rate: number;
+                isHomeCurrency: boolean;
+              } | null;
+            } | null;
           }>;
         };
         supplier?: { __typename: 'NameNode'; id: string; name: string } | null;
@@ -275,6 +350,13 @@ export type PurchaseOrderByIdQuery = {
             createdDatetime: string;
           }>;
         };
+        currency?: {
+          __typename: 'CurrencyNode';
+          id: string;
+          code: string;
+          rate: number;
+          isHomeCurrency: boolean;
+        } | null;
       }
     | { __typename: 'RecordNotFound'; description: string };
 };
@@ -289,6 +371,22 @@ export type InsertPurchaseOrderMutation = {
   insertPurchaseOrder: { __typename: 'IdResponse'; id: string };
 };
 
+export type ItemCannotBeOrderedFragment = {
+  __typename: 'ItemCannotBeOrdered';
+  description: string;
+  line: { __typename: 'PurchaseOrderLineNode'; id: string };
+};
+
+export type ItemsCannotBeOrderedFragment = {
+  __typename: 'ItemsCannotBeOrdered';
+  description: string;
+  lines: Array<{
+    __typename: 'ItemCannotBeOrdered';
+    description: string;
+    line: { __typename: 'PurchaseOrderLineNode'; id: string };
+  }>;
+};
+
 export type UpdatePurchaseOrderMutationVariables = Types.Exact<{
   input: Types.UpdatePurchaseOrderInput;
   storeId: Types.Scalars['String']['input'];
@@ -296,7 +394,20 @@ export type UpdatePurchaseOrderMutationVariables = Types.Exact<{
 
 export type UpdatePurchaseOrderMutation = {
   __typename: 'Mutations';
-  updatePurchaseOrder: { __typename: 'IdResponse'; id: string };
+  updatePurchaseOrder:
+    | { __typename: 'IdResponse'; id: string }
+    | {
+        __typename: 'UpdatePurchaseOrderError';
+        error: {
+          __typename: 'ItemsCannotBeOrdered';
+          description: string;
+          lines: Array<{
+            __typename: 'ItemCannotBeOrdered';
+            description: string;
+            line: { __typename: 'PurchaseOrderLineNode'; id: string };
+          }>;
+        };
+      };
 };
 
 export type DeletePurchaseOrderMutationVariables = Types.Exact<{
@@ -311,7 +422,7 @@ export type DeletePurchaseOrderMutation = {
         __typename: 'DeletePurchaseOrderError';
         error:
           | {
-              __typename: 'CannotDeleteNonNewPurchaseOrder';
+              __typename: 'CannotDeletePurchaseOrder';
               description: string;
             }
           | { __typename: 'RecordNotFound'; description: string };
@@ -342,19 +453,23 @@ export type PurchaseOrderLinesQuery = {
       requestedPackSize: number;
       requestedDeliveryDate?: string | null;
       requestedNumberOfUnits: number;
+      receivedNumberOfUnits: number;
       adjustedNumberOfUnits?: number | null;
-      pricePerUnitAfterDiscount: number;
-      pricePerUnitBeforeDiscount: number;
+      pricePerPackAfterDiscount: number;
+      pricePerPackBeforeDiscount: number;
       note?: string | null;
       unit?: string | null;
       comment?: string | null;
       supplierItemCode?: string | null;
+      status: Types.PurchaseOrderLineStatusNode;
+      unitsOrderedInOthers: number;
       item: {
         __typename: 'ItemNode';
         id: string;
         code: string;
         name: string;
         unitName?: string | null;
+        stats: { __typename: 'ItemStatsNode'; stockOnHand: number };
       };
       manufacturer?: {
         __typename: 'NameNode';
@@ -365,6 +480,27 @@ export type PurchaseOrderLinesQuery = {
         isOnHold: boolean;
         name: string;
         store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+      } | null;
+      purchaseOrder?: {
+        __typename: 'PurchaseOrderNode';
+        id: string;
+        number: number;
+        reference?: string | null;
+        confirmedDatetime?: string | null;
+        currencyId?: string | null;
+        supplier?: {
+          __typename: 'NameNode';
+          code: string;
+          name: string;
+        } | null;
+        user?: { __typename: 'UserNode'; username: string } | null;
+        currency?: {
+          __typename: 'CurrencyNode';
+          id: string;
+          code: string;
+          rate: number;
+          isHomeCurrency: boolean;
+        } | null;
       } | null;
     }>;
   };
@@ -389,19 +525,23 @@ export type PurchaseOrderLineQuery = {
       requestedPackSize: number;
       requestedDeliveryDate?: string | null;
       requestedNumberOfUnits: number;
+      receivedNumberOfUnits: number;
       adjustedNumberOfUnits?: number | null;
-      pricePerUnitAfterDiscount: number;
-      pricePerUnitBeforeDiscount: number;
+      pricePerPackAfterDiscount: number;
+      pricePerPackBeforeDiscount: number;
       note?: string | null;
       unit?: string | null;
       comment?: string | null;
       supplierItemCode?: string | null;
+      status: Types.PurchaseOrderLineStatusNode;
+      unitsOrderedInOthers: number;
       item: {
         __typename: 'ItemNode';
         id: string;
         code: string;
         name: string;
         unitName?: string | null;
+        stats: { __typename: 'ItemStatsNode'; stockOnHand: number };
       };
       manufacturer?: {
         __typename: 'NameNode';
@@ -412,6 +552,27 @@ export type PurchaseOrderLineQuery = {
         isOnHold: boolean;
         name: string;
         store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+      } | null;
+      purchaseOrder?: {
+        __typename: 'PurchaseOrderNode';
+        id: string;
+        number: number;
+        reference?: string | null;
+        confirmedDatetime?: string | null;
+        currencyId?: string | null;
+        supplier?: {
+          __typename: 'NameNode';
+          code: string;
+          name: string;
+        } | null;
+        user?: { __typename: 'UserNode'; username: string } | null;
+        currency?: {
+          __typename: 'CurrencyNode';
+          id: string;
+          code: string;
+          rate: number;
+          isHomeCurrency: boolean;
+        } | null;
       } | null;
     }>;
   };
@@ -439,7 +600,18 @@ export type InsertPurchaseOrderLineMutation = {
   __typename: 'Mutations';
   insertPurchaseOrderLine:
     | { __typename: 'IdResponse'; id: string }
-    | { __typename: 'InsertPurchaseOrderLineError' };
+    | {
+        __typename: 'InsertPurchaseOrderLineError';
+        error:
+          | { __typename: 'CannnotFindItemByCode'; description: string }
+          | { __typename: 'CannotEditPurchaseOrder'; description: string }
+          | { __typename: 'ForeignKeyError'; description: string }
+          | { __typename: 'PackSizeCodeCombinationExists'; description: string }
+          | {
+              __typename: 'PurchaseOrderLineWithIdExists';
+              description: string;
+            };
+      };
 };
 
 export type AddToPurchaseOrderFromMasterListMutationVariables = Types.Exact<{
@@ -463,34 +635,6 @@ export type AddToPurchaseOrderFromMasterListMutation = {
     | { __typename: 'PurchaseOrderLineConnector' };
 };
 
-export type InsertPurchaseOrderLineFromCsvMutationVariables = Types.Exact<{
-  storeId: Types.Scalars['String']['input'];
-  input: Types.InsertPurchaseOrderLineFromCsvInput;
-}>;
-
-export type InsertPurchaseOrderLineFromCsvMutation = {
-  __typename: 'Mutations';
-  insertPurchaseOrderLineFromCsv:
-    | { __typename: 'IdResponse'; id: string }
-    | {
-        __typename: 'InsertPurchaseOrderLineError';
-        error:
-          | { __typename: 'CannnotFindItemByCode'; description: string }
-          | { __typename: 'CannotEditPurchaseOrder'; description: string }
-          | { __typename: 'ForeignKeyError'; description: string }
-          | {
-              __typename: 'PackSizeCodeCombinationExists';
-              description: string;
-              itemCode: string;
-              requestedPackSize: number;
-            }
-          | {
-              __typename: 'PurchaseOrderLineWithIdExists';
-              description: string;
-            };
-      };
-};
-
 export type UpdatePurchaseOrderLineMutationVariables = Types.Exact<{
   input: Types.UpdatePurchaseOrderLineInput;
   storeId: Types.Scalars['String']['input'];
@@ -503,8 +647,18 @@ export type UpdatePurchaseOrderLineMutation = {
     | {
         __typename: 'UpdatePurchaseOrderLineError';
         error:
-          | { __typename: 'CannotAdjustRequestedQuantity'; description: string }
+          | { __typename: 'CannotEditAdjustedQuantity'; description: string }
           | { __typename: 'CannotEditPurchaseOrder'; description: string }
+          | {
+              __typename: 'CannotEditQuantityBelowReceived';
+              description: string;
+            }
+          | { __typename: 'CannotEditRequestedQuantity'; description: string }
+          | {
+              __typename: 'ItemCannotBeOrdered';
+              description: string;
+              line: { __typename: 'PurchaseOrderLineNode'; id: string };
+            }
           | { __typename: 'PurchaseOrderDoesNotExist'; description: string }
           | { __typename: 'PurchaseOrderLineNotFound'; description: string }
           | { __typename: 'UpdatedLineDoesNotExist'; description: string };
@@ -543,7 +697,9 @@ export const PurchaseOrderRowFragmentDoc = gql`
     }
     createdDatetime
     confirmedDatetime
+    sentDatetime
     status
+    requestedDeliveryDate
     targetMonths
     reference
     lines {
@@ -564,13 +720,17 @@ export const PurchaseOrderLineFragmentDoc = gql`
       code
       name
       unitName
+      stats(storeId: $storeId) {
+        stockOnHand
+      }
     }
     requestedPackSize
     requestedDeliveryDate
     requestedNumberOfUnits
+    receivedNumberOfUnits
     adjustedNumberOfUnits
-    pricePerUnitAfterDiscount
-    pricePerUnitBeforeDiscount
+    pricePerPackAfterDiscount
+    pricePerPackBeforeDiscount
     manufacturer(storeId: $storeId) {
       ...NameRow
     }
@@ -578,17 +738,30 @@ export const PurchaseOrderLineFragmentDoc = gql`
     unit
     comment
     supplierItemCode
+    status
+    purchaseOrder {
+      id
+      number
+      reference
+      confirmedDatetime
+      supplier {
+        code
+        name
+      }
+      user {
+        username
+      }
+      currencyId
+      currency {
+        id
+        code
+        rate
+        isHomeCurrency
+      }
+    }
+    unitsOrderedInOthers
   }
   ${NameRowFragmentDoc}
-`;
-export const SyncFileReferenceFragmentDoc = gql`
-  fragment SyncFileReference on SyncFileReferenceNode {
-    __typename
-    id
-    fileName
-    recordId
-    createdDatetime
-  }
 `;
 export const PurchaseOrderFragmentDoc = gql`
   fragment PurchaseOrder on PurchaseOrderNode {
@@ -632,7 +805,7 @@ export const PurchaseOrderFragmentDoc = gql`
     supplierAgent
     supplierDiscountAmount
     supplierDiscountPercentage
-    lineTotalAfterDiscount
+    orderTotalBeforeDiscount
     orderTotalAfterDiscount
     targetMonths
     confirmedDatetime
@@ -640,7 +813,7 @@ export const PurchaseOrderFragmentDoc = gql`
     advancePaidDate
     receivedAtPortDate
     requestedDeliveryDate
-    authorisedDatetime
+    requestApprovalDatetime
     finalisedDatetime
     documents {
       __typename
@@ -651,9 +824,34 @@ export const PurchaseOrderFragmentDoc = gql`
     donor {
       id
     }
+    currency {
+      id
+      code
+      rate
+      isHomeCurrency
+    }
   }
   ${PurchaseOrderLineFragmentDoc}
   ${SyncFileReferenceFragmentDoc}
+`;
+export const ItemCannotBeOrderedFragmentDoc = gql`
+  fragment ItemCannotBeOrdered on ItemCannotBeOrdered {
+    __typename
+    description
+    line {
+      id
+    }
+  }
+`;
+export const ItemsCannotBeOrderedFragmentDoc = gql`
+  fragment ItemsCannotBeOrdered on ItemsCannotBeOrdered {
+    __typename
+    description
+    lines {
+      ...ItemCannotBeOrdered
+    }
+  }
+  ${ItemCannotBeOrderedFragmentDoc}
 `;
 export const PurchaseOrdersDocument = gql`
   query purchaseOrders(
@@ -717,8 +915,17 @@ export const UpdatePurchaseOrderDocument = gql`
       ... on IdResponse {
         id
       }
+      ... on UpdatePurchaseOrderError {
+        __typename
+        error {
+          ... on ItemsCannotBeOrdered {
+            ...ItemsCannotBeOrdered
+          }
+        }
+      }
     }
   }
+  ${ItemsCannotBeOrderedFragmentDoc}
 `;
 export const DeletePurchaseOrderDocument = gql`
   mutation deletePurchaseOrder($id: String!, $storeId: String!) {
@@ -730,7 +937,7 @@ export const DeletePurchaseOrderDocument = gql`
             __typename
           }
           description
-          ... on CannotDeleteNonNewPurchaseOrder {
+          ... on CannotDeletePurchaseOrder {
             __typename
           }
         }
@@ -805,6 +1012,32 @@ export const InsertPurchaseOrderLineDocument = gql`
       ... on IdResponse {
         id
       }
+      ... on InsertPurchaseOrderLineError {
+        __typename
+        error {
+          description
+          ... on CannnotFindItemByCode {
+            __typename
+            description
+          }
+          ... on CannotEditPurchaseOrder {
+            __typename
+            description
+          }
+          ... on ForeignKeyError {
+            __typename
+            description
+          }
+          ... on PackSizeCodeCombinationExists {
+            __typename
+            description
+          }
+          ... on PurchaseOrderLineWithIdExists {
+            __typename
+            description
+          }
+        }
+      }
     }
   }
 `;
@@ -841,47 +1074,6 @@ export const AddToPurchaseOrderFromMasterListDocument = gql`
     }
   }
 `;
-export const InsertPurchaseOrderLineFromCsvDocument = gql`
-  mutation insertPurchaseOrderLineFromCsv(
-    $storeId: String!
-    $input: InsertPurchaseOrderLineFromCSVInput!
-  ) {
-    insertPurchaseOrderLineFromCsv(input: $input, storeId: $storeId) {
-      ... on InsertPurchaseOrderLineError {
-        __typename
-        error {
-          description
-          ... on CannnotFindItemByCode {
-            __typename
-            description
-          }
-          ... on ForeignKeyError {
-            __typename
-            description
-          }
-          ... on CannotEditPurchaseOrder {
-            __typename
-            description
-          }
-          ... on PackSizeCodeCombinationExists {
-            __typename
-            description
-            itemCode
-            requestedPackSize
-          }
-          ... on PurchaseOrderLineWithIdExists {
-            __typename
-            description
-          }
-        }
-      }
-      ... on IdResponse {
-        __typename
-        id
-      }
-    }
-  }
-`;
 export const UpdatePurchaseOrderLineDocument = gql`
   mutation updatePurchaseOrderLine(
     $input: UpdatePurchaseOrderLineInput!
@@ -911,10 +1103,18 @@ export const UpdatePurchaseOrderLineDocument = gql`
             __typename
             description
           }
+          ... on ItemCannotBeOrdered {
+            ...ItemCannotBeOrdered
+          }
+          ... on CannotEditQuantityBelowReceived {
+            __typename
+            description
+          }
         }
       }
     }
   }
+  ${ItemCannotBeOrderedFragmentDoc}
 `;
 export const DeletePurchaseOrderLinesDocument = gql`
   mutation deletePurchaseOrderLines($ids: [String!]!, $storeId: String!) {
@@ -1114,22 +1314,6 @@ export function getSdk(
             { ...requestHeaders, ...wrappedRequestHeaders }
           ),
         'addToPurchaseOrderFromMasterList',
-        'mutation',
-        variables
-      );
-    },
-    insertPurchaseOrderLineFromCsv(
-      variables: InsertPurchaseOrderLineFromCsvMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
-    ): Promise<InsertPurchaseOrderLineFromCsvMutation> {
-      return withWrapper(
-        wrappedRequestHeaders =>
-          client.request<InsertPurchaseOrderLineFromCsvMutation>(
-            InsertPurchaseOrderLineFromCsvDocument,
-            variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
-        'insertPurchaseOrderLineFromCsv',
         'mutation',
         variables
       );

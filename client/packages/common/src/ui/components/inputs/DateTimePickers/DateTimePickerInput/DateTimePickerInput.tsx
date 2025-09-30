@@ -6,7 +6,6 @@ import {
   DateValidationError,
   PickersActionBarAction,
 } from '@mui/x-date-pickers';
-import { useAppTheme } from '@common/styles';
 import { Box, SxProps, Typography, useMediaQuery } from '@mui/material';
 import {
   DateUtils,
@@ -82,7 +81,6 @@ export const DateTimePickerInput = ({
   slotProps,
   ...props
 }: DateTimePickerInputProps) => {
-  const theme = useAppTheme();
   const [internalError, setInternalError] = useState<string | null>(null);
   const [value, setValue] = useBufferState<Date | null>(props.value ?? null);
   const [isInitialEntry, setIsInitialEntry] = useState(true);
@@ -141,11 +139,11 @@ export const DateTimePickerInput = ({
         }}
         label={label}
         slotProps={{
-          mobilePaper: { sx: getPaperSx(theme) },
-          desktopPaper: { sx: getPaperSx(theme) },
+          mobilePaper: { sx: getPaperSx() },
+          desktopPaper: { sx: getPaperSx() },
           actionBar: {
             actions: actions ?? ['clear', 'accept'],
-            sx: getActionBarSx(theme),
+            sx: getActionBarSx(),
           },
           textField: {
             onBlur: () => {
@@ -161,7 +159,7 @@ export const DateTimePickerInput = ({
             helperText:
               errorText || (!isInitialEntry ? (internalError ?? '') : ''),
             sx: {
-              ...getTextFieldSx(theme, !!label, !showTime, inputSx, width),
+              ...getTextFieldSx(!!label, !showTime, inputSx, width),
               width,
               minWidth: showTime ? 200 : undefined,
             },

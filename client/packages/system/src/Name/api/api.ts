@@ -2,8 +2,9 @@ import {
   SortBy,
   NameSortFieldInput,
   NameNodeType,
-  FilterByWithBoolean,
+  FilterBy,
   UpdateNamePropertiesInput,
+  NameFilterInput,
 } from '@openmsupply-client/common';
 import {
   Sdk,
@@ -64,17 +65,26 @@ export const getNameQueries = (sdk: Sdk, storeId: string) => ({
 
       return result?.names;
     },
-    suppliers: async ({ sortBy }: ListParams) => {
+    suppliers: async ({
+      sortBy,
+      external = false,
+    }: ListParams & { external?: boolean }) => {
       const key = nameParsers.toSort(sortBy?.key ?? '');
+
+      const filter: NameFilterInput = {
+        isSupplier: true,
+        type: {
+          equalAny: external
+            ? [NameNodeType.Facility]
+            : [NameNodeType.Facility, NameNodeType.Store],
+        },
+      };
 
       const result = await sdk.names({
         key,
         desc: !!sortBy?.isDesc,
         storeId,
-        filter: {
-          isSupplier: true,
-          type: { equalAny: [NameNodeType.Facility, NameNodeType.Store] },
-        },
+        filter,
         first: 1000,
       });
 
@@ -121,7 +131,7 @@ export const getNameQueries = (sdk: Sdk, storeId: string) => ({
       offset?: number;
       first?: number;
       sortBy?: SortBy<NameRowFragment>;
-      filterBy?: FilterByWithBoolean | null;
+      filterBy?: FilterBy | null;
     }): Promise<{
       nodes: FacilityNameRowFragment[];
       totalCount: number;

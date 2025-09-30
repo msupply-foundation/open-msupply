@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 import {
   AppBarContentPortal,
   Box,
@@ -8,16 +8,16 @@ import {
   useTranslation,
   useBufferState,
   Switch,
-  useIsGrouped,
+  useIsGroupedState,
   Tooltip,
   useNavigate,
   RouteBuilder,
 } from '@openmsupply-client/common';
 import { CustomerSearchInput } from '@openmsupply-client/system';
 import { useOutbound } from '../api';
-import { AppRoute } from 'packages/config/src';
+import { AppRoute } from '@openmsupply-client/config';
 
-export const Toolbar: FC = () => {
+export const Toolbar = () => {
   const t = useTranslation();
   const { id, otherParty, theirReference, update, requisition } =
     useOutbound.document.fields([
@@ -26,7 +26,7 @@ export const Toolbar: FC = () => {
       'theirReference',
       'requisition',
     ]);
-  const { isGrouped, toggleIsGrouped } = useIsGrouped('outboundShipment');
+  const { isGrouped, toggleIsGrouped } = useIsGroupedState('outboundShipment');
   const [theirReferenceBuffer, setTheirReferenceBuffer] =
     useBufferState(theirReference);
   const navigate = useNavigate();

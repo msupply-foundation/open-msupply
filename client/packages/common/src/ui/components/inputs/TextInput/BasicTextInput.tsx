@@ -84,8 +84,8 @@ export const BasicTextInput = React.forwardRef<
                   error ? `2px solid ${theme.palette.error.main}` : 'none',
                 backgroundColor: theme =>
                   props.disabled
-                    ? theme.palette.background.toolbar
-                    : theme.palette.background.menu,
+                    ? theme.palette.background.input.disabled
+                    : theme.palette.background.input.main,
                 borderRadius: 2,
                 padding: 0.5,
                 // Ignoring below, see https://github.com/mui/material-ui/issues/45041

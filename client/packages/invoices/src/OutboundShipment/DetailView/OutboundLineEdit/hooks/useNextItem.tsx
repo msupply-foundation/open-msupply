@@ -1,27 +1,25 @@
-import { ItemRowFragment, toItemRow } from '@openmsupply-client/system';
-import { useOutbound } from '../../../api';
+import { useState } from 'react';
+import { ItemRowFragment } from '@openmsupply-client/system';
 
 export const useNextItem = (
+  getSortedItems: () => ItemRowFragment[],
   currentItemId?: string
 ): { next: ItemRowFragment | null; disabled: boolean } => {
-  const next: ItemRowFragment | null = null;
-  const disabled = true;
+  const [items] = useState(getSortedItems());
 
-  const { items } = useOutbound.line.rows();
-
-  if (!items || !currentItemId) return { next, disabled };
+  if (!items || !currentItemId) return { next: null, disabled: true };
 
   const numberOfItems = items.length;
-  const currentIdx = items.findIndex(({ itemId }) => itemId === currentItemId);
+  const currentIdx = items.findIndex(({ id }) => id === currentItemId);
   const nextIdx = currentIdx + 1;
   const nextItem = items[nextIdx];
 
   if (currentIdx === -1 || !nextItem) {
-    return { next, disabled };
+    return { next: null, disabled: true };
   }
 
   return {
-    next: toItemRow(nextItem),
+    next: nextItem,
     disabled: currentIdx === numberOfItems - 1,
   };
 };

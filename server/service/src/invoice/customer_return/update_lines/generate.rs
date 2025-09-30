@@ -106,7 +106,7 @@ pub fn generate(
              }| UpdateStockInLine {
                 id,
                 batch,
-                expiry_date,
+                expiry_date: Some(NullableUpdate { value: expiry_date }),
                 note: Some(NullableUpdate { value: note }),
                 item_id: Some(item_id),
                 pack_size: Some(pack_size),

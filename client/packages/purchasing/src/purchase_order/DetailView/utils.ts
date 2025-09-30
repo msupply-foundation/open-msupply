@@ -4,18 +4,15 @@ import {
   TypedTFunction,
   Formatter,
 } from '@openmsupply-client/common';
-import {
-  ImportRow,
-  LineNumber,
-} from './ImportLines/PurchaseOrderLineImportModal';
+import { ImportRow, LineNumber } from './ImportLines/utils';
 
 function basePurchaseOrderLineFields(t: TypedTFunction<LocaleKey>) {
   return [
     t('label.code'),
     t('label.pack-size'),
     t('label.requested'),
-    t('label.price-per-unit-before-discount'),
-    t('label.price-per-unit-after-discount'),
+    t('label.price-per-pack-before-discount'),
+    t('label.price-per-pack-after-discount'),
   ];
 }
 
@@ -51,8 +48,8 @@ export const importPurchaseOrderLinesToCSVWithErrors = (
       node.itemCode,
       node.requestedPackSize,
       node.requestedNumberOfUnits,
-      node.pricePerUnitBeforeDiscount,
-      node.pricePerUnitAfterDiscount,
+      (node.pricePerPackBeforeDiscount || 0) * (node.requestedPackSize || 1),
+      (node.pricePerPackAfterDiscount || 0) * (node.requestedPackSize || 1),
       node.lineNumber,
       node.errorMessage,
     ];
@@ -68,18 +65,34 @@ export const importPurchaseOrderLinesToCsv = (
   const fields: string[] = [
     t('label.code'),
     t('label.pack-size'),
-    t('label.requested'),
-    t('label.price-per-unit-after-discount'),
-    t('label.price-per-unit-before-discount'),
+    t('label.requested-packs'),
+    t('label.unit'),
+    t('label.supplier-item-code'),
+    t('label.price-per-pack-before-discount'),
+    t('label.discount-percentage'),
+    t('label.price-per-pack-after-discount'),
+    t('label.requested-delivery-date'),
+    t('label.expected-delivery-date'),
+    t('label.comment'),
+    t('label.notes'),
   ];
+
   const data = purchaseOrderLines.map(node => {
     const row = [
       node.itemCode,
       node.requestedPackSize,
       node.requestedNumberOfUnits,
-      node.pricePerUnitAfterDiscount,
-      node.pricePerUnitBeforeDiscount,
+      node.unit,
+      node.supplierItemCode,
+      node.pricePerPackBeforeDiscount,
+      node.discountPercentage,
+      node.pricePerPackAfterDiscount,
+      node.requestedDeliveryDate,
+      node.expectedDeliveryDate,
+      node.comment,
+      node.note,
     ];
+
     return row;
   });
 

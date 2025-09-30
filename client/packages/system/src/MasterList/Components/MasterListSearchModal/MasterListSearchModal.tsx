@@ -1,13 +1,13 @@
 import React from 'react';
 import {
-  FilterByWithBoolean,
+  FilterBy,
   ListSearch,
   useTranslation,
 } from '@openmsupply-client/common';
 import { MasterListRowFragment, useMasterLists } from '../../api';
 
 interface MasterListSearchProps {
-  filterBy?: FilterByWithBoolean;
+  filterBy?: FilterBy;
   open: boolean;
   onClose: () => void;
   onChange: (name: MasterListRowFragment) => void;

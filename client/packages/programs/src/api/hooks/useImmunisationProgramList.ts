@@ -1,5 +1,5 @@
 import {
-  FilterByWithBoolean,
+  FilterBy,
   SortBy,
   ProgramNode,
   ProgramSortFieldInput,
@@ -13,7 +13,7 @@ type ListParams = {
   first?: number;
   offset?: number;
   sortBy?: SortBy<ImmunisationProgramFragment>;
-  filterBy?: FilterByWithBoolean | null;
+  filterBy?: FilterBy | null;
 };
 
 export const useImmunisationProgramList = (queryParams: ListParams) => {

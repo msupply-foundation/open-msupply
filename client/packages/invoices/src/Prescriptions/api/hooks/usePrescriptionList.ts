@@ -1,5 +1,5 @@
 import {
-  FilterByWithBoolean,
+  FilterBy,
   InvoiceNodeType,
   InvoiceSortFieldInput,
   SortBy,
@@ -16,7 +16,7 @@ export type ListParams = {
   first?: number;
   offset?: number;
   sortBy?: SortBy<PrescriptionRowFragment>;
-  filterBy: FilterByWithBoolean | null;
+  filterBy: FilterBy | null;
 };
 
 export const usePrescriptionList = (queryParams: ListParams) => {

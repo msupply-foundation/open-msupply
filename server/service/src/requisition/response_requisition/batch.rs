@@ -75,15 +75,15 @@ pub fn batch_response_requisition(
 
 #[cfg(test)]
 mod test {
-    use repository::{
-        mock::{mock_full_new_response_requisition_for_update_test, mock_store_a, MockDataInserts},
-        test_db::setup_all,
-        RequisitionLineRowRepository,
-    };
     use crate::{
         requisition::response_requisition::BatchResponseRequisition,
         requisition_line::response_requisition_line::DeleteResponseRequisitionLine,
         service_provider::ServiceProvider,
+    };
+    use repository::{
+        mock::{mock_full_new_response_requisition_for_update_test, mock_store_a, MockDataInserts},
+        test_db::setup_all,
+        RequisitionLineRowRepository,
     };
 
     #[actix_rt::test]
@@ -104,7 +104,6 @@ mod test {
         let delete_requisition_lines_input = BatchResponseRequisition {
             delete_line: Some(vec![DeleteResponseRequisitionLine {
                 id: line_id.clone(),
-                ..Default::default()
             }]),
             continue_on_error: None,
             delete_requisition: None,
