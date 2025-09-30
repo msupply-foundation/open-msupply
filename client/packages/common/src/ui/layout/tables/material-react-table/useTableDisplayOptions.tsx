@@ -11,7 +11,8 @@ import {
   CheckboxCheckedIcon,
   CheckboxEmptyIcon,
   CheckboxIndeterminateIcon,
-  MedicineIcon,
+  CollapseIcon,
+  ExpandIcon,
   RefreshIcon,
 } from '@common/icons';
 import { MenuItem, Typography } from '@mui/material';
@@ -67,11 +68,10 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
       <>
         {toggleGrouped && (
           <IconButton
-            icon={<MedicineIcon />}
+            icon={isGrouped ? <ExpandIcon /> : <CollapseIcon />}
             onClick={toggleGrouped}
             label={t('label.group-by-item')}
             sx={iconButtonProps}
-            color={isGrouped ? 'secondary' : undefined}
           />
         )}
         <MRT_ToggleFiltersButton table={table} />
