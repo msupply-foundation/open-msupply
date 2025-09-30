@@ -1,12 +1,12 @@
 import React, { ReactElement } from 'react';
-import { useDialog, useNotification } from '@common/hooks';
+import { useDialog, useFormErrorActions, useNotification } from '@common/hooks';
 import { DateUtils, useFormatDateTime, useTranslation } from '@common/intl';
 import {
   BasicTextInput,
   DateTimePickerInput,
   DialogButton,
   InputWithLabelRow,
-  NumericTextInput,
+  NumericTextInputWithError,
   Switch,
 } from '@common/components';
 import { Box, Stack } from '@openmsupply-client/common';
@@ -45,6 +45,9 @@ export const InsuranceModal = ({
     updatePatch,
   } = useInsurancePolicies(nameId, patientName);
 
+  // const { showRequiredErrors, resetRequiredErrors, hasErrors } =
+  //   useFormErrorActions();
+
   const handleInsuranceUpdate = async (): Promise<void> => {
     try {
       await update();
@@ -59,10 +62,6 @@ export const InsuranceModal = ({
 
   const handleInsuranceInsert = async (): Promise<void> => {
     try {
-      // Temp hotfix for when both policy number fields are empty. Will be
-      // improved with new Error State handler
-      if (draft.policyNumberFamily === '' && draft.policyNumberPerson === '')
-        throw new Error('missing policy numbers');
       const result = await create();
       if (result != null) setModal(undefined);
       success(t('messages.insurance-created'))();
@@ -74,6 +73,11 @@ export const InsuranceModal = ({
   };
 
   const handleSave = async (): Promise<void> => {
+    // showRequiredErrors();
+    // if (hasErrors()) {
+    //   // console.log("Errors, can't submit");
+    //   return;
+    // }
     if (insuranceId !== undefined) await handleInsuranceUpdate();
     else await handleInsuranceInsert();
   };
