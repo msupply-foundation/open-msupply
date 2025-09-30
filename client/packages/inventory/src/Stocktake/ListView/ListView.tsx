@@ -52,6 +52,7 @@ export const ListView = () => {
         accessorKey: 'stocktakeNumber',
         header: t('label.number'),
         defaultHideOnMobile: true,
+        enableSorting: true,
       },
       {
         id: 'status',
