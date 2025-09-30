@@ -1,11 +1,9 @@
 import React, { useEffect, useMemo } from 'react';
 import {
-  TextInputCell,
   alpha,
   RecordPatch,
   DataTable,
   useColumns,
-  CurrencyInputCell,
   useTranslation,
   getExpiryDateInputColumn,
   EnabledCheckboxCell,
@@ -22,6 +20,11 @@ import {
   usePreferences,
   useAuthContext,
   StoreModeNodeType,
+  MaterialTable,
+  useSimpleMaterialTable,
+  ColumnDef,
+  Typography,
+  CheckBoxCell,
 } from '@openmsupply-client/common';
 import { DraftStocktakeLine } from './utils';
 import {
@@ -41,6 +44,9 @@ import {
   useStocktakeLineErrorContext,
   UseStocktakeLineErrors,
 } from '../../../context';
+// Need to be re-exported when Legacy cells are removed
+import { CurrencyInputCell } from '@openmsupply-client/common/src/ui/layout/tables/material-react-table/components/CurrencyInputCell';
+import { TextInputCell } from '@openmsupply-client/common/src/ui/layout/tables/material-react-table/components/TextInputCell';
 
 interface StocktakeLineEditTableProps {
   isDisabled?: boolean;
@@ -180,7 +186,7 @@ export const BatchTable = ({
   const theme = useTheme();
   const itemVariantsEnabled = useIsItemVariantsEnabled();
   const { manageVvmStatusForStock } = usePreferences();
-  useDisableStocktakeRows(batches);
+  // useDisableStocktakeRows(batches);
   const { data: reasonOptions, isLoading } = useReasonOptions();
   const errorsContext = useStocktakeLineErrorContext();
 
@@ -315,15 +321,25 @@ export const BatchTable = ({
     showVVMStatusColumn,
   ]);
 
-  const columns = useColumns<DraftStocktakeLine>(columnDefinitions, {}, [
+  const oldColumns = useColumns<DraftStocktakeLine>(columnDefinitions, {}, [
     columnDefinitions,
   ]);
+
+  const columns = useMemo((): ColumnDef<DraftStocktakeLine>[] => [], []);
+
+  // const table = useSimpleMaterialTable({
+  //   tableId: 'stocktake-batches',
+  //   columns,
+  //   data: batches,
+  // });
+
+  // return <MaterialTable table={table} />;
 
   return (
     <DataTable
       id="stocktake-batch"
       isDisabled={isDisabled}
-      columns={columns}
+      columns={oldColumns}
       data={batches}
       noDataMessage={t('label.add-new-line')}
       dense
@@ -337,42 +353,78 @@ export const PricingTable = ({
   update,
   isDisabled,
 }: StocktakeLineEditTableProps) => {
-  const theme = useTheme();
   const t = useTranslation();
-  useDisableStocktakeRows(batches);
 
-  const columns = useColumns<DraftStocktakeLine>([
-    getCountThisLineColumn(update, theme),
-    getBatchColumn(update, theme),
-    [
-      'sellPricePerPack',
+  const columns = useMemo(
+    (): ColumnDef<DraftStocktakeLine>[] => [
       {
-        Cell: CurrencyInputCell,
-        width: 200,
-        setter: patch => update({ ...patch, countThisLine: true }),
+        accessorKey: 'countThisLine',
+        header: t('label.count-this-line'),
+        size: 60,
+        Cell: ({ cell, row }) => (
+          <CheckBoxCell
+            cell={cell}
+            updateFn={value =>
+              update({ id: row.original.id, countThisLine: value })
+            }
+          />
+        ),
+      },
+      {
+        accessorKey: 'batch',
+        header: t('label.batch'),
+        Cell: ({ cell, row }) => (
+          <TextInputCell
+            cell={cell}
+            updateFn={value => update({ id: row.original.id, batch: value })}
+            isDisabled={isDisabled || !row.original.countThisLine}
+            autoFocus={row.index === 0}
+          />
+        ),
+        size: 150,
+      },
+      {
+        accessorKey: 'sellPricePerPack',
+        header: t('label.pack-sell-price'),
+        Cell: ({ cell, row }) => (
+          <CurrencyInputCell
+            cell={cell}
+            isDisabled={isDisabled || !row.original.countThisLine}
+            updateFn={value =>
+              update({ id: row.original.id, sellPricePerPack: value })
+            }
+          />
+        ),
+      },
+      {
+        accessorKey: 'costPricePerPack',
+        header: t('label.pack-cost-price'),
+        Cell: ({ cell, row }) => (
+          <CurrencyInputCell
+            cell={cell}
+            isDisabled={isDisabled || !row.original.countThisLine}
+            updateFn={value =>
+              update({ id: row.original.id, costPricePerPack: value })
+            }
+          />
+        ),
       },
     ],
-    [
-      'costPricePerPack',
-      {
-        Cell: CurrencyInputCell,
-        width: 200,
-        setter: patch => update({ ...patch, countThisLine: true }),
-      },
-    ],
-  ]);
-
-  return (
-    <DataTable
-      id="stocktake-pricing"
-      isDisabled={isDisabled}
-      columns={columns}
-      data={batches}
-      noDataMessage={t('label.add-new-line')}
-      dense
-      gradientBottom={true}
-    />
+    []
   );
+
+  const table = useSimpleMaterialTable({
+    tableId: 'stocktake-pricing',
+    columns,
+    data: batches,
+    noDataElement: (
+      <Typography sx={{ color: 'gray.dark', padding: 2 }}>
+        {t('label.add-new-line')}
+      </Typography>
+    ),
+  });
+
+  return <MaterialTable table={table} />;
 };
 
 export const LocationTable = ({
