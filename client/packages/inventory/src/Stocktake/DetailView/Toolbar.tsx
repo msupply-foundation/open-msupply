@@ -8,20 +8,22 @@ import {
   InputWithLabelRow,
   DateTimePickerInput,
   Formatter,
-  SearchBar,
   DateUtils,
   Alert,
-  useUrlQuery,
   useSimplifiedTabletUI,
   TypedTFunction,
   LocaleKey,
   FieldUpdateMutation,
+  Box,
+  Switch,
+  useIsGroupedState,
 } from '@openmsupply-client/common';
 import { StocktakeFragment, useStocktakeOld } from '../api';
 
 export const Toolbar = () => {
   const isDisabled = useStocktakeOld.utils.isDisabled();
   const t = useTranslation();
+  const { isGrouped, toggleIsGrouped } = useIsGroupedState('stocktake');
   const { isLocked, stocktakeDate, description, update } =
     useStocktakeOld.document.fields([
       'isLocked',
@@ -34,13 +36,6 @@ export const Toolbar = () => {
   const infoMessage = isLocked
     ? t('messages.on-hold-stock-take')
     : t('messages.finalised-stock-take');
-
-  const { urlQuery, updateQuery } = useUrlQuery({
-    skipParse: ['itemCodeOrName'],
-  });
-  const itemFilter = (urlQuery['itemCodeOrName'] as string) ?? '';
-  const setItemFilter = (itemFilter: string) =>
-    updateQuery({ itemCodeOrName: itemFilter });
 
   return (
     <AppBarContentPortal sx={{ display: 'flex', flex: 1, marginBottom: 1 }}>
@@ -82,13 +77,15 @@ export const Toolbar = () => {
               justifyContent="flex-end"
               alignItems="center"
             >
-              <SearchBar
-                placeholder={t('placeholder.filter-items')}
-                value={itemFilter}
-                onChange={newValue => {
-                  setItemFilter(newValue);
-                }}
-              />
+              <Box sx={{ marginRight: 2 }}>
+                <Switch
+                  label={t('label.group-by-item')}
+                  onChange={toggleIsGrouped}
+                  checked={isGrouped}
+                  size="small"
+                  color="secondary"
+                />
+              </Box>
             </Grid>
           </>
         )}
