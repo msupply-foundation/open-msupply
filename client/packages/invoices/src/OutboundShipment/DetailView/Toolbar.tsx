@@ -35,7 +35,7 @@ export const Toolbar = () => {
         display: 'flex',
         flex: 1,
         marginY: 1,
-        gap: 1,
+        gap: 3,
         flexWrap: 'wrap',
       }}
     >
