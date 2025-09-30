@@ -83,7 +83,7 @@ pub fn system_activity_log_entry(
     Ok(())
 }
 
-pub fn system_log_entry(
+fn system_log_entry(
     connection: &StorageConnection,
     log_type: SystemLogType,
     message: &str,
