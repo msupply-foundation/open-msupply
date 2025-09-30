@@ -127,7 +127,12 @@ pub(crate) mod test {
     async fn inventory_adjustment_to_balance_test() {
         let ServiceTestContext { connection, .. } = setup_all_with_data_and_service_provider(
             "inventory_adjustment_to_balance",
-            MockDataInserts::none().names().stores().units().items(),
+            MockDataInserts::none()
+                .names()
+                .stores()
+                .units()
+                .items()
+                .currencies(),
             mock_data(),
         )
         .await;
