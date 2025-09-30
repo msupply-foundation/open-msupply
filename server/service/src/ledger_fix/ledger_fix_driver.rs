@@ -220,7 +220,12 @@ mod test {
             ..
         } = setup_all_with_data_and_service_provider(
             "test_all_ledger_fixes",
-            MockDataInserts::none().names().stores().units().items(),
+            MockDataInserts::none()
+                .names()
+                .stores()
+                .units()
+                .items()
+                .currencies(),
             mock_data,
         )
         .await;

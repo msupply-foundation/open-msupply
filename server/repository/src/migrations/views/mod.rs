@@ -262,7 +262,7 @@ pub(crate) fn rebuild_views(connection: &StorageConnection) -> anyhow::Result<()
         )
       )
     )
-    OR running_balance.q IS NULL;
+    OR running_balance.q IS NULL AND (current_balance.t_q != 0 OR current_balance.a_q != 0);
 
   CREATE VIEW item_ledger AS
     WITH all_movements AS (
