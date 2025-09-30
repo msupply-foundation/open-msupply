@@ -1,6 +1,6 @@
 use crate::{
     db_diesel::{item_link_row::item_link, item_row::item, purchase_order_row::purchase_order},
-    name_link, Delete, Upsert,
+    name_link, Delete, PurchaseOrderRowRepository, Upsert,
 };
 use crate::{
     ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RepositoryError, RowActionType,
@@ -108,16 +108,32 @@ impl<'a> PurchaseOrderLineRowRepository<'a> {
         row: &PurchaseOrderLineRow,
         action: RowActionType,
     ) -> Result<i64, RepositoryError> {
+        let purchase_order = PurchaseOrderRowRepository::new(self.connection)
+            .find_one_by_id(&row.purchase_order_id)?;
+        let purchase_order = match purchase_order {
+            Some(purchase_order) => purchase_order,
+
+            None => return Err(RepositoryError::NotFound),
+        };
+
         let row = ChangeLogInsertRow {
             table_name: ChangelogTableName::PurchaseOrderLine,
             record_id: row.id.clone(),
             row_action: action,
-            // no information on store - but this can be found on the parent purchase order record
-            store_id: None,
+            store_id: Some(purchase_order.store_id.clone()),
             name_link_id: None,
         };
 
-        ChangelogRepository::new(self.connection).insert(&row)
+        let purchase_order_row = ChangeLogInsertRow {
+            table_name: ChangelogTableName::PurchaseOrder,
+            record_id: purchase_order.id,
+            row_action: RowActionType::Upsert,
+            store_id: Some(purchase_order.store_id),
+            name_link_id: None,
+        };
+
+        let _ = ChangelogRepository::new(self.connection).insert(&row);
+        ChangelogRepository::new(self.connection).insert(&purchase_order_row)
     }
 
     pub fn delete(&self, purchase_order_line_id: &str) -> Result<Option<i64>, RepositoryError> {
