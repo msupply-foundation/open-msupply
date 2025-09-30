@@ -6,7 +6,7 @@ use chrono::NaiveDate;
 use graphql_core::{
     loader::NameRowLoader, standard_graphql_error::StandardGraphqlError, ContextExt,
 };
-use repository::{CurrencyFilter, LanguageType as LanguageTypeRepo, StoreMode, User, UserStore};
+use repository::{CurrencyFilter, User, UserStore};
 use service::permission::permissions;
 
 pub struct UserStoreNode {
@@ -14,6 +14,8 @@ pub struct UserStoreNode {
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
+#[graphql(remote = "repository::db_diesel::store_row
+::StoreMode")]
 pub enum StoreModeNodeType {
     Store,
     Dispensary,
@@ -55,7 +57,7 @@ impl UserStoreNode {
     }
 
     pub async fn store_mode(&self) -> StoreModeNodeType {
-        StoreModeNodeType::from_domain(&self.user_store.store_row.store_mode)
+        StoreModeNodeType::from(self.user_store.store_row.store_mode.clone())
     }
 
     pub async fn created_date(&self) -> &Option<NaiveDate> {
@@ -88,7 +90,8 @@ impl UserStoreNode {
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
-pub enum LanguageType {
+#[graphql(remote = "repository::db_diesel::user_row::LanguageType")]
+pub enum LanguageTypeNode {
     English,
     French,
     Spanish,
@@ -165,8 +168,8 @@ impl UserNode {
         Ok(UserStorePermissionConnector::from_vec(result))
     }
 
-    pub async fn language(&self) -> LanguageType {
-        LanguageType::from_domain(&self.user.user_row.language)
+    pub async fn language(&self) -> LanguageTypeNode {
+        LanguageTypeNode::from(self.user.user_row.language.clone())
     }
 
     pub async fn first_name(&self) -> &Option<String> {
@@ -180,30 +183,6 @@ impl UserNode {
     }
     pub async fn job_title(&self) -> &Option<String> {
         &self.user.user_row.job_title
-    }
-}
-
-impl LanguageType {
-    fn from_domain(from: &LanguageTypeRepo) -> Self {
-        match from {
-            LanguageTypeRepo::English => Self::English,
-            LanguageTypeRepo::French => Self::French,
-            LanguageTypeRepo::Spanish => Self::Spanish,
-            LanguageTypeRepo::Laos => Self::Laos,
-            LanguageTypeRepo::Khmer => Self::Khmer,
-            LanguageTypeRepo::Portuguese => Self::Portuguese,
-            LanguageTypeRepo::Russian => Self::Russian,
-            LanguageTypeRepo::Tetum => Self::Tetum,
-        }
-    }
-}
-
-impl StoreModeNodeType {
-    pub fn from_domain(from: &StoreMode) -> StoreModeNodeType {
-        match from {
-            StoreMode::Store => Self::Store,
-            StoreMode::Dispensary => Self::Dispensary,
-        }
     }
 }
 

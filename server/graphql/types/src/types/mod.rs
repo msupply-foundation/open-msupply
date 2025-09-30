@@ -158,6 +158,9 @@ pub use self::purchase_order_line::*;
 pub mod item_store_join;
 pub use self::item_store_join::*;
 
+pub mod shipping_method;
+pub use self::shipping_method::*;
+
 use async_graphql::*;
 pub struct DeleteResponse(pub String);
 #[Object]
@@ -175,12 +178,6 @@ impl IdResponse {
     }
 }
 
-impl IdResponse {
-    pub fn from_domain(purchase_order_line: PurchaseOrderLineRow) -> Self {
-        IdResponse(purchase_order_line.id)
-    }
-}
-
 pub struct OkResponse;
 #[Object]
 impl OkResponse {
@@ -190,4 +187,3 @@ impl OkResponse {
 }
 
 pub use campaign::*;
-use repository::PurchaseOrderLineRow;

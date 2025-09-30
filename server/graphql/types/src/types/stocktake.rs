@@ -1,18 +1,17 @@
+use super::{program_node::ProgramNode, InvoiceNode, StocktakeLineConnector, UserNode};
 use async_graphql::{dataloader::DataLoader, Context, Enum, ErrorExtensions, Object, Result};
 use chrono::{DateTime, NaiveDate, Utc};
-use repository::{StocktakeRow, StocktakeStatus};
-use serde::Serialize;
-
 use graphql_core::{
     loader::{InvoiceByIdLoader, ProgramByIdLoader, StocktakeLineByStocktakeIdLoader, UserLoader},
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
-
-use super::{program_node::ProgramNode, InvoiceNode, StocktakeLineConnector, UserNode};
+use repository::StocktakeRow;
+use serde::Serialize;
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")] // only needed to be comparable in tests
+#[graphql(remote = "repository::db_diesel::stocktake_row::StocktakeStatus")]
 pub enum StocktakeNodeStatus {
     New,
     Finalised,
@@ -72,7 +71,7 @@ impl StocktakeNode {
     }
 
     pub async fn status(&self) -> StocktakeNodeStatus {
-        StocktakeNodeStatus::from_domain(&self.stocktake.status)
+        StocktakeNodeStatus::from(self.stocktake.status.clone())
     }
 
     pub async fn created_datetime(&self) -> DateTime<Utc> {
@@ -163,22 +162,6 @@ impl StocktakeNode {
 impl StocktakeNode {
     pub fn from_domain(stocktake: StocktakeRow) -> StocktakeNode {
         StocktakeNode { stocktake }
-    }
-}
-
-impl StocktakeNodeStatus {
-    pub fn to_domain(self) -> StocktakeStatus {
-        match self {
-            StocktakeNodeStatus::New => StocktakeStatus::New,
-            StocktakeNodeStatus::Finalised => StocktakeStatus::Finalised,
-        }
-    }
-
-    pub fn from_domain(status: &StocktakeStatus) -> StocktakeNodeStatus {
-        match status {
-            StocktakeStatus::New => StocktakeNodeStatus::New,
-            StocktakeStatus::Finalised => StocktakeNodeStatus::Finalised,
-        }
     }
 }
 

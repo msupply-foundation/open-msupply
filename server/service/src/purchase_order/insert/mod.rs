@@ -33,9 +33,15 @@ pub fn insert_purchase_order(
     let purchase_order = ctx
         .connection
         .transaction_sync(|connection| {
-            validate(&input, store_id, connection)?;
+            let other_party = validate(&input, store_id, connection)?;
 
-            let purchase_order = generate(connection, store_id, &ctx.user_id, input.clone())?;
+            let purchase_order = generate(
+                connection,
+                store_id,
+                &ctx.user_id,
+                input.clone(),
+                other_party.currency_id,
+            )?;
             PurchaseOrderRowRepository::new(connection).upsert_one(&purchase_order)?;
 
             activity_log_entry(

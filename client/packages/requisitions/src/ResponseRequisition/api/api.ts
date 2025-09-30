@@ -1,7 +1,7 @@
 import {
   RequisitionNodeStatus,
   SortBy,
-  FilterByWithBoolean,
+  FilterBy,
   RequisitionSortFieldInput,
   RequisitionNodeType,
   UpdateResponseRequisitionInput,
@@ -24,7 +24,7 @@ export type ListParams = {
   first: number;
   offset: number;
   sortBy: SortBy<ResponseRowFragment>;
-  filterBy: FilterByWithBoolean | null;
+  filterBy: FilterBy | null;
 };
 
 const responseParser = {
@@ -351,5 +351,34 @@ export const getResponseQueries = (sdk: Sdk, storeId: string) => ({
     }
 
     throw new Error('Could not update indicator value');
+  },
+
+  responseAddFromMasterList: async ({
+    responseId,
+    masterListId,
+  }: {
+    responseId: string;
+    masterListId: string;
+  }) => {
+    const result = await sdk.responseAddFromMasterList({
+      storeId,
+      responseId,
+      masterListId,
+    });
+
+    if (
+      result.responseAddFromMasterList.__typename === 'RequisitionLineConnector'
+    ) {
+      return result.responseAddFromMasterList;
+    }
+
+    if (
+      result.responseAddFromMasterList.__typename ===
+      'ResponseAddFromMasterListError'
+    ) {
+      throw new Error(result.responseAddFromMasterList.error.__typename);
+    }
+
+    throw new Error('Could not add from master list');
   },
 });

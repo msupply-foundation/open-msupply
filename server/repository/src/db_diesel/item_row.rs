@@ -61,6 +61,7 @@ pub enum VENCategory {
 }
 
 #[derive(Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset)]
+#[diesel(treat_none_as_null = true)]
 #[diesel(table_name = item)]
 pub struct ItemRow {
     pub id: String,
@@ -177,6 +178,17 @@ impl<'a> ItemRowRepository<'a> {
         Ok(result)
     }
 
+    pub fn find_many_active_by_id(
+        &self,
+        ids: &Vec<String>,
+    ) -> Result<Vec<ItemRow>, RepositoryError> {
+        let result = item
+            .filter(id.eq_any(ids))
+            .filter(is_active.eq(true))
+            .load(self.connection.lock().connection())?;
+        Ok(result)
+    }
+
     pub fn delete(&self, item_id: &str) -> Result<(), RepositoryError> {
         diesel::update(item.filter(id.eq(item_id)))
             .set(is_active.eq(false))
@@ -216,5 +228,64 @@ impl Upsert for ItemRow {
             ItemRowRepository::new(con).find_active_by_id(&self.id),
             Ok(Some(self.clone()))
         )
+    }
+}
+
+#[cfg(test)]
+mod test {
+
+    use crate::{mock::MockDataInserts, test_db::setup_all, ItemRow, ItemRowRepository, ItemType};
+
+    #[actix_rt::test]
+    async fn nullable_restricted_item_type() {
+        let (_, connection, _, _) = setup_all(
+            "restricted_item_type",
+            MockDataInserts::none()
+                .stores()
+                .names()
+                .items()
+                .location_types()
+                .locations(),
+        )
+        .await;
+
+        let repo = ItemRowRepository::new(&connection);
+
+        let item_with_restriction = ItemRow {
+            id: "restricted_location_test_item".to_string(),
+            name: "restricted_location_test_item".to_string(),
+            code: "code".to_string(),
+            unit_id: None,
+            r#type: ItemType::Stock,
+            legacy_record: "{}".to_string(),
+            default_pack_size: 2.0,
+            is_active: true,
+            is_vaccine: false,
+            vaccine_doses: 0,
+            restricted_location_type_id: Some("location_type_a_id".to_string()),
+            ..Default::default()
+        };
+
+        repo.upsert_one(&item_with_restriction).unwrap();
+        let item_with_restriction_stored = repo
+            .find_one_by_id("restricted_location_test_item")
+            .unwrap()
+            .unwrap();
+        assert_eq!(
+            item_with_restriction_stored.restricted_location_type_id,
+            Some("location_type_a_id".to_string())
+        );
+
+        let item_without_restriction = ItemRow {
+            restricted_location_type_id: None, // remove the restriction on the same item
+            ..item_with_restriction
+        };
+
+        repo.upsert_one(&item_without_restriction).unwrap();
+        let updated_item = repo
+            .find_one_by_id("restricted_location_test_item")
+            .unwrap()
+            .unwrap();
+        assert_eq!(updated_item.restricted_location_type_id, None);
     }
 }

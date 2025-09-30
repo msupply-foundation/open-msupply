@@ -92,7 +92,7 @@ export const StockLineDetailView: React.FC = () => {
 
   const openInventoryAdjustmentModal = useCallbackWithPermission(
     UserPermission.InventoryAdjustmentMutate,
-    adjustmentModalController.toggleOn
+    () => adjustmentModalController.toggleOn()
   );
 
   const isVaccine = draft?.item?.isVaccine ?? false;
@@ -160,6 +160,7 @@ export const StockLineDetailView: React.FC = () => {
       <AppBarButtons
         openRepack={repackModalController.toggleOn}
         openAdjust={openInventoryAdjustmentModal}
+        itemId={data?.itemId}
       />
       <TableProvider createStore={createTableStore}>
         <DetailTabs tabs={tabs} />

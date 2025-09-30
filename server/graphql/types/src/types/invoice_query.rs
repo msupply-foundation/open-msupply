@@ -1,3 +1,5 @@
+use crate::types::SyncFileReferenceConnector;
+
 use super::patient::PatientNode;
 use super::program_node::ProgramNode;
 use super::{
@@ -9,9 +11,9 @@ use chrono::{DateTime, NaiveDate, Utc};
 use dataloader::DataLoader;
 
 use graphql_core::loader::{
-    DiagnosisLoader, InvoiceByIdLoader, InvoiceLineByInvoiceIdLoader, NameByIdLoaderInput,
-    NameByNameLinkIdLoader, NameByNameLinkIdLoaderInput, NameInsuranceJoinLoader, PatientLoader,
-    ProgramByIdLoader, UserLoader,
+    CurrencyByIdLoader, DiagnosisLoader, InvoiceByIdLoader, InvoiceLineByInvoiceIdLoader,
+    NameByIdLoaderInput, NameByNameLinkIdLoader, NameByNameLinkIdLoaderInput,
+    NameInsuranceJoinLoader, PatientLoader, ProgramByIdLoader, SyncFileReferenceLoader, UserLoader,
 };
 use graphql_core::{
     loader::{InvoiceStatsLoader, NameByIdLoader, RequisitionsByIdLoader},
@@ -19,8 +21,7 @@ use graphql_core::{
     ContextExt,
 };
 use repository::{
-    ClinicianRow, InvoiceRow, InvoiceStatus, InvoiceType, Name, NameLinkRow, NameRow, PricingRow,
-    Store, StoreRow,
+    ClinicianRow, InvoiceRow, Name, NameLinkRow, NameRow, PricingRow, Store, StoreRow,
 };
 
 use repository::Invoice;
@@ -29,6 +30,7 @@ use service::{usize_to_u32, ListResult};
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+#[graphql(remote = "repository::db_diesel::invoice_row::InvoiceType")]
 pub enum InvoiceNodeType {
     OutboundShipment,
     InboundShipment,
@@ -42,6 +44,7 @@ pub enum InvoiceNodeType {
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")] // only needed to be comparable in tests
+#[graphql(remote = "repository::db_diesel::invoice_row::InvoiceStatus")]
 pub enum InvoiceNodeStatus {
     /// Outbound Shipment: available_number_of_packs in a stock line gets
     /// updated when items are added to the invoice.
@@ -140,11 +143,11 @@ impl InvoiceNode {
     }
 
     pub async fn r#type(&self) -> InvoiceNodeType {
-        InvoiceNodeType::from_domain(&self.row().r#type)
+        InvoiceNodeType::from(self.row().r#type.clone())
     }
 
     pub async fn status(&self) -> InvoiceNodeStatus {
-        InvoiceNodeStatus::from_domain(&self.row().status)
+        InvoiceNodeStatus::from(self.row().status.clone())
     }
 
     pub async fn invoice_number(&self) -> i64 {
@@ -366,26 +369,19 @@ impl InvoiceNode {
     }
 
     pub async fn currency(&self, ctx: &Context<'_>) -> Result<Option<CurrencyNode>> {
-        let service_provider = ctx.service_provider();
-        let currency_provider = &service_provider.currency_service;
-        let service_context = &service_provider.basic_context()?;
-
-        let currency_id = if let Some(currency_id) = &self.row().currency_id {
-            currency_id
-        } else {
-            return Ok(None);
+        let currency_id = match &self.row().currency_id {
+            Some(currency_id) => currency_id,
+            None => return Ok(None),
         };
 
-        let currency = currency_provider
-            .get_currency(service_context, currency_id)
-            .map_err(|e| StandardGraphqlError::from_repository_error(e).extend())?
-            .ok_or(StandardGraphqlError::InternalError(format!(
-                "Cannot find currency ({}) linked to invoice ({})",
-                currency_id,
-                &self.row().id
-            )))?;
+        let loader = ctx.get_loader::<DataLoader<CurrencyByIdLoader>>();
 
-        Ok(Some(CurrencyNode::from_domain(currency)))
+        let result = loader
+            .load_one(currency_id.clone())
+            .await?
+            .map(CurrencyNode::from_domain);
+
+        Ok(result)
     }
 
     pub async fn currency_rate(&self) -> &f64 {
@@ -494,6 +490,16 @@ impl InvoiceNode {
 
         Ok(result.map(NameNode::from_domain))
     }
+
+    pub async fn documents(&self, ctx: &Context<'_>) -> Result<SyncFileReferenceConnector> {
+        let invoice_id = &self.row().id;
+        let loader = ctx.get_loader::<DataLoader<SyncFileReferenceLoader>>();
+        let result_option = loader.load_one(invoice_id.to_string()).await?;
+
+        let documents = SyncFileReferenceConnector::from_vec(result_option.unwrap_or(vec![]));
+
+        Ok(documents)
+    }
 }
 
 impl InvoiceNode {
@@ -582,66 +588,6 @@ impl InvoiceConnector {
     }
 }
 
-impl InvoiceNodeType {
-    pub fn to_domain(self) -> InvoiceType {
-        use InvoiceNodeType::*;
-        match self {
-            OutboundShipment => InvoiceType::OutboundShipment,
-            InboundShipment => InvoiceType::InboundShipment,
-            Prescription => InvoiceType::Prescription,
-            InventoryAddition => InvoiceType::InventoryAddition,
-            InventoryReduction => InvoiceType::InventoryReduction,
-            Repack => InvoiceType::Repack,
-            SupplierReturn => InvoiceType::SupplierReturn,
-            CustomerReturn => InvoiceType::CustomerReturn,
-        }
-    }
-
-    pub fn from_domain(r#type: &InvoiceType) -> InvoiceNodeType {
-        use InvoiceType::*;
-        match r#type {
-            OutboundShipment => InvoiceNodeType::OutboundShipment,
-            InboundShipment => InvoiceNodeType::InboundShipment,
-            Prescription => InvoiceNodeType::Prescription,
-            InventoryAddition => InvoiceNodeType::InventoryAddition,
-            InventoryReduction => InvoiceNodeType::InventoryReduction,
-            Repack => InvoiceNodeType::Repack,
-            CustomerReturn => InvoiceNodeType::CustomerReturn,
-            SupplierReturn => InvoiceNodeType::SupplierReturn,
-        }
-    }
-}
-
-impl InvoiceNodeStatus {
-    pub fn to_domain(self) -> InvoiceStatus {
-        use InvoiceNodeStatus::*;
-        match self {
-            New => InvoiceStatus::New,
-            Allocated => InvoiceStatus::Allocated,
-            Picked => InvoiceStatus::Picked,
-            Shipped => InvoiceStatus::Shipped,
-            Delivered => InvoiceStatus::Delivered,
-            Received => InvoiceStatus::Received,
-            Verified => InvoiceStatus::Verified,
-            Cancelled => InvoiceStatus::Cancelled,
-        }
-    }
-
-    pub fn from_domain(status: &InvoiceStatus) -> InvoiceNodeStatus {
-        use InvoiceStatus::*;
-        match status {
-            New => InvoiceNodeStatus::New,
-            Allocated => InvoiceNodeStatus::Allocated,
-            Picked => InvoiceNodeStatus::Picked,
-            Shipped => InvoiceNodeStatus::Shipped,
-            Delivered => InvoiceNodeStatus::Delivered,
-            Received => InvoiceNodeStatus::Received,
-            Verified => InvoiceNodeStatus::Verified,
-            Cancelled => InvoiceNodeStatus::Cancelled,
-        }
-    }
-}
-
 #[cfg(test)]
 mod test {
 
@@ -656,7 +602,6 @@ mod test {
         Invoice, InvoiceLineRow, InvoiceLineType, InvoiceRow,
     };
     use serde_json::json;
-    
 
     use crate::types::InvoiceNode;
 

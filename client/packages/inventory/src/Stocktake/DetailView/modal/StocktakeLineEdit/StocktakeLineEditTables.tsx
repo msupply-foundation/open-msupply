@@ -20,7 +20,6 @@ import {
   NumberCell,
   getReasonOptionTypes,
   usePreferences,
-  Box,
   useAuthContext,
   StoreModeNodeType,
 } from '@openmsupply-client/common';
@@ -29,6 +28,7 @@ import {
   getCampaignOrProgramColumn,
   getDonorColumn,
   getLocationInputColumn,
+  getVolumePerPackFromVariant,
   ItemVariantInputCell,
   PackSizeEntryCell,
   ReasonOptionRowFragment,
@@ -199,6 +199,7 @@ export const BatchTable = ({
         },
       ],
     ];
+
     if (itemVariantsEnabled) {
       columnDefinitions.push({
         key: 'itemVariantId',
@@ -208,21 +209,10 @@ export const BatchTable = ({
           <ItemVariantInputCell {...props} itemId={props.rowData.item.id} />
         ),
         setter: patch => {
-          const { packSize, itemVariant } = patch;
-
-          if (itemVariant) {
-            const packaging = itemVariant.packagingVariants.find(
-              p => p.packSize === packSize
-            );
-            // Item variants save volume in L, but it is saved in m3 everywhere else
-            update({
-              ...patch,
-              volumePerPack:
-                ((packaging?.volumePerUnit ?? 0) / 1000) * (packSize ?? 1),
-            });
-          } else {
-            update(patch);
-          }
+          update({
+            ...patch,
+            volumePerPack: getVolumePerPackFromVariant(patch) ?? 0,
+          });
         },
       });
     }
@@ -239,6 +229,7 @@ export const BatchTable = ({
         setter: patch => update({ ...patch }),
       });
     }
+
     columnDefinitions.push(
       getColumnLookupWithOverrides('packSize', {
         Cell: PackSizeEntryCell<DraftStocktakeLine>,
@@ -255,11 +246,12 @@ export const BatchTable = ({
             patch.item?.defaultPackSize !== patch.packSize &&
             patch.item?.itemStoreProperties?.defaultSellPricePerPack ===
               patch.sellPricePerPack;
-          if (shouldClearSellPrice) {
-            update({ ...patch, sellPricePerPack: 0 });
-          } else {
-            update(patch);
-          }
+
+          update({
+            ...patch,
+            volumePerPack: getVolumePerPackFromVariant(patch) ?? 0,
+            sellPricePerPack: shouldClearSellPrice ? 0 : patch.sellPricePerPack,
+          });
         },
       }),
       {
@@ -326,6 +318,7 @@ export const BatchTable = ({
   const columns = useColumns<DraftStocktakeLine>(columnDefinitions, {}, [
     columnDefinitions,
   ]);
+
   return (
     <DataTable
       id="stocktake-batch"
@@ -334,6 +327,7 @@ export const BatchTable = ({
       data={batches}
       noDataMessage={t('label.add-new-line')}
       dense
+      gradientBottom={true}
     />
   );
 };
@@ -376,6 +370,7 @@ export const PricingTable = ({
       data={batches}
       noDataMessage={t('label.add-new-line')}
       dense
+      gradientBottom={true}
     />
   );
 };
@@ -442,15 +437,14 @@ export const LocationTable = ({
   const columns = useColumns(columnDefinitions, {}, [columnDefinitions]);
 
   return (
-    <Box display="flex" flexDirection="column" width="100%">
-      <DataTable
-        id="stocktake-location"
-        isDisabled={isDisabled}
-        columns={columns}
-        data={batches}
-        noDataMessage={t('label.add-new-line')}
-        dense
-      />
-    </Box>
+    <DataTable
+      id="stocktake-location"
+      isDisabled={isDisabled}
+      columns={columns}
+      data={batches}
+      noDataMessage={t('label.add-new-line')}
+      dense
+      gradientBottom={true}
+    />
   );
 };

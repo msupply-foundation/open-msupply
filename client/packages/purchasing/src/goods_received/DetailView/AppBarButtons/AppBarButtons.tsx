@@ -1,25 +1,34 @@
 import React, { memo, ReactElement } from 'react';
 import {
   AppBarButtonsPortal,
+  GoodsReceivedNodeStatus,
   Grid,
   useDetailPanel,
 } from '@openmsupply-client/common';
-// import { useGoodsReceived } from '../../api/hooks';
-
-// interface AppBarButtonProps {}
+import { isGoodsReceivedEditable } from '../../../utils';
+import { useGoodsReceived } from '../../api';
+import { AddButton } from './AddButton';
 
 export const AppBarButtonsComponent = (): ReactElement => {
   const { OpenButton } = useDetailPanel();
 
-  //   const {
-  //     query: { data, isLoading },
-  //   } = useGoodsReceived();
+  const {
+    query: { data, isLoading },
+  } = useGoodsReceived();
 
   return (
     <AppBarButtonsPortal>
       <Grid container gap={1}>
         {/* Add Buttons as needed */}
-        {/* <AddItem /> */}
+        <AddButton
+          goodsReceived={data}
+          disable={
+            isLoading ||
+            !isGoodsReceivedEditable(
+              data?.status ?? GoodsReceivedNodeStatus.New
+            )
+          }
+        />
         {OpenButton}
       </Grid>
     </AppBarButtonsPortal>

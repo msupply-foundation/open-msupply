@@ -23,7 +23,12 @@ pub fn get_master_list_lines(
         .master_list_id(EqualFilter::equal_to(master_list_id));
 
     Ok(ListResult {
-        rows: repository.query(pagination, Some(filter.clone()), sort)?,
+        rows: repository.query(
+            pagination,
+            Some(filter.clone()),
+            sort,
+            Some(ctx.store_id.clone()),
+        )?,
         count: i64_to_u32(repository.count(Some(filter))?),
     })
 }

@@ -259,9 +259,17 @@ impl CannotEditPurchaseOrder {
     }
 }
 
-pub struct CannotDeleteNonNewPurchaseOrder;
+pub struct CannotEditGoodsReceived;
 #[Object]
-impl CannotDeleteNonNewPurchaseOrder {
+impl CannotEditGoodsReceived {
+    pub async fn description(&self) -> &str {
+        "Cannot edit goods received"
+    }
+}
+
+pub struct CannotDeletePurchaseOrder;
+#[Object]
+impl CannotDeletePurchaseOrder {
     pub async fn description(&self) -> &str {
         "Cannot delete non-new purchase order"
     }
@@ -286,6 +294,7 @@ pub enum ForeignKey {
     LocationId,
     RequisitionId,
     PurchaseOrderId,
+    GoodsReceivedId,
 }
 
 pub struct ForeignKeyError(pub ForeignKey);

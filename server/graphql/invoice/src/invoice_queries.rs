@@ -11,11 +11,11 @@ use graphql_core::{
 };
 use graphql_types::types::{
     EqualFilterInvoiceStatusInput, EqualFilterInvoiceTypeInput, InvoiceConnector, InvoiceNode,
-    InvoiceNodeStatus, InvoiceNodeType,
+    InvoiceNodeType,
 };
 use repository::{
-    DatetimeFilter, EqualFilter, InvoiceFilter, InvoiceSort, InvoiceSortField, PaginationOption,
-    StringFilter,
+    DatetimeFilter, EqualFilter, InvoiceFilter, InvoiceSort, InvoiceSortField, InvoiceStatus,
+    InvoiceType, PaginationOption, StringFilter,
 };
 use service::auth::{Resource, ResourceAccessRequest};
 
@@ -32,6 +32,7 @@ pub enum InvoicesResponse {
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(rename_items = "camelCase")]
+#[graphql(remote = "repository::db_diesel::invoice::InvoiceSortField")]
 pub enum InvoiceSortFieldInput {
     Type,
     OtherPartyName,
@@ -85,6 +86,7 @@ pub struct InvoiceFilterInput {
     pub requisition_id: Option<EqualFilterStringInput>,
     pub linked_invoice_id: Option<EqualFilterStringInput>,
     pub is_program_invoice: Option<bool>,
+    pub program_id: Option<EqualFilterStringInput>,
 }
 
 pub fn get_invoice(
@@ -175,7 +177,7 @@ pub fn get_invoice_by_number(
         &service_context,
         &store_id,
         invoice_number,
-        r#type.to_domain(),
+        InvoiceType::from(r#type),
     )?;
 
     let response = match invoice_option {
@@ -199,10 +201,10 @@ impl InvoiceFilterInput {
             user_id: self.user_id.map(EqualFilter::from),
             r#type: self
                 .r#type
-                .map(|t| map_filter!(t, InvoiceNodeType::to_domain)),
+                .map(|t| map_filter!(t, |r| InvoiceType::from(r))),
             status: self
                 .status
-                .map(|t| map_filter!(t, InvoiceNodeStatus::to_domain)),
+                .map(|t| map_filter!(t, |s| InvoiceStatus::from(s))),
             on_hold: self.on_hold,
             comment: self.comment.map(StringFilter::from),
             their_reference: self.their_reference.map(StringFilter::from),
@@ -221,35 +223,18 @@ impl InvoiceFilterInput {
             requisition_id: self.requisition_id.map(EqualFilter::from),
             linked_invoice_id: self.linked_invoice_id.map(EqualFilter::from),
             is_program_invoice: self.is_program_invoice,
+            program_id: self.program_id.map(EqualFilter::from),
             stock_line_id: None,
             is_cancellation: None,
+            goods_received_id: None,
         }
     }
 }
 
 impl InvoiceSortInput {
     pub fn to_domain(self) -> InvoiceSort {
-        use InvoiceSortField as to;
-        use InvoiceSortFieldInput as from;
-        let key = match self.key {
-            from::Type => to::Type,
-            from::OtherPartyName => to::OtherPartyName,
-            from::InvoiceNumber => to::InvoiceNumber,
-            from::Comment => to::Comment,
-            from::Status => to::Status,
-            from::CreatedDatetime => to::CreatedDatetime,
-            from::InvoiceDatetime => to::InvoiceDatetime,
-            from::AllocatedDatetime => to::AllocatedDatetime,
-            from::PickedDatetime => to::PickedDatetime,
-            from::ShippedDatetime => to::ShippedDatetime,
-            from::DeliveredDatetime => to::DeliveredDatetime,
-            from::VerifiedDatetime => to::VerifiedDatetime,
-            from::TheirReference => to::TheirReference,
-            from::TransportReference => to::TransportReference,
-        };
-
         InvoiceSort {
-            key,
+            key: InvoiceSortField::from(self.key),
             desc: self.desc,
         }
     }

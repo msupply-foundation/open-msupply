@@ -29,7 +29,7 @@ use service::{
     plugin::validation::ValidatedPluginBucket,
     processors::Processors,
     service_provider::ServiceProvider,
-    settings::{is_develop, DiscoveryMode, ServerSettings, Settings},
+    settings::{is_develop, ServerSettings, Settings},
     standard_reports::StandardReports,
     sync::{
         file_sync_driver::FileSyncDriver,
@@ -286,6 +286,7 @@ pub async fn start_server(
     // Only run discovery on Mac or Windows
     #[cfg(any(target_os = "macos", target_os = "windows"))]
     {
+        use service::settings::DiscoveryMode;
         let discovery_enabled = match settings.server.discovery {
             DiscoveryMode::Disabled => false,
             DiscoveryMode::Enabled => true,

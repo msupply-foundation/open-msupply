@@ -14,11 +14,16 @@ use serde::Serialize;
 
 use service::{
     auth::{Resource, ResourceAccessRequest},
-    goods_received::update::{
-        UpdateGoodsReceivedError as ServiceError, UpdateGoodsReceivedInput as ServiceInput,
+    goods_received::{
+        create_goods_received_shipment::CreateGoodsReceivedShipmentError,
+        update::{
+            UpdateGoodsReceivedError as ServiceError, UpdateGoodsReceivedInput as ServiceInput,
+        },
     },
     NullableUpdate,
 };
+
+use crate::mutations::errors::{GoodsReceivedEmpty, NoAuthorisedLines, PurchaseOrderNotFinalised};
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
@@ -50,6 +55,8 @@ pub struct UpdateInput {
     pub status: Option<GoodsReceivedNodeType>,
     pub received_date: Option<NullableUpdateInput<NaiveDate>>,
     pub comment: Option<String>,
+    pub donor_id: Option<NullableUpdateInput<String>>,
+    pub supplier_reference: Option<String>,
 }
 
 impl UpdateInput {
@@ -59,6 +66,8 @@ impl UpdateInput {
             status,
             received_date,
             comment,
+            donor_id,
+            supplier_reference,
         } = self;
 
         ServiceInput {
@@ -66,13 +75,29 @@ impl UpdateInput {
             status: status.map(GoodsReceivedNodeType::to_domain),
             received_date: received_date.map(|r| NullableUpdate { value: r.value }),
             comment,
+            donor_id: donor_id.map(|d| NullableUpdate { value: d.value }),
+            supplier_reference,
         }
     }
+}
+
+#[derive(Interface)]
+#[graphql(field(name = "description", ty = "&str"))]
+pub enum GoodsReceivedError {
+    GoodsReceivedEmpty(GoodsReceivedEmpty),
+    PurchaseOrderNotFinalised(PurchaseOrderNotFinalised),
+    NoAuthorisedLines(NoAuthorisedLines),
+}
+
+#[derive(SimpleObject)]
+pub struct UpdateGoodsReceivedError {
+    pub error: GoodsReceivedError,
 }
 
 #[derive(Union)]
 #[graphql(name = "UpdateGoodsReceivedResponse")]
 pub enum UpdateResponse {
+    Error(UpdateGoodsReceivedError),
     Response(IdResponse),
 }
 
@@ -110,6 +135,32 @@ fn map_error(error: ServiceError) -> Result<UpdateResponse> {
     let formatted_error = format!("{:#?}", error);
 
     let graphql_error = match error {
+        ServiceError::ErrorCreatingShipment(
+            CreateGoodsReceivedShipmentError::GoodsReceivedEmpty,
+        ) => {
+            return Ok(UpdateResponse::Error(UpdateGoodsReceivedError {
+                error: GoodsReceivedError::GoodsReceivedEmpty(GoodsReceivedEmpty),
+            }))
+        }
+
+        ServiceError::ErrorCreatingShipment(
+            CreateGoodsReceivedShipmentError::NoAuthorisedLines,
+        ) => {
+            return Ok(UpdateResponse::Error(UpdateGoodsReceivedError {
+                error: GoodsReceivedError::NoAuthorisedLines(NoAuthorisedLines),
+            }))
+        }
+
+        ServiceError::ErrorCreatingShipment(
+            CreateGoodsReceivedShipmentError::PurchaseOrderNotFinalised,
+        ) => {
+            return Ok(UpdateResponse::Error(UpdateGoodsReceivedError {
+                error: GoodsReceivedError::PurchaseOrderNotFinalised(PurchaseOrderNotFinalised),
+            }))
+        }
+
+        ServiceError::ErrorCreatingShipment(_) => BadUserInput(formatted_error),
+        // unstructured errors:
         ServiceError::GoodsReceivedDoesNotExist => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) | ServiceError::UpdatedRecordNotFound => {
             InternalError(formatted_error)

@@ -17,38 +17,19 @@ use graphql_core::{
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
-use repository::{location::Location, InvoiceLine, InvoiceLineRow, InvoiceLineType, ItemRow};
+use repository::{location::Location, InvoiceLine, InvoiceLineRow, ItemRow};
 use serde::Serialize;
 use service::{usize_to_u32, ListResult};
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")] // only needed to be comparable in tests
+#[graphql(remote = "repository::db_diesel::invoice_line_row
+    ::InvoiceLineType")]
 pub enum InvoiceLineNodeType {
     StockIn,
     StockOut,
     UnallocatedStock,
     Service,
-}
-impl InvoiceLineNodeType {
-    pub fn from_domain(domain_type: &InvoiceLineType) -> Self {
-        use InvoiceLineNodeType::*;
-        match domain_type {
-            InvoiceLineType::StockIn => StockIn,
-            InvoiceLineType::StockOut => StockOut,
-            InvoiceLineType::UnallocatedStock => UnallocatedStock,
-            InvoiceLineType::Service => Service,
-        }
-    }
-
-    pub fn to_domain(self) -> InvoiceLineType {
-        use InvoiceLineNodeType::*;
-        match self {
-            StockIn => InvoiceLineType::StockIn,
-            StockOut => InvoiceLineType::StockOut,
-            UnallocatedStock => InvoiceLineType::UnallocatedStock,
-            Service => InvoiceLineType::Service,
-        }
-    }
 }
 
 pub struct InvoiceLineNode {
@@ -70,7 +51,7 @@ impl InvoiceLineNode {
         &self.row().invoice_id
     }
     pub async fn r#type(&self) -> InvoiceLineNodeType {
-        InvoiceLineNodeType::from_domain(&self.row().r#type)
+        InvoiceLineNodeType::from(self.row().r#type.clone())
     }
     // Item
     pub async fn item_id(&self) -> &str {
@@ -375,7 +356,6 @@ mod test {
         LocationRow,
     };
     use serde_json::json;
-    
 
     use crate::types::InvoiceLineNode;
 

@@ -10,6 +10,7 @@ use service::{usize_to_u32, ListResult};
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(rename_items = "camelCase")]
+#[graphql(remote = "repository::db_diesel::currency::CurrencySortField")]
 pub enum CurrencySortFieldInput {
     Id,
     CurrencyCode,
@@ -127,16 +128,8 @@ impl CurrencyConnector {
 
 impl CurrencySortInput {
     pub fn to_domain(self) -> CurrencySort {
-        use CurrencySortField as to;
-        use CurrencySortFieldInput as from;
-        let key = match self.key {
-            from::Id => to::Id,
-            from::CurrencyCode => to::CurrencyCode,
-            from::IsHomeCurrency => to::IsHomeCurrency,
-        };
-
         CurrencySort {
-            key,
+            key: CurrencySortField::from(self.key),
             desc: self.desc,
         }
     }

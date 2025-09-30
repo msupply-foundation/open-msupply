@@ -83,7 +83,6 @@ pub struct StockLineLedgerFilter {
 
 #[derive(PartialEq, Debug)]
 pub enum StockLineLedgerSortField {
-    Id,
     Datetime,
     Name,
     InvoiceType,
@@ -153,9 +152,6 @@ impl<'a> StockLineLedgerRepository<'a> {
 
         if let Some(sort) = sort {
             match sort.key {
-                StockLineLedgerSortField::Id => {
-                    apply_sort!(query, sort, stock_line_ledger::id);
-                }
                 StockLineLedgerSortField::Datetime => {
                     apply_sort!(query, sort, stock_line_ledger::datetime);
                 }
@@ -215,9 +211,10 @@ fn create_filtered_query(filter: Option<StockLineLedgerFilter>) -> BoxedLedgerQu
         apply_date_time_filter!(query, datetime, stock_line_ledger::datetime);
 
         if let Some(master_list_id) = master_list_id {
-            let item_ids = MasterListLineRepository::create_filtered_query(Some(
-                MasterListLineFilter::new().master_list_id(master_list_id),
-            ))
+            let item_ids = MasterListLineRepository::create_filtered_query(
+                Some(MasterListLineFilter::new().master_list_id(master_list_id)),
+                None,
+            )
             .unwrap()
             .select(item::id);
 

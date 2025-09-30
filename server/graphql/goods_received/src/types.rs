@@ -1,12 +1,16 @@
 use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
 use chrono::{DateTime, NaiveDate, NaiveDateTime, Utc};
-use graphql_core::loader::{GoodsReceivedLinesByGoodsReceivedIdLoader, NameByIdLoader, NameByIdLoaderInput, PurchaseOrderByIdLoader};
+use graphql_core::loader::{
+    GoodsReceivedLinesByGoodsReceivedIdLoader, NameByIdLoader, NameByIdLoaderInput,
+    NameByNameLinkIdLoader, PurchaseOrderByIdLoader, UserLoader,
+};
+use graphql_core::loader::{NameByNameLinkIdLoaderInput, StoreByIdLoader};
 use graphql_core::ContextExt;
-use graphql_types::types::{purchase_order, NameNode};
-use repository::goods_received_row::{GoodsReceivedRow, GoodsReceivedStatus};
-use service::ListResult;
 use graphql_goods_received_line::types::GoodsReceivedLineConnector;
+use graphql_types::types::{purchase_order, user, NameNode, StoreNode, UserNode};
+use repository::goods_received_row::GoodsReceivedRow;
+use service::ListResult;
 #[derive(PartialEq, Debug)]
 pub struct GoodsReceivedNode {
     pub goods_received: GoodsReceivedRow,
@@ -28,8 +32,16 @@ impl GoodsReceivedNode {
         &self.row().goods_received_number
     }
 
+    pub async fn store(&self, ctx: &Context<'_>) -> Result<Option<StoreNode>> {
+        let loader = ctx.get_loader::<DataLoader<StoreByIdLoader>>();
+        Ok(loader
+            .load_one(self.row().store_id.clone())
+            .await?
+            .map(StoreNode::from_domain))
+    }
+
     pub async fn status(&self) -> GoodsReceivedNodeStatus {
-        GoodsReceivedNodeStatus::from_domain(self.row().status.clone())
+        GoodsReceivedNodeStatus::from(self.row().status.clone())
     }
 
     pub async fn comment(&self) -> &Option<String> {
@@ -62,6 +74,10 @@ impl GoodsReceivedNode {
         return Ok(None);
     }
 
+    pub async fn purchase_order_id(&self) -> &Option<String> {
+        &self.row().purchase_order_id
+    }
+
     pub async fn purchase_order_number(&self, ctx: &Context<'_>) -> Result<Option<i64>> {
         let po_id = match self.row().purchase_order_id {
             Some(ref id) => id,
@@ -84,6 +100,19 @@ impl GoodsReceivedNode {
         &self.row().supplier_reference
     }
 
+    pub async fn donor(&self, ctx: &Context<'_>, store_id: String) -> Result<Option<NameNode>> {
+        let donor_link_id = match &self.row().donor_link_id {
+            None => return Ok(None),
+            Some(donor_link_id) => donor_link_id,
+        };
+        let loader = ctx.get_loader::<DataLoader<NameByNameLinkIdLoader>>();
+        let result = loader
+            .load_one(NameByNameLinkIdLoaderInput::new(&store_id, donor_link_id))
+            .await?;
+
+        Ok(result.map(NameNode::from_domain))
+    }
+
     pub async fn created_datetime(&self) -> DateTime<Utc> {
         DateTime::from_naive_utc_and_offset(self.row().created_datetime, Utc)
     }
@@ -100,8 +129,18 @@ impl GoodsReceivedNode {
         Ok(GoodsReceivedLineConnector::from_vec(result))
     }
 
-    pub async fn created_by(&self) -> &Option<String> {
-        &self.row().created_by
+    pub async fn user(&self, ctx: &Context<'_>) -> Result<Option<UserNode>> {
+        let loader = ctx.get_loader::<DataLoader<UserLoader>>();
+        let user_id = match self.row().created_by.clone() {
+            Some(user_id) => user_id,
+            None => return Ok(None),
+        };
+
+        let result = loader
+            .load_one(user_id)
+            .await?
+            .map(user::UserNode::from_domain);
+        Ok(result)
     }
 
     pub async fn finalised_datetime(&self) -> &Option<NaiveDateTime> {
@@ -122,27 +161,11 @@ impl GoodsReceivedNode {
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
+#[graphql(remote = "repository::db_diesel::goods_received_row
+::GoodsReceivedStatus")]
 pub enum GoodsReceivedNodeStatus {
     New,
     Finalised,
-}
-
-impl GoodsReceivedNodeStatus {
-    pub fn from_domain(status: GoodsReceivedStatus) -> GoodsReceivedNodeStatus {
-        use GoodsReceivedStatus::*;
-        match status {
-            New => GoodsReceivedNodeStatus::New,
-            Finalised => GoodsReceivedNodeStatus::Finalised,
-        }
-    }
-
-    pub fn to_domain(self) -> GoodsReceivedStatus {
-        use GoodsReceivedNodeStatus::*;
-        match self {
-            New => GoodsReceivedStatus::New,
-            Finalised => GoodsReceivedStatus::Finalised,
-        }
-    }
 }
 
 impl GoodsReceivedConnector {

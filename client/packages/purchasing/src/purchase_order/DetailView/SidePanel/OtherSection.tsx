@@ -7,10 +7,12 @@ import {
   PanelLabel,
   TextArea,
 } from '@openmsupply-client/common';
-import { DonorSearchInput } from '@openmsupply-client/system/src';
+import {
+  DonorSearchInput,
+  ShippingMethodAutocomplete,
+  useShippingMethod,
+} from '@openmsupply-client/system';
 import { PurchaseOrderFragment } from '../../api';
-
-// TODO: ShippingMethod have its own table. Need to migrate over before implementing this
 
 interface OtherSectionProps {
   draft?: PurchaseOrderFragment;
@@ -24,6 +26,11 @@ export const OtherSection = ({
   onChange,
 }: OtherSectionProps): ReactElement => {
   const t = useTranslation();
+  const { data: shippingMethods } = useShippingMethod();
+
+  const selectedShippingMethod =
+    shippingMethods?.nodes.find(sm => sm.method === draft?.shippingMethod) ??
+    null;
 
   return (
     <DetailPanelSection title={t('heading.other')}>
@@ -39,11 +46,19 @@ export const OtherSection = ({
           <DonorSearchInput
             donorId={draft?.donor?.id ?? null}
             onChange={donor => onUpdate({ donor: donor })}
+            clearable
           />
         </PanelRow>
-        {/* <PanelRow>
-          <PanelLabel>{t('label.shipping-method')}</PanelLabel> 
-        </PanelRow> */}
+        <PanelRow>
+          <PanelLabel>{t('label.shipping-method')}</PanelLabel>
+          <ShippingMethodAutocomplete
+            value={selectedShippingMethod}
+            onChange={shippingMethod => {
+              onChange({ shippingMethod: shippingMethod?.method ?? null });
+            }}
+            width={250}
+          />
+        </PanelRow>
         <PanelLabel>{t('label.comment')}</PanelLabel>
         <TextArea
           fullWidth

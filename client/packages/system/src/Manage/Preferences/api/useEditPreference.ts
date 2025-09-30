@@ -21,13 +21,16 @@ export const useEditPreferences = (
   const { data } = useAdminPrefsList(prefType, storeId);
   const { mutateAsync } = useUpsertPref();
 
-  // Please add debouncing when string prefs are implemented
-  const update = async (input: Partial<UpsertPreferencesInput>) => {
+  const update = async (
+    input: Partial<UpsertPreferencesInput>
+  ): Promise<boolean /* wasSuccessful */> => {
     try {
       await mutateAsync(input);
+      return true;
     } catch (err) {
       console.error('Error updating preferences:', err);
       error(t('error.something-wrong'))();
+      return false;
     }
   };
 

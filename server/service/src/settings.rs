@@ -1,4 +1,7 @@
-use std::fmt::{Display, Formatter, Result};
+use std::{
+    collections::HashMap,
+    fmt::{Display, Formatter, Result},
+};
 
 use repository::database_settings::DatabaseSettings;
 use serde::{Deserialize, Serialize};
@@ -13,6 +16,7 @@ pub struct Settings {
     pub logging: Option<LoggingSettings>,
     pub backup: Option<BackupSettings>,
     pub mail: Option<MailSettings>,
+    pub features: Option<HashMap<String, bool>>,
 }
 
 #[derive(Deserialize, Serialize, Clone)]

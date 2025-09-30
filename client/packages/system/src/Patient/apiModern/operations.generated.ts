@@ -14,6 +14,7 @@ export type InsuranceFragment = {
   discountPercentage: number;
   expiryDate: string;
   isActive: boolean;
+  nameOfInsured?: string | null;
   insuranceProviders?: {
     __typename: 'InsuranceProviderNode';
     id: string;
@@ -44,6 +45,7 @@ export type InsurancePoliciesQuery = {
       discountPercentage: number;
       expiryDate: string;
       isActive: boolean;
+      nameOfInsured?: string | null;
       insuranceProviders?: {
         __typename: 'InsuranceProviderNode';
         id: string;
@@ -110,6 +112,7 @@ export const InsuranceFragmentDoc = gql`
     discountPercentage
     expiryDate
     isActive
+    nameOfInsured
     insuranceProviders {
       id
       providerName

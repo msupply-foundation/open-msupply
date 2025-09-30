@@ -22,6 +22,7 @@ pub enum ProgramEventResponse {
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(rename_items = "camelCase")]
+#[graphql(remote = "repository::db_diesel::program_event::ProgramEventSortField")]
 pub enum ProgramEventSortFieldInput {
     Datetime,
     ActiveStartDatetime,
@@ -42,21 +43,8 @@ pub struct ProgramEventSortInput {
 
 impl ProgramEventSortInput {
     pub fn to_domain(self) -> ProgramEventSort {
-        let key = match self.key {
-            ProgramEventSortFieldInput::Datetime => ProgramEventSortField::Datetime,
-            ProgramEventSortFieldInput::ActiveStartDatetime => {
-                ProgramEventSortField::ActiveStartDatetime
-            }
-            ProgramEventSortFieldInput::ActiveEndDatetime => {
-                ProgramEventSortField::ActiveEndDatetime
-            }
-            ProgramEventSortFieldInput::DocumentType => ProgramEventSortField::DocumentType,
-            ProgramEventSortFieldInput::DocumentName => ProgramEventSortField::DocumentName,
-            ProgramEventSortFieldInput::Type => ProgramEventSortField::Type,
-        };
-
         ProgramEventSort {
-            key,
+            key: ProgramEventSortField::from(self.key),
             desc: self.desc,
         }
     }

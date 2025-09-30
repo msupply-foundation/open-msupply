@@ -13,6 +13,8 @@ use service::{usize_to_u32, ListResult};
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(rename_items = "camelCase")]
+#[graphql(remote = "repository::db_diesel::campaign::campaign
+::CampaignSortField")]
 pub enum CampaignSortFieldInput {
     Name,
 }
@@ -112,14 +114,8 @@ impl CampaignConnector {
 
 impl CampaignSortInput {
     pub fn to_domain(self) -> CampaignSort {
-        use CampaignSortField as to;
-        use CampaignSortFieldInput as from;
-        let key = match self.key {
-            from::Name => to::Name,
-        };
-
         CampaignSort {
-            key,
+            key: CampaignSortField::from(self.key),
             desc: self.desc,
         }
     }

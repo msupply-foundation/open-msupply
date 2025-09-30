@@ -19,6 +19,7 @@ pub struct StockLineQueries;
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(rename_items = "camelCase")]
+#[graphql(remote = "repository::db_diesel::stock_line::StockLineSortField")]
 pub enum StockLineSortFieldInput {
     ExpiryDate,
     NumberOfPacks,
@@ -28,6 +29,7 @@ pub enum StockLineSortFieldInput {
     PackSize,
     SupplierName,
     LocationCode,
+    VvmStatusThenExpiry,
 }
 #[derive(InputObject)]
 pub struct StockLineSortInput {
@@ -44,6 +46,7 @@ pub struct StockLineFilterInput {
     pub id: Option<EqualFilterStringInput>,
     pub is_available: Option<bool>,
     pub item_code_or_name: Option<StringFilterInput>,
+    pub search: Option<StringFilterInput>,
     pub item_id: Option<EqualFilterStringInput>,
     pub location_id: Option<EqualFilterStringInput>,
     pub vvm_status_id: Option<EqualFilterStringInput>,
@@ -52,6 +55,7 @@ pub struct StockLineFilterInput {
     pub location: Option<LocationFilterInput>,
     pub master_list: Option<MasterListFilterInput>,
     pub is_active: Option<bool>,
+    pub is_program_stock_line: Option<bool>,
 }
 
 impl From<StockLineFilterInput> for StockLineFilter {
@@ -61,6 +65,7 @@ impl From<StockLineFilterInput> for StockLineFilter {
             id: f.id.map(EqualFilter::from),
             is_available: f.is_available,
             item_code_or_name: f.item_code_or_name.map(StringFilterInput::into),
+            search: f.search.map(StringFilterInput::into),
             item_id: f.item_id.map(EqualFilter::from),
             location_id: f.location_id.map(EqualFilter::from),
             store_id: None,
@@ -69,27 +74,15 @@ impl From<StockLineFilterInput> for StockLineFilter {
             location: f.location.map(LocationFilter::from),
             master_list: f.master_list.map(|f| f.to_domain()),
             is_active: f.is_active,
+            is_program_stock_line: f.is_program_stock_line,
         }
     }
 }
 
 impl StockLineSortInput {
     pub fn to_domain(self) -> StockLineSort {
-        use StockLineSortField as to;
-        use StockLineSortFieldInput as from;
-        let key = match self.key {
-            from::NumberOfPacks => to::NumberOfPacks,
-            from::ExpiryDate => to::ExpiryDate,
-            from::ItemCode => to::ItemCode,
-            from::ItemName => to::ItemName,
-            from::Batch => to::Batch,
-            from::PackSize => to::PackSize,
-            from::SupplierName => to::SupplierName,
-            from::LocationCode => to::LocationCode,
-        };
-
         StockLineSort {
-            key,
+            key: StockLineSortField::from(self.key),
             desc: self.desc,
         }
     }

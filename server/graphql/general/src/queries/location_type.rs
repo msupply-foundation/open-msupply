@@ -15,8 +15,8 @@ use service::{
 };
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
-#[graphql(remote = "repository::LocationTypeSortField")]
 #[graphql(rename_items = "camelCase")]
+#[graphql(remote = "repository::LocationTypeSortField")]
 pub enum LocationTypeSortFieldInput {
     Id,
     Name,
@@ -93,16 +93,8 @@ impl LocationTypeFilterInput {
 
 impl LocationTypeSortInput {
     pub fn to_domain(self) -> LocationTypeSort {
-        use LocationTypeSortField as to;
-        use LocationTypeSortFieldInput as from;
-        let key = match self.key {
-            from::Name => to::Name,
-            from::Id => to::Id,
-            from::MinTemperature => to::MinTemperature,
-        };
-
         LocationTypeSort {
-            key,
+            key: LocationTypeSortField::from(self.key),
             desc: self.desc,
         }
     }

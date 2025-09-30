@@ -33,7 +33,6 @@ allow_tables_to_appear_in_same_query!(program, item_link);
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Eq, Default)]
 #[diesel(table_name = program)]
 #[diesel(treat_none_as_null = true)]
-
 pub struct ProgramRow {
     pub id: String, // Master list id
     pub master_list_id: Option<String>,

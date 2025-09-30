@@ -1,8 +1,8 @@
 use super::{
     item_category_row::item_category_join, item_link_row::item_link, item_row::item,
     master_list_line_row::master_list_line, master_list_name_join::master_list_name_join,
-    master_list_row::master_list, stock_on_hand::stock_on_hand, store_row::store, unit_row::unit,
-    DBType, ItemRow, ItemType, StorageConnection, UnitRow,
+    master_list_row::master_list, program_row::program, stock_on_hand::stock_on_hand,
+    store_row::store, unit_row::unit, DBType, ItemRow, ItemType, StorageConnection, UnitRow,
 };
 
 use diesel::{
@@ -16,6 +16,7 @@ use crate::{
         apply_equal_filter, apply_sort, apply_sort_no_case, apply_string_filter,
         apply_string_or_filter,
     },
+    item_store_join::item_store_join,
     repository_error::RepositoryError,
     EqualFilter, Pagination, Sort, StringFilter,
 };
@@ -52,6 +53,10 @@ pub struct ItemFilter {
     pub is_active: Option<bool>,
     pub is_vaccine: Option<bool>,
     pub master_list_id: Option<EqualFilter<String>>,
+    pub is_program_item: Option<bool>,
+    pub ignore_for_orders: Option<bool>,
+    pub min_months_of_stock: Option<f64>,
+    pub max_months_of_stock: Option<f64>,
 }
 
 impl ItemFilter {
@@ -116,6 +121,16 @@ impl ItemFilter {
 
     pub fn visible_or_on_hand(mut self, value: bool) -> Self {
         self.is_visible_or_on_hand = Some(value);
+        self
+    }
+
+    pub fn is_program_item(mut self, value: bool) -> Self {
+        self.is_program_item = Some(value);
+        self
+    }
+
+    pub fn ignore_for_orders(mut self, value: bool) -> Self {
+        self.ignore_for_orders = Some(value);
         self
     }
 }
@@ -225,6 +240,11 @@ fn create_filtered_query(store_id: String, filter: Option<ItemFilter>) -> BoxedI
             has_stock_on_hand,
             is_visible_or_on_hand,
             master_list_id,
+            is_program_item,
+            ignore_for_orders,
+            // Implementing these MOS filters requires consumption data, so they are handled in the service layer.
+            max_months_of_stock: _,
+            min_months_of_stock: _,
         } = f;
 
         // or filter need to be applied before and filters
@@ -334,6 +354,33 @@ fn create_filtered_query(store_id: String, filter: Option<ItemFilter>) -> BoxedI
             (_, _) => query,
         };
 
+        if let Some(is_program_item_filter) = is_program_item {
+            let program_master_list_ids = program::table
+                .select(program::master_list_id)
+                .filter(program::master_list_id.is_not_null())
+                .distinct()
+                .into_boxed();
+
+            let program_item_ids = item_link::table
+                .select(item_link::item_id)
+                .inner_join(
+                    master_list_line::table.on(master_list_line::item_link_id.eq(item_link::id)),
+                )
+                .filter(
+                    master_list_line::master_list_id
+                        .nullable()
+                        .eq_any(program_master_list_ids),
+                )
+                .distinct()
+                .into_boxed();
+
+            if is_program_item_filter {
+                query = query.filter(item::id.eq_any(program_item_ids));
+            } else {
+                query = query.filter(item::id.ne_all(program_item_ids));
+            }
+        }
+
         if let Some(master_list_id_filter) = master_list_id {
             let mut sub_query = item_link::table
                 .select(item_link::item_id)
@@ -348,6 +395,19 @@ fn create_filtered_query(store_id: String, filter: Option<ItemFilter>) -> BoxedI
             );
             query = query.filter(item::id.eq_any(sub_query));
         };
+
+        if let Some(ignore_for_orders) = ignore_for_orders {
+            let item_ids_for_ignore_for_orders = item_link::table
+                .select(item_link::item_id)
+                .inner_join(
+                    item_store_join::table.on(item_store_join::item_link_id.eq(item_link::id)),
+                )
+                .filter(item_store_join::store_id.eq(store_id.clone()))
+                .filter(item_store_join::ignore_for_orders.eq(ignore_for_orders))
+                .into_boxed();
+
+            query = query.filter(item::id.eq_any(item_ids_for_ignore_for_orders));
+        }
     }
     query
 }
@@ -404,9 +464,9 @@ mod tests {
         let mut rows = Vec::new();
         for index in 0..200 {
             rows.push(ItemRow {
-                id: format!("id{:05}", index),
-                name: format!("name{}", index),
-                code: format!("code{}", index),
+                id: format!("id{index:05}"),
+                name: format!("name{index}"),
+                code: format!("code{index}"),
                 r#type: ItemType::Stock,
                 ..Default::default()
             });

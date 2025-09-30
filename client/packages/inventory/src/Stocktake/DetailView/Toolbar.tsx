@@ -8,10 +8,8 @@ import {
   InputWithLabelRow,
   DateTimePickerInput,
   Formatter,
-  SearchBar,
   DateUtils,
   Alert,
-  useUrlQuery,
   useSimplifiedTabletUI,
   TypedTFunction,
   LocaleKey,
@@ -35,13 +33,6 @@ export const Toolbar = () => {
     ? t('messages.on-hold-stock-take')
     : t('messages.finalised-stock-take');
 
-  const { urlQuery, updateQuery } = useUrlQuery({
-    skipParse: ['itemCodeOrName'],
-  });
-  const itemFilter = (urlQuery['itemCodeOrName'] as string) ?? '';
-  const setItemFilter = (itemFilter: string) =>
-    updateQuery({ itemCodeOrName: itemFilter });
-
   return (
     <AppBarContentPortal sx={{ display: 'flex', flex: 1, marginBottom: 1 }}>
       <Grid
@@ -64,33 +55,17 @@ export const Toolbar = () => {
             />
           </Grid>
         ) : (
-          <>
-            <Grid display="flex" flex={1} flexDirection="column" gap={1}>
-              <InformationFields
-                isDisabled={isDisabled}
-                descriptionBuffer={descriptionBuffer}
-                setDescriptionBuffer={setDescriptionBuffer}
-                update={update}
-                t={t}
-                stocktakeDate={stocktakeDate}
-                infoMessage={infoMessage}
-              />
-            </Grid>
-            <Grid
-              display="flex"
-              gap={1}
-              justifyContent="flex-end"
-              alignItems="center"
-            >
-              <SearchBar
-                placeholder={t('placeholder.filter-items')}
-                value={itemFilter}
-                onChange={newValue => {
-                  setItemFilter(newValue);
-                }}
-              />
-            </Grid>
-          </>
+          <Grid display="flex" flex={1} flexDirection="column" gap={1}>
+            <InformationFields
+              isDisabled={isDisabled}
+              descriptionBuffer={descriptionBuffer}
+              setDescriptionBuffer={setDescriptionBuffer}
+              update={update}
+              t={t}
+              stocktakeDate={stocktakeDate}
+              infoMessage={infoMessage}
+            />
+          </Grid>
         )}
       </Grid>
     </AppBarContentPortal>

@@ -7,12 +7,14 @@ use repository::{
 };
 
 pub fn generate(
-    goods_received: GoodsReceivedRow,
+    goods_received: &GoodsReceivedRow,
     UpdateGoodsReceivedInput {
         id: _,
         status,
         received_date,
         comment,
+        donor_id,
+        supplier_reference,
     }: UpdateGoodsReceivedInput,
 ) -> Result<GoodsReceivedRow, RepositoryError> {
     let mut updated_goods_received = goods_received.clone();
@@ -29,6 +31,10 @@ pub fn generate(
     updated_goods_received.received_date =
         nullable_update(&received_date, updated_goods_received.received_date);
     updated_goods_received.comment = comment.or(updated_goods_received.comment);
+    updated_goods_received.donor_link_id =
+        nullable_update(&donor_id, updated_goods_received.donor_link_id);
+    updated_goods_received.supplier_reference =
+        supplier_reference.or(updated_goods_received.supplier_reference);
 
     Ok(updated_goods_received)
 }

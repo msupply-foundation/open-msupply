@@ -13,6 +13,7 @@ import {
   usePluginProvider,
   Typography,
   BufferedTextArea,
+  ModalGridLayout,
   usePreferences,
 } from '@openmsupply-client/common';
 import { DraftRequestLine } from './hooks';
@@ -23,7 +24,6 @@ import { StockEvolution } from './ItemCharts/StockEvolution';
 import { StockDistribution } from './ItemCharts/StockDistribution';
 import {
   InfoRow,
-  ModalContentLayout,
   ValueInfoRow,
   ValueInfo,
   RepresentationValue,
@@ -112,6 +112,7 @@ export const RequestLineEdit = ({
               sx={sx}
               displayVaccinesInDoses={showDoses ?? displayVaccinesInDoses}
               dosesPerUnit={currentItem?.doses}
+              decimalLimit={0}
             />
           )
         )}
@@ -214,7 +215,7 @@ export const RequestLineEdit = ({
 
   return (
     <>
-      <ModalContentLayout
+      <ModalGridLayout
         showExtraFields={showExtraFields}
         Top={
           <>

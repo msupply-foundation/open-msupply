@@ -40,6 +40,9 @@ mod v2_09_00;
 mod v2_09_01;
 mod v2_09_02;
 mod v2_10_00;
+mod v2_10_01;
+mod v2_11_00;
+mod v2_12_00;
 mod version;
 mod views;
 
@@ -89,7 +92,7 @@ pub enum MigrationError {
     DatabaseVersionIsPreRelease(Version),
     #[error("Migration version ({0}) is higher then app version ({1}), consider increasing app version in root package.json")]
     MigrationAboveAppVersion(Version, Version),
-    #[error("Problem dropping or re-creating views")]
+    #[error("Problem dropping or re-creating views {0}")]
     DatabaseViewsError(anyhow::Error),
     #[error("Error during one time migration ({version})")]
     MigrationError {
@@ -151,6 +154,9 @@ pub fn migrate(
         Box::new(v2_09_01::V2_09_01),
         Box::new(v2_09_02::V2_09_02),
         Box::new(v2_10_00::V2_10_00),
+        Box::new(v2_10_01::V2_10_01),
+        Box::new(v2_11_00::V2_11_00),
+        Box::new(v2_12_00::V2_12_00),
     ];
 
     // Historic diesel migrations

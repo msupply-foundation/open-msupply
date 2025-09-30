@@ -1,5 +1,4 @@
 use async_graphql::{Enum, Object, SimpleObject};
-use repository::PermissionType;
 use service::{permission::UserStorePermissions, usize_to_u32, ListResult};
 
 #[derive(PartialEq, Debug)]
@@ -14,6 +13,7 @@ pub struct UserStorePermissionConnector {
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
+#[graphql(remote = "repository::db_diesel::user_permission_row::PermissionType")]
 pub enum UserPermission {
     ServerAdmin,
     StoreAccess,
@@ -31,12 +31,13 @@ pub enum UserPermission {
     RequisitionMutate,
     RequisitionSend,
     RequisitionCreateOutboundShipment,
-    RnRFormQuery,
-    RnRFormMutate,
+    RnrFormQuery,
+    RnrFormMutate,
     OutboundShipmentQuery,
     OutboundShipmentMutate,
     InboundShipmentQuery,
     InboundShipmentMutate,
+    InboundShipmentVerify,
     SupplierReturnQuery,
     SupplierReturnMutate,
     CustomerReturnQuery,
@@ -77,7 +78,7 @@ impl UserStorePermissionNode {
             .permissions
             .clone()
             .into_iter()
-            .map(|p| UserPermission::from_domain(&p.permission))
+            .map(|p| UserPermission::from(p.permission.clone()))
             .collect()
     }
 
@@ -104,133 +105,6 @@ impl UserStorePermissionNode {
 
     pub fn row(&self) -> &UserStorePermissions {
         &self.user_store_permission
-    }
-}
-
-impl UserPermission {
-    pub fn from_domain(from: &PermissionType) -> UserPermission {
-        match from {
-            PermissionType::ServerAdmin => UserPermission::ServerAdmin,
-            PermissionType::StoreAccess => UserPermission::StoreAccess,
-            PermissionType::LocationMutate => UserPermission::LocationMutate,
-            PermissionType::SensorMutate => UserPermission::SensorMutate,
-            PermissionType::SensorQuery => UserPermission::SensorQuery,
-            PermissionType::TemperatureBreachQuery => UserPermission::TemperatureBreachQuery,
-            PermissionType::TemperatureLogQuery => UserPermission::TemperatureLogQuery,
-            PermissionType::StockLineQuery => UserPermission::StockLineQuery,
-            PermissionType::CreateRepack => UserPermission::CreateRepack,
-            PermissionType::StocktakeQuery => UserPermission::StocktakeQuery,
-            PermissionType::StocktakeMutate => UserPermission::StocktakeMutate,
-            PermissionType::InventoryAdjustmentMutate => UserPermission::InventoryAdjustmentMutate,
-            PermissionType::RequisitionQuery => UserPermission::RequisitionQuery,
-            PermissionType::RequisitionMutate => UserPermission::RequisitionMutate,
-            PermissionType::RequisitionCreateOutboundShipment => {
-                UserPermission::RequisitionCreateOutboundShipment
-            }
-            PermissionType::RnrFormQuery => UserPermission::RnRFormQuery,
-            PermissionType::RnrFormMutate => UserPermission::RnRFormMutate,
-            PermissionType::RequisitionSend => UserPermission::RequisitionSend,
-            PermissionType::OutboundShipmentQuery => UserPermission::OutboundShipmentQuery,
-            PermissionType::OutboundShipmentMutate => UserPermission::OutboundShipmentMutate,
-            PermissionType::InboundShipmentQuery => UserPermission::InboundShipmentQuery,
-            PermissionType::InboundShipmentMutate => UserPermission::InboundShipmentMutate,
-            PermissionType::SupplierReturnQuery => UserPermission::SupplierReturnQuery,
-            PermissionType::SupplierReturnMutate => UserPermission::SupplierReturnMutate,
-            PermissionType::CustomerReturnQuery => UserPermission::CustomerReturnQuery,
-            PermissionType::CustomerReturnMutate => UserPermission::CustomerReturnMutate,
-            PermissionType::PrescriptionQuery => UserPermission::PrescriptionQuery,
-            PermissionType::PrescriptionMutate => UserPermission::PrescriptionMutate,
-            PermissionType::Report => UserPermission::Report,
-            PermissionType::LogQuery => UserPermission::LogQuery,
-            PermissionType::StockLineMutate => UserPermission::StockLineMutate,
-            PermissionType::ItemMutate => UserPermission::ItemMutate,
-            PermissionType::PatientQuery => UserPermission::PatientQuery,
-            PermissionType::PatientMutate => UserPermission::PatientMutate,
-            PermissionType::DocumentQuery => UserPermission::DocumentQuery,
-            PermissionType::DocumentMutate => UserPermission::DocumentMutate,
-            PermissionType::ItemNamesCodesAndUnitsMutate => {
-                UserPermission::ItemNamesCodesAndUnitsMutate
-            }
-
-            PermissionType::ColdChainApi => UserPermission::ColdChainApi,
-            PermissionType::AssetMutate => UserPermission::AssetMutate,
-            PermissionType::AssetMutateViaDataMatrix => UserPermission::AssetMutateViaDataMatrix,
-            PermissionType::AssetQuery => UserPermission::AssetQuery,
-            PermissionType::AssetCatalogueItemMutate => UserPermission::AssetCatalogueItemMutate,
-            PermissionType::NamePropertiesMutate => UserPermission::NamePropertiesMutate,
-            PermissionType::EditCentralData => UserPermission::EditCentralData,
-            PermissionType::ViewAndEditVvmStatus => UserPermission::ViewAndEditVvmStatus,
-            PermissionType::PurchaseOrderQuery => UserPermission::PurchaseOrderQuery,
-            PermissionType::PurchaseOrderMutate => UserPermission::PurchaseOrderMutate,
-            PermissionType::PurchaseOrderAuthorise => UserPermission::PurchaseOrderAuthorise,
-            PermissionType::MutateClinician => UserPermission::MutateClinician,
-            PermissionType::CancelFinalisedInvoices => UserPermission::CancelFinalisedInvoices,
-            PermissionType::GoodsReceivedQuery => UserPermission::GoodsReceivedQuery,
-            PermissionType::GoodsReceivedMutate => UserPermission::GoodsReceivedMutate,
-            PermissionType::GoodsReceivedAuthorise => UserPermission::GoodsReceivedAuthorise,
-        }
-    }
-
-    pub fn to_domain(self) -> PermissionType {
-        match self {
-            UserPermission::ServerAdmin => PermissionType::ServerAdmin,
-            UserPermission::StoreAccess => PermissionType::StoreAccess,
-            UserPermission::LocationMutate => PermissionType::LocationMutate,
-            UserPermission::SensorMutate => PermissionType::SensorMutate,
-            UserPermission::SensorQuery => PermissionType::SensorQuery,
-            UserPermission::TemperatureBreachQuery => PermissionType::TemperatureBreachQuery,
-            UserPermission::TemperatureLogQuery => PermissionType::TemperatureLogQuery,
-            UserPermission::StockLineQuery => PermissionType::StockLineQuery,
-            UserPermission::CreateRepack => PermissionType::CreateRepack,
-            UserPermission::StocktakeQuery => PermissionType::StocktakeQuery,
-            UserPermission::StocktakeMutate => PermissionType::StocktakeMutate,
-            UserPermission::InventoryAdjustmentMutate => PermissionType::InventoryAdjustmentMutate,
-            UserPermission::RequisitionQuery => PermissionType::RequisitionQuery,
-            UserPermission::RequisitionMutate => PermissionType::RequisitionMutate,
-            UserPermission::RequisitionSend => PermissionType::RequisitionSend,
-            UserPermission::RequisitionCreateOutboundShipment => {
-                PermissionType::RequisitionCreateOutboundShipment
-            }
-            UserPermission::RnRFormQuery => PermissionType::RnrFormQuery,
-            UserPermission::RnRFormMutate => PermissionType::RnrFormMutate,
-            UserPermission::OutboundShipmentQuery => PermissionType::OutboundShipmentQuery,
-            UserPermission::OutboundShipmentMutate => PermissionType::OutboundShipmentMutate,
-            UserPermission::InboundShipmentQuery => PermissionType::InboundShipmentQuery,
-            UserPermission::InboundShipmentMutate => PermissionType::InboundShipmentMutate,
-            UserPermission::SupplierReturnQuery => PermissionType::SupplierReturnQuery,
-            UserPermission::SupplierReturnMutate => PermissionType::SupplierReturnMutate,
-            UserPermission::CustomerReturnQuery => PermissionType::CustomerReturnQuery,
-            UserPermission::CustomerReturnMutate => PermissionType::CustomerReturnMutate,
-            UserPermission::PrescriptionQuery => PermissionType::PrescriptionQuery,
-            UserPermission::PrescriptionMutate => PermissionType::PrescriptionMutate,
-            UserPermission::Report => PermissionType::Report,
-            UserPermission::LogQuery => PermissionType::LogQuery,
-            UserPermission::StockLineMutate => PermissionType::StockLineMutate,
-            UserPermission::ItemMutate => PermissionType::ItemMutate,
-            UserPermission::PatientQuery => PermissionType::PatientQuery,
-            UserPermission::PatientMutate => PermissionType::PatientMutate,
-            UserPermission::DocumentQuery => PermissionType::DocumentQuery,
-            UserPermission::DocumentMutate => PermissionType::DocumentMutate,
-            UserPermission::ItemNamesCodesAndUnitsMutate => {
-                PermissionType::ItemNamesCodesAndUnitsMutate
-            }
-            UserPermission::ColdChainApi => PermissionType::ColdChainApi,
-            UserPermission::AssetMutate => PermissionType::AssetMutate,
-            UserPermission::AssetMutateViaDataMatrix => PermissionType::AssetMutateViaDataMatrix,
-            UserPermission::AssetQuery => PermissionType::AssetQuery,
-            UserPermission::AssetCatalogueItemMutate => PermissionType::AssetCatalogueItemMutate,
-            UserPermission::NamePropertiesMutate => PermissionType::NamePropertiesMutate,
-            UserPermission::EditCentralData => PermissionType::EditCentralData,
-            UserPermission::ViewAndEditVvmStatus => PermissionType::ViewAndEditVvmStatus,
-            UserPermission::PurchaseOrderQuery => PermissionType::PurchaseOrderQuery,
-            UserPermission::PurchaseOrderMutate => PermissionType::PurchaseOrderMutate,
-            UserPermission::PurchaseOrderAuthorise => PermissionType::PurchaseOrderAuthorise,
-            UserPermission::MutateClinician => PermissionType::MutateClinician,
-            UserPermission::CancelFinalisedInvoices => PermissionType::CancelFinalisedInvoices,
-            UserPermission::GoodsReceivedQuery => PermissionType::GoodsReceivedQuery,
-            UserPermission::GoodsReceivedMutate => PermissionType::GoodsReceivedMutate,
-            UserPermission::GoodsReceivedAuthorise => PermissionType::GoodsReceivedAuthorise,
-        }
     }
 }
 

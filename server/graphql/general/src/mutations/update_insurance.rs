@@ -5,6 +5,7 @@ use graphql_core::standard_graphql_error::StandardGraphqlError;
 use graphql_core::ContextExt;
 use graphql_types::types::IdResponse;
 use graphql_types::types::InsurancePolicyNodeType;
+use repository::name_insurance_join_row::InsurancePolicyType;
 use repository::name_insurance_join_row::NameInsuranceJoinRow;
 use service::{
     auth::{Resource, ResourceAccessRequest},
@@ -19,6 +20,7 @@ pub struct UpdateInsuranceInput {
     pub discount_percentage: Option<f64>,
     pub expiry_date: Option<NaiveDate>,
     pub is_active: Option<bool>,
+    pub name_of_insured: Option<String>,
 }
 
 impl UpdateInsuranceInput {
@@ -30,15 +32,17 @@ impl UpdateInsuranceInput {
             discount_percentage,
             expiry_date,
             is_active,
+            name_of_insured,
         } = self;
 
         ServiceInput {
             id,
             insurance_provider_id,
-            policy_type: policy_type.map(|t| t.to_domain()),
+            policy_type: policy_type.map(|t| InsurancePolicyType::from(t)),
             discount_percentage,
             expiry_date,
             is_active,
+            name_of_insured,
         }
     }
 }

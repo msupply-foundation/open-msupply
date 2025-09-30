@@ -774,6 +774,25 @@ export type CreateOutboundFromResponseMutation = {
     | { __typename: 'InvoiceNode'; id: string; invoiceNumber: number };
 };
 
+export type ResponseAddFromMasterListMutationVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  responseId: Types.Scalars['String']['input'];
+  masterListId: Types.Scalars['String']['input'];
+}>;
+
+export type ResponseAddFromMasterListMutation = {
+  __typename: 'Mutations';
+  responseAddFromMasterList:
+    | { __typename: 'RequisitionLineConnector'; totalCount: number }
+    | {
+        __typename: 'ResponseAddFromMasterListError';
+        error: {
+          __typename: 'MasterListNotFoundForThisStore';
+          description: string;
+        };
+      };
+};
+
 export type SupplyRequestedQuantityMutationVariables = Types.Exact<{
   responseId: Types.Scalars['String']['input'];
   storeId: Types.Scalars['String']['input'];
@@ -1510,6 +1529,33 @@ export const CreateOutboundFromResponseDocument = gql`
     }
   }
 `;
+export const ResponseAddFromMasterListDocument = gql`
+  mutation responseAddFromMasterList(
+    $storeId: String!
+    $responseId: String!
+    $masterListId: String!
+  ) {
+    responseAddFromMasterList(
+      input: { responseRequisitionId: $responseId, masterListId: $masterListId }
+      storeId: $storeId
+    ) {
+      ... on RequisitionLineConnector {
+        __typename
+        totalCount
+      }
+      ... on ResponseAddFromMasterListError {
+        __typename
+        error {
+          description
+          ... on MasterListNotFoundForThisStore {
+            __typename
+            description
+          }
+        }
+      }
+    }
+  }
+`;
 export const SupplyRequestedQuantityDocument = gql`
   mutation supplyRequestedQuantity($responseId: String!, $storeId: String!) {
     supplyRequestedQuantity(
@@ -1830,6 +1876,22 @@ export function getSdk(
             { ...requestHeaders, ...wrappedRequestHeaders }
           ),
         'createOutboundFromResponse',
+        'mutation',
+        variables
+      );
+    },
+    responseAddFromMasterList(
+      variables: ResponseAddFromMasterListMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders
+    ): Promise<ResponseAddFromMasterListMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<ResponseAddFromMasterListMutation>(
+            ResponseAddFromMasterListDocument,
+            variables,
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
+        'responseAddFromMasterList',
         'mutation',
         variables
       );
