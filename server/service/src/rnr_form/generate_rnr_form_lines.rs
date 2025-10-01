@@ -79,6 +79,9 @@ pub fn generate_rnr_form_lines(
         &usage_by_item_map,
     )?;
 
+    let earliest_expiries =
+        get_bulk_earliest_expiries(&ctx.connection, store_id, &master_list_item_ids)?;
+
     // Generate line for each item in the master list
     let rnr_form_lines = master_list_item_ids
         .into_iter()
@@ -126,7 +129,7 @@ pub fn generate_rnr_form_lines(
                 0.0
             };
 
-            let earliest_expiry = get_earliest_expiry(&ctx.connection, store_id, &item_id)?;
+            let earliest_expiry = earliest_expiries.get(&item_id).copied();
 
             Ok(RnRFormLineRow {
                 id: uuid(),
@@ -166,7 +169,6 @@ pub fn generate_rnr_form_lines(
 // ---- ---- ---- ----
 // HELPER FUNCTIONS
 // ---- ---- ---- ----
-
 fn get_master_list_item_ids(
     ctx: &ServiceContext,
     master_list_id: &str,
@@ -336,33 +338,6 @@ pub fn get_usage_map(
     Ok(usage_map)
 }
 
-pub fn get_earliest_expiry(
-    connection: &StorageConnection,
-    store_id: &str,
-    item_id: &str,
-) -> Result<Option<NaiveDate>, RepositoryError> {
-    let filter = StockLineFilter::new()
-        .store_id(EqualFilter::equal_to(store_id))
-        .item_id(EqualFilter::equal_to(item_id))
-        // Note: this is available stock _now_, not what would have been available at the closing time of the period
-        .is_available(true);
-
-    let earliest_expiring = StockLineRepository::new(connection)
-        .query(
-            Pagination::all(),
-            Some(filter),
-            Some(StockLineSort {
-                key: StockLineSortField::ExpiryDate,
-                // Descending, then pop last entry for earliest expiry
-                desc: Some(true),
-            }),
-            Some(store_id.to_string()),
-        )?
-        .pop();
-
-    Ok(earliest_expiring.and_then(|line| line.stock_line_row.expiry_date))
-}
-
 fn get_low_stock_status(final_balance: f64, maximum_quantity: f64) -> RnRFormLowStock {
     if final_balance < maximum_quantity / 4.0 {
         return RnRFormLowStock::BelowQuarter;
@@ -514,4 +489,40 @@ pub fn get_stock_out_durations_batch(
     }
 
     Ok(stock_out_durations)
+}
+
+pub fn get_bulk_earliest_expiries(
+    connection: &StorageConnection,
+    store_id: &str,
+    item_ids: &[String],
+) -> Result<HashMap<String, NaiveDate>, RepositoryError> {
+    let mut expiries = HashMap::new();
+
+    let filter = StockLineFilter::new()
+        .store_id(EqualFilter::equal_to(store_id))
+        .item_id(EqualFilter::equal_any(item_ids.to_vec()))
+        // Note: this is available stock _now_, not what would have been available at the closing time of the period
+        .is_available(true);
+
+    let stock_lines = StockLineRepository::new(connection).query(
+        Pagination::all(),
+        Some(filter),
+        Some(StockLineSort {
+            key: StockLineSortField::ExpiryDate,
+            // Descending, then pop last entry for earliest expiry
+            desc: Some(true),
+        }),
+        Some(store_id.to_string()),
+    )?;
+
+    for line in stock_lines.into_iter() {
+        if let Some(expiry) = line.stock_line_row.expiry_date {
+            let entry = expiries.entry(line.item_row.id.clone()).or_insert(expiry);
+            if expiry < *entry {
+                *entry = expiry;
+            }
+        }
+    }
+
+    Ok(expiries)
 }
