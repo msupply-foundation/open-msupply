@@ -21,13 +21,16 @@ export const useLocationList = (
   currentLocation?: LocationRowFragment | null,
   enabled: boolean = true
 ) => {
-  const { data, isLoading, isError } = useGetList(enabled, queryParams);
+  const { data, isLoading, isError, isFetching } = useGetList(
+    enabled,
+    queryParams
+  );
 
   // NEXT LOCATION
   const next = getNextLocation(data?.nodes ?? [], currentLocation);
 
   return {
-    query: { data, isLoading, isError },
+    query: { data, isLoading, isError, isFetching },
     nextLocation: next,
   };
 };
