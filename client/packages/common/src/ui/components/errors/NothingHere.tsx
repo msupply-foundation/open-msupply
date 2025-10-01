@@ -3,11 +3,13 @@ import React from 'react';
 import { useTranslation } from '@common/intl';
 import { Box, Stack, Typography, Button } from '@mui/material';
 import { NothingHereIcon } from './NothingHereIcon';
+import { useAppTheme } from '@common/styles';
 export interface NothingHereProps {
   title?: string;
   body?: string;
   buttonText?: string;
   onCreate?: () => void;
+  isError?: boolean;
 }
 
 export const NothingHere: React.FC<NothingHereProps> = ({
@@ -15,9 +17,11 @@ export const NothingHere: React.FC<NothingHereProps> = ({
   buttonText,
   title,
   onCreate,
+  isError = false,
 }) => {
   const t = useTranslation();
-  const heading = title || t('error.no-results');
+  const theme = useAppTheme();
+  const heading = title || (isError ? '' : t('error.no-results'));
   const createButtonText = buttonText || t('button.create-a-new-one');
 
   const CreateButton = !!onCreate ? (
@@ -33,7 +37,11 @@ export const NothingHere: React.FC<NothingHereProps> = ({
   ) : undefined;
 
   const Body = !!body ? (
-    <Typography fontSize={14} sx={{ color: 'gray.main' }} display="inline">
+    <Typography
+      fontSize={14}
+      sx={{ color: isError ? 'error.main' : 'gray.main' }}
+      display="inline"
+    >
       {body}
     </Typography>
   ) : undefined;
@@ -46,7 +54,10 @@ export const NothingHere: React.FC<NothingHereProps> = ({
       height="100%"
       padding={1}
     >
-      <NothingHereIcon sx={{ fontSize: 120 }} />
+      <NothingHereIcon
+        sx={{ fontSize: 120 }}
+        fill={isError ? theme.palette.background.error : undefined}
+      />
       <Box justifyContent="center">
         <Typography fontSize={24} fontWeight={700} sx={{ color: 'gray.light' }}>
           {heading}

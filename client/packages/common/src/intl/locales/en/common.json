@@ -830,6 +830,7 @@
   "label.cost-final": "Final cost",
   "label.cost-per-unit": "Cost per unit",
   "label.cost-price": "Cost price",
+  "label.cost-price-per-unit": "Cost price per unit",
   "label.cost-subtotal": "Subtotal",
   "label.cost-total-after-discount": "After discount",
   "label.count-rows": "Number of rows",
