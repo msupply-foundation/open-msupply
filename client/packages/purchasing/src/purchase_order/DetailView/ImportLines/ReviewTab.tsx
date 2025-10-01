@@ -46,9 +46,9 @@ export const ReviewTab = ({
     },
     {
       width: 90,
-      key: 'requestedNumberOfUnits',
+      key: 'numberOfPacks',
       sortable: false,
-      label: 'label.requested',
+      label: 'label.requested-packs',
     },
     {
       width: 90,
@@ -64,9 +64,9 @@ export const ReviewTab = ({
     },
     {
       width: 90,
-      key: 'pricePerUnitBeforeDiscount',
+      key: 'pricePerPackBeforeDiscount',
       sortable: false,
-      label: 'label.price-per-unit-before-discount',
+      label: 'label.price-per-pack-before-discount',
     },
     {
       width: 90,
@@ -76,9 +76,9 @@ export const ReviewTab = ({
     },
     {
       width: 90,
-      key: 'pricePerUnitAfterDiscount',
+      key: 'pricePerPackAfterDiscount',
       sortable: false,
-      label: 'label.price-per-unit-after-discount',
+      label: 'label.price-per-pack-after-discount',
     },
     {
       width: 90,
@@ -160,7 +160,7 @@ export const ReviewTab = ({
           columns={columns}
           data={currentEquipmentPage}
           noDataElement={
-            <NothingHere body={t('error.purchase-order-not-found')} />
+            <NothingHere body={t('error.purchase-order-line-not-found')} />
           }
         />
       </Grid>

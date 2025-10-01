@@ -10,12 +10,7 @@ import {
   Formatter,
   useLocalStorage,
 } from '@openmsupply-client/common';
-import {
-  FilterBy,
-  FilterByWithBoolean,
-  FilterController,
-  SortBy,
-} from '../useQueryParams';
+import { FilterBy, FilterController, SortBy } from '../useQueryParams';
 
 // This hook uses the state of the url query parameters (from useUrlQuery hook)
 // to provide query parameters and update methods to tables.
@@ -65,6 +60,7 @@ export const useUrlQueryParams = ({
     skipParse,
   });
 
+  // Set initial sort on mount
   useEffect(() => {
     if (!initialSort) return;
 
@@ -73,7 +69,7 @@ export const useUrlQueryParams = ({
 
     const { key: sort, dir } = initialSort;
     updateQuery({ sort, dir: dir === 'desc' ? 'desc' : '' });
-  }, [initialSort, updateQuery, urlQuery]);
+  }, []);
 
   const updateSortQuery = useCallback(
     (sort: string, dir: 'desc' | 'asc') => {
@@ -81,6 +77,8 @@ export const useUrlQueryParams = ({
     },
     [updateQuery]
   );
+
+  const clearSort = () => updateQuery({ sort: undefined, dir: undefined });
 
   const updatePaginationQuery = (
     page: number,
@@ -99,8 +97,8 @@ export const useUrlQueryParams = ({
     updateQuery({ [key]: value });
   };
 
-  const getFilterBy = (): FilterByWithBoolean =>
-    filters.reduce<FilterByWithBoolean>((prev, filter) => {
+  const getFilterBy = (): FilterBy =>
+    filters.reduce<FilterBy>((prev, filter) => {
       const filterValue = getFilterValue(
         urlQuery,
         filter.key,
@@ -159,7 +157,7 @@ export const useUrlQueryParams = ({
     offset: page * pageSize,
     first: pageSize,
     sortBy: {
-      key: urlQuery['sort'] ?? initialSort?.key ?? '',
+      key: urlQuery['sort'] ?? '',
       direction: urlQuery['dir'] ?? 'asc',
       isDesc: urlQuery['dir'] === 'desc',
     } as SortBy<unknown>,
@@ -171,6 +169,7 @@ export const useUrlQueryParams = ({
     queryParams,
     urlQuery,
     updateSortQuery,
+    clearSort,
     updatePaginationQuery,
     updateFilterQuery,
     filter,
@@ -230,6 +229,9 @@ const getFilterEntry = (
   const condition = filter.condition ? filter.condition : 'like';
   if (condition === '=') {
     return Boolean(filterValue);
+  }
+  if (condition === 'isNumber') {
+    return Number(filterValue);
   }
 
   if (nestedKey) {

@@ -8,7 +8,6 @@ import {
 import {
   MRT_RowData,
   MRT_RowSelectionState,
-  MRT_SortingState,
   MRT_Updater,
   MRT_PaginationState,
 } from 'material-react-table';
@@ -18,49 +17,24 @@ import { BaseTableConfig, useBaseMaterialTable } from './useBaseMaterialTable';
 interface PaginatedTableConfig<T extends MRT_RowData>
   extends BaseTableConfig<T> {
   totalCount: number;
-  initialSort?: { key: string; dir: 'asc' | 'desc' };
 }
 
+/** Use for any paginated datasets. Sort, filter and pagination must be handled externally */
 export const usePaginatedMaterialTable = <T extends MRT_RowData>({
   isLoading,
   onRowClick,
   totalCount,
-  initialSort,
   ...tableOptions
 }: PaginatedTableConfig<T>) => {
-  const {
-    updateSortQuery,
-    updatePaginationQuery,
-    queryParams: { sortBy, page, first, offset },
-  } = useUrlQueryParams({
-    initialSort,
-  });
   const t = useTranslation();
+  const {
+    updatePaginationQuery,
+    queryParams: { page, first, offset },
+  } = useUrlQueryParams();
   const [rowSelection, setRowSelection] = useState<MRT_RowSelectionState>({});
   const paginationRef = useRef<number>(0);
 
   const pagination = { page, first, offset };
-
-  const handleSortingChange = useCallback(
-    (sortUpdate: MRT_Updater<MRT_SortingState>) => {
-      if (typeof sortUpdate === 'function') {
-        // MRT can handle multiple sort fields, but for now we're only
-        // supporting one, so we take the first item of the array
-        const newSortValue = sortUpdate([
-          { id: sortBy.key, desc: !!sortBy.isDesc },
-        ])[0];
-        if (newSortValue)
-          updateSortQuery(newSortValue.id, newSortValue.desc ? 'desc' : 'asc');
-        else {
-          // For some reason, when just changing the sort direction on a field,
-          // the sortUpdate method doesn't return anything -- is this a bug in
-          // MRT?
-          updateSortQuery(sortBy.key, !sortBy.isDesc ? 'desc' : 'asc');
-        }
-      }
-    },
-    [sortBy, updateSortQuery]
-  );
 
   const handlePaginationChange = useCallback(
     (paginationUpdate: MRT_Updater<MRT_PaginationState>) => {
@@ -69,10 +43,8 @@ export const usePaginatedMaterialTable = <T extends MRT_RowData>({
         const current = { pageIndex: page, pageSize: first };
         const newPaginationValue = paginationUpdate(current);
         paginationRef.current = Date.now();
-        // There is a bug where this function is called twice in quick
-        // succession the first time it's triggered. This is a hacky workaround
-        // for now, but we should investigate further at some point, or report
-        // the bug to MRT devs
+        // This is a hacky workaround for this bug:
+        // https://github.com/KevinVandy/material-react-table/issues/1251
         if (paginationRef.current - lastUpdate < 300) return;
         updatePaginationQuery(
           newPaginationValue.pageIndex,
@@ -86,6 +58,16 @@ export const usePaginatedMaterialTable = <T extends MRT_RowData>({
   const table = useBaseMaterialTable<T>({
     isLoading,
     onRowClick,
+
+    autoResetPageIndex: false,
+    onPaginationChange: handlePaginationChange,
+    enableRowSelection: true,
+    onRowSelectionChange: setRowSelection,
+    rowCount: totalCount,
+    state: {
+      pagination: { pageIndex: pagination.page, pageSize: pagination.first },
+      rowSelection,
+    },
 
     manualFiltering: true,
     manualPagination: true,
@@ -115,6 +97,8 @@ export const usePaginatedMaterialTable = <T extends MRT_RowData>({
     },
     // Summary display in toolbar, e.g. "Showing 1-20 of 45"
     renderBottomToolbarCustomActions: () => {
+      if (totalCount === 0) return <Box />; // empty box to kep toolbar layout consistent
+
       const xToY = `${offset + 1}-${Math.min(first + offset, totalCount)}`;
       return (
         <Box
@@ -138,18 +122,6 @@ export const usePaginatedMaterialTable = <T extends MRT_RowData>({
       );
     },
 
-    onSortingChange: handleSortingChange,
-    autoResetPageIndex: false,
-    onPaginationChange: handlePaginationChange,
-    enableRowSelection: true,
-    onRowSelectionChange: setRowSelection,
-    rowCount: totalCount,
-    state: {
-      sorting: [{ id: sortBy.key, desc: !!sortBy.isDesc }],
-      pagination: { pageIndex: pagination.page, pageSize: pagination.first },
-      showProgressBars: isLoading,
-      rowSelection,
-    },
     ...tableOptions,
   });
 
@@ -158,9 +130,5 @@ export const usePaginatedMaterialTable = <T extends MRT_RowData>({
     [rowSelection]
   );
 
-  const resetRowSelection = () => {
-    table.resetRowSelection();
-  };
-
-  return { table, selectedRows, resetRowSelection };
+  return { table, selectedRows };
 };

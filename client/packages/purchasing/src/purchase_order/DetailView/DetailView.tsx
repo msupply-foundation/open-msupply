@@ -5,7 +5,6 @@ import {
   createTableStore,
   DetailTabs,
   DetailViewSkeleton,
-  NothingHere,
   RouteBuilder,
   TableProvider,
   useBreadcrumbs,
@@ -15,17 +14,17 @@ import {
   useUrlQuery,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
-import { ActivityLogList, DocumentsTable } from '@openmsupply-client/system';
+import { ActivityLogList } from '@openmsupply-client/system';
 
 import { canAddNewLines, isPurchaseOrderDisabled } from '../../utils';
 import { PurchaseOrderLineFragment, usePurchaseOrder } from '../api';
 import { PurchaseOrderLineErrorProvider } from '../context';
-import { ContentArea, Details, GoodsReceived } from './Tabs';
+import { ContentArea, Details, GoodsReceived, Documents } from './Tabs';
 import { AppBarButtons } from './AppBarButtons';
 import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
 import { SidePanel } from './SidePanel';
-import { PurchaseOrderLineEditModal } from './LineEdit';
+import { PurchaseOrderLineEditModal } from './LineEdit/PurchaseOrderLineEditModal';
 
 export const DetailViewInner = () => {
   const t = useTranslation();
@@ -82,7 +81,7 @@ export const DetailViewInner = () => {
           lines={sortedAndFilteredLines}
           isDisabled={isDisabled}
           onAddItem={onOpen}
-          onRowClick={!isDisabled ? onRowClick : null}
+          onRowClick={onRowClick}
         />
       ),
       value: t('label.general'),
@@ -97,13 +96,9 @@ export const DetailViewInner = () => {
     },
     {
       Component: (
-        <DocumentsTable
-          recordId={data?.id ?? ''}
-          documents={data?.documents?.nodes ?? []}
-          tableName="purchase_order"
-          noDataElement={
-            <NothingHere body={t('error.no-purchase-order-documents')} />
-          }
+        <Documents
+          data={data}
+          disable={isDisabled}
           invalidateQueries={invalidateQueries}
         />
       ),

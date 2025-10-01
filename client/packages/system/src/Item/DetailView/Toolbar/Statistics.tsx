@@ -5,8 +5,10 @@ import {
   useFormatNumber,
   useTranslation,
   usePreferences,
+  RouteBuilder,
 } from '@openmsupply-client/common';
 import { useItem } from '../../api';
+import { AppRoute } from '@openmsupply-client/config';
 
 export const Statistics = () => {
   const t = useTranslation();
@@ -44,6 +46,15 @@ export const Statistics = () => {
           },
         ]}
         title={t('title.stock-on-hand')}
+        link={
+          data?.code &&
+          RouteBuilder.create(AppRoute.Inventory)
+            .addPart(AppRoute.Stock)
+            .addQuery({
+              search: data?.code,
+            })
+            .build()
+        }
         width={300}
       />
       <StatsPanel

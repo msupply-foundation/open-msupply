@@ -1,10 +1,11 @@
 use self::dataloader::DataLoader;
 use crate::types::{
-    NameNode, PurchaseOrderLineConnector, StoreNode, SyncFileReferenceConnector, UserNode,
+    CurrencyNode, NameNode, PurchaseOrderLineConnector, StoreNode, SyncFileReferenceConnector,
+    UserNode,
 };
 use async_graphql::*;
 use chrono::{DateTime, NaiveDate, Utc};
-use graphql_core::loader::PurchaseOrderLinesByPurchaseOrderIdLoader;
+use graphql_core::loader::{CurrencyByIdLoader, PurchaseOrderLinesByPurchaseOrderIdLoader};
 use graphql_core::loader::{
     NameByIdLoader, NameByIdLoaderInput, StoreByIdLoader, SyncFileReferenceLoader, UserLoader,
 };
@@ -113,7 +114,7 @@ impl PurchaseOrderNode {
         &self.row().shipping_method
     }
     pub async fn sent_datetime(&self) -> Option<DateTime<Utc>> {
-        let sent_datetime = self.row().confirmed_datetime;
+        let sent_datetime = self.row().sent_datetime;
         sent_datetime.map(|v| DateTime::<Utc>::from_naive_utc_and_offset(v, Utc))
     }
     pub async fn contract_signed_date(&self) -> &Option<NaiveDate> {
@@ -175,9 +176,9 @@ impl PurchaseOrderNode {
     pub async fn supplier_discount_percentage(&self) -> &Option<f64> {
         &self.row().supplier_discount_percentage
     }
-    pub async fn authorised_datetime(&self) -> Option<DateTime<Utc>> {
-        let authorised_datetime = self.row().confirmed_datetime;
-        authorised_datetime.map(|v| DateTime::<Utc>::from_naive_utc_and_offset(v, Utc))
+    pub async fn request_approval_datetime(&self) -> Option<DateTime<Utc>> {
+        let request_approval_datetime = self.row().request_approval_datetime;
+        request_approval_datetime.map(|v| DateTime::<Utc>::from_naive_utc_and_offset(v, Utc))
     }
     pub async fn finalised_datetime(&self) -> Option<DateTime<Utc>> {
         let finalised_datetime = self.row().finalised_datetime;
@@ -201,6 +202,22 @@ impl PurchaseOrderNode {
         let result = result_option.unwrap_or(vec![]);
         Ok(PurchaseOrderLineConnector::from_vec(result))
     }
+
+    pub async fn currency(&self, ctx: &Context<'_>) -> Result<Option<CurrencyNode>> {
+        let currency_id = match &self.row().currency_id {
+            Some(currency_id) => currency_id,
+            None => return Ok(None),
+        };
+
+        let loader = ctx.get_loader::<DataLoader<CurrencyByIdLoader>>();
+
+        let result = loader
+            .load_one(currency_id.clone())
+            .await?
+            .map(CurrencyNode::from_domain);
+
+        Ok(result)
+    }
 }
 
 impl PurchaseOrderNode {
@@ -223,8 +240,9 @@ impl PurchaseOrderNode {
 ::PurchaseOrderStatus")]
 pub enum PurchaseOrderNodeStatus {
     New,
+    RequestApproval,
     Confirmed,
-    Authorised,
+    Sent,
     Finalised,
 }
 

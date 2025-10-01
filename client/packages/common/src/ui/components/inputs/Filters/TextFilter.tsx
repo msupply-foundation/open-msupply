@@ -17,7 +17,10 @@ export const TextFilter: FC<{
   filterDefinition: TextFilterDefinition;
   remove: () => void;
 }> = ({ filterDefinition }) => {
-  const { urlQuery, updateQuery } = useUrlQuery();
+  const { urlQuery, updateQuery } = useUrlQuery({
+    // text filter values shouldn't have special parsing i.e. code `0300` should retain leading zeroes
+    skipParse: [filterDefinition.urlParameter],
+  });
   const [value, setValue] = useState(
     urlQuery[filterDefinition.urlParameter] ?? ''
   );

@@ -12,7 +12,7 @@ import {
   useDisabledNotificationToast,
 } from '@openmsupply-client/common';
 import { getNextOutboundStatus, getStatusTranslation } from '../../../utils';
-import { useOutbound } from '../../api';
+import { useOutbound, useOutboundLines } from '../../api';
 
 const getStatusOptions = (
   currentStatus: InvoiceNodeStatus,
@@ -173,7 +173,7 @@ const useStatusChangeButton = () => {
 
 const useStatusChangePlaceholderCheck = () => {
   const t = useTranslation();
-  const { data: lines } = useOutbound.line.stockLines();
+  const { data: lines } = useOutboundLines();
   const alert = useAlertModal({
     title: t('heading.cannot-do-that'),
     message: t('messages.must-allocate-all-lines'),

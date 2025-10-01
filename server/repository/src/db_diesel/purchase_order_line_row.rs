@@ -1,6 +1,6 @@
 use crate::{
     db_diesel::{item_link_row::item_link, item_row::item, purchase_order_row::purchase_order},
-    name_link, Delete, Upsert,
+    name_link, Delete, PurchaseOrderRowRepository, Upsert,
 };
 use crate::{
     ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RepositoryError, RowActionType,
@@ -27,8 +27,8 @@ table! {
         expected_delivery_date -> Nullable<Date>,
         stock_on_hand_in_units -> Double,
         supplier_item_code -> Nullable<Text>,
-        price_per_unit_before_discount -> Double,
-        price_per_unit_after_discount -> Double,
+        price_per_pack_before_discount -> Double,
+        price_per_pack_after_discount -> Double,
         comment -> Nullable<Text>,
         manufacturer_link_id -> Nullable<Text>,
         note -> Nullable<Text>,
@@ -64,8 +64,8 @@ pub struct PurchaseOrderLineRow {
     pub expected_delivery_date: Option<NaiveDate>,
     pub stock_on_hand_in_units: f64,
     pub supplier_item_code: Option<String>,
-    pub price_per_unit_before_discount: f64,
-    pub price_per_unit_after_discount: f64,
+    pub price_per_pack_before_discount: f64,
+    pub price_per_pack_after_discount: f64,
     pub comment: Option<String>,
     pub manufacturer_link_id: Option<String>,
     pub note: Option<String>,
@@ -108,16 +108,32 @@ impl<'a> PurchaseOrderLineRowRepository<'a> {
         row: &PurchaseOrderLineRow,
         action: RowActionType,
     ) -> Result<i64, RepositoryError> {
+        let purchase_order = PurchaseOrderRowRepository::new(self.connection)
+            .find_one_by_id(&row.purchase_order_id)?;
+        let purchase_order = match purchase_order {
+            Some(purchase_order) => purchase_order,
+
+            None => return Err(RepositoryError::NotFound),
+        };
+
         let row = ChangeLogInsertRow {
             table_name: ChangelogTableName::PurchaseOrderLine,
             record_id: row.id.clone(),
             row_action: action,
-            // no information on store - but this can be found on the parent purchase order record
-            store_id: None,
+            store_id: Some(purchase_order.store_id.clone()),
             name_link_id: None,
         };
 
-        ChangelogRepository::new(self.connection).insert(&row)
+        let purchase_order_row = ChangeLogInsertRow {
+            table_name: ChangelogTableName::PurchaseOrder,
+            record_id: purchase_order.id,
+            row_action: RowActionType::Upsert,
+            store_id: Some(purchase_order.store_id),
+            name_link_id: None,
+        };
+
+        let _ = ChangelogRepository::new(self.connection).insert(&row);
+        ChangelogRepository::new(self.connection).insert(&purchase_order_row)
     }
 
     pub fn delete(&self, purchase_order_line_id: &str) -> Result<Option<i64>, RepositoryError> {

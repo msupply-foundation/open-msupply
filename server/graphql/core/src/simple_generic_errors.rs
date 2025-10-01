@@ -267,9 +267,9 @@ impl CannotEditGoodsReceived {
     }
 }
 
-pub struct CannotDeleteNonNewPurchaseOrder;
+pub struct CannotDeletePurchaseOrder;
 #[Object]
-impl CannotDeleteNonNewPurchaseOrder {
+impl CannotDeletePurchaseOrder {
     pub async fn description(&self) -> &str {
         "Cannot delete non-new purchase order"
     }

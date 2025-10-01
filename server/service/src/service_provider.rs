@@ -67,6 +67,7 @@ use crate::{
     sensor::{SensorService, SensorServiceTrait},
     settings::MailSettings,
     settings_service::{SettingsService, SettingsServiceTrait},
+    shipping_method::{ShippingMethodService, ShippingMethodServiceTrait},
     standard_reports::StandardReports,
     stock_line::{StockLineService, StockLineServiceTrait},
     stocktake::{StocktakeService, StocktakeServiceTrait},
@@ -200,6 +201,8 @@ pub struct ServiceProvider {
     pub goods_received_line_service: Box<dyn GoodsReceivedLineServiceTrait>,
     // Contacts
     pub contact_service: Box<dyn ContactServiceTrait>,
+    // Shipping Method
+    pub shipping_method_service: Box<dyn ShippingMethodServiceTrait>,
 }
 
 pub struct ServiceContext {
@@ -312,6 +315,7 @@ impl ServiceProvider {
             goods_received_line_service: Box::new(GoodsReceivedLineService),
             contact_service: Box::new(ContactService {}),
             ledger_fix_trigger,
+            shipping_method_service: Box::new(ShippingMethodService {}),
         }
     }
 

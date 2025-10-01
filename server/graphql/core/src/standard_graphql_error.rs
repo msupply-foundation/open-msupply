@@ -49,6 +49,7 @@ impl StandardGraphqlError {
             ListError::DatabaseError(error) => error.into(),
             ListError::LimitBelowMin(_) => StandardGraphqlError::BadUserInput(formatted_error),
             ListError::LimitAboveMax(_) => StandardGraphqlError::BadUserInput(formatted_error),
+            ListError::PluginError(_) => StandardGraphqlError::InternalError(formatted_error),
         };
         graphql_error.extend()
     }
@@ -110,6 +111,7 @@ pub fn list_error_to_gql_err(err: ListError) -> async_graphql::Error {
         ListError::DatabaseError(err) => err.into(),
         ListError::LimitBelowMin(_) => StandardGraphqlError::BadUserInput(format!("{:?}", err)),
         ListError::LimitAboveMax(_) => StandardGraphqlError::BadUserInput(format!("{:?}", err)),
+        _ => StandardGraphqlError::InternalError(format!("{:?}", err)),
     };
     gql_err.extend()
 }

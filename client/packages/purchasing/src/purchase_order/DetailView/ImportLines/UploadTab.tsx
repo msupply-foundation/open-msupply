@@ -11,15 +11,22 @@ import {
   UploadFile,
   useExportCSV,
   ImportPanel,
+  PurchaseOrderNodeStatus,
+  NumUtils,
 } from '@openmsupply-client/common';
 import { importPurchaseOrderLinesToCsv } from '../utils';
 import { getImportHelpers, ImportRow, ParsedLine } from './utils';
+import {
+  calculatePricesAndDiscount,
+  calculateUnitQuantities,
+} from '../LineEdit';
 
 interface UploadTabProps {
   setLines: Dispatch<SetStateAction<ImportRow[]>>;
   setErrorMessage: (value: SetStateAction<string>) => void;
   setWarningMessage: (value: SetStateAction<string>) => void;
   onUploadComplete: () => void;
+  status: PurchaseOrderNodeStatus;
 }
 
 export const UploadTab = ({
@@ -28,6 +35,7 @@ export const UploadTab = ({
   setWarningMessage,
   setLines,
   onUploadComplete,
+  status,
 }: ImportPanel & UploadTabProps) => {
   const t = useTranslation();
   const { error } = useNotification();
@@ -41,12 +49,12 @@ export const UploadTab = ({
       {
         itemCode: t('label.code'),
         requestedPackSize: 0,
-        requestedNumberOfUnits: 0,
+        numberOfPacks: 0,
         unit: '',
         supplierItemCode: '',
-        pricePerUnitBeforeDiscount: 0,
+        pricePerPackBeforeDiscount: 0,
         discountPercentage: 0,
-        pricePerUnitAfterDiscount: 0,
+        pricePerPackAfterDiscount: 0,
         requestedDeliveryDate: '',
         expectedDeliveryDate: '',
         comment: '',
@@ -69,32 +77,87 @@ export const UploadTab = ({
       {
         key: 'requestedPackSize',
         localeKey: 'label.pack-size',
-        formatter: numString => parseFloat(numString),
+        formatter: numString => parseFloat(numString) || 0,
       },
     ]);
 
-    addCell('requestedNumberOfUnits', 'label.requested', numString =>
-      parseFloat(numString)
-    );
+    addCell('numberOfPacks', 'label.requested-packs', numString => {
+      const packSizeValue = row[t('label.pack-size')] ?? '';
+      const packSize = NumUtils.parseString(packSizeValue);
+
+      if (packSize <= 0) {
+        rowErrors.push(t('error.pack-size-must-be-greater-than-zero'));
+      }
+
+      const parsedValue = parseFloat(numString);
+      const calculatedValues = calculateUnitQuantities(status, {
+        ...importRow,
+        numberOfPacks: parsedValue,
+      });
+      Object.assign(importRow, {
+        requestedNumberOfUnits: calculatedValues.requestedNumberOfUnits,
+        adjustedNumberOfUnits: calculatedValues.adjustedNumberOfUnits,
+      });
+      return parsedValue;
+    });
 
     addCell('unit', 'label.unit');
 
     addCell('supplierItemCode', 'label.supplier-item-code');
 
     addCell(
-      'pricePerUnitBeforeDiscount',
-      'label.price-per-unit-before-discount',
-      numString => parseFloat(numString)
+      'pricePerPackBeforeDiscount',
+      'label.price-per-pack-before-discount',
+      numString => {
+        const parsedValue = parseFloat(numString) || 0;
+
+        const calculatedValues = calculatePricesAndDiscount(
+          'pricePerPackBeforeDiscount',
+          {
+            ...importRow,
+            pricePerPackBeforeDiscount: parsedValue,
+          }
+        );
+
+        Object.assign(importRow, { ...calculatedValues });
+        return parsedValue;
+      }
     );
 
-    addCell('discountPercentage', 'label.discount-percentage', numString =>
-      parseFloat(numString)
-    );
+    addCell('discountPercentage', 'label.discount-percentage', numString => {
+      const parsedValue = parseFloat(numString) || 0;
+
+      if (parsedValue > 100 && !!importRow.pricePerPackAfterDiscount) {
+        rowErrors.push(t('error.discount-exceeds-maximum'));
+      }
+
+      return parsedValue;
+    });
 
     addCell(
-      'pricePerUnitAfterDiscount',
-      'label.price-per-unit-after-discount',
-      numString => parseFloat(numString)
+      'pricePerPackAfterDiscount',
+      'label.price-per-pack-after-discount',
+      numString => {
+        const parsedValue = parseFloat(numString) || 0;
+        const beforeDiscountPrice = importRow.pricePerPackBeforeDiscount || 0;
+
+        if (parsedValue > beforeDiscountPrice) {
+          rowErrors.push(
+            t('error.price-after-discount-cannot-exceed-price-before-discount')
+          );
+        }
+
+        const calculatedValues = calculatePricesAndDiscount(
+          'pricePerPackAfterDiscount',
+          {
+            ...importRow,
+            pricePerPackAfterDiscount: parsedValue,
+          }
+        );
+
+        Object.assign(importRow, { ...calculatedValues });
+        return parsedValue;
+      }
     );
 
     addCell('requestedDeliveryDate', 'label.requested-delivery-date');
