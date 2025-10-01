@@ -14,7 +14,6 @@ import {
   InvoiceLineNodeType,
   MaterialTable,
   NothingHere,
-  useIsGroupedState,
   Groupable,
 } from '@openmsupply-client/common';
 import {
@@ -53,8 +52,7 @@ export const DetailView = () => {
   } = useEditModal<string[]>();
 
   const { data, isLoading } = useOutbound.document.get();
-  const { isGrouped } = useIsGroupedState('outboundShipment');
-  const { data: rows } = useOutboundLines();
+  const { data: rows, isError } = useOutboundLines();
 
   const { setCustomBreadcrumbs } = useBreadcrumbs();
   const navigate = useNavigate();
@@ -100,7 +98,8 @@ export const DetailView = () => {
     tableId: 'outbound-shipment-detail-view',
     columns,
     data: rows,
-    groupByField: isGrouped ? 'itemName' : undefined,
+    isError,
+    grouping: { enabled: true },
     isLoading: false,
     initialSort: { key: 'itemName', dir: 'asc' },
     onRowClick: !isDisabled ? onRowClick : undefined,

@@ -130,7 +130,7 @@ export type SupplierReturnLineFragment = {
   expiryDate?: string | null;
   numberOfPacks: number;
   packSize: number;
-  sellPricePerPack: number;
+  costPricePerPack: number;
   item: {
     __typename: 'ItemNode';
     id: string;
@@ -414,7 +414,7 @@ export type SupplierReturnByNumberQuery = {
             expiryDate?: string | null;
             numberOfPacks: number;
             packSize: number;
-            sellPricePerPack: number;
+            costPricePerPack: number;
             item: {
               __typename: 'ItemNode';
               id: string;
@@ -488,7 +488,7 @@ export type SupplierReturnByIdQuery = {
             expiryDate?: string | null;
             numberOfPacks: number;
             packSize: number;
-            sellPricePerPack: number;
+            costPricePerPack: number;
             item: {
               __typename: 'ItemNode';
               id: string;
@@ -962,7 +962,7 @@ export const SupplierReturnLineFragmentDoc = gql`
     expiryDate
     numberOfPacks
     packSize
-    sellPricePerPack
+    costPricePerPack
     item {
       __typename
       id
