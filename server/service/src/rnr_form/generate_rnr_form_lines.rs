@@ -59,6 +59,8 @@ pub fn generate_rnr_form_lines(
             .program_id(EqualFilter::equal_to(program_id)),
     )?;
 
+    let store_preferences = get_store_preferences(&ctx.connection, store_id)?;
+
     // Generate line for each item in the master list
     let rnr_form_lines = master_list_item_ids
         .into_iter()
@@ -112,8 +114,6 @@ pub fn generate_rnr_form_lines(
                 .map(|v| v.to_string())
                 .collect::<Vec<String>>()
                 .join(",");
-
-            let store_preferences = get_store_preferences(&ctx.connection, store_id)?;
 
             let minimum_quantity =
                 average_monthly_consumption * store_preferences.months_understock;
