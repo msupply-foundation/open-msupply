@@ -61,21 +61,19 @@ pub fn generate_rnr_form_lines(
 
     let store_preferences = get_store_preferences(&ctx.connection, store_id)?;
 
+    let opening_balances = get_bulk_opening_balances(
+        &ctx.connection,
+        &previous_rnr_form_lines_by_item_id,
+        store_id,
+        &master_list_item_ids,
+        period.start_date,
+    )?;
+
     // Generate line for each item in the master list
     let rnr_form_lines = master_list_item_ids
         .into_iter()
         .map(|item_id| {
-            // Initial balance is either:
-            // - Use the previous form's final balance
-            // - If not available, calculate retrospectively from stock movements
-            let initial_balance = get_opening_balance(
-                &ctx.connection,
-                previous_rnr_form_lines_by_item_id.get(&item_id),
-                store_id,
-                &item_id,
-                period.start_date,
-            )?;
-
+            let initial_balance = opening_balances.get(&item_id).copied().unwrap_or(0.0);
             let usage = usage_by_item_map.get(&item_id).copied().unwrap_or_default();
 
             let final_balance =
@@ -210,10 +208,8 @@ pub fn get_amc(
         previous_monthly_consumption_values.iter().sum::<f64>();
 
     // Calculate AMC for this period
-    let this_period_amc = (total_previous_monthly_consumption + monthly_consumption_this_period)
-        / (num_previous_data_points + 1.0);
-
-    this_period_amc
+    (total_previous_monthly_consumption + monthly_consumption_this_period)
+        / (num_previous_data_points + 1.0)
 }
 
 pub fn get_previous_monthly_consumption(
@@ -256,46 +252,6 @@ pub fn get_previous_monthly_consumption(
     }
 
     Ok(monthly_consumption_by_item_id)
-}
-
-pub fn get_opening_balance(
-    connection: &StorageConnection,
-    previous_row: Option<&RnRFormLineRow>,
-    store_id: &str,
-    item_id: &str,
-    start_date: NaiveDate,
-) -> Result<f64, RepositoryError> {
-    if let Some(previous_row) = previous_row {
-        return Ok(previous_row.final_balance);
-    }
-
-    // Find all the store movement values between the start_date and now
-    // Take those stock movements away from the current stock on hand, to retrospectively calculate what was available at that time.
-    let filter = StockMovementFilter::new()
-        .store_id(EqualFilter::equal_to(store_id))
-        .item_id(EqualFilter::equal_to(item_id))
-        .datetime(DatetimeFilter::date_range(
-            start_date.into(),
-            date_now().into(),
-        ));
-
-    let stock_movement_rows = StockMovementRepository::new(connection).query(Some(filter))?;
-
-    let total_movements_since_start_date: f64 = stock_movement_rows
-        .into_iter()
-        .map(|row| row.quantity)
-        .sum();
-
-    let stock_on_hand_now = StockOnHandRepository::new(connection)
-        .query_one(
-            StockOnHandFilter::new()
-                .store_id(EqualFilter::equal_to(store_id))
-                .item_id(EqualFilter::equal_to(item_id)),
-        )?
-        .map(|row| row.total_stock_on_hand)
-        .unwrap_or(0.0);
-
-    Ok(stock_on_hand_now - total_movements_since_start_date)
 }
 
 pub fn get_stock_out_duration(
@@ -458,4 +414,72 @@ fn get_low_stock_status(final_balance: f64, maximum_quantity: f64) -> RnRFormLow
     }
 
     RnRFormLowStock::Ok
+}
+
+/**
+ * Opening balance for R&R form lines is either:
+ * - The final balance from the previous R&R form for that item (if it exists)
+ * - Or, if there is no previous R&R form line for that item, we calculate it from stock movements
+ */
+pub fn get_bulk_opening_balances(
+    connection: &StorageConnection,
+    previous_rnr_form_lines_by_item_id: &HashMap<String, RnRFormLineRow>,
+    store_id: &str,
+    item_ids: &[String],
+    start_date: NaiveDate,
+) -> Result<HashMap<String, f64>, RepositoryError> {
+    let mut opening_balances = HashMap::new();
+
+    for item_id in item_ids {
+        if let Some(previous_row) = previous_rnr_form_lines_by_item_id.get(item_id) {
+            opening_balances.insert(item_id.clone(), previous_row.final_balance);
+        }
+    }
+
+    let items_needing_calculation: Vec<String> = item_ids
+        .iter()
+        .filter(|item_id| !opening_balances.contains_key(*item_id))
+        .cloned()
+        .collect();
+
+    if !items_needing_calculation.is_empty() {
+        // Get all movements between the start date and now for all items needing calculation
+        let stock_movement_rows = StockMovementRepository::new(connection).query(Some(
+            StockMovementFilter::new()
+                .store_id(EqualFilter::equal_to(store_id))
+                .item_id(EqualFilter::equal_any(items_needing_calculation.clone()))
+                .datetime(DatetimeFilter::date_range(
+                    start_date.into(),
+                    date_now().into(),
+                )),
+        ))?;
+
+        let mut movements_by_item: HashMap<String, f64> = HashMap::new();
+        for movement in stock_movement_rows {
+            *movements_by_item
+                .entry(movement.item_id.clone())
+                .or_insert(0.0) += movement.quantity;
+        }
+
+        let stock_on_hand_rows = StockOnHandRepository::new(connection).query(Some(
+            StockOnHandFilter::new()
+                .store_id(EqualFilter::equal_to(store_id))
+                .item_id(EqualFilter::equal_any(items_needing_calculation.clone())),
+        ))?;
+
+        let stock_on_hand_by_item: HashMap<String, f64> = stock_on_hand_rows
+            .into_iter()
+            .map(|row| (row.item_id, row.total_stock_on_hand))
+            .collect();
+
+        for item_id in items_needing_calculation {
+            let stock_on_hand_now = stock_on_hand_by_item.get(&item_id).copied().unwrap_or(0.0);
+            let total_movements_since_start =
+                movements_by_item.get(&item_id).copied().unwrap_or(0.0);
+            let opening_balance = stock_on_hand_now - total_movements_since_start;
+            opening_balances.insert(item_id, opening_balance);
+        }
+    }
+
+    Ok(opening_balances)
 }
