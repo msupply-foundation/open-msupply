@@ -12,6 +12,7 @@
     feature_flags:
       table_usability_improvements: true
       load_remote_plugins_in_dev: true
+      create_stocktake_modal_usability_improvements: true
   ```
 */
 
@@ -32,8 +33,6 @@ export const useFeatureFlags = () => {
   });
 
   return {
-    // Enable the new demo table, with better usability
-    tableUsabilityImprovements: !!featureFlags['table_usability_improvements'],
     // Enable the new demo create stocktake modal (see https://github.com/msupply-foundation/open-msupply/issues/8773)
     createStocktakeModalUsabilityImprovements:
       !!featureFlags['create_stocktake_modal_usability_improvements'],

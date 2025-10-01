@@ -15,7 +15,6 @@ import {
   useBreadcrumbs,
   useConfirmationModal,
   InvoiceLineNodeType,
-  useFeatureFlags,
 } from '@openmsupply-client/common';
 import { getStatusTranslator, outboundStatuses } from '../../../utils';
 import { useOutbound, OutboundFragment } from '../../api';
@@ -74,7 +73,6 @@ export const FooterComponent: FC<FooterComponentProps> = ({
   selectedRows,
   resetRowSelection,
 }) => {
-  const { tableUsabilityImprovements } = useFeatureFlags();
   const t = useTranslation();
   const { navigateUpOne } = useBreadcrumbs();
 
@@ -83,15 +81,12 @@ export const FooterComponent: FC<FooterComponentProps> = ({
     selectedRows,
     resetRowSelection
   );
-  const { onAllocate } = useOutbound.line.allocateSelected();
+  const { onAllocate } = useOutbound.line.allocateSelected(
+    selectedRows,
+    resetRowSelection
+  );
 
-  const oldSelectedLines = useOutbound.utils.selectedLines();
-
-  const actualSelectedRows = tableUsabilityImprovements
-    ? selectedRows
-    : oldSelectedLines;
-
-  const selectedUnallocatedEmptyLines = actualSelectedRows
+  const selectedUnallocatedEmptyLines = selectedRows
     .filter(
       ({ type, numberOfPacks }) =>
         type === InvoiceLineNodeType.UnallocatedStock && numberOfPacks === 0
@@ -112,7 +107,6 @@ export const FooterComponent: FC<FooterComponentProps> = ({
       getConfirmation();
     } else {
       onAllocate();
-      resetRowSelection();
     }
   };
 
@@ -131,7 +125,7 @@ export const FooterComponent: FC<FooterComponentProps> = ({
     {
       label: t('button.return-lines'),
       icon: <ArrowLeftIcon />,
-      onClick: () => onReturnLines(actualSelectedRows),
+      onClick: () => onReturnLines(selectedRows),
       shouldShrink: false,
     },
   ];
@@ -140,14 +134,14 @@ export const FooterComponent: FC<FooterComponentProps> = ({
     <AppFooterPortal
       Content={
         <>
-          {actualSelectedRows.length !== 0 && (
+          {selectedRows.length !== 0 && (
             <ActionsFooter
               actions={actions}
-              selectedRowCount={actualSelectedRows.length}
+              selectedRowCount={selectedRows.length}
               resetRowSelection={resetRowSelection}
             />
           )}
-          {data && actualSelectedRows.length === 0 && (
+          {data && selectedRows.length === 0 && (
             <Box
               gap={2}
               display="flex"

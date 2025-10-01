@@ -20,8 +20,8 @@ export const createDraftPurchaseOrderLine = (
     requestedNumberOfUnits: 0,
     lineNumber: 0,
     adjustedNumberOfUnits: null,
-    pricePerUnitBeforeDiscount: 0,
-    pricePerUnitAfterDiscount: 0,
+    pricePerPackBeforeDiscount: 0,
+    pricePerPackAfterDiscount: 0,
     unit: item.unitName,
     item: {
       __typename: 'ItemNode',
@@ -44,9 +44,9 @@ export const createDraftPurchaseOrderLine = (
 };
 
 type PriceField =
-  | 'pricePerUnitBeforeDiscount'
+  | 'pricePerPackBeforeDiscount'
   | 'discountPercentage'
-  | 'pricePerUnitAfterDiscount';
+  | 'pricePerPackAfterDiscount';
 
 /**
  * Calculates any of the these values from the other two, based on which have
@@ -60,39 +60,33 @@ export const calculatePricesAndDiscount = (
   data: Partial<DraftPurchaseOrderLine>
 ) => {
   const {
-    pricePerUnitBeforeDiscount = 0,
     discountPercentage,
-    pricePerUnitAfterDiscount = 0,
+    pricePerPackAfterDiscount = 0,
+    pricePerPackBeforeDiscount = 0,
   } = data;
+  const discount = Math.min(Math.max(discountPercentage || 0, 0), 100);
 
   switch (changingField) {
-    case 'pricePerUnitBeforeDiscount': {
-      // Update the price after discount based on discount percentage
-      return {
-        pricePerUnitBeforeDiscount,
-        discountPercentage,
-        pricePerUnitAfterDiscount:
-          pricePerUnitBeforeDiscount * (1 - (discountPercentage || 0) / 100),
-      };
-    }
+    case 'pricePerPackBeforeDiscount':
     case 'discountPercentage': {
-      // Update the price after discount based on original price
       return {
-        pricePerUnitBeforeDiscount,
+        pricePerPackBeforeDiscount,
         discountPercentage,
-        pricePerUnitAfterDiscount:
-          pricePerUnitBeforeDiscount * (1 - (discountPercentage || 0) / 100),
+        pricePerPackAfterDiscount:
+          pricePerPackBeforeDiscount * (1 - discount / 100),
       };
     }
-    case 'pricePerUnitAfterDiscount': {
-      // Update the discount percentage based on original price
+    case 'pricePerPackAfterDiscount': {
+      const discountPercentage = pricePerPackBeforeDiscount
+        ? ((pricePerPackBeforeDiscount - pricePerPackAfterDiscount) /
+            pricePerPackBeforeDiscount) *
+          100
+        : 0;
+
       return {
-        pricePerUnitBeforeDiscount,
-        discountPercentage:
-          ((pricePerUnitBeforeDiscount - pricePerUnitAfterDiscount) /
-            (pricePerUnitBeforeDiscount || 1)) *
-          100,
-        pricePerUnitAfterDiscount,
+        pricePerPackBeforeDiscount,
+        discountPercentage,
+        pricePerPackAfterDiscount,
       };
     }
   }
@@ -107,9 +101,18 @@ export const calculateUnitQuantities = (
   const totalUnits = numberOfPacks * requestedPackSize;
 
   // Only adjust the requested number of units if the status is not confirmed yet
-  return status === PurchaseOrderNodeStatus.Confirmed
-    ? { adjustedNumberOfUnits: totalUnits }
-    : { requestedNumberOfUnits: totalUnits };
+  if (
+    status === PurchaseOrderNodeStatus.Confirmed ||
+    status === PurchaseOrderNodeStatus.Sent
+  ) {
+    return {
+      adjustedNumberOfUnits: totalUnits,
+    };
+  }
+  return {
+    requestedNumberOfUnits: totalUnits,
+    adjustedNumberOfUnits: totalUnits,
+  };
 };
 
 type LineStatusOption = {
@@ -121,10 +124,13 @@ export const lineStatusOptions = (
   status: PurchaseOrderNodeStatus
 ): LineStatusOption[] => {
   const disableNewOption =
-    status === PurchaseOrderNodeStatus.Confirmed ? true : false;
+    status === PurchaseOrderNodeStatus.Confirmed ||
+    status === PurchaseOrderNodeStatus.Sent
+      ? true
+      : false;
   const disableOtherOptions =
     status === PurchaseOrderNodeStatus.New ||
-    status === PurchaseOrderNodeStatus.Authorised
+    status === PurchaseOrderNodeStatus.RequestApproval
       ? true
       : false;
 

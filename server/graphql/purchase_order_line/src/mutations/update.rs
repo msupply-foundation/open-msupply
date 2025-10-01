@@ -22,8 +22,8 @@ use service::{
 };
 
 use crate::mutations::errors::{
-    CannotAdjustRequestedQuantity, PurchaseOrderDoesNotExist, PurchaseOrderLineNotFound,
-    UpdatedLineDoesNotExist,
+    CannotEditAdjustedQuantity, CannotEditQuantityBelowReceived, CannotEditRequestedQuantity,
+    PurchaseOrderDoesNotExist, PurchaseOrderLineNotFound, UpdatedLineDoesNotExist,
 };
 
 #[derive(InputObject)]
@@ -36,8 +36,8 @@ pub struct UpdateInput {
     pub adjusted_number_of_units: Option<f64>,
     pub requested_delivery_date: Option<NaiveDate>,
     pub expected_delivery_date: Option<NaiveDate>,
-    pub price_per_unit_before_discount: Option<f64>,
-    pub price_per_unit_after_discount: Option<f64>,
+    pub price_per_pack_before_discount: Option<f64>,
+    pub price_per_pack_after_discount: Option<f64>,
     pub manufacturer_id: Option<NullableUpdateInput<String>>,
     pub note: Option<NullableUpdateInput<String>>,
     pub unit: Option<String>,
@@ -56,8 +56,8 @@ impl UpdateInput {
             adjusted_number_of_units,
             requested_delivery_date,
             expected_delivery_date,
-            price_per_unit_before_discount,
-            price_per_unit_after_discount,
+            price_per_pack_before_discount,
+            price_per_pack_after_discount,
             manufacturer_id,
             note,
             unit,
@@ -74,8 +74,8 @@ impl UpdateInput {
             adjusted_number_of_units,
             requested_delivery_date,
             expected_delivery_date,
-            price_per_unit_before_discount,
-            price_per_unit_after_discount,
+            price_per_pack_before_discount,
+            price_per_pack_after_discount,
             manufacturer_id: manufacturer_id.map(|v| NullableUpdate { value: v.value }),
             note: note.map(|v| NullableUpdate { value: v.value }),
             unit,
@@ -93,7 +93,9 @@ pub enum PurchaseOrderLineError {
     UpdatedLineDoesNotExist(UpdatedLineDoesNotExist),
     PurchaseOrderDoesNotExist(PurchaseOrderDoesNotExist),
     CannotEditPurchaseOrder(CannotEditPurchaseOrder),
-    CannotAdjustRequestedQuantity(CannotAdjustRequestedQuantity),
+    CannotEditRequestedQuantity(CannotEditRequestedQuantity),
+    CannotEditAdjustedQuantity(CannotEditAdjustedQuantity),
+    CannotEditQuantityBelowReceived(CannotEditQuantityBelowReceived),
     ItemCannotBeOrdered(ItemCannotBeOrdered),
 }
 
@@ -125,10 +127,27 @@ pub fn update_purchase_order_line(
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
 
+    let mut user_has_permission = false;
+    if input.adjusted_number_of_units.is_some() {
+        user_has_permission = validate_auth(
+            ctx,
+            &ResourceAccessRequest {
+                resource: Resource::AuthorisePurchaseOrder,
+                store_id: Some(store_id.to_string()),
+            },
+        )
+        .is_ok();
+    }
+
     map_response(
         service_provider
             .purchase_order_line_service
-            .update_purchase_order_line(&service_context, store_id, input.to_domain()),
+            .update_purchase_order_line(
+                &service_context,
+                store_id,
+                input.to_domain(),
+                Some(user_has_permission),
+            ),
     )
 }
 
@@ -160,10 +179,24 @@ fn map_error(error: ServiceError) -> Result<UpdateResponse> {
                 error: PurchaseOrderLineError::PurchaseOrderDoesNotExist(PurchaseOrderDoesNotExist),
             }))
         }
-        ServiceError::CannotAdjustRequestedQuantity => {
+        ServiceError::CannotEditRequestedQuantity => {
             return Ok(UpdateResponse::Error(UpdatePurchaseOrderLineError {
-                error: PurchaseOrderLineError::CannotAdjustRequestedQuantity(
-                    CannotAdjustRequestedQuantity,
+                error: PurchaseOrderLineError::CannotEditRequestedQuantity(
+                    CannotEditRequestedQuantity,
+                ),
+            }))
+        }
+        ServiceError::CannotEditAdjustedQuantity => {
+            return Ok(UpdateResponse::Error(UpdatePurchaseOrderLineError {
+                error: PurchaseOrderLineError::CannotEditAdjustedQuantity(
+                    CannotEditAdjustedQuantity,
+                ),
+            }))
+        }
+        ServiceError::CannotEditQuantityBelowReceived => {
+            return Ok(UpdateResponse::Error(UpdatePurchaseOrderLineError {
+                error: PurchaseOrderLineError::CannotEditQuantityBelowReceived(
+                    CannotEditQuantityBelowReceived,
                 ),
             }))
         }

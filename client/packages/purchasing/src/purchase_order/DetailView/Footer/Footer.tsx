@@ -31,13 +31,21 @@ const createStatusLog = (
   purchaseOrder: PurchaseOrderFragment,
   requiresAuthorisation: boolean
 ) => {
+  const allocatePurchaseOrderSentStatus =
+    purchaseOrder.sentDatetime &&
+    (purchaseOrder.status === PurchaseOrderNodeStatus.Sent ||
+      purchaseOrder.status === PurchaseOrderNodeStatus.Finalised);
+
   const statusLog: Record<PurchaseOrderNodeStatus, null | undefined | string> =
     {
       [PurchaseOrderNodeStatus.New]: purchaseOrder.createdDatetime,
-      [PurchaseOrderNodeStatus.Authorised]: requiresAuthorisation
-        ? purchaseOrder.authorisedDatetime
+      [PurchaseOrderNodeStatus.RequestApproval]: requiresAuthorisation
+        ? purchaseOrder.requestApprovalDatetime
         : null,
       [PurchaseOrderNodeStatus.Confirmed]: purchaseOrder.confirmedDatetime,
+      [PurchaseOrderNodeStatus.Sent]: allocatePurchaseOrderSentStatus
+        ? purchaseOrder.sentDatetime
+        : null,
       [PurchaseOrderNodeStatus.Finalised]: purchaseOrder.finalisedDatetime,
     };
 
@@ -132,7 +140,7 @@ export const Footer = ({
     title: t('heading.are-you-sure'),
   });
 
-  if (status === PurchaseOrderNodeStatus.Confirmed) {
+  if (status === PurchaseOrderNodeStatus.Sent) {
     actions.push({
       label: t('button.close-purchase-order-lines'),
       onClick: showCloseConfirmation,
@@ -143,7 +151,7 @@ export const Footer = ({
   const filteredStatuses = authorisePurchaseOrder
     ? purchaseOrderStatuses
     : purchaseOrderStatuses.filter(
-        status => status !== PurchaseOrderNodeStatus.Authorised
+        status => status !== PurchaseOrderNodeStatus.RequestApproval
       );
 
   return (
@@ -168,6 +176,7 @@ export const Footer = ({
                 statuses={filteredStatuses}
                 statusLog={createStatusLog(data, authorisePurchaseOrder)}
                 statusFormatter={getStatusTranslator(t)}
+                width={280}
               />
               <Box flex={1} display="flex" justifyContent="flex-end" gap={2}>
                 <StatusChangeButton />

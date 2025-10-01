@@ -5,9 +5,10 @@ import {
   DetailPanelSection,
   PanelRow,
   PanelLabel,
-  useFormatCurrency,
   PanelField,
   splitTranslatedLines,
+  useCurrency,
+  Currencies,
   NumericTextInput,
 } from '@openmsupply-client/common';
 import { PurchaseOrderFragment } from '../../api';
@@ -38,7 +39,7 @@ export const PricingSection = ({
   disabled,
 }: PricingSectionProps) => {
   const t = useTranslation();
-  const c = useFormatCurrency();
+  const { c } = useCurrency(draft?.currency?.code as Currencies);
 
   if (!draft) return null;
 
@@ -72,13 +73,13 @@ export const PricingSection = ({
       <Grid container gap={1} key="pricing-section">
         <PanelRow>
           <PanelLabel>{t('label.cost-subtotal')}</PanelLabel>
-          <PanelField>{c(draft.orderTotalBeforeDiscount)}</PanelField>
+          <PanelField>{c(draft.orderTotalBeforeDiscount).format()}</PanelField>
         </PanelRow>
         <PanelRow>
           <PanelLabel>
             {splitTranslatedLines(t('label.cost-additional-fees'))}
           </PanelLabel>
-          <PanelField>{c(additionalFees)}</PanelField>
+          <PanelField>{c(additionalFees).format()}</PanelField>
         </PanelRow>
         <PanelRow>
           <PanelLabel>{t('label.supplier-discount-percentage')}</PanelLabel>
@@ -104,7 +105,7 @@ export const PricingSection = ({
         <PanelRow>
           <PanelLabel>{t('label.cost-final')}</PanelLabel>
           <PanelField>
-            {c(draft.orderTotalAfterDiscount + additionalFees)}
+            {c(draft.orderTotalAfterDiscount + additionalFees).format()}
           </PanelField>
         </PanelRow>
       </Grid>
