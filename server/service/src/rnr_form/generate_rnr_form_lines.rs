@@ -7,14 +7,18 @@ use repository::{
     PeriodRow, ReplenishmentFilter, ReplenishmentRepository, RepositoryError, RnRForm,
     RnRFormFilter, RnRFormLineRow, RnRFormLineRowRepository, RnRFormLowStock, RnRFormRepository,
     StockLineFilter, StockLineRepository, StockLineSort, StockLineSortField, StockMovementFilter,
-    StockMovementRepository, StockOnHandFilter, StockOnHandRepository, StorageConnection,
+    StockMovementRepository, StockMovementRow, StockOnHandFilter, StockOnHandRepository,
+    StorageConnection,
 };
 use util::{
     constants::APPROX_NUMBER_OF_DAYS_IN_A_MONTH_IS_30, date_now, date_with_offset, pos_zero,
     uuid::uuid,
 };
 
-use crate::{service_provider::ServiceContext, store_preference::get_store_preferences};
+use crate::{
+    requisition_line::chart::calculate_historic_stock_evolution, service_provider::ServiceContext,
+    store_preference::get_store_preferences,
+};
 
 use super::get_period_length;
 
@@ -462,17 +466,6 @@ pub fn get_stock_out_durations_batch(
             )),
     ))?;
 
-    let mut movements_by_item_and_date: HashMap<String, HashMap<NaiveDate, f64>> = HashMap::new();
-    for movement in stock_movement_rows {
-        let movement_date = movement.datetime.date();
-        movements_by_item_and_date
-            .entry(movement.item_id.clone())
-            .or_default()
-            .entry(movement_date)
-            .and_modify(|qty| *qty += movement.quantity)
-            .or_insert(movement.quantity);
-    }
-
     for item_id in item_ids {
         let usage = usage_by_item_map.get(item_id).copied().unwrap_or_default();
         let initial_balance = opening_balances.get(item_id).copied().unwrap_or(0.0);
@@ -487,28 +480,29 @@ pub fn get_stock_out_durations_batch(
             closing_quantity.max(0.0)
         };
 
-        // Calculate historic stock levels day by day (same logic as
-        // get_stock_evolution_for_item without the extras)
-        let item_movements = movements_by_item_and_date
-            .get(item_id)
+        let item_movements: Vec<StockMovementRow> = stock_movement_rows
+            .iter()
+            .filter(|movement| movement.item_id == *item_id)
             .cloned()
-            .unwrap_or_default();
-        let mut running_stock = final_stock_quantity;
-        let mut days_out_of_stock = 0;
+            .collect();
 
+        // Generate the list of dates for the period
+        let mut historic_points = Vec::new();
         for day_offset in 0..days_in_period {
-            if day_offset > 0 {
-                let next_date =
-                    date_with_offset(&end_date, Duration::days(-((day_offset - 1) as i64)));
-                if let Some(daily_movement) = item_movements.get(&next_date) {
-                    running_stock -= daily_movement;
-                }
-            }
-
-            if running_stock <= 0.0 {
-                days_out_of_stock += 1;
-            }
+            let date = date_with_offset(&period_start_date, Duration::days(day_offset as i64));
+            historic_points.push(date);
         }
+
+        let stock_evolution = calculate_historic_stock_evolution(
+            final_stock_quantity as u32,
+            historic_points,
+            item_movements,
+        );
+
+        let days_out_of_stock = stock_evolution
+            .into_iter()
+            .filter(|point| point.quantity == 0.0)
+            .count() as i32;
 
         let stock_out_duration = if days_out_of_stock == days_in_period as i32 {
             0
