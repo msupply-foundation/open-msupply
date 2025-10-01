@@ -59,16 +59,16 @@ export const ReplenishmentNav = ({
           <AppNavLink
             end
             to={RouteBuilder.create(AppRoute.Replenishment)
-              .addPart(AppRoute.InboundShipment)
+              .addPart(AppRoute.InternalOrder)
               .build()}
-            text={t('inbound-shipment')}
+            text={t('internal-order')}
           />
           <AppNavLink
             end
             to={RouteBuilder.create(AppRoute.Replenishment)
-              .addPart(AppRoute.InternalOrder)
+              .addPart(AppRoute.InboundShipment)
               .build()}
-            text={t('internal-order')}
+            text={t('inbound-shipment')}
           />
           <AppNavLink
             end
