@@ -113,7 +113,7 @@ const InformationFields = ({
           <BufferedTextInput
             disabled={isDisabled}
             size="small"
-            sx={{ width: 220 }}
+            sx={{ width: 250 }}
             value={descriptionBuffer ?? ''}
             onChange={event => {
               setDescriptionBuffer(event.target.value);
