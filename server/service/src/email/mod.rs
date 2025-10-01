@@ -109,7 +109,7 @@ impl EmailServiceTrait for EmailService {
             Some(inner) => inner
                 .mailer
                 .test_connection()
-                .map_err(|e| EmailServiceError::SmtpError(e)),
+                .map_err(EmailServiceError::SmtpError),
         }
     }
 
@@ -169,8 +169,7 @@ impl EmailServiceTrait for EmailService {
                             send_error
                         );
                         email.error = Some(format!(
-                            "Failed to send email after {} retries - {:?}",
-                            MAX_RETRIES, send_error
+                            "Failed to send email after {MAX_RETRIES} retries - {send_error:?}"
                         ));
                         email.status = EmailQueueStatus::Failed;
                     } else if send_error.is_permanent() {
@@ -179,7 +178,7 @@ impl EmailServiceTrait for EmailService {
                             email.id,
                             email.to_address,
                         );
-                        email.error = Some(format!("{:?}", send_error));
+                        email.error = Some(format!("{send_error:?}"));
                         email.status = EmailQueueStatus::Failed;
                     } else {
                         log::error!(
@@ -188,7 +187,7 @@ impl EmailServiceTrait for EmailService {
                             email.to_address,
                             send_error
                         );
-                        email.error = Some(format!("{:?}", send_error));
+                        email.error = Some(format!("{send_error:?}"));
                         email.status = EmailQueueStatus::Errored;
 
                         email.retry_at = Some(
@@ -210,12 +209,11 @@ impl EmailServiceTrait for EmailService {
 
         if error_count > 0 {
             return Err(EmailServiceError::GenericError(format!(
-                "Failed to send {} emails",
-                error_count
+                "Failed to send {error_count} emails"
             )));
         }
 
-        log::debug!("Sent {} emails", sent_count);
+        log::debug!("Sent {sent_count} emails");
 
         Ok(sent_count)
     }
@@ -225,6 +223,7 @@ impl EmailServiceTrait for EmailService {
 #[cfg(feature = "email-tests")]
 mod email_test {
 
+    use crate::ledger_fix::ledger_fix_driver::LedgerFixTrigger;
     use crate::processors::ProcessorsTrigger;
     use crate::service_provider::ServiceProvider;
     use crate::settings::MailSettings;
@@ -241,6 +240,7 @@ mod email_test {
             connection_manager,
             ProcessorsTrigger::new_void(),
             SyncTrigger::new_void(),
+            LedgerFixTrigger::new_void(),
             SiteIsInitialisedTrigger::new_void(),
             Some(MailSettings {
                 port: 1025,

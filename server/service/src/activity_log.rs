@@ -83,7 +83,7 @@ pub fn system_activity_log_entry(
     Ok(())
 }
 
-pub fn system_log_entry(
+fn system_log_entry(
     connection: &StorageConnection,
     log_type: SystemLogType,
     message: &str,
@@ -111,8 +111,13 @@ pub fn system_error_log(
     error: &impl Error,
     context: &str,
 ) -> Result<(), RepositoryError> {
-    let error_message = format_error(error);
-    log::error!("{context} - {} - {error_message}", log_type.to_string());
+    let error_message = format!(
+        "{} - {} - {}",
+        context,
+        log_type.to_string(),
+        format_error(error)
+    );
+    log::error!("{error_message}");
     system_log_entry(connection, log_type, &error_message)?;
     Ok(())
 }

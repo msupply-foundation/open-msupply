@@ -8,7 +8,6 @@ import {
   SearchBar,
   Tooltip,
   DateTimePickerInput,
-  DateUtils,
   Formatter,
   useNotification,
   NumericTextInput,
@@ -41,7 +40,7 @@ export const Toolbar = ({ isDisabled }: ToolbarProps) => {
   const { updateLines } = usePurchaseOrderLine();
 
   const [requestedDeliveryDate, setRequestedDeliveryDate] = useState(
-    DateUtils.getDateOrNull(data?.requestedDeliveryDate)
+    new Date(data?.requestedDeliveryDate ?? '')
   );
 
   const getMostRecentExpectedDate = () => {
@@ -52,7 +51,7 @@ export const Toolbar = ({ isDisabled }: ToolbarProps) => {
   };
 
   const [expectedDeliveryDate, setExpectedDeliveryDate] = useState(
-    DateUtils.getDateOrNull(getMostRecentExpectedDate())
+    new Date(getMostRecentExpectedDate() ?? '')
   );
 
   const disabledRequestedDeliveryDate = data?.status
@@ -182,6 +181,7 @@ export const Toolbar = ({ isDisabled }: ToolbarProps) => {
                 <DateTimePickerInput
                   value={requestedDeliveryDate}
                   onChange={date => {
+                    if (!date) return;
                     setRequestedDeliveryDate(date);
                     const formattedDate = Formatter.naiveDate(date);
                     handleUpdate({
