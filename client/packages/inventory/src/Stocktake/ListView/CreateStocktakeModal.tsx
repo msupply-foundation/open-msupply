@@ -132,7 +132,15 @@ export const CreateStocktakeModal = ({
         slideAnimation={false}
         title={t('label.new-stocktake')}
         width={675}
-        contentProps={{ sx: { paddingY: 0 } }}
+        height={725}
+        contentProps={{
+          sx: {
+            paddingY: 0,
+            display: 'flex',
+            flexDirection: 'column',
+            '& > div': { flex: 1, display: 'flex', flexDirection: 'column' },
+          },
+        }}
         cancelButton={
           <DialogButton
             variant="cancel"
@@ -153,14 +161,15 @@ export const CreateStocktakeModal = ({
           />
         }
       >
-        <Box flex={1}>
+        <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
           {!isCreating ? (
             <Box
               sx={{
+                flex: 1,
                 display: 'flex',
                 flexDirection: 'column',
                 justifyContent: 'space-between',
-                height: 550,
+                gap: 2,
                 width: 630,
                 margin: '0 auto',
               }}
