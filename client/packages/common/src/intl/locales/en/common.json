@@ -1465,7 +1465,6 @@
   "label.unit-plural_one": "{{unit}}",
   "label.unit-plural_other": "{{unit}}s",
   "label.unit-price": "Unit Price",
-  "label.cost-price-per-unit": "Cost price per unit",
   "label.unit-quantity": "Unit Qty",
   "label.unit-sell-price": "Unit Sell Price",
   "label.unit-type": "{{unit}}",
