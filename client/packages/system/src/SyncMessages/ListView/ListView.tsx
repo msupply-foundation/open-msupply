@@ -1,4 +1,4 @@
-import React, { ReactElement } from 'react';
+import React from 'react';
 import {
   createTableStore,
   DataTable,
@@ -14,7 +14,7 @@ import { SyncMessageModal } from './SyncMessageModal';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
 
-export const ListView = () => {
+export const SyncMessageListView = () => {
   const t = useTranslation();
   const columns = useSyncMessageColumns();
 
@@ -50,7 +50,7 @@ export const ListView = () => {
   const { data, isError, isLoading } = useSyncMessageList(listParams);
 
   return (
-    <>
+    <TableProvider createStore={createTableStore}>
       <Toolbar />
       <AppBarButtons onOpen={onOpen} />
       <DataTable
@@ -73,12 +73,6 @@ export const ListView = () => {
           mode={mode}
         />
       )}
-    </>
+    </TableProvider>
   );
 };
-
-export const SyncMessageListView = (): ReactElement => (
-  <TableProvider createStore={createTableStore}>
-    <ListView />
-  </TableProvider>
-);
