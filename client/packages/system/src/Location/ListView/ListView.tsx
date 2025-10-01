@@ -11,16 +11,15 @@ import {
   ColumnDef,
   ColumnType,
   MaterialTable,
+  CheckCell,
 } from '@openmsupply-client/common';
 import { LocationRowFragment, useLocationList } from '../api';
 import { AppBarButtons } from './AppBarButtons';
 import { LocationEditModal } from './LocationEditModal';
-import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
 
 export const LocationListView = () => {
   const {
-    filter,
     queryParams: { sortBy, first, offset, filterBy },
   } = useUrlQueryParams({
     initialSort: { key: 'name', dir: 'asc' },
@@ -55,6 +54,7 @@ export const LocationListView = () => {
         accessorKey: 'name',
         header: t('label.name'),
         enableSorting: true,
+        enableColumnFilter: true,
       },
       {
         id: 'locationType',
@@ -100,6 +100,18 @@ export const LocationListView = () => {
           );
         },
       },
+      {
+        accessorKey: 'onHold',
+        header: t('label.on-hold'),
+        Cell: CheckCell,
+        size: 110,
+        enableColumnFilter: true,
+        filterVariant: 'select',
+        filterSelectOptions: [
+          { value: 'true', label: t('label.on-hold') },
+          { value: 'false', label: t('label.not-on-hold') },
+        ],
+      },
     ],
     []
   );
@@ -127,7 +139,6 @@ export const LocationListView = () => {
           location={entity}
         />
       )}
-      <Toolbar filter={filter} />
       <AppBarButtons
         onCreate={() => onOpen()}
         locations={data?.nodes}
