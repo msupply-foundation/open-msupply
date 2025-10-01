@@ -41,9 +41,9 @@ export const ManageNav = ({ store }: { store?: UserStoreNodeFragment }) => {
             visible={isCentralServer}
             end
             to={RouteBuilder.create(AppRoute.Manage)
-              .addPart(AppRoute.Campaigns)
+              .addPart(AppRoute.Stores)
               .build()}
-            text={t('campaigns')}
+            text={t('stores')}
           />
           <AppNavLink
             visible={isCentralServer && vaccineModuleEnabled}
@@ -54,6 +54,13 @@ export const ManageNav = ({ store }: { store?: UserStoreNodeFragment }) => {
             text={t('indicators-demographics')}
           />
           <AppNavLink
+            end
+            to={RouteBuilder.create(AppRoute.Manage)
+              .addPart(AppRoute.GlobalPreferences)
+              .build()}
+            text={t('global-preferences')}
+          />
+          <AppNavLink
             visible={isCentralServer && vaccineModuleEnabled}
             end
             to={RouteBuilder.create(AppRoute.Manage)
@@ -62,11 +69,12 @@ export const ManageNav = ({ store }: { store?: UserStoreNodeFragment }) => {
             text={t('equipment')}
           />
           <AppNavLink
+            visible={isCentralServer}
             end
             to={RouteBuilder.create(AppRoute.Manage)
-              .addPart(AppRoute.GlobalPreferences)
+              .addPart(AppRoute.Campaigns)
               .build()}
-            text={t('global-preferences')}
+            text={t('campaigns')}
           />
           <AppNavLink
             visible={isCentralServer && isServerAdmin}
@@ -75,14 +83,6 @@ export const ManageNav = ({ store }: { store?: UserStoreNodeFragment }) => {
               .addPart(AppRoute.Reports)
               .build()}
             text={t('reports')}
-          />
-          <AppNavLink
-            visible={isCentralServer}
-            end
-            to={RouteBuilder.create(AppRoute.Manage)
-              .addPart(AppRoute.Stores)
-              .build()}
-            text={t('stores')}
           />
         </List>
       </Collapse>
