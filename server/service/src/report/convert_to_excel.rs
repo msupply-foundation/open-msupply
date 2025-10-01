@@ -130,9 +130,7 @@ fn apply_header(sheet: &mut Worksheet, header_html: &str) -> u32 /* rows used */
 
         sheet_cell.set_value(inner_text(el));
 
-        if let Some(cell_type) = el.attr("excel-type") {
-            apply_known_styles(sheet_cell, cell_type);
-        };
+        apply_known_styles(sheet_cell, el);
 
         let (_, row, _, _) = index_from_coordinate(coordinate);
         let row_index = row.unwrap_or(0);
@@ -211,7 +209,10 @@ fn apply_data_rows(
             // If no custom columns, every column will be mapped, otherwise only custom columns
             if let Some(column_index) = index_to_column_index_map.get(&(cell_index as u32)).cloned()
             {
-                sheet.get_cell_mut((column_index, row_idx)).set_value(cell);
+                let sheet_cell = sheet
+                    .get_cell_mut((column_index, row_idx))
+                    .set_value(inner_text(cell));
+                apply_known_styles(sheet_cell, cell);
             }
         }
         row_idx += 1; // Next row
@@ -284,12 +285,12 @@ impl Selectors {
             .collect()
     }
 
-    fn rows_and_cells(&self) -> Vec<Vec<&str>> {
+    fn rows_and_cells(&self) -> Vec<Vec<ElementRef>> {
         let rows_selector = Selector::parse("tbody tr:not([excel-type=\"total-row\"])").unwrap();
         let cells_selector = Selector::parse("td").unwrap();
         self.html
             .select(&rows_selector)
-            .map(|row| row.select(&cells_selector).map(inner_text).collect())
+            .map(|row| row.select(&cells_selector).collect())
             .collect()
     }
 
@@ -307,21 +308,28 @@ fn inner_text(element_ref: ElementRef) -> &str {
         .unwrap_or_default()
 }
 
-fn apply_known_styles(cell: &mut Cell, cell_type: &str) {
+fn apply_known_styles(cell: &mut Cell, el: ElementRef) {
     let style = cell.get_style_mut();
 
-    match cell_type {
-        "title" => {
-            let mut font_size = FontSize::default();
-            font_size.set_val(14.0);
-            style.get_font_mut().set_bold(true).set_font_size(font_size);
-        }
-        "bold" => {
-            style.get_font_mut().set_bold(true);
-        }
-        _ => {
-            // Unknown type, leave as is
-        }
+    if let Some(cell_type) = el.attr("excel-type") {
+        match cell_type {
+            "title" => {
+                let mut font_size = FontSize::default();
+                font_size.set_val(14.0);
+                style.get_font_mut().set_bold(true).set_font_size(font_size);
+            }
+            "bold" => {
+                style.get_font_mut().set_bold(true);
+            }
+            _ => {
+                // Unknown type, leave as is
+            }
+        };
+    }
+
+    if let Some(color) = el.attr("excel-bg-color") {
+        let color = color.trim_start_matches('#');
+        style.set_background_color(color);
     }
 }
 
@@ -547,17 +555,21 @@ mod report_to_excel_test {
             vec![(None, "First Header"), (Some("A"), "Second Header")]
         );
 
+        let res = selectors.rows_and_cells();
+        assert_eq!(res.len(), 2);
+
         assert_eq!(
-            selectors.rows_and_cells(),
-            vec![
-                vec!["Row One Cell One", "Row One Cell Two"],
-                vec!["Row Two Cell One", "Row Two Cell Two"]
-            ]
+            res.first()
+                .unwrap()
+                .into_iter()
+                .map(|e| inner_text(*e))
+                .collect::<Vec<&str>>(),
+            vec!["Row One Cell One", "Row One Cell Two"],
         );
     }
 
     #[tokio::test]
-    async fn test_generate_excel_perf() {
+    async fn test_generate_excel_performance() {
         // We want to ensure that excel export takes a sensible amount of time.
         // Many reports may have several thousand rows with dozens of columns
 
