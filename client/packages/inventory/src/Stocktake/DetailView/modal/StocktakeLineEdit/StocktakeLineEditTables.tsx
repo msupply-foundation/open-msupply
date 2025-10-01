@@ -399,7 +399,7 @@ export const LocationTable = ({
                 donorName: donor?.name,
               })
             }
-            disabled={disabled}
+            disabled={disabled || !row.countThisLine}
             fullWidth
             clearable
           />
@@ -412,6 +412,7 @@ export const LocationTable = ({
         Cell: ({ row }) => (
           <CampaignOrProgramCell
             row={row.original}
+            disabled={disabled || !row.original.countThisLine}
             updateFn={patch => update({ id: row.original.id, ...patch })}
           />
         ),
