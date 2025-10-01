@@ -39,7 +39,7 @@ export const PrescriptionLineEdit = ({
   // changing item with the selector
   const [currentItemId, setCurrentItemId] = useBufferState(itemId);
 
-  const { isDisabled, rows: items } = usePrescription(); // TODO: how much can we strip now?
+  const { isDisabled, rows: lines } = usePrescription(); // TODO: how much can we strip now?
 
   const { clear, initialise, item } = useAllocationContext(
     ({ initialise, item, clear }) => ({
@@ -111,7 +111,7 @@ export const PrescriptionLineEdit = ({
             extraFilter={
               isDisabled
                 ? undefined
-                : item => !items?.some(({ id }) => id === item.id)
+                : item => !lines?.some(line => line.item.id === item.id)
             }
             programId={programId}
           />
