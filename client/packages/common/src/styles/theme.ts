@@ -132,6 +132,7 @@ declare module '@mui/material/styles/createPalette' {
     success: string;
     row: string;
     group: string;
+    error: string;
     input: {
       main: string;
       disabled: string;
@@ -237,6 +238,7 @@ export const themeOptions = {
       success: 'rgb(237, 247, 237)',
       input: { main: '#f2f2f5', disabled: '#fafafc' },
       secondary: '#E8F1FE',
+      error: '#ffcdce',
     },
     form: {
       field: '#555770',

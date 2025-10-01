@@ -22,7 +22,6 @@ import { AppRoute } from '@openmsupply-client/config';
 import {
   ActivityLogList,
   DocumentsTable,
-  toItemWithPackSize,
   UploadDocumentModal,
   useIsItemVariantsEnabled,
   useVvmStatusesEnabled,
@@ -83,7 +82,8 @@ const DetailViewInner = () => {
 
   const onRowClick = React.useCallback(
     (line: InboundItem | InboundLineFragment) => {
-      onOpen(toItemWithPackSize(line));
+      const item = 'lines' in line ? line.lines[0]?.item : line.item;
+      onOpen(item);
     },
     [onOpen]
   );
