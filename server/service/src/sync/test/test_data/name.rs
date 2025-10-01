@@ -102,7 +102,7 @@ const NAME_1: (&str, &str) = (
     "isDeceased": false,
     "om_created_datetime": "",
     "om_gender": "FEMALE",
-    "om_date_of_death": "", 
+    "om_date_of_death": "",
     "HSH_code": "HSH001",
     "HSH_name": "HSH Name"
 }"#,
@@ -696,8 +696,287 @@ fn name_push_record_2() -> TestSyncOutgoingRecord {
     }
 }
 
+const NAME_5_DOB_T_FORMAT: (&str, &str) = (
+    "ef232e6c-93cf-4d02-a95a-c563abccc24f",
+    r#"{
+    "ID": "ef232e6c-93cf-4d02-a95a-c563abccc24f",
+    "NEXT_OF_KIN_ID": null,
+    "bill_address1": "123 Main St",
+    "bill_address2": null,
+    "charge code": null,
+    "code": "MJ200303A",
+    "comment": null,
+    "country": null,
+    "created_date": "2025-09-01T00:00:00",
+    "custom_data": null,
+    "customer": true,
+    "date_of_birth": "2003-03-03T00:00:00",
+    "donor": false,
+    "email": null,
+    "female": true,
+    "first": "N5",
+    "hold": false,
+    "isDeceased": false,
+    "last": "Mikalsen",
+    "manufacturer": false,
+    "name": "Mikalsen, N5",
+    "national_health_number": null,
+    "next_of_kin_relative": null,
+    "om_created_datetime": "2025-09-01T06:19:31.857",
+    "om_date_of_death": null,
+    "om_gender": "FEMALE",
+    "phone": "123456789",
+    "supplier": false,
+    "supplying_store_id": "",
+    "type": "patient",
+    "url": null
+}"#,
+);
+
+fn name_5_dob_t_format_pull() -> TestSyncIncomingRecord {
+    TestSyncIncomingRecord::new_pull_upsert(
+        TABLE_NAME,
+        NAME_5_DOB_T_FORMAT,
+        NameRow {
+            id: NAME_5_DOB_T_FORMAT.0.to_string(),
+            name: "Mikalsen, N5".to_string(),
+            code: "MJ200303A".to_string(),
+            r#type: repository::NameRowType::Patient,
+            is_customer: true,
+            is_supplier: false,
+            supplying_store_id: None,
+            first_name: Some("N5".to_string()),
+            last_name: Some("Mikalsen".to_string()),
+            gender: Some(GenderType::Female),
+            date_of_birth: Some(NaiveDate::from_ymd_opt(2003, 3, 3).unwrap()),
+            phone: Some("123456789".to_string()),
+            charge_code: None,
+            comment: None,
+            country: None,
+            address1: Some("123 Main St".to_string()),
+            address2: None,
+            email: None,
+            website: None,
+            is_manufacturer: false,
+            is_donor: false,
+            on_hold: false,
+            next_of_kin_id: None,
+            next_of_kin_name: None,
+            created_datetime: Some(
+                NaiveDate::from_ymd_opt(2025, 9, 1)
+                    .unwrap()
+                    .and_hms_milli_opt(6, 19, 31, 857)
+                    .unwrap(),
+            ),
+            is_deceased: false,
+            national_health_number: None,
+            date_of_death: None,
+            custom_data_string: None,
+            deleted_datetime: None,
+            hsh_code: None,
+            hsh_name: None,
+            margin: None,
+            freight_factor: None,
+            currency_id: None,
+        },
+    )
+}
+
+fn name_push_record_5() -> TestSyncOutgoingRecord {
+    TestSyncOutgoingRecord {
+        table_name: TABLE_NAME.to_string(),
+        record_id: NAME_5_DOB_T_FORMAT.0.to_string(),
+        push_data: json!(LegacyNameRow {
+            id: NAME_5_DOB_T_FORMAT.0.to_string(),
+            name: "Mikalsen, N5".to_string(),
+            code: "MJ200303A".to_string(),
+            r#type: LegacyNameRowType::Patient,
+            is_customer: true,
+            is_supplier: false,
+            supplying_store_id: None,
+            first_name: Some("N5".to_string()),
+            last_name: Some("Mikalsen".to_string()),
+            date_of_birth: Some(NaiveDate::from_ymd_opt(2003, 3, 3).unwrap()),
+            phone: Some("123456789".to_string()),
+            charge_code: None,
+            comment: None,
+            country: None,
+            address1: Some("123 Main St".to_string()),
+            address2: None,
+            email: None,
+            website: None,
+            is_manufacturer: false,
+            is_donor: false,
+            on_hold: false,
+            next_of_kin_id: None,
+            next_of_kin_name: None,
+            is_deceased: false,
+            national_health_number: None,
+            female: true,
+            created_date: Some(NaiveDate::from_ymd_opt(2025, 9, 1).unwrap()),
+            created_datetime: Some(
+                NaiveDate::from_ymd_opt(2025, 9, 1)
+                    .unwrap()
+                    .and_hms_milli_opt(6, 19, 31, 857)
+                    .unwrap()
+            ),
+            gender: Some(GenderType::Female),
+            date_of_death: None,
+            custom_data: None,
+            hsh_code: None,
+            hsh_name: None,
+            margin: None,
+            freight_factor: None,
+            currency_id: None,
+        }),
+    }
+}
+
+const NAME_6_DOB_NO_T_FORMAT: (&str, &str) = (
+    "ef232e6c-93cf-4d02-a95a-c563abccc24a",
+    r#"{
+    "ID": "ef232e6c-93cf-4d02-a95a-c563abccc24a",
+    "NEXT_OF_KIN_ID": null,
+    "bill_address1": "123 Main St",
+    "bill_address2": null,
+    "charge code": null,
+    "code": "MJ200303B",
+    "comment": null,
+    "country": null,
+    "created_date": "2025-09-01T00:00:00",
+    "custom_data": null,
+    "customer": true,
+    "date_of_birth": "2003-03-03 00:00:00",
+    "donor": false,
+    "email": null,
+    "female": true,
+    "first": "N6",
+    "hold": false,
+    "isDeceased": false,
+    "last": "Mikalsen",
+    "manufacturer": false,
+    "name": "Mikalsen, N6",
+    "national_health_number": null,
+    "next_of_kin_relative": null,
+    "om_created_datetime": "2025-09-01T06:21:31.857",
+    "om_date_of_death": null,
+    "om_gender": "FEMALE",
+    "phone": "123456789",
+    "supplier": false,
+    "supplying_store_id": "",
+    "type": "patient",
+    "url": null
+}"#,
+);
+
+fn name_6_dob_no_t_format_pull() -> TestSyncIncomingRecord {
+    TestSyncIncomingRecord::new_pull_upsert(
+        TABLE_NAME,
+        NAME_6_DOB_NO_T_FORMAT,
+        NameRow {
+            id: NAME_6_DOB_NO_T_FORMAT.0.to_string(),
+            name: "Mikalsen, N6".to_string(),
+            code: "MJ200303B".to_string(),
+            r#type: repository::NameRowType::Patient,
+            is_customer: true,
+            is_supplier: false,
+            supplying_store_id: None,
+            first_name: Some("N6".to_string()),
+            last_name: Some("Mikalsen".to_string()),
+            gender: Some(GenderType::Female),
+            date_of_birth: Some(NaiveDate::from_ymd_opt(2003, 3, 3).unwrap()),
+            phone: Some("123456789".to_string()),
+            charge_code: None,
+            comment: None,
+            country: None,
+            address1: Some("123 Main St".to_string()),
+            address2: None,
+            email: None,
+            website: None,
+            is_manufacturer: false,
+            is_donor: false,
+            on_hold: false,
+            next_of_kin_id: None,
+            next_of_kin_name: None,
+            created_datetime: Some(
+                NaiveDate::from_ymd_opt(2025, 9, 1)
+                    .unwrap()
+                    .and_hms_milli_opt(6, 21, 31, 857)
+                    .unwrap(),
+            ),
+            is_deceased: false,
+            national_health_number: None,
+            date_of_death: None,
+            custom_data_string: None,
+            deleted_datetime: None,
+            hsh_code: None,
+            hsh_name: None,
+            margin: None,
+            freight_factor: None,
+            currency_id: None,
+        },
+    )
+}
+
+fn name_push_record_6() -> TestSyncOutgoingRecord {
+    TestSyncOutgoingRecord {
+        table_name: TABLE_NAME.to_string(),
+        record_id: NAME_6_DOB_NO_T_FORMAT.0.to_string(),
+        push_data: json!(LegacyNameRow {
+            id: NAME_6_DOB_NO_T_FORMAT.0.to_string(),
+            name: "Mikalsen, N6".to_string(),
+            code: "MJ200303B".to_string(),
+            r#type: LegacyNameRowType::Patient,
+            is_customer: true,
+            is_supplier: false,
+            supplying_store_id: None,
+            first_name: Some("N6".to_string()),
+            last_name: Some("Mikalsen".to_string()),
+            date_of_birth: Some(NaiveDate::from_ymd_opt(2003, 3, 3).unwrap()),
+            phone: Some("123456789".to_string()),
+            charge_code: None,
+            comment: None,
+            country: None,
+            address1: Some("123 Main St".to_string()),
+            address2: None,
+            email: None,
+            website: None,
+            is_manufacturer: false,
+            is_donor: false,
+            on_hold: false,
+            next_of_kin_id: None,
+            next_of_kin_name: None,
+            is_deceased: false,
+            national_health_number: None,
+            female: true,
+            created_date: Some(NaiveDate::from_ymd_opt(2025, 9, 1).unwrap()),
+            created_datetime: Some(
+                NaiveDate::from_ymd_opt(2025, 9, 1)
+                    .unwrap()
+                    .and_hms_milli_opt(6, 21, 31, 857)
+                    .unwrap()
+            ),
+            gender: Some(GenderType::Female),
+            date_of_death: None,
+            custom_data: None,
+            hsh_code: None,
+            hsh_name: None,
+            margin: None,
+            freight_factor: None,
+            currency_id: None,
+        }),
+    }
+}
+
 pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
-    vec![name_1(), name_2(), name_3(), name_4()]
+    vec![
+        name_1(),
+        name_2(),
+        name_3(),
+        name_4(),
+        name_5_dob_t_format_pull(),
+        name_6_dob_no_t_format_pull(),
+    ]
 }
 
 pub(crate) fn test_pull_delete_records() -> Vec<TestSyncIncomingRecord> {
@@ -709,5 +988,10 @@ pub(crate) fn test_pull_delete_records() -> Vec<TestSyncIncomingRecord> {
 }
 
 pub(crate) fn test_push_records() -> Vec<TestSyncOutgoingRecord> {
-    vec![name_push_record_1(), name_push_record_2()]
+    vec![
+        name_push_record_1(),
+        name_push_record_2(),
+        name_push_record_5(),
+        name_push_record_6(),
+    ]
 }
