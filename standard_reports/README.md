@@ -42,48 +42,111 @@ The toggle report command can be useful to deactivate standard reports when a cl
 1. Build the reports: `cd open-msupply/server` then `cargo run --bin remote_server_cli build-reports`.
 2. Upsert the reports to the database's report table. You can either use the UI (central server > manage > reports > the big upload button > drag and drop `standard-reports.json` and `standard-forms.json`) or the CLI (`cd open-msupply/server` then `cargo run --bin remote_server_cli upsert-reports --overwrite`).
 
-## CLI Tools
+## Generating Reports
 
-Some of the CLI's commands require yarn's dependencies to be installed by running `yarn install` in open-msupply's main directory.
+Some of the CLI commands require yarn's dependencies to be installed by running `yarn install` in open-msupply's main directory.
 
-CLI tools require the OMS cli to be built either by:
+There are three main steps to get started with reports:
 
-- Building the cli with `cargo build` command, and then running commands with the built cli like (in the open-msupply/server directory):
-  `./target/debug/remote_server_cli build-reports`
+1. Build the server
+2. Build the reports
+3. Upsert the reports to the database
 
-- Prefacing the commands with `cargo run --bin remote_server_cli`, ie:
-  `cargo run --bin remote_server_cli build-reports`
+### Build the Server to access the CLI tools
+
+This is required before reports can be built in the following steps.
+
+From open-msupply/server:
+`cargo build`
+
+You can then use the CLI tools to build the reports, then upsert them to the database for access in the application.
+
+When developing in reports `cargo build` does not need to be re-run every time some changes have been made in the reports. It must be run to process the initial upsert, and then only after any server changes.
+
+If you receive the error `no such file or directory: ./target/debug/remote_server_cli`, you will need to rebuild.
+
+#### Using the CLI Tools
+
+All commands can be run in two ways:
+
+- **Pre-built**: `./target/debug/remote_server_cli <command>` (after `cargo build`)
+- **Direct**: `cargo run --bin remote_server_cli <command>` (builds each time)
 
 ### Build Reports
 
-`build-reports --path <optional-path>`
+`build-reports --path <optional-directory-path>`
 
-Build reports command generates all reports into a json array.
+Generates all reports into a JSON array.
 
-This command builds these reports from source files within the dir passed as an argument to this command. It will attempt to build a report from any dir containing a `report-manifest.json` file. This command will search through any sub directories recursively; any file structure can be used.
+**What it does**
+This command builds reports from source files within the directory passed as the path argument. It searches through directories recursively, so any file structure can be used. If no path is passed, the build-reports command defaults to the `standard_forms` and `standard_report` dirs containing OMS standard forms and reports respectively.
 
-If no path is passed, the build-reports command defaults to the `standard_forms` and `standard_reportd` dirs containing OMS standard forms and reports respectively.
+It will attempt to build a report from any directory containing a `report-manifest.json` file. When it finds one, it processes all the report's source files and generates a JSON file.
 
-The generated json can be added to sites via the [ui interface](#uploading-reports) or [upsert reports](#upsert-reports) cli command.
+Regardless if one or many reports are built, the generated JSON file will be an array of reports. The file is located at the root of the path used in a `/generated` folder. Use this file with the [UI interface](#uploading-reports) or [upsert reports](#upsert-reports) cli command to make them available in the client.
 
-The `build-reports` command will generated all reports in all sub dirs - so can be used to generate multiple reports for a specific client, or a single specific report. Regardless if one or many reports are built, the generated json file will be of the same structure (an array of reports), and can be uploaded via cli or central server ui.
+**Path options**
+
+```bash
+# Build standard reports
+./target/debug/remote_server_cli build-reports
+
+# Build custom reports from specific path
+./target/debug/remote_server_cli build-reports --path ~/custom-reports
+
+# Build single report
+./target/debug/remote_server_cli build-reports --path ~/custom-reports/my-report/latest
+```
 
 ### Upsert Reports
 
-`upsert-reports --path <optional-path> --overwrite (optional)`
+`upsert-reports --path <optional-directory-path/generated/reports.json> --overwrite (optional)`
 
-Upsert reports command inserts or upserts reports from a json array located in the path passed as the `path` argument.
+Takes the generated JSON from the `build-reports` process and upserts it to the database, making reports available in the client application.
+
+**What it does**
+This command reads the JSON array created by `build-reports` and adds those reports to your database. The path you specify here should point to the generated JSON file created in the previous build step - this will be located in a `generated/` subdirectory.
+
+- If you built with `--path ~/custom-reports`, the generated file will be at `~/custom-reports/generated/reports.json`
+- If you built standard reports (no path), it defaults to `reports/generated/standard-reports.json` and no path is required in this step
 
 This command will upsert if the `-o` or `--overwrite` flag is passed.
 If no overwrite flag is passed, it will default to insert.
 
-If no path is passed, it will look for in the `reports/generated/standard-reports.json` file for the array of standard reports.
+**Path options**
+
+```bash
+# Upload standard reports
+./target/debug/remote_server_cli upsert-reports --overwrite
+
+# Upload custom reports from specific JSON
+./target/debug/remote_server_cli upsert-reports --path ~/custom-reports/generated/reports.json --overwrite
+
+# Upload without overwriting (insert only)
+./target/debug/remote_server_cli upsert-reports --path ~/custom-reports/generated/reports.json
+```
+
+Once uploaded, reports become available in the client and will sync to remote sites automatically.
+
+## Reference Workflow
+
+```bash
+# 1. Build the CLI tools (initially, or after server code changes)
+cargo build
+
+# 2. Build reports and upload to database (after report changes)
+./target/debug/remote_server_cli build-reports --path ~/custom-reports && \
+./target/debug/remote_server_cli upsert-reports --path ~/custom-reports/generated/reports.json --overwrite
+
+# 3. Start the server
+cargo run
+```
 
 #### Report IDs
 
 Report IDs are generated in a standardised way in the format of `<report-code>_<report-version>_<is-custom-boolean>`.
 This means an edited report of the same version will not upload without the `-o` flag.
-To ensure edited reports supercede existing reports, they should have their patch version bumped as detailed in the [versioning section](#report-versioning).
+To ensure edited reports supersede existing reports, they should have their patch version bumped as detailed in the [versioning section](#report-versioning).
 
 ### Reload Embedded Reports
 
@@ -135,7 +198,7 @@ Reports added to OMS central server (from either cli or ui interface) are synced
 
 Report versioning protects remote sites of earlier versions from rendering a more recent report of an incompatible api.
 
-The report ui interface can be accesed via the manage nav.
+The report ui interface can be accessed via the manage nav.
 
 Both the upsert and upload ui accept an array of generated reports from the [build reports](#build-reports) command.
 
@@ -227,9 +290,9 @@ The src dir contains:
 
 A javascript function can be added to reports where further data conversion is required. This functionality will be built automatically by the report build cli when a convert_data_js dir path is specified in the [`report-manifest.json`](#report-manifest)
 
-The convert_data_js follows a typical node package structure, with `package.json` in the root, `src` directory and typescipt/packager config (`webpack` in our case). The latest example with extensive type safety is item-usage report.
+The convert_data_js follows a typical node package structure, with `package.json` in the root, `src` directory and typescript/packager config (`webpack` in our case). The latest example with extensive type safety is item-usage report.
 
-For vanila JS a simple `webpack.config.js` is all that is needed. For typescript `webpack.config.js` is more involved and requires `tsconfig.json` plus extra config files and dependencies for generating types for graphql queries and json form argument schemas.
+For vanilla JS a simple `webpack.config.js` is all that is needed. For typescript `webpack.config.js` is more involved and requires `tsconfig.json` plus extra config files and dependencies for generating types for graphql queries and json form argument schemas.
 
 #### convert_data_js src dir
 
