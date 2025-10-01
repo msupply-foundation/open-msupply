@@ -79,7 +79,11 @@ export const useGetColumnTypeDefaults = () => {
           // Displays an empty header in the table, but still uses the provided
           // "header" prop for the Column Management menu
           Header: () => <></>,
-          Cell: ({ cell }) => {
+          Cell: ({ cell, row }) => {
+            if ('subRows' in row.original) {
+              // Don't show comment icon for grouped rows
+              return null;
+            }
             const value = cell.getValue<string | null>();
             return <PopoverCell value={value} label={t('label.comment')} />;
           },

@@ -11,6 +11,8 @@ import {
   CheckboxCheckedIcon,
   CheckboxEmptyIcon,
   CheckboxIndeterminateIcon,
+  CollapseIcon,
+  ExpandIcon,
   RefreshIcon,
 } from '@common/icons';
 import { MenuItem, Typography } from '@mui/material';
@@ -19,13 +21,23 @@ import { IconButton } from '@common/components';
 import { useTranslation } from '@common/intl';
 import { hasSavedState } from './tableState/utils';
 
-export const useTableDisplayOptions = <T extends MRT_RowData>(
-  tableId: string,
-  resetTableState: () => void,
-  onRowClick?: (row: T) => void,
-  getIsPlaceholderRow: (row: T) => boolean = () => false,
-  getIsRestrictedRow: (row: T) => boolean = () => false
-): Partial<MRT_TableOptions<T>> => {
+export const useTableDisplayOptions = <T extends MRT_RowData>({
+  tableId,
+  resetTableState,
+  onRowClick,
+  isGrouped,
+  toggleGrouped,
+  getIsPlaceholderRow = () => false,
+  getIsRestrictedRow = () => false,
+}: {
+  tableId: string;
+  resetTableState: () => void;
+  onRowClick?: (row: T) => void;
+  isGrouped: boolean;
+  toggleGrouped?: () => void;
+  getIsPlaceholderRow?: (row: T) => boolean;
+  getIsRestrictedRow?: (row: T) => boolean;
+}): Partial<MRT_TableOptions<T>> => {
   const t = useTranslation();
   return {
     // Add description to column menu
@@ -54,6 +66,14 @@ export const useTableDisplayOptions = <T extends MRT_RowData>(
     // Add reset state button to toolbar
     renderToolbarInternalActions: ({ table }) => (
       <>
+        {toggleGrouped && (
+          <IconButton
+            icon={isGrouped ? <ExpandIcon /> : <CollapseIcon />}
+            onClick={toggleGrouped}
+            label={t('label.group-by-item')}
+            sx={iconButtonProps}
+          />
+        )}
         <MRT_ToggleFiltersButton table={table} />
         <MRT_ToggleDensePaddingButton table={table} />
         <MRT_ShowHideColumnsButton table={table} />
@@ -62,11 +82,7 @@ export const useTableDisplayOptions = <T extends MRT_RowData>(
           onClick={resetTableState}
           label={t('label.reset-table-defaults')}
           disabled={!hasSavedState(tableId)}
-          sx={{
-            width: '40px',
-            height: '40px',
-            '& svg': { fontSize: '1.2rem' },
-          }}
+          sx={iconButtonProps}
         />
         <MRT_ToggleFullScreenButton table={table} />
       </>
@@ -163,7 +179,6 @@ export const useTableDisplayOptions = <T extends MRT_RowData>(
         if (onRowClick) onRowClick(row.original);
       },
       sx: {
-        '& td': { borderBottom: '1px solid rgba(224, 224, 224, 1)' },
         backgroundColor: row.original['isSubRow']
           ? 'background.secondary'
           : 'inherit',
@@ -172,7 +187,7 @@ export const useTableDisplayOptions = <T extends MRT_RowData>(
       },
     }),
 
-    muiTableBodyCellProps: ({ cell, row, column, table }) => ({
+    muiTableBodyCellProps: ({ row, column, table }) => ({
       sx: {
         fontSize: table.getState().density === 'compact' ? '0.90em' : '1em',
         fontWeight: 400,
@@ -184,7 +199,7 @@ export const useTableDisplayOptions = <T extends MRT_RowData>(
             ? 'gray.main'
             : undefined,
 
-        ...(cell.column.id === 'mrt-row-expand' && {
+        ...(column.id === 'mrt-row-expand' && {
           // The expand chevron is rotated incorrectly by default (in terms of
           // consistency with other Accordion/Expando UI elements in the app)
           button: {
@@ -207,7 +222,7 @@ export const useTableDisplayOptions = <T extends MRT_RowData>(
 
         // Indent "sub-rows" when expanded
         paddingLeft:
-          row.original?.['isSubRow'] && cell.column.id !== 'mrt-row-select'
+          row.original?.['isSubRow'] && column.id !== 'mrt-row-select'
             ? '2em'
             : undefined,
         backgroundColor:
@@ -215,6 +230,16 @@ export const useTableDisplayOptions = <T extends MRT_RowData>(
             ? // Remove transparency from pinned backgrounds
               'rgba(252, 252, 252, 1)'
             : undefined,
+
+        ...((column.columnDef as ColumnDef<T>).getIsError?.(row.original)
+          ? {
+              border: '2px solid',
+              borderColor: 'error.main',
+              borderRadius: '8px',
+            }
+          : {
+              borderBottom: '1px solid rgba(224, 224, 224, 1)',
+            }),
       },
     }),
 
@@ -247,4 +272,10 @@ export const useTableDisplayOptions = <T extends MRT_RowData>(
       },
     },
   };
+};
+
+const iconButtonProps = {
+  width: '40px',
+  height: '40px',
+  '& svg': { fontSize: '1.2rem' },
 };

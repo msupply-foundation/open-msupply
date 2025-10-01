@@ -13,7 +13,7 @@ export const useColumnOrder = <T extends MRT_RowData>(
   tableId: string,
   columns: MRT_ColumnDef<T>[],
   enableRowSelection: MRT_TableOptions<T>['enableRowSelection'],
-  groupByField?: string
+  isGrouped: boolean
 ) => {
   const initial = useMemo(
     () =>
@@ -21,11 +21,11 @@ export const useColumnOrder = <T extends MRT_RowData>(
         columns,
         state: {},
         enableRowSelection, // adds `mrt-row-select`
-        enableExpanding: !!groupByField, // adds `mrt-row-expand`
+        enableExpanding: !!isGrouped, // adds `mrt-row-expand`
         positionExpandColumn: 'first', // this is the default, but needs to be explicitly set here
       } as MRT_StatefulTableOptions<MRT_RowData>),
 
-    []
+    [isGrouped, columns]
   );
 
   const [state, setState] = useState<MRT_ColumnOrderState>(
