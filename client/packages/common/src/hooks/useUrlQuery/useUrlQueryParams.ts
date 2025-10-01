@@ -157,9 +157,9 @@ export const useUrlQueryParams = ({
     offset: page * pageSize,
     first: pageSize,
     sortBy: {
-      key: urlQuery['sort'] ?? initialSort?.key ?? '',
-      direction: urlQuery['dir'] ?? initialSort?.dir ?? 'asc',
-      isDesc: (urlQuery['dir'] ?? initialSort?.dir) === 'desc',
+      key: urlQuery['sort'] ?? '',
+      direction: urlQuery['dir'] ?? 'asc',
+      isDesc: urlQuery['dir'] === 'desc',
     } as SortBy<unknown>,
     filterBy: filter.filterBy,
     reportArgs: urlQuery['reportArgs'],
