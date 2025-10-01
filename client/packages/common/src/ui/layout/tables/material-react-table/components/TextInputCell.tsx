@@ -6,14 +6,14 @@ import { useBufferState, useDebounceCallback } from '@common/hooks';
 interface TextInputCell<T extends MRT_RowData> {
   cell: MRT_Cell<T>;
   updateFn: (value: string) => void;
-  isDisabled?: boolean;
+  disabled?: boolean;
   autoFocus?: boolean;
 }
 
 export const TextInputCell = <T extends MRT_RowData>({
   cell,
   updateFn,
-  isDisabled = false,
+  disabled = false,
   autoFocus = false,
 }: TextInputCell<T>) => {
   const value = cell.getValue<string>();
@@ -22,7 +22,7 @@ export const TextInputCell = <T extends MRT_RowData>({
 
   return (
     <BasicTextInput
-      disabled={isDisabled}
+      disabled={disabled}
       value={buffer ?? ''}
       onChange={e => {
         const newValue = e.target.value;
