@@ -80,7 +80,6 @@ export const StocktakeListView = () => {
       ],
       ['description', { sortable: false }],
       ['createdDatetime', { format: ColumnFormat.Date }],
-      ['stocktakeDate', { sortable: false, defaultHideOnMobile: true }],
       getCommentPopoverColumn(),
     ],
     { onChangeSortBy: updateSortQuery, sortBy },
