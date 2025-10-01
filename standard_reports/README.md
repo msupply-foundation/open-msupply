@@ -85,19 +85,6 @@ It will attempt to build a report from any directory containing a `report-manife
 
 Regardless if one or many reports are built, the generated JSON file will be an array of reports. The file is located at the root of the path used in a `/generated` folder. Use this file with the [UI interface](#uploading-reports) or [upsert reports](#upsert-reports) cli command to make them available in the client.
 
-**Path options**
-
-```bash
-# Build standard reports
-./target/debug/remote_server_cli build-reports
-
-# Build custom reports from specific path
-./target/debug/remote_server_cli build-reports --path ~/custom-reports
-
-# Build single report
-./target/debug/remote_server_cli build-reports --path ~/custom-reports/my-report/latest
-```
-
 ### Upsert Reports
 
 `upsert-reports --path <optional-directory-path/generated/reports.json> --overwrite (optional)`
@@ -113,29 +100,16 @@ This command reads the JSON array created by `build-reports` and adds those repo
 This command will upsert if the `-o` or `--overwrite` flag is passed.
 If no overwrite flag is passed, it will default to insert.
 
-**Path options**
-
-```bash
-# Upload standard reports
-./target/debug/remote_server_cli upsert-reports --overwrite
-
-# Upload custom reports from specific JSON
-./target/debug/remote_server_cli upsert-reports --path ~/custom-reports/generated/reports.json --overwrite
-
-# Upload without overwriting (insert only)
-./target/debug/remote_server_cli upsert-reports --path ~/custom-reports/generated/reports.json
-```
-
 Once uploaded, reports become available in the client and will sync to remote sites automatically.
 
-## Reference Workflow
+### Reference Workflow
 
 ```bash
 # 1. Build the CLI tools (initially, or after server code changes)
 cargo build
 
 # 2. Build reports and upload to database (after report changes)
-./target/debug/remote_server_cli build-reports --path ~/custom-reports && \
+./target/debug/remote_server_cli build-reports --path ~/custom-reports &&
 ./target/debug/remote_server_cli upsert-reports --path ~/custom-reports/generated/reports.json --overwrite
 
 # 3. Start the server
@@ -147,6 +121,8 @@ cargo run
 Report IDs are generated in a standardised way in the format of `<report-code>_<report-version>_<is-custom-boolean>`.
 This means an edited report of the same version will not upload without the `-o` flag.
 To ensure edited reports supersede existing reports, they should have their patch version bumped as detailed in the [versioning section](#report-versioning).
+
+## Other CLI Functions
 
 ### Reload Embedded Reports
 
