@@ -96,7 +96,7 @@ export const useResponseColumns = () => {
       key: 'customerStockOnHand',
       label: 'label.customer-soh',
       description: 'description.customer-soh',
-      width: 100,
+      width: 140,
       align: ColumnAlign.Right,
       Cell: PackQuantityCell,
       getSortValue: rowData => rowData.availableStockOnHand,

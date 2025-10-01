@@ -14,16 +14,12 @@ import {
   TypedTFunction,
   LocaleKey,
   FieldUpdateMutation,
-  Box,
-  Switch,
-  useIsGroupedState,
 } from '@openmsupply-client/common';
 import { StocktakeFragment, useStocktakeOld } from '../api';
 
 export const Toolbar = () => {
   const isDisabled = useStocktakeOld.utils.isDisabled();
   const t = useTranslation();
-  const { isGrouped, toggleIsGrouped } = useIsGroupedState('stocktake');
   const { isLocked, stocktakeDate, description, update } =
     useStocktakeOld.document.fields([
       'isLocked',
@@ -59,35 +55,17 @@ export const Toolbar = () => {
             />
           </Grid>
         ) : (
-          <>
-            <Grid display="flex" flex={1} flexDirection="column" gap={1}>
-              <InformationFields
-                isDisabled={isDisabled}
-                descriptionBuffer={descriptionBuffer}
-                setDescriptionBuffer={setDescriptionBuffer}
-                update={update}
-                t={t}
-                stocktakeDate={stocktakeDate}
-                infoMessage={infoMessage}
-              />
-            </Grid>
-            <Grid
-              display="flex"
-              gap={1}
-              justifyContent="flex-end"
-              alignItems="center"
-            >
-              <Box sx={{ marginRight: 2 }}>
-                <Switch
-                  label={t('label.group-by-item')}
-                  onChange={toggleIsGrouped}
-                  checked={isGrouped}
-                  size="small"
-                  color="secondary"
-                />
-              </Box>
-            </Grid>
-          </>
+          <Grid display="flex" flex={1} flexDirection="column" gap={1}>
+            <InformationFields
+              isDisabled={isDisabled}
+              descriptionBuffer={descriptionBuffer}
+              setDescriptionBuffer={setDescriptionBuffer}
+              update={update}
+              t={t}
+              stocktakeDate={stocktakeDate}
+              infoMessage={infoMessage}
+            />
+          </Grid>
         )}
       </Grid>
     </AppBarContentPortal>

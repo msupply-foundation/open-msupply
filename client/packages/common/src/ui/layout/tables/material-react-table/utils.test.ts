@@ -6,11 +6,20 @@ describe('getGroupedRows', () => {
   it('should return original data when no groupByField is provided', () => {
     const data = [
       { name: 'Item 1', category: 'A' },
-      { name: 'Item 2', category: 'B' },
+      { name: 'Item 2', category: 'A' },
     ];
 
-    const result = getGroupedRows(data, undefined, mockT);
+    const result = getGroupedRows(true, data, undefined, mockT);
 
+    expect(result).toEqual(data);
+  });
+  it('should return original data when isGrouped is false', () => {
+    const data = [
+      { name: 'Item 1', category: 'A' },
+      { name: 'Item 2', category: 'A' },
+    ];
+
+    const result = getGroupedRows(false, data, 'category', mockT);
     expect(result).toEqual(data);
   });
 
@@ -20,7 +29,7 @@ describe('getGroupedRows', () => {
       { name: 'Item 2', category: 'B' },
     ];
 
-    const result = getGroupedRows(data, 'category', mockT);
+    const result = getGroupedRows(true, data, 'category', mockT);
 
     expect(result).toHaveLength(2);
     expect(result[0]).toEqual({ name: 'Item 1', category: 'A' });
@@ -33,7 +42,7 @@ describe('getGroupedRows', () => {
       { name: 'Item 2', category: 'A', price: 20 },
     ];
 
-    const result = getGroupedRows(data, 'category', mockT);
+    const result = getGroupedRows(true, data, 'category', mockT);
 
     expect(result).toHaveLength(1);
     expect(result[0]).toEqual({
@@ -54,7 +63,7 @@ describe('getGroupedRows', () => {
       { name: 'Item 3', category: 'A', status: 'active' },
     ];
 
-    const result = getGroupedRows(data, 'category', mockT);
+    const result = getGroupedRows(true, data, 'category', mockT);
 
     expect(result).toHaveLength(1);
     expect(result[0]!.status).toBe('active'); // Should preserve equal value
@@ -68,7 +77,7 @@ describe('getGroupedRows', () => {
       { category: 'A', details: { type: 'large', color: 'red' } },
     ];
 
-    const result = getGroupedRows(data, 'category', mockT);
+    const result = getGroupedRows(true, data, 'category', mockT);
 
     expect(result).toHaveLength(1);
     expect(result[0]).toEqual({
@@ -89,7 +98,7 @@ describe('getGroupedRows', () => {
       { name: 'Item 4', category: 'C' },
     ];
 
-    const result = getGroupedRows(data, 'category', mockT);
+    const result = getGroupedRows(true, data, 'category', mockT);
 
     expect(result).toEqual([
       // Single item group A
