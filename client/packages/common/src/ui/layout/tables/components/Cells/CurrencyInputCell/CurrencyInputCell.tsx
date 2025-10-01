@@ -11,7 +11,7 @@ export const CurrencyInputCell = <T extends RecordWithId>({
   columnIndex,
   isDisabled = false,
 }: CellProps<T>): React.ReactElement<CellProps<T>> => {
-  const updater = useDebounceCallback(column.setter, [column.setter], 250);
+  const updater = useDebounceCallback(column.setter, [column.setter], 750);
 
   const autoFocus = rowIndex === 0 && columnIndex === 0;
 
