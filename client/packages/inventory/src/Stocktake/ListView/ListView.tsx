@@ -83,12 +83,6 @@ export const ListView = () => {
         enableSorting: true,
       },
       {
-        accessorKey: 'stocktakeDate',
-        header: t('label.stocktake-date'),
-        defaultHideOnMobile: true,
-        columnType: ColumnType.Date,
-      },
-      {
         accessorKey: 'comment',
         header: t('label.comment'),
         columnType: ColumnType.Comment,
