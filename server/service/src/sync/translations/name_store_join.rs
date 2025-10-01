@@ -6,7 +6,10 @@ use repository::{
 
 use serde::{Deserialize, Serialize};
 
-use crate::sync::translations::{name::NameTranslation, store::StoreTranslation};
+use crate::sync::{
+    translations::{name::NameTranslation, store::StoreTranslation},
+    CentralServerConfig,
+};
 
 use super::{
     PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
@@ -54,7 +57,22 @@ impl SyncTranslation for NameStoreJoinTranslation {
     ) -> bool {
         match r#type {
             ToSyncRecordTranslationType::PushToLegacyCentral => {
-                self.change_log_type().as_ref() == Some(&row.table_name)
+                let is_name_store_record = self.change_log_type().as_ref() == Some(&row.table_name);
+
+                if !is_name_store_record {
+                    return false;
+                }
+
+                // Check if we're the central server, if we are don't push changes received from remote sites
+                // Otherwise we could end up syncing changes back to the site they came from
+                if CentralServerConfig::is_central_server() && row.source_site_id.is_some() {
+                    log::debug!(
+                        "Not pushing name_store_join update from remote site back to central for id: {}", row.record_id
+                    );
+                    return false;
+                }
+
+                true
             }
             // We are also pushing to omsupply central so that it's available for
             // cross site patient details sharing, same for name
