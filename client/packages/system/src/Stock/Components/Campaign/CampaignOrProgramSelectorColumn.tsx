@@ -47,12 +47,14 @@ const CampaignCell = <T extends CampaignRowData>({
 export const CampaignOrProgramCell = <T extends CampaignRowData>({
   row,
   updateFn,
+  disabled,
 }: {
   row: T;
   updateFn: (patch: {
     campaign: CampaignNode | null;
     program: ProgramFragment | null;
   }) => void;
+  disabled?: boolean;
 }): JSX.Element => (
   <CampaignOrProgramSelector
     campaignId={row.campaign?.id ?? undefined}
@@ -65,5 +67,6 @@ export const CampaignOrProgramCell = <T extends CampaignRowData>({
       })
     }
     fullWidth
+    disabled={disabled}
   />
 );
