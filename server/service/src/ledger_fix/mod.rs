@@ -55,10 +55,17 @@ pub(crate) fn ledger_balance_summary(
         .map(|line| line.invoice_line_row.number_of_packs * line.invoice_line_row.pack_size)
         .sum::<f64>();
 
-    // Unwrap is safe stock_line must exist at this pont
-    let stock_line = StockLineRowRepository::new(connection)
-        .find_one_by_id(stock_line_id)?
-        .unwrap();
+    // Some ledger fixes may delete the stock_line, so subsequent checks of the ID should handle it safely.
+    let Some(stock_line) = StockLineRowRepository::new(connection).find_one_by_id(stock_line_id)?
+    else {
+        return Ok(LedgerBalanceSummary {
+            is_fixed: true,
+            available: 0.0,
+            total: 0.0,
+            running_balance: 0.0,
+            reserved_not_picked: 0.0,
+        });
+    };
 
     let available = stock_line.available_number_of_packs * stock_line.pack_size;
     let total = stock_line.total_number_of_packs * stock_line.pack_size;
