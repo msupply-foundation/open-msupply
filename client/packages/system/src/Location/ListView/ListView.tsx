@@ -116,7 +116,7 @@ export const LocationListView = () => {
     []
   );
 
-  const { table } = usePaginatedMaterialTable({
+  const { table, selectedRows } = usePaginatedMaterialTable({
     tableId: 'location-list',
     isLoading: isFetching,
     isError,
@@ -145,7 +145,10 @@ export const LocationListView = () => {
         reportIsLoading={isLoading}
       />
       <MaterialTable table={table} />
-      <Footer data={locations} />
+      <Footer
+        selectedRows={selectedRows}
+        resetRowSelection={table.resetRowSelection}
+      />
     </>
   );
 };
