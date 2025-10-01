@@ -216,6 +216,7 @@ impl From<StocktakeFilterInput> for StocktakeFilter {
             is_locked: f.is_locked,
             is_program_stocktake: f.is_program_stocktake,
             program_id: f.program_id.map(EqualFilter::from),
+            stocktake_line: None,
         }
     }
 }

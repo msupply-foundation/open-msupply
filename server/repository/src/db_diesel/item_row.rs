@@ -171,6 +171,18 @@ impl<'a> ItemRowRepository<'a> {
         Ok(result)
     }
 
+    pub fn find_one_by_item_link_id(
+        &self,
+        item_link_id: &str,
+    ) -> Result<Option<ItemRow>, RepositoryError> {
+        let result: Option<(ItemRow, ItemLinkRow)> = item
+            .inner_join(item_link::table)
+            .filter(item_link::id.eq(item_link_id))
+            .first(self.connection.lock().connection())
+            .optional()?;
+        Ok(result.map(|r| r.0))
+    }
+
     pub fn find_many_by_id(&self, ids: &Vec<String>) -> Result<Vec<ItemRow>, RepositoryError> {
         let result = item
             .filter(id.eq_any(ids))
