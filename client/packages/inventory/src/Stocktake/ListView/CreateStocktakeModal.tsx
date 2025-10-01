@@ -161,6 +161,8 @@ export const CreateStocktakeModal = ({
                 flexDirection: 'column',
                 justifyContent: 'space-between',
                 height: 550,
+                width: 630,
+                margin: '0 auto',
               }}
             >
               <Box>
