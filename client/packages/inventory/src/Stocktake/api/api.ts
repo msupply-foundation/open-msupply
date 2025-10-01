@@ -31,10 +31,10 @@ export type ListParams = {
 };
 
 export type LinesParams = {
-  first: number;
-  offset: number;
-  sortBy: SortBy<StocktakeLineFragment>;
-  filterBy: FilterBy | null;
+  first?: number;
+  offset?: number;
+  sortBy?: SortBy<StocktakeLineFragment>;
+  filterBy?: FilterBy | null;
 };
 
 const stocktakeParser = {
@@ -164,10 +164,12 @@ export const getStocktakeQueries = (sdk: Sdk, storeId: string) => ({
         stocktakeId: id,
         storeId,
         page: { offset, first },
-        sort: {
-          key: sortBy.key as StocktakeLineSortFieldInput,
-          desc: !!sortBy.isDesc,
-        },
+        sort: sortBy
+          ? {
+              key: sortBy.key as StocktakeLineSortFieldInput,
+              desc: !!sortBy.isDesc,
+            }
+          : undefined,
         filter: filterBy,
       });
 
