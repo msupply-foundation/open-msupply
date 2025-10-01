@@ -42,7 +42,7 @@ export const OutboundShipmentListView = () => {
   });
   const queryParams = { ...filter, sortBy, first, offset };
 
-  const { data, isFetching } = useOutbound.document.list(queryParams);
+  const { data, isFetching, isError } = useOutbound.document.list(queryParams);
   const { mutate: onUpdate } = useOutbound.document.update();
 
   const mrtColumns = useMemo(
@@ -122,6 +122,7 @@ export const OutboundShipmentListView = () => {
     usePaginatedMaterialTable<OutboundRowFragment>({
       tableId: 'outbound-shipment-list',
       isLoading: isFetching,
+      isError,
       onRowClick: row => navigate(row.id),
       columns: mrtColumns,
       data: data?.nodes,

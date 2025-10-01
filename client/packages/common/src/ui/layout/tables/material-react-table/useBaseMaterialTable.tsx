@@ -28,6 +28,7 @@ export interface BaseTableConfig<T extends MRT_RowData>
   data: T[] | undefined;
   onRowClick?: (row: T) => void;
   isLoading?: boolean;
+  isError?: boolean;
   getIsPlaceholderRow?: (row: T) => boolean;
   /** Whether row should be greyed out - still potentially clickable */
   getIsRestrictedRow?: (row: T) => boolean;
@@ -48,6 +49,7 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
   tableId,
   state,
   isLoading,
+  isError,
   onRowClick,
   getIsPlaceholderRow,
   getIsRestrictedRow,
@@ -179,11 +181,22 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
     onColumnOrderChange: columnOrder.update,
 
     renderEmptyRowsFallback: () =>
-      isLoading ? <></> : (noDataElement ?? <NothingHere />),
+      isLoading ? (
+        <></>
+      ) : isError ? (
+        <ErrorState />
+      ) : (
+        (noDataElement ?? <NothingHere />)
+      ),
 
     ...displayOptions,
     ...tableOptions,
   });
 
   return table;
+};
+
+const ErrorState = () => {
+  const t = useTranslation();
+  return <NothingHere body={t('error.unable-to-load-data')} isError />;
 };
