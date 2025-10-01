@@ -259,11 +259,14 @@ pub async fn patient_pull(
     .collect();
 
     log::info!(
-        "Sending {} records to site {}",
+        "Patient Pull: Sending {} records to site {}",
         records.len(),
         response.site_id
     );
-    log::debug!("Sending records as central server: {:#?}", records);
+    log::debug!(
+        "Patient Pull: Sending records as central server: {:#?}",
+        records
+    );
 
     let is_last_batch = total_records <= batch_size as u64;
 
