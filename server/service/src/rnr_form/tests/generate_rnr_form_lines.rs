@@ -2,7 +2,7 @@
 mod generate_rnr_form_lines {
     use crate::rnr_form::generate_rnr_form_lines::{
         generate_rnr_form_lines, get_adjusted_quantity_consumed, get_amc,
-        get_bulk_opening_balances, get_earliest_expiry, get_previous_monthly_consumption,
+        get_bulk_earliest_expiries, get_bulk_opening_balances, get_previous_monthly_consumption,
         get_stock_out_durations_batch, get_usage_map, UsageStats,
     };
     use crate::service_provider::ServiceProvider;
@@ -362,15 +362,18 @@ mod generate_rnr_form_lines {
         )
         .await;
 
-        // When no stock lines with expiries, return None
-        let result =
-            get_earliest_expiry(&connection, &mock_store_a().id, &mock_item_a().id).unwrap();
-        assert_eq!(result, None);
+        let result = get_bulk_earliest_expiries(
+            &connection,
+            &mock_store_a().id,
+            &[item_query_test1().id.clone(), mock_item_a().id.clone()],
+        )
+        .unwrap();
 
-        // Selects the earliest expiry date
-        let result =
-            get_earliest_expiry(&connection, &mock_store_a().id, &item_query_test1().id).unwrap();
-        assert_eq!(result, Some(NaiveDate::from_ymd_opt(2024, 1, 31).unwrap()));
+        assert_eq!(
+            result.get(&item_query_test1().id),
+            NaiveDate::from_ymd_opt(2024, 1, 31).as_ref()
+        );
+        assert_eq!(result.get(&mock_item_a().id), None);
     }
 
     #[actix_rt::test]
