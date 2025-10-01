@@ -44,8 +44,6 @@ The toggle report command can be useful to deactivate standard reports when a cl
 
 ## Generating Reports
 
-Some of the CLI commands require yarn's dependencies to be installed by running `yarn install` in open-msupply's main directory.
-
 There are three main steps to get started with reports:
 
 1. Build the server
@@ -79,7 +77,7 @@ All commands can be run in two ways:
 Generates all reports into a JSON array.
 
 **What it does**
-This command builds reports from source files within the directory passed as the path argument. It searches through directories recursively, so any file structure can be used. If no path is passed, the build-reports command defaults to the `standard_forms` and `standard_report` dirs containing OMS standard forms and reports respectively.
+This command builds reports from source files within the directory passed as the path argument. It searches through directories recursively, so any file structure can be used. If no path is passed, the build-reports command defaults to the `standard_forms` and `standard_report` directories containing OMS standard forms and reports respectively.
 
 It will attempt to build a report from any directory containing a `report-manifest.json` file. When it finds one, it processes all the report's source files and generates a JSON file.
 
@@ -174,7 +172,7 @@ Reports added to OMS central server (from either cli or ui interface) are synced
 
 Report versioning protects remote sites of earlier versions from rendering a more recent report of an incompatible api.
 
-The report ui interface can be accessed via the manage nav.
+The report UI interface can be accessed via the `Manage` navigation AppDrawer.
 
 Both the upsert and upload ui accept an array of generated reports from the [build reports](#build-reports) command.
 
