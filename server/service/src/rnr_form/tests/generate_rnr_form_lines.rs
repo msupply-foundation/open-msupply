@@ -3,7 +3,7 @@ mod generate_rnr_form_lines {
     use crate::rnr_form::generate_rnr_form_lines::{
         generate_rnr_form_lines, get_adjusted_quantity_consumed, get_amc,
         get_bulk_opening_balances, get_earliest_expiry, get_previous_monthly_consumption,
-        get_stock_out_duration, get_usage_map, UsageStats,
+        get_stock_out_durations_batch, get_usage_map, UsageStats,
     };
     use crate::service_provider::ServiceProvider;
     use chrono::NaiveDate;
@@ -258,30 +258,58 @@ mod generate_rnr_form_lines {
         )
         .await;
 
-        let result = get_stock_out_duration(
+        let usage_by_item_map = get_usage_map(
             &connection,
             &mock_store_a().id,
-            &item_query_test1().id,
-            NaiveDate::from_ymd_opt(2024, 1, 31).unwrap(),
+            Some(EqualFilter::equal_to(&item_query_test1().id)),
             31,
-            5.0, // closing balance
+            &NaiveDate::from_ymd_opt(2024, 1, 31).unwrap(),
         )
         .unwrap();
 
-        assert_eq!(result, 8);
-
-        // If no transactions, stock out duration is 0
-        let result = get_stock_out_duration(
+        let opening_balances = get_bulk_opening_balances(
             &connection,
+            &HashMap::new(),
             &mock_store_a().id,
-            &mock_item_a().id, // different item, which we have no transactions for
-            NaiveDate::from_ymd_opt(2024, 1, 31).unwrap(),
-            31,
-            0.0, // closing balance
+            &[item_query_test1().id.clone()],
+            NaiveDate::from_ymd_opt(2024, 1, 1).unwrap(),
         )
         .unwrap();
 
-        assert_eq!(result, 0);
+        let result = get_stock_out_durations_batch(
+            &connection,
+            &mock_store_a().id,
+            &[item_query_test1().id.clone()],
+            NaiveDate::from_ymd_opt(2024, 1, 31).unwrap(),
+            31,
+            &opening_balances,
+            &usage_by_item_map,
+        )
+        .unwrap();
+
+        assert_eq!(result, {
+            let mut map = HashMap::new();
+            map.insert(item_query_test1().id.clone(), 8);
+            map
+        });
+
+        // If no transactions, stockout duration is 0
+        let result = get_stock_out_durations_batch(
+            &connection,
+            &mock_store_a().id,
+            &[item_query_test2().id.clone()],
+            NaiveDate::from_ymd_opt(2024, 1, 31).unwrap(),
+            31,
+            &HashMap::new(),
+            &HashMap::new(),
+        )
+        .unwrap();
+
+        assert_eq!(result, {
+            let mut map = HashMap::new();
+            map.insert(item_query_test2().id.clone(), 0);
+            map
+        });
     }
 
     #[actix_rt::test]
