@@ -20,18 +20,6 @@ impl Processor for SupportUploadFilesProcessor {
         "Support Upload Files Processor".to_string()
     }
 
-    fn change_log_table_names(&self) -> Vec<ChangelogTableName> {
-        vec![ChangelogTableName::SyncMessage]
-    }
-
-    fn cursor_type(&self) -> CursorType {
-        CursorType::Standard(KeyType::SuppportUploadFilesProcessorCursor)
-    }
-
-    fn should_run(&self) -> bool {
-        CentralServerConfig::is_central_server()
-    }
-
     async fn try_process_record(
         &self,
         ctx: &ServiceContext,
@@ -77,6 +65,18 @@ impl Processor for SupportUploadFilesProcessor {
             "Processed support upload files for sync message: {}",
             sync_message.id
         )))
+    }
+
+    fn change_log_table_names(&self) -> Vec<ChangelogTableName> {
+        vec![ChangelogTableName::SyncMessage]
+    }
+
+    fn cursor_type(&self) -> CursorType {
+        CursorType::Standard(KeyType::SupportUploadFilesProcessorCursor)
+    }
+
+    fn should_run(&self) -> bool {
+        CentralServerConfig::is_central_server()
     }
 }
 
@@ -138,15 +138,21 @@ fn handle_database_file(
         .get_server_settings_info()
         .map_err(|e| ProcessorError::OtherError(e.to_string()))?;
 
-    let database_path = database_settings
-        .database_path
-        .as_ref()
-        .ok_or_else(|| ProcessorError::OtherError("Database path not configured".into()))?;
+    let database_path = database_settings.database_path();
+    // TODO: can't find database path
+    let database_bytes = std::fs::read(database_path).map_err(|e| {
+        ProcessorError::OtherError(format!(
+            "Failed to read database file at: {}",
+            e.to_string()
+        ))
+    })?;
 
-    let database_bytes =
-        std::fs::read(database_path).map_err(|e| ProcessorError::OtherError(e.to_string()))?;
-    let static_file_service = StaticFileService::new(&server_settings.base_dir)
-        .map_err(|e| ProcessorError::OtherError(e.to_string()))?;
+    let static_file_service = StaticFileService::new(&server_settings.base_dir).map_err(|e| {
+        ProcessorError::OtherError(format!(
+            "Failed to create StaticFileService at: {}",
+            e.to_string()
+        ))
+    })?;
 
     let stored_file = static_file_service
         .store_file(
