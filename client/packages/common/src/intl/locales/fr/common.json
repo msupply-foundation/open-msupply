@@ -29,7 +29,6 @@
   "button.add-encounter": "Ajouter une rencontre",
   "button.add-form": "Ajouter un formulaire",
   "button.add-from-internal-order": "Ajouter à partir d'une commande interne",
-  "button.add-from-internal-order": "Ajouter à partir d'une commande interne",
   "button.add-from-master-list": "Utiliser une liste maîtresse",
   "button.add-insurance": "Ajouter assurance",
   "button.add-item": "Ajouter un article",
@@ -2436,12 +2435,5 @@
   "warning.field-not-parsed": "{{field}} non analysé",
   "warning.foreign-exchange-rate-different": "Ce taux ne correspond pas à la devise.",
   "warning.manual-store-requisition": "Attention - La saisie d'une réquisition client pour un dépôt peut entraîner des doublons si ce dépôt soumet aussi une commande interne.",
-  "warning.nothing-to-supply": "La quantité demandée à été fournie !",
-  "error.no-goods-received-linked": "Aucun article reçu n'est lié à ce bon de commande",
-  "error.cannot-add-items-to-requisition": "Impossible d'ajouter des articles à la réquisition",
-  "error.master-list-not-found-for-this-store": "Impossible de trouver cette liste maitresse dans ce dépôt",
-  "label.goods-received": "Articles reçus",
-  "label.authorised": "Autorisé",
-  "label.price-per-unit-before-discount": "Prix / unité (avant réduction)",
-  "label.price-per-unit-after-discount": "Prix / unité (après réduction)"
+  "warning.nothing-to-supply": "La quantité demandée à été fournie !"
 }
