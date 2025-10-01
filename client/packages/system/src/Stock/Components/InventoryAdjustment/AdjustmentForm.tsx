@@ -8,6 +8,7 @@ import {
   useAuthContext,
   StoreModeNodeType,
   FormLabel,
+  ReasonOptionNodeType,
 } from '@openmsupply-client/common';
 import { DraftInventoryAdjustment } from '../../api';
 import { ReasonOptionsSearchInput } from '../../..';
@@ -24,6 +25,9 @@ export const AdjustmentForm = ({
 }) => {
   const t = useTranslation();
   const { store } = useAuthContext();
+
+  const isInventoryReduction =
+    draft.adjustmentType === AdjustmentTypeInput.Reduction;
 
   return (
     <Box
@@ -85,9 +89,13 @@ export const AdjustmentForm = ({
           type={getReasonOptionTypes({
             isVaccine,
             isDispensary: store?.storeMode === StoreModeNodeType.Dispensary,
-            isInventoryReduction:
-              draft.adjustmentType === AdjustmentTypeInput.Reduction,
+            isInventoryReduction,
           })}
+          fallbackType={
+            isInventoryReduction
+              ? ReasonOptionNodeType.NegativeInventoryAdjustment
+              : ReasonOptionNodeType.PositiveInventoryAdjustment
+          }
           width="20em"
         />
       </Box>
