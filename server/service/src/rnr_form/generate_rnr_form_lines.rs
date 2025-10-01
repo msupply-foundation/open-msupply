@@ -14,11 +14,7 @@ use util::{
     uuid::uuid,
 };
 
-use crate::{
-    requisition_line::chart::{get_stock_evolution_for_item, StockEvolutionOptions},
-    service_provider::ServiceContext,
-    store_preference::get_store_preferences,
-};
+use crate::{service_provider::ServiceContext, store_preference::get_store_preferences};
 
 use super::get_period_length;
 
@@ -69,6 +65,16 @@ pub fn generate_rnr_form_lines(
         period.start_date,
     )?;
 
+    let stock_out_durations = get_stock_out_durations_batch(
+        &ctx.connection,
+        store_id,
+        &master_list_item_ids,
+        period.end_date,
+        period_length_in_days as u32,
+        &opening_balances,
+        &usage_by_item_map,
+    )?;
+
     // Generate line for each item in the master list
     let rnr_form_lines = master_list_item_ids
         .into_iter()
@@ -79,14 +85,7 @@ pub fn generate_rnr_form_lines(
             let final_balance =
                 initial_balance + usage.replenished - usage.consumed + usage.adjusted;
 
-            let stock_out_duration = get_stock_out_duration(
-                &ctx.connection,
-                store_id,
-                &item_id,
-                period.end_date,
-                period_length_in_days as u32,
-                final_balance,
-            )?;
+            let stock_out_duration = stock_out_durations.get(&item_id).copied().unwrap_or(0);
 
             let adjusted_quantity_consumed = get_adjusted_quantity_consumed(
                 period_length_in_days,
@@ -252,51 +251,6 @@ pub fn get_previous_monthly_consumption(
     }
 
     Ok(monthly_consumption_by_item_id)
-}
-
-pub fn get_stock_out_duration(
-    connection: &StorageConnection,
-    store_id: &str,
-    item_id: &str,
-    end_date: NaiveDate,
-    days_in_period: u32,
-    closing_quantity: f64,
-) -> Result<i32, RepositoryError> {
-    let end_datetime = end_date
-        .and_hms_milli_opt(23, 59, 59, 999)
-        // Should always be able to create end of day datetime, so this error shouldn't be possible
-        .ok_or(RepositoryError::as_db_error(
-            "Could not determine closing datetime",
-            "",
-        ))?;
-
-    let evolution = get_stock_evolution_for_item(
-        connection,
-        store_id,
-        item_id,
-        end_datetime,
-        closing_quantity as u32,
-        date_now(), // only used for future projections, not needed here
-        0,          // only used for future projections, not needed here
-        0.0,        // only used for future projections, not needed here
-        StockEvolutionOptions {
-            number_of_historic_data_points: days_in_period,
-            number_of_projected_data_points: 0,
-        },
-    )?;
-
-    let days_out_of_stock = evolution
-        .historic_stock
-        .into_iter()
-        .filter(|point| point.quantity == 0.0)
-        .count() as i32;
-
-    if days_out_of_stock == days_in_period as i32 {
-        // If there was no consumption data, we'll set stock out duration to 0 and let the user input this
-        Ok(0)
-    } else {
-        Ok(days_out_of_stock)
-    }
 }
 
 // If stock had been available for the entire period, this is the quantity that 'would' have been consumed
@@ -482,4 +436,88 @@ pub fn get_bulk_opening_balances(
     }
 
     Ok(opening_balances)
+}
+
+pub fn get_stock_out_durations_batch(
+    connection: &StorageConnection,
+    store_id: &str,
+    item_ids: &[String],
+    end_date: NaiveDate,
+    days_in_period: u32,
+    opening_balances: &HashMap<String, f64>,
+    usage_by_item_map: &HashMap<String, UsageStats>,
+) -> Result<HashMap<String, i32>, RepositoryError> {
+    let mut stock_out_durations = HashMap::new();
+
+    let period_start_date =
+        date_with_offset(&end_date, Duration::days((days_in_period as i64 - 1).neg()));
+
+    let stock_movement_rows = StockMovementRepository::new(connection).query(Some(
+        StockMovementFilter::new()
+            .store_id(EqualFilter::equal_to(store_id))
+            .item_id(EqualFilter::equal_any(item_ids.to_vec()))
+            .datetime(DatetimeFilter::date_range(
+                period_start_date.and_hms_opt(0, 0, 0).unwrap(),
+                end_date.and_hms_milli_opt(23, 59, 59, 999).unwrap(),
+            )),
+    ))?;
+
+    let mut movements_by_item_and_date: HashMap<String, HashMap<NaiveDate, f64>> = HashMap::new();
+    for movement in stock_movement_rows {
+        let movement_date = movement.datetime.date();
+        movements_by_item_and_date
+            .entry(movement.item_id.clone())
+            .or_default()
+            .entry(movement_date)
+            .and_modify(|qty| *qty += movement.quantity)
+            .or_insert(movement.quantity);
+    }
+
+    for item_id in item_ids {
+        let usage = usage_by_item_map.get(item_id).copied().unwrap_or_default();
+        let initial_balance = opening_balances.get(item_id).copied().unwrap_or(0.0);
+        let closing_quantity =
+            initial_balance + usage.replenished - usage.consumed + usage.adjusted;
+
+        // When calculated closing quantity is 0 or negative but there was replenishment,
+        // use the replenishment amount as the final stock quantity
+        let final_stock_quantity = if closing_quantity <= 0.0 && usage.replenished > 0.0 {
+            usage.replenished.max(0.0)
+        } else {
+            closing_quantity.max(0.0)
+        };
+
+        // Calculate historic stock levels day by day (same logic as
+        // get_stock_evolution_for_item without the extras)
+        let item_movements = movements_by_item_and_date
+            .get(item_id)
+            .cloned()
+            .unwrap_or_default();
+        let mut running_stock = final_stock_quantity;
+        let mut days_out_of_stock = 0;
+
+        for day_offset in 0..days_in_period {
+            if day_offset > 0 {
+                let next_date =
+                    date_with_offset(&end_date, Duration::days(-((day_offset - 1) as i64)));
+                if let Some(daily_movement) = item_movements.get(&next_date) {
+                    running_stock -= daily_movement;
+                }
+            }
+
+            if running_stock <= 0.0 {
+                days_out_of_stock += 1;
+            }
+        }
+
+        let stock_out_duration = if days_out_of_stock == days_in_period as i32 {
+            0
+        } else {
+            days_out_of_stock
+        };
+
+        stock_out_durations.insert(item_id.clone(), stock_out_duration);
+    }
+
+    Ok(stock_out_durations)
 }
