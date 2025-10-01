@@ -11,7 +11,7 @@ pub fn convert_invoice_line_to_single_pack(invoice_line: InvoiceLineRow) -> Invo
         volume_per_pack: invoice_line.volume_per_pack / invoice_line.pack_size,
         shipped_number_of_packs: invoice_line
             .shipped_number_of_packs
-            .map(|shipped| shipped * invoice_line.pack_size),
+            .map(|shipped| shipped * invoice_line.shipped_pack_size.unwrap_or(1.0)),
         shipped_pack_size: Some(1.0),
         pack_size: 1.0,
         ..invoice_line

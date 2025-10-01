@@ -157,7 +157,7 @@ pub(crate) fn make_movements(stock_line: StockLineRow, date_quantity: Vec<(i64, 
                     ..Default::default()
                 },
                 InvoiceLineRow {
-                    id: format!("line_{}", invoice_id),
+                    id: format!("line_{invoice_id}"),
                     invoice_id,
                     item_link_id: stock_line.item_link_id.clone(),
                     stock_line_id: Some(stock_line.id.clone()),

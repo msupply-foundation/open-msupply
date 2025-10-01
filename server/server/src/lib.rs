@@ -39,7 +39,7 @@ use service::{
     token_bucket::TokenBucket,
 };
 
-use actix_web::{web::Data, App, HttpServer};
+use actix_web::{web, web::Data, App, HttpServer};
 use std::sync::{Arc, Mutex, RwLock};
 
 mod authentication;
@@ -346,6 +346,8 @@ pub async fn start_server(
             .wrap(compress_middleware())
             // needed for static files service
             .app_data(Data::new(closure_settings.clone()))
+            // Configure JSON payload limit (default is 2MB, setting to 10MB)
+            .app_data(web::JsonConfig::default().limit(10 * 1024 * 1024))
             // needed for cold chain service
             .app_data(service_provider.clone())
             .app_data(auth.clone())
