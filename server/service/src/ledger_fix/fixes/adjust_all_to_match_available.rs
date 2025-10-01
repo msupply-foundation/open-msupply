@@ -119,7 +119,12 @@ pub(crate) mod test {
     async fn adjust_all_to_match_available_test() {
         let ServiceTestContext { connection, .. } = setup_all_with_data_and_service_provider(
             "adjust_all_to_match_available",
-            MockDataInserts::none().names().stores().units().items(),
+            MockDataInserts::none()
+                .names()
+                .stores()
+                .units()
+                .items()
+                .currencies(),
             mock_data(),
         )
         .await;
