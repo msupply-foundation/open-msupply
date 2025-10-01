@@ -53,12 +53,6 @@ export const useTableFiltering = <T extends MRT_RowData>(
           };
           break;
 
-        case 'checkbox':
-          filterUpdaters[filterKey] = (value: boolean) => {
-            updateQuery({ [filterKey]: value });
-          };
-          break;
-
         case 'select':
         case 'text':
         case undefined: // default to text
