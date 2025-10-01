@@ -129,7 +129,7 @@ export const useDraftRequisitionLine = (
     }
 
     return null;
-  }, [draft, saveMutation, t]);
+  }, [draft, saveMutation]);
 
   return {
     draft,
