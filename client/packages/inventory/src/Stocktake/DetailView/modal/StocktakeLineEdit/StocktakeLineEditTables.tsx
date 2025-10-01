@@ -18,6 +18,7 @@ import {
   Formatter,
   RequiredNumberInputCell,
   RecordWithId,
+  ReasonOptionNodeType,
 } from '@openmsupply-client/common';
 import { DraftStocktakeLine } from './utils';
 import {
@@ -535,6 +536,11 @@ const InventoryAdjustmentReasonInputCell = ({
       }}
       disabled={isDisabled}
       initialStocktake={initialStocktake}
+      fallbackType={
+        isInventoryReduction
+          ? ReasonOptionNodeType.NegativeInventoryAdjustment
+          : ReasonOptionNodeType.PositiveInventoryAdjustment
+      }
     />
   );
 };
