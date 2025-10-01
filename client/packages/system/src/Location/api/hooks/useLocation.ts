@@ -107,12 +107,14 @@ const useUpdateLocation = () => {
 const useDeleteLocation = (locations?: LocationRowFragment[]) => {
   const { locationApi, queryClient, storeId } = useLocationGraphQL();
 
-  const { selectedRows } = useTableStore(state => ({
-    selectedRows: Object.keys(state.rowState)
-      .filter(id => state.rowState[id]?.isSelected)
-      .map(selectedId => locations?.find(({ id }) => selectedId === id))
-      .filter(Boolean) as LocationRowFragment[],
-  }));
+  // const { selectedRows } = useTableStore(state => ({
+  //   selectedRows: Object.keys(state.rowState)
+  //     .filter(id => state.rowState[id]?.isSelected)
+  //     .map(selectedId => locations?.find(({ id }) => selectedId === id))
+  //     .filter(Boolean) as LocationRowFragment[],
+  // }));
+
+  const selectedRows = [];
 
   const mutationFn = async (id: string) => {
     const result = await locationApi.deleteLocation({
