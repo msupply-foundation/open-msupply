@@ -213,6 +213,7 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
             color: !row.getCanExpand() ? 'transparent' : undefined,
           },
         }),
+        minHeight: table.getState().density === 'compact' ? '32px' : '40px',
         padding:
           table.getState().density === 'spacious'
             ? '0.7rem'
