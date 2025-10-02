@@ -261,7 +261,10 @@ mod generate_rnr_form_lines {
         let usage_by_item_map = get_usage_map(
             &connection,
             &mock_store_a().id,
-            Some(EqualFilter::equal_to(&item_query_test1().id)),
+            Some(EqualFilter::equal_any(vec![
+                item_query_test1().id.clone(),
+                item_query_test2().id.clone(),
+            ])),
             31,
             &NaiveDate::from_ymd_opt(2024, 1, 31).unwrap(),
         )
@@ -271,7 +274,7 @@ mod generate_rnr_form_lines {
             &connection,
             &HashMap::new(),
             &mock_store_a().id,
-            &[item_query_test1().id.clone()],
+            &[item_query_test1().id.clone(), item_query_test2().id.clone()],
             NaiveDate::from_ymd_opt(2024, 1, 1).unwrap(),
         )
         .unwrap();
@@ -279,7 +282,7 @@ mod generate_rnr_form_lines {
         let result = get_stock_out_durations_batch(
             &connection,
             &mock_store_a().id,
-            &[item_query_test1().id.clone()],
+            &[item_query_test1().id.clone(), item_query_test2().id.clone()],
             NaiveDate::from_ymd_opt(2024, 1, 31).unwrap(),
             31,
             &opening_balances,
@@ -290,24 +293,8 @@ mod generate_rnr_form_lines {
         assert_eq!(result, {
             let mut map = HashMap::new();
             map.insert(item_query_test1().id.clone(), 8);
-            map
-        });
+            map.insert(item_query_test2().id.clone(), 0); // If no transactions, stockout duration is 0
 
-        // If no transactions, stockout duration is 0
-        let result = get_stock_out_durations_batch(
-            &connection,
-            &mock_store_a().id,
-            &[item_query_test2().id.clone()],
-            NaiveDate::from_ymd_opt(2024, 1, 31).unwrap(),
-            31,
-            &HashMap::new(),
-            &HashMap::new(),
-        )
-        .unwrap();
-
-        assert_eq!(result, {
-            let mut map = HashMap::new();
-            map.insert(item_query_test2().id.clone(), 0);
             map
         });
     }

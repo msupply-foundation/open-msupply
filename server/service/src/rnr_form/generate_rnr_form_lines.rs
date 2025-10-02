@@ -1,5 +1,8 @@
-use std::{collections::HashMap, ops::Neg};
-
+use super::get_period_length;
+use crate::{
+    requisition_line::chart::calculate_historic_stock_evolution, service_provider::ServiceContext,
+    store_preference::get_store_preferences,
+};
 use chrono::{Duration, NaiveDate, Utc};
 use repository::{
     AdjustmentFilter, AdjustmentRepository, ConsumptionFilter, ConsumptionRepository, DateFilter,
@@ -10,17 +13,10 @@ use repository::{
     StockMovementRepository, StockMovementRow, StockOnHandFilter, StockOnHandRepository,
     StorageConnection,
 };
+use std::{collections::HashMap, ops::Neg};
 use util::{
-    constants::APPROX_NUMBER_OF_DAYS_IN_A_MONTH_IS_30, date_now, date_with_offset, pos_zero,
-    uuid::uuid,
+    constants::APPROX_NUMBER_OF_DAYS_IN_A_MONTH_IS_30, date_with_offset, pos_zero, uuid::uuid,
 };
-
-use crate::{
-    requisition_line::chart::calculate_historic_stock_evolution, service_provider::ServiceContext,
-    store_preference::get_store_preferences,
-};
-
-use super::get_period_length;
 
 pub fn generate_rnr_form_lines(
     ctx: &ServiceContext,
