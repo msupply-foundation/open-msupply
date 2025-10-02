@@ -3,8 +3,9 @@ import { styled } from '@mui/material/styles';
 import RCInput, {
   CurrencyInputProps as RCInputProps,
 } from 'react-currency-input-field';
-import { useCurrency } from '@common/intl';
+import { useCurrency, useFormatNumber } from '@common/intl';
 import { NumUtils } from '@common/utils';
+import { useBufferState } from '@common/hooks';
 
 interface CurrencyInputProps extends RCInputProps {
   onChangeNumber: (value: number) => void;
@@ -43,14 +44,19 @@ export const CurrencyInput: FC<CurrencyInputProps> = ({
   width,
   ...restOfProps
 }) => {
-  const { c, options } = useCurrency();
+  const val = value !== undefined ? value : defaultValue;
+  const valueAsNumber = Number.isNaN(Number(val)) ? 0 : Number(val);
+  const { options } = useCurrency();
+
+  const { format } = useFormatNumber();
+
+  const [buffer, setBuffer] = useBufferState<string | number | undefined>(
+    NumUtils.round(valueAsNumber, options.precision)
+  );
+
   const isSymbolLast = options.pattern.endsWith('!');
   const prefix = !isSymbolLast ? options.symbol : '';
   const suffix = isSymbolLast ? options.symbol : '';
-  const defaultValueAsNumber = Number.isNaN(Number(defaultValue))
-    ? undefined
-    : Number(defaultValue);
-  const valueAsNumber = Number.isNaN(value) ? 0 : Number(value);
 
   return (
     <StyledCurrencyInput
@@ -66,12 +72,25 @@ export const CurrencyInput: FC<CurrencyInputProps> = ({
         color: disabled ? theme => theme.palette.text.disabled : undefined,
         width,
       }}
-      defaultValue={NumUtils.round(
-        valueAsNumber ?? defaultValueAsNumber,
-        options.precision
-      )}
-      onValueChange={newValue => onChangeNumber(c(newValue || '').value)}
+      value={buffer}
+      onValueChange={(_v, _e, values) => {
+        setBuffer(values?.value);
+        if (
+          // Intermediate states (typing decimal, or a leading 0 (e.g. 2.0.. heading for 2.05))
+          !values?.value.endsWith(options.decimal) &&
+          !values?.value.endsWith('0')
+        ) {
+          onChangeNumber(values?.float ?? 0);
+        }
+      }}
       onFocus={e => e.target.select()}
+      onBlur={() => {
+        const finalValue = buffer ? Number(buffer) : 0;
+        setBuffer(
+          format(finalValue, { minimumFractionDigits: options.precision })
+        );
+        onChangeNumber(finalValue);
+      }}
       allowNegativeValue={allowNegativeValue}
       prefix={prefix}
       suffix={suffix}
