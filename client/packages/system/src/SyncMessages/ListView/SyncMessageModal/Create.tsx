@@ -84,24 +84,27 @@ export const Create = ({ t, draft, setDraft }: CreateProps) => {
           selectSx={{ width: '100%' }}
           label={t(typeMapping(draft?.type))}
         >
-          {syncMessageTypes.map(
-            (type, index) =>
-              type && (
-                <DropdownMenuItem
-                  key={index}
-                  value={type}
-                  sx={{ fontSize: 14 }}
-                  onClick={() =>
-                    setDraft({
-                      ...draft,
-                      type,
-                    })
-                  }
-                >
-                  {t(typeMapping(type))}
-                </DropdownMenuItem>
-              )
-          )}
+          {syncMessageTypes
+            // Remove filter once other types have functionalities e.g. processor to process data passed
+            .filter(type => type === SyncMessageNodeType.SupportUpload)
+            .map(
+              (type, index) =>
+                type && (
+                  <DropdownMenuItem
+                    key={index}
+                    value={type}
+                    sx={{ fontSize: 14 }}
+                    onClick={() =>
+                      setDraft({
+                        ...draft,
+                        type,
+                      })
+                    }
+                  >
+                    {t(typeMapping(type))}
+                  </DropdownMenuItem>
+                )
+            )}
         </DropdownMenu>
       </Box>
       <Stack flexDirection="column">

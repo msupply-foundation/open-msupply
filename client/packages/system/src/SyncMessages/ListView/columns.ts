@@ -21,14 +21,14 @@ export const useSyncMessageColumns = () => {
 
   const columns: ColumnDescription<SyncMessageRowFragment>[] = [
     {
-      key: 'toStore',
-      label: 'label.to-store',
-      accessor: ({ rowData }) => rowData?.toStore?.storeName,
-    },
-    {
       key: 'fromStore',
       label: 'label.from-store',
       accessor: ({ rowData }) => rowData?.fromStore?.storeName,
+    },
+    {
+      key: 'toStore',
+      label: 'label.to-store',
+      accessor: ({ rowData }) => rowData?.toStore?.storeName,
     },
     {
       key: 'createdDatetime',

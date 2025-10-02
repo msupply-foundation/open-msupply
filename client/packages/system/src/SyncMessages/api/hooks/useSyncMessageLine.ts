@@ -19,7 +19,7 @@ const draftSyncMessageLine: SyncMessageRowFragment = {
   __typename: 'SyncMessageNode',
   id: '',
   body: '',
-  type: SyncMessageNodeType.RequestFieldChange,
+  type: SyncMessageNodeType.SupportUpload,
   status: SyncMessageNodeStatus.New,
   createdDatetime: '',
   toStore: {
