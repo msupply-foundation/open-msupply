@@ -13,6 +13,7 @@ import {
   NameAndColorSetterCell,
   ColumnType,
   TextWithTooltipCell,
+  useNavigate,
 } from '@openmsupply-client/common';
 import { AppBarButtons } from './AppBarButtons';
 import { RequestRowFragment, useRequest } from '../api';
@@ -26,6 +27,7 @@ import { AppRoute } from '@openmsupply-client/config';
 
 export const ListView = () => {
   const t = useTranslation();
+  const navigate = useNavigate();
   const modalController = useToggle();
   const { data: programSettings } = useRequest.utils.programSettings();
 
@@ -47,6 +49,12 @@ export const ListView = () => {
   const { requireSupplierAuthorisation } = useRequest.utils.preferences();
   const simplifiedTabletView = useSimplifiedTabletUI();
 
+  const getRoute = (row: RequestRowFragment) =>
+    RouteBuilder.create(AppRoute.Replenishment)
+      .addPart(AppRoute.InternalOrder)
+      .addPart(row.id)
+      .build();
+
   // Default to true to prevent columns from jumping on initial render
   const hasProgramSettings =
     (programSettings && programSettings.length > 0) ?? true;
@@ -58,11 +66,13 @@ export const ListView = () => {
         header: t('label.name'),
         enableSorting: true,
         enableColumnFilter: true,
+        size: 250,
         Cell: ({ row }) => (
           <NameAndColorSetterCell
             row={row.original}
             onColorChange={onUpdate}
             getIsDisabled={isRequestDisabled}
+            link={getRoute(row.original)}
           />
         ),
       },
@@ -141,12 +151,6 @@ export const ListView = () => {
     [hasProgramSettings, requireSupplierAuthorisation, simplifiedTabletView]
   );
 
-  const getRoute = (row: RequestRowFragment) =>
-    RouteBuilder.create(AppRoute.Replenishment)
-      .addPart(AppRoute.InternalOrder)
-      .addPart(row.id)
-      .build();
-
   const { table, selectedRows } = usePaginatedMaterialTable({
     tableId: 'internal-order-list',
     columns,
@@ -154,7 +158,7 @@ export const ListView = () => {
     totalCount: data?.totalCount ?? 0,
     isError,
     isLoading: isFetching,
-    onRowClick: undefined, // todo - command click!
+    onRowClick: row => navigate(getRoute(row)), // todo - command click!
     getIsRestrictedRow: isRequestDisabled,
     noDataElement: (
       <NothingHere
