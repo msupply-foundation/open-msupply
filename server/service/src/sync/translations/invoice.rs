@@ -727,7 +727,8 @@ fn map_legacy(
 
     let finalised_datetime = data
         .finalised_date
-        .map(|finalised_date| NaiveDateTime::new(finalised_date, data.finalised_time));
+        .map(|finalised_date| NaiveDateTime::new(finalised_date, data.finalised_time))
+        .or(confirm_datetime);
 
     // Try to figure out if a legacy record was backdated
     let backdated_datetime = map_backdated_datetime(&mapping.created_datetime, &confirm_datetime);
