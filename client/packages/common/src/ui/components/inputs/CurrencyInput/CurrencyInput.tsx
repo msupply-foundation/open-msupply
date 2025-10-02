@@ -3,7 +3,7 @@ import { styled } from '@mui/material/styles';
 import RCInput, {
   CurrencyInputProps as RCInputProps,
 } from 'react-currency-input-field';
-import { useCurrency } from '@common/intl';
+import { useCurrency, useFormatNumber } from '@common/intl';
 import { NumUtils } from '@common/utils';
 import { useBufferState } from '@common/hooks';
 
@@ -48,6 +48,8 @@ export const CurrencyInput: FC<CurrencyInputProps> = ({
   const valueAsNumber = Number.isNaN(Number(val)) ? 0 : Number(val);
   const { options } = useCurrency();
 
+  const { format } = useFormatNumber();
+
   const [buffer, setBuffer] = useBufferState<string | number | undefined>(
     NumUtils.round(valueAsNumber, options.precision)
   );
@@ -73,11 +75,22 @@ export const CurrencyInput: FC<CurrencyInputProps> = ({
       value={buffer}
       onValueChange={(_v, _e, values) => {
         setBuffer(values?.value);
-        if (!values?.value.endsWith(options.decimal)) {
+        if (
+          // Intermediate states (typing decimal, or a leading 0 (e.g. 2.0.. heading for 2.05))
+          !values?.value.endsWith(options.decimal) &&
+          !values?.value.endsWith('0')
+        ) {
           onChangeNumber(values?.float ?? 0);
         }
       }}
       onFocus={e => e.target.select()}
+      onBlur={() => {
+        const finalValue = buffer ? Number(buffer) : 0;
+        setBuffer(
+          format(finalValue, { minimumFractionDigits: options.precision })
+        );
+        onChangeNumber(finalValue);
+      }}
       allowNegativeValue={allowNegativeValue}
       prefix={prefix}
       suffix={suffix}
