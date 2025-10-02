@@ -73,7 +73,7 @@ export const CurrencyInput: FC<CurrencyInputProps> = ({
       value={buffer}
       onValueChange={(_v, _e, values) => {
         setBuffer(values?.value);
-        if (!values?.value.endsWith('.')) {
+        if (!values?.value.endsWith(options.decimal)) {
           onChangeNumber(values?.float ?? 0);
         }
       }}
