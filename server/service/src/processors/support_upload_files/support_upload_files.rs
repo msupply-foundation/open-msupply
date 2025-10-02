@@ -3,6 +3,7 @@ use repository::{
     ChangelogRow, ChangelogTableName, KeyType, SyncMessageRow, SyncMessageRowRepository,
     SyncMessageRowStatus, SyncMessageRowType,
 };
+use serde_json::Value;
 
 use crate::{
     cursor_controller::CursorType,
@@ -43,16 +44,24 @@ impl Processor for SupportUploadFilesProcessor {
             return Ok(None);
         }
 
-        let include_logs = sync_message.body.contains("logs");
-        let include_database = sync_message.body.contains("database");
+        let request_body: Value = serde_json::from_str(&sync_message.body)
+            .map_err(|e| ProcessorError::OtherError(format!("Invalid JSON in body: {}", e)))?;
+
+        let include_logs = request_body
+            .get("logs")
+            .and_then(|v| v.as_bool())
+            .unwrap_or(false);
+
+        let include_database = request_body
+            .get("database")
+            .and_then(|v| v.as_bool())
+            .unwrap_or(false);
 
         if include_logs {
-            log::info!("Processing log files for sync message: {}", sync_message.id);
             handle_log_files(ctx, service_provider, &sync_message)?;
         }
 
         if include_database {
-            log::info!("Processing database file: {}", sync_message.id);
             handle_database_file(service_provider, &sync_message)?;
         }
 
@@ -61,10 +70,7 @@ impl Processor for SupportUploadFilesProcessor {
             ..sync_message.clone()
         })?;
 
-        Ok(Some(format!(
-            "Processed support upload files for sync message: {}",
-            sync_message.id
-        )))
+        Ok(Some("success".to_string()))
     }
 
     fn change_log_table_names(&self) -> Vec<ChangelogTableName> {
@@ -107,18 +113,13 @@ fn handle_log_files(
         let log_content_string = log_content.join("\n");
         let log_bytes = log_content_string.as_bytes();
 
-        let stored_file = static_file_service
+        static_file_service
             .store_file(
                 &file_name,
-                StaticFileCategory::SyncFile(
-                    "sync_message_logs".to_string(),
-                    sync_message.id.clone(),
-                ),
+                StaticFileCategory::SyncFile("sync_message".to_string(), sync_message.id.clone()),
                 log_bytes,
             )
             .map_err(|e| ProcessorError::OtherError(e.to_string()))?;
-
-        log::info!("Log file stored: {} ({})", file_name, stored_file.id);
     }
 
     Ok(())
@@ -139,7 +140,6 @@ fn handle_database_file(
         .map_err(|e| ProcessorError::OtherError(e.to_string()))?;
 
     let database_path = database_settings.database_path();
-    // TODO: can't find database path
     let database_bytes = std::fs::read(database_path).map_err(|e| {
         ProcessorError::OtherError(format!(
             "Failed to read database file at: {}",
@@ -154,17 +154,13 @@ fn handle_database_file(
         ))
     })?;
 
-    let stored_file = static_file_service
+    static_file_service
         .store_file(
             &database_settings.database_name,
-            StaticFileCategory::SyncFile(
-                "sync_message_database".to_string(),
-                sync_message.id.clone(),
-            ),
+            StaticFileCategory::SyncFile("sync_message".to_string(), sync_message.id.clone()),
             &database_bytes,
         )
         .map_err(|e| ProcessorError::OtherError(e.to_string()))?;
 
-    log::info!("Database stored: {}", stored_file.id);
     Ok(())
 }

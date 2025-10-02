@@ -2,6 +2,7 @@ use actix_multipart::form::tempfile::TempFile;
 use anyhow::Context;
 use repository::sync_file_reference_row::SyncFileReferenceRow;
 use reqwest::Response;
+use serde::Serialize;
 use std::io::Error;
 use std::ops::Deref;
 use std::path::{Path, PathBuf};
@@ -10,7 +11,7 @@ use std::time::{Duration, SystemTime};
 use tokio::fs::File;
 use util::uuid::uuid;
 use util::{move_file, sanitize_filename};
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Serialize)]
 pub struct StaticFile {
     pub id: String,
     pub name: String,
@@ -200,6 +201,30 @@ impl StaticFileService {
             name: sync_file.file_name.clone(),
             path: file.path.to_string(),
         })
+    }
+
+    pub fn list_files(&self, category: &StaticFileCategory) -> anyhow::Result<Vec<StaticFile>> {
+        let dir = self.dir.join(category.to_path_buf());
+        std::fs::create_dir_all(&dir)?;
+        let mut files = Vec::new();
+
+        for entry in std::fs::read_dir(&dir)? {
+            let entry = entry?;
+            let path = entry.path();
+            let metadata = entry.metadata()?;
+            if !metadata.is_file() {
+                continue;
+            }
+            let file_name = path.file_name().unwrap().to_string_lossy();
+            if let Some((id, name)) = file_name.split_once('_') {
+                files.push(StaticFile {
+                    id: id.to_string(),
+                    name: name.to_string(),
+                    path: path.to_string_lossy().to_string(),
+                });
+            }
+        }
+        Ok(files)
     }
 }
 

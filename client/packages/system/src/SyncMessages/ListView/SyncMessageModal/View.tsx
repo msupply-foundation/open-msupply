@@ -5,12 +5,14 @@ import {
   LocaleKey,
   ReadOnlyInput,
   Stack,
+  SyncMessageNodeType,
   TextArea,
   TypedTFunction,
   Typography,
 } from '@openmsupply-client/common';
 import { SyncMessageRowFragment } from '../../api';
 import { statusMapping, typeMapping } from '../utils';
+import { FileList } from './FileList';
 
 interface ViewProps {
   data?: SyncMessageRowFragment;
@@ -58,9 +60,12 @@ export const View = ({ data, t }: ViewProps): ReactElement => {
           slotProps={{
             input: { sx: { backgroundColor: 'background.drawer' } },
           }}
+          disabled
         />
       </Box>
-      {/* TODO: Show files */}
+      {data?.type === SyncMessageNodeType.SupportUpload && (
+        <FileList id={data?.id ?? ''} />
+      )}
     </Stack>
   );
 };
