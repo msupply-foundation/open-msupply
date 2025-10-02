@@ -2,18 +2,15 @@ import React, { useEffect, useState } from 'react';
 import {
   Box,
   Checkbox,
-  DatabaseType,
   DropdownMenu,
   DropdownMenuItem,
   LocaleKey,
   Stack,
   SyncMessageNodeType,
   TextArea,
-  Tooltip,
   TypedTFunction,
   Typography,
 } from '@openmsupply-client/common';
-import { useDatabaseSettings } from '@openmsupply-client/host/src/api/hooks/settings/useDatabaseSettings';
 import { StoreSearchInput } from '@openmsupply-client/system/src/Store';
 import { SyncMessageRowFragment } from '../../api';
 import { typeMapping } from '../utils';
@@ -25,7 +22,6 @@ interface CreateProps {
 }
 
 export const Create = ({ t, draft, setDraft }: CreateProps) => {
-  const { data: databaseSettings } = useDatabaseSettings();
   const syncMessageTypes = Object.values(SyncMessageNodeType);
 
   const [selectedFiles, setSelectedFiles] = useState({
@@ -139,23 +135,15 @@ export const Create = ({ t, draft, setDraft }: CreateProps) => {
               })
             }
           />
-          <Tooltip
-            title={
-              databaseSettings?.databaseType !== DatabaseType.SqLite
-                ? t('message.database-not-sqlite')
-                : ''
+          <Typography
+            color={
+              draft?.type !== SyncMessageNodeType.SupportUpload
+                ? 'textDisabled'
+                : 'textPrimary'
             }
           >
-            <Typography
-              color={
-                draft?.type !== SyncMessageNodeType.SupportUpload
-                  ? 'textDisabled'
-                  : 'textPrimary'
-              }
-            >
-              {t('label.database')}
-            </Typography>
-          </Tooltip>
+            {t('label.database-sqlite')}
+          </Typography>
         </Stack>
       </Stack>
       <Box>

@@ -156,7 +156,7 @@ fn handle_database_file(
 
     static_file_service
         .store_file(
-            &database_settings.database_name,
+            &format!("{}.sqlite", &database_settings.database_name),
             StaticFileCategory::SyncFile("sync_message".to_string(), sync_message.id.clone()),
             &database_bytes,
         )
