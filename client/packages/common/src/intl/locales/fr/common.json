@@ -2344,7 +2344,7 @@
   "status.unserviceable": "Hors service",
   "stock": "Afficher le stock",
   "stocktake": "Inventaire",
-  "stocktake.all-master-list-items": "Inclure les articles sans stock",
+  "stocktake.all-master-list-items": "Tous les articles (Inclure les articles sans stock)",
   "stocktake.comment-and-template": "{{start}} et {{end}}",
   "stocktake.comment-initial-stocktake-template": "Inventaire initial créé en incorporant tous les articles",
   "stocktake.comment-template": "Créé en utilisant les articles {{filters}}",
