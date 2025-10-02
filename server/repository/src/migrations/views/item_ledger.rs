@@ -19,12 +19,12 @@ impl ViewMigrationFragment for ViewMigration {
         sql!(
             connection,
             r#"
-                CREATE VIEW item_ledger AS
+    CREATE VIEW item_ledger AS
     WITH all_movements AS (
       SELECT
         invoice_line_stock_movement.id AS id,
         quantity_movement AS movement_in_units,
-        invoice_line_stock_movement.item_link_id AS item_id,
+        invoice_line_stock_movement.item_id AS item_id,
         invoice.store_id as store_id,
         CASE WHEN invoice.type IN (
           'OUTBOUND_SHIPMENT', 'SUPPLIER_RETURN', 'PRESCRIPTION'
@@ -71,8 +71,9 @@ impl ViewMigrationFragment for ViewMigration {
         ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
       ) AS running_balance
     FROM all_movements
-    WHERE datetime IS NOT NULL
-    ORDER BY datetime, id, type_precedence;            "#
+    WHERE datetime IS NOT NULL  
+    ORDER BY datetime, id, type_precedence;
+    "#
         )?;
 
         Ok(())

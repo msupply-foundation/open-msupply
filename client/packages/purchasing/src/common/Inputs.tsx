@@ -194,7 +194,7 @@ export const DateInput = ({
   const date = DateUtils.getDateOrNull(value);
   const handleChange = (newValue: Date | null) => {
     if (newValue) {
-      onChange?.(Formatter.naiveDate(DateUtils.getNaiveDate(newValue)));
+      onChange?.(Formatter.naiveDate(newValue));
     } else {
       onChange?.(null);
     }

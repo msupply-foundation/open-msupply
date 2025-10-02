@@ -234,7 +234,7 @@ export const StockLineForm = ({
                   Input={
                     <CurrencyInput
                       autoFocus={!packEditable}
-                      defaultValue={draft.costPricePerPack}
+                      value={draft.costPricePerPack}
                       onChangeNumber={costPricePerPack =>
                         onUpdate({ costPricePerPack })
                       }

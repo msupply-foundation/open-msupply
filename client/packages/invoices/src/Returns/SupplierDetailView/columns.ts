@@ -171,19 +171,20 @@ export const useSupplierReturnColumns = ({
     ],
     {
       label: 'label.unit-price',
-      key: 'sellPricePerUnit',
+      key: 'costPricePerPack',
       align: ColumnAlign.Right,
+      description: 'label.cost-price-per-unit',
       accessor: ({ rowData }) => {
         if ('lines' in rowData) {
           return c(
             Object.values(rowData.lines).reduce(
               (sum, batch) =>
-                sum + (batch.sellPricePerPack ?? 0) / batch.packSize,
+                sum + (batch.costPricePerPack ?? 0) / batch.packSize,
               0
             )
           ).format();
         } else {
-          return c((rowData.sellPricePerPack ?? 0) / rowData.packSize).format();
+          return c((rowData.costPricePerPack ?? 0) / rowData.packSize).format();
         }
       },
       getSortValue: rowData => {
@@ -191,12 +192,12 @@ export const useSupplierReturnColumns = ({
           return c(
             Object.values(rowData.lines).reduce(
               (sum, batch) =>
-                sum + (batch.sellPricePerPack ?? 0) / batch.packSize,
+                sum + (batch.costPricePerPack ?? 0) / batch.packSize,
               0
             )
           ).format();
         } else {
-          return c((rowData.sellPricePerPack ?? 0) / rowData.packSize).format();
+          return c((rowData.costPricePerPack ?? 0) / rowData.packSize).format();
         }
       },
     },
@@ -209,13 +210,13 @@ export const useSupplierReturnColumns = ({
           return c(
             Object.values(rowData.lines).reduce(
               (sum, batch) =>
-                sum + batch.sellPricePerPack * batch.numberOfPacks,
+                sum + batch.costPricePerPack * batch.numberOfPacks,
               0
             )
           ).format();
         } else {
           const x = c(
-            rowData.sellPricePerPack * rowData.numberOfPacks
+            rowData.costPricePerPack * rowData.numberOfPacks
           ).format();
           return x;
         }
@@ -225,12 +226,12 @@ export const useSupplierReturnColumns = ({
           return c(
             Object.values(row.lines).reduce(
               (sum, batch) =>
-                sum + batch.sellPricePerPack * batch.numberOfPacks,
+                sum + batch.costPricePerPack * batch.numberOfPacks,
               0
             )
           ).format();
         } else {
-          const x = c(row.sellPricePerPack * row.numberOfPacks).format();
+          const x = c(row.costPricePerPack * row.numberOfPacks).format();
           return x;
         }
       },
