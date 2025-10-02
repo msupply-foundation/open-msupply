@@ -39,7 +39,7 @@ export const useCampaigns = (queryParams?: ListParams) => {
   const [draft, setDraft] = useState<DraftCampaign>(defaultDraftCampaign);
 
   // QUERY
-  const { data, isLoading, isError } = useGetList(queryParams);
+  const { data, isFetching, isError } = useGetList(queryParams);
 
   // UPDATE DRAFT
   const updateDraft = (patch: Partial<DraftCampaign>) => {
@@ -69,7 +69,7 @@ export const useCampaigns = (queryParams?: ListParams) => {
   } = useDeleteCampaign();
 
   return {
-    query: { data, isLoading, isError },
+    query: { data, isFetching, isError },
     upsert: { upsert, isUpserting, upsertError },
     delete: { deleteCampaign, isDeleting, deleteError },
     draft,
@@ -97,6 +97,7 @@ const useGetList = (queryParams?: ListParams) => {
   const query = useQuery({
     queryKey,
     queryFn,
+    keepPreviousData: true,
   });
   return query;
 };
