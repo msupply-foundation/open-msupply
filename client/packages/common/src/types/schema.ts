@@ -159,9 +159,12 @@ export enum ActivityLogNodeType {
   PurchaseOrderFinalised = 'PURCHASE_ORDER_FINALISED',
   PurchaseOrderLineCreated = 'PURCHASE_ORDER_LINE_CREATED',
   PurchaseOrderLineDeleted = 'PURCHASE_ORDER_LINE_DELETED',
+  PurchaseOrderLineStatusChangedFromSentToNew = 'PURCHASE_ORDER_LINE_STATUS_CHANGED_FROM_SENT_TO_NEW',
+  PurchaseOrderLineStatusClosed = 'PURCHASE_ORDER_LINE_STATUS_CLOSED',
   PurchaseOrderLineUpdated = 'PURCHASE_ORDER_LINE_UPDATED',
   PurchaseOrderRequestApproval = 'PURCHASE_ORDER_REQUEST_APPROVAL',
   PurchaseOrderSent = 'PURCHASE_ORDER_SENT',
+  PurchaseOrderStatusChangedFromSentToConfirmed = 'PURCHASE_ORDER_STATUS_CHANGED_FROM_SENT_TO_CONFIRMED',
   PurchaseOrderUnauthorised = 'PURCHASE_ORDER_UNAUTHORISED',
   QuantityForLineHasBeenSetToZero = 'QUANTITY_FOR_LINE_HAS_BEEN_SET_TO_ZERO',
   Repack = 'REPACK',
@@ -9287,6 +9290,7 @@ export type StockLineResponse = NodeError | StockLineNode;
 
 export enum StockLineSortFieldInput {
   Batch = 'batch',
+  CostPricePerPack = 'costPricePerPack',
   ExpiryDate = 'expiryDate',
   ItemCode = 'itemCode',
   ItemName = 'itemName',
@@ -9352,6 +9356,7 @@ export type StocktakeLineFilterInput = {
   itemCodeOrName?: InputMaybe<StringFilterInput>;
   itemId?: InputMaybe<EqualFilterStringInput>;
   locationId?: InputMaybe<EqualFilterStringInput>;
+  stockLineId?: InputMaybe<EqualFilterStringInput>;
   stocktakeId?: InputMaybe<EqualFilterStringInput>;
 };
 

@@ -48,6 +48,7 @@ pub enum StockLineSortField {
     PackSize,
     SupplierName,
     LocationCode,
+    CostPricePerPack,
     VvmStatusThenExpiry,
 }
 
@@ -144,6 +145,9 @@ impl<'a> StockLineRepository<'a> {
                 }
                 StockLineSortField::LocationCode => {
                     apply_sort_no_case!(query, sort, location::code);
+                }
+                StockLineSortField::CostPricePerPack => {
+                    apply_sort!(query, sort, stock_line::cost_price_per_pack);
                 }
                 StockLineSortField::VvmStatusThenExpiry => {
                     // Complex sort, not using apply_sort
