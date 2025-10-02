@@ -8,7 +8,7 @@ use actix_multipart::form::MultipartForm;
 use actix_web::error::InternalError;
 use actix_web::http::header::{ContentDisposition, DispositionParam, DispositionType};
 use actix_web::http::StatusCode;
-use actix_web::web::Data;
+use actix_web::web::{Data, Path};
 use actix_web::{delete, get, guard, post, web, Error, HttpRequest, HttpResponse};
 
 use fs::NamedFile;
@@ -47,6 +47,7 @@ pub fn config_static_files(cfg: &mut web::ServiceConfig) {
     cfg.service(web::resource("/files").guard(guard::Get()).to(files));
     cfg.service(
         web::scope("/sync_files")
+            .service(list_static_files)
             .service(download_sync_file)
             .service(delete_sync_file)
             .service(upload_sync_file)
@@ -308,4 +309,30 @@ async fn download_sync_file_inner(
         .await?;
 
     Ok((NamedFile::open(file.path)?, file.name))
+}
+
+#[get("/{table_name}/{record_id}/list_files")]
+async fn list_static_files(
+    req: HttpRequest,
+    settings: Data<Settings>,
+    path: Path<(String, String)>,
+    auth_data: Data<AuthData>,
+) -> Result<HttpResponse, Error> {
+    validate_cookie_auth(req.clone(), &auth_data).map_err(|_err| {
+        InternalError::new(
+            "You need to be logged in",
+            StatusCode::INTERNAL_SERVER_ERROR,
+        )
+    })?;
+
+    let (table_name, record_id) = path.into_inner();
+    let service = StaticFileService::new(&settings.server.base_dir)
+        .map_err(|err| InternalError::new(err, StatusCode::INTERNAL_SERVER_ERROR))?;
+
+    let category = StaticFileCategory::SyncFile(table_name, record_id);
+    let files = service
+        .list_files(&category)
+        .map_err(|err| InternalError::new(err, StatusCode::INTERNAL_SERVER_ERROR))?;
+
+    Ok(HttpResponse::Ok().json(files))
 }

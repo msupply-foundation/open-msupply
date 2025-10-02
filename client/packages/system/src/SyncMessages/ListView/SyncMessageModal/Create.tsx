@@ -30,20 +30,18 @@ export const Create = ({ t, draft, setDraft }: CreateProps) => {
   });
 
   useEffect(() => {
-    if (draft?.type === SyncMessageNodeType.SupportUpload) {
-      setDraft({
-        ...draft,
-        body: JSON.stringify({
-          logs: selectedFiles.logs,
-          database: selectedFiles.database,
-        }),
-      });
-    } else {
-      setDraft({
-        ...draft,
-        body: '',
-      });
-    }
+    const body =
+      draft?.type === SyncMessageNodeType.SupportUpload
+        ? JSON.stringify({
+            logs: selectedFiles.logs,
+            database: selectedFiles.database,
+          })
+        : '';
+
+    setDraft({
+      ...draft,
+      body,
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedFiles, draft?.type]);
 

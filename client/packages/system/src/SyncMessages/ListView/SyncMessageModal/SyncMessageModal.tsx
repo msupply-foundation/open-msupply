@@ -60,7 +60,7 @@ export const SyncMessageModal = ({
       {mode === ModalMode.Create ? (
         <Create t={t} draft={draft} setDraft={setDraft} />
       ) : (
-        <View data={data} t={t} />
+        <View t={t} data={data} />
       )}
     </Modal>
   );
