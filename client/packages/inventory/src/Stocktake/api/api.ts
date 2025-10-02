@@ -43,9 +43,6 @@ const stocktakeParser = {
     comment: patch.comment,
     id: patch.id,
     isLocked: patch.isLocked,
-    stocktakeDate: patch.stocktakeDate
-      ? Formatter.naiveDate(new Date(patch.stocktakeDate))
-      : undefined,
     status:
       patch.status === StocktakeNodeStatus.Finalised
         ? UpdateStocktakeStatusInput.Finalised
