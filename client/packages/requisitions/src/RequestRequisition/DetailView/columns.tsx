@@ -124,6 +124,8 @@ export const useRequestColumns = () => {
       width: 150,
       Cell: MonthsOfStockCell,
       accessor: ({ rowData }) => rowData.itemStats.availableMonthsOfStockOnHand,
+      getSortValue: rowData =>
+        rowData.itemStats.availableMonthsOfStockOnHand ?? 0,
     }
   );
 
