@@ -6,10 +6,7 @@ import {
   BufferedTextInput,
   useBufferState,
   InputWithLabelRow,
-  DateTimePickerInput,
-  Formatter,
   SearchBar,
-  DateUtils,
   Alert,
   useUrlQuery,
   useSimplifiedTabletUI,
@@ -22,12 +19,10 @@ import { StocktakeFragment, useStocktakeOld } from '../api';
 export const Toolbar = () => {
   const isDisabled = useStocktakeOld.utils.isDisabled();
   const t = useTranslation();
-  const { isLocked, stocktakeDate, description, update } =
-    useStocktakeOld.document.fields([
-      'isLocked',
-      'description',
-      'stocktakeDate',
-    ]);
+  const { isLocked, description, update } = useStocktakeOld.document.fields([
+    'isLocked',
+    'description',
+  ]);
   const simplifiedTabletView = useSimplifiedTabletUI();
   const [descriptionBuffer, setDescriptionBuffer] = useBufferState(description);
 
@@ -59,7 +54,6 @@ export const Toolbar = () => {
               setDescriptionBuffer={setDescriptionBuffer}
               update={update}
               t={t}
-              stocktakeDate={stocktakeDate}
               infoMessage={infoMessage}
             />
           </Grid>
@@ -72,7 +66,6 @@ export const Toolbar = () => {
                 setDescriptionBuffer={setDescriptionBuffer}
                 update={update}
                 t={t}
-                stocktakeDate={stocktakeDate}
                 infoMessage={infoMessage}
               />
             </Grid>
@@ -103,7 +96,6 @@ const InformationFields = ({
   setDescriptionBuffer,
   update,
   t,
-  stocktakeDate,
   infoMessage,
 }: {
   isDisabled: boolean;
@@ -111,7 +103,6 @@ const InformationFields = ({
   setDescriptionBuffer: (value: string) => void;
   update: FieldUpdateMutation<StocktakeFragment>;
   t: TypedTFunction<LocaleKey>;
-  stocktakeDate: string | null | undefined;
   infoMessage: string;
 }) => {
   return (
@@ -122,24 +113,11 @@ const InformationFields = ({
           <BufferedTextInput
             disabled={isDisabled}
             size="small"
-            sx={{ width: 220 }}
+            sx={{ width: 250 }}
             value={descriptionBuffer ?? ''}
             onChange={event => {
               setDescriptionBuffer(event.target.value);
               update({ description: event.target.value });
-            }}
-          />
-        }
-      />
-      <InputWithLabelRow
-        label={t('label.stocktake-date')}
-        Input={
-          <DateTimePickerInput
-            disabled={true}
-            value={DateUtils.getDateOrNull(stocktakeDate)}
-            onChange={date => {
-              if (DateUtils.isValid(date))
-                update({ stocktakeDate: Formatter.naiveDate(date) });
             }}
           />
         }

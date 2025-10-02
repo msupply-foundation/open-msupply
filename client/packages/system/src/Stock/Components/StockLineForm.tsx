@@ -205,7 +205,7 @@ export const StockLineForm = ({
               Input={
                 <CurrencyInput
                   autoFocus={!packEditable}
-                  defaultValue={draft.costPricePerPack}
+                  value={draft.costPricePerPack}
                   onChangeNumber={costPricePerPack =>
                     onUpdate({ costPricePerPack })
                   }
@@ -216,6 +216,7 @@ export const StockLineForm = ({
               label={t('label.sell-price')}
               Input={
                 <CurrencyInput
+                  key={draft.packSize}
                   value={draft.sellPricePerPack}
                   onChangeNumber={sellPricePerPack =>
                     onUpdate({ sellPricePerPack })
