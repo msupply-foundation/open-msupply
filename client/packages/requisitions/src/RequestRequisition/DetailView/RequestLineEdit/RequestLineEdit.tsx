@@ -15,6 +15,7 @@ import {
   BufferedTextArea,
   ModalGridLayout,
   usePreferences,
+  ModalPanelArea,
 } from '@openmsupply-client/common';
 import { DraftRequestLine } from './hooks';
 import { RequestLineFragment } from '../../api';
@@ -138,14 +139,7 @@ export const RequestLineEdit = ({
 
     return (
       <>
-        <Box
-          sx={{
-            background: theme => theme.palette.background.group,
-            padding: '0px 8px',
-            borderRadius: 2,
-            pb: 1,
-          }}
-        >
+        <ModalPanelArea>
           {!showExtraFields && renderValueInfoRows(getSuggestedRow(t, draft))}
           <RequestedSelection
             disabled={disabled}
@@ -208,7 +202,7 @@ export const RequestLineEdit = ({
             minRows={3}
             maxRows={3}
           />
-        </Box>
+        </ModalPanelArea>
       </>
     );
   };

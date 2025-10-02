@@ -2,7 +2,6 @@ import React, { useMemo } from 'react';
 import {
   useTranslation,
   BasicTextInput,
-  Box,
   BufferedTextArea,
   ReasonOptionNodeType,
   RequisitionNodeApprovalStatus,
@@ -10,6 +9,7 @@ import {
   UserStoreNodeFragment,
   ModalGridLayout,
   usePreferences,
+  ModalPanelArea,
 } from '@openmsupply-client/common';
 import {
   ItemWithStatsFragment,
@@ -154,14 +154,7 @@ export const ResponseLineEdit = ({
             value={currentItem?.doses}
           />
         ) : null}
-        <Box
-          sx={{
-            background: theme => theme.palette.background.group,
-            pt: 1,
-            pb: 0.2,
-            borderRadius: 2,
-          }}
-        >
+        <ModalPanelArea>
           {numericInput('label.requested', draft?.requestedQuantity, {
             onChange: value => {
               draft?.suggestedQuantity === value
@@ -215,7 +208,7 @@ export const ResponseLineEdit = ({
               />
             </Typography>
           )}
-        </Box>
+        </ModalPanelArea>
         {showExtraFields && (
           <>
             {numericInput('label.available', available, {
@@ -235,14 +228,7 @@ export const ResponseLineEdit = ({
 
     return (
       <>
-        <Box
-          sx={{
-            background: theme => theme.palette.background.group,
-            borderRadius: 2,
-            p: 1,
-            pb: 0.5,
-          }}
-        >
+        <ModalPanelArea>
           {hasApproval &&
             numericInput('label.approved', draft?.approvedQuantity, {
               disabledOverride: true,
@@ -280,7 +266,7 @@ export const ResponseLineEdit = ({
               px: 0,
             },
           })}
-        </Box>
+        </ModalPanelArea>
         {!!requisition.linkedRequisition || showExtraFields ? (
           <>
             {numericInput('label.amc/amd', draft?.averageMonthlyConsumption, {
