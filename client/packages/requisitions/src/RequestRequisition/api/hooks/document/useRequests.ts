@@ -12,7 +12,10 @@ export const useRequests = (
     ...useQuery(
       api.keys.paramList(queryParams),
       () => api.get.list(queryParams),
-      options
+      {
+        keepPreviousData: true,
+        ...options,
+      }
     ),
   };
 };
