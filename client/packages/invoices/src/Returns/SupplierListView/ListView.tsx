@@ -1,39 +1,33 @@
-import React, { useEffect } from 'react';
+import React, { useMemo } from 'react';
 import {
   useNavigate,
-  DataTable,
-  useColumns,
-  getNameAndColorColumn,
-  TableProvider,
-  createTableStore,
   useTranslation,
   InvoiceNodeStatus,
   NothingHere,
   useToggle,
   useUrlQueryParams,
   ColumnDataSetter,
-  useTableStore,
-  TooltipTextCell,
-  GenericColumnKey,
-  getCommentPopoverColumn,
   useCallbackWithPermission,
   UserPermission,
   usePreferences,
   useNotification,
+  ColumnDef,
+  NameAndColorSetterCell,
+  ColumnType,
+  TextWithTooltipCell,
+  usePaginatedMaterialTable,
+  MaterialTable,
 } from '@openmsupply-client/common';
 import { getStatusTranslator, isOutboundDisabled } from '../../utils';
-import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
 import { SupplierReturnRowFragment, useReturns } from '../api';
 import { Footer } from './Footer';
 
-const SupplierReturnListViewComponent = () => {
+export const SupplierReturnListView = () => {
   const t = useTranslation();
   const {
-    updateSortQuery,
-    updatePaginationQuery,
     filter,
-    queryParams: { sortBy, page, first, offset },
+    queryParams: { sortBy, first, offset },
   } = useUrlQueryParams({
     initialSort: { key: 'createdDatetime', dir: 'desc' },
     filters: [
@@ -41,24 +35,15 @@ const SupplierReturnListViewComponent = () => {
       { key: 'status', condition: 'equalTo' },
     ],
   });
-  const { setDisabledRows } = useTableStore();
   const navigate = useNavigate();
   const modalController = useToggle();
   const { info } = useNotification();
   const { disableManualReturns } = usePreferences();
 
-  const pagination = { page, first, offset };
   const queryParams = { ...filter, sortBy, first, offset };
 
-  const { data, isError, isLoading } =
+  const { data, isError, isFetching } =
     useReturns.document.listSupplier(queryParams);
-
-  useEffect(() => {
-    const disabledRows = data?.nodes
-      .filter(isOutboundDisabled)
-      .map(({ id }) => id);
-    if (disabledRows) setDisabledRows(disabledRows);
-  }, [data?.nodes, setDisabledRows]);
 
   const { mutate } = useReturns.document.updateSupplierReturn();
 
@@ -82,66 +67,95 @@ const SupplierReturnListViewComponent = () => {
     openModal();
   };
 
-  const columns = useColumns<SupplierReturnRowFragment>(
-    [
-      GenericColumnKey.Selection,
-      [getNameAndColorColumn(), { setter: onUpdateColour }],
-      [
-        'status',
-        {
-          formatter: status =>
-            getStatusTranslator(t)(status as InvoiceNodeStatus),
-        },
-      ],
-      [
-        'invoiceNumber',
-        { description: 'description.invoice-number', width: 150 },
-      ],
-      'createdDatetime',
-      getCommentPopoverColumn(),
-      [
-        'theirReference',
-        {
-          Cell: TooltipTextCell,
-          width: 150,
-        },
-      ],
+  const columns = useMemo(
+    (): ColumnDef<SupplierReturnRowFragment>[] => [
+      {
+        accessorKey: 'otherPartyName',
+        header: t('label.name'),
+        size: 250,
+        enableSorting: true,
+        enableColumnFilter: true,
+        Cell: ({ row }) => (
+          <NameAndColorSetterCell
+            row={row.original}
+            onColorChange={onUpdateColour}
+            getIsDisabled={isOutboundDisabled}
+          />
+        ),
+      },
+      {
+        id: 'status',
+        header: t('label.status'),
+        accessorFn: row => getStatusTranslator(t)(row.status),
+        enableSorting: true,
+        enableColumnFilter: true,
+        filterVariant: 'select',
+        filterSelectOptions: [
+          { label: t('label.new'), value: InvoiceNodeStatus.New },
+          { label: t('label.picked'), value: InvoiceNodeStatus.Picked },
+          { label: t('label.shipped'), value: InvoiceNodeStatus.Shipped },
+          {
+            label: t('label.delivered'),
+            value: InvoiceNodeStatus.Delivered,
+          },
+          {
+            label: t('label.verified'),
+            value: InvoiceNodeStatus.Verified,
+          },
+        ],
+      },
+      {
+        accessorKey: 'invoiceNumber',
+        header: t('label.invoice-number'),
+        description: t('description.invoice-number'),
+        enableSorting: true,
+        columnType: ColumnType.Number,
+      },
+      {
+        accessorKey: 'createdDatetime',
+        header: t('label.created-datetime'),
+        enableSorting: true,
+        columnType: ColumnType.Date,
+      },
+      {
+        accessorKey: 'theirReference',
+        header: t('label.reference'),
+        Cell: TextWithTooltipCell,
+      },
+      {
+        accessorKey: 'comment',
+        header: t('label.comment'),
+        columnType: ColumnType.Comment,
+      },
     ],
-    { onChangeSortBy: updateSortQuery, sortBy },
-    [sortBy]
+    []
   );
+
+  const { table, selectedRows } = usePaginatedMaterialTable({
+    tableId: 'supplier-return-list',
+    columns,
+    data: data?.nodes,
+    totalCount: data?.totalCount ?? 0,
+    isLoading: isFetching,
+    isError,
+    getIsRestrictedRow: isOutboundDisabled,
+    onRowClick: r => navigate(r.id),
+    noDataElement: (
+      <NothingHere
+        body={t('error.no-supplier-returns')}
+        onCreate={handleClick}
+      />
+    ),
+  });
 
   return (
     <>
-      <Toolbar filter={filter} />
       <AppBarButtons modalController={modalController} onNew={handleClick} />
-
-      <DataTable
-        id="supplier-return-list"
-        enableColumnSelection
-        pagination={{ ...pagination, total: data?.totalCount ?? 0 }}
-        onChangePage={updatePaginationQuery}
-        columns={columns}
-        data={data?.nodes ?? []}
-        isError={isError}
-        isLoading={isLoading}
-        noDataElement={
-          <NothingHere
-            body={t('error.no-supplier-returns')}
-            onCreate={handleClick}
-          />
-        }
-        onRowClick={row => {
-          navigate(row.id);
-        }}
+      <MaterialTable table={table} />
+      <Footer
+        selectedRows={selectedRows}
+        resetRowSelection={table.resetRowSelection}
       />
-      <Footer />
     </>
   );
 };
-
-export const SupplierReturnListView = () => (
-  <TableProvider createStore={createTableStore}>
-    <SupplierReturnListViewComponent />
-  </TableProvider>
-);
