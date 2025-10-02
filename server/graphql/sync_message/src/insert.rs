@@ -18,6 +18,9 @@ pub enum SyncMessageRowTypeInput {
     SupportUpload,
 }
 
+// TODO:
+// Need to add support for Other type
+// Figure out what action is taken for Other and RequestFieldChange types
 impl From<SyncMessageRowTypeInput> for SyncMessageRowType {
     fn from(input: SyncMessageRowTypeInput) -> Self {
         match input {
