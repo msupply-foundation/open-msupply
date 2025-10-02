@@ -158,7 +158,7 @@ export const ListView = () => {
     totalCount: data?.totalCount ?? 0,
     isError,
     isLoading: isFetching,
-    onRowClick: row => navigate(getRoute(row)), // todo - command click!
+    onRowClick: row => navigate(getRoute(row)),
     getIsRestrictedRow: isRequestDisabled,
     noDataElement: (
       <NothingHere
