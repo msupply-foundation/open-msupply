@@ -1,6 +1,6 @@
 use std::{collections::HashMap, ops::Neg};
 
-use chrono::{Duration, NaiveDate};
+use chrono::{Duration, NaiveDate, Utc};
 use repository::{
     AdjustmentFilter, AdjustmentRepository, ConsumptionFilter, ConsumptionRepository, DateFilter,
     DatetimeFilter, EqualFilter, MasterListLineFilter, MasterListLineRepository, Pagination,
@@ -383,7 +383,7 @@ pub fn get_bulk_opening_balances(
                 .item_id(EqualFilter::equal_any(items_needing_calculation.clone()))
                 .datetime(DatetimeFilter::date_range(
                     start_date.into(),
-                    date_now().into(),
+                    Utc::now().naive_utc(),
                 )),
         ))?;
 
