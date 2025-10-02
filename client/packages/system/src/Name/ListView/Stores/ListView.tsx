@@ -73,6 +73,7 @@ export const StoresListView = () => {
     isError,
     noDataElement: <NothingHere body={t('error.no-stores')} />,
     onRowClick: onRowClick,
+    enableRowSelection: false,
   });
 
   return (
