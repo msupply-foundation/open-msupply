@@ -46,7 +46,7 @@ describe('QuantityUtils', () => {
     });
 
     it('handles cases with no doses per unit', () => {
-      const line = { packSize: 10 };
+      const line = { packSize: 10, dosesPerUnit: 1 };
       expect(QuantityUtils.packsToDoses(5, line)).toBe(50);
     });
 

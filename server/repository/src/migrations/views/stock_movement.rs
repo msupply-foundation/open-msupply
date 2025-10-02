@@ -24,7 +24,7 @@ impl ViewMigrationFragment for ViewMigration {
       SELECT
         invoice_line_stock_movement.id AS id,
         quantity_movement AS quantity,
-        invoice_line_stock_movement.item_link_id AS item_id,
+        invoice_line_stock_movement.item_id AS item_id,
         invoice.store_id as store_id,
         CASE WHEN invoice.type IN (
             'OUTBOUND_SHIPMENT', 'SUPPLIER_RETURN',
