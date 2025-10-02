@@ -20,7 +20,12 @@ export const ReportsList = () => {
     queryParams: { sortBy, first, offset, filterBy },
   } = useUrlQueryParams({ initialSort: { key: 'code', dir: 'asc' } });
 
-  const queryParams = { sortBy, first, offset, filterBy };
+  const queryParams = {
+    sortBy: sortBy.key ? sortBy : undefined,
+    first,
+    offset,
+    filterBy,
+  };
   const {
     query: { data, isError, isFetching },
     install: { installMutation },
