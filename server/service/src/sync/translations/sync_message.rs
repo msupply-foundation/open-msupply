@@ -1,4 +1,6 @@
-use crate::sync::translations::{store::StoreTranslation, PullTranslateResult, SyncTranslation};
+use crate::sync::translations::{
+    store::StoreTranslation, PullTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
+};
 use anyhow::Context;
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 use repository::{
@@ -96,6 +98,20 @@ impl SyncTranslation for MessageTranslation {
 
     fn change_log_type(&self) -> Option<ChangelogTableName> {
         Some(ChangelogTableName::SyncMessage)
+    }
+
+    fn should_translate_to_sync_record(
+        &self,
+        row: &ChangelogRow,
+        r#type: &ToSyncRecordTranslationType,
+    ) -> bool {
+        match r#type {
+            ToSyncRecordTranslationType::PushToLegacyCentral
+            | ToSyncRecordTranslationType::PushToOmSupplyCentral
+            | ToSyncRecordTranslationType::PullFromOmSupplyCentral => {
+                self.change_log_type().as_ref() == Some(&row.table_name)
+            }
+        }
     }
 
     fn try_translate_to_upsert_sync_record(

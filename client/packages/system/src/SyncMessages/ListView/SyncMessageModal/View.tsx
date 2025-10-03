@@ -5,6 +5,7 @@ import {
   LocaleKey,
   ReadOnlyInput,
   Stack,
+  SyncMessageNodeStatus,
   SyncMessageNodeType,
   TextArea,
   TypedTFunction,
@@ -63,9 +64,10 @@ export const View = ({ data, t }: ViewProps): ReactElement => {
           disabled
         />
       </Box>
-      {data?.type === SyncMessageNodeType.SupportUpload && (
-        <FileList id={data?.id ?? ''} status={data?.status} />
-      )}
+      {data?.type === SyncMessageNodeType.SupportUpload &&
+        data?.status === SyncMessageNodeStatus.Processed && (
+          <FileList id={data?.id ?? ''} status={data?.status} />
+        )}
     </Stack>
   );
 };

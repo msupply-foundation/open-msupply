@@ -77,11 +77,6 @@ pub struct SyncMessageRow {
     pub error_message: Option<String>,
 }
 
-// TODO:
-// Add a sync_message processer
-// - updates status to uploading
-// - creates a new sync_reference_row record(s) check either if its logs or database or both
-
 pub struct SyncMessageRowRepository<'a> {
     connection: &'a StorageConnection,
 }

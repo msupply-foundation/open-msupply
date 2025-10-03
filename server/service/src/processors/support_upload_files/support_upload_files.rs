@@ -1,7 +1,7 @@
 use async_trait::async_trait;
 use repository::{
-    ChangelogRow, ChangelogTableName, KeyType, SyncMessageRow, SyncMessageRowRepository,
-    SyncMessageRowStatus, SyncMessageRowType,
+    ChangelogRow, ChangelogTableName, KeyType, KeyValueStoreRepository, StoreRowRepository,
+    SyncMessageRow, SyncMessageRowRepository, SyncMessageRowStatus, SyncMessageRowType,
 };
 use serde_json::Value;
 
@@ -10,7 +10,6 @@ use crate::{
     processors::general_processor::{Processor, ProcessorError},
     service_provider::{ServiceContext, ServiceProvider},
     static_files::{StaticFileCategory, StaticFileService},
-    sync::CentralServerConfig,
 };
 
 pub struct SupportUploadFilesProcessor;
@@ -38,6 +37,10 @@ impl Processor for SupportUploadFilesProcessor {
                 )
             })?;
 
+        if !is_to_store_on_this_site(ctx, &sync_message.to_store_id)? {
+            return Ok(None);
+        }
+
         if sync_message.r#type != SyncMessageRowType::SupportUpload
             || sync_message.status != SyncMessageRowStatus::New
         {
@@ -47,22 +50,22 @@ impl Processor for SupportUploadFilesProcessor {
         let request_body: Value = serde_json::from_str(&sync_message.body)
             .map_err(|e| ProcessorError::OtherError(format!("Invalid JSON in body: {}", e)))?;
 
-        let include_logs = request_body
+        let process_logs = request_body
             .get("logs")
             .and_then(|v| v.as_bool())
             .unwrap_or(false);
 
-        let include_database = request_body
+        let process_database = request_body
             .get("database")
             .and_then(|v| v.as_bool())
             .unwrap_or(false);
 
-        if include_logs {
-            handle_log_files(ctx, service_provider, &sync_message)?;
+        if process_logs {
+            process_log_files(ctx, service_provider, &sync_message)?;
         }
 
-        if include_database {
-            handle_database_file(service_provider, &sync_message)?;
+        if process_database {
+            process_database_files(service_provider, &sync_message)?;
         }
 
         sync_message_repo.upsert_one(&SyncMessageRow {
@@ -80,16 +83,29 @@ impl Processor for SupportUploadFilesProcessor {
     fn cursor_type(&self) -> CursorType {
         CursorType::Standard(KeyType::SupportUploadFilesProcessorCursor)
     }
-
-    fn should_run(&self) -> bool {
-        CentralServerConfig::is_central_server()
-    }
 }
 
-fn handle_log_files(
+fn is_to_store_on_this_site(
+    ctx: &ServiceContext,
+    to_store_id: &Option<String>,
+) -> Result<bool, ProcessorError> {
+    let sync_site_id =
+        KeyValueStoreRepository::new(&ctx.connection).get_i32(KeyType::SettingsSyncSiteId)?;
+
+    if let Some(to_store_id) = to_store_id {
+        let store = StoreRowRepository::new(&ctx.connection).find_one_by_id(to_store_id)?;
+        if let Some(store) = store {
+            return Ok(sync_site_id == Some(store.site_id));
+        }
+    }
+
+    Ok(false)
+}
+
+fn process_log_files(
     ctx: &ServiceContext,
     service_provider: &ServiceProvider,
-    sync_message: &repository::SyncMessageRow,
+    sync_message: &SyncMessageRow,
 ) -> Result<(), ProcessorError> {
     let server_settings = service_provider
         .settings
@@ -125,9 +141,9 @@ fn handle_log_files(
     Ok(())
 }
 
-fn handle_database_file(
+fn process_database_files(
     service_provider: &ServiceProvider,
-    sync_message: &repository::SyncMessageRow,
+    sync_message: &SyncMessageRow,
 ) -> Result<(), ProcessorError> {
     let database_settings = service_provider
         .settings
