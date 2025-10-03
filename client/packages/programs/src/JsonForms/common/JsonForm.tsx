@@ -134,6 +134,11 @@ export type JsonFormsConfig = {
   initialData?: JsonData;
 };
 
+// This allows "default" values to be set in the JSON schema, though it
+// currently can't add defaults on nested properties unless a default object is
+// defined at the root level -- see issue #6971
+const handleDefaultsAjv = createAjv({ useDefaults: true });
+
 const FormComponent = ({
   data,
   jsonSchema,
@@ -172,11 +177,6 @@ const FormComponent = ({
       error.message = messages?.[keyword] ?? error.message;
       return error.message ?? '';
     });
-
-  // This allows "default" values to be set in the JSON schema, though it
-  // currently can't add defaults on nested properties unless a
-  // default object is defined at the root level -- see issue #6971
-  const handleDefaultsAjv = createAjv({ useDefaults: true });
 
   const translateError = useCallback(
     (error: {
