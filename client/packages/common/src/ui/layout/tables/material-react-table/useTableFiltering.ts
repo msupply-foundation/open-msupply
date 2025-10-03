@@ -37,18 +37,14 @@ export const useTableFiltering = <T extends MRT_RowData>(
   const filterUpdaters = useMemo(() => {
     const filterUpdaters: Record<string, (value: any) => void> = {};
 
-    columns.forEach(properties => {
-      const columnId = (properties.id || properties.accessorKey) as string;
-      const filterKey = properties.filterKey || columnId;
+    columns.forEach(({ filterKey, id, accessorKey, filterVariant }) => {
+      const key = (filterKey || id || accessorKey) as string;
 
-      switch (properties.filterVariant) {
+      switch (filterVariant) {
         case 'date-range':
-          filterUpdaters[filterKey] = ([date1, date2]: [
-            Date | '',
-            Date | '',
-          ]) => {
+          filterUpdaters[key] = ([date1, date2]: [Date | '', Date | '']) => {
             updateQuery({
-              [filterKey]: {
+              [key]: {
                 from: date1 ? customDate(date1, urlQueryDateTime) : '',
                 to: date2 ? customDate(date2, urlQueryDateTime) : '',
               },
@@ -59,8 +55,8 @@ export const useTableFiltering = <T extends MRT_RowData>(
         case 'select':
         case 'text':
         case undefined: // default to text
-          filterUpdaters[filterKey] = (value: string) => {
-            updateQuery({ [filterKey]: value });
+          filterUpdaters[key] = (value: string) => {
+            updateQuery({ [key]: value });
           };
           break;
 
@@ -91,19 +87,12 @@ export const useTableFiltering = <T extends MRT_RowData>(
         );
 
         if (removedFilter) {
-          const column = columns.find(
-            col => (col.id ?? col.accessorKey) === removedFilter.id
-          );
-          const id = column?.filterKey || removedFilter.id;
-          updateQuery({ [id]: undefined });
+          updateQuery({ [getFilterKey(columns, removedFilter.id)]: undefined });
         }
         return;
       }
-      const column = columns.find(
-        col => (col.id ?? col.accessorKey) === changedFilter.id
-      );
-      const id = column?.filterKey || changedFilter.id;
-      const filterUpdater = filterUpdaters[id];
+      const filterUpdater =
+        filterUpdaters[getFilterKey(columns, changedFilter.id)];
       const newValue = changedFilter.value;
       if (filterUpdater) filterUpdater(newValue);
     }
@@ -145,4 +134,14 @@ const getFilterState = <T extends MRT_RowData>(
         };
       })
   );
+};
+
+const getFilterKey = <T extends MRT_RowData>(
+  columns: ColumnDef<T>[],
+  columnId: string
+) => {
+  const column = columns.find(col => (col.id ?? col.accessorKey) === columnId);
+  const key = column?.filterKey || columnId;
+
+  return key;
 };

@@ -97,12 +97,7 @@ export const useGetColumnTypeDefaults = () => {
           Cell: ({ cell }) => {
             const value = cell.getValue<boolean | null>();
             return value ? (
-              <CircleIcon
-                sx={{
-                  // color: ,
-                  transform: 'scale(0.5)',
-                }}
-              />
+              <CircleIcon sx={{ transform: 'scale(0.5)' }} />
             ) : null;
           },
         };
