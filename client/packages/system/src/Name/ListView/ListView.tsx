@@ -1,16 +1,15 @@
-import React, { ReactElement, useState } from 'react';
+import React, { ReactElement, useMemo, useState } from 'react';
 import {
   TableProvider,
-  DataTable,
-  useColumns,
   createTableStore,
   useDialog,
   DialogButton,
   Fade,
-  NothingHere,
-  useUrlQueryParams,
   useTranslation,
   useNavigate,
+  usePaginatedMaterialTable,
+  MaterialTable,
+  ColumnDef,
 } from '@openmsupply-client/common';
 import { TransitionProps } from '@mui/material/transitions';
 import { Details } from '../Details';
@@ -27,31 +26,28 @@ export const NameListView = ({ type }: NameListProps): ReactElement => {
   const { Modal, showDialog, hideDialog } = useDialog();
   const [selectedId, setSelectedId] = useState<string>('');
 
-  const {
-    updateSortQuery,
-    updatePaginationQuery,
-    queryParams: { sortBy, page, first, offset },
-  } = useUrlQueryParams();
-  const { data, isError, isLoading } = useName.document.list(type);
-  const pagination = { page, first, offset };
+  const { data, isError, isFetching } = useName.document.list(type);
 
-  const columns = useColumns<NameRowFragment>(
-    [
+  const columns = useMemo(
+    (): ColumnDef<NameRowFragment>[] => [
       {
-        key: 'code',
-        label: 'label.code',
-        Cell: ({ rowData }) => (
-          <NameRenderer label={rowData.code} isStore={!!rowData.store} />
+        accessorKey: 'code',
+        header: t('label.code'),
+        enableSorting: true,
+        Cell: ({ row }) => (
+          <NameRenderer
+            label={row.original.code}
+            isStore={!!row.original.store}
+          />
         ),
-        width: 100,
       },
-      'name',
+      {
+        accessorKey: 'name',
+        header: t('label.name'),
+        enableSorting: true,
+      },
     ],
-    {
-      sortBy,
-      onChangeSortBy: updateSortQuery,
-    },
-    [sortBy]
+    []
   );
 
   const Transition = React.forwardRef(
@@ -69,19 +65,20 @@ export const NameListView = ({ type }: NameListProps): ReactElement => {
     showDialog();
   };
 
+  const { table } = usePaginatedMaterialTable({
+    tableId: 'name-list',
+    columns,
+    data: data?.nodes,
+    totalCount: data?.totalCount ?? 0,
+    isLoading: isFetching,
+    isError,
+    enableRowSelection: false,
+    onRowClick: handleRowClick,
+  });
+
   return (
     <TableProvider createStore={createTableStore}>
-      <DataTable
-        id="name-list"
-        pagination={{ ...pagination, total: data?.totalCount ?? 0 }}
-        onChangePage={updatePaginationQuery}
-        columns={columns}
-        data={data?.nodes}
-        isLoading={isLoading}
-        isError={isError}
-        onRowClick={handleRowClick}
-        noDataElement={<NothingHere body={t('error.no-items-to-display')} />}
-      />
+      <MaterialTable table={table} />
       {type === 'customer' && (
         <Modal
           title=""
