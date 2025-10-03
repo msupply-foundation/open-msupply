@@ -28,7 +28,10 @@ export const ListView = () => {
     filter,
     queryParams: { sortBy, first, offset },
   } = useUrlQueryParams({
-    filters: [{ key: 'status', condition: 'equalTo' }],
+    filters: [
+      { key: 'status', condition: 'equalTo' },
+      { key: 'createdDatetime', condition: 'between' },
+    ],
   });
   const queryParams = { ...filter, sortBy, first, offset };
 
@@ -77,10 +80,12 @@ export const ListView = () => {
         header: t('label.description'),
       },
       {
-        accessorKey: 'createdDatetime',
+        id: 'createdDatetime',
+        accessorFn: row => new Date(row.createdDatetime),
         header: t('label.created'),
         columnType: ColumnType.Date,
         enableSorting: true,
+        enableColumnFilter: true,
       },
       {
         accessorKey: 'comment',
