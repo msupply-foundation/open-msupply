@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+import React, { memo, useState } from 'react';
 import {
   Action,
   ActionsFooter,
@@ -11,19 +11,25 @@ import {
 } from '@openmsupply-client/common';
 import { DeleteError, LocationRowFragment, useLocation } from '../api';
 
-export const FooterComponent = ({ data }: { data: LocationRowFragment[] }) => {
+export const FooterComponent = ({
+  selectedRows,
+  resetRowSelection,
+}: {
+  selectedRows: LocationRowFragment[];
+  resetRowSelection: () => void;
+}) => {
   const t = useTranslation();
   const {
-    delete: { delete: deleteLocation, selectedRows },
-  } = useLocation(data);
+    delete: { delete: deleteLocation },
+  } = useLocation();
 
   const { error, success } = useNotification();
-  const [deleteErrors, setDeleteErrors] = React.useState<DeleteError[]>([]);
+  const [deleteErrors, setDeleteErrors] = useState<DeleteError[]>([]);
 
   const deleteAction = async () => {
     if (selectedRows) {
       try {
-        const result = await deleteLocation();
+        const result = await deleteLocation(selectedRows);
         if (result) {
           setDeleteErrors(result);
         }
@@ -33,6 +39,7 @@ export const FooterComponent = ({ data }: { data: LocationRowFragment[] }) => {
               count: selectedRows.length,
             })
           )();
+          resetRowSelection();
         }
       } catch (err) {
         error(
@@ -66,6 +73,7 @@ export const FooterComponent = ({ data }: { data: LocationRowFragment[] }) => {
             <ActionsFooter
               actions={actions}
               selectedRowCount={selectedRows.length}
+              resetRowSelection={resetRowSelection}
             />
           )}
           {deleteErrors.length > 0 && (

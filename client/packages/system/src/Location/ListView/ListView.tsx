@@ -1,30 +1,26 @@
-import React, { FC } from 'react';
+import React, { useMemo } from 'react';
 import {
-  TableProvider,
-  DataTable,
-  useColumns,
-  createTableStore,
   useEditModal,
   NothingHere,
   useTranslation,
   useUrlQueryParams,
-  GenericColumnKey,
   UNDEFINED_STRING_VALUE,
   InlineProgress,
   Box,
+  usePaginatedMaterialTable,
+  ColumnDef,
+  ColumnType,
+  MaterialTable,
+  CheckCell,
 } from '@openmsupply-client/common';
 import { LocationRowFragment, useLocationList } from '../api';
 import { AppBarButtons } from './AppBarButtons';
 import { LocationEditModal } from './LocationEditModal';
-import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
 
-const LocationListComponent: FC = () => {
+export const LocationListView = () => {
   const {
-    updateSortQuery,
-    updatePaginationQuery,
-    filter,
-    queryParams: { sortBy, page, first, offset, filterBy },
+    queryParams: { sortBy, first, offset, filterBy },
   } = useUrlQueryParams({
     initialSort: { key: 'name', dir: 'asc' },
     filters: [
@@ -39,43 +35,52 @@ const LocationListComponent: FC = () => {
   });
   const queryParams = { sortBy, first, offset, filterBy };
   const {
-    query: { data, isError, isLoading },
+    query: { data, isError, isLoading, isFetching },
   } = useLocationList(queryParams);
-  const pagination = { page, first, offset };
   const t = useTranslation();
-  const columns = useColumns<LocationRowFragment>(
-    [
-      GenericColumnKey.Selection,
-      'code',
+
+  const { isOpen, entity, mode, onClose, onOpen } =
+    useEditModal<LocationRowFragment>();
+  const locations = data?.nodes ?? [];
+
+  const columns = useMemo(
+    (): ColumnDef<LocationRowFragment>[] => [
       {
-        key: 'name',
-        label: 'label.name',
+        accessorKey: 'code',
+        header: t('label.code'),
+        enableSorting: true,
       },
       {
-        key: 'locationType',
-        label: 'label.location-type',
-        accessor: ({ rowData: { locationType } }) =>
+        accessorKey: 'name',
+        header: t('label.name'),
+        enableSorting: true,
+        enableColumnFilter: true,
+      },
+      {
+        id: 'locationType',
+        header: t('label.location-type'),
+        accessorFn: ({ locationType }) =>
           locationType
             ? t('label.location-temperature-range', {
+                ...locationType,
                 locationName: locationType.name,
-                minTemperature: locationType.minTemperature,
-                maxTemperature: locationType.maxTemperature,
               })
             : null,
-        sortable: false,
       },
       {
-        key: 'volume',
-        label: 'label.volume',
-        sortable: false,
+        accessorKey: 'volume',
+        header: t('label.volume'),
+        columnType: ColumnType.Number,
       },
       {
-        key: 'volumeUsed',
-        label: 'label.volume-used',
-        sortable: false,
-        Cell: ({ rowData: { volume, volumeUsed } }) => {
+        id: 'volumeUsed',
+        header: t('label.volume-used'),
+        Cell: ({
+          row: {
+            original: { volume, volumeUsed },
+          },
+        }) => {
           if (!volume) return UNDEFINED_STRING_VALUE;
-
           const percentageValue = ((volumeUsed || 0) / volume) * 100;
 
           return (
@@ -95,16 +100,34 @@ const LocationListComponent: FC = () => {
           );
         },
       },
+      {
+        accessorKey: 'onHold',
+        header: t('label.on-hold'),
+        Cell: CheckCell,
+        size: 110,
+        enableColumnFilter: true,
+        filterVariant: 'select',
+        filterSelectOptions: [
+          { value: 'true', label: t('label.on-hold') },
+          { value: 'false', label: t('label.not-on-hold') },
+        ],
+      },
     ],
-    {
-      onChangeSortBy: updateSortQuery,
-      sortBy,
-    },
-    [updateSortQuery, sortBy]
+    []
   );
-  const { isOpen, entity, mode, onClose, onOpen } =
-    useEditModal<LocationRowFragment>();
-  const locations = data?.nodes ?? [];
+
+  const { table, selectedRows } = usePaginatedMaterialTable({
+    tableId: 'location-list',
+    isLoading: isFetching,
+    isError,
+    columns,
+    data: locations,
+    totalCount: data?.totalCount ?? 0,
+    onRowClick: onOpen,
+    noDataElement: (
+      <NothingHere body={t('error.no-locations')} onCreate={() => onOpen()} />
+    ),
+  });
 
   return (
     <>
@@ -116,35 +139,16 @@ const LocationListComponent: FC = () => {
           location={entity}
         />
       )}
-      <Toolbar filter={filter} />
       <AppBarButtons
         onCreate={() => onOpen()}
         locations={data?.nodes}
         reportIsLoading={isLoading}
       />
-      <DataTable
-        id="location-list"
-        pagination={{ ...pagination, total: data?.totalCount ?? 0 }}
-        onChangePage={updatePaginationQuery}
-        columns={columns}
-        data={locations}
-        isError={isError}
-        isLoading={isLoading}
-        onRowClick={onOpen}
-        noDataElement={
-          <NothingHere
-            body={t('error.no-locations')}
-            onCreate={() => onOpen()}
-          />
-        }
+      <MaterialTable table={table} />
+      <Footer
+        selectedRows={selectedRows}
+        resetRowSelection={table.resetRowSelection}
       />
-      <Footer data={locations} />
     </>
   );
 };
-
-export const LocationListView: FC = () => (
-  <TableProvider createStore={createTableStore}>
-    <LocationListComponent />
-  </TableProvider>
-);
