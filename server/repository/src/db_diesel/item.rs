@@ -357,7 +357,11 @@ fn create_filtered_query(store_id: String, filter: Option<ItemFilter>) -> BoxedI
         if let Some(is_program_item_filter) = is_program_item {
             let program_master_list_ids = program::table
                 .select(program::master_list_id)
-                .filter(program::master_list_id.is_not_null())
+                .filter(
+                    program::master_list_id
+                        .is_not_null()
+                        .and(program::deleted_datetime.is_null()),
+                )
                 .distinct()
                 .into_boxed();
 
