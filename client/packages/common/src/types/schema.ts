@@ -1318,6 +1318,7 @@ export type CentralServerMutationNode = {
 export type CentralServerQueryNode = {
   __typename: 'CentralServerQueryNode';
   plugin: CentralPluginQueries;
+  syncMessage: SyncMessageQueries;
 };
 
 export type CentralSyncRequired = AuthTokenErrorInterface & {
@@ -2791,6 +2792,12 @@ export type EqualFilterStringInput = {
   notEqualTo?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type EqualFilterSyncMessageStatusInput = {
+  equalAny?: InputMaybe<Array<SyncMessageNodeStatus>>;
+  equalTo?: InputMaybe<SyncMessageNodeStatus>;
+  notEqualTo?: InputMaybe<SyncMessageNodeStatus>;
+};
+
 export type EqualFilterTemperatureBreachRowTypeInput = {
   equalAny?: InputMaybe<Array<TemperatureBreachNodeType>>;
   equalTo?: InputMaybe<TemperatureBreachNodeType>;
@@ -4176,6 +4183,15 @@ export type InsertSupplierReturnResponse =
   | InsertSupplierReturnError
   | InvoiceNode;
 
+export type InsertSyncMessageInput = {
+  body?: InputMaybe<Scalars['String']['input']>;
+  id: Scalars['String']['input'];
+  toStoreId?: InputMaybe<Scalars['String']['input']>;
+  type: SyncMessageRowTypeInput;
+};
+
+export type InsertSyncMessageResponse = IdResponse;
+
 export type InsertVvmStatusLogInput = {
   comment?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
@@ -5441,6 +5457,7 @@ export type Mutations = {
   insertStocktake: InsertStocktakeResponse;
   insertStocktakeLine: InsertStocktakeLineResponse;
   insertSupplierReturn: InsertSupplierReturnResponse;
+  insertSyncMessage: InsertSyncMessageResponse;
   insertVaccination: InsertVaccinationResponse;
   insertVvmStatusLog: InsertVvmStatusLogResponse;
   /** Links a patient to a store and thus effectively to a site */
@@ -5918,6 +5935,11 @@ export type MutationsInsertStocktakeLineArgs = {
 
 export type MutationsInsertSupplierReturnArgs = {
   input: SupplierReturnInput;
+  storeId: Scalars['String']['input'];
+};
+
+export type MutationsInsertSyncMessageArgs = {
+  input: InsertSyncMessageInput;
   storeId: Scalars['String']['input'];
 };
 
@@ -9678,6 +9700,81 @@ export type SyncFileReferenceNode = {
   mimeType?: Maybe<Scalars['String']['output']>;
   recordId: Scalars['String']['output'];
   tableName: Scalars['String']['output'];
+};
+
+export type SyncMessageConnector = {
+  __typename: 'SyncMessageConnector';
+  nodes: Array<SyncMessageNode>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type SyncMessageFilterInput = {
+  createdDatetime?: InputMaybe<DatetimeFilterInput>;
+  fromStoreId?: InputMaybe<EqualFilterStringInput>;
+  id?: InputMaybe<EqualFilterStringInput>;
+  status?: InputMaybe<EqualFilterSyncMessageStatusInput>;
+  toStoreId?: InputMaybe<EqualFilterStringInput>;
+};
+
+export type SyncMessageListResponse = SyncMessageConnector;
+
+export type SyncMessageNode = {
+  __typename: 'SyncMessageNode';
+  body: Scalars['String']['output'];
+  createdDatetime: Scalars['DateTime']['output'];
+  errorMessage?: Maybe<Scalars['String']['output']>;
+  fromStore?: Maybe<StoreNode>;
+  id: Scalars['String']['output'];
+  status: SyncMessageNodeStatus;
+  toStore?: Maybe<StoreNode>;
+  type: SyncMessageNodeType;
+};
+
+export enum SyncMessageNodeStatus {
+  New = 'new',
+  Processed = 'processed',
+}
+
+export enum SyncMessageNodeType {
+  Other = 'other',
+  RequestFieldChange = 'requestFieldChange',
+  SupportUpload = 'supportUpload',
+}
+
+export type SyncMessageQueries = {
+  __typename: 'SyncMessageQueries';
+  syncMessage: SyncMessageResponse;
+  syncMessages: SyncMessageListResponse;
+};
+
+export type SyncMessageQueriesSyncMessageArgs = {
+  id: Scalars['String']['input'];
+  storeId: Scalars['String']['input'];
+};
+
+export type SyncMessageQueriesSyncMessagesArgs = {
+  filter?: InputMaybe<SyncMessageFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<Array<SyncMessageSortInput>>;
+  storeId: Scalars['String']['input'];
+};
+
+export type SyncMessageResponse = RecordNotFound | SyncMessageNode;
+
+export enum SyncMessageRowTypeInput {
+  RequestFieldChange = 'REQUEST_FIELD_CHANGE',
+  SupportUpload = 'SUPPORT_UPLOAD',
+}
+
+export enum SyncMessageSortFieldInput {
+  CreatedDatetime = 'createdDatetime',
+  Id = 'id',
+  Status = 'status',
+}
+
+export type SyncMessageSortInput = {
+  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  key: SyncMessageSortFieldInput;
 };
 
 export type SyncSettingsInput = {
