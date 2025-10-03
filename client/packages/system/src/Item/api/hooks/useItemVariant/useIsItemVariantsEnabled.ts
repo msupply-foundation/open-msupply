@@ -16,5 +16,6 @@ export const useIsItemVariantsEnabled = () => {
     refetchOnMount: false,
   });
 
-  return !!data;
+  // default to true while loading to avoid flicker
+  return !!(data ?? true);
 };
