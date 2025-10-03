@@ -10,11 +10,13 @@ import {
 interface FooterProps {
   selectedRowCount: number;
   deleteRows: () => void;
+  resetRowSelection: () => void;
 }
 
 export const FooterComponent: FC<FooterProps> = ({
   selectedRowCount,
   deleteRows,
+  resetRowSelection,
 }) => {
   const t = useTranslation();
 
@@ -34,6 +36,7 @@ export const FooterComponent: FC<FooterProps> = ({
             <ActionsFooter
               actions={actions}
               selectedRowCount={selectedRowCount}
+              resetRowSelection={resetRowSelection}
             />
           )}
         </>

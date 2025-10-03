@@ -13,6 +13,7 @@ import {
   useFormatDateTime,
   PopoverCell,
   useTranslation,
+  CircleIcon,
 } from '@openmsupply-client/common';
 
 import { ColumnDef } from './types';
@@ -23,6 +24,7 @@ export enum ColumnType {
   Currency = 'currency',
   Date = 'date',
   Comment = 'comment',
+  Boolean = 'boolean',
 }
 
 export const useGetColumnTypeDefaults = () => {
@@ -86,6 +88,17 @@ export const useGetColumnTypeDefaults = () => {
             }
             const value = cell.getValue<string | null>();
             return <PopoverCell value={value} label={t('label.comment')} />;
+          },
+        };
+
+      case ColumnType.Boolean:
+        return {
+          align: 'center',
+          Cell: ({ cell }) => {
+            const value = cell.getValue<boolean | null>();
+            return value ? (
+              <CircleIcon sx={{ transform: 'scale(0.5)' }} />
+            ) : null;
           },
         };
 
