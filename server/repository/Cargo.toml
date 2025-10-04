@@ -38,6 +38,7 @@ anyhow.workspace = true
 pretty_assertions = { workspace = true }
 strum = { workspace = true }
 ts-rs = { workspace = true }
+urlencoding = "2.1"
 
 [dev-dependencies]
 tokio = { version = "1.38.0", features = ["time", "rt-multi-thread", "macros"] }
