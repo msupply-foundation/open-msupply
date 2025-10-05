@@ -4757,6 +4757,7 @@ export type ItemFilterInput = {
   hasStockOnHand?: InputMaybe<Scalars['Boolean']['input']>;
   id?: InputMaybe<EqualFilterStringInput>;
   ignoreForOrders?: InputMaybe<Scalars['Boolean']['input']>;
+  invoiceId?: InputMaybe<EqualFilterStringInput>;
   isActive?: InputMaybe<Scalars['Boolean']['input']>;
   isProgramItem?: InputMaybe<Scalars['Boolean']['input']>;
   isVaccine?: InputMaybe<Scalars['Boolean']['input']>;

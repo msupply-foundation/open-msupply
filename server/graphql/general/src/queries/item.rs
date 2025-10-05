@@ -61,6 +61,7 @@ pub struct ItemFilterInput {
     pub ignore_for_orders: Option<bool>,
     pub min_months_of_stock: Option<f64>,
     pub max_months_of_stock: Option<f64>,
+    pub invoice_id: Option<EqualFilterStringInput>,
 }
 
 #[derive(Union)]
@@ -118,6 +119,7 @@ impl ItemFilterInput {
             ignore_for_orders,
             min_months_of_stock,
             max_months_of_stock,
+            invoice_id,
         } = self;
 
         ItemFilter {
@@ -138,6 +140,7 @@ impl ItemFilterInput {
             ignore_for_orders,
             min_months_of_stock,
             max_months_of_stock,
+            invoice_id: invoice_id.map(EqualFilter::from),
         }
     }
 }

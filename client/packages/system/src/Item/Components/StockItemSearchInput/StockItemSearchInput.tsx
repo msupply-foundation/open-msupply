@@ -10,6 +10,7 @@ import {
   FilterOptionsState,
   RegexUtils,
   ItemFilterInput,
+  useParams,
 } from '@openmsupply-client/common';
 import {
   ItemStockOnHandFragment,
@@ -39,9 +40,10 @@ export const StockItemSearchInput = ({
   const formatNumber = useFormatNumber();
   const selectControl = useToggle();
 
+  const { invoiceId = '' } = useParams();
   const { filter, onFilter } = useStringFilter('codeOrName');
-  const [search, setSearch] = useState('');
 
+  const [search, setSearch] = useState('');
   const [selectedCode, setSelectedCode] = useState('');
 
   const debounceOnFilter = useDebouncedValueCallback(
@@ -56,6 +58,7 @@ export const StockItemSearchInput = ({
   // as their equivalent program. In the future, this may change, so we can add
   // another filter specifically for programs if required.
   if (programId) fullFilter['masterListId'] = { equalTo: programId };
+  if (invoiceId) fullFilter['invoiceId'] = { equalTo: invoiceId };
 
   const { data, isLoading, fetchNextPage, isFetchingNextPage } =
     useItemStockOnHandInfinite({
