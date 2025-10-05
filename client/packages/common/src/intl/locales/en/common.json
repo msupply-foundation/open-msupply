@@ -1638,6 +1638,7 @@
   "message.copy-success": "Copied to clipboard successfully",
   "message.create-blank-stocktake": "This will create a blank stocktake",
   "message.database-not-local": "Database is running on a server, so can't be downloaded here",
+  "message.database-not-sqlite": "Database download is only available for SQLite databases",
   "message.failed-to-create-requisition": "Failed to create requisition!",
   "message.keyboard-shortcuts": "Press 'Command' (Mac) or 'Control' (Windows) + 'k' to see a list of keyboard shortcuts which are available on any page. You can use the actions directly from the pop up window too.",
   "message.lines-estimated_few": "{{ count }} lines estimated",

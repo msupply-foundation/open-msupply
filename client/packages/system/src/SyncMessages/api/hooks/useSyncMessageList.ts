@@ -1,5 +1,5 @@
 import {
-  FilterByWithBoolean,
+  FilterBy,
   LIST_KEY,
   SyncMessageSortFieldInput,
   SortBy,
@@ -13,7 +13,7 @@ export type ListParams = {
   first?: number;
   offset?: number;
   sortBy?: SortBy<SyncMessageRowFragment>;
-  filterBy: FilterByWithBoolean | null;
+  filterBy: FilterBy | null;
 };
 
 export const useSyncMessageList = (queryParams: ListParams) => {
