@@ -21,8 +21,8 @@ export const Alert = (props: AlertProps) => {
   const Icon = getIcon(props.severity);
   return (
     <MuiAlert
-      {...rest}
       icon={Icon}
+      {...rest}
       sx={{ borderRadius: '10px', marginRight: '8px', ...sx }}
     />
   );
