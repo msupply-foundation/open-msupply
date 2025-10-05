@@ -49,7 +49,7 @@ export const Footer: FC<FooterProps> = ({
             marginLeft="auto"
           >
             <DialogButton
-              variant="close"
+              variant={isDirty ? 'cancel' : 'close'}
               onClick={() =>
                 isDirty ? showCancelConfirmation() : navigateUpOne()
               }
