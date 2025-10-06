@@ -1,6 +1,5 @@
 export {
   StockLineRowFragment,
-  VvmStatusFragment,
   useStockListCount,
   useStockList,
   useRepack,
