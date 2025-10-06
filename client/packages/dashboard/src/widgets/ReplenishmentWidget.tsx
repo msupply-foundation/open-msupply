@@ -7,6 +7,7 @@ import {
   RANGE_SPLIT_CHAR,
   RouteBuilder,
   StatsPanel,
+  useAuthContext,
   useNavigate,
   useNotification,
   useToggle,
@@ -23,6 +24,7 @@ import {
   InvoiceNodeStatus,
   PropsWithChildrenOnly,
   RequisitionNodeStatus,
+  UserPermission,
 } from '@common/types';
 import { useDashboard } from '../api';
 import { useInbound } from '@openmsupply-client/invoices';
@@ -34,6 +36,7 @@ export const ReplenishmentWidget: React.FC<PropsWithChildrenOnly> = () => {
   const modalControl = useToggle(false);
   const { error: errorNotification } = useNotification();
   const formatNumber = useFormatNumber();
+  const { userHasPermission } = useAuthContext();
   const navigate = useNavigate();
   const { data, isLoading, isError, error } = useDashboard.statistics.inbound();
   const {
@@ -76,6 +79,14 @@ export const ReplenishmentWidget: React.FC<PropsWithChildrenOnly> = () => {
       t('error.failed-to-create-requisition', { message })
     );
     errorSnack();
+  };
+
+  const handleClick = () => {
+    if (!userHasPermission(UserPermission.InboundShipmentMutate)) {
+      errorNotification(t('error-no-inbound-shipment-create-permission'))();
+      return;
+    }
+    modalControl.toggleOn();
   };
 
   return (
@@ -183,7 +194,7 @@ export const ReplenishmentWidget: React.FC<PropsWithChildrenOnly> = () => {
               color="secondary"
               Icon={<PlusCircleIcon />}
               label={t('button.new-inbound-shipment')}
-              onClick={modalControl.toggleOn}
+              onClick={handleClick}
             />
           </Grid>
         </Grid>

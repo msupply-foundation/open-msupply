@@ -187,6 +187,7 @@ const StockListComponent: FC = () => {
         rowData.totalNumberOfPacks * rowData.costPricePerPack,
       Cell: CurrencyCell,
       description: 'description.total-cost',
+      sortable: false,
       width: 125,
       defaultHideOnMobile: true,
     },

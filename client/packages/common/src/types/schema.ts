@@ -9312,6 +9312,7 @@ export type StockLineResponse = NodeError | StockLineNode;
 
 export enum StockLineSortFieldInput {
   Batch = 'batch',
+  CostPricePerPack = 'costPricePerPack',
   ExpiryDate = 'expiryDate',
   ItemCode = 'itemCode',
   ItemName = 'itemName',
@@ -9377,6 +9378,7 @@ export type StocktakeLineFilterInput = {
   itemCodeOrName?: InputMaybe<StringFilterInput>;
   itemId?: InputMaybe<EqualFilterStringInput>;
   locationId?: InputMaybe<EqualFilterStringInput>;
+  stockLineId?: InputMaybe<EqualFilterStringInput>;
   stocktakeId?: InputMaybe<EqualFilterStringInput>;
 };
 
