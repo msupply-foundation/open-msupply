@@ -10,6 +10,7 @@ interface InlineProgressProps {
   color?: 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning';
   value?: number;
   variant?: 'determinate' | 'indeterminate' | 'buffer' | 'query';
+  width?: number | string;
 }
 
 function LinearProgressWithLabel(
@@ -35,12 +36,14 @@ export const InlineProgress: FC<InlineProgressProps> = ({
   color = 'primary',
   value = 1,
   variant = 'indeterminate',
+  width,
 }) => {
   return (
     <Box
       style={{
         display: 'flex',
         flexDirection: 'column',
+        width,
       }}
     >
       <LinearProgressWithLabel variant={variant} color={color} value={value} />
