@@ -55,12 +55,16 @@ export const SyncProgress: FC<SyncProgressProps> = ({
   );
 
   return (
-    <Box display="flex" flexDirection={'column'}>
-      {!isExtraSmallScreen && (
-        <HorizontalStepper steps={steps} colour={colour} />
-      )}
-      {error && <BoxedErrorWithDetails {...error} />}
-    </Box>
+    <>
+      <Box display="flex" flexDirection="column">
+        {!isExtraSmallScreen && (
+          <HorizontalStepper steps={steps} colour={colour} />
+        )}
+      </Box>
+      <Box justifyItems="center" pt={1}>
+        {error && <BoxedErrorWithDetails {...error} width={600} />}
+      </Box>
+    </>
   );
 };
 
