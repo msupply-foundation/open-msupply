@@ -43,7 +43,7 @@ export const getExtraMiddlePanels = (
       label: t('label.suggested'),
       value: draft?.suggestedQuantity,
       sx: {
-        background: theme => theme.palette.background.group,
+        background: theme => theme.palette.background.group.dark,
         pt: 0.5,
         pb: 0.5,
       },
