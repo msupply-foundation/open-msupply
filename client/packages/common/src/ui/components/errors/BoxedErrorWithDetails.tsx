@@ -11,12 +11,14 @@ export type BoxedErrorWithDetailsProps = {
   error: string;
   details: string;
   hint?: string;
+  width?: number;
 };
 
 export const BoxedErrorWithDetails = ({
   error,
   details,
   hint,
+  width = 300,
 }: BoxedErrorWithDetailsProps) => {
   const t = useTranslation();
   const [expand, setExpand] = useState(false);
@@ -33,7 +35,7 @@ export const BoxedErrorWithDetails = ({
       sx={{ backgroundColor: 'error.background', borderRadius: 2 }}
       gap={1}
       padding={1}
-      width={300}
+      width={width}
     >
       <Box display="flex" flexDirection="column">
         <Box display="flex" flexDirection="row">
