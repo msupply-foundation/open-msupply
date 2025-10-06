@@ -4105,6 +4105,7 @@ export type InsertStocktakeInput = {
   expiresBefore?: InputMaybe<Scalars['NaiveDate']['input']>;
   id: Scalars['String']['input'];
   includeAllMasterListItems?: InputMaybe<Scalars['Boolean']['input']>;
+  isAllItemsStocktake?: InputMaybe<Scalars['Boolean']['input']>;
   isInitialStocktake?: InputMaybe<Scalars['Boolean']['input']>;
   locationId?: InputMaybe<Scalars['String']['input']>;
   masterListId?: InputMaybe<Scalars['String']['input']>;
