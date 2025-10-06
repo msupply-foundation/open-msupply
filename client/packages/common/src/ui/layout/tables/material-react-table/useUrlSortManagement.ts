@@ -14,6 +14,7 @@ export const useUrlSortManagement = (initialSort?: {
 
   const handleSortingChange = useCallback(
     (sortUpdate: MRT_Updater<MRT_SortingState>) => {
+      console.log(sortBy);
       if (typeof sortUpdate === 'function') {
         // MRT can handle multiple sort fields, but for now we're only
         // supporting one, so we take the first item of the array
@@ -22,7 +23,10 @@ export const useUrlSortManagement = (initialSort?: {
         ])[0];
         if (newSortValue)
           updateSortQuery(newSortValue.id, newSortValue.desc ? 'desc' : 'asc');
-        else clearSort();
+        else {
+          console.log('its me');
+          clearSort();
+        }
       }
     },
     [sortBy]
