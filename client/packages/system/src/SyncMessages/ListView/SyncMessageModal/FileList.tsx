@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import {
   List,
   ListItem,
@@ -10,14 +10,9 @@ import {
   Typography,
   useTranslation,
   SyncMessageNodeStatus,
+  SyncFileReferenceNode,
 } from '@openmsupply-client/common';
 import { Environment } from '@openmsupply-client/config/src';
-
-interface StaticFile {
-  id: string;
-  name: string;
-  path: string;
-}
 
 interface FileListProps {
   id: string;
@@ -26,26 +21,7 @@ interface FileListProps {
 
 export const FileList = ({ id, status }: FileListProps) => {
   const t = useTranslation();
-  const [files, setFiles] = useState<StaticFile[]>();
-
-  useEffect(() => {
-    const fetchFiles = async () => {
-      try {
-        const url = `${Environment.SYNC_FILES_URL}/sync_message/${id}/list_files`;
-        const response = await fetch(url, {
-          method: 'GET',
-          headers: { Accept: 'application/json' },
-          credentials: 'include',
-        });
-        const result = await response.json();
-
-        setFiles(result);
-      } catch (error) {
-        console.error('Error fetching files:', error);
-      }
-    };
-    fetchFiles();
-  }, [id]);
+  const files: SyncFileReferenceNode[] = [];
 
   return (
     <Stack>
@@ -73,7 +49,7 @@ export const FileList = ({ id, status }: FileListProps) => {
                     to={`${Environment.SYNC_FILES_URL}/sync_message/${id}/${file.id}`}
                     target="_blank"
                   >
-                    {file.name}
+                    {file.fileName}
                   </Link>
                 }
               />

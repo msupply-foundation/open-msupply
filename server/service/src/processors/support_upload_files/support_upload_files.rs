@@ -223,7 +223,7 @@ fn process_database_files(
 
     static_file_service
         .store_file(
-            &database_settings.database_name,
+            "uploaded-database.sqlite",
             StaticFileCategory::SyncFile("sync_message".to_string(), sync_message.id.clone()),
             &database_bytes,
         )
