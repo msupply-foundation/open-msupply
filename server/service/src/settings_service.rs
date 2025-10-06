@@ -36,34 +36,6 @@ fn validate(settings: &SyncSettings) -> Result<(), UpdateSettingsError> {
 }
 
 pub trait SettingsServiceTrait: Sync + Send {
-    fn sync_settings(&self, ctx: &ServiceContext) -> Result<Option<SyncSettings>, RepositoryError>;
-
-    fn update_sync_settings(
-        &self,
-        ctx: &ServiceContext,
-        settings: &SyncSettings,
-    ) -> Result<(), UpdateSettingsError>;
-
-    fn is_sync_disabled(&self, ctx: &ServiceContext) -> Result<bool, RepositoryError>;
-
-    fn disable_sync(&self, ctx: &ServiceContext) -> Result<(), RepositoryError>;
-
-    fn get_database_info(&self) -> Result<DatabaseSettings, UpdateSettingsError>;
-
-    fn get_server_settings_info(&self) -> Result<ServerSettings, UpdateSettingsError>;
-}
-
-pub struct SettingsService {
-    pub service: Option<Settings>,
-}
-
-impl SettingsService {
-    pub fn new(settings: Option<Settings>) -> Self {
-        SettingsService { service: settings }
-    }
-}
-
-impl SettingsServiceTrait for SettingsService {
     /// Loads sync settings from the DB
     fn sync_settings(&self, ctx: &ServiceContext) -> Result<Option<SyncSettings>, RepositoryError> {
         let key_value_store = KeyValueStoreRepository::new(&ctx.connection);
@@ -127,6 +99,22 @@ impl SettingsServiceTrait for SettingsService {
             .set_bool(KeyType::SettingsSyncIsDisabled, Some(true))
     }
 
+    fn get_database_info(&self) -> Result<DatabaseSettings, UpdateSettingsError>;
+
+    fn get_server_settings_info(&self) -> Result<ServerSettings, UpdateSettingsError>;
+}
+
+pub struct SettingsService {
+    pub service: Option<Settings>,
+}
+
+impl SettingsService {
+    pub fn new(settings: Option<Settings>) -> Self {
+        SettingsService { service: settings }
+    }
+}
+
+impl SettingsServiceTrait for SettingsService {
     fn get_database_info(&self) -> Result<DatabaseSettings, UpdateSettingsError> {
         match &self.service {
             None => Err(UpdateSettingsError::InvalidSettings(
