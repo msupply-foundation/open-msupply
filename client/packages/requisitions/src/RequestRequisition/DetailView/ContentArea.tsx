@@ -1,70 +1,58 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import {
-  AppSxProp,
-  DataTable,
+  MaterialTable,
   NothingHere,
+  useNonPaginatedMaterialTable,
   usePluginProvider,
-  useRowStyle,
   useTranslation,
 } from '@openmsupply-client/common';
 import { RequestLineFragment, useHideOverStocked, useRequest } from '../api';
 import { isRequestLinePlaceholderRow } from '../../utils';
+import { useRequestColumns } from './columns';
 
 interface ContentAreaProps {
   onAddItem: () => void;
-  onRowClick: null | ((line: RequestLineFragment) => void);
+  onRowClick: (line: RequestLineFragment) => void;
 }
-
-const useHighlightPlaceholderRows = (
-  rows: RequestLineFragment[] | undefined
-) => {
-  const { setRowStyles } = useRowStyle();
-
-  useEffect(() => {
-    if (!rows) return;
-
-    const placeholders = rows
-      .filter(isRequestLinePlaceholderRow)
-      .map(row => row.id);
-    const style: AppSxProp = {
-      color: theme => theme.palette.secondary.light,
-    };
-    setRowStyles(placeholders, style);
-  }, [rows, setRowStyles]);
-};
 
 export const ContentArea = ({ onAddItem, onRowClick }: ContentAreaProps) => {
   const t = useTranslation();
-  const { lines, columns, itemFilter } = useRequest.line.list();
+  const { lines, itemFilter, isError, isFetching } = useRequest.line.list();
   const { on } = useHideOverStocked();
   const { plugins } = usePluginProvider();
   const isDisabled = useRequest.utils.isDisabled();
   const isFiltered = !!itemFilter || on;
-  useHighlightPlaceholderRows(lines);
+
+  const columns = useRequestColumns();
+
+  const { table, selectedRows } = useNonPaginatedMaterialTable({
+    tableId: 'internal-order-detail',
+    columns,
+    data: lines,
+    isLoading: isFetching,
+    isError,
+    getIsPlaceholderRow: isRequestLinePlaceholderRow,
+    onRowClick,
+    initialSort: { key: 'itemName', dir: 'asc' },
+    noDataElement: (
+      <NothingHere
+        body={
+          isFiltered
+            ? t('error.no-items-filter-on')
+            : t('error.no-internal-order-items')
+        }
+        onCreate={isDisabled ? undefined : onAddItem}
+        buttonText={t('button.add-item')}
+      />
+    ),
+  });
 
   return (
     <>
-      {plugins.requestRequisitionLine?.tableStateLoader?.map(
+      {/* {plugins.requestRequisitionLine?.tableStateLoader?.map(
         (StateLoader, index) => <StateLoader key={index} requestLines={lines} />
-      )}
-      <DataTable
-        id="internal-order-detail"
-        onRowClick={onRowClick}
-        columns={columns}
-        data={lines}
-        enableColumnSelection
-        noDataElement={
-          <NothingHere
-            body={t(
-              isFiltered
-                ? 'error.no-items-filter-on'
-                : 'error.no-internal-order-items'
-            )}
-            onCreate={isDisabled ? undefined : onAddItem}
-            buttonText={t('button.add-item')}
-          />
-        }
-      />
+      )} */}
+      <MaterialTable table={table} />
     </>
   );
 };
