@@ -18,6 +18,10 @@ use util::{
     constants::APPROX_NUMBER_OF_DAYS_IN_A_MONTH_IS_30, date_with_offset, pos_zero, uuid::uuid,
 };
 
+// Further improvements to R&R performance could include:
+// - Querying stock movements once
+// - Moving some of the calculations to SQL (e.g. stock out durations, opening
+//   balances)
 pub fn generate_rnr_form_lines(
     ctx: &ServiceContext,
     store_id: &str,
