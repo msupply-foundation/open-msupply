@@ -94,9 +94,8 @@ export const QuantityReturnedTableComponent = ({
       })
     );
 
-    if (lines.some(l => l.numberOfPacksIssued !== null)) {
-      // if any line has a value, show the column
-
+    // if any line has a value, show the column
+    if (lines.some(l => !!l.numberOfPacksIssued)) {
       columnDefinitions.push([
         'numberOfPacks',
         {
@@ -131,7 +130,7 @@ export const QuantityReturnedTableComponent = ({
       }
     );
     return columnDefinitions;
-  }, [showItemVariantsColumn]);
+  }, [isDisabled, lines, showItemVariantsColumn]);
 
   const columns = useColumns(columnDefinitions, {}, [
     updateLine,
