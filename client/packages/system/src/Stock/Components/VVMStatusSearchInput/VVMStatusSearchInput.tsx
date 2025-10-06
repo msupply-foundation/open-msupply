@@ -7,8 +7,6 @@ interface VVMStatusSearchInputProps {
   disabled?: boolean;
   width?: number | string;
   useDefault?: boolean;
-  clearable?: boolean;
-  placeholder?: string;
 }
 
 export const VVMStatusSearchInput = ({
@@ -17,8 +15,6 @@ export const VVMStatusSearchInput = ({
   onChange,
   disabled,
   useDefault = false,
-  clearable = false,
-  placeholder,
 }: VVMStatusSearchInputProps) => {
   const t = useTranslation();
   const { data, isLoading } = useVvmStatusesEnabled();
