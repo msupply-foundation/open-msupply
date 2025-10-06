@@ -5,7 +5,7 @@ import {
   useDialog,
   useTranslation,
 } from '@openmsupply-client/common';
-import { useSyncMessageLine } from '../../api/hooks';
+import { useSyncMessage } from '../../api/hooks';
 import { View } from './View';
 import { Create } from './Create';
 
@@ -33,7 +33,7 @@ export const SyncMessageModal = ({
     create: { create },
     draft,
     setDraft,
-  } = useSyncMessageLine(lineId);
+  } = useSyncMessage(lineId);
 
   const handleSaveClick = async () => {
     await create();

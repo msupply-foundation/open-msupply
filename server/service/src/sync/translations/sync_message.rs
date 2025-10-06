@@ -1,5 +1,8 @@
-use crate::sync::translations::{
-    store::StoreTranslation, PullTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
+use crate::sync::{
+    translations::{
+        store::StoreTranslation, PullTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
+    },
+    CentralServerConfig,
 };
 use anyhow::Context;
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
@@ -106,8 +109,26 @@ impl SyncTranslation for MessageTranslation {
         r#type: &ToSyncRecordTranslationType,
     ) -> bool {
         match r#type {
-            ToSyncRecordTranslationType::PushToLegacyCentral
-            | ToSyncRecordTranslationType::PushToOmSupplyCentral
+            ToSyncRecordTranslationType::PushToLegacyCentral => {
+                let sync_message_record = self.change_log_type().as_ref() == Some(&row.table_name);
+
+                if !sync_message_record {
+                    return false;
+                }
+
+                // Check if we're the central server, if we are don't push changes received from remote sites
+                // Otherwise we could end up syncing chnages back to the site they came from
+                if CentralServerConfig::is_central_server() && row.source_site_id.is_some() {
+                    log::debug!(
+                        "Not pushing name update from remote site back to central for id: {}",
+                        row.record_id
+                    );
+                    return false;
+                }
+
+                true
+            }
+            ToSyncRecordTranslationType::PushToOmSupplyCentral
             | ToSyncRecordTranslationType::PullFromOmSupplyCentral => {
                 self.change_log_type().as_ref() == Some(&row.table_name)
             }

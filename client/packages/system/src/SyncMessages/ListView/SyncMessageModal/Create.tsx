@@ -147,7 +147,9 @@ export const Create = ({ t, draft, setDraft }: CreateProps) => {
         </Stack>
       </Stack>
       <Box>
-        <Typography fontWeight="bold">{t('label.body')}:</Typography>
+        <Typography fontWeight="bold">
+          {t('label.sync-message-body')}:
+        </Typography>
         <TextArea
           fullWidth
           value={draft?.body}

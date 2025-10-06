@@ -12,10 +12,10 @@ import {
 import { useSyncMessageGraphQL } from '../useSyncMessageGraphQL';
 
 import { SyncMessageRowFragment } from '../operations.generated';
-import { SYNC_MESSAGE, SYNC_MESSAGE_LINE } from './keys';
+import { SYNC_MESSAGE } from './keys';
 import { useState } from 'react';
 
-const draftSyncMessageLine: SyncMessageRowFragment = {
+const draftSyncMessage: SyncMessageRowFragment = {
   __typename: 'SyncMessageNode',
   id: '',
   body: '',
@@ -36,7 +36,7 @@ const draftSyncMessageLine: SyncMessageRowFragment = {
   },
 };
 
-export const useSyncMessageLine = (id?: string) => {
+export const useSyncMessage = (id?: string) => {
   const t = useTranslation();
   const { error } = useNotification();
 
@@ -44,7 +44,7 @@ export const useSyncMessageLine = (id?: string) => {
   const { data, isLoading, isError } = useGetById(id);
 
   // DRAFT
-  const [draft, setDraft] = useState(draftSyncMessageLine);
+  const [draft, setDraft] = useState(draftSyncMessage);
 
   // CREATE
   const {
@@ -86,7 +86,7 @@ const useGetById = (id?: string) => {
   };
 
   return useQuery({
-    queryKey: [SYNC_MESSAGE_LINE, id],
+    queryKey: [SYNC_MESSAGE, id],
     queryFn,
   });
 };
