@@ -23,26 +23,24 @@ export const InlineProgress: FC<InlineProgressProps> = ({
     <Box
       style={{
         display: 'flex',
-        flexDirection: 'column',
+        alignItems: 'center',
         width,
       }}
     >
-      <Box sx={{ display: 'flex', alignItems: 'center' }}>
-        <Box sx={{ width: '100%', mr: 1 }}>
-          <LinearProgress
-            variant={variant}
-            color={color}
-            value={Math.min(value, 100)}
-          />
-        </Box>
-        {variant == 'determinate' ? (
-          <Box sx={{ minWidth: 35 }}>
-            <Typography variant="body2" color="text.secondary">{`${Math.round(
-              value
-            )}%`}</Typography>
-          </Box>
-        ) : null}
+      <Box sx={{ width: '100%', mr: 1 }}>
+        <LinearProgress
+          variant={variant}
+          color={color}
+          value={Math.min(value, 100)}
+        />
       </Box>
+      {variant == 'determinate' ? (
+        <Box sx={{ minWidth: 35 }}>
+          <Typography variant="body2" color="text.secondary">{`${Math.round(
+            value
+          )}%`}</Typography>
+        </Box>
+      ) : null}
     </Box>
   );
 };
