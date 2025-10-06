@@ -5,7 +5,6 @@ fragment StocktakeRow on StocktakeNode {
   description
   createdDatetime
   finalisedDatetime
-  stocktakeDate
   stocktakeNumber
   status
   isLocked
@@ -105,7 +104,6 @@ fragment Stocktake on StocktakeNode {
   comment
   createdDatetime
   finalisedDatetime
-  stocktakeDate
   status
   description
   isLocked

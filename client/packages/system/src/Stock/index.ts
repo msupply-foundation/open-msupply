@@ -6,6 +6,7 @@ export {
   useRepack,
   useVvmStatusesEnabled,
   StockListParams,
+  VvmStatusFragment,
 } from './api';
 export * from './ListView';
 export * from './DetailView';

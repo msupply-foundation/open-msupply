@@ -15,6 +15,10 @@ interface MasterListSearchInputProps {
   onChange: (masterList: MasterListRowFragment | null) => void;
   disabled: boolean;
   autoFocus?: boolean;
+  clearable?: boolean;
+  /** Alternative to `clearable`, ideal for tables where the X takes up valuable real estate */
+  includeRemoveOption?: boolean;
+  placeholder?: string;
 }
 
 interface MasterListOption {
@@ -60,6 +64,9 @@ export const MasterListSearchInput = ({
   onChange,
   disabled,
   autoFocus = false,
+  clearable = false,
+  includeRemoveOption = !clearable,
+  placeholder,
 }: MasterListSearchInputProps) => {
   const t = useTranslation();
   const { store } = useAuthContext();
@@ -81,6 +88,7 @@ export const MasterListSearchInput = ({
   );
 
   if (
+    includeRemoveOption &&
     masterLists.length > 0 &&
     selectedMasterList !== null &&
     selectedMasterList !== undefined
@@ -96,7 +104,7 @@ export const MasterListSearchInput = ({
       disabled={disabled}
       width={`${width}px`}
       popperMinWidth={Number(width)}
-      clearable={false}
+      clearable={clearable}
       value={selectedOption || null}
       loading={isLoading}
       onChange={(_, option) => {
@@ -107,6 +115,7 @@ export const MasterListSearchInput = ({
       renderOption={optionRenderer}
       getOptionLabel={getOptionLabel}
       isOptionEqualToValue={(option, value) => option.value === value?.value}
+      placeholder={placeholder}
     />
   );
 };
