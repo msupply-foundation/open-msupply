@@ -84,19 +84,18 @@ export const LocationListView = () => {
           const percentageValue = ((volumeUsed || 0) / volume) * 100;
 
           return (
-            <Box sx={{ width: '150px' }}>
-              <InlineProgress
-                variant="determinate"
-                color={
-                  percentageValue > 100
-                    ? 'error'
-                    : percentageValue > 80
-                      ? 'warning'
-                      : 'secondary'
-                }
-                value={percentageValue}
-              />
-            </Box>
+            <InlineProgress
+              variant="determinate"
+              width="150px"
+              color={
+                percentageValue > 100
+                  ? 'error'
+                  : percentageValue > 80
+                    ? 'warning'
+                    : 'secondary'
+              }
+              value={percentageValue}
+            />
           );
         },
       },
