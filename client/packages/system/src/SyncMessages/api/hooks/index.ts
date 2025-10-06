@@ -1,2 +1,2 @@
 export * from './useSyncMessageList';
-export * from './useSyncMessageLine';
+export * from './useSyncMessage';

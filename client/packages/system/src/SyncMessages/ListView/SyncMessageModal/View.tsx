@@ -54,7 +54,9 @@ export const View = ({ data, t }: ViewProps): ReactElement => {
         </Stack>
       </Stack>
       <Box>
-        <Typography fontWeight="bold">{t('label.body')}:</Typography>
+        <Typography fontWeight="bold">
+          {t('label.sync-message-body')}:
+        </Typography>
         <TextArea
           fullWidth
           value={data?.body ?? ''}
