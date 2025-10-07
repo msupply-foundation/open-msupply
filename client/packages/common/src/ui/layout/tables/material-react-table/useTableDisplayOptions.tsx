@@ -28,7 +28,7 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
   onRowClick,
   isGrouped,
   toggleGrouped,
-  enableColumnFilters,
+  hasColumnFilters,
   getIsPlaceholderRow = () => false,
   getIsRestrictedRow = () => false,
 }: {
@@ -36,7 +36,7 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
   resetTableState: () => void;
   onRowClick?: (row: T, isCtrlClick: boolean) => void;
   isGrouped: boolean;
-  enableColumnFilters: boolean;
+  hasColumnFilters: boolean;
   toggleGrouped?: () => void;
   getIsPlaceholderRow?: (row: T) => boolean;
   getIsRestrictedRow?: (row: T) => boolean;
@@ -77,7 +77,7 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
             sx={iconButtonProps}
           />
         )}
-        {enableColumnFilters && <MRT_ToggleFiltersButton table={table} />}
+        {hasColumnFilters && <MRT_ToggleFiltersButton table={table} />}
         <MRT_ToggleDensePaddingButton table={table} />
         <MRT_ShowHideColumnsButton table={table} />
         <IconButton
