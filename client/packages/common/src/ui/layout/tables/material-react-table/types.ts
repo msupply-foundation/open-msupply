@@ -23,6 +23,9 @@ export type ColumnDef<T extends MRT_RowData> = MRT_ColumnDef<T> & {
 
   align?: 'left' | 'center' | 'right';
 
+  /** Specify the filter key for backend filtering, where a column's data accessor key and filtering key might vary */
+  filterKey?: string;
+
   /** Function to determine if cell should be marked as error. Cell will be
    * highlighted in red. */
   getIsError?: (row: T) => boolean;
