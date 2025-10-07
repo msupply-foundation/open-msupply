@@ -252,7 +252,6 @@ const useFilteredItems = (
     if (!allItems || !options?.fieldFilter) {
       setVisibleItems(allItems ?? []);
       customErrors.remove(path);
-      // setError(undefined);
       return;
     }
     const mapping = options.fieldFilter.mapping[conditionField] ?? [];
