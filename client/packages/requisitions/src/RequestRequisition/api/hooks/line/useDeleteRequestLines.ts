@@ -7,8 +7,12 @@ import {
 import { useRequestId } from '../document/useRequest';
 import { useIsRequestDisabled } from '../utils/useIsRequestDisabled';
 import { useRequestApi } from '../utils/useRequestApi';
+import { RequestLineFragment } from '../..';
 
-export const useDeleteRequestLines = () => {
+export const useDeleteRequestLines = (
+  selectedRows: RequestLineFragment[],
+  resetRowSelection: () => void
+) => {
   const t = useTranslation();
   const api = useRequestApi();
   const queryClient = useQueryClient();
@@ -18,12 +22,11 @@ export const useDeleteRequestLines = () => {
     onSettled: () => queryClient.invalidateQueries(api.keys.detail(requestId)),
   });
 
-  const selectedRows = [];
-
   const onDelete = async () => {
-    mutateAsync(selectedRows).catch(err => {
+    await mutateAsync(selectedRows).catch(err => {
       throw err;
     });
+    resetRowSelection();
   };
 
   const confirmAndDelete = useDeleteConfirmation({
