@@ -310,7 +310,7 @@ export const canDeleteInvoice = (
 export const canCancelInvoice = (invoice: PrescriptionRowFragment) =>
   invoice.type === InvoiceNodeType.Prescription &&
   invoice.status === InvoiceNodeStatus.Verified &&
-  invoice.isCancellation !== true;
+  !invoice.isCancellation;
 
 export const canDeleteSupplierReturn = (
   SupplierReturn: SupplierReturnRowFragment
