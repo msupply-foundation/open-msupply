@@ -2,8 +2,7 @@ import React, { useEffect } from 'react';
 import {
   ArrayElement,
   BasicCellLayout,
-  CellProps,
-  ColumnDefinition,
+  ColumnDef,
   create,
   InputWithLabelRow,
   NumericTextInput,
@@ -72,17 +71,11 @@ export const StateLoader: ArrayElement<
   return <></>;
 };
 
-const ColumnInner = ({ rowData }: CellProps<RequestLineFragment>) => {
+const ColumnInner = ({ row }: { row: RequestLineFragment }) => {
   const { getById } = useColumnStore();
 
-  return <BasicCellLayout>{getById(rowData)?.data || ''}</BasicCellLayout>;
+  return <BasicCellLayout>{getById(row)?.data || ''}</BasicCellLayout>;
 };
-
-const Column = (props: CellProps<RequestLineFragment>) => (
-  <QueryClientProviderProxy>
-    <ColumnInner {...props} />
-  </QueryClientProviderProxy>
-);
 
 export const AggregateAmcEditView: AggregateAmcEditView = ({ line }) => {
   const { data } = usePluginData([line.id]);
@@ -101,11 +94,13 @@ export const AggregateAmcEditView: AggregateAmcEditView = ({ line }) => {
   );
 };
 
-export const AggregateAmcColumn: ColumnDefinition<RequestLineFragment> = {
-  Cell: Column,
-  key: 'aggregate amc',
-  label: 'Aggregate Amc',
-  maxWidth: 150,
-  sortable: false,
-  order: 103,
+export const AggregateAmcColumn: ColumnDef<RequestLineFragment> = {
+  id: 'aggregate amc',
+  header: 'Aggregate Amc',
+  size: 150,
+  Cell: ({ row }) => (
+    <QueryClientProviderProxy>
+      <ColumnInner row={row.original} />
+    </QueryClientProviderProxy>
+  ),
 };

@@ -2,8 +2,7 @@ import React, { useEffect } from 'react';
 import {
   ArrayElement,
   BasicCellLayout,
-  CellProps,
-  ColumnDefinition,
+  ColumnDef,
   create,
   PluginDataStore,
   Plugins,
@@ -38,23 +37,19 @@ export const StateLoader: ArrayElement<
   return <></>;
 };
 
-const DonorColumn = ({ rowData }: CellProps<StockLineRowFragment>) => {
+const DonorColumn = ({ row }: { row: StockLineRowFragment }) => {
   const { getById } = useColumnStore();
 
-  return <BasicCellLayout>{getById(rowData)?.data || ''}</BasicCellLayout>;
+  return <BasicCellLayout>{getById(row)?.data || ''}</BasicCellLayout>;
 };
 
-const Column = (props: CellProps<StockLineRowFragment>) => (
-  <QueryClientProviderProxy>
-    <DonorColumn {...props} />
-  </QueryClientProviderProxy>
-);
-
-export const StockDonorColumn: ColumnDefinition<StockLineRowFragment> = {
-  Cell: Column,
-  key: 'stock-donor',
-  label: 'label.donor',
-  maxWidth: 150,
-  sortable: false,
-  order: 103,
+export const StockDonorColumn: ColumnDef<StockLineRowFragment> = {
+  Cell: ({ row }) => (
+    <QueryClientProviderProxy>
+      <DonorColumn row={row.original} />
+    </QueryClientProviderProxy>
+  ),
+  id: 'stock-donor',
+  header: 'Donor',
+  size: 150,
 };
