@@ -113,10 +113,14 @@ export const DetailView = () => {
   const tabs = [
     {
       Component: (
-        // {/* {plugins.requestRequisitionLine?.tableStateLoader?.map(
-        //   (StateLoader, index) => <StateLoader key={index} requestLines={lines} />
-        // )} */}
-        <MaterialTable table={table} />
+        <>
+          {plugins.requestRequisitionLine?.tableStateLoader?.map(
+            (StateLoader, index) => (
+              <StateLoader key={index} requestLines={lines} />
+            )
+          )}
+          <MaterialTable table={table} />
+        </>
       ),
       value: 'Details',
     },
