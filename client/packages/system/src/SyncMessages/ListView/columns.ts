@@ -53,6 +53,11 @@ export const useSyncMessageColumns = () => {
         return t(type);
       },
     },
+    {
+      key: 'errorMessage',
+      label: 'label.error-message',
+      accessor: ({ rowData }) => rowData?.errorMessage,
+    },
   ];
 
   return useColumns<SyncMessageRowFragment>(
