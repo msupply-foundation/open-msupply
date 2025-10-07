@@ -79,7 +79,7 @@ mod tests {
 
     #[actix_rt::test]
     async fn test_om_sync_message_translation() {
-        use crate::sync::test::test_data::sync_message as test_data;
+        use crate::sync::test::test_data::sync_message_om as test_data;
         let translator = OmSyncMessageTranslation;
 
         let (_, connection, _, _) =
