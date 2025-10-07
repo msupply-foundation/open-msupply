@@ -12,19 +12,24 @@ import {
   useAuthContext,
   useBreadcrumbs,
   useEditModal,
+  useNonPaginatedMaterialTable,
+  usePluginProvider,
+  NothingHere,
+  MaterialTable,
 } from '@openmsupply-client/common';
 import { ActivityLogList } from '@openmsupply-client/system';
-import { RequestLineFragment, useRequest } from '../api';
+import { RequestLineFragment, useHideOverStocked, useRequest } from '../api';
 import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
 import { AppBarButtons } from './AppBarButtons';
 import { SidePanel } from './SidePanel';
-import { ContentArea } from './ContentArea';
 import { AppRoute } from '@openmsupply-client/config';
 import { RequestRequisitionLineErrorProvider } from '../context';
 import { IndicatorsTab } from './IndicatorsTab';
 import { buildIndicatorEditRoute } from './utils';
 import { RequestLineEditModal } from './RequestLineEdit';
+import { useRequestColumns } from './columns';
+import { isRequestLinePlaceholderRow } from '../../utils';
 
 export const DetailView = () => {
   const t = useTranslation();
@@ -50,9 +55,7 @@ export const DetailView = () => {
     );
 
   const onRowClick = useCallback(
-    (line: RequestLineFragment) => {
-      onOpen(line.item.id);
-    },
+    (line: RequestLineFragment) => onOpen(line.item.id),
     [onOpen]
   );
 
@@ -79,15 +82,45 @@ export const DetailView = () => {
     setCustomBreadcrumbs({ 1: data?.requisitionNumber.toString() ?? '' });
   }, [setCustomBreadcrumbs, data?.requisitionNumber]);
 
-  if (isLoading) return <DetailViewSkeleton />;
+  const onAddItem = () => onOpen();
 
-  const onAddItem = () => {
-    onOpen();
-  };
+  const { lines, itemFilter, isError, isFetching } = useRequest.line.list();
+  const { on } = useHideOverStocked();
+  const { plugins } = usePluginProvider();
+  const isFiltered = !!itemFilter || on;
+
+  const columns = useRequestColumns();
+
+  const { table, selectedRows } = useNonPaginatedMaterialTable({
+    tableId: 'internal-order-detail',
+    columns,
+    data: lines,
+    isLoading: isFetching,
+    isError,
+    getIsPlaceholderRow: isRequestLinePlaceholderRow,
+    onRowClick,
+    initialSort: { key: 'itemName', dir: 'asc' },
+    noDataElement: (
+      <NothingHere
+        body={
+          isFiltered
+            ? t('error.no-items-filter-on')
+            : t('error.no-internal-order-items')
+        }
+        onCreate={isDisabled ? undefined : onAddItem}
+        buttonText={t('button.add-item')}
+      />
+    ),
+  });
 
   const tabs = [
     {
-      Component: <ContentArea onRowClick={onRowClick} onAddItem={onAddItem} />,
+      Component: (
+        // {/* {plugins.requestRequisitionLine?.tableStateLoader?.map(
+        //   (StateLoader, index) => <StateLoader key={index} requestLines={lines} />
+        // )} */}
+        <MaterialTable table={table} />
+      ),
       value: 'Details',
     },
     {
@@ -116,6 +149,7 @@ export const DetailView = () => {
     });
   }
 
+  if (isLoading) return <DetailViewSkeleton />;
   return !!data ? (
     <RequestRequisitionLineErrorProvider>
       <TableProvider
@@ -133,7 +167,10 @@ export const DetailView = () => {
 
         <DetailTabs tabs={tabs} />
 
-        <Footer />
+        <Footer
+          selectedRows={selectedRows}
+          resetRowSelection={table.resetRowSelection}
+        />
         <SidePanel />
         {isOpen && (
           <RequestLineEditModal
