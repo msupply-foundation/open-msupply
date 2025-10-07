@@ -63,7 +63,7 @@ export const ItemOption = styled('li')(({ theme }) => ({
 export interface StockItemSearchInputWithStatsProps
   extends GenericStockItemSearchInputProps {
   onChange: (item: ItemWithStatsFragment | null) => void;
-  extraFilter?: (item: ItemWithStatsFragment) => boolean;
+  filter: ItemFilterInput;
 }
 
 export const itemFilterOptions = {
