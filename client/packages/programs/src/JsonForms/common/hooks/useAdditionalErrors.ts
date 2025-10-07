@@ -14,7 +14,9 @@
 import { useCallback, useState } from 'react';
 import { ErrorObject } from 'ajv';
 
-export const useAdditionalErrors = () => {
+export const useAdditionalErrors = (
+  setError: ((error: string | false) => void) | undefined
+) => {
   const [additionalErrors, setAdditionalErrors] = useState<ErrorObject[]>([]);
 
   const addAdditionalError = useCallback(
@@ -45,6 +47,9 @@ export const useAdditionalErrors = () => {
           params: {},
         },
       ]);
+
+      // This updates the form's overall "error" state, if it's defined
+      if (setError) setError(message);
     },
     [additionalErrors]
   );

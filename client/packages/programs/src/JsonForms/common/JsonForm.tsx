@@ -159,7 +159,7 @@ const FormComponent = ({
   const { currentLanguage } = useIntlUtils();
   const { user, store } = useAuthContext();
   const { additionalErrors, addAdditionalError, removeAdditionalError } =
-    useAdditionalErrors();
+    useAdditionalErrors(setError);
   const fullConfig: JsonFormsConfig = {
     store,
     user,
