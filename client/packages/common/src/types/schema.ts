@@ -2658,6 +2658,7 @@ export type EncounterSortInput = {
 export type EqualFilterActivityLogTypeInput = {
   equalAny?: InputMaybe<Array<ActivityLogNodeType>>;
   equalTo?: InputMaybe<ActivityLogNodeType>;
+  notEqualAll?: InputMaybe<Array<ActivityLogNodeType>>;
   notEqualTo?: InputMaybe<ActivityLogNodeType>;
 };
 
@@ -2680,54 +2681,63 @@ export type EqualFilterBigNumberInput = {
 export type EqualFilterDocumentRegistryCategoryInput = {
   equalAny?: InputMaybe<Array<DocumentRegistryCategoryNode>>;
   equalTo?: InputMaybe<DocumentRegistryCategoryNode>;
+  notEqualAll?: InputMaybe<Array<DocumentRegistryCategoryNode>>;
   notEqualTo?: InputMaybe<DocumentRegistryCategoryNode>;
 };
 
 export type EqualFilterEncounterStatusInput = {
   equalAny?: InputMaybe<Array<EncounterNodeStatus>>;
   equalTo?: InputMaybe<EncounterNodeStatus>;
+  notEqualAll?: InputMaybe<Array<EncounterNodeStatus>>;
   notEqualTo?: InputMaybe<EncounterNodeStatus>;
 };
 
 export type EqualFilterGenderType = {
   equalAny?: InputMaybe<Array<GenderTypeNode>>;
   equalTo?: InputMaybe<GenderTypeNode>;
+  notEqualAll?: InputMaybe<Array<GenderTypeNode>>;
   notEqualTo?: InputMaybe<GenderTypeNode>;
 };
 
 export type EqualFilterGoodsReceivedStatusInput = {
   equalAny?: InputMaybe<Array<GoodsReceivedNodeStatus>>;
   equalTo?: InputMaybe<GoodsReceivedNodeStatus>;
+  notEqualAll?: InputMaybe<Array<GoodsReceivedNodeStatus>>;
   notEqualTo?: InputMaybe<GoodsReceivedNodeStatus>;
 };
 
 export type EqualFilterInventoryAdjustmentReasonTypeInput = {
   equalAny?: InputMaybe<Array<InventoryAdjustmentReasonNodeType>>;
   equalTo?: InputMaybe<InventoryAdjustmentReasonNodeType>;
+  notEqualAll?: InputMaybe<Array<InventoryAdjustmentReasonNodeType>>;
   notEqualTo?: InputMaybe<InventoryAdjustmentReasonNodeType>;
 };
 
 export type EqualFilterInvoiceLineTypeInput = {
   equalAny?: InputMaybe<Array<InvoiceLineNodeType>>;
   equalTo?: InputMaybe<InvoiceLineNodeType>;
+  notEqualAll?: InputMaybe<Array<InvoiceLineNodeType>>;
   notEqualTo?: InputMaybe<InvoiceLineNodeType>;
 };
 
 export type EqualFilterInvoiceStatusInput = {
   equalAny?: InputMaybe<Array<InvoiceNodeStatus>>;
   equalTo?: InputMaybe<InvoiceNodeStatus>;
+  notEqualAll?: InputMaybe<Array<InvoiceNodeStatus>>;
   notEqualTo?: InputMaybe<InvoiceNodeStatus>;
 };
 
 export type EqualFilterInvoiceTypeInput = {
   equalAny?: InputMaybe<Array<InvoiceNodeType>>;
   equalTo?: InputMaybe<InvoiceNodeType>;
+  notEqualAll?: InputMaybe<Array<InvoiceNodeType>>;
   notEqualTo?: InputMaybe<InvoiceNodeType>;
 };
 
 export type EqualFilterItemTypeInput = {
   equalAny?: InputMaybe<Array<ItemNodeType>>;
   equalTo?: InputMaybe<ItemNodeType>;
+  notEqualAll?: InputMaybe<Array<ItemNodeType>>;
   notEqualTo?: InputMaybe<ItemNodeType>;
 };
 
@@ -2742,48 +2752,56 @@ export type EqualFilterNumberInput = {
 export type EqualFilterPurchaseOrderLineStatusInput = {
   equalAny?: InputMaybe<Array<PurchaseOrderLineStatusNode>>;
   equalTo?: InputMaybe<PurchaseOrderLineStatusNode>;
+  notEqualAll?: InputMaybe<Array<PurchaseOrderLineStatusNode>>;
   notEqualTo?: InputMaybe<PurchaseOrderLineStatusNode>;
 };
 
 export type EqualFilterPurchaseOrderStatusInput = {
   equalAny?: InputMaybe<Array<PurchaseOrderNodeStatus>>;
   equalTo?: InputMaybe<PurchaseOrderNodeStatus>;
+  notEqualAll?: InputMaybe<Array<PurchaseOrderNodeStatus>>;
   notEqualTo?: InputMaybe<PurchaseOrderNodeStatus>;
 };
 
 export type EqualFilterReasonOptionTypeInput = {
   equalAny?: InputMaybe<Array<ReasonOptionNodeType>>;
   equalTo?: InputMaybe<ReasonOptionNodeType>;
+  notEqualAll?: InputMaybe<Array<ReasonOptionNodeType>>;
   notEqualTo?: InputMaybe<ReasonOptionNodeType>;
 };
 
 export type EqualFilterReportContextInput = {
   equalAny?: InputMaybe<Array<ReportContext>>;
   equalTo?: InputMaybe<ReportContext>;
+  notEqualAll?: InputMaybe<Array<ReportContext>>;
   notEqualTo?: InputMaybe<ReportContext>;
 };
 
 export type EqualFilterRequisitionStatusInput = {
   equalAny?: InputMaybe<Array<RequisitionNodeStatus>>;
   equalTo?: InputMaybe<RequisitionNodeStatus>;
+  notEqualAll?: InputMaybe<Array<RequisitionNodeStatus>>;
   notEqualTo?: InputMaybe<RequisitionNodeStatus>;
 };
 
 export type EqualFilterRequisitionTypeInput = {
   equalAny?: InputMaybe<Array<RequisitionNodeType>>;
   equalTo?: InputMaybe<RequisitionNodeType>;
+  notEqualAll?: InputMaybe<Array<RequisitionNodeType>>;
   notEqualTo?: InputMaybe<RequisitionNodeType>;
 };
 
 export type EqualFilterStatusInput = {
   equalAny?: InputMaybe<Array<AssetLogStatusNodeType>>;
   equalTo?: InputMaybe<AssetLogStatusNodeType>;
+  notEqualAll?: InputMaybe<Array<AssetLogStatusNodeType>>;
   notEqualTo?: InputMaybe<AssetLogStatusNodeType>;
 };
 
 export type EqualFilterStocktakeStatusInput = {
   equalAny?: InputMaybe<Array<StocktakeNodeStatus>>;
   equalTo?: InputMaybe<StocktakeNodeStatus>;
+  notEqualAll?: InputMaybe<Array<StocktakeNodeStatus>>;
   notEqualTo?: InputMaybe<StocktakeNodeStatus>;
 };
 
@@ -2798,12 +2816,14 @@ export type EqualFilterStringInput = {
 export type EqualFilterTemperatureBreachRowTypeInput = {
   equalAny?: InputMaybe<Array<TemperatureBreachNodeType>>;
   equalTo?: InputMaybe<TemperatureBreachNodeType>;
+  notEqualAll?: InputMaybe<Array<TemperatureBreachNodeType>>;
   notEqualTo?: InputMaybe<TemperatureBreachNodeType>;
 };
 
 export type EqualFilterTypeInput = {
   equalAny?: InputMaybe<Array<NameNodeType>>;
   equalTo?: InputMaybe<NameNodeType>;
+  notEqualAll?: InputMaybe<Array<NameNodeType>>;
   notEqualTo?: InputMaybe<NameNodeType>;
 };
 
@@ -4761,7 +4781,6 @@ export type ItemFilterInput = {
   hasStockOnHand?: InputMaybe<Scalars['Boolean']['input']>;
   id?: InputMaybe<EqualFilterStringInput>;
   ignoreForOrders?: InputMaybe<Scalars['Boolean']['input']>;
-  invoiceId?: InputMaybe<EqualFilterStringInput>;
   isActive?: InputMaybe<Scalars['Boolean']['input']>;
   isProgramItem?: InputMaybe<Scalars['Boolean']['input']>;
   isVaccine?: InputMaybe<Scalars['Boolean']['input']>;
