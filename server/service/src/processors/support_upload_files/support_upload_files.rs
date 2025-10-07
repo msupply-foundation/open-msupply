@@ -1,6 +1,7 @@
 use async_trait::async_trait;
 use repository::{
     ChangelogRow, ChangelogTableName, KeyType, KeyValueStoreRepository, StoreRowRepository,
+    SyncFileDirection, SyncFileReferenceRow, SyncFileReferenceRowRepository, SyncFileStatus,
     SyncMessageRow, SyncMessageRowRepository, SyncMessageRowStatus, SyncMessageRowType,
 };
 use serde_json::Value;
@@ -47,51 +48,33 @@ impl Processor for SupportUploadFilesProcessor {
             return Ok(None);
         }
 
-        let request_body: Value = serde_json::from_str(&sync_message.body).map_err(|e| {
-            ProcessorError::OtherError(format!(
-                "(support upload): Invalid JSON in body: {} - {}",
-                sync_message.body, e
-            ))
-        })?;
-
-        log::info!(
-            "Processing support upload files for sync message id: {} with body: {}",
-            sync_message.id,
-            request_body
-        );
-
-        let process_logs = request_body
-            .get("logs")
-            .and_then(|v| v.as_bool())
-            .unwrap_or(false);
-
-        let process_database = request_body
-            .get("database")
-            .and_then(|v| v.as_bool())
-            .unwrap_or(false);
-
-        if process_logs {
-            log::info!(
-                "Processing log files for sync message id: {}",
-                sync_message.id
-            );
-            process_log_files(ctx, service_provider, &sync_message)?;
-        }
-
-        if process_database {
-            log::info!(
-                "Processing database file for sync message id: {}",
-                sync_message.id
-            );
-            process_database_files(service_provider, &sync_message)?;
-        }
-
         sync_message_repo.upsert_one(&SyncMessageRow {
-            status: SyncMessageRowStatus::Processed,
+            status: SyncMessageRowStatus::InProgress,
             ..sync_message.clone()
         })?;
 
-        Ok(Some("success".to_string()))
+        let result = process_support_upload(ctx, service_provider, &sync_message).await;
+
+        match result {
+            Ok(_) => {
+                sync_message_repo.upsert_one(&SyncMessageRow {
+                    status: SyncMessageRowStatus::Processed,
+                    ..sync_message.clone()
+                })?;
+                Ok(Some("success".to_string()))
+            }
+            Err(e) => {
+                let error_message =
+                    format!("(support upload) Failed to process support upload: {}", e);
+
+                sync_message_repo.upsert_one(&SyncMessageRow {
+                    status: SyncMessageRowStatus::Processed,
+                    error_message: Some(error_message.clone()),
+                    ..sync_message.clone()
+                })?;
+                Err(e)
+            }
+        }
     }
 
     fn change_log_table_names(&self) -> Vec<ChangelogTableName> {
@@ -101,6 +84,53 @@ impl Processor for SupportUploadFilesProcessor {
     fn cursor_type(&self) -> CursorType {
         CursorType::Standard(KeyType::SupportUploadFilesProcessorCursor)
     }
+}
+
+async fn process_support_upload(
+    ctx: &ServiceContext,
+    service_provider: &ServiceProvider,
+    sync_message: &SyncMessageRow,
+) -> Result<(), ProcessorError> {
+    let request_body: Value = serde_json::from_str(&sync_message.body).map_err(|e| {
+        ProcessorError::OtherError(format!(
+            "(support upload): Invalid JSON in body: {} - {}",
+            sync_message.body, e
+        ))
+    })?;
+
+    log::info!(
+        "Processing support upload files for sync message id: {} with body: {}",
+        sync_message.id,
+        request_body
+    );
+
+    let process_logs = request_body
+        .get("logs")
+        .and_then(|v| v.as_bool())
+        .unwrap_or(false);
+
+    let process_database = request_body
+        .get("database")
+        .and_then(|v| v.as_bool())
+        .unwrap_or(false);
+
+    if process_logs {
+        log::info!(
+            "Processing log files for sync message id: {}",
+            sync_message.id
+        );
+        process_log_files(ctx, service_provider, &sync_message)?;
+    }
+
+    if process_database {
+        log::info!(
+            "Processing database file for sync message id: {}",
+            sync_message.id
+        );
+        process_database_files(ctx, service_provider, &sync_message)?;
+    }
+
+    Ok(())
 }
 
 fn is_to_store_on_this_site(
@@ -152,6 +182,8 @@ fn process_log_files(
             ))
         })?;
 
+    let sync_file_ref_repo = SyncFileReferenceRowRepository::new(&ctx.connection);
+
     for file_name in log_file_names {
         let (_, log_content) = service_provider
             .log_service
@@ -167,7 +199,7 @@ fn process_log_files(
         let log_content_string = log_content.join("\n");
         let log_bytes = log_content_string.as_bytes();
 
-        static_file_service
+        let file = static_file_service
             .store_file(
                 &file_name,
                 StaticFileCategory::SyncFile("sync_message".to_string(), sync_message.id.clone()),
@@ -180,12 +212,28 @@ fn process_log_files(
                     e.to_string()
                 ))
             })?;
+
+        sync_file_ref_repo.upsert_one(&SyncFileReferenceRow {
+            id: file.id.clone(),
+            file_name: file.name.clone(),
+            table_name: "sync_message".to_string(),
+            record_id: sync_message.id.clone(),
+            total_bytes: log_bytes.len() as i32,
+            mime_type: Some("text/plain".to_string()),
+            uploaded_bytes: 0,
+            created_datetime: chrono::Utc::now().naive_utc(),
+            deleted_datetime: None,
+            status: SyncFileStatus::New,
+            direction: SyncFileDirection::Upload,
+            ..Default::default()
+        })?;
     }
 
     Ok(())
 }
 
 fn process_database_files(
+    ctx: &ServiceContext,
     service_provider: &ServiceProvider,
     sync_message: &SyncMessageRow,
 ) -> Result<(), ProcessorError> {
@@ -221,7 +269,7 @@ fn process_database_files(
         ))
     })?;
 
-    static_file_service
+    let file = static_file_service
         .store_file(
             "uploaded-database.sqlite",
             StaticFileCategory::SyncFile("sync_message".to_string(), sync_message.id.clone()),
@@ -233,6 +281,21 @@ fn process_database_files(
                 e.to_string()
             ))
         })?;
+
+    SyncFileReferenceRowRepository::new(&ctx.connection).upsert_one(&SyncFileReferenceRow {
+        id: file.id.clone(),
+        file_name: file.name.clone(),
+        table_name: "sync_message".to_string(),
+        record_id: sync_message.id.clone(),
+        total_bytes: database_bytes.len() as i32,
+        mime_type: Some("application/x-sqlite3".to_string()),
+        uploaded_bytes: 0,
+        created_datetime: chrono::Utc::now().naive_utc(),
+        deleted_datetime: None,
+        status: SyncFileStatus::New,
+        direction: SyncFileDirection::Upload,
+        ..Default::default()
+    })?;
 
     Ok(())
 }
