@@ -11,7 +11,6 @@ export type StocktakeRowFragment = {
   description?: string | null;
   createdDatetime: string;
   finalisedDatetime?: string | null;
-  stocktakeDate?: string | null;
   stocktakeNumber: number;
   status: Types.StocktakeNodeStatus;
   isLocked: boolean;
@@ -100,7 +99,6 @@ export type StocktakeFragment = {
   comment?: string | null;
   createdDatetime: string;
   finalisedDatetime?: string | null;
-  stocktakeDate?: string | null;
   status: Types.StocktakeNodeStatus;
   description?: string | null;
   isLocked: boolean;
@@ -217,7 +215,6 @@ export type StocktakesQuery = {
       description?: string | null;
       createdDatetime: string;
       finalisedDatetime?: string | null;
-      stocktakeDate?: string | null;
       stocktakeNumber: number;
       status: Types.StocktakeNodeStatus;
       isLocked: boolean;
@@ -242,7 +239,6 @@ export type StocktakeQuery = {
         comment?: string | null;
         createdDatetime: string;
         finalisedDatetime?: string | null;
-        stocktakeDate?: string | null;
         status: Types.StocktakeNodeStatus;
         description?: string | null;
         isLocked: boolean;
@@ -359,7 +355,6 @@ export type StocktakeByNumberQuery = {
         comment?: string | null;
         createdDatetime: string;
         finalisedDatetime?: string | null;
-        stocktakeDate?: string | null;
         status: Types.StocktakeNodeStatus;
         description?: string | null;
         isLocked: boolean;
@@ -777,7 +772,6 @@ export const StocktakeRowFragmentDoc = gql`
     description
     createdDatetime
     finalisedDatetime
-    stocktakeDate
     stocktakeNumber
     status
     isLocked
@@ -870,7 +864,6 @@ export const StocktakeFragmentDoc = gql`
     comment
     createdDatetime
     finalisedDatetime
-    stocktakeDate
     status
     description
     isLocked
