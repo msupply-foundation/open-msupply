@@ -59,7 +59,7 @@ export const StockItemSearchInput = ({
   const { data, isLoading, fetchNextPage, isFetchingNextPage } =
     useItemStockOnHandInfinite({
       rowsPerPage: ROWS_PER_PAGE,
-      filter: fullFilter,
+      filter: disabled ? undefined : fullFilter,
     });
 
   // Note - important that we do a separate query for current item
