@@ -69,7 +69,7 @@ export const useDraftRequisitionLine = (
 ) => {
   const t = useTranslation();
   const [isReasonsError, setIsReasonsError] = useState(false);
-  const { lines } = useRequest.line.list();
+  const { lines } = useRequest.line.list(item?.id);
   const { data } = useRequest.document.get();
   const { mutateAsync: saveMutation, isLoading } = useRequest.line.save();
 
@@ -91,7 +91,7 @@ export const useDraftRequisitionLine = (
     } else {
       setDraft(null);
     }
-  }, [lines, item, data]);
+  }, [lines, item, data, isReasonsError]);
 
   const update = useCallback((patch: Partial<DraftRequestLine>) => {
     setDraft(current => (current ? { ...current, ...patch } : null));

@@ -1,8 +1,7 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo } from 'react';
 import {
   getDefaultColumnOrderIds,
   MRT_ColumnDef,
-  MRT_ColumnOrderState,
   MRT_RowData,
   MRT_StatefulTableOptions,
   MRT_TableOptions,
@@ -28,27 +27,26 @@ export const useColumnOrder = <T extends MRT_RowData>(
     [isGrouped, columns]
   );
 
-  const [state, setState] = useState<MRT_ColumnOrderState>(
-    getSavedState(tableId).columnOrder ?? initial
-  );
+  const savedState = getSavedState(tableId).columnOrder;
+  // Memoise to prevent re-renders
+  const state = useMemo(() => savedState, [savedState?.toString()]);
 
   const update = useCallback<
     NonNullable<MRT_TableOptions<MRT_RowData>['onColumnOrderChange']>
   >(
-    updaterOrValue =>
-      setState(prev => {
-        const newColumnOrder =
-          typeof updaterOrValue === 'function'
-            ? updaterOrValue(prev)
-            : updaterOrValue;
+    updaterOrValue => {
+      const newColumnOrder =
+        typeof updaterOrValue === 'function'
+          ? updaterOrValue(state ?? initial)
+          : updaterOrValue;
 
-        updateSavedState(tableId, {
-          columnOrder: differentOrUndefined(newColumnOrder, initial),
-        });
-        return newColumnOrder;
-      }),
-    []
+      updateSavedState(tableId, {
+        columnOrder: differentOrUndefined(newColumnOrder, initial),
+      });
+      return newColumnOrder;
+    },
+    [initial, state]
   );
 
-  return { initial, state, update };
+  return { initial, state: state ?? initial, update };
 };

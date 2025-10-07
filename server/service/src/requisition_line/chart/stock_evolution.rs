@@ -123,7 +123,7 @@ fn generate_evolution_series(
     points
 }
 
-fn calculate_historic_stock_evolution(
+pub fn calculate_historic_stock_evolution(
     reference_stock_on_hand: u32,
     mut historic_points: Vec<NaiveDate>,
     stock_on_hand_rows: Vec<StockMovementRow>,
