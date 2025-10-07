@@ -37,6 +37,7 @@ pub struct EqualFilterItemTypeInput {
     pub equal_to: Option<ItemNodeType>,
     pub equal_any: Option<Vec<ItemNodeType>>,
     pub not_equal_to: Option<ItemNodeType>,
+    pub not_equal_all: Option<Vec<ItemNodeType>>,
 }
 
 #[derive(InputObject, Clone)]

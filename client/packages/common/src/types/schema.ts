@@ -2665,6 +2665,7 @@ export type EqualFilterBigFloatingNumberInput = {
   equalAny?: InputMaybe<Array<Scalars['Float']['input']>>;
   equalAnyOrNull?: InputMaybe<Array<Scalars['Float']['input']>>;
   equalTo?: InputMaybe<Scalars['Float']['input']>;
+  notEqualAll?: InputMaybe<Array<Scalars['Float']['input']>>;
   notEqualTo?: InputMaybe<Scalars['Float']['input']>;
 };
 
@@ -2672,6 +2673,7 @@ export type EqualFilterBigNumberInput = {
   equalAny?: InputMaybe<Array<Scalars['Int']['input']>>;
   equalAnyOrNull?: InputMaybe<Array<Scalars['Int']['input']>>;
   equalTo?: InputMaybe<Scalars['Int']['input']>;
+  notEqualAll?: InputMaybe<Array<Scalars['Int']['input']>>;
   notEqualTo?: InputMaybe<Scalars['Int']['input']>;
 };
 
@@ -2733,6 +2735,7 @@ export type EqualFilterNumberInput = {
   equalAny?: InputMaybe<Array<Scalars['Int']['input']>>;
   equalAnyOrNull?: InputMaybe<Array<Scalars['Int']['input']>>;
   equalTo?: InputMaybe<Scalars['Int']['input']>;
+  notEqualAll?: InputMaybe<Array<Scalars['Int']['input']>>;
   notEqualTo?: InputMaybe<Scalars['Int']['input']>;
 };
 
@@ -2788,6 +2791,7 @@ export type EqualFilterStringInput = {
   equalAny?: InputMaybe<Array<Scalars['String']['input']>>;
   equalAnyOrNull?: InputMaybe<Array<Scalars['String']['input']>>;
   equalTo?: InputMaybe<Scalars['String']['input']>;
+  notEqualAll?: InputMaybe<Array<Scalars['String']['input']>>;
   notEqualTo?: InputMaybe<Scalars['String']['input']>;
 };
 
