@@ -25,10 +25,8 @@ pub fn validate(
     // "Verified" prescriptions can be updated to "Cancelled", which is the one
     // exception to normal "is_editable" rules.
     let is_editable = match &patch.status {
-        Some(UpdatePrescriptionStatus::Cancelled) => {
-            // Trying to cancel, so we just check if we can we cancel this invoice
-            can_cancel_invoice(&invoice)
-        }
+        // Trying to cancel, so we just check if we can we cancel this invoice
+        Some(UpdatePrescriptionStatus::Cancelled) => can_cancel_invoice(&invoice),
         // Otherwise, check if invoice is editable
         _ => check_invoice_is_editable(&invoice),
     };
