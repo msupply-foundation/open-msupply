@@ -26,7 +26,7 @@ export interface BaseTableConfig<T extends MRT_RowData>
   extends Omit<MRT_TableOptions<T>, 'data'> {
   tableId: string; // key for local storage
   data: T[] | undefined;
-  onRowClick?: (row: T) => void;
+  onRowClick?: (row: T, isCtrlClick: boolean) => void;
   isLoading?: boolean;
   isError?: boolean;
   getIsPlaceholderRow?: (row: T) => boolean;
