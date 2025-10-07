@@ -58,7 +58,6 @@ export const useUrlQuery = ({ skipParse }: useUrlQueryProps = {}) => {
 
   return useMemo(() => {
     const updateQuery = (values: UrlQueryObject, overwrite = false) => {
-      console.log('updateQuery', values, overwrite);
       // We use this rather than searchParams as this function uses a stale
       // version of searchParams (closure from when the hook was first called)
       const urlSearchParams = new URLSearchParams(window.location.search);
