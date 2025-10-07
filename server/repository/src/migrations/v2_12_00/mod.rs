@@ -1,6 +1,7 @@
 use super::{version::Version, Migration, MigrationFragment};
 use crate::StorageConnection;
 
+mod add_in_progress_status_sync_message;
 mod add_purchase_order_status_logs_to_activity_log_type_enum;
 mod add_shipping_method_table;
 mod add_support_upload_files_processor_cursor_key_value_store;
@@ -29,6 +30,7 @@ impl Migration for V2_12_00 {
             Box::new(add_purchase_order_status_logs_to_activity_log_type_enum::Migrate),
             Box::new(rename_purchase_order_line_price_per_unit_to_per_pack::Migrate),
             Box::new(add_support_upload_files_processor_cursor_key_value_store::Migrate),
+            Box::new(add_in_progress_status_sync_message::Migrate),
         ]
     }
 }

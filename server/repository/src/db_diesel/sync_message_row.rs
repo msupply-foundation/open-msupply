@@ -16,6 +16,7 @@ use serde::{Deserialize, Serialize};
 pub enum SyncMessageRowStatus {
     #[default]
     New,
+    InProgress,
     Processed,
 }
 
