@@ -18,6 +18,7 @@ pub struct InsertStocktake {
     pub id: String,
     pub create_blank_stocktake: Option<bool>,
     pub is_initial_stocktake: Option<bool>,
+    pub is_all_items_stocktake: Option<bool>,
     pub location_id: Option<String>,
     pub vvm_status_id: Option<String>,
     pub master_list_id: Option<String>,
@@ -94,9 +95,10 @@ mod test {
             program_master_list_store, MockData, MockDataInserts,
         },
         test_db::{setup_all, setup_all_with_data},
-        EqualFilter, MasterListLineRow, MasterListLineRowRepository, MasterListNameJoinRow,
-        StockLineRow, StockLineRowRepository, StocktakeLineFilter, StocktakeLineRepository,
-        StocktakeRow, StocktakeRowRepository, StocktakeStatus,
+        EqualFilter, ItemFilter, ItemRepository, MasterListLineRow, MasterListLineRowRepository,
+        MasterListNameJoinRow, StockLineFilter, StockLineRepository, StockLineRow,
+        StockLineRowRepository, StocktakeLineFilter, StocktakeLineRepository, StocktakeRow,
+        StocktakeRowRepository, StocktakeStatus,
     };
 
     #[actix_rt::test]
@@ -699,5 +701,90 @@ mod test {
             .iter()
             .find(|r| r.line.stock_line_id == Some("stock_line_row_1".to_string()));
         assert!(stock_line_row.is_none());
+    }
+
+    #[actix_rt::test]
+    async fn insert_full_stocktake() {
+        let (_, connection, connection_manager, _) = setup_all(
+            "insert_full_stocktake",
+            MockDataInserts {
+                ..MockDataInserts::all()
+            },
+        )
+        .await;
+
+        let store = mock_store_b();
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(store.id.clone(), mock_user_account_a().id)
+            .unwrap();
+        let service = service_provider.stocktake_service;
+
+        // create stocktake with no additional inputs - should include all items in stock
+        let in_stock_stocktake = service
+            .insert_stocktake(
+                &context,
+                InsertStocktake {
+                    id: "in_stock_stocktake".to_string(),
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+
+        let num_stock_lines = StockLineRepository::new(&connection)
+            .count(
+                Some(
+                    StockLineFilter::new()
+                        .store_id(EqualFilter::equal_to(&store.id))
+                        .has_packs_in_store(true),
+                ),
+                None,
+            )
+            .unwrap();
+
+        let num_stocktake_rows = StocktakeLineRepository::new(&connection)
+            .count(
+                Some(
+                    StocktakeLineFilter::new()
+                        .stocktake_id(EqualFilter::equal_to(&in_stock_stocktake.id)),
+                ),
+                None,
+            )
+            .unwrap();
+
+        // Should be a stocktake line for each stock line in the store
+        assert_eq!(num_stocktake_rows, num_stock_lines);
+
+        // INCLUDE OUT OF STOCK ITEMS
+        let all_items_stocktake = service
+            .insert_stocktake(
+                &context,
+                InsertStocktake {
+                    id: "all_items_stocktake".to_string(),
+                    is_all_items_stocktake: Some(true),
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+
+        let num_out_of_stock_items = ItemRepository::new(&connection)
+            .count(
+                store.id,
+                Some(ItemFilter::new().has_stock_on_hand(false).is_visible(true)),
+            )
+            .unwrap();
+
+        let num_stocktake_rows = StocktakeLineRepository::new(&connection)
+            .count(
+                Some(
+                    StocktakeLineFilter::new()
+                        .stocktake_id(EqualFilter::equal_to(&all_items_stocktake.id)),
+                ),
+                None,
+            )
+            .unwrap();
+
+        // Should be a stocktake line for each stock line in the store, & each out of stock item
+        assert_eq!(num_stocktake_rows, num_stock_lines + num_out_of_stock_items);
     }
 }

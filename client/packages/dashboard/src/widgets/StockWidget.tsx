@@ -9,10 +9,12 @@ import {
   RANGE_SPLIT_CHAR,
   RouteBuilder,
   StatsPanel,
+  useAuthContext,
   useFormatDateTime,
   useFormatNumber,
   useNavigate,
   useNotification,
+  UserPermission,
   useToggle,
   useTranslation,
   Widget,
@@ -24,11 +26,12 @@ import { AppRoute } from '@openmsupply-client/config';
 
 const LOW_MOS_THRESHOLD = 3;
 
-export const StockWidget: React.FC = () => {
+export const StockWidget = () => {
   const t = useTranslation();
   const navigate = useNavigate();
   const modalControl = useToggle(false);
   const { error: errorNotification } = useNotification();
+  const { userHasPermission } = useAuthContext();
   const formatNumber = useFormatNumber();
   const {
     data: expiryData,
@@ -64,6 +67,14 @@ export const StockWidget: React.FC = () => {
     today,
     urlQueryDate
   )}${RANGE_SPLIT_CHAR}${customDate(inAMonth, urlQueryDate)}`;
+
+  const handleClick = () => {
+    if (!userHasPermission(UserPermission.RequisitionMutate)) {
+      errorNotification(t('error-no-internal-order-create-permission'))();
+      return;
+    }
+    modalControl.toggleOn();
+  };
 
   return (
     <>
@@ -205,7 +216,7 @@ export const StockWidget: React.FC = () => {
               color="secondary"
               Icon={<PlusCircleIcon />}
               label={t('button.order-more')}
-              onClick={modalControl.toggleOn}
+              onClick={handleClick}
             />
           </Grid>
         </Grid>

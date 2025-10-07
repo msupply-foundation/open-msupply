@@ -1,4 +1,4 @@
-import React, { FC, memo } from 'react';
+import React, { memo } from 'react';
 import {
   Action,
   ActionsFooter,
@@ -6,13 +6,21 @@ import {
   useTranslation,
   AppFooterPortal,
 } from '@openmsupply-client/common';
-import { useRequest } from '../api';
+import { RequestRowFragment, useRequest } from '../api';
 
-export const FooterComponent: FC = () => {
+export const FooterComponent = ({
+  selectedRows,
+  resetRowSelection,
+}: {
+  selectedRows: RequestRowFragment[];
+  resetRowSelection: () => void;
+}) => {
   const t = useTranslation();
 
-  const { selectedRows, confirmAndDelete } =
-    useRequest.document.deleteSelected();
+  const { confirmAndDelete } = useRequest.document.deleteSelected(
+    selectedRows,
+    resetRowSelection
+  );
 
   const actions: Action[] = [
     {
@@ -30,6 +38,7 @@ export const FooterComponent: FC = () => {
             <ActionsFooter
               actions={actions}
               selectedRowCount={selectedRows.length}
+              resetRowSelection={resetRowSelection}
             />
           )}
         </>

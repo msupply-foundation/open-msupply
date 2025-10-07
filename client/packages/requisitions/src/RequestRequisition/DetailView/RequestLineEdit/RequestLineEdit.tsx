@@ -140,7 +140,7 @@ export const RequestLineEdit = ({
       <>
         <Box
           sx={{
-            background: theme => theme.palette.background.group,
+            background: theme => theme.palette.background.group.dark,
             padding: '0px 8px',
             borderRadius: 2,
             pb: 1,

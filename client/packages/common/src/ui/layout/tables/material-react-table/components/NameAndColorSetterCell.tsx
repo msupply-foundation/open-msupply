@@ -16,7 +16,7 @@ export const NameAndColorSetterCell = <
 }: {
   row: T;
   onColorChange: (patch: { id: string; colour: string }) => void;
-  getIsDisabled: (row: T) => boolean;
+  getIsDisabled?: (row: T) => boolean;
 }) => (
   <Box
     sx={{
@@ -28,12 +28,11 @@ export const NameAndColorSetterCell = <
     }}
   >
     <ColorSelectButton
-      disabled={getIsDisabled(row)}
+      disabled={getIsDisabled?.(row) ?? false}
       onChange={color => onColorChange({ id: row.id, colour: color.hex })}
       color={row.colour}
     />
     <Box ml={1} />
-    {/* TODO: implement row click as link */}
-    <Box>{row.otherPartyName}</Box>
+    {row.otherPartyName}
   </Box>
 );

@@ -30,6 +30,8 @@ const TRANSACT_1: (&str, &str) = (
       "comment": "",
       "confirm_date": "2021-07-30",
       "confirm_time": 47046,
+      "finalised_date": "0000-00-00",
+      "finalised_time": 0,
       "contact_id": "",
       "currency_ID": "NEW_ZEALAND_DOLLARS",
       "currency_rate": 1.32,
@@ -179,8 +181,8 @@ fn transact_1_push_legacy_row() -> LegacyTransactRow {
         linked_transaction_id: None,
         entry_date: NaiveDate::from_ymd_opt(2021, 7, 30).unwrap(),
         entry_time: NaiveTime::from_hms_opt(13, 4, 6).unwrap(),
-        ship_date: None,
-        arrival_date_actual: Some(NaiveDate::from_ymd_opt(2021, 7, 30).unwrap()),
+        finalised_date: None,
+        finalised_time: NaiveTime::from_hms_opt(0, 0, 0).unwrap(),
         confirm_date: Some(NaiveDate::from_ymd_opt(2021, 7, 30).unwrap()),
         confirm_time: NaiveTime::from_hms_opt(13, 4, 6).unwrap(),
         mode: TransactMode::Store,
@@ -315,7 +317,9 @@ const TRANSACT_2: (&str, &str) = (
         "waybill_number": "",
         "om_transport_reference": "transport reference",
         "programID": "missing_program",
-        "om_expected_delivery_date": ""
+        "om_expected_delivery_date": "",
+        "finalised_date": "0000-00-00",
+        "finalised_time": 0
     }"#,
 );
 fn transact_2_pull_record() -> TestSyncIncomingRecord {
@@ -388,8 +392,8 @@ fn transact_2_push_record() -> TestSyncOutgoingRecord {
             linked_transaction_id: None,
             entry_date: NaiveDate::from_ymd_opt(2021, 8, 3).unwrap(),
             entry_time: NaiveTime::from_hms_opt(12, 26, 46).unwrap(),
-            ship_date: None,
-            arrival_date_actual: None,
+            finalised_date: None,
+            finalised_time: NaiveTime::from_hms_opt(0, 0, 0).unwrap(),
             confirm_date: None,
             confirm_time: NaiveTime::from_hms_opt(0, 0, 0).unwrap(),
             mode: TransactMode::Store,
@@ -446,6 +450,8 @@ const TRANSACT_OM_FIELDS: (&str, &str) = (
         "comment": "",
         "confirm_date": "0000-00-00",
         "confirm_time": 44806,
+        "finalised_date": "2022-08-29",
+        "finalised_time": 34800,
         "contact_id": "",
         "currency_ID": "AUSTRALIAN_DOLLARS",
         "currency_rate": 1,
@@ -618,8 +624,8 @@ fn transact_om_fields_push_record() -> TestSyncOutgoingRecord {
             linked_transaction_id: None,
             entry_date: NaiveDate::from_ymd_opt(2022, 8, 24).unwrap(),
             entry_time: NaiveTime::from_hms_opt(9, 33, 0).unwrap(),
-            ship_date: Some(NaiveDate::from_ymd_opt(2022, 8, 27).unwrap()),
-            arrival_date_actual: Some(NaiveDate::from_ymd_opt(2022, 8, 28).unwrap()),
+            finalised_date: Some(NaiveDate::from_ymd_opt(2022, 8, 29).unwrap()),
+            finalised_time: NaiveTime::from_hms_opt(14, 33, 0).unwrap(),
             confirm_date: Some(NaiveDate::from_ymd_opt(2022, 8, 29).unwrap()),
             confirm_time: NaiveTime::from_hms_opt(14, 33, 0).unwrap(),
             mode: TransactMode::Store,
@@ -774,6 +780,7 @@ const INVENTORY_ADDITION: (&str, &str) = (
         "om_type": null,
         "om_transport_reference": null,
         "finalised_date": "2023-01-16",
+        "finalised_time": 0,
         "om_expected_delivery_date": null
     }"#,
 );
@@ -853,6 +860,8 @@ fn inventory_addition_push_record() -> TestSyncOutgoingRecord {
             entry_time: NaiveTime::from_hms_opt(0, 0, 0).unwrap(),
             confirm_date: Some(NaiveDate::from_ymd_opt(2023, 1, 16).unwrap(),),
             confirm_time: NaiveTime::from_hms_opt(0, 0, 0).unwrap(),
+            finalised_date: Some(NaiveDate::from_ymd_opt(2023, 1, 16).unwrap(),),
+            finalised_time: NaiveTime::from_hms_opt(0, 0, 0).unwrap(),
             created_datetime: Some(
                 NaiveDate::from_ymd_opt(2023, 1, 16)
                     .unwrap()
@@ -869,14 +878,12 @@ fn inventory_addition_push_record() -> TestSyncOutgoingRecord {
             mode: TransactMode::Store,
             comment: Some("Stocktake 1; Added stock".to_string()),
 
-            arrival_date_actual: None,
             allocated_datetime: None,
             picked_datetime: None,
             shipped_datetime: None,
             delivered_datetime: None,
             // received_datetime: None
             om_colour: None,
-            ship_date: None,
             hold: false,
             their_ref: None,
             transport_reference: None,
@@ -986,6 +993,7 @@ const INVENTORY_REDUCTION: (&str, &str) = (
         "om_type": null,
         "om_transport_reference": null,
         "finalised_date": "2023-01-16",
+        "finalised_time": 0,
         "om_expected_delivery_date": null
     }"#,
 );
@@ -1065,6 +1073,8 @@ fn inventory_reduction_push_record() -> TestSyncOutgoingRecord {
             entry_time: NaiveTime::from_hms_opt(0, 0, 0).unwrap(),
             confirm_date: Some(NaiveDate::from_ymd_opt(2023, 1, 16).unwrap(),),
             confirm_time: NaiveTime::from_hms_opt(0, 0, 0).unwrap(),
+            finalised_date: Some(NaiveDate::from_ymd_opt(2023, 1, 16).unwrap(),),
+            finalised_time: NaiveTime::from_hms_opt(0, 0, 0).unwrap(),
             created_datetime: Some(
                 NaiveDate::from_ymd_opt(2023, 1, 16)
                     .unwrap()
@@ -1080,14 +1090,12 @@ fn inventory_reduction_push_record() -> TestSyncOutgoingRecord {
             cancelled_datetime: None,
             mode: TransactMode::Store,
             comment: Some("Stocktake 2; Reduced stock".to_string()),
-            arrival_date_actual: None,
             allocated_datetime: None,
             picked_datetime: None,
             shipped_datetime: None,
             delivered_datetime: None,
             // received_datetime: None
             om_colour: None,
-            ship_date: None,
             hold: false,
             their_ref: None,
             transport_reference: None,
@@ -1193,7 +1201,9 @@ const PRESCRIPTION_1: (&str, &str) = (
       "om_verified_datetime": "",
       "om_created_datetime": "",
       "om_transport_reference": "",
-      "om_expected_delivery_date": ""
+      "om_expected_delivery_date": "",
+      "finalised_date": "0000-00-00",
+      "finalised_time": 0
   }"#,
 );
 fn prescription_1_pull_record() -> TestSyncIncomingRecord {
@@ -1272,8 +1282,8 @@ fn prescription_1_push_record() -> TestSyncOutgoingRecord {
             linked_transaction_id: None,
             entry_date: NaiveDate::from_ymd_opt(2021, 7, 30).unwrap(),
             entry_time: NaiveTime::from_hms_opt(13, 4, 6).unwrap(),
-            ship_date: None,
-            arrival_date_actual: None,
+            finalised_date: None,
+            finalised_time: NaiveTime::from_hms_opt(0, 0, 0).unwrap(),
             confirm_date: Some(NaiveDate::from_ymd_opt(2021, 7, 30).unwrap()),
             confirm_time: NaiveTime::from_hms_opt(13, 4, 6).unwrap(),
             mode: TransactMode::Dispensary,
@@ -1401,7 +1411,9 @@ const CANCELLED_PRESCRIPTION: (&str, &str) = (
       "om_created_datetime": "",
       "om_cancelled_datetime": "2022-08-24T09:33:00",
       "om_transport_reference": "",
-      "om_expected_delivery_date": ""
+      "om_expected_delivery_date": "",
+      "finalised_date": "0000-00-00",
+      "finalised_time": 0
   }"#,
 );
 fn cancelled_prescription_pull_record() -> TestSyncIncomingRecord {
@@ -1485,8 +1497,8 @@ fn cancelled_prescription_push_record() -> TestSyncOutgoingRecord {
             linked_transaction_id: None,
             entry_date: NaiveDate::from_ymd_opt(2021, 7, 30).unwrap(),
             entry_time: NaiveTime::from_hms_opt(13, 4, 6).unwrap(),
-            ship_date: None,
-            arrival_date_actual: None,
+            finalised_date: None,
+            finalised_time: NaiveTime::from_hms_opt(0, 0, 0).unwrap(),
             confirm_date: Some(NaiveDate::from_ymd_opt(2021, 7, 30).unwrap()),
             confirm_time: NaiveTime::from_hms_opt(13, 4, 6).unwrap(),
             mode: TransactMode::Dispensary,
@@ -1578,13 +1590,13 @@ fn transact_migrate_og_si_to_shipped_push() -> TestSyncOutgoingRecord {
             ID: TRANSACT_MIGRATE_OG_SI_STATUS_ID.to_string(),
             status: LegacyTransactStatus::Nw,
             om_status: Some(LegacyOmStatus::Shipped),
-            arrival_date_actual: None,
+            // arrival_date_actual: None,
             confirm_date: None,
             confirm_time: NaiveTime::from_hms_opt(0, 0, 0).unwrap(),
             shipped_datetime: transact_1_push_legacy_row().delivered_datetime,
             delivered_datetime: None,
-            // received_datetime: None
-            ship_date: Some(transact_1_push_legacy_row().entry_date),
+            finalised_date: transact_1_push_legacy_row().finalised_date,
+            finalised_time: transact_1_push_legacy_row().finalised_time,
             ..transact_1_push_legacy_row()
         }),
     }
