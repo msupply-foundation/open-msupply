@@ -58,6 +58,7 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
   grouping,
   enableRowSelection = true,
   enableColumnResizing = true,
+  enableColumnFilters = true,
   manualFiltering = false,
   initialSort,
   noDataElement,
@@ -87,7 +88,11 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
   const density = useColumnDensity(tableId);
   const columnSizing = useColumnSizing(tableId);
   const columnVisibility = useColumnVisibility(tableId, columns);
-  const columnPinning = useColumnPinning(tableId, columns);
+  const columnPinning = useColumnPinning(
+    tableId,
+    columns,
+    !!enableRowSelection
+  );
   const columnOrder = useColumnOrder(
     tableId,
     columns,
@@ -118,6 +123,7 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
   const displayOptions = useTableDisplayOptions({
     tableId,
     isGrouped,
+    enableColumnFilters,
     toggleGrouped: grouping?.enabled ? toggleGrouped : undefined,
     resetTableState,
     onRowClick,
@@ -135,6 +141,7 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
 
     layoutMode: 'grid',
     enableColumnResizing,
+    enableColumnFilters,
 
     enableColumnPinning: true,
     enableColumnOrdering: true,

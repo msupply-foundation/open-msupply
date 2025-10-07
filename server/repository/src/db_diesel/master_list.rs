@@ -103,7 +103,11 @@ impl<'a> MasterListRepository<'a> {
             if let Some(is_program) = f.is_program {
                 let program_join_query = program::table
                     .select(program::master_list_id)
-                    .filter(program::master_list_id.is_not_null())
+                    .filter(
+                        program::master_list_id
+                            .is_not_null()
+                            .and(program::deleted_datetime.is_null()),
+                    )
                     .distinct()
                     .into_boxed();
 

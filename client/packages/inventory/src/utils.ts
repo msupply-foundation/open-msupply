@@ -56,7 +56,6 @@ export const stocktakesToCsv = (
     t('heading.description'),
     t('label.comment'),
     t('label.created'),
-    t('label.date'),
   ];
 
   const data = invoices.map(node => [
@@ -66,7 +65,6 @@ export const stocktakesToCsv = (
     node.description,
     node.comment,
     Formatter.csvDateTimeString(node.createdDatetime),
-    Formatter.csvDateString(node.stocktakeDate),
   ]);
   return Formatter.csv({ fields, data });
 };
