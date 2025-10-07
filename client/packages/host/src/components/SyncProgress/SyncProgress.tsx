@@ -5,7 +5,6 @@ import {
   useTranslation,
   Box,
   AlertIcon,
-  BoxedErrorWithDetails,
   HorizontalStepper,
   StepDefinition,
   StepperColour,
@@ -59,7 +58,6 @@ export const SyncProgress: FC<SyncProgressProps> = ({
       {!isExtraSmallScreen && (
         <HorizontalStepper steps={steps} colour={colour} />
       )}
-      {error && <BoxedErrorWithDetails {...error} />}
     </Box>
   );
 };
