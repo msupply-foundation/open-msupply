@@ -156,7 +156,7 @@ export const ResponseLineEdit = ({
         ) : null}
         <Box
           sx={{
-            background: theme => theme.palette.background.group,
+            background: theme => theme.palette.background.group.dark,
             pt: 1,
             pb: 0.2,
             borderRadius: 2,
@@ -237,7 +237,7 @@ export const ResponseLineEdit = ({
       <>
         <Box
           sx={{
-            background: theme => theme.palette.background.group,
+            background: theme => theme.palette.background.group.dark,
             borderRadius: 2,
             p: 1,
             pb: 0.5,

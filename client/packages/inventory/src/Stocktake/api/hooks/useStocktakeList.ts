@@ -128,8 +128,6 @@ const toSortField = (
       return StocktakeSortFieldInput.Description;
     case 'createdDatetime':
       return StocktakeSortFieldInput.CreatedDatetime;
-    case 'stocktakeDate':
-      return StocktakeSortFieldInput.StocktakeDate;
     case 'comment':
       return StocktakeSortFieldInput.Comment;
     case 'finalisedDatetime':

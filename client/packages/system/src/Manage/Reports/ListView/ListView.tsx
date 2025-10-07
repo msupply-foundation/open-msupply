@@ -1,104 +1,86 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
-  TableProvider,
-  DataTable,
-  useColumns,
-  createTableStore,
   NothingHere,
   useUrlQueryParams,
   useTranslation,
-  TooltipTextCell,
   useEditModal,
-  ColumnAlign,
-  DotCell,
+  usePaginatedMaterialTable,
+  ColumnDef,
+  ColumnType,
+  MaterialTable,
 } from '@openmsupply-client/common';
 import { AppBarButtons } from './AppBarButtons';
 import { useCentralReports } from '../api/hooks/useAllReportVersionsList';
-import { ReportRowFragment } from 'packages/system/src/Report';
 import { ReportUploadModal } from './ReportUploadModal';
+import { ReportWithVersionRowFragment } from '../api/operations.generated';
 
-const ReportsComponent = () => {
+export const ReportsList = () => {
   const t = useTranslation();
   const {
-    updateSortQuery,
-    updatePaginationQuery,
-    queryParams: { sortBy, page, first, offset, filterBy },
+    queryParams: { sortBy, first, offset, filterBy },
   } = useUrlQueryParams({ initialSort: { key: 'code', dir: 'asc' } });
 
-  const queryParams = { sortBy, first, offset, filterBy };
+  const queryParams = {
+    sortBy: sortBy.key ? sortBy : undefined,
+    first,
+    offset,
+    filterBy,
+  };
   const {
-    query: { data, isError, isLoading },
+    query: { data, isError, isFetching },
     install: { installMutation },
   } = useCentralReports({
     queryParams,
   });
 
-  const pagination = { page, first, offset };
-
   const { isOpen, onClose, onOpen } = useEditModal();
 
-  const columns = useColumns<ReportRowFragment>(
-    [
+  const columns = useMemo(
+    (): ColumnDef<ReportWithVersionRowFragment>[] => [
       {
-        key: 'name',
-        label: 'label.name',
-        width: 150,
-        sortable: true,
-        Cell: TooltipTextCell,
+        accessorKey: 'name',
+        header: t('label.name'),
+        enableSorting: true,
       },
       {
-        key: 'code',
-        label: 'label.code',
-        width: 150,
-        sortable: true,
-        Cell: TooltipTextCell,
+        accessorKey: 'code',
+        header: t('label.code'),
+        enableSorting: true,
       },
       {
-        key: 'version',
-        label: 'label.version',
-        width: 150,
-        sortable: true,
+        accessorKey: 'version',
+        header: t('label.version'),
+        enableSorting: true,
       },
       {
-        label: 'label.status',
-        key: 'isActive',
-        accessor: ({ rowData }) => {
-          const { isActive } = rowData;
-          return t(isActive ? 'label.active' : 'label.inactive');
-        },
-        width: 150,
-        sortable: false,
+        id: 'isActive',
+        header: t('label.status'),
+        accessorFn: row =>
+          row.isActive ? t('label.active') : t('label.inactive'),
       },
-
       {
-        key: 'isCustom',
-        label: 'label.custom',
-        align: ColumnAlign.Center,
-        Cell: DotCell,
-        sortable: false,
-        width: 150,
+        accessorKey: 'isCustom',
+        header: t('label.custom'),
+        columnType: ColumnType.Boolean,
       },
     ],
-    {
-      sortBy,
-      onChangeSortBy: updateSortQuery,
-    },
-    [sortBy]
+    []
   );
+
+  const { table } = usePaginatedMaterialTable({
+    tableId: 'reports-list',
+    columns,
+    data: data?.nodes,
+    totalCount: data?.totalCount ?? 0,
+    isLoading: isFetching,
+    isError,
+    noDataElement: <NothingHere body={t('error.no-reports')} />,
+    enableRowSelection: false,
+  });
 
   return (
     <>
       <AppBarButtons onOpen={onOpen} />
-      <DataTable
-        id="report-list"
-        pagination={{ ...pagination, total: data?.totalCount ?? 0 }}
-        onChangePage={updatePaginationQuery}
-        columns={columns}
-        data={data?.nodes}
-        isLoading={isLoading}
-        isError={isError}
-        noDataElement={<NothingHere body={t('error.no-reports')} />}
-      />
       {isOpen && (
         <ReportUploadModal
           isOpen={isOpen}
@@ -106,12 +88,7 @@ const ReportsComponent = () => {
           install={installMutation}
         />
       )}
+      <MaterialTable table={table} />
     </>
   );
 };
-
-export const ReportsList = () => (
-  <TableProvider createStore={createTableStore}>
-    <ReportsComponent />
-  </TableProvider>
-);
