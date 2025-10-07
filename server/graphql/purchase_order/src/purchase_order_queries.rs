@@ -38,6 +38,7 @@ pub struct EqualFilterPurchaseOrderStatusInput {
     pub equal_to: Option<PurchaseOrderNodeStatus>,
     pub equal_any: Option<Vec<PurchaseOrderNodeStatus>>,
     pub not_equal_to: Option<PurchaseOrderNodeStatus>,
+    pub not_equal_all: Option<Vec<PurchaseOrderNodeStatus>>,
 }
 
 #[derive(InputObject, Clone)]

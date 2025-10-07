@@ -99,6 +99,7 @@ pub struct EqualFilterGenderType {
     pub equal_to: Option<GenderTypeNode>,
     pub equal_any: Option<Vec<GenderTypeNode>>,
     pub not_equal_to: Option<GenderTypeNode>,
+    pub not_equal_all: Option<Vec<GenderTypeNode>>,
 }
 
 #[Object]
