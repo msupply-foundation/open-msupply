@@ -1,27 +1,16 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { RequestLineFragment } from '../api';
 import {
-  ColumnAlign,
-  useColumns,
-  GenericColumnKey,
-  getCommentPopoverColumn,
-  useUrlQueryParams,
-  ColumnDescription,
-  TooltipTextCell,
   useAuthContext,
-  getLinesFromRow,
   usePluginProvider,
   UNDEFINED_STRING_VALUE,
   usePreferences,
-  UnitsAndMaybeDoses,
-  CellProps,
   ColumnDef,
   useTranslation,
   ColumnType,
   UnitsAndDosesCell,
 } from '@openmsupply-client/common';
 import { useRequest } from '../api';
-import { NumericCell, PackQuantityCell } from '@openmsupply-client/system';
 import { useRequestRequisitionLineErrorContext } from '../context';
 
 export const useRequestColumns = () => {
@@ -30,137 +19,29 @@ export const useRequestColumns = () => {
     'maxMonthsOfStock',
     'programName',
   ]);
-  const {
-    updateSortQuery,
-    queryParams: { sortBy },
-  } = useUrlQueryParams({ initialSort: { key: 'itemName', dir: 'asc' } });
   const { usesRemoteAuthorisation } = useRequest.utils.isRemoteAuthorisation();
   const { store } = useAuthContext();
-  const { getError } = useRequestRequisitionLineErrorContext();
+  const { errors } = useRequestRequisitionLineErrorContext();
   const { plugins } = usePluginProvider();
   const { manageVaccinesInDoses } = usePreferences();
 
   const showExtraColumns =
     !!programName &&
-    (store?.preferences.useConsumptionAndStockFromCustomersForInternalOrders ??
-      true);
+    store?.preferences.useConsumptionAndStockFromCustomersForInternalOrders;
 
-  const columnDefinitions: ColumnDescription<RequestLineFragment>[] = [
-    GenericColumnKey.Selection,
-    getCommentPopoverColumn(),
-  ];
-
-  if (showExtraColumns) {
-    columnDefinitions.push(
-      // TODO: Global pref to show/hide the next columns
-      {
-        key: 'initialStockOnHand',
-        label: 'label.initial-stock-on-hand',
-        width: 100,
-        align: ColumnAlign.Right,
-        sortable: false,
-        description: 'description.initial-stock-on-hand',
-        Cell: UnitsAndMaybeDosesCell,
-        accessor: ({ rowData }) => rowData.initialStockOnHandUnits,
-      },
-      {
-        key: 'incomingStock',
-        label: 'label.incoming',
-        width: 100,
-        align: ColumnAlign.Right,
-        sortable: false,
-        Cell: UnitsAndMaybeDosesCell,
-        accessor: ({ rowData }) => rowData.incomingUnits,
-      },
-      {
-        key: 'outgoingUnits',
-        label: 'label.outgoing',
-        width: 100,
-        align: ColumnAlign.Right,
-        sortable: false,
-        Cell: UnitsAndMaybeDosesCell,
-        accessor: ({ rowData }) => rowData.outgoingUnits,
-      },
-      {
-        key: 'losses',
-        label: 'label.losses',
-        width: 100,
-        align: ColumnAlign.Right,
-        sortable: false,
-        Cell: UnitsAndMaybeDosesCell,
-        accessor: ({ rowData }) => rowData.lossInUnits,
-      },
-      {
-        key: 'additions',
-        label: 'label.additions',
-        width: 100,
-        align: ColumnAlign.Right,
-        sortable: false,
-        Cell: UnitsAndMaybeDosesCell,
-        accessor: ({ rowData }) => rowData.additionInUnits,
-      },
-      {
-        key: 'expiringUnits',
-        label: 'label.short-expiry',
-        width: 100,
-        align: ColumnAlign.Right,
-        sortable: false,
-        Cell: UnitsAndMaybeDosesCell,
-        accessor: ({ rowData }) => rowData.expiringUnits,
-      },
-      {
-        key: 'daysOutOfStock',
-        label: 'label.days-out-of-stock',
-        width: 100,
-        align: ColumnAlign.Right,
-        sortable: false,
-        Cell: PackQuantityCell,
-        accessor: ({ rowData }) => rowData.daysOutOfStock,
-      },
-      {
-        key: 'reason',
-        label: 'label.reason',
-        sortable: false,
-        getIsError: row =>
-          getLinesFromRow(row).some(
-            r => getError(r)?.__typename === 'RequisitionReasonNotProvided'
-          ),
-        accessor: ({ rowData }) => rowData.reason?.reason,
-      }
-    );
-  }
-
-  if (usesRemoteAuthorisation) {
-    columnDefinitions.push({
-      key: 'approvedNumPacks',
-      label: 'label.approved-packs',
-      align: ColumnAlign.Right,
-      Cell: PackQuantityCell,
-      accessor: ({ rowData }) =>
-        rowData.linkedRequisitionLine?.approvedQuantity ?? 0,
-      getSortValue: rowData =>
-        rowData.linkedRequisitionLine?.approvedQuantity ?? 0,
-    });
-    columnDefinitions.push({
-      key: 'approvalComment',
-      label: 'label.approval-comment',
-      sortable: false,
-      accessor: ({ rowData }) => rowData.linkedRequisitionLine?.approvalComment,
-    });
-  }
-
-  // ...(plugins.requestRequisitionLine?.tableColumn || []),
   const columns = useMemo(
     (): ColumnDef<RequestLineFragment>[] => [
       {
         accessorKey: 'comment',
         header: t('label.comment'),
         columnType: ColumnType.Comment,
+        pin: 'left',
       },
       {
         accessorKey: 'item.code',
         header: t('label.code'),
         pin: 'left',
+        size: 100,
         enableSorting: true,
       },
       { accessorKey: 'itemName', header: t('label.name'), enableSorting: true },
@@ -235,6 +116,8 @@ export const useRequestColumns = () => {
         Cell: UnitsAndDosesCell,
         enableSorting: true,
       },
+
+      // --- Extra consumption columns on program orders
       {
         accessorKey: 'initialStockOnHandUnits',
         header: t('label.initial-stock-on-hand'),
@@ -279,7 +162,7 @@ export const useRequestColumns = () => {
         includeColumn: showExtraColumns,
       },
       {
-        accessorKey: 'daysOutOfStock', // todo - maybe default to 0, accessFN
+        accessorKey: 'daysOutOfStock',
         header: t('label.days-out-of-stock'),
         columnType: ColumnType.Number,
         includeColumn: showExtraColumns,
@@ -290,11 +173,10 @@ export const useRequestColumns = () => {
         includeColumn: showExtraColumns,
         accessorFn: row => row.reason?.reason,
         getIsError: row =>
-          // todo - prob less than this + include in deps
-          getLinesFromRow(row).some(
-            r => getError(r)?.__typename === 'RequisitionReasonNotProvided'
-          ),
+          errors[row.id]?.__typename === 'RequisitionReasonNotProvided',
       },
+
+      // --- Remote authorisation columns
       {
         id: 'approvedNumPacks',
         header: t('label.approved-packs'),
@@ -309,24 +191,19 @@ export const useRequestColumns = () => {
         accessorFn: row => row.linkedRequisitionLine?.approvalComment,
         includeColumn: usesRemoteAuthorisation,
       },
+
+      // Plugin columns
+      ...(plugins.requestRequisitionLine?.tableColumn || []),
     ],
-    [manageVaccinesInDoses, showExtraColumns]
+    [
+      manageVaccinesInDoses,
+      showExtraColumns,
+      usesRemoteAuthorisation,
+      maxMonthsOfStock,
+      plugins.requestRequisitionLine?.tableColumn,
+      errors,
+    ]
   );
 
   return columns;
-};
-
-const UnitsAndMaybeDosesCell = (props: CellProps<RequestLineFragment>) => {
-  const { rowData, column } = props;
-  const units = Number(column.accessor({ rowData })) ?? 0;
-  const { isVaccine, doses } = rowData.item;
-
-  return (
-    <UnitsAndMaybeDoses
-      numberCellProps={{ ...props, decimalLimit: 0 }}
-      units={units}
-      isVaccine={isVaccine}
-      dosesPerUnit={doses}
-    />
-  );
 };
