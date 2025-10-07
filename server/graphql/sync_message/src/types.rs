@@ -23,6 +23,7 @@ pub struct SyncMessageConnector {
 #[graphql(rename_items = "camelCase")]
 pub enum SyncMessageNodeStatus {
     New,
+    InProgress,
     Processed,
 }
 
@@ -86,10 +87,7 @@ impl SyncMessageNode {
         &self.row().error_message
     }
 
-    pub async fn sync_file_reference(
-        &self,
-        ctx: &Context<'_>,
-    ) -> Result<Option<SyncFileReferenceConnector>> {
+    pub async fn files(&self, ctx: &Context<'_>) -> Result<Option<SyncFileReferenceConnector>> {
         let sync_file_reference_id = &self.row().id;
 
         let files = ctx.get_loader::<DataLoader<SyncFileReferenceLoader>>();
@@ -130,6 +128,7 @@ impl SyncMessageNodeStatus {
     pub fn from_domain(status: &SyncMessageRowStatus) -> SyncMessageNodeStatus {
         match status {
             SyncMessageRowStatus::New => SyncMessageNodeStatus::New,
+            SyncMessageRowStatus::InProgress => SyncMessageNodeStatus::New,
             SyncMessageRowStatus::Processed => SyncMessageNodeStatus::Processed,
         }
     }
@@ -137,6 +136,7 @@ impl SyncMessageNodeStatus {
     pub fn to_domain(self) -> SyncMessageRowStatus {
         match self {
             SyncMessageNodeStatus::New => SyncMessageRowStatus::New,
+            SyncMessageNodeStatus::InProgress => SyncMessageRowStatus::InProgress,
             SyncMessageNodeStatus::Processed => SyncMessageRowStatus::Processed,
         }
     }

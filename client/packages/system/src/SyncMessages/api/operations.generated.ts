@@ -2,6 +2,7 @@ import * as Types from '@openmsupply-client/common';
 
 import { GraphQLClient, RequestOptions } from 'graphql-request';
 import gql from 'graphql-tag';
+import { SyncFileReferenceFragmentDoc } from '../../Documents/types.generated';
 type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
 export type SyncMessageRowFragment = {
   __typename: 'SyncMessageNode';
@@ -10,6 +11,7 @@ export type SyncMessageRowFragment = {
   type: Types.SyncMessageNodeType;
   status: Types.SyncMessageNodeStatus;
   createdDatetime: string;
+  errorMessage?: string | null;
   toStore?: {
     __typename: 'StoreNode';
     id: string;
@@ -21,6 +23,16 @@ export type SyncMessageRowFragment = {
     id: string;
     code: string;
     storeName: string;
+  } | null;
+  files?: {
+    __typename: 'SyncFileReferenceConnector';
+    nodes: Array<{
+      __typename: 'SyncFileReferenceNode';
+      id: string;
+      fileName: string;
+      recordId: string;
+      createdDatetime: string;
+    }>;
   } | null;
 };
 
@@ -49,6 +61,7 @@ export type SyncMessagesQuery = {
           type: Types.SyncMessageNodeType;
           status: Types.SyncMessageNodeStatus;
           createdDatetime: string;
+          errorMessage?: string | null;
           toStore?: {
             __typename: 'StoreNode';
             id: string;
@@ -60,6 +73,16 @@ export type SyncMessagesQuery = {
             id: string;
             code: string;
             storeName: string;
+          } | null;
+          files?: {
+            __typename: 'SyncFileReferenceConnector';
+            nodes: Array<{
+              __typename: 'SyncFileReferenceNode';
+              id: string;
+              fileName: string;
+              recordId: string;
+              createdDatetime: string;
+            }>;
           } | null;
         }>;
       };
@@ -87,6 +110,7 @@ export type SyncMessageByIdQuery = {
             type: Types.SyncMessageNodeType;
             status: Types.SyncMessageNodeStatus;
             createdDatetime: string;
+            errorMessage?: string | null;
             toStore?: {
               __typename: 'StoreNode';
               id: string;
@@ -98,6 +122,16 @@ export type SyncMessageByIdQuery = {
               id: string;
               code: string;
               storeName: string;
+            } | null;
+            files?: {
+              __typename: 'SyncFileReferenceConnector';
+              nodes: Array<{
+                __typename: 'SyncFileReferenceNode';
+                id: string;
+                fileName: string;
+                recordId: string;
+                createdDatetime: string;
+              }>;
             } | null;
           };
     };
@@ -131,7 +165,15 @@ export const SyncMessageRowFragmentDoc = gql`
       storeName
     }
     createdDatetime
+    errorMessage
+    files {
+      __typename
+      nodes {
+        ...SyncFileReference
+      }
+    }
   }
+  ${SyncFileReferenceFragmentDoc}
 `;
 export const SyncMessagesDocument = gql`
   query syncMessages(
