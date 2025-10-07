@@ -1,13 +1,10 @@
 import React, { useCallback, useEffect } from 'react';
 import {
-  TableProvider,
-  createTableStore,
   DetailViewSkeleton,
   AlertModal,
   RouteBuilder,
   useNavigate,
   useTranslation,
-  createQueryParamsStore,
   DetailTabs,
   useAuthContext,
   useBreadcrumbs,
@@ -152,37 +149,30 @@ export const DetailView = () => {
   if (isLoading) return <DetailViewSkeleton />;
   return !!data ? (
     <RequestRequisitionLineErrorProvider>
-      <TableProvider
-        createStore={createTableStore}
-        queryParamsStore={createQueryParamsStore<RequestLineFragment>({
-          initialSortBy: { key: 'itemName' },
-        })}
-      >
-        <AppBarButtons
-          isDisabled={!data || isDisabled}
-          onAddItem={onAddItem}
-          showIndicators={showIndicatorTab}
-        />
-        <Toolbar />
+      <AppBarButtons
+        isDisabled={!data || isDisabled}
+        onAddItem={onAddItem}
+        showIndicators={showIndicatorTab}
+      />
+      <Toolbar />
 
-        <DetailTabs tabs={tabs} />
+      <DetailTabs tabs={tabs} />
 
-        <Footer
-          selectedRows={selectedRows}
-          resetRowSelection={table.resetRowSelection}
+      <Footer
+        selectedRows={selectedRows}
+        resetRowSelection={table.resetRowSelection}
+      />
+      <SidePanel />
+      {isOpen && (
+        <RequestLineEditModal
+          requisition={data}
+          itemId={itemId}
+          isOpen={isOpen}
+          onClose={onClose}
+          mode={mode}
+          store={store}
         />
-        <SidePanel />
-        {isOpen && (
-          <RequestLineEditModal
-            requisition={data}
-            itemId={itemId}
-            isOpen={isOpen}
-            onClose={onClose}
-            mode={mode}
-            store={store}
-          />
-        )}
-      </TableProvider>
+      )}
     </RequestRequisitionLineErrorProvider>
   ) : (
     <AlertModal
