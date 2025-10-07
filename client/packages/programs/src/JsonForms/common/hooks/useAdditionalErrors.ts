@@ -21,57 +21,49 @@ export const useAdditionalErrors = (
 
   const addAdditionalError = useCallback(
     (path: string, message: string) => {
-      const existing = additionalErrors.find(
-        error => error.instancePath === path
-      );
-      if (existing) {
-        if (existing?.message === message) return;
-        // Update existing error if message has changed
-        setAdditionalErrors(prevErrors => {
+      setAdditionalErrors(prevErrors => {
+        const existing = prevErrors.find(error => error.instancePath === path);
+        if (existing) {
+          if (existing?.message === message) return prevErrors;
+          // Update existing error if message has changed
           const newErrors = prevErrors.filter(
             error => error.instancePath !== path
           );
           return [...newErrors, { ...existing, message }];
-        });
-        return;
-      }
+        }
 
-      // Add if new error
-      setAdditionalErrors(prevErrors => [
-        ...prevErrors,
-        {
-          instancePath: path,
-          message: message,
-          schemaPath: '',
-          keyword: 'custom',
-          params: {},
-        },
-      ]);
+        // Add if new error
+        return [
+          ...prevErrors,
+          {
+            instancePath: path,
+            message: message,
+            schemaPath: '',
+            keyword: 'custom',
+            params: {},
+          },
+        ];
+      });
 
       // This updates the form's overall "error" state, if it's defined
       if (setError) setError(message);
     },
-    [additionalErrors]
+    [setError]
   );
 
-  const removeAdditionalError = useCallback(
-    (path: string) => {
-      const existing = additionalErrors.find(
-        error => error.instancePath === path
-      );
-      if (!existing) return;
+  const removeAdditionalError = useCallback((path: string) => {
+    // Resetting errors in the same render cycle prevents newly modified data
+    // being updated correctly -- small timeout allow it to settle before
+    // updating errors
+    setTimeout(() => {
+      setAdditionalErrors(prevErrors => {
+        const existing = prevErrors.find(error => error.instancePath === path);
+        if (!existing) return prevErrors;
 
-      // Resetting errors in the same render cycle prevents newly modified data
-      // being updated correctly -- small timeout allow it to settle before
-      // updating errors
-      setTimeout(() => {
-        setAdditionalErrors(prevErrors =>
-          prevErrors.filter(error => error.instancePath !== path)
-        );
-      }, 50);
-    },
-    [additionalErrors]
-  );
+        return prevErrors.filter(error => error.instancePath !== path);
+      });
+    }, 50);
+  }, []);
 
   return {
     additionalErrors,
