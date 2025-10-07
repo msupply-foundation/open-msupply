@@ -49,7 +49,6 @@ interface GenericStockItemSearchInputProps {
 export interface StockItemSearchInputProps
   extends GenericStockItemSearchInputProps {
   onChange: (item: ItemStockOnHandFragment | null) => void;
-  extraFilter?: (item: ItemStockOnHandFragment) => boolean;
   filter?: ItemFilterInput;
   itemCategoryName?: string;
   programId?: string;

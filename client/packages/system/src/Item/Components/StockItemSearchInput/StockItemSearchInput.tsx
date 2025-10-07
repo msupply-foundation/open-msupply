@@ -27,11 +27,10 @@ export const StockItemSearchInput = ({
   onChange,
   currentItemId,
   disabled = false,
-  extraFilter,
   width,
   autoFocus = false,
   openOnFocus,
-  filter: apiFilter = { isVisible: true },
+  filter: apiFilter,
   itemCategoryName,
   programId,
   initialUpdate = false,
@@ -144,10 +143,9 @@ export const StockItemSearchInput = ({
       paginationDebounce={DEBOUNCE_TIMEOUT}
       onPageChange={pageNumber => fetchNextPage({ pageParam: pageNumber })}
       mapOptions={items =>
-        defaultOptionMapper(
-          extraFilter ? items.filter(extraFilter) : items,
-          'name'
-        ).sort((a, b) => a.label.localeCompare(b.label))
+        defaultOptionMapper(items, 'name').sort((a, b) =>
+          a.label.localeCompare(b.label)
+        )
       }
       inputValue={search}
       inputProps={{
