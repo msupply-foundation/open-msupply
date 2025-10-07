@@ -14,17 +14,20 @@ import {
   InvoiceNodeStatus,
   RequisitionNodeStatus,
   useNavigate,
+  useAuthContext,
+  UserPermission,
 } from '@openmsupply-client/common';
 import { useFormatNumber, useTranslation } from '@common/intl';
 import { useDashboard } from '../api';
 import { useOutbound } from '@openmsupply-client/invoices';
 import { AppRoute } from '@openmsupply-client/config';
 
-export const DistributionWidget: React.FC = () => {
+export const DistributionWidget = () => {
   const t = useTranslation();
   const modalControl = useToggle(false);
   const navigate = useNavigate();
   const { error: errorNotification } = useNotification();
+  const { userHasPermission } = useAuthContext();
   const formatNumber = useFormatNumber();
   const {
     data: outboundCount,
@@ -46,6 +49,14 @@ export const DistributionWidget: React.FC = () => {
       `Failed to create invoice! ${message}`
     );
     errorSnack();
+  };
+
+  const handleClick = () => {
+    if (!userHasPermission(UserPermission.OutboundShipmentMutate)) {
+      errorNotification(t('error-no-outbound-shipment-create-permission'))();
+      return;
+    }
+    modalControl.toggleOn();
   };
 
   return (
@@ -145,7 +156,7 @@ export const DistributionWidget: React.FC = () => {
               color="secondary"
               Icon={<PlusCircleIcon />}
               label={t('button.new-outbound-shipment')}
-              onClick={modalControl.toggleOn}
+              onClick={handleClick}
             />
           </Grid>
         </Grid>

@@ -26,7 +26,7 @@ export interface BaseTableConfig<T extends MRT_RowData>
   extends Omit<MRT_TableOptions<T>, 'data'> {
   tableId: string; // key for local storage
   data: T[] | undefined;
-  onRowClick?: (row: T) => void;
+  onRowClick?: (row: T, isCtrlClick: boolean) => void;
   isLoading?: boolean;
   isError?: boolean;
   getIsPlaceholderRow?: (row: T) => boolean;
@@ -58,6 +58,7 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
   grouping,
   enableRowSelection = true,
   enableColumnResizing = true,
+  enableColumnFilters = true,
   manualFiltering = false,
   initialSort,
   noDataElement,
@@ -87,7 +88,11 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
   const density = useColumnDensity(tableId);
   const columnSizing = useColumnSizing(tableId);
   const columnVisibility = useColumnVisibility(tableId, columns);
-  const columnPinning = useColumnPinning(tableId, columns);
+  const columnPinning = useColumnPinning(
+    tableId,
+    columns,
+    !!enableRowSelection
+  );
   const columnOrder = useColumnOrder(
     tableId,
     columns,
@@ -102,10 +107,11 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
     // reset function doesn't fire the onChange handlers (needed to trigger our state handlers)
     // Seeing as local storage has already been cleared,
     // these shouldn't trigger additional local storage updates
-    table.resetColumnOrder();
     table.resetColumnPinning();
     table.resetColumnSizing();
     resetGrouped();
+
+    // column order doesn't need resetting - state reset directly from clearing local storage
 
     // Visibility `initial` could change if prefs have come on/screen size changed
     // so reset to latest initial value rather than default initial mount state
@@ -118,6 +124,7 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
   const displayOptions = useTableDisplayOptions({
     tableId,
     isGrouped,
+    enableColumnFilters,
     toggleGrouped: grouping?.enabled ? toggleGrouped : undefined,
     resetTableState,
     onRowClick,
@@ -135,6 +142,7 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
 
     layoutMode: 'grid',
     enableColumnResizing,
+    enableColumnFilters,
 
     enableColumnPinning: true,
     enableColumnOrdering: true,

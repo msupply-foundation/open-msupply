@@ -1,24 +1,20 @@
-import React, { FC, useEffect } from 'react';
+import React, { useMemo } from 'react';
 import {
-  DataTable,
-  useColumns,
-  TableProvider,
-  createTableStore,
-  getNameAndColorColumn,
   useTranslation,
   RequisitionNodeStatus,
-  useTableStore,
   NothingHere,
   useToggle,
   useUrlQueryParams,
-  ColumnDescription,
-  GenericColumnKey,
-  getCommentPopoverColumn,
   useSimplifiedTabletUI,
   RouteBuilder,
-  TooltipTextCell,
+  usePaginatedMaterialTable,
+  MaterialTable,
+  ColumnDef,
+  NameAndColorSetterCell,
+  ColumnType,
+  TextWithTooltipCell,
+  useNavigate,
 } from '@openmsupply-client/common';
-import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
 import { RequestRowFragment, useRequest } from '../api';
 import {
@@ -29,25 +25,16 @@ import {
 import { Footer } from './Footer';
 import { AppRoute } from '@openmsupply-client/config';
 
-const useDisableRequestRows = (rows?: RequestRowFragment[]) => {
-  const { setDisabledRows } = useTableStore();
-  useEffect(() => {
-    const disabledRows = rows?.filter(isRequestDisabled).map(({ id }) => id);
-    if (disabledRows) setDisabledRows(disabledRows);
-  }, [rows]);
-};
-
-export const RequestRequisitionListView: FC = () => {
+export const ListView = () => {
   const t = useTranslation();
+  const navigate = useNavigate();
   const modalController = useToggle();
   const { data: programSettings } = useRequest.utils.programSettings();
 
   const { mutate: onUpdate } = useRequest.document.update();
   const {
-    updateSortQuery,
-    updatePaginationQuery,
     filter,
-    queryParams: { sortBy, page, first, offset },
+    queryParams: { sortBy, first, offset },
   } = useUrlQueryParams({
     initialSort: { key: 'createdDatetime', dir: 'desc' },
     filters: [
@@ -56,134 +43,144 @@ export const RequestRequisitionListView: FC = () => {
     ],
   });
   const queryParams = { ...filter, sortBy, first, offset };
-  const pagination = { page, first, offset };
 
-  const { data, isError, isLoading } = useRequest.document.list(queryParams);
-  useDisableRequestRows(data?.nodes);
+  const { data, isError, isFetching } = useRequest.document.list(queryParams);
+
   const { requireSupplierAuthorisation } = useRequest.utils.preferences();
   const simplifiedTabletView = useSimplifiedTabletUI();
 
-  const columnDefinitions: ColumnDescription<RequestRowFragment>[] = [
-    GenericColumnKey.Selection,
-    [
-      getNameAndColorColumn(),
+  // Default to true to prevent columns from jumping on initial render
+  const hasProgramSettings = !!programSettings && programSettings.length > 0;
+
+  const columns = useMemo(
+    (): ColumnDef<RequestRowFragment>[] => [
       {
-        setter: onUpdate,
-        customLinkRendering: true,
+        accessorKey: 'otherPartyName',
+        header: t('label.name'),
+        enableSorting: true,
+        enableColumnFilter: true,
+        size: 250,
+        Cell: ({ row }) => (
+          <NameAndColorSetterCell
+            row={row.original}
+            onColorChange={onUpdate}
+            getIsDisabled={isRequestDisabled}
+          />
+        ),
+      },
+      {
+        accessorKey: 'requisitionNumber',
+        header: t('label.number'),
+        enableSorting: true,
+        columnType: ColumnType.Number,
+      },
+      {
+        accessorKey: 'createdDatetime',
+        header: t('label.created'),
+        enableSorting: true,
+        columnType: ColumnType.Date,
+      },
+      {
+        accessorKey: 'lines.totalCount',
+        header: t('label.count-rows'),
+        includeColumn: simplifiedTabletView,
+      },
+      {
+        id: 'programName',
+        accessorFn: row => row.programName ?? '',
+        header: t('label.program'),
+        description: t('description.program'),
+        enableSorting: true,
+        Cell: TextWithTooltipCell,
+        defaultHideOnMobile: true,
+        includeColumn: hasProgramSettings,
+      },
+      {
+        id: 'orderType',
+        accessorFn: row => row.orderType ?? '',
+        header: t('label.order-type'),
+        enableSorting: true,
+        defaultHideOnMobile: true,
+        includeColumn: hasProgramSettings,
+      },
+      {
+        id: 'period',
+        accessorFn: row => row.period?.name ?? '',
+        header: t('label.period'),
+        enableSorting: true,
+        defaultHideOnMobile: true,
+        includeColumn: hasProgramSettings,
+      },
+      {
+        id: 'status',
+        header: t('label.status'),
+        enableSorting: true,
+        enableColumnFilter: true,
+        accessorFn: row => getRequisitionTranslator(t)(row.status),
+        filterVariant: 'select',
+        filterSelectOptions: [
+          { label: t('label.draft'), value: RequisitionNodeStatus.Draft },
+          { label: t('label.sent'), value: RequisitionNodeStatus.Sent },
+          {
+            label: t('label.finalised'),
+            value: RequisitionNodeStatus.Finalised,
+          },
+        ],
+      },
+      {
+        accessorKey: 'comment',
+        header: t('label.comment'),
+        columnType: ColumnType.Comment,
+      },
+      {
+        id: 'approvalStatus',
+        header: t('label.auth-status'),
+        accessorFn: row =>
+          t(getApprovalStatusKey(row.linkedRequisition?.approvalStatus)),
+        includeColumn: requireSupplierAuthorisation,
       },
     ],
-    {
-      key: 'requisitionNumber',
-      label: 'label.number',
-      width: 90,
-    },
-    ['createdDatetime', { width: 150 }],
-  ];
-
-  if (simplifiedTabletView) {
-    columnDefinitions.push({
-      key: 'count',
-      label: 'label.count-rows',
-      width: 110,
-      accessor: ({ rowData }: { rowData: RequestRowFragment }) =>
-        rowData.lines.totalCount,
-    });
-  }
-
-  if (programSettings && programSettings.length > 0) {
-    columnDefinitions.push(
-      {
-        key: 'programName',
-        accessor: ({ rowData }) => rowData.programName,
-        label: 'label.program',
-        description: 'description.program',
-        sortable: true,
-        width: 150,
-        defaultHideOnMobile: true,
-        Cell: TooltipTextCell,
-      },
-      {
-        key: 'orderType',
-        accessor: ({ rowData }) => rowData.orderType,
-        label: 'label.order-type',
-        sortable: true,
-        width: 100,
-        defaultHideOnMobile: true,
-      },
-      {
-        key: 'period',
-        accessor: ({ rowData }) => rowData.period?.name ?? '',
-        label: 'label.period',
-        sortable: true,
-        defaultHideOnMobile: true,
-      }
-    );
-  }
-
-  columnDefinitions.push(
-    [
-      'status',
-      {
-        width: 100,
-        formatter: currentStatus =>
-          getRequisitionTranslator(t)(currentStatus as RequisitionNodeStatus),
-      },
-    ],
-    getCommentPopoverColumn()
+    [hasProgramSettings, requireSupplierAuthorisation, simplifiedTabletView]
   );
 
-  if (requireSupplierAuthorisation) {
-    columnDefinitions.push({
-      key: 'approvalStatus',
-      label: 'label.auth-status',
-      minWidth: 150,
-      sortable: false,
-      accessor: ({ rowData }) =>
-        t(getApprovalStatusKey(rowData.linkedRequisition?.approvalStatus)),
-    });
-  }
-
-  const columns = useColumns<RequestRowFragment>(
-    columnDefinitions,
-    { sortBy, onChangeSortBy: updateSortQuery },
-    [sortBy]
-  );
-
-  const getRoute = (row: RequestRowFragment) =>
-    RouteBuilder.create(AppRoute.Replenishment)
+  const onRowClick = (row: RequestRowFragment, isCtrlClick: boolean) => {
+    const route = RouteBuilder.create(AppRoute.Replenishment)
       .addPart(AppRoute.InternalOrder)
       .addPart(row.id)
       .build();
 
+    // Open in new tab
+    if (isCtrlClick) window.open(route, '_blank');
+    else navigate(route);
+  };
+
+  const { table, selectedRows } = usePaginatedMaterialTable({
+    tableId: 'internal-order-list',
+    columns,
+    data: data?.nodes,
+    totalCount: data?.totalCount ?? 0,
+    isError,
+    isLoading: isFetching,
+    onRowClick,
+    getIsRestrictedRow: isRequestDisabled,
+    noDataElement: (
+      <NothingHere
+        body={t('error.no-internal-orders')}
+        onCreate={modalController.toggleOn}
+      />
+    ),
+  });
+
   return (
     <>
-      <Toolbar filter={filter} />
       <AppBarButtons modalController={modalController} />
 
-      <DataTable
-        id="internal-order-list"
-        pagination={{ ...pagination, total: data?.totalCount ?? 0 }}
-        onChangePage={updatePaginationQuery}
-        columns={columns}
-        data={data?.nodes ?? []}
-        rowLinkBuilder={getRoute}
-        isError={isError}
-        isLoading={isLoading}
-        enableColumnSelection
-        noDataElement={
-          <NothingHere
-            body={t('error.no-internal-orders')}
-            onCreate={modalController.toggleOn}
-          />
-        }
+      <MaterialTable table={table} />
+
+      <Footer
+        selectedRows={selectedRows}
+        resetRowSelection={table.resetRowSelection}
       />
-      <Footer />
     </>
   );
 };
-
-export const ListView = () => (
-  <TableProvider createStore={createTableStore}>
-    <RequestRequisitionListView />
-  </TableProvider>
-);
