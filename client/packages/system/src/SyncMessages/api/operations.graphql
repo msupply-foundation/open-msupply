@@ -14,6 +14,13 @@ fragment SyncMessageRow on SyncMessageNode {
     storeName
   }
   createdDatetime
+  errorMessage
+  files {
+    __typename
+    nodes {
+      ...SyncFileReference
+    }
+  }
 }
 
 query syncMessages(

@@ -10,25 +10,23 @@ import {
   Typography,
   useTranslation,
   SyncMessageNodeStatus,
-  SyncFileReferenceNode,
 } from '@openmsupply-client/common';
 import { Environment } from '@openmsupply-client/config/src';
+import { SyncMessageRowFragment } from '../../api';
 
 interface FileListProps {
-  id: string;
-  status: SyncMessageNodeStatus;
+  data: SyncMessageRowFragment;
 }
 
-export const FileList = ({ id, status }: FileListProps) => {
+export const FileList = ({ data }: FileListProps) => {
   const t = useTranslation();
-  const files: SyncFileReferenceNode[] = [];
 
   return (
     <Stack>
       <Typography fontWeight="bold">{t('label.files')}:</Typography>
       <List>
-        {files && files.length > 0 ? (
-          files.map(file => (
+        {data?.files?.nodes && data?.files?.nodes.length > 0 ? (
+          data?.files?.nodes.map(file => (
             <ListItem
               key={file.id}
               sx={{
@@ -46,7 +44,7 @@ export const FileList = ({ id, status }: FileListProps) => {
               <ListItemText
                 primary={
                   <Link
-                    to={`${Environment.SYNC_FILES_URL}/sync_message/${id}/${file.id}`}
+                    to={`${Environment.SYNC_FILES_URL}/sync_message/${data?.id}/${file.id}`}
                     target="_blank"
                   >
                     {file.fileName}
@@ -55,7 +53,7 @@ export const FileList = ({ id, status }: FileListProps) => {
               />
             </ListItem>
           ))
-        ) : status === SyncMessageNodeStatus.New ? (
+        ) : data?.status === SyncMessageNodeStatus.New ? (
           <Typography fontStyle="italic">
             {t('label.processing-files')}
           </Typography>
