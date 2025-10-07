@@ -29,6 +29,7 @@ export const ClinicianListView = () => {
     isError,
     isLoading: isFetching,
     enableRowSelection: false,
+    enableColumnFilters: false,
     noDataElement: <NothingHere body={t('error.no-clinicians')} />,
   });
 
