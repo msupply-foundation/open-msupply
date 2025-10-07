@@ -7,8 +7,8 @@
  * The update methods are added to the core "config" object to make them
  * available to all renderer components, and the "additionalErrors" array is
  * passed as a property on the main JsonForms component. Internally it is merged
- * with its own validation errors, so can be accessed on the `error` property of
- * any control.
+ * with its own validation errors, so can be accessed on the `errors` property
+ * of any control.
  */
 
 import { useCallback, useState } from 'react';
