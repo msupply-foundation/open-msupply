@@ -627,5 +627,27 @@ mod test {
                 expected_available
             );
         }
+
+        // Try to cancel again - should return an error as can't cancel a cancelled prescription
+        let result = service.update_prescription(
+            &context,
+            UpdatePrescription {
+                id: prescription().id,
+                status: Some(UpdatePrescriptionStatus::Cancelled),
+                ..Default::default()
+            },
+        );
+        assert_eq!(result, Err(ServiceError::InvoiceIsNotEditable));
+
+        // Try to cancel the reverse prescription - should return an error as can't cancel a cancelled prescription
+        let result = service.update_prescription(
+            &context,
+            UpdatePrescription {
+                id: reverse_prescription.id,
+                status: Some(UpdatePrescriptionStatus::Cancelled),
+                ..Default::default()
+            },
+        );
+        assert_eq!(result, Err(ServiceError::InvoiceIsNotEditable));
     }
 }
