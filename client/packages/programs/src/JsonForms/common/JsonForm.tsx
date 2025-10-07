@@ -15,7 +15,6 @@ import {
   UISchemaElement,
   createAjv,
 } from '@jsonforms/core';
-import { ErrorObject } from 'ajv';
 import { materialRenderers } from '@jsonforms/material-renderers';
 import {
   BooleanField,
@@ -135,7 +134,7 @@ export type JsonFormsConfig = {
    */
   initialData?: JsonData;
   // "Custom" error management functions
-  customErrors: {
+  customErrors?: {
     add: (path: string, message: string) => void;
     remove: (path: string) => void;
   };
