@@ -131,7 +131,7 @@ mod test {
                 name_link_id: mock_name_b().id,
                 store_id: mock_store_a().id,
                 r#type: InvoiceType::Prescription,
-                status: InvoiceStatus::Picked,
+                status: InvoiceStatus::Verified,
                 picked_datetime: Some((Utc::now() + Duration::hours(2)).naive_utc()),
                 invoice_number: 3,
                 ..Default::default()
