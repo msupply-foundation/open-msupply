@@ -15,6 +15,7 @@ import {
   UISchemaElement,
   createAjv,
 } from '@jsonforms/core';
+import { ErrorObject } from 'ajv';
 import { materialRenderers } from '@jsonforms/material-renderers';
 import {
   BooleanField,
@@ -65,6 +66,7 @@ import {
 } from './styleConstants';
 import { FormActionStructure } from '../useFormActions';
 import { PreviousData } from '../usePreviousEncounter';
+import { useAdditionalErrors } from './hooks/useAdditionalErrors';
 
 export type JsonType = string | number | boolean | null | undefined;
 
@@ -132,6 +134,11 @@ export type JsonFormsConfig = {
    * The initial data of the form before doing any modifications.
    */
   initialData?: JsonData;
+  // "Custom" error management functions
+  customErrors: {
+    add: (path: string, message: string) => void;
+    remove: (path: string) => void;
+  };
 };
 
 // This allows "default" values to be set in the JSON schema, though it
@@ -152,9 +159,15 @@ const FormComponent = ({
   const t = useTranslation();
   const { currentLanguage } = useIntlUtils();
   const { user, store } = useAuthContext();
+  const { additionalErrors, addAdditionalError, removeAdditionalError } =
+    useAdditionalErrors();
   const fullConfig: JsonFormsConfig = {
     store,
     user,
+    customErrors: {
+      add: addAdditionalError,
+      remove: removeAdditionalError,
+    },
     ...config,
   };
 
@@ -216,6 +229,7 @@ const FormComponent = ({
       }}
       ajv={handleDefaultsAjv}
       i18n={{ locale: currentLanguage, translateError }}
+      additionalErrors={additionalErrors}
     />
   );
 };
