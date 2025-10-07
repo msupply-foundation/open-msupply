@@ -21,6 +21,7 @@ import {
   SettingsIcon,
   RouteBuilder,
   useNavigate,
+  UserPermission,
 } from '@openmsupply-client/common';
 import { mapSyncError, useSync } from '@openmsupply-client/system';
 import { SyncProgress } from '../SyncProgress';
@@ -110,6 +111,7 @@ const useHostSync = (enabled: boolean) => {
 export const SyncModal = ({ onCancel, open, width = 800 }: SyncModalProps) => {
   const t = useTranslation();
   const navigate = useNavigate();
+  const { userHasPermission } = useAuthContext();
   const { localisedTime, localisedDate } = useFormatDateTime();
   const theme = useAppTheme();
   const isExtraSmallScreen = useMediaQuery(
@@ -281,20 +283,22 @@ export const SyncModal = ({ onCancel, open, width = 800 }: SyncModalProps) => {
               fontSize: '14px',
             })}
           />
-          <ButtonWithIcon
-            color={'secondary'}
-            onClick={() => {
-              onCancel();
-              navigate(RouteBuilder.create(AppRoute.Settings).build());
-            }}
-            Icon={<SettingsIcon />}
-            label={t('settings')}
-            shouldShrink={false}
-            sx={{
-              marginLeft: 1,
-              fontSize: '14px',
-            }}
-          />
+          {userHasPermission(UserPermission.ServerAdmin) && (
+            <ButtonWithIcon
+              color={'secondary'}
+              onClick={() => {
+                onCancel();
+                navigate(RouteBuilder.create(AppRoute.Settings).build());
+              }}
+              Icon={<SettingsIcon />}
+              label={t('settings')}
+              shouldShrink={false}
+              sx={{
+                marginLeft: 1,
+                fontSize: '14px',
+              }}
+            />
+          )}
         </Box>
       </Grid>
     </BasicModal>
