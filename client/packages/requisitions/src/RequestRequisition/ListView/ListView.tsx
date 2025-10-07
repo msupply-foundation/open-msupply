@@ -49,12 +49,6 @@ export const ListView = () => {
   const { requireSupplierAuthorisation } = useRequest.utils.preferences();
   const simplifiedTabletView = useSimplifiedTabletUI();
 
-  const getRoute = (row: RequestRowFragment) =>
-    RouteBuilder.create(AppRoute.Replenishment)
-      .addPart(AppRoute.InternalOrder)
-      .addPart(row.id)
-      .build();
-
   // Default to true to prevent columns from jumping on initial render
   const hasProgramSettings = !!programSettings && programSettings.length > 0;
 
@@ -71,7 +65,6 @@ export const ListView = () => {
             row={row.original}
             onColorChange={onUpdate}
             getIsDisabled={isRequestDisabled}
-            link={getRoute(row.original)}
           />
         ),
       },
@@ -150,6 +143,17 @@ export const ListView = () => {
     [hasProgramSettings, requireSupplierAuthorisation, simplifiedTabletView]
   );
 
+  const onRowClick = (row: RequestRowFragment, isCtrlClick: boolean) => {
+    const route = RouteBuilder.create(AppRoute.Replenishment)
+      .addPart(AppRoute.InternalOrder)
+      .addPart(row.id)
+      .build();
+
+    // Open in new tab
+    if (isCtrlClick) window.open(route, '_blank');
+    else navigate(route);
+  };
+
   const { table, selectedRows } = usePaginatedMaterialTable({
     tableId: 'internal-order-list',
     columns,
@@ -157,7 +161,7 @@ export const ListView = () => {
     totalCount: data?.totalCount ?? 0,
     isError,
     isLoading: isFetching,
-    onRowClick: row => navigate(getRoute(row)),
+    onRowClick,
     getIsRestrictedRow: isRequestDisabled,
     noDataElement: (
       <NothingHere

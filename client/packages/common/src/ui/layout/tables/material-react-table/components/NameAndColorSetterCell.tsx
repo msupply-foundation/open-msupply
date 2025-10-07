@@ -13,12 +13,10 @@ export const NameAndColorSetterCell = <
   onColorChange,
   getIsDisabled,
   row,
-  link,
 }: {
   row: T;
   onColorChange: (patch: { id: string; colour: string }) => void;
   getIsDisabled?: (row: T) => boolean;
-  link?: string;
 }) => (
   <Box
     sx={{
@@ -35,12 +33,6 @@ export const NameAndColorSetterCell = <
       color={row.colour}
     />
     <Box ml={1} />
-    <Box
-      component={link ? 'a' : 'div'}
-      href={link}
-      sx={{ textDecoration: 'none', color: 'inherit' }}
-    >
-      {row.otherPartyName}
-    </Box>
+    {row.otherPartyName}
   </Box>
 );

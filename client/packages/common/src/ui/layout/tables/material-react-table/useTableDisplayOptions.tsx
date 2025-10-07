@@ -20,6 +20,7 @@ import { ColumnDef } from './types';
 import { IconButton } from '@common/components';
 import { useTranslation } from '@common/intl';
 import { hasSavedState } from './tableState/utils';
+import { EnvUtils } from '@common/utils';
 
 export const useTableDisplayOptions = <T extends MRT_RowData>({
   tableId,
@@ -33,7 +34,7 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
 }: {
   tableId: string;
   resetTableState: () => void;
-  onRowClick?: (row: T) => void;
+  onRowClick?: (row: T, isCtrlClick: boolean) => void;
   isGrouped: boolean;
   enableColumnFilters: boolean;
   toggleGrouped?: () => void;
@@ -177,8 +178,11 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
         : {},
 
     muiTableBodyRowProps: ({ row }) => ({
-      onClick: () => {
-        if (onRowClick) onRowClick(row.original);
+      onClick: e => {
+        const isCtrlClick = e.getModifierState(
+          EnvUtils.os === 'Mac OS' ? 'Meta' : 'Control'
+        );
+        if (onRowClick) onRowClick(row.original, isCtrlClick);
       },
       sx: {
         backgroundColor: row.original['isSubRow']
