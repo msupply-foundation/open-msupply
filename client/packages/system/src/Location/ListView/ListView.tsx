@@ -6,7 +6,6 @@ import {
   useUrlQueryParams,
   UNDEFINED_STRING_VALUE,
   InlineProgress,
-  Box,
   usePaginatedMaterialTable,
   ColumnDef,
   ColumnType,

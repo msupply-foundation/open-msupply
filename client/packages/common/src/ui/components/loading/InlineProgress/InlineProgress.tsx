@@ -1,10 +1,5 @@
 import React, { FC } from 'react';
-import {
-  Box,
-  LinearProgress,
-  LinearProgressProps,
-  Typography,
-} from '@mui/material';
+import { Box, LinearProgress, Typography } from '@mui/material';
 
 interface InlineProgressProps {
   color?: 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning';
