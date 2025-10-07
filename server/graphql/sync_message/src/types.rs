@@ -1,7 +1,10 @@
 use async_graphql::{dataloader::DataLoader, *};
 use chrono::{DateTime, Utc};
-use graphql_core::{loader::StoreByIdLoader, ContextExt};
-use graphql_types::types::StoreNode;
+use graphql_core::{
+    loader::{StoreByIdLoader, SyncFileReferenceLoader},
+    ContextExt,
+};
+use graphql_types::types::{StoreNode, SyncFileReferenceConnector};
 use repository::{SyncMessageRow, SyncMessageRowStatus, SyncMessageRowType};
 use service::ListResult;
 
@@ -81,6 +84,20 @@ impl SyncMessageNode {
 
     pub async fn error_message(&self) -> &Option<String> {
         &self.row().error_message
+    }
+
+    pub async fn sync_file_reference(
+        &self,
+        ctx: &Context<'_>,
+    ) -> Result<Option<SyncFileReferenceConnector>> {
+        let sync_file_reference_id = &self.row().id;
+
+        let files = ctx.get_loader::<DataLoader<SyncFileReferenceLoader>>();
+        let result_option = files.load_one(sync_file_reference_id.to_string()).await?;
+
+        let documents = SyncFileReferenceConnector::from_vec(result_option.unwrap_or(vec![]));
+
+        Ok(Some(documents))
     }
 }
 
