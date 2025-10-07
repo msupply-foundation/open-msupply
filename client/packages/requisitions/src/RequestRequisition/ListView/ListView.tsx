@@ -56,8 +56,7 @@ export const ListView = () => {
       .build();
 
   // Default to true to prevent columns from jumping on initial render
-  const hasProgramSettings =
-    (programSettings && programSettings.length > 0) ?? true;
+  const hasProgramSettings = !!programSettings && programSettings.length > 0;
 
   const columns = useMemo(
     (): ColumnDef<RequestRowFragment>[] => [

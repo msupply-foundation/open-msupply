@@ -107,10 +107,11 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
     // reset function doesn't fire the onChange handlers (needed to trigger our state handlers)
     // Seeing as local storage has already been cleared,
     // these shouldn't trigger additional local storage updates
-    table.resetColumnOrder();
     table.resetColumnPinning();
     table.resetColumnSizing();
     resetGrouped();
+
+    // column order doesn't need resetting - state reset directly from clearing local storage
 
     // Visibility `initial` could change if prefs have come on/screen size changed
     // so reset to latest initial value rather than default initial mount state
