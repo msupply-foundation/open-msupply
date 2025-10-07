@@ -16,11 +16,8 @@ import { PreviousValueDisplay } from '../utilityComponents';
 const Options = z
   .object({
     /**
-     * Additional pattern to be matched that can be defined in ui schema
-     */
-    pattern: z.string().optional(),
-    /**
-     * Examples for the correct pattern
+     * Examples for the correct Regex pattern, which is defined in the Json
+     * schema (not the uischema options)
      */
     examples: z.array(z.string()).optional(),
     width: z.string().optional(),
