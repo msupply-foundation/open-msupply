@@ -1,9 +1,8 @@
 use super::{
-    invoice_line_row::invoice_line, item_category_row::item_category_join,
-    item_link_row::item_link, item_row::item, master_list_line_row::master_list_line,
-    master_list_name_join::master_list_name_join, master_list_row::master_list,
-    program_row::program, stock_on_hand::stock_on_hand, store_row::store, unit_row::unit, DBType,
-    ItemRow, ItemType, StorageConnection, UnitRow,
+    item_category_row::item_category_join, item_link_row::item_link, item_row::item,
+    master_list_line_row::master_list_line, master_list_name_join::master_list_name_join,
+    master_list_row::master_list, program_row::program, stock_on_hand::stock_on_hand,
+    store_row::store, unit_row::unit, DBType, ItemRow, ItemType, StorageConnection, UnitRow,
 };
 
 use diesel::{
@@ -58,7 +57,6 @@ pub struct ItemFilter {
     pub ignore_for_orders: Option<bool>,
     pub min_months_of_stock: Option<f64>,
     pub max_months_of_stock: Option<f64>,
-    pub invoice_id: Option<EqualFilter<String>>,
 }
 
 impl ItemFilter {
@@ -133,11 +131,6 @@ impl ItemFilter {
 
     pub fn ignore_for_orders(mut self, value: bool) -> Self {
         self.ignore_for_orders = Some(value);
-        self
-    }
-
-    pub fn invoice_id(mut self, filter: EqualFilter<String>) -> Self {
-        self.invoice_id = Some(filter);
         self
     }
 }
@@ -252,7 +245,6 @@ fn create_filtered_query(store_id: String, filter: Option<ItemFilter>) -> BoxedI
             // Implementing these MOS filters requires consumption data, so they are handled in the service layer.
             max_months_of_stock: _,
             min_months_of_stock: _,
-            invoice_id,
         } = f;
 
         // or filter need to be applied before and filters
@@ -273,10 +265,6 @@ fn create_filtered_query(store_id: String, filter: Option<ItemFilter>) -> BoxedI
         if let Some(is_vaccine) = is_vaccine {
             query = query.filter(item::is_vaccine.eq(is_vaccine));
         }
-
-        // if let Some(is_not_on_invoice) = is_not_on_invoice {
-        //     let item_ids_on_invoice = item_link_id::in
-        // }
 
         if let Some(category_id) = category_id {
             // Don't need to consider merged items (item_link) here - if item
@@ -407,16 +395,6 @@ fn create_filtered_query(store_id: String, filter: Option<ItemFilter>) -> BoxedI
             );
             query = query.filter(item::id.eq_any(sub_query));
         };
-
-        if let Some(invoice_id_filter) = invoice_id {
-            if let Some(invoice_id_value) = invoice_id_filter.equal_to {
-                let sub_query = invoice_line::table
-                    .select(invoice_line::item_link_id)
-                    .filter(invoice_line::invoice_id.eq(invoice_id_value));
-
-                query = query.filter(item::id.ne_all(sub_query));
-            }
-        }
 
         if let Some(ignore_for_orders) = ignore_for_orders {
             let item_ids_for_ignore_for_orders = item_link::table
