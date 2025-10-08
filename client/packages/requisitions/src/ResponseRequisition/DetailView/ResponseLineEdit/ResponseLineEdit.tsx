@@ -10,7 +10,6 @@ import {
   ModalGridLayout,
   usePreferences,
   ModalPanelArea,
-  NumInputRow,
 } from '@openmsupply-client/common';
 import {
   ItemWithStatsFragment,
@@ -22,6 +21,7 @@ import { InfoRow, RepresentationValue } from '../../../common';
 import { DraftResponseLine } from './hooks';
 import { SupplySelection } from './SuppliedSelection';
 import { useStockCalculations } from './utils';
+import { ResponseNumInputRow } from './ResponseNumInputRow';
 
 interface ResponseLineEditProps {
   store?: UserStoreNodeFragment;
@@ -109,37 +109,37 @@ export const ResponseLineEdit = ({
         ) : null}
         {showExtraFields && (
           <>
-            <NumInputRow
+            <ResponseNumInputRow
               label={t('label.initial-stock-on-hand')}
               value={draft?.initialStockOnHandUnits}
               onChange={value => update({ initialStockOnHandUnits: value })}
               {...commonProps}
             />
-            <NumInputRow
+            <ResponseNumInputRow
               label={t('label.incoming')}
               value={draft?.incomingUnits}
               onChange={value => update({ incomingUnits: value })}
               {...commonProps}
             />
-            <NumInputRow
+            <ResponseNumInputRow
               label={t('label.outgoing')}
               value={draft?.outgoingUnits}
               onChange={value => update({ outgoingUnits: value })}
               {...commonProps}
             />
-            <NumInputRow
+            <ResponseNumInputRow
               label={t('label.losses')}
               value={draft?.lossInUnits}
               onChange={value => update({ lossInUnits: value })}
               {...commonProps}
             />
-            <NumInputRow
+            <ResponseNumInputRow
               label={t('label.additions')}
               value={draft?.additionInUnits}
               onChange={value => update({ additionInUnits: value })}
               {...commonProps}
             />
-            <NumInputRow
+            <ResponseNumInputRow
               label={t('label.days-out-of-stock')}
               value={draft?.daysOutOfStock}
               onChange={value => update({ daysOutOfStock: value })}
@@ -171,7 +171,7 @@ export const ResponseLineEdit = ({
           />
         ) : null}
         <ModalPanelArea>
-          <NumInputRow
+          <ResponseNumInputRow
             label={t('label.requested')}
             value={draft?.requestedQuantity}
             onChange={value => {
@@ -184,19 +184,19 @@ export const ResponseLineEdit = ({
             }}
             {...commonProps}
           />
-          <NumInputRow
+          <ResponseNumInputRow
             label={t('label.customer-soh')}
             value={draft?.availableStockOnHand}
             onChange={value => update({ availableStockOnHand: value })}
             {...commonProps}
           />
-          <NumInputRow
+          <ResponseNumInputRow
             label={t('label.our-soh')}
             value={draft?.itemStats.stockOnHand}
             disabledOverride={true}
             {...commonProps}
           />
-          <NumInputRow
+          <ResponseNumInputRow
             label={t('label.suggested')}
             value={draft?.suggestedQuantity}
             disabledOverride={true}
@@ -239,13 +239,13 @@ export const ResponseLineEdit = ({
         </ModalPanelArea>
         {showExtraFields && (
           <>
-            <NumInputRow
+            <ResponseNumInputRow
               label={t('label.available')}
               value={available}
               disabledOverride={true}
               {...commonProps}
             />
-            <NumInputRow
+            <ResponseNumInputRow
               label={t('label.short-expiry')}
               value={draft?.expiringUnits}
               onChange={value => update({ expiringUnits: value })}
@@ -264,7 +264,7 @@ export const ResponseLineEdit = ({
       <>
         <ModalPanelArea>
           {hasApproval && (
-            <NumInputRow
+            <ResponseNumInputRow
               label={t('label.approved')}
               value={draft?.approvedQuantity}
               disabledOverride={true}
@@ -289,7 +289,7 @@ export const ResponseLineEdit = ({
             setIsEditingSupply={setIsEditingSupply}
           />
 
-          <NumInputRow
+          <ResponseNumInputRow
             label={t('label.remaining-to-supply')}
             value={draft?.remainingQuantityToSupply}
             disabledOverride={true}
@@ -299,7 +299,7 @@ export const ResponseLineEdit = ({
             {...commonProps}
           />
 
-          <NumInputRow
+          <ResponseNumInputRow
             label={t('label.already-issued')}
             value={draft?.alreadyIssued}
             disabledOverride={true}
@@ -311,7 +311,7 @@ export const ResponseLineEdit = ({
         </ModalPanelArea>
         {!!requisition.linkedRequisition || showExtraFields ? (
           <>
-            <NumInputRow
+            <ResponseNumInputRow
               label={t('label.amc/amd')}
               value={draft?.averageMonthlyConsumption}
               onChange={value => update({ averageMonthlyConsumption: value })}
@@ -320,7 +320,7 @@ export const ResponseLineEdit = ({
               }}
               {...commonProps}
             />
-            <NumInputRow
+            <ResponseNumInputRow
               label={t('label.months-of-stock')}
               value={mos() ?? 0}
               disabledOverride={true}
