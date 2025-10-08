@@ -7,8 +7,6 @@ import {
   DateUtils,
   Formatter,
   InputWithLabelRow,
-  NumericTextInput,
-  NumericTextInputProps,
   Theme,
   Typography,
   useTheme,
@@ -46,60 +44,6 @@ export const commonLabelProps = {
       xs: '100%',
     },
   },
-};
-
-export const NumInputRow = ({
-  label,
-  value,
-  isVerticalScreen,
-  onChange,
-  disabled = false,
-  max,
-  decimalLimit,
-  endAdornment,
-  ...rest
-}: NumericTextInputProps & {
-  isVerticalScreen: boolean;
-  label: string;
-}) => {
-  const handleChange = (newValue?: number) => {
-    if (!onChange || newValue === value) return;
-
-    const v = newValue === undefined ? 0 : newValue;
-    onChange(v);
-  };
-
-  return (
-    <Box sx={commonInputContainerSx}>
-      <InputWithLabelRow
-        Input={
-          <NumericTextInput
-            fullWidth
-            sx={{
-              '& .MuiInputBase-input': {
-                backgroundColor: theme =>
-                  disabled
-                    ? theme.palette.background.toolbar
-                    : theme.palette.background.white,
-              },
-            }}
-            slotProps={inputSlotProps(disabled)}
-            min={0}
-            value={value}
-            onChange={handleChange}
-            disabled={disabled}
-            max={max}
-            decimalLimit={decimalLimit ?? 0}
-            endAdornment={endAdornment}
-            {...rest}
-          />
-        }
-        label={label}
-        labelProps={commonLabelProps}
-        sx={createLabelRowSx(isVerticalScreen)}
-      />
-    </Box>
-  );
 };
 
 interface TextInputProps {
