@@ -11,13 +11,12 @@ import {
 import { ItemWithStatsFragment } from '@openmsupply-client/system';
 import { RequestFragment, useRequest } from '../../api';
 import { useDraftRequisitionLine, useNextRequestLine } from './hooks';
-import { isRequestDisabled } from '../../../utils';
+import { isRequestDisabled, shouldDeleteLine } from '../../../utils';
 import { RequestLineEdit } from './RequestLineEdit';
 import {
   Representation,
   RepresentationValue,
-  shouldDeleteLine,
-} from '../../../common';
+} from 'packages/requisitions/src/common';
 
 interface RequestLineEditModalProps {
   store?: UserStoreNodeFragment;
