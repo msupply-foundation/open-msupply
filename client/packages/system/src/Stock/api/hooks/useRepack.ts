@@ -102,6 +102,6 @@ export const useRepack = ({ invoiceId, stockLineId }: UseRepackProps) => {
     draft,
     onChange,
     // Create
-    onInsert: mutation.mutateAsync,
+    onInsert: mutation,
   };
 };
