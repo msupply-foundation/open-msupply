@@ -21,6 +21,11 @@ pub enum PrefKey {
     PreventTransfersMonthsBeforeInitialisation,
     ShowContactTracing,
     SyncRecordsDisplayThreshold,
+    EnableCustomAmcCalculation,
+    UseDaysInMonth,
+    AdjustForNumberOfDaysOutOfStock,
+    DaysInMonth,
+    ExcludeTransfers,
 
     // Store preferences
     ManageVaccinesInDoses,
