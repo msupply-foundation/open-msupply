@@ -15,6 +15,7 @@ import {
   UserPermission,
   useTranslation,
   NumUtils,
+  NumInputRow,
 } from '@openmsupply-client/common';
 import { PurchaseOrderLineFragment } from '../../api';
 import {
@@ -25,7 +26,6 @@ import {
 import { DraftPurchaseOrderLine } from '../../api/hooks/usePurchaseOrderLine';
 import {
   commonLabelProps,
-  NumInputRow,
   TextInput,
   MultilineTextInput,
   DateInput,
@@ -85,11 +85,6 @@ export const PurchaseOrderLineEdit = ({
     StatusGroup.BeforeConfirmed
   );
 
-  const commonProps = {
-    disabled: true,
-    isVerticalScreen,
-  };
-
   return (
     <ModalGridLayout
       showExtraFields={true}
@@ -138,12 +133,10 @@ export const PurchaseOrderLineEdit = ({
             <NumInputRow
               value={draft?.lineNumber || lineCount + 1}
               label={t('label.line-number')}
-              {...commonProps}
             />
             <NumInputRow
               value={draft?.item.stats.stockOnHand || 0}
               label={t('label.stock-on-hand')}
-              {...commonProps}
             />
             <TextInput
               label={t('label.unit')}
@@ -204,7 +197,6 @@ export const PurchaseOrderLineEdit = ({
               disabled={
                 isDisabled || (!canEditRequestedQuantity && !userIsAuthorised)
               }
-              isVerticalScreen={isVerticalScreen}
               onChange={(value: number | undefined) => {
                 // Adjust the requested and adjusted number of units based
                 // on the number of packs * pack size
@@ -223,7 +215,6 @@ export const PurchaseOrderLineEdit = ({
               disabled={
                 disabled || isFieldDisabled(status, StatusGroup.AfterConfirmed)
               }
-              isVerticalScreen={isVerticalScreen}
               onChange={(requestedPackSize: number | undefined) => {
                 // Adjust the requested and adjusted number of units based
                 // on the number of packs * pack size
@@ -239,7 +230,6 @@ export const PurchaseOrderLineEdit = ({
               label={t('label.requested-quantity')}
               value={draft?.requestedNumberOfUnits}
               disabled={true}
-              isVerticalScreen={isVerticalScreen}
               decimalLimit={2}
             />
             {!canEditRequestedQuantity && (
@@ -247,7 +237,6 @@ export const PurchaseOrderLineEdit = ({
                 label={t('label.adjusted-units')}
                 value={draft?.adjustedNumberOfUnits ?? undefined}
                 disabled={true}
-                isVerticalScreen={isVerticalScreen}
                 decimalLimit={2}
               />
             )}
@@ -258,7 +247,6 @@ export const PurchaseOrderLineEdit = ({
               disabled={
                 disabled || isFieldDisabled(status, StatusGroup.AfterConfirmed)
               }
-              isVerticalScreen={isVerticalScreen}
               onChange={(value: number | undefined) => {
                 const adjustedPatch = calculatePricesAndDiscount(
                   'pricePerPackBeforeDiscount',
@@ -275,7 +263,6 @@ export const PurchaseOrderLineEdit = ({
               disabled={
                 disabled || isFieldDisabled(status, StatusGroup.AfterConfirmed)
               }
-              isVerticalScreen={isVerticalScreen}
               onChange={(value: number | undefined) => {
                 const adjustedPatch = calculatePricesAndDiscount(
                   'discountPercentage',
@@ -289,11 +276,10 @@ export const PurchaseOrderLineEdit = ({
             />
             <NumInputRow
               label={t('label.price-per-pack-after-discount')}
-              value={getCurrencyValue(draft?.pricePerPackAfterDiscount)}
+              value={getCurrencyValue(draft?.pricePerPackAfterDiscount) || 0}
               disabled={
                 disabled || isFieldDisabled(status, StatusGroup.AfterConfirmed)
               }
-              isVerticalScreen={isVerticalScreen}
               onChange={(value: number | undefined) => {
                 const adjustedPatch = calculatePricesAndDiscount(
                   'pricePerPackAfterDiscount',
@@ -311,10 +297,9 @@ export const PurchaseOrderLineEdit = ({
                   ? getCurrencyValue(
                       (draft.pricePerPackAfterDiscount ?? 0) *
                         (draft.numberOfPacks ?? 0)
-                    )
+                    ) || 0
                   : 0
               }
-              {...commonProps}
               decimalLimit={options.precision}
               endAdornment={options.symbol}
             />
