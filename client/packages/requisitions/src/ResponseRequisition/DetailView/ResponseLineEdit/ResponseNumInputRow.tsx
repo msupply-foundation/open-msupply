@@ -1,14 +1,12 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import {
   NumInputRow,
   SxProps,
   Theme,
-  useFormatNumber,
   useIntlUtils,
   useTranslation,
 } from '@openmsupply-client/common';
 import {
-  calculateValueInDoses,
   RepresentationValue,
   useEndAdornment,
   useValueInUnitsOrPacks,
@@ -45,7 +43,6 @@ export const ResponseNumInputRow = ({
 }: ResponseNumInputRowProps) => {
   const t = useTranslation();
   const { getPlural } = useIntlUtils();
-  const { round } = useFormatNumber();
 
   const valueInUnitsOrPacks = useValueInUnitsOrPacks(
     representation,
@@ -62,28 +59,6 @@ export const ResponseNumInputRow = ({
     endAdornmentOverride
   );
 
-  // doses always rounded to display in whole numbers
-  const valueInDoses = useMemo(
-    () =>
-      displayVaccinesInDoses
-        ? round(
-            calculateValueInDoses(
-              representation,
-              defaultPackSize,
-              dosesPerUnit,
-              valueInUnitsOrPacks
-            )
-          )
-        : undefined,
-    [
-      displayVaccinesInDoses,
-      representation,
-      defaultPackSize,
-      dosesPerUnit,
-      valueInUnitsOrPacks,
-    ]
-  );
-
   return (
     <NumInputRow
       value={valueInUnitsOrPacks}
@@ -91,7 +66,6 @@ export const ResponseNumInputRow = ({
       displayVaccinesInDoses={overrideDoseDisplay ?? displayVaccinesInDoses}
       dosesPerUnit={dosesPerUnit}
       endAdornment={endAdornment}
-      valueInDoses={valueInDoses}
       label={label}
       disabledOverride={disabledOverride}
       sx={sx}

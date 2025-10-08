@@ -1,11 +1,11 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import {
+  DosesCaption,
   Grid,
   NumericTextDisplay,
   SxProps,
   Theme,
   Typography,
-  useFormatNumber,
   useIntlUtils,
   useTranslation,
 } from '@openmsupply-client/common';
@@ -13,7 +13,6 @@ import {
   useEndAdornment,
   useValueInUnitsOrPacks,
   RepresentationValue,
-  calculateValueInDoses,
 } from './utils';
 
 interface InfoRowProps {
@@ -21,10 +20,8 @@ interface InfoRowProps {
   value?: number | string;
   packagingDisplay?: string;
   sx?: SxProps<Theme>;
-  displayVaccinesInDoses?: boolean;
-  doses?: number | string;
-  dosesLabel?: string;
   decimalLimit?: number;
+  dosesCaption?: React.ReactNode;
 }
 
 export const InfoRow = ({
@@ -32,10 +29,8 @@ export const InfoRow = ({
   value,
   packagingDisplay,
   sx,
-  displayVaccinesInDoses = false,
-  doses,
-  dosesLabel,
   decimalLimit,
+  dosesCaption,
 }: InfoRowProps) => {
   return (
     <Grid
@@ -58,19 +53,17 @@ export const InfoRow = ({
         alignItems="flex-end"
       >
         {typeof value === 'number' ? (
-          <NumericTextDisplay
-            value={value}
-            packagingDisplay={packagingDisplay}
-            decimalLimit={decimalLimit}
-          />
+          <>
+            <NumericTextDisplay
+              value={value}
+              packagingDisplay={packagingDisplay}
+              decimalLimit={decimalLimit}
+            />
+            {dosesCaption}
+          </>
         ) : (
           <Typography variant="body1">
             {value} {packagingDisplay}
-          </Typography>
-        )}
-        {displayVaccinesInDoses && (
-          <Typography variant="caption" color="text.secondary">
-            {doses ? `(${doses} ${dosesLabel?.toLowerCase()})` : ''}
           </Typography>
         )}
       </Grid>
@@ -113,34 +106,11 @@ export const ValueInfoRow = ({
 }: ValueInfoRowProps) => {
   const t = useTranslation();
   const { getPlural } = useIntlUtils();
-  const { round } = useFormatNumber();
 
   const valueInUnitsOrPacks = useValueInUnitsOrPacks(
     representation,
     defaultPackSize,
     value
-  );
-
-  // doses always rounded to display in whole numbers
-  const valueInDoses = useMemo(
-    () =>
-      displayVaccinesInDoses
-        ? round(
-            calculateValueInDoses(
-              representation,
-              defaultPackSize,
-              dosesPerUnit,
-              valueInUnitsOrPacks
-            )
-          )
-        : undefined,
-    [
-      displayVaccinesInDoses,
-      representation,
-      defaultPackSize,
-      dosesPerUnit,
-      valueInUnitsOrPacks,
-    ]
   );
 
   const endAdornment = useEndAdornment(
@@ -156,16 +126,28 @@ export const ValueInfoRow = ({
 
   const displayValue = treatAsNull ? nullDisplay : valueInUnitsOrPacks;
 
+  const dosesCaption =
+    displayVaccinesInDoses && !!value ? (
+      <DosesCaption
+        value={value}
+        representation={representation}
+        dosesPerUnit={dosesPerUnit}
+        displayVaccinesInDoses={displayVaccinesInDoses}
+        defaultPackSize={defaultPackSize}
+        sx={{ pr: 0 }}
+      />
+    ) : null;
+
   return (
-    <InfoRow
-      label={label}
-      value={displayValue}
-      packagingDisplay={treatAsNull ? '' : endAdornment}
-      sx={sx}
-      displayVaccinesInDoses={displayVaccinesInDoses && !!valueInUnitsOrPacks}
-      doses={valueInDoses}
-      dosesLabel={t('label.doses')}
-      decimalLimit={decimalLimit}
-    />
+    <>
+      <InfoRow
+        label={label}
+        value={displayValue}
+        packagingDisplay={treatAsNull ? '' : endAdornment}
+        sx={sx}
+        decimalLimit={decimalLimit}
+        dosesCaption={dosesCaption}
+      />
+    </>
   );
 };
