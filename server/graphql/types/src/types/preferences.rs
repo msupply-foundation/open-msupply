@@ -83,6 +83,50 @@ impl PreferencesNode {
     pub async fn disable_manual_returns(&self) -> Result<bool> {
         self.load_preference(&self.preferences.disable_manual_returns)
     }
+
+    pub async fn can_create_internal_order_from_a_requisition(&self) -> Result<bool> {
+        self.load_preference(
+            &self
+                .preferences
+                .can_create_internal_order_from_a_requisition,
+        )
+    }
+
+    pub async fn select_destination_store_for_an_internal_order(&self) -> Result<bool> {
+        self.load_preference(
+            &self
+                .preferences
+                .select_destination_store_for_an_internal_order,
+        )
+    }
+
+    pub async fn number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products(
+        &self,
+    ) -> Result<i32> {
+        self.load_preference(
+            &self
+                .preferences
+                .number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products,
+        )
+    }
+
+    pub async fn number_of_months_threshold_to_show_low_stock_alerts_for_products(
+        &self,
+    ) -> Result<i32> {
+        self.load_preference(
+            &self
+                .preferences
+                .number_of_months_threshold_to_show_low_stock_alerts_for_products,
+        )
+    }
+
+    pub async fn first_threshold_for_expiring_items(&self) -> Result<i32> {
+        self.load_preference(&self.preferences.first_threshold_for_expiring_items)
+    }
+
+    pub async fn second_threshold_for_expiring_items(&self) -> Result<i32> {
+        self.load_preference(&self.preferences.second_threshold_for_expiring_items)
+    }
 }
 
 impl PreferencesNode {
@@ -147,6 +191,12 @@ pub enum PreferenceKey {
     SortByVvmStatusThenExpiry,
     UseSimplifiedMobileUi,
     DisableManualReturns,
+    CanCreateInternalOrderFromARequisition,
+    SelectDestinationStoreForAnInternalOrder,
+    NumberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts,
+    NumberOfMonthsThresholdToShowLowStockAlertsForProducts,
+    FirstThresholdForExpiringItems,
+    SecondThresholdForExpiringItems,
 }
 
 #[derive(Enum, Copy, Clone, Debug, Eq, PartialEq)]

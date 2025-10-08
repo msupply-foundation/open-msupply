@@ -28,6 +28,18 @@ pub mod use_procurement_functionality;
 pub use use_procurement_functionality::*;
 pub mod disable_manual_returns;
 pub use disable_manual_returns::*;
+pub mod can_create_internal_order_from_a_requisition;
+pub use can_create_internal_order_from_a_requisition::*;
+pub mod select_destination_store_for_an_internal_order;
+pub use select_destination_store_for_an_internal_order::*;
+pub mod number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products;
+pub use number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products::*;
+pub mod number_of_months_threshold_to_show_low_stock_alerts_for_products;
+pub use number_of_months_threshold_to_show_low_stock_alerts_for_products::*;
+pub mod first_threshold_for_expiring_items;
+pub use first_threshold_for_expiring_items::*;
+pub mod second_threshold_for_expiring_items;
+pub use second_threshold_for_expiring_items::*;
 
 pub struct PreferenceProvider {
     // Global preferences
@@ -47,6 +59,14 @@ pub struct PreferenceProvider {
     pub sort_by_vvm_status_then_expiry: SortByVvmStatusThenExpiry,
     pub use_simplified_mobile_ui: UseSimplifiedMobileUi,
     pub disable_manual_returns: DisableManualReturns,
+    pub can_create_internal_order_from_a_requisition: CanCreateInternalOrderFromARequisition,
+    pub select_destination_store_for_an_internal_order: SelectDestinationStoreForAnInternalOrder,
+    pub number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products:
+        NumberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts,
+    pub number_of_months_threshold_to_show_low_stock_alerts_for_products:
+        NumberOfMonthsThresholdToShowLowStockAlertsForProducts,
+    pub first_threshold_for_expiring_items: FirstThresholdForExpiringItems,
+    pub second_threshold_for_expiring_items: SecondThresholdForExpiringItems,
 }
 
 pub fn get_preference_provider() -> PreferenceProvider {
@@ -68,5 +88,13 @@ pub fn get_preference_provider() -> PreferenceProvider {
         sort_by_vvm_status_then_expiry: SortByVvmStatusThenExpiry,
         use_simplified_mobile_ui: UseSimplifiedMobileUi,
         disable_manual_returns: DisableManualReturns,
+        can_create_internal_order_from_a_requisition: CanCreateInternalOrderFromARequisition,
+        select_destination_store_for_an_internal_order: SelectDestinationStoreForAnInternalOrder,
+        number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products:
+            NumberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts,
+        number_of_months_threshold_to_show_low_stock_alerts_for_products:
+            NumberOfMonthsThresholdToShowLowStockAlertsForProducts,
+        first_threshold_for_expiring_items: FirstThresholdForExpiringItems,
+        second_threshold_for_expiring_items: SecondThresholdForExpiringItems,
     }
 }

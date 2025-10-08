@@ -42,6 +42,12 @@ pub trait PreferenceServiceTrait: Sync + Send {
             sort_by_vvm_status_then_expiry,
             use_simplified_mobile_ui,
             disable_manual_returns,
+            can_create_internal_order_from_a_requisition,
+            select_destination_store_for_an_internal_order,
+            number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products,
+            number_of_months_threshold_to_show_low_stock_alerts_for_products,
+            first_threshold_for_expiring_items,
+            second_threshold_for_expiring_items,
         } = self.get_preference_provider();
 
         let input = AppendIfTypeInputs {
@@ -74,6 +80,28 @@ pub trait PreferenceServiceTrait: Sync + Send {
         append_if_type(sort_by_vvm_status_then_expiry, &mut prefs, &input)?;
         append_if_type(use_simplified_mobile_ui, &mut prefs, &input)?;
         append_if_type(disable_manual_returns, &mut prefs, &input)?;
+        append_if_type(
+            can_create_internal_order_from_a_requisition,
+            &mut prefs,
+            &input,
+        )?;
+        append_if_type(
+            select_destination_store_for_an_internal_order,
+            &mut prefs,
+            &input,
+        )?;
+        append_if_type(
+            number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products,
+            &mut prefs,
+            &input,
+        )?;
+        append_if_type(
+            number_of_months_threshold_to_show_low_stock_alerts_for_products,
+            &mut prefs,
+            &input,
+        )?;
+        append_if_type(first_threshold_for_expiring_items, &mut prefs, &input)?;
+        append_if_type(second_threshold_for_expiring_items, &mut prefs, &input)?;
 
         Ok(prefs)
     }
