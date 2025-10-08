@@ -136,8 +136,6 @@ const getSteps = (
       icon = null;
     }
 
-    console.log('icon:', icon);
-
     return {
       active,
       completed,
