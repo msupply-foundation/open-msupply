@@ -307,6 +307,20 @@ export const themeOptions = {
     // Custom text variants
     login: { color: '#fafafa' },
   },
+  components: {
+    MuiMenu: {
+      styleOverrides: {
+        paper: { maxWidth: 450 },
+      },
+    },
+    MuiMenuItem: {
+      styleOverrides: {
+        root: {
+          textWrap: 'wrap',
+        },
+      },
+    },
+  },
 };
 
 export const createTheme = (themeOptions: ThemeOptions) => {
