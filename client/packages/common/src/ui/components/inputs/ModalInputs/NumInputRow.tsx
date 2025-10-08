@@ -8,9 +8,8 @@ import {
   NumUtils,
   SxProps,
   Theme,
-  Typography,
   useMediaQuery,
-  useTranslation,
+  DosesCaption,
 } from '@openmsupply-client/common';
 import { inputSlotProps, commonLabelProps, createLabelRowSx } from './utils';
 import {
@@ -28,10 +27,9 @@ export interface NumInputRowProps extends NumericTextInputProps {
   sx?: SxProps<Theme>;
   showExtraFields?: boolean;
   displayVaccinesInDoses?: boolean;
-  dosesPerUnit?: number;
   overrideDoseDisplay?: boolean;
   disabledOverride?: boolean;
-  valueInDoses?: string;
+  dosesPerUnit?: number;
   value: number | undefined;
 }
 
@@ -44,7 +42,7 @@ export const NumInputRow = ({
   decimalLimit,
   representation = 'packs',
   defaultPackSize = 1,
-  valueInDoses,
+  dosesPerUnit = 1,
   endAdornment,
   sx,
   showExtraFields = false,
@@ -53,11 +51,12 @@ export const NumInputRow = ({
   disabledOverride,
   ...rest
 }: NumInputRowProps) => {
-  const t = useTranslation();
-
   const isVerticalScreen = useMediaQuery('(max-width:800px)');
 
   const roundedValue = value ? NumUtils.round(value) : 0;
+
+  const showDoseLabel =
+    displayVaccinesInDoses && !!value && !overrideDoseDisplay;
 
   const handleChange = (newValue?: number) => {
     if (!onChange || newValue === roundedValue) return;
@@ -99,20 +98,13 @@ export const NumInputRow = ({
         labelProps={commonLabelProps(showExtraFields)}
         sx={createLabelRowSx(isVerticalScreen)}
       />
-      {/* make this a var */}
-      {displayVaccinesInDoses && !!value && !overrideDoseDisplay && (
-        <Typography
-          variant="caption"
-          color="text.secondary"
-          sx={{
-            display: 'flex',
-            justifyContent: 'flex-end',
-            pt: 0.3,
-            pr: 1.3,
-          }}
-        >
-          {valueInDoses} {t('label.doses').toLowerCase()}
-        </Typography>
+      {showDoseLabel && (
+        <DosesCaption
+          value={value}
+          representation={representation}
+          dosesPerUnit={dosesPerUnit}
+          displayVaccinesInDoses={displayVaccinesInDoses}
+        />
       )}
     </Box>
   );
