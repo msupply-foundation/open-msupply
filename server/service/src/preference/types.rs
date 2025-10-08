@@ -30,6 +30,12 @@ pub enum PrefKey {
     SortByVvmStatusThenExpiry,
     UseSimplifiedMobileUi,
     DisableManualReturns,
+    CanCreateInternalOrderFromARequisition,
+    SelectDestinationStoreForAnInternalOrder,
+    NumberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts,
+    NumberOfMonthsThresholdToShowLowStockAlertsForProducts,
+    FirstThresholdForExpiringItems,
+    SecondThresholdForExpiringItems,
 }
 
 #[derive(Clone, Debug, PartialEq)]

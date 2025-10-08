@@ -30,6 +30,14 @@ pub struct UpsertPreferences {
     pub sort_by_vvm_status_then_expiry: Option<Vec<StorePrefUpdate<bool>>>,
     pub use_simplified_mobile_ui: Option<Vec<StorePrefUpdate<bool>>>,
     pub disable_manual_returns: Option<Vec<StorePrefUpdate<bool>>>,
+    pub can_create_internal_order_from_a_requisition: Option<Vec<StorePrefUpdate<bool>>>,
+    pub select_destination_store_for_an_internal_order: Option<Vec<StorePrefUpdate<bool>>>,
+    pub number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products:
+        Option<Vec<StorePrefUpdate<i32>>>,
+    pub number_of_months_threshold_to_show_low_stock_alerts_for_products:
+        Option<Vec<StorePrefUpdate<i32>>>,
+    pub first_threshold_for_expiring_items: Option<Vec<StorePrefUpdate<i32>>>,
+    pub second_threshold_for_expiring_items: Option<Vec<StorePrefUpdate<i32>>>,
 }
 
 pub fn upsert_preferences(
@@ -54,6 +62,16 @@ pub fn upsert_preferences(
         sort_by_vvm_status_then_expiry: sort_by_vvm_status_then_expiry_input,
         use_simplified_mobile_ui: use_simplified_mobile_ui_input,
         disable_manual_returns: disable_manual_returns_input,
+        can_create_internal_order_from_a_requisition:
+            can_create_internal_order_from_a_requisition_input,
+        select_destination_store_for_an_internal_order:
+            select_destination_store_for_an_internal_order_input,
+        number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products:
+            number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products_input,
+        number_of_months_threshold_to_show_low_stock_alerts_for_products:
+            number_of_months_threshold_to_show_low_stock_alerts_for_products_input,
+        first_threshold_for_expiring_items: first_threshold_for_expiring_items_input,
+        second_threshold_for_expiring_items: second_threshold_for_expiring_items_input,
     }: UpsertPreferences,
 ) -> Result<(), UpsertPreferenceError> {
     let PreferenceProvider {
@@ -75,6 +93,12 @@ pub fn upsert_preferences(
         sort_by_vvm_status_then_expiry,
         use_simplified_mobile_ui,
         disable_manual_returns,
+        can_create_internal_order_from_a_requisition,
+        select_destination_store_for_an_internal_order,
+        number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products,
+        number_of_months_threshold_to_show_low_stock_alerts_for_products,
+        first_threshold_for_expiring_items,
+        second_threshold_for_expiring_items,
     }: PreferenceProvider = get_preference_provider();
 
     ctx.connection
@@ -172,6 +196,66 @@ pub fn upsert_preferences(
             if let Some(input) = disable_manual_returns_input {
                 for update in input.into_iter() {
                     disable_manual_returns.upsert(
+                        connection,
+                        update.value,
+                        Some(update.store_id),
+                    )?;
+                }
+            }
+
+            if let Some(input) = can_create_internal_order_from_a_requisition_input {
+                for update in input.into_iter() {
+                    can_create_internal_order_from_a_requisition.upsert(
+                        connection,
+                        update.value,
+                        Some(update.store_id),
+                    )?;
+                }
+            }
+
+            if let Some(input) = select_destination_store_for_an_internal_order_input {
+                for update in input.into_iter() {
+                    select_destination_store_for_an_internal_order.upsert(
+                        connection,
+                        update.value,
+                        Some(update.store_id),
+                    )?;
+                }
+            }
+
+            if let Some(input) = number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products_input {
+                for update in input.into_iter() {
+                    number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products.upsert(
+                        connection,
+                        update.value,
+                        Some(update.store_id),
+                    )?;
+                }
+            }
+
+            if let Some(input) = number_of_months_threshold_to_show_low_stock_alerts_for_products_input {
+                for update in input.into_iter() {
+                    number_of_months_threshold_to_show_low_stock_alerts_for_products.upsert(
+                        connection,
+                        update.value,
+                        Some(update.store_id),
+                    )?;
+                }
+            }
+
+            if let Some(input) = first_threshold_for_expiring_items_input {
+                for update in input.into_iter() {
+                    first_threshold_for_expiring_items.upsert(
+                        connection,
+                        update.value,
+                        Some(update.store_id),
+                    )?;
+                }
+            }
+
+            if let Some(input) = second_threshold_for_expiring_items_input {
+                for update in input.into_iter() {
+                    second_threshold_for_expiring_items.upsert(
                         connection,
                         update.value,
                         Some(update.store_id),
