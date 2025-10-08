@@ -3,14 +3,14 @@ import { cleanUpNodes, sortNodes } from "../../../../../standard_reports/utils";
 function convert_data(queryResponse) {
   let nodes = queryResponse.data.purchaseOrder.lines.nodes;
   for (let node in nodes) {
-    let unitCost = nodes[node]["pricePerUnitAfterDiscount"];
+    let pricePerPack = nodes[node]["pricePerPackAfterDiscount"];
+    let packSize = nodes[node]["requestedPackSize"];
     let unitQuantity = nodes[node]["requestedNumberOfUnits"];
-    let lineCost = unitCost * unitQuantity;
+    let numberOfPacks = packSize > 0 ? unitQuantity / packSize : 0;
+    let lineCost = pricePerPack * numberOfPacks;
     nodes[node]["lineCost"] = lineCost.toFixed(2);
 
-    let packSize = nodes[node]["requestedPackSize"];
-    let requestedPacks = packSize > 0 ? unitQuantity / packSize : 0;
-    nodes[node]["requestedNumberOfPacks"] = requestedPacks;
+    nodes[node]["requestedNumberOfPacks"] = numberOfPacks;
   }
 
   // Clean and sort each line:
