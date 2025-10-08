@@ -60,7 +60,7 @@ export const useTableFiltering = <T extends MRT_RowData>(
           };
           break;
 
-        // TODO: other filter types, number, boolean
+        // TODO: other filter types, number
       }
     });
 
@@ -124,6 +124,13 @@ const getFilterState = <T extends MRT_RowData>(
               val.from ? DateUtils.getDateOrNull(val.from as string) : '',
               val.to ? DateUtils.getDateOrNull(val.to as string) : '',
             ],
+          };
+
+        // Boolean (MRT represents boolean filter values as strings)
+        if (typeof val === 'boolean')
+          return {
+            id,
+            value: String(val),
           };
 
         // TO-DO: Implement filter state for other types
