@@ -1,4 +1,4 @@
-import { useMutation, useTableStore } from '@openmsupply-client/common';
+import { useMutation } from '@openmsupply-client/common';
 import { useLocationGraphQL } from '../useLocationGraphQL';
 import { LOCATION } from './keys';
 import { LocationRowFragment } from '../operations.generated';
@@ -8,7 +8,7 @@ export type DeleteError = {
   message: string;
 };
 
-export const useLocation = (locations?: LocationRowFragment[]) => {
+export const useLocation = () => {
   // CREATE
   const {
     mutateAsync: createMutation,
@@ -24,23 +24,12 @@ export const useLocation = (locations?: LocationRowFragment[]) => {
   } = useUpdateLocation();
 
   // DELETE
-  const { deleteLocations, selectedRows } = useDeleteLocation(locations);
+  const { deleteLocations } = useDeleteLocation();
 
   return {
-    create: {
-      create: createMutation,
-      isCreating,
-      createError,
-    },
-    update: {
-      update,
-      isUpdating,
-      updateError,
-    },
-    delete: {
-      delete: deleteLocations,
-      selectedRows,
-    },
+    create: { create: createMutation, isCreating, createError },
+    update: { update, isUpdating, updateError },
+    delete: { delete: deleteLocations },
   };
 };
 
@@ -104,21 +93,12 @@ const useUpdateLocation = () => {
   });
 };
 
-const useDeleteLocation = (locations?: LocationRowFragment[]) => {
+const useDeleteLocation = () => {
   const { locationApi, queryClient, storeId } = useLocationGraphQL();
-
-  const { selectedRows } = useTableStore(state => ({
-    selectedRows: Object.keys(state.rowState)
-      .filter(id => state.rowState[id]?.isSelected)
-      .map(selectedId => locations?.find(({ id }) => selectedId === id))
-      .filter(Boolean) as LocationRowFragment[],
-  }));
 
   const mutationFn = async (id: string) => {
     const result = await locationApi.deleteLocation({
-      input: {
-        id,
-      },
+      input: { id },
       storeId,
     });
     return result.deleteLocation;
@@ -131,7 +111,7 @@ const useDeleteLocation = (locations?: LocationRowFragment[]) => {
     },
   });
 
-  const deleteLocations = async () => {
+  const deleteLocations = async (selectedRows: LocationRowFragment[]) => {
     const deleteErrors: DeleteError[] = [];
 
     await Promise.all(
@@ -150,6 +130,5 @@ const useDeleteLocation = (locations?: LocationRowFragment[]) => {
 
   return {
     deleteLocations,
-    selectedRows,
   };
 };
