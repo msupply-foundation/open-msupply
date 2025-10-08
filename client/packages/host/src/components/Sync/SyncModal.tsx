@@ -162,13 +162,11 @@ export const SyncModal = ({ onCancel, open, width = 800 }: SyncModalProps) => {
     durationAsDate: Date
   ): string => {
     // If the date is today, display the time, otherwise display the date
-    let today = new Date();
-    let lastSuccessfulSyncTime;
-    if (date?.toDateString() === today.toDateString()) {
-      lastSuccessfulSyncTime = localisedTime(date);
-    } else {
-      lastSuccessfulSyncTime = localisedDate(date);
-    }
+    const today = new Date();
+    const lastSuccessfulSyncTime =
+      date?.toDateString() === today.toDateString()
+        ? localisedTime(date)
+        : localisedDate(date);
 
     // Format the duration into "X hours Y minutes Z seconds" omitting hours or minutes if there are 0 of them.
     const hours = durationAsDate.getHours();
