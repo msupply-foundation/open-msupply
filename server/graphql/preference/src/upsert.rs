@@ -32,6 +32,11 @@ pub struct UpsertPreferencesInput {
     pub prevent_transfers_months_before_initialisation: Option<i32>,
     pub show_contact_tracing: Option<bool>,
     pub sync_records_display_threshold: Option<i32>,
+    pub enable_custom_amc_calculation: Option<bool>,
+    pub use_days_in_month: Option<bool>,
+    pub adjust_for_number_of_days_out_of_stock: Option<bool>,
+    pub days_in_month: Option<i32>,
+    pub exclude_transfers: Option<bool>,
 
     // Store preferences
     pub manage_vaccines_in_doses: Option<Vec<BoolStorePrefInput>>,
@@ -85,6 +90,11 @@ impl UpsertPreferencesInput {
             gender_options,
             show_contact_tracing,
             sync_records_display_threshold,
+            enable_custom_amc_calculation,
+            use_days_in_month,
+            adjust_for_number_of_days_out_of_stock,
+            days_in_month,
+            exclude_transfers,
             // Store preferences
             manage_vaccines_in_doses,
             manage_vvm_status_for_stock,
@@ -114,6 +124,11 @@ impl UpsertPreferencesInput {
                 *prevent_transfers_months_before_initialisation,
             show_contact_tracing: *show_contact_tracing,
             sync_records_display_threshold: *sync_records_display_threshold,
+            enable_custom_amc_calculation: *enable_custom_amc_calculation,
+            use_days_in_month: *use_days_in_month,
+            adjust_for_number_of_days_out_of_stock: *adjust_for_number_of_days_out_of_stock,
+            days_in_month: *days_in_month,
+            exclude_transfers: *exclude_transfers,
             // Store preferences
             manage_vaccines_in_doses: manage_vaccines_in_doses
                 .as_ref()
