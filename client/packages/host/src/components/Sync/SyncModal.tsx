@@ -174,13 +174,12 @@ export const SyncModal = ({ onCancel, open, width = 800 }: SyncModalProps) => {
     const seconds = durationAsDate.getSeconds();
     let formattedDuration = '';
     if (hours > 0) {
-      formattedDuration += `${hours} ${t('label.hours', { count: hours })} `;
+      formattedDuration += `${t('label.hours', { count: hours })} `;
     }
     if (minutes > 0) {
-      formattedDuration += `${minutes} ${t('label.minutes', { count: minutes })} `;
+      formattedDuration += `${t('label.minutes', { count: minutes })} `;
     }
-    formattedDuration += `${seconds} ${t('label.seconds', { count: seconds })}`;
-    formattedDuration = formattedDuration.trim();
+    formattedDuration += `${t('label.seconds', { count: seconds })}`;
 
     // Return "Last successful sync 2:05 PM (completed in 1 second)"
     return t('messages.last-successful-sync-time-and-duration', {
