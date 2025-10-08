@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 
 import {
   Box,
@@ -9,19 +9,14 @@ import {
   SxProps,
   Theme,
   Typography,
-  useFormatNumber,
-  useIntlUtils,
   useMediaQuery,
   useTranslation,
 } from '@openmsupply-client/common';
+import { inputSlotProps, commonLabelProps, createLabelRowSx } from './utils';
 import {
-  calculateValueInDoses,
   Representation,
   RepresentationValue,
-  useEndAdornment,
-  useValueInUnitsOrPacks,
 } from 'packages/requisitions/src/common';
-import { inputSlotProps, commonLabelProps, createLabelRowSx } from './utils';
 
 export interface NumInputRowProps extends NumericTextInputProps {
   label: string;
@@ -29,15 +24,15 @@ export interface NumInputRowProps extends NumericTextInputProps {
   disabled?: boolean;
   representation?: RepresentationValue;
   defaultPackSize?: number;
-  unitName?: string | null;
-  endAdornmentOverride?: string;
+  endAdornment?: string;
   sx?: SxProps<Theme>;
   showExtraFields?: boolean;
   displayVaccinesInDoses?: boolean;
   dosesPerUnit?: number;
   overrideDoseDisplay?: boolean;
   disabledOverride?: boolean;
-  showEndAdornment?: boolean;
+  valueInDoses?: string;
+  value: number | undefined;
 }
 
 export const NumInputRow = ({
@@ -49,37 +44,20 @@ export const NumInputRow = ({
   decimalLimit,
   representation = 'packs',
   defaultPackSize = 1,
-  unitName,
-  endAdornmentOverride,
-  showEndAdornment,
+  valueInDoses,
+  endAdornment,
   sx,
   showExtraFields = false,
   displayVaccinesInDoses = false,
-  dosesPerUnit = 1,
   overrideDoseDisplay,
   disabledOverride,
   ...rest
 }: NumInputRowProps) => {
   const t = useTranslation();
-  const { getPlural } = useIntlUtils();
-  const { round } = useFormatNumber();
+
   const isVerticalScreen = useMediaQuery('(max-width:800px)');
 
-  const valueInUnitsOrPacks = useValueInUnitsOrPacks(
-    representation,
-    defaultPackSize,
-    value
-  );
-  const roundedValue = NumUtils.round(valueInUnitsOrPacks);
-
-  const endAdornment = useEndAdornment(
-    t,
-    getPlural,
-    unitName || t('label.unit'),
-    representation,
-    valueInUnitsOrPacks,
-    endAdornmentOverride
-  );
+  const roundedValue = value ? NumUtils.round(value) : 0;
 
   const handleChange = (newValue?: number) => {
     if (!onChange || newValue === roundedValue) return;
@@ -91,28 +69,6 @@ export const NumInputRow = ({
       onChange(value);
     }
   };
-
-  // doses always rounded to display in whole numbers
-  const valueInDoses = useMemo(
-    () =>
-      displayVaccinesInDoses
-        ? round(
-            calculateValueInDoses(
-              representation,
-              defaultPackSize,
-              dosesPerUnit,
-              valueInUnitsOrPacks
-            )
-          )
-        : undefined,
-    [
-      displayVaccinesInDoses,
-      representation,
-      defaultPackSize,
-      dosesPerUnit,
-      valueInUnitsOrPacks,
-    ]
-  );
 
   return (
     <Box sx={{ marginBottom: 1, px: 1, flex: 1, ...sx }}>
@@ -135,7 +91,7 @@ export const NumInputRow = ({
             disabled={disabledOverride || disabled}
             max={max}
             decimalLimit={decimalLimit ?? 0}
-            endAdornment={showEndAdornment ? endAdornment : ''}
+            endAdornment={endAdornment}
             {...rest}
           />
         }
@@ -144,22 +100,20 @@ export const NumInputRow = ({
         sx={createLabelRowSx(isVerticalScreen)}
       />
       {/* make this a var */}
-      {displayVaccinesInDoses &&
-        !!valueInUnitsOrPacks &&
-        !overrideDoseDisplay && (
-          <Typography
-            variant="caption"
-            color="text.secondary"
-            sx={{
-              display: 'flex',
-              justifyContent: 'flex-end',
-              pt: 0.3,
-              pr: 1.3,
-            }}
-          >
-            {valueInDoses} {t('label.doses').toLowerCase()}
-          </Typography>
-        )}
+      {displayVaccinesInDoses && !!value && !overrideDoseDisplay && (
+        <Typography
+          variant="caption"
+          color="text.secondary"
+          sx={{
+            display: 'flex',
+            justifyContent: 'flex-end',
+            pt: 0.3,
+            pr: 1.3,
+          }}
+        >
+          {valueInDoses} {t('label.doses').toLowerCase()}
+        </Typography>
+      )}
     </Box>
   );
 };
