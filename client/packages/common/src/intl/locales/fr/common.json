@@ -2434,5 +2434,15 @@
   "label.goods-received": "Articles reçus",
   "label.authorised": "Autorisé",
   "label.price-per-unit-before-discount": "Prix / unité (avant réduction)",
-  "label.price-per-unit-after-discount": "Prix / unité (après réduction)"
+  "label.price-per-unit-after-discount": "Prix / unité (après réduction)",
+  "label.cost-price-per-unit": "Cout d'achat par unité",
+  "label.all-items": "Tous les articles",
+  "label.all-locations": "Tous les emplacements",
+  "label.all-statuses": "Tous les statuts",
+  "stocktake.create-filtered": "Créer un inventaire avec filtres",
+  "stocktake.create-full": "Créer un inventaire complet",
+  "stocktake.description-blank": "Il est possible d'ajouter des articles manuellement après avoir créer l'inventaire.",
+  "stocktake.description-filters": "Veuillez utiliser les filtres ci-dessous pour choisir les articles à ajouter à l'inventaire.",
+  "stocktake.description-full": "Créer un inventaire pour tous les articles de votre dépôt.",
+  "stocktake.items-with-soh": "Articles en stock"
 }
