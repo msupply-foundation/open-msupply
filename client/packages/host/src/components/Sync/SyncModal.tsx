@@ -32,7 +32,7 @@ import {
   ButtonWithIcon,
   IconButton,
 } from '@common/components';
-import { AppRoute } from 'packages/config/src';
+import { AppRoute } from '@openmsupply-client/config';
 
 const STATUS_POLLING_INTERVAL = 1000;
 
