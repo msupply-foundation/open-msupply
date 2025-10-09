@@ -26,11 +26,10 @@ export const StockItemSearchInput = ({
   onChange,
   currentItemId,
   disabled = false,
-  extraFilter,
   width,
   autoFocus = false,
   openOnFocus,
-  filter: apiFilter = { isVisible: true },
+  filter: apiFilter,
   itemCategoryName,
   programId,
   initialUpdate = false,
@@ -40,8 +39,8 @@ export const StockItemSearchInput = ({
   const selectControl = useToggle();
 
   const { filter, onFilter } = useStringFilter('codeOrName');
-  const [search, setSearch] = useState('');
 
+  const [search, setSearch] = useState('');
   const [selectedCode, setSelectedCode] = useState('');
 
   const debounceOnFilter = useDebouncedValueCallback(
@@ -60,7 +59,7 @@ export const StockItemSearchInput = ({
   const { data, isLoading, fetchNextPage, isFetchingNextPage } =
     useItemStockOnHandInfinite({
       rowsPerPage: ROWS_PER_PAGE,
-      filter: fullFilter,
+      filter: disabled ? undefined : fullFilter,
     });
 
   // Note - important that we do a separate query for current item
@@ -141,10 +140,9 @@ export const StockItemSearchInput = ({
       paginationDebounce={DEBOUNCE_TIMEOUT}
       onPageChange={pageNumber => fetchNextPage({ pageParam: pageNumber })}
       mapOptions={items =>
-        defaultOptionMapper(
-          extraFilter ? items.filter(extraFilter) : items,
-          'name'
-        ).sort((a, b) => a.label.localeCompare(b.label))
+        defaultOptionMapper(items, 'name').sort((a, b) =>
+          a.label.localeCompare(b.label)
+        )
       }
       inputValue={search}
       inputProps={{

@@ -25,6 +25,7 @@ pub struct EqualFilterDocumentRegistryCategoryInput {
     pub equal_to: Option<DocumentRegistryCategoryNode>,
     pub equal_any: Option<Vec<DocumentRegistryCategoryNode>>,
     pub not_equal_to: Option<DocumentRegistryCategoryNode>,
+    pub not_equal_all: Option<Vec<DocumentRegistryCategoryNode>>,
 }
 
 #[derive(InputObject, Clone)]

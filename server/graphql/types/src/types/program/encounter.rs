@@ -58,6 +58,7 @@ pub struct EqualFilterEncounterStatusInput {
     pub equal_to: Option<EncounterNodeStatus>,
     pub equal_any: Option<Vec<EncounterNodeStatus>>,
     pub not_equal_to: Option<EncounterNodeStatus>,
+    pub not_equal_all: Option<Vec<EncounterNodeStatus>>,
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
