@@ -135,7 +135,7 @@ const UIComponent = (props: ControlProps) => {
             width={145}
             disableFuture
             disabled={!props.enabled}
-            onError={validationError => customErrors.add(path, validationError)}
+            onError={validationError => customErrors.add(path, validationError || 'Invalid date')}
             error={errors}
             actions={actions}
           />
