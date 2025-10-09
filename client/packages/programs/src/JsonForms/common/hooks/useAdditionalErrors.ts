@@ -14,6 +14,16 @@
 import { useCallback, useState } from 'react';
 import { ErrorObject } from 'ajv';
 
+/**
+ * Convert a JSONForms "dot" notation path to an ajv path
+ * e.g. "person.firstName" -> "/person/firstName"
+ * Note that ajv paths always start with a "/"
+ */
+const toAjvPath = (path: string) => {
+  if (path.startsWith('/')) return path.replace(/\./g, '/');
+  return `/${path.replace(/\./g, '/')}`;
+};
+
 export const useAdditionalErrors = (
   setError: ((error: string | false) => void) | undefined
 ) => {
@@ -22,12 +32,15 @@ export const useAdditionalErrors = (
   const addAdditionalError = useCallback(
     (path: string, message: string) => {
       setAdditionalErrors(prevErrors => {
-        const existing = prevErrors.find(error => error.instancePath === path);
+        const ajvPath = toAjvPath(path);
+        const existing = prevErrors.find(
+          error => error.instancePath === ajvPath
+        );
         if (existing) {
           if (existing?.message === message) return prevErrors;
           // Update existing error if message has changed
           const newErrors = prevErrors.filter(
-            error => error.instancePath !== path
+            error => error.instancePath !== ajvPath
           );
           return [...newErrors, { ...existing, message }];
         }
@@ -36,7 +49,7 @@ export const useAdditionalErrors = (
         return [
           ...prevErrors,
           {
-            instancePath: path,
+            instancePath: ajvPath,
             message: message,
             schemaPath: '',
             keyword: 'custom',
@@ -56,11 +69,14 @@ export const useAdditionalErrors = (
     // being updated correctly -- small timeout allow it to settle before
     // updating errors
     setTimeout(() => {
+      const ajvPath = toAjvPath(path);
       setAdditionalErrors(prevErrors => {
-        const existing = prevErrors.find(error => error.instancePath === path);
+        const existing = prevErrors.find(
+          error => error.instancePath === ajvPath
+        );
         if (!existing) return prevErrors;
 
-        return prevErrors.filter(error => error.instancePath !== path);
+        return prevErrors.filter(error => error.instancePath !== ajvPath);
       });
     }, 50);
   }, []);

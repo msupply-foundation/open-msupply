@@ -97,6 +97,12 @@ const UIComponent = (props: ControlProps) => {
 
   useEffect(() => {
     if (!data) return;
+
+    // Okay to reset error if data externally updated, as the "invalid" won't be
+    // added to data -- this ensures that the error state disappears if the data
+    // is reset (by changing another field)
+    customErrors.remove(path);
+
     const naiveDoB = DateUtils.getNaiveDate(
       data[options?.dobFieldName ?? 'dateOfBirth']
     );
