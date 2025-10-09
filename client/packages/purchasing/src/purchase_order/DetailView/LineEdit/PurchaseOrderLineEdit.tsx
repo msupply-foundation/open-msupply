@@ -11,7 +11,6 @@ import {
   Select,
   useCurrency,
   useAuthContext,
-  useMediaQuery,
   UserPermission,
   useTranslation,
   NumUtils,
@@ -61,7 +60,6 @@ export const PurchaseOrderLineEdit = ({
   const t = useTranslation();
   const showContent = !!draft?.itemId;
   const { userHasPermission } = useAuthContext();
-  const isVerticalScreen = useMediaQuery('(max-width:800px)');
   const { options } = useCurrency(
     draft?.purchaseOrder?.currency?.code as Currencies
   );
@@ -144,14 +142,12 @@ export const PurchaseOrderLineEdit = ({
               disabled={
                 disabled || isFieldDisabled(status, StatusGroup.AfterConfirmed)
               }
-              isVerticalScreen={isVerticalScreen}
             />
             <TextInput
               label={t('label.supplier-item-code')}
               value={draft?.supplierItemCode || ''}
               onChange={(value?: string) => update({ supplierItemCode: value })}
               disabled={disabled}
-              isVerticalScreen={isVerticalScreen}
             />
             <InputWithLabelRow
               Input={
@@ -314,7 +310,6 @@ export const PurchaseOrderLineEdit = ({
               disabled={
                 disabled || isFieldDisabled(status, StatusGroup.AfterConfirmed)
               }
-              isVerticalScreen={isVerticalScreen}
               onChange={(value: string | null) =>
                 update({ requestedDeliveryDate: value })
               }
@@ -325,7 +320,6 @@ export const PurchaseOrderLineEdit = ({
               disabled={
                 disabled || isFieldDisabled(status, StatusGroup.AfterSent)
               }
-              isVerticalScreen={isVerticalScreen}
               onChange={(value: string | null) =>
                 update({ expectedDeliveryDate: value })
               }
