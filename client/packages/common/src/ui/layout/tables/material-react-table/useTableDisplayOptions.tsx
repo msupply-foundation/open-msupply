@@ -20,6 +20,7 @@ import { ColumnDef } from './types';
 import { IconButton } from '@common/components';
 import { useTranslation } from '@common/intl';
 import { hasSavedState } from './tableState/utils';
+import { EnvUtils } from '@common/utils';
 
 export const useTableDisplayOptions = <T extends MRT_RowData>({
   tableId,
@@ -27,13 +28,15 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
   onRowClick,
   isGrouped,
   toggleGrouped,
+  enableColumnFilters,
   getIsPlaceholderRow = () => false,
   getIsRestrictedRow = () => false,
 }: {
   tableId: string;
   resetTableState: () => void;
-  onRowClick?: (row: T) => void;
+  onRowClick?: (row: T, isCtrlClick: boolean) => void;
   isGrouped: boolean;
+  enableColumnFilters: boolean;
   toggleGrouped?: () => void;
   getIsPlaceholderRow?: (row: T) => boolean;
   getIsRestrictedRow?: (row: T) => boolean;
@@ -74,7 +77,7 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
             sx={iconButtonProps}
           />
         )}
-        <MRT_ToggleFiltersButton table={table} />
+        {enableColumnFilters && <MRT_ToggleFiltersButton table={table} />}
         <MRT_ToggleDensePaddingButton table={table} />
         <MRT_ShowHideColumnsButton table={table} />
         <IconButton
@@ -175,8 +178,11 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
         : {},
 
     muiTableBodyRowProps: ({ row }) => ({
-      onClick: () => {
-        if (onRowClick) onRowClick(row.original);
+      onClick: e => {
+        const isCtrlClick = e.getModifierState(
+          EnvUtils.os === 'Mac OS' ? 'Meta' : 'Control'
+        );
+        if (onRowClick) onRowClick(row.original, isCtrlClick);
       },
       sx: {
         backgroundColor: row.original['isSubRow']
@@ -213,6 +219,7 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
             color: !row.getCanExpand() ? 'transparent' : undefined,
           },
         }),
+        minHeight: table.getState().density === 'compact' ? '32px' : '40px',
         padding:
           table.getState().density === 'spacious'
             ? '0.7rem'
