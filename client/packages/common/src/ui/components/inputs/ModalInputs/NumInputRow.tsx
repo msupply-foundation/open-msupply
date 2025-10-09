@@ -9,9 +9,6 @@ import {
   SxProps,
   Theme,
   useMediaQuery,
-  DosesCaption,
-  Representation,
-  RepresentationValue,
 } from '@openmsupply-client/common';
 import { inputSlotProps, commonLabelProps, createLabelRowSx } from './utils';
 
@@ -19,16 +16,12 @@ export interface NumInputRowProps extends NumericTextInputProps {
   label: string;
   onChange?: (value?: number) => void;
   disabled?: boolean;
-  representation?: RepresentationValue;
-  defaultPackSize?: number;
   endAdornment?: string;
   sx?: SxProps<Theme>;
   showExtraFields?: boolean;
-  displayVaccinesInDoses?: boolean;
-  overrideDoseDisplay?: boolean;
   disabledOverride?: boolean;
-  dosesPerUnit?: number;
   value: number | undefined;
+  dosesCaption?: React.ReactNode;
 }
 
 export const NumInputRow = ({
@@ -38,33 +31,20 @@ export const NumInputRow = ({
   disabled = false,
   max,
   decimalLimit,
-  representation = 'packs',
-  defaultPackSize = 1,
-  dosesPerUnit = 1,
   endAdornment,
   sx,
   showExtraFields = false,
-  displayVaccinesInDoses = false,
-  overrideDoseDisplay,
   disabledOverride,
+  dosesCaption,
   ...rest
 }: NumInputRowProps) => {
   const isVerticalScreen = useMediaQuery('(max-width:800px)');
 
   const roundedValue = value ? NumUtils.round(value) : 0;
 
-  const showDoseLabel =
-    displayVaccinesInDoses && !!value && !overrideDoseDisplay;
-
   const handleChange = (newValue?: number) => {
     if (!onChange || newValue === roundedValue) return;
-
-    const value = newValue === undefined ? 0 : newValue;
-    if (representation === Representation.PACKS) {
-      onChange(value * defaultPackSize);
-    } else {
-      onChange(value);
-    }
+    onChange(newValue);
   };
 
   return (
@@ -96,14 +76,7 @@ export const NumInputRow = ({
         labelProps={commonLabelProps(showExtraFields)}
         sx={createLabelRowSx(isVerticalScreen)}
       />
-      {showDoseLabel && (
-        <DosesCaption
-          value={value}
-          representation={representation}
-          dosesPerUnit={dosesPerUnit}
-          displayVaccinesInDoses={displayVaccinesInDoses}
-        />
-      )}
+      {dosesCaption}
     </Box>
   );
 };
