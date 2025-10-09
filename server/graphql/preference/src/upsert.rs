@@ -14,6 +14,13 @@ pub struct BoolStorePrefInput {
     pub store_id: String,
     pub value: bool,
 }
+
+#[derive(InputObject)]
+pub struct IntegerStorePrefInput {
+    pub store_id: String,
+    pub value: i32,
+}
+
 #[derive(InputObject)]
 pub struct UpsertPreferencesInput {
     // Global preferences
@@ -25,6 +32,10 @@ pub struct UpsertPreferencesInput {
     pub prevent_transfers_months_before_initialisation: Option<i32>,
     pub show_contact_tracing: Option<bool>,
     pub sync_records_display_threshold: Option<i32>,
+    pub use_days_in_month: Option<bool>,
+    pub adjust_for_number_of_days_out_of_stock: Option<bool>,
+    pub days_in_month: Option<i32>,
+    pub exclude_transfers: Option<bool>,
 
     // Store preferences
     pub manage_vaccines_in_doses: Option<Vec<BoolStorePrefInput>>,
@@ -34,6 +45,14 @@ pub struct UpsertPreferencesInput {
     pub sort_by_vvm_status_then_expiry: Option<Vec<BoolStorePrefInput>>,
     pub use_simplified_mobile_ui: Option<Vec<BoolStorePrefInput>>,
     pub disable_manual_returns: Option<Vec<BoolStorePrefInput>>,
+    pub can_create_internal_order_from_a_requisition: Option<Vec<BoolStorePrefInput>>,
+    pub select_destination_store_for_an_internal_order: Option<Vec<BoolStorePrefInput>>,
+    pub number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products:
+        Option<Vec<IntegerStorePrefInput>>,
+    pub number_of_months_threshold_to_show_low_stock_alerts_for_products:
+        Option<Vec<IntegerStorePrefInput>>,
+    pub first_threshold_for_expiring_items: Option<Vec<IntegerStorePrefInput>>,
+    pub second_threshold_for_expiring_items: Option<Vec<IntegerStorePrefInput>>,
 }
 
 pub fn upsert_preferences(
@@ -70,6 +89,10 @@ impl UpsertPreferencesInput {
             gender_options,
             show_contact_tracing,
             sync_records_display_threshold,
+            use_days_in_month,
+            adjust_for_number_of_days_out_of_stock,
+            days_in_month,
+            exclude_transfers,
             // Store preferences
             manage_vaccines_in_doses,
             manage_vvm_status_for_stock,
@@ -78,6 +101,12 @@ impl UpsertPreferencesInput {
             sort_by_vvm_status_then_expiry,
             use_simplified_mobile_ui,
             disable_manual_returns,
+            can_create_internal_order_from_a_requisition,
+            select_destination_store_for_an_internal_order,
+            number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products,
+            number_of_months_threshold_to_show_low_stock_alerts_for_products,
+            first_threshold_for_expiring_items,
+            second_threshold_for_expiring_items,
         } = self;
 
         UpsertPreferences {
@@ -93,6 +122,10 @@ impl UpsertPreferencesInput {
                 *prevent_transfers_months_before_initialisation,
             show_contact_tracing: *show_contact_tracing,
             sync_records_display_threshold: *sync_records_display_threshold,
+            use_days_in_month: *use_days_in_month,
+            adjust_for_number_of_days_out_of_stock: *adjust_for_number_of_days_out_of_stock,
+            days_in_month: *days_in_month,
+            exclude_transfers: *exclude_transfers,
             // Store preferences
             manage_vaccines_in_doses: manage_vaccines_in_doses
                 .as_ref()
@@ -115,12 +148,43 @@ impl UpsertPreferencesInput {
             disable_manual_returns: disable_manual_returns
                 .as_ref()
                 .map(|i| i.iter().map(|i| i.to_domain()).collect()),
+            can_create_internal_order_from_a_requisition:
+                can_create_internal_order_from_a_requisition
+                    .as_ref()
+                    .map(|i| i.iter().map(|i| i.to_domain()).collect()),
+            select_destination_store_for_an_internal_order:
+                select_destination_store_for_an_internal_order
+                    .as_ref()
+                    .map(|i| i.iter().map(|i| i.to_domain()).collect()),
+            number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products:
+                number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products
+                    .as_ref()
+                    .map(|i| i.iter().map(|i| i.to_domain()).collect()),
+            number_of_months_threshold_to_show_low_stock_alerts_for_products:
+                number_of_months_threshold_to_show_low_stock_alerts_for_products
+                    .as_ref()
+                    .map(|i| i.iter().map(|i| i.to_domain()).collect()),
+            first_threshold_for_expiring_items: first_threshold_for_expiring_items
+                .as_ref()
+                .map(|i| i.iter().map(|i| i.to_domain()).collect()),
+            second_threshold_for_expiring_items: second_threshold_for_expiring_items
+                .as_ref()
+                .map(|i| i.iter().map(|i| i.to_domain()).collect()),
         }
     }
 }
 
 impl BoolStorePrefInput {
     pub fn to_domain(&self) -> StorePrefUpdate<bool> {
+        StorePrefUpdate {
+            store_id: self.store_id.clone(),
+            value: self.value,
+        }
+    }
+}
+
+impl IntegerStorePrefInput {
+    pub fn to_domain(&self) -> StorePrefUpdate<i32> {
         StorePrefUpdate {
             store_id: self.store_id.clone(),
             value: self.value,

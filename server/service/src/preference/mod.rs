@@ -33,6 +33,10 @@ pub trait PreferenceServiceTrait: Sync + Send {
             prevent_transfers_months_before_initialisation,
             show_contact_tracing,
             sync_records_display_threshold,
+            use_days_in_month,
+            adjust_for_number_of_days_out_of_stock,
+            days_in_month,
+            exclude_transfers,
 
             // Store preferences
             manage_vaccines_in_doses,
@@ -42,6 +46,12 @@ pub trait PreferenceServiceTrait: Sync + Send {
             sort_by_vvm_status_then_expiry,
             use_simplified_mobile_ui,
             disable_manual_returns,
+            can_create_internal_order_from_a_requisition,
+            select_destination_store_for_an_internal_order,
+            number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products,
+            number_of_months_threshold_to_show_low_stock_alerts_for_products,
+            first_threshold_for_expiring_items,
+            second_threshold_for_expiring_items,
         } = self.get_preference_provider();
 
         let input = AppendIfTypeInputs {
@@ -65,6 +75,10 @@ pub trait PreferenceServiceTrait: Sync + Send {
         )?;
         append_if_type(show_contact_tracing, &mut prefs, &input)?;
         append_if_type(sync_records_display_threshold, &mut prefs, &input)?;
+        append_if_type(use_days_in_month, &mut prefs, &input)?;
+        append_if_type(adjust_for_number_of_days_out_of_stock, &mut prefs, &input)?;
+        append_if_type(days_in_month, &mut prefs, &input)?;
+        append_if_type(exclude_transfers, &mut prefs, &input)?;
 
         // Store preferences
         append_if_type(manage_vaccines_in_doses, &mut prefs, &input)?;
@@ -74,6 +88,28 @@ pub trait PreferenceServiceTrait: Sync + Send {
         append_if_type(sort_by_vvm_status_then_expiry, &mut prefs, &input)?;
         append_if_type(use_simplified_mobile_ui, &mut prefs, &input)?;
         append_if_type(disable_manual_returns, &mut prefs, &input)?;
+        append_if_type(
+            can_create_internal_order_from_a_requisition,
+            &mut prefs,
+            &input,
+        )?;
+        append_if_type(
+            select_destination_store_for_an_internal_order,
+            &mut prefs,
+            &input,
+        )?;
+        append_if_type(
+            number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products,
+            &mut prefs,
+            &input,
+        )?;
+        append_if_type(
+            number_of_months_threshold_to_show_low_stock_alerts_for_products,
+            &mut prefs,
+            &input,
+        )?;
+        append_if_type(first_threshold_for_expiring_items, &mut prefs, &input)?;
+        append_if_type(second_threshold_for_expiring_items, &mut prefs, &input)?;
 
         Ok(prefs)
     }
