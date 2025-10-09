@@ -9,12 +9,12 @@ import {
   InputWithLabelRow,
   useTheme,
   commonInputContainerSx,
+  useMediaQuery,
 } from '@openmsupply-client/common';
 
 interface DateInputProps {
   label: string;
   value?: string | null;
-  isVerticalScreen: boolean;
   onChange?: (value: string | null) => void;
   disabled: boolean;
 }
@@ -22,10 +22,11 @@ interface DateInputProps {
 export const DateInput = ({
   label,
   value,
-  isVerticalScreen,
   onChange,
   disabled,
 }: DateInputProps) => {
+  const isVerticalScreen = useMediaQuery('(max-width:800px)');
+
   const theme = useTheme();
   const date = DateUtils.getDateOrNull(value);
   const handleChange = (newValue: Date | null) => {

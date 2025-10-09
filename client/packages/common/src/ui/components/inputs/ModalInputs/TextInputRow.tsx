@@ -7,12 +7,12 @@ import {
   createLabelRowSx,
   inputSlotProps,
   InputWithLabelRow,
+  useMediaQuery,
 } from '@openmsupply-client/common';
 
 interface TextInputProps {
   label: string;
   value: string;
-  isVerticalScreen: boolean;
   onChange?: (value?: string) => void;
   disabled: boolean;
 }
@@ -20,10 +20,11 @@ interface TextInputProps {
 export const TextInput = ({
   label,
   value,
-  isVerticalScreen,
   onChange,
   disabled,
 }: TextInputProps) => {
+  const isVerticalScreen = useMediaQuery('(max-width:800px)');
+
   return (
     <Box sx={commonInputContainerSx}>
       <InputWithLabelRow
@@ -36,6 +37,7 @@ export const TextInput = ({
                   disabled
                     ? theme.palette.background.toolbar
                     : theme.palette.background.white,
+                textAlign: 'right',
               },
             }}
             slotProps={inputSlotProps(disabled)}
