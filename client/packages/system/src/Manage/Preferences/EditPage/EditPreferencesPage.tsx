@@ -22,25 +22,28 @@ export const EditPreferencesPage = () => {
   return (
     <Box display="flex" justifyContent="center" width="100%" marginTop={2}>
       <Box width="600px">
-        {ungrouped.map(pref => (
-          <InputWithLabelRow
-            key={pref.key}
-            labelWidth={'100%'}
-            label={t(`preference.${pref.key}` as LocaleKey)}
-            Input={
-              <EditPreference
-                preference={pref}
-                update={value => update({ [pref.key]: value })}
-              />
-            }
-            sx={{
-              justifyContent: 'center',
-              borderBottom: '1px dashed',
-              borderColor: 'gray.main',
-              padding: 1,
-            }}
-          />
-        ))}
+        {ungrouped.map((pref, idx) => {
+          const isLast = idx === ungrouped.length - 1;
+          return (
+            <InputWithLabelRow
+              key={pref.key}
+              labelWidth={'100%'}
+              label={t(`preference.${pref.key}` as LocaleKey)}
+              Input={
+                <EditPreference
+                  preference={pref}
+                  update={value => update({ [pref.key]: value })}
+                />
+              }
+              sx={{
+                justifyContent: 'center',
+                borderBottom: isLast ? 'none' : '1px dashed',
+                borderColor: 'gray.main',
+                padding: 1,
+              }}
+            />
+          );
+        })}
         {groups.map(group => (
           <PreferenceGroupAccordion
             key={group.key}
