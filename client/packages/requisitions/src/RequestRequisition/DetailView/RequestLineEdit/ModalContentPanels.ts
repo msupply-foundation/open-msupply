@@ -1,6 +1,9 @@
-import { LocaleKey, TypedTFunction } from '@openmsupply-client/common';
+import {
+  LocaleKey,
+  TypedTFunction,
+  ValueInfo,
+} from '@openmsupply-client/common';
 import { DraftRequestLine } from '.';
-import { ValueInfo } from '../../../common';
 
 export const getLeftPanel = (
   t: TypedTFunction<LocaleKey>,

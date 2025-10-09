@@ -8,12 +8,10 @@ import {
   Typography,
   useIntlUtils,
   useTranslation,
-} from '@openmsupply-client/common';
-import {
+  RepresentationValue,
   useEndAdornment,
   useValueInUnitsOrPacks,
-  RepresentationValue,
-} from './utils';
+} from '@openmsupply-client/common';
 
 interface InfoRowProps {
   label: string;
@@ -37,7 +35,8 @@ export const InfoRow = ({
       container
       spacing={1}
       marginBottom={1}
-      px={1}
+      pl={1}
+      pr={1.5}
       borderRadius={2}
       sx={sx}
     >
