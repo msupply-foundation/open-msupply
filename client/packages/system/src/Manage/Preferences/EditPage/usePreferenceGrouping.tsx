@@ -11,6 +11,7 @@ interface GroupedPreferences {
   groups: PreferenceGroup[];
 }
 
+// Grouping of global preferences
 const PREFERENCE_GROUP_CONFIG: Record<string, PreferenceKey[]> = {
   'label.amc-calculation': [
     PreferenceKey.UseDaysInMonth,
@@ -18,8 +19,10 @@ const PREFERENCE_GROUP_CONFIG: Record<string, PreferenceKey[]> = {
     PreferenceKey.AdjustForNumberOfDaysOutOfStock,
     PreferenceKey.ExcludeTransfers,
   ],
-  // Add more groups here:
-  // Should this grouping be done in Backend?
+  'label.procurement': [
+    PreferenceKey.AuthoriseGoodsReceived,
+    PreferenceKey.AuthorisePurchaseOrder,
+  ],
 };
 
 export const usePreferenceGrouping = (
@@ -38,21 +41,16 @@ export const usePreferenceGrouping = (
 
   preferences.forEach(pref => {
     const groupLabel = keyToGroup[pref.key];
+
     if (groupLabel) {
-      if (!groupsObject[groupLabel]) {
-        groupsObject[groupLabel] = [];
-      }
-      groupsObject[groupLabel].push(pref);
+      (groupsObject[groupLabel] ??= []).push(pref);
     } else {
       ungrouped.push(pref);
     }
   });
 
   const groups: PreferenceGroup[] = Object.entries(groupsObject).map(
-    ([key, prefs]) => ({
-      key,
-      preferences: prefs,
-    })
+    ([key, preferences]) => ({ key, preferences })
   );
 
   return { ungrouped, groups };
