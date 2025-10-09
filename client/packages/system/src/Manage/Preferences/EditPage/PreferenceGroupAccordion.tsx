@@ -35,7 +35,10 @@ export const PreferenceGroupAccordion = ({
         boxShadow: 'none',
       }}
     >
-      <AccordionSummary expandIcon={<ExpandIcon />} sx={{ fontWeight: 'bold' }}>
+      <AccordionSummary
+        expandIcon={<ExpandIcon />}
+        sx={{ fontWeight: 'bold', fontSize: 16 }}
+      >
         {label}
       </AccordionSummary>
       <AccordionDetails>
