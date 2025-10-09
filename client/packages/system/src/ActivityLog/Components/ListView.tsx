@@ -1,73 +1,72 @@
-import React, { FC } from 'react';
+import React, { FC, useMemo } from 'react';
 import {
-  DataTable,
-  useColumns,
-  ColumnFormat,
   useTranslation,
   Formatter,
-  TableProvider,
-  createTableStore,
   NothingHere,
+  useNonPaginatedMaterialTable,
+  MaterialTable,
+  ColumnDef,
+  ColumnType,
 } from '@openmsupply-client/common';
 import { useFormatDateTime } from '@common/intl';
 
 import { useActivityLog, ActivityLogRowFragment } from '../api';
 
 export const ActivityLogList: FC<{ recordId: string }> = ({ recordId }) => {
-  const { data, isError, isLoading } = useActivityLog(recordId);
+  const { data, isError, isFetching } = useActivityLog(recordId);
   const t = useTranslation();
   const { localisedTime } = useFormatDateTime();
 
-  const columns = useColumns<ActivityLogRowFragment>([
-    {
-      key: 'datetime',
-      label: 'label.date',
-      format: ColumnFormat.Date,
-      width: 150,
-    },
-    {
-      key: 'time',
-      label: 'label.time',
-      width: 150,
-      accessor: ({ rowData }) => localisedTime(rowData.datetime),
-    },
-    {
-      key: 'username',
-      label: 'label.user',
-      accessor: ({ rowData }) => rowData?.user?.username ?? '',
-    },
-    {
-      key: 'type',
-      label: 'label.event',
-      accessor: ({ rowData }) =>
-        t(Formatter.logTypeTranslation(rowData.type), {
-          defaultValue: rowData.type,
-        }),
-    },
-    {
-      key: 'changeDetails',
-      label: 'label.details',
-      accessor: ({ rowData }) => {
-        if (rowData?.from && rowData.to) {
-          return `[${rowData.from}] ${t('log.changed-to')} [${rowData.to}]`;
-        } else if (rowData?.from) {
-          return `${t('log.changed-from')} [${rowData.from}]`;
-        }
+  const columns = useMemo(
+    (): ColumnDef<ActivityLogRowFragment>[] => [
+      {
+        accessorKey: 'datetime',
+        header: t('label.date'),
+        columnType: ColumnType.Date,
       },
-    },
-  ]);
-
-  return (
-    <TableProvider createStore={createTableStore}>
-      <DataTable
-        id="name-list"
-        columns={columns}
-        data={data?.nodes}
-        isLoading={isLoading}
-        isError={isError}
-        noDataElement={<NothingHere body={t('messages.no-log-entries')} />}
-        overflowX="auto"
-      />
-    </TableProvider>
+      {
+        id: 'time',
+        header: t('label.time'),
+        accessorFn: row => localisedTime(row.datetime),
+        align: 'right',
+      },
+      {
+        id: 'username',
+        accessorFn: rowData => rowData?.user?.username ?? '',
+        header: t('label.user'),
+      },
+      {
+        id: 'type',
+        header: t('label.event'),
+        accessorFn: rowData =>
+          t(Formatter.logTypeTranslation(rowData.type), {
+            defaultValue: rowData.type,
+          }),
+      },
+      {
+        id: 'changeDetails',
+        header: t('label.details'),
+        accessorFn: rowData => {
+          if (rowData?.from && rowData.to) {
+            return `[${rowData.from}] ${t('log.changed-to')} [${rowData.to}]`;
+          } else if (rowData?.from) {
+            return `${t('log.changed-from')} [${rowData.from}]`;
+          }
+        },
+      },
+    ],
+    []
   );
+
+  const { table } = useNonPaginatedMaterialTable({
+    tableId: 'activity-log-list',
+    columns,
+    data: data?.nodes || [],
+    isLoading: isFetching,
+    isError,
+    noDataElement: <NothingHere body={t('messages.no-log-entries')} />,
+    enableRowSelection: false,
+  });
+
+  return <MaterialTable table={table} />;
 };
