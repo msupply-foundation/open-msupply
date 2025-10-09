@@ -308,9 +308,9 @@ export const canDeleteInvoice = (
   invoice.status === InvoiceNodeStatus.Picked;
 
 export const canCancelInvoice = (invoice: PrescriptionRowFragment) =>
-  // TO-DO Pass in preferences and check preference enabled
   invoice.type === InvoiceNodeType.Prescription &&
-  invoice.status === InvoiceNodeStatus.Verified;
+  invoice.status === InvoiceNodeStatus.Verified &&
+  !invoice.isCancellation;
 
 export const canDeleteSupplierReturn = (
   SupplierReturn: SupplierReturnRowFragment

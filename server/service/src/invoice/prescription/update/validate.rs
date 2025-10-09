@@ -1,6 +1,6 @@
 use crate::invoice::{
-    check_invoice_exists, check_invoice_is_editable, check_invoice_type, check_status_change,
-    check_store, UpdatePrescriptionStatus,
+    can_cancel_invoice, check_invoice_exists, check_invoice_is_editable, check_invoice_type,
+    check_status_change, check_store, UpdatePrescriptionStatus,
 };
 use crate::validate::check_patient_exists;
 use repository::{
@@ -24,13 +24,17 @@ pub fn validate(
     }
     // "Verified" prescriptions can be updated to "Cancelled", which is the one
     // exception to normal "is_editable" rules.
-    // TO-DO: Should also have a preference check, but pref not yet implemented.
-    // Issue #6505
-    if !check_invoice_is_editable(&invoice)
-        && !(patch.status == Some(UpdatePrescriptionStatus::Cancelled))
-    {
+    let is_editable = match &patch.status {
+        // Trying to cancel, so we just check if we can we cancel this invoice
+        Some(UpdatePrescriptionStatus::Cancelled) => can_cancel_invoice(&invoice),
+        // Otherwise, check if invoice is editable
+        _ => check_invoice_is_editable(&invoice),
+    };
+
+    if !is_editable {
         return Err(InvoiceIsNotEditable);
     }
+
     if !check_invoice_type(&invoice, InvoiceType::Prescription) {
         return Err(NotAPrescriptionInvoice);
     }
