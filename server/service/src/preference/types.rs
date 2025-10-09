@@ -21,7 +21,6 @@ pub enum PrefKey {
     PreventTransfersMonthsBeforeInitialisation,
     ShowContactTracing,
     SyncRecordsDisplayThreshold,
-    EnableCustomAmcCalculation,
     UseDaysInMonth,
     AdjustForNumberOfDaysOutOfStock,
     DaysInMonth,
