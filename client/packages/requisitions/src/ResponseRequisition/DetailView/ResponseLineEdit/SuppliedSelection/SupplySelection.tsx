@@ -8,9 +8,10 @@ import {
   useDebounceCallback,
   useIntlUtils,
   useTranslation,
+  Representation,
+  RepresentationValue,
 } from '@openmsupply-client/common';
 import { getCurrentValue, getUpdatedSupply } from './utils';
-import { Representation, RepresentationValue } from '../../../../common';
 import { DraftResponseLine } from '../hooks';
 
 interface Option {

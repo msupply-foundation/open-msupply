@@ -1,5 +1,8 @@
+import {
+  Representation,
+  RepresentationValue,
+} from '@openmsupply-client/common';
 import { NumUtils } from '@common/utils';
-import { Representation, RepresentationValue } from '../../../../common';
 
 // Quantity Calculation
 export const calculatePackQuantity = (

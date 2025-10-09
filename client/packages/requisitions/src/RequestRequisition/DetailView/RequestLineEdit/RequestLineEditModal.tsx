@@ -7,16 +7,14 @@ import {
   useNotification,
   usePreferences,
   UserStoreNodeFragment,
+  Representation,
+  RepresentationValue,
 } from '@openmsupply-client/common';
 import { ItemWithStatsFragment } from '@openmsupply-client/system';
 import { RequestFragment, useRequest } from '../../api';
 import { useDraftRequisitionLine, useNextRequestLine } from './hooks';
 import { isRequestDisabled, shouldDeleteLine } from '../../../utils';
 import { RequestLineEdit } from './RequestLineEdit';
-import {
-  Representation,
-  RepresentationValue,
-} from 'packages/requisitions/src/common';
 
 interface RequestLineEditModalProps {
   store?: UserStoreNodeFragment;

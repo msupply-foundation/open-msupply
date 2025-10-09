@@ -3,14 +3,14 @@ import {
   DosesCaption,
   Grid,
   NumericTextDisplay,
+  QuantityUtils,
+  DisplayUtils,
+  RepresentationValue,
   SxProps,
   Theme,
   Typography,
   useIntlUtils,
   useTranslation,
-  RepresentationValue,
-  useEndAdornment,
-  useValueInUnitsOrPacks,
 } from '@openmsupply-client/common';
 
 interface InfoRowProps {
@@ -106,13 +106,13 @@ export const ValueInfoRow = ({
   const t = useTranslation();
   const { getPlural } = useIntlUtils();
 
-  const valueInUnitsOrPacks = useValueInUnitsOrPacks(
+  const valueInUnitsOrPacks = QuantityUtils.useValueInUnitsOrPacks(
     representation,
     defaultPackSize,
     value
   );
 
-  const endAdornment = useEndAdornment(
+  const endAdornment = DisplayUtils.useEndAdornment(
     t,
     getPlural,
     unitName,

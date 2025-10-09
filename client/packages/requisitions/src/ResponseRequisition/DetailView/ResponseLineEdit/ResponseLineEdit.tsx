@@ -11,6 +11,7 @@ import {
   ModalPanelArea,
   MultilineTextInput,
   InfoRow,
+  RepresentationValue,
 } from '@openmsupply-client/common';
 import {
   ItemWithStatsFragment,
@@ -18,7 +19,6 @@ import {
   StockItemSearchInputWithStats,
 } from '@openmsupply-client/system';
 import { ResponseFragment, ResponseLineFragment } from '../../api';
-import { RepresentationValue } from '../../../common';
 import { DraftResponseLine } from './hooks';
 import { SupplySelection } from './SuppliedSelection';
 import { useStockCalculations } from './utils';
