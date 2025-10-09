@@ -83,9 +83,7 @@ export const useGetColumnTypeDefaults = () => {
           // Comment popover is pretty narrow, show icon rather than full label
           Header: () => (
             <Tooltip title={t('label.comment')} placement="top">
-              <div>
-                <MessageSquareIcon fontSize="small" />
-              </div>
+              <MessageSquareIcon fontSize="small" />
             </Tooltip>
           ),
           Cell: ({ cell, row }) => {
@@ -96,6 +94,7 @@ export const useGetColumnTypeDefaults = () => {
             const value = cell.getValue<string | null>();
             return <PopoverCell value={value} label={t('label.comment')} />;
           },
+          align: 'left',
         };
 
       case ColumnType.Boolean:
