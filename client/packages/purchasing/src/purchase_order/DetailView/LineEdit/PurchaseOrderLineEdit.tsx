@@ -20,6 +20,7 @@ import {
   MultilineTextInput,
   DateInput,
   commonLabelProps,
+  InfoRow,
 } from '@openmsupply-client/common';
 import { PurchaseOrderLineFragment } from '../../api';
 import {
@@ -128,11 +129,11 @@ export const PurchaseOrderLineEdit = ({
       Left={
         showContent ? (
           <>
-            <NumInputRow
+            <InfoRow
               value={draft?.lineNumber || lineCount + 1}
               label={t('label.line-number')}
             />
-            <NumInputRow
+            <InfoRow
               value={draft?.item.stats.stockOnHand || 0}
               label={t('label.stock-on-hand')}
             />
@@ -224,17 +225,16 @@ export const PurchaseOrderLineEdit = ({
               }}
               decimalLimit={2}
             />
-            <NumInputRow
+            <InfoRow
               label={t('label.requested-quantity')}
               value={draft?.requestedNumberOfUnits}
-              disabled={true}
               decimalLimit={2}
             />
-            {!canEditRequestedQuantity && (
-              <NumInputRow
+            {(!canEditRequestedQuantity ||
+              status == PurchaseOrderNodeStatus.Finalised) && (
+              <InfoRow
                 label={t('label.adjusted-units')}
                 value={draft?.adjustedNumberOfUnits ?? undefined}
-                disabled={true}
                 decimalLimit={2}
               />
             )}
@@ -300,6 +300,7 @@ export const PurchaseOrderLineEdit = ({
               }
               decimalLimit={options.precision}
               endAdornment={options.symbol}
+              disabled={true}
             />
           </>
         ) : null

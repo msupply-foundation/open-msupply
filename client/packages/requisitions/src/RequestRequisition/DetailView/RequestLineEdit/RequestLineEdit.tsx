@@ -16,6 +16,9 @@ import {
   usePreferences,
   ModalPanelArea,
   MultilineTextInput,
+  InfoRow,
+  ValueInfoRow,
+  ValueInfo,
 } from '@openmsupply-client/common';
 import { DraftRequestLine } from './hooks';
 import { RequestLineFragment } from '../../api';
@@ -23,12 +26,7 @@ import { RequestedSelection } from './RequestedSelection';
 import { ConsumptionHistory } from './ItemCharts/ConsumptionHistory';
 import { StockEvolution } from './ItemCharts/StockEvolution';
 import { StockDistribution } from './ItemCharts/StockDistribution';
-import {
-  InfoRow,
-  ValueInfoRow,
-  ValueInfo,
-  RepresentationValue,
-} from '../../../common';
+import { RepresentationValue } from '../../../common';
 import {
   getLeftPanel,
   getExtraMiddlePanels,
