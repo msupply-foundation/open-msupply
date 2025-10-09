@@ -40,8 +40,6 @@ pub mod first_threshold_for_expiring_items;
 pub use first_threshold_for_expiring_items::*;
 pub mod second_threshold_for_expiring_items;
 pub use second_threshold_for_expiring_items::*;
-pub mod enable_custom_amc_calculation;
-pub use enable_custom_amc_calculation::*;
 pub mod use_days_in_month;
 pub use use_days_in_month::*;
 pub mod adjust_for_number_of_days_out_of_stock;
@@ -61,7 +59,6 @@ pub struct PreferenceProvider {
     pub prevent_transfers_months_before_initialisation: PreventTransfersMonthsBeforeInitialisation,
     pub show_contact_tracing: ShowContactTracing,
     pub sync_records_display_threshold: SyncRecordsDisplayThreshold,
-    pub enable_custom_amc_calculation: EnableCustomAmcCalculation,
     pub use_days_in_month: UseDaysInMonth,
     pub adjust_for_number_of_days_out_of_stock: AdjustForNumberOfDaysOutOfStock,
     pub days_in_month: DaysInMonth,
@@ -95,7 +92,6 @@ pub fn get_preference_provider() -> PreferenceProvider {
         show_contact_tracing: ShowContactTracing,
         sync_records_display_threshold: SyncRecordsDisplayThreshold,
         prevent_transfers_months_before_initialisation: PreventTransfersMonthsBeforeInitialisation,
-        enable_custom_amc_calculation: EnableCustomAmcCalculation,
         use_days_in_month: UseDaysInMonth,
         adjust_for_number_of_days_out_of_stock: AdjustForNumberOfDaysOutOfStock,
         days_in_month: DaysInMonth,

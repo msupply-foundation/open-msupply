@@ -33,7 +33,6 @@ pub trait PreferenceServiceTrait: Sync + Send {
             prevent_transfers_months_before_initialisation,
             show_contact_tracing,
             sync_records_display_threshold,
-            enable_custom_amc_calculation,
             use_days_in_month,
             adjust_for_number_of_days_out_of_stock,
             days_in_month,
@@ -76,7 +75,6 @@ pub trait PreferenceServiceTrait: Sync + Send {
         )?;
         append_if_type(show_contact_tracing, &mut prefs, &input)?;
         append_if_type(sync_records_display_threshold, &mut prefs, &input)?;
-        append_if_type(enable_custom_amc_calculation, &mut prefs, &input)?;
         append_if_type(use_days_in_month, &mut prefs, &input)?;
         append_if_type(adjust_for_number_of_days_out_of_stock, &mut prefs, &input)?;
         append_if_type(days_in_month, &mut prefs, &input)?;

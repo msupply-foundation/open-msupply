@@ -6797,7 +6797,6 @@ export enum PreferenceKey {
   CustomTranslations = 'customTranslations',
   DaysInMonth = 'daysInMonth',
   DisableManualReturns = 'disableManualReturns',
-  EnableCustomAmcCalculation = 'enableCustomAmcCalculation',
   ExcludeTransfers = 'excludeTransfers',
   FirstThresholdForExpiringItems = 'firstThresholdForExpiringItems',
   GenderOptions = 'genderOptions',
@@ -6849,7 +6848,6 @@ export type PreferencesNode = {
   customTranslations: Scalars['JSONObject']['output'];
   daysInMonth: Scalars['Int']['output'];
   disableManualReturns: Scalars['Boolean']['output'];
-  enableCustomAmcCalculation: Scalars['Boolean']['output'];
   excludeTransfers: Scalars['Boolean']['output'];
   firstThresholdForExpiringItems: Scalars['Int']['output'];
   genderOptions: Array<GenderTypeNode>;
@@ -11150,7 +11148,6 @@ export type UpsertPreferencesInput = {
   customTranslations?: InputMaybe<Scalars['JSONObject']['input']>;
   daysInMonth?: InputMaybe<Scalars['Int']['input']>;
   disableManualReturns?: InputMaybe<Array<BoolStorePrefInput>>;
-  enableCustomAmcCalculation?: InputMaybe<Scalars['Boolean']['input']>;
   excludeTransfers?: InputMaybe<Scalars['Boolean']['input']>;
   firstThresholdForExpiringItems?: InputMaybe<Array<IntegerStorePrefInput>>;
   genderOptions?: InputMaybe<Array<GenderTypeNode>>;

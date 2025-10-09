@@ -55,10 +55,6 @@ impl PreferencesNode {
         self.load_preference(&self.preferences.sync_records_display_threshold)
     }
 
-    pub async fn enable_custom_amc_calculation(&self) -> Result<bool> {
-        self.load_preference(&self.preferences.enable_custom_amc_calculation)
-    }
-
     pub async fn use_days_in_month(&self) -> Result<bool> {
         self.load_preference(&self.preferences.use_days_in_month)
     }
@@ -203,7 +199,6 @@ pub enum PreferenceKey {
     PreventTransfersMonthsBeforeInitialisation,
     ShowContactTracing,
     SyncRecordsDisplayThreshold,
-    EnableCustomAmcCalculation,
     UseDaysInMonth,
     AdjustForNumberOfDaysOutOfStock,
     DaysInMonth,
