@@ -16,7 +16,8 @@ export const useColumnOrder = <T extends MRT_RowData>(
 ) => {
   const initial = useMemo(() => {
     for (const col of columns) {
-      // if column has a custom columnIndex, remove it from its current position and insert it at the specified index
+      // if column has a custom columnIndex, remove it from its current position
+      // and insert it at the specified index
       if (col.columnIndex !== undefined) {
         const currentIndex = columns.indexOf(col);
         if (currentIndex > -1) {
