@@ -2,7 +2,6 @@ import React, { useMemo } from 'react';
 import {
   useTranslation,
   BasicTextInput,
-  BufferedTextArea,
   ReasonOptionNodeType,
   RequisitionNodeApprovalStatus,
   Typography,
@@ -10,6 +9,7 @@ import {
   ModalGridLayout,
   usePreferences,
   ModalPanelArea,
+  MultilineTextInput,
 } from '@openmsupply-client/common';
 import {
   ItemWithStatsFragment,
@@ -332,27 +332,12 @@ export const ResponseLineEdit = ({
             />
           </>
         ) : null}
-        <Typography variant="body1" fontWeight="bold" p={1}>
-          {t('heading.comment')}:
-        </Typography>
-        <BufferedTextArea
+
+        <MultilineTextInput
+          label={t('label.comment')}
           value={draft?.comment ?? ''}
-          onChange={e => update({ comment: e.target.value })}
-          slotProps={{
-            input: {
-              sx: {
-                boxShadow: theme => (!disabled ? theme.shadows[2] : 'none'),
-                borderRadius: 2,
-                backgroundColor: theme =>
-                  disabled
-                    ? theme.palette.background.toolbar
-                    : theme.palette.background.white,
-              },
-            },
-          }}
+          onChange={(value?: string) => update({ comment: value })}
           disabled={disabled}
-          minRows={3}
-          maxRows={3}
         />
       </>
     );
