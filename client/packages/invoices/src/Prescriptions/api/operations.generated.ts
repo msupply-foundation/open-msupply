@@ -10,6 +10,7 @@ export type PrescriptionRowFragment = {
   pickedDatetime?: string | null;
   verifiedDatetime?: string | null;
   cancelledDatetime?: string | null;
+  isCancellation: boolean;
   id: string;
   invoiceNumber: number;
   otherPartyName: string;
@@ -348,6 +349,7 @@ export type PrescriptionsQuery = {
       pickedDatetime?: string | null;
       verifiedDatetime?: string | null;
       cancelledDatetime?: string | null;
+      isCancellation: boolean;
       id: string;
       invoiceNumber: number;
       otherPartyName: string;
@@ -529,6 +531,7 @@ export type PrescriptionByNumberQuery = {
         pickedDatetime?: string | null;
         verifiedDatetime?: string | null;
         cancelledDatetime?: string | null;
+        isCancellation: boolean;
         id: string;
         invoiceNumber: number;
         otherPartyName: string;
@@ -720,6 +723,7 @@ export type PrescriptionByIdQuery = {
         pickedDatetime?: string | null;
         verifiedDatetime?: string | null;
         cancelledDatetime?: string | null;
+        isCancellation: boolean;
         id: string;
         invoiceNumber: number;
         otherPartyName: string;
@@ -1322,6 +1326,7 @@ export const PrescriptionRowFragmentDoc = gql`
     pickedDatetime
     verifiedDatetime
     cancelledDatetime
+    isCancellation
     id
     invoiceNumber
     patientId: otherPartyId
