@@ -53,6 +53,7 @@ pub struct EqualFilterRequisitionTypeInput {
     pub equal_to: Option<RequisitionNodeType>,
     pub equal_any: Option<Vec<RequisitionNodeType>>,
     pub not_equal_to: Option<RequisitionNodeType>,
+    pub not_equal_all: Option<Vec<RequisitionNodeType>>,
 }
 
 #[derive(InputObject, Clone)]
@@ -60,6 +61,7 @@ pub struct EqualFilterRequisitionStatusInput {
     pub equal_to: Option<RequisitionNodeStatus>,
     pub equal_any: Option<Vec<RequisitionNodeStatus>>,
     pub not_equal_to: Option<RequisitionNodeStatus>,
+    pub not_equal_all: Option<Vec<RequisitionNodeStatus>>,
 }
 
 #[derive(InputObject, Clone)]

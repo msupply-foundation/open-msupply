@@ -37,6 +37,7 @@ pub struct EqualFilterInventoryAdjustmentReasonTypeInput {
     pub equal_to: Option<InventoryAdjustmentReasonNodeType>,
     pub equal_any: Option<Vec<InventoryAdjustmentReasonNodeType>>,
     pub not_equal_to: Option<InventoryAdjustmentReasonNodeType>,
+    pub not_equal_all: Option<Vec<InventoryAdjustmentReasonNodeType>>,
 }
 
 #[derive(InputObject, Clone)]

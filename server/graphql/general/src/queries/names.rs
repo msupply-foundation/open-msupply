@@ -36,6 +36,7 @@ pub struct EqualFilterNameRowTypeInput {
     pub equal_to: Option<NameNodeType>,
     pub equal_any: Option<Vec<NameNodeType>>,
     pub not_equal_to: Option<NameNodeType>,
+    pub not_equal_all: Option<Vec<NameNodeType>>,
 }
 
 #[derive(InputObject, Clone)]
@@ -94,6 +95,7 @@ pub struct EqualFilterTypeInput {
     pub equal_to: Option<NameNodeType>,
     pub equal_any: Option<Vec<NameNodeType>>,
     pub not_equal_to: Option<NameNodeType>,
+    pub not_equal_all: Option<Vec<NameNodeType>>,
 }
 
 pub fn get_names(
