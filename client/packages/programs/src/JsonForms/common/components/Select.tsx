@@ -241,6 +241,7 @@ const useFilteredItems = (
   },
   path: string
 ): string[] => {
+  const t = useTranslation();
   const { core } = useJsonForms();
   const [visibleItems, setVisibleItems] = useState(allItems ?? []);
 
@@ -261,7 +262,7 @@ const useFilteredItems = (
       !filtered.includes(currentSelection)
     ) {
       setVisibleItems([currentSelection, ...filtered]);
-      customErrors.add(path, 'Please select a valid option');
+      customErrors.add(path, t('messages.please-select-valid-option'));
     } else {
       setVisibleItems(filtered);
       customErrors.remove(path);
