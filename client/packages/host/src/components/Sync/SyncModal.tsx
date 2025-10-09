@@ -278,6 +278,7 @@ export const SyncModal = ({ onCancel, open, width = 800 }: SyncModalProps) => {
               marginRight: 1,
               color: theme.palette.common.white,
               fontSize: '14px',
+              minWidth: '130px',
             })}
           />
           {userHasPermission(UserPermission.ServerAdmin) && (
