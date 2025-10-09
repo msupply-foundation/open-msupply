@@ -5,7 +5,7 @@ export const ModalPanelArea = ({ children }: PropsWithChildren) => {
   return (
     <Box
       sx={{
-        background: theme => theme.palette.background.group,
+        background: theme => theme.palette.background.group.dark,
         borderRadius: 2,
         p: 1,
       }}

@@ -421,10 +421,7 @@ export type DeletePurchaseOrderMutation = {
     | {
         __typename: 'DeletePurchaseOrderError';
         error:
-          | {
-              __typename: 'CannotDeletePurchaseOrder';
-              description: string;
-            }
+          | { __typename: 'CannotDeletePurchaseOrder'; description: string }
           | { __typename: 'RecordNotFound'; description: string };
       }
     | { __typename: 'DeleteResponse'; id: string };

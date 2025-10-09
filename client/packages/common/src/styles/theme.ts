@@ -131,8 +131,12 @@ declare module '@mui/material/styles/createPalette' {
     icon: string;
     success: string;
     row: string;
-    group: string;
     error: string;
+    group: {
+      light: string;
+      main: string;
+      dark: string;
+    };
     input: {
       main: string;
       disabled: string;
@@ -227,7 +231,7 @@ export const themeOptions = {
     },
     secondary: { main: '#3e7bfa', light: '#5b8def', dark: '#3568d4' },
     background: {
-      group: '#e2e2e9',
+      group: { main: '#f2f2f5', dark: '#e2e2e9', light: '#fafafc' },
       drawer: '#f2f2f5',
       row: '#fafafc',
       icon: '#E5EEFF',

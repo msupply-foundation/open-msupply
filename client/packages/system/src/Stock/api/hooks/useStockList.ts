@@ -71,6 +71,8 @@ const toSortField = (
       return StockLineSortFieldInput.NumberOfPacks;
     case 'location':
       return StockLineSortFieldInput.LocationCode;
+    case 'costPricePerPack':
+      return StockLineSortFieldInput.CostPricePerPack;
     case 'expiryDate':
     default: {
       return StockLineSortFieldInput.ExpiryDate;

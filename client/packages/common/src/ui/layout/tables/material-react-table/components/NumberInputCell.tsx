@@ -7,6 +7,8 @@ import {
 } from '@openmsupply-client/common';
 import { MRT_Cell, MRT_RowData } from 'material-react-table';
 
+const ARROW_KEYS = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'];
+
 interface NumberInputCellProps<T extends MRT_RowData>
   extends NumericTextInputProps {
   cell: MRT_Cell<T>;
@@ -59,6 +61,14 @@ export const NumberInputCell = <T extends MRT_RowData>({
         setBuffer(newValue);
         debouncedUpdate(newValue);
       }}
+      onKeyDown={e => {
+        // Allow using arrow keys to move input cursor without
+        // navigating to the next/previous cell
+        if (ARROW_KEYS.includes(e.key)) {
+          e.stopPropagation();
+        }
+      }}
+      fullWidth
       {...numericTextProps}
     />
   );
