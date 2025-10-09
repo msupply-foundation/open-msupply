@@ -227,7 +227,7 @@ export const SyncModal = ({ onCancel, open, width = 800 }: SyncModalProps) => {
 
         {error && (
           <Box marginTop="20">
-            <BoxedErrorWithDetails {...error} />
+            <BoxedErrorWithDetails {...error} width={'100%'} />
           </Box>
         )}
 
