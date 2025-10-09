@@ -9,6 +9,7 @@ export const inputSlotProps = (disabled: boolean) => ({
   input: {
     sx: {
       boxShadow: (theme: Theme) => (!disabled ? theme.shadows[2] : 'none'),
+      borderRadius: 2,
       background: (theme: Theme) =>
         disabled
           ? theme.palette.background.toolbar

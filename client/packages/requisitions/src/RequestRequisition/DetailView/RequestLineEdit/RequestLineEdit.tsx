@@ -12,10 +12,10 @@ import {
   ReasonOptionNodeType,
   usePluginProvider,
   Typography,
-  BufferedTextArea,
   ModalGridLayout,
   usePreferences,
   ModalPanelArea,
+  MultilineTextInput,
 } from '@openmsupply-client/common';
 import { DraftRequestLine } from './hooks';
 import { RequestLineFragment } from '../../api';
@@ -182,25 +182,11 @@ export const RequestLineEdit = ({
               />
             </Typography>
           )}
-          <Typography variant="body1" fontWeight="bold" pb={0.5}>
-            {t('heading.comment')}:
-          </Typography>
-          <BufferedTextArea
+          <MultilineTextInput
+            label={t('label.comment')}
             value={draft?.comment ?? ''}
-            onChange={e => update({ comment: e.target.value })}
-            slotProps={{
-              input: {
-                sx: {
-                  backgroundColor: theme =>
-                    disabled
-                      ? theme.palette.background.toolbar
-                      : theme.palette.background.white,
-                },
-              },
-            }}
+            onChange={(value?: string) => update({ comment: value })}
             disabled={disabled}
-            minRows={3}
-            maxRows={3}
           />
         </ModalPanelArea>
       </>

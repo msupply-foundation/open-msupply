@@ -10,14 +10,14 @@ interface MultilineTextInputProps {
   label: string;
   value: string;
   onChange?: (value?: string) => void;
-  disabled: boolean;
+  disabled?: boolean;
 }
 
 export const MultilineTextInput = ({
   label,
   value,
   onChange,
-  disabled,
+  disabled = false,
 }: MultilineTextInputProps) => {
   return (
     <Box flex={1}>
