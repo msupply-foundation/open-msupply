@@ -20,6 +20,7 @@ import {
   DateInput,
   commonLabelProps,
   InfoRow,
+  Grid,
 } from '@openmsupply-client/common';
 import { PurchaseOrderLineFragment } from '../../api';
 import {
@@ -135,47 +136,55 @@ export const PurchaseOrderLineEdit = ({
               value={draft?.item.stats.stockOnHand || 0}
               label={t('label.stock-on-hand')}
             />
-            <TextInput
-              label={t('label.unit')}
-              value={draft?.unit || ''}
-              onChange={(value?: string) => update({ unit: value })}
-              disabled={
-                disabled || isFieldDisabled(status, StatusGroup.AfterConfirmed)
-              }
-            />
-            <TextInput
-              label={t('label.supplier-item-code')}
-              value={draft?.supplierItemCode || ''}
-              onChange={(value?: string) => update({ supplierItemCode: value })}
-              disabled={disabled}
-            />
-            <InputWithLabelRow
-              Input={
-                <ManufacturerSearchInput
-                  disabled={isFieldDisabled(status, StatusGroup.AfterConfirmed)}
-                  value={draft?.manufacturer ?? null}
-                  onChange={manufacturer =>
-                    update({ manufacturer: manufacturer || null })
-                  }
-                  textSx={
-                    disabled
-                      ? {
-                          backgroundColor: theme =>
-                            theme.palette.background.toolbar,
-                          boxShadow: 'none',
-                        }
-                      : {
-                          backgroundColor: theme =>
-                            theme.palette.background.white,
-                          boxShadow: theme => theme.shadows[2],
-                        }
-                  }
-                  width={185}
-                />
-              }
-              label={t('label.manufacturer')}
-              labelProps={commonLabelProps()}
-            />
+            <Grid pl={1}>
+              <TextInput
+                label={t('label.unit')}
+                value={draft?.unit || ''}
+                onChange={(value?: string) => update({ unit: value })}
+                disabled={
+                  disabled ||
+                  isFieldDisabled(status, StatusGroup.AfterConfirmed)
+                }
+              />
+              <TextInput
+                label={t('label.supplier-item-code')}
+                value={draft?.supplierItemCode || ''}
+                onChange={(value?: string) =>
+                  update({ supplierItemCode: value })
+                }
+                disabled={disabled}
+              />
+              <InputWithLabelRow
+                Input={
+                  <ManufacturerSearchInput
+                    disabled={isFieldDisabled(
+                      status,
+                      StatusGroup.AfterConfirmed
+                    )}
+                    value={draft?.manufacturer ?? null}
+                    onChange={manufacturer =>
+                      update({ manufacturer: manufacturer || null })
+                    }
+                    textSx={
+                      disabled
+                        ? {
+                            backgroundColor: theme =>
+                              theme.palette.background.toolbar,
+                            boxShadow: 'none',
+                          }
+                        : {
+                            backgroundColor: theme =>
+                              theme.palette.background.white,
+                            boxShadow: theme => theme.shadows[2],
+                          }
+                    }
+                    width={185}
+                  />
+                }
+                label={t('label.manufacturer')}
+                labelProps={commonLabelProps()}
+              />
+            </Grid>
           </>
         ) : null
       }
