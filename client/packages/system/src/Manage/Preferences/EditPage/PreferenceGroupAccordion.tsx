@@ -39,24 +39,27 @@ export const PreferenceGroupAccordion = ({
         {label}
       </AccordionSummary>
       <AccordionDetails>
-        {preferences.map(pref => (
-          <InputWithLabelRow
-            key={pref.key}
-            labelWidth={'100%'}
-            label={t(`preference.${pref.key}` as LocaleKey)}
-            Input={
-              <EditPreference
-                preference={pref}
-                update={value => update({ [pref.key]: value })}
-              />
-            }
-            sx={{
-              justifyContent: 'center',
-              borderBottom: '1px dashed',
-              padding: 1,
-            }}
-          />
-        ))}
+        {preferences.map((pref, idx) => {
+          const isLast = idx === preferences.length - 1;
+          return (
+            <InputWithLabelRow
+              key={pref.key}
+              labelWidth={'100%'}
+              label={t(`preference.${pref.key}` as LocaleKey)}
+              Input={
+                <EditPreference
+                  preference={pref}
+                  update={value => update({ [pref.key]: value })}
+                />
+              }
+              sx={{
+                justifyContent: 'center',
+                borderBottom: isLast ? 'none' : '1px dashed',
+                padding: 1,
+              }}
+            />
+          );
+        })}
       </AccordionDetails>
     </Accordion>
   );
