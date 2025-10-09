@@ -1,15 +1,13 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import {
   useTranslation,
   Typography,
   useFormatNumber,
   SxProps,
   Theme,
-} from '@openmsupply-client/common';
-import {
-  calculateValueInDoses,
   RepresentationValue,
-} from 'packages/requisitions/src/common';
+  QuantityUtils,
+} from '@openmsupply-client/common';
 
 interface DosesCaptionProps {
   value: number;
@@ -32,25 +30,12 @@ export const DosesCaption = ({
   const { round } = useFormatNumber();
 
   // doses always rounded to display in whole numbers
-  const valueInDoses = useMemo(
-    () =>
-      displayVaccinesInDoses
-        ? round(
-            calculateValueInDoses(
-              representation,
-              defaultPackSize || 1,
-              dosesPerUnit,
-              value
-            )
-          )
-        : undefined,
-    [
-      displayVaccinesInDoses,
-      representation,
-      defaultPackSize,
-      dosesPerUnit,
-      value,
-    ]
+  const valueInDoses = QuantityUtils.useValueInDoses(
+    displayVaccinesInDoses,
+    representation,
+    defaultPackSize || 1,
+    dosesPerUnit,
+    value
   );
 
   return (
@@ -65,7 +50,7 @@ export const DosesCaption = ({
         ...sx,
       }}
     >
-      {valueInDoses} {t('label.doses').toLowerCase()}
+      {round(valueInDoses)} {t('label.doses').toLowerCase()}
     </Typography>
   );
 };

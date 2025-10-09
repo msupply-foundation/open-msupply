@@ -10,12 +10,10 @@ import {
   Theme,
   useMediaQuery,
   DosesCaption,
-} from '@openmsupply-client/common';
-import { inputSlotProps, commonLabelProps, createLabelRowSx } from './utils';
-import {
   Representation,
   RepresentationValue,
-} from 'packages/requisitions/src/common';
+} from '@openmsupply-client/common';
+import { inputSlotProps, commonLabelProps, createLabelRowSx } from './utils';
 
 export interface NumInputRowProps extends NumericTextInputProps {
   label: string;

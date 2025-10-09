@@ -8,12 +8,13 @@ import {
   useNotification,
   usePreferences,
   UserStoreNodeFragment,
+  Representation,
+  RepresentationValue,
 } from '@openmsupply-client/common';
 import { ItemWithStatsFragment } from '@openmsupply-client/system';
 import { ResponseFragment, useResponse } from '../../api';
 import { ResponseLineEdit } from './ResponseLineEdit';
 import { useDraftRequisitionLine, useNextResponseLine } from './hooks';
-import { Representation, RepresentationValue } from '../../../common';
 import { ResponseStoreStats } from '../ResponseStats/ResponseStoreStats';
 import { RequestStoreStats } from '../ResponseStats/RequestStoreStats';
 import { shouldDeleteLine } from 'packages/requisitions/src/utils';

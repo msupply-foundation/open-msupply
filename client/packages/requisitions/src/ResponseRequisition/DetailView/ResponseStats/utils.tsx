@@ -4,8 +4,9 @@ import {
   LocaleKey,
   TypedTFunction,
   Box,
+  RepresentationValue,
+  DisplayUtils,
 } from '@openmsupply-client/common';
-import { RepresentationValue, useEndAdornment } from '../../../common';
 
 type StatsInfoProps = {
   t: TypedTFunction<LocaleKey>;
@@ -51,7 +52,7 @@ const StatsInfoValue = ({
     >
       {round(value, 2)}
       &nbsp;
-      {useEndAdornment(t, getPlural, unit, representation, value)}
+      {DisplayUtils.useEndAdornment(t, getPlural, unit, representation, value)}
     </Typography>
   </Box>
 );
