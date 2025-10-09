@@ -5,12 +5,12 @@ import {
   Theme,
   useIntlUtils,
   useTranslation,
-} from '@openmsupply-client/common';
-import {
   RepresentationValue,
-  useEndAdornment,
-  useValueInUnitsOrPacks,
-} from 'packages/requisitions/src/common/utils';
+  QuantityUtils,
+  DisplayUtils,
+  Representation,
+  DosesCaption,
+} from '@openmsupply-client/common';
 
 interface ResponseNumInputRowProps {
   value: number;
@@ -44,13 +44,13 @@ export const ResponseNumInputRow = ({
   const t = useTranslation();
   const { getPlural } = useIntlUtils();
 
-  const valueInUnitsOrPacks = useValueInUnitsOrPacks(
+  const valueInUnitsOrPacks = QuantityUtils.useValueInUnitsOrPacks(
     representation,
     defaultPackSize,
     value
   );
 
-  const endAdornment = useEndAdornment(
+  const endAdornment = DisplayUtils.useEndAdornment(
     t,
     getPlural,
     unitName || t('label.unit'),
@@ -59,16 +59,41 @@ export const ResponseNumInputRow = ({
     endAdornmentOverride
   );
 
+  const handleChange = (newValue?: number) => {
+    if (!onChange) return;
+
+    if (newValue === undefined) {
+      onChange(undefined);
+      return;
+    }
+
+    if (representation === Representation.PACKS) {
+      onChange(newValue * defaultPackSize);
+    } else {
+      onChange(newValue);
+    }
+  };
+
+  const dosesCaption =
+    displayVaccinesInDoses && !!value && !overrideDoseDisplay ? (
+      <DosesCaption
+        value={value}
+        representation={representation}
+        dosesPerUnit={dosesPerUnit}
+        displayVaccinesInDoses={displayVaccinesInDoses}
+        defaultPackSize={defaultPackSize}
+      />
+    ) : null;
+
   return (
     <NumInputRow
       value={valueInUnitsOrPacks}
-      onChange={onChange}
-      displayVaccinesInDoses={overrideDoseDisplay ?? displayVaccinesInDoses}
-      dosesPerUnit={dosesPerUnit}
+      onChange={handleChange}
       endAdornment={endAdornment}
       label={label}
       disabledOverride={disabledOverride}
       sx={sx}
+      dosesCaption={dosesCaption}
     />
   );
 };
