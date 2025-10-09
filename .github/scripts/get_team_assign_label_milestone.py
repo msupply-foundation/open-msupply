@@ -40,11 +40,12 @@ class TeamLabelAndMilestone:
         issue_labels = self.get_issue_labels()
         user_team_label = self.get_assignees_team_labels()
         not_user_team_labels = self.get_team_labels_not_belonging_to_assignees()
+        milestone = self.repo.get_issue(self.issue_number).milestone
 
         issue = self.repo.get_issue(self.issue_number)
         assignees = issue.assignees
 
-        if not assignees:
+        if not assignees and not milestone:
             for label in self.team_labels:
                 if label in issue_labels:
                     print(f"Removing team label: {label}")
