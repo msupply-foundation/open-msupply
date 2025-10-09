@@ -16,6 +16,10 @@ import {
   useTranslation,
   NumUtils,
   NumInputRow,
+  TextInput,
+  MultilineTextInput,
+  DateInput,
+  commonLabelProps,
 } from '@openmsupply-client/common';
 import { PurchaseOrderLineFragment } from '../../api';
 import {
@@ -24,12 +28,6 @@ import {
   StockItemSearchInput,
 } from '@openmsupply-client/system/src';
 import { DraftPurchaseOrderLine } from '../../api/hooks/usePurchaseOrderLine';
-import {
-  commonLabelProps,
-  TextInput,
-  MultilineTextInput,
-  DateInput,
-} from '../../../common';
 import {
   calculatePricesAndDiscount,
   calculateUnitQuantities,
@@ -179,7 +177,7 @@ export const PurchaseOrderLineEdit = ({
                 />
               }
               label={t('label.manufacturer')}
-              labelProps={commonLabelProps}
+              labelProps={commonLabelProps()}
             />
           </>
         ) : null

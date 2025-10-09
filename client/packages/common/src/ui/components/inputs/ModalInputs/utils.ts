@@ -1,5 +1,10 @@
 import { Theme } from '@openmsupply-client/common';
 
+export const commonInputContainerSx = {
+  marginBottom: 1,
+  flex: 1,
+};
+
 export const inputSlotProps = (disabled: boolean) => ({
   input: {
     sx: {
@@ -21,7 +26,7 @@ export const createLabelRowSx = (isVerticalScreen: boolean) => ({
   alignItems: { xs: 'flex-start', md: 'center' },
 });
 
-export const commonLabelProps = (showExtraFields: boolean) => ({
+export const commonLabelProps = (showExtraFields: boolean = false) => ({
   sx: {
     width: {
       xs: '100%',
