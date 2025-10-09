@@ -37,6 +37,8 @@ const genderToGenderType = (gender: Gender): GenderTypeNode => {
       return GenderTypeNode.Unknown;
     case Gender.NON_BINARY:
       return GenderTypeNode.NonBinary;
+    case Gender.TRANSGENDER:
+      return GenderTypeNode.Transgender;
     default:
       return noOtherVariants(gender);
   }

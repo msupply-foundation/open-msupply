@@ -199,8 +199,9 @@ const StockListComponent: FC = () => {
       Cell: TooltipTextCell,
       width: 190,
       defaultHideOnMobile: true,
-    },
-    ...(plugins.stockLine?.tableColumn || [])
+    }
+    // TODO: re-enable when this table is updated, plugin column API is for the new table implementation
+    // ...(plugins.stockLine?.tableColumn || [])
   );
 
   const columns = useColumns<StockLineRowFragment>(

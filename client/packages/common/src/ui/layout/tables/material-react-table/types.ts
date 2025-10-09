@@ -29,6 +29,9 @@ export type ColumnDef<T extends MRT_RowData> = MRT_ColumnDef<T> & {
   /** Function to determine if cell should be marked as error. Cell will be
    * highlighted in red. */
   getIsError?: (row: T) => boolean;
+
+  /** Customise the default index of the column. Used by plugins. */
+  columnIndex?: number;
 };
 
 /** Use when you have `groupByField` enabled, to allow for typing of `subRows` */
