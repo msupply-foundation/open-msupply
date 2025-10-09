@@ -73,7 +73,6 @@ export const NameListView = ({ type }: NameListProps): ReactElement => {
     isLoading: isFetching,
     isError,
     enableRowSelection: false,
-    enableColumnFilters: false,
     onRowClick: handleRowClick,
   });
 

@@ -1,13 +1,10 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   Box,
-  ColumnDescription,
-  ColumnFormat,
-  createTableStore,
-  DataTable,
-  TableProvider,
-  TooltipTextCell,
-  useColumns,
+  ColumnDef,
+  ColumnType,
+  MaterialTable,
+  useSimpleMaterialTable,
   useTranslation,
 } from '@openmsupply-client/common';
 import {
@@ -21,73 +18,47 @@ interface CustomerIndicatorInfoProps {
   customerInfos?: CustomerIndicatorInfoFragment[];
 }
 
-const CustomerIndicatorInfo = ({
+export const CustomerIndicatorInfoView = ({
   columns,
   customerInfos,
 }: CustomerIndicatorInfoProps) => {
   const t = useTranslation();
-  const columnDefinitions: ColumnDescription<CustomerIndicatorInfoFragment>[] =
-    [
-      [
-        'name',
-        {
-          sortable: false,
-          accessor: ({ rowData }) => rowData?.customer.name,
-          width: 300,
-          Cell: TooltipTextCell,
-        },
-      ],
-    ];
-
-  columns.forEach(({ name, id }) => {
-    columnDefinitions.push({
-      key: name,
-      label: indicatorColumnNameToLocal(name, t),
-      sortable: false,
-      accessor: ({ rowData }) => {
-        const indicator = rowData?.indicatorInformation?.find(
-          ({ columnId }) => columnId == id
-        );
-        return indicator?.value || '';
+  const columnsDefs = useMemo(
+    (): ColumnDef<CustomerIndicatorInfoFragment>[] => [
+      {
+        accessorKey: 'customer.name',
+        header: t('label.name'),
       },
-    });
-  });
+      ...columns.map(
+        ({ id, name }): ColumnDef<CustomerIndicatorInfoFragment> => ({
+          id,
+          header: indicatorColumnNameToLocal(name, t),
+          accessorFn: row =>
+            row.indicatorInformation.find(i => i.columnId === id)?.value || '',
+        })
+      ),
+      {
+        accessorKey: 'datetime',
+        header: t('label.date'),
+        columnType: ColumnType.Date,
+      },
+    ],
+    [columns]
+  );
 
-  columnDefinitions.push({
-    key: 'datetime',
-    label: 'label.date',
-    sortable: false,
-    format: ColumnFormat.Date,
+  const table = useSimpleMaterialTable({
+    tableId: 'customer-indicator-info',
+    columns: columnsDefs,
+    data: customerInfos,
+    enableBottomToolbar: false,
+    initialState: {
+      density: 'comfortable',
+    },
   });
-
-  const tableColumns =
-    useColumns<CustomerIndicatorInfoFragment>(columnDefinitions);
 
   return (
-    <DataTable
-      id="item-information"
-      columns={tableColumns}
-      data={customerInfos}
-      dense
-    />
+    <Box sx={{ flex: '1 1 0%', overflowY: 'auto' }}>
+      <MaterialTable table={table} />
+    </Box>
   );
 };
-
-export const CustomerIndicatorInfoView = ({
-  columns,
-  customerInfos,
-}: CustomerIndicatorInfoProps) => (
-  <Box
-    width="100%"
-    borderRadius={3}
-    sx={{
-      display: 'flex',
-      flex: '1 1 0%',
-      overflowY: 'auto',
-    }}
-  >
-    <TableProvider createStore={createTableStore}>
-      <CustomerIndicatorInfo columns={columns} customerInfos={customerInfos} />
-    </TableProvider>
-  </Box>
-);

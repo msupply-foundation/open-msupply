@@ -62,7 +62,7 @@ export const useSimpleMaterialTable = <T extends MRT_RowData>({
       },
     }),
     muiTableBodyRowProps: {
-      sx: {},
+      sx: { minHeight: '32px' },
     },
   });
 

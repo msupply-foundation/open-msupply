@@ -42,7 +42,14 @@ export const useMaterialTableColumns = <T extends MRT_RowData>(
                     : alignment === 'center'
                       ? // To-DO: Add padding for center aligned cells
                         { justifyContent: 'center' }
-                      : {},
+                      : {
+                          // Left aligned (fallback):
+                          // Padding varies based on density
+                          paddingLeft:
+                            params.table.getState().density === 'compact'
+                              ? '0.7em'
+                              : '1.2em',
+                        },
               },
               params
             );
