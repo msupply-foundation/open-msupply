@@ -1,5 +1,6 @@
 use std::{collections::HashMap, ops::Neg};
 
+use crate::common::days_in_a_month;
 use crate::{
     backend_plugin::{
         plugin_provider::{PluginInstance, PluginResult},
@@ -14,7 +15,7 @@ use repository::{
     ConsumptionFilter, ConsumptionRepository, DateFilter, EqualFilter, PluginType, RepositoryError,
     RequisitionLine, StockOnHandFilter, StockOnHandRepository, StockOnHandRow, StorageConnection,
 };
-use util::{constants::AVG_NUMBER_OF_DAYS_IN_A_MONTH, date_now_with_offset};
+use util::date_now_with_offset;
 
 #[derive(Clone, Debug, PartialEq, Default)]
 pub struct ItemStats {
@@ -124,8 +125,10 @@ fn get_consumption_map(
     item_ids: Vec<String>,
     amc_lookback_months: f64,
 ) -> Result<HashMap<String /* item_id */, f64 /* total consumption */>, RepositoryError> {
+    let days_in_month: f64 = days_in_a_month(connection);
+    let number_of_days = amc_lookback_months * days_in_month;
     let start_date = date_now_with_offset(Duration::days(
-        (amc_lookback_months * AVG_NUMBER_OF_DAYS_IN_A_MONTH).neg() as i64,
+        (number_of_days).neg() as i64,
     ));
 
     let filter = ConsumptionFilter {
