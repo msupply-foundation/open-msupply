@@ -4571,9 +4571,7 @@ if (omSupplyServerDatabase == "sqlite") then
 	Service.Create(SessionVar.Expand("%AppFolder%\\omSupply-sqlite.exe"), "Open mSupply Server", "omsupply-server", SERVICE_WIN32_OWN_PROCESS, false, SERVICE_AUTO_START, SERVICE_ERROR_NORMAL, "", nil, nil, "", "");
 	File.Delete(SessionVar.Expand("%AppFolder%\\omSupply-postgres.exe"));
 	File.Delete(SessionVar.Expand("%AppFolder%\\omSupply-cli-postgres.exe"));
-	File.Rename(SessionVar.Expand("%AppFolder%\\omSupply-cli-sqlite.exe"), SessionVar.Expand("%AppFolder%\\omSupply-cli.exe"));
 	File.Delete(SessionVar.Expand("%AppFolder%\\test-connection-postgres.exe"));
-	File.Rename(SessionVar.Expand("%AppFolder%\\test-connection-sqlite.exe"), SessionVar.Expand("%AppFolder%\\test-connection-cli.exe"));
 else
 	Service.Create(SessionVar.Expand("%AppFolder%\\omSupply-postgres.exe"), "Open mSupply Server", "omsupply-server", SERVICE_WIN32_OWN_PROCESS, false, SERVICE_AUTO_START, SERVICE_ERROR_NORMAL, "", nil, nil, "", "");
 	File.Delete(SessionVar.Expand("%AppFolder%\\omSupply-sqlite.exe"));
