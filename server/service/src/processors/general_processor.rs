@@ -22,6 +22,7 @@ use super::{
     add_central_patient_visibility::AddPatientVisibilityForCentral,
     assign_requisition_number::AssignRequisitionNumber, contact_form::QueueContactEmailProcessor,
     load_plugin::LoadPlugin, plugin_processor::PluginProcessor,
+    support_upload_files::SupportUploadFilesProcessor,
 };
 
 #[derive(Error, Debug)]
@@ -50,6 +51,7 @@ pub enum ProcessorType {
     LoadPlugin,
     AssignRequisitionNumber,
     AddPatientVisibilityForCentral,
+    SupportUploadFiles,
     Plugins,
 }
 
@@ -64,6 +66,9 @@ impl ProcessorType {
                 vec![Box::new(AddPatientVisibilityForCentral)]
             }
             ProcessorType::Plugins => get_plugin_processors(),
+            ProcessorType::SupportUploadFiles => {
+                vec![Box::new(SupportUploadFilesProcessor)]
+            }
         }
     }
 
