@@ -23,7 +23,7 @@ pub struct UpsertPreferences {
     pub sync_records_display_threshold: Option<i32>,
     pub use_days_in_month: Option<bool>,
     pub adjust_for_number_of_days_out_of_stock: Option<bool>,
-    pub days_in_month: Option<i32>,
+    pub days_in_month: Option<f64>,
     pub exclude_transfers: Option<bool>,
 
     // Store preferences

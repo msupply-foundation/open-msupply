@@ -3,6 +3,10 @@ use repository::{
     StockLineRepository, StorageConnection,
 };
 
+use crate::preference::{DaysInMonth, Preference, UseDaysInMonth};
+
+use util::constants::AVG_NUMBER_OF_DAYS_IN_A_MONTH;
+
 #[derive(Debug, PartialEq)]
 pub enum CommonStockLineError {
     DatabaseError(RepositoryError),
@@ -49,5 +53,15 @@ pub fn check_program_exists(
 impl From<RepositoryError> for CommonStockLineError {
     fn from(error: RepositoryError) -> Self {
         CommonStockLineError::DatabaseError(error)
+    }
+}
+
+pub fn days_in_a_month(connection: &StorageConnection) -> f64 {
+    let custom_days_result = DaysInMonth.load(connection, None);
+    let use_custom_days_result = UseDaysInMonth.load(connection, None);
+
+    match (custom_days_result, use_custom_days_result) {
+        (Ok(custom_days), Ok(true)) => custom_days,
+        _ => AVG_NUMBER_OF_DAYS_IN_A_MONTH,
     }
 }

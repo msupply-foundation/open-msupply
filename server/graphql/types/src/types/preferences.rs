@@ -63,7 +63,7 @@ impl PreferencesNode {
         self.load_preference(&self.preferences.adjust_for_number_of_days_out_of_stock)
     }
 
-    pub async fn days_in_month(&self) -> Result<i32> {
+    pub async fn days_in_month(&self) -> Result<f64> {
         self.load_preference(&self.preferences.days_in_month)
     }
 
