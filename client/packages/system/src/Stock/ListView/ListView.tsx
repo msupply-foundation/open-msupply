@@ -249,7 +249,7 @@ const StockListComponent = () => {
   );
 };
 
-export const StockListView: FC = () => (
+export const StockListView = () => (
   <TableProvider createStore={createTableStore}>
     <StockListComponent />
   </TableProvider>
