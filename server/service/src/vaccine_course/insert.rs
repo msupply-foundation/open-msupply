@@ -130,6 +130,7 @@ pub fn generate(
         use_in_gaps_calculations,
         wastage_rate,
         deleted_datetime: None,
+        can_skip_dose: false,
     }
 }
 
