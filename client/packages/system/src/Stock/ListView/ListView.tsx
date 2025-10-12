@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 import {
   TableProvider,
   DataTable,
@@ -27,7 +27,7 @@ import { AppRoute } from '@openmsupply-client/config';
 import { useStockList } from '../api/hooks/useStockList';
 import { NewStockLineModal } from '../Components/NewStockLineModal';
 
-const StockListComponent: FC = () => {
+const StockListComponent = () => {
   const {
     updatePaginationQuery,
     updateSortQuery,
