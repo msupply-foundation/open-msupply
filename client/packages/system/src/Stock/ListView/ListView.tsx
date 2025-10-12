@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 import {
   TableProvider,
   DataTable,
@@ -27,13 +27,13 @@ import { AppRoute } from '@openmsupply-client/config';
 import { useStockList } from '../api/hooks/useStockList';
 import { NewStockLineModal } from '../Components/NewStockLineModal';
 
-const StockListComponent: FC = () => {
+const StockListComponent = () => {
   const {
     updatePaginationQuery,
     updateSortQuery,
     queryParams: { sortBy, page, first, offset, filterBy },
   } = useUrlQueryParams({
-    initialSort: { key: 'expiryDate', dir: 'asc' },
+    initialSort: { key: 'itemName', dir: 'asc' },
     filters: [
       { key: 'vvmStatusId', condition: 'equalTo' },
       { key: 'search' },
@@ -250,7 +250,7 @@ const StockListComponent: FC = () => {
   );
 };
 
-export const StockListView: FC = () => (
+export const StockListView = () => (
   <TableProvider createStore={createTableStore}>
     <StockListComponent />
   </TableProvider>
