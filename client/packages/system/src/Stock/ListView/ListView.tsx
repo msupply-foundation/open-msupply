@@ -33,7 +33,7 @@ const StockListComponent: FC = () => {
     updateSortQuery,
     queryParams: { sortBy, page, first, offset, filterBy },
   } = useUrlQueryParams({
-    initialSort: { key: 'expiryDate', dir: 'asc' },
+    initialSort: { key: 'itemName', dir: 'asc' },
     filters: [
       { key: 'vvmStatusId', condition: 'equalTo' },
       { key: 'search' },

@@ -30,9 +30,9 @@ export const InventoryNav: FC = () => {
         <List>
           <AppNavLink
             end
-            to={`${RouteBuilder.create(AppRoute.Inventory)
+            to={RouteBuilder.create(AppRoute.Inventory)
               .addPart(AppRoute.Stock)
-              .build()}?sort=itemName`}
+              .build()}
             text={t('stock')}
           />
 
