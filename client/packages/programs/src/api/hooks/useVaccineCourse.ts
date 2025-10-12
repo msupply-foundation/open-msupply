@@ -201,6 +201,7 @@ const useUpdate = (setErrorMessage: Dispatch<SetStateAction<string>>) => {
         demographicId: input.demographicId,
         coverageRate: input.coverageRate,
         useInGapsCalculations: input.useInGapsCalculations,
+        canSkipDose: input.canSkipDose,
         wastageRate: input.wastageRate,
         vaccineItems:
           input.vaccineCourseItems?.map(item =>

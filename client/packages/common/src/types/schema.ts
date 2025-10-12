@@ -11036,6 +11036,7 @@ export type UpdateVaccineCourseErrorInterface = {
 };
 
 export type UpdateVaccineCourseInput = {
+  canSkipDose?: InputMaybe<Scalars['Boolean']['input']>;
   coverageRate: Scalars['Float']['input'];
   demographicId?: InputMaybe<Scalars['String']['input']>;
   doses: Array<UpsertVaccineCourseDoseInput>;
@@ -11417,6 +11418,7 @@ export type VaccineCourseMutationsUpdateVaccineCourseArgs = {
 
 export type VaccineCourseNode = {
   __typename: 'VaccineCourseNode';
+  canSkipDose: Scalars['Boolean']['output'];
   coverageRate: Scalars['Float']['output'];
   demographic?: Maybe<DemographicNode>;
   demographicId?: Maybe<Scalars['String']['output']>;
