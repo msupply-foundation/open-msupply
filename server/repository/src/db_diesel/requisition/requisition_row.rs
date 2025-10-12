@@ -40,6 +40,8 @@ table! {
         period_id -> Nullable<Text>,
         order_type -> Nullable<Text>,
         is_emergency -> Bool,
+        created_from_requisition_ids -> Nullable<Text>,
+        destination_customer_id -> Nullable<Text>,
     }
 }
 
@@ -110,6 +112,8 @@ pub struct RequisitionRow {
     pub period_id: Option<String>,
     pub order_type: Option<String>,
     pub is_emergency: bool,
+    pub created_from_requisition_ids: Option<String>,
+    pub destination_customer_id: Option<String>,
 }
 
 pub struct RequisitionRowRepository<'a> {
