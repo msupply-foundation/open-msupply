@@ -9215,8 +9215,9 @@ export type SnapshotCountCurrentCountMismatchLine =
 
 export type StockCounts = {
   __typename: 'StockCounts';
-  batchesExpiringBetweenThreshold: Scalars['Int']['output'];
   expired: Scalars['Int']['output'];
+  expiringBetweenThresholds: Scalars['Int']['output'];
+  expiringInNextThreeMonths: Scalars['Int']['output'];
   expiringSoon: Scalars['Int']['output'];
 };
 

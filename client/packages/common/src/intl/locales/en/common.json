@@ -763,6 +763,7 @@
   "label.batch": "Batch",
   "label.batches": "Batches",
   "label.batches-expiring-in-days": "Batches expiring in {{firstThreshold}} days to {{secondThreshold}} days",
+  "label.batches-expiring-between-days": "Batches expiring in between 30 days and 90 days",
   "label.battery-level": "Battery level",
   "label.bmi-prev-height-message": "Using height of {{height}}m from previous measurement",
   "label.box": "Box",

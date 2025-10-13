@@ -25,6 +25,11 @@ import { InternalSupplierSearchModal } from '@openmsupply-client/system';
 import { useRequest } from '@openmsupply-client/requisitions';
 import { AppRoute } from '@openmsupply-client/config';
 
+// TODO:
+// Two items need to be added to this widged
+// First is for the two thresholds that users can set, where max for second threshold is < 30
+// Second is an item that checks between >= 30 and < 90 days
+
 const LOW_MOS_THRESHOLD = 3;
 
 export const StockWidget = () => {
@@ -74,7 +79,12 @@ export const StockWidget = () => {
     urlQueryDate
   )}${RANGE_SPLIT_CHAR}${customDate(inAMonth, urlQueryDate)}`;
 
-  const batchesExpiryDateRange = `${formatDaysFromToday(firstThreshold)}_${formatDaysFromToday(secondThreshold)}`;
+  const haveThreshold =
+    (firstThreshold && firstThreshold > 0) ||
+    (secondThreshold && secondThreshold > 0);
+
+  const getBatchesExpiryDateRange = (first: number, second: number): string =>
+    `${formatDaysFromToday(first)}_${formatDaysFromToday(second)}`;
 
   const handleClick = () => {
     if (!userHasPermission(UserPermission.RequisitionMutate)) {
@@ -147,18 +157,37 @@ export const StockWidget = () => {
                     })
                     .build(),
                 },
+                ...(haveThreshold
+                  ? [
+                      {
+                        label: t('label.batches-expiring-in-days', {
+                          firstThreshold,
+                          secondThreshold,
+                        }),
+                        value: formatNumber.round(
+                          expiryData?.expiringBetweenThresholds
+                        ),
+                        link: RouteBuilder.create(AppRoute.Inventory)
+                          .addPart(AppRoute.Stock)
+                          .addQuery({
+                            expiryDate: getBatchesExpiryDateRange(
+                              firstThreshold ?? 0,
+                              secondThreshold ?? 0
+                            ),
+                          })
+                          .build(),
+                      },
+                    ]
+                  : []),
                 {
-                  label: t('label.batches-expiring-in-days', {
-                    firstThreshold,
-                    secondThreshold,
-                  }),
+                  label: t('label.batches-expiring-between-days'),
                   value: formatNumber.round(
-                    expiryData?.batchesExpiringBetweenThreshold
+                    expiryData?.expiringInNextThreeMonths
                   ),
                   link: RouteBuilder.create(AppRoute.Inventory)
                     .addPart(AppRoute.Stock)
                     .addQuery({
-                      expiryDate: batchesExpiryDateRange,
+                      expiryDate: getBatchesExpiryDateRange(30, 90),
                     })
                     .build(),
                 },

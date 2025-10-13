@@ -10,7 +10,8 @@ query stockCounts(
   ) {
     expired
     expiringSoon
-    batchesExpiringBetweenThreshold
+    expiringBetweenThresholds
+    expiringInNextThreeMonths
   }
 }
 
