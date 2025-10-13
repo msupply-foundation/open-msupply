@@ -40,15 +40,22 @@ const isPreviousDoseGiven = (
   return itemsForCourse[doseIndex - 1]?.given;
 };
 
-const includeRow = (
+const canClickRow = (
   includeNextDose: boolean,
   row: VaccinationCardItemFragment,
-  items: VaccinationCardItemFragment[] | undefined
-) => (includeNextDose || row.vaccinationId) && isPreviousDoseGiven(row, items);
+  items: VaccinationCardItemFragment[] | undefined,
+  canSkipDose: boolean
+) => {
+  if (canSkipDose) return true;
+  return (
+    (includeNextDose || row.vaccinationId) && isPreviousDoseGiven(row, items)
+  );
+};
 
 const useStyleRowsByStatus = (
   rows: VaccinationCardItemFragment[] | undefined,
-  isEncounter: boolean
+  isEncounter: boolean,
+  canSkipDose: boolean
 ) => {
   const { updateRowStyles } = useRowStyle();
   const theme = useTheme();
@@ -65,7 +72,7 @@ const useStyleRowsByStatus = (
       .filter(row => row.status === VaccinationCardItemNodeStatus.Given)
       .map(row => row.id);
     const nonClickableRows = rows
-      .filter(row => !includeRow(isEncounter, row, rows))
+      .filter(row => !canClickRow(isEncounter, row, rows, canSkipDose))
       .map(row => row.id);
     const lastOfEachAgeRange = rows
       .filter(
@@ -123,9 +130,9 @@ const VaccinationCardComponent = ({
 
   const isEncounter = !!encounterId;
 
-  const canSkipDose = data?.items.some(item => item.canSkipDose);
+  const canSkipDose = data?.items.some(item => item.canSkipDose) ?? false;
 
-  useStyleRowsByStatus(data?.items, isEncounter);
+  useStyleRowsByStatus(data?.items, isEncounter, canSkipDose);
 
   const getAgeLabel = (row: VaccinationCardItemFragment) => {
     if (row.customAgeLabel) return row.customAgeLabel;
@@ -171,9 +178,7 @@ const VaccinationCardComponent = ({
       {
         key: 'status',
         label: 'label.status',
-        accessor: ({ rowData }) =>
-          // Only show label for existing vaccinations and the next editable row
-          includeRow(true, rowData, data?.items) ? rowData.status : null,
+        accessor: ({ rowData }) => rowData.status,
         Cell: ({ ...props }) => (
           <StatusCell
             {...props}
@@ -236,7 +241,7 @@ const VaccinationCardComponent = ({
         columns={columns}
         data={data?.items ?? []}
         onRowClick={row => {
-          if (includeRow(isEncounter, row, data?.items) || canSkipDose)
+          if (canClickRow(isEncounter, row, data?.items, canSkipDose))
             openModal(row);
         }}
         noDataElement={<NothingHere body={t('error.no-items')} />}
