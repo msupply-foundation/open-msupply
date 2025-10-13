@@ -215,3 +215,113 @@ impl From<RepositoryError> for InsertFromResponseRequisitionError {
         InsertFromResponseRequisitionError::DatabaseError(error)
     }
 }
+
+#[cfg(test)]
+mod test_insert_from_response_requisition {
+    use crate::{
+        requisition::{
+            request_requisition::InsertFromResponseRequisition,
+            response_requisition::InsertResponseRequisition,
+        },
+        service_provider::ServiceProvider,
+    };
+    use repository::{
+        mock::{
+            mock_full_new_response_requisition_for_update_test, mock_name_customer_a,
+            mock_name_store_c, mock_store_a, MockData, MockDataInserts,
+        },
+        test_db::setup_all_with_data,
+        EqualFilter, RequisitionLineFilter, RequisitionLineRepository, RequisitionRowRepository,
+    };
+    use util::uuid::uuid;
+
+    #[actix_rt::test]
+    async fn insert_from_response_requisition_success() {
+        let (_, connection, connection_manager, _) = setup_all_with_data(
+            "insert_from_response_requisition_success",
+            MockDataInserts::all(),
+            MockData::default(),
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
+        let service = service_provider.requisition_service;
+
+        let response_requisition = mock_full_new_response_requisition_for_update_test();
+        let new_requisition_id = uuid();
+        let response_requisition_ids = vec![response_requisition.requisition.id.clone()];
+
+        let result = service
+            .insert_from_response_requisition(
+                &context,
+                InsertFromResponseRequisition {
+                    id: new_requisition_id.clone(),
+                    response_requisition_ids: response_requisition_ids.clone(),
+                    other_party_id: mock_name_store_c().id,
+                    comment: Some("Test comment".to_string()),
+                    max_months_of_stock: 2.0,
+                    min_months_of_stock: 1.0,
+                },
+            )
+            .unwrap();
+
+        let requisition = RequisitionRowRepository::new(&connection)
+            .find_one_by_id(&new_requisition_id)
+            .unwrap()
+            .unwrap();
+
+        assert_eq!(requisition, result.requisition_row.clone());
+
+        // Verify requisition lines were created from response requisition
+        let lines = RequisitionLineRepository::new(&connection)
+            .query_by_filter(
+                RequisitionLineFilter::new()
+                    .requisition_id(EqualFilter::equal_to(&new_requisition_id)),
+            )
+            .unwrap();
+
+        for line in &lines {
+            assert_eq!(line.requisition_row.id, new_requisition_id);
+        }
+
+        // Try insert from multiple
+        let response_requisition1 = mock_full_new_response_requisition_for_update_test();
+        let response_requisition2_id = "response_req_2".to_string();
+
+        service
+            .insert_response_requisition(
+                &context,
+                InsertResponseRequisition {
+                    id: response_requisition2_id.clone(),
+                    other_party_id: mock_name_customer_a().id,
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+
+        let response_requisition_ids = vec![
+            response_requisition1.requisition.id.clone(),
+            response_requisition2_id.clone(),
+        ];
+
+        let result = service
+            .insert_from_response_requisition(
+                &context,
+                InsertFromResponseRequisition {
+                    id: uuid(),
+                    response_requisition_ids: response_requisition_ids.clone(),
+                    other_party_id: mock_name_store_c().id,
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+
+        assert_eq!(
+            result.requisition_row.get_created_from_requisition_ids(),
+            response_requisition_ids
+        );
+    }
+}

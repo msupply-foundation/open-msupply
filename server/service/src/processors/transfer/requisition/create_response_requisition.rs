@@ -290,6 +290,8 @@ fn generate_response_requisition(
         sent_datetime: None,
         finalised_datetime: None,
         colour: None,
+        created_from_requisition_ids: None,
+        destination_customer_id: None,
     };
 
     Ok(result)
