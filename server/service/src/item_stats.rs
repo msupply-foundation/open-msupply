@@ -55,13 +55,16 @@ pub fn get_item_stats(
         Some(months) => months,
         None => default_amc_lookback_months,
     };
+    let days_in_month: f64 = days_in_a_month(connection);
+    let number_of_days = amc_lookback_months * days_in_month;
 
     let consumption_map =
-        get_consumption_map(connection, store_id, item_ids.clone(), amc_lookback_months)?;
+        get_consumption_map(connection, store_id, item_ids.clone(), number_of_days)?;
 
     let input = amc::Input {
         store_id: store_id.to_string(),
         amc_lookback_months,
+        number_of_days,
         // Really don't like cloning this
         consumption_map: consumption_map.clone(),
         item_ids: item_ids.clone(),
@@ -102,6 +105,7 @@ impl amc::Trait for DefaultAmc {
         amc::Input {
             amc_lookback_months,
             consumption_map,
+            number_of_days,
             ..
         }: amc::Input,
     ) -> PluginResult<amc::Output> {
@@ -123,10 +127,7 @@ fn get_consumption_map(
     connection: &StorageConnection,
     store_id: &str,
     item_ids: Vec<String>,
-    amc_lookback_months: f64,
-) -> Result<HashMap<String /* item_id */, f64 /* total consumption */>, RepositoryError> {
-    let days_in_month: f64 = days_in_a_month(connection);
-    let number_of_days = amc_lookback_months * days_in_month;
+    number_of_days: f64,
     let start_date = date_now_with_offset(Duration::days(
         (number_of_days).neg() as i64,
     ));
