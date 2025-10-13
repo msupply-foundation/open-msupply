@@ -36,7 +36,7 @@ import { AppRoute } from '@openmsupply-client/config';
 import { FacilitySearchInput, OTHER_FACILITY } from './FacilitySearchInput';
 import { SelectItemAndBatch } from './SelectItemAndBatch';
 import { useClinicians } from '@openmsupply-client/programs';
-import { getShouldShowConfirmation } from '../utils';
+import { hasNoStocklineSelected } from '../utils';
 
 interface VaccinationModalProps {
   encounterId?: string;
@@ -132,7 +132,7 @@ export const VaccinationModal = ({
         title: t('heading.are-you-sure'),
         message: t('messages.no-batch-selected'),
         condition: () =>
-          getShouldShowConfirmation(
+          hasNoStocklineSelected(
             draft,
             !!dose?.vaccineCourse.vaccineCourseItems?.length,
             store?.nameId ?? ''
