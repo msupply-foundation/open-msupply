@@ -19,7 +19,7 @@ export const isPreviousDoseGiven = (
   return itemsForCourse[doseIndex - 1]?.given;
 };
 
-export const getShouldShowConfirmation = (
+export const hasNoStocklineSelected = (
   draft: VaccinationDraft,
   hasItems: boolean,
   facilityId: string
