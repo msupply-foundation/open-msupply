@@ -12,7 +12,6 @@ import {
 import { DefaultFormRowSx, FORM_LABEL_WIDTH } from '../styleConstants';
 import { z } from 'zod';
 import { useZodOptionsValidation } from '../hooks/useZodOptionsValidation';
-import { useJSONFormsCustomError } from '../hooks/useJSONFormsCustomError';
 
 const Options = z
   .object({
@@ -26,7 +25,7 @@ type Options = z.infer<typeof Options>;
 export const dateTester = rankWith(5, isDateControl);
 
 const UIComponent = (props: ControlProps) => {
-  const { data, handleChange, label, path, uischema } = props;
+  const { data, handleChange, label, path, uischema, config } = props;
 
   const t = useTranslation();
   const formatDateTime = useFormatDateTime();
@@ -34,7 +33,8 @@ const UIComponent = (props: ControlProps) => {
     Options,
     uischema.options
   );
-  const { customError, setCustomError } = useJSONFormsCustomError(path, 'Date');
+
+  const { customErrors } = config;
 
   const disableFuture = options?.disableFuture ?? false;
 
@@ -59,15 +59,13 @@ const UIComponent = (props: ControlProps) => {
               path,
               !e ? undefined : formatDateTime.customDate(e, 'yyyy-MM-dd')
             );
-            if (customError) setCustomError(undefined);
+            customErrors.remove(path);
           }}
           format="P"
           disabled={!props.enabled}
-          error={customError ?? props.errors ?? zErrors ?? ''}
+          error={props.errors ?? zErrors ?? ''}
           disableFuture={disableFuture}
-          onError={validationError =>
-            setCustomError(validationError ?? undefined)
-          }
+          onError={validationError => customErrors.add(path, validationError)}
         />
       }
     />

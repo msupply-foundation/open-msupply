@@ -33,6 +33,7 @@ pub struct EqualFilterGoodsReceivedStatusInput {
     pub equal_to: Option<GoodsReceivedNodeStatus>,
     pub equal_any: Option<Vec<GoodsReceivedNodeStatus>>,
     pub not_equal_to: Option<GoodsReceivedNodeStatus>,
+    pub not_equal_all: Option<Vec<GoodsReceivedNodeStatus>>,
 }
 
 #[derive(InputObject, Clone)]

@@ -83,6 +83,8 @@ export const PurchaseOrderLineEdit = ({
     StatusGroup.BeforeConfirmed
   );
 
+  const existingItemIds = lines.map(line => line.item.id);
+
   return (
     <ModalGridLayout
       showExtraFields={true}
@@ -94,8 +96,10 @@ export const PurchaseOrderLineEdit = ({
             disabled={isUpdateMode || disabled}
             currentItemId={draft?.itemId}
             onChange={newItem => newItem && onChangeItem(newItem)}
-            extraFilter={item => !lines.some(line => line.item.id === item.id)}
-            filter={{ isVisible: true, ignoreForOrders: false }}
+            filter={{
+              ignoreForOrders: false,
+              id: { notEqualAll: existingItemIds },
+            }}
             width={825}
           />
           <InputWithLabelRow

@@ -22,6 +22,8 @@ export const SelectItem = ({
   const t = useTranslation();
   const { data: items } = useOutboundItems();
 
+  const existingItemIds = items?.map(item => item.id);
+
   return (
     <Grid container gap="4px" width="100%">
       <ModalRow>
@@ -33,12 +35,10 @@ export const SelectItem = ({
             disabled={disabled}
             currentItemId={itemId}
             onChange={item => onChangeItem(item?.id)}
-            filter={{ isVisibleOrOnHand: true }}
-            extraFilter={
-              disabled
-                ? undefined
-                : item => !items?.some(({ id }) => id === item.id)
-            }
+            filter={{
+              isVisibleOrOnHand: true,
+              id: { notEqualAll: existingItemIds },
+            }}
           />
         </Grid>
       </ModalRow>

@@ -14,6 +14,8 @@ import {
   PopoverCell,
   useTranslation,
   CircleIcon,
+  MessageSquareIcon,
+  Tooltip,
 } from '@openmsupply-client/common';
 
 import { ColumnDef } from './types';
@@ -73,14 +75,17 @@ export const useGetColumnTypeDefaults = () => {
 
       case ColumnType.Comment:
         return {
-          size: 60,
+          size: 50,
           enableSorting: false,
           enableColumnFilter: false,
           enableResizing: false,
           enableColumnActions: false,
-          // Displays an empty header in the table, but still uses the provided
-          // "header" prop for the Column Management menu
-          Header: () => <></>,
+          // Comment popover is pretty narrow, show icon rather than full label
+          Header: () => (
+            <Tooltip title={t('label.comment')} placement="top">
+              <MessageSquareIcon fontSize="small" />
+            </Tooltip>
+          ),
           Cell: ({ cell, row }) => {
             if ('subRows' in row.original) {
               // Don't show comment icon for grouped rows
@@ -89,6 +94,7 @@ export const useGetColumnTypeDefaults = () => {
             const value = cell.getValue<string | null>();
             return <PopoverCell value={value} label={t('label.comment')} />;
           },
+          align: 'left',
         };
 
       case ColumnType.Boolean:
