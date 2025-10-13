@@ -1,3 +1,19 @@
+/**
+ * A hook to manage a sequence of confirmation modals.
+ *
+ * Handling these individually using our `useConfirmationModal` hook is very
+ * messy when there's 2 or more confirmations that must be handled before an
+ * action. This hook simplified it into a simple sequence of steps.
+ *
+ * Each step can optionally have a `condition` function that returns a boolean
+ * to determine whether that step should be shown or skipped. Other than that
+ * the input properties for each step are the same as for the standalone
+ * confirmation modal.
+ *
+ * The "Action" to be performed after all steps are confirmed should be passed
+ * in as the second parameter (`finalConfirm`).
+ */
+
 import {
   ConfirmationModalContext,
   ConfirmationModalState,
