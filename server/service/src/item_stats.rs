@@ -111,11 +111,19 @@ impl amc::Trait for DefaultAmc {
     ) -> PluginResult<amc::Output> {
         Ok(consumption_map
             .iter()
-            .map(|(item_id, consumption)| {
+            .map(|(item_id, (total_consumption, transfer_consumption))| {
+                // TODO: dos
+                let dos = 0.0;
+
+                let average_consumption =
+                    Some((*total_consumption - transfer_consumption) / amc_lookback_months);
+                let timeframe = number_of_days / (number_of_days - dos);
                 (
                     item_id.to_string(),
                     amc::AverageMonthlyConsumptionItem {
-                        average_monthly_consumption: Some(*consumption / amc_lookback_months),
+                        average_monthly_consumption: Some(
+                            average_consumption.unwrap_or(0.0) * timeframe,
+                        ),
                     },
                 )
             })
@@ -128,6 +136,16 @@ fn get_consumption_map(
     store_id: &str,
     item_ids: Vec<String>,
     number_of_days: f64,
+) -> Result<
+    HashMap<
+        String, /* item_id */
+        (
+            f64, /* total consumption */
+            f64, /* transfer consumption */
+        ),
+    >,
+    RepositoryError,
+> {
     let start_date = date_now_with_offset(Duration::days(
         (number_of_days).neg() as i64,
     ));
@@ -142,11 +160,16 @@ fn get_consumption_map(
 
     let mut consumption_map = HashMap::new();
     for consumption_row in consumption_rows.into_iter() {
-        let item_total_consumption = consumption_map
+        let (item_total_consumption, item_transfer_consumption) = consumption_map
             .entry(consumption_row.item_id.clone())
-            .or_insert(0.0);
+            .or_insert((0.0, 0.0));
         *item_total_consumption += consumption_row.quantity;
+
+        let _transfers = if consumption_row.is_transfer == true {
+            *item_transfer_consumption += consumption_row.quantity;
+        };
     }
+
     Ok(consumption_map)
 }
 
@@ -166,7 +189,13 @@ pub fn get_stock_on_hand_rows(
 impl ItemStats {
     fn new_vec(
         amc_by_item: amc::Output,
-        consumption_map: HashMap<String /* item_id */, f64 /* consumption */>,
+        consumption_map: HashMap<
+            String, /* item_id */
+            (
+                f64, /* total consumption */
+                f64, /* transfer consumption */
+            ),
+        >,
         stock_on_hand_rows: Vec<StockOnHandRow>,
     ) -> Vec<Self> {
         stock_on_hand_rows
@@ -181,7 +210,7 @@ impl ItemStats {
                     .unwrap_or_default(),
                 total_consumption: consumption_map
                     .get(&stock_on_hand.item_id)
-                    .copied()
+                    .map(|(total_consumption, _)| *total_consumption)
                     .unwrap_or_default(),
                 total_stock_on_hand: stock_on_hand.total_stock_on_hand,
             })
