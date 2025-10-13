@@ -14,6 +14,7 @@ import {
   useFormatNumber,
   useNavigate,
   useNotification,
+  usePreferences,
   UserPermission,
   useToggle,
   useTranslation,
@@ -30,9 +31,14 @@ export const StockWidget = () => {
   const t = useTranslation();
   const navigate = useNavigate();
   const modalControl = useToggle(false);
-  const { error: errorNotification } = useNotification();
-  const { userHasPermission } = useAuthContext();
   const formatNumber = useFormatNumber();
+  const { userHasPermission } = useAuthContext();
+  const { error: errorNotification } = useNotification();
+  const {
+    firstThresholdForExpiringItems: firstThreshold,
+    secondThresholdForExpiringItems: secondThreshold,
+  } = usePreferences();
+
   const {
     data: expiryData,
     error: expiryError,
@@ -55,7 +61,7 @@ export const StockWidget = () => {
     errorSnack();
   };
 
-  const { customDate, urlQueryDate } = useFormatDateTime();
+  const { customDate, urlQueryDate, formatDaysFromToday } = useFormatDateTime();
   const today = new Date();
   const inAMonth = DateUtils.addMonths(today, 1);
 
@@ -67,6 +73,8 @@ export const StockWidget = () => {
     today,
     urlQueryDate
   )}${RANGE_SPLIT_CHAR}${customDate(inAMonth, urlQueryDate)}`;
+
+  const batchesExpiryDateRange = `${formatDaysFromToday(firstThreshold)}_${formatDaysFromToday(secondThreshold)}`;
 
   const handleClick = () => {
     if (!userHasPermission(UserPermission.RequisitionMutate)) {
@@ -136,6 +144,18 @@ export const StockWidget = () => {
                     .addPart(AppRoute.Stock)
                     .addQuery({
                       expiryDate: getExpiredInAMonthUrlQuery,
+                    })
+                    .build(),
+                },
+                {
+                  label: t('label.batches-expiring-in-days', {
+                    firstThreshold,
+                    secondThreshold,
+                  }),
+                  link: RouteBuilder.create(AppRoute.Inventory)
+                    .addPart(AppRoute.Stock)
+                    .addQuery({
+                      expiryDate: batchesExpiryDateRange,
                     })
                     .build(),
                 },

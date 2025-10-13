@@ -762,6 +762,7 @@
   "label.barcode-scanner-id": "Vendor ID: {{vid}}, Product ID: {{pid}}",
   "label.batch": "Batch",
   "label.batches": "Batches",
+  "label.batches-expiring-in-days": "Batches expiring in {{firstThreshold}} days to {{secondThreshold}} days",
   "label.battery-level": "Battery level",
   "label.bmi-prev-height-message": "Using height of {{height}}m from previous measurement",
   "label.box": "Box",
