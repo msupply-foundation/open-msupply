@@ -5,7 +5,10 @@ use graphql_core::{
     ContextExt,
 };
 
-use service::auth::{Resource, ResourceAccessRequest};
+use service::{
+    auth::{Resource, ResourceAccessRequest},
+    preference::{FirstThresholdForExpiringItems, Preference, SecondThresholdForExpiringItems},
+};
 use util::timezone::offset_to_timezone;
 pub struct StockCounts {
     timezone_offset: FixedOffset,
@@ -34,6 +37,37 @@ impl StockCounts {
         let expiring = service.count_expired_stock(&service_ctx, &self.store_id, date)? - expired;
         // I don't see how it is possible that expired is greater than expiring.. if it happened it would look daft though
         Ok(std::cmp::max(0, expiring))
+    }
+
+    async fn batches_expiring_between_threshold(&self, ctx: &Context<'_>) -> Result<i64> {
+        let service_provider = ctx.service_provider();
+        let service_ctx = service_provider.basic_context()?;
+        let stock_expiry_count_service = &service_provider.stock_expiry_count_service;
+
+        let connection = &service_ctx.connection;
+        let store_id = Some(self.store_id.clone());
+
+        let first_threshold = FirstThresholdForExpiringItems.load(&connection, store_id.clone())?;
+        let second_threshold =
+            SecondThresholdForExpiringItems.load(&connection, store_id.clone())?;
+
+        let today = Utc::now().with_timezone(&self.timezone_offset).date_naive();
+        let first_date = today + Duration::days(first_threshold as i64);
+        let second_date = today + Duration::days(second_threshold as i64);
+
+        let count_at_first = stock_expiry_count_service.count_expired_stock(
+            &service_ctx,
+            &self.store_id,
+            first_date,
+        )?;
+        let count_at_second = stock_expiry_count_service.count_expired_stock(
+            &service_ctx,
+            &self.store_id,
+            second_date,
+        )?;
+
+        let count_between = count_at_second - count_at_first;
+        Ok(std::cmp::max(0, count_between))
     }
 }
 

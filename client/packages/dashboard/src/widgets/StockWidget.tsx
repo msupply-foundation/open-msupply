@@ -152,6 +152,9 @@ export const StockWidget = () => {
                     firstThreshold,
                     secondThreshold,
                   }),
+                  value: formatNumber.round(
+                    expiryData?.batchesExpiringBetweenThreshold
+                  ),
                   link: RouteBuilder.create(AppRoute.Inventory)
                     .addPart(AppRoute.Stock)
                     .addQuery({
