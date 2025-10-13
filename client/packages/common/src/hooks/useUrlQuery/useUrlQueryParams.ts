@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import {
   NESTED_SPLIT_CHAR,
   RANGE_SPLIT_CHAR,
@@ -44,6 +44,8 @@ export const useUrlQueryParams = ({
   initialSort,
   filters = [],
 }: UrlQueryParams = {}) => {
+  const initialMount = useRef(true);
+
   // Do not coerce the filter parameter if the user enters a numeric value
   // If this is parsed as numeric, the query param changes filter=0300 to
   // filter=300 which then does not match against codes, as the filter is
@@ -62,6 +64,7 @@ export const useUrlQueryParams = ({
 
   // Set initial sort on mount
   useEffect(() => {
+    initialMount.current = false;
     if (!initialSort) return;
 
     // Don't want to override existing sort
@@ -152,14 +155,19 @@ export const useUrlQueryParams = ({
       ? urlQuery['page'] - 1
       : 0;
 
+  const defaultSort =
+    initialMount.current && initialSort ? initialSort : { key: '', dir: 'asc' };
+
+  const direction = urlQuery['dir'] ?? defaultSort.dir;
+
   const queryParams = {
     page,
     offset: page * pageSize,
     first: pageSize,
     sortBy: {
-      key: urlQuery['sort'] ?? '',
-      direction: urlQuery['dir'] ?? 'asc',
-      isDesc: urlQuery['dir'] === 'desc',
+      key: urlQuery['sort'] ?? defaultSort.key,
+      direction,
+      isDesc: direction === 'desc',
     } as SortBy<unknown>,
     filterBy: filter.filterBy,
     reportArgs: urlQuery['reportArgs'],

@@ -22,7 +22,9 @@ export const useUrlSortManagement = (initialSort?: {
         ])[0];
         if (newSortValue)
           updateSortQuery(newSortValue.id, newSortValue.desc ? 'desc' : 'asc');
-        else clearSort();
+        else {
+          clearSort();
+        }
       }
     },
     [sortBy]

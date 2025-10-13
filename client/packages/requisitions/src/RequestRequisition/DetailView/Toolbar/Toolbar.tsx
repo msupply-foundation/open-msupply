@@ -5,7 +5,6 @@ import {
   BufferedTextInput,
   Grid,
   useTranslation,
-  SearchBar,
   Alert,
   Tooltip,
   Switch,
@@ -22,7 +21,6 @@ export const Toolbar = () => {
   const t = useTranslation();
   const isDisabled = useRequest.utils.isDisabled();
   const isProgram = useRequest.utils.isProgram();
-  const { itemFilter, setItemFilter } = useRequest.line.list();
   const {
     minMonthsOfStock,
     maxMonthsOfStock,
@@ -68,7 +66,9 @@ export const Toolbar = () => {
                 <InternalSupplierSearchInput
                   disabled={isDisabled || isProgram}
                   value={otherParty ?? null}
-                  onChange={otherParty => update({ otherParty: otherParty ?? undefined })}
+                  onChange={otherParty =>
+                    update({ otherParty: otherParty ?? undefined })
+                  }
                 />
               }
             />
@@ -81,7 +81,7 @@ export const Toolbar = () => {
                   disabled={isDisabled}
                   size="small"
                   sx={{ width: 250 }}
-                  value={theirReference ?? null}
+                  value={theirReference ?? ''}
                   onChange={e => update({ theirReference: e.target.value })}
                 />
               </Tooltip>
@@ -93,7 +93,7 @@ export const Toolbar = () => {
             </Alert>
           )}
         </Grid>
-        <Grid>
+        <Grid display="flex" flex={1} flexDirection="column" gap={1}>
           <InputWithLabelRow
             label={t('label.min-months-of-stock')}
             labelWidth={'350px'}
@@ -179,16 +179,6 @@ export const Toolbar = () => {
                 color="secondary"
                 size="small"
                 labelSx={{ margin: '5px 0' }}
-              />
-            </Grid>
-            <Grid>
-              <SearchBar
-                placeholder={t('placeholder.filter-items')}
-                value={itemFilter}
-                onChange={newValue => {
-                  setItemFilter(newValue);
-                }}
-                debounceTime={0}
               />
             </Grid>
           </Grid>

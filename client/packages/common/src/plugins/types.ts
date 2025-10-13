@@ -1,4 +1,4 @@
-import { ColumnDefinition, UsePluginEvents } from '@openmsupply-client/common';
+import { ColumnDef, UsePluginEvents } from '@openmsupply-client/common';
 import {
   RequestFragment,
   RequestLineFragment,
@@ -15,7 +15,7 @@ export type Plugins = {
     tableStateLoader: React.ComponentType<{
       stockLines: StockLineRowFragment[];
     }>[];
-    tableColumn: ColumnDefinition<StockLineRowFragment>[];
+    tableColumn: ColumnDef<StockLineRowFragment>[];
     editViewField: React.ComponentType<{
       stockLine: StockLineRowFragment;
       events: UsePluginEvents<{ isDirty: boolean }>;
@@ -25,7 +25,7 @@ export type Plugins = {
     tableStateLoader: React.ComponentType<{
       requestLines: RequestLineFragment[];
     }>[];
-    tableColumn: ColumnDefinition<RequestLineFragment>[];
+    tableColumn: ColumnDef<RequestLineFragment>[];
     editViewField: React.ComponentType<{
       line: RequestLineFragment;
       unitName?: string;

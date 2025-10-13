@@ -212,9 +212,9 @@ export const RequestLineEdit = ({
                 onChange={(newItem: ItemWithStatsFragment | null) =>
                   newItem && onChangeItem(newItem)
                 }
-                extraFilter={item =>
-                  !lines.some(line => line.item.id === item.id)
-                }
+                filter={{
+                  id: { notEqualAll: lines.map(line => line.item.id) },
+                }}
               />
             )}
           </>
