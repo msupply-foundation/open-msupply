@@ -2,8 +2,9 @@ import React from 'react';
 import { VaccinationModal } from './VaccinationModal';
 import { useEditModal } from '@common/hooks';
 import { Clinician } from '../../Clinician';
-import { VaccineCardTable } from './VaccineCardTable';
+import { isPreviousDoseGiven, VaccineCardTable } from './VaccineCardTable';
 import { VaccinationCardItemFragment } from '../api/operations.generated';
+import { usePatientVaccineCard } from '../api/usePatientVaccineCard';
 
 export const VaccinationCard = ({
   clinician,
@@ -16,12 +17,19 @@ export const VaccinationCard = ({
   clinician?: Clinician;
   onOk?: () => void;
 }) => {
+  const {
+    query: { data, isLoading },
+  } = usePatientVaccineCard(programEnrolmentId);
   const { isOpen, onClose, onOpen, entity } =
     useEditModal<VaccinationCardItemFragment>();
 
   const openModal = (row: VaccinationCardItemFragment) => {
     onOpen(row);
   };
+
+  const isPreviousGiven = entity
+    ? !!isPreviousDoseGiven(entity, data?.items ?? [])
+    : false;
 
   return (
     <>
@@ -32,10 +40,13 @@ export const VaccinationCard = ({
           cardRow={entity}
           onClose={onClose}
           defaultClinician={clinician}
+          isPreviousGiven={isPreviousGiven}
           onOk={onOk}
         />
       )}
       <VaccineCardTable
+        data={data}
+        isLoading={isLoading}
         programEnrolmentId={programEnrolmentId}
         openModal={openModal}
         encounterId={encounterId}

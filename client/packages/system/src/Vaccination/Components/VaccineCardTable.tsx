@@ -14,7 +14,6 @@ import {
   StatusCell,
   VaccinationCardItemNodeStatus,
 } from '@openmsupply-client/common';
-import { usePatientVaccineCard } from '../api/usePatientVaccineCard';
 import {
   VaccinationCardFragment,
   VaccinationCardItemFragment,
@@ -24,9 +23,11 @@ interface VaccinationCardProps {
   programEnrolmentId: string;
   openModal: (row: VaccinationCardItemFragment) => void;
   encounterId?: string;
+  data?: VaccinationCardFragment;
+  isLoading: boolean;
 }
 
-const isPreviousDoseGiven = (
+export const isPreviousDoseGiven = (
   row: VaccinationCardItemFragment,
   items: VaccinationCardItemFragment[] | undefined
 ) => {
@@ -41,15 +42,14 @@ const isPreviousDoseGiven = (
 };
 
 const canClickRow = (
-  includeNextDose: boolean,
+  isEncounter: boolean,
   row: VaccinationCardItemFragment,
   items: VaccinationCardItemFragment[] | undefined,
   canSkipDose: boolean
 ) => {
+  if (!isEncounter) return false;
   if (canSkipDose) return true;
-  return (
-    (includeNextDose || row.vaccinationId) && isPreviousDoseGiven(row, items)
-  );
+  return isPreviousDoseGiven(row, items);
 };
 
 const useStyleRowsByStatus = (
@@ -251,11 +251,7 @@ const VaccinationCardComponent = ({
 };
 
 export const VaccineCardTable: FC<VaccinationCardProps> = props => {
-  const {
-    query: { data, isLoading },
-  } = usePatientVaccineCard(props.programEnrolmentId);
-
-  if (isLoading) return <InlineSpinner />;
+  if (props.isLoading) return <InlineSpinner />;
 
   return (
     <TableProvider
@@ -264,7 +260,7 @@ export const VaccineCardTable: FC<VaccinationCardProps> = props => {
         initialSortBy: { key: 'name' },
       })}
     >
-      <VaccinationCardComponent data={data} {...props} />
+      <VaccinationCardComponent {...props} />
     </TableProvider>
   );
 };
