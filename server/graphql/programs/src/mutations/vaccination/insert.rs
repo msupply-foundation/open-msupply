@@ -57,6 +57,7 @@ impl From<InsertVaccinationInput> for InsertVaccination {
             item_id,
             stock_line_id,
             not_given_reason,
+            skip_dose_backfill: false, // Default to false for API inputs
         }
     }
 }
