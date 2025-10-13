@@ -33,7 +33,7 @@ export const useConfirmNoStockLineSelected = (
   };
 };
 
-const getShouldShowConfirmation = (
+export const getShouldShowConfirmation = (
   draft: VaccinationDraft,
   hasItems: boolean,
   facilityId: string
