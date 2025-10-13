@@ -123,6 +123,8 @@ const VaccinationCardComponent = ({
 
   const isEncounter = !!encounterId;
 
+  const canSkipDose = data?.items.some(item => item.canSkipDose);
+
   useStyleRowsByStatus(data?.items, isEncounter);
 
   const getAgeLabel = (row: VaccinationCardItemFragment) => {
@@ -234,7 +236,8 @@ const VaccinationCardComponent = ({
         columns={columns}
         data={data?.items ?? []}
         onRowClick={row => {
-          if (includeRow(isEncounter, row, data?.items)) openModal(row);
+          if (includeRow(isEncounter, row, data?.items) || canSkipDose)
+            openModal(row);
         }}
         noDataElement={<NothingHere body={t('error.no-items')} />}
       />
