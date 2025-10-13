@@ -1,36 +1,22 @@
-import {
-  useAuthContext,
-  useConfirmationModal,
-  useTranslation,
-} from '@openmsupply-client/common';
-import { VaccinationDraft } from '../api';
+/**
+ * Shared utility functions specific to vaccination
+ */
 
-export const useConfirmNoStockLineSelected = (
-  draft: VaccinationDraft,
-  hasItems: boolean,
-  onConfirm: () => void
+import { VaccinationDraft } from './api';
+import { VaccinationCardItemFragment } from './api/operations.generated';
+
+export const isPreviousDoseGiven = (
+  row: VaccinationCardItemFragment,
+  items: VaccinationCardItemFragment[] | undefined
 ) => {
-  const t = useTranslation();
-  const { store } = useAuthContext();
-  const showConfirmation = useConfirmationModal({
-    onConfirm,
-    message: t('messages.no-batch-selected'),
-    title: t('heading.are-you-sure'),
-  });
-
-  return () => {
-    const shouldShowConfirmation = getShouldShowConfirmation(
-      draft,
-      hasItems,
-      store?.nameId ?? ''
-    );
-
-    if (shouldShowConfirmation) {
-      showConfirmation();
-    } else {
-      onConfirm();
-    }
-  };
+  const vaccineCourseId = row.vaccineCourseId;
+  if (!items) return false;
+  const itemsForCourse = items.filter(
+    item => item.vaccineCourseId === vaccineCourseId
+  );
+  const doseIndex = itemsForCourse.findIndex(dose => dose.id === row.id);
+  if (doseIndex === 0) return true;
+  return itemsForCourse[doseIndex - 1]?.given;
 };
 
 export const getShouldShowConfirmation = (

@@ -35,8 +35,8 @@ import {
 import { AppRoute } from '@openmsupply-client/config';
 import { FacilitySearchInput, OTHER_FACILITY } from './FacilitySearchInput';
 import { SelectItemAndBatch } from './SelectItemAndBatch';
-import { getShouldShowConfirmation } from './useConfirmNoStockLineSelected';
 import { useClinicians } from '@openmsupply-client/programs';
+import { getShouldShowConfirmation } from '../utils';
 
 interface VaccinationModalProps {
   encounterId?: string;
