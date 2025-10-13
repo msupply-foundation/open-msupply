@@ -18,6 +18,7 @@ import {
   VaccinationCardFragment,
   VaccinationCardItemFragment,
 } from '../api/operations.generated';
+import { isPreviousDoseGiven } from '../utils';
 
 interface VaccinationCardProps {
   programEnrolmentId: string;
@@ -26,20 +27,6 @@ interface VaccinationCardProps {
   data?: VaccinationCardFragment;
   isLoading: boolean;
 }
-
-export const isPreviousDoseGiven = (
-  row: VaccinationCardItemFragment,
-  items: VaccinationCardItemFragment[] | undefined
-) => {
-  const vaccineCourseId = row.vaccineCourseId;
-  if (!items) return false;
-  const itemsForCourse = items.filter(
-    item => item.vaccineCourseId === vaccineCourseId
-  );
-  const doseIndex = itemsForCourse.findIndex(dose => dose.id === row.id);
-  if (doseIndex === 0) return true;
-  return itemsForCourse[doseIndex - 1]?.given;
-};
 
 const canClickRow = (
   isEncounter: boolean,

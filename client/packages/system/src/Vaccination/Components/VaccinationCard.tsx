@@ -2,9 +2,10 @@ import React from 'react';
 import { VaccinationModal } from './VaccinationModal';
 import { useEditModal } from '@common/hooks';
 import { Clinician } from '../../Clinician';
-import { isPreviousDoseGiven, VaccineCardTable } from './VaccineCardTable';
+import { VaccineCardTable } from './VaccineCardTable';
 import { VaccinationCardItemFragment } from '../api/operations.generated';
 import { usePatientVaccineCard } from '../api/usePatientVaccineCard';
+import { isPreviousDoseGiven } from '../utils';
 
 export const VaccinationCard = ({
   clinician,
