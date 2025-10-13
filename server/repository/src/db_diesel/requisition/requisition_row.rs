@@ -236,6 +236,20 @@ impl ApprovalStatusType {
     }
 }
 
+impl RequisitionRow {
+    pub fn get_created_from_requisition_ids(&self) -> Vec<String> {
+        self.created_from_requisition_ids
+            .as_ref()
+            .and_then(|json_str| serde_json::from_str(json_str).ok())
+            .unwrap_or_default()
+    }
+
+    pub fn set_created_from_requisition_ids(&mut self, ids: Vec<String>) {
+        self.created_from_requisition_ids =
+            (!ids.is_empty()).then(|| serde_json::to_string(&ids).unwrap_or_default());
+    }
+}
+
 #[cfg(test)]
 mod test {
     use crate::{
