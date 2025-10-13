@@ -19,6 +19,15 @@ use util::sync_serde::{
     empty_str_as_option, empty_str_as_option_string, zero_date_as_option,
 };
 
+#[allow(non_snake_case)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
+pub struct OmsFields {
+    #[serde(default)]
+    pub created_from_requisition_ids: Option<String>,
+    #[serde(default)]
+    pub destination_customer_id: Option<String>,
+}
+
 #[derive(Deserialize, Serialize, Debug, PartialEq)]
 pub enum LegacyRequisitionType {
     /// A response to the request created for the supplying store
@@ -158,6 +167,8 @@ pub struct LegacyRequisitionRow {
     pub programID: Option<String>,
     #[serde(default)]
     pub is_emergency: bool,
+    #[serde(default)]
+    pub oms_fields: Option<OmsFields>,
 }
 
 /// When mSupply central creates transfers it copies over all of the data
@@ -309,6 +320,11 @@ impl SyncTranslation for RequisitionTranslation {
             period_id: data.periodID,
             order_type: data.orderType,
             is_emergency: data.is_emergency,
+            created_from_requisition_ids: data
+                .oms_fields
+                .clone()
+                .and_then(|f| f.created_from_requisition_ids),
+            destination_customer_id: data.oms_fields.and_then(|f| f.destination_customer_id),
         };
 
         Ok(PullTranslateResult::upsert(result))
@@ -355,6 +371,8 @@ impl SyncTranslation for RequisitionTranslation {
                     period_id,
                     order_type,
                     is_emergency,
+                    created_from_requisition_ids,
+                    destination_customer_id,
                 },
             name_row,
             ..
@@ -368,6 +386,16 @@ impl SyncTranslation for RequisitionTranslation {
         let has_outbound_shipment = !InvoiceRepository::new(connection)
             .query_by_filter(InvoiceFilter::new().requisition_id(EqualFilter::equal_to(&id)))?
             .is_empty();
+
+        let oms_fields =
+            if created_from_requisition_ids.is_some() || destination_customer_id.is_some() {
+                Some(OmsFields {
+                    created_from_requisition_ids,
+                    destination_customer_id,
+                })
+            } else {
+                None
+            };
 
         let legacy_row = LegacyRequisitionRow {
             ID: id.clone(),
@@ -408,6 +436,7 @@ impl SyncTranslation for RequisitionTranslation {
             periodID: period_id,
             orderType: order_type,
             is_emergency,
+            oms_fields,
         };
 
         Ok(PushTranslateResult::upsert(
