@@ -198,16 +198,18 @@ fn create_missing_not_given_vaccinations(
                 .program_enrolment_id(EqualFilter::equal_to(&program_enrolment.id)),
         )?;
 
-        // If no vaccination exists, create a "Not given" one by calling insert_vaccination
+        // If no vaccination exists, create a "Not given" one by calling
+        // insert_vaccination
         if existing_vaccination.is_none() {
             let not_given_input = InsertVaccination {
                 id: uuid(),
                 vaccine_course_dose_id: dose.vaccine_course_dose_row.id.clone(),
                 given: false,
-                item_id: None,       // Can't be given if not administered
-                stock_line_id: None, // Can't be given if not administered
+                item_id: None,
+                stock_line_id: None,
                 not_given_reason: Some("Dose skipped - administered out of order".to_string()),
                 skip_dose_backfill: true, // Prevent recursive backfill creation
+
                 // Copy all other properties from the original input
                 encounter_id: original_input.encounter_id.clone(),
                 vaccination_date: original_input.vaccination_date,
