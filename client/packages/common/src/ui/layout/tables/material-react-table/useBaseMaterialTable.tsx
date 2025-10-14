@@ -99,13 +99,12 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
     isGrouped
   );
 
-  const hasSavedState = [
-    density.hasSavedState,
-    columnSizing.hasSavedState,
-    columnPinning.hasSavedState,
-    columnVisibility.hasSavedState,
-    columnOrder.hasSavedState,
-  ].some(v => v);
+  const hasSavedState =
+    density.hasSavedState ||
+    columnSizing.hasSavedState ||
+    columnPinning.hasSavedState ||
+    columnVisibility.hasSavedState ||
+    columnOrder.hasSavedState;
 
   const resetTableState = () => {
     clearSavedState(tableId);
