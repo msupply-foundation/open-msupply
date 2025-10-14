@@ -25,11 +25,6 @@ import { InternalSupplierSearchModal } from '@openmsupply-client/system';
 import { useRequest } from '@openmsupply-client/requisitions';
 import { AppRoute } from '@openmsupply-client/config';
 
-// TODO:
-// Two items need to be added to this widged
-// First is for the two thresholds that users can set, where max for second threshold is < 30
-// Second is an item that checks between >= 30 and < 90 days
-
 const LOW_MOS_THRESHOLD = 3;
 
 export const StockWidget = () => {

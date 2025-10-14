@@ -1349,6 +1349,8 @@
   "label.schedule": "Schedule",
   "label.schedule-next-encounter": "Schedule next encounter",
   "label.search-results": "Search results",
+  "label.second-threshold-exceeds-days": "Second threshold must not be greater than 30 days",
+  "label.second-threshold-is-less-than-first-threshold": "Second threshold can not be less than first threshold",
   "label.secondary": "Secondary",
   "label.secondary-2": "Secondary (2)",
   "label.select": "Select",
