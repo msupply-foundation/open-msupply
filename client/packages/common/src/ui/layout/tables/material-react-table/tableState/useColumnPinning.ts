@@ -43,6 +43,17 @@ export const useColumnPinning = <T extends MRT_RowData>(
             ? updaterOrValue(prev)
             : updaterOrValue;
 
+        // Ensure "selection" column remains always pinned to the left
+        if (
+          rowSelectionEnabled &&
+          !newColumnPinning.left?.includes('mrt-row-select')
+        ) {
+          newColumnPinning.left = [
+            'mrt-row-select',
+            ...(newColumnPinning.left ?? []),
+          ];
+        }
+
         const savedColumnPinning = differentOrUndefined(
           newColumnPinning,
           initial

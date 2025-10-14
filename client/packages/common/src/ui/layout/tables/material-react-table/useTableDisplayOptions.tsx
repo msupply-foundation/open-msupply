@@ -270,6 +270,7 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
     displayColumnDefOptions: {
       'mrt-row-select': {
         size: 50,
+        enablePinning: false, // Can't (un-)pin the selection column
         muiTableHeadCellProps: {
           align: 'center',
         },
