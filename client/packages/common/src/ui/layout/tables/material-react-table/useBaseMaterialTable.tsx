@@ -118,8 +118,8 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
     table.resetColumnSizing();
     resetGrouped();
 
-    // column order doesn't need resetting - state reset directly from clearing local storage
-    // table.resetColumnOrder();
+    // column order doesn't need resetting - state reset directly from clearing
+    // local storage
 
     // Visibility `initial` could change if prefs have come on/screen size
     // changed so reset to latest initial value rather than default initial
