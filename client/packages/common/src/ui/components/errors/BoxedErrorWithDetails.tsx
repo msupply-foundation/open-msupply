@@ -11,7 +11,7 @@ export type BoxedErrorWithDetailsProps = {
   error: string;
   details: string;
   hint?: string;
-  width?: number;
+  width?: string | number;
 };
 
 export const BoxedErrorWithDetails = ({

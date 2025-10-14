@@ -1,15 +1,13 @@
-import React, { PropsWithChildren, useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 
 import {
   Breakpoints,
   CloseIcon,
   DateUtils,
-  Formatter,
   Grid,
   LoadingButton,
   RadioIcon,
   Typography,
-  UNDEFINED_STRING_VALUE,
   useAppTheme,
   useAuthContext,
   useFormatDateTime,
@@ -18,11 +16,23 @@ import {
   useTranslation,
   useMediaQuery,
   useIntlUtils,
+  Box,
+  CheckCircleIcon,
+  SettingsIcon,
+  RouteBuilder,
+  useNavigate,
+  UserPermission,
 } from '@openmsupply-client/common';
-import { useSync } from '@openmsupply-client/system';
+import { mapSyncError, useSync } from '@openmsupply-client/system';
 import { SyncProgress } from '../SyncProgress';
-import { BasicModal, IconButton } from '@common/components';
-import { ServerInfo } from '../../Admin/ServerInfo';
+import {
+  Alert,
+  BasicModal,
+  BoxedErrorWithDetails,
+  ButtonWithIcon,
+  IconButton,
+} from '@common/components';
+import { AppRoute } from '@openmsupply-client/config';
 
 const STATUS_POLLING_INTERVAL = 1000;
 
@@ -98,13 +108,11 @@ const useHostSync = (enabled: boolean) => {
   };
 };
 
-export const SyncModal = ({
-  onCancel,
-  open,
-  width = 800,
-  height = 500,
-}: SyncModalProps) => {
+export const SyncModal = ({ onCancel, open, width = 800 }: SyncModalProps) => {
   const t = useTranslation();
+  const navigate = useNavigate();
+  const { userHasPermission } = useAuthContext();
+  const { localisedTime, localisedDate } = useFormatDateTime();
   const theme = useAppTheme();
   const isExtraSmallScreen = useMediaQuery(
     theme.breakpoints.down(Breakpoints.sm)
@@ -112,14 +120,15 @@ export const SyncModal = ({
 
   const {
     syncStatus,
-    latestSyncStart,
-    latestSyncFinish,
     latestSuccessfulSyncDate,
     numberOfRecordsInPushQueue,
     isLoading,
     onManualSync,
   } = useHostSync(open);
   const { updateUserIsLoading, updateUser, setStore, store } = useAuthContext();
+  const error =
+    syncStatus?.error &&
+    mapSyncError(t, syncStatus?.error, 'error.unknown-sync-error');
 
   const sync = async () => {
     await updateUser();
@@ -128,6 +137,7 @@ export const SyncModal = ({
       await setStore(store);
     }
   };
+
   const durationAsDate = new Date(
     0,
     0,
@@ -137,16 +147,57 @@ export const SyncModal = ({
     syncStatus?.summary?.durationInSeconds || 0
   );
 
+  const getSyncStatusMessage = (): string => {
+    if (syncStatus?.isSyncing === true) {
+      return t('sync-info.syncing');
+    } else {
+      return numberOfRecordsInPushQueue
+        ? t('label.records-to-push', { count: numberOfRecordsInPushQueue })
+        : t('label.no-records-to-push');
+    }
+  };
+
+  const lastSuccessfulSyncMessage = (
+    date: Date,
+    durationAsDate: Date
+  ): string => {
+    // If the date is today, display the time, otherwise display the date
+    const today = new Date();
+    const lastSuccessfulSyncTime =
+      date?.toDateString() === today.toDateString()
+        ? localisedTime(date)
+        : localisedDate(date);
+
+    // Format the duration into "X hours Y minutes Z seconds" omitting hours or minutes if there are 0 of them.
+    const hours = durationAsDate.getHours();
+    const minutes = durationAsDate.getMinutes();
+    const seconds = durationAsDate.getSeconds();
+    let formattedDuration = '';
+    if (hours > 0) {
+      formattedDuration += `${t('label.hours', { count: hours })} `;
+    }
+    if (minutes > 0) {
+      formattedDuration += `${t('label.minutes', { count: minutes })} `;
+    }
+    formattedDuration += `${t('label.seconds', { count: seconds })}`;
+
+    // Return "Last successful sync 2:05 PM (completed in 1 second)"
+    return t('messages.last-successful-sync-time-and-duration', {
+      time: lastSuccessfulSyncTime,
+      duration: formattedDuration,
+    });
+  };
+
+  const modalWidth = Math.min(width, window.innerWidth - 50);
   return (
     <BasicModal
-      width={!isExtraSmallScreen ? width : 340}
-      height={!isExtraSmallScreen ? height : 600}
+      width={!isExtraSmallScreen ? modalWidth : 340}
       open={open}
       onKeyDown={e => {
         if (e.key === 'Escape') onCancel();
       }}
     >
-      <Grid sx={{ padding: 2 }} justifyContent="center">
+      <Grid sx={{ padding: 7 }} justifyContent="center">
         <IconButton
           icon={<CloseIcon />}
           color="primary"
@@ -154,186 +205,100 @@ export const SyncModal = ({
           sx={{ position: 'absolute', right: 0, top: 0, padding: 2 }}
           label={t('button.close')}
         />
-        <Grid
-          container
+
+        <Box
+          display="flex"
           flexDirection="column"
-          justifyContent="flex-start"
           sx={theme => ({
             [theme.breakpoints.down('sm')]: {
-              minWidth: 300,
-              padding: '2 0 0 0',
-            },
-            padding: 2,
-            minWidth: 650,
-          })}
-          flexWrap="nowrap"
-        >
-          <Typography variant="h5" color="primary" sx={{ paddingBottom: 1.25 }}>
-            {t('heading.synchronise-status')}
-          </Typography>
-          <Typography
-            sx={theme => ({
-              [theme.breakpoints.down('sm')]: {
-                textWrap: 'wrap',
-              },
-              paddingBottom: 2,
-              fontSize: 12,
-              maxWidth: 650,
-            })}
-          >
-            {!isExtraSmallScreen
-              ? t('sync-info.summary')
-                  .split('\n')
-                  .map((line, index) => <div key={index}>{line}</div>)
-              : t('sync-info.summary')}
-          </Typography>
-          <Row title={t('sync-info.number-to-push')}>
-            <Typography>{numberOfRecordsInPushQueue}</Typography>
-          </Row>
-          <Row title={t('sync-info.last-sync-start')}>
-            <FormattedSyncDate date={latestSyncStart} />
-          </Row>
-          <Row title={t('sync-info.last-sync-finish')}>
-            <FormattedSyncDate date={latestSyncFinish} />
-          </Row>
-          <Row title={t('sync-info.last-sync-duration')}>
-            <Grid display="flex" container gap={1}>
-              <Grid flex={0} style={{ whiteSpace: 'nowrap' }}>
-                {DateUtils.formatDuration(durationAsDate)}
-              </Grid>
-            </Grid>
-          </Row>
-          <Row title={t('sync-info.last-successful-sync')}>
-            <FormattedSyncDate date={latestSuccessfulSyncDate} />
-          </Row>
-          <Grid
-            sx={theme => ({
-              [theme.breakpoints.down('sm')]: {
-                flexDirection: 'column',
-                padding: '0em .5em 1em 0em',
-              },
-              padding: 1,
-            })}
-          >
-            <ServerInfo />
-          </Grid>
-          <Grid display="flex" justifyContent="center">
-            <LoadingButton
-              shouldShrink={false}
-              autoFocus
-              isLoading={isLoading || updateUserIsLoading}
-              startIcon={<RadioIcon />}
-              variant="contained"
-              sx={theme => ({
-                [theme.breakpoints.down('sm')]: {
-                  margin: '0em .5em 1em 0em',
-                },
-                margin: 1,
-                color: theme.palette.common.white,
-                fontSize: '12px',
-              })}
-              disabled={false}
-              onClick={sync}
-              label={t('button.sync-now')}
-            />
-            <ShowStatus
-              isSyncing={isLoading}
-              isUpdatingUser={updateUserIsLoading}
-            />
-          </Grid>
-        </Grid>
-        <Grid
-          container
-          flexDirection="column"
-          justifyContent="flex-start"
-          sx={theme => ({
-            [theme.breakpoints.down('sm')]: {
-              minWidth: 300,
               padding: '0 0 0 2',
             },
-            padding: '0 2 2 2',
-            minWidth: 650,
+            padding: '20 0 40 0',
+            backgroundColor: theme.palette.background.drawer,
+            borderRadius: '10px',
           })}
           flexWrap="nowrap"
         >
+          <Typography textAlign="center" marginBottom="10">
+            {getSyncStatusMessage()}
+          </Typography>
           <SyncProgress syncStatus={syncStatus} isOperational={true} />
-        </Grid>
+        </Box>
+
+        {error && (
+          <Box marginTop="20">
+            <BoxedErrorWithDetails {...error} width={'100%'} />
+          </Box>
+        )}
+
+        {!!numberOfRecordsInPushQueue && numberOfRecordsInPushQueue >= 100 && (
+          <Alert
+            severity="warning"
+            sx={{ fontSize: '14px', marginTop: error ? '5' : '20' }}
+          >
+            {t('warning.high-number-records-to-sync')}
+          </Alert>
+        )}
+
+        {!error && latestSuccessfulSyncDate && (
+          <Alert
+            sx={{
+              backgroundColor: theme.palette.background.drawer,
+              fontSize: '14px',
+              width: '100%',
+              marginTop:
+                (!!numberOfRecordsInPushQueue &&
+                  numberOfRecordsInPushQueue >= 100) ||
+                error
+                  ? '5'
+                  : '20',
+            }}
+            icon={
+              <CheckCircleIcon fontSize="small" sx={{ color: 'gray.dark' }} />
+            }
+          >
+            {lastSuccessfulSyncMessage(
+              latestSuccessfulSyncDate,
+              durationAsDate
+            )}
+          </Alert>
+        )}
+
+        <Box sx={{ paddingTop: 7 }} display="flex" justifyContent="center">
+          <LoadingButton
+            shouldShrink={false}
+            autoFocus
+            isLoading={isLoading || updateUserIsLoading}
+            startIcon={<RadioIcon />}
+            variant="contained"
+            disabled={false}
+            onClick={sync}
+            label={t('button.sync-now')}
+            sx={theme => ({
+              marginRight: 1,
+              color: theme.palette.common.white,
+              fontSize: '14px',
+              minWidth: '130px',
+            })}
+          />
+          {userHasPermission(UserPermission.ServerAdmin) && (
+            <ButtonWithIcon
+              color={'secondary'}
+              onClick={() => {
+                onCancel();
+                navigate(RouteBuilder.create(AppRoute.Settings).build());
+              }}
+              Icon={<SettingsIcon />}
+              label={t('settings')}
+              shouldShrink={false}
+              sx={{
+                marginLeft: 1,
+                fontSize: '14px',
+              }}
+            />
+          )}
+        </Box>
       </Grid>
     </BasicModal>
-  );
-};
-
-interface RowProps {
-  title?: string;
-}
-
-const Row: React.FC<PropsWithChildren<RowProps>> = ({ title, children }) => (
-  <Grid
-    container
-    sx={theme => ({
-      [theme.breakpoints.down('sm')]: {
-        flexDirection: 'column',
-        padding: '0em .5em 1em 0em',
-      },
-      padding: 1,
-    })}
-  >
-    <Grid flex={1} flexBasis="40%">
-      <Typography fontWeight={700}>{title}</Typography>
-    </Grid>
-    <Grid flex={1} flexBasis="60%">
-      {children}
-    </Grid>
-  </Grid>
-);
-
-const FormattedSyncDate = ({ date }: { date: Date | null }) => {
-  const t = useTranslation();
-  const { localisedDistanceToNow, relativeDateTime } = useFormatDateTime();
-
-  if (!date) return UNDEFINED_STRING_VALUE;
-
-  const relativeTime = `(${t('messages.ago', {
-    time: localisedDistanceToNow(date),
-  })})`;
-
-  return (
-    <Grid display="flex" flexDirection="row" container gap={1}>
-      <Grid style={{ whiteSpace: 'nowrap' }}>
-        {Formatter.sentenceCase(relativeDateTime(date))}
-      </Grid>
-      <Grid style={{ whiteSpace: 'nowrap' }}>{relativeTime}</Grid>
-    </Grid>
-  );
-};
-
-const ShowStatus = ({
-  isSyncing,
-  isUpdatingUser,
-}: {
-  isSyncing: boolean;
-  isUpdatingUser: boolean;
-}) => {
-  const t = useTranslation();
-  if (!isSyncing && !isUpdatingUser) return null;
-
-  const message = isSyncing ? 'sync-info.syncing' : 'sync-info.updating-user';
-  return (
-    <Typography
-      sx={theme => ({
-        [theme.breakpoints.down('sm')]: {
-          position: 'absolute',
-          left: 0,
-          top: 0,
-          margin: '1em',
-        },
-        fontSize: 12,
-        textAlign: 'center',
-        width: '115px',
-      })}
-      padding={1}
-    >
-      {t(message)}
-    </Typography>
   );
 };
