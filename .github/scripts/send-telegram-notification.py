@@ -41,6 +41,7 @@ def get_channel_for_tag(tag):
     else:
         return dev_chat_id, "Dev"
 
+
 # -- Handles Android build notifications -- #
 def handle_android_build_notification(filenames):
     bot_key = os.getenv("TELEGRAM_RELEASE_BOT_KEY")
@@ -107,7 +108,7 @@ def handle_tag_notification():
     rc_tags = []
 
     for tag, branch in zip(created_tags, affected_branches):
-        if branch == 'develop':
+        if branch == 'develop' or re.search(r'-(dev|develop)$', branch, re.IGNORECASE):
             develop_tags.append(tag)
         else:
             rc_tags.append(tag)
