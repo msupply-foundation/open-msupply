@@ -66,8 +66,9 @@ export const useGetColumnTypeDefaults = () => {
                 return {
                   minDate: start ? new Date(start) : undefined,
                 };
+              default:
+                return {};
             }
-            return {};
           },
         };
 
