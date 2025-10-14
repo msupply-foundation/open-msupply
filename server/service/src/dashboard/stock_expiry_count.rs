@@ -11,7 +11,7 @@ pub trait StockExpiryCountServiceTrait: Send + Sync {
         from_date: Option<NaiveDate>,
         to_date: Option<NaiveDate>,
     ) -> Result<i64, RepositoryError> {
-        StockExpiryServiceCount {}.count_expired_stock(ctx, store_id, to_date, from_date)
+        StockExpiryServiceCount {}.count_expired_stock(ctx, store_id, from_date, to_date)
     }
 }
 
@@ -104,7 +104,7 @@ mod stock_count_test {
         let date_now = Utc::now().naive_utc().date();
 
         let expired_stock_count = count_service
-            .count_expired_stock(&context, &mock_store_a().id, Some(date_now), None)
+            .count_expired_stock(&context, &mock_store_a().id, None, Some(date_now))
             .unwrap();
         assert_eq!(expired_stock_count, 2);
 
@@ -121,7 +121,7 @@ mod stock_count_test {
             .unwrap();
 
         let expired_stock_count = count_service
-            .count_expired_stock(&context, &mock_store_a().id, Some(date_now), None)
+            .count_expired_stock(&context, &mock_store_a().id, None, Some(date_now))
             .unwrap();
         assert_eq!(expired_stock_count, 1);
     }
