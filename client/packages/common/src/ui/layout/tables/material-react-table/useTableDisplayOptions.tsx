@@ -19,12 +19,11 @@ import { MenuItem, Typography } from '@mui/material';
 import { ColumnDef } from './types';
 import { IconButton } from '@common/components';
 import { useTranslation } from '@common/intl';
-import { hasSavedState } from './tableState/utils';
 import { EnvUtils } from '@common/utils';
 
 export const useTableDisplayOptions = <T extends MRT_RowData>({
-  tableId,
   resetTableState,
+  hasSavedState,
   onRowClick,
   isGrouped,
   toggleGrouped,
@@ -32,8 +31,8 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
   getIsPlaceholderRow = () => false,
   getIsRestrictedRow = () => false,
 }: {
-  tableId: string;
   resetTableState: () => void;
+  hasSavedState: boolean;
   onRowClick?: (row: T, isCtrlClick: boolean) => void;
   isGrouped: boolean;
   hasColumnFilters: boolean;
@@ -42,6 +41,7 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
   getIsRestrictedRow?: (row: T) => boolean;
 }): Partial<MRT_TableOptions<T>> => {
   const t = useTranslation();
+
   return {
     // Add description to column menu
     renderColumnActionsMenuItems: ({ internalColumnMenuItems, column }) => {
@@ -84,7 +84,7 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
           icon={<RefreshIcon />}
           onClick={resetTableState}
           label={t('label.reset-table-defaults')}
-          disabled={!hasSavedState(tableId)}
+          disabled={!hasSavedState}
           sx={iconButtonProps}
         />
         <MRT_ToggleFullScreenButton table={table} />

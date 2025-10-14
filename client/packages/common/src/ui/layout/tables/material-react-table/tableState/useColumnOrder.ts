@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import {
   getDefaultColumnOrderIds,
   MRT_RowData,
@@ -39,6 +39,9 @@ export const useColumnOrder = <T extends MRT_RowData>(
   const savedState = getSavedState(tableId).columnOrder;
   // Memoise to prevent re-renders
   const state = useMemo(() => savedState, [savedState?.toString()]);
+  const [hasSavedState, setHasSavedState] = useState(
+    !!getSavedState(tableId).columnOrder
+  );
 
   const update = useCallback<
     NonNullable<MRT_TableOptions<MRT_RowData>['onColumnOrderChange']>
@@ -49,13 +52,21 @@ export const useColumnOrder = <T extends MRT_RowData>(
           ? updaterOrValue(state ?? initial)
           : updaterOrValue;
 
+      const savedColumnOrder = differentOrUndefined(newColumnOrder, initial);
       updateSavedState(tableId, {
-        columnOrder: differentOrUndefined(newColumnOrder, initial),
+        columnOrder: savedColumnOrder,
       });
+      if (savedColumnOrder) setHasSavedState(true);
       return newColumnOrder;
     },
     [initial, state]
   );
 
-  return { initial, state: state ?? initial, update };
+  return {
+    initial,
+    state: state ?? initial,
+    update,
+    hasSavedState,
+    resetHasSavedState: () => setHasSavedState(false),
+  };
 };

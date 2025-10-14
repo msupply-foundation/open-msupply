@@ -29,6 +29,10 @@ export const useColumnPinning = <T extends MRT_RowData>(
     getSavedState(tableId).columnPinning ?? initial
   );
 
+  const [hasSavedState, setHasSavedState] = useState(
+    !!getSavedState(tableId).columnPinning
+  );
+
   const update = useCallback<
     NonNullable<MRT_TableOptions<MRT_RowData>['onColumnPinningChange']>
   >(
@@ -39,13 +43,24 @@ export const useColumnPinning = <T extends MRT_RowData>(
             ? updaterOrValue(prev)
             : updaterOrValue;
 
+        const savedColumnPinning = differentOrUndefined(
+          newColumnPinning,
+          initial
+        );
         updateSavedState(tableId, {
-          columnPinning: differentOrUndefined(newColumnPinning, initial),
+          columnPinning: savedColumnPinning,
         });
+        if (savedColumnPinning) setHasSavedState(true);
         return newColumnPinning;
       }),
     []
   );
 
-  return { initial, state, update };
+  return {
+    initial,
+    state,
+    update,
+    hasSavedState,
+    resetHasSavedState: () => setHasSavedState(false),
+  };
 };
