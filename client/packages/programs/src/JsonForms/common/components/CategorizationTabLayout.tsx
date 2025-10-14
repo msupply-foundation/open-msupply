@@ -140,7 +140,10 @@ const containsErrors = (layout: Layout, errorPaths: string[]): Set<string> => {
         ''
       );
       for (const errorPath of errorPaths) {
-        if (scopePath == errorPath) {
+        // Match on the parent as well, as some components have internal "child"
+        // elements that set the error rather than the component itself
+        const errorPathParent = errorPath.split('/').slice(0, -1).join('/');
+        if (scopePath == errorPath || scopePath === errorPathParent) {
           results.add(errorPath);
         }
       }
