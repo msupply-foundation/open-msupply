@@ -2286,7 +2286,7 @@
   "label.ready-for-approval": "Pronto para ser Aprovado",
   "label.ready-to-send": "Pronto para ser Enviado",
   "label.records-to-push_other": "Existem {{count}} registos para serem enviados",
-  "label.records-to-push_one": "Existe {{count}} registo para ser enviado",
+  "label.records-to-push_one": "Existem {{count}} registos para serem enviados",
   "label.all": "Todos",
   "label.adjusted-units": "Unidades ajustadas",
   "label.adjusted-units-expected": "Unidades ajustadas (experadas)",
@@ -2297,5 +2297,11 @@
   "label.authorised-quantity": "Quantidade Autorizada",
   "label.all-statuses": "Todos os estados",
   "label.all-items": "Todos os itens",
-  "label.all-locations": "Todas as localizações"
+  "label.all-locations": "Todas as localizações",
+  "log.purchase-order-line-updated": "Linha da ordem de compra attualizada",
+  "log.purchase-order-line-status-closed": "Linha da ordem de compra marcada comorecebida",
+  "log.purchase-order-request-approval": "Ordem de compra pronta para autorização",
+  "log.purchase-order-sent": "Ordem de compra enviada",
+  "log.purchase-order-status-changed-from-sent-to-confirmed": "Estado da ordem de compra mudou de Enviado para Pronto para Envio",
+  "log.volume-per-pack-changed": "O Volume por pacote mudou"
 }
