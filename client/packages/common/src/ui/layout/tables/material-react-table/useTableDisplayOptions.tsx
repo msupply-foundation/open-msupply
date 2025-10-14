@@ -15,7 +15,7 @@ import {
   ExpandIcon,
   RefreshIcon,
 } from '@common/icons';
-import { MenuItem, Typography } from '@mui/material';
+import { MenuItem, Typography, alpha } from '@mui/material';
 import { ColumnDef } from './types';
 import { IconButton } from '@common/components';
 import { useTranslation } from '@common/intl';
@@ -139,8 +139,17 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
         '& .MuiTableSortLabel-root': {
           display: column.getIsSorted() ? undefined : 'none',
         },
-        '& .Mui-TableHeadCell-Content-Actions': {
-          '& svg': { fontSize: '2em' },
+        // replace the action button with a full-width invisible button to make
+        // the whole header clickable to display the action menu
+        '& .Mui-TableHeadCell-Content-Actions > button ': {
+          width: '100%',
+          position: 'absolute',
+          left: 0,
+          top: 0,
+          borderRadius: 0,
+          '& svg': {
+            display: 'none',
+          },
         },
         // Allow date range filters to wrap if column is too narrow
         '& .MuiCollapse-wrapperInner > div': {
@@ -169,8 +178,7 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
     }),
 
     muiTableBodyProps: ({ table }) =>
-      // Make the NothingHere component vertically centered when there are no
-      // rows
+      // Make the NothingHere component vertically centred when there are no rows
       table.getRowCount() === 0
         ? {
             sx: { height: '100%' },
@@ -188,6 +196,12 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
         backgroundColor: row.original['isSubRow']
           ? 'background.secondary'
           : 'inherit',
+        '&.Mui-selected td:after': {
+          backgroundColor: theme => alpha(theme.palette.gray.pale, 0.2),
+        },
+        '&.Mui-selected:hover td:after': {
+          backgroundColor: theme => alpha(theme.palette.gray.pale, 0.4),
+        },
         fontStyle: row.getCanExpand() ? 'italic' : 'normal',
         cursor: onRowClick ? 'pointer' : 'default',
       },
@@ -197,7 +211,6 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
       sx: {
         fontSize: table.getState().density === 'compact' ? '0.90em' : '1em',
         fontWeight: 400,
-        // Remove transparency from pinned backgrounds
         opacity: 1,
         color: getIsPlaceholderRow(row.original)
           ? 'secondary.light'
