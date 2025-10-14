@@ -10,6 +10,7 @@ export { BookIcon } from './Book';
 export { CartIcon } from './Cart';
 export { CentralIcon } from './Central';
 export { CheckIcon } from './Check';
+export { CheckCircleIcon } from './CheckCircle';
 export { CheckboxCheckedIcon } from './CheckboxChecked';
 export { CheckboxEmptyIcon } from './CheckboxEmpty';
 export { CheckboxIndeterminateIcon } from './CheckboxIndeterminate';
