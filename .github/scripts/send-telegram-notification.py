@@ -41,7 +41,6 @@ def get_channel_for_tag(tag):
     else:
         return dev_chat_id, "Dev"
 
-
 # -- Handles Android build notifications -- #
 def handle_android_build_notification(filenames):
     bot_key = os.getenv("TELEGRAM_RELEASE_BOT_KEY")
