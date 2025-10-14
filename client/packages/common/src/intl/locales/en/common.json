@@ -2367,7 +2367,7 @@
   "status.not-in-use": "Not in use",
   "status.sent": "Sent",
   "status.unserviceable": "Unserviceable",
-  "stock": "View Stock",
+  "stock": "Stock",
   "stocktake.all-master-list-items": "All items (include out of stock items)",
   "stocktake.comment-and-template": "{{start}} and {{end}}",
   "stocktake.comment-initial-stocktake-template": "Initial stocktake created using all items",
