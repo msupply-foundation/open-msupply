@@ -81,6 +81,7 @@ pub fn mock_item_stats() -> MockData {
         u.invoice_lines[ITEM1_INDEX].number_of_packs = 5.0;
         u.invoice_lines[ITEM1_INDEX].pack_size = 3.0;
         // Remove item2 line so it isn't counted in 1 month scenario
+        // u.invoice_lines.remove(ITEM2_TRANSFER_INDEX);
         u.invoice_lines.remove(ITEM2_INDEX);
         u
     })
@@ -92,11 +93,8 @@ pub fn mock_item_stats() -> MockData {
         );
         u.invoice_lines[ITEM1_INDEX].number_of_packs = 1000.0;
         u.invoice_lines[ITEM2_INDEX].number_of_packs = 30.0;
-        // Transfer invoice
-        // ~28.4 days ago
-        u.invoices[1].picked_datetime = Some(
-            Utc::now().naive_utc() - Duration::days((AVG_NUMBER_OF_DAYS_IN_A_MONTH - 2.0) as i64),
-        );
+        // 34 days ago - Transfer invoice - intended to fall outside of custom days test
+        u.invoices[1].picked_datetime = Some(Utc::now().naive_utc() - Duration::days(34 as i64));
         u.invoice_lines[ITEM2_TRANSFER_INDEX].number_of_packs = 2.0;
         u.invoice_lines[ITEM2_TRANSFER_INDEX].pack_size = 10.0;
         u
@@ -133,13 +131,13 @@ pub fn item2_amc_3_months() -> f64 {
     50.0 / 3.0
 }
 
-// 30 days
-pub fn item1_amc_30_days() -> f64 {
+// Custom days
+pub fn item1_amc_number_of_days_pref() -> f64 {
     (5.0 * 3.0) / 1.0
 }
 
-pub fn item2_amc_30_days() -> f64 {
-    0.0 / 1.0
+pub fn item2_amc_number_of_days_pref() -> f64 {
+    0.0
 }
 
 // Transfer line packs * pack size
@@ -159,6 +157,19 @@ pub fn item1_amc_1_months() -> f64 {
 
 pub fn item1_amc_3_months_store_b() -> f64 {
     50.0 / 3.0
+}
+
+// with period end date (also 1 month lookback)
+pub fn period_end_date() -> chrono::NaiveDate {
+    util::date_now() - chrono::Duration::days(4)
+}
+
+pub fn item1_amc_1_months_period_end_date() -> f64 {
+    1000.0 / 1.0
+}
+
+pub fn item2_amc_1_months_period_end_date() -> f64 {
+    30.0 / 1.0
 }
 
 pub fn item() -> ItemRow {
