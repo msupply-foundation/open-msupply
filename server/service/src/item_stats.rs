@@ -11,12 +11,12 @@ use crate::{
     store_preference::get_store_preferences,
     PluginOrRepositoryError,
 };
-use chrono::Duration;
+use chrono::{Duration, NaiveDate};
 use repository::{
     ConsumptionFilter, ConsumptionRepository, DateFilter, EqualFilter, PluginType, RepositoryError,
     RequisitionLine, StockOnHandFilter, StockOnHandRepository, StockOnHandRow, StorageConnection,
 };
-use util::date_now_with_offset;
+use util::{date_now, date_with_offset};
 
 #[derive(Clone, Debug, PartialEq, Default)]
 pub struct ItemStats {
@@ -36,8 +36,15 @@ pub trait ItemStatsServiceTrait: Sync + Send {
         store_id: &str,
         amc_lookback_months: Option<f64>,
         item_ids: Vec<String>,
+        period_end: Option<NaiveDate>,
     ) -> Result<Vec<ItemStats>, PluginOrRepositoryError> {
-        get_item_stats(&ctx.connection, store_id, amc_lookback_months, item_ids)
+        get_item_stats(
+            &ctx.connection,
+            store_id,
+            amc_lookback_months,
+            item_ids,
+            period_end,
+        )
     }
 }
 
@@ -49,6 +56,7 @@ pub fn get_item_stats(
     store_id: &str,
     amc_lookback_months: Option<f64>,
     item_ids: Vec<String>,
+    period_end: Option<NaiveDate>,
 ) -> Result<Vec<ItemStats>, PluginOrRepositoryError> {
     let default_amc_lookback_months =
         get_store_preferences(connection, store_id)?.monthly_consumption_look_back_period;
@@ -62,8 +70,13 @@ pub fn get_item_stats(
 
     let exclude_transfers = ExcludeTransfers.load(connection, None).unwrap_or(false);
 
-    let consumption_map =
-        get_consumption_map(connection, store_id, item_ids.clone(), number_of_days)?;
+    let consumption_map = get_consumption_map(
+        connection,
+        store_id,
+        item_ids.clone(),
+        number_of_days,
+        period_end,
+    )?;
 
     let input = amc::Input {
         store_id: store_id.to_string(),
@@ -92,8 +105,15 @@ pub fn get_item_stats_map(
     store_id: &str,
     amc_lookback_months: Option<f64>,
     item_ids: Vec<String>,
+    period_end: Option<NaiveDate>,
 ) -> Result<HashMap<String, ItemStats>, PluginOrRepositoryError> {
-    let item_stats_vec = get_item_stats(connection, store_id, amc_lookback_months, item_ids);
+    let item_stats_vec = get_item_stats(
+        connection,
+        store_id,
+        amc_lookback_months,
+        item_ids,
+        period_end,
+    );
 
     let item_stats_map = item_stats_vec?
         .into_iter()
@@ -145,6 +165,7 @@ fn get_consumption_map(
     store_id: &str,
     item_ids: Vec<String>,
     number_of_days: f64,
+    period_end: Option<NaiveDate>,
 ) -> Result<
     HashMap<
         String, /* item_id */
@@ -155,14 +176,20 @@ fn get_consumption_map(
     >,
     RepositoryError,
 > {
-    let start_date = date_now_with_offset(Duration::days(
-        (number_of_days).neg() as i64,
-    ));
+    let end_date = period_end.unwrap_or_else(date_now);
+    let offset_end_date = end_date + Duration::days(1);
+    
+    let start_date = date_with_offset(
+        &offset_end_date,
+        Duration::days(
+            (number_of_days).neg() as i64,
+        ),
+    );
 
     let filter = ConsumptionFilter {
         item_id: Some(EqualFilter::equal_any(item_ids)),
         store_id: Some(EqualFilter::equal_to(store_id)),
-        date: Some(DateFilter::after_or_equal_to(start_date)),
+        date: Some(DateFilter::date_range(&start_date, &end_date)),
     };
 
     let consumption_rows = ConsumptionRepository::new(connection).query(Some(filter))?;

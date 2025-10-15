@@ -132,7 +132,13 @@ fn generate(
         .map(|master_list_line| master_list_line.item_id)
         .collect();
 
-    generate_requisition_lines(ctx, store_id, requisition_row, items_ids_not_in_requisition)
+    generate_requisition_lines(
+        ctx,
+        store_id,
+        requisition_row,
+        items_ids_not_in_requisition,
+        None,
+    )
 }
 
 impl From<RepositoryError> for AddFromMasterListError {
