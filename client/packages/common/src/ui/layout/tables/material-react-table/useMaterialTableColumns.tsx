@@ -4,14 +4,9 @@
  */
 
 import React, { useMemo } from 'react';
-import {
-  MRT_Column,
-  MRT_RowData,
-  MRT_TableBodyCellProps,
-} from 'material-react-table';
+import { MRT_Column, MRT_RowData } from 'material-react-table';
 import {
   mergeCellProps,
-  TableCellProps,
   Tooltip,
   useGetColumnTypeDefaults,
 } from '@openmsupply-client/common';
