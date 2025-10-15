@@ -255,7 +255,7 @@ mod test {
     };
 
     use crate::{
-        preference::{DaysInMonth, ExcludeTransfers, Preference},
+        preference::{DaysInMonth, ExcludeTransfers, Preference, UseDaysInMonth},
         service_provider::ServiceProvider,
     };
 
@@ -275,7 +275,7 @@ mod test {
         let item_ids = vec![test_item_stats::item().id, test_item_stats::item2().id];
 
         let mut item_stats = service
-            .get_item_stats(&context, &mock_store_a().id, None, item_ids.clone())
+            .get_item_stats(&context, &mock_store_a().id, None, item_ids.clone(), None)
             .unwrap();
         item_stats.sort_by(|a, b| a.item_id.cmp(&b.item_id));
 
@@ -298,10 +298,10 @@ mod test {
             test_item_stats::item2_amc_3_months()
         );
 
+        // Test 3 month stats with exclude_transfers = true
         // Exclude Transfer = true
         PreferenceRowRepository::new(&context.connection)
             .upsert_one(&PreferenceRow {
-                // Use a unique id so it isn't overwritten by later DaysInMonth preference upsert
                 id: "exclude transfers".to_string(),
                 store_id: None,
                 key: ExcludeTransfers.key().to_string(),
@@ -309,9 +309,14 @@ mod test {
             })
             .unwrap();
 
-        // Test 3 month stats with exclude_transfers = true
         let mut item_stats = service
-            .get_item_stats(&context, &mock_store_a().id, Some(3.0), item_ids.clone())
+            .get_item_stats(
+                &context,
+                &mock_store_a().id,
+                Some(3.0),
+                item_ids.clone(),
+                None,
+            )
             .unwrap();
         item_stats.sort_by(|a, b| a.item_id.cmp(&b.item_id));
 
@@ -324,9 +329,25 @@ mod test {
             test_item_stats::item2_amc_3_months_excluding_transfer()
         );
 
+        // Test remainder with exclude_transfers = false
+        PreferenceRowRepository::new(&context.connection)
+            .upsert_one(&PreferenceRow {
+                id: "exclude transfers".to_string(),
+                store_id: None,
+                key: ExcludeTransfers.key().to_string(),
+                value: "false".to_string(),
+            })
+            .unwrap();
+
         // Reduce to looking back 1 month
         let mut item_stats = service
-            .get_item_stats(&context, &mock_store_a().id, Some(1.0), item_ids.clone())
+            .get_item_stats(
+                &context,
+                &mock_store_a().id,
+                Some(1.0),
+                item_ids.clone(),
+                None,
+            )
             .unwrap();
         item_stats.sort_by(|a, b| a.item_id.cmp(&b.item_id));
 
@@ -354,7 +375,7 @@ mod test {
             })
             .unwrap();
         let mut item_stats = service
-            .get_item_stats(&context, &mock_store_a().id, None, item_ids.clone())
+            .get_item_stats(&context, &mock_store_a().id, None, item_ids.clone(), None)
             .unwrap();
         item_stats.sort_by(|a, b| a.item_id.cmp(&b.item_id));
 
@@ -373,52 +394,12 @@ mod test {
             test_item_stats::item1_amc_1_months()
         );
 
-        // Change days in a month to 30 via Global pref
-        PreferenceRowRepository::new(&context.connection)
-            .upsert_one(&PreferenceRow {
-                id: "days in month".to_string(),
-                store_id: None,
-                key: DaysInMonth.key().to_string(),
-                value: "30".to_string(),
-            })
-            .unwrap();
-
-        let pref = PreferenceRowRepository::new(&context.connection)
-            .find_one_by_key(&DaysInMonth.key().to_string())
-            .unwrap()
-            .unwrap();
-        assert_eq!(pref.value, "30");
-
-        let mut item_stats = service
-            .get_item_stats(&context, &mock_store_a().id, None, item_ids.clone())
-            .unwrap();
-        item_stats.sort_by(|a, b| a.item_id.cmp(&b.item_id));
-
-        assert_eq!(item_stats.len(), 2);
-        assert_eq!(
-            item_stats[0].available_stock_on_hand,
-            test_item_stats::item_1_soh()
-        );
-        assert_eq!(
-            item_stats[1].available_stock_on_hand,
-            test_item_stats::item_2_soh()
-        );
-
-        assert_eq!(
-            item_stats[0].average_monthly_consumption,
-            test_item_stats::item1_amc_30_days()
-        );
-
-        assert_eq!(
-            item_stats[1].average_monthly_consumption,
-            test_item_stats::item2_amc_30_days()
-        );
-
         // No invoice lines check
+        // Also confirms transfer line is not included
         assert_eq!(item_stats[1].average_monthly_consumption, 0.0);
 
         let mut item_stats = service
-            .get_item_stats(&context, &mock_store_b().id, None, item_ids.clone())
+            .get_item_stats(&context, &mock_store_b().id, None, item_ids.clone(), None)
             .unwrap();
         item_stats.sort_by(|a, b| a.item_id.cmp(&b.item_id));
 
@@ -433,6 +414,81 @@ mod test {
         assert_eq!(
             item_stats[0].average_monthly_consumption,
             test_item_stats::item1_amc_3_months_store_b()
+        );
+
+        // Change days in a month to 32 via Global pref
+        PreferenceRowRepository::new(&context.connection)
+            .upsert_one(&PreferenceRow {
+                id: "days in month".to_string(),
+                store_id: None,
+                key: DaysInMonth.key().to_string(),
+                value: "32".to_string(),
+            })
+            .unwrap();
+
+        let pref = PreferenceRowRepository::new(&context.connection)
+            .find_one_by_key(&DaysInMonth.key().to_string())
+            .unwrap()
+            .unwrap();
+        assert_eq!(pref.value, "32");
+
+        // Turn on the pref
+        PreferenceRowRepository::new(&context.connection)
+            .upsert_one(&PreferenceRow {
+                id: "use days in month".to_string(),
+                store_id: None,
+                key: UseDaysInMonth.key().to_string(),
+                value: "true".to_string(),
+            })
+            .unwrap();
+
+        let mut item_stats = service
+            .get_item_stats(&context, &mock_store_a().id, None, item_ids.clone(), None)
+            .unwrap();
+        item_stats.sort_by(|a, b| a.item_id.cmp(&b.item_id));
+
+        assert_eq!(
+            item_stats[0].average_monthly_consumption,
+            test_item_stats::item1_amc_number_of_days_pref()
+        );
+
+        assert_eq!(
+            item_stats[1].average_monthly_consumption,
+            test_item_stats::item2_amc_number_of_days_pref()
+        );
+
+        // Turn back off
+        PreferenceRowRepository::new(&context.connection)
+            .upsert_one(&PreferenceRow {
+                id: "use days in month".to_string(),
+                store_id: None,
+                key: UseDaysInMonth.key().to_string(),
+                value: "false".to_string(),
+            })
+            .unwrap();
+
+        // Test with a period end date (from requisition)
+        let period_end = Some(test_item_stats::period_end_date());
+        let mut item_stats = service
+            .get_item_stats(
+                &context,
+                &mock_store_a().id,
+                None,
+                item_ids.clone(),
+                period_end,
+            )
+            .unwrap();
+        item_stats.sort_by(|a, b| a.item_id.cmp(&b.item_id));
+
+        assert_eq!(item_stats.len(), 2);
+
+        assert_eq!(
+            item_stats[0].average_monthly_consumption,
+            test_item_stats::item1_amc_1_months_period_end_date()
+        );
+        assert_eq!(
+            item_stats[1].average_monthly_consumption,
+            test_item_stats::item2_amc_1_months_period_end_date()
         );
     }
 }
