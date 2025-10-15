@@ -4,9 +4,14 @@
  */
 
 import React, { useMemo } from 'react';
-import { MRT_Column, MRT_RowData } from 'material-react-table';
+import {
+  MRT_Column,
+  MRT_RowData,
+  MRT_TableBodyCellProps,
+} from 'material-react-table';
 import {
   mergeCellProps,
+  TableCellProps,
   Tooltip,
   useGetColumnTypeDefaults,
 } from '@openmsupply-client/common';
@@ -53,6 +58,14 @@ export const useMaterialTableColumns = <T extends MRT_RowData>(
               },
               params
             );
+          };
+        }
+
+        // Merge any custom cell props with defaults
+        const cellProps = col.muiTableBodyCellProps;
+        if (cellProps) {
+          col.muiTableBodyCellProps = params => {
+            return mergeCellProps(cellProps, params);
           };
         }
 
