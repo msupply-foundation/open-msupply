@@ -1,6 +1,6 @@
 import React from 'react';
 import { MRT_Cell, MRT_RowData } from 'material-react-table';
-import { StatusChip } from 'packages/common/src/ui/components/panels/StatusChip';
+import { StatusChip } from '@openmsupply-client/common/src/ui/components/panels/StatusChip';
 
 const StatusCell = <T extends MRT_RowData>({
   cell,
