@@ -352,8 +352,9 @@ mod test {
             RequisitionLineRow {
                 available_stock_on_hand: test_item_stats::item_2_soh(),
                 average_monthly_consumption: test_item_stats::item2_amc_3_months(),
-                suggested_quantity: test_item_stats::item2_amc_3_months() * 10.0
-                    - test_item_stats::item_2_soh(),
+                suggested_quantity: (test_item_stats::item2_amc_3_months() * 10.0
+                    - test_item_stats::item_2_soh())
+                .ceil(),
                 ..line.clone()
             }
         );
