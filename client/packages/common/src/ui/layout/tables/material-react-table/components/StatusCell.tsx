@@ -2,7 +2,7 @@ import React from 'react';
 import { MRT_Cell, MRT_RowData } from 'material-react-table';
 import { StatusChip } from 'packages/common/src/ui/components/panels/StatusChip';
 
-export const StatusCell = <T extends MRT_RowData>({
+const StatusCell = <T extends MRT_RowData>({
   cell,
   statusMap,
 }: {
@@ -17,3 +17,5 @@ export const StatusCell = <T extends MRT_RowData>({
   const { label, color, bgColor } = statusMap?.[status] ?? {};
   return <StatusChip label={label} color={color} bgColor={bgColor} />;
 };
+
+export { StatusCell as StatusCellNew };
