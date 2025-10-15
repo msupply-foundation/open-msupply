@@ -50,6 +50,7 @@ export const useEditPreferences = (
     if (
       firstThreshold != null &&
       secondThreshold != null &&
+      secondThreshold !== 0 &&
       secondThreshold < firstThreshold
     ) {
       warning(t('label.second-threshold-is-less-than-first-threshold'))();
