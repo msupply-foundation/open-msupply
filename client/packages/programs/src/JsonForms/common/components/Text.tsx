@@ -58,7 +58,6 @@ const UIComponent = (props: ControlProps) => {
   const error = !!errors || !!zErrors;
   const onChange = (value: string | undefined) =>
     handleChange(path, !!value ? value : undefined);
-
   const { text, onChange: onDebounceChange } = useDebouncedTextInput(
     data,
     onChange
