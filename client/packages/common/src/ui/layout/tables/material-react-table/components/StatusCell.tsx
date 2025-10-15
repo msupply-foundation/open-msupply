@@ -18,4 +18,5 @@ const StatusCell = <T extends MRT_RowData>({
   return <StatusChip label={label} color={color} bgColor={bgColor} />;
 };
 
+// TO-DO: Please rename once the old StatusCell is removed from the codebase
 export { StatusCell as StatusCellNew };
