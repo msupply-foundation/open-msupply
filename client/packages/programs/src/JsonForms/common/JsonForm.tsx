@@ -217,7 +217,6 @@ const FormComponent = ({
       renderers={renderers}
       // cells={materialCells}
       onChange={({ errors, data }) => {
-        console.log('data', data);
         setData(data);
         if (errors && errors.length) {
           setError?.(mapErrors(errors)?.join(', ') ?? '');

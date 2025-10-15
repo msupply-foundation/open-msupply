@@ -56,10 +56,9 @@ const UIComponent = (props: ControlProps) => {
     uischema.options
   );
   const error = !!errors || !!zErrors;
-  const onChange = (value: string | undefined) => {
-    console.log(path, !!value ? value : undefined);
+  const onChange = (value: string | undefined) =>
     handleChange(path, !!value ? value : undefined);
-  };
+
   const { text, onChange: onDebounceChange } = useDebouncedTextInput(
     data,
     onChange
