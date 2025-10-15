@@ -24,7 +24,6 @@ import {
 import { extractProperty } from '@common/utils';
 import { usePatient } from '@openmsupply-client/system';
 import { z } from 'zod';
-import { useJSONFormsCustomError } from '../common/hooks/useJSONFormsCustomError';
 import { useDebouncedTextInput } from '../common/hooks/useDebouncedTextInput';
 
 export const idGeneratorTester = rankWith(10, uiTypeIs('IdGenerator'));
@@ -307,16 +306,13 @@ const UIComponent = (props: ControlProps) => {
 
   const { label, errors, path, data, visible, handleChange, uischema } = props;
   const config: JsonFormsConfig = props.config;
+  const { customErrors } = config;
 
   const { mutateAsync: mutateGenerateId } = useMutation(
     async (input: GenerateIdInput): Promise<string> => generateId(input)
   );
   const { mutateAsync: allocateNumber } = useDocument.utils.allocateNumber();
 
-  const { customError, setCustomError } = useJSONFormsCustomError(
-    path,
-    'UIGenerator'
-  );
   const { errors: zErrors, options } = useZodOptionsValidation(
     GeneratorOptions,
     uischema.options
@@ -336,7 +332,8 @@ const UIComponent = (props: ControlProps) => {
 
       if (value) {
         const error = await validateId(options, value);
-        setCustomError(error);
+        if (error) customErrors?.add(path, error);
+        else customErrors?.remove(path);
       }
       handleChange(path, value);
     },
@@ -391,7 +388,7 @@ const UIComponent = (props: ControlProps) => {
       if (finished) break;
     }
     onChange(id);
-    setCustomError(undefined);
+    customErrors?.remove(path);
     handleChange(path, id);
   }, [options, path, core?.data, handleChange]);
 
@@ -421,9 +418,9 @@ const UIComponent = (props: ControlProps) => {
             disabled={!props.enabled || !options?.allowManualEntry}
             value={text}
             style={{ flex: 1 }}
-            helperText={zErrors ?? customError ?? errors}
+            helperText={zErrors ?? errors}
             onChange={e => onChange(e.target.value)}
-            error={!!zErrors || !!customError || !!errors}
+            error={!!zErrors || !!errors}
             FormHelperTextProps={
               errors ? { sx: { color: 'error.main' } } : undefined
             }
