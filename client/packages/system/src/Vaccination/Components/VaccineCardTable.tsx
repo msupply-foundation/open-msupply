@@ -1,9 +1,5 @@
-import React, { FC, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import {
-  TableProvider,
-  createTableStore,
-  createQueryParamsStore,
-  InlineSpinner,
   useTranslation,
   NothingHere,
   useTheme,
@@ -39,8 +35,9 @@ const canClickRow = (
   return isPreviousDoseGiven(row, items);
 };
 
-const VaccinationCardComponent = ({
+export const VaccineCardTable = ({
   data,
+  isLoading,
   encounterId,
   openModal,
 }: VaccinationCardProps & {
@@ -164,6 +161,7 @@ const VaccinationCardComponent = ({
     tableId: 'vaccine-card-table',
     data: data?.items ?? [],
     columns,
+    isLoading,
     enableRowSelection: false,
     onRowClick: row => {
       if (canClickRow(isEncounter, row, data?.items, canSkipDose))
@@ -184,19 +182,4 @@ const VaccinationCardComponent = ({
   });
 
   return <MaterialTable table={table} />;
-};
-
-export const VaccineCardTable: FC<VaccinationCardProps> = props => {
-  if (props.isLoading) return <InlineSpinner />;
-
-  return (
-    <TableProvider
-      createStore={createTableStore}
-      queryParamsStore={createQueryParamsStore({
-        initialSortBy: { key: 'name' },
-      })}
-    >
-      <VaccinationCardComponent {...props} />
-    </TableProvider>
-  );
 };
