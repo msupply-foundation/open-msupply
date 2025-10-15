@@ -143,26 +143,29 @@ const VaccinationCardComponent = ({
     return monthsLabel;
   };
 
+  const isAgeSameAsPreviousRow = (row: VaccinationCardItemFragment) => {
+    const index = data?.items.findIndex(item => item.id === row.id) ?? 0;
+    return row.minAgeMonths === data?.items?.[index - 1]?.minAgeMonths;
+  };
+
   const columns = useMemo(
     (): ColumnDef<VaccinationCardItemFragment>[] => [
       {
         id: 'age',
         header: t('label.age'),
         size: 160,
-        accessorFn: row => {
-          const index = data?.items.findIndex(item => item.id === row.id) ?? 0;
-
-          const sameAsPrev =
-            row.minAgeMonths === data?.items?.[index - 1]?.minAgeMonths;
-
-          // Only show age label for first of each "block", when repeated
-          return sameAsPrev ? null : getAgeLabel(row);
-        },
-        Cell: ({ renderedCellValue }) => (
-          <span style={{ fontWeight: 'bold', paddingLeft: 8 }}>
-            {renderedCellValue}
-          </span>
-        ),
+        pin: 'left',
+        accessorFn: row =>
+          isAgeSameAsPreviousRow(row) ? null : getAgeLabel(row),
+        muiTableBodyCellProps: ({ row }) => ({
+          sx: {
+            fontWeight: 'bold',
+            paddingLeft: 2,
+            ...(isAgeSameAsPreviousRow(row.original)
+              ? { borderBottom: 'none' }
+              : {}),
+          },
+        }),
         enableHiding: false,
         enableColumnOrdering: false,
       },
@@ -327,6 +330,10 @@ const VaccinationCardComponent = ({
         cursor: canClickRow(isEncounter, row.original, data?.items, canSkipDose)
           ? 'pointer'
           : 'default',
+        backgroundColor:
+          row.original.status === VaccinationCardItemNodeStatus.Given
+            ? theme.palette.background.success
+            : undefined,
       },
     }),
   });
