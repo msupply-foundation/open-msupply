@@ -28,6 +28,8 @@ pub struct Input {
     >,
     pub item_ids: Vec<String>,
     pub number_of_days: f64,
+    // pub exclude_transfers: Option<bool>,
+    pub exclude_transfers: bool,
 }
 
 pub type Output = HashMap<String /* item_id */, AverageMonthlyConsumptionItem>;
