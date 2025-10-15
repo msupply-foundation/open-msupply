@@ -137,7 +137,7 @@ fn generate(
     }: InsertRequestRequisitionLine,
 ) -> Result<RequisitionLineRow, OutError> {
     let mut requisition_line =
-        generate_requisition_lines(ctx, store_id, requisition_row, vec![item_id])?
+        generate_requisition_lines(ctx, store_id, requisition_row, vec![item_id], None)?
             .pop()
             .ok_or(OutError::CannotFindItemStatusForRequisitionLine)?;
 
@@ -176,7 +176,6 @@ mod test {
         test_db::{setup_all, setup_all_with_data},
         RequisitionLineRow, RequisitionLineRowRepository,
     };
-   
 
     use crate::{
         requisition_line::request_requisition_line::{

@@ -81,7 +81,6 @@ pub fn mock_item_stats() -> MockData {
         u.invoice_lines[ITEM1_INDEX].number_of_packs = 5.0;
         u.invoice_lines[ITEM1_INDEX].pack_size = 3.0;
         // Remove item2 line so it isn't counted in 1 month scenario
-        // u.invoice_lines.remove(ITEM2_TRANSFER_INDEX);
         u.invoice_lines.remove(ITEM2_INDEX);
         u
     })
