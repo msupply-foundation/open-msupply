@@ -101,6 +101,13 @@ pub fn item2_amc_3_months() -> f64 {
     30.0 / 3.0
 }
 
+pub fn item1_amc_30_days() -> f64 {
+    (5.0 * 3.0) / 1.0
+}
+
+pub fn item2_amc_30_days() -> f64 {
+    0.0 / 1.0
+}
 pub fn item1_amc_1_months() -> f64 {
     (3 * 5) as f64 / 1.0
 }

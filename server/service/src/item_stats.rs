@@ -327,6 +327,48 @@ mod test {
             item_stats[0].average_monthly_consumption,
             test_item_stats::item1_amc_1_months()
         );
+
+        // Change days in a month to 30 via Global pref
+        PreferenceRowRepository::new(&context.connection)
+            .upsert_one(&PreferenceRow {
+                id: "days in month".to_string(),
+                store_id: None,
+                key: DaysInMonth.key().to_string(),
+                value: "30".to_string(),
+            })
+            .unwrap();
+
+        let pref = PreferenceRowRepository::new(&context.connection)
+            .find_one_by_key(&DaysInMonth.key().to_string())
+            .unwrap()
+            .unwrap();
+        assert_eq!(pref.value, "30");
+
+        let mut item_stats = service
+            .get_item_stats(&context, &mock_store_a().id, None, item_ids.clone())
+            .unwrap();
+        item_stats.sort_by(|a, b| a.item_id.cmp(&b.item_id));
+
+        assert_eq!(item_stats.len(), 2);
+        assert_eq!(
+            item_stats[0].available_stock_on_hand,
+            test_item_stats::item_1_soh()
+        );
+        assert_eq!(
+            item_stats[1].available_stock_on_hand,
+            test_item_stats::item_2_soh()
+        );
+
+        assert_eq!(
+            item_stats[0].average_monthly_consumption,
+            test_item_stats::item1_amc_30_days()
+        );
+
+        assert_eq!(
+            item_stats[1].average_monthly_consumption,
+            test_item_stats::item2_amc_30_days()
+        );
+
         // No invoice lines check
         assert_eq!(item_stats[1].average_monthly_consumption, 0.0);
 
