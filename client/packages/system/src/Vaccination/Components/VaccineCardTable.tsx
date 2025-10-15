@@ -322,13 +322,13 @@ const VaccinationCardComponent = ({
       if (canClickRow(isEncounter, row, data?.items, canSkipDose))
         openModal(row);
     },
-    // muiTableBodyRowProps: ({ row }) => ({
-    //   sx: {
-    //     cursor: canClickRow(isEncounter, row.original, data?.items, canSkipDose)
-    //       ? 'pointer'
-    //       : 'default',
-    //   },
-    // }),
+    muiTableBodyRowProps: ({ row }) => ({
+      sx: {
+        cursor: canClickRow(isEncounter, row.original, data?.items, canSkipDose)
+          ? 'pointer'
+          : 'default',
+      },
+    }),
   });
 
   return (

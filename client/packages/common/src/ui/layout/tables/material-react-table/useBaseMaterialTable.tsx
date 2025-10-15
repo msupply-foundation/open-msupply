@@ -61,6 +61,7 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
   manualFiltering = false,
   initialSort,
   noDataElement,
+  muiTableBodyRowProps,
   ...tableOptions
 }: BaseTableConfig<T>) => {
   const t = useTranslation();
@@ -131,6 +132,7 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
     onRowClick,
     getIsPlaceholderRow,
     getIsRestrictedRow,
+    muiTableBodyRowProps,
   });
 
   const table = useMaterialReactTable<T>({
