@@ -67,7 +67,6 @@ pub fn get_item_stats(
     };
     let days_in_month: f64 = days_in_a_month(connection);
     let number_of_days = amc_lookback_months * days_in_month;
-
     let exclude_transfers = ExcludeTransfers.load(connection, None).unwrap_or(false);
 
     let consumption_map = get_consumption_map(
@@ -178,12 +177,9 @@ fn get_consumption_map(
 > {
     let end_date = period_end.unwrap_or_else(date_now);
     let offset_end_date = end_date + Duration::days(1);
-    
     let start_date = date_with_offset(
         &offset_end_date,
-        Duration::days(
-            (number_of_days).neg() as i64,
-        ),
+        Duration::days((number_of_days).neg() as i64),
     );
 
     let filter = ConsumptionFilter {
