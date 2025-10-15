@@ -1,6 +1,7 @@
 use std::{collections::HashMap, ops::Neg};
 
 use crate::common::days_in_a_month;
+use crate::preference::{ExcludeTransfers, Preference};
 use crate::{
     backend_plugin::{
         plugin_provider::{PluginInstance, PluginResult},
@@ -20,6 +21,7 @@ use util::date_now_with_offset;
 #[derive(Clone, Debug, PartialEq, Default)]
 pub struct ItemStats {
     pub total_consumption: f64,
+    pub transfer_consumption: f64,
     pub average_monthly_consumption: f64,
     pub available_stock_on_hand: f64,
     pub total_stock_on_hand: f64,
@@ -58,6 +60,8 @@ pub fn get_item_stats(
     let days_in_month: f64 = days_in_a_month(connection);
     let number_of_days = amc_lookback_months * days_in_month;
 
+    let exclude_transfers = ExcludeTransfers.load(connection, None).unwrap_or(false);
+
     let consumption_map =
         get_consumption_map(connection, store_id, item_ids.clone(), number_of_days)?;
 
@@ -65,6 +69,7 @@ pub fn get_item_stats(
         store_id: store_id.to_string(),
         amc_lookback_months,
         number_of_days,
+        exclude_transfers,
         // Really don't like cloning this
         consumption_map: consumption_map.clone(),
         item_ids: item_ids.clone(),
@@ -106,6 +111,7 @@ impl amc::Trait for DefaultAmc {
             amc_lookback_months,
             consumption_map,
             number_of_days,
+            exclude_transfers,
             ..
         }: amc::Input,
     ) -> PluginResult<amc::Output> {
@@ -115,8 +121,11 @@ impl amc::Trait for DefaultAmc {
                 // TODO: dos
                 let dos = 0.0;
 
-                let average_consumption =
-                    Some((*total_consumption - transfer_consumption) / amc_lookback_months);
+                let average_consumption: Option<f64> = match exclude_transfers {
+                    true => Some((*total_consumption - transfer_consumption) / amc_lookback_months),
+                    false => Some((*total_consumption) / amc_lookback_months),
+                };
+
                 let timeframe = number_of_days / (number_of_days - dos);
                 (
                     item_id.to_string(),
@@ -200,19 +209,24 @@ impl ItemStats {
     ) -> Vec<Self> {
         stock_on_hand_rows
             .into_iter()
-            .map(|stock_on_hand| ItemStats {
-                available_stock_on_hand: stock_on_hand.available_stock_on_hand,
-                item_id: stock_on_hand.item_id.clone(),
-                item_name: stock_on_hand.item_name.clone(),
-                average_monthly_consumption: amc_by_item
+            .map(|stock_on_hand| {
+                let (total_consumption, transfer_consumption) = consumption_map
                     .get(&stock_on_hand.item_id)
-                    .and_then(|r| r.average_monthly_consumption)
-                    .unwrap_or_default(),
-                total_consumption: consumption_map
-                    .get(&stock_on_hand.item_id)
-                    .map(|(total_consumption, _)| *total_consumption)
-                    .unwrap_or_default(),
-                total_stock_on_hand: stock_on_hand.total_stock_on_hand,
+                    .cloned()
+                    .unwrap_or((0.0, 0.0));
+
+                ItemStats {
+                    available_stock_on_hand: stock_on_hand.available_stock_on_hand,
+                    item_id: stock_on_hand.item_id.clone(),
+                    item_name: stock_on_hand.item_name.clone(),
+                    average_monthly_consumption: amc_by_item
+                        .get(&stock_on_hand.item_id)
+                        .and_then(|r| r.average_monthly_consumption)
+                        .unwrap_or_default(),
+                    total_consumption,
+                    transfer_consumption,
+                    total_stock_on_hand: stock_on_hand.total_stock_on_hand,
+                }
             })
             .collect()
     }
@@ -227,6 +241,7 @@ impl ItemStats {
             // TODO: Implement total consumption & total_stock_on_hand
             total_consumption: 0.0,
             total_stock_on_hand: 0.0,
+            transfer_consumption: 0.0,
         }
     }
 }
@@ -235,10 +250,14 @@ impl ItemStats {
 mod test {
     use repository::{
         mock::{mock_store_a, mock_store_b, test_item_stats, MockDataInserts},
-        test_db, StorePreferenceRow, StorePreferenceRowRepository,
+        test_db, PreferenceRow, PreferenceRowRepository, StorePreferenceRow,
+        StorePreferenceRowRepository,
     };
 
-    use crate::service_provider::ServiceProvider;
+    use crate::{
+        preference::{DaysInMonth, ExcludeTransfers, Preference},
+        service_provider::ServiceProvider,
+    };
 
     #[actix_rt::test]
     async fn test_item_stats_service() {
@@ -277,6 +296,32 @@ mod test {
         assert_eq!(
             item_stats[1].average_monthly_consumption,
             test_item_stats::item2_amc_3_months()
+        );
+
+        // Exclude Transfer = true
+        PreferenceRowRepository::new(&context.connection)
+            .upsert_one(&PreferenceRow {
+                // Use a unique id so it isn't overwritten by later DaysInMonth preference upsert
+                id: "exclude transfers".to_string(),
+                store_id: None,
+                key: ExcludeTransfers.key().to_string(),
+                value: "true".to_string(),
+            })
+            .unwrap();
+
+        // Test 3 month stats with exclude_transfers = true
+        let mut item_stats = service
+            .get_item_stats(&context, &mock_store_a().id, Some(3.0), item_ids.clone())
+            .unwrap();
+        item_stats.sort_by(|a, b| a.item_id.cmp(&b.item_id));
+
+        assert_eq!(
+            item_stats[1].transfer_consumption,
+            test_item_stats::item2_transfer_units()
+        );
+        assert_eq!(
+            item_stats[1].average_monthly_consumption,
+            test_item_stats::item2_amc_3_months_excluding_transfer()
         );
 
         // Reduce to looking back 1 month
