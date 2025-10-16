@@ -115,8 +115,8 @@ export const EquipmentImportModal = ({
   const [activeStep, setActiveStep] = useState(0);
   const { Modal } = useDialog({ isOpen, onClose });
 
-  const [errorMessage, setErrorMessage] = useState<string>(() => '');
-  const [warningMessage, setWarningMessage] = useState<string>(() => '');
+  const [errorMessage, setErrorMessage] = useState<string>('');
+  const [warningMessage, setWarningMessage] = useState<string>('');
 
   const [importProgress, setImportProgress] = useState(0);
   const [importErrorCount, setImportErrorCount] = useState(0);
@@ -301,7 +301,11 @@ export const EquipmentImportModal = ({
           activeStep={activeStep}
           onClickStep={onClickStep}
         />
-        {errorMessage ? <Alert severity="error">{errorMessage}</Alert> : null}
+        {errorMessage ? (
+          <Alert severity="error" sx={{ mt: 3 }}>
+            {errorMessage}
+          </Alert>
+        ) : null}
         <TabContext value={currentTab}>
           <Grid container flex={1} flexDirection="column" gap={1}>
             <QueryParamsProvider
@@ -324,6 +328,7 @@ export const EquipmentImportModal = ({
               showWarnings={showWarnings}
               tab={Tabs.Review}
               uploadedRows={bufferedEquipment}
+              hasError={errorMessage !== ''}
             />
             <ImportTab
               tab={Tabs.Import}
