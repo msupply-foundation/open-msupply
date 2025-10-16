@@ -15,6 +15,7 @@ import {
   BufferedTextArea,
   ModalGridLayout,
   usePreferences,
+  Alert,
 } from '@openmsupply-client/common';
 import { DraftRequestLine } from './hooks';
 import { RequestLineFragment } from '../../api';
@@ -63,7 +64,6 @@ export const RequestLineEdit = ({
   setRepresentation,
   disabled,
   isUpdateMode,
-  showExtraFields,
   isReasonsError,
   setIsEditingRequested,
 }: RequestLineEditProps) => {
@@ -160,6 +160,11 @@ export const RequestLineEdit = ({
             dosesPerUnit={currentItem?.doses}
             setIsEditingRequested={setIsEditingRequested}
           />
+          {draft.requestedQuantity > draft.suggestedQuantity && (
+            <Alert severity="warning" sx={{ mt: 1 }}>
+              {t('warning.requested-exceeds-suggested')}
+            </Alert>
+          )}
           {showExtraFields && (
             <Typography variant="body1" fontWeight="bold">
               {t('label.reason')}:
