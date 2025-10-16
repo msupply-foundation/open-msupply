@@ -183,10 +183,11 @@ fn generate(
                 snapshot_datetime: line.snapshot_datetime,
                 comment: line.comment.clone(),
                 item_name: line.item_name.clone(),
+                // Stats from original Internal Order
+                suggested_quantity: line.suggested_quantity,
+                available_stock_on_hand: line.available_stock_on_hand,
+                average_monthly_consumption: line.average_monthly_consumption,
                 // Defaults
-                suggested_quantity: 0.0,
-                available_stock_on_hand: 0.0,
-                average_monthly_consumption: 0.0,
                 initial_stock_on_hand_units: 0.0,
                 incoming_units: 0.0,
                 outgoing_units: 0.0,

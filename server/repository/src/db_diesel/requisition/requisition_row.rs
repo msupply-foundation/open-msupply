@@ -112,7 +112,7 @@ pub struct RequisitionRow {
     pub period_id: Option<String>,
     pub order_type: Option<String>,
     pub is_emergency: bool,
-    pub created_from_requisition_id: Option<String>,
+    pub created_from_requisition_id: Option<String>, // for Internal Orders created from a Requisition
     pub original_customer_id: Option<String>,
 }
 
