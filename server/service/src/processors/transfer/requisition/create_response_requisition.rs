@@ -1,3 +1,4 @@
+use super::{RequisitionTransferProcessor, RequisitionTransferProcessorRecord};
 use crate::{
     activity_log::system_activity_log_entry,
     number::next_number,
@@ -6,8 +7,6 @@ use crate::{
     requisition::common::get_lines_for_requisition,
     store_preference::get_store_preferences,
 };
-
-use super::{RequisitionTransferProcessor, RequisitionTransferProcessorRecord};
 use chrono::{Months, Utc};
 use repository::{
     indicator_value::{IndicatorValueFilter, IndicatorValueRepository},
@@ -86,7 +85,7 @@ impl RequisitionTransferProcessor for CreateResponseRequisitionProcessor {
                     .and_then(|initialisation_date| {
                         initialisation_date.checked_sub_months(Months::new(pref_months as u32))
                     })
-                    .map_or(false, |cutoff_date| sent_datetime < cutoff_date)
+                    .is_some_and(|cutoff_date| sent_datetime < cutoff_date)
                 {
                     return Ok(RequisitionTransferOutput::BeforeInitialisationMonths);
                 }
@@ -290,8 +289,8 @@ fn generate_response_requisition(
         sent_datetime: None,
         finalised_datetime: None,
         colour: None,
-        created_from_requisition_ids: None,
-        destination_customer_id: None,
+        created_from_requisition_id: None,
+        original_customer_id: None,
     };
 
     Ok(result)
@@ -416,7 +415,7 @@ mod test {
         let log_1 = SyncLogRow {
             id: "sync_log_1".to_string(),
             integration_finished_datetime: Some(
-                NaiveDate::from_ymd_opt(2025, 01, 01)
+                NaiveDate::from_ymd_opt(2025, 1, 1)
                     .unwrap()
                     .and_hms_opt(0, 0, 0)
                     .unwrap(),
@@ -427,7 +426,7 @@ mod test {
         let log_2 = SyncLogRow {
             id: "sync_log_2".to_string(),
             integration_finished_datetime: Some(
-                NaiveDate::from_ymd_opt(2024, 01, 01)
+                NaiveDate::from_ymd_opt(2024, 1, 1)
                     .unwrap()
                     .and_hms_opt(0, 0, 0)
                     .unwrap(),

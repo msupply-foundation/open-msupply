@@ -40,8 +40,8 @@ table! {
         period_id -> Nullable<Text>,
         order_type -> Nullable<Text>,
         is_emergency -> Bool,
-        created_from_requisition_ids -> Nullable<Text>,
-        destination_customer_id -> Nullable<Text>,
+        created_from_requisition_id -> Nullable<Text>,
+        original_customer_id -> Nullable<Text>,
     }
 }
 
@@ -112,8 +112,8 @@ pub struct RequisitionRow {
     pub period_id: Option<String>,
     pub order_type: Option<String>,
     pub is_emergency: bool,
-    pub created_from_requisition_ids: Option<String>,
-    pub destination_customer_id: Option<String>,
+    pub created_from_requisition_id: Option<String>,
+    pub original_customer_id: Option<String>,
 }
 
 pub struct RequisitionRowRepository<'a> {
@@ -233,20 +233,6 @@ impl ApprovalStatusType {
                 | ApprovalStatusType::AutoApproved
                 | ApprovalStatusType::Approved
         )
-    }
-}
-
-impl RequisitionRow {
-    pub fn get_created_from_requisition_ids(&self) -> Vec<String> {
-        self.created_from_requisition_ids
-            .as_ref()
-            .and_then(|json_str| serde_json::from_str(json_str).ok())
-            .unwrap_or_default()
-    }
-
-    pub fn set_created_from_requisition_ids(&mut self, ids: Vec<String>) {
-        self.created_from_requisition_ids =
-            (!ids.is_empty()).then(|| serde_json::to_string(&ids).unwrap_or_default());
     }
 }
 

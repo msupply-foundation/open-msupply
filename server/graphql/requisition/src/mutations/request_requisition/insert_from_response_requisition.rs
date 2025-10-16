@@ -17,7 +17,7 @@ use service::{
 #[graphql(name = "InsertFromResponseRequisitionInput")]
 pub struct InsertFromResponseRequisitionInput {
     pub id: String,
-    pub response_requisition_ids: Vec<String>,
+    pub response_requisition_id: String,
     pub other_party_id: String,
     pub comment: Option<String>,
     pub max_months_of_stock: Option<f64>,
@@ -111,7 +111,7 @@ impl InsertFromResponseRequisitionInput {
     pub fn to_domain(self) -> InsertFromResponseRequisition {
         let InsertFromResponseRequisitionInput {
             id,
-            response_requisition_ids,
+            response_requisition_id,
             other_party_id,
             comment,
             max_months_of_stock,
@@ -120,7 +120,7 @@ impl InsertFromResponseRequisitionInput {
 
         InsertFromResponseRequisition {
             id,
-            response_requisition_ids,
+            response_requisition_id,
             other_party_id,
             comment,
             max_months_of_stock: max_months_of_stock.unwrap_or(0.0),
@@ -179,7 +179,7 @@ mod test {
         json!({
           "input": {
             "id": "n/a",
-            "responseRequisitionIds": ["req1", "req2"],
+            "responseRequisitionId": "req1",
             "otherPartyId": "n/a",
             "maxMonthsOfStock": 0,
             "minMonthsOfStock": 0
@@ -307,7 +307,7 @@ mod test {
                 input,
                 ServiceInput {
                     id: "id input".to_string(),
-                    response_requisition_ids: vec!["req1".to_string(), "req2".to_string()],
+                    response_requisition_id: "req1".to_string(),
                     other_party_id: "other party input".to_string(),
                     comment: Some("comment input".to_string()),
                     max_months_of_stock: 1.0,
@@ -323,7 +323,7 @@ mod test {
         let variables = json!({
           "input": {
             "id": "id input",
-            "responseRequisitionIds": ["req1", "req2"],
+            "responseRequisitionId": "req1",
             "otherPartyId": "other party input",
             "maxMonthsOfStock": 1,
             "minMonthsOfStock": 2,

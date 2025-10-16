@@ -208,8 +208,8 @@ fn generate(
         approval_status: None,
         finalised_datetime: None,
         linked_requisition_id: None,
-        created_from_requisition_ids: None,
-        destination_customer_id: None,
+        created_from_requisition_id: None,
+        original_customer_id: None,
     };
 
     let master_list_id = program.master_list_id.clone().unwrap_or_default();

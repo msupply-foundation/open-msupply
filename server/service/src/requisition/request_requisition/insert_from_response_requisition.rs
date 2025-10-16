@@ -37,7 +37,7 @@ type OutError = InsertFromResponseRequisitionError;
 #[derive(Debug, PartialEq, Clone, Default)]
 pub struct InsertFromResponseRequisition {
     pub id: String,
-    pub response_requisition_ids: Vec<String>,
+    pub response_requisition_id: String,
     pub other_party_id: String,
     pub comment: Option<String>,
     pub max_months_of_stock: f64,
@@ -123,7 +123,7 @@ fn generate(
     ctx: &ServiceContext,
     InsertFromResponseRequisition {
         id,
-        response_requisition_ids,
+        response_requisition_id,
         other_party_id,
         comment,
         max_months_of_stock,
@@ -132,7 +132,7 @@ fn generate(
 ) -> Result<GenerateResult, InsertFromResponseRequisitionError> {
     let connection = &ctx.connection;
 
-    let mut requisition = RequisitionRow {
+    let requisition = RequisitionRow {
         id: id.clone(),
         user_id: Some(ctx.user_id.clone()),
         requisition_number: next_number(
@@ -148,6 +148,7 @@ fn generate(
         comment: comment.clone(),
         max_months_of_stock: *max_months_of_stock,
         min_months_of_stock: *min_months_of_stock,
+        created_from_requisition_id: Some(response_requisition_id.clone()),
         // Defaults
         colour: None,
         expected_delivery_date: None,
@@ -160,14 +161,11 @@ fn generate(
         approval_status: None,
         finalised_datetime: None,
         linked_requisition_id: None,
-        destination_customer_id: None,
-        created_from_requisition_ids: None, // Will be set below
+        original_customer_id: None,
     };
 
-    requisition.set_created_from_requisition_ids(response_requisition_ids.clone());
-
     let requisition_supply =
-        get_requisitions_supply_statuses(connection, response_requisition_ids.to_vec())?
+        get_requisitions_supply_statuses(connection, vec![response_requisition_id.clone()])?
             .into_iter()
             .filter(|s| s.remaining_quantity() > 0.0)
             .collect::<Vec<_>>();
@@ -219,16 +217,13 @@ impl From<RepositoryError> for InsertFromResponseRequisitionError {
 #[cfg(test)]
 mod test_insert_from_response_requisition {
     use crate::{
-        requisition::{
-            request_requisition::InsertFromResponseRequisition,
-            response_requisition::InsertResponseRequisition,
-        },
+        requisition::request_requisition::InsertFromResponseRequisition,
         service_provider::ServiceProvider,
     };
     use repository::{
         mock::{
-            mock_full_new_response_requisition_for_update_test, mock_name_customer_a,
-            mock_name_store_c, mock_store_a, MockData, MockDataInserts,
+            mock_full_new_response_requisition_for_update_test, mock_name_store_c, mock_store_a,
+            MockData, MockDataInserts,
         },
         test_db::setup_all_with_data,
         EqualFilter, RequisitionLineFilter, RequisitionLineRepository, RequisitionRowRepository,
@@ -252,14 +247,13 @@ mod test_insert_from_response_requisition {
 
         let response_requisition = mock_full_new_response_requisition_for_update_test();
         let new_requisition_id = uuid();
-        let response_requisition_ids = vec![response_requisition.requisition.id.clone()];
 
         let result = service
             .insert_from_response_requisition(
                 &context,
                 InsertFromResponseRequisition {
                     id: new_requisition_id.clone(),
-                    response_requisition_ids: response_requisition_ids.clone(),
+                    response_requisition_id: response_requisition.requisition.id.clone(),
                     other_party_id: mock_name_store_c().id,
                     comment: Some("Test comment".to_string()),
                     max_months_of_stock: 2.0,
@@ -286,42 +280,5 @@ mod test_insert_from_response_requisition {
         for line in &lines {
             assert_eq!(line.requisition_row.id, new_requisition_id);
         }
-
-        // Try insert from multiple
-        let response_requisition1 = mock_full_new_response_requisition_for_update_test();
-        let response_requisition2_id = "response_req_2".to_string();
-
-        service
-            .insert_response_requisition(
-                &context,
-                InsertResponseRequisition {
-                    id: response_requisition2_id.clone(),
-                    other_party_id: mock_name_customer_a().id,
-                    ..Default::default()
-                },
-            )
-            .unwrap();
-
-        let response_requisition_ids = vec![
-            response_requisition1.requisition.id.clone(),
-            response_requisition2_id.clone(),
-        ];
-
-        let result = service
-            .insert_from_response_requisition(
-                &context,
-                InsertFromResponseRequisition {
-                    id: uuid(),
-                    response_requisition_ids: response_requisition_ids.clone(),
-                    other_party_id: mock_name_store_c().id,
-                    ..Default::default()
-                },
-            )
-            .unwrap();
-
-        assert_eq!(
-            result.requisition_row.get_created_from_requisition_ids(),
-            response_requisition_ids
-        );
     }
 }
