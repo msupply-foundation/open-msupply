@@ -140,8 +140,8 @@ fn generate(
         period_id: None,
         order_type: None,
         is_emergency: false,
-        created_from_requisition_ids: None,
-        destination_customer_id: None,
+        created_from_requisition_id: None,
+        original_customer_id: None,
     };
 
     Ok(result)

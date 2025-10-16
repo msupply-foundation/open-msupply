@@ -11,8 +11,8 @@ impl MigrationFragment for Migrate {
         sql!(
             connection,
             r#"
-                ALTER TABLE requisition ADD COLUMN created_from_requisition_ids TEXT;
-                ALTER TABLE requisition ADD COLUMN destination_customer_id TEXT REFERENCES name(id);
+                ALTER TABLE requisition ADD COLUMN created_from_requisition_id TEXT;
+                ALTER TABLE requisition ADD COLUMN original_customer_id TEXT REFERENCES name(id);
             "#,
         )?;
 
