@@ -32,6 +32,7 @@ const defaultDraftVaccineCourse: DraftVaccineCourse = {
   coverageRate: 100,
   wastageRate: 0,
   useInGapsCalculations: true,
+  canSkipDose: false,
   vaccineCourseItems: [],
 };
 
@@ -141,6 +142,7 @@ const useCreate = (setErrorMessage: Dispatch<SetStateAction<string>>) => {
         demographicId: input.demographicId,
         coverageRate: input.coverageRate,
         useInGapsCalculations: input.useInGapsCalculations,
+        canSkipDose: input.canSkipDose,
         wastageRate: input.wastageRate,
         vaccineItems:
           input.vaccineCourseItems?.map(item =>
@@ -201,6 +203,7 @@ const useUpdate = (setErrorMessage: Dispatch<SetStateAction<string>>) => {
         demographicId: input.demographicId,
         coverageRate: input.coverageRate,
         useInGapsCalculations: input.useInGapsCalculations,
+        canSkipDose: input.canSkipDose,
         wastageRate: input.wastageRate,
         vaccineItems:
           input.vaccineCourseItems?.map(item =>

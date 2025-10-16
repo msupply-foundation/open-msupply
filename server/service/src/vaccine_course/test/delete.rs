@@ -55,6 +55,7 @@ mod delete {
             coverage_rate: 100.0,
             use_in_gaps_calculations: true,
             wastage_rate: 0.1,
+            can_skip_dose: false,
         };
 
         let _result = service
