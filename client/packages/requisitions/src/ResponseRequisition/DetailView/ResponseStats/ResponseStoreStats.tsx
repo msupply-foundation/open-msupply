@@ -5,8 +5,9 @@ import {
   Typography,
   NewValueBar,
   RequisitionNodeStatus,
+  RepresentationValue,
+  QuantityUtils,
 } from '@openmsupply-client/common';
-import { RepresentationValue, useValueInUnitsOrPacks } from '../../../common';
 import { calculatePercentage, stats } from './utils';
 
 export interface ResponseStoreStatsProps {
@@ -39,27 +40,27 @@ export const ResponseStoreStats = ({
 
   const statsDisplay = stats(t, getPlural, round, unit, representation);
 
-  const formattedSoh = useValueInUnitsOrPacks(
+  const formattedSoh = QuantityUtils.useValueInUnitsOrPacks(
     representation,
     defaultPackSize,
     stockOnHand
   );
-  const formattedIncoming = useValueInUnitsOrPacks(
+  const formattedIncoming = QuantityUtils.useValueInUnitsOrPacks(
     representation,
     defaultPackSize,
     incomingStock
   );
-  const formattedSoo = useValueInUnitsOrPacks(
+  const formattedSoo = QuantityUtils.useValueInUnitsOrPacks(
     representation,
     defaultPackSize,
     stockOnOrder
   );
-  const formattedRequested = useValueInUnitsOrPacks(
+  const formattedRequested = QuantityUtils.useValueInUnitsOrPacks(
     representation,
     defaultPackSize,
     requestedQuantity
   );
-  const formattedOtherRequested = useValueInUnitsOrPacks(
+  const formattedOtherRequested = QuantityUtils.useValueInUnitsOrPacks(
     representation,
     defaultPackSize,
     otherRequestedQuantity

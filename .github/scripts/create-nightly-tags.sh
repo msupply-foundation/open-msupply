@@ -62,11 +62,12 @@ create_tag_for_branch() {
     fi
 }
 
-# Get all RC branches
+# Get all RC and develop branches
 RC_BRANCHES=$(git branch -r | grep -E 'v[0-9.]+-(R|r)(C|c)' | sed 's/.*origin\///')
+DEV_BRANCHES=$(git branch -r | grep -E 'v[0-9.]+-(dev|develop)$' | sed 's/.*origin\///')
 
-# Process all RC branches and develop
-for BRANCH in $RC_BRANCHES 'develop'; do
+# Process all RC, develop branches, and the literal 'develop'
+for BRANCH in $RC_BRANCHES $DEV_BRANCHES 'develop'; do
     create_tag_for_branch "$BRANCH"
 done
 

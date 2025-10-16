@@ -2,14 +2,16 @@ import React, { useMemo } from 'react';
 import {
   useTranslation,
   BasicTextInput,
-  Box,
-  BufferedTextArea,
   ReasonOptionNodeType,
   RequisitionNodeApprovalStatus,
   Typography,
   UserStoreNodeFragment,
   ModalGridLayout,
   usePreferences,
+  ModalPanelArea,
+  MultilineTextInput,
+  InfoRow,
+  RepresentationValue,
 } from '@openmsupply-client/common';
 import {
   ItemWithStatsFragment,
@@ -17,11 +19,10 @@ import {
   StockItemSearchInputWithStats,
 } from '@openmsupply-client/system';
 import { ResponseFragment, ResponseLineFragment } from '../../api';
-import { InfoRow, RepresentationValue } from '../../../common';
 import { DraftResponseLine } from './hooks';
 import { SupplySelection } from './SuppliedSelection';
 import { useStockCalculations } from './utils';
-import { createNumericInput } from './ContentLayout';
+import { ResponseNumInputRow } from './ResponseNumInputRow';
 
 interface ResponseLineEditProps {
   store?: UserStoreNodeFragment;
@@ -78,7 +79,8 @@ export const ResponseLineEdit = ({
   );
 
   const { available, mos } = useStockCalculations(draft);
-  const numericInput = createNumericInput(t, {
+
+  const commonProps = {
     defaultPackSize,
     representation,
     unitName,
@@ -86,7 +88,8 @@ export const ResponseLineEdit = ({
     showExtraFields,
     displayVaccinesInDoses,
     dosesPerUnit: currentItem?.doses ?? 1,
-  });
+    showEndAdornment: true,
+  };
 
   const getLeftPanelContent = () => {
     if (!showContent) return null;
@@ -107,30 +110,44 @@ export const ResponseLineEdit = ({
         ) : null}
         {showExtraFields && (
           <>
-            {numericInput(
-              'label.initial-stock-on-hand',
-              draft?.initialStockOnHandUnits,
-              {
-                onChange: value => update({ initialStockOnHandUnits: value }),
-              }
-            )}
-            {numericInput('label.incoming', draft?.incomingUnits, {
-              onChange: value => update({ incomingUnits: value }),
-            })}
-            {numericInput('label.outgoing', draft?.outgoingUnits, {
-              onChange: value => update({ outgoingUnits: value }),
-            })}
-            {numericInput('label.losses', draft?.lossInUnits, {
-              onChange: value => update({ lossInUnits: value }),
-            })}
-            {numericInput('label.additions', draft?.additionInUnits, {
-              onChange: value => update({ additionInUnits: value }),
-            })}
-            {numericInput('label.days-out-of-stock', draft?.daysOutOfStock, {
-              onChange: value => update({ daysOutOfStock: value }),
-              endAdornmentOverride: t('label.days'),
-              overrideDoseDisplay: false,
-            })}
+            <ResponseNumInputRow
+              label={t('label.initial-stock-on-hand')}
+              value={draft?.initialStockOnHandUnits}
+              onChange={value => update({ initialStockOnHandUnits: value })}
+              {...commonProps}
+            />
+            <ResponseNumInputRow
+              label={t('label.incoming')}
+              value={draft?.incomingUnits}
+              onChange={value => update({ incomingUnits: value })}
+              {...commonProps}
+            />
+            <ResponseNumInputRow
+              label={t('label.outgoing')}
+              value={draft?.outgoingUnits}
+              onChange={value => update({ outgoingUnits: value })}
+              {...commonProps}
+            />
+            <ResponseNumInputRow
+              label={t('label.losses')}
+              value={draft?.lossInUnits}
+              onChange={value => update({ lossInUnits: value })}
+              {...commonProps}
+            />
+            <ResponseNumInputRow
+              label={t('label.additions')}
+              value={draft?.additionInUnits}
+              onChange={value => update({ additionInUnits: value })}
+              {...commonProps}
+            />
+            <ResponseNumInputRow
+              label={t('label.days-out-of-stock')}
+              value={draft?.daysOutOfStock}
+              onChange={value => update({ daysOutOfStock: value })}
+              endAdornmentOverride={t('label.days')}
+              overrideDoseDisplay={false}
+              {...commonProps}
+            />
           </>
         )}
       </>
@@ -154,33 +171,38 @@ export const ResponseLineEdit = ({
             value={currentItem?.doses}
           />
         ) : null}
-        <Box
-          sx={{
-            background: theme => theme.palette.background.group.dark,
-            pt: 1,
-            pb: 0.2,
-            borderRadius: 2,
-          }}
-        >
-          {numericInput('label.requested', draft?.requestedQuantity, {
-            onChange: value => {
+        <ModalPanelArea>
+          <ResponseNumInputRow
+            label={t('label.requested')}
+            value={draft?.requestedQuantity}
+            onChange={value => {
               draft?.suggestedQuantity === value
                 ? update({
                     requestedQuantity: value,
                     reason: null,
                   })
                 : update({ requestedQuantity: value });
-            },
-          })}
-          {numericInput('label.customer-soh', draft?.availableStockOnHand, {
-            onChange: value => update({ availableStockOnHand: value }),
-          })}
-          {numericInput('label.our-soh', draft?.itemStats.stockOnHand, {
-            disabledOverride: true,
-          })}
-          {numericInput('label.suggested', draft?.suggestedQuantity, {
-            disabledOverride: true,
-          })}
+            }}
+            {...commonProps}
+          />
+          <ResponseNumInputRow
+            label={t('label.customer-soh')}
+            value={draft?.availableStockOnHand}
+            onChange={value => update({ availableStockOnHand: value })}
+            {...commonProps}
+          />
+          <ResponseNumInputRow
+            label={t('label.our-soh')}
+            value={draft?.itemStats.stockOnHand}
+            disabledOverride={true}
+            {...commonProps}
+          />
+          <ResponseNumInputRow
+            label={t('label.suggested')}
+            value={draft?.suggestedQuantity}
+            disabledOverride={true}
+            {...commonProps}
+          />
           {showExtraFields && (
             <Typography
               variant="body1"
@@ -215,15 +237,21 @@ export const ResponseLineEdit = ({
               />
             </Typography>
           )}
-        </Box>
+        </ModalPanelArea>
         {showExtraFields && (
           <>
-            {numericInput('label.available', available, {
-              disabledOverride: true,
-            })}
-            {numericInput('label.short-expiry', draft?.expiringUnits, {
-              onChange: value => update({ expiringUnits: value }),
-            })}
+            <ResponseNumInputRow
+              label={t('label.available')}
+              value={available}
+              disabledOverride={true}
+              {...commonProps}
+            />
+            <ResponseNumInputRow
+              label={t('label.short-expiry')}
+              value={draft?.expiringUnits}
+              onChange={value => update({ expiringUnits: value })}
+              {...commonProps}
+            />
           </>
         )}
       </>
@@ -235,22 +263,19 @@ export const ResponseLineEdit = ({
 
     return (
       <>
-        <Box
-          sx={{
-            background: theme => theme.palette.background.group.dark,
-            borderRadius: 2,
-            p: 1,
-            pb: 0.5,
-          }}
-        >
-          {hasApproval &&
-            numericInput('label.approved', draft?.approvedQuantity, {
-              disabledOverride: true,
-              sx: {
+        <ModalPanelArea>
+          {hasApproval && (
+            <ResponseNumInputRow
+              label={t('label.approved')}
+              value={draft?.approvedQuantity}
+              disabledOverride={true}
+              sx={{
                 px: 0,
                 mb: 0,
-              },
-            })}
+              }}
+              {...commonProps}
+            />
+          )}
           <SupplySelection
             disabled={disabled}
             defaultPackSize={defaultPackSize}
@@ -264,62 +289,56 @@ export const ResponseLineEdit = ({
             dosesPerUnit={currentItem?.doses ?? 1}
             setIsEditingSupply={setIsEditingSupply}
           />
-          {numericInput(
-            'label.remaining-to-supply',
-            draft?.remainingQuantityToSupply,
-            {
-              disabledOverride: true,
-              sx: {
-                px: 0,
-              },
-            }
-          )}
-          {numericInput('label.already-issued', draft?.alreadyIssued, {
-            disabledOverride: true,
-            sx: {
+
+          <ResponseNumInputRow
+            label={t('label.remaining-to-supply')}
+            value={draft?.remainingQuantityToSupply}
+            disabledOverride={true}
+            sx={{
               px: 0,
-            },
-          })}
-        </Box>
+            }}
+            {...commonProps}
+          />
+
+          <ResponseNumInputRow
+            label={t('label.already-issued')}
+            value={draft?.alreadyIssued}
+            disabledOverride={true}
+            sx={{
+              px: 0,
+            }}
+            {...commonProps}
+          />
+        </ModalPanelArea>
         {!!requisition.linkedRequisition || showExtraFields ? (
           <>
-            {numericInput('label.amc/amd', draft?.averageMonthlyConsumption, {
-              onChange: value => update({ averageMonthlyConsumption: value }),
-              sx: {
+            <ResponseNumInputRow
+              label={t('label.amc/amd')}
+              value={draft?.averageMonthlyConsumption}
+              onChange={value => update({ averageMonthlyConsumption: value })}
+              sx={{
                 pt: 1,
-              },
-            })}
-            {numericInput('label.months-of-stock', mos(), {
-              disabledOverride: true,
-              endAdornmentOverride: t('label.months'),
-              sx: {
+              }}
+              {...commonProps}
+            />
+            <ResponseNumInputRow
+              label={t('label.months-of-stock')}
+              value={mos() ?? 0}
+              disabledOverride={true}
+              endAdornmentOverride={t('label.months')}
+              sx={{
                 mb: 0,
-              },
-              overrideDoseDisplay: false,
-            })}
+              }}
+              {...commonProps}
+            />
           </>
         ) : null}
-        <Typography variant="body1" fontWeight="bold" p={1}>
-          {t('heading.comment')}:
-        </Typography>
-        <BufferedTextArea
+
+        <MultilineTextInput
+          label={t('label.comment')}
           value={draft?.comment ?? ''}
-          onChange={e => update({ comment: e.target.value })}
-          slotProps={{
-            input: {
-              sx: {
-                boxShadow: theme => (!disabled ? theme.shadows[2] : 'none'),
-                borderRadius: 2,
-                backgroundColor: theme =>
-                  disabled
-                    ? theme.palette.background.toolbar
-                    : theme.palette.background.white,
-              },
-            },
-          }}
+          onChange={(value?: string) => update({ comment: value })}
           disabled={disabled}
-          minRows={3}
-          maxRows={3}
         />
       </>
     );
