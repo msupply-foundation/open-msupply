@@ -70,7 +70,7 @@ export const RequestLineEdit = ({
 }: RequestLineEditProps) => {
   const t = useTranslation();
   const { plugins } = usePluginProvider();
-  const { manageVaccinesInDoses } = usePreferences();
+  const { manageVaccinesInDoses, warningForExcessRequest } = usePreferences();
 
   const unitName = currentItem?.unitName || t('label.unit');
   const defaultPackSize = currentItem?.defaultPackSize || 1;
@@ -137,6 +137,10 @@ export const RequestLineEdit = ({
   const getRightPanelContent = () => {
     if (!showContent) return null;
 
+    const showExcessRequestWarning =
+      warningForExcessRequest &&
+      draft.requestedQuantity - draft.suggestedQuantity >= 1;
+
     return (
       <>
         <Box
@@ -161,7 +165,7 @@ export const RequestLineEdit = ({
             dosesPerUnit={currentItem?.doses}
             setIsEditingRequested={setIsEditingRequested}
           />
-          {draft.requestedQuantity > draft.suggestedQuantity && (
+          {showExcessRequestWarning && (
             <Alert severity="warning" sx={{ mt: 1 }}>
               {t('warning.requested-exceeds-suggested')}
             </Alert>
