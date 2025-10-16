@@ -55,6 +55,10 @@ impl PreferencesNode {
         self.load_preference(&self.preferences.sync_records_display_threshold)
     }
 
+    pub async fn warning_for_excess_request(&self) -> Result<bool> {
+        self.load_preference(&self.preferences.warning_for_excess_request)
+    }
+
     // Store preferences
     pub async fn manage_vaccines_in_doses(&self) -> Result<bool> {
         self.load_preference(&self.preferences.manage_vaccines_in_doses)
@@ -147,6 +151,7 @@ pub enum PreferenceKey {
     SortByVvmStatusThenExpiry,
     UseSimplifiedMobileUi,
     DisableManualReturns,
+    WarningForExcessRequest,
 }
 
 #[derive(Enum, Copy, Clone, Debug, Eq, PartialEq)]

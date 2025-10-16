@@ -309,10 +309,10 @@ export const themeOptions = {
   },
   components: {
     // The following two component definitions are needed to restrict the width
-    // of the "Popover" menu in the new tables (when clicking the three dot menu
-    // at the top of each column). They are rendered in a Portal, which is
-    // outside the Table container, so can't be targeted via props within the
-    // table configuration itself
+    // of the "Popover" menu of the tables (when opening the "header" menu at
+    // the top of each column). They are rendered in a Portal, which is outside
+    // the Table container, so can't be targeted via props within the table
+    // configuration itself
     MuiMenu: {
       styleOverrides: {
         paper: { maxWidth: 450 },
