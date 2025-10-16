@@ -64,6 +64,7 @@ export const RequestLineEdit = ({
   setRepresentation,
   disabled,
   isUpdateMode,
+  showExtraFields,
   isReasonsError,
   setIsEditingRequested,
 }: RequestLineEditProps) => {
