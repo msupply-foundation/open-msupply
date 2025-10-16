@@ -2183,6 +2183,7 @@
   "preference.syncRecordsDisplayThreshold": "Sync records display threshold",
   "preference.useProcurementFunctionality": "Use procurement functionality",
   "preference.useSimplifiedMobileUi": "Use simplified mobile UI",
+  "preference.warningForExcessRequest": "Warn when requested quantity exceeds suggested quantity in requisitions",
   "prescription": "Prescriptions",
   "prescriptions": "Prescriptions",
   "programs": "Programs",
