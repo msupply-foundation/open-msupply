@@ -2714,6 +2714,67 @@ dependencies = [
 ]
 
 [[package]]
+name = "dos"
+version = "0.1.0"
+dependencies = [
+ "actix-files",
+ "actix-multipart",
+ "actix-rt",
+ "actix-web",
+ "anyhow",
+ "anymap",
+ "assert-json-diff",
+ "assert_approx_eq",
+ "async-trait",
+ "base64 0.22.1",
+ "bcrypt",
+ "boa_engine",
+ "chrono",
+ "diesel",
+ "flate2",
+ "headless_chrome",
+ "hex",
+ "httpmock",
+ "jsonschema",
+ "jsonwebtoken",
+ "lettre",
+ "log",
+ "machine-uid",
+ "nanohtml2text",
+ "pem",
+ "pretty_assertions",
+ "qrcode",
+ "rand 0.8.5",
+ "regex",
+ "repository",
+ "reqwest",
+ "rsa",
+ "rust-embed",
+ "schemafy",
+ "schemafy_core",
+ "scraper",
+ "serde",
+ "serde_json",
+ "serde_yaml",
+ "sha2",
+ "simple-log",
+ "strum 0.27.2",
+ "telnet",
+ "temperature-sensor",
+ "tempfile",
+ "tera",
+ "thiserror 2.0.17",
+ "tokio",
+ "topological-sort",
+ "ts-rs",
+ "umya-spreadsheet",
+ "url",
+ "util",
+ "walkdir",
+ "x509-parser",
+]
+
+[[package]]
 name = "downcast-rs"
 version = "1.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
