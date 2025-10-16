@@ -10,10 +10,10 @@ import {
   useBreadcrumbs,
   useSimplifiedTabletUI,
   Box,
-  useNonPaginatedMaterialTable,
   Groupable,
   NothingHere,
   MaterialTable,
+  usePaginatedMaterialTable,
 } from '@openmsupply-client/common';
 import { ActivityLogList } from '@openmsupply-client/system';
 import { Toolbar } from './Toolbar';
@@ -43,6 +43,7 @@ const DetailViewInner = () => {
     isDisabled,
     isLoading: rowsLoading,
     lines,
+    totalLineCount,
   } = useStocktakeOld.line.rows();
 
   const { isOpen, entity, onOpen, onClose, mode } =
@@ -64,7 +65,7 @@ const DetailViewInner = () => {
 
   const columns = useStocktakeColumns();
 
-  const { table, selectedRows } = useNonPaginatedMaterialTable<
+  const { table, selectedRows } = usePaginatedMaterialTable<
     Groupable<StocktakeLineFragment>
   >({
     tableId: 'stocktake-detail',
@@ -75,6 +76,7 @@ const DetailViewInner = () => {
     grouping: { enabled: true, groupedByDefault: true },
     initialSort: { key: 'itemName', dir: 'asc' },
     getIsPlaceholderRow,
+    totalCount: totalLineCount,
     noDataElement: (
       <NothingHere
         body={t('error.no-stocktake-items')}

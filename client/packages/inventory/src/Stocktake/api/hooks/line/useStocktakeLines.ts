@@ -1,13 +1,22 @@
-import { useQuery } from '@openmsupply-client/common';
+import { useQuery, useUrlQueryParams } from '@openmsupply-client/common';
 import { useStocktakeApi } from '../utils/useStocktakeApi';
 import { useStocktakeId } from '../document/useStocktake';
 
 export const useStocktakeLines = (id: string, itemId?: string) => {
-  const queryParams = {
-    sortBy: { key: 'itemName', isDesc: false, direction: 'asc' as const },
+  const { queryParams } = useUrlQueryParams({
+    initialSort: { key: 'itemName', dir: 'asc' },
+    filters: [{ key: 'itemCodeOrName' }],
+  });
 
-    ...(itemId ? { filterBy: { itemId: { equalTo: itemId } } } : {}),
-  };
+  if (itemId) {
+    queryParams.filterBy = {
+      ...queryParams.filterBy,
+      itemId: { equalTo: itemId },
+    };
+    // When filtering by itemId, fetch up to 1000 lines and reset offset
+    queryParams.first = 1000;
+    queryParams.offset = 0;
+  }
 
   const api = useStocktakeApi();
   const stocktakeId = useStocktakeId();
