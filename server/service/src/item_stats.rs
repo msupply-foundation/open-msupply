@@ -21,7 +21,6 @@ use util::{date_now, date_with_offset};
 #[derive(Clone, Debug, PartialEq, Default)]
 pub struct ItemStats {
     pub total_consumption: f64,
-    pub transfer_consumption: f64,
     pub average_monthly_consumption: f64,
     pub available_stock_on_hand: f64,
     pub total_stock_on_hand: f64,
@@ -69,21 +68,34 @@ pub fn get_item_stats(
     let number_of_days = amc_lookback_months * days_in_month;
     let exclude_transfers = ExcludeTransfers.load(connection, None).unwrap_or(false);
 
-    let consumption_map = get_consumption_map(
-        connection,
-        store_id,
-        item_ids.clone(),
-        number_of_days,
-        period_end,
-    )?;
+    // common to transfer and total consumption
+    let end_date = period_end.unwrap_or_else(date_now);
+    let offset_end_date = end_date + Duration::days(1);
+    let start_date = date_with_offset(
+        &offset_end_date,
+        Duration::days((number_of_days).neg() as i64),
+    );
+
+    let filter = ConsumptionFilter {
+        item_id: Some(EqualFilter::equal_any(item_ids.clone())),
+        store_id: Some(EqualFilter::equal_to(store_id)),
+        date: Some(DateFilter::date_range(&start_date, &end_date)),
+    };
+
+    let consumption_map = get_consumption_map(connection, filter.clone())?;
+    let transfer_consumption_map = get_transfer_consumption_map(connection, filter)?;
+
+    let overall_consumption_map = match exclude_transfers {
+        true => combine_maps(consumption_map.clone(), transfer_consumption_map),
+        false => consumption_map.clone(),
+    };
 
     let input = amc::Input {
         store_id: store_id.to_string(),
         amc_lookback_months,
         number_of_days,
-        exclude_transfers,
         // Really don't like cloning this
-        consumption_map: consumption_map.clone(),
+        consumption_map: overall_consumption_map.clone(),
         item_ids: item_ids.clone(),
     };
 
@@ -122,6 +134,19 @@ pub fn get_item_stats_map(
     Ok(item_stats_map)
 }
 
+fn combine_maps(
+    mut consumption_map: HashMap<String, f64>,
+    transfer_consumption_map: HashMap<String, f64>,
+) -> HashMap<String, f64> {
+    for (item_id, _transfer_consumption) in transfer_consumption_map {
+        consumption_map
+            .entry(item_id.clone())
+            .and_modify(|_total_consumption| {});
+    }
+
+    consumption_map
+}
+
 struct DefaultAmc;
 impl amc::Trait for DefaultAmc {
     fn call(
@@ -130,28 +155,24 @@ impl amc::Trait for DefaultAmc {
             amc_lookback_months,
             consumption_map,
             number_of_days,
-            exclude_transfers,
             ..
         }: amc::Input,
     ) -> PluginResult<amc::Output> {
         Ok(consumption_map
             .iter()
-            .map(|(item_id, (total_consumption, transfer_consumption))| {
+            .map(|(item_id, total_consumption)| {
                 // TODO: dos
                 let dos = 0.0;
 
-                let average_consumption: Option<f64> = match exclude_transfers {
-                    true => Some((*total_consumption - transfer_consumption) / amc_lookback_months),
-                    false => Some((*total_consumption) / amc_lookback_months),
-                };
+                let consumption_per_month = (*total_consumption) / amc_lookback_months;
 
                 let timeframe = number_of_days / (number_of_days - dos);
+                let average_monthly_consumption = consumption_per_month * timeframe;
+
                 (
                     item_id.to_string(),
                     amc::AverageMonthlyConsumptionItem {
-                        average_monthly_consumption: Some(
-                            average_consumption.unwrap_or(0.0) * timeframe,
-                        ),
+                        average_monthly_consumption: Some(average_monthly_consumption),
                     },
                 )
             })
@@ -161,48 +182,38 @@ impl amc::Trait for DefaultAmc {
 
 fn get_consumption_map(
     connection: &StorageConnection,
-    store_id: &str,
-    item_ids: Vec<String>,
-    number_of_days: f64,
-    period_end: Option<NaiveDate>,
-) -> Result<
-    HashMap<
-        String, /* item_id */
-        (
-            f64, /* total consumption */
-            f64, /* transfer consumption */
-        ),
-    >,
-    RepositoryError,
-> {
-    let end_date = period_end.unwrap_or_else(date_now);
-    let offset_end_date = end_date + Duration::days(1);
-    let start_date = date_with_offset(
-        &offset_end_date,
-        Duration::days((number_of_days).neg() as i64),
-    );
-
-    let filter = ConsumptionFilter {
-        item_id: Some(EqualFilter::equal_any(item_ids)),
-        store_id: Some(EqualFilter::equal_to(store_id)),
-        date: Some(DateFilter::date_range(&start_date, &end_date)),
-    };
-
+    filter: ConsumptionFilter,
+) -> Result<HashMap<String /* item_id */, f64 /* total consumption */>, RepositoryError> {
     let consumption_rows = ConsumptionRepository::new(connection).query(Some(filter))?;
 
     let mut consumption_map = HashMap::new();
     for consumption_row in consumption_rows.into_iter() {
-        let (item_total_consumption, item_transfer_consumption) = consumption_map
+        let item_total_consumption = consumption_map
             .entry(consumption_row.item_id.clone())
-            .or_insert((0.0, 0.0));
+            .or_insert(0.0);
         *item_total_consumption += consumption_row.quantity;
-
-        let _transfers = if consumption_row.is_transfer == true {
-            *item_transfer_consumption += consumption_row.quantity;
-        };
     }
 
     Ok(consumption_map)
+}
+
+fn get_transfer_consumption_map(
+    connection: &StorageConnection,
+    filter: ConsumptionFilter,
+) -> Result<HashMap<String /* item_id */, f64 /* transfer consumption */>, RepositoryError> {
+    let consumption_rows = ConsumptionRepository::new(connection).query(Some(filter))?;
+
+    let mut transfer_consumption_map = HashMap::new();
+    for consumption_row in consumption_rows.into_iter() {
+        if consumption_row.is_transfer == true {
+            let item_transfer_consumption = transfer_consumption_map
+                .entry(consumption_row.item_id.clone())
+                .or_insert(0.0);
+            *item_transfer_consumption += consumption_row.quantity;
+        }
+    }
+
+    Ok(transfer_consumption_map)
 }
 
 pub fn get_stock_on_hand_rows(
@@ -221,22 +232,16 @@ pub fn get_stock_on_hand_rows(
 impl ItemStats {
     fn new_vec(
         amc_by_item: amc::Output,
-        consumption_map: HashMap<
-            String, /* item_id */
-            (
-                f64, /* total consumption */
-                f64, /* transfer consumption */
-            ),
-        >,
+        consumption_map: HashMap<String /* item_id */, f64 /* total consumption */>,
         stock_on_hand_rows: Vec<StockOnHandRow>,
     ) -> Vec<Self> {
         stock_on_hand_rows
             .into_iter()
             .map(|stock_on_hand| {
-                let (total_consumption, transfer_consumption) = consumption_map
+                let total_consumption = consumption_map
                     .get(&stock_on_hand.item_id)
                     .cloned()
-                    .unwrap_or((0.0, 0.0));
+                    .unwrap_or(0.0);
 
                 ItemStats {
                     available_stock_on_hand: stock_on_hand.available_stock_on_hand,
@@ -247,7 +252,6 @@ impl ItemStats {
                         .and_then(|r| r.average_monthly_consumption)
                         .unwrap_or_default(),
                     total_consumption,
-                    transfer_consumption,
                     total_stock_on_hand: stock_on_hand.total_stock_on_hand,
                 }
             })
@@ -264,7 +268,6 @@ impl ItemStats {
             // TODO: Implement total consumption & total_stock_on_hand
             total_consumption: 0.0,
             total_stock_on_hand: 0.0,
-            transfer_consumption: 0.0,
         }
     }
 }
@@ -344,8 +347,8 @@ mod test {
         item_stats.sort_by(|a, b| a.item_id.cmp(&b.item_id));
 
         assert_eq!(
-            item_stats[1].transfer_consumption,
-            test_item_stats::item2_transfer_units()
+            item_stats[1].total_consumption, // total across all months before transfers excluded
+            test_item_stats::item2_amc_3_months() * 3.0
         );
         assert_eq!(
             item_stats[1].average_monthly_consumption,

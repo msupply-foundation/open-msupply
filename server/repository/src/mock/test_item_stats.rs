@@ -146,7 +146,7 @@ pub fn item2_transfer_units() -> f64 {
 
 // AMC excluding transferred units
 pub fn item2_amc_3_months_excluding_transfer() -> f64 {
-    (50.0 - item2_transfer_units()) / 3.0
+    item2_amc_3_months() - (item2_transfer_units() / 3.0)
 }
 
 // 1 month lookback
