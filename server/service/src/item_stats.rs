@@ -281,7 +281,7 @@ mod test {
     };
 
     use crate::{
-        preference::{DaysInMonth, ExcludeTransfers, Preference, UseDaysInMonth},
+        preference::{DaysInMonth, ExcludeTransfers, Preference},
         service_provider::ServiceProvider,
     };
 
@@ -458,16 +458,6 @@ mod test {
             .unwrap();
         assert_eq!(pref.value, "32");
 
-        // Turn on the pref
-        PreferenceRowRepository::new(&context.connection)
-            .upsert_one(&PreferenceRow {
-                id: "use days in month".to_string(),
-                store_id: None,
-                key: UseDaysInMonth.key().to_string(),
-                value: "true".to_string(),
-            })
-            .unwrap();
-
         let mut item_stats = service
             .get_item_stats(&context, &mock_store_a().id, None, item_ids.clone(), None)
             .unwrap();
@@ -483,13 +473,13 @@ mod test {
             test_item_stats::item2_amc_number_of_days_pref()
         );
 
-        // Turn back off
+        // Set days pref to 0.0 => will default back to average days in month
         PreferenceRowRepository::new(&context.connection)
             .upsert_one(&PreferenceRow {
-                id: "use days in month".to_string(),
+                id: "days in month".to_string(),
                 store_id: None,
-                key: UseDaysInMonth.key().to_string(),
-                value: "false".to_string(),
+                key: DaysInMonth.key().to_string(),
+                value: "0.0".to_string(),
             })
             .unwrap();
 
