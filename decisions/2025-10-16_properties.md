@@ -23,7 +23,7 @@ Open mSupply should be extendable with user configurable and enterable fields.
 
 3. User can change property configurations, however migrations are too difficult to implement and maintain, it's well communicated that updates to configurations (like removing options or changing option type) will not update existing value property values
 
-4. User will see properties in all of the views and lists/tables (as if it's another field/column that is part of a table)
+4. User will see properties in all of the views and lists relating to the data object which the property is linked to. For example an item property will be shown in the item detail view alongside standard item fields, and is available to be shown in tables and lists which show items.
 
 5. User will be able to filter by properties, in the natural option for the property type
 - Natural here suggests consistency with existing filters and aligning with expectation of how this property type should be filtered (for option type being able to filter by 'contains' might not be possible because the field might be translated, however would be possible if it's by general name)
