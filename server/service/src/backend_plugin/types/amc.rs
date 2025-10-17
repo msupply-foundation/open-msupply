@@ -21,7 +21,7 @@ pub struct Input {
     pub amc_lookback_months: f64,
     pub consumption_map: HashMap<String /* item_id */, f64 /* total consumption */>,
     pub item_ids: Vec<String>,
-    pub number_of_days: f64,
+    pub adjusted_stock_days_map: HashMap<String /* item_id */, f64 /* days of stock */>,
 }
 
 pub type Output = HashMap<String /* item_id */, AverageMonthlyConsumptionItem>;
