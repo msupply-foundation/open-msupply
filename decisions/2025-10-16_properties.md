@@ -20,7 +20,7 @@ Open mSupply should be extendable with user configurable and enterable fields.
 
 2. User is able to set properties based on configurations, properties should all be clearable. 
 
-3. User can change property configurations, however migrations are too difficult to implement and maintain, it's well communicated that updates to configurations (like removing options or or changing option type) will not update existing value property values
+3. User can change property configurations, however migrations are too difficult to implement and maintain, it's well communicated that updates to configurations (like removing options or changing option type) will not update existing value property values
 
 4. User will see properties in all of the views and lists/tables (as if it's another field/column that is part of a table)
 
