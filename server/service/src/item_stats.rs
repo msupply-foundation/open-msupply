@@ -13,8 +13,9 @@ use crate::{
 };
 use chrono::{Duration, NaiveDate};
 use repository::{
-    ConsumptionFilter, ConsumptionRepository, DateFilter, EqualFilter, PluginType, RepositoryError,
-    RequisitionLine, StockOnHandFilter, StockOnHandRepository, StockOnHandRow, StorageConnection,
+    ConsumptionFilter, ConsumptionRepository, ConsumptionRow, DateFilter, EqualFilter, PluginType,
+    RepositoryError, RequisitionLine, StockOnHandFilter, StockOnHandRepository, StockOnHandRow,
+    StorageConnection,
 };
 use util::{date_now, date_with_offset};
 
@@ -59,33 +60,46 @@ pub fn get_item_stats(
 ) -> Result<Vec<ItemStats>, PluginOrRepositoryError> {
     let default_amc_lookback_months =
         get_store_preferences(connection, store_id)?.monthly_consumption_look_back_period;
-
     let amc_lookback_months = match amc_lookback_months {
         Some(months) => months,
         None => default_amc_lookback_months,
     };
     let days_in_month: f64 = days_in_a_month(connection);
     let number_of_days = amc_lookback_months * days_in_month;
+
+    let filter: ConsumptionFilter =
+        create_amc_filter(store_id, number_of_days, &item_ids, period_end)?;
+
+    fn create_amc_filter(
+        store_id: &str,
+        number_of_days: f64,
+        item_ids: &Vec<String>,
+        period_end: Option<NaiveDate>,
+    ) -> Result<ConsumptionFilter, PluginOrRepositoryError> {
+        let end_date = period_end.unwrap_or_else(date_now);
+        let offset_end_date = end_date + Duration::days(1);
+        let start_date = date_with_offset(
+            &offset_end_date,
+            Duration::days((number_of_days).neg() as i64),
+        );
+
+        let filter = ConsumptionFilter {
+            item_id: Some(EqualFilter::equal_any(item_ids.clone())),
+            store_id: Some(EqualFilter::equal_to(store_id)),
+            date: Some(DateFilter::date_range(&start_date, &end_date)),
+        };
+
+        Ok(filter)
+    }
+
+    let consumption_rows = ConsumptionRepository::new(connection).query(Some(filter))?;
+
+    let consumption_map = get_consumption_map(&consumption_rows)?;
+    let transfer_consumption_map = get_transfer_consumption_map(&consumption_rows)?;
+
     let exclude_transfers = ExcludeTransfers.load(connection, None).unwrap_or(false);
 
-    // common to transfer and total consumption
-    let end_date = period_end.unwrap_or_else(date_now);
-    let offset_end_date = end_date + Duration::days(1);
-    let start_date = date_with_offset(
-        &offset_end_date,
-        Duration::days((number_of_days).neg() as i64),
-    );
-
-    let filter = ConsumptionFilter {
-        item_id: Some(EqualFilter::equal_any(item_ids.clone())),
-        store_id: Some(EqualFilter::equal_to(store_id)),
-        date: Some(DateFilter::date_range(&start_date, &end_date)),
-    };
-
-    let consumption_map = get_consumption_map(connection, filter.clone())?;
-    let transfer_consumption_map = get_transfer_consumption_map(connection, filter)?;
-
-    let overall_consumption_map = match exclude_transfers {
+    let adjusted_consumption_map = match exclude_transfers {
         true => combine_maps(consumption_map.clone(), transfer_consumption_map),
         false => consumption_map.clone(),
     };
@@ -95,7 +109,7 @@ pub fn get_item_stats(
         amc_lookback_months,
         number_of_days,
         // Really don't like cloning this
-        consumption_map: overall_consumption_map.clone(),
+        consumption_map: adjusted_consumption_map.clone(),
         item_ids: item_ids.clone(),
     };
 
@@ -106,7 +120,7 @@ pub fn get_item_stats(
 
     Ok(ItemStats::new_vec(
         amc_by_item,
-        consumption_map,
+        adjusted_consumption_map,
         get_stock_on_hand_rows(connection, store_id, Some(item_ids))?,
     ))
 }
@@ -138,10 +152,10 @@ fn combine_maps(
     mut consumption_map: HashMap<String, f64>,
     transfer_consumption_map: HashMap<String, f64>,
 ) -> HashMap<String, f64> {
-    for (item_id, _transfer_consumption) in transfer_consumption_map {
+    for (item_id, transfer_consumption) in transfer_consumption_map {
         consumption_map
             .entry(item_id.clone())
-            .and_modify(|_total_consumption| {});
+            .and_modify(|total_consumption| *total_consumption -= transfer_consumption);
     }
 
     consumption_map
@@ -181,11 +195,8 @@ impl amc::Trait for DefaultAmc {
 }
 
 fn get_consumption_map(
-    connection: &StorageConnection,
-    filter: ConsumptionFilter,
+    consumption_rows: &Vec<ConsumptionRow>,
 ) -> Result<HashMap<String /* item_id */, f64 /* total consumption */>, RepositoryError> {
-    let consumption_rows = ConsumptionRepository::new(connection).query(Some(filter))?;
-
     let mut consumption_map = HashMap::new();
     for consumption_row in consumption_rows.into_iter() {
         let item_total_consumption = consumption_map
@@ -198,11 +209,8 @@ fn get_consumption_map(
 }
 
 fn get_transfer_consumption_map(
-    connection: &StorageConnection,
-    filter: ConsumptionFilter,
+    consumption_rows: &Vec<ConsumptionRow>,
 ) -> Result<HashMap<String /* item_id */, f64 /* transfer consumption */>, RepositoryError> {
-    let consumption_rows = ConsumptionRepository::new(connection).query(Some(filter))?;
-
     let mut transfer_consumption_map = HashMap::new();
     for consumption_row in consumption_rows.into_iter() {
         if consumption_row.is_transfer == true {
@@ -346,10 +354,6 @@ mod test {
             .unwrap();
         item_stats.sort_by(|a, b| a.item_id.cmp(&b.item_id));
 
-        assert_eq!(
-            item_stats[1].total_consumption, // total across all months before transfers excluded
-            test_item_stats::item2_amc_3_months() * 3.0
-        );
         assert_eq!(
             item_stats[1].average_monthly_consumption,
             test_item_stats::item2_amc_3_months_excluding_transfer()
