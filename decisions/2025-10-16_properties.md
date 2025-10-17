@@ -18,7 +18,7 @@ Open mSupply should be extendable with user configurable and enterable fields.
 - **Hierarchical Options:** Options can be hierarchical (e.g., item categories in mSupply or organisation units in DHIS2) — to be confirmed.
 - **Table Assignment:** Tables that will have this property can be specified; properties may be reused across multiple tables (to be confirmed).
 
-2. User is able to set properties based on configurations, properties should all be clearable. 
+2. User is able to update the value of the properties. All properties should be clearable and should conform to the rules defined/configured for that property, such as type or particular option linked to property
 
 3. User can change property configurations, however migrations are too difficult to implement and maintain, it's well communicated that updates to configurations (like removing options or changing option type) will not update existing value property values
 
