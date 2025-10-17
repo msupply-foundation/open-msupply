@@ -51,7 +51,7 @@ Have table specific property and/or property_value tables. The idea is to build 
 
 ### Option 4
 
-Store value as JSON rather then different typed fields. This would be easier in general but if we need to do any calculations, it would be slower. Also if configuration is changed for the property it would require higher congnitive load and likely translations (to make sure existing values work)
+Store value as JSON rather than different typed fields. This would be easier in general but if we need to do any calculations, it would be slower. Also if configuration is changed for the property it would require higher cognitive load and likely translations (to make sure existing values work)
 
 ### Option 5
 
