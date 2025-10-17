@@ -29,7 +29,7 @@ Open mSupply should be extendable with user configurable and enterable fields.
 6. User can sort a table by a property set for that table
 7. User can configure and use properties at a particular store/site only (to be confirmed)
 
-There is also a requirement from customisation/plugin end to extend existing records for display/logic, we can feed two birds with ones scone having plugins and customisations also using properties, configuration/property setting and display UI for free. 
+There is also a requirement from customisation/plugin end to extend existing records for display/logic, we can feed two birds with one scone having plugins and customisations also using properties, configuration/property setting and display UI for free. 
 
 ## Options
 
