@@ -12,11 +12,11 @@ Open mSupply should be extendable with user configurable and enterable fields.
 ### Requirements
 
 1. User can configure a new property:
-  a. type can be given one of Number (int), Text, Date, Real (Float), Option (user defined categories/options) 
-  b. name can be given 
-  c. translation can be given (would default to translation if one is found for current langauge, otherwise would use general name) 
-  d. options can be hierarchical, i.e current item categories in mSupply or organisation units in DHIS2 (to be confirmed)
-  e. tables which will have this property are specified, property can be re-used across many tables. (to be confirmed)
+- **Type:** Can be one of `Number (int)`, `Text`, `Date`, `Real (Float)`, or `Option` (user-defined categories/options).
+- **Name:** Can be specified by the user.
+- **Translation:** Can be provided; defaults to a translation if available for the current language, otherwise uses the general name.
+- **Hierarchical Options:** Options can be hierarchical (e.g., item categories in mSupply or organisation units in DHIS2) — to be confirmed.
+- **Table Assignment:** Tables that will have this property can be specified; properties may be reused across multiple tables (to be confirmed).
 
 2. User is able to set properties based on configurations, properties should all be clearable. 
 
