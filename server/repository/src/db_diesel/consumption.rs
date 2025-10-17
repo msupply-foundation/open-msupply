@@ -13,6 +13,7 @@ table! {
         store_id -> Text,
         quantity -> Double,
         date -> Date,
+        is_transfer -> Bool
     }
 }
 
@@ -25,6 +26,7 @@ pub struct ConsumptionRow {
     pub store_id: String,
     pub quantity: f64,
     pub date: NaiveDate,
+    pub is_transfer: bool,
 }
 
 #[derive(Clone, Debug, PartialEq, Default)]

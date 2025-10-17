@@ -41,6 +41,7 @@ impl ViewMigrationFragment for ViewMigration {
         invoice.type AS invoice_type,
         invoice.invoice_number AS invoice_number,
         invoice.id AS invoice_id,
+        invoice.linked_invoice_id AS linked_invoice_id,
         reason_option.reason AS reason,
         stock_line_id,
         invoice_line_stock_movement.expiry_date AS expiry_date,

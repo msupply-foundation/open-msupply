@@ -5,10 +5,9 @@ use repository::{
     ConsumptionFilter, ConsumptionRepository, ConsumptionRow, DateFilter, EqualFilter,
     RepositoryError, StorageConnection,
 };
-use util::{
-    constants::AVG_NUMBER_OF_DAYS_IN_A_MONTH, date_with_months_offset, first_day_of_the_month,
-    last_day_of_the_month,
-};
+use util::{date_with_months_offset, first_day_of_the_month, last_day_of_the_month};
+
+use crate::common::days_in_a_month;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct ConsumptionHistoryOptions {
@@ -42,11 +41,14 @@ pub fn get_historic_consumption_for_item(
         ));
 
     let consumption_rows = ConsumptionRepository::new(connection).query(Some(filter))?;
+
+    let days_in_month: f64 = days_in_a_month(connection);
+
     // Calculate historic consumption
     let result = points
         .rows
         .into_iter()
-        .map(|point| calculate_consumption(point, &consumption_rows))
+        .map(|point| calculate_consumption(point, &consumption_rows, days_in_month))
         .collect();
 
     Ok(result)
@@ -124,6 +126,7 @@ fn calculate_consumption(
         end_of_amc_lookup,
     }: ConsumptionHistoryPoint,
     consumption_rows: &Vec<ConsumptionRow>,
+    days: f64,
 ) -> ConsumptionHistory {
     // https://github.com/openmsupply/remote-server/issues/972
     let total_consumption_amc = consumption_rows.iter().fold(0.0, |sum, row| {
@@ -149,8 +152,7 @@ fn calculate_consumption(
 
     ConsumptionHistory {
         consumption,
-        average_monthly_consumption: total_consumption_amc / days_in_amc_lookup as f64
-            * AVG_NUMBER_OF_DAYS_IN_A_MONTH,
+        average_monthly_consumption: total_consumption_amc / days_in_amc_lookup as f64 * days,
         date: reference_date,
     }
 }
@@ -162,6 +164,7 @@ fn within_range(from_date: &NaiveDate, to_date: &NaiveDate, date: &NaiveDate) ->
 #[cfg(test)]
 mod tests {
     use super::*;
+    use repository::{mock::MockDataInserts, test_db::setup_all};
 
     #[test]
     fn test_generate_series() {
@@ -203,8 +206,12 @@ mod tests {
         );
     }
 
-    #[test]
-    fn test_calculate_consumption() {
+    #[actix_rt::test]
+    async fn test_calculate_consumption() {
+        let (_, connection, _, _) =
+            setup_all("calculate historic consumption", MockDataInserts::none()).await;
+        let days_in_month: f64 = days_in_a_month(&connection);
+
         assert_eq!(
             calculate_consumption(
                 ConsumptionHistoryPoint {
@@ -270,7 +277,8 @@ mod tests {
                         quantity: 1000.0,
                         ..Default::default()
                     }
-                ]
+                ],
+                days_in_month
             ),
             ConsumptionHistory {
                 consumption: 20,
@@ -278,7 +286,7 @@ mod tests {
                     / (NaiveDate::from_ymd_opt(2021, 1, 31).unwrap()
                         - NaiveDate::from_ymd_opt(2020, 10, 1).unwrap())
                     .num_days() as f64
-                    * AVG_NUMBER_OF_DAYS_IN_A_MONTH,
+                    * days_in_month,
                 date: NaiveDate::from_ymd_opt(2021, 1, 31).unwrap()
             }
         );
