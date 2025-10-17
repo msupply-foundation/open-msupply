@@ -25,11 +25,11 @@ Open mSupply should be extendable with user configurable and enterable fields.
 4. User will see properties in all of the views and lists/tables (as if it's another field/column that is part of a table)
 
 5. User will be able to filter by properties, in the natural option for the property type
-    a. Natural here suggests consistency with existing filters and aligning with expectation of how this property type should be filtered (for option type being able to filter by 'contains' might not be possible because the field might be translated, however would be possible if it's by general name)
+- Natural here suggests consistency with existing filters and aligning with expectation of how this property type should be filtered (for option type being able to filter by 'contains' might not be possible because the field might be translated, however would be possible if it's by general name)
 6. User can sort a table by a property set for that table
 7. User can configure and use properties at a particular store/site only (to be confirmed)
 
-There is also a requirement from customisation/plugin end to extend existing records for display/logic, we can feed two birds with ones scone having plugins and customisations also using properties, configuration/property setting and display UI for free. 
+There is also a requirement from customisation/plugin end to extend existing records for display/logic, we can feed two birds with one scone having plugins and customisations also using properties, configuration/property setting and display UI for free. 
 
 ## Options
 
@@ -47,11 +47,11 @@ Also adding property configuration functionality to omSupply is slightly easier 
 
 ### Option 3
 
-Have table specific property and/or property_value tables. The idea is to build for future performance in mind and reduce dynamic structured (usually safer and more readable/disoverable). However a pattern like would be very common and well understood, negating any effects this abstraction should have on readability/discoverability. As for performance, there is an assumption to be validated that table_name index together with record_id index will only speed up insert time (for index building), not query (query is the the performance concern, not insert), this goes in favour ot "Option 1".
+Have table specific property and/or property_value tables. The idea is to build for future performance in mind and reduce dynamic structured (usually safer and more readable/disoverable). However a pattern like would be very common and well understood, negating any effects this abstraction should have on readability/discoverability. As for performance, there is an assumption to be validated that table_name index together with record_id index will only speed up insert time (for index building), not query (query is the the performance concern, not insert), this goes in favour of "Option 1".
 
 ### Option 4
 
-Store value as JSON rather then different typed fields. This would be easier in general but if we need to do any calculations, it would be slower. Also if configuration is changed for the property it would require higher congnitive load and likely translations (to make sure existing values work)
+Store value as JSON rather than different typed fields. This would be easier in general but if we need to do any calculations, it would be slower. Also if configuration is changed for the property it would require higher cognitive load and likely translations (to make sure existing values work)
 
 ### Option 5
 
