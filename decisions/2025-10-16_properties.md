@@ -70,7 +70,7 @@ Multiple values - Do we need an array type element when multiple values can be a
 
 Sort - It should be possible but a lot more complex, especially for hierarchical and for options that are translated
 
-Sync - For remote types, we can just lookup changelog for the record_id and see store_id it relates to
+Sync - Normally, property, property_table and property_options are central data. property_values is also central data, where table_name = central, otherwise it's remote data and it would sync to a site where property_value.record_id belongs to (can just lookup changelog for record_id). If 7. is validated, we can add store_id to all tables in the diagram and only sync to that site (and only show in that site)
 
 Plugin data / Customisations - When used in custom data and customisation we should populate (create) the property when plugin is installed, and possibly migrate it 
 
