@@ -29,6 +29,7 @@ Open mSupply should be extendable with user configurable and enterable fields.
 - Natural here suggests consistency with existing filters and aligning with expectation of how this property type should be filtered (for option type being able to filter by 'contains' might not be possible because the field might be translated, however would be possible if it's by general name)
 6. User can sort a table by a property set for that table
 7. User can configure and use properties at a particular store/site only (to be confirmed)
+8. TODO migrations from mSupply (transaction categories etc..)
 
 There is also a requirement from customisation/plugin end to extend existing records for display/logic, we can feed two birds with one scone having plugins and customisations also using properties, configuration/property setting and display UI for free. 
 
