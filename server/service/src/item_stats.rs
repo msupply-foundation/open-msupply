@@ -13,9 +13,9 @@ use crate::{
 };
 use chrono::{Duration, NaiveDate};
 use repository::{
-    ConsumptionFilter, ConsumptionRepository, ConsumptionRow, DateFilter, EqualFilter, PluginType,
-    RepositoryError, RequisitionLine, StockOnHandFilter, StockOnHandRepository, StockOnHandRow,
-    StorageConnection,
+    ConsumptionFilter, ConsumptionRepository, ConsumptionRow, DateFilter, DaysOutOfStockRepository,
+    DaysOutOfStockRow, EqualFilter, PluginType, RepositoryError, RequisitionLine,
+    StockOnHandFilter, StockOnHandRepository, StockOnHandRow, StorageConnection,
 };
 use util::{date_now, date_with_offset};
 
@@ -92,10 +92,12 @@ pub fn get_item_stats(
         Ok(filter)
     }
 
-    let consumption_rows = ConsumptionRepository::new(connection).query(Some(filter))?;
+    let consumption_rows = ConsumptionRepository::new(connection).query(Some(filter.clone()))?;
+    let dos_rows = DaysOutOfStockRepository::new(connection).query(Some(filter))?;
 
     let consumption_map = get_consumption_map(&consumption_rows)?;
     let transfer_consumption_map = get_transfer_consumption_map(&consumption_rows)?;
+    let adjusted_stock_days_map = get_days_of_stock_map(dos_rows, number_of_days)?;
 
     let exclude_transfers = ExcludeTransfers.load(connection, None).unwrap_or(false);
 
@@ -107,9 +109,9 @@ pub fn get_item_stats(
     let input = amc::Input {
         store_id: store_id.to_string(),
         amc_lookback_months,
-        number_of_days,
         // Really don't like cloning this
         consumption_map: adjusted_consumption_map.clone(),
+        adjusted_stock_days_map,
         item_ids: item_ids.clone(),
     };
 
@@ -168,23 +170,23 @@ impl amc::Trait for DefaultAmc {
         amc::Input {
             amc_lookback_months,
             consumption_map,
-            number_of_days,
+            adjusted_stock_days_map,
             ..
         }: amc::Input,
     ) -> PluginResult<amc::Output> {
         Ok(consumption_map
-            .iter()
+            .into_iter()
             .map(|(item_id, total_consumption)| {
-                // TODO: dos
-                let dos = 0.0;
+                let adjusted_days = adjusted_stock_days_map
+                    .get(&item_id)
+                    .copied()
+                    .unwrap_or(1.0);
 
-                let consumption_per_month = (*total_consumption) / amc_lookback_months;
-
-                let timeframe = number_of_days / (number_of_days - dos);
-                let average_monthly_consumption = consumption_per_month * timeframe;
+                let average_monthly_consumption =
+                    total_consumption / amc_lookback_months * adjusted_days;
 
                 (
-                    item_id.to_string(),
+                    item_id,
                     amc::AverageMonthlyConsumptionItem {
                         average_monthly_consumption: Some(average_monthly_consumption),
                     },
@@ -222,6 +224,23 @@ fn get_transfer_consumption_map(
     }
 
     Ok(transfer_consumption_map)
+}
+
+fn get_days_of_stock_map(
+    dos_rows: Vec<DaysOutOfStockRow>,
+    number_of_days: f64,
+) -> Result<
+    HashMap<String /* item_id */, f64 /* (numberOfDays/(numberOfDays-dos)) */>,
+    RepositoryError,
+> {
+    let mut days_of_stock_map = HashMap::new();
+    for dos_row in dos_rows.into_iter() {
+        let adjusted_days = days_of_stock_map
+            .entry(dos_row.item_id.clone())
+            .or_insert(0.0);
+        *adjusted_days = number_of_days / (number_of_days - dos_row.total_dos);
+    }
+    Ok(days_of_stock_map)
 }
 
 pub fn get_stock_on_hand_rows(
