@@ -47,7 +47,7 @@ Also adding property configuration functionality to omSupply is slightly easier 
 
 ### Option 3
 
-Have table specific property and/or property_value tables. The idea is to build for future performance in mind and reduce dynamic structured (usually safer and more readable/disoverable). However a pattern like would be very common and well understood, negating any effects this abstraction should have on readability/discoverability. As for performance, there is an assumption to be validated that table_name index together with record_id index will only speed up insert time (for index building), not query (query is the the performance concern, not insert), this goes in favour ot "Option 1".
+Have table specific property and/or property_value tables. The idea is to build for future performance in mind and reduce dynamic structured (usually safer and more readable/disoverable). However a pattern like would be very common and well understood, negating any effects this abstraction should have on readability/discoverability. As for performance, there is an assumption to be validated that table_name index together with record_id index will only speed up insert time (for index building), not query (query is the the performance concern, not insert), this goes in favour of "Option 1".
 
 ### Option 4
 
