@@ -17,6 +17,7 @@ Open mSupply should be extendable with user configurable and enterable fields.
 - **Translation:** Can be provided; defaults to a translation if available for the current language, otherwise uses the general name.
 - **Hierarchical Options:** Options can be hierarchical (e.g., item categories in mSupply or organisation units in DHIS2) — to be confirmed.
 - **Table Assignment:** Tables that will have this property can be specified; properties may be reused across multiple tables (to be confirmed).
+- **Advance Type Validation:** A way to restrict entry further then by type/option, like regex, external API lookup. Could be plugin (to be confirmed but good idea to have a way forward for this), similar for updating/displaying property
 
 2. User is able to update the value of the properties. All properties should be clearable and should conform to the rules defined/configured for that property, such as type or particular option linked to property
 
