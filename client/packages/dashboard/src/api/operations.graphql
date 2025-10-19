@@ -23,6 +23,7 @@ query itemCounts($storeId: String!, $lowStockThreshold: Int!) {
       moreThanSixMonthsStock
       total
       outOfStockProducts
+      productsAtRiskOfBeingOutOfStock
     }
   }
 }

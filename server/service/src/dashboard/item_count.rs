@@ -15,6 +15,7 @@ pub struct ItemCounts {
     pub low_stock: i64,
     pub more_than_six_months_stock: i64,
     pub out_of_stock_products: i64,
+    pub products_at_risk_of_being_out_of_stock: i64,
 }
 
 pub trait ItemCountServiceTrait: Send + Sync {
@@ -62,14 +63,28 @@ pub trait ItemCountServiceTrait: Send + Sync {
     }
 
     fn get_out_of_stock_products_count(&self, item_stats: &Vec<ItemStats>) -> i64 {
-        item_stats
+        let out_of_stock_products_count = item_stats
             .iter()
             .filter(|i| i.total_consumption > 0.0 && i.total_stock_on_hand == 0.0)
-            .count() as i64
+            .count() as i64;
+
+        return out_of_stock_products_count;
     }
 
-    // Products at risk of being out of stock (months of stock < x months)
-    fn get_products_at_risk_of_being_out_of_stock_count(&self) {}
+    fn get_products_at_risk_of_being_out_of_stock_count(
+        &self,
+        item_stats: &Vec<ItemStats>,
+        threshold_months: i32,
+    ) -> i64 {
+        let products_at_risk_of_being_out_of_stock_count = item_stats
+            .iter()
+            .filter(|&i| (i.average_monthly_consumption > 0.0))
+            .map(|i| i.total_stock_on_hand / i.average_monthly_consumption)
+            .filter(|months_of_stock| *months_of_stock < threshold_months as f64)
+            .count() as i64;
+
+        return products_at_risk_of_being_out_of_stock_count;
+    }
 }
 
 pub struct ItemServiceCount {}
@@ -102,20 +117,32 @@ impl ItemCountServiceTrait for ItemServiceCount {
         let more_than_six_months_stock =
             Self::get_more_than_six_months_stock_count(&self, &item_stats);
 
-        let months = NumberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts
-            .load(&ctx.connection, Some(store_id.to_string()))
-            .map_err(|e| {
-                PluginOrRepositoryError::RepositoryError(RepositoryError::DBError {
-                    msg: format!("Failed to load preference: {}", e),
-                    extra: Default::default(),
-                })
-            })?;
+        let stock_risk_window_months =
+            NumberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts
+                .load(&ctx.connection, Some(store_id.to_string()))
+                .map_err(|e| {
+                    PluginOrRepositoryError::RepositoryError(RepositoryError::DBError {
+                        msg: format!("Failed to load preference: {}", e),
+                        extra: Default::default(),
+                    })
+                })?;
 
-        let item_stats_with_time_window =
-            get_item_stats(&ctx.connection, store_id, Some(months as f64), item_ids)?;
+        let item_stats_with_time_window = get_item_stats(
+            &ctx.connection,
+            store_id,
+            Some(stock_risk_window_months as f64),
+            item_ids,
+        )?;
 
         let out_of_stock_products =
             Self::get_out_of_stock_products_count(&self, &item_stats_with_time_window);
+
+        let products_at_risk_of_being_out_of_stock =
+            Self::get_products_at_risk_of_being_out_of_stock_count(
+                &self,
+                &item_stats_with_time_window,
+                stock_risk_window_months,
+            );
 
         Ok(ItemCounts {
             total: total_count,
@@ -123,6 +150,7 @@ impl ItemCountServiceTrait for ItemServiceCount {
             low_stock,
             more_than_six_months_stock,
             out_of_stock_products,
+            products_at_risk_of_being_out_of_stock,
         })
     }
 }
@@ -351,5 +379,42 @@ mod item_count_service_test {
         let result = ItemServiceCount {}.get_out_of_stock_products_count(&item_stats);
 
         assert_eq!(result, 1);
+    }
+
+    #[actix_rt::test]
+    async fn test_products_at_risk_of_being_out_of_stock_count() {
+        let threshold_months = 2;
+        let item_stats: Vec<ItemStats> = vec![
+            // Should count: 1 month of stock, amc > 0
+            ItemStats {
+                average_monthly_consumption: 2.0,
+                total_stock_on_hand: 2.0,
+                ..Default::default()
+            },
+            // Should NOT count: 3 months of stock, amc > 0
+            ItemStats {
+                average_monthly_consumption: 1.0,
+                total_stock_on_hand: 3.0,
+                ..Default::default()
+            },
+            // Should NOT count: amc = 0
+            ItemStats {
+                average_monthly_consumption: 0.0,
+                total_stock_on_hand: 10.0,
+                ..Default::default()
+            },
+            // Should count: 0.5 months of stock, amc > 0
+            ItemStats {
+                average_monthly_consumption: 4.0,
+                total_stock_on_hand: 2.0,
+                ..Default::default()
+            },
+        ];
+
+        let result = ItemServiceCount {}
+            .get_products_at_risk_of_being_out_of_stock_count(&item_stats, threshold_months);
+
+        // Only the first and last items should be counted (months of stock < 2)
+        assert_eq!(result, 2);
     }
 }

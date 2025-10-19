@@ -97,6 +97,20 @@ export const StockLevelsSummary = () => {
                   })
                   .build(),
               },
+              {
+                label: t('label.products-at-risk-of-being-out-of-stock', {
+                  count: Math.round(itemCountsData?.outOfStockProducts || 0),
+                }),
+                value: formatNumber.round(
+                  itemCountsData?.productsAtRiskOfBeingOutOfStock || 0
+                ),
+                link: RouteBuilder.create(AppRoute.Catalogue)
+                  .addPart(AppRoute.Items)
+                  .addQuery({
+                    minMonthsOfStock: 6,
+                  })
+                  .build(),
+              },
             ]
           : []),
       ]}
