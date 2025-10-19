@@ -13,7 +13,7 @@ import {
 import React from 'react';
 import { AdminPreferenceFragment } from '../api/operations.generated';
 import { EditPreference } from './EditPreference';
-import { AMC_GROUP_LABEL } from './usePreferenceGrouping';
+import { isAnyAmcPrefOn, generateAmcFormula } from './utils';
 
 interface PreferenceGroupAccordionProps {
   label: string;
@@ -28,7 +28,8 @@ export const PreferenceGroupAccordion = ({
 }: PreferenceGroupAccordionProps) => {
   const t = useTranslation();
 
-  const showAMC = label === t(AMC_GROUP_LABEL);
+  const showAmcFormula = isAnyAmcPrefOn(preferences);
+  const amcFormula = generateAmcFormula(preferences, t);
 
   return (
     <Accordion
@@ -68,7 +69,7 @@ export const PreferenceGroupAccordion = ({
             />
           );
         })}
-        {showAMC && (
+        {showAmcFormula && (
           <>
             <Divider />
             <InputWithLabelRow
@@ -84,9 +85,7 @@ export const PreferenceGroupAccordion = ({
               }}
               Input={
                 <Typography variant="caption" color="text.secondary">
-                  {
-                    '(consumption - transfers) * daysInMonth / ((lookbackMonths * daysInMonth ) - daysOutOfStock)'
-                  }
+                  {amcFormula}
                 </Typography>
               }
             />

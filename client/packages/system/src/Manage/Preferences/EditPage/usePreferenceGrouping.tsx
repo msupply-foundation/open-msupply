@@ -1,5 +1,6 @@
 import { PreferenceKey } from '@openmsupply-client/common';
 import { AdminPreferenceFragment } from '../api/operations.generated';
+import { PREFERENCE_GROUP_CONFIG } from './utils';
 
 interface PreferenceGroup {
   key: string;
@@ -10,22 +11,6 @@ interface GroupedPreferences {
   ungrouped: AdminPreferenceFragment[];
   groups: PreferenceGroup[];
 }
-
-export const AMC_GROUP_LABEL = 'title.average-monthly-consumption';
-
-// Grouping of global preferences
-const PREFERENCE_GROUP_CONFIG: Record<string, PreferenceKey[]> = {
-  [AMC_GROUP_LABEL]: [
-    PreferenceKey.UseDaysInMonth,
-    PreferenceKey.DaysInMonth,
-    PreferenceKey.AdjustForNumberOfDaysOutOfStock,
-    PreferenceKey.ExcludeTransfers,
-  ],
-  'label.procurement': [
-    PreferenceKey.AuthoriseGoodsReceived,
-    PreferenceKey.AuthorisePurchaseOrder,
-  ],
-};
 
 export const usePreferenceGrouping = (
   preferences: AdminPreferenceFragment[]
