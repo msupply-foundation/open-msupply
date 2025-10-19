@@ -231,6 +231,8 @@ fragment ResponseRow on RequisitionNode {
   otherPartyId
   approvalStatus
   programName
+  maxMonthsOfStock
+  minMonthsOfStock
   period {
     name
     startDate
@@ -621,6 +623,32 @@ mutation updateIndicatorValue(
           description
         }
         ... on ValueTypeNotCorrect {
+          __typename
+          description
+        }
+      }
+    }
+  }
+}
+
+mutation insertRequestFromResponseRequisition(
+  $storeId: String!
+  $input: InsertFromResponseRequisitionInput!
+) {
+  insertFromResponseRequisition(input: $input, storeId: $storeId) {
+    ... on RequisitionNode {
+      __typename
+      id
+    }
+    ... on InsertFromResponseRequisitionError {
+      __typename
+      error {
+        description
+        ... on OtherPartyNotASupplier {
+          __typename
+          description
+        }
+        ... on OtherPartyNotVisible {
           __typename
           description
         }
