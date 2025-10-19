@@ -11,9 +11,11 @@ interface GroupedPreferences {
   groups: PreferenceGroup[];
 }
 
+export const AMC_GROUP_LABEL = 'title.average-monthly-consumption';
+
 // Grouping of global preferences
 const PREFERENCE_GROUP_CONFIG: Record<string, PreferenceKey[]> = {
-  'label.amc-calculation': [
+  [AMC_GROUP_LABEL]: [
     PreferenceKey.UseDaysInMonth,
     PreferenceKey.DaysInMonth,
     PreferenceKey.AdjustForNumberOfDaysOutOfStock,

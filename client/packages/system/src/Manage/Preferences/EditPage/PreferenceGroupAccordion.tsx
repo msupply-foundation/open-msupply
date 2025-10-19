@@ -2,15 +2,18 @@ import {
   Accordion,
   AccordionDetails,
   AccordionSummary,
+  Divider,
   ExpandIcon,
   InputWithLabelRow,
   LocaleKey,
+  Typography,
   UpsertPreferencesInput,
   useTranslation,
 } from '@openmsupply-client/common';
 import React from 'react';
 import { AdminPreferenceFragment } from '../api/operations.generated';
 import { EditPreference } from './EditPreference';
+import { AMC_GROUP_LABEL } from './usePreferenceGrouping';
 
 interface PreferenceGroupAccordionProps {
   label: string;
@@ -24,6 +27,8 @@ export const PreferenceGroupAccordion = ({
   update,
 }: PreferenceGroupAccordionProps) => {
   const t = useTranslation();
+
+  const showAMC = label === t(AMC_GROUP_LABEL);
 
   return (
     <Accordion
@@ -63,6 +68,30 @@ export const PreferenceGroupAccordion = ({
             />
           );
         })}
+        {showAMC && (
+          <>
+            <Divider />
+            <InputWithLabelRow
+              label={t('label.amc-calculation')}
+              sx={{
+                display: 'flex',
+                alignItems: 'start',
+                flexDirection: 'column',
+                padding: 1,
+              }}
+              labelProps={{
+                sx: { display: 'flex', textAlign: 'start' },
+              }}
+              Input={
+                <Typography variant="caption" color="text.secondary">
+                  {
+                    '(consumption - transfers) * daysInMonth / ((lookbackMonths * daysInMonth ) - daysOutOfStock)'
+                  }
+                </Typography>
+              }
+            />
+          </>
+        )}
       </AccordionDetails>
     </Accordion>
   );
