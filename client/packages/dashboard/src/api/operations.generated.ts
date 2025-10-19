@@ -15,6 +15,8 @@ export type StockCountsQuery = {
     __typename: 'StockCounts';
     expired: number;
     expiringSoon: number;
+    expiringBetweenThresholds: number;
+    expiringInNextThreeMonths: number;
   };
 };
 
@@ -109,6 +111,8 @@ export const StockCountsDocument = gql`
     ) {
       expired
       expiringSoon
+      expiringBetweenThresholds
+      expiringInNextThreeMonths
     }
   }
 `;
