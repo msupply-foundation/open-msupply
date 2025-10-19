@@ -73,7 +73,13 @@ export const EditPreference = ({
       if (!isNumber(preference.value)) {
         return t('error.something-wrong');
       }
-      return <NumericTextInput value={value} onChange={handleChange} />;
+      return (
+        <NumericTextInput
+          value={value}
+          onChange={handleChange}
+          onBlur={() => {}}
+        />
+      );
 
     case PreferenceValueNodeType.MultiChoice:
       if (!Array.isArray(value)) {
