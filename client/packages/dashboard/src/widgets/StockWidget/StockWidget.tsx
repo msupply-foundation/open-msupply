@@ -13,7 +13,10 @@ import {
   useTranslation,
   Widget,
 } from '@openmsupply-client/common';
-import { InternalSupplierSearchModal } from '@openmsupply-client/system';
+import {
+  InternalSupplierSearchModal,
+  NameRowFragment,
+} from '@openmsupply-client/system';
 import { useRequest } from '@openmsupply-client/requisitions';
 import { AppRoute } from '@openmsupply-client/config';
 import { ExpiringStockSummary } from './ExpiringStockSummary';
@@ -25,15 +28,7 @@ export const StockWidget = () => {
   const modalControl = useToggle(false);
   const { userHasPermission } = useAuthContext();
   const { error: errorNotification } = useNotification();
-
   const { mutateAsync: onCreate } = useRequest.document.insert();
-  const onError = (e: unknown) => {
-    const message = (e as Error).message ?? '';
-    const errorSnack = errorNotification(
-      t('error.failed-to-create-requisition', { message })
-    );
-    errorSnack();
-  };
 
   const handleClick = () => {
     if (!userHasPermission(UserPermission.RequisitionMutate)) {
@@ -43,29 +38,42 @@ export const StockWidget = () => {
     modalControl.toggleOn();
   };
 
+  const onError = (e: unknown) =>
+    errorNotification(
+      t('error.failed-to-create-requisition', {
+        message: (e as Error).message ?? '',
+      })
+    )();
+
+  const handleModalChange = async ({ id: otherPartyId }: NameRowFragment) => {
+    modalControl.toggleOff();
+    try {
+      const result = await onCreate(
+        {
+          id: FnUtils.generateUUID(),
+          otherPartyId,
+        },
+        { onError }
+      );
+      if (result)
+        navigate(
+          RouteBuilder.create(AppRoute.Replenishment)
+            .addPart(AppRoute.InternalOrder)
+            .addPart(result.id)
+            .build()
+        );
+    } catch (e) {
+      // onError is already managing error state
+    }
+  };
+
   return (
     <>
       {modalControl.isOn ? (
         <InternalSupplierSearchModal
           open={true}
           onClose={modalControl.toggleOff}
-          onChange={async ({ id: otherPartyId }) => {
-            modalControl.toggleOff();
-            await onCreate(
-              {
-                id: FnUtils.generateUUID(),
-                otherPartyId,
-              },
-              { onError }
-            ).then(({ id }) => {
-              navigate(
-                RouteBuilder.create(AppRoute.Replenishment)
-                  .addPart(AppRoute.InternalOrder)
-                  .addPart(id)
-                  .build()
-              );
-            });
-          }}
+          onChange={handleModalChange}
         />
       ) : null}
       <Widget title={t('inventory-management')}>

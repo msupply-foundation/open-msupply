@@ -4767,6 +4767,7 @@ export type ItemCountsResponse = {
   lowStock: Scalars['Int']['output'];
   moreThanSixMonthsStock: Scalars['Int']['output'];
   noStock: Scalars['Int']['output'];
+  outOfStockProducts: Scalars['Int']['output'];
   total: Scalars['Int']['output'];
 };
 

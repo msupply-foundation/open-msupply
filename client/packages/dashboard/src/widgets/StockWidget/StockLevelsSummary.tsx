@@ -4,6 +4,7 @@ import {
   RouteBuilder,
   StatsPanel,
   useFormatNumber,
+  usePreferences,
   useTranslation,
 } from '@openmsupply-client/common';
 import { useDashboard } from '../../api';
@@ -14,6 +15,10 @@ const LOW_MOS_THRESHOLD = 3;
 export const StockLevelsSummary = () => {
   const t = useTranslation();
   const formatNumber = useFormatNumber();
+  const {
+    numberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts:
+      monthsForOutOfStockCalc,
+  } = usePreferences();
 
   const {
     data: itemCountsData,
@@ -76,6 +81,24 @@ export const StockLevelsSummary = () => {
             })
             .build(),
         },
+        ...(monthsForOutOfStockCalc
+          ? [
+              {
+                label: t('label.out-of-stock-products', {
+                  count: Math.round(itemCountsData?.outOfStockProducts || 0),
+                }),
+                value: formatNumber.round(
+                  itemCountsData?.outOfStockProducts || 0
+                ),
+                link: RouteBuilder.create(AppRoute.Catalogue)
+                  .addPart(AppRoute.Items)
+                  .addQuery({
+                    minMonthsOfStock: 6,
+                  })
+                  .build(),
+              },
+            ]
+          : []),
       ]}
       link={RouteBuilder.create(AppRoute.Inventory)
         .addPart(AppRoute.Stock)
