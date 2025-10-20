@@ -146,26 +146,29 @@ pub fn get_item_ids_by_stock_status(
         .map(|item| item.item_row.id.clone())
         .collect();
 
-    let threshold_months = NumberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts
-        .load(&connection, Some(store_id.to_string()))
-        .map_err(|e| match e {
-            PreferenceError::DatabaseError(err) => ListError::DatabaseError(err),
-            PreferenceError::DeserializeError(key, value, msg) => ListError::PluginError(format!(
-                "Failed to deserialize preference {}: {} - {}",
-                key, value, msg
-            )),
-            PreferenceError::ConversionError(key, msg) => {
-                ListError::PluginError(format!("Failed to convert preference {}: {}", key, msg))
-            }
-            PreferenceError::StoreIdNotProvided => {
-                ListError::PluginError("Store ID not provided".to_string())
-            }
-        })?;
+    let num_months_consumption =
+        NumberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts
+            .load(&connection, Some(store_id.to_string()))
+            .map_err(|e| match e {
+                PreferenceError::DatabaseError(err) => ListError::DatabaseError(err),
+                PreferenceError::DeserializeError(key, value, msg) => {
+                    ListError::PluginError(format!(
+                        "Failed to deserialize preference {}: {} - {}",
+                        key, value, msg
+                    ))
+                }
+                PreferenceError::ConversionError(key, msg) => {
+                    ListError::PluginError(format!("Failed to convert preference {}: {}", key, msg))
+                }
+                PreferenceError::StoreIdNotProvided => {
+                    ListError::PluginError("Store ID not provided".to_string())
+                }
+            })?;
 
     let item_stats = get_item_stats_map(
         &connection,
         store_id,
-        Some(threshold_months as f64),
+        Some(num_months_consumption as f64),
         item_ids,
     )
     .map_err(|e| match e {
@@ -188,7 +191,7 @@ pub fn get_item_ids_by_stock_status(
                 if stats.average_monthly_consumption > 0.0 {
                     let months_of_stock =
                         stats.total_stock_on_hand / stats.average_monthly_consumption;
-                    include &= months_of_stock < threshold_months as f64;
+                    include &= months_of_stock < num_months_consumption as f64;
                 } else {
                     include = false;
                 }

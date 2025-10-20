@@ -63,12 +63,10 @@ pub trait ItemCountServiceTrait: Send + Sync {
     }
 
     fn get_out_of_stock_products_count(&self, item_stats: &Vec<ItemStats>) -> i64 {
-        let out_of_stock_products_count = item_stats
+        item_stats
             .iter()
             .filter(|i| i.total_consumption > 0.0 && i.total_stock_on_hand == 0.0)
-            .count() as i64;
-
-        return out_of_stock_products_count;
+            .count() as i64
     }
 
     fn get_products_at_risk_of_being_out_of_stock_count(
@@ -76,14 +74,14 @@ pub trait ItemCountServiceTrait: Send + Sync {
         item_stats: &Vec<ItemStats>,
         threshold_months: i32,
     ) -> i64 {
-        let products_at_risk_of_being_out_of_stock_count = item_stats
+        item_stats
             .iter()
-            .filter(|&i| (i.average_monthly_consumption > 0.0))
-            .map(|i| i.total_stock_on_hand / i.average_monthly_consumption)
-            .filter(|months_of_stock| *months_of_stock < threshold_months as f64)
-            .count() as i64;
-
-        return products_at_risk_of_being_out_of_stock_count;
+            .filter(|i| {
+                i.average_monthly_consumption > 0.0
+                    && (i.total_stock_on_hand / i.average_monthly_consumption)
+                        < threshold_months as f64
+            })
+            .count() as i64
     }
 }
 
@@ -117,12 +115,12 @@ impl ItemCountServiceTrait for ItemServiceCount {
         let more_than_six_months_stock =
             Self::get_more_than_six_months_stock_count(&self, &item_stats);
 
-        let stock_risk_window_months =
+        let num_months_consumption =
             NumberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts
                 .load(&ctx.connection, Some(store_id.to_string()))
                 .map_err(|e| {
                     PluginOrRepositoryError::RepositoryError(RepositoryError::DBError {
-                        msg: format!("Failed to load preference: {}", e),
+                        msg: format!("Failed to load preference: {e}"),
                         extra: Default::default(),
                     })
                 })?;
@@ -130,18 +128,18 @@ impl ItemCountServiceTrait for ItemServiceCount {
         let item_stats_with_time_window = get_item_stats(
             &ctx.connection,
             store_id,
-            Some(stock_risk_window_months as f64),
+            Some(num_months_consumption as f64),
             item_ids,
         )?;
 
         let out_of_stock_products =
-            Self::get_out_of_stock_products_count(&self, &item_stats_with_time_window);
+            Self::get_out_of_stock_products_count(self, &item_stats_with_time_window);
 
         let products_at_risk_of_being_out_of_stock =
             Self::get_products_at_risk_of_being_out_of_stock_count(
-                &self,
+                self,
                 &item_stats_with_time_window,
-                stock_risk_window_months,
+                num_months_consumption,
             );
 
         Ok(ItemCounts {
