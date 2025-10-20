@@ -210,61 +210,67 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
       },
     }),
 
-    muiTableBodyCellProps: ({ row, column, table }) => ({
-      sx: {
-        fontSize: table.getState().density === 'compact' ? '0.90em' : '1em',
-        fontWeight: 400,
-        opacity: 1,
-        color: getIsPlaceholderRow(row.original)
-          ? 'secondary.light'
-          : getIsRestrictedRow(row.original)
-            ? 'gray.main'
-            : undefined,
+    muiTableBodyCellProps: ({ row, column, table }) => {
+      const columnWidth = column.getSize();
+      return {
+        sx: {
+          fontSize: table.getState().density === 'compact' ? '0.90em' : '1em',
+          fontWeight: 400,
+          opacity: 1,
+          color: getIsPlaceholderRow(row.original)
+            ? 'secondary.light'
+            : getIsRestrictedRow(row.original)
+              ? 'gray.main'
+              : undefined,
 
-        ...(column.id === 'mrt-row-expand' && {
-          // The expand chevron is rotated incorrectly by default (in terms of
-          // consistency with other Accordion/Expando UI elements in the app)
-          button: {
-            rotate: row.getIsExpanded() ? '180deg' : '-90deg',
-            // Height and padding affect the density of the row
-            padding: 0,
-            height: 'unset',
-          },
-          // Hide the icon when there's nothing to expand
-          '& button.Mui-disabled': {
-            color: !row.getCanExpand() ? 'transparent' : undefined,
-          },
-        }),
-        minHeight: table.getState().density === 'compact' ? '32px' : '40px',
-        padding:
-          table.getState().density === 'spacious'
-            ? '0.7rem'
-            : table.getState().density === 'comfortable'
-              ? '0.35rem 0.3rem'
-              : undefined, // default for "compact",
+          ...(column.id === 'mrt-row-expand' && {
+            // The expand chevron is rotated incorrectly by default (in terms of
+            // consistency with other Accordion/Expando UI elements in the app)
+            button: {
+              rotate: row.getIsExpanded() ? '180deg' : '-90deg',
+              // Height and padding affect the density of the row
+              padding: 0,
+              height: 'unset',
+            },
+            // Hide the icon when there's nothing to expand
+            '& button.Mui-disabled': {
+              color: !row.getCanExpand() ? 'transparent' : undefined,
+            },
+          }),
+          minHeight: table.getState().density === 'compact' ? '32px' : '40px',
+          padding:
+            table.getState().density === 'spacious'
+              ? '0.7rem'
+              : table.getState().density === 'comfortable'
+                ? columnWidth > 100
+                  ? '0.35rem 0.5rem'
+                  : // Reduce the padding when column is narrow
+                    '0.35rem 0.25rem'
+                : undefined, // default for "compact",
 
-        // Indent "sub-rows" when expanded
-        paddingLeft:
-          row.original?.['isSubRow'] && column.id !== 'mrt-row-select'
-            ? '2em'
-            : undefined,
-        backgroundColor:
-          column.getIsPinned() || row.getIsSelected()
-            ? // Remove transparency from pinned backgrounds
-              'rgba(252, 252, 252, 1)'
-            : undefined,
+          // Indent "sub-rows" when expanded
+          paddingLeft:
+            row.original?.['isSubRow'] && column.id !== 'mrt-row-select'
+              ? '2em'
+              : undefined,
+          backgroundColor:
+            column.getIsPinned() || row.getIsSelected()
+              ? // Remove transparency from pinned backgrounds
+                'rgba(252, 252, 252, 1)'
+              : undefined,
 
-        ...((column.columnDef as ColumnDef<T>).getIsError?.(row.original)
-          ? {
-              border: '2px solid',
-              borderColor: 'error.main',
-              borderRadius: '8px',
-            }
-          : {
-              borderBottom: '1px solid rgba(224, 224, 224, 1)',
-            }),
-      },
-    }),
+          ...((column.columnDef as ColumnDef<T>).getIsError?.(row.original)
+            ? {
+                border: '2px solid',
+                borderColor: 'error.main',
+                borderRadius: '8px',
+              }
+            : {
+                borderBottom: '1px solid rgba(224, 224, 224, 1)',
+              }),
+        },
+      };
+    },
 
     muiSelectAllCheckboxProps: {
       color: 'outline',
