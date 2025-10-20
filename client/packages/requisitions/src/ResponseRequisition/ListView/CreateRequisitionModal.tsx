@@ -36,16 +36,10 @@ export const CreateRequisitionModalComponent: FC<
   CreateRequisitionModalProps
 > = ({ isOpen, onClose, onCreate }) => {
   const t = useTranslation();
-
+  const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: false });
   const { data, isLoading } = useName.document.customers();
 
   const [customer, setCustomer] = React.useState<NameRowFragment | null>(null);
-
-  const handleCustomerChange = (customer: NameRowFragment | null) => {
-    setCustomer(customer);
-  };
-
-  const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: false });
 
   const InnerComponent = () => {
     if (isLoading) return <BasicSpinner />;
@@ -58,7 +52,7 @@ export const CreateRequisitionModalComponent: FC<
                 <ProgramRequisitionOptions
                   customerOptions={data.nodes ?? []}
                   onCreate={onCreate}
-                  onChangeCustomer={handleCustomerChange}
+                  onChangeCustomer={setCustomer}
                   customer={customer}
                 />
               ),
