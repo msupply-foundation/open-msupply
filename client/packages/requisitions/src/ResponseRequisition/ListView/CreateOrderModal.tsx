@@ -110,11 +110,13 @@ export const CreateOrderModal = ({
 
   return (
     <>
-      <InternalSupplierSearchModal
-        open={!selectedSupplier && isOpen}
-        onClose={onClose}
-        onChange={supplier => setSelectedSupplier(supplier)}
-      />
+      {!selectedSupplier && isOpen ? (
+        <InternalSupplierSearchModal
+          open={true}
+          onClose={onClose}
+          onChange={supplier => setSelectedSupplier(supplier)}
+        />
+      ) : null}
       {isOpen && !!selectedSupplier && (
         <Modal
           title={t('button.create-order')}
