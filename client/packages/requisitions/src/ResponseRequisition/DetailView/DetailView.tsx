@@ -13,6 +13,9 @@ import {
   useBreadcrumbs,
   useEditModal,
   useAuthContext,
+  useNonPaginatedMaterialTable,
+  MaterialTable,
+  NothingHere,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { ActivityLogList } from '@openmsupply-client/system';
@@ -20,13 +23,14 @@ import { Toolbar } from './Toolbar/Toolbar';
 import { Footer } from './Footer';
 import { AppBarButtons } from './AppBarButtons';
 import { SidePanel } from './SidePanel';
-import { ContentArea } from './ContentArea';
 import { useResponse, ResponseLineFragment, ResponseFragment } from '../api';
 import { IndicatorsTab } from './IndicatorsTab';
 import { ResponseRequisitionLineErrorProvider } from '../context';
 import { ProgramIndicatorFragment } from '../../RequestRequisition/api';
 import { buildIndicatorEditRoute } from './utils';
 import { ResponseLineEditModal } from './ResponseLineEdit';
+import { useResponseColumns } from './columns';
+import { isResponseLinePlaceholderRow } from '../../utils';
 
 export const DetailView = () => {
   const t = useTranslation();
@@ -43,6 +47,7 @@ export const DetailView = () => {
   } = useEditModal<string | null>();
 
   const { data, isLoading } = useResponse.document.get();
+  const { newColumns } = useResponseColumns();
   const isDisabled = useResponse.utils.isDisabled();
   const { data: programIndicators, isLoading: isProgramIndicatorsLoading } =
     useResponse.document.indicators(
@@ -85,6 +90,24 @@ export const DetailView = () => {
     setCustomBreadcrumbs({ 1: data?.requisitionNumber.toString() ?? '' });
   }, [setCustomBreadcrumbs, data?.requisitionNumber]);
 
+  const { table, selectedRows } = useNonPaginatedMaterialTable({
+    tableId: 'response-requisition-detail',
+    columns: newColumns,
+    data: data?.lines.nodes || [],
+    // isLoading: isFetching,
+    // isError,
+    getIsPlaceholderRow: isResponseLinePlaceholderRow,
+    onRowClick,
+    // initialSort: { key: 'itemName', dir: 'asc' },
+    noDataElement: (
+      <NothingHere
+        body={t('error.no-requisition-items')}
+        onCreate={isDisabled ? undefined : onAddItem}
+        buttonText={t('button.add-item')}
+      />
+    ),
+  });
+
   if (isLoading) return <DetailViewSkeleton />;
 
   const showIndicatorTab =
@@ -95,15 +118,7 @@ export const DetailView = () => {
 
   const tabs = [
     {
-      Component: (
-        <ContentArea
-          onAddItem={onAddItem}
-          onRowClick={onRowClick}
-          disableAddLine={
-            isDisabled || !!data?.linkedRequisition || !!data?.programName
-          }
-        />
-      ),
+      Component: <MaterialTable table={table} />,
       value: 'Details',
     },
     {
@@ -142,8 +157,10 @@ export const DetailView = () => {
         />
         <Toolbar />
         <DetailTabs tabs={tabs} />
-
-        <Footer />
+        <Footer
+          selectedRows={selectedRows}
+          resetRowSelection={table.resetRowSelection}
+        />
         <SidePanel />
         {isOpen && (
           <ResponseLineEditModal
