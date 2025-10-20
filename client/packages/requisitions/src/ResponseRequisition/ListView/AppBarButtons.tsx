@@ -165,16 +165,18 @@ export const AppBarButtons = ({
         onClose={requisitionModalController.toggleOff}
         onCreate={handleCreateRequisition}
       />
-      <CreateOrderModal
-        isOpen={createOrderModalController.isOn}
-        onClose={() => {
-          setSelectedSupplier(undefined);
-          createOrderModalController.toggleOff();
-        }}
-        onRowClick={handleCreateOrderFromRequisition}
-        selectedSupplier={selectedSupplier}
-        setSelectedSupplier={setSelectedSupplier}
-      />
+      {canCreateInternalOrderFromARequisition && (
+        <CreateOrderModal
+          isOpen={createOrderModalController.isOn}
+          onClose={() => {
+            setSelectedSupplier(undefined);
+            createOrderModalController.toggleOff();
+          }}
+          onRowClick={handleCreateOrderFromRequisition}
+          selectedSupplier={selectedSupplier}
+          setSelectedSupplier={setSelectedSupplier}
+        />
+      )}
     </AppBarButtonsPortal>
   );
 };
