@@ -25,7 +25,6 @@ export const useResponseColumns = () => {
 
   const showExtraProgramColumns =
     !!programName && store?.preferences?.extraFieldsInRequisition;
-  // const isRemoteAuthorisation = true;
 
   const columns = useMemo(
     (): ColumnDef<ResponseLineFragment>[] => [
@@ -39,6 +38,7 @@ export const useResponseColumns = () => {
         accessorKey: 'item.code',
         header: t('label.code'),
         size: 100,
+        pin: 'left',
         enableSorting: true,
         enableColumnFilter: true,
       },
@@ -60,7 +60,6 @@ export const useResponseColumns = () => {
         accessorFn: row =>
           row.item?.isVaccine ? row.item.doses : UNDEFINED_STRING_VALUE,
         header: t('label.doses-per-unit'),
-        enableColumnFilter: true,
         size: 100,
         columnType: ColumnType.Number,
         includeColumn: manageVaccinesInDoses,
@@ -222,6 +221,7 @@ export const useResponseColumns = () => {
         header: t('label.supply-quantity'),
         columnType: ColumnType.Number,
         Cell: UnitsAndDosesCell,
+        enableSorting: true,
       },
       // TODO: Global pref to show/hide column
       {
@@ -241,6 +241,7 @@ export const useResponseColumns = () => {
         size: 100,
         columnType: ColumnType.Number,
         Cell: UnitsAndDosesCell,
+        enableSorting: true,
       },
       {
         accessorKey: 'remainingQuantityToSupply',
@@ -249,6 +250,7 @@ export const useResponseColumns = () => {
         size: 100,
         columnType: ColumnType.Number,
         Cell: UnitsAndDosesCell,
+        enableSorting: true,
       },
     ],
     [
