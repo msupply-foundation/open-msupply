@@ -9,15 +9,16 @@ import {
   ColumnType,
   UnitsAndDosesCell,
 } from '@openmsupply-client/common';
-import { ResponseLineFragment, useResponse } from './../api';
+import { ResponseLineFragment, useResponse } from '../api';
 import { useResponseRequisitionLineErrorContext } from '../context';
 import { useMemo } from 'react';
+import React from 'react';
 
 export const useResponseColumns = () => {
   const t = useTranslation();
 
   const { getError } = useResponseRequisitionLineErrorContext();
-  const { manageVaccinesInDoses } = usePreferences();
+  const { manageVaccinesInDoses, warningForExcessRequest } = usePreferences();
 
   const { store } = useAuthContext();
   const { isRemoteAuthorisation } = useResponse.utils.isRemoteAuthorisation();
@@ -199,7 +200,15 @@ export const useResponseColumns = () => {
         header: t('label.requested'),
         size: 100,
         columnType: ColumnType.Number,
-        Cell: UnitsAndDosesCell,
+        Cell: ({ row, ...props }) => {
+          const showAlert =
+            warningForExcessRequest &&
+            row.original.requestedQuantity - row.original.suggestedQuantity >=
+              1;
+          return (
+            <UnitsAndDosesCell row={row} {...props} showAlert={showAlert} />
+          );
+        },
         enableSorting: true,
       },
       {
