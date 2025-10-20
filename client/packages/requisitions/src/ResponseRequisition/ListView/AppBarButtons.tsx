@@ -66,44 +66,38 @@ export const AppBarButtons = ({
   const handleCreateRequisition = async (
     newRequisition: NewGeneralRequisition | NewProgramRequisition
   ) => {
-    try {
-      const id = FnUtils.generateUUID();
-      let requisitionId: string | undefined;
+    const id = FnUtils.generateUUID();
+    let requisitionId: string | undefined;
 
-      switch (newRequisition.type) {
-        case NewRequisitionType.General:
-          requisitionId = await onCreate({
-            id,
-            otherPartyId: newRequisition.name.id,
-          });
-          break;
+    switch (newRequisition.type) {
+      case NewRequisitionType.General:
+        requisitionId = await onCreate({
+          id,
+          otherPartyId: newRequisition.name.id,
+        });
+        break;
+      case NewRequisitionType.Program:
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { type, ...programData } = newRequisition;
+        const response = await onProgramCreate({
+          id,
+          ...programData,
+        });
 
-        case NewRequisitionType.Program:
-          // eslint-disable-next-line @typescript-eslint/no-unused-vars
-          const { type, ...programData } = newRequisition;
-          const response = await onProgramCreate({
-            id,
-            ...programData,
-          });
+        if (response.__typename === 'RequisitionNode') {
+          requisitionId = response.id;
+        }
+        break;
+    }
 
-          if (response.__typename === 'RequisitionNode') {
-            requisitionId = response.id;
-          }
-          break;
-      }
-
-      if (requisitionId) {
-        requisitionModalController.toggleOff();
-        navigate(
-          RouteBuilder.create(AppRoute.Distribution)
-            .addPart(AppRoute.CustomerRequisition)
-            .addPart(requisitionId)
-            .build()
-        );
-      }
-    } catch (err) {
-      console.error('Error creating requisition:', err);
-      error(t('error.failed-to-create-requisition'))();
+    if (requisitionId) {
+      requisitionModalController.toggleOff();
+      navigate(
+        RouteBuilder.create(AppRoute.Distribution)
+          .addPart(AppRoute.CustomerRequisition)
+          .addPart(requisitionId)
+          .build()
+      );
     }
   };
 
