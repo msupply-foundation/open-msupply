@@ -1,7 +1,7 @@
 use std::{collections::HashMap, ops::Neg};
 
 use crate::common::days_in_a_month;
-use crate::preference::{ExcludeTransfers, Preference};
+use crate::preference::{AdjustForNumberOfDaysOutOfStock, ExcludeTransfers, Preference};
 use crate::{
     backend_plugin::{
         plugin_provider::{PluginInstance, PluginResult},
@@ -96,13 +96,32 @@ pub fn get_item_stats(
     let dos_rows = DaysOutOfStockRepository::new(connection).query(Some(filter))?;
 
     let consumption_map = get_consumption_map(&consumption_rows)?;
-    let transfer_consumption_map = get_transfer_consumption_map(&consumption_rows)?;
-    let adjusted_stock_days_map = get_days_of_stock_map(dos_rows, number_of_days)?;
 
     let exclude_transfers = ExcludeTransfers.load(connection, None).unwrap_or(false);
+    let transfer_consumption_map = if exclude_transfers {
+        Some(get_transfer_consumption_map(&consumption_rows)?)
+    } else {
+        None
+    };
+
+    let adjust_for_days_out_of_stock = AdjustForNumberOfDaysOutOfStock
+        .load(connection, None)
+        .unwrap_or(false);
+
+    let adjusted_days_out_of_stock_map = if adjust_for_days_out_of_stock {
+        Some(get_days_out_of_stock_adjustment_map(
+            dos_rows,
+            number_of_days,
+        )?)
+    } else {
+        None
+    };
 
     let adjusted_consumption_map = match exclude_transfers {
-        true => combine_maps(consumption_map.clone(), transfer_consumption_map),
+        true => combine_consumption_maps(
+            consumption_map.clone(),
+            transfer_consumption_map.unwrap_or_default(),
+        ),
         false => consumption_map.clone(),
     };
 
@@ -111,7 +130,7 @@ pub fn get_item_stats(
         amc_lookback_months,
         // Really don't like cloning this
         consumption_map: adjusted_consumption_map.clone(),
-        adjusted_stock_days_map,
+        adjusted_days_out_of_stock_map,
         item_ids: item_ids.clone(),
     };
 
@@ -150,7 +169,7 @@ pub fn get_item_stats_map(
     Ok(item_stats_map)
 }
 
-fn combine_maps(
+fn combine_consumption_maps(
     mut consumption_map: HashMap<String, f64>,
     transfer_consumption_map: HashMap<String, f64>,
 ) -> HashMap<String, f64> {
@@ -170,15 +189,16 @@ impl amc::Trait for DefaultAmc {
         amc::Input {
             amc_lookback_months,
             consumption_map,
-            adjusted_stock_days_map,
+            adjusted_days_out_of_stock_map,
             ..
         }: amc::Input,
     ) -> PluginResult<amc::Output> {
         Ok(consumption_map
             .into_iter()
             .map(|(item_id, total_consumption)| {
-                let adjusted_days = adjusted_stock_days_map
-                    .get(&item_id)
+                let adjusted_days = adjusted_days_out_of_stock_map
+                    .as_ref()
+                    .and_then(|map| map.get(&item_id))
                     .copied()
                     .unwrap_or(1.0);
 
@@ -206,7 +226,6 @@ fn get_consumption_map(
             .or_insert(0.0);
         *item_total_consumption += consumption_row.quantity;
     }
-
     Ok(consumption_map)
 }
 
@@ -226,21 +245,21 @@ fn get_transfer_consumption_map(
     Ok(transfer_consumption_map)
 }
 
-fn get_days_of_stock_map(
+fn get_days_out_of_stock_adjustment_map(
     dos_rows: Vec<DaysOutOfStockRow>,
     number_of_days: f64,
 ) -> Result<
     HashMap<String /* item_id */, f64 /* (numberOfDays/(numberOfDays-dos)) */>,
     RepositoryError,
 > {
-    let mut days_of_stock_map = HashMap::new();
+    let mut days_out_of_stock_adjustment_map = HashMap::new();
     for dos_row in dos_rows.into_iter() {
-        let adjusted_days = days_of_stock_map
+        let adjusted_days = days_out_of_stock_adjustment_map
             .entry(dos_row.item_id.clone())
             .or_insert(0.0);
         *adjusted_days = number_of_days / (number_of_days - dos_row.total_dos);
     }
-    Ok(days_of_stock_map)
+    Ok(days_out_of_stock_adjustment_map)
 }
 
 pub fn get_stock_on_hand_rows(
@@ -264,23 +283,19 @@ impl ItemStats {
     ) -> Vec<Self> {
         stock_on_hand_rows
             .into_iter()
-            .map(|stock_on_hand| {
-                let total_consumption = consumption_map
+            .map(|stock_on_hand| ItemStats {
+                available_stock_on_hand: stock_on_hand.available_stock_on_hand,
+                item_id: stock_on_hand.item_id.clone(),
+                item_name: stock_on_hand.item_name.clone(),
+                average_monthly_consumption: amc_by_item
                     .get(&stock_on_hand.item_id)
-                    .cloned()
-                    .unwrap_or(0.0);
-
-                ItemStats {
-                    available_stock_on_hand: stock_on_hand.available_stock_on_hand,
-                    item_id: stock_on_hand.item_id.clone(),
-                    item_name: stock_on_hand.item_name.clone(),
-                    average_monthly_consumption: amc_by_item
-                        .get(&stock_on_hand.item_id)
-                        .and_then(|r| r.average_monthly_consumption)
-                        .unwrap_or_default(),
-                    total_consumption,
-                    total_stock_on_hand: stock_on_hand.total_stock_on_hand,
-                }
+                    .and_then(|r| r.average_monthly_consumption)
+                    .unwrap_or_default(),
+                total_consumption: consumption_map
+                    .get(&stock_on_hand.item_id)
+                    .copied()
+                    .unwrap_or_default(),
+                total_stock_on_hand: stock_on_hand.total_stock_on_hand,
             })
             .collect()
     }
