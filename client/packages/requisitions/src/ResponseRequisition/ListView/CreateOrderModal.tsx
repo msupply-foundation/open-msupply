@@ -18,7 +18,7 @@ import { ResponseRowFragment } from '../api/operations.generated';
 import {
   InternalSupplierSearchModal,
   NameRowFragment,
-} from 'packages/system/src';
+} from '@openmsupply-client/system';
 
 interface CreateOrderModalProps {
   isOpen: boolean;
