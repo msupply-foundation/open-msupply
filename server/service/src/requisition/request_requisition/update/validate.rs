@@ -119,5 +119,36 @@ pub fn validate(
         .store_id()
         .ok_or(OutError::OtherPartyIsNotAStore)?;
 
+    if let Some(original_customer_id) = &input.original_customer_id {
+        validate_original_customer(connection, store_id, original_customer_id)?;
+    }
+
     Ok((requisition_row, status_changed))
+}
+
+fn validate_original_customer(
+    connection: &StorageConnection,
+    store_id: &str,
+    original_customer_id: &str,
+) -> Result<(), OutError> {
+    let original_customer_party = check_other_party(
+        connection,
+        store_id,
+        original_customer_id,
+        CheckOtherPartyType::Customer,
+    )
+    .map_err(|e| match e {
+        OtherPartyErrors::OtherPartyDoesNotExist => OutError::OriginalCustomerDoesNotExist,
+        OtherPartyErrors::OtherPartyNotVisible => OutError::OriginalCustomerNotVisible,
+        OtherPartyErrors::TypeMismatched => OutError::OriginalCustomerNotACustomer,
+        OtherPartyErrors::DatabaseError(repository_error) => {
+            OutError::DatabaseError(repository_error)
+        }
+    })?;
+
+    original_customer_party
+        .store_id()
+        .ok_or(OutError::OriginalCustomerIsNotAStore)?;
+
+    Ok(())
 }
