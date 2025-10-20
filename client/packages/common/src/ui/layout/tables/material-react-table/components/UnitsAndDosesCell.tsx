@@ -54,8 +54,7 @@ export const UnitsAndDosesCell = <T extends MRT_RowData>({
         <AlertIcon
           sx={{
             color: theme => theme.palette.error.main,
-            position: 'absolute',
-            right: 0,
+            marginLeft: '0.2em',
             width: '0.7em',
           }}
         />
