@@ -47,7 +47,7 @@ export const DetailView = () => {
   } = useEditModal<string | null>();
 
   const { data, isLoading } = useResponse.document.get();
-  const { newColumns } = useResponseColumns();
+  const { columns } = useResponseColumns();
   const isDisabled = useResponse.utils.isDisabled();
   const { data: programIndicators, isLoading: isProgramIndicatorsLoading } =
     useResponse.document.indicators(
@@ -90,9 +90,11 @@ export const DetailView = () => {
     setCustomBreadcrumbs({ 1: data?.requisitionNumber.toString() ?? '' });
   }, [setCustomBreadcrumbs, data?.requisitionNumber]);
 
+  console.log('DATA', data?.lines.nodes);
+
   const { table, selectedRows } = useNonPaginatedMaterialTable({
     tableId: 'response-requisition-detail',
-    columns: newColumns,
+    columns,
     data: data?.lines.nodes || [],
     // isLoading: isFetching,
     // isError,

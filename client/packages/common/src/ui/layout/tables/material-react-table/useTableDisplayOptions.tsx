@@ -240,7 +240,7 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
           table.getState().density === 'spacious'
             ? '0.7rem'
             : table.getState().density === 'comfortable'
-              ? '0.35rem 0.5rem'
+              ? '0.35rem 0.3rem'
               : undefined, // default for "compact",
 
         // Indent "sub-rows" when expanded
