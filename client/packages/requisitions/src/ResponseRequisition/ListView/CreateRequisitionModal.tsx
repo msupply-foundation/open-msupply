@@ -41,40 +41,45 @@ export const CreateRequisitionModalComponent: FC<
 
   const [customer, setCustomer] = React.useState<NameRowFragment | null>(null);
 
-  const InnerComponent = () => {
-    if (isLoading) return <BasicSpinner />;
-    if (data && data.totalCount > 0)
-      return (
-        <ModalTabs
-          tabs={[
-            {
-              Component: (
-                <ProgramRequisitionOptions
-                  customerOptions={data.nodes ?? []}
-                  onCreate={onCreate}
-                  onChangeCustomer={setCustomer}
-                  customer={customer}
-                />
-              ),
-              value: t('label.requisition-program'),
-            },
-            {
-              Component: (
-                <GeneralRequisition
-                  onCreate={onCreate}
-                  open={isOpen}
-                  onClose={onClose}
-                />
-              ),
-              value: t('label.requisition-general'),
-            },
-          ]}
+  const programTab = React.useMemo(
+    () => ({
+      Component: (
+        <ProgramRequisitionOptions
+          customerOptions={data?.nodes ?? []}
+          onCreate={onCreate}
+          onChangeCustomer={setCustomer}
+          customer={customer}
         />
-      );
+      ),
+      value: t('label.requisition-program'),
+    }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [data?.nodes, onCreate, customer]
+  );
+
+  const generalTab = React.useMemo(
+    () => ({
+      Component: (
+        <GeneralRequisition
+          onCreate={onCreate}
+          open={isOpen}
+          onClose={onClose}
+        />
+      ),
+      value: t('label.requisition-general'),
+    }),
+    [onCreate, isOpen, onClose, t]
+  );
+
+  const InnerComponent = React.useMemo(() => {
+    if (isLoading) return <BasicSpinner />;
+    if (data && data.totalCount > 0) {
+      return <ModalTabs tabs={[programTab, generalTab]} />;
+    }
     return (
       <GeneralRequisition onCreate={onCreate} open={isOpen} onClose={onClose} />
     );
-  };
+  }, [isLoading, data, onCreate, isOpen, onClose, programTab, generalTab]);
 
   return (
     <Modal
@@ -83,7 +88,7 @@ export const CreateRequisitionModalComponent: FC<
       slideAnimation={false}
       title={t('label.new-requisition')}
     >
-      <InnerComponent />
+      {InnerComponent}
     </Modal>
   );
 };
