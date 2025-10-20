@@ -6,6 +6,7 @@ use crate::{
     },
     store_preference::get_store_preferences,
     validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors},
+    NullableUpdate,
 };
 use repository::{
     reason_option_row::ReasonOptionType,
@@ -100,8 +101,9 @@ pub fn validate(
     };
     validate_supplier(connection, store_id, supplier_id)?;
 
-    let Some(original_customer_id) = &input.original_customer_id else {
-        return Ok((requisition_row, status_changed));
+    let original_customer_id = match &input.original_customer_id {
+        Some(NullableUpdate { value: Some(id) }) => id,
+        _ => return Ok((requisition_row, status_changed)),
     };
     validate_original_customer(connection, store_id, original_customer_id)?;
 
