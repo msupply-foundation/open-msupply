@@ -93,7 +93,7 @@ export const StockLevelsSummary = () => {
                 link: RouteBuilder.create(AppRoute.Catalogue)
                   .addPart(AppRoute.Items)
                   .addQuery({
-                    minMonthsOfStock: 6,
+                    outOfStockProducts: true,
                   })
                   .build(),
               },
@@ -107,7 +107,7 @@ export const StockLevelsSummary = () => {
                 link: RouteBuilder.create(AppRoute.Catalogue)
                   .addPart(AppRoute.Items)
                   .addQuery({
-                    minMonthsOfStock: 6,
+                    productsAtRiskOfBeingOutOfStock: true,
                   })
                   .build(),
               },
