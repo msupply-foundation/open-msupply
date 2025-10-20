@@ -95,15 +95,28 @@ pub fn validate(
         }
     }
 
-    let other_party_id = match &input.other_party_id {
-        None => return Ok((requisition_row, status_changed)),
-        Some(other_party_id) => other_party_id,
+    let Some(supplier_id) = &input.other_party_id else {
+        return Ok((requisition_row, status_changed));
     };
+    validate_supplier(connection, store_id, supplier_id)?;
 
-    let other_party = check_other_party(
+    let Some(original_customer_id) = &input.original_customer_id else {
+        return Ok((requisition_row, status_changed));
+    };
+    validate_original_customer(connection, store_id, original_customer_id)?;
+
+    Ok((requisition_row, status_changed))
+}
+
+fn validate_supplier(
+    connection: &StorageConnection,
+    store_id: &str,
+    supplier_id: &str,
+) -> Result<(), OutError> {
+    let supplier = check_other_party(
         connection,
         store_id,
-        other_party_id,
+        supplier_id,
         CheckOtherPartyType::Supplier,
     )
     .map_err(|e| match e {
@@ -115,15 +128,9 @@ pub fn validate(
         }
     })?;
 
-    other_party
-        .store_id()
-        .ok_or(OutError::OtherPartyIsNotAStore)?;
+    supplier.store_id().ok_or(OutError::OtherPartyIsNotAStore)?;
 
-    if let Some(original_customer_id) = &input.original_customer_id {
-        validate_original_customer(connection, store_id, original_customer_id)?;
-    }
-
-    Ok((requisition_row, status_changed))
+    Ok(())
 }
 
 fn validate_original_customer(
@@ -131,7 +138,7 @@ fn validate_original_customer(
     store_id: &str,
     original_customer_id: &str,
 ) -> Result<(), OutError> {
-    let original_customer_party = check_other_party(
+    let original_customer = check_other_party(
         connection,
         store_id,
         original_customer_id,
@@ -146,7 +153,7 @@ fn validate_original_customer(
         }
     })?;
 
-    original_customer_party
+    original_customer
         .store_id()
         .ok_or(OutError::OriginalCustomerIsNotAStore)?;
 
