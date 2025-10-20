@@ -6,6 +6,7 @@ use crate::{
     },
     requisition::query::get_requisition,
     service_provider::ServiceContext,
+    NullableUpdate,
 };
 use chrono::NaiveDate;
 use repository::{
@@ -38,7 +39,7 @@ pub struct UpdateRequestRequisition {
     pub min_months_of_stock: Option<f64>,
     pub status: Option<UpdateRequestRequisitionStatus>,
     pub expected_delivery_date: Option<NaiveDate>,
-    pub original_customer_id: Option<String>,
+    pub original_customer_id: Option<NullableUpdate<String>>,
 }
 
 #[derive(Debug, PartialEq)]
