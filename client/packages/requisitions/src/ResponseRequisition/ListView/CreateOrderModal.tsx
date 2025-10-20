@@ -107,7 +107,7 @@ export const CreateOrderModal = ({
 
   return (
     <>
-      {!selectedSupplier && isOpen ? (
+      {isOpen && !selectedSupplier ? (
         <InternalSupplierSearchModal
           open={true}
           onClose={onClose}
