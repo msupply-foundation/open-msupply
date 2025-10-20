@@ -7,7 +7,6 @@ import {
   DialogButton,
   RequisitionNodeStatus,
   ColumnDef,
-  Groupable,
   ColumnType,
   useNonPaginatedMaterialTable,
   NothingHere,
@@ -93,9 +92,7 @@ export const CreateOrderModal = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const { table } = useNonPaginatedMaterialTable<
-    Groupable<ResponseRowFragment>
-  >({
+  const { table } = useNonPaginatedMaterialTable<ResponseRowFragment>({
     tableId: 'create-order-from-requisition',
     columns,
     isLoading: isLoading,
