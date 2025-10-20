@@ -12,8 +12,8 @@ import { filterByNameAndCode, NameSearchProps } from '../../utils';
 import { getNameOptionRenderer } from '../NameOptionRenderer';
 
 const InternalSupplierSearchComponent: FC<NameSearchProps> = props => {
-  const { data, isLoading } = useName.document.internalSuppliers();
   const t = useTranslation();
+  const { data, isLoading } = useName.document.internalSuppliers();
   const NameOptionRenderer = getNameOptionRenderer(t('label.on-hold'));
 
   const listProps: AutocompleteListProps<NameRowFragment> = {
