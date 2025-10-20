@@ -20,8 +20,12 @@ import { ResponseRowFragment, useResponse } from '../api';
 import { responsesToCsv } from '../../utils';
 import { AppRoute } from '@openmsupply-client/config';
 import { NewRequisitionType } from '../../types';
-import { CreateRequisitionModal } from './CreateRequisitionModal';
+import {
+  CreateRequisitionModal,
+  NewGeneralRequisition,
+} from './CreateRequisitionModal';
 import { CreateOrderModal } from './CreateOrderModal';
+import { NewProgramRequisition } from './ProgramRequisitionOptions';
 
 export const AppBarButtons = ({
   requisitionModalController,
@@ -55,34 +59,79 @@ export const AppBarButtons = ({
       error(t('error.no-data'))();
       return;
     }
-
     const csv = responsesToCsv(data.nodes, t);
     exportCSV(csv, 'requisitions');
   };
 
-  const handleRequisitionRowClick = async (
+  const handleCreateRequisition = async (
+    newRequisition: NewGeneralRequisition | NewProgramRequisition
+  ) => {
+    try {
+      const id = FnUtils.generateUUID();
+      let requisitionId: string | undefined;
+
+      switch (newRequisition.type) {
+        case NewRequisitionType.General:
+          requisitionId = await onCreate({
+            id,
+            otherPartyId: newRequisition.name.id,
+          });
+          break;
+
+        case NewRequisitionType.Program:
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          const { type, ...programData } = newRequisition;
+          const response = await onProgramCreate({
+            id,
+            ...programData,
+          });
+
+          if (response.__typename === 'RequisitionNode') {
+            requisitionId = response.id;
+          }
+          break;
+      }
+
+      if (requisitionId) {
+        requisitionModalController.toggleOff();
+        navigate(
+          RouteBuilder.create(AppRoute.Distribution)
+            .addPart(AppRoute.CustomerRequisition)
+            .addPart(requisitionId)
+            .build()
+        );
+      }
+    } catch (err) {
+      console.error('Error creating requisition:', err);
+      error(t('error.failed-to-create-requisition'))();
+    }
+  };
+
+  const handleCreateOrderFromRequisition = async (
     requisition: ResponseRowFragment
   ) => {
     try {
-      const id = await createOrder({
+      const orderId = await createOrder({
         id: FnUtils.generateUUID(),
         responseRequisitionId: requisition.id,
         otherPartyId: selectedSupplier?.id || '',
         maxMonthsOfStock: requisition.maxMonthsOfStock,
         minMonthsOfStock: requisition.minMonthsOfStock,
       });
+
       navigate(
         RouteBuilder.create(AppRoute.Replenishment)
           .addPart(AppRoute.InternalOrder)
-          .addPart(id)
+          .addPart(orderId)
           .build()
       );
-    } catch (e) {
-      console.error('Error creating order:', e);
+    } catch (err) {
+      console.error('Error creating order:', err);
       error(t('error.failed-to-create-internal-order'))();
+    } finally {
+      setSelectedSupplier(undefined);
+      createOrderModalController.toggleOff();
     }
-    setSelectedSupplier(undefined);
-    createOrderModalController.toggleOff();
   };
 
   return (
@@ -114,48 +163,15 @@ export const AppBarButtons = ({
       <CreateRequisitionModal
         isOpen={requisitionModalController.isOn}
         onClose={requisitionModalController.toggleOff}
-        onCreate={async newRequisition => {
-          switch (newRequisition.type) {
-            case NewRequisitionType.General:
-              return onCreate({
-                id: FnUtils.generateUUID(),
-                otherPartyId: newRequisition.name.id,
-              }).then(id => {
-                requisitionModalController.toggleOff();
-                navigate(
-                  RouteBuilder.create(AppRoute.Distribution)
-                    .addPart(AppRoute.CustomerRequisition)
-                    .addPart(String(id))
-                    .build()
-                );
-              });
-            case NewRequisitionType.Program:
-              // eslint-disable-next-line @typescript-eslint/no-unused-vars
-              const { type: _, ...rest } = newRequisition;
-              return onProgramCreate({
-                id: FnUtils.generateUUID(),
-                ...rest,
-              }).then(response => {
-                if (response.__typename == 'RequisitionNode') {
-                  requisitionModalController.toggleOff();
-                  navigate(
-                    RouteBuilder.create(AppRoute.Distribution)
-                      .addPart(AppRoute.CustomerRequisition)
-                      .addPart(String(response.id))
-                      .build()
-                  );
-                }
-              });
-          }
-        }}
+        onCreate={handleCreateRequisition}
       />
       <CreateOrderModal
-        isOpen={createOrderModalController.isOn && !!selectedSupplier}
+        isOpen={createOrderModalController.isOn}
         onClose={() => {
           setSelectedSupplier(undefined);
           createOrderModalController.toggleOff();
         }}
-        onRowClick={handleRequisitionRowClick}
+        onRowClick={handleCreateOrderFromRequisition}
         selectedSupplier={selectedSupplier}
         setSelectedSupplier={setSelectedSupplier}
       />

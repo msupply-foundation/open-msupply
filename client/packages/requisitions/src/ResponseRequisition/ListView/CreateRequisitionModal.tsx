@@ -20,7 +20,7 @@ import {
   ProgramRequisitionOptions,
 } from './ProgramRequisitionOptions';
 
-interface NewGeneralRequisition {
+export interface NewGeneralRequisition {
   type: NewRequisitionType.General;
   name: NameRowFragment;
 }
