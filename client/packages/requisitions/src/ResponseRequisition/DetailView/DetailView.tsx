@@ -98,7 +98,7 @@ export const DetailView = () => {
     // isError,
     getIsPlaceholderRow: isResponseLinePlaceholderRow,
     onRowClick,
-    // initialSort: { key: 'itemName', dir: 'asc' },
+    initialSort: { key: 'itemName', dir: 'asc' },
     noDataElement: (
       <NothingHere
         body={t('error.no-requisition-items')}
