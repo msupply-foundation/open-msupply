@@ -18,6 +18,8 @@ pub struct ItemCountsResponse {
     no_stock: i64,
     low_stock: i64,
     more_than_six_months_stock: i64,
+    out_of_stock_products: i64,
+    products_at_risk_of_being_out_of_stock: i64,
 }
 
 #[Object]
@@ -36,6 +38,9 @@ impl ItemCounts {
                 no_stock: item_counts.no_stock,
                 low_stock: item_counts.low_stock,
                 more_than_six_months_stock: item_counts.more_than_six_months_stock,
+                out_of_stock_products: item_counts.out_of_stock_products,
+                products_at_risk_of_being_out_of_stock: item_counts
+                    .products_at_risk_of_being_out_of_stock,
             }),
             Err(err) => Err(StandardGraphqlError::from_error(&err)),
         }

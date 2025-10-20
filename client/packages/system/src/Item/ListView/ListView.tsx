@@ -30,6 +30,8 @@ const ItemListComponent = () => {
       { key: 'hasStockOnHand', condition: '=' },
       { key: 'minMonthsOfStock', condition: 'isNumber' },
       { key: 'maxMonthsOfStock', condition: 'isNumber' },
+      { key: 'outOfStockProducts', condition: '=' },
+      { key: 'productsAtRiskOfBeingOutOfStock', condition: '=' },
     ],
   });
 
