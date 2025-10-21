@@ -208,6 +208,13 @@ export type RequestFragment = {
     startDate: string;
     endDate: string;
   } | null;
+  createdFromRequisition?: {
+    __typename: 'RequisitionNode';
+    id: string;
+    requisitionNumber: number;
+    createdDatetime: string;
+    user?: { __typename: 'UserNode'; username: string } | null;
+  } | null;
 };
 
 export type OnlyHereToAvoidUnusedWarningsQueryVariables = Types.Exact<{
@@ -359,6 +366,15 @@ export const RequestFragmentDoc = gql`
     }
     orderType
     isEmergency
+    createdFromRequisition {
+      id
+      requisitionNumber
+      createdDatetime
+      user {
+        __typename
+        username
+      }
+    }
   }
   ${RequestLineFragmentDoc}
 `;

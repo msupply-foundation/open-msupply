@@ -142,6 +142,16 @@ fragment Request on RequisitionNode {
   }
   orderType
   isEmergency
+
+  createdFromRequisition {
+    id
+    requisitionNumber
+    createdDatetime
+    user {
+      __typename
+      username
+    }
+  }
 }
 
 query OnlyHereToAvoidUnusedWarnings {
