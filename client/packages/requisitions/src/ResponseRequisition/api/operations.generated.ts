@@ -261,6 +261,16 @@ export type ResponseFragment = {
     name: string;
     store?: { __typename: 'StoreNode'; id: string; code: string } | null;
   };
+  destinationCustomer?: {
+    __typename: 'NameNode';
+    id: string;
+    code: string;
+    isCustomer: boolean;
+    isSupplier: boolean;
+    isOnHold: boolean;
+    name: string;
+    store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+  } | null;
   program?: { __typename: 'ProgramNode'; id: string; name: string } | null;
   period?: {
     __typename: 'PeriodNode';
@@ -403,6 +413,16 @@ export type ResponseByNumberQuery = {
           name: string;
           store?: { __typename: 'StoreNode'; id: string; code: string } | null;
         };
+        destinationCustomer?: {
+          __typename: 'NameNode';
+          id: string;
+          code: string;
+          isCustomer: boolean;
+          isSupplier: boolean;
+          isOnHold: boolean;
+          name: string;
+          store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+        } | null;
         program?: {
           __typename: 'ProgramNode';
           id: string;
@@ -553,6 +573,16 @@ export type ResponseByIdQuery = {
           name: string;
           store?: { __typename: 'StoreNode'; id: string; code: string } | null;
         };
+        destinationCustomer?: {
+          __typename: 'NameNode';
+          id: string;
+          code: string;
+          isCustomer: boolean;
+          isSupplier: boolean;
+          isOnHold: boolean;
+          name: string;
+          store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+        } | null;
         program?: {
           __typename: 'ProgramNode';
           id: string;
@@ -1142,6 +1172,19 @@ export const ResponseFragmentDoc = gql`
       }
     }
     otherParty(storeId: $storeId) {
+      __typename
+      id
+      code
+      isCustomer
+      isSupplier
+      isOnHold
+      name
+      store {
+        id
+        code
+      }
+    }
+    destinationCustomer(storeId: $storeId) {
       __typename
       id
       code
