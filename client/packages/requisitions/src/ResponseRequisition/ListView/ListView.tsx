@@ -1,9 +1,6 @@
-import React, { FC, useEffect, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import {
   useNavigate,
-  TableProvider,
-  createTableStore,
-  useTableStore,
   RequisitionNodeStatus,
   useTranslation,
   NothingHere,
@@ -25,15 +22,7 @@ import {
 import { useResponse, ResponseRowFragment, ResponseFragment } from '../api';
 import { Footer } from './Footer';
 
-const useDisableResponseRows = (rows?: ResponseRowFragment[]) => {
-  const { setDisabledRows } = useTableStore();
-  useEffect(() => {
-    const disabledRows = rows?.filter(isResponseDisabled).map(({ id }) => id);
-    if (disabledRows) setDisabledRows(disabledRows);
-  }, [rows]);
-};
-
-export const ResponseRequisitionListView: FC = () => {
+export const ListView = () => {
   const t = useTranslation();
   const navigate = useNavigate();
   const modalController = useToggle();
@@ -66,7 +55,6 @@ export const ResponseRequisitionListView: FC = () => {
   const queryParams = { ...filter, sortBy, page, first, offset };
   const { data, isError, isFetching } = useResponse.document.list(queryParams);
   const { authoriseResponseRequisitions } = useResponse.utils.preferences();
-  useDisableResponseRows(data?.nodes);
   const program =
     data?.nodes.some(row => row.programName) ||
     data?.nodes.some(row => row.orderType) ||
@@ -186,13 +174,5 @@ export const ResponseRequisitionListView: FC = () => {
         resetRowSelection={table.resetRowSelection}
       />
     </>
-  );
-};
-
-export const ListView: FC = () => {
-  return (
-    <TableProvider createStore={createTableStore}>
-      <ResponseRequisitionListView />
-    </TableProvider>
   );
 };
