@@ -14,41 +14,35 @@ import {
   StatusCell,
   VaccinationCardItemNodeStatus,
 } from '@openmsupply-client/common';
-import { usePatientVaccineCard } from '../api/usePatientVaccineCard';
 import {
   VaccinationCardFragment,
   VaccinationCardItemFragment,
 } from '../api/operations.generated';
+import { isPreviousDoseGiven } from '../utils';
 
 interface VaccinationCardProps {
   programEnrolmentId: string;
   openModal: (row: VaccinationCardItemFragment) => void;
   encounterId?: string;
+  data?: VaccinationCardFragment;
+  isLoading: boolean;
 }
 
-const isPreviousDoseGiven = (
+const canClickRow = (
+  isEncounter: boolean,
   row: VaccinationCardItemFragment,
-  items: VaccinationCardItemFragment[] | undefined
+  items: VaccinationCardItemFragment[] | undefined,
+  canSkipDose: boolean
 ) => {
-  const vaccineCourseId = row.vaccineCourseId;
-  if (!items) return false;
-  const itemsForCourse = items.filter(
-    item => item.vaccineCourseId === vaccineCourseId
-  );
-  const doseIndex = itemsForCourse.findIndex(dose => dose.id === row.id);
-  if (doseIndex === 0) return true;
-  return itemsForCourse[doseIndex - 1]?.given;
+  if (!isEncounter) return false;
+  if (canSkipDose) return true;
+  return isPreviousDoseGiven(row, items);
 };
-
-const includeRow = (
-  includeNextDose: boolean,
-  row: VaccinationCardItemFragment,
-  items: VaccinationCardItemFragment[] | undefined
-) => (includeNextDose || row.vaccinationId) && isPreviousDoseGiven(row, items);
 
 const useStyleRowsByStatus = (
   rows: VaccinationCardItemFragment[] | undefined,
-  isEncounter: boolean
+  isEncounter: boolean,
+  canSkipDose: boolean
 ) => {
   const { updateRowStyles } = useRowStyle();
   const theme = useTheme();
@@ -65,7 +59,7 @@ const useStyleRowsByStatus = (
       .filter(row => row.status === VaccinationCardItemNodeStatus.Given)
       .map(row => row.id);
     const nonClickableRows = rows
-      .filter(row => !includeRow(isEncounter, row, rows))
+      .filter(row => !canClickRow(isEncounter, row, rows, canSkipDose))
       .map(row => row.id);
     const lastOfEachAgeRange = rows
       .filter(
@@ -123,7 +117,9 @@ const VaccinationCardComponent = ({
 
   const isEncounter = !!encounterId;
 
-  useStyleRowsByStatus(data?.items, isEncounter);
+  const canSkipDose = data?.items.some(item => item.canSkipDose) ?? false;
+
+  useStyleRowsByStatus(data?.items, isEncounter, canSkipDose);
 
   const getAgeLabel = (row: VaccinationCardItemFragment) => {
     if (row.customAgeLabel) return row.customAgeLabel;
@@ -169,9 +165,7 @@ const VaccinationCardComponent = ({
       {
         key: 'status',
         label: 'label.status',
-        accessor: ({ rowData }) =>
-          // Only show label for existing vaccinations and the next editable row
-          includeRow(true, rowData, data?.items) ? rowData.status : null,
+        accessor: ({ rowData }) => rowData.status,
         Cell: ({ ...props }) => (
           <StatusCell
             {...props}
@@ -234,7 +228,8 @@ const VaccinationCardComponent = ({
         columns={columns}
         data={data?.items ?? []}
         onRowClick={row => {
-          if (includeRow(isEncounter, row, data?.items)) openModal(row);
+          if (canClickRow(isEncounter, row, data?.items, canSkipDose))
+            openModal(row);
         }}
         noDataElement={<NothingHere body={t('error.no-items')} />}
       />
@@ -243,11 +238,7 @@ const VaccinationCardComponent = ({
 };
 
 export const VaccineCardTable: FC<VaccinationCardProps> = props => {
-  const {
-    query: { data, isLoading },
-  } = usePatientVaccineCard(props.programEnrolmentId);
-
-  if (isLoading) return <InlineSpinner />;
+  if (props.isLoading) return <InlineSpinner />;
 
   return (
     <TableProvider
@@ -256,7 +247,7 @@ export const VaccineCardTable: FC<VaccinationCardProps> = props => {
         initialSortBy: { key: 'name' },
       })}
     >
-      <VaccinationCardComponent data={data} {...props} />
+      <VaccinationCardComponent {...props} />
     </TableProvider>
   );
 };
