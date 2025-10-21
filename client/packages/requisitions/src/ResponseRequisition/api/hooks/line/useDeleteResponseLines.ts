@@ -2,22 +2,23 @@ import {
   useQueryClient,
   useMutation,
   useTranslation,
-  useTableStore,
   useDeleteConfirmation,
   noOtherVariants,
 } from '@openmsupply-client/common';
 import { useResponse } from '..';
 import { useResponseId } from '../document/useResponse';
 import { useResponseApi } from '../utils/useResponseApi';
-import { useResponseLines } from './useResponseLines';
 import { useResponseRequisitionLineErrorContext } from '../../../context';
+import { ResponseLineFragment } from '../..';
 
-export const useDeleteResponseLines = () => {
+export const useDeleteResponseLines = (
+  selectedRows: ResponseLineFragment[],
+  resetRowSelection: () => void
+) => {
   const t = useTranslation();
   const queryClient = useQueryClient();
   const api = useResponseApi();
   const responseId = useResponseId();
-  const { lines } = useResponseLines();
   const isDisabled = useResponse.utils.isDisabled();
   const { mutateAsync } = useMutation(api.deleteLines, {
     onSettled: () => queryClient.invalidateQueries(api.keys.detail(responseId)),
@@ -26,10 +27,6 @@ export const useDeleteResponseLines = () => {
   const { linkedRequisition } = useResponse.document.fields([
     'linkedRequisition',
   ]);
-
-  const selectedRows = useTableStore(state =>
-    lines.filter(({ id }) => state.rowState[id]?.isSelected)
-  );
 
   const onDelete = async () => {
     const result = await mutateAsync(selectedRows).catch(err => {
@@ -57,6 +54,7 @@ export const useDeleteResponseLines = () => {
           noOtherVariants(error);
       }
     });
+    resetRowSelection();
   };
 
   interface handleCantDelete {
