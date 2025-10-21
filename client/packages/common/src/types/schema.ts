@@ -3468,8 +3468,6 @@ export type InsertFromResponseRequisitionErrorInterface = {
 export type InsertFromResponseRequisitionInput = {
   comment?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
-  maxMonthsOfStock?: InputMaybe<Scalars['Float']['input']>;
-  minMonthsOfStock?: InputMaybe<Scalars['Float']['input']>;
   otherPartyId: Scalars['String']['input'];
   responseRequisitionId: Scalars['String']['input'];
 };
@@ -8787,6 +8785,7 @@ export type RequisitionNode = {
   colour?: Maybe<Scalars['String']['output']>;
   comment?: Maybe<Scalars['String']['output']>;
   createdDatetime: Scalars['DateTime']['output'];
+  createdFromRequisition?: Maybe<RequisitionNode>;
   destinationCustomer?: Maybe<NameNode>;
   expectedDeliveryDate?: Maybe<Scalars['NaiveDate']['output']>;
   finalisedDatetime?: Maybe<Scalars['DateTime']['output']>;

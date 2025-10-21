@@ -42,6 +42,7 @@ export const CreateOrderModal = ({
     filterBy: {
       status: { notEqualTo: RequisitionNodeStatus.Finalised },
       hasOutstandingLines: true,
+      otherPartyId: { notEqualTo: selectedSupplier?.id },
     },
   });
 
