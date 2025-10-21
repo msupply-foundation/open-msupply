@@ -1,19 +1,15 @@
-import React, { FC, useEffect } from 'react';
+import React, { useMemo } from 'react';
 import {
-  TableProvider,
-  createTableStore,
-  createQueryParamsStore,
-  InlineSpinner,
   useTranslation,
-  DataTable,
-  useColumns,
   NothingHere,
-  useFormatDateTime,
-  useRowStyle,
   useTheme,
-  StatusCell,
   VaccinationCardItemNodeStatus,
+  useNonPaginatedMaterialTable,
+  MaterialTable,
+  ColumnDef,
+  ColumnType,
 } from '@openmsupply-client/common';
+import { StatusCellNew } from '@openmsupply-client/common';
 import {
   VaccinationCardFragment,
   VaccinationCardItemFragment,
@@ -31,95 +27,25 @@ interface VaccinationCardProps {
 const canClickRow = (
   isEncounter: boolean,
   row: VaccinationCardItemFragment,
-  items: VaccinationCardItemFragment[] | undefined,
-  canSkipDose: boolean
+  items: VaccinationCardItemFragment[] | undefined
 ) => {
   if (!isEncounter) return false;
-  if (canSkipDose) return true;
+  if (row.canSkipDose) return true;
   return isPreviousDoseGiven(row, items);
 };
 
-const useStyleRowsByStatus = (
-  rows: VaccinationCardItemFragment[] | undefined,
-  isEncounter: boolean,
-  canSkipDose: boolean
-) => {
-  const { updateRowStyles } = useRowStyle();
-  const theme = useTheme();
-
-  // This replaces the default "box-shadow", and is not an exact replacement,
-  // but pretty close. Can be refined in future.
-  const BORDER_STYLE = '0.75px solid rgba(143, 144, 166, 0.3)';
-
-  useEffect(() => {
-    if (!rows) return;
-
-    const allRows = rows.map(({ id }) => id);
-    const givenRows = rows
-      .filter(row => row.status === VaccinationCardItemNodeStatus.Given)
-      .map(row => row.id);
-    const nonClickableRows = rows
-      .filter(row => !canClickRow(isEncounter, row, rows, canSkipDose))
-      .map(row => row.id);
-    const lastOfEachAgeRange = rows
-      .filter(
-        (row, index) => row.minAgeMonths !== rows[index + 1]?.minAgeMonths
-      )
-      .map(row => row.id);
-
-    updateRowStyles(nonClickableRows, {
-      '& td': {
-        cursor: 'default',
-      },
-    });
-    updateRowStyles(allRows, {
-      backgroundColor: 'white !important',
-      boxShadow: 'none',
-      '& td': {
-        borderBottom: `${BORDER_STYLE} !important`,
-      },
-      // Reset all rows to white, then apply green to given rows below
-      '& td:not(:first-of-type)': {
-        backgroundColor: `white !important`,
-      },
-      '& td:nth-of-type(2)': {
-        borderLeft: BORDER_STYLE,
-      },
-      '& td:first-of-type': {
-        borderBottom: 'none !important',
-        fontWeight: 'bold',
-      },
-    });
-    updateRowStyles(givenRows, {
-      '& td:not(:first-of-type)': {
-        backgroundColor: `${theme.palette.background.success} !important`,
-      },
-    });
-    updateRowStyles(lastOfEachAgeRange, {
-      '& td:first-of-type': {
-        borderBottom: BORDER_STYLE,
-        fontWeight: 'bold',
-      },
-    });
-  }, [rows]);
-};
-
-const VaccinationCardComponent = ({
+export const VaccineCardTable = ({
   data,
+  isLoading,
   encounterId,
   openModal,
 }: VaccinationCardProps & {
   data?: VaccinationCardFragment;
 }) => {
   const t = useTranslation();
-  const { localisedDate } = useFormatDateTime();
   const theme = useTheme();
 
   const isEncounter = !!encounterId;
-
-  const canSkipDose = data?.items.some(item => item.canSkipDose) ?? false;
-
-  useStyleRowsByStatus(data?.items, isEncounter, canSkipDose);
 
   const getAgeLabel = (row: VaccinationCardItemFragment) => {
     if (row.customAgeLabel) return row.customAgeLabel;
@@ -138,37 +64,45 @@ const VaccinationCardComponent = ({
     return monthsLabel;
   };
 
-  const columns = useColumns<VaccinationCardItemFragment>(
-    [
+  const isAgeSameAsPreviousRow = (row: VaccinationCardItemFragment) => {
+    const index = data?.items.findIndex(item => item.id === row.id) ?? 0;
+    return row.minAgeMonths === data?.items?.[index - 1]?.minAgeMonths;
+  };
+
+  const columns = useMemo(
+    (): ColumnDef<VaccinationCardItemFragment>[] => [
       {
-        key: 'age',
-        label: 'label.age',
-        sortable: false,
-        accessor: ({ rowData }) => {
-          const index =
-            data?.items.findIndex(item => item.id === rowData.id) ?? 0;
-
-          const sameAsPrev =
-            rowData.minAgeMonths === data?.items?.[index - 1]?.minAgeMonths;
-
-          // Only show age label for first of each "block", when repeated
-          return sameAsPrev ? null : getAgeLabel(rowData);
-        },
-        // Hack for "min-content"
-        width: '1%',
+        id: 'age',
+        header: t('label.age'),
+        size: 160,
+        pin: 'left',
+        accessorFn: row =>
+          isAgeSameAsPreviousRow(row) ? null : getAgeLabel(row),
+        muiTableBodyCellProps: ({ row }) => ({
+          sx: {
+            fontWeight: 'bold',
+            paddingLeft: 2,
+            ...(isAgeSameAsPreviousRow(row.original)
+              ? { borderBottom: 'none' }
+              : {}),
+          },
+        }),
+        enableHiding: false,
+        enableColumnOrdering: false,
       },
       {
-        key: 'label',
-        label: 'label.dose',
-        accessor: ({ rowData }) => rowData.label,
+        accessorKey: 'label',
+        header: t('label.dose'),
+        size: 100,
+        enableHiding: false,
       },
       {
-        key: 'status',
-        label: 'label.status',
-        accessor: ({ rowData }) => rowData.status,
-        Cell: ({ ...props }) => (
-          <StatusCell
-            {...props}
+        accessorKey: 'status',
+        header: t('label.status'),
+        size: 140,
+        Cell: ({ cell }) => (
+          <StatusCellNew
+            cell={cell}
             statusMap={{
               [VaccinationCardItemNodeStatus.Given]: {
                 color: theme.palette.vaccinationStatus.given,
@@ -189,65 +123,59 @@ const VaccinationCardComponent = ({
             }}
           />
         ),
+        enableHiding: false,
       },
       {
-        key: 'suggestedDate',
-        label: 'label.suggested-date',
-        accessor: ({ rowData }) => localisedDate(rowData.suggestedDate ?? ''),
+        id: 'suggestedDate',
+        header: t('label.suggested-date'),
+        size: 120,
+        accessorFn: row => row.suggestedDate ?? '',
+        columnType: ColumnType.Date,
       },
       {
-        key: 'dateGiven',
-        label: 'label.date-given',
-        accessor: ({ rowData }) => {
-          if (rowData.status === VaccinationCardItemNodeStatus.Given) {
-            return localisedDate(rowData.vaccinationDate ?? '');
-          } else {
-            return null;
-          }
-        },
+        id: 'dateGiven',
+        header: t('label.date-given'),
+        size: 120,
+        accessorFn: row =>
+          row.status === VaccinationCardItemNodeStatus.Given
+            ? (row.vaccinationDate ?? '')
+            : '',
+        columnType: ColumnType.Date,
       },
       {
-        key: 'batch',
-        label: 'label.batch',
+        accessorKey: 'batch',
+        header: t('label.batch'),
       },
       {
-        key: 'facilityName',
-        label: 'label.facility',
+        accessorKey: 'facilityName',
+        header: t('label.facility'),
       },
     ],
-    {},
-    // Putting data/items into deps array so that status labels get recalculated
-    // on changes
     [data]
   );
 
-  return (
-    <>
-      <DataTable
-        id={'Vaccine Course List'}
-        columns={columns}
-        data={data?.items ?? []}
-        onRowClick={row => {
-          if (canClickRow(isEncounter, row, data?.items, canSkipDose))
-            openModal(row);
-        }}
-        noDataElement={<NothingHere body={t('error.no-items')} />}
-      />
-    </>
-  );
-};
+  const { table } = useNonPaginatedMaterialTable<VaccinationCardItemFragment>({
+    tableId: 'vaccine-card-table',
+    data: data?.items ?? [],
+    columns,
+    isLoading,
+    enableRowSelection: false,
+    onRowClick: row => {
+      if (canClickRow(isEncounter, row, data?.items)) openModal(row);
+    },
+    muiTableBodyRowProps: ({ row }) => ({
+      sx: {
+        cursor: canClickRow(isEncounter, row.original, data?.items)
+          ? 'pointer'
+          : 'default',
+        backgroundColor:
+          row.original.status === VaccinationCardItemNodeStatus.Given
+            ? theme.palette.background.success
+            : undefined,
+      },
+    }),
+    noDataElement: <NothingHere body={t('error.no-items')} />,
+  });
 
-export const VaccineCardTable: FC<VaccinationCardProps> = props => {
-  if (props.isLoading) return <InlineSpinner />;
-
-  return (
-    <TableProvider
-      createStore={createTableStore}
-      queryParamsStore={createQueryParamsStore({
-        initialSortBy: { key: 'name' },
-      })}
-    >
-      <VaccinationCardComponent {...props} />
-    </TableProvider>
-  );
+  return <MaterialTable table={table} />;
 };
