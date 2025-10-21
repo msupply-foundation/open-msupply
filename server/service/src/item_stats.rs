@@ -1,7 +1,7 @@
 use std::{collections::HashMap, ops::Neg};
 
 use crate::common::days_in_a_month;
-use crate::preference::{ExcludeTransfers, Preference};
+use crate::preference::{AdjustForNumberOfDaysOutOfStock, ExcludeTransfers, Preference};
 use crate::{
     backend_plugin::{
         plugin_provider::{PluginInstance, PluginResult},
@@ -13,8 +13,9 @@ use crate::{
 };
 use chrono::{Duration, NaiveDate};
 use repository::{
-    ConsumptionFilter, ConsumptionRepository, DateFilter, EqualFilter, PluginType, RepositoryError,
-    RequisitionLine, StockOnHandFilter, StockOnHandRepository, StockOnHandRow, StorageConnection,
+    ConsumptionFilter, ConsumptionRepository, ConsumptionRow, DateFilter, DaysOutOfStockRepository,
+    DaysOutOfStockRow, EqualFilter, PluginType, RepositoryError, RequisitionLine,
+    StockOnHandFilter, StockOnHandRepository, StockOnHandRow, StorageConnection,
 };
 use util::{date_now, date_with_offset};
 
@@ -59,43 +60,77 @@ pub fn get_item_stats(
 ) -> Result<Vec<ItemStats>, PluginOrRepositoryError> {
     let default_amc_lookback_months =
         get_store_preferences(connection, store_id)?.monthly_consumption_look_back_period;
-
     let amc_lookback_months = match amc_lookback_months {
         Some(months) => months,
         None => default_amc_lookback_months,
     };
     let days_in_month: f64 = days_in_a_month(connection);
     let number_of_days = amc_lookback_months * days_in_month;
+
+    let filter: ConsumptionFilter =
+        create_amc_filter(store_id, number_of_days, &item_ids, period_end)?;
+
+    fn create_amc_filter(
+        store_id: &str,
+        number_of_days: f64,
+        item_ids: &Vec<String>,
+        period_end: Option<NaiveDate>,
+    ) -> Result<ConsumptionFilter, PluginOrRepositoryError> {
+        let end_date = period_end.unwrap_or_else(date_now);
+        let offset_end_date = end_date + Duration::days(1);
+        let start_date = date_with_offset(
+            &offset_end_date,
+            Duration::days((number_of_days).neg() as i64),
+        );
+
+        let filter = ConsumptionFilter {
+            item_id: Some(EqualFilter::equal_any(item_ids.clone())),
+            store_id: Some(EqualFilter::equal_to(store_id)),
+            date: Some(DateFilter::date_range(&start_date, &end_date)),
+        };
+
+        Ok(filter)
+    }
+
+    let consumption_rows = ConsumptionRepository::new(connection).query(Some(filter.clone()))?;
+    let dos_rows = DaysOutOfStockRepository::new(connection).query(Some(filter))?;
+
+    let consumption_map = get_consumption_map(&consumption_rows)?;
+
     let exclude_transfers = ExcludeTransfers.load(connection, None).unwrap_or(false);
-
-    // common to transfer and total consumption
-    let end_date = period_end.unwrap_or_else(date_now);
-    let offset_end_date = end_date + Duration::days(1);
-    let start_date = date_with_offset(
-        &offset_end_date,
-        Duration::days((number_of_days).neg() as i64),
-    );
-
-    let filter = ConsumptionFilter {
-        item_id: Some(EqualFilter::equal_any(item_ids.clone())),
-        store_id: Some(EqualFilter::equal_to(store_id)),
-        date: Some(DateFilter::date_range(&start_date, &end_date)),
+    let transfer_consumption_map = if exclude_transfers {
+        Some(get_transfer_consumption_map(&consumption_rows)?)
+    } else {
+        None
     };
 
-    let consumption_map = get_consumption_map(connection, filter.clone())?;
-    let transfer_consumption_map = get_transfer_consumption_map(connection, filter)?;
+    let adjust_for_days_out_of_stock = AdjustForNumberOfDaysOutOfStock
+        .load(connection, None)
+        .unwrap_or(false);
 
-    let overall_consumption_map = match exclude_transfers {
-        true => combine_maps(consumption_map.clone(), transfer_consumption_map),
+    let adjusted_days_out_of_stock_map = if adjust_for_days_out_of_stock {
+        Some(get_days_out_of_stock_adjustment_map(
+            dos_rows,
+            number_of_days,
+        )?)
+    } else {
+        None
+    };
+
+    let adjusted_consumption_map = match exclude_transfers {
+        true => combine_consumption_maps(
+            consumption_map.clone(),
+            transfer_consumption_map.unwrap_or_default(),
+        ),
         false => consumption_map.clone(),
     };
 
     let input = amc::Input {
         store_id: store_id.to_string(),
         amc_lookback_months,
-        number_of_days,
         // Really don't like cloning this
-        consumption_map: overall_consumption_map.clone(),
+        consumption_map: adjusted_consumption_map.clone(),
+        adjusted_days_out_of_stock_map,
         item_ids: item_ids.clone(),
     };
 
@@ -106,7 +141,7 @@ pub fn get_item_stats(
 
     Ok(ItemStats::new_vec(
         amc_by_item,
-        consumption_map,
+        adjusted_consumption_map,
         get_stock_on_hand_rows(connection, store_id, Some(item_ids))?,
     ))
 }
@@ -134,14 +169,14 @@ pub fn get_item_stats_map(
     Ok(item_stats_map)
 }
 
-fn combine_maps(
+fn combine_consumption_maps(
     mut consumption_map: HashMap<String, f64>,
     transfer_consumption_map: HashMap<String, f64>,
 ) -> HashMap<String, f64> {
-    for (item_id, _transfer_consumption) in transfer_consumption_map {
+    for (item_id, transfer_consumption) in transfer_consumption_map {
         consumption_map
             .entry(item_id.clone())
-            .and_modify(|_total_consumption| {});
+            .and_modify(|total_consumption| *total_consumption -= transfer_consumption);
     }
 
     consumption_map
@@ -154,23 +189,24 @@ impl amc::Trait for DefaultAmc {
         amc::Input {
             amc_lookback_months,
             consumption_map,
-            number_of_days,
+            adjusted_days_out_of_stock_map,
             ..
         }: amc::Input,
     ) -> PluginResult<amc::Output> {
         Ok(consumption_map
-            .iter()
+            .into_iter()
             .map(|(item_id, total_consumption)| {
-                // TODO: dos
-                let dos = 0.0;
+                let adjusted_days = adjusted_days_out_of_stock_map
+                    .as_ref()
+                    .and_then(|map| map.get(&item_id))
+                    .copied()
+                    .unwrap_or(1.0);
 
-                let consumption_per_month = (*total_consumption) / amc_lookback_months;
-
-                let timeframe = number_of_days / (number_of_days - dos);
-                let average_monthly_consumption = consumption_per_month * timeframe;
+                let average_monthly_consumption =
+                    total_consumption / amc_lookback_months * adjusted_days;
 
                 (
-                    item_id.to_string(),
+                    item_id,
                     amc::AverageMonthlyConsumptionItem {
                         average_monthly_consumption: Some(average_monthly_consumption),
                     },
@@ -181,11 +217,8 @@ impl amc::Trait for DefaultAmc {
 }
 
 fn get_consumption_map(
-    connection: &StorageConnection,
-    filter: ConsumptionFilter,
+    consumption_rows: &Vec<ConsumptionRow>,
 ) -> Result<HashMap<String /* item_id */, f64 /* total consumption */>, RepositoryError> {
-    let consumption_rows = ConsumptionRepository::new(connection).query(Some(filter))?;
-
     let mut consumption_map = HashMap::new();
     for consumption_row in consumption_rows.into_iter() {
         let item_total_consumption = consumption_map
@@ -193,16 +226,12 @@ fn get_consumption_map(
             .or_insert(0.0);
         *item_total_consumption += consumption_row.quantity;
     }
-
     Ok(consumption_map)
 }
 
 fn get_transfer_consumption_map(
-    connection: &StorageConnection,
-    filter: ConsumptionFilter,
+    consumption_rows: &Vec<ConsumptionRow>,
 ) -> Result<HashMap<String /* item_id */, f64 /* transfer consumption */>, RepositoryError> {
-    let consumption_rows = ConsumptionRepository::new(connection).query(Some(filter))?;
-
     let mut transfer_consumption_map = HashMap::new();
     for consumption_row in consumption_rows.into_iter() {
         if consumption_row.is_transfer == true {
@@ -214,6 +243,23 @@ fn get_transfer_consumption_map(
     }
 
     Ok(transfer_consumption_map)
+}
+
+fn get_days_out_of_stock_adjustment_map(
+    dos_rows: Vec<DaysOutOfStockRow>,
+    number_of_days: f64,
+) -> Result<
+    HashMap<String /* item_id */, f64 /* (numberOfDays/(numberOfDays-dos)) */>,
+    RepositoryError,
+> {
+    let mut days_out_of_stock_adjustment_map = HashMap::new();
+    for dos_row in dos_rows.into_iter() {
+        let adjusted_days = days_out_of_stock_adjustment_map
+            .entry(dos_row.item_id.clone())
+            .or_insert(0.0);
+        *adjusted_days = number_of_days / (number_of_days - dos_row.total_dos);
+    }
+    Ok(days_out_of_stock_adjustment_map)
 }
 
 pub fn get_stock_on_hand_rows(
@@ -237,23 +283,19 @@ impl ItemStats {
     ) -> Vec<Self> {
         stock_on_hand_rows
             .into_iter()
-            .map(|stock_on_hand| {
-                let total_consumption = consumption_map
+            .map(|stock_on_hand| ItemStats {
+                available_stock_on_hand: stock_on_hand.available_stock_on_hand,
+                item_id: stock_on_hand.item_id.clone(),
+                item_name: stock_on_hand.item_name.clone(),
+                average_monthly_consumption: amc_by_item
                     .get(&stock_on_hand.item_id)
-                    .cloned()
-                    .unwrap_or(0.0);
-
-                ItemStats {
-                    available_stock_on_hand: stock_on_hand.available_stock_on_hand,
-                    item_id: stock_on_hand.item_id.clone(),
-                    item_name: stock_on_hand.item_name.clone(),
-                    average_monthly_consumption: amc_by_item
-                        .get(&stock_on_hand.item_id)
-                        .and_then(|r| r.average_monthly_consumption)
-                        .unwrap_or_default(),
-                    total_consumption,
-                    total_stock_on_hand: stock_on_hand.total_stock_on_hand,
-                }
+                    .and_then(|r| r.average_monthly_consumption)
+                    .unwrap_or_default(),
+                total_consumption: consumption_map
+                    .get(&stock_on_hand.item_id)
+                    .copied()
+                    .unwrap_or_default(),
+                total_stock_on_hand: stock_on_hand.total_stock_on_hand,
             })
             .collect()
     }
@@ -281,7 +323,7 @@ mod test {
     };
 
     use crate::{
-        preference::{DaysInMonth, ExcludeTransfers, Preference, UseDaysInMonth},
+        preference::{DaysInMonth, ExcludeTransfers, Preference},
         service_provider::ServiceProvider,
     };
 
@@ -346,10 +388,6 @@ mod test {
             .unwrap();
         item_stats.sort_by(|a, b| a.item_id.cmp(&b.item_id));
 
-        assert_eq!(
-            item_stats[1].total_consumption, // total across all months before transfers excluded
-            test_item_stats::item2_amc_3_months() * 3.0
-        );
         assert_eq!(
             item_stats[1].average_monthly_consumption,
             test_item_stats::item2_amc_3_months_excluding_transfer()
@@ -458,16 +496,6 @@ mod test {
             .unwrap();
         assert_eq!(pref.value, "32");
 
-        // Turn on the pref
-        PreferenceRowRepository::new(&context.connection)
-            .upsert_one(&PreferenceRow {
-                id: "use days in month".to_string(),
-                store_id: None,
-                key: UseDaysInMonth.key().to_string(),
-                value: "true".to_string(),
-            })
-            .unwrap();
-
         let mut item_stats = service
             .get_item_stats(&context, &mock_store_a().id, None, item_ids.clone(), None)
             .unwrap();
@@ -483,13 +511,13 @@ mod test {
             test_item_stats::item2_amc_number_of_days_pref()
         );
 
-        // Turn back off
+        // Set days pref to 0.0 => will default back to average days in month
         PreferenceRowRepository::new(&context.connection)
             .upsert_one(&PreferenceRow {
-                id: "use days in month".to_string(),
+                id: "days in month".to_string(),
                 store_id: None,
-                key: UseDaysInMonth.key().to_string(),
-                value: "false".to_string(),
+                key: DaysInMonth.key().to_string(),
+                value: "0.0".to_string(),
             })
             .unwrap();
 

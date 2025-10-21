@@ -3,7 +3,7 @@ use repository::{
     StockLineRepository, StorageConnection,
 };
 
-use crate::preference::{DaysInMonth, Preference, UseDaysInMonth};
+use crate::preference::{DaysInMonth, Preference};
 
 use util::constants::AVG_NUMBER_OF_DAYS_IN_A_MONTH;
 
@@ -58,10 +58,9 @@ impl From<RepositoryError> for CommonStockLineError {
 
 pub fn days_in_a_month(connection: &StorageConnection) -> f64 {
     let custom_days_result = DaysInMonth.load(connection, None);
-    let use_custom_days_result = UseDaysInMonth.load(connection, None);
 
-    match (custom_days_result, use_custom_days_result) {
-        (Ok(custom_days), Ok(true)) if custom_days > 0.0 => custom_days,
+    match custom_days_result {
+        Ok(custom_days) if custom_days > 0.0 => custom_days,
         _ => AVG_NUMBER_OF_DAYS_IN_A_MONTH,
     }
 }
@@ -69,7 +68,7 @@ pub fn days_in_a_month(connection: &StorageConnection) -> f64 {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::preference::{DaysInMonth, UseDaysInMonth};
+    use crate::preference::DaysInMonth;
     use repository::{
         mock::MockDataInserts, test_db::setup_all, PreferenceRow, PreferenceRowRepository,
     };
@@ -95,19 +94,6 @@ mod tests {
             })
             .unwrap();
 
-        // UseDaysInMonth is false so fallback to average days
-        let result = days_in_a_month(&connection);
-        assert_eq!(result, AVG_NUMBER_OF_DAYS_IN_A_MONTH);
-
-        // UseDaysInMonth is set to true
-        PreferenceRowRepository::new(&connection)
-            .upsert_one(&PreferenceRow {
-                id: "use_days_in_month".to_string(),
-                key: UseDaysInMonth.key().to_string(),
-                value: "true".to_string(),
-                store_id: None,
-            })
-            .unwrap();
         let result = days_in_a_month(&connection);
         assert_eq!(result, 28.0);
 
