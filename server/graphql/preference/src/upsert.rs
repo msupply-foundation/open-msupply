@@ -34,6 +34,7 @@ pub struct UpsertPreferencesInput {
     pub sort_by_vvm_status_then_expiry: Option<Vec<BoolStorePrefInput>>,
     pub use_simplified_mobile_ui: Option<Vec<BoolStorePrefInput>>,
     pub disable_manual_returns: Option<Vec<BoolStorePrefInput>>,
+    pub requisition_auto_finalise: Option<Vec<BoolStorePrefInput>>,
 }
 
 pub fn upsert_preferences(
@@ -78,6 +79,7 @@ impl UpsertPreferencesInput {
             sort_by_vvm_status_then_expiry,
             use_simplified_mobile_ui,
             disable_manual_returns,
+            requisition_auto_finalise,
         } = self;
 
         UpsertPreferences {
@@ -113,6 +115,9 @@ impl UpsertPreferencesInput {
                 .as_ref()
                 .map(|i| i.iter().map(|i| i.to_domain()).collect()),
             disable_manual_returns: disable_manual_returns
+                .as_ref()
+                .map(|i| i.iter().map(|i| i.to_domain()).collect()),
+            requisition_auto_finalise: requisition_auto_finalise
                 .as_ref()
                 .map(|i| i.iter().map(|i| i.to_domain()).collect()),
         }
