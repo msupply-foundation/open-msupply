@@ -109,8 +109,6 @@ export const AppBarButtons = ({
         id: FnUtils.generateUUID(),
         responseRequisitionId: requisition.id,
         otherPartyId: selectedSupplier?.id || '',
-        maxMonthsOfStock: requisition.maxMonthsOfStock,
-        minMonthsOfStock: requisition.minMonthsOfStock,
       });
 
       navigate(

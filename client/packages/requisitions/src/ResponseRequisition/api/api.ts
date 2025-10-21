@@ -117,12 +117,17 @@ const responseParser = {
 export const getResponseQueries = (sdk: Sdk, storeId: string) => ({
   get: {
     list: async ({ first, offset, sortBy, filterBy }: ListParams) => {
+      const s = sortBy || {
+        key: 'createdDatetime',
+        direction: 'desc',
+        isDesc: true,
+      };
       const result = await sdk.responses({
         storeId,
         page: { offset, first },
         sort: {
-          key: responseParser.toSortField(sortBy),
-          desc: !!sortBy?.isDesc,
+          key: responseParser.toSortField(s),
+          desc: !!s?.isDesc,
         },
         filter: {
           ...filterBy,
@@ -214,15 +219,11 @@ export const getResponseQueries = (sdk: Sdk, storeId: string) => ({
     responseRequisitionId,
     otherPartyId,
     comment,
-    maxMonthsOfStock,
-    minMonthsOfStock,
   }: {
     id: string;
     responseRequisitionId: string;
     otherPartyId: string;
     comment?: string;
-    maxMonthsOfStock: number;
-    minMonthsOfStock: number;
   }): Promise<string> => {
     const result = await sdk.insertRequestFromResponseRequisition({
       storeId,
@@ -231,8 +232,6 @@ export const getResponseQueries = (sdk: Sdk, storeId: string) => ({
         responseRequisitionId,
         otherPartyId,
         comment,
-        maxMonthsOfStock,
-        minMonthsOfStock,
       },
     });
 
