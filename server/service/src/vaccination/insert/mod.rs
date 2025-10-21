@@ -62,7 +62,7 @@ pub struct InsertVaccination {
     pub not_given_reason: Option<String>,
     /// Internal flag to unnecessary recursion when creating missing "Not Given"
     /// vaccinations
-    pub skip_dose_backfill: bool,
+    pub create_not_given_records_for_skipped_doses: bool,
 }
 
 pub fn insert_vaccination(
@@ -91,7 +91,7 @@ pub fn insert_vaccination(
 
             // If can_skip_dose is enabled and we're not already doing backfill,
             // create "Not given" vaccinations for any missing previous doses
-            if !input.skip_dose_backfill {
+            if !input.create_not_given_records_for_skipped_doses {
                 if let Ok(vaccine_course_dose) =
                     check_vaccine_course_dose_exists(&input.vaccine_course_dose_id, connection)
                 {
@@ -208,7 +208,7 @@ fn create_missing_not_given_vaccinations(
                 item_id: None,
                 stock_line_id: None,
                 not_given_reason: Some("Dose skipped (Later dose administered)".to_string()),
-                skip_dose_backfill: true, // Prevent recursive backfill creation
+                create_not_given_records_for_skipped_doses: true, // Prevent recursive backfill creation
 
                 // Copy all other properties from the original input
                 encounter_id: original_input.encounter_id.clone(),
