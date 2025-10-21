@@ -27,11 +27,10 @@ interface VaccinationCardProps {
 const canClickRow = (
   isEncounter: boolean,
   row: VaccinationCardItemFragment,
-  items: VaccinationCardItemFragment[] | undefined,
-  canSkipDose: boolean
+  items: VaccinationCardItemFragment[] | undefined
 ) => {
   if (!isEncounter) return false;
-  if (canSkipDose) return true;
+  if (row.canSkipDose) return true;
   return isPreviousDoseGiven(row, items);
 };
 
@@ -47,8 +46,6 @@ export const VaccineCardTable = ({
   const theme = useTheme();
 
   const isEncounter = !!encounterId;
-
-  const canSkipDose = data?.items.some(item => item.canSkipDose) ?? false;
 
   const getAgeLabel = (row: VaccinationCardItemFragment) => {
     if (row.customAgeLabel) return row.customAgeLabel;
@@ -164,12 +161,11 @@ export const VaccineCardTable = ({
     isLoading,
     enableRowSelection: false,
     onRowClick: row => {
-      if (canClickRow(isEncounter, row, data?.items, canSkipDose))
-        openModal(row);
+      if (canClickRow(isEncounter, row, data?.items)) openModal(row);
     },
     muiTableBodyRowProps: ({ row }) => ({
       sx: {
-        cursor: canClickRow(isEncounter, row.original, data?.items, canSkipDose)
+        cursor: canClickRow(isEncounter, row.original, data?.items)
           ? 'pointer'
           : 'default',
         backgroundColor:
