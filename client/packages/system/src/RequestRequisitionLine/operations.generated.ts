@@ -187,6 +187,16 @@ export type RequestFragment = {
     name: string;
     store?: { __typename: 'StoreNode'; id: string; code: string } | null;
   };
+  destinationCustomer?: {
+    __typename: 'NameNode';
+    id: string;
+    code: string;
+    isCustomer: boolean;
+    isSupplier: boolean;
+    isOnHold: boolean;
+    name: string;
+    store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+  } | null;
   linkedRequisition?: {
     __typename: 'RequisitionNode';
     approvalStatus: Types.RequisitionNodeApprovalStatus;
@@ -314,6 +324,18 @@ export const RequestFragmentDoc = gql`
       }
     }
     otherParty(storeId: $storeId) {
+      id
+      code
+      isCustomer
+      isSupplier
+      isOnHold
+      name
+      store {
+        id
+        code
+      }
+    }
+    destinationCustomer(storeId: $storeId) {
       id
       code
       isCustomer
