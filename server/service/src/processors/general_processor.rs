@@ -158,7 +158,7 @@ pub(super) trait Processor: Sync + Send {
         }))
     }
 
-    /// Default to empty array in case chanelogs_filter is manually implemented
+    /// Default to empty array in case changelogs_filter is manually implemented
     fn change_log_table_names(&self) -> Vec<ChangelogTableName> {
         Vec::new()
     }
