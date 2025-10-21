@@ -42,10 +42,6 @@ const UIComponent = (props: ControlProps) => {
   const disableFuture = options?.disableFuture ?? false;
   const noDay = options?.noDay ?? false;
 
-  if (!props.visible) {
-    return null;
-  }
-
   const formatDate = useCallback(
     (date: Date) => {
       const d = noDay ? DateUtils.startOfMonth(date) : date;
@@ -53,6 +49,10 @@ const UIComponent = (props: ControlProps) => {
     },
     [formatDateTime, noDay]
   );
+
+  if (!props.visible) {
+    return null;
+  }
 
   return (
     <DetailInputWithLabelRow
