@@ -9,6 +9,7 @@ import {
   useTranslation,
   ColumnType,
   UnitsAndDosesCell,
+  LocaleKey,
 } from '@openmsupply-client/common';
 import { useRequest } from '../api';
 import { useRequestRequisitionLineErrorContext } from '../context';
@@ -29,6 +30,23 @@ export const useRequestColumns = () => {
   const showExtraColumns =
     !!programName &&
     store?.preferences.useConsumptionAndStockFromCustomersForInternalOrders;
+
+  // Get plugin columns and translate their headers
+  const pluginColumns = useMemo(() => {
+    return (
+      plugins.requestRequisitionLine?.tableColumn?.map(col => ({
+        ...col,
+        header:
+          typeof col.header === 'string'
+            ? t(col.header as LocaleKey)
+            : col.header,
+        description:
+          typeof col.description === 'string'
+            ? t(col.description as LocaleKey)
+            : col.description,
+      })) || []
+    );
+  }, [plugins.requestRequisitionLine?.tableColumn, t]);
 
   const columns = useMemo(
     (): ColumnDef<RequestLineFragment>[] => [
@@ -210,15 +228,16 @@ export const useRequestColumns = () => {
       },
 
       // Plugin columns
-      ...(plugins.requestRequisitionLine?.tableColumn || []),
+      ...pluginColumns,
     ],
     [
+      t,
       manageVaccinesInDoses,
       warningForExcessRequest,
       showExtraColumns,
       usesRemoteAuthorisation,
       maxMonthsOfStock,
-      plugins.requestRequisitionLine?.tableColumn,
+      pluginColumns,
       errors,
     ]
   );
