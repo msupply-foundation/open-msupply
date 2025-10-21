@@ -177,6 +177,19 @@ fragment Response on RequisitionNode {
       code
     }
   }
+  destinationCustomer(storeId: $storeId) {
+    __typename
+    id
+    code
+    isCustomer
+    isSupplier
+    isOnHold
+    name
+    store {
+      id
+      code
+    }
+  }
   programName
   program {
     id

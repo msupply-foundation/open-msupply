@@ -127,6 +127,13 @@ export type InboundFragment = {
     requisitionNumber: number;
     createdDatetime: string;
     user?: { __typename: 'UserNode'; username: string } | null;
+    createdFromRequisition?: {
+      __typename: 'RequisitionNode';
+      id: string;
+      requisitionNumber: number;
+      createdDatetime: string;
+      user?: { __typename: 'UserNode'; username: string } | null;
+    } | null;
   } | null;
   lines: {
     __typename: 'InvoiceLineConnector';
@@ -388,6 +395,13 @@ export type InvoiceQuery = {
           requisitionNumber: number;
           createdDatetime: string;
           user?: { __typename: 'UserNode'; username: string } | null;
+          createdFromRequisition?: {
+            __typename: 'RequisitionNode';
+            id: string;
+            requisitionNumber: number;
+            createdDatetime: string;
+            user?: { __typename: 'UserNode'; username: string } | null;
+          } | null;
         } | null;
         lines: {
           __typename: 'InvoiceLineConnector';
@@ -586,6 +600,13 @@ export type InboundByNumberQuery = {
           requisitionNumber: number;
           createdDatetime: string;
           user?: { __typename: 'UserNode'; username: string } | null;
+          createdFromRequisition?: {
+            __typename: 'RequisitionNode';
+            id: string;
+            requisitionNumber: number;
+            createdDatetime: string;
+            user?: { __typename: 'UserNode'; username: string } | null;
+          } | null;
         } | null;
         lines: {
           __typename: 'InvoiceLineConnector';
@@ -1300,6 +1321,16 @@ export const InboundFragmentDoc = gql`
       user {
         __typename
         username
+      }
+      createdFromRequisition {
+        __typename
+        id
+        requisitionNumber
+        createdDatetime
+        user {
+          __typename
+          username
+        }
       }
     }
     lines {
