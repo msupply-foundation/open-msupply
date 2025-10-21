@@ -150,6 +150,12 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
     enableRowSelection,
     enableFacetedValues: true,
     enableStickyHeader: true,
+    // We want tab navigation to follow our normal behaviour of moving to the
+    // next INPUT, not move through every table cell. If we need specific Table
+    // keyboard navigation in future, we can enable this in a more granular way
+    // using our own custom shortcuts:
+    // https://www.material-react-table.com/docs/guides/accessibility#custom-keyboard-shortcuts
+    enableKeyboardShortcuts: false,
 
     // Disable bottom footer - use OMS custom action footer instead
     enableBottomToolbar: false,
