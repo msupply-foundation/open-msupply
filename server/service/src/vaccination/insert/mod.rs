@@ -207,7 +207,7 @@ fn create_missing_not_given_vaccinations(
                 given: false,
                 item_id: None,
                 stock_line_id: None,
-                not_given_reason: Some("Dose skipped - administered out of order".to_string()),
+                not_given_reason: Some("Dose skipped (Later dose administered)".to_string()),
                 skip_dose_backfill: true, // Prevent recursive backfill creation
 
                 // Copy all other properties from the original input
