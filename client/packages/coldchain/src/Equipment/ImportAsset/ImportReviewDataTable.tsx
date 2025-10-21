@@ -18,10 +18,12 @@ import { Status } from '../Components';
 interface ImportReviewDataTableProps {
   importRows: ImportRow[];
   showWarnings: boolean;
+  showErrors: boolean;
 }
 export const ImportReviewDataTable: FC<ImportReviewDataTableProps> = ({
   importRows,
   showWarnings,
+  showErrors,
 }) => {
   const t = useTranslation();
   const isCentralServer = useIsCentralServerApi();
@@ -122,10 +124,10 @@ export const ImportReviewDataTable: FC<ImportReviewDataTableProps> = ({
         header: t('label.error-message'),
         size: 150,
         Cell: TextWithTooltipCell,
-        includeColumn: showWarnings,
+        includeColumn: showErrors,
       },
     ],
-    [showWarnings, isCentralServer]
+    [showWarnings, showErrors, isCentralServer]
   );
 
   const filteredEquipment = importRows.filter(row => {
