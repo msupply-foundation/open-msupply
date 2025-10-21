@@ -283,6 +283,7 @@ fn generate_response_requisition(
         period_id: request_requisition_row.period_id.clone(),
         order_type: request_requisition_row.order_type.clone(),
         is_emergency: request_requisition_row.is_emergency,
+        original_customer_id: request_requisition_row.original_customer_id.clone(),
         // Default
         user_id: None,
         approval_status: None,
@@ -290,7 +291,6 @@ fn generate_response_requisition(
         finalised_datetime: None,
         colour: None,
         created_from_requisition_id: None,
-        original_customer_id: None,
     };
 
     Ok(result)
