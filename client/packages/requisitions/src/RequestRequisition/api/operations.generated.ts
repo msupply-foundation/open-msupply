@@ -182,6 +182,13 @@ export type RequestByNumberQuery = {
           startDate: string;
           endDate: string;
         } | null;
+        createdFromRequisition?: {
+          __typename: 'RequisitionNode';
+          id: string;
+          requisitionNumber: number;
+          createdDatetime: string;
+          user?: { __typename: 'UserNode'; username: string } | null;
+        } | null;
       };
 };
 
@@ -320,6 +327,13 @@ export type RequestByIdQuery = {
           name: string;
           startDate: string;
           endDate: string;
+        } | null;
+        createdFromRequisition?: {
+          __typename: 'RequisitionNode';
+          id: string;
+          requisitionNumber: number;
+          createdDatetime: string;
+          user?: { __typename: 'UserNode'; username: string } | null;
         } | null;
       };
 };

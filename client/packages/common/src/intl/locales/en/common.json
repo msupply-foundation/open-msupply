@@ -866,6 +866,7 @@
   "label.created-by": "Created by",
   "label.created-datetime": "Created date",
   "label.created-datetime-UTC": "Created date / time (UTC)",
+  "label.created-from-requisition": "Created from Requisition",
   "label.cumulative": "Cumulative",
   "label.currency": "Currency",
   "label.current": "Current",
