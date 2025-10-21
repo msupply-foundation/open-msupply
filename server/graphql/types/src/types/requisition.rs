@@ -286,6 +286,23 @@ impl RequisitionNode {
         self.row().is_emergency
     }
 
+    pub async fn created_from_requisition(
+        &self,
+        ctx: &Context<'_>,
+    ) -> Result<Option<RequisitionNode>> {
+        let created_from_requisition_id = match &self.row().created_from_requisition_id {
+            Some(id) => id,
+            None => return Ok(None),
+        };
+
+        let loader = ctx.get_loader::<DataLoader<RequisitionsByIdLoader>>();
+
+        Ok(loader
+            .load_one(created_from_requisition_id.clone())
+            .await?
+            .map(RequisitionNode::from_domain))
+    }
+
     // % allocated ?
     // % shipped ?
     // lead time ?
