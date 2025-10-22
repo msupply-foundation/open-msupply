@@ -303,6 +303,10 @@ impl RequisitionNode {
             .map(RequisitionNode::from_domain))
     }
 
+    pub async fn created_from_requisition_id(&self) -> &Option<String> {
+        &self.row().created_from_requisition_id
+    }
+
     // % allocated ?
     // % shipped ?
     // lead time ?

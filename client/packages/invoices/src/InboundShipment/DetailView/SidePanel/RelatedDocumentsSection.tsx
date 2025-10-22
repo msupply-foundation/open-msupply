@@ -20,7 +20,7 @@ export const RelatedDocumentsSectionComponent = () => {
   const { localisedDate: d } = useFormatDateTime();
   const { requisition } = useInbound.document.fields('requisition');
 
-  const orderedFromDifferentStore = !!requisition?.createdFromRequisition;
+  const orderedFromDifferentStore = !!requisition?.createdFromRequisitionId;
   let tooltip = '';
   if (requisition) {
     const { user, createdDatetime } = requisition;

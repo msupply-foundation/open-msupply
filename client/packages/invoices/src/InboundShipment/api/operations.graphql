@@ -149,17 +149,7 @@ fragment Inbound on InvoiceNode {
       username
     }
 
-    createdFromRequisition {
-      __typename
-      id
-      requisitionNumber
-      createdDatetime
-
-      user {
-        __typename
-        username
-      }
-    }
+    createdFromRequisitionId
   }
 
   lines {
