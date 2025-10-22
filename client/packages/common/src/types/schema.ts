@@ -4237,6 +4237,7 @@ export type InsertVaccineCourseErrorInterface = {
 };
 
 export type InsertVaccineCourseInput = {
+  canSkipDose: Scalars['Boolean']['input'];
   coverageRate: Scalars['Float']['input'];
   demographicId?: InputMaybe<Scalars['String']['input']>;
   doses: Array<UpsertVaccineCourseDoseInput>;
@@ -11036,6 +11037,7 @@ export type UpdateVaccineCourseErrorInterface = {
 };
 
 export type UpdateVaccineCourseInput = {
+  canSkipDose?: InputMaybe<Scalars['Boolean']['input']>;
   coverageRate: Scalars['Float']['input'];
   demographicId?: InputMaybe<Scalars['String']['input']>;
   doses: Array<UpsertVaccineCourseDoseInput>;
@@ -11302,6 +11304,7 @@ export type UserStorePermissionNode = {
 export type VaccinationCardItemNode = {
   __typename: 'VaccinationCardItemNode';
   batch?: Maybe<Scalars['String']['output']>;
+  canSkipDose: Scalars['Boolean']['output'];
   customAgeLabel?: Maybe<Scalars['String']['output']>;
   facilityName?: Maybe<Scalars['String']['output']>;
   given?: Maybe<Scalars['Boolean']['output']>;
@@ -11417,6 +11420,7 @@ export type VaccineCourseMutationsUpdateVaccineCourseArgs = {
 
 export type VaccineCourseNode = {
   __typename: 'VaccineCourseNode';
+  canSkipDose: Scalars['Boolean']['output'];
   coverageRate: Scalars['Float']['output'];
   demographic?: Maybe<DemographicNode>;
   demographicId?: Maybe<Scalars['String']['output']>;

@@ -43,21 +43,24 @@ pub fn validate(
         return Err(InsertVaccinationError::VaccinationAlreadyExistsForDose);
     }
 
-    // Check that the previous dose has been given
-    let (previous_vaccination, _) = get_related_vaccinations(
-        connection,
-        &vaccine_course_dose.vaccine_course_row.id,
-        &input.vaccine_course_dose_id,
-        &program_enrolment.row.id,
-    )
-    .map_err(|err| match err {
-        RepositoryError::NotFound => InsertVaccinationError::VaccineIsNotNextDose,
-        _ => InsertVaccinationError::DatabaseError(err),
-    })?;
+    // Check that the previous dose has been given (only if doses cannot be
+    // skipped)
+    if !vaccine_course_dose.vaccine_course_row.can_skip_dose {
+        let (previous_vaccination, _) = get_related_vaccinations(
+            connection,
+            &vaccine_course_dose.vaccine_course_row.id,
+            &input.vaccine_course_dose_id,
+            &program_enrolment.row.id,
+        )
+        .map_err(|err| match err {
+            RepositoryError::NotFound => InsertVaccinationError::VaccineIsNotNextDose,
+            _ => InsertVaccinationError::DatabaseError(err),
+        })?;
 
-    if let Some(previous_vaccination) = previous_vaccination {
-        if !previous_vaccination.vaccination_row.given {
-            return Err(InsertVaccinationError::VaccineIsNotNextDose);
+        if let Some(previous_vaccination) = previous_vaccination {
+            if !previous_vaccination.vaccination_row.given {
+                return Err(InsertVaccinationError::VaccineIsNotNextDose);
+            }
         }
     }
 
