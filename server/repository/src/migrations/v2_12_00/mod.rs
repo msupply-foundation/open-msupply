@@ -2,6 +2,7 @@ use super::{version::Version, Migration, MigrationFragment};
 use crate::StorageConnection;
 
 mod add_purchase_order_status_logs_to_activity_log_type_enum;
+mod add_requisition_auto_finalise_processor_cursor_pg_enum;
 mod add_shipping_method_table;
 mod add_skip_dose_option_to_vaccine_course;
 mod rename_authorised_datetime_to_request_approval_datetime;
@@ -29,6 +30,7 @@ impl Migration for V2_12_00 {
             Box::new(add_purchase_order_status_logs_to_activity_log_type_enum::Migrate),
             Box::new(rename_purchase_order_line_price_per_unit_to_per_pack::Migrate),
             Box::new(add_skip_dose_option_to_vaccine_course::Migrate),
+            Box::new(add_requisition_auto_finalise_processor_cursor_pg_enum::Migrate),
         ]
     }
 }

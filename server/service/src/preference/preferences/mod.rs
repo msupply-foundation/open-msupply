@@ -70,7 +70,7 @@ pub fn get_preference_provider() -> PreferenceProvider {
         use_procurement_functionality: UseProcurementFunctionality,
         sort_by_vvm_status_then_expiry: SortByVvmStatusThenExpiry,
         use_simplified_mobile_ui: UseSimplifiedMobileUi,
-        requisition_auto_finalise: RequisitionAutoFinalise,
         disable_manual_returns: DisableManualReturns,
+        requisition_auto_finalise: RequisitionAutoFinalise,
     }
 }
