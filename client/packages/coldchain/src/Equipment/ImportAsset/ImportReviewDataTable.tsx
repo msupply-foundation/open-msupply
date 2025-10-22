@@ -1,6 +1,5 @@
 import React, { FC, useMemo, useState } from 'react';
 import {
-  ColumnDescription,
   Grid,
   SearchBar,
   useIsCentralServerApi,
@@ -28,17 +27,6 @@ export const ImportReviewDataTable: FC<ImportReviewDataTableProps> = ({
   const { height } = useWindowDimensions();
 
   const [searchString, setSearchString] = useState<string>(() => '');
-  const columnDescriptions: ColumnDescription<ImportRow>[] = [];
-
-  if (isCentralServer) {
-    columnDescriptions.push({
-      key: 'store',
-      width: 80,
-      sortable: false,
-      label: 'label.store',
-      accessor: ({ rowData }) => rowData.store?.code,
-    });
-  }
 
   const columns = useMemo(
     (): ColumnDef<ImportRow>[] => [
