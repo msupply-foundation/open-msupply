@@ -126,14 +126,8 @@ export type InboundFragment = {
     id: string;
     requisitionNumber: number;
     createdDatetime: string;
+    createdFromRequisitionId?: string | null;
     user?: { __typename: 'UserNode'; username: string } | null;
-    createdFromRequisition?: {
-      __typename: 'RequisitionNode';
-      id: string;
-      requisitionNumber: number;
-      createdDatetime: string;
-      user?: { __typename: 'UserNode'; username: string } | null;
-    } | null;
   } | null;
   lines: {
     __typename: 'InvoiceLineConnector';
@@ -394,14 +388,8 @@ export type InvoiceQuery = {
           id: string;
           requisitionNumber: number;
           createdDatetime: string;
+          createdFromRequisitionId?: string | null;
           user?: { __typename: 'UserNode'; username: string } | null;
-          createdFromRequisition?: {
-            __typename: 'RequisitionNode';
-            id: string;
-            requisitionNumber: number;
-            createdDatetime: string;
-            user?: { __typename: 'UserNode'; username: string } | null;
-          } | null;
         } | null;
         lines: {
           __typename: 'InvoiceLineConnector';
@@ -599,14 +587,8 @@ export type InboundByNumberQuery = {
           id: string;
           requisitionNumber: number;
           createdDatetime: string;
+          createdFromRequisitionId?: string | null;
           user?: { __typename: 'UserNode'; username: string } | null;
-          createdFromRequisition?: {
-            __typename: 'RequisitionNode';
-            id: string;
-            requisitionNumber: number;
-            createdDatetime: string;
-            user?: { __typename: 'UserNode'; username: string } | null;
-          } | null;
         } | null;
         lines: {
           __typename: 'InvoiceLineConnector';
@@ -1322,16 +1304,7 @@ export const InboundFragmentDoc = gql`
         __typename
         username
       }
-      createdFromRequisition {
-        __typename
-        id
-        requisitionNumber
-        createdDatetime
-        user {
-          __typename
-          username
-        }
-      }
+      createdFromRequisitionId
     }
     lines {
       __typename

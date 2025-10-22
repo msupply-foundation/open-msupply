@@ -8786,6 +8786,7 @@ export type RequisitionNode = {
   comment?: Maybe<Scalars['String']['output']>;
   createdDatetime: Scalars['DateTime']['output'];
   createdFromRequisition?: Maybe<RequisitionNode>;
+  createdFromRequisitionId?: Maybe<Scalars['String']['output']>;
   destinationCustomer?: Maybe<NameNode>;
   expectedDeliveryDate?: Maybe<Scalars['NaiveDate']['output']>;
   finalisedDatetime?: Maybe<Scalars['DateTime']['output']>;
