@@ -127,11 +127,10 @@ impl Processor for RequisitionAutoFinaliseProcessor {
                     .and_modify(|v| *v += units)
                     .or_insert(units);
             });
-        dbg!(&invoice_line_item_units);
         let should_finalise = requisition_lines.iter().all(|rl| {
             invoice_line_item_units
                 .get(&rl.item_row.id)
-                .is_none_or(|v| dbg!(*v) >= dbg!(rl.requisition_line_row.supply_quantity))
+                .is_none_or(|v| *v >= rl.requisition_line_row.supply_quantity)
         });
 
         if !should_finalise {
