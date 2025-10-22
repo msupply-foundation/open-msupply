@@ -16,11 +16,10 @@ export const EquipmentReviewTab: FC<ImportPanel & EquipmentReviewTabProps> = ({
   hasError,
 }) => (
   <ImportPanel tab={tab}>
-    {!hasError && (
-      <ImportReviewDataTable
-        importRows={uploadedRows}
-        showWarnings={showWarnings}
-      />
-    )}
+    <ImportReviewDataTable
+      importRows={uploadedRows}
+      showWarnings={showWarnings}
+      showErrors={hasError}
+    />
   </ImportPanel>
 );
