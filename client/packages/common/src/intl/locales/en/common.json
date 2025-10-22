@@ -432,6 +432,7 @@
   "error.order-not-found": "Internal Order not found",
   "error.ordering-too-many-items_one": "You cannot finalise an emergency order with more than {{ count }} item. Reduce the number of items and try again.",
   "error.ordering-too-many-items_other": "You cannot finalise an emergency order with more than {{ count }} items. Reduce the number of items and try again.",
+  "error.other-party-not-a-customer": "The other party is not a customer",
   "error.other-party-not-a-supplier": "The other party is not a supplier",
   "error.other-party-not-visible": "Other party not visible in this store",
   "error.pack-size-code-combinations-exists": "Pack size combination already exists",
