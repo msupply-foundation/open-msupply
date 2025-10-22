@@ -149,6 +149,8 @@ const useStatusChangeButton = () => {
         return t('error.other-party-not-visible');
       case 'RecordNotFound':
         return t('messages.record-not-found');
+      case 'OtherPartyNotACustomer':
+        return t('error.other-party-not-a-customer');
       default:
         return noOtherVariants(error);
     }
