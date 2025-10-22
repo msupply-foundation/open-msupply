@@ -31,6 +31,7 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
   hasColumnFilters,
   getIsPlaceholderRow = () => false,
   getIsRestrictedRow = () => false,
+  muiTableBodyRowProps = {},
 }: {
   tableId: string;
   resetTableState: () => void;
@@ -40,6 +41,10 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
   toggleGrouped?: () => void;
   getIsPlaceholderRow?: (row: T) => boolean;
   getIsRestrictedRow?: (row: T) => boolean;
+
+  // This object is merged with the default row props in muiTableBodyRowProps
+  // below. We can do the same for other muiTable props if needed in future.
+  muiTableBodyRowProps?: MRT_TableOptions<T>['muiTableBodyRowProps'];
 }): Partial<MRT_TableOptions<T>> => {
   const t = useTranslation();
   return {
@@ -186,30 +191,46 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
           }
         : {},
 
-    muiTableBodyRowProps: ({ row }) => ({
-      onClick: e => {
-        const isCtrlClick = e.getModifierState(
-          EnvUtils.os === 'Mac OS' ? 'Meta' : 'Control'
-        );
-        if (onRowClick) onRowClick(row.original, isCtrlClick);
-      },
-      sx: {
-        backgroundColor: row.original['isSubRow']
-          ? 'background.secondary'
-          : 'inherit',
-        // these two selectors are to change the background color of a selected
-        // row from the default which is to use primary.main of the theme
-        // with an opacity of 0.2 and 0.4 on hover
-        '&.Mui-selected td:after': {
-          backgroundColor: theme => alpha(theme.palette.gray.pale, 0.2),
+    muiTableBodyRowProps: params => {
+      const { row } = params;
+      const customProps =
+        typeof muiTableBodyRowProps === 'function'
+          ? muiTableBodyRowProps(params)
+          : muiTableBodyRowProps;
+
+      const defaultProps: MRT_TableOptions<T>['muiTableBodyRowProps'] = {
+        onClick: e => {
+          const isCtrlClick = e.getModifierState(
+            EnvUtils.os === 'Mac OS' ? 'Meta' : 'Control'
+          );
+          if (onRowClick) onRowClick(row.original, isCtrlClick);
         },
-        '&.Mui-selected:hover td:after': {
-          backgroundColor: theme => alpha(theme.palette.gray.pale, 0.4),
+        sx: {
+          backgroundColor: row.original['isSubRow']
+            ? 'background.secondary'
+            : 'inherit',
+          // these two selectors are to change the background color of a selected
+          // row from the default which is to use primary.main of the theme
+          // with an opacity of 0.2 and 0.4 on hover
+          '&.Mui-selected td:after': {
+            backgroundColor: theme => alpha(theme.palette.gray.pale, 0.2),
+          },
+          '&.Mui-selected:hover td:after': {
+            backgroundColor: theme => alpha(theme.palette.gray.pale, 0.4),
+          },
+          fontStyle: row.getCanExpand() ? 'italic' : 'normal',
+          cursor: onRowClick ? 'pointer' : 'default',
         },
-        fontStyle: row.getCanExpand() ? 'italic' : 'normal',
-        cursor: onRowClick ? 'pointer' : 'default',
-      },
-    }),
+      };
+      return {
+        ...defaultProps,
+        ...customProps,
+        sx: {
+          ...(defaultProps.sx || {}),
+          ...(customProps?.sx || {}),
+        },
+      };
+    },
 
     muiTableBodyCellProps: ({ row, column, table }) => ({
       sx: {
