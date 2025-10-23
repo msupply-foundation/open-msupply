@@ -236,6 +236,23 @@ export type UpdateNamePropertiesMutation = {
       };
 };
 
+export type ConfigureNamePropertiesMutationVariables = Types.Exact<{
+  input:
+    | Array<Types.ConfigureNamePropertyInput>
+    | Types.ConfigureNamePropertyInput;
+}>;
+
+export type ConfigureNamePropertiesMutation = {
+  __typename: 'Mutations';
+  centralServer: {
+    __typename: 'CentralServerMutationNode';
+    general: {
+      __typename: 'CentralGeneralMutations';
+      configureNameProperties: { __typename: 'Success'; success: boolean };
+    };
+  };
+};
+
 export const NameRowFragmentDoc = gql`
   fragment NameRow on NameNode {
     code
@@ -414,6 +431,21 @@ export const UpdateNamePropertiesDocument = gql`
   }
   ${NameFragmentDoc}
 `;
+export const ConfigureNamePropertiesDocument = gql`
+  mutation configureNameProperties($input: [ConfigureNamePropertyInput!]!) {
+    centralServer {
+      general {
+        configureNameProperties(input: $input) {
+          __typename
+          ... on Success {
+            __typename
+            success
+          }
+        }
+      }
+    }
+  }
+`;
 
 export type SdkFunctionWrapper = <T>(
   action: (requestHeaders?: Record<string, string>) => Promise<T>,
@@ -507,6 +539,22 @@ export function getSdk(
             { ...requestHeaders, ...wrappedRequestHeaders }
           ),
         'updateNameProperties',
+        'mutation',
+        variables
+      );
+    },
+    configureNameProperties(
+      variables: ConfigureNamePropertiesMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders
+    ): Promise<ConfigureNamePropertiesMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<ConfigureNamePropertiesMutation>(
+            ConfigureNamePropertiesDocument,
+            variables,
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
+        'configureNameProperties',
         'mutation',
         variables
       );

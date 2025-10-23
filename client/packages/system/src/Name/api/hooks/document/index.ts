@@ -9,6 +9,7 @@ import { useDonors } from './useDonors';
 import { useNameProperties } from './useNameProperties';
 import { useUpdateProperties } from './useUpdateProperties';
 import { useStoresAll } from './useStoresAll';
+import { useConfigureNameProperties } from './useConfigureNameProperties';
 
 export const Document = {
   useCustomers,
@@ -22,4 +23,5 @@ export const Document = {
   useDonors,
   useNameProperties,
   useStoresAll,
+  useConfigureNameProperties,
 };
