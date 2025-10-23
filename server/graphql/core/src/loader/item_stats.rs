@@ -43,7 +43,13 @@ impl Loader<ItemStatsLoaderInput> for ItemsStatsForItemLoader {
         let item_stats = self
             .service_provider
             .item_stats_service
-            .get_item_stats(&service_context, &store_id, amc_lookback_months, item_ids)
+            .get_item_stats(
+                &service_context,
+                &store_id,
+                amc_lookback_months,
+                item_ids,
+                None,
+            )
             .map_err(|e| StandardGraphqlError::from_error(&e))?;
 
         Ok(item_stats

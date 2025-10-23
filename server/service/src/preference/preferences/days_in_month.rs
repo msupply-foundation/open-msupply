@@ -3,7 +3,7 @@ use crate::preference::{PrefKey, Preference, PreferenceType, PreferenceValueType
 pub struct DaysInMonth;
 
 impl Preference for DaysInMonth {
-    type Value = i32;
+    type Value = f64;
 
     fn key(&self) -> PrefKey {
         PrefKey::DaysInMonth
