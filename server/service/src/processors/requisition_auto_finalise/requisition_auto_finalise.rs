@@ -128,9 +128,12 @@ impl Processor for RequisitionAutoFinaliseProcessor {
                     .or_insert(units);
             });
         let should_finalise = requisition_lines.iter().all(|rl| {
+            if rl.requisition_line_row.supply_quantity <= 0.0 {
+                return true;
+            }
             invoice_line_item_units
                 .get(&rl.item_row.id)
-                .is_none_or(|v| *v >= rl.requisition_line_row.supply_quantity)
+                .is_some_and(|v| *v >= rl.requisition_line_row.supply_quantity)
         });
 
         if !should_finalise {

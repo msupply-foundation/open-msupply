@@ -3,9 +3,10 @@ use std::vec;
 use repository::{
     mock::{MockData, MockDataInserts},
     InvoiceLineType, InvoiceRow, InvoiceRowRepository, InvoiceStatus, InvoiceType, ItemRow,
-    KeyType, KeyValueStoreRepository, KeyValueStoreRow, NameRow, PreferenceRow, RequisitionLineRow,
-    RequisitionLineRowRepository, RequisitionRow, RequisitionRowRepository, RequisitionStatus,
-    RequisitionType, StockLineRow, StorageConnection, StoreRow,
+    KeyType, KeyValueStoreRepository, KeyValueStoreRow, NameRow, PreferenceRow,
+    PreferenceRowRepository, RequisitionLineRow, RequisitionLineRowRepository, RequisitionRow,
+    RequisitionRowRepository, RequisitionStatus, RequisitionType, StockLineRow, StorageConnection,
+    StoreRow,
 };
 use util::uuid::uuid;
 
@@ -79,17 +80,7 @@ async fn test_requisition_auto_finalise() {
         ..Default::default()
     };
 
-    let stock_line_3 = StockLineRow {
-        id: uuid(),
-        item_link_id: item_2.id.clone(),
-        store_id: store.id.clone(),
-        total_number_of_packs: 100.0,
-        available_number_of_packs: 100.0,
-        pack_size: 1.1,
-        ..Default::default()
-    };
-
-    let response = RequisitionRow {
+    let requisition = RequisitionRow {
         id: uuid(),
         requisition_number: 1,
         name_link_id: customer_name.id.clone(),
@@ -117,9 +108,9 @@ async fn test_requisition_auto_finalise() {
             names: vec![customer_name.clone(), response_store_name.clone()],
             stores: vec![store.clone()],
             key_value_store_rows: vec![site_id_settings],
-            requisitions: vec![response.clone()],
+            requisitions: vec![requisition.clone()],
             items: vec![item_1.clone(), item_2.clone()],
-            stock_lines: vec![stock_line_1, stock_line_2, stock_line_3],
+            stock_lines: vec![stock_line_1, stock_line_2],
             preferences: vec![preference.clone()],
             ..Default::default()
         },
@@ -127,16 +118,16 @@ async fn test_requisition_auto_finalise() {
     .await;
 
     run_processor(&ctx).await;
-    let updated_response = requisition_get(&connection, &response.id);
+    let requisition = requisition_get(&connection, &requisition.id);
     assert_eq!(
-        updated_response.status,
+        requisition.status,
         RequisitionStatus::New,
         "Expected status to be New, there are no linked invoices"
     );
 
     let requisition_line_1 = RequisitionLineRow {
         id: uuid(),
-        requisition_id: response.id.clone(),
+        requisition_id: requisition.id.clone(),
         item_link_id: item_1.id.clone(),
         supply_quantity: 100.0,
         ..Default::default()
@@ -152,7 +143,7 @@ async fn test_requisition_auto_finalise() {
         name_link_id: customer_name.id.clone(),
         r#type: InvoiceType::OutboundShipment,
         status: InvoiceStatus::Allocated,
-        requisition_id: Some(response.id.clone()),
+        requisition_id: Some(requisition.id.clone()),
         ..Default::default()
     };
 
@@ -174,9 +165,9 @@ async fn test_requisition_auto_finalise() {
         .unwrap();
 
     run_processor(&ctx).await;
-    let updated_response = requisition_get(&connection, &response.id);
+    let requisition = requisition_get(&connection, &requisition.id);
     assert_eq!(
-        updated_response.status,
+        requisition.status,
         RequisitionStatus::New,
         "Expected status to be New, the invoice is still Allocated"
     );
@@ -187,23 +178,159 @@ async fn test_requisition_auto_finalise() {
         .unwrap();
 
     run_processor(&ctx).await;
-    let updated_response = requisition_get(&connection, &response.id);
+    let requisition = requisition_get(&connection, &requisition.id);
     assert_eq!(
-        updated_response.status,
+        requisition.status,
         RequisitionStatus::New,
         "Expected status to be New, the invoice has been shipped but amount supplied is less than requisition supply quantity"
     );
 
-    invoice_line_1.number_of_packs = 101.0;
+    invoice_line_1.number_of_packs = 100.0;
     repository::InvoiceLineRowRepository::new(&connection)
         .upsert_one(&invoice_line_1)
         .unwrap();
     run_processor(&ctx).await;
-    let updated_response = requisition_get(&connection, &response.id);
+    let mut requisition = requisition_get(&connection, &requisition.id);
     assert_eq!(
-        updated_response.status,
+        requisition.status,
         RequisitionStatus::Finalised,
         "Expected status to be Finalised, the invoice has been shipped and amount supplied meets requisition supply quantity"
+    );
+
+    // reset requisition to New
+    requisition.status = RequisitionStatus::New;
+    requisition.finalised_datetime = None;
+    RequisitionRowRepository::new(&connection)
+        .upsert_one(&requisition)
+        .unwrap();
+
+    let mut linked_invoice_2 = InvoiceRow {
+        id: uuid(),
+        store_id: store.id.clone(),
+        name_link_id: customer_name.id.clone(),
+        r#type: InvoiceType::OutboundShipment,
+        status: InvoiceStatus::New,
+        requisition_id: Some(requisition.id.clone()),
+        ..Default::default()
+    };
+    InvoiceRowRepository::new(&connection)
+        .upsert_one(&linked_invoice_2)
+        .unwrap();
+    let mut invoice_line_2 = repository::InvoiceLineRow {
+        id: uuid(),
+        invoice_id: linked_invoice_2.id.clone(),
+        item_link_id: item_1.id.clone(),
+        number_of_packs: 3.0,
+        pack_size: 20.0,
+        r#type: InvoiceLineType::StockOut,
+        ..Default::default()
+    };
+    repository::InvoiceLineRowRepository::new(&connection)
+        .upsert_one(&invoice_line_2)
+        .unwrap();
+    invoice_line_1.number_of_packs = 50.0;
+    invoice_line_1.pack_size = 1.0;
+    repository::InvoiceLineRowRepository::new(&connection)
+        .upsert_one(&invoice_line_1)
+        .unwrap();
+
+    run_processor(&ctx).await;
+    let requisition = requisition_get(&connection, &requisition.id);
+    assert_eq!(
+        requisition.status,
+        RequisitionStatus::New,
+        "Expected status to be New, not all linked invoices are shipped"
+    );
+
+    invoice_line_2.pack_size = 10.0;
+    repository::InvoiceLineRowRepository::new(&connection)
+        .upsert_one(&invoice_line_2)
+        .unwrap();
+    linked_invoice_2.status = InvoiceStatus::Shipped;
+    InvoiceRowRepository::new(&connection)
+        .upsert_one(&linked_invoice_2)
+        .unwrap();
+    run_processor(&ctx).await;
+    let requisition = requisition_get(&connection, &requisition.id);
+    assert_eq!(
+        requisition.status,
+        RequisitionStatus::New,
+        "Expected status to be New, invoices are shipped but total supplied is less than requisition supply quantity"
+    );
+
+    invoice_line_2.pack_size = 20.0;
+    repository::InvoiceLineRowRepository::new(&connection)
+        .upsert_one(&invoice_line_2)
+        .unwrap();
+    run_processor(&ctx).await;
+    let requisition = requisition_get(&connection, &requisition.id);
+    assert_eq!(
+        requisition.status,
+        RequisitionStatus::Finalised,
+        "Expected status to be Finalised, all linked invoices are shipped and total supplied meets requisition supply quantity"
+    );
+
+    // reset requisition to New
+    let mut requisition = requisition_get(&connection, &requisition.id);
+    requisition.status = RequisitionStatus::New;
+    requisition.finalised_datetime = None;
+    RequisitionRowRepository::new(&connection)
+        .upsert_one(&requisition)
+        .unwrap();
+
+    let mut requisition_line_2 = RequisitionLineRow {
+        id: uuid(),
+        requisition_id: requisition.id.clone(),
+        item_link_id: item_2.id.clone(),
+        supply_quantity: 5.0,
+        ..Default::default()
+    };
+
+    RequisitionLineRowRepository::new(&connection)
+        .upsert_one(&requisition_line_2)
+        .unwrap();
+    run_processor(&ctx).await;
+    let requisition = requisition_get(&connection, &requisition.id);
+    assert_eq!(
+        requisition.status,
+        RequisitionStatus::New,
+        "Expected status to be New, not all requisition lines have their supply quantity met"
+    );
+
+    requisition_line_2.supply_quantity = 0.0;
+    RequisitionLineRowRepository::new(&connection)
+        .upsert_one(&requisition_line_2)
+        .unwrap();
+    run_processor(&ctx).await;
+    let requisition = requisition_get(&connection, &requisition.id);
+    assert_eq!(
+        requisition.status,
+        RequisitionStatus::Finalised,
+        "Expected status to be Finalised, all requisition lines have their supply quantity met"
+    );
+
+    // reset requisition to New
+    let mut requisition = requisition_get(&connection, &requisition.id);
+    requisition.status = RequisitionStatus::New;
+    requisition.finalised_datetime = None;
+    RequisitionRowRepository::new(&connection)
+        .upsert_one(&requisition)
+        .unwrap();
+
+    // Disable auto finalise preference
+    let preference = PreferenceRow {
+        value: "false".to_string(),
+        ..preference
+    };
+    PreferenceRowRepository::new(&connection)
+        .upsert_one(&preference)
+        .unwrap();
+    run_processor(&ctx).await;
+    let requisition = requisition_get(&connection, &requisition.id);
+    assert_eq!(
+        requisition.status,
+        RequisitionStatus::New,
+        "Expected status to be New, auto finalise preference is disabled"
     );
 }
 
