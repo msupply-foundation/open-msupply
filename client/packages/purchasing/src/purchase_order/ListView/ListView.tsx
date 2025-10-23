@@ -16,7 +16,6 @@ import {
 } from '@openmsupply-client/common';
 import { usePurchaseOrderList } from '../api';
 import { PurchaseOrderRowFragment } from '../api/operations.generated';
-import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
 import { Footer } from './Footer';
 import {
@@ -157,7 +156,6 @@ const ListView = () => {
 
   return (
     <>
-      <Toolbar />
       <AppBarButtons
         data={data?.nodes}
         isLoading={isLoading}
