@@ -161,6 +161,16 @@ export type RequestByNumberQuery = {
             user?: { __typename: 'UserNode'; username: string } | null;
           }>;
         };
+        destinationCustomer?: {
+          __typename: 'NameNode';
+          id: string;
+          code: string;
+          isCustomer: boolean;
+          isSupplier: boolean;
+          isOnHold: boolean;
+          name: string;
+          store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+        } | null;
         linkedRequisition?: {
           __typename: 'RequisitionNode';
           approvalStatus: Types.RequisitionNodeApprovalStatus;
@@ -171,6 +181,13 @@ export type RequestByNumberQuery = {
           name: string;
           startDate: string;
           endDate: string;
+        } | null;
+        createdFromRequisition?: {
+          __typename: 'RequisitionNode';
+          id: string;
+          requisitionNumber: number;
+          createdDatetime: string;
+          user?: { __typename: 'UserNode'; username: string } | null;
         } | null;
       };
 };
@@ -290,6 +307,16 @@ export type RequestByIdQuery = {
             user?: { __typename: 'UserNode'; username: string } | null;
           }>;
         };
+        destinationCustomer?: {
+          __typename: 'NameNode';
+          id: string;
+          code: string;
+          isCustomer: boolean;
+          isSupplier: boolean;
+          isOnHold: boolean;
+          name: string;
+          store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+        } | null;
         linkedRequisition?: {
           __typename: 'RequisitionNode';
           approvalStatus: Types.RequisitionNodeApprovalStatus;
@@ -300,6 +327,13 @@ export type RequestByIdQuery = {
           name: string;
           startDate: string;
           endDate: string;
+        } | null;
+        createdFromRequisition?: {
+          __typename: 'RequisitionNode';
+          id: string;
+          requisitionNumber: number;
+          createdDatetime: string;
+          user?: { __typename: 'UserNode'; username: string } | null;
         } | null;
       };
 };
@@ -587,6 +621,7 @@ export type UpdateRequestMutation = {
               description: string;
               maxItemsInEmergencyOrder: number;
             }
+          | { __typename: 'OtherPartyNotACustomer'; description: string }
           | { __typename: 'OtherPartyNotASupplier'; description: string }
           | { __typename: 'OtherPartyNotVisible'; description: string }
           | { __typename: 'RecordNotFound'; description: string }

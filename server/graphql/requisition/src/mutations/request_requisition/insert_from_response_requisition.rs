@@ -20,8 +20,6 @@ pub struct InsertFromResponseRequisitionInput {
     pub response_requisition_id: String,
     pub other_party_id: String,
     pub comment: Option<String>,
-    pub max_months_of_stock: Option<f64>,
-    pub min_months_of_stock: Option<f64>,
 }
 
 #[derive(Interface)]
@@ -114,8 +112,6 @@ impl InsertFromResponseRequisitionInput {
             response_requisition_id,
             other_party_id,
             comment,
-            max_months_of_stock,
-            min_months_of_stock,
         } = self;
 
         InsertFromResponseRequisition {
@@ -123,8 +119,6 @@ impl InsertFromResponseRequisitionInput {
             response_requisition_id,
             other_party_id,
             comment,
-            max_months_of_stock: max_months_of_stock.unwrap_or(0.0),
-            min_months_of_stock: min_months_of_stock.unwrap_or(0.0),
         }
     }
 }
@@ -180,9 +174,7 @@ mod test {
           "input": {
             "id": "n/a",
             "responseRequisitionId": "req1",
-            "otherPartyId": "n/a",
-            "maxMonthsOfStock": 0,
-            "minMonthsOfStock": 0
+            "otherPartyId": "n/a"
           },
           "storeId": "n/a"
         })
@@ -310,8 +302,6 @@ mod test {
                     response_requisition_id: "req1".to_string(),
                     other_party_id: "other party input".to_string(),
                     comment: Some("comment input".to_string()),
-                    max_months_of_stock: 1.0,
-                    min_months_of_stock: 2.0,
                 }
             );
             Ok(Requisition {
@@ -325,8 +315,6 @@ mod test {
             "id": "id input",
             "responseRequisitionId": "req1",
             "otherPartyId": "other party input",
-            "maxMonthsOfStock": 1,
-            "minMonthsOfStock": 2,
             "comment": "comment input"
           },
           "storeId": "store_a"

@@ -1,5 +1,5 @@
 use super::UpdateGoodsReceivedInput;
-use crate::NullableUpdate;
+use crate::nullable_update;
 use chrono::Utc;
 use repository::{
     goods_received_row::{GoodsReceivedRow, GoodsReceivedStatus},
@@ -37,11 +37,4 @@ pub fn generate(
         supplier_reference.or(updated_goods_received.supplier_reference);
 
     Ok(updated_goods_received)
-}
-
-fn nullable_update<T: Clone>(input: &Option<NullableUpdate<T>>, current: Option<T>) -> Option<T> {
-    match input {
-        Some(NullableUpdate { value }) => value.clone(),
-        None => current,
-    }
 }

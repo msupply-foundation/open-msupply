@@ -187,6 +187,16 @@ export type RequestFragment = {
     name: string;
     store?: { __typename: 'StoreNode'; id: string; code: string } | null;
   };
+  destinationCustomer?: {
+    __typename: 'NameNode';
+    id: string;
+    code: string;
+    isCustomer: boolean;
+    isSupplier: boolean;
+    isOnHold: boolean;
+    name: string;
+    store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+  } | null;
   linkedRequisition?: {
     __typename: 'RequisitionNode';
     approvalStatus: Types.RequisitionNodeApprovalStatus;
@@ -197,6 +207,13 @@ export type RequestFragment = {
     name: string;
     startDate: string;
     endDate: string;
+  } | null;
+  createdFromRequisition?: {
+    __typename: 'RequisitionNode';
+    id: string;
+    requisitionNumber: number;
+    createdDatetime: string;
+    user?: { __typename: 'UserNode'; username: string } | null;
   } | null;
 };
 
@@ -325,6 +342,18 @@ export const RequestFragmentDoc = gql`
         code
       }
     }
+    destinationCustomer(storeId: $storeId) {
+      id
+      code
+      isCustomer
+      isSupplier
+      isOnHold
+      name
+      store {
+        id
+        code
+      }
+    }
     linkedRequisition {
       approvalStatus
     }
@@ -337,6 +366,15 @@ export const RequestFragmentDoc = gql`
     }
     orderType
     isEmergency
+    createdFromRequisition {
+      id
+      requisitionNumber
+      createdDatetime
+      user {
+        __typename
+        username
+      }
+    }
   }
   ${RequestLineFragmentDoc}
 `;

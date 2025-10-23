@@ -10,6 +10,7 @@ import {
   InsertProgramRequestRequisitionInput,
   RequisitionFilterInput,
   UpdateIndicatorValueInput,
+  setNullableInput,
 } from '@openmsupply-client/common';
 import { DraftRequestLine } from './../DetailView/RequestLineEdit/hooks';
 import { RequestRowFragment, Sdk } from './operations.generated';
@@ -82,6 +83,10 @@ const requestParser = {
       status: requestParser.toStatus(requisition),
       minMonthsOfStock: requisition.minMonthsOfStock,
       maxMonthsOfStock: requisition.maxMonthsOfStock,
+      originalCustomerId: setNullableInput(
+        'id',
+        requisition.destinationCustomer
+      ),
     };
   },
   toDeleteLine: (line: RequestLineFragment) => ({ id: line.id }),

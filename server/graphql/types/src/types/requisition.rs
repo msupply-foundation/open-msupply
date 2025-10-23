@@ -174,6 +174,28 @@ impl RequisitionNode {
         &self.name_row().id
     }
 
+    pub async fn destination_customer(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+    ) -> Result<Option<NameNode>> {
+        let loader = ctx.get_loader::<DataLoader<NameByIdLoader>>();
+
+        let original_customer_id = match &self.requisition.requisition_row.original_customer_id {
+            Some(customer) => customer,
+            None => return Ok(None),
+        };
+
+        let response_option = loader
+            .load_one(NameByIdLoaderInput::new(&store_id, original_customer_id))
+            .await?;
+
+        match response_option {
+            Some(name) => Ok(Some(NameNode::from_domain(name))),
+            None => Ok(None),
+        }
+    }
+
     /// Maximum calculated quantity, used to deduce calculated quantity for each line, see calculated in requisition line
     pub async fn max_months_of_stock(&self) -> &f64 {
         &self.row().max_months_of_stock
@@ -262,6 +284,27 @@ impl RequisitionNode {
 
     pub async fn is_emergency(&self) -> bool {
         self.row().is_emergency
+    }
+
+    pub async fn created_from_requisition(
+        &self,
+        ctx: &Context<'_>,
+    ) -> Result<Option<RequisitionNode>> {
+        let created_from_requisition_id = match &self.row().created_from_requisition_id {
+            Some(id) => id,
+            None => return Ok(None),
+        };
+
+        let loader = ctx.get_loader::<DataLoader<RequisitionsByIdLoader>>();
+
+        Ok(loader
+            .load_one(created_from_requisition_id.clone())
+            .await?
+            .map(RequisitionNode::from_domain))
+    }
+
+    pub async fn created_from_requisition_id(&self) -> &Option<String> {
+        &self.row().created_from_requisition_id
     }
 
     // % allocated ?
