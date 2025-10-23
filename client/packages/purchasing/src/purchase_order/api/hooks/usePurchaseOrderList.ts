@@ -5,7 +5,6 @@ import {
   SortBy,
   useMutation,
   useQuery,
-  useTableStore,
 } from '@openmsupply-client/common';
 import { usePurchaseOrderGraphQL } from '../usePurchaseOrderGraphQL';
 import { PURCHASE_ORDER } from './keys';
@@ -72,13 +71,6 @@ export const usePurchaseOrderList = (queryParams?: ListParams) => {
 
   const { data, isLoading, isError } = useQuery({ queryKey, queryFn });
 
-  const { selectedRows } = useTableStore(state => ({
-    selectedRows: Object.keys(state.rowState)
-      .filter(id => state.rowState[id]?.isSelected)
-      .map(selectedId => data?.nodes?.find(({ id }) => selectedId === id))
-      .filter(Boolean) as PurchaseOrderFragment[],
-  }));
-
   const deleteMutationFn = async (ids: string[]) => {
     try {
       for (const id of ids) {
@@ -106,7 +98,6 @@ export const usePurchaseOrderList = (queryParams?: ListParams) => {
 
   return {
     query: { data, isLoading, isError },
-    selectedRows,
     delete: {
       deletePurchaseOrders,
       isDeleting,
