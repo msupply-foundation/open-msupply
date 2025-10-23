@@ -12,7 +12,6 @@ export const useInbound = {
     listAll: Document.useInboundsAll,
 
     delete: Document.useInboundDelete,
-    deleteRows: Document.useInboundDeleteRows,
     insert: Document.useInsertInbound,
     update: Document.useUpdateInbound,
     updateTax: Document.useUpdateInboundServiceTax,
