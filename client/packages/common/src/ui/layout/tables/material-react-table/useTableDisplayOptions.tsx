@@ -110,6 +110,7 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
         '& > .MuiBox-root > .MuiBox-root': {
           paddingY: 0,
         },
+        boxShadow: 'none',
       },
     },
     muiTableContainerProps: {
