@@ -5,6 +5,7 @@ import {
   FilterBy,
   UpdateNamePropertiesInput,
   NameFilterInput,
+  ConfigureNamePropertyInput,
 } from '@openmsupply-client/common';
 import {
   Sdk,
@@ -202,5 +203,17 @@ export const getNameQueries = (sdk: Sdk, storeId: string) => ({
     }
 
     throw new Error(result.updateNameProperties.error.description);
+  },
+  configureNameProperties: async (input: ConfigureNamePropertyInput) => {
+    const result = await sdk.configureNameProperties({ input });
+
+    if (
+      result.centralServer.general.configureNameProperties.__typename ===
+      'Success'
+    ) {
+      return result;
+    }
+
+    throw new Error('Unable to configure name properties');
   },
 });

@@ -173,10 +173,7 @@ function getGapsPropertiesForLanguage(
       key: SUPPLY_LEVEL_KEY,
       name: translations['SUPPLY_LEVEL_KEY'],
       valueType: PropertyNodeValueType.String,
-      allowedValues: translateAllowedValues(
-        ['Primary', 'Sub-National', 'Lowest Distribution', 'Service Point'],
-        translations
-      ),
+      allowedValues: null,
       remoteEditable: false,
     },
     {

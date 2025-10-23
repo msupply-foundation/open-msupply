@@ -161,3 +161,17 @@ mutation updateNameProperties(
     }
   }
 }
+
+mutation configureNameProperties($input: [ConfigureNamePropertyInput!]!) {
+  centralServer {
+    general {
+      configureNameProperties(input: $input) {
+        __typename
+        ... on Success {
+          __typename
+          success
+        }
+      }
+    }
+  }
+}
