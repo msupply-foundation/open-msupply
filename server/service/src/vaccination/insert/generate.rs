@@ -40,6 +40,7 @@ pub fn generate(
         stock_line_id,
         not_given_reason,
         item_id,
+        create_not_given_records_for_skipped_doses: _, // Ignore this field as it's only used for control flow
     } = insert_input;
 
     let now = Utc::now().naive_utc();

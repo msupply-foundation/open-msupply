@@ -20,6 +20,7 @@ table! {
         use_in_gaps_calculations -> Bool,
         wastage_rate -> Double,
         deleted_datetime -> Nullable<Timestamp>,
+        can_skip_dose -> Bool
     }
 }
 
@@ -38,6 +39,7 @@ pub struct VaccineCourseRow {
     pub use_in_gaps_calculations: bool,
     pub wastage_rate: f64,
     pub deleted_datetime: Option<chrono::NaiveDateTime>,
+    pub can_skip_dose: bool,
 }
 
 pub struct VaccineCourseRowRepository<'a> {
