@@ -22,7 +22,13 @@ use self::{
 };
 
 use super::{ListError, ListResult};
-use crate::service_provider::ServiceContext;
+use crate::{
+    requisition::request_requisition::{
+        insert_from_response_requisition, InsertFromResponseRequisition,
+        InsertFromResponseRequisitionError,
+    },
+    service_provider::ServiceContext,
+};
 use program_settings::{
     customer_program_settings::{
         get_program_requisition_settings_by_customer, prepare::CustomerProgramRequisitionSetting,
@@ -118,6 +124,14 @@ pub trait RequisitionServiceTrait: Sync + Send {
         input: DeleteRequestRequisition,
     ) -> Result<String, DeleteRequestRequisitionError> {
         delete_request_requisition(ctx, input)
+    }
+
+    fn insert_from_response_requisition(
+        &self,
+        ctx: &ServiceContext,
+        input: InsertFromResponseRequisition,
+    ) -> Result<Requisition, InsertFromResponseRequisitionError> {
+        insert_from_response_requisition(ctx, input)
     }
 
     fn use_suggested_quantity(

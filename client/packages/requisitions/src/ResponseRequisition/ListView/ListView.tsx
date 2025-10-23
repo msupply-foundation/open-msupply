@@ -1,4 +1,4 @@
-import React, { FC, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import {
   useNavigate,
   DataTable,
@@ -34,10 +34,11 @@ const useDisableResponseRows = (rows?: ResponseRowFragment[]) => {
   }, [rows]);
 };
 
-export const ResponseRequisitionListView: FC = () => {
+export const ResponseRequisitionListView = () => {
   const t = useTranslation();
   const navigate = useNavigate();
-  const modalController = useToggle();
+  const requisitionModalController = useToggle();
+  const createOrderModalController = useToggle();
   const { mutate: onUpdate } = useResponse.document.update();
   const {
     updateSortQuery,
@@ -150,7 +151,10 @@ export const ResponseRequisitionListView: FC = () => {
   return (
     <>
       <Toolbar filter={filter} />
-      <AppBarButtons modalController={modalController} />
+      <AppBarButtons
+        requisitionModalController={requisitionModalController}
+        createOrderModalController={createOrderModalController}
+      />
 
       <DataTable
         id="requisition-list"
@@ -166,7 +170,7 @@ export const ResponseRequisitionListView: FC = () => {
         noDataElement={
           <NothingHere
             body={t('error.no-requisitions')}
-            onCreate={modalController.toggleOn}
+            onCreate={requisitionModalController.toggleOn}
           />
         }
       />
@@ -175,7 +179,7 @@ export const ResponseRequisitionListView: FC = () => {
   );
 };
 
-export const ListView: FC = () => {
+export const ListView = () => {
   return (
     <TableProvider createStore={createTableStore}>
       <ResponseRequisitionListView />

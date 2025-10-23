@@ -21,9 +21,9 @@ import {
 import { DraftResponseLine } from './../DetailView/ResponseLineEdit/hooks';
 
 export type ListParams = {
-  first: number;
-  offset: number;
-  sortBy: SortBy<ResponseRowFragment>;
+  first?: number;
+  offset?: number;
+  sortBy?: SortBy<ResponseRowFragment>;
   filterBy: FilterBy | null;
 };
 
@@ -39,9 +39,9 @@ const responseParser = {
     }
   },
   toSortField: (
-    sortBy: SortBy<ResponseRowFragment>
+    sortBy?: SortBy<ResponseRowFragment>
   ): RequisitionSortFieldInput => {
-    switch (sortBy.key) {
+    switch (sortBy?.key) {
       case 'createdDatetime': {
         return RequisitionSortFieldInput.CreatedDatetime;
       }
@@ -122,7 +122,7 @@ export const getResponseQueries = (sdk: Sdk, storeId: string) => ({
         page: { offset, first },
         sort: {
           key: responseParser.toSortField(sortBy),
-          desc: !!sortBy.isDesc,
+          desc: !!sortBy?.isDesc,
         },
         filter: {
           ...filterBy,
@@ -209,6 +209,42 @@ export const getResponseQueries = (sdk: Sdk, storeId: string) => ({
 
     throw new Error('Unable to create requisition');
   },
+  insertRequestFromResponse: async ({
+    id,
+    responseRequisitionId,
+    otherPartyId,
+    comment,
+    maxMonthsOfStock,
+    minMonthsOfStock,
+  }: {
+    id: string;
+    responseRequisitionId: string;
+    otherPartyId: string;
+    comment?: string;
+    maxMonthsOfStock: number;
+    minMonthsOfStock: number;
+  }): Promise<string> => {
+    const result = await sdk.insertRequestFromResponseRequisition({
+      storeId,
+      input: {
+        id,
+        responseRequisitionId,
+        otherPartyId,
+        comment,
+        maxMonthsOfStock,
+        minMonthsOfStock,
+      },
+    });
+
+    const { insertFromResponseRequisition } = result || {};
+
+    if (insertFromResponseRequisition?.__typename === 'RequisitionNode') {
+      return insertFromResponseRequisition.id;
+    }
+
+    throw new Error('Unable to create request from response requisition');
+  },
+
   insertProgram: async (input: InsertProgramResponseRequisitionInput) => {
     const result = await sdk.insertProgramResponse({
       storeId,
