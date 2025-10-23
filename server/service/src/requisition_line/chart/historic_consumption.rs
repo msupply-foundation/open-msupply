@@ -346,14 +346,19 @@ mod tests {
             },
         ];
 
+        let start_date = NaiveDate::from_ymd_opt(2021, 1, 1).unwrap();
+        let end_date = NaiveDate::from_ymd_opt(2021, 1, 31).unwrap();
+        let amc_start = NaiveDate::from_ymd_opt(2020, 10, 1).unwrap();
+        let end_of_amc = end_date;
+
         assert_eq!(
             calculate_consumption(
                 ConsumptionHistoryPoint {
-                    reference_date: NaiveDate::from_ymd_opt(2021, 1, 31).unwrap(),
-                    start_of_consumption_lookup: NaiveDate::from_ymd_opt(2021, 1, 1).unwrap(),
-                    end_of_consumption_lookup: NaiveDate::from_ymd_opt(2021, 1, 31).unwrap(),
-                    start_of_amc_lookup: NaiveDate::from_ymd_opt(2020, 10, 1).unwrap(),
-                    end_of_amc_lookup: NaiveDate::from_ymd_opt(2021, 1, 31).unwrap(),
+                    reference_date: end_date,
+                    start_of_consumption_lookup: start_date,
+                    end_of_consumption_lookup: end_date,
+                    start_of_amc_lookup: amc_start,
+                    end_of_amc_lookup: end_of_amc,
                 },
                 &consumption_rows,
                 days_in_month,
@@ -363,13 +368,9 @@ mod tests {
             ConsumptionHistory {
                 consumption: 20,
                 average_monthly_consumption: 80_f64
-                    / amc_months_helper(
-                        NaiveDate::from_ymd_opt(2021, 1, 31).unwrap(),
-                        NaiveDate::from_ymd_opt(2020, 10, 1).unwrap(),
-                        days_in_month
-                    )
+                    / amc_months_helper(end_of_amc, amc_start, days_in_month)
                     * adjust_for_dos,
-                date: NaiveDate::from_ymd_opt(2021, 1, 31).unwrap()
+                date: end_date
             }
         );
 
@@ -378,11 +379,11 @@ mod tests {
         assert_eq!(
             calculate_consumption(
                 ConsumptionHistoryPoint {
-                    reference_date: NaiveDate::from_ymd_opt(2021, 1, 31).unwrap(),
-                    start_of_consumption_lookup: NaiveDate::from_ymd_opt(2021, 1, 1).unwrap(),
-                    end_of_consumption_lookup: NaiveDate::from_ymd_opt(2021, 1, 31).unwrap(),
-                    start_of_amc_lookup: NaiveDate::from_ymd_opt(2020, 10, 1).unwrap(),
-                    end_of_amc_lookup: NaiveDate::from_ymd_opt(2021, 1, 31).unwrap(),
+                    reference_date: end_date,
+                    start_of_consumption_lookup: start_date,
+                    end_of_consumption_lookup: end_date,
+                    start_of_amc_lookup: amc_start,
+                    end_of_amc_lookup: end_of_amc,
                 },
                 &consumption_rows,
                 days_in_month,
@@ -392,13 +393,9 @@ mod tests {
             ConsumptionHistory {
                 consumption: 20,
                 average_monthly_consumption: 50_f64
-                    / amc_months_helper(
-                        NaiveDate::from_ymd_opt(2021, 1, 31).unwrap(),
-                        NaiveDate::from_ymd_opt(2020, 10, 1).unwrap(),
-                        days_in_month
-                    )
+                    / amc_months_helper(end_of_amc, amc_start, days_in_month)
                     * adjust_for_dos,
-                date: NaiveDate::from_ymd_opt(2021, 1, 31).unwrap()
+                date: end_date
             }
         );
 
@@ -409,11 +406,11 @@ mod tests {
         assert_eq!(
             calculate_consumption(
                 ConsumptionHistoryPoint {
-                    reference_date: NaiveDate::from_ymd_opt(2021, 1, 31).unwrap(),
-                    start_of_consumption_lookup: NaiveDate::from_ymd_opt(2021, 1, 1).unwrap(),
-                    end_of_consumption_lookup: NaiveDate::from_ymd_opt(2021, 1, 31).unwrap(),
-                    start_of_amc_lookup: NaiveDate::from_ymd_opt(2020, 10, 1).unwrap(),
-                    end_of_amc_lookup: NaiveDate::from_ymd_opt(2021, 1, 31).unwrap(),
+                    reference_date: end_date,
+                    start_of_consumption_lookup: start_date,
+                    end_of_consumption_lookup: end_date,
+                    start_of_amc_lookup: amc_start,
+                    end_of_amc_lookup: end_of_amc,
                 },
                 &consumption_rows,
                 days_in_month,
@@ -423,13 +420,9 @@ mod tests {
             ConsumptionHistory {
                 consumption: 20,
                 average_monthly_consumption: 80_f64
-                    / amc_months_helper(
-                        NaiveDate::from_ymd_opt(2021, 1, 31).unwrap(),
-                        NaiveDate::from_ymd_opt(2020, 10, 1).unwrap(),
-                        days_in_month
-                    )
+                    / amc_months_helper(end_of_amc, amc_start, days_in_month)
                     * adjust_for_dos,
-                date: NaiveDate::from_ymd_opt(2021, 1, 31).unwrap()
+                date: end_date
             }
         );
     }
