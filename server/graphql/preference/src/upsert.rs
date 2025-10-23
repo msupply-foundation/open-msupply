@@ -25,6 +25,7 @@ pub struct UpsertPreferencesInput {
     pub prevent_transfers_months_before_initialisation: Option<i32>,
     pub show_contact_tracing: Option<bool>,
     pub sync_records_display_threshold: Option<i32>,
+    pub warning_for_excess_request: Option<bool>,
 
     // Store preferences
     pub manage_vaccines_in_doses: Option<Vec<BoolStorePrefInput>>,
@@ -70,6 +71,8 @@ impl UpsertPreferencesInput {
             gender_options,
             show_contact_tracing,
             sync_records_display_threshold,
+            warning_for_excess_request,
+
             // Store preferences
             manage_vaccines_in_doses,
             manage_vvm_status_for_stock,
@@ -93,6 +96,8 @@ impl UpsertPreferencesInput {
                 *prevent_transfers_months_before_initialisation,
             show_contact_tracing: *show_contact_tracing,
             sync_records_display_threshold: *sync_records_display_threshold,
+            warning_for_excess_request: *warning_for_excess_request,
+
             // Store preferences
             manage_vaccines_in_doses: manage_vaccines_in_doses
                 .as_ref()
