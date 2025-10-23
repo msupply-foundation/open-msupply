@@ -137,22 +137,23 @@ const ListView = () => {
     []
   );
 
-  const { table } = usePaginatedMaterialTable<PurchaseOrderRowFragment>({
-    tableId: 'purchase-order-list-view',
-    isLoading,
-    onRowClick: row => navigate(row.id),
-    columns: mrtColumns,
-    data: data?.nodes ?? [],
-    totalCount: data?.totalCount ?? 0,
-    initialSort: { key: 'invoiceNumber', dir: 'desc' },
-    getIsRestrictedRow: isPurchaseOrderDisabled,
-    noDataElement: (
-      <NothingHere
-        body={t('error.no-purchase-orders')}
-        onCreate={modalController.toggleOn}
-      />
-    ),
-  });
+  const { table, selectedRows } =
+    usePaginatedMaterialTable<PurchaseOrderRowFragment>({
+      tableId: 'purchase-order-list-view',
+      isLoading,
+      onRowClick: row => navigate(row.id),
+      columns: mrtColumns,
+      data: data?.nodes ?? [],
+      totalCount: data?.totalCount ?? 0,
+      initialSort: { key: 'invoiceNumber', dir: 'desc' },
+      getIsRestrictedRow: isPurchaseOrderDisabled,
+      noDataElement: (
+        <NothingHere
+          body={t('error.no-purchase-orders')}
+          onCreate={modalController.toggleOn}
+        />
+      ),
+    });
 
   return (
     <>
@@ -165,7 +166,10 @@ const ListView = () => {
       />
       <MaterialTable table={table} />
 
-      <Footer listParams={listParams} />
+      <Footer
+        selectedRows={selectedRows}
+        resetRowSelection={table.resetRowSelection}
+      />
     </>
   );
 };
