@@ -1,23 +1,20 @@
-import { useMemo, useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
   FnUtils,
   InsertPurchaseOrderInput,
   PurchaseOrderLineNode,
-  SortUtils,
   useConfirmationModal,
   useMutation,
   useNotification,
   useParams,
   useQuery,
   useTranslation,
-  useUrlQuery,
   RecordPatch,
   useDebounceCallback,
   LIST_KEY,
 } from '@openmsupply-client/common';
 
 import { isPurchaseOrderDisabled } from '../../../utils';
-import { usePurchaseOrderColumns } from '../../DetailView/columns';
 import { usePurchaseOrderGraphQL } from '../usePurchaseOrderGraphQL';
 import { PurchaseOrderFragment } from '../operations.generated';
 import { parseUpdateInput } from './utils';
@@ -37,9 +34,6 @@ export const usePurchaseOrder = (id?: string) => {
   const { data, isLoading, isError } = useGetById(purchaseOrderId);
 
   const isDisabled = data ? isPurchaseOrderDisabled(data) : false;
-
-  const { sortedAndFilteredLines, itemFilter, setItemFilter } =
-    useFilteredAndSortedLines(data);
 
   // DRAFT STATE
   const [draft, setDraft] = useState<PurchaseOrderFragment | undefined>();
@@ -93,7 +87,6 @@ export const usePurchaseOrder = (id?: string) => {
 
   return {
     query: { data, isLoading, isError },
-    lines: { sortedAndFilteredLines, itemFilter, setItemFilter },
     create: { create, isCreating, createError },
     update: { update, isUpdating, updateError },
     masterList: { addFromMasterList, isAdding },
@@ -157,52 +150,6 @@ const useUpdate = () => {
     mutationFn,
     onSuccess: () => queryClient.invalidateQueries([PURCHASE_ORDER]),
   });
-};
-
-// Filters by item code or name, and sorts by the selected column
-const useFilteredAndSortedLines = (
-  data: PurchaseOrderFragment | undefined | void
-) => {
-  const { columns, sortBy } = usePurchaseOrderColumns();
-
-  const { urlQuery, updateQuery } = useUrlQuery({
-    skipParse: ['codeOrName'],
-  });
-
-  const itemFilter = urlQuery?.['codeOrName'] as string;
-
-  const setItemFilter = (filterValue: string) => {
-    updateQuery({
-      codeOrName: filterValue,
-    });
-  };
-
-  const sortedAndFilteredLines = useMemo(() => {
-    if (!data) return [];
-
-    const lines = data.lines.nodes || [];
-    const currentSortColumn = columns.find(({ key }) => key === sortBy.key);
-
-    if (!currentSortColumn?.getSortValue) return lines;
-
-    const sorter = SortUtils.getColumnSorter(
-      currentSortColumn?.getSortValue,
-      !!sortBy.isDesc
-    );
-
-    return [...lines].sort(sorter).filter(line => {
-      if (!itemFilter) return true;
-      const {
-        item: { code, name },
-      } = line;
-      return (
-        code?.toLowerCase().includes(itemFilter.toLowerCase()) ||
-        name?.toLowerCase().includes(itemFilter.toLowerCase())
-      );
-    });
-  }, [data, columns, sortBy, itemFilter]);
-
-  return { sortedAndFilteredLines, itemFilter, setItemFilter };
 };
 
 const useAddFromMasterList = () => {
