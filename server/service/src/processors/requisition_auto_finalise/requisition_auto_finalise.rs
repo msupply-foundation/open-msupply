@@ -138,6 +138,7 @@ impl Processor for RequisitionAutoFinaliseProcessor {
         }
 
         requisition.status = RequisitionStatus::Finalised;
+        requisition.finalised_datetime = Some(chrono::Utc::now().naive_utc());
 
         requisition_row_repo.upsert_one(&requisition)?;
 
