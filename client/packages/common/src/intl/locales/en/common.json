@@ -2175,6 +2175,7 @@
   "preference.authorisePurchaseOrder": "Authorise purchase orders",
   "preference.customTranslations": "Custom translations",
   "preference.disableManualReturns": "Disable manual returns",
+  "preference.requisitionAutoFinalise": "Auto finalise fulfilled requisitions",
   "preference.genderOptions": "Gender options",
   "preference.manageVaccinesInDoses": "Manage vaccines in doses",
   "preference.manageVvmStatusForStock": "Manage VVM status for stock",
