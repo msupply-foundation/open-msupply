@@ -5,7 +5,6 @@ import {
   BufferedTextInput,
   Grid,
   useTranslation,
-  SearchBar,
   Tooltip,
   DateTimePickerInput,
   Formatter,
@@ -33,7 +32,6 @@ export const Toolbar = ({ isDisabled }: ToolbarProps) => {
   const {
     draft,
     query: { data, isLoading },
-    lines: { itemFilter, setItemFilter },
     update: { update },
     handleChange,
   } = usePurchaseOrder();
@@ -203,14 +201,6 @@ export const Toolbar = ({ isDisabled }: ToolbarProps) => {
                   disabled={disabledExpectedDeliveryDate}
                 />
               }
-            />
-          </Grid>
-          <Grid display="flex" flexGrow={1} justifyContent="flex-end">
-            <SearchBar
-              placeholder={t('placeholder.filter-items')}
-              value={itemFilter ?? ''}
-              onChange={newValue => setItemFilter(newValue)}
-              debounceTime={0}
             />
           </Grid>
         </Grid>
