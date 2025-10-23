@@ -1,39 +1,37 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import {
   useNavigate,
-  DataTable,
-  useColumns,
   TableProvider,
   createTableStore,
   useTranslation,
-  NothingHere,
   useUrlQueryParams,
-  ColumnFormat,
-  GenericColumnKey,
   PurchaseOrderNodeStatus,
   useTableStore,
-  NumberCell,
-  useFormatDateTime,
   useToggle,
+  ColumnType,
+  ColumnDef,
+  usePaginatedMaterialTable,
+  MaterialTable,
+  NothingHere,
 } from '@openmsupply-client/common';
 import { usePurchaseOrderList } from '../api';
 import { PurchaseOrderRowFragment } from '../api/operations.generated';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
 import { Footer } from './Footer';
-import { getPurchaseOrderStatusTranslator } from '../../utils';
+import {
+  getPurchaseOrderStatusTranslator,
+  isPurchaseOrderDisabled,
+} from '../../utils';
 
 const ListView = () => {
   const t = useTranslation();
   const navigate = useNavigate();
-  const { localisedDate } = useFormatDateTime();
   const { setDisabledRows } = useTableStore();
   const modalController = useToggle();
 
   const {
-    updateSortQuery,
-    updatePaginationQuery,
-    queryParams: { page, first, offset, sortBy, filterBy },
+    queryParams: { first, offset, sortBy, filterBy },
   } = useUrlQueryParams({
     initialSort: { key: 'createdDatetime', dir: 'desc' },
     filters: [
@@ -55,9 +53,8 @@ const ListView = () => {
     filterBy,
   };
   const {
-    query: { data, isError, isLoading },
+    query: { data, isLoading },
   } = usePurchaseOrderList(listParams);
-  const pagination = { page, first, offset };
 
   useEffect(() => {
     const disabledRows = (data?.nodes ?? [])
@@ -66,79 +63,96 @@ const ListView = () => {
     setDisabledRows(disabledRows);
   }, [data, setDisabledRows]);
 
-  const columns = useColumns<PurchaseOrderRowFragment>(
-    [
-      GenericColumnKey.Selection,
+  const mrtColumns = useMemo(
+    (): ColumnDef<PurchaseOrderRowFragment>[] => [
       {
-        key: 'supplier',
-        label: 'label.supplier',
-        accessor: ({ rowData }) => rowData.supplier?.name,
-        sortable: true,
-      },
-      [
-        'invoiceNumber',
-        {
-          label: 'label.number',
-          maxWidth: 110,
-          accessor: ({ rowData }) => rowData.number,
-        },
-      ],
-      {
-        key: 'createdDatetime',
-        label: 'label.created',
-        formatter: dateString =>
-          dateString ? localisedDate((dateString as string) || '') : '',
-        accessor: ({ rowData }) => rowData.createdDatetime,
-        sortable: true,
+        header: t('label.supplier'),
+        accessorKey: 'supplierName',
+        enableColumnFilter: true,
+        defaultHideOnMobile: true,
       },
       {
-        key: 'confirmedDatetime',
-        label: 'label.confirmed',
-        formatter: dateString =>
-          dateString ? localisedDate((dateString as string) || '') : '',
-        accessor: ({ rowData }) => rowData.confirmedDatetime,
-        sortable: true,
+        header: t('label.number'),
+        accessorKey: 'number',
+        columnType: ColumnType.Number,
+        size: 110,
       },
       {
-        key: 'sentDatetime',
-        label: 'label.sent',
-        formatter: dateString =>
-          dateString ? localisedDate((dateString as string) || '') : '',
-        accessor: ({ rowData }) => rowData.sentDatetime,
+        header: t('label.created'),
+        accessorKey: 'createdDatetime',
+        enableColumnFilter: true,
+        columnType: ColumnType.Date,
       },
       {
-        key: 'requestedDeliveryDate',
-        label: 'label.requested-delivery-date',
-        format: ColumnFormat.Date,
-        accessor: ({ rowData }) => rowData.requestedDeliveryDate,
-      },
-      [
-        'status',
-        {
-          formatter: status =>
-            getPurchaseOrderStatusTranslator(t)(
-              status as PurchaseOrderNodeStatus
-            ),
-        },
-      ],
-      {
-        key: 'targetMonths',
-        label: 'label.target-months',
-        accessor: ({ rowData }) => rowData.targetMonths,
-        Cell: NumberCell,
+        header: t('label.confirmed'),
+        accessorKey: 'confirmedDatetime',
+        enableColumnFilter: true,
+        columnType: ColumnType.Date,
       },
       {
-        key: 'lines',
-        label: 'label.lines',
-        accessor: ({ rowData }) => rowData.lines.totalCount,
-        maxWidth: 80,
-        sortable: false,
+        header: t('label.sent'),
+        accessorKey: 'sentDatetime',
+        enableColumnFilter: true,
+        columnType: ColumnType.Date,
       },
-      ['comment'],
+      {
+        header: t('label.requested-delivery-date'),
+        accessorKey: 'requestedDeliveryDate',
+        enableColumnFilter: true,
+        columnType: ColumnType.Date,
+      },
+      {
+        header: t('label.status'),
+        accessorFn: row => getPurchaseOrderStatusTranslator(t)(row.status),
+        id: 'status',
+        size: 140,
+        filterVariant: 'select',
+        filterSelectOptions: Object.values(PurchaseOrderNodeStatus).map(
+          status => ({
+            value: status,
+            label: getPurchaseOrderStatusTranslator(t)(status),
+          })
+        ),
+      },
+      {
+        header: t('label.target-months'),
+        accessorKey: 'targetMonths',
+        columnType: ColumnType.Number,
+        accessorFn: row => row.targetMonths,
+        defaultHideOnMobile: true,
+      },
+      {
+        header: t('label.lines'),
+        accessorFn: row => row.lines?.totalCount ?? 0,
+        size: 80,
+        enableSorting: false,
+        defaultHideOnMobile: true,
+      },
+      {
+        header: t('label.comment'),
+        accessorKey: 'comment',
+        columnType: ColumnType.Comment,
+      },
     ],
-    { onChangeSortBy: updateSortQuery, sortBy },
-    [sortBy]
+    []
   );
+
+  const { table } = usePaginatedMaterialTable<PurchaseOrderRowFragment>({
+    tableId: 'purchase-order-list-view',
+    isLoading,
+    onRowClick: row => navigate(row.id),
+    columns: mrtColumns,
+    data: data?.nodes ?? [],
+    totalCount: data?.totalCount ?? 0,
+    initialSort: { key: 'invoiceNumber', dir: 'desc' },
+    getIsRestrictedRow: isPurchaseOrderDisabled,
+    noDataElement: (
+      <NothingHere
+        body={t('error.no-purchase-orders')}
+        onCreate={modalController.toggleOn}
+      />
+    ),
+  });
 
   return (
     <>
@@ -149,23 +163,8 @@ const ListView = () => {
         modalController={modalController}
         onCreate={modalController.toggleOn}
       />
-      <DataTable
-        id="purchase-order-list"
-        enableColumnSelection
-        columns={columns}
-        data={data?.nodes ?? []}
-        isError={isError}
-        isLoading={isLoading}
-        onRowClick={row => navigate(row.id)}
-        onChangePage={updatePaginationQuery}
-        pagination={{ ...pagination, total: data?.totalCount ?? 0 }}
-        noDataElement={
-          <NothingHere
-            body={t('error.no-purchase-orders')}
-            onCreate={modalController.toggleOn}
-          />
-        }
-      />
+      <MaterialTable table={table} />
+
       <Footer listParams={listParams} />
     </>
   );
