@@ -1,18 +1,17 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   useNavigate,
-  DataTable,
-  useColumns,
   TableProvider,
   createTableStore,
   useTranslation,
   NothingHere,
   useUrlQueryParams,
   PurchaseOrderLineStatusNode,
-  useFormatDateTime,
-  ColumnFormat,
-  NumberCell,
   RouteBuilder,
+  ColumnDef,
+  ColumnType,
+  usePaginatedMaterialTable,
+  MaterialTable,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { PurchaseOrderLineFragment } from '../../api/operations.generated';
@@ -22,12 +21,9 @@ import { AppBarButtons } from './AppBarButtons';
 const OutstandingLinesList = () => {
   const t = useTranslation();
   const navigate = useNavigate();
-  const { localisedDate } = useFormatDateTime();
 
   const {
-    updateSortQuery,
-    updatePaginationQuery,
-    queryParams: { page, first, offset, sortBy },
+    queryParams: { first, offset, sortBy },
   } = useUrlQueryParams({
     initialSort: { key: 'purchaseOrderNumber', dir: 'desc' },
   });
@@ -44,115 +40,91 @@ const OutstandingLinesList = () => {
   const {
     query: { data, isError, isLoading },
   } = usePurchaseOrderLineList(listParams);
-  const pagination = { page, first, offset };
 
-  const columns = useColumns<PurchaseOrderLineFragment>(
-    [
+  const mrtColumns = useMemo(
+    (): ColumnDef<PurchaseOrderLineFragment>[] => [
       {
-        key: 'purchaseOrderNumber',
-        label: 'label.purchase-order-number',
-        accessor: ({ rowData }) => rowData?.purchaseOrder?.number,
+        header: t('label.purchase-order-number'),
+        accessorKey: 'purchaseOrderNumber',
       },
       {
-        key: 'purchaseOrderReference',
-        label: 'label.purchase-order-reference',
-        accessor: ({ rowData }) => rowData?.purchaseOrder?.reference,
-        sortable: false,
+        header: t('label.purchase-order-reference'),
+        accessorKey: 'purchaseOrderReference',
       },
       {
-        key: 'createdBy',
-        label: 'label.created-by',
-        accessor: ({ rowData }) => rowData?.purchaseOrder?.user?.username,
-        sortable: false,
+        header: t('label.created-by'),
+        accessorKey: 'createdBy',
       },
       {
-        key: 'supplierCode',
-        label: 'label.supplier-code',
-        accessor: ({ rowData }) => rowData?.purchaseOrder?.supplier?.code,
-        sortable: false,
+        header: t('label.supplier-code'),
+        accessorKey: 'supplierCode',
       },
       {
-        key: 'supplierName',
-        label: 'label.supplier-name',
-        accessor: ({ rowData }) => rowData?.purchaseOrder?.supplier?.name,
-        sortable: false,
+        header: t('label.supplier-name'),
+        accessorKey: 'supplierName',
       },
       {
-        key: 'itemName',
-        label: 'label.item-name',
-        accessor: ({ rowData }) => rowData?.item?.name,
-        sortable: false,
+        header: t('label.item-name'),
+        accessorKey: 'itemName',
       },
       {
-        key: 'confirmedDatetime',
-        label: 'label.purchase-order-confirmed',
-        formatter: dateString =>
-          dateString ? localisedDate((dateString as string) || '') : '',
-        accessor: ({ rowData }) => rowData?.purchaseOrder?.confirmedDatetime,
-        sortable: false,
+        header: t('label.purchase-order-confirmed'),
+        accessorKey: 'confirmedDatetime',
+        columnType: ColumnType.Date,
       },
       {
-        key: 'expectedDeliveryDate',
-        label: 'label.expected-delivery-date',
-        format: ColumnFormat.Date,
-        sortable: false,
-        width: 150,
+        header: t('label.expected-delivery-date'),
+        accessorKey: 'expectedDeliveryDate',
+        columnType: ColumnType.Date,
       },
       {
-        key: 'adjustedNumberOfUnits',
-        label: 'label.adjusted-units-expected',
-        Cell: NumberCell,
-        sortable: false,
-        width: 150,
+        header: t('label.adjusted-units-expected'),
+        accessorKey: 'adjustedNumberOfUnits',
+        columnType: ColumnType.Number,
       },
       {
-        key: 'receivedNumberOfUnits',
-        label: 'label.received-units',
-        Cell: NumberCell,
-        sortable: false,
+        header: t('label.received-units'),
+        accessorKey: 'receivedNumberOfUnits',
+        columnType: ColumnType.Number,
       },
       {
-        key: 'outstandingQuantity',
-        label: 'label.outstanding-units',
-        Cell: NumberCell,
-        accessor: ({ rowData }) => {
-          const adjusted = rowData?.adjustedNumberOfUnits ?? 0;
-          const received = rowData?.receivedNumberOfUnits ?? 0;
+        header: t('label.outstanding-units'),
+        accessorKey: 'outstandingQuantity',
+        columnType: ColumnType.Number,
+        accessorFn: row => {
+          const adjusted = row?.adjustedNumberOfUnits ?? 0;
+          const received = row?.receivedNumberOfUnits ?? 0;
           return adjusted - received;
         },
-        sortable: false,
       },
     ],
-    { onChangeSortBy: updateSortQuery, sortBy },
-    [sortBy]
+    []
   );
+
+  const { table } = usePaginatedMaterialTable<PurchaseOrderLineFragment>({
+    tableId: 'outstanding-purchase-order-lines-list',
+    isLoading: isLoading,
+    isError,
+    onRowClick: row =>
+      navigate(
+        RouteBuilder.create(AppRoute.Replenishment)
+          .addPart(AppRoute.PurchaseOrder)
+          .addPart(row.purchaseOrder?.id ?? '')
+          .build()
+      ),
+    columns: mrtColumns,
+    data: data?.nodes,
+    totalCount: data?.totalCount ?? 0,
+    initialSort: { key: 'invoiceNumber', dir: 'desc' },
+    noDataElement: (
+      <NothingHere body={t('message.no-outstanding-purchase-order-lines')} />
+    ),
+  });
 
   return (
     <>
       <AppBarButtons data={data?.nodes} isLoading={isLoading} />
-      <DataTable
-        id="outstanding-purchase-order-lines"
-        enableColumnSelection
-        columns={columns}
-        data={data?.nodes ?? []}
-        isError={isError}
-        isLoading={isLoading}
-        onRowClick={row =>
-          navigate(
-            RouteBuilder.create(AppRoute.Replenishment)
-              .addPart(AppRoute.PurchaseOrder)
-              .addPart(row.purchaseOrder?.id ?? '')
-              .build()
-          )
-        }
-        onChangePage={updatePaginationQuery}
-        pagination={{ ...pagination, total: data?.totalCount ?? 0 }}
-        noDataElement={
-          <NothingHere
-            body={t('message.no-outstanding-purchase-order-lines')}
-          />
-        }
-      />
+      <MaterialTable table={table} />
     </>
   );
 };
