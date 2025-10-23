@@ -3,24 +3,26 @@ import {
   ColumnType,
   getLinesFromRow,
   TextWithTooltipCell,
+  useTranslation,
 } from '@openmsupply-client/common';
 import { PurchaseOrderLineFragment } from '../api';
 import { usePurchaseOrderLineErrorContext } from '../context';
 import { useMemo } from 'react';
 
 export const usePurchaseOrderColumns = () => {
+  const t = useTranslation();
   const { getError } = usePurchaseOrderLineErrorContext();
 
   const columns = useMemo((): ColumnDef<PurchaseOrderLineFragment>[] => {
     return [
       {
         accessorKey: 'lineNumber',
-        header: 'label.line-number',
+        header: t('label.line-number'),
         columnType: ColumnType.Number,
       },
       {
         accessorKey: 'item.code',
-        header: 'label.item-code',
+        header: t('label.code'),
         size: 130,
         getIsError: row =>
           getLinesFromRow(row).some(
@@ -29,51 +31,51 @@ export const usePurchaseOrderColumns = () => {
       },
       {
         accessorKey: 'item.name',
-        header: 'label.item-name',
+        header: t('label.item-name'),
         Cell: TextWithTooltipCell,
         size: 350,
       },
       {
         accessorKey: 'numberOfPacks',
-        header: 'label.num-packs',
+        header: t('label.num-packs'),
         columnType: ColumnType.Number,
       },
       {
         accessorKey: 'packSize',
-        header: 'label.pack-size',
+        header: t('label.pack-size'),
         columnType: ColumnType.Number,
         defaultHideOnMobile: true,
       },
       {
         accessorKey: 'requestedNumberOfUnits',
-        header: 'label.requested-quantity',
+        header: t('label.requested-quantity'),
         columnType: ColumnType.Number,
       },
       {
         accessorKey: 'authorisedNumberOfUnits',
-        header: 'label.adjusted-units',
+        header: t('label.adjusted-units'),
         columnType: ColumnType.Number,
       },
       {
         // TODO: Goods received calculation
         accessorKey: 'totalReceived',
-        header: 'label.total-received',
+        header: t('label.total-received'),
         columnType: ColumnType.Number,
       },
       {
         accessorKey: 'stockOnHand',
-        header: 'label.soh',
+        header: t('label.soh'),
         columnType: ColumnType.Number,
         defaultHideOnMobile: true,
       },
       {
         accessorKey: 'onOrder',
-        header: 'label.on-order',
+        header: t('label.on-order'),
         columnType: ColumnType.Number,
       },
       {
         accessorKey: 'totalCost',
-        header: 'label.total-cost',
+        header: t('label.total-cost'),
         columnType: ColumnType.Currency,
         accessorFn: row => {
           const units =
@@ -84,15 +86,16 @@ export const usePurchaseOrderColumns = () => {
       },
       {
         accessorKey: 'requestedDeliveryDate',
-        header: 'label.requested-delivery-date',
+        header: t('label.requested-delivery-date'),
         columnType: ColumnType.Date,
       },
       {
         accessorKey: 'expectedDeliveryDate',
-        header: 'label.expected-delivery-date',
+        header: t('label.expected-delivery-date'),
         columnType: ColumnType.Date,
       },
     ];
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [getError]);
 
   return { columns };
