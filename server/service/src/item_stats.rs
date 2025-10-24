@@ -93,7 +93,6 @@ pub fn get_item_stats(
     }
 
     let consumption_rows = ConsumptionRepository::new(connection).query(Some(filter.clone()))?;
-    let dos_rows = DaysOutOfStockRepository::new(connection).query(Some(filter))?;
 
     let consumption_map = get_consumption_map(&consumption_rows)?;
 
@@ -109,6 +108,8 @@ pub fn get_item_stats(
         .unwrap_or(false);
 
     let adjusted_days_out_of_stock_map = if adjust_for_days_out_of_stock {
+        let dos_rows = DaysOutOfStockRepository::new(connection).query(Some(filter))?;
+
         Some(get_days_out_of_stock_adjustment_map(
             dos_rows,
             number_of_days,

@@ -15,7 +15,7 @@ import {
   ExpandIcon,
   RefreshIcon,
 } from '@common/icons';
-import { MenuItem, Typography } from '@mui/material';
+import { MenuItem, Typography, alpha } from '@mui/material';
 import { ColumnDef } from './types';
 import { IconButton } from '@common/components';
 import { useTranslation } from '@common/intl';
@@ -31,6 +31,7 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
   hasColumnFilters,
   getIsPlaceholderRow = () => false,
   getIsRestrictedRow = () => false,
+  muiTableBodyRowProps = {},
 }: {
   tableId: string;
   resetTableState: () => void;
@@ -40,6 +41,10 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
   toggleGrouped?: () => void;
   getIsPlaceholderRow?: (row: T) => boolean;
   getIsRestrictedRow?: (row: T) => boolean;
+
+  // This object is merged with the default row props in muiTableBodyRowProps
+  // below. We can do the same for other muiTable props if needed in future.
+  muiTableBodyRowProps?: MRT_TableOptions<T>['muiTableBodyRowProps'];
 }): Partial<MRT_TableOptions<T>> => {
   const t = useTranslation();
   return {
@@ -139,8 +144,17 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
         '& .MuiTableSortLabel-root': {
           display: column.getIsSorted() ? undefined : 'none',
         },
-        '& .Mui-TableHeadCell-Content-Actions': {
-          '& svg': { fontSize: '2em' },
+        // replace the action button with a full-width invisible button to make
+        // the whole header clickable to display the action menu
+        '& .Mui-TableHeadCell-Content-Actions > button ': {
+          width: '100%',
+          position: 'absolute',
+          left: 0,
+          top: 0,
+          borderRadius: 0,
+          '& svg': {
+            display: 'none',
+          },
         },
         // Allow date range filters to wrap if column is too narrow
         '& .MuiCollapse-wrapperInner > div': {
@@ -169,35 +183,58 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
     }),
 
     muiTableBodyProps: ({ table }) =>
-      // Make the NothingHere component vertically centered when there are no
-      // rows
+      // Make the NothingHere component vertically centred when there are no rows
       table.getRowCount() === 0
         ? {
             sx: { height: '100%' },
           }
         : {},
 
-    muiTableBodyRowProps: ({ row }) => ({
-      onClick: e => {
-        const isCtrlClick = e.getModifierState(
-          EnvUtils.os === 'Mac OS' ? 'Meta' : 'Control'
-        );
-        if (onRowClick) onRowClick(row.original, isCtrlClick);
-      },
-      sx: {
-        backgroundColor: row.original['isSubRow']
-          ? 'background.secondary'
-          : 'inherit',
-        fontStyle: row.getCanExpand() ? 'italic' : 'normal',
-        cursor: onRowClick ? 'pointer' : 'default',
-      },
-    }),
+    muiTableBodyRowProps: params => {
+      const { row } = params;
+      const customProps =
+        typeof muiTableBodyRowProps === 'function'
+          ? muiTableBodyRowProps(params)
+          : muiTableBodyRowProps;
+
+      const defaultProps: MRT_TableOptions<T>['muiTableBodyRowProps'] = {
+        onClick: e => {
+          const isCtrlClick = e.getModifierState(
+            EnvUtils.os === 'Mac OS' ? 'Meta' : 'Control'
+          );
+          if (onRowClick) onRowClick(row.original, isCtrlClick);
+        },
+        sx: {
+          backgroundColor: row.original['isSubRow']
+            ? 'background.secondary'
+            : 'inherit',
+          // these two selectors are to change the background color of a selected
+          // row from the default which is to use primary.main of the theme
+          // with an opacity of 0.2 and 0.4 on hover
+          '&.Mui-selected td:after': {
+            backgroundColor: theme => alpha(theme.palette.gray.pale, 0.2),
+          },
+          '&.Mui-selected:hover td:after': {
+            backgroundColor: theme => alpha(theme.palette.gray.pale, 0.4),
+          },
+          fontStyle: row.getCanExpand() ? 'italic' : 'normal',
+          cursor: onRowClick ? 'pointer' : 'default',
+        },
+      };
+      return {
+        ...defaultProps,
+        ...customProps,
+        sx: {
+          ...(defaultProps.sx || {}),
+          ...(customProps?.sx || {}),
+        },
+      };
+    },
 
     muiTableBodyCellProps: ({ row, column, table }) => ({
       sx: {
         fontSize: table.getState().density === 'compact' ? '0.90em' : '1em',
         fontWeight: 400,
-        // Remove transparency from pinned backgrounds
         opacity: 1,
         color: getIsPlaceholderRow(row.original)
           ? 'secondary.light'
