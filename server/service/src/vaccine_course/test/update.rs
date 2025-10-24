@@ -39,6 +39,7 @@ mod query {
             coverage_rate: 100.0,
             use_in_gaps_calculations: true,
             wastage_rate: 0.1,
+            can_skip_dose: false,
         };
 
         let _result = service
@@ -101,11 +102,13 @@ mod query {
             coverage_rate: 100.0,
             use_in_gaps_calculations: true,
             wastage_rate: 0.1,
+            can_skip_dose: Some(true),
         };
 
         let result = service.update_vaccine_course(&context, update).unwrap();
         assert_eq!(result.name, "new_name");
         assert_eq!(result.demographic_id, Some(mock_demographic_a().id));
+        assert_eq!(result.can_skip_dose, true);
 
         // Check there are two items for the vaccine_course
         let item_repo = VaccineCourseItemRepository::new(&context.connection);
@@ -134,6 +137,7 @@ mod query {
             coverage_rate: 100.0,
             use_in_gaps_calculations: true,
             wastage_rate: 0.1,
+            can_skip_dose: None,
         };
         let _result = service.update_vaccine_course(&context, update).unwrap();
 
@@ -155,6 +159,7 @@ mod query {
             coverage_rate: 100.0,
             use_in_gaps_calculations: true,
             wastage_rate: 0.1,
+            can_skip_dose: None,
         };
         let _result = service.update_vaccine_course(&context, update).unwrap();
 
@@ -184,6 +189,7 @@ mod query {
             coverage_rate: 100.0,
             use_in_gaps_calculations: true,
             wastage_rate: 0.1,
+            can_skip_dose: None,
         };
         let _result = service.update_vaccine_course(&context, update).unwrap();
 
@@ -202,6 +208,7 @@ mod query {
             coverage_rate: 100.0,
             use_in_gaps_calculations: true,
             wastage_rate: 0.1,
+            can_skip_dose: None,
         };
         let _result = service.update_vaccine_course(&context, update).unwrap();
 
@@ -227,6 +234,7 @@ mod query {
             coverage_rate: 100.0,
             use_in_gaps_calculations: true,
             wastage_rate: 0.1,
+            can_skip_dose: false,
         };
 
         let result = service
@@ -246,6 +254,7 @@ mod query {
             coverage_rate: 100.0,
             use_in_gaps_calculations: true,
             wastage_rate: 0.1,
+            can_skip_dose: None,
         };
 
         assert_eq!(

@@ -78,6 +78,9 @@ impl VaccinationCardItemNode {
     pub async fn vaccine_course_dose_id(&self) -> &str {
         &self.item.row.vaccine_course_dose_id
     }
+    pub async fn can_skip_dose(&self) -> &bool {
+        &self.item.row.can_skip_dose
+    }
     pub async fn vaccination_id(&self) -> &Option<String> {
         &self.item.row.vaccination_id
     }

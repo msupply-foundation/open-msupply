@@ -11,7 +11,6 @@ query StocktakeDetailQuery(
       status
       createdDatetime
       description
-      comment
     }
     ... on NodeError {
       __typename
@@ -41,8 +40,8 @@ query StocktakeDetailQuery(
         batch
         snapshotNumberOfPacks
         costPricePerPack
-        inventoryAdjustmentReason {
-          ... on InventoryAdjustmentReasonNode {
+        reasonOption {
+          ... on ReasonOptionNode {
             reason
           }
         }

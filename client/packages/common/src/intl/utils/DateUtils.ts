@@ -279,6 +279,12 @@ export const useFormatDateTime = () => {
       return `${months > 0 ? t('label.age-months-and', { count: months }) : ''}${t('label.age-days', { count: days })}`;
   };
 
+  const formatDaysFromToday = (days?: number): string => {
+    if (!days) return '';
+    const date = DateUtils.addDays(new Date(), days);
+    return customDate(date, URL_QUERY_DATE);
+  };
+
   return {
     urlQueryDate: URL_QUERY_DATE,
     urlQueryDateTime: URL_QUERY_DATE_TIME,
@@ -292,5 +298,6 @@ export const useFormatDateTime = () => {
     localisedTime,
     relativeDateTime,
     getDisplayAge,
+    formatDaysFromToday,
   };
 };

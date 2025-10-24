@@ -50,6 +50,7 @@ export type VaccinationCardItemFragment = {
   id: string;
   vaccineCourseId: string;
   vaccineCourseDoseId: string;
+  canSkipDose: boolean;
   vaccinationId?: string | null;
   label: string;
   minAgeMonths: number;
@@ -74,6 +75,7 @@ export type VaccinationCardFragment = {
     id: string;
     vaccineCourseId: string;
     vaccineCourseDoseId: string;
+    canSkipDose: boolean;
     vaccinationId?: string | null;
     label: string;
     minAgeMonths: number;
@@ -113,6 +115,7 @@ export type VaccinationCardQuery = {
           id: string;
           vaccineCourseId: string;
           vaccineCourseDoseId: string;
+          canSkipDose: boolean;
           vaccinationId?: string | null;
           label: string;
           minAgeMonths: number;
@@ -272,6 +275,7 @@ export const VaccinationCardItemFragmentDoc = gql`
     id
     vaccineCourseId
     vaccineCourseDoseId
+    canSkipDose
     vaccinationId
     label
     minAgeMonths
