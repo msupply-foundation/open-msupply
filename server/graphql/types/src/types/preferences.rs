@@ -83,6 +83,10 @@ impl PreferencesNode {
     pub async fn disable_manual_returns(&self) -> Result<bool> {
         self.load_preference(&self.preferences.disable_manual_returns)
     }
+
+    pub async fn requisition_auto_finalise(&self) -> Result<bool> {
+        self.load_preference(&self.preferences.requisition_auto_finalise)
+    }
 }
 
 impl PreferencesNode {
@@ -147,6 +151,7 @@ pub enum PreferenceKey {
     SortByVvmStatusThenExpiry,
     UseSimplifiedMobileUi,
     DisableManualReturns,
+    RequisitionAutoFinalise,
 }
 
 #[derive(Enum, Copy, Clone, Debug, Eq, PartialEq)]
