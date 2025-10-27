@@ -12,6 +12,9 @@ export const useColumnDensity = (tableId: string) => {
   const [state, setState] = useState<MRT_DensityState>(
     getSavedState(tableId).density ?? initial
   );
+  const [hasSavedState, setHasSavedState] = useState(
+    !!getSavedState(tableId).density
+  );
 
   const update = useCallback<
     NonNullable<MRT_TableOptions<MRT_RowData>['onDensityChange']>
@@ -23,13 +26,19 @@ export const useColumnDensity = (tableId: string) => {
             ? updaterOrValue(prev)
             : updaterOrValue;
 
-        updateSavedState(tableId, {
-          density: differentOrUndefined(newDensity, initial),
-        });
+        const savedDensity = differentOrUndefined(newDensity, initial);
+        updateSavedState(tableId, { density: savedDensity });
+        if (savedDensity) setHasSavedState(true);
         return newDensity;
       }),
     []
   );
 
-  return { initial, state, update };
+  return {
+    initial,
+    state,
+    update,
+    hasSavedState,
+    resetHasSavedState: () => setHasSavedState(false),
+  };
 };
