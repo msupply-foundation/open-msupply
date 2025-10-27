@@ -2078,6 +2078,7 @@
   "messages.report-upload-helper": "Select a file which contains the reports to add. The file must be a generated json file of the reports, and must have a .json extension.",
   "messages.reports-uploaded-successfully": "Added reports successfully",
   "messages.requested-to-suggested": "This will set requested quantity to the suggested quantity for lines where requested quantity is 0.",
+  "messages.requested-exceeds-suggested": "The quantity requested exceeds the suggested quantity",
   "messages.requisition-item-information-amc": "Customer's average monthly consumption. For your store it is the sum of the customers' average monthly consumption.",
   "messages.requisition-no-stock": "There is currently no stock available",
   "messages.results-found": "{{totalCount}} results found",
