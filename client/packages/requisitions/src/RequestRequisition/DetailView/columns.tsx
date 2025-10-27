@@ -181,7 +181,7 @@ export const useRequestColumns = () => {
         includeColumn: showExtraColumns,
         accessorFn: row => row.reason?.reason,
         getIsError: row =>
-          errors[row.id]?.__typename === 'RequisitionReasonNotProvided',
+          errors?.[row.id]?.__typename === 'RequisitionReasonNotProvided',
       },
 
       // --- Remote authorisation columns
