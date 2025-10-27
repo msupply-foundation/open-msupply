@@ -102,7 +102,7 @@ async fn test_requisition_auto_finalise() {
         connection,
         ..
     } = setup_all_with_data_and_service_provider(
-        "assigns_requisition_number_to_response_requisitions",
+        "requisition_auto_finalise_processor_test",
         MockDataInserts::none().stores().names(),
         MockData {
             names: vec![customer_name.clone(), response_store_name.clone()],
