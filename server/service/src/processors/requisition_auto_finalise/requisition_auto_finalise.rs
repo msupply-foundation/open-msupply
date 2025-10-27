@@ -63,6 +63,7 @@ impl Processor for RequisitionAutoFinaliseProcessor {
             return Ok(None);
         };
 
+        // Only process invoices that are in a Shipped or Verified status
         if invoice.status != InvoiceStatus::Shipped && invoice.status != InvoiceStatus::Verified {
             return Ok(None);
         }
