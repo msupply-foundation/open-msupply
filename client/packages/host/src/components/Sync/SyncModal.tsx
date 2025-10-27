@@ -189,6 +189,17 @@ export const SyncModal = ({ onCancel, open, width = 800 }: SyncModalProps) => {
   };
 
   const modalWidth = Math.min(width, window.innerWidth - 50);
+  const commonAlertStyles = {
+    fontSize: '14px',
+    width: '100%',
+    marginTop:
+      (!!numberOfRecordsInPushQueue && numberOfRecordsInPushQueue >= 100) ||
+      error
+        ? '5'
+        : '20',
+    backgroundColor: theme.palette.background.drawer,
+  };
+
   return (
     <BasicModal
       width={!isExtraSmallScreen ? modalWidth : 340}
@@ -224,13 +235,11 @@ export const SyncModal = ({ onCancel, open, width = 800 }: SyncModalProps) => {
           </Typography>
           <SyncProgress syncStatus={syncStatus} isOperational={true} />
         </Box>
-
         {error && (
           <Box marginTop="20">
             <BoxedErrorWithDetails {...error} width={'100%'} />
           </Box>
         )}
-
         {!!numberOfRecordsInPushQueue && numberOfRecordsInPushQueue >= 100 && (
           <Alert
             severity="warning"
@@ -240,30 +249,26 @@ export const SyncModal = ({ onCancel, open, width = 800 }: SyncModalProps) => {
           </Alert>
         )}
 
-        {!error && latestSuccessfulSyncDate && (
-          <Alert
-            sx={{
-              backgroundColor: theme.palette.background.drawer,
-              fontSize: '14px',
-              width: '100%',
-              marginTop:
-                (!!numberOfRecordsInPushQueue &&
-                  numberOfRecordsInPushQueue >= 100) ||
-                error
-                  ? '5'
-                  : '20',
-            }}
-            icon={
-              <CheckCircleIcon fontSize="small" sx={{ color: 'gray.dark' }} />
-            }
-          >
-            {lastSuccessfulSyncMessage(
-              latestSuccessfulSyncDate,
-              durationAsDate
-            )}
+        {syncStatus?.isSyncing ? (
+          <Alert severity="info" sx={commonAlertStyles}>
+            {t('sync-info.syncing')}
           </Alert>
+        ) : (
+          !error &&
+          latestSuccessfulSyncDate && (
+            <Alert
+              sx={commonAlertStyles}
+              icon={
+                <CheckCircleIcon fontSize="small" sx={{ color: 'gray.dark' }} />
+              }
+            >
+              {lastSuccessfulSyncMessage(
+                latestSuccessfulSyncDate,
+                durationAsDate
+              )}
+            </Alert>
+          )
         )}
-
         <Box sx={{ paddingTop: 7 }} display="flex" justifyContent="center">
           <LoadingButton
             shouldShrink={false}
