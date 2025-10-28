@@ -170,6 +170,7 @@ pub fn get_item_ids_by_stock_status(
         store_id,
         Some(num_months_consumption as f64),
         item_ids,
+        None,
     )
     .map_err(|e| match e {
         PluginOrRepositoryError::PluginError(err) => ListError::PluginError(err.to_string()),
