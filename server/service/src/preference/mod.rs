@@ -43,6 +43,7 @@ pub trait PreferenceServiceTrait: Sync + Send {
             sort_by_vvm_status_then_expiry,
             use_simplified_mobile_ui,
             disable_manual_returns,
+            requisition_auto_finalise,
         } = self.get_preference_provider();
 
         let input = AppendIfTypeInputs {
@@ -76,6 +77,7 @@ pub trait PreferenceServiceTrait: Sync + Send {
         append_if_type(sort_by_vvm_status_then_expiry, &mut prefs, &input)?;
         append_if_type(use_simplified_mobile_ui, &mut prefs, &input)?;
         append_if_type(disable_manual_returns, &mut prefs, &input)?;
+        append_if_type(requisition_auto_finalise, &mut prefs, &input)?;
 
         Ok(prefs)
     }

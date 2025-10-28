@@ -31,6 +31,7 @@ pub enum PrefKey {
     SortByVvmStatusThenExpiry,
     UseSimplifiedMobileUi,
     DisableManualReturns,
+    RequisitionAutoFinalise,
 }
 
 #[derive(Clone, Debug, PartialEq)]

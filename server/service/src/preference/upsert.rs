@@ -2,7 +2,7 @@ use std::collections::BTreeMap;
 
 use super::{get_preference_provider, Preference, PreferenceProvider, UpsertPreferenceError};
 use crate::service_provider::ServiceContext;
-use repository::{GenderType, TransactionError};
+use repository::{GenderType, StorageConnection, TransactionError};
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct StorePrefUpdate<T> {
@@ -31,6 +31,7 @@ pub struct UpsertPreferences {
     pub sort_by_vvm_status_then_expiry: Option<Vec<StorePrefUpdate<bool>>>,
     pub use_simplified_mobile_ui: Option<Vec<StorePrefUpdate<bool>>>,
     pub disable_manual_returns: Option<Vec<StorePrefUpdate<bool>>>,
+    pub requisition_auto_finalise: Option<Vec<StorePrefUpdate<bool>>>,
 }
 
 pub fn upsert_preferences(
@@ -55,6 +56,7 @@ pub fn upsert_preferences(
         sort_by_vvm_status_then_expiry: sort_by_vvm_status_then_expiry_input,
         use_simplified_mobile_ui: use_simplified_mobile_ui_input,
         disable_manual_returns: disable_manual_returns_input,
+        requisition_auto_finalise: requisition_auto_finalise_input,
         warning_for_excess_request: warning_for_excess_request_input,
     }: UpsertPreferences,
 ) -> Result<(), UpsertPreferenceError> {
@@ -77,6 +79,7 @@ pub fn upsert_preferences(
         sort_by_vvm_status_then_expiry,
         use_simplified_mobile_ui,
         disable_manual_returns,
+        requisition_auto_finalise,
         warning_for_excess_request,
     }: PreferenceProvider = get_preference_provider();
 
@@ -120,75 +123,45 @@ pub fn upsert_preferences(
             }
 
             // Store preferences, input could be array of store IDs and values - iterate and insert...
-            if let Some(input) = manage_vaccines_in_doses_input {
-                for update in input.into_iter() {
-                    manage_vaccines_in_doses.upsert(
-                        connection,
-                        update.value,
-                        Some(update.store_id),
-                    )?;
-                }
+            if let Some(inputs) = manage_vaccines_in_doses_input {
+                upsert_store_input(connection, manage_vaccines_in_doses, inputs)?
             }
-
-            if let Some(input) = manage_vvm_status_for_stock_input {
-                for update in input.into_iter() {
-                    manage_vvm_status_for_stock.upsert(
-                        connection,
-                        update.value,
-                        Some(update.store_id),
-                    )?;
-                }
+            if let Some(inputs) = manage_vvm_status_for_stock_input {
+                upsert_store_input(connection, manage_vvm_status_for_stock, inputs)?
             }
-
-            if let Some(input) = order_in_packs_input {
-                for update in input.into_iter() {
-                    order_in_packs.upsert(connection, update.value, Some(update.store_id))?;
-                }
+            if let Some(inputs) = order_in_packs_input {
+                upsert_store_input(connection, order_in_packs, inputs)?
             }
-
-            if let Some(input) = show_purchase_orders_and_goods_received_input {
-                for update in input.into_iter() {
-                    use_procurement_functionality.upsert(
-                        connection,
-                        update.value,
-                        Some(update.store_id),
-                    )?;
-                }
+            if let Some(inputs) = show_purchase_orders_and_goods_received_input {
+                upsert_store_input(connection, use_procurement_functionality, inputs)?
             }
-
-            if let Some(input) = sort_by_vvm_status_then_expiry_input {
-                for update in input.into_iter() {
-                    sort_by_vvm_status_then_expiry.upsert(
-                        connection,
-                        update.value,
-                        Some(update.store_id),
-                    )?;
-                }
+            if let Some(inputs) = sort_by_vvm_status_then_expiry_input {
+                upsert_store_input(connection, sort_by_vvm_status_then_expiry, inputs)?
             }
-
-            if let Some(input) = use_simplified_mobile_ui_input {
-                for update in input.into_iter() {
-                    use_simplified_mobile_ui.upsert(
-                        connection,
-                        update.value,
-                        Some(update.store_id),
-                    )?;
-                }
+            if let Some(inputs) = use_simplified_mobile_ui_input {
+                upsert_store_input(connection, use_simplified_mobile_ui, inputs)?
             }
-
-            if let Some(input) = disable_manual_returns_input {
-                for update in input.into_iter() {
-                    disable_manual_returns.upsert(
-                        connection,
-                        update.value,
-                        Some(update.store_id),
-                    )?;
-                }
+            if let Some(inputs) = disable_manual_returns_input {
+                upsert_store_input(connection, disable_manual_returns, inputs)?
+            }
+            if let Some(inputs) = requisition_auto_finalise_input {
+                upsert_store_input(connection, requisition_auto_finalise, inputs)?
             }
 
             Ok(())
         })
         .map_err(|error: TransactionError<UpsertPreferenceError>| error.to_inner_error())?;
 
+    Ok(())
+}
+
+fn upsert_store_input<P: Preference>(
+    connection: &StorageConnection,
+    preference: P,
+    input: Vec<StorePrefUpdate<P::Value>>,
+) -> Result<(), UpsertPreferenceError> {
+    for update in input.into_iter() {
+        preference.upsert(connection, update.value, Some(update.store_id))?;
+    }
     Ok(())
 }
