@@ -9,12 +9,8 @@ import {
   useIsGapsStoreOnly,
   PropertyNodeValueType,
   NamePropertyNode,
-  IconButton,
-  EditIcon,
-  useEditModal,
 } from '@openmsupply-client/common';
 import { DraftProperties } from './useDraftStoreProperties';
-import { SupplyLevelModal } from './SupplyLevelModal';
 
 interface StorePropertiesProps {
   propertyConfigs: NamePropertyNode[];
@@ -31,12 +27,6 @@ export const StoreProperties = ({
   const isCentralServer = useIsCentralServerApi();
 
   const isGapsStore = useIsGapsStoreOnly();
-
-  const {
-    isOpen,
-    onOpen: handleSupplyModalOpen,
-    onClose: handleSupplyModalClose,
-  } = useEditModal();
 
   return !propertyConfigs?.length ? (
     <Typography sx={{ textAlign: 'center' }}>
@@ -64,7 +54,6 @@ export const StoreProperties = ({
             key={p.id}
             label={p.property.name}
             isGapsStore={isGapsStore}
-            propertyKey={p.property.key}
             inputProperties={{
               disabled: !isCentralServer && !p.remoteEditable,
               valueType: p.property.valueType,
@@ -75,12 +64,8 @@ export const StoreProperties = ({
                   [p.property.key]: v ?? null,
                 }),
             }}
-            onEditSupplyLevel={handleSupplyModalOpen}
           />
         ))}
-      {isOpen && (
-        <SupplyLevelModal isOpen={isOpen} onClose={handleSupplyModalClose} />
-      )}
     </Box>
   );
 };
@@ -94,23 +79,17 @@ type PropertyInput = {
   disabled?: boolean;
 };
 
-interface RowProps {
-  key: string;
-  label: string;
-  isGapsStore: boolean;
-  inputProperties: PropertyInput;
-  propertyKey: string;
-  onEditSupplyLevel: () => void;
-}
-
 const Row = ({
   key,
   label,
   isGapsStore,
   inputProperties,
-  propertyKey,
-  onEditSupplyLevel,
-}: RowProps) => {
+}: {
+  key: string;
+  label: string;
+  isGapsStore: boolean;
+  inputProperties: PropertyInput;
+}) => {
   if (!isGapsStore)
     return (
       <>
@@ -132,13 +111,6 @@ const Row = ({
               </Box>
             }
           />
-          {propertyKey === 'supply_level' && (
-            <IconButton
-              label="edit supply level"
-              icon={<EditIcon />}
-              onClick={onEditSupplyLevel}
-            />
-          )}
         </Box>
       </>
     );

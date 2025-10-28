@@ -9,9 +9,13 @@ import {
   Typography,
   useTranslation,
   DeleteIcon,
+  PropertyNodeValueType,
+  useIntlUtils,
 } from '@openmsupply-client/common';
-import { useNameProperties } from '../../api/hooks/document/useNameProperties';
-import { useConfigureNameProperties } from '../../api/hooks/document/useConfigureNameProperties';
+import { useNameProperties } from '@openmsupply-client/system/src/Name/api/hooks/document/useNameProperties';
+import { useConfigureCustomProperties } from '../api/hooks/settings/useConfigureNameProperties';
+import { getPropertyTranslation } from '../api/hooks/settings/namePropertyData';
+import { SUPPLY_LEVEL_KEY } from '../api/hooks/settings/namePropertyKeys';
 
 interface SupplyLevelModalProps {
   isOpen: boolean;
@@ -25,8 +29,9 @@ export const SupplyLevelModal = ({
   const t = useTranslation();
   const { Modal } = useDialog({ isOpen, onClose });
   const { data } = useNameProperties();
+  const { currentLanguage } = useIntlUtils();
 
-  const { mutateAsync } = useConfigureNameProperties();
+  const { mutateAsync } = useConfigureCustomProperties();
 
   const supplyLevelPropertyNode = data?.find(
     p => p.property.key === 'supply_level'
@@ -51,17 +56,27 @@ export const SupplyLevelModal = ({
     setSupplyLevels(supplyLevels.filter(l => l !== level));
 
   const handleSaveSupplyLevels = async () => {
-    if (!supplyLevelPropertyNode) return;
+    const name = getPropertyTranslation(
+      'SUPPLY_LEVEL_KEY',
+      currentLanguage ?? 'en'
+    );
 
-    await mutateAsync({
-      id: supplyLevelPropertyNode.id,
-      propertyId: supplyLevelPropertyNode.id,
-      key: supplyLevelPropertyNode.key,
-      name: supplyLevelPropertyNode.name,
-      valueType: supplyLevelPropertyNode.valueType,
-      allowedValues: supplyLevels.join(','),
-      remoteEditable: true,
-    });
+    try {
+      await mutateAsync([
+        {
+          id: '3285c231-ffc2-485b-9a86-5ccafed9a5c5',
+          propertyId: SUPPLY_LEVEL_KEY,
+          key: SUPPLY_LEVEL_KEY,
+          name,
+          valueType: PropertyNodeValueType.String,
+          allowedValues: supplyLevels.join(','),
+          remoteEditable: false,
+        },
+      ]);
+    } catch {
+      // Errors handled by main GraphQL handler
+    }
+
     onClose();
   };
 
@@ -80,7 +95,10 @@ export const SupplyLevelModal = ({
             value={inputValue}
             onChange={e => setInputValue(e.target.value)}
             onKeyDown={e => {
-              if (e.key === 'Enter') handleAddSupplyLevel();
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                handleAddSupplyLevel();
+              }
             }}
           />
           <IconButton
