@@ -114,7 +114,7 @@ mod omsupply_service {
 
                 // Handle stop
                 ServiceControl::Stop => {
-                    log::info!("Service stop requested");
+                    log::warn!("Service stop requested");
                     // update status to StopPending because actix_web can take a long time to stop
                     // as it has to wait for all threads to stop processing
                     let event_handler = move |_| -> ServiceControlHandlerResult {
@@ -129,7 +129,7 @@ mod omsupply_service {
                     );
 
                     let _ = futures::executor::block_on(shutdown_tx.send(()));
-                    log::info!("Service stopped");
+                    log::warn!("Service stopped");
 
                     ServiceControlHandlerResult::NoError
                 }
