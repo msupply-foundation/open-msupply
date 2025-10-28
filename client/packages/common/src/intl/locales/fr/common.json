@@ -2491,5 +2491,11 @@
   "messages.deleted-documents_other": "{{count}} document(s) supprimé(s)",
   "messages.please-select-valid-option": "Veuillez sélectionner une option valide",
   "messages.last-successful-sync-time-and-duration": "Dernière synchronisation réussie {{time}} (terminée en {{duration}})",
-  "warning.high-number-records-to-sync": "Un grand nombre d'entrées sont en cours de synchronisation. Cela peut prendre plus de temps que d'habitude."
+  "warning.high-number-records-to-sync": "Un grand nombre d'entrées sont en cours de synchronisation. Cela peut prendre plus de temps que d'habitude.",
+  "messages.confirm-skip-dose": "Vous allez administrer une dose alors que les précédentes n’ont pas été données. Celles-ci ne pourront plus être modifiées. Voulez-vous continuer ?",
+  "preference.warningForExcessRequest": "Avertir lorsque la quantité demandée dépasse la quantité suggérée dans une requisition",
+  "warning.requested-exceeds-suggested": "La quantité demandée est supérieure à la quantité suggérée",
+  "messages.requested-exceeds-suggested": "La quantité demandée est supérieure à la quantité suggérée",
+  "preference.requisitionAutoFinalise": "Finalisation automatique pour les réquisitions complétées",
+  "label.can-skip-dose": "La dose peut être sautée"
 }
