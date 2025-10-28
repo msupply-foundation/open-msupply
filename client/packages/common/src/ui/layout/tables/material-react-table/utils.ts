@@ -20,13 +20,17 @@ type MuiTableBodyCellPropsParams<TData extends Record<string, any>> = {
 
 // Helper function to merge props - gets global props from table automatically
 export const mergeCellProps = <TData extends Record<string, any>>(
-  customProps: TableCellProps,
+  customProps:
+    | TableCellProps
+    | ((params: MuiTableBodyCellPropsParams<TData>) => TableCellProps),
   params: MuiTableBodyCellPropsParams<TData>
 ): TableCellProps => {
   const { table } = params;
   const globalPropsOption = table.options.muiTableBodyCellProps;
 
-  // Resolve global props if it's a function
+  const resolvedCustomProps =
+    typeof customProps === 'function' ? customProps(params) : customProps || {};
+
   const globalProps =
     typeof globalPropsOption === 'function'
       ? globalPropsOption(params)
@@ -34,10 +38,10 @@ export const mergeCellProps = <TData extends Record<string, any>>(
 
   return {
     ...globalProps,
-    ...customProps,
+    ...resolvedCustomProps,
     sx: {
       ...(globalProps.sx || {}),
-      ...(customProps.sx || {}),
+      ...(resolvedCustomProps.sx || {}),
     } as TableCellProps['sx'],
   };
 };

@@ -17,6 +17,7 @@ import {
   SaveIcon,
   Select,
   useAuthContext,
+  useConfirmModalSequence,
   useDialog,
   useFormatDateTime,
   useNotification,
@@ -34,9 +35,8 @@ import {
 import { AppRoute } from '@openmsupply-client/config';
 import { FacilitySearchInput, OTHER_FACILITY } from './FacilitySearchInput';
 import { SelectItemAndBatch } from './SelectItemAndBatch';
-import { useConfirmNoStockLineSelected } from './useConfirmNoStockLineSelected';
 import { useClinicians } from '@openmsupply-client/programs';
-import { useConfirmEarlyVaccination } from './useConfirmEarlyVaccination';
+import { hasNoStocklineSelected } from '../utils';
 
 interface VaccinationModalProps {
   encounterId?: string;
@@ -45,6 +45,7 @@ interface VaccinationModalProps {
   onClose: () => void;
   defaultClinician?: Clinician;
   onOk: () => void;
+  isPreviousGiven: boolean;
 }
 
 export const VaccinationModal = ({
@@ -54,6 +55,7 @@ export const VaccinationModal = ({
   cardRow,
   defaultClinician,
   onOk,
+  isPreviousGiven,
 }: VaccinationModalProps) => {
   const t = useTranslation();
   const { success, error } = useNotification();
@@ -70,6 +72,9 @@ export const VaccinationModal = ({
     cardRow,
     defaultClinician,
   });
+
+  const { store } = useAuthContext();
+  const { localisedDate } = useFormatDateTime();
 
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
 
@@ -100,16 +105,41 @@ export const VaccinationModal = ({
     }
   };
 
-  const confirmNoStockLine = useConfirmNoStockLineSelected(
-    draft,
-    !!dose?.vaccineCourse.vaccineCourseItems?.length,
+  const save = useConfirmModalSequence(
+    [
+      {
+        title: t('heading.are-you-sure'),
+        message: t('messages.confirm-skip-dose'),
+        condition: () => !isPreviousGiven,
+      },
+      {
+        title: t('heading.are-you-sure'),
+        message: t('messages.confirm-early-vaccination', {
+          date: localisedDate(cardRow.suggestedDate || ''),
+        }),
+        condition: () => {
+          if (!draft.given) return false;
+          if (!cardRow.suggestedDate) return false;
+          if (!draft.date) return false;
+          return (
+            // Compare dates agnostic to time
+            new Date(new Date(cardRow.suggestedDate).toDateString()) >
+            new Date(draft.date.toDateString())
+          );
+        },
+      },
+      {
+        title: t('heading.are-you-sure'),
+        message: t('messages.no-batch-selected'),
+        condition: () =>
+          hasNoStocklineSelected(
+            draft,
+            !!dose?.vaccineCourse.vaccineCourseItems?.length,
+            store?.nameId ?? ''
+          ),
+      },
+    ],
     onSave
-  );
-
-  const save = useConfirmEarlyVaccination(
-    cardRow.suggestedDate,
-    draft,
-    confirmNoStockLine
   );
 
   const InfoBox = <VaccineInfoBox vaccination={vaccination} />;
