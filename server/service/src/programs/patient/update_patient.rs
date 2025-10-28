@@ -1,10 +1,13 @@
 use chrono::NaiveDate;
 use repository::{
-    EqualFilter, GenderType, NameRow, NameRowRepository, NameRowType, Patient, PatientFilter,
-    RepositoryError, StorageConnection, TransactionError,
+    ActivityLogType, EqualFilter, GenderType, NameRow, NameRowRepository, NameRowType, Patient,
+    PatientFilter, RepositoryError, StorageConnection, TransactionError,
 };
 
-use crate::service_provider::{ServiceContext, ServiceProvider};
+use crate::{
+    activity_log::activity_log_entry_with_diff,
+    service_provider::{ServiceContext, ServiceProvider},
+};
 
 use super::patient_updated::patient_name;
 
@@ -95,11 +98,21 @@ pub(crate) fn update_patient(
     let patient = ctx
         .connection
         .transaction_sync(|con| {
+            let record_id = input.id.clone();
             let existing = validate(con, &input)?;
-            let row = generate(existing, input);
+            let row = generate(existing.clone(), input);
 
             let name_repo = NameRowRepository::new(con);
             name_repo.upsert_one(&row)?;
+
+            // Create logging entry
+            activity_log_entry_with_diff(
+                ctx,
+                ActivityLogType::PatientUpdated,
+                Some(record_id),
+                &existing,
+                &row,
+            )?;
 
             let patient = service_provider
                 .patient_service

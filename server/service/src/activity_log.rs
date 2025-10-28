@@ -9,6 +9,7 @@ use repository::{
 };
 
 use repository::{PaginationOption, RepositoryError};
+use util::serde_json_diff::json_diff;
 use util::uuid::uuid;
 use util::{constants::SYSTEM_USER_ID, format_error};
 
@@ -60,6 +61,29 @@ pub fn activity_log_entry(
 
     let _change_log_id = ActivityLogRowRepository::new(&ctx.connection).insert_one(log)?;
     Ok(())
+}
+
+pub fn activity_log_entry_with_diff(
+    ctx: &ServiceContext,
+    log_type: ActivityLogType,
+    record_id: Option<String>,
+    old_value: &impl serde::Serialize,
+    new_value: &impl serde::Serialize,
+) -> Result<(), RepositoryError> {
+    // Create a diff showing only the changes
+    let (changed_from, changed_to) =
+        match json_diff(&old_value, &new_value).map_err(|e| RepositoryError::DBError {
+            msg: format!("{:?}", e),
+            extra: "JSON diff error".to_string(),
+        })? {
+            Some((from, to)) => (
+                Some(serde_json::to_string(&from).unwrap_or_default()),
+                Some(serde_json::to_string(&to).unwrap_or_default()),
+            ),
+            None => (None, None), // No changes
+        };
+
+    activity_log_entry(ctx, log_type, record_id, changed_from, changed_to)
 }
 
 pub fn system_activity_log_entry(
