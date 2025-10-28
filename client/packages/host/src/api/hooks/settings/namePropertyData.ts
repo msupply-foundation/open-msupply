@@ -19,6 +19,7 @@ import {
   KEROSENE_AVAILABILITY_KEY,
   PENTA_3_KEY,
   ZERO_DOSE_KEY,
+  SUPPLY_LEVEL_KEY,
 } from './namePropertyKeys';
 
 export type LocalisedNamePropertyConfig = Partial<
@@ -166,7 +167,18 @@ function getGapsPropertiesForLanguage(
       allowedValues: null,
       remoteEditable: false,
     },
-
+    {
+      id: '3285c231-ffc2-485b-9a86-5ccafed9a5c5',
+      propertyId: SUPPLY_LEVEL_KEY,
+      key: SUPPLY_LEVEL_KEY,
+      name: translations['SUPPLY_LEVEL_KEY'],
+      valueType: PropertyNodeValueType.String,
+      allowedValues: translateAllowedValues(
+        ['Primary', 'Sub-National', 'Lowest Distribution', 'Service Point'],
+        translations
+      ),
+      remoteEditable: false,
+    },
     {
       id: '0e6fa1d3-4762-4b19-a832-1fe8a391e75b',
       propertyId: FACILITY_TYPE_KEY,
