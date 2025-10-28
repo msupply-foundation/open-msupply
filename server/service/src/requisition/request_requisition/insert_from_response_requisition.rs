@@ -177,10 +177,6 @@ fn generate(
         .map(|r| {
             let line = r.requisition_line.requisition_line_row.clone();
 
-            println!(
-                "remaining to supply: {:#?}",
-                r.requested_minus_supply_quantity()
-            );
             RequisitionLineRow {
                 id: uuid(),
                 requisition_id: requisition.id.clone(),
