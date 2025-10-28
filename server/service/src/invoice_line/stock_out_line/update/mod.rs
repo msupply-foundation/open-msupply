@@ -157,7 +157,6 @@ mod test {
         InvoiceRowRepository, InvoiceStatus, InvoiceType, StockLineRow, StockLineRowRepository,
         Upsert,
     };
-   
 
     use crate::{
         invoice::outbound_shipment::update::{
@@ -735,7 +734,13 @@ mod test {
 
         let item_stats_service = service_provider.item_stats_service;
         let stats = item_stats_service
-            .get_item_stats(&context, &context.store_id, None, vec![mock_item_a().id])
+            .get_item_stats(
+                &context,
+                &context.store_id,
+                None,
+                vec![mock_item_a().id],
+                None,
+            )
             .unwrap();
         let stats = stats.first().unwrap();
         assert_eq!(
@@ -758,7 +763,13 @@ mod test {
             .unwrap();
 
         let stats = item_stats_service
-            .get_item_stats(&context, &context.store_id, None, vec![mock_item_a().id])
+            .get_item_stats(
+                &context,
+                &context.store_id,
+                None,
+                vec![mock_item_a().id],
+                None,
+            )
             .unwrap();
         let stats = stats.first().unwrap();
         assert_eq!(
