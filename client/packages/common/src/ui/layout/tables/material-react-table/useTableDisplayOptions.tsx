@@ -19,29 +19,34 @@ import { MenuItem, Typography, alpha } from '@mui/material';
 import { ColumnDef } from './types';
 import { IconButton } from '@common/components';
 import { useTranslation } from '@common/intl';
-import { hasSavedState } from './tableState/utils';
 import { EnvUtils } from '@common/utils';
 
 export const useTableDisplayOptions = <T extends MRT_RowData>({
-  tableId,
   resetTableState,
+  hasSavedState,
   onRowClick,
   isGrouped,
   toggleGrouped,
   hasColumnFilters,
   getIsPlaceholderRow = () => false,
   getIsRestrictedRow = () => false,
+  muiTableBodyRowProps = {},
 }: {
-  tableId: string;
   resetTableState: () => void;
+  hasSavedState: boolean;
   onRowClick?: (row: T, isCtrlClick: boolean) => void;
   isGrouped: boolean;
   hasColumnFilters: boolean;
   toggleGrouped?: () => void;
   getIsPlaceholderRow?: (row: T) => boolean;
   getIsRestrictedRow?: (row: T) => boolean;
+
+  // This object is merged with the default row props in muiTableBodyRowProps
+  // below. We can do the same for other muiTable props if needed in future.
+  muiTableBodyRowProps?: MRT_TableOptions<T>['muiTableBodyRowProps'];
 }): Partial<MRT_TableOptions<T>> => {
   const t = useTranslation();
+
   return {
     // Add description to column menu
     renderColumnActionsMenuItems: ({ internalColumnMenuItems, column }) => {
@@ -84,7 +89,7 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
           icon={<RefreshIcon />}
           onClick={resetTableState}
           label={t('label.reset-table-defaults')}
-          disabled={!hasSavedState(tableId)}
+          disabled={!hasSavedState}
           sx={iconButtonProps}
         />
         <MRT_ToggleFullScreenButton table={table} />
@@ -105,6 +110,7 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
         '& > .MuiBox-root > .MuiBox-root': {
           paddingY: 0,
         },
+        boxShadow: 'none',
       },
     },
     muiTableContainerProps: {
@@ -185,30 +191,46 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
           }
         : {},
 
-    muiTableBodyRowProps: ({ row }) => ({
-      onClick: e => {
-        const isCtrlClick = e.getModifierState(
-          EnvUtils.os === 'Mac OS' ? 'Meta' : 'Control'
-        );
-        if (onRowClick) onRowClick(row.original, isCtrlClick);
-      },
-      sx: {
-        backgroundColor: row.original['isSubRow']
-          ? 'background.secondary'
-          : 'inherit',
-        // these two selectors are to change the background color of a selected
-        // row from the default which is to use primary.main of the theme
-        // with an opacity of 0.2 and 0.4 on hover
-        '&.Mui-selected td:after': {
-          backgroundColor: theme => alpha(theme.palette.gray.pale, 0.2),
+    muiTableBodyRowProps: params => {
+      const { row } = params;
+      const customProps =
+        typeof muiTableBodyRowProps === 'function'
+          ? muiTableBodyRowProps(params)
+          : muiTableBodyRowProps;
+
+      const defaultProps: MRT_TableOptions<T>['muiTableBodyRowProps'] = {
+        onClick: e => {
+          const isCtrlClick = e.getModifierState(
+            EnvUtils.os === 'Mac OS' ? 'Meta' : 'Control'
+          );
+          if (onRowClick) onRowClick(row.original, isCtrlClick);
         },
-        '&.Mui-selected:hover td:after': {
-          backgroundColor: theme => alpha(theme.palette.gray.pale, 0.4),
+        sx: {
+          backgroundColor: row.original['isSubRow']
+            ? 'background.secondary'
+            : 'inherit',
+          // these two selectors are to change the background color of a selected
+          // row from the default which is to use primary.main of the theme
+          // with an opacity of 0.2 and 0.4 on hover
+          '&.Mui-selected td:after': {
+            backgroundColor: theme => alpha(theme.palette.gray.pale, 0.2),
+          },
+          '&.Mui-selected:hover td:after': {
+            backgroundColor: theme => alpha(theme.palette.gray.pale, 0.4),
+          },
+          fontStyle: row.getCanExpand() ? 'italic' : 'normal',
+          cursor: onRowClick ? 'pointer' : 'default',
         },
-        fontStyle: row.getCanExpand() ? 'italic' : 'normal',
-        cursor: onRowClick ? 'pointer' : 'default',
-      },
-    }),
+      };
+      return {
+        ...defaultProps,
+        ...customProps,
+        sx: {
+          ...(defaultProps.sx || {}),
+          ...(customProps?.sx || {}),
+        },
+      };
+    },
 
     muiTableBodyCellProps: ({ row, column, table }) => ({
       sx: {
@@ -286,6 +308,7 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
     displayColumnDefOptions: {
       'mrt-row-select': {
         size: 50,
+        enablePinning: false, // Can't (un-)pin the selection column
         muiTableHeadCellProps: {
           align: 'center',
         },
