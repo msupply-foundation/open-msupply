@@ -47,109 +47,123 @@ impl<FH: QueryFragment<DBType>, SQ: QueryFragment<DBType>> QueryFragment<DBType>
         out.push_sql("))");
 
         // Variables
-        out.push_sql(", variables AS (SELECT datetime(");
+        // bind the timestamp directly for suitability with sqlite & postgres
+        out.push_sql(", variables AS (SELECT ");
         out.push_bind_param::<Timestamp, _>(&self.start)?;
-        out.push_sql(") AS start_datetime, datetime(");
+        out.push_sql(" AS start_datetime, ");
         out.push_bind_param::<Timestamp, _>(&self.end)?;
-        out.push_sql(") AS end_datetime) ");
+        out.push_sql(" AS end_datetime) ");
+
         // Query
+        use diesel::sqlite::Sqlite;
+        use std::any::TypeId;
+
         out.push_sql(
             r#"    
-, starting_stock AS (
-  SELECT
-    item_id,
-    store_id,
-    SUM(quantity) AS running_balance,
-    (SELECT start_datetime FROM variables)  AS datetime
-  FROM
-    stock_movement
-  WHERE
-    datetime <= (SELECT start_datetime FROM variables) AND (item_id, store_id) IN (select item_id, store_id from inner_query)
-  GROUP BY
-    item_id,
-    store_id
-), 
-ending_stock AS (
-  SELECT
-    item_id,
-    store_id,
-    SUM(quantity) AS running_balance,
-    (SELECT end_datetime FROM variables) AS datetime
-  FROM
-    stock_movement
-  WHERE
-    datetime <= (SELECT end_datetime FROM variables) AND (item_id, store_id) IN (select item_id, store_id from inner_query)
-  GROUP BY
-    item_id,
-    store_id
-),
-ledger AS (
-  SELECT
-    *,
-    DATE(datetime) AS date
-  FROM
-    starting_stock
-  UNION
-  SELECT
-    *,
-    DATE(datetime) AS date
-  FROM
-    ending_stock
-  UNION
-  SELECT
-    item_id,
-    store_id,
-    running_balance,
-    datetime,
-    DATE(datetime) AS date
-  FROM
-    item_ledger
-  WHERE
-    datetime > (SELECT start_datetime FROM variables)
-    AND datetime < (SELECT end_datetime FROM variables) AND (item_id, store_id) IN (select item_id, store_id from inner_query)
-),
-daily_stock AS (
-  SELECT DISTINCT
-    item_id,
-    store_id,
-    date,
-    MAX(running_balance) OVER (PARTITION BY store_id,
-      item_id,
-      date) AS max_stock,
-    FIRST_VALUE(running_balance) OVER (PARTITION BY store_id,
-      item_id,
-      date ORDER BY datetime DESC) AS running_balance
-  FROM
-    ledger
-),
-with_lag AS (
-  SELECT
-    *,
-    LAG(running_balance) OVER (PARTITION BY store_id,
-      item_id ORDER BY date) AS pr,
-    LAG(date) OVER (PARTITION BY store_id,
-      item_id ORDER BY date) AS pd
-  FROM
-    daily_stock
-  ORDER BY
-    store_id,
-    item_id
-)
-, dos_result as (SELECT
-  item_id,
-  store_id,
-  sum(julianday(date) - julianday(pd)) as dos
-FROM
-  with_lag
-WHERE
-  pr = 0
-GROUP BY
-  1,
-  2
-ORDER BY
-  store_id,
-  item_id)
-
+          , starting_stock AS (
+              SELECT
+                item_id,
+                store_id,
+                SUM(quantity) AS running_balance,
+                (SELECT start_datetime FROM variables)  AS datetime
+              FROM
+                stock_movement
+              WHERE
+                datetime <= (SELECT start_datetime FROM variables) AND (item_id, store_id) IN (select item_id, store_id from inner_query)
+              GROUP BY
+                item_id,
+                store_id
+            ), 
+            ending_stock AS (
+              SELECT
+                item_id,
+                store_id,
+                SUM(quantity) AS running_balance,
+                (SELECT end_datetime FROM variables) AS datetime
+              FROM
+                stock_movement
+              WHERE
+                datetime <= (SELECT end_datetime FROM variables) AND (item_id, store_id) IN (select item_id, store_id from inner_query)
+              GROUP BY
+                item_id,
+                store_id
+            ),
+            ledger AS (
+              SELECT
+                *,
+                DATE(datetime) AS date
+              FROM
+                starting_stock
+              UNION
+              SELECT
+                *,
+                DATE(datetime) AS date
+              FROM
+                ending_stock
+              UNION
+              SELECT
+                item_id,
+                store_id,
+                running_balance,
+                datetime,
+                DATE(datetime) AS date
+              FROM
+                item_ledger
+              WHERE
+                datetime > (SELECT start_datetime FROM variables)
+                AND datetime < (SELECT end_datetime FROM variables) AND (item_id, store_id) IN (select item_id, store_id from inner_query)
+            ),
+            daily_stock AS (
+              SELECT DISTINCT
+                item_id,
+                store_id,
+                date,
+                MAX(running_balance) OVER (PARTITION BY store_id,
+                  item_id,
+                  date) AS max_stock,
+                FIRST_VALUE(running_balance) OVER (PARTITION BY store_id,
+                  item_id,
+                  date ORDER BY datetime DESC) AS running_balance
+              FROM
+                ledger
+            ),
+            with_lag AS (
+              SELECT
+                *,
+                LAG(running_balance) OVER (PARTITION BY store_id,
+                  item_id ORDER BY date) AS pr,
+                LAG(date) OVER (PARTITION BY store_id,
+                  item_id ORDER BY date) AS pd
+              FROM
+                daily_stock
+              ORDER BY
+                store_id,
+                item_id
+            )
+            , dos_result as (SELECT
+              item_id,
+              store_id,
+              sum("#,
+        );
+        // Backend-aware date difference
+        if TypeId::of::<DBType>() == TypeId::of::<Sqlite>() {
+            out.push_sql("julianday(date) - julianday(pd)");
+        } else {
+            // Postgres and others: EXTRACT(DAY FROM (date::timestamp - pd::timestamp))
+            out.push_sql("EXTRACT(DAY FROM (date::timestamp - pd::timestamp))::double precision");
+        }
+        out.push_sql(
+            r#") as dos
+            FROM
+              with_lag
+            WHERE
+              pr = 0
+            GROUP BY
+              1,
+              2
+            ORDER BY
+              store_id,
+              item_id)
               "#,
         );
         // cast to the table name and column. Otherwise defaults to stock_movement
@@ -171,8 +185,6 @@ pub(crate) mod test {
         test_db::{setup_test, SetupOption, SetupResult},
         Dos,
     };
-
-    use diesel::sqlite::Sqlite;
 
     #[actix_rt::test]
     async fn test() {
@@ -198,6 +210,6 @@ pub(crate) mod test {
         };
 
         // Print the generated SQL for the full DOS query
-        println!("{}", diesel::debug_query::<Sqlite, _>(&query));
+        println!("{}", diesel::debug_query::<crate::DBType, _>(&query));
     }
 }
