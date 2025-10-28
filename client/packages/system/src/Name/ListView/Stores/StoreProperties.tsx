@@ -91,23 +91,25 @@ const Row = ({
   inputProperties: PropertyInput;
 }) => {
   if (!isGapsStore)
-    <InputWithLabelRow
-      key={key}
-      label={label}
-      sx={{ width: '100%' }}
-      labelProps={{
-        sx: {
-          width: '250px',
-          fontSize: '16px',
-          paddingRight: 2,
-        },
-      }}
-      Input={
-        <Box flex={1}>
-          <PropertyInput {...inputProperties} />
-        </Box>
-      }
-    />;
+    return (
+      <InputWithLabelRow
+        key={key}
+        label={label}
+        sx={{ width: '100%' }}
+        labelProps={{
+          sx: {
+            width: '250px',
+            fontSize: '16px',
+            paddingRight: 2,
+          },
+        }}
+        Input={
+          <Box flex={1}>
+            <PropertyInput {...inputProperties} />
+          </Box>
+        }
+      />
+    );
 
   return (
     <Box paddingTop={1.5}>
