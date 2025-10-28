@@ -28,6 +28,8 @@ pub mod use_procurement_functionality;
 pub use use_procurement_functionality::*;
 pub mod disable_manual_returns;
 pub use disable_manual_returns::*;
+pub mod requisition_auto_finalise;
+pub use requisition_auto_finalise::*;
 pub mod warning_for_excess_request;
 pub use warning_for_excess_request::*;
 
@@ -49,6 +51,7 @@ pub struct PreferenceProvider {
     pub use_procurement_functionality: UseProcurementFunctionality,
     pub sort_by_vvm_status_then_expiry: SortByVvmStatusThenExpiry,
     pub use_simplified_mobile_ui: UseSimplifiedMobileUi,
+    pub requisition_auto_finalise: RequisitionAutoFinalise,
     pub disable_manual_returns: DisableManualReturns,
 }
 
@@ -72,5 +75,6 @@ pub fn get_preference_provider() -> PreferenceProvider {
         sort_by_vvm_status_then_expiry: SortByVvmStatusThenExpiry,
         use_simplified_mobile_ui: UseSimplifiedMobileUi,
         disable_manual_returns: DisableManualReturns,
+        requisition_auto_finalise: RequisitionAutoFinalise,
     }
 }
