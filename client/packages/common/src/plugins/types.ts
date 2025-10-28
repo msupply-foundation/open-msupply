@@ -10,6 +10,7 @@ import { PrescriptionPaymentComponentProps } from './prescriptionTypes';
 
 export type Plugins = {
   prescriptionPaymentForm?: React.ComponentType<PrescriptionPaymentComponentProps>[];
+  itemPropertiesTab?: React.ComponentType<{ item: ItemFragment }>[];
   inboundShipmentAppBar?: React.ComponentType<{ shipment: InboundFragment }>[];
   itemSellPrice?: {
     catalogueSellPrice: React.ComponentType<{ item: ItemFragment }>[];
