@@ -45,36 +45,39 @@ const OutstandingLinesList = () => {
     (): ColumnDef<PurchaseOrderLineFragment>[] => [
       {
         header: t('label.purchase-order-number'),
-        accessorKey: 'purchaseOrderNumber',
+        accessorKey: 'purchaseOrder.number',
       },
       {
         header: t('label.purchase-order-reference'),
-        accessorKey: 'purchaseOrderReference',
+        accessorKey: 'purchaseOrder.reference',
       },
       {
         header: t('label.created-by'),
         accessorKey: 'createdBy',
+        accessorFn: row => row?.purchaseOrder?.user?.username,
       },
       {
         header: t('label.supplier-code'),
         accessorKey: 'supplierCode',
+        accessorFn: row => row?.purchaseOrder?.supplier?.code,
       },
       {
         header: t('label.supplier-name'),
         accessorKey: 'supplierName',
+        accessorFn: row => row?.purchaseOrder?.supplier?.name,
       },
       {
         header: t('label.item-name'),
-        accessorKey: 'itemName',
+        accessorKey: 'item.name',
       },
       {
         header: t('label.purchase-order-confirmed'),
-        accessorKey: 'confirmedDatetime',
+        accessorKey: 'purchaseOrder.confirmedDatetime',
         columnType: ColumnType.Date,
       },
       {
         header: t('label.expected-delivery-date'),
-        accessorKey: 'expectedDeliveryDate',
+        accessorKey: 'purchaseOrder.expectedDeliveryDate',
         columnType: ColumnType.Date,
       },
       {
