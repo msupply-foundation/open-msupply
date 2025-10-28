@@ -6824,6 +6824,7 @@ export enum PreferenceKey {
   SyncRecordsDisplayThreshold = 'syncRecordsDisplayThreshold',
   UseProcurementFunctionality = 'useProcurementFunctionality',
   UseSimplifiedMobileUi = 'useSimplifiedMobileUi',
+  WarningForExcessRequest = 'warningForExcessRequest',
 }
 
 export type PreferenceMutations = {
@@ -6865,6 +6866,7 @@ export type PreferencesNode = {
   syncRecordsDisplayThreshold: Scalars['Int']['output'];
   useProcurementFunctionality: Scalars['Boolean']['output'];
   useSimplifiedMobileUi: Scalars['Boolean']['output'];
+  warningForExcessRequest: Scalars['Boolean']['output'];
 };
 
 export type PrescriptionLineInput = {
@@ -11156,6 +11158,7 @@ export type UpsertPreferencesInput = {
   syncRecordsDisplayThreshold?: InputMaybe<Scalars['Int']['input']>;
   useProcurementFunctionality?: InputMaybe<Array<BoolStorePrefInput>>;
   useSimplifiedMobileUi?: InputMaybe<Array<BoolStorePrefInput>>;
+  warningForExcessRequest?: InputMaybe<Scalars['Boolean']['input']>;
 };
 
 export type UpsertVaccineCourseDoseInput = {

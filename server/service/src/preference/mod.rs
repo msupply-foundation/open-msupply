@@ -33,6 +33,7 @@ pub trait PreferenceServiceTrait: Sync + Send {
             prevent_transfers_months_before_initialisation,
             show_contact_tracing,
             sync_records_display_threshold,
+            warning_for_excess_request,
 
             // Store preferences
             manage_vaccines_in_doses,
@@ -66,6 +67,7 @@ pub trait PreferenceServiceTrait: Sync + Send {
         )?;
         append_if_type(show_contact_tracing, &mut prefs, &input)?;
         append_if_type(sync_records_display_threshold, &mut prefs, &input)?;
+        append_if_type(warning_for_excess_request, &mut prefs, &input)?;
 
         // Store preferences
         append_if_type(manage_vaccines_in_doses, &mut prefs, &input)?;
