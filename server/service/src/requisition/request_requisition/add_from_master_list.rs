@@ -132,7 +132,13 @@ fn generate(
         .map(|master_list_line| master_list_line.item_id)
         .collect();
 
-    generate_requisition_lines(ctx, store_id, requisition_row, items_ids_not_in_requisition)
+    generate_requisition_lines(
+        ctx,
+        store_id,
+        requisition_row,
+        items_ids_not_in_requisition,
+        None,
+    )
 }
 
 impl From<RepositoryError> for AddFromMasterListError {
@@ -389,7 +395,7 @@ mod test {
         assert_eq!(
             line.requisition_line_row.suggested_quantity,
             // 10 = requisition max_mos
-            test_item_stats::item2_amc_3_months() * 10.0 - test_item_stats::item_2_soh()
+            (test_item_stats::item2_amc_3_months() * 10.0 - test_item_stats::item_2_soh()).ceil()
         );
     }
 }
