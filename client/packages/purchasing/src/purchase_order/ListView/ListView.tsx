@@ -66,39 +66,45 @@ const ListView = () => {
     (): ColumnDef<PurchaseOrderRowFragment>[] => [
       {
         header: t('label.supplier'),
-        accessorKey: 'supplierName',
+        accessorKey: 'supplier',
+        accessorFn: row => row.supplier?.name,
         enableColumnFilter: true,
         defaultHideOnMobile: true,
+        enableSorting: true,
       },
       {
         header: t('label.number'),
         accessorKey: 'number',
         columnType: ColumnType.Number,
         size: 110,
+        enableSorting: true,
       },
       {
         header: t('label.created'),
         accessorKey: 'createdDatetime',
-        enableColumnFilter: true,
         columnType: ColumnType.Date,
+        enableSorting: true,
       },
       {
         header: t('label.confirmed'),
         accessorKey: 'confirmedDatetime',
         enableColumnFilter: true,
         columnType: ColumnType.Date,
+        enableSorting: true,
       },
       {
         header: t('label.sent'),
         accessorKey: 'sentDatetime',
         enableColumnFilter: true,
         columnType: ColumnType.Date,
+        enableSorting: true,
       },
       {
         header: t('label.requested-delivery-date'),
         accessorKey: 'requestedDeliveryDate',
         enableColumnFilter: true,
         columnType: ColumnType.Date,
+        enableSorting: true,
       },
       {
         header: t('label.status'),
@@ -112,6 +118,8 @@ const ListView = () => {
             label: getPurchaseOrderStatusTranslator(t)(status),
           })
         ),
+        enableSorting: true,
+        enableColumnFilter: true,
       },
       {
         header: t('label.target-months'),
@@ -124,13 +132,13 @@ const ListView = () => {
         header: t('label.lines'),
         accessorFn: row => row.lines?.totalCount ?? 0,
         size: 80,
-        enableSorting: false,
         defaultHideOnMobile: true,
       },
       {
         header: t('label.comment'),
         accessorKey: 'comment',
         columnType: ColumnType.Comment,
+        enableSorting: true,
       },
     ],
     []
