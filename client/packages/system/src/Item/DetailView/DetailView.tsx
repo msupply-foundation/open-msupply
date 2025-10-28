@@ -10,6 +10,7 @@ import {
   DetailTabs,
   useIsCentralServerApi,
   InvoiceNodeType,
+  usePluginProvider,
 } from '@openmsupply-client/common';
 import { ItemLedgerFragment, useItem } from '../api';
 import { Toolbar } from './Toolbar';
@@ -22,6 +23,7 @@ import { StoreTab } from './Tabs/Store';
 
 export const ItemDetailView = () => {
   const t = useTranslation();
+  const { plugins } = usePluginProvider();
   const navigate = useNavigate();
   const { setCustomBreadcrumbs } = useBreadcrumbs();
   const isCentralServer = useIsCentralServerApi();
@@ -108,6 +110,14 @@ export const ItemDetailView = () => {
       Component: <ItemVariantsTab item={data} itemVariants={data.variants} />,
       value: t('label.variants'),
     });
+
+  isCentralServer &&
+    plugins.itemPropertiesTab?.map((Plugin, index) =>
+      tabs.push({
+        Component: <Plugin key={index} item={data} />,
+        value: t('label.item-properties'),
+      })
+    );
 
   return !!data ? (
     <Box style={{ width: '100%' }}>
