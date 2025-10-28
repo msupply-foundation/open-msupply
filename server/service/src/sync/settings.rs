@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 // See README.md for description of when this API version needs to be updated
-pub(crate) static SYNC_V5_VERSION: u32 = 13; // bumped for v2.10.1. OG version 8.04.04
+pub(crate) static SYNC_V5_VERSION: u32 = 14; // bumped for v2.13.0 OG version 8.06
 pub(crate) static SYNC_V6_VERSION: u32 = 5; // bumped for 2.9.02 (adding new types to system log)
 
 #[derive(Deserialize, Serialize, Clone, Debug, PartialEq, Default)]
