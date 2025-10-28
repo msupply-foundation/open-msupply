@@ -79,24 +79,30 @@ export const InboundListView = () => {
             row={row.original}
           />
         ),
+        enableSorting: true,
       },
       {
         header: t('label.number'),
         accessorKey: 'invoiceNumber',
         columnType: ColumnType.Number,
         size: 110,
+        enableColumnFilter: true,
+        enableSorting: true,
       },
       {
         header: t('label.created'),
         accessorKey: 'createdDatetime',
-        enableColumnFilter: true,
         columnType: ColumnType.Date,
+        enableColumnFilter: true,
+        enableSorting: true,
       },
       {
         header: t('label.delivered'),
         accessorKey: 'deliveredDatetime',
         columnType: ColumnType.Date,
         defaultHideOnMobile: true,
+        enableColumnFilter: true,
+        enableSorting: true,
       },
       {
         header: t('label.status'),
@@ -108,12 +114,16 @@ export const InboundListView = () => {
           value: status,
           label: getStatusTranslator(t)(status),
         })),
+        enableColumnFilter: true,
+        enableSorting: true,
       },
       {
         header: t('label.reference'),
         accessorKey: 'theirReference',
         size: 225,
         defaultHideOnMobile: true,
+        enableColumnFilter: true,
+        enableSorting: true,
       },
       {
         header: t('label.total'),

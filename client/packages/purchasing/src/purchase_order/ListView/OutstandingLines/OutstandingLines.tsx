@@ -45,7 +45,9 @@ const OutstandingLinesList = () => {
     (): ColumnDef<PurchaseOrderLineFragment>[] => [
       {
         header: t('label.purchase-order-number'),
-        accessorKey: 'purchaseOrder.number',
+        accessorKey: 'purchaseOrderNumber',
+        accessorFn: row => row?.purchaseOrder?.number,
+        enableSorting: true,
       },
       {
         header: t('label.purchase-order-reference'),
@@ -68,7 +70,9 @@ const OutstandingLinesList = () => {
       },
       {
         header: t('label.item-name'),
-        accessorKey: 'item.name',
+        accessorKey: 'itemName',
+        accessorFn: row => row.item.name,
+        enableSorting: true,
       },
       {
         header: t('label.purchase-order-confirmed'),
