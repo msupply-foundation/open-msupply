@@ -2185,6 +2185,7 @@
   "preference.syncRecordsDisplayThreshold": "Sync records display threshold",
   "preference.useProcurementFunctionality": "Use procurement functionality",
   "preference.useSimplifiedMobileUi": "Use simplified mobile UI",
+  "preference.warningForExcessRequest": "Warn when requested quantity exceeds suggested quantity in requisitions",
   "prescription": "Prescriptions",
   "prescriptions": "Prescriptions",
   "programs": "Programs",
@@ -2459,5 +2460,6 @@
   "warning.foreign-exchange-rate-different": "This rate is not the same as the currency.",
   "warning.high-number-records-to-sync": "A high number of records are being synced. This may take longer than usual.",
   "warning.manual-store-requisition": "Entering a requisition for this store may result in duplicates if the store also submits an Internal Order.",
-  "warning.nothing-to-supply": "Nothing left to supply!"
+  "warning.nothing-to-supply": "Nothing left to supply!",
+  "warning.requested-exceeds-suggested": "Your requested quantity is higher than the suggested"
 }

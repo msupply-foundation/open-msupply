@@ -21,6 +21,7 @@ pub enum PrefKey {
     PreventTransfersMonthsBeforeInitialisation,
     ShowContactTracing,
     SyncRecordsDisplayThreshold,
+    WarningForExcessRequest,
 
     // Store preferences
     ManageVaccinesInDoses,

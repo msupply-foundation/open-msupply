@@ -21,6 +21,7 @@ pub struct UpsertPreferences {
     pub prevent_transfers_months_before_initialisation: Option<i32>,
     pub show_contact_tracing: Option<bool>,
     pub sync_records_display_threshold: Option<i32>,
+    pub warning_for_excess_request: Option<bool>,
 
     // Store preferences
     pub manage_vaccines_in_doses: Option<Vec<StorePrefUpdate<bool>>>,
@@ -54,6 +55,7 @@ pub fn upsert_preferences(
         sort_by_vvm_status_then_expiry: sort_by_vvm_status_then_expiry_input,
         use_simplified_mobile_ui: use_simplified_mobile_ui_input,
         disable_manual_returns: disable_manual_returns_input,
+        warning_for_excess_request: warning_for_excess_request_input,
     }: UpsertPreferences,
 ) -> Result<(), UpsertPreferenceError> {
     let PreferenceProvider {
@@ -75,6 +77,7 @@ pub fn upsert_preferences(
         sort_by_vvm_status_then_expiry,
         use_simplified_mobile_ui,
         disable_manual_returns,
+        warning_for_excess_request,
     }: PreferenceProvider = get_preference_provider();
 
     ctx.connection
@@ -110,6 +113,10 @@ pub fn upsert_preferences(
 
             if let Some(input) = sync_records_display_threshold_input {
                 sync_records_display_threshold.upsert(connection, input, None)?;
+            }
+
+            if let Some(input) = warning_for_excess_request_input {
+                warning_for_excess_request.upsert(connection, input, None)?;
             }
 
             // Store preferences, input could be array of store IDs and values - iterate and insert...
