@@ -165,10 +165,11 @@ fn generate(
         original_customer_id: None,
     };
 
+    // Response requisition that still need to be supplied (supply < requested)
     let requisition_supply =
         get_requisitions_supply_statuses(connection, vec![response_requisition_id.clone()])?
             .into_iter()
-            .filter(|s| s.remaining_quantity() > 0.0)
+            .filter(|s| s.requested_minus_supply_quantity() > 0.0)
             .collect::<Vec<_>>();
 
     let requisition_lines = requisition_supply
@@ -176,11 +177,15 @@ fn generate(
         .map(|r| {
             let line = r.requisition_line.requisition_line_row.clone();
 
+            println!(
+                "remaining to supply: {:#?}",
+                r.requested_minus_supply_quantity()
+            );
             RequisitionLineRow {
                 id: uuid(),
                 requisition_id: requisition.id.clone(),
                 item_link_id: line.item_link_id.clone(),
-                requested_quantity: r.remaining_quantity(),
+                requested_quantity: r.requested_minus_supply_quantity().abs(),
                 snapshot_datetime: line.snapshot_datetime,
                 comment: line.comment.clone(),
                 item_name: line.item_name.clone(),
