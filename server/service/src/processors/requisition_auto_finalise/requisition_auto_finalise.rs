@@ -112,14 +112,14 @@ impl Processor for RequisitionAutoFinaliseProcessor {
         let mut invoice_line_item_units: HashMap<String, f64> = HashMap::new();
         invoice_lines
             .iter()
-            .filter_map(|il| {
-                if matches!(
-                    il.invoice_row.status,
-                    InvoiceStatus::Allocated | InvoiceStatus::New | InvoiceStatus::Picked
-                ) {
-                    return None;
-                }
-                Some(il)
+            .filter_map(|il| match il.invoice_row.status {
+                // Only want statuses after the goods have left the warehouse and the invoice is no longer editable
+                InvoiceStatus::New | InvoiceStatus::Allocated | InvoiceStatus::Picked => None,
+                InvoiceStatus::Shipped
+                | InvoiceStatus::Received
+                | InvoiceStatus::Delivered
+                | InvoiceStatus::Verified
+                | InvoiceStatus::Cancelled => Some(il),
             })
             .for_each(|il| {
                 let units = il.invoice_line_row.number_of_packs * il.invoice_line_row.pack_size;
