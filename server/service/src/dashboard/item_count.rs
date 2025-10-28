@@ -79,7 +79,7 @@ impl ItemCountServiceTrait for ItemServiceCount {
             .map(|i| i.item_row.id)
             .collect();
 
-        let item_stats = get_item_stats(&ctx.connection, store_id, None, item_ids)?;
+        let item_stats = get_item_stats(&ctx.connection, store_id, None, item_ids, None)?;
 
         let no_stock = Self::get_no_stock_count(&self, &item_stats);
 

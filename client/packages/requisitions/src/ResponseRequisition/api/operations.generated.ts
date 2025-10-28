@@ -588,6 +588,8 @@ export type ResponseRowFragment = {
   otherPartyId: string;
   approvalStatus: Types.RequisitionNodeApprovalStatus;
   programName?: string | null;
+  maxMonthsOfStock: number;
+  minMonthsOfStock: number;
   orderType?: string | null;
   period?: {
     __typename: 'PeriodNode';
@@ -628,6 +630,8 @@ export type ResponsesQuery = {
       otherPartyId: string;
       approvalStatus: Types.RequisitionNodeApprovalStatus;
       programName?: string | null;
+      maxMonthsOfStock: number;
+      minMonthsOfStock: number;
       orderType?: string | null;
       period?: {
         __typename: 'PeriodNode';
@@ -1020,6 +1024,24 @@ export type UpdateIndicatorValueMutation = {
       };
 };
 
+export type InsertRequestFromResponseRequisitionMutationVariables =
+  Types.Exact<{
+    storeId: Types.Scalars['String']['input'];
+    input: Types.InsertFromResponseRequisitionInput;
+  }>;
+
+export type InsertRequestFromResponseRequisitionMutation = {
+  __typename: 'Mutations';
+  insertFromResponseRequisition:
+    | {
+        __typename: 'InsertFromResponseRequisitionError';
+        error:
+          | { __typename: 'OtherPartyNotASupplier'; description: string }
+          | { __typename: 'OtherPartyNotVisible'; description: string };
+      }
+    | { __typename: 'RequisitionNode'; id: string };
+};
+
 export const ResponseLineFragmentDoc = gql`
   fragment ResponseLine on RequisitionLineNode {
     id
@@ -1167,6 +1189,8 @@ export const ResponseRowFragmentDoc = gql`
     otherPartyId
     approvalStatus
     programName
+    maxMonthsOfStock
+    minMonthsOfStock
     period {
       name
       startDate
@@ -1686,6 +1710,33 @@ export const UpdateIndicatorValueDocument = gql`
     }
   }
 `;
+export const InsertRequestFromResponseRequisitionDocument = gql`
+  mutation insertRequestFromResponseRequisition(
+    $storeId: String!
+    $input: InsertFromResponseRequisitionInput!
+  ) {
+    insertFromResponseRequisition(input: $input, storeId: $storeId) {
+      ... on RequisitionNode {
+        __typename
+        id
+      }
+      ... on InsertFromResponseRequisitionError {
+        __typename
+        error {
+          description
+          ... on OtherPartyNotASupplier {
+            __typename
+            description
+          }
+          ... on OtherPartyNotVisible {
+            __typename
+            description
+          }
+        }
+      }
+    }
+  }
+`;
 
 export type SdkFunctionWrapper = <T>(
   action: (requestHeaders?: Record<string, string>) => Promise<T>,
@@ -1972,6 +2023,22 @@ export function getSdk(
             { ...requestHeaders, ...wrappedRequestHeaders }
           ),
         'updateIndicatorValue',
+        'mutation',
+        variables
+      );
+    },
+    insertRequestFromResponseRequisition(
+      variables: InsertRequestFromResponseRequisitionMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders
+    ): Promise<InsertRequestFromResponseRequisitionMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<InsertRequestFromResponseRequisitionMutation>(
+            InsertRequestFromResponseRequisitionDocument,
+            variables,
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
+        'insertRequestFromResponseRequisition',
         'mutation',
         variables
       );

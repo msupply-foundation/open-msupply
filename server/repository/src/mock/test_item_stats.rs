@@ -9,20 +9,31 @@ use super::{mock_name_a, mock_store_a, mock_store_b, MockData};
 
 const ITEM1_INDEX: usize = 0;
 const ITEM2_INDEX: usize = 1;
+const ITEM2_TRANSFER_INDEX: usize = 2;
 
 fn consumption_points() -> MockData {
     let invoice_id = uuid();
     MockData {
-        invoices: vec![InvoiceRow {
-            id: invoice_id.clone(),
-            store_id: mock_store_a().id,
-            name_link_id: mock_name_a().id,
-            r#type: InvoiceType::OutboundShipment,
-            ..Default::default()
-        }],
+        invoices: vec![
+            InvoiceRow {
+                id: invoice_id.clone(),
+                store_id: mock_store_a().id,
+                name_link_id: mock_name_a().id,
+                r#type: InvoiceType::OutboundShipment,
+                ..Default::default()
+            },
+            InvoiceRow {
+                id: format!("{}-invoice-2", invoice_id),
+                store_id: mock_store_a().id,
+                name_link_id: mock_name_a().id,
+                r#type: InvoiceType::OutboundShipment,
+                linked_invoice_id: Some(invoice_id.clone()),
+                ..Default::default()
+            },
+        ],
         invoice_lines: vec![
             InvoiceLineRow {
-                id: format!("{}line1", invoice_id),
+                id: format!("{}-line-item1", invoice_id),
                 invoice_id: invoice_id.clone(),
                 item_link_id: item().id,
                 r#type: InvoiceLineType::StockOut,
@@ -30,8 +41,17 @@ fn consumption_points() -> MockData {
                 ..Default::default()
             },
             InvoiceLineRow {
-                id: format!("{}line2", invoice_id),
+                id: format!("{}-line-item2", invoice_id),
                 invoice_id: invoice_id.clone(),
+                item_link_id: item2().id,
+                r#type: InvoiceLineType::StockOut,
+                pack_size: 1.0,
+                ..Default::default()
+            },
+            InvoiceLineRow {
+                id: format!("{}-invoice-2-line-item3", invoice_id),
+                // Invoice 2 = transfer
+                invoice_id: format!("{}-invoice-2", invoice_id),
                 item_link_id: item2().id,
                 r#type: InvoiceLineType::StockOut,
                 pack_size: 1.0,
@@ -56,23 +76,30 @@ pub fn mock_item_stats() -> MockData {
     }
     .join({
         let mut u = consumption_points();
+        // ~3 days ago
         u.invoices[0].picked_datetime = Some(Utc::now().naive_utc() - Duration::days(3));
         u.invoice_lines[ITEM1_INDEX].number_of_packs = 5.0;
         u.invoice_lines[ITEM1_INDEX].pack_size = 3.0;
-        // Don't want item2 invoice line for 1 month calculation
+        // Remove item2 line so it isn't counted in 1 month scenario
         u.invoice_lines.remove(ITEM2_INDEX);
         u
     })
     .join({
         let mut u = consumption_points();
+        // ~32.4 days ago
         u.invoices[0].picked_datetime = Some(
             Utc::now().naive_utc() - Duration::days((AVG_NUMBER_OF_DAYS_IN_A_MONTH + 2.0) as i64),
         );
         u.invoice_lines[ITEM1_INDEX].number_of_packs = 1000.0;
         u.invoice_lines[ITEM2_INDEX].number_of_packs = 30.0;
+        // 34 days ago - Transfer invoice - intended to fall outside of custom days test
+        u.invoices[1].picked_datetime = Some(Utc::now().naive_utc() - Duration::days(34 as i64));
+        u.invoice_lines[ITEM2_TRANSFER_INDEX].number_of_packs = 2.0;
+        u.invoice_lines[ITEM2_TRANSFER_INDEX].pack_size = 10.0;
         u
     })
     .join({
+        // ~92.3 days ago
         let mut u = consumption_points();
         u.invoices[0].picked_datetime = Some(
             Utc::now().naive_utc()
@@ -84,6 +111,7 @@ pub fn mock_item_stats() -> MockData {
     })
     .join({
         let mut u = consumption_points();
+        // ~60.9 days ago
         u.invoices[0].picked_datetime = Some(
             Utc::now().naive_utc() - Duration::days((AVG_NUMBER_OF_DAYS_IN_A_MONTH * 2.0) as i64),
         );
@@ -93,20 +121,54 @@ pub fn mock_item_stats() -> MockData {
     })
 }
 
+// defaults
 pub fn item1_amc_3_months() -> f64 {
     (3 * 5 + 1000) as f64 / 3.0
 }
 
 pub fn item2_amc_3_months() -> f64 {
-    30.0 / 3.0
+    50.0 / 3.0
 }
 
+// Custom days
+pub fn item1_amc_number_of_days_pref() -> f64 {
+    (5.0 * 3.0) / 1.0
+}
+
+pub fn item2_amc_number_of_days_pref() -> f64 {
+    0.0
+}
+
+// Transfer line packs * pack size
+pub fn item2_transfer_units() -> f64 {
+    2.0 * 10.0
+}
+
+// AMC excluding transferred units
+pub fn item2_amc_3_months_excluding_transfer() -> f64 {
+    item2_amc_3_months() - (item2_transfer_units() / 3.0)
+}
+
+// 1 month lookback
 pub fn item1_amc_1_months() -> f64 {
     (3 * 5) as f64 / 1.0
 }
 
 pub fn item1_amc_3_months_store_b() -> f64 {
     50.0 / 3.0
+}
+
+// with period end date (also 1 month lookback)
+pub fn period_end_date() -> chrono::NaiveDate {
+    util::date_now() - chrono::Duration::days(4)
+}
+
+pub fn item1_amc_1_months_period_end_date() -> f64 {
+    1000.0 / 1.0
+}
+
+pub fn item2_amc_1_months_period_end_date() -> f64 {
+    30.0 / 1.0
 }
 
 pub fn item() -> ItemRow {

@@ -20,7 +20,7 @@ export const useStockList = (queryParams: StockListParams) => {
 
   const {
     sortBy = {
-      key: 'name',
+      key: 'itemName',
       direction: 'asc',
     },
     first,
@@ -75,7 +75,7 @@ const toSortField = (
       return StockLineSortFieldInput.CostPricePerPack;
     case 'expiryDate':
     default: {
-      return StockLineSortFieldInput.ExpiryDate;
+      return StockLineSortFieldInput.ItemName;
     }
   }
 };
