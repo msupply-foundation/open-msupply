@@ -11,6 +11,7 @@ import {
   DeleteIcon,
   PropertyNodeValueType,
   useIntlUtils,
+  useNotification,
 } from '@openmsupply-client/common';
 import { useNameProperties } from '@openmsupply-client/system/src/Name/api/hooks/document/useNameProperties';
 import { useConfigureCustomProperties } from '../api/hooks/settings/useConfigureNameProperties';
@@ -27,10 +28,11 @@ export const SupplyLevelModal = ({
   onClose,
 }: SupplyLevelModalProps) => {
   const t = useTranslation();
-  const { Modal } = useDialog({ isOpen, onClose });
-  const { data } = useNameProperties();
+  const { error } = useNotification();
   const { currentLanguage } = useIntlUtils();
+  const { Modal } = useDialog({ isOpen, onClose });
 
+  const { data } = useNameProperties();
   const { mutateAsync } = useConfigureCustomProperties();
 
   const supplyLevelPropertyNode = data?.find(
@@ -74,7 +76,7 @@ export const SupplyLevelModal = ({
         },
       ]);
     } catch {
-      // Errors handled by main GraphQL handler
+      error(t('error.failed-to-save-supply-level'))();
     }
 
     onClose();

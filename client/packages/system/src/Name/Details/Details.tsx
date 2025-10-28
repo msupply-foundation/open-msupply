@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   useTranslation,
   DetailContainer,
@@ -11,9 +11,15 @@ import {
   BasicSpinner,
   MuiLink,
   BasicTextInput,
+  ObjUtils,
+  PropertyNodeValueType,
+  PropertyInput,
+  useNotification,
 } from '@openmsupply-client/common';
 import { useName } from '../api';
 import { NameRenderer } from '../Components';
+
+type PropertyValue = string | number | boolean | undefined;
 
 interface DetailsProps {
   nameId: string;
@@ -23,8 +29,42 @@ interface DetailsProps {
 export const Details = ({ nameId, type = 'customer' }: DetailsProps) => {
   const disabled = true;
   const t = useTranslation();
-  const { data, isLoading } = useName.document.get(nameId);
   const { localisedDate } = useFormatDateTime();
+  const { error } = useNotification();
+
+  const { data, isLoading } = useName.document.get(nameId);
+  const { mutateAsync } = useName.document.updateProperties(nameId);
+  const { data: properties, isLoading: propertiesLoading } =
+    useName.document.properties();
+
+  const supplyLevelProperty = properties?.find(
+    p => p.property.key === 'supply_level'
+  )?.property;
+
+  const supplyLevel =
+    supplyLevelProperty?.key && data?.properties
+      ? (ObjUtils.parse(data?.properties)[supplyLevelProperty.key] ?? null)
+      : null;
+
+  const [localSupplyLevel, setLocalSupplyLevel] = useState(supplyLevel);
+
+  const handleSupplyLevelChange = async (value: PropertyValue) => {
+    if (!supplyLevelProperty?.key) return;
+
+    const previousValue = localSupplyLevel;
+    setLocalSupplyLevel(value as string);
+
+    try {
+      const property = { [supplyLevelProperty?.key]: value };
+      await mutateAsync({
+        id: nameId,
+        properties: JSON.stringify(property),
+      });
+    } catch {
+      setLocalSupplyLevel(previousValue);
+      error(t('error.failed-to-save-supply-level'))();
+    }
+  };
 
   if (isLoading) return <BasicSpinner />;
 
@@ -186,6 +226,29 @@ export const Details = ({ nameId, type = 'customer' }: DetailsProps) => {
             }
             labelWidthPercentage={19}
           />
+          {type === 'customer' && (
+            <DetailInputWithLabelRow
+              label={t('label.supply-level')}
+              labelWidthPercentage={19}
+              inputProps={{ disabled: propertiesLoading }}
+              inputSx={{
+                '& .MuiAutocomplete-root': {
+                  width: '100%',
+                },
+              }}
+              Input={
+                <PropertyInput
+                  value={localSupplyLevel}
+                  valueType={
+                    supplyLevelProperty?.valueType ??
+                    PropertyNodeValueType.String
+                  }
+                  allowedValues={supplyLevelProperty?.allowedValues?.split(',')}
+                  onChange={handleSupplyLevelChange}
+                />
+              }
+            />
+          )}
         </Box>
       </Box>
     </DetailContainer>
