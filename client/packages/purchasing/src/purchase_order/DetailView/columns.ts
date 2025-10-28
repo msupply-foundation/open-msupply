@@ -28,23 +28,33 @@ export const usePurchaseOrderColumns = () => {
           getLinesFromRow(row).some(
             r => getError(r)?.__typename === 'ItemCannotBeOrdered'
           ),
+        enableColumnFilter: true,
+        enableSorting: true,
       },
       {
         accessorKey: 'item.name',
         header: t('label.item-name'),
         Cell: TextWithTooltipCell,
         size: 350,
+        enableColumnFilter: true,
+        enableSorting: true,
       },
       {
         accessorKey: 'numberOfPacks',
         header: t('label.num-packs'),
         columnType: ColumnType.Number,
+        accessorFn: row => {
+          const numUnits =
+            row.adjustedNumberOfUnits ?? row.requestedNumberOfUnits;
+          return Math.ceil(numUnits / row.requestedPackSize);
+        },
       },
       {
         accessorKey: 'packSize',
         header: t('label.pack-size'),
         columnType: ColumnType.Number,
         defaultHideOnMobile: true,
+        accessorFn: row => row.requestedPackSize,
       },
       {
         accessorKey: 'requestedNumberOfUnits',
@@ -52,7 +62,7 @@ export const usePurchaseOrderColumns = () => {
         columnType: ColumnType.Number,
       },
       {
-        accessorKey: 'authorisedNumberOfUnits',
+        accessorKey: 'adjustedNumberOfUnits',
         header: t('label.adjusted-units'),
         columnType: ColumnType.Number,
       },
@@ -67,9 +77,10 @@ export const usePurchaseOrderColumns = () => {
         header: t('label.soh'),
         columnType: ColumnType.Number,
         defaultHideOnMobile: true,
+        accessorFn: row => row.item.stats.stockOnHand ?? 0,
       },
       {
-        accessorKey: 'onOrder',
+        accessorKey: 'unitsOrderedInOthers',
         header: t('label.on-order'),
         columnType: ColumnType.Number,
       },
