@@ -2,17 +2,20 @@ use std::collections::HashMap;
 
 use async_trait::async_trait;
 use repository::{
-    ActivityLogType, ChangelogFilter, ChangelogRow, ChangelogTableName, EqualFilter, InvoiceFilter,
+    ChangelogFilter, ChangelogRow, ChangelogTableName, EqualFilter, InvoiceFilter,
     InvoiceLineFilter, InvoiceLineRepository, InvoiceLineType, InvoiceRepository,
     InvoiceRowRepository, InvoiceStatus, InvoiceType, KeyType, RequisitionLineFilter,
     RequisitionLineRepository, RequisitionRowRepository, RequisitionStatus, RequisitionType,
 };
+use util::constants::SYSTEM_USER_ID;
 
 use crate::{
-    activity_log::system_activity_log_entry,
     cursor_controller::CursorType,
     preference::{Preference, RequisitionAutoFinalise},
     processors::general_processor::{Processor, ProcessorError},
+    requisition::response_requisition::{
+        update_response_requisition, UpdateResponseRequisition, UpdateResponseRequisitionStatus,
+    },
     service_provider::{ServiceContext, ServiceProvider},
     sync::ActiveStoresOnSite,
 };
@@ -28,7 +31,7 @@ impl Processor for RequisitionAutoFinaliseProcessor {
     async fn try_process_record(
         &self,
         ctx: &ServiceContext,
-        _service_provider: &ServiceProvider,
+        service_provider: &ServiceProvider,
         changelog: &ChangelogRow,
     ) -> Result<Option<String>, ProcessorError> {
         let connection = &ctx.connection;
@@ -69,7 +72,7 @@ impl Processor for RequisitionAutoFinaliseProcessor {
         }
 
         let requisition_row_repo = RequisitionRowRepository::new(connection);
-        let mut requisition = requisition_row_repo
+        let requisition = requisition_row_repo
             .find_one_by_id(&requisition_id)?
             .ok_or(ProcessorError::RecordNotFound(
                 "Requisition".to_string(),
@@ -141,17 +144,17 @@ impl Processor for RequisitionAutoFinaliseProcessor {
             return Ok(None);
         }
 
-        requisition.status = RequisitionStatus::Finalised;
-        requisition.finalised_datetime = Some(chrono::Utc::now().naive_utc());
-
-        requisition_row_repo.upsert_one(&requisition)?;
-
-        system_activity_log_entry(
-            connection,
-            ActivityLogType::RequisitionStatusFinalised,
-            &requisition.store_id,
-            &requisition.id,
-        )?;
+        let store_ctx =
+            service_provider.context(requisition.store_id, SYSTEM_USER_ID.to_string())?;
+        update_response_requisition(
+            &store_ctx,
+            UpdateResponseRequisition {
+                id: requisition.id.clone(),
+                status: Some(UpdateResponseRequisitionStatus::Finalised),
+                ..Default::default()
+            },
+        )
+        .map_err(|e| ProcessorError::OtherError(e.to_string()))?;
 
         Ok(Some(format!(
             "requisition ({}) auto finalised",
