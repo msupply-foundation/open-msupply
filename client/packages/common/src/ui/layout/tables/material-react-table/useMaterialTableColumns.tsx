@@ -55,6 +55,14 @@ export const useMaterialTableColumns = <T extends MRT_RowData>(
           };
         }
 
+        // Merge any custom cell props with defaults
+        const cellProps = col.muiTableBodyCellProps;
+        if (cellProps) {
+          col.muiTableBodyCellProps = params => {
+            return mergeCellProps(cellProps, params);
+          };
+        }
+
         return {
           grow: true,
           Header: ColumnHeaderWithTooltip, // can't define this globally for the table unfortunately
