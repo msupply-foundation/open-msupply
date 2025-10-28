@@ -86,7 +86,7 @@ pub fn get_item_ids_by_mos(
         .collect();
 
     let item_stats =
-        get_item_stats_map(&connection, store_id, None, item_ids).map_err(|e| match e {
+        get_item_stats_map(&connection, store_id, None, item_ids, None).map_err(|e| match e {
             PluginOrRepositoryError::PluginError(err) => ListError::PluginError(err.to_string()),
             PluginOrRepositoryError::RepositoryError(err) => ListError::DatabaseError(err),
         })?;

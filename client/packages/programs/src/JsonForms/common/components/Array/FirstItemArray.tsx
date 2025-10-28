@@ -9,7 +9,10 @@ import {
   JsonSchema7,
   ControlProps,
 } from '@jsonforms/core';
-import { withJsonFormsArrayControlProps, JsonForms } from '@jsonforms/react';
+import {
+  withJsonFormsArrayControlProps,
+  JsonFormsDispatch,
+} from '@jsonforms/react';
 import {
   Box,
   Typography,
@@ -48,9 +51,6 @@ const FirstItemArrayComponent = (props: FirstItemArrayControlCustomProps) => {
     rootSchema,
     renderers,
     options,
-    data,
-    config,
-    handleChange,
   } = props;
 
   const childUiSchema = useMemo(
@@ -88,19 +88,13 @@ const FirstItemArrayComponent = (props: FirstItemArrayControlCustomProps) => {
         </Box>
       ) : null}
 
-      <JsonForms
+      <JsonFormsDispatch
         key={childPath}
         schema={schemaWithDefs}
         uischema={childUiSchema || uischema}
-        data={data?.[0] ?? {}}
-        config={config}
-        readonly={!enabled}
-        renderers={renderers ?? []}
-        onChange={({ data }) => {
-          if (Object.values(data).filter(it => !!it).length > 0) {
-            handleChange(childPath, data);
-          }
-        }}
+        enabled={enabled}
+        path={childPath}
+        renderers={renderers}
       />
     </Box>
   );

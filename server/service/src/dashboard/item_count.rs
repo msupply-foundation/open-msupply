@@ -106,7 +106,7 @@ impl ItemCountServiceTrait for ItemServiceCount {
             .map(|i| i.item_row.id)
             .collect();
 
-        let item_stats = get_item_stats(&ctx.connection, store_id, None, item_ids.clone())?;
+        let item_stats = get_item_stats(&ctx.connection, store_id, None, item_ids.clone(), None)?;
 
         let no_stock = Self::get_no_stock_count(&self, &item_stats);
 
@@ -130,6 +130,7 @@ impl ItemCountServiceTrait for ItemServiceCount {
             store_id,
             Some(num_months_consumption as f64),
             item_ids,
+            None,
         )?;
 
         let out_of_stock_products =

@@ -19,8 +19,10 @@ pub struct AverageMonthlyConsumptionItem {
 pub struct Input {
     pub store_id: String,
     pub amc_lookback_months: f64,
-    pub consumption_map: HashMap<String /* item_id */, f64 /* consumption */>,
+    pub consumption_map: HashMap<String /* item_id */, f64 /* total consumption */>,
     pub item_ids: Vec<String>,
+    pub adjusted_days_out_of_stock_map:
+        Option<HashMap<String /* item_id */, f64 /* days out of stock adjustment */>>,
 }
 
 pub type Output = HashMap<String /* item_id */, AverageMonthlyConsumptionItem>;
