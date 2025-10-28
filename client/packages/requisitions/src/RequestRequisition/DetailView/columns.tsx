@@ -12,6 +12,7 @@ import {
 } from '@openmsupply-client/common';
 import { useRequest } from '../api';
 import { useRequestRequisitionLineErrorContext } from '../context';
+import React from 'react';
 
 export const useRequestColumns = () => {
   const t = useTranslation();
@@ -23,7 +24,7 @@ export const useRequestColumns = () => {
   const { store } = useAuthContext();
   const { errors } = useRequestRequisitionLineErrorContext();
   const { plugins } = usePluginProvider();
-  const { manageVaccinesInDoses } = usePreferences();
+  const { manageVaccinesInDoses, warningForExcessRequest } = usePreferences();
 
   const showExtraColumns =
     !!programName &&
@@ -121,7 +122,15 @@ export const useRequestColumns = () => {
         header: t('label.requested'),
         description: t('description.doses-quantity'),
         columnType: ColumnType.Number,
-        Cell: UnitsAndDosesCell,
+        Cell: ({ row, ...props }) => {
+          const showAlert =
+            warningForExcessRequest &&
+            row.original.requestedQuantity - row.original.suggestedQuantity >=
+              1;
+          return (
+            <UnitsAndDosesCell row={row} {...props} showAlert={showAlert} />
+          );
+        },
         enableSorting: true,
       },
 
@@ -205,6 +214,7 @@ export const useRequestColumns = () => {
     ],
     [
       manageVaccinesInDoses,
+      warningForExcessRequest,
       showExtraColumns,
       usesRemoteAuthorisation,
       maxMonthsOfStock,
