@@ -89,8 +89,8 @@ export const InboundListView = () => {
         columnType: ColumnType.Date,
         defaultHideOnMobile: true,
         enableColumnFilter: true,
-        enableSorting: true,        size: 100,
-
+        enableSorting: true,
+        size: 100,
       },
       {
         header: t('label.status'),
