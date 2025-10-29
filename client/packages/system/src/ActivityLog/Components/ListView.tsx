@@ -42,16 +42,23 @@ const formatChangeDetails = (
   };
 
   // If both are valid JSON objects, compare the keys
-  if (fromJson && toJson) {
+  if (toJson) {
     const changes: React.ReactNode[] = [];
-    const allKeys = new Set([...Object.keys(fromJson), ...Object.keys(toJson)]);
+    const allKeys = new Set([
+      ...Object.keys(fromJson || {}),
+      ...Object.keys(toJson),
+    ]);
 
     allKeys.forEach(key => {
-      const fromValue = (fromJson as Record<string, unknown>)[key];
+      const fromValue = fromJson && (fromJson as Record<string, unknown>)[key];
       const toValue = (toJson as Record<string, unknown>)[key];
 
       if (JSON.stringify(fromValue) !== JSON.stringify(toValue)) {
-        if (fromValue !== undefined && toValue !== undefined) {
+        if (
+          fromValue !== undefined &&
+          fromValue !== null &&
+          toValue !== undefined
+        ) {
           changes.push(
             <Box key={key}>
               <Typography component="span" fontWeight="bold">
@@ -61,13 +68,13 @@ const formatChangeDetails = (
               {JSON.stringify(toValue)}
             </Box>
           );
-        } else if (fromValue !== undefined) {
+        } else if (fromValue !== undefined && fromValue !== null) {
           changes.push(
             <Box key={key}>
               <Typography component="span" fontWeight="bold">
                 {translateFieldName(key)}:
               </Typography>{' '}
-              removed [{JSON.stringify(fromValue)}]
+              removed {JSON.stringify(fromValue)}
             </Box>
           );
         } else {
@@ -76,7 +83,7 @@ const formatChangeDetails = (
               <Typography component="span" fontWeight="bold">
                 {translateFieldName(key)}:
               </Typography>{' '}
-              added [{JSON.stringify(toValue)}]
+              {JSON.stringify(toValue)}
             </Box>
           );
         }
