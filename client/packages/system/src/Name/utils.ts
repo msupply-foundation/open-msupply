@@ -32,6 +32,7 @@ export interface NameSearchInputProps {
   disabled?: boolean;
   clearable?: boolean;
   currentId?: string;
+  extraFilter?: (item: NameRowFragment) => boolean;
 }
 
 export interface NullableNameSearchInputProps
@@ -46,11 +47,16 @@ export const basicFilterOptions = {
 
 export const filterByNameAndCode = (
   options: NameRowFragment[],
-  state: FilterOptionsState<NameRowFragment>
+  state: FilterOptionsState<NameRowFragment>,
+  extraFilter?: (item: NameRowFragment) => boolean
 ) =>
-  options.filter(option =>
-    RegexUtils.matchObjectProperties(state.inputValue, option, ['name', 'code'])
-  );
+  options.filter(option => {
+    const matches = RegexUtils.matchObjectProperties(state.inputValue, option, [
+      'name',
+      'code',
+    ]);
+    return matches && (!extraFilter || extraFilter(option));
+  });
 
 const statusTranslation: Record<PurchaseOrderNodeStatus, LocaleKey> = {
   NEW: 'label.new',

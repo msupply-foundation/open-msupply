@@ -272,9 +272,6 @@ pub fn get_pagination_or_default(
         if limit < DEFAULT_PAGINATION_MIN_LIMIT {
             return Err(ListError::LimitBelowMin(DEFAULT_PAGINATION_MIN_LIMIT));
         }
-        if limit > DEFAULT_PAGINATION_MAX_LIMIT {
-            return Err(ListError::LimitAboveMax(DEFAULT_PAGINATION_MAX_LIMIT));
-        }
 
         Ok(limit)
     };
@@ -329,6 +326,16 @@ pub struct InputWithResult<I, R> {
 #[derive(Debug, Clone, PartialEq)]
 pub struct NullableUpdate<T> {
     pub value: Option<T>,
+}
+
+pub fn nullable_update<T: Clone>(
+    input: &Option<NullableUpdate<T>>,
+    current: Option<T>,
+) -> Option<T> {
+    match input {
+        Some(NullableUpdate { value }) => value.clone(),
+        None => current,
+    }
 }
 
 fn check_location_exists(
