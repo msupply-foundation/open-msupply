@@ -41,7 +41,7 @@ const formatChangeDetails = (
     return t(translationKey, { defaultValue: key });
   };
 
-  // If both are valid JSON objects, compare the keys
+  // If we have a json `to` object, compare/display the keys
   if (toJson) {
     const changes: React.ReactNode[] = [];
     const allKeys = new Set([
@@ -57,7 +57,8 @@ const formatChangeDetails = (
         if (
           fromValue !== undefined &&
           fromValue !== null &&
-          toValue !== undefined
+          toValue !== undefined &&
+          toValue !== null
         ) {
           changes.push(
             <Box key={key}>
@@ -74,7 +75,7 @@ const formatChangeDetails = (
               <Typography component="span" fontWeight="bold">
                 {translateFieldName(key)}:
               </Typography>{' '}
-              removed {JSON.stringify(fromValue)}
+              {t('log.removed')} {JSON.stringify(fromValue)}
             </Box>
           );
         } else {
@@ -97,7 +98,7 @@ const formatChangeDetails = (
     ) : undefined;
   }
 
-  // Fallback: Check if it's already formatted string with a single field changes (old style)
+  // Fallback: Check if it's already a string with a single field changes (old style)
   if (from && to) {
     const combinedText = `[${from}] ${t('log.changed-to')} [${to}]`;
     return combinedText;
