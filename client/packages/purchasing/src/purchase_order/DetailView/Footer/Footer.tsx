@@ -159,6 +159,7 @@ export const Footer = ({
             <ActionsFooter
               actions={actions}
               selectedRowCount={selectedRows.length}
+              resetRowSelection={resetRowSelection}
             />
           )}
           {data && selectedRows.length === 0 && showStatusBar ? (
