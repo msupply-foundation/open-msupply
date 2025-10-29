@@ -118,7 +118,7 @@ pub(crate) fn insert_patient(
             // Create logging entry
             activity_log_entry_with_diff(
                 ctx,
-                ActivityLogType::PatientUpdated,
+                ActivityLogType::PatientCreated,
                 Some(record_id),
                 None::<&NameRow>,
                 &row,

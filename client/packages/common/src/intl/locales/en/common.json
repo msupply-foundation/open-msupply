@@ -1546,6 +1546,8 @@
   "log.prescription-status-verified": "Verified",
   "log.program-created": "Created",
   "log.program-updated": "Updated",
+  "log.patient-created": "Created",
+  "log.patient-updated": "Updated",
   "log.quantity-for-line-has-been-set-to-zero": "The quantity of this batch has been set to 0",
   "log.repack": "Repacked",
   "log.requisition-approved": "Approved",
