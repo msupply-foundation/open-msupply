@@ -19,7 +19,7 @@ export const usePurchaseOrderColumns = () => {
         accessorKey: 'lineNumber',
         header: t('label.line-number'),
         columnType: ColumnType.Number,
-        size: 90,
+        size: 60,
         enableSorting: true,
       },
       {

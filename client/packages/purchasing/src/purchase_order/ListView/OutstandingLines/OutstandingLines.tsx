@@ -46,6 +46,7 @@ export const OutstandingLinesListView = () => {
         accessorKey: 'purchaseOrderNumber',
         accessorFn: row => row?.purchaseOrder?.number,
         enableSorting: true,
+        columnType: ColumnType.Number,
       },
       {
         header: t('label.purchase-order-reference'),
