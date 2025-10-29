@@ -166,7 +166,8 @@ impl<FH: QueryFragment<DBType>, SQ: QueryFragment<DBType>> QueryFragment<DBType>
               item_id)
               "#,
         );
-        // cast to the table name and column. Otherwise defaults to stock_movement
+        // Cast to the table name and column. Otherwise defaults to stock_movement
+        // DOS is the number of days where the item had a balance of 0 stock on hand on the previous day
         out.push_sql("SELECT item_id, store_id, dos as total_dos FROM dos_result");
 
         Ok(())
