@@ -110,7 +110,7 @@ pub(crate) fn update_patient(
                 ctx,
                 ActivityLogType::PatientUpdated,
                 Some(record_id),
-                &existing,
+                Some(&existing),
                 &row,
             )?;
 
