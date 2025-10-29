@@ -1529,6 +1529,7 @@
   "log.asset-updated": "Updated",
   "log.changed-from": "From",
   "log.changed-to": "to",
+  "log.removed": "Removed",
   "log.inventory-adjustment": "Inventory Adjustment",
   "log.invoice-created": "Created",
   "log.invoice-deleted": "Deleted",

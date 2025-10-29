@@ -73,10 +73,9 @@ pub fn update_encounter(
                     DocumentInsertError::InvalidParent(_) => UpdateEncounterError::InvalidParentId,
                 })?;
 
-            let (is_latest, _) = is_latest_doc(&ctx.connection, &document.name, document.datetime)
-                .map_err(UpdateEncounterError::DatabaseError)?;
-
-            if is_latest {
+            if is_latest_doc(&ctx.connection, &document.name, document.datetime)
+                .map_err(UpdateEncounterError::DatabaseError)?
+            {
                 encounter_updated::update_encounter_row_and_events(
                     &ctx.connection,
                     &existing_encounter_row.patient_row.id,

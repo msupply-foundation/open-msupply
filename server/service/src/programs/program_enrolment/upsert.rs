@@ -77,11 +77,9 @@ pub fn upsert_program_enrolment(
                     }
                 })?;
 
-            let (is_latest, _document) =
-                is_latest_doc(&ctx.connection, &document.name, document.datetime)
-                    .map_err(UpsertProgramEnrolmentError::DatabaseError)?;
-
-            if is_latest {
+            if is_latest_doc(&ctx.connection, &document.name, document.datetime)
+                .map_err(UpsertProgramEnrolmentError::DatabaseError)?
+            {
                 update_program_enrolment_row(
                     &ctx.connection,
                     &patient_id,
