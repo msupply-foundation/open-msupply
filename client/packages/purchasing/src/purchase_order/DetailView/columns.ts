@@ -13,12 +13,14 @@ export const usePurchaseOrderColumns = () => {
   const t = useTranslation();
   const { getError } = usePurchaseOrderLineErrorContext();
 
-  const columns = useMemo((): ColumnDef<PurchaseOrderLineFragment>[] => {
+  return useMemo((): ColumnDef<PurchaseOrderLineFragment>[] => {
     return [
       {
         accessorKey: 'lineNumber',
         header: t('label.line-number'),
         columnType: ColumnType.Number,
+        size: 90,
+        enableSorting: true,
       },
       {
         accessorKey: 'item.code',
@@ -55,6 +57,7 @@ export const usePurchaseOrderColumns = () => {
         columnType: ColumnType.Number,
         defaultHideOnMobile: true,
         accessorFn: row => row.requestedPackSize,
+        size: 90,
       },
       {
         accessorKey: 'requestedNumberOfUnits',
@@ -108,6 +111,4 @@ export const usePurchaseOrderColumns = () => {
     ];
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [getError]);
-
-  return { columns };
 };

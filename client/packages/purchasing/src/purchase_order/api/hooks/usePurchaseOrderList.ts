@@ -69,7 +69,7 @@ export const usePurchaseOrderList = (queryParams?: ListParams) => {
     return { nodes, totalCount };
   };
 
-  const { data, isLoading, isError } = useQuery({ queryKey, queryFn });
+  const { data, isFetching, isError } = useQuery({ queryKey, queryFn });
 
   const deleteMutationFn = async (ids: string[]) => {
     try {
@@ -97,7 +97,7 @@ export const usePurchaseOrderList = (queryParams?: ListParams) => {
   });
 
   return {
-    query: { data, isLoading, isError },
+    query: { data, isFetching, isError },
     delete: {
       deletePurchaseOrders,
       isDeleting,

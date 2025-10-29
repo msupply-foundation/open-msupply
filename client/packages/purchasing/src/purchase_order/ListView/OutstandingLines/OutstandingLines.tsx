@@ -1,8 +1,6 @@
 import React, { useMemo } from 'react';
 import {
   useNavigate,
-  TableProvider,
-  createTableStore,
   useTranslation,
   NothingHere,
   useUrlQueryParams,
@@ -18,7 +16,7 @@ import { PurchaseOrderLineFragment } from '../../api/operations.generated';
 import { usePurchaseOrderLineList } from '../../api/hooks/usePurchaseOrderLineList';
 import { AppBarButtons } from './AppBarButtons';
 
-const OutstandingLinesList = () => {
+export const OutstandingLinesListView = () => {
   const t = useTranslation();
   const navigate = useNavigate();
 
@@ -41,7 +39,7 @@ const OutstandingLinesList = () => {
     query: { data, isError, isLoading },
   } = usePurchaseOrderLineList(listParams);
 
-  const mrtColumns = useMemo(
+  const columns = useMemo(
     (): ColumnDef<PurchaseOrderLineFragment>[] => [
       {
         header: t('label.purchase-order-number'),
@@ -119,13 +117,14 @@ const OutstandingLinesList = () => {
           .addPart(row.purchaseOrder?.id ?? '')
           .build()
       ),
-    columns: mrtColumns,
+    columns,
     data: data?.nodes,
     totalCount: data?.totalCount ?? 0,
     initialSort: { key: 'invoiceNumber', dir: 'desc' },
     noDataElement: (
       <NothingHere body={t('message.no-outstanding-purchase-order-lines')} />
     ),
+    enableRowSelection: false,
   });
 
   return (
@@ -135,9 +134,3 @@ const OutstandingLinesList = () => {
     </>
   );
 };
-
-export const OutstandingPurchaseOrderLinesListView = () => (
-  <TableProvider createStore={createTableStore}>
-    <OutstandingLinesList />
-  </TableProvider>
-);
