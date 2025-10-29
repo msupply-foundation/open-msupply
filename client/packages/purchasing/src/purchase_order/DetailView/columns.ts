@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import {
   ColumnDef,
   ColumnType,
@@ -7,7 +8,6 @@ import {
 } from '@openmsupply-client/common';
 import { PurchaseOrderLineFragment } from '../api';
 import { usePurchaseOrderLineErrorContext } from '../context';
-import { useMemo } from 'react';
 
 export const usePurchaseOrderColumns = () => {
   const t = useTranslation();
