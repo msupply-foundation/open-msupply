@@ -67,21 +67,28 @@ pub fn activity_log_entry_with_diff(
     ctx: &ServiceContext,
     log_type: ActivityLogType,
     record_id: Option<String>,
-    old_value: &impl serde::Serialize,
+    old_value: Option<&impl serde::Serialize>,
     new_value: &impl serde::Serialize,
 ) -> Result<(), RepositoryError> {
     // Create a diff showing only the changes
-    let (changed_from, changed_to) =
-        match json_diff(&old_value, &new_value).map_err(|e| RepositoryError::DBError {
-            msg: format!("{:?}", e),
-            extra: "JSON diff error".to_string(),
-        })? {
-            Some((from, to)) => (
-                Some(serde_json::to_string(&from).unwrap_or_default()),
-                Some(serde_json::to_string(&to).unwrap_or_default()),
-            ),
-            None => (None, None), // No changes
-        };
+    let (changed_from, changed_to) = match old_value {
+        Some(old) => {
+            match json_diff(&old, &new_value).map_err(|e| RepositoryError::DBError {
+                msg: format!("{:?}", e),
+                extra: "JSON diff error".to_string(),
+            })? {
+                Some((from, to)) => (
+                    Some(serde_json::to_string(&from).unwrap_or_default()),
+                    Some(serde_json::to_string(&to).unwrap_or_default()),
+                ),
+                None => (None, None), // No changes
+            }
+        }
+        None => (
+            None,
+            Some(serde_json::to_string(&new_value).unwrap_or_default()),
+        ),
+    };
 
     activity_log_entry(ctx, log_type, record_id, changed_from, changed_to)
 }
