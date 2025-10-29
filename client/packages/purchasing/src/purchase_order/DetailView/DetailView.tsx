@@ -94,7 +94,7 @@ const DetailViewInner = () => {
       onRowClick: onRowClick,
       columns,
       data: lines,
-      initialSort: { key: 'invoiceNumber', dir: 'desc' },
+      initialSort: { key: 'number', dir: 'asc' },
       getIsRestrictedRow: getClosedLine,
       getIsPlaceholderRow: getPlaceholderRow,
       noDataElement: (

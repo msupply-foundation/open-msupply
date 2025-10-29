@@ -147,7 +147,7 @@ export const PurchaseOrderListView = () => {
       columns,
       data: data?.nodes ?? [],
       totalCount: data?.totalCount ?? 0,
-      initialSort: { key: 'invoiceNumber', dir: 'desc' },
+      initialSort: { key: 'number', dir: 'desc' },
       getIsRestrictedRow: isPurchaseOrderDisabled,
       noDataElement: (
         <NothingHere
