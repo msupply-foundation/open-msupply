@@ -1,11 +1,8 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import {
   useNavigate,
-  TableProvider,
-  createTableStore,
   InvoiceNodeStatus,
   useTranslation,
-  useTableStore,
   NothingHere,
   useToggle,
   useUrlQueryParams,
@@ -24,16 +21,6 @@ import {
 import { useInbound, InboundRowFragment } from '../api';
 import { Footer } from './Footer';
 
-const useDisableInboundRows = (rows?: InboundRowFragment[]) => {
-  const { setDisabledRows } = useTableStore();
-  useEffect(() => {
-    const disabledRows = rows
-      ?.filter(isInboundListItemDisabled)
-      .map(({ id }) => id);
-    if (disabledRows) setDisabledRows(disabledRows);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [rows]);
-};
 export const InboundListView = () => {
   const t = useTranslation();
   const navigate = useNavigate();
@@ -63,10 +50,9 @@ export const InboundListView = () => {
     filterBy,
   };
 
-  const { data, isLoading } = useInbound.document.list(listParams);
-  useDisableInboundRows(data?.nodes);
+  const { data, isFetching } = useInbound.document.list(listParams);
 
-  const mrtColumns = useMemo(
+  const columns = useMemo(
     (): ColumnDef<InboundRowFragment>[] => [
       {
         header: t('label.supplier'),
@@ -85,7 +71,7 @@ export const InboundListView = () => {
         header: t('label.number'),
         accessorKey: 'invoiceNumber',
         columnType: ColumnType.Number,
-        size: 110,
+        size: 90,
         enableColumnFilter: true,
         enableSorting: true,
       },
@@ -95,6 +81,7 @@ export const InboundListView = () => {
         columnType: ColumnType.Date,
         enableColumnFilter: true,
         enableSorting: true,
+        size: 100,
       },
       {
         header: t('label.delivered'),
@@ -102,7 +89,8 @@ export const InboundListView = () => {
         columnType: ColumnType.Date,
         defaultHideOnMobile: true,
         enableColumnFilter: true,
-        enableSorting: true,
+        enableSorting: true,        size: 100,
+
       },
       {
         header: t('label.status'),
@@ -122,7 +110,6 @@ export const InboundListView = () => {
         accessorKey: 'theirReference',
         size: 225,
         defaultHideOnMobile: true,
-        enableColumnFilter: true,
         enableSorting: true,
       },
       {
@@ -143,9 +130,9 @@ export const InboundListView = () => {
   const { table, selectedRows } = usePaginatedMaterialTable<InboundRowFragment>(
     {
       tableId: 'inbound-shipment-list-view',
-      isLoading,
+      isLoading: isFetching,
       onRowClick: row => navigate(row.id),
-      columns: mrtColumns,
+      columns,
       data: data?.nodes ?? [],
       totalCount: data?.totalCount ?? 0,
       initialSort: { key: 'invoiceNumber', dir: 'desc' },
@@ -173,9 +160,3 @@ export const InboundListView = () => {
     </>
   );
 };
-
-export const ListView = () => (
-  <TableProvider createStore={createTableStore}>
-    <InboundListView />
-  </TableProvider>
-);
