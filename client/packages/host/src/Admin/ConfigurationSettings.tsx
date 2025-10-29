@@ -1,5 +1,4 @@
 import React from 'react';
-
 import {
   BaseButton,
   useEditModal,
@@ -7,9 +6,7 @@ import {
   useTranslation,
 } from '@openmsupply-client/common';
 import { useName } from '@openmsupply-client/system';
-
 import { Setting } from './Setting';
-
 import {
   useConfigureNameProperties,
   useCheckConfiguredProperties,
