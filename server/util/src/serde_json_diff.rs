@@ -9,7 +9,7 @@ pub enum JsonDiffError {
 
 /// Compares two Serializable values (using json) and returns only the differences
 /// E.g. if a field changed from 1 to 2, the output will be ({ "field": 1 }, { "field": 2 })
-/// Recursion for neested objects is not implemented for now, to keep it simple.
+/// Recursion for nested objects is not implemented for now, to keep it simple.
 pub fn json_diff(
     old: &impl serde::Serialize,
     new: &impl serde::Serialize,
