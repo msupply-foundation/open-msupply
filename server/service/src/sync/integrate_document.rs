@@ -38,7 +38,7 @@ fn sync_upsert_document(
     document: &Document,
 ) -> Result<i64, RepositoryError> {
     // Fetch current document by name to check if the new document is the latest in the DB
-    let new_doc_is_latest = is_latest_doc(con, &document.name, document.datetime)?;
+    let (new_doc_is_latest, _) = is_latest_doc(con, &document.name, document.datetime)?;
 
     // Insert the new document
     // Note, every document is immutable for which reason an insert (instead of an upsert) is used.

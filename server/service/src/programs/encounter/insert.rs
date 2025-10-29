@@ -86,10 +86,10 @@ pub fn insert_encounter(
                         InsertEncounterError::InternalError(err)
                     }
                 })?;
+            let (is_latest, _) = is_latest_doc(&ctx.connection, &document.name, document.datetime)
+                .map_err(InsertEncounterError::DatabaseError)?;
 
-            if is_latest_doc(&ctx.connection, &document.name, document.datetime)
-                .map_err(InsertEncounterError::DatabaseError)?
-            {
+            if is_latest {
                 update_encounter_row_and_events(
                     &ctx.connection,
                     &patient_id,
@@ -235,9 +235,7 @@ mod test {
         EncounterFilter, EncounterRepository, EqualFilter, FormSchemaRowRepository,
     };
     use serde_json::json;
-    use util::{
-        constants::{PATIENT_CONTEXT_ID, PATIENT_TYPE},
-    };
+    use util::constants::{PATIENT_CONTEXT_ID, PATIENT_TYPE};
 
     use crate::{
         programs::{

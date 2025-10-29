@@ -77,9 +77,11 @@ pub fn upsert_program_enrolment(
                     }
                 })?;
 
-            if is_latest_doc(&ctx.connection, &document.name, document.datetime)
-                .map_err(UpsertProgramEnrolmentError::DatabaseError)?
-            {
+            let (is_latest, _document) =
+                is_latest_doc(&ctx.connection, &document.name, document.datetime)
+                    .map_err(UpsertProgramEnrolmentError::DatabaseError)?;
+
+            if is_latest {
                 update_program_enrolment_row(
                     &ctx.connection,
                     &patient_id,
@@ -218,9 +220,7 @@ mod test {
         ProgramEnrolmentRepository, StringFilter,
     };
     use serde_json::json;
-    use util::{
-        constants::{PATIENT_CONTEXT_ID, PATIENT_TYPE},
-    };
+    use util::constants::{PATIENT_CONTEXT_ID, PATIENT_TYPE};
 
     use crate::{
         programs::{
