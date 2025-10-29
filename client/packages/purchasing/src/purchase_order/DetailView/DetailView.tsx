@@ -135,55 +135,49 @@ const DetailViewInner = () => {
   ];
   if (isLoading) return <DetailViewSkeleton hasGroupBy={true} hasHold={true} />;
 
-  return (
-    <React.Suspense
-      fallback={<DetailViewSkeleton hasGroupBy={true} hasHold={true} />}
-    >
-      {data ? (
-        <>
-          <AppBarButtons
-            isDisabled={isDisabled}
-            disableNewLines={disableNewLines}
-            onAddItem={onOpen}
-          />
-          <Toolbar isDisabled={isDisabled} />
-          <DetailTabs tabs={tabs} />
-          <Footer
-            showStatusBar={currentTab !== 'Documents'}
-            status={data.status}
-            selectedRows={selectedRows}
-            resetRowSelection={table.resetRowSelection}
-          />
-          <SidePanel />
-          {isOpen && (
-            <PurchaseOrderLineEditModal
-              purchaseOrder={data}
-              isOpen={isOpen}
-              onClose={onClose}
-              mode={mode}
-              lineId={lineId}
-              isDisabled={isDisabled}
-              hasNext={
-                lines.findIndex(line => line.id === lineId) < lines.length - 1
-              }
-              openNext={openNext}
-            />
-          )}
-        </>
-      ) : (
-        <AlertModal
-          open={true}
-          onOk={() =>
-            navigate(
-              RouteBuilder.create(AppRoute.Replenishment)
-                .addPart(AppRoute.PurchaseOrder)
-                .build()
-            )
+  return data ? (
+    <>
+      <AppBarButtons
+        isDisabled={isDisabled}
+        disableNewLines={disableNewLines}
+        onAddItem={onOpen}
+      />
+      <Toolbar isDisabled={isDisabled} />
+      <DetailTabs tabs={tabs} />
+      <Footer
+        showStatusBar={currentTab !== 'Documents'}
+        status={data.status}
+        selectedRows={selectedRows}
+        resetRowSelection={table.resetRowSelection}
+      />
+      <SidePanel />
+      {isOpen && (
+        <PurchaseOrderLineEditModal
+          purchaseOrder={data}
+          isOpen={isOpen}
+          onClose={onClose}
+          mode={mode}
+          lineId={lineId}
+          isDisabled={isDisabled}
+          hasNext={
+            lines.findIndex(line => line.id === lineId) < lines.length - 1
           }
-          title={t('error.purchase-order-not-found')}
-          message={t('messages.click-to-return-to-purchase-orders')}
+          openNext={openNext}
         />
       )}
-    </React.Suspense>
+    </>
+  ) : (
+    <AlertModal
+      open={true}
+      onOk={() =>
+        navigate(
+          RouteBuilder.create(AppRoute.Replenishment)
+            .addPart(AppRoute.PurchaseOrder)
+            .build()
+        )
+      }
+      title={t('error.purchase-order-not-found')}
+      message={t('messages.click-to-return-to-purchase-orders')}
+    />
   );
 };
