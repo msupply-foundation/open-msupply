@@ -1,6 +1,6 @@
 use chrono::{DateTime, Utc};
 use repository::{
-    DocumentFilter, DocumentRepository, RepositoryError, StorageConnection, StringFilter,
+    Document, DocumentFilter, DocumentRepository, RepositoryError, StorageConnection, StringFilter,
 };
 
 pub mod document_registry;
@@ -13,16 +13,16 @@ pub(crate) fn is_latest_doc(
     connection: &StorageConnection,
     name: &str,
     datetime: DateTime<Utc>,
-) -> Result<bool, RepositoryError> {
+) -> Result<(bool, Option<Document>), RepositoryError> {
     // Document repository will always return latest document for a name
     let current_doc = DocumentRepository::new(connection)
         .query_by_filter(DocumentFilter::new().name(StringFilter::equal_to(name)))?
         .pop();
-    let new_doc_is_latest = if let Some(current_doc) = current_doc {
+    let new_doc_is_latest = if let Some(ref current_doc) = current_doc {
         current_doc.datetime <= datetime
     } else {
-        true
+        return Ok((true, None));
     };
 
-    Ok(new_doc_is_latest)
+    Ok((new_doc_is_latest, current_doc))
 }

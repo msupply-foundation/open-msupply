@@ -73,9 +73,10 @@ pub fn update_encounter(
                     DocumentInsertError::InvalidParent(_) => UpdateEncounterError::InvalidParentId,
                 })?;
 
-            if is_latest_doc(&ctx.connection, &document.name, document.datetime)
-                .map_err(UpdateEncounterError::DatabaseError)?
-            {
+            let (is_latest, _) = is_latest_doc(&ctx.connection, &document.name, document.datetime)
+                .map_err(UpdateEncounterError::DatabaseError)?;
+
+            if is_latest {
                 encounter_updated::update_encounter_row_and_events(
                     &ctx.connection,
                     &existing_encounter_row.patient_row.id,
@@ -198,9 +199,7 @@ mod test {
         EncounterFilter, EncounterRepository, EqualFilter, FormSchemaRowRepository,
     };
     use serde_json::json;
-    use util::{
-        constants::{PATIENT_CONTEXT_ID, PATIENT_TYPE},
-    };
+    use util::constants::{PATIENT_CONTEXT_ID, PATIENT_TYPE};
 
     use crate::{
         programs::{
