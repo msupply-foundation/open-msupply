@@ -31,7 +31,7 @@ export const Toolbar = ({ isDisabled }: ToolbarProps) => {
   const { error } = useNotification();
   const {
     draft,
-    query: { data, isLoading },
+    query: { data, isFetching },
     update: { update },
     handleChange,
   } = usePurchaseOrder();
@@ -120,7 +120,7 @@ export const Toolbar = ({ isDisabled }: ToolbarProps) => {
               Input={
                 <SupplierSearchInput
                   external
-                  disabled={isDisabled || isLoading}
+                  disabled={isDisabled || isFetching}
                   value={(data?.supplier as NameFragment) ?? null}
                   onChange={supplier => {
                     if (!supplier) return;

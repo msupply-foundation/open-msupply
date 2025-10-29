@@ -1,12 +1,9 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import {
   useNavigate,
-  TableProvider,
-  createTableStore,
   useTranslation,
   useUrlQueryParams,
   PurchaseOrderNodeStatus,
-  useTableStore,
   useToggle,
   ColumnType,
   ColumnDef,
@@ -23,10 +20,9 @@ import {
   isPurchaseOrderDisabled,
 } from '../../utils';
 
-const ListView = () => {
+export const PurchaseOrderListView = () => {
   const t = useTranslation();
   const navigate = useNavigate();
-  const { setDisabledRows } = useTableStore();
   const modalController = useToggle();
 
   const {
@@ -52,17 +48,10 @@ const ListView = () => {
     filterBy,
   };
   const {
-    query: { data, isLoading },
+    query: { data, isFetching },
   } = usePurchaseOrderList(listParams);
 
-  useEffect(() => {
-    const disabledRows = (data?.nodes ?? [])
-      .filter(row => row.status === PurchaseOrderNodeStatus.Finalised)
-      .map(({ id }) => id);
-    setDisabledRows(disabledRows);
-  }, [data, setDisabledRows]);
-
-  const mrtColumns = useMemo(
+  const columns = useMemo(
     (): ColumnDef<PurchaseOrderRowFragment>[] => [
       {
         header: t('label.supplier'),
@@ -76,7 +65,7 @@ const ListView = () => {
         header: t('label.number'),
         accessorKey: 'number',
         columnType: ColumnType.Number,
-        size: 110,
+        size: 90,
         enableSorting: true,
       },
       {
@@ -84,6 +73,7 @@ const ListView = () => {
         accessorKey: 'createdDatetime',
         columnType: ColumnType.Date,
         enableSorting: true,
+        size: 100,
       },
       {
         header: t('label.confirmed'),
@@ -91,6 +81,7 @@ const ListView = () => {
         enableColumnFilter: true,
         columnType: ColumnType.Date,
         enableSorting: true,
+        size: 100,
       },
       {
         header: t('label.sent'),
@@ -98,6 +89,7 @@ const ListView = () => {
         enableColumnFilter: true,
         columnType: ColumnType.Date,
         enableSorting: true,
+        size: 100,
       },
       {
         header: t('label.requested-delivery-date'),
@@ -105,6 +97,7 @@ const ListView = () => {
         enableColumnFilter: true,
         columnType: ColumnType.Date,
         enableSorting: true,
+        size: 100,
       },
       {
         header: t('label.status'),
@@ -127,12 +120,14 @@ const ListView = () => {
         columnType: ColumnType.Number,
         accessorFn: row => row.targetMonths,
         defaultHideOnMobile: true,
+        size: 90,
       },
       {
         header: t('label.lines'),
         accessorFn: row => row.lines?.totalCount ?? 0,
         size: 80,
         defaultHideOnMobile: true,
+        columnType: ColumnType.Number,
       },
       {
         header: t('label.comment'),
@@ -147,9 +142,9 @@ const ListView = () => {
   const { table, selectedRows } =
     usePaginatedMaterialTable<PurchaseOrderRowFragment>({
       tableId: 'purchase-order-list-view',
-      isLoading,
+      isLoading: isFetching,
       onRowClick: row => navigate(row.id),
-      columns: mrtColumns,
+      columns,
       data: data?.nodes ?? [],
       totalCount: data?.totalCount ?? 0,
       initialSort: { key: 'invoiceNumber', dir: 'desc' },
@@ -166,7 +161,7 @@ const ListView = () => {
     <>
       <AppBarButtons
         data={data?.nodes}
-        isLoading={isLoading}
+        isLoading={isFetching}
         modalController={modalController}
         onCreate={modalController.toggleOn}
       />
@@ -179,9 +174,3 @@ const ListView = () => {
     </>
   );
 };
-
-export const PurchaseOrderListView = () => (
-  <TableProvider createStore={createTableStore}>
-    <ListView />
-  </TableProvider>
-);
