@@ -86,10 +86,9 @@ pub fn upsert_contact_trace(
                     }
                 })?;
 
-            let (is_latest, _) = is_latest_doc(&ctx.connection, &document.name, document.datetime)
-                .map_err(UpsertContactTraceError::DatabaseError)?;
-
-            if is_latest {
+            if is_latest_doc(&ctx.connection, &document.name, document.datetime)
+                .map_err(UpsertContactTraceError::DatabaseError)?
+            {
                 update_contact_trace_row(
                     &ctx.connection,
                     &patient_id,

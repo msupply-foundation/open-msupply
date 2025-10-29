@@ -13,6 +13,7 @@ impl MigrationFragment for Migrate {
                 connection,
                 r#"
                     ALTER TYPE activity_log_type ADD VALUE IF NOT EXISTS 'PATIENT_UPDATED';
+                    ALTER TYPE activity_log_type ADD VALUE IF NOT EXISTS 'PATIENT_CREATED';
                 "#
             )?;
         }

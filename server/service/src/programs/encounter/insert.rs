@@ -86,10 +86,10 @@ pub fn insert_encounter(
                         InsertEncounterError::InternalError(err)
                     }
                 })?;
-            let (is_latest, _) = is_latest_doc(&ctx.connection, &document.name, document.datetime)
-                .map_err(InsertEncounterError::DatabaseError)?;
 
-            if is_latest {
+            if is_latest_doc(&ctx.connection, &document.name, document.datetime)
+                .map_err(InsertEncounterError::DatabaseError)?
+            {
                 update_encounter_row_and_events(
                     &ctx.connection,
                     &patient_id,

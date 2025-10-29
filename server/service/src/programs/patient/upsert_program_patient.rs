@@ -7,7 +7,7 @@ use util::constants::PATIENT_TYPE;
 
 use crate::{
     activity_log::activity_log_entry_with_diff,
-    document::{document_service::DocumentInsertError, is_latest_doc, raw_document::RawDocument},
+    document::{document_service::DocumentInsertError, get_latest_doc, raw_document::RawDocument},
     service_provider::{ServiceContext, ServiceProvider},
 };
 
@@ -54,11 +54,14 @@ pub fn upsert_program_patient(
             let doc_timestamp = doc.datetime;
 
             // Update the name first because the doc is referring the name id
-            let (new_doc_is_latest, current_doc) =
-                is_latest_doc(&ctx.connection, &doc.name, doc.datetime)
-                    .map_err(UpdateProgramPatientError::DatabaseError)?;
 
-            if new_doc_is_latest {
+            let current_doc = get_latest_doc(&ctx.connection, &doc.name)?;
+            let is_latest = match &current_doc {
+                Some(d) => d.datetime < doc.datetime,
+                None => true,
+            };
+
+            if is_latest {
                 update_patient_row(
                     &ctx.connection,
                     Some(store_id.to_string()),
