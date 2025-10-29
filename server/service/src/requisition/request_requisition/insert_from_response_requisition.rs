@@ -40,8 +40,6 @@ pub struct InsertFromResponseRequisition {
     pub response_requisition_id: String,
     pub other_party_id: String,
     pub comment: Option<String>,
-    pub max_months_of_stock: f64,
-    pub min_months_of_stock: f64,
 }
 
 pub fn insert_from_response_requisition(
@@ -126,11 +124,14 @@ fn generate(
         response_requisition_id,
         other_party_id,
         comment,
-        max_months_of_stock,
-        min_months_of_stock,
     }: &InsertFromResponseRequisition,
 ) -> Result<GenerateResult, InsertFromResponseRequisitionError> {
     let connection = &ctx.connection;
+    let response_requisition = RequisitionRowRepository::new(connection)
+        .find_one_by_id(response_requisition_id)?
+        .ok_or(InsertFromResponseRequisitionError::DatabaseError(
+            RepositoryError::NotFound,
+        ))?;
 
     let requisition = RequisitionRow {
         id: id.clone(),
@@ -146,17 +147,17 @@ fn generate(
         status: RequisitionStatus::Draft,
         created_datetime: Utc::now().naive_utc(),
         comment: comment.clone(),
-        max_months_of_stock: *max_months_of_stock,
-        min_months_of_stock: *min_months_of_stock,
+        max_months_of_stock: response_requisition.max_months_of_stock,
+        min_months_of_stock: response_requisition.min_months_of_stock,
         created_from_requisition_id: Some(response_requisition_id.clone()),
+        program_id: response_requisition.program_id.clone(),
+        period_id: response_requisition.period_id.clone(),
+        order_type: response_requisition.order_type.clone(),
+        is_emergency: response_requisition.is_emergency,
         // Defaults
         colour: None,
         expected_delivery_date: None,
         their_reference: None,
-        program_id: None,
-        period_id: None,
-        order_type: None,
-        is_emergency: false,
         sent_datetime: None,
         approval_status: None,
         finalised_datetime: None,
@@ -164,10 +165,11 @@ fn generate(
         original_customer_id: None,
     };
 
+    // Response requisition that still need to be supplied (supply < requested)
     let requisition_supply =
         get_requisitions_supply_statuses(connection, vec![response_requisition_id.clone()])?
             .into_iter()
-            .filter(|s| s.remaining_quantity() > 0.0)
+            .filter(|s| s.requested_minus_supply_quantity() > 0.0)
             .collect::<Vec<_>>();
 
     let requisition_lines = requisition_supply
@@ -179,7 +181,7 @@ fn generate(
                 id: uuid(),
                 requisition_id: requisition.id.clone(),
                 item_link_id: line.item_link_id.clone(),
-                requested_quantity: r.remaining_quantity(),
+                requested_quantity: r.requested_minus_supply_quantity().abs(),
                 snapshot_datetime: line.snapshot_datetime,
                 comment: line.comment.clone(),
                 item_name: line.item_name.clone(),
@@ -257,8 +259,6 @@ mod test_insert_from_response_requisition {
                     response_requisition_id: response_requisition.requisition.id.clone(),
                     other_party_id: mock_name_store_c().id,
                     comment: Some("Test comment".to_string()),
-                    max_months_of_stock: 2.0,
-                    min_months_of_stock: 1.0,
                 },
             )
             .unwrap();
