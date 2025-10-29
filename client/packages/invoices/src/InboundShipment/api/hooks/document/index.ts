@@ -1,4 +1,3 @@
-import { useInboundDeleteRows } from './useInboundDeleteRows';
 import { useInbound } from './useInbound';
 import { useInboundFields } from './useInboundFields';
 import { useInbounds } from './useInbounds';
@@ -8,11 +7,13 @@ import { useNextItem } from './useNextItem';
 import { useUpdateInbound } from './useUpdateInbound';
 import { useUpdateInboundServiceTax } from './useInboundUpdateServiceTax';
 import { useInboundDelete } from './useInboundDelete';
-import { useListInternalOrders, useListInternalOrdersPromise } from './useListInternalOrders';
+import {
+  useListInternalOrders,
+  useListInternalOrdersPromise,
+} from './useListInternalOrders';
 import { useListInternalOrderLines } from './useListInternalOrderLines';
 
 export const Document = {
-  useInboundDeleteRows,
   useInboundDelete,
   useInbound,
   useInboundFields,

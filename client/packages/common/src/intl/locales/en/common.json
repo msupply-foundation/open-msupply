@@ -1099,7 +1099,7 @@
   "label.ledger": "Ledger",
   "label.level": "Level",
   "label.line": "Line {{line, number}}",
-  "label.line-number": "Line number",
+  "label.line-number": "Line",
   "label.line-total": "Line total",
   "label.lines": "Lines",
   "label.linked-patient": "Linked Patient",
