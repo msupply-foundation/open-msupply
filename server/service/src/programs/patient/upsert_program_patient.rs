@@ -73,7 +73,11 @@ pub fn upsert_program_patient(
                 // Create logging entry with document diff
                 activity_log_entry_with_diff(
                     ctx,
-                    ActivityLogType::PatientUpdated,
+                    if current_doc.is_none() {
+                        ActivityLogType::PatientCreated
+                    } else {
+                        ActivityLogType::PatientUpdated
+                    },
                     Some(patient_id.clone()),
                     current_doc.as_ref().map(|doc| &doc.data),
                     &input.data,
