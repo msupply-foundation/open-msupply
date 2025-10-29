@@ -107,6 +107,7 @@ export const Toolbar = () => {
                     })
                   }
                   clearable
+                  extraFilter={option => option.id !== otherParty?.id}
                 />
               }
             />
