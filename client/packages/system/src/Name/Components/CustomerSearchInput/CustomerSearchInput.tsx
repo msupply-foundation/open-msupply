@@ -19,6 +19,7 @@ export const CustomerSearchInput = ({
   disabled = false,
   clearable = false,
   currentId = undefined,
+  extraFilter,
 }: NameSearchInputProps) => {
   const t = useTranslation();
   const { data, isLoading } = useName.document.customers();
@@ -42,7 +43,9 @@ export const CustomerSearchInput = ({
       clearable={clearable}
       value={buffer && { ...buffer, label: buffer.name }}
       filterOptionConfig={basicFilterOptions}
-      filterOptions={filterByNameAndCode}
+      filterOptions={(options, state) =>
+        filterByNameAndCode(options, state, extraFilter)
+      }
       loading={isLoading}
       onChange={(_, name) => {
         setBuffer(name);

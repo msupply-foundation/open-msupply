@@ -3456,6 +3456,26 @@ export type InsertFormSchemaResponse = FormSchemaNode;
 
 export type InsertFromInternalOrderResponse = InvoiceLineNode;
 
+export type InsertFromResponseRequisitionError = {
+  __typename: 'InsertFromResponseRequisitionError';
+  error: InsertFromResponseRequisitionErrorInterface;
+};
+
+export type InsertFromResponseRequisitionErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
+export type InsertFromResponseRequisitionInput = {
+  comment?: InputMaybe<Scalars['String']['input']>;
+  id: Scalars['String']['input'];
+  otherPartyId: Scalars['String']['input'];
+  responseRequisitionId: Scalars['String']['input'];
+};
+
+export type InsertFromResponseRequisitionResponse =
+  | InsertFromResponseRequisitionError
+  | RequisitionNode;
+
 export type InsertGoodsReceivedInput = {
   id: Scalars['String']['input'];
   purchaseOrderId: Scalars['String']['input'];
@@ -5434,6 +5454,7 @@ export type Mutations = {
   insertDocumentRegistry: InsertDocumentResponse;
   insertEncounter: InsertEncounterResponse;
   insertFormSchema: InsertFormSchemaResponse;
+  insertFromResponseRequisition: InsertFromResponseRequisitionResponse;
   insertGoodsReceived: InsertGoodsReceivedResponse;
   insertGoodsReceivedLine: InsertGoodsReceivedLineResponse;
   insertGoodsReceivedLinesFromPurchaseOrder: InsertLinesFromPurchaseOrderResponse;
@@ -5790,6 +5811,11 @@ export type MutationsInsertEncounterArgs = {
 
 export type MutationsInsertFormSchemaArgs = {
   input: InsertFormSchemaInput;
+};
+
+export type MutationsInsertFromResponseRequisitionArgs = {
+  input: InsertFromResponseRequisitionInput;
+  storeId: Scalars['String']['input'];
 };
 
 export type MutationsInsertGoodsReceivedArgs = {
@@ -6501,23 +6527,27 @@ export type OtherPartyNotACustomer = InsertCustomerReturnErrorInterface &
   InsertErrorInterface &
   InsertResponseRequisitionErrorInterface &
   UpdateCustomerReturnErrorInterface &
-  UpdateNameErrorInterface & {
+  UpdateNameErrorInterface &
+  UpdateRequestRequisitionErrorInterface & {
     __typename: 'OtherPartyNotACustomer';
     description: Scalars['String']['output'];
   };
 
-export type OtherPartyNotASupplier = InsertInboundShipmentErrorInterface &
-  InsertRequestRequisitionErrorInterface &
-  InsertSupplierReturnErrorInterface &
-  UpdateInboundShipmentErrorInterface &
-  UpdateRequestRequisitionErrorInterface &
-  UpdateReturnOtherPartyErrorInterface & {
-    __typename: 'OtherPartyNotASupplier';
-    description: Scalars['String']['output'];
-  };
+export type OtherPartyNotASupplier =
+  InsertFromResponseRequisitionErrorInterface &
+    InsertInboundShipmentErrorInterface &
+    InsertRequestRequisitionErrorInterface &
+    InsertSupplierReturnErrorInterface &
+    UpdateInboundShipmentErrorInterface &
+    UpdateRequestRequisitionErrorInterface &
+    UpdateReturnOtherPartyErrorInterface & {
+      __typename: 'OtherPartyNotASupplier';
+      description: Scalars['String']['output'];
+    };
 
 export type OtherPartyNotVisible = InsertCustomerReturnErrorInterface &
   InsertErrorInterface &
+  InsertFromResponseRequisitionErrorInterface &
   InsertInboundShipmentErrorInterface &
   InsertRequestRequisitionErrorInterface &
   InsertResponseRequisitionErrorInterface &
@@ -8637,6 +8667,7 @@ export type RequisitionFilterInput = {
   elmisCode?: InputMaybe<EqualFilterStringInput>;
   expectedDeliveryDate?: InputMaybe<DateFilterInput>;
   finalisedDatetime?: InputMaybe<DatetimeFilterInput>;
+  hasOutstandingLines?: InputMaybe<Scalars['Boolean']['input']>;
   id?: InputMaybe<EqualFilterStringInput>;
   isEmergency?: InputMaybe<Scalars['Boolean']['input']>;
   isProgramRequisition?: InputMaybe<Scalars['Boolean']['input']>;
@@ -8759,6 +8790,9 @@ export type RequisitionNode = {
   colour?: Maybe<Scalars['String']['output']>;
   comment?: Maybe<Scalars['String']['output']>;
   createdDatetime: Scalars['DateTime']['output'];
+  createdFromRequisition?: Maybe<RequisitionNode>;
+  createdFromRequisitionId?: Maybe<Scalars['String']['output']>;
+  destinationCustomer?: Maybe<NameNode>;
   expectedDeliveryDate?: Maybe<Scalars['NaiveDate']['output']>;
   finalisedDatetime?: Maybe<Scalars['DateTime']['output']>;
   id: Scalars['String']['output'];
@@ -8804,6 +8838,10 @@ export type RequisitionNode = {
    * Null is returned for transfers, where response requisition has not been edited yet
    */
   user?: Maybe<UserNode>;
+};
+
+export type RequisitionNodeDestinationCustomerArgs = {
+  storeId: Scalars['String']['input'];
 };
 
 export type RequisitionNodeOtherPartyArgs = {
@@ -10699,6 +10737,7 @@ export type UpdateRequestRequisitionInput = {
   id: Scalars['String']['input'];
   maxMonthsOfStock?: InputMaybe<Scalars['Float']['input']>;
   minMonthsOfStock?: InputMaybe<Scalars['Float']['input']>;
+  originalCustomerId?: InputMaybe<NullableStringUpdate>;
   otherPartyId?: InputMaybe<Scalars['String']['input']>;
   status?: InputMaybe<UpdateRequestRequisitionStatusInput>;
   theirReference?: InputMaybe<Scalars['String']['input']>;
