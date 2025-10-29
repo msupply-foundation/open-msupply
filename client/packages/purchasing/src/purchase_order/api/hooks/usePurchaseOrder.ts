@@ -31,7 +31,7 @@ export const usePurchaseOrder = (id?: string) => {
   const { queryClient } = usePurchaseOrderGraphQL();
 
   // QUERY
-  const { data, isFetching, isError } = useGetById(purchaseOrderId);
+  const { data, isFetching, isError, isLoading } = useGetById(purchaseOrderId);
 
   const isDisabled = data ? isPurchaseOrderDisabled(data) : false;
 
@@ -86,7 +86,7 @@ export const usePurchaseOrder = (id?: string) => {
   const { addFromMasterList, isLoading: isAdding } = useAddFromMasterList();
 
   return {
-    query: { data, isFetching, isError },
+    query: { data, isFetching, isError, isLoading },
     create: { create, isCreating, createError },
     update: { update, isUpdating, updateError },
     masterList: { addFromMasterList, isAdding },

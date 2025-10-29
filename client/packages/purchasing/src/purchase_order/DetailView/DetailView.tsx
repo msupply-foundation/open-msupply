@@ -49,7 +49,7 @@ const DetailViewInner = () => {
   const currentTab = urlQuery['tab'];
 
   const {
-    query: { data, isFetching },
+    query: { data, isFetching, isLoading },
     draft,
     handleChange,
     invalidateQueries,
@@ -133,6 +133,7 @@ const DetailViewInner = () => {
       value: t('label.log'),
     },
   ];
+  if (isLoading) return <DetailViewSkeleton hasGroupBy={true} hasHold={true} />;
 
   return (
     <React.Suspense
