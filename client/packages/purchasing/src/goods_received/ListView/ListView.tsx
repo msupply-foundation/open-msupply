@@ -10,7 +10,6 @@ import {
   useUrlQueryParams,
   GenericColumnKey,
   ColumnFormat,
-  ColumnType,
 } from '@openmsupply-client/common';
 import { useGoodsReceivedList } from '../api';
 import { GoodsReceivedRowFragment } from '../api/operations.generated';
