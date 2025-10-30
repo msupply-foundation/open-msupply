@@ -4,7 +4,6 @@ import {
   Box,
   useTranslation,
   BasicSpinner,
-  Typography,
 } from '@openmsupply-client/common';
 import { usePatientStore } from '@openmsupply-client/programs';
 import { Footer } from './Footer';
