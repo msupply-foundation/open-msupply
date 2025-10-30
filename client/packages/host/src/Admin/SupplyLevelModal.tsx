@@ -12,8 +12,10 @@ import {
   PropertyNodeValueType,
   useIntlUtils,
   useNotification,
+  useAuthContext,
+  UserPermission,
 } from '@openmsupply-client/common';
-import { useNameProperties } from '@openmsupply-client/system/src/Name/api/hooks/document/useNameProperties';
+import { useName } from '@openmsupply-client/system/src/Name/api/hooks/';
 import { useConfigureCustomProperties } from '../api/hooks/settings/useConfigureNameProperties';
 import { getPropertyTranslation } from '../api/hooks/settings/namePropertyData';
 import { SUPPLY_LEVEL_KEY } from '../api/hooks/settings/namePropertyKeys';
@@ -30,18 +32,18 @@ export const SupplyLevelModal = ({
   const t = useTranslation();
   const { error } = useNotification();
   const { currentLanguage } = useIntlUtils();
+  const { userHasPermission } = useAuthContext();
   const { Modal } = useDialog({ isOpen, onClose });
 
-  const { data } = useNameProperties();
+  const { data } = useName.document.properties();
   const { mutateAsync } = useConfigureCustomProperties();
+  const canEditCentralData = userHasPermission(UserPermission.EditCentralData);
 
-  const supplyLevelPropertyNode = data?.find(
-    p => p.property.key === 'supply_level'
-  )?.property;
-
-  const convertedSupplyLevels = supplyLevelPropertyNode?.allowedValues
-    ? supplyLevelPropertyNode?.allowedValues.split(',').map(v => v.trim())
-    : [];
+  const convertedSupplyLevels =
+    data
+      ?.find(p => p.property.key === SUPPLY_LEVEL_KEY)
+      ?.property.allowedValues?.split(',')
+      .map(v => v.trim()) ?? [];
 
   const [supplyLevels, setSupplyLevels] = useState(convertedSupplyLevels);
   const [inputValue, setInputValue] = useState('');
@@ -58,18 +60,13 @@ export const SupplyLevelModal = ({
     setSupplyLevels(supplyLevels.filter(l => l !== level));
 
   const handleSaveSupplyLevels = async () => {
-    const name = getPropertyTranslation(
-      'SUPPLY_LEVEL_KEY',
-      currentLanguage ?? 'en'
-    );
-
     try {
       await mutateAsync([
         {
           id: '3285c231-ffc2-485b-9a86-5ccafed9a5c5',
           propertyId: SUPPLY_LEVEL_KEY,
           key: SUPPLY_LEVEL_KEY,
-          name,
+          name: getPropertyTranslation('SUPPLY_LEVEL_KEY', currentLanguage),
           valueType: PropertyNodeValueType.String,
           allowedValues: supplyLevels.join(','),
           remoteEditable: false,
@@ -84,7 +81,7 @@ export const SupplyLevelModal = ({
 
   return (
     <Modal
-      title="Configure Supply Levels"
+      title={t('title.configure-supply-levels')}
       cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
       okButton={<DialogButton variant="ok" onClick={handleSaveSupplyLevels} />}
     >
@@ -108,7 +105,7 @@ export const SupplyLevelModal = ({
             icon={<PlusCircleIcon />}
             label={t('label.add-supply-level')}
             onClick={handleAddSupplyLevel}
-            disabled={!inputValue.trim()}
+            disabled={!canEditCentralData || !inputValue.trim()}
           />
         </Box>
         {supplyLevels.length > 0 ? (
@@ -130,6 +127,7 @@ export const SupplyLevelModal = ({
                 icon={<DeleteIcon />}
                 label={t('label.delete-supply-level')}
                 onClick={() => handleDeleteSupplyLevel(supplyLevel)}
+                disabled={!canEditCentralData}
               />
             </Box>
           ))
