@@ -18,16 +18,18 @@ interface DocumentsProps {
   recordId: string;
   tableName: string;
   documents: SyncFileReferenceFragment[];
-  invalidateQueries?: () => void;
   isFetching?: boolean;
+  invalidateQueries?: () => void;
+  openUploadModal?: () => void;
 }
 
 export const DocumentsTable = ({
   recordId,
   tableName,
   documents,
-  invalidateQueries,
   isFetching,
+  invalidateQueries,
+  openUploadModal,
 }: DocumentsProps): ReactElement => {
   const t = useTranslation();
 
@@ -55,7 +57,12 @@ export const DocumentsTable = ({
       columns,
       data: documents,
       initialSort: { key: 'createdDatetime', dir: 'desc' },
-      noDataElement: <NothingHere body={t('messages.no-documents-uploaded')} />,
+      noDataElement: (
+        <NothingHere
+          body={t('messages.no-documents-uploaded')}
+          onCreate={openUploadModal}
+        />
+      ),
     });
 
   return (
