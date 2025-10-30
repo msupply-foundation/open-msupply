@@ -26,15 +26,15 @@ export const useInbound = {
   lines: {
     list: Lines.useInboundLines,
     items: Lines.useInboundItems,
-    rows: Lines.useInboundRows,
+    // rows: Lines.useInboundRows,
     serviceLines: Lines.useInboundServiceLines,
 
     insertFromInternalOrder: Lines.useLinesFromInternalOrder,
     delete: Lines.useDeleteInboundLines,
-    deleteSelected: Lines.useDeleteSelectedLines,
+    deleteSelected: Lines.useInboundDeleteSelectedLines,
     save: Lines.useSaveInboundLines,
 
-    zeroQuantities: Lines.useZeroInboundLinesQuantity,
+    // zeroQuantities: Lines.useZeroInboundLinesQuantity,
   },
   utils: {
     addFromMasterList: Utils.useAddFromMasterList,
@@ -42,6 +42,5 @@ export const useInbound = {
     isDisabled: Utils.useIsInboundDisabled,
     isHoldable: Utils.useIsInboundHoldable,
     isStatusChangeDisabled: Utils.useIsStatusChangeDisabled,
-    selectedLines: Utils.useSelectedLines,
   },
 };

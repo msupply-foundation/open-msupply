@@ -15,10 +15,9 @@ import {
   ActionsFooter,
   ArrowRightIcon,
   useEditModal,
-  useTableStore,
   useNotification,
 } from '@openmsupply-client/common';
-import { ChangeCampaignOrProgramConfirmationModal } from '@openmsupply-client/system';
+// import { ChangeCampaignOrProgramConfirmationModal } from '@openmsupply-client/system';
 import {
   getStatusTranslator,
   inboundStatuses,
@@ -66,20 +65,28 @@ const createStatusLog = (invoice: InboundFragment) => {
 };
 
 interface FooterComponentProps {
-  onReturnLines: (selectedLines: InboundLineFragment[]) => void;
+  // onReturnLines: (selectedLines: InboundLineFragment[]) => void;
+  selectedRows: InboundLineFragment[];
+  resetRowSelection: () => void;
 }
 
-export const FooterComponent = ({ onReturnLines }: FooterComponentProps) => {
+export const FooterComponent = ({
+  // onReturnLines,
+  selectedRows,
+  resetRowSelection,
+}: FooterComponentProps) => {
   const t = useTranslation();
   const { navigateUpOne } = useBreadcrumbs();
-  const { clearSelected } = useTableStore();
   const { info } = useNotification();
   const changeCampaignOrProgramModal = useEditModal();
 
   const { data } = useInbound.document.get();
-  const onDelete = useInbound.lines.deleteSelected();
-  const onZeroQuantities = useInbound.lines.zeroQuantities();
-  const selectedLines = useInbound.utils.selectedLines();
+  const onDelete = useInbound.lines.deleteSelected(
+    selectedRows,
+    resetRowSelection
+  );
+  // const onZeroQuantities = useInbound.lines.zeroQuantities();
+  // const selectedLines = useInbound.utils.selectedLines();
   const { mutateAsync } = useInbound.lines.save();
   const isDisabled = useIsInboundDisabled();
   const isManuallyCreated = !data?.linkedShipment?.id;
@@ -106,31 +113,32 @@ export const FooterComponent = ({ onReturnLines }: FooterComponentProps) => {
       onClick: handleCampaignClick,
       shouldShrink: false,
     },
-    {
-      label: t('button.zero-line-quantity'),
-      icon: <RewindIcon />,
-      onClick: onZeroQuantities,
-      shouldShrink: false,
-    },
-    {
-      label: t('button.return-lines'),
-      icon: <ArrowLeftIcon />,
-      onClick: () => onReturnLines(selectedLines),
-      shouldShrink: false,
-    },
+    // {
+    //   label: t('button.zero-line-quantity'),
+    //   icon: <RewindIcon />,
+    //   onClick: onZeroQuantities,
+    //   shouldShrink: false,
+    // },
+    // {
+    //   label: t('button.return-lines'),
+    //   icon: <ArrowLeftIcon />,
+    //   onClick: () => onReturnLines(selectedLines),
+    //   shouldShrink: false,
+    // },
   ];
 
   return (
     <AppFooterPortal
       Content={
         <>
-          {selectedLines.length !== 0 && (
+          {selectedRows.length !== 0 && (
             <ActionsFooter
               actions={actions}
-              selectedRowCount={selectedLines.length}
+              selectedRowCount={selectedRows.length}
+              resetRowSelection={resetRowSelection}
             />
           )}
-          {data && selectedLines.length === 0 ? (
+          {data && selectedRows.length === 0 ? (
             <Box
               gap={2}
               display="flex"
@@ -162,7 +170,7 @@ export const FooterComponent = ({ onReturnLines }: FooterComponentProps) => {
               </Box>
             </Box>
           ) : null}
-          {
+          {/* {
             <ChangeCampaignOrProgramConfirmationModal
               isOpen={changeCampaignOrProgramModal.isOpen}
               onCancel={changeCampaignOrProgramModal.onClose}
@@ -170,7 +178,7 @@ export const FooterComponent = ({ onReturnLines }: FooterComponentProps) => {
               rows={selectedLines}
               onChange={mutateAsync}
             />
-          }
+          } */}
         </>
       }
     />
