@@ -38,7 +38,6 @@ export const Toolbar = () => {
   const t = useTranslation();
 
   const isDisabled = useInbound.utils.isDisabled();
-  const { data } = useInbound.lines.items();
   const { data: shipment } = useInbound.document.get();
 
   const { otherParty, theirReference, update } = useInbound.document.fields([
@@ -47,7 +46,6 @@ export const Toolbar = () => {
   ]);
 
   const isTransfer = !!shipment?.linkedShipment?.id;
-  if (!data) return null;
 
   return (
     <AppBarContentPortal sx={{ display: 'flex', flex: 1, marginBottom: 1 }}>

@@ -9,7 +9,6 @@ import {
   DetailTabs,
   useNotification,
   ModalMode,
-  useTableStore,
   useBreadcrumbs,
   useSimplifiedTabletUI,
   useUrlQuery,
@@ -60,7 +59,6 @@ const DetailViewInner = () => {
   const { setCustomBreadcrumbs } = useBreadcrumbs();
   const navigate = useNavigate();
   const { info } = useNotification();
-  const { clearSelected } = useTableStore();
   const { urlQuery, updateQuery } = useUrlQuery();
   const { data: lines } = useInboundLines();
 
@@ -115,34 +113,34 @@ const DetailViewInner = () => {
     setMode(ModalMode.Update);
   };
 
-  const onReturn = async (selectedLines: InboundLineFragment[]) => {
-    if (!data || !canReturnInboundLines(data)) {
-      const cantReturnSnack = info(
-        t('messages.cant-return-shipment-replenishment')
-      );
-      cantReturnSnack();
-      return;
-    }
-    if (!selectedLines.length) {
-      const selectLinesSnack = info(t('messages.select-rows-to-return'));
-      selectLinesSnack();
-      return;
-    }
-    if (selectedLines.some(line => !line.stockLine)) {
-      const selectLinesSnack = info(
-        t('messages.cant-return-lines-with-no-received-stock')
-      );
-      selectLinesSnack();
-      return;
-    }
+  // const onReturn = async (selectedLines: InboundLineFragment[]) => {
+  //   if (!data || !canReturnInboundLines(data)) {
+  //     const cantReturnSnack = info(
+  //       t('messages.cant-return-shipment-replenishment')
+  //     );
+  //     cantReturnSnack();
+  //     return;
+  //   }
+  //   if (!selectedLines.length) {
+  //     const selectLinesSnack = info(t('messages.select-rows-to-return'));
+  //     selectLinesSnack();
+  //     return;
+  //   }
+  //   if (selectedLines.some(line => !line.stockLine)) {
+  //     const selectLinesSnack = info(
+  //       t('messages.cant-return-lines-with-no-received-stock')
+  //     );
+  //     selectLinesSnack();
+  //     return;
+  //   }
 
-    const selectedStockLineIds = selectedLines.map(
-      line => line.stockLine?.id ?? ''
-    );
+  //   const selectedStockLineIds = selectedLines.map(
+  //     line => line.stockLine?.id ?? ''
+  //   );
 
-    onOpenReturns(selectedStockLineIds);
-    setMode(ModalMode.Create);
-  };
+  //   onOpenReturns(selectedStockLineIds);
+  //   setMode(ModalMode.Create);
+  // };
 
   useEffect(() => {
     setCustomBreadcrumbs({ 1: data?.invoiceNumber.toString() ?? '' });
@@ -220,7 +218,7 @@ const DetailViewInner = () => {
 
           {(tab === InboundShipmentDetailTabs.Details || !tab) && (
             <Footer
-              onReturnLines={onReturn}
+              // onReturnLines={onReturn}
               selectedRows={selectedRows}
               resetRowSelection={table.resetRowSelection}
             />
@@ -250,7 +248,7 @@ const DetailViewInner = () => {
           {returnsIsOpen && (
             <SupplierReturnEditModal
               isOpen={returnsIsOpen}
-              onCreate={clearSelected}
+              onCreate={table.resetRowSelection}
               onClose={onCloseReturns}
               stockLineIds={stockLineIds || []}
               supplierId={data.otherParty.id}
