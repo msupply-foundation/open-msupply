@@ -64,12 +64,12 @@ export const useEncounterListColumns = ({
 
   const columnList: ColumnDescription<EncounterRowFragment>[] = [
     {
-      key: 'type',
+      key: 'Type',
       label: 'label.encounter-type',
       accessor: ({ rowData }) => rowData?.document.documentRegistry?.name,
     },
     {
-      key: 'program',
+      key: 'Program',
       label: 'label.program',
       accessor: ({ rowData }) =>
         enrolmentRegistries?.nodes.find(
