@@ -10,6 +10,7 @@ import {
   UserStoreNodeFragment,
   ModalGridLayout,
   usePreferences,
+  Alert,
 } from '@openmsupply-client/common';
 import {
   ItemWithStatsFragment,
@@ -55,7 +56,7 @@ export const ResponseLineEdit = ({
   setIsEditingSupply,
 }: ResponseLineEditProps) => {
   const t = useTranslation();
-  const { manageVaccinesInDoses } = usePreferences();
+  const { manageVaccinesInDoses, warningForExcessRequest } = usePreferences();
 
   const hasApproval =
     requisition.approvalStatus === RequisitionNodeApprovalStatus.Approved;
@@ -140,6 +141,10 @@ export const ResponseLineEdit = ({
   const getMiddlePanelContent = () => {
     if (!showContent) return null;
 
+    const showExcessRequestWarning =
+      warningForExcessRequest &&
+      (draft?.requestedQuantity ?? 0) - (draft?.suggestedQuantity ?? 0) >= 1;
+
     return (
       <>
         {isPacksEnabled && !showExtraFields && (
@@ -216,6 +221,11 @@ export const ResponseLineEdit = ({
             </Typography>
           )}
         </Box>
+        {showExcessRequestWarning && (
+          <Alert sx={{ mt: 1 }} severity="warning">
+            {t('messages.requested-exceeds-suggested')}
+          </Alert>
+        )}
         {showExtraFields && (
           <>
             {numericInput('label.available', available, {
