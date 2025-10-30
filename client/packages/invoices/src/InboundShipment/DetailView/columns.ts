@@ -7,10 +7,10 @@ import {
   Groupable,
   ColumnType,
 } from '@openmsupply-client/common';
-import { InboundLineFragment } from '../../api';
-import { isInboundPlaceholderRow } from '../../../utils';
-import { useInboundShipmentLineErrorContext } from '../../context/inboundShipmentLineError';
+import { useInboundShipmentLineErrorContext } from '../context/inboundShipmentLineError';
 import { useMemo } from 'react';
+import { isInboundPlaceholderRow } from '../../utils';
+import { InboundLineFragment } from '../api';
 
 export const useInboundShipmentColumns = () => {
   const t = useTranslation();

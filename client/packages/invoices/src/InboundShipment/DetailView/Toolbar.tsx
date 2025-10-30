@@ -5,7 +5,6 @@ import {
   InputWithLabelRow,
   Grid,
   useTranslation,
-  Switch,
   InvoiceNodeStatus,
   Alert,
   Tooltip,
@@ -35,11 +34,7 @@ const InboundInfoPanel = ({
   return <Alert severity="info">{loadMessage(shipment)}</Alert>;
 };
 
-interface ToolbarProps {
-  simplifiedTabletView?: boolean;
-}
-
-export const Toolbar = ({ simplifiedTabletView }: ToolbarProps) => {
+export const Toolbar = () => {
   const t = useTranslation();
 
   const isDisabled = useInbound.utils.isDisabled();
@@ -50,7 +45,6 @@ export const Toolbar = ({ simplifiedTabletView }: ToolbarProps) => {
     'otherParty',
     'theirReference',
   ]);
-  const { isGrouped, toggleIsGrouped } = useInbound.lines.rows();
 
   const isTransfer = !!shipment?.linkedShipment?.id;
   if (!data) return null;
@@ -112,24 +106,6 @@ export const Toolbar = ({ simplifiedTabletView }: ToolbarProps) => {
             <InboundInfoPanel shipment={shipment} />
           </Box>
         </Grid>
-        {!simplifiedTabletView && (
-          <Grid
-            display="flex"
-            gap={1}
-            justifyContent="flex-end"
-            alignItems="center"
-          >
-            <Box sx={{ marginRight: 2 }}>
-              <Switch
-                label={t('label.group-by-item')}
-                onChange={toggleIsGrouped}
-                checked={isGrouped}
-                size="small"
-                color="secondary"
-              />
-            </Box>
-          </Grid>
-        )}
       </Grid>
     </AppBarContentPortal>
   );

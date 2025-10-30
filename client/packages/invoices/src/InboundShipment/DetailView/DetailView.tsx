@@ -1,14 +1,11 @@
 import React, { useEffect } from 'react';
 import {
-  TableProvider,
-  createTableStore,
   useEditModal,
   DetailViewSkeleton,
   AlertModal,
   useNavigate,
   RouteBuilder,
   useTranslation,
-  createQueryParamsStore,
   DetailTabs,
   useNotification,
   ModalMode,
@@ -34,7 +31,6 @@ import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
 import { AppBarButtons } from './AppBarButtons';
 import { SidePanel } from './SidePanel';
-import { useInboundShipmentColumns } from './ContentArea';
 import { InboundLineEdit } from './modals/InboundLineEdit';
 import { InboundItem, ScannedBarcode } from '../../types';
 import { useInbound, InboundLineFragment } from '../api';
@@ -43,6 +39,7 @@ import { canReturnInboundLines, isInboundPlaceholderRow } from '../../utils';
 import { InboundShipmentLineErrorProvider } from '../context/inboundShipmentLineError';
 import { InboundShipmentDetailTabs } from './types';
 import { useInboundLines } from '../api/hooks/line/useInboundLines';
+import { useInboundShipmentColumns } from './columns';
 
 type InboundLineItem = InboundLineFragment['item'];
 
@@ -217,12 +214,16 @@ const DetailViewInner = () => {
             }}
           />
 
-          <Toolbar simplifiedTabletView={simplifiedTabletView} />
+          <Toolbar />
 
           <DetailTabs tabs={tabs} />
 
           {(tab === InboundShipmentDetailTabs.Details || !tab) && (
-            <Footer onReturnLines={onReturn} />
+            <Footer
+              onReturnLines={onReturn}
+              selectedRows={selectedRows}
+              resetRowSelection={table.resetRowSelection}
+            />
           )}
           <SidePanel />
 
