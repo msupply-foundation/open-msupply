@@ -27,7 +27,7 @@ export const AppBarButtonsComponent = ({
   } = useUrlQueryParams();
 
   const {
-    query: { data, isLoading },
+    query: { data, isFetching },
   } = usePurchaseOrder();
 
   return (
@@ -37,7 +37,7 @@ export const AppBarButtonsComponent = ({
           purchaseOrder={data ?? undefined}
           onAddItem={onAddItem}
           disable={disableNewLines}
-          disableAddFromMasterListButton={isLoading}
+          disableAddFromMasterListButton={isFetching}
         />
         <ReportSelector
           context={ReportContext.PurchaseOrder}

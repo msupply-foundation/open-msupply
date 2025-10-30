@@ -33,6 +33,7 @@ pub trait PreferenceServiceTrait: Sync + Send {
             prevent_transfers_months_before_initialisation,
             show_contact_tracing,
             sync_records_display_threshold,
+            warning_for_excess_request,
 
             // Store preferences
             manage_vaccines_in_doses,
@@ -42,6 +43,7 @@ pub trait PreferenceServiceTrait: Sync + Send {
             sort_by_vvm_status_then_expiry,
             use_simplified_mobile_ui,
             disable_manual_returns,
+            requisition_auto_finalise,
         } = self.get_preference_provider();
 
         let input = AppendIfTypeInputs {
@@ -65,6 +67,7 @@ pub trait PreferenceServiceTrait: Sync + Send {
         )?;
         append_if_type(show_contact_tracing, &mut prefs, &input)?;
         append_if_type(sync_records_display_threshold, &mut prefs, &input)?;
+        append_if_type(warning_for_excess_request, &mut prefs, &input)?;
 
         // Store preferences
         append_if_type(manage_vaccines_in_doses, &mut prefs, &input)?;
@@ -74,6 +77,7 @@ pub trait PreferenceServiceTrait: Sync + Send {
         append_if_type(sort_by_vvm_status_then_expiry, &mut prefs, &input)?;
         append_if_type(use_simplified_mobile_ui, &mut prefs, &input)?;
         append_if_type(disable_manual_returns, &mut prefs, &input)?;
+        append_if_type(requisition_auto_finalise, &mut prefs, &input)?;
 
         Ok(prefs)
     }

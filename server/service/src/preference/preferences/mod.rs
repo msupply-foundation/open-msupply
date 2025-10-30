@@ -28,6 +28,10 @@ pub mod use_procurement_functionality;
 pub use use_procurement_functionality::*;
 pub mod disable_manual_returns;
 pub use disable_manual_returns::*;
+pub mod requisition_auto_finalise;
+pub use requisition_auto_finalise::*;
+pub mod warning_for_excess_request;
+pub use warning_for_excess_request::*;
 
 pub struct PreferenceProvider {
     // Global preferences
@@ -39,6 +43,7 @@ pub struct PreferenceProvider {
     pub prevent_transfers_months_before_initialisation: PreventTransfersMonthsBeforeInitialisation,
     pub show_contact_tracing: ShowContactTracing,
     pub sync_records_display_threshold: SyncRecordsDisplayThreshold,
+    pub warning_for_excess_request: WarningForExcessRequest,
     // Store preferences
     pub manage_vaccines_in_doses: ManageVaccinesInDoses,
     pub manage_vvm_status_for_stock: ManageVvmStatusForStock,
@@ -46,6 +51,7 @@ pub struct PreferenceProvider {
     pub use_procurement_functionality: UseProcurementFunctionality,
     pub sort_by_vvm_status_then_expiry: SortByVvmStatusThenExpiry,
     pub use_simplified_mobile_ui: UseSimplifiedMobileUi,
+    pub requisition_auto_finalise: RequisitionAutoFinalise,
     pub disable_manual_returns: DisableManualReturns,
 }
 
@@ -60,6 +66,7 @@ pub fn get_preference_provider() -> PreferenceProvider {
         show_contact_tracing: ShowContactTracing,
         sync_records_display_threshold: SyncRecordsDisplayThreshold,
         prevent_transfers_months_before_initialisation: PreventTransfersMonthsBeforeInitialisation,
+        warning_for_excess_request: WarningForExcessRequest,
         // Store preferences
         manage_vaccines_in_doses: ManageVaccinesInDoses,
         manage_vvm_status_for_stock: ManageVvmStatusForStock,
@@ -68,5 +75,6 @@ pub fn get_preference_provider() -> PreferenceProvider {
         sort_by_vvm_status_then_expiry: SortByVvmStatusThenExpiry,
         use_simplified_mobile_ui: UseSimplifiedMobileUi,
         disable_manual_returns: DisableManualReturns,
+        requisition_auto_finalise: RequisitionAutoFinalise,
     }
 }

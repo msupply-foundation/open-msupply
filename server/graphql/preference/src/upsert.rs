@@ -25,6 +25,7 @@ pub struct UpsertPreferencesInput {
     pub prevent_transfers_months_before_initialisation: Option<i32>,
     pub show_contact_tracing: Option<bool>,
     pub sync_records_display_threshold: Option<i32>,
+    pub warning_for_excess_request: Option<bool>,
 
     // Store preferences
     pub manage_vaccines_in_doses: Option<Vec<BoolStorePrefInput>>,
@@ -34,6 +35,7 @@ pub struct UpsertPreferencesInput {
     pub sort_by_vvm_status_then_expiry: Option<Vec<BoolStorePrefInput>>,
     pub use_simplified_mobile_ui: Option<Vec<BoolStorePrefInput>>,
     pub disable_manual_returns: Option<Vec<BoolStorePrefInput>>,
+    pub requisition_auto_finalise: Option<Vec<BoolStorePrefInput>>,
 }
 
 pub fn upsert_preferences(
@@ -70,6 +72,8 @@ impl UpsertPreferencesInput {
             gender_options,
             show_contact_tracing,
             sync_records_display_threshold,
+            warning_for_excess_request,
+
             // Store preferences
             manage_vaccines_in_doses,
             manage_vvm_status_for_stock,
@@ -78,6 +82,7 @@ impl UpsertPreferencesInput {
             sort_by_vvm_status_then_expiry,
             use_simplified_mobile_ui,
             disable_manual_returns,
+            requisition_auto_finalise,
         } = self;
 
         UpsertPreferences {
@@ -93,6 +98,8 @@ impl UpsertPreferencesInput {
                 *prevent_transfers_months_before_initialisation,
             show_contact_tracing: *show_contact_tracing,
             sync_records_display_threshold: *sync_records_display_threshold,
+            warning_for_excess_request: *warning_for_excess_request,
+
             // Store preferences
             manage_vaccines_in_doses: manage_vaccines_in_doses
                 .as_ref()
@@ -113,6 +120,9 @@ impl UpsertPreferencesInput {
                 .as_ref()
                 .map(|i| i.iter().map(|i| i.to_domain()).collect()),
             disable_manual_returns: disable_manual_returns
+                .as_ref()
+                .map(|i| i.iter().map(|i| i.to_domain()).collect()),
+            requisition_auto_finalise: requisition_auto_finalise
                 .as_ref()
                 .map(|i| i.iter().map(|i| i.to_domain()).collect()),
         }
