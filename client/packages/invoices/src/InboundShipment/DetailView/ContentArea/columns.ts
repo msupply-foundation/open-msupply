@@ -1,415 +1,202 @@
 import {
-  getRowExpandColumn,
-  GenericColumnKey,
-  getNotePopoverColumn,
-  useColumns,
-  Column,
   ArrayUtils,
-  ColumnAlign,
-  TooltipTextCell,
-  useColumnUtils,
-  CurrencyCell,
   getLinesFromRow,
   usePreferences,
-  ColumnDescription,
-  SortBy,
   useTranslation,
-  getDosesPerUnitColumn,
+  ColumnDef,
+  Groupable,
+  ColumnType,
 } from '@openmsupply-client/common';
-import { InboundItem } from './../../../types';
 import { InboundLineFragment } from '../../api';
 import { isInboundPlaceholderRow } from '../../../utils';
 import { useInboundShipmentLineErrorContext } from '../../context/inboundShipmentLineError';
-import { getDosesQuantityColumn } from '../../../DoseQtyColumn';
+import { useMemo } from 'react';
 
-const getUnitQuantity = (row: InboundLineFragment) =>
-  row.packSize * row.numberOfPacks;
-
-const getTotalCost = (row: InboundLineFragment) =>
-  row.numberOfPacks * row.costPricePerPack;
-
-const calculateRowTotalCost = (rowData: InboundLineFragment | InboundItem) => {
-  if ('lines' in rowData) {
-    return rowData.lines.reduce(
-      (acc, line) => acc + line.numberOfPacks * line.costPricePerPack,
-      0
-    );
-  } else {
-    return getTotalCost(rowData);
-  }
-};
-
-interface InboundShipmentColumnsProps {
-  sortBy: SortBy<InboundLineFragment | InboundItem>;
-  onChangeSortBy: (sort: string, dir: 'desc' | 'asc') => void;
-}
-
-export const useInboundShipmentColumns = ({
-  sortBy,
-  onChangeSortBy,
-}: InboundShipmentColumnsProps) => {
+export const useInboundShipmentColumns = () => {
   const t = useTranslation();
   const {
     manageVaccinesInDoses,
     allowTrackingOfStockByDonor,
     manageVvmStatusForStock,
   } = usePreferences();
-
-  const { getColumnPropertyAsString, getColumnProperty } = useColumnUtils();
   const { getError } = useInboundShipmentLineErrorContext();
-  const getCostPrice = (row: InboundLineFragment) =>
-    isInboundPlaceholderRow(row) ? 0 : row.costPricePerPack / row.packSize;
 
-  const columns: ColumnDescription<InboundLineFragment | InboundItem>[] = [
-    [
-      GenericColumnKey.Selection,
+  return useMemo((): ColumnDef<Groupable<InboundLineFragment>>[] => {
+    return [
       {
+        accessorKey: 'comment',
+        header: t('label.comment'),
+        columnType: ColumnType.Comment,
+      },
+      {
+        accessorKey: 'item.code',
+        header: t('label.code'),
+        size: 120,
+        pin: 'left',
+        enableColumnFilter: true,
+        enableSorting: true,
         getIsError: row =>
           getLinesFromRow(row).some(
             r => getError(r)?.__typename === 'LineLinkedToTransferredInvoice'
           ),
       },
-    ],
-    [
-      getNotePopoverColumn(),
       {
-        accessor: ({ rowData }) => {
-          if ('lines' in rowData) {
-            const noteSections = rowData.lines
-              .map(({ batch, note }) => ({
-                header: batch ?? '',
-                body: note ?? '',
-              }))
-              .filter(({ body }) => !!body);
-
-            return noteSections.length ? noteSections : null;
-          } else {
-            return rowData.note
-              ? { header: rowData.batch ?? '', body: rowData.note }
-              : null;
-          }
-        },
+        accessorKey: 'itemName',
+        header: t('label.name'),
+        size: 400,
+        enableColumnFilter: true,
+        enableSorting: true,
       },
-    ],
-    [
-      'itemCode',
       {
-        getSortValue: row =>
-          getColumnPropertyAsString(row, [
-            { path: ['lines', 'item', 'code'] },
-            { path: ['item', 'code'], default: '' },
-          ]),
-        accessor: ({ rowData }) =>
-          getColumnProperty(rowData, [
-            { path: ['lines', 'item', 'code'] },
-            { path: ['item', 'code'], default: '' },
-          ]),
-        isSticky: true,
-      },
-    ],
-    [
-      'itemName',
-      {
-        Cell: TooltipTextCell,
-        getSortValue: row =>
-          getColumnPropertyAsString(row, [
-            { path: ['lines', 'itemName'] },
-            { path: ['itemName'], default: '' },
-          ]),
-        accessor: ({ rowData }) =>
-          getColumnProperty(rowData, [
-            { path: ['lines', 'itemName'] },
-            { path: ['itemName'], default: '' },
-          ]),
-      },
-    ],
-    [
-      'batch',
-      {
-        accessor: ({ rowData }) =>
-          getColumnProperty(rowData, [
-            { path: ['lines', 'batch'] },
-            { path: ['batch'], default: '' },
-          ]),
-        getSortValue: row =>
-          getColumnPropertyAsString(row, [
-            { path: ['lines', 'batch'] },
-            { path: ['batch'], default: '' },
-          ]),
-      },
-    ],
-    [
-      'expiryDate',
-      {
-        getSortValue: row =>
-          getColumnPropertyAsString(row, [
-            { path: ['lines', 'expiryDate'] },
-            { path: ['expiryDate'], default: '' },
-          ]),
-        accessor: ({ rowData }) =>
-          getColumnProperty(rowData, [
-            { path: ['lines', 'expiryDate'] },
-            { path: ['expiryDate'], default: '' },
-          ]),
-      },
-    ],
-  ];
-
-  if (manageVvmStatusForStock) {
-    columns.push({
-      key: 'vvmStatus',
-      label: 'label.vvm-status',
-      width: 150,
-      accessor: ({ rowData }) =>
-        getColumnPropertyAsString(rowData, [
-          { path: ['lines', 'vvmStatus', 'description' as any] }, // doesn't like nested description, I think because vvmStatus is optional?
-          { path: ['vvmStatus', 'description'] },
-        ]),
-      defaultHideOnMobile: true,
-    });
-  }
-
-  columns.push(
-    [
-      'location',
-      {
-        getSortValue: row =>
-          getColumnPropertyAsString(row, [
-            { path: ['lines', 'location', 'code'] },
-            { path: ['location', 'code'], default: '' },
-          ]),
-        accessor: ({ rowData }) =>
-          getColumnProperty(rowData, [
-            { path: ['lines', 'location', 'code'] },
-            { path: ['location', 'code'], default: '' },
-          ]),
-        width: 150,
+        accessorKey: 'batch',
+        header: t('label.batch'),
+        enableSorting: true,
         defaultHideOnMobile: true,
       },
-    ],
-
-    [
-      'itemUnit',
       {
-        getSortValue: row =>
-          getColumnPropertyAsString(row, [
-            { path: ['lines', 'item', 'unitName'] },
-            { path: ['item', 'unitName'], default: '' },
-          ]),
-        accessor: ({ rowData }) =>
-          getColumnProperty(rowData, [
-            { path: ['lines', 'item', 'unitName'] },
-            { path: ['item', 'unitName'], default: '' },
-          ]),
+        id: 'expiryDate',
+        accessorFn: row => (row.expiryDate ? new Date(row.expiryDate) : null),
+        header: t('label.expiry-date'),
+        columnType: ColumnType.Date,
+        defaultHideOnMobile: true,
+        enableColumnFilter: true,
+        enableSorting: true,
+      },
+      {
+        id: 'vvmStatus',
+        accessorFn: row => row.vvmStatus?.description ?? '',
+        header: t('label.vvm-status'),
+        includeColumn: manageVvmStatusForStock,
+        defaultHideOnMobile: true,
+        enableSorting: true,
+      },
+      {
+        id: 'locationCode',
+        accessorFn: row => row.location?.code ?? '',
+        header: t('label.location'),
+        enableColumnFilter: true,
+        enableSorting: true,
         defaultHideOnMobile: true,
       },
-    ],
-    [
-      'packSize',
       {
-        accessor: ({ rowData }) =>
-          getColumnProperty(rowData, [
-            { path: ['lines', 'packSize'] },
-            { path: ['packSize'], default: '' },
-          ]),
-        getSortValue: row =>
-          getColumnPropertyAsString(row, [
-            { path: ['lines', 'packSize'] },
-            { path: ['packSize'], default: '' },
-          ]),
+        id: 'itemUnit',
+        accessorKey: 'item.unitName',
+        header: t('label.unit-name'),
+        enableColumnFilter: true,
+        filterVariant: 'select',
         defaultHideOnMobile: true,
       },
-    ]
-  );
-
-  if (manageVaccinesInDoses) {
-    columns.push(getDosesPerUnitColumn(t));
-  }
-
-  columns.push(
-    [
-      'numberOfPacks',
       {
-        accessor: ({ rowData }) => {
-          if ('lines' in rowData) {
-            const { lines } = rowData;
-            return ArrayUtils.getSum(lines, 'numberOfPacks');
-          } else {
-            return rowData.numberOfPacks;
-          }
-        },
-        getSortValue: rowData => {
-          if ('lines' in rowData) {
-            const { lines } = rowData;
-            return ArrayUtils.getSum(lines, 'numberOfPacks');
-          } else {
-            return rowData.numberOfPacks;
-          }
-        },
-      },
-    ],
-    [
-      'unitQuantity',
-      {
-        accessor: ({ rowData }) => {
-          if ('lines' in rowData) {
-            const { lines } = rowData;
-            return ArrayUtils.getUnitQuantity(lines);
-          } else {
-            return getUnitQuantity(rowData);
-          }
-        },
-        getSortValue: rowData => {
-          if ('lines' in rowData) {
-            const { lines } = rowData;
-            return ArrayUtils.getUnitQuantity(lines);
-          } else {
-            return getUnitQuantity(rowData);
-          }
-        },
+        accessorKey: 'packSize',
+        header: t('label.pack-size'),
+        columnType: ColumnType.Number,
         defaultHideOnMobile: true,
+        enableSorting: true,
       },
-    ]
-  );
-
-  if (manageVaccinesInDoses) {
-    columns.push(getDosesQuantityColumn());
-  }
-
-  columns.push(
-    {
-      label: 'label.cost-per-unit',
-      key: 'costPricePerUnit',
-      align: ColumnAlign.Right,
-      width: 120,
-      Cell: CurrencyCell,
-      accessor: ({ rowData }) => {
-        if ('lines' in rowData) {
-          const { lines } = rowData;
-          return ArrayUtils.getAveragePrice(lines, 'costPricePerPack');
-        } else {
-          return getCostPrice(rowData);
-        }
+      {
+        id: 'itemDoses',
+        header: t('label.doses-per-unit'),
+        columnType: ColumnType.Number,
+        defaultHideOnMobile: true,
+        includeColumn: manageVaccinesInDoses,
+        accessorFn: row => (row.item.isVaccine ? row.item.doses : undefined),
       },
-      sortable: false,
-      defaultHideOnMobile: true,
-    },
-    {
-      label: 'label.total',
-      key: 'total',
-      align: ColumnAlign.Right,
-      width: 120,
-      Cell: CurrencyCell,
-      accessor: ({ rowData }) => calculateRowTotalCost(rowData),
-      getSortValue: rowData => calculateRowTotalCost(rowData),
-      defaultHideOnMobile: true,
-    }
-  );
+      {
+        accessorKey: 'numberOfPacks',
+        header: t('label.pack-quantity'),
+        columnType: ColumnType.Number,
+        accessorFn: row => {
+          if ('subRows' in row)
+            return ArrayUtils.getSum(row.subRows ?? [], 'numberOfPacks');
 
-  if (allowTrackingOfStockByDonor) {
-    columns.push({
-      key: 'donorName',
-      label: 'label.donor',
-      accessor: ({ rowData }) =>
-        getColumnProperty(rowData, [
-          { path: ['lines', 'donor', 'name'] },
-          { path: ['donor', 'name'], default: '' },
-        ]),
-      sortable: false,
-    });
-  }
-
-  columns.push(
-    {
-      key: 'campaign',
-      label: 'label.campaign',
-      accessor: ({ rowData }) => {
-        // Campaign or program could be selected
-
-        // Check for campaign name first
-        const campaignName = getColumnProperty(rowData, [
-          { path: ['lines', 'campaign', 'name'] },
-          { path: ['campaign', 'name'] },
-        ]);
-
-        if (!!campaignName) return campaignName;
-
-        // Otherwise, check for program name
-        return getColumnProperty(rowData, [
-          { path: ['lines', 'program', 'name'] },
-          { path: ['program', 'name'], default: '' },
-        ]);
+          return row.numberOfPacks;
+        },
       },
-      defaultHideOnMobile: true,
-    },
-    getRowExpandColumn()
-  );
+      {
+        id: 'unitQuantity',
+        header: t('label.unit-quantity'),
+        description: t('description.unit-quantity'),
+        columnType: ColumnType.Number,
+        defaultHideOnMobile: true,
+        accessorFn: row => {
+          if ('subRows' in row)
+            return ArrayUtils.getUnitQuantity(row.subRows ?? []);
 
-  return useColumns(columns, { sortBy, onChangeSortBy }, [
-    sortBy,
-    onChangeSortBy,
+          return row.packSize * row.numberOfPacks;
+        },
+      },
+      {
+        id: 'doseQuantity',
+        header: t('label.doses'),
+        columnType: ColumnType.Number,
+        defaultHideOnMobile: true,
+        includeColumn: manageVaccinesInDoses,
+        accessorFn: row => {
+          if (!row.item.isVaccine) return null;
+          if ('subRows' in row)
+            return (
+              ArrayUtils.getUnitQuantity(row.subRows ?? []) *
+              (row.item.doses ?? 1)
+            );
+
+          return row.packSize * row.numberOfPacks * (row.item.doses ?? 1);
+        },
+      },
+      {
+        id: 'costPricePerUnit',
+        header: t('label.cost-per-unit'),
+        columnType: ColumnType.Currency,
+        defaultHideOnMobile: true,
+        accessorFn: rowData => {
+          if ('subRows' in rowData) {
+            return ArrayUtils.getAveragePrice(
+              rowData.subRows ?? [],
+              'costPricePerPack'
+            );
+          } else {
+            if (isInboundPlaceholderRow(rowData)) return undefined;
+            return (rowData.costPricePerPack ?? 0) / rowData.packSize;
+          }
+        },
+      },
+      {
+        id: 'total',
+        header: t('label.total'),
+        columnType: ColumnType.Currency,
+        defaultHideOnMobile: true,
+        accessorFn: rowData => {
+          if ('subRows' in rowData) {
+            return Object.values(rowData.subRows ?? []).reduce(
+              (sum, batch) =>
+                sum + batch.costPricePerPack * batch.numberOfPacks,
+              0
+            );
+          } else {
+            if (isInboundPlaceholderRow(rowData)) return '';
+
+            const x = rowData.costPricePerPack * rowData.numberOfPacks;
+            return x;
+          }
+        },
+      },
+      {
+        id: 'donorName',
+        header: t('label.donor'),
+        defaultHideOnMobile: true,
+        includeColumn: allowTrackingOfStockByDonor,
+        accessorFn: row => (row.donor ? row.donor.name : ''),
+      },
+      {
+        id: 'campaign',
+        header: t('label.campaign'),
+        defaultHideOnMobile: true,
+        accessorFn: row => row.campaign?.name ?? row.program?.name ?? '',
+      },
+    ];
+  }, [
+    getError,
+    manageVaccinesInDoses,
+    manageVvmStatusForStock,
+    allowTrackingOfStockByDonor,
   ]);
-};
-
-export const useExpansionColumns = (
-  isVaccineItem: boolean
-): Column<InboundLineFragment>[] => {
-  const { allowTrackingOfStockByDonor, manageVaccinesInDoses } =
-    usePreferences();
-  const columns: ColumnDescription<InboundLineFragment>[] = [
-    'batch',
-    'expiryDate',
-    [
-      'location',
-      {
-        accessor: ({ rowData }) => rowData.location?.code,
-      },
-    ],
-    'packSize',
-    'numberOfPacks',
-  ];
-
-  if (manageVaccinesInDoses && isVaccineItem) {
-    columns.push(getDosesQuantityColumn());
-  }
-
-  columns.push(
-    [
-      'costPricePerPack',
-      {
-        label: 'label.cost',
-        accessor: ({ rowData }) => rowData.costPricePerPack,
-        Cell: CurrencyCell,
-      },
-    ],
-    [
-      'lineTotal',
-      {
-        label: 'label.line-total',
-        accessor: ({ rowData }) => getTotalCost(rowData),
-        Cell: CurrencyCell,
-      },
-    ]
-  );
-
-  if (allowTrackingOfStockByDonor) {
-    columns.push({
-      key: 'donorName',
-      label: 'label.donor',
-      width: 175,
-      accessor: ({ rowData }) => rowData.donor?.name,
-      defaultHideOnMobile: true,
-    });
-  }
-
-  columns.push({
-    key: 'campaign',
-    label: 'label.campaign',
-    width: 100,
-    accessor: ({ rowData }) =>
-      rowData.campaign?.name ?? rowData.program?.name ?? '',
-    defaultHideOnMobile: true,
-  });
-
-  return useColumns(columns, {}, []);
 };
