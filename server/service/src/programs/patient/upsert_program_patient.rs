@@ -57,7 +57,7 @@ pub fn upsert_program_patient(
 
             let current_doc = get_latest_doc(&ctx.connection, &doc.name)?;
             let is_latest = match &current_doc {
-                Some(d) => d.datetime < doc.datetime,
+                Some(d) => d.datetime <= doc.datetime,
                 None => true,
             };
 
