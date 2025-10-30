@@ -5,6 +5,9 @@
 import { VaccinationDraft } from './api';
 import { VaccinationCardItemFragment } from './api/operations.generated';
 
+// Note: undefined and null have different meanings here
+// If it returns undefined, it means there is no previous dose (i.e. it's the first).
+// If it returns null, it means the previous dose hasn't been entered at all (neither Given nor Not Given), which means the current dose will be skipping a dose.
 export const getPreviousDoseStatus = (
   row: VaccinationCardItemFragment,
   items: VaccinationCardItemFragment[] | undefined
