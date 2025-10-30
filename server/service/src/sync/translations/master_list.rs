@@ -1,9 +1,10 @@
 use repository::{
-    MasterListRow, MasterListRowDelete, MasterListRowRepository, ProgramRowRepository,
-    StorageConnection, SyncBufferRow,
+    MasterListRow, MasterListRowDelete, MasterListRowRepository, PluginDataRow,
+    PluginDataRowRepository, ProgramRowRepository, StorageConnection, SyncBufferRow,
 };
 
 use serde::Deserialize;
+use util::uuid::uuid;
 
 use super::{PullTranslateResult, SyncTranslation};
 
@@ -18,6 +19,7 @@ pub struct LegacyListMasterRow {
     inactive: Option<bool>,
     is_default_price_list: Option<bool>,
     discount_percentage: Option<f64>,
+    is_essential: Option<bool>,
 }
 // Needs to be added to all_translators()
 #[deny(dead_code)]
@@ -37,10 +39,32 @@ impl SyncTranslation for MasterListTranslation {
 
     fn try_translate_from_upsert_sync_record(
         &self,
-        _: &StorageConnection,
+        connection: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let data = serde_json::from_str::<LegacyListMasterRow>(&sync_record.data)?;
+
+        // is_essential is only an available value if plugin is active
+        let is_essential = data.is_essential.is_some();
+
+        if is_essential {
+            let plugin_data_repository = PluginDataRowRepository::new(connection);
+            let existing_plugin_data =
+                plugin_data_repository.find_one_by_related_record_id(&data.id)?;
+
+            let plugin_data = PluginDataRow {
+                id: existing_plugin_data
+                    .map(|row| row.id)
+                    .unwrap_or_else(|| uuid()),
+                store_id: None,
+                plugin_code: "congo-plugin".to_string(),
+                related_record_id: Some(data.id.clone()),
+                data_identifier: "master-lists".to_string(),
+                data: serde_json::json!({ "is_essential": data.is_essential }).to_string(),
+            };
+
+            plugin_data_repository.upsert_one(&plugin_data)?;
+        }
 
         let result = MasterListRow {
             id: data.id,

@@ -65,6 +65,18 @@ impl<'a> PluginDataRowRepository<'a> {
         Ok(result)
     }
 
+    pub fn find_one_by_related_record_id(
+        &self,
+        related_record_id: &str,
+    ) -> Result<Option<PluginDataRow>, RepositoryError> {
+        let result: Option<PluginDataRow> = plugin_data::table
+            .filter(plugin_data::related_record_id.eq(related_record_id))
+            .first(self.connection.lock().connection())
+            .optional()?;
+
+        Ok(result)
+    }
+
     fn insert_changelog(
         &self,
         uid: &str,
