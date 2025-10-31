@@ -26,7 +26,6 @@ export const useInbound = {
   lines: {
     list: Lines.useInboundLines,
     items: Lines.useInboundItems,
-    // rows: Lines.useInboundRows,
     serviceLines: Lines.useInboundServiceLines,
 
     insertFromInternalOrder: Lines.useLinesFromInternalOrder,
@@ -34,7 +33,7 @@ export const useInbound = {
     deleteSelected: Lines.useInboundDeleteSelectedLines,
     save: Lines.useSaveInboundLines,
 
-    // zeroQuantities: Lines.useZeroInboundLinesQuantity,
+    zeroQuantities: Lines.useZeroInboundLinesQuantity,
   },
   utils: {
     addFromMasterList: Utils.useAddFromMasterList,
