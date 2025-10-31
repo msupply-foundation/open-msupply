@@ -65,13 +65,13 @@ const createStatusLog = (invoice: InboundFragment) => {
 };
 
 interface FooterComponentProps {
-  // onReturnLines: (selectedLines: InboundLineFragment[]) => void;
+  onReturnLines: () => void;
   selectedRows: InboundLineFragment[];
   resetRowSelection: () => void;
 }
 
 export const FooterComponent = ({
-  // onReturnLines,
+  onReturnLines,
   selectedRows,
   resetRowSelection,
 }: FooterComponentProps) => {
@@ -121,12 +121,12 @@ export const FooterComponent = ({
       onClick: onZeroQuantities,
       shouldShrink: false,
     },
-    // {
-    //   label: t('button.return-lines'),
-    //   icon: <ArrowLeftIcon />,
-    //   onClick: () => onReturnLines(selectedLines),
-    //   shouldShrink: false,
-    // },
+    {
+      label: t('button.return-lines'),
+      icon: <ArrowLeftIcon />,
+      onClick: () => onReturnLines(),
+      shouldShrink: false,
+    },
   ];
 
   return (

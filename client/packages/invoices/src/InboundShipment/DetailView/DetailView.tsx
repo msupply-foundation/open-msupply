@@ -113,41 +113,6 @@ const DetailViewInner = () => {
     setMode(ModalMode.Update);
   };
 
-  // const onReturn = async (selectedLines: InboundLineFragment[]) => {
-  //   if (!data || !canReturnInboundLines(data)) {
-  //     const cantReturnSnack = info(
-  //       t('messages.cant-return-shipment-replenishment')
-  //     );
-  //     cantReturnSnack();
-  //     return;
-  //   }
-  //   if (!selectedLines.length) {
-  //     const selectLinesSnack = info(t('messages.select-rows-to-return'));
-  //     selectLinesSnack();
-  //     return;
-  //   }
-  //   if (selectedLines.some(line => !line.stockLine)) {
-  //     const selectLinesSnack = info(
-  //       t('messages.cant-return-lines-with-no-received-stock')
-  //     );
-  //     selectLinesSnack();
-  //     return;
-  //   }
-
-  //   const selectedStockLineIds = selectedLines.map(
-  //     line => line.stockLine?.id ?? ''
-  //   );
-
-  //   onOpenReturns(selectedStockLineIds);
-  //   setMode(ModalMode.Create);
-  // };
-
-  useEffect(() => {
-    setCustomBreadcrumbs({ 1: data?.invoiceNumber.toString() ?? '' });
-  }, [setCustomBreadcrumbs, data?.invoiceNumber]);
-
-  const tab = urlQuery['tab'] ?? InboundShipmentDetailTabs.Details;
-
   const columns = useInboundShipmentColumns();
 
   const { table, selectedRows } = useNonPaginatedMaterialTable<
@@ -156,7 +121,6 @@ const DetailViewInner = () => {
     tableId: 'inbound-shipment-detail-view',
     columns,
     data: lines,
-    // isError,
     grouping: { enabled: true },
     isLoading: false,
     initialSort: { key: 'itemName', dir: 'asc' },
@@ -170,6 +134,41 @@ const DetailViewInner = () => {
       />
     ),
   });
+
+  const onReturn = async () => {
+    if (!data || !canReturnInboundLines(data)) {
+      const cantReturnSnack = info(
+        t('messages.cant-return-shipment-replenishment')
+      );
+      cantReturnSnack();
+      return;
+    }
+    if (!selectedRows.length) {
+      const selectLinesSnack = info(t('messages.select-rows-to-return'));
+      selectLinesSnack();
+      return;
+    }
+    if (selectedRows.some(line => !line.stockLine)) {
+      const selectLinesSnack = info(
+        t('messages.cant-return-lines-with-no-received-stock')
+      );
+      selectLinesSnack();
+      return;
+    }
+
+    const selectedStockLineIds = selectedRows.map(
+      line => line.stockLine?.id ?? ''
+    );
+
+    onOpenReturns(selectedStockLineIds);
+    setMode(ModalMode.Create);
+  };
+
+  useEffect(() => {
+    setCustomBreadcrumbs({ 1: data?.invoiceNumber.toString() ?? '' });
+  }, [setCustomBreadcrumbs, data?.invoiceNumber]);
+
+  const tab = urlQuery['tab'] ?? InboundShipmentDetailTabs.Details;
 
   if (isLoading) return <DetailViewSkeleton hasGroupBy={true} hasHold={true} />;
 
@@ -218,7 +217,7 @@ const DetailViewInner = () => {
 
           {(tab === InboundShipmentDetailTabs.Details || !tab) && (
             <Footer
-              // onReturnLines={onReturn}
+              onReturnLines={onReturn}
               selectedRows={selectedRows}
               resetRowSelection={table.resetRowSelection}
             />
