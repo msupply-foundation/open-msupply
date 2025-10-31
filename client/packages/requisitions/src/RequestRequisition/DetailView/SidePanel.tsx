@@ -178,8 +178,8 @@ const RelatedDocumentsSection: FC = () => {
                 key={createdFromRequisition?.id}
                 label={t('label.created-from-requisition')}
                 value={createdFromRequisition?.requisitionNumber}
-                to={RouteBuilder.create(AppRoute.Replenishment)
-                  .addPart(AppRoute.InternalOrder)
+                to={RouteBuilder.create(AppRoute.Distribution)
+                  .addPart(AppRoute.CustomerRequisition)
                   .addPart(createdFromRequisition?.id ?? '')
                   .build()}
               />
