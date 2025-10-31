@@ -1,6 +1,7 @@
 use repository::{
-    MasterListRow, MasterListRowDelete, MasterListRowRepository, PluginDataRow,
-    PluginDataRowRepository, ProgramRowRepository, StorageConnection, SyncBufferRow,
+    EqualFilter, MasterListRow, MasterListRowDelete, MasterListRowRepository, PluginDataFilter,
+    PluginDataRepository, PluginDataRow, PluginDataRowRepository, ProgramRowRepository,
+    StorageConnection, SyncBufferRow,
 };
 
 use serde::Deserialize;
@@ -48,13 +49,21 @@ impl SyncTranslation for MasterListTranslation {
         let is_essential = data.is_essential.is_some();
 
         if is_essential {
-            let plugin_data_repository = PluginDataRowRepository::new(connection);
+            let filter = PluginDataFilter {
+                related_record_id: Some(EqualFilter::equal_to(&data.id.clone())),
+                plugin_code: Some(EqualFilter::equal_to(&"congo-plugin".to_string())),
+                id: None,
+                data_identifier: None,
+                store_id: None,
+            };
+
             let existing_plugin_data =
-                plugin_data_repository.find_one_by_related_record_id(&data.id)?;
+                PluginDataRepository::new(connection).query_by_filter(filter)?;
 
             let plugin_data = PluginDataRow {
                 id: existing_plugin_data
-                    .map(|row| row.id)
+                    .first()
+                    .map(|row| row.plugin_data.id.clone())
                     .unwrap_or_else(|| uuid()),
                 store_id: None,
                 plugin_code: "congo-plugin".to_string(),
@@ -63,7 +72,7 @@ impl SyncTranslation for MasterListTranslation {
                 data: serde_json::json!({ "is_essential": data.is_essential }).to_string(),
             };
 
-            plugin_data_repository.upsert_one(&plugin_data)?;
+            PluginDataRowRepository::new(connection).upsert_one(&plugin_data)?;
         }
 
         let result = MasterListRow {
