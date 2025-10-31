@@ -422,6 +422,7 @@
   "error.no-stores": "No stores to display.",
   "error.no-supplier-return-items": "No items have been added to this return.",
   "error.no-supplier-returns": "There are no Supplier Returns to display.",
+  "error.no-supply-level-permission": "You do not have permission to edit supply levels",
   "error.no-temperature-breaches": "No temperature breaches to display. Try changing or resetting the filters above.",
   "error.no-temperature-logs": "No temperature logs to display. Try changing or resetting the filters above.",
   "error.no-vaccine-courses": "No vaccine courses to display.",

@@ -12,8 +12,6 @@ import {
   PropertyNodeValueType,
   useIntlUtils,
   useNotification,
-  useAuthContext,
-  UserPermission,
 } from '@openmsupply-client/common';
 import { useName } from '@openmsupply-client/system/src/Name/api/hooks/';
 import { useConfigureCustomProperties } from '../api/hooks/settings/useConfigureNameProperties';
@@ -32,18 +30,17 @@ export const SupplyLevelModal = ({
   const t = useTranslation();
   const { error } = useNotification();
   const { currentLanguage } = useIntlUtils();
-  const { userHasPermission } = useAuthContext();
   const { Modal } = useDialog({ isOpen, onClose });
 
   const { data } = useName.document.properties();
   const { mutateAsync } = useConfigureCustomProperties();
-  const canEditCentralData = userHasPermission(UserPermission.EditCentralData);
 
   const convertedSupplyLevels =
     data
       ?.find(p => p.property.key === SUPPLY_LEVEL_KEY)
       ?.property.allowedValues?.split(',')
-      .map(v => v.trim()) ?? [];
+      .map(v => v.trim())
+      .filter(v => v !== '') ?? [];
 
   const [supplyLevels, setSupplyLevels] = useState(convertedSupplyLevels);
   const [inputValue, setInputValue] = useState('');
@@ -105,7 +102,7 @@ export const SupplyLevelModal = ({
             icon={<PlusCircleIcon />}
             label={t('label.add-supply-level')}
             onClick={handleAddSupplyLevel}
-            disabled={!canEditCentralData || !inputValue.trim()}
+            disabled={!inputValue.trim()}
           />
         </Box>
         {supplyLevels.length > 0 ? (
@@ -127,7 +124,6 @@ export const SupplyLevelModal = ({
                 icon={<DeleteIcon />}
                 label={t('label.delete-supply-level')}
                 onClick={() => handleDeleteSupplyLevel(supplyLevel)}
-                disabled={!canEditCentralData}
               />
             </Box>
           ))

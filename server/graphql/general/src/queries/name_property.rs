@@ -27,18 +27,20 @@ pub fn configure_name_properties(
     store_id: &str,
     input: Vec<ConfigureNamePropertyInput>,
 ) -> Result<ConfigureNamePropertiesResponse> {
-    validate_auth(
+    let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
             resource: Resource::MutateNameProperties,
-            store_id: Some(store_id.to_string()),
+            store_id: None,
         },
     )?;
 
-    let connection_manager = ctx.get_connection_manager();
+    let service_context = ctx
+        .service_provider()
+        .context(store_id.to_string(), user.user_id)?;
 
     let result = initialise_name_properties(
-        connection_manager,
+        &service_context,
         input
             .into_iter()
             .map(ConfigureNamePropertyInput::to_domain)

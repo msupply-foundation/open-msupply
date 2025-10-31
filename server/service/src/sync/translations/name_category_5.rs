@@ -1,10 +1,11 @@
 use repository::{
-    types::PropertyValueType, ChangelogRow, ChangelogTableName, PropertyRow, PropertyRowRepository,
+    activity_log::{ActivityLogFilter, ActivityLogRepository},
+    types::PropertyValueType,
+    ChangelogRow, ChangelogTableName, EqualFilter, PropertyRow, PropertyRowRepository,
     StorageConnection, SyncBufferRow,
 };
 
 use serde::{Deserialize, Serialize};
-use util::uuid::uuid;
 
 use crate::sync::{
     api::{CommonSyncRecord, SyncAction},
@@ -110,7 +111,22 @@ impl SyncTranslation for NameCategory5Translation {
                 changelog.record_id
             )))?;
 
-        let values = match &property.allowed_values {
+        let activity_log = ActivityLogRepository::new(connection)
+            .query_by_filter(
+                ActivityLogFilter::new().record_id(EqualFilter::equal_to(&changelog.record_id)),
+            )?
+            .into_iter()
+            .max_by_key(|log| log.activity_log_row.datetime);
+
+        let previous_values = match activity_log {
+            Some(log) => match log.activity_log_row.changed_from {
+                Some(ref s) => s.split(',').map(|v| v.trim().to_string()).collect(),
+                None => Vec::new(),
+            },
+            None => Vec::new(),
+        };
+
+        let current_values = match &property.allowed_values {
             Some(values) => values
                 .split(',')
                 .map(|s| s.trim().to_string())
@@ -122,32 +138,86 @@ impl SyncTranslation for NameCategory5Translation {
             }
         };
 
-        let mut records = Vec::new();
-        for description in values.iter() {
-            let id = uuid();
-            let legacy_row = LegacyNameCategory5Row {
-                ID: id.clone(),
-                description: description.clone(),
-                r#type: 'c'.to_string(),
-            };
+        let removed_values: Vec<String> = previous_values
+            .into_iter()
+            .filter(|v| !current_values.contains(v))
+            .collect();
 
-            records.push(PushSyncRecord {
-                cursor: changelog.cursor,
-                record: CommonSyncRecord {
-                    table_name: self.table_name().to_string(),
-                    record_id: id,
-                    action: SyncAction::Update,
-                    record_data: serde_json::to_value(legacy_row)?,
-                },
-            });
+        let mut records = Vec::new();
+
+        if !removed_values.is_empty() {
+            for description in removed_values {
+                let id = format!("{}:{}", changelog.record_id, description);
+                let legacy_row = LegacyNameCategory5Row {
+                    ID: id.clone(),
+                    description: description.to_string(),
+                    r#type: 'c'.to_string(),
+                };
+
+                records.push(PushSyncRecord {
+                    cursor: changelog.cursor,
+                    record: CommonSyncRecord {
+                        table_name: self.table_name().to_string(),
+                        record_id: id,
+                        action: SyncAction::Delete,
+                        record_data: serde_json::to_value(legacy_row)?,
+                    },
+                });
+            }
+        } else {
+            for description in current_values.iter() {
+                let id = format!("{}:{}", changelog.record_id, description);
+                let legacy_row = LegacyNameCategory5Row {
+                    ID: id.clone(),
+                    description: description.to_string(),
+                    r#type: 'c'.to_string(),
+                };
+
+                records.push(PushSyncRecord {
+                    cursor: changelog.cursor,
+                    record: CommonSyncRecord {
+                        table_name: self.table_name().to_string(),
+                        record_id: id,
+                        action: SyncAction::Update,
+                        record_data: serde_json::to_value(legacy_row)?,
+                    },
+                });
+            }
         }
 
         Ok(PushTranslateResult::PushRecord(records))
     }
-}
 
-// TODO:
-// - Finish tests
-// - Figure out how to manage delete,
-//   current configuration in OMS saves everything into one id (id = key name),
-//   which makes us lose track of the name_category5 ID
+    fn try_translate_from_delete_sync_record(
+        &self,
+        connection: &StorageConnection,
+        sync_buffer: &SyncBufferRow,
+    ) -> Result<PullTranslateResult, anyhow::Error> {
+        let mut parts = sync_buffer.record_id.splitn(2, ':');
+        let property_id = parts.next().unwrap_or("");
+        let description = parts.next().unwrap_or("");
+
+        let mut property = PropertyRowRepository::new(connection)
+            .find_one_by_id(&"supply_level")?
+            .ok_or_else(|| {
+                anyhow::Error::msg(format!("Property row ({}) not found", property_id))
+            })?;
+
+        property.allowed_values = property
+            .allowed_values
+            .as_ref()
+            .map(|values| {
+                values
+                    .split(',')
+                    .map(|s| s.trim())
+                    .filter(|v| *v != description)
+                    .collect::<Vec<_>>()
+                    .join(",")
+            })
+            .filter(|s| !s.is_empty());
+
+        println!("property {:?}", property);
+
+        Ok(PullTranslateResult::upsert(property))
+    }
+}

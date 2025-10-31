@@ -1,8 +1,10 @@
 import React from 'react';
 import {
   BaseButton,
+  useCallbackWithPermission,
   useEditModal,
   useIntlUtils,
+  UserPermission,
   useTranslation,
 } from '@openmsupply-client/common';
 import { useName } from '@openmsupply-client/system';
@@ -22,15 +24,17 @@ export const ConfigurationSettings = () => {
   const { gapsConfigured, forecastingConfigured } =
     useCheckConfiguredProperties();
 
-  const {
-    isOpen,
-    onOpen: handleSupplyModalOpen,
-    onClose: handleSupplyModalClose,
-  } = useEditModal();
+  const { isOpen, onOpen, onClose } = useEditModal();
 
   const handleClick = (propertyType: PropertyType) => async () => {
     await mutateAsync(propertyType);
   };
+
+  const handleSupplyModalClick = useCallbackWithPermission(
+    UserPermission.EditCentralData,
+    onOpen,
+    t('error.no-supply-level-permission')
+  );
 
   return (
     <>
@@ -71,14 +75,12 @@ export const ConfigurationSettings = () => {
       <Setting
         title={t('label.configure-supply-level')}
         component={
-          <BaseButton onClick={handleSupplyModalOpen}>
+          <BaseButton onClick={handleSupplyModalClick}>
             {t('label.edit')}
           </BaseButton>
         }
       />
-      {isOpen && (
-        <SupplyLevelModal isOpen={isOpen} onClose={handleSupplyModalClose} />
-      )}
+      {isOpen && <SupplyLevelModal isOpen={isOpen} onClose={onClose} />}
     </>
   );
 };
