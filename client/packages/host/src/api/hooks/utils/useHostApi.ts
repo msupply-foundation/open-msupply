@@ -14,6 +14,6 @@ export const useHostApi = () => {
 
   const { client } = useGql();
   const { storeId } = useAuthContext();
-  const queries = getHostQueries(getSdk(client));
+  const queries = getHostQueries(getSdk(client), storeId);
   return { ...queries, storeId, keys };
 };

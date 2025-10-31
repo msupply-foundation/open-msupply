@@ -1,19 +1,18 @@
 import React from 'react';
-
 import {
   BaseButton,
+  useEditModal,
   useIntlUtils,
   useTranslation,
 } from '@openmsupply-client/common';
 import { useName } from '@openmsupply-client/system';
-
 import { Setting } from './Setting';
-
 import {
   useConfigureNameProperties,
   useCheckConfiguredProperties,
   PropertyType,
 } from '../api/hooks/settings/useConfigureNameProperties';
+import { SupplyLevelModal } from './SupplyLevelModal';
 
 export const ConfigurationSettings = () => {
   const t = useTranslation();
@@ -22,6 +21,12 @@ export const ConfigurationSettings = () => {
   const { isLoading: dataLoading } = useName.document.properties();
   const { gapsConfigured, forecastingConfigured } =
     useCheckConfiguredProperties();
+
+  const {
+    isOpen,
+    onOpen: handleSupplyModalOpen,
+    onClose: handleSupplyModalClose,
+  } = useEditModal();
 
   const handleClick = (propertyType: PropertyType) => async () => {
     await mutateAsync(propertyType);
@@ -63,6 +68,17 @@ export const ConfigurationSettings = () => {
           </BaseButton>
         }
       />
+      <Setting
+        title={t('label.configure-supply-level')}
+        component={
+          <BaseButton onClick={handleSupplyModalOpen}>
+            {t('label.edit')}
+          </BaseButton>
+        }
+      />
+      {isOpen && (
+        <SupplyLevelModal isOpen={isOpen} onClose={handleSupplyModalClose} />
+      )}
     </>
   );
 };

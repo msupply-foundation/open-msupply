@@ -1235,6 +1235,7 @@ export type CentralGeneralMutations = {
 
 export type CentralGeneralMutationsConfigureNamePropertiesArgs = {
   input: Array<ConfigureNamePropertyInput>;
+  storeId: Scalars['String']['input'];
 };
 
 export type CentralPatientNode = {
