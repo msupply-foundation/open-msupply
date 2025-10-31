@@ -85,8 +85,10 @@ export const FooterComponent = ({
     selectedRows,
     resetRowSelection
   );
-  // const onZeroQuantities = useInbound.lines.zeroQuantities();
-  // const selectedLines = useInbound.utils.selectedLines();
+  const onZeroQuantities = useInbound.lines.zeroQuantities(
+    selectedRows,
+    resetRowSelection
+  );
   const { mutateAsync } = useInbound.lines.save();
   const isDisabled = useIsInboundDisabled();
   const isManuallyCreated = !data?.linkedShipment?.id;
@@ -113,12 +115,12 @@ export const FooterComponent = ({
       onClick: handleCampaignClick,
       shouldShrink: false,
     },
-    // {
-    //   label: t('button.zero-line-quantity'),
-    //   icon: <RewindIcon />,
-    //   onClick: onZeroQuantities,
-    //   shouldShrink: false,
-    // },
+    {
+      label: t('button.zero-line-quantity'),
+      icon: <RewindIcon />,
+      onClick: onZeroQuantities,
+      shouldShrink: false,
+    },
     // {
     //   label: t('button.return-lines'),
     //   icon: <ArrowLeftIcon />,
