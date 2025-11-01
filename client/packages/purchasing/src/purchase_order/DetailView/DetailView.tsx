@@ -89,12 +89,12 @@ const DetailViewInner = () => {
 
   const { table, selectedRows } =
     useNonPaginatedMaterialTable<PurchaseOrderLineFragment>({
-      tableId: 'purchase-order-line-list-view',
+      tableId: 'purchase-order-detail-view',
       isLoading: isFetching,
       onRowClick: onRowClick,
       columns,
       data: lines,
-      initialSort: { key: 'number', dir: 'asc' },
+      initialSort: { key: 'lineNumber', dir: 'asc' },
       getIsRestrictedRow: getClosedLine,
       getIsPlaceholderRow: getPlaceholderRow,
       noDataElement: (
