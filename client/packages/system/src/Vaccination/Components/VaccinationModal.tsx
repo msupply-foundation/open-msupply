@@ -22,6 +22,7 @@ import {
   useFormatDateTime,
   useNotification,
   useTranslation,
+  VaccinationCardItemNodeStatus,
 } from '@openmsupply-client/common';
 import { FormControlLabel, Typography } from '@mui/material';
 import React, { useState } from 'react';
@@ -45,7 +46,8 @@ interface VaccinationModalProps {
   onClose: () => void;
   defaultClinician?: Clinician;
   onOk: () => void;
-  isPreviousGiven: boolean;
+  previousDoseStatus: VaccinationCardItemNodeStatus | undefined | null;
+  isEditable: boolean;
 }
 
 export const VaccinationModal = ({
@@ -55,7 +57,8 @@ export const VaccinationModal = ({
   cardRow,
   defaultClinician,
   onOk,
-  isPreviousGiven,
+  previousDoseStatus,
+  isEditable,
 }: VaccinationModalProps) => {
   const t = useTranslation();
   const { success, error } = useNotification();
@@ -110,7 +113,7 @@ export const VaccinationModal = ({
       {
         title: t('heading.are-you-sure'),
         message: t('messages.confirm-skip-dose'),
-        condition: () => !isPreviousGiven,
+        condition: () => previousDoseStatus === null,
       },
       {
         title: t('heading.are-you-sure'),
@@ -154,6 +157,8 @@ export const VaccinationModal = ({
         draft={draft}
         dose={dose}
         vaccination={vaccination}
+        isEditable={isEditable}
+        previousDoseStatus={previousDoseStatus}
       />
     </Box>
   );
@@ -178,7 +183,7 @@ export const VaccinationModal = ({
       slideAnimation={false}
       contentProps={{ sx: { paddingTop: !!InfoBox ? 0 : undefined } }}
     >
-      <>{modalContent}</>
+      {modalContent}
     </Modal>
   );
 };
@@ -188,11 +193,15 @@ const VaccinationForm = ({
   dose,
   vaccination,
   updateDraft,
+  isEditable,
+  previousDoseStatus,
 }: {
   dose?: VaccinationCourseDoseFragment;
   draft: VaccinationDraft;
   vaccination?: VaccinationDetailFragment | null;
   updateDraft: (update: Partial<VaccinationDraft>) => void;
+  isEditable: boolean;
+  previousDoseStatus: VaccinationCardItemNodeStatus | undefined | null;
 }) => {
   const t = useTranslation();
   const { store, storeId } = useAuthContext();
@@ -228,7 +237,7 @@ const VaccinationForm = ({
               }
               facilityId={draft.facilityId}
               enteredAtOtherFacility={draft.enteredAtOtherFacility}
-              disabled={givenAtOtherStore}
+              disabled={givenAtOtherStore || !isEditable}
             />
 
             {isFreeTextFacility && (
@@ -241,6 +250,7 @@ const VaccinationForm = ({
                   updateDraft({ facilityFreeText: e.target.value })
                 }
                 sx={{ flex: 1, marginTop: 2 }}
+                disabled={!isEditable}
               />
             )}
           </Grid>
@@ -258,6 +268,7 @@ const VaccinationForm = ({
                   });
                 }}
                 clinicianValue={draft.clinician}
+                disabled={!isEditable}
               />
             </Grid>
           }
@@ -267,7 +278,7 @@ const VaccinationForm = ({
         label={t('label.date')}
         Input={
           <DatePicker
-            disabled={givenAtOtherStore}
+            disabled={givenAtOtherStore || !isEditable}
             disableFuture
             value={draft.date}
             onChange={date => updateDraft({ date })}
@@ -287,26 +298,31 @@ const VaccinationForm = ({
         }
       >
         <FormControlLabel
-          disabled={givenAtOtherStore}
+          disabled={givenAtOtherStore || !isEditable}
           value={true}
           control={<Radio />}
           label={t('label.vaccine-given')}
         />
-        <FormControlLabel
-          disabled={givenAtOtherStore}
-          value={false}
-          control={<Radio />}
-          label={t('label.vaccine-not-given')}
-        />
+        {/* Don't show option for "Not given" when skipping doses */}
+        {previousDoseStatus !== null && (
+          <FormControlLabel
+            disabled={givenAtOtherStore || !isEditable}
+            value={false}
+            control={<Radio />}
+            label={t('label.vaccine-not-given')}
+          />
+        )}
       </RadioGroup>
-
+      {previousDoseStatus === null && draft.given && (
+        <Alert severity="warning">{t('messages.skip-dose-warning')}</Alert>
+      )}
       <SelectItemAndBatch
         draft={draft}
         vaccination={vaccination}
         isOtherFacility={isOtherFacility}
         dose={dose}
         updateDraft={updateDraft}
-        givenAtOtherStore={givenAtOtherStore}
+        givenAtOtherStore={givenAtOtherStore || !isEditable}
       />
 
       {draft.given === false && (
@@ -327,6 +343,7 @@ const VaccinationForm = ({
                     updateDraft({ notGivenReason: e.target.value })
                   }
                   sx={{ flex: 1 }}
+                  disabled={!isEditable}
                 />
                 <Box width={2}>
                   <Typography
@@ -358,6 +375,7 @@ const VaccinationForm = ({
               fullWidth
               rows={3}
               style={{ flex: 1 }}
+              disabled={!isEditable}
             />
           }
         />

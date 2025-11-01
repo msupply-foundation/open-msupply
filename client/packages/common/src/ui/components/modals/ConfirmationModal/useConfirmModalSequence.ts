@@ -36,12 +36,10 @@ export const useConfirmModalSequence = (
     setMessage,
     setOnConfirm,
     setOnCancel,
-
-    // ENABLE THESE LATER IF REQUIRED (and below)
-    // setIconType,
-    // setInfo,
-    // setButtonLabel,
-    // setCancelButtonLabel,
+    setIconType,
+    setInfo,
+    setButtonLabel,
+    setCancelButtonLabel,
   } = useContext(ConfirmationModalContext);
   const [currentStepIndex, setCurrentStepIndex] = useState(-1);
 
@@ -57,7 +55,15 @@ export const useConfirmModalSequence = (
       return;
     }
 
-    const { title, message, condition = () => true } = nextStep;
+    const {
+      title,
+      message,
+      buttonLabel,
+      cancelButtonLabel,
+      iconType = 'help',
+      info,
+      condition = () => true,
+    } = nextStep;
 
     if (!condition()) {
       next();
@@ -71,13 +77,10 @@ export const useConfirmModalSequence = (
       setOpen(false);
       setCurrentStepIndex(-1);
     });
-
-    // ENABLE THESE LATER IF REQUIRED
-    // setIconType(nextStep.iconType ?? 'help');
-    // setInfo(nextStep.info);
-    // setOnCancel(nextStep.onCancel);
-    // setButtonLabel(nextStep.buttonLabel);
-    // setCancelButtonLabel(nextStep.cancelButtonLabel);
+    setIconType(iconType);
+    setInfo(info);
+    setButtonLabel(buttonLabel);
+    setCancelButtonLabel(cancelButtonLabel);
 
     setTimeout(() => setOpen(true), 50); // Delay to ensure modal state has updated before re-opening
   }, [currentStepIndex]);
