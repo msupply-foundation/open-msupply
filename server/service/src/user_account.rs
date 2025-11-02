@@ -171,7 +171,7 @@ impl<'a> UserAccountService<'a> {
             UserFilter::new()
                 .id(EqualFilter::equal_to_string(user_id))
                 .hashed_password(EqualFilter::not_equal_to_string(""))
-                .site_id(EqualFilter::equal_to_i32(site_id)),
+                .site_id(EqualFilter::equal_to(site_id)),
         )
     }
 
