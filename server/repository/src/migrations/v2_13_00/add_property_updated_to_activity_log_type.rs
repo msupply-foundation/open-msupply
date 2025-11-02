@@ -12,7 +12,7 @@ impl MigrationFragment for Migrate {
             sql!(
                 connection,
                 r#"
-                    ALTER TYPE activity_log_type ADD VALUE IF NOT EXISTS 'PROPERTY_UPDATED'
+                    ALTER TYPE activity_log_type ADD VALUE IF NOT EXISTS 'PROPERTY_UPDATED';
                 "#
             )?;
         }
