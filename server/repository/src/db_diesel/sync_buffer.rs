@@ -275,7 +275,7 @@ mod test {
                 .query_by_filter(
                     SyncBufferFilter::new()
                         .integration_datetime(DatetimeFilter::is_null(true))
-                        .integration_error(EqualFilter::is_null_string(true))
+                        .integration_error(EqualFilter::is_null(true))
                 )
                 .unwrap(),
             vec![row_c()]
@@ -286,7 +286,7 @@ mod test {
                 .query_by_filter(
                     SyncBufferFilter::new()
                         .integration_datetime(DatetimeFilter::is_null(true))
-                        .integration_error(EqualFilter::is_null_string(true))
+                        .integration_error(EqualFilter::is_null(true))
                 )
                 .unwrap(),
             vec![row_c()]
