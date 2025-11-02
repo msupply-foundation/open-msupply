@@ -194,14 +194,17 @@ impl SyncTranslation for NameCategory5Translation {
         sync_buffer: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let mut parts = sync_buffer.record_id.splitn(2, ':');
-        let property_id = parts.next().unwrap_or("");
-        let description = parts.next().unwrap_or("");
+        let _og_id = parts.next().unwrap_or("");
+        let description = parts.next().ok_or_else(|| {
+            anyhow::Error::msg(format!(
+                "Invalid record_id format for delete: expected 'id:description', got '{}'",
+                sync_buffer.record_id
+            ))
+        })?;
 
         let mut property = PropertyRowRepository::new(connection)
-            .find_one_by_id(&"supply_level")?
-            .ok_or_else(|| {
-                anyhow::Error::msg(format!("Property row ({}) not found", property_id))
-            })?;
+            .find_one_by_id("supply_level")?
+            .ok_or_else(|| anyhow::Error::msg("Property row (supply_level) not found"))?;
 
         property.allowed_values = property
             .allowed_values
@@ -215,8 +218,6 @@ impl SyncTranslation for NameCategory5Translation {
                     .join(",")
             })
             .filter(|s| !s.is_empty());
-
-        println!("property {:?}", property);
 
         Ok(PullTranslateResult::upsert(property))
     }
