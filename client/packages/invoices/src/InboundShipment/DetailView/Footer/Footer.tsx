@@ -17,7 +17,7 @@ import {
   useEditModal,
   useNotification,
 } from '@openmsupply-client/common';
-// import { ChangeCampaignOrProgramConfirmationModal } from '@openmsupply-client/system';
+import { ChangeCampaignOrProgramConfirmationModal } from '@openmsupply-client/system';
 import {
   getStatusTranslator,
   inboundStatuses,
@@ -172,15 +172,15 @@ export const FooterComponent = ({
               </Box>
             </Box>
           ) : null}
-          {/* {
+          {
             <ChangeCampaignOrProgramConfirmationModal
               isOpen={changeCampaignOrProgramModal.isOpen}
               onCancel={changeCampaignOrProgramModal.onClose}
-              clearSelected={clearSelected}
-              rows={selectedLines}
+              clearSelected={resetRowSelection}
+              rows={selectedRows}
               onChange={mutateAsync}
             />
-          } */}
+          }
         </>
       }
     />
