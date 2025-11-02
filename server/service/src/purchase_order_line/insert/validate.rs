@@ -63,7 +63,7 @@ pub fn validate(
         Some(
             PurchaseOrderLineFilter::new()
                 .purchase_order_id(EqualFilter::equal_to_string(&input.purchase_order_id))
-                .requested_pack_size(EqualFilter::equal_to_f64(
+                .requested_pack_size(EqualFilter::equal_to(
                     input.requested_pack_size.unwrap_or_default(),
                 ))
                 .item_id(EqualFilter::equal_to_string(&item.id)),

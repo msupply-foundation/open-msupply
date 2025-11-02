@@ -269,7 +269,7 @@ fn empty_lines_to_trim(
         InvoiceLineFilter::new()
             .invoice_id(EqualFilter::equal_to_string(&invoice.id))
             .r#type(InvoiceLineType::StockIn.equal_to())
-            .number_of_packs(EqualFilter::equal_to_f64(0.0)),
+            .number_of_packs(EqualFilter::equal_to(0.0)),
     )?;
 
     // Only trim lines that have no shipped packs either (valid to track "supplier said they sent 5 packs but I received 0")

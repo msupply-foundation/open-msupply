@@ -57,10 +57,10 @@ fn get_matching_sensor_breach_config(
         .duration_milliseconds(EqualFilter::equal_to(
             temperature_breach_config.duration.num_milliseconds() as i32,
         ))
-        .minimum_temperature(EqualFilter::equal_to_f64(
+        .minimum_temperature(EqualFilter::equal_to(
             temperature_breach_config.minimum_temperature,
         ))
-        .maximum_temperature(EqualFilter::equal_to_f64(
+        .maximum_temperature(EqualFilter::equal_to(
             temperature_breach_config.maximum_temperature,
         ))
         .r#type(breach_type.equal_to());
