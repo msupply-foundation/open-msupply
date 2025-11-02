@@ -17,7 +17,6 @@ export const useInbound = {
     updateTax: Document.useUpdateInboundServiceTax,
 
     fields: Document.useInboundFields,
-    next: Document.useNextItem,
 
     listInternalOrders: Document.useListInternalOrders,
     listInternalOrdersPromise: Document.useListInternalOrdersPromise,
