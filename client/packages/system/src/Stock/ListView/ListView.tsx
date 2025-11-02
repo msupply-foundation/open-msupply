@@ -1,7 +1,5 @@
 import React, { FC, useMemo } from 'react';
 import {
-  TableProvider,
-  createTableStore,
   useTranslation,
   NothingHere,
   useUrlQueryParams,
@@ -22,7 +20,7 @@ import { Toolbar } from './Toolbar';
 import { useStockList } from '../api/hooks/useStockList';
 import { NewStockLineModal } from '../Components/NewStockLineModal';
 
-const StockListComponent: FC = () => {
+export const StockListView: FC = () => {
   const {
     queryParams: { sortBy, first, offset, filterBy },
   } = useUrlQueryParams({
@@ -230,9 +228,3 @@ const StockListComponent: FC = () => {
     </>
   );
 };
-
-export const StockListView: FC = () => (
-  <TableProvider createStore={createTableStore}>
-    <StockListComponent />
-  </TableProvider>
-);
