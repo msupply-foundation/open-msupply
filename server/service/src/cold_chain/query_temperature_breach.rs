@@ -35,7 +35,7 @@ pub fn get_temperature_breach(
     let repository = TemperatureBreachRepository::new(&ctx.connection);
 
     let mut result = repository
-        .query_by_filter(TemperatureBreachFilter::new().id(EqualFilter::equal_to(&id)))?;
+        .query_by_filter(TemperatureBreachFilter::new().id(EqualFilter::equal_to_string(&id)))?;
 
     if let Some(record) = result.pop() {
         Ok(record)
@@ -82,7 +82,7 @@ pub fn get_max_or_min_breach_temperature(
     let logs =
         TemperatureLogRepository::new(connection)
             .query_by_filter(TemperatureLogFilter::new().temperature_breach(
-                TemperatureBreachFilter::new().id(EqualFilter::equal_to(id)),
+                TemperatureBreachFilter::new().id(EqualFilter::equal_to_string(id)),
             ))?;
 
     let max_or_min_from_logs = match breach.r#type {

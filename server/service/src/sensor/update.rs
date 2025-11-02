@@ -110,7 +110,7 @@ pub fn update_sensor_logs_for_breach(
 
     // And temperature log is not associated with any breaches
     let temperature_log_filter =
-        temperature_log_filter.temperature_breach_id(EqualFilter::is_null(true));
+        temperature_log_filter.temperature_breach_id(EqualFilter::is_null_string(true));
 
     let logs = TemperatureLogRepository::new(connection).query_by_filter(temperature_log_filter)?;
 

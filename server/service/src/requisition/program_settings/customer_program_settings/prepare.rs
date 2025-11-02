@@ -57,9 +57,9 @@ pub(super) fn prepare_program_requisition_settings_by_customer(
 ) -> Result<CustomerProgramRequisitionSetting, RepositoryError> {
     let filter = ProgramRequisitionSettingsFilter::new()
         .master_list(
-            MasterListFilter::new().exists_for_name_id(EqualFilter::equal_to(customer_name_id)),
+            MasterListFilter::new().exists_for_name_id(EqualFilter::equal_to_string(customer_name_id)),
         )
-        .name_tag(NameTagFilter::new().name_id(EqualFilter::equal_to(customer_name_id)));
+        .name_tag(NameTagFilter::new().name_id(EqualFilter::equal_to_string(customer_name_id)));
 
     // All program settings for store
     let settings =
@@ -97,7 +97,7 @@ pub(super) fn prepare_program_requisition_settings_by_customer(
 
     // Requisitions in Period (for all periods and store)
     let filter = RequisitionsInPeriodFilter::new()
-        .other_party_id(EqualFilter::equal_to(customer_name_id))
+        .other_party_id(EqualFilter::equal_to_string(customer_name_id))
         .program_id(EqualFilter::equal_any(program_ids.clone()))
         .period_id(EqualFilter::equal_any(period_ids))
         .r#type(RequisitionType::Response.equal_to());

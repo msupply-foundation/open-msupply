@@ -27,6 +27,6 @@ pub fn get_asset_class(
 ) -> Result<Option<AssetClassRow>, RepositoryError> {
     let repository = AssetClassRepository::new(connection);
     let mut result =
-        repository.query_by_filter(AssetClassFilter::new().id(EqualFilter::equal_to(&id)))?;
+        repository.query_by_filter(AssetClassFilter::new().id(EqualFilter::equal_to_string(&id)))?;
     Ok(result.pop())
 }

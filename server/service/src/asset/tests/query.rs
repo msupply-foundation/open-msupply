@@ -73,7 +73,7 @@ mod query {
             .get_assets(
                 &connection,
                 None,
-                Some(AssetFilter::new().id(EqualFilter::equal_to(&mock_asset_a().id))),
+                Some(AssetFilter::new().id(EqualFilter::equal_to_string(&mock_asset_a().id))),
                 None,
             )
             .unwrap();
@@ -88,7 +88,7 @@ mod query {
             .get_assets(
                 &connection,
                 None,
-                Some(AssetFilter::new().category_id(EqualFilter::equal_to(
+                Some(AssetFilter::new().category_id(EqualFilter::equal_to_string(
                     "02cbea92-d5bf-4832-863b-c04e093a7760",
                 ))),
                 None,
@@ -104,7 +104,7 @@ mod query {
             .get_assets(
                 &connection,
                 None,
-                Some(AssetFilter::new().category_id(EqualFilter::equal_to(
+                Some(AssetFilter::new().category_id(EqualFilter::equal_to_string(
                     "b7eea921-5a14-44cc-b5e0-ea59f2e9cb8d",
                 ))),
                 None,
@@ -120,7 +120,7 @@ mod query {
             .get_assets(
                 &connection,
                 None,
-                Some(AssetFilter::new().class_id(EqualFilter::equal_to(
+                Some(AssetFilter::new().class_id(EqualFilter::equal_to_string(
                     "fad280b6-8384-41af-84cf-c7b6b4526ef0",
                 ))),
                 Some(AssetSort {

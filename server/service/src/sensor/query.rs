@@ -30,7 +30,7 @@ pub fn get_sensor(ctx: &ServiceContext, id: String) -> Result<Sensor, SingleReco
     let repository = SensorRepository::new(&ctx.connection);
 
     let mut result =
-        repository.query_by_filter(SensorFilter::new().id(EqualFilter::equal_to(&id)))?;
+        repository.query_by_filter(SensorFilter::new().id(EqualFilter::equal_to_string(&id)))?;
 
     if let Some(record) = result.pop() {
         Ok(record)
@@ -56,7 +56,7 @@ pub fn get_sensor_logs_filter_for_breach(
     });
 
     let filter = TemperatureLogFilter::new()
-        .sensor(SensorFilter::new().id(EqualFilter::equal_to(&breach.sensor_id)))
+        .sensor(SensorFilter::new().id(EqualFilter::equal_to_string(&breach.sensor_id)))
         .datetime(datetime_filter)
         .temperature(temperature_filter);
 

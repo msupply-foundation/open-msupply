@@ -67,7 +67,7 @@ impl<'a> VaccinationCardRepository<'a> {
 
         apply_equal_filter!(
             query,
-            Some(EqualFilter::equal_to(&program_enrolment_id)),
+            Some(EqualFilter::equal_to_string(&program_enrolment_id)),
             vaccination_card::program_enrolment_id
         );
 

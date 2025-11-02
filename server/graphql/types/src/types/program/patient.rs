@@ -268,7 +268,7 @@ impl PatientNode {
         let filter = filter
             .map(ProgramEnrolmentFilter::from)
             .unwrap_or_default()
-            .patient_id(EqualFilter::equal_to(&self.patient.id));
+            .patient_id(EqualFilter::equal_to_string(&self.patient.id));
 
         let nodes: Vec<_> = ctx
             .service_provider()
@@ -306,7 +306,7 @@ impl PatientNode {
         let context = service_provider.basic_context()?;
 
         let mut filter = filter.map(|f| f.to_domain_filter()).unwrap_or_default();
-        filter.patient_id = Some(EqualFilter::equal_to(&self.patient.id));
+        filter.patient_id = Some(EqualFilter::equal_to_string(&self.patient.id));
         let result = service_provider
             .contact_trace_service
             .contact_traces(

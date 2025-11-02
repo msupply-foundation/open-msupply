@@ -212,7 +212,7 @@ pub fn check_item_exists(
 ) -> Result<bool, RepositoryError> {
     let count = ItemRepository::new(connection).count(
         store_id,
-        Some(ItemFilter::new().id(EqualFilter::equal_to(item_id))),
+        Some(ItemFilter::new().id(EqualFilter::equal_to_string(item_id))),
     )?;
     Ok(count > 0)
 }
@@ -224,7 +224,7 @@ pub fn get_item(
 ) -> Result<Option<Item>, RepositoryError> {
     Ok(ItemRepository::new(connection)
         .query_by_filter(
-            ItemFilter::new().id(EqualFilter::equal_to(item_id)),
+            ItemFilter::new().id(EqualFilter::equal_to_string(item_id)),
             Some(store_id),
         )?
         .pop())

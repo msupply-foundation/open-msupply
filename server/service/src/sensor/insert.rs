@@ -86,7 +86,7 @@ pub fn check_sensor_does_not_exist(
     connection: &StorageConnection,
 ) -> Result<bool, RepositoryError> {
     let sensors = SensorRepository::new(connection)
-        .query_by_filter(SensorFilter::new().id(EqualFilter::equal_to(id)))?;
+        .query_by_filter(SensorFilter::new().id(EqualFilter::equal_to_string(id)))?;
 
     Ok(sensors.is_empty())
 }

@@ -216,7 +216,7 @@ fn generate(
 
     let program_item_ids: Vec<String> = MasterListLineRepository::new(connection)
         .query_by_filter(
-            MasterListLineFilter::new().master_list_id(EqualFilter::equal_to(&master_list_id)),
+            MasterListLineFilter::new().master_list_id(EqualFilter::equal_to_string(&master_list_id)),
             None,
         )?
         .into_iter()
@@ -230,14 +230,14 @@ fn generate(
             connection,
             Pagination::all(),
             None,
-            Some(ProgramIndicatorFilter::new().program_id(EqualFilter::equal_to(&program.id))),
+            Some(ProgramIndicatorFilter::new().program_id(EqualFilter::equal_to_string(&program.id))),
         )?
     } else {
         vec![]
     };
 
     let customer_store = StoreRepository::new(connection)
-        .query_one(StoreFilter::new().name_id(EqualFilter::equal_to(&other_party_id)))?;
+        .query_one(StoreFilter::new().name_id(EqualFilter::equal_to_string(&other_party_id)))?;
 
     let indicator_values = match customer_store {
         Some(_) => generate_program_indicator_values(

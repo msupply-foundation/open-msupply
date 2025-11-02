@@ -50,7 +50,7 @@ pub fn response_add_from_master_list(
 
             match RequisitionLineRepository::new(connection).query_by_filter(
                 RequisitionLineFilter::new()
-                    .requisition_id(EqualFilter::equal_to(&input.response_requisition_id)),
+                    .requisition_id(EqualFilter::equal_to_string(&input.response_requisition_id)),
             ) {
                 Ok(lines) => Ok(lines),
                 Err(error) => Err(OutError::DatabaseError(error)),
@@ -102,7 +102,7 @@ fn generate(
     let master_list_lines_not_in_requisition = MasterListLineRepository::new(&ctx.connection)
         .query_by_filter(
             MasterListLineFilter::new()
-                .master_list_id(EqualFilter::equal_to(&input.master_list_id))
+                .master_list_id(EqualFilter::equal_to_string(&input.master_list_id))
                 .item_id(EqualFilter::not_equal_all(item_ids_in_requisition))
                 .item_type(ItemType::Stock.equal_to()),
             None,

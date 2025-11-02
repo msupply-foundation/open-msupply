@@ -27,6 +27,6 @@ pub fn get_asset_type(
 ) -> Result<Option<AssetTypeRow>, RepositoryError> {
     let repository = AssetTypeRepository::new(connection);
     let mut result =
-        repository.query_by_filter(AssetTypeFilter::new().id(EqualFilter::equal_to(&id)))?;
+        repository.query_by_filter(AssetTypeFilter::new().id(EqualFilter::equal_to_string(&id)))?;
     Ok(result.pop())
 }

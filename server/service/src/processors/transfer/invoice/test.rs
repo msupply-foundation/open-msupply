@@ -760,7 +760,7 @@ impl InvoiceTransferTester {
         let response_requisition = RequisitionRepository::new(connection)
             .query_one(
                 RequisitionFilter::new()
-                    .linked_requisition_id(EqualFilter::equal_to(&self.request_requisition.id)),
+                    .linked_requisition_id(EqualFilter::equal_to_string(&self.request_requisition.id)),
             )
             .unwrap();
         assert!(response_requisition.is_some());
@@ -875,7 +875,7 @@ impl InvoiceTransferTester {
             InvoiceLineRepository::new(connection)
                 .count(Some(
                     InvoiceLineFilter::new()
-                        .invoice_id(EqualFilter::equal_to(&inbound_shipment.id))
+                        .invoice_id(EqualFilter::equal_to_string(&inbound_shipment.id))
                 ))
                 .unwrap(),
             3
@@ -930,7 +930,7 @@ impl InvoiceTransferTester {
         assert_eq!(
             InvoiceLineRepository::new(connection)
                 .count(Some(
-                    InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(inbound_shipment_id))
+                    InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to_string(inbound_shipment_id))
                 ))
                 .unwrap(),
             0
@@ -1011,7 +1011,7 @@ impl InvoiceTransferTester {
             InvoiceLineRepository::new(connection)
                 .count(Some(
                     InvoiceLineFilter::new()
-                        .invoice_id(EqualFilter::equal_to(&inbound_shipment.id))
+                        .invoice_id(EqualFilter::equal_to_string(&inbound_shipment.id))
                 ))
                 .unwrap(),
             2
@@ -1186,7 +1186,7 @@ impl InvoiceTransferTester {
         assert_eq!(
             InvoiceLineRepository::new(connection)
                 .count(Some(
-                    InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(&customer_return.id))
+                    InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to_string(&customer_return.id))
                 ))
                 .unwrap(),
             1
@@ -1229,7 +1229,7 @@ impl InvoiceTransferTester {
         assert_eq!(
             InvoiceLineRepository::new(connection)
                 .count(Some(
-                    InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(customer_return_id))
+                    InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to_string(customer_return_id))
                 ))
                 .unwrap(),
             0
@@ -1300,7 +1300,7 @@ impl InvoiceTransferTester {
         assert_eq!(
             InvoiceLineRepository::new(connection)
                 .count(Some(
-                    InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(&customer_return.id))
+                    InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to_string(&customer_return.id))
                 ))
                 .unwrap(),
             1
@@ -1395,8 +1395,8 @@ fn check_line(
     let inbound_line = InvoiceLineRepository::new(connection)
         .query_one(
             InvoiceLineFilter::new()
-                .invoice_id(EqualFilter::equal_to(inbound_id))
-                .item_id(EqualFilter::equal_to(&outbound_line.item_link_id)),
+                .invoice_id(EqualFilter::equal_to_string(inbound_id))
+                .item_id(EqualFilter::equal_to_string(&outbound_line.item_link_id)),
         )
         .unwrap();
 

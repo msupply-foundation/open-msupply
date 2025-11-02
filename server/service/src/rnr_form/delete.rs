@@ -30,7 +30,7 @@ pub fn delete_rnr_form(ctx: &ServiceContext, input: DeleteRnRForm) -> Result<Str
             validate(connection, &ctx.store_id, &input)?;
 
             let lines = RnRFormLineRepository::new(connection).query_by_filter(
-                RnRFormLineFilter::new().rnr_form_id(EqualFilter::equal_to(&input.id)),
+                RnRFormLineFilter::new().rnr_form_id(EqualFilter::equal_to_string(&input.id)),
             )?;
 
             for line in lines {

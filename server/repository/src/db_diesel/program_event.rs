@@ -277,8 +277,8 @@ mod test {
         // test deleting by patient id
         repo.delete(
             ProgramEventFilter::new()
-                .document_type(EqualFilter::equal_to("type1"))
-                .patient_id(EqualFilter::equal_to(&mock_patient().id)),
+                .document_type(EqualFilter::equal_to_string("type1"))
+                .patient_id(EqualFilter::equal_to_string(&mock_patient().id)),
         )
         .unwrap();
         assert_eq!(
@@ -293,7 +293,7 @@ mod test {
         );
 
         // delete the second event without patient filter
-        repo.delete(ProgramEventFilter::new().document_type(EqualFilter::equal_to("type2")))
+        repo.delete(ProgramEventFilter::new().document_type(EqualFilter::equal_to_string("type2")))
             .unwrap();
         assert_eq!(repo.query(Pagination::all(), None, None).unwrap().len(), 0);
     }

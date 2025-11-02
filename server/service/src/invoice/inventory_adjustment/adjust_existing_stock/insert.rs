@@ -252,7 +252,7 @@ mod test {
         // Reduce stock below zero
         let stock_line = StockLineRepository::new(&context.connection)
             .query_by_filter(
-                StockLineFilter::new().id(EqualFilter::equal_to(&mock_stock_line_a().id)),
+                StockLineFilter::new().id(EqualFilter::equal_to_string(&mock_stock_line_a().id)),
                 Some(mock_store_a().id.clone()),
             )
             .unwrap()

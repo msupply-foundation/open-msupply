@@ -198,10 +198,10 @@ mod graphql {
                 has_outstanding_lines: _,
             } = filter.unwrap();
 
-            assert_eq!(id, Some(EqualFilter::not_equal_to("id_not_equal_to")));
+            assert_eq!(id, Some(EqualFilter::not_equal_to_string("id_not_equal_to")));
             assert_eq!(
                 user_id,
-                Some(EqualFilter::not_equal_to("user_id_not_equal_to"))
+                Some(EqualFilter::not_equal_to_string("user_id_not_equal_to"))
             );
             assert_eq!(requisition_number, Some(EqualFilter::equal_to_i64(20)));
             assert_eq!(r#type, Some(RequisitionType::Request.equal_to()));
@@ -247,7 +247,7 @@ mod graphql {
                     "two".to_owned()
                 ]))
             );
-            assert_eq!(colour, Some(EqualFilter::equal_to("equal_to_color")));
+            assert_eq!(colour, Some(EqualFilter::equal_to_string("equal_to_color")));
             assert_eq!(
                 their_reference,
                 Some(StringFilter::like("like_their_reference"))

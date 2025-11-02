@@ -70,7 +70,7 @@ impl RequisitionTransferProcessor for UpdateRequestRequisitionApprovedQuantities
 
         // Get response requisition lines
         let response_lines = requisition_line_repository.query_by_filter(
-            RequisitionLineFilter::new().requisition_id(EqualFilter::equal_to(
+            RequisitionLineFilter::new().requisition_id(EqualFilter::equal_to_string(
                 &response_requisition.requisition_row.id,
             )),
         )?;

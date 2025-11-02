@@ -301,9 +301,9 @@ mod test {
         )
         .unwrap();
 
-        let vvm_log_filter = VVMStatusLogFilter::new().invoice_line_id(EqualFilter::equal_to(
-            "delivered_invoice_line_with_vvm_status",
-        ));
+        let vvm_log_filter = VVMStatusLogFilter::new().invoice_line_id(
+            EqualFilter::equal_to_string("delivered_invoice_line_with_vvm_status"),
+        );
 
         let vvm_status_log = VVMStatusLogRepository::new(&connection)
             .query_by_filter(vvm_log_filter.clone())
