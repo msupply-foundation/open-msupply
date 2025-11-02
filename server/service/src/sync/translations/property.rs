@@ -55,6 +55,10 @@ impl SyncTranslation for PropertyTranslation {
     ) -> bool {
         match r#type {
             ToSyncRecordTranslationType::PullFromOmSupplyCentral => {
+                // supply_level is handled by name_category_5 translator
+                if row.record_id == "supply_level" {
+                    return false;
+                }
                 self.change_log_type().as_ref() == Some(&row.table_name)
             }
             _ => false,
