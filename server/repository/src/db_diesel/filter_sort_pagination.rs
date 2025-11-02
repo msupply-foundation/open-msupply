@@ -188,22 +188,6 @@ impl EqualFilter<bool> {
     }
 }
 
-impl EqualFilter<f64> {
-    pub fn equal_to_f64(value: f64) -> Self {
-        Self {
-            equal_to: Some(value),
-            ..Default::default()
-        }
-    }
-
-    pub fn not_equal_to_f64(value: f64) -> Self {
-        Self {
-            not_equal_to: Some(value),
-            ..Default::default()
-        }
-    }
-}
-
 impl EqualFilter<String> {
     pub fn equal_to_string(value: &str) -> Self {
         Self {

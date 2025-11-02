@@ -193,7 +193,7 @@ fn lines_to_trim(
     let mut empty_lines = InvoiceLineRepository::new(connection).query_by_filter(
         InvoiceLineFilter::new()
             .invoice_id(EqualFilter::equal_to_string(&invoice.id))
-            .number_of_packs(EqualFilter::equal_to_f64(0.0))
+            .number_of_packs(EqualFilter::equal_to(0.0))
             .r#type(InvoiceLineType::StockOut.equal_to()),
     )?;
 
