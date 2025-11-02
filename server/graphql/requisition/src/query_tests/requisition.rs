@@ -203,7 +203,7 @@ mod graphql {
                 user_id,
                 Some(EqualFilter::not_equal_to_string("user_id_not_equal_to"))
             );
-            assert_eq!(requisition_number, Some(EqualFilter::equal_to_i64(20)));
+            assert_eq!(requisition_number, Some(EqualFilter::equal_to(20)));
             assert_eq!(r#type, Some(RequisitionType::Request.equal_to()));
             assert_eq!(status, Some(RequisitionStatus::Draft.equal_to()));
             assert_eq!(

@@ -181,15 +181,6 @@ impl EqualFilter<bool> {
     }
 }
 
-impl EqualFilter<i64> {
-    pub fn equal_to_i64(value: i64) -> Self {
-        Self {
-            equal_to: Some(value),
-            ..Default::default()
-        }
-    }
-}
-
 impl EqualFilter<i32> {
     pub fn equal_to_i32(value: i32) -> Self {
         Self {

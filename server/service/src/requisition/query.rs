@@ -50,7 +50,7 @@ pub fn get_requisition_by_number(
     let mut result = RequisitionRepository::new(&ctx.connection).query_by_filter(
         RequisitionFilter::new()
             .store_id(EqualFilter::equal_to_string(store_id))
-            .requisition_number(EqualFilter::equal_to_i64(requisition_number as i64))
+            .requisition_number(EqualFilter::equal_to(requisition_number as i64))
             .r#type(r#type.equal_to()),
     )?;
 
