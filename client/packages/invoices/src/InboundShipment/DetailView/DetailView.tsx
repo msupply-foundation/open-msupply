@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import {
   useEditModal,
   DetailViewSkeleton,
@@ -22,6 +22,7 @@ import { AppRoute } from '@openmsupply-client/config';
 import {
   ActivityLogList,
   DocumentsTable,
+  ItemRowFragment,
   UploadDocumentModal,
   useIsItemVariantsEnabled,
   useVvmStatusesEnabled,
@@ -170,6 +171,16 @@ const DetailViewInner = () => {
 
   const tab = urlQuery['tab'] ?? InboundShipmentDetailTabs.Details;
 
+  const getSortedItems = useCallback(
+    () =>
+      table.getSortedRowModel().rows.reduce<ItemRowFragment[]>((acc, row) => {
+        const item = row.original.item;
+        if (!acc.find(i => i.id === item.id)) acc.push(item);
+        return acc;
+      }, []),
+    []
+  );
+
   if (isLoading) return <DetailViewSkeleton hasGroupBy={true} hasHold={true} />;
 
   const tabs = [
@@ -242,6 +253,7 @@ const DetailViewInner = () => {
                 batch: (entity as ScannedBatchData)?.batch,
                 expiryDate: (entity as ScannedBatchData)?.expiryDate,
               }}
+              getSortedItems={getSortedItems}
             />
           )}
           {returnsIsOpen && (
