@@ -179,15 +179,6 @@ impl<F> EqualFilter<F> {
     }
 }
 
-impl EqualFilter<bool> {
-    pub fn equal_or_null_bool(value: bool) -> Self {
-        Self {
-            equal_any_or_null: Some(vec![value]),
-            ..Default::default()
-        }
-    }
-}
-
 impl EqualFilter<String> {
     pub fn equal_to_string(value: &str) -> Self {
         Self {
