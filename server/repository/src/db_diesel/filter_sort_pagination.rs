@@ -109,13 +109,6 @@ impl<T> EqualFilter<T> {
         }
     }
 
-    pub fn not_equal_to(value: T) -> Self {
-        Self {
-            not_equal_to: Some(value),
-            ..Default::default()
-        }
-    }
-
     pub fn equal_any(value: Vec<T>) -> Self {
         Self {
             equal_any: Some(value),
@@ -126,6 +119,20 @@ impl<T> EqualFilter<T> {
     pub fn equal_any_or_null(value: Vec<T>) -> Self {
         Self {
             equal_any_or_null: Some(value),
+            ..Default::default()
+        }
+    }
+
+    pub fn not_equal_to(value: T) -> Self {
+        Self {
+            not_equal_to: Some(value),
+            ..Default::default()
+        }
+    }
+
+    pub fn not_equal_to_or_null(value: T) -> Self {
+        Self {
+            not_equal_to_or_null: Some(value),
             ..Default::default()
         }
     }
@@ -176,42 +183,6 @@ impl EqualFilter<bool> {
     pub fn equal_or_null_bool(value: bool) -> Self {
         Self {
             equal_any_or_null: Some(vec![value]),
-            ..Default::default()
-        }
-    }
-}
-
-impl EqualFilter<i32> {
-    pub fn equal_to_i32(value: i32) -> Self {
-        Self {
-            equal_to: Some(value),
-            ..Default::default()
-        }
-    }
-
-    pub fn not_equal_to_i32(value: i32) -> Self {
-        Self {
-            not_equal_to: Some(value),
-            ..Default::default()
-        }
-    }
-
-    pub fn not_equal_to_or_null_i32(value: i32) -> Self {
-        Self {
-            not_equal_to_or_null: Some(value),
-            ..Default::default()
-        }
-    }
-
-    pub fn i32_is_null(value: bool) -> Self {
-        Self {
-            is_null: Some(value),
-            ..Default::default()
-        }
-    }
-    pub fn equal_any_or_null_i32(value: Vec<i32>) -> Self {
-        Self {
-            equal_any_or_null: Some(value),
             ..Default::default()
         }
     }

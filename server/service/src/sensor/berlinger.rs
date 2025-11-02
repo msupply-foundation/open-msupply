@@ -54,7 +54,7 @@ fn get_matching_sensor_breach_config(
 ) -> Result<Vec<TemperatureBreachConfig>, RepositoryError> {
     let filter = TemperatureBreachConfigFilter::new()
         .store_id(EqualFilter::equal_to_string(store_id))
-        .duration_milliseconds(EqualFilter::equal_to_i32(
+        .duration_milliseconds(EqualFilter::equal_to(
             temperature_breach_config.duration.num_milliseconds() as i32,
         ))
         .minimum_temperature(EqualFilter::equal_to_f64(

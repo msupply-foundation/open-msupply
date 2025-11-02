@@ -64,7 +64,7 @@ pub(crate) fn get_sync_push_changelogs_filter(
             .ok_or(SyncChangelogError::CentralSiteIdNotSet)?;
 
         return Ok(Some(ChangelogFilter::new().source_site_id(
-            EqualFilter::not_equal_to_or_null_i32(msupply_central_server_id),
+            EqualFilter::not_equal_to_or_null(msupply_central_server_id),
         )));
     }
 
@@ -96,7 +96,7 @@ impl ActiveStoresOnSite {
             .ok_or(Error::SiteIdNotSet)?;
 
         let stores = StoreRepository::new(connection)
-            .query_by_filter(StoreFilter::new().site_id(EqualFilter::equal_to_i32(site_id)))?;
+            .query_by_filter(StoreFilter::new().site_id(EqualFilter::equal_to(site_id)))?;
 
         Ok(ActiveStoresOnSite { stores })
     }
