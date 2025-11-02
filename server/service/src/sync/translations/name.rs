@@ -2,7 +2,7 @@ use anyhow::Context;
 use chrono::{NaiveDate, NaiveDateTime};
 use repository::{
     ChangelogRow, ChangelogTableName, GenderType, NameRow, NameRowDelete, NameRowRepository,
-    NameRowType, StorageConnection, SyncBufferRow,
+    NameRowType, PropertyRowRepository, StorageConnection, SyncBufferRow,
 };
 use util::sync_serde::{
     date_option_to_isostring, empty_str_as_option, empty_str_as_option_string, zero_date_as_option,
@@ -175,6 +175,10 @@ pub struct LegacyNameRow {
     #[serde(rename = "currency_ID")]
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub currency_id: Option<String>,
+
+    #[serde(rename = "category5_ID")]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    pub category5_id: Option<String>,
 }
 // Needs to be added to all_translators()
 #[deny(dead_code)]
@@ -232,7 +236,7 @@ impl SyncTranslation for NameTranslation {
 
     fn try_translate_from_upsert_sync_record(
         &self,
-        _: &StorageConnection,
+        connection: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let LegacyNameRow {
@@ -272,7 +276,31 @@ impl SyncTranslation for NameTranslation {
             margin,
             freight_factor,
             currency_id,
+            category5_id,
         } = serde_json::from_str::<LegacyNameRow>(&sync_record.data)?;
+
+        let category5_parts = category5_id.and_then(|cat5| {
+            cat5.split_once(':')
+                .map(|(key, value)| (key.to_string(), value.to_string()))
+        });
+
+        let properties_json = if let Some((key, value)) = &category5_parts {
+            PropertyRowRepository::new(connection)
+                .find_one_by_id(key)
+                .ok()
+                .flatten()
+                .and_then(|property| {
+                    property.allowed_values.as_ref().and_then(|allowed| {
+                        if allowed.split(',').any(|v| v.trim() == value) {
+                            Some(format!("{{\"{}\": \"{}\"}}", key, value))
+                        } else {
+                            None
+                        }
+                    })
+                })
+        } else {
+            None
+        };
 
         // Custom data for facility or name only (for others, say patient, don't need to have extra overhead or push translation back to json)
         let r#type = legacy_type.to_name_type();
@@ -329,6 +357,11 @@ impl SyncTranslation for NameTranslation {
             currency_id,
             deleted_datetime: None,
         };
+
+        // Save properties if we parsed category5_id successfully
+        if let Some(props) = properties_json {
+            let _ = NameRowRepository::new(connection).update_properties(&result.id, &Some(props));
+        }
 
         Ok(PullTranslateResult::upsert(result))
     }
@@ -397,20 +430,56 @@ impl SyncTranslation for NameTranslation {
             ));
         }
 
-        let patient_type = match r#type {
+        let properties = NameRowRepository::new(connection)
+            .find_one_oms_fields_by_id(&id)?
+            .and_then(|row| row.properties);
+
+        // Check if this record has a supply_level property
+        let has_supply_level = properties
+            .as_ref()
+            .and_then(|json_str| serde_json::from_str::<serde_json::Value>(&json_str).ok())
+            .and_then(|v| v.get("supply_level").cloned())
+            .is_some();
+
+        // Only push if it's a patient OR (is a store/customer AND has a supply_level property)
+        let is_patient = r#type == NameRowType::Patient;
+        let is_store = r#type == NameRowType::Store;
+        let is_customer_type = is_customer;
+
+        if !is_patient && !(is_store && has_supply_level) && !(is_customer_type && has_supply_level)
+        {
+            return Ok(PushTranslateResult::Ignored(
+                "Only push patients, or stores/customers with supply_level property".to_string(),
+            ));
+        }
+
+        let legacy_type = match r#type {
             NameRowType::Patient => LegacyNameRowType::Patient,
+            NameRowType::Store => LegacyNameRowType::Store,
+            NameRowType::Facility => LegacyNameRowType::Facility,
             _ => {
-                return Ok(PushTranslateResult::Ignored(
-                    "Only push name records that belong to patients".to_string(),
-                ))
+                return Ok(PushTranslateResult::Ignored(format!(
+                    "Only push Patient, Store, or Facility name types. Got: {:?}",
+                    r#type
+                )))
             }
         };
+
+        let category5_id = properties
+            .and_then(|json_str| serde_json::from_str::<serde_json::Value>(&json_str).ok())
+            .and_then(|v| v.as_object().cloned())
+            .map(|obj| {
+                obj.iter()
+                    .map(|(k, v)| format!("{}:{}", k, v.as_str().unwrap_or("")))
+                    .collect::<Vec<_>>()
+                    .join(", ")
+            });
 
         let legacy_row = LegacyNameRow {
             id,
             name,
             code,
-            r#type: patient_type,
+            r#type: legacy_type,
             is_customer,
             is_supplier,
             supplying_store_id,
@@ -446,6 +515,7 @@ impl SyncTranslation for NameTranslation {
             freight_factor,
             currency_id,
             custom_data: None,
+            category5_id,
         };
 
         Ok(PushTranslateResult::upsert(

@@ -221,3 +221,30 @@ impl SyncTranslation for NameCategory5Translation {
         Ok(PullTranslateResult::upsert(property))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use repository::{mock::MockDataInserts, test_db::setup_all};
+
+    #[actix_rt::test]
+    async fn test_name_category_5_translation() {
+        use crate::sync::test::test_data::name_category_5 as test_data;
+        let translator = NameCategory5Translation {};
+
+        let (_, connection, _, _) =
+            setup_all("test_name_category_5_translation", MockDataInserts::none()).await;
+
+        for record in test_data::test_pull_upsert_records() {
+            assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
+            let translation_result = translator
+                .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
+                .expect(&format!(
+                    "Error translating from upsert sync record {:?}",
+                    record.sync_buffer_row.record_id
+                ));
+
+            assert_eq!(translation_result, record.translated_record);
+        }
+    }
+}

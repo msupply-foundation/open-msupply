@@ -642,6 +642,7 @@ fn name_push_record_1() -> TestSyncOutgoingRecord {
             margin: Some(0.0),
             freight_factor: Some(0.0),
             currency_id: None,
+            category5_id: None,
         }),
     }
 }
@@ -692,6 +693,7 @@ fn name_push_record_2() -> TestSyncOutgoingRecord {
             margin: Some(0.0),
             freight_factor: Some(0.0),
             currency_id: Some("NEW_ZEALAND_DOLLARS".to_string()),
+            category5_id: None,
         }),
     }
 }
@@ -828,6 +830,7 @@ fn name_push_record_5() -> TestSyncOutgoingRecord {
             margin: None,
             freight_factor: None,
             currency_id: None,
+            category5_id: None,
         }),
     }
 }
@@ -964,6 +967,7 @@ fn name_push_record_6() -> TestSyncOutgoingRecord {
             margin: None,
             freight_factor: None,
             currency_id: None,
+            category5_id: None,
         }),
     }
 }
