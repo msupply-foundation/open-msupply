@@ -173,7 +173,7 @@ pub fn stocktake_by_number(
         &service_ctx,
         store_id,
         None,
-        Some(StocktakeFilter::new().stocktake_number(EqualFilter::equal_to_i64(stocktake_number))),
+        Some(StocktakeFilter::new().stocktake_number(EqualFilter::equal_to(stocktake_number))),
         None,
     ) {
         Ok(mut stocktakes) => {
