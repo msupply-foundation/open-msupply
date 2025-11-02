@@ -10,7 +10,7 @@ pub fn query_global(
     PreferenceRepository::new(connection).query_one(
         PreferenceFilter::new()
             .key(EqualFilter::equal_to_string(key))
-            .store_id(EqualFilter::is_null_string(true)),
+            .store_id(EqualFilter::is_null(true)),
     )
 }
 

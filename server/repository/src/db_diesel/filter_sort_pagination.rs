@@ -193,13 +193,6 @@ impl EqualFilter<String> {
             ..Default::default()
         }
     }
-
-    pub fn is_null_string(value: bool) -> Self {
-        Self {
-            is_null: Some(value),
-            ..Default::default()
-        }
-    }
 }
 
 #[derive(Clone, PartialEq, Debug, Default)]

@@ -203,7 +203,7 @@ mod tests {
         let result = repository
             .query_by_filter(
                 InvoiceFilter::new()
-                    .user_id(EqualFilter::is_null_string(true).restrict_results(&allowed)),
+                    .user_id(EqualFilter::is_null(true).restrict_results(&allowed)),
             )
             .unwrap()
             .into_iter()
