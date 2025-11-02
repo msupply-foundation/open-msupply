@@ -1,27 +1,25 @@
-import { useInbound } from '..';
-import { InboundLineFragment } from '../../operations.generated';
-
-type InboundLineItem = InboundLineFragment['item'];
+import { ItemRowFragment } from 'packages/system/src';
+import { useState } from 'react';
 
 export const useNextItem = (
+  getSortedItems: () => ItemRowFragment[],
   currentItemId: string
-): { next: InboundLineItem | null; disabled: boolean } => {
-  const next: InboundLineItem | null = null;
-  const disabled = true;
-  const { items } = useInbound.lines.rows();
+): { next: ItemRowFragment | null; disabled: boolean } => {
+  const [items] = useState(getSortedItems());
 
-  if (!items) return { next, disabled };
+  if (!items || !currentItemId) return { next: null, disabled: true };
 
   const numberOfItems = items.length;
-  const currentIndex = items.findIndex(
-    ({ itemId }) => itemId === currentItemId
-  );
-  const nextIndex = currentIndex + 1;
-  const nextItem = items?.[nextIndex];
-  if (!nextItem) return { next, disabled };
+  const currentIdx = items.findIndex(({ id }) => id === currentItemId);
+  const nextIdx = currentIdx + 1;
+  const nextItem = items[nextIdx];
+
+  if (currentIdx === -1 || !nextItem) {
+    return { next: null, disabled: true };
+  }
 
   return {
-    next: nextItem.lines[0]?.item || null,
-    disabled: currentIndex === numberOfItems - 1,
+    next: nextItem,
+    disabled: currentIdx === numberOfItems - 1,
   };
 };

@@ -27,6 +27,7 @@ export const useInbound = {
     list: Lines.useInboundLines,
     items: Lines.useInboundItems,
     serviceLines: Lines.useInboundServiceLines,
+    lines: Lines.useInboundLines,
 
     insertFromInternalOrder: Lines.useLinesFromInternalOrder,
     delete: Lines.useDeleteInboundLines,
