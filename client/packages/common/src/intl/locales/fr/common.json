@@ -1104,7 +1104,7 @@
   "label.ledger": "Grand livre",
   "label.level": "Niveau",
   "label.line": "Ligne {{line, number}}",
-  "label.line-number": "Numéro de ligne",
+  "label.line-number": "Ligne",
   "label.line-total": "Total Ligne",
   "label.lines": "Lignes",
   "label.linked-patient": "Patient Associé",
