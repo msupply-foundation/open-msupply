@@ -29,7 +29,6 @@ export const ExpiryDateInputCell = <T extends MRT_RowData>({
       value={value}
       onChange={onChange}
       disabled={!!isDisabled}
-      //   width={column}
     />
   );
 };

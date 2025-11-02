@@ -34,6 +34,7 @@ import {
 import { TextInputCell } from '@openmsupply-client/common/src/ui/layout/tables/material-react-table/components/TextInputCell';
 import { ExpiryDateInputCell } from '@openmsupply-client/common/src/ui/layout/tables/material-react-table/components/ExpiryDateInputCell';
 import { NumberInputCell } from '@openmsupply-client/common/src/ui/layout/tables/material-react-table/components/NumberInputCell';
+import { ItemVariantCell } from '@openmsupply-client/common/src/ui/layout/tables/material-react-table/components/ItemVariantCell';
 import { DraftInboundLine } from '../../../../types';
 import {
   CurrencyRowFragment,
@@ -42,16 +43,11 @@ import {
   getLocationInputColumn,
   getVolumePerPackFromVariant,
   ItemRowFragment,
+  ItemVariantFragment,
   LocationRowFragment,
   PackSizeEntryCell,
+  VVMStatusSearchInput,
 } from '@openmsupply-client/system';
-import {
-  getBatchExpiryColumns,
-  getInboundDosesColumns,
-  itemVariantColumn,
-  NumberOfPacksCell,
-  vvmStatusesColumn,
-} from './utils';
 import { PatchDraftLineInput } from '../../../api';
 
 interface TableProps {
@@ -82,7 +78,6 @@ export const QuantityTableComponent = ({
   setPackRoundingMessage,
 }: QuantityTableProps) => {
   const t = useTranslation();
-  const theme = useTheme();
   const { getPlural } = useIntlUtils();
   const { format } = useFormatNumber();
   const { manageVaccinesInDoses } = usePreferences();
@@ -105,16 +100,16 @@ export const QuantityTableComponent = ({
             updateFn={(value: string) => {
               updateDraftLine({ batch: value, id: row.original.id });
             }}
+            autoFocus={row.index === 0}
           />
         ),
         // TODO: Mui Autocomplete
         // autocompleteProvider: data => `inboundshipment${data.item.id}`,
       },
-      // TODO: EDITABLE
       {
         accessorKey: 'expiryDate',
         header: t('label.expiry-date'),
-        size: 100,
+        size: 150,
         columnType: ColumnType.Date,
         Cell: ({ row, cell }) => (
           <ExpiryDateInputCell
@@ -127,7 +122,52 @@ export const QuantityTableComponent = ({
           />
         ),
       },
-      // TODO: item variant cell, doses per unit, vvm status.
+      {
+        accessorKey: 'itemVariant',
+        header: t('label.item-variant'),
+        size: 150,
+        accessorFn: row => row.itemVariant?.id || '',
+        Cell: ({ row, cell }) => (
+          <ItemVariantCell
+            cell={cell}
+            updateFn={(value: ItemVariantFragment | null) => {
+              updateDraftLine({
+                itemVariant: value,
+                id: row.original.id,
+              });
+            }}
+            itemId={row.original.item.id}
+          />
+        ),
+        includeColumn: hasItemVariantsEnabled,
+      },
+      {
+        id: 'itemDoses',
+        header: t('label.doses-per-unit'),
+        columnType: ColumnType.Number,
+        defaultHideOnMobile: true,
+        includeColumn: displayInDoses,
+        accessorFn: row => (row.item.isVaccine ? row.item.doses : undefined),
+      },
+      {
+        id: 'vvmStatus',
+        header: t('label.vvm-status'),
+        size: 150,
+        accessorFn: row => row.vvmStatus || '',
+        Cell: ({
+          row: {
+            original: { id, vvmStatus, stockLine },
+          },
+        }) => (
+          <VVMStatusSearchInput
+            disabled={isDisabled}
+            selected={vvmStatus ?? null}
+            onChange={vvmStatus => updateDraftLine({ id, vvmStatus })}
+            useDefault={!stockLine}
+          />
+        ),
+        includeColumn: hasVvmStatusesEnabled && item?.isVaccine,
+      },
       {
         accessorKey: 'shippedPackSize',
         header: t('label.shipped-pack-size'),
@@ -216,6 +256,16 @@ export const QuantityTableComponent = ({
         ),
       },
       {
+        accessorKey: 'doseQuantity',
+        header: t('label.doses-received'),
+        size: 100,
+        includeColumn: displayInDoses,
+        accessorFn: row => {
+          const total = row.numberOfPacks * row.packSize;
+          return format(total * row.item.doses);
+        },
+      },
+      {
         accessorKey: 'unitsPerPack',
         header: t('label.units-received', {
           unit: pluralisedUnitName,
@@ -296,178 +346,6 @@ export const QuantityTableComponent = ({
   });
 
   return <MaterialTable table={table} />;
-
-  // const columnDefinitions: ColumnDescription<DraftInboundLine>[] = [
-  //   ...getBatchExpiryColumns(updateDraftLine, theme),
-  // ];
-
-  // if (hasItemVariantsEnabled) {
-  //   columnDefinitions.push(itemVariantColumn(updateDraftLine));
-  // }
-
-  // if (displayInDoses) {
-  //   columnDefinitions.push(getDosesPerUnitColumn(t, unitName));
-  // }
-
-  // if (!!hasVvmStatusesEnabled && item?.isVaccine) {
-  //   columnDefinitions.push(vvmStatusesColumn(updateDraftLine));
-  // }
-
-  // columnDefinitions.push(
-  //   {
-  //     key: 'shippedPackSize',
-  //     label: 'label.shipped-pack-size',
-  //     width: 100,
-  //     Cell: PackSizeEntryCell<DraftInboundLine>,
-  //     setter: patch => {
-  //       updateDraftLine(patch);
-  //     },
-  //     getIsDisabled: rowData => !!rowData.linkedInvoiceId,
-  //     defaultHideOnMobile: true,
-  //     align: ColumnAlign.Left,
-  //   },
-  //   {
-  //     key: 'shippedNumberOfPacks',
-  //     label: 'label.shipped-number-of-packs',
-  //     Cell: NumberOfPacksCell,
-  //     cellProps: {
-  //       decimalLimit: 0,
-  //     },
-  //     getIsDisabled: rowData => !!rowData.linkedInvoiceId,
-  //     width: 100,
-  //     align: ColumnAlign.Left,
-  //     setter: patch => updateDraftLine(patch),
-  //   },
-  //   getColumnLookupWithOverrides('packSize', {
-  //     Cell: PackSizeEntryCell<DraftInboundLine>,
-  //     setter: patch => {
-  //       const shouldClearSellPrice =
-  //         patch.item?.defaultPackSize !== patch.packSize &&
-  //         patch.item?.itemStoreProperties?.defaultSellPricePerPack ===
-  //           patch.sellPricePerPack;
-
-  //       updateDraftLine({
-  //         ...patch,
-  //         volumePerPack: getVolumePerPackFromVariant(patch) ?? 0,
-  //         sellPricePerPack: shouldClearSellPrice ? 0 : patch.sellPricePerPack,
-  //       });
-  //     },
-  //     label: 'label.received-pack-size',
-  //     width: 100,
-  //     defaultHideOnMobile: true,
-  //     align: ColumnAlign.Left,
-  //   }),
-  //   [
-  //     'numberOfPacks',
-  //     {
-  //       label: 'label.packs-received',
-  //       Cell: NumberOfPacksCell,
-  //       cellProps: { decimalLimit: 0 },
-  //       width: 100,
-  //       align: ColumnAlign.Left,
-  //       setter: patch => {
-  //         const { packSize, numberOfPacks } = patch;
-
-  //         if (packSize !== undefined && numberOfPacks !== undefined) {
-  //           const packToUnits = packSize * numberOfPacks;
-  //           setPackRoundingMessage?.('');
-
-  //           updateDraftLine({
-  //             ...patch,
-  //             unitsPerPack: packToUnits,
-  //           });
-  //         }
-  //       },
-  //     },
-  //   ]
-  // );
-
-  // columnDefinitions.push({
-  //   key: 'unitsPerPack',
-  //   label: t('label.units-received', {
-  //     unit: pluralisedUnitName,
-  //   }),
-  //   width: 100,
-  //   cellProps: { debounce: 500 },
-  //   Cell: NumberInputCell,
-  //   align: ColumnAlign.Left,
-  //   setter: patch => {
-  //     const { unitsPerPack, packSize } = patch;
-
-  //     if (packSize !== undefined && unitsPerPack !== undefined) {
-  //       const unitToPacks = unitsPerPack / packSize;
-
-  //       const roundedPacks = Math.ceil(unitToPacks);
-  //       const actualUnits = roundedPacks * packSize;
-
-  //       if (roundedPacks === unitToPacks || roundedPacks === 0) {
-  //         setPackRoundingMessage?.('');
-  //       } else {
-  //         setPackRoundingMessage?.(
-  //           t('messages.under-allocated', {
-  //             receivedQuantity: format(NumUtils.round(unitsPerPack, 2)), // round the display value to 2dp
-  //             quantity: format(actualUnits),
-  //           })
-  //         );
-  //       }
-
-  //       updateDraftLine({
-  //         ...patch,
-  //         unitsPerPack: actualUnits,
-  //         numberOfPacks: roundedPacks,
-  //       });
-  //       return actualUnits;
-  //     }
-  //   },
-
-  //   accessor: ({ rowData }) => {
-  //     return rowData.numberOfPacks * rowData.packSize;
-  //   },
-  //   defaultHideOnMobile: true,
-  // });
-
-  // if (displayInDoses) {
-  //   columnDefinitions.push(...getInboundDosesColumns(format));
-  // }
-
-  // columnDefinitions.push(
-  //   {
-  //     key: 'volumePerPack',
-  //     label: t('label.volume-per-pack'),
-  //     Cell: NumberInputCell,
-  //     cellProps: { decimalLimit: 10 },
-  //     width: 100,
-  //     accessor: ({ rowData }) => rowData?.volumePerPack,
-  //     setter: updateDraftLine,
-  //   },
-  //   {
-  //     key: 'delete',
-  //     width: 50,
-  //     Cell: ({ rowData }) => (
-  //       <IconButton
-  //         label="Delete"
-  //         onClick={() => removeDraftLine(rowData.id)}
-  //         icon={<DeleteIcon fontSize="small" />}
-  //       />
-  //     ),
-  //   }
-  // );
-
-  // const columns = useColumns<DraftInboundLine>(columnDefinitions, {}, [
-  //   updateDraftLine,
-  //   lines,
-  //   columnDefinitions,
-  // ]);
-
-  // return (
-  //   <DataTable
-  //     id="inbound-line-quantity"
-  //     isDisabled={isDisabled}
-  //     columns={columns}
-  //     data={lines}
-  //     dense
-  //   />
-  // );
 };
 
 export const QuantityTable = React.memo(QuantityTableComponent);
