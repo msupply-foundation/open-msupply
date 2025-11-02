@@ -1,13 +1,16 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useInbound } from '.';
-import { useConfirmOnLeaving, useNotification } from '@common/hooks';
+import {
+  useConfirmOnLeaving,
+  useNotification,
+  useTranslation,
+} from '@openmsupply-client/common';
+import { useItem } from '@openmsupply-client/system';
 import { DraftInboundLine } from '../../../types';
 import { CreateDraft } from '../../DetailView/modals/utils';
 import { useDeleteInboundLines } from './line/useDeleteInboundLines';
 import { mapErrorToMessageAndSetContext } from './mapErrorToMessageAndSetContext';
-import { useTranslation } from '@common/intl';
 import { ScannedBatchData } from '../../DetailView';
-import { useItem } from 'packages/system/src';
 
 export type PatchDraftLineInput = Partial<DraftInboundLine> & { id: string };
 
@@ -62,7 +65,6 @@ export const useDraftInboundLines = (
   }, [lines, item, id]);
 
   const addDraftLine = () => {
-    console.log('item', item);
     if (item) {
       const newLine = CreateDraft.stockInLine({
         item,
