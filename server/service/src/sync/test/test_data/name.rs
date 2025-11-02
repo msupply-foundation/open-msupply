@@ -731,7 +731,8 @@ const NAME_5_DOB_T_FORMAT: (&str, &str) = (
     "supplier": false,
     "supplying_store_id": "",
     "type": "patient",
-    "url": null
+    "url": null,
+    "category5_ID": null
 }"#,
 );
 
@@ -868,7 +869,8 @@ const NAME_6_DOB_NO_T_FORMAT: (&str, &str) = (
     "supplier": false,
     "supplying_store_id": "",
     "type": "patient",
-    "url": null
+    "url": null, 
+    "category5_ID": null
 }"#,
 );
 
