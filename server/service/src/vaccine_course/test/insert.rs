@@ -158,7 +158,7 @@ mod query {
         // Check there are two items for the vaccine_course
         let item_repo = VaccineCourseItemRepository::new(&context.connection);
         let item_filter = VaccineCourseItemFilter::new()
-            .vaccine_course_id(EqualFilter::equal_to(&vaccine_course_insert_d.id));
+            .vaccine_course_id(EqualFilter::equal_to_string(&vaccine_course_insert_d.id));
 
         let count = item_repo.count(Some(item_filter.clone())).unwrap();
         assert_eq!(count, 2);
@@ -167,7 +167,7 @@ mod query {
 
         let dose_repo = VaccineCourseDoseRepository::new(&context.connection);
         let dose_filter = VaccineCourseDoseFilter::new()
-            .vaccine_course_id(EqualFilter::equal_to(&vaccine_course_insert_d.id));
+            .vaccine_course_id(EqualFilter::equal_to_string(&vaccine_course_insert_d.id));
         let count = dose_repo.count(Some(dose_filter.clone())).unwrap();
         assert_eq!(count, 2);
     }

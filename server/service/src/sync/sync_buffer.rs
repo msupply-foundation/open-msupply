@@ -66,7 +66,7 @@ impl<'a> SyncBuffer<'a> {
         for legacy_table_name in order {
             let mut rows = self.query_repository.query_by_filter(
                 SyncBufferFilter::new()
-                    .table_name(EqualFilter::equal_to(legacy_table_name))
+                    .table_name(EqualFilter::equal_to_string(legacy_table_name))
                     .action(action.equal_to())
                     .integration_datetime(DatetimeFilter::is_null(true))
                     .source_site_id(match record_type {

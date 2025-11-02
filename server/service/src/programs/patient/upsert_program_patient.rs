@@ -95,7 +95,7 @@ pub fn upsert_program_patient(
                 .get_patients(
                     ctx,
                     None,
-                    Some(PatientFilter::new().id(EqualFilter::equal_to(&patient_id))),
+                    Some(PatientFilter::new().id(EqualFilter::equal_to_string(&patient_id))),
                     None,
                     None,
                 )
@@ -175,7 +175,7 @@ fn validate_document_type(
     let mut entry = DocumentRegistryRepository::new(&ctx.connection).query_by_filter(
         DocumentRegistryFilter::new()
             .r#type(DocumentRegistryCategory::Patient.equal_to())
-            .document_type(EqualFilter::equal_to(PATIENT_TYPE)),
+            .document_type(EqualFilter::equal_to_string(PATIENT_TYPE)),
     )?;
     Ok(entry.pop())
 }
@@ -309,7 +309,7 @@ pub mod test {
         // success insert
         assert!(PatientRepository::new(&ctx.connection)
             .query_by_filter(
-                PatientFilter::new().id(EqualFilter::equal_to(&patient.id)),
+                PatientFilter::new().id(EqualFilter::equal_to_string(&patient.id)),
                 None
             )
             .unwrap()
@@ -330,7 +330,7 @@ pub mod test {
             .unwrap();
         PatientRepository::new(&ctx.connection)
             .query_by_filter(
-                PatientFilter::new().id(EqualFilter::equal_to(&patient.id)),
+                PatientFilter::new().id(EqualFilter::equal_to_string(&patient.id)),
                 None,
             )
             .unwrap()

@@ -68,7 +68,7 @@ mod query {
             .get_stock_lines(
                 &context,
                 None,
-                Some(StockLineFilter::new().id(EqualFilter::equal_to("item_a_line_a"))),
+                Some(StockLineFilter::new().id(EqualFilter::equal_to_string("item_a_line_a"))),
                 None,
                 None,
             )

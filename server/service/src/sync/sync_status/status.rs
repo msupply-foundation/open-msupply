@@ -280,7 +280,7 @@ fn get_latest_successful_sync_status(
             Some(
                 SyncLogFilter::new()
                     .finished_datetime(DatetimeFilter::is_null(false))
-                    .error_message(EqualFilter::is_null(true)),
+                    .error_message(EqualFilter::is_null_string(true)),
             ),
             Some(sort),
         )?

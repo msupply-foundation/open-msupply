@@ -61,7 +61,7 @@ impl ColdChainQueries {
         let filter = filter
             .map(TemperatureLogFilter::from)
             .unwrap_or_default()
-            .store_id(EqualFilter::equal_to(&store_id));
+            .store_id(EqualFilter::equal_to_string(&store_id));
 
         let temperature_logs = service_provider
             .cold_chain_service
@@ -104,7 +104,7 @@ impl ColdChainQueries {
         let filter = filter
             .map(TemperatureBreachFilter::from)
             .unwrap_or_default()
-            .store_id(EqualFilter::equal_to(&store_id));
+            .store_id(EqualFilter::equal_to_string(&store_id));
 
         let temperature_breaches = service_provider
             .cold_chain_service
@@ -143,7 +143,7 @@ impl ColdChainQueries {
 
         // construct filter
         let filter = TemperatureBreachFilter::new()
-            .store_id(EqualFilter::equal_to(&store_id))
+            .store_id(EqualFilter::equal_to_string(&store_id))
             .unacknowledged(true);
 
         let temperature_breaches = service_provider
@@ -197,7 +197,7 @@ impl ColdChainQueries {
         let filter = filter
             .map(SensorFilter::from)
             .unwrap_or_default()
-            .store_id(EqualFilter::equal_to(&store_id));
+            .store_id(EqualFilter::equal_to_string(&store_id));
 
         let sensors = service_provider
             .sensor_service
@@ -477,8 +477,8 @@ mod test_logs {
                 filter,
                 Some(
                     TemperatureLogFilter::new()
-                        .store_id(EqualFilter::equal_to("store_a"))
-                        .sensor(SensorFilter::new().id(EqualFilter::equal_to("match_sensor")))
+                        .store_id(EqualFilter::equal_to_string("store_a"))
+                        .sensor(SensorFilter::new().id(EqualFilter::equal_to_string("match_sensor")))
                 )
             );
             Ok(ListResult::empty())
@@ -1127,7 +1127,7 @@ mod test_sensor {
                 filter,
                 Some(
                     SensorFilter::new()
-                        .store_id(EqualFilter::equal_to("store_a"))
+                        .store_id(EqualFilter::equal_to_string("store_a"))
                         .name(StringFilter::equal_to("match_name"))
                 )
             );

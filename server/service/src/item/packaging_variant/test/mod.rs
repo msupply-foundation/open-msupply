@@ -63,7 +63,7 @@ mod query {
                 None,
                 Some(
                     PackagingVariantFilter::new()
-                        .id(EqualFilter::equal_to(test_packaging_variant_id)),
+                        .id(EqualFilter::equal_to_string(test_packaging_variant_id)),
                 ),
                 None,
             )
@@ -97,7 +97,7 @@ mod query {
                 None,
                 Some(
                     PackagingVariantFilter::new()
-                        .id(EqualFilter::equal_to(test_packaging_variant_id)),
+                        .id(EqualFilter::equal_to_string(test_packaging_variant_id)),
                 ),
                 None,
             )
@@ -127,7 +127,7 @@ mod query {
                 None,
                 Some(
                     PackagingVariantFilter::new()
-                        .id(EqualFilter::equal_to(test_packaging_variant_id)),
+                        .id(EqualFilter::equal_to_string(test_packaging_variant_id)),
                 ),
                 None,
             )

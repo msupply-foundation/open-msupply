@@ -110,7 +110,7 @@ impl SyncTranslation for NameStoreJoinTranslation {
         };
 
         if let Some(store) = StoreRepository::new(connection)
-            .query_by_filter(StoreFilter::new().id(EqualFilter::equal_to(&data.store_id)))?
+            .query_by_filter(StoreFilter::new().id(EqualFilter::equal_to_string(&data.store_id)))?
             .pop()
         {
             // if the name_store_join is referencing itself, then exclude it
@@ -155,7 +155,7 @@ impl SyncTranslation for NameStoreJoinTranslation {
             name,
         } = NameStoreJoinRepository::new(connection)
             .query_by_filter(
-                NameStoreJoinFilter::new().id(EqualFilter::equal_to(&changelog.record_id)),
+                NameStoreJoinFilter::new().id(EqualFilter::equal_to_string(&changelog.record_id)),
             )?
             .pop()
             .ok_or(anyhow::anyhow!("Name store join not found"))?;

@@ -70,7 +70,7 @@ pub fn get_store(ctx: &Context<'_>, id: &str) -> Result<StoreResponse> {
 
     let store_option = service.get_store(
         &service_context,
-        StoreFilter::new().id(EqualFilter::equal_to(id)),
+        StoreFilter::new().id(EqualFilter::equal_to_string(id)),
     )?;
 
     let response = match store_option {
@@ -243,7 +243,7 @@ mod graphql {
         // Test ok mapping
         let test_service = TestService(Box::new(|filter| {
             assert_eq!(
-                StoreFilter::new().id(EqualFilter::equal_to("store_id")),
+                StoreFilter::new().id(EqualFilter::equal_to_string("store_id")),
                 filter
             );
 

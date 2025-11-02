@@ -15,7 +15,7 @@ pub(crate) fn generate_inbound_lines(
 ) -> Result<Vec<InvoiceLineRow>, RepositoryError> {
     let outbound_lines = InvoiceLineRepository::new(connection).query_by_filter(
         InvoiceLineFilter::new()
-            .invoice_id(EqualFilter::equal_to(&source_invoice.invoice_row.id))
+            .invoice_id(EqualFilter::equal_to_string(&source_invoice.invoice_row.id))
             // In mSupply you can finalise customer invoice with placeholder lines, we should remove them
             // when duplicating lines from outbound invoice to inbound invoice
             .r#type(InvoiceLineType::UnallocatedStock.not_equal_to()),

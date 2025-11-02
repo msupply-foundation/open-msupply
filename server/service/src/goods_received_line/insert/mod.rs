@@ -88,7 +88,7 @@ pub fn insert_goods_received_lines_from_purchase_order(
             let purchase_order_lines = PurchaseOrderLineRepository::new(connection)
                 .query_by_filter(
                     PurchaseOrderLineFilter::new()
-                        .purchase_order_id(EqualFilter::equal_to(&input.purchase_order_id)),
+                        .purchase_order_id(EqualFilter::equal_to_string(&input.purchase_order_id)),
                 )?;
 
             let mut goods_received_lines = Vec::new();

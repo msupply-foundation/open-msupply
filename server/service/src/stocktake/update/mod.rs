@@ -650,7 +650,7 @@ mod test {
             .unwrap();
         let stocktake_line = StocktakeLineRepository::new(&context.connection)
             .query_by_filter(
-                StocktakeLineFilter::new().stocktake_id(EqualFilter::equal_to(&result.id)),
+                StocktakeLineFilter::new().stocktake_id(EqualFilter::equal_to_string(&result.id)),
                 None,
             )
             .unwrap();
@@ -674,7 +674,7 @@ mod test {
 
         let stocktake_line = StocktakeLineRepository::new(&context.connection)
             .query_by_filter(
-                StocktakeLineFilter::new().stocktake_id(EqualFilter::equal_to(&result.id)),
+                StocktakeLineFilter::new().stocktake_id(EqualFilter::equal_to_string(&result.id)),
                 None,
             )
             .unwrap();
@@ -737,10 +737,10 @@ mod test {
         let stocktake_line = StocktakeLineRepository::new(&connection)
             .query_by_filter(
                 StocktakeLineFilter::new()
-                    .id(EqualFilter::equal_to(
+                    .id(EqualFilter::equal_to_string(
                         &mock_stocktake_line_stock_surplus().id,
                     ))
-                    .stocktake_id(EqualFilter::equal_to(&result.id)),
+                    .stocktake_id(EqualFilter::equal_to_string(&result.id)),
                 None,
             )
             .unwrap()

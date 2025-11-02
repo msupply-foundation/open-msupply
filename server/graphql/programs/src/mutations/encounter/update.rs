@@ -93,7 +93,7 @@ pub fn update_encounter(
         .encounter_service
         .encounter(
             &service_context,
-            EncounterFilter::new().document_name(EqualFilter::equal_to(&document.name)),
+            EncounterFilter::new().document_name(EqualFilter::equal_to_string(&document.name)),
             allowed_ctx.clone(),
         )?
         .ok_or(

@@ -186,13 +186,13 @@ fn lines_to_trim(
 
     let mut lines = InvoiceLineRepository::new(connection).query_by_filter(
         InvoiceLineFilter::new()
-            .invoice_id(EqualFilter::equal_to(&invoice.id))
+            .invoice_id(EqualFilter::equal_to_string(&invoice.id))
             .r#type(InvoiceLineType::UnallocatedStock.equal_to()),
     )?;
 
     let mut empty_lines = InvoiceLineRepository::new(connection).query_by_filter(
         InvoiceLineFilter::new()
-            .invoice_id(EqualFilter::equal_to(&invoice.id))
+            .invoice_id(EqualFilter::equal_to_string(&invoice.id))
             .number_of_packs(EqualFilter::equal_to_f64(0.0))
             .r#type(InvoiceLineType::StockOut.equal_to()),
     )?;
@@ -265,7 +265,7 @@ fn generate_update_for_lines(
 ) -> Result<Vec<InvoiceLineRow>, UpdateOutboundShipmentError> {
     let invoice_lines = InvoiceLineRepository::new(connection).query_by_filter(
         InvoiceLineFilter::new()
-            .invoice_id(EqualFilter::equal_to(invoice_id))
+            .invoice_id(EqualFilter::equal_to_string(invoice_id))
             .r#type(InvoiceLineType::StockOut.equal_to()),
     )?;
 
@@ -309,11 +309,11 @@ pub fn generate_location_movements(
                     LocationMovementFilter::new()
                         .enter_datetime(DatetimeFilter::is_null(false))
                         .exit_datetime(DatetimeFilter::is_null(true))
-                        .location_id(EqualFilter::equal_to(
+                        .location_id(EqualFilter::equal_to_string(
                             &batch.location_id.clone().unwrap_or_default(),
                         ))
-                        .stock_line_id(EqualFilter::equal_to(&batch.id))
-                        .store_id(EqualFilter::equal_to(store_id)),
+                        .stock_line_id(EqualFilter::equal_to_string(&batch.id))
+                        .store_id(EqualFilter::equal_to_string(store_id)),
                 )?
                 .into_iter()
                 .map(|l| l.location_movement_row)

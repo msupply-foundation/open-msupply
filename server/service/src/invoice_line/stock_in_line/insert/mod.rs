@@ -467,7 +467,7 @@ mod test {
             ..
         } = InvoiceLineRepository::new(&connection)
             .query_by_filter(
-                InvoiceLineFilter::new().id(EqualFilter::equal_to("new_invoice_line_id")),
+                InvoiceLineFilter::new().id(EqualFilter::equal_to_string("new_invoice_line_id")),
             )
             .unwrap()
             .pop()
@@ -483,7 +483,7 @@ mod test {
         });
 
         let barcode = BarcodeRepository::new(&connection)
-            .query_by_filter(BarcodeFilter::new().gtin(EqualFilter::equal_to(&gtin)))
+            .query_by_filter(BarcodeFilter::new().gtin(EqualFilter::equal_to_string(&gtin)))
             .unwrap()
             .pop()
             .unwrap();
@@ -611,8 +611,8 @@ mod test {
 
         assert_eq!(invoice_line.vvm_status_id, Some(mock_vvm_status_a().id));
 
-        let log_filter =
-            VVMStatusLogFilter::new().invoice_line_id(EqualFilter::equal_to(&invoice_line.id));
+        let log_filter = VVMStatusLogFilter::new()
+            .invoice_line_id(EqualFilter::equal_to_string(&invoice_line.id));
 
         let log = VVMStatusLogRepository::new(&connection)
             .query_by_filter(log_filter)
@@ -638,9 +638,9 @@ mod test {
         )
         .unwrap();
 
-        let vvm_log_filter = VVMStatusLogFilter::new().invoice_line_id(EqualFilter::equal_to(
-            "delivered_invoice_line_with_vvm_status",
-        ));
+        let vvm_log_filter = VVMStatusLogFilter::new().invoice_line_id(
+            EqualFilter::equal_to_string("delivered_invoice_line_with_vvm_status"),
+        );
 
         let vvm_status_log = VVMStatusLogRepository::new(&connection)
             .query_by_filter(vvm_log_filter)

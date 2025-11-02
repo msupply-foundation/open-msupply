@@ -258,9 +258,9 @@ fn generate_location_movement(
                 LocationMovementFilter::new()
                     .enter_datetime(DatetimeFilter::is_null(false))
                     .exit_datetime(DatetimeFilter::is_null(true))
-                    .location_id(EqualFilter::equal_to(&location_id))
-                    .stock_line_id(EqualFilter::equal_to(&existing.id))
-                    .store_id(EqualFilter::equal_to(&store_id)),
+                    .location_id(EqualFilter::equal_to_string(&location_id))
+                    .stock_line_id(EqualFilter::equal_to_string(&existing.id))
+                    .store_id(EqualFilter::equal_to_string(&store_id)),
             )?
             .into_iter()
             .map(|l| l.location_movement_row)

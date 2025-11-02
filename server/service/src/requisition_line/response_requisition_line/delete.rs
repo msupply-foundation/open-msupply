@@ -75,7 +75,7 @@ fn validate(
     }
 
     let invoice_lines = InvoiceLineRepository::new(connection).query_by_filter(
-        InvoiceLineFilter::new().requisition_id(EqualFilter::equal_to(&requisition_row.id)),
+        InvoiceLineFilter::new().requisition_id(EqualFilter::equal_to_string(&requisition_row.id)),
     )?;
 
     if invoice_lines.iter().any(|invoice_line| {

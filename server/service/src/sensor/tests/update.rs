@@ -24,7 +24,9 @@ mod query {
         let service = service_provider.sensor_service;
 
         let sensors_not_in_store = sensor_repository
-            .query_by_filter(SensorFilter::new().store_id(EqualFilter::not_equal_to("store_a")))
+            .query_by_filter(
+                SensorFilter::new().store_id(EqualFilter::not_equal_to_string("store_a")),
+            )
             .unwrap();
 
         // Sensor does not exist
@@ -74,7 +76,7 @@ mod query {
         let service = service_provider.sensor_service;
 
         let sensors_in_store = sensor_repository
-            .query_by_filter(SensorFilter::new().store_id(EqualFilter::equal_to("store_a")))
+            .query_by_filter(SensorFilter::new().store_id(EqualFilter::equal_to_string("store_a")))
             .unwrap();
 
         // Success with no changes
@@ -98,7 +100,7 @@ mod query {
         assert_eq!(
             sensor_repository
                 .query_by_filter(
-                    SensorFilter::new().id(EqualFilter::equal_to(&sensor.sensor_row.id))
+                    SensorFilter::new().id(EqualFilter::equal_to_string(&sensor.sensor_row.id))
                 )
                 .unwrap()[0],
             sensor
@@ -130,7 +132,7 @@ mod query {
         assert_eq!(
             sensor_repository
                 .query_by_filter(
-                    SensorFilter::new().id(EqualFilter::equal_to(&sensor.sensor_row.id))
+                    SensorFilter::new().id(EqualFilter::equal_to_string(&sensor.sensor_row.id))
                 )
                 .unwrap()[0],
             sensor

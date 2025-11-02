@@ -48,11 +48,11 @@ fn max_datetime() -> NaiveDateTime {
 
 fn event_target_filter(target: &EventTarget) -> ProgramEventFilter {
     let mut filter = ProgramEventFilter::new()
-        .patient_id(EqualFilter::equal_to(&target.patient_id))
-        .document_type(EqualFilter::equal_to(&target.document_type))
-        .r#type(EqualFilter::equal_to(&target.r#type));
+        .patient_id(EqualFilter::equal_to_string(&target.patient_id))
+        .document_type(EqualFilter::equal_to_string(&target.document_type))
+        .r#type(EqualFilter::equal_to_string(&target.r#type));
     if let Some(document_name) = &target.document_name {
-        filter = filter.document_name(EqualFilter::equal_to(document_name));
+        filter = filter.document_name(EqualFilter::equal_to_string(document_name));
     }
     filter
 }
@@ -192,7 +192,7 @@ pub trait ProgramEventServiceTrait: Sync + Send {
 
                     repo.query_by_filter(
                         ProgramEventFilter::new()
-                            .patient_id(EqualFilter::equal_to(&patient_id))
+                            .patient_id(EqualFilter::equal_to_string(&patient_id))
                             .datetime(DatetimeFilter::equal_to(datetime)),
                     )?
                     .into_iter()

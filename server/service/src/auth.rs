@@ -980,9 +980,9 @@ impl AuthServiceTrait for AuthService {
         let connection = &context.connection;
 
         let mut permission_filter =
-            UserPermissionFilter::new().user_id(EqualFilter::equal_to(&user_id));
+            UserPermissionFilter::new().user_id(EqualFilter::equal_to_string(&user_id));
         if let Some(store_id) = &resource_request.store_id {
-            permission_filter = permission_filter.store_id(EqualFilter::equal_to(store_id));
+            permission_filter = permission_filter.store_id(EqualFilter::equal_to_string(store_id));
         }
         let mut user_permissions = UserPermissionRepository::new(connection).query(
             Pagination::all(),

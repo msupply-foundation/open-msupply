@@ -275,7 +275,7 @@ mod test {
                 .query_by_filter(
                     SyncBufferFilter::new()
                         .integration_datetime(DatetimeFilter::is_null(true))
-                        .integration_error(EqualFilter::is_null(true))
+                        .integration_error(EqualFilter::is_null_string(true))
                 )
                 .unwrap(),
             vec![row_c()]
@@ -286,7 +286,7 @@ mod test {
                 .query_by_filter(
                     SyncBufferFilter::new()
                         .integration_datetime(DatetimeFilter::is_null(true))
-                        .integration_error(EqualFilter::is_null(true))
+                        .integration_error(EqualFilter::is_null_string(true))
                 )
                 .unwrap(),
             vec![row_c()]
@@ -311,7 +311,7 @@ mod test {
                 .query_by_filter(
                     SyncBufferFilter::new()
                         .integration_datetime(DatetimeFilter::is_null(true))
-                        .record_id(EqualFilter::equal_to(&row_a().record_id))
+                        .record_id(EqualFilter::equal_to_string(&row_a().record_id))
                 )
                 .unwrap(),
             vec![new_a]

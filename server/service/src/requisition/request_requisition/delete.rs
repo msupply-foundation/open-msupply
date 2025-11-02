@@ -47,7 +47,8 @@ pub fn delete_request_requisition(
             // Note that lines are not deleted when an invoice is deleted, due to issues with batch deletes.
             // TODO: implement delete lines. See https://github.com/openmsupply/remote-server/issues/839 for details.
             let lines = RequisitionLineRepository::new(connection).query_by_filter(
-                RequisitionLineFilter::new().requisition_id(EqualFilter::equal_to(&input.id)),
+                RequisitionLineFilter::new()
+                    .requisition_id(EqualFilter::equal_to_string(&input.id)),
             )?;
             for line in lines {
                 delete_request_requisition_line(

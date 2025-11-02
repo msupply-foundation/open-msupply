@@ -26,7 +26,7 @@ mod query {
         let service = service_provider.sensor_service;
 
         let sensors_in_store = sensor_repository
-            .query_by_filter(SensorFilter::new().store_id(EqualFilter::equal_to("store_a")))
+            .query_by_filter(SensorFilter::new().store_id(EqualFilter::equal_to_string("store_a")))
             .unwrap();
 
         assert_eq!(
@@ -110,8 +110,8 @@ mod query {
             sensor_repository
                 .query_by_filter(
                     SensorFilter::new()
-                        .id(EqualFilter::equal_to("new_id"))
-                        .store_id(EqualFilter::equal_to("store_a",))
+                        .id(EqualFilter::equal_to_string("new_id"))
+                        .store_id(EqualFilter::equal_to_string("store_a",))
                 )
                 .unwrap(),
             vec![result_sensor]

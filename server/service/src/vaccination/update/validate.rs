@@ -169,7 +169,7 @@ fn validate_existing_prescription(
         Some(invoice_id) => {
             InvoiceLineRepository::new(connection)
                 // Vaccination prescription should only ever have 1 line
-                .query_one(InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(invoice_id)))?
+                .query_one(InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to_string(invoice_id)))?
                 .ok_or(RepositoryError::NotFound)?
         }
         None => return Ok(None),

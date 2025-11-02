@@ -448,7 +448,7 @@ mod test {
         // Add properties to name
         row_repo.update_properties(&row.id, &properties).unwrap();
 
-        let name_filter = NameFilter::new().id(EqualFilter::equal_to(&row.id));
+        let name_filter = NameFilter::new().id(EqualFilter::equal_to_string(&row.id));
         let name = name_repo
             .query_one("store_id", name_filter.clone())
             .unwrap()

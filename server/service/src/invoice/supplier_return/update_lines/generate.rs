@@ -24,7 +24,7 @@ pub fn generate(
     }: UpdateSupplierReturnLines,
 ) -> Result<GenerateResult, RepositoryError> {
     let existing_lines = InvoiceLineRepository::new(connection).query_by_filter(
-        InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(&supplier_return_id)),
+        InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to_string(&supplier_return_id)),
     )?;
     let check_already_exists = |id: &str| {
         existing_lines

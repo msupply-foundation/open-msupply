@@ -95,7 +95,7 @@ mod test {
 
         assert_eq!(
             printer_repository
-                .query_by_filter(PrinterFilter::new().id(EqualFilter::equal_to("new_id")))
+                .query_by_filter(PrinterFilter::new().id(EqualFilter::equal_to_string("new_id")))
                 .unwrap(),
             vec![result_printer]
         );

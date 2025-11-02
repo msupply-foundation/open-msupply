@@ -14,7 +14,7 @@ pub(crate) fn is_ledger_fixed(
     stock_line_id: &str,
 ) -> Result<bool, RepositoryError> {
     let ledger_lines = StockLineLedgerRepository::new(connection).query_by_filter(
-        StockLineLedgerFilter::new().stock_line_id(EqualFilter::equal_to(stock_line_id)),
+        StockLineLedgerFilter::new().stock_line_id(EqualFilter::equal_to_string(stock_line_id)),
     )?;
 
     if ledger_lines.iter().any(|line| line.running_balance < 0.0) {
@@ -42,7 +42,7 @@ pub(crate) fn ledger_balance_summary(
 ) -> Result<LedgerBalanceSummary, RepositoryError> {
     let reserved_not_picked = InvoiceLineRepository::new(connection).query_by_filter(
         InvoiceLineFilter::new()
-            .stock_line_id(EqualFilter::equal_to(stock_line_id))
+            .stock_line_id(EqualFilter::equal_to_string(stock_line_id))
             .r#type(InvoiceLineType::StockOut.equal_to())
             .invoice_status(InvoiceStatus::equal_any(vec![
                 InvoiceStatus::Allocated,

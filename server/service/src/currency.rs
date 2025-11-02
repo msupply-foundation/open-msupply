@@ -13,7 +13,7 @@ pub trait CurrencyServiceTrait: Sync + Send {
         let repository = CurrencyRepository::new(&ctx.connection);
 
         Ok(repository
-            .query_by_filter(CurrencyFilter::new().id(EqualFilter::equal_to(currency_id)))?
+            .query_by_filter(CurrencyFilter::new().id(EqualFilter::equal_to_string(currency_id)))?
             .pop())
     }
 
