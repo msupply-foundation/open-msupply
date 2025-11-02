@@ -62,8 +62,7 @@ export const TabLayout = ({
     () => ''
   );
 
-  if (draftLines.length === 0)
-    return <Box sx={{ height: isMediumScreen ? 400 : 500 }} />;
+  if (!item) return null;
 
   return (
     <TabContext value={currentTab}>
@@ -142,7 +141,7 @@ export const TabLayout = ({
             />
           </Box>
         </InboundLineEditPanel>
-
+        {/* 
         <InboundLineEditPanel value={Tabs.Pricing}>
           <PricingTable
             isDisabled={isDisabled}
@@ -160,7 +159,7 @@ export const TabLayout = ({
             updateDraftLine={updateDraftLine}
             restrictedToLocationTypeId={item?.restrictedLocationTypeId}
           />
-        </InboundLineEditPanel>
+        </InboundLineEditPanel> */}
       </TableContainer>
     </TabContext>
   );
