@@ -24,10 +24,10 @@ use repository::{
     requisition_row::{RequisitionRow, RequisitionStatus, RequisitionType},
     ActivityLogType, EqualFilter, IndicatorValueRow, IndicatorValueRowRepository,
     IndicatorValueType, MasterListLineFilter, MasterListLineRepository, NameFilter, NameRepository,
-    NumberRowType, Pagination, PluginDataRowRepository, ProgramIndicatorFilter,
-    ProgramRequisitionOrderTypeRow, ProgramRow, RepositoryError, Requisition, RequisitionLineRow,
-    RequisitionLineRowRepository, RequisitionRowRepository, StorageConnection, StoreFilter,
-    StoreRepository,
+    NumberRowType, Pagination, PeriodRowRepository, PluginDataRowRepository,
+    ProgramIndicatorFilter, ProgramRequisitionOrderTypeRow, ProgramRow, RepositoryError,
+    Requisition, RequisitionLineRow, RequisitionLineRowRepository, RequisitionRowRepository,
+    StorageConnection, StoreFilter, StoreRepository,
 };
 use util::uuid::uuid;
 
@@ -225,6 +225,8 @@ fn generate(
         approval_status: None,
         finalised_datetime: None,
         linked_requisition_id: None,
+        created_from_requisition_id: None,
+        original_customer_id: None,
     };
 
     let master_list_id = program.master_list_id.clone().unwrap_or_default();
@@ -238,8 +240,18 @@ fn generate(
         .map(|line| line.item_id)
         .collect();
 
-    let requisition_lines =
-        generate_requisition_lines(ctx, &ctx.store_id, &requisition, program_item_ids)?;
+    let period = PeriodRowRepository::new(connection)
+        .find_one_by_id(&period_id)
+        .unwrap()
+        .unwrap_or_default();
+
+    let requisition_lines = generate_requisition_lines(
+        ctx,
+        &ctx.store_id,
+        &requisition,
+        program_item_ids,
+        Some(period.end_date),
+    )?;
 
     let program_indicators = program_indicators(
         connection,

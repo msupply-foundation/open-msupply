@@ -82,7 +82,7 @@ mod test {
             .unwrap();
         assert!(result.is_none());
 
-        let ref result = service
+        let result = &service
             .get_purchase_order(&context, Some(&po.store_id), &po.id)
             .unwrap();
         assert!(result.is_some());

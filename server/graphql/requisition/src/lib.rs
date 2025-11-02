@@ -123,6 +123,17 @@ impl RequisitionMutations {
         request_requisition::delete::delete(ctx, &store_id, input)
     }
 
+    async fn insert_from_response_requisition(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: request_requisition::insert_from_response_requisition::InsertFromResponseRequisitionInput,
+    ) -> Result<request_requisition::insert_from_response_requisition::InsertFromResponse> {
+        request_requisition::insert_from_response_requisition::insert_from_response_requisition(
+            ctx, &store_id, input,
+        )
+    }
+
     /// Set requested for each line in request requisition to calculated
     async fn use_suggested_quantity(
         &self,
