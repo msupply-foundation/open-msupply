@@ -13,12 +13,7 @@ import {
   PlusCircleIcon,
 } from '@openmsupply-client/common';
 import { InboundLineEditForm } from './InboundLineEditForm';
-import {
-  InboundLineFragment,
-  useDraftInboundLines,
-  useInbound,
-} from '../../../api';
-
+import { InboundLineFragment, useDraftInboundLines } from '../../../api';
 import { TabLayout } from './TabLayout';
 import {
   CurrencyRowFragment,
@@ -27,6 +22,7 @@ import {
 import { QuantityTable } from './TabTables';
 import { isInboundPlaceholderRow } from '../../../../utils';
 import { ScannedBatchData } from '../../DetailView';
+import { useNextItem } from '../../../../useNextItem';
 
 type InboundLineItem = InboundLineFragment['item'];
 interface InboundLineEditProps {
@@ -59,7 +55,7 @@ export const InboundLineEdit = ({
   const t = useTranslation();
   const { error } = useNotification();
   const [currentItem, setCurrentItem] = useState<ItemRowFragment | null>(item);
-  const { next: nextItem, disabled: nextDisabled } = useInbound.document.next(
+  const { next: nextItem, disabled: nextDisabled } = useNextItem(
     getSortedItems,
     currentItem?.id ?? ''
   );
