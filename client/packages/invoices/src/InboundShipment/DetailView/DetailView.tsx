@@ -171,6 +171,9 @@ const DetailViewInner = () => {
 
   const tab = urlQuery['tab'] ?? InboundShipmentDetailTabs.Details;
 
+  // Table manages the sorting state
+  // This needs to be passed to the edit modal, so based on latest sort order
+  // it can determine which item to load when user clicks `next`
   const getSortedItems = useCallback(
     () =>
       table.getSortedRowModel().rows.reduce<ItemRowFragment[]>((acc, row) => {

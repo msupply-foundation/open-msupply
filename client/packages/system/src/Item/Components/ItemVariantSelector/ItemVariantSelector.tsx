@@ -38,7 +38,7 @@ export const ItemVariantSelector = ({
   const table = useSimpleMaterialTable<ItemVariantFragment>({
     tableId: 'item-variant-selector',
     columns,
-    data: variants ?? [],
+    data: variants,
     isLoading,
     getIsRestrictedRow: disabled ? () => true : undefined,
     enableBottomToolbar: false,
