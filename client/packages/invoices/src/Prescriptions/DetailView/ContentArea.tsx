@@ -2,16 +2,18 @@ import React from 'react';
 import {
   useTranslation,
   NothingHere,
-  useUrlQueryParams,
-  DataTable,
+  MaterialTable,
+  useNonPaginatedMaterialTable,
+  Groupable,
 } from '@openmsupply-client/common';
 import { usePrescription } from '../api';
 import { usePrescriptionColumn } from './columns';
-import { StockOutLineFragment } from '../../StockOut';
+import { PrescriptionLineFragment } from '../api/operations.generated';
+import { isPrescriptionPlaceholderRow } from '../../utils';
 
 interface ContentAreaProps {
   onAddItem: () => void;
-  onRowClick?: null | ((rowData: StockOutLineFragment) => void);
+  onRowClick?: null | ((rowData: PrescriptionLineFragment) => void);
 }
 
 export const ContentAreaComponent = ({
@@ -19,35 +21,31 @@ export const ContentAreaComponent = ({
   onRowClick,
 }: ContentAreaProps) => {
   const t = useTranslation();
-  const {
-    updateSortQuery,
-    queryParams: { sortBy },
-  } = useUrlQueryParams();
   const { isDisabled, rows } = usePrescription();
-  const columns = usePrescriptionColumn({
-    onChangeSortBy: updateSortQuery,
-    sortBy,
+  const columns = usePrescriptionColumn();
+
+  const { table } = useNonPaginatedMaterialTable<
+    Groupable<PrescriptionLineFragment>
+  >({
+    tableId: 'prescription-detail',
+    columns,
+    data: rows,
+    grouping: { enabled: true },
+    isLoading: false,
+    initialSort: { key: 'itemName', dir: 'asc' },
+    isError: false,
+    onRowClick: onRowClick ? row => onRowClick(row) : undefined,
+    getIsPlaceholderRow: isPrescriptionPlaceholderRow,
+    noDataElement: (
+      <NothingHere
+        body={t('error.no-prescriptions')}
+        onCreate={isDisabled ? undefined : () => onAddItem()}
+        buttonText={t('button.add-item')}
+      />
+    ),
   });
 
-  if (!rows) return null;
-
-  return (
-    <DataTable
-      id="prescription-detail"
-      onRowClick={onRowClick}
-      columns={columns}
-      data={rows}
-      enableColumnSelection
-      noDataElement={
-        <NothingHere
-          body={t('error.no-prescriptions')}
-          onCreate={isDisabled ? undefined : () => onAddItem()}
-          buttonText={t('button.add-item')}
-        />
-      }
-      isRowAnimated={true}
-    />
-  );
+  return <MaterialTable table={table} />;
 };
 
 export const ContentArea = React.memo(ContentAreaComponent);
