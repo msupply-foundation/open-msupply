@@ -145,44 +145,44 @@ impl SyncTranslation for NameCategory5Translation {
 
         let mut records = Vec::new();
 
-        if !removed_values.is_empty() {
-            for description in removed_values {
-                let id = format!("{}:{}", changelog.record_id, description);
-                let legacy_row = LegacyNameCategory5Row {
-                    ID: id.clone(),
-                    description: description.to_string(),
-                    r#type: 'c'.to_string(),
-                };
+        // Handle removed values (deletes)
+        for description in removed_values {
+            let id = format!("{}:{}", changelog.record_id, description);
+            let legacy_row = LegacyNameCategory5Row {
+                ID: id.clone(),
+                description: description.to_string(),
+                r#type: 'c'.to_string(),
+            };
 
-                records.push(PushSyncRecord {
-                    cursor: changelog.cursor,
-                    record: CommonSyncRecord {
-                        table_name: self.table_name().to_string(),
-                        record_id: id,
-                        action: SyncAction::Delete,
-                        record_data: serde_json::to_value(legacy_row)?,
-                    },
-                });
-            }
-        } else {
-            for description in current_values.iter() {
-                let id = format!("{}:{}", changelog.record_id, description);
-                let legacy_row = LegacyNameCategory5Row {
-                    ID: id.clone(),
-                    description: description.to_string(),
-                    r#type: 'c'.to_string(),
-                };
+            records.push(PushSyncRecord {
+                cursor: changelog.cursor,
+                record: CommonSyncRecord {
+                    table_name: self.table_name().to_string(),
+                    record_id: id,
+                    action: SyncAction::Delete,
+                    record_data: serde_json::to_value(legacy_row)?,
+                },
+            });
+        }
 
-                records.push(PushSyncRecord {
-                    cursor: changelog.cursor,
-                    record: CommonSyncRecord {
-                        table_name: self.table_name().to_string(),
-                        record_id: id,
-                        action: SyncAction::Update,
-                        record_data: serde_json::to_value(legacy_row)?,
-                    },
-                });
-            }
+        // Handle current values (updates)
+        for description in current_values.iter() {
+            let id = format!("{}:{}", changelog.record_id, description);
+            let legacy_row = LegacyNameCategory5Row {
+                ID: id.clone(),
+                description: description.to_string(),
+                r#type: 'c'.to_string(),
+            };
+
+            records.push(PushSyncRecord {
+                cursor: changelog.cursor,
+                record: CommonSyncRecord {
+                    table_name: self.table_name().to_string(),
+                    record_id: id,
+                    action: SyncAction::Update,
+                    record_data: serde_json::to_value(legacy_row)?,
+                },
+            });
         }
 
         Ok(PushTranslateResult::PushRecord(records))
