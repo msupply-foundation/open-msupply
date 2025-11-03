@@ -20,7 +20,6 @@ import {
 // Need to be re-exported when Legacy cells are removed
 import { TextInputCell } from '@openmsupply-client/common/src/ui/layout/tables/material-react-table/components/TextInputCell';
 import { NumberInputCell } from '@openmsupply-client/common/src/ui/layout/tables/material-react-table/components/NumberInputCell';
-import { ItemVariantCell } from '@openmsupply-client/common/src/ui/layout/tables/material-react-table/components/ItemVariantCell';
 import { CurrencyInputCell } from '@openmsupply-client/common/src/ui/layout/tables/material-react-table/components/CurrencyInputCell';
 import { DraftInboundLine } from '../../../../types';
 import {
@@ -29,7 +28,7 @@ import {
   DonorSearchInput,
   getVolumePerPackFromVariant,
   ItemRowFragment,
-  ItemVariantFragment,
+  ItemVariantInput,
   LocationRowFragment,
   LocationSearchInput,
   VVMStatusSearchInput,
@@ -114,17 +113,31 @@ export const QuantityTableComponent = ({
         },
       },
       {
-        accessorKey: 'itemVariant',
+        id: 'itemVariant',
         header: t('label.item-variant'),
-        size: 150,
         accessorFn: row => row.itemVariant?.id || '',
-        Cell: ({ row, cell }) => (
-          <ItemVariantCell
-            cell={cell}
-            updateFn={(itemVariant: ItemVariantFragment | null) =>
-              updateDraftLine({ id: row.original.id, itemVariant })
+        size: 150,
+        Cell: ({
+          row: {
+            original: { id, packSize, itemVariant, item },
+          },
+        }) => (
+          <ItemVariantInput
+            disabled={isDisabled}
+            selectedId={itemVariant?.id}
+            itemId={item.id}
+            width="100%"
+            onChange={itemVariant =>
+              updateDraftLine({
+                id,
+                itemVariantId: itemVariant?.id,
+                itemVariant,
+                volumePerPack: getVolumePerPackFromVariant({
+                  packSize,
+                  itemVariant,
+                }),
+              })
             }
-            itemId={row.original.item.id}
           />
         ),
         includeColumn: hasItemVariantsEnabled,
