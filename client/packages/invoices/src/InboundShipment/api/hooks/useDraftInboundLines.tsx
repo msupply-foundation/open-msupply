@@ -27,6 +27,7 @@ export const useDraftInboundLines = (
   const { data: lines } = useInbound.lines.list(itemId ?? '');
   const { mutateAsync, isLoading } = useInbound.lines.save();
   const { mutateAsync: deleteMutation } = useDeleteInboundLines();
+  console.log('Draft lines: ', draftLines);
 
   const { isDirty, setIsDirty } = useConfirmOnLeaving(
     'inbound-shipment-line-edit'

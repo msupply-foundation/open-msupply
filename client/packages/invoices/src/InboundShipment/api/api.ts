@@ -10,7 +10,6 @@ import {
   InsertInboundShipmentLineInput,
   DeleteInboundShipmentLineInput,
   UpdateInboundShipmentInput,
-  Formatter,
   UpdateInboundShipmentStatusInput,
   setNullableInput,
   InsertInboundShipmentServiceLineInput,
@@ -112,9 +111,7 @@ const inboundParsers = {
       batch: line.batch,
       costPricePerPack: line.costPricePerPack,
       sellPricePerPack: line.sellPricePerPack,
-      expiryDate: line.expiryDate
-        ? Formatter.naiveDate(new Date(line.expiryDate))
-        : null,
+      expiryDate: line.expiryDate,
       packSize: line.packSize,
       numberOfPacks: line.numberOfPacks,
       invoiceId: line.invoiceId,
@@ -145,9 +142,7 @@ const inboundParsers = {
     batch: line.batch,
     costPricePerPack: line.costPricePerPack,
     expiryDate: {
-      value: line.expiryDate
-        ? Formatter.naiveDate(new Date(line.expiryDate))
-        : null,
+      value: line.expiryDate || null,
     },
     sellPricePerPack: line.sellPricePerPack,
     packSize: line.packSize,
