@@ -32,6 +32,12 @@ export const StockListView: FC = () => {
         key: 'location.code',
       },
       {
+        key: 'name',
+      },
+      {
+        key: 'code',
+      },
+      {
         key: 'expiryDate',
         condition: 'between',
       },
@@ -58,11 +64,13 @@ export const StockListView: FC = () => {
   const mrtColumns = useMemo(
     (): ColumnDef<StockLineRowFragment>[] => [
       {
+        id: 'code',
         accessorKey: 'item.code',
         header: t('label.code'),
         Cell: TextWithTooltipCell,
         size: 100,
         enableSorting: true,
+        enableColumnFilter: true,
       },
       {
         id: 'name',
@@ -71,6 +79,7 @@ export const StockListView: FC = () => {
         Cell: TextWithTooltipCell,
         size: 350,
         enableSorting: true,
+        enableColumnFilter: true,
       },
       // TODO: Add back when design has been decided
       // {
@@ -91,11 +100,11 @@ export const StockListView: FC = () => {
       {
         id: 'expiryDate',
         header: t('label.expiry'),
-        // expiryDate is a string - use accessorFn to convert to Date object for sort and filtering
         accessorFn: row => (row.expiryDate ? new Date(row.expiryDate) : null),
         columnType: ColumnType.Date,
         size: 120,
         defaultHideOnMobile: true,
+        enableColumnFilter: true,
         enableSorting: true,
       },
 
@@ -110,13 +119,14 @@ export const StockListView: FC = () => {
       },
 
       {
-        id: 'location',
+        // id: 'location',
         header: t('label.location'),
         Cell: TextWithTooltipCell,
         size: 100,
         defaultHideOnMobile: true,
-        accessorKey: 'location?.code',
+        accessorKey: 'location.code',
         enableSorting: true,
+        enableColumnFilter: true,
       },
       {
         id: 'itemUnit',
@@ -207,6 +217,7 @@ export const StockListView: FC = () => {
     totalCount: data?.totalCount ?? 0,
     initialSort: { key: 'name', dir: 'desc' },
     enableRowSelection: false,
+    enableGlobalFilter: true,
     noDataElement: (
       <NothingHere
         body={t('error.no-stock')}
