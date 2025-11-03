@@ -12,10 +12,9 @@ import {
   usePaginatedMaterialTable,
   ColumnDef,
   ColumnType,
-  Chip,
-  Box,
   GenderTypeNode,
   ColumnDataAccessor,
+  ChipTableCell,
 } from '@openmsupply-client/common';
 import { usePatient, PatientRowFragment } from '../api';
 import { AppBarButtons } from './AppBarButtons';
@@ -151,29 +150,7 @@ const PatientListComponent = () => {
             return `${it.document.documentRegistry?.name}${programEnrolmentId}`;
           }),
         Cell: ({ cell }) => {
-          const items = cell.getValue<string[]>();
-          if (!items || items.length === 0) return null;
-
-          return (
-            <Box
-              sx={{
-                display: 'flex',
-                flexWrap: 'wrap',
-                gap: 0.5,
-                maxWidth: 250,
-              }}
-            >
-              {items.map((item, index) => (
-                <Chip
-                  key={index}
-                  label={item}
-                  variant="outlined"
-                  size="small"
-                  sx={{ fontSize: 11 }}
-                />
-              ))}
-            </Box>
-          );
+          return <ChipTableCell cell={cell} />;
         },
         enableColumnFilter: true,
         size: 250,
