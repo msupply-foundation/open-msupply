@@ -4,7 +4,6 @@ import {
   InvoiceSortFieldInput,
   SortBy,
   useQuery,
-  useTableStore,
 } from '@openmsupply-client/common';
 import { usePrescriptionGraphQL } from '../usePrescriptionGraphQL';
 import { LIST, PRESCRIPTION } from './keys';
@@ -19,7 +18,7 @@ export type ListParams = {
   filterBy: FilterBy | null;
 };
 
-export const usePrescriptionList = (queryParams: ListParams) => {
+export const usePrescriptionList = (queryParams?: ListParams) => {
   const { prescriptionApi, storeId } = usePrescriptionGraphQL();
 
   const {
@@ -30,7 +29,7 @@ export const usePrescriptionList = (queryParams: ListParams) => {
     first,
     offset,
     filterBy,
-  } = queryParams;
+  } = queryParams ?? {};
 
   const queryKey = [
     LIST,
@@ -65,26 +64,20 @@ export const usePrescriptionList = (queryParams: ListParams) => {
 
   const { data, isLoading, isError } = useQuery({ queryKey, queryFn });
 
-  const { selectedRows } = useTableStore(state => ({
-    selectedRows: Object.keys(state.rowState)
-      .filter(id => state.rowState[id]?.isSelected)
-      .map(selectedId => data?.nodes?.find(({ id }) => selectedId === id))
-      .filter(Boolean) as PrescriptionRowFragment[],
-  }));
-
   const {
     mutateAsync: deleteMutation,
     isLoading: isDeleting,
     error: deleteError,
   } = useDelete();
 
-  const deletePrescriptions = async () => {
+  const deletePrescriptions = async (
+    selectedRows: PrescriptionRowFragment[]
+  ) => {
     await deleteMutation(selectedRows);
   };
 
   return {
     query: { data, isLoading, isError },
     delete: { deletePrescriptions, isDeleting, deleteError },
-    selectedRows,
   };
 };
