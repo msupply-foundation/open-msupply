@@ -1,10 +1,10 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
-  ColumnDescription,
-  RadioCell,
-  TooltipTextCell,
-  useColumns,
+  ColumnDef,
+  TextWithTooltipCell,
+  useTranslation,
 } from '@openmsupply-client/common';
+import { RadioCell } from '@openmsupply-client/common/src/ui/layout/tables/material-react-table/components';
 import { ItemVariantFragment } from '../../api';
 
 interface ItemVariantSelectorColumnProps {
@@ -18,43 +18,49 @@ export const useItemVariantSelectorColumns = ({
   onVariantSelected,
   isVaccine,
 }: ItemVariantSelectorColumnProps) => {
-  const columnDefinition: ColumnDescription<ItemVariantFragment>[] = [
-    {
-      key: 'itemVariantSelector',
-      Cell: props => (
-        <RadioCell
-          {...props}
-          selectedId={selectedId}
-          onSelected={onVariantSelected}
-          groupName="item-variant-selector"
-        />
-      ),
-      accessor: ({ rowData }) => rowData.id,
-      width: 50,
-    },
-    [
-      'name',
+  const t = useTranslation();
+
+  const columns = useMemo(() => {
+    const cols: ColumnDef<ItemVariantFragment>[] = [
       {
-        Cell: TooltipTextCell,
-        width: 300,
+        id: 'itemVariantSelector',
+        header: '',
+        size: 50,
+        accessorKey: 'id',
+        Cell: ({ cell }) => (
+          <RadioCell
+            cell={cell}
+            selectedId={selectedId}
+            onSelected={onVariantSelected}
+            groupName="item-variant-selector"
+          />
+        ),
+        enableSorting: false,
+        enableColumnFilter: false,
       },
-    ],
-  ];
+      {
+        accessorKey: 'name',
+        header: t('label.name'),
+        size: 300,
+        Cell: TextWithTooltipCell,
+      },
+      {
+        id: 'manufacturer',
+        header: t('label.manufacturer'),
+        size: 250,
+        accessorFn: row => row.manufacturer?.name || '',
+        Cell: TextWithTooltipCell,
+      },
+      {
+        accessorKey: 'vvmStatus',
+        header: t('label.vvm-status'),
+        Cell: TextWithTooltipCell,
+        includeColumn: isVaccine,
+      },
+    ];
 
-  columnDefinition.push({
-    key: 'manufacturer',
-    label: 'label.manufacturer',
-    width: 250,
-    Cell: TooltipTextCell,
-    accessor: ({ rowData }) => rowData.manufacturer?.name,
-  });
+    return cols;
+  }, [selectedId, onVariantSelected, isVaccine, t]);
 
-  if (isVaccine) {
-    columnDefinition.push({
-      key: 'vvmType',
-      label: 'label.vvm-type',
-    });
-  }
-
-  return useColumns(columnDefinition, {}, [selectedId, onVariantSelected]);
+  return { columns };
 };
