@@ -141,7 +141,7 @@ export const TabLayout = ({
             />
           </Box>
         </InboundLineEditPanel>
-        {/* 
+
         <InboundLineEditPanel value={Tabs.Pricing}>
           <PricingTable
             isDisabled={isDisabled}
@@ -152,7 +152,7 @@ export const TabLayout = ({
           />
         </InboundLineEditPanel>
 
-        <InboundLineEditPanel value={Tabs.Other}>
+        {/* <InboundLineEditPanel value={Tabs.Other}>
           <LocationTable
             isDisabled={isDisabled}
             lines={draftLines}
