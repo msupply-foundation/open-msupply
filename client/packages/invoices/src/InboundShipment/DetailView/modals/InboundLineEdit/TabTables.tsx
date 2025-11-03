@@ -66,7 +66,6 @@ export const QuantityTableComponent = ({
   const { getPlural } = useIntlUtils();
   const { format } = useFormatNumber();
   const { manageVaccinesInDoses } = usePreferences();
-  const { localisedDate } = useFormatDateTime();
 
   const displayInDoses = manageVaccinesInDoses && !!item?.isVaccine;
   const unitName = Formatter.sentenceCase(
@@ -339,7 +338,6 @@ export const QuantityTableComponent = ({
     return cols;
   }, [
     isDisabled,
-    localisedDate,
     updateDraftLine,
     setPackRoundingMessage,
     format,
