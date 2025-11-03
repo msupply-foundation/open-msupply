@@ -55,13 +55,10 @@ mutation updateLabelPrinterSettings(
   }
 }
 
-mutation configureNameProperties(
-  $input: [ConfigureNamePropertyInput!]!
-  $storeId: String!
-) {
+mutation configureNameProperties($input: [ConfigureNamePropertyInput!]!) {
   centralServer {
     general {
-      configureNameProperties(input: $input, storeId: $storeId) {
+      configureNameProperties(input: $input) {
         __typename
         ... on Success {
           __typename

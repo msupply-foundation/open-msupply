@@ -81,7 +81,6 @@ export type ConfigureNamePropertiesMutationVariables = Types.Exact<{
   input:
     | Array<Types.ConfigureNamePropertyInput>
     | Types.ConfigureNamePropertyInput;
-  storeId: Types.Scalars['String']['input'];
 }>;
 
 export type ConfigureNamePropertiesMutation = {
@@ -168,13 +167,10 @@ export const UpdateLabelPrinterSettingsDocument = gql`
   }
 `;
 export const ConfigureNamePropertiesDocument = gql`
-  mutation configureNameProperties(
-    $input: [ConfigureNamePropertyInput!]!
-    $storeId: String!
-  ) {
+  mutation configureNameProperties($input: [ConfigureNamePropertyInput!]!) {
     centralServer {
       general {
-        configureNameProperties(input: $input, storeId: $storeId) {
+        configureNameProperties(input: $input) {
           __typename
           ... on Success {
             __typename
