@@ -13,10 +13,10 @@ import {
   ColumnDef,
   ColumnType,
   UnitsAndDosesCell,
+  ChipTableCell,
 } from '@openmsupply-client/common';
 import { StockLineRowFragment } from '../api';
 import { AppBarButtons } from './AppBarButtons';
-import { Toolbar } from './Toolbar';
 import { useStockList } from '../api/hooks/useStockList';
 import { NewStockLineModal } from '../Components/NewStockLineModal';
 
@@ -81,14 +81,14 @@ export const StockListView: FC = () => {
         enableSorting: true,
         enableColumnFilter: true,
       },
-      // TODO: Add back when design has been decided
-      // {
-      //   accessorkey: 'masterList',
-      //   header: t('label.master-list',
-      //   Cell: ChipTableCell,
-      //   width: 150,
-      //   accessor: ({ rowData }) => rowData.item.masterLists.map(m => m.name),
-      // },
+      {
+        id: 'masterList.name',
+        header: t('label.master-lists'),
+        Cell: ChipTableCell,
+        size: 150,
+        accessorFn: row => row.item?.masterLists?.map(m => m.name) ?? [],
+        enableColumnFilter: true,
+      },
       {
         accessorKey: 'batch',
         header: t('label.batch'),
@@ -229,7 +229,6 @@ export const StockListView: FC = () => {
 
   return (
     <>
-      <Toolbar />
       <AppBarButtons exportFilter={filterBy} />
       {plugins.stockLine?.tableStateLoader?.map((StateLoader, index) => (
         <StateLoader key={index} stockLines={data?.nodes ?? []} />
