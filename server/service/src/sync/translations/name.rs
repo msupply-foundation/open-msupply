@@ -279,6 +279,7 @@ impl SyncTranslation for NameTranslation {
             category5_id,
         } = serde_json::from_str::<LegacyNameRow>(&sync_record.data)?;
 
+        // Expected ID format: supply_level:category
         let category5_parts = category5_id.and_then(|cat5| {
             cat5.split_once(':')
                 .map(|(key, value)| (key.to_string(), value.to_string()))

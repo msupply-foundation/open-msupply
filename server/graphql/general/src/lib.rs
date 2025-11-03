@@ -658,9 +658,8 @@ impl CentralGeneralMutations {
     pub async fn configure_name_properties(
         &self,
         ctx: &Context<'_>,
-        store_id: String,
         input: Vec<ConfigureNamePropertyInput>,
     ) -> Result<ConfigureNamePropertiesResponse> {
-        configure_name_properties(ctx, &store_id, input)
+        configure_name_properties(ctx, input)
     }
 }

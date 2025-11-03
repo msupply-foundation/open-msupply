@@ -24,10 +24,9 @@ pub fn name_properties(ctx: &Context<'_>) -> Result<NamePropertyResponse> {
 
 pub fn configure_name_properties(
     ctx: &Context<'_>,
-    store_id: &str,
     input: Vec<ConfigureNamePropertyInput>,
 ) -> Result<ConfigureNamePropertiesResponse> {
-    let user = validate_auth(
+    validate_auth(
         ctx,
         &ResourceAccessRequest {
             resource: Resource::MutateNameProperties,
@@ -35,9 +34,7 @@ pub fn configure_name_properties(
         },
     )?;
 
-    let service_context = ctx
-        .service_provider()
-        .context(store_id.to_string(), user.user_id)?;
+    let service_context = ctx.service_provider().basic_context()?;
 
     let result = initialise_name_properties(
         &service_context,
