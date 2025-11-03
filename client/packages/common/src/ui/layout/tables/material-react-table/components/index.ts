@@ -6,4 +6,3 @@ export * from './TextWithTooltipCell';
 export * from './RequiredNumberInputCell';
 export * from './UnitsAndDosesCell';
 export * from './StatusCell';
-export * from './ExpiryDateInputCell';

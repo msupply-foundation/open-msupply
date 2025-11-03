@@ -14,10 +14,11 @@ import {
   MaterialTable,
   ColumnType,
   useFormatDateTime,
+  DateUtils,
+  ExpiryDateInput,
 } from '@openmsupply-client/common';
 // Need to be re-exported when Legacy cells are removed
 import { TextInputCell } from '@openmsupply-client/common/src/ui/layout/tables/material-react-table/components/TextInputCell';
-import { ExpiryDateInputCell } from '@openmsupply-client/common/src/ui/layout/tables/material-react-table/components/ExpiryDateInputCell';
 import { NumberInputCell } from '@openmsupply-client/common/src/ui/layout/tables/material-react-table/components/NumberInputCell';
 import { ItemVariantCell } from '@openmsupply-client/common/src/ui/layout/tables/material-react-table/components/ItemVariantCell';
 import { CurrencyInputCell } from '@openmsupply-client/common/src/ui/layout/tables/material-react-table/components/CurrencyInputCell';
@@ -95,16 +96,22 @@ export const QuantityTableComponent = ({
         header: t('label.expiry-date'),
         size: 150,
         columnType: ColumnType.Date,
-        Cell: ({ row, cell }) => (
-          <ExpiryDateInputCell
-            cell={cell}
-            updateFn={(value: Date | null) => {
-              const expiryDate = value ? localisedDate(value) : null;
-              updateDraftLine({ id: row.original.id, expiryDate });
-            }}
-            isDisabled={isDisabled}
-          />
-        ),
+        accessorFn: row => DateUtils.getDateOrNull(row.expiryDate),
+        Cell: ({ cell, row }) => {
+          const value = cell.getValue<Date | null>();
+          return (
+            <ExpiryDateInput
+              value={value}
+              disabled={isDisabled}
+              onChange={date =>
+                updateDraftLine({
+                  id: row.original.id,
+                  expiryDate: Formatter.naiveDate(date),
+                })
+              }
+            />
+          );
+        },
       },
       {
         accessorKey: 'itemVariant',
