@@ -2,7 +2,6 @@ import React, { useMemo } from 'react';
 import {
   MaterialTable,
   NothingHere,
-  useFormatDateTime,
   useTranslation,
   useNonPaginatedMaterialTable,
   ColumnDef,
@@ -22,7 +21,11 @@ const programAdditionalInfoAccessor = (row: ProgramEnrolmentRowFragment) =>
   getStatusEventData(row.activeProgramEvents.nodes);
 
 const ProgramListComponent = () => {
+  const t = useTranslation();
+  const { setEditModal: setEditingModal, setModal: selectModal } =
+    usePatientModalStore();
   const patientId = usePatient.utils.id();
+
   const { data, isError, isLoading } = useProgramEnrolments.document.list({
     sortBy: {
       key: 'enrolmentDatetime',
@@ -30,11 +33,6 @@ const ProgramListComponent = () => {
     },
     filterBy: { patientId: { equalTo: patientId } },
   });
-
-  const { localisedDate } = useFormatDateTime();
-  const t = useTranslation();
-  const { setEditModal: setEditingModal, setModal: selectModal } =
-    usePatientModalStore();
 
   const columns: ColumnDef<ProgramEnrolmentRowFragment>[] = useMemo(
     () => [
@@ -71,7 +69,7 @@ const ProgramListComponent = () => {
         columnType: ColumnType.Date,
       },
     ],
-    [localisedDate]
+    []
   );
 
   const { table } = useNonPaginatedMaterialTable({
