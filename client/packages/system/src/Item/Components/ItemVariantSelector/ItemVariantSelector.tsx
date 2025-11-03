@@ -29,7 +29,7 @@ export const ItemVariantSelector = ({
   isVaccine,
 }: ItemVariantSelectorProps & PropsWithChildren) => {
   const t = useTranslation();
-  const { columns } = useItemVariantSelectorColumns({
+  const columns = useItemVariantSelectorColumns({
     selectedId,
     onVariantSelected,
     isVaccine,

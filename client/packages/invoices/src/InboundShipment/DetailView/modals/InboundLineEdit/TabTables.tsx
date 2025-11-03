@@ -13,7 +13,6 @@ import {
   useSimpleMaterialTable,
   MaterialTable,
   ColumnType,
-  useFormatDateTime,
   DateUtils,
   ExpiryDateInput,
 } from '@openmsupply-client/common';
@@ -66,7 +65,6 @@ export const QuantityTableComponent = ({
   const { getPlural } = useIntlUtils();
   const { format } = useFormatNumber();
   const { manageVaccinesInDoses } = usePreferences();
-  const { localisedDate } = useFormatDateTime();
 
   const displayInDoses = manageVaccinesInDoses && !!item?.isVaccine;
   const unitName = Formatter.sentenceCase(

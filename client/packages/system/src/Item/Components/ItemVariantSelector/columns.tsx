@@ -3,8 +3,8 @@ import {
   ColumnDef,
   TextWithTooltipCell,
   useTranslation,
+  MRTRadioCell,
 } from '@openmsupply-client/common';
-import { RadioCell } from '@openmsupply-client/common/src/ui/layout/tables/material-react-table/components';
 import { ItemVariantFragment } from '../../api';
 
 interface ItemVariantSelectorColumnProps {
@@ -28,7 +28,7 @@ export const useItemVariantSelectorColumns = ({
         size: 50,
         accessorKey: 'id',
         Cell: ({ cell, row }) => (
-          <RadioCell
+          <MRTRadioCell
             cell={cell}
             selectedId={selectedId}
             onSelected={onVariantSelected}

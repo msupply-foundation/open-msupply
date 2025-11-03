@@ -2,7 +2,7 @@ import React from 'react';
 import { MRT_Cell, MRT_RowData } from 'material-react-table';
 import { Radio, Box } from '@openmsupply-client/common';
 
-export const RadioCell = <T extends MRT_RowData>({
+export const MRTRadioCell = <T extends MRT_RowData>({
   cell,
   selectedId,
   onSelected,
