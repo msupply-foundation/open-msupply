@@ -1,5 +1,6 @@
 export * from './CheckCell';
 export * from './CheckBoxCell';
+export * from './ChipTableCell';
 export * from './CurrencyValueCell';
 export * from './NameAndColorSetterCell';
 export * from './TextWithTooltipCell';
