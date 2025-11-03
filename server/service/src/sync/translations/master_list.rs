@@ -45,10 +45,8 @@ impl SyncTranslation for MasterListTranslation {
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let data = serde_json::from_str::<LegacyListMasterRow>(&sync_record.data)?;
 
-        // is_essential is only an available value if plugin is active
-        let is_essential = data.is_essential.is_some();
-
-        if is_essential {
+        // is_essential is only an available value if plugin is active, set via OG
+        if data.is_essential.is_some() {
             let filter = PluginDataFilter {
                 related_record_id: Some(EqualFilter::equal_to(&data.id.clone())),
                 plugin_code: Some(EqualFilter::equal_to(&"congo-plugin".to_string())),
