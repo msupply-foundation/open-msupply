@@ -189,7 +189,7 @@ const PatientListComponent = () => {
         align: 'center',
       },
     ],
-    [store?.preferences.omProgramModule, t]
+    [store?.preferences.omProgramModule]
   );
 
   const { table } = usePaginatedMaterialTable({
