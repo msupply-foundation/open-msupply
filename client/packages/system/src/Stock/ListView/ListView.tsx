@@ -119,7 +119,6 @@ export const StockListView: FC = () => {
       },
 
       {
-        // id: 'location',
         header: t('label.location'),
         Cell: TextWithTooltipCell,
         size: 100,
