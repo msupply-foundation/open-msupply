@@ -66,12 +66,13 @@ export const QuantityTableComponent = ({
   const { getPlural } = useIntlUtils();
   const { format } = useFormatNumber();
   const { manageVaccinesInDoses } = usePreferences();
+  const { localisedDate } = useFormatDateTime();
+
   const displayInDoses = manageVaccinesInDoses && !!item?.isVaccine;
   const unitName = Formatter.sentenceCase(
     item?.unitName ? item.unitName : t('label.unit')
   );
   const pluralisedUnitName = getPlural(unitName, 2);
-  const { localisedDate } = useFormatDateTime();
 
   const columns = useMemo(() => {
     const cols: ColumnDef<DraftInboundLine>[] = [
@@ -82,14 +83,12 @@ export const QuantityTableComponent = ({
         Cell: ({ row, cell }) => (
           <TextInputCell
             cell={cell}
-            updateFn={(value: string) => {
-              updateDraftLine({ batch: value, id: row.original.id });
-            }}
+            updateFn={(batch: string) =>
+              updateDraftLine({ id: row.original.id, batch })
+            }
             autoFocus={row.index === 0}
           />
         ),
-        // TODO: Mui Autocomplete
-        // autocompleteProvider: data => `inboundshipment${data.item.id}`,
       },
       {
         accessorKey: 'expiryDate',
@@ -100,8 +99,8 @@ export const QuantityTableComponent = ({
           <ExpiryDateInputCell
             cell={cell}
             updateFn={(value: Date | null) => {
-              const date = value ? localisedDate(value) : null;
-              updateDraftLine({ expiryDate: date, id: row.original.id });
+              const expiryDate = value ? localisedDate(value) : null;
+              updateDraftLine({ id: row.original.id, expiryDate });
             }}
             isDisabled={isDisabled}
           />
@@ -115,12 +114,9 @@ export const QuantityTableComponent = ({
         Cell: ({ row, cell }) => (
           <ItemVariantCell
             cell={cell}
-            updateFn={(value: ItemVariantFragment | null) => {
-              updateDraftLine({
-                itemVariant: value,
-                id: row.original.id,
-              });
-            }}
+            updateFn={(itemVariant: ItemVariantFragment | null) =>
+              updateDraftLine({ id: row.original.id, itemVariant })
+            }
             itemId={row.original.item.id}
           />
         ),
@@ -321,7 +317,20 @@ export const QuantityTableComponent = ({
       },
     ];
     return cols;
-  }, []);
+  }, [
+    isDisabled,
+    localisedDate,
+    updateDraftLine,
+    setPackRoundingMessage,
+    format,
+    unitName,
+    pluralisedUnitName,
+    hasItemVariantsEnabled,
+    hasVvmStatusesEnabled,
+    item,
+    displayInDoses,
+    removeDraftLine,
+  ]);
 
   const table = useSimpleMaterialTable<DraftInboundLine>({
     tableId: 'inbound-line-quantity',
