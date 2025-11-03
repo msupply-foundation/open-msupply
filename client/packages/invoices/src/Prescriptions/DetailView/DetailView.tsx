@@ -76,7 +76,7 @@ export const PrescriptionDetailView = () => {
     setHistoryMode(ModalMode.Create);
   };
 
-  const { table } = useNonPaginatedMaterialTable<
+  const { table, selectedRows } = useNonPaginatedMaterialTable<
     Groupable<PrescriptionLineFragment>
   >({
     tableId: 'prescription-detail',
@@ -140,7 +140,10 @@ export const PrescriptionDetailView = () => {
           />
           <Toolbar />
           <DetailTabs tabs={tabs} />
-          <Footer />
+          <Footer
+            selectedRows={selectedRows}
+            resetRowSelection={table.resetRowSelection}
+          />
           <SidePanel />
         </TableProvider>
       ) : (
