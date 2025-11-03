@@ -24,11 +24,6 @@ export const useInboundShipmentColumns = () => {
   return useMemo((): ColumnDef<Groupable<InboundLineFragment>>[] => {
     return [
       {
-        accessorKey: 'comment',
-        header: t('label.comment'),
-        columnType: ColumnType.Comment,
-      },
-      {
         accessorKey: 'item.code',
         header: t('label.code'),
         size: 120,
@@ -41,6 +36,11 @@ export const useInboundShipmentColumns = () => {
           ),
       },
       {
+        accessorKey: 'comment',
+        header: t('label.comment'),
+        columnType: ColumnType.Comment,
+      },
+      {
         accessorKey: 'itemName',
         header: t('label.name'),
         size: 400,
@@ -51,6 +51,7 @@ export const useInboundShipmentColumns = () => {
         accessorKey: 'batch',
         header: t('label.batch'),
         enableSorting: true,
+        enableColumnFilter: true,
         defaultHideOnMobile: true,
       },
       {
@@ -69,6 +70,7 @@ export const useInboundShipmentColumns = () => {
         includeColumn: manageVvmStatusForStock,
         defaultHideOnMobile: true,
         enableSorting: true,
+        enableColumnFilter: true,
       },
       {
         id: 'locationCode',
@@ -92,6 +94,7 @@ export const useInboundShipmentColumns = () => {
         columnType: ColumnType.Number,
         defaultHideOnMobile: true,
         enableSorting: true,
+        size: 100,
       },
       {
         id: 'itemDoses',
@@ -111,6 +114,7 @@ export const useInboundShipmentColumns = () => {
 
           return row.numberOfPacks;
         },
+        size: 100,
       },
       {
         id: 'unitQuantity',
@@ -124,6 +128,7 @@ export const useInboundShipmentColumns = () => {
 
           return row.packSize * row.numberOfPacks;
         },
+        size: 120,
       },
       {
         id: 'doseQuantity',
@@ -141,6 +146,7 @@ export const useInboundShipmentColumns = () => {
 
           return row.packSize * row.numberOfPacks * (row.item.doses ?? 1);
         },
+        size: 120,
       },
       {
         id: 'costPricePerUnit',
@@ -158,6 +164,7 @@ export const useInboundShipmentColumns = () => {
             return (rowData.costPricePerPack ?? 0) / rowData.packSize;
           }
         },
+        size: 100,
       },
       {
         id: 'total',
@@ -178,6 +185,7 @@ export const useInboundShipmentColumns = () => {
             return x;
           }
         },
+        size: 120,
       },
       {
         id: 'donorName',
