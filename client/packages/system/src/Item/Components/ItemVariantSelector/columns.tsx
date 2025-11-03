@@ -1,10 +1,10 @@
 import React from 'react';
 import {
   ColumnDescription,
-  RadioCell,
   TooltipTextCell,
   useColumns,
 } from '@openmsupply-client/common';
+import { RadioCell } from '@openmsupply-client/common/src/ui/layout/tables/components/Cells/RadioCell';
 import { ItemVariantFragment } from '../../api';
 
 interface ItemVariantSelectorColumnProps {
