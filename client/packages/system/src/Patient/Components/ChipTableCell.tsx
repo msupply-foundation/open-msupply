@@ -13,7 +13,7 @@ export const ChipTableCell = <T extends RecordWithId>({
 }: CellProps<T>) => {
   const items = column.accessor({ rowData }) as string[];
 
-  if (items.length === 0) return <> </>;
+  if (items.length === 0) return null;
 
   return (
     <Box
