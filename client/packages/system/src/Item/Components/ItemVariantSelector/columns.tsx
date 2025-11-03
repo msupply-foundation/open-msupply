@@ -20,7 +20,7 @@ export const useItemVariantSelectorColumns = ({
 }: ItemVariantSelectorColumnProps) => {
   const t = useTranslation();
 
-  const columns = useMemo((): ColumnDef<ItemVariantFragment>[] => {
+  return useMemo((): ColumnDef<ItemVariantFragment>[] => {
     return [
       {
         id: 'itemVariantSelector',
@@ -59,6 +59,4 @@ export const useItemVariantSelectorColumns = ({
       },
     ];
   }, [selectedId, onVariantSelected, isVaccine]);
-
-  return { columns };
 };
