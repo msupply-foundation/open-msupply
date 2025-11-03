@@ -31,7 +31,7 @@ impl InvoiceTransferProcessor for UpdateInboundInvoiceProcessor {
     /// 2. Source invoice is Outbound shipment or Supplier Return
     /// 3. Linked invoice exists (the inbound invoice)
     /// 4. Linked inbound invoice is Picked (Inbound invoice can only be updated before it turns to Shipped status)
-    /// 5. Source outbound invoice is Shipped
+    /// 5. Source outbound invoice is either Shipped or Picked
     ///
     /// Only runs once:
     /// 6. Because linked inbound invoice will be changed to Shipped status and `4.` will never be true again
@@ -67,7 +67,10 @@ impl InvoiceTransferProcessor for UpdateInboundInvoiceProcessor {
             ));
         }
         // 5.
-        if outbound_invoice.invoice_row.status != InvoiceStatus::Shipped {
+        if !matches!(
+            &outbound_invoice.invoice_row.status,
+            InvoiceStatus::Shipped | InvoiceStatus::Picked,
+        ) {
             return Ok(InvoiceTransferOutput::WrongOutboundStatus(
                 outbound_invoice.invoice_row.status.to_owned(),
             ));
