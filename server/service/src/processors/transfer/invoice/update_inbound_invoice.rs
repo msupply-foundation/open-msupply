@@ -34,7 +34,7 @@ impl InvoiceTransferProcessor for UpdateInboundInvoiceProcessor {
     /// 5. Source outbound invoice is either Shipped or Picked
     ///
     /// Only runs once:
-    /// 6. Because linked inbound invoice will be changed to Shipped status and `4.` will never be true again
+    /// 6. Because linked inbound invoice will be changed to match the outbound status (Picked or Shipped) and `4.` will prevent further updates once status changes from Picked
     fn try_process_record(
         &self,
         connection: &StorageConnection,
@@ -128,7 +128,7 @@ impl InvoiceTransferProcessor for UpdateInboundInvoiceProcessor {
 
         let updated_inbound_invoice = InvoiceRow {
             // 6.
-            status: InvoiceStatus::Shipped,
+            status: outbound_invoice_row.status.clone(),
             picked_datetime: outbound_invoice_row.picked_datetime,
             shipped_datetime: outbound_invoice_row.shipped_datetime,
             their_reference: Some(formatted_ref),
