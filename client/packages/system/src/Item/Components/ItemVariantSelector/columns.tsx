@@ -20,19 +20,19 @@ export const useItemVariantSelectorColumns = ({
 }: ItemVariantSelectorColumnProps) => {
   const t = useTranslation();
 
-  const columns = useMemo(() => {
-    const cols: ColumnDef<ItemVariantFragment>[] = [
+  const columns = useMemo((): ColumnDef<ItemVariantFragment>[] => {
+    return [
       {
         id: 'itemVariantSelector',
         header: '',
         size: 50,
         accessorKey: 'id',
-        Cell: ({ cell }) => (
+        Cell: ({ cell, row }) => (
           <RadioCell
             cell={cell}
             selectedId={selectedId}
             onSelected={onVariantSelected}
-            groupName="item-variant-selector"
+            groupName={`item-variant-selector-${row.original.itemId}`}
           />
         ),
         enableSorting: false,
@@ -58,9 +58,7 @@ export const useItemVariantSelectorColumns = ({
         includeColumn: isVaccine,
       },
     ];
-
-    return cols;
-  }, [selectedId, onVariantSelected, isVaccine, t]);
+  }, [selectedId, onVariantSelected, isVaccine]);
 
   return { columns };
 };
