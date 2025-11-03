@@ -7,7 +7,7 @@ import {
 
 import { Sdk } from './operations.generated';
 
-export const getHostQueries = (sdk: Sdk, storeId: string) => ({
+export const getHostQueries = (sdk: Sdk) => ({
   get: {
     displaySettings: async (input: DisplaySettingsHash) => {
       const result = await sdk.displaySettings({ input });
@@ -37,7 +37,7 @@ export const getHostQueries = (sdk: Sdk, storeId: string) => ({
   },
 
   configureNameProperties: async (input: ConfigureNamePropertyInput[]) => {
-    const result = await sdk.configureNameProperties({ input, storeId });
+    const result = await sdk.configureNameProperties({ input });
     return result?.centralServer.general.configureNameProperties;
   },
 });
