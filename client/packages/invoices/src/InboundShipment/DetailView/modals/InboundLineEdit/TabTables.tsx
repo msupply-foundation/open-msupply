@@ -1,32 +1,18 @@
 import React, { useMemo } from 'react';
 import {
-  DataTable,
-  useColumns,
-  ColumnDescription,
-  useTheme,
-  QueryParamsProvider,
-  createQueryParamsStore,
-  getColumnLookupWithOverrides,
-  ColumnAlign,
-  Currencies,
-  useCurrencyCell,
   useAuthContext,
   useTranslation,
   usePreferences,
   Formatter,
   useIntlUtils,
-  getDosesPerUnitColumn,
   useFormatNumber,
   NumUtils,
   IconButton,
   DeleteIcon,
   ColumnDef,
-  Box,
-  Typography,
   useSimpleMaterialTable,
   MaterialTable,
   ColumnType,
-  DateUtils,
   useFormatDateTime,
 } from '@openmsupply-client/common';
 // Need to be re-exported when Legacy cells are removed
@@ -37,15 +23,14 @@ import { ItemVariantCell } from '@openmsupply-client/common/src/ui/layout/tables
 import { CurrencyInputCell } from '@openmsupply-client/common/src/ui/layout/tables/material-react-table/components/CurrencyInputCell';
 import { DraftInboundLine } from '../../../../types';
 import {
+  CampaignOrProgramCell,
   CurrencyRowFragment,
-  getCampaignOrProgramColumn,
-  getDonorColumn,
-  getLocationInputColumn,
+  DonorSearchInput,
   getVolumePerPackFromVariant,
   ItemRowFragment,
   ItemVariantFragment,
   LocationRowFragment,
-  PackSizeEntryCell,
+  LocationSearchInput,
   VVMStatusSearchInput,
 } from '@openmsupply-client/system';
 import { PatchDraftLineInput } from '../../../api';
@@ -469,74 +454,106 @@ export const PricingTableComponent = ({
 
 export const PricingTable = React.memo(PricingTableComponent);
 
-// export const LocationTableComponent = ({
-//   lines,
-//   updateDraftLine,
-//   isDisabled,
-//   restrictedToLocationTypeId,
-// }: TableProps) => {
-//   const { allowTrackingOfStockByDonor } = usePreferences();
+export const LocationTableComponent = ({
+  lines,
+  updateDraftLine,
+  isDisabled,
+  restrictedToLocationTypeId,
+}: TableProps) => {
+  const t = useTranslation();
+  const { allowTrackingOfStockByDonor } = usePreferences();
 
-//   const columnDescriptions: ColumnDescription<DraftInboundLine>[] = [
-//     [
-//       'batch',
-//       {
-//         accessor: ({ rowData }) => rowData.batch || '',
-//       },
-//     ],
-//     [
-//       'location',
-//       {
-//         ...getLocationInputColumn(restrictedToLocationTypeId),
-//         setter: updateDraftLine,
-//         width: 530,
-//         cellProps: {
-//           getVolumeRequired: (rowData: DraftInboundLine) =>
-//             rowData.volumePerPack * rowData.numberOfPacks,
-//         },
-//       },
-//     ],
-//     [
-//       'note',
-//       {
-//         Cell: TextInputCell,
-//         setter: patch => {
-//           const note = patch.note === '' ? null : patch.note;
-//           updateDraftLine({ ...patch, note });
-//         },
-//         accessor: ({ rowData }) => rowData.note ?? '',
-//       },
-//     ],
-//   ];
+  const columns = useMemo(() => {
+    const cols: ColumnDef<DraftInboundLine>[] = [
+      {
+        accessorKey: 'batch',
+        header: t('label.batch'),
+        size: 100,
+        accessorFn: row => row.batch || '',
+      },
+      {
+        id: 'location',
+        header: t('label.location'),
+        Cell: ({ row: { original: row } }) => {
+          return (
+            <LocationSearchInput
+              onChange={value =>
+                updateDraftLine({ id: row.id, location: value })
+              }
+              disabled={isDisabled ?? false}
+              selectedLocation={(row.location as LocationRowFragment) ?? null}
+              volumeRequired={row.volumePerPack * row.numberOfPacks}
+              restrictedToLocationTypeId={restrictedToLocationTypeId}
+              fullWidth
+            />
+          );
+        },
+      },
 
-//   if (allowTrackingOfStockByDonor) {
-//     columnDescriptions.push([
-//       getDonorColumn((id, donor) => updateDraftLine({ id, donor })),
-//       { accessor: ({ rowData }) => rowData.donor?.id },
-//     ] as ColumnDescription<DraftInboundLine>);
-//   }
+      {
+        accessorKey: 'note',
+        header: t('label.stocktake-comment'),
+        size: 200,
+        Cell: ({ cell, row }) => (
+          <TextInputCell
+            cell={cell}
+            updateFn={value =>
+              updateDraftLine({ id: row.original.id, note: value })
+            }
+            disabled={isDisabled ?? false}
+          />
+        ),
+        defaultHideOnMobile: true,
+      },
+      {
+        id: 'donor',
+        header: t('label.donor'),
+        Cell: ({ row: { original: row } }) => (
+          <DonorSearchInput
+            donorId={row?.donor?.id || null}
+            onChange={donor =>
+              updateDraftLine({
+                id: row.id,
+                donor,
+              })
+            }
+            disabled={isDisabled ?? false}
+            fullWidth
+            clearable
+          />
+        ),
+        includeColumn: allowTrackingOfStockByDonor,
+      },
+      {
+        id: 'campaignOrProgram',
+        header: t('label.campaign'),
+        Cell: ({ row }) => (
+          <CampaignOrProgramCell
+            row={row.original}
+            disabled={isDisabled ?? false}
+            updateFn={patch =>
+              updateDraftLine({ id: row.original.id, ...patch })
+            }
+          />
+        ),
+      },
+    ];
+    return cols;
+  }, [
+    allowTrackingOfStockByDonor,
+    isDisabled,
+    restrictedToLocationTypeId,
+    updateDraftLine,
+  ]);
 
-//   columnDescriptions.push(
-//     getCampaignOrProgramColumn(patch => updateDraftLine(patch))
-//   );
+  const table = useSimpleMaterialTable<DraftInboundLine>({
+    tableId: 'inbound-line-location',
+    columns,
+    data: lines,
+    getIsRestrictedRow: isDisabled ? () => true : undefined,
+  });
 
-//   const columns = useColumns(columnDescriptions, {}, [updateDraftLine, lines]);
+  return <MaterialTable table={table} />;
+};
 
-//   return (
-//     <QueryParamsProvider
-//       createStore={createQueryParamsStore<LocationRowFragment>({
-//         initialSortBy: { key: 'name' },
-//       })}
-//     >
-//       <DataTable
-//         id="inbound-line-location"
-//         columns={columns}
-//         data={lines}
-//         dense
-//         isDisabled={isDisabled}
-//       />
-//     </QueryParamsProvider>
-//   );
-// };
-
-// export const LocationTable = React.memo(LocationTableComponent);
+export const LocationTable = React.memo(LocationTableComponent);

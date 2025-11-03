@@ -152,14 +152,14 @@ export const TabLayout = ({
           />
         </InboundLineEditPanel>
 
-        {/* <InboundLineEditPanel value={Tabs.Other}>
+        <InboundLineEditPanel value={Tabs.Other}>
           <LocationTable
             isDisabled={isDisabled}
             lines={draftLines}
             updateDraftLine={updateDraftLine}
             restrictedToLocationTypeId={item?.restrictedLocationTypeId}
           />
-        </InboundLineEditPanel> */}
+        </InboundLineEditPanel>
       </TableContainer>
     </TabContext>
   );
