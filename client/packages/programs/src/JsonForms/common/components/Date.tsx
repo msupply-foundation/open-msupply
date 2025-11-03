@@ -8,6 +8,7 @@ import {
   LocaleKey,
   useTranslation,
   DateTimePickerInput,
+  DatePickerInput,
 } from '@openmsupply-client/common';
 import { DefaultFormRowSx, FORM_LABEL_WIDTH } from '../styleConstants';
 import { z } from 'zod';
@@ -63,24 +64,45 @@ const UIComponent = (props: ControlProps) => {
       labelWidthPercentage={FORM_LABEL_WIDTH}
       inputAlignment="start"
       Input={
-        <DateTimePickerInput
-          width="100%"
-          // undefined is displayed as "now" and null as unset
-          value={DateUtils.getNaiveDate(data)}
-          onChange={e => {
-            handleChange(path, !e ? undefined : formatDate(e));
-            if (customError) setCustomError(undefined);
-          }}
-          views={noDay ? ['year', 'month'] : ['year', 'month', 'day']}
-          openTo={noDay ? 'month' : 'day'}
-          format={noDay ? 'MM/yyyy' : 'P'}
-          disabled={!props.enabled}
-          error={customError ?? props.errors ?? zErrors ?? ''}
-          disableFuture={disableFuture}
-          onError={validationError =>
-            setCustomError(validationError ?? undefined)
-          }
-        />
+        noDay ? (
+          <DatePickerInput
+            width="100%"
+            // undefined is displayed as "now" and null as unset
+            value={DateUtils.getNaiveDate(data)}
+            onChange={e => {
+              handleChange(path, !e ? undefined : formatDate(e));
+              if (customError) setCustomError(undefined);
+            }}
+            views={noDay ? ['year', 'month'] : ['year', 'month', 'day']}
+            openTo={noDay ? 'month' : 'day'}
+            format={noDay ? 'MM/yyyy' : 'P'}
+            disabled={!props.enabled}
+            error={customError ?? props.errors ?? zErrors ?? ''}
+            disableFuture={disableFuture}
+            onError={validationError =>
+              setCustomError(validationError ?? undefined)
+            }
+          />
+        ) : (
+          <DateTimePickerInput
+            width="100%"
+            // undefined is displayed as "now" and null as unset
+            value={DateUtils.getNaiveDate(data)}
+            onChange={e => {
+              handleChange(path, !e ? undefined : formatDate(e));
+              if (customError) setCustomError(undefined);
+            }}
+            views={noDay ? ['year', 'month'] : ['year', 'month', 'day']}
+            openTo={noDay ? 'month' : 'day'}
+            format={noDay ? 'MM/yyyy' : 'P'}
+            disabled={!props.enabled}
+            error={customError ?? props.errors ?? zErrors ?? ''}
+            disableFuture={disableFuture}
+            onError={validationError =>
+              setCustomError(validationError ?? undefined)
+            }
+          />
+        )
       }
     />
   );
