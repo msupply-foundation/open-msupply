@@ -1,11 +1,16 @@
-import { Box, Chip } from '@openmsupply-client/common';
 import React from 'react';
+import { Box, Chip } from '@openmsupply-client/common';
 import { MRT_Cell, MRT_RowData } from 'material-react-table';
 
 interface ChipTableCellProps<T extends MRT_RowData> {
   cell: MRT_Cell<T>;
 }
 
+/**
+ * Displays a list of labels in a table cell.
+ *
+ * This expects that the data accessor returns a list of string for a given table row.
+ */
 export const ChipTableCell = <T extends MRT_RowData>({
   cell,
 }: ChipTableCellProps<T>) => {
