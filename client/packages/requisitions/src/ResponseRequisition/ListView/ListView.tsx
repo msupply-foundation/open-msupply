@@ -160,7 +160,7 @@ export const ListView = () => {
     noDataElement: (
       <NothingHere
         body={t('error.no-requisitions')}
-        onCreate={modalController.toggleOn}
+        onCreate={requisitionModalController.toggleOn}
       />
     ),
   });
@@ -168,7 +168,10 @@ export const ListView = () => {
   return (
     <>
       <Toolbar filter={filter} />
-      <AppBarButtons modalController={modalController} />
+      <AppBarButtons
+        requisitionModalController={requisitionModalController}
+        createOrderModalController={createOrderModalController}
+      />
       <MaterialTable table={table} />
       <Footer
         selectedRows={selectedRows as ResponseFragment[]}
