@@ -63,7 +63,11 @@ export const usePrescriptionList = (queryParams: ListParams) => {
     return { nodes, totalCount };
   };
 
-  const { data, isLoading, isError } = useQuery({ queryKey, queryFn });
+  const { data, isLoading, isError } = useQuery({
+    queryKey,
+    queryFn,
+    keepPreviousData: true,
+  });
 
   const { selectedRows } = useTableStore(state => ({
     selectedRows: Object.keys(state.rowState)
