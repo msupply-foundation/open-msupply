@@ -5,18 +5,38 @@
 import { VaccinationDraft } from './api';
 import { VaccinationCardItemFragment } from './api/operations.generated';
 
-export const isPreviousDoseGiven = (
+// Note: undefined and null have different meanings here
+// If it returns undefined, it means there is no previous dose (i.e. it's the first).
+// If it returns null, it means the previous dose hasn't been entered at all (neither Given nor Not Given), which means the current dose will be skipping a dose.
+export const getPreviousDoseStatus = (
   row: VaccinationCardItemFragment,
   items: VaccinationCardItemFragment[] | undefined
 ) => {
   const vaccineCourseId = row.vaccineCourseId;
-  if (!items) return false;
+  if (!items) return undefined;
   const itemsForCourse = items.filter(
     item => item.vaccineCourseId === vaccineCourseId
   );
   const doseIndex = itemsForCourse.findIndex(dose => dose.id === row.id);
-  if (doseIndex === 0) return true;
-  return itemsForCourse[doseIndex - 1]?.given;
+  if (doseIndex === 0) return undefined;
+  return itemsForCourse[doseIndex - 1]?.status;
+};
+
+export const isEditable = (
+  row: VaccinationCardItemFragment,
+  items: VaccinationCardItemFragment[] | undefined
+) => {
+  if (!items) return false;
+
+  const itemsForCourse = items.filter(
+    item => item.vaccineCourseId === row.vaccineCourseId
+  );
+  const doseIndex = itemsForCourse.findIndex(dose => dose.id === row.id);
+  const firstNullIndex = itemsForCourse.findIndex(dose => dose.status === null);
+  const lastEnteredIndex =
+    firstNullIndex === -1 ? itemsForCourse.length - 1 : firstNullIndex - 1;
+  // Allow editing if it's the last entered dose or later
+  return doseIndex >= lastEnteredIndex;
 };
 
 export const hasNoStocklineSelected = (
