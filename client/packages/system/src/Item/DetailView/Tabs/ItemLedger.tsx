@@ -68,18 +68,18 @@ const ItemLedgerTable = ({
       {
         accessorKey: 'time',
         header: t('label.time'),
-        Cell: ({ row }) => localisedTime(row.original.datetime),
+        accessorFn: row => localisedTime(row.datetime),
         size: 80,
       },
       {
         accessorKey: 'name',
         header: t('label.name'),
-        Cell: ({ row }) => getNameValue(t, row.original.name),
+        accessorFn: row => getNameValue(t, row.name),
       },
       {
         accessorKey: 'invoiceStatus',
         header: t('label.status'),
-        Cell: ({ row }) => t(getStatusTranslation(row.original.invoiceStatus)),
+        accessorFn: row => t(getStatusTranslation(row.invoiceStatus)),
         filterVariant: 'select',
         filterSelectOptions: Object.values(InvoiceNodeStatus).map(status => ({
           value: status,
