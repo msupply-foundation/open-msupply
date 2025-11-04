@@ -17,7 +17,7 @@ import {
 } from '../utils';
 import { useEncounter } from '@openmsupply-client/programs';
 
-const EncounterListComponent = () => {
+export const EncounterListView = () => {
   const t = useTranslation();
   const {
     queryParams: { sortBy, first, offset, filterBy },
@@ -76,5 +76,3 @@ const EncounterListComponent = () => {
 
   return <MaterialTable table={table} />;
 };
-
-export const EncounterListView = () => <EncounterListComponent />;
