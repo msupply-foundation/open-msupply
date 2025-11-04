@@ -24,8 +24,6 @@ export const ChipTableCell = <T extends MRT_RowData>({
         display: 'flex',
         flexWrap: 'wrap',
         gap: 0.5,
-        maxWidth: 250,
-        padding: '3px 0',
       }}
     >
       {items.map((item, index) => (
