@@ -1,6 +1,7 @@
 pub mod canonical_json;
 pub mod constants;
 pub mod hash;
+pub mod serde_json_diff;
 pub mod sync_serde;
 pub mod timezone;
 pub mod uuid;
