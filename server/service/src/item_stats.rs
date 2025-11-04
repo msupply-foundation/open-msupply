@@ -23,6 +23,7 @@ use util::{date_now, date_with_offset};
 pub struct ItemStats {
     pub total_consumption: f64,
     pub average_monthly_consumption: f64,
+    pub average_monthly_distribution: Option<f64>, // Optional - only present when plugin is active
     pub available_stock_on_hand: f64,
     pub total_stock_on_hand: f64,
     pub item_id: String,
@@ -95,13 +96,33 @@ pub fn get_item_stats(
     let mut consumption_rows =
         ConsumptionRepository::new(connection).query(Some(filter.clone()))?;
 
-    // Apply AMD filter if plugin is available (filters out same supply level)
-    if let Some(plugin) = PluginInstance::get_one(PluginType::AverageMonthlyDistribution) {
+    // Check if AMD plugin is available
+    let amd_plugin = PluginInstance::get_one(PluginType::AverageMonthlyDistribution);
+
+    let (amd_consumption_rows, amd_by_item) = if let Some(plugin) = amd_plugin {
         let amd_input = amd::Input {
             store_id: store_id.to_string(),
             consumption_rows: consumption_rows.clone(),
         };
-        consumption_rows = amd::Trait::call(&(*plugin), amd_input)?;
+        let filtered_rows = amd::Trait::call(&(*plugin), amd_input)?;
+
+        let amd_consumption_map = get_consumption_map(&filtered_rows)?;
+        let amd_map: HashMap<String, f64> = amd_consumption_map
+            .iter()
+            .map(|(item_id, total_distribution)| {
+                let amd = total_distribution / amc_lookback_months;
+                (item_id.clone(), amd)
+            })
+            .collect();
+
+        (filtered_rows, Some(amd_map))
+    } else {
+        (consumption_rows.clone(), None)
+    };
+
+    // Use AMD-filtered rows for AMC calculation if plugin is active
+    if amd_by_item.is_some() {
+        consumption_rows = amd_consumption_rows;
     }
 
     let consumption_map = get_consumption_map(&consumption_rows)?;
@@ -152,6 +173,7 @@ pub fn get_item_stats(
 
     Ok(ItemStats::new_vec(
         amc_by_item,
+        amd_by_item,
         adjusted_consumption_map,
         get_stock_on_hand_rows(connection, store_id, Some(item_ids))?,
     ))
@@ -289,6 +311,7 @@ pub fn get_stock_on_hand_rows(
 impl ItemStats {
     fn new_vec(
         amc_by_item: amc::Output,
+        amd_by_item: Option<HashMap<String, f64>>,
         consumption_map: HashMap<String /* item_id */, f64 /* total consumption */>,
         stock_on_hand_rows: Vec<StockOnHandRow>,
     ) -> Vec<Self> {
@@ -302,6 +325,9 @@ impl ItemStats {
                     .get(&stock_on_hand.item_id)
                     .and_then(|r| r.average_monthly_consumption)
                     .unwrap_or_default(),
+                average_monthly_distribution: amd_by_item
+                    .as_ref()
+                    .and_then(|map| map.get(&stock_on_hand.item_id).copied()),
                 total_consumption: consumption_map
                     .get(&stock_on_hand.item_id)
                     .copied()
@@ -315,6 +341,7 @@ impl ItemStats {
         let row = &requisition_line.requisition_line_row;
         ItemStats {
             average_monthly_consumption: row.average_monthly_consumption,
+            average_monthly_distribution: None, // Not available from requisition line
             available_stock_on_hand: row.available_stock_on_hand,
             item_id: requisition_line.item_row.id.clone(),
             item_name: requisition_line.item_row.name.clone(),
