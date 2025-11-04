@@ -2,14 +2,14 @@ import React from 'react';
 import {
   Divider,
   Box,
-  DataTable,
+  MaterialTable,
   useTranslation,
   useFormatNumber,
+  useSimpleMaterialTable,
 } from '@openmsupply-client/common';
 
 import { usePrescriptionLineEditColumns } from './columns';
 import { getAllocatedQuantity, useAllocationContext } from '../../StockOut';
-import { useDisableVvmRows } from '../../useDisableVvmRows';
 
 export interface PrescriptionLineEditTableProps {
   disabled?: boolean;
@@ -27,8 +27,6 @@ export const PrescriptionLineEditTable = ({
     })
   );
 
-  useDisableVvmRows({ rows: draftLines, isVaccine: item?.isVaccine });
-
   const allocate = (key: string, value: number) => {
     const num = Number.isNaN(value) ? 0 : value;
     return manualAllocate(key, num, format, t);
@@ -38,7 +36,14 @@ export const PrescriptionLineEditTable = ({
     allocate,
     item,
     allocateIn: allocateIn.type,
-    disabled,
+  });
+
+  const table = useSimpleMaterialTable({
+    tableId: 'prescription-line-edit',
+    columns,
+    data: draftLines,
+    getIsRestrictedRow: row => disabled || !!row.vvmStatus?.unusable,
+    enableRowSelection: false,
   });
 
   return (
@@ -51,20 +56,9 @@ export const PrescriptionLineEditTable = ({
           flexDirection: 'column',
           overflowX: 'hidden',
           overflowY: 'auto',
-          '& .MuiTableRow-root:nth-of-type(even)': {
-            backgroundColor: 'background.row',
-          },
         }}
       >
-        {!!draftLines.length && (
-          <DataTable
-            id="prescription-line-edit"
-            columns={columns}
-            data={draftLines}
-            isDisabled={disabled}
-            dense
-          />
-        )}
+        {!!draftLines.length && <MaterialTable table={table} />}
       </Box>
     </Box>
   );
