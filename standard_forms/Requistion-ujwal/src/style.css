@@ -1,0 +1,133 @@
+/* Print and screen layout */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 1cm;
+  }
+}
+
+/* Header styling */
+.header_section {
+  width: 100%;
+  border-bottom: 2px solid #333;
+  padding-bottom: 10px;
+  margin-bottom: 20px;
+}
+
+.logo_cell {
+  width: 15%;
+  text-align: left;
+}
+
+.logo {
+  height: 80px;
+  display: block;
+}
+
+.store_info {
+  width: 45%;
+  text-align: left;
+  vertical-align: top;
+}
+
+.store_name {
+  font-weight: bold;
+  font-size: 14pt;
+}
+
+.address, .contact {
+  font-size: 9pt;
+  color: #666;
+}
+
+.form_title {
+  width: 40%;
+  text-align: right;
+  vertical-align: top;
+}
+
+.form_title h1 {
+  font-size: 24pt;
+  margin: 0;
+  color: #333;
+}
+
+/* Request info section */
+.request_info {
+  margin-bottom: 20px;
+  padding: 10px;
+  background-color: #f5f5f5;
+  border: 1px solid #ddd;
+}
+
+.info_row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 5px;
+  font-weight: bold;
+}
+
+/* Base typography */
+body {
+  font-family: Arial, sans-serif;
+  font-size: 10pt;
+  line-height: 1.4;
+  margin: 0;
+  padding: 20px;
+}
+/* Table styling */
+.items_table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 30px;
+}
+
+.table_header th {
+  background-color: #e6e6e6;
+  border: 1px solid #333;
+  padding: 8px;
+  text-align: left;
+  font-weight: bold;
+}
+
+.item_row td {
+  border: 1px solid #333;
+  padding: 8px;
+  vertical-align: top;
+}
+
+.quantity {
+  text-align: center;
+  width: 100px;
+}
+
+.notes {
+  width: 200px;
+}
+
+/* Comments and signatures */
+.comments_section {
+  margin-bottom: 30px;
+  padding: 15px;
+  border: 1px solid #ddd;
+  background-color: #f9f9f9;
+}
+
+.signature_section {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 40px;
+}
+
+.signature_box {
+  width: 45%;
+  border: 1px solid #333;
+  padding: 20px;
+  min-height: 80px;
+}
+
+.signature_box p {
+  margin: 10px 0;
+  border-bottom: 1px solid #333;
+  padding-bottom: 5px;
+}

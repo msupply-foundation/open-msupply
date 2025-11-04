@@ -1,0 +1,44 @@
+<style>
+  {% include "style.css" %}
+</style>
+
+<div class="equipment_request">
+  <table class="items_table">
+    <thead>
+      <tr class="table_header">
+        <th>Item Code</th>
+        <th>Item Name</th>
+        <th>Requested Quantity</th>
+        <th>Notes</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for line in data.requisition.lines.nodes %}
+      <tr class="item_row">
+        <td>{{ line.item.code }}</td>
+        <td>{{ line.item.name }}</td>
+        <td class="quantity">{{ line.requestedQuantity }}</td>
+        <td class="notes">_________________</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  {% if data.requisition.comment %}
+  <div class="comments_section">
+    <h3>Comments:</h3>
+    <p>{{ data.requisition.comment }}</p>
+  </div>
+  {% endif %}
+
+  <div class="signature_section">
+    <div class="signature_box">
+      <p>Requested by: _________________</p>
+      <p>Date: _________________</p>
+    </div>
+    <div class="signature_box">
+      <p>Approved by: _________________</p>
+      <p>Date: _________________</p>
+    </div>
+  </div>
+</div>
