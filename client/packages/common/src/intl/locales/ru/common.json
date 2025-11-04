@@ -2185,7 +2185,6 @@
   "warning.cannot-create-placeholder-units": "Всего доступно {{allocatedQuantity}} единиц. Невозможно выделить все {{requestedQuantity}} единицы.",
   "warning.caps-lock": "Внимание: включен Caps Lock",
   "warning.field-not-parsed": "{{field}} не проанализировано",
-<<<<<<< HEAD
   "warning.nothing-to-supply": "Больше нечего поставить!",
   "button.add-status-entry": "Добавить Запись Статуса",
   "error.unknown-insert-error": "Неизвестная ошибка. Невозможно вставить запись",
@@ -2823,9 +2822,6 @@
   "label.supplier-reference": "Сноска поставщика",
   "messages.cannot-delete-rnr-form": "Невозможно удалить завершенную форму О&З",
   "messages.confirm-delete-lines-purchase-order_many": "Это навсегда удалит {{count}} строк из этого заказа на закупку",
-  "messages.created-clinician": "Успешно созданный врач"
-}
-=======
+  "messages.created-clinician": "Успешно созданный врач",
   "warning.nothing-to-supply": "Больше нечего поставить!"
 }
->>>>>>> main
