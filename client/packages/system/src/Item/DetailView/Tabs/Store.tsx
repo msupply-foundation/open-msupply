@@ -18,8 +18,6 @@ export const StoreTab = ({ item }: { item: ItemFragment }) => {
   const isCentralServer = useIsCentralServerApi();
   const { plugins } = usePluginProvider();
 
-  const showPlugin = isCentralServer && !!plugins.itemProperties?.ItemSellPrice;
-
   return (
     <>
       <DetailContainer>
@@ -31,21 +29,14 @@ export const StoreTab = ({ item }: { item: ItemFragment }) => {
           gap={4}
         >
           <DetailSection title={t('title.pricing')}>
-            {!!showPlugin ? (
-              plugins.itemProperties?.ItemSellPrice?.map((Plugin, index) => (
+            {isCentralServer && plugins.itemProperties?.ItemSellPrice ? (
+              plugins.itemProperties.ItemSellPrice.map((Plugin, index) => (
                 <Plugin key={index} item={item} />
               ))
             ) : (
-              <DetailInputWithLabelRow
-                label={t('label.default-sell-price-per-pack')}
-                Input={
-                  <CurrencyInput
-                    value={item?.itemStoreProperties?.defaultSellPricePerPack}
-                    disabled={isDisabled}
-                    onChangeNumber={() => {}}
-                    width={'100%'}
-                  />
-                }
+              <SellPriceInput
+                value={item.itemStoreProperties?.defaultSellPricePerPack}
+                isDisabled={isDisabled}
               />
             )}
           </DetailSection>
@@ -71,10 +62,38 @@ export const StoreTab = ({ item }: { item: ItemFragment }) => {
           </DetailSection>
         </Grid>
       </DetailContainer>
-      {showPlugin &&
+      {isCentralServer &&
         plugins.itemProperties?.ItemFooter?.map((Plugin, index) => (
           <Plugin key={index} item={item} />
         ))}
     </>
+  );
+};
+
+// Also used in plugin for consistency
+interface SellPriceInputProps {
+  value?: string | number;
+  isDisabled?: boolean;
+  onChange?: (value: number) => void;
+}
+
+export const SellPriceInput = ({
+  value = 0,
+  isDisabled,
+  onChange,
+}: SellPriceInputProps) => {
+  const t = useTranslation();
+  return (
+    <DetailInputWithLabelRow
+      label={t('label.default-sell-price-per-pack')}
+      Input={
+        <CurrencyInput
+          value={value}
+          disabled={isDisabled}
+          onChangeNumber={onChange ?? (() => {})}
+          width={'100%'}
+        />
+      }
+    />
   );
 };
