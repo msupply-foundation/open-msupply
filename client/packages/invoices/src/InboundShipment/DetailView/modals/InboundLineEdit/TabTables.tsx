@@ -13,7 +13,6 @@ import {
   useSimpleMaterialTable,
   MaterialTable,
   ColumnType,
-  useFormatDateTime,
   DateUtils,
   ExpiryDateInput,
 } from '@openmsupply-client/common';
@@ -343,11 +342,15 @@ export const QuantityTableComponent = ({
     format,
     unitName,
     pluralisedUnitName,
+    displayInDoses,
     hasItemVariantsEnabled,
     hasVvmStatusesEnabled,
-    item,
-    displayInDoses,
+    isDisabled,
+    item?.isVaccine,
+    pluralisedUnitName,
     removeDraftLine,
+    setPackRoundingMessage,
+    updateDraftLine,
   ]);
 
   const table = useSimpleMaterialTable<DraftInboundLine>({

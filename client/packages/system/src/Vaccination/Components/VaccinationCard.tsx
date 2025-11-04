@@ -5,7 +5,7 @@ import { Clinician } from '../../Clinician';
 import { VaccineCardTable } from './VaccineCardTable';
 import { VaccinationCardItemFragment } from '../api/operations.generated';
 import { usePatientVaccineCard } from '../api/usePatientVaccineCard';
-import { isPreviousDoseGiven } from '../utils';
+import { getPreviousDoseStatus, isEditable } from '../utils';
 
 export const VaccinationCard = ({
   clinician,
@@ -28,9 +28,11 @@ export const VaccinationCard = ({
     onOpen(row);
   };
 
-  const isPreviousGiven = entity
-    ? !!isPreviousDoseGiven(entity, data?.items ?? [])
-    : false;
+  const previousDoseStatus = entity
+    ? getPreviousDoseStatus(entity, data?.items ?? [])
+    : undefined;
+
+  const isDoseEditable = entity ? isEditable(entity, data?.items ?? []) : false;
 
   return (
     <>
@@ -41,7 +43,8 @@ export const VaccinationCard = ({
           cardRow={entity}
           onClose={onClose}
           defaultClinician={clinician}
-          isPreviousGiven={isPreviousGiven}
+          previousDoseStatus={previousDoseStatus}
+          isEditable={isDoseEditable}
           onOk={onOk}
         />
       )}

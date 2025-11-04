@@ -23,6 +23,7 @@ interface DocumentsProps {
   openUploadModal?: () => void;
 }
 
+// TODO: Replace upload table with how we have it in other modules (i.e. Not table)
 export const DocumentsTable = ({
   recordId,
   tableName,
