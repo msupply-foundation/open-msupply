@@ -33,6 +33,7 @@ pub trait PreferenceServiceTrait: Sync + Send {
             prevent_transfers_months_before_initialisation,
             show_contact_tracing,
             sync_records_display_threshold,
+            warning_for_excess_request,
             use_days_in_month,
             adjust_for_number_of_days_out_of_stock,
             days_in_month,
@@ -46,6 +47,7 @@ pub trait PreferenceServiceTrait: Sync + Send {
             sort_by_vvm_status_then_expiry,
             use_simplified_mobile_ui,
             disable_manual_returns,
+            requisition_auto_finalise,
             can_create_internal_order_from_a_requisition,
             select_destination_store_for_an_internal_order,
             number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products,
@@ -75,6 +77,7 @@ pub trait PreferenceServiceTrait: Sync + Send {
         )?;
         append_if_type(show_contact_tracing, &mut prefs, &input)?;
         append_if_type(sync_records_display_threshold, &mut prefs, &input)?;
+        append_if_type(warning_for_excess_request, &mut prefs, &input)?;
         append_if_type(use_days_in_month, &mut prefs, &input)?;
         append_if_type(adjust_for_number_of_days_out_of_stock, &mut prefs, &input)?;
         append_if_type(days_in_month, &mut prefs, &input)?;
@@ -88,6 +91,7 @@ pub trait PreferenceServiceTrait: Sync + Send {
         append_if_type(sort_by_vvm_status_then_expiry, &mut prefs, &input)?;
         append_if_type(use_simplified_mobile_ui, &mut prefs, &input)?;
         append_if_type(disable_manual_returns, &mut prefs, &input)?;
+        append_if_type(requisition_auto_finalise, &mut prefs, &input)?;
         append_if_type(
             can_create_internal_order_from_a_requisition,
             &mut prefs,

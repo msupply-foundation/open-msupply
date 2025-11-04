@@ -14,7 +14,7 @@ import {
   VaccinationCardFragment,
   VaccinationCardItemFragment,
 } from '../api/operations.generated';
-import { isPreviousDoseGiven } from '../utils';
+import { getPreviousDoseStatus } from '../utils';
 
 interface VaccinationCardProps {
   programEnrolmentId: string;
@@ -31,7 +31,7 @@ const canClickRow = (
 ) => {
   if (!isEncounter) return false;
   if (row.canSkipDose) return true;
-  return isPreviousDoseGiven(row, items);
+  return getPreviousDoseStatus(row, items) !== null;
 };
 
 export const VaccineCardTable = ({

@@ -6873,6 +6873,7 @@ export enum PreferenceKey {
   UseDaysInMonth = 'useDaysInMonth',
   UseProcurementFunctionality = 'useProcurementFunctionality',
   UseSimplifiedMobileUi = 'useSimplifiedMobileUi',
+  WarningForExcessRequest = 'warningForExcessRequest',
 }
 
 export type PreferenceMutations = {
@@ -6924,6 +6925,7 @@ export type PreferencesNode = {
   useDaysInMonth: Scalars['Boolean']['output'];
   useProcurementFunctionality: Scalars['Boolean']['output'];
   useSimplifiedMobileUi: Scalars['Boolean']['output'];
+  warningForExcessRequest: Scalars['Boolean']['output'];
 };
 
 export type PrescriptionLineInput = {
@@ -11244,6 +11246,7 @@ export type UpsertPreferencesInput = {
   useDaysInMonth?: InputMaybe<Scalars['Boolean']['input']>;
   useProcurementFunctionality?: InputMaybe<Array<BoolStorePrefInput>>;
   useSimplifiedMobileUi?: InputMaybe<Array<BoolStorePrefInput>>;
+  warningForExcessRequest?: InputMaybe<Scalars['Boolean']['input']>;
 };
 
 export type UpsertVaccineCourseDoseInput = {

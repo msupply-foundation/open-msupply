@@ -36,11 +36,12 @@ export const EditPreferencesPage = () => {
                 />
               }
               sx={{
-                justifyContent: 'center',
+                justifyContent: 'space-between',
                 borderBottom: isLast ? 'none' : '1px dashed',
                 borderColor: 'gray.main',
                 padding: 1,
               }}
+              labelProps={{ sx: { maxWidth: 450 } }}
             />
           );
         })}
