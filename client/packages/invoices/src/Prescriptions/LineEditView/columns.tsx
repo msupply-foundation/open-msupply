@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   ColumnDef,
   ColumnType,
@@ -35,8 +35,8 @@ export const usePrescriptionLineEditColumns = ({
   const pluralisedUnitName = getPlural(unit, 2);
   const displayInDoses = allocateIn === AllocateInType.Doses;
 
-  const columns = React.useMemo((): ColumnDef<DraftStockOutLineFragment>[] => {
-    const baseColumns: ColumnDef<DraftStockOutLineFragment>[] = [
+  return useMemo((): ColumnDef<DraftStockOutLineFragment>[] => {
+    return [
       {
         accessorKey: 'batch',
         header: t('label.batch'),
@@ -107,9 +107,5 @@ export const usePrescriptionLineEditColumns = ({
         ),
       },
     ];
-
-    return baseColumns;
   }, [unit, allocate]);
-
-  return columns;
 };
