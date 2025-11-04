@@ -6,8 +6,10 @@ export const useInbounds = (queryParams: ListParams) => {
   const api = useInboundApi();
 
   return {
-    ...useQuery(api.keys.paramList(queryParams), () =>
-      api.get.list(queryParams)
+    ...useQuery(
+      api.keys.paramList(queryParams),
+      () => api.get.list(queryParams),
+      { keepPreviousData: true }
     ),
   };
 };
