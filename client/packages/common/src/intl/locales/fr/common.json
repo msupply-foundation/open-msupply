@@ -1205,7 +1205,7 @@
   "label.observations": "Remarques",
   "label.of": "sur",
   "label.ok-and-close": "Fermer le journal",
-  "label.on-hold": "Bloqué",
+  "label.on-hold": "Bloqué(e)",
   "label.ongoing": "En cours",
   "label.order-history": "Historique des statuts",
   "label.order-quantity": "Quantité demandée",
@@ -2497,5 +2497,6 @@
   "warning.requested-exceeds-suggested": "La quantité demandée est supérieure à la quantité suggérée",
   "messages.requested-exceeds-suggested": "La quantité demandée est supérieure à la quantité suggérée",
   "preference.requisitionAutoFinalise": "Finalisation automatique pour les réquisitions complétées",
-  "label.can-skip-dose": "La dose peut être sautée"
+  "label.can-skip-dose": "La dose peut être sautée",
+  "messages.skip-dose-warning": "Si vous donnez cette dose, une ou plusieurs doses précédentes seront ignorées et indiquées comme non données."
 }
