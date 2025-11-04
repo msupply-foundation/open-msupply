@@ -53,41 +53,45 @@ export const useEncounterListColumns = ({
   const columns: ColumnDef<EncounterRowFragment>[] = useMemo(
     () => [
       {
-        accessorKey: 'type',
+        id: 'Type',
         header: t('label.encounter-type'),
         accessorFn: (row: EncounterRowFragment) =>
           row?.document.documentRegistry?.name,
         enableSorting: true,
       },
       {
-        accessorKey: 'programEnrolment.programName',
+        id: 'Program',
         header: t('label.program'),
         accessorFn: (row: EncounterRowFragment) =>
           enrolmentRegistries?.nodes.find(it => it.contextId === row.contextId)
             ?.name,
         enableSorting: true,
-        enableFilter: true,
+        enableColumnFilter: true,
+        // GraphQL uses a different key for filtering than for sorting, so need
+        // to specify here
+        filterKey: 'programEnrolment.programName',
       },
       {
         accessorKey: 'startDatetime',
         header: t('label.date'),
         columnType: ColumnType.Date,
         enableSorting: true,
-        enableFilter: true,
+        enableColumnFilter: true,
       },
 
       {
-        accessorKey: 'patient.lastName',
+        id: 'patient.lastName',
         header: t('label.patient'),
+        description: t('description.patient-filter-note'),
         accessorFn: (row: EncounterRowFragment) => row?.patient?.name,
-        enableSorting: true,
-        enableFilter: true,
+        // enableSorting: true, -- not sortable, as only has patientId as sort
+        // key
+        enableColumnFilter: true,
         includeColumn: includePatient,
       },
       {
         accessorKey: 'status',
         header: t('label.status'),
-        enableSorting: false,
         size: 175,
         filterVariant: 'select',
         accessorFn: (row: EncounterRowFragment) =>
@@ -97,6 +101,7 @@ export const useEncounterListColumns = ({
           label: encounterStatusTranslation(status, t),
         })),
         enableColumnFilter: true,
+        enableSorting: true,
       },
       {
         accessorKey: 'events',
