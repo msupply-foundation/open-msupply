@@ -5,7 +5,7 @@ use crate::preference::{AdjustForNumberOfDaysOutOfStock, ExcludeTransfers, Prefe
 use crate::{
     backend_plugin::{
         plugin_provider::{PluginInstance, PluginResult},
-        types::amc,
+        types::{amc, amd},
     },
     service_provider::ServiceContext,
     store_preference::get_store_preferences,
@@ -92,7 +92,17 @@ pub fn get_item_stats(
         Ok(filter)
     }
 
-    let consumption_rows = ConsumptionRepository::new(connection).query(Some(filter.clone()))?;
+    let mut consumption_rows =
+        ConsumptionRepository::new(connection).query(Some(filter.clone()))?;
+
+    // Apply AMD filter if plugin is available (filters out same supply level)
+    if let Some(plugin) = PluginInstance::get_one(PluginType::AverageMonthlyDistribution) {
+        let amd_input = amd::Input {
+            store_id: store_id.to_string(),
+            consumption_rows: consumption_rows.clone(),
+        };
+        consumption_rows = amd::Trait::call(&(*plugin), amd_input)?;
+    }
 
     let consumption_map = get_consumption_map(&consumption_rows)?;
 

@@ -6,6 +6,9 @@ export type BackendPlugins = {
   average_monthly_consumption?: (
     _: PluginTypes['average_monthly_consumption']['input']
   ) => PluginTypes['average_monthly_consumption']['output'];
+  average_monthly_distribution?: (
+    _: PluginTypes['average_monthly_distribution']['input']
+  ) => PluginTypes['average_monthly_distribution']['output'];
   transform_request_requisition_lines?: (
     _: PluginTypes['transform_request_requisition_lines']['input']
   ) => PluginTypes['transform_request_requisition_lines']['output'];

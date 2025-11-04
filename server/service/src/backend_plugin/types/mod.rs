@@ -1,4 +1,5 @@
 pub mod amc;
+pub mod amd;
 pub mod graphql_query;
 pub mod processor;
 pub mod transform_request_requisition_lines;
@@ -35,6 +36,7 @@ pub mod generate_typescript_types {
         >,
         graphql_query: Function<graphql_query::Input, graphql_query::Output>,
         processor: Function<processor::Input, processor::Output>,
+        average_monthly_distribution: Function<amd::Input, amd::Output>,
         // Extra types to expose, not directly related to plugin interface
         // like for input or output of global methods
         get_store_preferences: StorePreferenceRow,

@@ -11,6 +11,7 @@ use serde::{Deserialize, Serialize};
 #[serde(rename_all = "snake_case")]
 pub enum PluginType {
     AverageMonthlyConsumption,
+    AverageMonthlyDistribution,
     TransformRequestRequisitionLines,
     GraphqlQuery,
     // TODO backwards compatibility ? When integrating this one via sync
