@@ -27,6 +27,7 @@ import { VaccinationCardsListView } from '../VaccinationCard/ListView';
 import { InsuranceListView, InsuranceModal } from '../Insurance';
 import { PatientDetailView } from './PatientDetailView';
 import { useInsuranceProviders } from '../apiModern';
+import { ActivityLogList } from '../../ActivityLog';
 
 export enum PatientTabValue {
   Details = 'details',
@@ -35,6 +36,7 @@ export enum PatientTabValue {
   ContactTracing = 'contact-tracing',
   Vaccinations = 'vaccinations',
   Insurance = 'insurance',
+  ActivityLog = 'log',
 }
 
 export const PatientView = () => {
@@ -122,6 +124,12 @@ export const PatientView = () => {
       Component: <InsuranceListView patientId={patientId} />,
       value: PatientTabValue.Insurance,
     });
+
+  // Add activity log tab
+  tabs.push({
+    Component: <ActivityLogList recordId={patientId} />,
+    value: PatientTabValue.ActivityLog,
+  });
 
   return (
     <React.Suspense fallback={<DetailViewSkeleton />}>
