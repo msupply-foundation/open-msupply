@@ -150,6 +150,7 @@ export const ActivityLogList: FC<{ recordId: string }> = ({ recordId }) => {
         },
       },
     ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     []
   );
 

@@ -176,151 +176,89 @@ pub fn upsert_preferences(
 
             // Store preferences, input could be array of store IDs and values - iterate and insert...
             if let Some(inputs) = manage_vaccines_in_doses_input {
-                upsert_store_input(connection, manage_vaccines_in_doses, inputs)?
+                upsert_store_input(connection, manage_vaccines_in_doses, inputs)?;
             }
+
             if let Some(inputs) = manage_vvm_status_for_stock_input {
-                upsert_store_input(connection, manage_vvm_status_for_stock, inputs)?
+                upsert_store_input(connection, manage_vvm_status_for_stock, inputs)?;
             }
+
             if let Some(inputs) = order_in_packs_input {
-                upsert_store_input(connection, order_in_packs, inputs)?
+                upsert_store_input(connection, order_in_packs, inputs)?;
             }
+
             if let Some(inputs) = show_purchase_orders_and_goods_received_input {
-                upsert_store_input(connection, use_procurement_functionality, inputs)?
+                upsert_store_input(connection, use_procurement_functionality, inputs)?;
             }
+
             if let Some(inputs) = sort_by_vvm_status_then_expiry_input {
-                upsert_store_input(connection, sort_by_vvm_status_then_expiry, inputs)?
+                upsert_store_input(connection, sort_by_vvm_status_then_expiry, inputs)?;
             }
+
             if let Some(inputs) = use_simplified_mobile_ui_input {
-                upsert_store_input(connection, use_simplified_mobile_ui, inputs)?
+                upsert_store_input(connection, use_simplified_mobile_ui, inputs)?;
             }
             if let Some(inputs) = disable_manual_returns_input {
-                upsert_store_input(connection, disable_manual_returns, inputs)?
+                upsert_store_input(connection, disable_manual_returns, inputs)?;
             }
+
             if let Some(inputs) = requisition_auto_finalise_input {
-                upsert_store_input(connection, requisition_auto_finalise, inputs)?
+                upsert_store_input(connection, requisition_auto_finalise, inputs)?;
             }
 
-            if let Some(input) = can_create_internal_order_from_a_requisition_input {
-                for update in input.into_iter() {
-                    can_create_internal_order_from_a_requisition.upsert(
-                        connection,
-                        update.value,
-                        Some(update.store_id),
-                    )?;
-                }
+            if let Some(inputs) = can_create_internal_order_from_a_requisition_input {
+                upsert_store_input(
+                    connection,
+                    can_create_internal_order_from_a_requisition,
+                    inputs,
+                )?;
+
             }
 
-            if let Some(input) = select_destination_store_for_an_internal_order_input {
-                for update in input.into_iter() {
-                    select_destination_store_for_an_internal_order.upsert(
-                        connection,
-                        update.value,
-                        Some(update.store_id),
-                    )?;
-                }
+            if let Some(inputs) = select_destination_store_for_an_internal_order_input {
+                upsert_store_input(
+                    connection,
+                    select_destination_store_for_an_internal_order,
+                    inputs,
+                )?;
             }
 
             if let Some(input) = number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products_input {
-                for update in input.into_iter() {
-                    number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products.upsert(
-                        connection,
-                        update.value,
-                        Some(update.store_id),
-                    )?;
-                }
+                           upsert_store_input(
+                    connection,
+                    number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products,
+                    input,
+                )?;
             }
 
-            if let Some(input) = number_of_months_threshold_to_show_low_stock_alerts_for_products_input {
-                for update in input.into_iter() {
-                    number_of_months_threshold_to_show_low_stock_alerts_for_products.upsert(
-                        connection,
-                        update.value,
-                        Some(update.store_id),
-                    )?;
-                }
+             if let Some(input) = number_of_months_threshold_to_show_low_stock_alerts_for_products_input {
+                           upsert_store_input(
+                    connection,
+                    number_of_months_threshold_to_show_low_stock_alerts_for_products,
+                    input,
+                )?;
             }
-
+            
             if let Some(input) = first_threshold_for_expiring_items_input {
-                for update in input.into_iter() {
-                    first_threshold_for_expiring_items.upsert(
-                        connection,
-                        update.value,
-                        Some(update.store_id),
-                    )?;
-                }
+                           upsert_store_input(
+                    connection,
+                    first_threshold_for_expiring_items,
+                    input,
+                )?;
             }
 
             if let Some(input) = second_threshold_for_expiring_items_input {
-                for update in input.into_iter() {
-                    second_threshold_for_expiring_items.upsert(
-                        connection,
-                        update.value,
-                        Some(update.store_id),
-                    )?;
-                }
+                           upsert_store_input(
+                    connection,
+                    second_threshold_for_expiring_items,
+                    input,
+                )?;
             }
-
-            if let Some(input) = can_create_internal_order_from_a_requisition_input {
-                for update in input.into_iter() {
-                    can_create_internal_order_from_a_requisition.upsert(
-                        connection,
-                        update.value,
-                        Some(update.store_id),
-                    )?;
-                }
-            }
-
-            if let Some(input) = select_destination_store_for_an_internal_order_input {
-                for update in input.into_iter() {
-                    select_destination_store_for_an_internal_order.upsert(
-                        connection,
-                        update.value,
-                        Some(update.store_id),
-                    )?;
-                }
-            }
-
-            if let Some(input) = number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products_input {
-                for update in input.into_iter() {
-                    number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products.upsert(
-                        connection,
-                        update.value,
-                        Some(update.store_id),
-                    )?;
-                }
-            }
-
-            if let Some(input) = number_of_months_threshold_to_show_low_stock_alerts_for_products_input {
-                for update in input.into_iter() {
-                    number_of_months_threshold_to_show_low_stock_alerts_for_products.upsert(
-                        connection,
-                        update.value,
-                        Some(update.store_id),
-                    )?;
-                }
-            }
-
-            if let Some(input) = first_threshold_for_expiring_items_input {
-                for update in input.into_iter() {
-                    first_threshold_for_expiring_items.upsert(
-                        connection,
-                        update.value,
-                        Some(update.store_id),
-                    )?;
-                }
-            }
-
-            if let Some(input) = second_threshold_for_expiring_items_input {
-                for update in input.into_iter() {
-                    second_threshold_for_expiring_items.upsert(
-                        connection,
-                        update.value,
-                        Some(update.store_id),
-                    )?;
-                }
-            }
+            
 
             Ok(())
+
+
         })
         .map_err(|error: TransactionError<UpsertPreferenceError>| error.to_inner_error())?;
 
