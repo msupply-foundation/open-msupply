@@ -1,12 +1,13 @@
 use chrono::Utc;
 use repository::{
-    DocumentRegistry, DocumentRegistryCategory, DocumentRegistryFilter, DocumentRegistryRepository,
-    DocumentStatus, EqualFilter, RepositoryError, TransactionError,
+    ActivityLogType, DocumentRegistry, DocumentRegistryCategory, DocumentRegistryFilter,
+    DocumentRegistryRepository, DocumentStatus, EqualFilter, RepositoryError, TransactionError,
 };
 use util::constants::PATIENT_TYPE;
 
 use crate::{
-    document::{document_service::DocumentInsertError, is_latest_doc, raw_document::RawDocument},
+    activity_log::activity_log_entry_with_diff,
+    document::{document_service::DocumentInsertError, get_latest_doc, raw_document::RawDocument},
     service_provider::{ServiceContext, ServiceProvider},
 };
 
@@ -29,6 +30,7 @@ pub enum UpdateProgramPatientError {
     DatabaseError(RepositoryError),
 }
 
+#[derive(Clone)]
 pub struct UpdateProgramPatient {
     pub data: serde_json::Value,
     pub schema_id: String,
@@ -48,20 +50,38 @@ pub fn upsert_program_patient(
         .transaction_sync(|_| {
             let (patient, registry) = validate(ctx, service_provider, &input)?;
             let patient_id = patient.id.clone();
-            let doc = generate(user_id, &patient, registry, input)?;
+            let doc = generate(user_id, &patient, registry, input.clone())?;
             let doc_timestamp = doc.datetime;
 
             // Update the name first because the doc is referring the name id
-            if is_latest_doc(&ctx.connection, &doc.name, doc.datetime)
-                .map_err(UpdateProgramPatientError::DatabaseError)?
-            {
+
+            let current_doc = get_latest_doc(&ctx.connection, &doc.name)?;
+            let is_latest = match &current_doc {
+                Some(d) => d.datetime <= doc.datetime,
+                None => true,
+            };
+
+            if is_latest {
                 update_patient_row(
                     &ctx.connection,
                     Some(store_id.to_string()),
                     &doc_timestamp,
-                    patient,
+                    patient.clone(),
                 )?;
                 create_patient_name_store_join(&ctx.connection, store_id, &patient_id, None)?;
+
+                // Create logging entry with document diff
+                activity_log_entry_with_diff(
+                    ctx,
+                    if current_doc.is_none() {
+                        ActivityLogType::PatientCreated
+                    } else {
+                        ActivityLogType::PatientUpdated
+                    },
+                    Some(patient_id.clone()),
+                    current_doc.as_ref().map(|doc| &doc.data),
+                    &input.data,
+                )?;
             }
 
             service_provider
