@@ -1,24 +1,28 @@
-import { useMemo } from 'react';
 import {
   ArrayUtils,
-  InvoiceLineNodeType,
-  useTranslation,
+  getLinesFromRow,
   usePreferences,
+  useTranslation,
   ColumnDef,
   Groupable,
   ColumnType,
 } from '@openmsupply-client/common';
-import { StockOutLineFragment } from '../../StockOut';
+import { useInboundShipmentLineErrorContext } from '../context/inboundShipmentLineError';
+import { useMemo } from 'react';
+import { isInboundPlaceholderRow } from '../../utils';
+import { InboundLineFragment } from '../api';
 
-const isDefaultPlaceholderRow = (row: StockOutLineFragment) =>
-  row.type === InvoiceLineNodeType.UnallocatedStock && !row.numberOfPacks;
-
-export const useOutboundColumns = () => {
+export const useInboundShipmentColumns = () => {
   const t = useTranslation();
-  const { manageVaccinesInDoses, manageVvmStatusForStock } = usePreferences();
+  const {
+    manageVaccinesInDoses,
+    allowTrackingOfStockByDonor,
+    manageVvmStatusForStock,
+  } = usePreferences();
+  const { getError } = useInboundShipmentLineErrorContext();
 
-  const columns = useMemo(() => {
-    const cols: ColumnDef<Groupable<StockOutLineFragment>>[] = [
+  return useMemo((): ColumnDef<Groupable<InboundLineFragment>>[] => {
+    return [
       {
         accessorKey: 'item.code',
         header: t('label.code'),
@@ -26,6 +30,15 @@ export const useOutboundColumns = () => {
         pin: 'left',
         enableColumnFilter: true,
         enableSorting: true,
+        getIsError: row =>
+          getLinesFromRow(row).some(
+            r => getError(r)?.__typename === 'LineLinkedToTransferredInvoice'
+          ),
+      },
+      {
+        accessorKey: 'comment',
+        header: t('label.comment'),
+        columnType: ColumnType.Comment,
       },
       {
         accessorKey: 'itemName',
@@ -38,11 +51,11 @@ export const useOutboundColumns = () => {
         accessorKey: 'batch',
         header: t('label.batch'),
         enableSorting: true,
+        enableColumnFilter: true,
         defaultHideOnMobile: true,
       },
       {
         id: 'expiryDate',
-        // expiryDate is a string - use accessorFn to convert to Date object for sort and filtering
         accessorFn: row => (row.expiryDate ? new Date(row.expiryDate) : null),
         header: t('label.expiry-date'),
         columnType: ColumnType.Date,
@@ -55,11 +68,9 @@ export const useOutboundColumns = () => {
         accessorFn: row => row.vvmStatus?.description ?? '',
         header: t('label.vvm-status'),
         includeColumn: manageVvmStatusForStock,
-        // TO-DO: Handle "null" values in filter - see issue #9398
-        // enableColumnFilter: true,
-        // filterVariant: 'select',
         defaultHideOnMobile: true,
         enableSorting: true,
+        enableColumnFilter: true,
       },
       {
         id: 'locationCode',
@@ -83,6 +94,7 @@ export const useOutboundColumns = () => {
         columnType: ColumnType.Number,
         defaultHideOnMobile: true,
         enableSorting: true,
+        size: 100,
       },
       {
         id: 'itemDoses',
@@ -102,6 +114,7 @@ export const useOutboundColumns = () => {
 
           return row.numberOfPacks;
         },
+        size: 100,
       },
       {
         id: 'unitQuantity',
@@ -115,6 +128,7 @@ export const useOutboundColumns = () => {
 
           return row.packSize * row.numberOfPacks;
         },
+        size: 120,
       },
       {
         id: 'doseQuantity',
@@ -132,23 +146,25 @@ export const useOutboundColumns = () => {
 
           return row.packSize * row.numberOfPacks * (row.item.doses ?? 1);
         },
+        size: 120,
       },
       {
-        id: 'unitSellPrice',
-        header: t('label.unit-sell-price'),
+        id: 'costPricePerUnit',
+        header: t('label.cost-per-unit'),
         columnType: ColumnType.Currency,
         defaultHideOnMobile: true,
         accessorFn: rowData => {
           if ('subRows' in rowData) {
             return ArrayUtils.getAveragePrice(
               rowData.subRows ?? [],
-              'sellPricePerPack'
+              'costPricePerPack'
             );
           } else {
-            if (isDefaultPlaceholderRow(rowData)) return undefined;
-            return (rowData.sellPricePerPack ?? 0) / rowData.packSize;
+            if (isInboundPlaceholderRow(rowData)) return undefined;
+            return (rowData.costPricePerPack ?? 0) / rowData.packSize;
           }
         },
+        size: 100,
       },
       {
         id: 'total',
@@ -159,21 +175,36 @@ export const useOutboundColumns = () => {
           if ('subRows' in rowData) {
             return Object.values(rowData.subRows ?? []).reduce(
               (sum, batch) =>
-                sum + batch.sellPricePerPack * batch.numberOfPacks,
+                sum + batch.costPricePerPack * batch.numberOfPacks,
               0
             );
           } else {
-            if (isDefaultPlaceholderRow(rowData)) return '';
+            if (isInboundPlaceholderRow(rowData)) return '';
 
-            const x = rowData.sellPricePerPack * rowData.numberOfPacks;
+            const x = rowData.costPricePerPack * rowData.numberOfPacks;
             return x;
           }
         },
+        size: 120,
+      },
+      {
+        id: 'donorName',
+        header: t('label.donor'),
+        defaultHideOnMobile: true,
+        includeColumn: allowTrackingOfStockByDonor,
+        accessorFn: row => (row.donor ? row.donor.name : ''),
+      },
+      {
+        id: 'campaign',
+        header: t('label.campaign'),
+        defaultHideOnMobile: true,
+        accessorFn: row => row.campaign?.name ?? row.program?.name ?? '',
       },
     ];
-
-    return cols;
-  }, [manageVvmStatusForStock, manageVaccinesInDoses]);
-
-  return columns;
+  }, [
+    getError,
+    manageVaccinesInDoses,
+    manageVvmStatusForStock,
+    allowTrackingOfStockByDonor,
+  ]);
 };

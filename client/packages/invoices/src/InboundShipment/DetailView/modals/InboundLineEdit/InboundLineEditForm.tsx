@@ -7,15 +7,14 @@ import {
   BasicTextInput,
 } from '@openmsupply-client/common';
 import {
+  ItemRowFragment,
   ItemStockOnHandFragment,
   StockItemSearchInput,
 } from '@openmsupply-client/system';
-import { InboundLineFragment, useInbound } from '../../../api';
-
-type InboundLineItem = InboundLineFragment['item'];
+import { useInbound } from '../../../api';
 
 interface InboundLineEditProps {
-  item: InboundLineItem | null;
+  item: ItemRowFragment | null;
   disabled: boolean;
   onChangeItem: (item: ItemStockOnHandFragment | null) => void;
 }
