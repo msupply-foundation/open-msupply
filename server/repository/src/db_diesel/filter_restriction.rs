@@ -180,7 +180,7 @@ mod tests {
         let result = repository
             .query_by_filter(
                 InvoiceFilter::new()
-                    .user_id(EqualFilter::not_equal_to_string("A").restrict_results(&allowed)),
+                    .user_id(EqualFilter::not_equal_to("A".to_owned()).restrict_results(&allowed)),
             )
             .unwrap()
             .into_iter()

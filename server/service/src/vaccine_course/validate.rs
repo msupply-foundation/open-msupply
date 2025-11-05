@@ -26,7 +26,7 @@ pub fn check_vaccine_course_name_exists_for_program(
         .name(StringFilter::equal_to(name));
 
     if let Some(id) = id {
-        filter = filter.id(EqualFilter::not_equal_to_string(&id));
+        filter = filter.id(EqualFilter::not_equal_to(id.to_owned()));
     }
     let result = VaccineCourseRepository::new(connection).query_by_filter(filter)?;
     Ok(result.is_empty())

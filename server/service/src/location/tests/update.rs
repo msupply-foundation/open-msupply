@@ -31,7 +31,7 @@ mod query {
             .unwrap();
 
         let locations_not_in_store = location_repository
-            .query_by_filter(LocationFilter::new().store_id(EqualFilter::not_equal_to_string("store_a")))
+            .query_by_filter(LocationFilter::new().store_id(EqualFilter::not_equal_to("store_a".to_owned())))
             .unwrap();
 
         // Location does not exist

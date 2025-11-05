@@ -7,7 +7,6 @@ use repository::{EqualFilter, PaginationOption};
 use crate::{
     get_pagination_or_default, i64_to_u32, service_provider::ServiceContext, ListError, ListResult,
 };
- 
 
 pub fn get_requisitions(
     ctx: &ServiceContext,
@@ -20,7 +19,7 @@ pub fn get_requisitions(
     let repository = RequisitionRepository::new(&ctx.connection);
 
     let mut filter = filter.unwrap_or_default();
-    filter.store_id = store_id_option.map(EqualFilter::equal_to_string);
+    filter.store_id = store_id_option.map(|id| EqualFilter::equal_to(id.to_owned()));
 
     Ok(ListResult {
         rows: repository.query(pagination, Some(filter.clone()), sort)?,
@@ -34,7 +33,7 @@ pub fn get_requisition(
     id: &str,
 ) -> Result<Option<Requisition>, RepositoryError> {
     let mut filter = RequisitionFilter::new().id(EqualFilter::equal_to(id.to_owned()));
-    filter.store_id = store_id_option.map(EqualFilter::equal_to_string);
+    filter.store_id = store_id_option.map(|id| EqualFilter::equal_to(id.to_owned()));
 
     let mut result = RequisitionRepository::new(&ctx.connection).query_by_filter(filter)?;
 
@@ -86,10 +85,9 @@ mod test {
                 &context,
                 Some(&mock_request_draft_requisition().store_id),
                 None,
-                Some(
-                    RequisitionFilter::new()
-                        .id(EqualFilter::equal_to(mock_request_draft_requisition().id.to_owned())),
-                ),
+                Some(RequisitionFilter::new().id(EqualFilter::equal_to(
+                    mock_request_draft_requisition().id.to_owned(),
+                ))),
                 None,
             )
             .unwrap();

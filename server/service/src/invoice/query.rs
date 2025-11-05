@@ -5,7 +5,6 @@ use repository::{EqualFilter, PaginationOption};
 use repository::{
     Invoice, InvoiceFilter, InvoiceRepository, InvoiceSort, InvoiceType, RepositoryError,
 };
- 
 
 pub fn get_invoices(
     ctx: &ServiceContext,
@@ -18,7 +17,7 @@ pub fn get_invoices(
     let repository = InvoiceRepository::new(&ctx.connection);
 
     let mut filter = filter.unwrap_or_default();
-    filter.store_id = store_id_option.map(EqualFilter::equal_to_string);
+    filter.store_id = store_id_option.map(|id| EqualFilter::equal_to(id.to_owned()));
     // For invoice list we don't want to show any that are cancellation
     // reversals
     filter.is_cancellation = Some(false);
@@ -35,7 +34,7 @@ pub fn get_invoice(
     id: &str,
 ) -> Result<Option<Invoice>, RepositoryError> {
     let mut filter = InvoiceFilter::new().id(EqualFilter::equal_to(id.to_owned()));
-    filter.store_id = store_id_option.map(EqualFilter::equal_to_string);
+    filter.store_id = store_id_option.map(|id| EqualFilter::equal_to(id.to_owned()));
 
     let mut result = InvoiceRepository::new(&ctx.connection).query_by_filter(filter)?;
 

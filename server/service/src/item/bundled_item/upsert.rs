@@ -101,7 +101,7 @@ fn validate(
         BundledItemFilter::new()
             .principal_item_variant_id(EqualFilter::equal_to(input.principal_item_variant_id.to_owned()))
             .bundled_item_variant_id(EqualFilter::equal_to(input.bundled_item_variant_id.to_owned()))
-            .id(EqualFilter::not_equal_to_string(&input.id)),
+            .id(EqualFilter::not_equal_to(input.id.to_owned())),
     ))?;
 
     if count > 0 {

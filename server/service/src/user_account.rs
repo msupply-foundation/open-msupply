@@ -170,7 +170,7 @@ impl<'a> UserAccountService<'a> {
         repo.query_one(
             UserFilter::new()
                 .id(EqualFilter::equal_to(user_id.to_owned()))
-                .hashed_password(EqualFilter::not_equal_to_string(""))
+                .hashed_password(EqualFilter::not_equal_to("".to_owned()))
                 .site_id(EqualFilter::equal_to(site_id)),
         )
     }
