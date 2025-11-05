@@ -54,7 +54,7 @@ export const usePrescriptionList = (queryParams?: ListParams) => {
       storeId,
       first: first,
       offset: offset,
-      key: sortFieldMap[sortBy.key] ?? InvoiceSortFieldInput.Status,
+      key: sortFieldMap[sortBy.key] as InvoiceSortFieldInput,
       desc: sortBy.direction === 'desc',
       filter,
     });
@@ -62,7 +62,7 @@ export const usePrescriptionList = (queryParams?: ListParams) => {
     return { nodes, totalCount };
   };
 
-  const { data, isLoading, isError } = useQuery({
+  const { data, isLoading, isError, isFetching } = useQuery({
     queryKey,
     queryFn,
     keepPreviousData: true,
@@ -81,7 +81,7 @@ export const usePrescriptionList = (queryParams?: ListParams) => {
   };
 
   return {
-    query: { data, isLoading, isError },
+    query: { data, isLoading, isFetching, isError },
     delete: { deletePrescriptions, isDeleting, deleteError },
   };
 };
