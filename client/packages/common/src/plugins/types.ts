@@ -15,6 +15,7 @@ export type Plugins = {
     ItemFooter?: React.ComponentType<{ itemId: string }>[];
   };
   inboundShipmentAppBar?: React.ComponentType<{ shipment: InboundFragment }>[];
+  internalOrderPrice?: ColumnDef<RequestLineFragment>[];
   dashboard?: React.ComponentType[];
   stockLine?: {
     tableStateLoader: React.ComponentType<{

@@ -202,6 +202,7 @@ export const useRequestColumns = () => {
 
       // Plugin columns
       ...(plugins.requestRequisitionLine?.tableColumn || []),
+      ...(plugins.internalOrderPrice || []),
     ],
     [
       manageVaccinesInDoses,
