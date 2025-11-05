@@ -34,21 +34,53 @@ export const AppBarButtonsComponent = () => {
   const printAssetLabel = () => {
     const date = new Date().toLocaleDateString();
     setIsPrinting(true);
-    fetch(Environment.PRINT_LABEL_QR, {
-      method: 'POST',
-      body: JSON.stringify({
+    // fetch(Environment.PRINT_LABEL_QR, {
+    //   method: 'POST',
+    //   body: JSON.stringify({
+    //     code: data?.id,
+    //     assetNumber: `${data?.assetNumber ?? ''}`,
+    //     datePrinted: `${date}`,
+    //   }),
+    //   credentials: 'include',
+    //   headers: { 'Content-Type': 'application/json' },
+    // })
+    //   .then(async response => {
+    //     if (response.status !== 200) {
+    //       const text = await response.text();
+    //       throw new Error(text);
+    //     }
+    //     success(t('messages.success-printing-label'))();
+    //   })
+    //   .catch(e => {
+    //     error(`${t('error.printing-label')}: ${e.message}`)();
+    //   })
+    //   .finally(() => setIsPrinting(false));
+
+    // example of local printing
+    // to implement - this will need to be executed alternatively to the above fetch
+    const uridata = encodeURIComponent(
+      JSON.stringify({
         code: data?.id,
         assetNumber: `${data?.assetNumber ?? ''}`,
         datePrinted: `${date}`,
-      }),
+      })
+    );
+    const url = `${Environment.PRINT_LABEL_QR}?data=${uridata}`;
+    fetch(url, {
+      method: 'GET',
       credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
     })
       .then(async response => {
         if (response.status !== 200) {
           const text = await response.text();
           throw new Error(text);
         }
+        return response.json();
+      })
+      .then(json => {
+        // the zebra printer does not return a valid response
+        // so the fetch fails even when the print is successful
+        fetch(json.url, { body: json.zpl, method: 'POST' }).catch(() => {});
         success(t('messages.success-printing-label'))();
       })
       .catch(e => {
