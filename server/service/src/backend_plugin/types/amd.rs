@@ -15,7 +15,12 @@ pub struct Input {
     pub consumption_rows: Vec<ConsumptionRow>,
 }
 
-pub type Output = Vec<ConsumptionRow>;
+#[derive(TS, Clone, Deserialize, Serialize)]
+#[ts(rename = "AverageMonthlyDistributionOutput")]
+pub struct Output {
+    pub amc_consumption_rows: Vec<ConsumptionRow>,
+    pub amd_consumption_rows: Vec<ConsumptionRow>,
+}
 
 pub trait Trait: Send + Sync {
     fn call(&self, input: Input) -> PluginResult<Output>;

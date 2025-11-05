@@ -303,8 +303,10 @@ export const useResponseColumns = () => {
     accessor: ({ rowData }) => rowData.remainingQuantityToSupply,
   });
 
-  if (plugins.averageMonthlyDistribution?.tableColumn) {
-    columnDefinitions.push(...plugins.averageMonthlyDistribution?.tableColumn);
+  if (plugins.averageMonthlyDistribution?.responseTableColumn) {
+    columnDefinitions.push(
+      ...plugins.averageMonthlyDistribution?.responseTableColumn
+    );
   }
 
   const columns = useColumns<ResponseLineFragment>(

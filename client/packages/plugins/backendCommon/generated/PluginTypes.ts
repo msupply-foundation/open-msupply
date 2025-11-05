@@ -3,7 +3,7 @@ import type { ActiveStoresOnSite } from './ActiveStoresOnSite';
 import type { AverageMonthlyConsumptionInput } from './AverageMonthlyConsumptionInput';
 import type { AverageMonthlyConsumptionItem } from './AverageMonthlyConsumptionItem';
 import type { AverageMonthlyDistributionInput } from './AverageMonthlyDistributionInput';
-import type { ConsumptionRow } from './ConsumptionRow';
+import type { AverageMonthlyDistributionOutput } from './AverageMonthlyDistributionOutput';
 import type { Function } from './Function';
 import type { GraphqlQueryInput } from './GraphqlQueryInput';
 import type { JsonValue } from './serde_json/JsonValue';
@@ -31,7 +31,7 @@ export type PluginTypes = {
   processor: Function<ProcessorInput, ProcessorOutput>;
   average_monthly_distribution: Function<
     AverageMonthlyDistributionInput,
-    Array<ConsumptionRow>
+    AverageMonthlyDistributionOutput
   >;
   get_store_preferences: StorePreferenceRow;
   get_plugin_data: Function<PluginDataFilter, Array<PluginDataRow>>;

@@ -23,7 +23,7 @@ use util::{date_now, date_with_offset};
 pub struct ItemStats {
     pub total_consumption: f64,
     pub average_monthly_consumption: f64,
-    pub average_monthly_distribution: Option<f64>, // Optional - only present when plugin is active
+    pub average_monthly_distribution: Option<f64>, // Optional - only present when AMD plugin is active
     pub available_stock_on_hand: f64,
     pub total_stock_on_hand: f64,
     pub item_id: String,
@@ -93,20 +93,20 @@ pub fn get_item_stats(
         Ok(filter)
     }
 
-    let mut consumption_rows =
-        ConsumptionRepository::new(connection).query(Some(filter.clone()))?;
+    let consumption_rows = ConsumptionRepository::new(connection).query(Some(filter.clone()))?;
 
     // Check if AMD plugin is available
     let amd_plugin = PluginInstance::get_one(PluginType::AverageMonthlyDistribution);
 
-    let (amd_consumption_rows, amd_by_item) = if let Some(plugin) = amd_plugin {
+    let (amc_consumption_rows, amd_by_item) = if let Some(plugin) = amd_plugin {
         let amd_input = amd::Input {
             store_id: store_id.to_string(),
             consumption_rows: consumption_rows.clone(),
         };
-        let filtered_rows = amd::Trait::call(&(*plugin), amd_input)?;
+        let output = amd::Trait::call(&(*plugin), amd_input)?;
 
-        let amd_consumption_map = get_consumption_map(&filtered_rows)?;
+        // Calculate AMD values
+        let amd_consumption_map = get_consumption_map(&output.amd_consumption_rows)?;
         let amd_map: HashMap<String, f64> = amd_consumption_map
             .iter()
             .map(|(item_id, total_distribution)| {
@@ -115,17 +115,14 @@ pub fn get_item_stats(
             })
             .collect();
 
-        (filtered_rows, Some(amd_map))
+        // Use the AMC rows from plugin output
+        (output.amc_consumption_rows, Some(amd_map))
     } else {
+        // No plugin - use all consumption for AMC
         (consumption_rows.clone(), None)
     };
 
-    // Use AMD-filtered rows for AMC calculation if plugin is active
-    if amd_by_item.is_some() {
-        consumption_rows = amd_consumption_rows;
-    }
-
-    let consumption_map = get_consumption_map(&consumption_rows)?;
+    let consumption_map = get_consumption_map(&amc_consumption_rows)?;
 
     let exclude_transfers = ExcludeTransfers.load(connection, None).unwrap_or(false);
     let transfer_consumption_map = if exclude_transfers {

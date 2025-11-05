@@ -41,7 +41,7 @@ export type Plugins = {
     }>[];
   };
   averageMonthlyDistribution?: {
-    tableColumn: ColumnDefinition<ResponseLineFragment>[];
+    responseTableColumn: ColumnDefinition<ResponseLineFragment>[];
   };
 };
 
