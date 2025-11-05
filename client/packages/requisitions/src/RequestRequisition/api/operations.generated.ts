@@ -130,6 +130,10 @@ export type RequestByNumberQuery = {
               isVaccine: boolean;
               doses: number;
               availableStockOnHand: number;
+              itemStoreProperties?: {
+                __typename: 'ItemStorePropertiesNode';
+                defaultSellPricePerPack: number;
+              } | null;
               stats: {
                 __typename: 'ItemStatsNode';
                 averageMonthlyConsumption: number;
@@ -276,6 +280,10 @@ export type RequestByIdQuery = {
               isVaccine: boolean;
               doses: number;
               availableStockOnHand: number;
+              itemStoreProperties?: {
+                __typename: 'ItemStorePropertiesNode';
+                defaultSellPricePerPack: number;
+              } | null;
               stats: {
                 __typename: 'ItemStatsNode';
                 averageMonthlyConsumption: number;

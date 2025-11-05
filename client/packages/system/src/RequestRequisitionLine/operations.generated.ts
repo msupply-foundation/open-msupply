@@ -62,6 +62,10 @@ export type RequestLineFragment = {
     isVaccine: boolean;
     doses: number;
     availableStockOnHand: number;
+    itemStoreProperties?: {
+      __typename: 'ItemStorePropertiesNode';
+      defaultSellPricePerPack: number;
+    } | null;
     stats: {
       __typename: 'ItemStatsNode';
       averageMonthlyConsumption: number;
@@ -146,6 +150,10 @@ export type RequestFragment = {
         isVaccine: boolean;
         doses: number;
         availableStockOnHand: number;
+        itemStoreProperties?: {
+          __typename: 'ItemStorePropertiesNode';
+          defaultSellPricePerPack: number;
+        } | null;
         stats: {
           __typename: 'ItemStatsNode';
           averageMonthlyConsumption: number;
@@ -275,6 +283,9 @@ export const RequestLineFragmentDoc = gql`
     }
     item {
       ...ItemWithStats
+      itemStoreProperties(storeId: $storeId) {
+        defaultSellPricePerPack
+      }
     }
     reason {
       ...ReasonOptionRow
