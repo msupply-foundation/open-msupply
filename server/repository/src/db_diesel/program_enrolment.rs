@@ -228,12 +228,11 @@ impl<'a> ProgramEnrolmentRepository<'a> {
             apply_equal_filter!(query, document_name, program_enrolment::document_name);
 
             if let Some(program_name) = program_name {
-                let program_ids = DocumentRegistryRepository::create_filtered_query(Some(
+                let document_types = DocumentRegistryRepository::create_filtered_query(Some(
                     DocumentRegistryFilter::new().name(program_name),
                 ))
-                .select(document_registry::context_id);
-
-                query = query.filter(program::id.eq_any(program_ids))
+                .select(document_registry::document_type);
+                query = query.filter(program_enrolment::document_type.eq_any(document_types))
             }
 
             if let Some(is_immunisation_program) = is_immunisation_program {
