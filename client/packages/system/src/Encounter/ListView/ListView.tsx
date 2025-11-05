@@ -17,7 +17,7 @@ import {
 } from '../utils';
 import { useEncounter } from '@openmsupply-client/programs';
 
-const EncounterListComponent = () => {
+export const EncounterListView = () => {
   const t = useTranslation();
   const {
     queryParams: { sortBy, first, offset, filterBy },
@@ -43,7 +43,7 @@ const EncounterListComponent = () => {
       },
     ],
   });
-  const { data, isError, isLoading } = useEncounter.document.list({
+  const { data, isError, isFetching } = useEncounter.document.list({
     pagination: { first, offset },
     sortBy,
     filterBy: filterBy ?? undefined,
@@ -56,11 +56,11 @@ const EncounterListComponent = () => {
     useEncounterFragmentWithStatus(data?.nodes);
 
   const { table } = usePaginatedMaterialTable({
-    tableId: 'encounter-list-view',
+    tableId: 'encounter-list',
     columns,
     data: dataWithStatus,
     totalCount: data?.totalCount ?? 0,
-    isLoading,
+    isLoading: isFetching,
     isError,
     enableRowSelection: false,
     onRowClick: row => {
@@ -76,5 +76,3 @@ const EncounterListComponent = () => {
 
   return <MaterialTable table={table} />;
 };
-
-export const EncounterListView = () => <EncounterListComponent />;

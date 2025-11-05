@@ -60,7 +60,7 @@ export const useImmunisationProgramList = (queryParams: ListParams) => {
     return { nodes, totalCount };
   };
 
-  const query = useQuery({ queryKey, queryFn });
+  const query = useQuery({ queryKey, queryFn, keepPreviousData: true });
   return query;
 };
 
