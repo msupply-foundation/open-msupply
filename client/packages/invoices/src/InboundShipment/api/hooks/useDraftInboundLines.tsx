@@ -1,20 +1,21 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useInbound } from '.';
-import { useConfirmOnLeaving, useNotification } from '@common/hooks';
+import {
+  useConfirmOnLeaving,
+  useNotification,
+  useTranslation,
+} from '@openmsupply-client/common';
+import { useItem } from '@openmsupply-client/system';
 import { DraftInboundLine } from '../../../types';
-import { InboundLineFragment } from '../operations.generated';
 import { CreateDraft } from '../../DetailView/modals/utils';
 import { useDeleteInboundLines } from './line/useDeleteInboundLines';
 import { mapErrorToMessageAndSetContext } from './mapErrorToMessageAndSetContext';
-import { useTranslation } from '@common/intl';
 import { ScannedBatchData } from '../../DetailView';
-
-type InboundLineItem = InboundLineFragment['item'];
 
 export type PatchDraftLineInput = Partial<DraftInboundLine> & { id: string };
 
 export const useDraftInboundLines = (
-  item: InboundLineItem | null,
+  itemId?: string,
   scannedBatchData?: ScannedBatchData
 ) => {
   const t = useTranslation();
@@ -23,19 +24,22 @@ export const useDraftInboundLines = (
   const [draftLines, setDraftLines] = useState<DraftInboundLine[]>([]);
 
   const { id } = useInbound.document.fields('id');
-  const { data: lines } = useInbound.lines.list(item?.id ?? '');
+  const { data: lines } = useInbound.lines.list(itemId ?? '');
   const { mutateAsync, isLoading } = useInbound.lines.save();
   const { mutateAsync: deleteMutation } = useDeleteInboundLines();
 
   const { isDirty, setIsDirty } = useConfirmOnLeaving(
     'inbound-shipment-line-edit'
   );
+  const {
+    byId: { data: item },
+  } = useItem(itemId ?? '');
 
   useEffect(() => {
     if (lines && item) {
       const drafts = lines.map(line =>
         CreateDraft.stockInLine({
-          item: line.item,
+          item,
           invoiceId: line.invoiceId,
           seed: line,
           // From scanned barcode:
@@ -43,7 +47,7 @@ export const useDraftInboundLines = (
           expiryDate: scannedBatchData?.expiryDate,
         })
       );
-      if (drafts.length === 0)
+      if (drafts.length === 0 && item) {
         drafts.push(
           CreateDraft.stockInLine({
             item,
@@ -53,6 +57,7 @@ export const useDraftInboundLines = (
             expiryDate: scannedBatchData?.expiryDate,
           })
         );
+      }
       setDraftLines(drafts);
     } else {
       setDraftLines([]);
