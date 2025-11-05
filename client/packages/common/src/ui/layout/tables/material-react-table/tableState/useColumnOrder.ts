@@ -1,6 +1,7 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   getDefaultColumnOrderIds,
+  MRT_ColumnOrderState,
   MRT_RowData,
   MRT_StatefulTableOptions,
   MRT_TableOptions,
@@ -36,26 +37,48 @@ export const useColumnOrder = <T extends MRT_RowData>(
     } as MRT_StatefulTableOptions<MRT_RowData>);
   }, [isGrouped, columns]);
 
-  const savedState = getSavedState(tableId).columnOrder;
-  // Memoise to prevent re-renders
-  const state = useMemo(() => savedState, [savedState?.toString()]);
+  const [state, setState] = useState<MRT_ColumnOrderState>(
+    getSavedState(tableId).columnOrder ?? initial
+  );
+  const [hasSavedState, setHasSavedState] = useState(
+    !!getSavedState(tableId).columnOrder
+  );
+
+  // If initial state changes (due to plugin column loading, for example) and no
+  // custom column order has been saved, update the column order to the new
+  // default
+  useEffect(() => {
+    if (!getSavedState(tableId).columnOrder) setState(initial);
+  }, [initial]);
 
   const update = useCallback<
     NonNullable<MRT_TableOptions<MRT_RowData>['onColumnOrderChange']>
   >(
-    updaterOrValue => {
-      const newColumnOrder =
-        typeof updaterOrValue === 'function'
-          ? updaterOrValue(state ?? initial)
-          : updaterOrValue;
+    updaterOrValue =>
+      setState(prev => {
+        const newColumnOrder =
+          typeof updaterOrValue === 'function'
+            ? updaterOrValue(prev)
+            : updaterOrValue;
 
-      updateSavedState(tableId, {
-        columnOrder: differentOrUndefined(newColumnOrder, initial),
-      });
-      return newColumnOrder;
-    },
+        const savedColumnOrder = differentOrUndefined(
+          newColumnOrder,
+          state ?? initial
+        );
+        updateSavedState(tableId, {
+          columnOrder: savedColumnOrder,
+        });
+        if (savedColumnOrder) setHasSavedState(true);
+        return newColumnOrder;
+      }),
     [initial, state]
   );
 
-  return { initial, state: state ?? initial, update };
+  return {
+    initial,
+    state: state ?? initial,
+    update,
+    hasSavedState,
+    resetHasSavedState: () => setHasSavedState(false),
+  };
 };

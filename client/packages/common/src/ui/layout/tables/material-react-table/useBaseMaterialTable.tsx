@@ -100,35 +100,52 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
     isGrouped
   );
 
+  const hasSavedState =
+    density.hasSavedState ||
+    columnSizing.hasSavedState ||
+    columnPinning.hasSavedState ||
+    columnVisibility.hasSavedState ||
+    columnOrder.hasSavedState;
+
   const resetTableState = () => {
     clearSavedState(tableId);
 
     // We have to call each of these reset fns, as MRT's general
-    // reset function doesn't fire the onChange handlers (needed to trigger our state handlers)
+    // reset function doesn't fire the onChange handlers (needed to trigger our
+    // state handlers).
     // Seeing as local storage has already been cleared,
     // these shouldn't trigger additional local storage updates
     table.resetColumnPinning();
     table.resetColumnSizing();
     resetGrouped();
 
-    // column order doesn't need resetting - state reset directly from clearing local storage
+    // column order doesn't need resetting - state reset directly from clearing
+    // local storage
 
-    // Visibility `initial` could change if prefs have come on/screen size changed
-    // so reset to latest initial value rather than default initial mount state
+    // Visibility `initial` could change if prefs have come on/screen size
+    // changed so reset to latest initial value rather than default initial
+    // mount state
     table.setColumnVisibility(columnVisibility.initial);
 
     // Density doesn't have a `reset` function
     table.setDensity(density.initial);
+
+    // Reset the flags for each state slice too
+    density.resetHasSavedState();
+    columnSizing.resetHasSavedState();
+    columnPinning.resetHasSavedState();
+    columnVisibility.resetHasSavedState();
+    columnOrder.resetHasSavedState();
   };
 
   const hasColumnFilters = columns.some(col => col.enableColumnFilter);
 
   const displayOptions = useTableDisplayOptions({
-    tableId,
     isGrouped,
     hasColumnFilters,
     toggleGrouped: grouping?.enabled ? toggleGrouped : undefined,
     resetTableState,
+    hasSavedState,
     onRowClick,
     getIsPlaceholderRow,
     getIsRestrictedRow,
