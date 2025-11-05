@@ -21,10 +21,10 @@ import {
 } from '@openmsupply-client/programs';
 import { usePatient } from '../api';
 
-const EncounterListComponent = () => {
+export const EncounterListView = () => {
   const t = useTranslation();
   const patientId = usePatient.utils.id();
-  const { data, isError, isLoading } = useEncounter.document.list({
+  const { data, isError, isFetching } = useEncounter.document.list({
     sortBy: {
       key: 'startDatetime',
       isDesc: true,
@@ -46,10 +46,10 @@ const EncounterListComponent = () => {
   const columns = useEncounterListColumns({});
 
   const { table } = useNonPaginatedMaterialTable({
-    tableId: 'encounter-list',
+    tableId: 'single-patient-encounter-list',
     columns,
     data: dataWithStatus,
-    isLoading,
+    isLoading: isFetching,
     isError,
     enableRowSelection: false,
     onRowClick: row => {
@@ -75,5 +75,3 @@ const EncounterListComponent = () => {
 
   return <MaterialTable table={table} />;
 };
-
-export const EncounterListView = () => <EncounterListComponent />;

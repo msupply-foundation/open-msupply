@@ -1,6 +1,5 @@
 import React, { useMemo } from 'react';
 import {
-  ColumnAlign,
   NothingHere,
   useNavigate,
   useParams,
@@ -36,14 +35,13 @@ export const GoodsReceived = () => {
         header: t('label.number'),
         accessorKey: 'number',
         columnType: ColumnType.Number,
-        size: 100,
+        size: 60,
         enableSorting: true,
         enableColumnFilter: true,
       },
       {
         header: t('label.supplier'),
         accessorKey: 'supplier.name',
-        enableSorting: false,
       },
       {
         header: t('label.status'),
@@ -63,7 +61,6 @@ export const GoodsReceived = () => {
       {
         header: t('label.supplier-reference'),
         accessorKey: 'supplierReference',
-        align: ColumnAlign.Left,
       },
       {
         header: t('label.created'),
@@ -73,7 +70,7 @@ export const GoodsReceived = () => {
         size: 100,
       },
       {
-        header: t('label.created'),
+        header: t('label.received'),
         accessorKey: 'receivedDatetime',
         columnType: ColumnType.Date,
         enableSorting: true,
@@ -96,7 +93,7 @@ export const GoodsReceived = () => {
     isLoading: isFetching,
     onRowClick: handleRowClick,
     columns,
-    data: data?.nodes ?? [],
+    data: data?.nodes,
     initialSort: { key: 'createdDatetime', dir: 'desc' },
     enableRowSelection: false,
     noDataElement: <NothingHere body={t('error.no-goods-received-linked')} />,
