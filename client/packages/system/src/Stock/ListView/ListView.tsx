@@ -216,7 +216,6 @@ export const StockListView: FC = () => {
     totalCount: data?.totalCount ?? 0,
     initialSort: { key: 'name', dir: 'desc' },
     enableRowSelection: false,
-    enableGlobalFilter: true,
     noDataElement: (
       <NothingHere
         body={t('error.no-stock')}
