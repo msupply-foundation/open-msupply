@@ -890,7 +890,7 @@ mod test {
         .unwrap();
 
         let vvm_log_filter = VVMStatusLogFilter::new().invoice_line_id(EqualFilter::equal_to(
-            "invoice_line_with_vvm_status".to_owned(),
+            "invoice_line_with_vvm_status".to_string(),
         ));
 
         let vvm_status_log = VVMStatusLogRepository::new(&connection)

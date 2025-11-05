@@ -405,7 +405,7 @@ mod tests {
 
         let result = PatientRepository::new(&connection)
             .query_by_filter(
-                PatientFilter::new().id(EqualFilter::equal_to("patient_1".to_owned())),
+                PatientFilter::new().id(EqualFilter::equal_to("patient_1".to_string())),
                 None,
             )
             .unwrap();

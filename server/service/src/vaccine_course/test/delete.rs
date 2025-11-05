@@ -23,7 +23,7 @@ mod delete {
         let service = service_provider.vaccine_course_service;
 
         assert_eq!(
-            service.delete_vaccine_course(&context, "invalid_id".to_owned()),
+            service.delete_vaccine_course(&context, "invalid_id".to_string()),
             Err(DeleteVaccineCourseError::VaccineCourseDoesNotExist)
         );
     }
@@ -39,8 +39,8 @@ mod delete {
 
         // Create vaccine course
         let vaccine_course = InsertVaccineCourse {
-            id: "vaccine_course_to_delete".to_owned(),
-            name: "vaccine_course_name".to_owned(),
+            id: "vaccine_course_to_delete".to_string(),
+            name: "vaccine_course_name".to_string(),
             program_id: mock_immunisation_program_a().id.clone(),
             vaccine_items: vec![],
             doses: vec![VaccineCourseDoseInput {

@@ -198,10 +198,10 @@ mod graphql {
                 has_outstanding_lines: _,
             } = filter.unwrap();
 
-            assert_eq!(id, Some(EqualFilter::not_equal_to("id_not_equal_to".to_owned())));
+            assert_eq!(id, Some(EqualFilter::not_equal_to("id_not_equal_to".to_string())));
             assert_eq!(
                 user_id,
-                Some(EqualFilter::not_equal_to("user_id_not_equal_to".to_owned()))
+                Some(EqualFilter::not_equal_to("user_id_not_equal_to".to_string()))
             );
             assert_eq!(requisition_number, Some(EqualFilter::equal_to(20)));
             assert_eq!(r#type, Some(RequisitionType::Request.equal_to()));
@@ -243,11 +243,11 @@ mod graphql {
             assert_eq!(
                 name_id,
                 Some(EqualFilter::equal_any(vec![
-                    "one".to_owned(),
-                    "two".to_owned()
+                    "one".to_string(),
+                    "two".to_string()
                 ]))
             );
-            assert_eq!(colour, Some(EqualFilter::equal_to("equal_to_color".to_owned())));
+            assert_eq!(colour, Some(EqualFilter::equal_to("equal_to_color".to_string())));
             assert_eq!(
                 their_reference,
                 Some(StringFilter::like("like_their_reference"))

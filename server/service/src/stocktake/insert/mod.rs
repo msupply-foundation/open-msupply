@@ -247,7 +247,7 @@ mod test {
         // check that rows were created for the stocktake
         let stocktake_rows = StocktakeLineRepository::new(&connection)
             .query_by_filter(
-                StocktakeLineFilter::new().stocktake_id(EqualFilter::equal_to("stocktake_1".to_owned())),
+                StocktakeLineFilter::new().stocktake_id(EqualFilter::equal_to("stocktake_1".to_string())),
                 None,
             )
             .unwrap();
@@ -293,7 +293,7 @@ mod test {
 
         let stocktake_rows = StocktakeLineRepository::new(&connection)
             .query_by_filter(
-                StocktakeLineFilter::new().stocktake_id(EqualFilter::equal_to("stocktake_2".to_owned())),
+                StocktakeLineFilter::new().stocktake_id(EqualFilter::equal_to("stocktake_2".to_string())),
                 None,
             )
             .unwrap();
@@ -329,7 +329,7 @@ mod test {
         // check that no rows were created for the stocktake
         let stocktake_rows = StocktakeLineRepository::new(&connection)
             .query_by_filter(
-                StocktakeLineFilter::new().stocktake_id(EqualFilter::equal_to("stocktake_1".to_owned())),
+                StocktakeLineFilter::new().stocktake_id(EqualFilter::equal_to("stocktake_1".to_string())),
                 None,
             )
             .unwrap();
@@ -364,7 +364,7 @@ mod test {
 
         let stocktake_rows = StocktakeLineRepository::new(&connection)
             .query_by_filter(
-                StocktakeLineFilter::new().stocktake_id(EqualFilter::equal_to("stocktake_2".to_owned())),
+                StocktakeLineFilter::new().stocktake_id(EqualFilter::equal_to("stocktake_2".to_string())),
                 None,
             )
             .unwrap();
@@ -410,7 +410,7 @@ mod test {
         let stocktake_rows = StocktakeLineRepository::new(&connection)
             .query_by_filter(
                 StocktakeLineFilter::new()
-                    .stocktake_id(EqualFilter::equal_to("stocktake_with_vvm_filter".to_owned())),
+                    .stocktake_id(EqualFilter::equal_to("stocktake_with_vvm_filter".to_string())),
                 None,
             )
             .unwrap();
@@ -444,7 +444,7 @@ mod test {
         let stocktake_rows = StocktakeLineRepository::new(&connection)
             .query_by_filter(
                 StocktakeLineFilter::new()
-                    .stocktake_id(EqualFilter::equal_to("stocktake_with_vvm_filter_2".to_owned())),
+                    .stocktake_id(EqualFilter::equal_to("stocktake_with_vvm_filter_2".to_string())),
                 None,
             )
             .unwrap();
@@ -528,7 +528,7 @@ mod test {
 
         let stocktake_rows = StocktakeLineRepository::new(&connection)
             .query_by_filter(
-                StocktakeLineFilter::new().stocktake_id(EqualFilter::equal_to("stocktake_1".to_owned())),
+                StocktakeLineFilter::new().stocktake_id(EqualFilter::equal_to("stocktake_1".to_string())),
                 None,
             )
             .unwrap();
@@ -555,7 +555,7 @@ mod test {
 
         let stocktake_rows = StocktakeLineRepository::new(&connection)
             .query_by_filter(
-                StocktakeLineFilter::new().stocktake_id(EqualFilter::equal_to("blank_stocktake".to_owned())),
+                StocktakeLineFilter::new().stocktake_id(EqualFilter::equal_to("blank_stocktake".to_string())),
                 None,
             )
             .unwrap();
@@ -590,7 +590,7 @@ mod test {
         // check that no rows were created for the stocktake
         let stocktake_rows = StocktakeLineRepository::new(&connection)
             .query_by_filter(
-                StocktakeLineFilter::new().stocktake_id(EqualFilter::equal_to("stocktake_1".to_owned())),
+                StocktakeLineFilter::new().stocktake_id(EqualFilter::equal_to("stocktake_1".to_string())),
                 None,
             )
             .unwrap();
@@ -614,7 +614,7 @@ mod test {
 
         let stocktake_rows = StocktakeLineRepository::new(&connection)
             .query_by_filter(
-                StocktakeLineFilter::new().stocktake_id(EqualFilter::equal_to("stocktake_2".to_owned())),
+                StocktakeLineFilter::new().stocktake_id(EqualFilter::equal_to("stocktake_2".to_string())),
                 None,
             )
             .unwrap();

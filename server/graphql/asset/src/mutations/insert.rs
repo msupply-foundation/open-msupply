@@ -227,9 +227,9 @@ mod test {
         // Record Already Exists
         let test_service = TestService(Box::new(|_| {
             Ok(Asset {
-                id: "id".to_owned(),
-                notes: Some("notes".to_owned()),
-                asset_number: Some("asset_number".to_owned()),
+                id: "id".to_string(),
+                notes: Some("notes".to_string()),
+                asset_number: Some("asset_number".to_string()),
                 ..Default::default()
             })
         }));

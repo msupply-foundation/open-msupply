@@ -243,7 +243,7 @@ mod graphql {
         // Test ok mapping
         let test_service = TestService(Box::new(|filter| {
             assert_eq!(
-                StoreFilter::new().id(EqualFilter::equal_to("store_id".to_owned())),
+                StoreFilter::new().id(EqualFilter::equal_to("store_id".to_string())),
                 filter
             );
 

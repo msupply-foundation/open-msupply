@@ -158,7 +158,7 @@ pub(crate) mod test {
 
         assert_eq!(
             repo.query_by_filter(StockLineLedgerFilter::new().stock_line_id(
-                EqualFilter::equal_to("positive_running_balance_fix".to_owned())
+                EqualFilter::equal_to("positive_running_balance_fix".to_string())
             ))
             .unwrap()
             .into_iter()
@@ -183,7 +183,7 @@ pub(crate) mod test {
 
         assert_eq!(
             repo.query_by_filter(StockLineLedgerFilter::new().stock_line_id(
-                EqualFilter::equal_to("negative_running_balance_fix".to_owned())
+                EqualFilter::equal_to("negative_running_balance_fix".to_string())
             ))
             .unwrap()
             .into_iter()

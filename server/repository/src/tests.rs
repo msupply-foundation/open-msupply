@@ -869,7 +869,7 @@ mod repository_test {
 
         // Test insert
         let mut update_test_row = mock_request_draft_requisition();
-        update_test_row.comment = Some("unique_comment".to_owned());
+        update_test_row.comment = Some("unique_comment".to_string());
         RequisitionRowRepository::new(&connection)
             .upsert_one(&update_test_row)
             .unwrap();

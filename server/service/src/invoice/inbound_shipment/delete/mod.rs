@@ -130,7 +130,7 @@ mod test {
             service.delete_inbound_shipment(
                 &context,
                 DeleteInboundShipment {
-                    id: "invalid".to_owned(),
+                    id: "invalid".to_string(),
                 },
             ),
             Err(ServiceError::InvoiceDoesNotExist)
