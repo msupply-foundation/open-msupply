@@ -142,7 +142,7 @@ mod query {
             Some(
                 ActivityLogFilter::new()
                     .r#type(ActivityLogType::ItemVariantUpdatedName.equal_to())
-                    .record_id(EqualFilter::equal_to(test_item_a_variant_id)),
+                    .record_id(EqualFilter::equal_to(test_item_a_variant_id.to_string())),
             ),
             None,
         )
@@ -178,7 +178,7 @@ mod query {
             .get_item_variants(
                 &context,
                 None,
-                Some(ItemVariantFilter::new().id(EqualFilter::equal_to(test_item_a_variant_id))),
+                Some(ItemVariantFilter::new().id(EqualFilter::equal_to(test_item_a_variant_id.to_string()))),
                 None,
             )
             .unwrap();
@@ -204,7 +204,7 @@ mod query {
             .get_item_variants(
                 &context,
                 None,
-                Some(ItemVariantFilter::new().id(EqualFilter::equal_to(test_item_a_variant_id))),
+                Some(ItemVariantFilter::new().id(EqualFilter::equal_to(test_item_a_variant_id.to_string()))),
                 None,
             )
             .unwrap();
@@ -219,7 +219,7 @@ mod query {
                 None,
                 Some(
                     BundledItemFilter::new()
-                        .principal_item_variant_id(EqualFilter::equal_to(test_item_b_variant_id)),
+                        .principal_item_variant_id(EqualFilter::equal_to(test_item_b_variant_id.to_string())),
                 ),
             )
             .unwrap();

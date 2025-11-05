@@ -183,7 +183,7 @@ fn update_lines(
     if let Some(new_status) = status {
         let lines = PurchaseOrderLineRepository::new(connection).query_by_filter(
             PurchaseOrderLineFilter::new()
-                .purchase_order_id(EqualFilter::equal_to(purchase_order_id)),
+                .purchase_order_id(EqualFilter::equal_to(purchase_order_id.to_string())),
         )?;
 
         let updated_lines: Vec<PurchaseOrderLineRow> = lines

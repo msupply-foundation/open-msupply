@@ -21,7 +21,10 @@ pub fn check_stock_line_exists(
     use CommonStockLineError::*;
 
     let stock_line = StockLineRepository::new(connection)
-        .query_by_filter(StockLineFilter::new().id(EqualFilter::equal_to(id)), None)?
+        .query_by_filter(
+            StockLineFilter::new().id(EqualFilter::equal_to(id.to_string())),
+            None,
+        )?
         .pop()
         .ok_or(DatabaseError(RepositoryError::NotFound))?;
 
@@ -37,8 +40,10 @@ pub fn check_stock_line_does_not_exist(
     id: &str,
     connection: &StorageConnection,
 ) -> Result<bool, RepositoryError> {
-    let stock_lines = StockLineRepository::new(connection)
-        .query_by_filter(StockLineFilter::new().id(EqualFilter::equal_to(id)), None)?;
+    let stock_lines = StockLineRepository::new(connection).query_by_filter(
+        StockLineFilter::new().id(EqualFilter::equal_to(id.to_string())),
+        None,
+    )?;
 
     Ok(stock_lines.is_empty())
 }

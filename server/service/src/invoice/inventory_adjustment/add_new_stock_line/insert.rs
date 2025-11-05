@@ -92,7 +92,7 @@ pub fn add_new_stock_line(
             activity_log_entry(
                 ctx,
                 ActivityLogType::InventoryAdjustment,
-                Some(verified_invoice.id.to_owned()),
+                Some(verified_invoice.id.to_string()),
                 None,
                 None,
             )?;
@@ -285,7 +285,8 @@ mod test {
 
         let mut invoice_lines = InvoiceLineRepository::new(&connection)
             .query_by_filter(
-                InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(&invoice_row.id)),
+                InvoiceLineFilter::new()
+                    .invoice_id(EqualFilter::equal_to(invoice_row.id.to_string())),
             )
             .unwrap();
 
@@ -326,7 +327,8 @@ mod test {
 
         let invoice_lines = InvoiceLineRepository::new(&connection)
             .query_by_filter(
-                InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(&invoice.invoice_row.id)),
+                InvoiceLineFilter::new()
+                    .invoice_id(EqualFilter::equal_to(invoice.invoice_row.id.to_string())),
             )
             .unwrap()
             .pop()
@@ -335,8 +337,10 @@ mod test {
         let vvm_status_log = VVMStatusLogRepository::new(&connection)
             .query_by_filter(
                 VVMStatusLogFilter::new()
-                    .stock_line_id(EqualFilter::equal_to(&stock_line_id))
-                    .invoice_line_id(EqualFilter::equal_to(&invoice_lines.invoice_line_row.id)),
+                    .stock_line_id(EqualFilter::equal_to(stock_line_id.to_string()))
+                    .invoice_line_id(EqualFilter::equal_to(
+                        invoice_lines.invoice_line_row.id.to_string(),
+                    )),
             )
             .unwrap()
             .pop();

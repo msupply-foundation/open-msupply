@@ -111,8 +111,8 @@ mod test {
         let result = service.insert_clinician(
             &context,
             InsertClinician {
-                id: "new_id".to_owned(),
-                code: "new_code".to_owned(),
+                id: "new_id".to_string(),
+                code: "new_code".to_string(),
                 initials: "TC".to_string(),
                 last_name: "Clinician".to_string(),
                 ..Default::default()
@@ -125,7 +125,7 @@ mod test {
         let result = ClinicianRepository::new(&connection)
             .query_by_filter(
                 &mock_store_a().id,
-                ClinicianFilter::new().id(EqualFilter::equal_to("new_id")),
+                ClinicianFilter::new().id(EqualFilter::equal_to("new_id".to_string())),
             )
             .unwrap();
         assert_eq!(result[0].initials, "TC");

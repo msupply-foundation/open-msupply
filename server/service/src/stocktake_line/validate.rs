@@ -10,7 +10,7 @@ pub fn check_stocktake_line_exist(
 ) -> Result<Option<StocktakeLine>, RepositoryError> {
     Ok(StocktakeLineRepository::new(connection)
         .query_by_filter(
-            StocktakeLineFilter::new().id(EqualFilter::equal_to(id)),
+            StocktakeLineFilter::new().id(EqualFilter::equal_to(id.to_string())),
             None,
         )?
         .pop())
@@ -63,7 +63,7 @@ pub fn check_reason_is_valid(
                 ReasonOptionFilter::new()
                     .r#type(ReasonOptionType::PositiveInventoryAdjustment.equal_to())
                     .is_active(true)
-                    .id(EqualFilter::equal_to(reason_id)),
+                    .id(EqualFilter::equal_to(reason_id.to_string())),
             )?;
             return Ok(reason.len() == 1);
         }
@@ -78,7 +78,7 @@ pub fn check_reason_is_valid(
                     ]),
                 )
                 .is_active(true)
-                .id(EqualFilter::equal_to(reason_id)),
+                .id(EqualFilter::equal_to(reason_id.to_string())),
         )?;
         return Ok(reason.len() == 1);
     }

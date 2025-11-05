@@ -66,7 +66,7 @@ mod test {
 
         // Querying with ID filter
         let filter = ShippingMethodFilter {
-            id: Some(EqualFilter::equal_to("test_shipping_method_1")),
+            id: Some(EqualFilter::equal_to("test_shipping_method_1".to_string())),
             ..Default::default()
         };
         let result = service
@@ -89,7 +89,7 @@ mod test {
 
         // Querying with non-existing ID filter
         let filter = ShippingMethodFilter {
-            id: Some(EqualFilter::equal_to("non_existing_id")),
+            id: Some(EqualFilter::equal_to("non_existing_id".to_string())),
             ..Default::default()
         };
         let result = service

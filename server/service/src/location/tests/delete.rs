@@ -31,7 +31,7 @@ mod query {
         let service = service_provider.location_service;
 
         let locations_not_in_store = location_repository
-            .query_by_filter(LocationFilter::new().store_id(EqualFilter::not_equal_to("store_a")))
+            .query_by_filter(LocationFilter::new().store_id(EqualFilter::not_equal_to("store_a".to_string())))
             .unwrap();
 
         // Location does not exist
@@ -39,7 +39,7 @@ mod query {
             service.delete_location(
                 &context,
                 DeleteLocation {
-                    id: "invalid".to_owned(),
+                    id: "invalid".to_string(),
                 },
             ),
             Err(DeleteLocationError::LocationDoesNotExist)
@@ -57,16 +57,16 @@ mod query {
         );
 
         // Location is not empty (invoice lines in use)
-        let location_id = "location_1".to_owned();
+        let location_id = "location_1".to_string();
         let stock_lines = stock_line_repository
             .query_by_filter(
-                StockLineFilter::new().location_id(EqualFilter::equal_to(&location_id)),
+                StockLineFilter::new().location_id(EqualFilter::equal_to(location_id.to_string())),
                 None,
             )
             .unwrap();
         let invoice_lines = invoice_line_repository
             .query_by_filter(
-                InvoiceLineFilter::new().location_id(EqualFilter::equal_to(&location_id)),
+                InvoiceLineFilter::new().location_id(EqualFilter::equal_to(location_id.to_string())),
             )
             .unwrap();
 
@@ -79,16 +79,16 @@ mod query {
         );
 
         // Location is not empty (stock_lines in use)
-        let location_id = "location_on_hold".to_owned();
+        let location_id = "location_on_hold".to_string();
         let stock_lines = stock_line_repository
             .query_by_filter(
-                StockLineFilter::new().location_id(EqualFilter::equal_to(&location_id)),
+                StockLineFilter::new().location_id(EqualFilter::equal_to(location_id.to_string())),
                 None,
             )
             .unwrap();
         let invoice_lines = invoice_line_repository
             .query_by_filter(
-                InvoiceLineFilter::new().location_id(EqualFilter::equal_to(&location_id)),
+                InvoiceLineFilter::new().location_id(EqualFilter::equal_to(location_id.to_string())),
             )
             .unwrap();
 
@@ -117,15 +117,15 @@ mod query {
             service.delete_location(
                 &context,
                 DeleteLocation {
-                    id: "location_2".to_owned()
+                    id: "location_2".to_string()
                 },
             ),
-            Ok("location_2".to_owned())
+            Ok("location_2".to_string())
         );
 
         assert_eq!(
             location_repository
-                .query_by_filter(LocationFilter::new().id(EqualFilter::equal_to("location_2")))
+                .query_by_filter(LocationFilter::new().id(EqualFilter::equal_to("location_2".to_string())))
                 .unwrap(),
             vec![]
         );

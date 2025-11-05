@@ -251,7 +251,7 @@ fn create_filtered_query(filter: Option<AssetFilter>) -> BoxedAssetQuery {
         if let Some(value) = is_non_catalogue {
             apply_equal_filter!(
                 query,
-                Some(EqualFilter::is_null(value)),
+                Some(EqualFilter::<String>::is_null(value)),
                 asset::asset_catalogue_item_id
             );
         }
@@ -317,7 +317,7 @@ mod tests {
 
         // Query by id
         let result = AssetRepository::new(&storage_connection)
-            .query_one(AssetFilter::new().id(EqualFilter::equal_to(&asset_id)))
+            .query_one(AssetFilter::new().id(EqualFilter::equal_to(asset_id.to_string())))
             .unwrap()
             .unwrap();
         assert_eq!(result.id, asset_id);

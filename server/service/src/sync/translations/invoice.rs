@@ -355,7 +355,9 @@ impl SyncTranslation for InvoiceTranslation {
             )))?;
 
         let name_store_id = StoreRepository::new(connection)
-            .query_by_filter(StoreFilter::new().name_id(EqualFilter::equal_to(&data.name_ID)))?
+            .query_by_filter(
+                StoreFilter::new().name_id(EqualFilter::equal_to(data.name_ID.to_owned())),
+            )?
             .pop()
             .map(|store| store.store_row.id);
 
@@ -481,7 +483,9 @@ impl SyncTranslation for InvoiceTranslation {
         changelog: &ChangelogRow,
     ) -> Result<PushTranslateResult, anyhow::Error> {
         let Some(invoice) = InvoiceRepository::new(connection)
-            .query_by_filter(InvoiceFilter::new().id(EqualFilter::equal_to(&changelog.record_id)))?
+            .query_by_filter(
+                InvoiceFilter::new().id(EqualFilter::equal_to(changelog.record_id.to_string())),
+            )?
             .pop()
         else {
             return Err(anyhow::anyhow!("Invoice not found"));

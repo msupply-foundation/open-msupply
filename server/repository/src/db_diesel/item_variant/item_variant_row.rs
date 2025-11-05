@@ -73,7 +73,7 @@ impl<'a> ItemVariantRowRepository<'a> {
             .set(row)
             .execute(self.connection.lock().connection())?;
 
-        self.insert_changelog(row.id.to_owned(), RowActionType::Upsert)
+        self.insert_changelog(row.id.to_string(), RowActionType::Upsert)
     }
 
     fn insert_changelog(
@@ -119,7 +119,7 @@ impl<'a> ItemVariantRowRepository<'a> {
             .execute(self.connection.lock().connection())?;
 
         // Upsert row action as this is a soft delete, not actual delete
-        self.insert_changelog(item_variant_id.to_owned(), RowActionType::Upsert)
+        self.insert_changelog(item_variant_id.to_string(), RowActionType::Upsert)
     }
 }
 

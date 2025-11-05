@@ -132,7 +132,7 @@ fn validate_exiting_encounter(
     name: &str,
 ) -> Result<Option<Encounter>, RepositoryError> {
     let result = EncounterRepository::new(&ctx.connection)
-        .query_by_filter(EncounterFilter::new().document_name(EqualFilter::equal_to(name)))?
+        .query_by_filter(EncounterFilter::new().document_name(EqualFilter::equal_to(name.to_owned())))?
         .pop();
     Ok(result)
 }
@@ -422,7 +422,7 @@ mod test {
         // check that encounter table has been updated
         let encounter = EncounterRepository::new(&ctx.connection)
             .query_by_filter(
-                EncounterFilter::new().document_name(EqualFilter::equal_to(&found.name)),
+                EncounterFilter::new().document_name(EqualFilter::equal_to(found.name.to_owned())),
             )
             .unwrap()
             .pop()

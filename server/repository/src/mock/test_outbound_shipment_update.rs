@@ -48,7 +48,7 @@ fn mock_outbound_shipment_invalid_stock_line() -> InvoiceRow {
         invoice_number: 3,
         r#type: InvoiceType::OutboundShipment,
         status: InvoiceStatus::New,
-        comment: Some("Sort comment test cA".to_owned()),
+        comment: Some("Sort comment test cA".to_string()),
         their_reference: Some(String::from("")),
         created_datetime: NaiveDate::from_ymd_opt(1970, 1, 6)
             .unwrap()

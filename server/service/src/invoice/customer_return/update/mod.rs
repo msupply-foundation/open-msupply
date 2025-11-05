@@ -69,7 +69,7 @@ pub fn update_customer_return(
                 activity_log_entry(
                     ctx,
                     log_type_from_invoice_status(&updated_return.status, false),
-                    Some(updated_return.id.to_owned()),
+                    Some(updated_return.id.to_string()),
                     None,
                     None,
                 )?;
@@ -307,8 +307,8 @@ mod test {
         /* -------
          * Setting NEW customer return to RECEIVED
          */
-        let return_line_filter = InvoiceLineFilter::new()
-            .invoice_id(EqualFilter::equal_to(&mock_customer_return_b().id));
+        let return_line_filter =
+            InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(mock_customer_return_b().id));
 
         let invoice_line_repo = InvoiceLineRepository::new(&connection);
 
@@ -431,8 +431,8 @@ mod test {
         /* -------
          * Setting NEW customer return to VERIFIED
          */
-        let return_line_filter = InvoiceLineFilter::new()
-            .invoice_id(EqualFilter::equal_to(&mock_customer_return_b().id));
+        let return_line_filter =
+            InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(mock_customer_return_b().id));
 
         let invoice_line_repo = InvoiceLineRepository::new(&connection);
 
