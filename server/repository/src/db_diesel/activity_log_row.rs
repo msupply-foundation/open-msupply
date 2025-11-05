@@ -119,6 +119,8 @@ pub enum ActivityLogType {
     PurchaseOrderStatusChangedFromSentToConfirmed,
     PurchaseOrderLineStatusClosed,
     PurchaseOrderLineStatusChangedFromSentToNew,
+    PatientUpdated,
+    PatientCreated,
     // Property
     PropertyUpdated,
 }
