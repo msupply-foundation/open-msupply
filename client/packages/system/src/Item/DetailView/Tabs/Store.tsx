@@ -64,7 +64,7 @@ export const StoreTab = ({ item }: { item: ItemFragment }) => {
       </DetailContainer>
       {isCentralServer &&
         plugins.itemProperties?.ItemFooter?.map((Plugin, index) => (
-          <Plugin key={index} item={item} />
+          <Plugin key={index} itemId={item.id} />
         ))}
     </>
   );
