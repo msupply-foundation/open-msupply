@@ -47,6 +47,7 @@ const ItemLedgerTable = ({
         Cell: ({ row }) =>
           t(getInvoiceLocalisationKey(row.original.invoiceType)),
         pin: 'left',
+        enableColumnFilter: true,
         filterVariant: 'select',
         filterSelectOptions: Object.values(InvoiceNodeType).map(type => ({
           value: type,
@@ -56,28 +57,29 @@ const ItemLedgerTable = ({
       {
         accessorKey: 'invoiceNumber',
         header: t('label.invoice-number'),
+        columnType: ColumnType.Number,
         size: 80,
       },
       {
         accessorKey: 'datetime',
         header: t('label.date'),
         columnType: ColumnType.Date,
-        size: 80,
+        size: 100,
         enableColumnFilter: true,
       },
       {
-        accessorKey: 'time',
+        id: 'time',
         header: t('label.time'),
         accessorFn: row => localisedTime(row.datetime),
         size: 80,
       },
       {
-        accessorKey: 'name',
+        id: 'name',
         header: t('label.name'),
         accessorFn: row => getNameValue(t, row.name),
       },
       {
-        accessorKey: 'invoiceStatus',
+        id: 'invoiceStatus',
         header: t('label.status'),
         accessorFn: row => t(getStatusTranslation(row.invoiceStatus)),
         filterVariant: 'select',
@@ -91,7 +93,7 @@ const ItemLedgerTable = ({
         accessorKey: 'expiryDate',
         header: t('label.expiry'),
         columnType: ColumnType.Date,
-        size: 80,
+        size: 100,
       },
       {
         accessorKey: 'batch',
@@ -139,7 +141,7 @@ const ItemLedgerTable = ({
         header: t('label.reason'),
       },
     ],
-    [t, localisedTime]
+    [localisedTime]
   );
 
   const { table } = usePaginatedMaterialTable<ItemLedgerFragment>({
@@ -150,6 +152,7 @@ const ItemLedgerTable = ({
     totalCount,
     onRowClick: row => onRowClick(row),
     noDataElement: <NothingHere body={t('messages.no-item-ledger')} />,
+    enableRowSelection: false,
   });
 
   return <MaterialTable table={table} />;
