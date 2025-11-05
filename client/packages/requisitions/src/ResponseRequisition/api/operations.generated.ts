@@ -100,6 +100,7 @@ export type ResponseLineFragment = {
     stockOnHand: number;
     availableMonthsOfStockOnHand?: number | null;
     averageMonthlyConsumption: number;
+    averageMonthlyDistribution?: number | null;
   };
   item: {
     __typename: 'ItemNode';
@@ -212,6 +213,7 @@ export type ResponseFragment = {
         stockOnHand: number;
         availableMonthsOfStockOnHand?: number | null;
         averageMonthlyConsumption: number;
+        averageMonthlyDistribution?: number | null;
       };
       item: {
         __typename: 'ItemNode';
@@ -364,6 +366,7 @@ export type ResponseByNumberQuery = {
               stockOnHand: number;
               availableMonthsOfStockOnHand?: number | null;
               averageMonthlyConsumption: number;
+              averageMonthlyDistribution?: number | null;
             };
             item: {
               __typename: 'ItemNode';
@@ -524,6 +527,7 @@ export type ResponseByIdQuery = {
               stockOnHand: number;
               availableMonthsOfStockOnHand?: number | null;
               averageMonthlyConsumption: number;
+              averageMonthlyDistribution?: number | null;
             };
             item: {
               __typename: 'ItemNode';
@@ -1101,6 +1105,7 @@ export const ResponseLineFragmentDoc = gql`
       stockOnHand
       availableMonthsOfStockOnHand
       averageMonthlyConsumption
+      averageMonthlyDistribution
     }
     item {
       ...ItemWithStats

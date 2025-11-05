@@ -1,10 +1,15 @@
-import { ColumnDef, UsePluginEvents } from '@openmsupply-client/common';
+import {
+  ColumnDef,
+  ColumnDefinition,
+  UsePluginEvents,
+} from '@openmsupply-client/common';
 import {
   RequestFragment,
   RequestLineFragment,
   StockLineRowFragment,
 } from '@openmsupply-client/system';
 import { InboundFragment } from '@openmsupply-client/invoices';
+import { ResponseLineFragment } from '@openmsupply-client/requisitions/src/ResponseRequisition/api';
 import { PrescriptionPaymentComponentProps } from './prescriptionTypes';
 
 export type Plugins = {
@@ -34,6 +39,9 @@ export type Plugins = {
       line: RequestLineFragment;
       requisition: RequestFragment;
     }>[];
+  };
+  averageMonthlyDistribution?: {
+    tableColumn: ColumnDefinition<ResponseLineFragment>[];
   };
 };
 

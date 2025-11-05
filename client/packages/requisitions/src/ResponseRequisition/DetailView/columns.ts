@@ -11,6 +11,7 @@ import {
   getLinesFromRow,
   UNDEFINED_STRING_VALUE,
   usePreferences,
+  usePluginProvider,
 } from '@openmsupply-client/common';
 import { ResponseLineFragment, useResponse } from './../api';
 import { PackQuantityCell } from '@openmsupply-client/system';
@@ -27,6 +28,7 @@ export const useResponseColumns = () => {
   const { store } = useAuthContext();
   const { isRemoteAuthorisation } = useResponse.utils.isRemoteAuthorisation();
   const { programName } = useResponse.document.fields(['programName']);
+  const { plugins } = usePluginProvider();
 
   const columnDefinitions: ColumnDescription<ResponseLineFragment>[] = [
     [
@@ -300,6 +302,10 @@ export const useResponseColumns = () => {
     Cell: PackQuantityCell,
     accessor: ({ rowData }) => rowData.remainingQuantityToSupply,
   });
+
+  if (plugins.averageMonthlyDistribution?.tableColumn) {
+    columnDefinitions.push(...plugins.averageMonthlyDistribution?.tableColumn);
+  }
 
   const columns = useColumns<ResponseLineFragment>(
     columnDefinitions,

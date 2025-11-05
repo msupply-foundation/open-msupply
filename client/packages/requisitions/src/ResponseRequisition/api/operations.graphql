@@ -90,6 +90,7 @@ fragment ResponseLine on RequisitionLineNode {
     stockOnHand
     availableMonthsOfStockOnHand
     averageMonthlyConsumption
+    averageMonthlyDistribution
   }
   item {
     ...ItemWithStats
