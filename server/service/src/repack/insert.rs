@@ -158,7 +158,7 @@ mod test {
         // StockLineReducedBelowZero
         let stock_line = StockLineRepository::new(&connection)
             .query_by_filter(
-                StockLineFilter::new().id(EqualFilter::equal_to(mock_stock_line_b().id.to_owned())),
+                StockLineFilter::new().id(EqualFilter::equal_to(mock_stock_line_b().id)),
                 None,
             )
             .unwrap()
@@ -205,7 +205,8 @@ mod test {
         ) -> SortedInvoiceAndStock {
             let invoice_lines = InvoiceLineRepository::new(connection)
                 .query_by_filter(
-                    InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(invoice_id.to_owned())),
+                    InvoiceLineFilter::new()
+                        .invoice_id(EqualFilter::equal_to(invoice_id.to_owned())),
                 )
                 .unwrap();
 
@@ -541,7 +542,8 @@ mod test {
 
         let enter_location_movement = LocationMovementRepository::new(&connection)
             .query_by_filter(
-                LocationMovementFilter::new().stock_line_id(EqualFilter::equal_to(new_stock.id.to_owned())),
+                LocationMovementFilter::new()
+                    .stock_line_id(EqualFilter::equal_to(new_stock.id.to_owned())),
             )
             .unwrap()
             .pop()

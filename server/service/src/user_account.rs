@@ -281,7 +281,7 @@ mod user_account_test {
 
         // some base line test that there is actually some data in the DB
         let user = user_repo
-            .query_by_filter(UserFilter::new().id(EqualFilter::equal_to(mock_user_account_a().id.to_owned())))
+            .query_by_filter(UserFilter::new().id(EqualFilter::equal_to(mock_user_account_a().id)))
             .unwrap()
             .pop()
             .unwrap();
@@ -289,7 +289,7 @@ mod user_account_test {
         let permissions = user_permission_repo
             .query_by_filter(
                 UserPermissionFilter::new()
-                    .user_id(EqualFilter::equal_to(mock_user_account_a().id.to_owned())),
+                    .user_id(EqualFilter::equal_to(mock_user_account_a().id)),
             )
             .unwrap();
         assert!(permissions.len() > 1);
@@ -321,7 +321,7 @@ mod user_account_test {
             )
             .unwrap();
         let user = user_repo
-            .query_by_filter(UserFilter::new().id(EqualFilter::equal_to(mock_user_account_a().id.to_owned())))
+            .query_by_filter(UserFilter::new().id(EqualFilter::equal_to(mock_user_account_a().id)))
             .unwrap()
             .pop()
             .unwrap();
@@ -329,14 +329,14 @@ mod user_account_test {
         let permissions = user_permission_repo
             .query_by_filter(
                 UserPermissionFilter::new()
-                    .user_id(EqualFilter::equal_to(mock_user_account_a().id.to_owned())),
+                    .user_id(EqualFilter::equal_to(mock_user_account_a().id)),
             )
             .unwrap();
         // new permission + context permission
         assert!(permissions.len() == 2);
         // test that other user is still there
         let user = user_repo
-            .query_by_filter(UserFilter::new().id(EqualFilter::equal_to(mock_user_account_b().id.to_owned())))
+            .query_by_filter(UserFilter::new().id(EqualFilter::equal_to(mock_user_account_b().id)))
             .unwrap()
             .pop()
             .unwrap();
@@ -344,7 +344,7 @@ mod user_account_test {
         let permissions = user_permission_repo
             .query_by_filter(
                 UserPermissionFilter::new()
-                    .user_id(EqualFilter::equal_to(mock_user_account_b().id.to_owned())),
+                    .user_id(EqualFilter::equal_to(mock_user_account_b().id)),
             )
             .unwrap();
         assert!(!permissions.is_empty());

@@ -278,7 +278,7 @@ mod test {
         repo.delete(
             ProgramEventFilter::new()
                 .document_type(EqualFilter::equal_to("type1".to_owned()))
-                .patient_id(EqualFilter::equal_to(mock_patient().id.to_owned())),
+                .patient_id(EqualFilter::equal_to(mock_patient().id)),
         )
         .unwrap();
         assert_eq!(
@@ -293,8 +293,10 @@ mod test {
         );
 
         // delete the second event without patient filter
-        repo.delete(ProgramEventFilter::new().document_type(EqualFilter::equal_to("type2".to_owned())))
-            .unwrap();
+        repo.delete(
+            ProgramEventFilter::new().document_type(EqualFilter::equal_to("type2".to_owned())),
+        )
+        .unwrap();
         assert_eq!(repo.query(Pagination::all(), None, None).unwrap().len(), 0);
     }
 }

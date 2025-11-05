@@ -52,8 +52,14 @@ mod test {
                 &context,
                 Some(
                     RequisitionLineFilter::new()
-                        .id(EqualFilter::equal_to(mock_draft_request_requisition_line().id.to_owned()))
-                        .requisition_id(EqualFilter::equal_to(mock_draft_request_requisition_line().requisition_id.to_owned())),
+                        .id(EqualFilter::equal_to(
+                            mock_draft_request_requisition_line().id,
+                        ))
+                        .requisition_id(EqualFilter::equal_to(
+                            mock_draft_request_requisition_line()
+                                .requisition_id
+                                .to_owned(),
+                        )),
                 ),
             )
             .unwrap();

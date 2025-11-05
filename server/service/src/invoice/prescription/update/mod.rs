@@ -581,7 +581,7 @@ mod test {
 
         let reverse_prescription = InvoiceRepository::new(&connection)
             .query_one(
-                InvoiceFilter::new().linked_invoice_id(EqualFilter::equal_to(prescription().id.to_owned())),
+                InvoiceFilter::new().linked_invoice_id(EqualFilter::equal_to(prescription().id)),
             )
             .unwrap()
             .unwrap()

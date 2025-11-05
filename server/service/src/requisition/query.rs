@@ -85,9 +85,10 @@ mod test {
                 &context,
                 Some(&mock_request_draft_requisition().store_id),
                 None,
-                Some(RequisitionFilter::new().id(EqualFilter::equal_to(
-                    mock_request_draft_requisition().id.to_owned(),
-                ))),
+                Some(
+                    RequisitionFilter::new()
+                        .id(EqualFilter::equal_to(mock_request_draft_requisition().id)),
+                ),
                 None,
             )
             .unwrap();

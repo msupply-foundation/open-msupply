@@ -466,10 +466,11 @@ mod repository_test {
             test_db::setup_all("test_master_list_repository", MockDataInserts::all()).await;
         let repo = MasterListRepository::new(&connection);
 
-        let id_rows: Vec<String> =
-            repo.query_by_filter(MasterListFilter::new().exists_for_name_id(
-                EqualFilter::equal_to(mock_test_master_list_name1().id.to_owned()),
-            ))
+        let id_rows: Vec<String> = repo
+            .query_by_filter(
+                MasterListFilter::new()
+                    .exists_for_name_id(EqualFilter::equal_to(mock_test_master_list_name1().id)),
+            )
             .unwrap()
             .into_iter()
             .map(|r| r.id)
@@ -483,10 +484,11 @@ mod repository_test {
             ]
         );
 
-        let id_rows: Vec<String> =
-            repo.query_by_filter(MasterListFilter::new().exists_for_name_id(
-                EqualFilter::equal_to(mock_test_master_list_name2().id.to_owned()),
-            ))
+        let id_rows: Vec<String> = repo
+            .query_by_filter(
+                MasterListFilter::new()
+                    .exists_for_name_id(EqualFilter::equal_to(mock_test_master_list_name2().id)),
+            )
             .unwrap()
             .into_iter()
             .map(|r| r.id)
@@ -500,10 +502,11 @@ mod repository_test {
             ]
         );
 
-        let id_rows: Vec<String> =
-            repo.query_by_filter(MasterListFilter::new().exists_for_store_id(
-                EqualFilter::equal_to(mock_test_master_list_store1().id.to_owned()),
-            ))
+        let id_rows: Vec<String> = repo
+            .query_by_filter(
+                MasterListFilter::new()
+                    .exists_for_store_id(EqualFilter::equal_to(mock_test_master_list_store1().id)),
+            )
             .unwrap()
             .into_iter()
             .map(|r| r.id)
@@ -878,9 +881,10 @@ mod repository_test {
 
         // Test query by id
         let result = RequisitionRepository::new(&connection)
-            .query_by_filter(RequisitionFilter::new().id(EqualFilter::equal_to(
-                mock_request_draft_requisition2().id.to_owned(),
-            )))
+            .query_by_filter(
+                RequisitionFilter::new()
+                    .id(EqualFilter::equal_to(mock_request_draft_requisition2().id)),
+            )
             .unwrap();
 
         let raw_result = sql_query(format!(
@@ -974,7 +978,7 @@ mod repository_test {
         // Test query by id
         let result = RequisitionLineRepository::new(&connection)
             .query_by_filter(RequisitionLineFilter::new().id(EqualFilter::equal_to(
-                mock_draft_request_requisition_line2().id.to_owned(),
+                mock_draft_request_requisition_line2().id,
             )))
             .unwrap();
 
