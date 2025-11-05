@@ -32,6 +32,7 @@ pub struct UpsertPreferencesInput {
     pub prevent_transfers_months_before_initialisation: Option<i32>,
     pub show_contact_tracing: Option<bool>,
     pub sync_records_display_threshold: Option<i32>,
+    pub warning_for_excess_request: Option<bool>,
     pub use_days_in_month: Option<bool>,
     pub adjust_for_number_of_days_out_of_stock: Option<bool>,
     pub days_in_month: Option<f64>,
@@ -45,6 +46,7 @@ pub struct UpsertPreferencesInput {
     pub sort_by_vvm_status_then_expiry: Option<Vec<BoolStorePrefInput>>,
     pub use_simplified_mobile_ui: Option<Vec<BoolStorePrefInput>>,
     pub disable_manual_returns: Option<Vec<BoolStorePrefInput>>,
+    pub requisition_auto_finalise: Option<Vec<BoolStorePrefInput>>,
     pub can_create_internal_order_from_a_requisition: Option<Vec<BoolStorePrefInput>>,
     pub select_destination_store_for_an_internal_order: Option<Vec<BoolStorePrefInput>>,
     pub number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products:
@@ -89,6 +91,8 @@ impl UpsertPreferencesInput {
             gender_options,
             show_contact_tracing,
             sync_records_display_threshold,
+            warning_for_excess_request,
+
             use_days_in_month,
             adjust_for_number_of_days_out_of_stock,
             days_in_month,
@@ -101,6 +105,7 @@ impl UpsertPreferencesInput {
             sort_by_vvm_status_then_expiry,
             use_simplified_mobile_ui,
             disable_manual_returns,
+            requisition_auto_finalise,
             can_create_internal_order_from_a_requisition,
             select_destination_store_for_an_internal_order,
             number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products,
@@ -122,6 +127,8 @@ impl UpsertPreferencesInput {
                 *prevent_transfers_months_before_initialisation,
             show_contact_tracing: *show_contact_tracing,
             sync_records_display_threshold: *sync_records_display_threshold,
+            warning_for_excess_request: *warning_for_excess_request,
+
             use_days_in_month: *use_days_in_month,
             adjust_for_number_of_days_out_of_stock: *adjust_for_number_of_days_out_of_stock,
             days_in_month: *days_in_month,
@@ -146,6 +153,9 @@ impl UpsertPreferencesInput {
                 .as_ref()
                 .map(|i| i.iter().map(|i| i.to_domain()).collect()),
             disable_manual_returns: disable_manual_returns
+                .as_ref()
+                .map(|i| i.iter().map(|i| i.to_domain()).collect()),
+            requisition_auto_finalise: requisition_auto_finalise
                 .as_ref()
                 .map(|i| i.iter().map(|i| i.to_domain()).collect()),
             can_create_internal_order_from_a_requisition:

@@ -1,20 +1,22 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
-  ColumnAlign,
-  ColumnFormat,
-  DataTable,
   NothingHere,
-  useColumns,
   useNavigate,
   useParams,
   useTranslation,
   RouteBuilder,
+  ColumnDef,
+  ColumnType,
+  GoodsReceivedNodeStatus,
+  useNonPaginatedMaterialTable,
+  MaterialTable,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import {
   useGoodsReceivedList,
   GoodsReceivedRowFragment,
 } from '../../../goods_received/api';
+import { getGoodsReceivedStatusTranslator } from '../../../utils';
 
 export const GoodsReceived = () => {
   const t = useTranslation();
@@ -22,46 +24,61 @@ export const GoodsReceived = () => {
   const navigate = useNavigate();
 
   const {
-    query: { data, isError, isLoading },
+    query: { data, isFetching },
   } = useGoodsReceivedList({
     filterBy: { purchaseOrderId: { equalTo: purchaseOrderId } },
   });
 
-  const columns = useColumns<GoodsReceivedRowFragment>([
-    {
-      key: 'number',
-      label: 'label.number',
-      accessor: ({ rowData }) => rowData.number,
-      align: ColumnAlign.Right,
-    },
-    {
-      key: 'supplier',
-      label: 'label.supplier',
-      accessor: ({ rowData }) => rowData.supplier?.name,
-    },
-    {
-      key: 'status',
-      label: 'label.status',
-      accessor: ({ rowData }) => rowData.status,
-    },
-    {
-      key: 'supplierReference',
-      label: 'label.supplier-reference',
-      accessor: ({ rowData }) => rowData.supplierReference,
-    },
-    {
-      key: 'createdDateTime',
-      label: 'label.created-datetime',
-      format: ColumnFormat.Date,
-      accessor: ({ rowData }) => rowData.createdDatetime,
-    },
-    {
-      key: 'receivedDateTime',
-      label: 'label.received-date',
-      format: ColumnFormat.Date,
-      accessor: ({ rowData }) => rowData.receivedDatetime,
-    },
-  ]);
+  const columns = useMemo(
+    (): ColumnDef<GoodsReceivedRowFragment>[] => [
+      {
+        header: t('label.number'),
+        accessorKey: 'number',
+        columnType: ColumnType.Number,
+        size: 60,
+        enableSorting: true,
+        enableColumnFilter: true,
+      },
+      {
+        header: t('label.supplier'),
+        accessorKey: 'supplier.name',
+      },
+      {
+        header: t('label.status'),
+        id: 'status',
+        size: 120,
+        accessorFn: row => getGoodsReceivedStatusTranslator(t)(row.status),
+        filterVariant: 'select',
+        filterSelectOptions: Object.values(GoodsReceivedNodeStatus).map(
+          status => ({
+            value: status,
+            label: getGoodsReceivedStatusTranslator(t)(status),
+          })
+        ),
+        enableSorting: true,
+        enableColumnFilter: true,
+      },
+      {
+        header: t('label.supplier-reference'),
+        accessorKey: 'supplierReference',
+      },
+      {
+        header: t('label.created'),
+        accessorKey: 'createdDatetime',
+        columnType: ColumnType.Date,
+        enableSorting: true,
+        size: 100,
+      },
+      {
+        header: t('label.received'),
+        accessorKey: 'receivedDatetime',
+        columnType: ColumnType.Date,
+        enableSorting: true,
+        size: 100,
+      },
+    ],
+    []
+  );
 
   const handleRowClick = (row: GoodsReceivedRowFragment) => {
     const path = RouteBuilder.create(AppRoute.Replenishment)
@@ -71,16 +88,16 @@ export const GoodsReceived = () => {
     navigate(path);
   };
 
-  return (
-    <DataTable
-      id="goods-received-linked-table"
-      columns={columns}
-      enableColumnSelection
-      data={data?.nodes ?? []}
-      isError={isError}
-      isLoading={isLoading}
-      onRowClick={handleRowClick}
-      noDataElement={<NothingHere body={t('error.no-goods-received-linked')} />}
-    />
-  );
+  const { table } = useNonPaginatedMaterialTable<GoodsReceivedRowFragment>({
+    tableId: 'goods-received-list-in-purchase-order',
+    isLoading: isFetching,
+    onRowClick: handleRowClick,
+    columns,
+    data: data?.nodes,
+    initialSort: { key: 'createdDatetime', dir: 'desc' },
+    enableRowSelection: false,
+    noDataElement: <NothingHere body={t('error.no-goods-received-linked')} />,
+  });
+
+  return <MaterialTable table={table} />;
 };

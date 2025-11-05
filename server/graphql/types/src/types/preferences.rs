@@ -55,6 +55,10 @@ impl PreferencesNode {
         self.load_preference(&self.preferences.sync_records_display_threshold)
     }
 
+    pub async fn warning_for_excess_request(&self) -> Result<bool> {
+        self.load_preference(&self.preferences.warning_for_excess_request)
+    }
+
     pub async fn use_days_in_month(&self) -> Result<bool> {
         self.load_preference(&self.preferences.use_days_in_month)
     }
@@ -98,6 +102,10 @@ impl PreferencesNode {
 
     pub async fn disable_manual_returns(&self) -> Result<bool> {
         self.load_preference(&self.preferences.disable_manual_returns)
+    }
+
+    pub async fn requisition_auto_finalise(&self) -> Result<bool> {
+        self.load_preference(&self.preferences.requisition_auto_finalise)
     }
 
     pub async fn can_create_internal_order_from_a_requisition(&self) -> Result<bool> {
@@ -211,6 +219,8 @@ pub enum PreferenceKey {
     SortByVvmStatusThenExpiry,
     UseSimplifiedMobileUi,
     DisableManualReturns,
+    RequisitionAutoFinalise,
+    WarningForExcessRequest,
     CanCreateInternalOrderFromARequisition,
     SelectDestinationStoreForAnInternalOrder,
     NumberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts,

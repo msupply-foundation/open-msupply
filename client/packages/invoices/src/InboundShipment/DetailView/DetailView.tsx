@@ -1,27 +1,28 @@
-import React, { useEffect } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import {
-  TableProvider,
-  createTableStore,
   useEditModal,
   DetailViewSkeleton,
   AlertModal,
   useNavigate,
   RouteBuilder,
   useTranslation,
-  createQueryParamsStore,
   DetailTabs,
   useNotification,
   ModalMode,
-  useTableStore,
   useBreadcrumbs,
   useSimplifiedTabletUI,
   useUrlQuery,
   useToggle,
+  useNonPaginatedMaterialTable,
+  Groupable,
+  NothingHere,
+  MaterialTable,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import {
   ActivityLogList,
   DocumentsTable,
+  ItemRowFragment,
   UploadDocumentModal,
   useIsItemVariantsEnabled,
   useVvmStatusesEnabled,
@@ -30,14 +31,15 @@ import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
 import { AppBarButtons } from './AppBarButtons';
 import { SidePanel } from './SidePanel';
-import { ContentArea } from './ContentArea';
 import { InboundLineEdit } from './modals/InboundLineEdit';
 import { InboundItem, ScannedBarcode } from '../../types';
 import { useInbound, InboundLineFragment } from '../api';
 import { SupplierReturnEditModal } from '../../Returns';
-import { canReturnInboundLines } from '../../utils';
+import { canReturnInboundLines, isInboundPlaceholderRow } from '../../utils';
 import { InboundShipmentLineErrorProvider } from '../context/inboundShipmentLineError';
 import { InboundShipmentDetailTabs } from './types';
+import { useInboundLines } from '../api/hooks/line/useInboundLines';
+import { useInboundShipmentColumns } from './columns';
 
 type InboundLineItem = InboundLineFragment['item'];
 
@@ -58,8 +60,8 @@ const DetailViewInner = () => {
   const { setCustomBreadcrumbs } = useBreadcrumbs();
   const navigate = useNavigate();
   const { info } = useNotification();
-  const { clearSelected } = useTableStore();
   const { urlQuery, updateQuery } = useUrlQuery();
+  const { data: lines } = useInboundLines();
 
   const uploadDocumentController = useToggle();
   const { onOpen, onClose, mode, entity, isOpen } = useEditModal<
@@ -112,7 +114,29 @@ const DetailViewInner = () => {
     setMode(ModalMode.Update);
   };
 
-  const onReturn = async (selectedLines: InboundLineFragment[]) => {
+  const columns = useInboundShipmentColumns();
+
+  const { table, selectedRows } = useNonPaginatedMaterialTable<
+    Groupable<InboundLineFragment>
+  >({
+    tableId: 'inbound-shipment-detail-view',
+    columns,
+    data: lines,
+    grouping: { enabled: true },
+    isLoading: false,
+    initialSort: { key: 'itemName', dir: 'asc' },
+    onRowClick: !isDisabled ? onRowClick : undefined,
+    getIsPlaceholderRow: row => !!isInboundPlaceholderRow(row),
+    noDataElement: (
+      <NothingHere
+        body={t('error.no-inbound-items')}
+        onCreate={isDisabled ? undefined : () => onAddItem()}
+        buttonText={t('button.add-item')}
+      />
+    ),
+  });
+
+  const onReturn = async () => {
     if (!data || !canReturnInboundLines(data)) {
       const cantReturnSnack = info(
         t('messages.cant-return-shipment-replenishment')
@@ -120,12 +144,12 @@ const DetailViewInner = () => {
       cantReturnSnack();
       return;
     }
-    if (!selectedLines.length) {
+    if (!selectedRows.length) {
       const selectLinesSnack = info(t('messages.select-rows-to-return'));
       selectLinesSnack();
       return;
     }
-    if (selectedLines.some(line => !line.stockLine)) {
+    if (selectedRows.some(line => !line.stockLine)) {
       const selectLinesSnack = info(
         t('messages.cant-return-lines-with-no-received-stock')
       );
@@ -133,7 +157,7 @@ const DetailViewInner = () => {
       return;
     }
 
-    const selectedStockLineIds = selectedLines.map(
+    const selectedStockLineIds = selectedRows.map(
       line => line.stockLine?.id ?? ''
     );
 
@@ -147,16 +171,24 @@ const DetailViewInner = () => {
 
   const tab = urlQuery['tab'] ?? InboundShipmentDetailTabs.Details;
 
+  // Table manages the sorting state
+  // This needs to be passed to the edit modal, so based on latest sort order
+  // it can determine which item to load when user clicks `next`
+  const getSortedItems = useCallback(
+    () =>
+      table.getSortedRowModel().rows.reduce<ItemRowFragment[]>((acc, row) => {
+        const item = row.original.item;
+        if (!acc.find(i => i.id === item.id)) acc.push(item);
+        return acc;
+      }, []),
+    []
+  );
+
   if (isLoading) return <DetailViewSkeleton hasGroupBy={true} hasHold={true} />;
 
   const tabs = [
     {
-      Component: (
-        <ContentArea
-          onRowClick={!isDisabled ? onRowClick : null}
-          onAddItem={() => onOpen()}
-        />
-      ),
+      Component: <MaterialTable table={table} />,
       value: InboundShipmentDetailTabs.Details,
     },
     {
@@ -183,67 +215,70 @@ const DetailViewInner = () => {
     >
       {data ? (
         <>
-          <InboundShipmentLineErrorProvider>
-            <AppBarButtons
-              onAddItem={onAddItem}
-              simplifiedTabletView={simplifiedTabletView}
-              openUploadModal={() => {
-                uploadDocumentController.toggleOn();
-                if (tab !== InboundShipmentDetailTabs.Documents)
-                  updateQuery({ tab: InboundShipmentDetailTabs.Documents });
+          <AppBarButtons
+            onAddItem={onAddItem}
+            simplifiedTabletView={simplifiedTabletView}
+            openUploadModal={() => {
+              uploadDocumentController.toggleOn();
+              if (tab !== InboundShipmentDetailTabs.Documents)
+                updateQuery({ tab: InboundShipmentDetailTabs.Documents });
+            }}
+          />
+
+          <Toolbar />
+
+          <DetailTabs tabs={tabs} />
+
+          {(tab === InboundShipmentDetailTabs.Details || !tab) && (
+            <Footer
+              onReturnLines={onReturn}
+              selectedRows={selectedRows}
+              resetRowSelection={table.resetRowSelection}
+            />
+          )}
+          <SidePanel />
+
+          {isOpen && (
+            <InboundLineEdit
+              isDisabled={isDisabled}
+              isOpen={isOpen}
+              onClose={onClose}
+              mode={mode}
+              // "as" here is okay, as the child components will take care of
+              // populating the item will the full details if they are missing
+              // (which is the case when item info is scanned from barcode)
+              item={entity as InboundLineItem}
+              currency={data.currency}
+              isExternalSupplier={!data.otherParty.store}
+              hasVvmStatusesEnabled={!!vvmStatuses && vvmStatuses.length > 0}
+              hasItemVariantsEnabled={hasItemVariantsEnabled}
+              scannedBatchData={{
+                batch: (entity as ScannedBatchData)?.batch,
+                expiryDate: (entity as ScannedBatchData)?.expiryDate,
               }}
+              getSortedItems={getSortedItems}
             />
-
-            <Toolbar simplifiedTabletView={simplifiedTabletView} />
-
-            <DetailTabs tabs={tabs} />
-
-            {(tab === InboundShipmentDetailTabs.Details || !tab) && (
-              <Footer onReturnLines={onReturn} />
-            )}
-            <SidePanel />
-
-            {isOpen && (
-              <InboundLineEdit
-                isDisabled={isDisabled}
-                isOpen={isOpen}
-                onClose={onClose}
-                mode={mode}
-                // "as" here is okay, as the child components will take care of
-                // populating the item will the full details if they are missing
-                // (which is the case when item info is scanned from barcode)
-                item={entity as InboundLineItem}
-                currency={data.currency}
-                isExternalSupplier={!data.otherParty.store}
-                hasVvmStatusesEnabled={!!vvmStatuses && vvmStatuses.length > 0}
-                hasItemVariantsEnabled={hasItemVariantsEnabled}
-                scannedBatchData={{
-                  batch: (entity as ScannedBatchData)?.batch,
-                  expiryDate: (entity as ScannedBatchData)?.expiryDate,
-                }}
-              />
-            )}
-            {returnsIsOpen && (
-              <SupplierReturnEditModal
-                isOpen={returnsIsOpen}
-                onCreate={clearSelected}
-                onClose={onCloseReturns}
-                stockLineIds={stockLineIds || []}
-                supplierId={data.otherParty.id}
-                modalMode={returnModalMode}
-                inboundShipmentId={data.id}
-                isNewReturn
-              />
-            )}
-
-            <UploadDocumentModal
-              isOn={uploadDocumentController.isOn}
-              toggleOff={uploadDocumentController.toggleOff}
-              recordId={data.id}
-              tableName="invoice"
-              invalidateQueries={invalidateQuery}
+          )}
+          {returnsIsOpen && (
+            <SupplierReturnEditModal
+              isOpen={returnsIsOpen}
+              onCreate={table.resetRowSelection}
+              onClose={onCloseReturns}
+              stockLineIds={stockLineIds || []}
+              supplierId={data.otherParty.id}
+              modalMode={returnModalMode}
+              inboundShipmentId={data.id}
+              isNewReturn
             />
-          </InboundShipmentLineErrorProvider>
+          )}
+
+          <UploadDocumentModal
+            isOn={uploadDocumentController.isOn}
+            toggleOff={uploadDocumentController.toggleOff}
+            recordId={data.id}
+            tableName="invoice"
+            invalidateQueries={invalidateQuery}
+          />
         </>
       ) : (
         <AlertModal
@@ -265,17 +300,8 @@ const DetailViewInner = () => {
 
 export const DetailView = () => {
   return (
-    <TableProvider
-      createStore={createTableStore}
-      queryParamsStore={createQueryParamsStore<
-        InboundLineFragment | InboundItem
-      >({
-        initialSortBy: {
-          key: 'itemName',
-        },
-      })}
-    >
+    <InboundShipmentLineErrorProvider>
       <DetailViewInner />
-    </TableProvider>
+    </InboundShipmentLineErrorProvider>
   );
 };
