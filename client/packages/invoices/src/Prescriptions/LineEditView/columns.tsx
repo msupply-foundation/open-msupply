@@ -40,7 +40,7 @@ export const usePrescriptionLineEditColumns = ({
       {
         accessorKey: 'batch',
         header: t('label.batch'),
-        size: 150,
+        size: 100,
       },
       {
         accessorKey: 'expiryDate',

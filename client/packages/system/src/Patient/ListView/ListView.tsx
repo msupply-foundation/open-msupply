@@ -35,7 +35,7 @@ export const programEnrolmentLabelAccessor: ColumnDataAccessor<
   });
 };
 
-const PatientListComponent = () => {
+export const PatientListView = () => {
   const t = useTranslation();
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const {
@@ -73,7 +73,7 @@ const PatientListComponent = () => {
 
   const { setDocumentName, createNewPatient } = usePatientStore();
 
-  const { data, isError, isLoading } = usePatient.document.list(queryParams);
+  const { data, isError, isFetching } = usePatient.document.list(queryParams);
   const navigate = useNavigate();
 
   const columns = useMemo(
@@ -149,15 +149,12 @@ const PatientListComponent = () => {
               : '';
             return `${it.document.documentRegistry?.name}${programEnrolmentId}`;
           }),
-        Cell: ({ cell }) => {
-          return <ChipTableCell cell={cell} />;
-        },
+        Cell: ChipTableCell,
         enableColumnFilter: true,
         size: 250,
         includeColumn: store?.preferences.omProgramModule,
       },
       {
-        id: 'isDeceased',
         header: t('label.deceased'),
         accessorKey: 'isDeceased',
         columnType: ColumnType.Boolean,
@@ -174,7 +171,7 @@ const PatientListComponent = () => {
     columns,
     data: data?.nodes,
     totalCount: data?.totalCount ?? 0,
-    isLoading,
+    isLoading: isFetching,
     isError,
     onRowClick: row => {
       setDocumentName(row.document?.name);
@@ -217,5 +214,3 @@ const PatientListComponent = () => {
     </>
   );
 };
-
-export const PatientListView = () => <PatientListComponent />;

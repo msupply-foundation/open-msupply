@@ -129,7 +129,7 @@ async fn test_requisition_auto_finalise() {
         id: uuid(),
         requisition_id: requisition.id.clone(),
         item_link_id: item_1.id.clone(),
-        supply_quantity: 100.0,
+        requested_quantity: 100.0,
         ..Default::default()
     };
 
@@ -282,7 +282,7 @@ async fn test_requisition_auto_finalise() {
         id: uuid(),
         requisition_id: requisition.id.clone(),
         item_link_id: item_2.id.clone(),
-        supply_quantity: 5.0,
+        requested_quantity: 5.0,
         ..Default::default()
     };
 
@@ -297,7 +297,7 @@ async fn test_requisition_auto_finalise() {
         "Expected status to be New, not all requisition lines have their supply quantity met"
     );
 
-    requisition_line_2.supply_quantity = 0.0;
+    requisition_line_2.requested_quantity = 0.0;
     RequisitionLineRowRepository::new(&connection)
         .upsert_one(&requisition_line_2)
         .unwrap();

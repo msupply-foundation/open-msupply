@@ -18,7 +18,7 @@ import { PrescriptionRowFragment } from '../api/operations.generated';
 import { AppBarButtons } from './AppBarButtons';
 import { Footer } from './Footer';
 
-const PrescriptionListViewComponent = () => {
+export const PrescriptionListView = () => {
   const {
     update: { update },
   } = usePrescription();
@@ -50,7 +50,7 @@ const PrescriptionListViewComponent = () => {
   const navigate = useNavigate();
   const modalController = useToggle();
   const {
-    query: { data, isError, isLoading },
+    query: { data, isError, isFetching },
   } = usePrescriptionList(listParams);
 
   const columns = useMemo(
@@ -97,18 +97,20 @@ const PrescriptionListViewComponent = () => {
         accessorFn: (row: PrescriptionRowFragment) =>
           row.prescriptionDate || row.createdDatetime,
         size: 150,
+        enableColumnFilter: true,
+        filterKey: 'createdOrBackdatedDatetime',
       },
       {
         accessorKey: 'theirReference',
         header: t('label.reference'),
         enableSorting: true,
         size: 110,
+        enableColumnFilter: true,
       },
       {
         accessorKey: 'comment',
         header: t('label.comment'),
         columnType: ColumnType.Comment,
-        enableSorting: false,
         size: 120,
       },
     ],
@@ -118,9 +120,9 @@ const PrescriptionListViewComponent = () => {
   const { table, selectedRows } = usePaginatedMaterialTable({
     tableId: 'prescription-list',
     columns,
-    data: data?.nodes ?? [],
+    data: data?.nodes,
     totalCount: data?.totalCount ?? 0,
-    isLoading,
+    isLoading: isFetching,
     isError,
     onRowClick: row => {
       navigate(row.id);
@@ -131,7 +133,6 @@ const PrescriptionListViewComponent = () => {
         onCreate={modalController.toggleOn}
       />
     ),
-    enableRowSelection: true,
     getIsRestrictedRow: isPrescriptionDisabled,
   });
 
@@ -149,5 +150,3 @@ const PrescriptionListViewComponent = () => {
     </>
   );
 };
-
-export const PrescriptionListView = () => <PrescriptionListViewComponent />;
