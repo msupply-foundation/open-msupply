@@ -18,7 +18,7 @@ fn name_tag_1() -> TestSyncIncomingRecord {
         NAME_TAG_1,
         NameTagRow {
             id: NAME_TAG_1.0.to_owned(),
-            name: "a1".to_owned(),
+            name: "a1".to_string(),
         },
     )
 }
@@ -37,7 +37,7 @@ fn name_tag_2() -> TestSyncIncomingRecord {
         NAME_TAG_2,
         NameTagRow {
             id: NAME_TAG_2.0.to_owned(),
-            name: "b2".to_owned(),
+            name: "b2".to_string(),
         },
     )
 }

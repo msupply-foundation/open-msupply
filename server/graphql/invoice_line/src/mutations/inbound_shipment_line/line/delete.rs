@@ -382,7 +382,7 @@ mod test {
                     r#type: StockInType::InboundShipment
                 }
             );
-            Ok("deleted id".to_owned())
+            Ok("deleted id".to_string())
         }));
 
         let variables = json!({

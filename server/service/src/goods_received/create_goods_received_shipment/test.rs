@@ -40,7 +40,7 @@ mod test_update {
             service.create_goods_received_shipment(
                 &context,
                 CreateGoodsReceivedShipment {
-                    goods_received_id: "invalid".to_owned(),
+                    goods_received_id: "invalid".to_string(),
                 },
             ),
             Err(ServiceError::GoodsReceivedDoesNotExist)

@@ -34,7 +34,7 @@ mod test_update {
             service.create_requisition_shipment(
                 &context,
                 CreateRequisitionShipment {
-                    response_requisition_id: "invalid".to_owned(),
+                    response_requisition_id: "invalid".to_string(),
                 },
             ),
             Err(ServiceError::RequisitionDoesNotExist)

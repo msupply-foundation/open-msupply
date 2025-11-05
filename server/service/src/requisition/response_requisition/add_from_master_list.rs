@@ -198,8 +198,8 @@ mod test {
             service.response_add_from_master_list(
                 &context,
                 ResponseAddFromMasterList {
-                    response_requisition_id: "invalid".to_owned(),
-                    master_list_id: "n/a".to_owned()
+                    response_requisition_id: "invalid".to_string(),
+                    master_list_id: "n/a".to_string()
                 },
             ),
             Err(ServiceError::RequisitionDoesNotExist)
@@ -211,7 +211,7 @@ mod test {
                 &context,
                 ResponseAddFromMasterList {
                     response_requisition_id: mock_finalised_response_requisition().id,
-                    master_list_id: "n/a".to_owned()
+                    master_list_id: "n/a".to_string()
                 },
             ),
             Err(ServiceError::CannotEditRequisition)
@@ -225,7 +225,7 @@ mod test {
                 &context,
                 ResponseAddFromMasterList {
                     response_requisition_id: request_requisition_mock.id,
-                    master_list_id: "n/a".to_owned()
+                    master_list_id: "n/a".to_string()
                 },
             ),
             Err(ServiceError::NotAResponseRequisition)
@@ -254,7 +254,7 @@ mod test {
                     response_requisition_id: mock_full_new_response_requisition_for_update_test()
                         .requisition
                         .id,
-                    master_list_id: "n/a".to_owned()
+                    master_list_id: "n/a".to_string()
                 },
             ),
             Err(ServiceError::NotThisStoreRequisition)
@@ -264,7 +264,7 @@ mod test {
     #[actix_rt::test]
     async fn response_add_from_master_list_success() {
         fn master_list() -> FullMockMasterList {
-            let id = "response_master_list".to_owned();
+            let id = "response_master_list".to_string();
             let join1 = format!("{id}1");
             let line1 = format!("{id}1");
             let line2 = format!("{id}2");

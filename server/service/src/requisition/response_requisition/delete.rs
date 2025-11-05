@@ -155,7 +155,7 @@ mod test_delete {
             service.delete_response_requisition(
                 &context,
                 DeleteResponseRequisition {
-                    id: "invalid".to_owned(),
+                    id: "invalid".to_string(),
                 },
             ),
             Err(ServiceError::RequisitionDoesNotExist)

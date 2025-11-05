@@ -160,7 +160,7 @@ pub(crate) mod test {
             StockLineLedgerRepository::new(&connection)
                 .query_by_filter(
                     StockLineLedgerFilter::new()
-                        .stock_line_id(EqualFilter::equal_to("nothing_matches".to_owned()))
+                        .stock_line_id(EqualFilter::equal_to("nothing_matches".to_string()))
                 )
                 .unwrap()
                 .into_iter()

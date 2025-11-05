@@ -27,11 +27,11 @@ mod query {
         let service = service_provider.location_service;
 
         let locations_in_store = location_repository
-            .query_by_filter(LocationFilter::new().store_id(EqualFilter::equal_to("store_a".to_owned())))
+            .query_by_filter(LocationFilter::new().store_id(EqualFilter::equal_to("store_a".to_string())))
             .unwrap();
 
         let locations_not_in_store = location_repository
-            .query_by_filter(LocationFilter::new().store_id(EqualFilter::not_equal_to("store_a".to_owned())))
+            .query_by_filter(LocationFilter::new().store_id(EqualFilter::not_equal_to("store_a".to_string())))
             .unwrap();
 
         // Location does not exist
@@ -85,7 +85,7 @@ mod query {
         let service = service_provider.location_service;
 
         let locations_in_store = location_repository
-            .query_by_filter(LocationFilter::new().store_id(EqualFilter::equal_to("store_a".to_owned())))
+            .query_by_filter(LocationFilter::new().store_id(EqualFilter::equal_to("store_a".to_string())))
             .unwrap();
 
         // Success with no changes

@@ -111,7 +111,7 @@ mod test_delete {
             service.delete_rnr_form(
                 &context,
                 DeleteRnRForm {
-                    id: "invalid".to_owned(),
+                    id: "invalid".to_string(),
                 },
             ),
             Err(ServiceError::RnRFormDoesNotExist)

@@ -145,8 +145,8 @@ mod test {
             service.add_to_inbound_shipment_from_master_list(
                 &context,
                 ServiceInput {
-                    shipment_id: "invalid".to_owned(),
-                    master_list_id: "n/a".to_owned()
+                    shipment_id: "invalid".to_string(),
+                    master_list_id: "n/a".to_string()
                 },
             ),
             Err(ServiceError::ShipmentDoesNotExist)
@@ -158,7 +158,7 @@ mod test {
                 &context,
                 ServiceInput {
                     shipment_id: mock_inbound_shipment_a().id,
-                    master_list_id: "n/a".to_owned()
+                    master_list_id: "n/a".to_string()
                 },
             ),
             Err(ServiceError::CannotEditShipment)
@@ -183,7 +183,7 @@ mod test {
                 &context,
                 ServiceInput {
                     shipment_id: mock_inbound_shipment_c().id,
-                    master_list_id: "n/a".to_owned()
+                    master_list_id: "n/a".to_string()
                 },
             ),
             Err(ServiceError::NotThisStoreShipment)
@@ -195,7 +195,7 @@ mod test {
                 &context,
                 ServiceInput {
                     shipment_id: mock_outbound_shipment_c().id,
-                    master_list_id: "n/a".to_owned()
+                    master_list_id: "n/a".to_string()
                 },
             ),
             Err(ServiceError::NotAnInboundShipment)
@@ -205,7 +205,7 @@ mod test {
     #[actix_rt::test]
     async fn add_from_master_list_success() {
         fn master_list() -> FullMockMasterList {
-            let id = "master_list".to_owned();
+            let id = "master_list".to_string();
             let join1 = format!("{}1", id);
             let line1 = format!("{}1", id);
             let line2 = format!("{}2", id);

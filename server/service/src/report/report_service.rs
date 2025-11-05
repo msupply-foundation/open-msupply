@@ -1053,7 +1053,7 @@ mod report_filter_test {
         let ctx = service_provider.basic_context().unwrap();
 
         // test standard reports
-        let filter = ReportFilter::new().code(EqualFilter::equal_to("standard_report".to_owned()));
+        let filter = ReportFilter::new().code(EqualFilter::equal_to("standard_report".to_string()));
         let reports = ReportRepository::new(&ctx.connection)
             .query_meta_data(Some(filter), None)
             .unwrap();
@@ -1127,7 +1127,7 @@ mod report_filter_test {
 
         // test standard reports
         let filter = ReportFilter::new().code(EqualFilter::equal_to(
-            "report_with_custom_option".to_owned(),
+            "report_with_custom_option".to_string(),
         ));
         let reports = ReportRepository::new(&ctx.connection)
             .query_meta_data(Some(filter), None)

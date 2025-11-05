@@ -186,11 +186,11 @@ mod test {
             Ok(ListResult {
                 rows: vec![Location {
                     location_row: LocationRow {
-                        id: "location_on_hold".to_owned(),
-                        name: "test_name".to_owned(),
-                        code: "test_code".to_owned(),
+                        id: "location_on_hold".to_string(),
+                        name: "test_name".to_string(),
+                        code: "test_code".to_string(),
                         on_hold: true,
-                        store_id: "store_a".to_owned(),
+                        store_id: "store_a".to_string(),
                         ..Default::default()
                     },
                 }],
@@ -344,7 +344,7 @@ mod test {
                 filter,
                 Some(
                     LocationFilter::new()
-                        .store_id(EqualFilter::equal_to("store_a".to_owned()))
+                        .store_id(EqualFilter::equal_to("store_a".to_string()))
                         .name(StringFilter::equal_to("match_name"))
                 )
             );

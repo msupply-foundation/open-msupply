@@ -146,7 +146,7 @@ mod test {
             service.use_suggested_quantity(
                 &context,
                 UseSuggestedQuantity {
-                    request_requisition_id: "invalid".to_owned(),
+                    request_requisition_id: "invalid".to_string(),
                 },
             ),
             Err(ServiceError::RequisitionDoesNotExist)

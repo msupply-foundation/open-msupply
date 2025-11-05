@@ -175,7 +175,7 @@ mod test {
             service.supply_requested_quantity(
                 &context,
                 SupplyRequestedQuantity {
-                    response_requisition_id: "invalid".to_owned(),
+                    response_requisition_id: "invalid".to_string(),
                 }
             ),
             Err(ServiceError::RequisitionDoesNotExist)

@@ -452,7 +452,7 @@ mod generate_rnr_form_lines {
         let result = get_previous_monthly_consumption(
             &connection,
             // Filter so that no rnr_forms are returned
-            RnRFormFilter::new().id(EqualFilter::equal_to("not-exists".to_owned())),
+            RnRFormFilter::new().id(EqualFilter::equal_to("not-exists".to_string())),
         )
         .unwrap();
         assert_eq!(result.get(&item_query_test1().id), None);
@@ -461,7 +461,7 @@ mod generate_rnr_form_lines {
         let result = get_previous_monthly_consumption(
             &connection,
             // Filter so that no rnr_forms are returned
-            RnRFormFilter::new().id(EqualFilter::equal_to("rnr_form_1".to_owned())),
+            RnRFormFilter::new().id(EqualFilter::equal_to("rnr_form_1".to_string())),
         )
         .unwrap();
         assert_eq!(

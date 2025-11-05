@@ -121,7 +121,7 @@ mod test {
 
         // Test querying with filter
         let filter = PurchaseOrderLineFilter::new()
-            .purchase_order_id(EqualFilter::equal_to("wrong_po_id".to_owned()));
+            .purchase_order_id(EqualFilter::equal_to("wrong_po_id".to_string()));
         let result = service.get_purchase_order_lines(
             &context,
             Some(&mock_store_a().id),

@@ -103,7 +103,7 @@ mod test {
 
         // Test filtering by wrong purchase_order_id
         let filter_by_wrong_po = GoodsReceivedFilter::new()
-            .purchase_order_id(EqualFilter::equal_to("wrong_po_id".to_owned()))
+            .purchase_order_id(EqualFilter::equal_to("wrong_po_id".to_string()))
             .store_id(EqualFilter::equal_to(mock_store_a().id));
         let result = repo.query_by_filter(filter_by_wrong_po).unwrap();
         assert!(result.is_empty());

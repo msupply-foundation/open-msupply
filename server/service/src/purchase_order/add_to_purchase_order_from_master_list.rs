@@ -174,8 +174,8 @@ mod test {
             service.add_to_purchase_order_from_master_list(
                 &context,
                 ServiceInput {
-                    purchase_order_id: "invalid".to_owned(),
-                    master_list_id: "n/a".to_owned()
+                    purchase_order_id: "invalid".to_string(),
+                    master_list_id: "n/a".to_string()
                 },
             ),
             Err(ServiceError::PurchaseOrderDoesNotExist)
@@ -187,7 +187,7 @@ mod test {
                 &context,
                 ServiceInput {
                     purchase_order_id: mock_purchase_order_c().id,
-                    master_list_id: "n/a".to_owned()
+                    master_list_id: "n/a".to_string()
                 },
             ),
             Err(ServiceError::CannotEditPurchaseOrder)
@@ -212,7 +212,7 @@ mod test {
                 &context,
                 ServiceInput {
                     purchase_order_id: mock_purchase_order_a().id,
-                    master_list_id: "n/a".to_owned()
+                    master_list_id: "n/a".to_string()
                 },
             ),
             Err(ServiceError::NotThisStorePurchaseOrder)
