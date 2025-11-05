@@ -25,7 +25,7 @@ pub fn get_asset_log(ctx: &ServiceContext, id: String) -> Result<AssetLog, Singl
     let repository = AssetLogRepository::new(&ctx.connection);
 
     let mut result =
-        repository.query_by_filter(AssetLogFilter::new().id(EqualFilter::equal_to_string(&id)))?;
+        repository.query_by_filter(AssetLogFilter::new().id(EqualFilter::equal_to(id.to_owned())))?;
 
     if let Some(record) = result.pop() {
         Ok(record)

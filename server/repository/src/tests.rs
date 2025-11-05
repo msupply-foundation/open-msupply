@@ -466,9 +466,9 @@ mod repository_test {
             test_db::setup_all("test_master_list_repository", MockDataInserts::all()).await;
         let repo = MasterListRepository::new(&connection);
 
-        let id_rows: Vec<String> = repo
-            .query_by_filter(MasterListFilter::new().exists_for_name_id(
-                EqualFilter::equal_to_string(&mock_test_master_list_name1().id),
+        let id_rows: Vec<String> =
+            repo.query_by_filter(MasterListFilter::new().exists_for_name_id(
+                EqualFilter::equal_to(mock_test_master_list_name1().id.to_owned()),
             ))
             .unwrap()
             .into_iter()
@@ -483,9 +483,9 @@ mod repository_test {
             ]
         );
 
-        let id_rows: Vec<String> = repo
-            .query_by_filter(MasterListFilter::new().exists_for_name_id(
-                EqualFilter::equal_to_string(&mock_test_master_list_name2().id),
+        let id_rows: Vec<String> =
+            repo.query_by_filter(MasterListFilter::new().exists_for_name_id(
+                EqualFilter::equal_to(mock_test_master_list_name2().id.to_owned()),
             ))
             .unwrap()
             .into_iter()
@@ -500,9 +500,9 @@ mod repository_test {
             ]
         );
 
-        let id_rows: Vec<String> = repo
-            .query_by_filter(MasterListFilter::new().exists_for_store_id(
-                EqualFilter::equal_to_string(&mock_test_master_list_store1().id),
+        let id_rows: Vec<String> =
+            repo.query_by_filter(MasterListFilter::new().exists_for_store_id(
+                EqualFilter::equal_to(mock_test_master_list_store1().id.to_owned()),
             ))
             .unwrap()
             .into_iter()
@@ -636,7 +636,7 @@ mod repository_test {
             .query_by_filter(
                 InvoiceFilter::new()
                     .r#type(InvoiceType::OutboundShipment.equal_to())
-                    .name_id(EqualFilter::equal_to_string(&item1.name_link_id)),
+                    .name_id(EqualFilter::equal_to(item1.name_link_id.to_owned())),
             )
             .unwrap();
         assert_eq!(1, loaded_item.len());
@@ -645,7 +645,7 @@ mod repository_test {
             .query_by_filter(
                 InvoiceFilter::new()
                     .r#type(InvoiceType::OutboundShipment.equal_to())
-                    .store_id(EqualFilter::equal_to_string(&item1.store_id)),
+                    .store_id(EqualFilter::equal_to(item1.store_id.to_owned())),
             )
             .unwrap();
         assert_eq!(1, loaded_item.len());
@@ -878,8 +878,8 @@ mod repository_test {
 
         // Test query by id
         let result = RequisitionRepository::new(&connection)
-            .query_by_filter(RequisitionFilter::new().id(EqualFilter::equal_to_string(
-                &mock_request_draft_requisition2().id,
+            .query_by_filter(RequisitionFilter::new().id(EqualFilter::equal_to(
+                mock_request_draft_requisition2().id.to_owned(),
             )))
             .unwrap();
 
@@ -973,11 +973,9 @@ mod repository_test {
 
         // Test query by id
         let result = RequisitionLineRepository::new(&connection)
-            .query_by_filter(
-                RequisitionLineFilter::new().id(EqualFilter::equal_to_string(
-                    &mock_draft_request_requisition_line2().id,
-                )),
-            )
+            .query_by_filter(RequisitionLineFilter::new().id(EqualFilter::equal_to(
+                mock_draft_request_requisition_line2().id.to_owned(),
+            )))
             .unwrap();
 
         let raw_result = sql_query(format!(
@@ -1002,8 +1000,10 @@ mod repository_test {
         let result = RequisitionLineRepository::new(&connection)
             .query_by_filter(
                 RequisitionLineFilter::new()
-                    .requisition_id(EqualFilter::equal_to_string(
-                        &mock_draft_request_requisition_line().requisition_id,
+                    .requisition_id(EqualFilter::equal_to(
+                        mock_draft_request_requisition_line()
+                            .requisition_id
+                            .to_owned(),
                     ))
                     .requested_quantity(EqualFilter::equal_to(99.0)),
             )

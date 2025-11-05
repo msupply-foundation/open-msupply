@@ -215,7 +215,7 @@ mod tests {
 
         // Query by id
         let item_variant_row = ItemVariantRepository::new(&storage_connection)
-            .query_one(ItemVariantFilter::new().id(EqualFilter::equal_to_string(&id)))
+            .query_one(ItemVariantFilter::new().id(EqualFilter::equal_to(id.to_owned())))
             .unwrap()
             .unwrap()
             .item_variant_row;

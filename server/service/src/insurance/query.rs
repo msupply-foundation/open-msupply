@@ -11,7 +11,7 @@ pub fn insurances(
     sort: Option<NameInsuranceJoinSort>,
 ) -> Result<Vec<NameInsuranceJoinRow>, RepositoryError> {
     let patient = PatientRepository::new(connection).query_one(
-        PatientFilter::new().id(EqualFilter::equal_to_string(name_id)),
+        PatientFilter::new().id(EqualFilter::equal_to(name_id.to_owned())),
         None,
     )?;
 

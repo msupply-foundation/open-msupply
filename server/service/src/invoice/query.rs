@@ -34,7 +34,7 @@ pub fn get_invoice(
     store_id_option: Option<&str>,
     id: &str,
 ) -> Result<Option<Invoice>, RepositoryError> {
-    let mut filter = InvoiceFilter::new().id(EqualFilter::equal_to_string(id));
+    let mut filter = InvoiceFilter::new().id(EqualFilter::equal_to(id.to_owned()));
     filter.store_id = store_id_option.map(EqualFilter::equal_to_string);
 
     let mut result = InvoiceRepository::new(&ctx.connection).query_by_filter(filter)?;
@@ -55,7 +55,7 @@ pub fn get_invoice_by_number(
             // Number as their linked prescription, so we don't want to return
             // them
             .is_cancellation(false)
-            .store_id(EqualFilter::equal_to_string(store_id))
+            .store_id(EqualFilter::equal_to(store_id.to_owned()))
             .r#type(r#type.equal_to()),
     )?;
 

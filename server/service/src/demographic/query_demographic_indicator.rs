@@ -50,7 +50,7 @@ pub fn get_demographic_indicator(
     let repository = DemographicIndicatorRepository::new(&ctx.connection);
 
     let mut result = repository
-        .query_by_filter(DemographicIndicatorFilter::new().id(EqualFilter::equal_to_string(&id)))?;
+        .query_by_filter(DemographicIndicatorFilter::new().id(EqualFilter::equal_to(id.to_owned())))?;
 
     if let Some(record) = result.pop() {
         Ok(record)

@@ -98,7 +98,7 @@ mod tests {
         // test excluded entry is in the data set
         let result = repository
             .query_by_filter(
-                InvoiceFilter::new().user_id(EqualFilter::equal_to_string(&excluded_id)),
+                InvoiceFilter::new().user_id(EqualFilter::equal_to(excluded_id.to_owned())),
             )
             .unwrap();
         assert!(result.len() == 1);
@@ -120,7 +120,7 @@ mod tests {
         let result = repository
             .query_by_filter(
                 InvoiceFilter::new()
-                    .user_id(EqualFilter::equal_to_string(&excluded_id).restrict_results(&allowed)),
+                    .user_id(EqualFilter::equal_to(excluded_id.to_owned()).restrict_results(&allowed)),
             )
             .unwrap();
         assert!(result.is_empty());
@@ -128,7 +128,7 @@ mod tests {
         let result = repository
             .query_by_filter(
                 InvoiceFilter::new()
-                    .user_id(EqualFilter::equal_to_string("A").restrict_results(&allowed)),
+                    .user_id(EqualFilter::equal_to("A".to_owned()).restrict_results(&allowed)),
             )
             .unwrap()
             .into_iter()

@@ -48,7 +48,7 @@ pub fn delete_request_requisition(
             // TODO: implement delete lines. See https://github.com/openmsupply/remote-server/issues/839 for details.
             let lines = RequisitionLineRepository::new(connection).query_by_filter(
                 RequisitionLineFilter::new()
-                    .requisition_id(EqualFilter::equal_to_string(&input.id)),
+                    .requisition_id(EqualFilter::equal_to(input.id.to_owned())),
             )?;
             for line in lines {
                 delete_request_requisition_line(

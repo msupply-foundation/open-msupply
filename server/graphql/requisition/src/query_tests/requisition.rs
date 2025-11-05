@@ -247,7 +247,7 @@ mod graphql {
                     "two".to_owned()
                 ]))
             );
-            assert_eq!(colour, Some(EqualFilter::equal_to_string("equal_to_color")));
+            assert_eq!(colour, Some(EqualFilter::equal_to("equal_to_color".to_owned())));
             assert_eq!(
                 their_reference,
                 Some(StringFilter::like("like_their_reference"))

@@ -32,7 +32,7 @@ pub fn get_program(
     let repository = ProgramRepository::new(connection);
 
     let mut result =
-        repository.query_by_filter(ProgramFilter::new().id(EqualFilter::equal_to_string(&id)))?;
+        repository.query_by_filter(ProgramFilter::new().id(EqualFilter::equal_to(id.to_owned())))?;
 
     if let Some(record) = result.pop() {
         Ok(record)

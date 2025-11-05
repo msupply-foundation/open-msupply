@@ -27,7 +27,7 @@ pub fn generate(
     }: SaveGoodsReceivedLinesInput,
 ) -> Result<GenerateResult, SaveGoodsReceivedLinesError> {
     let existing_lines = GoodsReceivedLineRepository::new(connection).query_by_filter(
-        GoodsReceivedLineFilter::new().goods_received_id(EqualFilter::equal_to_string(&goods_received_id)),
+        GoodsReceivedLineFilter::new().goods_received_id(EqualFilter::equal_to(goods_received_id.to_owned())),
     )?;
 
     let check_already_exists = |id: &str| {

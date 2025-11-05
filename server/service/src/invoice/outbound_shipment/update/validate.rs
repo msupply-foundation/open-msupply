@@ -83,7 +83,7 @@ fn check_can_change_status_to_allocated(
         let repository = InvoiceLineRepository::new(connection);
         let unallocated_lines = repository.query_by_filter(
             InvoiceLineFilter::new()
-                .invoice_id(EqualFilter::equal_to_string(&invoice_row.id))
+                .invoice_id(EqualFilter::equal_to(invoice_row.id.to_owned()))
                 .r#type(InvoiceLineType::UnallocatedStock.equal_to())
                 .number_of_packs(EqualFilter::not_equal_to(0.0)),
         )?;

@@ -325,7 +325,7 @@ impl SyncTranslation for PurchaseOrderTranslation {
     ) -> Result<PushTranslateResult, anyhow::Error> {
         let purchase_order = PurchaseOrderRepository::new(connection)
             .query_by_filter(
-                PurchaseOrderFilter::new().id(EqualFilter::equal_to_string(&changelog.record_id)),
+                PurchaseOrderFilter::new().id(EqualFilter::equal_to(changelog.record_id.to_owned())),
             )?
             .pop()
             .ok_or_else(|| anyhow::anyhow!("Purchase Order not found"))?;

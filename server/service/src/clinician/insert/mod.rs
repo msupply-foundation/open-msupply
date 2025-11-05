@@ -125,7 +125,7 @@ mod test {
         let result = ClinicianRepository::new(&connection)
             .query_by_filter(
                 &mock_store_a().id,
-                ClinicianFilter::new().id(EqualFilter::equal_to_string("new_id")),
+                ClinicianFilter::new().id(EqualFilter::equal_to("new_id".to_owned())),
             )
             .unwrap();
         assert_eq!(result[0].initials, "TC");

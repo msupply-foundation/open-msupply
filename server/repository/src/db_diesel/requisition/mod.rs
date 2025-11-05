@@ -140,11 +140,11 @@ impl RequisitionFilter {
     }
 
     pub fn by_id(id: &str) -> RequisitionFilter {
-        RequisitionFilter::new().id(EqualFilter::equal_to_string(id))
+        RequisitionFilter::new().id(EqualFilter::equal_to(id.to_owned()))
     }
 
     pub fn by_linked_requisition_id(id: &str) -> RequisitionFilter {
-        RequisitionFilter::new().linked_requisition_id(EqualFilter::equal_to_string(id))
+        RequisitionFilter::new().linked_requisition_id(EqualFilter::equal_to(id.to_owned()))
     }
 
     pub fn order_type(mut self, filter: EqualFilter<String>) -> Self {

@@ -111,7 +111,7 @@ mod test_update {
 
         let mut invoice_lines = InvoiceLineRepository::new(&connection)
             .query_by_filter(
-                InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to_string(&invoice.id)),
+                InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(invoice.id.to_owned())),
             )
             .unwrap();
 
@@ -171,7 +171,7 @@ mod test_update {
 
         let mut invoice_lines = InvoiceLineRepository::new(&connection)
             .query_by_filter(
-                InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to_string(&invoice.id)),
+                InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(invoice.id.to_owned())),
             )
             .unwrap();
 

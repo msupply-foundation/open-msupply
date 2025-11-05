@@ -199,7 +199,7 @@ impl SyncTranslation for RequisitionLineTranslation {
             .item_id;
 
         let is_program_requisition = RequisitionRepository::new(connection)
-            .query_by_filter(RequisitionFilter::new().id(EqualFilter::equal_to_string(&requisition_id)))?
+            .query_by_filter(RequisitionFilter::new().id(EqualFilter::equal_to(requisition_id.to_owned())))?
             .pop()
             .map(|requisition| requisition.program.is_some())
             .unwrap_or(false);
@@ -211,7 +211,7 @@ impl SyncTranslation for RequisitionLineTranslation {
         };
 
         let rnr_form_line = RnRFormLineRepository::new(connection)
-            .query_one(RnRFormLineFilter::new().requisition_line_id(EqualFilter::equal_to_string(&id)))?;
+            .query_one(RnRFormLineFilter::new().requisition_line_id(EqualFilter::equal_to(id.to_owned())))?;
 
         let expiry_date = rnr_form_line
             .as_ref()

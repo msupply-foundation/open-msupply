@@ -62,7 +62,7 @@ mod query {
             .get_sensors(
                 &context,
                 None,
-                Some(SensorFilter::new().id(EqualFilter::equal_to_string("sensor_1"))),
+                Some(SensorFilter::new().id(EqualFilter::equal_to("sensor_1".to_owned()))),
                 None,
             )
             .unwrap();

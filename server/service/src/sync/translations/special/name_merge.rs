@@ -68,10 +68,10 @@ impl SyncTranslation for NameMergeTranslation {
 
         let name_store_join_repo = NameStoreJoinRepository::new(connection);
         let name_store_joins_for_delete = name_store_join_repo.query_by_filter(
-            NameStoreJoinFilter::new().name_id(EqualFilter::equal_to_string(&data.merge_id_to_delete)),
+            NameStoreJoinFilter::new().name_id(EqualFilter::equal_to(data.merge_id_to_delete.to_owned())),
         )?;
         let name_store_joins_for_keep = name_store_join_repo.query_by_filter(
-            NameStoreJoinFilter::new().name_id(EqualFilter::equal_to_string(&data.merge_id_to_keep)),
+            NameStoreJoinFilter::new().name_id(EqualFilter::equal_to(data.merge_id_to_keep.to_owned())),
         )?;
 
         // We need to delete the name_store_joins that are no longer needed after the merge
@@ -89,7 +89,7 @@ impl SyncTranslation for NameMergeTranslation {
         // We prefer making the name visible to stores rather than losing visibility as it allows users to still make invoices and orders
         let store_repo = StoreRepository::new(connection);
         let store = store_repo
-            .query_one(StoreFilter::new().name_id(EqualFilter::equal_to_string(&data.merge_id_to_keep)))?;
+            .query_one(StoreFilter::new().name_id(EqualFilter::equal_to(data.merge_id_to_keep.to_owned())))?;
         let mut deletes = name_store_joins_for_delete
             .iter()
             .filter_map(|nsj_delete| {
@@ -261,7 +261,7 @@ mod tests {
         let count_name_store_join = |id: &str| -> usize {
             name_store_join_repo
                 .query(Some(
-                    NameStoreJoinFilter::new().name_id(EqualFilter::equal_to_string(id)),
+                    NameStoreJoinFilter::new().name_id(EqualFilter::equal_to(id.to_owned())),
                 ))
                 .unwrap()
                 .len()

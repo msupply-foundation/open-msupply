@@ -16,7 +16,7 @@ pub fn check_location_code_is_unique(
                 LocationFilter::new()
                     .code(StringFilter::equal_to(&code))
                     .id(EqualFilter::not_equal_to_string(id))
-                    .store_id(EqualFilter::equal_to_string("store_a")),
+                    .store_id(EqualFilter::equal_to("store_a".to_owned())),
             )?;
 
             Ok(locations.is_empty())

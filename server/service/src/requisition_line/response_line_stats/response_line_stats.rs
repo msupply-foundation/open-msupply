@@ -46,8 +46,8 @@ pub fn response_store_stats(
 ) -> Result<ResponseStoreStats, RepositoryError> {
     let stock_lines = StockLineRepository::new(connection).query_by_filter(
         StockLineFilter::new()
-            .item_id(EqualFilter::equal_to_string(&requisition_line.item_row.id))
-            .store_id(EqualFilter::equal_to_string(store_id)),
+            .item_id(EqualFilter::equal_to(requisition_line.item_row.id.to_owned()))
+            .store_id(EqualFilter::equal_to(store_id.to_owned())),
         None,
     )?;
 
@@ -57,9 +57,9 @@ pub fn response_store_stats(
 
     let request_requisitions = RequisitionLineRepository::new(connection).query_by_filter(
         RequisitionLineFilter::new()
-            .store_id(EqualFilter::equal_to_string(store_id))
+            .store_id(EqualFilter::equal_to(store_id.to_owned()))
             .r#type(RequisitionType::Request.equal_to())
-            .item_id(EqualFilter::equal_to_string(&requisition_line.item_row.id))
+            .item_id(EqualFilter::equal_to(requisition_line.item_row.id.to_owned()))
             .status(RequisitionStatus::Sent.equal_to()),
     )?;
 
@@ -71,8 +71,8 @@ pub fn response_store_stats(
 
     let invoice_lines = InvoiceLineRepository::new(connection).query_by_filter(
         InvoiceLineFilter::new()
-            .store_id(EqualFilter::equal_to_string(store_id))
-            .item_id(EqualFilter::equal_to_string(&requisition_line.item_row.id))
+            .store_id(EqualFilter::equal_to(store_id.to_owned()))
+            .item_id(EqualFilter::equal_to(requisition_line.item_row.id.to_owned()))
             .r#type(InvoiceLineType::StockIn.equal_to())
             .invoice_type(InvoiceType::InboundShipment.equal_to())
             .invoice_status(InvoiceStatus::Shipped.equal_to()),
@@ -86,8 +86,8 @@ pub fn response_store_stats(
     let other_response_requisition_lines = RequisitionLineRepository::new(connection)
         .query_by_filter(
             RequisitionLineFilter::new()
-                .store_id(EqualFilter::equal_to_string(store_id))
-                .item_id(EqualFilter::equal_to_string(&requisition_line.item_row.id))
+                .store_id(EqualFilter::equal_to(store_id.to_owned()))
+                .item_id(EqualFilter::equal_to(requisition_line.item_row.id.to_owned()))
                 .requisition_id(EqualFilter::not_equal_to_string(
                     &requisition_line.requisition_line_row.requisition_id,
                 ))

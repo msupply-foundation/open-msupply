@@ -70,7 +70,7 @@ pub fn add_from_master_list(
 
             match PurchaseOrderLineRepository::new(connection).query_by_filter(
                 PurchaseOrderLineFilter::new()
-                    .purchase_order_id(EqualFilter::equal_to_string(&input.purchase_order_id))
+                    .purchase_order_id(EqualFilter::equal_to(input.purchase_order_id.to_owned()))
                     .id(EqualFilter::equal_any(new_line_ids)),
             ) {
                 Ok(lines) => Ok(lines),
@@ -123,7 +123,7 @@ fn generate(
     let master_list_lines_not_in_invoice = MasterListLineRepository::new(&ctx.connection)
         .query_by_filter(
             MasterListLineFilter::new()
-                .master_list_id(EqualFilter::equal_to_string(&input.master_list_id))
+                .master_list_id(EqualFilter::equal_to(input.master_list_id.to_owned()))
                 .item_id(EqualFilter::not_equal_all(item_ids_in_purchase_order))
                 .item_type(ItemType::Stock.equal_to())
                 .ignore_for_orders(false),
