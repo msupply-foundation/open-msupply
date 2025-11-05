@@ -129,7 +129,7 @@ pub(crate) fn insert_patient(
                 .get_patients(
                     ctx,
                     None,
-                    Some(PatientFilter::new().id(EqualFilter::equal_to(&row.id))),
+                    Some(PatientFilter::new().id(EqualFilter::equal_to(row.id.to_string()))),
                     None,
                     None,
                 )

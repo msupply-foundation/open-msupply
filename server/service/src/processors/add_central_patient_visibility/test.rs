@@ -119,8 +119,8 @@ fn is_patient_visible_on_central(
     let patient_visible_on_central = repo
         .query_by_filter(
             NameStoreJoinFilter::new()
-                .name_id(EqualFilter::equal_to(patient_id))
-                .store_id(EqualFilter::equal_to(central_store_id)),
+                .name_id(EqualFilter::equal_to(patient_id.to_string()))
+                .store_id(EqualFilter::equal_to(central_store_id.to_string())),
         )
         .unwrap();
 

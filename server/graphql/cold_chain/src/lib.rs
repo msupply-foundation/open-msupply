@@ -61,7 +61,7 @@ impl ColdChainQueries {
         let filter = filter
             .map(TemperatureLogFilter::from)
             .unwrap_or_default()
-            .store_id(EqualFilter::equal_to(&store_id));
+            .store_id(EqualFilter::equal_to(store_id.to_string()));
 
         let temperature_logs = service_provider
             .cold_chain_service
@@ -104,7 +104,7 @@ impl ColdChainQueries {
         let filter = filter
             .map(TemperatureBreachFilter::from)
             .unwrap_or_default()
-            .store_id(EqualFilter::equal_to(&store_id));
+            .store_id(EqualFilter::equal_to(store_id.to_string()));
 
         let temperature_breaches = service_provider
             .cold_chain_service
@@ -143,7 +143,7 @@ impl ColdChainQueries {
 
         // construct filter
         let filter = TemperatureBreachFilter::new()
-            .store_id(EqualFilter::equal_to(&store_id))
+            .store_id(EqualFilter::equal_to(store_id.to_string()))
             .unacknowledged(true);
 
         let temperature_breaches = service_provider
@@ -197,7 +197,7 @@ impl ColdChainQueries {
         let filter = filter
             .map(SensorFilter::from)
             .unwrap_or_default()
-            .store_id(EqualFilter::equal_to(&store_id));
+            .store_id(EqualFilter::equal_to(store_id.to_string()));
 
         let sensors = service_provider
             .sensor_service
@@ -323,8 +323,8 @@ mod test_logs {
             Ok(ListResult {
                 rows: vec![TemperatureLog {
                     temperature_log_row: TemperatureLogRow {
-                        id: "temperature_log_1a".to_owned(),
-                        sensor_id: "sensor_1".to_owned(),
+                        id: "temperature_log_1a".to_string(),
+                        sensor_id: "sensor_1".to_string(),
                         store_id: "store_a".to_string(),
                         location_id: None,
                         temperature: 2.4,
@@ -477,8 +477,8 @@ mod test_logs {
                 filter,
                 Some(
                     TemperatureLogFilter::new()
-                        .store_id(EqualFilter::equal_to("store_a"))
-                        .sensor(SensorFilter::new().id(EqualFilter::equal_to("match_sensor")))
+                        .store_id(EqualFilter::equal_to("store_a".to_string()))
+                        .sensor(SensorFilter::new().id(EqualFilter::equal_to("match_sensor".to_string())))
                 )
             );
             Ok(ListResult::empty())
@@ -581,7 +581,7 @@ mod test_breaches {
             Ok(ListResult {
                 rows: vec![TemperatureBreach {
                     temperature_breach_row: TemperatureBreachRow {
-                        id: "acknowledged_temperature_breach".to_owned(),
+                        id: "acknowledged_temperature_breach".to_string(),
                         duration_milliseconds: 3600,
                         unacknowledged: false,
                         r#type: TemperatureBreachType::ColdConsecutive,
@@ -589,7 +589,7 @@ mod test_breaches {
                         location_id: None,
                         threshold_minimum: -273.0,
                         threshold_maximum: 2.0,
-                        sensor_id: "sensor_1".to_owned(),
+                        sensor_id: "sensor_1".to_string(),
                         start_datetime: NaiveDate::from_ymd_opt(2022, 7, 1)
                             .unwrap()
                             .and_hms_opt(0, 0, 0)
@@ -765,7 +765,7 @@ mod test_notifications {
             Ok(ListResult {
                 rows: vec![TemperatureBreach {
                     temperature_breach_row: TemperatureBreachRow {
-                        id: "acknowledged_temperature_breach".to_owned(),
+                        id: "acknowledged_temperature_breach".to_string(),
                         duration_milliseconds: 3600,
                         unacknowledged: false,
                         r#type: TemperatureBreachType::ColdConsecutive,
@@ -773,7 +773,7 @@ mod test_notifications {
                         location_id: None,
                         threshold_minimum: -273.0,
                         threshold_maximum: 2.0,
-                        sensor_id: "sensor_1".to_owned(),
+                        sensor_id: "sensor_1".to_string(),
                         start_datetime: NaiveDate::from_ymd_opt(2022, 7, 1)
                             .unwrap()
                             .and_hms_opt(0, 0, 0)
@@ -796,7 +796,7 @@ mod test_notifications {
 
         let excursion_service = TestExcursionService(Box::new(|| {
             Ok(vec![TemperatureExcursion {
-                id: "log_1".to_owned(),
+                id: "log_1".to_string(),
                 datetime: NaiveDate::from_ymd_opt(2022, 7, 1)
                     .unwrap()
                     .and_hms_opt(0, 0, 0)
@@ -804,9 +804,9 @@ mod test_notifications {
                     + Duration::seconds(47046),
                 temperature: 9.5,
                 location_id: None,
-                sensor_id: "sensor_1".to_owned(),
+                sensor_id: "sensor_1".to_string(),
                 duration: 3600,
-                store_id: "store_1".to_owned(),
+                store_id: "store_1".to_string(),
             }])
         }));
 
@@ -966,9 +966,9 @@ mod test_sensor {
             Ok(ListResult {
                 rows: vec![Sensor {
                     sensor_row: SensorRow {
-                        id: "active_sensor".to_owned(),
-                        name: "test_name".to_owned(),
-                        serial: "test_serial".to_owned(),
+                        id: "active_sensor".to_string(),
+                        name: "test_name".to_string(),
+                        serial: "test_serial".to_string(),
                         is_active: true,
                         store_id: "store_a".to_string(),
                         location_id: None,
@@ -1127,7 +1127,7 @@ mod test_sensor {
                 filter,
                 Some(
                     SensorFilter::new()
-                        .store_id(EqualFilter::equal_to("store_a"))
+                        .store_id(EqualFilter::equal_to("store_a".to_string()))
                         .name(StringFilter::equal_to("match_name"))
                 )
             );

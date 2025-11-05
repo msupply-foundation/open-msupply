@@ -9,7 +9,7 @@ pub fn check_requisition_line_exists(
     id: &str,
 ) -> Result<Option<RequisitionLine>, RepositoryError> {
     RequisitionLineRepository::new(connection)
-        .query_one(RequisitionLineFilter::new().id(EqualFilter::equal_to(id)))
+        .query_one(RequisitionLineFilter::new().id(EqualFilter::equal_to(id.to_string())))
 }
 
 pub fn check_item_exists_in_requisition(
@@ -19,8 +19,8 @@ pub fn check_item_exists_in_requisition(
 ) -> Result<Option<RequisitionLine>, RepositoryError> {
     let mut lines = RequisitionLineRepository::new(connection).query_by_filter(
         RequisitionLineFilter::new()
-            .requisition_id(EqualFilter::equal_to(requisition_id))
-            .item_id(EqualFilter::equal_to(item_id)),
+            .requisition_id(EqualFilter::equal_to(requisition_id.to_string()))
+            .item_id(EqualFilter::equal_to(item_id.to_string())),
     )?;
 
     Ok(lines.pop())

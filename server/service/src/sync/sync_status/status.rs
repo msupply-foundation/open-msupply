@@ -4,7 +4,6 @@ use repository::{
     SyncLogFilter, SyncLogRepository, SyncLogRow, SyncLogSortField,
 };
 
-
 use crate::{
     cursor_controller::CursorController,
     i32_to_u32,

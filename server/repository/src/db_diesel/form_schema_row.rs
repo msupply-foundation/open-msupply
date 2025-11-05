@@ -70,7 +70,7 @@ fn row_from_schema(schema: &FormSchemaJson) -> Result<FormSchemaRow, RepositoryE
             extra: format!("{err}"),
         })?;
     Ok(FormSchemaRow {
-        id: schema.id.to_owned(),
+        id: schema.id.to_string(),
         r#type: schema.r#type.to_owned(),
         json_schema,
         ui_schema,

@@ -15,7 +15,7 @@ pub fn check_vaccination_exists(
     connection: &StorageConnection,
 ) -> Result<Option<Vaccination>, RepositoryError> {
     let result = VaccinationRepository::new(connection)
-        .query_by_filter(VaccinationFilter::new().id(EqualFilter::equal_to(id)))?
+        .query_by_filter(VaccinationFilter::new().id(EqualFilter::equal_to(id.to_string())))?
         .pop();
 
     Ok(result)
@@ -35,8 +35,8 @@ pub fn check_program_enrolment_exists(
     let result = ProgramEnrolmentRepository::new(connection)
         .query_by_filter(
             ProgramEnrolmentFilter::new()
-                .program_id(EqualFilter::equal_to(&encounter.program_id))
-                .patient_id(EqualFilter::equal_to(&encounter.patient_link_id)),
+                .program_id(EqualFilter::equal_to(encounter.program_id.to_string()))
+                .patient_id(EqualFilter::equal_to(encounter.patient_link_id.to_string())),
         )?
         .pop();
 
@@ -48,7 +48,7 @@ pub fn check_vaccine_course_dose_exists(
     connection: &StorageConnection,
 ) -> Result<Option<VaccineCourseDose>, RepositoryError> {
     VaccineCourseDoseRepository::new(connection)
-        .query_one(VaccineCourseDoseFilter::new().id(EqualFilter::equal_to(id)))
+        .query_one(VaccineCourseDoseFilter::new().id(EqualFilter::equal_to(id.to_string())))
 }
 
 pub fn check_vaccination_does_not_exist_for_dose(
@@ -58,8 +58,8 @@ pub fn check_vaccination_does_not_exist_for_dose(
 ) -> Result<bool, RepositoryError> {
     let vaccination = VaccinationRepository::new(connection).query_one(
         VaccinationFilter::new()
-            .program_enrolment_id(EqualFilter::equal_to(program_enrolment_id))
-            .vaccine_course_dose_id(EqualFilter::equal_to(vaccine_course_dose_id)),
+            .program_enrolment_id(EqualFilter::equal_to(program_enrolment_id.to_string()))
+            .vaccine_course_dose_id(EqualFilter::equal_to(vaccine_course_dose_id.to_string())),
     )?;
 
     Ok(vaccination.is_none())
@@ -72,8 +72,8 @@ pub fn check_item_belongs_to_vaccine_course(
 ) -> Result<bool, RepositoryError> {
     let vaccine_course_item = VaccineCourseItemRepository::new(connection).query_one(
         VaccineCourseItemFilter::new()
-            .vaccine_course_id(EqualFilter::equal_to(vaccine_course_id))
-            .item_id(EqualFilter::equal_to(item_id)),
+            .vaccine_course_id(EqualFilter::equal_to(vaccine_course_id.to_string()))
+            .item_id(EqualFilter::equal_to(item_id.to_string())),
     )?;
 
     Ok(vaccine_course_item.is_some())
@@ -96,7 +96,7 @@ pub fn get_related_vaccinations(
 ) -> Result<(Option<Vaccination>, Option<Vaccination>), RepositoryError> {
     // Get all doses based on course id
     let all_course_doses = VaccineCourseDoseRepository::new(connection).query_by_filter(
-        VaccineCourseDoseFilter::new().vaccine_course_id(EqualFilter::equal_to(vaccine_course_id)),
+        VaccineCourseDoseFilter::new().vaccine_course_id(EqualFilter::equal_to(vaccine_course_id.to_string())),
     )?;
 
     // Get previous and next dose based on dose_id
@@ -116,10 +116,8 @@ pub fn get_related_vaccinations(
     let previous_vaccination = if let Some(previous_dose) = previous_dose {
         let prev_vaccination = VaccinationRepository::new(connection).query_one(
             VaccinationFilter::new()
-                .vaccine_course_dose_id(EqualFilter::equal_to(
-                    &previous_dose.vaccine_course_dose_row.id,
-                ))
-                .program_enrolment_id(EqualFilter::equal_to(&program_enrolment_id)),
+                .vaccine_course_dose_id(EqualFilter::equal_to(previous_dose.vaccine_course_dose_row.id.to_string()))
+                .program_enrolment_id(EqualFilter::equal_to(program_enrolment_id.to_string())),
         )?;
 
         // If there is a previous dose, it should have an associated vaccination
@@ -134,10 +132,8 @@ pub fn get_related_vaccinations(
 
     let next_vaccination = VaccinationRepository::new(connection).query_one(
         VaccinationFilter::new()
-            .vaccine_course_dose_id(EqualFilter::equal_to(
-                &next_dose.unwrap_or_default().vaccine_course_dose_row.id,
-            ))
-            .program_enrolment_id(EqualFilter::equal_to(&program_enrolment_id)),
+            .vaccine_course_dose_id(EqualFilter::equal_to(next_dose.unwrap_or_default().vaccine_course_dose_row.id.to_string()))
+            .program_enrolment_id(EqualFilter::equal_to(program_enrolment_id.to_string())),
     )?;
 
     return Ok((previous_vaccination, next_vaccination));

@@ -311,7 +311,7 @@ mod stocktake_line_test {
             .unwrap_err();
         let stock_line = StockLineRepository::new(&context.connection)
             .query_by_filter(
-                StockLineFilter::new().id(EqualFilter::equal_to(&mock_stock_line_b().id)),
+                StockLineFilter::new().id(EqualFilter::equal_to(mock_stock_line_b().id)),
                 Some(mock_store_a().id.clone()),
             )
             .unwrap();

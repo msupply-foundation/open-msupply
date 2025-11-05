@@ -44,7 +44,7 @@ pub fn generate(
             .as_ref()
             .and_then(|customer| customer.store_id().map(|id| id.to_string()))
             .or_else(|| other_party.store_id().map(|id| id.to_string())),
-        store_id: store_id.to_owned(),
+        store_id: store_id.to_string(),
         invoice_number: next_number(connection, &NumberRowType::OutboundShipment, store_id)?,
         r#type: InvoiceType::OutboundShipment,
         status: InvoiceStatus::New,
@@ -100,7 +100,7 @@ pub fn generate_invoice_lines(
 
         invoice_line_rows.push(InvoiceLineRow {
             id: uuid(),
-            invoice_id: invoice_id.to_owned(),
+            invoice_id: invoice_id.to_string(),
             pack_size: 1.0,
             number_of_packs: requisition_line_supply_status.remaining_quantity(),
             item_link_id: item_row.id,
