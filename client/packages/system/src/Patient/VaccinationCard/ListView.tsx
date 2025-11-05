@@ -21,7 +21,7 @@ import { usePatient } from '../api';
 const VaccinationCardListComponent = () => {
   const t = useTranslation();
   const patientId = usePatient.utils.id();
-  const { data, isError, isLoading } = useProgramEnrolments.document.list({
+  const { data, isError, isFetching } = useProgramEnrolments.document.list({
     sortBy: {
       key: 'enrolmentDatetime',
       isDesc: true,
@@ -36,10 +36,11 @@ const VaccinationCardListComponent = () => {
 
   const columns: ColumnDef<ProgramEnrolmentRowFragment>[] = [
     {
-      accessorKey: 'type',
+      id: 'type',
       header: t('label.enrolment-program'),
       accessorFn: row => row?.document?.documentRegistry?.name,
       enableSorting: true,
+      enableColumnFilter: true,
     },
     {
       accessorKey: 'programEnrolmentId',
@@ -51,13 +52,16 @@ const VaccinationCardListComponent = () => {
       accessorKey: 'status',
       header: t('label.program-status'),
       enableSorting: true,
+      enableColumnFilter: true,
+      filterVariant: 'select',
     },
     {
       accessorKey: 'enrolmentDatetime',
       header: t('label.enrolment-datetime'),
       columnType: ColumnType.Date,
-      enableSorting: true,
       size: 175,
+      enableSorting: true,
+      enableColumnFilter: true,
     },
   ];
 
@@ -65,7 +69,7 @@ const VaccinationCardListComponent = () => {
     tableId: 'vaccination-card-list',
     columns,
     data: data?.nodes,
-    isLoading,
+    isLoading: isFetching,
     isError,
     enableRowSelection: false,
     onRowClick: row =>
