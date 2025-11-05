@@ -134,7 +134,7 @@ mod test_update {
         let result = invoice_repository
             .query_one(
                 InvoiceFilter::new()
-                    .goods_received_id(EqualFilter::equal_to(mock_goods_received_new().id.to_owned())),
+                    .goods_received_id(EqualFilter::equal_to(mock_goods_received_new().id)),
             )
             .unwrap();
 

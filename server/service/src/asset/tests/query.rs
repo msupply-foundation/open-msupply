@@ -73,7 +73,7 @@ mod query {
             .get_assets(
                 &connection,
                 None,
-                Some(AssetFilter::new().id(EqualFilter::equal_to(mock_asset_a().id.to_owned()))),
+                Some(AssetFilter::new().id(EqualFilter::equal_to(mock_asset_a().id))),
                 None,
             )
             .unwrap();
@@ -88,7 +88,9 @@ mod query {
             .get_assets(
                 &connection,
                 None,
-                Some(AssetFilter::new().category_id(EqualFilter::equal_to("02cbea92-d5bf-4832-863b-c04e093a7760".to_owned()))),
+                Some(AssetFilter::new().category_id(EqualFilter::equal_to(
+                    "02cbea92-d5bf-4832-863b-c04e093a7760".to_owned(),
+                ))),
                 None,
             )
             .unwrap();
@@ -102,7 +104,9 @@ mod query {
             .get_assets(
                 &connection,
                 None,
-                Some(AssetFilter::new().category_id(EqualFilter::equal_to("b7eea921-5a14-44cc-b5e0-ea59f2e9cb8d".to_owned()))),
+                Some(AssetFilter::new().category_id(EqualFilter::equal_to(
+                    "b7eea921-5a14-44cc-b5e0-ea59f2e9cb8d".to_owned(),
+                ))),
                 None,
             )
             .unwrap();
@@ -116,7 +120,9 @@ mod query {
             .get_assets(
                 &connection,
                 None,
-                Some(AssetFilter::new().class_id(EqualFilter::equal_to("fad280b6-8384-41af-84cf-c7b6b4526ef0".to_owned()))),
+                Some(AssetFilter::new().class_id(EqualFilter::equal_to(
+                    "fad280b6-8384-41af-84cf-c7b6b4526ef0".to_owned(),
+                ))),
                 Some(AssetSort {
                     key: AssetSortField::Notes,
                     desc: Some(false),

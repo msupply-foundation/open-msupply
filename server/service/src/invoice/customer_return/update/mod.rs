@@ -307,8 +307,8 @@ mod test {
         /* -------
          * Setting NEW customer return to RECEIVED
          */
-        let return_line_filter = InvoiceLineFilter::new()
-            .invoice_id(EqualFilter::equal_to(mock_customer_return_b().id.to_owned()));
+        let return_line_filter =
+            InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(mock_customer_return_b().id));
 
         let invoice_line_repo = InvoiceLineRepository::new(&connection);
 
@@ -431,8 +431,8 @@ mod test {
         /* -------
          * Setting NEW customer return to VERIFIED
          */
-        let return_line_filter = InvoiceLineFilter::new()
-            .invoice_id(EqualFilter::equal_to(mock_customer_return_b().id.to_owned()));
+        let return_line_filter =
+            InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(mock_customer_return_b().id));
 
         let invoice_line_repo = InvoiceLineRepository::new(&connection);
 

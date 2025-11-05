@@ -310,7 +310,7 @@ mod test {
                 period3.id.clone(),
                 period4.id.clone(),
             ]))
-            .store_id(EqualFilter::equal_to(mock_store_a().id.to_owned()));
+            .store_id(EqualFilter::equal_to(mock_store_a().id));
         let mut result = repo.query(filter.clone()).unwrap();
         result.sort_by(sort);
 
@@ -390,7 +390,7 @@ mod test {
         let mut result = repo
             .query(
                 RequisitionsInPeriodFilter::new()
-                    .store_id(EqualFilter::equal_to(mock_store_b().id.to_owned())),
+                    .store_id(EqualFilter::equal_to(mock_store_b().id)),
             )
             .unwrap();
         result.sort_by(sort);

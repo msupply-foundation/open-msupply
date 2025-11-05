@@ -175,7 +175,7 @@ mod generate_rnr_form_lines {
         let result = get_usage_map(
             &connection,
             &mock_store_a().id,
-            Some(EqualFilter::equal_to(item_query_test1().id.to_owned())),
+            Some(EqualFilter::equal_to(item_query_test1().id)),
             31,
             &NaiveDate::from_ymd_opt(2024, 1, 31).unwrap(),
         )
