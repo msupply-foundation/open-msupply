@@ -2,11 +2,10 @@ import React, { PropsWithChildren } from 'react';
 import {
   PaperPopoverSection,
   useTranslation,
-  TableProvider,
-  createTableStore,
-  DataTable,
   NothingHere,
   PersistentPaperPopover,
+  useSimpleMaterialTable,
+  MaterialTable,
 } from '@openmsupply-client/common';
 import { useItemVariantSelectorColumns } from './columns';
 import { ItemVariantFragment } from '../../api';
@@ -36,28 +35,27 @@ export const ItemVariantSelector = ({
     isVaccine,
   });
 
+  const table = useSimpleMaterialTable<ItemVariantFragment>({
+    tableId: 'item-variant-selector',
+    columns,
+    data: variants,
+    isLoading,
+    getIsRestrictedRow: disabled ? () => true : undefined,
+    enableBottomToolbar: false,
+    noDataElement: <NothingHere body={t('messages.no-item-variants')} />,
+  });
+
   return (
-    <TableProvider createStore={createTableStore}>
-      <PersistentPaperPopover
-        placement="bottom"
-        width={850}
-        Content={
-          <PaperPopoverSection>
-            <DataTable
-              id="item-variant-selector"
-              columns={columns}
-              data={variants ?? []}
-              isDisabled={disabled}
-              isLoading={isLoading}
-              noDataElement={
-                <NothingHere body={t('messages.no-item-variants')} />
-              }
-            />
-          </PaperPopoverSection>
-        }
-      >
-        {children}
-      </PersistentPaperPopover>
-    </TableProvider>
+    <PersistentPaperPopover
+      placement="bottom"
+      width={850}
+      Content={
+        <PaperPopoverSection>
+          <MaterialTable table={table} />
+        </PaperPopoverSection>
+      }
+    >
+      {children}
+    </PersistentPaperPopover>
   );
 };

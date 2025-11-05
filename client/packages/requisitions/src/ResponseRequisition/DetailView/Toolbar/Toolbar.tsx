@@ -5,7 +5,6 @@ import {
   InputWithLabelRow,
   Grid,
   useTranslation,
-  SearchBar,
   Typography,
   BufferedTextInput,
   Tooltip,
@@ -20,7 +19,6 @@ import { getApprovalStatusKey } from '../../../utils';
 export const Toolbar = () => {
   const t = useTranslation();
   const isDisabled = useResponse.utils.isDisabled();
-  const { itemFilter, setItemFilter } = useResponse.line.list();
 
   const {
     approvalStatus,
@@ -112,14 +110,6 @@ export const Toolbar = () => {
             </Box>
           </Box>
         </Grid>
-        <SearchBar
-          placeholder={t('placeholder.filter-items')}
-          value={itemFilter}
-          onChange={newValue => {
-            setItemFilter(newValue);
-          }}
-          debounceTime={0}
-        />
       </Grid>
     </AppBarContentPortal>
   );

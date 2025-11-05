@@ -1117,7 +1117,7 @@
   "label.ledger": "Grand livre",
   "label.level": "Niveau",
   "label.line": "Ligne {{line, number}}",
-  "label.line-number": "Numéro de ligne",
+  "label.line-number": "Ligne",
   "label.line-total": "Total Ligne",
   "label.lines": "Lignes",
   "label.linked-patient": "Patient Associé",
@@ -2491,5 +2491,11 @@
   "warning.foreign-exchange-rate-different": "Ce taux ne correspond pas à la devise.",
   "warning.high-number-records-to-sync": "Un grand nombre d'entrées sont en cours de synchronisation. Cela peut prendre plus de temps que d'habitude.",
   "warning.manual-store-requisition": "Attention - La saisie d'une réquisition client pour un dépôt peut entraîner des doublons si ce dépôt soumet aussi une commande interne.",
-  "warning.nothing-to-supply": "La quantité demandée à été fournie !"
+  "warning.nothing-to-supply": "La quantité demandée à été fournie !",
+  "messages.confirm-skip-dose": "Vous allez administrer une dose alors que les précédentes n’ont pas été données. Celles-ci ne pourront plus être modifiées. Voulez-vous continuer ?",
+  "preference.warningForExcessRequest": "Avertir lorsque la quantité demandée dépasse la quantité suggérée dans une requisition",
+  "warning.requested-exceeds-suggested": "La quantité demandée est supérieure à la quantité suggérée",
+  "messages.requested-exceeds-suggested": "La quantité demandée est supérieure à la quantité suggérée",
+  "preference.requisitionAutoFinalise": "Finalisation automatique pour les réquisitions complétées",
+  "label.can-skip-dose": "La dose peut être sautée"
 }
