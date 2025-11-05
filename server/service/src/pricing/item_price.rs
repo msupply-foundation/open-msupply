@@ -28,7 +28,7 @@ pub fn get_pricing_for_item(
         .query_by_filter(
             MasterListLineFilter::new()
                 .master_list(MasterListFilter::new().is_default_price_list(true))
-                .item_id(EqualFilter::equal_to(input.item_id.to_owned())),
+                .item_id(EqualFilter::equal_to(input.item_id.to_string())),
             None,
         )?
         .pop()
@@ -38,7 +38,7 @@ pub fn get_pricing_for_item(
     let is_patient = match &input.customer_name_id {
         Some(customer_name_id) => {
             let num_patients = PatientRepository::new(&ctx.connection).count(
-                Some(PatientFilter::new().id(EqualFilter::equal_to(customer_name_id.to_owned()))),
+                Some(PatientFilter::new().id(EqualFilter::equal_to(customer_name_id.to_string()))),
                 None,
             )?;
 
@@ -61,7 +61,7 @@ pub fn get_pricing_for_item(
                 Some(
                     MasterListFilter::new()
                         .is_discount_list(true)
-                        .item_id(EqualFilter::equal_to(input.item_id.to_owned())),
+                        .item_id(EqualFilter::equal_to(input.item_id.to_string())),
                 ),
                 Some(MasterListSort {
                     key: MasterListSortField::DiscountPercentage,

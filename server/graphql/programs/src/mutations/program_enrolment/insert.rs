@@ -102,8 +102,8 @@ pub fn insert_program_enrolment(
         .program_enrolment(
             &service_context,
             ProgramEnrolmentFilter::new()
-                .patient_id(EqualFilter::equal_to(input.patient_id.to_owned()))
-                .context_id(EqualFilter::equal_to(document.context_id.to_owned())),
+                .patient_id(EqualFilter::equal_to(input.patient_id.to_string()))
+                .context_id(EqualFilter::equal_to(document.context_id.to_string())),
             allowed_ctx.clone(),
         )?
         .ok_or(

@@ -150,7 +150,7 @@ fn validate_patient_exists(
 ) -> Result<bool, RepositoryError> {
     let patient = PatientRepository::new(&ctx.connection)
         .query_by_filter(
-            PatientFilter::new().id(EqualFilter::equal_to(patient_id.to_owned())),
+            PatientFilter::new().id(EqualFilter::equal_to(patient_id.to_string())),
             None,
         )?
         .pop();
@@ -174,7 +174,7 @@ fn validate_program(
     context_id: &str,
 ) -> Result<Option<ProgramRow>, RepositoryError> {
     ProgramRepository::new(&ctx.connection)
-        .query_one(ProgramFilter::new().context_id(EqualFilter::equal_to(context_id.to_owned())))
+        .query_one(ProgramFilter::new().context_id(EqualFilter::equal_to(context_id.to_string())))
 }
 
 fn validate_parent_doc_exists(

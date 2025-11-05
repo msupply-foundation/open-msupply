@@ -174,7 +174,7 @@ mod tests {
 
         // Query by id
         let category = AssetCategoryRepository::new(&storage_connection)
-            .query_one(AssetCategoryFilter::new().id(EqualFilter::equal_to(id.to_owned())))
+            .query_one(AssetCategoryFilter::new().id(EqualFilter::equal_to(id.to_string())))
             .unwrap()
             .unwrap();
         assert_eq!(category.id, id);

@@ -33,7 +33,7 @@ pub fn get_demographic_projection(
     let repository = DemographicProjectionRepository::new(&ctx.connection);
 
     let mut result = repository.query_by_filter(
-        DemographicProjectionFilter::new().id(EqualFilter::equal_to(id.to_owned())),
+        DemographicProjectionFilter::new().id(EqualFilter::equal_to(id.to_string())),
     )?;
 
     if let Some(record) = result.pop() {

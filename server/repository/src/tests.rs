@@ -639,7 +639,7 @@ mod repository_test {
             .query_by_filter(
                 InvoiceFilter::new()
                     .r#type(InvoiceType::OutboundShipment.equal_to())
-                    .name_id(EqualFilter::equal_to(item1.name_link_id.to_owned())),
+                    .name_id(EqualFilter::equal_to(item1.name_link_id.to_string())),
             )
             .unwrap();
         assert_eq!(1, loaded_item.len());
@@ -648,7 +648,7 @@ mod repository_test {
             .query_by_filter(
                 InvoiceFilter::new()
                     .r#type(InvoiceType::OutboundShipment.equal_to())
-                    .store_id(EqualFilter::equal_to(item1.store_id.to_owned())),
+                    .store_id(EqualFilter::equal_to(item1.store_id.to_string())),
             )
             .unwrap();
         assert_eq!(1, loaded_item.len());

@@ -47,7 +47,8 @@ pub fn add_from_master_list(
             }
 
             match InvoiceLineRepository::new(connection).query_by_filter(
-                InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(input.shipment_id.to_owned())),
+                InvoiceLineFilter::new()
+                    .invoice_id(EqualFilter::equal_to(input.shipment_id.to_string())),
             ) {
                 Ok(lines) => Ok(lines),
                 Err(error) => Err(OutError::DatabaseError(error)),
@@ -105,7 +106,7 @@ fn generate(
     let master_list_lines_not_in_invoice = MasterListLineRepository::new(&ctx.connection)
         .query_by_filter(
             MasterListLineFilter::new()
-                .master_list_id(EqualFilter::equal_to(input.master_list_id.to_owned()))
+                .master_list_id(EqualFilter::equal_to(input.master_list_id.to_string()))
                 .item_id(EqualFilter::not_equal_all(item_ids_in_invoice))
                 .item_type(ItemType::Stock.equal_to()),
             None,

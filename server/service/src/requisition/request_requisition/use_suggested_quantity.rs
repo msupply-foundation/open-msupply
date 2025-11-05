@@ -44,7 +44,7 @@ pub fn use_suggested_quantity(
 
             match RequisitionLineRepository::new(connection).query_by_filter(
                 RequisitionLineFilter::new()
-                    .requisition_id(EqualFilter::equal_to(input.request_requisition_id.to_owned())),
+                    .requisition_id(EqualFilter::equal_to(input.request_requisition_id.to_string())),
             ) {
                 Ok(lines) => Ok(lines),
                 Err(error) => Err(OutError::DatabaseError(error)),

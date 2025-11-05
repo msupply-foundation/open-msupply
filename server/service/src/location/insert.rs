@@ -81,7 +81,7 @@ pub fn check_location_does_not_exist(
     connection: &StorageConnection,
 ) -> Result<bool, RepositoryError> {
     let locations = LocationRepository::new(connection)
-        .query_by_filter(LocationFilter::new().id(EqualFilter::equal_to(id.to_owned())))?;
+        .query_by_filter(LocationFilter::new().id(EqualFilter::equal_to(id.to_string())))?;
 
     Ok(locations.is_empty())
 }

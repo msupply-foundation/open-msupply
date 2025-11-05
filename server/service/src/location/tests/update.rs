@@ -104,7 +104,7 @@ mod query {
         assert_eq!(
             location_repository
                 .query_by_filter(
-                    LocationFilter::new().id(EqualFilter::equal_to(location.location_row.id.to_owned()))
+                    LocationFilter::new().id(EqualFilter::equal_to(location.location_row.id.to_string()))
                 )
                 .unwrap()[0],
             location
@@ -133,7 +133,7 @@ mod query {
         assert_eq!(
             location_repository
                 .query_by_filter(
-                    LocationFilter::new().id(EqualFilter::equal_to(location.location_row.id.to_owned()))
+                    LocationFilter::new().id(EqualFilter::equal_to(location.location_row.id.to_string()))
                 )
                 .unwrap()[0],
             location

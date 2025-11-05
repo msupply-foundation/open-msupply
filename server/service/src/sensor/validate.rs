@@ -15,7 +15,7 @@ pub fn check_sensor_serial_is_unique(
             let sensors = SensorRepository::new(connection).query_by_filter(
                 SensorFilter::new()
                     .serial(EqualFilter::equal_to(serial.to_owned()))
-                    .id(EqualFilter::not_equal_to(id.to_owned()))
+                    .id(EqualFilter::not_equal_to(id.to_string()))
                     .store_id(EqualFilter::equal_to("store_a".to_owned())),
             )?;
 

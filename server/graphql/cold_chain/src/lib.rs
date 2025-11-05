@@ -61,7 +61,7 @@ impl ColdChainQueries {
         let filter = filter
             .map(TemperatureLogFilter::from)
             .unwrap_or_default()
-            .store_id(EqualFilter::equal_to(store_id.to_owned()));
+            .store_id(EqualFilter::equal_to(store_id.to_string()));
 
         let temperature_logs = service_provider
             .cold_chain_service
@@ -104,7 +104,7 @@ impl ColdChainQueries {
         let filter = filter
             .map(TemperatureBreachFilter::from)
             .unwrap_or_default()
-            .store_id(EqualFilter::equal_to(store_id.to_owned()));
+            .store_id(EqualFilter::equal_to(store_id.to_string()));
 
         let temperature_breaches = service_provider
             .cold_chain_service
@@ -143,7 +143,7 @@ impl ColdChainQueries {
 
         // construct filter
         let filter = TemperatureBreachFilter::new()
-            .store_id(EqualFilter::equal_to(store_id.to_owned()))
+            .store_id(EqualFilter::equal_to(store_id.to_string()))
             .unacknowledged(true);
 
         let temperature_breaches = service_provider
@@ -197,7 +197,7 @@ impl ColdChainQueries {
         let filter = filter
             .map(SensorFilter::from)
             .unwrap_or_default()
-            .store_id(EqualFilter::equal_to(store_id.to_owned()));
+            .store_id(EqualFilter::equal_to(store_id.to_string()));
 
         let sensors = service_provider
             .sensor_service

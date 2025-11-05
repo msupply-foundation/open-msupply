@@ -143,7 +143,7 @@ impl RequisitionTransferProcessor for CreateResponseRequisitionProcessor {
 
         let customer_name_id = StoreRepository::new(connection)
             .query_by_filter(
-                StoreFilter::new().id(EqualFilter::equal_to(request_requisition.store_row.id.to_owned())),
+                StoreFilter::new().id(EqualFilter::equal_to(request_requisition.store_row.id.to_string())),
             )?
             .pop()
             .ok_or(RepositoryError::NotFound)?
@@ -193,7 +193,7 @@ fn requisition_has_program_items(
     // Query for master lists that are program-related and visible to the supplier store
     let supplier_program_master_lists = MasterListRepository::new(connection).query_by_filter(
         MasterListFilter::new()
-            .exists_for_store_id(EqualFilter::equal_to(other_party_store_id.to_owned()))
+            .exists_for_store_id(EqualFilter::equal_to(other_party_store_id.to_string()))
             .is_program(true),
     )?;
     if supplier_program_master_lists.is_empty() {
@@ -230,7 +230,7 @@ fn generate_response_requisition(
 ) -> Result<RequisitionRow, RepositoryError> {
     let store_id = record_for_processing.other_party_store_id.clone();
     let store_name = StoreRepository::new(connection)
-        .query_by_filter(StoreFilter::new().id(EqualFilter::equal_to(record_for_processing.requisition.store_row.id.to_owned())))?
+        .query_by_filter(StoreFilter::new().id(EqualFilter::equal_to(record_for_processing.requisition.store_row.id.to_string())))?
         .pop()
         .ok_or(RepositoryError::NotFound)?
         .name_row;
@@ -375,9 +375,9 @@ fn generate_response_requisition_indicator_values(
     if let Some(period_id) = input.period_id {
         let supplier_store_id = input.supplier_store_id.clone();
         let filter = IndicatorValueFilter::new()
-            .store_id(EqualFilter::equal_to(input.customer_store_id.to_owned()))
-            .customer_name_id(EqualFilter::equal_to(input.customer_name_id.to_owned()))
-            .period_id(EqualFilter::equal_to(period_id.to_owned()));
+            .store_id(EqualFilter::equal_to(input.customer_store_id.to_string()))
+            .customer_name_id(EqualFilter::equal_to(input.customer_name_id.to_string()))
+            .period_id(EqualFilter::equal_to(period_id.to_string()));
 
         let request_indicator_values =
             IndicatorValueRepository::new(connection).query_by_filter(filter)?;

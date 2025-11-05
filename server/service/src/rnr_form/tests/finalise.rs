@@ -177,7 +177,7 @@ mod finalise {
         let requisition_lines = RequisitionLineRepository::new(&context.connection)
             .query_by_filter(
                 RequisitionLineFilter::new()
-                    .requisition_id(EqualFilter::equal_to(requisition.requisition_row.id.to_owned())),
+                    .requisition_id(EqualFilter::equal_to(requisition.requisition_row.id.to_string())),
             )
             .unwrap();
 

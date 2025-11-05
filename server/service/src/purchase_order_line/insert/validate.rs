@@ -62,11 +62,11 @@ pub fn validate(
         Pagination::all(),
         Some(
             PurchaseOrderLineFilter::new()
-                .purchase_order_id(EqualFilter::equal_to(input.purchase_order_id.to_owned()))
+                .purchase_order_id(EqualFilter::equal_to(input.purchase_order_id.to_string()))
                 .requested_pack_size(EqualFilter::equal_to(
                     input.requested_pack_size.unwrap_or_default(),
                 ))
-                .item_id(EqualFilter::equal_to(item.id.to_owned())),
+                .item_id(EqualFilter::equal_to(item.id.to_string())),
         ),
         None,
     )?;

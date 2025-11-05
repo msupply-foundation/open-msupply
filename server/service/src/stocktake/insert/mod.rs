@@ -59,7 +59,7 @@ pub fn insert_stocktake(
             activity_log_entry(
                 ctx,
                 ActivityLogType::StocktakeCreated,
-                Some(new_stocktake.id.to_owned()),
+                Some(new_stocktake.id.to_string()),
                 None,
                 None,
             )?;
@@ -688,7 +688,7 @@ mod test {
         let stocktake_rows = StocktakeLineRepository::new(&connection)
             .query_by_filter(
                 StocktakeLineFilter::new()
-                    .stocktake_id(EqualFilter::equal_to(initial_stocktake.id.to_owned())),
+                    .stocktake_id(EqualFilter::equal_to(initial_stocktake.id.to_string())),
                 None,
             )
             .unwrap();
@@ -735,7 +735,7 @@ mod test {
             .count(
                 Some(
                     StockLineFilter::new()
-                        .store_id(EqualFilter::equal_to(store.id.to_owned()))
+                        .store_id(EqualFilter::equal_to(store.id.to_string()))
                         .has_packs_in_store(true),
                 ),
                 None,
@@ -746,7 +746,7 @@ mod test {
             .count(
                 Some(
                     StocktakeLineFilter::new()
-                        .stocktake_id(EqualFilter::equal_to(in_stock_stocktake.id.to_owned())),
+                        .stocktake_id(EqualFilter::equal_to(in_stock_stocktake.id.to_string())),
                 ),
                 None,
             )
@@ -778,7 +778,7 @@ mod test {
             .count(
                 Some(
                     StocktakeLineFilter::new()
-                        .stocktake_id(EqualFilter::equal_to(all_items_stocktake.id.to_owned())),
+                        .stocktake_id(EqualFilter::equal_to(all_items_stocktake.id.to_string())),
                 ),
                 None,
             )

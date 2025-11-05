@@ -43,7 +43,7 @@ impl<'a> DemographicRowRepository<'a> {
             .set(row)
             .execute(self.connection.lock().connection())?;
 
-        self.insert_changelog(row.id.to_owned(), RowActionType::Upsert)
+        self.insert_changelog(row.id.to_string(), RowActionType::Upsert)
     }
 
     fn insert_changelog(
