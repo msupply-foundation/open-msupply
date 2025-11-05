@@ -17,6 +17,7 @@ export type Plugins = {
   inboundShipmentAppBar?: React.ComponentType<{ shipment: InboundFragment }>[];
   itemSellPrice?: {
     catalogueSellPrice: React.ComponentType<{ item: ItemFragment }>[];
+    internalOrderPrice?: ColumnDef<RequestLineFragment>[];
   };
   dashboard?: React.ComponentType[];
   stockLine?: {
