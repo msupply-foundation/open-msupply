@@ -19,7 +19,7 @@ pub fn get_requisitions(
     let repository = RequisitionRepository::new(&ctx.connection);
 
     let mut filter = filter.unwrap_or_default();
-    filter.store_id = store_id_option.map(|id| EqualFilter::equal_to(id.to_owned()));
+    filter.store_id = store_id_option.map(|id| EqualFilter::equal_to(id.to_string()));
 
     Ok(ListResult {
         rows: repository.query(pagination, Some(filter.clone()), sort)?,
@@ -32,8 +32,8 @@ pub fn get_requisition(
     store_id_option: Option<&str>,
     id: &str,
 ) -> Result<Option<Requisition>, RepositoryError> {
-    let mut filter = RequisitionFilter::new().id(EqualFilter::equal_to(id.to_owned()));
-    filter.store_id = store_id_option.map(|id| EqualFilter::equal_to(id.to_owned()));
+    let mut filter = RequisitionFilter::new().id(EqualFilter::equal_to(id.to_string()));
+    filter.store_id = store_id_option.map(|id| EqualFilter::equal_to(id.to_string()));
 
     let mut result = RequisitionRepository::new(&ctx.connection).query_by_filter(filter)?;
 
@@ -48,7 +48,7 @@ pub fn get_requisition_by_number(
 ) -> Result<Option<Requisition>, RepositoryError> {
     let mut result = RequisitionRepository::new(&ctx.connection).query_by_filter(
         RequisitionFilter::new()
-            .store_id(EqualFilter::equal_to(store_id.to_owned()))
+            .store_id(EqualFilter::equal_to(store_id.to_string()))
             .requisition_number(EqualFilter::equal_to(requisition_number as i64))
             .r#type(r#type.equal_to()),
     )?;

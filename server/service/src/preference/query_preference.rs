@@ -22,7 +22,7 @@ pub fn query_store(
     PreferenceRepository::new(connection).query_one(
         PreferenceFilter::new()
             .key(EqualFilter::equal_to(key.to_owned()))
-            .store_id(EqualFilter::equal_to(store_id.to_owned())),
+            .store_id(EqualFilter::equal_to(store_id.to_string())),
     )
 }
 

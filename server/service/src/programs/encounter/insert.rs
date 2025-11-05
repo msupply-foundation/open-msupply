@@ -177,8 +177,8 @@ fn validate_patient_program_exists(
     Ok(ProgramEnrolmentRepository::new(&ctx.connection)
         .query_by_filter(
             ProgramEnrolmentFilter::new()
-                .patient_id(EqualFilter::equal_to(patient_id.to_owned()))
-                .context_id(EqualFilter::equal_to(encounter_registry.context_id.to_owned())),
+                .patient_id(EqualFilter::equal_to(patient_id.to_string()))
+                .context_id(EqualFilter::equal_to(encounter_registry.context_id.to_string())),
         )?
         .pop())
 }

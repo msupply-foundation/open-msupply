@@ -612,7 +612,7 @@ mod test {
         assert_eq!(invoice_line.vvm_status_id, Some(mock_vvm_status_a().id));
 
         let log_filter = VVMStatusLogFilter::new()
-            .invoice_line_id(EqualFilter::equal_to(invoice_line.id.to_owned()));
+            .invoice_line_id(EqualFilter::equal_to(invoice_line.id.to_string()));
 
         let log = VVMStatusLogRepository::new(&connection)
             .query_by_filter(log_filter)

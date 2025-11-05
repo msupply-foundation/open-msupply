@@ -95,7 +95,7 @@ pub fn upsert_program_patient(
                 .get_patients(
                     ctx,
                     None,
-                    Some(PatientFilter::new().id(EqualFilter::equal_to(patient_id.to_owned()))),
+                    Some(PatientFilter::new().id(EqualFilter::equal_to(patient_id.to_string()))),
                     None,
                     None,
                 )
@@ -309,7 +309,7 @@ pub mod test {
         // success insert
         assert!(PatientRepository::new(&ctx.connection)
             .query_by_filter(
-                PatientFilter::new().id(EqualFilter::equal_to(patient.id.to_owned())),
+                PatientFilter::new().id(EqualFilter::equal_to(patient.id.to_string())),
                 None
             )
             .unwrap()
@@ -330,7 +330,7 @@ pub mod test {
             .unwrap();
         PatientRepository::new(&ctx.connection)
             .query_by_filter(
-                PatientFilter::new().id(EqualFilter::equal_to(patient.id.to_owned())),
+                PatientFilter::new().id(EqualFilter::equal_to(patient.id.to_string())),
                 None,
             )
             .unwrap()

@@ -20,7 +20,8 @@ pub fn permissions(
     let user_permission_repo = UserPermissionRepository::new(&connection);
     let store_repo = StoreRowRepository::new(&connection);
 
-    let mut filter = UserPermissionFilter::new().user_id(EqualFilter::equal_to(user_id.to_owned()));
+    let mut filter =
+        UserPermissionFilter::new().user_id(EqualFilter::equal_to(user_id.to_string()));
     if let Some(store) = store {
         filter = filter.store_id(EqualFilter::equal_to(store.to_owned()))
     }

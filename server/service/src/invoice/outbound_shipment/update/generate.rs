@@ -186,13 +186,13 @@ fn lines_to_trim(
 
     let mut lines = InvoiceLineRepository::new(connection).query_by_filter(
         InvoiceLineFilter::new()
-            .invoice_id(EqualFilter::equal_to(invoice.id.to_owned()))
+            .invoice_id(EqualFilter::equal_to(invoice.id.to_string()))
             .r#type(InvoiceLineType::UnallocatedStock.equal_to()),
     )?;
 
     let mut empty_lines = InvoiceLineRepository::new(connection).query_by_filter(
         InvoiceLineFilter::new()
-            .invoice_id(EqualFilter::equal_to(invoice.id.to_owned()))
+            .invoice_id(EqualFilter::equal_to(invoice.id.to_string()))
             .number_of_packs(EqualFilter::equal_to(0.0))
             .r#type(InvoiceLineType::StockOut.equal_to()),
     )?;
@@ -265,7 +265,7 @@ fn generate_update_for_lines(
 ) -> Result<Vec<InvoiceLineRow>, UpdateOutboundShipmentError> {
     let invoice_lines = InvoiceLineRepository::new(connection).query_by_filter(
         InvoiceLineFilter::new()
-            .invoice_id(EqualFilter::equal_to(invoice_id.to_owned()))
+            .invoice_id(EqualFilter::equal_to(invoice_id.to_string()))
             .r#type(InvoiceLineType::StockOut.equal_to()),
     )?;
 
@@ -309,9 +309,11 @@ pub fn generate_location_movements(
                     LocationMovementFilter::new()
                         .enter_datetime(DatetimeFilter::is_null(false))
                         .exit_datetime(DatetimeFilter::is_null(true))
-                        .location_id(EqualFilter::equal_to(batch.location_id.clone().unwrap_or_default().to_owned()))
-                        .stock_line_id(EqualFilter::equal_to(batch.id.to_owned()))
-                        .store_id(EqualFilter::equal_to(store_id.to_owned())),
+                        .location_id(EqualFilter::equal_to(
+                            batch.location_id.clone().unwrap_or_default().to_owned(),
+                        ))
+                        .stock_line_id(EqualFilter::equal_to(batch.id.to_string()))
+                        .store_id(EqualFilter::equal_to(store_id.to_string())),
                 )?
                 .into_iter()
                 .map(|l| l.location_movement_row)

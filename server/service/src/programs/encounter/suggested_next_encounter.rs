@@ -36,7 +36,7 @@ pub fn suggested_next_encounter(
         return Ok(None);
     };
     let program_filter = ProgramEventFilter::new()
-        .patient_id(EqualFilter::equal_to(patient_id.to_owned()))
+        .patient_id(EqualFilter::equal_to(patient_id.to_string()))
         .document_type(EqualFilter::equal_to(encounter_type.to_owned()))
         .r#type(EqualFilter::equal_to(config.event_type.to_owned()));
     let Some(program_event) = service_provider

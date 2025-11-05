@@ -32,8 +32,8 @@ pub fn get_temperature_log(
 ) -> Result<TemperatureLog, SingleRecordError> {
     let repository = TemperatureLogRepository::new(&ctx.connection);
 
-    let mut result =
-        repository.query_by_filter(TemperatureLogFilter::new().id(EqualFilter::equal_to(id.to_owned())))?;
+    let mut result = repository
+        .query_by_filter(TemperatureLogFilter::new().id(EqualFilter::equal_to(id.to_string())))?;
 
     if let Some(record) = result.pop() {
         Ok(record)

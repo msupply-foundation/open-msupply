@@ -18,7 +18,7 @@ pub fn validate(
 ) -> Result<PurchaseOrderLineRow, UpdatePurchaseOrderLineInputError> {
     let purchase_order_line = PurchaseOrderLineRepository::new(connection)
         .query_by_filter(
-            PurchaseOrderLineFilter::new().id(EqualFilter::equal_to(input.id.to_owned())),
+            PurchaseOrderLineFilter::new().id(EqualFilter::equal_to(input.id.to_string())),
         )?
         .pop()
         .ok_or(UpdatePurchaseOrderLineInputError::PurchaseOrderLineNotFound)?;
@@ -84,8 +84,8 @@ pub fn validate(
         Pagination::all(),
         Some(
             PurchaseOrderLineFilter::new()
-                .id(EqualFilter::not_equal_to(input.id.to_owned()))
-                .purchase_order_id(EqualFilter::equal_to(purchase_order.id.to_owned()))
+                .id(EqualFilter::not_equal_to(input.id.to_string()))
+                .purchase_order_id(EqualFilter::equal_to(purchase_order.id.to_string()))
                 .requested_pack_size(EqualFilter::equal_to(
                     input
                         .requested_pack_size

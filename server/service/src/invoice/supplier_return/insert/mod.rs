@@ -114,7 +114,7 @@ pub fn insert_supplier_return(
             activity_log_entry(
                 ctx,
                 ActivityLogType::InvoiceCreated,
-                Some(supplier_return.id.to_owned()),
+                Some(supplier_return.id.to_string()),
                 None,
                 None,
             )?;

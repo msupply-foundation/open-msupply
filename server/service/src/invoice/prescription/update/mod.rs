@@ -89,7 +89,7 @@ pub fn update_prescription(
                 activity_log_entry(
                     ctx,
                     log_type_from_invoice_status(&update_invoice.status, true),
-                    Some(update_invoice.id.to_owned()),
+                    Some(update_invoice.id.to_string()),
                     None,
                     None,
                 )?;
@@ -130,7 +130,7 @@ pub fn create_reverse_prescription(
     let line_repo = InvoiceLineRepository::new(connection);
     let line_row_repo = InvoiceLineRowRepository::new(connection);
     let lines = line_repo.query_by_filter(
-        InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(orig_invoice.id.to_owned())),
+        InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(orig_invoice.id.to_string())),
     )?;
 
     // Reverse the stock direction of each line and update DB

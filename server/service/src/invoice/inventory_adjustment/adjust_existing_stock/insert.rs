@@ -100,7 +100,7 @@ pub fn insert_inventory_adjustment(
             activity_log_entry(
                 ctx,
                 ActivityLogType::InventoryAdjustment,
-                Some(verified_invoice.id.to_owned()),
+                Some(verified_invoice.id.to_string()),
                 None,
                 None,
             )?;

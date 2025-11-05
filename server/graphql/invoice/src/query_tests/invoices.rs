@@ -43,7 +43,7 @@ mod test {
             .iter()
             .map(|invoice| {
                 json!({
-                    "id": invoice.invoice_row.id.to_owned(),
+                    "id": invoice.invoice_row.id.to_string(),
                     "pricing": {
                         "totalAfterTax":
                              get_invoice_lines_inline!(&invoice.invoice_row.id, &connection)

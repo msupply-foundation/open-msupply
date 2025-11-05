@@ -241,8 +241,8 @@ impl<'a> ProgramEnrolmentRepository<'a> {
         Ok(self
             .query_by_filter(
                 ProgramEnrolmentFilter::new()
-                    .program_id(EqualFilter::equal_to(program_id.to_owned()))
-                    .patient_id(EqualFilter::equal_to(patient_id.to_owned())),
+                    .program_id(EqualFilter::equal_to(program_id.to_string()))
+                    .patient_id(EqualFilter::equal_to(patient_id.to_string())),
             )?
             .pop())
     }

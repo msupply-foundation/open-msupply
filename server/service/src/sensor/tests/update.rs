@@ -76,7 +76,9 @@ mod query {
         let service = service_provider.sensor_service;
 
         let sensors_in_store = sensor_repository
-            .query_by_filter(SensorFilter::new().store_id(EqualFilter::equal_to("store_a".to_owned())))
+            .query_by_filter(
+                SensorFilter::new().store_id(EqualFilter::equal_to("store_a".to_owned())),
+            )
             .unwrap();
 
         // Success with no changes
@@ -100,7 +102,7 @@ mod query {
         assert_eq!(
             sensor_repository
                 .query_by_filter(
-                    SensorFilter::new().id(EqualFilter::equal_to(sensor.sensor_row.id.to_owned()))
+                    SensorFilter::new().id(EqualFilter::equal_to(sensor.sensor_row.id.to_string()))
                 )
                 .unwrap()[0],
             sensor
@@ -132,7 +134,7 @@ mod query {
         assert_eq!(
             sensor_repository
                 .query_by_filter(
-                    SensorFilter::new().id(EqualFilter::equal_to(sensor.sensor_row.id.to_owned()))
+                    SensorFilter::new().id(EqualFilter::equal_to(sensor.sensor_row.id.to_string()))
                 )
                 .unwrap()[0],
             sensor

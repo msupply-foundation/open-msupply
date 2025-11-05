@@ -142,7 +142,7 @@ pub fn update_inbound_shipment(
                 activity_log_entry(
                     ctx,
                     log_type_from_invoice_status(&update_invoice.status, false),
-                    Some(update_invoice.id.to_owned()),
+                    Some(update_invoice.id.to_string()),
                     None,
                     None,
                 )?;
@@ -889,8 +889,9 @@ mod test {
         )
         .unwrap();
 
-        let vvm_log_filter = VVMStatusLogFilter::new()
-            .invoice_line_id(EqualFilter::equal_to("invoice_line_with_vvm_status".to_owned()));
+        let vvm_log_filter = VVMStatusLogFilter::new().invoice_line_id(EqualFilter::equal_to(
+            "invoice_line_with_vvm_status".to_owned(),
+        ));
 
         let vvm_status_log = VVMStatusLogRepository::new(&connection)
             .query_by_filter(vvm_log_filter.clone())

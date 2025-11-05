@@ -64,7 +64,7 @@ mod delete {
 
         // Check it is found
         let course_filter =
-            VaccineCourseFilter::new().id(EqualFilter::equal_to(vaccine_course.id.to_owned()));
+            VaccineCourseFilter::new().id(EqualFilter::equal_to(vaccine_course.id.to_string()));
 
         let courses = service
             .get_vaccine_courses(&context.connection, None, Some(course_filter.clone()), None)
@@ -73,7 +73,7 @@ mod delete {
         assert_eq!(courses.count, 1);
 
         let dose_filter = VaccineCourseDoseFilter::new()
-            .vaccine_course_id(EqualFilter::equal_to(vaccine_course.id.to_owned()));
+            .vaccine_course_id(EqualFilter::equal_to(vaccine_course.id.to_string()));
 
         let dose_repo = VaccineCourseDoseRepository::new(&context.connection);
 

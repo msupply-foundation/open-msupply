@@ -41,7 +41,7 @@ impl LocationQueries {
         let mut filter = filter.map(LocationFilter::from).unwrap_or_default();
 
         if filter.store_id.is_none() {
-            filter = filter.store_id(EqualFilter::equal_to(store_id.to_owned()));
+            filter = filter.store_id(EqualFilter::equal_to(store_id.to_string()));
         }
 
         let locations = service_provider

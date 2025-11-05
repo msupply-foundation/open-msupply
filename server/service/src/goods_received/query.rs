@@ -19,7 +19,7 @@ pub fn get_goods_received_list(
     let repository = GoodsReceivedRepository::new(&ctx.connection);
 
     let mut filter = filter.unwrap_or_default();
-    filter.store_id = Some(EqualFilter::equal_to(store_id.to_owned()));
+    filter.store_id = Some(EqualFilter::equal_to(store_id.to_string()));
 
     Ok(ListResult {
         rows: repository.query(pagination, Some(filter.clone()), sort)?,
@@ -34,8 +34,8 @@ pub fn get_goods_received(
 ) -> Result<Option<GoodsReceivedRow>, RepositoryError> {
     let repository = GoodsReceivedRepository::new(&ctx.connection);
     let filter = GoodsReceivedFilter::new()
-        .id(EqualFilter::equal_to(id.to_owned()))
-        .store_id(EqualFilter::equal_to(store_id.to_owned()));
+        .id(EqualFilter::equal_to(id.to_string()))
+        .store_id(EqualFilter::equal_to(store_id.to_string()));
 
     Ok(repository.query_by_filter(filter)?.pop())
 }

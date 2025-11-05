@@ -197,7 +197,7 @@ mod encounter_document_updated_test {
                 .events(
                     &context,
                     None,
-                    Some(ProgramEventFilter::new().patient_id(EqualFilter::equal_to(patient.id.to_owned()))),
+                    Some(ProgramEventFilter::new().patient_id(EqualFilter::equal_to(patient.id.to_string()))),
                     None,
                     None,
                 )
@@ -241,7 +241,7 @@ mod encounter_document_updated_test {
                 .events(
                     &context,
                     None,
-                    Some(ProgramEventFilter::new().patient_id(EqualFilter::equal_to(patient.id.to_owned()))),
+                    Some(ProgramEventFilter::new().patient_id(EqualFilter::equal_to(patient.id.to_string()))),
                     None,
                     None,
                 )

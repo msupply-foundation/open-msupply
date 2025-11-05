@@ -43,7 +43,7 @@ pub trait BarcodeServiceTrait: Sync + Send {
         let repository = BarcodeRepository::new(&ctx.connection);
 
         Ok(repository
-            .query_by_filter(BarcodeFilter::new().id(EqualFilter::equal_to(id.to_owned())))?
+            .query_by_filter(BarcodeFilter::new().id(EqualFilter::equal_to(id.to_string())))?
             .pop())
     }
 

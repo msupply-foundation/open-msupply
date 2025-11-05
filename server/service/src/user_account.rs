@@ -69,7 +69,7 @@ impl<'a> UserAccountService<'a> {
 
                 let permissions_to_delete = UserPermissionRepository::new(con).query_by_filter(
                     UserPermissionFilter::new()
-                        .user_id(EqualFilter::equal_to(user.id.to_owned()))
+                        .user_id(EqualFilter::equal_to(user.id.to_string()))
                         .has_context(false),
                 )?;
                 for permission in permissions_to_delete {
@@ -169,7 +169,7 @@ impl<'a> UserAccountService<'a> {
         let repo = UserRepository::new(self.connection);
         repo.query_one(
             UserFilter::new()
-                .id(EqualFilter::equal_to(user_id.to_owned()))
+                .id(EqualFilter::equal_to(user_id.to_string()))
                 .hashed_password(EqualFilter::not_equal_to("".to_owned()))
                 .site_id(EqualFilter::equal_to(site_id)),
         )

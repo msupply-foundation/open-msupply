@@ -33,7 +33,7 @@ pub fn insert_asset(
     let asset_input = match &input.store_id {
         Some(_) => input,
         None => InsertAssetInput {
-            store_id: Some(store_id.to_owned()),
+            store_id: Some(store_id.to_string()),
             ..input
         },
     };

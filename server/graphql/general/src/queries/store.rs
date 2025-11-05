@@ -70,7 +70,7 @@ pub fn get_store(ctx: &Context<'_>, id: &str) -> Result<StoreResponse> {
 
     let store_option = service.get_store(
         &service_context,
-        StoreFilter::new().id(EqualFilter::equal_to(id.to_owned())),
+        StoreFilter::new().id(EqualFilter::equal_to(id.to_string())),
     )?;
 
     let response = match store_option {
