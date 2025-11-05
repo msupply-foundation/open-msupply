@@ -8,7 +8,7 @@ import {
   CustomerReturnListView,
 } from './Returns';
 import {
-  ListView as InboundShipmentListView,
+  InboundListView,
   DetailView as InboundShipmentDetailView,
 } from './InboundShipment';
 import { PrescriptionListView, PrescriptionDetailView } from './Prescriptions';
@@ -68,7 +68,7 @@ const InvoiceService: FC = () => {
       <Route path={outboundShipmentRoute} element={<DetailView />} />
       <Route
         path={inboundShipmentsRoute}
-        element={<InboundShipmentListView />}
+        element={<InboundListView />}
       />
       <Route
         path={inboundShipmentRoute}

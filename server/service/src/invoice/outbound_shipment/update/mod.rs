@@ -14,6 +14,7 @@ use crate::activity_log::{activity_log_entry, log_type_from_invoice_status};
 use crate::invoice::outbound_shipment::update::generate::GenerateResult;
 use crate::invoice::query::get_invoice;
 use crate::invoice_line::ShipmentTaxUpdate;
+use crate::processors::ProcessorType::RequisitionAutoFinalise;
 use crate::service_provider::ServiceContext;
 use crate::NullableUpdate;
 
@@ -121,6 +122,8 @@ pub fn update_outbound_shipment(
         .map_err(|error| error.to_inner_error())?;
 
     ctx.processors_trigger.trigger_invoice_transfer_processors();
+    ctx.processors_trigger
+        .trigger_processor(RequisitionAutoFinalise);
 
     Ok(invoice)
 }

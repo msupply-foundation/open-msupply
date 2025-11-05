@@ -8,7 +8,6 @@ import {
   useNotification,
   InvoiceNodeStatus,
 } from '@openmsupply-client/common';
-import { useNextItem } from './hooks';
 import { ScannedBarcode } from '../../../types';
 import { SelectItem } from './SelectItem';
 import { Allocation } from './Allocation';
@@ -16,6 +15,7 @@ import { useOpenedWithBarcode } from './hooks/useOpenedWithBarcode';
 import { useAllocationContext, getAllocatedQuantity } from '../../../StockOut';
 import { useSaveOutboundLines } from '../../api/hooks/useSaveOutboundLines';
 import { ItemRowFragment } from '@openmsupply-client/system';
+import { useNextItem } from '../../../useNextItem';
 
 export type OutboundOpenedWith = { itemId: string } | ScannedBarcode | null;
 

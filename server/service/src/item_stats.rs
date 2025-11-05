@@ -318,15 +318,49 @@ impl ItemStats {
 #[cfg(test)]
 mod test {
     use repository::{
-        mock::{mock_store_a, mock_store_b, test_item_stats, MockDataInserts},
-        test_db, PreferenceRow, PreferenceRowRepository, StorePreferenceRow,
+        mock::{
+            mock_item_a, mock_store_a, mock_store_b, test_item_stats, MockData, MockDataInserts,
+        },
+        test_db, PreferenceRow, PreferenceRowRepository, StockLineRow, StorePreferenceRow,
         StorePreferenceRowRepository,
     };
 
     use crate::{
-        preference::{DaysInMonth, ExcludeTransfers, Preference},
+        preference::{AdjustForNumberOfDaysOutOfStock, DaysInMonth, ExcludeTransfers, Preference},
         service_provider::ServiceProvider,
     };
+
+    use crate::test_helpers::make_movements;
+
+    pub(crate) fn mock_data() -> MockData {
+        let test_stock_line = StockLineRow {
+            id: "test_stock_line".to_string(),
+            item_link_id: mock_item_a().id.clone(),
+            store_id: mock_store_a().id.clone(),
+            pack_size: 1.0,
+            ..Default::default()
+        };
+
+        // Use make_movements to create days where the item is out of stock
+        let mock_data = MockData {
+            stock_lines: vec![test_stock_line.clone()],
+            ..Default::default()
+        }
+        .join(make_movements(
+            test_stock_line.clone(),
+            vec![
+                // (day, movement)
+                (1, 3),   // +3 in
+                (10, -3), // -3 out
+                // (stock = zero for 10 days)
+                (20, 3), // +3 in
+                (25, -3), // -3 out
+                         // (stock = zero for 5 more days)
+            ],
+        ));
+
+        mock_data
+    }
 
     #[actix_rt::test]
     async fn test_item_stats_service() {
@@ -545,5 +579,59 @@ mod test {
             item_stats[1].average_monthly_consumption,
             test_item_stats::item2_amc_1_months_period_end_date()
         );
+    }
+
+    #[actix_rt::test]
+    async fn test_item_stats_with_dos() {
+        let (_, _, connection_manager, _) = test_db::setup_all_with_data(
+            "test_item_stats_with_dos",
+            MockDataInserts::none().names().stores().units().items(),
+            mock_data(),
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider.basic_context().unwrap();
+        let service = service_provider.item_stats_service;
+
+        let item_ids = vec![mock_item_a().id.clone()];
+        let item_stats = service
+            .get_item_stats(
+                &context,
+                &mock_store_a().id,
+                Some(1.0),
+                item_ids.clone(),
+                None,
+            )
+            .unwrap();
+
+        // Set days pref to 30.0 for simpler testing
+        PreferenceRowRepository::new(&context.connection)
+            .upsert_one(&PreferenceRow {
+                id: "days in month".to_string(),
+                store_id: None,
+                key: DaysInMonth.key().to_string(),
+                value: "30.0".to_string(),
+            })
+            .unwrap();
+
+        // AMC with DOS preference off
+        assert_eq!(item_stats[0].average_monthly_consumption, 6.0);
+
+        // Turn adjust for days out of stock preference on
+        PreferenceRowRepository::new(&context.connection)
+            .upsert_one(&PreferenceRow {
+                id: "adjust dos".to_string(),
+                store_id: None,
+                key: AdjustForNumberOfDaysOutOfStock.key().to_string(),
+                value: "true".to_string(),
+            })
+            .unwrap();
+
+        let item_stats = service
+            .get_item_stats(&context, &mock_store_a().id, Some(1.0), item_ids, None)
+            .unwrap();
+
+        assert_eq!(item_stats[0].average_monthly_consumption, 12.0);
     }
 }
