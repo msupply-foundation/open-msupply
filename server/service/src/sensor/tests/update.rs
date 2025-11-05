@@ -25,7 +25,7 @@ mod query {
 
         let sensors_not_in_store = sensor_repository
             .query_by_filter(
-                SensorFilter::new().store_id(EqualFilter::not_equal_to_string("store_a")),
+                SensorFilter::new().store_id(EqualFilter::not_equal_to("store_a".to_owned())),
             )
             .unwrap();
 

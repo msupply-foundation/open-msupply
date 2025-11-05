@@ -77,7 +77,7 @@ fn validate(
     let campaigns_with_duplicate_name = CampaignRepository::new(connection).query_by_filter(
         CampaignFilter::new()
             .name(StringFilter::equal_to(input.name.trim()))
-            .id(EqualFilter::not_equal_to_string(&input.id)),
+            .id(EqualFilter::not_equal_to(input.id.to_owned())),
     )?;
 
     if !campaigns_with_duplicate_name.is_empty() {

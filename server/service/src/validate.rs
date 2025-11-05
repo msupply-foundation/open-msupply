@@ -119,7 +119,7 @@ pub fn check_property_key_does_not_exist(
 ) -> Result<bool, RepositoryError> {
     let filter = PropertyFilter::new()
         .key(StringFilter::equal_to(key))
-        .id(EqualFilter::not_equal_to_string(property_id));
+        .id(EqualFilter::not_equal_to(property_id.to_owned()));
 
     let found = PropertyRepository::new(connection).query_by_filter(filter)?;
 

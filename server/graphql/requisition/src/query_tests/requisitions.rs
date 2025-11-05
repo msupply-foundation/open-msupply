@@ -199,11 +199,11 @@ mod graphql {
 
             assert_eq!(
                 id,
-                Some(EqualFilter::not_equal_to_string("id_not_equal_to"))
+                Some(EqualFilter::not_equal_to("id_not_equal_to".to_owned()))
             );
             assert_eq!(
                 user_id,
-                Some(EqualFilter::not_equal_to_string("user_id_not_equal_to"))
+                Some(EqualFilter::not_equal_to("user_id_not_equal_to".to_owned()))
             );
             assert_eq!(requisition_number, Some(EqualFilter::equal_to(20)));
             assert_eq!(r#type, Some(RequisitionType::Request.equal_to()));

@@ -33,7 +33,7 @@ impl Loader<String> for UnitsInOtherPurchaseOrdersLoader {
                     .item_id(EqualFilter::equal_to(item_row.id.to_owned()))
                     .purchase_order(
                         PurchaseOrderFilter::new()
-                            .id(EqualFilter::not_equal_to_string(&line_row.purchase_order_id))
+                            .id(EqualFilter::not_equal_to(line_row.purchase_order_id.to_owned()))
                             .status(PurchaseOrderStatus::Sent.equal_to()),
                     )
                     .status(PurchaseOrderLineStatus::Sent.equal_to()),

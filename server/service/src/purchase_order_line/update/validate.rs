@@ -84,7 +84,7 @@ pub fn validate(
         Pagination::all(),
         Some(
             PurchaseOrderLineFilter::new()
-                .id(EqualFilter::not_equal_to_string(&input.id))
+                .id(EqualFilter::not_equal_to(input.id.to_owned()))
                 .purchase_order_id(EqualFilter::equal_to(purchase_order.id.to_owned()))
                 .requested_pack_size(EqualFilter::equal_to(
                     input

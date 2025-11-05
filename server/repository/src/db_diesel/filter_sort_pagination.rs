@@ -179,22 +179,6 @@ impl<F> EqualFilter<F> {
     }
 }
 
-impl EqualFilter<String> {
-    pub fn equal_to_string(value: &str) -> Self {
-        Self {
-            equal_to: Some(value.to_owned()),
-            ..Default::default()
-        }
-    }
-
-    pub fn not_equal_to_string(value: &str) -> Self {
-        Self {
-            not_equal_to: Some(value.to_owned()),
-            ..Default::default()
-        }
-    }
-}
-
 #[derive(Clone, PartialEq, Debug, Default)]
 pub struct NumberFilter<T> {
     /// ( {field} < range.start or range.end < {field} )
