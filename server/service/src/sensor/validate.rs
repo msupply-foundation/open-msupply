@@ -14,9 +14,9 @@ pub fn check_sensor_serial_is_unique(
         Some(serial) => {
             let sensors = SensorRepository::new(connection).query_by_filter(
                 SensorFilter::new()
-                    .serial(EqualFilter::equal_to_string(&serial))
+                    .serial(EqualFilter::equal_to(serial.to_owned()))
                     .id(EqualFilter::not_equal_to_string(id))
-                    .store_id(EqualFilter::equal_to_string("store_a")),
+                    .store_id(EqualFilter::equal_to("store_a".to_owned())),
             )?;
 
             Ok(sensors.is_empty())

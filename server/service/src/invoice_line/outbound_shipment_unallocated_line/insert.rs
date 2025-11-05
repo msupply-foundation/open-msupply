@@ -145,8 +145,8 @@ pub fn check_unallocated_line_does_not_exist(
 ) -> Result<bool, RepositoryError> {
     let count = InvoiceLineRepository::new(connection).count(Some(
         InvoiceLineFilter::new()
-            .item_id(EqualFilter::equal_to_string(item_id))
-            .invoice_id(EqualFilter::equal_to_string(invoice_id))
+            .item_id(EqualFilter::equal_to(item_id.to_owned()))
+            .invoice_id(EqualFilter::equal_to(invoice_id.to_owned()))
             .r#type(InvoiceLineType::UnallocatedStock.equal_to()),
     ))?;
 

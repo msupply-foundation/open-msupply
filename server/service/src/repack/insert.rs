@@ -69,8 +69,8 @@ pub fn insert_repack(
             InvoiceRepository::new(connection)
                 .query_by_filter(
                     InvoiceFilter::new()
-                        .id(EqualFilter::equal_to_string(&repack_invoice.id))
-                        .store_id(EqualFilter::equal_to_string(&ctx.store_id)),
+                        .id(EqualFilter::equal_to(repack_invoice.id.to_owned()))
+                        .store_id(EqualFilter::equal_to(ctx.store_id.to_owned())),
                 )?
                 .pop()
                 .ok_or(InsertRepackError::NewlyCreatedInvoiceDoesNotExist)
@@ -158,7 +158,7 @@ mod test {
         // StockLineReducedBelowZero
         let stock_line = StockLineRepository::new(&connection)
             .query_by_filter(
-                StockLineFilter::new().id(EqualFilter::equal_to_string(&mock_stock_line_b().id)),
+                StockLineFilter::new().id(EqualFilter::equal_to(mock_stock_line_b().id.to_owned())),
                 None,
             )
             .unwrap()
@@ -205,7 +205,7 @@ mod test {
         ) -> SortedInvoiceAndStock {
             let invoice_lines = InvoiceLineRepository::new(connection)
                 .query_by_filter(
-                    InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to_string(invoice_id)),
+                    InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(invoice_id.to_owned())),
                 )
                 .unwrap();
 
@@ -541,7 +541,7 @@ mod test {
 
         let enter_location_movement = LocationMovementRepository::new(&connection)
             .query_by_filter(
-                LocationMovementFilter::new().stock_line_id(EqualFilter::equal_to_string(&new_stock.id)),
+                LocationMovementFilter::new().stock_line_id(EqualFilter::equal_to(new_stock.id.to_owned())),
             )
             .unwrap()
             .pop()
@@ -562,7 +562,7 @@ mod test {
 
         let activity_log = ActivityLogRepository::new(&connection)
             .query_by_filter(
-                ActivityLogFilter::new().record_id(EqualFilter::equal_to_string(&new_stock.id)),
+                ActivityLogFilter::new().record_id(EqualFilter::equal_to(new_stock.id.to_owned())),
             )
             .unwrap()
             .pop()

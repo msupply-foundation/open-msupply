@@ -71,7 +71,7 @@ mod query {
             .get_locations(
                 &context,
                 None,
-                Some(LocationFilter::new().id(EqualFilter::equal_to_string("location_1"))),
+                Some(LocationFilter::new().id(EqualFilter::equal_to("location_1".to_owned()))),
                 None,
             )
             .unwrap();
@@ -177,7 +177,7 @@ mod query {
                 None,
                 Some(
                     LocationFilter::new()
-                        .id(EqualFilter::equal_to_string("location_1"))
+                        .id(EqualFilter::equal_to("location_1".to_owned()))
                         .assigned_to_asset(true),
                 ),
                 None,
@@ -206,7 +206,7 @@ mod query {
                 None,
                 Some(
                     LocationFilter::new()
-                        .id(EqualFilter::equal_to_string("location_1"))
+                        .id(EqualFilter::equal_to("location_1".to_owned()))
                         .assigned_to_asset(true),
                 ),
                 None,

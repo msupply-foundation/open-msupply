@@ -34,7 +34,7 @@ pub fn get_purchase_order(
     id: &str,
 ) -> Result<Option<PurchaseOrder>, RepositoryError> {
     let repository = PurchaseOrderRepository::new(&ctx.connection);
-    let mut filter = PurchaseOrderFilter::new().id(EqualFilter::equal_to_string(id));
+    let mut filter = PurchaseOrderFilter::new().id(EqualFilter::equal_to(id.to_owned()));
     filter.store_id = store_id.map(EqualFilter::equal_to_string);
 
     Ok(repository.query_by_filter(filter)?.pop())

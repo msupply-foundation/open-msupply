@@ -469,11 +469,11 @@ impl InvoiceFilter {
     }
 
     pub fn by_id(id: &str) -> InvoiceFilter {
-        InvoiceFilter::new().id(EqualFilter::equal_to_string(id))
+        InvoiceFilter::new().id(EqualFilter::equal_to(id.to_owned()))
     }
 
     pub fn new_match_linked_invoice_id(id: &str) -> InvoiceFilter {
-        InvoiceFilter::new().linked_invoice_id(EqualFilter::equal_to_string(id))
+        InvoiceFilter::new().linked_invoice_id(EqualFilter::equal_to(id.to_owned()))
     }
 
     pub fn stock_line_id(mut self, stock_line_id: String) -> Self {

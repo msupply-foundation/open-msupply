@@ -130,7 +130,7 @@ pub fn create_reverse_prescription(
     let line_repo = InvoiceLineRepository::new(connection);
     let line_row_repo = InvoiceLineRowRepository::new(connection);
     let lines = line_repo.query_by_filter(
-        InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to_string(&orig_invoice.id)),
+        InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(orig_invoice.id.to_owned())),
     )?;
 
     // Reverse the stock direction of each line and update DB
@@ -581,7 +581,7 @@ mod test {
 
         let reverse_prescription = InvoiceRepository::new(&connection)
             .query_one(
-                InvoiceFilter::new().linked_invoice_id(EqualFilter::equal_to_string(&prescription().id)),
+                InvoiceFilter::new().linked_invoice_id(EqualFilter::equal_to(prescription().id.to_owned())),
             )
             .unwrap()
             .unwrap()

@@ -399,7 +399,7 @@ impl RequisitionTransferTester {
         assert_eq!(
             RequisitionLineRepository::new(connection)
                 .count(Some(RequisitionLineFilter::new().requisition_id(
-                    EqualFilter::equal_to_string(&response_requisition.id)
+                    EqualFilter::equal_to(response_requisition.id.to_owned())
                 )))
                 .unwrap(),
             2
@@ -449,7 +449,7 @@ impl RequisitionTransferTester {
         let response_lines = RequisitionLineRepository::new(&ctx.connection)
             .query_by_filter(
                 RequisitionLineFilter::new()
-                    .requisition_id(EqualFilter::equal_to_string(&response_req.id)),
+                    .requisition_id(EqualFilter::equal_to(response_req.id.to_owned())),
             )
             .unwrap();
 
@@ -582,8 +582,8 @@ fn check_line(
     let response_line = RequisitionLineRepository::new(connection)
         .query_one(
             RequisitionLineFilter::new()
-                .requisition_id(EqualFilter::equal_to_string(response_requisition_id))
-                .item_id(EqualFilter::equal_to_string(&request_line.item_link_id)),
+                .requisition_id(EqualFilter::equal_to(response_requisition_id.to_owned()))
+                .item_id(EqualFilter::equal_to(request_line.item_link_id.to_owned())),
         )
         .unwrap();
 

@@ -139,7 +139,7 @@ pub fn empty_lines_to_trim(
 
     let lines = RequisitionLineRepository::new(connection).query_by_filter(
         RequisitionLineFilter::new()
-            .requisition_id(EqualFilter::equal_to_string(&requisition.id))
+            .requisition_id(EqualFilter::equal_to(requisition.id.to_owned()))
             .requested_quantity(EqualFilter::equal_to(0.0)),
     )?;
 

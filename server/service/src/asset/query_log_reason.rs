@@ -31,7 +31,7 @@ pub fn get_asset_log_reason(
     let repository = AssetLogReasonRepository::new(&ctx.connection);
 
     let mut result =
-        repository.query_by_filter(AssetLogReasonFilter::new().id(EqualFilter::equal_to_string(&id)))?;
+        repository.query_by_filter(AssetLogReasonFilter::new().id(EqualFilter::equal_to(id.to_owned())))?;
 
     if let Some(record) = result.pop() {
         Ok(record)

@@ -203,7 +203,7 @@ fn generate_inbound_invoice(
     let store_id = record_for_processing.other_party_store_id.clone();
     let name_id = StoreRepository::new(connection)
         .query_by_filter(
-            StoreFilter::new().id(EqualFilter::equal_to_string(&outbound_invoice.store_row.id)),
+            StoreFilter::new().id(EqualFilter::equal_to(outbound_invoice.store_row.id.to_owned())),
         )?
         .pop()
         .ok_or(RepositoryError::NotFound)?

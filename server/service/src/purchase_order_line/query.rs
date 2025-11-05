@@ -34,7 +34,7 @@ pub fn get_purchase_order_line(
     id: &str,
 ) -> Result<Option<PurchaseOrderLine>, RepositoryError> {
     let repository = PurchaseOrderLineRepository::new(&ctx.connection);
-    let mut filter = PurchaseOrderLineFilter::new().id(EqualFilter::equal_to_string(id));
+    let mut filter = PurchaseOrderLineFilter::new().id(EqualFilter::equal_to(id.to_owned()));
     filter.store_id = store_id_option.map(EqualFilter::equal_to_string);
 
     Ok(repository.query_by_filter(filter)?.pop())
@@ -121,7 +121,7 @@ mod test {
 
         // Test querying with filter
         let filter =
-            PurchaseOrderLineFilter::new().purchase_order_id(EqualFilter::equal_to_string("wrong_po_id"));
+            PurchaseOrderLineFilter::new().purchase_order_id(EqualFilter::equal_to("wrong_po_id".to_owned()));
         let result = service.get_purchase_order_lines(
             &context,
             Some(&mock_store_a().id),
@@ -133,7 +133,7 @@ mod test {
         assert_eq!(result.unwrap().count, 0);
 
         let filter = PurchaseOrderLineFilter::new()
-            .purchase_order_id(EqualFilter::equal_to_string(&purchase_order_id));
+            .purchase_order_id(EqualFilter::equal_to(purchase_order_id.to_owned()));
         let result = service.get_purchase_order_lines(
             &context,
             Some(&mock_store_a().id),

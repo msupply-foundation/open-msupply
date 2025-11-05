@@ -66,7 +66,7 @@ pub fn create_requisition_shipment(
 
             // TODO use invoice service if it accepts ctx
             let mut result = InvoiceRepository::new(connection).query_by_filter(
-                InvoiceFilter::new().id(EqualFilter::equal_to_string(&invoice_row.id)),
+                InvoiceFilter::new().id(EqualFilter::equal_to(invoice_row.id.to_owned())),
             )?;
 
             result.pop().ok_or(OutError::CreatedInvoiceDoesNotExist)

@@ -150,7 +150,7 @@ mod tests {
 
         // Query by id
         let reference_data = AssetClassRepository::new(&storage_connection)
-            .query_one(AssetClassFilter::new().id(EqualFilter::equal_to_string(&id)))
+            .query_one(AssetClassFilter::new().id(EqualFilter::equal_to(id.to_owned())))
             .unwrap()
             .unwrap();
         assert_eq!(reference_data.id, id);

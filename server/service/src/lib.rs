@@ -345,8 +345,8 @@ fn check_location_exists(
 ) -> Result<bool, RepositoryError> {
     let count = LocationRepository::new(connection).count(Some(
         LocationFilter::new()
-            .id(EqualFilter::equal_to_string(location_id))
-            .store_id(EqualFilter::equal_to_string(store_id)),
+            .id(EqualFilter::equal_to(location_id.to_owned()))
+            .store_id(EqualFilter::equal_to(store_id.to_owned())),
     ))?;
     Ok(count > 0)
 }
@@ -361,8 +361,8 @@ fn check_location_type_is_valid(
     let location = LocationRepository::new(connection)
         .query_by_filter(
             LocationFilter::new()
-                .id(EqualFilter::equal_to_string(location_id))
-                .store_id(EqualFilter::equal_to_string(store_id)),
+                .id(EqualFilter::equal_to(location_id.to_owned()))
+                .store_id(EqualFilter::equal_to(store_id.to_owned())),
         )?
         .pop();
 

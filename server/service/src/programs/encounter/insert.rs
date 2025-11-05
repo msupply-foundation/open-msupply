@@ -163,7 +163,7 @@ fn validate_encounter_registry(
     let encounter_registry = DocumentRegistryRepository::new(&ctx.connection)
         .query_by_filter(
             DocumentRegistryFilter::new()
-                .document_type(EqualFilter::equal_to_string(encounter_document_type)),
+                .document_type(EqualFilter::equal_to(encounter_document_type.to_owned())),
         )?
         .pop();
     Ok(encounter_registry)
@@ -177,8 +177,8 @@ fn validate_patient_program_exists(
     Ok(ProgramEnrolmentRepository::new(&ctx.connection)
         .query_by_filter(
             ProgramEnrolmentFilter::new()
-                .patient_id(EqualFilter::equal_to_string(patient_id))
-                .context_id(EqualFilter::equal_to_string(&encounter_registry.context_id)),
+                .patient_id(EqualFilter::equal_to(patient_id.to_owned()))
+                .context_id(EqualFilter::equal_to(encounter_registry.context_id.to_owned())),
         )?
         .pop())
 }
@@ -483,7 +483,7 @@ mod test {
         // check that encounter table has been updated
         let row = EncounterRepository::new(&ctx.connection)
             .query_by_filter(
-                EncounterFilter::new().document_name(EqualFilter::equal_to_string(&found.name)),
+                EncounterFilter::new().document_name(EqualFilter::equal_to(found.name.to_owned())),
             )
             .unwrap()
             .pop();

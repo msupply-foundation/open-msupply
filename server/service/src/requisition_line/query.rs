@@ -21,7 +21,7 @@ pub fn get_requisition_line(
     id: &str,
 ) -> Result<Option<RequisitionLine>, RepositoryError> {
     let mut result = RequisitionLineRepository::new(&ctx.connection)
-        .query_by_filter(RequisitionLineFilter::new().id(EqualFilter::equal_to_string(id)))?;
+        .query_by_filter(RequisitionLineFilter::new().id(EqualFilter::equal_to(id.to_owned())))?;
 
     Ok(result.pop())
 }
@@ -52,12 +52,8 @@ mod test {
                 &context,
                 Some(
                     RequisitionLineFilter::new()
-                        .id(EqualFilter::equal_to_string(
-                            &mock_draft_request_requisition_line().id,
-                        ))
-                        .requisition_id(EqualFilter::equal_to_string(
-                            &mock_draft_request_requisition_line().requisition_id,
-                        )),
+                        .id(EqualFilter::equal_to(mock_draft_request_requisition_line().id.to_owned()))
+                        .requisition_id(EqualFilter::equal_to(mock_draft_request_requisition_line().requisition_id.to_owned())),
                 ),
             )
             .unwrap();

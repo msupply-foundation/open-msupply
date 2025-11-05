@@ -30,7 +30,7 @@ pub fn get_goods_received_line(
     id: &str,
 ) -> Result<Option<GoodsReceivedLine>, RepositoryError> {
     let repository = GoodsReceivedLineRepository::new(&ctx.connection);
-    let mut filter = GoodsReceivedLineFilter::new().id(EqualFilter::equal_to_string(id));
+    let mut filter = GoodsReceivedLineFilter::new().id(EqualFilter::equal_to(id.to_owned()));
     filter.store_id = store_id.map(EqualFilter::equal_to_string);
 
     Ok(repository.query_by_filter(filter)?.pop())

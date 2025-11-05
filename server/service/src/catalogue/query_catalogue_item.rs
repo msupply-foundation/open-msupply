@@ -29,6 +29,6 @@ pub fn get_asset_catalogue_item(
 ) -> Result<Option<AssetCatalogueItemRow>, RepositoryError> {
     let repository = AssetCatalogueItemRepository::new(connection);
     let mut result = repository
-        .query_by_filter(AssetCatalogueItemFilter::new().id(EqualFilter::equal_to_string(&id)))?;
+        .query_by_filter(AssetCatalogueItemFilter::new().id(EqualFilter::equal_to(id.to_owned())))?;
     Ok(result.pop())
 }

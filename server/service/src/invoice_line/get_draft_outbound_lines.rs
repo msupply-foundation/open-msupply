@@ -88,17 +88,17 @@ pub fn get_draft_stock_out_lines(
     let placeholder_quantity = InvoiceLineRepository::new(&ctx.connection)
         .query_one(
             InvoiceLineFilter::new()
-                .invoice_id(EqualFilter::equal_to_string(&invoice.invoice_row.id))
+                .invoice_id(EqualFilter::equal_to(invoice.invoice_row.id.to_owned()))
                 .r#type(InvoiceLineType::UnallocatedStock.equal_to())
-                .item_id(EqualFilter::equal_to_string(item_id)),
+                .item_id(EqualFilter::equal_to(item_id.to_owned())),
         )?
         .map(|l| l.invoice_line_row.number_of_packs);
 
     let prescribed_quantity = InvoiceLineRepository::new(&ctx.connection)
         .query_one(
             InvoiceLineFilter::new()
-                .invoice_id(EqualFilter::equal_to_string(&invoice.invoice_row.id))
-                .item_id(EqualFilter::equal_to_string(item_id))
+                .invoice_id(EqualFilter::equal_to(invoice.invoice_row.id.to_owned()))
+                .item_id(EqualFilter::equal_to(item_id.to_owned()))
                 .has_prescribed_quantity(true),
         )?
         .map(|l| l.invoice_line_row.prescribed_quantity)
@@ -107,8 +107,8 @@ pub fn get_draft_stock_out_lines(
     let note = InvoiceLineRepository::new(&ctx.connection)
         .query_one(
             InvoiceLineFilter::new()
-                .invoice_id(EqualFilter::equal_to_string(&invoice.invoice_row.id))
-                .item_id(EqualFilter::equal_to_string(item_id))
+                .invoice_id(EqualFilter::equal_to(invoice.invoice_row.id.to_owned()))
+                .item_id(EqualFilter::equal_to(item_id.to_owned()))
                 .has_note(true),
         )?
         .map(|l| l.invoice_line_row.note)
@@ -139,8 +139,8 @@ fn get_historical_available_stock_lines(
             None,
             Some(
                 StockLineFilter::new()
-                    .store_id(EqualFilter::equal_to_string(store_id))
-                    .item_id(EqualFilter::equal_to_string(item_id))
+                    .store_id(EqualFilter::equal_to(store_id.to_owned()))
+                    .item_id(EqualFilter::equal_to(item_id.to_owned()))
                     .is_available(true),
             ),
             None,
@@ -160,9 +160,9 @@ fn get_outgoing_invoice_lines(
 
     let existing_invoice_lines = invoice_line_repo.query_by_filter(
         InvoiceLineFilter::new()
-            .invoice_id(EqualFilter::equal_to_string(&outbound.id))
+            .invoice_id(EqualFilter::equal_to(outbound.id.to_owned()))
             .r#type(InvoiceLineType::StockOut.equal_to())
-            .item_id(EqualFilter::equal_to_string(item_id)),
+            .item_id(EqualFilter::equal_to(item_id.to_owned())),
     )?;
 
     let mut invoice_stock_lines = existing_invoice_lines

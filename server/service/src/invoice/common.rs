@@ -26,7 +26,7 @@ pub(crate) fn get_lines_for_invoice(
     invoice_id: &str,
 ) -> Result<Vec<InvoiceLine>, RepositoryError> {
     let result = InvoiceLineRepository::new(connection)
-        .query_by_filter(InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to_string(invoice_id)))?;
+        .query_by_filter(InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(invoice_id.to_owned())))?;
 
     Ok(result)
 }
@@ -76,8 +76,8 @@ pub fn check_master_list_for_name_link_id(
     };
     let mut rows = MasterListRepository::new(connection).query_by_filter(
         MasterListFilter::new()
-            .id(EqualFilter::equal_to_string(master_list_id))
-            .exists_for_name_id(EqualFilter::equal_to_string(&name_link.name_id)),
+            .id(EqualFilter::equal_to(master_list_id.to_owned()))
+            .exists_for_name_id(EqualFilter::equal_to(name_link.name_id.to_owned())),
     )?;
     Ok(rows.pop())
 }
@@ -89,8 +89,8 @@ pub fn check_master_list_for_store(
 ) -> Result<Option<MasterList>, RepositoryError> {
     let mut rows = MasterListRepository::new(connection).query_by_filter(
         MasterListFilter::new()
-            .id(EqualFilter::equal_to_string(master_list_id))
-            .exists_for_store_id(EqualFilter::equal_to_string(store_id)),
+            .id(EqualFilter::equal_to(master_list_id.to_owned()))
+            .exists_for_store_id(EqualFilter::equal_to(store_id.to_owned())),
     )?;
     Ok(rows.pop())
 }
@@ -116,7 +116,7 @@ pub fn generate_batches_total_number_of_packs_update(
     let invoice_lines = InvoiceLineRepository::new(connection)
         .query_by_filter(
             InvoiceLineFilter::new()
-                .invoice_id(EqualFilter::equal_to_string(invoice_id))
+                .invoice_id(EqualFilter::equal_to(invoice_id.to_owned()))
                 .r#type(InvoiceLineType::StockOut.equal_to()),
         )
         .map_err(InvoiceLineHasNoStockLine::DatabaseError)?;

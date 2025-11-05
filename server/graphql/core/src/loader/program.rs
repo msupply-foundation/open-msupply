@@ -75,8 +75,8 @@ impl Loader<ProgramsByItemIdLoaderInput> for ProgramsByItemIdLoader {
             for item_id in item_ids {
                 let program = ProgramRepository::new(&connection).query_by_filter(
                     ProgramFilter::new()
-                        .exists_for_store_id(EqualFilter::equal_to_string(&store_id))
-                        .item_id(EqualFilter::equal_to_string(&item_id)),
+                        .exists_for_store_id(EqualFilter::equal_to(store_id.to_owned()))
+                        .item_id(EqualFilter::equal_to(item_id.to_owned())),
                 )?;
 
                 let entry = output.entry(ProgramsByItemIdLoaderInput {

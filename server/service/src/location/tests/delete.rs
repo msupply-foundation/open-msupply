@@ -60,13 +60,13 @@ mod query {
         let location_id = "location_1".to_owned();
         let stock_lines = stock_line_repository
             .query_by_filter(
-                StockLineFilter::new().location_id(EqualFilter::equal_to_string(&location_id)),
+                StockLineFilter::new().location_id(EqualFilter::equal_to(location_id.to_owned())),
                 None,
             )
             .unwrap();
         let invoice_lines = invoice_line_repository
             .query_by_filter(
-                InvoiceLineFilter::new().location_id(EqualFilter::equal_to_string(&location_id)),
+                InvoiceLineFilter::new().location_id(EqualFilter::equal_to(location_id.to_owned())),
             )
             .unwrap();
 
@@ -82,13 +82,13 @@ mod query {
         let location_id = "location_on_hold".to_owned();
         let stock_lines = stock_line_repository
             .query_by_filter(
-                StockLineFilter::new().location_id(EqualFilter::equal_to_string(&location_id)),
+                StockLineFilter::new().location_id(EqualFilter::equal_to(location_id.to_owned())),
                 None,
             )
             .unwrap();
         let invoice_lines = invoice_line_repository
             .query_by_filter(
-                InvoiceLineFilter::new().location_id(EqualFilter::equal_to_string(&location_id)),
+                InvoiceLineFilter::new().location_id(EqualFilter::equal_to(location_id.to_owned())),
             )
             .unwrap();
 
@@ -125,7 +125,7 @@ mod query {
 
         assert_eq!(
             location_repository
-                .query_by_filter(LocationFilter::new().id(EqualFilter::equal_to_string("location_2")))
+                .query_by_filter(LocationFilter::new().id(EqualFilter::equal_to("location_2".to_owned())))
                 .unwrap(),
             vec![]
         );

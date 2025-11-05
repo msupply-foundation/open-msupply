@@ -21,7 +21,7 @@ pub fn get_warning(
 ) -> Result<Warning, SingleRecordError> {
     let connection = connection_manager.connection()?;
     let mut result = WarningRepository::new(&connection)
-        .query(Some(WarningFilter::new().id(EqualFilter::equal_to_string(&id))))?;
+        .query(Some(WarningFilter::new().id(EqualFilter::equal_to(id.to_owned()))))?;
 
     if let Some(record) = result.pop() {
         Ok(record)

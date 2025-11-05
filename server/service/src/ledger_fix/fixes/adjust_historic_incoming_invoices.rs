@@ -16,7 +16,7 @@ pub(crate) fn fix(
     operation_log.push_str("Starting adjust_historic_incoming_invoices\n");
 
     let ledger_lines = StockLineLedgerRepository::new(connection).query_by_filter(
-        StockLineLedgerFilter::new().stock_line_id(EqualFilter::equal_to_string(stock_line_id)),
+        StockLineLedgerFilter::new().stock_line_id(EqualFilter::equal_to(stock_line_id.to_owned())),
     )?;
     let balance_summary = ledger_balance_summary(connection, &ledger_lines, stock_line_id)?;
     let LedgerBalanceSummary {
@@ -46,7 +46,7 @@ pub(crate) fn fix(
             );
         }
         let ledger_lines = StockLineLedgerRepository::new(connection).query_by_filter(
-            StockLineLedgerFilter::new().stock_line_id(EqualFilter::equal_to_string(stock_line_id)),
+            StockLineLedgerFilter::new().stock_line_id(EqualFilter::equal_to(stock_line_id.to_owned())),
         )?;
 
         if ledger_lines.is_empty() {

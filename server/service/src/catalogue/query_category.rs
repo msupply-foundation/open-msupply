@@ -27,6 +27,6 @@ pub fn get_asset_category(
 ) -> Result<Option<AssetCategoryRow>, RepositoryError> {
     let repository = AssetCategoryRepository::new(connection);
     let mut result =
-        repository.query_by_filter(AssetCategoryFilter::new().id(EqualFilter::equal_to_string(&id)))?;
+        repository.query_by_filter(AssetCategoryFilter::new().id(EqualFilter::equal_to(id.to_owned())))?;
     Ok(result.pop())
 }

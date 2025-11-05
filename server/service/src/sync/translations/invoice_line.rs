@@ -353,7 +353,7 @@ impl SyncTranslation for InvoiceLineTranslation {
         changelog: &ChangelogRow,
     ) -> Result<PushTranslateResult, anyhow::Error> {
         let Some(invoice_line) = InvoiceLineRepository::new(connection)
-            .query_one(InvoiceLineFilter::new().id(EqualFilter::equal_to_string(&changelog.record_id)))?
+            .query_one(InvoiceLineFilter::new().id(EqualFilter::equal_to(changelog.record_id.to_owned())))?
         else {
             return Err(anyhow::anyhow!("invoice_line row not found"));
         };

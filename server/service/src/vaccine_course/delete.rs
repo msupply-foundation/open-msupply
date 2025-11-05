@@ -58,7 +58,7 @@ fn validate(
         .ok_or(DeleteVaccineCourseError::VaccineCourseDoesNotExist)?;
 
     let doses = VaccineCourseDoseRepository::new(connection).query_by_filter(
-        VaccineCourseDoseFilter::new().vaccine_course_id(EqualFilter::equal_to_string(id)),
+        VaccineCourseDoseFilter::new().vaccine_course_id(EqualFilter::equal_to(id.to_owned())),
     )?;
 
     Ok(doses)

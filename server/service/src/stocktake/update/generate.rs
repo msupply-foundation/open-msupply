@@ -457,9 +457,9 @@ fn generate_exit_location_movements(
                     LocationMovementFilter::new()
                         .enter_datetime(DatetimeFilter::is_null(false))
                         .exit_datetime(DatetimeFilter::is_null(true))
-                        .location_id(EqualFilter::equal_to_string(&location_id))
-                        .stock_line_id(EqualFilter::equal_to_string(&stock_line.id))
-                        .store_id(EqualFilter::equal_to_string(store_id)),
+                        .location_id(EqualFilter::equal_to(location_id.to_owned()))
+                        .stock_line_id(EqualFilter::equal_to(stock_line.id.to_owned()))
+                        .store_id(EqualFilter::equal_to(store_id.to_owned())),
                 )?
                 .into_iter()
                 .map(|l| l.location_movement_row)
@@ -486,7 +486,7 @@ fn unallocated_lines_to_trim(
         return Ok(None);
     }
     let stocktake_lines = StocktakeLineRepository::new(connection).query_by_filter(
-        StocktakeLineFilter::new().stocktake_id(EqualFilter::equal_to_string(&stocktake.id)),
+        StocktakeLineFilter::new().stocktake_id(EqualFilter::equal_to(stocktake.id.to_owned())),
         Some(store_id.to_string()),
     )?;
     if stocktake_lines.is_empty() {

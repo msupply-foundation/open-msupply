@@ -21,7 +21,7 @@ pub fn get_rnr_forms(
     // ensure filter restrict results to store id
     let filter = filter
         .unwrap_or_default()
-        .store_id(EqualFilter::equal_to_string(store_id));
+        .store_id(EqualFilter::equal_to(store_id.to_owned()));
 
     Ok(ListResult {
         rows: repository.query(pagination, Some(filter.clone()), sort)?,
@@ -36,8 +36,8 @@ pub fn get_rnr_form(
 ) -> Result<Option<RnRForm>, RepositoryError> {
     let repository = RnRFormRepository::new(&ctx.connection);
     let filter = RnRFormFilter::new()
-        .id(EqualFilter::equal_to_string(&id))
-        .store_id(EqualFilter::equal_to_string(store_id));
+        .id(EqualFilter::equal_to(id.to_owned()))
+        .store_id(EqualFilter::equal_to(store_id.to_owned()));
 
     Ok(repository.query_by_filter(filter)?.pop())
 }

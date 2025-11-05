@@ -175,7 +175,7 @@ mod graphql {
                 filter,
                 Some(
                     MasterListFilter::new()
-                        .id(EqualFilter::equal_to_string("test_id_filter"))
+                        .id(EqualFilter::equal_to("test_id_filter".to_owned()))
                         .name(StringFilter::equal_to("name_filter"))
                         .code(StringFilter::equal_to("code_filter"))
                         .description(StringFilter {
@@ -185,7 +185,7 @@ mod graphql {
                         })
                         .exists_for_name(StringFilter::like("exists_for_name_filter"))
                         .exists_for_name_id(EqualFilter::not_equal_to_string("test_name_id_filter"))
-                        .exists_for_store_id(EqualFilter::equal_to_string("store_a"))
+                        .exists_for_store_id(EqualFilter::equal_to("store_a".to_owned()))
                         .is_program(false)
                 )
             );

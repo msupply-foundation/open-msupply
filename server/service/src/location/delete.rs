@@ -64,11 +64,11 @@ pub fn check_location_in_use(
     connection: &StorageConnection,
 ) -> Result<Option<LocationInUse>, RepositoryError> {
     let stock_lines = StockLineRepository::new(connection).query_by_filter(
-        StockLineFilter::new().location_id(EqualFilter::equal_to_string(id)),
+        StockLineFilter::new().location_id(EqualFilter::equal_to(id.to_owned())),
         None,
     )?;
     let invoice_lines = InvoiceLineRepository::new(connection)
-        .query_by_filter(InvoiceLineFilter::new().location_id(EqualFilter::equal_to_string(id)))?;
+        .query_by_filter(InvoiceLineFilter::new().location_id(EqualFilter::equal_to(id.to_owned())))?;
 
     if !stock_lines.is_empty() || !invoice_lines.is_empty() {
         Ok(Some(LocationInUse {

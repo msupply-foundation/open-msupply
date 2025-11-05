@@ -21,7 +21,7 @@ mod test {
         .await;
 
         let invoices = InvoiceRepository::new(&connection)
-            .query_by_filter(InvoiceFilter::new().store_id(EqualFilter::equal_to_string("store_a")))
+            .query_by_filter(InvoiceFilter::new().store_id(EqualFilter::equal_to("store_a".to_owned())))
             .unwrap();
 
         let query = r#"{
@@ -74,7 +74,7 @@ mod test {
         .await;
 
         let invoices = InvoiceRepository::new(&connection)
-            .query_by_filter(InvoiceFilter::new().store_id(EqualFilter::equal_to_string("store_a")))
+            .query_by_filter(InvoiceFilter::new().store_id(EqualFilter::equal_to("store_a".to_owned())))
             .unwrap();
 
         // filter query
@@ -193,7 +193,7 @@ mod test {
         .await;
 
         let mut invoices = InvoiceRepository::new(&connection)
-            .query_by_filter(InvoiceFilter::new().store_id(EqualFilter::equal_to_string("store_a")))
+            .query_by_filter(InvoiceFilter::new().store_id(EqualFilter::equal_to("store_a".to_owned())))
             .unwrap();
 
         // invoice number

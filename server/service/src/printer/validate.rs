@@ -33,7 +33,7 @@ pub fn check_printer_address_is_unique(
     id: &str,
 ) -> Result<bool, RepositoryError> {
     let filter = PrinterFilter::new()
-        .address(EqualFilter::equal_to_string(&address))
+        .address(EqualFilter::equal_to(address.to_owned()))
         .id(EqualFilter::not_equal_to_string(id));
 
     let printers = PrinterRepository::new(con).query_by_filter(filter)?;

@@ -266,7 +266,7 @@ fn get_delete_operation(
     changelog_row: &ChangelogRow,
 ) -> Result<Operation, RepositoryError> {
     let linked_invoice = InvoiceRepository::new(connection).query_one(
-        InvoiceFilter::new().linked_invoice_id(EqualFilter::equal_to_string(&changelog_row.record_id)),
+        InvoiceFilter::new().linked_invoice_id(EqualFilter::equal_to(changelog_row.record_id.to_owned())),
     )?;
 
     Ok(Operation::Delete { linked_invoice })

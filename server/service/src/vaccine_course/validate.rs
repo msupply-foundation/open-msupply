@@ -22,7 +22,7 @@ pub fn check_vaccine_course_name_exists_for_program(
     connection: &StorageConnection,
 ) -> Result<bool, RepositoryError> {
     let mut filter = VaccineCourseFilter::new()
-        .program_id(EqualFilter::equal_to_string(program_id))
+        .program_id(EqualFilter::equal_to(program_id.to_owned()))
         .name(StringFilter::equal_to(name));
 
     if let Some(id) = id {

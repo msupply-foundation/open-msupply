@@ -624,7 +624,7 @@ mod test {
             .unwrap();
 
             let user = UserRepository::new(&context.connection)
-                .query_one(UserFilter::new().id(EqualFilter::equal_to_string(&expected_user_info.user.id)))
+                .query_one(UserFilter::new().id(EqualFilter::equal_to(expected_user_info.user.id.to_owned())))
                 .unwrap()
                 .unwrap();
             assert_eq!(expected_user_info.user.name, user.user_row.username);
@@ -636,7 +636,7 @@ mod test {
             let permissions = UserPermissionRepository::new(&context.connection)
                 .query_by_filter(
                     UserPermissionFilter::new()
-                        .user_id(EqualFilter::equal_to_string(&expected_user_info.user.id)),
+                        .user_id(EqualFilter::equal_to(expected_user_info.user.id.to_owned())),
                 )
                 .unwrap();
             assert!(!permissions.is_empty());

@@ -47,8 +47,8 @@ pub fn get_stock_evolution_for_item(
     let points = generate_evolution_series(reference_datetime, options);
     // Get rows
     let filter = StockMovementFilter::new()
-        .store_id(EqualFilter::equal_to_string(store_id))
-        .item_id(EqualFilter::equal_to_string(item_id))
+        .store_id(EqualFilter::equal_to(store_id.to_owned()))
+        .item_id(EqualFilter::equal_to(item_id.to_owned()))
         .datetime(DatetimeFilter::date_range(
             points.first_historic_datetime,
             points.last_historic_datetime,

@@ -54,9 +54,9 @@ pub fn generate_rnr_form_lines(
     let previous_monthly_consumption = get_previous_monthly_consumption(
         &ctx.connection,
         RnRFormFilter::new()
-            .store_id(EqualFilter::equal_to_string(store_id))
-            .period_schedule_id(EqualFilter::equal_to_string(&period.period_schedule_id))
-            .program_id(EqualFilter::equal_to_string(program_id)),
+            .store_id(EqualFilter::equal_to(store_id.to_owned()))
+            .period_schedule_id(EqualFilter::equal_to(period.period_schedule_id.to_owned()))
+            .program_id(EqualFilter::equal_to(program_id.to_owned())),
     )?;
 
     let store_preferences = get_store_preferences(&ctx.connection, store_id)?;
@@ -175,7 +175,7 @@ fn get_master_list_item_ids(
 ) -> Result<Vec<String>, RepositoryError> {
     MasterListLineRepository::new(&ctx.connection)
         .query_by_filter(
-            MasterListLineFilter::new().master_list_id(EqualFilter::equal_to_string(master_list_id)),
+            MasterListLineFilter::new().master_list_id(EqualFilter::equal_to(master_list_id.to_owned())),
             None,
         )
         .map(|lines| lines.into_iter().map(|line| line.item_id).collect())
@@ -291,7 +291,7 @@ pub fn get_usage_map(
     let lookback_days = period_length_in_days - 1;
 
     let start_date = date_with_offset(end_date, Duration::days(lookback_days).neg());
-    let store_id_filter = Some(EqualFilter::equal_to_string(store_id));
+    let store_id_filter = Some(EqualFilter::equal_to(store_id.to_owned()));
     let date_filter = Some(DateFilter::date_range(&start_date, end_date));
 
     // Get all usage rows for the period
@@ -379,7 +379,7 @@ pub fn get_bulk_opening_balances(
         // Get all movements between the start date and now for all items needing calculation
         let stock_movement_rows = StockMovementRepository::new(connection).query(Some(
             StockMovementFilter::new()
-                .store_id(EqualFilter::equal_to_string(store_id))
+                .store_id(EqualFilter::equal_to(store_id.to_owned()))
                 .item_id(EqualFilter::equal_any(items_needing_calculation.clone()))
                 .datetime(DatetimeFilter::date_range(
                     start_date.into(),
@@ -396,7 +396,7 @@ pub fn get_bulk_opening_balances(
 
         let stock_on_hand_rows = StockOnHandRepository::new(connection).query(Some(
             StockOnHandFilter::new()
-                .store_id(EqualFilter::equal_to_string(store_id))
+                .store_id(EqualFilter::equal_to(store_id.to_owned()))
                 .item_id(EqualFilter::equal_any(items_needing_calculation.clone())),
         ))?;
 
@@ -433,7 +433,7 @@ pub fn get_stock_out_durations_batch(
 
     let stock_movement_rows = StockMovementRepository::new(connection).query(Some(
         StockMovementFilter::new()
-            .store_id(EqualFilter::equal_to_string(store_id))
+            .store_id(EqualFilter::equal_to(store_id.to_owned()))
             .item_id(EqualFilter::equal_any(item_ids.to_vec()))
             .datetime(DatetimeFilter::date_range(
                 period_start_date.and_hms_opt(0, 0, 0).unwrap(),
@@ -499,7 +499,7 @@ pub fn get_bulk_earliest_expiries(
     let mut expiries = HashMap::new();
 
     let filter = StockLineFilter::new()
-        .store_id(EqualFilter::equal_to_string(store_id))
+        .store_id(EqualFilter::equal_to(store_id.to_owned()))
         .item_id(EqualFilter::equal_any(item_ids.to_vec()))
         // Note: this is available stock _now_, not what would have been available at the closing time of the period
         .is_available(true);
