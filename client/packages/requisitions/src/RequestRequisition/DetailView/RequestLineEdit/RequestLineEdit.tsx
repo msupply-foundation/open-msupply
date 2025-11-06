@@ -254,6 +254,10 @@ export const RequestLineEdit = ({
                     <Field key={index} line={line} unitName={unitName} />
                   )
                 )}
+              {line &&
+                plugins.internalOrderPriceComponents?.estimatedLinePrice?.map(
+                  (Plugin, index) => <Plugin key={index} itemId={line.itemId} />
+                )}
             </>
           ) : null
         }
