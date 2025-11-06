@@ -13,6 +13,7 @@ import {
   MultilineTextInput,
   InfoRow,
   RepresentationValue,
+  usePluginProvider,
 } from '@openmsupply-client/common';
 import {
   ItemWithStatsFragment,
@@ -58,6 +59,7 @@ export const ResponseLineEdit = ({
 }: ResponseLineEditProps) => {
   const t = useTranslation();
   const { manageVaccinesInDoses, warningForExcessRequest } = usePreferences();
+  const { plugins } = usePluginProvider();
 
   const hasApproval =
     requisition.approvalStatus === RequisitionNodeApprovalStatus.Approved;
@@ -322,15 +324,23 @@ export const ResponseLineEdit = ({
         </ModalPanelArea>
         {!!requisition.linkedRequisition || showExtraFields ? (
           <>
-            <ResponseNumInputRow
-              label={t('label.amc/amd')}
-              value={draft?.averageMonthlyConsumption}
-              onChange={value => update({ averageMonthlyConsumption: value })}
-              sx={{
-                pt: 1,
-              }}
-              {...commonProps}
-            />
+            {plugins.averageMonthlyDistribution?.editViewField ? (
+              plugins.averageMonthlyDistribution.editViewField?.map(
+                (Field, index) => (
+                  <Field key={index} currentItem={currentItem} />
+                )
+              )
+            ) : (
+              <ResponseNumInputRow
+                label={t('label.amc/amd')}
+                value={draft?.averageMonthlyConsumption}
+                onChange={value => update({ averageMonthlyConsumption: value })}
+                sx={{
+                  pt: 1,
+                }}
+                {...commonProps}
+              />
+            )}
             <ResponseNumInputRow
               label={t('label.months-of-stock')}
               value={mos() ?? 0}

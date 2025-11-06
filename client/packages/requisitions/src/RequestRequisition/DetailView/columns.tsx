@@ -211,6 +211,7 @@ export const useRequestColumns = () => {
 
       // Plugin columns
       ...(plugins.requestRequisitionLine?.tableColumn || []),
+      ...(plugins.averageMonthlyDistribution?.internalOrderAmdColumn(t) || []),
     ],
     [
       manageVaccinesInDoses,
@@ -219,6 +220,7 @@ export const useRequestColumns = () => {
       usesRemoteAuthorisation,
       maxMonthsOfStock,
       plugins.requestRequisitionLine?.tableColumn,
+      plugins.averageMonthlyDistribution?.internalOrderAmdColumn,
       errors,
     ]
   );

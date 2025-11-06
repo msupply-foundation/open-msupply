@@ -120,6 +120,7 @@ export type ResponseLineFragment = {
       totalConsumption: number;
       stockOnHand: number;
       monthsOfStockOnHand?: number | null;
+      averageMonthlyDistribution?: number | null;
     };
   };
   linkedRequisitionLine?: {
@@ -233,6 +234,7 @@ export type ResponseFragment = {
           totalConsumption: number;
           stockOnHand: number;
           monthsOfStockOnHand?: number | null;
+          averageMonthlyDistribution?: number | null;
         };
       };
       linkedRequisitionLine?: {
@@ -386,6 +388,7 @@ export type ResponseByNumberQuery = {
                 totalConsumption: number;
                 stockOnHand: number;
                 monthsOfStockOnHand?: number | null;
+                averageMonthlyDistribution?: number | null;
               };
             };
             linkedRequisitionLine?: {
@@ -547,6 +550,7 @@ export type ResponseByIdQuery = {
                 totalConsumption: number;
                 stockOnHand: number;
                 monthsOfStockOnHand?: number | null;
+                averageMonthlyDistribution?: number | null;
               };
             };
             linkedRequisitionLine?: {

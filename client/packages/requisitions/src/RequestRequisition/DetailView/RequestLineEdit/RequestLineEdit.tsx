@@ -247,7 +247,9 @@ export const RequestLineEdit = ({
                   value={currentItem?.doses}
                 />
               ) : null}
-              {renderValueInfoRows(getLeftPanel(t, draft, showExtraFields))}
+              {renderValueInfoRows(
+                getLeftPanel(t, draft, showExtraFields, plugins)
+              )}
               {line &&
                 plugins.requestRequisitionLine?.editViewField?.map(
                   (Field, index) => (

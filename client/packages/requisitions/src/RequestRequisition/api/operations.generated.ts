@@ -138,6 +138,7 @@ export type RequestByNumberQuery = {
                 totalConsumption: number;
                 stockOnHand: number;
                 monthsOfStockOnHand?: number | null;
+                averageMonthlyDistribution?: number | null;
               };
             };
             reason?: {
@@ -284,6 +285,7 @@ export type RequestByIdQuery = {
                 totalConsumption: number;
                 stockOnHand: number;
                 monthsOfStockOnHand?: number | null;
+                averageMonthlyDistribution?: number | null;
               };
             };
             reason?: {

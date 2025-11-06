@@ -22,6 +22,7 @@ export type ItemWithStatsFragment = {
     totalConsumption: number;
     stockOnHand: number;
     monthsOfStockOnHand?: number | null;
+    averageMonthlyDistribution?: number | null;
   };
 };
 
@@ -70,6 +71,7 @@ export type RequestLineFragment = {
       totalConsumption: number;
       stockOnHand: number;
       monthsOfStockOnHand?: number | null;
+      averageMonthlyDistribution?: number | null;
     };
   };
   reason?: {
@@ -154,6 +156,7 @@ export type RequestFragment = {
           totalConsumption: number;
           stockOnHand: number;
           monthsOfStockOnHand?: number | null;
+          averageMonthlyDistribution?: number | null;
         };
       };
       reason?: {
@@ -243,6 +246,7 @@ export const ItemWithStatsFragmentDoc = gql`
       totalConsumption
       stockOnHand
       monthsOfStockOnHand
+      averageMonthlyDistribution
     }
     isVaccine
   }

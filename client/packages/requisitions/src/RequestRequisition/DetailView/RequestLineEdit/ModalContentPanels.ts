@@ -1,5 +1,7 @@
 import {
+  ItemStatsNode,
   LocaleKey,
+  Plugins,
   TypedTFunction,
   ValueInfo,
 } from '@openmsupply-client/common';
@@ -8,17 +10,25 @@ import { DraftRequestLine } from '.';
 export const getLeftPanel = (
   t: TypedTFunction<LocaleKey>,
   draft?: DraftRequestLine | null,
-  showExtraFields: boolean = false
+  showExtraFields: boolean = false,
+  plugins?: Plugins
 ): ValueInfo[] => {
   const base: ValueInfo[] = [
     {
       label: t('label.our-soh'),
       value: draft?.itemStats.availableStockOnHand,
     },
-    {
-      label: t('label.amc/amd'),
-      value: draft?.itemStats.averageMonthlyConsumption,
-    },
+    ...(plugins?.averageMonthlyDistribution?.internalOrderField
+      ? plugins.averageMonthlyDistribution?.internalOrderField(
+          t,
+          draft?.itemStats as ItemStatsNode
+        )
+      : [
+          {
+            label: t('label.amc/amd'),
+            value: draft?.itemStats.averageMonthlyConsumption,
+          },
+        ]),
     {
       label: t('label.months-of-stock'),
       value: draft?.itemStats.availableMonthsOfStockOnHand,

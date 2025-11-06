@@ -8,6 +8,7 @@ import {
   useTranslation,
   ColumnType,
   UnitsAndDosesCell,
+  usePluginProvider,
 } from '@openmsupply-client/common';
 import { ResponseLineFragment, useResponse } from '../api';
 import { useResponseRequisitionLineErrorContext } from '../context';
@@ -19,6 +20,7 @@ export const useResponseColumns = () => {
 
   const { getError } = useResponseRequisitionLineErrorContext();
   const { manageVaccinesInDoses, warningForExcessRequest } = usePreferences();
+  const { plugins } = usePluginProvider();
 
   const { store } = useAuthContext();
   const { isRemoteAuthorisation } = useResponse.utils.isRemoteAuthorisation();
@@ -261,6 +263,7 @@ export const useResponseColumns = () => {
         Cell: UnitsAndDosesCell,
         enableSorting: true,
       },
+      ...(plugins?.averageMonthlyDistribution?.requisitionAmdColumn(t) || []),
     ],
     [
       showExtraProgramColumns,
@@ -268,6 +271,7 @@ export const useResponseColumns = () => {
       t,
       manageVaccinesInDoses,
       programName,
+      plugins.averageMonthlyDistribution?.requisitionAmdColumn,
     ]
   );
 

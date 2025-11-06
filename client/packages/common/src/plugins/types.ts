@@ -1,9 +1,13 @@
 import {
   ColumnDef,
-  ColumnDefinition,
+  ItemStatsNode,
+  LocaleKey,
+  TypedTFunction,
   UsePluginEvents,
+  ValueInfo,
 } from '@openmsupply-client/common';
 import {
+  ItemWithStatsFragment,
   RequestFragment,
   RequestLineFragment,
   StockLineRowFragment,
@@ -41,7 +45,19 @@ export type Plugins = {
     }>[];
   };
   averageMonthlyDistribution?: {
-    responseTableColumn: ColumnDefinition<ResponseLineFragment>[];
+    requisitionAmdColumn: (
+      t: TypedTFunction<LocaleKey>
+    ) => ColumnDef<ResponseLineFragment>[];
+    internalOrderAmdColumn: (
+      t: TypedTFunction<LocaleKey>
+    ) => ColumnDef<RequestLineFragment>[];
+    editViewField: React.ComponentType<{
+      currentItem: ItemWithStatsFragment;
+    }>[];
+    internalOrderField: (
+      t: TypedTFunction<LocaleKey>,
+      itemStats?: ItemStatsNode
+    ) => ValueInfo[];
   };
 };
 
