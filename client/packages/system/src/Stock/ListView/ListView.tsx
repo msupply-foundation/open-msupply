@@ -111,7 +111,8 @@ export const StockListView: FC = () => {
       {
         id: 'vvmStatus',
         header: t('label.vvm-status'),
-        accessorKey: 'vvmStatus?.description',
+        accessorFn: row => row.vvmStatus?.description ?? '',
+        Cell: TextWithTooltipCell,
         size: 150,
         defaultHideOnMobile: true,
         includeColumn: manageVvmStatusForStock,
@@ -119,7 +120,8 @@ export const StockListView: FC = () => {
       },
 
       {
-        accessorKey: 'location.code',
+        id: 'location.code',
+        accessorFn: row => row.location?.code || '',
         header: t('label.location'),
         Cell: TextWithTooltipCell,
         size: 100,
