@@ -33,12 +33,14 @@ export const useLedgerColumns = () => {
         header: t('label.date'),
         columnType: ColumnType.Date,
         enableSorting: true,
+        size: 100,
       },
       {
         accessorKey: ColumnKey.Time,
         header: t('label.time'),
         accessorFn: row => localisedTime(row.datetime),
         enableSorting: true,
+        size: 80,
       },
       {
         accessorKey: ColumnKey.Name,
@@ -71,6 +73,6 @@ export const useLedgerColumns = () => {
         enableSorting: true,
       },
     ],
-    [localisedTime]
+    [getInvoiceLocalisationKey]
   );
 };

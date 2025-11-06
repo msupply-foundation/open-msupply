@@ -111,7 +111,7 @@ const getFilterState = <T extends MRT_RowData>(
   return (
     Object.entries(urlQuery)
       // Ignore sort params from URL
-      .filter(([id]) => id !== 'sort' && id !== 'dir')
+      .filter(([id]) => id !== 'sort' && id !== 'dir' && id !== 'tab')
       .map(([urlKey, val]) => {
         const column = columns.find(col => col.filterKey === urlKey);
         const id = column?.id || column?.accessorKey || urlKey;

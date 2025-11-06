@@ -22,9 +22,9 @@ export const LedgerTable = ({ stockLine }: LedgerTableProps) => {
     tableId: 'stockline-ledger',
     columns,
     data: data?.nodes,
+    initialSort: { key: 'datetime', dir: 'desc' },
     isError,
     isLoading: isFetching,
-    initialSort: { key: 'itemName', dir: 'asc' },
     enableRowSelection: false,
     noDataElement: <NothingHere body={t('messages.no-ledger')} />,
   });
