@@ -44,6 +44,7 @@ export const LoginLayout = ({
           },
           backgroundImage: (theme: Theme) => theme.mixins.gradient.primary,
           backgroundSize: (theme: Theme) => theme.mixins.gradient.size,
+          backgroundPosition: (theme: Theme) => theme.mixins.gradient.position,
           padding: '0 5% 7%',
         })}
         display="flex"

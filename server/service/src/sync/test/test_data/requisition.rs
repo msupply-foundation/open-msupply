@@ -1,6 +1,7 @@
 use super::{TestSyncIncomingRecord, TestSyncOutgoingRecord};
 use crate::sync::translations::requisition::{
-    LegacyAuthorisationStatus, LegacyRequisitionRow, LegacyRequisitionStatus, LegacyRequisitionType,
+    LegacyAuthorisationStatus, LegacyRequisitionRow, LegacyRequisitionStatus,
+    LegacyRequisitionType, OmsFields,
 };
 use chrono::NaiveDate;
 use repository::{
@@ -47,7 +48,11 @@ const REQUISITION_REQUEST: (&str, &str) = (
       "om_expected_delivery_date": "0000-00-00", 
       "om_max_months_of_stock": 0,
       "om_status": "",
-      "om_colour": "" 
+      "om_colour": "",
+      "oms_fields": {
+        "created_from_requisition_id": "created_from_id",
+        "original_customer_id": "name1"
+      }
     }"#,
 );
 fn requisition_request_pull_record() -> TestSyncIncomingRecord {
@@ -85,6 +90,8 @@ fn requisition_request_pull_record() -> TestSyncIncomingRecord {
             period_id: None,
             order_type: None,
             is_emergency: false,
+            created_from_requisition_id: Some("created_from_id".to_string()),
+            original_customer_id: Some("name1".to_string()),
         },
     )
 }
@@ -129,6 +136,10 @@ fn requisition_request_push_record() -> TestSyncOutgoingRecord {
             periodID: None,
             programID: None,
             is_emergency: false,
+            oms_fields: Some(OmsFields {
+                created_from_requisition_id: Some("created_from_id".to_string()),
+                original_customer_id: Some("name1".to_string())
+            }),
         }),
     }
 }
@@ -162,7 +173,8 @@ const REQUISITION_RESPONSE: (&str, &str) = (
       "programID": "F36DBBC6DBCA4528BDA2403CE07CB44F",
       "lastModifiedAt": 1594271180,
       "is_emergency": true,
-      "isRemoteOrder": false
+      "isRemoteOrder": false,
+      "oms_fields": {}
     }"#,
 );
 fn requisition_response_pull_record() -> TestSyncIncomingRecord {
@@ -200,6 +212,8 @@ fn requisition_response_pull_record() -> TestSyncIncomingRecord {
             period_id: Some("641A3560C84A44BC9E6DDC01F3D75923".to_string()),
             order_type: Some("Normal".to_string()),
             is_emergency: true,
+            created_from_requisition_id: None,
+            original_customer_id: None,
         },
     )
 }
@@ -244,6 +258,7 @@ fn requisition_response_push_record() -> TestSyncOutgoingRecord {
             periodID: Some("641A3560C84A44BC9E6DDC01F3D75923".to_string()),
             programID: Some("missing_program".to_string()),
             is_emergency: true,
+            oms_fields: None,
         }),
     }
 }
@@ -284,7 +299,8 @@ const REQUISITION_OM_FIELDS: (&str, &str) = (
       "om_expected_delivery_date": "2022-03-26",
       "om_max_months_of_stock": 10,
       "om_status": "NEW",
-      "om_colour": "Colour" 
+      "om_colour": "Colour",
+      "oms_fields": {}    
     }"#,
 );
 fn requisition_om_fields_pull_record() -> TestSyncIncomingRecord {
@@ -327,6 +343,8 @@ fn requisition_om_fields_pull_record() -> TestSyncIncomingRecord {
             period_id: Some("641A3560C84A44BC9E6DDC01F3D75923".to_string()),
             order_type: Some("Normal".to_string()),
             is_emergency: false,
+            created_from_requisition_id: None,
+            original_customer_id: None,
         },
     )
 }
@@ -376,6 +394,7 @@ fn requisition_om_fields_push_record() -> TestSyncOutgoingRecord {
             periodID: Some("641A3560C84A44BC9E6DDC01F3D75923".to_string()),
             programID: None,
             is_emergency: false,
+            oms_fields: None,
         }),
     }
 }
@@ -416,7 +435,8 @@ const PROGRAM_REQUISITION_REQUEST: (&str, &str) = (
       "om_expected_delivery_date": "0000-00-00", 
       "om_max_months_of_stock": 0,
       "om_status": "",
-      "om_colour": "" 
+      "om_colour": "" ,
+      "oms_fields": {}
     }"#,
 );
 fn program_requisition_request_pull_record() -> TestSyncIncomingRecord {
@@ -454,6 +474,8 @@ fn program_requisition_request_pull_record() -> TestSyncIncomingRecord {
             period_id: Some("772B3984DBA14A5F941ED0EF857FDB31".to_string()),
             order_type: Some("Normal".to_string()),
             is_emergency: false,
+            created_from_requisition_id: None,
+            original_customer_id: None,
         },
     )
 }
@@ -498,6 +520,7 @@ fn program_requisition_request_push_record() -> TestSyncOutgoingRecord {
             periodID: Some("772B3984DBA14A5F941ED0EF857FDB31".to_string()),
             programID: Some("missing_program".to_string()),
             is_emergency: false,
+            oms_fields: None,
         }),
     }
 }

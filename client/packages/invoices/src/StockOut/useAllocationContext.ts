@@ -21,7 +21,7 @@ import {
   unitsToQuantity,
 } from '.';
 import { allocateQuantities } from './allocateQuantities';
-import { VvmStatusFragment } from 'packages/system/src/Stock/api';
+import { VvmStatusFragment } from '@openmsupply-client/system';
 
 /**
  * Allocation can be in units, doses, or packs of a specific size.

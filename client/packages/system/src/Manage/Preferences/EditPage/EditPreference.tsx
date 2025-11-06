@@ -18,17 +18,19 @@ import {
 } from '../Components/EnumOptions';
 import { EditCustomTranslations } from '../Components/CustomTranslations/CustomTranslationsModal';
 
-export const EditPreference = ({
-  preference,
-  update,
-  disabled = false,
-}: {
+interface EditPreferenceProps {
   preference: PreferenceDescriptionNode;
   update: (
     input: UpsertPreferencesInput[keyof UpsertPreferencesInput]
   ) => Promise<boolean>;
   disabled?: boolean;
-}) => {
+}
+
+export const EditPreference = ({
+  preference,
+  update,
+  disabled = false,
+}: EditPreferenceProps) => {
   const t = useTranslation();
   const { error } = useNotification();
 
@@ -71,7 +73,13 @@ export const EditPreference = ({
       if (!isNumber(preference.value)) {
         return t('error.something-wrong');
       }
-      return <NumericTextInput value={value} onChange={handleChange} />;
+      return (
+        <NumericTextInput
+          value={value}
+          onChange={handleChange}
+          onBlur={() => {}}
+        />
+      );
 
     case PreferenceValueNodeType.MultiChoice:
       if (!Array.isArray(value)) {

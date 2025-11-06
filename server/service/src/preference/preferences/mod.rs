@@ -32,6 +32,26 @@ pub mod requisition_auto_finalise;
 pub use requisition_auto_finalise::*;
 pub mod warning_for_excess_request;
 pub use warning_for_excess_request::*;
+pub mod can_create_internal_order_from_a_requisition;
+pub use can_create_internal_order_from_a_requisition::*;
+pub mod select_destination_store_for_an_internal_order;
+pub use select_destination_store_for_an_internal_order::*;
+pub mod number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products;
+pub use number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products::*;
+pub mod number_of_months_threshold_to_show_low_stock_alerts_for_products;
+pub use number_of_months_threshold_to_show_low_stock_alerts_for_products::*;
+pub mod first_threshold_for_expiring_items;
+pub use first_threshold_for_expiring_items::*;
+pub mod second_threshold_for_expiring_items;
+pub use second_threshold_for_expiring_items::*;
+pub mod use_days_in_month;
+pub use use_days_in_month::*;
+pub mod adjust_for_number_of_days_out_of_stock;
+pub use adjust_for_number_of_days_out_of_stock::*;
+pub mod days_in_month;
+pub use days_in_month::*;
+pub mod exclude_transfers;
+pub use exclude_transfers::*;
 
 pub struct PreferenceProvider {
     // Global preferences
@@ -44,6 +64,10 @@ pub struct PreferenceProvider {
     pub show_contact_tracing: ShowContactTracing,
     pub sync_records_display_threshold: SyncRecordsDisplayThreshold,
     pub warning_for_excess_request: WarningForExcessRequest,
+    pub use_days_in_month: UseDaysInMonth,
+    pub adjust_for_number_of_days_out_of_stock: AdjustForNumberOfDaysOutOfStock,
+    pub days_in_month: DaysInMonth,
+    pub exclude_transfers: ExcludeTransfers,
     // Store preferences
     pub manage_vaccines_in_doses: ManageVaccinesInDoses,
     pub manage_vvm_status_for_stock: ManageVvmStatusForStock,
@@ -53,6 +77,14 @@ pub struct PreferenceProvider {
     pub use_simplified_mobile_ui: UseSimplifiedMobileUi,
     pub requisition_auto_finalise: RequisitionAutoFinalise,
     pub disable_manual_returns: DisableManualReturns,
+    pub can_create_internal_order_from_a_requisition: CanCreateInternalOrderFromARequisition,
+    pub select_destination_store_for_an_internal_order: SelectDestinationStoreForAnInternalOrder,
+    pub number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products:
+        NumberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts,
+    pub number_of_months_threshold_to_show_low_stock_alerts_for_products:
+        NumberOfMonthsThresholdToShowLowStockAlertsForProducts,
+    pub first_threshold_for_expiring_items: FirstThresholdForExpiringItems,
+    pub second_threshold_for_expiring_items: SecondThresholdForExpiringItems,
 }
 
 pub fn get_preference_provider() -> PreferenceProvider {
@@ -67,6 +99,10 @@ pub fn get_preference_provider() -> PreferenceProvider {
         sync_records_display_threshold: SyncRecordsDisplayThreshold,
         prevent_transfers_months_before_initialisation: PreventTransfersMonthsBeforeInitialisation,
         warning_for_excess_request: WarningForExcessRequest,
+        use_days_in_month: UseDaysInMonth,
+        adjust_for_number_of_days_out_of_stock: AdjustForNumberOfDaysOutOfStock,
+        days_in_month: DaysInMonth,
+        exclude_transfers: ExcludeTransfers,
         // Store preferences
         manage_vaccines_in_doses: ManageVaccinesInDoses,
         manage_vvm_status_for_stock: ManageVvmStatusForStock,
@@ -76,5 +112,13 @@ pub fn get_preference_provider() -> PreferenceProvider {
         use_simplified_mobile_ui: UseSimplifiedMobileUi,
         disable_manual_returns: DisableManualReturns,
         requisition_auto_finalise: RequisitionAutoFinalise,
+        can_create_internal_order_from_a_requisition: CanCreateInternalOrderFromARequisition,
+        select_destination_store_for_an_internal_order: SelectDestinationStoreForAnInternalOrder,
+        number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products:
+            NumberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts,
+        number_of_months_threshold_to_show_low_stock_alerts_for_products:
+            NumberOfMonthsThresholdToShowLowStockAlertsForProducts,
+        first_threshold_for_expiring_items: FirstThresholdForExpiringItems,
+        second_threshold_for_expiring_items: SecondThresholdForExpiringItems,
     }
 }
