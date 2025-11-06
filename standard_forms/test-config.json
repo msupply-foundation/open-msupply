@@ -1,0 +1,24 @@
+{
+  "//": "Copy to test-config.json and edit as needed",
+
+  "//": "data_id is used for forms, the record ID to generate the form for",
+  "data_id": "019a4e67-28ff-76be-8f4f-73ff5c4a636f",
+  "store_id": "5857BD1A990B43EDB0F65D8A7BB229CD",
+
+  "//": "Server login details",
+  "url": "http://localhost:8000",
+  "username": "ujwal",
+  "password": "ujwal",
+
+  "//": "Arguments for standard reports",
+  "arguments": {
+    "monthlyConsumptionLookBackPeriod": 3,
+    "monthsOverstock": 6,
+    "monthsUnderstock": 3,
+    "monthsItemsExpire": 3,
+    "timezone": "Pacific/Auckland"
+  },
+
+  "//": "Output file name",
+  "output_filename": "report_to_show"
+}

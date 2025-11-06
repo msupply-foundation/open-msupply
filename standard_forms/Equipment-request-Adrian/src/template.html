@@ -1,0 +1,129 @@
+<style>
+  {% include "style.css" %}
+</style>
+
+<!-- At the top of template.html -->
+{% macro formatDate(datetime) %}
+  {% if datetime %}
+    {{ datetime | date(format="%d/%m/%Y") }}
+  {% else %}
+    N/A
+  {% endif %}
+{% endmacro %}
+
+{% macro formatCurrency(amount) %}
+  {% if amount %}
+    ${{ amount | round(precision=2) }}
+  {% else %}
+    $0.00
+  {% endif %}
+{% endmacro %}
+
+{% macro priorityBadge(quantity) %}
+  {% if quantity > 100 %}
+    <span class="priority high">HIGH</span>
+  {% elif quantity > 50 %}
+    <span class="priority medium">MEDIUM</span>
+  {% else %}
+    <span class="priority low">LOW</span>
+  {% endif %}
+{% endmacro %}
+
+<!-- Using the macros -->
+<div class="dates">
+  <p>Created: {{ self::formatDate(datetime=data.requisition.createdDatetime) }}</p>
+  <p>Updated: {{ self::formatDate(datetime=data.requisition.finalisedDatetime) }}</p>
+</div>
+
+{% set_global total_items = 0 %}
+{% set_global high_priority_items = 0 %}
+
+<div class="equipment_request">
+  <table class="items_table">
+  <thead>
+    <tr class="table_header">
+      <th>Line #</th>
+      <th>Item Code</th>
+      <th>Item Name</th>
+      <th>Requested Qty</th>
+      <th>Priority</th>
+      <th>Status</th>
+      <th>Est. Cost</th>
+      <th>Line Total</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for line in data.requisition.lines.nodes %}
+
+    {% set_global total_items = total_items + line.requestedQuantity %}
+    {% if line.requestedQuantity > 100 %}
+      {% set_global high_priority_items = high_priority_items + 1 %}
+    {% endif %}
+    
+    {% set estimated_cost = 25.00 %} <!-- This would come from item data -->
+    {% set line_total = line.requestedQuantity * estimated_cost %}
+
+    <tr class="item_row {% if loop.index is odd %}odd{% else %}even{% endif %}">
+      <td class="line_number">{{ loop.index }}</td>
+      <td>{{ line.item.code }}</td>
+      <td>{{ line.item.name }}</td>
+            <td class="quantity">
+        {{ line.requestedQuantity | default(value=0) }}
+      </td>
+      <td class="priority">{{ self::priorityBadge(quantity=line.requestedQuantity) }}</td>
+      <td class="status">
+        {% if line.requestedQuantity %}
+          REQUESTED
+        {% else %}
+          PENDING
+        {% endif %}
+      </td>
+      <td class="cost">{{ self::formatCurrency(amount=estimated_cost) }}</td>
+      <td class="total">{{ self::formatCurrency(amount=line_total) }}</td>
+    </tr>
+    {% endfor %}
+    
+    {% if data.requisition.lines.nodes | length == 0 %}
+    <tr>
+      <td colspan="6" class="no_items">No items requested</td>
+    </tr>
+    {% endif %}
+  </tbody>
+</table>
+
+<div class="summary">
+  <h3>Request Summary</h3>
+  <div class="summary_grid">
+    <div class="summary_item">
+      <label>Total Items:</label>
+      <span>{{ total_items }}</span>
+    </div>
+    <div class="summary_item">
+      <label>High Priority Items:</label>
+      <span>{{ high_priority_items }}</span>
+    </div>
+    <div class="summary_item">
+      <label>Total Lines:</label>
+      <span>{{ data.requisition.lines.nodes | length }}</span>
+    </div>
+  </div>
+</div>
+
+  {% if data.requisition.comment %}
+  <div class="comments_section">
+    <h3>Comments:</h3>
+    <p>{{ data.requisition.comment }}</p>
+  </div>
+  {% endif %}
+
+  <div class="signature_section">
+    <div class="signature_box">
+      <p>Requested by: _________________</p>
+      <p>Date: _________________</p>
+    </div>
+    <div class="signature_box">
+      <p>Approved by: _________________</p>
+      <p>Date: _________________</p>
+    </div>
+  </div>
+</div>

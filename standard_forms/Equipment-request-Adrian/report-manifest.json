@@ -1,0 +1,12 @@
+{
+  "is_custom": true,
+  "version": "1.0.0",
+  "code": "equipment-request",
+  "context": "REQUISITION",
+  "name": "Equipment Request",
+  "queries": {
+    "gql": "query.graphql"
+  },
+  "arguments": {},
+  "header": "header.html"
+}

@@ -1,0 +1,50 @@
+<table class="header_section">
+  <tr>
+    <th class="logo_cell">
+      <img class="logo" src="{{ data.store.logo }}" />
+    </th>
+    <th class="store_info">
+      <span class="store_name">{{ data.store.storeName }}</span><br>
+      <span class="address">{{ data.store.name.address1 }}</span><br>
+      <span class="address">{{ data.store.name.address2 }}</span><br>
+      <span class="contact">Phone: {{ data.store.name.phone }}</span><br>
+      <span class="contact">Email: {{ data.store.name.email }}</span>
+    </th>
+    <th class="form_title">
+      <h1>Equipment Request</h1>
+    </th>
+  </tr>
+</table>
+
+<div class="info_row">
+    <span>Request Number: {{ data.requisition.requisitionNumber }}</span>
+    <span>Date: {{ data.requisition.createdDatetime | date(format="%d/%m/%Y") }}</span>
+  </div>
+
+<div class="request_info">
+  {% if data.requisition.status == "DRAFT" %}
+    <div class="status_banner draft">DRAFT - Not Yet Submitted</div>
+  {% elif data.requisition.status == "SENT" %}
+    <div class="status_banner sent">SUBMITTED - Awaiting Approval</div>
+  {% elif data.requisition.status == "FINALISED" %}
+    <div class="status_banner approved">APPROVED</div>
+  {% else %}
+    <div class="status_banner">Status: {{ data.requisition.status }}</div>
+  {% endif %}
+  </div>
+</div>
+
+<!-- Conditional supplier information -->
+{% if data.requisition.otherParty %}
+  <div class="supplier_info">
+    <h3>Supplier Information</h3>
+    <p><strong>{{ data.requisition.otherParty.name }}</strong></p>
+    <p>Code: {{ data.requisition.otherParty.code }}</p>
+    {% if data.requisition.otherParty.address1 %}
+      <p>{{ data.requisition.otherParty.address1 }}</p>
+      {% if data.requisition.otherParty.address2 %}
+        <p>{{ data.requisition.otherParty.address2 }}</p>
+      {% endif %}
+    {% endif %}
+  </div>
+{% endif %}

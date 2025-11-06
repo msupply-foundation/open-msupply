@@ -1,0 +1,39 @@
+query equipmentRequestQuery($storeId: String!, $dataId: String!) {
+  requisition(storeId: $storeId, id: $dataId) {
+    ... on RequisitionNode {
+      id
+      status
+      requisitionNumber
+      createdDatetime
+      finalisedDatetime
+      comment
+      otherParty(storeId: $storeId) {
+        name
+        code
+        address1
+        address2
+      }
+      lines {
+        nodes {
+          requestedQuantity
+          item {
+            code
+            name
+          }
+        }
+      }
+    }
+  }
+  store(id: $storeId) {
+    ... on StoreNode {
+      storeName
+      logo
+      name(storeId: $storeId) {
+        address1
+        address2
+        phone
+        email
+      }
+    }
+  }
+}
