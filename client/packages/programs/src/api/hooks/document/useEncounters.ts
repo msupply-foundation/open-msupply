@@ -5,5 +5,6 @@ export const useEncounters = (params: EncounterListParams) => {
   const api = useEncounterApi();
   return useQuery(api.keys.paramList(params), () => api.list(params), {
     keepPreviousData: true,
+    enabled: !!params?.sortBy?.key,
   });
 };
