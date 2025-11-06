@@ -16,9 +16,15 @@ export type Plugins = {
     ItemFooter?: React.ComponentType<{ itemId: string }>[];
   };
   inboundShipmentAppBar?: React.ComponentType<{ shipment: InboundFragment }>[];
-  internalOrderPrice?: (
-    supplierData?: Partial<NameFragment>
-  ) => ColumnDef<RequestLineFragment>[]; // TODO check correct supplier data and type with supply levels
+  internalOrderPriceComponents?: {
+    internalOrderPrice?: (
+      supplierData?: Partial<NameFragment>
+    ) => ColumnDef<RequestLineFragment>[]; // TODO check correct supplier data and type with supply levels
+    pricingSection?: React.ComponentType<{
+      requisition: RequestFragment;
+    }>[];
+    estimatedLinePrice?: React.ComponentType<{ itemId: string }>[];
+  };
   dashboard?: React.ComponentType[];
   stockLine?: {
     tableStateLoader: React.ComponentType<{

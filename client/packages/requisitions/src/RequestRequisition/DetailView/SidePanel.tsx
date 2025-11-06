@@ -24,6 +24,7 @@ import {
   useNavigate,
   UNDEFINED_STRING_VALUE,
   usePreferences,
+  usePluginProvider,
 } from '@openmsupply-client/common';
 import { useRequest } from '../api';
 import { AppRoute } from '@openmsupply-client/config';
@@ -197,6 +198,7 @@ export const SidePanel: FC = () => {
   const { success } = useNotification();
   const { mutateAsync } = useRequest.document.delete();
   const { data } = useRequest.document.get();
+  const { plugins } = usePluginProvider();
   const canDelete = data?.status === RequisitionNodeStatus.Draft;
 
   const deleteAction = async () => {
@@ -250,6 +252,10 @@ export const SidePanel: FC = () => {
       <ProgramInfoSection />
       <AdditionalInfoSection />
       <RelatedDocumentsSection />
+      {data &&
+        plugins.internalOrderPriceComponents?.pricingSection?.map(
+          (Plugin, index) => <Plugin key={index} requisition={data} />
+        )}
     </DetailPanelPortal>
   );
 };

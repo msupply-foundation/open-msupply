@@ -203,8 +203,8 @@ export const useRequestColumns = (supplierData?: Partial<NameFragment>) => {
 
       // Plugin columns
       ...(plugins.requestRequisitionLine?.tableColumn || []),
-      ...(plugins.internalOrderPrice
-        ? plugins.internalOrderPrice(supplierData)
+      ...(plugins.internalOrderPriceComponents?.internalOrderPrice
+        ? plugins.internalOrderPriceComponents.internalOrderPrice(supplierData)
         : []),
     ],
     [
