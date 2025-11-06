@@ -205,7 +205,7 @@ export const StockListView: FC = () => {
       },
       ...(plugins.stockLine?.tableColumn || []),
     ],
-    [t, manageVvmStatusForStock, plugins.stockLine?.tableColumn]
+    [manageVvmStatusForStock, plugins.stockLine?.tableColumn]
   );
 
   const { table } = usePaginatedMaterialTable<StockLineRowFragment>({
