@@ -52,6 +52,8 @@ pub mod days_in_month;
 pub use days_in_month::*;
 pub mod exclude_transfers;
 pub use exclude_transfers::*;
+pub mod warn_when_missing_recent_stocktake;
+pub use warn_when_missing_recent_stocktake::*;
 
 pub struct PreferenceProvider {
     // Global preferences
@@ -85,6 +87,7 @@ pub struct PreferenceProvider {
         NumberOfMonthsThresholdToShowLowStockAlertsForProducts,
     pub first_threshold_for_expiring_items: FirstThresholdForExpiringItems,
     pub second_threshold_for_expiring_items: SecondThresholdForExpiringItems,
+    pub warn_when_missing_recent_stocktake: WarnWhenMissingRecentStocktake,
 }
 
 pub fn get_preference_provider() -> PreferenceProvider {
@@ -120,5 +123,6 @@ pub fn get_preference_provider() -> PreferenceProvider {
             NumberOfMonthsThresholdToShowLowStockAlertsForProducts,
         first_threshold_for_expiring_items: FirstThresholdForExpiringItems,
         second_threshold_for_expiring_items: SecondThresholdForExpiringItems,
+        warn_when_missing_recent_stocktake: WarnWhenMissingRecentStocktake,
     }
 }

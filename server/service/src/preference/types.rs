@@ -42,6 +42,7 @@ pub enum PrefKey {
     NumberOfMonthsThresholdToShowLowStockAlertsForProducts,
     FirstThresholdForExpiringItems,
     SecondThresholdForExpiringItems,
+    WarnWhenMissingRecentStocktake,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -59,6 +60,7 @@ pub enum PreferenceValueType {
     MultiChoice,
     // specific type to CustomTranslations preference
     CustomTranslations,
+    WarnWhenMissingRecentStocktakeData,
     // String,
     // MultilineString,
     // Add scalar or custom value types here - mapped to frontend renderers
