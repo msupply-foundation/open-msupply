@@ -1,6 +1,7 @@
 import { ColumnDef, UsePluginEvents } from '@openmsupply-client/common';
 import {
   ItemFragment,
+  NameFragment,
   RequestFragment,
   RequestLineFragment,
   StockLineRowFragment,
@@ -17,7 +18,9 @@ export type Plugins = {
   inboundShipmentAppBar?: React.ComponentType<{ shipment: InboundFragment }>[];
   itemSellPrice?: {
     catalogueSellPrice: React.ComponentType<{ item: ItemFragment }>[];
-    internalOrderPrice?: ColumnDef<RequestLineFragment>[];
+    internalOrderPrice?: (
+      supplierData?: Partial<NameFragment>
+    ) => ColumnDef<RequestLineFragment>[]; // TODO check correct supplier data and type with supply levels
   };
   dashboard?: React.ComponentType[];
   stockLine?: {

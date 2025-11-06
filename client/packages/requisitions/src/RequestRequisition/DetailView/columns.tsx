@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { RequestLineFragment } from '../api';
 import {
   useAuthContext,
@@ -12,9 +12,9 @@ import {
 } from '@openmsupply-client/common';
 import { useRequest } from '../api';
 import { useRequestRequisitionLineErrorContext } from '../context';
-import React from 'react';
+import { NameFragment } from '@openmsupply-client/system';
 
-export const useRequestColumns = () => {
+export const useRequestColumns = (supplierData?: Partial<NameFragment>) => {
   const t = useTranslation();
   const { maxMonthsOfStock, programName } = useRequest.document.fields([
     'maxMonthsOfStock',
@@ -211,7 +211,9 @@ export const useRequestColumns = () => {
 
       // Plugin columns
       ...(plugins.requestRequisitionLine?.tableColumn || []),
-      ...(plugins.internalOrderPrice || []),
+      ...(plugins.internalOrderPrice
+        ? plugins.internalOrderPrice(supplierData)
+        : []),
     ],
     [
       manageVaccinesInDoses,
@@ -220,6 +222,7 @@ export const useRequestColumns = () => {
       usesRemoteAuthorisation,
       maxMonthsOfStock,
       plugins.requestRequisitionLine?.tableColumn,
+      supplierData,
       errors,
     ]
   );
