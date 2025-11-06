@@ -11,7 +11,10 @@ import { ColumnKey } from '../../Components/Ledger/useLedgerColumns';
 
 export function useStockLedger(
   stockLine: StockLineRowFragment,
-  sortBy?: SortBy<LedgerRowFragment>
+  sortBy: SortBy<LedgerRowFragment> = {
+    key: ColumnKey.DateTime,
+    direction: 'desc',
+  }
 ) {
   const { stockApi, storeId } = useStockGraphQL();
 
