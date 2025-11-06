@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import {
   ColumnDef,
   EncounterNodeStatus,
@@ -20,7 +20,7 @@ interface useEncounterListColumnsProps {
 
 const useEncounterAdditionalInfoAccessor = () => {
   const t = useTranslation();
-  return (row: EncounterRowFragment): string[] => {
+  return useCallback((row: EncounterRowFragment): string[] => {
     const additionalInfo = getStatusEventData(row.activeProgramEvents.nodes);
 
     if (row?.status === EncounterNodeStatus.Pending) {
@@ -32,7 +32,7 @@ const useEncounterAdditionalInfoAccessor = () => {
     }
 
     return additionalInfo;
-  };
+  }, []);
 };
 
 export const useEncounterListColumns = ({
