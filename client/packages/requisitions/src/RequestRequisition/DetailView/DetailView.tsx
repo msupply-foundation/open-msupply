@@ -86,7 +86,8 @@ export const DetailView = () => {
   const { plugins } = usePluginProvider();
   const isFiltered = !!itemFilter || on;
 
-  const columns = useRequestColumns();
+  // TODO check correct supplier data and type with supply levels
+  const columns = useRequestColumns(data?.otherParty);
 
   const { table, selectedRows } = useNonPaginatedMaterialTable({
     tableId: 'internal-order-detail',
