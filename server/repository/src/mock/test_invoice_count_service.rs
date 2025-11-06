@@ -12,7 +12,7 @@ pub fn mock_inbound_shipment_invoice_count_service_a() -> InvoiceRow {
         invoice_number: 4,
         r#type: InvoiceType::InboundShipment,
         status: InvoiceStatus::New,
-        comment: Some("Sort comment test Ac".to_owned()),
+        comment: Some("Sort comment test Ac".to_string()),
         their_reference: Some(String::from("")),
         created_datetime: NaiveDate::from_ymd_opt(2021, 12, 7)
             .unwrap()
@@ -30,7 +30,7 @@ pub fn mock_inbound_shipment_invoice_count_service_b() -> InvoiceRow {
         invoice_number: 4,
         r#type: InvoiceType::InboundShipment,
         status: InvoiceStatus::New,
-        comment: Some("Sort comment test Ac".to_owned()),
+        comment: Some("Sort comment test Ac".to_string()),
         their_reference: Some(String::from("")),
         created_datetime: NaiveDate::from_ymd_opt(2021, 12, 8)
             .unwrap()

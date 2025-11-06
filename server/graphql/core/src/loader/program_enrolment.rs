@@ -64,7 +64,7 @@ impl Loader<ProgramEnrolmentLoaderInput> for ProgramEnrolmentLoader {
                         None,
                         Some(
                             ProgramEnrolmentFilter::new()
-                                .context_id(EqualFilter::equal_to(&program))
+                                .context_id(EqualFilter::equal_to(program.to_owned()))
                                 .patient_id(EqualFilter::equal_any(patient_id)),
                         ),
                         allowed_ctx.clone(),

@@ -120,7 +120,7 @@ impl StockLineQueries {
         let filter = filter
             .map(StockLineFilter::from)
             .unwrap_or_default()
-            .store_id(EqualFilter::equal_to(&store_id));
+            .store_id(EqualFilter::equal_to(store_id.to_string()));
 
         let stock_lines = service_provider
             .stock_line_service
@@ -166,8 +166,8 @@ impl StockLineQueries {
                     &service_context,
                     None,
                     Some(StockLineFilter {
-                        item_id: Some(EqualFilter::equal_to(&item_id)),
-                        store_id: Some(EqualFilter::equal_to(&store_id)),
+                        item_id: Some(EqualFilter::equal_to(item_id.to_string())),
+                        store_id: Some(EqualFilter::equal_to(store_id.to_string())),
                         is_available: Some(true),
                         ..Default::default()
                     }),

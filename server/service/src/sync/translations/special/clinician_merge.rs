@@ -136,7 +136,7 @@ mod tests {
             .find_many_by_clinician_id("clinician_c")
             .unwrap();
 
-        clinician_links.sort_by_key(|i| i.id.to_owned());
+        clinician_links.sort_by_key(|i| i.id.to_string());
         assert_eq!(clinician_links, expected_clinician_links);
 
         let (_, connection, _, _) = setup_all(
@@ -158,7 +158,7 @@ mod tests {
             .find_many_by_clinician_id("clinician_c")
             .unwrap();
 
-        clinician_links.sort_by_key(|i| i.id.to_owned());
+        clinician_links.sort_by_key(|i| i.id.to_string());
         assert_eq!(clinician_links, expected_clinician_links);
     }
 }

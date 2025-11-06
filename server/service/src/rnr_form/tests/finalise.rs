@@ -156,9 +156,7 @@ mod finalise {
         // Check the internal order (requisition) has been created
 
         let requisition = RequisitionRepository::new(&context.connection)
-            .query_one(RequisitionFilter::new().id(EqualFilter::equal_to(
-                updated_row.linked_requisition_id.as_ref().unwrap(),
-            )))
+            .query_one(RequisitionFilter::new().id(EqualFilter::equal_to(updated_row.linked_requisition_id.as_ref().unwrap().to_owned())))
             .unwrap()
             .unwrap();
 
@@ -179,7 +177,7 @@ mod finalise {
         let requisition_lines = RequisitionLineRepository::new(&context.connection)
             .query_by_filter(
                 RequisitionLineFilter::new()
-                    .requisition_id(EqualFilter::equal_to(&requisition.requisition_row.id)),
+                    .requisition_id(EqualFilter::equal_to(requisition.requisition_row.id.to_string())),
             )
             .unwrap();
 

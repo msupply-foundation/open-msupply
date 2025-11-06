@@ -87,7 +87,7 @@ fn update_encounter_row(
 
     let repo = EncounterRepository::new(con);
     let encounter = repo
-        .query_by_filter(EncounterFilter::new().document_name(EqualFilter::equal_to(&doc.name)))?
+        .query_by_filter(EncounterFilter::new().document_name(EqualFilter::equal_to(doc.name.to_owned())))?
         .pop();
     // Documents are identified by a human readable name. Thus, use hash(name) as an ID.
     // For example, an ID works better in an web URL.
@@ -197,7 +197,7 @@ mod encounter_document_updated_test {
                 .events(
                     &context,
                     None,
-                    Some(ProgramEventFilter::new().patient_id(EqualFilter::equal_to(&patient.id))),
+                    Some(ProgramEventFilter::new().patient_id(EqualFilter::equal_to(patient.id.to_string()))),
                     None,
                     None,
                 )
@@ -241,7 +241,7 @@ mod encounter_document_updated_test {
                 .events(
                     &context,
                     None,
-                    Some(ProgramEventFilter::new().patient_id(EqualFilter::equal_to(&patient.id))),
+                    Some(ProgramEventFilter::new().patient_id(EqualFilter::equal_to(patient.id.to_string()))),
                     None,
                     None,
                 )

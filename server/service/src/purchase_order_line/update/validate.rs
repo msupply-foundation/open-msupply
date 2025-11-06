@@ -17,7 +17,9 @@ pub fn validate(
     user_has_permission: Option<bool>,
 ) -> Result<PurchaseOrderLineRow, UpdatePurchaseOrderLineInputError> {
     let purchase_order_line = PurchaseOrderLineRepository::new(connection)
-        .query_by_filter(PurchaseOrderLineFilter::new().id(EqualFilter::equal_to(&input.id)))?
+        .query_by_filter(
+            PurchaseOrderLineFilter::new().id(EqualFilter::equal_to(input.id.to_string())),
+        )?
         .pop()
         .ok_or(UpdatePurchaseOrderLineInputError::PurchaseOrderLineNotFound)?;
     let line = purchase_order_line.purchase_order_line_row.clone();
@@ -82,15 +84,19 @@ pub fn validate(
         Pagination::all(),
         Some(
             PurchaseOrderLineFilter::new()
-                .id(EqualFilter::not_equal_to(&input.id))
-                .purchase_order_id(EqualFilter::equal_to(&purchase_order.id))
-                .requested_pack_size(EqualFilter::equal_to_f64(
+                .id(EqualFilter::not_equal_to(input.id.to_string()))
+                .purchase_order_id(EqualFilter::equal_to(purchase_order.id.to_string()))
+                .requested_pack_size(EqualFilter::equal_to(
                     input
                         .requested_pack_size
                         .unwrap_or(line.requested_pack_size),
                 ))
                 .item_id(EqualFilter::equal_to(
-                    &input.item_id.clone().unwrap_or(line.item_link_id.clone()),
+                    input
+                        .item_id
+                        .clone()
+                        .unwrap_or(line.item_link_id.clone())
+                        .to_owned(),
                 )),
         ),
         None,

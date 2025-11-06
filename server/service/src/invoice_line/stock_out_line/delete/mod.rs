@@ -121,7 +121,7 @@ mod test {
             service.delete_stock_out_line(
                 &context,
                 DeleteStockOutLine {
-                    id: "invalid".to_owned(),
+                    id: "invalid".to_string(),
                     r#type: Some(StockOutType::OutboundShipment)
                 },
             ),

@@ -114,8 +114,8 @@ fn name_1() -> TestSyncIncomingRecord {
         NAME_1,
         NameRow {
             id: NAME_1.0.to_owned(),
-            name: "General".to_owned(),
-            code: "GEN".to_owned(),
+            name: "General".to_string(),
+            code: "GEN".to_string(),
             r#type: NameRowType::Patient,
             is_supplier: true,
             is_customer: true,
@@ -264,8 +264,8 @@ fn name_2() -> TestSyncIncomingRecord {
         NAME_2,
         NameRow {
             id: NAME_2.0.to_owned(),
-            name: "Birch Store".to_owned(),
-            code: "SNA".to_owned(),
+            name: "Birch Store".to_string(),
+            code: "SNA".to_string(),
             r#type: NameRowType::Facility,
             is_customer: true,
             is_supplier: false,
@@ -408,8 +408,8 @@ fn name_3() -> TestSyncIncomingRecord {
         NAME_3,
         NameRow {
             id: NAME_3.0.to_owned(),
-            name: "Birch Store 2".to_owned(),
-            code: "SNA".to_owned(),
+            name: "Birch Store 2".to_string(),
+            code: "SNA".to_string(),
             r#type: NameRowType::Facility,
             is_customer: true,
             is_supplier: false,
@@ -602,8 +602,8 @@ fn name_push_record_1() -> TestSyncOutgoingRecord {
         record_id: NAME_1.0.to_string(),
         push_data: json!(LegacyNameRow {
             id: NAME_1.0.to_owned(),
-            name: "General".to_owned(),
-            code: "GEN".to_owned(),
+            name: "General".to_string(),
+            code: "GEN".to_string(),
             r#type: LegacyNameRowType::Patient,
             is_supplier: true,
             is_customer: true,

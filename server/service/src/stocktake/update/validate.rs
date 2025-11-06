@@ -101,7 +101,7 @@ fn check_stock_lines_reduced_to_zero(
             {
                 let stock_line = StockLineRepository::new(connection)
                     .query_by_filter(
-                        StockLineFilter::new().id(EqualFilter::equal_to(&stock_line_row.id)),
+                        StockLineFilter::new().id(EqualFilter::equal_to(stock_line_row.id.to_string())),
                         None,
                     )?
                     .pop()
@@ -124,7 +124,7 @@ fn load_stocktake_lines(
     store_id: &str,
 ) -> Result<Vec<StocktakeLine>, RepositoryError> {
     StocktakeLineRepository::new(connection).query_by_filter(
-        StocktakeLineFilter::new().stocktake_id(EqualFilter::equal_to(stocktake_id)),
+        StocktakeLineFilter::new().stocktake_id(EqualFilter::equal_to(stocktake_id.to_string())),
         Some(store_id.to_string()),
     )
 }

@@ -69,7 +69,7 @@ impl<'a> UserAccountService<'a> {
 
                 let permissions_to_delete = UserPermissionRepository::new(con).query_by_filter(
                     UserPermissionFilter::new()
-                        .user_id(EqualFilter::equal_to(&user.id))
+                        .user_id(EqualFilter::equal_to(user.id.to_string()))
                         .has_context(false),
                 )?;
                 for permission in permissions_to_delete {
@@ -169,9 +169,9 @@ impl<'a> UserAccountService<'a> {
         let repo = UserRepository::new(self.connection);
         repo.query_one(
             UserFilter::new()
-                .id(EqualFilter::equal_to(user_id))
-                .hashed_password(EqualFilter::not_equal_to(""))
-                .site_id(EqualFilter::equal_to_i32(site_id)),
+                .id(EqualFilter::equal_to(user_id.to_string()))
+                .hashed_password(EqualFilter::not_equal_to("".to_string()))
+                .site_id(EqualFilter::equal_to(site_id)),
         )
     }
 
@@ -281,7 +281,7 @@ mod user_account_test {
 
         // some base line test that there is actually some data in the DB
         let user = user_repo
-            .query_by_filter(UserFilter::new().id(EqualFilter::equal_to(&mock_user_account_a().id)))
+            .query_by_filter(UserFilter::new().id(EqualFilter::equal_to(mock_user_account_a().id)))
             .unwrap()
             .pop()
             .unwrap();
@@ -289,7 +289,7 @@ mod user_account_test {
         let permissions = user_permission_repo
             .query_by_filter(
                 UserPermissionFilter::new()
-                    .user_id(EqualFilter::equal_to(&mock_user_account_a().id)),
+                    .user_id(EqualFilter::equal_to(mock_user_account_a().id)),
             )
             .unwrap();
         assert!(permissions.len() > 1);
@@ -321,7 +321,7 @@ mod user_account_test {
             )
             .unwrap();
         let user = user_repo
-            .query_by_filter(UserFilter::new().id(EqualFilter::equal_to(&mock_user_account_a().id)))
+            .query_by_filter(UserFilter::new().id(EqualFilter::equal_to(mock_user_account_a().id)))
             .unwrap()
             .pop()
             .unwrap();
@@ -329,14 +329,14 @@ mod user_account_test {
         let permissions = user_permission_repo
             .query_by_filter(
                 UserPermissionFilter::new()
-                    .user_id(EqualFilter::equal_to(&mock_user_account_a().id)),
+                    .user_id(EqualFilter::equal_to(mock_user_account_a().id)),
             )
             .unwrap();
         // new permission + context permission
         assert!(permissions.len() == 2);
         // test that other user is still there
         let user = user_repo
-            .query_by_filter(UserFilter::new().id(EqualFilter::equal_to(&mock_user_account_b().id)))
+            .query_by_filter(UserFilter::new().id(EqualFilter::equal_to(mock_user_account_b().id)))
             .unwrap()
             .pop()
             .unwrap();
@@ -344,7 +344,7 @@ mod user_account_test {
         let permissions = user_permission_repo
             .query_by_filter(
                 UserPermissionFilter::new()
-                    .user_id(EqualFilter::equal_to(&mock_user_account_b().id)),
+                    .user_id(EqualFilter::equal_to(mock_user_account_b().id)),
             )
             .unwrap();
         assert!(!permissions.is_empty());

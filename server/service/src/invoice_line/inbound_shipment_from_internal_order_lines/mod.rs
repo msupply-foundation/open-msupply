@@ -314,7 +314,7 @@ mod test {
         } = InvoiceLineRepository::new(&connection)
             .query_by_filter(
                 InvoiceLineFilter::new()
-                    .invoice_id(EqualFilter::equal_to(&invoice_linked_to_requisition().id)),
+                    .invoice_id(EqualFilter::equal_to(invoice_linked_to_requisition().id)),
             )
             .unwrap()
             .pop()

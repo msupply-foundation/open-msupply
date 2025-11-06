@@ -30,7 +30,7 @@ pub fn delete_rnr_form(ctx: &ServiceContext, input: DeleteRnRForm) -> Result<Str
             validate(connection, &ctx.store_id, &input)?;
 
             let lines = RnRFormLineRepository::new(connection).query_by_filter(
-                RnRFormLineFilter::new().rnr_form_id(EqualFilter::equal_to(&input.id)),
+                RnRFormLineFilter::new().rnr_form_id(EqualFilter::equal_to(input.id.to_string())),
             )?;
 
             for line in lines {
@@ -111,7 +111,7 @@ mod test_delete {
             service.delete_rnr_form(
                 &context,
                 DeleteRnRForm {
-                    id: "invalid".to_owned(),
+                    id: "invalid".to_string(),
                 },
             ),
             Err(ServiceError::RnRFormDoesNotExist)

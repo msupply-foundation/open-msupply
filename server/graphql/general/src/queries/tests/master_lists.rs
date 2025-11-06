@@ -78,10 +78,10 @@ mod graphql {
         let test_service = TestService(Box::new(|_, _, _| {
             Ok(ListResult {
                 rows: vec![MasterList {
-                    id: "master_list_master_list_line_filter_test".to_owned(),
-                    name: "test_name".to_owned(),
-                    code: "test_code".to_owned(),
-                    description: "test_description".to_owned(),
+                    id: "master_list_master_list_line_filter_test".to_string(),
+                    name: "test_name".to_string(),
+                    code: "test_code".to_string(),
+                    description: "test_description".to_string(),
                     is_active: true,
                     is_default_price_list: false,
                     discount_percentage: None,
@@ -175,17 +175,17 @@ mod graphql {
                 filter,
                 Some(
                     MasterListFilter::new()
-                        .id(EqualFilter::equal_to("test_id_filter"))
+                        .id(EqualFilter::equal_to("test_id_filter".to_string()))
                         .name(StringFilter::equal_to("name_filter"))
                         .code(StringFilter::equal_to("code_filter"))
                         .description(StringFilter {
-                            equal_to: Some("description_filter_1".to_owned()),
-                            like: Some("description_filter_2".to_owned()),
+                            equal_to: Some("description_filter_1".to_string()),
+                            like: Some("description_filter_2".to_string()),
                             ..Default::default()
                         })
                         .exists_for_name(StringFilter::like("exists_for_name_filter"))
-                        .exists_for_name_id(EqualFilter::not_equal_to("test_name_id_filter"))
-                        .exists_for_store_id(EqualFilter::equal_to("store_a"))
+                        .exists_for_name_id(EqualFilter::not_equal_to("test_name_id_filter".to_string()))
+                        .exists_for_store_id(EqualFilter::equal_to("store_a".to_string()))
                         .is_program(false)
                 )
             );
