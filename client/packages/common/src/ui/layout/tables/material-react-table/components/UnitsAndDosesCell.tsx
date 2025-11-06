@@ -8,8 +8,12 @@ import {
   UNDEFINED_STRING_VALUE,
   AlertIcon,
 } from '@openmsupply-client/common';
-import { ItemRowFragment } from '@openmsupply-client/system';
 import { MRT_Cell, MRT_Row, MRT_RowData } from 'material-react-table';
+
+interface ItemData {
+  doses?: number;
+  isVaccine?: boolean;
+}
 
 export const UnitsAndDosesCell = <T extends MRT_RowData>({
   cell,
@@ -17,7 +21,7 @@ export const UnitsAndDosesCell = <T extends MRT_RowData>({
   showAlert,
 }: {
   cell: MRT_Cell<T>;
-  row: MRT_Row<T & { item: ItemRowFragment }>;
+  row: MRT_Row<T & { item: ItemData }>;
   showAlert?: boolean;
 }) => {
   const t = useTranslation();
@@ -29,7 +33,7 @@ export const UnitsAndDosesCell = <T extends MRT_RowData>({
 
   // Doses should always be a whole number, round if fractional packs are giving
   // us funky decimals
-  const doseCount = format(item.doses * (value ?? 0), {
+  const doseCount = format(item.doses ?? 0 * (value ?? 0), {
     maximumFractionDigits: 0,
   });
 

@@ -11,7 +11,10 @@ import { ColumnKey } from '../../Components/Ledger/useLedgerColumns';
 
 export function useStockLedger(
   stockLine: StockLineRowFragment,
-  sortBy: SortBy<LedgerRowFragment>
+  sortBy: SortBy<LedgerRowFragment> = {
+    key: ColumnKey.DateTime,
+    direction: 'desc',
+  }
 ) {
   const { stockApi, storeId } = useStockGraphQL();
 
@@ -24,8 +27,8 @@ export function useStockLedger(
 
     const query = await stockApi.ledger({
       storeId,
-      key: getSortKey(sortBy.key),
-      desc: sortBy.direction === 'desc',
+      key: getSortKey(sortBy?.key || ColumnKey.DateTime),
+      desc: sortBy?.direction === 'desc',
       filter,
     });
     const { nodes, totalCount } = query?.ledger;

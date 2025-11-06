@@ -336,6 +336,12 @@ export const QuantityTableComponent = ({
     ];
     return cols;
   }, [
+    isDisabled,
+    updateDraftLine,
+    setPackRoundingMessage,
+    format,
+    unitName,
+    pluralisedUnitName,
     displayInDoses,
     hasItemVariantsEnabled,
     hasVvmStatusesEnabled,
