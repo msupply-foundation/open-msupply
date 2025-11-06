@@ -153,7 +153,7 @@ impl InvoiceTransferProcessor for UpdateInboundInvoiceProcessor {
             updated_inbound_invoice.id,
             lines_to_delete
                 .into_iter()
-                .map(|l| l.invoice_row.id)
+                .map(|l| l.invoice_line_row.id)
                 .collect::<Vec<String>>(),
             new_inbound_lines
                 .into_iter()
