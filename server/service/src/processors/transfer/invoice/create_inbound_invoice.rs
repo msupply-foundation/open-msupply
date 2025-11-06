@@ -12,6 +12,7 @@ use crate::{
     number::next_number,
     preference::{Preference, PreventTransfersMonthsBeforeInitialisation},
     processors::transfer::invoice::InvoiceTransferOutput,
+    service_provider::ServiceProvider,
     store_preference::get_store_preferences,
 };
 
@@ -49,6 +50,7 @@ impl InvoiceTransferProcessor for CreateInboundInvoiceProcessor {
     fn try_process_record(
         &self,
         connection: &StorageConnection,
+        _service_provider: &ServiceProvider,
         record_for_processing: &InvoiceTransferProcessorRecord,
     ) -> Result<InvoiceTransferOutput, RepositoryError> {
         // Check can execute
@@ -395,7 +397,7 @@ mod test {
             other_party_store_id: "store_a".to_string(),
         };
 
-        let (_, connection, _, _) = setup_all_with_data(
+        let (_, connection, connection_manager, _) = setup_all_with_data(
             "test_create_inbound_invoice_picked_cutoff",
             MockDataInserts::none().stores(),
             MockData {
@@ -406,9 +408,11 @@ mod test {
         )
         .await;
 
+        let service_provider = &ServiceProvider::new(connection_manager);
+
         let processor = CreateInboundInvoiceProcessor {};
         let result = processor
-            .try_process_record(&connection, &invoice_transfer_old)
+            .try_process_record(&connection, service_provider, &invoice_transfer_old)
             .unwrap();
         assert!(
             matches!(result, InvoiceTransferOutput::BeforeInitialisationMonths),
@@ -417,7 +421,7 @@ mod test {
         );
 
         let result = processor
-            .try_process_record(&connection, &invoice_transfer_new)
+            .try_process_record(&connection, service_provider, &invoice_transfer_new)
             .unwrap();
         assert!(
             matches!(result, InvoiceTransferOutput::Processed(_)),

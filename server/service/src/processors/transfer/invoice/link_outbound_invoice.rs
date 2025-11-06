@@ -2,7 +2,9 @@ use repository::{
     InvoiceRow, InvoiceRowRepository, InvoiceType, RepositoryError, StorageConnection,
 };
 
-use crate::processors::transfer::invoice::InvoiceTransferOutput;
+use crate::{
+    processors::transfer::invoice::InvoiceTransferOutput, service_provider::ServiceProvider,
+};
 
 use super::{InvoiceTransferProcessor, InvoiceTransferProcessorRecord, Operation};
 
@@ -27,6 +29,7 @@ impl InvoiceTransferProcessor for LinkOutboundInvoiceProcessor {
     fn try_process_record(
         &self,
         connection: &StorageConnection,
+        _service_provider: &ServiceProvider,
         record_for_processing: &InvoiceTransferProcessorRecord,
     ) -> Result<InvoiceTransferOutput, RepositoryError> {
         // Check can execute

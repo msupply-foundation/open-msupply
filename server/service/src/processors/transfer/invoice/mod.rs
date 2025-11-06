@@ -98,6 +98,7 @@ pub(crate) enum ProcessInvoiceTransfersError {
 
 fn process_change_log(
     connection: &StorageConnection,
+    service_provider: &ServiceProvider,
     log: &ChangelogRow,
     processors: &[Box<dyn InvoiceTransferProcessor>],
     active_stores: &ActiveStoresOnSite,
@@ -130,7 +131,7 @@ fn process_change_log(
     // Try record against all of the processors
     for processor in processors.iter() {
         let result = processor
-            .try_process_record_common(connection, &record)
+            .try_process_record_common(connection, service_provider, &record)
             .map_err(Error::ProcessorError);
         if let Err(e) = result {
             log_system_error(connection, &e).map_err(Error::DatabaseError)?;
@@ -181,7 +182,13 @@ pub(crate) fn process_invoice_transfers(
         }
 
         for log in logs {
-            let result = process_change_log(&ctx.connection, &log, &processors, &active_stores);
+            let result = process_change_log(
+                &ctx.connection,
+                &service_provider,
+                &log,
+                &processors,
+                &active_stores,
+            );
             if let Err(e) = result {
                 log_system_error(&ctx.connection, &e).map_err(Error::DatabaseError)?;
             }
@@ -266,7 +273,8 @@ fn get_delete_operation(
     changelog_row: &ChangelogRow,
 ) -> Result<Operation, RepositoryError> {
     let linked_invoice = InvoiceRepository::new(connection).query_one(
-        InvoiceFilter::new().linked_invoice_id(EqualFilter::equal_to(changelog_row.record_id.to_string())),
+        InvoiceFilter::new()
+            .linked_invoice_id(EqualFilter::equal_to(changelog_row.record_id.to_string())),
     )?;
 
     Ok(Operation::Delete { linked_invoice })
@@ -300,10 +308,13 @@ trait InvoiceTransferProcessor {
     fn try_process_record_common(
         &self,
         connection: &StorageConnection,
+        service_provider: &ServiceProvider,
         record: &InvoiceTransferProcessorRecord,
     ) -> Result<Option<String>, ProcessorError> {
         let output = connection
-            .transaction_sync(|connection| self.try_process_record(connection, record))
+            .transaction_sync(|connection| {
+                self.try_process_record(connection, service_provider, record)
+            })
             .map_err(|e| ProcessorError(self.get_description(), e.to_inner_error()))?;
 
         let result = match output {
@@ -324,6 +335,7 @@ trait InvoiceTransferProcessor {
     fn try_process_record(
         &self,
         connection: &StorageConnection,
+        service_provider: &ServiceProvider,
         record: &InvoiceTransferProcessorRecord,
     ) -> Result<InvoiceTransferOutput, RepositoryError>;
 }

@@ -6,6 +6,7 @@ use repository::{
 use crate::{
     activity_log::{log_type_from_invoice_status, system_activity_log_entry},
     processors::transfer::invoice::{InvoiceTransferOutput, Operation},
+    service_provider::ServiceProvider,
 };
 
 use super::{InvoiceTransferProcessor, InvoiceTransferProcessorRecord};
@@ -36,6 +37,7 @@ impl InvoiceTransferProcessor for UpdateOutboundInvoiceStatusProcessor {
     fn try_process_record(
         &self,
         connection: &StorageConnection,
+        _service_provider: &ServiceProvider,
         record_for_processing: &InvoiceTransferProcessorRecord,
     ) -> Result<InvoiceTransferOutput, RepositoryError> {
         // Check can execute

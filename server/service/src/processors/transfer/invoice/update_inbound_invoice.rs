@@ -7,6 +7,7 @@ use crate::{
     activity_log::{log_type_from_invoice_status, system_activity_log_entry},
     invoice::common::get_lines_for_invoice,
     processors::transfer::invoice::InvoiceTransferOutput,
+    service_provider::ServiceProvider,
     store_preference::get_store_preferences,
 };
 
@@ -38,6 +39,7 @@ impl InvoiceTransferProcessor for UpdateInboundInvoiceProcessor {
     fn try_process_record(
         &self,
         connection: &StorageConnection,
+        _service_provider: &ServiceProvider,
         record_for_processing: &InvoiceTransferProcessorRecord,
     ) -> Result<InvoiceTransferOutput, RepositoryError> {
         // Check can execute
