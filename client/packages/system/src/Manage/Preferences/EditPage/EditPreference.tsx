@@ -17,6 +17,7 @@ import {
   getEnumPreferenceOptions,
 } from '../Components/EnumOptions';
 import { EditCustomTranslations } from '../Components/CustomTranslations/CustomTranslationsModal';
+import { EditWarningWhenMissingRecentStocktakeData } from '../Components/EditWarningWhenMissingRecentStocktakeData';
 
 interface EditPreferenceProps {
   preference: PreferenceDescriptionNode;
@@ -102,6 +103,13 @@ export const EditPreference = ({
         <EditCustomTranslations value={preference.value} update={update} />
       );
 
+    case PreferenceValueNodeType.WarnWhenMissingRecentStocktakeData:
+      return (
+        <EditWarningWhenMissingRecentStocktakeData
+          value={value}
+          update={handleChange}
+        />
+      );
     default:
       try {
         noOtherVariants(preference.valueType);

@@ -1,6 +1,9 @@
 use std::collections::BTreeMap;
 
-use crate::types::patient::GenderTypeNode;
+use crate::types::{
+    patient::GenderTypeNode,
+    warn_when_missing_recent_stocktake::WarnWhenMissingRecentStocktakeDataNode,
+};
 use async_graphql::*;
 use repository::StorageConnection;
 use service::preference::{preferences::PreferenceProvider, Preference, PreferenceDescription};
@@ -150,6 +153,14 @@ impl PreferencesNode {
 
     pub async fn second_threshold_for_expiring_items(&self) -> Result<i32> {
         self.load_preference(&self.preferences.second_threshold_for_expiring_items)
+    }
+
+    pub async fn warn_when_missing_recent_stocktake(
+        &self,
+    ) -> Result<WarnWhenMissingRecentStocktakeDataNode> {
+        Ok(WarnWhenMissingRecentStocktakeDataNode::from_domain(
+            self.load_preference(&self.preferences.warn_when_missing_recent_stocktake)?,
+        ))
     }
 }
 
