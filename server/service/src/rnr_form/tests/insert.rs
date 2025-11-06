@@ -386,9 +386,9 @@ mod insert {
 
         let created_line = form_lines.pop().unwrap();
         let blank_line = RnRFormLineRow {
-            id: created_line.id.to_owned(),
-            rnr_form_id: created_line.rnr_form_id.to_owned(),
-            item_link_id: created_line.item_link_id.to_owned(),
+            id: created_line.id.to_string(),
+            rnr_form_id: created_line.rnr_form_id.to_string(),
+            item_link_id: created_line.item_link_id.to_string(),
             ..Default::default()
         };
 

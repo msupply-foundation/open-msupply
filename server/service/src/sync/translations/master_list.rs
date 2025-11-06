@@ -48,8 +48,8 @@ impl SyncTranslation for MasterListTranslation {
         // is_essential is only an available value if plugin is active, set via OG
         if data.is_essential.is_some() {
             let filter = PluginDataFilter {
-                related_record_id: Some(EqualFilter::equal_to(&data.id.clone())),
-                plugin_code: Some(EqualFilter::equal_to(&"congo-plugin".to_string())),
+                related_record_id: Some(EqualFilter::equal_to(data.id.to_string())),
+                plugin_code: Some(EqualFilter::equal_to("congo-plugin".to_string())),
                 id: None,
                 data_identifier: None,
                 store_id: None,

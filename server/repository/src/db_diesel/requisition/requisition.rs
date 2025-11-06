@@ -225,7 +225,7 @@ fn create_filtered_query(
         if let Some(automatically_created) = automatically_created {
             apply_equal_filter!(
                 query,
-                Some(EqualFilter::is_null(automatically_created)),
+                Some(EqualFilter::<String>::is_null(automatically_created)),
                 requisition::linked_requisition_id
             );
         }

@@ -72,7 +72,7 @@ pub fn update_supplier_return(
                 activity_log_entry(
                     ctx,
                     log_type_from_invoice_status(&updated_return.status, false),
-                    Some(updated_return.id.to_owned()),
+                    Some(updated_return.id.to_string()),
                     None,
                     None,
                 )?;

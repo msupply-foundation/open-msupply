@@ -58,7 +58,7 @@ impl StandardReports {
         let mut upserted_reports: Vec<ReportMetaDataRow> = vec![];
         for report in reports_data.reports {
             let report_versions = ReportRepository::new(con)
-                .query_by_filter(ReportFilter::new().code(EqualFilter::equal_to(&report.code)))?;
+                .query_by_filter(ReportFilter::new().code(EqualFilter::equal_to(report.code.to_owned())))?;
 
             let existing_report = report_versions
                 .iter()

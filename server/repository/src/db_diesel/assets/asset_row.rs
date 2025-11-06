@@ -92,7 +92,7 @@ impl<'a> AssetRowRepository<'a> {
     pub fn upsert_one(&self, asset_row: &AssetRow) -> Result<i64, RepositoryError> {
         self._upsert_one(asset_row)?;
         self.insert_changelog(
-            asset_row.id.to_owned(),
+            asset_row.id.to_string(),
             RowActionType::Upsert,
             asset_row.store_id.clone(),
         )
@@ -137,7 +137,7 @@ impl<'a> AssetRowRepository<'a> {
         let asset_row = AssetRowRepository::find_one_by_id(&self, asset_id)?;
 
         self.insert_changelog(
-            asset_id.to_owned(),
+            asset_id.to_string(),
             RowActionType::Upsert,
             asset_row.and_then(|row| row.store_id),
         )

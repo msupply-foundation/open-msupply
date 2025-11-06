@@ -54,7 +54,7 @@ fn check_if_asset_already_exists(
         .ok_or(AssetFromGs1Error::MissingPartNumber)?;
 
     if let Some(asset_catalogue_id) = lookup_asset_catalogue_id_by_pqs_code(ctx, &part_number)? {
-        filter = filter.catalogue_item_id(EqualFilter::equal_to(&asset_catalogue_id));
+        filter = filter.catalogue_item_id(EqualFilter::equal_to(asset_catalogue_id.to_string()));
     }
 
     // Look up the item by the serial number & part number

@@ -588,7 +588,7 @@ async fn main() -> anyhow::Result<()> {
             let connection_manager = get_storage_connection_manager(&settings.database);
             let con = connection_manager.connection()?;
 
-            let filter = ReportFilter::new().id(EqualFilter::equal_to(&id));
+            let filter = ReportFilter::new().id(EqualFilter::equal_to(id.to_string()));
             let existing_report = ReportRepository::new(&con).query_by_filter(filter)?.pop();
 
             let argument_schema_id =
@@ -733,7 +733,7 @@ async fn main() -> anyhow::Result<()> {
             let connection_manager = get_storage_connection_manager(&settings.database);
             let con = connection_manager.connection()?;
 
-            let mut filter = ReportFilter::new().code(EqualFilter::equal_to(&code));
+            let mut filter = ReportFilter::new().code(EqualFilter::equal_to(code.to_owned()));
             match is_custom {
                 Some(value) => {
                     filter = filter.is_custom(value);
