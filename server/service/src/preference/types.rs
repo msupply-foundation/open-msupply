@@ -22,6 +22,10 @@ pub enum PrefKey {
     ShowContactTracing,
     SyncRecordsDisplayThreshold,
     WarningForExcessRequest,
+    UseDaysInMonth,
+    AdjustForNumberOfDaysOutOfStock,
+    DaysInMonth,
+    ExcludeTransfers,
 
     // Store preferences
     ManageVaccinesInDoses,
@@ -32,6 +36,12 @@ pub enum PrefKey {
     UseSimplifiedMobileUi,
     DisableManualReturns,
     RequisitionAutoFinalise,
+    CanCreateInternalOrderFromARequisition,
+    SelectDestinationStoreForAnInternalOrder,
+    NumberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts,
+    NumberOfMonthsThresholdToShowLowStockAlertsForProducts,
+    FirstThresholdForExpiringItems,
+    SecondThresholdForExpiringItems,
 }
 
 #[derive(Clone, Debug, PartialEq)]

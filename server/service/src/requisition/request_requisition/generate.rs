@@ -1,4 +1,4 @@
-use chrono::Utc;
+use chrono::{NaiveDate, Utc};
 use repository::{RequisitionLineRow, RequisitionRow};
 use util::uuid::uuid;
 
@@ -45,8 +45,9 @@ pub fn generate_requisition_lines(
     store_id: &str,
     requisition_row: &RequisitionRow,
     item_ids: Vec<String>,
+    period_end: Option<NaiveDate>,
 ) -> Result<Vec<RequisitionLineRow>, PluginOrRepositoryError> {
-    let item_stats_rows = get_item_stats(&ctx.connection, store_id, None, item_ids)?;
+    let item_stats_rows = get_item_stats(&ctx.connection, store_id, None, item_ids, period_end)?;
 
     let lines = item_stats_rows
         .into_iter()

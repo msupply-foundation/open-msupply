@@ -176,7 +176,6 @@ pub(crate) fn make_movements(stock_line: StockLineRow, date_quantity: Vec<(i64, 
     MockData {
         invoices,
         invoice_lines,
-
         ..Default::default()
     }
 }

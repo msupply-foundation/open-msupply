@@ -44,6 +44,7 @@ declare module '@mui/material/styles/createMixins' {
     gradient: {
       primary: string;
       secondary: string;
+      position?: string;
       size?: string;
       tertiary: string;
     };

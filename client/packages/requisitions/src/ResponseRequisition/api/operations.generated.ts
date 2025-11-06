@@ -261,6 +261,16 @@ export type ResponseFragment = {
     name: string;
     store?: { __typename: 'StoreNode'; id: string; code: string } | null;
   };
+  destinationCustomer?: {
+    __typename: 'NameNode';
+    id: string;
+    code: string;
+    isCustomer: boolean;
+    isSupplier: boolean;
+    isOnHold: boolean;
+    name: string;
+    store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+  } | null;
   program?: { __typename: 'ProgramNode'; id: string; name: string } | null;
   period?: {
     __typename: 'PeriodNode';
@@ -403,6 +413,16 @@ export type ResponseByNumberQuery = {
           name: string;
           store?: { __typename: 'StoreNode'; id: string; code: string } | null;
         };
+        destinationCustomer?: {
+          __typename: 'NameNode';
+          id: string;
+          code: string;
+          isCustomer: boolean;
+          isSupplier: boolean;
+          isOnHold: boolean;
+          name: string;
+          store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+        } | null;
         program?: {
           __typename: 'ProgramNode';
           id: string;
@@ -553,6 +573,16 @@ export type ResponseByIdQuery = {
           name: string;
           store?: { __typename: 'StoreNode'; id: string; code: string } | null;
         };
+        destinationCustomer?: {
+          __typename: 'NameNode';
+          id: string;
+          code: string;
+          isCustomer: boolean;
+          isSupplier: boolean;
+          isOnHold: boolean;
+          name: string;
+          store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+        } | null;
         program?: {
           __typename: 'ProgramNode';
           id: string;
@@ -588,6 +618,8 @@ export type ResponseRowFragment = {
   otherPartyId: string;
   approvalStatus: Types.RequisitionNodeApprovalStatus;
   programName?: string | null;
+  maxMonthsOfStock: number;
+  minMonthsOfStock: number;
   orderType?: string | null;
   period?: {
     __typename: 'PeriodNode';
@@ -628,6 +660,8 @@ export type ResponsesQuery = {
       otherPartyId: string;
       approvalStatus: Types.RequisitionNodeApprovalStatus;
       programName?: string | null;
+      maxMonthsOfStock: number;
+      minMonthsOfStock: number;
       orderType?: string | null;
       period?: {
         __typename: 'PeriodNode';
@@ -1020,6 +1054,24 @@ export type UpdateIndicatorValueMutation = {
       };
 };
 
+export type InsertRequestFromResponseRequisitionMutationVariables =
+  Types.Exact<{
+    storeId: Types.Scalars['String']['input'];
+    input: Types.InsertFromResponseRequisitionInput;
+  }>;
+
+export type InsertRequestFromResponseRequisitionMutation = {
+  __typename: 'Mutations';
+  insertFromResponseRequisition:
+    | {
+        __typename: 'InsertFromResponseRequisitionError';
+        error:
+          | { __typename: 'OtherPartyNotASupplier'; description: string }
+          | { __typename: 'OtherPartyNotVisible'; description: string };
+      }
+    | { __typename: 'RequisitionNode'; id: string };
+};
+
 export const ResponseLineFragmentDoc = gql`
   fragment ResponseLine on RequisitionLineNode {
     id
@@ -1132,6 +1184,19 @@ export const ResponseFragmentDoc = gql`
         code
       }
     }
+    destinationCustomer(storeId: $storeId) {
+      __typename
+      id
+      code
+      isCustomer
+      isSupplier
+      isOnHold
+      name
+      store {
+        id
+        code
+      }
+    }
     programName
     program {
       id
@@ -1167,6 +1232,8 @@ export const ResponseRowFragmentDoc = gql`
     otherPartyId
     approvalStatus
     programName
+    maxMonthsOfStock
+    minMonthsOfStock
     period {
       name
       startDate
@@ -1686,6 +1753,33 @@ export const UpdateIndicatorValueDocument = gql`
     }
   }
 `;
+export const InsertRequestFromResponseRequisitionDocument = gql`
+  mutation insertRequestFromResponseRequisition(
+    $storeId: String!
+    $input: InsertFromResponseRequisitionInput!
+  ) {
+    insertFromResponseRequisition(input: $input, storeId: $storeId) {
+      ... on RequisitionNode {
+        __typename
+        id
+      }
+      ... on InsertFromResponseRequisitionError {
+        __typename
+        error {
+          description
+          ... on OtherPartyNotASupplier {
+            __typename
+            description
+          }
+          ... on OtherPartyNotVisible {
+            __typename
+            description
+          }
+        }
+      }
+    }
+  }
+`;
 
 export type SdkFunctionWrapper = <T>(
   action: (requestHeaders?: Record<string, string>) => Promise<T>,
@@ -1972,6 +2066,22 @@ export function getSdk(
             { ...requestHeaders, ...wrappedRequestHeaders }
           ),
         'updateIndicatorValue',
+        'mutation',
+        variables
+      );
+    },
+    insertRequestFromResponseRequisition(
+      variables: InsertRequestFromResponseRequisitionMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders
+    ): Promise<InsertRequestFromResponseRequisitionMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<InsertRequestFromResponseRequisitionMutation>(
+            InsertRequestFromResponseRequisitionDocument,
+            variables,
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
+        'insertRequestFromResponseRequisition',
         'mutation',
         variables
       );

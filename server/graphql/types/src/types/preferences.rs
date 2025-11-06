@@ -59,6 +59,22 @@ impl PreferencesNode {
         self.load_preference(&self.preferences.warning_for_excess_request)
     }
 
+    pub async fn use_days_in_month(&self) -> Result<bool> {
+        self.load_preference(&self.preferences.use_days_in_month)
+    }
+
+    pub async fn adjust_for_number_of_days_out_of_stock(&self) -> Result<bool> {
+        self.load_preference(&self.preferences.adjust_for_number_of_days_out_of_stock)
+    }
+
+    pub async fn days_in_month(&self) -> Result<f64> {
+        self.load_preference(&self.preferences.days_in_month)
+    }
+
+    pub async fn exclude_transfers(&self) -> Result<bool> {
+        self.load_preference(&self.preferences.exclude_transfers)
+    }
+
     // Store preferences
     pub async fn manage_vaccines_in_doses(&self) -> Result<bool> {
         self.load_preference(&self.preferences.manage_vaccines_in_doses)
@@ -90,6 +106,50 @@ impl PreferencesNode {
 
     pub async fn requisition_auto_finalise(&self) -> Result<bool> {
         self.load_preference(&self.preferences.requisition_auto_finalise)
+    }
+
+    pub async fn can_create_internal_order_from_a_requisition(&self) -> Result<bool> {
+        self.load_preference(
+            &self
+                .preferences
+                .can_create_internal_order_from_a_requisition,
+        )
+    }
+
+    pub async fn select_destination_store_for_an_internal_order(&self) -> Result<bool> {
+        self.load_preference(
+            &self
+                .preferences
+                .select_destination_store_for_an_internal_order,
+        )
+    }
+
+    pub async fn number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products(
+        &self,
+    ) -> Result<i32> {
+        self.load_preference(
+            &self
+                .preferences
+                .number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products,
+        )
+    }
+
+    pub async fn number_of_months_threshold_to_show_low_stock_alerts_for_products(
+        &self,
+    ) -> Result<i32> {
+        self.load_preference(
+            &self
+                .preferences
+                .number_of_months_threshold_to_show_low_stock_alerts_for_products,
+        )
+    }
+
+    pub async fn first_threshold_for_expiring_items(&self) -> Result<i32> {
+        self.load_preference(&self.preferences.first_threshold_for_expiring_items)
+    }
+
+    pub async fn second_threshold_for_expiring_items(&self) -> Result<i32> {
+        self.load_preference(&self.preferences.second_threshold_for_expiring_items)
     }
 }
 
@@ -147,6 +207,10 @@ pub enum PreferenceKey {
     PreventTransfersMonthsBeforeInitialisation,
     ShowContactTracing,
     SyncRecordsDisplayThreshold,
+    UseDaysInMonth,
+    AdjustForNumberOfDaysOutOfStock,
+    DaysInMonth,
+    ExcludeTransfers,
     // Store preferences
     ManageVaccinesInDoses,
     ManageVvmStatusForStock,
@@ -157,6 +221,12 @@ pub enum PreferenceKey {
     DisableManualReturns,
     RequisitionAutoFinalise,
     WarningForExcessRequest,
+    CanCreateInternalOrderFromARequisition,
+    SelectDestinationStoreForAnInternalOrder,
+    NumberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts,
+    NumberOfMonthsThresholdToShowLowStockAlertsForProducts,
+    FirstThresholdForExpiringItems,
+    SecondThresholdForExpiringItems,
 }
 
 #[derive(Enum, Copy, Clone, Debug, Eq, PartialEq)]
