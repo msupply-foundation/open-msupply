@@ -21,6 +21,10 @@ export type Plugins = {
     internalOrderPrice?: (
       supplierData?: Partial<NameFragment>
     ) => ColumnDef<RequestLineFragment>[]; // TODO check correct supplier data and type with supply levels
+    pricingSection?: React.ComponentType<{
+      requisition: RequestFragment;
+    }>[];
+    estimatedLinePrice?: React.ComponentType<{ itemId: string }>[];
   };
   dashboard?: React.ComponentType[];
   stockLine?: {
