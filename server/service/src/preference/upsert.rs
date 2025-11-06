@@ -1,7 +1,7 @@
 use std::collections::BTreeMap;
 
 use super::{get_preference_provider, Preference, PreferenceProvider, UpsertPreferenceError};
-use crate::service_provider::ServiceContext;
+use crate::{preference::WarnWhenMissingRecentStocktakeData, service_provider::ServiceContext};
 use repository::{GenderType, StorageConnection, TransactionError};
 
 #[derive(Debug, PartialEq, Clone)]
@@ -44,6 +44,7 @@ pub struct UpsertPreferences {
         Option<Vec<StorePrefUpdate<i32>>>,
     pub first_threshold_for_expiring_items: Option<Vec<StorePrefUpdate<i32>>>,
     pub second_threshold_for_expiring_items: Option<Vec<StorePrefUpdate<i32>>>,
+    pub warn_when_missing_recent_stocktake: Option<Vec<StorePrefUpdate<WarnWhenMissingRecentStocktakeData>>>,
 }
 
 pub fn upsert_preferences(
@@ -84,6 +85,7 @@ pub fn upsert_preferences(
             number_of_months_threshold_to_show_low_stock_alerts_for_products_input,
         first_threshold_for_expiring_items: first_threshold_for_expiring_items_input,
         second_threshold_for_expiring_items: second_threshold_for_expiring_items_input,
+        warn_when_missing_recent_stocktake: warn_when_missing_recent_stocktake_input,
     }: UpsertPreferences,
 ) -> Result<(), UpsertPreferenceError> {
     let PreferenceProvider {
@@ -117,6 +119,7 @@ pub fn upsert_preferences(
         number_of_months_threshold_to_show_low_stock_alerts_for_products,
         first_threshold_for_expiring_items,
         second_threshold_for_expiring_items,
+        warn_when_missing_recent_stocktake,
     }: PreferenceProvider = get_preference_provider();
 
     ctx.connection
@@ -251,6 +254,14 @@ pub fn upsert_preferences(
                            upsert_store_input(
                     connection,
                     second_threshold_for_expiring_items,
+                    input,
+                )?;
+            }
+
+            if let Some(input) = warn_when_missing_recent_stocktake_input {
+                           upsert_store_input(
+                    connection,
+                    warn_when_missing_recent_stocktake,
                     input,
                 )?;
             }

@@ -227,6 +227,7 @@ pub enum PreferenceKey {
     NumberOfMonthsThresholdToShowLowStockAlertsForProducts,
     FirstThresholdForExpiringItems,
     SecondThresholdForExpiringItems,
+    WarnWhenMissingRecentStocktake,
 }
 
 #[derive(Enum, Copy, Clone, Debug, Eq, PartialEq)]
@@ -243,4 +244,5 @@ pub enum PreferenceValueNodeType {
     Integer,
     MultiChoice,
     CustomTranslations, // Specific type for CustomTranslations preference
+    WarnWhenMissingRecentStocktakeData,
 }
