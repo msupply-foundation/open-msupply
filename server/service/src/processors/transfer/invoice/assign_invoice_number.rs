@@ -5,7 +5,7 @@ use repository::{
 
 use crate::{
     activity_log::system_activity_log_entry, number::next_number,
-    processors::transfer::invoice::InvoiceTransferOutput,
+    processors::transfer::invoice::InvoiceTransferOutput, service_provider::ServiceProvider,
 };
 
 use super::{InvoiceTransferProcessor, InvoiceTransferProcessorRecord, Operation};
@@ -35,6 +35,7 @@ impl InvoiceTransferProcessor for AssignInvoiceNumberProcessor {
     fn try_process_record(
         &self,
         connection: &StorageConnection,
+        _service_provider: &ServiceProvider,
         record_for_processing: &InvoiceTransferProcessorRecord,
     ) -> Result<InvoiceTransferOutput, RepositoryError> {
         // Check can execute
