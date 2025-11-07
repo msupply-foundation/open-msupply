@@ -7,8 +7,8 @@ Contains a suite of "forecasting" plugins for **Open mSupply**:
 - `transform_request_requisition_lines`:
   - On insert of new requisition_lines, it calculates a "Forecast quantity" for each line. The formula/logic for calculating this is detailed [below](#forecasting-calculation).
   - this new value is saved to "plugin_data" so it can be fetched as a new "column" by the front-end plugin
-  - the existing field "suggested_quantity" is also modified -- the value stored in it is the new "forecast_quantity" minus the current stock on hand. This  modified value will be displayed by the normal detail view in the front-end.
-  - The displayed values will be in *units*, not *doses* for consistency with existing columns, although the dose quantity is returned with the plugin data, so it can be modified to display doses in the future.
+  - the existing field "suggested_quantity" is also modified -- the value stored in it is the new "forecast_quantity" minus the current stock on hand. This modified value will be displayed by the normal detail view in the front-end.
+  - The displayed values will be in _units_, not _doses_ for consistency with existing columns, although the dose quantity is returned with the plugin data, so it can be modified to display doses in the future.
 
 ## Front-end
 
@@ -26,13 +26,13 @@ For a requisition line item to be able to calculate a forecast quantity, several
 - the following store properties must be defined:
   - Stock Safety Buffer (months)
   - Supply Interval (Months between deliveries)
-  - Population Served  
+  - Population Served
 
-*You can quickly enable these properties for your store by going to: Settings -> Configuration -> Initialise store properties for population based forecasting*
+_You can quickly enable these properties for your store by going to: Settings -> Configuration -> Initialise store properties for population based forecasting_
 
-If *any* of these values are not defined, the forecast totals will be returned as `null`.
+If _any_ of these values are not defined, the forecast totals will be returned as `null`.
 
-From this data, we calculate (or retrieve) the following intermediate values for *each* vaccine course that the item is a part of:
+From this data, we calculate (or retrieve) the following intermediate values for _each_ vaccine course that the item is a part of:
 
 - **Target Population** `= Population served X Population percentage`
   - `Population served` comes from store properties
@@ -48,7 +48,7 @@ From this data, we calculate (or retrieve) the following intermediate values for
 
 From these values we can calculate:
 
-**Annual target stock** `= Target Population X Number of Doses X Coverage Rate X Loss Factor` 
+**Annual target stock** `= Target Population X Number of Doses X Coverage Rate X Loss Factor`
 
 This value is in individual vaccine **doses**.
 
@@ -60,7 +60,7 @@ And in units:
 
 **Forecast Unit Quantity** `= Forecast Quantity / Doses per Unit`
 
-As mentioned earlier, these quantities are for *each vaccine course*, so we need to add them all up to get the total forecast amounts for each item.
+As mentioned earlier, these quantities are for _each vaccine course_, so we need to add them all up to get the total forecast amounts for each item.
 
 The back-end plugin returns an object containing the final totals, plus breakdowns of each course, for example:
 
@@ -104,3 +104,51 @@ The value `forecastTotalUnits` is the number that will show up in the Requisitio
 ## TO-DO:
 
 Would like to combine this repo in a common "open msupply public plugins" repo, but in order to do that we need to be able to store multiple plugin structures within one repo, which doesn't currently work with the plugin folder structure.
+
+## HOW TO:
+
+To install these plugins, follow the normal procedure for installing Open mSupply plugins...
+
+As a dev....
+
+If you need to clean up your submodule...
+
+```bash
+rm .gitmodules
+git submodule deinit -f --all
+rm -rf .git/modules
+rm -rf /client/packages/plugins/open-msupply-forecasting-plugins`
+```
+
+Checkout this repo as a submodule...
+
+```bash
+git submodule add https://github.com/msupply-foundation/open-msupply-forecasting-plugins ./packages/plugins/open-msupply-forecasting-plugins
+```
+
+> REMEBER NOT TO COMMIT YOUR SUBMODULES
+
+Build the plugin bundle file...
+
+```
+cd server
+cargo run --bin remote_server_cli -- generate-plugin-bundle -i '../client/packages/plugins/open-msupply-forecasting-plugins/' --out-file ../client/packages/plugins/open-msupply-forecasting-plugins/bundle.json
+```
+
+Install on the server (especially for backend plugin)...
+
+```bash
+ cargo run --bin remote_server_cli install-plugin-bundle --path ../client/packages/plugins/open-msupply-forecasting-plugins/bundle.json --url=http://localhost:8890 --username=admin --password=pass
+```
+
+Or use the `generate-and-install-plugin-bundle`
+
+```bash
+cargo run --bin remote_server_cli -- generate-and-install-plugin-bundle -i '../client/packages/plugins/open-msupply-forecasting-plugins/backend' --url 'http://localhost:8000' --username "admin" --password pass
+```
+
+As a normal user, you'll need to use the open-msupply-cli on OMS Central Server
+
+```bash
+ remote_server_cli.exe install-plugin-bundle --path ./path/to/bundle.json --url 'http://localhost:8000' --username "admin" --password pass
+```
