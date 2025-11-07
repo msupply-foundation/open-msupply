@@ -2,8 +2,7 @@ import React, { useEffect } from 'react';
 import {
   ArrayElement,
   BasicCellLayout,
-  CellProps,
-  ColumnDefinition,
+  ColumnDef,
   create,
   PluginDataStore,
   Plugins,
@@ -53,7 +52,7 @@ export const StateLoader: ArrayElement<
   return <></>;
 };
 
-const ForecastColumn = ({ rowData }: CellProps<RequestLineFragment>) => {
+const ForecastColumn = ({ row: rowData }: { row: RequestLineFragment }) => {
   const { getById } = useColumnStore();
 
   const parsed = JSON.parse(getById(rowData)?.data || '{}');
@@ -64,19 +63,17 @@ const ForecastColumn = ({ rowData }: CellProps<RequestLineFragment>) => {
   return <BasicCellLayout>{value}</BasicCellLayout>;
 };
 
-const Column = (props: CellProps<RequestLineFragment>) => (
-  <QueryClientProviderProxy>
-    <ForecastColumn {...props} />
-  </QueryClientProviderProxy>
-);
-
-export const ForecastQuantityColumn: ColumnDefinition<RequestLineFragment> = {
-  Cell: Column,
-  key: 'forecast-quantity',
-  label: 'plugin.forecasting.forecast-amount',
-  description: 'plugin.forecasting.forecast-amount-description',
-  maxWidth: 150,
-  sortable: false,
-  order: 110,
+export const ForecastQuantityColumn: ColumnDef<RequestLineFragment> = {
+  Cell: ({ row }) => (
+    <QueryClientProviderProxy>
+      <ForecastColumn row={row.original} />
+    </QueryClientProviderProxy>
+  ),
+  id: 'forecast-quantity',
+  header: 'Target stock (population) ', // plugin.forecasting.forecast-amount (can't translate in plugins yet...)
+  description:
+    'The target stock level for this item, calculated using the population served by this store', // 'plugin.forecasting.forecast-amount-description',
+  enableSorting: false,
+  // columnIndex: 110,
   defaultHideOnMobile: true,
 };
