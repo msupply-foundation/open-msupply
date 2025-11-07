@@ -1,5 +1,9 @@
 # Open mSupply Forecasting plugins
 
+
+## Translation Note
+Since we can't currently translate the column names in plugins, this plugin will install with French, we'll need to either solve the core problem or fork this repo if a french version is needed in future.
+
 Contains a suite of "forecasting" plugins for **Open mSupply**:
 
 ## Back-end
