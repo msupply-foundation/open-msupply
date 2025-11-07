@@ -74,6 +74,6 @@ export const ForecastQuantityColumn: ColumnDef<RequestLineFragment> = {
   description:
     'The target stock level for this item, calculated using the population served by this store', // 'plugin.forecasting.forecast-amount-description',
   enableSorting: false,
-  // columnIndex: 110,
+  columnIndex: 10,
   defaultHideOnMobile: true,
 };
