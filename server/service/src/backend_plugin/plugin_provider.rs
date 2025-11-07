@@ -2,7 +2,10 @@ use std::sync::{Arc, RwLock};
 
 use base64::{prelude::BASE64_STANDARD, Engine};
 
-use repository::{BackendPluginRow, FrontendPluginRow, PluginType, PluginTypes, PluginVariantType};
+use repository::{
+    migrations::Version, BackendPluginRow, FrontendPluginRow, PluginType, PluginTypes,
+    PluginVariantType,
+};
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use thiserror::Error;
 
@@ -16,8 +19,10 @@ pub struct PluginError {
     variant: PluginErrorVariant,
 }
 
+#[derive(Clone)]
 pub struct Plugin {
     types: PluginTypes,
+    version: Version,
     instance: Arc<PluginInstance>,
 }
 
@@ -72,6 +77,17 @@ where
     })
 }
 
+fn compatible_plugins_with_current_app_version() -> Vec<Plugin> {
+    let plugins = PLUGINS.read().unwrap();
+    let app_version: Version = Version::from_package_json();
+
+    plugins
+        .iter()
+        .filter(|p| p.version.is_compatible_by_major_and_minor(&app_version))
+        .map(|p| p.clone())
+        .collect()
+}
+
 #[derive(Serialize, Deserialize, Default)]
 pub struct PluginBundle {
     pub backend_plugins: Vec<BackendPluginRow>,
@@ -80,31 +96,26 @@ pub struct PluginBundle {
 
 impl PluginInstance {
     pub fn get_one(r#type: PluginType) -> Option<Arc<PluginInstance>> {
-        let plugins = PLUGINS.read().unwrap();
-
-        plugins
-            .iter()
+        compatible_plugins_with_current_app_version()
+            .into_iter()
             .find(|p| p.has_type(&r#type))
-            .map(|p| p.instance.clone())
+            .map(|p| p.instance)
     }
 
     pub fn get_all(r#type: PluginType) -> Vec<Arc<PluginInstance>> {
-        let plugins = PLUGINS.read().unwrap();
-
-        plugins
-            .iter()
+        compatible_plugins_with_current_app_version()
+            .into_iter()
             .filter(|p| p.has_type(&r#type))
-            .map(|p| p.instance.clone())
+            .map(|p| p.instance)
             .collect()
     }
 
+    // Sort by version filter by is_compatible_by_major_and_minor
     pub fn get_one_with_code(code: &str, r#type: PluginType) -> Option<Arc<PluginInstance>> {
-        let plugins = PLUGINS.read().unwrap();
-
-        plugins
-            .iter()
+        compatible_plugins_with_current_app_version()
+            .into_iter()
             .find(|p| p.has_type(&r#type) && p.instance.code == code)
-            .map(|p| p.instance.clone())
+            .map(|p| p.instance)
     }
 
     pub fn bind(
@@ -113,6 +124,7 @@ impl PluginInstance {
             variant_type,
             types,
             code,
+            version,
             ..
         }: BackendPluginRow,
     ) {
@@ -132,7 +144,12 @@ impl PluginInstance {
         // Remove all plugins with this code
         (*plugins).retain(|Plugin { instance, .. }| instance.code != code);
 
+        let version = Version::from_str(&version);
         // Add plugin with this code
-        (*plugins).push(Plugin { types, instance });
+        (*plugins).push(Plugin {
+            types,
+            instance,
+            version,
+        });
     }
 }
