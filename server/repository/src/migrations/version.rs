@@ -80,6 +80,17 @@ impl Version {
             pre_release: extra.map(String::from),
         }
     }
+
+    // If "self" (plugin/report etc..) major and minor below or equal to app_version
+    // it is compatible with that app_version. We rely on report/plugin upgrade to fix
+    // compatibility issues rather then max app_version compatibiilty for self.
+    pub fn is_compatible_by_major_and_minor(&self, app_version: &Version) -> bool {
+        if self.major != app_version.major {
+            return self.major < app_version.major;
+        }
+        // When major equals
+        return self.minor <= app_version.minor;
+    }
 }
 
 impl PartialOrd for Version {
