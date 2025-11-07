@@ -8,7 +8,6 @@ import {
   AppFooterPortal,
   InvoiceNodeStatus,
   useBreadcrumbs,
-  useTableStore,
   useDeleteConfirmation,
   DeleteIcon,
   Action,
@@ -19,6 +18,7 @@ import {
 import { getStatusTranslator, prescriptionStatuses } from '../../../utils';
 import { StatusChangeButton } from './StatusChangeButton';
 import {
+  PrescriptionLineFragment,
   PrescriptionRowFragment,
   usePrescription,
   usePrescriptionLines,
@@ -56,19 +56,19 @@ const createStatusLog = (invoice: PrescriptionRowFragment) => {
   return statusLog;
 };
 
-export const FooterComponent = () => {
+export const FooterComponent = ({
+  selectedRows,
+  resetRowSelection,
+}: {
+  selectedRows: PrescriptionLineFragment[];
+  resetRowSelection: () => void;
+}) => {
   const t = useTranslation();
   const {
     query: { data: prescription },
     isDisabled,
-    rows,
   } = usePrescription();
   const { navigateUpOne } = useBreadcrumbs();
-
-  const selectedRows =
-    useTableStore(state => {
-      return rows?.filter(row => state.rowState[row.id]?.isSelected) || [];
-    }) || [];
 
   const {
     delete: { deleteLines },
@@ -76,6 +76,7 @@ export const FooterComponent = () => {
 
   const deleteAction = async () => {
     await deleteLines(selectedRows);
+    resetRowSelection();
   };
 
   const confirmAndDelete = useDeleteConfirmation({
@@ -135,6 +136,7 @@ export const FooterComponent = () => {
               <ActionsFooter
                 actions={actions}
                 selectedRowCount={selectedRows.length}
+                resetRowSelection={resetRowSelection}
               />
               <AlertModal
                 title={t('heading.unable-to-print')}

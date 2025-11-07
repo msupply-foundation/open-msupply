@@ -19,5 +19,6 @@ export const usePatients = (query: ListParams, enabled?: boolean) => {
 
   return useQuery(api.keys.paramList(query), () => api.get.list(query), {
     enabled,
+    keepPreviousData: true,
   });
 };
