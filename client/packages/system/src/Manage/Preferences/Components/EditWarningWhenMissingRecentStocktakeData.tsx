@@ -9,6 +9,15 @@ import {
   useTranslation,
 } from '@openmsupply-client/common';
 
+// Backend returns snake_case, but TypeScript types expect camelCase
+type WarnWhenMissingRecentStocktakeDataSnakeCase = {
+  enabled: boolean;
+  max_age?: number;
+  min_items?: number;
+  maxAge?: number;
+  minItems?: number;
+};
+
 export const EditWarningWhenMissingRecentStocktakeData = ({
   value,
   update,
@@ -22,25 +31,38 @@ export const EditWarningWhenMissingRecentStocktakeData = ({
 }) => {
   const t = useTranslation();
 
+  // The backend returns snake_case (max_age, min_items) but we need to handle both formats
+  const getValue = (val: WarnWhenMissingRecentStocktakeDataSnakeCase) => {
+    const maxAge = val?.max_age ?? val?.maxAge ?? 0;
+    const minItems = val?.min_items ?? val?.minItems ?? 0;
+    const enabled = val?.enabled ?? false;
+
+    return { maxAge, minItems, enabled };
+  };
+
+  const { maxAge, minItems, enabled } = getValue(
+    value as WarnWhenMissingRecentStocktakeDataSnakeCase
+  );
+
   // Helper to ensure all required fields have valid values (excluding __typename for input)
   const createUpdateValue = (
     updates: Partial<Omit<WarnWhenMissingRecentStocktakeDataNode, '__typename'>>
   ) => {
     const newValue = {
-      enabled: value?.enabled ?? false,
-      maxAge: value?.maxAge ?? 0,
-      minItems: value?.minItems ?? 0,
+      enabled,
+      maxAge,
+      minItems,
       ...updates,
     };
     update(newValue);
   };
 
-  const handleMaxAgeChange = (maxAge?: number | undefined) => {
-    createUpdateValue({ maxAge });
+  const handleMaxAgeChange = (newMaxAge?: number | undefined) => {
+    createUpdateValue({ maxAge: newMaxAge });
   };
 
-  const handleMinItemsChange = (minItems?: number | undefined) => {
-    createUpdateValue({ minItems });
+  const handleMinItemsChange = (newMinItems?: number | undefined) => {
+    createUpdateValue({ minItems: newMinItems });
   };
 
   return (
@@ -53,7 +75,7 @@ export const EditWarningWhenMissingRecentStocktakeData = ({
         Input={
           <Switch
             disabled={disabled}
-            checked={value.enabled}
+            checked={enabled}
             onChange={(_, checked) => createUpdateValue({ enabled: checked })}
           />
         }
@@ -65,8 +87,8 @@ export const EditWarningWhenMissingRecentStocktakeData = ({
         label={t('preference.warnWhenMissingRecentStocktake.maxAge')}
         Input={
           <NumericTextInput
-            disabled={disabled || !value.enabled}
-            value={value.maxAge}
+            disabled={disabled || !enabled}
+            value={maxAge}
             onChange={handleMaxAgeChange}
             onBlur={() => {}}
           />
@@ -79,8 +101,8 @@ export const EditWarningWhenMissingRecentStocktakeData = ({
         label={t('preference.warnWhenMissingRecentStocktake.minItems')}
         Input={
           <NumericTextInput
-            disabled={disabled || !value.enabled}
-            value={value.minItems}
+            disabled={disabled || !enabled}
+            value={minItems}
             onChange={handleMinItemsChange}
             onBlur={() => {}}
           />
