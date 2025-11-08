@@ -1,11 +1,10 @@
 import {
-  FilterByWithBoolean,
+  FilterBy,
   LIST_KEY,
   PurchaseOrderSortFieldInput,
   SortBy,
   useMutation,
   useQuery,
-  useTableStore,
 } from '@openmsupply-client/common';
 import { usePurchaseOrderGraphQL } from '../usePurchaseOrderGraphQL';
 import { PURCHASE_ORDER } from './keys';
@@ -18,10 +17,10 @@ export type ListParams = {
   first?: number;
   offset?: number;
   sortBy?: SortBy<PurchaseOrderFragment>;
-  filterBy: FilterByWithBoolean | null;
+  filterBy: FilterBy | null;
 };
 
-export const usePurchaseOrderList = (queryParams: ListParams) => {
+export const usePurchaseOrderList = (queryParams?: ListParams) => {
   const { purchaseOrderApi, storeId, queryClient } = usePurchaseOrderGraphQL();
 
   const {
@@ -32,7 +31,7 @@ export const usePurchaseOrderList = (queryParams: ListParams) => {
     first,
     offset,
     filterBy,
-  } = queryParams;
+  } = queryParams ?? {};
 
   const queryKey = [
     PURCHASE_ORDER,
@@ -43,12 +42,6 @@ export const usePurchaseOrderList = (queryParams: ListParams) => {
     offset,
     filterBy,
   ];
-
-  const sortFieldMap: Record<string, PurchaseOrderSortFieldInput> = {
-    createdDatetime: PurchaseOrderSortFieldInput.CreatedDatetime,
-    status: PurchaseOrderSortFieldInput.Status,
-    number: PurchaseOrderSortFieldInput.Number,
-  };
 
   const queryFn = async (): Promise<{
     nodes: PurchaseOrderRowFragment[];
@@ -62,7 +55,7 @@ export const usePurchaseOrderList = (queryParams: ListParams) => {
       storeId,
       first: first,
       offset: offset,
-      key: sortFieldMap[sortBy.key] ?? PurchaseOrderSortFieldInput.Status,
+      key: (sortBy.key as PurchaseOrderSortFieldInput) ?? 'number',
       desc: sortBy.direction === 'desc',
       filter,
     });
@@ -70,14 +63,11 @@ export const usePurchaseOrderList = (queryParams: ListParams) => {
     return { nodes, totalCount };
   };
 
-  const { data, isLoading, isError } = useQuery({ queryKey, queryFn });
-
-  const { selectedRows } = useTableStore(state => ({
-    selectedRows: Object.keys(state.rowState)
-      .filter(id => state.rowState[id]?.isSelected)
-      .map(selectedId => data?.nodes?.find(({ id }) => selectedId === id))
-      .filter(Boolean) as PurchaseOrderFragment[],
-  }));
+  const { data, isFetching, isError } = useQuery({
+    queryKey,
+    queryFn,
+    keepPreviousData: true,
+  });
 
   const deleteMutationFn = async (ids: string[]) => {
     try {
@@ -105,8 +95,7 @@ export const usePurchaseOrderList = (queryParams: ListParams) => {
   });
 
   return {
-    query: { data, isLoading, isError },
-    selectedRows,
+    query: { data, isFetching, isError },
     delete: {
       deletePurchaseOrders,
       isDeleting,

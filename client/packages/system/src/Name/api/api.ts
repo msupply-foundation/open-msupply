@@ -2,7 +2,7 @@ import {
   SortBy,
   NameSortFieldInput,
   NameNodeType,
-  FilterByWithBoolean,
+  FilterBy,
   UpdateNamePropertiesInput,
   NameFilterInput,
 } from '@openmsupply-client/common';
@@ -41,7 +41,7 @@ export const getNameQueries = (sdk: Sdk, storeId: string) => ({
 
       throw new Error('Name not found');
     },
-    internalSuppliers: async ({ sortBy }: ListParams) => {
+    internalSuppliers: async ({ sortBy }: ListParams = {}) => {
       const key = nameParsers.toSort(sortBy?.key ?? '');
 
       const result = await sdk.names({
@@ -131,7 +131,7 @@ export const getNameQueries = (sdk: Sdk, storeId: string) => ({
       offset?: number;
       first?: number;
       sortBy?: SortBy<NameRowFragment>;
-      filterBy?: FilterByWithBoolean | null;
+      filterBy?: FilterBy | null;
     }): Promise<{
       nodes: FacilityNameRowFragment[];
       totalCount: number;

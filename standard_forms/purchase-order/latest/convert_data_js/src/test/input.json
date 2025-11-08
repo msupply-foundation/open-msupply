@@ -22,7 +22,7 @@
               "unitName": "Comprime"
             },
             "lineNumber": 2,
-            "pricePerUnitAfterDiscount": 1.98,
+            "pricePerPackAfterDiscount": 1.98,
             "requestedNumberOfUnits": 242,
             "requestedPackSize": 11,
             "supplierItemCode": null
@@ -36,7 +36,7 @@
               "unitName": null
             },
             "lineNumber": 3,
-            "pricePerUnitAfterDiscount": 4.9,
+            "pricePerPackAfterDiscount": 4.9,
             "requestedNumberOfUnits": 250,
             "requestedPackSize": 5,
             "supplierItemCode": null
@@ -50,7 +50,7 @@
               "unitName": "Tab"
             },
             "lineNumber": 1,
-            "pricePerUnitAfterDiscount": 0.95,
+            "pricePerPackAfterDiscount": 0.95,
             "requestedNumberOfUnits": 10000,
             "requestedPackSize": 1000,
             "supplierItemCode": null

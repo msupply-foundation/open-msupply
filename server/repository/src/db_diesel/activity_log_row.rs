@@ -107,15 +107,20 @@ pub enum ActivityLogType {
     GoodsReceivedStatusFinalised,
     // Purchase Orders
     PurchaseOrderCreated,
-    PurchaseOrderAuthorised,
+    PurchaseOrderRequestApproval,
     PurchaseOrderUnauthorised,
+    PurchaseOrderSent,
     PurchaseOrderConfirmed,
     PurchaseOrderFinalised,
-    // TODO add delete purchase order once https://github.com/msupply-foundation/open-msupply/pull/8714 merged
     PurchaseOrderDeleted,
     PurchaseOrderLineCreated,
     PurchaseOrderLineUpdated,
     PurchaseOrderLineDeleted,
+    PurchaseOrderStatusChangedFromSentToConfirmed,
+    PurchaseOrderLineStatusClosed,
+    PurchaseOrderLineStatusChangedFromSentToNew,
+    PatientUpdated,
+    PatientCreated,
 }
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]

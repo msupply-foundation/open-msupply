@@ -7,15 +7,17 @@ import { PurchaseOrderLineFragment } from '../../api';
 
 export const purchaseOrderStatuses: PurchaseOrderNodeStatus[] = [
   PurchaseOrderNodeStatus.New,
-  PurchaseOrderNodeStatus.Authorised,
+  PurchaseOrderNodeStatus.RequestApproval,
   PurchaseOrderNodeStatus.Confirmed,
+  PurchaseOrderNodeStatus.Sent,
   PurchaseOrderNodeStatus.Finalised,
 ];
 
 export const statusTranslation: Record<PurchaseOrderNodeStatus, LocaleKey> = {
   NEW: 'label.new',
-  AUTHORISED: 'label.authorised',
-  CONFIRMED: 'label.confirmed',
+  REQUEST_APPROVAL: 'label.ready-for-approval',
+  CONFIRMED: 'label.ready-to-send',
+  SENT: 'label.sent',
   FINALISED: 'label.finalised',
 };
 

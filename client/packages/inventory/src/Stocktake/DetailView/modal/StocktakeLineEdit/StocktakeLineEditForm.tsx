@@ -33,6 +33,8 @@ export const StocktakeLineEditForm: FC<StocktakeLineEditProps> = ({
   const t = useTranslation();
   const disabled = mode === ModalMode.Update;
 
+  const existingItemIds = items.map(item => item.item?.id ?? '');
+
   return (
     <>
       <ModalRow>
@@ -44,12 +46,10 @@ export const StocktakeLineEditForm: FC<StocktakeLineEditProps> = ({
             disabled={disabled}
             currentItemId={item?.id}
             onChange={onChangeItem}
-            filter={{ isVisibleOrOnHand: true }}
-            extraFilter={
-              disabled
-                ? undefined
-                : item => !items?.some(({ id }) => id === item.id)
-            }
+            filter={{
+              isVisibleOrOnHand: true,
+              id: { notEqualAll: existingItemIds },
+            }}
           />
         </Grid>
       </ModalRow>

@@ -13,6 +13,9 @@ import {
   useFormatDateTime,
   PopoverCell,
   useTranslation,
+  CircleIcon,
+  MessageSquareIcon,
+  Tooltip,
 } from '@openmsupply-client/common';
 
 import { ColumnDef } from './types';
@@ -23,6 +26,7 @@ export enum ColumnType {
   Currency = 'currency',
   Date = 'date',
   Comment = 'comment',
+  Boolean = 'boolean',
 }
 
 export const useGetColumnTypeDefaults = () => {
@@ -45,6 +49,27 @@ export const useGetColumnTypeDefaults = () => {
           },
           align: 'right',
           filterVariant: 'date-range',
+          muiFilterDatePickerProps: ({ column, rangeFilterIndex }) => {
+            const [start, end] =
+              (column.getFilterValue() as [
+                Date | undefined,
+                Date | undefined,
+              ]) ?? [];
+            // Enforces date range validity, e.g. end date can't be before start
+            // date
+            switch (rangeFilterIndex) {
+              case 0:
+                return {
+                  maxDate: end ? new Date(end) : undefined,
+                };
+              case 1:
+                return {
+                  minDate: start ? new Date(start) : undefined,
+                };
+              default:
+                return {};
+            }
+          },
         };
 
       case ColumnType.Number:
@@ -71,13 +96,36 @@ export const useGetColumnTypeDefaults = () => {
 
       case ColumnType.Comment:
         return {
-          size: 60,
+          size: 50,
           enableSorting: false,
           enableColumnFilter: false,
           enableResizing: false,
-          Cell: ({ cell }) => {
+          enableColumnActions: false,
+          // Comment popover is pretty narrow, show icon rather than full label
+          Header: () => (
+            <Tooltip title={t('label.comment')} placement="top">
+              <MessageSquareIcon fontSize="small" />
+            </Tooltip>
+          ),
+          Cell: ({ cell, row }) => {
+            if ('subRows' in row.original) {
+              // Don't show comment icon for grouped rows
+              return null;
+            }
             const value = cell.getValue<string | null>();
             return <PopoverCell value={value} label={t('label.comment')} />;
+          },
+          align: 'left',
+        };
+
+      case ColumnType.Boolean:
+        return {
+          align: 'center',
+          Cell: ({ cell }) => {
+            const value = cell.getValue<boolean | null>();
+            return value ? (
+              <CircleIcon sx={{ transform: 'scale(0.5)' }} />
+            ) : null;
           },
         };
 

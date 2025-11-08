@@ -53,10 +53,11 @@ export const filterByNameAndCode = (
   );
 
 const statusTranslation: Record<PurchaseOrderNodeStatus, LocaleKey> = {
-  AUTHORISED: 'label.authorised',
-  CONFIRMED: 'label.confirmed',
-  FINALISED: 'label.finalised',
   NEW: 'label.new',
+  REQUEST_APPROVAL: 'label.ready-for-approval',
+  CONFIRMED: 'label.ready-to-send',
+  SENT: 'label.sent',
+  FINALISED: 'label.finalised',
 };
 
 export const getStatusTranslator =

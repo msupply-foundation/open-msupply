@@ -18,7 +18,6 @@ interface AppBarButtonProps {
 
 export const AppBarButtonsComponent = ({
   onAddItem,
-  isDisabled,
   disableNewLines,
 }: AppBarButtonProps) => {
   const { OpenButton } = useDetailPanel();
@@ -28,7 +27,7 @@ export const AppBarButtonsComponent = ({
   } = useUrlQueryParams();
 
   const {
-    query: { data, isLoading },
+    query: { data, isFetching },
   } = usePurchaseOrder();
 
   return (
@@ -37,9 +36,8 @@ export const AppBarButtonsComponent = ({
         <AddButton
           purchaseOrder={data ?? undefined}
           onAddItem={onAddItem}
-          disable={isDisabled}
-          disableAddFromMasterListButton={isLoading}
-          disableNewLines={disableNewLines}
+          disable={disableNewLines}
+          disableAddFromMasterListButton={isFetching}
         />
         <ReportSelector
           context={ReportContext.PurchaseOrder}

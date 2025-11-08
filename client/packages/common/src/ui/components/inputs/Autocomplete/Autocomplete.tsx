@@ -249,8 +249,6 @@ export function Autocomplete<T>({
       }}
       sx={{
         ...restOfAutocompleteProps.sx,
-        paddingTop: 0.5,
-        paddingBottom: 0.5,
       }}
     />
   );

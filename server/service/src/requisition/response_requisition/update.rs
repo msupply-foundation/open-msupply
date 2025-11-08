@@ -18,6 +18,7 @@ use repository::{
     Requisition, RequisitionLine, RequisitionLineFilter, RequisitionLineRepository,
     RequisitionRowRepository, StorageConnection,
 };
+use thiserror::Error;
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum UpdateResponseRequisitionStatus {
@@ -32,17 +33,25 @@ pub struct UpdateResponseRequisition {
     pub status: Option<UpdateResponseRequisitionStatus>,
 }
 
-#[derive(Debug, PartialEq)]
-
+#[derive(Debug, Error, PartialEq)]
 pub enum UpdateResponseRequisitionError {
+    #[error("Requisition does not exist")]
     RequisitionDoesNotExist,
+    #[error("Not this store's requisition")]
     NotThisStoreRequisition,
+    #[error("Cannot edit requisition")]
     CannotEditRequisition,
+    #[error("Not a response requisition")]
     NotAResponseRequisition,
+    #[error("Updated requisition does not exist")]
     UpdatedRequisitionDoesNotExist,
+    #[error("Order type not found")]
     OrderTypeNotFound,
+    #[error("Ordering too many items")]
     OrderingTooManyItems(i32), // emergency order
+    #[error("Database error")]
     DatabaseError(RepositoryError),
+    #[error("Reason not provided for one or more requisition lines")]
     ReasonsNotProvided(Vec<RequisitionLine>),
 }
 
@@ -202,6 +211,13 @@ impl From<RepositoryError> for UpdateResponseRequisitionError {
 
 #[cfg(test)]
 mod test_update {
+    use crate::{
+        requisition::response_requisition::{
+            UpdateResponseRequisition, UpdateResponseRequisitionError as ServiceError,
+            UpdateResponseRequisitionStatus,
+        },
+        service_provider::ServiceProvider,
+    };
     use chrono::Utc;
     use repository::{
         mock::{
@@ -213,13 +229,6 @@ mod test_update {
         requisition_row::{RequisitionRow, RequisitionStatus},
         test_db::setup_all,
         ActivityLogRowRepository, ActivityLogType, RequisitionRowRepository,
-    };
-    use crate::{
-        requisition::response_requisition::{
-            UpdateResponseRequisition, UpdateResponseRequisitionError as ServiceError,
-            UpdateResponseRequisitionStatus,
-        },
-        service_provider::ServiceProvider,
     };
 
     #[actix_rt::test]

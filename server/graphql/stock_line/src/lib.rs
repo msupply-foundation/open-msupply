@@ -10,7 +10,7 @@ use graphql_core::{
 use graphql_types::types::*;
 use repository::{
     location::LocationFilter, DateFilter, EqualFilter, PaginationOption, StockLineFilter,
-    StockLineSort, StockLineSortField,
+    StockLineSort, StockLineSortField, StringFilter,
 };
 use service::auth::{Resource, ResourceAccessRequest};
 
@@ -29,6 +29,7 @@ pub enum StockLineSortFieldInput {
     PackSize,
     SupplierName,
     LocationCode,
+    CostPricePerPack,
     VvmStatusThenExpiry,
 }
 #[derive(InputObject)]
@@ -44,6 +45,8 @@ pub struct StockLineSortInput {
 pub struct StockLineFilterInput {
     pub expiry_date: Option<DateFilterInput>,
     pub id: Option<EqualFilterStringInput>,
+    pub code: Option<StringFilterInput>,
+    pub name: Option<StringFilterInput>,
     pub is_available: Option<bool>,
     pub item_code_or_name: Option<StringFilterInput>,
     pub search: Option<StringFilterInput>,
@@ -63,6 +66,8 @@ impl From<StockLineFilterInput> for StockLineFilter {
         StockLineFilter {
             expiry_date: f.expiry_date.map(DateFilter::from),
             id: f.id.map(EqualFilter::from),
+            code: f.code.map(StringFilter::from),
+            name: f.name.map(StringFilter::from),
             is_available: f.is_available,
             item_code_or_name: f.item_code_or_name.map(StringFilterInput::into),
             search: f.search.map(StringFilterInput::into),

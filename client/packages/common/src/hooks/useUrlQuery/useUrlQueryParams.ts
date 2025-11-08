@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import {
   NESTED_SPLIT_CHAR,
   RANGE_SPLIT_CHAR,
@@ -10,12 +10,7 @@ import {
   Formatter,
   useLocalStorage,
 } from '@openmsupply-client/common';
-import {
-  FilterBy,
-  FilterByWithBoolean,
-  FilterController,
-  SortBy,
-} from '../useQueryParams';
+import { FilterBy, FilterController, SortBy } from '../useQueryParams';
 
 // This hook uses the state of the url query parameters (from useUrlQuery hook)
 // to provide query parameters and update methods to tables.
@@ -49,6 +44,8 @@ export const useUrlQueryParams = ({
   initialSort,
   filters = [],
 }: UrlQueryParams = {}) => {
+  const initialMount = useRef(true);
+
   // Do not coerce the filter parameter if the user enters a numeric value
   // If this is parsed as numeric, the query param changes filter=0300 to
   // filter=300 which then does not match against codes, as the filter is
@@ -65,7 +62,9 @@ export const useUrlQueryParams = ({
     skipParse,
   });
 
+  // Set initial sort on mount
   useEffect(() => {
+    initialMount.current = false;
     if (!initialSort) return;
 
     // Don't want to override existing sort
@@ -73,7 +72,7 @@ export const useUrlQueryParams = ({
 
     const { key: sort, dir } = initialSort;
     updateQuery({ sort, dir: dir === 'desc' ? 'desc' : '' });
-  }, [initialSort, updateQuery, urlQuery]);
+  }, []);
 
   const updateSortQuery = useCallback(
     (sort: string, dir: 'desc' | 'asc') => {
@@ -81,6 +80,8 @@ export const useUrlQueryParams = ({
     },
     [updateQuery]
   );
+
+  const clearSort = () => updateQuery({ sort: undefined, dir: undefined });
 
   const updatePaginationQuery = (
     page: number,
@@ -99,8 +100,8 @@ export const useUrlQueryParams = ({
     updateQuery({ [key]: value });
   };
 
-  const getFilterBy = (): FilterByWithBoolean =>
-    filters.reduce<FilterByWithBoolean>((prev, filter) => {
+  const getFilterBy = (): FilterBy =>
+    filters.reduce<FilterBy>((prev, filter) => {
       const filterValue = getFilterValue(
         urlQuery,
         filter.key,
@@ -154,14 +155,19 @@ export const useUrlQueryParams = ({
       ? urlQuery['page'] - 1
       : 0;
 
+  const defaultSort =
+    initialMount.current && initialSort ? initialSort : { key: '', dir: 'asc' };
+
+  const direction = urlQuery['dir'] ?? defaultSort.dir;
+
   const queryParams = {
     page,
     offset: page * pageSize,
     first: pageSize,
     sortBy: {
-      key: urlQuery['sort'] ?? initialSort?.key ?? '',
-      direction: urlQuery['dir'] ?? 'asc',
-      isDesc: urlQuery['dir'] === 'desc',
+      key: urlQuery['sort'] ?? defaultSort.key,
+      direction,
+      isDesc: direction === 'desc',
     } as SortBy<unknown>,
     filterBy: filter.filterBy,
     reportArgs: urlQuery['reportArgs'],
@@ -171,6 +177,7 @@ export const useUrlQueryParams = ({
     queryParams,
     urlQuery,
     updateSortQuery,
+    clearSort,
     updatePaginationQuery,
     updateFilterQuery,
     filter,
@@ -230,6 +237,9 @@ const getFilterEntry = (
   const condition = filter.condition ? filter.condition : 'like';
   if (condition === '=') {
     return Boolean(filterValue);
+  }
+  if (condition === 'isNumber') {
+    return Number(filterValue);
   }
 
   if (nestedKey) {

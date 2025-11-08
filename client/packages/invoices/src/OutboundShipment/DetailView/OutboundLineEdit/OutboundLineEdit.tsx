@@ -8,13 +8,14 @@ import {
   useNotification,
   InvoiceNodeStatus,
 } from '@openmsupply-client/common';
-import { useNextItem } from './hooks';
 import { ScannedBarcode } from '../../../types';
 import { SelectItem } from './SelectItem';
 import { Allocation } from './Allocation';
 import { useOpenedWithBarcode } from './hooks/useOpenedWithBarcode';
 import { useAllocationContext, getAllocatedQuantity } from '../../../StockOut';
 import { useSaveOutboundLines } from '../../api/hooks/useSaveOutboundLines';
+import { ItemRowFragment } from '@openmsupply-client/system';
+import { useNextItem } from '../../../useNextItem';
 
 export type OutboundOpenedWith = { itemId: string } | ScannedBarcode | null;
 
@@ -25,6 +26,7 @@ interface OutboundLineEditProps {
   mode: ModalMode | null;
   status: InvoiceNodeStatus;
   invoiceId: string;
+  getSortedItems: () => ItemRowFragment[];
 }
 
 export const OutboundLineEdit = ({
@@ -34,6 +36,7 @@ export const OutboundLineEdit = ({
   mode,
   status,
   invoiceId,
+  getSortedItems,
 }: OutboundLineEditProps) => {
   const t = useTranslation();
   const { info, warning } = useNotification();
@@ -45,7 +48,7 @@ export const OutboundLineEdit = ({
   };
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
 
-  const { next, disabled: nextDisabled } = useNextItem(itemId);
+  const { next, disabled: nextDisabled } = useNextItem(getSortedItems, itemId);
 
   const { mutateAsync } = useSaveOutboundLines(invoiceId);
   const { saveBarcode } = useOpenedWithBarcode(asBarcodeOrNull(openedWith));

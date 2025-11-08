@@ -34,7 +34,7 @@ pub fn export_html_report_to_excel(
 
     // Save the report to tmp dir, for download
     xlsx::write(&book, reserved_file.path)
-        .map_err(|err| ReportError::DocGenerationError(format!("{}", err)))?;
+        .map_err(|err| ReportError::DocGenerationError(format!("{err}")))?;
 
     Ok(reserved_file.id)
 }
@@ -43,7 +43,7 @@ pub fn export_html_report_to_excel(
 fn reserve_file(base_dir: &Option<String>, report_name: &str) -> Result<StaticFile, ReportError> {
     let now: DateTime<Utc> = SystemTime::now().into();
     let file_service = StaticFileService::new(base_dir)
-        .map_err(|err| ReportError::DocGenerationError(format!("{}", err)))?;
+        .map_err(|err| ReportError::DocGenerationError(format!("{err}")))?;
 
     let reserved_file = file_service
         .reserve_file(
@@ -51,7 +51,7 @@ fn reserve_file(base_dir: &Option<String>, report_name: &str) -> Result<StaticFi
             &StaticFileCategory::Temporary,
             None,
         )
-        .map_err(|err| ReportError::DocGenerationError(format!("{}", err)))?;
+        .map_err(|err| ReportError::DocGenerationError(format!("{err}")))?;
 
     Ok(reserved_file)
 }
@@ -65,17 +65,17 @@ fn get_workbook(
         Some(template) => {
             // Save a copy of the template to the reserved file path
             fs::write(path, template)
-                .map_err(|err| ReportError::DocGenerationError(format!("{}", err)))?;
+                .map_err(|err| ReportError::DocGenerationError(format!("{err}")))?;
 
             // Read in the template as a mutable XLSX book
             umya_spreadsheet::reader::xlsx::read(path)
-                .map_err(|err| ReportError::DocGenerationError(format!("{}", err)))?
+                .map_err(|err| ReportError::DocGenerationError(format!("{err}")))?
         }
         None => {
             // Create a new xlsx file if no template is provided
             let mut book = umya_spreadsheet::new_file();
             book.set_sheet_name(0, "Report")
-                .map_err(|err| ReportError::DocGenerationError(format!("{}", err)))?;
+                .map_err(|err| ReportError::DocGenerationError(format!("{err}")))?;
             book
         }
     };
@@ -217,16 +217,19 @@ fn apply_data_rows(
         }
         row_idx += 1; // Next row
     }
-    // Add a blank row before the total row
+    // Add a blank row before the total rows
     row_idx += 1;
 
-    // Total row
-    for (cell_index, cell) in body.total_row().into_iter().enumerate() {
-        if let Some(column_index) = index_to_column_index_map.get(&(cell_index as u32)).cloned() {
-            let sheet_cell = sheet.get_cell_mut((column_index, row_idx));
-            sheet_cell.set_value(cell);
-            sheet_cell.get_style_mut().get_font_mut().set_bold(true);
+    // Total rows - each on a new row
+    for total_row in body.total_rows().into_iter() {
+        for (cell_index, cell) in total_row.into_iter().enumerate() {
+            if let Some(column_index) = index_to_column_index_map.get(&(cell_index as u32)).cloned() {
+                let sheet_cell = sheet.get_cell_mut((column_index, row_idx));
+                sheet_cell.set_value(cell);
+                sheet_cell.get_style_mut().get_font_mut().set_bold(true);
+            }
         }
+        row_idx += 1; // Move to next row for next total row
     }
 
     row_idx
@@ -241,10 +244,9 @@ impl Selectors {
         let formatted = format!(
             r#"
               <div>
-                  {}
+                  {html_str}
               </div>
-            "#,
-            html_str
+            "#
         );
 
         let html = Html::parse_fragment(&formatted);
@@ -294,9 +296,13 @@ impl Selectors {
             .collect()
     }
 
-    fn total_row(&self) -> Vec<&str> {
-        let rows_selector = Selector::parse("tbody tr[excel-type=\"total-row\"] td").unwrap();
-        self.html.select(&rows_selector).map(inner_text).collect()
+    fn total_rows(&self) -> Vec<Vec<&str>> {
+        let rows_selector = Selector::parse("tbody tr[excel-type=\"total-row\"]").unwrap();
+        let cells_selector = Selector::parse("td").unwrap();
+        self.html
+            .select(&rows_selector)
+            .map(|row| row.select(&cells_selector).map(inner_text).collect())
+            .collect()
     }
 }
 
@@ -578,7 +584,7 @@ mod report_to_excel_test {
 
         let mut headers = String::new();
         for i in 1..=NUM_COLUMNS {
-            headers += &format!("<th>colHeader{}</th>\n", i);
+            headers += &format!("<th>colHeader{i}</th>\n");
         }
 
         let mut rows = String::new();
@@ -704,15 +710,14 @@ mod report_to_excel_test {
                         </tr>
                     </thead>
                     <tbody>
-                        {}
+                        {data_rows}
                         <tr excel-type="total-row">
                             <td></td>
                             <td>Total:</td>
                             <td>550.00</td>
                         </tr>
                     </tbody>
-                </table>"#,
-                data_rows
+                </table>"#
             ),
             header: Some(r#"<div excel-cell="C2">Report Date: 2025-07-17</div>"#.to_string()),
             footer: None,

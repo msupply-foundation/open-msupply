@@ -6,7 +6,7 @@ import {
   useTranslation,
 } from '@openmsupply-client/common';
 import { StockItemSearchInput } from '@openmsupply-client/system';
-import { useOutbound } from '../../api';
+import { useOutboundItems } from '../../api';
 
 interface SelectItemProps {
   itemId: string | undefined;
@@ -20,7 +20,9 @@ export const SelectItem = ({
   disabled,
 }: SelectItemProps) => {
   const t = useTranslation();
-  const { items } = useOutbound.line.rows();
+  const { data: items } = useOutboundItems();
+
+  const existingItemIds = items?.map(item => item.id);
 
   return (
     <Grid container gap="4px" width="100%">
@@ -33,12 +35,10 @@ export const SelectItem = ({
             disabled={disabled}
             currentItemId={itemId}
             onChange={item => onChangeItem(item?.id)}
-            filter={{ isVisibleOrOnHand: true }}
-            extraFilter={
-              disabled
-                ? undefined
-                : item => !items?.some(({ id }) => id === item.id)
-            }
+            filter={{
+              isVisibleOrOnHand: true,
+              id: { notEqualAll: existingItemIds },
+            }}
           />
         </Grid>
       </ModalRow>

@@ -20,27 +20,27 @@ impl ViewMigrationFragment for ViewMigration {
             connection,
             r#"
                 CREATE VIEW purchase_order_stats AS
-        SELECT
-            po.id AS purchase_order_id,
-            COALESCE(SUM(
-                CASE
-                    WHEN pol.adjusted_number_of_units IS NOT NULL
-                    THEN pol.adjusted_number_of_units * pol.price_per_unit_after_discount
-                    ELSE pol.requested_number_of_units * pol.price_per_unit_after_discount
-                END
-            ), 0) AS order_total_before_discount,
-            COALESCE(SUM(
-                CASE
-                    WHEN pol.adjusted_number_of_units IS NOT NULL
-                    THEN pol.adjusted_number_of_units * pol.price_per_unit_after_discount
-                    ELSE pol.requested_number_of_units * pol.price_per_unit_after_discount
-                END
-            ), 0) * (1-(COALESCE(po.supplier_discount_percentage, 0)/100)) AS order_total_after_discount 
+                SELECT
+                    po.id AS purchase_order_id,
+                    COALESCE(SUM(
+                        CASE
+                            WHEN pol.adjusted_number_of_units IS NOT NULL
+                            THEN (pol.adjusted_number_of_units / NULLIF(pol.requested_pack_size, 0)) * pol.price_per_pack_after_discount
+                            ELSE (pol.requested_number_of_units / NULLIF(pol.requested_pack_size, 0)) * pol.price_per_pack_after_discount
+                        END
+                    ), 0) AS order_total_before_discount,
+                    COALESCE(SUM(
+                        CASE
+                            WHEN pol.adjusted_number_of_units IS NOT NULL
+                            THEN (pol.adjusted_number_of_units / NULLIF(pol.requested_pack_size, 0)) * pol.price_per_pack_after_discount
+                            ELSE (pol.requested_number_of_units / NULLIF(pol.requested_pack_size, 0)) * pol.price_per_pack_after_discount
+                        END
+                    ), 0) * (1-(COALESCE(po.supplier_discount_percentage, 0)/100)) AS order_total_after_discount 
 
-        FROM
-            purchase_order po JOIN purchase_order_line pol on po.id = pol.purchase_order_id
-        GROUP BY
-            po.id;
+                FROM
+                    purchase_order po JOIN purchase_order_line pol on po.id = pol.purchase_order_id
+                GROUP BY
+                    po.id;
             "#
         )?;
 

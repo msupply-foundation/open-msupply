@@ -49,7 +49,12 @@ export const useStockList = (queryParams: StockListParams) => {
     return { nodes, totalCount };
   };
 
-  const query = useQuery({ queryKey, queryFn });
+  const query = useQuery({
+    queryKey,
+    queryFn,
+
+    keepPreviousData: true,
+  });
   return query;
 };
 
@@ -71,6 +76,8 @@ const toSortField = (
       return StockLineSortFieldInput.NumberOfPacks;
     case 'location':
       return StockLineSortFieldInput.LocationCode;
+    case 'costPricePerPack':
+      return StockLineSortFieldInput.CostPricePerPack;
     case 'expiryDate':
     default: {
       return StockLineSortFieldInput.ExpiryDate;

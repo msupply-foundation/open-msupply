@@ -20,13 +20,17 @@ type MuiTableBodyCellPropsParams<TData extends Record<string, any>> = {
 
 // Helper function to merge props - gets global props from table automatically
 export const mergeCellProps = <TData extends Record<string, any>>(
-  customProps: TableCellProps,
+  customProps:
+    | TableCellProps
+    | ((params: MuiTableBodyCellPropsParams<TData>) => TableCellProps),
   params: MuiTableBodyCellPropsParams<TData>
 ): TableCellProps => {
   const { table } = params;
   const globalPropsOption = table.options.muiTableBodyCellProps;
 
-  // Resolve global props if it's a function
+  const resolvedCustomProps =
+    typeof customProps === 'function' ? customProps(params) : customProps || {};
+
   const globalProps =
     typeof globalPropsOption === 'function'
       ? globalPropsOption(params)
@@ -34,20 +38,21 @@ export const mergeCellProps = <TData extends Record<string, any>>(
 
   return {
     ...globalProps,
-    ...customProps,
+    ...resolvedCustomProps,
     sx: {
       ...(globalProps.sx || {}),
-      ...(customProps.sx || {}),
+      ...(resolvedCustomProps.sx || {}),
     } as TableCellProps['sx'],
   };
 };
 
 export const getGroupedRows = <T extends MRT_RowData>(
+  isGrouped: boolean,
   data: T[],
   groupByField: keyof T | undefined,
   t: TypedTFunction<LocaleKey>
 ): Groupable<T>[] => {
-  if (!groupByField) return data;
+  if (!isGrouped || !groupByField) return data;
 
   // Group rows by groupByField
   const grouped = data.reduce(
@@ -81,14 +86,17 @@ export const getGroupedRows = <T extends MRT_RowData>(
 
         if (allEqual) {
           summary[key] = values[0];
-        } else if (isObject(values[0])) {
-          // If the values are objects, return an object with all keys set to 'multiple', so accessors still work
-          // Could break if objects have some different values and some same, but should be rare - can write custom accessor in that case
-          summary[key] = Object.fromEntries(
-            Object.keys(values[0]).map(k => [k, t('multiple')])
-          );
         } else {
-          summary[key] = t('multiple');
+          const foundObject = values.find(isObject);
+
+          if (!foundObject) {
+            summary[key] = t('multiple');
+          } else {
+            // If the values are objects, return an object with all keys set to 'multiple', so accessors still work
+            summary[key] = Object.fromEntries(
+              Object.keys(foundObject).map(k => [k, t('multiple')])
+            );
+          }
         }
       }
       // Attach subRows

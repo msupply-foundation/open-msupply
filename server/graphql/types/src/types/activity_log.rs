@@ -97,14 +97,22 @@ pub enum ActivityLogNodeType {
     GoodsReceivedStatusFinalised,
     // Purchase Orders
     PurchaseOrderCreated,
-    PurchaseOrderAuthorised,
+    PurchaseOrderRequestApproval,
     PurchaseOrderUnauthorised,
+    PurchaseOrderSent,
     PurchaseOrderConfirmed,
     PurchaseOrderFinalised,
     PurchaseOrderDeleted,
     PurchaseOrderLineCreated,
     PurchaseOrderLineUpdated,
     PurchaseOrderLineDeleted,
+
+    PurchaseOrderStatusChangedFromSentToConfirmed,
+    PurchaseOrderLineStatusClosed,
+    PurchaseOrderLineStatusChangedFromSentToNew,
+    // Patients
+    PatientCreated,
+    PatientUpdated,
 }
 
 #[Object]

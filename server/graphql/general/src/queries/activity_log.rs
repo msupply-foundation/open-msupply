@@ -41,6 +41,7 @@ pub struct EqualFilterActivityLogTypeInput {
     pub equal_to: Option<ActivityLogNodeType>,
     pub equal_any: Option<Vec<ActivityLogNodeType>>,
     pub not_equal_to: Option<ActivityLogNodeType>,
+    pub not_equal_all: Option<Vec<ActivityLogNodeType>>,
 }
 
 #[derive(InputObject, Clone)]

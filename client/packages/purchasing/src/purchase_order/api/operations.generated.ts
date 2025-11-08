@@ -54,7 +54,7 @@ export type PurchaseOrderFragment = {
   advancePaidDate?: string | null;
   receivedAtPortDate?: string | null;
   requestedDeliveryDate?: string | null;
-  authorisedDatetime?: string | null;
+  requestApprovalDatetime?: string | null;
   finalisedDatetime?: string | null;
   donor?: { __typename: 'NameNode'; id: string; name: string } | null;
   lines: {
@@ -71,8 +71,8 @@ export type PurchaseOrderFragment = {
       requestedNumberOfUnits: number;
       receivedNumberOfUnits: number;
       adjustedNumberOfUnits?: number | null;
-      pricePerUnitAfterDiscount: number;
-      pricePerUnitBeforeDiscount: number;
+      pricePerPackAfterDiscount: number;
+      pricePerPackBeforeDiscount: number;
       note?: string | null;
       unit?: string | null;
       comment?: string | null;
@@ -103,12 +103,20 @@ export type PurchaseOrderFragment = {
         number: number;
         reference?: string | null;
         confirmedDatetime?: string | null;
+        currencyId?: string | null;
         supplier?: {
           __typename: 'NameNode';
           code: string;
           name: string;
         } | null;
         user?: { __typename: 'UserNode'; username: string } | null;
+        currency?: {
+          __typename: 'CurrencyNode';
+          id: string;
+          code: string;
+          rate: number;
+          isHomeCurrency: boolean;
+        } | null;
       } | null;
     }>;
   };
@@ -123,6 +131,13 @@ export type PurchaseOrderFragment = {
       createdDatetime: string;
     }>;
   };
+  currency?: {
+    __typename: 'CurrencyNode';
+    id: string;
+    code: string;
+    rate: number;
+    isHomeCurrency: boolean;
+  } | null;
 };
 
 export type PurchaseOrderLineFragment = {
@@ -136,8 +151,8 @@ export type PurchaseOrderLineFragment = {
   requestedNumberOfUnits: number;
   receivedNumberOfUnits: number;
   adjustedNumberOfUnits?: number | null;
-  pricePerUnitAfterDiscount: number;
-  pricePerUnitBeforeDiscount: number;
+  pricePerPackAfterDiscount: number;
+  pricePerPackBeforeDiscount: number;
   note?: string | null;
   unit?: string | null;
   comment?: string | null;
@@ -168,8 +183,16 @@ export type PurchaseOrderLineFragment = {
     number: number;
     reference?: string | null;
     confirmedDatetime?: string | null;
+    currencyId?: string | null;
     supplier?: { __typename: 'NameNode'; code: string; name: string } | null;
     user?: { __typename: 'UserNode'; username: string } | null;
+    currency?: {
+      __typename: 'CurrencyNode';
+      id: string;
+      code: string;
+      rate: number;
+      isHomeCurrency: boolean;
+    } | null;
   } | null;
 };
 
@@ -246,7 +269,7 @@ export type PurchaseOrderByIdQuery = {
         advancePaidDate?: string | null;
         receivedAtPortDate?: string | null;
         requestedDeliveryDate?: string | null;
-        authorisedDatetime?: string | null;
+        requestApprovalDatetime?: string | null;
         finalisedDatetime?: string | null;
         donor?: { __typename: 'NameNode'; id: string; name: string } | null;
         lines: {
@@ -263,8 +286,8 @@ export type PurchaseOrderByIdQuery = {
             requestedNumberOfUnits: number;
             receivedNumberOfUnits: number;
             adjustedNumberOfUnits?: number | null;
-            pricePerUnitAfterDiscount: number;
-            pricePerUnitBeforeDiscount: number;
+            pricePerPackAfterDiscount: number;
+            pricePerPackBeforeDiscount: number;
             note?: string | null;
             unit?: string | null;
             comment?: string | null;
@@ -299,12 +322,20 @@ export type PurchaseOrderByIdQuery = {
               number: number;
               reference?: string | null;
               confirmedDatetime?: string | null;
+              currencyId?: string | null;
               supplier?: {
                 __typename: 'NameNode';
                 code: string;
                 name: string;
               } | null;
               user?: { __typename: 'UserNode'; username: string } | null;
+              currency?: {
+                __typename: 'CurrencyNode';
+                id: string;
+                code: string;
+                rate: number;
+                isHomeCurrency: boolean;
+              } | null;
             } | null;
           }>;
         };
@@ -319,6 +350,13 @@ export type PurchaseOrderByIdQuery = {
             createdDatetime: string;
           }>;
         };
+        currency?: {
+          __typename: 'CurrencyNode';
+          id: string;
+          code: string;
+          rate: number;
+          isHomeCurrency: boolean;
+        } | null;
       }
     | { __typename: 'RecordNotFound'; description: string };
 };
@@ -383,10 +421,7 @@ export type DeletePurchaseOrderMutation = {
     | {
         __typename: 'DeletePurchaseOrderError';
         error:
-          | {
-              __typename: 'CannotDeleteNonNewPurchaseOrder';
-              description: string;
-            }
+          | { __typename: 'CannotDeletePurchaseOrder'; description: string }
           | { __typename: 'RecordNotFound'; description: string };
       }
     | { __typename: 'DeleteResponse'; id: string };
@@ -417,8 +452,8 @@ export type PurchaseOrderLinesQuery = {
       requestedNumberOfUnits: number;
       receivedNumberOfUnits: number;
       adjustedNumberOfUnits?: number | null;
-      pricePerUnitAfterDiscount: number;
-      pricePerUnitBeforeDiscount: number;
+      pricePerPackAfterDiscount: number;
+      pricePerPackBeforeDiscount: number;
       note?: string | null;
       unit?: string | null;
       comment?: string | null;
@@ -449,12 +484,20 @@ export type PurchaseOrderLinesQuery = {
         number: number;
         reference?: string | null;
         confirmedDatetime?: string | null;
+        currencyId?: string | null;
         supplier?: {
           __typename: 'NameNode';
           code: string;
           name: string;
         } | null;
         user?: { __typename: 'UserNode'; username: string } | null;
+        currency?: {
+          __typename: 'CurrencyNode';
+          id: string;
+          code: string;
+          rate: number;
+          isHomeCurrency: boolean;
+        } | null;
       } | null;
     }>;
   };
@@ -481,8 +524,8 @@ export type PurchaseOrderLineQuery = {
       requestedNumberOfUnits: number;
       receivedNumberOfUnits: number;
       adjustedNumberOfUnits?: number | null;
-      pricePerUnitAfterDiscount: number;
-      pricePerUnitBeforeDiscount: number;
+      pricePerPackAfterDiscount: number;
+      pricePerPackBeforeDiscount: number;
       note?: string | null;
       unit?: string | null;
       comment?: string | null;
@@ -513,12 +556,20 @@ export type PurchaseOrderLineQuery = {
         number: number;
         reference?: string | null;
         confirmedDatetime?: string | null;
+        currencyId?: string | null;
         supplier?: {
           __typename: 'NameNode';
           code: string;
           name: string;
         } | null;
         user?: { __typename: 'UserNode'; username: string } | null;
+        currency?: {
+          __typename: 'CurrencyNode';
+          id: string;
+          code: string;
+          rate: number;
+          isHomeCurrency: boolean;
+        } | null;
       } | null;
     }>;
   };
@@ -593,8 +644,13 @@ export type UpdatePurchaseOrderLineMutation = {
     | {
         __typename: 'UpdatePurchaseOrderLineError';
         error:
-          | { __typename: 'CannotAdjustRequestedQuantity'; description: string }
+          | { __typename: 'CannotEditAdjustedQuantity'; description: string }
           | { __typename: 'CannotEditPurchaseOrder'; description: string }
+          | {
+              __typename: 'CannotEditQuantityBelowReceived';
+              description: string;
+            }
+          | { __typename: 'CannotEditRequestedQuantity'; description: string }
           | {
               __typename: 'ItemCannotBeOrdered';
               description: string;
@@ -670,8 +726,8 @@ export const PurchaseOrderLineFragmentDoc = gql`
     requestedNumberOfUnits
     receivedNumberOfUnits
     adjustedNumberOfUnits
-    pricePerUnitAfterDiscount
-    pricePerUnitBeforeDiscount
+    pricePerPackAfterDiscount
+    pricePerPackBeforeDiscount
     manufacturer(storeId: $storeId) {
       ...NameRow
     }
@@ -691,6 +747,13 @@ export const PurchaseOrderLineFragmentDoc = gql`
       }
       user {
         username
+      }
+      currencyId
+      currency {
+        id
+        code
+        rate
+        isHomeCurrency
       }
     }
     unitsOrderedInOthers
@@ -747,7 +810,7 @@ export const PurchaseOrderFragmentDoc = gql`
     advancePaidDate
     receivedAtPortDate
     requestedDeliveryDate
-    authorisedDatetime
+    requestApprovalDatetime
     finalisedDatetime
     documents {
       __typename
@@ -757,6 +820,12 @@ export const PurchaseOrderFragmentDoc = gql`
     }
     donor {
       id
+    }
+    currency {
+      id
+      code
+      rate
+      isHomeCurrency
     }
   }
   ${PurchaseOrderLineFragmentDoc}
@@ -865,7 +934,7 @@ export const DeletePurchaseOrderDocument = gql`
             __typename
           }
           description
-          ... on CannotDeleteNonNewPurchaseOrder {
+          ... on CannotDeletePurchaseOrder {
             __typename
           }
         }
@@ -1033,6 +1102,10 @@ export const UpdatePurchaseOrderLineDocument = gql`
           }
           ... on ItemCannotBeOrdered {
             ...ItemCannotBeOrdered
+          }
+          ... on CannotEditQuantityBelowReceived {
+            __typename
+            description
           }
         }
       }

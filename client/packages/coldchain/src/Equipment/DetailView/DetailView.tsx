@@ -10,8 +10,6 @@ import {
   useConfirmationModal,
   useNotification,
   useConfirmOnLeaving,
-  TableProvider,
-  createTableStore,
   ObjUtils,
   useAuthContext,
   useIsCentralServerApi,
@@ -168,11 +166,7 @@ export const EquipmentDetailView = () => {
       value: 'Documents',
     },
     {
-      Component: (
-        <TableProvider createStore={createTableStore}>
-          <ActivityLogList recordId={data?.id ?? ''} />
-        </TableProvider>
-      ),
+      Component: <ActivityLogList recordId={data?.id ?? ''} />,
       value: 'Log',
     },
   ];

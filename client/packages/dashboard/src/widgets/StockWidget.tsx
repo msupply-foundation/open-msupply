@@ -9,10 +9,12 @@ import {
   RANGE_SPLIT_CHAR,
   RouteBuilder,
   StatsPanel,
+  useAuthContext,
   useFormatDateTime,
   useFormatNumber,
   useNavigate,
   useNotification,
+  UserPermission,
   useToggle,
   useTranslation,
   Widget,
@@ -24,11 +26,12 @@ import { AppRoute } from '@openmsupply-client/config';
 
 const LOW_MOS_THRESHOLD = 3;
 
-export const StockWidget: React.FC = () => {
+export const StockWidget = () => {
   const t = useTranslation();
   const navigate = useNavigate();
   const modalControl = useToggle(false);
   const { error: errorNotification } = useNotification();
+  const { userHasPermission } = useAuthContext();
   const formatNumber = useFormatNumber();
   const {
     data: expiryData,
@@ -64,6 +67,14 @@ export const StockWidget: React.FC = () => {
     today,
     urlQueryDate
   )}${RANGE_SPLIT_CHAR}${customDate(inAMonth, urlQueryDate)}`;
+
+  const handleClick = () => {
+    if (!userHasPermission(UserPermission.RequisitionMutate)) {
+      errorNotification(t('error-no-internal-order-create-permission'))();
+      return;
+    }
+    modalControl.toggleOn();
+  };
 
   return (
     <>
@@ -144,18 +155,33 @@ export const StockWidget: React.FC = () => {
                     count: Math.round(itemCountsData?.total || 0),
                   }),
                   value: formatNumber.round(itemCountsData?.total || 0),
+                  link: RouteBuilder.create(AppRoute.Catalogue)
+                    .addPart(AppRoute.Items)
+                    .build(),
                 },
                 {
                   label: t('label.items-no-stock', {
                     count: Math.round(itemCountsData?.noStock || 0),
                   }),
                   value: formatNumber.round(itemCountsData?.noStock || 0),
+                  link: RouteBuilder.create(AppRoute.Catalogue)
+                    .addPart(AppRoute.Items)
+                    .addQuery({
+                      hasStockOnHand: 'false',
+                    })
+                    .build(),
                 },
                 {
                   label: t('label.low-stock-items', {
                     count: Math.round(itemCountsData?.lowStock || 0),
                   }),
                   value: formatNumber.round(itemCountsData?.lowStock || 0),
+                  link: RouteBuilder.create(AppRoute.Catalogue)
+                    .addPart(AppRoute.Items)
+                    .addQuery({
+                      maxMonthsOfStock: 3,
+                    })
+                    .build(),
                 },
                 {
                   label: t('label.more-than-six-months-stock-items', {
@@ -166,6 +192,12 @@ export const StockWidget: React.FC = () => {
                   value: formatNumber.round(
                     itemCountsData?.moreThanSixMonthsStock || 0
                   ),
+                  link: RouteBuilder.create(AppRoute.Catalogue)
+                    .addPart(AppRoute.Items)
+                    .addQuery({
+                      minMonthsOfStock: 6,
+                    })
+                    .build(),
                 },
               ]}
               link={RouteBuilder.create(AppRoute.Inventory)
@@ -184,7 +216,7 @@ export const StockWidget: React.FC = () => {
               color="secondary"
               Icon={<PlusCircleIcon />}
               label={t('button.order-more')}
-              onClick={modalControl.toggleOn}
+              onClick={handleClick}
             />
           </Grid>
         </Grid>

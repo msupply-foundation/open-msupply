@@ -2,15 +2,12 @@ import {
   useQueryClient,
   useMutation,
   useTranslation,
-  useTableStore,
   useDeleteConfirmation,
-  useFeatureFlags,
 } from '@openmsupply-client/common';
 import { OutboundFragment } from './../../operations.generated';
 import { useOutboundApi } from './../utils/useOutboundApi';
 import { useOutboundId } from '../utils/useOutboundId';
 import { useOutboundIsDisabled } from './../utils/useOutboundIsDisabled';
-import { useOutboundRows } from './useOutboundRows';
 import { StockOutLineFragment } from 'packages/invoices/src/StockOut';
 
 export const useOutboundDeleteLines = () => {
@@ -56,46 +53,27 @@ export const useOutboundDeleteSelectedLines = (
   rowsToDelete: StockOutLineFragment[],
   resetRowSelection: () => void
 ): (() => void) => {
-  const { tableUsabilityImprovements } = useFeatureFlags();
-
-  const { items, lines } = useOutboundRows();
   const { mutateAsync } = useOutboundDeleteLines();
   const isDisabled = useOutboundIsDisabled();
   const t = useTranslation();
 
-  const selectedRows =
-    useTableStore(state => {
-      const { isGrouped } = state;
-
-      return isGrouped
-        ? items
-            ?.filter(({ id }) => state.rowState[id]?.isSelected)
-            .map(({ lines }) => lines.flat())
-            .flat()
-        : lines?.filter(({ id }) => state.rowState[id]?.isSelected);
-    }) || [];
-
-  const actualRowsToDelete = tableUsabilityImprovements
-    ? rowsToDelete
-    : selectedRows;
-
   const onDelete = async () => {
-    await mutateAsync(actualRowsToDelete || []).catch(err => {
+    await mutateAsync(rowsToDelete || []).catch(err => {
       throw err;
     });
     resetRowSelection();
   };
 
   const confirmAndDelete = useDeleteConfirmation({
-    selectedRows: actualRowsToDelete,
+    selectedRows: rowsToDelete,
     deleteAction: onDelete,
     canDelete: !isDisabled,
     messages: {
       confirmMessage: t('messages.confirm-delete-invoice-lines', {
-        count: actualRowsToDelete.length,
+        count: rowsToDelete.length,
       }),
       deleteSuccess: t('messages.deleted-lines', {
-        count: actualRowsToDelete.length,
+        count: rowsToDelete.length,
       }),
     },
   });

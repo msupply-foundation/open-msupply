@@ -30,7 +30,7 @@ query PurchaseOrder($dataId: String!, $storeId: String!) {
           expectedDeliveryDate
           requestedNumberOfUnits
           requestedPackSize
-          pricePerUnitAfterDiscount
+          pricePerPackAfterDiscount
           supplierItemCode
           comment
         }
@@ -39,6 +39,16 @@ query PurchaseOrder($dataId: String!, $storeId: String!) {
       status
       confirmedDatetime
       orderTotalAfterDiscount
+      currency {
+        code
+      }
+    }
+  }
+  currencies(filter: { isActive: true, isHomeCurrency: true }) {
+    ... on CurrencyConnector {
+      nodes {
+        code
+      }
     }
   }
 }

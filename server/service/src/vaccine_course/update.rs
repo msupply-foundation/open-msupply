@@ -81,6 +81,7 @@ pub struct UpdateVaccineCourse {
     pub coverage_rate: f64,
     pub use_in_gaps_calculations: bool,
     pub wastage_rate: f64,
+    pub can_skip_dose: Option<bool>,
 }
 
 pub fn update_vaccine_course(
@@ -200,6 +201,7 @@ fn generate(
         coverage_rate,
         use_in_gaps_calculations,
         wastage_rate,
+        can_skip_dose,
     }: UpdateVaccineCourse,
 ) -> Result<GenerateResult, RepositoryError> {
     let updated_course = VaccineCourseRow {
@@ -211,6 +213,7 @@ fn generate(
         use_in_gaps_calculations,
         wastage_rate,
         deleted_datetime: None,
+        can_skip_dose: can_skip_dose.unwrap_or(old_row.can_skip_dose),
     };
 
     let doses_in_course = VaccineCourseDoseRepository::new(&connection)
