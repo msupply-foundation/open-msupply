@@ -14,7 +14,7 @@ type PreferencesQuery = {
 };
 
 // Map of complex preference fields that require subfield selection,
-// If they are a complext type, they must be included in the query or we get an error from the graphql server
+// If they are a complex type, they must be included in the query or we get an error from the graphql server
 // These must be kept in sync with the GraphQL schema.
 // If a new complex preference type is added, add it here with its subfields.
 const COMPLEX_PREFERENCE_FIELDS: Record<string, string> = {
