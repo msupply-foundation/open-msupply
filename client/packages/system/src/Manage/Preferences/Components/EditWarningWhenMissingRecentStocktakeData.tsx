@@ -90,7 +90,6 @@ export const EditWarningWhenMissingRecentStocktakeData = ({
             disabled={disabled || !enabled}
             value={maxAge}
             onChange={handleMaxAgeChange}
-            onBlur={() => {}}
           />
         }
         labelRight
