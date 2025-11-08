@@ -104,7 +104,6 @@ export const EditWarningWhenMissingRecentStocktakeData = ({
             disabled={disabled || !enabled}
             value={minItems}
             onChange={handleMinItemsChange}
-            onBlur={() => {}}
           />
         }
         labelRight
