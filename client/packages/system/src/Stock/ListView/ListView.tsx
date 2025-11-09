@@ -105,6 +105,7 @@ export const StockListView: FC = () => {
         size: 120,
         defaultHideOnMobile: true,
         enableColumnFilter: true,
+        dateFilterFormat: 'date',
         enableSorting: true,
       },
 

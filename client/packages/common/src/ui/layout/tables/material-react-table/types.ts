@@ -26,6 +26,11 @@ export type ColumnDef<T extends MRT_RowData> = MRT_ColumnDef<T> & {
   /** Specify the filter key for backend filtering, where a column's data accessor key and filtering key might vary */
   filterKey?: string;
 
+  /** For date filters, specifies whether to update the URL (and subsequently
+   * what it passed to GraphQL query) with a full date-time string or just a
+   * (naive) date */
+  dateFilterFormat?: 'date' | 'date-time'; // defaults to date-time
+
   /** Function to determine if cell should be marked as error. Cell will be
    * highlighted in red. */
   getIsError?: (row: T) => boolean;
