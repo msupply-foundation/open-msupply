@@ -1,11 +1,11 @@
 use repository::{
-    EqualFilter, MasterListRow, MasterListRowDelete, MasterListRowRepository, PluginDataFilter,
-    PluginDataRepository, PluginDataRow, PluginDataRowRepository, ProgramRowRepository,
-    StorageConnection, SyncBufferRow,
+    MasterListRow, MasterListRowDelete, MasterListRowRepository, PluginDataRowRepository,
+    PluginType, ProgramRowRepository, StorageConnection, SyncBufferRow,
 };
 
 use serde::Deserialize;
-use util::uuid::uuid;
+
+use crate::backend_plugin::{plugin_provider::PluginInstance, types::sync_essential_item_list};
 
 use super::{PullTranslateResult, SyncTranslation};
 
@@ -47,30 +47,18 @@ impl SyncTranslation for MasterListTranslation {
 
         // is_essential is only an available value if plugin is active, set via OG
         if data.is_essential.is_some() {
-            let filter = PluginDataFilter {
-                related_record_id: Some(EqualFilter::equal_to(&data.id.clone())),
-                plugin_code: Some(EqualFilter::equal_to(&"congo-plugin".to_string())),
-                id: None,
-                data_identifier: None,
-                store_id: None,
+            let input = sync_essential_item_list::Input {
+                id: data.id.clone(),
+                is_essential: data.is_essential.is_some(),
             };
 
-            let existing_plugin_data =
-                PluginDataRepository::new(connection).query_by_filter(filter)?;
+            let plugins = PluginInstance::get_one(PluginType::SyncEssentialItemList);
 
-            let plugin_data = PluginDataRow {
-                id: existing_plugin_data
-                    .first()
-                    .map(|row| row.plugin_data.id.clone())
-                    .unwrap_or_else(|| uuid()),
-                store_id: None,
-                plugin_code: "congo-plugin".to_string(),
-                related_record_id: Some(data.id.clone()),
-                data_identifier: "master-lists".to_string(),
-                data: serde_json::json!({ "is_essential": data.is_essential }).to_string(),
-            };
-
-            PluginDataRowRepository::new(connection).upsert_one(&plugin_data)?;
+            if let Some(plugin) = plugins {
+                let plugin_data_row = sync_essential_item_list::Trait::call(&(*plugin), input)
+                    .map_err(|e| anyhow::anyhow!("Failed to call plugin: {}", e))?;
+                PluginDataRowRepository::new(connection).upsert_one(&plugin_data_row)?;
+            }
         }
 
         let result = MasterListRow {
