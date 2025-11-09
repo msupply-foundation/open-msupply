@@ -265,8 +265,6 @@ pub fn upsert_preferences(
                     input,
                 )?;
             }
-            
-
             Ok(())
 
 
