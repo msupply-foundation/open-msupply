@@ -1,9 +1,7 @@
-use repository::{
-    InvoiceRow, InvoiceRowRepository, InvoiceType, RepositoryError, StorageConnection,
-};
+use repository::{InvoiceRow, InvoiceRowRepository, InvoiceType, RepositoryError};
 
 use crate::{
-    processors::transfer::invoice::InvoiceTransferOutput, service_provider::ServiceProvider,
+    processors::transfer::invoice::InvoiceTransferOutput, service_provider::ServiceContext,
 };
 
 use super::{InvoiceTransferProcessor, InvoiceTransferProcessorRecord, Operation};
@@ -28,8 +26,7 @@ impl InvoiceTransferProcessor for LinkOutboundInvoiceProcessor {
     /// 5. Because link is created between linked outbound invoice and source inbound invoice `4.` will never be true again
     fn try_process_record(
         &self,
-        connection: &StorageConnection,
-        _service_provider: &ServiceProvider,
+        ctx: &ServiceContext,
         record_for_processing: &InvoiceTransferProcessorRecord,
     ) -> Result<InvoiceTransferOutput, RepositoryError> {
         // Check can execute
@@ -67,7 +64,7 @@ impl InvoiceTransferProcessor for LinkOutboundInvoiceProcessor {
             ..outbound_invoice.invoice_row.clone()
         };
 
-        InvoiceRowRepository::new(connection).upsert_one(&updated_outbound_invoice)?;
+        InvoiceRowRepository::new(&ctx.connection).upsert_one(&updated_outbound_invoice)?;
 
         let result = format!(
             "invoice ({}) source invoice ({})",

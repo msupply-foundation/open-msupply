@@ -14,7 +14,7 @@ use crate::{
     processors::transfer::invoice::{
         common::auto_verify_if_store_preference, InvoiceTransferOutput,
     },
-    service_provider::ServiceProvider,
+    service_provider::ServiceContext,
     store_preference::get_store_preferences,
 };
 
@@ -51,8 +51,7 @@ impl InvoiceTransferProcessor for CreateInboundInvoiceProcessor {
     /// 5. Because created inbound invoice will be linked to source outbound invoice `4.` will never be true again
     fn try_process_record(
         &self,
-        connection: &StorageConnection,
-        service_provider: &ServiceProvider,
+        ctx: &ServiceContext,
         record_for_processing: &InvoiceTransferProcessorRecord,
     ) -> Result<InvoiceTransferOutput, RepositoryError> {
         // Check can execute
@@ -98,7 +97,7 @@ impl InvoiceTransferProcessor for CreateInboundInvoiceProcessor {
         }
 
         // 5.
-        let store = StoreRowRepository::new(connection)
+        let store = StoreRowRepository::new(&ctx.connection)
             .find_one_by_id(&record_for_processing.other_party_store_id)?
             .ok_or(RepositoryError::NotFound)?;
         if let Some(created_date) = store.created_date {
@@ -114,7 +113,7 @@ impl InvoiceTransferProcessor for CreateInboundInvoiceProcessor {
         if outbound_invoice.invoice_row.status == InvoiceStatus::Picked {
             if let Some(picked_date) = outbound_invoice.invoice_row.picked_datetime {
                 let pref_months = PreventTransfersMonthsBeforeInitialisation {}
-                    .load(connection, None)
+                    .load(&ctx.connection, None)
                     .map_err(|e| RepositoryError::DBError {
                         msg: e.to_string(),
                         extra: "".to_string(),
@@ -128,7 +127,7 @@ impl InvoiceTransferProcessor for CreateInboundInvoiceProcessor {
                     let filter = SyncLogFilter::new()
                         .integration_finished_datetime(DatetimeFilter::is_null(false));
 
-                    let first_initialisation_log = SyncLogRepository::new(connection)
+                    let first_initialisation_log = SyncLogRepository::new(&ctx.connection)
                         .query(Pagination::one(), Some(filter), Some(sort))?
                         .pop();
 
@@ -147,7 +146,7 @@ impl InvoiceTransferProcessor for CreateInboundInvoiceProcessor {
 
         // Execute
         let new_inbound_invoice = generate_inbound_invoice(
-            connection,
+            &ctx.connection,
             outbound_invoice,
             record_for_processing,
             request_requisition,
@@ -155,34 +154,35 @@ impl InvoiceTransferProcessor for CreateInboundInvoiceProcessor {
             new_invoice_type,
         )?;
         let new_inbound_lines = generate_inbound_lines(
-            connection,
+            &ctx.connection,
             &new_inbound_invoice.id,
             &new_inbound_invoice.store_id,
             outbound_invoice,
         )?;
-        let store_preferences = get_store_preferences(connection, &new_inbound_invoice.store_id)?;
+        let store_preferences =
+            get_store_preferences(&ctx.connection, &new_inbound_invoice.store_id)?;
 
         let new_inbound_lines = match store_preferences.pack_to_one {
             true => convert_invoice_line_to_single_pack(new_inbound_lines),
             false => new_inbound_lines,
         };
 
-        InvoiceRowRepository::new(connection).upsert_one(&new_inbound_invoice)?;
+        InvoiceRowRepository::new(&ctx.connection).upsert_one(&new_inbound_invoice)?;
 
         system_activity_log_entry(
-            connection,
+            &ctx.connection,
             ActivityLogType::InvoiceCreated,
             &new_inbound_invoice.store_id,
             &new_inbound_invoice.id,
         )?;
 
-        let invoice_line_repository = InvoiceLineRowRepository::new(connection);
+        let invoice_line_repository = InvoiceLineRowRepository::new(&ctx.connection);
 
         for line in new_inbound_lines.iter() {
             invoice_line_repository.upsert_one(line)?;
         }
 
-        auto_verify_if_store_preference(connection, service_provider, &new_inbound_invoice)?;
+        auto_verify_if_store_preference(ctx, &new_inbound_invoice)?;
 
         let result = format!(
             "invoice ({}) lines ({:?}) source invoice ({})",
@@ -310,6 +310,8 @@ fn generate_inbound_invoice(
 
 #[cfg(test)]
 mod test {
+    use crate::service_provider::ServiceProvider;
+
     use super::*;
     use chrono::NaiveDate;
     use repository::{
@@ -401,7 +403,7 @@ mod test {
             other_party_store_id: "store_a".to_string(),
         };
 
-        let (_, connection, connection_manager, _) = setup_all_with_data(
+        let (_, _, connection_manager, _) = setup_all_with_data(
             "test_create_inbound_invoice_picked_cutoff",
             MockDataInserts::none().stores(),
             MockData {
@@ -413,10 +415,11 @@ mod test {
         .await;
 
         let service_provider = &ServiceProvider::new(connection_manager);
+        let ctx = service_provider.basic_context().unwrap();
 
         let processor = CreateInboundInvoiceProcessor {};
         let result = processor
-            .try_process_record(&connection, service_provider, &invoice_transfer_old)
+            .try_process_record(&ctx, &invoice_transfer_old)
             .unwrap();
         assert!(
             matches!(result, InvoiceTransferOutput::BeforeInitialisationMonths),
@@ -425,7 +428,7 @@ mod test {
         );
 
         let result = processor
-            .try_process_record(&connection, service_provider, &invoice_transfer_new)
+            .try_process_record(&ctx, &invoice_transfer_new)
             .unwrap();
         assert!(
             matches!(result, InvoiceTransferOutput::Processed(_)),

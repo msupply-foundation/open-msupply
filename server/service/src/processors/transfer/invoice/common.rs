@@ -1,5 +1,3 @@
-use std::ops::Deref;
-
 use repository::{
     EqualFilter, Invoice, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineType, InvoiceRow,
     ItemRow, ItemStoreJoinRowRepository, ItemStoreJoinRowRepositoryTrait,
@@ -12,7 +10,7 @@ use crate::invoice::inbound_shipment::{
     update_inbound_shipment, UpdateInboundShipment, UpdateInboundShipmentStatus,
 };
 use crate::preference::{InboundShipmentAutoVerify, Preference};
-use crate::service_provider::ServiceProvider;
+use crate::service_provider::ServiceContext;
 
 pub(crate) fn generate_inbound_lines(
     connection: &StorageConnection,
@@ -157,11 +155,10 @@ pub(crate) fn convert_invoice_line_to_single_pack(
 }
 
 pub(crate) fn auto_verify_if_store_preference(
-    connection: &StorageConnection,
-    service_provider: &ServiceProvider,
-    invoice: &InvoiceRow,
+    ctx: &ServiceContext,
+    inbound_shipment: &InvoiceRow,
 ) -> Result<(), RepositoryError> {
-    match invoice.status {
+    match inbound_shipment.status {
         repository::InvoiceStatus::New
         | repository::InvoiceStatus::Allocated
         | repository::InvoiceStatus::Picked
@@ -171,24 +168,23 @@ pub(crate) fn auto_verify_if_store_preference(
         | repository::InvoiceStatus::Received
         | repository::InvoiceStatus::Delivered => (), // proceed to check auto verify pref
     };
-    dbg!(invoice);
+    dbg!(inbound_shipment);
     let should_auto_verify = InboundShipmentAutoVerify {}
-        .load(connection, Some(invoice.store_id.to_string()))
+        .load(&ctx.connection, Some(inbound_shipment.store_id.to_string()))
         .map_err(|e| RepositoryError::DBError {
             msg: e.to_string(),
             extra: "".to_string(),
         })?;
     println!("Hello\n\n\n\n\n");
     if should_auto_verify {
-        let service_ctx = &service_provider.system_context(Some(invoice.store_id.to_string()))?;
-
         update_inbound_shipment(
-            service_ctx,
+            ctx,
             UpdateInboundShipment {
-                id: invoice.id.to_string(),
+                id: inbound_shipment.id.to_string(),
                 status: Some(UpdateInboundShipmentStatus::Verified),
                 ..Default::default()
             },
+            Some(&inbound_shipment.store_id),
         )
         .map_err(|e| {
             dbg!(&e);
