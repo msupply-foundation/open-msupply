@@ -168,14 +168,13 @@ pub(crate) fn auto_verify_if_store_preference(
         | repository::InvoiceStatus::Received
         | repository::InvoiceStatus::Delivered => (), // proceed to check auto verify pref
     };
-    dbg!(inbound_shipment);
     let should_auto_verify = InboundShipmentAutoVerify {}
         .load(&ctx.connection, Some(inbound_shipment.store_id.to_string()))
         .map_err(|e| RepositoryError::DBError {
             msg: e.to_string(),
             extra: "".to_string(),
         })?;
-    println!("Hello\n\n\n\n\n");
+
     if should_auto_verify {
         update_inbound_shipment(
             ctx,
@@ -187,9 +186,6 @@ pub(crate) fn auto_verify_if_store_preference(
             Some(&inbound_shipment.store_id),
         )
         .map_err(|e| {
-            dbg!(&e);
-            dbg!(&e);
-            dbg!(&e);
             log::error!("{:?}", e);
             RepositoryError::DBError {
                 msg: "the service exploded lol. We really need to refactor how errors are done"
