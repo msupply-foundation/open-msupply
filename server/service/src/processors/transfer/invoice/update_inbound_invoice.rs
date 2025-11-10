@@ -1,13 +1,13 @@
 use repository::{
     InvoiceLineRowRepository, InvoiceRow, InvoiceRowRepository, InvoiceStatus, InvoiceType,
-    RepositoryError, StorageConnection,
+    RepositoryError,
 };
 
 use crate::{
     activity_log::{log_type_from_invoice_status, system_activity_log_entry},
     invoice::common::get_lines_for_invoice,
     processors::transfer::invoice::InvoiceTransferOutput,
-    service_provider::ServiceProvider,
+    service_provider::ServiceContext,
     store_preference::get_store_preferences,
 };
 
@@ -38,8 +38,7 @@ impl InvoiceTransferProcessor for UpdateInboundInvoiceProcessor {
     /// 6. Because linked inbound invoice will be changed to Shipped status and `4.` will never be true again
     fn try_process_record(
         &self,
-        connection: &StorageConnection,
-        _service_provider: &ServiceProvider,
+        ctx: &ServiceContext,
         record_for_processing: &InvoiceTransferProcessorRecord,
     ) -> Result<InvoiceTransferOutput, RepositoryError> {
         // Check can execute
@@ -76,22 +75,23 @@ impl InvoiceTransferProcessor for UpdateInboundInvoiceProcessor {
         }
 
         // Execute
-        let lines_to_delete = get_lines_for_invoice(connection, &inbound_invoice.invoice_row.id)?;
+        let lines_to_delete =
+            get_lines_for_invoice(&ctx.connection, &inbound_invoice.invoice_row.id)?;
         let new_inbound_lines = generate_inbound_lines(
-            connection,
+            &ctx.connection,
             &inbound_invoice.invoice_row.id,
             &inbound_invoice.store_row.id,
             outbound_invoice,
         )?;
 
         let store_preferences =
-            get_store_preferences(connection, &inbound_invoice.invoice_row.store_id)?;
+            get_store_preferences(&ctx.connection, &inbound_invoice.invoice_row.store_id)?;
         let new_inbound_lines = match store_preferences.pack_to_one {
             true => convert_invoice_line_to_single_pack(new_inbound_lines),
             false => new_inbound_lines,
         };
 
-        let invoice_line_repository = InvoiceLineRowRepository::new(connection);
+        let invoice_line_repository = InvoiceLineRowRepository::new(&ctx.connection);
 
         for line in lines_to_delete.iter() {
             invoice_line_repository.delete(&line.invoice_line_row.id)?;
@@ -141,10 +141,10 @@ impl InvoiceTransferProcessor for UpdateInboundInvoiceProcessor {
             ..inbound_invoice.invoice_row.clone()
         };
 
-        InvoiceRowRepository::new(connection).upsert_one(&updated_inbound_invoice)?;
+        InvoiceRowRepository::new(&ctx.connection).upsert_one(&updated_inbound_invoice)?;
 
         system_activity_log_entry(
-            connection,
+            &ctx.connection,
             log_type_from_invoice_status(&updated_inbound_invoice.status, false),
             &updated_inbound_invoice.store_id,
             &updated_inbound_invoice.id,
