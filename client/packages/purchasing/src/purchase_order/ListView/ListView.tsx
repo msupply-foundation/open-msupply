@@ -93,8 +93,9 @@ export const PurchaseOrderListView = () => {
       {
         header: t('label.requested-delivery-date'),
         accessorKey: 'requestedDeliveryDate',
-        enableColumnFilter: true,
         columnType: ColumnType.Date,
+        enableColumnFilter: true,
+        dateFilterFormat: 'date',
         size: 100,
       },
       {
