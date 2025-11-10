@@ -10,18 +10,20 @@ fn plugin_type() -> PluginType {
 }
 
 #[derive(TS, Clone, Deserialize, Serialize)]
-#[ts(rename = "syncEssentialItemListInput")]
+#[ts(rename = "SyncEssentialItemListInput")]
 pub struct Input {
     pub id: String,
     pub is_essential: bool,
 }
 
+pub type Output = PluginDataRow;
+
 pub trait Trait: Send + Sync {
-    fn call(&self, input: Input) -> PluginResult<PluginDataRow>;
+    fn call(&self, input: Input) -> PluginResult<Output>;
 }
 
 impl self::Trait for PluginInstance {
-    fn call(&self, input: Input) -> PluginResult<PluginDataRow> {
+    fn call(&self, input: Input) -> PluginResult<Output> {
         Ok(call_plugin(input, plugin_type(), self)?)
     }
 }
