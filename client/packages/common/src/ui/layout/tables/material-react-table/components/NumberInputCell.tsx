@@ -13,11 +13,16 @@ interface NumberInputCellProps<T extends MRT_RowData>
   extends NumericTextInputProps {
   cell: MRT_Cell<T>;
   updateFn: (value: number) => void;
+  debounceTime?: number; // ms
 }
 
 export const NumberInputCell = <T extends MRT_RowData>({
   cell,
   updateFn,
+  // Normally debouncing should be done in the hook that handles the
+  // read/update logic, but leaving the functionality here for compatibility
+  // with existing implementations (e.g. allocation login in Outbound Shipments)
+  debounceTime = 0,
   ...numericTextProps
 }: NumberInputCellProps<T>) => {
   const { getValue, column, row } = cell;
@@ -47,7 +52,7 @@ export const NumberInputCell = <T extends MRT_RowData>({
       }
     },
     [updateFn],
-    300
+    debounceTime
   );
 
   return (
