@@ -397,13 +397,12 @@ impl SyncTranslation for NameTranslation {
             ));
         }
 
-        let legacy_type = match r#type {
+        let patient_type = match r#type {
             NameRowType::Patient => LegacyNameRowType::Patient,
             _ => {
-                return Ok(PushTranslateResult::Ignored(format!(
-                    "Only push Patient, Store, or Facility name types. Got: {:?}",
-                    r#type
-                )))
+                return Ok(PushTranslateResult::Ignored(
+                    "Only push name records that belong to patients".to_string(),
+                ))
             }
         };
 
@@ -411,7 +410,7 @@ impl SyncTranslation for NameTranslation {
             id,
             name,
             code,
-            r#type: legacy_type,
+            r#type: patient_type,
             is_customer,
             is_supplier,
             supplying_store_id,
