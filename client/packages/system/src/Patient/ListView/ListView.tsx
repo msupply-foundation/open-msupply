@@ -45,7 +45,7 @@ export const PatientListView = () => {
     filters: [
       {
         key: 'dateOfBirth',
-        condition: 'equalTo',
+        condition: 'between',
       },
       {
         key: 'gender',
@@ -131,6 +131,7 @@ export const PatientListView = () => {
         columnType: ColumnType.Date,
         enableSorting: true,
         enableColumnFilter: true,
+        dateFilterFormat: 'date',
         size: 150,
       },
       {
