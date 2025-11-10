@@ -43,7 +43,6 @@ pub(crate) mod master_list;
 pub(crate) mod master_list_line;
 pub(crate) mod master_list_name_join;
 pub(crate) mod name;
-pub(crate) mod name_category_5;
 pub(crate) mod name_insurance_join;
 pub(crate) mod name_oms_fields;
 pub(crate) mod name_property;
@@ -136,7 +135,6 @@ pub(crate) fn get_all_pull_upsert_central_test_records() -> Vec<TestSyncIncoming
     test_records.append(&mut asset_property::test_pull_upsert_records());
     test_records.append(&mut property::test_pull_upsert_records());
     test_records.append(&mut name_property::test_pull_upsert_records());
-    test_records.append(&mut name_category_5::test_pull_upsert_records());
     test_records.append(&mut demographic::test_pull_upsert_records());
     test_records.append(&mut vaccine_course::test_pull_upsert_records());
     test_records.append(&mut vaccine_course_dose::test_pull_upsert_records());
@@ -231,7 +229,6 @@ pub(crate) fn get_all_pull_delete_remote_test_records() -> Vec<TestSyncIncomingR
 pub(crate) fn get_all_push_test_records() -> Vec<TestSyncOutgoingRecord> {
     let mut test_records = Vec::new();
     test_records.append(&mut name::test_push_records());
-    test_records.append(&mut name_category_5::test_push_records());
     test_records.append(&mut location::test_push_records());
     test_records.append(&mut sensor::test_push_records());
     test_records.append(&mut temperature_log::test_push_records());

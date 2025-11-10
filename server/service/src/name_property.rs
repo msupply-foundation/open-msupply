@@ -1,14 +1,10 @@
 use repository::{
-    types::PropertyValueType, ActivityLogType, NameProperty, NamePropertyFilter,
-    NamePropertyRepository, NamePropertyRow, NamePropertyRowRepository, PropertyRow,
-    PropertyRowRepository, RepositoryError, StorageConnection, StorageConnectionManager,
-    TransactionError,
+    types::PropertyValueType, NameProperty, NamePropertyFilter, NamePropertyRepository,
+    NamePropertyRow, NamePropertyRowRepository, PropertyRow, PropertyRowRepository,
+    RepositoryError, StorageConnection, StorageConnectionManager, TransactionError,
 };
 
-use crate::{
-    activity_log::activity_log_entry, service_provider::ServiceContext, usize_to_u32,
-    validate::check_property_key_does_not_exist, ListError, ListResult,
-};
+use crate::{usize_to_u32, validate::check_property_key_does_not_exist, ListError, ListResult};
 
 pub fn get_name_properties(
     connection_manager: &StorageConnectionManager,
@@ -49,10 +45,12 @@ pub struct InitialiseNameProperty {
 // but this should get revisited at whatever point we add an actual UI to
 // manage properties :)
 pub fn initialise_name_properties(
-    ctx: &ServiceContext,
+    connection_manager: &StorageConnectionManager,
     input: Vec<InitialiseNameProperty>,
 ) -> Result<(), InitialiseNamePropertyError> {
-    ctx.connection
+    let connection = connection_manager.connection()?;
+
+    connection
         .transaction_sync(|connection| {
             let property_repo = PropertyRowRepository::new(connection);
             let name_property_repo = NamePropertyRowRepository::new(connection);
@@ -70,20 +68,6 @@ pub fn initialise_name_properties(
                     property_id,
                     remote_editable,
                 } = property;
-
-                if let Some(existing_property) =
-                    property_repo.find_one_by_id(&property_id.clone())?
-                {
-                    if existing_property.allowed_values != allowed_values {
-                        activity_log_entry(
-                            ctx,
-                            ActivityLogType::PropertyUpdated,
-                            Some(property_id.clone()),
-                            existing_property.allowed_values,
-                            allowed_values.clone(),
-                        )?;
-                    }
-                }
 
                 // Not yet handling the possibility of wanting to add an existing property to a new name property..
                 property_repo.upsert_one(&PropertyRow {
@@ -127,13 +111,9 @@ fn validate(
 
 #[cfg(test)]
 mod test {
-    use repository::{
-        mock::{mock_store_a, MockDataInserts},
-        test_db::setup_all,
-        types::PropertyValueType,
-    };
+    use repository::{mock::MockDataInserts, test_db::setup_all, types::PropertyValueType};
 
-    use crate::{name_property::InitialiseNamePropertyError, service_provider::ServiceProvider};
+    use crate::name_property::InitialiseNamePropertyError;
 
     use super::{initialise_name_properties, InitialiseNameProperty};
 
@@ -152,15 +132,10 @@ mod test {
             remote_editable: false,
         };
 
-        let service_provider = ServiceProvider::new(connection_manager);
-        let ctx = service_provider
-            .context(mock_store_a().id, "".to_string())
-            .unwrap();
-
         let input: Vec<InitialiseNameProperty> = vec![property_input.clone()];
 
         // Can initialise a name property
-        assert!(initialise_name_properties(&ctx, input).is_ok());
+        assert!(initialise_name_properties(&connection_manager, input).is_ok());
 
         // Can't initialise a different name property with the same key
 
@@ -171,7 +146,10 @@ mod test {
         };
 
         assert_eq!(
-            initialise_name_properties(&ctx, vec![same_key_different_property_input]),
+            initialise_name_properties(
+                &connection_manager,
+                vec![same_key_different_property_input]
+            ),
             Err(InitialiseNamePropertyError::PropertyKeyAlreadyExists)
         );
     }

@@ -311,13 +311,6 @@ impl<'a> NameRowRepository<'a> {
             .set(name_oms_fields::properties.eq(properties))
             .execute(self.connection.lock().connection())?;
 
-        // Only return name changelog if properties contains "supply_level"
-        if let Some(props) = properties {
-            if props.contains("supply_level") {
-                return self.insert_changelog(name_id.to_owned(), RowActionType::Upsert);
-            }
-        }
-
         self.insert_changelog_oms_fields(name_id.to_owned(), RowActionType::Upsert)
     }
 

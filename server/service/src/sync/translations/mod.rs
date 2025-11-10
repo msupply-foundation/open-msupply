@@ -42,7 +42,6 @@ pub(crate) mod master_list;
 pub(crate) mod master_list_line;
 pub(crate) mod master_list_name_join;
 pub(crate) mod name;
-pub(crate) mod name_category_5;
 pub(crate) mod name_insurance_join;
 pub(crate) mod name_oms_fields;
 pub(crate) mod name_property;
@@ -221,8 +220,6 @@ pub(crate) fn all_translators() -> SyncTranslators {
         goods_received_line::boxed(),
         // Shipping Method
         shipping_method::boxed(),
-        // Name Category 5
-        name_category_5::boxed(),
     ]
 }
 

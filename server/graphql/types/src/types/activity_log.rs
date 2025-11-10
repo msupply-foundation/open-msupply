@@ -113,8 +113,6 @@ pub enum ActivityLogNodeType {
     // Patients
     PatientCreated,
     PatientUpdated,
-    // Property
-    PropertyUpdated,
 }
 
 #[Object]

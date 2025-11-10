@@ -2,7 +2,6 @@ use super::{version::Version, Migration, MigrationFragment};
 use crate::StorageConnection;
 
 mod add_created_from_req_ids_to_requisition;
-mod add_property_updated_to_activity_log_type;
 
 pub(crate) struct V2_13_00;
 impl Migration for V2_13_00 {
@@ -15,10 +14,7 @@ impl Migration for V2_13_00 {
     }
 
     fn migrate_fragments(&self) -> Vec<Box<dyn MigrationFragment>> {
-        vec![
-            Box::new(add_created_from_req_ids_to_requisition::Migrate),
-            Box::new(add_property_updated_to_activity_log_type::Migrate),
-        ]
+        vec![Box::new(add_created_from_req_ids_to_requisition::Migrate)]
     }
 }
 

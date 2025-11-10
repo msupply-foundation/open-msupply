@@ -34,10 +34,10 @@ pub fn configure_name_properties(
         },
     )?;
 
-    let service_context = ctx.service_provider().basic_context()?;
+    let connection_manager = ctx.get_connection_manager();
 
     let result = initialise_name_properties(
-        &service_context,
+        connection_manager,
         input
             .into_iter()
             .map(ConfigureNamePropertyInput::to_domain)
