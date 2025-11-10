@@ -14,6 +14,7 @@ use crate::activity_log::{activity_log_entry, log_type_from_invoice_status};
 use crate::invoice::outbound_shipment::update::generate::GenerateResult;
 use crate::invoice::query::get_invoice;
 use crate::invoice_line::ShipmentTaxUpdate;
+use crate::processors::ProcessorType::RequisitionAutoFinalise;
 use crate::service_provider::ServiceContext;
 use crate::NullableUpdate;
 
@@ -108,7 +109,7 @@ pub fn update_outbound_shipment(
                 activity_log_entry(
                     ctx,
                     log_type_from_invoice_status(&update_invoice.status, false),
-                    Some(update_invoice.id.to_owned()),
+                    Some(update_invoice.id.to_string()),
                     None,
                     None,
                 )?;
@@ -121,6 +122,8 @@ pub fn update_outbound_shipment(
         .map_err(|error| error.to_inner_error())?;
 
     ctx.processors_trigger.trigger_invoice_transfer_processors();
+    ctx.processors_trigger
+        .trigger_processor(RequisitionAutoFinalise);
 
     Ok(invoice)
 }
@@ -477,34 +480,31 @@ mod test {
             .unwrap()
             .unwrap();
 
-        assert_eq!(
-            updated_record,
-            {
-                let UpdateOutboundShipment {
-                    id: _,
-                    status: _,
-                    on_hold,
-                    comment,
-                    their_reference,
-                    colour,
-                    transport_reference,
-                    tax,
-                    currency_id: _,
-                    currency_rate: _,
-                    expected_delivery_date,
-                } = get_update();
-                InvoiceRow {
-                    on_hold: on_hold.unwrap(),
-                    comment,
-                    their_reference,
-                    colour,
-                    transport_reference,
-                    tax_percentage: tax.map(|tax| tax.percentage.unwrap()),
-                    expected_delivery_date: expected_delivery_date.and_then(|v| v.value),
-                    ..invoice()
-                }
+        assert_eq!(updated_record, {
+            let UpdateOutboundShipment {
+                id: _,
+                status: _,
+                on_hold,
+                comment,
+                their_reference,
+                colour,
+                transport_reference,
+                tax,
+                currency_id: _,
+                currency_rate: _,
+                expected_delivery_date,
+            } = get_update();
+            InvoiceRow {
+                on_hold: on_hold.unwrap(),
+                comment,
+                their_reference,
+                colour,
+                transport_reference,
+                tax_percentage: tax.map(|tax| tax.percentage.unwrap()),
+                expected_delivery_date: expected_delivery_date.and_then(|v| v.value),
+                ..invoice()
             }
-        );
+        });
 
         // helpers to compare totals
         let stock_lines_for_invoice_lines = |invoice_lines: &Vec<InvoiceLineRow>| {

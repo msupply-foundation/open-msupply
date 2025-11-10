@@ -33,7 +33,7 @@ pub fn insert_asset(
     let asset_input = match &input.store_id {
         Some(_) => input,
         None => InsertAssetInput {
-            store_id: Some(store_id.to_owned()),
+            store_id: Some(store_id.to_string()),
             ..input
         },
     };
@@ -227,9 +227,9 @@ mod test {
         // Record Already Exists
         let test_service = TestService(Box::new(|_| {
             Ok(Asset {
-                id: "id".to_owned(),
-                notes: Some("notes".to_owned()),
-                asset_number: Some("asset_number".to_owned()),
+                id: "id".to_string(),
+                notes: Some("notes".to_string()),
+                asset_number: Some("asset_number".to_string()),
                 ..Default::default()
             })
         }));

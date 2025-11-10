@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import {
   ArrayUtils,
   InvoiceLineNodeType,
@@ -8,7 +9,6 @@ import {
   ColumnType,
 } from '@openmsupply-client/common';
 import { StockOutLineFragment } from '../../StockOut';
-import { useMemo } from 'react';
 
 const isDefaultPlaceholderRow = (row: StockOutLineFragment) =>
   row.type === InvoiceLineNodeType.UnallocatedStock && !row.numberOfPacks;

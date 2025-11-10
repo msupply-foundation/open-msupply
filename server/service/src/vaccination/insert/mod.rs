@@ -176,7 +176,7 @@ fn create_missing_not_given_vaccinations(
 
     // Get all doses for this vaccine course
     let all_course_doses = VaccineCourseDoseRepository::new(connection).query_by_filter(
-        VaccineCourseDoseFilter::new().vaccine_course_id(EqualFilter::equal_to(vaccine_course_id)),
+        VaccineCourseDoseFilter::new().vaccine_course_id(EqualFilter::equal_to(vaccine_course_id.to_string())),
     )?;
 
     // Find the current dose index
@@ -194,8 +194,8 @@ fn create_missing_not_given_vaccinations(
         // Check if vaccination already exists for this dose
         let existing_vaccination = VaccinationRepository::new(connection).query_one(
             VaccinationFilter::new()
-                .vaccine_course_dose_id(EqualFilter::equal_to(&dose.vaccine_course_dose_row.id))
-                .program_enrolment_id(EqualFilter::equal_to(&program_enrolment.id)),
+                .vaccine_course_dose_id(EqualFilter::equal_to(dose.vaccine_course_dose_row.id.to_string()))
+                .program_enrolment_id(EqualFilter::equal_to(program_enrolment.id.to_string())),
         )?;
 
         // If no vaccination exists, create a "Not given" one by calling
@@ -497,6 +497,22 @@ mod insert {
             Err(InsertVaccinationError::StockLineDoesNotMatchItem)
         );
 
+        // VaccineIsNotNextDose (can't skip straight to dose C if B doesn't have a status yet)
+        assert_eq!(
+            service.insert_vaccination(
+                &context,
+                store_id,
+                InsertVaccination {
+                    id: "new_id".to_string(),
+                    encounter_id: mock_immunisation_encounter_a().id,
+                    // Dose B does not exist yet
+                    vaccine_course_dose_id: mock_vaccine_course_a_dose_c().id,
+                    ..Default::default()
+                }
+            ),
+            Err(InsertVaccinationError::VaccineIsNotNextDose)
+        );
+
         // Insert dose B as NOT GIVEN
         service
             .insert_vaccination(
@@ -513,21 +529,20 @@ mod insert {
             )
             .unwrap();
 
-        // VaccineIsNotNextDose
-        assert_eq!(
-            service.insert_vaccination(
-                &context,
-                store_id,
-                InsertVaccination {
-                    id: "new_id".to_string(),
-                    encounter_id: mock_immunisation_encounter_a().id,
-                    // Dose B was not given, so can't give dose C
-                    vaccine_course_dose_id: mock_vaccine_course_a_dose_c().id,
-                    ..Default::default()
-                }
-            ),
-            Err(InsertVaccinationError::VaccineIsNotNextDose)
+        // Test manual Skipping of dose B to dose C (e.g. Dose B was not given but it was records as such)
+        let result = service.insert_vaccination(
+            &context,
+            store_id,
+            InsertVaccination {
+                id: "new_id".to_string(),
+                encounter_id: mock_immunisation_encounter_a().id,
+                // Dose B was not given, but we can manually skip and give dose C
+                vaccine_course_dose_id: mock_vaccine_course_a_dose_c().id,
+                given: true,
+                ..Default::default()
+            },
         );
+        assert!(result.is_ok());
     }
 
     #[actix_rt::test]

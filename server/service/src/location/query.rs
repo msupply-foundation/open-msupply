@@ -29,7 +29,7 @@ pub fn get_location(ctx: &ServiceContext, id: String) -> Result<Location, Single
     let repository = LocationRepository::new(&ctx.connection);
 
     let mut result =
-        repository.query_by_filter(LocationFilter::new().id(EqualFilter::equal_to(&id)))?;
+        repository.query_by_filter(LocationFilter::new().id(EqualFilter::equal_to(id.to_string())))?;
 
     if let Some(record) = result.pop() {
         Ok(record)
@@ -46,7 +46,7 @@ pub fn get_volume_used(
 
     let lines = stock_line_repo.query_by_filter(
         StockLineFilter::new()
-            .location_id(EqualFilter::equal_to(&location.id))
+            .location_id(EqualFilter::equal_to(location.id.to_string()))
             .has_packs_in_store(true),
         Some(location.store_id.clone()),
     )?;

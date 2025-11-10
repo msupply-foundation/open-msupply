@@ -135,7 +135,7 @@ pub fn stocktake(ctx: &Context<'_>, store_id: &str, id: &str) -> Result<Stocktak
         &service_ctx,
         store_id,
         None,
-        Some(StocktakeFilter::new().id(EqualFilter::equal_to(id))),
+        Some(StocktakeFilter::new().id(EqualFilter::equal_to(id.to_string()))),
         None,
     ) {
         Ok(mut stocktakes) => {
@@ -173,7 +173,7 @@ pub fn stocktake_by_number(
         &service_ctx,
         store_id,
         None,
-        Some(StocktakeFilter::new().stocktake_number(EqualFilter::equal_to_i64(stocktake_number))),
+        Some(StocktakeFilter::new().stocktake_number(EqualFilter::equal_to(stocktake_number))),
         None,
     ) {
         Ok(mut stocktakes) => {

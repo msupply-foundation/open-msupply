@@ -292,8 +292,8 @@ mod test {
         let stock_movement_repo = StockMovementRepository::new(&connection);
         let mut rows = stock_movement_repo
             .query(Some(StockMovementFilter {
-                store_id: Some(EqualFilter::equal_to(&store().id)),
-                item_id: Some(EqualFilter::equal_to(&mock_item_a().id)),
+                store_id: Some(EqualFilter::equal_to(store().id)),
+                item_id: Some(EqualFilter::equal_to(mock_item_a().id)),
                 datetime: None,
                 stock_line_id: None,
             }))
@@ -386,8 +386,8 @@ mod test {
 
         let rows = stock_movement_repo
             .query(Some(StockMovementFilter {
-                store_id: Some(EqualFilter::equal_to(&store().id)),
-                item_id: Some(EqualFilter::equal_to(&mock_item_a().id)),
+                store_id: Some(EqualFilter::equal_to(store().id)),
+                item_id: Some(EqualFilter::equal_to(mock_item_a().id)),
                 datetime: None,
                 stock_line_id: None,
             }))

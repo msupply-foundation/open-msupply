@@ -20,7 +20,7 @@ mod query {
                 None,
                 Some(
                     MasterListFilter::new()
-                        .exists_for_name_id(EqualFilter::equal_to("name_store_a")),
+                        .exists_for_name_id(EqualFilter::equal_to("name_store_a".to_string())),
                 ),
                 None,
             )
@@ -49,7 +49,7 @@ mod query {
             .get_master_lists(
                 &context,
                 None,
-                Some(MasterListFilter::new().exists_for_store_id(EqualFilter::equal_to("store_a"))),
+                Some(MasterListFilter::new().exists_for_store_id(EqualFilter::equal_to("store_a".to_string()))),
                 None,
             )
             .unwrap();
@@ -61,7 +61,7 @@ mod query {
                 None,
                 Some(
                     MasterListFilter::new()
-                        .exists_for_store_id(EqualFilter::equal_to("not_a_real_store")),
+                        .exists_for_store_id(EqualFilter::equal_to("not_a_real_store".to_string())),
                 ),
                 None,
             )

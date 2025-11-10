@@ -8,7 +8,6 @@ import {
   useDeleteConfirmation,
   useDownloadFile,
   useNotification,
-  useTableStore,
   useTranslation,
 } from '@openmsupply-client/common';
 import { Environment } from '@openmsupply-client/config';
@@ -16,24 +15,22 @@ import { SyncFileReferenceFragment } from '@openmsupply-client/system';
 
 interface FooterProps {
   recordId: string;
-  documents: SyncFileReferenceFragment[];
   tableName: string;
   invalidateQueries?: () => void;
+  selectedRows?: SyncFileReferenceFragment[];
+  resetRowSelection?: () => void;
 }
 
 const FooterComponent = ({
   recordId,
-  documents,
   tableName,
   invalidateQueries = () => {},
+  selectedRows = [],
+  resetRowSelection = () => {},
 }: FooterProps): ReactElement => {
   const t = useTranslation();
   const downloadFile = useDownloadFile();
   const { error } = useNotification();
-
-  const selectedRows = useTableStore(state =>
-    documents.filter(({ id }) => state.rowState[id]?.isSelected)
-  );
 
   const handleFileDelete = async (id: string) => {
     const url = `${Environment.SYNC_FILES_URL}/${tableName}/${recordId}/${id}`;
@@ -107,6 +104,7 @@ const FooterComponent = ({
             <ActionsFooter
               actions={actions}
               selectedRowCount={selectedRows.length}
+              resetRowSelection={resetRowSelection}
             />
           )}
         </>

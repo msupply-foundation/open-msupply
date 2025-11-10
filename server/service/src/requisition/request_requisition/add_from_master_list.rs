@@ -68,7 +68,7 @@ pub fn add_from_master_list(
 
             match RequisitionLineRepository::new(connection).query_by_filter(
                 RequisitionLineFilter::new()
-                    .requisition_id(EqualFilter::equal_to(&input.request_requisition_id)),
+                    .requisition_id(EqualFilter::equal_to(input.request_requisition_id.to_string())),
             ) {
                 Ok(lines) => Ok(lines),
                 Err(error) => Err(OutError::DatabaseError(error)),
@@ -121,7 +121,7 @@ fn generate(
     let master_list_lines_not_in_requisition = MasterListLineRepository::new(&ctx.connection)
         .query_by_filter(
             MasterListLineFilter::new()
-                .master_list_id(EqualFilter::equal_to(&input.master_list_id))
+                .master_list_id(EqualFilter::equal_to(input.master_list_id.to_string()))
                 .item_id(EqualFilter::not_equal_all(item_ids_in_requisition))
                 .item_type(ItemType::Stock.equal_to()),
             None,
@@ -199,8 +199,8 @@ mod test {
             service.add_from_master_list(
                 &context,
                 AddFromMasterList {
-                    request_requisition_id: "invalid".to_owned(),
-                    master_list_id: "n/a".to_owned()
+                    request_requisition_id: "invalid".to_string(),
+                    master_list_id: "n/a".to_string()
                 },
             ),
             Err(ServiceError::RequisitionDoesNotExist)
@@ -212,7 +212,7 @@ mod test {
                 &context,
                 AddFromMasterList {
                     request_requisition_id: mock_sent_request_requisition().id,
-                    master_list_id: "n/a".to_owned()
+                    master_list_id: "n/a".to_string()
                 },
             ),
             Err(ServiceError::CannotEditRequisition)
@@ -226,7 +226,7 @@ mod test {
                     request_requisition_id: mock_full_new_response_requisition_for_update_test()
                         .requisition
                         .id,
-                    master_list_id: "n/a".to_owned()
+                    master_list_id: "n/a".to_string()
                 },
             ),
             Err(ServiceError::NotARequestRequisition)
@@ -251,7 +251,7 @@ mod test {
                 &context,
                 AddFromMasterList {
                     request_requisition_id: mock_draft_request_requisition_for_update_test().id,
-                    master_list_id: "n/a".to_owned()
+                    master_list_id: "n/a".to_string()
                 },
             ),
             Err(ServiceError::NotThisStoreRequisition)
@@ -261,7 +261,7 @@ mod test {
     #[actix_rt::test]
     async fn add_from_master_list_success() {
         fn master_list() -> FullMockMasterList {
-            let id = "master_list".to_owned();
+            let id = "master_list".to_string();
             let join1 = format!("{id}1");
             let line1 = format!("{id}1");
             let line2 = format!("{id}2");

@@ -33,7 +33,7 @@ pub fn get_vaccine_course(
     let repository = VaccineCourseRepository::new(connection);
 
     let mut result =
-        repository.query_by_filter(VaccineCourseFilter::new().id(EqualFilter::equal_to(&id)))?;
+        repository.query_by_filter(VaccineCourseFilter::new().id(EqualFilter::equal_to(id.to_string())))?;
 
     if let Some(record) = result.pop() {
         Ok(record)
@@ -49,7 +49,7 @@ pub fn get_vaccine_course_dose(
 
     let result = repository.query_one(
         VaccineCourseDoseFilter::new()
-            .id(EqualFilter::equal_to(&id))
+            .id(EqualFilter::equal_to(id.to_string()))
             // We're getting by id, so we want to include deleted records
             // Currently this is only used from vaccination modal - if there are other cases we may need to reconsider
             .include_deleted(true),

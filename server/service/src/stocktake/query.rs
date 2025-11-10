@@ -19,7 +19,7 @@ pub fn get_stocktakes(
     // ensure filter restrict results to store id
     let filter = filter
         .unwrap_or_default()
-        .store_id(EqualFilter::equal_to(store_id));
+        .store_id(EqualFilter::equal_to(store_id.to_string()));
 
     Ok(ListResult {
         rows: repository.query(pagination, Some(filter.clone()), sort)?,
@@ -33,6 +33,6 @@ pub fn get_stocktake(
 ) -> Result<Option<Stocktake>, RepositoryError> {
     let repository = StocktakeRepository::new(&ctx.connection);
     Ok(repository
-        .query_by_filter(StocktakeFilter::new().id(EqualFilter::equal_to(&id)))?
+        .query_by_filter(StocktakeFilter::new().id(EqualFilter::equal_to(id.to_string())))?
         .pop())
 }

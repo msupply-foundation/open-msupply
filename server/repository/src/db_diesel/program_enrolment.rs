@@ -5,8 +5,10 @@ use super::{
 
 use crate::{
     diesel_macros::{apply_date_time_filter, apply_equal_filter, apply_sort, apply_string_filter},
-    DBType, DatetimeFilter, EqualFilter, NameLinkRow, NameRow, Pagination, ProgramEnrolmentRow,
-    ProgramRow, RepositoryError, Sort, StringFilter,
+    document_registry_row::document_registry,
+    DBType, DatetimeFilter, DocumentRegistryFilter, DocumentRegistryRepository, EqualFilter,
+    NameLinkRow, NameRow, Pagination, ProgramEnrolmentRow, ProgramRow, RepositoryError, Sort,
+    StringFilter,
 };
 
 use diesel::{dsl::IntoBoxed, helper_types::InnerJoin, prelude::*};
@@ -224,7 +226,14 @@ impl<'a> ProgramEnrolmentRepository<'a> {
             apply_string_filter!(query, status, program_enrolment::status);
             apply_equal_filter!(query, document_type, program_enrolment::document_type);
             apply_equal_filter!(query, document_name, program_enrolment::document_name);
-            apply_string_filter!(query, program_name, program::name);
+
+            if let Some(program_name) = program_name {
+                let document_types = DocumentRegistryRepository::create_filtered_query(Some(
+                    DocumentRegistryFilter::new().name(program_name),
+                ))
+                .select(document_registry::document_type);
+                query = query.filter(program_enrolment::document_type.eq_any(document_types))
+            }
 
             if let Some(is_immunisation_program) = is_immunisation_program {
                 query = query.filter(program::is_immunisation.eq(is_immunisation_program))
@@ -241,8 +250,8 @@ impl<'a> ProgramEnrolmentRepository<'a> {
         Ok(self
             .query_by_filter(
                 ProgramEnrolmentFilter::new()
-                    .program_id(EqualFilter::equal_to(program_id))
-                    .patient_id(EqualFilter::equal_to(patient_id)),
+                    .program_id(EqualFilter::equal_to(program_id.to_string()))
+                    .patient_id(EqualFilter::equal_to(patient_id.to_string())),
             )?
             .pop())
     }

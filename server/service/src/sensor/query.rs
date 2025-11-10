@@ -9,7 +9,6 @@ use crate::{
     get_pagination_or_default, i64_to_u32, service_provider::ServiceContext, ListError, ListResult,
     SingleRecordError,
 };
- 
 
 pub fn get_sensors(
     ctx: &ServiceContext,
@@ -29,8 +28,8 @@ pub fn get_sensors(
 pub fn get_sensor(ctx: &ServiceContext, id: String) -> Result<Sensor, SingleRecordError> {
     let repository = SensorRepository::new(&ctx.connection);
 
-    let mut result =
-        repository.query_by_filter(SensorFilter::new().id(EqualFilter::equal_to(&id)))?;
+    let mut result = repository
+        .query_by_filter(SensorFilter::new().id(EqualFilter::equal_to(id.to_string())))?;
 
     if let Some(record) = result.pop() {
         Ok(record)
@@ -56,7 +55,7 @@ pub fn get_sensor_logs_filter_for_breach(
     });
 
     let filter = TemperatureLogFilter::new()
-        .sensor(SensorFilter::new().id(EqualFilter::equal_to(&breach.sensor_id)))
+        .sensor(SensorFilter::new().id(EqualFilter::equal_to(breach.sensor_id.to_string())))
         .datetime(datetime_filter)
         .temperature(temperature_filter);
 

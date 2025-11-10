@@ -199,7 +199,7 @@ fn generate_tax_update_for_lines(
 ) -> Result<Vec<InvoiceLineRow>, UpdateInboundShipmentError> {
     let invoice_lines = InvoiceLineRepository::new(connection).query_by_filter(
         InvoiceLineFilter::new()
-            .invoice_id(EqualFilter::equal_to(invoice_id))
+            .invoice_id(EqualFilter::equal_to(invoice_id.to_string()))
             .r#type(InvoiceLineType::StockIn.equal_to()),
     )?;
 
@@ -223,7 +223,7 @@ fn generate_foreign_currency_before_tax_for_lines(
 ) -> Result<Vec<InvoiceLineRow>, UpdateInboundShipmentError> {
     let invoice_lines = InvoiceLineRepository::new(connection).query_by_filter(
         InvoiceLineFilter::new()
-            .invoice_id(EqualFilter::equal_to(invoice_id))
+            .invoice_id(EqualFilter::equal_to(invoice_id.to_string()))
             .r#type(InvoiceLineType::StockIn.equal_to()),
     )?;
 
@@ -267,9 +267,9 @@ fn empty_lines_to_trim(
 
     let lines_with_no_received_packs = InvoiceLineRepository::new(connection).query_by_filter(
         InvoiceLineFilter::new()
-            .invoice_id(EqualFilter::equal_to(&invoice.id))
+            .invoice_id(EqualFilter::equal_to(invoice.id.to_string()))
             .r#type(InvoiceLineType::StockIn.equal_to())
-            .number_of_packs(EqualFilter::equal_to_f64(0.0)),
+            .number_of_packs(EqualFilter::equal_to(0.0)),
     )?;
 
     // Only trim lines that have no shipped packs either (valid to track "supplier said they sent 5 packs but I received 0")
@@ -449,7 +449,7 @@ fn update_donor_on_lines_and_stock(
 ) -> Result<Vec<LineAndStockLine>, UpdateInboundShipmentError> {
     let invoice_lines = InvoiceLineRepository::new(connection).query_by_filter(
         InvoiceLineFilter::new()
-            .invoice_id(EqualFilter::equal_to(invoice_id))
+            .invoice_id(EqualFilter::equal_to(invoice_id.to_string()))
             .r#type(InvoiceLineType::StockIn.equal_to()),
     )?;
     let mut result = Vec::new();

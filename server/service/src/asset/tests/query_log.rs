@@ -48,8 +48,8 @@ mod query {
         let service = service_provider.asset_service;
 
         assert_eq!(
-            service.get_asset_log(&context, "invalid_id".to_owned()),
-            Err(SingleRecordError::NotFound("invalid_id".to_owned()))
+            service.get_asset_log(&context, "invalid_id".to_string()),
+            Err(SingleRecordError::NotFound("invalid_id".to_string()))
         );
 
         let result = service

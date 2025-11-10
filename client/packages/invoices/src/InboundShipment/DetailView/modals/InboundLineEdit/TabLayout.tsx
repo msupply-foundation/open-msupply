@@ -62,8 +62,7 @@ export const TabLayout = ({
     () => ''
   );
 
-  if (draftLines.length === 0)
-    return <Box sx={{ height: isMediumScreen ? 400 : 500 }} />;
+  if (!item) return null;
 
   return (
     <TabContext value={currentTab}>

@@ -187,7 +187,7 @@ mod tests {
 
         // Query by id
         let bundled_item_row = BundledItemRepository::new(&storage_connection)
-            .query_one(BundledItemFilter::new().id(EqualFilter::equal_to(&id)))
+            .query_one(BundledItemFilter::new().id(EqualFilter::equal_to(id.to_string())))
             .unwrap()
             .unwrap();
         assert_eq!(bundled_item_row.id, id);
@@ -196,7 +196,7 @@ mod tests {
         let bundled_item_row = BundledItemRepository::new(&storage_connection)
             .query_one(
                 BundledItemFilter::new()
-                    .principal_item_variant_id(EqualFilter::equal_to(&principal_id)),
+                    .principal_item_variant_id(EqualFilter::equal_to(principal_id.to_string())),
             )
             .unwrap()
             .unwrap();

@@ -18,6 +18,7 @@ use repository::{
     Requisition, RequisitionLine, RequisitionLineFilter, RequisitionLineRepository,
     RequisitionRowRepository, StorageConnection,
 };
+use thiserror::Error;
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum UpdateResponseRequisitionStatus {
@@ -32,17 +33,25 @@ pub struct UpdateResponseRequisition {
     pub status: Option<UpdateResponseRequisitionStatus>,
 }
 
-#[derive(Debug, PartialEq)]
-
+#[derive(Debug, Error, PartialEq)]
 pub enum UpdateResponseRequisitionError {
+    #[error("Requisition does not exist")]
     RequisitionDoesNotExist,
+    #[error("Not this store's requisition")]
     NotThisStoreRequisition,
+    #[error("Cannot edit requisition")]
     CannotEditRequisition,
+    #[error("Not a response requisition")]
     NotAResponseRequisition,
+    #[error("Updated requisition does not exist")]
     UpdatedRequisitionDoesNotExist,
+    #[error("Order type not found")]
     OrderTypeNotFound,
+    #[error("Ordering too many items")]
     OrderingTooManyItems(i32), // emergency order
+    #[error("Database error")]
     DatabaseError(RepositoryError),
+    #[error("Reason not provided for one or more requisition lines")]
     ReasonsNotProvided(Vec<RequisitionLine>),
 }
 
@@ -65,7 +74,7 @@ pub fn update_response_requisition(
                 activity_log_entry(
                     ctx,
                     ActivityLogType::RequisitionStatusFinalised,
-                    Some(updated_requisition.id.to_owned()),
+                    Some(updated_requisition.id.to_string()),
                     None,
                     None,
                 )?;
@@ -107,7 +116,7 @@ pub fn validate(
     }
 
     let response_lines = RequisitionLineRepository::new(connection).query_by_filter(
-        RequisitionLineFilter::new().requisition_id(EqualFilter::equal_to(&requisition_row.id)),
+        RequisitionLineFilter::new().requisition_id(EqualFilter::equal_to(requisition_row.id.to_string())),
     )?;
 
     let reason_options = ReasonOptionRepository::new(connection).query_by_filter(
@@ -202,6 +211,13 @@ impl From<RepositoryError> for UpdateResponseRequisitionError {
 
 #[cfg(test)]
 mod test_update {
+    use crate::{
+        requisition::response_requisition::{
+            UpdateResponseRequisition, UpdateResponseRequisitionError as ServiceError,
+            UpdateResponseRequisitionStatus,
+        },
+        service_provider::ServiceProvider,
+    };
     use chrono::Utc;
     use repository::{
         mock::{
@@ -213,13 +229,6 @@ mod test_update {
         requisition_row::{RequisitionRow, RequisitionStatus},
         test_db::setup_all,
         ActivityLogRowRepository, ActivityLogType, RequisitionRowRepository,
-    };
-    use crate::{
-        requisition::response_requisition::{
-            UpdateResponseRequisition, UpdateResponseRequisitionError as ServiceError,
-            UpdateResponseRequisitionStatus,
-        },
-        service_provider::ServiceProvider,
     };
 
     #[actix_rt::test]
@@ -238,7 +247,7 @@ mod test_update {
             service.update_response_requisition(
                 &context,
                 UpdateResponseRequisition {
-                    id: "invalid".to_owned(),
+                    id: "invalid".to_string(),
                     colour: None,
                     status: None,
                     their_reference: None,
@@ -331,10 +340,10 @@ mod test_update {
                 &context,
                 UpdateResponseRequisition {
                     id: mock_new_response_requisition().id,
-                    colour: Some("new colour".to_owned()),
+                    colour: Some("new colour".to_string()),
                     status: Some(UpdateResponseRequisitionStatus::Finalised),
-                    their_reference: Some("new their_reference".to_owned()),
-                    comment: Some("new comment".to_owned()),
+                    their_reference: Some("new their_reference".to_string()),
+                    comment: Some("new comment".to_string()),
                 },
             )
             .unwrap();
@@ -357,9 +366,9 @@ mod test_update {
 
         assert_eq!(user_id, Some(mock_user_account_b().id));
         assert_eq!(id, mock_new_response_requisition().id);
-        assert_eq!(colour, Some("new colour".to_owned()));
-        assert_eq!(their_reference, Some("new their_reference".to_owned()));
-        assert_eq!(comment, Some("new comment".to_owned()));
+        assert_eq!(colour, Some("new colour".to_string()));
+        assert_eq!(their_reference, Some("new their_reference".to_string()));
+        assert_eq!(comment, Some("new comment".to_string()));
         assert_eq!(status, RequisitionStatus::Finalised);
 
         let log = ActivityLogRowRepository::new(&connection)

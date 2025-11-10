@@ -87,7 +87,13 @@ export const CurrencyInput: FC<CurrencyInputProps> = ({
       onBlur={() => {
         const finalValue = buffer ? Number(buffer) : 0;
         setBuffer(
-          format(finalValue, { minimumFractionDigits: options.precision })
+          format(finalValue, {
+            minimumFractionDigits: options.precision,
+            // Need to disable grouping because RCInput doesn't handle commas in
+            // the value and displays NaN. But RCInput internally formats with
+            // grouping anyway, so we're good.
+            useGrouping: false,
+          })
         );
         onChangeNumber(finalValue);
       }}
