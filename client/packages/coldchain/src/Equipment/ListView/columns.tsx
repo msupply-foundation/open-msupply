@@ -144,6 +144,7 @@ export const useAssetColumns = () => {
         columnType: ColumnType.Date,
         enableSorting: true,
         enableColumnFilter: true,
+        dateFilterFormat: 'date',
       },
       {
         id: 'replacementDate',
@@ -151,6 +152,7 @@ export const useAssetColumns = () => {
         header: t('label.replacement-date'),
         columnType: ColumnType.Date,
         enableColumnFilter: true,
+        dateFilterFormat: 'date',
       },
       {
         accessorKey: 'notes',

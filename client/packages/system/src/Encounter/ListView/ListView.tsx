@@ -1,28 +1,26 @@
 import React from 'react';
 import {
-  TableProvider,
-  DataTable,
-  createTableStore,
   NothingHere,
   useUrlQueryParams,
   useNavigate,
   EncounterSortFieldInput,
   useTranslation,
+  usePaginatedMaterialTable,
+  RouteBuilder,
+  MaterialTable,
 } from '@openmsupply-client/common';
+import { AppRoute } from '@openmsupply-client/config';
 import { useEncounterListColumns } from './columns';
 import {
   EncounterFragmentWithStatus,
   useEncounterFragmentWithStatus,
 } from '../utils';
 import { useEncounter } from '@openmsupply-client/programs';
-import { Toolbar } from './Toolbar';
 
-const EncounterListComponent = () => {
+export const EncounterListView = () => {
   const t = useTranslation();
   const {
-    updateSortQuery,
-    updatePaginationQuery,
-    queryParams: { sortBy, page, first, offset, filterBy },
+    queryParams: { sortBy, first, offset, filterBy },
   } = useUrlQueryParams({
     initialSort: {
       key: EncounterSortFieldInput.StartDatetime,
@@ -45,42 +43,36 @@ const EncounterListComponent = () => {
       },
     ],
   });
-  const { data, isError, isLoading } = useEncounter.document.list({
+  const { data, isError, isFetching } = useEncounter.document.list({
     pagination: { first, offset },
     sortBy,
     filterBy: filterBy ?? undefined,
   });
   const navigate = useNavigate();
   const columns = useEncounterListColumns({
-    onChangeSortBy: updateSortQuery,
-    sortBy,
     includePatient: true,
   });
   const dataWithStatus: EncounterFragmentWithStatus[] | undefined =
     useEncounterFragmentWithStatus(data?.nodes);
 
-  return (
-    <>
-      <Toolbar />
-      <DataTable
-        id="name-list"
-        pagination={{ page, first, offset, total: data?.totalCount }}
-        onChangePage={updatePaginationQuery}
-        columns={columns}
-        data={dataWithStatus}
-        isLoading={isLoading}
-        isError={isError}
-        onRowClick={row => {
-          navigate(String(row.id));
-        }}
-        noDataElement={<NothingHere body={t('error.no-encounters')} />}
-      />
-    </>
-  );
-};
+  const { table } = usePaginatedMaterialTable({
+    tableId: 'encounter-list',
+    columns,
+    data: dataWithStatus,
+    totalCount: data?.totalCount ?? 0,
+    isLoading: isFetching,
+    isError,
+    enableRowSelection: false,
+    onRowClick: row => {
+      navigate(
+        RouteBuilder.create(AppRoute.Dispensary)
+          .addPart(AppRoute.Encounter)
+          .addPart(row.id)
+          .build()
+      );
+    },
+    noDataElement: <NothingHere body={t('error.no-encounters')} />,
+  });
 
-export const EncounterListView = () => (
-  <TableProvider createStore={createTableStore}>
-    <EncounterListComponent />
-  </TableProvider>
-);
+  return <MaterialTable table={table} />;
+};
