@@ -30,7 +30,8 @@ pub mod generate_typescript_types {
     struct PluginTypes {
         // Fields here must match PluginTypes in backend_plugin_row repository
         average_monthly_consumption: Function<amc::Input, amc::Output>,
-        sync_essential_item_list: Function<sync_essential_item_list::Input, PluginDataRow>,
+        sync_essential_item_list:
+            Function<sync_essential_item_list::Input, sync_essential_item_list::Output>,
         transform_request_requisition_lines: Function<
             transform_request_requisition_lines::Input,
             transform_request_requisition_lines::Output,

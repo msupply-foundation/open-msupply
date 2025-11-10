@@ -46,10 +46,10 @@ impl SyncTranslation for MasterListTranslation {
         let data = serde_json::from_str::<LegacyListMasterRow>(&sync_record.data)?;
 
         // is_essential is only an available value if plugin is active, set via OG
-        if data.is_essential.is_some() {
+        if let Some(is_essential) = data.is_essential {
             let input = sync_essential_item_list::Input {
                 id: data.id.clone(),
-                is_essential: data.is_essential.is_some(),
+                is_essential,
             };
 
             let plugins = PluginInstance::get_one(PluginType::SyncEssentialItemList);
@@ -57,6 +57,7 @@ impl SyncTranslation for MasterListTranslation {
             if let Some(plugin) = plugins {
                 let plugin_data_row = sync_essential_item_list::Trait::call(&(*plugin), input)
                     .map_err(|e| anyhow::anyhow!("Failed to call plugin: {}", e))?;
+
                 PluginDataRowRepository::new(connection).upsert_one(&plugin_data_row)?;
             }
         }
