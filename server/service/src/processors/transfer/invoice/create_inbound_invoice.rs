@@ -11,7 +11,9 @@ use crate::{
     activity_log::system_activity_log_entry,
     number::next_number,
     preference::{Preference, PreventTransfersMonthsBeforeInitialisation},
-    processors::transfer::invoice::InvoiceTransferOutput,
+    processors::transfer::invoice::{
+        common::auto_verify_if_store_preference, InvoiceTransferOutput,
+    },
     service_provider::ServiceProvider,
     store_preference::get_store_preferences,
 };
@@ -50,7 +52,7 @@ impl InvoiceTransferProcessor for CreateInboundInvoiceProcessor {
     fn try_process_record(
         &self,
         connection: &StorageConnection,
-        _service_provider: &ServiceProvider,
+        service_provider: &ServiceProvider,
         record_for_processing: &InvoiceTransferProcessorRecord,
     ) -> Result<InvoiceTransferOutput, RepositoryError> {
         // Check can execute
@@ -180,6 +182,8 @@ impl InvoiceTransferProcessor for CreateInboundInvoiceProcessor {
             invoice_line_repository.upsert_one(line)?;
         }
 
+        auto_verify_if_store_preference(connection, service_provider, &new_inbound_invoice)?;
+
         let result = format!(
             "invoice ({}) lines ({:?}) source invoice ({})",
             new_inbound_invoice.id,
@@ -204,9 +208,9 @@ fn generate_inbound_invoice(
 ) -> Result<InvoiceRow, RepositoryError> {
     let store_id = record_for_processing.other_party_store_id.clone();
     let name_id = StoreRepository::new(connection)
-        .query_by_filter(
-            StoreFilter::new().id(EqualFilter::equal_to(outbound_invoice.store_row.id.to_string())),
-        )?
+        .query_by_filter(StoreFilter::new().id(EqualFilter::equal_to(
+            outbound_invoice.store_row.id.to_string(),
+        )))?
         .pop()
         .ok_or(RepositoryError::NotFound)?
         .name_row

@@ -1,11 +1,18 @@
+use std::ops::Deref;
+
 use repository::{
-    EqualFilter, Invoice, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineType, ItemRow,
-    ItemStoreJoinRowRepository, ItemStoreJoinRowRepositoryTrait,
+    EqualFilter, Invoice, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineType, InvoiceRow,
+    ItemRow, ItemStoreJoinRowRepository, ItemStoreJoinRowRepositoryTrait,
 };
 use repository::{InvoiceLineRow, RepositoryError, StorageConnection};
 use util::uuid::uuid;
 
 use crate::invoice::common::calculate_total_after_tax;
+use crate::invoice::inbound_shipment::{
+    update_inbound_shipment, UpdateInboundShipment, UpdateInboundShipmentStatus,
+};
+use crate::preference::{InboundShipmentAutoVerify, Preference};
+use crate::service_provider::ServiceProvider;
 
 pub(crate) fn generate_inbound_lines(
     connection: &StorageConnection,
@@ -15,7 +22,9 @@ pub(crate) fn generate_inbound_lines(
 ) -> Result<Vec<InvoiceLineRow>, RepositoryError> {
     let outbound_lines = InvoiceLineRepository::new(connection).query_by_filter(
         InvoiceLineFilter::new()
-            .invoice_id(EqualFilter::equal_to(source_invoice.invoice_row.id.to_string()))
+            .invoice_id(EqualFilter::equal_to(
+                source_invoice.invoice_row.id.to_string(),
+            ))
             // In mSupply you can finalise customer invoice with placeholder lines, we should remove them
             // when duplicating lines from outbound invoice to inbound invoice
             .r#type(InvoiceLineType::UnallocatedStock.not_equal_to()),
@@ -145,4 +154,54 @@ pub(crate) fn convert_invoice_line_to_single_pack(
             line
         })
         .collect()
+}
+
+pub(crate) fn auto_verify_if_store_preference(
+    connection: &StorageConnection,
+    service_provider: &ServiceProvider,
+    invoice: &InvoiceRow,
+) -> Result<(), RepositoryError> {
+    match invoice.status {
+        repository::InvoiceStatus::New
+        | repository::InvoiceStatus::Allocated
+        | repository::InvoiceStatus::Picked
+        | repository::InvoiceStatus::Verified
+        | repository::InvoiceStatus::Cancelled => return Ok(()),
+        repository::InvoiceStatus::Shipped
+        | repository::InvoiceStatus::Received
+        | repository::InvoiceStatus::Delivered => (), // proceed to check auto verify pref
+    };
+    dbg!(invoice);
+    let should_auto_verify = InboundShipmentAutoVerify {}
+        .load(connection, Some(invoice.store_id.to_string()))
+        .map_err(|e| RepositoryError::DBError {
+            msg: e.to_string(),
+            extra: "".to_string(),
+        })?;
+    println!("Hello\n\n\n\n\n");
+    if should_auto_verify {
+        let service_ctx = &service_provider.system_context(Some(invoice.store_id.to_string()))?;
+
+        update_inbound_shipment(
+            service_ctx,
+            UpdateInboundShipment {
+                id: invoice.id.to_string(),
+                status: Some(UpdateInboundShipmentStatus::Verified),
+                ..Default::default()
+            },
+        )
+        .map_err(|e| {
+            dbg!(&e);
+            dbg!(&e);
+            dbg!(&e);
+            log::error!("{:?}", e);
+            RepositoryError::DBError {
+                msg: "the service exploded lol. We really need to refactor how errors are done"
+                    .to_string(), // TODO error better. Fundamentally given we're in the service crate, should processors generally _only_ be returning repository crate errors? I think not...
+                extra: "".to_string(),
+            }
+        })?;
+    }
+    dbg!(should_auto_verify);
+    Ok(())
 }
