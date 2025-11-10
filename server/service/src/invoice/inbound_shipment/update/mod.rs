@@ -58,12 +58,13 @@ type OutError = UpdateInboundShipmentError;
 pub fn update_inbound_shipment(
     ctx: &ServiceContext,
     patch: UpdateInboundShipment,
+    store_id: Option<&str>,
 ) -> Result<Invoice, OutError> {
     let invoice = ctx
         .connection
         .transaction_sync(|connection| {
             let (invoice, other_party, status_changed) =
-                validate(connection, &ctx.store_id, &patch)?;
+                validate(connection, store_id.unwrap_or(&ctx.store_id), &patch)?;
             let GenerateResult {
                 batches_to_update,
                 update_invoice,

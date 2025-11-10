@@ -177,11 +177,21 @@ pub fn batch_inbound_shipment(
                 return Err(WithDBError::err(results));
             }
 
-            let (has_errors, result) = mutations_processor
-                .do_mutations_with_user_id(input.update_shipment, update_inbound_shipment);
-            results.update_shipment = result;
-            if has_errors && !continue_on_error {
-                return Err(WithDBError::err(results));
+            if let Some(update_shipment_inputs) = input.update_shipment {
+                let output: Vec<_> = update_shipment_inputs
+                    .into_iter()
+                    .filter_map(|input| {
+                        let result = update_inbound_shipment(ctx, input.clone(), None);
+                        if result.is_err() {
+                            return Some(InputWithResult { input, result });
+                        }
+                        None
+                    })
+                    .collect();
+                results.update_shipment = output;
+                if !continue_on_error {
+                    return Err(WithDBError::err(results));
+                }
             }
 
             let (has_errors, result) = mutations_processor
