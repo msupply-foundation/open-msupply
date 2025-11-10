@@ -6,7 +6,9 @@ use repository::{
 use crate::{
     activity_log::{log_type_from_invoice_status, system_activity_log_entry},
     invoice::common::get_lines_for_invoice,
-    processors::transfer::invoice::InvoiceTransferOutput,
+    processors::transfer::invoice::{
+        common::auto_verify_if_store_preference, InvoiceTransferOutput,
+    },
     service_provider::ServiceContext,
     store_preference::get_store_preferences,
 };
@@ -149,6 +151,8 @@ impl InvoiceTransferProcessor for UpdateInboundInvoiceProcessor {
             &updated_inbound_invoice.store_id,
             &updated_inbound_invoice.id,
         )?;
+
+        auto_verify_if_store_preference(ctx, &updated_inbound_invoice)?;
 
         let result = format!(
             "invoice ({}) deleted lines ({:?}) inserted lines ({:?})",
