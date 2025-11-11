@@ -3,6 +3,7 @@ use crate::preference::{PrefKey, Preference, PreferenceType, PreferenceValueType
 pub struct WarnWhenMissingRecentStocktake;
 
 #[derive(Default, Clone, Debug, PartialEq, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct WarnWhenMissingRecentStocktakeData {
     pub enabled: bool,
     pub max_age: u32,   // Days
