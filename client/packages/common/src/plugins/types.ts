@@ -1,4 +1,9 @@
-import { ColumnDef, UsePluginEvents } from '@openmsupply-client/common';
+import {
+  ColumnDef,
+  LocaleKey,
+  TypedTFunction,
+  UsePluginEvents,
+} from '@openmsupply-client/common';
 import {
   ItemFragment,
   NameFragment,
@@ -19,12 +24,17 @@ export type Plugins = {
   itemSellPrice?: {
     catalogueSellPrice: React.ComponentType<{ itemId: string }>[];
     internalOrderPrice?: (
+      t: TypedTFunction<LocaleKey>,
       supplierData?: Partial<NameFragment>
     ) => ColumnDef<RequestLineFragment>[]; // TODO check correct supplier data and type with supply levels
     pricingSection?: React.ComponentType<{
       requisition: RequestFragment;
     }>[];
-    estimatedLinePrice?: React.ComponentType<{ itemId: string }>[];
+    estimatedLinePrice?: React.ComponentType<{
+      itemId: string;
+      supplierData?: Partial<NameFragment>;
+      requestedPacks: number;
+    }>[];
   };
   dashboard?: React.ComponentType[];
   stockLine?: {
