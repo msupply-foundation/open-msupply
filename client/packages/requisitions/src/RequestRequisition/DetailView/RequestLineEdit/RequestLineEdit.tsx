@@ -256,7 +256,14 @@ export const RequestLineEdit = ({
                 )}
               {line &&
                 plugins.itemSellPrice?.estimatedLinePrice?.map(
-                  (Plugin, index) => <Plugin key={index} itemId={line.itemId} />
+                  (Plugin, index) => (
+                    <Plugin
+                      key={index}
+                      itemId={line.itemId}
+                      supplierData={requisition.otherParty}
+                      requestedPacks={line.requestedQuantity}
+                    />
+                  )
                 )}
             </>
           ) : null
