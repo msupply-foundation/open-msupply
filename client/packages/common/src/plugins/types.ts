@@ -17,7 +17,7 @@ export type Plugins = {
   };
   inboundShipmentAppBar?: React.ComponentType<{ shipment: InboundFragment }>[];
   itemSellPrice?: {
-    catalogueSellPrice: React.ComponentType<{ item: ItemFragment }>[];
+    catalogueSellPrice: React.ComponentType<{ itemId: string }>[];
     internalOrderPrice?: (
       supplierData?: Partial<NameFragment>
     ) => ColumnDef<RequestLineFragment>[]; // TODO check correct supplier data and type with supply levels
