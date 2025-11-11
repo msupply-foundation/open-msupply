@@ -194,6 +194,5 @@ pub(crate) fn auto_verify_if_store_preference(
             }
         })?;
     }
-    dbg!(should_auto_verify);
     Ok(())
 }
