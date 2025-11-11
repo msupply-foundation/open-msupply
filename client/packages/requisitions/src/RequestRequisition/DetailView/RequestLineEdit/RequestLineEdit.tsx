@@ -255,7 +255,7 @@ export const RequestLineEdit = ({
                   )
                 )}
               {line &&
-                plugins.internalOrderPriceComponents?.estimatedLinePrice?.map(
+                plugins.itemSellPrice?.estimatedLinePrice?.map(
                   (Plugin, index) => <Plugin key={index} itemId={line.itemId} />
                 )}
             </>

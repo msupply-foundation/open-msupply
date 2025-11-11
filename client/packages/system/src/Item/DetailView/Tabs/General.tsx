@@ -193,7 +193,7 @@ export const GeneralTab = ({ item, isLoading }: GeneralTabProps) => {
         {isCentralServer && plugins.itemSellPrice?.catalogueSellPrice && (
           <DetailSection title={t('title.catalogue-price')}>
             {plugins.itemSellPrice.catalogueSellPrice.map((Plugin, index) => (
-              <Plugin key={index} item={item} />
+              <Plugin key={index} itemId={item.id} />
             ))}
           </DetailSection>
         )}
