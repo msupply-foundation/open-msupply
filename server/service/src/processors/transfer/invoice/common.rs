@@ -1,6 +1,6 @@
 use repository::{
     EqualFilter, Invoice, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineType, InvoiceRow,
-    ItemRow, ItemStoreJoinRowRepository, ItemStoreJoinRowRepositoryTrait,
+    InvoiceType, ItemRow, ItemStoreJoinRowRepository, ItemStoreJoinRowRepositoryTrait,
 };
 use repository::{InvoiceLineRow, RepositoryError, StorageConnection};
 use util::uuid::uuid;
@@ -158,6 +158,13 @@ pub(crate) fn auto_verify_if_store_preference(
     ctx: &ServiceContext,
     inbound_shipment: &InvoiceRow,
 ) -> Result<(), RepositoryError> {
+    if inbound_shipment.r#type != InvoiceType::InboundShipment {
+        return Err(RepositoryError::DBError {
+            msg: "Wrong invoice type to auto verify".to_string(),
+            extra: inbound_shipment.r#type.to_string(),
+        });
+    }
+
     match inbound_shipment.status {
         repository::InvoiceStatus::New
         | repository::InvoiceStatus::Allocated
@@ -188,9 +195,8 @@ pub(crate) fn auto_verify_if_store_preference(
         .map_err(|e| {
             log::error!("{:?}", e);
             RepositoryError::DBError {
-                msg: "the service exploded lol. We really need to refactor how errors are done"
-                    .to_string(), // TODO error better. Fundamentally given we're in the service crate, should processors generally _only_ be returning repository crate errors? I think not...
-                extra: "".to_string(),
+                msg: "the service exploded lol. We should refactor how errors are done".to_string(), // TODO error better. Fundamentally given we're in the service crate, should processors generally _only_ be returning repository crate errors? I think not...
+                extra: format!("{e:?}"),
             }
         })?;
     }
