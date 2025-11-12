@@ -17,6 +17,10 @@ export const PREFERENCE_GROUP_CONFIG: Record<string, PreferenceKey[]> = {
     PreferenceKey.AuthoriseGoodsReceived,
     PreferenceKey.AuthorisePurchaseOrder,
   ],
+  'label.expired-stock': [
+    PreferenceKey.ExpiredStockPreventIssue,
+    PreferenceKey.ExpiredStockIssueThreshold,
+  ],
 };
 
 export const isAnyAmcPrefOn = (
