@@ -2497,5 +2497,9 @@
   "warning.high-number-records-to-sync": "Un grand nombre d'entrées sont en cours de synchronisation. Cela peut prendre plus de temps que d'habitude.",
   "warning.manual-store-requisition": "Attention - La saisie d'une réquisition client pour un dépôt peut entraîner des doublons si ce dépôt soumet aussi une commande interne.",
   "warning.nothing-to-supply": "La quantité demandée à été fournie !",
-  "warning.requested-exceeds-suggested": "La quantité demandée est supérieure à la quantité suggérée"
+  "warning.requested-exceeds-suggested": "La quantité demandée est supérieure à la quantité suggérée",
+  "description.patient-filter-note": "Il est uniquement possible de filtrer les noms de famille.",
+  "button.create-order": "Créer commande",
+  "button.download-pdf": "Télechargement PDF",
+  "error.failed-to-create-internal-order": "Impossible de créer la commande interne !"
 }
