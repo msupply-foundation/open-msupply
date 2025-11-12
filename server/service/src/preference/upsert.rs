@@ -26,6 +26,8 @@ pub struct UpsertPreferences {
     pub adjust_for_number_of_days_out_of_stock: Option<bool>,
     pub days_in_month: Option<f64>,
     pub exclude_transfers: Option<bool>,
+    pub expired_stock_prevent_issue: Option<bool>,
+    pub expired_stock_issue_threshold: Option<i32>,
 
     // Store preferences
     pub manage_vaccines_in_doses: Option<Vec<StorePrefUpdate<bool>>>,
@@ -63,6 +65,8 @@ pub fn upsert_preferences(
         adjust_for_number_of_days_out_of_stock: adjust_for_number_of_days_out_of_stock_input,
         days_in_month: days_in_month_input,
         exclude_transfers: exclude_transfers_input,
+        expired_stock_prevent_issue: expired_stock_prevent_issue_input,
+        expired_stock_issue_threshold: expired_stock_issue_threshold_input,
 
         // Store preferences
         manage_vaccines_in_doses: manage_vaccines_in_doses_input,
@@ -100,6 +104,8 @@ pub fn upsert_preferences(
         adjust_for_number_of_days_out_of_stock,
         days_in_month,
         exclude_transfers,
+        expired_stock_prevent_issue,
+        expired_stock_issue_threshold,
 
         // Store preferences
         manage_vaccines_in_doses,
@@ -172,6 +178,14 @@ pub fn upsert_preferences(
 
             if let Some(input) = exclude_transfers_input {
                 exclude_transfers.upsert(connection, input, None)?;
+            }
+
+            if let Some(input) = expired_stock_prevent_issue_input {
+                expired_stock_prevent_issue.upsert(connection, input, None)?;
+            }
+
+            if let Some(input) = expired_stock_issue_threshold_input {
+                expired_stock_issue_threshold.upsert(connection, input, None)?;
             }
 
             // Store preferences, input could be array of store IDs and values - iterate and insert...

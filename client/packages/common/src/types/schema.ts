@@ -146,6 +146,8 @@ export enum ActivityLogNodeType {
   ItemVariantUpdateLocationType = 'ITEM_VARIANT_UPDATE_LOCATION_TYPE',
   ItemVariantUpdateManufacturer = 'ITEM_VARIANT_UPDATE_MANUFACTURER',
   ItemVariantUpdateVvmType = 'ITEM_VARIANT_UPDATE_VVM_TYPE',
+  PatientCreated = 'PATIENT_CREATED',
+  PatientUpdated = 'PATIENT_UPDATED',
   PrescriptionCreated = 'PRESCRIPTION_CREATED',
   PrescriptionDeleted = 'PRESCRIPTION_DELETED',
   PrescriptionStatusCancelled = 'PRESCRIPTION_STATUS_CANCELLED',
@@ -1420,7 +1422,7 @@ export type ConsumptionHistoryNode = {
 
 export type ConsumptionOptionsInput = {
   /** Defaults to store preference amc_lookback_months */
-  amcLookbackMonths?: InputMaybe<Scalars['Int']['input']>;
+  amcLookbackMonths?: InputMaybe<Scalars['Float']['input']>;
   /** Defaults to 12 */
   numberOfDataPoints?: InputMaybe<Scalars['Int']['input']>;
 };
@@ -6857,6 +6859,8 @@ export enum PreferenceKey {
   DaysInMonth = 'daysInMonth',
   DisableManualReturns = 'disableManualReturns',
   ExcludeTransfers = 'excludeTransfers',
+  ExpiredStockIssueThreshold = 'expiredStockIssueThreshold',
+  ExpiredStockPreventIssue = 'expiredStockPreventIssue',
   FirstThresholdForExpiringItems = 'firstThresholdForExpiringItems',
   GenderOptions = 'genderOptions',
   ManageVaccinesInDoses = 'manageVaccinesInDoses',
@@ -6865,6 +6869,7 @@ export enum PreferenceKey {
   NumberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts = 'numberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts',
   OrderInPacks = 'orderInPacks',
   PreventTransfersMonthsBeforeInitialisation = 'preventTransfersMonthsBeforeInitialisation',
+  RequisitionAutoFinalise = 'requisitionAutoFinalise',
   SecondThresholdForExpiringItems = 'secondThresholdForExpiringItems',
   SelectDestinationStoreForAnInternalOrder = 'selectDestinationStoreForAnInternalOrder',
   ShowContactTracing = 'showContactTracing',
@@ -6906,9 +6911,11 @@ export type PreferencesNode = {
   authorisePurchaseOrder: Scalars['Boolean']['output'];
   canCreateInternalOrderFromARequisition: Scalars['Boolean']['output'];
   customTranslations: Scalars['JSONObject']['output'];
-  daysInMonth: Scalars['Int']['output'];
+  daysInMonth: Scalars['Float']['output'];
   disableManualReturns: Scalars['Boolean']['output'];
   excludeTransfers: Scalars['Boolean']['output'];
+  expiredStockIssueThreshold: Scalars['Int']['output'];
+  expiredStockPreventIssue: Scalars['Boolean']['output'];
   firstThresholdForExpiringItems: Scalars['Int']['output'];
   genderOptions: Array<GenderTypeNode>;
   manageVaccinesInDoses: Scalars['Boolean']['output'];
@@ -6917,6 +6924,7 @@ export type PreferencesNode = {
   numberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts: Scalars['Int']['output'];
   orderInPacks: Scalars['Boolean']['output'];
   preventTransfersMonthsBeforeInitialisation: Scalars['Int']['output'];
+  requisitionAutoFinalise: Scalars['Boolean']['output'];
   secondThresholdForExpiringItems: Scalars['Int']['output'];
   selectDestinationStoreForAnInternalOrder: Scalars['Boolean']['output'];
   showContactTracing: Scalars['Boolean']['output'];
@@ -9306,6 +9314,7 @@ export type StockLineConnector = {
 };
 
 export type StockLineFilterInput = {
+  code?: InputMaybe<StringFilterInput>;
   expiryDate?: InputMaybe<DateFilterInput>;
   hasPacksInStore?: InputMaybe<Scalars['Boolean']['input']>;
   id?: InputMaybe<EqualFilterStringInput>;
@@ -9317,6 +9326,7 @@ export type StockLineFilterInput = {
   location?: InputMaybe<LocationFilterInput>;
   locationId?: InputMaybe<EqualFilterStringInput>;
   masterList?: InputMaybe<MasterListFilterInput>;
+  name?: InputMaybe<StringFilterInput>;
   search?: InputMaybe<StringFilterInput>;
   storeId?: InputMaybe<EqualFilterStringInput>;
   vvmStatusId?: InputMaybe<EqualFilterStringInput>;
@@ -11219,9 +11229,11 @@ export type UpsertPreferencesInput = {
     Array<BoolStorePrefInput>
   >;
   customTranslations?: InputMaybe<Scalars['JSONObject']['input']>;
-  daysInMonth?: InputMaybe<Scalars['Int']['input']>;
+  daysInMonth?: InputMaybe<Scalars['Float']['input']>;
   disableManualReturns?: InputMaybe<Array<BoolStorePrefInput>>;
   excludeTransfers?: InputMaybe<Scalars['Boolean']['input']>;
+  expiredStockIssueThreshold?: InputMaybe<Scalars['Int']['input']>;
+  expiredStockPreventIssue?: InputMaybe<Scalars['Boolean']['input']>;
   firstThresholdForExpiringItems?: InputMaybe<Array<IntegerStorePrefInput>>;
   genderOptions?: InputMaybe<Array<GenderTypeNode>>;
   manageVaccinesInDoses?: InputMaybe<Array<BoolStorePrefInput>>;
@@ -11236,6 +11248,7 @@ export type UpsertPreferencesInput = {
   preventTransfersMonthsBeforeInitialisation?: InputMaybe<
     Scalars['Int']['input']
   >;
+  requisitionAutoFinalise?: InputMaybe<Array<BoolStorePrefInput>>;
   secondThresholdForExpiringItems?: InputMaybe<Array<IntegerStorePrefInput>>;
   selectDestinationStoreForAnInternalOrder?: InputMaybe<
     Array<BoolStorePrefInput>

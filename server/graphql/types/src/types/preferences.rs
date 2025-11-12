@@ -75,6 +75,14 @@ impl PreferencesNode {
         self.load_preference(&self.preferences.exclude_transfers)
     }
 
+    pub async fn expired_stock_prevent_issue(&self) -> Result<bool> {
+        self.load_preference(&self.preferences.expired_stock_prevent_issue)
+    }
+
+    pub async fn expired_stock_issue_threshold(&self) -> Result<i32> {
+        self.load_preference(&self.preferences.expired_stock_issue_threshold)
+    }
+
     // Store preferences
     pub async fn manage_vaccines_in_doses(&self) -> Result<bool> {
         self.load_preference(&self.preferences.manage_vaccines_in_doses)
@@ -211,6 +219,8 @@ pub enum PreferenceKey {
     AdjustForNumberOfDaysOutOfStock,
     DaysInMonth,
     ExcludeTransfers,
+    ExpiredStockPreventIssue,
+    ExpiredStockIssueThreshold,
     // Store preferences
     ManageVaccinesInDoses,
     ManageVvmStatusForStock,
