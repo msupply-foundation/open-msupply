@@ -314,10 +314,9 @@ mod test {
     use crate::{preference::PrefKey, service_provider::ServiceProvider};
     use chrono::NaiveDate;
     use repository::{
-        invoice_row::invoice,
         mock::{mock_name_b, mock_outbound_shipment_a, mock_store_b, MockData, MockDataInserts},
         test_db::setup_all_with_data,
-        PreferenceRow, SyncLogRow,
+        InvoiceFilter, InvoiceRepository, PreferenceRow, SyncLogRow,
     };
 
     #[actix_rt::test]
@@ -439,15 +438,16 @@ mod test {
 
     #[actix_rt::test]
     async fn test_create_inbound_invoice_auto_finalise() {
-        use diesel::prelude::*;
         fn make_invoice(
             id: &str,
             status: InvoiceStatus,
+            r#type: InvoiceType,
         ) -> (InvoiceTransferProcessorRecord, InvoiceRow) {
             let invoice_row = InvoiceRow {
                 id: id.to_string(),
                 status,
                 created_datetime: Utc::now().naive_utc(),
+                r#type,
                 ..mock_outbound_shipment_a()
             };
             let invoice = Invoice {
@@ -470,12 +470,26 @@ mod test {
             )
         }
 
-        let (new_status_invoice_input, new_invoice_row) =
-            make_invoice("new_status", InvoiceStatus::New);
-        let (picked_status_invoice_input, picked_invoice_row) =
-            make_invoice("picked_status", InvoiceStatus::Picked);
-        let (shipped_status_invoice_input, shipped_invoice_row) =
-            make_invoice("shipped_status", InvoiceStatus::Shipped);
+        let (new_status_invoice_input, new_invoice_row) = make_invoice(
+            "new_status",
+            InvoiceStatus::New,
+            InvoiceType::OutboundShipment,
+        );
+        let (picked_status_invoice_input, picked_invoice_row) = make_invoice(
+            "picked_status",
+            InvoiceStatus::Picked,
+            InvoiceType::OutboundShipment,
+        );
+        let (shipped_status_invoice_input, shipped_invoice_row) = make_invoice(
+            "shipped_status",
+            InvoiceStatus::Shipped,
+            InvoiceType::OutboundShipment,
+        );
+        let (supplier_return_shipped, supplier_return_row) = make_invoice(
+            "shipped_supplier_credit",
+            InvoiceStatus::Shipped,
+            InvoiceType::SupplierReturn,
+        );
 
         // First test without preference
         let (_, _, connection_manager, _) = setup_all_with_data(
@@ -486,6 +500,7 @@ mod test {
                     new_invoice_row.clone(),
                     picked_invoice_row.clone(),
                     shipped_invoice_row.clone(),
+                    supplier_return_row.clone(),
                 ],
                 ..Default::default()
             },
@@ -496,32 +511,29 @@ mod test {
             .basic_context()
             .unwrap();
 
-        fn get_second_half_status(
-            connection: &StorageConnection,
-            first_half_invoice_id: &str,
-        ) -> Result<InvoiceStatus, diesel::result::Error> {
-            invoice::table
-                .filter(invoice::linked_invoice_id.eq(first_half_invoice_id))
-                .select(invoice::status)
-                .first(connection.lock().connection())
+        fn get_linked_invoice(connection: &StorageConnection, id: String) -> Option<Invoice> {
+            InvoiceRepository::new(connection)
+                .query_one(InvoiceFilter::new().linked_invoice_id(EqualFilter::equal_to(id)))
+                .unwrap()
         }
 
         CreateInboundInvoiceProcessor {}
             .try_process_record(&ctx, &new_status_invoice_input)
             .unwrap();
 
-        let invoice_status = get_second_half_status(&ctx.connection, &new_invoice_row.id);
-        assert_eq!(
-            invoice_status.err(),
-            Some(diesel::result::Error::NotFound),
+        let invoice = get_linked_invoice(&ctx.connection, new_invoice_row.id.to_string());
+        assert!(
+            invoice.is_none(),
             "The transfer should not be made for a new invoice"
         );
 
         CreateInboundInvoiceProcessor {}
             .try_process_record(&ctx, &picked_status_invoice_input)
             .unwrap();
-        let invoice_status =
-            get_second_half_status(&ctx.connection, &picked_invoice_row.id).unwrap();
+        let invoice_status = get_linked_invoice(&ctx.connection, picked_invoice_row.id.to_string())
+            .unwrap()
+            .invoice_row
+            .status;
         assert_eq!(
             invoice_status,
             InvoiceStatus::Picked,
@@ -532,7 +544,10 @@ mod test {
             .try_process_record(&ctx, &shipped_status_invoice_input)
             .unwrap();
         let invoice_status =
-            get_second_half_status(&ctx.connection, &shipped_invoice_row.id).unwrap();
+            get_linked_invoice(&ctx.connection, shipped_invoice_row.id.to_string())
+                .unwrap()
+                .invoice_row
+                .status;
         assert_eq!(
             invoice_status,
             InvoiceStatus::Shipped,
@@ -566,21 +581,12 @@ mod test {
             .unwrap();
 
         CreateInboundInvoiceProcessor {}
-            .try_process_record(&ctx, &new_status_invoice_input)
-            .unwrap();
-
-        let invoice_status = get_second_half_status(&ctx.connection, &new_invoice_row.id);
-        assert_eq!(
-            invoice_status.err(),
-            Some(diesel::result::Error::NotFound),
-            "The transfer should not be made for a new invoice"
-        );
-
-        CreateInboundInvoiceProcessor {}
             .try_process_record(&ctx, &picked_status_invoice_input)
             .unwrap();
-        let invoice_status =
-            get_second_half_status(&ctx.connection, &picked_invoice_row.id).unwrap();
+        let invoice_status = get_linked_invoice(&ctx.connection, picked_invoice_row.id.to_string())
+            .unwrap()
+            .invoice_row
+            .status;
         assert_eq!(
             invoice_status,
             InvoiceStatus::Picked,
@@ -591,11 +597,29 @@ mod test {
             .try_process_record(&ctx, &shipped_status_invoice_input)
             .unwrap();
         let invoice_status =
-            get_second_half_status(&ctx.connection, &shipped_invoice_row.id).unwrap();
+            get_linked_invoice(&ctx.connection, shipped_invoice_row.id.to_string())
+                .unwrap()
+                .invoice_row
+                .status;
         assert_eq!(
             invoice_status,
             InvoiceStatus::Verified,
             "The transfer should be auto verified if the first half is shipped and the auto verify preference is on"
+        );
+
+        CreateInboundInvoiceProcessor {}
+            .try_process_record(&ctx, &supplier_return_shipped)
+            .unwrap();
+
+        let invoice_status =
+            get_linked_invoice(&ctx.connection, supplier_return_row.id.to_string())
+                .unwrap()
+                .invoice_row
+                .status;
+        assert_eq!(
+            invoice_status,
+            InvoiceStatus::Shipped,
+            "Only inbound shipments should get a transfer created"
         );
     }
 }
