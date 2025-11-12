@@ -12,7 +12,7 @@ export type Plugins = {
   prescriptionPaymentForm?: React.ComponentType<PrescriptionPaymentComponentProps>[];
   inboundShipmentAppBar?: React.ComponentType<{ shipment: InboundFragment }>[];
   itemSellPrice?: {
-    catalogueSellPrice: React.ComponentType<{ item: ItemFragment }>[];
+    catalogueUnitPrice: React.ComponentType<{ item: ItemFragment }>[];
   };
   dashboard?: React.ComponentType[];
   stockLine?: {
