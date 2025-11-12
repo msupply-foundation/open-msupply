@@ -159,10 +159,7 @@ pub(crate) fn auto_verify_if_store_preference(
     inbound_shipment: &InvoiceRow,
 ) -> Result<(), RepositoryError> {
     if inbound_shipment.r#type != InvoiceType::InboundShipment {
-        return Err(RepositoryError::DBError {
-            msg: "Wrong invoice type to auto verify".to_string(),
-            extra: inbound_shipment.r#type.to_string(),
-        });
+        return Ok(());
     }
 
     match inbound_shipment.status {

@@ -187,7 +187,7 @@ mod test {
 
     #[actix_rt::test]
     async fn test_update_inbound_invoice_auto_finalise() {
-        fn get_invoice(connection: &StorageConnection, id: String) -> InvoiceRow {
+        fn get_invoice_row(connection: &StorageConnection, id: String) -> InvoiceRow {
             InvoiceRepository::new(connection)
                 .query_one(InvoiceFilter::new().id(EqualFilter::equal_to(id)))
                 .unwrap()
@@ -249,7 +249,7 @@ mod test {
             .try_process_record(&ctx, &processor_input)
             .unwrap();
 
-        let invoice = get_invoice(&ctx.connection, second_half_row.id.to_string());
+        let invoice = get_invoice_row(&ctx.connection, second_half_row.id.to_string());
         assert_eq!(
             invoice.status,
             InvoiceStatus::Picked,
@@ -267,7 +267,7 @@ mod test {
             .try_process_record(&ctx, &processor_input)
             .unwrap();
 
-        let invoice = get_invoice(&ctx.connection, second_half_row.id.to_string());
+        let invoice = get_invoice_row(&ctx.connection, second_half_row.id.to_string());
         assert_eq!(
             invoice.status,
             InvoiceStatus::Shipped,
@@ -308,7 +308,7 @@ mod test {
         UpdateInboundInvoiceProcessor {}
             .try_process_record(&ctx, &processor_input)
             .unwrap();
-        let invoice = get_invoice(&ctx.connection, second_half_row.id.to_string());
+        let invoice = get_invoice_row(&ctx.connection, second_half_row.id.to_string());
         assert_eq!(
             invoice.status,
             InvoiceStatus::Picked,
@@ -326,7 +326,7 @@ mod test {
             .try_process_record(&ctx, &processor_input)
             .unwrap();
 
-        let invoice = get_invoice(&ctx.connection, second_half_row.id.to_string());
+        let invoice = get_invoice_row(&ctx.connection, second_half_row.id.to_string());
         assert_eq!(
             invoice.status,
             InvoiceStatus::Verified,
