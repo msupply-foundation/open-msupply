@@ -22,7 +22,7 @@ export type Plugins = {
   };
   inboundShipmentAppBar?: React.ComponentType<{ shipment: InboundFragment }>[];
   itemSellPrice?: {
-    catalogueSellPrice: React.ComponentType<{ itemId: string }>[];
+    catalogueUnitPrice: React.ComponentType<{ itemId: string }>[];
     internalOrderPrice?: (
       t: TypedTFunction<LocaleKey>,
       supplierData?: Partial<NameFragment>
