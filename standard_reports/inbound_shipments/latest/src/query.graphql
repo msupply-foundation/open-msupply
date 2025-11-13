@@ -1,0 +1,38 @@
+query InboundShipments(
+  $storeId: String
+  $otherPartyId: String
+  $before: String
+  $after: String
+) {
+  invoices(
+    storeId: $storeId
+    filter: {
+      type: { equalTo: INBOUND_SHIPMENT }
+      status: { equalAny: [RECEIVED, VERIFIED]}
+      otherPartyId: { equalTo: $otherPartyId }
+      shippedDatetime: { afterOrEqualTo: $after, beforeOrEqualTo: $before }
+    }
+  ) {
+    ... on InvoiceConnector {
+      nodes {
+        id
+        otherPartyName
+        lines {
+          nodes {
+            id
+            item {
+              id
+              code
+              name
+            }
+            batch
+            expiryDate
+            numberOfPacks
+            packSize
+            costPricePerPack
+          }
+        }
+      }
+    }
+  }
+}
