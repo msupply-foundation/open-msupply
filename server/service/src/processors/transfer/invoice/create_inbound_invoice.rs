@@ -493,7 +493,7 @@ mod test {
 
         // First test without preference
         let (_, _, connection_manager, _) = setup_all_with_data(
-            "test_create_inbound_invoice_auto_finalise",
+            "test_create_inbound_invoice_auto_finalise_off",
             MockDataInserts::none().stores(),
             MockData {
                 invoices: vec![
@@ -561,9 +561,8 @@ mod test {
             store_id: Some("store_a".to_string()),
         };
 
-        // First test without preference
         let (_, _, connection_manager, _) = setup_all_with_data(
-            "test_create_inbound_invoice_auto_finalise",
+            "test_create_inbound_invoice_auto_finalise_on",
             MockDataInserts::none().stores(),
             MockData {
                 invoices: vec![
