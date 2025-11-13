@@ -274,7 +274,10 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
           paddingLeft:
             row.original?.['isSubRow'] && column.id !== 'mrt-row-select'
               ? '2em'
-              : undefined,
+              : // Little bit of extra padding for first column, unless it's the "Select" checkbox column
+                column.getIndex() === 0 && column.id !== 'mrt-row-select'
+                ? '1em'
+                : undefined,
           backgroundColor:
             column.getIsPinned() || row.getIsSelected()
               ? // Remove transparency from pinned backgrounds

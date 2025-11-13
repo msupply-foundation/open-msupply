@@ -91,6 +91,7 @@ const useGet = (queryParams: ListParams) => {
   const query = useQuery({
     queryKey,
     queryFn,
+    keepPreviousData: true,
   });
   return query;
 };
