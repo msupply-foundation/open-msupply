@@ -5,10 +5,10 @@ import {
   NumericTextInput,
   Switch,
   WarnWhenMissingRecentStocktakeDataNode,
-  InputWithLabelRow,
   useTranslation,
 } from '@openmsupply-client/common';
 import { PreferenceAccordion } from '../EditPage/PreferenceAccordion';
+import { PreferenceLabelRow } from '../EditPage/PreferenceLabelRow';
 
 export const EditWarningWhenMissingRecentStocktakeData = ({
   value,
@@ -68,7 +68,7 @@ export const EditWarningWhenMissingRecentStocktakeData = ({
         <Typography variant="caption" color="textSecondary">
           {t('preference.warnWhenMissingRecentStocktake.description')}
         </Typography>
-        <InputWithLabelRow
+        <PreferenceLabelRow
           label={t('preference.warnWhenMissingRecentStocktake.enabled')}
           Input={
             <Switch
@@ -77,11 +77,9 @@ export const EditWarningWhenMissingRecentStocktakeData = ({
               onChange={(_, checked) => createUpdateValue({ enabled: checked })}
             />
           }
-          labelRight
-          labelWidth={'100%'}
         />
 
-        <InputWithLabelRow
+        <PreferenceLabelRow
           label={t('preference.warnWhenMissingRecentStocktake.maxAge')}
           Input={
             <NumericTextInput
@@ -90,11 +88,9 @@ export const EditWarningWhenMissingRecentStocktakeData = ({
               onChange={handleMaxAgeChange}
             />
           }
-          labelRight
-          labelWidth={'100%'}
         />
 
-        <InputWithLabelRow
+        <PreferenceLabelRow
           label={t('preference.warnWhenMissingRecentStocktake.minItems')}
           Input={
             <NumericTextInput
@@ -103,8 +99,7 @@ export const EditWarningWhenMissingRecentStocktakeData = ({
               onChange={handleMinItemsChange}
             />
           }
-          labelRight
-          labelWidth={'100%'}
+          isLast={true}
         />
       </Box>
     </PreferenceAccordion>
