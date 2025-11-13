@@ -221,6 +221,7 @@
   "description.our-soh": "Our available stock on hand",
   "description.pack-cost": "Cost price per pack",
   "description.pack-quantity": "Total quantity in number of packs",
+  "description.patient-filter-note": "Filtering is by last name only",
   "description.program": "Programs are used to manage groups of items, and replenishment schedules.",
   "description.remaining-to-supply": "The number of units remaining to be supplied to the customer which will be re-calculated after a shipment has been created. The calculation is 'Supply - Issued'.",
   "description.requested-quantity": "The number of units requested by the customer",

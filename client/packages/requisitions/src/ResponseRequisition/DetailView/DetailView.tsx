@@ -1,13 +1,10 @@
 import React, { useCallback, useEffect } from 'react';
 import {
-  TableProvider,
-  createTableStore,
   DetailViewSkeleton,
   useNavigate,
   useTranslation,
   AlertModal,
   RouteBuilder,
-  createQueryParamsStore,
   DetailTabs,
   IndicatorLineRowNode,
   useBreadcrumbs,
@@ -32,7 +29,7 @@ import { ResponseLineEditModal } from './ResponseLineEdit';
 import { useResponseColumns } from './columns';
 import { isResponseLinePlaceholderRow } from '../../utils';
 
-export const DetailView = () => {
+const DetailViewInner = () => {
   const t = useTranslation();
   const navigate = useNavigate();
   const { setCustomBreadcrumbs } = useBreadcrumbs();
@@ -142,38 +139,31 @@ export const DetailView = () => {
   }
 
   return !!data ? (
-    <ResponseRequisitionLineErrorProvider>
-      <TableProvider
-        createStore={createTableStore}
-        queryParamsStore={createQueryParamsStore<ResponseLineFragment>({
-          initialSortBy: { key: 'itemName' },
-        })}
-      >
-        <AppBarButtons
-          isDisabled={isDisabled}
-          hasLinkedRequisition={!!data.linkedRequisition}
-          isProgram={!!data.programName}
-          onAddItem={onAddItem}
+    <>
+      <AppBarButtons
+        isDisabled={isDisabled}
+        hasLinkedRequisition={!!data.linkedRequisition}
+        isProgram={!!data.programName}
+        onAddItem={onAddItem}
+      />
+      <Toolbar />
+      <DetailTabs tabs={tabs} />
+      <Footer
+        selectedRows={selectedRows}
+        resetRowSelection={table.resetRowSelection}
+      />
+      <SidePanel />
+      {isOpen && (
+        <ResponseLineEditModal
+          requisition={data}
+          itemId={itemId}
+          store={store}
+          mode={mode}
+          isOpen={isOpen}
+          onClose={onClose}
         />
-        <Toolbar />
-        <DetailTabs tabs={tabs} />
-        <Footer
-          selectedRows={selectedRows}
-          resetRowSelection={table.resetRowSelection}
-        />
-        <SidePanel />
-        {isOpen && (
-          <ResponseLineEditModal
-            requisition={data}
-            itemId={itemId}
-            store={store}
-            mode={mode}
-            isOpen={isOpen}
-            onClose={onClose}
-          />
-        )}
-      </TableProvider>
-    </ResponseRequisitionLineErrorProvider>
+      )}
+    </>
   ) : (
     <AlertModal
       open={true}
@@ -187,5 +177,13 @@ export const DetailView = () => {
       title={t('error.requisition-not-found')}
       message={t('messages.click-to-return-to-requisitions')}
     />
+  );
+};
+
+export const DetailView = () => {
+  return (
+    <ResponseRequisitionLineErrorProvider>
+      <DetailViewInner />
+    </ResponseRequisitionLineErrorProvider>
   );
 };

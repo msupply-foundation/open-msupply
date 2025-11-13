@@ -35,6 +35,7 @@ export const PurchaseOrderListView = () => {
         key: 'status',
         condition: 'equalTo',
       },
+      { key: 'createdDatetime', condition: 'between' },
       { key: 'confirmedDatetime', condition: 'between' },
       { key: 'requestedDeliveryDate', condition: 'between' },
       { key: 'sentDatetime', condition: 'between' },
@@ -55,11 +56,10 @@ export const PurchaseOrderListView = () => {
     (): ColumnDef<PurchaseOrderRowFragment>[] => [
       {
         header: t('label.supplier'),
-        accessorKey: 'supplier',
+        id: 'supplier',
         accessorFn: row => row.supplier?.name,
         enableColumnFilter: true,
         defaultHideOnMobile: true,
-        enableSorting: true,
       },
       {
         header: t('label.number'),
@@ -73,6 +73,7 @@ export const PurchaseOrderListView = () => {
         accessorKey: 'createdDatetime',
         columnType: ColumnType.Date,
         enableSorting: true,
+        enableColumnFilter: true,
         size: 100,
       },
       {
@@ -80,7 +81,6 @@ export const PurchaseOrderListView = () => {
         accessorKey: 'confirmedDatetime',
         enableColumnFilter: true,
         columnType: ColumnType.Date,
-        enableSorting: true,
         size: 100,
       },
       {
@@ -88,15 +88,14 @@ export const PurchaseOrderListView = () => {
         accessorKey: 'sentDatetime',
         enableColumnFilter: true,
         columnType: ColumnType.Date,
-        enableSorting: true,
         size: 100,
       },
       {
         header: t('label.requested-delivery-date'),
         accessorKey: 'requestedDeliveryDate',
-        enableColumnFilter: true,
         columnType: ColumnType.Date,
-        enableSorting: true,
+        enableColumnFilter: true,
+        dateFilterFormat: 'date',
         size: 100,
       },
       {
