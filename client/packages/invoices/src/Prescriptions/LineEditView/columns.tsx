@@ -48,7 +48,7 @@ export const usePrescriptionLineEditColumns = ({
       {
         accessorKey: 'expiryDate',
         header: t('label.expiry'),
-        Cell: ({ cell }) => <ExpiryDateCell cell={cell} />,
+        Cell: ExpiryDateCell,
         size: 100,
       },
       {
