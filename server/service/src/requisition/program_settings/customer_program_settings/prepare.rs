@@ -57,9 +57,12 @@ pub(super) fn prepare_program_requisition_settings_by_customer(
 ) -> Result<CustomerProgramRequisitionSetting, RepositoryError> {
     let filter = ProgramRequisitionSettingsFilter::new()
         .master_list(
-            MasterListFilter::new().exists_for_name_id(EqualFilter::equal_to(customer_name_id.to_string())),
+            MasterListFilter::new()
+                .exists_for_name_id(EqualFilter::equal_to(customer_name_id.to_string())),
         )
-        .name_tag(NameTagFilter::new().name_id(EqualFilter::equal_to(customer_name_id.to_string())));
+        .name_tag(
+            NameTagFilter::new().name_id(EqualFilter::equal_to(customer_name_id.to_string())),
+        );
 
     // All program settings for store
     let settings =

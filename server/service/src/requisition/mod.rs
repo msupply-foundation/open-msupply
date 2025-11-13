@@ -23,9 +23,12 @@ use self::{
 
 use super::{ListError, ListResult};
 use crate::{
-    requisition::request_requisition::{
-        insert_from_response_requisition, InsertFromResponseRequisition,
-        InsertFromResponseRequisitionError,
+    requisition::{
+        program_settings::customer_program_settings::has_customer_program_requisition_settings,
+        request_requisition::{
+            insert_from_response_requisition, InsertFromResponseRequisition,
+            InsertFromResponseRequisitionError,
+        },
     },
     service_provider::ServiceContext,
 };
@@ -236,6 +239,14 @@ pub trait RequisitionServiceTrait: Sync + Send {
         customer_name_id: &str,
     ) -> Result<CustomerProgramRequisitionSetting, RepositoryError> {
         get_program_requisition_settings_by_customer(ctx, customer_name_id)
+    }
+
+    fn has_customer_program_requisition_settings(
+        &self,
+        ctx: &ServiceContext,
+        customer_name_ids: &[String],
+    ) -> Result<bool, RepositoryError> {
+        has_customer_program_requisition_settings(ctx, customer_name_ids)
     }
 
     fn get_indicator_information(
