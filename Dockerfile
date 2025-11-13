@@ -1,5 +1,5 @@
 # Build stage for libfaketime
-FROM rust:slim as faketime-builder
+FROM rust:1.88-slim as faketime-builder
 RUN apt-get update && apt-get install -y git make gcc libc6-dev
 WORKDIR /usr/src/
 RUN git clone https://github.com/wolfcw/libfaketime.git
@@ -7,7 +7,7 @@ WORKDIR /usr/src/libfaketime/src
 RUN make install
 
 # Runtime stage
-FROM rust:slim as base
+FROM rust:1.88-slim as base
 # Copy only the compiled libfaketime from builder
 COPY --from=faketime-builder /usr/local/lib/faketime/libfaketime.so.1 /usr/local/lib/faketime/
 RUN echo "/usr/local/lib/faketime/libfaketime.so.1" > /etc/ld.so.preload
