@@ -45,11 +45,7 @@ export const EditStorePreferences = ({
             [pref.key]: [{ storeId, value }],
           })
         }
-        sx={{
-          borderBottom: isLast ? 'none' : '1px dashed',
-          borderColor: 'gray.main',
-          padding: 1,
-        }}
+        isLast={isLast}
       />
     );
   });

@@ -28,7 +28,7 @@ interface EditPreferenceProps {
   ) => Promise<boolean>;
   disabled?: boolean;
   label?: string;
-  sx?: Record<string, unknown>;
+  isLast?: boolean;
 }
 
 export const EditPreference = ({
@@ -36,7 +36,7 @@ export const EditPreference = ({
   update,
   disabled = false,
   label,
-  sx,
+  isLast = false,
 }: EditPreferenceProps) => {
   const t = useTranslation();
   const { error } = useNotification();
@@ -81,7 +81,7 @@ export const EditPreference = ({
               onChange={(_, checked) => handleChange(checked)}
             />
           }
-          sx={sx}
+          isLast={isLast}
         />
       );
 
@@ -99,7 +99,7 @@ export const EditPreference = ({
               onBlur={() => {}}
             />
           }
-          sx={sx}
+          isLast={isLast}
         />
       );
 
@@ -120,7 +120,7 @@ export const EditPreference = ({
               onChange={handleChange}
             />
           }
-          sx={sx}
+          isLast={isLast}
         />
       );
 
@@ -132,7 +132,7 @@ export const EditPreference = ({
             // Pass API value/update directly - called on modal save rather than on each key stroke/click
             <EditCustomTranslations value={preference.value} update={update} />
           }
-          sx={sx}
+          isLast={isLast}
         />
       );
 
@@ -144,7 +144,6 @@ export const EditPreference = ({
           update={handleChange}
           disabled={disabled}
           label={preferenceLabel}
-          sx={sx}
         />
       );
     default:
