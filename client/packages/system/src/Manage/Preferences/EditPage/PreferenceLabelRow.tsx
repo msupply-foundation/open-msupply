@@ -4,20 +4,24 @@ import { InputWithLabelRow } from '@openmsupply-client/common';
 interface PreferenceLabelRowProps {
   label: string;
   Input: ReactNode;
-  sx?: Record<string, unknown>;
+  isLast?: boolean;
 }
 
 export const PreferenceLabelRow = ({
   label,
   Input,
-  sx,
+  isLast = false,
 }: PreferenceLabelRowProps) => {
   return (
     <InputWithLabelRow
       labelWidth={'100%'}
       label={label}
       Input={Input}
-      sx={sx}
+      sx={{
+        borderBottom: isLast ? 'none' : '1px dashed',
+        borderColor: 'gray.main',
+        padding: 1,
+      }}
     />
   );
 };
