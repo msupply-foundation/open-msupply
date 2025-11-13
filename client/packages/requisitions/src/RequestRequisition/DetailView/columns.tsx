@@ -12,9 +12,8 @@ import {
 } from '@openmsupply-client/common';
 import { useRequest } from '../api';
 import { useRequestRequisitionLineErrorContext } from '../context';
-import { NameFragment } from '@openmsupply-client/system';
 
-export const useRequestColumns = (supplierData?: Partial<NameFragment>) => {
+export const useRequestColumns = () => {
   const t = useTranslation();
   const { maxMonthsOfStock, programName } = useRequest.document.fields([
     'maxMonthsOfStock',
@@ -219,7 +218,6 @@ export const useRequestColumns = (supplierData?: Partial<NameFragment>) => {
       usesRemoteAuthorisation,
       maxMonthsOfStock,
       plugins.requestRequisitionLine?.tableColumn,
-      supplierData,
       errors,
     ]
   );
