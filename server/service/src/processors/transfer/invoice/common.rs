@@ -174,9 +174,11 @@ pub(crate) fn auto_verify_if_store_preference(
     };
     let should_auto_verify = InboundShipmentAutoVerify {}
         .load(&ctx.connection, Some(inbound_shipment.store_id.to_string()))
-        .map_err(|e| RepositoryError::DBError {
-            msg: e.to_string(),
-            extra: "".to_string(),
+        .map_err(|e| {
+            RepositoryError::as_db_error(
+                "Could not load inbound shipment auto verify preference",
+                e,
+            )
         })?;
 
     if should_auto_verify {
@@ -191,10 +193,7 @@ pub(crate) fn auto_verify_if_store_preference(
         )
         .map_err(|e| {
             log::error!("{:?}", e);
-            RepositoryError::DBError {
-                msg: "the service exploded lol. We should refactor how errors are done".to_string(), // TODO error better. Fundamentally given we're in the service crate, should processors generally _only_ be returning repository crate errors? I think not...
-                extra: format!("{e:?}"),
-            }
+            RepositoryError::as_db_error("Error attempting to verify inbound shipment", e)
         })?;
     }
     Ok(())
