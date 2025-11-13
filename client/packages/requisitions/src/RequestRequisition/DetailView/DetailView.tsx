@@ -111,13 +111,34 @@ export const DetailView = () => {
     ),
   });
 
+  if (isLoading) return <DetailViewSkeleton />;
+  if (!data)
+    return (
+      <AlertModal
+        open={true}
+        onOk={() =>
+          navigate(
+            RouteBuilder.create(AppRoute.Replenishment)
+              .addPart(AppRoute.InternalOrder)
+              .build()
+          )
+        }
+        title={t('error.order-not-found')}
+        message={t('messages.click-to-return-to-requisitions')}
+      />
+    );
+
   const tabs = [
     {
       Component: (
         <>
           {plugins.requestRequisitionLine?.tableStateLoader?.map(
             (StateLoader, index) => (
-              <StateLoader key={index} requestLines={lines} />
+              <StateLoader
+                key={index}
+                requestLines={lines}
+                requisition={data}
+              />
             )
           )}
           <MaterialTable table={table} />
@@ -126,16 +147,16 @@ export const DetailView = () => {
       value: 'Details',
     },
     {
-      Component: <ActivityLogList recordId={data?.id ?? ''} />,
+      Component: <ActivityLogList recordId={data.id} />,
       value: 'Log',
     },
   ];
 
   const showIndicatorTab =
-    !!data?.programName &&
-    !!data?.otherParty.store &&
+    !!data.programName &&
+    !!data.otherParty.store &&
     programIndicators?.totalCount !== 0 &&
-    !data?.isEmergency;
+    !data.isEmergency;
 
   if (showIndicatorTab) {
     tabs.push({
@@ -151,8 +172,7 @@ export const DetailView = () => {
     });
   }
 
-  if (isLoading) return <DetailViewSkeleton />;
-  return !!data ? (
+  return (
     <RequestRequisitionLineErrorProvider>
       <AppBarButtons
         isDisabled={!data || isDisabled}
@@ -179,18 +199,5 @@ export const DetailView = () => {
         />
       )}
     </RequestRequisitionLineErrorProvider>
-  ) : (
-    <AlertModal
-      open={true}
-      onOk={() =>
-        navigate(
-          RouteBuilder.create(AppRoute.Replenishment)
-            .addPart(AppRoute.InternalOrder)
-            .build()
-        )
-      }
-      title={t('error.order-not-found')}
-      message={t('messages.click-to-return-to-requisitions')}
-    />
   );
 };
