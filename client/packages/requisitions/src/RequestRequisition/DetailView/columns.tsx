@@ -211,9 +211,6 @@ export const useRequestColumns = (supplierData?: Partial<NameFragment>) => {
 
       // Plugin columns
       ...(plugins.requestRequisitionLine?.tableColumn || []),
-      ...(plugins.itemSellPrice?.internalOrderPrice
-        ? plugins.itemSellPrice.internalOrderPrice(t, supplierData)
-        : []),
     ],
     [
       manageVaccinesInDoses,
