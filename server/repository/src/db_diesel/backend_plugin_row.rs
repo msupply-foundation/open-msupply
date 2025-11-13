@@ -13,6 +13,7 @@ pub enum PluginType {
     AverageMonthlyConsumption,
     TransformRequestRequisitionLines,
     GraphqlQuery,
+    SyncEssentialItemList,
     // TODO backwards compatibility ? When integrating this one via sync
     Processor,
 }
