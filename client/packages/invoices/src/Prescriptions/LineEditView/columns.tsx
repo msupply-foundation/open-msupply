@@ -14,6 +14,7 @@ import {
   packsToQuantity,
 } from '../../StockOut';
 import { NumberInputCell } from '@openmsupply-client/common/src/ui/layout/tables/material-react-table/components/NumberInputCell';
+import { ExpiryDateCell } from '@openmsupply-client/common/src/ui/layout/tables/material-react-table/components/ExpiryDateCell';
 
 export const usePrescriptionLineEditColumns = ({
   allocate,
@@ -47,7 +48,7 @@ export const usePrescriptionLineEditColumns = ({
       {
         accessorKey: 'expiryDate',
         header: t('label.expiry'),
-        columnType: ColumnType.Date,
+        Cell: ({ cell }) => <ExpiryDateCell cell={cell} />,
         size: 100,
       },
       {
