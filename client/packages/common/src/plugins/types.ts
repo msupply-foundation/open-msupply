@@ -39,6 +39,11 @@ export type Plugins = {
       requisition: RequestFragment;
     }>[];
   };
+  requestRequisitionSidePanel?: {
+    detailPanelSection: React.ComponentType<{
+      requisition: RequestFragment;
+    }>[];
+  };
 };
 
 type PluginData<D> = { relatedRecordId?: string | null; data: D };

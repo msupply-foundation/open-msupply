@@ -254,17 +254,6 @@ export const RequestLineEdit = ({
                     <Field key={index} line={line} unitName={unitName} />
                   )
                 )}
-              {line &&
-                plugins.itemSellPrice?.estimatedLinePrice?.map(
-                  (Plugin, index) => (
-                    <Plugin
-                      key={index}
-                      itemId={line.itemId}
-                      supplierData={requisition.otherParty}
-                      requestedPacks={line.requestedQuantity}
-                    />
-                  )
-                )}
             </>
           ) : null
         }

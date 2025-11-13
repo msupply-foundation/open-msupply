@@ -253,9 +253,9 @@ export const SidePanel: FC = () => {
       <AdditionalInfoSection />
       <RelatedDocumentsSection />
       {data &&
-        plugins.itemSellPrice?.pricingSection?.map((Plugin, index) => (
-          <Plugin key={index} requisition={data} />
-        ))}
+        plugins.requestRequisitionSidePanel?.detailPanelSection?.map(
+          (Plugin, index) => <Plugin key={index} requisition={data} />
+        )}
     </DetailPanelPortal>
   );
 };
