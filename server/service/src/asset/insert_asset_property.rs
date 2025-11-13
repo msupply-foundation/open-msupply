@@ -44,6 +44,7 @@ pub fn insert_asset_property(
                 Some(new_asset_property.id.clone()),
                 None,
                 None,
+                None,
             )?;
 
             get_asset_property(ctx, new_asset_property.id).map_err(InsertAssetPropertyError::from)

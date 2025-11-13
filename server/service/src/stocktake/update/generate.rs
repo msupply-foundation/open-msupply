@@ -282,6 +282,7 @@ fn log_stock_changes(
             Some(existing.id.to_string()),
             previous_location,
             new.location_id,
+            None,
         )?;
     }
     if existing.batch != new.batch {
@@ -297,6 +298,7 @@ fn log_stock_changes(
             Some(existing.id.to_string()),
             previous_batch,
             new.batch,
+            None,
         )?;
     }
     if let Some(cost_price_per_pack) = new.cost_price_per_pack {
@@ -307,6 +309,7 @@ fn log_stock_changes(
                 Some(existing.id.to_string()),
                 Some(existing.cost_price_per_pack.to_string()),
                 Some(cost_price_per_pack.to_string()),
+                None,
             )?;
         }
     }
@@ -318,6 +321,7 @@ fn log_stock_changes(
                 Some(existing.id.to_string()),
                 Some(existing.sell_price_per_pack.to_string()),
                 Some(sell_price_per_pack.to_string()),
+                None,
             )?;
         }
     }
@@ -334,6 +338,7 @@ fn log_stock_changes(
             Some(existing.id.to_string()),
             previous_expiry_date,
             new.expiry_date.map(|date| date.to_string()),
+            None,
         )?;
     }
 

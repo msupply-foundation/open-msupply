@@ -69,6 +69,7 @@ pub fn insert_from_response_requisition(
                 Some(requisition.id.to_string()),
                 None,
                 None,
+                None,
             )?;
 
             get_requisition(ctx, None, &requisition.id)

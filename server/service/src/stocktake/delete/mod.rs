@@ -52,6 +52,7 @@ pub fn delete_stocktake(
                 Some(stocktake_id.to_string()),
                 None,
                 None,
+                None,
             )?;
 
             StocktakeRowRepository::new(connection).delete(&stocktake_id)?;

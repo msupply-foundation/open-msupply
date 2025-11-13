@@ -303,6 +303,7 @@ fn log_stock_changes(
             Some(new.id.to_string()),
             previous_location,
             new.location_id,
+            None,
         )?;
     }
     if existing.batch != new.batch {
@@ -318,6 +319,7 @@ fn log_stock_changes(
             Some(new.id.to_string()),
             previous_batch,
             new.batch,
+            None,
         )?;
     }
     if existing.cost_price_per_pack != new.cost_price_per_pack {
@@ -327,6 +329,7 @@ fn log_stock_changes(
             Some(new.id.to_string()),
             Some(existing.cost_price_per_pack.to_string()),
             Some(new.cost_price_per_pack.to_string()),
+            None,
         )?;
     }
     if existing.sell_price_per_pack != new.sell_price_per_pack {
@@ -336,6 +339,7 @@ fn log_stock_changes(
             Some(new.id.to_string()),
             Some(existing.sell_price_per_pack.to_string()),
             Some(new.sell_price_per_pack.to_string()),
+            None,
         )?;
     }
     if existing.expiry_date != new.expiry_date {
@@ -351,6 +355,7 @@ fn log_stock_changes(
             Some(new.id.to_string()),
             previous_expiry_date,
             new.expiry_date.map(|date| date.to_string()),
+            None,
         )?;
     }
     if existing.on_hold != new.on_hold && new.on_hold {
@@ -360,6 +365,7 @@ fn log_stock_changes(
             Some(new.id.to_string()),
             None,
             None,
+            None,
         )?;
     }
     if existing.on_hold != new.on_hold && !new.on_hold {
@@ -367,6 +373,7 @@ fn log_stock_changes(
             ctx,
             ActivityLogType::StockOffHold,
             Some(new.id.to_string()),
+            None,
             None,
             None,
         )?;
@@ -379,6 +386,7 @@ fn log_stock_changes(
             Some(new.id),
             Some(existing.volume_per_pack.to_string()),
             Some(new.volume_per_pack.to_string()),
+            None,
         )?;
     }
 

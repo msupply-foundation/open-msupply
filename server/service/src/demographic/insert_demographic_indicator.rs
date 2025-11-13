@@ -72,6 +72,7 @@ pub fn insert_demographic_indicator(
                 Some(new_demographic_indicator.id.to_string()),
                 None,
                 None,
+                None,
             )?;
 
             get_demographic_indicator(ctx, new_demographic_indicator.id)

@@ -89,6 +89,7 @@ pub fn update_rnr_form(
                 Some(updated_form.id.clone()),
                 None,
                 None,
+                None,
             )?;
 
             get_rnr_form(ctx, store_id, updated_form.id)

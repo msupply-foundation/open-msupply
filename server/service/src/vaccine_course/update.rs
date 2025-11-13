@@ -133,6 +133,7 @@ pub fn update_vaccine_course(
                 Some(updated_course.id.clone()),
                 None,
                 None,
+                None,
             )?;
 
             get_vaccine_course(&ctx.connection, updated_course.id)

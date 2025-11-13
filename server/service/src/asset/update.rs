@@ -66,6 +66,7 @@ pub fn update_asset(
                 Some(updated_asset_row.id.clone()),
                 Some(serde_json::to_string(&asset_row).unwrap_or_default()),
                 Some(serde_json::to_string(&updated_asset_row).unwrap_or_default()),
+                None,
             )?;
 
             if input.location_ids.clone().is_some() {

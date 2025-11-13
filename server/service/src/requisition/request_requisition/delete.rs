@@ -71,6 +71,7 @@ pub fn delete_request_requisition(
                 Some(input.id.to_string()),
                 None,
                 None,
+                None,
             )?;
 
             match RequisitionRowRepository::new(connection).delete(&input.id) {

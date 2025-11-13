@@ -50,6 +50,7 @@ pub fn update_sensor(
                         Some(sensor_row.id),
                         sensor_row.location_id,
                         location_update.value,
+                        None,
                     )?;
                 }
             }
