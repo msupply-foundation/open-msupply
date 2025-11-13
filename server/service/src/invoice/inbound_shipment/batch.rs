@@ -178,18 +178,17 @@ pub fn batch_inbound_shipment(
             }
 
             if let Some(update_shipment_inputs) = input.update_shipment {
-                let output: Vec<_> = update_shipment_inputs
-                    .into_iter()
-                    .filter_map(|input| {
-                        let result = update_inbound_shipment(ctx, input.clone(), None);
-                        if result.is_err() {
-                            return Some(InputWithResult { input, result });
-                        }
-                        None
-                    })
-                    .collect();
-                results.update_shipment = output;
-                if !continue_on_error {
+                let mut has_errors = false;
+                let mut result = vec![];
+                for input in update_shipment_inputs {
+                    let mutation_result = update_inbound_shipment(ctx, input.clone(), None);
+                    has_errors = has_errors || mutation_result.is_err();
+                    result.push(InputWithResult {
+                        input,
+                        result: mutation_result,
+                    });
+                }
+                if has_errors && !continue_on_error {
                     return Err(WithDBError::err(results));
                 }
             }
