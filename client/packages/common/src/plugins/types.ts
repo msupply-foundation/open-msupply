@@ -6,6 +6,7 @@ import {
 } from '@openmsupply-client/system';
 import { InboundFragment } from '@openmsupply-client/invoices';
 import { PrescriptionPaymentComponentProps } from './prescriptionTypes';
+import { DraftRequestLine } from 'packages/requisitions/src/RequestRequisition/DetailView/RequestLineEdit';
 
 export type Plugins = {
   prescriptionPaymentForm?: React.ComponentType<PrescriptionPaymentComponentProps>[];
@@ -32,6 +33,7 @@ export type Plugins = {
     tableColumn: ColumnDef<RequestLineFragment>[];
     editViewField: React.ComponentType<{
       line: RequestLineFragment;
+      draft?: DraftRequestLine;
       unitName?: string;
     }>[];
     editViewInfo: React.ComponentType<{
