@@ -1,12 +1,5 @@
+import { ColumnDef, UsePluginEvents } from '@openmsupply-client/common';
 import {
-  ColumnDef,
-  LocaleKey,
-  TypedTFunction,
-  UsePluginEvents,
-} from '@openmsupply-client/common';
-import {
-  ItemFragment,
-  NameFragment,
   RequestFragment,
   RequestLineFragment,
   StockLineRowFragment,
@@ -16,25 +9,9 @@ import { PrescriptionPaymentComponentProps } from './prescriptionTypes';
 
 export type Plugins = {
   prescriptionPaymentForm?: React.ComponentType<PrescriptionPaymentComponentProps>[];
-  itemProperties?: {
-    ItemSellPrice?: React.ComponentType<{ item: ItemFragment }>[];
-    ItemFooter?: React.ComponentType<{ itemId: string }>[];
-  };
   inboundShipmentAppBar?: React.ComponentType<{ shipment: InboundFragment }>[];
   itemSellPrice?: {
     catalogueUnitPrice: React.ComponentType<{ itemId: string }>[];
-    internalOrderPrice?: (
-      t: TypedTFunction<LocaleKey>,
-      supplierData?: Partial<NameFragment>
-    ) => ColumnDef<RequestLineFragment>[]; // TODO check correct supplier data and type with supply levels
-    pricingSection?: React.ComponentType<{
-      requisition: RequestFragment;
-    }>[];
-    estimatedLinePrice?: React.ComponentType<{
-      itemId: string;
-      supplierData?: Partial<NameFragment>;
-      requestedPacks: number;
-    }>[];
   };
   dashboard?: React.ComponentType[];
   stockLine?: {
