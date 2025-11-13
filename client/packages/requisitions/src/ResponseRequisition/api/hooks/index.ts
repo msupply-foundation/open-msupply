@@ -36,5 +36,7 @@ export const useResponse = {
     programRequisitionSettingsByCustomer:
       Utils.useProgramRequisitionSettingsByCustomer,
     addFromMasterList: Utils.useResponseAddFromMasterList,
+    hasCustomerProgramRequisitionSettings:
+      Utils.useHasCustomerProgramRequisitionSettings,
   },
 };
