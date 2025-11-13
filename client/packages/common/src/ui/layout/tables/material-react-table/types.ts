@@ -22,7 +22,21 @@ export type ColumnDef<T extends MRT_RowData> = MRT_ColumnDef<T> & {
   pin?: 'left' | 'right';
 
   align?: 'left' | 'center' | 'right';
-  // overflow?: 'ellipsis' | 'wrap'; // TO-DO -- will only affect "dense" layout
+
+  /** Specify the filter key for backend filtering, where a column's data accessor key and filtering key might vary */
+  filterKey?: string;
+
+  /** For date filters, specifies whether to update the URL (and subsequently
+   * what it passed to GraphQL query) with a full date-time string or just a
+   * (naive) date */
+  dateFilterFormat?: 'date' | 'date-time'; // defaults to date-time
+
+  /** Function to determine if cell should be marked as error. Cell will be
+   * highlighted in red. */
+  getIsError?: (row: T) => boolean;
+
+  /** Customise the default index of the column. Used by plugins. */
+  columnIndex?: number;
 };
 
 /** Use when you have `groupByField` enabled, to allow for typing of `subRows` */
@@ -30,3 +44,7 @@ export type Groupable<T extends MRT_RowData> = T & {
   isSubRow?: boolean;
   subRows?: T[];
 };
+
+export type DefaultCellProps<T extends MRT_RowData> = Parameters<
+  NonNullable<ColumnDef<T>['Cell']>
+>[0];

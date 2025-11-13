@@ -205,7 +205,7 @@ export const HorizontalStepper = ({
           // There is no accessability role that I can find to accurately describe
           // a stepper, so turning to testids to mark the active/completed steps
           // for tests
-          const stepIcon = icon ? undefined : getCircle(paletteColour);
+          const stepIcon = getCircle(paletteColour);
 
           return (
             <Step

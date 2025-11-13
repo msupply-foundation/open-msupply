@@ -1,14 +1,14 @@
 import { useNotification, useTranslation } from '@openmsupply-client/common';
 import { useSaveStocktakeLines } from './useStocktakeSaveLines';
 import { LocationRowFragment } from '@openmsupply-client/system';
-import { useSelectedRows } from '../utils/useSelectedRows';
+import { StocktakeLineFragment } from '../../operations.generated';
 
-export const useChangeLinesLocation = () => {
+export const useChangeLinesLocation = (
+  selectedRows: StocktakeLineFragment[]
+) => {
   const { saveAndMapStructuredErrors } = useSaveStocktakeLines();
   const t = useTranslation();
   const { error, success, errorWithDetail } = useNotification();
-
-  const selectedRows = useSelectedRows();
 
   const onChangeLocations = async (location: LocationRowFragment | null) => {
     try {

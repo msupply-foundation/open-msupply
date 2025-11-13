@@ -109,7 +109,7 @@ pub fn insert_goods_received_line(
 pub fn map_response(from: Result<GoodsReceivedLineRow, ServiceError>) -> Result<InsertResponse> {
     let result = match from {
         Ok(goods_received_line) => {
-            InsertResponse::Response(IdResponse(goods_received_line.id.to_owned()))
+            InsertResponse::Response(IdResponse(goods_received_line.id.to_string()))
         }
         Err(error) => InsertResponse::Error(InsertError {
             error: map_error(error)?,

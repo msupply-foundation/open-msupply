@@ -353,7 +353,7 @@ const RnRNumberCell = ({
             disabled={disabled}
             onChange={newValue => {
               setBuffer(newValue);
-              if (newValue !== undefined) onChange(newValue);
+              onChange(newValue ?? 0);
             }}
             max={max}
             allowNegative={allowNegative}

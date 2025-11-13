@@ -23,8 +23,8 @@ mod query {
 
         // Create a vaccine course
         let vaccine_course_insert = InsertVaccineCourse {
-            id: "vaccine_course_id".to_owned(),
-            name: "vaccine_course_name".to_owned(),
+            id: "vaccine_course_id".to_string(),
+            name: "vaccine_course_name".to_string(),
             program_id: mock_immunisation_program_a().id.clone(),
             vaccine_items: vec![],
             doses: vec![],
@@ -32,6 +32,7 @@ mod query {
             coverage_rate: 100.0,
             use_in_gaps_calculations: true,
             wastage_rate: 0.1,
+            can_skip_dose: false,
         };
 
         let _result = service
@@ -39,8 +40,8 @@ mod query {
             .unwrap();
 
         assert_eq!(
-            service.get_vaccine_course(&context.connection, "invalid_id".to_owned()),
-            Err(SingleRecordError::NotFound("invalid_id".to_owned()))
+            service.get_vaccine_course(&context.connection, "invalid_id".to_string()),
+            Err(SingleRecordError::NotFound("invalid_id".to_string()))
         );
 
         let result = service
@@ -61,8 +62,8 @@ mod query {
 
         // Create 2 vaccine courses
         let vaccine_course_insert_a = InsertVaccineCourse {
-            id: "vaccine_course_id".to_owned(),
-            name: "vaccine_course_name".to_owned(),
+            id: "vaccine_course_id".to_string(),
+            name: "vaccine_course_name".to_string(),
             program_id: mock_immunisation_program_a().id.clone(),
             vaccine_items: vec![],
             doses: vec![],
@@ -70,6 +71,7 @@ mod query {
             coverage_rate: 100.0,
             use_in_gaps_calculations: true,
             wastage_rate: 0.1,
+            can_skip_dose: false,
         };
 
         let _result = service
@@ -77,8 +79,8 @@ mod query {
             .unwrap();
 
         let vaccine_course_insert_b = InsertVaccineCourse {
-            id: "vaccine_course_id_b".to_owned(),
-            name: "vaccine_course_name_b".to_owned(),
+            id: "vaccine_course_id_b".to_string(),
+            name: "vaccine_course_name_b".to_string(),
             program_id: mock_immunisation_program_a().id.clone(),
             vaccine_items: vec![],
             doses: vec![],
@@ -86,6 +88,7 @@ mod query {
             coverage_rate: 100.0,
             use_in_gaps_calculations: true,
             wastage_rate: 0.1,
+            can_skip_dose: false,
         };
 
         let _result = service

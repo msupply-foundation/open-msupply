@@ -86,9 +86,9 @@ mod test {
         let service = service_provider.printer_service;
 
         let result_printer = PrinterRow {
-            id: "Printer2".to_owned(),
-            description: "Room three".to_owned(),
-            address: "222.222.1.222".to_owned(),
+            id: "Printer2".to_string(),
+            description: "Room three".to_string(),
+            address: "222.222.1.222".to_string(),
             port: 1111.to_owned(),
             label_width: 55.to_owned(),
             label_height: 40.to_owned(),
@@ -98,9 +98,9 @@ mod test {
             service.update_printer(
                 &context,
                 UpdatePrinter {
-                    id: "Printer2".to_owned(),
-                    description: "Room three".to_owned(),
-                    address: "222.222.1.222".to_owned(),
+                    id: "Printer2".to_string(),
+                    description: "Room three".to_string(),
+                    address: "222.222.1.222".to_string(),
                     port: 1111.to_owned(),
                     label_width: 55.to_owned(),
                     label_height: 40.to_owned(),
@@ -111,7 +111,7 @@ mod test {
 
         assert_eq!(
             printer_repository
-                .query_by_filter(PrinterFilter::new().id(EqualFilter::equal_to("Printer2")))
+                .query_by_filter(PrinterFilter::new().id(EqualFilter::equal_to("Printer2".to_string())))
                 .unwrap(),
             vec![result_printer]
         );

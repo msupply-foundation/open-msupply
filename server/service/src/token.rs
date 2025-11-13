@@ -289,7 +289,7 @@ fn create_jwt_pair(
         aud: Audience::Api,
         iat: now,
         iss: ISSUER.to_string(),
-        sub: user_id.to_owned(),
+        sub: user_id.to_string(),
     };
     let api_token = jsonwebtoken::encode(
         &jsonwebtoken::Header::default(),
@@ -303,7 +303,7 @@ fn create_jwt_pair(
         aud: Audience::TokenRefresh,
         iat: now,
         iss: ISSUER.to_string(),
-        sub: user_id.to_owned(),
+        sub: user_id.to_string(),
     };
     let refresh_token = jsonwebtoken::encode(
         &jsonwebtoken::Header::default(),

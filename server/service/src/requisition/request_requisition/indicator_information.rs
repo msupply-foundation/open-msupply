@@ -45,7 +45,7 @@ pub fn get_indicator_information(
         Pagination::all(),
         Some(
             NameFilter::new()
-                .supplying_store_id(EqualFilter::equal_to(store_id))
+                .supplying_store_id(EqualFilter::equal_to(store_id.to_string()))
                 .is_customer(true)
                 .is_store(true),
         ),
@@ -69,8 +69,8 @@ pub fn get_indicator_information(
 
     let values = IndicatorValueRepository::new(connection).query_by_filter(
         IndicatorValueFilter::new()
-            .store_id(EqualFilter::equal_to(store_id))
-            .period_id(EqualFilter::equal_to(period_id))
+            .store_id(EqualFilter::equal_to(store_id.to_string()))
+            .period_id(EqualFilter::equal_to(period_id.to_string()))
             .indicator_line_id(EqualFilter::equal_any(line_ids.clone()))
             .customer_name_id(EqualFilter::equal_any(customer_ids.clone())),
     )?;

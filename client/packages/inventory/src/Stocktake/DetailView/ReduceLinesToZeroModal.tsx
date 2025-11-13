@@ -8,22 +8,25 @@ import {
   getReasonOptionTypes,
   useAuthContext,
   StoreModeNodeType,
+  ReasonOptionNodeType,
 } from '@openmsupply-client/common';
 import {
   ReasonOptionRowFragment,
   ReasonOptionsSearchInput,
   useReasonOptions,
 } from '@openmsupply-client/system';
-import { useStocktakeOld } from '../api';
+import { StocktakeLineFragment, useStocktakeOld } from '../api';
 
 interface ReduceLinesToZeroConfirmationModalProps {
   isOpen: boolean;
+  selectedRows: StocktakeLineFragment[];
   onCancel: () => void;
   clearSelected: () => void;
 }
 
 export const ReduceLinesToZeroConfirmationModal = ({
   isOpen,
+  selectedRows,
   onCancel,
   clearSelected,
 }: ReduceLinesToZeroConfirmationModalProps) => {
@@ -33,7 +36,7 @@ export const ReduceLinesToZeroConfirmationModal = ({
   const [reason, setReason] = useState<ReasonOptionRowFragment | null>(null);
 
   const { onZeroQuantities, allSelectedItemsAreVaccines } =
-    useStocktakeOld.line.zeroQuantities();
+    useStocktakeOld.line.zeroQuantities(selectedRows);
 
   const { data: reasonOptions } = useReasonOptions();
   const reasonIsRequired = reasonOptions?.totalCount !== 0;
@@ -73,6 +76,7 @@ export const ReduceLinesToZeroConfirmationModal = ({
                 isVaccine: allSelectedItemsAreVaccines,
                 isDispensary: store?.storeMode === StoreModeNodeType.Dispensary,
               })}
+              fallbackType={ReasonOptionNodeType.NegativeInventoryAdjustment}
               value={reason}
               onChange={reason => setReason(reason)}
               width={160}

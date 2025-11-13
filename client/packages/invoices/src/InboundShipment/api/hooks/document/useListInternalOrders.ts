@@ -23,7 +23,11 @@ export const useListInternalOrders = (otherPartyId: string) => {
     ...useQuery(
       api.keys.listInternalOrders(otherPartyId),
       () => api.get.listInternalOrders(otherPartyId),
-      { cacheTime: POLLING_INTERVAL_MS, staleTime: STALE_TIME_MS }
+      {
+        cacheTime: POLLING_INTERVAL_MS,
+        staleTime: STALE_TIME_MS,
+        keepPreviousData: true,
+      }
     ),
   };
 };

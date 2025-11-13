@@ -31,16 +31,17 @@ export const InventoryNav: FC = () => {
           <AppNavLink
             end
             to={RouteBuilder.create(AppRoute.Inventory)
-              .addPart(AppRoute.Locations)
-              .build()}
-            text={t('locations')}
-          />
-          <AppNavLink
-            end
-            to={RouteBuilder.create(AppRoute.Inventory)
               .addPart(AppRoute.Stock)
               .build()}
             text={t('stock')}
+          />
+
+          <AppNavLink
+            end
+            to={RouteBuilder.create(AppRoute.Inventory)
+              .addPart(AppRoute.Locations)
+              .build()}
+            text={t('locations')}
           />
           <AppNavLink
             end

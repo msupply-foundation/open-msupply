@@ -9,6 +9,7 @@ use repository::{
 };
 
 use repository::{PaginationOption, RepositoryError};
+use util::serde_json_diff::json_diff;
 use util::uuid::uuid;
 use util::{constants::SYSTEM_USER_ID, format_error};
 
@@ -62,6 +63,36 @@ pub fn activity_log_entry(
     Ok(())
 }
 
+pub fn activity_log_entry_with_diff(
+    ctx: &ServiceContext,
+    log_type: ActivityLogType,
+    record_id: Option<String>,
+    old_value: Option<&impl serde::Serialize>,
+    new_value: &impl serde::Serialize,
+) -> Result<(), RepositoryError> {
+    // Create a diff showing only the changes
+    let (changed_from, changed_to) = match old_value {
+        Some(old) => {
+            match json_diff(&old, &new_value).map_err(|e| RepositoryError::DBError {
+                msg: format!("{:?}", e),
+                extra: "JSON diff error".to_string(),
+            })? {
+                Some((from, to)) => (
+                    Some(serde_json::to_string(&from).unwrap_or_default()),
+                    Some(serde_json::to_string(&to).unwrap_or_default()),
+                ),
+                None => (None, None), // No changes
+            }
+        }
+        None => (
+            None,
+            Some(serde_json::to_string(&new_value).unwrap_or_default()),
+        ),
+    };
+
+    activity_log_entry(ctx, log_type, record_id, changed_from, changed_to)
+}
+
 pub fn system_activity_log_entry(
     connection: &StorageConnection,
     log_type: ActivityLogType,
@@ -83,7 +114,7 @@ pub fn system_activity_log_entry(
     Ok(())
 }
 
-pub fn system_log_entry(
+fn system_log_entry(
     connection: &StorageConnection,
     log_type: SystemLogType,
     message: &str,
@@ -111,8 +142,13 @@ pub fn system_error_log(
     error: &impl Error,
     context: &str,
 ) -> Result<(), RepositoryError> {
-    let error_message = format_error(error);
-    log::error!("{context} - {} - {error_message}", log_type.to_string());
+    let error_message = format!(
+        "{} - {} - {}",
+        context,
+        log_type.to_string(),
+        format_error(error)
+    );
+    log::error!("{error_message}");
     system_log_entry(connection, log_type, &error_message)?;
     Ok(())
 }

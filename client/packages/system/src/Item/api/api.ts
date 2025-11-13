@@ -55,6 +55,7 @@ export const getItemQueries = (sdk: Sdk, storeId: string) => ({
           ...filterBy,
           type: { equalTo: ItemNodeType.Stock },
           isActive: true,
+          isVisible: true,
         },
       });
 

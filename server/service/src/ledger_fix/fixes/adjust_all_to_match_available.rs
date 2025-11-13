@@ -16,7 +16,8 @@ pub(crate) fn fix(
     operation_log.push_str("Starting adjust_all_to_match_available\n");
 
     let ledger_lines = StockLineLedgerRepository::new(connection).query_by_filter(
-        StockLineLedgerFilter::new().stock_line_id(EqualFilter::equal_to(stock_line_id)),
+        StockLineLedgerFilter::new()
+            .stock_line_id(EqualFilter::equal_to(stock_line_id.to_string())),
     )?;
 
     let balance_summary = ledger_balance_summary(connection, &ledger_lines, stock_line_id)?;
@@ -119,7 +120,12 @@ pub(crate) mod test {
     async fn adjust_all_to_match_available_test() {
         let ServiceTestContext { connection, .. } = setup_all_with_data_and_service_provider(
             "adjust_all_to_match_available",
-            MockDataInserts::none().names().stores().units().items(),
+            MockDataInserts::none()
+                .names()
+                .stores()
+                .units()
+                .items()
+                .currencies(),
             mock_data(),
         )
         .await;
@@ -154,7 +160,7 @@ pub(crate) mod test {
             StockLineLedgerRepository::new(&connection)
                 .query_by_filter(
                     StockLineLedgerFilter::new()
-                        .stock_line_id(EqualFilter::equal_to("nothing_matches"))
+                        .stock_line_id(EqualFilter::equal_to("nothing_matches".to_string()))
                 )
                 .unwrap()
                 .into_iter()

@@ -17,7 +17,9 @@ pub fn validate(
     user_has_permission: Option<bool>,
 ) -> Result<PurchaseOrderLineRow, UpdatePurchaseOrderLineInputError> {
     let purchase_order_line = PurchaseOrderLineRepository::new(connection)
-        .query_by_filter(PurchaseOrderLineFilter::new().id(EqualFilter::equal_to(&input.id)))?
+        .query_by_filter(
+            PurchaseOrderLineFilter::new().id(EqualFilter::equal_to(input.id.to_string())),
+        )?
         .pop()
         .ok_or(UpdatePurchaseOrderLineInputError::PurchaseOrderLineNotFound)?;
     let line = purchase_order_line.purchase_order_line_row.clone();
@@ -27,7 +29,7 @@ pub fn validate(
         .ok_or(UpdatePurchaseOrderLineInputError::PurchaseOrderDoesNotExist)?;
 
     // Allow editing of the requested quantity
-    // Check if the user is allowed to update the requested_number_of_units or just the adjusted_number_of_units
+    // Check if the user is allowed to update the requested_number_of_units
     if let Some(requested_units) = input.requested_number_of_units {
         if requested_units != line.requested_number_of_units
             && !can_edit_requested_quantity(&purchase_order)
@@ -36,7 +38,7 @@ pub fn validate(
         }
     }
     // Allow editing of the adjusted quantity
-    // Check if the user is allowed to update the requested_number_of_units or just the adjusted_number_of_units
+    // Check if the user is allowed to update the adjusted_number_of_units
     if let Some(adjusted_units) = input.adjusted_number_of_units {
         if Some(adjusted_units) != line.adjusted_number_of_units
             && !can_edit_adjusted_quantity(&purchase_order, user_has_permission.unwrap_or(false))
@@ -56,21 +58,24 @@ pub fn validate(
 
     // Check the line status change before purchase_order_lines_editable
     // Should be able to update the line status only when the Purchase Order Sent
-    if let Some(status) = input.status.clone() {
-        let is_purchase_order_sent = purchase_order.status >= PurchaseOrderStatus::Sent;
-        let is_valid_status_change = match (status, is_purchase_order_sent) {
-            (PurchaseOrderLineStatus::New, false) => true,
-            (PurchaseOrderLineStatus::New, true) => false,
-            (_, true) => true,
-            (_, false) => false,
-        };
+    if let Some(new_status) = input.status.clone() {
+        // Only validate if the status is actually changing
+        if new_status != line.status {
+            let is_purchase_order_sent = purchase_order.status >= PurchaseOrderStatus::Sent;
+            let is_valid_status_change = match new_status {
+                PurchaseOrderLineStatus::New => !is_purchase_order_sent,
+                _ => is_purchase_order_sent,
+            };
 
-        if !is_valid_status_change {
-            return Err(UpdatePurchaseOrderLineInputError::CannotChangeStatus);
+            if !is_valid_status_change {
+                return Err(UpdatePurchaseOrderLineInputError::CannotChangeStatus);
+            }
         }
     }
 
-    if line.status == PurchaseOrderLineStatus::Closed {
+    if line.status == PurchaseOrderLineStatus::Closed
+        && input.status == Some(PurchaseOrderLineStatus::Closed)
+    {
         return Err(UpdatePurchaseOrderLineInputError::CannotEditPurchaseOrderLine);
     }
 
@@ -79,15 +84,19 @@ pub fn validate(
         Pagination::all(),
         Some(
             PurchaseOrderLineFilter::new()
-                .id(EqualFilter::not_equal_to(&input.id))
-                .purchase_order_id(EqualFilter::equal_to(&purchase_order.id))
-                .requested_pack_size(EqualFilter::equal_to_f64(
+                .id(EqualFilter::not_equal_to(input.id.to_string()))
+                .purchase_order_id(EqualFilter::equal_to(purchase_order.id.to_string()))
+                .requested_pack_size(EqualFilter::equal_to(
                     input
                         .requested_pack_size
                         .unwrap_or(line.requested_pack_size),
                 ))
                 .item_id(EqualFilter::equal_to(
-                    &input.item_id.clone().unwrap_or(line.item_link_id.clone()),
+                    input
+                        .item_id
+                        .clone()
+                        .unwrap_or(line.item_link_id.clone())
+                        .to_owned(),
                 )),
         ),
         None,

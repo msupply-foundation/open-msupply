@@ -51,7 +51,7 @@ pub fn generate_invoice_lines(
             let item_row = item_rows.iter().find(|item| item.id == line.item_link_id)?;
             Some(InsertStockInLine {
                 id: uuid(),
-                invoice_id: invoice_id.to_owned(),
+                invoice_id: invoice_id.to_string(),
                 pack_size: line.received_pack_size,
                 number_of_packs: line.number_of_packs_received,
                 item_id: item_row.id.clone(),
@@ -59,7 +59,7 @@ pub fn generate_invoice_lines(
                 expiry_date: line.expiry_date,
                 batch: line.batch.clone(),
                 volume_per_pack: line.volume_per_pack,
-                cost_price_per_pack: po_line.price_per_unit_after_discount,
+                cost_price_per_pack: po_line.price_per_pack_after_discount,
                 total_before_tax: None,
                 // Default
                 tax_percentage: None,

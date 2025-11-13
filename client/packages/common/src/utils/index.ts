@@ -16,6 +16,7 @@ export * from './item';
 export * from './globalConst';
 export * from './reasons';
 export * from './mappers';
+export * from './display';
 
 // having issues with tree shaking lodash
 // so we're just importing the functions we need

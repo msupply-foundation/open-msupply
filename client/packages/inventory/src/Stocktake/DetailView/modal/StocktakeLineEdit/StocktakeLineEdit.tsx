@@ -1,20 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import {
-  checkInvalidLocationLines,
-  LocationRowFragment,
-} from '@openmsupply-client/system';
+import { checkInvalidLocationLines } from '@openmsupply-client/system';
 import {
   BasicSpinner,
   Breakpoints,
   Divider,
   Box,
   ModalMode,
-  TableProvider,
-  createTableStore,
-  createQueryParamsStore,
-  QueryParamsProvider,
   useAppTheme,
-  useRowHighlight,
   useMediaQuery,
   useNotification,
   useUrlQueryParams,
@@ -61,7 +53,6 @@ export const StocktakeLineEdit = ({
   const { draftLines, update, addLine, isSaving, save, nextItem } =
     useStocktakeLineEdit(currentItem);
   const t = useTranslation();
-  const { highlightRows } = useRowHighlight();
   const { error } = useNotification();
   const {
     updatePaginationQuery,
@@ -122,8 +113,6 @@ export const StocktakeLineEdit = ({
       return;
     }
 
-    const rowIds = draftLines.map(line => line.id);
-    highlightRows({ rowIds });
     onClose();
   };
 
@@ -141,7 +130,7 @@ export const StocktakeLineEdit = ({
   const tableContent = simplifiedTabletView ? (
     <>
       <BatchTable
-        isDisabled={isDisabled}
+        disabled={isDisabled}
         batches={reversedDraftLines}
         update={update}
         isInitialStocktake={isInitialStocktake}
@@ -164,7 +153,7 @@ export const StocktakeLineEdit = ({
         <StyledTabPanel value={Tabs.Batch}>
           <StyledTabContainer>
             <BatchTable
-              isDisabled={isDisabled}
+              disabled={isDisabled}
               batches={reversedDraftLines}
               update={update}
               isInitialStocktake={isInitialStocktake}
@@ -176,7 +165,7 @@ export const StocktakeLineEdit = ({
         <StyledTabPanel value={Tabs.Pricing}>
           <StyledTabContainer>
             <PricingTable
-              isDisabled={isDisabled}
+              disabled={isDisabled}
               batches={reversedDraftLines}
               update={update}
             />
@@ -185,20 +174,14 @@ export const StocktakeLineEdit = ({
 
         <StyledTabPanel value={Tabs.Other}>
           <StyledTabContainer>
-            <QueryParamsProvider
-              createStore={createQueryParamsStore<LocationRowFragment>({
-                initialSortBy: { key: 'name' },
-              })}
-            >
-              <LocationTable
-                isDisabled={isDisabled}
-                batches={reversedDraftLines}
-                update={update}
-                restrictedToLocationTypeId={
-                  currentItem?.restrictedLocationTypeId
-                }
-              />
-            </QueryParamsProvider>
+            <LocationTable
+              disabled={isDisabled}
+              batches={reversedDraftLines}
+              update={update}
+              restrictedToLocationTypeId={
+                currentItem?.restrictedLocationTypeId ?? null
+              }
+            />
           </StyledTabContainer>
         </StyledTabPanel>
       </StocktakeLineEditTabs>
@@ -206,52 +189,45 @@ export const StocktakeLineEdit = ({
   );
 
   return (
-    <TableProvider
-      createStore={createTableStore}
-      queryParamsStore={createQueryParamsStore({
-        initialSortBy: { key: 'expiryDate' },
-      })}
+    <StocktakeLineEditModal
+      onNext={onNext}
+      onOk={onOk}
+      onCancel={onClose}
+      mode={mode}
+      isOpen={isOpen}
+      hasNext={!!nextItem || hasMorePages}
+      isValid={hasValidBatches && !isSaving}
     >
-      <StocktakeLineEditModal
-        onNext={onNext}
-        onOk={onOk}
-        onCancel={onClose}
-        mode={mode}
-        isOpen={isOpen}
-        hasNext={!!nextItem || hasMorePages}
-        isValid={hasValidBatches && !isSaving}
-      >
-        {(() => {
-          if (isSaving) {
-            return (
-              <Box sx={{ height: isMediumScreen ? 350 : 450 }}>
-                <BasicSpinner messageKey="saving" />
-              </Box>
-            );
-          }
-
+      {(() => {
+        if (isSaving) {
           return (
-            <>
-              <StocktakeLineEditForm
-                item={currentItem}
-                items={items}
-                onChangeItem={setCurrentItem}
-                mode={mode}
-                hasInvalidLocationLines={hasInvalidLocationLines ?? false}
-              />
-              {!currentItem ? (
-                <Box sx={{ height: isMediumScreen ? 400 : 500 }} />
-              ) : null}
-              {!!currentItem ? (
-                <>
-                  <Divider margin={5} />
-                  {tableContent}
-                </>
-              ) : null}
-            </>
+            <Box sx={{ height: isMediumScreen ? 350 : 450 }}>
+              <BasicSpinner messageKey="saving" />
+            </Box>
           );
-        })()}
-      </StocktakeLineEditModal>
-    </TableProvider>
+        }
+
+        return (
+          <>
+            <StocktakeLineEditForm
+              item={currentItem}
+              items={items}
+              onChangeItem={setCurrentItem}
+              mode={mode}
+              hasInvalidLocationLines={hasInvalidLocationLines ?? false}
+            />
+            {!currentItem ? (
+              <Box sx={{ height: isMediumScreen ? 400 : 500 }} />
+            ) : null}
+            {!!currentItem ? (
+              <>
+                <Divider margin={5} />
+                {tableContent}
+              </>
+            ) : null}
+          </>
+        );
+      })()}
+    </StocktakeLineEditModal>
   );
 };

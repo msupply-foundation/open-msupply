@@ -5,10 +5,17 @@ use crate::{
     },
     invoice_line::stock_out_line::{insert_stock_out_line, InsertStockOutLineError},
     service_provider::ServiceContext,
+    vaccination::validate::check_vaccine_course_dose_exists,
 };
 
 use chrono::NaiveDate;
-use repository::{ActivityLogType, RepositoryError, Vaccination, VaccinationRowRepository};
+use repository::{
+    vaccination::{VaccinationFilter, VaccinationRepository},
+    vaccine_course::vaccine_course_dose::{VaccineCourseDoseFilter, VaccineCourseDoseRepository},
+    ActivityLogType, EqualFilter, ProgramEnrolmentRow, RepositoryError, Vaccination,
+    VaccinationRowRepository,
+};
+use util::uuid::uuid;
 
 mod generate;
 mod validate;
@@ -53,6 +60,9 @@ pub struct InsertVaccination {
     pub item_id: Option<String>,
     pub stock_line_id: Option<String>,
     pub not_given_reason: Option<String>,
+    /// Internal flag to unnecessary recursion when creating missing "Not Given"
+    /// vaccinations
+    pub create_not_given_records_for_skipped_doses: bool,
 }
 
 pub fn insert_vaccination(
@@ -70,7 +80,7 @@ pub fn insert_vaccination(
                 create_prescription,
             } = generate(GenerateInput {
                 store_id: store_id.to_string(),
-                program_enrolment,
+                program_enrolment: program_enrolment.clone(),
                 user_id: ctx.user_id.clone(),
                 insert_input: input.clone(),
                 stock_line,
@@ -78,6 +88,27 @@ pub fn insert_vaccination(
 
             // Create the vaccination
             VaccinationRowRepository::new(connection).upsert_one(&vaccination)?;
+
+            // If can_skip_dose is enabled and we're not already doing backfill,
+            // create "Not given" vaccinations for any missing previous doses
+            if !input.create_not_given_records_for_skipped_doses {
+                if let Ok(vaccine_course_dose) =
+                    check_vaccine_course_dose_exists(&input.vaccine_course_dose_id, connection)
+                {
+                    if let Some(vaccine_course_dose) = vaccine_course_dose {
+                        if vaccine_course_dose.vaccine_course_row.can_skip_dose {
+                            create_missing_not_given_vaccinations(
+                                ctx,
+                                store_id,
+                                &vaccine_course_dose.vaccine_course_row.id,
+                                &input.vaccine_course_dose_id,
+                                &program_enrolment,
+                                &input,
+                            )?;
+                        }
+                    }
+                }
+            }
 
             // If it was `Given`, create a prescription
             if let Some(CreatePrescription {
@@ -131,6 +162,69 @@ impl From<UpdatePrescriptionError> for InsertVaccinationError {
     fn from(error: UpdatePrescriptionError) -> Self {
         InsertVaccinationError::InternalError(format!("Could not update prescription: {:?}", error))
     }
+}
+
+fn create_missing_not_given_vaccinations(
+    ctx: &ServiceContext,
+    store_id: &str,
+    vaccine_course_id: &str,
+    current_vaccine_course_dose_id: &str,
+    program_enrolment: &ProgramEnrolmentRow,
+    original_input: &InsertVaccination,
+) -> Result<(), InsertVaccinationError> {
+    let connection = &ctx.connection;
+
+    // Get all doses for this vaccine course
+    let all_course_doses = VaccineCourseDoseRepository::new(connection).query_by_filter(
+        VaccineCourseDoseFilter::new().vaccine_course_id(EqualFilter::equal_to(vaccine_course_id.to_string())),
+    )?;
+
+    // Find the current dose index
+    let current_dose_index = all_course_doses
+        .iter()
+        .position(|v| &v.vaccine_course_dose_row.id == current_vaccine_course_dose_id)
+        .unwrap_or(0);
+
+    // Create "Not given" vaccinations for all previous doses that don't have vaccinations
+    for (index, dose) in all_course_doses.iter().enumerate() {
+        if index >= current_dose_index {
+            break; // Only process doses before the current one
+        }
+
+        // Check if vaccination already exists for this dose
+        let existing_vaccination = VaccinationRepository::new(connection).query_one(
+            VaccinationFilter::new()
+                .vaccine_course_dose_id(EqualFilter::equal_to(dose.vaccine_course_dose_row.id.to_string()))
+                .program_enrolment_id(EqualFilter::equal_to(program_enrolment.id.to_string())),
+        )?;
+
+        // If no vaccination exists, create a "Not given" one by calling
+        // insert_vaccination
+        if existing_vaccination.is_none() {
+            let not_given_input = InsertVaccination {
+                id: uuid(),
+                vaccine_course_dose_id: dose.vaccine_course_dose_row.id.clone(),
+                given: false,
+                item_id: None,
+                stock_line_id: None,
+                not_given_reason: Some("Dose skipped (Later dose administered)".to_string()),
+                create_not_given_records_for_skipped_doses: true, // Prevent recursive backfill creation
+
+                // Copy all other properties from the original input
+                encounter_id: original_input.encounter_id.clone(),
+                vaccination_date: original_input.vaccination_date,
+                clinician_id: original_input.clinician_id.clone(),
+                facility_name_id: original_input.facility_name_id.clone(),
+                facility_free_text: original_input.facility_free_text.clone(),
+                comment: original_input.comment.clone(),
+            };
+
+            // Call insert_vaccination for the missing dose
+            insert_vaccination(ctx, store_id, not_given_input)?;
+        }
+    }
+
+    Ok(())
 }
 
 #[cfg(test)]
@@ -403,6 +497,22 @@ mod insert {
             Err(InsertVaccinationError::StockLineDoesNotMatchItem)
         );
 
+        // VaccineIsNotNextDose (can't skip straight to dose C if B doesn't have a status yet)
+        assert_eq!(
+            service.insert_vaccination(
+                &context,
+                store_id,
+                InsertVaccination {
+                    id: "new_id".to_string(),
+                    encounter_id: mock_immunisation_encounter_a().id,
+                    // Dose B does not exist yet
+                    vaccine_course_dose_id: mock_vaccine_course_a_dose_c().id,
+                    ..Default::default()
+                }
+            ),
+            Err(InsertVaccinationError::VaccineIsNotNextDose)
+        );
+
         // Insert dose B as NOT GIVEN
         service
             .insert_vaccination(
@@ -419,21 +529,20 @@ mod insert {
             )
             .unwrap();
 
-        // VaccineIsNotNextDose
-        assert_eq!(
-            service.insert_vaccination(
-                &context,
-                store_id,
-                InsertVaccination {
-                    id: "new_id".to_string(),
-                    encounter_id: mock_immunisation_encounter_a().id,
-                    // Dose B was not given, so can't give dose C
-                    vaccine_course_dose_id: mock_vaccine_course_a_dose_c().id,
-                    ..Default::default()
-                }
-            ),
-            Err(InsertVaccinationError::VaccineIsNotNextDose)
+        // Test manual Skipping of dose B to dose C (e.g. Dose B was not given but it was records as such)
+        let result = service.insert_vaccination(
+            &context,
+            store_id,
+            InsertVaccination {
+                id: "new_id".to_string(),
+                encounter_id: mock_immunisation_encounter_a().id,
+                // Dose B was not given, but we can manually skip and give dose C
+                vaccine_course_dose_id: mock_vaccine_course_a_dose_c().id,
+                given: true,
+                ..Default::default()
+            },
         );
+        assert!(result.is_ok());
     }
 
     #[actix_rt::test]

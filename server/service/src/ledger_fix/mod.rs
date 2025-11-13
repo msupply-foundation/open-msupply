@@ -14,7 +14,8 @@ pub(crate) fn is_ledger_fixed(
     stock_line_id: &str,
 ) -> Result<bool, RepositoryError> {
     let ledger_lines = StockLineLedgerRepository::new(connection).query_by_filter(
-        StockLineLedgerFilter::new().stock_line_id(EqualFilter::equal_to(stock_line_id)),
+        StockLineLedgerFilter::new()
+            .stock_line_id(EqualFilter::equal_to(stock_line_id.to_string())),
     )?;
 
     if ledger_lines.iter().any(|line| line.running_balance < 0.0) {
@@ -42,7 +43,7 @@ pub(crate) fn ledger_balance_summary(
 ) -> Result<LedgerBalanceSummary, RepositoryError> {
     let reserved_not_picked = InvoiceLineRepository::new(connection).query_by_filter(
         InvoiceLineFilter::new()
-            .stock_line_id(EqualFilter::equal_to(stock_line_id))
+            .stock_line_id(EqualFilter::equal_to(stock_line_id.to_string()))
             .r#type(InvoiceLineType::StockOut.equal_to())
             .invoice_status(InvoiceStatus::equal_any(vec![
                 InvoiceStatus::Allocated,
@@ -55,10 +56,17 @@ pub(crate) fn ledger_balance_summary(
         .map(|line| line.invoice_line_row.number_of_packs * line.invoice_line_row.pack_size)
         .sum::<f64>();
 
-    // Unwrap is safe stock_line must exist at this pont
-    let stock_line = StockLineRowRepository::new(connection)
-        .find_one_by_id(stock_line_id)?
-        .unwrap();
+    // Some ledger fixes may delete the stock_line, so subsequent checks of the ID should handle it safely.
+    let Some(stock_line) = StockLineRowRepository::new(connection).find_one_by_id(stock_line_id)?
+    else {
+        return Ok(LedgerBalanceSummary {
+            is_fixed: true,
+            available: 0.0,
+            total: 0.0,
+            running_balance: 0.0,
+            reserved_not_picked: 0.0,
+        });
+    };
 
     let available = stock_line.available_number_of_packs * stock_line.pack_size;
     let total = stock_line.total_number_of_packs * stock_line.pack_size;

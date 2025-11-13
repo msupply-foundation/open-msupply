@@ -242,7 +242,7 @@ mod test {
         let requisition_lines =
             RequisitionLineRepository::new(&connection)
                 .query_by_filter(RequisitionLineFilter::new().requisition_id(
-                    EqualFilter::equal_to(&progam_request_line().requisition_id.clone()),
+                    EqualFilter::equal_to(progam_request_line().requisition_id.clone().to_owned()),
                 ))
                 .unwrap();
 

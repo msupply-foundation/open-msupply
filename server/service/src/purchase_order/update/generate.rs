@@ -1,12 +1,11 @@
 use super::UpdatePurchaseOrderInput;
-use crate::NullableUpdate;
-use repository::{PurchaseOrder, PurchaseOrderRow, PurchaseOrderStatus, RepositoryError};
-
+use crate::nullable_update;
 use chrono::{NaiveDate, Utc};
 use repository::{
     EqualFilter, PurchaseOrderLineFilter, PurchaseOrderLineRepository, PurchaseOrderLineRow,
     StorageConnection,
 };
+use repository::{PurchaseOrder, PurchaseOrderRow, PurchaseOrderStatus, RepositoryError};
 
 pub(crate) struct GenerateResult {
     pub updated_order: PurchaseOrderRow,
@@ -107,13 +106,13 @@ pub fn generate(
     updated_order.supplier_discount_percentage = Some(supplier_discount_percentage);
 
     if let Some(supplier_discount_amount) = supplier_discount_amount {
-        let line_total_before_discount = purchase_order_stats
+        let total_before_tax = purchase_order_stats
             .as_ref()
-            .map(|stats| stats.line_total_before_discount)
+            .map(|stats| stats.order_total_before_discount)
             .unwrap_or(0.0);
 
-        updated_order.supplier_discount_percentage = if line_total_before_discount > 0.0 {
-            Some((supplier_discount_amount / line_total_before_discount) * 100.0)
+        updated_order.supplier_discount_percentage = if total_before_tax > 0.0 {
+            Some((supplier_discount_amount / total_before_tax) * 100.0)
         } else {
             Some(0.0)
         };
@@ -135,13 +134,6 @@ pub fn generate(
         updated_order,
         updated_lines,
     })
-}
-
-fn nullable_update<T: Clone>(input: &Option<NullableUpdate<T>>, current: Option<T>) -> Option<T> {
-    match input {
-        Some(NullableUpdate { value }) => value.clone(),
-        None => current,
-    }
 }
 
 fn set_new_status_datetime(
@@ -191,7 +183,7 @@ fn update_lines(
     if let Some(new_status) = status {
         let lines = PurchaseOrderLineRepository::new(connection).query_by_filter(
             PurchaseOrderLineFilter::new()
-                .purchase_order_id(EqualFilter::equal_to(purchase_order_id)),
+                .purchase_order_id(EqualFilter::equal_to(purchase_order_id.to_string())),
         )?;
 
         let updated_lines: Vec<PurchaseOrderLineRow> = lines
@@ -205,8 +197,12 @@ fn update_lines(
                             .or(requested_delivery_date);
                     }
                     PurchaseOrderStatus::Sent => {
-                        line.purchase_order_line_row.status =
-                            repository::PurchaseOrderLineStatus::Sent;
+                        if line.purchase_order_line_row.status
+                            != repository::PurchaseOrderLineStatus::Closed
+                        {
+                            line.purchase_order_line_row.status =
+                                repository::PurchaseOrderLineStatus::Sent;
+                        }
                     }
                     PurchaseOrderStatus::Finalised => {
                         line.purchase_order_line_row.status =

@@ -90,6 +90,7 @@ pub struct EqualFilterInvoiceTypeInput {
     pub equal_to: Option<InvoiceNodeType>,
     pub equal_any: Option<Vec<InvoiceNodeType>>,
     pub not_equal_to: Option<InvoiceNodeType>,
+    pub not_equal_all: Option<Vec<InvoiceNodeType>>,
 }
 
 #[derive(InputObject, Clone)]
@@ -97,6 +98,7 @@ pub struct EqualFilterInvoiceStatusInput {
     pub equal_to: Option<InvoiceNodeStatus>,
     pub equal_any: Option<Vec<InvoiceNodeStatus>>,
     pub not_equal_to: Option<InvoiceNodeStatus>,
+    pub not_equal_all: Option<Vec<InvoiceNodeStatus>>,
 }
 
 pub struct InvoiceNode {

@@ -3,15 +3,16 @@ use crate::{
         plugin_provider::{PluginError, PluginInstance},
         types::transform_request_requisition_lines::Context,
     },
-    requisition::common::{check_requisition_row_exists, get_lines_for_requisition},
+    requisition::common::{
+        check_master_list_for_store, check_requisition_row_exists, get_lines_for_requisition,
+    },
     service_provider::ServiceContext,
     PluginOrRepositoryError,
 };
 use repository::{
     requisition_row::{RequisitionRow, RequisitionStatus, RequisitionType},
-    MasterList, MasterListFilter, MasterListLineFilter, MasterListLineRepository,
-    MasterListRepository, PluginDataRowRepository, RepositoryError, RequisitionLine,
-    RequisitionLineFilter, RequisitionLineRepository, RequisitionLineRow,
+    MasterListLineFilter, MasterListLineRepository, PluginDataRowRepository, RepositoryError,
+    RequisitionLine, RequisitionLineFilter, RequisitionLineRepository, RequisitionLineRow,
     RequisitionLineRowRepository, StorageConnection,
 };
 use repository::{EqualFilter, ItemType};
@@ -67,7 +68,7 @@ pub fn add_from_master_list(
 
             match RequisitionLineRepository::new(connection).query_by_filter(
                 RequisitionLineFilter::new()
-                    .requisition_id(EqualFilter::equal_to(&input.request_requisition_id)),
+                    .requisition_id(EqualFilter::equal_to(input.request_requisition_id.to_string())),
             ) {
                 Ok(lines) => Ok(lines),
                 Err(error) => Err(OutError::DatabaseError(error)),
@@ -120,7 +121,7 @@ fn generate(
     let master_list_lines_not_in_requisition = MasterListLineRepository::new(&ctx.connection)
         .query_by_filter(
             MasterListLineFilter::new()
-                .master_list_id(EqualFilter::equal_to(&input.master_list_id))
+                .master_list_id(EqualFilter::equal_to(input.master_list_id.to_string()))
                 .item_id(EqualFilter::not_equal_all(item_ids_in_requisition))
                 .item_type(ItemType::Stock.equal_to()),
             None,
@@ -131,21 +132,13 @@ fn generate(
         .map(|master_list_line| master_list_line.item_id)
         .collect();
 
-    generate_requisition_lines(ctx, store_id, requisition_row, items_ids_not_in_requisition)
-}
-
-pub fn check_master_list_for_store(
-    connection: &StorageConnection,
-    store_id: &str,
-    master_list_id: &str,
-) -> Result<Option<MasterList>, RepositoryError> {
-    let mut rows = MasterListRepository::new(connection).query_by_filter(
-        MasterListFilter::new()
-            .id(EqualFilter::equal_to(master_list_id))
-            .exists_for_store_id(EqualFilter::equal_to(store_id))
-            .is_program(false),
-    )?;
-    Ok(rows.pop())
+    generate_requisition_lines(
+        ctx,
+        store_id,
+        requisition_row,
+        items_ids_not_in_requisition,
+        None,
+    )
 }
 
 impl From<RepositoryError> for AddFromMasterListError {
@@ -206,8 +199,8 @@ mod test {
             service.add_from_master_list(
                 &context,
                 AddFromMasterList {
-                    request_requisition_id: "invalid".to_owned(),
-                    master_list_id: "n/a".to_owned()
+                    request_requisition_id: "invalid".to_string(),
+                    master_list_id: "n/a".to_string()
                 },
             ),
             Err(ServiceError::RequisitionDoesNotExist)
@@ -219,7 +212,7 @@ mod test {
                 &context,
                 AddFromMasterList {
                     request_requisition_id: mock_sent_request_requisition().id,
-                    master_list_id: "n/a".to_owned()
+                    master_list_id: "n/a".to_string()
                 },
             ),
             Err(ServiceError::CannotEditRequisition)
@@ -233,7 +226,7 @@ mod test {
                     request_requisition_id: mock_full_new_response_requisition_for_update_test()
                         .requisition
                         .id,
-                    master_list_id: "n/a".to_owned()
+                    master_list_id: "n/a".to_string()
                 },
             ),
             Err(ServiceError::NotARequestRequisition)
@@ -258,7 +251,7 @@ mod test {
                 &context,
                 AddFromMasterList {
                     request_requisition_id: mock_draft_request_requisition_for_update_test().id,
-                    master_list_id: "n/a".to_owned()
+                    master_list_id: "n/a".to_string()
                 },
             ),
             Err(ServiceError::NotThisStoreRequisition)
@@ -268,11 +261,11 @@ mod test {
     #[actix_rt::test]
     async fn add_from_master_list_success() {
         fn master_list() -> FullMockMasterList {
-            let id = "master_list".to_owned();
-            let join1 = format!("{}1", id);
-            let line1 = format!("{}1", id);
-            let line2 = format!("{}2", id);
-            let line3 = format!("{}3", id);
+            let id = "master_list".to_string();
+            let join1 = format!("{id}1");
+            let line1 = format!("{id}1");
+            let line2 = format!("{id}2");
+            let line3 = format!("{id}3");
 
             FullMockMasterList {
                 master_list: MasterListRow {
@@ -402,7 +395,7 @@ mod test {
         assert_eq!(
             line.requisition_line_row.suggested_quantity,
             // 10 = requisition max_mos
-            test_item_stats::item2_amc_3_months() * 10.0 - test_item_stats::item_2_soh()
+            (test_item_stats::item2_amc_3_months() * 10.0 - test_item_stats::item_2_soh()).ceil()
         );
     }
 }

@@ -168,7 +168,7 @@ mod tests {
             ledger::{get_test_ledger_datetime, mock_ledger_data},
             MockData, MockDataInserts,
         },
-        test_db,
+        test_db, ItemLinkRowRepository,
     };
 
     use super::*;
@@ -191,9 +191,9 @@ mod tests {
         .await;
 
         let repo = ItemLedgerRepository::new(&storage_connection);
-        let filter = ItemLedgerFilter::new().item_id(EqualFilter::equal_to("ledger_test_item"));
+        let filter = ItemLedgerFilter::new().item_id(EqualFilter::equal_to("ledger_test_item".to_string()));
 
-        let result = repo.query(Pagination::all(), Some(filter)).unwrap();
+        let result = repo.query(Pagination::all(), Some(filter.clone())).unwrap();
 
         // Validate the results based on the mock_ledger_data
         // PICKED+ outbounds, RECEIVED+ inbounds, VERIFIED adjustments should be included
@@ -220,5 +220,41 @@ mod tests {
         assert_eq!(result[2].running_balance, 50.0); // picked outbound
         assert_eq!(result[1].running_balance, 0.0); // picked outbound second line
         assert_eq!(result[0].running_balance, 50.0); // verified inventory addition
+
+        let item_link_repo = ItemLinkRowRepository::new(&storage_connection);
+        let mut item_link_b = item_link_repo
+            .find_one_by_id("ledger_test_item_b")
+            .unwrap()
+            .unwrap();
+        item_link_b.item_id = "ledger_test_item".to_string();
+        item_link_repo.upsert_one(&item_link_b).unwrap();
+
+        let result = repo.query(Pagination::all(), Some(filter)).unwrap();
+
+        assert_eq!(result[0].id, "verified_inventory_adjustment_b_line");
+        assert_eq!(result[1].id, "verified_inventory_adjustment_line");
+        assert_eq!(result[2].id, "picked_outbound_line_stock_line_b");
+        assert_eq!(result[3].id, "picked_outbound_line");
+        assert_eq!(result[4].id, "verified_inbound_line_stock_line_b");
+        assert_eq!(result[5].id, "received_inbound_line");
+
+        // There is a ledger entry for another item, check it is not included
+        assert_eq!(result.len(), 6);
+
+        // Check that the results are in the expected order (reverse chronological)
+        assert_eq!(result[0].datetime, get_test_ledger_datetime(6));
+        assert_eq!(result[1].datetime, get_test_ledger_datetime(5));
+        assert_eq!(result[2].datetime, get_test_ledger_datetime(4));
+        assert_eq!(result[3].datetime, get_test_ledger_datetime(4));
+        assert_eq!(result[4].datetime, get_test_ledger_datetime(3)); // the received time of the verified inbound
+        assert_eq!(result[5].datetime, get_test_ledger_datetime(2));
+
+        // Check the running balance (reverse chronological)
+        assert_eq!(result[5].running_balance, 50.0); // received first inbound
+        assert_eq!(result[4].running_balance, 100.0); // received another inbound
+        assert_eq!(result[3].running_balance, 50.0); // picked outbound
+        assert_eq!(result[2].running_balance, 0.0); // picked outbound second line
+        assert_eq!(result[1].running_balance, 50.0); // verified inventory addition
+        assert_eq!(result[0].running_balance, 100.0); // verified inventory addition (line b)
     }
 }

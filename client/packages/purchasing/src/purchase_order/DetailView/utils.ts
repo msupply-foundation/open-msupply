@@ -6,63 +6,9 @@ import {
 } from '@openmsupply-client/common';
 import { ImportRow, LineNumber } from './ImportLines/utils';
 
+// Should match Line Edit Columns
 function basePurchaseOrderLineFields(t: TypedTFunction<LocaleKey>) {
   return [
-    t('label.code'),
-    t('label.pack-size'),
-    t('label.requested'),
-    t('label.price-per-pack-before-discount'),
-    t('label.price-per-pack-after-discount'),
-  ];
-}
-
-export const purchaseOrderLinesToCsv = (
-  items: PurchaseOrderLineFragment[],
-  t: TypedTFunction<LocaleKey>
-) => {
-  const fields: string[] = ['id'];
-  fields.push(
-    ...basePurchaseOrderLineFields(t),
-    t('label.created-datetime-UTC'),
-    t('label.modified-datetime-UTC')
-  );
-  const data = items.map(node => {
-    return [node.id, node.purchaseOrderId, node.item.id];
-  });
-  return Formatter.csv({ fields, data });
-};
-
-export const importPurchaseOrderLinesToCSVWithErrors = (
-  purchaseOrderLines: Partial<ImportRow & LineNumber>[],
-  t: TypedTFunction<LocaleKey>
-) => {
-  const fields: string[] = [];
-
-  fields.push(
-    ...basePurchaseOrderLineFields(t),
-    t('label.line-number'),
-    t('label.error-message')
-  );
-  const data = purchaseOrderLines.map(node => {
-    const mapped: (string | number | null | undefined)[] = [
-      node.itemCode,
-      node.requestedPackSize,
-      node.requestedNumberOfUnits,
-      (node.pricePerUnitBeforeDiscount || 0)  * (node.requestedPackSize || 1),
-      (node.pricePerUnitAfterDiscount || 0) * (node.requestedPackSize || 1),
-      node.lineNumber,
-      node.errorMessage,
-    ];
-    return mapped;
-  });
-  return Formatter.csv({ fields, data });
-};
-
-export const importPurchaseOrderLinesToCsv = (
-  purchaseOrderLines: Partial<ImportRow>[],
-  t: TypedTFunction<LocaleKey>
-) => {
-  const fields: string[] = [
     t('label.code'),
     t('label.pack-size'),
     t('label.requested-packs'),
@@ -76,26 +22,66 @@ export const importPurchaseOrderLinesToCsv = (
     t('label.comment'),
     t('label.notes'),
   ];
+}
 
-  const data = purchaseOrderLines.map(node => {
-    const row = [
-      node.itemCode,
-      node.requestedPackSize,
-      node.requestedNumberOfUnits,
-      node.unit,
-      node.supplierItemCode,
-      node.pricePerUnitBeforeDiscount,
-      node.discountPercentage,
-      node.pricePerUnitAfterDiscount,
-      node.requestedDeliveryDate,
-      node.expectedDeliveryDate,
-      node.comment,
-      node.note,
-    ];
+function mapImportRowToArray(node: Partial<ImportRow>) {
+  return [
+    node.itemCode,
+    node.requestedPackSize,
+    node.requestedNumberOfUnits,
+    node.unit,
+    node.supplierItemCode,
+    node.pricePerPackBeforeDiscount,
+    node.discountPercentage,
+    node.pricePerPackAfterDiscount,
+    node.requestedDeliveryDate,
+    node.expectedDeliveryDate,
+    node.comment,
+    node.note,
+  ];
+}
 
-    return row;
+export const purchaseOrderLinesToCsv = (
+  items: PurchaseOrderLineFragment[],
+  t: TypedTFunction<LocaleKey>
+) => {
+  const fields = [
+    'id',
+    ...basePurchaseOrderLineFields(t),
+    t('label.created-datetime-UTC'),
+    t('label.modified-datetime-UTC'),
+  ];
+  const data = items.map(node => {
+    return [node.id, node.purchaseOrderId, node.item.id];
   });
 
+  return Formatter.csv({ fields, data });
+};
+
+export const importPurchaseOrderLinesToCSVWithErrors = (
+  purchaseOrderLines: Partial<ImportRow & LineNumber>[],
+  t: TypedTFunction<LocaleKey>
+) => {
+  const fields = [
+    ...basePurchaseOrderLineFields(t),
+    t('label.line-number'),
+    t('label.error-message'),
+  ];
+  const data = purchaseOrderLines.map(node => [
+    ...mapImportRowToArray(node),
+    node.lineNumber,
+    node.errorMessage,
+  ]);
+
+  return Formatter.csv({ fields, data });
+};
+
+export const importPurchaseOrderLinesToCsv = (
+  purchaseOrderLines: Partial<ImportRow>[],
+  t: TypedTFunction<LocaleKey>
+) => {
+  const fields = basePurchaseOrderLineFields(t);
+  const data = purchaseOrderLines.map(mapImportRowToArray);
   return Formatter.csv({ fields, data });
 };
 

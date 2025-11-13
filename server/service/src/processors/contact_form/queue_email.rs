@@ -2,7 +2,7 @@ use async_trait::async_trait;
 use repository::{
     contact_form::{ContactForm, ContactFormFilter, ContactFormRepository},
     contact_form_row::ContactType,
-    ChangelogRow, ChangelogTableName, EqualFilter, KeyType,
+    ChangelogRow, ChangelogTableName, EqualFilter, KeyType, KeyValueStoreRepository,
 };
 use tera::{Context, Tera};
 use util::constants::{FEEDBACK_EMAIL, SUPPORT_EMAIL};
@@ -38,7 +38,7 @@ impl Processor for QueueContactEmailProcessor {
         changelog: &ChangelogRow,
     ) -> Result<Option<String>, ProcessorError> {
         let connection = &ctx.connection;
-        let filter = ContactFormFilter::new().id(EqualFilter::equal_to(&changelog.record_id));
+        let filter = ContactFormFilter::new().id(EqualFilter::equal_to(changelog.record_id.to_string()));
 
         let contact_form = ContactFormRepository::new(connection)
             .query_one(filter)
@@ -48,7 +48,10 @@ impl Processor for QueueContactEmailProcessor {
                 changelog.record_id.clone(),
             ))?;
 
-        let email = create_email(&contact_form);
+        let settings_sync_url =
+            KeyValueStoreRepository::new(connection).get_string(KeyType::SettingsSyncUrl)?;
+
+        let email = create_email(&contact_form, settings_sync_url);
 
         let email = match email {
             Ok(email) => email,
@@ -99,7 +102,10 @@ impl Processor for QueueContactEmailProcessor {
     }
 }
 
-fn create_email(contact_form: &ContactForm) -> Result<EnqueueEmailData, EmailServiceError> {
+fn create_email(
+    contact_form: &ContactForm,
+    settings_sync_url: Option<String>,
+) -> Result<EnqueueEmailData, EmailServiceError> {
     let ContactForm {
         contact_form_row,
         store_row,
@@ -128,6 +134,7 @@ fn create_email(contact_form: &ContactForm) -> Result<EnqueueEmailData, EmailSer
     context.insert("reply_email", &contact_form_row.reply_email);
     context.insert("submission_time", &submission_time);
     context.insert("store_name", &store_name);
+    context.insert("sync_url", &settings_sync_url);
     context.insert("site_id", &store_row.site_id);
     context.insert("body", &contact_form_row.body);
 
@@ -144,7 +151,7 @@ fn create_email(contact_form: &ContactForm) -> Result<EnqueueEmailData, EmailSer
     let html_body = match html_body {
         Ok(html_body) => html_body,
         Err(e) => {
-            log::error!("Failed to render {}: {:?}", template_name, e);
+            log::error!("Failed to render {template_name}: {e:?}");
             return Err(EmailServiceError::GenericError(e.to_string()));
         }
     };
@@ -181,7 +188,7 @@ mod email_test {
     use util::constants::SUPPORT_EMAIL;
 
     use crate::{
-        processors::contact_form::{ContactFormProcessor, QueueContactEmailProcessor},
+        processors::{contact_form::QueueContactEmailProcessor, general_processor::Processor},
         test_helpers::{
             email_test::send_test_emails, setup_all_with_data_and_service_provider,
             ServiceTestContext,
@@ -205,8 +212,9 @@ mod email_test {
             store_row: mock_store_a(),
             name_row: mock_name_store_a(),
         };
+        let sync_url = Some("https://sync-url.test".to_string());
 
-        let email = create_email(&contact_form);
+        let email = create_email(&contact_form, sync_url);
 
         assert!(email.is_ok());
 
@@ -215,6 +223,7 @@ mod email_test {
         assert!(email_body.contains("Feedback Submission"));
         assert!(email_body.contains("Reply email: reply@test.com"));
         assert!(email_body.contains("Store: Store A (code)"));
+        assert!(email_body.contains("Sync URL: https://sync-url.test"));
         assert!(email_body.contains("Feedback message"));
     }
 
@@ -223,6 +232,7 @@ mod email_test {
         let ServiceTestContext {
             connection,
             service_provider,
+            service_context,
             ..
         } = setup_all_with_data_and_service_provider(
             "send_contact_form_emails",
@@ -249,7 +259,8 @@ mod email_test {
         };
 
         QueueContactEmailProcessor
-            .try_process_record(&connection, &changelog)
+            .try_process_record(&service_context, &service_provider, &changelog)
+            .await
             .unwrap();
 
         // Check that the email was queued

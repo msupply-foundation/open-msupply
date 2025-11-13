@@ -72,7 +72,7 @@ mod query {
                 &context,
                 None,
                 Some(
-                    BundledItemFilter::new().id(EqualFilter::equal_to(test_bundled_item_record_id)),
+                    BundledItemFilter::new().id(EqualFilter::equal_to(test_bundled_item_record_id.to_string())),
                 ),
             )
             .unwrap();
@@ -100,7 +100,7 @@ mod query {
                 &context,
                 None,
                 Some(
-                    BundledItemFilter::new().id(EqualFilter::equal_to(test_bundled_item_record_id)),
+                    BundledItemFilter::new().id(EqualFilter::equal_to(test_bundled_item_record_id.to_string())),
                 ),
             )
             .unwrap();

@@ -156,7 +156,7 @@ mod tests {
 
         // Query by id
         let campaign_row = CampaignRepository::new(&storage_connection)
-            .query_one(CampaignFilter::new().id(EqualFilter::equal_to(&id)))
+            .query_one(CampaignFilter::new().id(EqualFilter::equal_to(id.to_string())))
             .unwrap()
             .unwrap();
 

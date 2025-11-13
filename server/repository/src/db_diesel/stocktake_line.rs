@@ -25,6 +25,7 @@ pub struct StocktakeLineFilter {
     pub location_id: Option<EqualFilter<String>>,
     pub item_code_or_name: Option<StringFilter>,
     pub item_id: Option<EqualFilter<String>>,
+    pub stock_line_id: Option<EqualFilter<String>>,
 }
 
 impl StocktakeLineFilter {
@@ -49,6 +50,11 @@ impl StocktakeLineFilter {
 
     pub fn item_id(mut self, filter: EqualFilter<String>) -> Self {
         self.item_id = Some(filter);
+        self
+    }
+
+    pub fn stock_line_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.stock_line_id = Some(filter);
         self
     }
 }
@@ -100,7 +106,7 @@ impl<'a> StocktakeLineRepository<'a> {
         filter: Option<StocktakeLineFilter>,
         store_id: Option<String>,
     ) -> Result<i64, RepositoryError> {
-        let mut query = create_filtered_query(filter.clone());
+        let mut query = Self::create_filtered_query(filter.clone());
         query = apply_item_filter(query, filter, self.connection, store_id.unwrap_or_default());
         Ok(query
             .count()
@@ -124,7 +130,7 @@ impl<'a> StocktakeLineRepository<'a> {
         sort: Option<StocktakeLineSort>,
         store_id: Option<String>,
     ) -> Result<Vec<StocktakeLine>, RepositoryError> {
-        let mut query = create_filtered_query(filter.clone());
+        let mut query = Self::create_filtered_query(filter.clone());
         query = apply_item_filter(query, filter, self.connection, store_id.unwrap_or_default());
 
         if let Some(sort) = sort {
@@ -168,6 +174,26 @@ impl<'a> StocktakeLineRepository<'a> {
 
         Ok(result.into_iter().map(to_domain).collect())
     }
+
+    pub fn create_filtered_query(filter: Option<StocktakeLineFilter>) -> BoxedStocktakeLineQuery {
+        let mut query = stocktake_line::table
+            .inner_join(item_link::table.inner_join(item::table))
+            .left_join(stock_line::table)
+            .left_join(location::table)
+            .left_join(name_link::table.inner_join(name::table))
+            .left_join(reason_option::table)
+            .into_boxed();
+
+        if let Some(f) = filter {
+            apply_equal_filter!(query, f.id, stocktake_line::id);
+            apply_equal_filter!(query, f.stocktake_id, stocktake_line::stocktake_id);
+            apply_equal_filter!(query, f.location_id, stocktake_line::location_id);
+            apply_equal_filter!(query, f.item_id, item::id);
+            apply_equal_filter!(query, f.stock_line_id, stocktake_line::stock_line_id);
+        }
+
+        query
+    }
 }
 
 type BoxedStocktakeLineQuery = IntoBoxed<
@@ -187,25 +213,6 @@ type BoxedStocktakeLineQuery = IntoBoxed<
     >,
     DBType,
 >;
-
-fn create_filtered_query(filter: Option<StocktakeLineFilter>) -> BoxedStocktakeLineQuery {
-    let mut query = stocktake_line::table
-        .inner_join(item_link::table.inner_join(item::table))
-        .left_join(stock_line::table)
-        .left_join(location::table)
-        .left_join(name_link::table.inner_join(name::table))
-        .left_join(reason_option::table)
-        .into_boxed();
-
-    if let Some(f) = filter {
-        apply_equal_filter!(query, f.id, stocktake_line::id);
-        apply_equal_filter!(query, f.stocktake_id, stocktake_line::stocktake_id);
-        apply_equal_filter!(query, f.location_id, stocktake_line::location_id);
-        apply_equal_filter!(query, f.item_id, item::id);
-    }
-
-    query
-}
 
 fn to_domain(
     (line, (_, item), stock_line, location, name_link, reason_option): StocktakeLineJoin,

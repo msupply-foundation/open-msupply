@@ -325,7 +325,8 @@ impl SyncTranslation for PurchaseOrderTranslation {
     ) -> Result<PushTranslateResult, anyhow::Error> {
         let purchase_order = PurchaseOrderRepository::new(connection)
             .query_by_filter(
-                PurchaseOrderFilter::new().id(EqualFilter::equal_to(&changelog.record_id)),
+                PurchaseOrderFilter::new()
+                    .id(EqualFilter::equal_to(changelog.record_id.to_string())),
             )?
             .pop()
             .ok_or_else(|| anyhow::anyhow!("Purchase Order not found"))?;
@@ -369,8 +370,7 @@ impl SyncTranslation for PurchaseOrderTranslation {
 
         let PurchaseOrderStatsRow {
             purchase_order_id: _,
-            line_total_before_discount,
-            line_total_after_discount,
+            order_total_before_discount,
             order_total_after_discount,
         } = purchase_order.purchase_order_stats_row.unwrap_or_default();
 
@@ -407,8 +407,11 @@ impl SyncTranslation for PurchaseOrderTranslation {
             communications_charge,
             insurance_charge,
             freight_charge,
-            supplier_discount_amount: line_total_after_discount
-                * (supplier_discount_percentage.unwrap_or(0.0) / 100.0),
+            supplier_discount_amount: if let Some(percentage) = supplier_discount_percentage {
+                order_total_before_discount * (percentage / 100.0)
+            } else {
+                0.0
+            },
             heading_message,
             requested_delivery_date,
             delivery_method: shipping_method,
@@ -420,7 +423,7 @@ impl SyncTranslation for PurchaseOrderTranslation {
             creation_date: created_datetime.date(),
             confirm_date: confirmed_datetime.map(|d| d.date()),
             curr_rate: foreign_exchange_rate,
-            order_total_before_discount: line_total_before_discount,
+            order_total_before_discount,
             order_total_after_discount,
             donor_id,
             is_authorised: check_is_authorised(&status),

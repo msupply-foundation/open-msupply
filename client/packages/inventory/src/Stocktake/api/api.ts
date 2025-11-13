@@ -31,10 +31,10 @@ export type ListParams = {
 };
 
 export type LinesParams = {
-  first: number;
-  offset: number;
-  sortBy: SortBy<StocktakeLineFragment>;
-  filterBy: FilterBy | null;
+  first?: number;
+  offset?: number;
+  sortBy?: SortBy<StocktakeLineFragment>;
+  filterBy?: FilterBy | null;
 };
 
 const stocktakeParser = {
@@ -43,9 +43,6 @@ const stocktakeParser = {
     comment: patch.comment,
     id: patch.id,
     isLocked: patch.isLocked,
-    stocktakeDate: patch.stocktakeDate
-      ? Formatter.naiveDate(new Date(patch.stocktakeDate))
-      : undefined,
     status:
       patch.status === StocktakeNodeStatus.Finalised
         ? UpdateStocktakeStatusInput.Finalised
@@ -164,10 +161,12 @@ export const getStocktakeQueries = (sdk: Sdk, storeId: string) => ({
         stocktakeId: id,
         storeId,
         page: { offset, first },
-        sort: {
-          key: sortBy.key as StocktakeLineSortFieldInput,
-          desc: !!sortBy.isDesc,
-        },
+        sort: sortBy
+          ? {
+              key: sortBy.key as StocktakeLineSortFieldInput,
+              desc: !!sortBy.isDesc,
+            }
+          : undefined,
         filter: filterBy,
       });
 

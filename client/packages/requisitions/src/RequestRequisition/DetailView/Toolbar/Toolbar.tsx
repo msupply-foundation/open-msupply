@@ -5,14 +5,17 @@ import {
   BufferedTextInput,
   Grid,
   useTranslation,
-  SearchBar,
   Alert,
   Tooltip,
   Switch,
   Autocomplete,
   useConfirmationModal,
+  usePreferences,
 } from '@openmsupply-client/common';
-import { InternalSupplierSearchInput } from '@openmsupply-client/system';
+import {
+  CustomerSearchInput,
+  InternalSupplierSearchInput,
+} from '@openmsupply-client/system';
 import { useHideOverStocked, useRequest } from '../../api';
 
 const MONTHS = [1, 2, 3, 4, 5, 6];
@@ -22,19 +25,21 @@ export const Toolbar = () => {
   const t = useTranslation();
   const isDisabled = useRequest.utils.isDisabled();
   const isProgram = useRequest.utils.isProgram();
-  const { itemFilter, setItemFilter } = useRequest.line.list();
   const {
     minMonthsOfStock,
     maxMonthsOfStock,
     theirReference,
     update,
     otherParty,
+    destinationCustomer,
   } = useRequest.document.fields([
     'theirReference',
     'otherParty',
     'minMonthsOfStock',
     'maxMonthsOfStock',
+    'destinationCustomer',
   ]);
+  const { selectDestinationStoreForAnInternalOrder } = usePreferences();
 
   const getMinMOSConfirmation = useConfirmationModal({
     title: t('heading.are-you-sure'),
@@ -68,7 +73,9 @@ export const Toolbar = () => {
                 <InternalSupplierSearchInput
                   disabled={isDisabled || isProgram}
                   value={otherParty ?? null}
-                  onChange={otherParty => update({ otherParty: otherParty ?? undefined })}
+                  onChange={otherParty =>
+                    update({ otherParty: otherParty ?? undefined })
+                  }
                 />
               }
             />
@@ -81,19 +88,37 @@ export const Toolbar = () => {
                   disabled={isDisabled}
                   size="small"
                   sx={{ width: 250 }}
-                  value={theirReference ?? null}
+                  value={theirReference ?? ''}
                   onChange={e => update({ theirReference: e.target.value })}
                 />
               </Tooltip>
             }
           />
+          {selectDestinationStoreForAnInternalOrder && (
+            <InputWithLabelRow
+              label={t('label.destination-customer')}
+              Input={
+                <CustomerSearchInput
+                  disabled={isDisabled || isProgram}
+                  value={destinationCustomer ?? null}
+                  onChange={destinationCustomer =>
+                    update({
+                      destinationCustomer: destinationCustomer,
+                    })
+                  }
+                  clearable
+                  extraFilter={option => option.id !== otherParty?.id}
+                />
+              }
+            />
+          )}
           {isProgram && (
             <Alert severity="info" sx={{ maxWidth: 1000 }}>
               {t('info.cannot-edit-program-requisition')}
             </Alert>
           )}
         </Grid>
-        <Grid>
+        <Grid display="flex" flex={1} flexDirection="column" gap={1}>
           <InputWithLabelRow
             label={t('label.min-months-of-stock')}
             labelWidth={'350px'}
@@ -179,16 +204,6 @@ export const Toolbar = () => {
                 color="secondary"
                 size="small"
                 labelSx={{ margin: '5px 0' }}
-              />
-            </Grid>
-            <Grid>
-              <SearchBar
-                placeholder={t('placeholder.filter-items')}
-                value={itemFilter}
-                onChange={newValue => {
-                  setItemFilter(newValue);
-                }}
-                debounceTime={0}
               />
             </Grid>
           </Grid>

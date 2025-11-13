@@ -26,6 +26,30 @@ pub fn check_status_change(invoice: &InvoiceRow, status_option: Option<InvoiceSt
     false
 }
 
+pub fn can_cancel_invoice(invoice: &InvoiceRow) -> bool {
+    if invoice.r#type != InvoiceType::Prescription {
+        // Only a prescription can be cancelled at the moment
+        return false;
+    }
+
+    if invoice.is_cancellation {
+        // Can't cancel a cancellation!
+        return false;
+    }
+
+    if invoice.status == InvoiceStatus::Cancelled {
+        // Already cancelled
+        return false;
+    }
+
+    if invoice.status != InvoiceStatus::Verified {
+        // Can only cancel verified prescriptions
+        return false;
+    }
+
+    return true;
+}
+
 pub fn check_invoice_is_editable(invoice: &InvoiceRow) -> bool {
     let status = invoice.status.clone();
     let is_editable = match &invoice.r#type {

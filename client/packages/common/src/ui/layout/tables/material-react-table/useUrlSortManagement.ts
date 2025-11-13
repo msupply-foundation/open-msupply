@@ -1,6 +1,6 @@
 import { useUrlQueryParams } from '@openmsupply-client/common';
 import { MRT_SortingState, MRT_Updater } from 'material-react-table';
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 
 export const useUrlSortManagement = (initialSort?: {
   key: string;
@@ -22,14 +22,22 @@ export const useUrlSortManagement = (initialSort?: {
         ])[0];
         if (newSortValue)
           updateSortQuery(newSortValue.id, newSortValue.desc ? 'desc' : 'asc');
-        else clearSort();
+        else {
+          clearSort();
+        }
       }
     },
     [sortBy]
   );
 
+  const sorting = useMemo(() => {
+    if (sortBy.key)
+      return [{ id: sortBy.key, desc: !!sortBy.isDesc }] as MRT_SortingState;
+    return [];
+  }, [sortBy.key, sortBy.isDesc]);
+
   return {
-    sorting: [{ id: sortBy.key, desc: !!sortBy.isDesc }],
+    sorting,
     onSortingChange: handleSortingChange,
   };
 };

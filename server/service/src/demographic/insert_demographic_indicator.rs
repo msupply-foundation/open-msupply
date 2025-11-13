@@ -69,7 +69,7 @@ pub fn insert_demographic_indicator(
             activity_log_entry(
                 ctx,
                 ActivityLogType::DemographicIndicatorCreated,
-                Some(new_demographic_indicator.id.to_owned()),
+                Some(new_demographic_indicator.id.to_string()),
                 None,
                 None,
             )?;

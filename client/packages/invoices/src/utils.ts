@@ -16,7 +16,10 @@ import {
 import { OutboundFragment, OutboundRowFragment } from './OutboundShipment/api';
 import { InboundLineFragment } from './InboundShipment/api';
 import { InboundItem } from './types';
-import { PrescriptionRowFragment } from './Prescriptions/api';
+import {
+  PrescriptionLineFragment,
+  PrescriptionRowFragment,
+} from './Prescriptions/api';
 import {
   CustomerReturnFragment,
   CustomerReturnRowFragment,
@@ -246,6 +249,9 @@ export const isPrescriptionDisabled = (
   );
 };
 
+export const isPrescriptionPlaceholderRow = (row: PrescriptionLineFragment) =>
+  row.type === InvoiceLineNodeType.UnallocatedStock && !row.numberOfPacks;
+
 export const isInboundListItemDisabled = (
   inbound: InboundRowFragment | CustomerReturnRowFragment
 ): boolean => {
@@ -308,9 +314,9 @@ export const canDeleteInvoice = (
   invoice.status === InvoiceNodeStatus.Picked;
 
 export const canCancelInvoice = (invoice: PrescriptionRowFragment) =>
-  // TO-DO Pass in preferences and check preference enabled
   invoice.type === InvoiceNodeType.Prescription &&
-  invoice.status === InvoiceNodeStatus.Verified;
+  invoice.status === InvoiceNodeStatus.Verified &&
+  !invoice.isCancellation;
 
 export const canDeleteSupplierReturn = (
   SupplierReturn: SupplierReturnRowFragment

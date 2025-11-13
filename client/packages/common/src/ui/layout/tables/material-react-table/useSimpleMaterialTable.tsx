@@ -18,18 +18,18 @@ export const useSimpleMaterialTable = <T extends MRT_RowData>({
 
   const table = useBaseMaterialTable<T>({
     enableRowSelection: false,
-    enableBottomToolbar: !!bottomToolbarContent,
+    enableBottomToolbar: true,
     enableTopToolbar: false,
     enableColumnActions: false,
     enableSorting: false,
     enableColumnResizing: false,
-    enableColumnPinning: false,
-    enableColumnOrdering: false,
     state: {
       ...tableOptions.state,
       density: 'compact',
+      // Disable all filtering/sorting for simple table
+      columnFilters: [],
+      sorting: [],
     },
-    layoutMode: 'grid-no-grow',
     ...tableOptions,
     renderBottomToolbar: ({ table }) => (
       <Box
@@ -52,15 +52,17 @@ export const useSimpleMaterialTable = <T extends MRT_RowData>({
     muiTableBodyCellProps: ({ row }) => ({
       sx: {
         fontSize: '0.85em',
+        fontWeight: 400,
         color: getIsPlaceholderRow(row.original)
           ? 'secondary.light'
           : getIsRestrictedRow(row.original)
             ? 'gray.main'
             : undefined,
+        paddingY: '0.2rem',
       },
     }),
     muiTableBodyRowProps: {
-      sx: {},
+      sx: { minHeight: '32px' },
     },
   });
 

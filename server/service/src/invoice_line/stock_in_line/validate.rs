@@ -56,8 +56,8 @@ pub fn check_program_visible_to_store(
         let repo = ProgramRepository::new(connection);
         let matching_programs = repo.query_by_filter(
             ProgramFilter::new()
-                .id(EqualFilter::equal_to(program_id))
-                .exists_for_store_id(EqualFilter::equal_to(store_id)),
+                .id(EqualFilter::equal_to(program_id.to_string()))
+                .exists_for_store_id(EqualFilter::equal_to(store_id.to_string())),
         )?;
 
         // If no programs, then program is not visible to the store
@@ -74,8 +74,8 @@ pub fn get_existing_vvm_status_log_id(
     Ok(VVMStatusLogRepository::new(connection)
         .query_by_filter(
             VVMStatusLogFilter::new()
-                .stock_line_id(EqualFilter::equal_to(stock_line_id))
-                .invoice_line_id(EqualFilter::equal_to(invoice_line_id)),
+                .stock_line_id(EqualFilter::equal_to(stock_line_id.to_string()))
+                .invoice_line_id(EqualFilter::equal_to(invoice_line_id.to_string())),
         )?
         .first()
         .map(|log| log.id.clone()))

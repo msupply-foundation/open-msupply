@@ -14,11 +14,8 @@ export interface ManagedTableState {
   columnPinning?: MRT_ColumnPinningState;
   columnOrder?: MRT_ColumnOrderState;
   columnSizing?: MRT_ColumnSizingState;
+  isGrouped?: boolean;
 }
-
-export const hasSavedState = (tableId: string): boolean => {
-  return !!localStorage.getItem(`@openmsupply-client/tables/${tableId}`);
-};
 
 export const getSavedState = (tableId: string): ManagedTableState => {
   const savedString = localStorage.getItem(

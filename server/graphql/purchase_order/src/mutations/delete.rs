@@ -1,6 +1,6 @@
 use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::{
-    simple_generic_errors::{CannotDeleteNonNewPurchaseOrder, RecordNotFound},
+    simple_generic_errors::{CannotDeletePurchaseOrder, RecordNotFound},
     ContextExt,
 };
 use graphql_types::types::DeleteResponse as GenericDeleteResponse;
@@ -56,7 +56,7 @@ pub fn map_response(from: Result<String, ServiceError>) -> Result<DeleteResponse
 #[graphql(field(name = "description", ty = "&str"))]
 pub enum DeletePurchaseOrderErrorInterface {
     RecordNotFound(RecordNotFound),
-    CannotDeleteNonNewPurchaseOrder(CannotDeleteNonNewPurchaseOrder),
+    CannotDeletePurchaseOrder(CannotDeletePurchaseOrder),
 }
 
 fn map_error(error: ServiceError) -> Result<DeletePurchaseOrderErrorInterface> {
@@ -70,10 +70,10 @@ fn map_error(error: ServiceError) -> Result<DeletePurchaseOrderErrorInterface> {
                 RecordNotFound {},
             ))
         }
-        ServiceError::CannotDeleteNonNewPurchaseOrder => {
+        ServiceError::CannotDeletePurchaseOrder => {
             return Ok(
-                DeletePurchaseOrderErrorInterface::CannotDeleteNonNewPurchaseOrder(
-                    CannotDeleteNonNewPurchaseOrder {},
+                DeletePurchaseOrderErrorInterface::CannotDeletePurchaseOrder(
+                    CannotDeletePurchaseOrder {},
                 ),
             )
         }
@@ -134,14 +134,14 @@ mod graphql {
         );
         assert_graphql_query!(&settings, query, &variables, &expected, None);
 
-        // CannotDeleteNonNewPurchaseOrder (trying to delete finalized purchase order)
+        // CannotDeletePurchaseOrder (trying to delete finalized purchase order)
         let variables = Some(json!({
           "id": "test_purchase_order_c"
         }));
         let expected = json!({
             "deletePurchaseOrder": {
               "error": {
-                "__typename": "CannotDeleteNonNewPurchaseOrder"
+                "__typename": "CannotDeletePurchaseOrder"
               }
             }
           }

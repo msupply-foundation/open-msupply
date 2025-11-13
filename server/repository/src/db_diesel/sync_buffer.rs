@@ -311,7 +311,7 @@ mod test {
                 .query_by_filter(
                     SyncBufferFilter::new()
                         .integration_datetime(DatetimeFilter::is_null(true))
-                        .record_id(EqualFilter::equal_to(&row_a().record_id))
+                        .record_id(EqualFilter::equal_to(row_a().record_id.to_string()))
                 )
                 .unwrap(),
             vec![new_a]

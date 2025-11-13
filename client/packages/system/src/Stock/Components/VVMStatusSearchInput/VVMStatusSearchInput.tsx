@@ -1,9 +1,5 @@
 import React, { useMemo } from 'react';
-import {
-  Autocomplete,
-  Tooltip,
-  useTranslation,
-} from '@openmsupply-client/common';
+import { Autocomplete, useTranslation } from '@openmsupply-client/common';
 import { useVvmStatusesEnabled, VvmStatusFragment } from '../../api';
 interface VVMStatusSearchInputProps {
   selected: VvmStatusFragment | null;
@@ -11,6 +7,8 @@ interface VVMStatusSearchInputProps {
   disabled?: boolean;
   width?: number | string;
   useDefault?: boolean;
+  placeholder?: string;
+  clearable?: boolean;
 }
 
 export const VVMStatusSearchInput = ({
@@ -19,6 +17,8 @@ export const VVMStatusSearchInput = ({
   onChange,
   disabled,
   useDefault = false,
+  placeholder,
+  clearable = false,
 }: VVMStatusSearchInputProps) => {
   const t = useTranslation();
   const { data, isLoading } = useVvmStatusesEnabled();
@@ -36,25 +36,24 @@ export const VVMStatusSearchInput = ({
   if (!data) return null;
 
   return (
-    <Tooltip title={selected?.description ?? ''} placement="top">
-      <Autocomplete
-        disabled={disabled}
-        popperMinWidth={Math.min(Number(width), 200)}
-        value={selected ?? defaultOption}
-        loading={isLoading}
-        onChange={(_, option) => {
-          onChange(option);
-        }}
-        options={data}
-        getOptionLabel={option => option.description ?? ''}
-        noOptionsText={t('messages.no-vvm-statuses')}
-        isOptionEqualToValue={(option, value) => option.id === value?.id}
-        clearable={false}
-        sx={{
-          width: width ? `${width}px` : '100%',
-        }}
-      />
-    </Tooltip>
+    <Autocomplete
+      disabled={disabled}
+      popperMinWidth={Math.min(Number(width), 200)}
+      value={selected ?? defaultOption}
+      loading={isLoading}
+      onChange={(_, option) => {
+        onChange(option);
+      }}
+      options={data}
+      getOptionLabel={option => option.description ?? ''}
+      noOptionsText={t('messages.no-vvm-statuses')}
+      isOptionEqualToValue={(option, value) => option.id === value?.id}
+      clearable={clearable}
+      sx={{
+        width: width ? `${width}px` : '100%',
+      }}
+      placeholder={placeholder}
+    />
   );
 };
 

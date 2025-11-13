@@ -24,13 +24,10 @@ use crate::{
 };
 
 pub(crate) struct ServiceTestContext {
-    #[allow(dead_code)]
     pub(crate) connection: StorageConnection,
     pub(crate) service_provider: Arc<ServiceProvider>,
-    #[allow(dead_code)]
     pub(crate) processors_task: JoinHandle<()>,
     pub(crate) connection_manager: StorageConnectionManager,
-    #[allow(dead_code)]
     pub(crate) service_context: ServiceContext,
     pub(crate) settings: Settings,
 }
@@ -157,7 +154,7 @@ pub(crate) fn make_movements(stock_line: StockLineRow, date_quantity: Vec<(i64, 
                     ..Default::default()
                 },
                 InvoiceLineRow {
-                    id: format!("line_{}", invoice_id),
+                    id: format!("line_{invoice_id}"),
                     invoice_id,
                     item_link_id: stock_line.item_link_id.clone(),
                     stock_line_id: Some(stock_line.id.clone()),
@@ -179,7 +176,6 @@ pub(crate) fn make_movements(stock_line: StockLineRow, date_quantity: Vec<(i64, 
     MockData {
         invoices,
         invoice_lines,
-
         ..Default::default()
     }
 }

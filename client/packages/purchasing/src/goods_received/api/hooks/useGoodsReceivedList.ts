@@ -4,7 +4,6 @@ import {
   SortBy,
   useMutation,
   useQuery,
-  useTableStore,
 } from '@openmsupply-client/common';
 import { useGoodsReceivedGraphQL } from '../useGoodsReceivedGraphQL';
 import { LIST, GOODS_RECEIVED } from './keys';
@@ -21,16 +20,21 @@ export type ListParams = {
 };
 
 export const useGoodsReceivedList = (queryParams?: ListParams) => {
-  const { data, isLoading, isError, refetch } = useGet(
+  const { data, isLoading, isError, refetch, isFetching } = useGet(
     queryParams ?? { filterBy: null }
   );
-  const { deleteGoodsReceived, selectedRows } = useDeleteLines(data?.nodes);
+  const { deleteGoodsReceived } = useDeleteLines();
 
   return {
-    query: { data, isLoading, isError, fetchAllGoodsReceived: refetch },
+    query: {
+      data,
+      isLoading,
+      isError,
+      isFetching,
+      fetchAllGoodsReceived: refetch,
+    },
     delete: {
       deleteGoodsReceived,
-      selectedRows,
     },
   };
 };
@@ -87,19 +91,13 @@ const useGet = (queryParams: ListParams) => {
   const query = useQuery({
     queryKey,
     queryFn,
+    keepPreviousData: true,
   });
   return query;
 };
 
-const useDeleteLines = (goodsReceived?: GoodsReceivedRowFragment[]) => {
+const useDeleteLines = () => {
   const { goodsReceivedApi, storeId, queryClient } = useGoodsReceivedGraphQL();
-
-  const { selectedRows } = useTableStore(state => ({
-    selectedRows: Object.keys(state.rowState)
-      .filter(id => state.rowState[id]?.isSelected)
-      .map(selectedId => goodsReceived?.find(({ id }) => selectedId === id))
-      .filter(Boolean) as GoodsReceivedFragment[],
-  }));
 
   const mutationFn = async (id: string) => {
     const result = await goodsReceivedApi.deleteGoodsReceived({
@@ -116,7 +114,9 @@ const useDeleteLines = (goodsReceived?: GoodsReceivedRowFragment[]) => {
     },
   });
 
-  const deleteGoodsReceived = async () => {
+  const deleteGoodsReceived = async (
+    selectedRows: GoodsReceivedRowFragment[]
+  ) => {
     await Promise.all(
       selectedRows.map(async ({ id }) => {
         try {
@@ -132,6 +132,5 @@ const useDeleteLines = (goodsReceived?: GoodsReceivedRowFragment[]) => {
 
   return {
     deleteGoodsReceived,
-    selectedRows,
   };
 };

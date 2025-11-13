@@ -39,7 +39,7 @@ export const PrescriptionLineEdit = ({
   // changing item with the selector
   const [currentItemId, setCurrentItemId] = useBufferState(itemId);
 
-  const { isDisabled, rows: items } = usePrescription(); // TODO: how much can we strip now?
+  const { isDisabled, rows: lines } = usePrescription(); // TODO: how much can we strip now?
 
   const { clear, initialise, item } = useAllocationContext(
     ({ initialise, item, clear }) => ({
@@ -89,6 +89,8 @@ export const PrescriptionLineEdit = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentItemId]);
 
+  const existingItemIds = lines.map(line => line.item.id);
+
   return (
     <Grid
       container
@@ -107,12 +109,10 @@ export const PrescriptionLineEdit = ({
             disabled={!isNew || isDisabled}
             currentItemId={itemId ?? currentItemId}
             onChange={item => setCurrentItemId(item?.id)}
-            filter={{ isVisibleOrOnHand: true }}
-            extraFilter={
-              isDisabled
-                ? undefined
-                : item => !items?.some(({ id }) => id === item.id)
-            }
+            filter={{
+              isVisibleOrOnHand: true,
+              id: { notEqualAll: existingItemIds },
+            }}
             programId={programId}
           />
         </Grid>

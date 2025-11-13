@@ -57,6 +57,8 @@ pub struct ItemFilter {
     pub ignore_for_orders: Option<bool>,
     pub min_months_of_stock: Option<f64>,
     pub max_months_of_stock: Option<f64>,
+    pub out_of_stock_products: Option<bool>,
+    pub products_at_risk_of_being_out_of_stock: Option<bool>,
 }
 
 impl ItemFilter {
@@ -245,6 +247,8 @@ fn create_filtered_query(store_id: String, filter: Option<ItemFilter>) -> BoxedI
             // Implementing these MOS filters requires consumption data, so they are handled in the service layer.
             max_months_of_stock: _,
             min_months_of_stock: _,
+            out_of_stock_products: _,
+            products_at_risk_of_being_out_of_stock: _,
         } = f;
 
         // or filter need to be applied before and filters
@@ -357,7 +361,11 @@ fn create_filtered_query(store_id: String, filter: Option<ItemFilter>) -> BoxedI
         if let Some(is_program_item_filter) = is_program_item {
             let program_master_list_ids = program::table
                 .select(program::master_list_id)
-                .filter(program::master_list_id.is_not_null())
+                .filter(
+                    program::master_list_id
+                        .is_not_null()
+                        .and(program::deleted_datetime.is_null()),
+                )
                 .distinct()
                 .into_boxed();
 

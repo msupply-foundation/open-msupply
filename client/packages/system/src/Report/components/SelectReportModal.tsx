@@ -8,6 +8,8 @@ import {
 } from '@common/components';
 import {
   DownloadIcon,
+  EnvUtils,
+  Platform,
   PrinterIcon,
   PrintFormat,
   useAuthContext,
@@ -33,6 +35,7 @@ export const SelectReportModal = ({
 }: SelectReportModalProps) => {
   const t = useTranslation();
   const { userHasPermission } = useAuthContext();
+  const isAndroid = EnvUtils.platform === Platform.Android;
 
   const [selectedReport, setSelectedReport] = useState<ReportOption | null>(
     reportOptions.length === 1 ? (reportOptions[0] ?? null) : null
@@ -46,7 +49,7 @@ export const SelectReportModal = ({
     <Modal
       title={t('title.select-a-form')}
       slideAnimation={false}
-      width={560}
+      width={660}
       cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
       reportSelector={
         <>
@@ -76,6 +79,21 @@ export const SelectReportModal = ({
             }}
             disabled={!selectedReport}
           />
+          {!isAndroid && (
+            <ButtonWithIcon
+              color="secondary"
+              variant="contained"
+              label={t('button.download-pdf')}
+              Icon={<DownloadIcon />}
+              onClick={() => {
+                if (!selectedReport) return;
+
+                onSelectReport(selectedReport, PrintFormat.Pdf);
+                onClose();
+              }}
+              disabled={!selectedReport}
+            />
+          )}
         </>
       }
     >

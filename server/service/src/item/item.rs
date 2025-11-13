@@ -8,6 +8,10 @@ use repository::{
 use crate::{
     get_pagination_or_default, i64_to_u32,
     item_stats::{get_item_stats_map, ItemStats},
+    preference::{
+        NumberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts, Preference,
+        PreferenceError,
+    },
     ListError, ListResult, PluginOrRepositoryError,
 };
 
@@ -40,15 +44,24 @@ pub fn get_items(
                 // ...and filter for only those ids.
                 filter = filter.id(EqualFilter::equal_any(item_ids_filtered_by_mos));
             }
+
+            if filter.out_of_stock_products.is_some()
+                || filter.products_at_risk_of_being_out_of_stock.is_some()
+            {
+                let item_ids_filtered =
+                    get_item_ids_by_stock_status(&connection, filter.clone(), store_id)?;
+                filter = filter.id(EqualFilter::equal_any(item_ids_filtered))
+            }
+
             Ok(filter)
         })
         .transpose()?;
 
-    let rows = repository.query(pagination, filter.clone(), sort, Some(store_id.to_owned()))?;
+    let rows = repository.query(pagination, filter.clone(), sort, Some(store_id.to_string()))?;
 
     Ok(ListResult {
         rows,
-        count: i64_to_u32(repository.count(store_id.to_owned(), filter)?),
+        count: i64_to_u32(repository.count(store_id.to_string(), filter)?),
     })
 }
 
@@ -66,14 +79,14 @@ pub fn get_item_ids_by_mos(
             Pagination::all(), // get all items so we can then filter them by mos in the next part. We'll use pagination for the query that will be returned to the user.
             Some(filter),
             None,
-            Some(store_id.to_owned()),
+            Some(store_id.to_string()),
         )?
         .iter()
         .map(|item| item.item_row.id.clone())
         .collect();
 
     let item_stats =
-        get_item_stats_map(&connection, store_id, None, item_ids).map_err(|e| match e {
+        get_item_stats_map(&connection, store_id, None, item_ids, None).map_err(|e| match e {
             PluginOrRepositoryError::PluginError(err) => ListError::PluginError(err.to_string()),
             PluginOrRepositoryError::RepositoryError(err) => ListError::DatabaseError(err),
         })?;
@@ -84,24 +97,20 @@ pub fn get_item_ids_by_mos(
     Ok(item_ids_filtered_by_mos)
 }
 
-pub fn get_months_of_stock_on_hand(item_stats: ItemStats) -> f64 {
-    if item_stats.average_monthly_consumption == 0.0 {
-        return 0.0;
-    }
-    item_stats.total_stock_on_hand / item_stats.average_monthly_consumption
-}
-
 pub fn get_items_ids_for_months_of_stock(
     item_stats: HashMap<String, ItemStats>,
     min_months_of_stock: Option<f64>,
     max_months_of_stock: Option<f64>,
 ) -> Vec<String> {
+    if min_months_of_stock.is_none() && max_months_of_stock.is_none() {
+        return item_stats.into_iter().map(|(k, _v)| k).collect();
+    }
     item_stats
         .into_iter()
         .filter_map(|(k, v)| {
-            let mos = get_months_of_stock_on_hand(v);
-
+            let mos = v.total_stock_on_hand / v.average_monthly_consumption;
             let mut include = true;
+
             if let Some(min_mos) = min_months_of_stock {
                 // include if it has more than the min months of stock
                 include &= mos >= min_mos;
@@ -110,10 +119,90 @@ pub fn get_items_ids_for_months_of_stock(
                 // include if it has less than the max months of stock
                 include &= mos <= max_mos;
             }
-
+            if v.average_monthly_consumption == 0.0 {
+                // If amc = 0, assume this is because there's no consumption data, so we cannot determine how many months of stock there are, so we'll exclude that item
+                include = false;
+            }
             include.then(|| k)
         })
         .collect()
+}
+
+pub fn get_item_ids_by_stock_status(
+    connection: &StorageConnection,
+    filter: ItemFilter,
+    store_id: &str,
+) -> Result<Vec<String>, ListError> {
+    let repository = ItemRepository::new(&connection);
+
+    let item_ids = repository
+        .query(
+            Pagination::all(),
+            Some(filter.clone()),
+            None,
+            Some(store_id.to_string()),
+        )?
+        .iter()
+        .map(|item| item.item_row.id.clone())
+        .collect();
+
+    let num_months_consumption =
+        NumberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts
+            .load(&connection, Some(store_id.to_string()))
+            .map_err(|e| match e {
+                PreferenceError::DatabaseError(err) => ListError::DatabaseError(err),
+                PreferenceError::DeserializeError(key, value, msg) => {
+                    ListError::PluginError(format!(
+                        "Failed to deserialize preference {}: {} - {}",
+                        key, value, msg
+                    ))
+                }
+                PreferenceError::ConversionError(key, msg) => {
+                    ListError::PluginError(format!("Failed to convert preference {}: {}", key, msg))
+                }
+                PreferenceError::StoreIdNotProvided => {
+                    ListError::PluginError("Store ID not provided".to_string())
+                }
+            })?;
+
+    let item_stats = get_item_stats_map(
+        &connection,
+        store_id,
+        Some(num_months_consumption as f64),
+        item_ids,
+        None,
+    )
+    .map_err(|e| match e {
+        PluginOrRepositoryError::PluginError(err) => ListError::PluginError(err.to_string()),
+        PluginOrRepositoryError::RepositoryError(err) => ListError::DatabaseError(err),
+    })?;
+
+    let filtered_ids: Vec<String> = item_stats
+        .into_iter()
+        .filter_map(|(id, stats)| {
+            let mut include = true;
+
+            if filter.out_of_stock_products == Some(true) {
+                // Include items with consumption in the lookback period but no stock
+                include &= stats.total_consumption > 0.0 && stats.total_stock_on_hand == 0.0;
+            }
+
+            if filter.products_at_risk_of_being_out_of_stock == Some(true) {
+                // Include items with less than threshold months of stock
+                if stats.average_monthly_consumption > 0.0 {
+                    let months_of_stock =
+                        stats.total_stock_on_hand / stats.average_monthly_consumption;
+                    include &= months_of_stock < num_months_consumption as f64;
+                } else {
+                    include = false;
+                }
+            }
+
+            include.then(|| id)
+        })
+        .collect();
+
+    Ok(filtered_ids)
 }
 
 pub fn check_item_exists(
@@ -123,7 +212,7 @@ pub fn check_item_exists(
 ) -> Result<bool, RepositoryError> {
     let count = ItemRepository::new(connection).count(
         store_id,
-        Some(ItemFilter::new().id(EqualFilter::equal_to(item_id))),
+        Some(ItemFilter::new().id(EqualFilter::equal_to(item_id.to_string()))),
     )?;
     Ok(count > 0)
 }
@@ -135,7 +224,7 @@ pub fn get_item(
 ) -> Result<Option<Item>, RepositoryError> {
     Ok(ItemRepository::new(connection)
         .query_by_filter(
-            ItemFilter::new().id(EqualFilter::equal_to(item_id)),
+            ItemFilter::new().id(EqualFilter::equal_to(item_id.to_string())),
             Some(store_id),
         )?
         .pop())
@@ -149,7 +238,31 @@ mod test {
         use crate::{item::get_items_ids_for_months_of_stock, item_stats::ItemStats};
 
         #[test]
-        fn includes_items_with_0_amc() {
+        fn excludes_items_with_0_amc() {
+            let min_months_of_stock = None;
+            let max_months_of_stock = Some(3.0);
+            let mut item_stats = HashMap::new();
+
+            item_stats.insert(
+                "item_1".to_string(),
+                ItemStats {
+                    // total_consumption: 0.0,
+                    average_monthly_consumption: 0.0,
+                    ..Default::default()
+                },
+            );
+
+            let result = get_items_ids_for_months_of_stock(
+                item_stats,
+                min_months_of_stock,
+                max_months_of_stock,
+            );
+
+            assert_eq!(result, Vec::<String>::new());
+        }
+
+        #[test]
+        fn returns_without_filtering_if_no_filters_provided() {
             let min_months_of_stock = None;
             let max_months_of_stock = None;
             let mut item_stats = HashMap::new();

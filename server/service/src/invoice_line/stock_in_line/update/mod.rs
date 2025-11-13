@@ -464,9 +464,9 @@ mod test {
         )
         .unwrap();
 
-        let vvm_log_filter = VVMStatusLogFilter::new().invoice_line_id(EqualFilter::equal_to(
-            "delivered_invoice_line_with_vvm_status",
-        ));
+        let vvm_log_filter = VVMStatusLogFilter::new().invoice_line_id(
+            EqualFilter::equal_to("delivered_invoice_line_with_vvm_status".to_string()),
+        );
 
         let vvm_status_logs = VVMStatusLogRepository::new(&connection)
             .query_by_filter(vvm_log_filter.clone())
@@ -534,7 +534,8 @@ mod test {
 
         let invoice_line = InvoiceLineRepository::new(&connection)
             .query_by_filter(
-                InvoiceLineFilter::new().id(EqualFilter::equal_to("volume_per_pack_invoice_line")),
+                InvoiceLineFilter::new()
+                    .id(EqualFilter::equal_to("volume_per_pack_invoice_line".to_string())),
             )
             .unwrap()
             .pop()

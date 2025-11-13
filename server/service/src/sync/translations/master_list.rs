@@ -1,9 +1,11 @@
 use repository::{
-    MasterListRow, MasterListRowDelete, MasterListRowRepository, ProgramRowRepository,
+    EqualFilter, MasterListRow, MasterListRowDelete, MasterListRowRepository, PluginDataFilter,
+    PluginDataRepository, PluginDataRow, PluginDataRowRepository, ProgramRowRepository,
     StorageConnection, SyncBufferRow,
 };
 
 use serde::Deserialize;
+use util::uuid::uuid;
 
 use super::{PullTranslateResult, SyncTranslation};
 
@@ -18,6 +20,7 @@ pub struct LegacyListMasterRow {
     inactive: Option<bool>,
     is_default_price_list: Option<bool>,
     discount_percentage: Option<f64>,
+    is_essential: Option<bool>,
 }
 // Needs to be added to all_translators()
 #[deny(dead_code)]
@@ -37,10 +40,38 @@ impl SyncTranslation for MasterListTranslation {
 
     fn try_translate_from_upsert_sync_record(
         &self,
-        _: &StorageConnection,
+        connection: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let data = serde_json::from_str::<LegacyListMasterRow>(&sync_record.data)?;
+
+        // is_essential is only an available value if plugin is active, set via OG
+        if data.is_essential.is_some() {
+            let filter = PluginDataFilter {
+                related_record_id: Some(EqualFilter::equal_to(data.id.to_string())),
+                plugin_code: Some(EqualFilter::equal_to("congo-plugin".to_string())),
+                id: None,
+                data_identifier: None,
+                store_id: None,
+            };
+
+            let existing_plugin_data =
+                PluginDataRepository::new(connection).query_by_filter(filter)?;
+
+            let plugin_data = PluginDataRow {
+                id: existing_plugin_data
+                    .first()
+                    .map(|row| row.plugin_data.id.clone())
+                    .unwrap_or_else(|| uuid()),
+                store_id: None,
+                plugin_code: "congo-plugin".to_string(),
+                related_record_id: Some(data.id.clone()),
+                data_identifier: "master-lists".to_string(),
+                data: serde_json::json!({ "is_essential": data.is_essential }).to_string(),
+            };
+
+            PluginDataRowRepository::new(connection).upsert_one(&plugin_data)?;
+        }
 
         let result = MasterListRow {
             id: data.id,

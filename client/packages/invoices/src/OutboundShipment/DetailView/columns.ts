@@ -1,340 +1,179 @@
+import { useMemo } from 'react';
 import {
-  useColumns,
-  getRowExpandColumn,
-  getNotePopoverColumn,
-  ColumnAlign,
-  GenericColumnKey,
-  SortBy,
-  Column,
   ArrayUtils,
   InvoiceLineNodeType,
-  TooltipTextCell,
-  useColumnUtils,
-  NumberCell,
-  CurrencyCell,
-  ColumnDescription,
-  UNDEFINED_STRING_VALUE,
   useTranslation,
-  getDosesPerUnitColumn,
   usePreferences,
+  ColumnDef,
+  Groupable,
+  ColumnType,
 } from '@openmsupply-client/common';
 import { StockOutLineFragment } from '../../StockOut';
-import { StockOutItem } from '../../types';
-import { getDosesQuantityColumn } from '../../DoseQtyColumn';
-
-interface UseOutboundColumnOptions {
-  sortBy: SortBy<StockOutLineFragment | StockOutItem>;
-  onChangeSortBy: (sort: string, dir: 'desc' | 'asc') => void;
-}
-
-const expansionColumn = getRowExpandColumn<
-  StockOutLineFragment | StockOutItem
->();
-const notePopoverColumn = getNotePopoverColumn<
-  StockOutLineFragment | StockOutItem
->();
 
 const isDefaultPlaceholderRow = (row: StockOutLineFragment) =>
   row.type === InvoiceLineNodeType.UnallocatedStock && !row.numberOfPacks;
 
-const getNumberOfPacks = (row: StockOutLineFragment) =>
-  isDefaultPlaceholderRow(row) ? '' : row.numberOfPacks;
-
-const getUnitQuantity = (row: StockOutLineFragment) =>
-  isDefaultPlaceholderRow(row) ? '' : row.packSize * row.numberOfPacks;
-
-export const useOutboundColumns = ({
-  sortBy,
-  onChangeSortBy,
-}: UseOutboundColumnOptions): Column<StockOutLineFragment | StockOutItem>[] => {
+export const useOutboundColumns = () => {
   const t = useTranslation();
-  const { getColumnProperty, getColumnPropertyAsString } = useColumnUtils();
   const { manageVaccinesInDoses, manageVvmStatusForStock } = usePreferences();
 
-  const columns: ColumnDescription<StockOutLineFragment | StockOutItem>[] = [
-    GenericColumnKey.Selection,
-    [
-      notePopoverColumn,
+  const columns = useMemo(() => {
+    const cols: ColumnDef<Groupable<StockOutLineFragment>>[] = [
       {
-        accessor: ({ rowData }) => {
-          if ('lines' in rowData) {
-            const { lines } = rowData;
-            const noteSections = lines
-              .map(({ batch, note }) => ({
-                header: batch ?? '',
-                body: note ?? '',
-              }))
-              .filter(({ body }) => !!body);
-            return noteSections.length ? noteSections : null;
+        accessorKey: 'item.code',
+        header: t('label.code'),
+        size: 120,
+        pin: 'left',
+        enableColumnFilter: true,
+        enableSorting: true,
+      },
+      {
+        accessorKey: 'itemName',
+        header: t('label.name'),
+        size: 400,
+        enableColumnFilter: true,
+        enableSorting: true,
+      },
+      {
+        accessorKey: 'batch',
+        header: t('label.batch'),
+        enableSorting: true,
+        defaultHideOnMobile: true,
+      },
+      {
+        id: 'expiryDate',
+        // expiryDate is a string - use accessorFn to convert to Date object for sort and filtering
+        accessorFn: row => (row.expiryDate ? new Date(row.expiryDate) : null),
+        header: t('label.expiry-date'),
+        columnType: ColumnType.Date,
+        defaultHideOnMobile: true,
+        enableColumnFilter: true,
+        enableSorting: true,
+      },
+      {
+        id: 'vvmStatus',
+        accessorFn: row => row.vvmStatus?.description ?? '',
+        header: t('label.vvm-status'),
+        includeColumn: manageVvmStatusForStock,
+        // TO-DO: Handle "null" values in filter - see issue #9398
+        // enableColumnFilter: true,
+        // filterVariant: 'select',
+        defaultHideOnMobile: true,
+        enableSorting: true,
+      },
+      {
+        id: 'locationCode',
+        accessorFn: row => row.location?.code ?? '',
+        header: t('label.location'),
+        enableColumnFilter: true,
+        enableSorting: true,
+        defaultHideOnMobile: true,
+      },
+      {
+        id: 'itemUnit',
+        accessorKey: 'item.unitName',
+        header: t('label.unit-name'),
+        enableColumnFilter: true,
+        filterVariant: 'select',
+        defaultHideOnMobile: true,
+      },
+      {
+        accessorKey: 'packSize',
+        header: t('label.pack-size'),
+        columnType: ColumnType.Number,
+        defaultHideOnMobile: true,
+        enableSorting: true,
+      },
+      {
+        id: 'itemDoses',
+        header: t('label.doses-per-unit'),
+        columnType: ColumnType.Number,
+        defaultHideOnMobile: true,
+        includeColumn: manageVaccinesInDoses,
+        accessorFn: row => (row.item.isVaccine ? row.item.doses : undefined),
+      },
+      {
+        accessorKey: 'numberOfPacks',
+        header: t('label.pack-quantity'),
+        columnType: ColumnType.Number,
+        accessorFn: row => {
+          if ('subRows' in row)
+            return ArrayUtils.getSum(row.subRows ?? [], 'numberOfPacks');
+
+          return row.numberOfPacks;
+        },
+      },
+      {
+        id: 'unitQuantity',
+        header: t('label.unit-quantity'),
+        description: t('description.unit-quantity'),
+        columnType: ColumnType.Number,
+        defaultHideOnMobile: true,
+        accessorFn: row => {
+          if ('subRows' in row)
+            return ArrayUtils.getUnitQuantity(row.subRows ?? []);
+
+          return row.packSize * row.numberOfPacks;
+        },
+      },
+      {
+        id: 'doseQuantity',
+        header: t('label.doses'),
+        columnType: ColumnType.Number,
+        defaultHideOnMobile: true,
+        includeColumn: manageVaccinesInDoses,
+        accessorFn: row => {
+          if (!row.item.isVaccine) return null;
+          if ('subRows' in row)
+            return (
+              ArrayUtils.getUnitQuantity(row.subRows ?? []) *
+              (row.item.doses ?? 1)
+            );
+
+          return row.packSize * row.numberOfPacks * (row.item.doses ?? 1);
+        },
+      },
+      {
+        id: 'unitSellPrice',
+        header: t('label.unit-sell-price'),
+        columnType: ColumnType.Currency,
+        defaultHideOnMobile: true,
+        accessorFn: rowData => {
+          if ('subRows' in rowData) {
+            return ArrayUtils.getAveragePrice(
+              rowData.subRows ?? [],
+              'sellPricePerPack'
+            );
           } else {
-            return rowData.batch && rowData.note
-              ? { header: rowData.batch, body: rowData.note }
-              : null;
+            if (isDefaultPlaceholderRow(rowData)) return undefined;
+            return (rowData.sellPricePerPack ?? 0) / rowData.packSize;
           }
         },
       },
-    ],
-    [
-      'itemCode',
       {
-        getSortValue: row =>
-          getColumnPropertyAsString(row, [
-            { path: ['lines', 'item', 'code'], default: '' },
-            { path: ['item', 'code'], default: '' },
-          ]),
-        accessor: ({ rowData }) =>
-          getColumnProperty(rowData, [
-            { path: ['lines', 'item', 'code'], default: '' },
-            { path: ['item', 'code'], default: '' },
-          ]),
-        isSticky: true,
-      },
-    ],
-    [
-      'itemName',
-      {
-        Cell: TooltipTextCell,
-        getSortValue: row =>
-          getColumnPropertyAsString(row, [
-            { path: ['lines', 'itemName'] },
-            { path: ['itemName'], default: '' },
-          ]),
-        accessor: ({ rowData }) =>
-          getColumnProperty(rowData, [
-            { path: ['lines', 'itemName'] },
-            { path: ['itemName'], default: '' },
-          ]),
-      },
-    ],
-    [
-      'batch',
-      {
-        getSortValue: row =>
-          getColumnPropertyAsString(row, [
-            { path: ['lines', 'batch'] },
-            { path: ['batch'], default: '' },
-          ]),
-        accessor: ({ rowData }) =>
-          getColumnProperty(rowData, [
-            { path: ['lines', 'batch'] },
-            { path: ['batch'] },
-          ]),
+        id: 'total',
+        header: t('label.total'),
+        columnType: ColumnType.Currency,
         defaultHideOnMobile: true,
-      },
-    ],
-    [
-      'expiryDate',
-      {
-        getSortValue: row =>
-          getColumnPropertyAsString(row, [
-            { path: ['lines', 'expiryDate'] },
-            { path: ['expiryDate'], default: '' },
-          ]),
-        accessor: ({ rowData }) =>
-          getColumnProperty(rowData, [
-            { path: ['lines', 'expiryDate'] },
-            { path: ['expiryDate'] },
-          ]),
-        defaultHideOnMobile: true,
-      },
-    ],
-  ];
-
-  if (manageVvmStatusForStock) {
-    columns.push({
-      key: 'vvmStatus',
-      label: 'label.vvm-status',
-      width: 150,
-      accessor: ({ rowData }) =>
-        getColumnPropertyAsString(rowData, [
-          { path: ['lines', 'vvmStatus', 'description' as any] }, // doesn't like nested description, I think because vvmStatus is optional?
-          { path: ['vvmStatus', 'description'] },
-        ]),
-      defaultHideOnMobile: true,
-    });
-  }
-  columns.push(
-    [
-      'location',
-      {
-        getSortValue: row =>
-          getColumnPropertyAsString(row, [
-            { path: ['lines', 'location', 'code'] },
-            { path: ['location', 'code'], default: '' },
-          ]),
-        accessor: ({ rowData }) =>
-          getColumnProperty(rowData, [
-            { path: ['lines', 'location', 'code'] },
-            { path: ['location', 'code'], default: '' },
-          ]),
-        width: 100,
-        defaultHideOnMobile: true,
-      },
-    ],
-    [
-      'itemUnit',
-      {
-        getSortValue: row =>
-          getColumnPropertyAsString(row, [
-            { path: ['lines', 'item', 'unitName'] },
-            { path: ['item', 'unitName'], default: '' },
-          ]),
-        accessor: ({ rowData }) =>
-          getColumnProperty(rowData, [
-            { path: ['lines', 'item', 'unitName'] },
-            { path: ['item', 'unitName'], default: '' },
-          ]),
-        defaultHideOnMobile: true,
-      },
-    ],
-    [
-      'packSize',
-      {
-        getSortValue: row => String(getPackSizeValue(row, getColumnProperty)),
-
-        accessor: ({ rowData }) => getPackSizeValue(rowData, getColumnProperty),
-        defaultHideOnMobile: true,
-      },
-    ]
-  );
-
-  if (manageVaccinesInDoses) {
-    columns.push(getDosesPerUnitColumn(t));
-  }
-
-  columns.push(
-    [
-      'numberOfPacks',
-      {
-        Cell: NumberCell,
-        getSortValue: row => {
-          if ('lines' in row) {
-            const { lines } = row;
-            return lines.reduce((acc, value) => acc + value.numberOfPacks, 0);
+        accessorFn: rowData => {
+          if ('subRows' in rowData) {
+            return Object.values(rowData.subRows ?? []).reduce(
+              (sum, batch) =>
+                sum + batch.sellPricePerPack * batch.numberOfPacks,
+              0
+            );
           } else {
-            return getNumberOfPacks(row);
-          }
-        },
-        accessor: ({ rowData }) => {
-          if ('lines' in rowData) {
-            const { lines } = rowData;
-            return lines.reduce((acc, value) => acc + value.numberOfPacks, 0);
-          } else {
-            return getNumberOfPacks(rowData);
+            if (isDefaultPlaceholderRow(rowData)) return '';
+
+            const x = rowData.sellPricePerPack * rowData.numberOfPacks;
+            return x;
           }
         },
       },
-    ],
-    [
-      'unitQuantity',
-      {
-        accessor: ({ rowData }) => {
-          if ('lines' in rowData) {
-            const { lines } = rowData;
-            return ArrayUtils.getUnitQuantity(lines);
-          } else {
-            return getUnitQuantity(rowData);
-          }
-        },
-        getSortValue: rowData => {
-          if ('lines' in rowData) {
-            const { lines } = rowData;
-            return ArrayUtils.getUnitQuantity(lines);
-          } else {
-            return getUnitQuantity(rowData);
-          }
-        },
-        defaultHideOnMobile: true,
-      },
-    ]
-  );
+    ];
 
-  if (manageVaccinesInDoses) {
-    columns.push(getDosesQuantityColumn());
-  }
+    return cols;
+  }, [manageVvmStatusForStock, manageVaccinesInDoses]);
 
-  columns.push(
-    {
-      label: 'label.unit-sell-price',
-      key: 'sellPricePerUnit',
-      align: ColumnAlign.Right,
-      Cell: CurrencyCell,
-      accessor: ({ rowData }) => {
-        if ('lines' in rowData) {
-          const { lines } = rowData;
-          return ArrayUtils.getAveragePrice(lines, 'sellPricePerPack');
-        } else {
-          if (isDefaultPlaceholderRow(rowData)) return undefined;
-          return (rowData.sellPricePerPack ?? 0) / rowData.packSize;
-        }
-      },
-      getSortValue: rowData => {
-        if ('lines' in rowData) {
-          return Object.values(rowData.lines).reduce(
-            (sum, batch) =>
-              sum + (batch.sellPricePerPack ?? 0) / batch.packSize,
-            0
-          );
-        } else {
-          return (rowData.sellPricePerPack ?? 0) / rowData.packSize;
-        }
-      },
-      defaultHideOnMobile: true,
-    },
-    {
-      label: 'label.total',
-      key: 'total',
-      align: ColumnAlign.Right,
-      Cell: CurrencyCell,
-      accessor: ({ rowData }) => {
-        if ('lines' in rowData) {
-          return Object.values(rowData.lines).reduce(
-            (sum, batch) => sum + batch.sellPricePerPack * batch.numberOfPacks,
-            0
-          );
-        } else {
-          if (isDefaultPlaceholderRow(rowData)) return '';
-
-          const x = rowData.sellPricePerPack * rowData.numberOfPacks;
-          return x;
-        }
-      },
-      getSortValue: row => {
-        if ('lines' in row) {
-          return Object.values(row.lines).reduce(
-            (sum, batch) => sum + batch.sellPricePerPack * batch.numberOfPacks,
-            0
-          );
-        } else {
-          const x = row.sellPricePerPack * row.numberOfPacks;
-          return x;
-        }
-      },
-      defaultHideOnMobile: true,
-    },
-    expansionColumn
-  );
-
-  return useColumns(columns, { onChangeSortBy, sortBy }, [sortBy]);
-};
-
-const getPackSizeValue = (
-  row: StockOutLineFragment | StockOutItem,
-  getColumnProperty: ReturnType<typeof useColumnUtils>['getColumnProperty']
-) => {
-  const lineType = getColumnProperty(row, [
-    { path: ['lines', 'type'] },
-    { path: ['type'], default: '' },
-  ]);
-
-  if (lineType === InvoiceLineNodeType.UnallocatedStock) {
-    const unitQuantity =
-      'lines' in row ? ArrayUtils.getUnitQuantity(row.lines) : row.packSize;
-
-    if (unitQuantity === 0) return UNDEFINED_STRING_VALUE;
-  }
-  return getColumnProperty(row, [
-    { path: ['lines', 'packSize'] },
-    { path: ['packSize'], default: '' },
-  ]);
+  return columns;
 };

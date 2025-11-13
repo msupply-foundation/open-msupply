@@ -9,7 +9,8 @@ import { ColumnDef } from '../types';
 
 export const useColumnPinning = <T extends MRT_RowData>(
   tableId: string,
-  columns: ColumnDef<T>[]
+  columns: ColumnDef<T>[],
+  rowSelectionEnabled: boolean
 ) => {
   const initial = useMemo(() => {
     const columnId = (column: ColumnDef<T>): string =>
@@ -17,7 +18,7 @@ export const useColumnPinning = <T extends MRT_RowData>(
 
     return {
       left: [
-        'mrt-row-select',
+        ...(rowSelectionEnabled ? ['mrt-row-select'] : []),
         ...columns.filter(col => col.pin === 'left').map(columnId),
       ],
       right: columns.filter(col => col.pin === 'right').map(columnId),
@@ -26,6 +27,10 @@ export const useColumnPinning = <T extends MRT_RowData>(
 
   const [state, setState] = useState<MRT_ColumnPinningState>(
     getSavedState(tableId).columnPinning ?? initial
+  );
+
+  const [hasSavedState, setHasSavedState] = useState(
+    !!getSavedState(tableId).columnPinning
   );
 
   const update = useCallback<
@@ -38,13 +43,35 @@ export const useColumnPinning = <T extends MRT_RowData>(
             ? updaterOrValue(prev)
             : updaterOrValue;
 
+        // Ensure "selection" column remains always pinned to the left
+        if (
+          rowSelectionEnabled &&
+          !newColumnPinning.left?.includes('mrt-row-select')
+        ) {
+          newColumnPinning.left = [
+            'mrt-row-select',
+            ...(newColumnPinning.left ?? []),
+          ];
+        }
+
+        const savedColumnPinning = differentOrUndefined(
+          newColumnPinning,
+          initial
+        );
         updateSavedState(tableId, {
-          columnPinning: differentOrUndefined(newColumnPinning, initial),
+          columnPinning: savedColumnPinning,
         });
+        if (savedColumnPinning) setHasSavedState(true);
         return newColumnPinning;
       }),
     []
   );
 
-  return { initial, state, update };
+  return {
+    initial,
+    state,
+    update,
+    hasSavedState,
+    resetHasSavedState: () => setHasSavedState(false),
+  };
 };

@@ -70,9 +70,9 @@ mod test {
         let service = service_provider.printer_service;
 
         let result_printer = PrinterRow {
-            id: "new_id".to_owned(),
-            description: "new_description".to_owned(),
-            address: "new_address".to_owned(),
+            id: "new_id".to_string(),
+            description: "new_description".to_string(),
+            address: "new_address".to_string(),
             port: 8000.to_owned(),
             label_width: 50.to_owned(),
             label_height: 70.to_owned(),
@@ -82,9 +82,9 @@ mod test {
             service.insert_printer(
                 &context,
                 InsertPrinter {
-                    id: "new_id".to_owned(),
-                    description: "new_description".to_owned(),
-                    address: "new_address".to_owned(),
+                    id: "new_id".to_string(),
+                    description: "new_description".to_string(),
+                    address: "new_address".to_string(),
                     port: 8000.to_owned(),
                     label_width: 50.to_owned(),
                     label_height: 70.to_owned(),
@@ -95,7 +95,7 @@ mod test {
 
         assert_eq!(
             printer_repository
-                .query_by_filter(PrinterFilter::new().id(EqualFilter::equal_to("new_id")))
+                .query_by_filter(PrinterFilter::new().id(EqualFilter::equal_to("new_id".to_string())))
                 .unwrap(),
             vec![result_printer]
         );
