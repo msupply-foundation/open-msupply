@@ -1,7 +1,6 @@
 import React from 'react';
 import {
   Box,
-  InputWithLabelRow,
   LocaleKey,
   NothingHere,
   PreferenceNodeType,
@@ -12,7 +11,7 @@ import { useEditPreferences } from '../api/useEditPreference';
 import { PreferenceGroupAccordion } from './PreferenceGroupAccordion';
 import { usePreferenceGrouping } from './usePreferenceGrouping';
 
-export const EditPreferencesPage = () => {
+export const EditGlobalPreferencesPage = () => {
   const t = useTranslation();
   const { update, preferences } = useEditPreferences(PreferenceNodeType.Global);
   const { ungrouped, groups } = usePreferenceGrouping(preferences);
@@ -25,23 +24,15 @@ export const EditPreferencesPage = () => {
         {ungrouped.map((pref, idx) => {
           const isLast = idx === ungrouped.length - 1;
           return (
-            <InputWithLabelRow
+            <EditPreference
               key={pref.key}
-              labelWidth={'100%'}
-              label={t(`preference.${pref.key}` as LocaleKey)}
-              Input={
-                <EditPreference
-                  preference={pref}
-                  update={value => update({ [pref.key]: value })}
-                />
-              }
+              preference={pref}
+              update={value => update({ [pref.key]: value })}
               sx={{
-                justifyContent: 'space-between',
                 borderBottom: isLast ? 'none' : '1px dashed',
                 borderColor: 'gray.main',
                 padding: 1,
               }}
-              labelProps={{ sx: { maxWidth: 450 } }}
             />
           );
         })}
