@@ -65,6 +65,7 @@ pub fn create_goods_received_shipment(
                 Some(invoice.id.to_string()),
                 None,
                 None,
+                None,
             )?;
 
             Ok(result)

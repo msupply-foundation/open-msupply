@@ -62,6 +62,7 @@ pub fn create_requisition_shipment(
                 Some(invoice_row.id.to_string()),
                 None,
                 None,
+                None,
             )?;
 
             // TODO use invoice service if it accepts ctx

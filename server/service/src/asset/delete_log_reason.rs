@@ -30,6 +30,7 @@ pub fn delete_log_reason(
                 Some(reason_id.clone()),
                 None,
                 None,
+                None,
             )?;
 
             let _deleted_location = AssetInternalLocationRowRepository::new(connection)

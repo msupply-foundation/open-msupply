@@ -39,6 +39,7 @@ pub fn delete_purchase_order(
                     Some(id.to_string()),
                     None,
                     None,
+                    None,
                 )?;
 
                 match PurchaseOrderRowRepository::new(connection).delete(&id) {

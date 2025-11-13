@@ -64,6 +64,7 @@ pub fn add_from_master_list(
                         Some(purchase_order_line_row.purchase_order_id),
                         None,
                         None,
+                        None,
                     )?;
                 }
             }

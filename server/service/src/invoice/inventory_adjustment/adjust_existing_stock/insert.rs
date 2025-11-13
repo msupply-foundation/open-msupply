@@ -103,6 +103,7 @@ pub fn insert_inventory_adjustment(
                 Some(verified_invoice.id.to_string()),
                 None,
                 None,
+                None,
             )?;
 
             get_invoice(ctx, None, &verified_invoice.id)

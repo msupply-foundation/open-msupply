@@ -39,7 +39,10 @@ pub fn activity_log_entry(
     record_id: Option<String>,
     changed_from: Option<String>,
     changed_to: Option<String>,
+    // Optional override if ctx doesn't have store_id in it and there is an appropriate option
+    store_id: Option<&str>,
 ) -> Result<(), RepositoryError> {
+    let store_id = store_id.unwrap_or(&ctx.store_id);
     let log = &ActivityLogRow {
         id: uuid(),
         r#type: log_type,
@@ -48,8 +51,8 @@ pub fn activity_log_entry(
         } else {
             None
         },
-        store_id: if !ctx.store_id.is_empty() {
-            Some(ctx.store_id.clone())
+        store_id: if !store_id.is_empty() {
+            Some(store_id.to_string())
         } else {
             None
         },
@@ -90,7 +93,7 @@ pub fn activity_log_entry_with_diff(
         ),
     };
 
-    activity_log_entry(ctx, log_type, record_id, changed_from, changed_to)
+    activity_log_entry(ctx, log_type, record_id, changed_from, changed_to, None)
 }
 
 pub fn system_activity_log_entry(

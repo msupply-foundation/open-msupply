@@ -167,6 +167,7 @@ pub fn update_stocktake(
                     Some(stocktake_id.to_string()),
                     None,
                     None,
+                    None,
                 )?;
             }
 

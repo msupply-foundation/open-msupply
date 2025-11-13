@@ -131,6 +131,7 @@ pub fn insert_vaccination(
                 Some(vaccination.id.clone()),
                 None,
                 None,
+                None,
             )?;
 
             get_vaccination(ctx, vaccination.id).map_err(InsertVaccinationError::from)
@@ -176,7 +177,8 @@ fn create_missing_not_given_vaccinations(
 
     // Get all doses for this vaccine course
     let all_course_doses = VaccineCourseDoseRepository::new(connection).query_by_filter(
-        VaccineCourseDoseFilter::new().vaccine_course_id(EqualFilter::equal_to(vaccine_course_id.to_string())),
+        VaccineCourseDoseFilter::new()
+            .vaccine_course_id(EqualFilter::equal_to(vaccine_course_id.to_string())),
     )?;
 
     // Find the current dose index
@@ -194,7 +196,9 @@ fn create_missing_not_given_vaccinations(
         // Check if vaccination already exists for this dose
         let existing_vaccination = VaccinationRepository::new(connection).query_one(
             VaccinationFilter::new()
-                .vaccine_course_dose_id(EqualFilter::equal_to(dose.vaccine_course_dose_row.id.to_string()))
+                .vaccine_course_dose_id(EqualFilter::equal_to(
+                    dose.vaccine_course_dose_row.id.to_string(),
+                ))
                 .program_enrolment_id(EqualFilter::equal_to(program_enrolment.id.to_string())),
         )?;
 

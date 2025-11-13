@@ -72,6 +72,7 @@ pub fn insert_vaccine_course(
                 Some(new_vaccine_course.id.clone()),
                 None,
                 None,
+                None,
             )?;
 
             get_vaccine_course(&ctx.connection, new_vaccine_course.id)

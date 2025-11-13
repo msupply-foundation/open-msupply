@@ -95,6 +95,7 @@ pub fn add_new_stock_line(
                 Some(verified_invoice.id.to_string()),
                 None,
                 None,
+                None,
             )?;
 
             match get_stock_line(ctx, stock_line_id) {

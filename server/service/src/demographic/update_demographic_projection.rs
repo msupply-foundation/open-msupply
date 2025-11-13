@@ -53,6 +53,7 @@ pub fn update_demographic_projection(
                 Some(
                     serde_json::to_string(&updated_demographic_projection_row).unwrap_or_default(),
                 ),
+                None,
             )?;
 
             get_demographic_projection(ctx, updated_demographic_projection_row.id)

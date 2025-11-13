@@ -45,6 +45,7 @@ pub fn delete_prescription(
                 Some(id.to_string()),
                 None,
                 None,
+                None,
             )?;
 
             match InvoiceRowRepository::new(connection).delete(&id) {
