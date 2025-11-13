@@ -46,9 +46,6 @@ fragment RequestLine on RequisitionLineNode {
   }
   item {
     ...ItemWithStats
-    itemStoreProperties(storeId: $storeId) {
-      defaultSellPricePerPack
-    }
   }
   reason {
     ...ReasonOptionRow
