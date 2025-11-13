@@ -8,7 +8,6 @@ import {
   Grid,
   NumericTextInput,
   usePluginProvider,
-  useIsCentralServerApi,
 } from '@openmsupply-client/common';
 import { ItemFragment } from '../../api';
 import { LocationTypeInput } from '../../Components';
@@ -21,7 +20,6 @@ interface GeneralTabProps {
 export const GeneralTab = ({ item, isLoading }: GeneralTabProps) => {
   const t = useTranslation();
   const { plugins } = usePluginProvider();
-  const isCentralServer = useIsCentralServerApi();
 
   const isDisabled = true;
 
@@ -190,9 +188,9 @@ export const GeneralTab = ({ item, isLoading }: GeneralTabProps) => {
             }
           />
         </DetailSection>
-        {isCentralServer && plugins.itemSellPrice?.catalogueUnitPrice && (
+        {plugins.item?.detailViewField && (
           <DetailSection title={t('title.catalogue-price')}>
-            {plugins.itemSellPrice.catalogueUnitPrice.map((Plugin, index) => (
+            {plugins.item.detailViewField.map((Plugin, index) => (
               <Plugin key={index} itemId={item.id} />
             ))}
           </DetailSection>
