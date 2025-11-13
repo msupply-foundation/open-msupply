@@ -19,10 +19,12 @@ export const usePrescriptionLineEditColumns = ({
   allocate,
   item,
   allocateIn,
+  getIsDisabled,
 }: {
   allocate: (key: string, value: number) => number;
   item: DraftItem | null;
   allocateIn: AllocateInType;
+  getIsDisabled: (row: DraftStockOutLineFragment) => boolean;
 }): ColumnDef<DraftStockOutLineFragment>[] => {
   const t = useTranslation();
   const { getPlural } = useIntlUtils();
@@ -103,9 +105,10 @@ export const usePrescriptionLineEditColumns = ({
             sx={{
               '& .MuiInputBase-input': { backgroundColor: 'background.paper' },
             }}
+            disabled={getIsDisabled(row.original)}
           />
         ),
       },
     ];
-  }, [unit, allocate]);
+  }, [unit, allocate, getIsDisabled]);
 };
