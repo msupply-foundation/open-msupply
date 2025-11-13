@@ -232,7 +232,7 @@ mod test {
 
         // First test without preference
         let (_, _, connection_manager, _) = setup_all_with_data(
-            "test_update_inbound_invoice_auto_finalise",
+            "test_update_inbound_invoice_auto_finalise_off",
             MockDataInserts::none().stores(),
             MockData {
                 invoices: vec![first_half_row.clone(), second_half_row.clone()],
@@ -289,9 +289,8 @@ mod test {
             _ => (),
         }
 
-        // First test without preference
         let (_, _, connection_manager, _) = setup_all_with_data(
-            "test_update_inbound_invoice_auto_finalise",
+            "test_update_inbound_invoice_auto_finalise_on",
             MockDataInserts::none().stores(),
             MockData {
                 invoices: vec![first_half_row.clone(), second_half_row.clone()],
