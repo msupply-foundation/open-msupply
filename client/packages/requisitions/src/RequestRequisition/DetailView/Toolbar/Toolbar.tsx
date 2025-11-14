@@ -99,7 +99,7 @@ export const Toolbar = () => {
               label={t('label.destination-customer')}
               Input={
                 <CustomerSearchInput
-                  disabled={isDisabled || isProgram}
+                  disabled={isDisabled}
                   value={destinationCustomer ?? null}
                   onChange={destinationCustomer =>
                     update({
