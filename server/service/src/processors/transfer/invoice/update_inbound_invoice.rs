@@ -276,7 +276,7 @@ mod test {
 
         // Setup for the test with the preference on
         let preference = PreferenceRow {
-            id: PrefKey::InboundShipmentAutoVerify.to_string() + "_" + mock_store_a().id.as_str(),
+            id: "preference_on".to_string(),
             key: PrefKey::InboundShipmentAutoVerify.to_string(),
             value: "true".to_string(),
             store_id: Some("store_a".to_string()),
