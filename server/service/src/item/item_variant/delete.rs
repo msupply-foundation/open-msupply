@@ -50,7 +50,6 @@ pub fn delete_item_variant(
                 Some(input.id.clone()),
                 None,
                 None,
-                None,
             )?;
 
             repo.mark_deleted(&input.id)

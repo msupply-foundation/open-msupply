@@ -50,7 +50,6 @@ pub fn insert_purchase_order(
                 Some(purchase_order.id.to_string()),
                 None,
                 None,
-                None,
             )?;
 
             Ok(purchase_order)

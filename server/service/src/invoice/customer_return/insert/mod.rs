@@ -118,7 +118,6 @@ pub fn insert_customer_return(
                 Some(customer_return.id.to_string()),
                 None,
                 None,
-                None,
             )?;
 
             get_invoice(ctx, None, &customer_return.id)

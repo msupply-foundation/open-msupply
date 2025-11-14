@@ -50,7 +50,6 @@ pub fn delete_rnr_form(ctx: &ServiceContext, input: DeleteRnRForm) -> Result<Str
                 Some(delete_line_id.clone()),
                 None,
                 None,
-                None,
             )?;
 
             Ok(delete_line_id)

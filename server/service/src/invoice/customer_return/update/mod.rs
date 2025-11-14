@@ -72,7 +72,6 @@ pub fn update_customer_return(
                     Some(updated_return.id.to_string()),
                     None,
                     None,
-                    None,
                 )?;
             }
 

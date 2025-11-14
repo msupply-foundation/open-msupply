@@ -92,7 +92,6 @@ pub fn update_prescription(
                     Some(update_invoice.id.to_string()),
                     None,
                     None,
-                    None,
                 )?;
 
                 if patch.status == Some(UpdatePrescriptionStatus::Cancelled) {

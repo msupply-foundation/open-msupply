@@ -107,7 +107,6 @@ pub fn update_vaccination(
                 Some(vaccination.id.clone()),
                 None,
                 None,
-                None,
             )?;
 
             get_vaccination(ctx, vaccination.id).map_err(UpdateVaccinationError::from)

@@ -51,7 +51,6 @@ pub fn insert_asset_log(
                 Some(new_asset_log.id.clone()),
                 None,
                 None,
-                None,
             )?;
 
             get_asset_log(ctx, new_asset_log.id).map_err(InsertAssetLogError::from)

@@ -120,7 +120,6 @@ pub fn update_request_requisition(
                     Some(updated_requisition_row.id.to_string()),
                     None,
                     None,
-                    None,
                 )?;
             }
 

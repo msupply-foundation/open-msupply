@@ -62,7 +62,6 @@ pub fn insert_stocktake(
                 Some(new_stocktake.id.to_string()),
                 None,
                 None,
-                None,
             )?;
             let stocktake = get_stocktake(ctx, new_stocktake.id)?;
             stocktake.ok_or(InsertStocktakeError::InternalError(

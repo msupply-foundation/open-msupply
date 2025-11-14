@@ -35,7 +35,6 @@ pub fn delete_goods_received(
                 Some(id.to_string()),
                 None,
                 None,
-                None,
             )?;
 
             match GoodsReceivedRowRepository::new(connection).delete(id) {

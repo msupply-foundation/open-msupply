@@ -47,7 +47,6 @@ pub fn delete_customer_return(
                 Some(id.to_string()),
                 None,
                 None,
-                None,
             )?;
 
             Ok(id)

@@ -41,7 +41,6 @@ pub fn insert_asset_log_reason(
                 Some(new_asset_log_reason.id.clone()),
                 None,
                 None,
-                None,
             )?;
 
             get_asset_log_reason(ctx, new_asset_log_reason.id)

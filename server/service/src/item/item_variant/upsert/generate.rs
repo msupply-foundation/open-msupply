@@ -60,7 +60,6 @@ pub fn generate_logs(
                 Some(existing_item_variant.id.clone()),
                 Some(existing_item_variant.name.clone()),
                 Some(updated_item_variant.name.clone()),
-                None,
             )?;
         }
 
@@ -78,7 +77,6 @@ pub fn generate_logs(
                 Some(existing_item_variant.id.clone()),
                 existing_variant_name,
                 updated_variant_name,
-                None,
             )?;
         }
 
@@ -95,7 +93,6 @@ pub fn generate_logs(
                 Some(existing_item_variant.id.clone()),
                 existing_manufacturer_name,
                 updated_manufacturer_name,
-                None,
             )?;
         }
 
@@ -106,7 +103,6 @@ pub fn generate_logs(
                 Some(existing_item_variant.id.clone()),
                 existing_item_variant.vvm_type.clone(),
                 updated_item_variant.vvm_type.clone(),
-                None,
             )?;
         }
     } else {
@@ -114,7 +110,6 @@ pub fn generate_logs(
             ctx,
             ActivityLogType::ItemVariantCreated,
             Some(updated_variant.item_variant_row.id.clone()),
-            None,
             None,
             None,
         )?;

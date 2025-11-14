@@ -43,7 +43,6 @@ pub fn update_vvm_status_log(
                 Some(updated_vvm_status_log.id.clone()),
                 None,
                 None,
-                None,
             )?;
 
             vvm_status_log_repository

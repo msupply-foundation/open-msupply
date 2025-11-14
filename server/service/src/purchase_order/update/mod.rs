@@ -109,7 +109,6 @@ pub fn update_purchase_order(
                 Some(updated_purchase_order.id.clone()),
                 None,
                 None,
-                None,
             )?;
 
             purchase_order_repository

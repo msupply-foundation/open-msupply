@@ -50,7 +50,6 @@ pub fn insert_demographic_projection(
                 Some(new_demographic_projection.id.to_string()),
                 None,
                 None,
-                None,
             )?;
 
             get_demographic_projection(ctx, new_demographic_projection.id)

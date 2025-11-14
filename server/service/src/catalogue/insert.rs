@@ -48,7 +48,6 @@ pub fn insert_asset_catalogue_item(
                 Some(new_item.id.clone()),
                 None,
                 None,
-                None,
             )?;
 
             get_asset_catalogue_item(&ctx.connection, new_item.id)

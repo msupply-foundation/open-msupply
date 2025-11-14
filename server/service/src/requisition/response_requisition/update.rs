@@ -77,7 +77,6 @@ pub fn update_response_requisition(
                     Some(updated_requisition.id.to_string()),
                     None,
                     None,
-                    None,
                 )?;
             }
 
@@ -117,8 +116,7 @@ pub fn validate(
     }
 
     let response_lines = RequisitionLineRepository::new(connection).query_by_filter(
-        RequisitionLineFilter::new()
-            .requisition_id(EqualFilter::equal_to(requisition_row.id.to_string())),
+        RequisitionLineFilter::new().requisition_id(EqualFilter::equal_to(requisition_row.id.to_string())),
     )?;
 
     let reason_options = ReasonOptionRepository::new(connection).query_by_filter(
