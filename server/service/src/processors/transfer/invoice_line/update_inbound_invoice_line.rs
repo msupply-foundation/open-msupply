@@ -117,8 +117,6 @@ impl UpdateInboundInvoiceLineProcessor {
         outbound_line: &InvoiceLine,
         inbound_invoice: &Invoice,
     ) -> Result<InvoiceLineTransferOutput, RepositoryError> {
-        let repo = InvoiceLineRowRepository::new(connection);
-
         // Find corresponding inbound line by linked_invoice_id
         let existing_inbound_lines = InvoiceLineRepository::new(connection).query_by_filter(
             InvoiceLineFilter::new()
@@ -141,7 +139,7 @@ impl UpdateInboundInvoiceLineProcessor {
             inbound_line_row.id = existing_inbound_line.invoice_line_row.id.clone();
         }
 
-        repo.upsert_one(&inbound_line_row)?;
+        InvoiceLineRowRepository::new(connection).upsert_one(&inbound_line_row)?;
 
         Ok(InvoiceLineTransferOutput::Processed(format!(
             "Upserted inbound line {} for invoice {}",
