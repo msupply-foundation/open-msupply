@@ -1,4 +1,4 @@
-import React, { FC, memo } from 'react';
+import React, { memo } from 'react';
 import {
   Action,
   ActionsFooter,
@@ -7,22 +7,30 @@ import {
   AppFooterPortal,
   useDeleteConfirmation,
 } from '@openmsupply-client/common';
-import { ListParams, usePrescriptionList } from '../api';
+import { PrescriptionRowFragment, usePrescriptionList } from '../api';
 import { canDeletePrescription } from '../../utils';
 
-export const FooterComponent: FC<{ listParams: ListParams }> = ({
-  listParams,
+export const FooterComponent = ({
+  selectedRows,
+  resetRowSelection,
+}: {
+  selectedRows: PrescriptionRowFragment[];
+  resetRowSelection: () => void;
 }) => {
   const t = useTranslation();
 
   const {
     delete: { deletePrescriptions },
-    selectedRows,
-  } = usePrescriptionList(listParams);
+  } = usePrescriptionList();
+
+  const deleteAction = async () => {
+    await deletePrescriptions(selectedRows);
+    resetRowSelection();
+  };
 
   const confirmAndDelete = useDeleteConfirmation({
     selectedRows,
-    deleteAction: deletePrescriptions,
+    deleteAction,
     canDelete: selectedRows.every(canDeletePrescription),
     messages: {
       confirmMessage: t('messages.confirm-delete-prescriptions', {
@@ -50,6 +58,7 @@ export const FooterComponent: FC<{ listParams: ListParams }> = ({
             <ActionsFooter
               actions={actions}
               selectedRowCount={selectedRows.length}
+              resetRowSelection={resetRowSelection}
             />
           )}
         </>
