@@ -90,7 +90,7 @@ impl InvoiceTransferProcessor for CreateInboundInvoiceProcessor {
 
         // 4.
         if linked_invoice.is_some() {
-            return Ok(InvoiceTransferOutput::NoLinkedInvoice);
+            return Ok(InvoiceTransferOutput::AlreadyLinked);
         }
 
         // 5.
