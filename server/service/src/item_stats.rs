@@ -94,28 +94,19 @@ pub fn get_item_stats(
 
     let consumption_rows = ConsumptionRepository::new(connection).query(Some(filter.clone()))?;
 
-    let consumption_map = get_consumption_map(&consumption_rows)?;
-
     let exclude_transfers = ExcludeTransfers.load(connection, None).unwrap_or(false);
 
     let same_level_transfer_input = same_level_transfer_consumption::Input {
         store_id: store_id.to_string(),
         consumption_map: consumption_rows.clone(),
+        exclude_transfers,
     };
 
-    let transfer_consumption_map = if exclude_transfers {
-        match PluginInstance::get_one(PluginType::SameLevelTransferConsumption) {
-            Some(plugin) => {
-                let result = same_level_transfer_consumption::Trait::call(
-                    &(*plugin),
-                    same_level_transfer_input,
-                )?;
-                Some(result)
-            }
-            None => Some(get_transfer_consumption_map(&consumption_rows)?),
+    let consumption_map = match PluginInstance::get_one(PluginType::SameLevelTransferConsumption) {
+        Some(plugin) => {
+            same_level_transfer_consumption::Trait::call(&(*plugin), same_level_transfer_input)?
         }
-    } else {
-        None
+        None => get_consumption_map(&consumption_rows, exclude_transfers)?,
     };
 
     let adjust_for_days_out_of_stock = AdjustForNumberOfDaysOutOfStock
@@ -133,19 +124,11 @@ pub fn get_item_stats(
         None
     };
 
-    let adjusted_consumption_map = match exclude_transfers {
-        true => combine_consumption_maps(
-            consumption_map.clone(),
-            transfer_consumption_map.unwrap_or_default(),
-        ),
-        false => consumption_map.clone(),
-    };
-
     let input = amc::Input {
         store_id: store_id.to_string(),
         amc_lookback_months,
         // Really don't like cloning this
-        consumption_map: adjusted_consumption_map.clone(),
+        consumption_map: consumption_map.clone(),
         adjusted_days_out_of_stock_map,
         item_ids: item_ids.clone(),
     };
@@ -157,7 +140,7 @@ pub fn get_item_stats(
 
     Ok(ItemStats::new_vec(
         amc_by_item,
-        adjusted_consumption_map,
+        consumption_map,
         get_stock_on_hand_rows(connection, store_id, Some(item_ids))?,
     ))
 }
@@ -183,19 +166,6 @@ pub fn get_item_stats_map(
         .collect();
 
     Ok(item_stats_map)
-}
-
-fn combine_consumption_maps(
-    mut consumption_map: HashMap<String, f64>,
-    transfer_consumption_map: HashMap<String, f64>,
-) -> HashMap<String, f64> {
-    for (item_id, transfer_consumption) in transfer_consumption_map {
-        consumption_map
-            .entry(item_id.clone())
-            .and_modify(|total_consumption| *total_consumption -= transfer_consumption);
-    }
-
-    consumption_map
 }
 
 struct DefaultAmc;
@@ -234,31 +204,21 @@ impl amc::Trait for DefaultAmc {
 
 fn get_consumption_map(
     consumption_rows: &Vec<ConsumptionRow>,
+    exclude_transfers: bool,
 ) -> Result<HashMap<String /* item_id */, f64 /* total consumption */>, RepositoryError> {
     let mut consumption_map = HashMap::new();
     for consumption_row in consumption_rows.into_iter() {
         let item_total_consumption = consumption_map
             .entry(consumption_row.item_id.clone())
             .or_insert(0.0);
+
+        if exclude_transfers && consumption_row.is_transfer {
+            continue; // Skip transfer consumption
+        }
         *item_total_consumption += consumption_row.quantity;
     }
+
     Ok(consumption_map)
-}
-
-fn get_transfer_consumption_map(
-    consumption_rows: &Vec<ConsumptionRow>,
-) -> Result<HashMap<String /* item_id */, f64 /* transfer consumption */>, RepositoryError> {
-    let mut transfer_consumption_map = HashMap::new();
-    for consumption_row in consumption_rows.into_iter() {
-        if consumption_row.is_transfer == true {
-            let item_transfer_consumption = transfer_consumption_map
-                .entry(consumption_row.item_id.clone())
-                .or_insert(0.0);
-            *item_transfer_consumption += consumption_row.quantity;
-        }
-    }
-
-    Ok(transfer_consumption_map)
 }
 
 fn get_days_out_of_stock_adjustment_map(
