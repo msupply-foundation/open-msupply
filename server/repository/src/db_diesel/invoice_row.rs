@@ -1,20 +1,19 @@
-use std::any::Any;
-
 use super::{
     clinician_link_row::clinician_link, currency_row::currency, invoice_row::invoice::dsl::*,
     item_link_row::item_link, name_link_row::name_link, store_row::store, user_row::user_account,
     StorageConnection,
 };
-
-use crate::{repository_error::RepositoryError, Delete, Upsert};
-use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
-
-use diesel::{dsl::max, prelude::*};
-
+use crate::{
+    repository_error::RepositoryError, ChangeLogInsertRow, ChangelogRepository, ChangelogTableName,
+    Delete, RowActionType, Upsert,
+};
 use chrono::{NaiveDate, NaiveDateTime};
+use diesel::{dsl::max, prelude::*};
 use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
+use std::any::Any;
 use strum::Display;
+use ts_rs::TS;
 
 table! {
     invoice (id) {
@@ -68,7 +67,18 @@ allow_tables_to_appear_in_same_query!(invoice, item_link);
 allow_tables_to_appear_in_same_query!(invoice, name_link);
 
 #[derive(
-    DbEnum, Debug, Display, Clone, PartialEq, Eq, Serialize, Deserialize, Default, PartialOrd, Ord,
+    DbEnum,
+    Debug,
+    Display,
+    Clone,
+    PartialEq,
+    Eq,
+    Serialize,
+    Deserialize,
+    Default,
+    PartialOrd,
+    Ord,
+    TS,
 )]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
@@ -80,12 +90,15 @@ pub enum InvoiceType {
     // Initially we had single inventory adjustment InvoiceType, this was changed to two separate types
     // central server may have old inventory adjustment type, thus map it to inventory additions
     #[serde(alias = "INVENTORY_ADJUSTMENT")]
+    #[ts(rename = "INVENTORY_ADDITION")]
     InventoryAddition,
     InventoryReduction,
     Repack,
     #[serde(alias = "OUTBOUND_RETURN")]
+    #[ts(rename = "SUPPLIER_RETURN")]
     SupplierReturn,
     #[serde(alias = "INBOUND_RETURN")]
+    #[ts(rename = "CUSTOMER_RETURN")]
     CustomerReturn,
 }
 
