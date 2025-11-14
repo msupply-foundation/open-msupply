@@ -209,7 +209,6 @@ mod test {
         let types = PluginTypes(vec![
             PluginType::AverageMonthlyConsumption,
             PluginType::TransformRequestRequisitionLines,
-            PluginType::SameLevelTransferConsumption,
         ]);
         let _ = repo.upsert_one(BackendPluginRow {
             id: id.clone(),
