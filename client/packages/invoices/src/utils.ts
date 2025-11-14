@@ -16,7 +16,10 @@ import {
 import { OutboundFragment, OutboundRowFragment } from './OutboundShipment/api';
 import { InboundLineFragment } from './InboundShipment/api';
 import { InboundItem } from './types';
-import { PrescriptionRowFragment } from './Prescriptions/api';
+import {
+  PrescriptionLineFragment,
+  PrescriptionRowFragment,
+} from './Prescriptions/api';
 import {
   CustomerReturnFragment,
   CustomerReturnRowFragment,
@@ -245,6 +248,9 @@ export const isPrescriptionDisabled = (
     prescription.status === InvoiceNodeStatus.Cancelled
   );
 };
+
+export const isPrescriptionPlaceholderRow = (row: PrescriptionLineFragment) =>
+  row.type === InvoiceLineNodeType.UnallocatedStock && !row.numberOfPacks;
 
 export const isInboundListItemDisabled = (
   inbound: InboundRowFragment | CustomerReturnRowFragment
