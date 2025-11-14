@@ -12,6 +12,7 @@ use serde::{Deserialize, Serialize};
 pub enum PluginType {
     AverageMonthlyConsumption,
     TransformRequestRequisitionLines,
+    SameLevelTransferConsumption,
     GraphqlQuery,
     SyncEssentialItemList,
     // TODO backwards compatibility ? When integrating this one via sync
@@ -208,6 +209,7 @@ mod test {
         let types = PluginTypes(vec![
             PluginType::AverageMonthlyConsumption,
             PluginType::TransformRequestRequisitionLines,
+            PluginType::SameLevelTransferConsumption,
         ]);
         let _ = repo.upsert_one(BackendPluginRow {
             id: id.clone(),
