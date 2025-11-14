@@ -9,6 +9,7 @@ import type { PluginDataFilter } from './PluginDataFilter';
 import type { PluginDataRow } from './PluginDataRow';
 import type { ProcessorInput } from './ProcessorInput';
 import type { ProcessorOutput } from './ProcessorOutput';
+import type { SameLevelTransferConsumptionInput } from './SameLevelTransferConsumptionInput';
 import type { StorePreferenceRow } from './StorePreferenceRow';
 import type { SyncEssentialItemListInput } from './SyncEssentialItemListInput';
 import type { TransformRequestRequisitionLineInput } from './TransformRequestRequisitionLineInput';
@@ -26,6 +27,10 @@ export type PluginTypes = {
   transform_request_requisition_lines: Function<
     TransformRequestRequisitionLineInput,
     TransformRequestRequisitionLineOutput
+  >;
+  same_level_transfer_consumption: Function<
+    SameLevelTransferConsumptionInput,
+    { [key in string]?: number }
   >;
   graphql_query: Function<GraphqlQueryInput, JsonValue>;
   processor: Function<ProcessorInput, ProcessorOutput>;
