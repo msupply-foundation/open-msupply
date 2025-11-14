@@ -1,96 +1,78 @@
+import { useMemo } from 'react';
 import {
-  ColumnFormat,
-  NumberCell,
-  SortBy,
-  useColumns,
-  useFormatDateTime,
+  ColumnDef,
+  ColumnType,
   useTranslation,
+  useFormatDateTime,
 } from '@openmsupply-client/common';
-import { LedgerRowFragment } from '../../api';
 import {
   getInvoiceLocalisationKey,
   getNameValue,
 } from '@openmsupply-client/system';
+import { LedgerRowFragment } from '../../api';
 
 export enum ColumnKey {
-  'DateTime' = 'datetime',
-  'Time' = 'time',
-  'Name' = 'name',
-  'Quantity' = 'quantity',
-  'Type' = 'type',
-  'Reason' = 'reason',
-  'Number' = 'number',
-  'Balance' = 'runningBalance',
+  DateTime = 'datetime',
+  Time = 'time',
+  Name = 'name',
+  Quantity = 'quantity',
+  Type = 'type',
+  Reason = 'reason',
+  Number = 'number',
+  Balance = 'runningBalance',
 }
 
-export const useLedgerColumns = (
-  sortBy: SortBy<LedgerRowFragment>,
-  updateSort: (sort: string, dir: 'asc' | 'desc') => void
-) => {
+export const useLedgerColumns = () => {
   const t = useTranslation();
   const { localisedTime } = useFormatDateTime();
 
-  const columns = useColumns<LedgerRowFragment>(
-    [
+  return useMemo<ColumnDef<LedgerRowFragment>[]>(
+    () => [
       {
-        key: ColumnKey.DateTime,
-        label: 'label.date',
-        format: ColumnFormat.Date,
-        sortable: false,
+        accessorKey: ColumnKey.DateTime,
+        header: t('label.date'),
+        columnType: ColumnType.Date,
+        enableSorting: true,
+        size: 100,
       },
       {
-        key: ColumnKey.Time,
-        label: 'label.time',
-        accessor: ({ rowData }) => localisedTime(rowData.datetime),
-        sortable: false,
+        accessorKey: ColumnKey.Time,
+        header: t('label.time'),
+        accessorFn: row => localisedTime(row.datetime),
+        enableSorting: true,
+        size: 80,
       },
       {
-        key: ColumnKey.Name,
-        label: 'label.name',
-        accessor: ({ rowData }) => getNameValue(t, rowData.name),
-        sortable: false,
+        accessorKey: ColumnKey.Name,
+        header: t('label.name'),
+        accessorFn: row => getNameValue(t, row.name),
+        enableSorting: true,
       },
       {
-        key: ColumnKey.Quantity,
-        label: 'label.unit-quantity',
-        sortable: false,
-        description: 'description.unit-quantity',
-        Cell: NumberCell,
+        accessorKey: ColumnKey.Quantity,
+        header: t('label.unit-quantity'),
+        columnType: ColumnType.Number,
+        enableSorting: true,
       },
       {
-        key: ColumnKey.Balance,
-        label: 'label.balance',
-        sortable: false,
-        Cell: NumberCell,
+        accessorKey: ColumnKey.Balance,
+        header: t('label.balance'),
+        columnType: ColumnType.Number,
+        enableSorting: true,
       },
       {
-        key: ColumnKey.Type,
-        label: 'label.type',
-        accessor: ({ rowData }) =>
-          `${t(getInvoiceLocalisationKey(rowData.invoiceType))} #${rowData.invoiceNumber}`,
-        sortable: false,
+        accessorKey: ColumnKey.Type,
+        header: t('label.type'),
+        accessorFn: row =>
+          `${t(getInvoiceLocalisationKey(row.invoiceType))} #${row.invoiceNumber}`,
+        enableSorting: true,
       },
       {
-        key: ColumnKey.Reason,
-        label: 'label.reason',
-        sortable: false,
+        accessorKey: ColumnKey.Reason,
+        header: t('label.reason'),
+        enableSorting: true,
       },
     ],
-    {
-      sortBy,
-      onChangeSortBy: sort => {
-        updateSort(
-          sort,
-          sort === sortBy.key
-            ? sortBy.direction === 'asc'
-              ? 'desc'
-              : 'asc'
-            : 'desc'
-        );
-      },
-    },
-    [sortBy]
+    [getInvoiceLocalisationKey]
   );
-
-  return { columns };
 };
