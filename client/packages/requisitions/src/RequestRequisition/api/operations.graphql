@@ -583,3 +583,21 @@ mutation updateIndicatorValue(
     }
   }
 }
+
+query recentStocktakeItems($storeId: String!, $startDate: NaiveDate!) {
+  stocktakes(
+    storeId: $storeId
+    filter: { stocktakeDate: { afterOrEqualTo: $startDate } }
+  ) {
+    __typename
+    ... on StocktakeConnector {
+      nodes {
+        lines {
+          nodes {
+            itemId
+          }
+        }
+      }
+    }
+  }
+}
