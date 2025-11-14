@@ -116,6 +116,10 @@ pub fn insert_stock_out_line(
                 .ok_or(OutError::NewlyCreatedLineDoesNotExist)
         })
         .map_err(|error| error.to_inner_error())?;
+
+    ctx.processors_trigger
+        .trigger_invoice_line_transfer_processors();
+
     Ok(new_line)
 }
 

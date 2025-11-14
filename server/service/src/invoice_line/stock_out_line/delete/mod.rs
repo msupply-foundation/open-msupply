@@ -60,6 +60,10 @@ pub fn delete_stock_out_line(
             Ok(line.id) as Result<String, OutError>
         })
         .map_err(|error| error.to_inner_error())?;
+
+    ctx.processors_trigger
+        .trigger_invoice_line_transfer_processors();
+
     Ok(line_id)
 }
 
@@ -95,7 +99,6 @@ mod test {
         InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineType, InvoiceRow, InvoiceStatus,
         StockLineRowRepository,
     };
-   
 
     use crate::{
         invoice_line::stock_out_line::{

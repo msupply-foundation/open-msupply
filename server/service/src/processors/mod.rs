@@ -10,9 +10,11 @@ use crate::activity_log::system_error_log;
 use crate::service_provider::ServiceProvider;
 
 use self::transfer::invoice::ProcessInvoiceTransfersError;
+use self::transfer::invoice_line::ProcessInvoiceLineTransfersError;
 use self::transfer::requisition::ProcessRequisitionTransfersError;
 use self::transfer::{
-    invoice::process_invoice_transfers, requisition::process_requisition_transfers,
+    invoice::process_invoice_transfers, invoice_line::process_invoice_line_transfers,
+    requisition::process_requisition_transfers,
 };
 use general_processor::{process_records, ProcessorError};
 
@@ -34,6 +36,7 @@ const CHANNEL_BUFFER_SIZE: usize = 30;
 pub struct ProcessorsTrigger {
     requisition_transfer: Sender<()>,
     invoice_transfer: Sender<()>,
+    invoice_line_transfer: Sender<()>,
     general_processor: Sender<ProcessorType>,
     await_process_queue: Sender<oneshot::Sender<()>>,
 }
@@ -41,6 +44,7 @@ pub struct ProcessorsTrigger {
 pub struct Processors {
     requisition_transfer: Receiver<()>,
     invoice_transfer: Receiver<()>,
+    invoice_line_transfer: Receiver<()>,
     general_processor: Receiver<ProcessorType>,
     await_process_queue: Receiver<oneshot::Sender<()>>,
 }
@@ -49,6 +53,8 @@ pub struct Processors {
 enum ProcessorsError {
     #[error("Error in invoice transfer processor ({0})")]
     InvoiceTransfer(ProcessInvoiceTransfersError),
+    #[error("Error in invoice line transfer processor ({0})")]
+    InvoiceLineTransfer(ProcessInvoiceLineTransfersError),
     #[error("Error in requisition transfer processor ({0})")]
     RequisitionTransfer(ProcessRequisitionTransfersError),
     #[error("Error in central record processor ({0})")]
@@ -65,6 +71,9 @@ impl Processors {
         let (invoice_transfer_sender, invoice_transfer_receiver) =
             mpsc::channel(CHANNEL_BUFFER_SIZE);
 
+        let (invoice_line_transfer_sender, invoice_line_transfer_receiver) =
+            mpsc::channel(CHANNEL_BUFFER_SIZE);
+
         let (general_processor_sender, general_processor_receiver) =
             mpsc::channel(CHANNEL_BUFFER_SIZE);
 
@@ -74,12 +83,14 @@ impl Processors {
             ProcessorsTrigger {
                 requisition_transfer: requisition_transfer_sender,
                 invoice_transfer: invoice_transfer_sender,
+                invoice_line_transfer: invoice_line_transfer_sender,
                 general_processor: general_processor_sender,
                 await_process_queue: request_check_sender,
             },
             Processors {
                 requisition_transfer: requisition_transfer_receiver,
                 invoice_transfer: invoice_transfer_receiver,
+                invoice_line_transfer: invoice_line_transfer_receiver,
                 general_processor: general_processor_receiver,
                 await_process_queue: request_check_receiver,
             },
@@ -90,6 +101,7 @@ impl Processors {
         let Processors {
             mut requisition_transfer,
             mut invoice_transfer,
+            mut invoice_line_transfer,
             mut general_processor,
             mut await_process_queue,
         } = self;
@@ -104,6 +116,9 @@ impl Processors {
                     biased;
                     Some(_) = requisition_transfer.recv() => {
                         process_requisition_transfers(&service_provider).map_err(ProcessorsError::RequisitionTransfer)
+                    },
+                    Some(_) = invoice_line_transfer.recv() => {
+                        process_invoice_line_transfers(&service_provider).map_err(ProcessorsError::InvoiceLineTransfer)
                     },
                     Some(_) = invoice_transfer.recv() => {
                         process_invoice_transfers(&service_provider).map_err(ProcessorsError::InvoiceTransfer)
@@ -142,6 +157,15 @@ impl ProcessorsTrigger {
         }
     }
 
+    pub(crate) fn trigger_invoice_line_transfer_processors(&self) {
+        if let Err(error) = self.invoice_line_transfer.try_send(()) {
+            log::error!(
+                "Problem triggering invoice line transfer processor {:#?}",
+                error
+            )
+        }
+    }
+
     pub(crate) fn trigger_processor(&self, r#type: ProcessorType) {
         if let Err(error) = self.general_processor.try_send(r#type.clone()) {
             let description = r#type.get_description();
@@ -175,6 +199,7 @@ impl ProcessorsTrigger {
         ProcessorsTrigger {
             requisition_transfer: mpsc::channel(1).0,
             invoice_transfer: mpsc::channel(1).0,
+            invoice_line_transfer: mpsc::channel(1).0,
             general_processor: mpsc::channel(1).0,
             await_process_queue: mpsc::channel(1).0,
         }

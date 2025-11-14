@@ -99,6 +99,10 @@ pub fn update_stock_out_line(
                 .ok_or(OutError::UpdatedLineDoesNotExist)
         })
         .map_err(|error| error.to_inner_error())?;
+
+    ctx.processors_trigger
+        .trigger_invoice_line_transfer_processors();
+
     Ok(updated_line)
 }
 
