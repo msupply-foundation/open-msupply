@@ -1,4 +1,6 @@
-use crate::activity_log::{activity_log_entry, log_type_from_invoice_status};
+use crate::activity_log::{
+    activity_log_entry, activity_log_entry_with_store, log_type_from_invoice_status,
+};
 use crate::invoice_line::ShipmentTaxUpdate;
 use crate::{invoice::query::get_invoice, service_provider::ServiceContext, WithDBError};
 use repository::vvm_status::vvm_status_log_row::VVMStatusLogRowRepository;
@@ -140,12 +142,13 @@ pub fn update_inbound_shipment(
             }
 
             if status_changed {
-                activity_log_entry(
+                activity_log_entry_with_store(
                     ctx,
                     log_type_from_invoice_status(&update_invoice.status, false),
                     Some(update_invoice.id.to_string()),
                     None,
                     None,
+                    store_id.map(|id| id.to_string()),
                 )?;
             }
 
