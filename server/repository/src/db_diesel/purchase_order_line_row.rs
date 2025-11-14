@@ -122,6 +122,7 @@ impl<'a> PurchaseOrderLineRowRepository<'a> {
             row_action: action,
             store_id: Some(purchase_order.store_id.clone()),
             name_link_id: None,
+            ..Default::default()
         };
 
         let purchase_order_row = ChangeLogInsertRow {
@@ -130,6 +131,7 @@ impl<'a> PurchaseOrderLineRowRepository<'a> {
             row_action: RowActionType::Upsert,
             store_id: Some(purchase_order.store_id),
             name_link_id: None,
+            ..Default::default()
         };
 
         let _ = ChangelogRepository::new(self.connection).insert(&row);

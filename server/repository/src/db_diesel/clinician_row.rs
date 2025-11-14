@@ -111,8 +111,9 @@ impl<'a> ClinicianRowRepository<'a> {
             table_name: ChangelogTableName::Clinician,
             record_id: row.id.clone(),
             row_action: action,
-            store_id: None,
+            store_id: row.store_id.clone(),
             name_link_id: None,
+            ..Default::default()
         };
 
         ChangelogRepository::new(self.connection).insert(&row)

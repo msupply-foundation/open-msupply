@@ -29,6 +29,7 @@ impl ViewMigrationFragment for ViewMigration {
         c.row_action,
         c.name_link_id,
         c.store_id,
+        c.invoice_id,
         c.is_sync_update,
         c.source_site_id
     FROM (

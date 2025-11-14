@@ -124,6 +124,7 @@ impl<'a> GoodsReceivedLineRowRepository<'a> {
             row_action: action,
             store_id: Some(store_id),
             name_link_id: None,
+            ..Default::default()
         };
         ChangelogRepository::new(self.connection).insert(&row)
     }
