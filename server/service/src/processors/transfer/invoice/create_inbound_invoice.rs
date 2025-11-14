@@ -555,7 +555,7 @@ mod test {
         );
 
         let preference = PreferenceRow {
-            id: PrefKey::InboundShipmentAutoVerify.to_string() + "_store_a",
+            id: "preference_on".to_string(),
             key: PrefKey::InboundShipmentAutoVerify.to_string(),
             value: "true".to_string(),
             store_id: Some("store_a".to_string()),
