@@ -90,15 +90,12 @@ pub enum InvoiceType {
     // Initially we had single inventory adjustment InvoiceType, this was changed to two separate types
     // central server may have old inventory adjustment type, thus map it to inventory additions
     #[serde(alias = "INVENTORY_ADJUSTMENT")]
-    #[ts(rename = "INVENTORY_ADDITION")]
     InventoryAddition,
     InventoryReduction,
     Repack,
     #[serde(alias = "OUTBOUND_RETURN")]
-    #[ts(rename = "SUPPLIER_RETURN")]
     SupplierReturn,
     #[serde(alias = "INBOUND_RETURN")]
-    #[ts(rename = "CUSTOMER_RETURN")]
     CustomerReturn,
 }
 
