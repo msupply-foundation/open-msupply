@@ -117,7 +117,6 @@ pub fn insert_supplier_return(
                 Some(supplier_return.id.to_string()),
                 None,
                 None,
-                None,
             )?;
 
             get_invoice(ctx, None, &supplier_return.id)

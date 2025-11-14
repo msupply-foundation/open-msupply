@@ -62,7 +62,6 @@ pub fn update_demographic_indicator(
                 Some(updated_demographic_indicator_row.id.to_string()),
                 Some(serde_json::to_string(&demographic_indicator_row).unwrap_or_default()),
                 Some(serde_json::to_string(&updated_demographic_indicator_row).unwrap_or_default()),
-                None,
             )?;
 
             get_demographic_indicator(ctx, updated_demographic_indicator_row.id)

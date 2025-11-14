@@ -53,7 +53,6 @@ pub fn insert_prescription(
                 Some(new_invoice.id.to_string()),
                 None,
                 None,
-                None,
             )?;
 
             get_invoice(ctx, None, &new_invoice.id)

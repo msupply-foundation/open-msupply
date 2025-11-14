@@ -51,7 +51,6 @@ pub fn delete_inbound_shipment(
                 Some(input.id.to_string()),
                 None,
                 None,
-                None,
             )?;
 
             match InvoiceRowRepository::new(connection).delete(&input.id.clone()) {

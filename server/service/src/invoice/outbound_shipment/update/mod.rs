@@ -112,7 +112,6 @@ pub fn update_outbound_shipment(
                     Some(update_invoice.id.to_string()),
                     None,
                     None,
-                    None,
                 )?;
             }
 

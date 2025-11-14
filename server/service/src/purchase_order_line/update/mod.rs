@@ -117,7 +117,6 @@ pub fn update_purchase_order_line(
                 Some(updated_purchase_order_line.purchase_order_id.clone()),
                 None,
                 None,
-                None,
             )?;
 
             get_purchase_order_line(ctx, Some(store_id), &updated_purchase_order_line.id)

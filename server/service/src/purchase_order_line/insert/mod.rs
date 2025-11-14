@@ -67,7 +67,6 @@ pub fn insert_purchase_order_line(
                 Some(purchase_order_line.purchase_order_id.clone()),
                 None,
                 None,
-                None,
             )?;
 
             PurchaseOrderLineRowRepository::new(connection).upsert_one(&purchase_order_line)?;

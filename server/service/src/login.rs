@@ -183,7 +183,6 @@ impl LoginService {
             None,
             None,
             None,
-            None,
         )?;
 
         let mut token_service = TokenService::new(

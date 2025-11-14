@@ -120,7 +120,6 @@ pub fn insert_asset(
                 Some(new_asset.id.clone()),
                 None,
                 None,
-                None,
             )?;
 
             get_asset(ctx, new_asset.id).map_err(InsertAssetError::from)

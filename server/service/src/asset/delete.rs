@@ -29,7 +29,6 @@ pub fn delete_asset(ctx: &ServiceContext, asset_id: String) -> Result<String, De
                 Some(asset_id.clone()),
                 None,
                 None,
-                None,
             )?;
 
             // This means that on soft deletion of asset, location assignments will be hard deleted.

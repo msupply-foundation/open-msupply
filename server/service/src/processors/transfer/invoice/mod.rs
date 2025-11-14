@@ -152,7 +152,7 @@ pub(crate) fn process_invoice_transfers(
     ];
 
     let ctx = &service_provider
-        .system_context(None)
+        .basic_context()
         .map_err(Error::DatabaseError)?;
 
     let active_stores =

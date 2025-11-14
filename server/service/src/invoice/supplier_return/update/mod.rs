@@ -75,7 +75,6 @@ pub fn update_supplier_return(
                     Some(updated_return.id.to_string()),
                     None,
                     None,
-                    None,
                 )?;
             }
 
