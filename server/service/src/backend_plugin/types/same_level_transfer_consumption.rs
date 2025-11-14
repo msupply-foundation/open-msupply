@@ -14,6 +14,7 @@ fn plugin_type() -> PluginType {
 pub struct Input {
     pub store_id: String,
     pub consumption_map: Vec<ConsumptionRow>,
+    pub exclude_transfers: bool,
 }
 
 pub type Output = HashMap<String /* item_id */, f64 /* transfer consumption */>;
