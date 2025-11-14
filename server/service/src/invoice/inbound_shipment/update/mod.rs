@@ -1,6 +1,4 @@
-use crate::activity_log::{
-    activity_log_entry, activity_log_entry_with_store, log_type_from_invoice_status,
-};
+use crate::activity_log::{activity_log_entry_with_store, log_type_from_invoice_status};
 use crate::invoice_line::ShipmentTaxUpdate;
 use crate::{invoice::query::get_invoice, service_provider::ServiceContext, WithDBError};
 use repository::vvm_status::vvm_status_log_row::VVMStatusLogRowRepository;
