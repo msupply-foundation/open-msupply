@@ -103,14 +103,14 @@ pub fn batch_inbound_shipment(
             let mutations_processor = BatchMutationsProcessor::new(ctx);
 
             // Insert Shipment
-            let (has_errors, result) = mutations_processor
-                .do_mutations_with_user_id(input.insert_shipment, insert_inbound_shipment);
+            let (has_errors, result) =
+                mutations_processor.do_mutations(input.insert_shipment, insert_inbound_shipment);
             results.insert_shipment = result;
             if has_errors && !continue_on_error {
                 return Err(WithDBError::err(results));
             }
 
-            let (has_errors, result) = mutations_processor.do_mutations_with_user_id(
+            let (has_errors, result) = mutations_processor.do_mutations(
                 input.insert_from_internal_order_lines,
                 insert_from_internal_order_line,
             );
@@ -121,22 +121,22 @@ pub fn batch_inbound_shipment(
 
             // Normal Line
 
-            let (has_errors, result) = mutations_processor
-                .do_mutations_with_user_id(input.insert_line, insert_stock_in_line);
+            let (has_errors, result) =
+                mutations_processor.do_mutations(input.insert_line, insert_stock_in_line);
             results.insert_line = result;
             if has_errors && !continue_on_error {
                 return Err(WithDBError::err(results));
             }
 
-            let (has_errors, result) = mutations_processor
-                .do_mutations_with_user_id(input.update_line, update_stock_in_line);
+            let (has_errors, result) =
+                mutations_processor.do_mutations(input.update_line, update_stock_in_line);
             results.update_line = result;
             if has_errors && !continue_on_error {
                 return Err(WithDBError::err(results));
             }
 
-            let (has_errors, result) = mutations_processor
-                .do_mutations_with_user_id(input.delete_line, delete_stock_in_line);
+            let (has_errors, result) =
+                mutations_processor.do_mutations(input.delete_line, delete_stock_in_line);
             results.delete_line = result;
             if has_errors && !continue_on_error {
                 return Err(WithDBError::err(results));
@@ -193,8 +193,8 @@ pub fn batch_inbound_shipment(
                 }
             }
 
-            let (has_errors, result) = mutations_processor
-                .do_mutations_with_user_id(input.delete_shipment, delete_inbound_shipment);
+            let (has_errors, result) =
+                mutations_processor.do_mutations(input.delete_shipment, delete_inbound_shipment);
             results.delete_shipment = result;
             if has_errors && !continue_on_error {
                 return Err(WithDBError::err(results));
