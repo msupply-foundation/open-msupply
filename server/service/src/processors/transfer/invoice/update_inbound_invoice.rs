@@ -30,9 +30,6 @@ impl InvoiceTransferProcessor for UpdateInboundInvoiceProcessor {
     /// 4. Linked inbound invoice is Picked (Inbound invoice can only be updated before it turns to Shipped status)
     /// 5. Source outbound invoice is Shipped
     ///
-    /// NOTE: Invoice LINES are already synced by UpdateInboundInvoiceLineProcessor while both invoices are PICKED.
-    /// This processor only updates the invoice HEADER (status, timestamps, references, etc.)
-    ///
     /// Only runs once:
     /// 6. Because linked inbound invoice will be changed to Shipped status and `4.` will never be true again
     fn try_process_record(
