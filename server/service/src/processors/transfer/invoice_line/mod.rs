@@ -154,3 +154,37 @@ pub(crate) fn process_invoice_line_transfers(
 
     Ok(())
 }
+
+#[cfg(test)]
+mod test;
+
+#[cfg(test)]
+mod test_processor {
+    use super::*;
+    use repository::test_db::setup_all;
+
+    #[actix_rt::test]
+    async fn test_invoice_line_processor_initialization() {
+        let (_, connection, _, _) = setup_all(
+            "test_invoice_line_processor",
+            repository::mock::MockDataInserts::all(),
+        )
+        .await;
+        let cursor_controller = CursorController::new(KeyType::InvoiceLineTransferProcessorCursor);
+        let cursor = cursor_controller.get(&connection).unwrap();
+        assert_eq!(cursor, 0);
+
+        // Cursor advancement test
+        cursor_controller.update(&connection, 5).unwrap();
+        let updated = cursor_controller.get(&connection).unwrap();
+        assert_eq!(updated, 5);
+
+        // Processor selection test (check description)
+        let processors = get_processors();
+        assert_eq!(processors.len(), 1);
+        assert_eq!(
+            processors[0].get_description(),
+            "Update inbound invoice line from outbound invoice line (PICKED status)"
+        );
+    }
+}

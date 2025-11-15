@@ -124,7 +124,7 @@ impl UpdateInboundInvoiceLineProcessor {
                 .linked_invoice_id(EqualFilter::equal_to(&outbound_line.invoice_row.id)),
         )?;
 
-        // Find the specific matching line based on business key (item, batch, expiry)
+        // Find the specific matching line based on invoice line fields (item, batch, expiry)
         let existing_inbound_line = existing_inbound_lines.into_iter().find(|inbound_line| {
             self.lines_match(
                 &outbound_line.invoice_line_row,
@@ -243,7 +243,7 @@ impl UpdateInboundInvoiceLineProcessor {
         )))
     }
 
-    /// Check if two lines match based on business key (item, batch, expiry)
+    /// Check if two lines match based on invoice line fields (item, batch, expiry)
     fn lines_match(
         &self,
         outbound_line_row: &InvoiceLineRow,
@@ -254,7 +254,8 @@ impl UpdateInboundInvoiceLineProcessor {
             && outbound_line_row.expiry_date == inbound_line_row.expiry_date
     }
 
-    /// Check if two lines match for deletion purposes, considering (item, batch, expiry) with quantity tolerance
+    /// Check if two lines match for deletion purposes, considering (item, batch, expiry)
+    /// with total quantity (pack_size x no. of packs)
     fn lines_match_for_delete(
         &self,
         outbound_line_row: &InvoiceLineRow,
@@ -273,5 +274,346 @@ impl UpdateInboundInvoiceLineProcessor {
         let diff = (outbound_line_total - inbound_line_total).abs();
 
         diff < 0.001 // Tolerance for floating point comparison
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use repository::{
+        mock::{
+            mock_item_a, mock_name_store_a, mock_name_store_b, mock_store_a, mock_store_b,
+            MockData, MockDataInserts,
+        },
+        test_db::setup_all_with_data,
+        InvoiceLineRow, InvoiceLineType, InvoiceRow,
+    };
+
+    // Helper function to create test invoice pair
+    fn create_invoice_pair(outbound_id: &str, inbound_id: &str) -> (InvoiceRow, InvoiceRow) {
+        let outbound = InvoiceRow {
+            id: outbound_id.to_string(),
+            store_id: mock_store_a().id,
+            name_link_id: mock_name_store_b().id,
+            r#type: InvoiceType::OutboundShipment,
+            status: InvoiceStatus::Picked,
+            linked_invoice_id: Some(inbound_id.to_string()),
+            ..Default::default()
+        };
+
+        let inbound = InvoiceRow {
+            id: inbound_id.to_string(),
+            store_id: mock_store_b().id,
+            name_link_id: mock_name_store_a().id,
+            r#type: InvoiceType::InboundShipment,
+            status: InvoiceStatus::Picked,
+            linked_invoice_id: Some(outbound_id.to_string()),
+            ..Default::default()
+        };
+
+        (outbound, inbound)
+    }
+
+    // Helper to create a basic outbound line
+    fn create_outbound_line(
+        line_id: &str,
+        invoice_id: &str,
+        item_id: &str,
+        batch: Option<&str>,
+        packs: f64,
+        pack_size: f64,
+    ) -> InvoiceLineRow {
+        InvoiceLineRow {
+            id: line_id.to_string(),
+            invoice_id: invoice_id.to_string(),
+            item_link_id: item_id.to_string(),
+            item_name: "Test Item".to_string(),
+            item_code: "TEST".to_string(),
+            r#type: InvoiceLineType::StockOut,
+            number_of_packs: packs,
+            pack_size,
+            batch: batch.map(|b| b.to_string()),
+            ..Default::default()
+        }
+    }
+
+    #[actix_rt::test]
+    async fn test_upsert_creates_new_inbound_line() {
+        let (outbound, inbound) = create_invoice_pair("outbound_1", "inbound_1");
+        let outbound_line = create_outbound_line(
+            "line_1",
+            &outbound.id,
+            &mock_item_a().id,
+            Some("batch1"),
+            10.0,
+            1.0,
+        );
+
+        let (_, connection, _, _) = setup_all_with_data(
+            "test_upsert_creates_new_inbound_line",
+            MockDataInserts::all(),
+            MockData {
+                invoices: vec![outbound.clone(), inbound.clone()],
+                invoice_lines: vec![outbound_line.clone()],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        let processor = UpdateInboundInvoiceLineProcessor;
+        let record = InvoiceLineTransferProcessorRecord {
+            operation: RowActionType::Upsert,
+            invoice_id: outbound.id.clone(),
+            invoice_store_id: outbound.store_id.clone(),
+            invoice_line_id: outbound_line.id.clone(),
+            other_party_store_id: inbound.store_id.clone(),
+        };
+
+        let result = processor.try_process_record(&connection, &record);
+        assert!(matches!(
+            result,
+            Ok(InvoiceLineTransferOutput::Processed(_))
+        ));
+
+        let inbound_lines = InvoiceLineRepository::new(&connection)
+            .query_by_filter(
+                InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(&inbound.id)),
+            )
+            .unwrap();
+
+        assert_eq!(inbound_lines.len(), 1);
+        let inbound_line = &inbound_lines[0].invoice_line_row;
+        assert_eq!(inbound_line.item_link_id, mock_item_a().id);
+        assert_eq!(inbound_line.number_of_packs, 10.0);
+        assert_eq!(inbound_line.batch, Some("batch1".to_string()));
+        assert_eq!(inbound_line.r#type, InvoiceLineType::StockIn);
+        assert_eq!(inbound_line.linked_invoice_id, Some(outbound.id.clone()));
+    }
+
+    #[actix_rt::test]
+    async fn test_upsert_updates_existing_inbound_line() {
+        let (outbound, inbound) = create_invoice_pair("outbound_2", "inbound_2");
+
+        let outbound_line = create_outbound_line(
+            "line_2",
+            &outbound.id,
+            &mock_item_a().id,
+            Some("batch1"),
+            10.0,
+            1.0,
+        );
+
+        let existing_inbound_line = InvoiceLineRow {
+            id: "existing_inbound_line".to_string(),
+            invoice_id: inbound.id.clone(),
+            item_link_id: mock_item_a().id,
+            item_name: "Test Item".to_string(),
+            item_code: "TEST".to_string(),
+            r#type: InvoiceLineType::StockIn,
+            number_of_packs: 5.0,
+            pack_size: 1.0,
+            batch: Some("batch1".to_string()),
+            linked_invoice_id: Some(outbound.id.clone()),
+            ..Default::default()
+        };
+
+        let (_, connection, _, _) = setup_all_with_data(
+            "test_upsert_updates_existing_inbound_line",
+            MockDataInserts::all(),
+            MockData {
+                invoices: vec![outbound.clone(), inbound.clone()],
+                invoice_lines: vec![outbound_line.clone(), existing_inbound_line.clone()],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        let processor = UpdateInboundInvoiceLineProcessor;
+        let record = InvoiceLineTransferProcessorRecord {
+            operation: RowActionType::Upsert,
+            invoice_id: outbound.id.clone(),
+            invoice_store_id: outbound.store_id.clone(),
+            invoice_line_id: outbound_line.id.clone(),
+            other_party_store_id: inbound.store_id.clone(),
+        };
+
+        let result = processor.try_process_record(&connection, &record);
+        assert!(matches!(
+            result,
+            Ok(InvoiceLineTransferOutput::Processed(_))
+        ));
+
+        // Verify the existing inbound line was updated (same ID, new quantity)
+        let inbound_lines = InvoiceLineRepository::new(&connection)
+            .query_by_filter(
+                InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(&inbound.id)),
+            )
+            .unwrap();
+
+        assert_eq!(inbound_lines.len(), 1);
+        let updated_line = &inbound_lines[0].invoice_line_row;
+        assert_eq!(updated_line.id, existing_inbound_line.id);
+        assert_eq!(updated_line.number_of_packs, 10.0);
+    }
+
+    #[actix_rt::test]
+    async fn test_delete_removes_orphaned_inbound_line() {
+        let (outbound, inbound) = create_invoice_pair("outbound_4", "inbound_4");
+
+        let outbound_line = create_outbound_line(
+            "line_4",
+            &outbound.id,
+            &mock_item_a().id,
+            Some("batch1"),
+            10.0,
+            1.0,
+        );
+
+        let inbound_line = InvoiceLineRow {
+            id: "inbound_line_4".to_string(),
+            invoice_id: inbound.id.clone(),
+            item_link_id: mock_item_a().id,
+            item_name: "Test Item".to_string(),
+            item_code: "TEST".to_string(),
+            r#type: InvoiceLineType::StockIn,
+            number_of_packs: 10.0,
+            pack_size: 1.0,
+            batch: Some("batch1".to_string()),
+            linked_invoice_id: Some(outbound.id.clone()),
+            ..Default::default()
+        };
+
+        let (_, connection, _, _) = setup_all_with_data(
+            "test_delete_removes_orphaned_inbound_line",
+            MockDataInserts::all(),
+            MockData {
+                invoices: vec![outbound.clone(), inbound.clone()],
+                invoice_lines: vec![inbound_line.clone()],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        let processor = UpdateInboundInvoiceLineProcessor;
+
+        // Simulate deletion (outbound line no longer exists)
+        let record = InvoiceLineTransferProcessorRecord {
+            operation: RowActionType::Delete,
+            invoice_id: outbound.id.clone(),
+            invoice_store_id: outbound.store_id.clone(),
+            invoice_line_id: outbound_line.id.clone(),
+            other_party_store_id: inbound.store_id.clone(),
+        };
+
+        let result = processor.try_process_record(&connection, &record);
+        assert!(matches!(
+            result,
+            Ok(InvoiceLineTransferOutput::Processed(_))
+        ));
+
+        let inbound_lines = InvoiceLineRepository::new(&connection)
+            .query_by_filter(
+                InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(&inbound.id)),
+            )
+            .unwrap();
+
+        assert_eq!(inbound_lines.len(), 0);
+    }
+
+    #[actix_rt::test]
+    async fn test_wrong_invoice_status() {
+        let (mut outbound, inbound) = create_invoice_pair("outbound_status", "inbound_status");
+        outbound.status = InvoiceStatus::Shipped; // Putting wrong status to check
+
+        let outbound_line = create_outbound_line(
+            "line_status",
+            &outbound.id,
+            &mock_item_a().id,
+            Some("batch1"),
+            10.0,
+            1.0,
+        );
+
+        let (_, connection, _, _) = setup_all_with_data(
+            "test_wrong_invoice_status",
+            MockDataInserts::all(),
+            MockData {
+                invoices: vec![outbound.clone(), inbound.clone()],
+                invoice_lines: vec![outbound_line.clone()],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        let processor = UpdateInboundInvoiceLineProcessor;
+        let record = InvoiceLineTransferProcessorRecord {
+            operation: RowActionType::Upsert,
+            invoice_id: outbound.id.clone(),
+            invoice_store_id: outbound.store_id.clone(),
+            invoice_line_id: outbound_line.id.clone(),
+            other_party_store_id: inbound.store_id.clone(),
+        };
+
+        let result = processor.try_process_record(&connection, &record);
+        assert!(matches!(
+            result,
+            Ok(InvoiceLineTransferOutput::WrongInvoiceStatus)
+        ));
+
+        let inbound_lines = InvoiceLineRepository::new(&connection)
+            .query_by_filter(
+                InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(&inbound.id)),
+            )
+            .unwrap();
+
+        assert_eq!(inbound_lines.len(), 0);
+    }
+
+    #[actix_rt::test]
+    async fn test_no_linked_invoice() {
+        let outbound = InvoiceRow {
+            id: "outbound_no_link".to_string(),
+            store_id: mock_store_a().id,
+            name_link_id: mock_name_store_b().id,
+            r#type: InvoiceType::OutboundShipment,
+            status: InvoiceStatus::Picked,
+            linked_invoice_id: None, // No linked invoice
+            ..Default::default()
+        };
+
+        let outbound_line = create_outbound_line(
+            "line_no_link",
+            &outbound.id,
+            &mock_item_a().id,
+            Some("batch1"),
+            10.0,
+            1.0,
+        );
+
+        let (_, connection, _, _) = setup_all_with_data(
+            "test_no_linked_invoice",
+            MockDataInserts::all(),
+            MockData {
+                invoices: vec![outbound.clone()],
+                invoice_lines: vec![outbound_line.clone()],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        let processor = UpdateInboundInvoiceLineProcessor;
+        let record = InvoiceLineTransferProcessorRecord {
+            operation: RowActionType::Upsert,
+            invoice_id: outbound.id.clone(),
+            invoice_store_id: outbound.store_id.clone(),
+            invoice_line_id: outbound_line.id.clone(),
+            other_party_store_id: mock_store_b().id,
+        };
+
+        let result = processor.try_process_record(&connection, &record);
+        assert!(matches!(
+            result,
+            Ok(InvoiceLineTransferOutput::NoLinkedInvoice)
+        ));
     }
 }
