@@ -39,7 +39,9 @@ impl InvoiceLineTransferProcessor for UpdateInboundInvoiceLineProcessor {
 
         // Get the outbound line (may not exist if deleted)
         let outbound_line = InvoiceLineRepository::new(connection).query_one(
-            InvoiceLineFilter::new().id(EqualFilter::equal_to(&record.invoice_line_id)),
+            InvoiceLineFilter::new()
+                .id(EqualFilter::equal_to(&record.invoice_line_id))
+                .r#type(InvoiceLineType::UnallocatedStock.not_equal_to()), // Filter out placeholder lines
         )?;
 
         let outbound_invoice = match &outbound_line {
@@ -169,23 +171,24 @@ impl UpdateInboundInvoiceLineProcessor {
             _ => 0.0,
         };
 
-        let total_before_tax = match new_line.r#type {
-            // Service lines don't work in packs
-            InvoiceLineType::Service => new_line.total_before_tax,
-            _ => new_line.cost_price_per_pack * new_line.number_of_packs,
-        };
-
         new_line.id = uuid();
         new_line.invoice_id = inbound_invoice.invoice_row.id.clone();
         new_line.r#type = match new_line.r#type {
             InvoiceLineType::StockOut => InvoiceLineType::StockIn,
             _ => new_line.r#type,
         };
-        new_line.stock_line_id = None; // Inbound creates its own stock lines
+        new_line.stock_line_id = None; // Inbound creates its own stock lines (when shipped)
         new_line.location_id = None;
         new_line.reason_option_id = None;
-        new_line.cost_price_per_pack = new_line.sell_price_per_pack; // Cost price on inbound is sell price from outbound
         new_line.linked_invoice_id = Some(outbound_line.invoice_row.id.clone());
+        new_line.cost_price_per_pack = new_line.sell_price_per_pack; // Cost price on inbound is sell price from outbound
+
+        let total_before_tax = match new_line.r#type {
+            // Service lines don't work in packs
+            InvoiceLineType::Service => new_line.total_before_tax,
+            _ => new_line.cost_price_per_pack * new_line.number_of_packs,
+        };
+
         new_line.total_before_tax = total_before_tax;
         new_line.total_after_tax =
             calculate_total_after_tax(new_line.total_before_tax, new_line.tax_percentage);
