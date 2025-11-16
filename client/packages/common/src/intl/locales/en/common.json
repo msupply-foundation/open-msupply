@@ -2211,6 +2211,7 @@
   "preference.excludeTransfers": "Exclude transfers",
   "preference.firstThresholdForExpiringItems": "First threshold for expiring items",
   "preference.genderOptions": "Gender options",
+  "preference.inboundShipmentAutoVerify": "Automatically verify inbound shipments",
   "preference.manageVaccinesInDoses": "Manage vaccines in doses",
   "preference.manageVvmStatusForStock": "Manage VVM status for stock",
   "preference.numberOfMonthsThresholdToShowLowStockAlertsForProducts": "Number of months threshold to show low stock alerts for products",
