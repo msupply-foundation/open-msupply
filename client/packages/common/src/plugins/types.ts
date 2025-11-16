@@ -1,5 +1,10 @@
-import { ColumnDef, UsePluginEvents } from '@openmsupply-client/common';
 import {
+  ColumnDef,
+  ColumnDefinition,
+  UsePluginEvents,
+} from '@openmsupply-client/common';
+import {
+  MasterListRowFragment,
   RequestFragment,
   RequestLineFragment,
   StockLineRowFragment,
@@ -45,6 +50,12 @@ export type Plugins = {
     detailPanelSection: React.ComponentType<{
       requisition: RequestFragment;
     }>[];
+  };
+  masterLists?: {
+    tableStateLoader: React.ComponentType<{
+      masterLists: MasterListRowFragment[];
+    }>[];
+    tableColumn: ColumnDefinition<MasterListRowFragment>[];
   };
 };
 
