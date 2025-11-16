@@ -191,7 +191,7 @@ export const GeneralTab = ({ item, isLoading }: GeneralTabProps) => {
         {plugins.item?.detailViewField && (
           <DetailSection title={t('title.catalogue-price')}>
             {plugins.item.detailViewField.map((Plugin, index) => (
-              <Plugin key={index} itemId={item.id} />
+              <Plugin key={index} item={item} />
             ))}
           </DetailSection>
         )}
