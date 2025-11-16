@@ -1,5 +1,6 @@
 import { ColumnDef, UsePluginEvents } from '@openmsupply-client/common';
 import {
+  ItemFragment,
   RequestFragment,
   RequestLineFragment,
   StockLineRowFragment,
@@ -12,7 +13,7 @@ export type Plugins = {
   prescriptionPaymentForm?: React.ComponentType<PrescriptionPaymentComponentProps>[];
   inboundShipmentAppBar?: React.ComponentType<{ shipment: InboundFragment }>[];
   item?: {
-    detailViewField: React.ComponentType<{ itemId: string }>[];
+    detailViewField: React.ComponentType<{ item: ItemFragment }>[];
   };
   dashboard?: React.ComponentType[];
   stockLine?: {
