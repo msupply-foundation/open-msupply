@@ -25,6 +25,9 @@ export const PreferenceAccordion = ({
         borderColor: 'grey.400',
         borderRadius: 1,
         boxShadow: 'none',
+        '&::before': {
+          display: 'none', // Common use case - hide the default border
+        },
         ...sx,
       }}
     >
