@@ -146,6 +146,8 @@ export enum ActivityLogNodeType {
   ItemVariantUpdateLocationType = 'ITEM_VARIANT_UPDATE_LOCATION_TYPE',
   ItemVariantUpdateManufacturer = 'ITEM_VARIANT_UPDATE_MANUFACTURER',
   ItemVariantUpdateVvmType = 'ITEM_VARIANT_UPDATE_VVM_TYPE',
+  PatientCreated = 'PATIENT_CREATED',
+  PatientUpdated = 'PATIENT_UPDATED',
   PrescriptionCreated = 'PRESCRIPTION_CREATED',
   PrescriptionDeleted = 'PRESCRIPTION_DELETED',
   PrescriptionStatusCancelled = 'PRESCRIPTION_STATUS_CANCELLED',
@@ -6866,6 +6868,7 @@ export enum PreferenceKey {
   NumberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts = 'numberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts',
   OrderInPacks = 'orderInPacks',
   PreventTransfersMonthsBeforeInitialisation = 'preventTransfersMonthsBeforeInitialisation',
+  RequisitionAutoFinalise = 'requisitionAutoFinalise',
   SecondThresholdForExpiringItems = 'secondThresholdForExpiringItems',
   SelectDestinationStoreForAnInternalOrder = 'selectDestinationStoreForAnInternalOrder',
   ShowContactTracing = 'showContactTracing',
@@ -6874,6 +6877,7 @@ export enum PreferenceKey {
   UseDaysInMonth = 'useDaysInMonth',
   UseProcurementFunctionality = 'useProcurementFunctionality',
   UseSimplifiedMobileUi = 'useSimplifiedMobileUi',
+  WarnWhenMissingRecentStocktake = 'warnWhenMissingRecentStocktake',
   WarningForExcessRequest = 'warningForExcessRequest',
 }
 
@@ -6897,6 +6901,7 @@ export enum PreferenceValueNodeType {
   CustomTranslations = 'CUSTOM_TRANSLATIONS',
   Integer = 'INTEGER',
   MultiChoice = 'MULTI_CHOICE',
+  WarnWhenMissingRecentStocktakeData = 'WARN_WHEN_MISSING_RECENT_STOCKTAKE_DATA',
 }
 
 export type PreferencesNode = {
@@ -6918,6 +6923,7 @@ export type PreferencesNode = {
   numberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts: Scalars['Int']['output'];
   orderInPacks: Scalars['Boolean']['output'];
   preventTransfersMonthsBeforeInitialisation: Scalars['Int']['output'];
+  requisitionAutoFinalise: Scalars['Boolean']['output'];
   secondThresholdForExpiringItems: Scalars['Int']['output'];
   selectDestinationStoreForAnInternalOrder: Scalars['Boolean']['output'];
   showContactTracing: Scalars['Boolean']['output'];
@@ -6926,6 +6932,7 @@ export type PreferencesNode = {
   useDaysInMonth: Scalars['Boolean']['output'];
   useProcurementFunctionality: Scalars['Boolean']['output'];
   useSimplifiedMobileUi: Scalars['Boolean']['output'];
+  warnWhenMissingRecentStocktake: WarnWhenMissingRecentStocktakeDataNode;
   warningForExcessRequest: Scalars['Boolean']['output'];
 };
 
@@ -11237,6 +11244,7 @@ export type UpsertPreferencesInput = {
   preventTransfersMonthsBeforeInitialisation?: InputMaybe<
     Scalars['Int']['input']
   >;
+  requisitionAutoFinalise?: InputMaybe<Array<BoolStorePrefInput>>;
   secondThresholdForExpiringItems?: InputMaybe<Array<IntegerStorePrefInput>>;
   selectDestinationStoreForAnInternalOrder?: InputMaybe<
     Array<BoolStorePrefInput>
@@ -11247,6 +11255,9 @@ export type UpsertPreferencesInput = {
   useDaysInMonth?: InputMaybe<Scalars['Boolean']['input']>;
   useProcurementFunctionality?: InputMaybe<Array<BoolStorePrefInput>>;
   useSimplifiedMobileUi?: InputMaybe<Array<BoolStorePrefInput>>;
+  warnWhenMissingRecentStocktake?: InputMaybe<
+    Array<WarnWhenMissingRecentStocktakeInput>
+  >;
   warningForExcessRequest?: InputMaybe<Scalars['Boolean']['input']>;
 };
 
@@ -11585,6 +11596,24 @@ export type VvmstatusNode = {
 };
 
 export type VvmstatusesResponse = VvmstatusConnector;
+
+export type WarnWhenMissingRecentStocktakeDataInput = {
+  enabled: Scalars['Boolean']['input'];
+  maxAge: Scalars['Int']['input'];
+  minItems: Scalars['Int']['input'];
+};
+
+export type WarnWhenMissingRecentStocktakeDataNode = {
+  __typename: 'WarnWhenMissingRecentStocktakeDataNode';
+  enabled: Scalars['Boolean']['output'];
+  maxAge: Scalars['Int']['output'];
+  minItems: Scalars['Int']['output'];
+};
+
+export type WarnWhenMissingRecentStocktakeInput = {
+  storeId: Scalars['String']['input'];
+  value: WarnWhenMissingRecentStocktakeDataInput;
+};
 
 export type WarningNode = {
   __typename: 'WarningNode';
