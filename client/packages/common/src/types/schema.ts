@@ -9314,6 +9314,7 @@ export type StockLineConnector = {
 };
 
 export type StockLineFilterInput = {
+  code?: InputMaybe<StringFilterInput>;
   expiryDate?: InputMaybe<DateFilterInput>;
   hasPacksInStore?: InputMaybe<Scalars['Boolean']['input']>;
   id?: InputMaybe<EqualFilterStringInput>;
@@ -9325,6 +9326,7 @@ export type StockLineFilterInput = {
   location?: InputMaybe<LocationFilterInput>;
   locationId?: InputMaybe<EqualFilterStringInput>;
   masterList?: InputMaybe<MasterListFilterInput>;
+  name?: InputMaybe<StringFilterInput>;
   search?: InputMaybe<StringFilterInput>;
   storeId?: InputMaybe<EqualFilterStringInput>;
   vvmStatusId?: InputMaybe<EqualFilterStringInput>;
