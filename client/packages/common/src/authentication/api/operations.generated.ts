@@ -263,6 +263,8 @@ export type PreferencesQuery = {
     useDaysInMonth: boolean;
     useProcurementFunctionality: boolean;
     useSimplifiedMobileUi: boolean;
+    expiredStockPreventIssue: boolean;
+    expiredStockIssueThreshold: number;
     warningForExcessRequest: boolean;
     warnWhenMissingRecentStocktake: {
       __typename: 'WarnWhenMissingRecentStocktakeDataNode';
@@ -500,6 +502,8 @@ export const PreferencesDocument = gql`
       useDaysInMonth
       useProcurementFunctionality
       useSimplifiedMobileUi
+      expiredStockPreventIssue
+      expiredStockIssueThreshold
       warnWhenMissingRecentStocktake {
         enabled
         maxAge
