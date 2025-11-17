@@ -124,7 +124,7 @@ function getForecastingPropertiesForLanguage(language: string) {
       propertyId: SUPPLY_INTERVAL_KEY,
       key: SUPPLY_INTERVAL_KEY,
       name: translations['SUPPLY_INTERVAL_KEY'],
-      valueType: PropertyNodeValueType.Integer,
+      valueType: PropertyNodeValueType.Float,
       allowedValues: null,
       remoteEditable: false,
     },
