@@ -86,7 +86,6 @@ export const DetailView = () => {
   const { plugins } = usePluginProvider();
   const isFiltered = !!itemFilter || on;
 
-  // TODO check correct supplier data and type with supply levels
   const columns = useRequestColumns();
 
   const { table, selectedRows } = useNonPaginatedMaterialTable({
