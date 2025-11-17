@@ -14,20 +14,19 @@ use crate::{
 };
 use repository::{InvoiceLineRow, InvoiceRow, InvoiceStatus, ItemRow, StorageConnection};
 
+pub struct UpdateStockOutLineValidationResult {
+    pub line: InvoiceLineRow,
+    pub item: ItemRow,
+    pub batch_pair: BatchPair,
+    pub invoice: InvoiceRow,
+    pub adjusted_input: UpdateStockOutLine,
+}
+
 pub fn validate(
     ctx: &ServiceContext,
     input: UpdateStockOutLine,
     store_id: &str,
-) -> Result<
-    (
-        InvoiceLineRow,
-        ItemRow,
-        BatchPair,
-        InvoiceRow,
-        UpdateStockOutLine,
-    ),
-    UpdateStockOutLineError,
-> {
+) -> Result<UpdateStockOutLineValidationResult, UpdateStockOutLineError> {
     use UpdateStockOutLineError::*;
     let ServiceContext { connection, .. } = ctx;
 
@@ -119,13 +118,13 @@ pub fn validate(
         }
     }
 
-    Ok((
-        line.invoice_line_row,
+    Ok(UpdateStockOutLineValidationResult {
+        line: line.invoice_line_row,
         item,
         batch_pair,
         invoice,
         adjusted_input,
-    ))
+    })
 }
 
 fn check_batch_exists_option(

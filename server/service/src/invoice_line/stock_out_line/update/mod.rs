@@ -1,7 +1,10 @@
 use super::StockOutType;
 use crate::{
     invoice::update_picked_date::{update_picked_date, UpdatePickedDateError},
-    invoice_line::{query::get_invoice_line, ShipmentTaxUpdate},
+    invoice_line::{
+        query::get_invoice_line,
+        stock_out_line::update::validate::UpdateStockOutLineValidationResult, ShipmentTaxUpdate,
+    },
     service_provider::ServiceContext,
 };
 use repository::{
@@ -49,6 +52,7 @@ pub enum UpdateStockOutLineError {
     LineDoesNotReferenceStockLine,
     BatchIsOnHold,
     UpdatedLineDoesNotExist,
+    CannotIssueMoreThanApprovedQuantity(String),
     StockLineAlreadyExistsInInvoice(String),
     AutoPickFailed(String),
     ReductionBelowZero {
@@ -67,8 +71,13 @@ pub fn update_stock_out_line(
     let updated_line = ctx
         .connection
         .transaction_sync(|connection| {
-            let (line, item, batch_pair, invoice, adjusted_input) =
-                validate(ctx, input, &ctx.store_id)?;
+            let UpdateStockOutLineValidationResult {
+                line,
+                item,
+                batch_pair,
+                invoice,
+                adjusted_input,
+            } = validate(ctx, input, &ctx.store_id)?;
 
             let GenerateResult {
                 update_line,
