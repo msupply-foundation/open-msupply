@@ -74,6 +74,7 @@
   "button.export": "Export",
   "button.export-or-print": "Export/Print",
   "button.export-to-excel": "Export to Excel",
+  "button.go-to-stocktakes": "Go to Stocktakes",
   "button.history": "History",
   "button.hiv": "HIV",
   "button.import": "Import",
@@ -2517,9 +2518,8 @@
   "warning.field-not-parsed": "{{field}} not parsed",
   "warning.foreign-exchange-rate-different": "This rate is not the same as the currency.",
   "warning.high-number-records-to-sync": "A high number of records are being synced. This may take longer than usual.",
+  "warning.insufficient-recent-stocktake-items": "You have not completed stocktake(s) containing at least {{ minItems }} items within the last {{maxAge}} days. Your stock levels may not be accurate. Are you sure that you want to continue?",
   "warning.manual-store-requisition": "Entering a requisition for this store may result in duplicates if the store also submits an Internal Order.",
   "warning.nothing-to-supply": "Nothing left to supply!",
-  "warning.requested-exceeds-suggested": "Your requested quantity is higher than the suggested",
-  "warning.insufficient-recent-stocktake-items": "You have not completed stocktake(s) containing at least {{ minItems }} items within the last {{maxAge}} days. Your stock levels may not be accurate. Are you sure that you want to continue?",
-  "button.go-to-stocktakes": "Go to Stocktakes"
+  "warning.requested-exceeds-suggested": "Your requested quantity is higher than the suggested"
 }
