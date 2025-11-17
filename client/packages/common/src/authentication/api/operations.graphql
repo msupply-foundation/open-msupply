@@ -213,6 +213,8 @@ query preferences($storeId: String!) {
     useDaysInMonth
     useProcurementFunctionality
     useSimplifiedMobileUi
+    expiredStockPreventIssue
+    expiredStockIssueThreshold
     warnWhenMissingRecentStocktake {
       enabled
       maxAge

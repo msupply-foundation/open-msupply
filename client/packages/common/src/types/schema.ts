@@ -155,7 +155,6 @@ export enum ActivityLogNodeType {
   PrescriptionStatusVerified = 'PRESCRIPTION_STATUS_VERIFIED',
   ProgramCreated = 'PROGRAM_CREATED',
   ProgramUpdated = 'PROGRAM_UPDATED',
-  PropertyUpdated = 'PROPERTY_UPDATED',
   PurchaseOrderConfirmed = 'PURCHASE_ORDER_CONFIRMED',
   PurchaseOrderCreated = 'PURCHASE_ORDER_CREATED',
   PurchaseOrderDeleted = 'PURCHASE_ORDER_DELETED',
@@ -6864,6 +6863,7 @@ export enum PreferenceKey {
   ExpiredStockPreventIssue = 'expiredStockPreventIssue',
   FirstThresholdForExpiringItems = 'firstThresholdForExpiringItems',
   GenderOptions = 'genderOptions',
+  InboundShipmentAutoVerify = 'inboundShipmentAutoVerify',
   ManageVaccinesInDoses = 'manageVaccinesInDoses',
   ManageVvmStatusForStock = 'manageVvmStatusForStock',
   NumberOfMonthsThresholdToShowLowStockAlertsForProducts = 'numberOfMonthsThresholdToShowLowStockAlertsForProducts',
@@ -6921,6 +6921,7 @@ export type PreferencesNode = {
   expiredStockPreventIssue: Scalars['Boolean']['output'];
   firstThresholdForExpiringItems: Scalars['Int']['output'];
   genderOptions: Array<GenderTypeNode>;
+  inboundShipmentAutoVerify: Scalars['Boolean']['output'];
   manageVaccinesInDoses: Scalars['Boolean']['output'];
   manageVvmStatusForStock: Scalars['Boolean']['output'];
   numberOfMonthsThresholdToShowLowStockAlertsForProducts: Scalars['Int']['output'];
@@ -11240,6 +11241,7 @@ export type UpsertPreferencesInput = {
   expiredStockPreventIssue?: InputMaybe<Scalars['Boolean']['input']>;
   firstThresholdForExpiringItems?: InputMaybe<Array<IntegerStorePrefInput>>;
   genderOptions?: InputMaybe<Array<GenderTypeNode>>;
+  inboundShipmentAutoVerify?: InputMaybe<Array<BoolStorePrefInput>>;
   manageVaccinesInDoses?: InputMaybe<Array<BoolStorePrefInput>>;
   manageVvmStatusForStock?: InputMaybe<Array<BoolStorePrefInput>>;
   numberOfMonthsThresholdToShowLowStockAlertsForProducts?: InputMaybe<
