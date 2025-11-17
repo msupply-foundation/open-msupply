@@ -13,7 +13,6 @@ import {
   useIntlUtils,
   useNotification,
   ObjUtils,
-  Tooltip,
 } from '@openmsupply-client/common';
 import { useName } from '@openmsupply-client/system/src/Name/api/hooks/';
 import { useConfigureCustomProperties } from '../api/hooks/settings/useConfigureNameProperties';
@@ -164,27 +163,17 @@ export const SupplyLevelModal = ({
                     </Typography>
                   )}
                 </Typography>
-                <Tooltip
-                  title={
-                    isInUse
-                      ? t('messages.supply-level-in-use')
-                      : t('label.delete-supply-level')
-                  }
-                >
-                  <span>
-                    <IconButton
-                      icon={<DeleteIcon />}
-                      label={t('label.delete-supply-level')}
-                      onClick={() => handleDeleteSupplyLevel(supplyLevel)}
-                      disabled={isInUse}
-                      sx={{
-                        '&.Mui-disabled': {
-                          opacity: 0.5,
-                        },
-                      }}
-                    />
-                  </span>
-                </Tooltip>
+                <IconButton
+                  icon={<DeleteIcon />}
+                  label={t('label.delete-supply-level')}
+                  onClick={() => handleDeleteSupplyLevel(supplyLevel)}
+                  disabled={isInUse}
+                  sx={{
+                    '&.Mui-disabled': {
+                      opacity: 0.5,
+                    },
+                  }}
+                />
               </Box>
             );
           })
