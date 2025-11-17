@@ -155,6 +155,7 @@ export enum ActivityLogNodeType {
   PrescriptionStatusVerified = 'PRESCRIPTION_STATUS_VERIFIED',
   ProgramCreated = 'PROGRAM_CREATED',
   ProgramUpdated = 'PROGRAM_UPDATED',
+  PropertyUpdated = 'PROPERTY_UPDATED',
   PurchaseOrderConfirmed = 'PURCHASE_ORDER_CONFIRMED',
   PurchaseOrderCreated = 'PURCHASE_ORDER_CREATED',
   PurchaseOrderDeleted = 'PURCHASE_ORDER_DELETED',
@@ -6878,6 +6879,7 @@ export enum PreferenceKey {
   UseDaysInMonth = 'useDaysInMonth',
   UseProcurementFunctionality = 'useProcurementFunctionality',
   UseSimplifiedMobileUi = 'useSimplifiedMobileUi',
+  WarnWhenMissingRecentStocktake = 'warnWhenMissingRecentStocktake',
   WarningForExcessRequest = 'warningForExcessRequest',
 }
 
@@ -6901,6 +6903,7 @@ export enum PreferenceValueNodeType {
   CustomTranslations = 'CUSTOM_TRANSLATIONS',
   Integer = 'INTEGER',
   MultiChoice = 'MULTI_CHOICE',
+  WarnWhenMissingRecentStocktakeData = 'WARN_WHEN_MISSING_RECENT_STOCKTAKE_DATA',
 }
 
 export type PreferencesNode = {
@@ -6933,6 +6936,7 @@ export type PreferencesNode = {
   useDaysInMonth: Scalars['Boolean']['output'];
   useProcurementFunctionality: Scalars['Boolean']['output'];
   useSimplifiedMobileUi: Scalars['Boolean']['output'];
+  warnWhenMissingRecentStocktake: WarnWhenMissingRecentStocktakeDataNode;
   warningForExcessRequest: Scalars['Boolean']['output'];
 };
 
@@ -11259,6 +11263,9 @@ export type UpsertPreferencesInput = {
   useDaysInMonth?: InputMaybe<Scalars['Boolean']['input']>;
   useProcurementFunctionality?: InputMaybe<Array<BoolStorePrefInput>>;
   useSimplifiedMobileUi?: InputMaybe<Array<BoolStorePrefInput>>;
+  warnWhenMissingRecentStocktake?: InputMaybe<
+    Array<WarnWhenMissingRecentStocktakeInput>
+  >;
   warningForExcessRequest?: InputMaybe<Scalars['Boolean']['input']>;
 };
 
@@ -11597,6 +11604,24 @@ export type VvmstatusNode = {
 };
 
 export type VvmstatusesResponse = VvmstatusConnector;
+
+export type WarnWhenMissingRecentStocktakeDataInput = {
+  enabled: Scalars['Boolean']['input'];
+  maxAge: Scalars['Int']['input'];
+  minItems: Scalars['Int']['input'];
+};
+
+export type WarnWhenMissingRecentStocktakeDataNode = {
+  __typename: 'WarnWhenMissingRecentStocktakeDataNode';
+  enabled: Scalars['Boolean']['output'];
+  maxAge: Scalars['Int']['output'];
+  minItems: Scalars['Int']['output'];
+};
+
+export type WarnWhenMissingRecentStocktakeInput = {
+  storeId: Scalars['String']['input'];
+  value: WarnWhenMissingRecentStocktakeDataInput;
+};
 
 export type WarningNode = {
   __typename: 'WarningNode';

@@ -56,7 +56,7 @@ pub fn batch_stocktake(
             let mutations_processor = BatchMutationsProcessor::new(ctx);
 
             let (has_errors, result) = mutations_processor
-                .do_mutations_with_user_id(input.insert_stocktake, insert_stocktake);
+                .do_mutations(input.insert_stocktake, insert_stocktake);
             results.insert_stocktake = result;
             if has_errors && !continue_on_error {
                 return Err(WithDBError::err(results));
@@ -84,7 +84,7 @@ pub fn batch_stocktake(
             }
 
             let (has_errors, result) = mutations_processor
-                .do_mutations_with_user_id(input.update_stocktake, update_stocktake);
+                .do_mutations(input.update_stocktake, update_stocktake);
             results.update_stocktake = result;
             if has_errors && !continue_on_error {
                 return Err(WithDBError::err(results));

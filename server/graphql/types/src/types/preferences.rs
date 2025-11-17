@@ -1,6 +1,9 @@
 use std::collections::BTreeMap;
 
-use crate::types::patient::GenderTypeNode;
+use crate::types::{
+    patient::GenderTypeNode,
+    warn_when_missing_recent_stocktake::WarnWhenMissingRecentStocktakeDataNode,
+};
 use async_graphql::*;
 use repository::StorageConnection;
 use service::preference::{preferences::PreferenceProvider, Preference, PreferenceDescription};
@@ -116,6 +119,10 @@ impl PreferencesNode {
         self.load_preference(&self.preferences.requisition_auto_finalise)
     }
 
+    pub async fn inbound_shipment_auto_verify(&self) -> Result<bool> {
+        self.load_preference(&self.preferences.inbound_shipment_auto_verify)
+    }
+
     pub async fn can_create_internal_order_from_a_requisition(&self) -> Result<bool> {
         self.load_preference(
             &self
@@ -158,6 +165,14 @@ impl PreferencesNode {
 
     pub async fn second_threshold_for_expiring_items(&self) -> Result<i32> {
         self.load_preference(&self.preferences.second_threshold_for_expiring_items)
+    }
+
+    pub async fn warn_when_missing_recent_stocktake(
+        &self,
+    ) -> Result<WarnWhenMissingRecentStocktakeDataNode> {
+        Ok(WarnWhenMissingRecentStocktakeDataNode::from_domain(
+            self.load_preference(&self.preferences.warn_when_missing_recent_stocktake)?,
+        ))
     }
 }
 
@@ -230,6 +245,7 @@ pub enum PreferenceKey {
     UseSimplifiedMobileUi,
     DisableManualReturns,
     RequisitionAutoFinalise,
+    InboundShipmentAutoVerify,
     WarningForExcessRequest,
     CanCreateInternalOrderFromARequisition,
     SelectDestinationStoreForAnInternalOrder,
@@ -237,6 +253,7 @@ pub enum PreferenceKey {
     NumberOfMonthsThresholdToShowLowStockAlertsForProducts,
     FirstThresholdForExpiringItems,
     SecondThresholdForExpiringItems,
+    WarnWhenMissingRecentStocktake,
 }
 
 #[derive(Enum, Copy, Clone, Debug, Eq, PartialEq)]
@@ -253,4 +270,5 @@ pub enum PreferenceValueNodeType {
     Integer,
     MultiChoice,
     CustomTranslations, // Specific type for CustomTranslations preference
+    WarnWhenMissingRecentStocktakeData,
 }

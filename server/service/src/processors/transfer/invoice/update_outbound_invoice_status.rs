@@ -1,11 +1,9 @@
-use repository::{
-    InvoiceRow, InvoiceRowRepository, InvoiceStatus, InvoiceType, RepositoryError,
-    StorageConnection,
-};
+use repository::{InvoiceRow, InvoiceRowRepository, InvoiceStatus, InvoiceType, RepositoryError};
 
 use crate::{
     activity_log::{log_type_from_invoice_status, system_activity_log_entry},
     processors::transfer::invoice::{InvoiceTransferOutput, Operation},
+    service_provider::ServiceContext,
 };
 
 use super::{InvoiceTransferProcessor, InvoiceTransferProcessorRecord};
@@ -35,7 +33,7 @@ impl InvoiceTransferProcessor for UpdateOutboundInvoiceStatusProcessor {
     ///    and status cannot be changed backwards
     fn try_process_record(
         &self,
-        connection: &StorageConnection,
+        ctx: &ServiceContext,
         record_for_processing: &InvoiceTransferProcessorRecord,
     ) -> Result<InvoiceTransferOutput, RepositoryError> {
         // Check can execute
@@ -100,10 +98,10 @@ impl InvoiceTransferProcessor for UpdateOutboundInvoiceStatusProcessor {
             ..outbound_invoice.invoice_row.clone()
         };
 
-        InvoiceRowRepository::new(connection).upsert_one(&updated_outbound_invoice)?;
+        InvoiceRowRepository::new(&ctx.connection).upsert_one(&updated_outbound_invoice)?;
 
         system_activity_log_entry(
-            connection,
+            &ctx.connection,
             log_type_from_invoice_status(&updated_outbound_invoice.status, false),
             &updated_outbound_invoice.store_id,
             &updated_outbound_invoice.id,
