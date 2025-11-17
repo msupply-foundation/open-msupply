@@ -1,15 +1,15 @@
 import { Formatter, useQuery } from '@openmsupply-client/common';
-import { useRequestRequistionGraphql } from '../useRequestRequistionGraphql';
+import { useRequestRequisitionGraphql } from '../useRequestRequisitionGraphql';
 import { RECENT_STOCKTAKES } from './keys';
 
 export const useRecentStocktakes = (
   enabled: boolean,
   maxAgeInDays?: number
 ) => {
-  const { api, storeId } = useRequestRequistionGraphql();
+  const { api, storeId } = useRequestRequisitionGraphql();
 
   const startDate = Formatter.naiveDate(
-    maxAgeInDays
+    maxAgeInDays !== undefined
       ? new Date(Date.now() - maxAgeInDays * 24 * 60 * 60 * 1000)
       : undefined
   );
