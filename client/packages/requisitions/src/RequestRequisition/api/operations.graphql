@@ -587,8 +587,7 @@ mutation updateIndicatorValue(
 query recentStocktakeItems($storeId: String!, $startDate: NaiveDate!) {
   stocktakes(
     storeId: $storeId
-    filter: { stocktakeDate: { afterOrEqualTo: $startDate } }
-    status: { equalTo: FINALISED }
+    filter: { stocktakeDate: { afterOrEqualTo: $startDate }, status: { equalTo: FINALISED } }
   ) {
     __typename
     ... on StocktakeConnector {
