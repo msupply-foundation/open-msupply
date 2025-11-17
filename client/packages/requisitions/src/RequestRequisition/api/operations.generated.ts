@@ -1592,7 +1592,10 @@ export const RecentStocktakeItemsDocument = gql`
   query recentStocktakeItems($storeId: String!, $startDate: NaiveDate!) {
     stocktakes(
       storeId: $storeId
-      filter: { stocktakeDate: { afterOrEqualTo: $startDate } }
+      filter: {
+        stocktakeDate: { afterOrEqualTo: $startDate }
+        status: { equalTo: FINALISED }
+      }
     ) {
       __typename
       ... on StocktakeConnector {
