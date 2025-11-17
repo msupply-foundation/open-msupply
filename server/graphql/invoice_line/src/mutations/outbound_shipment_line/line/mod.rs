@@ -122,3 +122,26 @@ impl ItemDoesNotMatchStockLine {
         "Item does not match stock line"
     }
 }
+
+pub struct CannotIssueMoreThanApprovedQuantity(pub String);
+#[Object]
+impl CannotIssueMoreThanApprovedQuantity {
+    pub async fn description(&self) -> &str {
+        "Cannot issue more than approved quantity"
+    }
+
+    pub async fn line(&self, ctx: &Context<'_>) -> Result<InvoiceLineNode> {
+        let service_provider = ctx.service_provider();
+        let service_context = service_provider.basic_context()?;
+
+        let invoice_line = service_provider
+            .invoice_line_service
+            .get_invoice_line(&service_context, &self.0)?
+            .ok_or(StandardGraphqlError::InternalError(format!(
+                "cannot get invoice_line {}",
+                &self.0
+            )))?;
+
+        Ok(InvoiceLineNode::from_domain(invoice_line))
+    }
+}

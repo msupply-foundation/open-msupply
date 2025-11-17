@@ -1,5 +1,8 @@
+use super::{
+    CannotIssueMoreThanApprovedQuantity, LocationIsOnHold, LocationNotFound,
+    NotEnoughStockForReduction, StockLineAlreadyExistsInInvoice, StockLineIsOnHold,
+};
 use async_graphql::*;
-
 use graphql_core::generic_inputs::TaxInput;
 use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::{
@@ -7,18 +10,12 @@ use graphql_core::{
     ContextExt,
 };
 use graphql_types::types::InvoiceLineNode;
-
 use repository::InvoiceLine;
 use service::auth::{Resource, ResourceAccessRequest};
 use service::invoice_line::stock_out_line::{
     StockOutType, UpdateStockOutLine as ServiceInput, UpdateStockOutLineError as ServiceError,
 };
 use service::invoice_line::ShipmentTaxUpdate;
-
-use super::{
-    LocationIsOnHold, LocationNotFound, NotEnoughStockForReduction,
-    StockLineAlreadyExistsInInvoice, StockLineIsOnHold,
-};
 
 #[derive(InputObject)]
 #[graphql(name = "UpdateOutboundShipmentLineInput")]
@@ -86,6 +83,7 @@ pub enum UpdateErrorInterface {
     LocationNotFound(LocationNotFound),
     StockLineIsOnHold(StockLineIsOnHold),
     NotEnoughStockForReduction(NotEnoughStockForReduction),
+    CannotIssueMoreThanApprovedQuantity(CannotIssueMoreThanApprovedQuantity),
 }
 
 impl UpdateInput {
@@ -168,6 +166,11 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
                     stock_line_id,
                     line_id: Some(line_id),
                 },
+            ))
+        }
+        CannotIssueMoreThanApprovedQuantity(line_id) => {
+            return Ok(UpdateErrorInterface::CannotIssueMoreThanApprovedQuantity(
+                super::CannotIssueMoreThanApprovedQuantity(line_id),
             ))
         }
         // Standard Graphql Errors
