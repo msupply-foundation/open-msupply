@@ -935,6 +935,25 @@ export type UpdateIndicatorValueMutation = {
       };
 };
 
+export type RecentStocktakeItemsQueryVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  startDate: Types.Scalars['NaiveDate']['input'];
+}>;
+
+export type RecentStocktakeItemsQuery = {
+  __typename: 'Queries';
+  stocktakes: {
+    __typename: 'StocktakeConnector';
+    nodes: Array<{
+      __typename: 'StocktakeNode';
+      lines: {
+        __typename: 'StocktakeLineConnector';
+        nodes: Array<{ __typename: 'StocktakeLineNode'; itemId: string }>;
+      };
+    }>;
+  };
+};
+
 export const RequestRowFragmentDoc = gql`
   fragment RequestRow on RequisitionNode {
     colour
@@ -1569,6 +1588,28 @@ export const UpdateIndicatorValueDocument = gql`
     }
   }
 `;
+export const RecentStocktakeItemsDocument = gql`
+  query recentStocktakeItems($storeId: String!, $startDate: NaiveDate!) {
+    stocktakes(
+      storeId: $storeId
+      filter: {
+        stocktakeDate: { afterOrEqualTo: $startDate }
+        status: { equalTo: FINALISED }
+      }
+    ) {
+      __typename
+      ... on StocktakeConnector {
+        nodes {
+          lines {
+            nodes {
+              itemId
+            }
+          }
+        }
+      }
+    }
+  }
+`;
 
 export type SdkFunctionWrapper = <T>(
   action: (requestHeaders?: Record<string, string>) => Promise<T>,
@@ -1840,6 +1881,22 @@ export function getSdk(
           ),
         'updateIndicatorValue',
         'mutation',
+        variables
+      );
+    },
+    recentStocktakeItems(
+      variables: RecentStocktakeItemsQueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders
+    ): Promise<RecentStocktakeItemsQuery> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<RecentStocktakeItemsQuery>(
+            RecentStocktakeItemsDocument,
+            variables,
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
+        'recentStocktakeItems',
+        'query',
         variables
       );
     },
