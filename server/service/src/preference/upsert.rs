@@ -36,6 +36,7 @@ pub struct UpsertPreferences {
     pub use_simplified_mobile_ui: Option<Vec<StorePrefUpdate<bool>>>,
     pub disable_manual_returns: Option<Vec<StorePrefUpdate<bool>>>,
     pub requisition_auto_finalise: Option<Vec<StorePrefUpdate<bool>>>,
+    pub inbound_shipment_auto_verify: Option<Vec<StorePrefUpdate<bool>>>,
     pub can_create_internal_order_from_a_requisition: Option<Vec<StorePrefUpdate<bool>>>,
     pub select_destination_store_for_an_internal_order: Option<Vec<StorePrefUpdate<bool>>>,
     pub number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products:
@@ -74,6 +75,7 @@ pub fn upsert_preferences(
         use_simplified_mobile_ui: use_simplified_mobile_ui_input,
         disable_manual_returns: disable_manual_returns_input,
         requisition_auto_finalise: requisition_auto_finalise_input,
+        inbound_shipment_auto_verify: inbound_shipment_auto_verify_input,
         warning_for_excess_request: warning_for_excess_request_input,
         can_create_internal_order_from_a_requisition:
             can_create_internal_order_from_a_requisition_input,
@@ -112,6 +114,7 @@ pub fn upsert_preferences(
         use_simplified_mobile_ui,
         disable_manual_returns,
         requisition_auto_finalise,
+        inbound_shipment_auto_verify,
         warning_for_excess_request,
         can_create_internal_order_from_a_requisition,
         select_destination_store_for_an_internal_order,
@@ -207,6 +210,10 @@ pub fn upsert_preferences(
 
             if let Some(inputs) = requisition_auto_finalise_input {
                 upsert_store_input(connection, requisition_auto_finalise, inputs)?;
+            }
+      
+            if let Some(inputs) = inbound_shipment_auto_verify_input {
+                upsert_store_input(connection, inbound_shipment_auto_verify, inputs)?;
             }
 
             if let Some(inputs) = can_create_internal_order_from_a_requisition_input {

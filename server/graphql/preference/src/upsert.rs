@@ -60,6 +60,7 @@ pub struct UpsertPreferencesInput {
     pub use_simplified_mobile_ui: Option<Vec<BoolStorePrefInput>>,
     pub disable_manual_returns: Option<Vec<BoolStorePrefInput>>,
     pub requisition_auto_finalise: Option<Vec<BoolStorePrefInput>>,
+    pub inbound_shipment_auto_verify: Option<Vec<BoolStorePrefInput>>,
     pub can_create_internal_order_from_a_requisition: Option<Vec<BoolStorePrefInput>>,
     pub select_destination_store_for_an_internal_order: Option<Vec<BoolStorePrefInput>>,
     pub number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products:
@@ -120,6 +121,7 @@ impl UpsertPreferencesInput {
             use_simplified_mobile_ui,
             disable_manual_returns,
             requisition_auto_finalise,
+            inbound_shipment_auto_verify,
             can_create_internal_order_from_a_requisition,
             select_destination_store_for_an_internal_order,
             number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products,
@@ -171,6 +173,9 @@ impl UpsertPreferencesInput {
                 .as_ref()
                 .map(|i| i.iter().map(|i| i.to_domain()).collect()),
             requisition_auto_finalise: requisition_auto_finalise
+                .as_ref()
+                .map(|i| i.iter().map(|i| i.to_domain()).collect()),
+            inbound_shipment_auto_verify: inbound_shipment_auto_verify
                 .as_ref()
                 .map(|i| i.iter().map(|i| i.to_domain()).collect()),
             can_create_internal_order_from_a_requisition:

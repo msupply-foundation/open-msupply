@@ -111,6 +111,10 @@ impl PreferencesNode {
         self.load_preference(&self.preferences.requisition_auto_finalise)
     }
 
+    pub async fn inbound_shipment_auto_verify(&self) -> Result<bool> {
+        self.load_preference(&self.preferences.inbound_shipment_auto_verify)
+    }
+
     pub async fn can_create_internal_order_from_a_requisition(&self) -> Result<bool> {
         self.load_preference(
             &self
@@ -231,6 +235,7 @@ pub enum PreferenceKey {
     UseSimplifiedMobileUi,
     DisableManualReturns,
     RequisitionAutoFinalise,
+    InboundShipmentAutoVerify,
     WarningForExcessRequest,
     CanCreateInternalOrderFromARequisition,
     SelectDestinationStoreForAnInternalOrder,

@@ -63,6 +63,34 @@ pub fn activity_log_entry(
     Ok(())
 }
 
+/// Use instead of `activity_log_entry()` to provide the store_id if the ctx doesn't include it (e.g. system or basic context used in changelog processors)
+pub fn activity_log_entry_with_store(
+    ctx: &ServiceContext,
+    log_type: ActivityLogType,
+    record_id: Option<String>,
+    changed_from: Option<String>,
+    changed_to: Option<String>,
+    store_id: Option<String>,
+) -> Result<(), RepositoryError> {
+    let log = &ActivityLogRow {
+        id: uuid(),
+        r#type: log_type,
+        user_id: if !ctx.user_id.is_empty() {
+            Some(ctx.user_id.clone())
+        } else {
+            None
+        },
+        store_id,
+        record_id,
+        datetime: Utc::now().naive_utc(),
+        changed_to,
+        changed_from,
+    };
+
+    let _change_log_id = ActivityLogRowRepository::new(&ctx.connection).insert_one(log)?;
+    Ok(())
+}
+
 pub fn activity_log_entry_with_diff(
     ctx: &ServiceContext,
     log_type: ActivityLogType,
@@ -235,7 +263,7 @@ mod test {
             .context(mock_store_a().id, "n/a".to_string())
             .unwrap();
 
-        // Test dupilcate status
+        // Test duplicate status
         service_provider
             .invoice_service
             .update_outbound_shipment(
