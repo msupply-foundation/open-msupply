@@ -78,6 +78,7 @@ export const AppBarButtons: FC<{
       maxAge: prefs.warnWhenMissingRecentStocktake?.maxAge,
     }),
     title: t('heading.are-you-sure'),
+    cancelButtonLabel: t('button.go-to-stocktakes'),
   });
 
   const handleAddRequisitionClick = () => {
@@ -87,7 +88,7 @@ export const AppBarButtons: FC<{
         .build();
       getConfirmation({
         onConfirm: () => modalController.toggleOn(),
-        onCancel: () => setTimeout(() => navigate(stocktakePath), 300),
+        onCancel: () => setTimeout(() => navigate(stocktakePath), 50), // Delay to allow modal to close
       });
     } else {
       modalController.toggleOn();
