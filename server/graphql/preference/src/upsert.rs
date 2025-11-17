@@ -6,7 +6,7 @@ use graphql_types::types::patient::GenderTypeNode;
 use repository::GenderType;
 use service::{
     auth::{Resource, ResourceAccessRequest},
-    preference::{StorePrefUpdate, UpsertPreferences},
+    preference::{StorePrefUpdate, UpsertPreferences, WarnWhenMissingRecentStocktakeData},
 };
 
 #[derive(InputObject)]
@@ -19,6 +19,19 @@ pub struct BoolStorePrefInput {
 pub struct IntegerStorePrefInput {
     pub store_id: String,
     pub value: i32,
+}
+
+#[derive(InputObject)]
+pub struct WarnWhenMissingRecentStocktakeDataInput {
+    pub enabled: bool,
+    pub max_age: u32,
+    pub min_items: u32,
+}
+
+#[derive(InputObject)]
+pub struct WarnWhenMissingRecentStocktakeInput {
+    pub store_id: String,
+    pub value: WarnWhenMissingRecentStocktakeDataInput,
 }
 
 #[derive(InputObject)]
@@ -56,6 +69,7 @@ pub struct UpsertPreferencesInput {
         Option<Vec<IntegerStorePrefInput>>,
     pub first_threshold_for_expiring_items: Option<Vec<IntegerStorePrefInput>>,
     pub second_threshold_for_expiring_items: Option<Vec<IntegerStorePrefInput>>,
+    pub warn_when_missing_recent_stocktake: Option<Vec<WarnWhenMissingRecentStocktakeInput>>,
 }
 
 pub fn upsert_preferences(
@@ -114,6 +128,7 @@ impl UpsertPreferencesInput {
             number_of_months_threshold_to_show_low_stock_alerts_for_products,
             first_threshold_for_expiring_items,
             second_threshold_for_expiring_items,
+            warn_when_missing_recent_stocktake,
         } = self;
 
         UpsertPreferences {
@@ -185,6 +200,9 @@ impl UpsertPreferencesInput {
             second_threshold_for_expiring_items: second_threshold_for_expiring_items
                 .as_ref()
                 .map(|i| i.iter().map(|i| i.to_domain()).collect()),
+            warn_when_missing_recent_stocktake: warn_when_missing_recent_stocktake
+                .as_ref()
+                .map(|i| i.iter().map(|i| i.to_domain()).collect()),
         }
     }
 }
@@ -203,6 +221,25 @@ impl IntegerStorePrefInput {
         StorePrefUpdate {
             store_id: self.store_id.clone(),
             value: self.value,
+        }
+    }
+}
+
+impl WarnWhenMissingRecentStocktakeDataInput {
+    pub fn to_domain(&self) -> WarnWhenMissingRecentStocktakeData {
+        WarnWhenMissingRecentStocktakeData {
+            enabled: self.enabled,
+            max_age: self.max_age,
+            min_items: self.min_items,
+        }
+    }
+}
+
+impl WarnWhenMissingRecentStocktakeInput {
+    pub fn to_domain(&self) -> StorePrefUpdate<WarnWhenMissingRecentStocktakeData> {
+        StorePrefUpdate {
+            store_id: self.store_id.clone(),
+            value: self.value.to_domain(),
         }
     }
 }
