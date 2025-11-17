@@ -161,7 +161,8 @@ The simplest way to begin is by cloning (forking for now or just copy and create
 ```
 git submodule add [your-plugin-bundle-repo-url] client/packages/plugins/myPluginBundle
 ```
->   You will need to have github authentication set up to add restricted access repos from command line. [github cli](https://cli.github.com/) can conveniently set up github command line authentication access.  Other [alternative methods](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/about-authentication-to-github) are also available.
+
+> You will need to have github authentication set up to add restricted access repos from command line. [github cli](https://cli.github.com/) can conveniently set up github command line authentication access. Other [alternative methods](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/about-authentication-to-github) are also available.
 
 Note the `myPluginBundle` can be anything. The inner repository and core will be treated as two different repositories, changes in them will only be reflected in relative repositories (i.e. you can add the inner repository as local repository https://cli.github.com/in github desktop). Make sure that you don't commit the `.gitmodules` file or the files under `client/packages/plugins/{your plugin bundle name}` to the main app.
 
@@ -179,7 +180,7 @@ git submodule add [your-plugin-bundle-repo-url] -b [your-branch] client/packages
 
 This will add a branch field to the .gitmodules file in the root project dir to include a specific branch field:
 
-``` .gitmodules
+```.gitmodules
   [submodule "client/packages/plugins/myPluginBundle"]
 	path = client/packages/plugins/myPluginBundle
 	url = https://github.com/msupply-foundation/civ-plugins.git
@@ -281,6 +282,8 @@ rm -rf .gitmodules
 rm -rf client/packages/plugins/myPluginBundle/
 rm -rf .git/modules/client/packages/plugins/myPluginBundle/
 ```
+
+NOTE: When running some plugins in the backend in dev mode you may get a stack overflow error. To resolve this increase your stack size e.g. export RUST_MIN_STACK=8388608; cargo run
 
 ### Compatibility/versioning
 
