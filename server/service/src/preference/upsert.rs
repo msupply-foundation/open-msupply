@@ -1,7 +1,7 @@
 use std::collections::BTreeMap;
 
 use super::{get_preference_provider, Preference, PreferenceProvider, UpsertPreferenceError};
-use crate::service_provider::ServiceContext;
+use crate::{preference::WarnWhenMissingRecentStocktakeData, service_provider::ServiceContext};
 use repository::{GenderType, StorageConnection, TransactionError};
 
 #[derive(Debug, PartialEq, Clone)]
@@ -38,6 +38,7 @@ pub struct UpsertPreferences {
     pub use_simplified_mobile_ui: Option<Vec<StorePrefUpdate<bool>>>,
     pub disable_manual_returns: Option<Vec<StorePrefUpdate<bool>>>,
     pub requisition_auto_finalise: Option<Vec<StorePrefUpdate<bool>>>,
+    pub inbound_shipment_auto_verify: Option<Vec<StorePrefUpdate<bool>>>,
     pub can_create_internal_order_from_a_requisition: Option<Vec<StorePrefUpdate<bool>>>,
     pub select_destination_store_for_an_internal_order: Option<Vec<StorePrefUpdate<bool>>>,
     pub number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products:
@@ -46,6 +47,7 @@ pub struct UpsertPreferences {
         Option<Vec<StorePrefUpdate<i32>>>,
     pub first_threshold_for_expiring_items: Option<Vec<StorePrefUpdate<i32>>>,
     pub second_threshold_for_expiring_items: Option<Vec<StorePrefUpdate<i32>>>,
+    pub warn_when_missing_recent_stocktake: Option<Vec<StorePrefUpdate<WarnWhenMissingRecentStocktakeData>>>,
 }
 
 pub fn upsert_preferences(
@@ -77,6 +79,7 @@ pub fn upsert_preferences(
         use_simplified_mobile_ui: use_simplified_mobile_ui_input,
         disable_manual_returns: disable_manual_returns_input,
         requisition_auto_finalise: requisition_auto_finalise_input,
+        inbound_shipment_auto_verify: inbound_shipment_auto_verify_input,
         warning_for_excess_request: warning_for_excess_request_input,
         can_create_internal_order_from_a_requisition:
             can_create_internal_order_from_a_requisition_input,
@@ -88,6 +91,7 @@ pub fn upsert_preferences(
             number_of_months_threshold_to_show_low_stock_alerts_for_products_input,
         first_threshold_for_expiring_items: first_threshold_for_expiring_items_input,
         second_threshold_for_expiring_items: second_threshold_for_expiring_items_input,
+        warn_when_missing_recent_stocktake: warn_when_missing_recent_stocktake_input,
     }: UpsertPreferences,
 ) -> Result<(), UpsertPreferenceError> {
     let PreferenceProvider {
@@ -116,6 +120,7 @@ pub fn upsert_preferences(
         use_simplified_mobile_ui,
         disable_manual_returns,
         requisition_auto_finalise,
+        inbound_shipment_auto_verify,
         warning_for_excess_request,
         can_create_internal_order_from_a_requisition,
         select_destination_store_for_an_internal_order,
@@ -123,6 +128,7 @@ pub fn upsert_preferences(
         number_of_months_threshold_to_show_low_stock_alerts_for_products,
         first_threshold_for_expiring_items,
         second_threshold_for_expiring_items,
+        warn_when_missing_recent_stocktake,
     }: PreferenceProvider = get_preference_provider();
 
     ctx.connection
@@ -219,6 +225,10 @@ pub fn upsert_preferences(
             if let Some(inputs) = requisition_auto_finalise_input {
                 upsert_store_input(connection, requisition_auto_finalise, inputs)?;
             }
+      
+            if let Some(inputs) = inbound_shipment_auto_verify_input {
+                upsert_store_input(connection, inbound_shipment_auto_verify, inputs)?;
+            }
 
             if let Some(inputs) = can_create_internal_order_from_a_requisition_input {
                 upsert_store_input(
@@ -268,8 +278,14 @@ pub fn upsert_preferences(
                     input,
                 )?;
             }
-            
 
+            if let Some(input) = warn_when_missing_recent_stocktake_input {
+                           upsert_store_input(
+                    connection,
+                    warn_when_missing_recent_stocktake,
+                    input,
+                )?;
+            }
             Ok(())
 
 
