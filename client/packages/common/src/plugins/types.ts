@@ -29,7 +29,7 @@ export type Plugins = {
   requestRequisitionLine?: {
     tableStateLoader: React.ComponentType<{
       requestLines: RequestLineFragment[];
-      requisition?: RequestFragment;
+      requisition: RequestFragment;
     }>[];
     tableColumn: ColumnDef<RequestLineFragment>[];
     editViewField: React.ComponentType<{

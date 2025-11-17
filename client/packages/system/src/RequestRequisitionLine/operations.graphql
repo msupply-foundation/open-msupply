@@ -111,6 +111,7 @@ fragment Request on RequisitionNode {
     isSupplier
     isOnHold
     name
+    margin
     store {
       id
       code
