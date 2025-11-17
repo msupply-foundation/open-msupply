@@ -5,6 +5,7 @@ import {
 } from '@openmsupply-client/common';
 import {
   MasterListRowFragment,
+  ItemFragment,
   RequestFragment,
   RequestLineFragment,
   StockLineRowFragment,
@@ -17,7 +18,7 @@ export type Plugins = {
   prescriptionPaymentForm?: React.ComponentType<PrescriptionPaymentComponentProps>[];
   inboundShipmentAppBar?: React.ComponentType<{ shipment: InboundFragment }>[];
   item?: {
-    detailViewField: React.ComponentType<{ itemId: string }>[];
+    detailViewField: React.ComponentType<{ item: ItemFragment }>[];
   };
   dashboard?: React.ComponentType[];
   stockLine?: {
@@ -33,7 +34,7 @@ export type Plugins = {
   requestRequisitionLine?: {
     tableStateLoader: React.ComponentType<{
       requestLines: RequestLineFragment[];
-      requisition?: RequestFragment;
+      requisition: RequestFragment;
     }>[];
     tableColumn: ColumnDef<RequestLineFragment>[];
     editViewField: React.ComponentType<{
@@ -46,8 +47,8 @@ export type Plugins = {
       requisition: RequestFragment;
     }>[];
   };
-  requestRequisitionSidePanel?: {
-    detailPanelSection: React.ComponentType<{
+  requestRequisition?: {
+    sidePanelSection: React.ComponentType<{
       requisition: RequestFragment;
     }>[];
   };
