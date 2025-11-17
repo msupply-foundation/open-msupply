@@ -42,8 +42,8 @@ export type Plugins = {
       requisition: RequestFragment;
     }>[];
   };
-  requestRequisitionSidePanel?: {
-    detailPanelSection: React.ComponentType<{
+  requestRequisition?: {
+    sidePanelSection: React.ComponentType<{
       requisition: RequestFragment;
     }>[];
   };
