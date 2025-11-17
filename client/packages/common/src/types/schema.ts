@@ -155,6 +155,7 @@ export enum ActivityLogNodeType {
   PrescriptionStatusVerified = 'PRESCRIPTION_STATUS_VERIFIED',
   ProgramCreated = 'PROGRAM_CREATED',
   ProgramUpdated = 'PROGRAM_UPDATED',
+  PropertyUpdated = 'PROPERTY_UPDATED',
   PurchaseOrderConfirmed = 'PURCHASE_ORDER_CONFIRMED',
   PurchaseOrderCreated = 'PURCHASE_ORDER_CREATED',
   PurchaseOrderDeleted = 'PURCHASE_ORDER_DELETED',

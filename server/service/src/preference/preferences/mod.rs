@@ -30,6 +30,8 @@ pub mod disable_manual_returns;
 pub use disable_manual_returns::*;
 pub mod requisition_auto_finalise;
 pub use requisition_auto_finalise::*;
+pub mod inbound_shipment_auto_verify;
+pub use inbound_shipment_auto_verify::*;
 pub mod warning_for_excess_request;
 pub use warning_for_excess_request::*;
 pub mod can_create_internal_order_from_a_requisition;
@@ -78,6 +80,7 @@ pub struct PreferenceProvider {
     pub sort_by_vvm_status_then_expiry: SortByVvmStatusThenExpiry,
     pub use_simplified_mobile_ui: UseSimplifiedMobileUi,
     pub requisition_auto_finalise: RequisitionAutoFinalise,
+    pub inbound_shipment_auto_verify: InboundShipmentAutoVerify,
     pub disable_manual_returns: DisableManualReturns,
     pub can_create_internal_order_from_a_requisition: CanCreateInternalOrderFromARequisition,
     pub select_destination_store_for_an_internal_order: SelectDestinationStoreForAnInternalOrder,
@@ -115,6 +118,7 @@ pub fn get_preference_provider() -> PreferenceProvider {
         use_simplified_mobile_ui: UseSimplifiedMobileUi,
         disable_manual_returns: DisableManualReturns,
         requisition_auto_finalise: RequisitionAutoFinalise,
+        inbound_shipment_auto_verify: InboundShipmentAutoVerify,
         can_create_internal_order_from_a_requisition: CanCreateInternalOrderFromARequisition,
         select_destination_store_for_an_internal_order: SelectDestinationStoreForAnInternalOrder,
         number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products:

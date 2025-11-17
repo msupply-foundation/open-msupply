@@ -36,6 +36,7 @@ pub enum PrefKey {
     UseSimplifiedMobileUi,
     DisableManualReturns,
     RequisitionAutoFinalise,
+    InboundShipmentAutoVerify,
     CanCreateInternalOrderFromARequisition,
     SelectDestinationStoreForAnInternalOrder,
     NumberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts,
