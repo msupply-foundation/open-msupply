@@ -2544,5 +2544,8 @@
   "messages.skip-dose-warning": "Si vous donnez cette dose, une ou plusieurs doses précédentes seront ignorées et indiquées comme non données.",
   "log.removed": "Retiré",
   "log.patient-created": "Créé(s)",
-  "log.patient-updated": "Mis à jour"
+  "log.patient-updated": "Mis à jour",
+  "plugin.catalogue-price": "Prix catalogue",
+  "title.catalogue-price": "prix catalogue",
+  "plugin.not-essential-item": "Cet article n'est pas essentiel"
 }
