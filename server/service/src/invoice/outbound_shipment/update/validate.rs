@@ -164,19 +164,28 @@ fn validate_approved_quantities(
         .collect();
 
     let mut item_quantities: HashMap<String, f64> = HashMap::new();
-    let mut invalid_lines = Vec::new();
+    let mut lines_by_item: HashMap<String, Vec<_>> = HashMap::new();
 
-    for invoice_line in invoice_lines {
+    for invoice_line in &invoice_lines {
         let line_row = &invoice_line.invoice_line_row;
         let item_id = &line_row.item_link_id;
         let line_quantity = line_row.number_of_packs * line_row.pack_size;
 
-        let total_quantity = item_quantities.entry(item_id.clone()).or_insert(0.0);
-        *total_quantity += line_quantity;
+        *item_quantities.entry(item_id.clone()).or_insert(0.0) += line_quantity;
 
-        if let Some(&approved_quantity) = approved_quantities.get(item_id) {
-            if *total_quantity > approved_quantity {
-                invalid_lines.push(invoice_line.clone());
+        lines_by_item
+            .entry(item_id.clone())
+            .or_default()
+            .push(invoice_line.clone());
+    }
+
+    let mut invalid_lines = Vec::new();
+    for (item_id, total_quantity) in item_quantities {
+        if let Some(&approved_quantity) = approved_quantities.get(&item_id) {
+            if total_quantity > approved_quantity {
+                if let Some(lines) = lines_by_item.get(&item_id) {
+                    invalid_lines.extend(lines.clone());
+                }
             }
         }
     }

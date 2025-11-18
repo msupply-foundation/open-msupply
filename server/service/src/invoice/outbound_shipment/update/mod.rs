@@ -173,19 +173,7 @@ impl UpdateOutboundShipment {
 
 #[cfg(test)]
 mod test {
-    use chrono::NaiveDate;
-    use repository::{
-        mock::{
-            mock_inbound_shipment_a, mock_item_a, mock_name_a, mock_outbound_shipment_b,
-            mock_outbound_shipment_c, mock_outbound_shipment_on_hold,
-            mock_outbound_shipment_picked, mock_store_a, mock_store_c, MockData, MockDataInserts,
-        },
-        test_db::setup_all_with_data,
-        ActivityLogRowRepository, ActivityLogType, InvoiceLineRow, InvoiceLineRowRepository,
-        InvoiceLineType, InvoiceRow, InvoiceRowRepository, InvoiceStatus, InvoiceType, NameRow,
-        NameStoreJoinRow, StockLineRow, StockLineRowRepository,
-    };
-
+    use super::UpdateOutboundShipmentError;
     use crate::{
         invoice::outbound_shipment::update::{
             UpdateOutboundShipment, UpdateOutboundShipmentStatus,
@@ -194,8 +182,21 @@ mod test {
         service_provider::ServiceProvider,
         NullableUpdate,
     };
-
-    use super::UpdateOutboundShipmentError;
+    use chrono::{NaiveDate, Utc};
+    use repository::{
+        mock::{
+            mock_inbound_shipment_a, mock_item_a, mock_item_b, mock_name_a, mock_name_store_a,
+            mock_outbound_shipment_b, mock_outbound_shipment_c, mock_outbound_shipment_on_hold,
+            mock_outbound_shipment_picked, mock_stock_line_a, mock_stock_line_b,
+            mock_stock_line_si_d, mock_store_a, mock_store_c, MockData, MockDataInserts,
+        },
+        test_db::setup_all_with_data,
+        ActivityLogRowRepository, ActivityLogType, ApprovalStatusType, EqualFilter,
+        InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRow, InvoiceLineRowRepository,
+        InvoiceLineType, InvoiceRow, InvoiceRowRepository, InvoiceStatus, InvoiceType, NameRow,
+        NameStoreJoinRow, RequisitionLineRow, RequisitionRow, RequisitionStatus, RequisitionType,
+        StockLineRow, StockLineRowRepository, StorePreferenceRow, StorePreferenceRowRepository,
+    };
 
     type ServiceError = UpdateOutboundShipmentError;
 
@@ -235,12 +236,107 @@ mod test {
             }
         }
 
+        fn requisition_one() -> RequisitionRow {
+            RequisitionRow {
+                id: "requisition_one".to_string(),
+                requisition_number: 1,
+                store_id: mock_store_a().id,
+                name_link_id: "name_a".to_string(),
+                r#type: RequisitionType::Response,
+                status: RequisitionStatus::New,
+                approval_status: Some(ApprovalStatusType::Approved),
+                created_datetime: Utc::now().naive_utc(),
+                max_months_of_stock: 3.0,
+                program_id: Some("program_a".to_string()),
+                ..Default::default()
+            }
+        }
+
+        fn requisition_line_one_a() -> RequisitionLineRow {
+            RequisitionLineRow {
+                id: "requisition_line_one_a".to_string(),
+                requisition_id: "requisition_one".to_string(),
+                item_link_id: mock_item_a().id,
+                requested_quantity: 20.0,
+                approved_quantity: 10.0,
+                ..Default::default()
+            }
+        }
+
+        fn requisition_line_b() -> RequisitionLineRow {
+            RequisitionLineRow {
+                id: "requisition_line_b".to_string(),
+                requisition_id: "requisition_one".to_string(),
+                item_link_id: mock_item_b().id,
+                requested_quantity: 50.0,
+                approved_quantity: 24.0,
+                ..Default::default()
+            }
+        }
+
+        fn invoice_one() -> InvoiceRow {
+            InvoiceRow {
+                id: "invoice_one".to_string(),
+                invoice_number: 1,
+                store_id: mock_store_a().id,
+                name_link_id: mock_name_store_a().id,
+                r#type: InvoiceType::OutboundShipment,
+                status: InvoiceStatus::New,
+                requisition_id: Some("requisition_one".to_string()),
+                created_datetime: Utc::now().naive_utc(),
+                ..Default::default()
+            }
+        }
+
+        fn invoice_line_one() -> InvoiceLineRow {
+            InvoiceLineRow {
+                id: "invoice_line_one".to_string(),
+                invoice_id: "invoice_one".to_string(),
+                item_link_id: mock_item_a().id,
+                stock_line_id: Some(mock_stock_line_b().id),
+                number_of_packs: 8.0,
+                pack_size: 1.0,
+                ..Default::default()
+            }
+        }
+
+        fn invoice_line_two() -> InvoiceLineRow {
+            InvoiceLineRow {
+                id: "invoice_line_two".to_string(),
+                invoice_id: "invoice_one".to_string(),
+                item_link_id: mock_item_a().id,
+                stock_line_id: Some(mock_stock_line_a().id),
+                number_of_packs: 12.0,
+                pack_size: 1.0,
+                ..Default::default()
+            }
+        }
+
+        fn invoice_line_three() -> InvoiceLineRow {
+            InvoiceLineRow {
+                id: "invoice_line_three".to_string(),
+                invoice_id: "invoice_one".to_string(),
+                item_link_id: mock_item_b().id,
+                stock_line_id: Some(mock_stock_line_si_d()[1].id.clone()),
+                number_of_packs: 8.0,
+                pack_size: 3.0,
+                ..Default::default()
+            }
+        }
+
         let (_, _, connection_manager, _) = setup_all_with_data(
             "update_outbound_shipment_errors",
             MockDataInserts::all(),
             MockData {
-                invoices: vec![outbound_shipment_no_stock()],
-                invoice_lines: vec![invoice_line_no_stock()],
+                invoices: vec![outbound_shipment_no_stock(), invoice_one()],
+                invoice_lines: vec![
+                    invoice_line_no_stock(),
+                    invoice_line_one(),
+                    invoice_line_two(),
+                    invoice_line_three(),
+                ],
+                requisitions: vec![requisition_one()],
+                requisition_lines: vec![requisition_line_one_a(), requisition_line_b()],
                 ..Default::default()
             },
         )
@@ -337,6 +433,35 @@ mod test {
                 }
             ),
             Err(ServiceError::NotThisStoreInvoice)
+        );
+
+        // CannotIssueMoreThanApprovedQuantity
+        context.store_id = mock_store_a().id;
+        StorePreferenceRowRepository::new(&context.connection)
+            .upsert_one(&StorePreferenceRow {
+                id: mock_store_a().id.clone(),
+                response_requisition_requires_authorisation: true,
+                ..Default::default()
+            })
+            .unwrap();
+
+        let mut invoice_lines = InvoiceLineRepository::new(&context.connection)
+            .query_by_filter(
+                InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(&invoice_one().id)),
+            )
+            .unwrap();
+        invoice_lines.retain(|line| line.invoice_line_row.id != invoice_line_three().id);
+
+        assert_eq!(
+            service.update_outbound_shipment(
+                &context,
+                UpdateOutboundShipment {
+                    id: invoice_one().id,
+                    status: Some(UpdateOutboundShipmentStatus::Picked),
+                    ..Default::default()
+                }
+            ),
+            Err(ServiceError::CannotIssueMoreThanAuthorised(invoice_lines))
         );
 
         // TODO CanOnlyChangeToAllocatedWhenNoUnallocatedLines

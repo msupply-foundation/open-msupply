@@ -152,6 +152,7 @@ impl From<RepositoryError> for UpdateStockOutLineError {
 
 #[cfg(test)]
 mod test {
+    use chrono::Utc;
     use repository::{
         mock::{
             mock_item_a, mock_item_b_lines, mock_name_store_a, mock_outbound_shipment_a,
@@ -159,12 +160,14 @@ mod test {
             mock_outbound_shipment_c, mock_outbound_shipment_c_invoice_lines,
             mock_outbound_shipment_no_stock_line, mock_patient, mock_prescription_a_invoice_lines,
             mock_stock_line_b, mock_stock_line_location_is_on_hold, mock_stock_line_on_hold,
-            mock_store_a, mock_store_b, mock_store_c, stock_line_with_volume, MockDataInserts,
+            mock_store_a, mock_store_b, mock_store_c, stock_line_with_volume, MockData,
+            MockDataInserts,
         },
-        test_db::setup_all,
-        InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineType, InvoiceRow,
-        InvoiceRowRepository, InvoiceStatus, InvoiceType, StockLineRow, StockLineRowRepository,
-        Upsert,
+        test_db::{setup_all, setup_all_with_data},
+        ApprovalStatusType, InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineType, InvoiceRow,
+        InvoiceRowRepository, InvoiceStatus, InvoiceType, RequisitionLineRow, RequisitionRow,
+        RequisitionStatus, RequisitionType, StockLineRow, StockLineRowRepository,
+        StorePreferenceRow, StorePreferenceRowRepository, Upsert,
     };
 
     use crate::{
@@ -180,10 +183,73 @@ mod test {
         service_provider::ServiceProvider,
     };
 
+    fn requisition_one() -> RequisitionRow {
+        RequisitionRow {
+            id: "requisition_one".to_string(),
+            requisition_number: 1,
+            store_id: mock_store_a().id,
+            name_link_id: "name_a".to_string(),
+            r#type: RequisitionType::Response,
+            status: RequisitionStatus::New,
+            approval_status: Some(ApprovalStatusType::Approved),
+            created_datetime: Utc::now().naive_utc(),
+            max_months_of_stock: 3.0,
+            program_id: Some("program_a".to_string()),
+            ..Default::default()
+        }
+    }
+
+    fn requisition_line_one_a() -> RequisitionLineRow {
+        RequisitionLineRow {
+            id: "requisition_line_one_a".to_string(),
+            requisition_id: "requisition_one".to_string(),
+            item_link_id: mock_item_a().id,
+            requested_quantity: 20.0,
+            approved_quantity: 10.0,
+            ..Default::default()
+        }
+    }
+
+    fn invoice_one() -> InvoiceRow {
+        InvoiceRow {
+            id: "invoice_one".to_string(),
+            invoice_number: 1,
+            store_id: mock_store_a().id,
+            name_link_id: mock_name_store_a().id,
+            r#type: InvoiceType::OutboundShipment,
+            status: InvoiceStatus::New,
+            requisition_id: Some("requisition_one".to_string()),
+            created_datetime: Utc::now().naive_utc(),
+            ..Default::default()
+        }
+    }
+
+    fn invoice_line_one() -> InvoiceLineRow {
+        InvoiceLineRow {
+            id: "invoice_line_one".to_string(),
+            invoice_id: "invoice_one".to_string(),
+            item_link_id: mock_item_a().id,
+            stock_line_id: Some(mock_stock_line_b().id),
+            number_of_packs: 5.0,
+            pack_size: 1.0,
+            ..Default::default()
+        }
+    }
+
     #[actix_rt::test]
     async fn update_stock_out_line_errors() {
-        let (_, _, connection_manager, _) =
-            setup_all("update_stock_out_line_errors", MockDataInserts::all()).await;
+        let (_, _, connection_manager, _) = setup_all_with_data(
+            "update_stock_out_line_errors",
+            MockDataInserts::all(),
+            MockData {
+                requisitions: vec![requisition_one()],
+                requisition_lines: vec![requisition_line_one_a()],
+                invoices: vec![invoice_one()],
+                invoice_lines: vec![invoice_line_one()],
+                ..Default::default()
+            },
+        )
+        .await;
 
         let service_provider = ServiceProvider::new(connection_manager);
         let mut context = service_provider
@@ -260,7 +326,6 @@ mod test {
         );
 
         context.store_id = mock_store_b().id;
-
         // StockLineNotFound
         assert_eq!(
             service.update_stock_out_line(
@@ -351,6 +416,28 @@ mod test {
             Err(ServiceError::StockLineAlreadyExistsInInvoice(
                 mock_outbound_shipment_a_invoice_lines()[1].id.clone()
             ))
+        );
+
+        // CannotIssueMoreThanApprovedQuantity
+        context.store_id = mock_store_a().id;
+        StorePreferenceRowRepository::new(&context.connection)
+            .upsert_one(&StorePreferenceRow {
+                id: mock_store_a().id.clone(),
+                response_requisition_requires_authorisation: true,
+                ..Default::default()
+            })
+            .unwrap();
+        assert_eq!(
+            service.update_stock_out_line(
+                &context,
+                UpdateStockOutLine {
+                    id: invoice_line_one().id.clone(),
+                    number_of_packs: Some(15.0),
+                    r#type: Some(StockOutType::OutboundShipment),
+                    ..Default::default()
+                },
+            ),
+            Err(ServiceError::CannotIssueMoreThanApprovedQuantity)
         );
     }
 
