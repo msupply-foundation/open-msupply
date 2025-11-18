@@ -1,5 +1,5 @@
 import { Box, BoxProps, Portal } from '@mui/material';
-import { styled } from '@mui/material/styles';
+import { styled, useTheme } from '@mui/material/styles';
 import React, { FC, ReactNode, useEffect, useRef } from 'react';
 import { useHostContext, useKeyboard } from '@common/hooks';
 import { useIsCentralServerApi } from '@openmsupply-client/common';
@@ -14,13 +14,18 @@ const Container = styled('div')(() => ({
   paddingRight: '20px',
 }));
 
-export const AppFooter: FC = () => {
+interface AppFooterProps {
+  nameProperties?: { colour?: string };
+}
+
+export const AppFooter: FC<AppFooterProps> = ({ nameProperties }) => {
   const { setAppFooterRef, setAppSessionDetailsRef, fullScreen } =
     useHostContext();
   const { keyboardIsOpen } = useKeyboard();
   const appFooterRef = useRef(null);
   const appSessionDetailsRef = useRef(null);
   const isCentralServer = useIsCentralServerApi();
+  const theme = useTheme();
 
   useEffect(() => {
     setAppFooterRef(appFooterRef);
@@ -29,14 +34,24 @@ export const AppFooter: FC = () => {
 
   const hideFooter = fullScreen || keyboardIsOpen;
 
+  // Colours for the Footer bar, if specified in Store properties
+  const customColour = nameProperties?.colour;
+  const textColour = theme.palette.getContrastText(customColour || '');
+
   return (
     <Box sx={{ display: hideFooter ? 'none' : undefined }}>
       <Container ref={appFooterRef} style={{ flex: 0 }} />
       <Container
         ref={appSessionDetailsRef}
         sx={{
-          backgroundColor: isCentralServer ? 'primary.main' : 'background.menu',
-          color: isCentralServer ? '#fff' : 'gray.main',
+          backgroundColor:
+            customColour ??
+            (isCentralServer ? 'primary.main' : 'background.menu'),
+          color: customColour
+            ? textColour
+            : isCentralServer
+              ? '#fff'
+              : 'gray.main',
         }}
       />
     </Box>

@@ -20,6 +20,7 @@ import {
   DetailLoadingSkeleton,
   useIsGapsStoreOnly,
   useBlockNavigation,
+  ObjUtils,
 } from '@openmsupply-client/common';
 import { AppDrawer, AppBar, Footer, NotFound } from './components';
 import { CommandK } from './CommandK';
@@ -43,6 +44,7 @@ import { EasterEggModalProvider } from './components';
 import { Help } from './Help/Help';
 import { SyncModalProvider } from './components/Sync';
 import { MobileNavBar } from './components/MobileNavBar';
+import { useName } from '@openmsupply-client/system';
 
 const NotifyOnLogin = () => {
   const { success } = useNotification();
@@ -74,6 +76,8 @@ export const Site: FC = () => {
   const { setPageTitle } = useHostContext();
   const pageTitle = getPageTitle(location.pathname);
   const isGapsStore = useIsGapsStoreOnly();
+  const { store } = useAuthContext();
+  const { data: nameData } = useName.document.get(store?.nameId || '');
 
   useEffect(() => {
     setPageTitle(pageTitle);
@@ -223,7 +227,9 @@ export const Site: FC = () => {
                       <Route path="*" element={<NotFound />} />
                     </Routes>
                   </Box>
-                  <AppFooter />
+                  <AppFooter
+                    nameProperties={ObjUtils.parse(nameData?.properties || '')}
+                  />
                   <AppFooterPortal SessionDetails={<Footer />} />
                 </Box>
                 <DetailPanel />
