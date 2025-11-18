@@ -42,11 +42,11 @@ export const EditPreference = ({
   const debouncedUpdate = useDebouncedValueCallback(
     async value => {
       const success = await update(value);
+      setHasError(!success);
 
       if (!success) {
         // If update fails, revert to original value
         setValue(preference.value);
-        setHasError(!success);
       }
     },
     [],
