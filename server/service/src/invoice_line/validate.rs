@@ -95,6 +95,10 @@ pub fn check_item_approved_quantity(
         .pop();
 
     if let Some(requisition_line) = requisition_line {
+        if requisition_line.requisition_row.program_id.is_none() {
+            return Ok(());
+        }
+
         let approved_quantity = requisition_line.requisition_line_row.approved_quantity;
 
         let all_lines_for_item = InvoiceLineRepository::new(connection).query_by_filter(

@@ -964,6 +964,10 @@ export type UpsertPrescriptionMutation = {
             __typename: 'InsertPrescriptionLineError';
             error:
               | { __typename: 'CannotEditInvoice'; description: string }
+              | {
+                  __typename: 'CannotIssueMoreThanApprovedQuantity';
+                  description: string;
+                }
               | { __typename: 'ForeignKeyError'; description: string }
               | { __typename: 'LocationIsOnHold'; description: string }
               | { __typename: 'LocationNotFound'; description: string }
@@ -992,6 +996,10 @@ export type UpsertPrescriptionMutation = {
             __typename: 'UpdatePrescriptionLineError';
             error:
               | { __typename: 'CannotEditInvoice'; description: string }
+              | {
+                  __typename: 'CannotIssueMoreThanApprovedQuantity';
+                  description: string;
+                }
               | {
                   __typename: 'ForeignKeyError';
                   description: string;

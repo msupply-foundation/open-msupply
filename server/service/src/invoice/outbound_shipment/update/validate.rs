@@ -148,6 +148,11 @@ fn validate_approved_quantities(
             .item_id(EqualFilter::equal_any(item_ids)),
     )?;
 
+    let requisition = requisition_lines[0].requisition_row.clone();
+    if requisition.program_id.is_none() {
+        return Ok(());
+    }
+
     let approved_quantities: HashMap<String, f64> = requisition_lines
         .into_iter()
         .map(|req_line| {

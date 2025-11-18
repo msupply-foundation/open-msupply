@@ -635,6 +635,7 @@ export type UpdateOutboundShipmentMutation = {
               description: string;
             }
           | { __typename: 'CannotIssueInForeignCurrency'; description: string }
+          | { __typename: 'CannotIssueMoreThanAuthorised' }
           | { __typename: 'CannotReverseInvoiceStatus'; description: string }
           | { __typename: 'InvoiceIsNotEditable'; description: string }
           | { __typename: 'NotAnOutboundShipmentError'; description: string }
@@ -790,6 +791,10 @@ export type UpsertOutboundShipmentMutation = {
             __typename: 'InsertOutboundShipmentLineError';
             error:
               | { __typename: 'CannotEditInvoice'; description: string }
+              | {
+                  __typename: 'CannotIssueMoreThanApprovedQuantity';
+                  description: string;
+                }
               | { __typename: 'ForeignKeyError'; description: string }
               | { __typename: 'LocationIsOnHold'; description: string }
               | { __typename: 'LocationNotFound'; description: string }
@@ -848,6 +853,10 @@ export type UpsertOutboundShipmentMutation = {
             __typename: 'UpdateOutboundShipmentLineError';
             error:
               | { __typename: 'CannotEditInvoice'; description: string }
+              | {
+                  __typename: 'CannotIssueMoreThanApprovedQuantity';
+                  description: string;
+                }
               | {
                   __typename: 'ForeignKeyError';
                   description: string;
@@ -939,6 +948,10 @@ export type UpsertOutboundShipmentMutation = {
                 }
               | {
                   __typename: 'CannotIssueInForeignCurrency';
+                  description: string;
+                }
+              | {
+                  __typename: 'CannotIssueMoreThanAuthorised';
                   description: string;
                 }
               | {
