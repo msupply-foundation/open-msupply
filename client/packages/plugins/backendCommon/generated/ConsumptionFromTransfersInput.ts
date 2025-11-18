@@ -3,6 +3,6 @@ import type { ConsumptionRow } from './ConsumptionRow';
 
 export type ConsumptionFromTransfersInput = {
   store_id: string;
-  consumption_map: Array<ConsumptionRow>;
+  consumption_rows: Array<ConsumptionRow>;
   exclude_transfers: boolean;
 };
