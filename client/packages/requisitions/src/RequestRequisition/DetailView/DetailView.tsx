@@ -22,7 +22,7 @@ import { AppBarButtons } from './AppBarButtons';
 import { SidePanel } from './SidePanel';
 import { AppRoute } from '@openmsupply-client/config';
 import { RequestRequisitionLineErrorProvider } from '../context';
-import { IndicatorsTab } from './IndicatorsTab';
+import { IndicatorsTab, Documents } from './Tabs';
 import { buildIndicatorEditRoute } from './utils';
 import { RequestLineEditModal } from './RequestLineEdit';
 import { useRequestColumns } from './columns';
@@ -41,7 +41,7 @@ export const DetailView = () => {
     isOpen,
   } = useEditModal<string | null>();
 
-  const { data, isLoading } = useRequest.document.get();
+  const { data, isLoading, invalidateQueries } = useRequest.document.get();
   const isDisabled = useRequest.utils.isDisabled();
   const { data: programIndicators, isLoading: isProgramIndicatorsLoading } =
     useRequest.document.indicators(
@@ -72,7 +72,7 @@ export const DetailView = () => {
         )
       );
     },
-    []
+    [navigate]
   );
 
   useEffect(() => {
@@ -123,6 +123,16 @@ export const DetailView = () => {
         </>
       ),
       value: 'Details',
+    },
+    {
+      Component: (
+        <Documents
+          data={data}
+          disable={isDisabled}
+          invalidateQueries={invalidateQueries}
+        />
+      ),
+      value: t('label.documents'),
     },
     {
       Component: <ActivityLogList recordId={data?.id ?? ''} />,
