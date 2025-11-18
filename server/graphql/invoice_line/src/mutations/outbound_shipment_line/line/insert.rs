@@ -172,9 +172,9 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
                 },
             ))
         }
-        CannotIssueMoreThanApprovedQuantity(line_id) => {
+        CannotIssueMoreThanApprovedQuantity => {
             return Ok(InsertErrorInterface::CannotIssueMoreThanApprovedQuantity(
-                super::CannotIssueMoreThanApprovedQuantity(line_id),
+                super::CannotIssueMoreThanApprovedQuantity {},
             ))
         }
         // Standard Graphql Errors

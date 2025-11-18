@@ -85,8 +85,8 @@ pub enum InsertErrorInterface {
 
 fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
     use ServiceError::*;
-    let formatted_error = format!("{:#?}", error);
-    log::error!("Error inserting prescription line: {}", formatted_error);
+    let formatted_error = format!("{error:#?}");
+    log::error!("Error inserting prescription line: {formatted_error}");
 
     let graphql_error = match error {
         // Structured Errors
@@ -133,9 +133,9 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
                 },
             ))
         }
-        CannotIssueMoreThanApprovedQuantity(line_id) => {
+        CannotIssueMoreThanApprovedQuantity => {
             return Ok(InsertErrorInterface::CannotIssueMoreThanApprovedQuantity(
-                line::CannotIssueMoreThanApprovedQuantity(line_id),
+                line::CannotIssueMoreThanApprovedQuantity {},
             ))
         }
         // Standard Graphql Errors

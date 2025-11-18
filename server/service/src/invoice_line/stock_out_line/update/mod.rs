@@ -52,7 +52,7 @@ pub enum UpdateStockOutLineError {
     LineDoesNotReferenceStockLine,
     BatchIsOnHold,
     UpdatedLineDoesNotExist,
-    CannotIssueMoreThanApprovedQuantity(String),
+    CannotIssueMoreThanApprovedQuantity,
     StockLineAlreadyExistsInInvoice(String),
     AutoPickFailed(String),
     ReductionBelowZero {
