@@ -81,7 +81,10 @@ impl From<RepositoryError> for CannotIssueMoreThanApprovedQuantity {
 pub fn check_item_approved_quantity(
     connection: &StorageConnection,
     item_id: &str,
+    invoice_line_id: Option<String>,
     requisition_id: Option<String>,
+    input_number_of_packs: Option<f64>,
+    pack_size: f64,
 ) -> Result<(), CannotIssueMoreThanApprovedQuantity> {
     let Some(ref req_id) = requisition_id else {
         return Ok(());
@@ -93,7 +96,6 @@ pub fn check_item_approved_quantity(
                 .item_id(EqualFilter::equal_to(item_id)),
         )?
         .pop();
-
     if let Some(requisition_line) = requisition_line {
         if requisition_line.requisition_row.program_id.is_none() {
             return Ok(());
@@ -107,10 +109,21 @@ pub fn check_item_approved_quantity(
                 .item_id(EqualFilter::equal_to(item_id)),
         )?;
 
-        let total_issued_quantity: f64 = all_lines_for_item
+        let mut total_issued_quantity: f64 = all_lines_for_item
             .iter()
+            .filter(|l| {
+                if let Some(ref line_id) = invoice_line_id {
+                    l.invoice_line_row.id != *line_id
+                } else {
+                    true
+                }
+            })
             .map(|l| l.invoice_line_row.number_of_packs * l.invoice_line_row.pack_size)
             .sum();
+
+        if let Some(new_num_packs) = input_number_of_packs {
+            total_issued_quantity += new_num_packs * pack_size;
+        }
 
         if total_issued_quantity > approved_quantity {
             return Err(CannotIssueMoreThanApprovedQuantity::CannotIssueMoreThanApprovedQuantity);
