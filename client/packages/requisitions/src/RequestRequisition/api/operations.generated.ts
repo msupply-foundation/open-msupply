@@ -83,6 +83,7 @@ export type RequestByNumberQuery = {
           isCustomer: boolean;
           isSupplier: boolean;
           isOnHold: boolean;
+          margin?: number | null;
           store?: { __typename: 'StoreNode'; id: string; code: string } | null;
         };
         user?: {
@@ -229,6 +230,7 @@ export type RequestByIdQuery = {
           isCustomer: boolean;
           isSupplier: boolean;
           isOnHold: boolean;
+          margin?: number | null;
           store?: { __typename: 'StoreNode'; id: string; code: string } | null;
         };
         user?: {
