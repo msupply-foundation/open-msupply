@@ -7,12 +7,13 @@ import {
 } from '@openmsupply-client/system';
 import { InboundFragment } from '@openmsupply-client/invoices';
 import { PrescriptionPaymentComponentProps } from './prescriptionTypes';
+import { DraftRequestLine } from 'packages/requisitions/src/RequestRequisition/DetailView/RequestLineEdit';
 
 export type Plugins = {
   prescriptionPaymentForm?: React.ComponentType<PrescriptionPaymentComponentProps>[];
   inboundShipmentAppBar?: React.ComponentType<{ shipment: InboundFragment }>[];
-  itemSellPrice?: {
-    catalogueUnitPrice: React.ComponentType<{ item: ItemFragment }>[];
+  item?: {
+    detailViewField: React.ComponentType<{ item: ItemFragment }>[];
   };
   dashboard?: React.ComponentType[];
   stockLine?: {
@@ -28,14 +29,21 @@ export type Plugins = {
   requestRequisitionLine?: {
     tableStateLoader: React.ComponentType<{
       requestLines: RequestLineFragment[];
+      requisition: RequestFragment;
     }>[];
     tableColumn: ColumnDef<RequestLineFragment>[];
     editViewField: React.ComponentType<{
       line: RequestLineFragment;
+      draft?: DraftRequestLine;
       unitName?: string;
     }>[];
     editViewInfo: React.ComponentType<{
       line: RequestLineFragment;
+      requisition: RequestFragment;
+    }>[];
+  };
+  requestRequisition?: {
+    sidePanelSection: React.ComponentType<{
       requisition: RequestFragment;
     }>[];
   };
