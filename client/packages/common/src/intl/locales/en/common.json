@@ -2237,6 +2237,7 @@
   "preference.selectDestinationStoreForAnInternalOrder": "Select destination store for an Internal Order",
   "preference.showContactTracing": "Show contact tracing",
   "preference.sortByVvmStatusThenExpiry": "Sort available batches by VVM status then expiry",
+  "preference.storeCustomColour": "Custom colour (main footer)",
   "preference.syncRecordsDisplayThreshold": "Sync records display threshold",
   "preference.useDaysInMonth": "Use days in month",
   "preference.useProcurementFunctionality": "Use procurement functionality",

@@ -1,8 +1,11 @@
 import { Box, BoxProps, Portal } from '@mui/material';
-import { styled } from '@mui/material/styles';
+import { styled, useTheme } from '@mui/material/styles';
 import React, { FC, ReactNode, useEffect, useRef } from 'react';
 import { useHostContext, useKeyboard } from '@common/hooks';
-import { useIsCentralServerApi } from '@openmsupply-client/common';
+import {
+  useIsCentralServerApi,
+  usePreferences,
+} from '@openmsupply-client/common';
 
 const Container = styled('div')(() => ({
   display: 'flex',
@@ -21,6 +24,8 @@ export const AppFooter: FC = () => {
   const appFooterRef = useRef(null);
   const appSessionDetailsRef = useRef(null);
   const isCentralServer = useIsCentralServerApi();
+  const { storeCustomColour } = usePreferences();
+  const theme = useTheme();
 
   useEffect(() => {
     setAppFooterRef(appFooterRef);
@@ -29,14 +34,31 @@ export const AppFooter: FC = () => {
 
   const hideFooter = fullScreen || keyboardIsOpen;
 
+  // Colours for the Footer bar, if specified in Store prefs
+  let customColour: string | undefined;
+  let textColour: string | undefined;
+  if (storeCustomColour) {
+    // Try/catch essentially validates the colour string -- if it's invalid, the
+    // `getContrastText` function with throw, so neither customColour nor
+    // textColour will be defined
+    try {
+      textColour = theme.palette.getContrastText(storeCustomColour ?? '');
+      customColour = storeCustomColour;
+    } catch (e) {
+      console.log('Error parsing footer colours from Store properties', e);
+    }
+  }
+
   return (
     <Box sx={{ display: hideFooter ? 'none' : undefined }}>
       <Container ref={appFooterRef} style={{ flex: 0 }} />
       <Container
         ref={appSessionDetailsRef}
         sx={{
-          backgroundColor: isCentralServer ? 'primary.main' : 'background.menu',
-          color: isCentralServer ? '#fff' : 'gray.main',
+          backgroundColor:
+            customColour ??
+            (isCentralServer ? 'primary.main' : 'background.menu'),
+          color: textColour ?? (isCentralServer ? '#fff' : 'gray.main'),
         }}
       />
     </Box>

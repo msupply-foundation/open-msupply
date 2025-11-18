@@ -12,6 +12,8 @@ import {
   NumericTextInput,
   useDebouncedValueCallback,
   LocaleKey,
+  BasicTextInput,
+  isString,
 } from '@openmsupply-client/common';
 import {
   EnumOptions,
@@ -96,6 +98,24 @@ export const EditPreference = ({
             <NumericTextInput
               value={value}
               onChange={handleChange}
+              onBlur={() => {}}
+            />
+          }
+          isLast={isLast}
+        />
+      );
+
+    case PreferenceValueNodeType.String:
+      if (!isString(preference.value)) {
+        return t('error.something-wrong');
+      }
+      return (
+        <PreferenceLabelRow
+          label={preferenceLabel}
+          Input={
+            <BasicTextInput
+              value={value}
+              onChange={e => handleChange(e.target.value)}
               onBlur={() => {}}
             />
           }
