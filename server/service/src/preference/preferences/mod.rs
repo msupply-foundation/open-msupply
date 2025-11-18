@@ -96,8 +96,8 @@ pub struct PreferenceProvider {
         NumberOfMonthsThresholdToShowLowStockAlertsForProducts,
     pub first_threshold_for_expiring_items: FirstThresholdForExpiringItems,
     pub second_threshold_for_expiring_items: SecondThresholdForExpiringItems,
-    pub warn_when_missing_recent_stocktake: WarnWhenMissingRecentStocktake,
     pub skip_intermediate_statuses_in_outbound: SkipIntermediateStatusesInOutbound,
+    pub warn_when_missing_recent_stocktake: WarnWhenMissingRecentStocktake,
 }
 
 pub fn get_preference_provider() -> PreferenceProvider {
@@ -136,7 +136,7 @@ pub fn get_preference_provider() -> PreferenceProvider {
             NumberOfMonthsThresholdToShowLowStockAlertsForProducts,
         first_threshold_for_expiring_items: FirstThresholdForExpiringItems,
         second_threshold_for_expiring_items: SecondThresholdForExpiringItems,
-        warn_when_missing_recent_stocktake: WarnWhenMissingRecentStocktake,
         skip_intermediate_statuses_in_outbound: SkipIntermediateStatusesInOutbound,
+        warn_when_missing_recent_stocktake: WarnWhenMissingRecentStocktake,
     }
 }
