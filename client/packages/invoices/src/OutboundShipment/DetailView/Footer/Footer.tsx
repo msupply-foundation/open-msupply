@@ -175,7 +175,6 @@ export const FooterComponent: FC<FooterComponentProps> = ({
                   sx={{ fontSize: '12px' }}
                   onClick={() => navigateUpOne()}
                 />
-
                 <StatusChangeButton />
               </Box>
             </Box>
