@@ -27,7 +27,7 @@ export const useEditPreferences = (
   const update = async (
     input: Partial<UpsertPreferencesInput>
   ): Promise<boolean /* wasSuccessful */> => {
-    if (!inputValidation(input, t, warning, data, setActionValid)) return false;
+    if (!inputValidation(input, t, warning, setActionValid)) return false;
 
     try {
       await mutateAsync(input);
