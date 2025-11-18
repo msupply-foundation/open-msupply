@@ -1,19 +1,16 @@
+use super::{
+    CannotIssueMoreThanApprovedQuantity, LocationIsOnHold, LocationNotFound,
+    NotEnoughStockForReduction, StockLineAlreadyExistsInInvoice, StockLineIsOnHold,
+};
 use async_graphql::*;
-
 use graphql_core::simple_generic_errors::{self, CannotEditInvoice, ForeignKey, ForeignKeyError};
 use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::ContextExt;
 use graphql_types::types::InvoiceLineNode;
-
 use repository::InvoiceLine;
 use service::auth::{Resource, ResourceAccessRequest};
 use service::invoice_line::stock_out_line::{
     InsertStockOutLine as ServiceInput, InsertStockOutLineError as ServiceError, StockOutType,
-};
-
-use super::{
-    LocationIsOnHold, LocationNotFound, NotEnoughStockForReduction,
-    StockLineAlreadyExistsInInvoice, StockLineIsOnHold,
 };
 
 #[derive(InputObject)]
@@ -81,6 +78,7 @@ pub enum InsertErrorInterface {
     LocationIsOnHold(LocationIsOnHold),
     LocationNotFound(LocationNotFound),
     StockLineIsOnHold(StockLineIsOnHold),
+    CannotIssueMoreThanApprovedQuantity(CannotIssueMoreThanApprovedQuantity),
 }
 
 impl InsertInput {
@@ -172,6 +170,11 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
                     stock_line_id,
                     line_id: None,
                 },
+            ))
+        }
+        CannotIssueMoreThanApprovedQuantity(line_id) => {
+            return Ok(InsertErrorInterface::CannotIssueMoreThanApprovedQuantity(
+                super::CannotIssueMoreThanApprovedQuantity(line_id),
             ))
         }
         // Standard Graphql Errors

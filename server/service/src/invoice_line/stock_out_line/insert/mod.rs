@@ -61,6 +61,7 @@ pub enum InsertStockOutLineError {
     BatchIsOnHold,
     ReductionBelowZero { stock_line_id: String },
     VVMStatusDoesNotExist,
+    CannotIssueMoreThanApprovedQuantity(String),
 }
 
 impl From<RepositoryError> for InsertStockOutLineError {

@@ -10,9 +10,12 @@ use crate::{
         LocationIsOnHoldError,
     },
     stock_line::historical_stock::get_historical_stock_line_available_quantity,
+    store_preference::get_store_preferences,
 };
 use repository::{
-    InvoiceRow, InvoiceStatus, ItemRow, LocationRowRepository, StockLine, StorageConnection,
+    EqualFilter, InvoiceLineFilter, InvoiceLineRepository, InvoiceRow, InvoiceStatus, ItemRow,
+    LocationRowRepository, RequisitionLineFilter, RequisitionLineRepository, StockLine,
+    StorageConnection,
 };
 
 pub fn validate(
@@ -21,6 +24,8 @@ pub fn validate(
     store_id: &str,
 ) -> Result<(ItemRow, InvoiceRow, StockLine, InsertStockOutLine), InsertStockOutLineError> {
     use InsertStockOutLineError::*;
+
+    let store_preferences = get_store_preferences(connection, store_id)?;
 
     if (check_line_exists(connection, &input.id)?).is_some() {
         return Err(LineAlreadyExists);
@@ -92,6 +97,42 @@ pub fn validate(
     if let Some(vvm_status_id) = &input.vvm_status_id {
         if check_vvm_status_exists(connection, vvm_status_id)?.is_none() {
             return Err(VVMStatusDoesNotExist);
+        }
+    }
+
+    if invoice.requisition_id.is_some()
+        && store_preferences.response_requisition_requires_authorisation
+    {
+        let requisition_line = RequisitionLineRepository::new(connection)
+            .query_by_filter(
+                RequisitionLineFilter::new()
+                    .requisition_id(EqualFilter::equal_to(
+                        &invoice.requisition_id.clone().unwrap(),
+                    ))
+                    .item_id(EqualFilter::equal_to(&item.id)),
+            )?
+            .pop();
+
+        if let Some(requisition_line) = requisition_line {
+            let approved_quantity = requisition_line.requisition_line_row.approved_quantity;
+
+            let all_lines_for_item = InvoiceLineRepository::new(connection).query_by_filter(
+                InvoiceLineFilter::new()
+                    .invoice_id(EqualFilter::equal_to(&invoice.id))
+                    .item_id(EqualFilter::equal_to(&item.id)),
+            )?;
+
+            let total_issued_quantity: f64 = all_lines_for_item
+                .iter()
+                .map(|l| l.invoice_line_row.number_of_packs * l.invoice_line_row.pack_size)
+                .sum();
+            let issue_quantity = input.number_of_packs * batch.stock_line_row.pack_size;
+
+            let total_quantity_after_update = total_issued_quantity + issue_quantity;
+
+            if total_quantity_after_update > approved_quantity {
+                return Err(CannotIssueMoreThanApprovedQuantity(input.id.clone()));
+            }
         }
     }
 

@@ -9,8 +9,8 @@ use repository::InvoiceLine;
 use service::auth::{Resource, ResourceAccessRequest};
 
 use crate::mutations::outbound_shipment_line::line::{
-    self, LocationIsOnHold, LocationNotFound, NotEnoughStockForReduction,
-    StockLineAlreadyExistsInInvoice, StockLineIsOnHold,
+    self, CannotIssueMoreThanApprovedQuantity, LocationIsOnHold, LocationNotFound,
+    NotEnoughStockForReduction, StockLineAlreadyExistsInInvoice, StockLineIsOnHold,
 };
 use service::invoice_line::stock_out_line::{
     InsertStockOutLine as ServiceInput, InsertStockOutLineError as ServiceError, StockOutType,
@@ -80,6 +80,7 @@ pub enum InsertErrorInterface {
     LocationIsOnHold(LocationIsOnHold),
     LocationNotFound(LocationNotFound),
     StockLineIsOnHold(StockLineIsOnHold),
+    CannotIssueMoreThanApprovedQuantity(CannotIssueMoreThanApprovedQuantity),
 }
 
 fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
@@ -130,6 +131,11 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
                     stock_line_id,
                     line_id: None,
                 },
+            ))
+        }
+        CannotIssueMoreThanApprovedQuantity(line_id) => {
+            return Ok(InsertErrorInterface::CannotIssueMoreThanApprovedQuantity(
+                line::CannotIssueMoreThanApprovedQuantity(line_id),
             ))
         }
         // Standard Graphql Errors
