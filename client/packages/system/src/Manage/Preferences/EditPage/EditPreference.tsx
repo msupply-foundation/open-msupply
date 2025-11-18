@@ -99,6 +99,7 @@ export const EditPreference = ({
               value={value}
               onChange={handleChange}
               onBlur={() => {}}
+              disabled={disabled}
             />
           }
           isLast={isLast}
@@ -117,6 +118,7 @@ export const EditPreference = ({
               value={value}
               onChange={e => handleChange(e.target.value)}
               onBlur={() => {}}
+              disabled={disabled}
             />
           }
           isLast={isLast}
