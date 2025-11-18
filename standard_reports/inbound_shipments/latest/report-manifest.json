@@ -3,7 +3,7 @@
   "version": "2.10.1",
   "code": "inbound-shipments",
   "context": "REPORT",
-  "sub_context": "Replenishment",
+  "sub_context": "Other",
   "name": "Inbound Shipments",
   "queries": {
     "gql": "query.graphql"
