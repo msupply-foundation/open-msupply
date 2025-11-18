@@ -13,7 +13,7 @@ fn plugin_type() -> PluginType {
 #[ts(rename = "ConsumptionFromTransfersInput")]
 pub struct Input {
     pub store_id: String,
-    pub consumption_map: Vec<ConsumptionRow>,
+    pub consumption_rows: Vec<ConsumptionRow>,
     pub exclude_transfers: bool,
 }
 

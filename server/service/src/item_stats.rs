@@ -98,7 +98,7 @@ pub fn get_item_stats(
 
     let same_level_transfer_input = consumption_from_transfers::Input {
         store_id: store_id.to_string(),
-        consumption_map: consumption_rows.clone(),
+        consumption_rows: consumption_rows.clone(),
         exclude_transfers,
     };
 
