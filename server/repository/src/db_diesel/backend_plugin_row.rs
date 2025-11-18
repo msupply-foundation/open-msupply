@@ -12,7 +12,7 @@ use serde::{Deserialize, Serialize};
 pub enum PluginType {
     AverageMonthlyConsumption,
     TransformRequestRequisitionLines,
-    SameLevelTransferConsumption,
+    ConsumptionFromTransfers,
     GraphqlQuery,
     SyncEssentialItemList,
     // TODO backwards compatibility ? When integrating this one via sync

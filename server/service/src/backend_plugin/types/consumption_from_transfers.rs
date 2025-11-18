@@ -6,11 +6,11 @@ use std::collections::HashMap;
 use ts_rs::TS;
 
 fn plugin_type() -> PluginType {
-    PluginType::SameLevelTransferConsumption
+    PluginType::ConsumptionFromTransfers
 }
 
 #[derive(TS, Clone, Deserialize, Serialize)]
-#[ts(rename = "SameLevelTransferConsumptionInput")]
+#[ts(rename = "ConsumptionFromTransfersInput")]
 pub struct Input {
     pub store_id: String,
     pub consumption_map: Vec<ConsumptionRow>,

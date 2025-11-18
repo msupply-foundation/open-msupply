@@ -9,9 +9,9 @@ export type BackendPlugins = {
   transform_request_requisition_lines?: (
     _: PluginTypes['transform_request_requisition_lines']['input']
   ) => PluginTypes['transform_request_requisition_lines']['output'];
-  same_level_transfer_consumption?: (
-    _: PluginTypes['same_level_transfer_consumption']['input']
-  ) => PluginTypes['same_level_transfer_consumption']['output'];
+  consumption_from_transfers?: (
+    _: PluginTypes['consumption_from_transfers']['input']
+  ) => PluginTypes['consumption_from_transfers']['output'];
   sync_essential_item_list?: (
     _: PluginTypes['sync_essential_item_list']['input']
   ) => PluginTypes['sync_essential_item_list']['output'];
