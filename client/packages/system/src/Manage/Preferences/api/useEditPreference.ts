@@ -1,4 +1,3 @@
-import { Dispatch, SetStateAction } from 'react';
 import {
   isEmpty,
   PreferenceNodeType,
@@ -15,8 +14,7 @@ import { inputValidation } from './utils';
 
 export const useEditPreferences = (
   prefType: PreferenceNodeType,
-  storeId?: string,
-  setActionValid?: Dispatch<SetStateAction<boolean>>
+  storeId?: string
 ) => {
   const t = useTranslation();
   const { error, warning } = useNotification();
@@ -27,7 +25,7 @@ export const useEditPreferences = (
   const update = async (
     input: Partial<UpsertPreferencesInput>
   ): Promise<boolean /* wasSuccessful */> => {
-    if (!inputValidation(input, t, warning, setActionValid)) return false;
+    if (!inputValidation(input, t, warning)) return false;
 
     try {
       await mutateAsync(input);

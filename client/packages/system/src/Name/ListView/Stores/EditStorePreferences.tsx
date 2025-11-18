@@ -1,4 +1,4 @@
-import React, { Dispatch, SetStateAction } from 'react';
+import React from 'react';
 import {
   InputWithLabelRow,
   LocaleKey,
@@ -17,20 +17,17 @@ import {
 
 interface EditStorePreferencesProps {
   storeId: string;
-  setIsActionValid: Dispatch<SetStateAction<boolean>>;
 }
 
 export const EditStorePreferences = ({
   storeId,
-  setIsActionValid,
 }: EditStorePreferencesProps) => {
   const t = useTranslation();
   const isCentralServer = useIsCentralServerApi();
   const { userHasPermission } = useAuthContext();
   const { update, preferences } = useEditPreferences(
     PreferenceNodeType.Store,
-    storeId,
-    setIsActionValid
+    storeId
   );
 
   if (!preferences.length) return <NothingHere />;
