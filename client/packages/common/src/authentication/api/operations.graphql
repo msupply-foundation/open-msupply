@@ -209,6 +209,7 @@ query preferences($storeId: String!) {
     selectDestinationStoreForAnInternalOrder
     showContactTracing
     sortByVvmStatusThenExpiry
+    storeCustomColour
     syncRecordsDisplayThreshold
     useDaysInMonth
     useProcurementFunctionality
