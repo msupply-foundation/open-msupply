@@ -1,7 +1,7 @@
 pub mod amc;
+pub mod consumption_from_transfers;
 pub mod graphql_query;
 pub mod processor;
-pub mod same_level_transfer_consumption;
 pub mod sync_essential_item_list;
 pub mod transform_request_requisition_lines;
 
@@ -37,10 +37,8 @@ pub mod generate_typescript_types {
             transform_request_requisition_lines::Input,
             transform_request_requisition_lines::Output,
         >,
-        same_level_transfer_consumption: Function<
-            same_level_transfer_consumption::Input,
-            same_level_transfer_consumption::Output,
-        >,
+        consumption_from_transfers:
+            Function<consumption_from_transfers::Input, consumption_from_transfers::Output>,
         graphql_query: Function<graphql_query::Input, graphql_query::Output>,
         processor: Function<processor::Input, processor::Output>,
         // Extra types to expose, not directly related to plugin interface

@@ -1,4 +1,4 @@
-use crate::backend_plugin::types::same_level_transfer_consumption;
+use crate::backend_plugin::types::consumption_from_transfers;
 use crate::common::days_in_a_month;
 use crate::preference::{AdjustForNumberOfDaysOutOfStock, ExcludeTransfers, Preference};
 use crate::{
@@ -96,15 +96,15 @@ pub fn get_item_stats(
 
     let exclude_transfers = ExcludeTransfers.load(connection, None).unwrap_or(false);
 
-    let same_level_transfer_input = same_level_transfer_consumption::Input {
+    let same_level_transfer_input = consumption_from_transfers::Input {
         store_id: store_id.to_string(),
         consumption_map: consumption_rows.clone(),
         exclude_transfers,
     };
 
-    let consumption_map = match PluginInstance::get_one(PluginType::SameLevelTransferConsumption) {
+    let consumption_map = match PluginInstance::get_one(PluginType::ConsumptionFromTransfers) {
         Some(plugin) => {
-            same_level_transfer_consumption::Trait::call(&(*plugin), same_level_transfer_input)?
+            consumption_from_transfers::Trait::call(&(*plugin), same_level_transfer_input)?
         }
         None => get_consumption_map(&consumption_rows, exclude_transfers)?,
     };
