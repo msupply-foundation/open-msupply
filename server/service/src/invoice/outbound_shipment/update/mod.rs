@@ -57,6 +57,7 @@ pub enum UpdateOutboundShipmentError {
     DatabaseError(RepositoryError),
     /// Holds the id of the invalid invoice line
     InvoiceLineHasNoStockLine(String),
+    CannotIssueMoreThanAuthorised(Vec<InvoiceLine>),
 }
 
 type OutError = UpdateOutboundShipmentError;

@@ -1,17 +1,20 @@
+use super::{UpdateOutboundShipment, UpdateOutboundShipmentError};
 use crate::invoice::common::check_can_issue_in_foreign_currency;
 use crate::invoice::{
     check_invoice_exists, check_invoice_is_editable, check_invoice_status, check_invoice_type,
     check_status_change, check_store, InvoiceRowStatusError,
 };
+use crate::store_preference::get_store_preferences;
 use crate::validate::get_other_party;
 use chrono::Utc;
-use repository::{EqualFilter, NameLinkRowRepository};
+use repository::{
+    EqualFilter, NameLinkRowRepository, RequisitionLineFilter, RequisitionLineRepository,
+};
 use repository::{
     InvoiceLineFilter, InvoiceLineRepository, InvoiceLineType, InvoiceRow, InvoiceStatus,
     InvoiceType, StorageConnection,
 };
-
-use super::{UpdateOutboundShipment, UpdateOutboundShipmentError};
+use std::collections::HashMap;
 
 pub fn validate(
     connection: &StorageConnection,
@@ -19,6 +22,7 @@ pub fn validate(
     patch: &UpdateOutboundShipment,
 ) -> Result<(InvoiceRow, bool), UpdateOutboundShipmentError> {
     use UpdateOutboundShipmentError::*;
+    let store_preferences = get_store_preferences(connection, store_id)?;
 
     let invoice = check_invoice_exists(&patch.id, connection)?.ok_or(InvoiceDoesNotExist)?;
     let other_party_id = NameLinkRowRepository::new(connection)
@@ -59,7 +63,14 @@ pub fn validate(
         if check_expected_delivery_date_before_shipped_date(patch.full_status(), &invoice) {
             return Err(CannotHaveEstimatedDeliveryDateBeforeShippedDate);
         }
+
+        // Don't allow users to issue more than what has been authorised in the
+        // linked requisition
+        if store_preferences.response_requisition_requires_authorisation {
+            validate_approved_quantities(connection, &invoice)?
+        }
     }
+
     Ok((invoice, status_changed))
 }
 
@@ -113,4 +124,62 @@ fn check_expected_delivery_date_before_shipped_date(
     }
 
     false
+}
+
+fn validate_approved_quantities(
+    connection: &StorageConnection,
+    invoice: &InvoiceRow,
+) -> Result<(), UpdateOutboundShipmentError> {
+    let Some(ref requisition_id) = invoice.requisition_id else {
+        return Ok(());
+    };
+
+    let invoice_lines = InvoiceLineRepository::new(connection)
+        .query_by_filter(InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(&invoice.id)))?;
+
+    let item_ids: Vec<String> = invoice_lines
+        .iter()
+        .map(|line| line.invoice_line_row.item_link_id.clone())
+        .collect();
+
+    let requisition_lines = RequisitionLineRepository::new(connection).query_by_filter(
+        RequisitionLineFilter::new()
+            .requisition_id(EqualFilter::equal_to(requisition_id))
+            .item_id(EqualFilter::equal_any(item_ids)),
+    )?;
+
+    let approved_quantities: HashMap<String, f64> = requisition_lines
+        .into_iter()
+        .map(|req_line| {
+            (
+                req_line.requisition_line_row.item_link_id,
+                req_line.requisition_line_row.approved_quantity,
+            )
+        })
+        .collect();
+
+    let mut item_quantities: HashMap<String, f64> = HashMap::new();
+    let mut invalid_lines = Vec::new();
+
+    for invoice_line in invoice_lines {
+        let line_row = &invoice_line.invoice_line_row;
+        let item_id = &line_row.item_link_id;
+        let line_quantity = line_row.number_of_packs * line_row.pack_size;
+
+        let total_quantity = item_quantities.entry(item_id.clone()).or_insert(0.0);
+        *total_quantity += line_quantity;
+
+        if let Some(&approved_quantity) = approved_quantities.get(item_id) {
+            if *total_quantity > approved_quantity {
+                invalid_lines.push(invoice_line.clone());
+            }
+        }
+    }
+
+    if !invalid_lines.is_empty() {
+        return Err(UpdateOutboundShipmentError::CannotIssueMoreThanAuthorised(
+            invalid_lines,
+        ));
+    }
+    Ok(())
 }

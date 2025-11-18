@@ -104,6 +104,7 @@ pub enum UpdateErrorInterface {
     CannotHaveEstimatedDeliveryDateBeforeShippedDate(
         CannotHaveEstimatedDeliveryDateBeforeShippedDate,
     ),
+    CannotIssueMoreThanAuthorised(CannotIssueMoreThanAuthorised),
 }
 
 impl UpdateInput {
@@ -187,6 +188,11 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
                 ),
             )
         }
+        ServiceError::CannotIssueMoreThanAuthorised(lines) => {
+            return Ok(UpdateErrorInterface::CannotIssueMoreThanAuthorised(
+                CannotIssueMoreThanAuthorised(InvoiceLineConnector::from_vec(lines)),
+            ))
+        }
         // Standard Graphql Errors
         ServiceError::NotAnOutboundShipment => BadUserInput(formatted_error),
         ServiceError::NotThisStoreInvoice => BadUserInput(formatted_error),
@@ -206,6 +212,17 @@ impl CanOnlyChangeToAllocatedWhenNoUnallocatedLines {
         "Cannot change to allocated status when unallocated lines are present"
     }
 
+    pub async fn invoice_lines(&self) -> &InvoiceLineConnector {
+        &self.0
+    }
+}
+
+pub struct CannotIssueMoreThanAuthorised(pub InvoiceLineConnector);
+#[Object]
+impl CannotIssueMoreThanAuthorised {
+    pub async fn description(&self) -> &'static str {
+        "Cannot issue more than the approved quantity in the requisition"
+    }
     pub async fn invoice_lines(&self) -> &InvoiceLineConnector {
         &self.0
     }
