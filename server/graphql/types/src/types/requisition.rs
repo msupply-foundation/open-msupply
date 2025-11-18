@@ -5,7 +5,7 @@ use graphql_core::{
     loader::{
         InvoiceByRequisitionIdLoader, NameByIdLoader, NameByIdLoaderInput,
         RequisitionLinesByRequisitionIdLoader, RequisitionLinesRemainingToSupplyLoader,
-        RequisitionsByIdLoader, UserLoader,
+        RequisitionsByIdLoader, SyncFileReferenceLoader, UserLoader,
     },
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
@@ -17,6 +17,7 @@ use super::{
     program_node::ProgramNode, InvoiceConnector, NameNode, PeriodNode, RequisitionLineConnector,
     UserNode,
 };
+use crate::types::SyncFileReferenceConnector;
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(remote = "repository::db_diesel::requisition::requisition_row::RequisitionType")]
@@ -204,6 +205,16 @@ impl RequisitionNode {
     /// Minimum quantity to have for stock to be ordered, used to deduce calculated quantity for each line, see calculated in requisition line
     pub async fn min_months_of_stock(&self) -> &f64 {
         &self.row().min_months_of_stock
+    }
+
+    pub async fn documents(&self, ctx: &Context<'_>) -> Result<SyncFileReferenceConnector> {
+        let requisition_id = &self.row().id;
+        let loader = ctx.get_loader::<DataLoader<SyncFileReferenceLoader>>();
+        let result_option = loader.load_one(requisition_id.to_string()).await?;
+
+        Ok(SyncFileReferenceConnector::from_vec(
+            result_option.unwrap_or(vec![]),
+        ))
     }
 
     pub async fn lines(&self, ctx: &Context<'_>) -> Result<RequisitionLineConnector> {
