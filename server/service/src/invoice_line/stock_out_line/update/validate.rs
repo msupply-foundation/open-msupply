@@ -91,9 +91,10 @@ pub fn validate(
     }
 
     if store_preferences.response_requisition_requires_authorisation {
+        let pack_size: f64 = batch_pair.main_batch.stock_line_row.pack_size;
         check_item_approved_quantity(connection, &item.id, 
             Some(line_row.id.clone()),
-            invoice.requisition_id.clone(), input.number_of_packs, line_row.pack_size)
+            invoice.requisition_id.clone(), input.number_of_packs, pack_size)
             .map_err(|e| match e {
                 crate::invoice_line::validate::CannotIssueMoreThanApprovedQuantity::CannotIssueMoreThanApprovedQuantity => {
                     UpdateStockOutLineError::CannotIssueMoreThanApprovedQuantity
