@@ -268,10 +268,10 @@ mod test {
                             custom_data_string: Some(r#"{"check": "check"}"#.to_string()),
                             ..Default::default()
                         },
-                        name_link_row: NameLinkRow {
-                            id: "test_id".to_string(),
-                            name_id: "test_id".to_string(),
-                        },
+                        // name_link_row: NameLinkRow {
+                        //     id: "test_id".to_string(),
+                        //     name_id: "test_id".to_string(),
+                        // },
                         name_store_join_row: None,
                         store_row: None,
                         properties: None,

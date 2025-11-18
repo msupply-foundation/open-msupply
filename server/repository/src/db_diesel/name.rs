@@ -7,10 +7,9 @@ use crate::{
     diesel_macros::{
         apply_equal_filter, apply_sort_no_case, apply_string_filter, apply_string_or_filter,
     },
-    name_oms_fields_alias,
+    name_oms_fields, name_oms_fields_alias,
     repository_error::RepositoryError,
-    EqualFilter, NameLinkRow, NameOmsFields, NameOmsFieldsRow, NameRowType, Pagination, Sort,
-    StringFilter,
+    EqualFilter, NameOmsFields, NameOmsFieldsRow, NameRowType, Pagination, Sort, StringFilter,
 };
 
 use diesel::{
@@ -27,7 +26,7 @@ pub struct Name {
     pub name_store_join_row: Option<NameStoreJoinRow>,
     pub store_row: Option<StoreRow>,
     pub properties: Option<String>,
-    pub name_link_row: NameLinkRow,
+    // pub name_link_row: NameLinkRow,
 }
 
 #[derive(Clone, Default, PartialEq, Debug)]
@@ -79,7 +78,7 @@ pub type NameSort = Sort<NameSortField>;
 
 type NameAndNameStoreJoin = (
     NameRow,
-    (NameLinkRow, Option<NameStoreJoinRow>, Option<StoreRow>),
+    (Option<NameStoreJoinRow>, Option<StoreRow>),
     NameOmsFieldsRow,
 );
 
@@ -166,24 +165,30 @@ impl<'a> NameRepository<'a> {
     /// Returns a list of names left joined to name_store_join (for name_store_joins matching store_id parameter)
     /// Names will still be present in result even if name_store_join doesn't match store_id in parameters
     /// but it's considered invisible in subsequent filters.
+    ///
+    /// Merged names/stores:
+    /// If a name has been merged with another name, we ideally want the name store join and masterlists associated with that two original names to be a union of both
+    /// But only return a single name row (the surviving name).
+    ///
     pub fn create_filtered_query(store_id: String, filter: Option<NameFilter>) -> BoxedNameQuery {
         let mut query = name::table
-            .inner_join(
-                name_link::table
-                    .left_join(
-                        name_store_join::table.on(name_store_join::name_link_id
-                            .eq(name_link::id)
-                            .and(name_store_join::store_id.eq(store_id.clone()))),
-                    )
-                    .left_join(store::table),
+            .left_join(
+                name_store_join::table.on(name_store_join::name_link_id
+                    .eq(name::id)
+                    .and(name_store_join::store_id.eq(store_id.clone()))),
             )
-            .inner_join(name_oms_fields_alias)
+            .left_join(store::table.on(store::name_link_id.eq(name::id)))
+            .inner_join(
+                name_oms_fields_alias.on(name_oms_fields_alias
+                    .field(name_oms_fields::id)
+                    .eq(name::id)),
+            )
             .filter(name::type_.ne(NameRowType::Patient))
             .filter(
                 store::is_disabled
                     .is_null()
                     .or(store::is_disabled.eq(false)),
-            ) // Filter out disabled stores, these are usually due to store merge, and should not be visible
+            )
             .into_boxed();
 
         if let Some(f) = filter {
@@ -218,7 +223,8 @@ impl<'a> NameRepository<'a> {
 
             apply_equal_filter!(query, id, name::id);
             apply_string_filter!(query, code, name::code);
-            apply_string_filter!(query, name_link_id, name_link::id);
+            // TODO Sub query
+            // apply_string_filter!(query, name_link_id, name::id);
 
             apply_string_filter!(query, name, name::name_);
             apply_string_filter!(query, store_code, store::code);
@@ -275,14 +281,13 @@ impl<'a> NameRepository<'a> {
 
 impl Name {
     pub fn from_join(
-        (name_row, (name_link_row, name_store_join_row, store_row), name_oms_fields): NameAndNameStoreJoin,
+        (name_row, (name_store_join_row, store_row), name_oms_fields): NameAndNameStoreJoin,
     ) -> Name {
         Name {
             name_row,
             name_store_join_row,
             store_row,
             properties: name_oms_fields.properties,
-            name_link_row,
         }
     }
 
@@ -296,19 +301,16 @@ impl Name {
 }
 
 // name_store_join::name_id.eq(name::id)
-type NameLinkIdEqualToId = Eq<name_store_join::name_link_id, name_link::id>;
+type NameIdEqualToId = Eq<name_store_join::name_link_id, name::id>;
 // name_store_join::store_id.eq(store_id)
 type StoreIdEqualToStr = Eq<name_store_join::store_id, String>;
-type OnNameStoreJoinToNameLinkJoin =
-    On<name_store_join::table, And<NameLinkIdEqualToId, StoreIdEqualToStr>>;
+type OnNameStoreJoinToNameJoin =
+    On<name_store_join::table, And<NameIdEqualToId, StoreIdEqualToStr>>;
 
 type BoxedNameQuery = IntoBoxed<
     'static,
     InnerJoin<
-        InnerJoin<
-            name::table,
-            LeftJoin<LeftJoin<name_link::table, OnNameStoreJoinToNameLinkJoin>, store::table>,
-        >,
+        LeftJoin<name::table, LeftJoin<OnNameStoreJoinToNameJoin, store::table>>,
         Alias<NameOmsFields>,
     >,
     DBType,
@@ -489,10 +491,10 @@ mod tests {
                 name_store_join_row: None,
                 store_row: None,
                 properties: None,
-                name_link_row: NameLinkRow {
-                    id: format!("id{:05}", index),
-                    name_id: format!("id{:05}", index),
-                },
+                // name_link_row: NameLinkRow {
+                //     id: format!("id{:05}", index),
+                //     name_id: format!("id{:05}", index),
+                // },
             });
         }
         (rows, queries)

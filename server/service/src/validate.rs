@@ -66,10 +66,10 @@ pub fn check_other_party(
 
         return Ok(Name {
             name_row: patient,
-            name_link_row: NameLinkRow {
-                id: other_party_id.to_string(),
-                name_id: other_party_id.to_string(),
-            },
+            // name_link_row: NameLinkRow {
+            //     id: other_party_id.to_string(),
+            //     name_id: other_party_id.to_string(),
+            // },
             name_store_join_row: None,
             store_row: None,
             properties: None,

@@ -310,10 +310,10 @@ mod test {
                         // program1 master list only visible in mock_name_store_b supplier
                         supplier: Name {
                             name_row: mock_name_store_b(),
-                            name_link_row: NameLinkRow {
-                                id: mock_name_store_b().id,
-                                name_id: mock_name_store_b().id,
-                            },
+                            // name_link_row: NameLinkRow {
+                            //     id: mock_name_store_b().id,
+                            //     name_id: mock_name_store_b().id,
+                            // },
                             name_store_join_row: Some(name_store_join1.clone()),
                             store_row: Some(mock_store_b()),
                             properties: None,
@@ -340,10 +340,10 @@ mod test {
                         // program2 master list only visible in mock_name_store_c supplier
                         supplier: Name {
                             name_row: mock_name_store_c(),
-                            name_link_row: NameLinkRow {
-                                id: mock_name_store_c().id,
-                                name_id: mock_name_store_c().id,
-                            },
+                            // name_link_row: NameLinkRow {
+                            //     id: mock_name_store_c().id,
+                            //     name_id: mock_name_store_c().id,
+                            // },
                             name_store_join_row: Some(name_store_join2.clone()),
                             store_row: Some(mock_store_c()),
                             properties: None,

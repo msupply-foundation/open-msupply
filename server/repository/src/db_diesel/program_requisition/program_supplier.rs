@@ -58,6 +58,7 @@ impl<'a> ProgramSupplierRepository<'a> {
 
         let mut query =
             NameRepository::create_filtered_query(store_id.to_string(), Some(name_filter))
+                .inner_join(name_link::table)
                 .inner_join(
                     master_list_name_join::table
                         .on(master_list_name_join::name_link_id.eq(name_link::id)),
@@ -78,17 +79,18 @@ impl<'a> ProgramSupplierRepository<'a> {
         //     diesel::debug_query::<crate::DBType, _>(&query).to_string()
         // );
 
-        let query = query.select((
-            // Same as NameRepository
-            name::table::all_columns(),
-            name_oms_fields_alias.fields((name_oms_fields::id, name_oms_fields::properties)),
-            name_link::table::all_columns().nullable().assume_not_null(),
-            name_store_join::table::all_columns()
-                .nullable()
-                .assume_not_null(),
-            store::table::all_columns().nullable().assume_not_null(),
-            program::table::all_columns().nullable().assume_not_null(),
-        ));
+        let query = query
+            .select((
+                // Same as NameRepository
+                name::table::all_columns(),
+                name_oms_fields_alias.fields((name_oms_fields::id, name_oms_fields::properties)),
+                name_store_join::table::all_columns()
+                    .nullable()
+                    .assume_not_null(),
+                store::table::all_columns().nullable().assume_not_null(),
+                program::table::all_columns().nullable().assume_not_null(),
+            ))
+            .distinct();
         let result = query.load::<ProgramSupplierJoin>(self.connection.lock().connection())?;
 
         Ok(result
@@ -97,7 +99,7 @@ impl<'a> ProgramSupplierRepository<'a> {
                 |(
                     name_row,
                     name_oms_fields_row,
-                    name_link_row,
+                    _name_link_row,
                     name_store_join_row,
                     store_row,
                     program,
@@ -105,7 +107,7 @@ impl<'a> ProgramSupplierRepository<'a> {
                     ProgramSupplier {
                         supplier: Name::from_join((
                             name_row,
-                            (name_link_row, Some(name_store_join_row), Some(store_row)),
+                            (Some(name_store_join_row), Some(store_row)),
                             name_oms_fields_row,
                         )),
                         program,
@@ -318,7 +320,7 @@ mod test {
             Ok(vec![ProgramSupplier {
                 supplier: Name {
                     name_row: store_name1.clone(),
-                    name_link_row: store_name_link1.clone(),
+                    // name_link_row: store_name_link1.clone(),
                     name_store_join_row: Some(name_store_join2.clone()),
                     store_row: Some(store1.clone()),
                     properties: None,
@@ -349,7 +351,7 @@ mod test {
                 ProgramSupplier {
                     supplier: Name {
                         name_row: store_name1.clone(),
-                        name_link_row: store_name_link1,
+                        // name_link_row: store_name_link1,
                         name_store_join_row: Some(name_store_join2.clone()),
                         store_row: Some(store1.clone()),
                         properties: None,
@@ -359,7 +361,7 @@ mod test {
                 ProgramSupplier {
                     supplier: Name {
                         name_row: store_name2.clone(),
-                        name_link_row: store_name_link2,
+                        // name_link_row: store_name_link2,
                         name_store_join_row: Some(name_store_join3.clone()),
                         store_row: Some(store2.clone()),
                         properties: None,
