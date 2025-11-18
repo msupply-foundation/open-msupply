@@ -174,6 +174,10 @@ impl PreferencesNode {
             self.load_preference(&self.preferences.warn_when_missing_recent_stocktake)?,
         ))
     }
+
+    pub async fn skip_intermediate_statuses_in_outbound(&self) -> Result<bool> {
+        self.load_preference(&self.preferences.skip_intermediate_statuses_in_outbound)
+    }
 }
 
 impl PreferencesNode {
@@ -254,6 +258,7 @@ pub enum PreferenceKey {
     FirstThresholdForExpiringItems,
     SecondThresholdForExpiringItems,
     WarnWhenMissingRecentStocktake,
+    SkipIntermediateStatusesInOutbound,
 }
 
 #[derive(Enum, Copy, Clone, Debug, Eq, PartialEq)]

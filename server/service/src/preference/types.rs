@@ -46,6 +46,7 @@ pub enum PrefKey {
     FirstThresholdForExpiringItems,
     SecondThresholdForExpiringItems,
     WarnWhenMissingRecentStocktake,
+    SkipIntermediateStatusesInOutbound,
 }
 
 #[derive(Clone, Debug, PartialEq)]

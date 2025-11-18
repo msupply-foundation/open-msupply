@@ -2235,6 +2235,7 @@
   "preference.secondThresholdForExpiringItems": "Second threshold for expiring items",
   "preference.selectDestinationStoreForAnInternalOrder": "Select destination store for an Internal Order",
   "preference.showContactTracing": "Show contact tracing",
+  "preference.skipIntermediateStatusesInOutbound": "Skip 'Picked' and 'Allocated' statuses in outbound shipments",
   "preference.sortByVvmStatusThenExpiry": "Sort available batches by VVM status then expiry",
   "preference.syncRecordsDisplayThreshold": "Sync records display threshold",
   "preference.useDaysInMonth": "Use days in month",
