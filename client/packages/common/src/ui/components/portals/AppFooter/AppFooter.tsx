@@ -45,7 +45,7 @@ export const AppFooter: FC = () => {
       textColour = theme.palette.getContrastText(storeCustomColour ?? '');
       customColour = storeCustomColour;
     } catch (e) {
-      console.log('Error parsing footer colours from Store properties', e);
+      console.error('Error parsing footer colours from Store properties', e);
     }
   }
 
