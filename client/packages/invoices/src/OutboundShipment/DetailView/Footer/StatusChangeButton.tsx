@@ -123,9 +123,19 @@ const useStatusChangeButton = () => {
     return statusOptions;
   }, [status, getButtonLabel, skipIntermediateStatusesInOutbound]);
 
+  // In the case where "skip intermediate statuses" is on, but the current
+  // status has already been set to "Allocated" or "Picked", we pretend the
+  // current status is actually "New" so it behaves as expected.
+  const currentStatus =
+    skipIntermediateStatusesInOutbound &&
+    (status === InvoiceNodeStatus.Allocated ||
+      status === InvoiceNodeStatus.Picked)
+      ? InvoiceNodeStatus.New
+      : status;
+
   const [selectedOption, setSelectedOption] =
     useState<SplitButtonOption<InvoiceNodeStatus> | null>(() =>
-      getNextStatusOption(status, options)
+      getNextStatusOption(currentStatus, options)
     );
 
   const onConfirmStatusChange = async () => {
@@ -167,7 +177,7 @@ const useStatusChangeButton = () => {
   // When the status of the invoice changes (after an update), set the selected option to the next status.
   // It would be set to the current status, which is now a disabled option.
   useEffect(() => {
-    setSelectedOption(() => getNextStatusOption(status, options));
+    setSelectedOption(() => getNextStatusOption(currentStatus, options));
   }, [status, options]);
 
   return {
