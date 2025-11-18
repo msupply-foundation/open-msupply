@@ -4,6 +4,7 @@ import {
   LocaleKey,
   NothingHere,
   PreferenceNodeType,
+  PreferenceValueNodeType,
   useAuthContext,
   useIsCentralServerApi,
   UserPermission,
@@ -50,11 +51,16 @@ export const EditStorePreferences = ({
               !userHasPermission(UserPermission.EditCentralData)
             }
             preference={pref}
-            update={value =>
-              update({
-                [pref.key]: [{ storeId, value }],
-              })
-            }
+            update={value => {
+              const finalValue =
+                pref.valueType === PreferenceValueNodeType.Integer &&
+                value === undefined
+                  ? 0
+                  : value;
+              return update({
+                [pref.key]: [{ storeId, value: finalValue }],
+              });
+            }}
           />
         }
         sx={{
