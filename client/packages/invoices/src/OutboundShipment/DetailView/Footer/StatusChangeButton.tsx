@@ -12,7 +12,7 @@ import {
   useDisabledNotificationToast,
   usePreferences,
 } from '@openmsupply-client/common';
-import { getNextOutboundStatus, getStatusTranslation } from '../../../utils';
+import { getStatusTranslation } from '../../../utils';
 import { useOutbound, useOutboundLines } from '../../api';
 
 const getStatusOptions = (
