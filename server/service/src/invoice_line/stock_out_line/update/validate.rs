@@ -6,17 +6,17 @@ use crate::{
         check_batch_exists, check_batch_on_hold, check_existing_stock_line, check_location_on_hold,
         invoice_backdated_date,
         stock_out_line::{adjust_for_residual_packs, BatchPair},
-        validate::{check_line_belongs_to_invoice, check_line_exists, check_number_of_packs},
+        validate::{
+            check_item_approved_quantity, check_line_belongs_to_invoice, check_line_exists,
+            check_number_of_packs,
+        },
         LocationIsOnHoldError,
     },
     service_provider::ServiceContext,
     stock_line::historical_stock::get_historical_stock_line_available_quantity,
     store_preference::get_store_preferences,
 };
-use repository::{
-    EqualFilter, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRow, InvoiceRow,
-    InvoiceStatus, ItemRow, RequisitionLineFilter, RequisitionLineRepository, StorageConnection,
-};
+use repository::{InvoiceLineRow, InvoiceRow, InvoiceStatus, ItemRow, StorageConnection};
 
 pub struct UpdateStockOutLineValidationResult {
     pub line: InvoiceLineRow,
@@ -90,43 +90,16 @@ pub fn validate(
         }
     }
 
-    if invoice.requisition_id.is_some()
-        && store_preferences.response_requisition_requires_authorisation
-    {
-        let requisition_line = RequisitionLineRepository::new(connection)
-            .query_by_filter(
-                RequisitionLineFilter::new()
-                    .requisition_id(EqualFilter::equal_to(
-                        &invoice.requisition_id.clone().unwrap(),
-                    ))
-                    .item_id(EqualFilter::equal_to(&line.item_row.id)),
-            )?
-            .pop();
-
-        if let Some(requisition_line) = requisition_line {
-            let approved_quantity = requisition_line.requisition_line_row.approved_quantity;
-
-            let all_lines_for_item = InvoiceLineRepository::new(connection).query_by_filter(
-                InvoiceLineFilter::new()
-                    .invoice_id(EqualFilter::equal_to(&invoice.id))
-                    .item_id(EqualFilter::equal_to(&line.item_row.id)),
-            )?;
-
-            let total_issued_quantity: f64 = all_lines_for_item
-                .iter()
-                .filter(|l| l.invoice_line_row.id != line_row.id)
-                .map(|l| l.invoice_line_row.number_of_packs * l.invoice_line_row.pack_size)
-                .sum();
-            let issue_quantity = input
-                .number_of_packs
-                .map_or(0.0, |packs| packs * line.invoice_line_row.pack_size);
-
-            let total_quantity_after_update = total_issued_quantity + issue_quantity;
-
-            if total_quantity_after_update > approved_quantity {
-                return Err(CannotIssueMoreThanApprovedQuantity(line_row.id.clone()));
-            }
-        }
+    if store_preferences.response_requisition_requires_authorisation {
+        check_item_approved_quantity(connection, &item.id, invoice.requisition_id.clone())
+            .map_err(|e| match e {
+                crate::invoice_line::validate::CannotIssueMoreThanApprovedQuantity::CannotIssueMoreThanApprovedQuantity => {
+                    UpdateStockOutLineError::CannotIssueMoreThanApprovedQuantity
+                }
+                crate::invoice_line::validate::CannotIssueMoreThanApprovedQuantity::RepositoryError(repository_error) => {
+                    UpdateStockOutLineError::DatabaseError(repository_error)
+                }
+            })?;
     }
 
     let mut adjusted_input = UpdateStockOutLine { ..input };

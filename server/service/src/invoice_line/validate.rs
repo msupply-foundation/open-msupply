@@ -1,7 +1,8 @@
 use repository::{
     EqualFilter, InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRow,
     InvoiceLineRowRepository, InvoiceRow, ItemRow, ItemRowRepository, RepositoryError,
-    StockLineFilter, StockLineRepository, StorageConnection,
+    RequisitionLineFilter, RequisitionLineRepository, StockLineFilter, StockLineRepository,
+    StorageConnection,
 };
 
 pub fn check_number_of_packs(number_of_packs_option: Option<f64>) -> bool {
@@ -64,4 +65,53 @@ pub fn check_line_not_associated_with_stocktake(
 pub struct ReductionBelowZeroError {
     pub stock_line_id: String,
     pub line_id: String,
+}
+
+pub enum CannotIssueMoreThanApprovedQuantity {
+    CannotIssueMoreThanApprovedQuantity,
+    RepositoryError(RepositoryError),
+}
+
+impl From<RepositoryError> for CannotIssueMoreThanApprovedQuantity {
+    fn from(err: RepositoryError) -> Self {
+        CannotIssueMoreThanApprovedQuantity::RepositoryError(err)
+    }
+}
+
+pub fn check_item_approved_quantity(
+    connection: &StorageConnection,
+    item_id: &str,
+    requisition_id: Option<String>,
+) -> Result<(), CannotIssueMoreThanApprovedQuantity> {
+    let Some(ref req_id) = requisition_id else {
+        return Ok(());
+    };
+    let requisition_line = RequisitionLineRepository::new(connection)
+        .query_by_filter(
+            RequisitionLineFilter::new()
+                .requisition_id(EqualFilter::equal_to(req_id))
+                .item_id(EqualFilter::equal_to(item_id)),
+        )?
+        .pop();
+
+    if let Some(requisition_line) = requisition_line {
+        let approved_quantity = requisition_line.requisition_line_row.approved_quantity;
+
+        let all_lines_for_item = InvoiceLineRepository::new(connection).query_by_filter(
+            InvoiceLineFilter::new()
+                .requisition_id(EqualFilter::equal_to(req_id))
+                .item_id(EqualFilter::equal_to(item_id)),
+        )?;
+
+        let total_issued_quantity: f64 = all_lines_for_item
+            .iter()
+            .map(|l| l.invoice_line_row.number_of_packs * l.invoice_line_row.pack_size)
+            .sum();
+
+        if total_issued_quantity > approved_quantity {
+            return Err(CannotIssueMoreThanApprovedQuantity::CannotIssueMoreThanApprovedQuantity);
+        }
+    }
+
+    Ok(())
 }

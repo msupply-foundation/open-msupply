@@ -6,16 +6,14 @@ use crate::{
         check_batch_exists, check_batch_on_hold, check_existing_stock_line, check_location_on_hold,
         invoice_backdated_date,
         stock_out_line::adjust_for_residual_packs,
-        validate::{check_line_exists, check_number_of_packs},
+        validate::{check_item_approved_quantity, check_line_exists, check_number_of_packs},
         LocationIsOnHoldError,
     },
     stock_line::historical_stock::get_historical_stock_line_available_quantity,
     store_preference::get_store_preferences,
 };
 use repository::{
-    EqualFilter, InvoiceLineFilter, InvoiceLineRepository, InvoiceRow, InvoiceStatus, ItemRow,
-    LocationRowRepository, RequisitionLineFilter, RequisitionLineRepository, StockLine,
-    StorageConnection,
+    InvoiceRow, InvoiceStatus, ItemRow, LocationRowRepository, StockLine, StorageConnection,
 };
 
 pub fn validate(
@@ -100,40 +98,16 @@ pub fn validate(
         }
     }
 
-    if invoice.requisition_id.is_some()
-        && store_preferences.response_requisition_requires_authorisation
-    {
-        let requisition_line = RequisitionLineRepository::new(connection)
-            .query_by_filter(
-                RequisitionLineFilter::new()
-                    .requisition_id(EqualFilter::equal_to(
-                        &invoice.requisition_id.clone().unwrap(),
-                    ))
-                    .item_id(EqualFilter::equal_to(&item.id)),
-            )?
-            .pop();
-
-        if let Some(requisition_line) = requisition_line {
-            let approved_quantity = requisition_line.requisition_line_row.approved_quantity;
-
-            let all_lines_for_item = InvoiceLineRepository::new(connection).query_by_filter(
-                InvoiceLineFilter::new()
-                    .invoice_id(EqualFilter::equal_to(&invoice.id))
-                    .item_id(EqualFilter::equal_to(&item.id)),
-            )?;
-
-            let total_issued_quantity: f64 = all_lines_for_item
-                .iter()
-                .map(|l| l.invoice_line_row.number_of_packs * l.invoice_line_row.pack_size)
-                .sum();
-            let issue_quantity = input.number_of_packs * batch.stock_line_row.pack_size;
-
-            let total_quantity_after_update = total_issued_quantity + issue_quantity;
-
-            if total_quantity_after_update > approved_quantity {
-                return Err(CannotIssueMoreThanApprovedQuantity(input.id.clone()));
-            }
-        }
+    if store_preferences.response_requisition_requires_authorisation {
+        check_item_approved_quantity(connection, &item.id, invoice.requisition_id.clone())
+            .map_err(|e| match e {
+                crate::invoice_line::validate::CannotIssueMoreThanApprovedQuantity::CannotIssueMoreThanApprovedQuantity => {
+                    InsertStockOutLineError::CannotIssueMoreThanApprovedQuantity
+                }
+                crate::invoice_line::validate::CannotIssueMoreThanApprovedQuantity::RepositoryError(repository_error) => {
+                    InsertStockOutLineError::DatabaseError(repository_error)
+                }
+            })?;
     }
 
     // If there's only a tiny bit left in stock after this, we'll adjust the invoice to take the last of the stock
