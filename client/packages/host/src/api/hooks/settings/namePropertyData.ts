@@ -115,7 +115,7 @@ function getForecastingPropertiesForLanguage(language: string) {
       propertyId: BUFFER_STOCK_KEY,
       key: BUFFER_STOCK_KEY,
       name: translations['BUFFER_STOCK_KEY'],
-      valueType: PropertyNodeValueType.Integer,
+      valueType: PropertyNodeValueType.Float,
       allowedValues: null,
       remoteEditable: false,
     },
