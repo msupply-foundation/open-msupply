@@ -6,7 +6,6 @@ use crate::{
 use chrono::NaiveDate;
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
-use ts_rs::TS;
 
 table! {
     consumption (id) {
@@ -21,8 +20,7 @@ table! {
     }
 }
 
-#[derive(Clone, Queryable, Debug, PartialEq, Default, Serialize, Deserialize, TS)]
-#[ts(export)]
+#[derive(Clone, Queryable, Debug, PartialEq, Default, Serialize, Deserialize)]
 pub struct ConsumptionRow {
     pub id: String,
     pub item_id: String,
