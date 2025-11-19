@@ -37,16 +37,10 @@ export const generateAmcFormula = (
   preferences: AdminPreferenceFragment[],
   t: TypedTFunction<LocaleKey>
 ): string => {
-  // const hasTransfers = preferences.some(
-  //   p => p.key === PreferenceKey.ExcludeTransfers && p.value
-  // );
   const hasDaysOut = preferences.some(
     p => p.key === PreferenceKey.AdjustForNumberOfDaysOutOfStock && p.value
   );
 
-  // const consumption = hasTransfers
-  //   ? `(${t('label.consumption')} - ${t('label.transfers')})`
-  //   : t('label.consumption');
   const consumption = t('label.consumption');
 
   const days = hasDaysOut

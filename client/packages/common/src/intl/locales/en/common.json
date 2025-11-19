@@ -1705,6 +1705,7 @@
   "messages.allocated-lines_many": "Allocated {{count}} lines",
   "messages.allocated-lines_one": "Allocated {{count}} line",
   "messages.allocated-lines_other": "Allocated {{count}} lines",
+  "messages.amc-minus-transfers": "If you are using any plugins that exclude transfers from the AMC calculation, then your calculation will be (consumption - transfers).",
   "messages.asset-saved": "Asset saved 🥳",
   "messages.auto-allocated-lines": "Placeholder quantity has been auto-allocated.",
   "messages.breach-ongoing": "This breach is ongoing and cannot be acknowledged until it has ended.",
