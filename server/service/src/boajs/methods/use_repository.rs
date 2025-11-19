@@ -1,5 +1,8 @@
 use boa_engine::*;
-use repository::{SyncMessageRow, SyncMessageRowRepository};
+use repository::{
+    ConsumptionFilter, DaysOutOfStockRepository, DaysOutOfStockRow, SyncMessageRow,
+    SyncMessageRowRepository,
+};
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
@@ -10,6 +13,7 @@ use crate::{boajs::context::BoaJsContext, boajs::utils::*};
 pub(crate) enum UseRepositoryInput {
     GetSyncMessageById(String),
     UpsertSyncMessage(SyncMessageRow),
+    GetDaysOutOfStock(ConsumptionFilter),
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
@@ -17,6 +21,7 @@ pub(crate) enum UseRepositoryInput {
 pub(crate) enum UseRepositoryOutput {
     GetSyncMessageById(Option<SyncMessageRow>),
     UpsertSyncMessage(i64),
+    GetDaysOutOfStock(Vec<DaysOutOfStockRow>),
 }
 
 pub(crate) fn bind_method(context: &mut Context) -> Result<(), JsError> {
@@ -45,6 +50,11 @@ pub(crate) fn bind_method(context: &mut Context) -> Result<(), JsError> {
                     In::UpsertSyncMessage(message_row) => Out::UpsertSyncMessage(
                         SyncMessageRowRepository::new(&connection)
                             .upsert_one(&message_row)
+                            .map_err(std_error_to_js_error)?,
+                    ),
+                    In::GetDaysOutOfStock(filter) => Out::GetDaysOutOfStock(
+                        DaysOutOfStockRepository::new(&connection)
+                            .query(Some(filter))
                             .map_err(std_error_to_js_error)?,
                     ),
                 }
