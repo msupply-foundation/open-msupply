@@ -39,7 +39,7 @@ export const AppFooter: FC = () => {
   let textColour: string | undefined;
   if (storeCustomColour) {
     // Try/catch essentially validates the colour string -- if it's invalid, the
-    // `getContrastText` function with throw, so neither customColour nor
+    // `getContrastText` function will throw, so neither customColour nor
     // textColour will be defined
     try {
       textColour = theme.palette.getContrastText(storeCustomColour ?? '');
