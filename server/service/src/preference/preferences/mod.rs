@@ -50,8 +50,6 @@ pub mod adjust_for_number_of_days_out_of_stock;
 pub use adjust_for_number_of_days_out_of_stock::*;
 pub mod days_in_month;
 pub use days_in_month::*;
-pub mod exclude_transfers;
-pub use exclude_transfers::*;
 
 pub struct PreferenceProvider {
     // Global preferences
@@ -67,7 +65,6 @@ pub struct PreferenceProvider {
     pub use_days_in_month: UseDaysInMonth,
     pub adjust_for_number_of_days_out_of_stock: AdjustForNumberOfDaysOutOfStock,
     pub days_in_month: DaysInMonth,
-    pub exclude_transfers: ExcludeTransfers,
     // Store preferences
     pub manage_vaccines_in_doses: ManageVaccinesInDoses,
     pub manage_vvm_status_for_stock: ManageVvmStatusForStock,
@@ -102,7 +99,6 @@ pub fn get_preference_provider() -> PreferenceProvider {
         use_days_in_month: UseDaysInMonth,
         adjust_for_number_of_days_out_of_stock: AdjustForNumberOfDaysOutOfStock,
         days_in_month: DaysInMonth,
-        exclude_transfers: ExcludeTransfers,
         // Store preferences
         manage_vaccines_in_doses: ManageVaccinesInDoses,
         manage_vvm_status_for_stock: ManageVvmStatusForStock,

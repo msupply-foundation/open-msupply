@@ -1,6 +1,6 @@
 use crate::backend_plugin::types::get_consumption;
 use crate::common::days_in_a_month;
-use crate::preference::{AdjustForNumberOfDaysOutOfStock, ExcludeTransfers, Preference};
+use crate::preference::{AdjustForNumberOfDaysOutOfStock, Preference};
 use crate::{
     backend_plugin::{
         plugin_provider::{PluginInstance, PluginResult},
@@ -81,8 +81,6 @@ pub fn get_item_stats(
 
     let consumption_rows = ConsumptionRepository::new(connection).query(Some(filter.clone()))?;
 
-    let exclude_transfers = ExcludeTransfers.load(connection, None).unwrap_or(false);
-
     let same_level_transfer_input = get_consumption::Input {
         store_id: store_id.to_string(),
         item_ids: item_ids.clone(),
@@ -92,7 +90,7 @@ pub fn get_item_stats(
 
     let consumption_map = match PluginInstance::get_one(PluginType::GetConsumption) {
         Some(plugin) => get_consumption::Trait::call(&(*plugin), same_level_transfer_input)?,
-        None => get_consumption_map(&consumption_rows, exclude_transfers)?,
+        None => get_consumption_map(&consumption_rows)?,
     };
 
     let adjust_for_days_out_of_stock = AdjustForNumberOfDaysOutOfStock
@@ -190,17 +188,12 @@ impl amc::Trait for DefaultAmc {
 
 fn get_consumption_map(
     consumption_rows: &Vec<ConsumptionRow>,
-    exclude_transfers: bool,
 ) -> Result<HashMap<String /* item_id */, f64 /* total consumption */>, RepositoryError> {
     let mut consumption_map = HashMap::new();
     for consumption_row in consumption_rows.into_iter() {
         let item_total_consumption = consumption_map
             .entry(consumption_row.item_id.clone())
             .or_insert(0.0);
-
-        if exclude_transfers && consumption_row.is_transfer {
-            continue; // Skip transfer consumption
-        }
         *item_total_consumption += consumption_row.quantity;
     }
 
@@ -287,7 +280,7 @@ mod test {
     };
 
     use crate::{
-        preference::{AdjustForNumberOfDaysOutOfStock, DaysInMonth, ExcludeTransfers, Preference},
+        preference::{AdjustForNumberOfDaysOutOfStock, DaysInMonth, Preference},
         service_provider::ServiceProvider,
     };
 
@@ -361,43 +354,6 @@ mod test {
             item_stats[1].average_monthly_consumption,
             test_item_stats::item2_amc_3_months()
         );
-
-        // Test 3 month stats with exclude_transfers = true
-        // Exclude Transfer = true
-        PreferenceRowRepository::new(&context.connection)
-            .upsert_one(&PreferenceRow {
-                id: "exclude transfers".to_string(),
-                store_id: None,
-                key: ExcludeTransfers.key().to_string(),
-                value: "true".to_string(),
-            })
-            .unwrap();
-
-        let mut item_stats = service
-            .get_item_stats(
-                &context,
-                &mock_store_a().id,
-                Some(3.0),
-                item_ids.clone(),
-                None,
-            )
-            .unwrap();
-        item_stats.sort_by(|a, b| a.item_id.cmp(&b.item_id));
-
-        assert_eq!(
-            item_stats[1].average_monthly_consumption,
-            test_item_stats::item2_amc_3_months_excluding_transfer()
-        );
-
-        // Test remainder with exclude_transfers = false
-        PreferenceRowRepository::new(&context.connection)
-            .upsert_one(&PreferenceRow {
-                id: "exclude transfers".to_string(),
-                store_id: None,
-                key: ExcludeTransfers.key().to_string(),
-                value: "false".to_string(),
-            })
-            .unwrap();
 
         // Reduce to looking back 1 month
         let mut item_stats = service
