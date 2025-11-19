@@ -71,10 +71,6 @@ impl PreferencesNode {
         self.load_preference(&self.preferences.days_in_month)
     }
 
-    pub async fn exclude_transfers(&self) -> Result<bool> {
-        self.load_preference(&self.preferences.exclude_transfers)
-    }
-
     // Store preferences
     pub async fn manage_vaccines_in_doses(&self) -> Result<bool> {
         self.load_preference(&self.preferences.manage_vaccines_in_doses)
@@ -210,7 +206,6 @@ pub enum PreferenceKey {
     UseDaysInMonth,
     AdjustForNumberOfDaysOutOfStock,
     DaysInMonth,
-    ExcludeTransfers,
     // Store preferences
     ManageVaccinesInDoses,
     ManageVvmStatusForStock,
