@@ -278,7 +278,6 @@ mod tests {
             ConsumptionRow {
                 date: NaiveDate::from_ymd_opt(2021, 2, 1).unwrap(),
                 quantity: 1000.0,
-                is_transfer: true,
                 ..Default::default()
             },
             ConsumptionRow {
@@ -294,7 +293,6 @@ mod tests {
             ConsumptionRow {
                 date: NaiveDate::from_ymd_opt(2020, 12, 3).unwrap(),
                 quantity: 10.0,
-                is_transfer: true,
                 ..Default::default()
             },
             ConsumptionRow {
@@ -305,7 +303,6 @@ mod tests {
             ConsumptionRow {
                 date: NaiveDate::from_ymd_opt(2020, 11, 11).unwrap(),
                 quantity: 10.0,
-                is_transfer: true,
                 ..Default::default()
             },
             ConsumptionRow {
@@ -316,7 +313,6 @@ mod tests {
             ConsumptionRow {
                 date: NaiveDate::from_ymd_opt(2020, 10, 7).unwrap(),
                 quantity: 10.0,
-                is_transfer: true,
                 ..Default::default()
             },
             ConsumptionRow {
