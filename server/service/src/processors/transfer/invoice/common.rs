@@ -1,6 +1,6 @@
 use repository::{
     EqualFilter, Invoice, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineType, ItemRow,
-    ItemStoreJoinRowRepository, ItemStoreJoinRowRepositoryTrait, NameRowRepository,
+    ItemStoreJoinRowRepository, ItemStoreJoinRowRepositoryTrait,
 };
 use repository::{InvoiceLineRow, RepositoryError, StorageConnection};
 use util::uuid::uuid;
@@ -71,13 +71,23 @@ pub(crate) fn generate_inbound_lines(
 
                 let margin = item_properties.as_ref().map_or(0.0, |i| i.margin);
 
-                let cost_price_per_pack =
-                    sell_price_per_pack + (sell_price_per_pack * margin) / 100.0;
+                let cost_price_per_pack = sell_price_per_pack;
 
                 let total_before_tax = match r#type {
                     // Service lines don't work in packs
                     InvoiceLineType::Service => total_before_tax,
                     _ => cost_price_per_pack * number_of_packs,
+                };
+                let default_sell_price_per_pack =
+                    match (item_properties, default_pack_size == pack_size) {
+                        (Some(p), true) => p.default_sell_price_per_pack,
+                        _ => 0.0,
+                    };
+
+                let adjusted_sell_price_per_pack = if margin == 0.0 {
+                    default_sell_price_per_pack
+                } else {
+                    cost_price_per_pack + (cost_price_per_pack * margin) / 100.0
                 };
 
                 InvoiceLineRow {
@@ -91,7 +101,7 @@ pub(crate) fn generate_inbound_lines(
                     pack_size,
                     total_before_tax,
                     total_after_tax: calculate_total_after_tax(total_before_tax, tax_percentage),
-                    cost_price_per_pack: cost_price_per_pack,
+                    cost_price_per_pack,
                     r#type: match r#type {
                         InvoiceLineType::Service => InvoiceLineType::Service,
                         _ => InvoiceLineType::StockIn,
@@ -109,7 +119,7 @@ pub(crate) fn generate_inbound_lines(
                     program_id,
                     shipped_number_of_packs,
                     volume_per_pack,
-                    sell_price_per_pack: cost_price_per_pack,
+                    sell_price_per_pack: adjusted_sell_price_per_pack,
                     shipped_pack_size,
                     // Default
                     stock_line_id: None,
@@ -137,7 +147,7 @@ pub(crate) fn convert_invoice_line_to_single_pack(
             line.number_of_packs *= line.pack_size;
             line.cost_price_per_pack /= line.pack_size;
             line.volume_per_pack /= line.pack_size;
-            line.cost_price_per_pack /= line.pack_size;
+            line.sell_price_per_pack /= line.pack_size;
             line.pack_size = 1.0;
             line.shipped_number_of_packs = Some(line.number_of_packs);
             line.shipped_pack_size = Some(line.pack_size);
