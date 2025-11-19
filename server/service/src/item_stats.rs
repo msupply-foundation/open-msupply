@@ -79,9 +79,7 @@ pub fn get_item_stats(
         date: Some(DateFilter::date_range(&start_date, &offset_end_date)),
     };
 
-    let consumption_rows = ConsumptionRepository::new(connection).query(Some(filter.clone()))?;
-
-    let same_level_transfer_input = get_consumption::Input {
+    let consumption = get_consumption::Input {
         store_id: store_id.to_string(),
         item_ids: item_ids.clone(),
         start_date: start_date.to_string(),
@@ -89,8 +87,8 @@ pub fn get_item_stats(
     };
 
     let consumption_map = match PluginInstance::get_one(PluginType::GetConsumption) {
-        Some(plugin) => get_consumption::Trait::call(&(*plugin), same_level_transfer_input)?,
-        None => get_consumption_map(&consumption_rows)?,
+        Some(plugin) => get_consumption::Trait::call(&(*plugin), consumption)?,
+        None => get_consumption_map(connection, filter.clone())?,
     };
 
     let adjust_for_days_out_of_stock = AdjustForNumberOfDaysOutOfStock
@@ -187,8 +185,11 @@ impl amc::Trait for DefaultAmc {
 }
 
 fn get_consumption_map(
-    consumption_rows: &Vec<ConsumptionRow>,
+    connection: &StorageConnection,
+    filter: ConsumptionFilter,
 ) -> Result<HashMap<String /* item_id */, f64 /* total consumption */>, RepositoryError> {
+    let consumption_rows = ConsumptionRepository::new(connection).query(Some(filter))?;
+
     let mut consumption_map = HashMap::new();
 
     for consumption_row in consumption_rows.into_iter() {
