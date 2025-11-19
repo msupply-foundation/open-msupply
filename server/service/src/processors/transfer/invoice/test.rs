@@ -84,6 +84,7 @@ async fn invoice_transfers() {
         store_id: inbound_store.id.clone(),
         default_sell_price_per_pack: 20.0,
         ignore_for_orders: false,
+        margin: 10.0,
     };
 
     let ServiceTestContext {
@@ -338,6 +339,7 @@ async fn invoice_transfers_with_merged_name() {
         store_id: inbound_store.id.clone(),
         default_sell_price_per_pack: 20.0,
         ignore_for_orders: false,
+        margin: 10.0,
     };
 
     let ServiceTestContext {
