@@ -36,12 +36,7 @@ impl ViewMigrationFragment for ViewMigration {
                     date(stock_movement.datetime) AS date,
                     stock_movement.invoice_type AS invoice_type,
                     stock_movement.name_id AS name_id,
-                    stock_movement.name_properties AS name_properties,
-                CASE 
-                    WHEN stock_movement.linked_invoice_id IS NOT NULL AND stock_movement.invoice_type = 'OUTBOUND_SHIPMENT'
-                        THEN true 
-                            ELSE false 
-                        END AS is_transfer
+                    stock_movement.name_properties AS name_properties
             FROM (SELECT item.id AS item_id, store.id AS store_id FROM item, store) as items_and_stores
                 LEFT OUTER JOIN stock_movement
                 ON stock_movement.item_id = items_and_stores.item_id
