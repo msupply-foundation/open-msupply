@@ -1,8 +1,8 @@
 use super::vvm_status_log_row::vvm_status_log::dsl::*;
 use crate::{
     db_diesel::{invoice_line_row::invoice_line, stock_line_row::stock_line, store_row::store},
-    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, Delete, RepositoryError,
-    RowActionType, StorageConnection, Upsert,
+    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, Delete, InvoiceLineRowRepository,
+    RepositoryError, RowActionType, StorageConnection, Upsert,
 };
 
 use chrono::NaiveDateTime;
@@ -97,12 +97,17 @@ impl<'a> VVMStatusLogRowRepository<'a> {
         row: &VVMStatusLogRow,
         action: RowActionType,
     ) -> Result<i64, RepositoryError> {
+        let invoice_line_repository = InvoiceLineRowRepository::new(&self.connection);
+        let invoice_line = invoice_line_repository
+            .find_one_by_id(row.invoice_line_id.clone().unwrap_or_default().as_str())?;
+
         let row = ChangeLogInsertRow {
             table_name: ChangelogTableName::VVMStatusLog,
             record_id: row.id.to_string(),
             row_action: action,
             store_id: Some(row.store_id.clone()),
             name_link_id: None,
+            invoice_id: invoice_line.map(|il| il.invoice_id),
         };
 
         ChangelogRepository::new(self.connection).insert(&row)

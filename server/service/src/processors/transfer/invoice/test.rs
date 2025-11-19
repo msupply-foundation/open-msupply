@@ -17,7 +17,6 @@ use crate::{
         outbound_shipment::update::{UpdateOutboundShipment, UpdateOutboundShipmentStatus},
         supplier_return::update::{UpdateSupplierReturn, UpdateSupplierReturnStatus},
     },
-    invoice_line::stock_out_line::{StockOutType, UpdateStockOutLine},
     processors::test_helpers::exec_concurrent,
     requisition::request_requisition::{UpdateRequestRequisition, UpdateRequestRequisitionStatus},
     service_provider::ServiceProvider,
@@ -169,7 +168,6 @@ async fn invoice_transfers() {
             tester.check_inbound_shipment_created(&ctx.connection);
             ctx.processors_trigger.await_events_processed().await;
             tester.check_outbound_shipment_was_linked(&ctx.connection);
-            tester.update_outbound_shipment_lines(&service_provider);
             tester.update_outbound_shipment_to_shipped(&service_provider);
             ctx.processors_trigger.await_events_processed().await;
             tester.check_inbound_shipment_was_updated(&ctx.connection);
@@ -195,7 +193,6 @@ async fn invoice_transfers() {
             tester.check_customer_return_created(&ctx.connection);
             ctx.processors_trigger.await_events_processed().await;
             tester.check_supplier_return_was_linked(&ctx.connection);
-            tester.update_supplier_return_line(&service_provider);
             tester.update_supplier_return_to_shipped(&service_provider);
             ctx.processors_trigger.await_events_processed().await;
             tester.check_customer_return_was_updated(&ctx.connection);
@@ -424,7 +421,6 @@ async fn invoice_transfers_with_merged_name() {
             tester.check_inbound_shipment_created(&ctx.connection);
             ctx.processors_trigger.await_events_processed().await;
             tester.check_outbound_shipment_was_linked(&ctx.connection);
-            tester.update_outbound_shipment_lines(&service_provider);
             tester.update_outbound_shipment_to_shipped(&service_provider);
             ctx.processors_trigger.await_events_processed().await;
             tester.check_inbound_shipment_was_updated(&ctx.connection);
@@ -450,7 +446,6 @@ async fn invoice_transfers_with_merged_name() {
             tester.check_customer_return_created(&ctx.connection);
             ctx.processors_trigger.await_events_processed().await;
             tester.check_supplier_return_was_linked(&ctx.connection);
-            tester.update_supplier_return_line(&service_provider);
             tester.update_supplier_return_to_shipped(&service_provider);
             ctx.processors_trigger.await_events_processed().await;
             tester.check_customer_return_was_updated(&ctx.connection);
@@ -518,7 +513,7 @@ async fn invoice_transfers_with_merged_name() {
     );
 
     tokio::select! {
-         Err(err) = processors_task => unreachable!("{}", err),
+        Err(err) = processors_task => unreachable!("{}", err),
         _ = test_handle => (),
     };
 }
@@ -884,18 +879,6 @@ impl InvoiceTransferTester {
         check_line(
             connection,
             &inbound_shipment.id,
-            &self.outbound_shipment_line1,
-            Some(self.outbound_shipment_line1.item_link_id.clone()),
-        );
-        check_line(
-            connection,
-            &inbound_shipment.id,
-            &self.outbound_shipment_line2,
-            None,
-        );
-        check_line(
-            connection,
-            &inbound_shipment.id,
             &self.outbound_shipment_service_line,
             None,
         );
@@ -944,29 +927,6 @@ impl InvoiceTransferTester {
         );
     }
 
-    pub(crate) fn update_outbound_shipment_lines(&mut self, service_provider: &ServiceProvider) {
-        let ctx = service_provider
-            .context(self.outbound_store.id.clone(), "".to_string())
-            .unwrap();
-
-        InvoiceLineRowRepository::new(&ctx.connection)
-            .delete(&self.outbound_shipment_line1.id)
-            .unwrap();
-
-        self.outbound_shipment_line2 = service_provider
-            .invoice_line_service
-            .update_stock_out_line(
-                &ctx,
-                UpdateStockOutLine {
-                    id: self.outbound_shipment_line2.id.clone(),
-                    number_of_packs: Some(21.0),
-                    r#type: Some(StockOutType::OutboundShipment),
-                    ..Default::default()
-                },
-            )
-            .unwrap()
-            .invoice_line_row;
-    }
     pub(crate) fn update_outbound_shipment_to_shipped(
         &mut self,
         service_provider: &ServiceProvider,
@@ -1014,7 +974,7 @@ impl InvoiceTransferTester {
                         .invoice_id(EqualFilter::equal_to(&inbound_shipment.id))
                 ))
                 .unwrap(),
-            2
+            3
         );
 
         check_line(
@@ -1241,26 +1201,6 @@ impl InvoiceTransferTester {
                 .unwrap(),
             None
         );
-    }
-
-    pub(crate) fn update_supplier_return_line(&mut self, service_provider: &ServiceProvider) {
-        let ctx = service_provider
-            .context(self.inbound_store.id.clone(), "".to_string())
-            .unwrap();
-
-        self.supplier_return_line = service_provider
-            .invoice_line_service
-            .update_stock_out_line(
-                &ctx,
-                UpdateStockOutLine {
-                    id: self.supplier_return_line.id.clone(),
-                    number_of_packs: Some(21.0),
-                    r#type: Some(StockOutType::SupplierReturn),
-                    ..Default::default()
-                },
-            )
-            .unwrap()
-            .invoice_line_row;
     }
 
     pub(crate) fn update_supplier_return_to_shipped(&mut self, service_provider: &ServiceProvider) {

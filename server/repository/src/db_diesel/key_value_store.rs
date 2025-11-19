@@ -27,6 +27,7 @@ pub enum KeyType {
     SyncPushCursorV6,
     RemoteSyncPushCursor,
     ShipmentTransferProcessorCursor,
+    InvoiceLineTransferProcessorCursor,
     RequisitionTransferProcessorCursor,
     ContactFormProcessorCursor,
     LoadPluginProcessorCursor,

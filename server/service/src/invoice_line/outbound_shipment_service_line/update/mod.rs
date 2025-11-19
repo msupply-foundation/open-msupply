@@ -46,6 +46,9 @@ pub fn update_outbound_shipment_service_line(
         })
         .map_err(|error| error.to_inner_error())?;
 
+    ctx.processors_trigger
+        .trigger_invoice_line_transfer_processors();
+
     Ok(updated_line)
 }
 
@@ -94,7 +97,6 @@ mod test {
         test_db::setup_all,
         InvoiceLineRow, InvoiceLineRowRepository,
     };
-   
 
     use crate::{
         invoice_line::{

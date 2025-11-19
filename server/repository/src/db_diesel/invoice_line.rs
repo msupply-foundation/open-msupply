@@ -92,6 +92,7 @@ pub struct InvoiceLineFilter {
     pub has_note: Option<bool>,
     pub program_id: Option<EqualFilter<String>>,
     pub is_program_invoice: Option<bool>,
+    pub linked_invoice_id: Option<EqualFilter<String>>,
 }
 
 impl InvoiceLineFilter {
@@ -191,6 +192,11 @@ impl InvoiceLineFilter {
 
     pub fn is_program_invoice(mut self, filter: bool) -> Self {
         self.is_program_invoice = Some(filter);
+        self
+    }
+
+    pub fn linked_invoice_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.linked_invoice_id = Some(filter);
         self
     }
 }
@@ -334,12 +340,14 @@ fn create_filtered_query(filter: Option<InvoiceLineFilter>) -> BoxedInvoiceLineQ
             has_note,
             program_id,
             is_program_invoice,
+            linked_invoice_id,
         } = f;
 
         apply_equal_filter!(query, id, invoice_line::id);
         apply_equal_filter!(query, store_id, invoice::store_id);
         apply_equal_filter!(query, requisition_id, invoice::requisition_id);
         apply_equal_filter!(query, invoice_id, invoice_line::invoice_id);
+        apply_equal_filter!(query, linked_invoice_id, invoice_line::linked_invoice_id);
         apply_equal_filter!(query, location_id, invoice_line::location_id);
         apply_equal_filter!(query, item_id, item_link::item_id);
         apply_equal_filter!(query, r#type, invoice_line::type_);

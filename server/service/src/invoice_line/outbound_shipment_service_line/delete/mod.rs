@@ -20,6 +20,10 @@ pub fn delete_outbound_shipment_service_line(
             Ok(line.id) as Result<String, OutError>
         })
         .map_err(|error| error.to_inner_error())?;
+
+    ctx.processors_trigger
+        .trigger_invoice_line_transfer_processors();
+
     Ok(line_id)
 }
 
@@ -64,9 +68,10 @@ mod test {
         InvoiceLineRowRepository,
     };
 
+    use super::DeleteOutboundShipmentServiceLineError;
     use crate::{
         invoice_line::stock_out_line::delete::DeleteStockOutLine, service_provider::ServiceProvider,
-    };    use super::DeleteOutboundShipmentServiceLineError;
+    };
 
     type ServiceError = DeleteOutboundShipmentServiceLineError;
 

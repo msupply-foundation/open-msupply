@@ -26,6 +26,7 @@ table! {
         store_id -> Nullable<Text>,
         is_sync_update -> Bool,
         source_site_id -> Nullable<Integer>,
+        invoice_id -> Nullable<Text>,
     }
 }
 
@@ -39,6 +40,7 @@ table! {
         store_id -> Nullable<Text>,
         is_sync_update -> Bool,
         source_site_id -> Nullable<Integer>,
+        invoice_id -> Nullable<Text>,
     }
 }
 
@@ -226,6 +228,7 @@ pub struct ChangeLogInsertRow {
     pub row_action: RowActionType,
     pub name_link_id: Option<String>,
     pub store_id: Option<String>,
+    pub invoice_id: Option<String>,
 }
 
 #[derive(Clone, Queryable, Debug, PartialEq, Insertable, Serialize, Deserialize, TS)]
@@ -240,6 +243,7 @@ pub struct ChangelogRow {
     pub store_id: Option<String>,
     pub is_sync_update: bool,
     pub source_site_id: Option<i32>,
+    pub invoice_id: Option<String>,
 }
 
 #[derive(Default, Clone, Serialize, Deserialize, Debug, TS)]
@@ -258,6 +262,8 @@ pub struct ChangelogFilter {
     pub is_sync_update: Option<EqualFilter<bool>>,
     #[ts(optional)]
     pub source_site_id: Option<EqualFilter<i32>>,
+    #[ts(optional)]
+    pub invoice_id: Option<EqualFilter<String>>,
 }
 
 pub struct ChangelogRepository<'a> {
@@ -277,6 +283,7 @@ impl ChangelogRow {
             store_id: row.store_id,
             is_sync_update: row.is_sync_update,
             source_site_id: row.source_site_id,
+            invoice_id: row.invoice_id,
         }
     }
 }
@@ -500,6 +507,7 @@ fn create_filtered_query(earliest: u64, filter: Option<ChangelogFilter>) -> Boxe
             is_sync_update,
             action,
             source_site_id,
+            invoice_id,
         } = f;
 
         apply_equal_filter!(query, table_name, changelog_deduped::table_name);
@@ -509,6 +517,7 @@ fn create_filtered_query(earliest: u64, filter: Option<ChangelogFilter>) -> Boxe
         apply_equal_filter!(query, action, changelog_deduped::row_action);
         apply_equal_filter!(query, is_sync_update, changelog_deduped::is_sync_update);
         apply_equal_filter!(query, source_site_id, changelog_deduped::source_site_id);
+        apply_equal_filter!(query, invoice_id, changelog_deduped::invoice_id);
     }
 
     query
@@ -698,6 +707,7 @@ impl Default for ChangelogRow {
             store_id: Default::default(),
             is_sync_update: Default::default(),
             source_site_id: Default::default(),
+            invoice_id: Default::default(),
         }
     }
 }
@@ -739,6 +749,11 @@ impl ChangelogFilter {
 
     pub fn source_site_id(mut self, filter: EqualFilter<i32>) -> Self {
         self.source_site_id = Some(filter);
+        self
+    }
+
+    pub fn invoice_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.invoice_id = Some(filter);
         self
     }
 }

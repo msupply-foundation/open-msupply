@@ -146,6 +146,7 @@ impl<'a> RequisitionRowRepository<'a> {
             row_action: action,
             store_id: Some(row.store_id.clone()),
             name_link_id: Some(row.name_link_id.clone()),
+            ..Default::default()
         };
 
         ChangelogRepository::new(self.connection).insert(&row)

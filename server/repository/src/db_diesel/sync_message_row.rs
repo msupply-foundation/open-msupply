@@ -109,6 +109,7 @@ impl<'a> SyncMessageRowRepository<'a> {
             row_action: RowActionType::Upsert,
             name_link_id: None,
             store_id: None,
+            ..Default::default()
         };
 
         ChangelogRepository::new(self.connection).insert(&row)

@@ -1,19 +1,16 @@
 use repository::{
-    InvoiceLineRowRepository, InvoiceRow, InvoiceRowRepository, InvoiceStatus, InvoiceType,
-    RepositoryError, StorageConnection,
+    InvoiceRow, InvoiceRowRepository, InvoiceStatus, InvoiceType, RepositoryError,
+    StorageConnection,
 };
 
 use crate::{
     activity_log::{log_type_from_invoice_status, system_activity_log_entry},
-    invoice::common::get_lines_for_invoice,
     processors::transfer::invoice::InvoiceTransferOutput,
-    store_preference::get_store_preferences,
 };
 
 use super::{
-    common::{convert_invoice_line_to_single_pack, generate_inbound_lines},
-    create_inbound_invoice::InboundInvoiceType,
-    InvoiceTransferProcessor, InvoiceTransferProcessorRecord, Operation,
+    create_inbound_invoice::InboundInvoiceType, InvoiceTransferProcessor,
+    InvoiceTransferProcessorRecord, Operation,
 };
 
 const DESCRIPTION: &str = "Update inbound invoice from outbound invoice";
@@ -73,32 +70,7 @@ impl InvoiceTransferProcessor for UpdateInboundInvoiceProcessor {
             ));
         }
 
-        // Execute
-        let lines_to_delete = get_lines_for_invoice(connection, &inbound_invoice.invoice_row.id)?;
-        let new_inbound_lines = generate_inbound_lines(
-            connection,
-            &inbound_invoice.invoice_row.id,
-            &inbound_invoice.store_row.id,
-            outbound_invoice,
-        )?;
-
-        let store_preferences =
-            get_store_preferences(connection, &inbound_invoice.invoice_row.store_id)?;
-        let new_inbound_lines = match store_preferences.pack_to_one {
-            true => convert_invoice_line_to_single_pack(new_inbound_lines),
-            false => new_inbound_lines,
-        };
-
-        let invoice_line_repository = InvoiceLineRowRepository::new(connection);
-
-        for line in lines_to_delete.iter() {
-            invoice_line_repository.delete(&line.invoice_line_row.id)?;
-        }
-
-        for line in new_inbound_lines.iter() {
-            invoice_line_repository.upsert_one(line)?;
-        }
-
+        // Execute - update invoice
         let outbound_invoice_row = &outbound_invoice.invoice_row;
 
         let formatted_ref = match &outbound_invoice_row.their_reference {
@@ -125,7 +97,7 @@ impl InvoiceTransferProcessor for UpdateInboundInvoiceProcessor {
 
         let updated_inbound_invoice = InvoiceRow {
             // 6.
-            status: InvoiceStatus::Shipped,
+            status: outbound_invoice_row.status.clone(),
             picked_datetime: outbound_invoice_row.picked_datetime,
             shipped_datetime: outbound_invoice_row.shipped_datetime,
             their_reference: Some(formatted_ref),
@@ -149,16 +121,8 @@ impl InvoiceTransferProcessor for UpdateInboundInvoiceProcessor {
         )?;
 
         let result = format!(
-            "invoice ({}) deleted lines ({:?}) inserted lines ({:?})",
-            updated_inbound_invoice.id,
-            lines_to_delete
-                .into_iter()
-                .map(|l| l.invoice_row.id)
-                .collect::<Vec<String>>(),
-            new_inbound_lines
-                .into_iter()
-                .map(|r| r.id)
-                .collect::<Vec<String>>(),
+            "Inbound invoice {} updated to status {:?}",
+            updated_inbound_invoice.id, updated_inbound_invoice.status
         );
 
         Ok(InvoiceTransferOutput::Processed(result))

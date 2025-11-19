@@ -5,6 +5,7 @@ use repository::{
 use thiserror::Error;
 
 pub(crate) mod invoice;
+pub(crate) mod invoice_line;
 pub(crate) mod requisition;
 
 #[derive(Error, Debug)]

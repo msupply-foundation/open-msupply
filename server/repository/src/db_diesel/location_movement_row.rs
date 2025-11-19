@@ -63,6 +63,7 @@ impl<'a> LocationMovementRowRepository<'a> {
             row_action: action,
             store_id: Some(row.store_id.clone()),
             name_link_id: None,
+            ..Default::default()
         };
 
         ChangelogRepository::new(self.connection).insert(&row)

@@ -24,6 +24,17 @@ When an outbound invoice is updated and an inbound invoice is already generated,
 
 You may want to refer to [requisition transfer docs](../requisition/README.md#same-site-transfer-both-stores-on-same-site) for example of how one instance of triggered processor can itself upsert records and process them in the next iteration
 
+## Invoice Line Transfer Processor
+
+Handles **line-level** changes for stock transfers:
+
+- Syncs individual line additions, updates, and deletions
+- Only processes lines when invoice status is PICKED
+- Matches lines by item, batch, and expiry date
+- Works in conjunction with Invoice Transfer Processor
+
+See [invoice_line/README.md](./invoice_line/README.md) for details.
+
 ## Returns
 
 Returns are invoices, with outbounds and inbounds, just the same as shipments. As such, they are transferred by the same processor. The flow is shown below:
