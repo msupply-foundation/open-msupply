@@ -6,6 +6,7 @@ use crate::{
 use chrono::NaiveDate;
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
+use ts_rs::TS;
 
 table! {
     consumption (id) {
@@ -32,10 +33,13 @@ pub struct ConsumptionRow {
     pub name_properties: Option<String>,
 }
 
-#[derive(Clone, Debug, PartialEq, Default)]
+#[derive(Clone, Debug, PartialEq, Default, TS, Serialize, Deserialize)]
 pub struct ConsumptionFilter {
+    #[ts(optional)]
     pub item_id: Option<EqualFilter<String>>,
+    #[ts(optional)]
     pub store_id: Option<EqualFilter<String>>,
+    #[ts(optional)]
     pub date: Option<DateFilter>,
 }
 
