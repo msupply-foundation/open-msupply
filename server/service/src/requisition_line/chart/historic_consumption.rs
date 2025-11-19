@@ -271,9 +271,7 @@ mod tests {
             start_of_amc_lookup: NaiveDate,
             days_in_month: f64,
         ) -> f64 {
-            let amc_months =
-                (end_of_amc_lookup - start_of_amc_lookup).num_days() as f64 / days_in_month;
-            amc_months
+            (end_of_amc_lookup - start_of_amc_lookup).num_days() as f64 / days_in_month
         }
 
         let consumption_rows = vec![

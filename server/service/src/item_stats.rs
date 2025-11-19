@@ -190,6 +190,7 @@ fn get_consumption_map(
     consumption_rows: &Vec<ConsumptionRow>,
 ) -> Result<HashMap<String /* item_id */, f64 /* total consumption */>, RepositoryError> {
     let mut consumption_map = HashMap::new();
+
     for consumption_row in consumption_rows.into_iter() {
         let item_total_consumption = consumption_map
             .entry(consumption_row.item_id.clone())
@@ -549,6 +550,11 @@ mod test {
             .get_item_stats(&context, &mock_store_a().id, Some(1.0), item_ids, None)
             .unwrap();
 
-        assert_eq!(item_stats[0].average_monthly_consumption, 12.0);
+        // With DOS adjustment: 30 days / (30 - 16 dos) = 30/14 = 2.142857
+        // AMC = 6.0 * 2.142857 = 12.857142857142858
+        assert_eq!(
+            item_stats[0].average_monthly_consumption,
+            12.857142857142858
+        );
     }
 }
