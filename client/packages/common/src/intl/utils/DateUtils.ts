@@ -280,8 +280,7 @@ export const useFormatDateTime = () => {
   };
 
   const formatDaysFromToday = (days?: number): string => {
-    if (!days) return '';
-    const date = DateUtils.addDays(new Date(), days);
+    const date = days ? DateUtils.addDays(new Date(), days) : new Date();
     return customDate(date, URL_QUERY_DATE);
   };
 
