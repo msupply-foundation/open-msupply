@@ -58,6 +58,7 @@ pub trait PreferenceServiceTrait: Sync + Send {
             first_threshold_for_expiring_items,
             second_threshold_for_expiring_items,
             warn_when_missing_recent_stocktake,
+            store_custom_colour,
         } = self.get_preference_provider();
 
         let input = AppendIfTypeInputs {
@@ -121,6 +122,7 @@ pub trait PreferenceServiceTrait: Sync + Send {
         )?;
         append_if_type(first_threshold_for_expiring_items, &mut prefs, &input)?;
         append_if_type(second_threshold_for_expiring_items, &mut prefs, &input)?;
+        append_if_type(store_custom_colour, &mut prefs, &input)?;
         append_if_type(warn_when_missing_recent_stocktake, &mut prefs, &input)?;
 
         Ok(prefs)

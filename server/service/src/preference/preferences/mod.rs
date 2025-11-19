@@ -58,6 +58,8 @@ pub mod expired_stock_prevent_issue;
 pub use expired_stock_prevent_issue::*;
 pub mod warn_when_missing_recent_stocktake;
 pub use warn_when_missing_recent_stocktake::*;
+pub mod store_custom_colour;
+pub use store_custom_colour::*;
 
 pub struct PreferenceProvider {
     // Global preferences
@@ -95,6 +97,7 @@ pub struct PreferenceProvider {
     pub first_threshold_for_expiring_items: FirstThresholdForExpiringItems,
     pub second_threshold_for_expiring_items: SecondThresholdForExpiringItems,
     pub warn_when_missing_recent_stocktake: WarnWhenMissingRecentStocktake,
+    pub store_custom_colour: StoreCustomColour,
 }
 
 pub fn get_preference_provider() -> PreferenceProvider {
@@ -133,6 +136,7 @@ pub fn get_preference_provider() -> PreferenceProvider {
             NumberOfMonthsThresholdToShowLowStockAlertsForProducts,
         first_threshold_for_expiring_items: FirstThresholdForExpiringItems,
         second_threshold_for_expiring_items: SecondThresholdForExpiringItems,
+        store_custom_colour: StoreCustomColour,
         warn_when_missing_recent_stocktake: WarnWhenMissingRecentStocktake,
     }
 }
