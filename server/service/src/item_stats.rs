@@ -1,4 +1,4 @@
-use crate::backend_plugin::types::consumption_from_transfers;
+use crate::backend_plugin::types::get_consumption;
 use crate::common::days_in_a_month;
 use crate::preference::{AdjustForNumberOfDaysOutOfStock, ExcludeTransfers, Preference};
 use crate::{
@@ -66,46 +66,32 @@ pub fn get_item_stats(
     };
     let days_in_month: f64 = days_in_a_month(connection);
     let number_of_days = amc_lookback_months * days_in_month;
+    let end_date = period_end.unwrap_or_else(date_now);
+    let offset_end_date = end_date + Duration::days(1);
+    let start_date = date_with_offset(
+        &offset_end_date,
+        Duration::days((number_of_days).neg() as i64),
+    );
 
-    let filter: ConsumptionFilter =
-        create_amc_filter(store_id, number_of_days, &item_ids, period_end)?;
-
-    fn create_amc_filter(
-        store_id: &str,
-        number_of_days: f64,
-        item_ids: &Vec<String>,
-        period_end: Option<NaiveDate>,
-    ) -> Result<ConsumptionFilter, PluginOrRepositoryError> {
-        let end_date = period_end.unwrap_or_else(date_now);
-        let offset_end_date = end_date + Duration::days(1);
-        let start_date = date_with_offset(
-            &offset_end_date,
-            Duration::days((number_of_days).neg() as i64),
-        );
-
-        let filter = ConsumptionFilter {
-            item_id: Some(EqualFilter::equal_any(item_ids.clone())),
-            store_id: Some(EqualFilter::equal_to(store_id)),
-            date: Some(DateFilter::date_range(&start_date, &end_date)),
-        };
-
-        Ok(filter)
-    }
+    let filter = ConsumptionFilter {
+        item_id: Some(EqualFilter::equal_any(item_ids.clone())),
+        store_id: Some(EqualFilter::equal_to(store_id)),
+        date: Some(DateFilter::date_range(&start_date, &offset_end_date)),
+    };
 
     let consumption_rows = ConsumptionRepository::new(connection).query(Some(filter.clone()))?;
 
     let exclude_transfers = ExcludeTransfers.load(connection, None).unwrap_or(false);
 
-    let same_level_transfer_input = consumption_from_transfers::Input {
+    let same_level_transfer_input = get_consumption::Input {
         store_id: store_id.to_string(),
-        consumption_rows: consumption_rows.clone(),
-        exclude_transfers,
+        item_ids: item_ids.clone(),
+        start_date: start_date.to_string(),
+        end_date: end_date.to_string(),
     };
 
-    let consumption_map = match PluginInstance::get_one(PluginType::ConsumptionFromTransfers) {
-        Some(plugin) => {
-            consumption_from_transfers::Trait::call(&(*plugin), same_level_transfer_input)?
-        }
+    let consumption_map = match PluginInstance::get_one(PluginType::GetConsumption) {
+        Some(plugin) => get_consumption::Trait::call(&(*plugin), same_level_transfer_input)?,
         None => get_consumption_map(&consumption_rows, exclude_transfers)?,
     };
 
