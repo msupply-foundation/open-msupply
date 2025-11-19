@@ -1,20 +1,21 @@
 use crate::backend_plugin::{plugin_provider::PluginInstance, *};
 use plugin_provider::{call_plugin, PluginResult};
-use repository::{ConsumptionRow, PluginType};
+use repository::PluginType;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use ts_rs::TS;
 
 fn plugin_type() -> PluginType {
-    PluginType::ConsumptionFromTransfers
+    PluginType::GetConsumption
 }
 
 #[derive(TS, Clone, Deserialize, Serialize)]
-#[ts(rename = "ConsumptionFromTransfersInput")]
+#[ts(rename = "GetConsumptionInput")]
 pub struct Input {
     pub store_id: String,
-    pub consumption_rows: Vec<ConsumptionRow>,
-    pub exclude_transfers: bool,
+    pub item_ids: Vec<String>,
+    pub start_date: String,
+    pub end_date: String,
 }
 
 pub type Output = HashMap<String /* item_id */, f64 /* transfer consumption */>;
