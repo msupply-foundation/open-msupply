@@ -196,6 +196,7 @@ export type RequestFragment = {
     isSupplier: boolean;
     isOnHold: boolean;
     name: string;
+    margin?: number | null;
     store?: { __typename: 'StoreNode'; id: string; code: string } | null;
   };
   destinationCustomer?: {
@@ -354,6 +355,7 @@ export const RequestFragmentDoc = gql`
       isSupplier
       isOnHold
       name
+      margin
       store {
         id
         code
