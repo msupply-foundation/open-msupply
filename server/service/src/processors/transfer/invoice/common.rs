@@ -1,6 +1,6 @@
 use repository::{
     EqualFilter, Invoice, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineType, ItemRow,
-    ItemStoreJoinRowRepository, ItemStoreJoinRowRepositoryTrait,
+    ItemStoreJoinRowRepository, ItemStoreJoinRowRepositoryTrait, NameRowRepository,
 };
 use repository::{InvoiceLineRow, RepositoryError, StorageConnection};
 use util::uuid::uuid;
@@ -69,7 +69,14 @@ pub(crate) fn generate_inbound_lines(
                     .find_one_by_item_and_store_id(&item_id, inbound_store_id)
                     .unwrap_or(None);
 
-                let cost_price_per_pack = sell_price_per_pack;
+                let sender = NameRowRepository::new(connection)
+                    .find_one_by_id(&source_invoice.store_row.name_link_id)
+                    .unwrap_or(None);
+                let margin = sender.as_ref().and_then(|s| s.margin).unwrap_or(0.0);
+
+                let cost_price_per_pack =
+                    sell_price_per_pack + (sell_price_per_pack * margin) / 100.0;
+
                 let total_before_tax = match r#type {
                     // Service lines don't work in packs
                     InvoiceLineType::Service => total_before_tax,
@@ -92,7 +99,7 @@ pub(crate) fn generate_inbound_lines(
                     pack_size,
                     total_before_tax,
                     total_after_tax: calculate_total_after_tax(total_before_tax, tax_percentage),
-                    cost_price_per_pack: sell_price_per_pack,
+                    cost_price_per_pack: cost_price_per_pack,
                     r#type: match r#type {
                         InvoiceLineType::Service => InvoiceLineType::Service,
                         _ => InvoiceLineType::StockIn,
@@ -110,7 +117,7 @@ pub(crate) fn generate_inbound_lines(
                     program_id,
                     shipped_number_of_packs,
                     volume_per_pack,
-                    sell_price_per_pack: default_sell_price_per_pack,
+                    sell_price_per_pack: cost_price_per_pack,
                     shipped_pack_size,
                     // Default
                     stock_line_id: None,
@@ -138,7 +145,7 @@ pub(crate) fn convert_invoice_line_to_single_pack(
             line.number_of_packs *= line.pack_size;
             line.cost_price_per_pack /= line.pack_size;
             line.volume_per_pack /= line.pack_size;
-            line.sell_price_per_pack /= line.pack_size;
+            line.cost_price_per_pack /= line.pack_size;
             line.pack_size = 1.0;
             line.shipped_number_of_packs = Some(line.number_of_packs);
             line.shipped_pack_size = Some(line.pack_size);
