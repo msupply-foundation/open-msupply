@@ -69,7 +69,10 @@ pub(crate) fn generate_inbound_lines(
                     .find_one_by_item_and_store_id(&item_id, inbound_store_id)
                     .unwrap_or(None);
 
+                let margin = item_properties.as_ref().map_or(0.0, |i| i.margin);
+
                 let cost_price_per_pack = sell_price_per_pack;
+
                 let total_before_tax = match r#type {
                     // Service lines don't work in packs
                     InvoiceLineType::Service => total_before_tax,
@@ -80,6 +83,12 @@ pub(crate) fn generate_inbound_lines(
                         (Some(p), true) => p.default_sell_price_per_pack,
                         _ => 0.0,
                     };
+
+                let adjusted_sell_price_per_pack = if margin == 0.0 {
+                    default_sell_price_per_pack
+                } else {
+                    cost_price_per_pack + (cost_price_per_pack * margin) / 100.0
+                };
 
                 InvoiceLineRow {
                     id: uuid(),
@@ -92,7 +101,7 @@ pub(crate) fn generate_inbound_lines(
                     pack_size,
                     total_before_tax,
                     total_after_tax: calculate_total_after_tax(total_before_tax, tax_percentage),
-                    cost_price_per_pack: sell_price_per_pack,
+                    cost_price_per_pack,
                     r#type: match r#type {
                         InvoiceLineType::Service => InvoiceLineType::Service,
                         _ => InvoiceLineType::StockIn,
@@ -110,7 +119,7 @@ pub(crate) fn generate_inbound_lines(
                     program_id,
                     shipped_number_of_packs,
                     volume_per_pack,
-                    sell_price_per_pack: default_sell_price_per_pack,
+                    sell_price_per_pack: adjusted_sell_price_per_pack,
                     shipped_pack_size,
                     // Default
                     stock_line_id: None,
