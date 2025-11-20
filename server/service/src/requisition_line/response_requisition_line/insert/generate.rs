@@ -34,5 +34,6 @@ pub fn generate(
         comment: None,
         approved_quantity: 0.0,
         approval_comment: None,
+        price_per_unit: 0.0,
     }
 }

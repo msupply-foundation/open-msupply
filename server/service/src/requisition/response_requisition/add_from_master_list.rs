@@ -49,8 +49,9 @@ pub fn response_add_from_master_list(
             }
 
             match RequisitionLineRepository::new(connection).query_by_filter(
-                RequisitionLineFilter::new()
-                    .requisition_id(EqualFilter::equal_to(input.response_requisition_id.to_string())),
+                RequisitionLineFilter::new().requisition_id(EqualFilter::equal_to(
+                    input.response_requisition_id.to_string(),
+                )),
             ) {
                 Ok(lines) => Ok(lines),
                 Err(error) => Err(OutError::DatabaseError(error)),
@@ -144,6 +145,7 @@ fn generate(
                 comment: None,
                 approved_quantity: 0.0,
                 approval_comment: None,
+                price_per_unit: 0.0, //TODO get national price list value if pref is on
             }
         })
         .collect();

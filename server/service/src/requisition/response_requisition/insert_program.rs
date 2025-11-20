@@ -216,7 +216,8 @@ fn generate(
 
     let program_item_ids: Vec<String> = MasterListLineRepository::new(connection)
         .query_by_filter(
-            MasterListLineFilter::new().master_list_id(EqualFilter::equal_to(master_list_id.to_string())),
+            MasterListLineFilter::new()
+                .master_list_id(EqualFilter::equal_to(master_list_id.to_string())),
             None,
         )?
         .into_iter()
@@ -230,7 +231,10 @@ fn generate(
             connection,
             Pagination::all(),
             None,
-            Some(ProgramIndicatorFilter::new().program_id(EqualFilter::equal_to(program.id.to_string()))),
+            Some(
+                ProgramIndicatorFilter::new()
+                    .program_id(EqualFilter::equal_to(program.id.to_string())),
+            ),
         )?
     } else {
         vec![]
@@ -293,6 +297,7 @@ fn generate_lines(
                 expiring_units: 0.0,
                 days_out_of_stock: 0.0,
                 option_id: None,
+                price_per_unit: 0.0, //TODO get national price list value if pref is on
             }
         })
         .collect();
