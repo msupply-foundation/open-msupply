@@ -52,8 +52,11 @@ export const generateAmcFormula = (
     : t('label.consumption');
 
   const days = hasDaysOut
-    ? `(${t('label.days-in-month')} - ${t('label.days-out-of-stock')})`
-    : t('label.days-in-month');
+    ? `(${t('label.lookback-days')} - ${t('label.days-out-of-stock')})`
+    : t('label.lookback-days');
 
-  return `${consumption} / ${t('label.lookback-months')} * ${t('label.days-in-month')} / ${days}`;
+  return (
+    `(${consumption} / ${t('label.lookback-months')}) * ${t('label.lookback-days')} / ${days}\n` +
+    `${t('label.lookback-days')} = ${t('label.days-in-month')} * ${t('label.lookback-months')}`
+  );
 };

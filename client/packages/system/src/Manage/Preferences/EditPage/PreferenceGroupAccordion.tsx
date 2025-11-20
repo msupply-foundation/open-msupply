@@ -84,7 +84,11 @@ export const PreferenceGroupAccordion = ({
                 sx: { display: 'flex', textAlign: 'start' },
               }}
               Input={
-                <Typography variant="caption" color="text.secondary">
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  style={{ whiteSpace: 'pre-line' }}
+                >
                   {amcFormula}
                 </Typography>
               }
