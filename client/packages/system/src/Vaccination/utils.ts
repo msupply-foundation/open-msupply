@@ -34,8 +34,6 @@ export const isEditable = (
   );
   const doseIndex = itemsForCourse.findIndex(dose => dose.id === row.id);
 
-  // const previousDoseStatus = getPreviousDoseStatus(row, items);
-
   const firstAvailableIndex = itemsForCourse.findIndex(
     dose =>
       dose.status === null ||
