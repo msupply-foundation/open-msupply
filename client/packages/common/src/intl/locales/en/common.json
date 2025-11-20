@@ -2232,7 +2232,6 @@
   "preference.showContactTracing": "Show contact tracing",
   "preference.sortByVvmStatusThenExpiry": "Sort available batches by VVM status then expiry",
   "preference.syncRecordsDisplayThreshold": "Sync records display threshold",
-  "preference.useDaysInMonth": "Use days in month",
   "preference.useProcurementFunctionality": "Use procurement functionality",
   "preference.useSimplifiedMobileUi": "Use simplified mobile UI",
   "preference.warningForExcessRequest": "Warn when requested quantity exceeds suggested quantity in requisitions",
