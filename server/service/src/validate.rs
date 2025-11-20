@@ -48,6 +48,7 @@ pub fn get_other_party(
     }
 
     // If names have been merged, there could be multiple results, if so we need to return the one with the name_store_join if it exists
+    // Revist this code in https://github.com/msupply-foundation/open-msupply/issues/9824
     let name_with_join = results
         .iter()
         .find(|name| name.name_store_join_row.is_some());
