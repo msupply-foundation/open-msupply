@@ -6,68 +6,48 @@
 {% if datetime %}{{ datetime | date(format="%d/%m/%Y", timezone=arguments.timezone) }}{% else %}{{t(k="messages.not-applicable", f="N/A")}}{% endif %} 
 {% endmacro input %}
 
-<table class="header_date_section">
-    <tr>
-        <td class="header_section_field_left">{{t(k="label.entered-by",f="Entered by")}}: {{ data.invoice.user.username | default(value='') }}</td>
-        <td class="header_section_field_right">{{t(k="report.shipped-date",f="Shipped date")}}: {{ self::dateOrNA(datetime=data.invoice.shippedDatetime) }}</td>
-    </tr>
-    <tr> 
-        <td class="header_section_field_left">{{t(k="report.created-date",f="Created date")}}: {{ data.invoice.createdDatetime | date(format="%d/%m/%Y", timezone=arguments.timezone) }}</td>
-        <td></td>
-    </tr>
-</table>
-
 <body>
     <table class="body_section" cellpadding="2" cellspacing="0">
         <thead>
             <tr class="body_column_label">
-                <th class="location_code" style="width: 80px;">{{t(k="label.location",f="Location")}}</th>
-                <th class="location_code" style="width: 50px;">{{t(k="report.item-code",f="Item code")}}</th>
-                <th class="item_name" style="width: 350px;">{{t(k="report.item-name", f="Item name")}}</th>
+                <th class="item_code" style="width: 80px;">{{t(k="report.item-code",f="Item code")}}</th>
+                <th class="item_name" style="width: 500px;">{{t(k="report.item-name", f="Item name")}}</th>
                 <th class="quantity" style="width: 50px;">{{t(k="label.quantity",f="Quantity")}}</th>
                 <th class="pack" style="width: 50px;">{{t(k="report.pack-size",f="Pack size")}}</th>
-                <th class="pack" style="width: 50px;">{{t(k="label.unit-quantity",f="Unit Qty")}}</th>
                 <th class="batch" style="width: 50px;">{{t(k="label.batch", f="Batch")}}</th>
                 <th class="expiry" style="width: 80px;">{{t(k="label.expiry",f="Expiry")}}</th>
-                <th class="cost_price" style="width: 80px;">{{t(k="description.pack-cost",f="Cost price per pack")}}</th>
-                <th class="cost_price" style="width: 80px;">{{t(k="label.cost-per-unit",f="Cost per unit")}}</th>
-                <th class="total_extension" style="width: 50px;">{{t(k="label.line-total",f="Line total")}}</th>
+                <th class="sell_price" style="width: 50px;">{{t(k="label.sell-price",f="Sell Price")}}</th>
+                <th class="cost_price" style="width: 80px;">{{t(k="label.cost-price",f="Cost Price")}}</th>
+                <th class="total_extension" style="width: 50px;">{{t(k="report.extension",f="Extension")}}</th>
             </tr>
         </thead>
         {% for line in data.invoiceLines.nodes -%}
         <tr class="body_value">
-            {% if line.location.code %}
-                <td class="location_code" style="width: 80px;">{{ line.location.code }}</td>
-            {% else %}
-                <td class="location_code" style="width: 80px;"></td>
-            {% endif %}
-            <td class="location_code" style="width: 50px;">{{ line.itemCode }}</td>
+            <td class="item_code" style="width: 80px;">{{ line.itemCode }}</td>
             <td class="item_name" style="width: 350px;">{{ line.itemName }}</td>
             <td class="quantity" style="width: 50px;">{{ line.numberOfPacks }}</td>
             <td class="pack" style="width: 50px;">{{ line.packSize }}</td>
-            <td class="pack" style="width: 50px;">{{ line.packSize * line.numberOfPacks }}</td>
             <td class="batch batch-wrap" style="width: 50px;">{{ line.batch }}</td>
-            <td class="expiry" style="width: 80px;">{{ self::dateOrNA(datetime=line.expiryDate) }}</td>
+            <td class="expiry" style="width: 80px;">{{ line.expiryDate }}</td>
+            <td class="sell_price" style="width: 50px;">{{ line.sellPricePerPack
+            }}</td>
             <td class="cost_price" style="width: 80px;">{{ line.costPricePerPack }}</td>
-            {% if line.costPricePerPack and line.packSize %}
-            <td class="cost_price" style="width: 80px;">{{ line.costPricePerPack / line.packSize | round(precision=2) }}</td>
-            {% else %} 
-            <td class="cost_price" style="width: 80px;">0</td>
-            {% endif %}
-            <td class="total_extension" style="width: 50px;">{{ line.numberOfPacks * line.costPricePerPack }}</td>
+            <td class="total_extension" style="width: 50px;">{{ line.numberOfPacks * line.sellPricePerPack }}</td>
         </tr>
         {%- endfor %}
     </table>
 </body>
 
 <table class="body_total_section" cellpadding="2" cellspacing="0">
-    <tr class="body_total_column_label">
-        <th class="header_section_field_right">{{t(k="heading.sub-total",f="Sub total")}}: {{ data.invoice.pricing.totalBeforeTax | round(precision=2) }}</th>
-    </tr>
-      <tr class="body_total_column_label">
-        <th class="header_section_field_right">{{t(k="heading.tax",f="Tax")}}: {{ data.invoice.pricing.taxPercentage }}</th>
-    </tr>
-    <tr class="body_total_column_label">
-        <th class="header_section_field_right">{{t(k="heading.total",f="Total")}}: {{ data.invoice.pricing.totalAfterTax }}</th>
+    <tr class="body_total_column_label" excel-type="total-row">
+        <td class="item_code" style="width: 80px;"></td>
+        <td class="item_name" style="width: 350px;"></td>
+        <td class="quantity" style="width: 50px;"></td>
+        <td class="pack" style="width: 50px;"></td>
+        <td class="batch" style="width: 50px;"></td>
+        <td class="expiry" style="width: 80px;"></td>
+        <td class="sell_price" style="width: 50px;"></td>
+        <td class="cost_price" style="width: 80px;">{{t(k="label.total",f="Total")}}:</td>
+        <td class="total_extension" style="width: 50px;">{{ data.invoice.pricing.totalAfterTax }}</td>
     </tr>
 </table>
