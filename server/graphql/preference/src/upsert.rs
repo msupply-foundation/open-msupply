@@ -72,6 +72,7 @@ pub struct UpsertPreferencesInput {
     pub first_threshold_for_expiring_items: Option<Vec<IntegerStorePrefInput>>,
     pub second_threshold_for_expiring_items: Option<Vec<IntegerStorePrefInput>>,
     pub warn_when_missing_recent_stocktake: Option<Vec<WarnWhenMissingRecentStocktakeInput>>,
+    pub show_indicative_unit_price_in_requisitions: Option<Vec<BoolStorePrefInput>>,
 }
 
 pub fn upsert_preferences(
@@ -133,6 +134,7 @@ impl UpsertPreferencesInput {
             first_threshold_for_expiring_items,
             second_threshold_for_expiring_items,
             warn_when_missing_recent_stocktake,
+            show_indicative_unit_price_in_requisitions,
         } = self;
 
         UpsertPreferences {
@@ -207,6 +209,9 @@ impl UpsertPreferencesInput {
                 .as_ref()
                 .map(|i| i.iter().map(|i| i.to_domain()).collect()),
             warn_when_missing_recent_stocktake: warn_when_missing_recent_stocktake
+                .as_ref()
+                .map(|i| i.iter().map(|i| i.to_domain()).collect()),
+            show_indicative_unit_price_in_requisitions: show_indicative_unit_price_in_requisitions
                 .as_ref()
                 .map(|i| i.iter().map(|i| i.to_domain()).collect()),
         }

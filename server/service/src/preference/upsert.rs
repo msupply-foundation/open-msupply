@@ -48,6 +48,7 @@ pub struct UpsertPreferences {
     pub first_threshold_for_expiring_items: Option<Vec<StorePrefUpdate<i32>>>,
     pub second_threshold_for_expiring_items: Option<Vec<StorePrefUpdate<i32>>>,
     pub warn_when_missing_recent_stocktake: Option<Vec<StorePrefUpdate<WarnWhenMissingRecentStocktakeData>>>,
+    pub show_indicative_unit_price_in_requisitions:Option<Vec<StorePrefUpdate<bool>>>,
 }
 
 pub fn upsert_preferences(
@@ -92,6 +93,7 @@ pub fn upsert_preferences(
         first_threshold_for_expiring_items: first_threshold_for_expiring_items_input,
         second_threshold_for_expiring_items: second_threshold_for_expiring_items_input,
         warn_when_missing_recent_stocktake: warn_when_missing_recent_stocktake_input,
+        show_indicative_unit_price_in_requisitions: show_indicative_unit_price_in_requisitions_input
     }: UpsertPreferences,
 ) -> Result<(), UpsertPreferenceError> {
     let PreferenceProvider {
@@ -129,6 +131,7 @@ pub fn upsert_preferences(
         first_threshold_for_expiring_items,
         second_threshold_for_expiring_items,
         warn_when_missing_recent_stocktake,
+        show_indicative_unit_price_in_requisitions
     }: PreferenceProvider = get_preference_provider();
 
     ctx.connection
@@ -283,6 +286,14 @@ pub fn upsert_preferences(
                            upsert_store_input(
                     connection,
                     warn_when_missing_recent_stocktake,
+                    input,
+                )?;
+            }
+
+            if let Some(input) = show_indicative_unit_price_in_requisitions_input {
+                           upsert_store_input(
+                    connection,
+                    show_indicative_unit_price_in_requisitions,
                     input,
                 )?;
             }
