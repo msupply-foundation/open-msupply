@@ -84,6 +84,7 @@ pub fn generate_requisition_lines(
                 expiring_units: 0.0,
                 days_out_of_stock: 0.0,
                 option_id: None,
+                price_per_unit: 0.0, //TODO get national price list value if pref is on
             }
         })
         .collect();

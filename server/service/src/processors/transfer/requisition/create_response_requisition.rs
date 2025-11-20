@@ -142,9 +142,9 @@ impl RequisitionTransferProcessor for CreateResponseRequisitionProcessor {
         }
 
         let customer_name_id = StoreRepository::new(connection)
-            .query_by_filter(
-                StoreFilter::new().id(EqualFilter::equal_to(request_requisition.store_row.id.to_string())),
-            )?
+            .query_by_filter(StoreFilter::new().id(EqualFilter::equal_to(
+                request_requisition.store_row.id.to_string(),
+            )))?
             .pop()
             .ok_or(RepositoryError::NotFound)?
             .name_row
@@ -230,7 +230,9 @@ fn generate_response_requisition(
 ) -> Result<RequisitionRow, RepositoryError> {
     let store_id = record_for_processing.other_party_store_id.clone();
     let store_name = StoreRepository::new(connection)
-        .query_by_filter(StoreFilter::new().id(EqualFilter::equal_to(record_for_processing.requisition.store_row.id.to_string())))?
+        .query_by_filter(StoreFilter::new().id(EqualFilter::equal_to(
+            record_for_processing.requisition.store_row.id.to_string(),
+        )))?
         .pop()
         .ok_or(RepositoryError::NotFound)?
         .name_row;
@@ -328,6 +330,7 @@ fn generate_response_requisition_lines(
                          expiring_units,
                          days_out_of_stock,
                          option_id,
+                         price_per_unit,
                      },
                  item_row: ItemRow { id: item_id, .. },
                  requisition_row: _,
@@ -354,6 +357,7 @@ fn generate_response_requisition_lines(
                 supply_quantity: 0.0,
                 approved_quantity: 0.0,
                 approval_comment: None,
+                price_per_unit,
             },
         )
         .collect();
