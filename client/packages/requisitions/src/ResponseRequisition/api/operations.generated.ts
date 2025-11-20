@@ -8,6 +8,7 @@ import {
 } from '../../RequestRequisition/api/operations.generated';
 import { ItemWithStatsFragmentDoc } from '../../../../system/src/RequestRequisitionLine/operations.generated';
 import { ReasonOptionRowFragmentDoc } from '../../../../system/src/ReasonOption/api/operations.generated';
+import { SyncFileReferenceFragmentDoc } from '../../../../system/src/Documents/types.generated';
 type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
 export type UpdateResponseMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
@@ -159,6 +160,16 @@ export type ResponseFragment = {
   programName?: string | null;
   orderType?: string | null;
   isEmergency: boolean;
+  documents: {
+    __typename: 'SyncFileReferenceConnector';
+    nodes: Array<{
+      __typename: 'SyncFileReferenceNode';
+      id: string;
+      fileName: string;
+      recordId: string;
+      createdDatetime: string;
+    }>;
+  };
   user?: {
     __typename: 'UserNode';
     username: string;
@@ -311,6 +322,16 @@ export type ResponseByNumberQuery = {
         programName?: string | null;
         orderType?: string | null;
         isEmergency: boolean;
+        documents: {
+          __typename: 'SyncFileReferenceConnector';
+          nodes: Array<{
+            __typename: 'SyncFileReferenceNode';
+            id: string;
+            fileName: string;
+            recordId: string;
+            createdDatetime: string;
+          }>;
+        };
         user?: {
           __typename: 'UserNode';
           username: string;
@@ -471,6 +492,16 @@ export type ResponseByIdQuery = {
         programName?: string | null;
         orderType?: string | null;
         isEmergency: boolean;
+        documents: {
+          __typename: 'SyncFileReferenceConnector';
+          nodes: Array<{
+            __typename: 'SyncFileReferenceNode';
+            id: string;
+            fileName: string;
+            recordId: string;
+            createdDatetime: string;
+          }>;
+        };
         user?: {
           __typename: 'UserNode';
           username: string;
@@ -621,6 +652,16 @@ export type ResponseRowFragment = {
   maxMonthsOfStock: number;
   minMonthsOfStock: number;
   orderType?: string | null;
+  documents: {
+    __typename: 'SyncFileReferenceConnector';
+    nodes: Array<{
+      __typename: 'SyncFileReferenceNode';
+      id: string;
+      fileName: string;
+      recordId: string;
+      createdDatetime: string;
+    }>;
+  };
   period?: {
     __typename: 'PeriodNode';
     name: string;
@@ -663,6 +704,16 @@ export type ResponsesQuery = {
       maxMonthsOfStock: number;
       minMonthsOfStock: number;
       orderType?: string | null;
+      documents: {
+        __typename: 'SyncFileReferenceConnector';
+        nodes: Array<{
+          __typename: 'SyncFileReferenceNode';
+          id: string;
+          fileName: string;
+          recordId: string;
+          createdDatetime: string;
+        }>;
+      };
       period?: {
         __typename: 'PeriodNode';
         name: string;
@@ -1139,6 +1190,12 @@ export const ResponseFragmentDoc = gql`
     maxMonthsOfStock
     minMonthsOfStock
     approvalStatus
+    documents {
+      __typename
+      nodes {
+        ...SyncFileReference
+      }
+    }
     user {
       __typename
       username
@@ -1214,6 +1271,7 @@ export const ResponseFragmentDoc = gql`
     orderType
     isEmergency
   }
+  ${SyncFileReferenceFragmentDoc}
   ${ResponseLineFragmentDoc}
 `;
 export const ResponseRowFragmentDoc = gql`
@@ -1234,6 +1292,12 @@ export const ResponseRowFragmentDoc = gql`
     programName
     maxMonthsOfStock
     minMonthsOfStock
+    documents {
+      __typename
+      nodes {
+        ...SyncFileReference
+      }
+    }
     period {
       name
       startDate
@@ -1245,6 +1309,7 @@ export const ResponseRowFragmentDoc = gql`
       totalCount
     }
   }
+  ${SyncFileReferenceFragmentDoc}
 `;
 export const CannotDeleteLineLinkedToShipmentErrorFragmentDoc = gql`
   fragment CannotDeleteLineLinkedToShipmentError on CannotDeleteLineLinkedToShipment {
