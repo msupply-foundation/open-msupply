@@ -86,6 +86,8 @@ export const PreferenceGroupAccordion = ({
               Input={
                 <Typography variant="caption" color="text.secondary">
                   {amcFormula}
+                  <br />
+                  {t('messages.amc-minus-transfers')}
                 </Typography>
               }
             />

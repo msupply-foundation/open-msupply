@@ -1,19 +1,17 @@
-use std::any::Any;
-
 use super::{
     clinician_link_row::clinician_link, currency_row::currency, invoice_row::invoice::dsl::*,
     item_link_row::item_link, name_link_row::name_link, store_row::store, user_row::user_account,
     StorageConnection,
 };
-
-use crate::{repository_error::RepositoryError, Delete, Upsert};
-use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
-
-use diesel::{dsl::max, prelude::*};
-
+use crate::{
+    repository_error::RepositoryError, ChangeLogInsertRow, ChangelogRepository, ChangelogTableName,
+    Delete, RowActionType, Upsert,
+};
 use chrono::{NaiveDate, NaiveDateTime};
+use diesel::{dsl::max, prelude::*};
 use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
+use std::any::Any;
 use strum::Display;
 
 table! {

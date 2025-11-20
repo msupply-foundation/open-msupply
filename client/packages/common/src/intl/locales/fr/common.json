@@ -2533,7 +2533,6 @@
   "preference.adjustForNumberOfDaysOutOfStock": "Ajuster en fonction du nombre de jours de rupture",
   "preference.canCreateInternalOrderFromARequisition": "Peut créer une commande interne à partir d'une réquisition",
   "preference.daysInMonth": "Jours dans un mois",
-  "preference.excludeTransfers": "Exclure les transferts",
   "preference.firstThresholdForExpiringItems": "Premier seuil pour les articles en voie d'expiration",
   "preference.numberOfMonthsThresholdToShowLowStockAlertsForProducts": "Seuil d'alerte pour les articles à faible niveau de stock (en mois)",
   "preference.numberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts": "Période de consommation à analyser pour les rupture de stock (en mois)",
