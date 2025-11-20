@@ -2,6 +2,7 @@ import {
   Accordion,
   AccordionDetails,
   AccordionSummary,
+  Box,
   Divider,
   ExpandIcon,
   InputWithLabelRow,
@@ -83,18 +84,16 @@ export const PreferenceGroupAccordion = ({
               labelProps={{
                 sx: { display: 'flex', textAlign: 'start' },
               }}
-              Input={
-                <Typography
-                  variant="caption"
-                  color="text.secondary"
-                  style={{ whiteSpace: 'pre-line' }}
-                >
-                  {amcFormula}
-                  <br />
-                  {t('messages.amc-minus-transfers')}
-                </Typography>
-              }
+              Input={<Typography variant="caption">{amcFormula}</Typography>}
             />
+            <Divider />
+            <Box padding={1}>
+              <Typography variant="caption" color="text.secondary">
+                {t('messages.amc-lookback-days')}
+                <br />
+                {t('messages.amc-minus-transfers')}
+              </Typography>
+            </Box>
           </>
         )}
       </AccordionDetails>

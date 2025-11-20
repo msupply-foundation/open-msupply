@@ -41,14 +41,9 @@ export const generateAmcFormula = (
     p => p.key === PreferenceKey.AdjustForNumberOfDaysOutOfStock && p.value
   );
 
-  const consumption = t('label.consumption');
-
   const days = hasDaysOut
     ? `(${t('label.lookback-days')} - ${t('label.days-out-of-stock')})`
     : t('label.lookback-days');
 
-  return (
-    `(${consumption} / ${t('label.lookback-months')}) * ${t('label.lookback-days')} / ${days}\n` +
-    `${t('label.lookback-days')} = ${t('label.days-in-month')} * ${t('label.lookback-months')}`
-  );
+  return `(${t('label.consumption')} / ${t('label.lookback-months')}) * ${t('label.lookback-days')} / ${days}`;
 };
