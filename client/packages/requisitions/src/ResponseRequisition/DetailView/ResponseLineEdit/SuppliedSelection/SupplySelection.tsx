@@ -13,6 +13,7 @@ import {
 } from '@openmsupply-client/common';
 import { getCurrentValue, getUpdatedSupply } from './utils';
 import { DraftResponseLine } from '../hooks';
+import { useResponse } from '../../../api';
 
 interface Option {
   label: string;
@@ -48,6 +49,10 @@ export const SupplySelection = ({
 }: SupplySelectionProps) => {
   const t = useTranslation();
   const { getPlural } = useIntlUtils();
+  const { authoriseResponseRequisitions } = useResponse.utils.preferences();
+  const max = authoriseResponseRequisitions
+    ? draft?.approvedQuantity
+    : undefined;
 
   const currentValue = useMemo(
     (): number =>
@@ -133,6 +138,7 @@ export const SupplySelection = ({
                     : theme.palette.background.white,
               },
             }}
+            max={max}
           />
           {displayVaccinesInDoses && !!value && (
             <DosesCaption

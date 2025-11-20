@@ -1,16 +1,14 @@
-use chrono::NaiveDate;
-
-use crate::{
-    requisition_row::{RequisitionStatus, RequisitionType},
-    ApprovalStatusType, InvoiceLineRow, InvoiceLineType, InvoiceRow, InvoiceStatus, InvoiceType,
-    MasterListRow, RequisitionLineRow, RequisitionRow,
-};
-
 use super::{
     common::{FullMockInvoice, FullMockInvoiceLine, FullMockMasterList, FullMockRequisition},
     mock_item_a, mock_item_b, mock_item_c, mock_item_d, mock_name_a, mock_program_a,
     mock_stock_line_a, mock_store_a, MockData,
 };
+use crate::{
+    requisition_row::{RequisitionStatus, RequisitionType},
+    ApprovalStatusType, InvoiceLineRow, InvoiceLineType, InvoiceRow, InvoiceStatus, InvoiceType,
+    MasterListRow, RequisitionLineRow, RequisitionRow,
+};
+use chrono::NaiveDate;
 
 pub fn mock_test_requisition_service() -> MockData {
     let mut result = MockData::default();
@@ -245,10 +243,10 @@ pub fn mock_full_new_response_requisition_for_update_test() -> FullMockRequisiti
 
 pub fn mock_request_draft_requisition_calculation_test() -> FullMockRequisition {
     let requisition_id = "mock_request_draft_requisition_calculation_test".to_string();
-    let line1_id = format!("{}1", requisition_id);
-    let line2_id = format!("{}2", requisition_id);
-    let line3_id = format!("{}3", requisition_id);
-    let line4_id = format!("{}4", requisition_id);
+    let line1_id = format!("{requisition_id}1");
+    let line2_id = format!("{requisition_id}2");
+    let line3_id = format!("{requisition_id}3");
+    let line4_id = format!("{requisition_id}4");
     FullMockRequisition {
         requisition: RequisitionRow {
             id: requisition_id.clone(),
@@ -297,7 +295,7 @@ pub fn mock_request_draft_requisition_calculation_test() -> FullMockRequisition 
             },
             RequisitionLineRow {
                 id: line4_id,
-                requisition_id: requisition_id,
+                requisition_id,
                 item_link_id: mock_item_d().id,
                 requested_quantity: 10.0,
                 suggested_quantity: 200.0,
@@ -328,8 +326,8 @@ pub fn mock_test_not_store_a_master_list() -> FullMockMasterList {
 
 pub fn mock_new_response_requisition_test() -> FullMockRequisition {
     let requisition_id = "mock_new_response_requisition_test".to_string();
-    let line1_id = format!("{}1", requisition_id);
-    let line2_id = format!("{}2", requisition_id);
+    let line1_id = format!("{requisition_id}1");
+    let line2_id = format!("{requisition_id}2");
     FullMockRequisition {
         requisition: RequisitionRow {
             id: requisition_id.clone(),
@@ -360,7 +358,7 @@ pub fn mock_new_response_requisition_test() -> FullMockRequisition {
             },
             RequisitionLineRow {
                 id: line2_id,
-                requisition_id: requisition_id,
+                requisition_id,
                 item_link_id: mock_item_b().id,
                 requested_quantity: 11.0,
                 suggested_quantity: 5.0,
@@ -374,8 +372,8 @@ pub fn mock_new_response_requisition_test() -> FullMockRequisition {
 
 pub fn mock_new_response_requisition_test_invoice() -> FullMockInvoice {
     let invoice_id = "mock_new_response_requisition_test_invoice".to_string();
-    let line1_id = format!("{}1", invoice_id);
-    let line2_id = format!("{}2", invoice_id);
+    let line1_id = format!("{invoice_id}1");
+    let line2_id = format!("{invoice_id}2");
 
     FullMockInvoice {
         invoice: InvoiceRow {
@@ -456,7 +454,7 @@ pub fn mock_request_program_requisition() -> RequisitionRow {
 
 pub fn mock_response_program_requisition() -> FullMockRequisition {
     let requisition_id = "mock_response_program_requisition".to_string();
-    let line1_id = format!("{}1", requisition_id);
+    let line1_id = format!("{requisition_id}1");
     FullMockRequisition {
         requisition: RequisitionRow {
             id: requisition_id.clone(),
@@ -477,7 +475,7 @@ pub fn mock_response_program_requisition() -> FullMockRequisition {
         },
         lines: vec![RequisitionLineRow {
             id: line1_id,
-            requisition_id: requisition_id,
+            requisition_id,
             item_link_id: mock_item_a().id,
             requested_quantity: 10.0,
             suggested_quantity: 10.0,
@@ -491,8 +489,8 @@ pub fn mock_response_program_requisition() -> FullMockRequisition {
 
 pub fn mock_new_response_program_requisition() -> FullMockRequisition {
     let requisition_id = "mock_new_response_program_requisition".to_string();
-    let line1_id = format!("{}1", requisition_id);
-    let line2_id = format!("{}2", requisition_id);
+    let line1_id = format!("{requisition_id}1");
+    let line2_id = format!("{requisition_id}2");
 
     FullMockRequisition {
         requisition: RequisitionRow {
@@ -526,7 +524,7 @@ pub fn mock_new_response_program_requisition() -> FullMockRequisition {
             },
             RequisitionLineRow {
                 id: line2_id,
-                requisition_id: requisition_id,
+                requisition_id,
                 item_link_id: mock_item_b().id,
                 requested_quantity: 10.0,
                 suggested_quantity: 10.0,

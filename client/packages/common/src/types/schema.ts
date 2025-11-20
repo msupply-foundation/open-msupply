@@ -1223,6 +1223,21 @@ export type CannotIssueInForeignCurrency = UpdateErrorInterface &
     description: Scalars['String']['output'];
   };
 
+export type CannotIssueMoreThanApprovedQuantity =
+  InsertOutboundShipmentLineErrorInterface &
+    InsertPrescriptionLineErrorInterface &
+    UpdateOutboundShipmentLineErrorInterface &
+    UpdatePrescriptionLineErrorInterface & {
+      __typename: 'CannotIssueMoreThanApprovedQuantity';
+      description: Scalars['String']['output'];
+    };
+
+export type CannotIssueMoreThanAuthorised = UpdateErrorInterface & {
+  __typename: 'CannotIssueMoreThanAuthorised';
+  description: Scalars['String']['output'];
+  invoiceLines: InvoiceLineConnector;
+};
+
 export type CannotReverseInvoiceStatus = UpdateErrorInterface &
   UpdateInboundShipmentErrorInterface &
   UpdatePrescriptionErrorInterface & {

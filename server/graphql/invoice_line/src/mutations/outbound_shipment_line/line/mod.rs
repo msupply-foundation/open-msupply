@@ -122,3 +122,11 @@ impl ItemDoesNotMatchStockLine {
         "Item does not match stock line"
     }
 }
+
+pub struct CannotIssueMoreThanApprovedQuantity;
+#[Object]
+impl CannotIssueMoreThanApprovedQuantity {
+    pub async fn description(&self) -> &str {
+        "Cannot issue more than approved quantity"
+    }
+}

@@ -6,30 +6,34 @@ use crate::{
         check_batch_exists, check_batch_on_hold, check_existing_stock_line, check_location_on_hold,
         invoice_backdated_date,
         stock_out_line::{adjust_for_residual_packs, BatchPair},
-        validate::{check_line_belongs_to_invoice, check_line_exists, check_number_of_packs},
+        validate::{
+            check_item_approved_quantity, check_line_belongs_to_invoice, check_line_exists,
+            check_number_of_packs,
+        },
         LocationIsOnHoldError,
     },
     service_provider::ServiceContext,
     stock_line::historical_stock::get_historical_stock_line_available_quantity,
+    store_preference::get_store_preferences,
 };
 use repository::{InvoiceLineRow, InvoiceRow, InvoiceStatus, ItemRow, StorageConnection};
+
+pub struct UpdateStockOutLineValidationResult {
+    pub line: InvoiceLineRow,
+    pub item: ItemRow,
+    pub batch_pair: BatchPair,
+    pub invoice: InvoiceRow,
+    pub adjusted_input: UpdateStockOutLine,
+}
 
 pub fn validate(
     ctx: &ServiceContext,
     input: UpdateStockOutLine,
     store_id: &str,
-) -> Result<
-    (
-        InvoiceLineRow,
-        ItemRow,
-        BatchPair,
-        InvoiceRow,
-        UpdateStockOutLine,
-    ),
-    UpdateStockOutLineError,
-> {
+) -> Result<UpdateStockOutLineValidationResult, UpdateStockOutLineError> {
     use UpdateStockOutLineError::*;
     let ServiceContext { connection, .. } = ctx;
+    let store_preferences = get_store_preferences(connection, store_id)?;
 
     let line = check_line_exists(connection, &input.id)?.ok_or(LineDoesNotExist)?;
     let line_row = &line.invoice_line_row;
@@ -86,6 +90,21 @@ pub fn validate(
         }
     }
 
+    if store_preferences.response_requisition_requires_authorisation {
+        let pack_size: f64 = batch_pair.main_batch.stock_line_row.pack_size;
+        check_item_approved_quantity(connection, &item.id, 
+            Some(line_row.id.clone()),
+            invoice.requisition_id.clone(), input.number_of_packs, pack_size)
+            .map_err(|e| match e {
+                crate::invoice_line::validate::CannotIssueMoreThanApprovedQuantity::CannotIssueMoreThanApprovedQuantity => {
+                    UpdateStockOutLineError::CannotIssueMoreThanApprovedQuantity
+                }
+                crate::invoice_line::validate::CannotIssueMoreThanApprovedQuantity::RepositoryError(repository_error) => {
+                    UpdateStockOutLineError::DatabaseError(repository_error)
+                }
+            })?;
+    }
+
     let mut adjusted_input = UpdateStockOutLine { ..input };
 
     if let Some(new_number_of_packs) = input.number_of_packs {
@@ -119,13 +138,13 @@ pub fn validate(
         }
     }
 
-    Ok((
-        line.invoice_line_row,
+    Ok(UpdateStockOutLineValidationResult {
+        line: line.invoice_line_row,
         item,
         batch_pair,
         invoice,
         adjusted_input,
-    ))
+    })
 }
 
 fn check_batch_exists_option(

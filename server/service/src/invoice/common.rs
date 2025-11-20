@@ -15,7 +15,7 @@ pub fn generate_invoice_user_id_update(
 ) -> Option<InvoiceRow> {
     let user_id_option = Some(user_id.to_string());
     let user_id_has_changed = existing_invoice_row.user_id != user_id_option;
-    user_id_has_changed.then(|| InvoiceRow {
+    user_id_has_changed.then_some(InvoiceRow {
         user_id: user_id_option,
         ..existing_invoice_row
     })
