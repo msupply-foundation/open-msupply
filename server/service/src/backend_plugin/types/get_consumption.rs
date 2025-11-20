@@ -18,7 +18,7 @@ pub struct Input {
     pub end_date: String,
 }
 
-pub type Output = HashMap<String /* item_id */, f64 /* transfer consumption */>;
+pub type Output = HashMap<String /* item_id */, f64 /* consumption */>;
 
 pub trait Trait: Send + Sync {
     fn call(&self, input: Input) -> PluginResult<Output>;
