@@ -174,6 +174,10 @@ impl PreferencesNode {
             self.load_preference(&self.preferences.warn_when_missing_recent_stocktake)?,
         ))
     }
+
+    pub async fn show_indicative_unit_price_in_requisitions(&self) -> Result<bool> {
+        self.load_preference(&self.preferences.show_indicative_unit_price_in_requisitions)
+    }
 }
 
 impl PreferencesNode {
@@ -254,6 +258,7 @@ pub enum PreferenceKey {
     FirstThresholdForExpiringItems,
     SecondThresholdForExpiringItems,
     WarnWhenMissingRecentStocktake,
+    ShowIndicativeUnitPriceInRequisitions,
 }
 
 #[derive(Enum, Copy, Clone, Debug, Eq, PartialEq)]
