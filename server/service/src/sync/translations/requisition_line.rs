@@ -140,7 +140,7 @@ impl SyncTranslation for RequisitionLineTranslation {
             expiring_units: data.expiring_units,
             days_out_of_stock: data.days_out_of_stock,
             option_id: data.option_id,
-            price_per_unit: 0.0, // TODO translate from new OG field om_price_per_unit?
+            price_per_unit: None, // TODO translate from new OG field om_price_per_unit?
         };
 
         Ok(PullTranslateResult::upsert(result))
