@@ -61,3 +61,29 @@ describe('getDisplayAge', () => {
     jest.useRealTimers();
   });
 });
+
+describe('formatDaysFromToday', () => {
+  beforeAll(() => {
+    jest.useFakeTimers();
+    jest.setSystemTime(new Date('2025-10-01'));
+  });
+
+  afterAll(() => {
+    jest.useRealTimers();
+  });
+
+  const hookResult = renderHookWithProvider(() => useFormatDateTime());
+  const { formatDaysFromToday } = hookResult.result.current;
+
+  it('returns today when days is undefined', () => {
+    expect(formatDaysFromToday(undefined)).toBe('2025-10-01');
+  });
+
+  it('returns today when days is 0', () => {
+    expect(formatDaysFromToday(0)).toBe('2025-10-01');
+  });
+
+  it('returns (days) after today when days is defined ', () => {
+    expect(formatDaysFromToday(5)).toBe('2025-10-06');
+  });
+});
