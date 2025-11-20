@@ -1,6 +1,7 @@
-import React, { ReactElement } from 'react';
+import React, { ReactElement, useMemo } from 'react';
 import {
   ButtonWithIcon,
+  RequisitionNodeStatus,
   useTranslation,
   useToggle,
   PlusCircleIcon,
@@ -26,6 +27,15 @@ export const Documents = ({
   const t = useTranslation();
   const uploadDocumentController = useToggle();
 
+  const deletableDocumentIds = useMemo(() => {
+    if (data?.status === RequisitionNodeStatus.Finalised) {
+      return new Set<string>();
+    }
+    // Request requisition can't have documents linked to response requisition.
+    // So all documents linked to request requisition are deletable.
+    return undefined;
+  }, [data]);
+
   return (
     <>
       <Grid flex={1} display="flex" flexDirection="column">
@@ -44,6 +54,7 @@ export const Documents = ({
             documents={data?.documents?.nodes ?? []}
             tableName="requisition"
             invalidateQueries={invalidateQueries}
+            deletableDocumentIds={deletableDocumentIds}
           />
         </Grid>
       </Grid>
