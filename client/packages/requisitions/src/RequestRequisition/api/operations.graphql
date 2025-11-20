@@ -16,6 +16,12 @@ fragment RequestRow on RequisitionNode {
     approvalStatus
   }
   programName
+  documents {
+    __typename
+    nodes {
+      ...SyncFileReference
+    }
+  }
   period {
     id
     name

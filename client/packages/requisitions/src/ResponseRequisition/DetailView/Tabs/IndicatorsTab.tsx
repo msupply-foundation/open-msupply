@@ -3,31 +3,30 @@ import {
   Box,
   ButtonWithIcon,
   DataTableSkeleton,
+  IndicatorLineRowNode,
   LocaleKey,
   NothingHere,
   PlusCircleIcon,
   useTranslation,
 } from '@openmsupply-client/common';
-import {
-  ProgramIndicatorFragment,
-  RequestFragment,
-} from '../../RequestRequisition/api';
+import { ResponseFragment } from '../../api';
+import { ProgramIndicatorFragment } from '../../../RequestRequisition/api';
 
 interface IndicatorTabProps {
   onClick: (
-    requisitionId?: string,
-    programIndicatorCode?: string,
-    indicatorId?: string
+    programIndicator?: ProgramIndicatorFragment,
+    indicatorLine?: IndicatorLineRowNode,
+    response?: ResponseFragment
   ) => void;
   isLoading: boolean;
-  request?: RequestFragment;
+  response?: ResponseFragment;
   indicators?: ProgramIndicatorFragment[];
 }
 
 export const IndicatorsTab = ({
   onClick,
   isLoading,
-  request,
+  response,
   indicators,
 }: IndicatorTabProps) => {
   const t = useTranslation();
@@ -65,13 +64,7 @@ export const IndicatorsTab = ({
             key={code}
             label={t(`button.${code.toLowerCase()}` as LocaleKey)}
             Icon={<PlusCircleIcon />}
-            onClick={() =>
-              onClick(
-                request?.id,
-                groupIndicators[0]?.code ?? undefined,
-                firstLine?.id
-              )
-            }
+            onClick={() => onClick(groupIndicators[0], firstLine, response)}
           />
         );
       })}
