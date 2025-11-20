@@ -67,6 +67,11 @@ async fn invoice_transfers() {
         ..Default::default()
     };
 
+    let item3 = ItemRow {
+        id: uuid(),
+        ..Default::default()
+    };
+
     let service_item = ItemRow {
         id: uuid(),
         ..Default::default()
@@ -87,6 +92,15 @@ async fn invoice_transfers() {
         margin: 0.0,
     };
 
+    let item3_store_properties = ItemStoreJoinRow {
+        id: uuid(),
+        item_link_id: item3.id.clone(),
+        store_id: inbound_store.id.clone(),
+        default_sell_price_per_pack: 15.0,
+        ignore_for_orders: false,
+        margin: 10.0,
+    };
+
     let ServiceTestContext {
         service_provider,
         processors_task,
@@ -102,8 +116,13 @@ async fn invoice_transfers() {
         MockData {
             names: vec![inbound_store_name.clone(), outbound_store_name.clone()],
             stores: vec![inbound_store.clone(), outbound_store.clone()],
-            items: vec![item1.clone(), item2.clone(), service_item.clone()],
-            item_store_joins: vec![item1_store_properties],
+            items: vec![
+                item1.clone(),
+                item2.clone(),
+                item3.clone(),
+                service_item.clone(),
+            ],
+            item_store_joins: vec![item1_store_properties, item3_store_properties],
             key_value_store_rows: vec![site_id_settings],
             ..Default::default()
         },
@@ -118,6 +137,7 @@ async fn invoice_transfers() {
         outbound_store_name,
         item1,
         item2,
+        item3,
         service_item,
     );
 
@@ -135,6 +155,7 @@ async fn invoice_transfers() {
                 outbound_store_name,
                 item1,
                 item2,
+                item3,
                 service_item,
             ) = test_input;
 
@@ -148,6 +169,7 @@ async fn invoice_transfers() {
                 Some(&inbound_store_name),
                 &item1,
                 &item2,
+                &item3,
                 &service_item,
             );
 
@@ -215,6 +237,7 @@ async fn invoice_transfers() {
                 Some(&inbound_store_name),
                 &item1,
                 &item2,
+                &item3,
                 &service_item,
             );
 
@@ -240,6 +263,7 @@ async fn invoice_transfers() {
                 Some(&inbound_store_name),
                 &item1,
                 &item2,
+                &item3,
                 &service_item,
             );
             // Setup: create shipment
@@ -322,6 +346,12 @@ async fn invoice_transfers_with_merged_name() {
         ..Default::default()
     };
 
+    let item3 = ItemRow {
+        id: uuid(),
+        default_pack_size: 10.0,
+        ..Default::default()
+    };
+
     let service_item = ItemRow {
         id: uuid(),
         ..Default::default()
@@ -340,6 +370,15 @@ async fn invoice_transfers_with_merged_name() {
         default_sell_price_per_pack: 20.0,
         ignore_for_orders: false,
         margin: 0.0,
+    };
+
+    let item3_store_properties = ItemStoreJoinRow {
+        id: uuid(),
+        item_link_id: item3.id.clone(),
+        store_id: inbound_store.id.clone(),
+        default_sell_price_per_pack: 15.0,
+        ignore_for_orders: false,
+        margin: 10.0,
     };
 
     let ServiceTestContext {
@@ -361,9 +400,14 @@ async fn invoice_transfers_with_merged_name() {
                 merge_name.clone(),
             ],
             stores: vec![inbound_store.clone(), outbound_store.clone()],
-            items: vec![item1.clone(), item2.clone(), service_item.clone()],
+            items: vec![
+                item1.clone(),
+                item2.clone(),
+                item3.clone(),
+                service_item.clone(),
+            ],
             key_value_store_rows: vec![site_id_settings],
-            item_store_joins: vec![item1_store_properties],
+            item_store_joins: vec![item1_store_properties, item3_store_properties],
             name_links: vec![merge_name_link.clone()],
             ..Default::default()
         },
@@ -378,6 +422,7 @@ async fn invoice_transfers_with_merged_name() {
         outbound_store_name,
         item1,
         item2,
+        item3,
         service_item,
     );
     let number_of_instances = 6;
@@ -394,6 +439,7 @@ async fn invoice_transfers_with_merged_name() {
                 outbound_store_name,
                 item1,
                 item2,
+                item3,
                 service_item,
             ) = test_input;
 
@@ -407,6 +453,7 @@ async fn invoice_transfers_with_merged_name() {
                 Some(&merge_name),
                 &item1,
                 &item2,
+                &item3,
                 &service_item,
             );
 
@@ -471,6 +518,7 @@ async fn invoice_transfers_with_merged_name() {
                 Some(&merge_name),
                 &item1,
                 &item2,
+                &item3,
                 &service_item,
             );
 
@@ -496,6 +544,7 @@ async fn invoice_transfers_with_merged_name() {
                 Some(&merge_name),
                 &item1,
                 &item2,
+                &item3,
                 &service_item,
             );
 
@@ -532,6 +581,7 @@ pub(crate) struct InvoiceTransferTester {
     request_requisition: RequisitionRow,
     outbound_shipment_line1: InvoiceLineRow,
     outbound_shipment_line2: InvoiceLineRow,
+    outbound_shipment_line3: InvoiceLineRow,
     outbound_shipment_unallocated_line: InvoiceLineRow,
     outbound_shipment_service_line: InvoiceLineRow,
     supplier_return_line: InvoiceLineRow,
@@ -551,6 +601,7 @@ impl InvoiceTransferTester {
         inbound_name: Option<&NameRow>,
         item1: &ItemRow,
         item2: &ItemRow,
+        item3: &ItemRow,
         service_item: &ItemRow,
     ) -> InvoiceTransferTester {
         let request_requisition = RequisitionRow {
@@ -647,6 +698,37 @@ impl InvoiceTransferTester {
             ..Default::default()
         };
 
+        let stock_line3 = StockLineRow {
+            id: uuid(),
+            store_id: outbound_store.id.clone(),
+            item_link_id: item3.id.clone(),
+            batch: Some(uuid()),
+            expiry_date: Some(NaiveDate::from_ymd_opt(2025, 10, 1).unwrap()),
+            pack_size: 5.0,
+            total_number_of_packs: 100.0,
+            available_number_of_packs: 100.0,
+            ..Default::default()
+        };
+
+        let outbound_shipment_line3 = InvoiceLineRow {
+            id: uuid(),
+            invoice_id: outbound_shipment.id.clone(),
+            r#type: InvoiceLineType::StockOut,
+            pack_size: stock_line3.pack_size,
+            number_of_packs: 2.0,
+            item_link_id: item3.id.clone(),
+            item_name: item3.name.clone(),
+            item_code: item3.code.clone(),
+            cost_price_per_pack: 10.0,
+            sell_price_per_pack: 15.0,
+            batch: stock_line3.batch.clone(),
+            expiry_date: stock_line3.expiry_date,
+            stock_line_id: Some(stock_line3.id.clone()),
+            location_id: Some(location.id.clone()),
+            tax_percentage: Some(0.0),
+            ..Default::default()
+        };
+
         let outbound_shipment_service_line = InvoiceLineRow {
             id: uuid(),
             invoice_id: outbound_shipment.id.clone(),
@@ -716,6 +798,7 @@ impl InvoiceTransferTester {
             request_requisition,
             outbound_shipment_line1,
             outbound_shipment_line2,
+            outbound_shipment_line3,
             outbound_shipment_unallocated_line,
             outbound_shipment_service_line,
             supplier_return_line,
@@ -725,7 +808,7 @@ impl InvoiceTransferTester {
             inbound_shipment: None,
             response_requisition: None,
             extra_mock_data: MockData {
-                stock_lines: vec![stock_line1, stock_line2],
+                stock_lines: vec![stock_line1, stock_line2, stock_line3],
                 locations: vec![location],
                 ..Default::default()
             },
@@ -782,6 +865,7 @@ impl InvoiceTransferTester {
                 invoice_lines: vec![
                     self.outbound_shipment_line1.clone(),
                     self.outbound_shipment_line2.clone(),
+                    self.outbound_shipment_line3.clone(),
                     self.outbound_shipment_service_line.clone(),
                 ],
                 ..Default::default()
@@ -880,7 +964,7 @@ impl InvoiceTransferTester {
                         .invoice_id(EqualFilter::equal_to(&inbound_shipment.id))
                 ))
                 .unwrap(),
-            3
+            4
         );
 
         check_line(
@@ -1016,7 +1100,7 @@ impl InvoiceTransferTester {
                         .invoice_id(EqualFilter::equal_to(&inbound_shipment.id))
                 ))
                 .unwrap(),
-            2
+            3
         );
 
         check_line(
