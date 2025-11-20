@@ -2,6 +2,7 @@
  * Shared utility functions specific to vaccination
  */
 
+import { VaccinationCardItemNodeStatus } from '@common/types';
 import { VaccinationDraft } from './api';
 import { VaccinationCardItemFragment } from './api/operations.generated';
 
@@ -32,11 +33,28 @@ export const isEditable = (
     item => item.vaccineCourseId === row.vaccineCourseId
   );
   const doseIndex = itemsForCourse.findIndex(dose => dose.id === row.id);
-  const firstNullIndex = itemsForCourse.findIndex(dose => dose.status === null);
+
+  // const previousDoseStatus = getPreviousDoseStatus(row, items);
+
+  const firstAvailableIndex = itemsForCourse.findIndex(
+    dose =>
+      dose.status === null ||
+      dose.status === VaccinationCardItemNodeStatus.Pending ||
+      dose.status === VaccinationCardItemNodeStatus.Late
+  );
+
   const lastEnteredIndex =
-    firstNullIndex === -1 ? itemsForCourse.length - 1 : firstNullIndex - 1;
-  // Allow editing if it's the last entered dose or later
-  return doseIndex >= lastEnteredIndex;
+    firstAvailableIndex === -1
+      ? itemsForCourse.length - 1
+      : firstAvailableIndex - 1;
+  // Allow editing if it's the last entered dose or later (if doses shouldn't be
+  // skipped, this will be restricted by not being allowed to open/click the
+  // row)
+  return (
+    doseIndex >= lastEnteredIndex ||
+    row.status === VaccinationCardItemNodeStatus.Pending ||
+    row.status === VaccinationCardItemNodeStatus.Late
+  );
 };
 
 export const hasNoStocklineSelected = (
