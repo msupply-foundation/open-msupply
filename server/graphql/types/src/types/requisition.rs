@@ -209,12 +209,19 @@ impl RequisitionNode {
 
     pub async fn documents(&self, ctx: &Context<'_>) -> Result<SyncFileReferenceConnector> {
         let requisition_id = &self.row().id;
-        let loader = ctx.get_loader::<DataLoader<SyncFileReferenceLoader>>();
-        let result_option = loader.load_one(requisition_id.to_string()).await?;
+        let linked_requisition_id = &self.row().linked_requisition_id;
 
-        Ok(SyncFileReferenceConnector::from_vec(
-            result_option.unwrap_or(vec![]),
-        ))
+        // Load documents for both requisition and linked requisition
+        let mut record_ids = vec![requisition_id.to_string()];
+        if let Some(linked_id) = linked_requisition_id {
+            record_ids.push(linked_id.to_string());
+        }
+
+        let loader = ctx.get_loader::<DataLoader<SyncFileReferenceLoader>>();
+        let results = loader.load_many(record_ids).await?;
+        let all_documents = results.into_values().flatten().collect();
+
+        Ok(SyncFileReferenceConnector::from_vec(all_documents))
     }
 
     pub async fn lines(&self, ctx: &Context<'_>) -> Result<RequisitionLineConnector> {
