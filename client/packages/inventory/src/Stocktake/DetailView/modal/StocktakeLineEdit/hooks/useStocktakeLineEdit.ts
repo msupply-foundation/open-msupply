@@ -22,7 +22,7 @@ interface useStocktakeLineEditController {
 export const useStocktakeLineEdit = (
   item: DraftStocktakeLine['item'] | null,
   items: StocktakeSummaryItem[],
-  lines: StocktakeLineFragment[] | undefined
+  lines?: StocktakeLineFragment[]
 ): useStocktakeLineEditController => {
   const { id } = useStocktakeOld.document.fields('id');
   const filteredItems = items.filter(item => item.item?.id === item?.id);

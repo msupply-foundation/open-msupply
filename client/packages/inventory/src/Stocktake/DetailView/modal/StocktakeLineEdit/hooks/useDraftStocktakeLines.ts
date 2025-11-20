@@ -6,7 +6,7 @@ import { StocktakeLineFragment } from '../../../../api';
 
 export const useDraftStocktakeLines = (
   item: ItemRowFragment | null,
-  lines: StocktakeLineFragment[] | undefined
+  lines?: StocktakeLineFragment[]
 ): [DraftStocktakeLine[], Dispatch<SetStateAction<DraftStocktakeLine[]>>] => {
   const { id } = useStocktakeOld.document.fields('id');
   const {
