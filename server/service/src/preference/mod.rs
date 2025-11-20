@@ -37,7 +37,6 @@ pub trait PreferenceServiceTrait: Sync + Send {
             use_days_in_month,
             adjust_for_number_of_days_out_of_stock,
             days_in_month,
-            exclude_transfers,
 
             // Store preferences
             manage_vaccines_in_doses,
@@ -81,7 +80,6 @@ pub trait PreferenceServiceTrait: Sync + Send {
         append_if_type(use_days_in_month, &mut prefs, &input)?;
         append_if_type(adjust_for_number_of_days_out_of_stock, &mut prefs, &input)?;
         append_if_type(days_in_month, &mut prefs, &input)?;
-        append_if_type(exclude_transfers, &mut prefs, &input)?;
 
         // Store preferences
         append_if_type(manage_vaccines_in_doses, &mut prefs, &input)?;
