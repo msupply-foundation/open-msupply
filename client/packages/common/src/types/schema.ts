@@ -8757,6 +8757,7 @@ export type RequisitionLineNode = {
   /** OutboundShipment lines linked to requisitions line */
   outboundShipmentLines: InvoiceLineConnector;
   outgoingUnits: Scalars['Float']['output'];
+  pricePerUnit?: Maybe<Scalars['Float']['output']>;
   reason?: Maybe<ReasonOptionNode>;
   /**
    * Quantity remaining to supply

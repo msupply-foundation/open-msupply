@@ -85,6 +85,10 @@ impl RequisitionLineNode {
         &self.row().approval_comment
     }
 
+    pub async fn price_per_unit(&self) -> &Option<f64> {
+        &self.row().price_per_unit
+    }
+
     /// OutboundShipment lines linked to requisitions line
     pub async fn outbound_shipment_lines(&self, ctx: &Context<'_>) -> Result<InvoiceLineConnector> {
         // Outbound shipments link to response requisition, so for request requisition
@@ -333,7 +337,6 @@ mod test {
         RequisitionLine,
     };
     use serde_json::json;
-    
 
     use crate::types::RequisitionLineNode;
 
