@@ -11,7 +11,7 @@ impl MigrationFragment for Migrate {
         sql!(
             connection,
             r#"
-                ALTER TABLE requisition_line ADD COLUMN price_per_unit {DOUBLE} NOT NULL;
+                ALTER TABLE requisition_line ADD COLUMN price_per_unit {DOUBLE};
             "#,
         )?;
 

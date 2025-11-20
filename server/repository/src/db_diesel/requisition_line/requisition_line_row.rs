@@ -24,7 +24,7 @@ table! {
         snapshot_datetime -> Nullable<Timestamp>,
         approved_quantity -> Double,
         approval_comment -> Nullable<Text>,
-        price_per_unit -> Double,
+        price_per_unit -> Nullable<Double>,
         comment -> Nullable<Text>,
         // Manual requisition fields
         initial_stock_on_hand_units -> Double,
@@ -60,7 +60,7 @@ pub struct RequisitionLineRow {
     pub snapshot_datetime: Option<NaiveDateTime>,
     pub approved_quantity: f64,
     pub approval_comment: Option<String>,
-    pub price_per_unit: f64,
+    pub price_per_unit: Option<f64>,
     pub comment: Option<String>,
     // Manual requisition fields
     pub initial_stock_on_hand_units: f64,
