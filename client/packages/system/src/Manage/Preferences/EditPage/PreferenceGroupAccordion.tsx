@@ -90,6 +90,8 @@ export const PreferenceGroupAccordion = ({
                   style={{ whiteSpace: 'pre-line' }}
                 >
                   {amcFormula}
+                  <br />
+                  {t('messages.amc-minus-transfers')}
                 </Typography>
               }
             />
