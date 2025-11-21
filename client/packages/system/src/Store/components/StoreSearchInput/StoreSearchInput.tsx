@@ -1,12 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { StoreRowFragment, usePaginatedStores } from '../../api';
 import {
   AutocompleteWithPagination,
-  RegexUtils,
+  useDebouncedValue,
 } from '@openmsupply-client/common';
 import { StoreOptionRender } from './StoreOptionRenderer';
 
-const DEBOUNCE_TIMEOUT = 300;
+const DEBOUNCE_TIMEOUT = 500;
 const RECORDS_PER_PAGE = 100;
 
 type StoreSearchInputProps = {
@@ -23,14 +23,6 @@ type StoreSearchInputProps = {
   ) => void;
 };
 
-const filterByNameAndCode = (options: StoreRowFragment[], state: any) =>
-  options.filter(option =>
-    RegexUtils.matchObjectProperties(state.inputValue, option, [
-      'storeName',
-      'code',
-    ])
-  );
-
 export const StoreSearchInput = ({
   clearable = false,
   fullWidth = false,
@@ -39,9 +31,13 @@ export const StoreSearchInput = ({
   onChange,
   onInputChange,
 }: StoreSearchInputProps) => {
+  const [input, setInput] = useState<string>(
+    value ? `${value.code} ${value.storeName}` : ''
+  );
+  const debouncedInput = useDebouncedValue(input, DEBOUNCE_TIMEOUT);
   const { data, isFetching, fetchNextPage } = usePaginatedStores({
     rowsPerPage: RECORDS_PER_PAGE,
-    // filter,
+    filter: debouncedInput ? { codeOrName: { like: debouncedInput } } : null,
   });
 
   const pageNumber = data?.pages?.length
@@ -56,18 +52,40 @@ export const StoreSearchInput = ({
       totalRows={data?.pages?.[0]?.data.totalCount ?? 0}
       width={fullWidth ? '100%' : undefined}
       sx={fullWidth ? { width: '100%' } : undefined}
-      filterOptions={filterByNameAndCode}
+      filterOptions={options => options}
       clearable={clearable}
       loading={isFetching}
       getOptionLabel={option => `${option.code} ${option.storeName}`}
       renderOption={StoreOptionRender}
       disabled={isDisabled}
-      onChange={(_, value) => value && onChange(value)}
+      onChange={(_, value) => {
+        if (value) {
+          onChange(value);
+          setInput(value.storeName);
+        }
+      }}
       value={value ? { label: value.storeName, ...value } : null}
       isOptionEqualToValue={(option, value) => option.id === value.id}
       paginationDebounce={DEBOUNCE_TIMEOUT}
       onPageChange={pageNumber => fetchNextPage({ pageParam: pageNumber })}
-      onInputChange={onInputChange}
+      inputValue={input}
+      inputProps={{
+        onChange: e => {
+          const { value } = e.target;
+          setInput(value);
+        },
+        onBlur: () => {
+          if (value) {
+            setInput(value.storeName);
+          }
+        },
+      }}
+      onInputChange={(event, value, reason) => {
+        if (reason === 'clear') {
+          setInput('');
+        }
+        onInputChange(event, value, reason);
+      }}
     />
   );
 };
