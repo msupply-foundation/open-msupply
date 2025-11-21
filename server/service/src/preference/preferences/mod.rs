@@ -44,14 +44,10 @@ pub mod first_threshold_for_expiring_items;
 pub use first_threshold_for_expiring_items::*;
 pub mod second_threshold_for_expiring_items;
 pub use second_threshold_for_expiring_items::*;
-pub mod use_days_in_month;
-pub use use_days_in_month::*;
 pub mod adjust_for_number_of_days_out_of_stock;
 pub use adjust_for_number_of_days_out_of_stock::*;
 pub mod days_in_month;
 pub use days_in_month::*;
-pub mod exclude_transfers;
-pub use exclude_transfers::*;
 
 pub struct PreferenceProvider {
     // Global preferences
@@ -64,10 +60,8 @@ pub struct PreferenceProvider {
     pub show_contact_tracing: ShowContactTracing,
     pub sync_records_display_threshold: SyncRecordsDisplayThreshold,
     pub warning_for_excess_request: WarningForExcessRequest,
-    pub use_days_in_month: UseDaysInMonth,
     pub adjust_for_number_of_days_out_of_stock: AdjustForNumberOfDaysOutOfStock,
     pub days_in_month: DaysInMonth,
-    pub exclude_transfers: ExcludeTransfers,
     // Store preferences
     pub manage_vaccines_in_doses: ManageVaccinesInDoses,
     pub manage_vvm_status_for_stock: ManageVvmStatusForStock,
@@ -99,10 +93,8 @@ pub fn get_preference_provider() -> PreferenceProvider {
         sync_records_display_threshold: SyncRecordsDisplayThreshold,
         prevent_transfers_months_before_initialisation: PreventTransfersMonthsBeforeInitialisation,
         warning_for_excess_request: WarningForExcessRequest,
-        use_days_in_month: UseDaysInMonth,
         adjust_for_number_of_days_out_of_stock: AdjustForNumberOfDaysOutOfStock,
         days_in_month: DaysInMonth,
-        exclude_transfers: ExcludeTransfers,
         // Store preferences
         manage_vaccines_in_doses: ManageVaccinesInDoses,
         manage_vvm_status_for_stock: ManageVvmStatusForStock,
