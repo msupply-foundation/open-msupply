@@ -12,9 +12,6 @@ export type BackendPlugins = {
   get_consumption?: (
     _: PluginTypes['get_consumption']['input']
   ) => PluginTypes['get_consumption']['output'];
-  sync_essential_item_list?: (
-    _: PluginTypes['sync_essential_item_list']['input']
-  ) => PluginTypes['sync_essential_item_list']['output'];
   graphql_query?: (
     _: PluginTypes['graphql_query']['input']
   ) => PluginTypes['graphql_query']['output'];

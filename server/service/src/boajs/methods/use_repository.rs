@@ -2,7 +2,7 @@ use boa_engine::*;
 use chrono::NaiveDate;
 use repository::{
     ConsumptionFilter, DateFilter, DaysOutOfStockRepository, DaysOutOfStockRow, EqualFilter,
-    SyncMessageRow, SyncMessageRowRepository,
+    PluginDataRow, PluginDataRowRepository, SyncMessageRow, SyncMessageRowRepository,
 };
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
@@ -25,6 +25,7 @@ pub struct GetDaysOutOfStockFilter {
 #[serde(tag = "t", content = "v")]
 pub(crate) enum UseRepositoryInput {
     GetSyncMessageById(String),
+    UpsertPluginData(PluginDataRow),
     UpsertSyncMessage(SyncMessageRow),
     GetDaysOutOfStock(GetDaysOutOfStockFilter),
 }
@@ -34,6 +35,7 @@ pub(crate) enum UseRepositoryInput {
 pub(crate) enum UseRepositoryOutput {
     GetSyncMessageById(Option<SyncMessageRow>),
     UpsertSyncMessage(i64),
+    UpsertPluginData(i64),
     GetDaysOutOfStock(Vec<DaysOutOfStockRow>),
 }
 
@@ -63,6 +65,11 @@ pub(crate) fn bind_method(context: &mut Context) -> Result<(), JsError> {
                     In::UpsertSyncMessage(message_row) => Out::UpsertSyncMessage(
                         SyncMessageRowRepository::new(&connection)
                             .upsert_one(&message_row)
+                            .map_err(std_error_to_js_error)?,
+                    ),
+                    In::UpsertPluginData(plugin_data_row) => Out::UpsertPluginData(
+                        PluginDataRowRepository::new(&connection)
+                            .upsert_one(&plugin_data_row)
                             .map_err(std_error_to_js_error)?,
                     ),
                     In::GetDaysOutOfStock(filter) => {

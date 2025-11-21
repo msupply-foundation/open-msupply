@@ -5,4 +5,5 @@ import type { SyncMessageRow } from './SyncMessageRow';
 export type UseRepositoryOutput =
   | { t: 'GetSyncMessageById'; v: SyncMessageRow | null }
   | { t: 'UpsertSyncMessage'; v: bigint }
+  | { t: 'UpsertPluginData'; v: bigint }
   | { t: 'GetDaysOutOfStock'; v: Array<DaysOutOfStockRow> };
