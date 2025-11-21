@@ -12,7 +12,7 @@ use crate::{
 };
 use chrono::{Duration, NaiveDate};
 use repository::{
-    ConsumptionFilter, ConsumptionRepository, ConsumptionRow, DateFilter, DaysOutOfStockRepository,
+    ConsumptionFilter, ConsumptionRepository, DateFilter, DaysOutOfStockRepository,
     DaysOutOfStockRow, EqualFilter, PluginType, RepositoryError, RequisitionLine,
     StockOnHandFilter, StockOnHandRepository, StockOnHandRow, StorageConnection,
 };
