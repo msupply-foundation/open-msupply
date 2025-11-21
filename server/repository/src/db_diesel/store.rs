@@ -6,7 +6,9 @@ use super::{
 };
 
 use crate::{
-    diesel_macros::{apply_equal_filter, apply_sort_no_case, apply_string_filter},
+    diesel_macros::{
+        apply_equal_filter, apply_sort_no_case, apply_string_filter, apply_string_or_filter,
+    },
     DBType, EqualFilter, Pagination, RepositoryError, Sort, StringFilter,
 };
 
@@ -29,6 +31,7 @@ pub struct StoreFilter {
     pub name: Option<StringFilter>,
     pub name_code: Option<StringFilter>,
     pub site_id: Option<EqualFilter<i32>>,
+    pub code_or_name: Option<StringFilter>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -74,6 +77,11 @@ impl StoreFilter {
 
     pub fn site_id(mut self, filter: EqualFilter<i32>) -> Self {
         self.site_id = Some(filter);
+        self
+    }
+
+    pub fn code_or_name(mut self, filter: StringFilter) -> Self {
+        self.code_or_name = Some(filter);
         self
     }
 }
@@ -150,7 +158,14 @@ fn create_filtered_query(filter: Option<StoreFilter>) -> BoxedStoreQuery {
             name,
             name_code,
             site_id,
+            code_or_name,
         } = f;
+
+        // or filter need to be applied before and filters
+        if code_or_name.is_some() {
+            apply_string_filter!(query, code_or_name.clone(), store::code);
+            apply_string_or_filter!(query, code_or_name, name::name_);
+        }
 
         apply_equal_filter!(query, id, store::id);
         apply_string_filter!(query, code, store::code);
