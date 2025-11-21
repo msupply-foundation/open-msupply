@@ -44,8 +44,6 @@ pub mod first_threshold_for_expiring_items;
 pub use first_threshold_for_expiring_items::*;
 pub mod second_threshold_for_expiring_items;
 pub use second_threshold_for_expiring_items::*;
-pub mod use_days_in_month;
-pub use use_days_in_month::*;
 pub mod adjust_for_number_of_days_out_of_stock;
 pub use adjust_for_number_of_days_out_of_stock::*;
 pub mod days_in_month;
@@ -62,7 +60,6 @@ pub struct PreferenceProvider {
     pub show_contact_tracing: ShowContactTracing,
     pub sync_records_display_threshold: SyncRecordsDisplayThreshold,
     pub warning_for_excess_request: WarningForExcessRequest,
-    pub use_days_in_month: UseDaysInMonth,
     pub adjust_for_number_of_days_out_of_stock: AdjustForNumberOfDaysOutOfStock,
     pub days_in_month: DaysInMonth,
     // Store preferences
@@ -96,7 +93,6 @@ pub fn get_preference_provider() -> PreferenceProvider {
         sync_records_display_threshold: SyncRecordsDisplayThreshold,
         prevent_transfers_months_before_initialisation: PreventTransfersMonthsBeforeInitialisation,
         warning_for_excess_request: WarningForExcessRequest,
-        use_days_in_month: UseDaysInMonth,
         adjust_for_number_of_days_out_of_stock: AdjustForNumberOfDaysOutOfStock,
         days_in_month: DaysInMonth,
         // Store preferences
