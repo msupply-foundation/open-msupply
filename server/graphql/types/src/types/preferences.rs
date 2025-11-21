@@ -59,20 +59,12 @@ impl PreferencesNode {
         self.load_preference(&self.preferences.warning_for_excess_request)
     }
 
-    pub async fn use_days_in_month(&self) -> Result<bool> {
-        self.load_preference(&self.preferences.use_days_in_month)
-    }
-
     pub async fn adjust_for_number_of_days_out_of_stock(&self) -> Result<bool> {
         self.load_preference(&self.preferences.adjust_for_number_of_days_out_of_stock)
     }
 
     pub async fn days_in_month(&self) -> Result<f64> {
         self.load_preference(&self.preferences.days_in_month)
-    }
-
-    pub async fn exclude_transfers(&self) -> Result<bool> {
-        self.load_preference(&self.preferences.exclude_transfers)
     }
 
     // Store preferences
@@ -207,10 +199,8 @@ pub enum PreferenceKey {
     PreventTransfersMonthsBeforeInitialisation,
     ShowContactTracing,
     SyncRecordsDisplayThreshold,
-    UseDaysInMonth,
     AdjustForNumberOfDaysOutOfStock,
     DaysInMonth,
-    ExcludeTransfers,
     // Store preferences
     ManageVaccinesInDoses,
     ManageVvmStatusForStock,

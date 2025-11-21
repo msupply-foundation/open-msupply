@@ -1,10 +1,11 @@
 use super::StorageConnection;
-
 use crate::{
     diesel_macros::{apply_date_filter, apply_equal_filter},
-    DateFilter, EqualFilter, RepositoryError,
+    DateFilter, EqualFilter, InvoiceType, RepositoryError,
 };
+use chrono::NaiveDate;
 use diesel::prelude::*;
+use serde::{Deserialize, Serialize};
 
 table! {
     consumption (id) {
@@ -13,20 +14,22 @@ table! {
         store_id -> Text,
         quantity -> Double,
         date -> Date,
-        is_transfer -> Bool
+        invoice_type -> crate::db_diesel::invoice_row::InvoiceTypeMapping,
+        name_id -> Text,
+        name_properties -> Nullable<Text>,
     }
 }
 
-use chrono::NaiveDate;
-
-#[derive(Clone, Queryable, Debug, PartialEq, Default)]
+#[derive(Clone, Queryable, Debug, PartialEq, Default, Serialize, Deserialize)]
 pub struct ConsumptionRow {
     pub id: String,
     pub item_id: String,
     pub store_id: String,
     pub quantity: f64,
     pub date: NaiveDate,
-    pub is_transfer: bool,
+    pub invoice_type: InvoiceType,
+    pub name_id: String,
+    pub name_properties: Option<String>,
 }
 
 #[derive(Clone, Debug, PartialEq, Default)]
