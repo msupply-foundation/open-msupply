@@ -2,6 +2,7 @@ use super::{version::Version, Migration, MigrationFragment};
 use crate::StorageConnection;
 
 mod add_created_from_req_ids_to_requisition;
+mod add_master_list_to_changelog;
 
 pub(crate) struct V2_13_00;
 impl Migration for V2_13_00 {
@@ -14,7 +15,10 @@ impl Migration for V2_13_00 {
     }
 
     fn migrate_fragments(&self) -> Vec<Box<dyn MigrationFragment>> {
-        vec![Box::new(add_created_from_req_ids_to_requisition::Migrate)]
+        vec![
+            Box::new(add_created_from_req_ids_to_requisition::Migrate),
+            Box::new(add_master_list_to_changelog::Migrate),
+        ]
     }
 }
 

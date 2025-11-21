@@ -1,5 +1,7 @@
 use boa_engine::*;
-use repository::{SyncMessageRow, SyncMessageRowRepository};
+use repository::{
+    PluginDataRow, PluginDataRowRepository, SyncMessageRow, SyncMessageRowRepository,
+};
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
@@ -9,6 +11,7 @@ use crate::{boajs::context::BoaJsContext, boajs::utils::*};
 #[serde(tag = "t", content = "v")]
 pub(crate) enum UseRepositoryInput {
     GetSyncMessageById(String),
+    UpsertPluginData(PluginDataRow),
     UpsertSyncMessage(SyncMessageRow),
 }
 
@@ -17,6 +20,7 @@ pub(crate) enum UseRepositoryInput {
 pub(crate) enum UseRepositoryOutput {
     GetSyncMessageById(Option<SyncMessageRow>),
     UpsertSyncMessage(i64),
+    UpsertPluginData(i64),
 }
 
 pub(crate) fn bind_method(context: &mut Context) -> Result<(), JsError> {
@@ -45,6 +49,11 @@ pub(crate) fn bind_method(context: &mut Context) -> Result<(), JsError> {
                     In::UpsertSyncMessage(message_row) => Out::UpsertSyncMessage(
                         SyncMessageRowRepository::new(&connection)
                             .upsert_one(&message_row)
+                            .map_err(std_error_to_js_error)?,
+                    ),
+                    In::UpsertPluginData(plugin_data_row) => Out::UpsertPluginData(
+                        PluginDataRowRepository::new(&connection)
+                            .upsert_one(&plugin_data_row)
                             .map_err(std_error_to_js_error)?,
                     ),
                 }
