@@ -167,6 +167,10 @@ impl PreferencesNode {
         self.load_preference(&self.preferences.second_threshold_for_expiring_items)
     }
 
+    pub async fn skip_intermediate_statuses_in_outbound(&self) -> Result<bool> {
+        self.load_preference(&self.preferences.skip_intermediate_statuses_in_outbound)
+    }
+
     pub async fn warn_when_missing_recent_stocktake(
         &self,
     ) -> Result<WarnWhenMissingRecentStocktakeDataNode> {
@@ -253,6 +257,7 @@ pub enum PreferenceKey {
     NumberOfMonthsThresholdToShowLowStockAlertsForProducts,
     FirstThresholdForExpiringItems,
     SecondThresholdForExpiringItems,
+    SkipIntermediateStatusesInOutbound,
     WarnWhenMissingRecentStocktake,
 }
 
