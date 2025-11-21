@@ -2,11 +2,7 @@ import React from 'react';
 import { StoreRowFragment, usePaginatedStores } from '../../api';
 import {
   AutocompleteWithPagination,
-  createQueryParamsStore,
-  QueryParamsProvider,
   RegexUtils,
-  useDebounceCallback,
-  useQueryParamsStore,
 } from '@openmsupply-client/common';
 import { StoreOptionRender } from './StoreOptionRenderer';
 
@@ -35,7 +31,7 @@ const filterByNameAndCode = (options: StoreRowFragment[], state: any) =>
     ])
   );
 
-const StoreSearchComponent = ({
+export const StoreSearchInput = ({
   clearable = false,
   fullWidth = false,
   isDisabled = false,
@@ -43,24 +39,14 @@ const StoreSearchComponent = ({
   onChange,
   onInputChange,
 }: StoreSearchInputProps) => {
-  const { filter } = useQueryParamsStore();
-
   const { data, isFetching, fetchNextPage } = usePaginatedStores({
     rowsPerPage: RECORDS_PER_PAGE,
-    filter,
+    // filter,
   });
 
   const pageNumber = data?.pages?.length
     ? (data.pages[data.pages.length - 1]?.pageNumber ?? 0)
     : 0;
-
-  const debounceOnFilter = useDebounceCallback(
-    (searchText: string) => {
-      filter.onChangeStringFilterRule('name', 'like', searchText);
-    },
-    [],
-    DEBOUNCE_TIMEOUT
-  );
 
   return (
     <AutocompleteWithPagination
@@ -81,21 +67,7 @@ const StoreSearchComponent = ({
       isOptionEqualToValue={(option, value) => option.id === value.id}
       paginationDebounce={DEBOUNCE_TIMEOUT}
       onPageChange={pageNumber => fetchNextPage({ pageParam: pageNumber })}
-      onInputChange={(event, value, reason) => {
-        if (event?.type === 'change') debounceOnFilter(value);
-        onInputChange(event, value, reason);
-      }}
+      onInputChange={onInputChange}
     />
   );
 };
-
-export const StoreSearchInput = (props: StoreSearchInputProps) => (
-  <QueryParamsProvider
-    createStore={createQueryParamsStore<StoreRowFragment>({
-      initialSortBy: { key: 'name' },
-      initialRowsPerPage: RECORDS_PER_PAGE,
-    })}
-  >
-    <StoreSearchComponent {...props} />
-  </QueryParamsProvider>
-);
