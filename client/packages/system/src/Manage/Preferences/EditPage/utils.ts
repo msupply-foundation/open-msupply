@@ -1,8 +1,4 @@
-import {
-  LocaleKey,
-  PreferenceKey,
-  TypedTFunction,
-} from '@openmsupply-client/common';
+import { PreferenceKey } from '@openmsupply-client/common';
 import { AdminPreferenceFragment } from '../api/operations.generated';
 
 // Grouping of global preferences
@@ -29,21 +25,4 @@ export const isAnyAmcPrefOn = (
         return false;
     }
   });
-};
-
-export const generateAmcFormula = (
-  preferences: AdminPreferenceFragment[],
-  t: TypedTFunction<LocaleKey>
-): string => {
-  const hasDaysOut = preferences.some(
-    p => p.key === PreferenceKey.AdjustForNumberOfDaysOutOfStock && p.value
-  );
-
-  const consumption = t('label.consumption');
-
-  const days = hasDaysOut
-    ? `(${t('label.days-in-month')} - ${t('label.days-out-of-stock')})`
-    : t('label.days-in-month');
-
-  return `${consumption} / ${t('label.lookback-months')} * ${t('label.days-in-month')} / ${days}`;
 };
