@@ -66,21 +66,6 @@ export const Toolbar: FC = () => {
               ? [
                   {
                     type: 'enum' as const,
-                    name: t('label.out-of-stock-products'),
-                    urlParameter: 'outOfStockProducts',
-                    options: [
-                      {
-                        label: t('label.show-out-of-stock-products'),
-                        value: 'true',
-                      },
-                      {
-                        label: t('label.show-in-stock-products'),
-                        value: 'false',
-                      },
-                    ],
-                  },
-                  {
-                    type: 'enum' as const,
                     name: t('label.products-at-risk-of-being-out-of-stock'),
                     urlParameter: 'productsAtRiskOfBeingOutOfStock',
                     options: [
