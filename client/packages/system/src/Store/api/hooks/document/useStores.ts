@@ -1,5 +1,5 @@
 import {
-  FilterController,
+  FilterBy,
   useInfiniteQuery,
   useQuery,
   useQueryParamsStore,
@@ -21,7 +21,7 @@ export const useStores = () => {
 };
 
 interface useStoresProps {
-  filter?: FilterController;
+  filter: FilterBy | null;
   rowsPerPage: number;
 }
 
@@ -29,12 +29,12 @@ export const usePaginatedStores = ({ rowsPerPage, filter }: useStoresProps) => {
   const api = useStoreApi();
 
   const query = useInfiniteQuery(
-    api.keys.paramList(filter?.filterBy ?? null),
+    api.keys.paramList(filter),
     async ({ pageParam }) => {
       const pageNumber = Number(pageParam ?? 0);
 
       const data = await api.get.list({
-        filter: filter?.filterBy ?? null,
+        filter,
         first: rowsPerPage,
         offset: rowsPerPage * pageNumber,
       });
