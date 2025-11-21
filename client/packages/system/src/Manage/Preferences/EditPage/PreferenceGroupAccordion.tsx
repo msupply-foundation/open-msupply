@@ -89,7 +89,11 @@ export const PreferenceGroupAccordion = ({
             <Divider />
             <Box padding={1}>
               <Typography variant="caption" color="text.secondary">
+                {t('messages.amc-consumption')}
+                <br />
                 {t('messages.amc-lookback-days')}
+                <br />
+                {t('messages.amc-days-out-of-stock')}
                 <br />
                 {t('messages.amc-minus-transfers')}
               </Typography>
