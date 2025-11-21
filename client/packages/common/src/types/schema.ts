@@ -4978,6 +4978,7 @@ export type ItemStorePropertiesNode = {
   defaultSellPricePerPack: Scalars['Float']['output'];
   id: Scalars['String']['output'];
   ignoreForOrders: Scalars['Boolean']['output'];
+  margin: Scalars['Float']['output'];
 };
 
 export type ItemVariantMutations = {
@@ -9590,6 +9591,7 @@ export type StoreConnector = {
 
 export type StoreFilterInput = {
   code?: InputMaybe<StringFilterInput>;
+  codeOrName?: InputMaybe<StringFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
   name?: InputMaybe<StringFilterInput>;
   nameCode?: InputMaybe<StringFilterInput>;
