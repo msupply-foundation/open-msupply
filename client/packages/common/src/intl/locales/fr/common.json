@@ -2538,7 +2538,6 @@
   "preference.numberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts": "Période de consommation à analyser pour les rupture de stock (en mois)",
   "preference.secondThresholdForExpiringItems": "Second seuil pour les articles en cours d'expiration",
   "preference.selectDestinationStoreForAnInternalOrder": "Sélectionner le dépot de destination d'une commande interne",
-  "preference.useDaysInMonth": "Utiliser le \"nombre de jours dans un mois\"",
   "title.configure-supply-levels": "Définir les niveaux de stock",
   "messages.skip-dose-warning": "Si vous donnez cette dose, une ou plusieurs doses précédentes seront ignorées et indiquées comme non données.",
   "log.removed": "Retiré",
