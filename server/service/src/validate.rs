@@ -46,7 +46,6 @@ pub fn get_other_party(
     if results.is_empty() {
         return Ok(None);
     }
-    println!("Result: {:?}", results);
 
     // If names have been merged, there could be multiple results, if so we need to return the one with the name_store_join if it exists
     // Revist this code in https://github.com/msupply-foundation/open-msupply/issues/9824
