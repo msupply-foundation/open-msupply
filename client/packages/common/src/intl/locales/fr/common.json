@@ -2515,7 +2515,6 @@
   "label.created-from-requisition": "Créé(s) à partir d'une réquisition",
   "label.delete-supply-level": "Supprimer les niveaux de stock",
   "label.destination-customer": "Client à destination",
-  "label.lookback-months": "période de référence (mois)",
   "label.no-supply-levels-configured": "Aucun niveau de stock définis...",
   "label.out-of-stock-products": "Produits en rupture de stock",
   "label.procurement": "Achats",
