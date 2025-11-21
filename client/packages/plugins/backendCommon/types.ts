@@ -9,9 +9,6 @@ export type BackendPlugins = {
   transform_request_requisition_lines?: (
     _: PluginTypes['transform_request_requisition_lines']['input']
   ) => PluginTypes['transform_request_requisition_lines']['output'];
-  sync_essential_item_list?: (
-    _: PluginTypes['sync_essential_item_list']['input']
-  ) => PluginTypes['sync_essential_item_list']['output'];
   graphql_query?: (
     _: PluginTypes['graphql_query']['input']
   ) => PluginTypes['graphql_query']['output'];
