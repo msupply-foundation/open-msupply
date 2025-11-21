@@ -21,9 +21,7 @@ fn main() {
         for entry in glob(&pattern).expect("Failed to read glob pattern") {
             match entry {
                 Ok(path) => {
-                    if !path.to_string_lossy().contains("/target/") {
-                        fs::File::create(Path::new(&path).join(TEMPLATE_MARKER_FILE)).unwrap();
-                    }
+                    fs::File::create(Path::new(&path).join(TEMPLATE_MARKER_FILE)).unwrap();
                 }
                 Err(e) => println!("cargo:warning={:?}", e),
             }
