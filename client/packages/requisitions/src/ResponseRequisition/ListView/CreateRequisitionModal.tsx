@@ -19,6 +19,7 @@ import {
   NewProgramRequisition,
   ProgramRequisitionOptions,
 } from './ProgramRequisitionOptions';
+import { useResponse } from '../api';
 
 export interface NewGeneralRequisition {
   type: NewRequisitionType.General;
@@ -38,7 +39,12 @@ export const CreateRequisitionModalComponent: FC<
   const t = useTranslation();
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: false });
   const { data, isLoading } = useName.document.customers();
-
+  const customerIds = data?.nodes?.map(c => c.id) || [];
+  const { data: hasCustomerPrograms } =
+    useResponse.utils.hasCustomerProgramRequisitionSettings(
+      customerIds,
+      !isLoading
+    );
   const [customer, setCustomer] = React.useState<NameRowFragment | null>(null);
 
   const programTab = React.useMemo(
@@ -73,13 +79,21 @@ export const CreateRequisitionModalComponent: FC<
 
   const InnerComponent = React.useMemo(() => {
     if (isLoading) return <BasicSpinner />;
-    if (data && data.totalCount > 0) {
+    if (hasCustomerPrograms) {
       return <ModalTabs tabs={[programTab, generalTab]} />;
     }
     return (
       <GeneralRequisition onCreate={onCreate} open={isOpen} onClose={onClose} />
     );
-  }, [isLoading, data, onCreate, isOpen, onClose, programTab, generalTab]);
+  }, [
+    isLoading,
+    onCreate,
+    isOpen,
+    onClose,
+    programTab,
+    generalTab,
+    hasCustomerPrograms,
+  ]);
 
   return (
     <Modal
