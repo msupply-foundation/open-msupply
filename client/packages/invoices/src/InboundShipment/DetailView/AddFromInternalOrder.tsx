@@ -103,7 +103,5 @@ const AddFromInternalOrderComponent = ({
 };
 
 export const AddFromInternalOrder = (props: AddFromInternalOrderProps) => (
-  <TableProvider createStore={createTableStore}>
-    <AddFromInternalOrderComponent {...props} />
-  </TableProvider>
+  <AddFromInternalOrderComponent {...props} />
 );
