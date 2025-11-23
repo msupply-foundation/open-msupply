@@ -971,19 +971,22 @@ impl InvoiceTransferTester {
             connection,
             &inbound_shipment.id,
             &self.outbound_shipment_line1,
-            Some(self.outbound_shipment_line1.item_link_id.clone()),
         );
+
         check_line(
             connection,
             &inbound_shipment.id,
             &self.outbound_shipment_line2,
-            None,
+        );
+        check_line(
+            connection,
+            &inbound_shipment.id,
+            &self.outbound_shipment_line3,
         );
         check_line(
             connection,
             &inbound_shipment.id,
             &self.outbound_shipment_service_line,
-            None,
         );
     }
 
@@ -1107,13 +1110,11 @@ impl InvoiceTransferTester {
             connection,
             &inbound_shipment.id,
             &self.outbound_shipment_line2,
-            None,
         );
         check_line(
             connection,
             &inbound_shipment.id,
             &self.outbound_shipment_service_line,
-            None,
         );
 
         self.inbound_shipment = Some(inbound_shipment)
@@ -1278,12 +1279,7 @@ impl InvoiceTransferTester {
             1
         );
 
-        check_line(
-            connection,
-            &customer_return.id,
-            &self.supplier_return_line,
-            None,
-        );
+        check_line(connection, &customer_return.id, &self.supplier_return_line);
     }
 
     pub(crate) fn check_supplier_return_was_linked(&self, connection: &StorageConnection) {
@@ -1392,12 +1388,7 @@ impl InvoiceTransferTester {
             1
         );
 
-        check_line(
-            connection,
-            &customer_return.id,
-            &self.supplier_return_line,
-            None,
-        );
+        check_line(connection, &customer_return.id, &self.supplier_return_line);
 
         self.inbound_shipment = Some(customer_return)
     }
@@ -1472,12 +1463,7 @@ fn check_invoice_status(invoice1: &InvoiceRow, invoice2: &InvoiceRow) {
     assert_eq!(invoice1.received_datetime, invoice2.received_datetime);
 }
 /// Line uniqueness is checked in caller method where invoice line count is checked
-fn check_line(
-    connection: &StorageConnection,
-    inbound_id: &str,
-    outbound_line: &InvoiceLineRow,
-    item1_id: Option<String>,
-) {
+fn check_line(connection: &StorageConnection, inbound_id: &str, outbound_line: &InvoiceLineRow) {
     let inbound_line = InvoiceLineRepository::new(connection)
         .query_one(
             InvoiceLineFilter::new()
@@ -1496,6 +1482,10 @@ fn check_line(
     assert_eq!(inbound_line.pack_size, outbound_line.pack_size);
     assert_eq!(inbound_line.number_of_packs, outbound_line.number_of_packs);
     assert_eq!(inbound_line.note, outbound_line.note);
+    assert_eq!(inbound_line.stock_line_id, None);
+    assert_eq!(inbound_line.location_id, None);
+    assert_eq!(inbound_line.tax_percentage, outbound_line.tax_percentage);
+}
 
     match outbound_line.r#type {
         InvoiceLineType::Service => {
