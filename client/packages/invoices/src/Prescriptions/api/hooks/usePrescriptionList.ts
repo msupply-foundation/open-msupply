@@ -23,7 +23,7 @@ export const usePrescriptionList = (queryParams?: ListParams) => {
 
   const {
     sortBy = {
-      key: 'name',
+      key: 'invoiceNumber',
       direction: 'asc',
     },
     first,
@@ -50,11 +50,14 @@ export const usePrescriptionList = (queryParams?: ListParams) => {
       type: { equalTo: InvoiceNodeType.Prescription },
     };
 
+    const sortKey = (sortFieldMap[sortBy.key] ||
+      InvoiceSortFieldInput.InvoiceNumber) as InvoiceSortFieldInput;
+
     const query = await prescriptionApi.prescriptions({
       storeId,
       first: first,
       offset: offset,
-      key: sortFieldMap[sortBy.key] as InvoiceSortFieldInput,
+      key: sortKey,
       desc: sortBy.direction === 'desc',
       filter,
     });
