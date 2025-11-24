@@ -33,6 +33,7 @@ export const EditStorePreferences = ({
 
     return (
       <EditPreference
+        key={pref.key}
         disabled={
           !isCentralServer || !userHasPermission(UserPermission.EditCentralData)
         }
