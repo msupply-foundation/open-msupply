@@ -58,7 +58,13 @@ pub fn update_asset(
         .transaction_sync(|connection| {
             let asset_row = validate(connection, &input)?;
             let updated_asset_row = generate(&ctx.store_id, input.clone(), asset_row.clone());
-            AssetRowRepository::new(connection).upsert_one(&updated_asset_row)?;
+            let original_store_id = if updated_asset_row.store_id != asset_row.store_id {
+                asset_row.store_id.clone()
+            } else {
+                None
+            };
+            AssetRowRepository::new(connection)
+                .upsert_one(&updated_asset_row, original_store_id)?;
 
             activity_log_entry(
                 ctx,
