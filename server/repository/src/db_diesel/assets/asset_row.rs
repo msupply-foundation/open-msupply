@@ -1,16 +1,13 @@
 use super::asset_row::asset::dsl::*;
-
-use serde::{Deserialize, Serialize};
-
 use crate::asset_log_row::latest_asset_log;
 use crate::db_diesel::store_row::store;
 use crate::{
     ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RepositoryError, RowActionType,
     StorageConnection, Upsert,
 };
-
 use chrono::{NaiveDate, NaiveDateTime};
 use diesel::prelude::*;
+use serde::{Deserialize, Serialize};
 
 table! {
     asset (id) {
@@ -89,13 +86,27 @@ impl<'a> AssetRowRepository<'a> {
         Ok(())
     }
 
-    pub fn upsert_one(&self, asset_row: &AssetRow) -> Result<i64, RepositoryError> {
+    pub fn upsert_one(
+        &self,
+        asset_row: &AssetRow,
+        original_store_id: Option<String>,
+    ) -> Result<i64, RepositoryError> {
         self._upsert_one(asset_row)?;
-        self.insert_changelog(
-            asset_row.id.to_owned(),
+        let changelog_id = self.insert_changelog(
+            asset_row.id.to_string(),
             RowActionType::Upsert,
             asset_row.store_id.clone(),
-        )
+        )?;
+
+        if let Some(original_store) = original_store_id {
+            // Insert "delete" changelog for the original store
+            self.insert_changelog(
+                asset_row.id.to_string(),
+                RowActionType::Delete,
+                Some(original_store),
+            )?;
+        }
+        Ok(changelog_id)
     }
 
     fn insert_changelog(
@@ -129,31 +140,33 @@ impl<'a> AssetRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn mark_deleted(&self, asset_id: &str) -> Result<i64, RepositoryError> {
+    pub fn mark_deleted(
+        &self,
+        asset_id: &str,
+        original_store_id: Option<String>,
+    ) -> Result<i64, RepositoryError> {
         diesel::update(asset.filter(id.eq(asset_id)))
             .set(deleted_datetime.eq(Some(chrono::Utc::now().naive_utc())))
             .execute(self.connection.lock().connection())?;
 
-        let asset_row = AssetRowRepository::find_one_by_id(&self, asset_id)?;
+        let asset_row = AssetRowRepository::find_one_by_id(self, asset_id)?;
 
         self.insert_changelog(
             asset_id.to_owned(),
             RowActionType::Upsert,
-            asset_row.and_then(|row| row.store_id),
+            original_store_id.or_else(|| asset_row.and_then(|row| row.store_id)),
         )
     }
 }
 
 impl Upsert for AssetRow {
     fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        let cursor_id = AssetRowRepository::new(con).upsert_one(self)?;
+        let cursor_id = AssetRowRepository::new(con).upsert_one(self, None)?;
         Ok(Some(cursor_id))
     }
 
     // Test only
     fn assert_upserted(&self, con: &StorageConnection) {
-        
-
         assert_eq!(
             AssetRowRepository::new(con).find_one_by_id(&self.id),
             Ok(Some(self.clone()))
