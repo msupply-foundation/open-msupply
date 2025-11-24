@@ -49,6 +49,7 @@ pub struct UpsertPreferences {
     pub second_threshold_for_expiring_items: Option<Vec<StorePrefUpdate<i32>>>,
     pub warn_when_missing_recent_stocktake: Option<Vec<StorePrefUpdate<WarnWhenMissingRecentStocktakeData>>>,
     pub skip_intermediate_statuses_in_outbound: Option<Vec<StorePrefUpdate<bool>>>,
+    pub store_custom_colour: Option<Vec<StorePrefUpdate<String>>>,
 }
 
 pub fn upsert_preferences(
@@ -94,6 +95,7 @@ pub fn upsert_preferences(
         second_threshold_for_expiring_items: second_threshold_for_expiring_items_input,
         warn_when_missing_recent_stocktake: warn_when_missing_recent_stocktake_input,
         skip_intermediate_statuses_in_outbound: skip_intermediate_statuses_in_outbound_input,
+        store_custom_colour: store_custom_colour_input,
     }: UpsertPreferences,
 ) -> Result<(), UpsertPreferenceError> {
     let PreferenceProvider {
@@ -132,6 +134,7 @@ pub fn upsert_preferences(
         second_threshold_for_expiring_items,
         warn_when_missing_recent_stocktake,
         skip_intermediate_statuses_in_outbound,
+        store_custom_colour,
     }: PreferenceProvider = get_preference_provider();
 
     ctx.connection
@@ -293,6 +296,11 @@ pub fn upsert_preferences(
             if let Some(inputs) = skip_intermediate_statuses_in_outbound_input {
                 upsert_store_input(connection, skip_intermediate_statuses_in_outbound, inputs)?;
             }
+            
+            if let Some(input) = store_custom_colour_input {
+                upsert_store_input(connection, store_custom_colour, input)?;
+            }
+
             Ok(())
 
 
