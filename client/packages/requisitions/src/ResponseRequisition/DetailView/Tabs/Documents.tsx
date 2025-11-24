@@ -19,7 +19,7 @@ export const Documents = ({
         .filter(doc => doc.recordId === requisitionId)
         .map(doc => doc.id)
     );
-  }, [data]);
+  }, [data?.id, data?.documents.nodes]);
 
   return (
     <Grid flex={1} display="flex" flexDirection="column">
