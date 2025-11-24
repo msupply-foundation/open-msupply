@@ -22,6 +22,12 @@ pub struct IntegerStorePrefInput {
 }
 
 #[derive(InputObject)]
+pub struct StringStorePrefInput {
+    pub store_id: String,
+    pub value: String,
+}
+
+#[derive(InputObject)]
 pub struct WarnWhenMissingRecentStocktakeDataInput {
     pub enabled: bool,
     pub max_age: u32,
@@ -72,6 +78,8 @@ pub struct UpsertPreferencesInput {
     pub first_threshold_for_expiring_items: Option<Vec<IntegerStorePrefInput>>,
     pub second_threshold_for_expiring_items: Option<Vec<IntegerStorePrefInput>>,
     pub warn_when_missing_recent_stocktake: Option<Vec<WarnWhenMissingRecentStocktakeInput>>,
+    pub skip_intermediate_statuses_in_outbound: Option<Vec<BoolStorePrefInput>>,
+    pub store_custom_colour: Option<Vec<StringStorePrefInput>>,
 }
 
 pub fn upsert_preferences(
@@ -133,6 +141,8 @@ impl UpsertPreferencesInput {
             first_threshold_for_expiring_items,
             second_threshold_for_expiring_items,
             warn_when_missing_recent_stocktake,
+            skip_intermediate_statuses_in_outbound,
+            store_custom_colour,
         } = self;
 
         UpsertPreferences {
@@ -209,6 +219,12 @@ impl UpsertPreferencesInput {
             warn_when_missing_recent_stocktake: warn_when_missing_recent_stocktake
                 .as_ref()
                 .map(|i| i.iter().map(|i| i.to_domain()).collect()),
+            skip_intermediate_statuses_in_outbound: skip_intermediate_statuses_in_outbound
+                .as_ref()
+                .map(|i| i.iter().map(|i| i.to_domain()).collect()),
+            store_custom_colour: store_custom_colour
+                .as_ref()
+                .map(|i| i.iter().map(|i| i.to_domain()).collect()),
         }
     }
 }
@@ -227,6 +243,15 @@ impl IntegerStorePrefInput {
         StorePrefUpdate {
             store_id: self.store_id.clone(),
             value: self.value,
+        }
+    }
+}
+
+impl StringStorePrefInput {
+    pub fn to_domain(&self) -> StorePrefUpdate<String> {
+        StorePrefUpdate {
+            store_id: self.store_id.clone(),
+            value: self.value.clone(),
         }
     }
 }
