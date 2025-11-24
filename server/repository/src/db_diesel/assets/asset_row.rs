@@ -2,8 +2,8 @@ use super::asset_row::asset::dsl::*;
 use crate::asset_log_row::latest_asset_log;
 use crate::db_diesel::store_row::store;
 use crate::{
-    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RepositoryError, RowActionType,
-    StorageConnection, Upsert,
+    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, Delete, RepositoryError,
+    RowActionType, StorageConnection, Upsert,
 };
 use chrono::{NaiveDate, NaiveDateTime};
 use diesel::prelude::*;
@@ -140,11 +140,7 @@ impl<'a> AssetRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn mark_deleted(
-        &self,
-        asset_id: &str,
-        original_store_id: Option<String>,
-    ) -> Result<i64, RepositoryError> {
+    pub fn mark_deleted(&self, asset_id: &str) -> Result<i64, RepositoryError> {
         diesel::update(asset.filter(id.eq(asset_id)))
             .set(deleted_datetime.eq(Some(chrono::Utc::now().naive_utc())))
             .execute(self.connection.lock().connection())?;
@@ -154,7 +150,7 @@ impl<'a> AssetRowRepository<'a> {
         self.insert_changelog(
             asset_id.to_owned(),
             RowActionType::Upsert,
-            original_store_id.or_else(|| asset_row.and_then(|row| row.store_id)),
+            asset_row.and_then(|row| row.store_id),
         )
     }
 }
@@ -171,5 +167,22 @@ impl Upsert for AssetRow {
             AssetRowRepository::new(con).find_one_by_id(&self.id),
             Ok(Some(self.clone()))
         )
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct AssetRowDelete(pub String);
+impl Delete for AssetRowDelete {
+    fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        let cursor_id = AssetRowRepository::new(con).mark_deleted(&self.0)?;
+        Ok(Some(cursor_id))
+    }
+
+    // Test only
+    fn assert_deleted(&self, con: &StorageConnection) {
+        assert_eq!(
+            AssetRowRepository::new(con).find_one_by_id(&self.0),
+            Ok(None)
+        );
     }
 }
