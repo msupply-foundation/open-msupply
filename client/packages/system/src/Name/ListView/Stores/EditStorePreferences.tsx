@@ -1,10 +1,14 @@
-import React, { Dispatch, SetStateAction } from 'react';
+import React from 'react';
 import {
+  InputWithLabelRow,
+  LocaleKey,
   NothingHere,
   PreferenceNodeType,
+  PreferenceValueNodeType,
   useAuthContext,
   useIsCentralServerApi,
   UserPermission,
+  useTranslation,
 } from '@openmsupply-client/common';
 import {
   EditPreference,
@@ -13,19 +17,17 @@ import {
 
 interface EditStorePreferencesProps {
   storeId: string;
-  setIsActionValid: Dispatch<SetStateAction<boolean>>;
 }
 
 export const EditStorePreferences = ({
   storeId,
-  setIsActionValid,
 }: EditStorePreferencesProps) => {
+  const t = useTranslation();
   const isCentralServer = useIsCentralServerApi();
   const { userHasPermission } = useAuthContext();
   const { update, preferences } = useEditPreferences(
     PreferenceNodeType.Store,
-    storeId,
-    setIsActionValid
+    storeId
   );
 
   if (!preferences.length) return <NothingHere />;
@@ -34,18 +36,31 @@ export const EditStorePreferences = ({
     const isLast = preferences[preferences?.length - 1]?.key === pref.key;
 
     return (
-      <EditPreference
+      <InputWithLabelRow
         key={pref.key}
-        disabled={
-          !isCentralServer || !userHasPermission(UserPermission.EditCentralData)
+        labelRight
+        labelWidth={'100%'}
+        label={t(`preference.${pref.key}` as LocaleKey)}
+        Input={
+          <EditPreference
+            disabled={
+              !isCentralServer ||
+              !userHasPermission(UserPermission.EditCentralData)
+            }
+            preference={pref}
+            update={value => {
+              const finalValue =
+                pref.valueType === PreferenceValueNodeType.Integer &&
+                value === undefined
+                  ? 0
+                  : value;
+              return update({
+                [pref.key]: [{ storeId, value: finalValue }],
+              });
+            }}
+            isLast={isLast}
+          />
         }
-        preference={pref}
-        update={value =>
-          update({
-            [pref.key]: [{ storeId, value }],
-          })
-        }
-        isLast={isLast}
       />
     );
   });
