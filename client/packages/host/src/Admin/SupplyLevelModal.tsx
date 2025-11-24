@@ -12,11 +12,34 @@ import {
   PropertyNodeValueType,
   useIntlUtils,
   useNotification,
+  ObjUtils,
 } from '@openmsupply-client/common';
 import { useName } from '@openmsupply-client/system/src/Name/api/hooks/';
 import { useConfigureCustomProperties } from '../api/hooks/settings/useConfigureNameProperties';
 import { getPropertyTranslation } from '../api/hooks/settings/namePropertyData';
 import { SUPPLY_LEVEL_KEY } from '../api/hooks/settings/namePropertyKeys';
+
+const useSupplyLevelsInUse = () => {
+  const names = useName.document.stores();
+
+  const supplyLevelsInUse: string[] = [];
+
+  names.data?.nodes.forEach(facility => {
+    if (facility.properties) {
+      const properties = ObjUtils.parse(facility.properties);
+      const supplyLevel = properties[SUPPLY_LEVEL_KEY];
+
+      if (supplyLevel && typeof supplyLevel === 'string') {
+        const trimmedLevel = supplyLevel.trim();
+        if (!supplyLevelsInUse.includes(trimmedLevel)) {
+          supplyLevelsInUse.push(trimmedLevel);
+        }
+      }
+    }
+  });
+
+  return supplyLevelsInUse;
+};
 
 interface SupplyLevelModalProps {
   isOpen: boolean;
@@ -34,6 +57,7 @@ export const SupplyLevelModal = ({
 
   const { data } = useName.document.properties();
   const { mutateAsync } = useConfigureCustomProperties();
+  const supplyLevelsInUse = useSupplyLevelsInUse();
 
   const convertedSupplyLevels =
     data
@@ -53,8 +77,9 @@ export const SupplyLevelModal = ({
     }
   };
 
-  const handleDeleteSupplyLevel = (level: string) =>
+  const handleDeleteSupplyLevel = (level: string) => {
     setSupplyLevels(supplyLevels.filter(l => l !== level));
+  };
 
   const handleSaveSupplyLevels = async () => {
     try {
@@ -106,27 +131,52 @@ export const SupplyLevelModal = ({
           />
         </Box>
         {supplyLevels.length > 0 ? (
-          supplyLevels.map(supplyLevel => (
-            <Box
-              key={supplyLevel}
-              sx={{
-                mb: 1,
-                pb: 0.5,
-                display: 'flex',
-                alignItems: 'center',
-                '&:not(:last-child)': {
-                  borderBottom: '1px dashed',
-                },
-              }}
-            >
-              <Typography sx={{ flex: 1 }}>{supplyLevel}</Typography>
-              <IconButton
-                icon={<DeleteIcon />}
-                label={t('label.delete-supply-level')}
-                onClick={() => handleDeleteSupplyLevel(supplyLevel)}
-              />
-            </Box>
-          ))
+          supplyLevels.map(supplyLevel => {
+            const isInUse = supplyLevelsInUse.includes(supplyLevel);
+
+            return (
+              <Box
+                key={supplyLevel}
+                sx={{
+                  mb: 1,
+                  pb: 0.5,
+                  display: 'flex',
+                  alignItems: 'center',
+                  '&:not(:last-child)': {
+                    borderBottom: '1px dashed',
+                  },
+                }}
+              >
+                <Typography sx={{ flex: 1 }}>
+                  {supplyLevel}
+                  {isInUse && (
+                    <Typography
+                      component="span"
+                      sx={{
+                        ml: 1,
+                        fontSize: '0.80rem',
+                        color: 'text.secondary',
+                        fontStyle: 'italic',
+                      }}
+                    >
+                      ({t('label.in-use')})
+                    </Typography>
+                  )}
+                </Typography>
+                <IconButton
+                  icon={<DeleteIcon />}
+                  label={t('label.delete-supply-level')}
+                  onClick={() => handleDeleteSupplyLevel(supplyLevel)}
+                  disabled={isInUse}
+                  sx={{
+                    '&.Mui-disabled': {
+                      opacity: 0.5,
+                    },
+                  }}
+                />
+              </Box>
+            );
+          })
         ) : (
           <Typography>{t('label.no-supply-levels-configured')}</Typography>
         )}
