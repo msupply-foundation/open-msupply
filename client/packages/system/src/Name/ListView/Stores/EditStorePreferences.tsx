@@ -36,31 +36,22 @@ export const EditStorePreferences = ({
     const isLast = preferences[preferences?.length - 1]?.key === pref.key;
 
     return (
-      <InputWithLabelRow
-        key={pref.key}
-        labelRight
-        labelWidth={'100%'}
-        label={t(`preference.${pref.key}` as LocaleKey)}
-        Input={
-          <EditPreference
-            disabled={
-              !isCentralServer ||
-              !userHasPermission(UserPermission.EditCentralData)
-            }
-            preference={pref}
-            update={value => {
-              const finalValue =
-                pref.valueType === PreferenceValueNodeType.Integer &&
-                value === undefined
-                  ? 0
-                  : value;
-              return update({
-                [pref.key]: [{ storeId, value: finalValue }],
-              });
-            }}
-            isLast={isLast}
-          />
+      <EditPreference
+        disabled={
+          !isCentralServer || !userHasPermission(UserPermission.EditCentralData)
         }
+        preference={pref}
+        update={value => {
+          const finalValue =
+            pref.valueType === PreferenceValueNodeType.Integer &&
+            value === undefined
+              ? 0
+              : value;
+          return update({
+            [pref.key]: [{ storeId, value: finalValue }],
+          });
+        }}
+        isLast={isLast}
       />
     );
   });
