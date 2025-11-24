@@ -1,14 +1,11 @@
 import React from 'react';
 import {
-  InputWithLabelRow,
-  LocaleKey,
   NothingHere,
   PreferenceNodeType,
   PreferenceValueNodeType,
   useAuthContext,
   useIsCentralServerApi,
   UserPermission,
-  useTranslation,
 } from '@openmsupply-client/common';
 import {
   EditPreference,
@@ -22,7 +19,6 @@ interface EditStorePreferencesProps {
 export const EditStorePreferences = ({
   storeId,
 }: EditStorePreferencesProps) => {
-  const t = useTranslation();
   const isCentralServer = useIsCentralServerApi();
   const { userHasPermission } = useAuthContext();
   const { update, preferences } = useEditPreferences(
