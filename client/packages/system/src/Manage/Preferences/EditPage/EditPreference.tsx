@@ -108,6 +108,35 @@ export const EditPreference = ({
         />
       );
 
+    case PreferenceValueNodeType.String:
+      if (!isString(preference.value)) {
+        return t('error.something-wrong');
+      }
+      return (
+        <PreferenceLabelRow
+          label={preferenceLabel}
+          Input={
+            <BasicTextInput
+              value={value}
+              onChange={e => handleChange(e.target.value)}
+              onBlur={() => {}}
+              disabled={disabled}
+              sx={
+                hasError
+                  ? {
+                      borderColor: theme => theme.palette.error.main,
+                      borderWidth: '2px',
+                      borderStyle: 'solid',
+                      borderRadius: '8px',
+                    }
+                  : undefined
+              }
+            />
+          }
+          isLast={isLast}
+        />
+      );
+
     case PreferenceValueNodeType.MultiChoice:
       if (!Array.isArray(value)) {
         return t('error.something-wrong');
