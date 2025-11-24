@@ -219,7 +219,9 @@ impl UpsertPreferencesInput {
             warn_when_missing_recent_stocktake: warn_when_missing_recent_stocktake
                 .as_ref()
                 .map(|i| i.iter().map(|i| i.to_domain()).collect()),
-            skip_intermediate_statuses_in_outbound: skip_intermediate_statuses_in_outbound,
+            skip_intermediate_statuses_in_outbound: skip_intermediate_statuses_in_outbound
+                .as_ref()
+                .map(|i| i.iter().map(|i| i.to_domain()).collect()),
             store_custom_colour: store_custom_colour
                 .as_ref()
                 .map(|i| i.iter().map(|i| i.to_domain()).collect()),
