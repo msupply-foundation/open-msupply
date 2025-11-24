@@ -77,12 +77,7 @@ pub fn insert_asset(
             };
 
             let new_asset = generate(input);
-            let original_store_id = if new_asset.store_id != Some(ctx.store_id.clone()) {
-                Some(ctx.store_id.clone())
-            } else {
-                None
-            };
-            AssetRowRepository::new(connection).upsert_one(&new_asset, original_store_id)?;
+            AssetRowRepository::new(connection).upsert_one(&new_asset, None)?;
 
             // Automatically create a location for this asset (if it's a cold chain asset, and store is active on this site)
             if new_asset.asset_class_id == Some(COLD_CHAIN_EQUIPMENT_UUID.to_string()) {
