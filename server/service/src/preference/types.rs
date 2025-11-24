@@ -46,6 +46,7 @@ pub enum PrefKey {
     FirstThresholdForExpiringItems,
     SecondThresholdForExpiringItems,
     SkipIntermediateStatusesInOutbound,
+    StoreCustomColour,
     WarnWhenMissingRecentStocktake,
 }
 
@@ -65,7 +66,7 @@ pub enum PreferenceValueType {
     // specific type to CustomTranslations preference
     CustomTranslations,
     WarnWhenMissingRecentStocktakeData,
-    // String,
+    String,
     // MultilineString,
     // Add scalar or custom value types here - mapped to frontend renderers
 }

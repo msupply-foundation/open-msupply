@@ -259,6 +259,7 @@ export type PreferencesQuery = {
     selectDestinationStoreForAnInternalOrder: boolean;
     showContactTracing: boolean;
     sortByVvmStatusThenExpiry: boolean;
+    storeCustomColour: string;
     syncRecordsDisplayThreshold: number;
     useDaysInMonth: boolean;
     useProcurementFunctionality: boolean;
@@ -499,6 +500,7 @@ export const PreferencesDocument = gql`
       selectDestinationStoreForAnInternalOrder
       showContactTracing
       sortByVvmStatusThenExpiry
+      storeCustomColour
       syncRecordsDisplayThreshold
       useDaysInMonth
       useProcurementFunctionality
