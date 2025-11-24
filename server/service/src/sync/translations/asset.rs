@@ -83,6 +83,14 @@ impl SyncTranslation for AssetTranslation {
         let row = serde_json::from_str::<AssetRow>(&sync_record.data)?;
         Ok(PullTranslateResult::delete(AssetRowDelete(row.id)))
     }
+
+    fn try_translate_to_delete_sync_record(
+        &self,
+        _connection: &StorageConnection,
+        changelog: &ChangelogRow,
+    ) -> Result<PushTranslateResult, anyhow::Error> {
+        Ok(PushTranslateResult::delete(changelog, self.table_name()))
+    }
 }
 
 #[cfg(test)]
