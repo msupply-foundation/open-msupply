@@ -16,6 +16,7 @@ pub struct LegacyItemStoreJoinRow {
     #[serde(rename = "default_price")]
     default_sell_price_per_pack: f64,
     ignore_for_orders: bool,
+    margin: f64,
 }
 
 // Needs to be added to all_translators()
@@ -47,6 +48,7 @@ impl SyncTranslation for ItemStoreJoinTranslation {
             store_id: data.store_id,
             default_sell_price_per_pack: data.default_sell_price_per_pack,
             ignore_for_orders: data.ignore_for_orders,
+            margin: data.margin,
         };
         Ok(PullTranslateResult::upsert(result))
     }
