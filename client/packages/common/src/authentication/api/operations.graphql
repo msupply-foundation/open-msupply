@@ -209,6 +209,7 @@ query preferences($storeId: String!) {
     selectDestinationStoreForAnInternalOrder
     showContactTracing
     sortByVvmStatusThenExpiry
+    storeCustomColour
     syncRecordsDisplayThreshold
     useDaysInMonth
     useProcurementFunctionality
@@ -221,5 +222,6 @@ query preferences($storeId: String!) {
       minItems
     }
     warningForExcessRequest
+    skipIntermediateStatusesInOutbound
   }
 }

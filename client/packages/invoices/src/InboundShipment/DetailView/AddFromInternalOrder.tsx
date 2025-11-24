@@ -89,19 +89,19 @@ const AddFromInternalOrderComponent = ({
       okButton={<DialogButton variant="select" onClick={onSelect} />}
       cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
     >
-      <DataTable
-        id="link-internal-order-to-inbound"
-        columns={columns}
-        data={lines}
-        isLoading={isLoading}
-        dense
-      />
+      <TableProvider createStore={createTableStore}>
+        <DataTable
+          id="link-internal-order-to-inbound"
+          columns={columns}
+          data={lines}
+          isLoading={isLoading}
+          dense
+        />
+      </TableProvider>
     </Modal>
   );
 };
 
 export const AddFromInternalOrder = (props: AddFromInternalOrderProps) => (
-  <TableProvider createStore={createTableStore}>
-    <AddFromInternalOrderComponent {...props} />
-  </TableProvider>
+  <AddFromInternalOrderComponent {...props} />
 );

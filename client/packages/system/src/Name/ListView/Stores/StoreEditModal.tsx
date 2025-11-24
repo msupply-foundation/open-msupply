@@ -1,4 +1,4 @@
-import React, { Dispatch, SetStateAction, useState } from 'react';
+import React, { useState } from 'react';
 import {
   useTranslation,
   DetailContainer,
@@ -49,7 +49,6 @@ export const StoreEditModal = ({
     data?.properties
   );
   const [currentTab, setCurrentTab] = useState(Tabs.Properties);
-  const [isActionValid, setIsActionValid] = useState(true);
 
   const save = async () => {
     mutateAsync({
@@ -71,7 +70,6 @@ export const StoreEditModal = ({
       okButton={
         <DialogButton
           variant="ok"
-          disabled={!isActionValid}
           onClick={async () => {
             await save();
             onClose();
@@ -128,7 +126,6 @@ export const StoreEditModal = ({
             }
             currentTab={currentTab}
             setCurrentTab={setCurrentTab}
-            setIsActionValid={setIsActionValid}
           />
         </Box>
       </DetailContainer>
@@ -148,7 +145,6 @@ interface ModalTabProps {
   updateProperty: (update: DraftProperties) => void;
   currentTab: Tabs;
   setCurrentTab: (tab: Tabs) => void;
-  setIsActionValid: Dispatch<SetStateAction<boolean>>;
 }
 
 const ModalTabs = ({
@@ -158,7 +154,6 @@ const ModalTabs = ({
   updateProperty,
   currentTab,
   setCurrentTab,
-  setIsActionValid,
 }: ModalTabProps) => {
   const t = useTranslation();
 
@@ -183,10 +178,7 @@ const ModalTabs = ({
       </TabPanel>
       {storeId && (
         <TabPanel value={Tabs.Preferences}>
-          <EditStorePreferences
-            storeId={storeId}
-            setIsActionValid={setIsActionValid}
-          />
+          <EditStorePreferences storeId={storeId} />
         </TabPanel>
       )}
     </TabContext>

@@ -259,6 +259,7 @@ export type PreferencesQuery = {
     selectDestinationStoreForAnInternalOrder: boolean;
     showContactTracing: boolean;
     sortByVvmStatusThenExpiry: boolean;
+    storeCustomColour: string;
     syncRecordsDisplayThreshold: number;
     useDaysInMonth: boolean;
     useProcurementFunctionality: boolean;
@@ -266,6 +267,7 @@ export type PreferencesQuery = {
     expiredStockPreventIssue: boolean;
     expiredStockIssueThreshold: number;
     warningForExcessRequest: boolean;
+    skipIntermediateStatusesInOutbound: boolean;
     warnWhenMissingRecentStocktake: {
       __typename: 'WarnWhenMissingRecentStocktakeDataNode';
       enabled: boolean;
@@ -498,6 +500,7 @@ export const PreferencesDocument = gql`
       selectDestinationStoreForAnInternalOrder
       showContactTracing
       sortByVvmStatusThenExpiry
+      storeCustomColour
       syncRecordsDisplayThreshold
       useDaysInMonth
       useProcurementFunctionality
@@ -510,6 +513,7 @@ export const PreferencesDocument = gql`
         minItems
       }
       warningForExcessRequest
+      skipIntermediateStatusesInOutbound
     }
   }
 `;
