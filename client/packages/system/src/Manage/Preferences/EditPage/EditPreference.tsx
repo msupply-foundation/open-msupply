@@ -49,10 +49,12 @@ export const EditPreference = ({
   // The preference.value only updates after mutation completes and cache
   // is invalidated - use local state for fast UI change
   const [value, setValue] = useState(preference.value);
+  const [hasError, setHasError] = useState(false);
 
   const debouncedUpdate = useDebouncedValueCallback(
     async value => {
       const success = await update(value);
+      setHasError(!success);
 
       if (!success) {
         // If update fails, revert to original value
@@ -98,25 +100,6 @@ export const EditPreference = ({
             <NumericTextInput
               value={value}
               onChange={handleChange}
-              onBlur={() => {}}
-              disabled={disabled}
-            />
-          }
-          isLast={isLast}
-        />
-      );
-
-    case PreferenceValueNodeType.String:
-      if (!isString(preference.value)) {
-        return t('error.something-wrong');
-      }
-      return (
-        <PreferenceLabelRow
-          label={preferenceLabel}
-          Input={
-            <BasicTextInput
-              value={value}
-              onChange={e => handleChange(e.target.value)}
               onBlur={() => {}}
               disabled={disabled}
             />
