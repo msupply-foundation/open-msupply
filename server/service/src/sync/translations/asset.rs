@@ -1,5 +1,5 @@
 use repository::{
-    asset_row::{AssetRow, AssetRowRepository},
+    asset_row::{AssetRow, AssetRowDelete, AssetRowRepository},
     ChangelogRow, ChangelogTableName, StorageConnection, SyncBufferRow,
 };
 
@@ -73,6 +73,15 @@ impl SyncTranslation for AssetTranslation {
             self.table_name(),
             serde_json::to_value(row)?,
         ))
+    }
+
+    fn try_translate_from_delete_sync_record(
+        &self,
+        _: &StorageConnection,
+        sync_record: &SyncBufferRow,
+    ) -> Result<PullTranslateResult, anyhow::Error> {
+        let row = serde_json::from_str::<AssetRow>(&sync_record.data)?;
+        Ok(PullTranslateResult::delete(AssetRowDelete(row.id)))
     }
 }
 
