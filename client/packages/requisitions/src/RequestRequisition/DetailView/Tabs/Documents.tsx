@@ -34,7 +34,7 @@ export const Documents = ({
     // Request requisition can't have documents linked to response requisition.
     // So all documents linked to request requisition are deletable.
     return undefined;
-  }, [data]);
+  }, [data?.status]);
 
   return (
     <>

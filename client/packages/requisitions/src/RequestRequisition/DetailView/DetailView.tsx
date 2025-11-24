@@ -2,6 +2,7 @@ import React, { useCallback, useEffect } from 'react';
 import {
   DetailViewSkeleton,
   AlertModal,
+  RequisitionNodeStatus,
   RouteBuilder,
   useNavigate,
   useTranslation,
@@ -149,7 +150,7 @@ export const DetailView = () => {
       Component: (
         <Documents
           data={data}
-          disable={isDisabled}
+          disable={data.status === RequisitionNodeStatus.Finalised}
           invalidateQueries={invalidateQueries}
         />
       ),
