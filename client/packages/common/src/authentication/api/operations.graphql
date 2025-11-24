@@ -222,5 +222,6 @@ query preferences($storeId: String!) {
       minItems
     }
     warningForExcessRequest
+    skipIntermediateStatusesInOutbound
   }
 }

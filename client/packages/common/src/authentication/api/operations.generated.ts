@@ -267,6 +267,7 @@ export type PreferencesQuery = {
     expiredStockPreventIssue: boolean;
     expiredStockIssueThreshold: number;
     warningForExcessRequest: boolean;
+    skipIntermediateStatusesInOutbound: boolean;
     warnWhenMissingRecentStocktake: {
       __typename: 'WarnWhenMissingRecentStocktakeDataNode';
       enabled: boolean;
@@ -512,6 +513,7 @@ export const PreferencesDocument = gql`
         minItems
       }
       warningForExcessRequest
+      skipIntermediateStatusesInOutbound
     }
   }
 `;

@@ -78,6 +78,7 @@ pub struct UpsertPreferencesInput {
     pub first_threshold_for_expiring_items: Option<Vec<IntegerStorePrefInput>>,
     pub second_threshold_for_expiring_items: Option<Vec<IntegerStorePrefInput>>,
     pub warn_when_missing_recent_stocktake: Option<Vec<WarnWhenMissingRecentStocktakeInput>>,
+    pub skip_intermediate_statuses_in_outbound: Option<Vec<BoolStorePrefInput>>,
     pub store_custom_colour: Option<Vec<StringStorePrefInput>>,
 }
 
@@ -140,6 +141,7 @@ impl UpsertPreferencesInput {
             first_threshold_for_expiring_items,
             second_threshold_for_expiring_items,
             warn_when_missing_recent_stocktake,
+            skip_intermediate_statuses_in_outbound,
             store_custom_colour,
         } = self;
 
@@ -215,6 +217,9 @@ impl UpsertPreferencesInput {
                 .as_ref()
                 .map(|i| i.iter().map(|i| i.to_domain()).collect()),
             warn_when_missing_recent_stocktake: warn_when_missing_recent_stocktake
+                .as_ref()
+                .map(|i| i.iter().map(|i| i.to_domain()).collect()),
+            skip_intermediate_statuses_in_outbound: skip_intermediate_statuses_in_outbound
                 .as_ref()
                 .map(|i| i.iter().map(|i| i.to_domain()).collect()),
             store_custom_colour: store_custom_colour
