@@ -312,7 +312,7 @@ mod tests {
         };
 
         let _result = AssetRowRepository::new(&storage_connection)
-            .upsert_one(&asset)
+            .upsert_one(&asset, None)
             .unwrap();
 
         // Query by id
