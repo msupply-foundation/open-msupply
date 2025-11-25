@@ -1,18 +1,16 @@
-use std::collections::HashMap;
-
 use crate::{
-    preference::{Preference, ShowIndicativeUnitPriceInRequisitions},
     requisition::common::{
-        check_master_list_for_store, check_requisition_row_exists, get_lines_for_requisition,
+        check_master_list_for_store, check_requisition_row_exists,
+        get_default_price_list_for_requisition, get_lines_for_requisition,
     },
     service_provider::ServiceContext,
 };
 use chrono::Utc;
 use repository::{
     requisition_row::{RequisitionRow, RequisitionStatus, RequisitionType},
-    ItemFilter, ItemRepository, MasterListFilter, MasterListLineFilter, MasterListLineRepository,
-    MasterListRepository, RepositoryError, RequisitionLine, RequisitionLineFilter,
-    RequisitionLineRepository, RequisitionLineRow, RequisitionLineRowRepository, StorageConnection,
+    ItemFilter, ItemRepository, MasterListLineFilter, MasterListLineRepository, RepositoryError,
+    RequisitionLine, RequisitionLineFilter, RequisitionLineRepository, RequisitionLineRow,
+    RequisitionLineRowRepository, StorageConnection,
 };
 use repository::{EqualFilter, ItemType};
 use util::uuid::uuid;
@@ -122,32 +120,8 @@ fn generate(
         None,
     )?;
 
-    let populate_price_per_unit = ShowIndicativeUnitPriceInRequisitions {}
-        .load(&ctx.connection, None)
-        .map_err(|e| RepositoryError::DBError {
-            msg: "Could not load ShowIndicativeUnitPriceInRequisitions global preference"
-                .to_string(),
-            extra: e.to_string(),
-        })?;
-
-    let mut price_map: HashMap<String, Option<f64>> = HashMap::new();
-    if populate_price_per_unit {
-        let default_price_list = MasterListRepository::new(&ctx.connection)
-            .query_by_filter(MasterListFilter::new().is_default_price_list(true))?
-            .pop();
-
-        if let Some(price_list) = default_price_list {
-            price_map = MasterListLineRepository::new(&ctx.connection)
-                .query_by_filter(
-                    MasterListLineFilter::new()
-                        .master_list_id(EqualFilter::equal_to(price_list.id)),
-                    None,
-                )?
-                .into_iter()
-                .map(|l| (l.item_id, l.price_per_unit))
-                .collect();
-        }
-    }
+    let (populate_price_per_unit, price_map) =
+        get_default_price_list_for_requisition(&ctx.connection)?;
 
     let lines = items
         .into_iter()

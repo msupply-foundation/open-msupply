@@ -1,14 +1,18 @@
+use std::collections::HashMap;
+
 use repository::{
     requisition_row::RequisitionRow, RepositoryError, RequisitionLine, RequisitionLineFilter,
     RequisitionLineRepository, RequisitionRowRepository, StorageConnection,
 };
 use repository::{
     ApprovalStatusType, EqualFilter, IndicatorColumnRow, IndicatorLineRow, IndicatorValueType,
-    MasterList, MasterListFilter, MasterListRepository, ProgramFilter,
-    ProgramRequisitionOrderTypeRowRepository, ProgramRequisitionSettingsFilter,
-    ProgramRequisitionSettingsRepository, Requisition, RequisitionFilter, RequisitionRepository,
-    RequisitionType,
+    MasterList, MasterListFilter, MasterListLineFilter, MasterListLineRepository,
+    MasterListRepository, ProgramFilter, ProgramRequisitionOrderTypeRowRepository,
+    ProgramRequisitionSettingsFilter, ProgramRequisitionSettingsRepository, Requisition,
+    RequisitionFilter, RequisitionRepository, RequisitionType,
 };
+
+use crate::preference::{Preference, ShowIndicativeUnitPriceInRequisitions};
 
 pub fn check_requisition_row_exists(
     connection: &StorageConnection,
@@ -31,7 +35,8 @@ pub fn get_lines_for_requisition(
     requisition_id: &str,
 ) -> Result<Vec<RequisitionLine>, RepositoryError> {
     RequisitionLineRepository::new(connection).query_by_filter(
-        RequisitionLineFilter::new().requisition_id(EqualFilter::equal_to(requisition_id.to_string())),
+        RequisitionLineFilter::new()
+            .requisition_id(EqualFilter::equal_to(requisition_id.to_string())),
     )
 }
 
@@ -175,4 +180,35 @@ pub fn check_master_list_for_store(
             .is_program(false),
     )?;
     Ok(rows.pop())
+}
+
+pub(crate) fn get_default_price_list_for_requisition(
+    connection: &StorageConnection,
+) -> Result<(bool, HashMap<String, Option<f64>>), RepositoryError> {
+    let populate_price_per_unit = ShowIndicativeUnitPriceInRequisitions {}
+        .load(connection, None)
+        .map_err(|e| RepositoryError::DBError {
+            msg: "Could not load ShowIndicativeUnitPriceInRequisitions global preference"
+                .to_string(),
+            extra: e.to_string(),
+        })?;
+    let mut price_map: HashMap<String, Option<f64>> = HashMap::new();
+    if populate_price_per_unit {
+        let default_price_list = MasterListRepository::new(connection)
+            .query_by_filter(MasterListFilter::new().is_default_price_list(true))?
+            .pop();
+
+        if let Some(price_list) = default_price_list {
+            price_map = MasterListLineRepository::new(connection)
+                .query_by_filter(
+                    MasterListLineFilter::new()
+                        .master_list_id(EqualFilter::equal_to(price_list.id)),
+                    None,
+                )?
+                .into_iter()
+                .map(|l| (l.item_id, l.price_per_unit))
+                .collect();
+        }
+    }
+    Ok((populate_price_per_unit, price_map))
 }

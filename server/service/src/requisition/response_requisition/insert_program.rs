@@ -1,13 +1,11 @@
-use std::collections::HashMap;
-
 use crate::{
     activity_log::activity_log_entry,
     number::next_number,
-    preference::{Preference, ShowIndicativeUnitPriceInRequisitions},
     requisition::{
         common::{
             check_exceeded_max_orders_for_period, check_requisition_row_exists,
-            default_indicator_value, CheckExceededOrdersForPeriod,
+            default_indicator_value, get_default_price_list_for_requisition,
+            CheckExceededOrdersForPeriod,
         },
         program_indicator::query::{program_indicators, ProgramIndicator},
         program_settings::get_program_requisition_settings_by_customer,
@@ -19,10 +17,10 @@ use chrono::Utc;
 use repository::{
     requisition_row::{RequisitionRow, RequisitionStatus, RequisitionType},
     ActivityLogType, EqualFilter, IndicatorValueRow, IndicatorValueRowRepository, ItemFilter,
-    ItemRepository, MasterListFilter, MasterListLineFilter, MasterListLineRepository,
-    MasterListRepository, NumberRowType, Pagination, ProgramIndicatorFilter,
-    ProgramRequisitionOrderTypeRow, ProgramRow, RepositoryError, Requisition, RequisitionLineRow,
-    RequisitionLineRowRepository, RequisitionRowRepository, StoreFilter, StoreRepository,
+    ItemRepository, MasterListLineFilter, MasterListLineRepository, NumberRowType, Pagination,
+    ProgramIndicatorFilter, ProgramRequisitionOrderTypeRow, ProgramRow, RepositoryError,
+    Requisition, RequisitionLineRow, RequisitionLineRowRepository, RequisitionRowRepository,
+    StoreFilter, StoreRepository,
 };
 use util::uuid::uuid;
 
@@ -274,32 +272,8 @@ fn generate_lines(
         Some(store_id.to_string()),
     )?;
 
-    let populate_price_per_unit = ShowIndicativeUnitPriceInRequisitions {}
-        .load(&ctx.connection, None)
-        .map_err(|e| RepositoryError::DBError {
-            msg: "Could not load ShowIndicativeUnitPriceInRequisitions global preference"
-                .to_string(),
-            extra: e.to_string(),
-        })?;
-
-    let mut price_map: HashMap<String, Option<f64>> = HashMap::new();
-    if populate_price_per_unit {
-        let default_price_list = MasterListRepository::new(&ctx.connection)
-            .query_by_filter(MasterListFilter::new().is_default_price_list(true))?
-            .pop();
-
-        if let Some(price_list) = default_price_list {
-            price_map = MasterListLineRepository::new(&ctx.connection)
-                .query_by_filter(
-                    MasterListLineFilter::new()
-                        .master_list_id(EqualFilter::equal_to(price_list.id)),
-                    None,
-                )?
-                .into_iter()
-                .map(|l| (l.item_id, l.price_per_unit))
-                .collect();
-        }
-    }
+    let (populate_price_per_unit, price_map) =
+        get_default_price_list_for_requisition(&ctx.connection)?;
 
     let result = items
         .into_iter()
