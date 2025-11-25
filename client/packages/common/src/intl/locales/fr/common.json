@@ -2543,5 +2543,7 @@
   "log.patient-updated": "Mis à jour",
   "plugin.catalogue-price": "Prix catalogue",
   "title.catalogue-price": "prix catalogue",
-  "plugin.not-essential-item": "Cet article n'est pas essentiel"
+  "plugin.not-essential-item": "Cet article n'est pas essentiel",
+  "label.threshold-exceeds-days": "Le pallier ne peut être supérieur à 30 jours",
+  "label.in-use": "en cours d'utilisation"
 }
