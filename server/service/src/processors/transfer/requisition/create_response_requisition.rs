@@ -115,24 +115,24 @@ impl RequisitionTransferProcessor for CreateResponseRequisitionProcessor {
             None
         };
 
-        let new_response_requisition = RequisitionRow {
+        let new_response_requisition_row = RequisitionRow {
             approval_status,
             ..generate_response_requisition(connection, request_requisition, record_for_processing)?
         };
 
         let new_requisition_lines = generate_response_requisition_lines(
             connection,
-            &new_response_requisition.id,
+            &new_response_requisition_row,
             &request_requisition.requisition_row,
         )?;
 
-        RequisitionRowRepository::new(connection).upsert_one(&new_response_requisition)?;
+        RequisitionRowRepository::new(connection).upsert_one(&new_response_requisition_row)?;
 
         system_activity_log_entry(
             connection,
             ActivityLogType::RequisitionCreated,
-            &new_response_requisition.store_id,
-            &new_response_requisition.id,
+            &new_response_requisition_row.store_id,
+            &new_response_requisition_row.id,
         )?;
 
         let requisition_line_row_repository = RequisitionLineRowRepository::new(connection);
@@ -170,7 +170,7 @@ impl RequisitionTransferProcessor for CreateResponseRequisitionProcessor {
 
         let result = format!(
             "requisition ({}) lines ({:?}) source requisition ({})",
-            new_response_requisition.id,
+            new_response_requisition_row.id,
             new_requisition_lines.into_iter().map(|r| r.id),
             request_requisition.requisition_row.id
         );
@@ -298,7 +298,7 @@ fn generate_response_requisition(
 
 fn generate_response_requisition_lines(
     connection: &StorageConnection,
-    response_requisition_id: &str,
+    response_requisition: &RequisitionRow,
     request_requisition: &RequisitionRow,
 ) -> Result<Vec<RequisitionLineRow>, RepositoryError> {
     let request_lines = get_lines_for_requisition(connection, &request_requisition.id)?;
@@ -336,7 +336,7 @@ fn generate_response_requisition_lines(
                  requisition_row: _,
              }| RequisitionLineRow {
                 id: uuid(),
-                requisition_id: response_requisition_id.to_string(),
+                requisition_id: response_requisition.id.to_string(),
                 item_link_id: item_id,
                 requested_quantity,
                 suggested_quantity,
