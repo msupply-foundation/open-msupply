@@ -22,16 +22,14 @@ export const Documents = ({
   }, [data?.id, data?.documents.nodes]);
 
   return (
-    <Grid flex={1} display="flex" flexDirection="column">
-      <Grid flex={1} sx={{ boxShadow: theme => theme.shadows[2] }}>
-        <DocumentsTable
-          recordId={data?.id ?? ''}
-          documents={data?.documents.nodes ?? []}
-          tableName="requisition"
-          invalidateQueries={invalidateQueries}
-          deletableDocumentIds={deletableDocumentIds}
-        />
-      </Grid>
+    <Grid flex={1} sx={{ boxShadow: theme => theme.shadows[2] }}>
+      <DocumentsTable
+        recordId={data?.id ?? ''}
+        documents={data?.documents.nodes ?? []}
+        tableName="requisition"
+        invalidateQueries={invalidateQueries}
+        deletableDocumentIds={deletableDocumentIds}
+      />
     </Grid>
   );
 };
