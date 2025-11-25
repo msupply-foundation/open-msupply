@@ -64,7 +64,7 @@ pub fn update_asset(
                 None
             };
             AssetRowRepository::new(connection)
-                .upsert_one(&updated_asset_row, original_store_id)?;
+                .upsert_one(&updated_asset_row, original_store_id.clone())?;
 
             activity_log_entry(
                 ctx,
@@ -164,6 +164,7 @@ pub fn generate(
     }: UpdateAsset,
     mut asset_row: AssetRow,
 ) -> AssetRow {
+    asset_row.deleted_datetime = None;
     asset_row.notes = notes;
     asset_row.asset_number = asset_number;
 
