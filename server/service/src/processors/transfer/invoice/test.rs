@@ -3,8 +3,9 @@ use repository::{
     mock::{insert_extra_mock_data, MockData, MockDataInserts},
     EqualFilter, InvoiceFilter, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRow,
     InvoiceLineRowRepository, InvoiceLineType, InvoiceRepository, InvoiceRow, InvoiceRowRepository,
-    InvoiceStatus, InvoiceType, ItemRow, ItemStoreJoinRow, KeyType, KeyValueStoreRow, LocationRow,
-    NameLinkRow, NameRow, RequisitionFilter, RequisitionRepository, RequisitionRow,
+    InvoiceStatus, InvoiceType, ItemRow, ItemRowRepository, ItemStoreJoinRow,
+    ItemStoreJoinRowRepository, ItemStoreJoinRowRepositoryTrait, KeyType, KeyValueStoreRow,
+    LocationRow, NameLinkRow, NameRow, RequisitionFilter, RequisitionRepository, RequisitionRow,
     RequisitionRowRepository, RequisitionStatus, RequisitionType, StockLineRow, StorageConnection,
     StoreRow,
 };
@@ -83,20 +84,22 @@ async fn invoice_transfers() {
         ..Default::default()
     };
 
+    // Will use default_sell_price_per_pack for pricing
     let item1_store_properties = ItemStoreJoinRow {
         id: uuid(),
         item_link_id: item1.id.clone(),
         store_id: inbound_store.id.clone(),
         default_sell_price_per_pack: 20.0,
         ignore_for_orders: false,
-        margin: 0.0,
+        margin: 10.0,
     };
 
+    // No default price - will use cost price + margin for pricing
     let item3_store_properties = ItemStoreJoinRow {
         id: uuid(),
         item_link_id: item3.id.clone(),
         store_id: inbound_store.id.clone(),
-        default_sell_price_per_pack: 15.0,
+        default_sell_price_per_pack: 0.0,
         ignore_for_orders: false,
         margin: 10.0,
     };
@@ -973,15 +976,40 @@ impl InvoiceTransferTester {
             &self.outbound_shipment_line1,
         );
 
+        check_line_pricing(
+            connection,
+            &inbound_shipment.id,
+            &inbound_shipment.store_id,
+            &self.outbound_shipment_line1,
+            self.outbound_shipment_line1.item_link_id.clone(),
+        );
+
         check_line(
             connection,
             &inbound_shipment.id,
             &self.outbound_shipment_line2,
         );
+
+        check_line_pricing(
+            connection,
+            &inbound_shipment.id,
+            &inbound_shipment.store_id,
+            &self.outbound_shipment_line2,
+            self.outbound_shipment_line2.item_link_id.clone(),
+        );
+
         check_line(
             connection,
             &inbound_shipment.id,
             &self.outbound_shipment_line3,
+        );
+
+        check_line_pricing(
+            connection,
+            &inbound_shipment.id,
+            &inbound_shipment.store_id,
+            &self.outbound_shipment_line3,
+            self.outbound_shipment_line3.item_link_id.clone(),
         );
         check_line(
             connection,
@@ -1487,6 +1515,41 @@ fn check_line(connection: &StorageConnection, inbound_id: &str, outbound_line: &
     assert_eq!(inbound_line.tax_percentage, outbound_line.tax_percentage);
 }
 
+// Check pricing is calculated correctly for each line
+fn check_line_pricing(
+    connection: &StorageConnection,
+    inbound_id: &str,
+    inbound_store: &str,
+    outbound_line: &InvoiceLineRow,
+    item_id: String,
+) {
+    let inbound_line = InvoiceLineRepository::new(connection)
+        .query_one(
+            InvoiceLineFilter::new()
+                .invoice_id(EqualFilter::equal_to(inbound_id))
+                .item_id(EqualFilter::equal_to(&outbound_line.item_link_id)),
+        )
+        .unwrap();
+
+    assert!(inbound_line.is_some());
+    let inbound_line = inbound_line.unwrap().invoice_line_row;
+
+    let item = ItemRowRepository::new(connection)
+        .find_one_by_item_link_id(&item_id)
+        .unwrap_or(None);
+
+    let item_properties = ItemStoreJoinRowRepository::new(connection)
+        .find_one_by_item_and_store_id(&item_id, inbound_store)
+        .unwrap_or(None);
+
+    let default_sell_price_per_pack = item_properties
+        .as_ref()
+        .map_or(0.0, |i| i.default_sell_price_per_pack);
+
+    let margin = item_properties.as_ref().map_or(0.0, |i| i.margin);
+
+    let default_pack_size = item.as_ref().map_or(0.0, |i| i.default_pack_size);
+
     match outbound_line.r#type {
         InvoiceLineType::Service => {
             assert_eq!(inbound_line.r#type, InvoiceLineType::Service);
@@ -1516,14 +1579,21 @@ fn check_line(connection: &StorageConnection, inbound_id: &str, outbound_line: &
         inbound_line.cost_price_per_pack,
         outbound_line.sell_price_per_pack
     );
-    match item1_id
-        .as_ref()
-        .map(|id| outbound_line.item_link_id == *id)
-    {
-        Some(true) => assert_eq!(inbound_line.sell_price_per_pack, 20.0),
-        _ => assert_eq!(inbound_line.sell_price_per_pack, 0.0),
-    }
-    assert_eq!(inbound_line.stock_line_id, None);
-    assert_eq!(inbound_line.location_id, None);
-    assert_eq!(inbound_line.tax_percentage, outbound_line.tax_percentage);
+
+    if default_sell_price_per_pack > 0.0 {
+        let price_per_new_pack =
+            (default_sell_price_per_pack / default_pack_size) * inbound_line.pack_size;
+
+        assert_eq!(inbound_line.sell_price_per_pack, price_per_new_pack)
+    } else if margin > 0.0 {
+        let margin_price =
+            inbound_line.cost_price_per_pack + (inbound_line.cost_price_per_pack * margin) / 100.0;
+
+        assert_eq!(inbound_line.sell_price_per_pack, margin_price)
+    } else {
+        assert_eq!(
+            inbound_line.sell_price_per_pack,
+            inbound_line.cost_price_per_pack
+        )
+    };
 }
