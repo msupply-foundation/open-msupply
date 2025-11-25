@@ -2,7 +2,10 @@ use super::{RequisitionTransferProcessor, RequisitionTransferProcessorRecord};
 use crate::{
     activity_log::system_activity_log_entry,
     number::next_number,
-    preference::{Preference, PreventTransfersMonthsBeforeInitialisation},
+    preference::{
+        show_indicative_unit_price_in_requisitions, Preference,
+        PreventTransfersMonthsBeforeInitialisation, ShowIndicativeUnitPriceInRequisitions,
+    },
     processors::transfer::requisition::RequisitionTransferOutput,
     requisition::common::get_lines_for_requisition,
     store_preference::get_store_preferences,
@@ -302,6 +305,17 @@ fn generate_response_requisition_lines(
     request_requisition: &RequisitionRow,
 ) -> Result<Vec<RequisitionLineRow>, RepositoryError> {
     let request_lines = get_lines_for_requisition(connection, &request_requisition.id)?;
+    // TODO: Change to global pref
+    // Edge case from processing records before pref turned on. Use national price list if the request value is None.
+    let populate_price_per_unit = ShowIndicativeUnitPriceInRequisitions {}
+        .load(connection, Some(request_requisition.store_id.to_string()))
+        .map_err(|e| RepositoryError::DBError {
+            msg: "Could not load ShowIndicativeUnitPriceInRequisitions store preference"
+                .to_string(),
+            extra: e.to_string(),
+        })?;
+
+    if populate_price_per_unit {}
 
     let response_lines = request_lines
         .into_iter()
