@@ -22,10 +22,8 @@ pub enum PrefKey {
     ShowContactTracing,
     SyncRecordsDisplayThreshold,
     WarningForExcessRequest,
-    UseDaysInMonth,
     AdjustForNumberOfDaysOutOfStock,
     DaysInMonth,
-    ExcludeTransfers,
     ExpiredStockPreventIssue,
     ExpiredStockIssueThreshold,
 
