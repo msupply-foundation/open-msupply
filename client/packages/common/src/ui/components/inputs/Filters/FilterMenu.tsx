@@ -248,10 +248,12 @@ export const EndAdornment = ({
   isLoading,
   hasValue,
   onClear,
+  noValueIcon = <SearchIcon fontSize="small" />,
 }: {
   isLoading: boolean;
   hasValue: boolean;
   onClear: () => void;
+  noValueIcon?: React.ReactNode;
 }) => {
   const t = useTranslation();
   if (isLoading) return <InlineSpinner />;
@@ -262,7 +264,7 @@ export const EndAdornment = ({
         sx={{ color: 'gray.main' }}
         label={hasValue ? t('label.clear-filter') : ''}
         onClick={hasValue ? onClear : () => {}}
-        icon={hasValue ? <CloseIcon /> : <SearchIcon fontSize="small" />}
+        icon={hasValue ? <CloseIcon /> : noValueIcon}
       />
     </InputAdornment>
   );

@@ -1,5 +1,10 @@
 import React from 'react';
-import { Box, TextInput, useTranslation } from '@openmsupply-client/common';
+import {
+  BasicTextInput,
+  Box,
+  EndAdornment,
+  FilterIcon,
+} from '@openmsupply-client/common';
 
 interface PreferenceSearchInputProps {
   value: string;
@@ -10,15 +15,25 @@ export const PreferenceSearchInput = ({
   value,
   onChange,
 }: PreferenceSearchInputProps) => {
-  const t = useTranslation();
-
   return (
     <Box mb={2}>
-      <TextInput
+      <BasicTextInput
         disabled={false}
-        label={t('messages.search')}
         value={value}
-        onChange={searchTerm => onChange(searchTerm ?? '')}
+        onChange={searchTerm => onChange(searchTerm?.target?.value ?? '')}
+        fullWidth
+        slotProps={{
+          input: {
+            endAdornment: (
+              <EndAdornment
+                isLoading={false}
+                hasValue={!!value}
+                onClear={() => onChange('')}
+                noValueIcon={<FilterIcon fontSize="small" />}
+              />
+            ),
+          },
+        }}
       />
     </Box>
   );
