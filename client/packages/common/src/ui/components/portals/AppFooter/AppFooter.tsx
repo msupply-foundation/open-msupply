@@ -38,11 +38,21 @@ export const AppFooter: FC = () => {
   let customColour: string | undefined;
   let textColour: string | undefined;
   if (storeCustomColour) {
-    // Try/catch essentially validates the colour string -- if it's invalid, the
-    // `getContrastText` function will throw, so neither customColour nor
+    // Try/catch allows us to validate the colour string, but we have to do two
+    // separate checks to cover all cases:
+    // 1. the `getContrastText` function will throw on most invalid inputs, but
+    //    it does let incomplete HEX values through (e.g. #257A2), which results
+    //    in invalid CSS and a non-contrasting text color
+    // 2. The CSS.supports() function can also check, but it accepts colour
+    //    literals like "red", which the `getContrastText` function does NOT, so
+    //    we have to use a combination of both these to cover all cases
+    //
+    // When either of these checks fail, then neither customColour nor
     // textColour will be defined
     try {
-      textColour = theme.palette.getContrastText(storeCustomColour ?? '');
+      if (!CSS.supports('color', storeCustomColour))
+        throw new Error('Invalid colour');
+      textColour = theme.palette.getContrastText(storeCustomColour);
       customColour = storeCustomColour;
     } catch (e) {
       console.error('Error parsing footer colours from Store properties', e);
