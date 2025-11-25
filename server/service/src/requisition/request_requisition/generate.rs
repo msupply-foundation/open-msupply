@@ -1,14 +1,9 @@
-use std::collections::HashMap;
-
 use chrono::{NaiveDate, Utc};
-use repository::{
-    EqualFilter, MasterListFilter, MasterListLineFilter, MasterListLineRepository,
-    MasterListRepository, RepositoryError, RequisitionLineRow, RequisitionRow,
-};
+use repository::{RequisitionLineRow, RequisitionRow};
 use util::uuid::uuid;
 
 use crate::item_stats::get_item_stats;
-use crate::preference::{Preference, ShowIndicativeUnitPriceInRequisitions};
+use crate::requisition::common::get_default_price_list_for_requisition;
 use crate::service_provider::ServiceContext;
 use crate::PluginOrRepositoryError;
 
@@ -55,32 +50,8 @@ pub fn generate_requisition_lines(
 ) -> Result<Vec<RequisitionLineRow>, PluginOrRepositoryError> {
     let item_stats_rows = get_item_stats(&ctx.connection, store_id, None, item_ids, period_end)?;
 
-    let populate_price_per_unit = ShowIndicativeUnitPriceInRequisitions {}
-        .load(&ctx.connection, None)
-        .map_err(|e| RepositoryError::DBError {
-            msg: "Could not load ShowIndicativeUnitPriceInRequisitions global preference"
-                .to_string(),
-            extra: e.to_string(),
-        })?;
-
-    let mut price_map: HashMap<String, Option<f64>> = HashMap::new();
-    if populate_price_per_unit {
-        let default_price_list = MasterListRepository::new(&ctx.connection)
-            .query_by_filter(MasterListFilter::new().is_default_price_list(true))?
-            .pop();
-
-        if let Some(price_list) = default_price_list {
-            price_map = MasterListLineRepository::new(&ctx.connection)
-                .query_by_filter(
-                    MasterListLineFilter::new()
-                        .master_list_id(EqualFilter::equal_to(price_list.id)),
-                    None,
-                )?
-                .into_iter()
-                .map(|l| (l.item_id, l.price_per_unit))
-                .collect();
-        }
-    }
+    let (populate_price_per_unit, price_map) =
+        get_default_price_list_for_requisition(&ctx.connection)?;
 
     let lines = item_stats_rows
         .into_iter()
