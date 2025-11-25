@@ -1,6 +1,9 @@
+use std::collections::HashMap;
+
 use chrono::Utc;
 use repository::{
-    ActivityLogType, NumberRowType, RepositoryError, Requisition, RequisitionLineRow,
+    ActivityLogType, EqualFilter, MasterListFilter, MasterListLineFilter, MasterListLineRepository,
+    MasterListRepository, NumberRowType, RepositoryError, Requisition, RequisitionLineRow,
     RequisitionLineRowRepository, RequisitionRow, RequisitionRowRepository, RequisitionStatus,
     RequisitionType,
 };
@@ -10,6 +13,7 @@ use crate::{
     activity_log::activity_log_entry,
     backend_plugin::plugin_provider::PluginError,
     number::next_number,
+    preference::{Preference, ShowIndicativeUnitPriceInRequisitions},
     requisition::{
         common::check_requisition_row_exists, query::get_requisition,
         requisition_supply_status::get_requisitions_supply_statuses,
@@ -172,6 +176,33 @@ fn generate(
             .filter(|s| s.requested_minus_supply_quantity() > 0.0)
             .collect::<Vec<_>>();
 
+    let populate_price_per_unit = ShowIndicativeUnitPriceInRequisitions {}
+        .load(&ctx.connection, None)
+        .map_err(|e| RepositoryError::DBError {
+            msg: "Could not load ShowIndicativeUnitPriceInRequisitions global preference"
+                .to_string(),
+            extra: e.to_string(),
+        })?;
+
+    let mut price_map: HashMap<String, Option<f64>> = HashMap::new();
+    if populate_price_per_unit {
+        let default_price_list = MasterListRepository::new(&ctx.connection)
+            .query_by_filter(MasterListFilter::new().is_default_price_list(true))?
+            .pop();
+
+        if let Some(price_list) = default_price_list {
+            price_map = MasterListLineRepository::new(&ctx.connection)
+                .query_by_filter(
+                    MasterListLineFilter::new()
+                        .master_list_id(EqualFilter::equal_to(price_list.id)),
+                    None,
+                )?
+                .into_iter()
+                .map(|l| (l.item_id, l.price_per_unit))
+                .collect();
+        }
+    }
+
     let requisition_lines = requisition_supply
         .iter()
         .map(|r| {
@@ -189,6 +220,14 @@ fn generate(
                 suggested_quantity: line.suggested_quantity,
                 available_stock_on_hand: line.available_stock_on_hand,
                 average_monthly_consumption: line.average_monthly_consumption,
+                price_per_unit: if populate_price_per_unit {
+                    price_map
+                        .get(&r.requisition_line.item_row.id)
+                        .copied()
+                        .flatten()
+                } else {
+                    None
+                },
                 // Defaults
                 initial_stock_on_hand_units: 0.0,
                 incoming_units: 0.0,
@@ -201,7 +240,6 @@ fn generate(
                 expiring_units: 0.0,
                 days_out_of_stock: 0.0,
                 option_id: None,
-                price_per_unit: None, //TODO get national price list value if pref is on
             }
         })
         .collect::<Vec<_>>();
