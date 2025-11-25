@@ -23,7 +23,7 @@ impl ViewMigrationFragment for ViewMigration {
     -- edits are removed.
     -- Note, an insert + delete will show up as an orphaned delete.
     -- For records that can be transferred between stores (like assets), we need to group by both
-    -- record_id and store_id to ensure each store sees the appropriate changelog entry.
+    -- record_id and store_id to ensure changes are not lost when an asset is moved.
   CREATE VIEW changelog_deduped AS
     SELECT c.cursor,
         c.table_name,
