@@ -305,59 +305,35 @@ fn generate_response_requisition_lines(
     request_requisition: &RequisitionRow,
 ) -> Result<Vec<RequisitionLineRow>, RepositoryError> {
     let request_lines = get_lines_for_requisition(connection, &request_requisition.id)?;
-    // TODO: Change to global pref
-    // Edge case from processing records before pref turned on. Use national price list if the request value is None.
+
     let populate_price_per_unit = ShowIndicativeUnitPriceInRequisitions {}
-        .load(connection, Some(request_requisition.store_id.to_string()))
+        .load(connection, None)
         .map_err(|e| RepositoryError::DBError {
-            msg: "Could not load ShowIndicativeUnitPriceInRequisitions store preference"
+            msg: "Could not load ShowIndicativeUnitPriceInRequisitions global preference"
                 .to_string(),
             extra: e.to_string(),
         })?;
 
-    if populate_price_per_unit {}
+    let default_price_list = MasterListRepository::new(connection)
+        .query_by_filter(MasterListFilter::new().is_default_price_list(true))?
+        .pop();
 
-    let response_lines = request_lines
-        .into_iter()
-        .map(
-            |RequisitionLine {
-                 requisition_line_row:
-                     RequisitionLineRow {
-                         id: _,
-                         requisition_id: _,
-                         approved_quantity: _,
-                         approval_comment: _,
-                         item_link_id: _,
-                         supply_quantity: _,
-                         requested_quantity,
-                         suggested_quantity,
-                         available_stock_on_hand,
-                         average_monthly_consumption,
-                         snapshot_datetime,
-                         comment,
-                         item_name,
-                         initial_stock_on_hand_units,
-                         incoming_units,
-                         outgoing_units,
-                         loss_in_units,
-                         addition_in_units,
-                         expiring_units,
-                         days_out_of_stock,
-                         option_id,
-                         price_per_unit,
-                     },
-                 item_row: ItemRow { id: item_id, .. },
-                 requisition_row: _,
-             }| RequisitionLineRow {
-                id: uuid(),
-                requisition_id: response_requisition.id.to_string(),
-                item_link_id: item_id,
+    let mut response_lines = Vec::with_capacity(request_lines.len());
+    for RequisitionLine {
+        requisition_line_row:
+            RequisitionLineRow {
+                id: _,
+                requisition_id: _,
+                approved_quantity: _,
+                approval_comment: _,
+                item_link_id: _,
+                supply_quantity: _,
                 requested_quantity,
                 suggested_quantity,
                 available_stock_on_hand,
                 average_monthly_consumption,
                 snapshot_datetime,
-                comment: comment.clone(),
+                comment,
                 item_name,
                 initial_stock_on_hand_units,
                 incoming_units,
@@ -367,14 +343,58 @@ fn generate_response_requisition_lines(
                 expiring_units,
                 days_out_of_stock,
                 option_id,
-                // Default
-                supply_quantity: 0.0,
-                approved_quantity: 0.0,
-                approval_comment: None,
                 price_per_unit,
             },
-        )
-        .collect();
+        item_row: ItemRow { id: item_id, .. },
+        requisition_row: _,
+    } in request_lines
+    {
+        let price_per_unit = {
+            let mut new_price_per_unit = price_per_unit;
+            if populate_price_per_unit
+                && new_price_per_unit.is_none()
+                && default_price_list.is_some()
+            {
+                new_price_per_unit = MasterListLineRepository::new(connection)
+                    .query_by_filter(
+                        MasterListLineFilter::new()
+                            .master_list_id(EqualFilter::equal_to(
+                                default_price_list.as_ref().unwrap().id.to_string(),
+                            ))
+                            .item_id(EqualFilter::equal_to(item_id.to_string())),
+                        None,
+                    )?
+                    .first()
+                    .and_then(|l| l.price_per_unit);
+            }
+            new_price_per_unit
+        };
+        response_lines.push(RequisitionLineRow {
+            id: uuid(),
+            requisition_id: response_requisition.id.to_string(),
+            item_link_id: item_id,
+            requested_quantity,
+            suggested_quantity,
+            available_stock_on_hand,
+            average_monthly_consumption,
+            snapshot_datetime,
+            comment: comment.clone(),
+            item_name,
+            initial_stock_on_hand_units,
+            incoming_units,
+            outgoing_units,
+            loss_in_units,
+            addition_in_units,
+            expiring_units,
+            days_out_of_stock,
+            option_id,
+            // Default
+            supply_quantity: 0.0,
+            approved_quantity: 0.0,
+            approval_comment: None,
+            price_per_unit,
+        });
+    }
 
     Ok(response_lines)
 }
@@ -416,14 +436,18 @@ fn generate_response_requisition_indicator_values(
 
 #[cfg(test)]
 mod test {
+    use crate::preference::PrefKey;
+
     use super::*;
     use chrono::{NaiveDate, NaiveDateTime};
     use repository::{
         mock::{
-            mock_name_b, mock_request_draft_requisition, mock_store_b, MockData, MockDataInserts,
+            mock_item_a, mock_item_b, mock_name_b, mock_request_draft_requisition, mock_store_b,
+            MockData, MockDataInserts,
         },
         test_db::setup_all_with_data,
-        SyncLogRow,
+        PreferenceRow, RequisitionFilter, RequisitionLineFilter, RequisitionLineRepository,
+        RequisitionRepository, SyncLogRow,
     };
 
     #[actix_rt::test]
@@ -529,5 +553,183 @@ mod test {
             .unwrap();
         assert!(matches!(result, RequisitionTransferOutput::Processed(_)),
         "The new requisition should have had a transfer generated as it is less than 3 months before initialisation date. Got: {:?}", result);
+    }
+
+    #[actix_rt::test]
+    async fn test_create_response_requisition_price_per_unit() {
+        let requisition_row = RequisitionRow {
+            id: "requisition_row".to_string(),
+            status: RequisitionStatus::Sent,
+            created_datetime: NaiveDateTime::new(
+                NaiveDate::from_ymd_opt(2020, 6, 6).unwrap(),
+                Default::default(),
+            ),
+            sent_datetime: Some(NaiveDateTime::new(
+                NaiveDate::from_ymd_opt(2020, 6, 6).unwrap(),
+                Default::default(),
+            )),
+
+            ..mock_request_draft_requisition()
+        };
+
+        let requisition_line_1 = RequisitionLineRow {
+            id: "line_1".to_string(),
+            requisition_id: requisition_row.id.to_string(),
+            item_link_id: mock_item_a().id,
+            price_per_unit: Some(0.0),
+            ..Default::default()
+        };
+
+        let requisition_line_2 = RequisitionLineRow {
+            id: "line_2".to_string(),
+            requisition_id: requisition_row.id.to_string(),
+            item_link_id: mock_item_b().id,
+            price_per_unit: None,
+            ..Default::default()
+        };
+
+        let requisition = Requisition {
+            requisition_row: requisition_row.clone(),
+            name_row: mock_name_b(),
+            store_row: mock_store_b(),
+            program: None,
+            period: None,
+        };
+        let requisition_transfer = RequisitionTransferProcessorRecord {
+            other_party_store_id: "store_a".to_string(),
+            requisition: requisition.clone(),
+            linked_requisition: None,
+        };
+
+        let (_, connection, _, _) = setup_all_with_data(
+            "test_create_response_requisition_price_per_unit_off",
+            MockDataInserts::none().stores().items().full_master_lists(),
+            MockData {
+                requisitions: vec![requisition_row.clone()],
+                requisition_lines: vec![requisition_line_1.clone(), requisition_line_2.clone()],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        let processor = CreateResponseRequisitionProcessor {};
+        processor
+            .try_process_record(&connection, &requisition_transfer)
+            .unwrap();
+
+        let response = RequisitionRepository::new(&connection)
+            .query_by_filter(
+                RequisitionFilter::new()
+                    .linked_requisition_id(EqualFilter::equal_to(requisition_row.id.clone())),
+            )
+            .unwrap()
+            .pop()
+            .unwrap();
+
+        let response_lines = RequisitionLineRepository::new(&connection)
+            .query_by_filter(
+                RequisitionLineFilter::new()
+                    .requisition_id(EqualFilter::equal_to(response.requisition_row.id)),
+            )
+            .unwrap();
+
+        assert_eq!(
+            response_lines
+                .iter()
+                .filter(|l| {
+                    l.requisition_line_row
+                        .price_per_unit
+                        .is_some_and(|price| price == 0.0)
+                })
+                .count(),
+            1,
+            "exactly one requisition line should have been generated copying the value of 0.0 as the pref was off, but one line had Some value to copy"
+        );
+
+        assert_eq!(
+            response_lines
+                .iter()
+                .filter(|l| {
+                    l.requisition_line_row
+                        .price_per_unit
+                        .is_none()
+                })
+                .count(),
+            1,
+            "The other line should have None as its value, copied from the original line that also has None"
+        );
+
+        // Again but with the pref on
+        let preference = PreferenceRow {
+            id: "preference_on".to_string(),
+            key: PrefKey::ShowIndicativeUnitPriceInRequisitions.to_string(),
+            value: "true".to_string(),
+            store_id: None,
+        };
+
+        let (_, connection, _, _) = setup_all_with_data(
+            "test_create_response_requisition_price_per_unit_on",
+            MockDataInserts::none().stores().items().full_master_lists(),
+            MockData {
+                requisitions: vec![requisition_row.clone()],
+                requisition_lines: vec![requisition_line_1.clone(), requisition_line_2.clone()],
+                preferences: vec![preference],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        let processor = CreateResponseRequisitionProcessor {};
+        processor
+            .try_process_record(&connection, &requisition_transfer)
+            .unwrap();
+
+        let response = RequisitionRepository::new(&connection)
+            .query_by_filter(
+                RequisitionFilter::new()
+                    .linked_requisition_id(EqualFilter::equal_to(requisition_row.id.clone())),
+            )
+            .unwrap()
+            .pop()
+            .unwrap();
+
+        let response_lines = RequisitionLineRepository::new(&connection)
+            .query_by_filter(
+                RequisitionLineFilter::new()
+                    .requisition_id(EqualFilter::equal_to(response.requisition_row.id)),
+            )
+            .unwrap();
+
+        assert_eq!(
+            response_lines.len(),
+            2,
+            "Should have generated exactly 2 response lines"
+        );
+
+        assert_eq!(
+            response_lines
+                .iter()
+                .filter(|l| {
+                    l.requisition_line_row
+                        .price_per_unit
+                        .is_some_and(|price| price == 0.0)
+                })
+                .count(),
+            1,
+            "Should prefer the price on the original line over falling back to the default price list"
+        );
+
+        assert_eq!(
+            response_lines
+                .iter()
+                .filter(|l| {
+                    l.requisition_line_row
+                        .price_per_unit
+                        .is_some_and(|price| price == 2.001) // 2.001 is truly 2.0009999999... in f64 ;-)
+                })
+                .count(),
+            1,
+            "Should fallback to the default price list as the original line had a None value"
+        );
     }
 }
