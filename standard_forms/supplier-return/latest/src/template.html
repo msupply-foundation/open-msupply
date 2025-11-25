@@ -6,6 +6,14 @@
 {% if datetime %}{{ datetime | date(format="%d/%m/%Y", timezone=arguments.timezone) }}{% else %}{{t(k="messages.not-applicable", f="N/A")}}{% endif %} 
 {% endmacro input %}
 
+{% macro formatCurrency(amount) %}
+  {% if amount %}
+    {{ amount | round(precision=2) }}
+  {% else %}
+    0.00
+  {% endif %}
+{% endmacro %}
+
 <body>
     <table class="body_section" cellpadding="2" cellspacing="0">
         <thead>
@@ -24,15 +32,14 @@
         {% for line in data.invoiceLines.nodes -%}
         <tr class="body_value">
             <td class="item_code" style="width: 80px;">{{ line.itemCode }}</td>
-            <td class="item_name" style="width: 350px;">{{ line.itemName }}</td>
+            <td class="item_name" style="width: 300px;">{{ line.itemName }}</td>
             <td class="quantity" style="width: 50px;">{{ line.numberOfPacks }}</td>
             <td class="pack" style="width: 50px;">{{ line.packSize }}</td>
-            <td class="batch batch-wrap" style="width: 50px;">{{ line.batch }}</td>
-            <td class="expiry" style="width: 80px;">{{ line.expiryDate }}</td>
-            <td class="sell_price" style="width: 50px;">{{ line.sellPricePerPack
-            }}</td>
-            <td class="cost_price" style="width: 80px;">{{ line.costPricePerPack }}</td>
-            <td class="total_extension" style="width: 50px;">{{ line.numberOfPacks * line.sellPricePerPack }}</td>
+            <td class="batch batch-wrap" style="width: 60px;">{{ line.batch }}</td>
+            <td class="expiry" style="width: 80px;">{{self::dateOrNA(datetime=line.expiryDate)}}</td>
+            <td class="sell_price" style="width: 50px;">{{self::formatCurrency(amount=line.sellPricePerPack)}}</td>
+            <td class="cost_price" style="width: 50px;">{{self::formatCurrency(amount=line.costPricePerPack)}}</td>
+            <td class="total_extension" style="width: 60px;">{{self::formatCurrency(amount=line.numberOfPacks * line.sellPricePerPack)}}</td>
         </tr>
         {%- endfor %}
     </table>
@@ -48,6 +55,6 @@
         <td class="expiry" style="width: 80px;"></td>
         <td class="sell_price" style="width: 50px;"></td>
         <td class="cost_price" style="width: 80px;">{{t(k="label.total",f="Total")}}:</td>
-        <td class="total_extension" style="width: 50px;">{{ data.invoice.pricing.totalAfterTax }}</td>
+        <td class="total_extension" style="width: 80px;">{{self::formatCurrency(amount=data.invoice.pricing.totalAfterTax)}}</td>
     </tr>
 </table>
