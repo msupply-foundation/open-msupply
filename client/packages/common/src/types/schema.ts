@@ -8813,6 +8813,7 @@ export type RequisitionNode = {
   createdFromRequisition?: Maybe<RequisitionNode>;
   createdFromRequisitionId?: Maybe<Scalars['String']['output']>;
   destinationCustomer?: Maybe<NameNode>;
+  documents: SyncFileReferenceConnector;
   expectedDeliveryDate?: Maybe<Scalars['NaiveDate']['output']>;
   finalisedDatetime?: Maybe<Scalars['DateTime']['output']>;
   id: Scalars['String']['output'];

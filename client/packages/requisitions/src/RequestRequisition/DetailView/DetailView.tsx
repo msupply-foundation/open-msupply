@@ -1,7 +1,8 @@
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import {
   DetailViewSkeleton,
   AlertModal,
+  RequisitionNodeStatus,
   RouteBuilder,
   useNavigate,
   useTranslation,
@@ -9,12 +10,18 @@ import {
   useAuthContext,
   useBreadcrumbs,
   useEditModal,
+  useToggle,
   useNonPaginatedMaterialTable,
   usePluginProvider,
   NothingHere,
   MaterialTable,
+  useUrlQuery,
 } from '@openmsupply-client/common';
-import { ActivityLogList } from '@openmsupply-client/system';
+import {
+  ActivityLogList,
+  DocumentsTable,
+  UploadDocumentModal,
+} from '@openmsupply-client/system';
 import { RequestLineFragment, useHideOverStocked, useRequest } from '../api';
 import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
@@ -27,6 +34,7 @@ import { buildIndicatorEditRoute } from './utils';
 import { RequestLineEditModal } from './RequestLineEdit';
 import { useRequestColumns } from './columns';
 import { isRequestLinePlaceholderRow } from '../../utils';
+import { InternalOrderDetailTabs } from './types';
 
 export const DetailView = () => {
   const t = useTranslation();
@@ -41,8 +49,9 @@ export const DetailView = () => {
     isOpen,
   } = useEditModal<string | null>();
 
-  const { data, isLoading } = useRequest.document.get();
+  const { data, isLoading, invalidateQueries } = useRequest.document.get();
   const isDisabled = useRequest.utils.isDisabled();
+  const uploadDocumentController = useToggle();
   const { data: programIndicators, isLoading: isProgramIndicatorsLoading } =
     useRequest.document.indicators(
       store?.nameId ?? '',
@@ -50,6 +59,17 @@ export const DetailView = () => {
       data?.program?.id ?? '',
       !!data
     );
+  const { urlQuery, updateQuery } = useUrlQuery();
+  const tab = urlQuery['tab'] ?? InternalOrderDetailTabs.Details;
+
+  const deletableDocumentIds = useMemo(() => {
+    if (data?.status === RequisitionNodeStatus.Finalised) {
+      return new Set<string>();
+    }
+    // Request requisition can't have documents linked to response requisition.
+    // So all documents linked to request requisition are deletable.
+    return undefined;
+  }, [data?.status]);
 
   const onRowClick = useCallback(
     (line: RequestLineFragment) => onOpen(line.item.id),
@@ -72,7 +92,7 @@ export const DetailView = () => {
         )
       );
     },
-    []
+    [navigate]
   );
 
   useEffect(() => {
@@ -80,6 +100,12 @@ export const DetailView = () => {
   }, [setCustomBreadcrumbs, data?.requisitionNumber]);
 
   const onAddItem = () => onOpen();
+  const onOpenUploadModal = () => {
+    uploadDocumentController.toggleOn();
+    if (tab !== InternalOrderDetailTabs.Documents) {
+      updateQuery({ tab: InternalOrderDetailTabs.Documents });
+    }
+  };
 
   const { lines, itemFilter, isError, isFetching } = useRequest.line.list();
   const { on } = useHideOverStocked();
@@ -146,7 +172,19 @@ export const DetailView = () => {
       value: 'Details',
     },
     {
-      Component: <ActivityLogList recordId={data.id} />,
+      Component: (
+        <DocumentsTable
+          recordId={data?.id ?? ''}
+          documents={data?.documents?.nodes ?? []}
+          tableName="requisition"
+          invalidateQueries={invalidateQueries}
+          deletableDocumentIds={deletableDocumentIds}
+        />
+      ),
+      value: t('label.documents'),
+    },
+    {
+      Component: <ActivityLogList recordId={data?.id ?? ''} />,
       value: 'Log',
     },
   ];
@@ -176,6 +214,7 @@ export const DetailView = () => {
       <AppBarButtons
         isDisabled={!data || isDisabled}
         onAddItem={onAddItem}
+        openUploadModal={onOpenUploadModal}
         showIndicators={showIndicatorTab}
       />
       <Toolbar />
@@ -195,6 +234,16 @@ export const DetailView = () => {
           onClose={onClose}
           mode={mode}
           store={store}
+        />
+      )}
+
+      {uploadDocumentController.isOn && (
+        <UploadDocumentModal
+          isOn={uploadDocumentController.isOn}
+          toggleOff={uploadDocumentController.toggleOff}
+          recordId={data?.id ?? ''}
+          tableName="requisition"
+          invalidateQueries={invalidateQueries}
         />
       )}
     </RequestRequisitionLineErrorProvider>
