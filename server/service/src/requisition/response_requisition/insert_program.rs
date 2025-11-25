@@ -1,6 +1,9 @@
+use std::collections::HashMap;
+
 use crate::{
     activity_log::activity_log_entry,
     number::next_number,
+    preference::{Preference, ShowIndicativeUnitPriceInRequisitions},
     requisition::{
         common::{
             check_exceeded_max_orders_for_period, check_requisition_row_exists,
@@ -16,10 +19,10 @@ use chrono::Utc;
 use repository::{
     requisition_row::{RequisitionRow, RequisitionStatus, RequisitionType},
     ActivityLogType, EqualFilter, IndicatorValueRow, IndicatorValueRowRepository, ItemFilter,
-    ItemRepository, MasterListLineFilter, MasterListLineRepository, NumberRowType, Pagination,
-    ProgramIndicatorFilter, ProgramRequisitionOrderTypeRow, ProgramRow, RepositoryError,
-    Requisition, RequisitionLineRow, RequisitionLineRowRepository, RequisitionRowRepository,
-    StoreFilter, StoreRepository,
+    ItemRepository, MasterListFilter, MasterListLineFilter, MasterListLineRepository,
+    MasterListRepository, NumberRowType, Pagination, ProgramIndicatorFilter,
+    ProgramRequisitionOrderTypeRow, ProgramRow, RepositoryError, Requisition, RequisitionLineRow,
+    RequisitionLineRowRepository, RequisitionRowRepository, StoreFilter, StoreRepository,
 };
 use util::uuid::uuid;
 
@@ -271,6 +274,33 @@ fn generate_lines(
         Some(store_id.to_string()),
     )?;
 
+    let populate_price_per_unit = ShowIndicativeUnitPriceInRequisitions {}
+        .load(&ctx.connection, None)
+        .map_err(|e| RepositoryError::DBError {
+            msg: "Could not load ShowIndicativeUnitPriceInRequisitions global preference"
+                .to_string(),
+            extra: e.to_string(),
+        })?;
+
+    let mut price_map: HashMap<String, Option<f64>> = HashMap::new();
+    if populate_price_per_unit {
+        let default_price_list = MasterListRepository::new(&ctx.connection)
+            .query_by_filter(MasterListFilter::new().is_default_price_list(true))?
+            .pop();
+
+        if let Some(price_list) = default_price_list {
+            price_map = MasterListLineRepository::new(&ctx.connection)
+                .query_by_filter(
+                    MasterListLineFilter::new()
+                        .master_list_id(EqualFilter::equal_to(price_list.id)),
+                    None,
+                )?
+                .into_iter()
+                .map(|l| (l.item_id, l.price_per_unit))
+                .collect();
+        }
+    }
+
     let result = items
         .into_iter()
         .map(|item| {
@@ -280,6 +310,11 @@ fn generate_lines(
                 item_link_id: item.item_row.id.clone(),
                 item_name: item.item_row.name.clone(),
                 snapshot_datetime: Some(Utc::now().naive_utc()),
+                price_per_unit: if populate_price_per_unit {
+                    price_map.get(&item.item_row.id).copied().flatten()
+                } else {
+                    None
+                },
                 // Default
                 suggested_quantity: 0.0,
                 available_stock_on_hand: 0.0,
@@ -297,7 +332,6 @@ fn generate_lines(
                 expiring_units: 0.0,
                 days_out_of_stock: 0.0,
                 option_id: None,
-                price_per_unit: None, //TODO get national price list value if pref is on
             }
         })
         .collect();
