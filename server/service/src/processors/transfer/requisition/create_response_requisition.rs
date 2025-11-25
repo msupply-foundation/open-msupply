@@ -3,8 +3,8 @@ use crate::{
     activity_log::system_activity_log_entry,
     number::next_number,
     preference::{
-        show_indicative_unit_price_in_requisitions, Preference,
-        PreventTransfersMonthsBeforeInitialisation, ShowIndicativeUnitPriceInRequisitions,
+        Preference, PreventTransfersMonthsBeforeInitialisation,
+        ShowIndicativeUnitPriceInRequisitions,
     },
     processors::transfer::requisition::RequisitionTransferOutput,
     requisition::common::get_lines_for_requisition,

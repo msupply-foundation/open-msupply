@@ -86,6 +86,10 @@ impl PreferencesNode {
         self.load_preference(&self.preferences.expired_stock_issue_threshold)
     }
 
+    pub async fn show_indicative_unit_price_in_requisitions(&self) -> Result<bool> {
+        self.load_preference(&self.preferences.show_indicative_unit_price_in_requisitions)
+    }
+
     // Store preferences
     pub async fn manage_vaccines_in_doses(&self) -> Result<bool> {
         self.load_preference(&self.preferences.manage_vaccines_in_doses)
@@ -173,10 +177,6 @@ impl PreferencesNode {
         Ok(WarnWhenMissingRecentStocktakeDataNode::from_domain(
             self.load_preference(&self.preferences.warn_when_missing_recent_stocktake)?,
         ))
-    }
-
-    pub async fn show_indicative_unit_price_in_requisitions(&self) -> Result<bool> {
-        self.load_preference(&self.preferences.show_indicative_unit_price_in_requisitions)
     }
 }
 

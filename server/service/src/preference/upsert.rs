@@ -28,6 +28,7 @@ pub struct UpsertPreferences {
     pub exclude_transfers: Option<bool>,
     pub expired_stock_prevent_issue: Option<bool>,
     pub expired_stock_issue_threshold: Option<i32>,
+    pub show_indicative_unit_price_in_requisitions:Option<bool>,
 
     // Store preferences
     pub manage_vaccines_in_doses: Option<Vec<StorePrefUpdate<bool>>>,
@@ -48,7 +49,6 @@ pub struct UpsertPreferences {
     pub first_threshold_for_expiring_items: Option<Vec<StorePrefUpdate<i32>>>,
     pub second_threshold_for_expiring_items: Option<Vec<StorePrefUpdate<i32>>>,
     pub warn_when_missing_recent_stocktake: Option<Vec<StorePrefUpdate<WarnWhenMissingRecentStocktakeData>>>,
-    pub show_indicative_unit_price_in_requisitions:Option<Vec<StorePrefUpdate<bool>>>,
 }
 
 pub fn upsert_preferences(
@@ -70,6 +70,7 @@ pub fn upsert_preferences(
         exclude_transfers: exclude_transfers_input,
         expired_stock_prevent_issue: expired_stock_prevent_issue_input,
         expired_stock_issue_threshold: expired_stock_issue_threshold_input,
+        show_indicative_unit_price_in_requisitions: show_indicative_unit_price_in_requisitions_input,
 
         // Store preferences
         manage_vaccines_in_doses: manage_vaccines_in_doses_input,
@@ -93,7 +94,6 @@ pub fn upsert_preferences(
         first_threshold_for_expiring_items: first_threshold_for_expiring_items_input,
         second_threshold_for_expiring_items: second_threshold_for_expiring_items_input,
         warn_when_missing_recent_stocktake: warn_when_missing_recent_stocktake_input,
-        show_indicative_unit_price_in_requisitions: show_indicative_unit_price_in_requisitions_input
     }: UpsertPreferences,
 ) -> Result<(), UpsertPreferenceError> {
     let PreferenceProvider {
@@ -112,6 +112,7 @@ pub fn upsert_preferences(
         exclude_transfers,
         expired_stock_prevent_issue,
         expired_stock_issue_threshold,
+        show_indicative_unit_price_in_requisitions,
 
         // Store preferences
         manage_vaccines_in_doses,
@@ -131,7 +132,6 @@ pub fn upsert_preferences(
         first_threshold_for_expiring_items,
         second_threshold_for_expiring_items,
         warn_when_missing_recent_stocktake,
-        show_indicative_unit_price_in_requisitions
     }: PreferenceProvider = get_preference_provider();
 
     ctx.connection
@@ -184,19 +184,23 @@ pub fn upsert_preferences(
             if let Some(input) = days_in_month_input {
                 days_in_month.upsert(connection, input, None)?;
             }
-
+            
             if let Some(input) = exclude_transfers_input {
                 exclude_transfers.upsert(connection, input, None)?;
             }
-
+            
             if let Some(input) = expired_stock_prevent_issue_input {
                 expired_stock_prevent_issue.upsert(connection, input, None)?;
             }
-
+            
             if let Some(input) = expired_stock_issue_threshold_input {
                 expired_stock_issue_threshold.upsert(connection, input, None)?;
             }
 
+            if let Some(input) = show_indicative_unit_price_in_requisitions_input {
+                show_indicative_unit_price_in_requisitions.upsert(connection, input, None)?;
+            }
+            
             // Store preferences, input could be array of store IDs and values - iterate and insert...
             if let Some(inputs) = manage_vaccines_in_doses_input {
                 upsert_store_input(connection, manage_vaccines_in_doses, inputs)?;
@@ -286,14 +290,6 @@ pub fn upsert_preferences(
                            upsert_store_input(
                     connection,
                     warn_when_missing_recent_stocktake,
-                    input,
-                )?;
-            }
-
-            if let Some(input) = show_indicative_unit_price_in_requisitions_input {
-                           upsert_store_input(
-                    connection,
-                    show_indicative_unit_price_in_requisitions,
                     input,
                 )?;
             }
