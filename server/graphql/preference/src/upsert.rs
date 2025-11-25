@@ -121,6 +121,8 @@ impl UpsertPreferencesInput {
             expired_stock_issue_threshold,
             // Store preferences
             manage_vaccines_in_doses,
+            manage_vvm_status_for_stock,
+            order_in_packs,
             use_procurement_functionality,
             sort_by_vvm_status_then_expiry,
             use_simplified_mobile_ui,

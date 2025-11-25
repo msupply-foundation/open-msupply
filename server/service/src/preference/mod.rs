@@ -95,6 +95,8 @@ pub trait PreferenceServiceTrait: Sync + Send {
         append_if_type(disable_manual_returns, &mut prefs, &input)?;
         append_if_type(requisition_auto_finalise, &mut prefs, &input)?;
         append_if_type(inbound_shipment_auto_verify, &mut prefs, &input)?;
+        append_if_type(manage_vvm_status_for_stock, &mut prefs, &input)?;
+        append_if_type(manage_vaccines_in_doses, &mut prefs, &input)?;
         append_if_type(
             can_create_internal_order_from_a_requisition,
             &mut prefs,
