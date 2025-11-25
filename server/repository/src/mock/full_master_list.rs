@@ -10,6 +10,7 @@ pub fn mock_full_master_lists() -> Vec<FullMockMasterList> {
         mock_master_list_master_list_line_filter_test(),
         mock_master_list_program(),
         mock_master_list_program_b(),
+        mock_master_list_default_price_list(),
     ]
 }
 
@@ -140,6 +141,37 @@ pub fn mock_master_list_master_list_line_filter_test() -> FullMockMasterList {
                 id: "master_list_line_filter_test_2".to_string(),
                 item_link_id: "item_b".to_string(),
                 master_list_id: "master_list_master_list_line_filter_test".to_string(),
+                ..Default::default()
+            },
+        ],
+    }
+}
+
+pub fn mock_master_list_default_price_list() -> FullMockMasterList {
+    FullMockMasterList {
+        master_list: MasterListRow {
+            id: "master_list_default_price_list".to_string(),
+            name: "name_master_list_default_price_list".to_string(),
+            code: "code_master_list_default_price_list".to_string(),
+            description: "description_master_list_default_price_list".to_string(),
+            is_active: true,
+            is_default_price_list: true,
+            ..Default::default()
+        },
+        joins: Vec::new(),
+        lines: vec![
+            MasterListLineRow {
+                id: "master_list_line_default_price_1".to_string(),
+                item_link_id: "item_a".to_string(),
+                master_list_id: "master_list_default_price_list".to_string(),
+                price_per_unit: Some(1.0),
+                ..Default::default()
+            },
+            MasterListLineRow {
+                id: "master_list_line_default_price_2".to_string(),
+                item_link_id: "item_b".to_string(),
+                master_list_id: "master_list_default_price_list".to_string(),
+                price_per_unit: Some(2.001),
                 ..Default::default()
             },
         ],
