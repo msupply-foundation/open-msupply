@@ -355,6 +355,11 @@ fn generate_response_requisition_lines(
                 && new_price_per_unit.is_none()
                 && default_price_list.is_some()
             {
+                // It's tempting to use a hashmap lookup here to avoid potentially making a query for each line. However, if the global pref is on
+                // then all sites should be sending through prices anyway (i.e. price_per_unit/new_price_per_unit is Some value!) and making the
+                // Hashmap would be a waste. What this then covers is when you've just turned the global preference on and there are prior requisitions
+                // that don't have a value. We could however make the hashmap on demand though, might still be better than this!
+                // TODO: Transfers from OG/Mobile will likely have 0.0 regardless of the pref being on. maybe we should only use the price list value? Or treat 0.0 the same as None here?
                 new_price_per_unit = MasterListLineRepository::new(connection)
                     .query_by_filter(
                         MasterListLineFilter::new()
