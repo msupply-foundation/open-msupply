@@ -117,7 +117,7 @@ mod tests {
             "test_vaccine_course_legacy_translation",
             MockDataInserts::none()
                 .programs()
-                .full_master_list()
+                .full_master_lists()
                 .items()
                 .names(),
         )
