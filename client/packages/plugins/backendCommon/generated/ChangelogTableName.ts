@@ -14,7 +14,6 @@ export type ChangelogTableName =
   | 'Requisition'
   | 'RequisitionLine'
   | 'ActivityLog'
-  | 'InventoryAdjustmentReason'
   | 'Barcode'
   | 'Clinician'
   | 'ClinicianStoreJoin'
@@ -68,4 +67,5 @@ export type ChangelogTableName =
   | 'SyncMessage'
   | 'PurchaseOrder'
   | 'PurchaseOrderLine'
-  | 'GoodsReceived';
+  | 'GoodsReceived'
+  | 'MasterList';

@@ -52,10 +52,8 @@ pub struct UpsertPreferencesInput {
     pub show_contact_tracing: Option<bool>,
     pub sync_records_display_threshold: Option<i32>,
     pub warning_for_excess_request: Option<bool>,
-    pub use_days_in_month: Option<bool>,
     pub adjust_for_number_of_days_out_of_stock: Option<bool>,
     pub days_in_month: Option<f64>,
-    pub exclude_transfers: Option<bool>,
     pub expired_stock_prevent_issue: Option<bool>,
     pub expired_stock_issue_threshold: Option<i32>,
 
@@ -117,17 +115,12 @@ impl UpsertPreferencesInput {
             show_contact_tracing,
             sync_records_display_threshold,
             warning_for_excess_request,
-
-            use_days_in_month,
             adjust_for_number_of_days_out_of_stock,
             days_in_month,
-            exclude_transfers,
             expired_stock_prevent_issue,
             expired_stock_issue_threshold,
             // Store preferences
             manage_vaccines_in_doses,
-            manage_vvm_status_for_stock,
-            order_in_packs,
             use_procurement_functionality,
             sort_by_vvm_status_then_expiry,
             use_simplified_mobile_ui,
@@ -160,10 +153,8 @@ impl UpsertPreferencesInput {
             sync_records_display_threshold: *sync_records_display_threshold,
             warning_for_excess_request: *warning_for_excess_request,
 
-            use_days_in_month: *use_days_in_month,
             adjust_for_number_of_days_out_of_stock: *adjust_for_number_of_days_out_of_stock,
             days_in_month: *days_in_month,
-            exclude_transfers: *exclude_transfers,
             expired_stock_prevent_issue: *expired_stock_prevent_issue,
             expired_stock_issue_threshold: *expired_stock_issue_threshold,
             // Store preferences

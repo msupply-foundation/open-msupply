@@ -34,10 +34,8 @@ pub trait PreferenceServiceTrait: Sync + Send {
             show_contact_tracing,
             sync_records_display_threshold,
             warning_for_excess_request,
-            use_days_in_month,
             adjust_for_number_of_days_out_of_stock,
             days_in_month,
-            exclude_transfers,
             expired_stock_prevent_issue,
             expired_stock_issue_threshold,
 
@@ -84,16 +82,12 @@ pub trait PreferenceServiceTrait: Sync + Send {
         append_if_type(show_contact_tracing, &mut prefs, &input)?;
         append_if_type(sync_records_display_threshold, &mut prefs, &input)?;
         append_if_type(warning_for_excess_request, &mut prefs, &input)?;
-        append_if_type(use_days_in_month, &mut prefs, &input)?;
         append_if_type(adjust_for_number_of_days_out_of_stock, &mut prefs, &input)?;
         append_if_type(days_in_month, &mut prefs, &input)?;
-        append_if_type(exclude_transfers, &mut prefs, &input)?;
         append_if_type(expired_stock_prevent_issue, &mut prefs, &input)?;
         append_if_type(expired_stock_issue_threshold, &mut prefs, &input)?;
 
         // Store preferences
-        append_if_type(manage_vaccines_in_doses, &mut prefs, &input)?;
-        append_if_type(manage_vvm_status_for_stock, &mut prefs, &input)?;
         append_if_type(order_in_packs, &mut prefs, &input)?;
         append_if_type(use_procurement_functionality, &mut prefs, &input)?;
         append_if_type(sort_by_vvm_status_then_expiry, &mut prefs, &input)?;
