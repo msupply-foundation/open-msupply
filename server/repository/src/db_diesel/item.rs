@@ -568,7 +568,7 @@ mod tests {
                 .units()
                 .items()
                 .names()
-                .full_master_list(),
+                .full_master_lists(),
         )
         .await;
         let item_query_repository = ItemRepository::new(&storage_connection);
