@@ -55,7 +55,7 @@ export const usePrescriptionLineEditColumns = ({
         id: 'vvmStatus',
         header: t('label.vvm-status'),
         size: 150,
-        accessorFn: row => row.vvmStatus || '',
+        accessorFn: row => row.vvmStatus?.description || '',
         includeColumn: hasVvmStatusesEnabled && item?.isVaccine,
       },
       {

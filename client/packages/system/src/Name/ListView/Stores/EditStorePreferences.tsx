@@ -1,7 +1,8 @@
-import React, { Dispatch, SetStateAction } from 'react';
+import React from 'react';
 import {
   NothingHere,
   PreferenceNodeType,
+  PreferenceValueNodeType,
   useAuthContext,
   useIsCentralServerApi,
   UserPermission,
@@ -13,19 +14,16 @@ import {
 
 interface EditStorePreferencesProps {
   storeId: string;
-  setIsActionValid: Dispatch<SetStateAction<boolean>>;
 }
 
 export const EditStorePreferences = ({
   storeId,
-  setIsActionValid,
 }: EditStorePreferencesProps) => {
   const isCentralServer = useIsCentralServerApi();
   const { userHasPermission } = useAuthContext();
   const { update, preferences } = useEditPreferences(
     PreferenceNodeType.Store,
-    storeId,
-    setIsActionValid
+    storeId
   );
 
   if (!preferences.length) return <NothingHere />;
@@ -40,11 +38,16 @@ export const EditStorePreferences = ({
           !isCentralServer || !userHasPermission(UserPermission.EditCentralData)
         }
         preference={pref}
-        update={value =>
-          update({
-            [pref.key]: [{ storeId, value }],
-          })
-        }
+        update={value => {
+          const finalValue =
+            pref.valueType === PreferenceValueNodeType.Integer &&
+            value === undefined
+              ? 0
+              : value;
+          return update({
+            [pref.key]: [{ storeId, value: finalValue }],
+          });
+        }}
         isLast={isLast}
       />
     );
