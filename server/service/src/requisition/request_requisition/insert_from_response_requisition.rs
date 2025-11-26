@@ -11,7 +11,7 @@ use crate::{
     backend_plugin::plugin_provider::PluginError,
     number::next_number,
     requisition::{
-        common::{check_requisition_row_exists, get_default_price_list_for_requisition},
+        common::{check_requisition_row_exists, get_indicative_price_pref_and_price_map},
         query::get_requisition,
         requisition_supply_status::get_requisitions_supply_statuses,
     },
@@ -174,7 +174,7 @@ fn generate(
             .collect::<Vec<_>>();
 
     let (populate_price_per_unit, price_map) =
-        get_default_price_list_for_requisition(&ctx.connection)?;
+        get_indicative_price_pref_and_price_map(&ctx.connection)?;
 
     let requisition_lines = requisition_supply
         .iter()

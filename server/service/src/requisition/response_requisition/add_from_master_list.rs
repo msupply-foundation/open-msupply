@@ -1,7 +1,7 @@
 use crate::{
     requisition::common::{
         check_master_list_for_store, check_requisition_row_exists,
-        get_default_price_list_for_requisition, get_lines_for_requisition,
+        get_indicative_price_pref_and_price_map, get_lines_for_requisition,
     },
     service_provider::ServiceContext,
 };
@@ -121,7 +121,7 @@ fn generate(
     )?;
 
     let (populate_price_per_unit, price_map) =
-        get_default_price_list_for_requisition(&ctx.connection)?;
+        get_indicative_price_pref_and_price_map(&ctx.connection)?;
 
     let lines = items
         .into_iter()
