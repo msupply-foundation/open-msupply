@@ -33,6 +33,7 @@ fragment RequestLine on RequisitionLineNode {
   additionInUnits
   expiringUnits
   daysOutOfStock
+  pricePerUnit
 
   itemStats {
     __typename

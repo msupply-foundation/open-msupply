@@ -41,6 +41,7 @@ export type RequestLineFragment = {
   additionInUnits: number;
   expiringUnits: number;
   daysOutOfStock: number;
+  pricePerUnit?: number | null;
   itemStats: {
     __typename: 'ItemStatsNode';
     availableStockOnHand: number;
@@ -125,6 +126,7 @@ export type RequestFragment = {
       additionInUnits: number;
       expiringUnits: number;
       daysOutOfStock: number;
+      pricePerUnit?: number | null;
       itemStats: {
         __typename: 'ItemStatsNode';
         availableStockOnHand: number;
@@ -264,6 +266,7 @@ export const RequestLineFragmentDoc = gql`
     additionInUnits
     expiringUnits
     daysOutOfStock
+    pricePerUnit
     itemStats {
       __typename
       availableStockOnHand
