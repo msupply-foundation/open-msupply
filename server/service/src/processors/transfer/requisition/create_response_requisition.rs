@@ -2,10 +2,7 @@ use super::{RequisitionTransferProcessor, RequisitionTransferProcessorRecord};
 use crate::{
     activity_log::system_activity_log_entry,
     number::next_number,
-    preference::{
-        Preference, PreventTransfersMonthsBeforeInitialisation,
-        ShowIndicativeUnitPriceInRequisitions,
-    },
+    preference::{Preference, PreventTransfersMonthsBeforeInitialisation},
     processors::transfer::requisition::RequisitionTransferOutput,
     requisition::common::{
         get_default_price_list, get_indicative_price_pref, get_item_price_per_unit,
