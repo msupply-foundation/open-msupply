@@ -110,6 +110,7 @@ export type RequestByNumberQuery = {
             additionInUnits: number;
             expiringUnits: number;
             daysOutOfStock: number;
+            pricePerUnit?: number | null;
             itemStats: {
               __typename: 'ItemStatsNode';
               availableStockOnHand: number;
@@ -257,6 +258,7 @@ export type RequestByIdQuery = {
             additionInUnits: number;
             expiringUnits: number;
             daysOutOfStock: number;
+            pricePerUnit?: number | null;
             itemStats: {
               __typename: 'ItemStatsNode';
               availableStockOnHand: number;

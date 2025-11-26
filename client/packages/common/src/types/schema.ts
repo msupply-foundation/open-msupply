@@ -11263,7 +11263,9 @@ export type UpsertPreferencesInput = {
     Array<BoolStorePrefInput>
   >;
   showContactTracing?: InputMaybe<Scalars['Boolean']['input']>;
-  showIndicativeUnitPriceInRequisitions?: InputMaybe<Array<BoolStorePrefInput>>;
+  showIndicativeUnitPriceInRequisitions?: InputMaybe<
+    Scalars['Boolean']['input']
+  >;
   sortByVvmStatusThenExpiry?: InputMaybe<Array<BoolStorePrefInput>>;
   syncRecordsDisplayThreshold?: InputMaybe<Scalars['Int']['input']>;
   useDaysInMonth?: InputMaybe<Scalars['Boolean']['input']>;
