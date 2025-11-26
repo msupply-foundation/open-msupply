@@ -109,3 +109,94 @@ impl<'a> DaysOutOfStockRepository<'a> {
             .load::<DaysOutOfStockRow>(self.connection.lock().connection())?)
     }
 }
+
+#[cfg(test)]
+
+pub(crate) mod test {
+
+    use std::ops::Neg;
+
+    use chrono::Duration;
+    use util::{date_now, date_with_offset};
+
+    use super::*;
+
+    use crate::mock::test_helpers::make_movements;
+    use crate::mock::MockData;
+    use crate::{
+        mock::{mock_item_a, mock_store_a, MockDataInserts},
+        test_db::setup_all_with_data,
+    };
+    use crate::{EqualFilter, StockLineRow};
+
+    pub(crate) fn mock_data() -> MockData {
+        let test_stock_line_a = StockLineRow {
+            id: "test_stock_line_a".to_string(),
+            item_link_id: mock_item_a().id.clone(),
+            store_id: mock_store_a().id.clone(),
+            pack_size: 1.0,
+            ..Default::default()
+        };
+
+        // Use make_movements to create days where the item is out of stock
+        let mock_data = MockData {
+            stock_lines: vec![
+                test_stock_line_a.clone(),
+            ],
+            ..Default::default()
+        }
+        .join(make_movements(
+            test_stock_line_a.clone(),
+            vec![
+                // (day, movement)
+                (1, 3),   // +3 in
+                (10, -3), // -3 out
+                // (stock = zero for 10 days)
+                (20, 3), // +3 in
+                (25, -3), // -3 out
+                         // (stock = zero for 5 more days)
+            ],
+        ));
+
+        mock_data
+    }
+
+    #[actix_rt::test]
+
+    async fn test_item_stats_with_dos() {
+        let (_, connection, _, _) = setup_all_with_data(
+            "test_item_stats_with_dos",
+            MockDataInserts::none().names().stores().units().items(),
+            mock_data(),
+        )
+        .await;
+
+        let end_date = date_now();
+        let offset_end_date = end_date + Duration::days(1);
+        let start_date = date_with_offset(&offset_end_date, Duration::days((30_i32).neg() as i64));
+
+        let item_id = vec![mock_item_a().id.clone()];
+        let store_id = mock_store_a().id.clone();
+
+        let filter = ConsumptionFilter {
+            item_id: Some(EqualFilter::equal_any(item_id)),
+            store_id: Some(EqualFilter::equal_to(&store_id)),
+            date: Some(DateFilter::date_range(&start_date, &offset_end_date)),
+        };
+
+        let result = DaysOutOfStockRepository::new(&connection)
+            .query(Some(filter))
+            .expect("Failed to query days out of stock");
+
+        let expected = vec![
+            DaysOutOfStockRow {
+                item_id: "item_a".to_string(),
+                store_id: "store_a".to_string(),
+                total_dos: 16.0,
+            },
+            // add more rows
+        ];
+
+        pretty_assertions::assert_eq!(result, expected);
+    }
+}
