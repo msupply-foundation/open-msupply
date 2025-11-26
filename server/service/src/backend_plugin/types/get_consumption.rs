@@ -1,22 +1,24 @@
 use crate::backend_plugin::{plugin_provider::PluginInstance, *};
 use plugin_provider::{call_plugin, PluginResult};
-use repository::{PluginDataRow, PluginType};
+use repository::PluginType;
 use serde::{Deserialize, Serialize};
-
+use std::collections::HashMap;
 use ts_rs::TS;
 
 fn plugin_type() -> PluginType {
-    PluginType::SyncEssentialItemList
+    PluginType::GetConsumption
 }
 
 #[derive(TS, Clone, Deserialize, Serialize)]
-#[ts(rename = "SyncEssentialItemListInput")]
+#[ts(rename = "GetConsumptionInput")]
 pub struct Input {
-    pub id: String,
-    pub is_essential: bool,
+    pub store_id: String,
+    pub item_ids: Vec<String>,
+    pub start_date: String,
+    pub end_date: String,
 }
 
-pub type Output = PluginDataRow;
+pub type Output = HashMap<String /* item_id */, f64 /* consumption */>;
 
 pub trait Trait: Send + Sync {
     fn call(&self, input: Input) -> PluginResult<Output>;
@@ -24,6 +26,6 @@ pub trait Trait: Send + Sync {
 
 impl self::Trait for PluginInstance {
     fn call(&self, input: Input) -> PluginResult<Output> {
-        Ok(call_plugin(input, plugin_type(), self)?)
+        call_plugin(input, plugin_type(), self)
     }
 }
