@@ -4,7 +4,7 @@ use crate::{
     requisition::{
         common::{
             check_exceeded_max_orders_for_period, check_requisition_row_exists,
-            default_indicator_value, get_default_price_list_for_requisition,
+            default_indicator_value, get_indicative_price_pref_and_price_map,
             CheckExceededOrdersForPeriod,
         },
         program_indicator::query::{program_indicators, ProgramIndicator},
@@ -273,7 +273,7 @@ fn generate_lines(
     )?;
 
     let (populate_price_per_unit, price_map) =
-        get_default_price_list_for_requisition(&ctx.connection)?;
+        get_indicative_price_pref_and_price_map(&ctx.connection)?;
 
     let result = items
         .into_iter()

@@ -3,7 +3,7 @@ use repository::{RequisitionLineRow, RequisitionRow};
 use util::uuid::uuid;
 
 use crate::item_stats::get_item_stats;
-use crate::requisition::common::get_default_price_list_for_requisition;
+use crate::requisition::common::get_indicative_price_pref_and_price_map;
 use crate::service_provider::ServiceContext;
 use crate::PluginOrRepositoryError;
 
@@ -51,7 +51,7 @@ pub fn generate_requisition_lines(
     let item_stats_rows = get_item_stats(&ctx.connection, store_id, None, item_ids, period_end)?;
 
     let (populate_price_per_unit, price_map) =
-        get_default_price_list_for_requisition(&ctx.connection)?;
+        get_indicative_price_pref_and_price_map(&ctx.connection)?;
 
     let lines = item_stats_rows
         .into_iter()
