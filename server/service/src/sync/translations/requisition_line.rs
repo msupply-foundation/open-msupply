@@ -16,8 +16,8 @@ use super::{PullTranslateResult, PushTranslateResult, SyncTranslation};
 
 #[derive(Deserialize, Serialize, PartialEq)]
 pub struct RequisitionLineOmsFields {
-    pub rnr_form_line_id: Option<String>,
-    pub expiry_date: Option<NaiveDate>,
+    pub rnr_form_line_id: Option<String>, // Actually from rnr table and only included in sync push so that OG auth module can use
+    pub expiry_date: Option<NaiveDate>, // Actually from rnr table and only included in sync push so that OG auth module can use
     pub price_per_unit: Option<f64>,
 }
 
