@@ -124,7 +124,10 @@ pub(crate) mod test {
     use crate::mock::test_helpers::make_movements;
     use crate::mock::MockData;
     use crate::{
-        mock::{mock_item_a, mock_store_a, MockDataInserts},
+        mock::{
+            mock_item_a, mock_item_b, mock_item_c, mock_item_d, mock_item_e, mock_item_f,
+            mock_store_a, MockDataInserts,
+        },
         test_db::setup_all_with_data,
     };
     use crate::{EqualFilter, StockLineRow};
@@ -137,24 +140,126 @@ pub(crate) mod test {
             pack_size: 1.0,
             ..Default::default()
         };
+        let test_stock_line_b = StockLineRow {
+            id: "test_stock_line_b".to_string(),
+            item_link_id: mock_item_b().id.clone(),
+            store_id: mock_store_a().id.clone(),
+            pack_size: 1.0,
+            ..Default::default()
+        };
+        let test_stock_line_c = StockLineRow {
+            id: "test_stock_line_c".to_string(),
+            item_link_id: mock_item_c().id.clone(),
+            store_id: mock_store_a().id.clone(),
+            pack_size: 1.0,
+            ..Default::default()
+        };
+        let test_stock_line_d = StockLineRow {
+            id: "test_stock_line_d".to_string(),
+            item_link_id: mock_item_d().id.clone(),
+            store_id: mock_store_a().id.clone(),
+            pack_size: 1.0,
+            ..Default::default()
+        };
+        let test_stock_line_e = StockLineRow {
+            id: "test_stock_line_e".to_string(),
+            item_link_id: mock_item_e().id.clone(),
+            store_id: mock_store_a().id.clone(),
+            pack_size: 1.0,
+            ..Default::default()
+        };
+        let test_stock_line_f = StockLineRow {
+            id: "test_stock_line_f".to_string(),
+            item_link_id: mock_item_f().id.clone(),
+            store_id: mock_store_a().id.clone(),
+            pack_size: 1.0,
+            ..Default::default()
+        };
 
         // Use make_movements to create days where the item is out of stock
+        // Movements from day 0 - 21 are prior to the DOS calculation
+        // Movements from day 22 - 30 inclusive are within the DOS calculation
+        // DOS is calculated to 31 days
         let mock_data = MockData {
             stock_lines: vec![
                 test_stock_line_a.clone(),
+                test_stock_line_b.clone(),
+                test_stock_line_c.clone(),
+                test_stock_line_d.clone(),
+                test_stock_line_e.clone(),
+                test_stock_line_f.clone(),
             ],
             ..Default::default()
         }
+        // Has multiple periods out of stock
         .join(make_movements(
             test_stock_line_a.clone(),
             vec![
                 // (day, movement)
-                (1, 3),   // +3 in
-                (10, -3), // -3 out
-                // (stock = zero for 10 days)
-                (20, 3), // +3 in
-                (25, -3), // -3 out
+                // DOS calculation period
+                (10, 3),  // +3 in
+                (22, -3), // -3 out
+                // (stock = zero for 2 days)
+                (25, 3), // +3 in
+                (26, -3), // -3 out
                          // (stock = zero for 5 more days)
+            ],
+        ))
+        // Is out of stock at the beginning of the period
+        .join(make_movements(
+            test_stock_line_b.clone(),
+            vec![
+                // (day, movement)
+                (5, 10),  // +10 in
+                (6, -10), // +10 out
+                // DOS calculation period
+                // (stock = zero for 3 days)
+                (25, 10), // +10 in
+            ],
+        ))
+        // Is out of stock at the end of the period
+        .join(make_movements(
+            test_stock_line_c.clone(),
+            vec![
+                // (day, movement)
+                (10, 6), // 6 in
+                // DOS calculation period
+                (26, -6), // -6 out
+                          // (stock = zero for 5 days)
+            ],
+        ))
+        // Is out of stock at the start and end of the period
+        .join(make_movements(
+            test_stock_line_d.clone(),
+            vec![
+                // (day, movement)
+                (5, 10),  // +10 in
+                (6, -10), // +10 out
+                // DOS calculation period
+                // (stock = zero for 2 days)
+                (24, 4), // -4 out
+                (25, -4), // -4 out
+                         // (stock = zero for 6 days)
+            ],
+        ))
+        // Is out of stock - no movements during DOS period
+        .join(make_movements(
+            test_stock_line_e.clone(),
+            vec![
+                // (day, movement)
+                (5, 10), // +10 in
+                (6, -10), // +10 out
+                         // DOS calculation period
+                         // (stock = zero for 9 days)
+            ],
+        ))
+        // Is in stock - no movements during DOS period
+        .join(make_movements(
+            test_stock_line_f.clone(),
+            vec![
+                // (day, movement)
+                (5, 10), // +10 in
+                         // DOS calculation period
             ],
         ));
 
@@ -173,29 +278,99 @@ pub(crate) mod test {
 
         let end_date = date_now();
         let offset_end_date = end_date + Duration::days(1);
-        let start_date = date_with_offset(&offset_end_date, Duration::days((30_i32).neg() as i64));
-
-        let item_id = vec![mock_item_a().id.clone()];
+        // Using a short DOS period so that stock movements can be created beforehand
+        let start_date = date_with_offset(&offset_end_date, Duration::days((10_i32).neg() as i64));
         let store_id = mock_store_a().id.clone();
 
-        let filter = ConsumptionFilter {
-            item_id: Some(EqualFilter::equal_any(item_id)),
-            store_id: Some(EqualFilter::equal_to(&store_id)),
-            date: Some(DateFilter::date_range(&start_date, &offset_end_date)),
-        };
-
         let result = DaysOutOfStockRepository::new(&connection)
-            .query(Some(filter))
+            .query(Some(ConsumptionFilter {
+                item_id: Some(EqualFilter::equal_any(vec![mock_item_a().id.clone()])),
+                store_id: Some(EqualFilter::equal_to(&store_id)),
+                date: Some(DateFilter::date_range(&start_date, &offset_end_date)),
+            }))
             .expect("Failed to query days out of stock");
 
-        let expected = vec![
-            DaysOutOfStockRow {
-                item_id: "item_a".to_string(),
-                store_id: "store_a".to_string(),
-                total_dos: 16.0,
-            },
-            // add more rows
-        ];
+        let expected = vec![DaysOutOfStockRow {
+            item_id: "item_a".to_string(),
+            store_id: "store_a".to_string(),
+            total_dos: 8.0,
+        }];
+
+        pretty_assertions::assert_eq!(result, expected);
+
+        let result = DaysOutOfStockRepository::new(&connection)
+            .query(Some(ConsumptionFilter {
+                item_id: Some(EqualFilter::equal_any(vec![mock_item_b().id.clone()])),
+                store_id: Some(EqualFilter::equal_to(&store_id)),
+                date: Some(DateFilter::date_range(&start_date, &offset_end_date)),
+            }))
+            .expect("Failed to query days out of stock");
+
+        let expected = vec![DaysOutOfStockRow {
+            item_id: "item_b".to_string(),
+            store_id: "store_a".to_string(),
+            total_dos: 4.0,
+        }];
+
+        pretty_assertions::assert_eq!(result, expected);
+
+        let result = DaysOutOfStockRepository::new(&connection)
+            .query(Some(ConsumptionFilter {
+                item_id: Some(EqualFilter::equal_any(vec![mock_item_c().id.clone()])),
+                store_id: Some(EqualFilter::equal_to(&store_id)),
+                date: Some(DateFilter::date_range(&start_date, &offset_end_date)),
+            }))
+            .expect("Failed to query days out of stock");
+
+        let expected = vec![DaysOutOfStockRow {
+            item_id: "item_c".to_string(),
+            store_id: "store_a".to_string(),
+            total_dos: 5.0,
+        }];
+
+        pretty_assertions::assert_eq!(result, expected);
+
+        let result = DaysOutOfStockRepository::new(&connection)
+            .query(Some(ConsumptionFilter {
+                item_id: Some(EqualFilter::equal_any(vec![mock_item_d().id.clone()])),
+                store_id: Some(EqualFilter::equal_to(&store_id)),
+                date: Some(DateFilter::date_range(&start_date, &offset_end_date)),
+            }))
+            .expect("Failed to query days out of stock");
+
+        let expected = vec![DaysOutOfStockRow {
+            item_id: "item_d".to_string(),
+            store_id: "store_a".to_string(),
+            total_dos: 9.0,
+        }];
+
+        pretty_assertions::assert_eq!(result, expected);
+
+        let result = DaysOutOfStockRepository::new(&connection)
+            .query(Some(ConsumptionFilter {
+                item_id: Some(EqualFilter::equal_any(vec![mock_item_e().id.clone()])),
+                store_id: Some(EqualFilter::equal_to(&store_id)),
+                date: Some(DateFilter::date_range(&start_date, &offset_end_date)),
+            }))
+            .expect("Failed to query days out of stock");
+
+        let expected = vec![DaysOutOfStockRow {
+            item_id: "item_e".to_string(),
+            store_id: "store_a".to_string(),
+            total_dos: 10.0,
+        }];
+
+        pretty_assertions::assert_eq!(result, expected);
+
+        let result = DaysOutOfStockRepository::new(&connection)
+            .query(Some(ConsumptionFilter {
+                item_id: Some(EqualFilter::equal_any(vec![mock_item_f().id.clone()])),
+                store_id: Some(EqualFilter::equal_to(&store_id)),
+                date: Some(DateFilter::date_range(&start_date, &offset_end_date)),
+            }))
+            .expect("Failed to query days out of stock");
+
+        let expected = [];
 
         pretty_assertions::assert_eq!(result, expected);
     }
