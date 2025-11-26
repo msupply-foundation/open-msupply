@@ -7,7 +7,10 @@ use crate::{
         ShowIndicativeUnitPriceInRequisitions,
     },
     processors::transfer::requisition::RequisitionTransferOutput,
-    requisition::common::get_lines_for_requisition,
+    requisition::common::{
+        get_default_price_list, get_indicative_price_pref, get_item_price_per_unit,
+        get_lines_for_requisition,
+    },
     store_preference::get_store_preferences,
 };
 use chrono::{Months, Utc};
@@ -305,18 +308,12 @@ fn generate_response_requisition_lines(
     request_requisition: &RequisitionRow,
 ) -> Result<Vec<RequisitionLineRow>, RepositoryError> {
     let request_lines = get_lines_for_requisition(connection, &request_requisition.id)?;
-
-    let populate_price_per_unit = ShowIndicativeUnitPriceInRequisitions {}
-        .load(connection, None)
-        .map_err(|e| RepositoryError::DBError {
-            msg: "Could not load ShowIndicativeUnitPriceInRequisitions global preference"
-                .to_string(),
-            extra: e.to_string(),
-        })?;
-
-    let default_price_list = MasterListRepository::new(connection)
-        .query_by_filter(MasterListFilter::new().is_default_price_list(true))?
-        .pop();
+    let populate_price_per_unit = get_indicative_price_pref(connection)?;
+    let default_price_list = if populate_price_per_unit {
+        get_default_price_list(connection)?
+    } else {
+        None
+    };
 
     let mut response_lines = Vec::with_capacity(request_lines.len());
     for RequisitionLine {
@@ -359,18 +356,12 @@ fn generate_response_requisition_lines(
                 // then all sites should be sending through prices anyway (i.e. price_per_unit/new_price_per_unit is Some value!) and making the
                 // Hashmap would be a waste. What this then covers is when you've just turned the global preference on and there are prior requisitions
                 // that don't have a value. We could however make the hashmap on demand though, might still be better than this!
-                // TODO: Transfers from OG/Mobile will likely have 0.0 regardless of the pref being on. maybe we should only use the price list value? Or treat 0.0 the same as None here?
-                new_price_per_unit = MasterListLineRepository::new(connection)
-                    .query_by_filter(
-                        MasterListLineFilter::new()
-                            .master_list_id(EqualFilter::equal_to(
-                                default_price_list.as_ref().unwrap().id.to_string(),
-                            ))
-                            .item_id(EqualFilter::equal_to(item_id.to_string())),
-                        None,
-                    )?
-                    .first()
-                    .and_then(|l| l.price_per_unit);
+                // Note transfers from mobile/OG remote sites will have request_line.price_per_unit = Some(0.0) regardless of the pref...
+                new_price_per_unit = get_item_price_per_unit(
+                    connection,
+                    &item_id,
+                    &default_price_list.as_ref().unwrap().id,
+                )?
             }
             new_price_per_unit
         };
