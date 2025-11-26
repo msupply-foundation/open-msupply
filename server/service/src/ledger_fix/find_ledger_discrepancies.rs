@@ -49,11 +49,12 @@ pub(super) fn find_stock_line_ledger_discrepancies(
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::test_helpers::{
-        make_movements, setup_all_with_data_and_service_provider, ServiceTestContext,
-    };
+    use crate::test_helpers::{setup_all_with_data_and_service_provider, ServiceTestContext};
     use repository::{
-        mock::{mock_item_a, mock_store_a, mock_store_b, MockData, MockDataInserts},
+        mock::{
+            mock_item_a, mock_store_a, mock_store_b, test_helpers::make_movements, MockData,
+            MockDataInserts,
+        },
         InvoiceStatus, KeyValueStoreRepository, StockLineRow,
     };
 
