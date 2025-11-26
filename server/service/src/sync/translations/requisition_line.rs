@@ -16,9 +16,7 @@ use super::{PullTranslateResult, PushTranslateResult, SyncTranslation};
 
 #[derive(Deserialize, Serialize, PartialEq)]
 pub struct RequisitionLineOmsFields {
-    #[serde(deserialize_with = "empty_str_as_option_string")]
     pub rnr_form_line_id: Option<String>,
-    #[serde(deserialize_with = "empty_str_as_option")]
     pub expiry_date: Option<NaiveDate>,
     pub price_per_unit: Option<f64>,
 }
