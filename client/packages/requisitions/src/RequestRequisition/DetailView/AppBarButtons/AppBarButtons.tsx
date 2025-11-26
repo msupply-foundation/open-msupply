@@ -14,11 +14,13 @@ import { AddButton } from './AddButton';
 interface AppBarButtonProps {
   isDisabled: boolean;
   onAddItem: () => void;
+  openUploadModal: () => void;
   showIndicators?: boolean;
 }
 
 export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
   onAddItem,
+  openUploadModal,
   isDisabled,
   showIndicators = false,
 }) => {
@@ -32,6 +34,7 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
       <Grid container gap={1}>
         <AddButton
           onAddItem={onAddItem}
+          openUploadModal={openUploadModal}
           status={data?.status}
           disable={isDisabled || isProgram}
         />
