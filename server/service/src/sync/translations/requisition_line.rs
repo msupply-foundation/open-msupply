@@ -20,6 +20,7 @@ pub struct RequisitionLineOmsFields {
     pub rnr_form_line_id: Option<String>,
     #[serde(deserialize_with = "empty_str_as_option")]
     pub expiry_date: Option<NaiveDate>,
+    pub price_per_unit: Option<f64>,
 }
 
 #[allow(non_snake_case)]
@@ -87,7 +88,6 @@ pub struct LegacyRequisitionLineRow {
     pub oms_fields: Option<RequisitionLineOmsFields>,
 }
 // Needs to be added to all_translators()
-#[deny(dead_code)]
 pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
     Box::new(RequisitionLineTranslation)
 }
@@ -140,7 +140,7 @@ impl SyncTranslation for RequisitionLineTranslation {
             expiring_units: data.expiring_units,
             days_out_of_stock: data.days_out_of_stock,
             option_id: data.option_id,
-            price_per_unit: None, // TODO translate from new OG field om_price_per_unit?
+            price_per_unit: data.oms_fields.and_then(|f| f.price_per_unit),
         };
 
         Ok(PullTranslateResult::upsert(result))
@@ -184,7 +184,7 @@ impl SyncTranslation for RequisitionLineTranslation {
             expiring_units,
             days_out_of_stock,
             option_id,
-            price_per_unit: _, // TODO translate to OG field
+            price_per_unit,
         } = RequisitionLineRowRepository::new(connection)
             .find_one_by_id(&changelog.record_id)?
             .ok_or(anyhow::Error::msg(format!(
@@ -228,6 +228,7 @@ impl SyncTranslation for RequisitionLineTranslation {
         let oms_fields = Some(RequisitionLineOmsFields {
             rnr_form_line_id,
             expiry_date,
+            price_per_unit,
         });
 
         let legacy_row = LegacyRequisitionLineRow {
