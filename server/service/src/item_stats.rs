@@ -286,7 +286,7 @@ mod test {
         service_provider::ServiceProvider,
     };
 
-    use crate::test_helpers::make_movements;
+    use repository::mock::test_helpers::make_movements;
 
     pub(crate) fn mock_data() -> MockData {
         let test_stock_line = StockLineRow {
