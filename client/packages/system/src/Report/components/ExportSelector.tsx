@@ -12,7 +12,7 @@ import {
 export type ExportFormat = 'csv' | 'excel';
 
 export interface ExportSelectorProps {
-  getCsvData: () => string | null | undefined;
+  getCsvData: () => string | null | Promise<string | null>;
   filename: string;
   isLoading?: boolean;
   disabled?: boolean;
@@ -47,8 +47,8 @@ export const ExportSelector = ({
     SplitButtonOption<ExportFormat>
   >(exportOptions[0]);
 
-  const handleExport = (option: SplitButtonOption<ExportFormat>) => {
-    const csv = getCsvData();
+  const handleExport = async (option: SplitButtonOption<ExportFormat>) => {
+    const csv = await getCsvData();
 
     if (!csv) {
       error(t('error.no-data'))();
