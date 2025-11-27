@@ -217,6 +217,7 @@ query labelPrinterSettings {
     labelHeight
     labelWidth
     port
+    isUsb
   }
 }
 
