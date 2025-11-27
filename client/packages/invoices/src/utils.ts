@@ -437,20 +437,20 @@ export const prescriptionToCsv = (
   t: TypedTFunction<LocaleKey>
 ) => {
   const fields: string[] = [
-    'id',
     t('label.name'),
     t('label.status'),
     t('label.invoice-number'),
-    t('label.created'),
+    t('label.prescription-date'),
+    t('label.reference'),
     t('label.comment'),
   ];
 
   const data = invoices.map(node => [
-    node.id,
     node.otherPartyName,
     t(getStatusTranslation(node.status)),
     node.invoiceNumber,
-    Formatter.csvDateTimeString(node.createdDatetime),
+    Formatter.csvDateTimeString(node.prescriptionDate || node.createdDatetime),
+    node.theirReference,
     node.comment,
   ]);
   return Formatter.csv({ fields, data });
