@@ -51,7 +51,6 @@ export const stockLinesToCsv = (
   manageVvmStatusForStock: boolean
 ) => {
   const fields: string[] = [
-    'id',
     t('label.code'),
     t('label.name'),
     t('label.batch'),
@@ -62,11 +61,11 @@ export const stockLinesToCsv = (
     t('label.pack-size'),
     t('label.num-packs'),
     t('label.available-in-packs'),
+    t('label.pack-cost-price'),
     t('label.supplier'),
   ];
 
   const data = stockLines.map(node => [
-    node.id,
     node.item.code,
     node.item.name,
     node.batch,
@@ -77,6 +76,7 @@ export const stockLinesToCsv = (
     node.packSize,
     node.totalNumberOfPacks,
     node.availableNumberOfPacks,
+    node.costPricePerPack,
     node.supplierName,
   ]);
   return Formatter.csv({ fields, data });

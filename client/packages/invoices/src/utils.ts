@@ -363,19 +363,19 @@ export const supplierReturnsToCsv = (
   t: TypedTFunction<LocaleKey>
 ) => {
   const fields: string[] = [
-    'id',
     t('label.name'),
     t('label.status'),
     t('label.invoice-number'),
     t('label.created'),
+    t('label.reference'),
   ];
 
   const data = returns.map(node => [
-    node.id,
     node.otherPartyName,
     node.status,
     node.invoiceNumber,
     Formatter.csvDateTimeString(node.createdDatetime),
+    node.theirReference,
   ]);
   return Formatter.csv({ fields, data });
 };
