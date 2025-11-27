@@ -23,7 +23,7 @@ use crate::{
 };
 
 use super::{
-    convert_to_excel::export_html_report_to_excel,
+    convert_to_excel::{csv_to_excel, export_html_report_to_excel},
     default_queries::get_default_gql_query,
     definition::{
         ConvertDataType, GraphQlQuery, ReportDefinition, ReportDefinitionEntry, ReportRef,
@@ -207,7 +207,7 @@ pub trait ReportServiceTrait: Sync + Send {
         let connection_manager = get_storage_connection_manager(&settings.database);
         let con = connection_manager
             .connection()
-            .map_err(|error| InstallReportError::RepositoryError(error))?;
+            .map_err(InstallReportError::RepositoryError)?;
 
         // default overwrite as true
         // TODO add user input to customise overwrite
@@ -221,6 +221,15 @@ pub trait ReportServiceTrait: Sync + Send {
 
         Ok(reports.iter().map(|r| r.id.clone()).collect())
     }
+
+    fn csv_to_excel(
+        &self,
+        base_dir: &Option<String>,
+        csv_data: &str,
+        filename: &str,
+    ) -> Result<String, ReportError> {
+        csv_to_excel(base_dir, csv_data, filename)
+    }
 }
 
 /// Converts a HTML report to a pdf file and returns the file id
@@ -232,10 +241,10 @@ fn generate_html_report_to_pdf(
     let id = uuid();
     // TODO use a proper tmp dir here instead of base_dir?
     let pdf = html_to_pdf(base_dir, &format_html_document(document), &id)
-        .map_err(|err| ReportError::HTMLToPDFError(format!("{}", err)))?;
+        .map_err(|err| ReportError::HTMLToPDFError(format!("{err}")))?;
 
     let file_service = StaticFileService::new(base_dir)
-        .map_err(|err| ReportError::DocGenerationError(format!("{}", err)))?;
+        .map_err(|err| ReportError::DocGenerationError(format!("{err}")))?;
     let now: DateTime<Utc> = SystemTime::now().into();
     let file = file_service
         .store_file(
@@ -243,7 +252,7 @@ fn generate_html_report_to_pdf(
             StaticFileCategory::Temporary,
             &pdf,
         )
-        .map_err(|err| ReportError::DocGenerationError(format!("{}", err)))?;
+        .map_err(|err| ReportError::DocGenerationError(format!("{err}")))?;
     Ok(file.id)
 }
 
@@ -254,7 +263,7 @@ fn generate_html_report_to_html(
     report_name: String,
 ) -> Result<String, ReportError> {
     let file_service = StaticFileService::new(base_dir)
-        .map_err(|err| ReportError::DocGenerationError(format!("{}", err)))?;
+        .map_err(|err| ReportError::DocGenerationError(format!("{err}")))?;
     let now: DateTime<Utc> = SystemTime::now().into();
     let file = file_service
         .store_file(
@@ -262,7 +271,7 @@ fn generate_html_report_to_html(
             StaticFileCategory::Temporary,
             format_html_document(document).as_bytes(),
         )
-        .map_err(|err| ReportError::DocGenerationError(format!("{}", err)))?;
+        .map_err(|err| ReportError::DocGenerationError(format!("{err}")))?;
     Ok(file.id)
 }
 
@@ -317,7 +326,7 @@ fn get_report(
 ) -> Result<Report, GetReportError> {
     let report = ReportRepository::new(&ctx.connection)
         .query_by_filter(ReportFilter::new().id(EqualFilter::equal_to(id.to_string())))
-        .map_err(|e| GetReportError::RepositoryError(e))?
+        .map_err(GetReportError::RepositoryError)?
         .pop()
         .ok_or(GetReportError::RepositoryError(RepositoryError::NotFound))?;
 
@@ -355,15 +364,13 @@ fn query_reports(
         .query(Pagination::all(), Some(filter), sort)
         .map_err(|err| GetReportsError::ListError(ListError::DatabaseError(err)))?;
 
-    let reports = reports
+    reports
         .into_iter()
         .map(|r| {
             translate_report_arugment_schema(r, localisations, &user_language)
                 .map_err(GetReportsError::TranslationError)
         })
-        .collect::<Result<Vec<Report>, GetReportsError>>();
-
-    reports
+        .collect::<Result<Vec<Report>, GetReportsError>>()
 }
 
 fn query_all_report_versions(
@@ -484,23 +491,20 @@ fn resolve_report_definition(
             ))?;
     if !templates.contains_key(&template) {
         return Err(ReportError::InvalidReportDefinition(format!(
-            "Invalid template reference: {}",
-            template
+            "Invalid template reference: {template}"
         )));
     }
     if let Some(header) = fully_loaded_report.index.header.clone() {
         if !templates.contains_key(&header) {
             return Err(ReportError::InvalidReportDefinition(format!(
-                "Invalid template header reference: {}",
-                header
+                "Invalid template header reference: {header}"
             )));
         }
     }
     if let Some(footer) = fully_loaded_report.index.footer.clone() {
         if !templates.contains_key(&footer) {
             return Err(ReportError::InvalidReportDefinition(format!(
-                "Invalid template footer reference: {}",
-                footer
+                "Invalid template footer reference: {footer}"
             )));
         }
     }
@@ -511,8 +515,7 @@ fn resolve_report_definition(
         .map(|query| match fully_loaded_report.entries.get(query) {
             Some(query_entry) => Ok(query_entry),
             None => Err(ReportError::InvalidReportDefinition(format!(
-                "Invalid query reference: {}",
-                query
+                "Invalid query reference: {query}"
             ))),
         })
         .collect::<Result<Vec<_>, ReportError>>()?;
@@ -592,7 +595,7 @@ fn generate_report(
     })?;
 
     let mut context = tera::Context::from_serialize(report_data).map_err(|err| {
-        ReportError::DocGenerationError(format!("Tera context from data: {:?}", err))
+        ReportError::DocGenerationError(format!("Tera context from data: {err:?}"))
     })?;
     // TODO: Validate if used and if needed
     context.insert("res", &report.resources);
@@ -639,16 +642,16 @@ fn generate_report(
         templates.insert(resource.0.clone(), string_value);
     }
     tera.add_raw_templates(templates.iter()).map_err(|err| {
-        ReportError::DocGenerationError(format!("Failed to add templates: {:?}", err))
+        ReportError::DocGenerationError(format!("Failed to add templates: {err:?}"))
     })?;
 
     let document = tera
         .render(&report.template, &context)
-        .map_err(|err| ReportError::DocGenerationError(format!("Tera rendering: {:?}", err)))?;
+        .map_err(|err| ReportError::DocGenerationError(format!("Tera rendering: {err:?}")))?;
     let header = match &report.header {
         Some(header_key) => {
             let header = tera.render(header_key, &context).map_err(|err| {
-                ReportError::DocGenerationError(format!("Header generation: {}", err))
+                ReportError::DocGenerationError(format!("Header generation: {err}"))
             })?;
             Some(header)
         }
@@ -657,7 +660,7 @@ fn generate_report(
     let footer = match &report.footer {
         Some(footer_ref) => {
             let footer = tera.render(footer_ref, &context).map_err(|err| {
-                ReportError::DocGenerationError(format!("Footer generation: {}", err))
+                ReportError::DocGenerationError(format!("Footer generation: {err}"))
             })?;
             Some(footer)
         }
@@ -761,7 +764,7 @@ fn load_report_definition(
         }
     };
     let def = serde_json::from_str::<ReportDefinition>(&row.template).map_err(|err| {
-        ReportError::InvalidReportDefinition(format!("Can't parse report: {}", err))
+        ReportError::InvalidReportDefinition(format!("Can't parse report: {err}"))
     })?;
     Ok((row.name, def, row.excel_template_buffer))
 }
@@ -804,8 +807,7 @@ fn resolve_ref(
             .entries
             .remove(source_name)
             .ok_or(ReportError::InvalidReportDefinition(format!(
-                "Invalid reference {:?}",
-                ref_entry
+                "Invalid reference {ref_entry:?}"
             )))?;
 
     Ok(entry)

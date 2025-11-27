@@ -7503,6 +7503,7 @@ export type Queries = {
   clinicians: CliniciansResponse;
   contactTraces: ContactTraceResponse;
   contacts: ContactsResponse;
+  csvToExcel: PrintReportResponse;
   currencies: CurrenciesResponse;
   databaseSettings: DatabaseSettingsNode;
   demographicIndicators: DemographicIndicatorsResponse;
@@ -7800,6 +7801,12 @@ export type QueriesContactTracesArgs = {
 
 export type QueriesContactsArgs = {
   nameId: Scalars['String']['input'];
+  storeId: Scalars['String']['input'];
+};
+
+export type QueriesCsvToExcelArgs = {
+  csvData: Scalars['String']['input'];
+  filename: Scalars['String']['input'];
   storeId: Scalars['String']['input'];
 };
 

@@ -58,7 +58,7 @@ pub fn generate_reports_recursive(
     manifest_name: &OsStr,
     path: &PathBuf,
 ) -> Result<(), Error> {
-    if let Some(_) = ignore_paths.iter().find(|p| Some(**p) == path.file_name()) {
+    if ignore_paths.iter().any(|p| Some(*p) == path.file_name()) {
         return Ok(());
     }
     if path.is_file() && Some(manifest_name) == path.file_name() {
@@ -80,7 +80,7 @@ pub fn generate_reports_recursive(
         let next_path = file_or_folder
             .map_err(|e| Error::FailedToGetFileOrDir(path.clone(), e))?
             .path();
-        generate_reports_recursive(reports_data, &ignore_paths, manifest_name, &next_path)?;
+        generate_reports_recursive(reports_data, ignore_paths, manifest_name, &next_path)?;
     }
     Ok(())
 }
@@ -115,11 +115,11 @@ pub fn generate_report_data(path: &PathBuf) -> Result<ReportData, Error> {
         .arguments
         .clone()
         .and_then(|a| a.schema)
-        .and_then(|schema| Some(path.join(schema)));
+        .map(|schema| path.join(schema));
     let arguments_ui_path = manifest
         .arguments
         .and_then(|a| a.ui)
-        .and_then(|ui| Some(path.join(ui)));
+        .map(|ui| path.join(ui));
     let graphql_query = manifest.queries.clone().and_then(|q| q.gql);
     let sql_queries = manifest.queries.clone().and_then(|q| q.sql);
     let query_default = manifest.query_default;
@@ -131,7 +131,7 @@ pub fn generate_report_data(path: &PathBuf) -> Result<ReportData, Error> {
         header: manifest.header,
         footer: manifest.footer,
         query_gql: graphql_query,
-        query_default: query_default,
+        query_default,
         query_sql: sql_queries,
     };
 
@@ -147,7 +147,7 @@ pub fn generate_report_data(path: &PathBuf) -> Result<ReportData, Error> {
         }
         (Some(arguments_path), Some(arguments_ui_path)) => Some(
             schema_from_row(FormSchemaRow {
-                id: (format!("for_report_{}", id)),
+                id: (format!("for_report_{id}")),
                 r#type: "reportArgument".to_string(),
                 json_schema: fs::read_to_string(arguments_path)
                     .map_err(|e| Error::CannotReadSchemaFile(path.clone(), e))?,
