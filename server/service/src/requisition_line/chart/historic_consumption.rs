@@ -9,7 +9,7 @@ use util::{date_with_months_offset, first_day_of_the_month, last_day_of_the_mont
 
 use crate::{
     common::days_in_a_month,
-    preference::{AdjustForNumberOfDaysOutOfStock, ExcludeTransfers, Preference},
+    preference::{AdjustForNumberOfDaysOutOfStock, Preference},
 };
 
 #[derive(Clone, Debug, PartialEq)]
@@ -47,9 +47,6 @@ pub fn get_historic_consumption_for_item(
 
     let days_in_month: f64 = days_in_a_month(connection);
 
-    // Calculate historic consumption
-    let exclude_transfers = ExcludeTransfers.load(connection, None).unwrap_or(false);
-
     let adjust_for_days_out_of_stock = AdjustForNumberOfDaysOutOfStock
         .load(connection, None)
         .unwrap_or(false);
@@ -73,7 +70,6 @@ pub fn get_historic_consumption_for_item(
                 point,
                 &consumption_rows,
                 days_in_month,
-                exclude_transfers,
                 adjusted_days_out_of_stock,
             )
         })
@@ -155,14 +151,11 @@ fn calculate_consumption(
     }: ConsumptionHistoryPoint,
     consumption_rows: &Vec<ConsumptionRow>,
     days_in_month: f64,
-    exclude_transfers: bool,
     adjusted_days_out_of_stock: f64,
 ) -> ConsumptionHistory {
     // https://github.com/openmsupply/remote-server/issues/972
     let total_consumption_amc = consumption_rows.iter().fold(0.0, |sum, row| {
-        if within_range(&start_of_amc_lookup, &end_of_amc_lookup, &row.date)
-            && (!exclude_transfers || !row.is_transfer)
-        {
+        if within_range(&start_of_amc_lookup, &end_of_amc_lookup, &row.date) {
             sum + row.quantity
         } else {
             sum
@@ -271,7 +264,6 @@ mod tests {
             setup_all("calculate historic consumption", MockDataInserts::none()).await;
         let days_in_month: f64 = days_in_a_month(&connection);
 
-        let mut exclude_transfers = false;
         let mut adjust_for_dos = 1.0; // item in stock on all days
 
         fn amc_months_helper(
@@ -279,16 +271,13 @@ mod tests {
             start_of_amc_lookup: NaiveDate,
             days_in_month: f64,
         ) -> f64 {
-            let amc_months =
-                (end_of_amc_lookup - start_of_amc_lookup).num_days() as f64 / days_in_month;
-            amc_months
+            (end_of_amc_lookup - start_of_amc_lookup).num_days() as f64 / days_in_month
         }
 
         let consumption_rows = vec![
             ConsumptionRow {
                 date: NaiveDate::from_ymd_opt(2021, 2, 1).unwrap(),
                 quantity: 1000.0,
-                is_transfer: true,
                 ..Default::default()
             },
             ConsumptionRow {
@@ -304,7 +293,6 @@ mod tests {
             ConsumptionRow {
                 date: NaiveDate::from_ymd_opt(2020, 12, 3).unwrap(),
                 quantity: 10.0,
-                is_transfer: true,
                 ..Default::default()
             },
             ConsumptionRow {
@@ -315,7 +303,6 @@ mod tests {
             ConsumptionRow {
                 date: NaiveDate::from_ymd_opt(2020, 11, 11).unwrap(),
                 quantity: 10.0,
-                is_transfer: true,
                 ..Default::default()
             },
             ConsumptionRow {
@@ -326,7 +313,6 @@ mod tests {
             ConsumptionRow {
                 date: NaiveDate::from_ymd_opt(2020, 10, 7).unwrap(),
                 quantity: 10.0,
-                is_transfer: true,
                 ..Default::default()
             },
             ConsumptionRow {
@@ -362,7 +348,6 @@ mod tests {
                 },
                 &consumption_rows,
                 days_in_month,
-                exclude_transfers,
                 adjust_for_dos
             ),
             ConsumptionHistory {
@@ -374,33 +359,6 @@ mod tests {
             }
         );
 
-        // Exclude transfers
-        exclude_transfers = true;
-        assert_eq!(
-            calculate_consumption(
-                ConsumptionHistoryPoint {
-                    reference_date: end_date,
-                    start_of_consumption_lookup: start_date,
-                    end_of_consumption_lookup: end_date,
-                    start_of_amc_lookup: amc_start,
-                    end_of_amc_lookup: end_of_amc,
-                },
-                &consumption_rows,
-                days_in_month,
-                exclude_transfers,
-                adjust_for_dos
-            ),
-            ConsumptionHistory {
-                consumption: 20,
-                average_monthly_consumption: 50_f64
-                    / amc_months_helper(end_of_amc, amc_start, days_in_month)
-                    * adjust_for_dos,
-                date: end_date
-            }
-        );
-
-        // Use a DOS adjustment
-        exclude_transfers = false;
         adjust_for_dos = 1.5; // 1/3 of days out of stock eg 10 days out of 30
 
         assert_eq!(
@@ -414,7 +372,6 @@ mod tests {
                 },
                 &consumption_rows,
                 days_in_month,
-                exclude_transfers,
                 adjust_for_dos
             ),
             ConsumptionHistory {

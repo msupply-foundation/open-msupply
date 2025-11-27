@@ -22,13 +22,12 @@ pub struct UpsertPreferences {
     pub show_contact_tracing: Option<bool>,
     pub sync_records_display_threshold: Option<i32>,
     pub warning_for_excess_request: Option<bool>,
-    pub use_days_in_month: Option<bool>,
     pub adjust_for_number_of_days_out_of_stock: Option<bool>,
     pub days_in_month: Option<f64>,
-    pub exclude_transfers: Option<bool>,
     pub expired_stock_prevent_issue: Option<bool>,
     pub expired_stock_issue_threshold: Option<i32>,
     pub show_indicative_unit_price_in_requisitions:Option<bool>,
+
 
     // Store preferences
     pub manage_vaccines_in_doses: Option<Vec<StorePrefUpdate<bool>>>,
@@ -66,10 +65,8 @@ pub fn upsert_preferences(
             prevent_transfers_months_before_initialisation_input,
         show_contact_tracing: show_contact_tracing_input,
         sync_records_display_threshold: sync_records_display_threshold_input,
-        use_days_in_month: use_days_in_month_input,
         adjust_for_number_of_days_out_of_stock: adjust_for_number_of_days_out_of_stock_input,
         days_in_month: days_in_month_input,
-        exclude_transfers: exclude_transfers_input,
         expired_stock_prevent_issue: expired_stock_prevent_issue_input,
         expired_stock_issue_threshold: expired_stock_issue_threshold_input,
         show_indicative_unit_price_in_requisitions: show_indicative_unit_price_in_requisitions_input,
@@ -110,10 +107,8 @@ pub fn upsert_preferences(
         prevent_transfers_months_before_initialisation,
         show_contact_tracing,
         sync_records_display_threshold,
-        use_days_in_month,
         adjust_for_number_of_days_out_of_stock,
         days_in_month,
-        exclude_transfers,
         expired_stock_prevent_issue,
         expired_stock_issue_threshold,
         show_indicative_unit_price_in_requisitions,
@@ -179,10 +174,6 @@ pub fn upsert_preferences(
                 warning_for_excess_request.upsert(connection, input, None)?;
             }
 
-            if let Some(input) = use_days_in_month_input {
-                use_days_in_month.upsert(connection, input, None)?;
-            }
-
             if let Some(input) = adjust_for_number_of_days_out_of_stock_input {
                 adjust_for_number_of_days_out_of_stock.upsert(connection, input, None)?;
             }
@@ -190,11 +181,6 @@ pub fn upsert_preferences(
             if let Some(input) = days_in_month_input {
                 days_in_month.upsert(connection, input, None)?;
             }
-            
-            if let Some(input) = exclude_transfers_input {
-                exclude_transfers.upsert(connection, input, None)?;
-            }
-            
             if let Some(input) = expired_stock_prevent_issue_input {
                 expired_stock_prevent_issue.upsert(connection, input, None)?;
             }

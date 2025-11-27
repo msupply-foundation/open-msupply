@@ -1,7 +1,7 @@
 pub mod amc;
+pub mod get_consumption;
 pub mod graphql_query;
 pub mod processor;
-pub mod sync_essential_item_list;
 pub mod transform_request_requisition_lines;
 
 pub mod generate_typescript_types {
@@ -30,12 +30,11 @@ pub mod generate_typescript_types {
     struct PluginTypes {
         // Fields here must match PluginTypes in backend_plugin_row repository
         average_monthly_consumption: Function<amc::Input, amc::Output>,
-        sync_essential_item_list:
-            Function<sync_essential_item_list::Input, sync_essential_item_list::Output>,
         transform_request_requisition_lines: Function<
             transform_request_requisition_lines::Input,
             transform_request_requisition_lines::Output,
         >,
+        get_consumption: Function<get_consumption::Input, get_consumption::Output>,
         graphql_query: Function<graphql_query::Input, graphql_query::Output>,
         processor: Function<processor::Input, processor::Output>,
         // Extra types to expose, not directly related to plugin interface
