@@ -15,7 +15,7 @@ export type CsvToExcelParams = {
 export const useCsvToExcel = () => {
   const t = useTranslation();
   const { reportApi, storeId } = useReportGraphQL();
-  const { error, success } = useNotification();
+  const { error } = useNotification();
   const downloadFile = useDownloadFile();
 
   const mutationFn = async (params: CsvToExcelParams) => {
@@ -47,7 +47,6 @@ export const useCsvToExcel = () => {
       }
       const url = `${Environment.FILE_URL}${fileId}`;
       downloadFile(url);
-      success(t('messages.downloaded-excel-successfully'))();
     },
     onError: (e: Error) => {
       error(e.message)();
