@@ -7,15 +7,33 @@ import {
   useNotification,
   LoadingButton,
   useDisabledNotificationPopover,
+  useNativeClient,
+  Typography,
 } from '@openmsupply-client/common';
 
 import { useAssets } from '../api';
 import { UpdateStatusButton } from './UpdateStatusButton';
 import { Environment } from '@openmsupply-client/config';
 
+interface ZebraPrinterDevice {
+  connection: string;
+  deviceType: string;
+  send: (
+    zpl: string,
+    successCallback: (response: unknown) => void,
+    errorCallback: (error: unknown) => void
+  ) => void;
+}
+
+interface BrowserPrintGlobal {
+  getLocalDevices: (
+    callback: (device: { printer: ZebraPrinterDevice[] }) => void
+  ) => void;
+}
+
 declare global {
   interface Window {
-    BrowserPrint?: any;
+    BrowserPrint?: BrowserPrintGlobal;
   }
 }
 
@@ -25,10 +43,15 @@ export const AppBarButtonsComponent = () => {
   const { error, success } = useNotification();
   const { data: settings } = useAssets.utils.labelPrinterSettings();
   const [isPrinting, setIsPrinting] = React.useState(false);
+  const [deviceListResult, setDeviceListResult] = React.useState<string | null>(
+    null
+  );
+
   const { show, DisabledNotification } = useDisabledNotificationPopover({
     title: t('heading.unable-to-print'),
     message: t('error.label-printer-not-configured'),
   });
+  const { printZpl } = useNativeClient();
   const onClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     if (settings === null) {
       show(e);
@@ -95,26 +118,20 @@ export const AppBarButtonsComponent = () => {
 
       const result = await response.json();
 
-      if (window.BrowserPrint && result.zpl) {
-        window.BrowserPrint.getLocalDevices(function (device) {
-          const usbConnectedPrinter = device.printer.find(
-            d => d.connection === 'usb' && d.deviceType === 'printer'
-          );
-          if (usbConnectedPrinter) {
-            usbConnectedPrinter?.send(
-              result.zpl,
-              function (success) {
-                console.log('success', success);
-              },
-              function (error) {
-                console.error(error);
-              }
-            );
-          }
-        });
-      } else {
-        error(t('error.label-printer-not-configured'))();
+      if (printZpl) {
+        const response = await printZpl(result.zpl);
+        setDeviceListResult(JSON.stringify(response, null, 2));
       }
+
+      // TODO: Add support for browser down here:
+
+      // if (window.BrowserPrint && result.zpl) {
+      //   window.BrowserPrint.getLocalDevices(function (device) {
+      //     console.log(device);
+      //   });
+      // } else {
+      //   error(t('error.label-printer-not-configured'))();
+      // }
     } catch (e: any) {
       error(`${t('error.printing-label')}: ${e.message}`)();
     } finally {
@@ -141,6 +158,11 @@ export const AppBarButtonsComponent = () => {
           variant="outlined"
         />
       </Grid>
+      {deviceListResult && (
+        <Typography variant="body2" sx={{ mt: 2, whiteSpace: 'pre-wrap' }}>
+          {deviceListResult}
+        </Typography>
+      )}
       <DisabledNotification />
     </AppBarButtonsPortal>
   );
