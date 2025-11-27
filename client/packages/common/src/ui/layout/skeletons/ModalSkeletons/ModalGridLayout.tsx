@@ -1,5 +1,5 @@
 import React from 'react';
-import { Grid } from '..';
+import { Grid } from '../..';
 
 interface LayoutProps {
   Top: React.ReactElement;

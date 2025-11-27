@@ -36,7 +36,7 @@ pub fn check_asset_number_exists(
 ) -> Result<Vec<Asset>, RepositoryError> {
     let mut filter = AssetFilter::new().asset_number(StringFilter::equal_to(asset_number));
     if let Some(updated_asset_id) = updated_asset_id {
-        filter = filter.id(EqualFilter::not_equal_to(&updated_asset_id));
+        filter = filter.id(EqualFilter::not_equal_to(updated_asset_id.to_string()));
     }
     AssetRepository::new(connection).query_by_filter(filter)
 }
@@ -78,7 +78,7 @@ pub fn check_locations_are_assigned(
     AssetInternalLocationRepository::new(connection).query_by_filter(
         AssetInternalLocationFilter::new()
             .location_id(EqualFilter::equal_any(location_ids))
-            .asset_id(EqualFilter::not_equal_to(asset_id)),
+            .asset_id(EqualFilter::not_equal_to(asset_id.to_string())),
     )
 }
 
@@ -90,7 +90,7 @@ pub fn check_locations_belong_to_store(
     let locations = LocationRepository::new(connection).query_by_filter(
         LocationFilter::new()
             .id(EqualFilter::equal_any(location_ids))
-            .store_id(EqualFilter::not_equal_to(store_id)),
+            .store_id(EqualFilter::not_equal_to(store_id.to_string())),
     )?;
     if !locations.is_empty() {
         return Err(UpdateAssetError::LocationDoesNotBelongToStore);

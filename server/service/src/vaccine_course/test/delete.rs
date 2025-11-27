@@ -23,7 +23,7 @@ mod delete {
         let service = service_provider.vaccine_course_service;
 
         assert_eq!(
-            service.delete_vaccine_course(&context, "invalid_id".to_owned()),
+            service.delete_vaccine_course(&context, "invalid_id".to_string()),
             Err(DeleteVaccineCourseError::VaccineCourseDoesNotExist)
         );
     }
@@ -39,8 +39,8 @@ mod delete {
 
         // Create vaccine course
         let vaccine_course = InsertVaccineCourse {
-            id: "vaccine_course_to_delete".to_owned(),
-            name: "vaccine_course_name".to_owned(),
+            id: "vaccine_course_to_delete".to_string(),
+            name: "vaccine_course_name".to_string(),
             program_id: mock_immunisation_program_a().id.clone(),
             vaccine_items: vec![],
             doses: vec![VaccineCourseDoseInput {
@@ -64,7 +64,7 @@ mod delete {
 
         // Check it is found
         let course_filter =
-            VaccineCourseFilter::new().id(EqualFilter::equal_to(&vaccine_course.id));
+            VaccineCourseFilter::new().id(EqualFilter::equal_to(vaccine_course.id.to_string()));
 
         let courses = service
             .get_vaccine_courses(&context.connection, None, Some(course_filter.clone()), None)
@@ -73,7 +73,7 @@ mod delete {
         assert_eq!(courses.count, 1);
 
         let dose_filter = VaccineCourseDoseFilter::new()
-            .vaccine_course_id(EqualFilter::equal_to(&vaccine_course.id));
+            .vaccine_course_id(EqualFilter::equal_to(vaccine_course.id.to_string()));
 
         let dose_repo = VaccineCourseDoseRepository::new(&context.connection);
 

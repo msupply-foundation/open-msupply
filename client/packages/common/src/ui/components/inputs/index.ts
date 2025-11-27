@@ -11,3 +11,4 @@ export * from './Filters';
 export * from './Upload';
 export * from './PropertyInput';
 export * from './GenderInput';
+export * from './ModalInputs';

@@ -3,9 +3,9 @@ use chrono::{Duration, NaiveDate};
 
 pub fn mock_sensor_1() -> SensorRow {
     SensorRow {
-        id: "sensor_1".to_owned(),
-        serial: "serial_sensor_1".to_owned(),
-        name: "name_sensor_1".to_owned(),
+        id: "sensor_1".to_string(),
+        serial: "serial_sensor_1".to_string(),
+        name: "name_sensor_1".to_string(),
         is_active: false,
         store_id: "store_a".to_string(),
         location_id: None,
@@ -24,9 +24,9 @@ pub fn mock_sensor_1() -> SensorRow {
 
 pub fn mock_sensor_is_active() -> SensorRow {
     SensorRow {
-        id: "sensor_is_active".to_owned(),
-        serial: "serial_sensor_is_active".to_owned(),
-        name: "name_sensor_is_active".to_owned(),
+        id: "sensor_is_active".to_string(),
+        serial: "serial_sensor_is_active".to_string(),
+        name: "name_sensor_is_active".to_string(),
         is_active: true,
         store_id: "store_a".to_string(),
         location_id: None,
@@ -46,9 +46,9 @@ pub fn mock_sensor_is_active() -> SensorRow {
 // For case insensitive sort
 pub fn mock_sensor_2() -> SensorRow {
     SensorRow {
-        id: "sensor_2".to_owned(),
-        serial: "serial_SeNsoR_2".to_owned(),
-        name: "name_SeNsoR_2".to_owned(),
+        id: "sensor_2".to_string(),
+        serial: "serial_SeNsoR_2".to_string(),
+        name: "name_SeNsoR_2".to_string(),
         is_active: false,
         store_id: "store_a".to_string(),
         location_id: None,
@@ -68,9 +68,9 @@ pub fn mock_sensor_2() -> SensorRow {
 // Sensor in another store, for unique serial check
 pub fn mock_sensor_in_another_store() -> SensorRow {
     SensorRow {
-        id: "sensor_in_another_store".to_owned(),
-        serial: "store_b_sensor".to_owned(),
-        name: "store_b_sensor_name".to_owned(),
+        id: "sensor_in_another_store".to_string(),
+        serial: "store_b_sensor".to_string(),
+        name: "store_b_sensor_name".to_string(),
         is_active: true,
         store_id: "store_b".to_string(),
         location_id: None,

@@ -23,18 +23,20 @@ import {
   useDeleteConfirmation,
   useNavigate,
   UNDEFINED_STRING_VALUE,
+  usePreferences,
+  usePluginProvider,
 } from '@openmsupply-client/common';
 import { useRequest } from '../api';
 import { AppRoute } from '@openmsupply-client/config';
 import { OrderInfoSection } from './OrderInfoSection';
 
 const ProgramInfoSection: FC = () => {
+  const t = useTranslation();
   const { orderType, programName, period } = useRequest.document.fields([
     'orderType',
     'programName',
     'period',
   ]);
-  const t = useTranslation();
 
   return programName ? (
     <DetailPanelSection title={t('heading.program-info')}>
@@ -123,7 +125,11 @@ const RelatedDocumentsRow: FC<{
 const RelatedDocumentsSection: FC = () => {
   const t = useTranslation();
   const { localisedDate: d } = useFormatDateTime();
-  const { shipments } = useRequest.document.fields('shipments');
+  const { canCreateInternalOrderFromARequisition = false } = usePreferences();
+  const { shipments, createdFromRequisition } = useRequest.document.fields([
+    'shipments',
+    'createdFromRequisition',
+  ]);
 
   const getTooltip = (createdDatetime: string, username?: string) => {
     let tooltip = t('messages.inbound-shipment-created-on', {
@@ -160,6 +166,27 @@ const RelatedDocumentsSection: FC = () => {
             </Grid>
           </Tooltip>
         ))}
+        {canCreateInternalOrderFromARequisition && createdFromRequisition && (
+          <Tooltip
+            key={createdFromRequisition?.id}
+            title={getTooltip(
+              createdFromRequisition?.createdDatetime,
+              createdFromRequisition?.user?.username ?? UNDEFINED_STRING_VALUE
+            )}
+          >
+            <Grid>
+              <RelatedDocumentsRow
+                key={createdFromRequisition?.id}
+                label={t('label.created-from-requisition')}
+                value={createdFromRequisition?.requisitionNumber}
+                to={RouteBuilder.create(AppRoute.Distribution)
+                  .addPart(AppRoute.CustomerRequisition)
+                  .addPart(createdFromRequisition?.id ?? '')
+                  .build()}
+              />
+            </Grid>
+          </Tooltip>
+        )}
       </Grid>
     </DetailPanelSection>
   );
@@ -171,6 +198,7 @@ export const SidePanel: FC = () => {
   const { success } = useNotification();
   const { mutateAsync } = useRequest.document.delete();
   const { data } = useRequest.document.get();
+  const { plugins } = usePluginProvider();
   const canDelete = data?.status === RequisitionNodeStatus.Draft;
 
   const deleteAction = async () => {
@@ -224,6 +252,10 @@ export const SidePanel: FC = () => {
       <ProgramInfoSection />
       <AdditionalInfoSection />
       <RelatedDocumentsSection />
+      {data &&
+        plugins.requestRequisition?.sidePanelSection?.map((Plugin, index) => (
+          <Plugin key={index} requisition={data} />
+        ))}
     </DetailPanelPortal>
   );
 };

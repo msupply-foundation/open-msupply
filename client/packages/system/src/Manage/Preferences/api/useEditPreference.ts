@@ -10,13 +10,14 @@ import {
 import { usePreferencesGraphQL } from './usePreferencesGraphQL';
 import { useAdminPrefsList } from './useAdminPrefsList';
 import { PREFERENCE_DESCRIPTION_QUERY_KEY } from './keys';
+import { inputValidation } from './utils';
 
 export const useEditPreferences = (
   prefType: PreferenceNodeType,
   storeId?: string
 ) => {
   const t = useTranslation();
-  const { error } = useNotification();
+  const { error, warning } = useNotification();
 
   const { data } = useAdminPrefsList(prefType, storeId);
   const { mutateAsync } = useUpsertPref();
@@ -24,6 +25,8 @@ export const useEditPreferences = (
   const update = async (
     input: Partial<UpsertPreferencesInput>
   ): Promise<boolean /* wasSuccessful */> => {
+    if (!inputValidation(input, t, warning)) return false;
+
     try {
       await mutateAsync(input);
       return true;

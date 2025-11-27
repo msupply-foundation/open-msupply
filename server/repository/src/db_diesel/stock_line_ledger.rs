@@ -256,7 +256,7 @@ mod tests {
 
         let repo = StockLineLedgerRepository::new(&storage_connection);
         let filter = StockLineLedgerFilter::new()
-            .stock_line_id(EqualFilter::equal_to("ledger_stock_line_a"));
+            .stock_line_id(EqualFilter::equal_to("ledger_stock_line_a".to_string()));
         let sort = StockLineLedgerSort {
             key: StockLineLedgerSortField::Datetime,
             desc: Some(true),

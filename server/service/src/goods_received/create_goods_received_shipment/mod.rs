@@ -62,7 +62,7 @@ pub fn create_goods_received_shipment(
             activity_log_entry(
                 ctx,
                 ActivityLogType::InvoiceCreated,
-                Some(invoice.id.to_owned()),
+                Some(invoice.id.to_string()),
                 None,
                 None,
             )?;

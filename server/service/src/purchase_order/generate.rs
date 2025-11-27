@@ -17,7 +17,7 @@ pub fn generate_empty_purchase_order_lines(
     let stocks_on_hand = StockOnHandRepository::new(&ctx.connection).query(Some(
         StockOnHandFilter::new()
             .item_id(EqualFilter::equal_any(item_ids.clone()))
-            .store_id(EqualFilter::equal_to(&purchase_order_row.store_id.clone())),
+            .store_id(EqualFilter::equal_to(purchase_order_row.store_id.clone().to_owned())),
     ))?;
 
     for item_id in item_ids {

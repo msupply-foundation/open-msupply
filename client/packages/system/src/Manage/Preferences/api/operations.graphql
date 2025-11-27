@@ -1,3 +1,9 @@
+fragment AdminPreference on PreferenceDescriptionNode {
+  key
+  valueType
+  value
+}
+
 query adminPreferenceList(
   $storeId: String!
   $prefType: PreferenceNodeType!
@@ -8,9 +14,7 @@ query adminPreferenceList(
     prefType: $prefType
     prefContext: $prefContext
   ) {
-    key
-    valueType
-    value
+    ...AdminPreference
   }
 }
 

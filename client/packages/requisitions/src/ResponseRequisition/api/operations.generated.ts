@@ -8,6 +8,7 @@ import {
 } from '../../RequestRequisition/api/operations.generated';
 import { ItemWithStatsFragmentDoc } from '../../../../system/src/RequestRequisitionLine/operations.generated';
 import { ReasonOptionRowFragmentDoc } from '../../../../system/src/ReasonOption/api/operations.generated';
+import { SyncFileReferenceFragmentDoc } from '../../../../system/src/Documents/types.generated';
 type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
 export type UpdateResponseMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
@@ -159,6 +160,16 @@ export type ResponseFragment = {
   programName?: string | null;
   orderType?: string | null;
   isEmergency: boolean;
+  documents: {
+    __typename: 'SyncFileReferenceConnector';
+    nodes: Array<{
+      __typename: 'SyncFileReferenceNode';
+      id: string;
+      fileName: string;
+      recordId: string;
+      createdDatetime: string;
+    }>;
+  };
   user?: {
     __typename: 'UserNode';
     username: string;
@@ -261,6 +272,16 @@ export type ResponseFragment = {
     name: string;
     store?: { __typename: 'StoreNode'; id: string; code: string } | null;
   };
+  destinationCustomer?: {
+    __typename: 'NameNode';
+    id: string;
+    code: string;
+    isCustomer: boolean;
+    isSupplier: boolean;
+    isOnHold: boolean;
+    name: string;
+    store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+  } | null;
   program?: { __typename: 'ProgramNode'; id: string; name: string } | null;
   period?: {
     __typename: 'PeriodNode';
@@ -301,6 +322,16 @@ export type ResponseByNumberQuery = {
         programName?: string | null;
         orderType?: string | null;
         isEmergency: boolean;
+        documents: {
+          __typename: 'SyncFileReferenceConnector';
+          nodes: Array<{
+            __typename: 'SyncFileReferenceNode';
+            id: string;
+            fileName: string;
+            recordId: string;
+            createdDatetime: string;
+          }>;
+        };
         user?: {
           __typename: 'UserNode';
           username: string;
@@ -403,6 +434,16 @@ export type ResponseByNumberQuery = {
           name: string;
           store?: { __typename: 'StoreNode'; id: string; code: string } | null;
         };
+        destinationCustomer?: {
+          __typename: 'NameNode';
+          id: string;
+          code: string;
+          isCustomer: boolean;
+          isSupplier: boolean;
+          isOnHold: boolean;
+          name: string;
+          store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+        } | null;
         program?: {
           __typename: 'ProgramNode';
           id: string;
@@ -451,6 +492,16 @@ export type ResponseByIdQuery = {
         programName?: string | null;
         orderType?: string | null;
         isEmergency: boolean;
+        documents: {
+          __typename: 'SyncFileReferenceConnector';
+          nodes: Array<{
+            __typename: 'SyncFileReferenceNode';
+            id: string;
+            fileName: string;
+            recordId: string;
+            createdDatetime: string;
+          }>;
+        };
         user?: {
           __typename: 'UserNode';
           username: string;
@@ -553,6 +604,16 @@ export type ResponseByIdQuery = {
           name: string;
           store?: { __typename: 'StoreNode'; id: string; code: string } | null;
         };
+        destinationCustomer?: {
+          __typename: 'NameNode';
+          id: string;
+          code: string;
+          isCustomer: boolean;
+          isSupplier: boolean;
+          isOnHold: boolean;
+          name: string;
+          store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+        } | null;
         program?: {
           __typename: 'ProgramNode';
           id: string;
@@ -588,7 +649,19 @@ export type ResponseRowFragment = {
   otherPartyId: string;
   approvalStatus: Types.RequisitionNodeApprovalStatus;
   programName?: string | null;
+  maxMonthsOfStock: number;
+  minMonthsOfStock: number;
   orderType?: string | null;
+  documents: {
+    __typename: 'SyncFileReferenceConnector';
+    nodes: Array<{
+      __typename: 'SyncFileReferenceNode';
+      id: string;
+      fileName: string;
+      recordId: string;
+      createdDatetime: string;
+    }>;
+  };
   period?: {
     __typename: 'PeriodNode';
     name: string;
@@ -628,7 +701,19 @@ export type ResponsesQuery = {
       otherPartyId: string;
       approvalStatus: Types.RequisitionNodeApprovalStatus;
       programName?: string | null;
+      maxMonthsOfStock: number;
+      minMonthsOfStock: number;
       orderType?: string | null;
+      documents: {
+        __typename: 'SyncFileReferenceConnector';
+        nodes: Array<{
+          __typename: 'SyncFileReferenceNode';
+          id: string;
+          fileName: string;
+          recordId: string;
+          createdDatetime: string;
+        }>;
+      };
       period?: {
         __typename: 'PeriodNode';
         name: string;
@@ -1020,6 +1105,24 @@ export type UpdateIndicatorValueMutation = {
       };
 };
 
+export type InsertRequestFromResponseRequisitionMutationVariables =
+  Types.Exact<{
+    storeId: Types.Scalars['String']['input'];
+    input: Types.InsertFromResponseRequisitionInput;
+  }>;
+
+export type InsertRequestFromResponseRequisitionMutation = {
+  __typename: 'Mutations';
+  insertFromResponseRequisition:
+    | {
+        __typename: 'InsertFromResponseRequisitionError';
+        error:
+          | { __typename: 'OtherPartyNotASupplier'; description: string }
+          | { __typename: 'OtherPartyNotVisible'; description: string };
+      }
+    | { __typename: 'RequisitionNode'; id: string };
+};
+
 export const ResponseLineFragmentDoc = gql`
   fragment ResponseLine on RequisitionLineNode {
     id
@@ -1087,6 +1190,12 @@ export const ResponseFragmentDoc = gql`
     maxMonthsOfStock
     minMonthsOfStock
     approvalStatus
+    documents {
+      __typename
+      nodes {
+        ...SyncFileReference
+      }
+    }
     user {
       __typename
       username
@@ -1132,6 +1241,19 @@ export const ResponseFragmentDoc = gql`
         code
       }
     }
+    destinationCustomer(storeId: $storeId) {
+      __typename
+      id
+      code
+      isCustomer
+      isSupplier
+      isOnHold
+      name
+      store {
+        id
+        code
+      }
+    }
     programName
     program {
       id
@@ -1149,6 +1271,7 @@ export const ResponseFragmentDoc = gql`
     orderType
     isEmergency
   }
+  ${SyncFileReferenceFragmentDoc}
   ${ResponseLineFragmentDoc}
 `;
 export const ResponseRowFragmentDoc = gql`
@@ -1167,6 +1290,14 @@ export const ResponseRowFragmentDoc = gql`
     otherPartyId
     approvalStatus
     programName
+    maxMonthsOfStock
+    minMonthsOfStock
+    documents {
+      __typename
+      nodes {
+        ...SyncFileReference
+      }
+    }
     period {
       name
       startDate
@@ -1178,6 +1309,7 @@ export const ResponseRowFragmentDoc = gql`
       totalCount
     }
   }
+  ${SyncFileReferenceFragmentDoc}
 `;
 export const CannotDeleteLineLinkedToShipmentErrorFragmentDoc = gql`
   fragment CannotDeleteLineLinkedToShipmentError on CannotDeleteLineLinkedToShipment {
@@ -1686,6 +1818,33 @@ export const UpdateIndicatorValueDocument = gql`
     }
   }
 `;
+export const InsertRequestFromResponseRequisitionDocument = gql`
+  mutation insertRequestFromResponseRequisition(
+    $storeId: String!
+    $input: InsertFromResponseRequisitionInput!
+  ) {
+    insertFromResponseRequisition(input: $input, storeId: $storeId) {
+      ... on RequisitionNode {
+        __typename
+        id
+      }
+      ... on InsertFromResponseRequisitionError {
+        __typename
+        error {
+          description
+          ... on OtherPartyNotASupplier {
+            __typename
+            description
+          }
+          ... on OtherPartyNotVisible {
+            __typename
+            description
+          }
+        }
+      }
+    }
+  }
+`;
 
 export type SdkFunctionWrapper = <T>(
   action: (requestHeaders?: Record<string, string>) => Promise<T>,
@@ -1972,6 +2131,22 @@ export function getSdk(
             { ...requestHeaders, ...wrappedRequestHeaders }
           ),
         'updateIndicatorValue',
+        'mutation',
+        variables
+      );
+    },
+    insertRequestFromResponseRequisition(
+      variables: InsertRequestFromResponseRequisitionMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders
+    ): Promise<InsertRequestFromResponseRequisitionMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<InsertRequestFromResponseRequisitionMutation>(
+            InsertRequestFromResponseRequisitionDocument,
+            variables,
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
+        'insertRequestFromResponseRequisition',
         'mutation',
         variables
       );

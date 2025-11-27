@@ -19,6 +19,15 @@ use util::sync_serde::{
     empty_str_as_option, empty_str_as_option_string, zero_date_as_option,
 };
 
+#[allow(non_snake_case)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
+pub struct OmsFields {
+    #[serde(default)]
+    pub created_from_requisition_id: Option<String>,
+    #[serde(default)]
+    pub original_customer_id: Option<String>,
+}
+
 #[derive(Deserialize, Serialize, Debug, PartialEq)]
 pub enum LegacyRequisitionType {
     /// A response to the request created for the supplying store
@@ -158,6 +167,8 @@ pub struct LegacyRequisitionRow {
     pub programID: Option<String>,
     #[serde(default)]
     pub is_emergency: bool,
+    #[serde(default)]
+    pub oms_fields: Option<OmsFields>,
 }
 
 /// When mSupply central creates transfers it copies over all of the data
@@ -309,6 +320,11 @@ impl SyncTranslation for RequisitionTranslation {
             period_id: data.periodID,
             order_type: data.orderType,
             is_emergency: data.is_emergency,
+            created_from_requisition_id: data
+                .oms_fields
+                .clone()
+                .and_then(|f| f.created_from_requisition_id),
+            original_customer_id: data.oms_fields.and_then(|f| f.original_customer_id),
         };
 
         Ok(PullTranslateResult::upsert(result))
@@ -355,19 +371,33 @@ impl SyncTranslation for RequisitionTranslation {
                     period_id,
                     order_type,
                     is_emergency,
+                    created_from_requisition_id,
+                    original_customer_id,
                 },
             name_row,
             ..
         } = RequisitionRepository::new(connection)
             .query_by_filter(
-                RequisitionFilter::new().id(EqualFilter::equal_to(&changelog.record_id)),
+                RequisitionFilter::new().id(EqualFilter::equal_to(changelog.record_id.to_string())),
             )?
             .pop()
             .ok_or_else(|| anyhow::anyhow!("Requisition not found"))?;
 
         let has_outbound_shipment = !InvoiceRepository::new(connection)
-            .query_by_filter(InvoiceFilter::new().requisition_id(EqualFilter::equal_to(&id)))?
+            .query_by_filter(
+                InvoiceFilter::new().requisition_id(EqualFilter::equal_to(id.to_string())),
+            )?
             .is_empty();
+
+        let oms_fields = if created_from_requisition_id.is_some() || original_customer_id.is_some()
+        {
+            Some(OmsFields {
+                created_from_requisition_id,
+                original_customer_id,
+            })
+        } else {
+            None
+        };
 
         let legacy_row = LegacyRequisitionRow {
             ID: id.clone(),
@@ -408,6 +438,7 @@ impl SyncTranslation for RequisitionTranslation {
             periodID: period_id,
             orderType: order_type,
             is_emergency,
+            oms_fields,
         };
 
         Ok(PushTranslateResult::upsert(

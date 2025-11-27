@@ -40,7 +40,7 @@ pub fn get_other_party(
 ) -> Result<Option<Name>, RepositoryError> {
     let mut results = NameRepository::new(connection).query_by_filter(
         store_id,
-        NameFilter::new().id(EqualFilter::equal_to(other_party_id)),
+        NameFilter::new().id(EqualFilter::equal_to(other_party_id.to_string())),
     )?;
 
     if results.is_empty() {
@@ -65,7 +65,7 @@ pub fn check_patient_exists(
     patient_id: &str,
 ) -> Result<Option<Patient>, RepositoryError> {
     PatientRepository::new(connection).query_one(
-        PatientFilter::new().id(EqualFilter::equal_to(patient_id)),
+        PatientFilter::new().id(EqualFilter::equal_to(patient_id.to_string())),
         None,
     )
 }
@@ -135,7 +135,7 @@ pub fn check_property_key_does_not_exist(
 ) -> Result<bool, RepositoryError> {
     let filter = PropertyFilter::new()
         .key(StringFilter::equal_to(key))
-        .id(EqualFilter::not_equal_to(property_id));
+        .id(EqualFilter::not_equal_to(property_id.to_string()));
 
     let found = PropertyRepository::new(connection).query_by_filter(filter)?;
 

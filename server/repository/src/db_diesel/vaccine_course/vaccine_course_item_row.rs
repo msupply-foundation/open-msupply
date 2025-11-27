@@ -55,7 +55,7 @@ impl<'a> VaccineCourseItemRowRepository<'a> {
             .set(vaccine_course_item_row)
             .execute(self.connection.lock().connection())?;
 
-        self.insert_changelog(vaccine_course_item_row.id.to_owned(), RowActionType::Upsert)
+        self.insert_changelog(vaccine_course_item_row.id.to_string(), RowActionType::Upsert)
     }
 
     fn insert_changelog(
@@ -95,7 +95,7 @@ impl<'a> VaccineCourseItemRowRepository<'a> {
             .execute(self.connection.lock().connection())?;
 
         // Upsert row action as this is a soft delete, not actual delete
-        self.insert_changelog(vaccine_course_item_id.to_owned(), RowActionType::Upsert)
+        self.insert_changelog(vaccine_course_item_id.to_string(), RowActionType::Upsert)
     }
 }
 

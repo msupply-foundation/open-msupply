@@ -46,12 +46,12 @@ mod query {
         let service = service_provider.location_service;
 
         assert_eq!(
-            service.get_location(&context, "invalid_id".to_owned()),
-            Err(SingleRecordError::NotFound("invalid_id".to_owned()))
+            service.get_location(&context, "invalid_id".to_string()),
+            Err(SingleRecordError::NotFound("invalid_id".to_string()))
         );
 
         let result = service
-            .get_location(&context, "location_on_hold".to_owned())
+            .get_location(&context, "location_on_hold".to_string())
             .unwrap();
 
         assert_eq!(result.location_row.id, "location_on_hold");
@@ -71,7 +71,7 @@ mod query {
             .get_locations(
                 &context,
                 None,
-                Some(LocationFilter::new().id(EqualFilter::equal_to("location_1"))),
+                Some(LocationFilter::new().id(EqualFilter::equal_to("location_1".to_string()))),
                 None,
             )
             .unwrap();
@@ -84,8 +84,8 @@ mod query {
                 &context,
                 None,
                 Some(LocationFilter::new().id(EqualFilter::equal_any(vec![
-                    "location_1".to_owned(),
-                    "location_on_hold".to_owned(),
+                    "location_1".to_string(),
+                    "location_on_hold".to_string(),
                 ]))),
                 None,
             )
@@ -177,7 +177,7 @@ mod query {
                 None,
                 Some(
                     LocationFilter::new()
-                        .id(EqualFilter::equal_to("location_1"))
+                        .id(EqualFilter::equal_to("location_1".to_string()))
                         .assigned_to_asset(true),
                 ),
                 None,
@@ -206,7 +206,7 @@ mod query {
                 None,
                 Some(
                     LocationFilter::new()
-                        .id(EqualFilter::equal_to("location_1"))
+                        .id(EqualFilter::equal_to("location_1".to_string()))
                         .assigned_to_asset(true),
                 ),
                 None,
@@ -223,8 +223,8 @@ mod query {
 
         // Insert a new empty location
         let location_with_no_stock_lines = LocationRow {
-            id: "location_with_no_stock_lines".to_owned(),
-            store_id: "store_a".to_owned(),
+            id: "location_with_no_stock_lines".to_string(),
+            store_id: "store_a".to_string(),
             ..Default::default()
         };
         location_with_no_stock_lines.upsert(&connection).unwrap();
@@ -236,14 +236,14 @@ mod query {
 
         // Insert some stock lines for the location
         StockLineRow {
-            id: "line1".to_owned(),
+            id: "line1".to_string(),
             location_id: Some(location_with_no_stock_lines.id.clone()),
             ..stock_line_with_volume() // total volume is 1000.0
         }
         .upsert(&connection)
         .unwrap();
         StockLineRow {
-            id: "line2".to_owned(),
+            id: "line2".to_string(),
             location_id: Some(location_with_no_stock_lines.id.clone()),
             total_volume: 500.0,
             ..stock_line_with_volume()

@@ -1,4 +1,13 @@
+import { useMemo } from 'react';
 import { NumUtils } from '../numbers';
+
+export const Representation = {
+  PACKS: 'packs',
+  UNITS: 'units',
+} as const;
+
+export type RepresentationValue =
+  (typeof Representation)[keyof typeof Representation];
 
 export const QuantityUtils = {
   suggestedQuantity: (amc: number, soh: number, mos: number) => {
@@ -32,4 +41,75 @@ export const QuantityUtils = {
   ) => {
     return doses / line.packSize / (line.dosesPerUnit || 1);
   },
+
+  calculateValueInUnitsOrPacks: (
+    representation: RepresentationValue,
+    defaultPackSize: number,
+    value?: number | null
+  ): number => {
+    if (!value) return 0;
+    return representation === Representation.PACKS
+      ? value / defaultPackSize
+      : value;
+  },
+
+  useValueInUnitsOrPacks: (
+    // check usage
+    representation: RepresentationValue,
+    defaultPackSize: number,
+    value?: number | null
+  ): number =>
+    useMemo(
+      () =>
+        QuantityUtils.calculateValueInUnitsOrPacks(
+          representation,
+          defaultPackSize,
+          value
+        ),
+      [representation, defaultPackSize, value]
+    ),
+
+  /**
+   * Calculates the value in doses.
+   * Does NOT round or format the result.
+   * Rounding/formatting to 0 decimal places should be done in the component with useFormatNumber().
+   */
+  calculateValueInDoses: (
+    representation: RepresentationValue,
+    defaultPackSize: number,
+    dosesPerUnit: number,
+    value?: number | null
+  ): number => {
+    if (!value) return 0;
+    if (representation === Representation.PACKS) {
+      return value * defaultPackSize * dosesPerUnit;
+    }
+    return value * dosesPerUnit;
+  },
+
+  useValueInDoses: (
+    displayVaccinesInDoses: boolean,
+    representation: RepresentationValue,
+    defaultPackSize: number,
+    dosesPerUnit: number,
+    value?: number | null
+  ): number | undefined =>
+    useMemo(
+      () =>
+        displayVaccinesInDoses
+          ? QuantityUtils.calculateValueInDoses(
+              representation,
+              defaultPackSize || 1,
+              dosesPerUnit,
+              value
+            )
+          : undefined,
+      [
+        displayVaccinesInDoses,
+        representation,
+        defaultPackSize,
+        dosesPerUnit,
+        value,
+      ]
+    ),
 };

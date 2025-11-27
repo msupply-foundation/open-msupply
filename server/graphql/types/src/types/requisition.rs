@@ -5,7 +5,7 @@ use graphql_core::{
     loader::{
         InvoiceByRequisitionIdLoader, NameByIdLoader, NameByIdLoaderInput,
         RequisitionLinesByRequisitionIdLoader, RequisitionLinesRemainingToSupplyLoader,
-        RequisitionsByIdLoader, UserLoader,
+        RequisitionsByIdLoader, SyncFileReferenceLoader, UserLoader,
     },
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
@@ -17,6 +17,7 @@ use super::{
     program_node::ProgramNode, InvoiceConnector, NameNode, PeriodNode, RequisitionLineConnector,
     UserNode,
 };
+use crate::types::SyncFileReferenceConnector;
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(remote = "repository::db_diesel::requisition::requisition_row::RequisitionType")]
@@ -174,6 +175,28 @@ impl RequisitionNode {
         &self.name_row().id
     }
 
+    pub async fn destination_customer(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+    ) -> Result<Option<NameNode>> {
+        let loader = ctx.get_loader::<DataLoader<NameByIdLoader>>();
+
+        let original_customer_id = match &self.requisition.requisition_row.original_customer_id {
+            Some(customer) => customer,
+            None => return Ok(None),
+        };
+
+        let response_option = loader
+            .load_one(NameByIdLoaderInput::new(&store_id, original_customer_id))
+            .await?;
+
+        match response_option {
+            Some(name) => Ok(Some(NameNode::from_domain(name))),
+            None => Ok(None),
+        }
+    }
+
     /// Maximum calculated quantity, used to deduce calculated quantity for each line, see calculated in requisition line
     pub async fn max_months_of_stock(&self) -> &f64 {
         &self.row().max_months_of_stock
@@ -182,6 +205,23 @@ impl RequisitionNode {
     /// Minimum quantity to have for stock to be ordered, used to deduce calculated quantity for each line, see calculated in requisition line
     pub async fn min_months_of_stock(&self) -> &f64 {
         &self.row().min_months_of_stock
+    }
+
+    pub async fn documents(&self, ctx: &Context<'_>) -> Result<SyncFileReferenceConnector> {
+        let requisition_id = &self.row().id;
+        let linked_requisition_id = &self.row().linked_requisition_id;
+
+        // Load documents for both requisition and linked requisition
+        let mut record_ids = vec![requisition_id.to_string()];
+        if let Some(linked_id) = linked_requisition_id {
+            record_ids.push(linked_id.to_string());
+        }
+
+        let loader = ctx.get_loader::<DataLoader<SyncFileReferenceLoader>>();
+        let results = loader.load_many(record_ids).await?;
+        let all_documents = results.into_values().flatten().collect();
+
+        Ok(SyncFileReferenceConnector::from_vec(all_documents))
     }
 
     pub async fn lines(&self, ctx: &Context<'_>) -> Result<RequisitionLineConnector> {
@@ -262,6 +302,27 @@ impl RequisitionNode {
 
     pub async fn is_emergency(&self) -> bool {
         self.row().is_emergency
+    }
+
+    pub async fn created_from_requisition(
+        &self,
+        ctx: &Context<'_>,
+    ) -> Result<Option<RequisitionNode>> {
+        let created_from_requisition_id = match &self.row().created_from_requisition_id {
+            Some(id) => id,
+            None => return Ok(None),
+        };
+
+        let loader = ctx.get_loader::<DataLoader<RequisitionsByIdLoader>>();
+
+        Ok(loader
+            .load_one(created_from_requisition_id.clone())
+            .await?
+            .map(RequisitionNode::from_domain))
+    }
+
+    pub async fn created_from_requisition_id(&self) -> &Option<String> {
+        &self.row().created_from_requisition_id
     }
 
     // % allocated ?

@@ -19,7 +19,7 @@ pub fn get_goods_received_list(
     let repository = GoodsReceivedRepository::new(&ctx.connection);
 
     let mut filter = filter.unwrap_or_default();
-    filter.store_id = Some(EqualFilter::equal_to(store_id));
+    filter.store_id = Some(EqualFilter::equal_to(store_id.to_string()));
 
     Ok(ListResult {
         rows: repository.query(pagination, Some(filter.clone()), sort)?,
@@ -34,8 +34,8 @@ pub fn get_goods_received(
 ) -> Result<Option<GoodsReceivedRow>, RepositoryError> {
     let repository = GoodsReceivedRepository::new(&ctx.connection);
     let filter = GoodsReceivedFilter::new()
-        .id(EqualFilter::equal_to(id))
-        .store_id(EqualFilter::equal_to(store_id));
+        .id(EqualFilter::equal_to(id.to_string()))
+        .store_id(EqualFilter::equal_to(store_id.to_string()));
 
     Ok(repository.query_by_filter(filter)?.pop())
 }
@@ -49,7 +49,8 @@ mod test {
 
     use repository::goods_received::{GoodsReceivedFilter, GoodsReceivedRepository};
     use repository::{
-        db_diesel::goods_received_row::GoodsReceivedRow, mock::MockDataInserts, test_db::setup_all, EqualFilter,
+        db_diesel::goods_received_row::GoodsReceivedRow, mock::MockDataInserts, test_db::setup_all,
+        EqualFilter,
     };
     #[actix_rt::test]
     async fn goods_received_service_queries() {
@@ -94,16 +95,16 @@ mod test {
 
         // Test filtering by purchase_order_id
         let filter_by_po = GoodsReceivedFilter::new()
-            .purchase_order_id(EqualFilter::equal_to(&mock_purchase_order_a().id))
-            .store_id(EqualFilter::equal_to(&mock_store_a().id));
+            .purchase_order_id(EqualFilter::equal_to(mock_purchase_order_a().id))
+            .store_id(EqualFilter::equal_to(mock_store_a().id));
         let result = repo.query_by_filter(filter_by_po).unwrap();
         assert_eq!(result.len(), 1);
         assert_eq!(result[0].id, gr.id);
 
         // Test filtering by wrong purchase_order_id
         let filter_by_wrong_po = GoodsReceivedFilter::new()
-            .purchase_order_id(EqualFilter::equal_to("wrong_po_id"))
-            .store_id(EqualFilter::equal_to(&mock_store_a().id));
+            .purchase_order_id(EqualFilter::equal_to("wrong_po_id".to_string()))
+            .store_id(EqualFilter::equal_to(mock_store_a().id));
         let result = repo.query_by_filter(filter_by_wrong_po).unwrap();
         assert!(result.is_empty());
     }

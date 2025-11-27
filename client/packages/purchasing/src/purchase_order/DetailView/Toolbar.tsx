@@ -18,7 +18,7 @@ import {
   SupplierSearchInput,
 } from '@openmsupply-client/system';
 import { usePurchaseOrder } from '../api/hooks/usePurchaseOrder';
-import { NameFragment } from 'packages/system/src/Name/api/operations.generated';
+import { NameFragment } from '@openmsupply-client/system';
 import { PurchaseOrderFragment, usePurchaseOrderLine } from '../api';
 import { isFieldDisabled, StatusGroup } from '../../utils';
 

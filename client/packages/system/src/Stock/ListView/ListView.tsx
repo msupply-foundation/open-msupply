@@ -19,12 +19,13 @@ import { StockLineRowFragment } from '../api';
 import { AppBarButtons } from './AppBarButtons';
 import { useStockList } from '../api/hooks/useStockList';
 import { NewStockLineModal } from '../Components/NewStockLineModal';
+import { ExpiryDateCell } from '@openmsupply-client/common/src/ui/layout/tables/material-react-table/components/ExpiryDateCell';
 
 export const StockListView: FC = () => {
   const {
     queryParams: { sortBy, first, offset, filterBy },
   } = useUrlQueryParams({
-    initialSort: { key: 'expiryDate', dir: 'asc' },
+    initialSort: { key: 'itemName', dir: 'asc' },
     filters: [
       { key: 'vvmStatusId', condition: 'equalTo' },
       { key: 'search' },
@@ -102,6 +103,7 @@ export const StockListView: FC = () => {
         header: t('label.expiry'),
         accessorFn: row => (row.expiryDate ? new Date(row.expiryDate) : null),
         columnType: ColumnType.Date,
+        Cell: ExpiryDateCell,
         size: 120,
         defaultHideOnMobile: true,
         enableColumnFilter: true,

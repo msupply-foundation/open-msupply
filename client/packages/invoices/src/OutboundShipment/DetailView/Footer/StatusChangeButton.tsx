@@ -10,8 +10,9 @@ import {
   useAlertModal,
   InvoiceLineNodeType,
   useDisabledNotificationToast,
+  usePreferences,
 } from '@openmsupply-client/common';
-import { getNextOutboundStatus, getStatusTranslation } from '../../../utils';
+import { getStatusTranslation } from '../../../utils';
 import { useOutbound, useOutboundLines } from '../../api';
 
 const getStatusOptions = (
@@ -82,9 +83,9 @@ const getNextStatusOption = (
 ): SplitButtonOption<InvoiceNodeStatus> | null => {
   if (!status) return options[0] ?? null;
 
-  const nextStatus = getNextOutboundStatus(status);
-  const nextStatusOption = options.find(o => o.value === nextStatus);
-  return nextStatusOption || null;
+  const currentIndex = options.findIndex(o => o.value === status);
+  const nextOption = options[currentIndex + 1];
+  return nextOption || null;
 };
 
 const getButtonLabel =
@@ -97,6 +98,7 @@ const getButtonLabel =
 
 const useStatusChangeButton = () => {
   const t = useTranslation();
+  const { skipIntermediateStatusesInOutbound } = usePreferences();
   const { lines, status, onHold } = useOutbound.document.fields([
     'status',
     'onHold',
@@ -109,14 +111,31 @@ const useStatusChangeButton = () => {
     data?.status === InvoiceNodeStatus.New &&
     (data?.lines?.nodes ?? []).some(line => line.numberOfPacks === 0);
 
-  const options = useMemo(
-    () => getStatusOptions(status, getButtonLabel(t)),
-    [status, getButtonLabel]
-  );
+  const options = useMemo(() => {
+    const statusOptions = getStatusOptions(status, getButtonLabel(t));
+    if (skipIntermediateStatusesInOutbound) {
+      return statusOptions.filter(
+        option =>
+          option.value !== InvoiceNodeStatus.Allocated &&
+          option.value !== InvoiceNodeStatus.Picked
+      );
+    }
+    return statusOptions;
+  }, [status, getButtonLabel, skipIntermediateStatusesInOutbound]);
+
+  // In the case where "skip intermediate statuses" is on, but the current
+  // status has already been set to "Allocated" or "Picked", we pretend the
+  // current status is actually "New" so it behaves as expected.
+  const currentStatus =
+    skipIntermediateStatusesInOutbound &&
+    (status === InvoiceNodeStatus.Allocated ||
+      status === InvoiceNodeStatus.Picked)
+      ? InvoiceNodeStatus.New
+      : status;
 
   const [selectedOption, setSelectedOption] =
     useState<SplitButtonOption<InvoiceNodeStatus> | null>(() =>
-      getNextStatusOption(status, options)
+      getNextStatusOption(currentStatus, options)
     );
 
   const onConfirmStatusChange = async () => {
@@ -158,7 +177,7 @@ const useStatusChangeButton = () => {
   // When the status of the invoice changes (after an update), set the selected option to the next status.
   // It would be set to the current status, which is now a disabled option.
   useEffect(() => {
-    setSelectedOption(() => getNextStatusOption(status, options));
+    setSelectedOption(() => getNextStatusOption(currentStatus, options));
   }, [status, options]);
 
   return {
@@ -211,7 +230,9 @@ export const StatusChangeButton = () => {
     t('messages.no-lines')
   );
 
-  const onHoldNotication = useDisabledNotificationToast(t('messages.on-hold'));
+  const onHoldNotification = useDisabledNotificationToast(
+    t('messages.on-hold')
+  );
 
   if (!selectedOption) return null;
   if (isDisabled) return null;
@@ -219,7 +240,7 @@ export const StatusChangeButton = () => {
   const onStatusClick = () => {
     if (hasPlaceholder) return alert();
     if (noLines) return noLinesNotification();
-    if (onHold) return onHoldNotication();
+    if (onHold) return onHoldNotification();
     return getConfirmation();
   };
 
