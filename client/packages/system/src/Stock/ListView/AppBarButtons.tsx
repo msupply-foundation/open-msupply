@@ -1,19 +1,17 @@
 import React from 'react';
 import {
-  DownloadIcon,
   useNotification,
   AppBarButtonsPortal,
   Grid,
   useTranslation,
-  LoadingButton,
   PlusCircleIcon,
   ButtonWithIcon,
   useEditModal,
   useSimplifiedTabletUI,
-  useExportCSV,
   usePreferences,
   FilterBy,
 } from '@openmsupply-client/common';
+import { ExportSelector } from '@openmsupply-client/system';
 import { stockLinesToCsv } from '../../utils';
 import { NewStockLineModal } from '../Components/NewStockLineModal';
 import { useExportStockList } from '../api/hooks/useExportStockList';
@@ -27,20 +25,17 @@ export const AppBarButtonsComponent = ({
   const t = useTranslation();
   const { fetchStock, isLoading } = useExportStockList(exportFilter);
   const simplifiedTabletView = useSimplifiedTabletUI();
-  const exportCSV = useExportCSV();
   const { manageVvmStatusForStock } = usePreferences();
 
   const { isOpen, onClose, onOpen } = useEditModal();
 
-  const csvExport = async () => {
+  const getCsvData = async () => {
     const { data } = await fetchStock();
-    if (!data || !data?.nodes.length) {
+    if (!data?.nodes?.length) {
       error(t('error.no-data'))();
-      return;
+      return null;
     }
-
-    const csv = stockLinesToCsv(data.nodes, t, !!manageVvmStatusForStock);
-    exportCSV(csv, t('filename.stock'));
+    return stockLinesToCsv(data.nodes, t, !!manageVvmStatusForStock);
   };
 
   return (
@@ -54,12 +49,10 @@ export const AppBarButtonsComponent = ({
           onClick={onOpen}
         />
         {!simplifiedTabletView && (
-          <LoadingButton
-            startIcon={<DownloadIcon />}
+          <ExportSelector
+            getCsvData={getCsvData}
+            filename={t('filename.stock')}
             isLoading={isLoading}
-            variant="outlined"
-            onClick={csvExport}
-            label={t('button.export')}
           />
         )}
       </Grid>
