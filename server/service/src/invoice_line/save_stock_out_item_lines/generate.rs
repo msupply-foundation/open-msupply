@@ -59,8 +59,8 @@ pub fn generate(
 
     let existing_lines = InvoiceLineRepository::new(connection).query_by_filter(
         InvoiceLineFilter::new()
-            .item_id(EqualFilter::equal_to(&item_id))
-            .invoice_id(EqualFilter::equal_to(&invoice_id)),
+            .item_id(EqualFilter::equal_to(item_id.to_string()))
+            .invoice_id(EqualFilter::equal_to(invoice_id.to_string())),
     )?;
 
     // The frontend generates ids for each line, however, if we already have a line with the same

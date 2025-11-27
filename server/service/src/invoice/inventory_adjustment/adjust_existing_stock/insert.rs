@@ -100,7 +100,7 @@ pub fn insert_inventory_adjustment(
             activity_log_entry(
                 ctx,
                 ActivityLogType::InventoryAdjustment,
-                Some(verified_invoice.id.to_owned()),
+                Some(verified_invoice.id.to_string()),
                 None,
                 None,
             )?;
@@ -252,7 +252,7 @@ mod test {
         // Reduce stock below zero
         let stock_line = StockLineRepository::new(&context.connection)
             .query_by_filter(
-                StockLineFilter::new().id(EqualFilter::equal_to(&mock_stock_line_a().id)),
+                StockLineFilter::new().id(EqualFilter::equal_to(mock_stock_line_a().id)),
                 Some(mock_store_a().id.clone()),
             )
             .unwrap()

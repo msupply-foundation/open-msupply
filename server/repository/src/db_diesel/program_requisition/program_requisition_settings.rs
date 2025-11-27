@@ -203,7 +203,7 @@ mod test {
 
         // TEST that program_requisition_settings can be queried by name_tag belonging to a store
         let result = repo.query(Some(ProgramRequisitionSettingsFilter::new().name_tag(
-            NameTagFilter::new().store_id(EqualFilter::equal_to(&mock_store_a().id)),
+            NameTagFilter::new().store_id(EqualFilter::equal_to(mock_store_a().id)),
         )));
 
         assert_eq!(
@@ -217,7 +217,7 @@ mod test {
         );
         // TEST that program_requisition_settings can be queried by master list linked to a store
         let result = repo.query(Some(ProgramRequisitionSettingsFilter::new().master_list(
-            MasterListFilter::new().exists_for_store_id(EqualFilter::equal_to(&mock_store_a().id)),
+            MasterListFilter::new().exists_for_store_id(EqualFilter::equal_to(mock_store_a().id)),
         )));
 
         assert_eq!(

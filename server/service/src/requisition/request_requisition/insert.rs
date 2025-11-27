@@ -56,7 +56,7 @@ pub fn insert_request_requisition(
             activity_log_entry(
                 ctx,
                 ActivityLogType::RequisitionCreated,
-                Some(new_requisition.id.to_owned()),
+                Some(new_requisition.id.to_string()),
                 None,
                 None,
             )?;
@@ -140,6 +140,8 @@ fn generate(
         period_id: None,
         order_type: None,
         is_emergency: false,
+        created_from_requisition_id: None,
+        original_customer_id: None,
     };
 
     Ok(result)

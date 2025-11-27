@@ -7,6 +7,7 @@ import {
   Formatter,
   RequisitionNodeApprovalStatus,
   noOtherVariants,
+  ModalMode,
 } from '@openmsupply-client/common';
 import {
   ResponseLineFragment,
@@ -176,4 +177,14 @@ export const indicatorColumnNameToLocal = (
     default:
       return columnName;
   }
+};
+
+export const shouldDeleteLine = (
+  mode: ModalMode | null,
+  draftId?: string,
+  isDisabled?: boolean
+): boolean => {
+  if (mode === ModalMode.Create) return true;
+  if (!draftId || isDisabled || mode === ModalMode.Update) return false;
+  return false;
 };

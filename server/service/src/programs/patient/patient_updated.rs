@@ -21,8 +21,8 @@ pub fn create_patient_name_store_join(
     let name_store_join = NameStoreJoinRepository::new(con)
         .query_by_filter(
             NameStoreJoinFilter::new()
-                .store_id(EqualFilter::equal_to(store_id))
-                .name_id(EqualFilter::equal_to(name_id)),
+                .store_id(EqualFilter::equal_to(store_id.to_string()))
+                .name_id(EqualFilter::equal_to(name_id.to_string())),
         )?
         .pop();
     if name_store_join.is_none() {
@@ -367,7 +367,7 @@ mod test {
             .get_patients(
                 &ctx,
                 None,
-                Some(PatientFilter::new().id(EqualFilter::equal_to(&patient.id))),
+                Some(PatientFilter::new().id(EqualFilter::equal_to(patient.id.to_string()))),
                 None,
                 None,
             )

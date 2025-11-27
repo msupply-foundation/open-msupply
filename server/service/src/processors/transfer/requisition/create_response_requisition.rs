@@ -1,3 +1,4 @@
+use super::{RequisitionTransferProcessor, RequisitionTransferProcessorRecord};
 use crate::{
     activity_log::system_activity_log_entry,
     number::next_number,
@@ -6,8 +7,6 @@ use crate::{
     requisition::common::get_lines_for_requisition,
     store_preference::get_store_preferences,
 };
-
-use super::{RequisitionTransferProcessor, RequisitionTransferProcessorRecord};
 use chrono::{Months, Utc};
 use repository::{
     indicator_value::{IndicatorValueFilter, IndicatorValueRepository},
@@ -86,7 +85,7 @@ impl RequisitionTransferProcessor for CreateResponseRequisitionProcessor {
                     .and_then(|initialisation_date| {
                         initialisation_date.checked_sub_months(Months::new(pref_months as u32))
                     })
-                    .map_or(false, |cutoff_date| sent_datetime < cutoff_date)
+                    .is_some_and(|cutoff_date| sent_datetime < cutoff_date)
                 {
                     return Ok(RequisitionTransferOutput::BeforeInitialisationMonths);
                 }
@@ -144,7 +143,7 @@ impl RequisitionTransferProcessor for CreateResponseRequisitionProcessor {
 
         let customer_name_id = StoreRepository::new(connection)
             .query_by_filter(
-                StoreFilter::new().id(EqualFilter::equal_to(&request_requisition.store_row.id)),
+                StoreFilter::new().id(EqualFilter::equal_to(request_requisition.store_row.id.to_string())),
             )?
             .pop()
             .ok_or(RepositoryError::NotFound)?
@@ -194,7 +193,7 @@ fn requisition_has_program_items(
     // Query for master lists that are program-related and visible to the supplier store
     let supplier_program_master_lists = MasterListRepository::new(connection).query_by_filter(
         MasterListFilter::new()
-            .exists_for_store_id(EqualFilter::equal_to(other_party_store_id))
+            .exists_for_store_id(EqualFilter::equal_to(other_party_store_id.to_string()))
             .is_program(true),
     )?;
     if supplier_program_master_lists.is_empty() {
@@ -231,9 +230,7 @@ fn generate_response_requisition(
 ) -> Result<RequisitionRow, RepositoryError> {
     let store_id = record_for_processing.other_party_store_id.clone();
     let store_name = StoreRepository::new(connection)
-        .query_by_filter(StoreFilter::new().id(EqualFilter::equal_to(
-            &record_for_processing.requisition.store_row.id,
-        )))?
+        .query_by_filter(StoreFilter::new().id(EqualFilter::equal_to(record_for_processing.requisition.store_row.id.to_string())))?
         .pop()
         .ok_or(RepositoryError::NotFound)?
         .name_row;
@@ -284,6 +281,8 @@ fn generate_response_requisition(
         period_id: request_requisition_row.period_id.clone(),
         order_type: request_requisition_row.order_type.clone(),
         is_emergency: request_requisition_row.is_emergency,
+        original_customer_id: request_requisition_row.original_customer_id.clone(),
+        created_from_requisition_id: request_requisition_row.created_from_requisition_id.clone(),
         // Default
         user_id: None,
         approval_status: None,
@@ -376,9 +375,9 @@ fn generate_response_requisition_indicator_values(
     if let Some(period_id) = input.period_id {
         let supplier_store_id = input.supplier_store_id.clone();
         let filter = IndicatorValueFilter::new()
-            .store_id(EqualFilter::equal_to(&input.customer_store_id))
-            .customer_name_id(EqualFilter::equal_to(&input.customer_name_id))
-            .period_id(EqualFilter::equal_to(&period_id));
+            .store_id(EqualFilter::equal_to(input.customer_store_id.to_string()))
+            .customer_name_id(EqualFilter::equal_to(input.customer_name_id.to_string()))
+            .period_id(EqualFilter::equal_to(period_id.to_string()));
 
         let request_indicator_values =
             IndicatorValueRepository::new(connection).query_by_filter(filter)?;
@@ -414,7 +413,7 @@ mod test {
         let log_1 = SyncLogRow {
             id: "sync_log_1".to_string(),
             integration_finished_datetime: Some(
-                NaiveDate::from_ymd_opt(2025, 01, 01)
+                NaiveDate::from_ymd_opt(2025, 1, 1)
                     .unwrap()
                     .and_hms_opt(0, 0, 0)
                     .unwrap(),
@@ -425,7 +424,7 @@ mod test {
         let log_2 = SyncLogRow {
             id: "sync_log_2".to_string(),
             integration_finished_datetime: Some(
-                NaiveDate::from_ymd_opt(2024, 01, 01)
+                NaiveDate::from_ymd_opt(2024, 1, 1)
                     .unwrap()
                     .and_hms_opt(0, 0, 0)
                     .unwrap(),

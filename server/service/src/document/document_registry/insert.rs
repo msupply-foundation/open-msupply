@@ -41,7 +41,7 @@ pub fn insert(
                 let result = DocumentRegistryRepository::new(connection)
                     .query(
                         Pagination::one(),
-                        Some(DocumentRegistryFilter::new().id(EqualFilter::equal_to(&id))),
+                        Some(DocumentRegistryFilter::new().id(EqualFilter::equal_to(id.to_string()))),
                         None,
                     )?
                     .pop()

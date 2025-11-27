@@ -25,7 +25,8 @@ import { Footer } from './Footer';
 export const ListView = () => {
   const t = useTranslation();
   const navigate = useNavigate();
-  const modalController = useToggle();
+  const requisitionModalController = useToggle();
+  const createOrderModalController = useToggle();
   const { mutate: onUpdate } = useResponse.document.update();
   const {
     filter,
@@ -159,7 +160,7 @@ export const ListView = () => {
     noDataElement: (
       <NothingHere
         body={t('error.no-requisitions')}
-        onCreate={modalController.toggleOn}
+        onCreate={requisitionModalController.toggleOn}
       />
     ),
   });
@@ -167,7 +168,10 @@ export const ListView = () => {
   return (
     <>
       <Toolbar filter={filter} />
-      <AppBarButtons modalController={modalController} />
+      <AppBarButtons
+        requisitionModalController={requisitionModalController}
+        createOrderModalController={createOrderModalController}
+      />
       <MaterialTable table={table} />
       <Footer
         selectedRows={selectedRows as ResponseFragment[]}

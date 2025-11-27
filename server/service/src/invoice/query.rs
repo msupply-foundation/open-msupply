@@ -5,7 +5,6 @@ use repository::{EqualFilter, PaginationOption};
 use repository::{
     Invoice, InvoiceFilter, InvoiceRepository, InvoiceSort, InvoiceType, RepositoryError,
 };
- 
 
 pub fn get_invoices(
     ctx: &ServiceContext,
@@ -18,7 +17,7 @@ pub fn get_invoices(
     let repository = InvoiceRepository::new(&ctx.connection);
 
     let mut filter = filter.unwrap_or_default();
-    filter.store_id = store_id_option.map(EqualFilter::equal_to);
+    filter.store_id = store_id_option.map(|id| EqualFilter::equal_to(id.to_string()));
     // For invoice list we don't want to show any that are cancellation
     // reversals
     filter.is_cancellation = Some(false);
@@ -34,8 +33,8 @@ pub fn get_invoice(
     store_id_option: Option<&str>,
     id: &str,
 ) -> Result<Option<Invoice>, RepositoryError> {
-    let mut filter = InvoiceFilter::new().id(EqualFilter::equal_to(id));
-    filter.store_id = store_id_option.map(EqualFilter::equal_to);
+    let mut filter = InvoiceFilter::new().id(EqualFilter::equal_to(id.to_string()));
+    filter.store_id = store_id_option.map(|id| EqualFilter::equal_to(id.to_string()));
 
     let mut result = InvoiceRepository::new(&ctx.connection).query_by_filter(filter)?;
 
@@ -50,12 +49,12 @@ pub fn get_invoice_by_number(
 ) -> Result<Option<Invoice>, RepositoryError> {
     let mut result = InvoiceRepository::new(&ctx.connection).query_by_filter(
         InvoiceFilter::new()
-            .invoice_number(EqualFilter::equal_to_i64(invoice_number as i64))
+            .invoice_number(EqualFilter::equal_to(invoice_number as i64))
             // Reverse "cancellation" prescription will have the same Invoice
             // Number as their linked prescription, so we don't want to return
             // them
             .is_cancellation(false)
-            .store_id(EqualFilter::equal_to(store_id))
+            .store_id(EqualFilter::equal_to(store_id.to_string()))
             .r#type(r#type.equal_to()),
     )?;
 

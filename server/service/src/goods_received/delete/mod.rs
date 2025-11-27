@@ -32,7 +32,7 @@ pub fn delete_goods_received(
             activity_log_entry(
                 ctx,
                 ActivityLogType::GoodsReceivedDeleted,
-                Some(id.to_owned()),
+                Some(id.to_string()),
                 None,
                 None,
             )?;

@@ -6,6 +6,7 @@ use crate::types::{program_node::ProgramNode, ItemStorePropertiesNode, LocationT
 
 use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
+use chrono::NaiveDate;
 use graphql_core::{
     loader::{
         ItemDirectionsByItemIdLoader, ItemStatsLoaderInput, ItemStoreJoinLoader,
@@ -101,6 +102,7 @@ impl ItemNode {
         ctx: &Context<'_>,
         store_id: String,
         #[graphql(desc = "Defaults to 3 months")] amc_lookback_months: Option<f64>,
+        period_end: Option<NaiveDate>,
     ) -> Result<ItemStatsNode> {
         let loader = ctx.get_loader::<DataLoader<ItemsStatsForItemLoader>>();
         let result = loader
@@ -108,6 +110,7 @@ impl ItemNode {
                 &store_id,
                 &self.row().id,
                 amc_lookback_months,
+                period_end,
             ))
             .await?
             .ok_or(
@@ -336,7 +339,7 @@ impl ItemNode {
     pub fn legacy_string(&self, key: &str) -> String {
         let json_value: serde_json::Value = match serde_json::from_str(&self.row().legacy_record) {
             Ok(value) => value,
-            Err(_) => return "".to_owned(),
+            Err(_) => return "".to_string(),
         };
 
         json_value

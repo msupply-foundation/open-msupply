@@ -8,12 +8,10 @@ import {
   useFormatNumber,
   useIntlUtils,
   useTranslation,
-} from '@openmsupply-client/common';
-import {
   Representation,
   RepresentationValue,
-  useValueInUnitsOrPacks,
-} from '../../../common';
+  QuantityUtils,
+} from '@openmsupply-client/common';
 import { calculatePercentage } from './utils';
 
 export interface RequestStoreStatsProps {
@@ -129,17 +127,17 @@ export const RequestStoreStats = ({
     ? unitName.charAt(0).toUpperCase() + unitName.slice(1)
     : t('label.unit').charAt(0).toUpperCase() + t('label.unit').slice(1);
 
-  const formattedSuggested = useValueInUnitsOrPacks(
+  const formattedSuggested = QuantityUtils.useValueInUnitsOrPacks(
     representation,
     defaultPackSize,
     suggestedQuantity
   );
-  const formattedSoh = useValueInUnitsOrPacks(
+  const formattedSoh = QuantityUtils.useValueInUnitsOrPacks(
     representation,
     defaultPackSize,
     availableStockOnHand
   );
-  const formattedAmc = useValueInUnitsOrPacks(
+  const formattedAmc = QuantityUtils.useValueInUnitsOrPacks(
     representation,
     defaultPackSize,
     averageMonthlyConsumption

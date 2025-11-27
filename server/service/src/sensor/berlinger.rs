@@ -31,7 +31,7 @@ fn get_matching_sensor_serial(
     serial: &str,
 ) -> Result<Vec<Sensor>, RepositoryError> {
     SensorRepository::new(connection)
-        .query_by_filter(SensorFilter::new().serial(EqualFilter::equal_to(serial)))
+        .query_by_filter(SensorFilter::new().serial(EqualFilter::equal_to(serial.to_owned())))
 }
 
 fn get_matching_sensor_log(
@@ -40,7 +40,7 @@ fn get_matching_sensor_log(
     datetime: NaiveDateTime,
 ) -> Result<Vec<TemperatureLog>, RepositoryError> {
     let filter = TemperatureLogFilter::new()
-        .sensor(SensorFilter::new().id(EqualFilter::equal_to(sensor_id)))
+        .sensor(SensorFilter::new().id(EqualFilter::equal_to(sensor_id.to_string())))
         .datetime(DatetimeFilter::equal_to(datetime));
 
     TemperatureLogRepository::new(connection).query_by_filter(filter)
@@ -53,14 +53,14 @@ fn get_matching_sensor_breach_config(
     breach_type: &TemperatureBreachType,
 ) -> Result<Vec<TemperatureBreachConfig>, RepositoryError> {
     let filter = TemperatureBreachConfigFilter::new()
-        .store_id(EqualFilter::equal_to(store_id))
-        .duration_milliseconds(EqualFilter::equal_to_i32(
+        .store_id(EqualFilter::equal_to(store_id.to_string()))
+        .duration_milliseconds(EqualFilter::equal_to(
             temperature_breach_config.duration.num_milliseconds() as i32,
         ))
-        .minimum_temperature(EqualFilter::equal_to_f64(
+        .minimum_temperature(EqualFilter::equal_to(
             temperature_breach_config.minimum_temperature,
         ))
-        .maximum_temperature(EqualFilter::equal_to_f64(
+        .maximum_temperature(EqualFilter::equal_to(
             temperature_breach_config.maximum_temperature,
         ))
         .r#type(breach_type.equal_to());
@@ -75,7 +75,7 @@ fn get_matching_sensor_breach(
     breach_type: &TemperatureBreachType,
 ) -> Result<Option<TemperatureBreach>, RepositoryError> {
     let filter = TemperatureBreachFilter::new()
-        .sensor(SensorFilter::new().id(EqualFilter::equal_to(sensor_id)))
+        .sensor(SensorFilter::new().id(EqualFilter::equal_to(sensor_id.to_string())))
         .r#type(breach_type.equal_to())
         .start_datetime(DatetimeFilter::equal_to(start_datetime));
 

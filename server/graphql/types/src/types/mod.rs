@@ -161,6 +161,9 @@ pub use self::item_store_join::*;
 pub mod shipping_method;
 pub use self::shipping_method::*;
 
+pub mod pref_nodes;
+pub use self::pref_nodes::*;
+
 use async_graphql::*;
 pub struct DeleteResponse(pub String);
 #[Object]

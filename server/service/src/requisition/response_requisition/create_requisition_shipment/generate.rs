@@ -19,6 +19,12 @@ pub fn generate(
 ) -> Result<(InvoiceRow, Vec<InvoiceLineRow>), OutError> {
     let other_party = get_other_party(connection, store_id, &requisition.name_row.id)?
         .ok_or(OutError::ProblemGettingOtherParty)?;
+
+    let original_customer = match &requisition.requisition_row.original_customer_id {
+        Some(original_customer) => get_other_party(connection, store_id, original_customer)?,
+        None => None,
+    };
+
     let requisition_row = requisition.requisition_row;
     let currency = CurrencyRepository::new(connection)
         .query_by_filter(CurrencyFilter::new().is_home_currency(true))?
@@ -30,9 +36,15 @@ pub fn generate(
     let new_invoice = InvoiceRow {
         id: uuid(),
         user_id: Some(user_id.to_string()),
-        name_link_id: requisition_row.name_link_id,
-        name_store_id: other_party.store_id().map(|id| id.to_string()),
-        store_id: store_id.to_owned(),
+        name_link_id: original_customer
+            .as_ref()
+            .map(|customer| customer.name_link_row.id.clone())
+            .unwrap_or_else(|| other_party.name_link_row.id.clone()),
+        name_store_id: original_customer
+            .as_ref()
+            .and_then(|customer| customer.store_id().map(|id| id.to_string()))
+            .or_else(|| other_party.store_id().map(|id| id.to_string())),
+        store_id: store_id.to_string(),
         invoice_number: next_number(connection, &NumberRowType::OutboundShipment, store_id)?,
         r#type: InvoiceType::OutboundShipment,
         status: InvoiceStatus::New,
@@ -40,9 +52,9 @@ pub fn generate(
         requisition_id: Some(requisition_row.id),
         their_reference: requisition_row.their_reference,
         program_id: requisition_row.program_id,
+        currency_id: Some(currency.currency_row.id),
 
         // Default
-        currency_id: Some(currency.currency_row.id),
         currency_rate: 1.0,
         on_hold: false,
         comment: None,
@@ -88,7 +100,7 @@ pub fn generate_invoice_lines(
 
         invoice_line_rows.push(InvoiceLineRow {
             id: uuid(),
-            invoice_id: invoice_id.to_owned(),
+            invoice_id: invoice_id.to_string(),
             pack_size: 1.0,
             number_of_packs: requisition_line_supply_status.remaining_quantity(),
             item_link_id: item_row.id,

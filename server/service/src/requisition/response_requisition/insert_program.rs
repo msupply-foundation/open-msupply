@@ -208,13 +208,15 @@ fn generate(
         approval_status: None,
         finalised_datetime: None,
         linked_requisition_id: None,
+        created_from_requisition_id: None,
+        original_customer_id: None,
     };
 
     let master_list_id = program.master_list_id.clone().unwrap_or_default();
 
     let program_item_ids: Vec<String> = MasterListLineRepository::new(connection)
         .query_by_filter(
-            MasterListLineFilter::new().master_list_id(EqualFilter::equal_to(&master_list_id)),
+            MasterListLineFilter::new().master_list_id(EqualFilter::equal_to(master_list_id.to_string())),
             None,
         )?
         .into_iter()
@@ -228,14 +230,14 @@ fn generate(
             connection,
             Pagination::all(),
             None,
-            Some(ProgramIndicatorFilter::new().program_id(EqualFilter::equal_to(&program.id))),
+            Some(ProgramIndicatorFilter::new().program_id(EqualFilter::equal_to(program.id.to_string()))),
         )?
     } else {
         vec![]
     };
 
     let customer_store = StoreRepository::new(connection)
-        .query_one(StoreFilter::new().name_id(EqualFilter::equal_to(&other_party_id)))?;
+        .query_one(StoreFilter::new().name_id(EqualFilter::equal_to(other_party_id.to_string())))?;
 
     let indicator_values = match customer_store {
         Some(_) => generate_program_indicator_values(

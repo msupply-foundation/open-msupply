@@ -158,7 +158,7 @@ export const DateUtils = {
   isExpired: (expiryDate: Date | string | number): boolean =>
     isPast(expiryDate),
   isAlmostExpired: (
-    expiryDate: Date,
+    expiryDate: Date | string | number,
     threshold = MINIMUM_EXPIRY_MONTHS
   ): boolean => differenceInMonths(expiryDate, Date.now()) <= threshold,
   isSameDay,
@@ -279,6 +279,11 @@ export const useFormatDateTime = () => {
       return `${months > 0 ? t('label.age-months-and', { count: months }) : ''}${t('label.age-days', { count: days })}`;
   };
 
+  const formatDaysFromToday = (days?: number): string => {
+    const date = days ? DateUtils.addDays(new Date(), days) : new Date();
+    return customDate(date, URL_QUERY_DATE);
+  };
+
   return {
     urlQueryDate: URL_QUERY_DATE,
     urlQueryDateTime: URL_QUERY_DATE_TIME,
@@ -292,5 +297,6 @@ export const useFormatDateTime = () => {
     localisedTime,
     relativeDateTime,
     getDisplayAge,
+    formatDaysFromToday,
   };
 };

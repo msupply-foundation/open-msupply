@@ -27,7 +27,7 @@ pub fn generate(
 ) -> Result<GenerateResult, UpdateOutboundShipmentNameError> {
     let old_invoice = existing_invoice.clone();
     let old_invoice_lines = InvoiceLineRepository::new(connection).query_by_filter(
-        InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(&existing_invoice.id)),
+        InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(existing_invoice.id.to_string())),
     )?;
 
     let mut new_invoice = InvoiceRow {
@@ -59,7 +59,7 @@ pub fn generate(
 
     let new_activity_log = ActivityLogRepository::new(connection)
         .query_by_filter(
-            ActivityLogFilter::new().record_id(EqualFilter::equal_to(&old_invoice.id)),
+            ActivityLogFilter::new().record_id(EqualFilter::equal_to(old_invoice.id.to_string())),
         )?
         .iter()
         .map(|log| ActivityLogRow {

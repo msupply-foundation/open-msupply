@@ -3,6 +3,6 @@
 export type Input = {
   store_id: string;
   amc_lookback_months: number;
-  consumption_map: { [key in string]?: number };
+  consumption_rows: { [key in string]?: number };
   item_ids: Array<string>;
 };

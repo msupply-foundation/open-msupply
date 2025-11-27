@@ -20,6 +20,7 @@ export const RelatedDocumentsSectionComponent = () => {
   const { localisedDate: d } = useFormatDateTime();
   const { requisition } = useInbound.document.fields('requisition');
 
+  const orderedFromDifferentStore = !!requisition?.createdFromRequisitionId;
   let tooltip = '';
   if (requisition) {
     const { user, createdDatetime } = requisition;
@@ -34,7 +35,7 @@ export const RelatedDocumentsSectionComponent = () => {
   return (
     <DetailPanelSection title={t('heading.related-documents')}>
       <Grid flexDirection="column" gap={0.5}>
-        {!requisition ? (
+        {!requisition || orderedFromDifferentStore ? (
           <PanelLabel>{t('messages.no-related-documents')}</PanelLabel>
         ) : (
           <Tooltip title={tooltip}>
@@ -45,7 +46,7 @@ export const RelatedDocumentsSectionComponent = () => {
                   <Link
                     to={RouteBuilder.create(AppRoute.Replenishment)
                       .addPart(AppRoute.InternalOrder)
-                      .addPart(requisition?.id)
+                      .addPart(requisition?.id ?? '')
                       .build()}
                   >{`#${requisition?.requisitionNumber}`}</Link>
                 </PanelField>

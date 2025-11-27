@@ -302,7 +302,7 @@ mod test {
 
         // TEST query for first program in first store, and all periods
         let mut filter = RequisitionsInPeriodFilter::new()
-            .program_id(EqualFilter::equal_to(&program1.id.clone()))
+            .program_id(EqualFilter::equal_to(program1.id.clone().to_owned()))
             .r#type(RequisitionType::Request.equal_to())
             .period_id(EqualFilter::equal_any(vec![
                 period1.id.clone(),
@@ -310,7 +310,7 @@ mod test {
                 period3.id.clone(),
                 period4.id.clone(),
             ]))
-            .store_id(EqualFilter::equal_to(&mock_store_a().id));
+            .store_id(EqualFilter::equal_to(mock_store_a().id));
         let mut result = repo.query(filter.clone()).unwrap();
         result.sort_by(sort);
 
@@ -390,7 +390,7 @@ mod test {
         let mut result = repo
             .query(
                 RequisitionsInPeriodFilter::new()
-                    .store_id(EqualFilter::equal_to(&mock_store_b().id)),
+                    .store_id(EqualFilter::equal_to(mock_store_b().id)),
             )
             .unwrap();
         result.sort_by(sort);

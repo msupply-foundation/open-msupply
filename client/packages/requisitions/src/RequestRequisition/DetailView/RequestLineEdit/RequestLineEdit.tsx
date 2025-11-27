@@ -12,10 +12,15 @@ import {
   ReasonOptionNodeType,
   usePluginProvider,
   Typography,
-  BufferedTextArea,
   ModalGridLayout,
   usePreferences,
   Alert,
+  ModalPanelArea,
+  MultilineTextInput,
+  InfoRow,
+  ValueInfoRow,
+  ValueInfo,
+  RepresentationValue,
 } from '@openmsupply-client/common';
 import { DraftRequestLine } from './hooks';
 import { RequestLineFragment } from '../../api';
@@ -23,12 +28,6 @@ import { RequestedSelection } from './RequestedSelection';
 import { ConsumptionHistory } from './ItemCharts/ConsumptionHistory';
 import { StockEvolution } from './ItemCharts/StockEvolution';
 import { StockDistribution } from './ItemCharts/StockDistribution';
-import {
-  InfoRow,
-  ValueInfoRow,
-  ValueInfo,
-  RepresentationValue,
-} from '../../../common';
 import {
   getLeftPanel,
   getExtraMiddlePanels,
@@ -143,14 +142,7 @@ export const RequestLineEdit = ({
 
     return (
       <>
-        <Box
-          sx={{
-            background: theme => theme.palette.background.group.dark,
-            padding: '0px 8px',
-            borderRadius: 2,
-            pb: 1,
-          }}
-        >
+        <ModalPanelArea>
           {!showExtraFields && renderValueInfoRows(getSuggestedRow(t, draft))}
           <RequestedSelection
             disabled={disabled}
@@ -198,27 +190,13 @@ export const RequestLineEdit = ({
               />
             </Typography>
           )}
-          <Typography variant="body1" fontWeight="bold" pb={0.5}>
-            {t('heading.comment')}:
-          </Typography>
-          <BufferedTextArea
+          <MultilineTextInput
+            label={t('label.comment')}
             value={draft?.comment ?? ''}
-            onChange={e => update({ comment: e.target.value })}
-            slotProps={{
-              input: {
-                sx: {
-                  backgroundColor: theme =>
-                    disabled
-                      ? theme.palette.background.toolbar
-                      : theme.palette.background.white,
-                },
-              },
-            }}
+            onChange={(value?: string) => update({ comment: value })}
             disabled={disabled}
-            minRows={3}
-            maxRows={3}
           />
-        </Box>
+        </ModalPanelArea>
       </>
     );
   };
@@ -273,7 +251,12 @@ export const RequestLineEdit = ({
               {line &&
                 plugins.requestRequisitionLine?.editViewField?.map(
                   (Field, index) => (
-                    <Field key={index} line={line} unitName={unitName} />
+                    <Field
+                      key={index}
+                      line={line}
+                      draft={draft}
+                      unitName={unitName}
+                    />
                   )
                 )}
             </>
