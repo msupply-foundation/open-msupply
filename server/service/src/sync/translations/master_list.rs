@@ -1,11 +1,6 @@
-use repository::{
-    MasterListRow, MasterListRowDelete, MasterListRowRepository, PluginDataRowRepository,
-    PluginType, ProgramRowRepository, StorageConnection, SyncBufferRow,
-};
+use repository::{MasterListRow, MasterListRowRepository, StorageConnection, SyncBufferRow};
 
 use serde::Deserialize;
-
-use crate::backend_plugin::{plugin_provider::PluginInstance, types::sync_essential_item_list};
 
 use super::{PullTranslateResult, SyncTranslation};
 
@@ -20,7 +15,6 @@ pub struct LegacyListMasterRow {
     inactive: Option<bool>,
     is_default_price_list: Option<bool>,
     discount_percentage: Option<f64>,
-    is_essential: Option<bool>,
 }
 // Needs to be added to all_translators()
 #[deny(dead_code)]
@@ -40,27 +34,10 @@ impl SyncTranslation for MasterListTranslation {
 
     fn try_translate_from_upsert_sync_record(
         &self,
-        connection: &StorageConnection,
+        _: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let data = serde_json::from_str::<LegacyListMasterRow>(&sync_record.data)?;
-
-        // is_essential is only an available value if plugin is active, set via OG
-        if let Some(is_essential) = data.is_essential {
-            let input = sync_essential_item_list::Input {
-                id: data.id.clone(),
-                is_essential,
-            };
-
-            let plugins = PluginInstance::get_one(PluginType::SyncEssentialItemList);
-
-            if let Some(plugin) = plugins {
-                let plugin_data_row = sync_essential_item_list::Trait::call(&(*plugin), input)
-                    .map_err(|e| anyhow::anyhow!("Failed to call plugin: {}", e))?;
-
-                PluginDataRowRepository::new(connection).upsert_one(&plugin_data_row)?;
-            }
-        }
 
         let result = MasterListRow {
             id: data.id,
@@ -75,35 +52,26 @@ impl SyncTranslation for MasterListTranslation {
         Ok(PullTranslateResult::upsert(result))
     }
 
-    // Soft deletes were implemented in OG months after program requisitions was
-    // rolled out, so previously hard deleted records may be gone even if they
-    // are linked to program. Set these records to inactive.
+    // Soft delete
     fn try_translate_from_delete_sync_record(
         &self,
         connection: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        let program =
-            ProgramRowRepository::new(connection).find_one_by_id(&sync_record.record_id)?;
         let master_list =
             MasterListRowRepository::new(connection).find_one_by_id(&sync_record.record_id)?;
 
-        if let (Some(_), Some(master_list)) = (program, master_list) {
-            let result = MasterListRow {
-                id: master_list.id,
-                name: master_list.name,
-                code: master_list.code,
-                description: master_list.description,
-                is_active: false,
-                is_default_price_list: master_list.is_default_price_list,
-                discount_percentage: master_list.discount_percentage,
-            };
-            return Ok(PullTranslateResult::upsert(result));
-        }
+        let Some(master_list) = master_list else {
+            return Ok(PullTranslateResult::Ignored(
+                "Deleting record not found".to_string(),
+            ));
+        };
 
-        Ok(PullTranslateResult::delete(MasterListRowDelete(
-            sync_record.record_id.clone(),
-        )))
+        let result = MasterListRow {
+            is_active: false,
+            ..master_list
+        };
+        Ok(PullTranslateResult::upsert(result))
     }
 }
 

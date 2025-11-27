@@ -3,7 +3,10 @@ use super::{
     StorageConnection,
 };
 
-use crate::{repository_error::RepositoryError, Delete, Upsert};
+use crate::{
+    repository_error::RepositoryError, ChangeLogInsertRow, ChangelogRepository, ChangelogTableName,
+    RowActionType, Upsert,
+};
 
 use diesel::prelude::*;
 
@@ -43,14 +46,14 @@ impl<'a> MasterListRowRepository<'a> {
         MasterListRowRepository { connection }
     }
 
-    pub fn upsert_one(&self, row: &MasterListRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&self, row: &MasterListRow) -> Result<i64, RepositoryError> {
         diesel::insert_into(master_list)
             .values(row)
             .on_conflict(id)
             .do_update()
             .set(row)
             .execute(self.connection.lock().connection())?;
-        Ok(())
+        self.insert_changelog(row)
     }
 
     pub fn find_one_by_id(
@@ -64,17 +67,22 @@ impl<'a> MasterListRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn delete(&self, master_list_id: &str) -> Result<(), RepositoryError> {
-        diesel::delete(master_list.filter(id.eq(master_list_id)))
-            .execute(self.connection.lock().connection())?;
-        Ok(())
+    fn insert_changelog(&self, row: &MasterListRow) -> Result<i64, RepositoryError> {
+        let row = ChangeLogInsertRow {
+            table_name: ChangelogTableName::MasterList,
+            record_id: row.id.clone(),
+            row_action: RowActionType::Upsert,
+            ..Default::default()
+        };
+
+        ChangelogRepository::new(self.connection).insert(&row)
     }
 }
 
 impl Upsert for MasterListRow {
     fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        MasterListRowRepository::new(con).upsert_one(self)?;
-        Ok(None) // Table not in Changelog
+        let change_log_id = MasterListRowRepository::new(con).upsert_one(self)?;
+        Ok(Some(change_log_id))
     }
 
     // Test only
@@ -82,23 +90,6 @@ impl Upsert for MasterListRow {
         assert_eq!(
             MasterListRowRepository::new(con).find_one_by_id(&self.id),
             Ok(Some(self.clone()))
-        )
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct MasterListRowDelete(pub String);
-impl Delete for MasterListRowDelete {
-    fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        MasterListRowRepository::new(con).delete(&self.0)?;
-        Ok(None) // Table not in Changelog
-    }
-
-    // Test only
-    fn assert_deleted(&self, con: &StorageConnection) {
-        assert_eq!(
-            MasterListRowRepository::new(con).find_one_by_id(&self.0),
-            Ok(None)
         )
     }
 }

@@ -2,6 +2,7 @@ import * as Types from '@openmsupply-client/common';
 
 import { GraphQLClient, RequestOptions } from 'graphql-request';
 import gql from 'graphql-tag';
+import { SyncFileReferenceFragmentDoc } from '../../../../system/src/Documents/types.generated';
 import { RequestFragmentDoc } from '../../../../system/src/RequestRequisitionLine/operations.generated';
 import { NameRowFragmentDoc } from '../../../../system/src/Name/api/operations.generated';
 type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
@@ -26,6 +27,16 @@ export type RequestRowFragment = {
     __typename: 'RequisitionNode';
     approvalStatus: Types.RequisitionNodeApprovalStatus;
   } | null;
+  documents: {
+    __typename: 'SyncFileReferenceConnector';
+    nodes: Array<{
+      __typename: 'SyncFileReferenceNode';
+      id: string;
+      fileName: string;
+      recordId: string;
+      createdDatetime: string;
+    }>;
+  };
   period?: {
     __typename: 'PeriodNode';
     id: string;
@@ -85,6 +96,16 @@ export type RequestByNumberQuery = {
           isOnHold: boolean;
           margin?: number | null;
           store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+        };
+        documents: {
+          __typename: 'SyncFileReferenceConnector';
+          nodes: Array<{
+            __typename: 'SyncFileReferenceNode';
+            id: string;
+            fileName: string;
+            recordId: string;
+            createdDatetime: string;
+          }>;
         };
         user?: {
           __typename: 'UserNode';
@@ -232,6 +253,16 @@ export type RequestByIdQuery = {
           isOnHold: boolean;
           margin?: number | null;
           store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+        };
+        documents: {
+          __typename: 'SyncFileReferenceConnector';
+          nodes: Array<{
+            __typename: 'SyncFileReferenceNode';
+            id: string;
+            fileName: string;
+            recordId: string;
+            createdDatetime: string;
+          }>;
         };
         user?: {
           __typename: 'UserNode';
@@ -426,6 +457,16 @@ export type RequestsQuery = {
         __typename: 'RequisitionNode';
         approvalStatus: Types.RequisitionNodeApprovalStatus;
       } | null;
+      documents: {
+        __typename: 'SyncFileReferenceConnector';
+        nodes: Array<{
+          __typename: 'SyncFileReferenceNode';
+          id: string;
+          fileName: string;
+          recordId: string;
+          createdDatetime: string;
+        }>;
+      };
       period?: {
         __typename: 'PeriodNode';
         id: string;
@@ -975,6 +1016,12 @@ export const RequestRowFragmentDoc = gql`
       approvalStatus
     }
     programName
+    documents {
+      __typename
+      nodes {
+        ...SyncFileReference
+      }
+    }
     period {
       id
       name
@@ -989,6 +1036,7 @@ export const RequestRowFragmentDoc = gql`
       totalCount
     }
   }
+  ${SyncFileReferenceFragmentDoc}
 `;
 export const ConsumptionHistoryFragmentDoc = gql`
   fragment ConsumptionHistory on ConsumptionHistoryNode {
