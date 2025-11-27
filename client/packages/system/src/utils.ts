@@ -10,16 +10,20 @@ export const locationsToCsv = (
   t: TypedTFunction<LocaleKey>
 ) => {
   const fields: string[] = [
-    'id',
     t('label.code'),
     t('label.name'),
+    t('label.location-type'),
+    t('label.volume'),
+    t('label.volume-used'),
     t('label.on-hold'),
   ];
 
   const data = invoices.map(node => [
-    node.id,
     node.code,
     node.name,
+    node.locationType?.name,
+    node.volume,
+    node.volumeUsed,
     node.onHold,
   ]);
   return Formatter.csv({ fields, data });

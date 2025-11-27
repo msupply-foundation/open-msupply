@@ -1,16 +1,14 @@
 import React from 'react';
 import {
-  DownloadIcon,
   useNotification,
   AppBarButtonsPortal,
   Grid,
-  LoadingButton,
   ButtonWithIcon,
   PlusCircleIcon,
   useToggle,
   useSimplifiedTabletUI,
-  useExportCSV,
 } from '@openmsupply-client/common';
+import { ExportSelector } from '@openmsupply-client/system';
 import { useTranslation } from '@common/intl';
 import { useStocktakeOld } from '../api';
 import { stocktakesToCsv } from '../../utils';
@@ -37,17 +35,13 @@ export const AppBarButtons = ({
     isDesc: true,
   });
   const simplifiedTabletView = useSimplifiedTabletUI();
-  const exportCSV = useExportCSV();
-
-  const csvExport = async () => {
+  const getCsvData = async () => {
     const data = await fetchAsync();
-    if (!data || !data?.nodes.length) {
+    if (!data?.nodes?.length) {
       error(t('error.no-data'))();
-      return;
+      return null;
     }
-
-    const csv = stocktakesToCsv(data.nodes, t);
-    exportCSV(csv, t('filename.stocktakes'));
+    return stocktakesToCsv(data.nodes, t);
   };
 
   return (
@@ -66,12 +60,10 @@ export const AppBarButtons = ({
           description={description}
         />
         {!simplifiedTabletView && (
-          <LoadingButton
-            startIcon={<DownloadIcon />}
-            variant="outlined"
+          <ExportSelector
+            getCsvData={getCsvData}
+            filename={t('filename.stocktakes')}
             isLoading={isLoading}
-            onClick={csvExport}
-            label={t('button.export')}
           />
         )}
       </Grid>
