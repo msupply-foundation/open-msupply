@@ -1,12 +1,15 @@
 use repository::{
     InvoiceLineRowRepository, InvoiceRow, InvoiceRowRepository, InvoiceStatus, InvoiceType,
-    RepositoryError, StorageConnection,
+    RepositoryError,
 };
 
 use crate::{
     activity_log::{log_type_from_invoice_status, system_activity_log_entry},
     invoice::common::get_lines_for_invoice,
-    processors::transfer::invoice::InvoiceTransferOutput,
+    processors::transfer::invoice::{
+        common::auto_verify_if_store_preference, InvoiceTransferOutput,
+    },
+    service_provider::ServiceContext,
     store_preference::get_store_preferences,
 };
 
@@ -37,7 +40,7 @@ impl InvoiceTransferProcessor for UpdateInboundInvoiceProcessor {
     /// 6. Because linked inbound invoice will be changed to Shipped status and `4.` will never be true again
     fn try_process_record(
         &self,
-        connection: &StorageConnection,
+        ctx: &ServiceContext,
         record_for_processing: &InvoiceTransferProcessorRecord,
     ) -> Result<InvoiceTransferOutput, RepositoryError> {
         // Check can execute
@@ -74,22 +77,23 @@ impl InvoiceTransferProcessor for UpdateInboundInvoiceProcessor {
         }
 
         // Execute
-        let lines_to_delete = get_lines_for_invoice(connection, &inbound_invoice.invoice_row.id)?;
+        let lines_to_delete =
+            get_lines_for_invoice(&ctx.connection, &inbound_invoice.invoice_row.id)?;
         let new_inbound_lines = generate_inbound_lines(
-            connection,
+            &ctx.connection,
             &inbound_invoice.invoice_row.id,
             &inbound_invoice.store_row.id,
             outbound_invoice,
         )?;
 
         let store_preferences =
-            get_store_preferences(connection, &inbound_invoice.invoice_row.store_id)?;
+            get_store_preferences(&ctx.connection, &inbound_invoice.invoice_row.store_id)?;
         let new_inbound_lines = match store_preferences.pack_to_one {
             true => convert_invoice_line_to_single_pack(new_inbound_lines),
             false => new_inbound_lines,
         };
 
-        let invoice_line_repository = InvoiceLineRowRepository::new(connection);
+        let invoice_line_repository = InvoiceLineRowRepository::new(&ctx.connection);
 
         for line in lines_to_delete.iter() {
             invoice_line_repository.delete(&line.invoice_line_row.id)?;
@@ -139,21 +143,23 @@ impl InvoiceTransferProcessor for UpdateInboundInvoiceProcessor {
             ..inbound_invoice.invoice_row.clone()
         };
 
-        InvoiceRowRepository::new(connection).upsert_one(&updated_inbound_invoice)?;
+        InvoiceRowRepository::new(&ctx.connection).upsert_one(&updated_inbound_invoice)?;
 
         system_activity_log_entry(
-            connection,
+            &ctx.connection,
             log_type_from_invoice_status(&updated_inbound_invoice.status, false),
             &updated_inbound_invoice.store_id,
             &updated_inbound_invoice.id,
         )?;
+
+        auto_verify_if_store_preference(ctx, &updated_inbound_invoice)?;
 
         let result = format!(
             "invoice ({}) deleted lines ({:?}) inserted lines ({:?})",
             updated_inbound_invoice.id,
             lines_to_delete
                 .into_iter()
-                .map(|l| l.invoice_row.id)
+                .map(|l| l.invoice_line_row.id)
                 .collect::<Vec<String>>(),
             new_inbound_lines
                 .into_iter()
@@ -162,5 +168,168 @@ impl InvoiceTransferProcessor for UpdateInboundInvoiceProcessor {
         );
 
         Ok(InvoiceTransferOutput::Processed(result))
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use crate::{preference::PrefKey, service_provider::ServiceProvider};
+    use chrono::Utc;
+    use repository::{
+        mock::{
+            mock_name_a, mock_name_b, mock_outbound_shipment_a, mock_store_a, mock_store_b,
+            MockData, MockDataInserts,
+        },
+        test_db::setup_all_with_data,
+        EqualFilter, Invoice, InvoiceFilter, InvoiceRepository, PreferenceRow, StorageConnection,
+    };
+
+    #[actix_rt::test]
+    async fn test_update_inbound_invoice_auto_finalise() {
+        fn get_invoice_row(connection: &StorageConnection, id: String) -> InvoiceRow {
+            InvoiceRepository::new(connection)
+                .query_one(InvoiceFilter::new().id(EqualFilter::equal_to(id)))
+                .unwrap()
+                .unwrap()
+                .invoice_row
+        }
+
+        let first_half_row = InvoiceRow {
+            id: "picked_first_half".to_string(),
+            status: InvoiceStatus::Picked,
+            created_datetime: Utc::now().naive_utc(),
+            ..mock_outbound_shipment_a()
+        };
+        let first_half = Invoice {
+            invoice_row: first_half_row.clone(),
+            name_row: mock_name_b(),
+            store_row: mock_store_b(),
+            clinician_row: None,
+        };
+        let second_half_row = InvoiceRow {
+            id: "picked_second_half".to_string(),
+            name_link_id: mock_name_a().id,
+            store_id: mock_store_a().id,
+            r#type: InvoiceType::InboundShipment,
+            ..first_half_row.clone()
+        };
+        let second_half = Invoice {
+            invoice_row: second_half_row.clone(),
+            name_row: mock_name_a(),
+            store_row: mock_store_a(),
+            clinician_row: None,
+        };
+        let mut processor_input = InvoiceTransferProcessorRecord {
+            operation: Operation::Upsert {
+                invoice: first_half.clone(),
+                linked_invoice: Some(second_half.clone()),
+                linked_shipment_requisition: None,
+                linked_original_shipment: None,
+            },
+            other_party_store_id: mock_store_a().id,
+        };
+
+        // First test without preference
+        let (_, _, connection_manager, _) = setup_all_with_data(
+            "test_update_inbound_invoice_auto_finalise_off",
+            MockDataInserts::none().stores(),
+            MockData {
+                invoices: vec![first_half_row.clone(), second_half_row.clone()],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        let ctx = &ServiceProvider::new(connection_manager)
+            .basic_context()
+            .unwrap();
+
+        UpdateInboundInvoiceProcessor {}
+            .try_process_record(&ctx, &processor_input)
+            .unwrap();
+
+        let invoice = get_invoice_row(&ctx.connection, second_half_row.id.to_string());
+        assert_eq!(
+            invoice.status,
+            InvoiceStatus::Picked,
+            "The transfer should remain Picked if the first half is still Picked"
+        );
+
+        match processor_input.operation {
+            Operation::Upsert {
+                ref mut invoice, ..
+            } => invoice.invoice_row.status = InvoiceStatus::Shipped,
+            _ => (),
+        }
+
+        UpdateInboundInvoiceProcessor {}
+            .try_process_record(&ctx, &processor_input)
+            .unwrap();
+
+        let invoice = get_invoice_row(&ctx.connection, second_half_row.id.to_string());
+        assert_eq!(
+            invoice.status,
+            InvoiceStatus::Shipped,
+            "The transfer should remain Shipped if the first half is shipped and the auto verify preference is off"
+        );
+
+        // Setup for the test with the preference on
+        let preference = PreferenceRow {
+            id: "preference_on".to_string(),
+            key: PrefKey::InboundShipmentAutoVerify.to_string(),
+            value: "true".to_string(),
+            store_id: Some("store_a".to_string()),
+        };
+
+        match processor_input.operation {
+            Operation::Upsert {
+                ref mut invoice, ..
+            } => invoice.invoice_row.status = InvoiceStatus::Picked,
+            _ => (),
+        }
+
+        let (_, _, connection_manager, _) = setup_all_with_data(
+            "test_update_inbound_invoice_auto_finalise_on",
+            MockDataInserts::none().stores(),
+            MockData {
+                invoices: vec![first_half_row.clone(), second_half_row.clone()],
+                preferences: vec![preference],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        let ctx = &ServiceProvider::new(connection_manager)
+            .basic_context()
+            .unwrap();
+
+        UpdateInboundInvoiceProcessor {}
+            .try_process_record(&ctx, &processor_input)
+            .unwrap();
+        let invoice = get_invoice_row(&ctx.connection, second_half_row.id.to_string());
+        assert_eq!(
+            invoice.status,
+            InvoiceStatus::Picked,
+            "The transfer should remain Picked if the first half is still Picked"
+        );
+
+        match processor_input.operation {
+            Operation::Upsert {
+                ref mut invoice, ..
+            } => invoice.invoice_row.status = InvoiceStatus::Shipped,
+            _ => (),
+        }
+
+        UpdateInboundInvoiceProcessor {}
+            .try_process_record(&ctx, &processor_input)
+            .unwrap();
+
+        let invoice = get_invoice_row(&ctx.connection, second_half_row.id.to_string());
+        assert_eq!(
+            invoice.status,
+            InvoiceStatus::Verified,
+            "The transfer should be auto verified if the first half is shipped and the auto verify preference is on"
+        );
     }
 }

@@ -1,7 +1,7 @@
 import React from 'react';
 import { BasicTextInput } from '@common/components';
 import { MRT_Cell, MRT_RowData } from 'material-react-table';
-import { useBufferState, useDebounceCallback } from '@common/hooks';
+import { useBufferState } from '@common/hooks';
 
 interface TextInputCell<T extends MRT_RowData> {
   cell: MRT_Cell<T>;
@@ -18,7 +18,6 @@ export const TextInputCell = <T extends MRT_RowData>({
 }: TextInputCell<T>) => {
   const value = cell.getValue<string>();
   const [buffer, setBuffer] = useBufferState(value);
-  const updater = useDebounceCallback(updateFn, [updateFn], 250);
 
   return (
     <BasicTextInput
@@ -27,7 +26,7 @@ export const TextInputCell = <T extends MRT_RowData>({
       onChange={e => {
         const newValue = e.target.value;
         setBuffer(newValue);
-        updater(newValue);
+        updateFn(newValue);
       }}
       autoFocus={autoFocus}
       fullWidth

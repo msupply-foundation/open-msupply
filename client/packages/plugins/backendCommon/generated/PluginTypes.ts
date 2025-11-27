@@ -3,6 +3,7 @@ import type { ActiveStoresOnSite } from './ActiveStoresOnSite';
 import type { AverageMonthlyConsumptionInput } from './AverageMonthlyConsumptionInput';
 import type { AverageMonthlyConsumptionItem } from './AverageMonthlyConsumptionItem';
 import type { Function } from './Function';
+import type { GetConsumptionInput } from './GetConsumptionInput';
 import type { GraphqlQueryInput } from './GraphqlQueryInput';
 import type { JsonValue } from './serde_json/JsonValue';
 import type { PluginDataFilter } from './PluginDataFilter';
@@ -25,6 +26,7 @@ export type PluginTypes = {
     TransformRequestRequisitionLineInput,
     TransformRequestRequisitionLineOutput
   >;
+  get_consumption: Function<GetConsumptionInput, { [key in string]?: number }>;
   graphql_query: Function<GraphqlQueryInput, JsonValue>;
   processor: Function<ProcessorInput, ProcessorOutput>;
   get_store_preferences: StorePreferenceRow;

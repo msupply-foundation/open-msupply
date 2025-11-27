@@ -1,13 +1,11 @@
-import React, { FC } from 'react';
+import React from 'react';
 import {
-  TableProvider,
-  DataTable,
-  createTableStore,
+  MaterialTable,
   NothingHere,
   useNavigate,
   RouteBuilder,
-  useUrlQueryParams,
   useTranslation,
+  useNonPaginatedMaterialTable,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import {
@@ -23,20 +21,16 @@ import {
 } from '@openmsupply-client/programs';
 import { usePatient } from '../api';
 
-const EncounterListComponent: FC = () => {
+export const EncounterListView = () => {
   const t = useTranslation();
-  const {
-    queryParams: { sortBy, page, first, offset, filterBy },
-    updatePaginationQuery,
-    updateSortQuery,
-  } = useUrlQueryParams({ initialSort: { key: 'startDatetime', dir: 'desc' } });
-
   const patientId = usePatient.utils.id();
-  const { data, isError, isLoading } = useEncounter.document.list({
-    pagination: { first, offset },
-    // enforce filtering by patient id
-    filterBy: { ...filterBy, patientId: { equalTo: patientId } },
-    sortBy,
+  const { data, isError, isFetching } = useEncounter.document.list({
+    sortBy: {
+      key: 'startDatetime',
+      isDesc: true,
+      direction: 'desc',
+    },
+    filterBy: { patientId: { equalTo: patientId } },
   });
   const dataWithStatus: EncounterFragmentWithStatus[] | undefined =
     useEncounterFragmentWithStatus(data?.nodes);
@@ -49,45 +43,35 @@ const EncounterListComponent: FC = () => {
   });
   const disableEncounterButton = enrolmentData?.nodes?.length === 0;
 
-  const columns = useEncounterListColumns({
-    onChangeSortBy: updateSortQuery,
-    sortBy,
+  const columns = useEncounterListColumns({});
+
+  const { table } = useNonPaginatedMaterialTable({
+    tableId: 'single-patient-encounter-list',
+    columns,
+    data: dataWithStatus,
+    isLoading: isFetching,
+    isError,
+    enableRowSelection: false,
+    onRowClick: row => {
+      navigate(
+        RouteBuilder.create(AppRoute.Dispensary)
+          .addPart(AppRoute.Encounter)
+          .addPart(row.id)
+          .build()
+      );
+    },
+    noDataElement: (
+      <NothingHere
+        onCreate={
+          disableEncounterButton
+            ? undefined
+            : () => selectModal(PatientModal.Encounter)
+        }
+        body={t('messages.no-encounters')}
+        buttonText={t('button.add-encounter')}
+      />
+    ),
   });
 
-  return (
-    <DataTable
-      id="encounter-list"
-      pagination={{ page, first, offset, total: data?.totalCount }}
-      onChangePage={updatePaginationQuery}
-      columns={columns}
-      data={dataWithStatus}
-      isLoading={isLoading}
-      isError={isError}
-      onRowClick={row => {
-        navigate(
-          RouteBuilder.create(AppRoute.Dispensary)
-            .addPart(AppRoute.Encounter)
-            .addPart(row.id)
-            .build()
-        );
-      }}
-      noDataElement={
-        <NothingHere
-          onCreate={
-            disableEncounterButton
-              ? undefined
-              : () => selectModal(PatientModal.Encounter)
-          }
-          body={t('messages.no-encounters')}
-          buttonText={t('button.add-encounter')}
-        />
-      }
-    />
-  );
+  return <MaterialTable table={table} />;
 };
-
-export const EncounterListView: FC = () => (
-  <TableProvider createStore={createTableStore}>
-    <EncounterListComponent />
-  </TableProvider>
-);

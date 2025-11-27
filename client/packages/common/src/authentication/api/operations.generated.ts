@@ -259,11 +259,15 @@ export type PreferencesQuery = {
     selectDestinationStoreForAnInternalOrder: boolean;
     showContactTracing: boolean;
     sortByVvmStatusThenExpiry: boolean;
+    storeCustomColour: string;
     syncRecordsDisplayThreshold: number;
     useDaysInMonth: boolean;
     useProcurementFunctionality: boolean;
     useSimplifiedMobileUi: boolean;
+    expiredStockPreventIssue: boolean;
+    expiredStockIssueThreshold: number;
     warningForExcessRequest: boolean;
+    skipIntermediateStatusesInOutbound: boolean;
     warnWhenMissingRecentStocktake: {
       __typename: 'WarnWhenMissingRecentStocktakeDataNode';
       enabled: boolean;
@@ -496,16 +500,20 @@ export const PreferencesDocument = gql`
       selectDestinationStoreForAnInternalOrder
       showContactTracing
       sortByVvmStatusThenExpiry
+      storeCustomColour
       syncRecordsDisplayThreshold
       useDaysInMonth
       useProcurementFunctionality
       useSimplifiedMobileUi
+      expiredStockPreventIssue
+      expiredStockIssueThreshold
       warnWhenMissingRecentStocktake {
         enabled
         maxAge
         minItems
       }
       warningForExcessRequest
+      skipIntermediateStatusesInOutbound
     }
   }
 `;

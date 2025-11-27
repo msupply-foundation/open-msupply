@@ -1,6 +1,12 @@
 import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
+  Box,
   Divider,
+  ExpandIcon,
   InputWithLabelRow,
+  LocaleKey,
   Typography,
   UpsertPreferencesInput,
   useTranslation,
@@ -8,8 +14,7 @@ import {
 import React from 'react';
 import { AdminPreferenceFragment } from '../api/operations.generated';
 import { EditPreference } from './EditPreference';
-import { isAnyAmcPrefOn, generateAmcFormula } from './utils';
-import { PreferenceAccordion } from './PreferenceAccordion';
+import { isAnyAmcPrefOn } from './utils';
 
 interface PreferenceGroupAccordionProps {
   label: string;
@@ -25,43 +30,84 @@ export const PreferenceGroupAccordion = ({
   const t = useTranslation();
 
   const showAmcFormula = isAnyAmcPrefOn(preferences);
-  const amcFormula = generateAmcFormula(preferences, t);
 
   return (
-    <PreferenceAccordion label={label}>
-      {preferences.map((pref, idx) => {
-        const isLast = idx === preferences.length - 1;
-        return (
-          <EditPreference
-            key={pref.key}
-            preference={pref}
-            update={value => update({ [pref.key]: value })}
-            isLast={isLast}
-          />
-        );
-      })}
-      {showAmcFormula && (
-        <>
-          <Divider />
-          <InputWithLabelRow
-            label={t('label.amc-calculation')}
-            sx={{
-              display: 'flex',
-              alignItems: 'start',
-              flexDirection: 'column',
-              padding: 1,
-            }}
-            labelProps={{
-              sx: { display: 'flex', textAlign: 'start' },
-            }}
-            Input={
+    <Accordion
+      sx={{
+        marginTop: 1,
+        border: '1px solid',
+        borderColor: 'grey.400',
+        borderRadius: 1,
+        boxShadow: 'none',
+      }}
+    >
+      <AccordionSummary
+        expandIcon={<ExpandIcon />}
+        sx={{ fontWeight: 'bold', fontSize: 16 }}
+      >
+        {label}
+      </AccordionSummary>
+      <AccordionDetails>
+        {preferences.map((pref, idx) => {
+          const isLast = idx === preferences.length - 1;
+          return (
+            <InputWithLabelRow
+              key={pref.key}
+              labelWidth={'100%'}
+              label={t(`preference.${pref.key}` as LocaleKey)}
+              Input={
+                <EditPreference
+                  preference={pref}
+                  update={value => update({ [pref.key]: value })}
+                />
+              }
+              sx={{
+                justifyContent: 'center',
+                borderBottom: isLast ? 'none' : '1px dashed',
+                padding: 1,
+              }}
+            />
+          );
+        })}
+        {showAmcFormula && (
+          <>
+            <Divider />
+            <InputWithLabelRow
+              label={t('label.amc-calculation')}
+              sx={{
+                display: 'flex',
+                alignItems: 'start',
+                flexDirection: 'column',
+                padding: 1,
+              }}
+              labelProps={{
+                sx: { display: 'flex', textAlign: 'start' },
+              }}
+              Input={
+                <Typography variant="caption">
+                  {t('messages.amc-calculation')}
+                </Typography>
+              }
+            />
+            <Divider />
+            <Box padding={1}>
               <Typography variant="caption" color="text.secondary">
-                {amcFormula}
+                {t('messages.amc-consumption')}
+                <br />
+                {t('messages.amc-lookback-months')}
+                <br />
+                {t('messages.amc-lookback-days')}
+                <br />
+                {t('messages.amc-days-out-of-stock')}
+                <br />
+                {t('messages.amc-days-out-of-stock-adjustment')}
+                <br />
+                {t('messages.amc-minus-transfers')}
               </Typography>
-            }
-          />
-        </>
-      )}
-    </PreferenceAccordion>
+            </Box>
+          </>
+        )}
+      </AccordionDetails>
+    </Accordion>
   );
 };
