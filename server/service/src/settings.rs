@@ -162,6 +162,7 @@ pub struct LabelPrinterSettingNode {
     pub label_height: i32,
     pub label_width: i32,
     pub port: u16,
+    pub is_usb: bool,
 }
 
 #[derive(Deserialize, Serialize, Clone)]
