@@ -213,7 +213,7 @@ pub(crate) mod test {
                 (5, 10),  // +10 in
                 (6, -10), // +10 out
                 // DOS calculation period
-                // (stock = zero for 3 days)
+                // (stock = zero for 5 days)
                 (25, 10), // +10 in
             ],
         ))
@@ -225,7 +225,7 @@ pub(crate) mod test {
                 (10, 6), // 6 in
                 // DOS calculation period
                 (26, -6), // -6 out
-                          // (stock = zero for 5 days)
+                          // (stock = zero for 4 days)
             ],
         ))
         // Is out of stock at the start and end of the period
@@ -239,7 +239,7 @@ pub(crate) mod test {
                 // (stock = zero for 2 days)
                 (24, 4), // -4 out
                 (25, -4), // -4 out
-                         // (stock = zero for 6 days)
+                         // (stock = zero for 9 days)
             ],
         ))
         // Is out of stock - no movements during DOS period
@@ -250,7 +250,7 @@ pub(crate) mod test {
                 (5, 10), // +10 in
                 (6, -10), // +10 out
                          // DOS calculation period
-                         // (stock = zero for 9 days)
+                         // (stock = zero for 10 days)
             ],
         ))
         // Is in stock - no movements during DOS period
@@ -277,23 +277,22 @@ pub(crate) mod test {
         .await;
 
         let end_date = date_now();
-        let offset_end_date = end_date + Duration::days(1);
         // Using a short DOS period so that stock movements can be created beforehand
-        let start_date = date_with_offset(&offset_end_date, Duration::days((10_i32).neg() as i64));
+        let start_date = date_with_offset(&end_date, Duration::days((10_i32).neg() as i64));
         let store_id = mock_store_a().id.clone();
 
         let result = DaysOutOfStockRepository::new(&connection)
             .query(Some(ConsumptionFilter {
                 item_id: Some(EqualFilter::equal_any(vec![mock_item_a().id.clone()])),
                 store_id: Some(EqualFilter::equal_to(&store_id)),
-                date: Some(DateFilter::date_range(&start_date, &offset_end_date)),
+                date: Some(DateFilter::date_range(&start_date, &end_date)),
             }))
             .expect("Failed to query days out of stock");
 
         let expected = vec![DaysOutOfStockRow {
             item_id: "item_a".to_string(),
             store_id: "store_a".to_string(),
-            total_dos: 8.0,
+            total_dos: 7.0,
         }];
 
         pretty_assertions::assert_eq!(result, expected);
@@ -302,28 +301,12 @@ pub(crate) mod test {
             .query(Some(ConsumptionFilter {
                 item_id: Some(EqualFilter::equal_any(vec![mock_item_b().id.clone()])),
                 store_id: Some(EqualFilter::equal_to(&store_id)),
-                date: Some(DateFilter::date_range(&start_date, &offset_end_date)),
+                date: Some(DateFilter::date_range(&start_date, &end_date)),
             }))
             .expect("Failed to query days out of stock");
 
         let expected = vec![DaysOutOfStockRow {
             item_id: "item_b".to_string(),
-            store_id: "store_a".to_string(),
-            total_dos: 4.0,
-        }];
-
-        pretty_assertions::assert_eq!(result, expected);
-
-        let result = DaysOutOfStockRepository::new(&connection)
-            .query(Some(ConsumptionFilter {
-                item_id: Some(EqualFilter::equal_any(vec![mock_item_c().id.clone()])),
-                store_id: Some(EqualFilter::equal_to(&store_id)),
-                date: Some(DateFilter::date_range(&start_date, &offset_end_date)),
-            }))
-            .expect("Failed to query days out of stock");
-
-        let expected = vec![DaysOutOfStockRow {
-            item_id: "item_c".to_string(),
             store_id: "store_a".to_string(),
             total_dos: 5.0,
         }];
@@ -332,9 +315,25 @@ pub(crate) mod test {
 
         let result = DaysOutOfStockRepository::new(&connection)
             .query(Some(ConsumptionFilter {
+                item_id: Some(EqualFilter::equal_any(vec![mock_item_c().id.clone()])),
+                store_id: Some(EqualFilter::equal_to(&store_id)),
+                date: Some(DateFilter::date_range(&start_date, &end_date)),
+            }))
+            .expect("Failed to query days out of stock");
+
+        let expected = vec![DaysOutOfStockRow {
+            item_id: "item_c".to_string(),
+            store_id: "store_a".to_string(),
+            total_dos: 4.0,
+        }];
+
+        pretty_assertions::assert_eq!(result, expected);
+
+        let result = DaysOutOfStockRepository::new(&connection)
+            .query(Some(ConsumptionFilter {
                 item_id: Some(EqualFilter::equal_any(vec![mock_item_d().id.clone()])),
                 store_id: Some(EqualFilter::equal_to(&store_id)),
-                date: Some(DateFilter::date_range(&start_date, &offset_end_date)),
+                date: Some(DateFilter::date_range(&start_date, &end_date)),
             }))
             .expect("Failed to query days out of stock");
 
@@ -350,7 +349,7 @@ pub(crate) mod test {
             .query(Some(ConsumptionFilter {
                 item_id: Some(EqualFilter::equal_any(vec![mock_item_e().id.clone()])),
                 store_id: Some(EqualFilter::equal_to(&store_id)),
-                date: Some(DateFilter::date_range(&start_date, &offset_end_date)),
+                date: Some(DateFilter::date_range(&start_date, &end_date)),
             }))
             .expect("Failed to query days out of stock");
 
@@ -366,7 +365,7 @@ pub(crate) mod test {
             .query(Some(ConsumptionFilter {
                 item_id: Some(EqualFilter::equal_any(vec![mock_item_f().id.clone()])),
                 store_id: Some(EqualFilter::equal_to(&store_id)),
-                date: Some(DateFilter::date_range(&start_date, &offset_end_date)),
+                date: Some(DateFilter::date_range(&start_date, &end_date)),
             }))
             .expect("Failed to query days out of stock");
 

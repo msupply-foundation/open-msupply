@@ -76,7 +76,7 @@ pub fn get_item_stats(
     let filter = ConsumptionFilter {
         item_id: Some(EqualFilter::equal_any(item_ids.clone())),
         store_id: Some(EqualFilter::equal_to(store_id)),
-        date: Some(DateFilter::date_range(&start_date, &offset_end_date)),
+        date: Some(DateFilter::date_range(&start_date, &end_date)),
     };
 
     let consumption = get_consumption::Input {
@@ -312,6 +312,7 @@ mod test {
                 (20, 3), // +3 in
                 (25, -3), // -3 out
                          // (stock = zero for 5 more days)
+                         // Total 13 days out of stock
             ],
         ));
 
@@ -551,11 +552,8 @@ mod test {
             .get_item_stats(&context, &mock_store_a().id, Some(1.0), item_ids, None)
             .unwrap();
 
-        // With DOS adjustment: 30 days / (30 - 16 dos) = 30/14 = 2.142857
-        // AMC = 6.0 * 2.142857 = 12.857142857142858
-        assert_eq!(
-            item_stats[0].average_monthly_consumption,
-            12.857142857142858
-        );
+        // With DOS adjustment: 30 days / (30 - 15 dos) = 30/15 = 2
+        // AMC = 6.0 * 2 = 12
+        assert_eq!(item_stats[0].average_monthly_consumption, 12.0);
     }
 }
