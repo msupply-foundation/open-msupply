@@ -2,20 +2,18 @@ import React, { useState } from 'react';
 import { AppRoute } from '@openmsupply-client/config';
 import {
   FnUtils,
-  DownloadIcon,
   PlusCircleIcon,
   useNotification,
   AppBarButtonsPortal,
   ButtonWithIcon,
   Grid,
   useTranslation,
-  LoadingButton,
   ToggleState,
   useNavigate,
   RouteBuilder,
   useAuthContext,
-  useExportCSV,
 } from '@openmsupply-client/common';
+import { ExportSelector } from '@openmsupply-client/system';
 import {
   NameRowFragment,
   SupplierSearchModal,
@@ -39,7 +37,6 @@ export const AppBarButtons = ({
   const { store } = useAuthContext();
   const [name, setName] = useState<NameRowFragment | null>(null);
 
-  const exportCsv = useExportCSV();
   const { mutateAsync: onCreate } = useInbound.document.insert();
   const { isLoading, fetchAsync } = useInbound.document.listAll({
     key: 'createdDateTime',
@@ -50,17 +47,6 @@ export const AppBarButtons = ({
     useInbound.document.listInternalOrdersPromise();
   const manuallyLinkInternalOrder =
     store?.preferences.manuallyLinkInternalOrderToInboundShipment;
-
-  const csvExport = async () => {
-    const data = await fetchAsync();
-    if (!data || !data?.nodes.length) {
-      error(t('error.no-data'))();
-      return;
-    }
-
-    const csv = inboundsToCsv(data.nodes, t);
-    await exportCsv(csv, t('filename.inbounds'));
-  };
 
   const createInvoice = async (nameId: string, requisitionId?: string) => {
     const invoiceId = await onCreate({
@@ -96,6 +82,15 @@ export const AppBarButtons = ({
     }
   };
 
+  const getCsvData = async () => {
+    const data = await fetchAsync();
+    if (!data?.nodes?.length) {
+      error(t('error.no-data'))();
+      return null;
+    }
+    return inboundsToCsv(data.nodes, t);
+  };
+
   return (
     <AppBarButtonsPortal>
       <Grid container gap={1}>
@@ -105,12 +100,10 @@ export const AppBarButtons = ({
           onClick={invoiceModalController.toggleOn}
         />
         {!simplifiedTabletView && (
-          <LoadingButton
-            startIcon={<DownloadIcon />}
-            variant="outlined"
-            onClick={csvExport}
+          <ExportSelector
+            getCsvData={getCsvData}
+            filename={t('filename.inbounds')}
             isLoading={isLoading}
-            label={t('button.export')}
           />
         )}
       </Grid>

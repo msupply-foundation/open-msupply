@@ -1,22 +1,20 @@
 import React, { FC } from 'react';
 import {
   FnUtils,
-  DownloadIcon,
   PlusCircleIcon,
   useNotification,
   AppBarButtonsPortal,
   ButtonWithIcon,
   Grid,
   useTranslation,
-  LoadingButton,
   ToggleState,
   useNavigate,
   RouteBuilder,
   useSimplifiedTabletUI,
-  useExportCSV,
   usePreferences,
   useConfirmationModal,
 } from '@openmsupply-client/common';
+import { ExportSelector } from '@openmsupply-client/system';
 import { useRequest } from '../api';
 import { requestsToCsv } from '../../utils';
 import { CreateRequisitionModal } from './CreateRequisitionModal';
@@ -34,24 +32,12 @@ export const AppBarButtons: FC<{
   const { insert: onProgramCreate } = useRequest.document.insertProgram();
   const { error } = useNotification();
 
-  const exportCSV = useExportCSV();
   const { isLoading, fetchAsync } = useRequest.document.listAll({
     key: 'createdDatetime',
     direction: 'desc',
     isDesc: true,
   });
   const simplifiedTabletView = useSimplifiedTabletUI();
-
-  const csvExport = async () => {
-    const data = await fetchAsync();
-    if (!data || !data?.nodes.length) {
-      error(t('error.no-data'))();
-      return;
-    }
-
-    const csv = requestsToCsv(data.nodes, t);
-    exportCSV(csv, t('filename.requests'));
-  };
 
   // Warning when you don't have a recent stocktake with enough items
   const prefs = usePreferences();
@@ -95,6 +81,15 @@ export const AppBarButtons: FC<{
     }
   };
 
+  const getCsvData = async () => {
+    const data = await fetchAsync();
+    if (!data?.nodes?.length) {
+      error(t('error.no-data'))();
+      return null;
+    }
+    return requestsToCsv(data.nodes, t);
+  };
+
   return (
     <AppBarButtonsPortal>
       <Grid container gap={1}>
@@ -105,12 +100,10 @@ export const AppBarButtons: FC<{
           onClick={handleAddRequisitionClick}
         />
         {!simplifiedTabletView && (
-          <LoadingButton
-            startIcon={<DownloadIcon />}
-            variant="outlined"
+          <ExportSelector
+            getCsvData={getCsvData}
+            filename={t('filename.requests')}
             isLoading={isLoading}
-            onClick={csvExport}
-            label={t('button.export')}
           />
         )}
       </Grid>
