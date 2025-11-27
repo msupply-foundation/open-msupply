@@ -335,25 +335,23 @@ export const outboundsToCsv = (
   t: TypedTFunction<LocaleKey>
 ) => {
   const fields: string[] = [
-    'id',
     t('label.name'),
     t('label.status'),
     t('label.invoice-number'),
     t('label.created'),
     t('label.reference'),
-    t('label.comment'),
     t('label.total'),
+    t('label.comment'),
   ];
 
   const data = invoices.map(node => [
-    node.id,
     node.otherPartyName,
     node.status,
     node.invoiceNumber,
     Formatter.csvDateTimeString(node.createdDatetime),
     node.theirReference,
-    node.comment,
     node.pricing.totalAfterTax,
+    node.comment,
   ]);
   return Formatter.csv({ fields, data });
 };
