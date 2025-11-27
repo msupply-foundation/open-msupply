@@ -9593,6 +9593,7 @@ export type StoreConnector = {
 
 export type StoreFilterInput = {
   code?: InputMaybe<StringFilterInput>;
+  codeOrName?: InputMaybe<StringFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
   name?: InputMaybe<StringFilterInput>;
   nameCode?: InputMaybe<StringFilterInput>;
