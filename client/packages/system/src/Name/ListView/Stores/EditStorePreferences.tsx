@@ -40,26 +40,29 @@ export const EditStorePreferences = ({
       ) : (
         filteredPreferences.map((pref, idx) => {
           const isLast = idx === filteredPreferences.length - 1;
-
-    return (
-      <EditPreference
-        key={pref.key}
-        disabled={
-          !isCentralServer || !userHasPermission(UserPermission.EditCentralData)
-        }
-        preference={pref}
-        update={value => {
-          const finalValue =
-            pref.valueType === PreferenceValueNodeType.Integer &&
-            value === undefined
-              ? 0
-              : value;
-          return update({
-            [pref.key]: [{ storeId, value: finalValue }],
-          });
-        }}
-        isLast={isLast}
-      />
-    );
-  });
+          return (
+            <EditPreference
+              key={pref.key}
+              disabled={
+                !isCentralServer ||
+                !userHasPermission(UserPermission.EditCentralData)
+              }
+              preference={pref}
+              update={value => {
+                const finalValue =
+                  pref.valueType === PreferenceValueNodeType.Integer &&
+                  value === undefined
+                    ? 0
+                    : value;
+                return update({
+                  [pref.key]: [{ storeId, value: finalValue }],
+                });
+              }}
+              isLast={isLast}
+            />
+          );
+        })
+      )}
+    </>
+  );
 };
