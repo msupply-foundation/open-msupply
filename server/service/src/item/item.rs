@@ -189,7 +189,7 @@ pub fn get_item_ids_by_stock_status(
 
             if filter.products_at_risk_of_being_out_of_stock == Some(true) {
                 // Include items with less than threshold months of stock
-                if stats.average_monthly_consumption > 0.0 {
+                if stats.average_monthly_consumption > 0.0 && stats.total_stock_on_hand > 0.0 {
                     let months_of_stock =
                         stats.total_stock_on_hand / stats.average_monthly_consumption;
                     include &= months_of_stock < num_months_consumption as f64;
