@@ -21,7 +21,7 @@ import { Footer } from './Footer';
 import { AppBarButtons } from './AppBarButtons';
 import { SidePanel } from './SidePanel';
 import { useResponse, ResponseLineFragment, ResponseFragment } from '../api';
-import { IndicatorsTab } from './IndicatorsTab';
+import { IndicatorsTab, Documents } from './Tabs';
 import { ResponseRequisitionLineErrorProvider } from '../context';
 import { ProgramIndicatorFragment } from '../../RequestRequisition/api';
 import { buildIndicatorEditRoute } from './utils';
@@ -43,7 +43,8 @@ const DetailViewInner = () => {
     isOpen,
   } = useEditModal<string | null>();
 
-  const { data, isLoading, isFetching, isError } = useResponse.document.get();
+  const { data, isLoading, isFetching, isError, invalidateQueries } =
+    useResponse.document.get();
   const { columns } = useResponseColumns();
   const isDisabled = useResponse.utils.isDisabled();
   const { data: programIndicators, isLoading: isProgramIndicatorsLoading } =
@@ -76,7 +77,7 @@ const DetailViewInner = () => {
         )
       );
     },
-    []
+    [navigate]
   );
 
   const onAddItem = () => {
@@ -117,6 +118,12 @@ const DetailViewInner = () => {
     {
       Component: <MaterialTable table={table} />,
       value: 'Details',
+    },
+    {
+      Component: (
+        <Documents data={data} invalidateQueries={invalidateQueries} />
+      ),
+      value: t('label.documents'),
     },
     {
       Component: <ActivityLogList recordId={data?.id ?? ''} />,

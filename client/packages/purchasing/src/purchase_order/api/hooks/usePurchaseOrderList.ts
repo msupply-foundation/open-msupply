@@ -51,11 +51,13 @@ export const usePurchaseOrderList = (queryParams?: ListParams) => {
       ...filterBy,
     };
 
+    const sortKey = (sortBy.key ||
+      PurchaseOrderSortFieldInput.Number) as PurchaseOrderSortFieldInput;
     const query = await purchaseOrderApi.purchaseOrders({
       storeId,
       first: first,
       offset: offset,
-      key: (sortBy.key as PurchaseOrderSortFieldInput) ?? 'number',
+      key: sortKey,
       desc: sortBy.direction === 'desc',
       filter,
     });
