@@ -170,7 +170,10 @@ fn validate_existing_prescription(
         Some(invoice_id) => {
             InvoiceLineRepository::new(connection)
                 // Vaccination prescription should only ever have 1 line
-                .query_one(InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(invoice_id.to_string())))?
+                .query_one(
+                    InvoiceLineFilter::new()
+                        .invoice_id(EqualFilter::equal_to(invoice_id.to_string())),
+                )?
                 .ok_or(RepositoryError::NotFound)?
         }
         None => return Ok(None),
@@ -232,10 +235,9 @@ fn validate_change_to_given(
 ) -> Result<(), UpdateVaccinationError> {
     // Get the vaccine course to check if doses can be skipped
     let vaccine_course_dose = VaccineCourseDoseRepository::new(connection)
-        .query_one(
-            VaccineCourseDoseFilter::new()
-                .id(EqualFilter::equal_to(&existing.vaccine_course_dose_row.id)),
-        )?
+        .query_one(VaccineCourseDoseFilter::new().id(EqualFilter::equal_to(
+            existing.vaccine_course_dose_row.id.clone(),
+        )))?
         .ok_or(UpdateVaccinationError::InternalError(
             "Vaccine course dose not found".to_string(),
         ))?;
