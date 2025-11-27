@@ -197,10 +197,7 @@ const ModalTabs = ({
             height: '100%',
           }}
         >
-          <EditStorePreferences
-            storeId={storeId}
-            setIsActionValid={setIsActionValid}
-          />
+          <EditStorePreferences storeId={storeId} />
         </TabPanel>
       )}
     </TabContext>
