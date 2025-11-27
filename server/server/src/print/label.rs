@@ -51,7 +51,7 @@ pub struct QueryParams {
 
 pub async fn get_label_asset(
     request: HttpRequest,
-    service_provider: Data<ServiceProvider>,
+    _service_provider: Data<ServiceProvider>,
     auth_data: Data<AuthData>,
     query: web::Query<QueryParams>,
 ) -> HttpResponse {
@@ -64,14 +64,6 @@ pub async fn get_label_asset(
         }
     }
 
-    let settings = match get_printer_settings(service_provider) {
-        Ok(settings) => settings,
-        Err(error) => {
-            return HttpResponse::InternalServerError()
-                .body(format!("Error getting printer settings: {}", error));
-        }
-    };
-    let url = format!("http://{}/pstprnt", settings.address);
     let data: AssetLabelData = match serde_json::from_str(query.into_inner().data.as_str()) {
         Ok(parsed_data) => parsed_data,
         Err(err) => {
@@ -80,7 +72,7 @@ pub async fn get_label_asset(
         }
     };
     let zpl = service::print::label::get_asset_label(data);
-    let response = serde_json::json!({"url":url,"zpl":zpl});
+    let response = serde_json::json!({ "zpl":zpl });
 
     HttpResponse::Ok().body(serde_json::to_string_pretty(&response).unwrap())
 }

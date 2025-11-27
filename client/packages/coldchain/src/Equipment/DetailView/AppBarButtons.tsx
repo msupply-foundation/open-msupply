@@ -13,6 +13,12 @@ import { useAssets } from '../api';
 import { UpdateStatusButton } from './UpdateStatusButton';
 import { Environment } from '@openmsupply-client/config';
 
+declare global {
+  interface Window {
+    BrowserPrint?: any;
+  }
+}
+
 export const AppBarButtonsComponent = () => {
   const { data } = useAssets.document.get();
   const t = useTranslation();
@@ -34,30 +40,6 @@ export const AppBarButtonsComponent = () => {
   const printAssetLabel = () => {
     const date = new Date().toLocaleDateString();
     setIsPrinting(true);
-    // fetch(Environment.PRINT_LABEL_QR, {
-    //   method: 'POST',
-    //   body: JSON.stringify({
-    //     code: data?.id,
-    //     assetNumber: `${data?.assetNumber ?? ''}`,
-    //     datePrinted: `${date}`,
-    //   }),
-    //   credentials: 'include',
-    //   headers: { 'Content-Type': 'application/json' },
-    // })
-    //   .then(async response => {
-    //     if (response.status !== 200) {
-    //       const text = await response.text();
-    //       throw new Error(text);
-    //     }
-    //     success(t('messages.success-printing-label'))();
-    //   })
-    //   .catch(e => {
-    //     error(`${t('error.printing-label')}: ${e.message}`)();
-    //   })
-    //   .finally(() => setIsPrinting(false));
-
-    // example of local printing
-    // to implement - this will need to be executed alternatively to the above fetch
     const uridata = encodeURIComponent(
       JSON.stringify({
         code: data?.id,
@@ -89,6 +71,57 @@ export const AppBarButtonsComponent = () => {
       .finally(() => setIsPrinting(false));
   };
 
+  const printAssetLabelLocally = async () => {
+    const date = new Date().toLocaleDateString();
+    setIsPrinting(true);
+    try {
+      const uridata = encodeURIComponent(
+        JSON.stringify({
+          code: data?.id,
+          assetNumber: `${data?.assetNumber ?? ''}`,
+          datePrinted: `${date}`,
+        })
+      );
+      const url = `${Environment.PRINT_LABEL_QR}?data=${uridata}`;
+      const response = await fetch(url, {
+        method: 'GET',
+        credentials: 'include',
+      });
+
+      if (response.status !== 200) {
+        const text = await response.text();
+        throw new Error(text);
+      }
+
+      const result = await response.json();
+
+      if (window.BrowserPrint && result.zpl) {
+        window.BrowserPrint.getLocalDevices(function (device) {
+          const usbConnectedPrinter = device.printer.find(
+            d => d.connection === 'usb' && d.deviceType === 'printer'
+          );
+          if (usbConnectedPrinter) {
+            usbConnectedPrinter?.send(
+              result.zpl,
+              function (success) {
+                console.log('success', success);
+              },
+              function (error) {
+                console.error(error);
+              }
+            );
+          }
+        });
+      } else {
+        error(t('error.label-printer-not-configured'))();
+      }
+    } catch (e: any) {
+      error(`${t('error.printing-label')}: ${e.message}`)();
+    } finally {
+      setIsPrinting(false);
+    }
+  };
+
   return (
     <AppBarButtonsPortal>
       <Grid container gap={1}>
@@ -98,6 +131,13 @@ export const AppBarButtonsComponent = () => {
           isLoading={isPrinting}
           onClick={onClick}
           label={t('button.print-asset-label')}
+          variant="outlined"
+        />
+        <LoadingButton
+          startIcon={<PrinterIcon />}
+          isLoading={isPrinting}
+          onClick={printAssetLabelLocally}
+          label={t('button.print-asset-label-locally')}
           variant="outlined"
         />
       </Grid>
