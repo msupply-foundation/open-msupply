@@ -27,7 +27,7 @@ export const usePreferenceSearch = (preferences: AdminPreferenceFragment[]) => {
         if (translatedGroupLabel.toLowerCase().includes(lowerSearch)) {
           return true;
         }
-        // If a pref within the group matches, include it
+        // If a pref within the group matches, include it, this means we see the whole group if any sub pref matches
         const groupPrefs = PREFERENCE_GROUP_CONFIG[groupLabelKey];
         if (
           groupPrefs &&
