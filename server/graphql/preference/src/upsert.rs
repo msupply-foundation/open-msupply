@@ -22,6 +22,12 @@ pub struct IntegerStorePrefInput {
 }
 
 #[derive(InputObject)]
+pub struct StringStorePrefInput {
+    pub store_id: String,
+    pub value: String,
+}
+
+#[derive(InputObject)]
 pub struct WarnWhenMissingRecentStocktakeDataInput {
     pub enabled: bool,
     pub max_age: u32,
@@ -46,10 +52,10 @@ pub struct UpsertPreferencesInput {
     pub show_contact_tracing: Option<bool>,
     pub sync_records_display_threshold: Option<i32>,
     pub warning_for_excess_request: Option<bool>,
-    pub use_days_in_month: Option<bool>,
     pub adjust_for_number_of_days_out_of_stock: Option<bool>,
     pub days_in_month: Option<f64>,
-    pub exclude_transfers: Option<bool>,
+    pub expired_stock_prevent_issue: Option<bool>,
+    pub expired_stock_issue_threshold: Option<i32>,
 
     // Store preferences
     pub manage_vaccines_in_doses: Option<Vec<BoolStorePrefInput>>,
@@ -60,6 +66,7 @@ pub struct UpsertPreferencesInput {
     pub use_simplified_mobile_ui: Option<Vec<BoolStorePrefInput>>,
     pub disable_manual_returns: Option<Vec<BoolStorePrefInput>>,
     pub requisition_auto_finalise: Option<Vec<BoolStorePrefInput>>,
+    pub inbound_shipment_auto_verify: Option<Vec<BoolStorePrefInput>>,
     pub can_create_internal_order_from_a_requisition: Option<Vec<BoolStorePrefInput>>,
     pub select_destination_store_for_an_internal_order: Option<Vec<BoolStorePrefInput>>,
     pub number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products:
@@ -69,6 +76,8 @@ pub struct UpsertPreferencesInput {
     pub first_threshold_for_expiring_items: Option<Vec<IntegerStorePrefInput>>,
     pub second_threshold_for_expiring_items: Option<Vec<IntegerStorePrefInput>>,
     pub warn_when_missing_recent_stocktake: Option<Vec<WarnWhenMissingRecentStocktakeInput>>,
+    pub skip_intermediate_statuses_in_outbound: Option<Vec<BoolStorePrefInput>>,
+    pub store_custom_colour: Option<Vec<StringStorePrefInput>>,
 }
 
 pub fn upsert_preferences(
@@ -106,11 +115,10 @@ impl UpsertPreferencesInput {
             show_contact_tracing,
             sync_records_display_threshold,
             warning_for_excess_request,
-
-            use_days_in_month,
             adjust_for_number_of_days_out_of_stock,
             days_in_month,
-            exclude_transfers,
+            expired_stock_prevent_issue,
+            expired_stock_issue_threshold,
             // Store preferences
             manage_vaccines_in_doses,
             manage_vvm_status_for_stock,
@@ -120,6 +128,7 @@ impl UpsertPreferencesInput {
             use_simplified_mobile_ui,
             disable_manual_returns,
             requisition_auto_finalise,
+            inbound_shipment_auto_verify,
             can_create_internal_order_from_a_requisition,
             select_destination_store_for_an_internal_order,
             number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products,
@@ -127,6 +136,8 @@ impl UpsertPreferencesInput {
             first_threshold_for_expiring_items,
             second_threshold_for_expiring_items,
             warn_when_missing_recent_stocktake,
+            skip_intermediate_statuses_in_outbound,
+            store_custom_colour,
         } = self;
 
         UpsertPreferences {
@@ -144,10 +155,10 @@ impl UpsertPreferencesInput {
             sync_records_display_threshold: *sync_records_display_threshold,
             warning_for_excess_request: *warning_for_excess_request,
 
-            use_days_in_month: *use_days_in_month,
             adjust_for_number_of_days_out_of_stock: *adjust_for_number_of_days_out_of_stock,
             days_in_month: *days_in_month,
-            exclude_transfers: *exclude_transfers,
+            expired_stock_prevent_issue: *expired_stock_prevent_issue,
+            expired_stock_issue_threshold: *expired_stock_issue_threshold,
             // Store preferences
             manage_vaccines_in_doses: manage_vaccines_in_doses
                 .as_ref()
@@ -171,6 +182,9 @@ impl UpsertPreferencesInput {
                 .as_ref()
                 .map(|i| i.iter().map(|i| i.to_domain()).collect()),
             requisition_auto_finalise: requisition_auto_finalise
+                .as_ref()
+                .map(|i| i.iter().map(|i| i.to_domain()).collect()),
+            inbound_shipment_auto_verify: inbound_shipment_auto_verify
                 .as_ref()
                 .map(|i| i.iter().map(|i| i.to_domain()).collect()),
             can_create_internal_order_from_a_requisition:
@@ -198,6 +212,12 @@ impl UpsertPreferencesInput {
             warn_when_missing_recent_stocktake: warn_when_missing_recent_stocktake
                 .as_ref()
                 .map(|i| i.iter().map(|i| i.to_domain()).collect()),
+            skip_intermediate_statuses_in_outbound: skip_intermediate_statuses_in_outbound
+                .as_ref()
+                .map(|i| i.iter().map(|i| i.to_domain()).collect()),
+            store_custom_colour: store_custom_colour
+                .as_ref()
+                .map(|i| i.iter().map(|i| i.to_domain()).collect()),
         }
     }
 }
@@ -216,6 +236,15 @@ impl IntegerStorePrefInput {
         StorePrefUpdate {
             store_id: self.store_id.clone(),
             value: self.value,
+        }
+    }
+}
+
+impl StringStorePrefInput {
+    pub fn to_domain(&self) -> StorePrefUpdate<String> {
+        StorePrefUpdate {
+            store_id: self.store_id.clone(),
+            value: self.value.clone(),
         }
     }
 }

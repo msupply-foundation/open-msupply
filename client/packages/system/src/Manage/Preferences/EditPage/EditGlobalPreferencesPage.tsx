@@ -28,11 +28,7 @@ export const EditGlobalPreferencesPage = () => {
               key={pref.key}
               preference={pref}
               update={value => update({ [pref.key]: value })}
-              sx={{
-                borderBottom: isLast ? 'none' : '1px dashed',
-                borderColor: 'gray.main',
-                padding: 1,
-              }}
+              isLast={isLast}
             />
           );
         })}

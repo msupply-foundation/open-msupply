@@ -1,11 +1,6 @@
-use repository::{
-    EqualFilter, MasterListRow, MasterListRowDelete, MasterListRowRepository, PluginDataFilter,
-    PluginDataRepository, PluginDataRow, PluginDataRowRepository, ProgramRowRepository,
-    StorageConnection, SyncBufferRow,
-};
+use repository::{MasterListRow, MasterListRowRepository, StorageConnection, SyncBufferRow};
 
 use serde::Deserialize;
-use util::uuid::uuid;
 
 use super::{PullTranslateResult, SyncTranslation};
 
@@ -20,7 +15,6 @@ pub struct LegacyListMasterRow {
     inactive: Option<bool>,
     is_default_price_list: Option<bool>,
     discount_percentage: Option<f64>,
-    is_essential: Option<bool>,
 }
 // Needs to be added to all_translators()
 #[deny(dead_code)]
@@ -40,38 +34,10 @@ impl SyncTranslation for MasterListTranslation {
 
     fn try_translate_from_upsert_sync_record(
         &self,
-        connection: &StorageConnection,
+        _: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let data = serde_json::from_str::<LegacyListMasterRow>(&sync_record.data)?;
-
-        // is_essential is only an available value if plugin is active, set via OG
-        if data.is_essential.is_some() {
-            let filter = PluginDataFilter {
-                related_record_id: Some(EqualFilter::equal_to(data.id.to_string())),
-                plugin_code: Some(EqualFilter::equal_to("congo-plugin".to_string())),
-                id: None,
-                data_identifier: None,
-                store_id: None,
-            };
-
-            let existing_plugin_data =
-                PluginDataRepository::new(connection).query_by_filter(filter)?;
-
-            let plugin_data = PluginDataRow {
-                id: existing_plugin_data
-                    .first()
-                    .map(|row| row.plugin_data.id.clone())
-                    .unwrap_or_else(|| uuid()),
-                store_id: None,
-                plugin_code: "congo-plugin".to_string(),
-                related_record_id: Some(data.id.clone()),
-                data_identifier: "master-lists".to_string(),
-                data: serde_json::json!({ "is_essential": data.is_essential }).to_string(),
-            };
-
-            PluginDataRowRepository::new(connection).upsert_one(&plugin_data)?;
-        }
 
         let result = MasterListRow {
             id: data.id,
@@ -86,35 +52,26 @@ impl SyncTranslation for MasterListTranslation {
         Ok(PullTranslateResult::upsert(result))
     }
 
-    // Soft deletes were implemented in OG months after program requisitions was
-    // rolled out, so previously hard deleted records may be gone even if they
-    // are linked to program. Set these records to inactive.
+    // Soft delete
     fn try_translate_from_delete_sync_record(
         &self,
         connection: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        let program =
-            ProgramRowRepository::new(connection).find_one_by_id(&sync_record.record_id)?;
         let master_list =
             MasterListRowRepository::new(connection).find_one_by_id(&sync_record.record_id)?;
 
-        if let (Some(_), Some(master_list)) = (program, master_list) {
-            let result = MasterListRow {
-                id: master_list.id,
-                name: master_list.name,
-                code: master_list.code,
-                description: master_list.description,
-                is_active: false,
-                is_default_price_list: master_list.is_default_price_list,
-                discount_percentage: master_list.discount_percentage,
-            };
-            return Ok(PullTranslateResult::upsert(result));
-        }
+        let Some(master_list) = master_list else {
+            return Ok(PullTranslateResult::Ignored(
+                "Deleting record not found".to_string(),
+            ));
+        };
 
-        Ok(PullTranslateResult::delete(MasterListRowDelete(
-            sync_record.record_id.clone(),
-        )))
+        let result = MasterListRow {
+            is_active: false,
+            ..master_list
+        };
+        Ok(PullTranslateResult::upsert(result))
     }
 }
 

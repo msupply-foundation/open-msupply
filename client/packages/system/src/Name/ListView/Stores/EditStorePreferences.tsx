@@ -1,7 +1,8 @@
-import React, { Dispatch, SetStateAction } from 'react';
+import React from 'react';
 import {
   NothingHere,
   PreferenceNodeType,
+  PreferenceValueNodeType,
   useAuthContext,
   useIsCentralServerApi,
   UserPermission,
@@ -15,19 +16,16 @@ import { PreferenceSearchInput } from '../../../Manage/Preferences/EditPage/Pref
 
 interface EditStorePreferencesProps {
   storeId: string;
-  setIsActionValid: Dispatch<SetStateAction<boolean>>;
 }
 
 export const EditStorePreferences = ({
   storeId,
-  setIsActionValid,
 }: EditStorePreferencesProps) => {
   const isCentralServer = useIsCentralServerApi();
   const { userHasPermission } = useAuthContext();
   const { update, preferences } = useEditPreferences(
     PreferenceNodeType.Store,
-    storeId,
-    setIsActionValid
+    storeId
   );
   const { searchTerm, setSearchTerm, filteredPreferences, hasSearchTerm } =
     usePreferenceSearch(preferences);
@@ -43,24 +41,25 @@ export const EditStorePreferences = ({
         filteredPreferences.map((pref, idx) => {
           const isLast = idx === filteredPreferences.length - 1;
 
-          return (
-            <EditPreference
-              key={pref.key}
-              disabled={
-                !isCentralServer ||
-                !userHasPermission(UserPermission.EditCentralData)
-              }
-              preference={pref}
-              update={value =>
-                update({
-                  [pref.key]: [{ storeId, value }],
-                })
-              }
-              isLast={isLast}
-            />
-          );
-        })
-      )}
-    </>
-  );
+    return (
+      <EditPreference
+        key={pref.key}
+        disabled={
+          !isCentralServer || !userHasPermission(UserPermission.EditCentralData)
+        }
+        preference={pref}
+        update={value => {
+          const finalValue =
+            pref.valueType === PreferenceValueNodeType.Integer &&
+            value === undefined
+              ? 0
+              : value;
+          return update({
+            [pref.key]: [{ storeId, value: finalValue }],
+          });
+        }}
+        isLast={isLast}
+      />
+    );
+  });
 };

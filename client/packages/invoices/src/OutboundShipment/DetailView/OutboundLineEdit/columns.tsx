@@ -117,7 +117,7 @@ export const useOutboundLineEditColumns = ({
         header: t('label.expiry-date'),
         size: 100,
         columnType: ColumnType.Date,
-        Cell: ({ cell }) => <ExpiryDateCell cell={cell} />,
+        Cell: ExpiryDateCell,
       },
       {
         id: 'vvmStatus',
