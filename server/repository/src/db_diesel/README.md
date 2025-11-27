@@ -184,5 +184,7 @@ For simple CRUD operations, use Diesel's standard table-based queries or a view.
 
 ## Further Reading
 
+Tutorial by Andrei [here](https://github.com/andreievg/diesel-rs-dynamic-queries)
+
 - [Diesel QueryFragment docs](https://docs.rs/diesel/latest/diesel/query_builder/trait.QueryFragment.html)
 - [Diesel Guide - using custom SQL](https://diesel.rs/guides/extending-diesel.html#using-custom-sql-and-how-to-extend-the-query-dsl)

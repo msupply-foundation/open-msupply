@@ -48,65 +48,47 @@ impl<'a> DaysOutOfStockRepository<'a> {
         &self,
         filter: Option<ConsumptionFilter>,
     ) -> Result<Vec<DaysOutOfStockRow>, RepositoryError> {
-        if let Some(f) = filter {
-            let ConsumptionFilter {
-                item_id,
-                store_id,
-                date,
-            } = f;
+        let Some(ConsumptionFilter {
+            item_id,
+            store_id,
+            date,
+        }) = filter
+        else {
+            // If no filter, fallback to static table query
+            return Ok(days_out_of_stock::table
+                .load::<DaysOutOfStockRow>(self.connection.lock().connection())?);
+        };
 
-            // Build filter_helper query for any present fields
-            let mut filter_helper_query = dos_filter_helper::table.into_boxed();
-            if let Some(ref item_id) = item_id {
-                apply_equal_filter!(
-                    filter_helper_query,
-                    Some(item_id.clone()),
-                    dos_filter_helper::item_id
-                );
-            }
-            if let Some(ref store_id) = store_id {
-                apply_equal_filter!(
-                    filter_helper_query,
-                    Some(store_id.clone()),
-                    dos_filter_helper::store_id
-                );
-            }
+        // Build filter_helper query for any present fields
+        let mut filter_helper_query = dos_filter_helper::table.into_boxed();
 
-            // If a date filter is provided and valid, use it; otherwise, return empty result
-            let (start, end) = match date {
-                Some(DateFilter {
-                    after_or_equal_to: Some(start_date),
-                    before_or_equal_to: Some(end_date),
-                    ..
-                }) => {
-                    // Convert start_date and end_date to NaiveDateTime
-                    // TODO: Can the query be changed to NaiveDate instead?
-                    let start =
-                        start_date.and_time(chrono::NaiveTime::from_hms_opt(0, 0, 0).unwrap());
-                    let end =
-                        end_date.and_time(chrono::NaiveTime::from_hms_opt(23, 59, 59).unwrap());
-                    (start, end)
-                }
-                _ => {
-                    // No valid date range filter: return empty result
-                    return Ok(vec![]);
-                }
-            };
+        apply_equal_filter!(filter_helper_query, item_id, dos_filter_helper::item_id);
 
-            let dos_query = Dos {
-                start,
-                end,
-                filter_helper: filter_helper_query,
-                dos_result: (),
-            };
+        apply_equal_filter!(filter_helper_query, store_id, dos_filter_helper::store_id);
 
-            // Run the dynamic query
-            return Ok(dos_query.load::<DaysOutOfStockRow>(self.connection.lock().connection())?);
-        }
+        // If a date filter is provided and valid, use it; otherwise, return empty result
+        let Some(DateFilter {
+            after_or_equal_to: Some(start_date),
+            before_or_equal_to: Some(end_date),
+            ..
+        }) = date
+        else {
+            return Ok(vec![]);
+        };
 
-        // If no filter, fallback to static table query
-        Ok(days_out_of_stock::table
-            .load::<DaysOutOfStockRow>(self.connection.lock().connection())?)
+        // Convert start_date and end_date to NaiveDateTime
+        // TODO: Can the query be changed to NaiveDate instead?
+        let start = start_date.and_time(chrono::NaiveTime::from_hms_opt(0, 0, 0).unwrap());
+        let end = end_date.and_time(chrono::NaiveTime::from_hms_opt(23, 59, 59).unwrap());
+
+        let dos_query = Dos {
+            start,
+            end,
+            filter_helper: filter_helper_query,
+            dos_result: (),
+        };
+
+        Ok(dos_query.load::<DaysOutOfStockRow>(self.connection.lock().connection())?)
     }
 }
 
