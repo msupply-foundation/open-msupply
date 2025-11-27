@@ -115,6 +115,22 @@ export type GenerateReportQuery = {
     | { __typename: 'PrintReportNode'; fileId: string };
 };
 
+export type CsvToExcelQueryVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  csvData: Types.Scalars['String']['input'];
+  filename: Types.Scalars['String']['input'];
+}>;
+
+export type CsvToExcelQuery = {
+  __typename: 'Queries';
+  csvToExcel:
+    | {
+        __typename: 'PrintReportError';
+        error: { __typename: 'FailedToFetchReportData'; description: string };
+      }
+    | { __typename: 'PrintReportNode'; fileId: string };
+};
+
 export const ReportRowFragmentDoc = gql`
   fragment ReportRow on ReportNode {
     __typename
@@ -223,6 +239,22 @@ export const GenerateReportDocument = gql`
     }
   }
 `;
+export const CsvToExcelDocument = gql`
+  query csvToExcel($storeId: String!, $csvData: String!, $filename: String!) {
+    csvToExcel(storeId: $storeId, csvData: $csvData, filename: $filename) {
+      ... on PrintReportNode {
+        __typename
+        fileId
+      }
+      ... on PrintReportError {
+        __typename
+        error {
+          description
+        }
+      }
+    }
+  }
+`;
 
 export type SdkFunctionWrapper = <T>(
   action: (requestHeaders?: Record<string, string>) => Promise<T>,
@@ -285,6 +317,21 @@ export function getSdk(
             { ...requestHeaders, ...wrappedRequestHeaders }
           ),
         'generateReport',
+        'query',
+        variables
+      );
+    },
+    csvToExcel(
+      variables: CsvToExcelQueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders
+    ): Promise<CsvToExcelQuery> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<CsvToExcelQuery>(CsvToExcelDocument, variables, {
+            ...requestHeaders,
+            ...wrappedRequestHeaders,
+          }),
+        'csvToExcel',
         'query',
         variables
       );
