@@ -242,12 +242,14 @@ fn validate_change_to_given(
             "Vaccine course dose not found".to_string(),
         ))?;
 
-    // If doses can be skipped, allow changing to given regardless of previous doses
+    // If doses can be skipped, allow changing to given regardless of previous
+    // doses
     if vaccine_course_dose.vaccine_course_row.can_skip_dose {
         return Ok(());
     }
 
-    // Should only be able to change to given if all previous doses in the course are given
+    // If doses CAN'T be skipped, should only be able to change to given if all
+    // previous doses in the course are given
     if let Some(previous_vaccination) = previous_vaccination {
         if !previous_vaccination.vaccination_row.given {
             return Err(UpdateVaccinationError::NotNextDose);
