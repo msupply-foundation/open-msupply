@@ -59,6 +59,12 @@ export interface NativeAPI {
     fileInfo: FileInfo
   ) => Promise<{ success: boolean; error?: string }>;
   saveDatabase: () => Promise<{ success: boolean; error?: string }>;
+  // Test
+  printZpl: ({
+    zpl,
+  }: {
+    zpl: string;
+  }) => Promise<{ success: boolean; error?: string }>;
 }
 
 export enum NativeMode {
