@@ -10,6 +10,15 @@ import android.os.SystemClock;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.webkit.WebView;
+import android.app.PendingIntent; 
+import android.content.Context; 
+import android.content.Intent;
+import android.hardware.usb.UsbDevice;
+import android.hardware.usb.UsbDeviceConnection;
+import android.hardware.usb.UsbEndpoint;
+import android.hardware.usb.UsbInterface;
+import android.hardware.usb.UsbManager;
+import android.hardware.usb.UsbConstants;
 
 import androidx.annotation.MainThread;
 import androidx.annotation.NonNull;
@@ -589,6 +598,141 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
 
         call.resolve(response);
     }
+
+
+    @PluginMethod()
+    public void printZpl(PluginCall call) { 
+        JSObject result = new JSObject(); 
+        UsbDeviceConnection connection = null;
+        try {
+            Context context = getContext();
+            if (context == null) {
+                result.put("success", false);
+                result.put("error", "Context not available");
+                call.resolve(result);
+                return;
+            }
+
+            UsbManager usbManager = (UsbManager) context.getSystemService(Context.USB_SERVICE);
+            if (usbManager == null) {
+                result.put("success", false);
+                result.put("error", "USB Manager not available");
+                call.resolve(result);
+                return;
+            }
+
+            if (usbManager.getDeviceList() == null) {
+                result.put("success", false);
+                result.put("error", "USB device list not available");
+                call.resolve(result);
+                return;
+            }
+
+            int ZEBRA_VENDOR_ID = 0x0a5f;
+            UsbDevice zebraDevice = null;
+            for (UsbDevice device : usbManager.getDeviceList().values()) {
+                if (device.getVendorId() == ZEBRA_VENDOR_ID) {
+                    zebraDevice = device;
+                    break;
+                }
+            }
+
+            if (zebraDevice == null) {
+                result.put("success", false);
+                result.put("error", "No Zebra printer found");
+                call.resolve(result);
+                return;
+            }
+
+            if (!usbManager.hasPermission(zebraDevice)) {
+                PendingIntent permissionIntent = PendingIntent.getBroadcast(
+                    getContext(),
+                    0,
+                    new Intent("org.openmsupply.client.USB_PERMISSION"),
+                    PendingIntent.FLAG_IMMUTABLE
+                );
+                usbManager.requestPermission(zebraDevice, permissionIntent);
+
+                result.put("success", false);
+                result.put("error", "No USB permission for printer. Permission requested. Please try again.");
+                call.resolve(result);
+                return;
+            }
+
+            // Get ZPL string from JS
+            String zpl = call.getString("zpl", null);
+            if (zpl == null || zpl.isEmpty()) {
+                result.put("success", false);
+                result.put("error", "No ZPL data provided");
+                call.resolve(result);
+                return;
+            }
+
+            UsbInterface usbInterface = null;
+            UsbEndpoint endpointOut = null;
+
+            // Find the first interface with an OUT endpoint
+            for (int i = 0; i < zebraDevice.getInterfaceCount(); i++) {
+                UsbInterface intf = zebraDevice.getInterface(i);
+                for (int j = 0; j < intf.getEndpointCount(); j++) {
+                    UsbEndpoint ep = intf.getEndpoint(j);
+                    if (ep.getType() == UsbConstants.USB_ENDPOINT_XFER_BULK &&
+                        ep.getDirection() == UsbConstants.USB_DIR_OUT) {
+                        usbInterface = intf;
+                        endpointOut = ep;
+                        break;
+                    }
+                }
+                if (usbInterface != null && endpointOut != null) break;
+            }
+
+            if (usbInterface == null || endpointOut == null) {
+                result.put("success", false);
+                result.put("error", "No suitable USB interface/endpoint found");
+                call.resolve(result);
+                return;
+            }
+
+            connection = usbManager.openDevice(zebraDevice);
+            if (connection == null) {
+                result.put("success", false);
+                result.put("error", "Failed to open USB connection");
+                call.resolve(result);
+                return;
+            }
+
+            if (!connection.claimInterface(usbInterface, true)) {
+                result.put("success", false);
+                result.put("error", "Failed to claim USB interface");
+                connection.close();
+                call.resolve(result);
+                return;
+            }
+
+            byte[] zplBytes = zpl.getBytes("UTF-8");
+            int sent = connection.bulkTransfer(endpointOut, zplBytes, zplBytes.length, 2000);
+
+            connection.releaseInterface(usbInterface);
+            connection.close();
+
+            if (sent < 0) {
+                result.put("success", false);
+                result.put("error", "Failed to send ZPL to printer");
+            } else {
+                result.put("success", true);
+                result.put("bytesSent", sent);
+            }
+            call.resolve(result);
+        } catch (Exception e) {
+            if (connection != null) {
+                try { connection.close(); } catch (Exception ignore) {}
+            }
+            result.put("success", false);
+            result.put("error", "Exception: " + e.getMessage());
+            call.resolve(result);
+        }
+    }
+        
 
     /** Helper class to get access to the JS FrontEndHost data */
     public class FrontEndHost {
