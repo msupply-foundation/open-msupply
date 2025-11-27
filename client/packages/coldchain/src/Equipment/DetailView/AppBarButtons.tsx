@@ -8,7 +8,8 @@ import {
   LoadingButton,
   useDisabledNotificationPopover,
   useNativeClient,
-  Typography,
+  EnvUtils,
+  Platform,
 } from '@openmsupply-client/common';
 
 import { useAssets } from '../api';
@@ -40,25 +41,15 @@ declare global {
 export const AppBarButtonsComponent = () => {
   const { data } = useAssets.document.get();
   const t = useTranslation();
+  const { printZpl } = useNativeClient();
   const { error, success } = useNotification();
+  const isAndroid = EnvUtils.platform === Platform.Android;
   const { data: settings } = useAssets.utils.labelPrinterSettings();
   const [isPrinting, setIsPrinting] = React.useState(false);
-  const [deviceListResult, setDeviceListResult] = React.useState<string | null>(
-    null
-  );
-
   const { show, DisabledNotification } = useDisabledNotificationPopover({
     title: t('heading.unable-to-print'),
     message: t('error.label-printer-not-configured'),
   });
-  const { printZpl } = useNativeClient();
-  const onClick = (e: React.MouseEvent<HTMLButtonElement>) => {
-    if (settings === null) {
-      show(e);
-    } else {
-      printAssetLabel();
-    }
-  };
 
   const printAssetLabel = () => {
     const date = new Date().toLocaleDateString();
@@ -94,7 +85,7 @@ export const AppBarButtonsComponent = () => {
       .finally(() => setIsPrinting(false));
   };
 
-  const printAssetLabelLocally = async () => {
+  const printAssetLabelViaUsb = async () => {
     const date = new Date().toLocaleDateString();
     setIsPrinting(true);
     try {
@@ -118,25 +109,39 @@ export const AppBarButtonsComponent = () => {
 
       const result = await response.json();
 
-      if (printZpl) {
-        const response = await printZpl(result.zpl);
-        setDeviceListResult(JSON.stringify(response, null, 2));
+      if (isAndroid && printZpl) {
+        await printZpl(result.zpl);
       }
 
-      // TODO: Add support for browser down here:
-
-      // if (window.BrowserPrint && result.zpl) {
-      //   window.BrowserPrint.getLocalDevices(function (device) {
-      //     console.log(device);
-      //   });
-      // } else {
-      //   error(t('error.label-printer-not-configured'))();
-      // }
+      if (!isAndroid && window.BrowserPrint && result.zpl) {
+        window.BrowserPrint.getLocalDevices(function (device) {
+          const usbConnectedPrinter = device.printer.find(
+            d => d.connection === 'usb' && d.deviceType === 'printer'
+          );
+          if (usbConnectedPrinter) {
+            usbConnectedPrinter?.send(
+              result.zpl,
+              function (success) {
+                console.info('success', success);
+              },
+              function (error) {
+                console.error(error);
+              }
+            );
+          }
+        });
+      }
     } catch (e: any) {
       error(`${t('error.printing-label')}: ${e.message}`)();
     } finally {
       setIsPrinting(false);
     }
+  };
+
+  const onClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    if (settings === null) show(e);
+    if (!settings?.isUsb) printAssetLabel();
+    if (settings?.isUsb) printAssetLabelViaUsb();
   };
 
   return (
@@ -150,19 +155,7 @@ export const AppBarButtonsComponent = () => {
           label={t('button.print-asset-label')}
           variant="outlined"
         />
-        <LoadingButton
-          startIcon={<PrinterIcon />}
-          isLoading={isPrinting}
-          onClick={printAssetLabelLocally}
-          label={t('button.print-asset-label-locally')}
-          variant="outlined"
-        />
       </Grid>
-      {deviceListResult && (
-        <Typography variant="body2" sx={{ mt: 2, whiteSpace: 'pre-wrap' }}>
-          {deviceListResult}
-        </Typography>
-      )}
       <DisabledNotification />
     </AppBarButtonsPortal>
   );
