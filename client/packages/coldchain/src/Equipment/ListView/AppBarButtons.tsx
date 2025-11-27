@@ -1,11 +1,9 @@
 import React from 'react';
 import {
-  DownloadIcon,
   useNotification,
   AppBarButtonsPortal,
   Grid,
   useTranslation,
-  LoadingButton,
   ButtonWithIcon,
   PlusCircleIcon,
   ToggleState,
@@ -13,8 +11,8 @@ import {
   UserPermission,
   useCallbackWithPermission,
   useIsCentralServerApi,
-  useExportCSV,
 } from '@openmsupply-client/common';
+import { ExportSelector } from '@openmsupply-client/system';
 import { useAssets } from '../api';
 import { assetsToCsv } from '../utils';
 import { AddFromScannerButton } from './AddFromScannerButton';
@@ -33,7 +31,6 @@ export const AppBarButtonsComponent = ({
   const isCentralServer = useIsCentralServerApi();
   const { error } = useNotification();
 
-  const exportCSV = useExportCSV();
   const { fetchAsync, isLoading } = useAssets.document.listAll();
   const { data: properties } = useAssetProperties();
 
@@ -49,20 +46,18 @@ export const AppBarButtonsComponent = ({
     t('error.no-asset-create-permission')
   );
 
-  const handleCsvExportClick = async () => {
-    const data = await fetchAsync();
-    if (!data || !data?.nodes.length) {
+  const getCsvData = async () => {
+    const result = await fetchAsync();
+    if (!result?.nodes?.length) {
       error(t('error.no-data'))();
-      return;
+      return null;
     }
-
-    const csv = assetsToCsv(
-      data.nodes,
+    return assetsToCsv(
+      result.nodes,
       t,
       properties?.map(p => p.key) ?? [],
       isCentralServer
     );
-    exportCSV(csv, t('filename.cold-chain-equipment'));
   };
 
   return (
@@ -79,12 +74,10 @@ export const AppBarButtonsComponent = ({
           onClick={handleCreateAssetClick}
         />
         <AddFromScannerButton />
-        <LoadingButton
-          startIcon={<DownloadIcon />}
+        <ExportSelector
+          getCsvData={getCsvData}
+          filename={t('filename.cold-chain-equipment')}
           isLoading={isLoading}
-          variant="outlined"
-          onClick={handleCsvExportClick}
-          label={t('button.export')}
         />
       </Grid>
     </AppBarButtonsPortal>
