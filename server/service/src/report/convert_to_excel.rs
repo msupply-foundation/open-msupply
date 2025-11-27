@@ -672,8 +672,7 @@ mod report_to_excel_test {
             let sheet = book.get_sheet_by_name_mut("test").unwrap();
             let start = std::time::Instant::now();
             apply_report(sheet, report);
-            let duration_millisec = start.elapsed().as_millis();
-            duration_millisec
+            start.elapsed().as_millis()
         });
 
         let duration_millisec = tokio::time::timeout(Duration::from_secs(10), handle)
@@ -689,6 +688,48 @@ mod report_to_excel_test {
             "Generate to excel should be FAST. Took: {}ms",
             duration_millisec
         );
+    }
+
+    #[test]
+    fn test_csv_to_excel() {
+        let csv_data = "Name,Status,Invoice Number\nHarry Potter,Picked,2\nHermione Granger,New,3\nRon Weasley,New,4\n";
+
+        let result = csv_to_excel(&None, csv_data, "test_csv_export");
+        assert!(result.is_ok(), "CSV to Excel conversion should succeed");
+
+        let file_id = result.unwrap();
+        assert!(!file_id.is_empty(), "File ID should not be empty");
+
+        let file_service = StaticFileService::new(&None).unwrap();
+        let generated_file = file_service
+            .find_file(&file_id, StaticFileCategory::Temporary)
+            .unwrap()
+            .unwrap();
+        let generated_book = umya_spreadsheet::reader::xlsx::read(&generated_file.path).unwrap();
+        let sheet = generated_book.get_sheet(&0).unwrap();
+
+        let get_value = |coord: &str| {
+            sheet
+                .get_cell(coord)
+                .map(|c| c.get_raw_value().to_string())
+                .unwrap_or_default()
+        };
+
+        assert_eq!(get_value("A1"), "Name");
+        assert_eq!(get_value("B1"), "Status");
+        assert_eq!(get_value("C1"), "Invoice Number");
+
+        assert_eq!(get_value("A2"), "Harry Potter");
+        assert_eq!(get_value("B2"), "Picked");
+        assert_eq!(get_value("C2"), "2");
+
+        assert_eq!(get_value("A3"), "Hermione Granger");
+        assert_eq!(get_value("B3"), "New");
+        assert_eq!(get_value("C3"), "3");
+
+        assert_eq!(get_value("A4"), "Ron Weasley");
+        assert_eq!(get_value("B4"), "New");
+        assert_eq!(get_value("C4"), "4");
     }
 
     #[test]
