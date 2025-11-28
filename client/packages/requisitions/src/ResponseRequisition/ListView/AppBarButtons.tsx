@@ -138,7 +138,7 @@ export const AppBarButtons = ({
         )}
         <ExportSelector
           getCsvData={getCsvData}
-          filename={t('filename.requisitions')}
+          filename={t('filename.responses')}
           isLoading={isLoading}
         />
       </Grid>
