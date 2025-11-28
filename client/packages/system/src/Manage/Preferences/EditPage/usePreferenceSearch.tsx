@@ -1,5 +1,9 @@
 import { useMemo, useState } from 'react';
-import { LocaleKey, useTranslation } from '@openmsupply-client/common';
+import {
+  LocaleKey,
+  typedEntries,
+  useTranslation,
+} from '@openmsupply-client/common';
 import { AdminPreferenceFragment } from '../api/operations.generated';
 import { PREFERENCE_GROUP_CONFIG } from './utils';
 
@@ -18,12 +22,12 @@ export const usePreferenceSearch = (preferences: AdminPreferenceFragment[]) => {
       const translatedLabel = t(`preference.${pref.key}` as LocaleKey);
 
       // Check if the pref is part of a group and include the group label in the search
-      const groupLabelKey = Object.entries(PREFERENCE_GROUP_CONFIG).find(
-        ([_, keys]) => keys.includes(pref.key)
+      const groupLabelKey = typedEntries(PREFERENCE_GROUP_CONFIG).find(group =>
+        !group || group[1] === undefined ? false : group[1].includes(pref.key)
       )?.[0];
 
       if (groupLabelKey) {
-        const translatedGroupLabel = t(groupLabelKey as LocaleKey);
+        const translatedGroupLabel = t(groupLabelKey);
         if (translatedGroupLabel.toLowerCase().includes(lowerSearch)) {
           return true;
         }

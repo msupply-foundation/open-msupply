@@ -14,27 +14,25 @@ interface PreferenceSearchInputProps {
 export const PreferenceSearchInput = ({
   value,
   onChange,
-}: PreferenceSearchInputProps) => {
-  return (
-    <Box mb={2}>
-      <BasicTextInput
-        disabled={false}
-        value={value}
-        onChange={searchTerm => onChange(searchTerm?.target?.value ?? '')}
-        fullWidth
-        slotProps={{
-          input: {
-            endAdornment: (
-              <EndAdornment
-                isLoading={false}
-                hasValue={!!value}
-                onClear={() => onChange('')}
-                noValueIcon={<FilterIcon fontSize="small" />}
-              />
-            ),
-          },
-        }}
-      />
-    </Box>
-  );
-};
+}: PreferenceSearchInputProps) => (
+  <Box mb={2}>
+    <BasicTextInput
+      disabled={false}
+      value={value}
+      onChange={searchTerm => onChange(searchTerm?.target?.value ?? '')}
+      fullWidth
+      slotProps={{
+        input: {
+          endAdornment: (
+            <EndAdornment
+              isLoading={false}
+              hasValue={!!value}
+              onClear={() => onChange('')}
+              noValueIcon={<FilterIcon fontSize="small" />}
+            />
+          ),
+        },
+      }}
+    />
+  </Box>
+);
