@@ -9,10 +9,10 @@ import {
 } from '@openmsupply-client/common';
 import {
   EditPreference,
+  PreferenceSearchInput,
   useEditPreferences,
+  usePreferenceSearch,
 } from '../../../Manage/Preferences';
-import { usePreferenceSearch } from '../../../Manage/Preferences/EditPage/usePreferenceSearch';
-import { PreferenceSearchInput } from '../../../Manage/Preferences/EditPage/PreferenceSearchInput';
 
 interface EditStorePreferencesProps {
   storeId: string;
