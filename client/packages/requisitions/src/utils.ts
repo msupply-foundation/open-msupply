@@ -79,23 +79,19 @@ export const requestsToCsv = (
   t: TypedTFunction<LocaleKey>
 ) => {
   const fields: string[] = [
-    'id',
     t('label.name'),
     t('label.number'),
+    t('label.created'),
     t('label.status'),
     t('label.created'),
-    t('label.created'),
-    t('label.reference'),
     t('label.comment'),
   ];
 
   const data = invoices.map(node => [
-    node.id,
     node.otherPartyName,
     node.requisitionNumber,
-    node.status,
     Formatter.csvDateTimeString(node.createdDatetime),
-    node.theirReference,
+    node.status,
     node.comment,
   ]);
   return Formatter.csv({ fields, data });
@@ -106,22 +102,18 @@ export const responsesToCsv = (
   t: TypedTFunction<LocaleKey>
 ) => {
   const fields: string[] = [
-    'id',
     t('label.name'),
     t('label.number'),
     t('label.created'),
     t('label.status'),
-    t('label.reference'),
     t('label.comment'),
   ];
 
   const data = invoices.map(node => [
-    node.id,
     node.otherPartyName,
     node.requisitionNumber,
     Formatter.csvDateTimeString(node.createdDatetime),
     node.status,
-    node.theirReference,
     node.comment,
   ]);
   return Formatter.csv({ fields, data });

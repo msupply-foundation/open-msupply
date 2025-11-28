@@ -142,7 +142,6 @@ export const purchaseOrderToCsv = (
   purchaseOrder: PurchaseOrderRowFragment[]
 ) => {
   const fields: string[] = [
-    'id',
     t('label.supplier'),
     t('label.number'),
     t('label.created'),
@@ -156,7 +155,6 @@ export const purchaseOrderToCsv = (
   ];
 
   const data = purchaseOrder.map(node => [
-    node.id,
     node.supplier?.name,
     node.number,
     Formatter.csvDateString(node.createdDatetime),

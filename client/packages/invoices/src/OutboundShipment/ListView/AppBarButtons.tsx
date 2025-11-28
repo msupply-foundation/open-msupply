@@ -1,7 +1,6 @@
 import React, { FC } from 'react';
 import { AppRoute } from '@openmsupply-client/config';
 import {
-  DownloadIcon,
   PlusCircleIcon,
   useNotification,
   AppBarButtonsPortal,
@@ -9,12 +8,11 @@ import {
   Grid,
   useTranslation,
   FnUtils,
-  LoadingButton,
   ToggleState,
   RouteBuilder,
   useNavigate,
-  useExportCSV,
 } from '@openmsupply-client/common';
+import { ExportSelector } from '@openmsupply-client/system';
 import { CustomerSearchModal } from '@openmsupply-client/system';
 import { useOutbound } from '../api';
 import { outboundsToCsv } from '../../utils';
@@ -32,17 +30,10 @@ export const AppBarButtonsComponent: FC<{
     direction: 'desc',
     isDesc: true,
   });
-  const exportCSV = useExportCSV();
 
-  const csvExport = async () => {
+  const getCsvData = async () => {
     const data = await fetchAsync();
-    if (!data || !data?.nodes.length) {
-      error(t('error.no-data'))();
-      return;
-    }
-
-    const csv = outboundsToCsv(data.nodes, t);
-    exportCSV(csv, t('filename.outbounds'));
+    return data?.nodes?.length ? outboundsToCsv(data.nodes, t) : null;
   };
 
   return (
@@ -79,12 +70,10 @@ export const AppBarButtonsComponent: FC<{
           }}
         />
         {!simplifiedTabletView && (
-          <LoadingButton
-            startIcon={<DownloadIcon />}
+          <ExportSelector
+            getCsvData={getCsvData}
+            filename={t('filename.outbounds')}
             isLoading={isLoading}
-            variant="outlined"
-            onClick={csvExport}
-            label={t('button.export')}
           />
         )}
       </Grid>
