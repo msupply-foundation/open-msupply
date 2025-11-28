@@ -9,7 +9,9 @@ import {
 } from '@openmsupply-client/common';
 import {
   EditPreference,
+  PreferenceSearchInput,
   useEditPreferences,
+  usePreferenceSearch,
 } from '../../../Manage/Preferences';
 
 interface EditStorePreferencesProps {
@@ -25,31 +27,42 @@ export const EditStorePreferences = ({
     PreferenceNodeType.Store,
     storeId
   );
+  const { searchTerm, setSearchTerm, filteredPreferences, hasSearchTerm } =
+    usePreferenceSearch(preferences);
 
   if (!preferences.length) return <NothingHere />;
 
-  return preferences.map(pref => {
-    const isLast = preferences[preferences?.length - 1]?.key === pref.key;
-
-    return (
-      <EditPreference
-        key={pref.key}
-        disabled={
-          !isCentralServer || !userHasPermission(UserPermission.EditCentralData)
-        }
-        preference={pref}
-        update={value => {
-          const finalValue =
-            pref.valueType === PreferenceValueNodeType.Integer &&
-            value === undefined
-              ? 0
-              : value;
-          return update({
-            [pref.key]: [{ storeId, value: finalValue }],
-          });
-        }}
-        isLast={isLast}
-      />
-    );
-  });
+  return (
+    <>
+      <PreferenceSearchInput value={searchTerm} onChange={setSearchTerm} />
+      {hasSearchTerm && filteredPreferences.length === 0 ? (
+        <NothingHere />
+      ) : (
+        filteredPreferences.map((pref, idx) => {
+          const isLast = idx === filteredPreferences.length - 1;
+          return (
+            <EditPreference
+              key={pref.key}
+              disabled={
+                !isCentralServer ||
+                !userHasPermission(UserPermission.EditCentralData)
+              }
+              preference={pref}
+              update={value => {
+                const finalValue =
+                  pref.valueType === PreferenceValueNodeType.Integer &&
+                  value === undefined
+                    ? 0
+                    : value;
+                return update({
+                  [pref.key]: [{ storeId, value: finalValue }],
+                });
+              }}
+              isLast={isLast}
+            />
+          );
+        })
+      )}
+    </>
+  );
 };

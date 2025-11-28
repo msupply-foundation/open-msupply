@@ -33,3 +33,8 @@ export type JsonValue =
   | null;
 
 export type NonEmptyArray<T> = [T, ...T[]];
+
+export const typedEntries = <T extends object>(obj: T) =>
+  Object.entries(obj) as {
+    [K in keyof T]: [K, T[K]];
+  }[keyof T][];
