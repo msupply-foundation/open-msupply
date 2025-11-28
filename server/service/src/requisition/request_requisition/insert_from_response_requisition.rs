@@ -11,7 +11,8 @@ use crate::{
     backend_plugin::plugin_provider::PluginError,
     number::next_number,
     requisition::{
-        common::check_requisition_row_exists, query::get_requisition,
+        common::{check_requisition_row_exists, get_indicative_price_pref_and_price_map},
+        query::get_requisition,
         requisition_supply_status::get_requisitions_supply_statuses,
     },
     service_provider::ServiceContext,
@@ -172,6 +173,9 @@ fn generate(
             .filter(|s| s.requested_minus_supply_quantity() > 0.0)
             .collect::<Vec<_>>();
 
+    let (populate_price_per_unit, price_map) =
+        get_indicative_price_pref_and_price_map(&ctx.connection)?;
+
     let requisition_lines = requisition_supply
         .iter()
         .map(|r| {
@@ -189,6 +193,14 @@ fn generate(
                 suggested_quantity: line.suggested_quantity,
                 available_stock_on_hand: line.available_stock_on_hand,
                 average_monthly_consumption: line.average_monthly_consumption,
+                price_per_unit: if populate_price_per_unit {
+                    price_map
+                        .get(&r.requisition_line.item_row.id)
+                        .copied()
+                        .flatten()
+                } else {
+                    None
+                },
                 // Defaults
                 initial_stock_on_hand_units: 0.0,
                 incoming_units: 0.0,

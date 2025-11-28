@@ -46,6 +46,7 @@ pub enum PrefKey {
     SkipIntermediateStatusesInOutbound,
     StoreCustomColour,
     WarnWhenMissingRecentStocktake,
+    ShowIndicativeUnitPriceInRequisitions,
 }
 
 #[derive(Clone, Debug, PartialEq)]

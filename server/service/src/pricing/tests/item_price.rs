@@ -11,8 +11,11 @@ mod query {
 
     #[actix_rt::test]
     async fn discount_from_master_list() {
-        let (_, _, connection_manager, _) =
-            setup_all("discount_from_master_list", MockDataInserts::all()).await;
+        let (_, _, connection_manager, _) = setup_all(
+            "discount_from_master_list",
+            MockDataInserts::none().items().names().stores(),
+        )
+        .await;
 
         let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider.basic_context().unwrap();
@@ -78,8 +81,11 @@ mod query {
 
     #[actix_rt::test]
     async fn default_price_list() {
-        let (_, _, connection_manager, _) =
-            setup_all("default_price_list", MockDataInserts::all()).await;
+        let (_, _, connection_manager, _) = setup_all(
+            "default_price_list",
+            MockDataInserts::none().items().names().stores(),
+        )
+        .await;
 
         let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider.basic_context().unwrap();
@@ -149,8 +155,11 @@ mod query {
 
     #[actix_rt::test]
     async fn default_price_plus_discount() {
-        let (_, _, connection_manager, _) =
-            setup_all("default_price_plus_discount", MockDataInserts::all()).await;
+        let (_, _, connection_manager, _) = setup_all(
+            "default_price_plus_discount",
+            MockDataInserts::none().items().names().stores(),
+        )
+        .await;
 
         let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider.basic_context().unwrap();

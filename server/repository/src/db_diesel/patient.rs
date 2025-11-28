@@ -469,7 +469,7 @@ mod tests {
                 .names()
                 .stores()
                 .name_store_joins()
-                .full_master_list()
+                .full_master_lists()
                 .contexts()
                 .programs(),
         )
@@ -618,7 +618,7 @@ mod tests {
                 .names()
                 .stores()
                 .name_store_joins()
-                .full_master_list()
+                .full_master_lists()
                 .contexts()
                 .programs(),
         )

@@ -30,7 +30,7 @@ mod generate_rnr_form_lines {
                 .name_store_joins()
                 .items()
                 .rnr_forms()
-                .full_master_list(),
+                .full_master_lists(),
             MockData {
                 // During the R&R period (jan 2024)
                 invoices: vec![

@@ -1,6 +1,7 @@
 use crate::{
     requisition::common::{
-        check_master_list_for_store, check_requisition_row_exists, get_lines_for_requisition,
+        check_master_list_for_store, check_requisition_row_exists,
+        get_indicative_price_pref_and_price_map, get_lines_for_requisition,
     },
     service_provider::ServiceContext,
 };
@@ -49,8 +50,9 @@ pub fn response_add_from_master_list(
             }
 
             match RequisitionLineRepository::new(connection).query_by_filter(
-                RequisitionLineFilter::new()
-                    .requisition_id(EqualFilter::equal_to(input.response_requisition_id.to_string())),
+                RequisitionLineFilter::new().requisition_id(EqualFilter::equal_to(
+                    input.response_requisition_id.to_string(),
+                )),
             ) {
                 Ok(lines) => Ok(lines),
                 Err(error) => Err(OutError::DatabaseError(error)),
@@ -118,15 +120,23 @@ fn generate(
         None,
     )?;
 
+    let (populate_price_per_unit, price_map) =
+        get_indicative_price_pref_and_price_map(&ctx.connection)?;
+
     let lines = items
         .into_iter()
         .map(|item| {
             RequisitionLineRow {
                 id: uuid(),
                 requisition_id: requisition_row.id.clone(),
-                item_link_id: item.item_row.id,
+                item_link_id: item.item_row.id.clone(),
                 item_name: item.item_row.name,
                 snapshot_datetime: Some(Utc::now().naive_utc()),
+                price_per_unit: if populate_price_per_unit {
+                    price_map.get(&item.item_row.id).copied().flatten()
+                } else {
+                    None
+                },
                 // Default
                 suggested_quantity: 0.0,
                 requested_quantity: 0.0,

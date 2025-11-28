@@ -31,7 +31,7 @@ mod insert {
                 .items()
                 .periods()
                 .program_requisition_settings()
-                .full_master_list(),
+                .full_master_lists(),
             MockData {
                 periods: vec![PeriodRow {
                     id: "future_period".to_string(),
@@ -339,7 +339,7 @@ mod insert {
                 .items()
                 .periods()
                 .program_requisition_settings()
-                .full_master_list(),
+                .full_master_lists(),
             MockData {
                 // make supplier store C visible in store A
                 name_store_joins: vec![NameStoreJoinRow {
@@ -621,7 +621,7 @@ mod insert {
                 .name_store_joins()
                 .periods()
                 .items()
-                .full_master_list()
+                .full_master_lists()
                 .program_requisition_settings(),
             MockData {
                 items: perf_test_items,
