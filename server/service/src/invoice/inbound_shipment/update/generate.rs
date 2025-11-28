@@ -350,6 +350,9 @@ pub fn generate_lines_and_stock_lines(
     let mut result = Vec::new();
 
     for invoice_line in lines.into_iter() {
+        if invoice_line.number_of_packs <= 0.0 {
+            continue;
+        }
         let mut line = invoice_line.clone();
         let stock_line_id = line.stock_line_id.unwrap_or(uuid());
 
@@ -385,36 +388,34 @@ pub fn generate_lines_and_stock_lines(
             ..
         }: InvoiceLineRow = invoice_line;
 
-        if number_of_packs > 0.0 {
-            let stock_line = StockLineRow {
-                id: stock_line_id,
-                item_link_id,
-                store_id: store_id.to_string(),
-                location_id,
-                batch,
-                pack_size,
-                cost_price_per_pack,
-                sell_price_per_pack,
-                available_number_of_packs: number_of_packs,
-                total_number_of_packs: number_of_packs,
-                expiry_date,
-                note,
-                supplier_link_id: Some(supplier_id.to_string()),
-                item_variant_id,
-                donor_link_id,
-                vvm_status_id,
-                campaign_id,
-                program_id,
-                volume_per_pack,
-                total_volume: volume_per_pack * number_of_packs,
-                on_hold: false,
-                barcode_id: None,
-            };
-            result.push(LineAndStockLine {
-                line,
-                stock_line: Some(stock_line),
-            });
-        }
+        let stock_line = StockLineRow {
+            id: stock_line_id,
+            item_link_id,
+            store_id: store_id.to_string(),
+            location_id,
+            batch,
+            pack_size,
+            cost_price_per_pack,
+            sell_price_per_pack,
+            available_number_of_packs: number_of_packs,
+            total_number_of_packs: number_of_packs,
+            expiry_date,
+            note,
+            supplier_link_id: Some(supplier_id.to_string()),
+            item_variant_id,
+            donor_link_id,
+            vvm_status_id,
+            campaign_id,
+            program_id,
+            volume_per_pack,
+            total_volume: volume_per_pack * number_of_packs,
+            on_hold: false,
+            barcode_id: None,
+        };
+        result.push(LineAndStockLine {
+            line,
+            stock_line: Some(stock_line),
+        });
     }
     Ok(result)
 }

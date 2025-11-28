@@ -251,7 +251,12 @@ export const RequestLineEdit = ({
               {line &&
                 plugins.requestRequisitionLine?.editViewField?.map(
                   (Field, index) => (
-                    <Field key={index} line={line} unitName={unitName} />
+                    <Field
+                      key={index}
+                      line={line}
+                      draft={draft}
+                      unitName={unitName}
+                    />
                   )
                 )}
             </>
