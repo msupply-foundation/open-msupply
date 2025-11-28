@@ -10,6 +10,7 @@ import {
   usePreferences,
   MaterialTable,
   useSimpleMaterialTable,
+  DateUtils,
 } from '@openmsupply-client/common';
 import { useOutboundLineEditColumns } from './columns';
 import { CurrencyRowFragment } from '@openmsupply-client/system';
@@ -66,9 +67,24 @@ export const OutboundLineEditTable = ({
     (row: DraftStockOutLineFragment) => {
       if (nonAllocatableLines.some(line => line.id === row.id)) return true;
 
-      // For Outbound Shipments, we also don't allow allocating bad VVM status stock
-      if (prefs.manageVvmStatusForStock && item?.isVaccine)
-        return !!row.vvmStatus?.unusable;
+      // For Outbound Shipments, we also don't allow allocating bad VVM status
+      // stock
+      if (
+        prefs.manageVvmStatusForStock &&
+        item?.isVaccine &&
+        !!row.vvmStatus?.unusable
+      )
+        return true;
+
+      // Prevent issuing expired stock if preference is set, up to threshold
+      if (prefs.expiredStockPreventIssue && !!row.expiryDate) {
+        const threshold = prefs.expiredStockIssueThreshold ?? 0;
+        const daysPastExpiry = DateUtils.differenceInDays(
+          Date.now(),
+          row.expiryDate
+        );
+        if (daysPastExpiry >= threshold) return true;
+      }
 
       return false;
     },

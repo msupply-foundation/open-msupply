@@ -1,9 +1,10 @@
 use super::consumption::*;
-use diesel::prelude::*;
-
 use crate::{
     diesel_macros::apply_equal_filter, DateFilter, Dos, RepositoryError, StorageConnection,
 };
+use diesel::prelude::*;
+use serde::{Deserialize, Serialize};
+use ts_rs::TS;
 
 // Only used for dynamic query construction
 // Not a queryable table outside of this
@@ -23,7 +24,7 @@ table! {
     }
 }
 
-#[derive(Clone, Queryable, Selectable, Debug, PartialEq, Default)]
+#[derive(Clone, Queryable, Selectable, Debug, PartialEq, Default, Serialize, Deserialize, TS)]
 #[diesel(table_name = days_out_of_stock)]
 /// Row type for results from the days_out_of_stock table or dynamic DOS query.
 pub struct DaysOutOfStockRow {

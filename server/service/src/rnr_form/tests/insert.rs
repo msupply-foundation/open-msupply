@@ -341,10 +341,10 @@ mod insert {
                 .program_requisition_settings()
                 .full_master_list(),
             MockData {
-                // make supplier store B visible in store A
+                // make supplier store C visible in store A
                 name_store_joins: vec![NameStoreJoinRow {
-                    id: String::from("name_store_a_join_b"),
-                    name_link_id: String::from("name_store_b"),
+                    id: String::from("name_store_a_join_c"),
+                    name_link_id: String::from("name_store_c"),
                     store_id: String::from("store_a"),
                     name_is_customer: false,
                     name_is_supplier: true,
@@ -372,7 +372,7 @@ mod insert {
                 &mock_store_a().id,
                 InsertRnRForm {
                     id: "new_rnr_id".to_string(),
-                    supplier_id: mock_name_store_b().id,
+                    supplier_id: mock_name_store_c().id,
                     program_id: mock_program_b().id,
                     period_id: mock_period_2_d().id,
                 },

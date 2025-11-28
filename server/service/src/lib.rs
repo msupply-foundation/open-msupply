@@ -224,30 +224,6 @@ impl<'a> BatchMutationsProcessor<'a> {
 
         (has_errors, result)
     }
-
-    pub fn do_mutations_with_user_id<I, R, E, M>(
-        &self,
-        inputs: Option<Vec<I>>,
-        mutation: M,
-    ) -> (bool, Vec<InputWithResult<I, Result<R, E>>>)
-    where
-        I: Clone,
-        M: Fn(&ServiceContext, I) -> Result<R, E>,
-    {
-        let mut has_errors = false;
-        let mut result = vec![];
-
-        for input in inputs.unwrap_or_default() {
-            let mutation_result = mutation(self.ctx, input.clone());
-            has_errors = has_errors || mutation_result.is_err();
-            result.push(InputWithResult {
-                input,
-                result: mutation_result,
-            });
-        }
-
-        (has_errors, result)
-    }
 }
 
 // Pagination helpers
