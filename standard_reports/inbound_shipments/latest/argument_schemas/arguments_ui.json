@@ -1,0 +1,33 @@
+{
+  "type": "VerticalLayout",
+  "elements": [
+    {
+      "type": "NameSearch",
+      "scope": "#/properties/otherPartyId",
+      "label": "T#label.supplier",
+      "options": {
+        "nameType": "supplier"
+      }
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/after",
+      "label": "T#label.from-date",
+      "options": {
+        "dateOnly": true,
+        "disableFuture": true,
+        "max": "#/properties/before"
+      }
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/before",
+      "label": "T#label.to-date",
+      "options": {
+        "dateOnly": true,
+        "disableFuture": true,
+        "min": "#/properties/after"
+      }
+    }
+  ]
+}
