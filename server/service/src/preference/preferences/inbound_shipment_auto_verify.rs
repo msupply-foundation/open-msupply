@@ -1,16 +1,16 @@
 use crate::preference::{PrefKey, Preference, PreferenceType, PreferenceValueType};
 
-pub struct ExcludeTransfers;
+pub struct InboundShipmentAutoVerify;
 
-impl Preference for ExcludeTransfers {
+impl Preference for InboundShipmentAutoVerify {
     type Value = bool;
 
     fn key(&self) -> PrefKey {
-        PrefKey::ExcludeTransfers
+        PrefKey::InboundShipmentAutoVerify
     }
 
     fn preference_type(&self) -> PreferenceType {
-        PreferenceType::Global
+        PreferenceType::Store
     }
 
     fn value_type(&self) -> PreferenceValueType {

@@ -7,44 +7,65 @@ import {
   useToggle,
   PlusCircleIcon,
   RequisitionNodeStatus,
+  useUrlQuery,
 } from '@openmsupply-client/common';
 import { AddFromMasterListModal } from './AddFromMasterListModal';
+import { InternalOrderDetailTabs } from '../types';
 
 interface AddButtonProps {
   status?: RequisitionNodeStatus;
   onAddItem: (newState: boolean) => void;
+  openUploadModal: () => void;
   disable: boolean /** Disable the whole control */;
 }
 
-export const AddButton = ({ status, onAddItem, disable }: AddButtonProps) => {
+export const AddButton = ({
+  status,
+  onAddItem,
+  openUploadModal,
+  disable,
+}: AddButtonProps) => {
   const t = useTranslation();
   const { info } = useNotification();
   const masterListModalController = useToggle();
+  const currentTab = useUrlQuery().urlQuery['tab'];
 
-  const options: [SplitButtonOption<string>, SplitButtonOption<string>] =
-    useMemo(
-      () => [
-        {
-          value: 'add-item',
-          label: t('button.add-item'),
-          isDisabled: disable,
-        },
-        {
-          value: 'add-from-master-list',
-          label: t('button.add-from-master-list'),
-          isDisabled: disable,
-        },
-      ],
-      [disable]
-    );
+  const options: [
+    SplitButtonOption<string>,
+    SplitButtonOption<string>,
+    SplitButtonOption<string>,
+  ] = useMemo(
+    () => [
+      {
+        value: 'add-item',
+        label: t('button.add-item'),
+        isDisabled: disable,
+      },
+      {
+        value: 'add-from-master-list',
+        label: t('button.add-from-master-list'),
+        isDisabled: disable,
+      },
+      {
+        value: 'upload-document',
+        label: t('label.upload-document'),
+        isDisabled: disable,
+      },
+    ],
+    [disable, t]
+  );
 
   const [selectedOption, setSelectedOption] = useState<
     SplitButtonOption<string>
   >(options[0]);
 
   useEffect(() => {
+    if (currentTab === InternalOrderDetailTabs.Documents) {
+      setSelectedOption(options[2]); // Default to 'upload-document' when not on Documents tab
+      return;
+    }
     setSelectedOption(options[0]);
-  }, [options]);
+  }, [options, currentTab]);
 
   const handleOptionSelection = (option: SplitButtonOption<string>) => {
     switch (option.value) {
@@ -55,6 +76,9 @@ export const AddButton = ({ status, onAddItem, disable }: AddButtonProps) => {
         status === RequisitionNodeStatus.Draft
           ? masterListModalController.toggleOn()
           : info(t('error.cannot-add-from-masterlist'))();
+        break;
+      case 'upload-document':
+        openUploadModal();
         break;
     }
   };

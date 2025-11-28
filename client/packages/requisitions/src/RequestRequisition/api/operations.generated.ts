@@ -2,6 +2,7 @@ import * as Types from '@openmsupply-client/common';
 
 import { GraphQLClient, RequestOptions } from 'graphql-request';
 import gql from 'graphql-tag';
+import { SyncFileReferenceFragmentDoc } from '../../../../system/src/Documents/types.generated';
 import { RequestFragmentDoc } from '../../../../system/src/RequestRequisitionLine/operations.generated';
 import { NameRowFragmentDoc } from '../../../../system/src/Name/api/operations.generated';
 type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
@@ -26,6 +27,16 @@ export type RequestRowFragment = {
     __typename: 'RequisitionNode';
     approvalStatus: Types.RequisitionNodeApprovalStatus;
   } | null;
+  documents: {
+    __typename: 'SyncFileReferenceConnector';
+    nodes: Array<{
+      __typename: 'SyncFileReferenceNode';
+      id: string;
+      fileName: string;
+      recordId: string;
+      createdDatetime: string;
+    }>;
+  };
   period?: {
     __typename: 'PeriodNode';
     id: string;
@@ -83,7 +94,18 @@ export type RequestByNumberQuery = {
           isCustomer: boolean;
           isSupplier: boolean;
           isOnHold: boolean;
+          margin?: number | null;
           store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+        };
+        documents: {
+          __typename: 'SyncFileReferenceConnector';
+          nodes: Array<{
+            __typename: 'SyncFileReferenceNode';
+            id: string;
+            fileName: string;
+            recordId: string;
+            createdDatetime: string;
+          }>;
         };
         user?: {
           __typename: 'UserNode';
@@ -229,7 +251,18 @@ export type RequestByIdQuery = {
           isCustomer: boolean;
           isSupplier: boolean;
           isOnHold: boolean;
+          margin?: number | null;
           store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+        };
+        documents: {
+          __typename: 'SyncFileReferenceConnector';
+          nodes: Array<{
+            __typename: 'SyncFileReferenceNode';
+            id: string;
+            fileName: string;
+            recordId: string;
+            createdDatetime: string;
+          }>;
         };
         user?: {
           __typename: 'UserNode';
@@ -424,6 +457,16 @@ export type RequestsQuery = {
         __typename: 'RequisitionNode';
         approvalStatus: Types.RequisitionNodeApprovalStatus;
       } | null;
+      documents: {
+        __typename: 'SyncFileReferenceConnector';
+        nodes: Array<{
+          __typename: 'SyncFileReferenceNode';
+          id: string;
+          fileName: string;
+          recordId: string;
+          createdDatetime: string;
+        }>;
+      };
       period?: {
         __typename: 'PeriodNode';
         id: string;
@@ -935,6 +978,25 @@ export type UpdateIndicatorValueMutation = {
       };
 };
 
+export type RecentStocktakeItemsQueryVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  startDate: Types.Scalars['NaiveDate']['input'];
+}>;
+
+export type RecentStocktakeItemsQuery = {
+  __typename: 'Queries';
+  stocktakes: {
+    __typename: 'StocktakeConnector';
+    nodes: Array<{
+      __typename: 'StocktakeNode';
+      lines: {
+        __typename: 'StocktakeLineConnector';
+        nodes: Array<{ __typename: 'StocktakeLineNode'; itemId: string }>;
+      };
+    }>;
+  };
+};
+
 export const RequestRowFragmentDoc = gql`
   fragment RequestRow on RequisitionNode {
     colour
@@ -954,6 +1016,12 @@ export const RequestRowFragmentDoc = gql`
       approvalStatus
     }
     programName
+    documents {
+      __typename
+      nodes {
+        ...SyncFileReference
+      }
+    }
     period {
       id
       name
@@ -968,6 +1036,7 @@ export const RequestRowFragmentDoc = gql`
       totalCount
     }
   }
+  ${SyncFileReferenceFragmentDoc}
 `;
 export const ConsumptionHistoryFragmentDoc = gql`
   fragment ConsumptionHistory on ConsumptionHistoryNode {
@@ -1569,6 +1638,28 @@ export const UpdateIndicatorValueDocument = gql`
     }
   }
 `;
+export const RecentStocktakeItemsDocument = gql`
+  query recentStocktakeItems($storeId: String!, $startDate: NaiveDate!) {
+    stocktakes(
+      storeId: $storeId
+      filter: {
+        stocktakeDate: { afterOrEqualTo: $startDate }
+        status: { equalTo: FINALISED }
+      }
+    ) {
+      __typename
+      ... on StocktakeConnector {
+        nodes {
+          lines {
+            nodes {
+              itemId
+            }
+          }
+        }
+      }
+    }
+  }
+`;
 
 export type SdkFunctionWrapper = <T>(
   action: (requestHeaders?: Record<string, string>) => Promise<T>,
@@ -1840,6 +1931,22 @@ export function getSdk(
           ),
         'updateIndicatorValue',
         'mutation',
+        variables
+      );
+    },
+    recentStocktakeItems(
+      variables: RecentStocktakeItemsQueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders
+    ): Promise<RecentStocktakeItemsQuery> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<RecentStocktakeItemsQuery>(
+            RecentStocktakeItemsDocument,
+            variables,
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
+        'recentStocktakeItems',
+        'query',
         variables
       );
     },

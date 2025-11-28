@@ -16,6 +16,12 @@ fragment RequestRow on RequisitionNode {
     approvalStatus
   }
   programName
+  documents {
+    __typename
+    nodes {
+      ...SyncFileReference
+    }
+  }
   period {
     id
     name
@@ -578,6 +584,24 @@ mutation updateIndicatorValue(
         ... on ValueTypeNotCorrect {
           __typename
           description
+        }
+      }
+    }
+  }
+}
+
+query recentStocktakeItems($storeId: String!, $startDate: NaiveDate!) {
+  stocktakes(
+    storeId: $storeId
+    filter: { stocktakeDate: { afterOrEqualTo: $startDate }, status: { equalTo: FINALISED } }
+  ) {
+    __typename
+    ... on StocktakeConnector {
+      nodes {
+        lines {
+          nodes {
+            itemId
+          }
         }
       }
     }
