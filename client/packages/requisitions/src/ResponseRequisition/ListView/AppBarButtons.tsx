@@ -115,11 +115,7 @@ export const AppBarButtons = ({
 
   const getCsvData = async () => {
     const data = await mutateAsync();
-    if (!data?.nodes?.length) {
-      error(t('error.no-data'))();
-      return null;
-    }
-    return responsesToCsv(data.nodes, t);
+    return data?.nodes?.length ? responsesToCsv(data.nodes, t) : null;
   };
 
   return (
@@ -142,7 +138,7 @@ export const AppBarButtons = ({
         )}
         <ExportSelector
           getCsvData={getCsvData}
-          filename="requisitions"
+          filename={t('filename.requisitions')}
           isLoading={isLoading}
         />
       </Grid>

@@ -3,7 +3,6 @@ import { AppRoute } from '@openmsupply-client/config';
 import {
   FnUtils,
   PlusCircleIcon,
-  useNotification,
   AppBarButtonsPortal,
   ButtonWithIcon,
   Grid,
@@ -33,7 +32,6 @@ export const AppBarButtons = ({
 }) => {
   const t = useTranslation();
   const navigate = useNavigate();
-  const { error } = useNotification();
   const { store } = useAuthContext();
   const [name, setName] = useState<NameRowFragment | null>(null);
 
@@ -84,11 +82,7 @@ export const AppBarButtons = ({
 
   const getCsvData = async () => {
     const data = await fetchAsync();
-    if (!data?.nodes?.length) {
-      error(t('error.no-data'))();
-      return null;
-    }
-    return inboundsToCsv(data.nodes, t);
+    return data?.nodes?.length ? inboundsToCsv(data.nodes, t) : null;
   };
 
   return (

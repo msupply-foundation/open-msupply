@@ -2,7 +2,6 @@ import React, { FC } from 'react';
 import {
   FnUtils,
   PlusCircleIcon,
-  useNotification,
   AppBarButtonsPortal,
   ButtonWithIcon,
   Grid,
@@ -30,7 +29,6 @@ export const AppBarButtons: FC<{
   const navigate = useNavigate();
   const { mutateAsync: onCreate } = useRequest.document.insert();
   const { insert: onProgramCreate } = useRequest.document.insertProgram();
-  const { error } = useNotification();
 
   const { isLoading, fetchAsync } = useRequest.document.listAll({
     key: 'createdDatetime',
@@ -83,11 +81,7 @@ export const AppBarButtons: FC<{
 
   const getCsvData = async () => {
     const data = await fetchAsync();
-    if (!data?.nodes?.length) {
-      error(t('error.no-data'))();
-      return null;
-    }
-    return requestsToCsv(data.nodes, t);
+    return data?.nodes?.length ? requestsToCsv(data.nodes, t) : null;
   };
 
   return (

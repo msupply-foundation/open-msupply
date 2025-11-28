@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import {
   PlusCircleIcon,
-  useNotification,
   AppBarButtonsPortal,
   ButtonWithIcon,
   Grid,
@@ -27,7 +26,6 @@ export const AppBarButtons = ({
   onSelectPatient,
   sortBy,
 }: AppBarButtonsComponentProps) => {
-  const { error } = useNotification();
   const t = useTranslation();
   const { isLoading, mutateAsync } = usePatient.document.listAll(sortBy);
   const [createModalOpen, setCreateModalOpen] = useState(false);
@@ -39,11 +37,7 @@ export const AppBarButtons = ({
 
   const getCsvData = async () => {
     const data = await mutateAsync();
-    if (!data?.nodes?.length) {
-      error(t('error.no-data'))();
-      return null;
-    }
-    return patientsToCsv(data.nodes, t);
+    return data?.nodes?.length ? patientsToCsv(data.nodes, t) : null;
   };
 
   return (

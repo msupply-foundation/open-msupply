@@ -1,7 +1,6 @@
 import React from 'react';
 import {
   PlusCircleIcon,
-  useNotification,
   AppBarButtonsPortal,
   ButtonWithIcon,
   Grid,
@@ -23,15 +22,7 @@ export const AppBarButtons = ({
   reportIsLoading,
 }: AppBarButtonsProps) => {
   const t = useTranslation();
-  const { error } = useNotification();
-
-  const getCsvData = () => {
-    if (!locations) {
-      error(t('error.no-data'))();
-      return null;
-    }
-    return locationsToCsv(locations, t);
-  };
+  const getCsvData = () => (locations ? locationsToCsv(locations, t) : null);
 
   return (
     <AppBarButtonsPortal>
