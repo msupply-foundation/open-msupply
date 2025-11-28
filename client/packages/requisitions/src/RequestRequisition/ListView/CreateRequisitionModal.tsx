@@ -40,7 +40,7 @@ export const CreateRequisitionModal = ({
   const { data: programSettings, isLoading } =
     useRequest.utils.programSettings();
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: false });
-  const noSuppliers = programSettings?.some(
+  const noSuppliers = programSettings?.every(
     setting => setting.suppliers.length === 0
   );
 
