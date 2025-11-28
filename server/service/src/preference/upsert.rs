@@ -1,7 +1,7 @@
 use std::collections::BTreeMap;
 
 use super::{get_preference_provider, Preference, PreferenceProvider, UpsertPreferenceError};
-use crate::{preference::WarnWhenMissingRecentStocktakeData, service_provider::ServiceContext};
+use crate::service_provider::ServiceContext;
 use repository::{GenderType, StorageConnection, TransactionError};
 
 #[derive(Debug, PartialEq, Clone)]
@@ -22,11 +22,10 @@ pub struct UpsertPreferences {
     pub show_contact_tracing: Option<bool>,
     pub sync_records_display_threshold: Option<i32>,
     pub warning_for_excess_request: Option<bool>,
+    pub use_days_in_month: Option<bool>,
     pub adjust_for_number_of_days_out_of_stock: Option<bool>,
     pub days_in_month: Option<f64>,
-    pub expired_stock_prevent_issue: Option<bool>,
-    pub expired_stock_issue_threshold: Option<i32>,
-
+    pub exclude_transfers: Option<bool>,
 
     // Store preferences
     pub manage_vaccines_in_doses: Option<Vec<StorePrefUpdate<bool>>>,
@@ -37,7 +36,6 @@ pub struct UpsertPreferences {
     pub use_simplified_mobile_ui: Option<Vec<StorePrefUpdate<bool>>>,
     pub disable_manual_returns: Option<Vec<StorePrefUpdate<bool>>>,
     pub requisition_auto_finalise: Option<Vec<StorePrefUpdate<bool>>>,
-    pub inbound_shipment_auto_verify: Option<Vec<StorePrefUpdate<bool>>>,
     pub can_create_internal_order_from_a_requisition: Option<Vec<StorePrefUpdate<bool>>>,
     pub select_destination_store_for_an_internal_order: Option<Vec<StorePrefUpdate<bool>>>,
     pub number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products:
@@ -46,9 +44,6 @@ pub struct UpsertPreferences {
         Option<Vec<StorePrefUpdate<i32>>>,
     pub first_threshold_for_expiring_items: Option<Vec<StorePrefUpdate<i32>>>,
     pub second_threshold_for_expiring_items: Option<Vec<StorePrefUpdate<i32>>>,
-    pub warn_when_missing_recent_stocktake: Option<Vec<StorePrefUpdate<WarnWhenMissingRecentStocktakeData>>>,
-    pub skip_intermediate_statuses_in_outbound: Option<Vec<StorePrefUpdate<bool>>>,
-    pub store_custom_colour: Option<Vec<StorePrefUpdate<String>>>,
 }
 
 pub fn upsert_preferences(
@@ -64,10 +59,10 @@ pub fn upsert_preferences(
             prevent_transfers_months_before_initialisation_input,
         show_contact_tracing: show_contact_tracing_input,
         sync_records_display_threshold: sync_records_display_threshold_input,
+        use_days_in_month: use_days_in_month_input,
         adjust_for_number_of_days_out_of_stock: adjust_for_number_of_days_out_of_stock_input,
         days_in_month: days_in_month_input,
-        expired_stock_prevent_issue: expired_stock_prevent_issue_input,
-        expired_stock_issue_threshold: expired_stock_issue_threshold_input,
+        exclude_transfers: exclude_transfers_input,
 
         // Store preferences
         manage_vaccines_in_doses: manage_vaccines_in_doses_input,
@@ -78,7 +73,6 @@ pub fn upsert_preferences(
         use_simplified_mobile_ui: use_simplified_mobile_ui_input,
         disable_manual_returns: disable_manual_returns_input,
         requisition_auto_finalise: requisition_auto_finalise_input,
-        inbound_shipment_auto_verify: inbound_shipment_auto_verify_input,
         warning_for_excess_request: warning_for_excess_request_input,
         can_create_internal_order_from_a_requisition:
             can_create_internal_order_from_a_requisition_input,
@@ -90,9 +84,6 @@ pub fn upsert_preferences(
             number_of_months_threshold_to_show_low_stock_alerts_for_products_input,
         first_threshold_for_expiring_items: first_threshold_for_expiring_items_input,
         second_threshold_for_expiring_items: second_threshold_for_expiring_items_input,
-        warn_when_missing_recent_stocktake: warn_when_missing_recent_stocktake_input,
-        skip_intermediate_statuses_in_outbound: skip_intermediate_statuses_in_outbound_input,
-        store_custom_colour: store_custom_colour_input,
     }: UpsertPreferences,
 ) -> Result<(), UpsertPreferenceError> {
     let PreferenceProvider {
@@ -105,10 +96,10 @@ pub fn upsert_preferences(
         prevent_transfers_months_before_initialisation,
         show_contact_tracing,
         sync_records_display_threshold,
+        use_days_in_month,
         adjust_for_number_of_days_out_of_stock,
         days_in_month,
-        expired_stock_prevent_issue,
-        expired_stock_issue_threshold,
+        exclude_transfers,
 
         // Store preferences
         manage_vaccines_in_doses,
@@ -119,7 +110,6 @@ pub fn upsert_preferences(
         use_simplified_mobile_ui,
         disable_manual_returns,
         requisition_auto_finalise,
-        inbound_shipment_auto_verify,
         warning_for_excess_request,
         can_create_internal_order_from_a_requisition,
         select_destination_store_for_an_internal_order,
@@ -127,9 +117,6 @@ pub fn upsert_preferences(
         number_of_months_threshold_to_show_low_stock_alerts_for_products,
         first_threshold_for_expiring_items,
         second_threshold_for_expiring_items,
-        warn_when_missing_recent_stocktake,
-        skip_intermediate_statuses_in_outbound,
-        store_custom_colour,
     }: PreferenceProvider = get_preference_provider();
 
     ctx.connection
@@ -171,6 +158,10 @@ pub fn upsert_preferences(
                 warning_for_excess_request.upsert(connection, input, None)?;
             }
 
+            if let Some(input) = use_days_in_month_input {
+                use_days_in_month.upsert(connection, input, None)?;
+            }
+
             if let Some(input) = adjust_for_number_of_days_out_of_stock_input {
                 adjust_for_number_of_days_out_of_stock.upsert(connection, input, None)?;
             }
@@ -179,14 +170,9 @@ pub fn upsert_preferences(
                 days_in_month.upsert(connection, input, None)?;
             }
 
-            if let Some(input) = expired_stock_prevent_issue_input {
-                expired_stock_prevent_issue.upsert(connection, input, None)?;
+            if let Some(input) = exclude_transfers_input {
+                exclude_transfers.upsert(connection, input, None)?;
             }
-
-            if let Some(input) = expired_stock_issue_threshold_input {
-                expired_stock_issue_threshold.upsert(connection, input, None)?;
-            }
-
 
             // Store preferences, input could be array of store IDs and values - iterate and insert...
             if let Some(inputs) = manage_vaccines_in_doses_input {
@@ -218,10 +204,6 @@ pub fn upsert_preferences(
 
             if let Some(inputs) = requisition_auto_finalise_input {
                 upsert_store_input(connection, requisition_auto_finalise, inputs)?;
-            }
-      
-            if let Some(inputs) = inbound_shipment_auto_verify_input {
-                upsert_store_input(connection, inbound_shipment_auto_verify, inputs)?;
             }
 
             if let Some(inputs) = can_create_internal_order_from_a_requisition_input {
@@ -272,22 +254,7 @@ pub fn upsert_preferences(
                     input,
                 )?;
             }
-
-            if let Some(input) = warn_when_missing_recent_stocktake_input {
-                           upsert_store_input(
-                    connection,
-                    warn_when_missing_recent_stocktake,
-                    input,
-                )?;
-            }
-
-            if let Some(inputs) = skip_intermediate_statuses_in_outbound_input {
-                upsert_store_input(connection, skip_intermediate_statuses_in_outbound, inputs)?;
-            }
             
-            if let Some(input) = store_custom_colour_input {
-                upsert_store_input(connection, store_custom_colour, input)?;
-            }
 
             Ok(())
 

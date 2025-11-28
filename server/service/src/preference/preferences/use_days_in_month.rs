@@ -1,16 +1,16 @@
 use crate::preference::{PrefKey, Preference, PreferenceType, PreferenceValueType};
 
-pub struct SkipIntermediateStatusesInOutbound;
+pub struct UseDaysInMonth;
 
-impl Preference for SkipIntermediateStatusesInOutbound {
+impl Preference for UseDaysInMonth {
     type Value = bool;
 
     fn key(&self) -> PrefKey {
-        PrefKey::SkipIntermediateStatusesInOutbound
+        PrefKey::UseDaysInMonth
     }
 
     fn preference_type(&self) -> PreferenceType {
-        PreferenceType::Store
+        PreferenceType::Global
     }
 
     fn value_type(&self) -> PreferenceValueType {

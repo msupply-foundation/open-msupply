@@ -164,7 +164,7 @@ pub fn period_end_date() -> chrono::NaiveDate {
 }
 
 pub fn item1_amc_1_months_period_end_date() -> f64 {
-    (1000.0 + 15.0) / 1.0
+    1000.0 / 1.0
 }
 
 pub fn item2_amc_1_months_period_end_date() -> f64 {

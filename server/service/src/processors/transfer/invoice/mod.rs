@@ -14,7 +14,7 @@ use crate::{
             },
         },
     },
-    service_provider::{ServiceContext, ServiceProvider},
+    service_provider::ServiceProvider,
     sync::{ActiveStoresOnSite, GetActiveStoresOnSiteError},
 };
 use repository::{
@@ -97,7 +97,7 @@ pub(crate) enum ProcessInvoiceTransfersError {
 }
 
 fn process_change_log(
-    ctx: &ServiceContext,
+    connection: &StorageConnection,
     log: &ChangelogRow,
     processors: &[Box<dyn InvoiceTransferProcessor>],
     active_stores: &ActiveStoresOnSite,
@@ -109,13 +109,14 @@ fn process_change_log(
         .ok_or_else(|| Error::NameIdIsMissingFromChangelog(log.clone()))?;
 
     // Prepare record
-    let operation =
-        match &log.row_action {
-            RowActionType::Upsert => get_upsert_operation(&ctx.connection, log)
-                .map_err(Error::GetUpsertOperationError)?,
-            RowActionType::Delete => get_delete_operation(&ctx.connection, log)
-                .map_err(Error::GetDeleteOperationError)?,
-        };
+    let operation = match &log.row_action {
+        RowActionType::Upsert => {
+            get_upsert_operation(connection, log).map_err(Error::GetUpsertOperationError)?
+        }
+        RowActionType::Delete => {
+            get_delete_operation(connection, log).map_err(Error::GetDeleteOperationError)?
+        }
+    };
 
     let record = InvoiceTransferProcessorRecord {
         operation,
@@ -129,10 +130,10 @@ fn process_change_log(
     // Try record against all of the processors
     for processor in processors.iter() {
         let result = processor
-            .try_process_record_common(ctx, &record)
+            .try_process_record_common(connection, &record)
             .map_err(Error::ProcessorError);
         if let Err(e) = result {
-            log_system_error(&ctx.connection, &e).map_err(Error::DatabaseError)?;
+            log_system_error(connection, &e).map_err(Error::DatabaseError)?;
         }
     }
     Ok(())
@@ -151,7 +152,7 @@ pub(crate) fn process_invoice_transfers(
         Box::new(AssignInvoiceNumberProcessor),
     ];
 
-    let ctx = &service_provider
+    let ctx = service_provider
         .basic_context()
         .map_err(Error::DatabaseError)?;
 
@@ -180,7 +181,7 @@ pub(crate) fn process_invoice_transfers(
         }
 
         for log in logs {
-            let result = process_change_log(ctx, &log, &processors, &active_stores);
+            let result = process_change_log(&ctx.connection, &log, &processors, &active_stores);
             if let Err(e) = result {
                 log_system_error(&ctx.connection, &e).map_err(Error::DatabaseError)?;
             }
@@ -265,8 +266,7 @@ fn get_delete_operation(
     changelog_row: &ChangelogRow,
 ) -> Result<Operation, RepositoryError> {
     let linked_invoice = InvoiceRepository::new(connection).query_one(
-        InvoiceFilter::new()
-            .linked_invoice_id(EqualFilter::equal_to(changelog_row.record_id.to_string())),
+        InvoiceFilter::new().linked_invoice_id(EqualFilter::equal_to(changelog_row.record_id.to_string())),
     )?;
 
     Ok(Operation::Delete { linked_invoice })
@@ -299,12 +299,11 @@ trait InvoiceTransferProcessor {
 
     fn try_process_record_common(
         &self,
-        ctx: &ServiceContext,
+        connection: &StorageConnection,
         record: &InvoiceTransferProcessorRecord,
     ) -> Result<Option<String>, ProcessorError> {
-        let output = ctx
-            .connection
-            .transaction_sync(|_| self.try_process_record(ctx, record))
+        let output = connection
+            .transaction_sync(|connection| self.try_process_record(connection, record))
             .map_err(|e| ProcessorError(self.get_description(), e.to_inner_error()))?;
 
         let result = match output {
@@ -324,7 +323,7 @@ trait InvoiceTransferProcessor {
     /// Caller MUST guarantee that source invoice.name_id is a store active on this site
     fn try_process_record(
         &self,
-        ctx: &ServiceContext,
+        connection: &StorageConnection,
         record: &InvoiceTransferProcessorRecord,
     ) -> Result<InvoiceTransferOutput, RepositoryError>;
 }

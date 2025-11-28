@@ -219,11 +219,6 @@ const VaccinationForm = ({
   const isOtherFacility =
     !!draft.facilityId && draft.facilityId !== store?.nameId;
 
-  const previousIsSkippable =
-    previousDoseStatus === null ||
-    previousDoseStatus === VaccinationCardItemNodeStatus.Late ||
-    previousDoseStatus === VaccinationCardItemNodeStatus.Pending;
-
   return (
     <Container
       maxWidth="xs"
@@ -309,7 +304,7 @@ const VaccinationForm = ({
           label={t('label.vaccine-given')}
         />
         {/* Don't show option for "Not given" when skipping doses */}
-        {!previousIsSkippable && (
+        {previousDoseStatus !== null && (
           <FormControlLabel
             disabled={givenAtOtherStore || !isEditable}
             value={false}
@@ -318,7 +313,7 @@ const VaccinationForm = ({
           />
         )}
       </RadioGroup>
-      {previousIsSkippable && draft.given && (
+      {previousDoseStatus === null && draft.given && (
         <Alert severity="warning">{t('messages.skip-dose-warning')}</Alert>
       )}
       <SelectItemAndBatch

@@ -11,7 +11,6 @@ import {
   useUrlQueryParams,
   TooltipTextCell,
   useAuthContext,
-  usePluginProvider,
 } from '@openmsupply-client/common';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
@@ -21,7 +20,6 @@ const MasterListComponent = () => {
   const t = useTranslation();
   const navigate = useNavigate();
   const { store } = useAuthContext();
-  const { plugins } = usePluginProvider();
 
   const {
     updateSortQuery,
@@ -49,7 +47,6 @@ const MasterListComponent = () => {
     [
       ['name', { width: 300, Cell: TooltipTextCell }],
       ['description', { minWidth: 100, Cell: TooltipTextCell }],
-      ...(plugins.masterLists?.tableColumn || []),
     ],
     {
       onChangeSortBy: updateSortQuery,
@@ -62,9 +59,6 @@ const MasterListComponent = () => {
     <>
       <Toolbar filter={filter} />
       <AppBarButtons data={data?.nodes ?? []} />
-      {plugins.masterLists?.tableStateLoader?.map((StateLoader, index) => (
-        <StateLoader key={index} masterLists={data?.nodes ?? []} />
-      ))}
       <DataTable
         id="master-list-list"
         pagination={{ ...pagination, total: data?.totalCount ?? 0 }}

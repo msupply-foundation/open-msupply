@@ -26,6 +26,4 @@ export type RequisitionRow = {
   period_id: string | null;
   order_type: string | null;
   is_emergency: boolean;
-  created_from_requisition_id: string | null;
-  original_customer_id: string | null;
 };

@@ -2,7 +2,6 @@ import {
   Accordion,
   AccordionDetails,
   AccordionSummary,
-  Box,
   Divider,
   ExpandIcon,
   InputWithLabelRow,
@@ -14,7 +13,7 @@ import {
 import React from 'react';
 import { AdminPreferenceFragment } from '../api/operations.generated';
 import { EditPreference } from './EditPreference';
-import { isAnyAmcPrefOn } from './utils';
+import { isAnyAmcPrefOn, generateAmcFormula } from './utils';
 
 interface PreferenceGroupAccordionProps {
   label: string;
@@ -30,6 +29,7 @@ export const PreferenceGroupAccordion = ({
   const t = useTranslation();
 
   const showAmcFormula = isAnyAmcPrefOn(preferences);
+  const amcFormula = generateAmcFormula(preferences, t);
 
   return (
     <Accordion
@@ -84,27 +84,11 @@ export const PreferenceGroupAccordion = ({
                 sx: { display: 'flex', textAlign: 'start' },
               }}
               Input={
-                <Typography variant="caption">
-                  {t('messages.amc-calculation')}
+                <Typography variant="caption" color="text.secondary">
+                  {amcFormula}
                 </Typography>
               }
             />
-            <Divider />
-            <Box padding={1}>
-              <Typography variant="caption" color="text.secondary">
-                {t('messages.amc-consumption')}
-                <br />
-                {t('messages.amc-lookback-months')}
-                <br />
-                {t('messages.amc-lookback-days')}
-                <br />
-                {t('messages.amc-days-out-of-stock')}
-                <br />
-                {t('messages.amc-days-out-of-stock-adjustment')}
-                <br />
-                {t('messages.amc-minus-transfers')}
-              </Typography>
-            </Box>
           </>
         )}
       </AccordionDetails>

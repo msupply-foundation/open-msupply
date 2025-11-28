@@ -1,2 +1,2 @@
-export * from './EditGlobalPreferencesPage';
+export * from './EditPreferencesPage';
 export * from './EditPreference';

@@ -1,6 +1,6 @@
 import { Box, BoxProps, Portal } from '@mui/material';
 import { styled } from '@mui/material/styles';
-import React, { ReactNode, useEffect, useRef } from 'react';
+import React, { FC, ReactNode, useEffect, useRef } from 'react';
 import { useHostContext, useKeyboard } from '@common/hooks';
 import { useIsCentralServerApi } from '@openmsupply-client/common';
 
@@ -14,12 +14,7 @@ const Container = styled('div')(() => ({
   paddingRight: '20px',
 }));
 
-interface AppFooterProps {
-  backgroundColor?: string;
-  textColor?: string;
-}
-
-export const AppFooter = ({ backgroundColor, textColor }: AppFooterProps) => {
+export const AppFooter: FC = () => {
   const { setAppFooterRef, setAppSessionDetailsRef, fullScreen } =
     useHostContext();
   const { keyboardIsOpen } = useKeyboard();
@@ -40,10 +35,8 @@ export const AppFooter = ({ backgroundColor, textColor }: AppFooterProps) => {
       <Container
         ref={appSessionDetailsRef}
         sx={{
-          backgroundColor:
-            backgroundColor ??
-            (isCentralServer ? 'primary.main' : 'background.menu'),
-          color: textColor ?? (isCentralServer ? '#fff' : 'gray.main'),
+          backgroundColor: isCentralServer ? 'primary.main' : 'background.menu',
+          color: isCentralServer ? '#fff' : 'gray.main',
         }}
       />
     </Box>
@@ -55,11 +48,11 @@ interface AppFooterPortalProps extends BoxProps {
   Content?: ReactNode;
 }
 
-export const AppFooterPortal = ({
+export const AppFooterPortal: FC<AppFooterPortalProps> = ({
   SessionDetails,
   Content,
   ...boxProps
-}: AppFooterPortalProps) => {
+}) => {
   const { appFooterRef, appSessionDetailsRef } = useHostContext();
 
   if (!(appFooterRef && appSessionDetailsRef)) return null;

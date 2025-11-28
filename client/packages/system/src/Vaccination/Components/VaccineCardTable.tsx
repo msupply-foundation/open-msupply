@@ -31,13 +31,7 @@ const canClickRow = (
 ) => {
   if (!isEncounter) return false;
   if (row.canSkipDose) return true;
-
-  const prevDoseStatus = getPreviousDoseStatus(row, items);
-  return (
-    prevDoseStatus !== null &&
-    prevDoseStatus !== VaccinationCardItemNodeStatus.Pending &&
-    prevDoseStatus !== VaccinationCardItemNodeStatus.Late
-  );
+  return getPreviousDoseStatus(row, items) !== null;
 };
 
 export const VaccineCardTable = ({

@@ -178,10 +178,7 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
     map.insert(Resource::QueryName, PermissionDSL::HasStoreAccess);
     map.insert(
         Resource::MutateNameProperties,
-        PermissionDSL::And(vec![
-            PermissionDSL::HasPermission(PermissionType::NamePropertiesMutate),
-            PermissionDSL::HasPermission(PermissionType::EditCentralData),
-        ]),
+        PermissionDSL::HasPermission(PermissionType::NamePropertiesMutate),
     );
 
     // location

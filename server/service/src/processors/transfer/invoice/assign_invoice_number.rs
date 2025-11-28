@@ -1,11 +1,11 @@
 use repository::{
     ActivityLogType, InvoiceRow, InvoiceRowRepository, InvoiceStatus, InvoiceType, NumberRowType,
-    RepositoryError,
+    RepositoryError, StorageConnection,
 };
 
 use crate::{
     activity_log::system_activity_log_entry, number::next_number,
-    processors::transfer::invoice::InvoiceTransferOutput, service_provider::ServiceContext,
+    processors::transfer::invoice::InvoiceTransferOutput,
 };
 
 use super::{InvoiceTransferProcessor, InvoiceTransferProcessorRecord, Operation};
@@ -34,7 +34,7 @@ impl InvoiceTransferProcessor for AssignInvoiceNumberProcessor {
     /// 5. Because the inbound invoice will have an invoice_number allocated to it
     fn try_process_record(
         &self,
-        ctx: &ServiceContext,
+        connection: &StorageConnection,
         record_for_processing: &InvoiceTransferProcessorRecord,
     ) -> Result<InvoiceTransferOutput, RepositoryError> {
         // Check can execute
@@ -77,16 +77,16 @@ impl InvoiceTransferProcessor for AssignInvoiceNumberProcessor {
         // Execute
         let updated_invoice_row = InvoiceRow {
             invoice_number: next_number(
-                &ctx.connection,
+                connection,
                 &NumberRowType::InboundShipment,
                 &inbound_invoice.store_row.id,
             )?,
             ..inbound_invoice.invoice_row.clone()
         };
 
-        InvoiceRowRepository::new(&ctx.connection).upsert_one(&updated_invoice_row)?;
+        InvoiceRowRepository::new(connection).upsert_one(&updated_invoice_row)?;
         system_activity_log_entry(
-            &ctx.connection,
+            connection,
             ActivityLogType::InvoiceNumberAllocated,
             &inbound_invoice.store_row.id,
             &inbound_invoice.invoice_row.id,

@@ -1,11 +1,10 @@
 use async_graphql::*;
-use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
+use graphql_core::standard_graphql_error::StandardGraphqlError;
 use graphql_core::ContextExt;
 use graphql_types::types::{PropertyNode, PropertyNodeValueType};
 use repository::types::PropertyValueType;
 use repository::{NameProperty, NamePropertyRow};
 
-use service::auth::{Resource, ResourceAccessRequest};
 use service::name_property::{
     get_name_properties, initialise_name_properties, InitialiseNameProperty,
     InitialiseNamePropertyError,
@@ -26,14 +25,6 @@ pub fn configure_name_properties(
     ctx: &Context<'_>,
     input: Vec<ConfigureNamePropertyInput>,
 ) -> Result<ConfigureNamePropertiesResponse> {
-    validate_auth(
-        ctx,
-        &ResourceAccessRequest {
-            resource: Resource::MutateNameProperties,
-            store_id: None,
-        },
-    )?;
-
     let connection_manager = ctx.get_connection_manager();
 
     let result = initialise_name_properties(

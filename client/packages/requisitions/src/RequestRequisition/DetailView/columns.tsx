@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { RequestLineFragment } from '../api';
 import {
   useAuthContext,
@@ -12,6 +12,7 @@ import {
 } from '@openmsupply-client/common';
 import { useRequest } from '../api';
 import { useRequestRequisitionLineErrorContext } from '../context';
+import React from 'react';
 
 export const useRequestColumns = () => {
   const t = useTranslation();

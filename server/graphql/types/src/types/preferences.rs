@@ -1,9 +1,6 @@
 use std::collections::BTreeMap;
 
-use crate::types::{
-    patient::GenderTypeNode,
-    warn_when_missing_recent_stocktake::WarnWhenMissingRecentStocktakeDataNode,
-};
+use crate::types::patient::GenderTypeNode;
 use async_graphql::*;
 use repository::StorageConnection;
 use service::preference::{preferences::PreferenceProvider, Preference, PreferenceDescription};
@@ -62,6 +59,10 @@ impl PreferencesNode {
         self.load_preference(&self.preferences.warning_for_excess_request)
     }
 
+    pub async fn use_days_in_month(&self) -> Result<bool> {
+        self.load_preference(&self.preferences.use_days_in_month)
+    }
+
     pub async fn adjust_for_number_of_days_out_of_stock(&self) -> Result<bool> {
         self.load_preference(&self.preferences.adjust_for_number_of_days_out_of_stock)
     }
@@ -70,12 +71,8 @@ impl PreferencesNode {
         self.load_preference(&self.preferences.days_in_month)
     }
 
-    pub async fn expired_stock_prevent_issue(&self) -> Result<bool> {
-        self.load_preference(&self.preferences.expired_stock_prevent_issue)
-    }
-
-    pub async fn expired_stock_issue_threshold(&self) -> Result<i32> {
-        self.load_preference(&self.preferences.expired_stock_issue_threshold)
+    pub async fn exclude_transfers(&self) -> Result<bool> {
+        self.load_preference(&self.preferences.exclude_transfers)
     }
 
     // Store preferences
@@ -109,10 +106,6 @@ impl PreferencesNode {
 
     pub async fn requisition_auto_finalise(&self) -> Result<bool> {
         self.load_preference(&self.preferences.requisition_auto_finalise)
-    }
-
-    pub async fn inbound_shipment_auto_verify(&self) -> Result<bool> {
-        self.load_preference(&self.preferences.inbound_shipment_auto_verify)
     }
 
     pub async fn can_create_internal_order_from_a_requisition(&self) -> Result<bool> {
@@ -157,22 +150,6 @@ impl PreferencesNode {
 
     pub async fn second_threshold_for_expiring_items(&self) -> Result<i32> {
         self.load_preference(&self.preferences.second_threshold_for_expiring_items)
-    }
-
-    pub async fn skip_intermediate_statuses_in_outbound(&self) -> Result<bool> {
-        self.load_preference(&self.preferences.skip_intermediate_statuses_in_outbound)
-    }
-
-    pub async fn store_custom_colour(&self) -> Result<String> {
-        self.load_preference(&self.preferences.store_custom_colour)
-    }
-
-    pub async fn warn_when_missing_recent_stocktake(
-        &self,
-    ) -> Result<WarnWhenMissingRecentStocktakeDataNode> {
-        Ok(WarnWhenMissingRecentStocktakeDataNode::from_domain(
-            self.load_preference(&self.preferences.warn_when_missing_recent_stocktake)?,
-        ))
     }
 }
 
@@ -230,10 +207,10 @@ pub enum PreferenceKey {
     PreventTransfersMonthsBeforeInitialisation,
     ShowContactTracing,
     SyncRecordsDisplayThreshold,
+    UseDaysInMonth,
     AdjustForNumberOfDaysOutOfStock,
     DaysInMonth,
-    ExpiredStockPreventIssue,
-    ExpiredStockIssueThreshold,
+    ExcludeTransfers,
     // Store preferences
     ManageVaccinesInDoses,
     ManageVvmStatusForStock,
@@ -243,7 +220,6 @@ pub enum PreferenceKey {
     UseSimplifiedMobileUi,
     DisableManualReturns,
     RequisitionAutoFinalise,
-    InboundShipmentAutoVerify,
     WarningForExcessRequest,
     CanCreateInternalOrderFromARequisition,
     SelectDestinationStoreForAnInternalOrder,
@@ -251,9 +227,6 @@ pub enum PreferenceKey {
     NumberOfMonthsThresholdToShowLowStockAlertsForProducts,
     FirstThresholdForExpiringItems,
     SecondThresholdForExpiringItems,
-    SkipIntermediateStatusesInOutbound,
-    StoreCustomColour,
-    WarnWhenMissingRecentStocktake,
 }
 
 #[derive(Enum, Copy, Clone, Debug, Eq, PartialEq)]
@@ -270,6 +243,4 @@ pub enum PreferenceValueNodeType {
     Integer,
     MultiChoice,
     CustomTranslations, // Specific type for CustomTranslations preference
-    WarnWhenMissingRecentStocktakeData,
-    String,
 }

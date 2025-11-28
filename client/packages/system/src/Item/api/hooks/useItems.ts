@@ -85,13 +85,11 @@ const getVisibleOrOnHandFilter = (hasStockOnHand?: boolean) => {
 interface ItemHookProps {
   filterBy?: ItemFilterInput;
   refetchOnMount?: boolean;
-  enabled?: boolean;
 }
 
 export const useItemsByFilter = ({
   filterBy = {},
   refetchOnMount = false,
-  enabled = true,
 }: ItemHookProps = {}) => {
   const { api, storeId } = useItemGraphQL();
 
@@ -118,6 +116,5 @@ export const useItemsByFilter = ({
     queryKey: [ITEM, filterBy],
     queryFn,
     refetchOnMount,
-    enabled,
   });
 };

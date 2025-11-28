@@ -5,5 +5,4 @@ export type AverageMonthlyConsumptionInput = {
   amc_lookback_months: number;
   consumption_map: { [key in string]?: number };
   item_ids: Array<string>;
-  adjusted_days_out_of_stock_map: { [key in string]?: number } | null;
 };

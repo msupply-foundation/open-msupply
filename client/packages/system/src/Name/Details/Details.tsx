@@ -11,9 +11,7 @@ import {
   BasicSpinner,
   MuiLink,
   BasicTextInput,
-  ObjUtils,
 } from '@openmsupply-client/common';
-import { SUPPLY_LEVEL_KEY } from '@openmsupply-client/host/src/api/hooks/settings/namePropertyKeys';
 import { useName } from '../api';
 import { NameRenderer } from '../Components';
 
@@ -25,14 +23,8 @@ interface DetailsProps {
 export const Details = ({ nameId, type = 'customer' }: DetailsProps) => {
   const disabled = true;
   const t = useTranslation();
-  const { localisedDate } = useFormatDateTime();
-
   const { data, isLoading } = useName.document.get(nameId);
-  const { data: properties } = useName.document.properties();
-
-  const supplyLevelProperty = properties?.find(
-    p => p.property.key === SUPPLY_LEVEL_KEY
-  )?.property;
+  const { localisedDate } = useFormatDateTime();
 
   if (isLoading) return <BasicSpinner />;
 
@@ -194,21 +186,6 @@ export const Details = ({ nameId, type = 'customer' }: DetailsProps) => {
             }
             labelWidthPercentage={19}
           />
-          {type === 'customer' && (
-            <DetailInputWithLabelRow
-              label={t('label.supply-level')}
-              labelWidthPercentage={19}
-              inputProps={{
-                disabled,
-                value:
-                  supplyLevelProperty?.key && data?.properties
-                    ? (ObjUtils.parse(data?.properties)[
-                        supplyLevelProperty.key
-                      ] ?? null)
-                    : null,
-              }}
-            />
-          )}
         </Box>
       </Box>
     </DetailContainer>

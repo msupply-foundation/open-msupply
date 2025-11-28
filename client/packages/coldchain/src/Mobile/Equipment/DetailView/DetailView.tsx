@@ -59,11 +59,11 @@ export const EquipmentDetailView: FC = () => {
         }}
       >
         <SimpleLabelDisplay
-          label={t('label.manufacturer')}
+          label="Manufacturer"
           value={data.catalogueItem?.manufacturer || 'n/a'}
         />
         <SimpleLabelDisplay
-          label={t('label.type')}
+          label="Type"
           value={data.assetType?.name || 'n/a'}
         />
       </Box>
@@ -79,35 +79,23 @@ export const EquipmentDetailView: FC = () => {
           gap: 1,
         }}
       >
-        <AccordionPanelSection
-          title={t('label.statushistory')}
-          defaultExpanded={false}
-        >
+        <AccordionPanelSection title="Status History" defaultExpanded={false}>
           {draft === undefined ? null : <StatusLogs assetId={draft.id} />}
         </AccordionPanelSection>
 
-        <AccordionPanelSection
-          title={t('label.summary')}
-          defaultExpanded={false}
-        >
+        <AccordionPanelSection title="Summary" defaultExpanded={false}>
           <Summary onChange={onChange} draft={draft} locations={locations} />
         </AccordionPanelSection>
 
-        <AccordionPanelSection
-          title={t('label.details')}
-          defaultExpanded={false}
-        >
+        <AccordionPanelSection title="Details" defaultExpanded={false}>
           <Details onChange={onChange} draft={draft} />
         </AccordionPanelSection>
 
-        <AccordionPanelSection
-          title={t('label.documents')}
-          defaultExpanded={false}
-        >
+        <AccordionPanelSection title="Documents" defaultExpanded={false}>
           {draft === undefined ? null : <Documents draft={draft} />}
         </AccordionPanelSection>
 
-        <AccordionPanelSection title={t('label.log')} defaultExpanded={false}>
+        <AccordionPanelSection title="Logs" defaultExpanded={false}>
           <LogCardListView recordId={data?.id} />
         </AccordionPanelSection>
         {isDirty && (

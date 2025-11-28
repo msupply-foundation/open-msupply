@@ -21,7 +21,6 @@ interface DocumentsProps {
   isFetching?: boolean;
   invalidateQueries?: () => void;
   openUploadModal?: () => void;
-  deletableDocumentIds?: Set<string>;
 }
 
 // TODO: Replace upload table with how we have it in other modules (i.e. Not table)
@@ -32,7 +31,6 @@ export const DocumentsTable = ({
   isFetching,
   invalidateQueries,
   openUploadModal,
-  deletableDocumentIds,
 }: DocumentsProps): ReactElement => {
   const t = useTranslation();
 
@@ -50,7 +48,7 @@ export const DocumentsTable = ({
         enableSorting: true,
       },
     ],
-    [t]
+    []
   );
 
   const { table, selectedRows } =
@@ -77,7 +75,6 @@ export const DocumentsTable = ({
         invalidateQueries={invalidateQueries}
         selectedRows={selectedRows}
         resetRowSelection={table.resetRowSelection}
-        deletableDocumentIds={deletableDocumentIds}
       />
     </>
   );

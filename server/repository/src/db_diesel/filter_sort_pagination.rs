@@ -247,13 +247,10 @@ impl DatetimeFilter {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Default, TS, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Default)]
 pub struct DateFilter {
-    #[ts(optional)]
     pub equal_to: Option<NaiveDate>,
-    #[ts(optional)]
     pub before_or_equal_to: Option<NaiveDate>,
-    #[ts(optional)]
     pub after_or_equal_to: Option<NaiveDate>,
 }
 

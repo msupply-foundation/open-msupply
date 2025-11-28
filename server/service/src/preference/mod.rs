@@ -34,10 +34,10 @@ pub trait PreferenceServiceTrait: Sync + Send {
             show_contact_tracing,
             sync_records_display_threshold,
             warning_for_excess_request,
+            use_days_in_month,
             adjust_for_number_of_days_out_of_stock,
             days_in_month,
-            expired_stock_prevent_issue,
-            expired_stock_issue_threshold,
+            exclude_transfers,
 
             // Store preferences
             manage_vaccines_in_doses,
@@ -48,16 +48,12 @@ pub trait PreferenceServiceTrait: Sync + Send {
             use_simplified_mobile_ui,
             disable_manual_returns,
             requisition_auto_finalise,
-            inbound_shipment_auto_verify,
             can_create_internal_order_from_a_requisition,
             select_destination_store_for_an_internal_order,
             number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products,
             number_of_months_threshold_to_show_low_stock_alerts_for_products,
             first_threshold_for_expiring_items,
             second_threshold_for_expiring_items,
-            skip_intermediate_statuses_in_outbound,
-            warn_when_missing_recent_stocktake,
-            store_custom_colour,
         } = self.get_preference_provider();
 
         let input = AppendIfTypeInputs {
@@ -82,21 +78,20 @@ pub trait PreferenceServiceTrait: Sync + Send {
         append_if_type(show_contact_tracing, &mut prefs, &input)?;
         append_if_type(sync_records_display_threshold, &mut prefs, &input)?;
         append_if_type(warning_for_excess_request, &mut prefs, &input)?;
+        append_if_type(use_days_in_month, &mut prefs, &input)?;
         append_if_type(adjust_for_number_of_days_out_of_stock, &mut prefs, &input)?;
         append_if_type(days_in_month, &mut prefs, &input)?;
-        append_if_type(expired_stock_prevent_issue, &mut prefs, &input)?;
-        append_if_type(expired_stock_issue_threshold, &mut prefs, &input)?;
+        append_if_type(exclude_transfers, &mut prefs, &input)?;
 
         // Store preferences
+        append_if_type(manage_vaccines_in_doses, &mut prefs, &input)?;
+        append_if_type(manage_vvm_status_for_stock, &mut prefs, &input)?;
         append_if_type(order_in_packs, &mut prefs, &input)?;
         append_if_type(use_procurement_functionality, &mut prefs, &input)?;
         append_if_type(sort_by_vvm_status_then_expiry, &mut prefs, &input)?;
         append_if_type(use_simplified_mobile_ui, &mut prefs, &input)?;
         append_if_type(disable_manual_returns, &mut prefs, &input)?;
         append_if_type(requisition_auto_finalise, &mut prefs, &input)?;
-        append_if_type(inbound_shipment_auto_verify, &mut prefs, &input)?;
-        append_if_type(manage_vvm_status_for_stock, &mut prefs, &input)?;
-        append_if_type(manage_vaccines_in_doses, &mut prefs, &input)?;
         append_if_type(
             can_create_internal_order_from_a_requisition,
             &mut prefs,
@@ -119,9 +114,6 @@ pub trait PreferenceServiceTrait: Sync + Send {
         )?;
         append_if_type(first_threshold_for_expiring_items, &mut prefs, &input)?;
         append_if_type(second_threshold_for_expiring_items, &mut prefs, &input)?;
-        append_if_type(skip_intermediate_statuses_in_outbound, &mut prefs, &input)?;
-        append_if_type(store_custom_colour, &mut prefs, &input)?;
-        append_if_type(warn_when_missing_recent_stocktake, &mut prefs, &input)?;
 
         Ok(prefs)
     }

@@ -18,11 +18,13 @@ import { useAssets } from '../../Equipment/api';
 import { SimpleLabelDisplay } from '../Components/SimpleLabelDisplay';
 import { AddFromScannerButton } from '../../Equipment/ListView/AddFromScannerButton';
 import { CreateAssetModal } from '../../Equipment/ListView/CreateAssetModal';
+import { useIsGapsStoreOnly } from '@openmsupply-client/common';
 import { ImportFridgeTag } from '../../common/ImportFridgeTag';
 
 export const CardListView: FC = () => {
   const t = useTranslation();
   const navigate = useNavigate();
+  const isGaps = useIsGapsStoreOnly();
   const { data, isError, isLoading } = useAssets.document.list();
   const modalController = useToggle();
   const equipmentRoute = RouteBuilder.create(AppRoute.Coldchain).addPart(
@@ -67,13 +69,13 @@ export const CardListView: FC = () => {
         }}
       >
         <ButtonWithIcon
-          shouldShrink={true}
+          shouldShrink={!isGaps}
           label={t('button.new-asset')}
           onClick={onAdd}
           Icon={<PlusCircleIcon />}
         />
         <AddFromScannerButton />
-        <ImportFridgeTag shouldShrink={true} />
+        <ImportFridgeTag shouldShrink={false} />
       </Box>
       <Box
         sx={{

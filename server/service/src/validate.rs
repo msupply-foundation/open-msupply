@@ -38,26 +38,10 @@ pub fn get_other_party(
     store_id: &str,
     other_party_id: &str,
 ) -> Result<Option<Name>, RepositoryError> {
-    let mut results = NameRepository::new(connection).query_by_filter(
+    NameRepository::new(connection).query_one(
         store_id,
         NameFilter::new().id(EqualFilter::equal_to(other_party_id.to_string())),
-    )?;
-
-    if results.is_empty() {
-        return Ok(None);
-    }
-
-    // If names have been merged, there could be multiple results, if so we need to return the one with the name_store_join if it exists
-    // Revist this code in https://github.com/msupply-foundation/open-msupply/issues/9824
-    let name_with_join = results
-        .iter()
-        .find(|name| name.name_store_join_row.is_some());
-
-    if let Some(name) = name_with_join {
-        return Ok(Some(name.to_owned()));
-    }
-
-    Ok(results.pop())
+    )
 }
 
 pub fn check_patient_exists(

@@ -14,18 +14,15 @@ import {
   packsToQuantity,
 } from '../../StockOut';
 import { NumberInputCell } from '@openmsupply-client/common/src/ui/layout/tables/material-react-table/components/NumberInputCell';
-import { ExpiryDateCell } from '@openmsupply-client/common/src/ui/layout/tables/material-react-table/components/ExpiryDateCell';
 
 export const usePrescriptionLineEditColumns = ({
   allocate,
   item,
   allocateIn,
-  getIsDisabled,
 }: {
   allocate: (key: string, value: number) => number;
   item: DraftItem | null;
   allocateIn: AllocateInType;
-  getIsDisabled: (row: DraftStockOutLineFragment) => boolean;
 }): ColumnDef<DraftStockOutLineFragment>[] => {
   const t = useTranslation();
   const { getPlural } = useIntlUtils();
@@ -48,14 +45,14 @@ export const usePrescriptionLineEditColumns = ({
       {
         accessorKey: 'expiryDate',
         header: t('label.expiry'),
-        Cell: ExpiryDateCell,
+        columnType: ColumnType.Date,
         size: 100,
       },
       {
         id: 'vvmStatus',
         header: t('label.vvm-status'),
         size: 150,
-        accessorFn: row => row.vvmStatus?.description || '',
+        accessorFn: row => row.vvmStatus || '',
         includeColumn: hasVvmStatusesEnabled && item?.isVaccine,
       },
       {
@@ -106,10 +103,9 @@ export const usePrescriptionLineEditColumns = ({
             sx={{
               '& .MuiInputBase-input': { backgroundColor: 'background.paper' },
             }}
-            disabled={getIsDisabled(row.original)}
           />
         ),
       },
     ];
-  }, [unit, allocate, getIsDisabled]);
+  }, [unit, allocate]);
 };

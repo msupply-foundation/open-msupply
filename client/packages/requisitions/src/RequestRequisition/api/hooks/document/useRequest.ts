@@ -5,20 +5,16 @@ import {
 } from '@openmsupply-client/common';
 import { RequestFragment } from '../../.';
 import { useRequestApi } from '../utils/useRequestApi';
-import { useRequestRequisitionGraphql } from '../useRequestRequisitionGraphql';
 
 export const useRequestId = () => {
   const { id = '' } = useParams();
   return id;
 };
 
-export const useRequest = (): UseQueryResult<RequestFragment> & {
-  invalidateQueries: () => Promise<void>;
-} => {
+export const useRequest = (): UseQueryResult<RequestFragment> => {
   const id = useRequestId();
   const api = useRequestApi();
-  const { queryClient } = useRequestRequisitionGraphql();
-  const query = useQuery(
+  return useQuery(
     api.keys.detail(id),
     () => api.get.byId(id),
     // Don't refetch when the edit modal opens, for example. But, don't cache data when this query
@@ -28,9 +24,4 @@ export const useRequest = (): UseQueryResult<RequestFragment> & {
       cacheTime: 0,
     }
   );
-
-  return {
-    ...query,
-    invalidateQueries: () => queryClient.invalidateQueries(api.keys.base()),
-  };
 };

@@ -69,12 +69,7 @@ fragment Request on RequisitionNode {
   maxMonthsOfStock
   minMonthsOfStock
   approvalStatus
-  documents {
-    __typename
-    nodes {
-      ...SyncFileReference
-    }
-  }
+
   user {
     __typename
     username
@@ -116,7 +111,6 @@ fragment Request on RequisitionNode {
     isSupplier
     isOnHold
     name
-    margin
     store {
       id
       code
