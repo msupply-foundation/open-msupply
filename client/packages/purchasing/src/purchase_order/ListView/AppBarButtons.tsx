@@ -56,13 +56,7 @@ export const AppBarButtonsComponent = ({
     modalController.toggleOff();
   };
 
-  const getCsvData = async () => {
-    if (!data?.length) {
-      error(t('error.no-data'))();
-      return null;
-    }
-    return purchaseOrderToCsv(t, data);
-  };
+  const getCsvData = () => (data?.length ? purchaseOrderToCsv(t, data) : null);
 
   return (
     <AppBarButtonsPortal>

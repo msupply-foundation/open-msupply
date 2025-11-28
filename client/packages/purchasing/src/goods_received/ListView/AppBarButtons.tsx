@@ -10,7 +10,6 @@ import {
   RouteBuilder,
   UserPermission,
   useCallbackWithPermission,
-  useNotification,
   useSimplifiedTabletUI,
 } from '@openmsupply-client/common';
 import { ExportSelector } from '@openmsupply-client/system';
@@ -24,7 +23,6 @@ export const AppBarButtons = () => {
   const t = useTranslation();
   const modalController = useToggle();
   const navigate = useNavigate();
-  const { error } = useNotification();
   const simplifiedTabletView = useSimplifiedTabletUI();
 
   const {
@@ -62,11 +60,7 @@ export const AppBarButtons = () => {
 
   const getCsvData = async () => {
     const { data } = await fetchAllGoodsReceived();
-    if (!data?.nodes?.length) {
-      error(t('error.no-data'))();
-      return null;
-    }
-    return goodsReceivedToCsv(data.nodes, t);
+    return data?.nodes?.length ? goodsReceivedToCsv(data.nodes, t) : null;
   };
 
   return (

@@ -1,6 +1,5 @@
 import React from 'react';
 import {
-  useNotification,
   AppBarButtonsPortal,
   Grid,
   useTranslation,
@@ -15,19 +14,13 @@ export const AppBarButtons = ({
   data?: MasterListRowFragment[] | null;
 }) => {
   const t = useTranslation();
-  const { error } = useNotification();
+  const getCsvData = () => (data ? masterListsToCsv(data, t) : null);
 
   return (
     <AppBarButtonsPortal>
       <Grid container gap={1}>
         <ExportSelector
-          getCsvData={() => {
-            if (!data?.length) {
-              error(t('error.no-data'))();
-              return null;
-            }
-            return masterListsToCsv(data, t);
-          }}
+          getCsvData={getCsvData}
           filename={t('filename.master-lists')}
         />
       </Grid>

@@ -1,6 +1,5 @@
 import React from 'react';
 import {
-  useNotification,
   AppBarButtonsPortal,
   Grid,
   useTranslation,
@@ -27,7 +26,6 @@ export const AppBarButtonsComponent = ({
 }) => {
   const t = useTranslation();
   const isCentralServer = useIsCentralServerApi();
-  const { error } = useNotification();
   const navigate = useNavigate();
 
   const path = RouteBuilder.create(AppRoute.Catalogue)
@@ -35,13 +33,8 @@ export const AppBarButtonsComponent = ({
     .addPart(AppRoute.LogReasons)
     .build();
 
-  const getCsvData = async () => {
-    if (!assets?.length) {
-      error(t('error.no-data'))();
-      return null;
-    }
-    return assetCatalogueItemsListToCsv(assets, t);
-  };
+  const getCsvData = () =>
+    assets?.length ? assetCatalogueItemsListToCsv(assets, t) : null;
 
   return (
     <AppBarButtonsPortal>

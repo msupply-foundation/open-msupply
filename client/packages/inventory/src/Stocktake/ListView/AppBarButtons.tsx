@@ -1,6 +1,5 @@
 import React from 'react';
 import {
-  useNotification,
   AppBarButtonsPortal,
   Grid,
   ButtonWithIcon,
@@ -28,7 +27,6 @@ export const AppBarButtons = ({
 }: AppBarButtonsProps) => {
   const t = useTranslation();
   const modalController = useToggle();
-  const { error } = useNotification();
   const { isLoading, fetchAsync } = useStocktakeOld.document.listAll({
     key: 'createdDatetime',
     direction: 'desc',
@@ -37,11 +35,7 @@ export const AppBarButtons = ({
   const simplifiedTabletView = useSimplifiedTabletUI();
   const getCsvData = async () => {
     const data = await fetchAsync();
-    if (!data?.nodes?.length) {
-      error(t('error.no-data'))();
-      return null;
-    }
-    return stocktakesToCsv(data.nodes, t);
+    return data?.nodes?.length ? stocktakesToCsv(data.nodes, t) : null;
   };
 
   return (

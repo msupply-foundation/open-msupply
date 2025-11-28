@@ -1,6 +1,5 @@
 import React from 'react';
 import {
-  useNotification,
   AppBarButtonsPortal,
   Grid,
   useTranslation,
@@ -29,7 +28,6 @@ export const AppBarButtonsComponent = ({
 }: AppBarButtonsComponentProps) => {
   const t = useTranslation();
   const isCentralServer = useIsCentralServerApi();
-  const { error } = useNotification();
 
   const { fetchAsync, isLoading } = useAssets.document.listAll();
   const { data: properties } = useAssetProperties();
@@ -48,16 +46,14 @@ export const AppBarButtonsComponent = ({
 
   const getCsvData = async () => {
     const result = await fetchAsync();
-    if (!result?.nodes?.length) {
-      error(t('error.no-data'))();
-      return null;
-    }
-    return assetsToCsv(
-      result.nodes,
-      t,
-      properties?.map(p => p.key) ?? [],
-      isCentralServer
-    );
+    return result?.nodes?.length
+      ? assetsToCsv(
+          result.nodes,
+          t,
+          properties?.map(p => p.key) ?? [],
+          isCentralServer
+        )
+      : null;
   };
 
   return (

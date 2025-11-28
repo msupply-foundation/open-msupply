@@ -33,11 +33,7 @@ export const AppBarButtonsComponent: FC<{
 
   const getCsvData = async () => {
     const data = await fetchAsync();
-    if (!data?.nodes?.length) {
-      error(t('error.no-data'))();
-      return null;
-    }
-    return outboundsToCsv(data.nodes, t);
+    return data?.nodes?.length ? outboundsToCsv(data.nodes, t) : null;
   };
 
   return (

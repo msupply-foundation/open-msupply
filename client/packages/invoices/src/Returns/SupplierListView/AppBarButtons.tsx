@@ -41,11 +41,7 @@ export const AppBarButtonsComponent = ({
 
   const getCsvData = async () => {
     const data = await fetchAsync();
-    if (!data?.nodes?.length) {
-      error(t('error.no-data'))();
-      return null;
-    }
-    return supplierReturnsToCsv(data.nodes, t);
+    return data?.nodes?.length ? supplierReturnsToCsv(data.nodes, t) : null;
   };
 
   return (
