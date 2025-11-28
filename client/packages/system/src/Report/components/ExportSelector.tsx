@@ -65,6 +65,11 @@ export const ExportSelector = ({
     }
   };
 
+  const onSelectOption = (option: SplitButtonOption<ExportFormat>) => {
+    setSelectedExportOption(option);
+    handleExport(option);
+  };
+
   return (
     <SplitButton
       color="primary"
@@ -74,7 +79,7 @@ export const ExportSelector = ({
       options={exportOptions}
       onClick={handleExport}
       selectedOption={selectedExportOption}
-      onSelectOption={setSelectedExportOption}
+      onSelectOption={onSelectOption}
       label={t('button.export')}
       isDisabled={disabled}
     />
