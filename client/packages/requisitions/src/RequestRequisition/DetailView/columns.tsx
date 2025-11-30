@@ -231,7 +231,6 @@ export const useRequestColumns = () => {
       maxMonthsOfStock,
       plugins.requestRequisitionLine?.tableColumn,
       errors,
-      t,
     ]
   );
 
