@@ -7,9 +7,6 @@ import {
   useNotification,
   LoadingButton,
   useDisabledNotificationPopover,
-  useNativeClient,
-  EnvUtils,
-  Platform,
 } from '@openmsupply-client/common';
 
 import { useAssets } from '../api';
@@ -41,9 +38,7 @@ declare global {
 export const AppBarButtonsComponent = () => {
   const { data } = useAssets.document.get();
   const t = useTranslation();
-  const { printZpl } = useNativeClient();
   const { error, success } = useNotification();
-  const isAndroid = EnvUtils.platform === Platform.Android;
   const { data: settings } = useAssets.utils.labelPrinterSettings();
   const [isPrinting, setIsPrinting] = React.useState(false);
   const { show, DisabledNotification } = useDisabledNotificationPopover({
@@ -109,11 +104,7 @@ export const AppBarButtonsComponent = () => {
 
       const result = await response.json();
 
-      if (isAndroid && printZpl) {
-        await printZpl(result.zpl);
-      }
-
-      if (!isAndroid && window.BrowserPrint && result.zpl) {
+      if (window.BrowserPrint && result.zpl) {
         window.BrowserPrint.getLocalDevices(function (device) {
           const usbConnectedPrinter = device.printer.find(
             d => d.connection === 'usb' && d.deviceType === 'printer'

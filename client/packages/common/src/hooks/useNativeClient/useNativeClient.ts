@@ -159,10 +159,6 @@ export const useNativeClient = ({
 
   const advertiseService = nativeAPI?.advertiseService ?? (() => {});
 
-  const printZpl = nativeAPI?.printZpl
-    ? (zpl: string) => nativeAPI.printZpl({ zpl })
-    : async () => ({ success: false, error: 'Not supported' });
-
   const setServerMode = (
     handleConnectionResult: (result: ConnectionResult) => void
   ) => {
@@ -242,7 +238,6 @@ export const useNativeClient = ({
     saveFile,
     saveDatabase,
     setServerMode,
-    printZpl,
   };
 };
 
