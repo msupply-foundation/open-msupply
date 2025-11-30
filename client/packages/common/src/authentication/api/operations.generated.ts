@@ -245,7 +245,6 @@ export type PreferencesQuery = {
     customTranslations: any;
     daysInMonth: number;
     disableManualReturns: boolean;
-    excludeTransfers: boolean;
     firstThresholdForExpiringItems: number;
     genderOptions: Array<Types.GenderTypeNode>;
     manageVaccinesInDoses: boolean;
@@ -261,7 +260,6 @@ export type PreferencesQuery = {
     sortByVvmStatusThenExpiry: boolean;
     storeCustomColour: string;
     syncRecordsDisplayThreshold: number;
-    useDaysInMonth: boolean;
     useProcurementFunctionality: boolean;
     useSimplifiedMobileUi: boolean;
     expiredStockPreventIssue: boolean;
@@ -486,7 +484,6 @@ export const PreferencesDocument = gql`
       customTranslations
       daysInMonth
       disableManualReturns
-      excludeTransfers
       firstThresholdForExpiringItems
       genderOptions
       manageVaccinesInDoses
@@ -502,7 +499,6 @@ export const PreferencesDocument = gql`
       sortByVvmStatusThenExpiry
       storeCustomColour
       syncRecordsDisplayThreshold
-      useDaysInMonth
       useProcurementFunctionality
       useSimplifiedMobileUi
       expiredStockPreventIssue
