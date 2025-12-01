@@ -4823,7 +4823,7 @@ export type ItemFilterInput = {
   maxMonthsOfStock?: InputMaybe<Scalars['Float']['input']>;
   minMonthsOfStock?: InputMaybe<Scalars['Float']['input']>;
   name?: InputMaybe<StringFilterInput>;
-  outOfStockProducts?: InputMaybe<Scalars['Boolean']['input']>;
+  outOfStockWithRecentConsumption?: InputMaybe<Scalars['Boolean']['input']>;
   productsAtRiskOfBeingOutOfStock?: InputMaybe<Scalars['Boolean']['input']>;
   type?: InputMaybe<EqualFilterItemTypeInput>;
 };

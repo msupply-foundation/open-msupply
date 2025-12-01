@@ -36,15 +36,23 @@ export const Toolbar: FC = () => {
             {
               type: 'enum',
               name: t('label.in-stock'),
-              urlParameter: 'hasStockOnHand',
+              urlParameter: 'stockStatus',
               options: [
                 {
                   label: t('label.in-stock'),
-                  value: 'true', // string value will be parsed as boolean from URL query params
+                  value: 'inStock', // string value will be parsed as boolean from URL query params
+                },
+                {
+                  label: t('label.in-stock-with-recent-consumption'),
+                  value: 'inStockWithRecentConsumption',
                 },
                 {
                   label: t('label.out-of-stock'),
-                  value: 'false',
+                  value: 'outOfStock',
+                },
+                {
+                  label: t('label.out-of-stock-with-recent-consumption'),
+                  value: 'outOfStockWithRecentConsumption',
                 },
               ],
             },
