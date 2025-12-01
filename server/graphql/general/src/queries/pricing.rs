@@ -63,7 +63,9 @@ pub async fn item_price(
     let pricing = service_provider
         .pricing_service
         .get_pricing_for_item(&service_context, input.to_domain())
-        .map_err(|e| StandardGraphqlError::from_repository_error(e))?;
+        .map_err(|e| StandardGraphqlError::from_repository_error(e))?
+        .pop()
+        .unwrap_or_default();
 
     Ok(ItemPriceResponse::Response(ItemPriceNode { pricing }))
 }
@@ -74,7 +76,7 @@ impl ItemPriceInput {
 
         ItemPriceLookup {
             customer_name_id: name_id,
-            item_id,
+            item_ids: vec![item_id],
         }
     }
 }

@@ -3,7 +3,8 @@ use repository::{RequisitionLineRow, RequisitionRow};
 use util::uuid::uuid;
 
 use crate::item_stats::get_item_stats;
-use crate::requisition::common::get_indicative_price_pref_and_price_map;
+use crate::pricing::item_price::{get_pricing_for_items, ItemPriceLookup};
+use crate::requisition::common::get_indicative_price_pref;
 use crate::service_provider::ServiceContext;
 use crate::PluginOrRepositoryError;
 
@@ -49,13 +50,26 @@ pub fn generate_requisition_lines(
     period_end: Option<NaiveDate>,
 ) -> Result<Vec<RequisitionLineRow>, PluginOrRepositoryError> {
     let item_stats_rows = get_item_stats(&ctx.connection, store_id, None, item_ids, period_end)?;
-
-    let (populate_price_per_unit, price_map) =
-        get_indicative_price_pref_and_price_map(&ctx.connection)?;
+    let populate_price_per_unit = get_indicative_price_pref(&ctx.connection)?;
+    let price_list = if populate_price_per_unit {
+        Some(get_pricing_for_items(
+            &ctx.connection,
+            ItemPriceLookup {
+                item_ids: item_stats_rows
+                    .iter()
+                    .map(|i| i.item_id.to_string())
+                    .collect(),
+                customer_name_id: None,
+            },
+        )?)
+    } else {
+        None
+    };
 
     let lines = item_stats_rows
         .into_iter()
-        .map(|item_stats| {
+        .enumerate()
+        .map(|(i, item_stats)| {
             let average_monthly_consumption = item_stats.average_monthly_consumption;
             let available_stock_on_hand = item_stats.available_stock_on_hand;
             let suggested_quantity = generate_suggested_quantity(GenerateSuggestedQuantity {
@@ -74,8 +88,8 @@ pub fn generate_requisition_lines(
                 available_stock_on_hand,
                 average_monthly_consumption,
                 snapshot_datetime: Some(Utc::now().naive_utc()),
-                price_per_unit: if populate_price_per_unit {
-                    price_map.get(&item_stats.item_id).copied().flatten()
+                price_per_unit: if let Some(price_list) = &price_list {
+                    price_list[i].calculated_price_per_unit
                 } else {
                     None
                 },

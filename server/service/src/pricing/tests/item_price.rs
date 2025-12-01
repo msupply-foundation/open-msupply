@@ -54,10 +54,12 @@ mod query {
             .get_pricing_for_item(
                 &context,
                 ItemPriceLookup {
-                    item_id: mock_item_a().id.clone(),
+                    item_ids: vec![mock_item_a().id.clone()],
                     customer_name_id: Some(mock_name_store_a().id.clone()),
                 },
             )
+            .unwrap()
+            .pop()
             .unwrap();
 
         assert_eq!(pricing.discount_percentage, Some(discount));
@@ -68,10 +70,12 @@ mod query {
             .get_pricing_for_item(
                 &context,
                 ItemPriceLookup {
-                    item_id: mock_item_b().id.clone(),
+                    item_ids: vec![mock_item_b().id.clone()],
                     customer_name_id: Some(mock_name_store_a().id.clone()),
                 },
             )
+            .unwrap()
+            .pop()
             .unwrap();
 
         assert_eq!(pricing.default_price_per_unit, None);
@@ -124,10 +128,12 @@ mod query {
             .get_pricing_for_item(
                 &context,
                 ItemPriceLookup {
-                    item_id: mock_item_a().id.clone(),
+                    item_ids: vec![mock_item_a().id.clone()],
                     customer_name_id: None,
                 },
             )
+            .unwrap()
+            .pop()
             .unwrap();
 
         assert_eq!(pricing.default_price_per_unit, Some(default_price_per_unit));
@@ -142,10 +148,12 @@ mod query {
             .get_pricing_for_item(
                 &context,
                 ItemPriceLookup {
-                    item_id: mock_item_b().id.clone(),
+                    item_ids: vec![mock_item_b().id.clone()],
                     customer_name_id: Some(mock_name_store_a().id.clone()),
                 },
             )
+            .unwrap()
+            .pop()
             .unwrap();
 
         assert_eq!(pricing.default_price_per_unit, None);
@@ -225,10 +233,12 @@ mod query {
             .get_pricing_for_item(
                 &context,
                 ItemPriceLookup {
-                    item_id: mock_item_a().id.clone(),
+                    item_ids: vec![mock_item_a().id.clone()],
                     customer_name_id: None,
                 },
             )
+            .unwrap()
+            .pop()
             .unwrap();
 
         assert_eq!(pricing.default_price_per_unit, Some(default_price_per_unit));
@@ -243,10 +253,12 @@ mod query {
             .get_pricing_for_item(
                 &context,
                 ItemPriceLookup {
-                    item_id: mock_item_b().id.clone(),
+                    item_ids: vec![mock_item_b().id.clone()],
                     customer_name_id: Some(mock_name_store_a().id.clone()),
                 },
             )
+            .unwrap()
+            .pop()
             .unwrap();
 
         assert_eq!(pricing.default_price_per_unit, None);

@@ -1,8 +1,7 @@
 mod validate;
 use crate::{
-    requisition::common::{
-        get_default_price_list, get_indicative_price_pref, get_item_price_per_unit,
-    },
+    pricing::item_price::{get_pricing_for_items, ItemPriceLookup},
+    requisition::common::get_indicative_price_pref,
     requisition_line::query::get_requisition_line,
     service_provider::ServiceContext,
 };
@@ -48,17 +47,20 @@ pub fn insert_response_requisition_line(
         .transaction_sync(|connection| {
             let (requisition_row, item_row) = validate(connection, &ctx.store_id, &input)?;
             let populate_price_per_unit = get_indicative_price_pref(connection)?;
-            let price_list = if populate_price_per_unit {
-                get_default_price_list(connection)?
+            let price_per_unit = if populate_price_per_unit {
+                get_pricing_for_items(
+                    connection,
+                    ItemPriceLookup {
+                        item_ids: vec![input.item_id.clone()],
+                        customer_name_id: None,
+                    },
+                )?
+                .pop()
+                .unwrap_or_default()
+                .calculated_price_per_unit
             } else {
                 None
             };
-            let price_per_unit = if let Some(price_list) = price_list {
-                get_item_price_per_unit(connection, &item_row.id, &price_list.id)?
-            } else {
-                None
-            };
-
             let new_requisition_line_row = RequisitionLineRow {
                 id: input.id.clone(),
                 item_link_id: item_row.id.clone(),
