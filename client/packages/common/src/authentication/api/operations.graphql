@@ -223,6 +223,6 @@ query preferences($storeId: String!) {
     }
     warningForExcessRequest
     skipIntermediateStatusesInOutbound
-    showIndicativeUnitPriceInRequisitions
+    showIndicativePriceInRequisitions
   }
 }

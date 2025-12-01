@@ -1,12 +1,12 @@
 use crate::preference::{PrefKey, Preference, PreferenceType, PreferenceValueType};
 
-pub struct ShowIndicativeUnitPriceInRequisitions;
+pub struct ShowIndicativePriceInRequisitions;
 
-impl Preference for ShowIndicativeUnitPriceInRequisitions {
+impl Preference for ShowIndicativePriceInRequisitions {
     type Value = bool;
 
     fn key(&self) -> PrefKey {
-        PrefKey::ShowIndicativeUnitPriceInRequisitions
+        PrefKey::ShowIndicativePriceInRequisitions
     }
 
     fn preference_type(&self) -> PreferenceType {

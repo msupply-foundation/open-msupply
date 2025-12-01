@@ -2247,7 +2247,7 @@
   "preference.syncRecordsDisplayThreshold": "Sync records display threshold",
   "preference.useProcurementFunctionality": "Use procurement functionality",
   "preference.useSimplifiedMobileUi": "Use simplified mobile UI",
-  "preference.showIndicativeUnitPriceInRequisitions": "Show Indicative Unit Price from National Price List in Internal Orders and Requisitions",
+  "preference.showIndicativePriceInRequisitions": "Show indicative price on internal orders and requisitions",
   "preference.warningForExcessRequest": "Warn when requested quantity exceeds suggested quantity in requisitions",
   "preference.warnWhenMissingRecentStocktake": "Warn users when creating internal order if there is no recent stocktake",
   "preference.warnWhenMissingRecentStocktake.description": "Display a warning when stocktake data is older than the specified max age or recent stock takes have fewer than the minimum number of items so isn't considered a valid stocktake for calculating stock levels.",
