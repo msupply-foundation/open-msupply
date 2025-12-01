@@ -8602,6 +8602,8 @@ export enum ReportContext {
   Requisition = 'REQUISITION',
   Resource = 'RESOURCE',
   Stocktake = 'STOCKTAKE',
+  SupplierReturn = 'SUPPLIER_RETURN',
+  CustomerReturn = 'CUSTOMER_RETURN',
 }
 
 export type ReportFilterInput = {

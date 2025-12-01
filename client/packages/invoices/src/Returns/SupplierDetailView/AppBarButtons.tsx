@@ -38,7 +38,7 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
           onClick={() => onAddItem()}
         />
         <ReportSelector
-          context={ReportContext.OutboundReturn}
+          context={ReportContext.SupplierReturn}
           dataId={data?.id ?? ''}
           sort={{ key: sortBy.key, desc: sortBy.isDesc }}
         />
