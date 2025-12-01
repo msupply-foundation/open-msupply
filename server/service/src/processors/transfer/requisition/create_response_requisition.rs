@@ -320,43 +320,44 @@ fn generate_response_requisition_lines(
     };
 
     let mut response_lines = Vec::with_capacity(request_lines.len());
-    for (
-        i,
-        RequisitionLine {
-            requisition_line_row:
-                RequisitionLineRow {
-                    id: _,
-                    requisition_id: _,
-                    approved_quantity: _,
-                    approval_comment: _,
-                    item_link_id: _,
-                    supply_quantity: _,
-                    requested_quantity,
-                    suggested_quantity,
-                    available_stock_on_hand,
-                    average_monthly_consumption,
-                    snapshot_datetime,
-                    comment,
-                    item_name,
-                    initial_stock_on_hand_units,
-                    incoming_units,
-                    outgoing_units,
-                    loss_in_units,
-                    addition_in_units,
-                    expiring_units,
-                    days_out_of_stock,
-                    option_id,
-                    price_per_unit,
-                },
-            item_row: ItemRow { id: item_id, .. },
-            requisition_row: _,
-        },
-    ) in request_lines.into_iter().enumerate()
+    for RequisitionLine {
+        requisition_line_row:
+            RequisitionLineRow {
+                id: _,
+                requisition_id: _,
+                approved_quantity: _,
+                approval_comment: _,
+                item_link_id: _,
+                supply_quantity: _,
+                requested_quantity,
+                suggested_quantity,
+                available_stock_on_hand,
+                average_monthly_consumption,
+                snapshot_datetime,
+                comment,
+                item_name,
+                initial_stock_on_hand_units,
+                incoming_units,
+                outgoing_units,
+                loss_in_units,
+                addition_in_units,
+                expiring_units,
+                days_out_of_stock,
+                option_id,
+                price_per_unit,
+            },
+        item_row: ItemRow { id: item_id, .. },
+        requisition_row: _,
+    } in request_lines
     {
         let price_per_unit = {
             if price_per_unit.is_none() {
                 if let Some(price_list) = &price_list {
-                    price_list[i].calculated_price_per_unit
+                    price_list
+                        .get(&item_id)
+                        .cloned()
+                        .unwrap_or_default()
+                        .calculated_price_per_unit
                 } else {
                     None
                 }

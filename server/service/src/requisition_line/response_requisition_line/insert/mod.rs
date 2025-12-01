@@ -55,7 +55,7 @@ pub fn insert_response_requisition_line(
                         customer_name_id: None,
                     },
                 )?
-                .pop()
+                .remove(&item_row.id)
                 .unwrap_or_default()
                 .calculated_price_per_unit
             } else {

@@ -220,7 +220,7 @@ fn generate_new_draft_lines(
         },
     )
     .map_err(ListError::DatabaseError)?
-    .pop()
+    .remove(item_id)
     .unwrap_or_default();
 
     let new_lines: Vec<DraftStockOutLine> = available_stock_lines
