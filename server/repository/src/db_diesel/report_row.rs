@@ -34,6 +34,8 @@ pub enum ContextType {
     InternalOrder,
     PurchaseOrder,
     GoodsReceived,
+    SupplierReturn,
+    CustomerReturn,
 }
 
 table! {
