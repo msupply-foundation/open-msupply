@@ -552,6 +552,7 @@
   "filename.purchase-order": "purchase-order",
   "filename.purchase-order-line-failed-uploads": "Purchase Order Line Failed Uploads",
   "filename.requests": "internal-orders",
+  "filename.requisitions": "requisitions",
   "filename.responses": "requisitions",
   "filename.stock": "stock",
   "filename.stocktakes": "stocktakes",
