@@ -1,18 +1,15 @@
 import React, { useState } from 'react';
 import {
-  DownloadIcon,
   PlusCircleIcon,
-  useNotification,
   AppBarButtonsPortal,
   ButtonWithIcon,
   Grid,
   useTranslation,
-  LoadingButton,
   SortBy,
   UserPermission,
   useCallbackWithPermission,
-  useExportCSV,
 } from '@openmsupply-client/common';
+import { ExportSelector } from '@openmsupply-client/system';
 import { PatientRowFragment, usePatient } from '../api';
 import { patientsToCsv } from '../utils';
 import { CreatePatientModal } from '../CreatePatientModal';
@@ -29,27 +26,19 @@ export const AppBarButtons = ({
   onSelectPatient,
   sortBy,
 }: AppBarButtonsComponentProps) => {
-  const { error } = useNotification();
   const t = useTranslation();
   const { isLoading, mutateAsync } = usePatient.document.listAll(sortBy);
   const [createModalOpen, setCreateModalOpen] = useState(false);
-  const exportCSV = useExportCSV();
-
-  const csvExport = async () => {
-    const data = await mutateAsync();
-    if (!data || !data?.nodes.length) {
-      error(t('error.no-data'))();
-      return;
-    }
-
-    const csv = patientsToCsv(data.nodes, t);
-    exportCSV(csv, t('filename.patients'));
-  };
 
   const handleClick = useCallbackWithPermission(
     UserPermission.PatientMutate,
     () => setCreateModalOpen(true)
   );
+
+  const getCsvData = async () => {
+    const data = await mutateAsync();
+    return data?.nodes?.length ? patientsToCsv(data.nodes, t) : null;
+  };
 
   return (
     <AppBarButtonsPortal>
@@ -59,12 +48,10 @@ export const AppBarButtons = ({
           label={t('button.new-patient')}
           onClick={handleClick}
         />
-        <LoadingButton
-          startIcon={<DownloadIcon />}
-          variant="outlined"
-          onClick={csvExport}
+        <ExportSelector
+          getCsvData={getCsvData}
+          filename={t('filename.patients')}
           isLoading={isLoading}
-          label={t('button.export')}
         />
       </Grid>
 
