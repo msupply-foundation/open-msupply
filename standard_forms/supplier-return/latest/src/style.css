@@ -104,13 +104,6 @@ hr {
   border: 0.1px solid black;
 }
 
-.pageNumber::after {
-  font-family: Tahoma;
-  font-size: 8pt;
-  counter-increment: page;
-  content: "Page " counter(page);
-}
-
 .batch-wrap {
   word-break: break-word;
 }

@@ -24,7 +24,6 @@
                 <th class="pack" style="width: 50px;">{{t(k="report.pack-size",f="Pack size")}}</th>
                 <th class="batch" style="width: 50px;">{{t(k="label.batch", f="Batch")}}</th>
                 <th class="expiry" style="width: 80px;">{{t(k="label.expiry",f="Expiry")}}</th>
-                <th class="sell_price" style="width: 50px;">{{t(k="label.sell-price",f="Sell Price")}}</th>
                 <th class="cost_price" style="width: 80px;">{{t(k="label.cost-price",f="Cost Price")}}</th>
                 <th class="total_extension" style="width: 50px;">{{t(k="report.extension",f="Extension")}}</th>
             </tr>
@@ -37,9 +36,8 @@
             <td class="pack" style="width: 50px;">{{ line.packSize }}</td>
             <td class="batch batch-wrap" style="width: 60px;">{{ line.batch }}</td>
             <td class="expiry" style="width: 80px;">{{self::dateOrNA(datetime=line.expiryDate)}}</td>
-            <td class="sell_price" style="width: 50px;">{{self::formatCurrency(amount=line.sellPricePerPack)}}</td>
             <td class="cost_price" style="width: 50px;">{{self::formatCurrency(amount=line.costPricePerPack)}}</td>
-            <td class="total_extension" style="width: 60px;">{{self::formatCurrency(amount=line.numberOfPacks * line.sellPricePerPack)}}</td>
+            <td class="total_extension" style="width: 60px;">{{self::formatCurrency(amount=line.numberOfPacks * line.costPricePerPack)}}</td>
         </tr>
         {%- endfor %}
     </table>
@@ -48,13 +46,12 @@
 <table class="body_total_section" cellpadding="2" cellspacing="0">
     <tr class="body_total_column_label" excel-type="total-row">
         <td class="item_code" style="width: 80px;"></td>
-        <td class="item_name" style="width: 350px;"></td>
+        <td class="item_name" style="width: 300px;"></td>
         <td class="quantity" style="width: 50px;"></td>
         <td class="pack" style="width: 50px;"></td>
-        <td class="batch" style="width: 50px;"></td>
+        <td class="batch" style="width: 60px;"></td>
         <td class="expiry" style="width: 80px;"></td>
-        <td class="sell_price" style="width: 50px;"></td>
-        <td class="cost_price" style="width: 80px;">{{t(k="label.total",f="Total")}}:</td>
-        <td class="total_extension" style="width: 80px;">{{self::formatCurrency(amount=data.invoice.pricing.totalAfterTax)}}</td>
+        <td class="cost_price" style="width: 50px;">{{t(k="label.total",f="Total")}}:</td>
+        <td class="total_extension" style="width: 60px;">{{self::formatCurrency(amount=data.invoice.pricing.totalAfterTax)}}</td>
     </tr>
 </table>

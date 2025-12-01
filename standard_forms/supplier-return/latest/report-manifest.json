@@ -1,9 +1,8 @@
 {
   "is_custom": false,
-  "version": "2.6.5",
+  "version": "2.13.0",
   "code": "supplier-return",
-  "context": "OUTBOUND_SHIPMENT",
-  "sub_context": "SupplierReturn",
+  "context": "SUPPLIER_RETURN",
   "name": "Supplier Return",
   "queries": {
     "gql": "query.graphql"
