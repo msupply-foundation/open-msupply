@@ -68,8 +68,7 @@ pub fn generate_requisition_lines(
 
     let lines = item_stats_rows
         .into_iter()
-        .enumerate()
-        .map(|(i, item_stats)| {
+        .map(|item_stats| {
             let average_monthly_consumption = item_stats.average_monthly_consumption;
             let available_stock_on_hand = item_stats.available_stock_on_hand;
             let suggested_quantity = generate_suggested_quantity(GenerateSuggestedQuantity {
@@ -89,7 +88,11 @@ pub fn generate_requisition_lines(
                 average_monthly_consumption,
                 snapshot_datetime: Some(Utc::now().naive_utc()),
                 price_per_unit: if let Some(price_list) = &price_list {
-                    price_list[i].calculated_price_per_unit
+                    price_list
+                        .get(&item_stats.item_id)
+                        .cloned()
+                        .unwrap_or_default()
+                        .calculated_price_per_unit
                 } else {
                     None
                 },

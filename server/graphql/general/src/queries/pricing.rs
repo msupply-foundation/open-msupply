@@ -59,12 +59,13 @@ pub async fn item_price(
 
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context(store_id, user.user_id)?;
+    let item_id = input.item_id.clone();
 
     let pricing = service_provider
         .pricing_service
         .get_pricing_for_item(&service_context, input.to_domain())
         .map_err(|e| StandardGraphqlError::from_repository_error(e))?
-        .pop()
+        .remove(&item_id)
         .unwrap_or_default();
 
     Ok(ItemPriceResponse::Response(ItemPriceNode { pricing }))

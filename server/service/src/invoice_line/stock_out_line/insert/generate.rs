@@ -47,7 +47,7 @@ pub fn generate(
             customer_name_id: Some(invoice.name_link_id.clone()),
         },
     )?
-    .pop()
+    .remove(&item_row.id)
     .unwrap_or_default();
     let new_line = generate_line(
         &ctx.connection,

@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use repository::{
     EqualFilter, MasterListFilter, MasterListLineFilter, MasterListLineRepository,
     MasterListRepository, MasterListSort, MasterListSortField, Pagination, PatientFilter,
@@ -10,7 +12,7 @@ pub struct ItemPriceLookup {
     pub customer_name_id: Option<String>,
 }
 
-#[derive(Debug, PartialEq, Default)]
+#[derive(Debug, PartialEq, Default, Clone)]
 pub struct ItemPrice {
     pub item_id: String,
     pub default_price_per_unit: Option<f64>,
@@ -21,7 +23,7 @@ pub struct ItemPrice {
 pub fn get_pricing_for_items(
     connection: &StorageConnection,
     input: ItemPriceLookup,
-) -> Result<Vec<ItemPrice>, RepositoryError> {
+) -> Result<HashMap<String, ItemPrice>, RepositoryError> {
     // 1. Get the default price list & price per unit for the item
     let mut item_prices = Vec::with_capacity(input.item_ids.len());
     for item_id in input.item_ids {
@@ -97,5 +99,9 @@ pub fn get_pricing_for_items(
             calculated_price_per_unit: calculated_price,
         });
     }
-    Ok(item_prices)
+    let item_price_map: HashMap<String, ItemPrice> = item_prices
+        .into_iter()
+        .map(|ip| (ip.item_id.clone(), ip))
+        .collect();
+    Ok(item_price_map)
 }

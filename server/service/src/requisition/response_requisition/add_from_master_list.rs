@@ -136,8 +136,7 @@ fn generate(
 
     let lines = items
         .into_iter()
-        .enumerate()
-        .map(|(i, item)| {
+        .map(|item| {
             RequisitionLineRow {
                 id: uuid(),
                 requisition_id: requisition_row.id.clone(),
@@ -145,7 +144,11 @@ fn generate(
                 item_name: item.item_row.name,
                 snapshot_datetime: Some(Utc::now().naive_utc()),
                 price_per_unit: if let Some(price_list) = &price_list {
-                    price_list[i].calculated_price_per_unit
+                    price_list
+                        .get(&item.item_row.id)
+                        .cloned()
+                        .unwrap_or_default()
+                        .calculated_price_per_unit
                 } else {
                     None
                 },

@@ -192,8 +192,7 @@ fn generate(
 
     let requisition_lines = requisition_supply
         .iter()
-        .enumerate()
-        .map(|(i, r)| {
+        .map(|r| {
             let line = r.requisition_line.requisition_line_row.clone();
 
             RequisitionLineRow {
@@ -209,7 +208,11 @@ fn generate(
                 available_stock_on_hand: line.available_stock_on_hand,
                 average_monthly_consumption: line.average_monthly_consumption,
                 price_per_unit: if let Some(price_list) = &price_list {
-                    price_list[i].calculated_price_per_unit
+                    price_list
+                        .get(&r.requisition_line.item_row.id)
+                        .cloned()
+                        .unwrap_or_default()
+                        .calculated_price_per_unit
                 } else {
                     None
                 },

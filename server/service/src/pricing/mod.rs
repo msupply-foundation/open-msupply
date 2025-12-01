@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use crate::service_provider::ServiceContext;
 use item_price::{get_pricing_for_items, ItemPrice, ItemPriceLookup};
 use repository::RepositoryError;
@@ -10,7 +12,7 @@ pub trait PricingServiceTrait: Sync + Send {
         &self,
         ctx: &ServiceContext,
         input: ItemPriceLookup,
-    ) -> Result<Vec<ItemPrice>, RepositoryError> {
+    ) -> Result<HashMap<String, ItemPrice>, RepositoryError> {
         get_pricing_for_items(&ctx.connection, input)
     }
 }
