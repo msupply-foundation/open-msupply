@@ -7504,6 +7504,7 @@ export type Queries = {
   clinicians: CliniciansResponse;
   contactTraces: ContactTraceResponse;
   contacts: ContactsResponse;
+  csvToExcel: PrintReportResponse;
   currencies: CurrenciesResponse;
   databaseSettings: DatabaseSettingsNode;
   demographicIndicators: DemographicIndicatorsResponse;
@@ -7552,6 +7553,7 @@ export type Queries = {
   goodsReceivedLine: GoodsReceivedLineResponse;
   goodsReceivedLines: GoodsReceivedLinesResponse;
   goodsReceivedList: GoodsReceivedListResponse;
+  hasCustomerProgramRequisitionSettings: Scalars['Boolean']['output'];
   /** Query for "historical_stock_line" entries */
   historicalStockLines: StockLinesResponse;
   /** Available without authorisation in operational and initialisation states */
@@ -7804,6 +7806,12 @@ export type QueriesContactsArgs = {
   storeId: Scalars['String']['input'];
 };
 
+export type QueriesCsvToExcelArgs = {
+  csvData: Scalars['String']['input'];
+  filename: Scalars['String']['input'];
+  storeId: Scalars['String']['input'];
+};
+
 export type QueriesCurrenciesArgs = {
   filter?: InputMaybe<CurrencyFilterInput>;
   sort?: InputMaybe<Array<CurrencySortInput>>;
@@ -7944,6 +7952,11 @@ export type QueriesGoodsReceivedListArgs = {
   filter?: InputMaybe<GoodsReceivedFilterInput>;
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<Array<GoodsReceivedSortInput>>;
+  storeId: Scalars['String']['input'];
+};
+
+export type QueriesHasCustomerProgramRequisitionSettingsArgs = {
+  customerNameIds: Array<Scalars['String']['input']>;
   storeId: Scalars['String']['input'];
 };
 

@@ -1,20 +1,18 @@
 import React, { useState } from 'react';
 import {
-  DownloadIcon,
   useNotification,
   useTranslation,
   AppBarButtonsPortal,
   Grid,
-  LoadingButton,
   ToggleState,
   FnUtils,
   RouteBuilder,
   ButtonWithIcon,
   PlusCircleIcon,
   useNavigate,
-  useExportCSV,
   usePreferences,
 } from '@openmsupply-client/common';
+import { ExportSelector } from '@openmsupply-client/system';
 import { NameRowFragment } from '@openmsupply-client/system';
 import { ResponseRowFragment, useResponse } from '../api';
 import { responsesToCsv } from '../../utils';
@@ -37,7 +35,6 @@ export const AppBarButtons = ({
   const t = useTranslation();
   const navigate = useNavigate();
   const { error } = useNotification();
-  const exportCSV = useExportCSV();
   const { canCreateInternalOrderFromARequisition = false } = usePreferences();
   const [selectedSupplier, setSelectedSupplier] = useState<
     NameRowFragment | undefined
@@ -52,16 +49,6 @@ export const AppBarButtons = ({
   });
   const { mutateAsync: createOrder } =
     useResponse.document.insertRequestFromResponse();
-
-  const csvExport = async () => {
-    const data = await mutateAsync();
-    if (!data || !data?.nodes.length) {
-      error(t('error.no-data'))();
-      return;
-    }
-    const csv = responsesToCsv(data.nodes, t);
-    exportCSV(csv, 'requisitions');
-  };
 
   const handleCreateRequisition = async (
     newRequisition: NewGeneralRequisition | NewProgramRequisition
@@ -126,6 +113,11 @@ export const AppBarButtons = ({
     }
   };
 
+  const getCsvData = async () => {
+    const data = await mutateAsync();
+    return data?.nodes?.length ? responsesToCsv(data.nodes, t) : null;
+  };
+
   return (
     <AppBarButtonsPortal>
       <Grid container gap={1}>
@@ -144,12 +136,10 @@ export const AppBarButtons = ({
             }}
           />
         )}
-        <LoadingButton
-          startIcon={<DownloadIcon />}
+        <ExportSelector
+          getCsvData={getCsvData}
+          filename={t('filename.responses')}
           isLoading={isLoading}
-          onClick={csvExport}
-          variant="outlined"
-          label={t('button.export')}
         />
       </Grid>
       <CreateRequisitionModal
