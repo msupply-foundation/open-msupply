@@ -7,7 +7,7 @@ use crate::{
     invoice_line::StockOutType,
     pricing::{
         calculate_sell_price::calculate_sell_price,
-        item_price::{get_pricing_for_item, ItemPrice, ItemPriceLookup},
+        item_price::{get_pricing_for_items, ItemPrice, ItemPriceLookup},
     },
     service_provider::ServiceContext,
 };
@@ -40,13 +40,15 @@ pub fn generate(
     );
 
     // Check if we need to override the pricing with a default
-    let pricing = get_pricing_for_item(
-        ctx,
+    let pricing = get_pricing_for_items(
+        &ctx.connection,
         ItemPriceLookup {
-            item_id: item_row.id.clone(),
+            item_ids: vec![item_row.id.clone()],
             customer_name_id: Some(invoice.name_link_id.clone()),
         },
-    )?;
+    )?
+    .pop()
+    .unwrap_or_default();
     let new_line = generate_line(
         &ctx.connection,
         input.clone(),

@@ -3,11 +3,9 @@ use crate::{
     activity_log::system_activity_log_entry,
     number::next_number,
     preference::{Preference, PreventTransfersMonthsBeforeInitialisation},
+    pricing::item_price::{get_pricing_for_items, ItemPriceLookup},
     processors::transfer::requisition::RequisitionTransferOutput,
-    requisition::common::{
-        get_default_price_list, get_indicative_price_pref, get_item_price_per_unit,
-        get_lines_for_requisition,
-    },
+    requisition::common::{get_indicative_price_pref, get_lines_for_requisition},
     store_preference::get_store_preferences,
 };
 use chrono::{Months, Utc};
@@ -306,61 +304,65 @@ fn generate_response_requisition_lines(
 ) -> Result<Vec<RequisitionLineRow>, RepositoryError> {
     let request_lines = get_lines_for_requisition(connection, &request_requisition.id)?;
     let populate_price_per_unit = get_indicative_price_pref(connection)?;
-    let default_price_list = if populate_price_per_unit {
-        get_default_price_list(connection)?
+    let price_list = if populate_price_per_unit {
+        Some(get_pricing_for_items(
+            connection,
+            ItemPriceLookup {
+                item_ids: request_lines
+                    .iter()
+                    .map(|l| l.item_row.id.to_string())
+                    .collect(),
+                customer_name_id: None,
+            },
+        )?)
     } else {
         None
     };
 
     let mut response_lines = Vec::with_capacity(request_lines.len());
-    for RequisitionLine {
-        requisition_line_row:
-            RequisitionLineRow {
-                id: _,
-                requisition_id: _,
-                approved_quantity: _,
-                approval_comment: _,
-                item_link_id: _,
-                supply_quantity: _,
-                requested_quantity,
-                suggested_quantity,
-                available_stock_on_hand,
-                average_monthly_consumption,
-                snapshot_datetime,
-                comment,
-                item_name,
-                initial_stock_on_hand_units,
-                incoming_units,
-                outgoing_units,
-                loss_in_units,
-                addition_in_units,
-                expiring_units,
-                days_out_of_stock,
-                option_id,
-                price_per_unit,
-            },
-        item_row: ItemRow { id: item_id, .. },
-        requisition_row: _,
-    } in request_lines
+    for (
+        i,
+        RequisitionLine {
+            requisition_line_row:
+                RequisitionLineRow {
+                    id: _,
+                    requisition_id: _,
+                    approved_quantity: _,
+                    approval_comment: _,
+                    item_link_id: _,
+                    supply_quantity: _,
+                    requested_quantity,
+                    suggested_quantity,
+                    available_stock_on_hand,
+                    average_monthly_consumption,
+                    snapshot_datetime,
+                    comment,
+                    item_name,
+                    initial_stock_on_hand_units,
+                    incoming_units,
+                    outgoing_units,
+                    loss_in_units,
+                    addition_in_units,
+                    expiring_units,
+                    days_out_of_stock,
+                    option_id,
+                    price_per_unit,
+                },
+            item_row: ItemRow { id: item_id, .. },
+            requisition_row: _,
+        },
+    ) in request_lines.into_iter().enumerate()
     {
         let price_per_unit = {
-            let mut new_price_per_unit = price_per_unit;
-            if populate_price_per_unit
-                && new_price_per_unit.is_none()
-                && default_price_list.is_some()
-            {
-                // It's tempting to use a hashmap lookup here to avoid potentially making a query for each line. However, if the global pref is on
-                // then all sites should be sending through prices anyway (i.e. price_per_unit/new_price_per_unit is Some value!) and making the
-                // Hashmap would be a waste. What this then covers is when you've just turned the global preference on and there are prior requisitions
-                // that don't have a value. We could however make the hashmap on demand though, might still be better than this!
-                // Note transfers from mobile/OG remote sites will have request_line.price_per_unit = Some(0.0) regardless of the pref...
-                new_price_per_unit = get_item_price_per_unit(
-                    connection,
-                    &item_id,
-                    &default_price_list.as_ref().unwrap().id,
-                )?
+            if price_per_unit.is_none() {
+                if let Some(price_list) = &price_list {
+                    price_list[i].calculated_price_per_unit
+                } else {
+                    None
+                }
+            } else {
+                price_per_unit
             }
-            new_price_per_unit
         };
         response_lines.push(RequisitionLineRow {
             id: uuid(),

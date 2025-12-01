@@ -1,11 +1,11 @@
 use crate::{
     activity_log::activity_log_entry,
     number::next_number,
+    pricing::item_price::{get_pricing_for_items, ItemPriceLookup},
     requisition::{
         common::{
             check_exceeded_max_orders_for_period, check_requisition_row_exists,
-            default_indicator_value, get_indicative_price_pref_and_price_map,
-            CheckExceededOrdersForPeriod,
+            default_indicator_value, get_indicative_price_pref, CheckExceededOrdersForPeriod,
         },
         program_indicator::query::{program_indicators, ProgramIndicator},
         program_settings::get_program_requisition_settings_by_customer,
@@ -272,20 +272,31 @@ fn generate_lines(
         Some(store_id.to_string()),
     )?;
 
-    let (populate_price_per_unit, price_map) =
-        get_indicative_price_pref_and_price_map(&ctx.connection)?;
+    let populate_price_per_unit = get_indicative_price_pref(&ctx.connection)?;
+    let price_list = if populate_price_per_unit {
+        Some(get_pricing_for_items(
+            &ctx.connection,
+            ItemPriceLookup {
+                item_ids: items.iter().map(|i| i.item_row.id.to_string()).collect(),
+                customer_name_id: None,
+            },
+        )?)
+    } else {
+        None
+    };
 
     let result = items
         .into_iter()
-        .map(|item| {
+        .enumerate()
+        .map(|(i, item)| {
             RequisitionLineRow {
                 id: uuid(),
                 requisition_id: requisition_row.id.clone(),
                 item_link_id: item.item_row.id.clone(),
                 item_name: item.item_row.name.clone(),
                 snapshot_datetime: Some(Utc::now().naive_utc()),
-                price_per_unit: if populate_price_per_unit {
-                    price_map.get(&item.item_row.id).copied().flatten()
+                price_per_unit: if let Some(price_list) = &price_list {
+                    price_list[i].calculated_price_per_unit
                 } else {
                     None
                 },

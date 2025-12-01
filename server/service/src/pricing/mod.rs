@@ -1,5 +1,5 @@
 use crate::service_provider::ServiceContext;
-use item_price::{get_pricing_for_item, ItemPrice, ItemPriceLookup};
+use item_price::{get_pricing_for_items, ItemPrice, ItemPriceLookup};
 use repository::RepositoryError;
 
 pub mod calculate_sell_price;
@@ -10,8 +10,8 @@ pub trait PricingServiceTrait: Sync + Send {
         &self,
         ctx: &ServiceContext,
         input: ItemPriceLookup,
-    ) -> Result<ItemPrice, RepositoryError> {
-        get_pricing_for_item(ctx, input)
+    ) -> Result<Vec<ItemPrice>, RepositoryError> {
+        get_pricing_for_items(&ctx.connection, input)
     }
 }
 

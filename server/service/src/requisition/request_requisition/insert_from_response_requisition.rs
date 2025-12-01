@@ -10,8 +10,9 @@ use crate::{
     activity_log::activity_log_entry,
     backend_plugin::plugin_provider::PluginError,
     number::next_number,
+    pricing::item_price::{get_pricing_for_items, ItemPriceLookup},
     requisition::{
-        common::{check_requisition_row_exists, get_indicative_price_pref_and_price_map},
+        common::{check_requisition_row_exists, get_indicative_price_pref},
         query::get_requisition,
         requisition_supply_status::get_requisitions_supply_statuses,
     },
@@ -173,12 +174,26 @@ fn generate(
             .filter(|s| s.requested_minus_supply_quantity() > 0.0)
             .collect::<Vec<_>>();
 
-    let (populate_price_per_unit, price_map) =
-        get_indicative_price_pref_and_price_map(&ctx.connection)?;
+    let populate_price_per_unit = get_indicative_price_pref(&ctx.connection)?;
+    let price_list = if populate_price_per_unit {
+        Some(get_pricing_for_items(
+            &ctx.connection,
+            ItemPriceLookup {
+                item_ids: requisition_supply
+                    .iter()
+                    .map(|r| r.item_id().to_string())
+                    .collect(),
+                customer_name_id: None,
+            },
+        )?)
+    } else {
+        None
+    };
 
     let requisition_lines = requisition_supply
         .iter()
-        .map(|r| {
+        .enumerate()
+        .map(|(i, r)| {
             let line = r.requisition_line.requisition_line_row.clone();
 
             RequisitionLineRow {
@@ -193,11 +208,8 @@ fn generate(
                 suggested_quantity: line.suggested_quantity,
                 available_stock_on_hand: line.available_stock_on_hand,
                 average_monthly_consumption: line.average_monthly_consumption,
-                price_per_unit: if populate_price_per_unit {
-                    price_map
-                        .get(&r.requisition_line.item_row.id)
-                        .copied()
-                        .flatten()
+                price_per_unit: if let Some(price_list) = &price_list {
+                    price_list[i].calculated_price_per_unit
                 } else {
                     None
                 },
