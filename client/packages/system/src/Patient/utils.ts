@@ -2,6 +2,7 @@ import {
   AutocompleteOptionRenderer,
   FilterOptionsState,
   Formatter,
+  getGenderTranslationKey,
   LocaleKey,
   RegexUtils,
   SxProps,
@@ -60,19 +61,21 @@ export const patientsToCsv = (
   t: TypedTFunction<LocaleKey>
 ) => {
   const fields: string[] = [
-    'id',
     t('label.code'),
     t('label.first-name'),
     t('label.last-name'),
+    t('label.gender'),
     t('label.date-of-birth'),
+    t('label.deceased'),
   ];
 
   const data = invoices.map(node => [
-    node.id,
     node.code,
     node.firstName,
     node.lastName,
+    node.gender ? t(getGenderTranslationKey(node.gender)) : '',
     Formatter.csvDateString(node.dateOfBirth),
+    node.isDeceased,
   ]);
   return Formatter.csv({ fields, data });
 };
