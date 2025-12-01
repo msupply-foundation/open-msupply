@@ -212,7 +212,7 @@
   "description.fc-line-total": "Foreign currency line total",
   "description.fc-sell-price": "Foreign currency sell price per pack",
   "description.forecast-quantity": "The number of units which is required to bring the stock level up to the target amount - population based for vaccines and AMC based for other items. $t(description.doses-quantity)",
-  "description.indicative-price": "The total price for the given amount of units",
+  "description.indicative-price": "The estimated price for the given amount of units",
   "description.initial-stock-on-hand": "Stock on hand on the first day of the program period",
   "description.invoice-number": "Shipment number",
   "description.last-reading-datetime": "Date and time of the last reading",
