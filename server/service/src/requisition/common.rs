@@ -12,7 +12,7 @@ use repository::{
     RequisitionFilter, RequisitionRepository, RequisitionType,
 };
 
-use crate::preference::{Preference, ShowIndicativeUnitPriceInRequisitions};
+use crate::preference::{Preference, ShowIndicativePriceInRequisitions};
 
 pub fn check_requisition_row_exists(
     connection: &StorageConnection,
@@ -187,11 +187,10 @@ type PriceMap = HashMap<String, Option<f64>>;
 pub(crate) fn get_indicative_price_pref(
     connection: &StorageConnection,
 ) -> Result<bool, RepositoryError> {
-    ShowIndicativeUnitPriceInRequisitions {}
+    ShowIndicativePriceInRequisitions {}
         .load(connection, None)
         .map_err(|e| RepositoryError::DBError {
-            msg: "Could not load ShowIndicativeUnitPriceInRequisitions global preference"
-                .to_string(),
+            msg: "Could not load showIndicativePriceInRequisitions global preference".to_string(),
             extra: e.to_string(),
         })
 }

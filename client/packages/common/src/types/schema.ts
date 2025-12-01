@@ -6874,7 +6874,7 @@ export enum PreferenceKey {
   SecondThresholdForExpiringItems = 'secondThresholdForExpiringItems',
   SelectDestinationStoreForAnInternalOrder = 'selectDestinationStoreForAnInternalOrder',
   ShowContactTracing = 'showContactTracing',
-  ShowIndicativeUnitPriceInRequisitions = 'showIndicativeUnitPriceInRequisitions',
+  showIndicativePriceInRequisitions = 'showIndicativePriceInRequisitions',
   SkipIntermediateStatusesInOutbound = 'skipIntermediateStatusesInOutbound',
   SortByVvmStatusThenExpiry = 'sortByVvmStatusThenExpiry',
   StoreCustomColour = 'storeCustomColour',
@@ -6934,7 +6934,7 @@ export type PreferencesNode = {
   secondThresholdForExpiringItems: Scalars['Int']['output'];
   selectDestinationStoreForAnInternalOrder: Scalars['Boolean']['output'];
   showContactTracing: Scalars['Boolean']['output'];
-  showIndicativeUnitPriceInRequisitions: Scalars['Boolean']['output'];
+  showIndicativePriceInRequisitions: Scalars['Boolean']['output'];
   skipIntermediateStatusesInOutbound: Scalars['Boolean']['output'];
   sortByVvmStatusThenExpiry: Scalars['Boolean']['output'];
   storeCustomColour: Scalars['String']['output'];
@@ -11266,9 +11266,7 @@ export type UpsertPreferencesInput = {
     Array<BoolStorePrefInput>
   >;
   showContactTracing?: InputMaybe<Scalars['Boolean']['input']>;
-  showIndicativeUnitPriceInRequisitions?: InputMaybe<
-    Scalars['Boolean']['input']
-  >;
+  showIndicativePriceInRequisitions?: InputMaybe<Scalars['Boolean']['input']>;
   skipIntermediateStatusesInOutbound?: InputMaybe<Array<BoolStorePrefInput>>;
   sortByVvmStatusThenExpiry?: InputMaybe<Array<BoolStorePrefInput>>;
   storeCustomColour?: InputMaybe<Array<StringStorePrefInput>>;

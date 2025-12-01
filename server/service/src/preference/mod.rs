@@ -38,7 +38,7 @@ pub trait PreferenceServiceTrait: Sync + Send {
             days_in_month,
             expired_stock_prevent_issue,
             expired_stock_issue_threshold,
-            show_indicative_unit_price_in_requisitions,
+            show_indicative_price_in_requisitions,
 
             // Store preferences
             manage_vaccines_in_doses,
@@ -87,11 +87,7 @@ pub trait PreferenceServiceTrait: Sync + Send {
         append_if_type(days_in_month, &mut prefs, &input)?;
         append_if_type(expired_stock_prevent_issue, &mut prefs, &input)?;
         append_if_type(expired_stock_issue_threshold, &mut prefs, &input)?;
-        append_if_type(
-            show_indicative_unit_price_in_requisitions,
-            &mut prefs,
-            &input,
-        )?;
+        append_if_type(show_indicative_price_in_requisitions, &mut prefs, &input)?;
 
         // Store preferences
         append_if_type(order_in_packs, &mut prefs, &input)?;

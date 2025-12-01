@@ -21,7 +21,7 @@ export const useResponseColumns = () => {
   const {
     manageVaccinesInDoses,
     warningForExcessRequest,
-    showIndicativeUnitPriceInRequisitions,
+    showIndicativePriceInRequisitions,
   } = usePreferences();
 
   const { store } = useAuthContext();
@@ -220,7 +220,7 @@ export const useResponseColumns = () => {
         description: t('description.indicative-price'),
         accessorFn: row => row.requestedQuantity * (row?.pricePerUnit || 0),
         columnType: ColumnType.Currency,
-        includeColumn: showIndicativeUnitPriceInRequisitions,
+        includeColumn: showIndicativePriceInRequisitions,
       },
       {
         accessorKey: 'approvedQuantity',
@@ -277,7 +277,7 @@ export const useResponseColumns = () => {
       manageVaccinesInDoses,
       programName,
       showExtraProgramColumns,
-      showIndicativeUnitPriceInRequisitions,
+      showIndicativePriceInRequisitions,
       t,
       warningForExcessRequest,
       getError,

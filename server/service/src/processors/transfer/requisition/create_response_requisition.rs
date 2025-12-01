@@ -655,7 +655,7 @@ mod test {
         // Again but with the pref on
         let preference = PreferenceRow {
             id: "preference_on".to_string(),
-            key: PrefKey::ShowIndicativeUnitPriceInRequisitions.to_string(),
+            key: PrefKey::ShowIndicativePriceInRequisitions.to_string(),
             value: "true".to_string(),
             store_id: None,
         };
