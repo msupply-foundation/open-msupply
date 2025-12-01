@@ -278,7 +278,6 @@ export const useResponseColumns = () => {
       programName,
       showExtraProgramColumns,
       showIndicativePriceInRequisitions,
-      t,
       warningForExcessRequest,
       getError,
     ]
