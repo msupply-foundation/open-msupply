@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { FC, useState, useMemo } from 'react';
 import {
   Box,
   CircularProgress,
@@ -9,6 +9,7 @@ import {
   useTranslation,
   useNavigate,
   useUserDetails,
+  BasicTextInput,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { PropsWithChildrenOnly, UserStoreNodeFragment } from '@common/types';
@@ -25,12 +26,23 @@ export const StoreSelector: FC<PropsWithChildrenOnly> = ({ children }) => {
     if (a.name > b.name) return 1;
     return 0;
   };
-  const stores = data?.stores?.nodes?.sort(storeSorter) || [];
-  if (!store?.name) return null;
+  const stores = useMemo(
+    () => data?.stores?.nodes?.sort(storeSorter) || [],
+    [data?.stores?.nodes]
+  );
+  const [search, setSearch] = useState('');
 
+  const filteredStores = useMemo(() => {
+    if (!search) return stores;
+    return stores.filter(s =>
+      s.name.toLowerCase().includes(search.toLowerCase())
+    );
+  }, [stores, search]);
+
+  if (!store?.name) return null;
   if (stores.length < 2) return <>{children}</>;
 
-  const storeButtons = stores.map(s => (
+  const storeButtons = filteredStores.map(s => (
     <FlatButton
       label={s.name + (s.isDisabled ? ` (${t('label.on-hold')})` : '')}
       disabled={s.id === store.id || !!s.isDisabled}
@@ -50,6 +62,7 @@ export const StoreSelector: FC<PropsWithChildrenOnly> = ({ children }) => {
       }}
     />
   ));
+
   return (
     <PaperClickPopover
       placement="top"
@@ -59,14 +72,22 @@ export const StoreSelector: FC<PropsWithChildrenOnly> = ({ children }) => {
           {isLoading ? (
             <CircularProgress size={12} />
           ) : (
-            <Box
-              style={{
-                overflowY: 'auto',
-                maxHeight: 300,
-              }}
-            >
-              {storeButtons}
-            </Box>
+            <>
+              <BasicTextInput
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                placeholder={t('placeholder.search-by-name')}
+                sx={{ marginBottom: 1, width: '100%' }}
+              />
+              <Box
+                style={{
+                  overflowY: 'auto',
+                  maxHeight: 300,
+                }}
+              >
+                {storeButtons}
+              </Box>
+            </>
           )}
         </PaperPopoverSection>
       }
