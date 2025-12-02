@@ -26,7 +26,6 @@ export interface InvoiceLine {
     numberOfPacks: number;
     packSize: number;
     costPricePerPack: number;
-    totalBeforeTax: number;
   }[];
 }
 
@@ -51,7 +50,7 @@ export type Lines = {
   packSize: number;
   numberOfPacks: number;
   numberOfUnits: number;
-  costPricePerPack: number;
+  costPricePerPack: string;
   totalCost: number | string;
   otherPartyName: string;
 }[];

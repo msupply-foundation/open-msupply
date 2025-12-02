@@ -41,7 +41,7 @@ export const processInvoiceLines = (
         packSize: line.packSize,
         numberOfPacks: line.numberOfPacks,
         numberOfUnits: line.numberOfPacks * line.packSize,
-        costPricePerPack: line.costPricePerPack,
+        costPricePerPack: (line.costPricePerPack).toFixed(2),
         totalCost: isLast ? (itemTotals.get(groupKey)!).toFixed(2) : "-",
         otherPartyName: invoice.otherPartyName,
       });
