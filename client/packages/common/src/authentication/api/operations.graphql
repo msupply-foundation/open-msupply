@@ -195,7 +195,6 @@ query preferences($storeId: String!) {
     customTranslations
     daysInMonth
     disableManualReturns
-    excludeTransfers
     firstThresholdForExpiringItems
     genderOptions
     manageVaccinesInDoses
@@ -211,7 +210,6 @@ query preferences($storeId: String!) {
     sortByVvmStatusThenExpiry
     storeCustomColour
     syncRecordsDisplayThreshold
-    useDaysInMonth
     useProcurementFunctionality
     useSimplifiedMobileUi
     expiredStockPreventIssue

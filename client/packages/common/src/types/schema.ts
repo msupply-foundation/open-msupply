@@ -4923,6 +4923,7 @@ export type ItemNodeProgramsArgs = {
 
 export type ItemNodeStatsArgs = {
   amcLookbackMonths?: InputMaybe<Scalars['Float']['input']>;
+  periodEnd?: InputMaybe<Scalars['NaiveDate']['input']>;
   storeId: Scalars['String']['input'];
 };
 
@@ -6874,7 +6875,7 @@ export enum PreferenceKey {
   SecondThresholdForExpiringItems = 'secondThresholdForExpiringItems',
   SelectDestinationStoreForAnInternalOrder = 'selectDestinationStoreForAnInternalOrder',
   ShowContactTracing = 'showContactTracing',
-  showIndicativePriceInRequisitions = 'showIndicativePriceInRequisitions',
+  ShowIndicativePriceInRequisitions = 'showIndicativePriceInRequisitions',
   SkipIntermediateStatusesInOutbound = 'skipIntermediateStatusesInOutbound',
   SortByVvmStatusThenExpiry = 'sortByVvmStatusThenExpiry',
   StoreCustomColour = 'storeCustomColour',
@@ -8782,6 +8783,7 @@ export type RequisitionLineNode = {
 
 export type RequisitionLineNodeItemStatsArgs = {
   amcLookbackMonths?: InputMaybe<Scalars['Float']['input']>;
+  periodEnd?: InputMaybe<Scalars['NaiveDate']['input']>;
 };
 
 export type RequisitionLineStatsError = {
@@ -11251,8 +11253,12 @@ export type UpsertPreferencesInput = {
   expiredStockPreventIssue?: InputMaybe<Scalars['Boolean']['input']>;
   firstThresholdForExpiringItems?: InputMaybe<Array<IntegerStorePrefInput>>;
   genderOptions?: InputMaybe<Array<GenderTypeNode>>;
+  inboundShipmentAutoVerify?: InputMaybe<Array<BoolStorePrefInput>>;
   manageVaccinesInDoses?: InputMaybe<Array<BoolStorePrefInput>>;
   manageVvmStatusForStock?: InputMaybe<Array<BoolStorePrefInput>>;
+  numberOfMonthsThresholdToShowLowStockAlertsForProducts?: InputMaybe<
+    Array<IntegerStorePrefInput>
+  >;
   numberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts?: InputMaybe<
     Array<IntegerStorePrefInput>
   >;
