@@ -108,7 +108,7 @@ mod tests {
             MockDataInserts::none()
                 .vaccine_courses()
                 .programs()
-                .full_master_list()
+                .full_master_lists()
                 .items()
                 .names(),
         )
