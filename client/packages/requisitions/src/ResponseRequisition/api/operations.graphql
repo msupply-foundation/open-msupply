@@ -67,6 +67,7 @@ fragment ResponseLine on RequisitionLineNode {
   itemId
   itemName
   requestedQuantity
+  pricePerUnit
   supplyQuantity
   remainingQuantityToSupply
   alreadyIssued

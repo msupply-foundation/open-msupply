@@ -77,6 +77,7 @@ export type ResponseLineFragment = {
   itemId: string;
   itemName: string;
   requestedQuantity: number;
+  pricePerUnit?: number | null;
   supplyQuantity: number;
   remainingQuantityToSupply: number;
   alreadyIssued: number;
@@ -199,6 +200,7 @@ export type ResponseFragment = {
       itemId: string;
       itemName: string;
       requestedQuantity: number;
+      pricePerUnit?: number | null;
       supplyQuantity: number;
       remainingQuantityToSupply: number;
       alreadyIssued: number;
@@ -361,6 +363,7 @@ export type ResponseByNumberQuery = {
             itemId: string;
             itemName: string;
             requestedQuantity: number;
+            pricePerUnit?: number | null;
             supplyQuantity: number;
             remainingQuantityToSupply: number;
             alreadyIssued: number;
@@ -531,6 +534,7 @@ export type ResponseByIdQuery = {
             itemId: string;
             itemName: string;
             requestedQuantity: number;
+            pricePerUnit?: number | null;
             supplyQuantity: number;
             remainingQuantityToSupply: number;
             alreadyIssued: number;
@@ -1129,6 +1133,7 @@ export const ResponseLineFragmentDoc = gql`
     itemId
     itemName
     requestedQuantity
+    pricePerUnit
     supplyQuantity
     remainingQuantityToSupply
     alreadyIssued
