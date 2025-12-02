@@ -7,6 +7,7 @@ import {
   Box,
   NumericTextInput,
   LoadingButton,
+  Switch,
 } from '@openmsupply-client/common';
 import { CheckIcon, SaveIcon } from '@common/icons';
 import { useTranslation } from '@common/intl';
@@ -20,7 +21,9 @@ interface LabelPrinterSettings {
   labelHeight: number;
   labelWidth: number;
   port: number;
+  isUsb: boolean;
 }
+
 export const LabelPrinterSettings = () => {
   const t = useTranslation();
   const { error, success } = useNotification();
@@ -33,6 +36,7 @@ export const LabelPrinterSettings = () => {
     labelHeight: 290,
     labelWidth: 576,
     port: 9100,
+    isUsb: false,
   });
 
   const onChange = (patch: Partial<LabelPrinterSettings>) => {
@@ -75,8 +79,9 @@ export const LabelPrinterSettings = () => {
       });
   };
 
-  const isInvalid =
-    !draft.address || !draft.port || !draft.labelHeight || !draft.labelWidth;
+  const isInvalid = draft.isUsb
+    ? false
+    : !draft.address || !draft.port || !draft.labelHeight || !draft.labelWidth;
 
   useEffect(() => {
     if (settings) {
@@ -85,6 +90,7 @@ export const LabelPrinterSettings = () => {
         labelHeight: settings.labelHeight,
         labelWidth: settings.labelWidth,
         port: settings.port,
+        isUsb: settings.isUsb,
       });
     }
   }, [settings]);
@@ -94,9 +100,20 @@ export const LabelPrinterSettings = () => {
       <SettingsSubHeading title={t('settings.label-printing')} />
       <Setting
         component={
+          <Switch
+            checked={draft.isUsb}
+            onChange={(_, checked) => onChange({ isUsb: checked, address: '' })}
+            color="primary"
+          />
+        }
+        title={t('settings.print-via-usb')}
+      />
+      <Setting
+        component={
           <BasicTextInput
             value={draft.address}
             onChange={event => onChange({ address: event.target.value })}
+            disabled={draft.isUsb}
           />
         }
         title={t('settings.printer-address')}
@@ -107,6 +124,7 @@ export const LabelPrinterSettings = () => {
             value={draft.port}
             noFormatting
             onChange={port => onChange({ port })}
+            disabled={draft.isUsb}
           />
         }
         title={t('settings.printer-port')}
@@ -118,6 +136,7 @@ export const LabelPrinterSettings = () => {
             onChange={labelHeight => {
               if (labelHeight !== undefined) onChange({ labelHeight });
             }}
+            disabled={draft.isUsb}
           />
         }
         title={t('settings.printer-label-height')}
@@ -129,6 +148,7 @@ export const LabelPrinterSettings = () => {
             onChange={labelWidth => {
               if (labelWidth !== undefined) onChange({ labelWidth });
             }}
+            disabled={draft.isUsb}
           />
         }
         title={t('settings.printer-label-width')}
@@ -138,7 +158,7 @@ export const LabelPrinterSettings = () => {
           startIcon={<CheckIcon />}
           isLoading={isTesting}
           onClick={test}
-          disabled={isInvalid}
+          disabled={isInvalid || draft.isUsb} // TODO: add same logic for testing out printing via USB
           label={t('button.test')}
         />
         <ButtonWithIcon
