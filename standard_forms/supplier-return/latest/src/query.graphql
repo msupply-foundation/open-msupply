@@ -13,6 +13,8 @@ query InvoiceQuery(
       otherPartyName
       pricing {
         totalAfterTax
+        totalBeforeTax
+        taxPercentage
       }
       otherParty(storeId: $storeId) {
         name
