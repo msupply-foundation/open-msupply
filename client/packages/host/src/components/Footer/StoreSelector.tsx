@@ -14,6 +14,7 @@ import {
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { PropsWithChildrenOnly, UserStoreNodeFragment } from '@common/types';
+import { min } from 'lodash';
 
 export const StoreSelector: FC<PropsWithChildrenOnly> = ({ children }) => {
   const t = useTranslation();
@@ -89,7 +90,7 @@ export const StoreSelector: FC<PropsWithChildrenOnly> = ({ children }) => {
                   maxHeight: 300,
                 }}
               >
-                {storeButtons.length > 1 ? (
+                {storeButtons.length > 0 ? (
                   storeButtons
                 ) : (
                   <FlatButton
