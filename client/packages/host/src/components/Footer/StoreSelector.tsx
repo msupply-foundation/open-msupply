@@ -1,4 +1,4 @@
-import React, { FC, useState, useMemo, useRef } from 'react';
+import React, { FC, useState, useMemo } from 'react';
 import {
   Box,
   CircularProgress,
@@ -10,7 +10,7 @@ import {
   useUserDetails,
   BasicTextInput,
   PersistentPaperPopover,
-  PersistentPaperPopoverRef,
+  usePopover,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { PropsWithChildrenOnly, UserStoreNodeFragment } from '@common/types';
@@ -20,7 +20,7 @@ export const StoreSelector: FC<PropsWithChildrenOnly> = ({ children }) => {
   const navigate = useNavigate();
   const { store, setStore, token } = useAuthContext();
   const { data, isLoading } = useUserDetails(token);
-  const popoverRef = useRef<PersistentPaperPopoverRef>(null);
+  const popoverControls = usePopover();
 
   const storeSorter = (a: UserStoreNodeFragment, b: UserStoreNodeFragment) => {
     if (a.name < b.name) return -1;
@@ -43,30 +43,32 @@ export const StoreSelector: FC<PropsWithChildrenOnly> = ({ children }) => {
   if (!store?.name) return null;
   if (stores.length < 2) return <>{children}</>;
 
+  const buttonStyle = {
+    whiteSpace: 'nowrap',
+    overflowX: 'hidden',
+    overflowY: 'visible',
+    textOverflow: 'ellipsis',
+    display: 'block',
+    textAlign: 'left',
+  };
+
   const storeButtons = filteredStores.map(s => (
     <FlatButton
       label={s.name + (s.isDisabled ? ` (${t('label.on-hold')})` : '')}
       disabled={s.id === store.id || !!s.isDisabled}
       onClick={async () => {
         await setStore(s);
-        popoverRef.current?.hide();
+        popoverControls.hide();
         navigate(AppRoute.Dashboard);
       }}
       key={s.id}
-      sx={{
-        whiteSpace: 'nowrap',
-        overflowX: 'hidden',
-        overflowY: 'visible',
-        textOverflow: 'ellipsis',
-        display: 'block',
-        textAlign: 'left',
-      }}
+      sx={buttonStyle}
     />
   ));
 
   return (
     <PersistentPaperPopover
-      ref={popoverRef}
+      popoverControls={popoverControls}
       placement="top"
       width={300}
       Content={
@@ -87,7 +89,17 @@ export const StoreSelector: FC<PropsWithChildrenOnly> = ({ children }) => {
                   maxHeight: 300,
                 }}
               >
-                {storeButtons}
+                {storeButtons.length > 1 ? (
+                  storeButtons
+                ) : (
+                  <FlatButton
+                    label={t('control.search.no-results-label')}
+                    onClick={() => {}}
+                    disabled={true}
+                    key="no-results"
+                    sx={buttonStyle}
+                  />
+                )}
               </Box>
             </>
           )}
