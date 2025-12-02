@@ -429,6 +429,7 @@
   "error.no-supply-level-permission": "You do not have permission to edit supply levels",
   "error.no-temperature-breaches": "No temperature breaches to display. Try changing or resetting the filters above.",
   "error.no-temperature-logs": "No temperature logs to display. Try changing or resetting the filters above.",
+  "error.no-usb-printer-found": "No USB printer found. Please connect a USB printer and try again.",
   "error.no-vaccine-courses": "No vaccine courses to display.",
   "error.not-editable": "Stocktake is not editable.",
   "error.not-most-recent-given-dose": "This is not the most recent vaccination. Please edit the most recent vaccination if a dose has not been given.",

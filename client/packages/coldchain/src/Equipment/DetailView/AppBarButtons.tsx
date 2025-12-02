@@ -106,11 +106,11 @@ export const AppBarButtonsComponent = () => {
 
       if (window.BrowserPrint && result.zpl) {
         window.BrowserPrint.getLocalDevices(function (device) {
-          const usbConnectedPrinter = device.printer.find(
+          const usbConnectedPrinter = device.printer?.find(
             d => d.connection === 'usb' && d.deviceType === 'printer'
           );
           if (usbConnectedPrinter) {
-            usbConnectedPrinter?.send(
+            usbConnectedPrinter.send(
               result.zpl,
               function (success) {
                 console.info('success', success);
@@ -119,6 +119,8 @@ export const AppBarButtonsComponent = () => {
                 console.error(error);
               }
             );
+          } else {
+            error(t('error.no-usb-printer-found'))();
           }
         });
       }
