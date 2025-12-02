@@ -1,16 +1,16 @@
-import React, { FC, useState, useMemo } from 'react';
+import React, { FC, useState, useMemo, useRef } from 'react';
 import {
   Box,
   CircularProgress,
   FlatButton,
   PaperPopoverSection,
   useAuthContext,
-  usePaperClickPopover,
   useTranslation,
   useNavigate,
   useUserDetails,
   BasicTextInput,
   PersistentPaperPopover,
+  PersistentPaperPopoverRef,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { PropsWithChildrenOnly, UserStoreNodeFragment } from '@common/types';
@@ -19,8 +19,8 @@ export const StoreSelector: FC<PropsWithChildrenOnly> = ({ children }) => {
   const t = useTranslation();
   const navigate = useNavigate();
   const { store, setStore, token } = useAuthContext();
-  const { hide } = usePaperClickPopover();
   const { data, isLoading } = useUserDetails(token);
+  const popoverRef = useRef<PersistentPaperPopoverRef>(null);
 
   const storeSorter = (a: UserStoreNodeFragment, b: UserStoreNodeFragment) => {
     if (a.name < b.name) return -1;
@@ -49,7 +49,7 @@ export const StoreSelector: FC<PropsWithChildrenOnly> = ({ children }) => {
       disabled={s.id === store.id || !!s.isDisabled}
       onClick={async () => {
         await setStore(s);
-        hide();
+        popoverRef.current?.hide();
         navigate(AppRoute.Dashboard);
       }}
       key={s.id}
@@ -66,6 +66,7 @@ export const StoreSelector: FC<PropsWithChildrenOnly> = ({ children }) => {
 
   return (
     <PersistentPaperPopover
+      ref={popoverRef}
       placement="top"
       width={300}
       Content={
