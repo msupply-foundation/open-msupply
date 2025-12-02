@@ -51,7 +51,7 @@ export const StockLevelsSummary = () => {
           link: RouteBuilder.create(AppRoute.Catalogue)
             .addPart(AppRoute.Items)
             .addQuery({
-              hasStockOnHand: 'false',
+              stockStatus: 'outOfStock',
             })
             .build(),
         },
