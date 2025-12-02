@@ -1,6 +1,6 @@
 {
   "is_custom": false,
-  "version": "2.10.1",
+  "version": "2.13.0",
   "code": "inbound-shipments",
   "context": "REPORT",
   "sub_context": "Other",
