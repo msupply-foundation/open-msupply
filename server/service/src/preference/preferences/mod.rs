@@ -58,6 +58,8 @@ pub mod skip_intermediate_statuses_in_outbound;
 pub use skip_intermediate_statuses_in_outbound::*;
 pub mod store_custom_colour;
 pub use store_custom_colour::*;
+pub mod invoice_status_options;
+pub use invoice_status_options::*;
 
 pub struct PreferenceProvider {
     // Global preferences
@@ -96,6 +98,7 @@ pub struct PreferenceProvider {
     pub skip_intermediate_statuses_in_outbound: SkipIntermediateStatusesInOutbound,
     pub warn_when_missing_recent_stocktake: WarnWhenMissingRecentStocktake,
     pub store_custom_colour: StoreCustomColour,
+    pub invoice_status_options: InvoiceStatusOptions,
 }
 
 pub fn get_preference_provider() -> PreferenceProvider {
@@ -136,5 +139,6 @@ pub fn get_preference_provider() -> PreferenceProvider {
         skip_intermediate_statuses_in_outbound: SkipIntermediateStatusesInOutbound,
         store_custom_colour: StoreCustomColour,
         warn_when_missing_recent_stocktake: WarnWhenMissingRecentStocktake,
+        invoice_status_options: InvoiceStatusOptions,
     }
 }

@@ -1,7 +1,7 @@
 use std::collections::BTreeMap;
 
 use crate::types::{
-    patient::GenderTypeNode,
+    invoice_query::InvoiceNodeStatus, patient::GenderTypeNode,
     warn_when_missing_recent_stocktake::WarnWhenMissingRecentStocktakeDataNode,
 };
 use async_graphql::*;
@@ -174,6 +174,15 @@ impl PreferencesNode {
             self.load_preference(&self.preferences.warn_when_missing_recent_stocktake)?,
         ))
     }
+
+    pub async fn invoice_status_options(&self) -> Result<Vec<InvoiceNodeStatus>> {
+        let domain_statuses = self.load_preference(&self.preferences.invoice_status_options)?;
+        let statuses = domain_statuses
+            .iter()
+            .map(|s| InvoiceNodeStatus::from(s.clone()))
+            .collect();
+        Ok(statuses)
+    }
 }
 
 impl PreferencesNode {
@@ -254,6 +263,7 @@ pub enum PreferenceKey {
     SkipIntermediateStatusesInOutbound,
     StoreCustomColour,
     WarnWhenMissingRecentStocktake,
+    InvoiceStatusOptions,
 }
 
 #[derive(Enum, Copy, Clone, Debug, Eq, PartialEq)]
