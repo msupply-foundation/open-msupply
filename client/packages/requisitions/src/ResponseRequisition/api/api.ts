@@ -416,4 +416,14 @@ export const getResponseQueries = (sdk: Sdk, storeId: string) => ({
 
     throw new Error('Could not add from master list');
   },
+  hasCustomerProgramRequisitionSettings: async (
+    customerNameIds: string[]
+  ): Promise<boolean> => {
+    const result = await sdk.hasCustomerProgramRequisitionSettings({
+      storeId,
+      customerNameIds,
+    });
+
+    return result.hasCustomerProgramRequisitionSettings;
+  },
 });

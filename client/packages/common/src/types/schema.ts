@@ -4923,6 +4923,7 @@ export type ItemNodeProgramsArgs = {
 
 export type ItemNodeStatsArgs = {
   amcLookbackMonths?: InputMaybe<Scalars['Float']['input']>;
+  periodEnd?: InputMaybe<Scalars['NaiveDate']['input']>;
   storeId: Scalars['String']['input'];
 };
 
@@ -7503,6 +7504,7 @@ export type Queries = {
   clinicians: CliniciansResponse;
   contactTraces: ContactTraceResponse;
   contacts: ContactsResponse;
+  csvToExcel: PrintReportResponse;
   currencies: CurrenciesResponse;
   databaseSettings: DatabaseSettingsNode;
   demographicIndicators: DemographicIndicatorsResponse;
@@ -7551,6 +7553,7 @@ export type Queries = {
   goodsReceivedLine: GoodsReceivedLineResponse;
   goodsReceivedLines: GoodsReceivedLinesResponse;
   goodsReceivedList: GoodsReceivedListResponse;
+  hasCustomerProgramRequisitionSettings: Scalars['Boolean']['output'];
   /** Query for "historical_stock_line" entries */
   historicalStockLines: StockLinesResponse;
   /** Available without authorisation in operational and initialisation states */
@@ -7803,6 +7806,12 @@ export type QueriesContactsArgs = {
   storeId: Scalars['String']['input'];
 };
 
+export type QueriesCsvToExcelArgs = {
+  csvData: Scalars['String']['input'];
+  filename: Scalars['String']['input'];
+  storeId: Scalars['String']['input'];
+};
+
 export type QueriesCurrenciesArgs = {
   filter?: InputMaybe<CurrencyFilterInput>;
   sort?: InputMaybe<Array<CurrencySortInput>>;
@@ -7943,6 +7952,11 @@ export type QueriesGoodsReceivedListArgs = {
   filter?: InputMaybe<GoodsReceivedFilterInput>;
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<Array<GoodsReceivedSortInput>>;
+  storeId: Scalars['String']['input'];
+};
+
+export type QueriesHasCustomerProgramRequisitionSettingsArgs = {
+  customerNameIds: Array<Scalars['String']['input']>;
   storeId: Scalars['String']['input'];
 };
 
@@ -8779,6 +8793,7 @@ export type RequisitionLineNode = {
 
 export type RequisitionLineNodeItemStatsArgs = {
   amcLookbackMonths?: InputMaybe<Scalars['Float']['input']>;
+  periodEnd?: InputMaybe<Scalars['NaiveDate']['input']>;
 };
 
 export type RequisitionLineStatsError = {
@@ -9593,6 +9608,7 @@ export type StoreConnector = {
 
 export type StoreFilterInput = {
   code?: InputMaybe<StringFilterInput>;
+  codeOrName?: InputMaybe<StringFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
   name?: InputMaybe<StringFilterInput>;
   nameCode?: InputMaybe<StringFilterInput>;
@@ -11248,8 +11264,12 @@ export type UpsertPreferencesInput = {
   expiredStockPreventIssue?: InputMaybe<Scalars['Boolean']['input']>;
   firstThresholdForExpiringItems?: InputMaybe<Array<IntegerStorePrefInput>>;
   genderOptions?: InputMaybe<Array<GenderTypeNode>>;
+  inboundShipmentAutoVerify?: InputMaybe<Array<BoolStorePrefInput>>;
   manageVaccinesInDoses?: InputMaybe<Array<BoolStorePrefInput>>;
   manageVvmStatusForStock?: InputMaybe<Array<BoolStorePrefInput>>;
+  numberOfMonthsThresholdToShowLowStockAlertsForProducts?: InputMaybe<
+    Array<IntegerStorePrefInput>
+  >;
   numberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts?: InputMaybe<
     Array<IntegerStorePrefInput>
   >;

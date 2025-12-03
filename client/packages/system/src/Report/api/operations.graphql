@@ -99,3 +99,18 @@ query generateReport(
     }
   }
 }
+
+query csvToExcel($storeId: String!, $csvData: String!, $filename: String!) {
+  csvToExcel(storeId: $storeId, csvData: $csvData, filename: $filename) {
+    ... on PrintReportNode {
+      __typename
+      fileId
+    }
+    ... on PrintReportError {
+      __typename
+      error {
+        description
+      }
+    }
+  }
+}

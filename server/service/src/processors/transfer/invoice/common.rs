@@ -226,6 +226,7 @@ pub(super) fn get_default_price_for_pack(
     price_per_unit * inbound_pack_size
 }
 
+#[cfg(test)]
 mod tests {
     use super::get_default_price_for_pack;
 

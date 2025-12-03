@@ -1123,6 +1123,18 @@ export type InsertRequestFromResponseRequisitionMutation = {
     | { __typename: 'RequisitionNode'; id: string };
 };
 
+export type HasCustomerProgramRequisitionSettingsQueryVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  customerNameIds:
+    | Array<Types.Scalars['String']['input']>
+    | Types.Scalars['String']['input'];
+}>;
+
+export type HasCustomerProgramRequisitionSettingsQuery = {
+  __typename: 'Queries';
+  hasCustomerProgramRequisitionSettings: boolean;
+};
+
 export const ResponseLineFragmentDoc = gql`
   fragment ResponseLine on RequisitionLineNode {
     id
@@ -1845,6 +1857,17 @@ export const InsertRequestFromResponseRequisitionDocument = gql`
     }
   }
 `;
+export const HasCustomerProgramRequisitionSettingsDocument = gql`
+  query hasCustomerProgramRequisitionSettings(
+    $storeId: String!
+    $customerNameIds: [String!]!
+  ) {
+    hasCustomerProgramRequisitionSettings(
+      storeId: $storeId
+      customerNameIds: $customerNameIds
+    )
+  }
+`;
 
 export type SdkFunctionWrapper = <T>(
   action: (requestHeaders?: Record<string, string>) => Promise<T>,
@@ -2148,6 +2171,22 @@ export function getSdk(
           ),
         'insertRequestFromResponseRequisition',
         'mutation',
+        variables
+      );
+    },
+    hasCustomerProgramRequisitionSettings(
+      variables: HasCustomerProgramRequisitionSettingsQueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders
+    ): Promise<HasCustomerProgramRequisitionSettingsQuery> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<HasCustomerProgramRequisitionSettingsQuery>(
+            HasCustomerProgramRequisitionSettingsDocument,
+            variables,
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
+        'hasCustomerProgramRequisitionSettings',
+        'query',
         variables
       );
     },
