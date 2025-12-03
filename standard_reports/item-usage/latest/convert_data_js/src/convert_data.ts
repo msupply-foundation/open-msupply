@@ -1,9 +1,9 @@
-import { ArrayElement, ConvertData } from '../convertDataType';
-import { Arguments } from './generated-types/arguments';
-import { ItemUsageQuery } from './generated-types/graphql';
-import get from 'lodash/get';
-import orderBy from 'lodash/orderBy';
-import groupBy from 'lodash/groupBy';
+import { ArrayElement, ConvertData } from "../convertDataType";
+import { Arguments } from "./generated-types/arguments";
+import { ItemUsageQuery } from "./generated-types/graphql";
+import get from "lodash/get";
+import orderBy from "lodash/orderBy";
+import groupBy from "lodash/groupBy";
 
 type SqlResult = { item_id: string; quantity: number }[];
 export type Data = ItemUsageQuery & {
@@ -17,7 +17,7 @@ export type Data = ItemUsageQuery & {
   AMCTwentyFour: SqlResult;
 };
 
-type OutputNode = ArrayElement<ItemUsageQuery['items']['nodes']> & {
+type OutputNode = ArrayElement<ItemUsageQuery["items"]["nodes"]> & {
   monthConsumption: number;
   lastMonthConsumption: number;
   twoMonthsAgoConsumption: number;
@@ -37,25 +37,34 @@ export const convert_data: ConvertData<Data, Arguments, Result> = ({
   data,
   arguments: { sort, dir },
 }) => {
-  const thisMonthConsumptionMap = groupBy(data.thisMonthConsumption, 'item_id');
-  const lastMonthConsumptionMap = groupBy(data.lastMonthConsumption, 'item_id');
-  const twoMonthsAgoConsumptionMap = groupBy(data.twoMonthsAgoConsumption, 'item_id');
-  const expiringInSixMonthsMap = groupBy(data.expiringInSixMonths, 'item_id');
-  const expiringInTwelveMonthsMap = groupBy(data.expiringInTwelveMonths, 'item_id');
-  const stockOnOrderMap = groupBy(data.stockOnOrder, 'item_id');
-  const AMCTwelveMap = groupBy(data.AMCTwelve, 'item_id');
-  const AMCTwentyFourMap = groupBy(data.AMCTwentyFour, 'item_id');
+  const thisMonthConsumptionMap = groupBy(data.thisMonthConsumption, "item_id");
+  const lastMonthConsumptionMap = groupBy(data.lastMonthConsumption, "item_id");
+  const twoMonthsAgoConsumptionMap = groupBy(
+    data.twoMonthsAgoConsumption,
+    "item_id"
+  );
+  const expiringInSixMonthsMap = groupBy(data.expiringInSixMonths, "item_id");
+  const expiringInTwelveMonthsMap = groupBy(
+    data.expiringInTwelveMonths,
+    "item_id"
+  );
+  const stockOnOrderMap = groupBy(data.stockOnOrder, "item_id");
+  const AMCTwelveMap = groupBy(data.AMCTwelve, "item_id");
+  const AMCTwentyFourMap = groupBy(data.AMCTwentyFour, "item_id");
 
   let output = data.items.nodes.map((item) => {
     let outputNode: OutputNode = {
       ...item,
       monthConsumption: thisMonthConsumptionMap[item.id]?.[0]?.quantity || 0,
-      lastMonthConsumption: lastMonthConsumptionMap[item.id]?.[0]?.quantity || 0,
-      twoMonthsAgoConsumption: twoMonthsAgoConsumptionMap[item.id]?.[0]?.quantity || 0,
+      lastMonthConsumption:
+        lastMonthConsumptionMap[item.id]?.[0]?.quantity || 0,
+      twoMonthsAgoConsumption:
+        twoMonthsAgoConsumptionMap[item.id]?.[0]?.quantity || 0,
       expiringInSixMonths: expiringInSixMonthsMap[item.id]?.[0]?.quantity || 0,
-      expiringInTwelveMonths: expiringInTwelveMonthsMap[item.id]?.[0]?.quantity || 0,
+      expiringInTwelveMonths:
+        expiringInTwelveMonthsMap[item.id]?.[0]?.quantity || 0,
       // invoice lines could add up to more then requested stock
-      stockOnOrder: Math.max(stockOnOrderMap[item.id]?.[0]?.quantity || 0),
+      stockOnOrder: Math.max(0, stockOnOrderMap[item.id]?.[0]?.quantity || 0),
       AMC12: AMCTwelveMap[item.id]?.[0]?.quantity || 0,
       AMC24: AMCTwentyFourMap[item.id]?.[0]?.quantity || 0,
       SOH: item.stats?.stockOnHand || 0,
@@ -67,10 +76,10 @@ export const convert_data: ConvertData<Data, Arguments, Result> = ({
   let sortedNodes = orderBy(
     output,
     (row) => {
-      const field = get(row, sort || 'name');
-      return typeof field == 'string' ? field.toLocaleLowerCase() : field;
+      const field = get(row, sort || "name");
+      return typeof field == "string" ? field.toLocaleLowerCase() : field;
     },
-    dir || 'asc'
+    dir || "asc"
   );
 
   // log('debug log'); // Example log, from README.md
