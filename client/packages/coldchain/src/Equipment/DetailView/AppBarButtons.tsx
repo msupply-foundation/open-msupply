@@ -25,7 +25,8 @@ interface ZebraPrinterDevice {
 
 interface BrowserPrintGlobal {
   getLocalDevices: (
-    callback: (device: { printer: ZebraPrinterDevice[] }) => void
+    callback: (device: { printer: ZebraPrinterDevice[] }) => void,
+    errorCallback: (error: string) => void
   ) => void;
 }
 
@@ -49,29 +50,21 @@ export const AppBarButtonsComponent = () => {
   const printAssetLabel = () => {
     const date = new Date().toLocaleDateString();
     setIsPrinting(true);
-    const uridata = encodeURIComponent(
-      JSON.stringify({
+    fetch(Environment.PRINT_LABEL_QR, {
+      method: 'POST',
+      body: JSON.stringify({
         code: data?.id,
         assetNumber: `${data?.assetNumber ?? ''}`,
         datePrinted: `${date}`,
-      })
-    );
-    const url = `${Environment.PRINT_LABEL_QR}?data=${uridata}`;
-    fetch(url, {
-      method: 'GET',
+      }),
       credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
     })
       .then(async response => {
         if (response.status !== 200) {
           const text = await response.text();
           throw new Error(text);
         }
-        return response.json();
-      })
-      .then(json => {
-        // the zebra printer does not return a valid response
-        // so the fetch fails even when the print is successful
-        fetch(json.url, { body: json.zpl, method: 'POST' }).catch(() => {});
         success(t('messages.success-printing-label'))();
       })
       .catch(e => {
@@ -84,6 +77,12 @@ export const AppBarButtonsComponent = () => {
     const date = new Date().toLocaleDateString();
     setIsPrinting(true);
     try {
+      if (!window.BrowserPrint) {
+        console.warn('No BrowserPrint');
+        error(t('error.printing-label'))();
+        return;
+      }
+
       const uridata = encodeURIComponent(
         JSON.stringify({
           code: data?.id,
@@ -105,27 +104,27 @@ export const AppBarButtonsComponent = () => {
       const result = await response.json();
 
       if (window.BrowserPrint && result.zpl) {
-        window.BrowserPrint.getLocalDevices(function (device) {
-          const usbConnectedPrinter = device.printer?.find(
-            d => d.connection === 'usb' && d.deviceType === 'printer'
-          );
-          if (usbConnectedPrinter) {
-            usbConnectedPrinter.send(
-              result.zpl,
-              function (success) {
-                console.info('success', success);
-              },
-              function (error) {
-                console.error(error);
-              }
+        window.BrowserPrint.getLocalDevices(
+          device => {
+            const usbConnectedPrinter = device.printer?.find(
+              d => d.connection === 'usb' && d.deviceType === 'printer'
             );
-          } else {
-            error(t('error.no-usb-printer-found'))();
-          }
-        });
+
+            if (usbConnectedPrinter) {
+              usbConnectedPrinter.send(
+                result.zpl,
+                () => success(t('messages.success-printing-label'))(),
+                e => error(`${t('error.printing-label')} ${e}`)()
+              );
+            } else {
+              error(t('error.no-usb-printer-found'))();
+            }
+          },
+          e => error(`${t('error.printing-label')} ${e}`)()
+        );
       }
     } catch (e: any) {
-      error(`${t('error.printing-label')}: ${e.message}`)();
+      error(`${t('error.printing-label')} ${e.message})}`)();
     } finally {
       setIsPrinting(false);
     }
