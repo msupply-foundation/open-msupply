@@ -2,12 +2,12 @@ pub(crate) mod abbreviation;
 pub(crate) mod activity_log;
 pub(crate) mod asset;
 pub(crate) mod asset_catalogue_item;
+pub(crate) mod asset_catalogue_type;
 pub(crate) mod asset_category;
 pub(crate) mod asset_class;
 pub(crate) mod asset_log;
 pub(crate) mod asset_log_reason;
 pub(crate) mod asset_property;
-pub(crate) mod asset_type;
 pub(crate) mod backend_plugin;
 pub(crate) mod barcode;
 pub(crate) mod campaign;
@@ -173,7 +173,7 @@ pub(crate) fn all_translators() -> SyncTranslators {
         asset::boxed(),
         asset_class::boxed(),
         asset_category::boxed(),
-        asset_type::boxed(),
+        asset_catalogue_type::boxed(),
         asset_catalogue_item::boxed(),
         asset_log::boxed(),
         asset_log_reason::boxed(),
