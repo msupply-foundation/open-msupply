@@ -1365,7 +1365,7 @@ pub fn insert_mock_data(
         if inserts.assets {
             for row in &mock_data.assets {
                 let repo = AssetRowRepository::new(connection);
-                repo.upsert_one(row).unwrap();
+                repo.upsert_one(row, None).unwrap();
             }
         }
 

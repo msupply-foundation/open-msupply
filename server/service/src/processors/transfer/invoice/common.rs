@@ -78,14 +78,20 @@ pub(crate) fn generate_inbound_lines(
                     InvoiceLineType::Service => total_before_tax,
                     _ => cost_price_per_pack * number_of_packs,
                 };
-                let default_sell_price_per_pack =
-                    match (item_properties, default_pack_size == pack_size) {
-                        (Some(p), true) => p.default_sell_price_per_pack,
-                        _ => 0.0,
-                    };
 
-                let adjusted_sell_price_per_pack = if margin == 0.0 {
-                    default_sell_price_per_pack
+                let default_price_per_default_pack = item_properties
+                    .as_ref()
+                    .map_or(0.0, |i| i.default_sell_price_per_pack);
+
+                let default_price_for_inbound_pack = get_default_price_for_pack(
+                    default_price_per_default_pack,
+                    default_pack_size,
+                    pack_size,
+                );
+
+                // Default price per pack takes priority over cost + margin
+                let adjusted_sell_price_per_pack = if default_price_for_inbound_pack > 0.0 {
+                    default_price_for_inbound_pack
                 } else {
                     cost_price_per_pack + (cost_price_per_pack * margin) / 100.0
                 };
@@ -101,7 +107,7 @@ pub(crate) fn generate_inbound_lines(
                     pack_size,
                     total_before_tax,
                     total_after_tax: calculate_total_after_tax(total_before_tax, tax_percentage),
-                    cost_price_per_pack,
+                    cost_price_per_pack: sell_price_per_pack,
                     r#type: match r#type {
                         InvoiceLineType::Service => InvoiceLineType::Service,
                         _ => InvoiceLineType::StockIn,
@@ -154,4 +160,63 @@ pub(crate) fn convert_invoice_line_to_single_pack(
             line
         })
         .collect()
+}
+
+pub(super) fn get_default_price_for_pack(
+    default_sell_price_per_pack: f64,
+    default_pack_size: f64,
+    inbound_pack_size: f64,
+) -> f64 {
+    if default_pack_size == 0.0 {
+        return 0.0;
+    }
+    let price_per_unit = default_sell_price_per_pack / default_pack_size;
+    price_per_unit * inbound_pack_size
+}
+
+mod tests {
+    use super::get_default_price_for_pack;
+
+    #[test]
+    fn test_get_default_price_for_pack_conversion() {
+        let default_price = 5.0;
+        let default_pack_size = 10.0;
+
+        // Exact pack
+        let inbound_pack_size = 10.0;
+        assert_eq!(
+            get_default_price_for_pack(default_price, default_pack_size, inbound_pack_size),
+            5.0
+        );
+
+        // Pack of one
+        let inbound_pack_size = 1.0;
+        assert_eq!(
+            get_default_price_for_pack(default_price, default_pack_size, inbound_pack_size),
+            0.5
+        );
+
+        // Larger pack
+        let inbound_pack_size = 100.0;
+        assert_eq!(
+            get_default_price_for_pack(default_price, default_pack_size, inbound_pack_size),
+            50.0
+        );
+
+        // Zero default pack size
+        let default_pack_size = 0.0;
+        let inbound_pack_size = 10.0;
+        assert_eq!(
+            get_default_price_for_pack(default_price, default_pack_size, inbound_pack_size),
+            0.0
+        );
+
+        // Zero default price
+        let default_price = 0.0;
+        let inbound_pack_size = 10.0;
+        assert_eq!(
+            get_default_price_for_pack(default_price, default_pack_size, inbound_pack_size),
+            0.0
+        );
+    }
 }
