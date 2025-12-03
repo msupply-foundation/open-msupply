@@ -6,10 +6,10 @@ import { FilterLabelSx } from './styleConstants';
 
 export interface EnumFilterDefinition extends FilterDefinitionCommon {
   type: 'enum';
-  options: EnumOption[];
+  options: MultiChoice[];
 }
 
-type EnumOption = { label: string; value: string };
+type MultiChoice = { label: string; value: string };
 
 export const EnumFilter: FC<{
   filterDefinition: EnumFilterDefinition;
