@@ -5,10 +5,12 @@ import {
   GenderTypeNode,
   getGenderTranslationKey,
   InputWithLabelRow,
+  InvoiceNodeStatus,
   LocaleKey,
   PreferenceKey,
   TypedTFunction,
 } from '@openmsupply-client/common';
+import { getStatusTranslation } from 'packages/invoices/src/utils';
 
 interface EnumOption<T extends string> {
   value: T;
@@ -77,6 +79,14 @@ export const getEnumPreferenceOptions = (
         .map(gender => ({
           value: gender,
           label: t(getGenderTranslationKey(gender)),
+        }));
+
+    case PreferenceKey.InvoiceStatusOptions:
+      return Object.values(InvoiceNodeStatus)
+        .filter(status => status !== InvoiceNodeStatus.Cancelled)
+        .map(status => ({
+          value: status,
+          label: t(getStatusTranslation(status)),
         }));
 
     default:

@@ -3,7 +3,7 @@ use std::collections::BTreeMap;
 use async_graphql::*;
 use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
 use graphql_types::types::{patient::GenderTypeNode, InvoiceNodeStatus};
-use repository::GenderType;
+use repository::{GenderType, InvoiceStatus};
 use service::{
     auth::{Resource, ResourceAccessRequest},
     preference::{StorePrefUpdate, UpsertPreferences, WarnWhenMissingRecentStocktakeData},
@@ -275,7 +275,7 @@ impl WarnWhenMissingRecentStocktakeInput {
 }
 
 impl InvoiceStatusOptionsInput {
-    pub fn to_domain(&self) -> StorePrefUpdate<Vec<repository::InvoiceStatus>> {
+    pub fn to_domain(&self) -> StorePrefUpdate<Vec<InvoiceStatus>> {
         StorePrefUpdate {
             store_id: self.store_id.clone(),
             value: self.value.iter().map(|s| (*s).into()).collect(),
