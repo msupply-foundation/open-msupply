@@ -159,10 +159,6 @@ impl PreferencesNode {
         self.load_preference(&self.preferences.second_threshold_for_expiring_items)
     }
 
-    pub async fn skip_intermediate_statuses_in_outbound(&self) -> Result<bool> {
-        self.load_preference(&self.preferences.skip_intermediate_statuses_in_outbound)
-    }
-
     pub async fn store_custom_colour(&self) -> Result<String> {
         self.load_preference(&self.preferences.store_custom_colour)
     }
