@@ -12,24 +12,24 @@ import {
 } from '@openmsupply-client/common';
 import { getStatusTranslation } from 'packages/invoices/src/utils';
 
-interface EnumOption<T extends string> {
+interface MultiChoice<T extends string> {
   value: T;
   label: string;
 }
 
-interface EnumOptionsProps<T extends string> {
-  options: EnumOption<T>[];
+interface MultiChoiceProps<T extends string> {
+  options: MultiChoice<T>[];
   value: T[];
   onChange: (newValues: T[]) => void;
   disabled?: boolean;
 }
 
-export const EnumOptions = <T extends string>({
+export const MultiChoice = <T extends string>({
   value,
   onChange,
   disabled,
   options,
-}: EnumOptionsProps<T>) => {
+}: MultiChoiceProps<T>) => {
   const handleChange = (optionValue: T, checked: boolean) => {
     const newValue = checked
       ? [...value, optionValue]
@@ -66,7 +66,7 @@ export const EnumOptions = <T extends string>({
   );
 };
 
-export const getEnumPreferenceOptions = (
+export const getMultiChoiceOptions = (
   t: TypedTFunction<LocaleKey>,
   key: PreferenceKey
 ) => {
