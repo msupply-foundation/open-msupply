@@ -11,6 +11,7 @@ import {
   Autocomplete,
   useConfirmationModal,
   usePreferences,
+  NameNodeType,
 } from '@openmsupply-client/common';
 import {
   CustomerSearchInput,
@@ -108,6 +109,9 @@ export const Toolbar = () => {
                   }
                   clearable
                   extraFilter={option => option.id !== otherParty?.id}
+                  filterBy={{
+                    type: { equalTo: NameNodeType.Store },
+                  }}
                 />
               }
             />
