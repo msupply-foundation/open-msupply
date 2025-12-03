@@ -50,21 +50,19 @@ export const stocktakesToCsv = (
   t: TypedTFunction<LocaleKey>
 ) => {
   const fields: string[] = [
-    'id',
     t('label.number'),
     t('label.status'),
     t('heading.description'),
-    t('label.comment'),
     t('label.created'),
+    t('label.comment'),
   ];
 
   const data = invoices.map(node => [
-    node.id,
     node.stocktakeNumber,
     node.status,
     node.description,
-    node.comment,
     Formatter.csvDateTimeString(node.createdDatetime),
+    node.comment,
   ]);
   return Formatter.csv({ fields, data });
 };

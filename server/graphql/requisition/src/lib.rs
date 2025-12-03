@@ -1,24 +1,27 @@
-pub mod mutations;
-mod program_indicator;
-mod program_settings;
-mod requisition_queries;
+use crate::program_settings::has_customer_program_requisition_settings;
 use async_graphql::*;
 use graphql_core::pagination::PaginationInput;
 use graphql_types::types::program_indicator::{
     ProgramIndicatorFilterInput, ProgramIndicatorResponse, ProgramIndicatorSortInput,
 };
 use graphql_types::types::RequisitionNodeType;
-use program_indicator::program_indicators;
-use program_settings::{
-    get_program_requisition_settings_by_customer, get_supplier_program_requisition_settings,
-    CustomerProgramRequisitionSettingNode, SupplierProgramRequisitionSettingNode,
-};
+
+pub mod mutations;
+mod program_indicator;
+mod program_settings;
+mod requisition_queries;
 
 use self::mutations::{request_requisition, response_requisition};
 use self::requisition_queries::*;
 use mutations::update_indicator_value::{
     self, UpdateIndicatorValueInput, UpdateIndicatorValueResponse,
 };
+use program_indicator::program_indicators;
+use program_settings::{
+    get_program_requisition_settings_by_customer, get_supplier_program_requisition_settings,
+    CustomerProgramRequisitionSettingNode, SupplierProgramRequisitionSettingNode,
+};
+
 #[derive(Default, Clone)]
 pub struct RequisitionQueries;
 
@@ -69,6 +72,15 @@ impl RequisitionQueries {
         customer_name_id: String,
     ) -> Result<CustomerProgramRequisitionSettingNode> {
         get_program_requisition_settings_by_customer(ctx, &store_id, &customer_name_id)
+    }
+
+    pub async fn has_customer_program_requisition_settings(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        customer_name_ids: Vec<String>,
+    ) -> Result<bool> {
+        has_customer_program_requisition_settings(ctx, &store_id, &customer_name_ids)
     }
 
     pub async fn program_indicators(

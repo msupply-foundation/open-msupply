@@ -335,25 +335,23 @@ export const outboundsToCsv = (
   t: TypedTFunction<LocaleKey>
 ) => {
   const fields: string[] = [
-    'id',
     t('label.name'),
     t('label.status'),
     t('label.invoice-number'),
     t('label.created'),
     t('label.reference'),
-    t('label.comment'),
     t('label.total'),
+    t('label.comment'),
   ];
 
   const data = invoices.map(node => [
-    node.id,
     node.otherPartyName,
     node.status,
     node.invoiceNumber,
     Formatter.csvDateTimeString(node.createdDatetime),
     node.theirReference,
-    node.comment,
     node.pricing.totalAfterTax,
+    node.comment,
   ]);
   return Formatter.csv({ fields, data });
 };
@@ -363,19 +361,19 @@ export const supplierReturnsToCsv = (
   t: TypedTFunction<LocaleKey>
 ) => {
   const fields: string[] = [
-    'id',
     t('label.name'),
     t('label.status'),
     t('label.invoice-number'),
     t('label.created'),
+    t('label.reference'),
   ];
 
   const data = returns.map(node => [
-    node.id,
     node.otherPartyName,
     node.status,
     node.invoiceNumber,
     Formatter.csvDateTimeString(node.createdDatetime),
+    node.theirReference,
   ]);
   return Formatter.csv({ fields, data });
 };
@@ -385,21 +383,21 @@ export const customerReturnsToCsv = (
   t: TypedTFunction<LocaleKey>
 ) => {
   const fields: string[] = [
-    'id',
     t('label.name'),
     t('label.status'),
     t('label.invoice-number'),
     t('label.created'),
-    t('label.confirmed'),
+    t('label.reference'),
+    t('label.comment'),
   ];
 
   const data = returns.map(node => [
-    node.id,
     node.otherPartyName,
     node.status,
     node.invoiceNumber,
     Formatter.csvDateTimeString(node.createdDatetime),
-    Formatter.csvDateTimeString(node.deliveredDatetime),
+    node.theirReference,
+    node.comment,
   ]);
   return Formatter.csv({ fields, data });
 };
@@ -409,25 +407,25 @@ export const inboundsToCsv = (
   t: TypedTFunction<LocaleKey>
 ) => {
   const fields: string[] = [
-    'id',
     t('label.name'),
-    t('label.status'),
     t('label.invoice-number'),
     t('label.created'),
-    t('label.confirmed'),
-    t('label.comment'),
+    t('label.delivered'),
+    t('label.status'),
+    t('label.reference'),
     t('label.total'),
+    t('label.comment'),
   ];
 
   const data = invoices.map(node => [
-    node.id,
     node.otherPartyName,
-    node.status,
     node.invoiceNumber,
     Formatter.csvDateTimeString(node.createdDatetime),
     Formatter.csvDateTimeString(node.deliveredDatetime),
-    node.comment,
+    node.status,
+    node.theirReference,
     node.pricing.totalAfterTax,
+    node.comment,
   ]);
   return Formatter.csv({ fields, data });
 };
@@ -437,20 +435,20 @@ export const prescriptionToCsv = (
   t: TypedTFunction<LocaleKey>
 ) => {
   const fields: string[] = [
-    'id',
     t('label.name'),
     t('label.status'),
     t('label.invoice-number'),
-    t('label.created'),
+    t('label.prescription-date'),
+    t('label.reference'),
     t('label.comment'),
   ];
 
   const data = invoices.map(node => [
-    node.id,
     node.otherPartyName,
     t(getStatusTranslation(node.status)),
     node.invoiceNumber,
-    Formatter.csvDateTimeString(node.createdDatetime),
+    Formatter.csvDateTimeString(node.prescriptionDate || node.createdDatetime),
+    node.theirReference,
     node.comment,
   ]);
   return Formatter.csv({ fields, data });

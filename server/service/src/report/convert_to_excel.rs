@@ -1,16 +1,60 @@
-use std::{collections::HashMap, fs, time::SystemTime};
-
+use super::report_service::{GeneratedReport, ReportError};
+use crate::static_files::{StaticFile, StaticFileCategory, StaticFileService};
 use chrono::{DateTime, Utc};
+use csv::{Reader, StringRecord};
 use scraper::{ElementRef, Html, Selector};
+use std::{collections::HashMap, fs, time::SystemTime};
 use umya_spreadsheet::{
     helper::coordinate::{column_index_from_string, coordinate_from_index, index_from_coordinate},
     writer::xlsx,
     Cell, FontSize, Spreadsheet, Worksheet,
 };
 
-use crate::static_files::{StaticFile, StaticFileCategory, StaticFileService};
+pub fn csv_to_excel(
+    base_dir: &Option<String>,
+    csv_data: &str,
+    filename: &str,
+) -> Result<String, ReportError> {
+    // Parse CSV data
+    let mut reader = Reader::from_reader(csv_data.as_bytes());
+    let headers = reader
+        .headers()
+        .map_err(|e| ReportError::DocGenerationError(e.to_string()))?
+        .clone();
+    let records: Vec<StringRecord> = reader
+        .records()
+        .collect::<Result<_, _>>()
+        .map_err(|e| ReportError::DocGenerationError(e.to_string()))?;
+    let reserved_file = reserve_file(base_dir, filename)?;
 
-use super::report_service::{GeneratedReport, ReportError};
+    // Create Excel workbook
+    let mut book = umya_spreadsheet::new_file();
+    let sheet = book
+        .get_sheet_mut(&0)
+        .ok_or_else(|| ReportError::DocGenerationError("Failed to get worksheet".to_string()))?;
+
+    // Write headers
+    for (col_idx, header) in headers.iter().enumerate() {
+        let cell = sheet.get_cell_mut((col_idx as u32 + 1, 1));
+        cell.set_value(header.to_string());
+        cell.get_style_mut().get_font_mut().set_bold(true);
+    }
+
+    // Write data rows
+    for (row_idx, record) in records.iter().enumerate() {
+        let row = row_idx as u32 + 2;
+        for (col_idx, field) in record.iter().enumerate() {
+            let cell = sheet.get_cell_mut((col_idx as u32 + 1, row));
+            cell.set_value(field);
+        }
+    }
+
+    // Save to temporary file
+    xlsx::write(&book, reserved_file.path)
+        .map_err(|err| ReportError::DocGenerationError(format!("{err}")))?;
+
+    Ok(reserved_file.id)
+}
 
 /// Converts the report to an Excel file and returns the file id
 pub fn export_html_report_to_excel(
@@ -75,7 +119,7 @@ fn get_workbook(
             // Create a new xlsx file if no template is provided
             let mut book = umya_spreadsheet::new_file();
             book.set_sheet_name(0, "Report")
-                .map_err(|err| ReportError::DocGenerationError(format!("{err}")))?;
+                .map_err(|err| ReportError::DocGenerationError(err.to_string()))?;
             book
         }
     };
@@ -83,7 +127,7 @@ fn get_workbook(
 }
 
 /// Maps a generated HTML report to an Excel worksheet
-fn apply_report(sheet: &mut Worksheet, report: GeneratedReport) -> () {
+fn apply_report(sheet: &mut Worksheet, report: GeneratedReport) {
     let mut row_idx: u32 = 1;
 
     // HEADER
@@ -223,7 +267,8 @@ fn apply_data_rows(
     // Total rows - each on a new row
     for total_row in body.total_rows().into_iter() {
         for (cell_index, cell) in total_row.into_iter().enumerate() {
-            if let Some(column_index) = index_to_column_index_map.get(&(cell_index as u32)).cloned() {
+            if let Some(column_index) = index_to_column_index_map.get(&(cell_index as u32)).cloned()
+            {
                 let sheet_cell = sheet.get_cell_mut((column_index, row_idx));
                 sheet_cell.set_value(cell);
                 sheet_cell.get_style_mut().get_font_mut().set_bold(true);
@@ -627,8 +672,7 @@ mod report_to_excel_test {
             let sheet = book.get_sheet_by_name_mut("test").unwrap();
             let start = std::time::Instant::now();
             apply_report(sheet, report);
-            let duration_millisec = start.elapsed().as_millis();
-            duration_millisec
+            start.elapsed().as_millis()
         });
 
         let duration_millisec = tokio::time::timeout(Duration::from_secs(10), handle)
@@ -644,6 +688,48 @@ mod report_to_excel_test {
             "Generate to excel should be FAST. Took: {}ms",
             duration_millisec
         );
+    }
+
+    #[test]
+    fn test_csv_to_excel() {
+        let csv_data = "Name,Status,Invoice Number\nHarry Potter,Picked,2\nHermione Granger,New,3\nRon Weasley,New,4\n";
+
+        let result = csv_to_excel(&None, csv_data, "test_csv_export");
+        assert!(result.is_ok(), "CSV to Excel conversion should succeed");
+
+        let file_id = result.unwrap();
+        assert!(!file_id.is_empty(), "File ID should not be empty");
+
+        let file_service = StaticFileService::new(&None).unwrap();
+        let generated_file = file_service
+            .find_file(&file_id, StaticFileCategory::Temporary)
+            .unwrap()
+            .unwrap();
+        let generated_book = umya_spreadsheet::reader::xlsx::read(&generated_file.path).unwrap();
+        let sheet = generated_book.get_sheet(&0).unwrap();
+
+        let get_value = |coord: &str| {
+            sheet
+                .get_cell(coord)
+                .map(|c| c.get_raw_value().to_string())
+                .unwrap_or_default()
+        };
+
+        assert_eq!(get_value("A1"), "Name");
+        assert_eq!(get_value("B1"), "Status");
+        assert_eq!(get_value("C1"), "Invoice Number");
+
+        assert_eq!(get_value("A2"), "Harry Potter");
+        assert_eq!(get_value("B2"), "Picked");
+        assert_eq!(get_value("C2"), "2");
+
+        assert_eq!(get_value("A3"), "Hermione Granger");
+        assert_eq!(get_value("B3"), "New");
+        assert_eq!(get_value("C3"), "3");
+
+        assert_eq!(get_value("A4"), "Ron Weasley");
+        assert_eq!(get_value("B4"), "New");
+        assert_eq!(get_value("C4"), "4");
     }
 
     #[test]
