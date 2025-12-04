@@ -16,6 +16,7 @@ import {
   ArrowRightIcon,
   useEditModal,
   useNotification,
+  usePreferences,
 } from '@openmsupply-client/common';
 import { ChangeCampaignOrProgramConfirmationModal } from '@openmsupply-client/system';
 import {
@@ -79,6 +80,7 @@ export const FooterComponent = ({
   const { navigateUpOne } = useBreadcrumbs();
   const { info } = useNotification();
   const changeCampaignOrProgramModal = useEditModal();
+  const { invoiceStatusOptions } = usePreferences();
 
   const { data } = useInbound.document.get();
   const onDelete = useInbound.lines.deleteSelected(
@@ -128,6 +130,11 @@ export const FooterComponent = ({
       shouldShrink: false,
     },
   ];
+  const statuses = isManuallyCreated
+    ? manualInboundStatuses.filter(status =>
+        invoiceStatusOptions?.includes(status)
+      )
+    : inboundStatuses.filter(status => invoiceStatusOptions?.includes(status));
 
   return (
     <AppFooterPortal
@@ -151,9 +158,7 @@ export const FooterComponent = ({
               <OnHoldButton />
 
               <StatusCrumbs
-                statuses={
-                  isManuallyCreated ? manualInboundStatuses : inboundStatuses
-                }
+                statuses={statuses}
                 statusLog={createStatusLog(data)}
                 statusFormatter={getStatusTranslator(t)}
               />
