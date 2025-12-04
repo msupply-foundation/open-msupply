@@ -16,6 +16,8 @@ import {
   getStatusTranslation,
   getPreviousStatus,
   outboundStatuses,
+  getButtonLabel,
+  getNextStatusOption,
 } from '../../../utils';
 import { useOutbound, useOutboundLines } from '../../api';
 
@@ -80,25 +82,6 @@ const getStatusOptions = (
 
   return options;
 };
-
-const getNextStatusOption = (
-  status: InvoiceNodeStatus,
-  options: SplitButtonOption<InvoiceNodeStatus>[]
-): SplitButtonOption<InvoiceNodeStatus> | null => {
-  if (!status) return options[0] ?? null;
-
-  const currentIndex = options.findIndex(o => o.value === status);
-  const nextOption = options[currentIndex + 1];
-  return nextOption || null;
-};
-
-const getButtonLabel =
-  (t: ReturnType<typeof useTranslation>) =>
-  (invoiceStatus: InvoiceNodeStatus): string => {
-    return t('button.save-and-confirm-status', {
-      status: t(getStatusTranslation(invoiceStatus)),
-    });
-  };
 
 const useStatusChangeButton = () => {
   const t = useTranslation();
