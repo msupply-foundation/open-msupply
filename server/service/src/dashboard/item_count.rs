@@ -3,6 +3,7 @@ use repository::{ItemFilter, ItemRepository, RepositoryError};
 use crate::{
     item_stats::{get_item_stats, ItemStats},
     preference::{
+        NumberOfMonthsThresholdToShowLowStockAlertsForProducts,
         NumberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts, Preference,
     },
     service_provider::ServiceContext,
@@ -116,6 +117,9 @@ impl ItemCountServiceTrait for ItemServiceCount {
         let more_than_six_months_stock =
             Self::get_more_than_six_months_stock_count(&self, &item_stats);
 
+        // TODO:
+        // Out of Stock Products: Any item consumption over the value set Number of months to check
+
         let num_months_consumption =
             NumberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts
                 .load(&ctx.connection, Some(store_id.to_string()))
@@ -126,23 +130,19 @@ impl ItemCountServiceTrait for ItemServiceCount {
                     })
                 })?;
 
-        let item_stats_with_time_window = get_item_stats(
-            &ctx.connection,
-            store_id,
-            Some(num_months_consumption as f64),
-            item_ids,
-            None,
-        )?;
+        let out_of_stock_products = 0;
 
-        let out_of_stock_products =
-            Self::get_out_of_stock_products_count(self, &item_stats_with_time_window);
+        let show_low_stock_alerts = NumberOfMonthsThresholdToShowLowStockAlertsForProducts
+            .load(&ctx.connection, Some(store_id.to_string()))
+            .map_err(|e| {
+                PluginOrRepositoryError::RepositoryError(RepositoryError::DBError {
+                    msg: format!("Failed to load preference: {e}"),
+                    extra: Default::default(),
+                })
+            })?;
 
-        let products_at_risk_of_being_out_of_stock =
-            Self::get_products_at_risk_of_being_out_of_stock_count(
-                self,
-                &item_stats_with_time_window,
-                num_months_consumption,
-            );
+        let products_at_risk_of_being_out_of_stock = self
+            .get_products_at_risk_of_being_out_of_stock_count(&item_stats, show_low_stock_alerts);
 
         Ok(ItemCounts {
             total: total_count,
