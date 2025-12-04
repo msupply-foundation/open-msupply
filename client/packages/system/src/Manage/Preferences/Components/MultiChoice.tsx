@@ -10,7 +10,7 @@ import {
   PreferenceKey,
   TypedTFunction,
 } from '@openmsupply-client/common';
-import { getStatusTranslator } from 'packages/invoices/src/utils';
+import { getInvoiceStatusTranslator } from '@openmsupply-client/invoices';
 
 interface MultiChoice<T extends string> {
   value: T;
@@ -116,7 +116,7 @@ export const getMultiChoiceOptions = (
       outboundStatuses.forEach(({ status, disabled }) => {
         options.push({
           value: status,
-          label: getStatusTranslator(t)(status),
+          label: getInvoiceStatusTranslator(t)(status),
           group: t('label.outbound-shipment'),
           disabled,
         });
@@ -125,7 +125,7 @@ export const getMultiChoiceOptions = (
       inboundStatuses.forEach(({ status, disabled }) => {
         options.push({
           value: status,
-          label: getStatusTranslator(t)(status),
+          label: getInvoiceStatusTranslator(t)(status),
           group: t('label.inbound-shipment'),
           disabled,
         });
