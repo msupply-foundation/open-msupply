@@ -13,10 +13,7 @@ import {
   useRegisterActions,
   ALT_KEY,
 } from '@openmsupply-client/common';
-import {
-  getNextPrescriptionStatus,
-  getStatusTranslation,
-} from '../../../utils';
+import { getNextStatusOption, getStatusTranslation } from '../../../utils';
 import { PrescriptionRowFragment, usePrescription } from '../../api';
 import { PaymentsModal } from '../Payments';
 import { Draft } from 'packages/invoices/src/StockOut';
@@ -59,17 +56,6 @@ const getStatusOptions = (
   }
 
   return options;
-};
-
-const getNextStatusOption = (
-  status: InvoiceNodeStatus | undefined,
-  options: SplitButtonOption<InvoiceNodeStatus>[]
-): SplitButtonOption<InvoiceNodeStatus> | null => {
-  if (!status) return options[0] ?? null;
-
-  const nextStatus = getNextPrescriptionStatus(status);
-  const nextStatusOption = options.find(o => o.value === nextStatus);
-  return nextStatusOption || null;
 };
 
 const getButtonLabel =

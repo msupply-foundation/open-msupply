@@ -8,10 +8,7 @@ import {
   SplitButtonOption,
   useConfirmationModal,
 } from '@openmsupply-client/common';
-import {
-  getNextSupplierReturnStatus,
-  getStatusTranslation,
-} from '../../../utils';
+import { getNextStatusOption, getStatusTranslation } from '../../../utils';
 import { useReturns } from '../../api';
 
 const getStatusOptions = (
@@ -62,17 +59,6 @@ const getStatusOptions = (
   }
 
   return options;
-};
-
-const getNextStatusOption = (
-  status: InvoiceNodeStatus,
-  options: SplitButtonOption<InvoiceNodeStatus>[]
-): SplitButtonOption<InvoiceNodeStatus> | null => {
-  if (!status) return options[0] ?? null;
-
-  const nextStatus = getNextSupplierReturnStatus(status);
-  const nextStatusOption = options.find(o => o.value === nextStatus);
-  return nextStatusOption || null;
 };
 
 const getButtonLabel =

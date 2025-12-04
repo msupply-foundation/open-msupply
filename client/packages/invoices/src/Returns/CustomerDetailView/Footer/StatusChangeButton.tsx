@@ -9,7 +9,7 @@ import {
   useConfirmationModal,
 } from '@openmsupply-client/common';
 import {
-  getNextCustomerReturnStatus,
+  getNextStatusOption,
   getStatusTranslation,
   isInboundStatusChangeDisabled,
 } from '../../../utils';
@@ -106,17 +106,6 @@ const getManualStatusOptions = (
   }
 
   return options;
-};
-
-const getNextStatusOption = (
-  status: InvoiceNodeStatus,
-  options: SplitButtonOption<InvoiceNodeStatus>[]
-): SplitButtonOption<InvoiceNodeStatus> | null => {
-  if (!status) return options[0] ?? null;
-
-  const nextStatus = getNextCustomerReturnStatus(status);
-  const nextStatusOption = options.find(o => o.value === nextStatus);
-  return nextStatusOption || null;
 };
 
 const getButtonLabel =
