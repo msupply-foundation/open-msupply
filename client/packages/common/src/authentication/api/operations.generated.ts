@@ -266,6 +266,8 @@ export type PreferencesQuery = {
     expiredStockIssueThreshold: number;
     warningForExcessRequest: boolean;
     skipIntermediateStatusesInOutbound: boolean;
+    allowEditingSellingPriceOnCustomerInvoiceLines: boolean;
+    itemMarginOverridesSupplierMargin: boolean;
     warnWhenMissingRecentStocktake: {
       __typename: 'WarnWhenMissingRecentStocktakeDataNode';
       enabled: boolean;
@@ -510,6 +512,8 @@ export const PreferencesDocument = gql`
       }
       warningForExcessRequest
       skipIntermediateStatusesInOutbound
+      allowEditingSellingPriceOnCustomerInvoiceLines
+      itemMarginOverridesSupplierMargin
     }
   }
 `;

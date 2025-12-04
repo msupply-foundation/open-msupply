@@ -26,6 +26,8 @@ pub struct UpsertPreferences {
     pub days_in_month: Option<f64>,
     pub expired_stock_prevent_issue: Option<bool>,
     pub expired_stock_issue_threshold: Option<i32>,
+    pub allow_editing_selling_price_on_customer_invoice_lines: Option<bool>,
+    pub item_margin_overrides_supplier_margin: Option<bool>,
 
 
     // Store preferences
@@ -68,6 +70,8 @@ pub fn upsert_preferences(
         days_in_month: days_in_month_input,
         expired_stock_prevent_issue: expired_stock_prevent_issue_input,
         expired_stock_issue_threshold: expired_stock_issue_threshold_input,
+        allow_editing_selling_price_on_customer_invoice_lines: allow_editing_selling_price_on_customer_invoice_lines_input,
+        item_margin_overrides_supplier_margin: item_margin_overrides_supplier_margin_input,
 
         // Store preferences
         manage_vaccines_in_doses: manage_vaccines_in_doses_input,
@@ -109,6 +113,8 @@ pub fn upsert_preferences(
         days_in_month,
         expired_stock_prevent_issue,
         expired_stock_issue_threshold,
+        allow_editing_selling_price_on_customer_invoice_lines, 
+        item_margin_overrides_supplier_margin,
 
         // Store preferences
         manage_vaccines_in_doses,
@@ -185,6 +191,14 @@ pub fn upsert_preferences(
 
             if let Some(input) = expired_stock_issue_threshold_input {
                 expired_stock_issue_threshold.upsert(connection, input, None)?;
+            }
+
+            if let Some(input) = allow_editing_selling_price_on_customer_invoice_lines_input {
+                allow_editing_selling_price_on_customer_invoice_lines.upsert(connection, input, None)?;
+            }
+
+            if let Some(input) = item_margin_overrides_supplier_margin_input {
+                item_margin_overrides_supplier_margin.upsert(connection, input, None)?;
             }
 
 
