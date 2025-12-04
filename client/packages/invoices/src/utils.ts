@@ -127,7 +127,7 @@ export const getPreviousStatus = (
 };
 
 export const getNextStatusOption = (
-  status: InvoiceNodeStatus,
+  status: InvoiceNodeStatus | undefined,
   options: SplitButtonOption<InvoiceNodeStatus>[]
 ): SplitButtonOption<InvoiceNodeStatus> | null => {
   if (!status) return options[0] ?? null;
@@ -144,33 +144,6 @@ export const getButtonLabel =
       status: t(getStatusTranslation(invoiceStatus)),
     });
   };
-
-export const getNextCustomerReturnStatus = (
-  currentStatus: InvoiceNodeStatus
-): InvoiceNodeStatus | null => {
-  const nextStatus = nextStatusMapCustomerReturn[currentStatus];
-  return nextStatus ?? null;
-};
-
-export const getNextSupplierReturnStatus = (
-  currentStatus: InvoiceNodeStatus
-): InvoiceNodeStatus | null => {
-  const currentStatusIdx = supplierReturnStatuses.findIndex(
-    status => currentStatus === status
-  );
-  const nextStatus = supplierReturnStatuses[currentStatusIdx + 1];
-  return nextStatus ?? null;
-};
-
-export const getNextPrescriptionStatus = (
-  currentStatus: InvoiceNodeStatus
-): InvoiceNodeStatus | null => {
-  const currentStatusIdx = prescriptionStatuses.findIndex(
-    status => currentStatus === status
-  );
-  const nextStatus = prescriptionStatuses[currentStatusIdx + 1];
-  return nextStatus ?? null;
-};
 
 export const getStatusTranslator =
   (t: ReturnType<typeof useTranslation>) =>
