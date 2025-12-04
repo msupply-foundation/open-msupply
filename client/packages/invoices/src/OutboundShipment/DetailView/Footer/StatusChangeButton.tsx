@@ -98,7 +98,7 @@ const getButtonLabel =
 
 const useStatusChangeButton = () => {
   const t = useTranslation();
-  const { skipIntermediateStatusesInOutbound } = usePreferences();
+  const { invoiceStatusOptions } = usePreferences();
   const { lines, status, onHold } = useOutbound.document.fields([
     'status',
     'onHold',
@@ -112,26 +112,20 @@ const useStatusChangeButton = () => {
     (data?.lines?.nodes ?? []).some(line => line.numberOfPacks === 0);
 
   const options = useMemo(() => {
-    const statusOptions = getStatusOptions(status, getButtonLabel(t));
-    if (skipIntermediateStatusesInOutbound) {
-      return statusOptions.filter(
+    let statusOptions = getStatusOptions(status, getButtonLabel(t));
+    if (invoiceStatusOptions) {
+      statusOptions = statusOptions.filter(
         option =>
-          option.value !== InvoiceNodeStatus.Allocated &&
-          option.value !== InvoiceNodeStatus.Picked
+          option.value !== undefined &&
+          invoiceStatusOptions.includes(option.value)
       );
     }
     return statusOptions;
-  }, [status, getButtonLabel, skipIntermediateStatusesInOutbound]);
+  }, [status, getButtonLabel, invoiceStatusOptions]);
 
-  // In the case where "skip intermediate statuses" is on, but the current
-  // status has already been set to "Allocated" or "Picked", we pretend the
-  // current status is actually "New" so it behaves as expected.
-  const currentStatus =
-    skipIntermediateStatusesInOutbound &&
-    (status === InvoiceNodeStatus.Allocated ||
-      status === InvoiceNodeStatus.Picked)
-      ? InvoiceNodeStatus.New
-      : status;
+  const currentStatus = invoiceStatusOptions?.includes(status)
+    ? status
+    : InvoiceNodeStatus.New;
 
   const [selectedOption, setSelectedOption] =
     useState<SplitButtonOption<InvoiceNodeStatus> | null>(() =>
