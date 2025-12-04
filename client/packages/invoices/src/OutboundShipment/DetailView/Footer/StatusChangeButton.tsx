@@ -12,7 +12,11 @@ import {
   useDisabledNotificationToast,
   usePreferences,
 } from '@openmsupply-client/common';
-import { getStatusTranslation } from '../../../utils';
+import {
+  getStatusTranslation,
+  getPreviousStatus,
+  outboundStatuses,
+} from '../../../utils';
 import { useOutbound, useOutboundLines } from '../../api';
 
 const getStatusOptions = (
@@ -123,11 +127,11 @@ const useStatusChangeButton = () => {
     return statusOptions;
   }, [status, getButtonLabel, invoiceStatusOptions]);
 
-  // Pretend that the status is NEW if the current status has already been set
-  // and is not included in the status options.
+  // If the status has already been set, but is not included in the preferences,
+  // then use the previous valid status.
   const currentStatus = invoiceStatusOptions?.includes(status)
     ? status
-    : InvoiceNodeStatus.New;
+    : getPreviousStatus(status, invoiceStatusOptions ?? [], outboundStatuses);
 
   const [selectedOption, setSelectedOption] =
     useState<SplitButtonOption<InvoiceNodeStatus> | null>(() =>
@@ -174,7 +178,7 @@ const useStatusChangeButton = () => {
   // It would be set to the current status, which is now a disabled option.
   useEffect(() => {
     setSelectedOption(() => getNextStatusOption(currentStatus, options));
-  }, [status, options]);
+  }, [status, options, currentStatus]);
 
   return {
     options,
