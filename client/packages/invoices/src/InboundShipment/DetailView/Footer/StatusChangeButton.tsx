@@ -10,12 +10,15 @@ import {
   useDisabledNotificationToast,
   UserPermission,
   useAuthContext,
+  usePreferences,
 } from '@openmsupply-client/common';
 import {
   getStatusTranslation,
   isInboundPlaceholderRow,
   getButtonLabel,
   getNextStatusOption,
+  inboundStatuses,
+  getPreviousStatus,
 } from '../../../utils';
 import { InboundLineFragment, useInbound } from '../../api';
 
@@ -79,20 +82,36 @@ const getStatusOptions = (
 };
 
 const useStatusChangeButton = () => {
+  const t = useTranslation();
+  const { invoiceStatusOptions } = usePreferences();
   const { status, onHold, linkedShipment, update, lines } =
     useInbound.document.fields(['status', 'onHold', 'linkedShipment', 'lines']);
   const { success, error } = useNotification();
-  const t = useTranslation();
   const isManuallyCreated = !linkedShipment?.id;
 
-  const options = useMemo(
-    () => getStatusOptions(status, getButtonLabel(t), isManuallyCreated),
-    [isManuallyCreated, status, t]
-  );
+  const options = useMemo(() => {
+    let statusOptions = getStatusOptions(
+      status,
+      getButtonLabel(t),
+      isManuallyCreated
+    );
+    if (invoiceStatusOptions) {
+      statusOptions = statusOptions.filter(
+        option =>
+          option.value !== undefined &&
+          invoiceStatusOptions.includes(option.value)
+      );
+    }
+    return statusOptions;
+  }, [status, isManuallyCreated, invoiceStatusOptions]);
+
+  const currentStatus = invoiceStatusOptions?.includes(status)
+    ? status
+    : getPreviousStatus(status, invoiceStatusOptions ?? [], inboundStatuses);
 
   const [selectedOption, setSelectedOption] =
     useState<SplitButtonOption<InvoiceNodeStatus> | null>(() =>
-      getNextStatusOption(status, options)
+      getNextStatusOption(currentStatus, options)
     );
 
   const onConfirmStatusChange = async () => {
@@ -122,7 +141,7 @@ const useStatusChangeButton = () => {
   // When the status of the invoice changes (after an update), set the selected option to the next status.
   // It would be set to the current status, which is now a disabled option.
   useEffect(() => {
-    setSelectedOption(() => getNextStatusOption(status, options));
+    setSelectedOption(() => getNextStatusOption(currentStatus, options));
   }, [status, options]);
 
   return {
@@ -159,10 +178,9 @@ export const StatusChangeButton = () => {
     onHold,
     lines,
   } = useStatusChangeButton();
-  const isStatusChangeDisabled = useInbound.utils.isStatusChangeDisabled();
   const t = useTranslation();
-
   const { userHasPermission } = useAuthContext();
+  const isStatusChangeDisabled = useInbound.utils.isStatusChangeDisabled();
 
   const onVerify = () => {
     if (userHasPermission(UserPermission.InboundShipmentVerify)) {
