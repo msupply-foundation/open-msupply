@@ -18,6 +18,7 @@ pub fn mock_name_store_b() -> NameRow {
         name: String::from("Store B"),
         code: String::from("code"),
         is_manufacturer: true,
+        margin: Some(10.0),
         ..Default::default()
     }
 }
