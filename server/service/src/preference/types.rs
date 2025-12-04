@@ -47,6 +47,7 @@ pub enum PrefKey {
     StoreCustomColour,
     WarnWhenMissingRecentStocktake,
     InvoiceStatusOptions,
+    ShowIndicativePriceInRequisitions,
 }
 
 #[derive(Clone, Debug, PartialEq)]

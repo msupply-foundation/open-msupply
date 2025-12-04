@@ -78,6 +78,10 @@ impl PreferencesNode {
         self.load_preference(&self.preferences.expired_stock_issue_threshold)
     }
 
+    pub async fn show_indicative_price_in_requisitions(&self) -> Result<bool> {
+        self.load_preference(&self.preferences.show_indicative_price_in_requisitions)
+    }
+
     // Store preferences
     pub async fn manage_vaccines_in_doses(&self) -> Result<bool> {
         self.load_preference(&self.preferences.manage_vaccines_in_doses)
@@ -260,6 +264,7 @@ pub enum PreferenceKey {
     StoreCustomColour,
     WarnWhenMissingRecentStocktake,
     InvoiceStatusOptions,
+    ShowIndicativePriceInRequisitions,
 }
 
 #[derive(Enum, Copy, Clone, Debug, Eq, PartialEq)]
