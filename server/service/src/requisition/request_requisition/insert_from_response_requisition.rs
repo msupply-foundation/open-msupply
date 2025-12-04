@@ -10,8 +10,10 @@ use crate::{
     activity_log::activity_log_entry,
     backend_plugin::plugin_provider::PluginError,
     number::next_number,
+    pricing::item_price::{get_pricing_for_items, ItemPriceLookup},
     requisition::{
-        common::check_requisition_row_exists, query::get_requisition,
+        common::{check_requisition_row_exists, get_indicative_price_pref},
+        query::get_requisition,
         requisition_supply_status::get_requisitions_supply_statuses,
     },
     service_provider::ServiceContext,
@@ -172,6 +174,22 @@ fn generate(
             .filter(|s| s.requested_minus_supply_quantity() > 0.0)
             .collect::<Vec<_>>();
 
+    let populate_price_per_unit = get_indicative_price_pref(&ctx.connection)?;
+    let price_list = if populate_price_per_unit {
+        Some(get_pricing_for_items(
+            &ctx.connection,
+            ItemPriceLookup {
+                item_ids: requisition_supply
+                    .iter()
+                    .map(|r| r.item_id().to_string())
+                    .collect(),
+                customer_name_id: None,
+            },
+        )?)
+    } else {
+        None
+    };
+
     let requisition_lines = requisition_supply
         .iter()
         .map(|r| {
@@ -189,6 +207,15 @@ fn generate(
                 suggested_quantity: line.suggested_quantity,
                 available_stock_on_hand: line.available_stock_on_hand,
                 average_monthly_consumption: line.average_monthly_consumption,
+                price_per_unit: if let Some(price_list) = &price_list {
+                    price_list
+                        .get(&r.requisition_line.item_row.id)
+                        .cloned()
+                        .unwrap_or_default()
+                        .calculated_price_per_unit
+                } else {
+                    None
+                },
                 // Defaults
                 initial_stock_on_hand_units: 0.0,
                 incoming_units: 0.0,

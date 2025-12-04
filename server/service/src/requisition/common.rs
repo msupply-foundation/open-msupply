@@ -10,6 +10,8 @@ use repository::{
     RequisitionType,
 };
 
+use crate::preference::{Preference, ShowIndicativePriceInRequisitions};
+
 pub fn check_requisition_row_exists(
     connection: &StorageConnection,
     id: &str,
@@ -31,7 +33,8 @@ pub fn get_lines_for_requisition(
     requisition_id: &str,
 ) -> Result<Vec<RequisitionLine>, RepositoryError> {
     RequisitionLineRepository::new(connection).query_by_filter(
-        RequisitionLineFilter::new().requisition_id(EqualFilter::equal_to(requisition_id.to_string())),
+        RequisitionLineFilter::new()
+            .requisition_id(EqualFilter::equal_to(requisition_id.to_string())),
     )
 }
 
@@ -175,4 +178,15 @@ pub fn check_master_list_for_store(
             .is_program(false),
     )?;
     Ok(rows.pop())
+}
+
+pub(crate) fn get_indicative_price_pref(
+    connection: &StorageConnection,
+) -> Result<bool, RepositoryError> {
+    ShowIndicativePriceInRequisitions {}
+        .load(connection, None)
+        .map_err(|e| RepositoryError::DBError {
+            msg: "Could not load showIndicativePriceInRequisitions global preference".to_string(),
+            extra: e.to_string(),
+        })
 }

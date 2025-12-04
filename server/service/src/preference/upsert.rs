@@ -26,6 +26,7 @@ pub struct UpsertPreferences {
     pub days_in_month: Option<f64>,
     pub expired_stock_prevent_issue: Option<bool>,
     pub expired_stock_issue_threshold: Option<i32>,
+    pub show_indicative_price_in_requisitions:Option<bool>,
 
 
     // Store preferences
@@ -68,6 +69,7 @@ pub fn upsert_preferences(
         days_in_month: days_in_month_input,
         expired_stock_prevent_issue: expired_stock_prevent_issue_input,
         expired_stock_issue_threshold: expired_stock_issue_threshold_input,
+        show_indicative_price_in_requisitions: show_indicative_price_in_requisitions_input,
 
         // Store preferences
         manage_vaccines_in_doses: manage_vaccines_in_doses_input,
@@ -109,6 +111,7 @@ pub fn upsert_preferences(
         days_in_month,
         expired_stock_prevent_issue,
         expired_stock_issue_threshold,
+        show_indicative_price_in_requisitions,
 
         // Store preferences
         manage_vaccines_in_doses,
@@ -178,16 +181,18 @@ pub fn upsert_preferences(
             if let Some(input) = days_in_month_input {
                 days_in_month.upsert(connection, input, None)?;
             }
-
             if let Some(input) = expired_stock_prevent_issue_input {
                 expired_stock_prevent_issue.upsert(connection, input, None)?;
             }
-
+            
             if let Some(input) = expired_stock_issue_threshold_input {
                 expired_stock_issue_threshold.upsert(connection, input, None)?;
             }
 
-
+            if let Some(input) = show_indicative_price_in_requisitions_input {
+                show_indicative_price_in_requisitions.upsert(connection, input, None)?;
+            }
+            
             // Store preferences, input could be array of store IDs and values - iterate and insert...
             if let Some(inputs) = manage_vaccines_in_doses_input {
                 upsert_store_input(connection, manage_vaccines_in_doses, inputs)?;
