@@ -13,8 +13,9 @@ import {
 } from '@openmsupply-client/common';
 import {
   getStatusTranslation,
-  getNextInboundStatus,
   isInboundPlaceholderRow,
+  getButtonLabel,
+  getNextStatusOption,
 } from '../../../utils';
 import { InboundLineFragment, useInbound } from '../../api';
 
@@ -76,31 +77,6 @@ const getStatusOptions = (
 
   return options;
 };
-
-const getNextStatusOption = (
-  status: InvoiceNodeStatus,
-  options: SplitButtonOption<InvoiceNodeStatus>[]
-): SplitButtonOption<InvoiceNodeStatus> | null => {
-  if (!status) return options[0] ?? null;
-
-  const nextStatus = getNextInboundStatus(status);
-  const nextStatusOption = options.find(o => o.value === nextStatus);
-
-  if (!nextStatusOption) {
-    console.warn(
-      `No status option found for status: ${nextStatus} for status: ${status}`
-    );
-  }
-  return nextStatusOption || null;
-};
-
-const getButtonLabel =
-  (t: ReturnType<typeof useTranslation>) =>
-  (invoiceStatus: InvoiceNodeStatus): string => {
-    return t('button.save-and-confirm-status', {
-      status: t(getStatusTranslation(invoiceStatus)),
-    });
-  };
 
 const useStatusChangeButton = () => {
   const { status, onHold, linkedShipment, update, lines } =

@@ -12,6 +12,7 @@ import {
   TypedTFunction,
   noOtherVariants,
   InvoiceNodeType,
+  SplitButtonOption,
 } from '@openmsupply-client/common';
 import { OutboundFragment, OutboundRowFragment } from './OutboundShipment/api';
 import { InboundLineFragment } from './InboundShipment/api';
@@ -110,23 +111,6 @@ export const getStatusTranslation = (status: InvoiceNodeStatus): LocaleKey => {
   return statusTranslation[status];
 };
 
-export const getNextSupplierReturnStatus = (
-  currentStatus: InvoiceNodeStatus
-): InvoiceNodeStatus | null => {
-  const currentStatusIdx = supplierReturnStatuses.findIndex(
-    status => currentStatus === status
-  );
-  const nextStatus = supplierReturnStatuses[currentStatusIdx + 1];
-  return nextStatus ?? null;
-};
-
-export const getNextInboundStatus = (
-  currentStatus: InvoiceNodeStatus
-): InvoiceNodeStatus | null => {
-  const nextStatus = nextStatusMap[currentStatus];
-  return nextStatus ?? null;
-};
-
 export const getPreviousStatus = (
   currentStatus: InvoiceNodeStatus,
   validStatuses: InvoiceNodeStatus[],
@@ -142,10 +126,39 @@ export const getPreviousStatus = (
   return previousValidStatus ?? InvoiceNodeStatus.New;
 };
 
+export const getNextStatusOption = (
+  status: InvoiceNodeStatus,
+  options: SplitButtonOption<InvoiceNodeStatus>[]
+): SplitButtonOption<InvoiceNodeStatus> | null => {
+  if (!status) return options[0] ?? null;
+
+  const currentIndex = options.findIndex(o => o.value === status);
+  const nextOption = options[currentIndex + 1];
+  return nextOption || null;
+};
+
+export const getButtonLabel =
+  (t: ReturnType<typeof useTranslation>) =>
+  (invoiceStatus: InvoiceNodeStatus): string => {
+    return t('button.save-and-confirm-status', {
+      status: t(getStatusTranslation(invoiceStatus)),
+    });
+  };
+
 export const getNextCustomerReturnStatus = (
   currentStatus: InvoiceNodeStatus
 ): InvoiceNodeStatus | null => {
   const nextStatus = nextStatusMapCustomerReturn[currentStatus];
+  return nextStatus ?? null;
+};
+
+export const getNextSupplierReturnStatus = (
+  currentStatus: InvoiceNodeStatus
+): InvoiceNodeStatus | null => {
+  const currentStatusIdx = supplierReturnStatuses.findIndex(
+    status => currentStatus === status
+  );
+  const nextStatus = supplierReturnStatuses[currentStatusIdx + 1];
   return nextStatus ?? null;
 };
 
@@ -157,16 +170,6 @@ export const getNextPrescriptionStatus = (
   );
   const nextStatus = prescriptionStatuses[currentStatusIdx + 1];
   return nextStatus ?? null;
-};
-
-export const getNextInboundStatusButtonTranslation = (
-  currentStatus: InvoiceNodeStatus
-): LocaleKey | undefined => {
-  const nextStatus = getNextInboundStatus(currentStatus);
-
-  if (nextStatus) return statusTranslation[nextStatus];
-
-  return undefined;
 };
 
 export const getStatusTranslator =
