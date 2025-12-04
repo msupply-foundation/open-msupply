@@ -38,6 +38,8 @@ pub trait PreferenceServiceTrait: Sync + Send {
             days_in_month,
             expired_stock_prevent_issue,
             expired_stock_issue_threshold,
+            item_margin_overrides_supplier_margin,
+            allow_editing_selling_price_on_customer_invoice_lines,
 
             // Store preferences
             manage_vaccines_in_doses,
@@ -86,6 +88,12 @@ pub trait PreferenceServiceTrait: Sync + Send {
         append_if_type(days_in_month, &mut prefs, &input)?;
         append_if_type(expired_stock_prevent_issue, &mut prefs, &input)?;
         append_if_type(expired_stock_issue_threshold, &mut prefs, &input)?;
+        append_if_type(
+            allow_editing_selling_price_on_customer_invoice_lines,
+            &mut prefs,
+            &input,
+        )?;
+        append_if_type(item_margin_overrides_supplier_margin, &mut prefs, &input)?;
 
         // Store preferences
         append_if_type(order_in_packs, &mut prefs, &input)?;
