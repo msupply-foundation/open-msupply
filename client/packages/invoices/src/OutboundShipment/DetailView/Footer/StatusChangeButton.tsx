@@ -123,6 +123,8 @@ const useStatusChangeButton = () => {
     return statusOptions;
   }, [status, getButtonLabel, invoiceStatusOptions]);
 
+  // Pretend that the status is NEW if the current status has already been set
+  // and is not included in the status options.
   const currentStatus = invoiceStatusOptions?.includes(status)
     ? status
     : InvoiceNodeStatus.New;
