@@ -1,10 +1,10 @@
 use super::StorageConnection;
 use crate::{
     diesel_macros::{apply_date_filter, apply_equal_filter},
-    DateFilter, EqualFilter, InvoiceType, RepositoryError,
+    DBType, DateFilter, EqualFilter, InvoiceType, RepositoryError,
 };
 use chrono::NaiveDate;
-use diesel::prelude::*;
+use diesel::{dsl::count, prelude::*};
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
@@ -63,20 +63,7 @@ impl<'a> ConsumptionRepository<'a> {
         &self,
         filter: Option<ConsumptionFilter>,
     ) -> Result<Vec<ConsumptionRow>, RepositoryError> {
-        // Query Consumption
-        let mut query = consumption::table.into_boxed();
-
-        if let Some(f) = filter {
-            let ConsumptionFilter {
-                item_id,
-                date,
-                store_id,
-            } = f;
-
-            apply_equal_filter!(query, item_id, consumption::item_id);
-            apply_equal_filter!(query, store_id, consumption::store_id);
-            apply_date_filter!(query, date, consumption::date);
-        }
+        let query = create_filtered_query(filter);
 
         // Debug diesel query
         // println!(
@@ -86,6 +73,34 @@ impl<'a> ConsumptionRepository<'a> {
 
         Ok(query.load::<ConsumptionRow>(self.connection.lock().connection())?)
     }
+
+    pub fn query_items_with_consumption(
+        &self,
+        filter: Option<ConsumptionFilter>,
+    ) -> Result<Vec<(String, i64)>, RepositoryError> {
+        let query = create_filtered_query(filter);
+
+        let query = consumption::table
+            .group_by(consumption::item_id)
+            .select((consumption::item_id, count(consumption::quantity)))
+            .filter(consumption::item_id.eq_any(query.select(consumption::item_id)));
+
+        Ok(query.load::<(String, i64)>(self.connection.lock().connection())?)
+    }
+}
+
+type BoxedConsumptionQuery = consumption::BoxedQuery<'static, DBType>;
+
+fn create_filtered_query(filter: Option<ConsumptionFilter>) -> BoxedConsumptionQuery {
+    let mut query = consumption::table.into_boxed();
+
+    if let Some(filter) = filter {
+        apply_equal_filter!(query, filter.item_id, consumption::item_id);
+        apply_equal_filter!(query, filter.store_id, consumption::store_id);
+        apply_date_filter!(query, filter.date, consumption::date);
+    }
+
+    query
 }
 
 impl ConsumptionFilter {

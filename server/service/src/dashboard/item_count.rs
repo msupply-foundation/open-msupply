@@ -1,4 +1,4 @@
-use repository::{ItemFilter, ItemRepository, RepositoryError};
+use std::collections::HashSet;
 
 use crate::{
     item_stats::{get_item_stats, ItemStats},
@@ -9,6 +9,12 @@ use crate::{
     service_provider::ServiceContext,
     PluginOrRepositoryError,
 };
+use chrono::Duration;
+use repository::{
+    ConsumptionFilter, ConsumptionRepository, DateFilter, EqualFilter, ItemFilter, ItemRepository,
+    RepositoryError, StorageConnection,
+};
+use util::{date_now, date_with_offset};
 
 pub struct ItemCounts {
     pub total: i64,
@@ -63,11 +69,29 @@ pub trait ItemCountServiceTrait: Send + Sync {
         return more_than_six_mos_count;
     }
 
-    fn get_out_of_stock_products_count(&self, item_stats: &Vec<ItemStats>) -> i64 {
-        item_stats
+    fn get_out_of_stock_products_count(
+        &self,
+        ctx: &ServiceContext,
+        store_id: &str,
+        item_ids: Vec<String>,
+        item_stats: &Vec<ItemStats>,
+        num_months_consumption: i32,
+    ) -> Result<i64, PluginOrRepositoryError> {
+        let items_with_consumption_set = get_items_with_consumption_set(
+            &ctx.connection,
+            store_id,
+            item_ids,
+            num_months_consumption,
+        )?;
+
+        let count = item_stats
             .iter()
-            .filter(|i| i.total_consumption > 0.0 && i.total_stock_on_hand == 0.0)
-            .count() as i64
+            .filter(|i| {
+                i.total_stock_on_hand == 0.0 && items_with_consumption_set.contains(&i.item_id)
+            })
+            .count() as i64;
+
+        Ok(count)
     }
 
     fn get_products_at_risk_of_being_out_of_stock_count(
@@ -117,9 +141,6 @@ impl ItemCountServiceTrait for ItemServiceCount {
         let more_than_six_months_stock =
             Self::get_more_than_six_months_stock_count(&self, &item_stats);
 
-        // TODO:
-        // Out of Stock Products: Any item consumption over the value set Number of months to check
-
         let num_months_consumption =
             NumberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts
                 .load(&ctx.connection, Some(store_id.to_string()))
@@ -130,7 +151,13 @@ impl ItemCountServiceTrait for ItemServiceCount {
                     })
                 })?;
 
-        let out_of_stock_products = 0;
+        let out_of_stock_products = self.get_out_of_stock_products_count(
+            ctx,
+            store_id,
+            item_ids.clone(),
+            &item_stats,
+            num_months_consumption,
+        )?;
 
         let show_low_stock_alerts = NumberOfMonthsThresholdToShowLowStockAlertsForProducts
             .load(&ctx.connection, Some(store_id.to_string()))
@@ -154,6 +181,32 @@ impl ItemCountServiceTrait for ItemServiceCount {
         })
     }
 }
+
+pub fn get_items_with_consumption_set(
+    connection: &StorageConnection,
+    store_id: &str,
+    item_ids: Vec<String>,
+    num_months: i32,
+) -> Result<HashSet<String>, RepositoryError> {
+    let days_in_month = 30.0;
+    let number_of_days = num_months as f64 * days_in_month;
+    let end_date = date_now();
+    let start_date = date_with_offset(&end_date, Duration::days(-(number_of_days as i64)));
+
+    let consumption_filter = ConsumptionFilter::new()
+        .store_id(EqualFilter::equal_to(store_id))
+        .item_id(EqualFilter::equal_any(item_ids))
+        .date(DateFilter::date_range(&start_date, &end_date));
+
+    let items_with_consumption = ConsumptionRepository::new(connection)
+        .query_items_with_consumption(Some(consumption_filter))?;
+
+    Ok(items_with_consumption
+        .into_iter()
+        .map(|(id, _)| id)
+        .collect())
+}
+
 #[cfg(test)]
 mod item_count_service_test {
 
@@ -165,7 +218,10 @@ mod item_count_service_test {
     use crate::{
         dashboard::item_count::{ItemCountServiceTrait, ItemServiceCount},
         item_stats::ItemStats,
-        test_helpers::{setup_all_with_data_and_service_provider, ServiceTestContext},
+        test_helpers::{
+            setup_all_and_service_provider, setup_all_with_data_and_service_provider,
+            ServiceTestContext,
+        },
     };
 
     #[actix_rt::test]
@@ -352,31 +408,56 @@ mod item_count_service_test {
 
     #[actix_rt::test]
     async fn test_out_of_stock_products_count() {
+        let ServiceTestContext {
+            service_context, ..
+        } = setup_all_and_service_provider(
+            "omsupply-database-out-of-stock-products-count",
+            MockDataInserts::all(),
+        )
+        .await;
+
         let item_stats: Vec<ItemStats> = vec![
-            // Should count - has consumption but no stock
+            // item_a has consumption but setting stock to 0
             ItemStats {
-                total_consumption: 10.0,
+                item_id: "item_a".to_string(),
                 total_stock_on_hand: 0.0,
                 average_monthly_consumption: 2.0,
                 ..Default::default()
             },
-            // Should NOT count - no consumption data
+            // item_b has consumption but has stock
             ItemStats {
-                total_consumption: 0.0,
-                total_stock_on_hand: 0.0,
-                average_monthly_consumption: 0.0,
-                ..Default::default()
-            },
-            // Should NOT count - has stock
-            ItemStats {
-                total_consumption: 15.0,
+                item_id: "item_b".to_string(),
                 total_stock_on_hand: 50.0,
                 average_monthly_consumption: 3.0,
                 ..Default::default()
             },
+            // item_c has no consumption
+            ItemStats {
+                item_id: "item_c".to_string(),
+                total_stock_on_hand: 0.0,
+                average_monthly_consumption: 0.0,
+                ..Default::default()
+            },
         ];
 
-        let result = ItemServiceCount {}.get_out_of_stock_products_count(&item_stats);
+        let item_ids = vec![
+            "item_a".to_string(),
+            "item_b".to_string(),
+            "item_c".to_string(),
+        ];
+        let num_months_consumption = 3;
+
+        let result = ItemServiceCount {}
+            .get_out_of_stock_products_count(
+                &service_context,
+                &mock_store_b().id,
+                item_ids,
+                &item_stats,
+                num_months_consumption,
+            )
+            .unwrap();
+
+        println!("result {:?}", result);
 
         assert_eq!(result, 1);
     }
