@@ -54,10 +54,12 @@ const getStatusOptions = (
     }
   } else {
     if (currentStatus === InvoiceNodeStatus.Shipped) {
+      // When shipped, can change to delivered or verified
       if (options[3]) options[3].isDisabled = false;
       if (options[4]) options[4].isDisabled = false;
     }
     if (currentStatus === InvoiceNodeStatus.Received) {
+      // When received, can change to verified
       if (options[4]) options[4].isDisabled = false;
     }
   }
