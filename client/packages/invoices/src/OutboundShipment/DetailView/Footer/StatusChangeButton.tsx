@@ -102,9 +102,7 @@ const useStatusChangeButton = () => {
     let statusOptions = getStatusOptions(status, getButtonLabel(t));
     if (invoiceStatusOptions) {
       statusOptions = statusOptions.filter(
-        option =>
-          option.value !== undefined &&
-          invoiceStatusOptions.includes(option.value)
+        option => !!option.value && invoiceStatusOptions.includes(option.value)
       );
     }
     return statusOptions;
