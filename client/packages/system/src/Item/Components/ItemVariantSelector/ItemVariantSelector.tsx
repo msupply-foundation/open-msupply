@@ -6,6 +6,7 @@ import {
   PersistentPaperPopover,
   useSimpleMaterialTable,
   MaterialTable,
+  usePopover,
 } from '@openmsupply-client/common';
 import { useItemVariantSelectorColumns } from './columns';
 import { ItemVariantFragment } from '../../api';
@@ -29,6 +30,8 @@ export const ItemVariantSelector = ({
   isVaccine,
 }: ItemVariantSelectorProps & PropsWithChildren) => {
   const t = useTranslation();
+  const popoverControls = usePopover();
+
   const columns = useItemVariantSelectorColumns({
     selectedId,
     onVariantSelected,
@@ -47,6 +50,7 @@ export const ItemVariantSelector = ({
 
   return (
     <PersistentPaperPopover
+      popoverControls={popoverControls}
       placement="bottom"
       width={850}
       Content={

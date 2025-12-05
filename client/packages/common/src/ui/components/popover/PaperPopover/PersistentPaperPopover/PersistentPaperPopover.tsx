@@ -7,15 +7,15 @@ import { Box, ClickAwayListener, IconButton } from '@mui/material';
 export function PersistentPaperPopover({
   children,
   Content,
+  popoverControls,
   paperProps,
   width,
   height,
   placement = 'left',
-}: PropsWithChildren<PaperPopoverProps>) {
-  const { show, hide, Popover } = usePopover({
-    hideDebounceDelay: 0,
-  });
-
+}: PropsWithChildren<PaperPopoverProps> & {
+  popoverControls: ReturnType<typeof usePopover>;
+}) {
+  const { show, hide, Popover } = popoverControls;
   return (
     <>
       <div

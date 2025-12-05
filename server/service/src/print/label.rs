@@ -12,10 +12,7 @@ pub struct AssetLabelData {
     date_printed: Option<String>,
 }
 
-pub fn print_asset_label(
-    settings: LabelPrinterSettingNode,
-    data: AssetLabelData,
-) -> Result<String> {
+pub fn get_asset_label(data: AssetLabelData) -> String {
     let asset_number = data.asset_number.unwrap_or_default();
 
     let date_printed = data.date_printed.unwrap_or_default();
@@ -24,7 +21,7 @@ pub fn print_asset_label(
 
     // You can use an online image to ZPL convertor, such as the one at labelary.com/viewer.html, to convert the logo from an image to the ZPL code that the printer needs.
 
-    let payload = format!(
+    format!(
         r#"
         ^XA
         ^FX CI command parameters:
@@ -38,7 +35,7 @@ pub fn print_asset_label(
         {}
         ^XZ"#,
         data.code, asset_number, date_printed, m_supply_logo
-    );
+    )
 
     // # Instructions to output QR codes rather than data matrix barcodes:
     // In the payload variable above, there are these three lines of code:
@@ -51,8 +48,15 @@ pub fn print_asset_label(
     // ^FDMA,{}^FS
     // For an explanation of how this works, see https://supportcommunity.zebra.com/s/article/ZPL-Command-Information-and-DetailsV2?language=en_US
     // To make the layout correct, adjust the positions of the elements (i.e. the values in the '^FO[number],[number]' statements) at labelary.com/viewer.html
+}
 
+pub fn print_asset_label(
+    settings: LabelPrinterSettingNode,
+    data: AssetLabelData,
+) -> Result<String> {
+    let payload = get_asset_label(data);
     let printer = Jetdirect::new(settings.address, settings.port);
+
     printer.send_string(payload, Mode::Print)
 }
 

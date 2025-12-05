@@ -1,4 +1,5 @@
 import {
+  FilterBy,
   FilterOptionsState,
   LocaleKey,
   PurchaseOrderNodeStatus,
@@ -33,6 +34,7 @@ export interface NameSearchInputProps {
   clearable?: boolean;
   currentId?: string;
   extraFilter?: (item: NameRowFragment) => boolean;
+  filterBy?: FilterBy | null;
 }
 
 export interface NullableNameSearchInputProps

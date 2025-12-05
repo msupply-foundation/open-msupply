@@ -55,7 +55,7 @@ export const convert_data: ConvertData<Data, Arguments, Result> = ({
       expiringInSixMonths: expiringInSixMonthsMap[item.id]?.[0]?.quantity || 0,
       expiringInTwelveMonths: expiringInTwelveMonthsMap[item.id]?.[0]?.quantity || 0,
       // invoice lines could add up to more then requested stock
-      stockOnOrder: Math.max(stockOnOrderMap[item.id]?.[0]?.quantity || 0),
+      stockOnOrder: Math.max(0, stockOnOrderMap[item.id]?.[0]?.quantity || 0),
       AMC12: AMCTwelveMap[item.id]?.[0]?.quantity || 0,
       AMC24: AMCTwentyFourMap[item.id]?.[0]?.quantity || 0,
       SOH: item.stats?.stockOnHand || 0,

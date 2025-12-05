@@ -52,7 +52,7 @@ export const getNativeAPI = (): NativeAPI | null => {
 };
 
 export const frontEndHostUrl = ({ protocol, ip, port }: FrontEndHost) =>
-  `${protocol}://${ip}:${port}`;
+  port === 0 ? `${protocol}://${ip}` : `${protocol}://${ip}:${port}`;
 
 export const frontEndHostDiscoveryGraphql = (server: FrontEndHost) =>
   `${frontEndHostUrl({
@@ -64,9 +64,13 @@ export const frontEndHostDiscoveryGraphql = (server: FrontEndHost) =>
 export const frontEndHostDisplay = ({ protocol, ip, port }: FrontEndHost) => {
   switch (protocol) {
     case 'https':
-      return port === 443 ? `https://${ip}` : `https://${ip}:${port}`;
+      return port === 443 || port === 0
+        ? `https://${ip}`
+        : `https://${ip}:${port}`;
     default:
-      return port === 80 ? `http://${ip}` : `http://${ip}:${port}`;
+      return port === 80 || port === 0
+        ? `http://${ip}`
+        : `http://${ip}:${port}`;
   }
 };
 

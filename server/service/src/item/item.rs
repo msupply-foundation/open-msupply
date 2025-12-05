@@ -45,7 +45,7 @@ pub fn get_items(
                 filter = filter.id(EqualFilter::equal_any(item_ids_filtered_by_mos));
             }
 
-            if filter.out_of_stock_products.is_some()
+            if filter.out_of_stock_with_recent_consumption.is_some()
                 || filter.products_at_risk_of_being_out_of_stock.is_some()
             {
                 let item_ids_filtered =
@@ -182,14 +182,17 @@ pub fn get_item_ids_by_stock_status(
         .filter_map(|(id, stats)| {
             let mut include = true;
 
-            if filter.out_of_stock_products == Some(true) {
+            if filter.out_of_stock_with_recent_consumption == Some(true) {
                 // Include items with consumption in the lookback period but no stock
                 include &= stats.total_consumption > 0.0 && stats.total_stock_on_hand == 0.0;
+            } else {
+                // Incluse items with consumptino in the lookback period but with stock
+                include &= stats.total_consumption > 0.0 && stats.total_stock_on_hand > 0.0;
             }
 
             if filter.products_at_risk_of_being_out_of_stock == Some(true) {
                 // Include items with less than threshold months of stock
-                if stats.average_monthly_consumption > 0.0 {
+                if stats.average_monthly_consumption > 0.0 && stats.total_stock_on_hand > 0.0 {
                     let months_of_stock =
                         stats.total_stock_on_hand / stats.average_monthly_consumption;
                     include &= months_of_stock < num_months_consumption as f64;

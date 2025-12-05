@@ -12,12 +12,12 @@ use super::{
 // Needs to be added to all_translators()
 #[deny(dead_code)]
 pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
-    Box::new(AssetTypeTranslation)
+    Box::new(AssetCatalogueTypeTranslation)
 }
 
-pub(crate) struct AssetTypeTranslation;
+pub(crate) struct AssetCatalogueTypeTranslation;
 
-impl SyncTranslation for AssetTypeTranslation {
+impl SyncTranslation for AssetCatalogueTypeTranslation {
     fn table_name(&self) -> &str {
         "asset_catalogue_type"
     }
@@ -82,7 +82,7 @@ mod tests {
     #[actix_rt::test]
     async fn test_asset_type_translation() {
         use crate::sync::test::test_data::asset_type as test_data;
-        let translator = AssetTypeTranslation;
+        let translator = AssetCatalogueTypeTranslation;
 
         let (_, connection, _, _) =
             setup_all("test_asset_type_translation", MockDataInserts::none()).await;
