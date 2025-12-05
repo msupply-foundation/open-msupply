@@ -1,4 +1,4 @@
-use chrono::{Datelike, Duration, NaiveDate, NaiveDateTime, Utc};
+use chrono::{Datelike, Duration, Local, NaiveDate, NaiveDateTime, TimeZone, Utc};
 
 pub fn date_now_with_offset(off_set: Duration) -> NaiveDate {
     date_with_offset(&date_now(), off_set)
@@ -15,6 +15,10 @@ pub fn date_with_days_offset(date: &NaiveDate, days_offset: i32) -> NaiveDate {
 
 pub fn date_now() -> NaiveDate {
     Utc::now().naive_utc().date()
+}
+
+pub fn datetime_now() -> NaiveDateTime {
+    Utc::now().naive_utc()
 }
 
 pub fn datetime_with_offset(date: &NaiveDateTime, off_set: Duration) -> NaiveDateTime {
@@ -100,4 +104,30 @@ pub fn create_datetime(
     second: u32,
 ) -> Option<NaiveDateTime> {
     NaiveDate::from_ymd_opt(year, month, day).and_then(|d| d.and_hms_opt(hour, minute, second))
+}
+
+pub fn get_timezone_date_as_utc(date: NaiveDateTime, tz: &impl TimeZone) -> NaiveDateTime {
+    tz.from_local_datetime(&date)
+        .earliest()
+        .map(|dt| dt.with_timezone(&Utc).naive_utc())
+        // If something fails return time as UTC could cause a very rare logic bug (daylight saving time)
+        // although it's not clear if this is even likely with 'earliest' method
+        .unwrap_or(date)
+}
+
+// First get local date at midnight, then convert to UTC and get the NaiveDateTime
+pub fn get_local_date_as_utc(date: NaiveDateTime) -> NaiveDateTime {
+    get_timezone_date_as_utc(date, &Local)
+}
+
+pub fn start_of_the_day_for_date(date: &NaiveDate) -> NaiveDateTime {
+    // Safe to unwrap as we know hour, min and sec are valid
+    let start = date.and_hms_opt(0, 0, 0).unwrap();
+    get_local_date_as_utc(start)
+}
+
+pub fn end_of_the_day_for_date(date: &NaiveDate) -> NaiveDateTime {
+    // Safe to unwrap as we know hour, min, sec, nanos are valid
+    let end = date.and_hms_nano_opt(23, 59, 59, 999_999_999).unwrap();
+    get_local_date_as_utc(end)
 }

@@ -1,7 +1,6 @@
 use std::sync::Arc;
 
 use actix_rt::task::JoinHandle;
-use chrono::Utc;
 use repository::{
     mock::{MockData, MockDataInserts},
     test_db::setup_all_with_data,

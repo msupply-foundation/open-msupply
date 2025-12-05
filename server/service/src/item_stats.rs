@@ -12,9 +12,9 @@ use crate::{
 };
 use chrono::{Duration, NaiveDate};
 use repository::{
-    ConsumptionFilter, ConsumptionRepository, DateFilter, DaysOutOfStockRepository,
-    DaysOutOfStockRow, EqualFilter, PluginType, RepositoryError, RequisitionLine,
-    StockOnHandFilter, StockOnHandRepository, StockOnHandRow, StorageConnection,
+    ConsumptionFilter, ConsumptionRepository, DateFilter, DaysOutOfStockFilter,
+    DaysOutOfStockRepository, DaysOutOfStockRow, EqualFilter, PluginType, RepositoryError,
+    RequisitionLine, StockOnHandFilter, StockOnHandRepository, StockOnHandRow, StorageConnection,
 };
 use std::{collections::HashMap, ops::Neg};
 use util::{date_now, date_with_offset};
@@ -73,7 +73,7 @@ pub fn get_item_stats(
         Duration::days((number_of_days).neg() as i64),
     );
 
-    let filter = ConsumptionFilter {
+    let consumption_filter = ConsumptionFilter {
         item_id: Some(EqualFilter::equal_any(item_ids.clone())),
         store_id: Some(EqualFilter::equal_to(store_id)),
         date: Some(DateFilter::date_range(&start_date, &end_date)),
@@ -88,15 +88,22 @@ pub fn get_item_stats(
 
     let consumption_map = match PluginInstance::get_one(PluginType::GetConsumption) {
         Some(plugin) => get_consumption::Trait::call(&(*plugin), consumption)?,
-        None => get_consumption_map(connection, filter.clone())?,
+        None => get_consumption_map(connection, consumption_filter)?,
     };
 
     let adjust_for_days_out_of_stock = AdjustForNumberOfDaysOutOfStock
         .load(connection, None)
         .unwrap_or(false);
 
+    let dos_filter = DaysOutOfStockFilter {
+        item_id: Some(EqualFilter::equal_any(item_ids.clone())),
+        store_id: Some(EqualFilter::equal_to(store_id)),
+        from: start_date,
+        to: end_date,
+    };
+
     let adjusted_days_out_of_stock_map = if adjust_for_days_out_of_stock {
-        let dos_rows = DaysOutOfStockRepository::new(connection).query(Some(filter))?;
+        let dos_rows = DaysOutOfStockRepository::new(connection).query(dos_filter)?;
 
         Some(get_days_out_of_stock_adjustment_map(
             dos_rows,
@@ -305,14 +312,23 @@ mod test {
         .join(make_movements(
             test_stock_line.clone(),
             vec![
-                // (day, movement)
-                (1, 3),   // +3 in
-                (10, -3), // -3 out
-                // (stock = zero for 10 days)
-                (20, 3), // +3 in
-                (25, -3), // -3 out
-                         // (stock = zero for 5 more days)
-                         // Total 13 days out of stock
+                (1, 3),
+                (5, -3),
+                (16, 3),
+                (22, -3),
+                (28, 3),
+                /*
+                Making sure to allow for local/utc timezone differences, at least +1 day at start and -1 day at end
+                +------------------------+----+-----+------------+----+----+-------------+----+-----+-------------+----+
+                |                        | 5  | 6   | ..(9 days) | 16 | 17 | .. (5 days) | 22 | 23  | .. (4 days) | 28 |
+                +------------------------+----+-----+------------+----+----+-------------+----+-----+-------------+----+
+                | end of day balance     | 0  | 0   | 0          | 3  | 3  | 3           | 0  | 0   | 0           | 3  |
+                +------------------------+----+-----+------------+----+----+-------------+----+-----+-------------+----+
+                | full day without stock | no | yes | yes * 9    | no | no | no          | no | yes | yes * 4     | no |
+                +------------------------+----+-----+------------+----+----+-------------+----+-----+-------------+----+
+                Leading to 15 dos
+                https://www.tablesgenerator.com/text_tables (file -> paste table data)
+                */
             ],
         ));
 

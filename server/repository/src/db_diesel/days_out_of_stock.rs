@@ -1,7 +1,7 @@
-use super::consumption::*;
 use crate::{
-    diesel_macros::apply_equal_filter, DateFilter, Dos, RepositoryError, StorageConnection,
+    diesel_macros::apply_equal_filter, Dos, EqualFilter, RepositoryError, StorageConnection,
 };
+use chrono::NaiveDate;
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
@@ -22,6 +22,18 @@ table! {
         store_id -> Text,
         total_dos -> Double,
     }
+}
+
+#[derive(Clone, Debug, PartialEq, Default, TS, Serialize, Deserialize)]
+pub struct DaysOutOfStockFilter {
+    #[ts(optional)]
+    pub store_id: Option<EqualFilter<String>>,
+    #[ts(optional)]
+    pub item_id: Option<EqualFilter<String>>,
+    // Will consider start of the day
+    pub from: NaiveDate,
+    // Will consider end of the day
+    pub to: NaiveDate,
 }
 
 #[derive(Clone, Queryable, Selectable, Debug, PartialEq, Default, Serialize, Deserialize, TS)]
@@ -46,18 +58,14 @@ impl<'a> DaysOutOfStockRepository<'a> {
 
     pub fn query(
         &self,
-        filter: Option<ConsumptionFilter>,
+        filter: DaysOutOfStockFilter,
     ) -> Result<Vec<DaysOutOfStockRow>, RepositoryError> {
-        let Some(ConsumptionFilter {
+        let DaysOutOfStockFilter {
             item_id,
             store_id,
-            date,
-        }) = filter
-        else {
-            // If no filter, fallback to static table query
-            return Ok(days_out_of_stock::table
-                .load::<DaysOutOfStockRow>(self.connection.lock().connection())?);
-        };
+            from,
+            to,
+        } = filter;
 
         // Build filter_helper query for any present fields
         let mut filter_helper_query = dos_filter_helper::table.into_boxed();
@@ -66,27 +74,15 @@ impl<'a> DaysOutOfStockRepository<'a> {
 
         apply_equal_filter!(filter_helper_query, store_id, dos_filter_helper::store_id);
 
-        // If a date filter is provided and valid, use it; otherwise, return empty result
-        let Some(DateFilter {
-            after_or_equal_to: Some(start_date),
-            before_or_equal_to: Some(end_date),
-            ..
-        }) = date
-        else {
-            return Ok(vec![]);
-        };
-
-        // Convert start_date and end_date to NaiveDateTime
-        // TODO: Can the query be changed to NaiveDate instead?
-        let start = start_date.and_time(chrono::NaiveTime::from_hms_opt(0, 0, 0).unwrap());
-        let end = end_date.and_time(chrono::NaiveTime::from_hms_opt(23, 59, 59).unwrap());
-
         let dos_query = Dos {
-            start,
-            end,
+            from,
+            to,
             filter_helper: filter_helper_query,
-            dos_result: (),
-        };
+        }
+        .as_dos_query()?;
+
+        // Debug
+        println!("{}", diesel::debug_query::<crate::DBType, _>(&dos_query));
 
         Ok(dos_query.load::<DaysOutOfStockRow>(self.connection.lock().connection())?)
     }
@@ -95,218 +91,237 @@ impl<'a> DaysOutOfStockRepository<'a> {
 #[cfg(test)]
 
 pub(crate) mod test {
-
-    use std::ops::Neg;
-
-    use chrono::Duration;
-    use util::{date_now, date_with_offset};
+    use chrono::{Duration, NaiveDateTime, Timelike};
+    use util::{date_now, date_with_offset, datetime_now, get_local_date_as_utc};
 
     use super::*;
 
-    use crate::mock::test_helpers::make_movements;
+    use crate::mock::test_helpers::{make_movements_extended, MakeMovements};
     use crate::mock::MockData;
     use crate::{
-        mock::{
-            mock_item_a, mock_item_b, mock_item_c, mock_item_d, mock_item_e, mock_item_f,
-            mock_store_a, MockDataInserts,
-        },
+        mock::{mock_item_a, mock_store_a, MockDataInserts},
         test_db::setup_all_with_data,
     };
     use crate::{EqualFilter, StockLineRow};
 
-    pub(crate) fn mock_data() -> MockData {
-        let test_stock_line_a = StockLineRow {
-            id: "test_stock_line_a".to_string(),
+    async fn test_one(
+        test_name: &str,
+        reference_date: NaiveDateTime,
+        movements: Vec<(i64, i64)>,
+        expected_dos: Option<f64>,
+    ) {
+        let test_stock_line = StockLineRow {
+            id: format!("test_stock_line_{test_name}"),
             item_link_id: mock_item_a().id.clone(),
             store_id: mock_store_a().id.clone(),
             pack_size: 1.0,
             ..Default::default()
         };
-        let test_stock_line_b = StockLineRow {
-            id: "test_stock_line_b".to_string(),
-            item_link_id: mock_item_b().id.clone(),
-            store_id: mock_store_a().id.clone(),
-            pack_size: 1.0,
-            ..Default::default()
-        };
-        let test_stock_line_c = StockLineRow {
-            id: "test_stock_line_c".to_string(),
-            item_link_id: mock_item_c().id.clone(),
-            store_id: mock_store_a().id.clone(),
-            pack_size: 1.0,
-            ..Default::default()
-        };
-        let test_stock_line_d = StockLineRow {
-            id: "test_stock_line_d".to_string(),
-            item_link_id: mock_item_d().id.clone(),
-            store_id: mock_store_a().id.clone(),
-            pack_size: 1.0,
-            ..Default::default()
-        };
-        let test_stock_line_e = StockLineRow {
-            id: "test_stock_line_e".to_string(),
-            item_link_id: mock_item_e().id.clone(),
-            store_id: mock_store_a().id.clone(),
-            pack_size: 1.0,
-            ..Default::default()
-        };
-        let test_stock_line_f = StockLineRow {
-            id: "test_stock_line_f".to_string(),
-            item_link_id: mock_item_f().id.clone(),
-            store_id: mock_store_a().id.clone(),
-            pack_size: 1.0,
-            ..Default::default()
-        };
 
-        // Use make_movements to create days where the item is out of stock
-        // Movements from day 0 - 21 are prior to the DOS calculation
-        // Movements from day 22 - 30 inclusive are within the DOS calculation
-        // DOS is calculated to 30 days
         let mock_data = MockData {
-            stock_lines: vec![
-                test_stock_line_a.clone(),
-                test_stock_line_b.clone(),
-                test_stock_line_c.clone(),
-                test_stock_line_d.clone(),
-                test_stock_line_e.clone(),
-                test_stock_line_f.clone(),
-            ],
+            stock_lines: vec![test_stock_line.clone()],
             ..Default::default()
         }
-        // Has multiple periods out of stock
-        .join(make_movements(
-            test_stock_line_a,
-            vec![
-                // (day, movement)
-                (10, 3),
-                // DOS calculation period
-                (22, -3), // stock = zero for 2 days
-                (25, 3),
-                (26, -3), // stock = zero for 5 more days
-            ],
-        ))
-        // Is out of stock at the beginning of the period
-        .join(make_movements(
-            test_stock_line_b,
-            vec![
-                (5, 10),
-                (6, -10),
-                // DOS calculation period
-                (25, 10), // stock = zero for 5 days
-            ],
-        ))
-        // Is out of stock at the end of the period
-        .join(make_movements(
-            test_stock_line_c,
-            vec![
-                (10, 6),
-                // DOS calculation period
-                (26, -6), // stock = zero for 4 days
-            ],
-        ))
-        // Is out of stock at the start and end of the period
-        .join(make_movements(
-            test_stock_line_d,
-            vec![
-                (5, 10),
-                (6, -10),
-                // DOS calculation period
-                // stock = zero for 2 days
-                (24, 4),
-                (25, -4), // stock = zero for 7 more days
-            ],
-        ))
-        // Is out of stock - no movements during DOS period
-        .join(make_movements(
-            test_stock_line_e,
-            vec![
-                (5, 10),
-                (6, -10),
-                // DOS calculation period
-                // stock = zero for 10 days
-            ],
-        ))
-        // Is in stock - no movements during DOS period
-        .join(make_movements(
-            test_stock_line_f,
-            vec![
-                (5, 10),
-                // DOS calculation period
-                // stock = 10 for 10 days
-            ],
-        ));
+        .join(make_movements_extended(MakeMovements {
+            stock_line: test_stock_line,
+            date_quantity: movements,
+            reference_datetime: reference_date,
+            offset_days: 30,
+        }));
 
-        mock_data
-    }
-
-    #[actix_rt::test]
-
-    async fn test_item_stats_with_dos() {
         let (_, connection, _, _) = setup_all_with_data(
-            "test_item_stats_with_dos",
+            &format!("test_dose_{test_name}"),
             MockDataInserts::none().names().stores().units().items(),
-            mock_data(),
+            mock_data,
         )
         .await;
 
         let end_date = date_now();
         // Using a short DOS period so that stock movements can be created beforehand
-        let start_date = date_with_offset(&end_date, Duration::days((10_i32).neg() as i64));
+        let start_date = date_with_offset(&end_date, Duration::days(-10));
         let store_id = mock_store_a().id.clone();
         let repo = DaysOutOfStockRepository::new(&connection);
 
+        // Set timezone, otherwise would use whatever is configured in postgres system
+        if cfg!(feature = "postgres") {
+            diesel::sql_query("SET TIME ZONE 'Pacific/Auckland';")
+                .execute(connection.lock().connection())
+                .unwrap();
+        } else {
+            std::env::set_var("TZ", "Pacific/Auckland");
+        }
+
         let result = repo
-            .query(Some(ConsumptionFilter {
+            .query(DaysOutOfStockFilter {
                 item_id: Some(EqualFilter::equal_any(vec![mock_item_a().id])),
                 store_id: Some(EqualFilter::equal_to(&store_id)),
-                date: Some(DateFilter::date_range(&start_date, &end_date)),
-            }))
+                from: start_date,
+                to: end_date,
+            })
             .unwrap();
-        assert_eq!(result[0].total_dos, 7.0);
 
-        let result = repo
-            .query(Some(ConsumptionFilter {
-                item_id: Some(EqualFilter::equal_any(vec![mock_item_b().id])),
-                store_id: Some(EqualFilter::equal_to(&store_id)),
-                date: Some(DateFilter::date_range(&start_date, &end_date)),
-            }))
-            .unwrap();
-        assert_eq!(result[0].total_dos, 5.0);
+        if cfg!(not(feature = "postgres")) {
+            std::env::set_var("TZ", "");
+        }
 
-        let result = repo
-            .query(Some(ConsumptionFilter {
-                item_id: Some(EqualFilter::equal_any(vec![mock_item_c().id])),
-                store_id: Some(EqualFilter::equal_to(&store_id)),
-                date: Some(DateFilter::date_range(&start_date, &end_date)),
-            }))
-            .unwrap();
-        assert_eq!(result[0].total_dos, 4.0);
+        let Some(expected_dos) = expected_dos else {
+            assert_eq!(
+                result.len(),
+                0,
+                "Expected no DOS result for test {test_name}"
+            );
+            return;
+        };
 
-        let result = repo
-            .query(Some(ConsumptionFilter {
-                item_id: Some(EqualFilter::equal_any(vec![mock_item_d().id])),
-                store_id: Some(EqualFilter::equal_to(&store_id)),
-                date: Some(DateFilter::date_range(&start_date, &end_date)),
-            }))
-            .unwrap();
-        assert_eq!(result[0].total_dos, 9.0);
+        assert_eq!(
+            result.len(),
+            1,
+            "Expected one DOS result for test {test_name}"
+        );
+        let actual = result[0].total_dos;
+        assert_eq!(
+            actual, expected_dos,
+            "DOS mismatch for test {test_name}, expected {expected_dos}, got {actual}"
+        );
+    }
 
-        let result = repo
-            .query(Some(ConsumptionFilter {
-                item_id: Some(EqualFilter::equal_any(vec![mock_item_e().id])),
-                store_id: Some(EqualFilter::equal_to(&store_id)),
-                date: Some(DateFilter::date_range(&start_date, &end_date)),
-            }))
-            .unwrap();
-        assert_eq!(result[0].total_dos, 10.0);
+    #[actix_rt::test]
 
-        let result = repo
-            .query(Some(ConsumptionFilter {
-                item_id: Some(EqualFilter::equal_any(vec![mock_item_f().id])),
-                store_id: Some(EqualFilter::equal_to(&store_id)),
-                date: Some(DateFilter::date_range(&start_date, &end_date)),
-            }))
-            .unwrap();
-        assert_eq!(result.len(), 0);
+    async fn test_dos() {
+        let reference_date = get_local_date_as_utc(datetime_now());
+
+        test_one(
+            "multiple_periods",
+            reference_date,
+            vec![(10, 3), (22, -3), (25, 3), (26, -3)],
+            /*
+            Looking back 10 days from 30th, including 20th in calculation
+            +------------------------+----+----+----+-----+-----+----+----+-----+-----+-----+-----+
+            |                        | 20 | 21 | 22 | 23  | 24  | 25 | 26 | 27  | 28  | 29  | 30  |
+            +------------------------+----+----+----+-----+-----+----+----+-----+-----+-----+-----+
+            | end of day balance     | 3  | 3  | 0  | 0   | 0   | 3  | 0  | 0   | 0   | 0   | 0   |
+            +------------------------+----+----+----+-----+-----+----+----+-----+-----+-----+-----+
+            | full day without stock | no | no | no | yes | yes | no | no | yes | yes | yes | yes |
+            +------------------------+----+----+----+-----+-----+----+----+-----+-----+-----+-----+
+            https://www.tablesgenerator.com/text_tables (file -> paste table data)
+            */
+            Some(6.0),
+        )
+        .await;
+
+        test_one(
+            "out_of_stock_at_start",
+            reference_date,
+            vec![(5, 10), (6, -10), (25, 10)],
+            /*
+            Looking back 10 days from 30th, including 20th in calculation
+            +------------------------+----+----+----+----+----+----+----+----+-----+-----+-----+-----+
+            |                        | 19 | 20 | 21 | 22 | 23 | 24 | 25 | 26 | 27  | 28  | 29  | 30  |
+            +------------------------+----+----+----+----+----+----+----+----+-----+-----+-----+-----+
+            | end of day balance     | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 0  | 0   | 0   | 0   | 0   |
+            +------------------------+----+----+----+----+----+----+----+----+-----+-----+-----+-----+
+            | full day without stock |    | no | no | no | no | no | no | no | yes | yes | yes | yes |
+            +------------------------+----+----+----+----+----+----+----+----+-----+-----+-----+-----+
+            https://www.tablesgenerator.com/text_tables (file -> paste table data)
+            */
+            Some(5.0),
+        )
+        .await;
+
+        test_one(
+            "out_of_stock_at_end",
+            reference_date,
+            vec![(10, 6), (26, -6)],
+            /*
+            Looking back 10 days from 30th, including 20th in calculation
+            +------------------------+----+----+----+----+----+----+----+----+-----+-----+-----+-----+
+            |                        | 19 | 20 | 21 | 22 | 23 | 24 | 25 | 26 | 27  | 28  | 29  | 30  |
+            +------------------------+----+----+----+----+----+----+----+----+-----+-----+-----+-----+
+            | end of day balance     | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 0  | 0   | 0   | 0   | 0   |
+            +------------------------+----+----+----+----+----+----+----+----+-----+-----+-----+-----+
+            | full day without stock |    | no | no | no | no | no | no | no | yes | yes | yes | yes |
+            +------------------------+----+----+----+----+----+----+----+----+-----+-----+-----+-----+
+            https://www.tablesgenerator.com/text_tables (file -> paste table data)
+            */
+            Some(4.0),
+        )
+        .await;
+
+        test_one(
+            "out_of_stock_start_and_end",
+            reference_date,
+            vec![(5, 10), (6, -10), (24, 4), (25, -4)],
+            /*
+            Looking back 10 days from 30th, including 20th in calculation
+            +------------------------+----+-----+-----+-----+-----+----+----+-----+-----+-----+-----+-----+
+            |                        | 19 | 20  | 21  | 22  | 23  | 24 | 25 | 26  | 27  | 28  | 29  | 30  |
+            +------------------------+----+-----+-----+-----+-----+----+----+-----+-----+-----+-----+-----+
+            | end of day balance     | 0  | 0   | 0   | 0   | 0   | 10 | 0  | 0   | 0   | 0   | 0   | 0   |
+            +------------------------+----+-----+-----+-----+-----+----+----+-----+-----+-----+-----+-----+
+            | full day without stock |    | yes | yes | yes | yes | no | no | yes | yes | yes | yes | yes |
+            +------------------------+----+-----+-----+-----+-----+----+----+-----+-----+-----+-----+-----+
+            https://www.tablesgenerator.com/text_tables (file -> paste table data)
+            */
+            Some(9.0),
+        )
+        .await;
+
+        test_one(
+            "fully_out_of_stock",
+            reference_date,
+            vec![(5, 10), (6, -10)],
+            /*
+            Looking back 10 days from 30th, including 20th in calculation
+            +------------------------+----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+            |                        | 19 | 20  | 21  | 22  | 23  | 24  | 25  | 26  | 27  | 28  | 29  | 30  |
+            +------------------------+----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+            | end of day balance     | 0  | 0   | 0   | 0   | 0   | 0   | 0   | 0   | 0   | 0   | 0   | 0   |
+            +------------------------+----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+            | full day without stock |    | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes |
+            +------------------------+----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+            11 days out of stock
+            https://www.tablesgenerator.com/text_tables (file -> paste table data)
+            */
+            Some(11.0),
+        )
+        .await;
+
+        test_one("in_stock_whole_time", reference_date, vec![(5, 10)], None).await;
+
+        let out_of_stock_first_day = vec![(5, 10), (20, -10)];
+        test_one(
+            "out_of_stock_first_day",
+            reference_date,
+            out_of_stock_first_day.clone(),
+            /*
+            Looking back 10 days from 30th, including 20th in calculation
+            +------------------------+----+----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+            |                        | 19 | 20 | 21  | 22  | 23  | 24  | 25  | 26  | 27  | 28  | 29  | 30  |
+            +------------------------+----+----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+            | end of day balance     | 10 | 0  | 0   | 0   | 0   | 0   | 0   | 0   | 0   | 0   | 0   | 0   |
+            +------------------------+----+----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+            | full day without stock |    | no | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes |
+            +------------------------+----+----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+            9 days out of stock
+            https://www.tablesgenerator.com/text_tables (file -> paste table data)
+            */
+            Some(10.0),
+        )
+        .await;
+
+        // If reference time is 23:00 UTC and local timezone iz 'Pacific/Auckland' then 20th will be 21st
+        // making previous data lead to 9 days out of stock instead of 10
+        let reference_date = datetime_now().with_hour(23).unwrap();
+
+        // Set TZ to UTC
+        // std::env::set_var("TZ", "Pacific/Auckland");
+
+        test_one(
+            "out_of_stock_timezone",
+            reference_date,
+            out_of_stock_first_day,
+            Some(9.0),
+        )
+        .await;
     }
 }
