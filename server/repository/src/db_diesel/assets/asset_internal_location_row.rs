@@ -116,17 +116,16 @@ impl<'a> AssetInternalLocationRowRepository<'a> {
             .filter(id.eq(asset_internal_location_id))
             .execute(self.connection.lock().connection())?;
 
-        self.insert_changelog(&ail, RowActionType::Upsert)
+        self.insert_changelog(&ail, RowActionType::Delete)
     }
 
     pub fn delete_all_for_asset_id(
         &self,
         asset_id_to_delete_locations: &str,
     ) -> Result<(), RepositoryError> {
-        diesel::delete(asset_internal_location)
-            .filter(asset_id.eq(asset_id_to_delete_locations))
-            .execute(self.connection.lock().connection())?;
-        // TODO: add changelogs for each deleted row
+        for asset in self.find_all_by_asset(asset_id_to_delete_locations)? {
+            self.delete(&asset.id)?;
+        }
         Ok(())
     }
 }
