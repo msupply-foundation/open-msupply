@@ -97,9 +97,7 @@ const useStatusChangeButton = () => {
     );
     if (invoiceStatusOptions) {
       statusOptions = statusOptions.filter(
-        option =>
-          option.value !== undefined &&
-          invoiceStatusOptions.includes(option.value)
+        option => !!option.value && invoiceStatusOptions.includes(option.value)
       );
     }
     return statusOptions;
