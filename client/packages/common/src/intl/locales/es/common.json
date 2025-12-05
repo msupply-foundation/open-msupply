@@ -1743,6 +1743,8 @@
   "report.stock-take-variance-report": "Reporte de Variación de Inventario",
   "report.stocktake-number": "Número de toma de inventario",
   "report.stocktake-sheet": "Hoja de toma de inventario",
+  "report.snapshot-number-of-packs": "Instantánea de número de paquetes",
+  "report.counted-number-of-packs": "Número contado de paquetes",
   "report.suggested-qty": "Cantidad sugerida",
   "report.supplied-to": "Suministrado a",
   "report.target-qty": "Cantidad objetivo",

@@ -581,5 +581,7 @@
   "title.stock-on-hand": "Stock on Hand",
   "tools": "Ekipamentus",
   "warning.caps-lock": "Alerta: Caps Lock ativu hela",
-  "warning.nothing-to-supply": "Laiha buat ida atu distribui!"
+  "warning.nothing-to-supply": "Laiha buat ida atu distribui!",
+  "report.snapshot-number-of-packs": "Snapshot Numeru Pakotes",
+  "report.counted-number-of-packs": "Numeru Pakotes konta"
 }

@@ -2207,6 +2207,8 @@
   "report.stocktake-sheet": "Folha de tomada de inventário",
   "report.stocktake-with-quantity": "Inventário com quantidade",
   "report.stocktake-without-quantity": "Inventário sem quantidade",
+  "report.snapshot-number-of-packs": "Número instantâneo de pacotes",
+  "report.counted-number-of-packs": "Número contado de pacotes",
   "report.suggested-qty": "Quantidade Sugerida",
   "report.summary-for-period": "Resumo do Período",
   "report.supplied-to": "Fornecido para",
