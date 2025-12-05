@@ -7,10 +7,13 @@ import {
   SplitButton,
   SplitButtonOption,
   useConfirmationModal,
+  usePreferences,
 } from '@openmsupply-client/common';
 import {
+  customerReturnStatuses,
   getButtonLabel,
   getNextStatusOption,
+  getPreviousStatus,
   getStatusTranslation,
   isInboundStatusChangeDisabled,
 } from '../../../utils';
@@ -64,6 +67,7 @@ const getStatusOptions = (
 
 const useStatusChangeButton = () => {
   const t = useTranslation();
+  const { invoiceStatusOptions } = usePreferences();
   const { success, error } = useNotification();
   const { mutateAsync } = useReturns.document.updateCustomerReturn();
 
@@ -80,14 +84,33 @@ const useStatusChangeButton = () => {
 
   const isManuallyCreated = !linkedShipment?.id;
 
-  const options = useMemo(
-    () => getStatusOptions(status, getButtonLabel(t), isManuallyCreated),
-    [status, isManuallyCreated]
-  );
+  const options = useMemo(() => {
+    let statusOptions = getStatusOptions(
+      status,
+      getButtonLabel(t),
+      isManuallyCreated
+    );
+    if (invoiceStatusOptions) {
+      statusOptions = statusOptions.filter(
+        option =>
+          option.value !== undefined &&
+          invoiceStatusOptions.includes(option.value)
+      );
+    }
+    return statusOptions;
+  }, [status, isManuallyCreated, invoiceStatusOptions]);
+
+  const currentStatus = invoiceStatusOptions?.includes(status)
+    ? status
+    : getPreviousStatus(
+        status,
+        invoiceStatusOptions ?? [],
+        customerReturnStatuses
+      );
 
   const [selectedOption, setSelectedOption] =
     useState<SplitButtonOption<InvoiceNodeStatus> | null>(() =>
-      getNextStatusOption(status, options)
+      getNextStatusOption(currentStatus, options)
     );
 
   const onConfirmStatusChange = async () => {
@@ -115,8 +138,8 @@ const useStatusChangeButton = () => {
   // option to the next status. It would be set to the current status, which is
   // now a disabled option.
   useEffect(() => {
-    setSelectedOption(() => getNextStatusOption(status, options));
-  }, [status, options]);
+    setSelectedOption(() => getNextStatusOption(currentStatus, options));
+  }, [status, options, currentStatus]);
 
   return {
     options,
