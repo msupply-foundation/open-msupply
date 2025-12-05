@@ -53,21 +53,6 @@ export const manualInboundStatuses: InvoiceNodeStatus[] = [
   InvoiceNodeStatus.Verified,
 ];
 
-export const nextStatusMap: { [k in InvoiceNodeStatus]?: InvoiceNodeStatus } = {
-  [InvoiceNodeStatus.New]: InvoiceNodeStatus.Delivered,
-  [InvoiceNodeStatus.Shipped]: InvoiceNodeStatus.Delivered,
-  [InvoiceNodeStatus.Delivered]: InvoiceNodeStatus.Received,
-  [InvoiceNodeStatus.Received]: InvoiceNodeStatus.Verified,
-};
-
-export const nextStatusMapCustomerReturn: {
-  [k in InvoiceNodeStatus]?: InvoiceNodeStatus;
-} = {
-  [InvoiceNodeStatus.New]: InvoiceNodeStatus.Received,
-  [InvoiceNodeStatus.Shipped]: InvoiceNodeStatus.Received,
-  [InvoiceNodeStatus.Received]: InvoiceNodeStatus.Verified,
-};
-
 export const prescriptionStatuses: InvoiceNodeStatus[] = [
   InvoiceNodeStatus.New,
   InvoiceNodeStatus.Picked,
