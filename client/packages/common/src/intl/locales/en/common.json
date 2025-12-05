@@ -1460,6 +1460,7 @@
   "label.supplier-name": "Supplier Name",
   "label.supplier-ref": "Reference",
   "label.supplier-reference": "Supplier Reference",
+  "label.supplier-return": "Supplier return",
   "label.supply": "Supply",
   "label.supply-level": "Supply Level",
   "label.supply-quantity": "Units to supply",
