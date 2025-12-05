@@ -13,12 +13,12 @@ import {
   usePreferences,
 } from '@openmsupply-client/common';
 import {
-  getStatusTranslation,
   isInboundPlaceholderRow,
   getButtonLabel,
   getNextStatusOption,
   inboundStatuses,
   getPreviousStatus,
+  getStatusTranslator,
 } from '../../../utils';
 import { InboundLineFragment, useInbound } from '../../api';
 
@@ -126,7 +126,7 @@ const useStatusChangeButton = () => {
     title: t('heading.are-you-sure'),
     message: `${t('messages.confirm-inbound-status-as', {
       status: selectedOption?.value
-        ? getStatusTranslation(selectedOption?.value)
+        ? getStatusTranslator(t)(selectedOption?.value)
         : '',
     })}\n${
       status === InvoiceNodeStatus.New

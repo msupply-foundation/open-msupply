@@ -13,7 +13,7 @@ import {
   getButtonLabel,
   getNextStatusOption,
   getPreviousStatus,
-  getStatusTranslation,
+  getStatusTranslator,
   supplierReturnStatuses,
 } from '../../../utils';
 import { useReturns } from '../../api';
@@ -100,7 +100,7 @@ const useStatusChangeButton = () => {
     title: t('heading.are-you-sure'),
     message: t('messages.confirm-status-as', {
       status: selectedOption?.value
-        ? getStatusTranslation(selectedOption?.value)
+        ? getStatusTranslator(t)(selectedOption?.value)
         : '',
     }),
     onConfirm: onConfirmStatusChange,

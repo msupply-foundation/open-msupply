@@ -14,7 +14,11 @@ import {
   ALT_KEY,
 } from '@openmsupply-client/common';
 import { useInsuranceProviders } from '@openmsupply-client/system';
-import { getNextStatusOption, getStatusTranslation } from '../../../utils';
+import {
+  getButtonLabel,
+  getNextStatusOption,
+  getStatusTranslator,
+} from '../../../utils';
 import { PrescriptionRowFragment, usePrescription } from '../../api';
 import { PaymentsModal } from '../Payments';
 import { Draft } from '../../../StockOut';
@@ -57,14 +61,6 @@ const getStatusOptions = (
 
   return options;
 };
-
-const getButtonLabel =
-  (t: ReturnType<typeof useTranslation>) =>
-  (invoiceStatus: InvoiceNodeStatus): string => {
-    return t('button.save-and-confirm-status', {
-      status: t(getStatusTranslation(invoiceStatus)),
-    });
-  };
 
 const useStatusChangeButton = () => {
   const t = useTranslation();
@@ -128,7 +124,7 @@ const useStatusChangeButton = () => {
       ? t('messages.confirm-zero-quantity-status')
       : t('messages.confirm-status-as', {
           status: selectedOption?.value
-            ? getStatusTranslation(selectedOption?.value)
+            ? getStatusTranslator(t)(selectedOption?.value)
             : '',
         }),
     onConfirm: onConfirmStatusChange,

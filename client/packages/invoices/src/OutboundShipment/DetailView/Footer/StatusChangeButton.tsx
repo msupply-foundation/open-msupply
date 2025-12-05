@@ -13,11 +13,11 @@ import {
   usePreferences,
 } from '@openmsupply-client/common';
 import {
-  getStatusTranslation,
   getPreviousStatus,
   outboundStatuses,
   getButtonLabel,
   getNextStatusOption,
+  getStatusTranslator,
 } from '../../../utils';
 import { useOutbound, useOutboundLines } from '../../api';
 
@@ -149,7 +149,7 @@ const useStatusChangeButton = () => {
       ? t('messages.confirm-zero-quantity-status')
       : t('messages.confirm-status-as', {
           status: selectedOption?.value
-            ? getStatusTranslation(selectedOption?.value)
+            ? getStatusTranslator(t)(selectedOption?.value)
             : '',
         }),
     onConfirm: onConfirmStatusChange,

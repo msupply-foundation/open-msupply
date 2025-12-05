@@ -92,10 +92,6 @@ const statusTranslation: Record<InvoiceNodeStatus, LocaleKey> = {
   CANCELLED: 'label.cancelled',
 };
 
-export const getStatusTranslation = (status: InvoiceNodeStatus): LocaleKey => {
-  return statusTranslation[status];
-};
-
 export const getPreviousStatus = (
   currentStatus: InvoiceNodeStatus,
   validStatuses: InvoiceNodeStatus[],
@@ -126,7 +122,7 @@ export const getButtonLabel =
   (t: ReturnType<typeof useTranslation>) =>
   (invoiceStatus: InvoiceNodeStatus): string => {
     return t('button.save-and-confirm-status', {
-      status: t(getStatusTranslation(invoiceStatus)),
+      status: getStatusTranslator(t)(invoiceStatus),
     });
   };
 
