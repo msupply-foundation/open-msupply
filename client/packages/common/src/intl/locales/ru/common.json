@@ -2345,6 +2345,8 @@
   "report.stocktake-sheet": "Лист инвентаризации",
   "report.stocktake-with-quantity": "Инвентаризация с указанием количества",
   "report.stocktake-without-quantity": "Инвентаризация без указания количества",
+  "report.snapshot-number-of-packs": "Текущее количество упаковок",
+  "report.counted-number-of-packs": "Подсчитанное количество упаковок",
   "report.suggested-qty": "Рекомендуемое кол-во",
   "report.summary-for-period": "Сводка за период",
   "report.supplied-to": "Поставлено",
