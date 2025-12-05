@@ -7,10 +7,14 @@ import {
   SplitButton,
   SplitButtonOption,
   useConfirmationModal,
+  usePreferences,
 } from '@openmsupply-client/common';
 import {
-  getNextSupplierReturnStatus,
-  getStatusTranslation,
+  getButtonLabel,
+  getNextStatusOption,
+  getPreviousStatus,
+  getStatusTranslator,
+  supplierReturnStatuses,
 } from '../../../utils';
 import { useReturns } from '../../api';
 
@@ -18,74 +22,34 @@ const getStatusOptions = (
   currentStatus: InvoiceNodeStatus,
   getButtonLabel: (status: InvoiceNodeStatus) => string
 ): SplitButtonOption<InvoiceNodeStatus>[] => {
-  const options: [
-    SplitButtonOption<InvoiceNodeStatus>,
-    SplitButtonOption<InvoiceNodeStatus>,
-    SplitButtonOption<InvoiceNodeStatus>,
-    SplitButtonOption<InvoiceNodeStatus>,
-    SplitButtonOption<InvoiceNodeStatus>,
-  ] = [
-    {
-      value: InvoiceNodeStatus.New,
-      label: getButtonLabel(InvoiceNodeStatus.New),
-      isDisabled: true,
-    },
-    {
-      value: InvoiceNodeStatus.Picked,
-      label: getButtonLabel(InvoiceNodeStatus.Picked),
-      isDisabled: true,
-    },
-    {
-      value: InvoiceNodeStatus.Shipped,
-      label: getButtonLabel(InvoiceNodeStatus.Shipped),
-      isDisabled: true,
-    },
-    {
-      value: InvoiceNodeStatus.Delivered,
-      label: getButtonLabel(InvoiceNodeStatus.Delivered),
-      isDisabled: true,
-    },
-    {
-      value: InvoiceNodeStatus.Verified,
-      label: getButtonLabel(InvoiceNodeStatus.Verified),
-      isDisabled: true,
-    },
-  ];
+  const options: SplitButtonOption<InvoiceNodeStatus>[] = [
+    InvoiceNodeStatus.New,
+    InvoiceNodeStatus.Picked,
+    InvoiceNodeStatus.Shipped,
+    InvoiceNodeStatus.Delivered,
+    InvoiceNodeStatus.Verified,
+  ].map(status => ({
+    value: status,
+    label: getButtonLabel(status),
+    isDisabled: true,
+  }));
 
   if (currentStatus === InvoiceNodeStatus.New) {
-    options[1].isDisabled = false;
-    options[2].isDisabled = false;
+    if (options[1]) options[1].isDisabled = false;
+    if (options[2]) options[2].isDisabled = false;
   }
 
   if (currentStatus === InvoiceNodeStatus.Picked) {
-    options[2].isDisabled = false;
+    if (options[2]) options[2].isDisabled = false;
   }
 
   return options;
 };
 
-const getNextStatusOption = (
-  status: InvoiceNodeStatus,
-  options: SplitButtonOption<InvoiceNodeStatus>[]
-): SplitButtonOption<InvoiceNodeStatus> | null => {
-  if (!status) return options[0] ?? null;
-
-  const nextStatus = getNextSupplierReturnStatus(status);
-  const nextStatusOption = options.find(o => o.value === nextStatus);
-  return nextStatusOption || null;
-};
-
-const getButtonLabel =
-  (t: ReturnType<typeof useTranslation>) =>
-  (invoiceStatus: InvoiceNodeStatus): string => {
-    return t('button.save-and-confirm-status', {
-      status: t(getStatusTranslation(invoiceStatus)),
-    });
-  };
-
 const useStatusChangeButton = () => {
-  const { success, error } = useNotification();
   const t = useTranslation();
+  const { invoiceStatusOptions } = usePreferences();
+  const { success, error } = useNotification();
   const { data } = useReturns.document.supplierReturn();
   const { mutateAsync } = useReturns.document.updateSupplierReturn();
 
@@ -97,14 +61,27 @@ const useStatusChangeButton = () => {
     nodes: [],
   };
 
-  const options = useMemo(
-    () => getStatusOptions(status, getButtonLabel(t)),
-    [status, getButtonLabel]
-  );
+  const options = useMemo(() => {
+    let statusOptions = getStatusOptions(status, getButtonLabel(t));
+    if (invoiceStatusOptions) {
+      statusOptions = statusOptions.filter(
+        option => !!option.value && invoiceStatusOptions.includes(option.value)
+      );
+    }
+    return statusOptions;
+  }, [status, invoiceStatusOptions]);
+
+  const currentStatus = invoiceStatusOptions?.includes(status)
+    ? status
+    : getPreviousStatus(
+        status,
+        invoiceStatusOptions ?? [],
+        supplierReturnStatuses
+      );
 
   const [selectedOption, setSelectedOption] =
     useState<SplitButtonOption<InvoiceNodeStatus> | null>(() =>
-      getNextStatusOption(status, options)
+      getNextStatusOption(currentStatus, options)
     );
 
   const onConfirmStatusChange = async () => {
@@ -123,7 +100,7 @@ const useStatusChangeButton = () => {
     title: t('heading.are-you-sure'),
     message: t('messages.confirm-status-as', {
       status: selectedOption?.value
-        ? getStatusTranslation(selectedOption?.value)
+        ? getStatusTranslator(t)(selectedOption?.value)
         : '',
     }),
     onConfirm: onConfirmStatusChange,
@@ -133,8 +110,8 @@ const useStatusChangeButton = () => {
   // option to the next status. It would be set to the current status, which is
   // now a disabled option.
   useEffect(() => {
-    setSelectedOption(() => getNextStatusOption(status, options));
-  }, [status, options]);
+    setSelectedOption(() => getNextStatusOption(currentStatus, options));
+  }, [currentStatus, options]);
 
   return {
     options,

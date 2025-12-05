@@ -10,11 +10,15 @@ import {
   useDisabledNotificationToast,
   UserPermission,
   useAuthContext,
+  usePreferences,
 } from '@openmsupply-client/common';
 import {
-  getStatusTranslation,
-  getNextInboundStatus,
   isInboundPlaceholderRow,
+  getButtonLabel,
+  getNextStatusOption,
+  inboundStatuses,
+  getPreviousStatus,
+  getStatusTranslator,
 } from '../../../utils';
 import { InboundLineFragment, useInbound } from '../../api';
 
@@ -77,46 +81,35 @@ const getStatusOptions = (
   return options;
 };
 
-const getNextStatusOption = (
-  status: InvoiceNodeStatus,
-  options: SplitButtonOption<InvoiceNodeStatus>[]
-): SplitButtonOption<InvoiceNodeStatus> | null => {
-  if (!status) return options[0] ?? null;
-
-  const nextStatus = getNextInboundStatus(status);
-  const nextStatusOption = options.find(o => o.value === nextStatus);
-
-  if (!nextStatusOption) {
-    console.warn(
-      `No status option found for status: ${nextStatus} for status: ${status}`
-    );
-  }
-  return nextStatusOption || null;
-};
-
-const getButtonLabel =
-  (t: ReturnType<typeof useTranslation>) =>
-  (invoiceStatus: InvoiceNodeStatus): string => {
-    return t('button.save-and-confirm-status', {
-      status: t(getStatusTranslation(invoiceStatus)),
-    });
-  };
-
 const useStatusChangeButton = () => {
+  const t = useTranslation();
+  const { invoiceStatusOptions } = usePreferences();
   const { status, onHold, linkedShipment, update, lines } =
     useInbound.document.fields(['status', 'onHold', 'linkedShipment', 'lines']);
   const { success, error } = useNotification();
-  const t = useTranslation();
   const isManuallyCreated = !linkedShipment?.id;
 
-  const options = useMemo(
-    () => getStatusOptions(status, getButtonLabel(t), isManuallyCreated),
-    [isManuallyCreated, status, t]
-  );
+  const options = useMemo(() => {
+    let statusOptions = getStatusOptions(
+      status,
+      getButtonLabel(t),
+      isManuallyCreated
+    );
+    if (invoiceStatusOptions) {
+      statusOptions = statusOptions.filter(
+        option => !!option.value && invoiceStatusOptions.includes(option.value)
+      );
+    }
+    return statusOptions;
+  }, [status, isManuallyCreated, invoiceStatusOptions]);
+
+  const currentStatus = invoiceStatusOptions?.includes(status)
+    ? status
+    : getPreviousStatus(status, invoiceStatusOptions ?? [], inboundStatuses);
 
   const [selectedOption, setSelectedOption] =
     useState<SplitButtonOption<InvoiceNodeStatus> | null>(() =>
-      getNextStatusOption(status, options)
+      getNextStatusOption(currentStatus, options)
     );
 
   const onConfirmStatusChange = async () => {
@@ -133,7 +126,7 @@ const useStatusChangeButton = () => {
     title: t('heading.are-you-sure'),
     message: `${t('messages.confirm-inbound-status-as', {
       status: selectedOption?.value
-        ? getStatusTranslation(selectedOption?.value)
+        ? getStatusTranslator(t)(selectedOption?.value)
         : '',
     })}\n${
       status === InvoiceNodeStatus.New
@@ -146,7 +139,7 @@ const useStatusChangeButton = () => {
   // When the status of the invoice changes (after an update), set the selected option to the next status.
   // It would be set to the current status, which is now a disabled option.
   useEffect(() => {
-    setSelectedOption(() => getNextStatusOption(status, options));
+    setSelectedOption(() => getNextStatusOption(currentStatus, options));
   }, [status, options]);
 
   return {
@@ -183,10 +176,9 @@ export const StatusChangeButton = () => {
     onHold,
     lines,
   } = useStatusChangeButton();
-  const isStatusChangeDisabled = useInbound.utils.isStatusChangeDisabled();
   const t = useTranslation();
-
   const { userHasPermission } = useAuthContext();
+  const isStatusChangeDisabled = useInbound.utils.isStatusChangeDisabled();
 
   const onVerify = () => {
     if (userHasPermission(UserPermission.InboundShipmentVerify)) {
