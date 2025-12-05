@@ -117,7 +117,7 @@ export const getMultiChoiceOptions = (
         options.push({
           value: status,
           label: getInvoiceStatusTranslator(t)(status),
-          group: `${t('label.outbound-shipment')} \ ${t('supplier-return')}`,
+          group: `${t('label.outbound-shipment')} / ${t('supplier-return')}`,
           disabled,
         });
       });
@@ -126,7 +126,7 @@ export const getMultiChoiceOptions = (
         options.push({
           value: status,
           label: getInvoiceStatusTranslator(t)(status),
-          group: `${t('label.inbound-shipment')} \ ${t('customer-return')}`,
+          group: `${t('label.inbound-shipment')} / ${t('customer-return')}`,
           disabled,
         });
       });
