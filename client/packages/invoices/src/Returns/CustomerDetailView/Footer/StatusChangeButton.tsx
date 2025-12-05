@@ -9,6 +9,7 @@ import {
   useConfirmationModal,
 } from '@openmsupply-client/common';
 import {
+  getButtonLabel,
   getNextStatusOption,
   getStatusTranslation,
   isInboundStatusChangeDisabled,
@@ -17,108 +18,53 @@ import { useReturns } from '../../api';
 
 const getStatusOptions = (
   currentStatus: InvoiceNodeStatus,
-  getButtonLabel: (status: InvoiceNodeStatus) => string
+  getButtonLabel: (status: InvoiceNodeStatus) => string,
+  isManuallyCreated: boolean
 ): SplitButtonOption<InvoiceNodeStatus>[] => {
-  const options: [
-    SplitButtonOption<InvoiceNodeStatus>,
-    SplitButtonOption<InvoiceNodeStatus>,
-    SplitButtonOption<InvoiceNodeStatus>,
-    SplitButtonOption<InvoiceNodeStatus>,
-    SplitButtonOption<InvoiceNodeStatus>,
-  ] = [
-    {
-      value: InvoiceNodeStatus.New,
-      label: getButtonLabel(InvoiceNodeStatus.New),
-      isDisabled: true,
-    },
-    {
-      value: InvoiceNodeStatus.Picked,
-      label: getButtonLabel(InvoiceNodeStatus.Picked),
-      isDisabled: true,
-    },
-    {
-      value: InvoiceNodeStatus.Shipped,
-      label: getButtonLabel(InvoiceNodeStatus.Shipped),
-      isDisabled: true,
-    },
-    {
-      value: InvoiceNodeStatus.Received,
-      label: getButtonLabel(InvoiceNodeStatus.Received),
-      isDisabled: true,
-    },
-    {
-      value: InvoiceNodeStatus.Verified,
-      label: getButtonLabel(InvoiceNodeStatus.Verified),
-      isDisabled: true,
-    },
-  ];
+  const statuses = isManuallyCreated
+    ? [
+        InvoiceNodeStatus.New,
+        InvoiceNodeStatus.Received,
+        InvoiceNodeStatus.Verified,
+      ]
+    : [
+        InvoiceNodeStatus.New,
+        InvoiceNodeStatus.Picked,
+        InvoiceNodeStatus.Shipped,
+        InvoiceNodeStatus.Received,
+        InvoiceNodeStatus.Verified,
+      ];
 
-  if (currentStatus === InvoiceNodeStatus.Shipped) {
-    // When shipped, can change to delivered or verified
-    options[3].isDisabled = false;
-    options[4].isDisabled = false;
-  }
+  const options = statuses.map(status => ({
+    value: status,
+    label: getButtonLabel(status),
+    isDisabled: true,
+  }));
 
-  if (currentStatus === InvoiceNodeStatus.Received) {
-    // When received, can change to verified
-    options[4].isDisabled = false;
+  if (isManuallyCreated) {
+    if (currentStatus === InvoiceNodeStatus.New) {
+      if (options[1]) options[1].isDisabled = false;
+      if (options[2]) options[2].isDisabled = false;
+    }
+    if (currentStatus === InvoiceNodeStatus.Received) {
+      if (options[2]) options[2].isDisabled = false;
+    }
+  } else {
+    if (currentStatus === InvoiceNodeStatus.Shipped) {
+      if (options[3]) options[3].isDisabled = false;
+      if (options[4]) options[4].isDisabled = false;
+    }
+    if (currentStatus === InvoiceNodeStatus.Received) {
+      if (options[4]) options[4].isDisabled = false;
+    }
   }
 
   return options;
 };
-
-const getManualStatusOptions = (
-  currentStatus: InvoiceNodeStatus,
-  getButtonLabel: (status: InvoiceNodeStatus) => string
-): SplitButtonOption<InvoiceNodeStatus>[] => {
-  const options: [
-    SplitButtonOption<InvoiceNodeStatus>,
-    SplitButtonOption<InvoiceNodeStatus>,
-    SplitButtonOption<InvoiceNodeStatus>,
-  ] = [
-    {
-      value: InvoiceNodeStatus.New,
-      label: getButtonLabel(InvoiceNodeStatus.New),
-      isDisabled: true,
-    },
-    {
-      value: InvoiceNodeStatus.Received,
-      label: getButtonLabel(InvoiceNodeStatus.Received),
-      isDisabled: true,
-    },
-    {
-      value: InvoiceNodeStatus.Verified,
-      label: getButtonLabel(InvoiceNodeStatus.Verified),
-      isDisabled: true,
-    },
-  ];
-
-  if (currentStatus === InvoiceNodeStatus.New) {
-    // When the status is new, received and verified are available to
-    // select.
-    options[1].isDisabled = false;
-    options[2].isDisabled = false;
-  }
-
-  // When the status is received, only verified is available to select.
-  if (currentStatus === InvoiceNodeStatus.Received) {
-    options[2].isDisabled = false;
-  }
-
-  return options;
-};
-
-const getButtonLabel =
-  (t: ReturnType<typeof useTranslation>) =>
-  (invoiceStatus: InvoiceNodeStatus): string => {
-    return t('button.save-and-confirm-status', {
-      status: t(getStatusTranslation(invoiceStatus)),
-    });
-  };
 
 const useStatusChangeButton = () => {
-  const { success, error } = useNotification();
   const t = useTranslation();
+  const { success, error } = useNotification();
   const { mutateAsync } = useReturns.document.updateCustomerReturn();
 
   const { data } = useReturns.document.customerReturn();
@@ -135,11 +81,8 @@ const useStatusChangeButton = () => {
   const isManuallyCreated = !linkedShipment?.id;
 
   const options = useMemo(
-    () =>
-      isManuallyCreated
-        ? getManualStatusOptions(status, getButtonLabel(t))
-        : getStatusOptions(status, getButtonLabel(t)),
-    [status, getButtonLabel]
+    () => getStatusOptions(status, getButtonLabel(t), isManuallyCreated),
+    [status, isManuallyCreated]
   );
 
   const [selectedOption, setSelectedOption] =
