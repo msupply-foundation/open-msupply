@@ -10,7 +10,7 @@ const ASSET_INTERNAL_LOCATION1: (&str, &str) = (
     r#"{
         "id":  "892a4827-d6d7-4183-a6bd-be9df27719be",
         "asset_id": "3de161ed-93ef-4210-aa31-3ae9e53748e8",
-        "location_id": "cf5812e0c33911eb9757779d39ae2bdb",
+        "location_id": "cf5812e0c33911eb9757779d39ae2bdb"
     }"#,
 );
 
