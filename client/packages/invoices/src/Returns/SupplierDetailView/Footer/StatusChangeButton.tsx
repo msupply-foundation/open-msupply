@@ -7,8 +7,15 @@ import {
   SplitButton,
   SplitButtonOption,
   useConfirmationModal,
+  usePreferences,
 } from '@openmsupply-client/common';
-import { getNextStatusOption, getStatusTranslation } from '../../../utils';
+import {
+  getButtonLabel,
+  getNextStatusOption,
+  getPreviousStatus,
+  getStatusTranslation,
+  supplierReturnStatuses,
+} from '../../../utils';
 import { useReturns } from '../../api';
 
 const getStatusOptions = (
@@ -39,17 +46,10 @@ const getStatusOptions = (
   return options;
 };
 
-const getButtonLabel =
-  (t: ReturnType<typeof useTranslation>) =>
-  (invoiceStatus: InvoiceNodeStatus): string => {
-    return t('button.save-and-confirm-status', {
-      status: t(getStatusTranslation(invoiceStatus)),
-    });
-  };
-
 const useStatusChangeButton = () => {
-  const { success, error } = useNotification();
   const t = useTranslation();
+  const { invoiceStatusOptions } = usePreferences();
+  const { success, error } = useNotification();
   const { data } = useReturns.document.supplierReturn();
   const { mutateAsync } = useReturns.document.updateSupplierReturn();
 
@@ -61,14 +61,29 @@ const useStatusChangeButton = () => {
     nodes: [],
   };
 
-  const options = useMemo(
-    () => getStatusOptions(status, getButtonLabel(t)),
-    [status, getButtonLabel]
-  );
+  const options = useMemo(() => {
+    let statusOptions = getStatusOptions(status, getButtonLabel(t));
+    if (invoiceStatusOptions) {
+      statusOptions = statusOptions.filter(
+        option =>
+          option.value !== undefined &&
+          invoiceStatusOptions.includes(option.value)
+      );
+    }
+    return statusOptions;
+  }, [status, invoiceStatusOptions]);
+
+  const currentStatus = invoiceStatusOptions?.includes(status)
+    ? status
+    : getPreviousStatus(
+        status,
+        invoiceStatusOptions ?? [],
+        supplierReturnStatuses
+      );
 
   const [selectedOption, setSelectedOption] =
     useState<SplitButtonOption<InvoiceNodeStatus> | null>(() =>
-      getNextStatusOption(status, options)
+      getNextStatusOption(currentStatus, options)
     );
 
   const onConfirmStatusChange = async () => {
@@ -97,8 +112,8 @@ const useStatusChangeButton = () => {
   // option to the next status. It would be set to the current status, which is
   // now a disabled option.
   useEffect(() => {
-    setSelectedOption(() => getNextStatusOption(status, options));
-  }, [status, options]);
+    setSelectedOption(() => getNextStatusOption(currentStatus, options));
+  }, [currentStatus, options]);
 
   return {
     options,

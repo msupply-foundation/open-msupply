@@ -141,7 +141,7 @@ const useStatusChangeButton = () => {
   // now a disabled option.
   useEffect(() => {
     setSelectedOption(() => getNextStatusOption(currentStatus, options));
-  }, [status, options, currentStatus]);
+  }, [options, currentStatus]);
 
   return {
     options,
