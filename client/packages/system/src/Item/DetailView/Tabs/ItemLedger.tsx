@@ -17,10 +17,7 @@ import {
   InvoiceNodeType,
   NothingHere,
 } from '@openmsupply-client/common';
-import {
-  getStatusTranslation,
-  getStatusTranslator,
-} from '@openmsupply-client/invoices/src/utils';
+import { getInvoiceStatusTranslator } from '@openmsupply-client/invoices/';
 
 interface ItemLedgerTableProps {
   itemLedgers: {
@@ -81,11 +78,11 @@ const ItemLedgerTable = ({
       {
         id: 'invoiceStatus',
         header: t('label.status'),
-        accessorFn: row => t(getStatusTranslation(row.invoiceStatus)),
+        accessorFn: row => getInvoiceStatusTranslator(t)(row.invoiceStatus),
         filterVariant: 'select',
         filterSelectOptions: Object.values(InvoiceNodeStatus).map(status => ({
           value: status,
-          label: getStatusTranslator(t)(status),
+          label: getInvoiceStatusTranslator(t)(status),
         })),
         enableColumnFilter: true,
       },
