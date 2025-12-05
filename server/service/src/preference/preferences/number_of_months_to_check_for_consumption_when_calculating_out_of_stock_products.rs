@@ -16,4 +16,8 @@ impl Preference for NumberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStock
     fn value_type(&self) -> PreferenceValueType {
         PreferenceValueType::Integer
     }
+
+    fn default_value(&self) -> Self::Value {
+        3
+    }
 }

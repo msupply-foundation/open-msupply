@@ -78,6 +78,7 @@ pub trait ItemCountServiceTrait: Send + Sync {
             .iter()
             .filter(|i| {
                 i.average_monthly_consumption > 0.0
+                    && i.total_stock_on_hand > 0.0
                     && (i.total_stock_on_hand / i.average_monthly_consumption)
                         < threshold_months as f64
             })
