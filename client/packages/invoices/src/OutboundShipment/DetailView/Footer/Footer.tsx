@@ -76,7 +76,7 @@ export const FooterComponent: FC<FooterComponentProps> = ({
 }) => {
   const t = useTranslation();
   const { navigateUpOne } = useBreadcrumbs();
-  const { skipIntermediateStatusesInOutbound } = usePreferences();
+  const { invoiceStatusOptions } = usePreferences();
 
   const { data } = useOutbound.document.get();
   const onDelete = useOutbound.line.deleteSelected(
@@ -132,11 +132,8 @@ export const FooterComponent: FC<FooterComponentProps> = ({
     },
   ];
 
-  const statuses = outboundStatuses.filter(
-    status =>
-      !skipIntermediateStatusesInOutbound ||
-      (status !== InvoiceNodeStatus.Allocated &&
-        status !== InvoiceNodeStatus.Picked)
+  const statuses = outboundStatuses.filter(status =>
+    invoiceStatusOptions?.includes(status)
   );
 
   return (

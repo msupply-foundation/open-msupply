@@ -265,7 +265,7 @@ export type PreferencesQuery = {
     expiredStockPreventIssue: boolean;
     expiredStockIssueThreshold: number;
     warningForExcessRequest: boolean;
-    skipIntermediateStatusesInOutbound: boolean;
+    invoiceStatusOptions: Array<Types.InvoiceNodeStatus>;
     showIndicativePriceInRequisitions: boolean;
     warnWhenMissingRecentStocktake: {
       __typename: 'WarnWhenMissingRecentStocktakeDataNode';
@@ -510,7 +510,7 @@ export const PreferencesDocument = gql`
         minItems
       }
       warningForExcessRequest
-      skipIntermediateStatusesInOutbound
+      invoiceStatusOptions
       showIndicativePriceInRequisitions
     }
   }

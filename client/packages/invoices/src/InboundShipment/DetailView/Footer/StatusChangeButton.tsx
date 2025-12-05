@@ -20,121 +20,58 @@ import { InboundLineFragment, useInbound } from '../../api';
 
 const getStatusOptions = (
   currentStatus: InvoiceNodeStatus,
-  getButtonLabel: (status: InvoiceNodeStatus) => string
+  getButtonLabel: (status: InvoiceNodeStatus) => string,
+  isManuallyCreated: boolean
 ): SplitButtonOption<InvoiceNodeStatus>[] => {
-  const options: [
-    SplitButtonOption<InvoiceNodeStatus>,
-    SplitButtonOption<InvoiceNodeStatus>,
-    SplitButtonOption<InvoiceNodeStatus>,
-    SplitButtonOption<InvoiceNodeStatus>,
-    SplitButtonOption<InvoiceNodeStatus>,
-    SplitButtonOption<InvoiceNodeStatus>,
-  ] = [
-    {
-      value: InvoiceNodeStatus.New,
-      label: getButtonLabel(InvoiceNodeStatus.New),
-      isDisabled: true,
-    },
-    {
-      value: InvoiceNodeStatus.Picked,
-      label: getButtonLabel(InvoiceNodeStatus.Picked),
-      isDisabled: true,
-    },
-    {
-      value: InvoiceNodeStatus.Shipped,
-      label: getButtonLabel(InvoiceNodeStatus.Shipped),
-      isDisabled: true,
-    },
-    {
-      value: InvoiceNodeStatus.Delivered,
-      label: getButtonLabel(InvoiceNodeStatus.Delivered),
-      isDisabled: true,
-    },
-    {
-      value: InvoiceNodeStatus.Received,
-      label: getButtonLabel(InvoiceNodeStatus.Received),
-      isDisabled: true,
-    },
-    {
-      value: InvoiceNodeStatus.Verified,
-      label: getButtonLabel(InvoiceNodeStatus.Verified),
-      isDisabled: true,
-    },
-  ];
+  // Manual workflows skip Picked and Shipped statuses
+  const statuses = isManuallyCreated
+    ? [
+        InvoiceNodeStatus.New,
+        InvoiceNodeStatus.Delivered,
+        InvoiceNodeStatus.Received,
+        InvoiceNodeStatus.Verified,
+      ]
+    : [
+        InvoiceNodeStatus.New,
+        InvoiceNodeStatus.Picked,
+        InvoiceNodeStatus.Shipped,
+        InvoiceNodeStatus.Delivered,
+        InvoiceNodeStatus.Received,
+        InvoiceNodeStatus.Verified,
+      ];
 
-  // User can only go forward through the statuses, so we enable the ones that are later in the order
-  // Should be refactored to make this easier to maintain, for some examples the next available status might not be as simple as this...
+  const options = statuses.map(status => ({
+    value: status,
+    label: getButtonLabel(status),
+    isDisabled: true,
+  }));
 
-  if (currentStatus === InvoiceNodeStatus.Shipped) {
-    // When the status is shipped the user can select from delivered, received and verified options
-    options[3].isDisabled = false;
-    options[4].isDisabled = false;
-    options[5].isDisabled = false;
-  }
-
-  if (currentStatus === InvoiceNodeStatus.Delivered) {
-    // When the status is Delivered, the user can select from received and verified options
-    options[4].isDisabled = false;
-    options[5].isDisabled = false;
-  }
-
-  if (currentStatus === InvoiceNodeStatus.Received) {
-    // When the status is Received, the user can only select verified option
-    options[5].isDisabled = false;
-  }
-
-  return options;
-};
-
-const getManualStatusOptions = (
-  currentStatus: InvoiceNodeStatus,
-  getButtonLabel: (status: InvoiceNodeStatus) => string
-): SplitButtonOption<InvoiceNodeStatus>[] => {
-  const options: [
-    SplitButtonOption<InvoiceNodeStatus>,
-    SplitButtonOption<InvoiceNodeStatus>,
-    SplitButtonOption<InvoiceNodeStatus>,
-    SplitButtonOption<InvoiceNodeStatus>,
-  ] = [
-    {
-      value: InvoiceNodeStatus.New,
-      label: getButtonLabel(InvoiceNodeStatus.New),
-      isDisabled: true,
-    },
-    {
-      value: InvoiceNodeStatus.Delivered,
-      label: getButtonLabel(InvoiceNodeStatus.Delivered),
-      isDisabled: true,
-    },
-    {
-      value: InvoiceNodeStatus.Received,
-      label: getButtonLabel(InvoiceNodeStatus.Received),
-      isDisabled: true,
-    },
-    {
-      value: InvoiceNodeStatus.Verified,
-      label: getButtonLabel(InvoiceNodeStatus.Verified),
-      isDisabled: true,
-    },
-  ];
-
-  if (currentStatus === InvoiceNodeStatus.New) {
-    // When the status is new, delivered and verified are available to
-    // select.
-    options[1].isDisabled = false;
-    options[2].isDisabled = false;
-    options[3].isDisabled = false;
-  }
-
-  // When the status is delivered, only verified is available to select.
-  if (currentStatus === InvoiceNodeStatus.Delivered) {
-    options[2].isDisabled = false;
-    options[3].isDisabled = false;
-  }
-
-  // When the status is delivered, only verified is available to select.
-  if (currentStatus === InvoiceNodeStatus.Received) {
-    options[3].isDisabled = false;
+  if (isManuallyCreated) {
+    if (currentStatus === InvoiceNodeStatus.New) {
+      if (options[1]) options[1].isDisabled = false;
+      if (options[2]) options[2].isDisabled = false;
+      if (options[3]) options[3].isDisabled = false;
+    }
+    if (currentStatus === InvoiceNodeStatus.Delivered) {
+      if (options[2]) options[2].isDisabled = false;
+      if (options[3]) options[3].isDisabled = false;
+    }
+    if (currentStatus === InvoiceNodeStatus.Received) {
+      if (options[3]) options[3].isDisabled = false;
+    }
+  } else {
+    if (currentStatus === InvoiceNodeStatus.Shipped) {
+      if (options[3]) options[3].isDisabled = false;
+      if (options[4]) options[4].isDisabled = false;
+      if (options[5]) options[5].isDisabled = false;
+    }
+    if (currentStatus === InvoiceNodeStatus.Delivered) {
+      if (options[4]) options[4].isDisabled = false;
+      if (options[5]) options[5].isDisabled = false;
+    }
+    if (currentStatus === InvoiceNodeStatus.Received) {
+      if (options[5]) options[5].isDisabled = false;
+    }
   }
 
   return options;
@@ -173,10 +110,7 @@ const useStatusChangeButton = () => {
   const isManuallyCreated = !linkedShipment?.id;
 
   const options = useMemo(
-    () =>
-      isManuallyCreated
-        ? getManualStatusOptions(status, getButtonLabel(t))
-        : getStatusOptions(status, getButtonLabel(t)),
+    () => getStatusOptions(status, getButtonLabel(t), isManuallyCreated),
     [isManuallyCreated, status, t]
   );
 

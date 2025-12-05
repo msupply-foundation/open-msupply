@@ -12,7 +12,11 @@ import {
   useDisabledNotificationToast,
   usePreferences,
 } from '@openmsupply-client/common';
-import { getStatusTranslation } from '../../../utils';
+import {
+  getStatusTranslation,
+  getPreviousStatus,
+  outboundStatuses,
+} from '../../../utils';
 import { useOutbound, useOutboundLines } from '../../api';
 
 const getStatusOptions = (
@@ -98,7 +102,7 @@ const getButtonLabel =
 
 const useStatusChangeButton = () => {
   const t = useTranslation();
-  const { skipIntermediateStatusesInOutbound } = usePreferences();
+  const { invoiceStatusOptions } = usePreferences();
   const { lines, status, onHold } = useOutbound.document.fields([
     'status',
     'onHold',
@@ -112,26 +116,22 @@ const useStatusChangeButton = () => {
     (data?.lines?.nodes ?? []).some(line => line.numberOfPacks === 0);
 
   const options = useMemo(() => {
-    const statusOptions = getStatusOptions(status, getButtonLabel(t));
-    if (skipIntermediateStatusesInOutbound) {
-      return statusOptions.filter(
+    let statusOptions = getStatusOptions(status, getButtonLabel(t));
+    if (invoiceStatusOptions) {
+      statusOptions = statusOptions.filter(
         option =>
-          option.value !== InvoiceNodeStatus.Allocated &&
-          option.value !== InvoiceNodeStatus.Picked
+          option.value !== undefined &&
+          invoiceStatusOptions.includes(option.value)
       );
     }
     return statusOptions;
-  }, [status, getButtonLabel, skipIntermediateStatusesInOutbound]);
+  }, [status, getButtonLabel, invoiceStatusOptions]);
 
-  // In the case where "skip intermediate statuses" is on, but the current
-  // status has already been set to "Allocated" or "Picked", we pretend the
-  // current status is actually "New" so it behaves as expected.
-  const currentStatus =
-    skipIntermediateStatusesInOutbound &&
-    (status === InvoiceNodeStatus.Allocated ||
-      status === InvoiceNodeStatus.Picked)
-      ? InvoiceNodeStatus.New
-      : status;
+  // If the status has already been set, but is not included in the preferences,
+  // then use the previous valid status.
+  const currentStatus = invoiceStatusOptions?.includes(status)
+    ? status
+    : getPreviousStatus(status, invoiceStatusOptions ?? [], outboundStatuses);
 
   const [selectedOption, setSelectedOption] =
     useState<SplitButtonOption<InvoiceNodeStatus> | null>(() =>
@@ -178,7 +178,7 @@ const useStatusChangeButton = () => {
   // It would be set to the current status, which is now a disabled option.
   useEffect(() => {
     setSelectedOption(() => getNextStatusOption(currentStatus, options));
-  }, [status, options]);
+  }, [status, options, currentStatus]);
 
   return {
     options,

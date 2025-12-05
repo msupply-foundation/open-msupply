@@ -220,7 +220,7 @@ query preferences($storeId: String!) {
       minItems
     }
     warningForExcessRequest
-    skipIntermediateStatusesInOutbound
+    invoiceStatusOptions
     showIndicativePriceInRequisitions
   }
 }

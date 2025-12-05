@@ -15,10 +15,7 @@ import {
   BasicTextInput,
   isString,
 } from '@openmsupply-client/common';
-import {
-  EnumOptions,
-  getEnumPreferenceOptions,
-} from '../Components/EnumOptions';
+import { MultiChoice, getMultiChoiceOptions } from '../Components/MultiChoice';
 import { EditCustomTranslations } from '../Components/CustomTranslations/CustomTranslationsModal';
 import { EditWarningWhenMissingRecentStocktakeData } from '../Components/EditWarningWhenMissingRecentStocktakeData';
 import { PreferenceLabelRow } from './PreferenceLabelRow';
@@ -141,13 +138,13 @@ export const EditPreference = ({
       if (!Array.isArray(value)) {
         return t('error.something-wrong');
       }
-      const options = getEnumPreferenceOptions(t, preference.key);
+      const options = getMultiChoiceOptions(t, preference.key);
 
       return (
         <PreferenceLabelRow
           label={preferenceLabel}
           Input={
-            <EnumOptions
+            <MultiChoice
               disabled={disabled}
               options={options}
               value={value}

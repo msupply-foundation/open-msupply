@@ -4758,6 +4758,11 @@ export type InvoiceSortInput = {
   key: InvoiceSortFieldInput;
 };
 
+export type InvoiceStatusOptionsInput = {
+  storeId: Scalars['String']['input'];
+  value: Array<InvoiceNodeStatus>;
+};
+
 export type InvoicesResponse = InvoiceConnector;
 
 export type ItemCannotBeOrdered = PurchaseOrderLineError & {
@@ -6865,6 +6870,7 @@ export enum PreferenceKey {
   FirstThresholdForExpiringItems = 'firstThresholdForExpiringItems',
   GenderOptions = 'genderOptions',
   InboundShipmentAutoVerify = 'inboundShipmentAutoVerify',
+  InvoiceStatusOptions = 'invoiceStatusOptions',
   ManageVaccinesInDoses = 'manageVaccinesInDoses',
   ManageVvmStatusForStock = 'manageVvmStatusForStock',
   NumberOfMonthsThresholdToShowLowStockAlertsForProducts = 'numberOfMonthsThresholdToShowLowStockAlertsForProducts',
@@ -6925,6 +6931,7 @@ export type PreferencesNode = {
   firstThresholdForExpiringItems: Scalars['Int']['output'];
   genderOptions: Array<GenderTypeNode>;
   inboundShipmentAutoVerify: Scalars['Boolean']['output'];
+  invoiceStatusOptions: Array<InvoiceNodeStatus>;
   manageVaccinesInDoses: Scalars['Boolean']['output'];
   manageVvmStatusForStock: Scalars['Boolean']['output'];
   numberOfMonthsThresholdToShowLowStockAlertsForProducts: Scalars['Int']['output'];
@@ -6936,7 +6943,6 @@ export type PreferencesNode = {
   selectDestinationStoreForAnInternalOrder: Scalars['Boolean']['output'];
   showContactTracing: Scalars['Boolean']['output'];
   showIndicativePriceInRequisitions: Scalars['Boolean']['output'];
-  skipIntermediateStatusesInOutbound: Scalars['Boolean']['output'];
   sortByVvmStatusThenExpiry: Scalars['Boolean']['output'];
   storeCustomColour: Scalars['String']['output'];
   syncRecordsDisplayThreshold: Scalars['Int']['output'];
@@ -11270,6 +11276,7 @@ export type UpsertPreferencesInput = {
   firstThresholdForExpiringItems?: InputMaybe<Array<IntegerStorePrefInput>>;
   genderOptions?: InputMaybe<Array<GenderTypeNode>>;
   inboundShipmentAutoVerify?: InputMaybe<Array<BoolStorePrefInput>>;
+  invoiceStatusOptions?: InputMaybe<Array<InvoiceStatusOptionsInput>>;
   manageVaccinesInDoses?: InputMaybe<Array<BoolStorePrefInput>>;
   manageVvmStatusForStock?: InputMaybe<Array<BoolStorePrefInput>>;
   numberOfMonthsThresholdToShowLowStockAlertsForProducts?: InputMaybe<
@@ -11289,7 +11296,6 @@ export type UpsertPreferencesInput = {
   >;
   showContactTracing?: InputMaybe<Scalars['Boolean']['input']>;
   showIndicativePriceInRequisitions?: InputMaybe<Scalars['Boolean']['input']>;
-  skipIntermediateStatusesInOutbound?: InputMaybe<Array<BoolStorePrefInput>>;
   sortByVvmStatusThenExpiry?: InputMaybe<Array<BoolStorePrefInput>>;
   storeCustomColour?: InputMaybe<Array<StringStorePrefInput>>;
   syncRecordsDisplayThreshold?: InputMaybe<Scalars['Int']['input']>;
