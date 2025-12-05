@@ -4823,7 +4823,7 @@ export type ItemFilterInput = {
   maxMonthsOfStock?: InputMaybe<Scalars['Float']['input']>;
   minMonthsOfStock?: InputMaybe<Scalars['Float']['input']>;
   name?: InputMaybe<StringFilterInput>;
-  outOfStockProducts?: InputMaybe<Scalars['Boolean']['input']>;
+  outOfStockWithRecentConsumption?: InputMaybe<Scalars['Boolean']['input']>;
   productsAtRiskOfBeingOutOfStock?: InputMaybe<Scalars['Boolean']['input']>;
   type?: InputMaybe<EqualFilterItemTypeInput>;
 };
@@ -5038,6 +5038,7 @@ export type JsonschemaNode = {
 export type LabelPrinterSettingNode = {
   __typename: 'LabelPrinterSettingNode';
   address: Scalars['String']['output'];
+  isUsb: Scalars['Boolean']['output'];
   labelHeight: Scalars['Int']['output'];
   labelWidth: Scalars['Int']['output'];
   port: Scalars['Int']['output'];
@@ -5045,6 +5046,7 @@ export type LabelPrinterSettingNode = {
 
 export type LabelPrinterSettingsInput = {
   address: Scalars['String']['input'];
+  isUsb: Scalars['Boolean']['input'];
   labelHeight: Scalars['Int']['input'];
   labelWidth: Scalars['Int']['input'];
   port: Scalars['Int']['input'];
@@ -9598,6 +9600,7 @@ export type StoreConnector = {
 
 export type StoreFilterInput = {
   code?: InputMaybe<StringFilterInput>;
+  codeOrName?: InputMaybe<StringFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
   name?: InputMaybe<StringFilterInput>;
   nameCode?: InputMaybe<StringFilterInput>;
