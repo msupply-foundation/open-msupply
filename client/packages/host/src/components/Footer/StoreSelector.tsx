@@ -70,7 +70,7 @@ export const StoreSelector: FC<PropsWithChildrenOnly> = ({ children }) => {
     <PersistentPaperPopover
       popoverControls={popoverControls}
       placement="top"
-      width={300}
+      width={400}
       Content={
         <PaperPopoverSection label={t('select-store')}>
           {isLoading ? (
@@ -87,6 +87,7 @@ export const StoreSelector: FC<PropsWithChildrenOnly> = ({ children }) => {
                 style={{
                   overflowY: 'auto',
                   maxHeight: 300,
+                  minHeight: 300,
                 }}
               >
                 {storeButtons.length > 0 ? (
