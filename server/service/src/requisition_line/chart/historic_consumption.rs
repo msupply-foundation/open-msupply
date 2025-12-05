@@ -2,8 +2,8 @@ use std::ops::Neg;
 
 use chrono::NaiveDate;
 use repository::{
-    ConsumptionFilter, ConsumptionRepository, ConsumptionRow, DateFilter, DaysOutOfStockRepository,
-    EqualFilter, RepositoryError, StorageConnection,
+    ConsumptionFilter, ConsumptionRepository, ConsumptionRow, DateFilter, DaysOutOfStockFilter,
+    DaysOutOfStockRepository, EqualFilter, RepositoryError, StorageConnection,
 };
 use util::{date_with_months_offset, first_day_of_the_month, last_day_of_the_month};
 
@@ -35,7 +35,7 @@ pub fn get_historic_consumption_for_item(
     // Initialise series
     let points = generate_consumption_series(reference_date, options);
     // Get rows
-    let filter = ConsumptionFilter::new()
+    let consumption_filter = ConsumptionFilter::new()
         .store_id(EqualFilter::equal_to(store_id))
         .item_id(EqualFilter::equal_to(item_id))
         .date(DateFilter::date_range(
@@ -43,7 +43,8 @@ pub fn get_historic_consumption_for_item(
             &points.last_date,
         ));
 
-    let consumption_rows = ConsumptionRepository::new(connection).query(Some(filter.clone()))?;
+    let consumption_rows =
+        ConsumptionRepository::new(connection).query(Some(consumption_filter))?;
 
     let days_in_month: f64 = days_in_a_month(connection);
 
@@ -51,10 +52,17 @@ pub fn get_historic_consumption_for_item(
         .load(connection, None)
         .unwrap_or(false);
 
+    let dos_filter = DaysOutOfStockFilter {
+        store_id: Some(EqualFilter::equal_to(store_id)),
+        item_id: Some(EqualFilter::equal_to(item_id)),
+        from: points.first_date,
+        to: points.last_date,
+    };
+
     let adjusted_days_out_of_stock = if adjust_for_days_out_of_stock {
         calculate_adjusted_days_out_of_stock(
             connection,
-            &filter,
+            dos_filter,
             days_in_month,
             adjust_for_days_out_of_stock,
         )?
@@ -193,7 +201,7 @@ fn calculate_amc(total_consumption: f64, amc_months: f64, adjusted_days_out_of_s
 
 fn calculate_adjusted_days_out_of_stock(
     connection: &StorageConnection,
-    filter: &ConsumptionFilter,
+    filter: DaysOutOfStockFilter,
     days_in_month: f64,
     adjust_for_days_out_of_stock: bool,
 ) -> Result<f64, RepositoryError> {
@@ -202,7 +210,7 @@ fn calculate_adjusted_days_out_of_stock(
     }
 
     let dos = DaysOutOfStockRepository::new(connection)
-        .query(Some(filter.clone()))?
+        .query(filter)?
         .first()
         .map_or(0.0, |row| row.total_dos);
 
