@@ -13,11 +13,11 @@ import {
   useRegisterActions,
   ALT_KEY,
 } from '@openmsupply-client/common';
+import { useInsuranceProviders } from '@openmsupply-client/system';
 import { getNextStatusOption, getStatusTranslation } from '../../../utils';
 import { PrescriptionRowFragment, usePrescription } from '../../api';
 import { PaymentsModal } from '../Payments';
-import { Draft } from 'packages/invoices/src/StockOut';
-import { useInsuranceProviders } from '@openmsupply-client/system/src';
+import { Draft } from '../../../StockOut';
 
 const getStatusOptions = (
   currentStatus: InvoiceNodeStatus | undefined,
