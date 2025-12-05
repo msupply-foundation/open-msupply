@@ -45,21 +45,24 @@ const getStatusOptions = (
   }));
 
   if (isManuallyCreated) {
+    // When the status is new, received and verified are available to
+    // select.
     if (currentStatus === InvoiceNodeStatus.New) {
       if (options[1]) options[1].isDisabled = false;
       if (options[2]) options[2].isDisabled = false;
     }
+    // When the status is received, only verified is available to select.
     if (currentStatus === InvoiceNodeStatus.Received) {
       if (options[2]) options[2].isDisabled = false;
     }
   } else {
+    // When shipped, can change to delivered or verified
     if (currentStatus === InvoiceNodeStatus.Shipped) {
-      // When shipped, can change to delivered or verified
       if (options[3]) options[3].isDisabled = false;
       if (options[4]) options[4].isDisabled = false;
     }
+    // When received, can change to verified
     if (currentStatus === InvoiceNodeStatus.Received) {
-      // When received, can change to verified
       if (options[4]) options[4].isDisabled = false;
     }
   }
