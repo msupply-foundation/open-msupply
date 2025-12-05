@@ -15,47 +15,25 @@ const getStatusOptions = (
   currentStatus: InvoiceNodeStatus,
   getButtonLabel: (status: InvoiceNodeStatus) => string
 ): SplitButtonOption<InvoiceNodeStatus>[] => {
-  const options: [
-    SplitButtonOption<InvoiceNodeStatus>,
-    SplitButtonOption<InvoiceNodeStatus>,
-    SplitButtonOption<InvoiceNodeStatus>,
-    SplitButtonOption<InvoiceNodeStatus>,
-    SplitButtonOption<InvoiceNodeStatus>,
-  ] = [
-    {
-      value: InvoiceNodeStatus.New,
-      label: getButtonLabel(InvoiceNodeStatus.New),
-      isDisabled: true,
-    },
-    {
-      value: InvoiceNodeStatus.Picked,
-      label: getButtonLabel(InvoiceNodeStatus.Picked),
-      isDisabled: true,
-    },
-    {
-      value: InvoiceNodeStatus.Shipped,
-      label: getButtonLabel(InvoiceNodeStatus.Shipped),
-      isDisabled: true,
-    },
-    {
-      value: InvoiceNodeStatus.Delivered,
-      label: getButtonLabel(InvoiceNodeStatus.Delivered),
-      isDisabled: true,
-    },
-    {
-      value: InvoiceNodeStatus.Verified,
-      label: getButtonLabel(InvoiceNodeStatus.Verified),
-      isDisabled: true,
-    },
-  ];
+  const options: SplitButtonOption<InvoiceNodeStatus>[] = [
+    InvoiceNodeStatus.New,
+    InvoiceNodeStatus.Picked,
+    InvoiceNodeStatus.Shipped,
+    InvoiceNodeStatus.Delivered,
+    InvoiceNodeStatus.Verified,
+  ].map(status => ({
+    value: status,
+    label: getButtonLabel(status),
+    isDisabled: true,
+  }));
 
   if (currentStatus === InvoiceNodeStatus.New) {
-    options[1].isDisabled = false;
-    options[2].isDisabled = false;
+    if (options[1]) options[1].isDisabled = false;
+    if (options[2]) options[2].isDisabled = false;
   }
 
   if (currentStatus === InvoiceNodeStatus.Picked) {
-    options[2].isDisabled = false;
+    if (options[2]) options[2].isDisabled = false;
   }
 
   return options;
