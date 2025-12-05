@@ -25,59 +25,32 @@ const getStatusOptions = (
   currentStatus: InvoiceNodeStatus,
   getButtonLabel: (status: InvoiceNodeStatus) => string
 ): SplitButtonOption<InvoiceNodeStatus>[] => {
-  const options: [
-    SplitButtonOption<InvoiceNodeStatus>,
-    SplitButtonOption<InvoiceNodeStatus>,
-    SplitButtonOption<InvoiceNodeStatus>,
-    SplitButtonOption<InvoiceNodeStatus>,
-    SplitButtonOption<InvoiceNodeStatus>,
-    SplitButtonOption<InvoiceNodeStatus>,
-  ] = [
-    {
-      value: InvoiceNodeStatus.New,
-      label: getButtonLabel(InvoiceNodeStatus.New),
-      isDisabled: true,
-    },
-    {
-      value: InvoiceNodeStatus.Allocated,
-      label: getButtonLabel(InvoiceNodeStatus.Allocated),
-      isDisabled: true,
-    },
-    {
-      value: InvoiceNodeStatus.Picked,
-      label: getButtonLabel(InvoiceNodeStatus.Picked),
-      isDisabled: true,
-    },
-    {
-      value: InvoiceNodeStatus.Shipped,
-      label: getButtonLabel(InvoiceNodeStatus.Shipped),
-      isDisabled: true,
-    },
-    {
-      value: InvoiceNodeStatus.Delivered,
-      label: getButtonLabel(InvoiceNodeStatus.Delivered),
-      isDisabled: true,
-    },
-    {
-      value: InvoiceNodeStatus.Verified,
-      label: getButtonLabel(InvoiceNodeStatus.Verified),
-      isDisabled: true,
-    },
-  ];
+  const options = [
+    InvoiceNodeStatus.New,
+    InvoiceNodeStatus.Allocated,
+    InvoiceNodeStatus.Picked,
+    InvoiceNodeStatus.Shipped,
+    InvoiceNodeStatus.Delivered,
+    InvoiceNodeStatus.Verified,
+  ].map(status => ({
+    value: status,
+    label: getButtonLabel(status),
+    isDisabled: true,
+  }));
 
   if (currentStatus === InvoiceNodeStatus.New) {
-    options[1].isDisabled = false;
-    options[2].isDisabled = false;
-    options[3].isDisabled = false;
+    if (options[1]) options[1].isDisabled = false;
+    if (options[2]) options[2].isDisabled = false;
+    if (options[3]) options[3].isDisabled = false;
   }
 
   if (currentStatus === InvoiceNodeStatus.Allocated) {
-    options[2].isDisabled = false;
-    options[3].isDisabled = false;
+    if (options[2]) options[2].isDisabled = false;
+    if (options[3]) options[3].isDisabled = false;
   }
 
   if (currentStatus === InvoiceNodeStatus.Picked) {
-    options[3].isDisabled = false;
+    if (options[3]) options[3].isDisabled = false;
   }
 
   return options;
