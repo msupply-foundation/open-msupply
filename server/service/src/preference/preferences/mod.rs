@@ -20,6 +20,8 @@ pub mod sync_records_display_threshold;
 pub use sync_records_display_threshold::*;
 pub mod authorise_purchase_order;
 pub use authorise_purchase_order::*;
+pub mod show_indicative_price_in_requisitions;
+pub use show_indicative_price_in_requisitions::*;
 pub mod prevent_transfers_months_before_initialisation;
 pub use prevent_transfers_months_before_initialisation::*;
 pub mod authorise_goods_received;
@@ -68,6 +70,7 @@ pub struct PreferenceProvider {
     pub allow_tracking_of_stock_by_donor: AllowTrackingOfStockByDonor,
     pub authorise_goods_received: AuthoriseGoodsReceived,
     pub authorise_purchase_order: AuthorisePurchaseOrder,
+    pub show_indicative_price_in_requisitions: ShowIndicativePriceInRequisitions,
     pub custom_translations: CustomTranslations,
     pub gender_options: GenderOptions,
     pub prevent_transfers_months_before_initialisation: PreventTransfersMonthsBeforeInitialisation,
@@ -111,6 +114,7 @@ pub fn get_preference_provider() -> PreferenceProvider {
         allow_tracking_of_stock_by_donor: AllowTrackingOfStockByDonor,
         authorise_goods_received: AuthoriseGoodsReceived,
         authorise_purchase_order: AuthorisePurchaseOrder,
+        show_indicative_price_in_requisitions: ShowIndicativePriceInRequisitions,
         custom_translations: CustomTranslations,
         gender_options: GenderOptions,
         show_contact_tracing: ShowContactTracing,

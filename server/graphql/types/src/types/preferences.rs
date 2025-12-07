@@ -78,6 +78,10 @@ impl PreferencesNode {
         self.load_preference(&self.preferences.expired_stock_issue_threshold)
     }
 
+    pub async fn show_indicative_price_in_requisitions(&self) -> Result<bool> {
+        self.load_preference(&self.preferences.show_indicative_price_in_requisitions)
+    }
+
     pub async fn allow_editing_selling_price_on_customer_invoice_lines(&self) -> Result<bool> {
         self.load_preference(
             &self
@@ -269,6 +273,7 @@ pub enum PreferenceKey {
     SkipIntermediateStatusesInOutbound,
     StoreCustomColour,
     WarnWhenMissingRecentStocktake,
+    ShowIndicativePriceInRequisitions,
 }
 
 #[derive(Enum, Copy, Clone, Debug, Eq, PartialEq)]
