@@ -27,7 +27,6 @@ pub struct UpsertPreferences {
     pub expired_stock_prevent_issue: Option<bool>,
     pub expired_stock_issue_threshold: Option<i32>,
     pub show_indicative_price_in_requisitions:Option<bool>,
-    pub allow_editing_selling_price_on_customer_invoice_lines: Option<bool>,
     pub item_margin_overrides_supplier_margin: Option<bool>,
 
 
@@ -72,7 +71,6 @@ pub fn upsert_preferences(
         expired_stock_prevent_issue: expired_stock_prevent_issue_input,
         expired_stock_issue_threshold: expired_stock_issue_threshold_input,
         show_indicative_price_in_requisitions: show_indicative_price_in_requisitions_input,
-        allow_editing_selling_price_on_customer_invoice_lines: allow_editing_selling_price_on_customer_invoice_lines_input,
         item_margin_overrides_supplier_margin: item_margin_overrides_supplier_margin_input,
 
         // Store preferences
@@ -116,7 +114,6 @@ pub fn upsert_preferences(
         expired_stock_prevent_issue,
         expired_stock_issue_threshold,
         show_indicative_price_in_requisitions,
-        allow_editing_selling_price_on_customer_invoice_lines, 
         item_margin_overrides_supplier_margin,
 
         // Store preferences
@@ -199,10 +196,6 @@ pub fn upsert_preferences(
                 show_indicative_price_in_requisitions.upsert(connection, input, None)?;
             }
             
-            if let Some(input) = allow_editing_selling_price_on_customer_invoice_lines_input {
-                allow_editing_selling_price_on_customer_invoice_lines.upsert(connection, input, None)?;
-            }
-
             if let Some(input) = item_margin_overrides_supplier_margin_input {
                 item_margin_overrides_supplier_margin.upsert(connection, input, None)?;
             }
