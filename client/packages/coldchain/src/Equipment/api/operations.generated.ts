@@ -462,7 +462,6 @@ export type LabelPrinterSettingsQuery = {
     labelHeight: number;
     labelWidth: number;
     port: number;
-    isUsb: boolean;
   } | null;
 };
 
@@ -772,7 +771,6 @@ export const LabelPrinterSettingsDocument = gql`
       labelHeight
       labelWidth
       port
-      isUsb
     }
   }
 `;
