@@ -20,9 +20,10 @@ export const CustomerSearchInput = ({
   clearable = false,
   currentId = undefined,
   extraFilter,
+  filterBy,
 }: NameSearchInputProps) => {
   const t = useTranslation();
-  const { data, isLoading } = useName.document.customers();
+  const { data, isLoading } = useName.document.customers(filterBy);
   const [buffer, setBuffer] = useBufferState(value);
   const NameOptionRenderer = getNameOptionRenderer(t('label.on-hold'));
 

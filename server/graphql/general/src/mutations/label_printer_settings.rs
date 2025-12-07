@@ -11,6 +11,7 @@ pub struct LabelPrinterSettingsInput {
     pub label_height: i32,
     pub label_width: i32,
     pub port: u16,
+    pub is_usb: bool,
 }
 
 #[derive(SimpleObject)]
@@ -42,6 +43,7 @@ impl LabelPrinterSettingNode {
             label_height: self.label_height,
             label_width: self.label_width,
             port: self.port,
+            is_usb: self.is_usb,
         }
     }
 }
@@ -53,6 +55,7 @@ impl LabelPrinterSettingsInput {
             label_height: self.label_height,
             label_width: self.label_width,
             port: self.port,
+            is_usb: self.is_usb,
         }
     }
 }
