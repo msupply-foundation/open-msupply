@@ -1,10 +1,16 @@
-mod generate;
 mod validate;
-use crate::{requisition_line::query::get_requisition_line, service_provider::ServiceContext};
-pub use generate::*;
+use crate::{
+    pricing::item_price::{get_pricing_for_items, ItemPriceLookup},
+    requisition::common::get_indicative_price_pref,
+    requisition_line::query::get_requisition_line,
+    service_provider::ServiceContext,
+};
+use chrono::Utc;
 use validate::validate;
 
-use repository::{RepositoryError, RequisitionLine, RequisitionLineRowRepository};
+use repository::{
+    RepositoryError, RequisitionLine, RequisitionLineRow, RequisitionLineRowRepository,
+};
 
 #[derive(Debug, PartialEq, Clone, Default)]
 pub struct InsertResponseRequisitionLine {
@@ -40,7 +46,47 @@ pub fn insert_response_requisition_line(
         .connection
         .transaction_sync(|connection| {
             let (requisition_row, item_row) = validate(connection, &ctx.store_id, &input)?;
-            let new_requisition_line_row = generate(requisition_row, item_row, input);
+            let populate_price_per_unit = get_indicative_price_pref(connection)?;
+            let price_per_unit = if populate_price_per_unit {
+                get_pricing_for_items(
+                    connection,
+                    ItemPriceLookup {
+                        item_ids: vec![input.item_id.clone()],
+                        customer_name_id: None,
+                    },
+                )?
+                .remove(&item_row.id)
+                .unwrap_or_default()
+                .calculated_price_per_unit
+            } else {
+                None
+            };
+            let new_requisition_line_row = RequisitionLineRow {
+                id: input.id.clone(),
+                item_link_id: item_row.id.clone(),
+                item_name: item_row.name.clone(),
+                requisition_id: requisition_row.id,
+                snapshot_datetime: Some(Utc::now().naive_utc()),
+                price_per_unit,
+
+                // Default
+                suggested_quantity: 0.0,
+                requested_quantity: 0.0,
+                initial_stock_on_hand_units: 0.0,
+                available_stock_on_hand: 0.0,
+                average_monthly_consumption: 0.0,
+                supply_quantity: 0.0,
+                incoming_units: 0.0,
+                outgoing_units: 0.0,
+                loss_in_units: 0.0,
+                addition_in_units: 0.0,
+                expiring_units: 0.0,
+                days_out_of_stock: 0.0,
+                option_id: None,
+                comment: None,
+                approved_quantity: 0.0,
+                approval_comment: None,
+            };
 
             RequisitionLineRowRepository::new(connection).upsert_one(&new_requisition_line_row)?;
 
@@ -60,6 +106,12 @@ impl From<RepositoryError> for InsertResponseRequisitionLineError {
 
 #[cfg(test)]
 mod test {
+    use crate::{
+        requisition_line::response_requisition_line::{
+            InsertResponseRequisitionLine, InsertResponseRequisitionLineError as ServiceError,
+        },
+        service_provider::ServiceProvider,
+    };
     use repository::{
         mock::{
             mock_finalised_response_requisition, mock_item_a, mock_name_b, mock_program_a,
@@ -69,12 +121,6 @@ mod test {
         test_db::setup_all_with_data,
         RequisitionLineRow, RequisitionLineRowRepository, RequisitionRow, RequisitionStatus,
         RequisitionType,
-    };
-    use crate::{
-        requisition_line::response_requisition_line::{
-            InsertResponseRequisitionLine, InsertResponseRequisitionLineError as ServiceError,
-        },
-        service_provider::ServiceProvider,
     };
 
     fn new_response_requisition_line() -> RequisitionLineRow {
