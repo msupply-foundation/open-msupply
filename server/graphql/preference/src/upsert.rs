@@ -57,7 +57,6 @@ pub struct UpsertPreferencesInput {
     pub days_in_month: Option<f64>,
     pub expired_stock_prevent_issue: Option<bool>,
     pub expired_stock_issue_threshold: Option<i32>,
-    pub allow_editing_selling_price_on_customer_invoice_lines: Option<bool>,
     pub item_margin_overrides_supplier_margin: Option<bool>,
 
     // Store preferences
@@ -123,7 +122,6 @@ impl UpsertPreferencesInput {
             days_in_month,
             expired_stock_prevent_issue,
             expired_stock_issue_threshold,
-            allow_editing_selling_price_on_customer_invoice_lines,
             item_margin_overrides_supplier_margin,
             // Store preferences
             manage_vaccines_in_doses,
@@ -165,8 +163,6 @@ impl UpsertPreferencesInput {
             days_in_month: *days_in_month,
             expired_stock_prevent_issue: *expired_stock_prevent_issue,
             expired_stock_issue_threshold: *expired_stock_issue_threshold,
-            allow_editing_selling_price_on_customer_invoice_lines:
-                *allow_editing_selling_price_on_customer_invoice_lines,
             item_margin_overrides_supplier_margin: *item_margin_overrides_supplier_margin,
 
             // Store preferences

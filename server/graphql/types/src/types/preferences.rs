@@ -82,14 +82,6 @@ impl PreferencesNode {
         self.load_preference(&self.preferences.show_indicative_price_in_requisitions)
     }
 
-    pub async fn allow_editing_selling_price_on_customer_invoice_lines(&self) -> Result<bool> {
-        self.load_preference(
-            &self
-                .preferences
-                .allow_editing_selling_price_on_customer_invoice_lines,
-        )
-    }
-
     pub async fn item_margin_overrides_supplier_margin(&self) -> Result<bool> {
         self.load_preference(&self.preferences.item_margin_overrides_supplier_margin)
     }
@@ -250,7 +242,6 @@ pub enum PreferenceKey {
     DaysInMonth,
     ExpiredStockPreventIssue,
     ExpiredStockIssueThreshold,
-    AllowEditingSellingPriceOnCustomerInvoiceLines,
     ItemMarginOverridesSupplierMargin,
 
     // Store preferences

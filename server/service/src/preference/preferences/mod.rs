@@ -60,8 +60,6 @@ pub mod skip_intermediate_statuses_in_outbound;
 pub use skip_intermediate_statuses_in_outbound::*;
 pub mod store_custom_colour;
 pub use store_custom_colour::*;
-pub mod allow_editing_selling_price_on_customer_invoice_lines;
-pub use allow_editing_selling_price_on_customer_invoice_lines::*;
 pub mod item_margin_overrides_supplier_margin;
 pub use item_margin_overrides_supplier_margin::*;
 
@@ -81,8 +79,6 @@ pub struct PreferenceProvider {
     pub days_in_month: DaysInMonth,
     pub expired_stock_prevent_issue: ExpiredStockPreventIssue,
     pub expired_stock_issue_threshold: ExpiredStockIssueThreshold,
-    pub allow_editing_selling_price_on_customer_invoice_lines:
-        AllowEditingSellingPriceOnCustomerInvoiceLines,
     pub item_margin_overrides_supplier_margin: ItemMarginOverridesSupplierMargin,
 
     // Store preferences
@@ -125,8 +121,6 @@ pub fn get_preference_provider() -> PreferenceProvider {
         days_in_month: DaysInMonth,
         expired_stock_prevent_issue: ExpiredStockPreventIssue,
         expired_stock_issue_threshold: ExpiredStockIssueThreshold,
-        allow_editing_selling_price_on_customer_invoice_lines:
-            AllowEditingSellingPriceOnCustomerInvoiceLines,
         item_margin_overrides_supplier_margin: ItemMarginOverridesSupplierMargin,
 
         // Store preferences

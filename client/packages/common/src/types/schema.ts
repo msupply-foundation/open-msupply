@@ -6853,7 +6853,6 @@ export type PreferenceDescriptionNode = {
 
 export enum PreferenceKey {
   AdjustForNumberOfDaysOutOfStock = 'adjustForNumberOfDaysOutOfStock',
-  AllowEditingSellingPriceOnCustomerInvoiceLines = 'allowEditingSellingPriceOnCustomerInvoiceLines',
   AllowTrackingOfStockByDonor = 'allowTrackingOfStockByDonor',
   AuthoriseGoodsReceived = 'authoriseGoodsReceived',
   AuthorisePurchaseOrder = 'authorisePurchaseOrder',
@@ -6915,7 +6914,6 @@ export enum PreferenceValueNodeType {
 export type PreferencesNode = {
   __typename: 'PreferencesNode';
   adjustForNumberOfDaysOutOfStock: Scalars['Boolean']['output'];
-  allowEditingSellingPriceOnCustomerInvoiceLines: Scalars['Boolean']['output'];
   allowTrackingOfStockByDonor: Scalars['Boolean']['output'];
   authoriseGoodsReceived: Scalars['Boolean']['output'];
   authorisePurchaseOrder: Scalars['Boolean']['output'];
@@ -11260,9 +11258,6 @@ export type UpsertPackVariantResponse =
 
 export type UpsertPreferencesInput = {
   adjustForNumberOfDaysOutOfStock?: InputMaybe<Scalars['Boolean']['input']>;
-  allowEditingSellingPriceOnCustomerInvoiceLines?: InputMaybe<
-    Scalars['Boolean']['input']
-  >;
   allowTrackingOfStockByDonor?: InputMaybe<Scalars['Boolean']['input']>;
   authoriseGoodsReceived?: InputMaybe<Scalars['Boolean']['input']>;
   authorisePurchaseOrder?: InputMaybe<Scalars['Boolean']['input']>;
