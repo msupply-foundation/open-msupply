@@ -7,6 +7,7 @@ import {
   useNotification,
   LoadingButton,
   useDisabledNotificationPopover,
+  useLocalStorage,
 } from '@openmsupply-client/common';
 
 import { useAssets } from '../api';
@@ -46,6 +47,7 @@ export const AppBarButtonsComponent = () => {
     title: t('heading.unable-to-print'),
     message: t('error.label-printer-not-configured'),
   });
+  const [isUsb] = useLocalStorage('/printlabel/isusb', false);
 
   const printAssetLabel = () => {
     const date = new Date().toLocaleDateString();
@@ -132,8 +134,8 @@ export const AppBarButtonsComponent = () => {
 
   const onClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     if (settings === null) show(e);
-    if (!settings?.isUsb) printAssetLabel();
-    if (settings?.isUsb) printAssetLabelViaUsb();
+    if (!isUsb) printAssetLabel();
+    if (isUsb) printAssetLabelViaUsb();
   };
 
   return (

@@ -4923,6 +4923,7 @@ export type ItemNodeProgramsArgs = {
 
 export type ItemNodeStatsArgs = {
   amcLookbackMonths?: InputMaybe<Scalars['Float']['input']>;
+  periodEnd?: InputMaybe<Scalars['NaiveDate']['input']>;
   storeId: Scalars['String']['input'];
 };
 
@@ -5037,7 +5038,6 @@ export type JsonschemaNode = {
 export type LabelPrinterSettingNode = {
   __typename: 'LabelPrinterSettingNode';
   address: Scalars['String']['output'];
-  isUsb: Scalars['Boolean']['output'];
   labelHeight: Scalars['Int']['output'];
   labelWidth: Scalars['Int']['output'];
   port: Scalars['Int']['output'];
@@ -5045,7 +5045,6 @@ export type LabelPrinterSettingNode = {
 
 export type LabelPrinterSettingsInput = {
   address: Scalars['String']['input'];
-  isUsb: Scalars['Boolean']['input'];
   labelHeight: Scalars['Int']['input'];
   labelWidth: Scalars['Int']['input'];
   port: Scalars['Int']['input'];
@@ -8767,6 +8766,7 @@ export type RequisitionLineNode = {
 
 export type RequisitionLineNodeItemStatsArgs = {
   amcLookbackMonths?: InputMaybe<Scalars['Float']['input']>;
+  periodEnd?: InputMaybe<Scalars['NaiveDate']['input']>;
 };
 
 export type RequisitionLineStatsError = {
