@@ -132,7 +132,9 @@ fn validate_exiting_encounter(
     name: &str,
 ) -> Result<Option<Encounter>, RepositoryError> {
     let result = EncounterRepository::new(&ctx.connection)
-        .query_by_filter(EncounterFilter::new().document_name(EqualFilter::equal_to(name.to_owned())))?
+        .query_by_filter(
+            EncounterFilter::new().document_name(EqualFilter::equal_to(name.to_owned())),
+        )?
         .pop();
     Ok(result)
 }
@@ -224,7 +226,7 @@ mod test {
                 .names()
                 .stores()
                 .name_store_joins()
-                .full_master_list()
+                .full_master_lists()
                 .contexts()
                 .programs(),
         )

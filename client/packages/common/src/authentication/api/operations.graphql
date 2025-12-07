@@ -223,5 +223,6 @@ query preferences($storeId: String!) {
     skipIntermediateStatusesInOutbound
     allowEditingSellingPriceOnCustomerInvoiceLines
     itemMarginOverridesSupplierMargin
+    showIndicativePriceInRequisitions
   }
 }

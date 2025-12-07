@@ -1,6 +1,6 @@
 use crate::{
     invoice::query::get_invoice,
-    pricing::item_price::{get_pricing_for_item, ItemPrice, ItemPriceLookup},
+    pricing::item_price::{get_pricing_for_items, ItemPrice, ItemPriceLookup},
     service_provider::ServiceContext,
     stock_line::{
         historical_stock::{
@@ -212,14 +212,16 @@ fn generate_new_draft_lines(
         .filter(|line| !existing_stock_line_ids.contains(&line.stock_line_row.id))
         .collect();
 
-    let item_pricing = get_pricing_for_item(
-        ctx,
+    let item_pricing = get_pricing_for_items(
+        &ctx.connection,
         ItemPriceLookup {
-            item_id: item_id.to_string(),
+            item_ids: vec![item_id.to_string()],
             customer_name_id: Some(other_party_id),
         },
     )
-    .map_err(ListError::DatabaseError)?;
+    .map_err(ListError::DatabaseError)?
+    .remove(item_id)
+    .unwrap_or_default();
 
     let new_lines: Vec<DraftStockOutLine> = available_stock_lines
         .into_iter()

@@ -3,6 +3,8 @@ use repository::{RequisitionLineRow, RequisitionRow};
 use util::uuid::uuid;
 
 use crate::item_stats::get_item_stats;
+use crate::pricing::item_price::{get_pricing_for_items, ItemPriceLookup};
+use crate::requisition::common::get_indicative_price_pref;
 use crate::service_provider::ServiceContext;
 use crate::PluginOrRepositoryError;
 
@@ -48,6 +50,21 @@ pub fn generate_requisition_lines(
     period_end: Option<NaiveDate>,
 ) -> Result<Vec<RequisitionLineRow>, PluginOrRepositoryError> {
     let item_stats_rows = get_item_stats(&ctx.connection, store_id, None, item_ids, period_end)?;
+    let populate_price_per_unit = get_indicative_price_pref(&ctx.connection)?;
+    let price_list = if populate_price_per_unit {
+        Some(get_pricing_for_items(
+            &ctx.connection,
+            ItemPriceLookup {
+                item_ids: item_stats_rows
+                    .iter()
+                    .map(|i| i.item_id.to_string())
+                    .collect(),
+                customer_name_id: None,
+            },
+        )?)
+    } else {
+        None
+    };
 
     let lines = item_stats_rows
         .into_iter()
@@ -64,12 +81,21 @@ pub fn generate_requisition_lines(
             RequisitionLineRow {
                 id: uuid(),
                 requisition_id: requisition_row.id.clone(),
-                item_link_id: item_stats.item_id,
+                item_link_id: item_stats.item_id.clone(),
                 item_name: item_stats.item_name,
                 suggested_quantity,
                 available_stock_on_hand,
                 average_monthly_consumption,
                 snapshot_datetime: Some(Utc::now().naive_utc()),
+                price_per_unit: if let Some(price_list) = &price_list {
+                    price_list
+                        .get(&item_stats.item_id)
+                        .cloned()
+                        .unwrap_or_default()
+                        .calculated_price_per_unit
+                } else {
+                    None
+                },
                 // Default
                 comment: None,
                 supply_quantity: 0.0,

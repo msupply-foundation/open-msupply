@@ -268,6 +268,7 @@ export type PreferencesQuery = {
     skipIntermediateStatusesInOutbound: boolean;
     allowEditingSellingPriceOnCustomerInvoiceLines: boolean;
     itemMarginOverridesSupplierMargin: boolean;
+    showIndicativePriceInRequisitions: boolean;
     warnWhenMissingRecentStocktake: {
       __typename: 'WarnWhenMissingRecentStocktakeDataNode';
       enabled: boolean;
@@ -514,6 +515,7 @@ export const PreferencesDocument = gql`
       skipIntermediateStatusesInOutbound
       allowEditingSellingPriceOnCustomerInvoiceLines
       itemMarginOverridesSupplierMargin
+      showIndicativePriceInRequisitions
     }
   }
 `;
