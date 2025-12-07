@@ -1,4 +1,4 @@
-import React, { FC, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import {
   useTranslation,
   NothingHere,
@@ -20,7 +20,7 @@ import { AppBarButtons } from './AppBarButtons';
 import { useStockList } from '../api/hooks/useStockList';
 import { NewStockLineModal } from '../Components/NewStockLineModal';
 
-export const StockListView: FC = () => {
+export const StockListView = () => {
   const {
     queryParams: { sortBy, first, offset, filterBy },
   } = useUrlQueryParams({
