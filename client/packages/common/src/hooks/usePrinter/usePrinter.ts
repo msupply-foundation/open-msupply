@@ -145,6 +145,7 @@ export const usePrinter = (
   return {
     isPrinting,
     print,
+    show,
     DisabledNotification,
     isUsbPrinting: isUsb,
   };
