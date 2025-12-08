@@ -1245,7 +1245,7 @@
   "label.outer-pack-size": "Outer pack size",
   "label.outgoing": "Outgoing",
   "label.outstanding-units": "Outstanding units",
-  "label.overstocked-products": "Overstocked products",
+  "label.overstocked-products": "Items with more than {{num}} months of stock",
   "label.pack": "Pack",
   "label.pack-cost-price": "Pack cost price",
   "label.pack-quantity": "Pack Qty",
