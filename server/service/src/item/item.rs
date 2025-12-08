@@ -1,12 +1,15 @@
 use std::collections::HashMap;
 
+use chrono::Duration;
 use repository::{
-    EqualFilter, Item, ItemFilter, ItemRepository, ItemSort, Pagination, PaginationOption,
-    RepositoryError, StorageConnection, StorageConnectionManager,
+    ConsumptionFilter, ConsumptionRepository, DateFilter, EqualFilter, Item, ItemFilter,
+    ItemRepository, ItemSort, Pagination, PaginationOption, RepositoryError, StorageConnection,
+    StorageConnectionManager,
 };
+use util::{date_now, date_with_offset, format_error};
 
 use crate::{
-    dashboard::item_count::get_items_with_consumption_set,
+    common::days_in_a_month,
     get_pagination_or_default, i64_to_u32,
     item_stats::{get_item_stats_map, ItemStats},
     preference::{
@@ -138,13 +141,13 @@ pub fn get_out_of_stock_products_item_ids(
     connection: &StorageConnection,
     filter: ItemFilter,
     store_id: &str,
-) -> Result<Vec<String>, ListError> {
+) -> Result<Vec<String>, RepositoryError> {
     let repository = ItemRepository::new(&connection);
 
     let item_ids: Vec<String> = repository
         .query(
             Pagination::all(),
-            Some(filter.clone()),
+            Some(filter.clone().has_stock_on_hand(true)),
             None,
             Some(store_id.to_owned()),
         )?
@@ -152,34 +155,25 @@ pub fn get_out_of_stock_products_item_ids(
         .map(|item| item.item_row.id.clone())
         .collect();
 
-    let item_stats = get_item_stats_map(&connection, store_id, None, item_ids.clone(), None)
-        .map_err(|e| match e {
-            PluginOrRepositoryError::PluginError(err) => ListError::PluginError(err.to_string()),
-            PluginOrRepositoryError::RepositoryError(err) => ListError::DatabaseError(err),
-        })?;
-
     let num_months_consumption =
         NumberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts
             .load(&connection, Some(store_id.to_string()))
             .map_err(map_preference_error)?;
 
-    let items_with_consumption_set =
-        get_items_with_consumption_set(connection, store_id, item_ids, num_months_consumption)
-            .map_err(ListError::DatabaseError)?;
+    let days_in_month = days_in_a_month(connection);
+    let number_of_days = num_months_consumption as f64 * days_in_month;
+    let end_date = date_now();
+    let start_date = date_with_offset(&end_date, Duration::days(-(number_of_days as i64)));
 
-    let out_of_stock = filter.out_of_stock_with_recent_consumption == Some(true);
+    let consumption_filter = ConsumptionFilter::new()
+        .store_id(EqualFilter::equal_to(store_id))
+        .item_id(EqualFilter::equal_any(item_ids))
+        .date(DateFilter::date_range(&start_date, &end_date));
 
-    let filtered_ids: Vec<String> = item_stats
-        .into_iter()
-        .filter_map(|(id, stats)| {
-            let is_out_of_stock =
-                stats.total_stock_on_hand == 0.0 && items_with_consumption_set.contains(&id);
+    let out_of_stock_with_consumption = ConsumptionRepository::new(connection)
+        .query_items_with_consumption(Some(consumption_filter))?;
 
-            (is_out_of_stock == out_of_stock).then_some(id)
-        })
-        .collect();
-
-    Ok(filtered_ids)
+    Ok(out_of_stock_with_consumption)
 }
 
 pub fn get_products_at_risk_item_ids(
@@ -228,19 +222,11 @@ pub fn get_products_at_risk_item_ids(
     Ok(filtered_ids)
 }
 
-fn map_preference_error(e: PreferenceError) -> ListError {
+fn map_preference_error(e: PreferenceError) -> RepositoryError {
+    let formatted_error = format_error(&e);
     match e {
-        PreferenceError::DatabaseError(err) => ListError::DatabaseError(err),
-        PreferenceError::DeserializeError(key, value, msg) => ListError::PluginError(format!(
-            "Failed to deserialize preference {}: {} - {}",
-            key, value, msg
-        )),
-        PreferenceError::ConversionError(key, msg) => {
-            ListError::PluginError(format!("Failed to convert preference {}: {}", key, msg))
-        }
-        PreferenceError::StoreIdNotProvided => {
-            ListError::PluginError("Store ID not provided".to_string())
-        }
+        PreferenceError::DatabaseError(err) => err,
+        _ => RepositoryError::as_db_error(&formatted_error, ()),
     }
 }
 
