@@ -114,6 +114,35 @@ pub async fn print_label_prescription(
     }
 }
 
+pub async fn get_label_prescription(
+    request: HttpRequest,
+    _service_provider: Data<ServiceProvider>,
+    auth_data: Data<AuthData>,
+    query: web::Query<QueryParams>,
+) -> HttpResponse {
+    let auth_result = validate_cookie_auth(request.clone(), &auth_data);
+    match auth_result {
+        Ok(_) => (),
+        Err(error) => {
+            let formatted_error = format!("{:#?}", error);
+            return HttpResponse::Unauthorized().body(formatted_error);
+        }
+    }
+
+    let data: Vec<PrescriptionLabelData> =
+        match serde_json::from_str(query.into_inner().data.as_str()) {
+            Ok(parsed_data) => parsed_data,
+            Err(err) => {
+                return HttpResponse::BadRequest()
+                    .body(format!("Failed to parse data header as JSON: {}", err));
+            }
+        };
+    let zpl = service::print::label::get_prescription_label(data);
+    let response = serde_json::json!({ "zpl": zpl });
+
+    HttpResponse::Ok().body(serde_json::to_string_pretty(&response).unwrap())
+}
+
 pub async fn test_printer(service_provider: Data<ServiceProvider>) -> HttpResponse {
     let settings = match get_printer_settings(service_provider) {
         Ok(settings) => settings,
