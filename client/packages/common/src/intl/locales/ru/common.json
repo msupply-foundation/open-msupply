@@ -363,6 +363,7 @@
   "error.name-program-duplicate": "Название курса вакцинации уже существует для этой программы",
   "error.no-asset-create-permission": "У вас нет разрешения на создание нового актива.",
   "error.no-asset-create-scan-permission": "У вас нет разрешения на создание нового актива посредством сканирования матрицы данных.",
+  "error.no-asset-edit-permission": "У вас нет разрешения на редактирование активов.",
   "error.no-asset-import-permission": "У вас нет разрешения на импорт активов",
   "error.no-asset-log-reasons": "Нет причин журнала активов для отображения.",
   "error.no-asset-view-permission": "У вас нет разрешения на просмотр активов.",
