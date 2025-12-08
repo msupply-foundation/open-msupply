@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   ApiException,
   RouteBuilder,
   StatsPanel,
   useFormatNumber,
   usePreferences,
+  useQueryClient,
   useTranslation,
 } from '@openmsupply-client/common';
 import { useDashboard } from '../../api';
@@ -15,9 +16,12 @@ const LOW_MOS_THRESHOLD = 3;
 export const StockLevelsSummary = () => {
   const t = useTranslation();
   const formatNumber = useFormatNumber();
+  const queryClient = useQueryClient();
+  const dashboardApi = useDashboard.utils.api();
   const {
     numberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts:
-      monthsForOutOfStockCalc,
+      outOfStockProducts,
+    numberOfMonthsThresholdToShowLowStockAlertsForProducts: lowStockAlert,
   } = usePreferences();
 
   const {
@@ -26,6 +30,11 @@ export const StockLevelsSummary = () => {
     isLoading: isItemStatsLoading,
     isError: hasItemStatsError,
   } = useDashboard.statistics.item(LOW_MOS_THRESHOLD);
+
+  useEffect(() => {
+    queryClient.invalidateQueries(dashboardApi.keys.items());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [outOfStockProducts, lowStockAlert]);
 
   return (
     <StatsPanel
@@ -81,7 +90,7 @@ export const StockLevelsSummary = () => {
             })
             .build(),
         },
-        ...(monthsForOutOfStockCalc
+        ...(outOfStockProducts
           ? [
               {
                 label: t('label.out-of-stock-products', {
@@ -97,9 +106,15 @@ export const StockLevelsSummary = () => {
                   })
                   .build(),
               },
+            ]
+          : []),
+        ...(lowStockAlert
+          ? [
               {
                 label: t('label.products-at-risk-of-being-out-of-stock', {
-                  count: Math.round(itemCountsData?.outOfStockProducts || 0),
+                  count: Math.round(
+                    itemCountsData?.productsAtRiskOfBeingOutOfStock || 0
+                  ),
                 }),
                 value: formatNumber.round(
                   itemCountsData?.productsAtRiskOfBeingOutOfStock || 0
