@@ -77,6 +77,12 @@ export const StockLevelsSummary = () => {
                 value: formatNumber.round(
                   itemCountsData?.productsOverstocked || 0
                 ),
+                link: RouteBuilder.create(AppRoute.Catalogue)
+                  .addPart(AppRoute.Items)
+                  .addQuery({
+                    minMonthsOfStock: overStockAlert,
+                  })
+                  .build(),
               },
             ]
           : []),
