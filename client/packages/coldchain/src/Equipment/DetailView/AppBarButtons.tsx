@@ -134,8 +134,11 @@ export const AppBarButtonsComponent = () => {
 
   const onClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     if (settings === null) show(e);
-    if (!isUsb) printAssetLabel();
-    if (isUsb) printAssetLabelViaUsb();
+    if (isUsb) {
+      printAssetLabelViaUsb();
+    } else {
+      printAssetLabel();
+    }
   };
 
   return (
