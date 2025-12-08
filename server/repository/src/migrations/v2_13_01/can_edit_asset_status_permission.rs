@@ -12,7 +12,7 @@ impl MigrationFragment for Migrate {
             sql!(
                 connection,
                 r#"
-                    ALTER TYPE permission_type ADD VALUE 'CHANGE_ASSET_STATUS';
+                    ALTER TYPE permission_type ADD VALUE 'ASSET_STATUS_MUTATE';
                 "#
             )?;
         }
