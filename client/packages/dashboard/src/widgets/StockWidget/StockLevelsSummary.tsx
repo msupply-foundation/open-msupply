@@ -18,6 +18,7 @@ export const StockLevelsSummary = () => {
   const {
     numberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts:
       monthsForOutOfStockCalc,
+    numberOfMonthsThresholdToShowOverStockAlertsForProducts: overStockAlert,
   } = usePreferences();
 
   const {
@@ -110,6 +111,18 @@ export const StockLevelsSummary = () => {
                     productsAtRiskOfBeingOutOfStock: true,
                   })
                   .build(),
+              },
+            ]
+          : []),
+        ...(overStockAlert
+          ? [
+              {
+                label: t('label.overstocked-products', {
+                  count: Math.round(itemCountsData?.productsOverstocked || 0),
+                }),
+                value: formatNumber.round(
+                  itemCountsData?.productsOverstocked || 0
+                ),
               },
             ]
           : []),

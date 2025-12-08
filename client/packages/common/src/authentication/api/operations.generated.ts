@@ -250,6 +250,7 @@ export type PreferencesQuery = {
     manageVaccinesInDoses: boolean;
     manageVvmStatusForStock: boolean;
     numberOfMonthsThresholdToShowLowStockAlertsForProducts: number;
+    numberOfMonthsThresholdToShowOverStockAlertsForProducts: number;
     numberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts: number;
     orderInPacks: boolean;
     preventTransfersMonthsBeforeInitialisation: number;
@@ -490,6 +491,7 @@ export const PreferencesDocument = gql`
       manageVaccinesInDoses
       manageVvmStatusForStock
       numberOfMonthsThresholdToShowLowStockAlertsForProducts
+      numberOfMonthsThresholdToShowOverStockAlertsForProducts
       numberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts
       orderInPacks
       preventTransfersMonthsBeforeInitialisation
