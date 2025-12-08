@@ -5,6 +5,7 @@ pub(crate) mod asset_catalogue_item;
 pub(crate) mod asset_catalogue_type;
 pub(crate) mod asset_category;
 pub(crate) mod asset_class;
+pub(crate) mod asset_internal_location;
 pub(crate) mod asset_log;
 pub(crate) mod asset_log_reason;
 pub(crate) mod asset_property;
@@ -171,6 +172,7 @@ pub(crate) fn all_translators() -> SyncTranslators {
         special::clinician_merge::boxed(),
         // Assets
         asset::boxed(),
+        asset_internal_location::boxed(),
         asset_class::boxed(),
         asset_category::boxed(),
         asset_catalogue_type::boxed(),

@@ -82,14 +82,11 @@ impl PrescriptionLabelData {
     }
 }
 
-pub fn print_prescription_label(
-    settings: LabelPrinterSettingNode,
-    label_data: Vec<PrescriptionLabelData>,
-) -> Result<String> {
+pub fn get_prescription_label(label_data: Vec<PrescriptionLabelData>) -> String {
     let sanitised_label_data: Vec<PrescriptionLabelData> =
         label_data.into_iter().map(|d| d.sanitise()).collect();
 
-    let payload = sanitised_label_data
+    sanitised_label_data
         .into_iter()
         .map(|d| {
             let PrescriptionLabelData {
@@ -144,7 +141,14 @@ pub fn print_prescription_label(
                 .join("\n")
         })
         .collect::<Vec<String>>()
-        .join("\n");
+        .join("\n")
+}
+
+pub fn print_prescription_label(
+    settings: LabelPrinterSettingNode,
+    label_data: Vec<PrescriptionLabelData>,
+) -> Result<String> {
+    let payload = get_prescription_label(label_data);
     let printer = Jetdirect::new(settings.address, settings.port);
     printer.send_string(payload, Mode::Print)
 }

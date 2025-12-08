@@ -1,6 +1,7 @@
 use super::{version::Version, Migration, MigrationFragment};
 use crate::StorageConnection;
 
+mod can_edit_asset_status_permission;
 mod reintegrate_assets_and_asset_logs;
 
 pub(crate) struct V2_13_01;
@@ -14,7 +15,10 @@ impl Migration for V2_13_01 {
     }
 
     fn migrate_fragments(&self) -> Vec<Box<dyn MigrationFragment>> {
-        vec![Box::new(reintegrate_assets_and_asset_logs::Migrate)]
+        vec![
+            Box::new(reintegrate_assets_and_asset_logs::Migrate),
+            Box::new(can_edit_asset_status_permission::Migrate),
+        ]
     }
 }
 

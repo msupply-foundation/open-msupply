@@ -70,7 +70,7 @@ export const StoreSelector: FC<PropsWithChildrenOnly> = ({ children }) => {
     <PersistentPaperPopover
       popoverControls={popoverControls}
       placement="top"
-      width={300}
+      width={400}
       Content={
         <PaperPopoverSection label={t('select-store')}>
           {isLoading ? (
@@ -82,11 +82,13 @@ export const StoreSelector: FC<PropsWithChildrenOnly> = ({ children }) => {
                 onChange={e => setSearch(e.target.value)}
                 placeholder={t('placeholder.search-by-name')}
                 sx={{ marginBottom: 1, width: '100%' }}
+                autoFocus
               />
               <Box
                 style={{
                   overflowY: 'auto',
                   maxHeight: 300,
+                  minHeight: 300,
                 }}
               >
                 {storeButtons.length > 0 ? (

@@ -1,14 +1,19 @@
 use std::collections::HashMap;
 
+use chrono::Duration;
 use repository::{
-    EqualFilter, Item, ItemFilter, ItemRepository, ItemSort, Pagination, PaginationOption,
-    RepositoryError, StorageConnection, StorageConnectionManager,
+    ConsumptionFilter, ConsumptionRepository, DateFilter, EqualFilter, Item, ItemFilter,
+    ItemRepository, ItemSort, Pagination, PaginationOption, RepositoryError, StorageConnection,
+    StorageConnectionManager,
 };
+use util::{date_now, date_with_offset, format_error};
 
 use crate::{
+    common::days_in_a_month,
     get_pagination_or_default, i64_to_u32,
     item_stats::{get_item_stats_map, ItemStats},
     preference::{
+        NumberOfMonthsThresholdToShowLowStockAlertsForProducts,
         NumberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts, Preference,
         PreferenceError,
     },
@@ -45,12 +50,16 @@ pub fn get_items(
                 filter = filter.id(EqualFilter::equal_any(item_ids_filtered_by_mos));
             }
 
-            if filter.out_of_stock_with_recent_consumption.is_some()
-                || filter.products_at_risk_of_being_out_of_stock.is_some()
-            {
-                let item_ids_filtered =
-                    get_item_ids_by_stock_status(&connection, filter.clone(), store_id)?;
-                filter = filter.id(EqualFilter::equal_any(item_ids_filtered))
+            if filter.out_of_stock_with_recent_consumption.is_some() {
+                let item_ids =
+                    get_out_of_stock_products_item_ids(&connection, filter.clone(), store_id)?;
+                filter = filter.id(EqualFilter::equal_any(item_ids))
+            }
+
+            if filter.products_at_risk_of_being_out_of_stock.is_some() {
+                let item_ids =
+                    get_products_at_risk_item_ids(&connection, filter.clone(), store_id)?;
+                filter = filter.id(EqualFilter::equal_any(item_ids))
             }
 
             Ok(filter)
@@ -128,7 +137,46 @@ pub fn get_items_ids_for_months_of_stock(
         .collect()
 }
 
-pub fn get_item_ids_by_stock_status(
+pub fn get_out_of_stock_products_item_ids(
+    connection: &StorageConnection,
+    filter: ItemFilter,
+    store_id: &str,
+) -> Result<Vec<String>, RepositoryError> {
+    let repository = ItemRepository::new(&connection);
+
+    let item_ids: Vec<String> = repository
+        .query(
+            Pagination::all(),
+            Some(filter.clone().has_stock_on_hand(true)),
+            None,
+            Some(store_id.to_owned()),
+        )?
+        .iter()
+        .map(|item| item.item_row.id.clone())
+        .collect();
+
+    let num_months_consumption =
+        NumberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts
+            .load(&connection, Some(store_id.to_string()))
+            .map_err(map_preference_error)?;
+
+    let days_in_month = days_in_a_month(connection);
+    let number_of_days = num_months_consumption as f64 * days_in_month;
+    let end_date = date_now();
+    let start_date = date_with_offset(&end_date, Duration::days(-(number_of_days as i64)));
+
+    let consumption_filter = ConsumptionFilter::new()
+        .store_id(EqualFilter::equal_to(store_id))
+        .item_id(EqualFilter::equal_any(item_ids))
+        .date(DateFilter::date_range(&start_date, &end_date));
+
+    let out_of_stock_with_consumption = ConsumptionRepository::new(connection)
+        .query_items_with_consumption(Some(consumption_filter))?;
+
+    Ok(out_of_stock_with_consumption)
+}
+
+pub fn get_products_at_risk_item_ids(
     connection: &StorageConnection,
     filter: ItemFilter,
     store_id: &str,
@@ -146,66 +194,40 @@ pub fn get_item_ids_by_stock_status(
         .map(|item| item.item_row.id.clone())
         .collect();
 
-    let num_months_consumption =
-        NumberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts
-            .load(&connection, Some(store_id.to_string()))
-            .map_err(|e| match e {
-                PreferenceError::DatabaseError(err) => ListError::DatabaseError(err),
-                PreferenceError::DeserializeError(key, value, msg) => {
-                    ListError::PluginError(format!(
-                        "Failed to deserialize preference {}: {} - {}",
-                        key, value, msg
-                    ))
-                }
-                PreferenceError::ConversionError(key, msg) => {
-                    ListError::PluginError(format!("Failed to convert preference {}: {}", key, msg))
-                }
-                PreferenceError::StoreIdNotProvided => {
-                    ListError::PluginError("Store ID not provided".to_string())
-                }
-            })?;
+    let show_low_stock_alerts = NumberOfMonthsThresholdToShowLowStockAlertsForProducts
+        .load(&connection, Some(store_id.to_string()))
+        .map_err(map_preference_error)?;
 
-    let item_stats = get_item_stats_map(
-        &connection,
-        store_id,
-        Some(num_months_consumption as f64),
-        item_ids,
-        None,
-    )
-    .map_err(|e| match e {
-        PluginOrRepositoryError::PluginError(err) => ListError::PluginError(err.to_string()),
-        PluginOrRepositoryError::RepositoryError(err) => ListError::DatabaseError(err),
-    })?;
+    let item_stats =
+        get_item_stats_map(&connection, store_id, None, item_ids, None).map_err(|e| match e {
+            PluginOrRepositoryError::PluginError(err) => ListError::PluginError(err.to_string()),
+            PluginOrRepositoryError::RepositoryError(err) => ListError::DatabaseError(err),
+        })?;
+
+    let product_at_risk = filter.products_at_risk_of_being_out_of_stock == Some(true);
 
     let filtered_ids: Vec<String> = item_stats
         .into_iter()
         .filter_map(|(id, stats)| {
-            let mut include = true;
-
-            if filter.out_of_stock_with_recent_consumption == Some(true) {
-                // Include items with consumption in the lookback period but no stock
-                include &= stats.total_consumption > 0.0 && stats.total_stock_on_hand == 0.0;
-            } else {
-                // Incluse items with consumptino in the lookback period but with stock
-                include &= stats.total_consumption > 0.0 && stats.total_stock_on_hand > 0.0;
+            if stats.average_monthly_consumption == 0.0 || stats.total_stock_on_hand == 0.0 {
+                return None;
             }
+            let months_of_stock = stats.total_stock_on_hand / stats.average_monthly_consumption;
+            let is_at_risk = months_of_stock < show_low_stock_alerts as f64;
 
-            if filter.products_at_risk_of_being_out_of_stock == Some(true) {
-                // Include items with less than threshold months of stock
-                if stats.average_monthly_consumption > 0.0 && stats.total_stock_on_hand > 0.0 {
-                    let months_of_stock =
-                        stats.total_stock_on_hand / stats.average_monthly_consumption;
-                    include &= months_of_stock < num_months_consumption as f64;
-                } else {
-                    include = false;
-                }
-            }
-
-            include.then(|| id)
+            (is_at_risk == product_at_risk).then_some(id)
         })
         .collect();
 
     Ok(filtered_ids)
+}
+
+fn map_preference_error(e: PreferenceError) -> RepositoryError {
+    let formatted_error = format_error(&e);
+    match e {
+        PreferenceError::DatabaseError(err) => err,
+        _ => RepositoryError::as_db_error(&formatted_error, ()),
+    }
 }
 
 pub fn check_item_exists(

@@ -8,6 +8,10 @@ import {
   NumericTextInput,
   LoadingButton,
   Switch,
+  useLocalStorage,
+  Divider,
+  EnvUtils,
+  Platform,
 } from '@openmsupply-client/common';
 import { CheckIcon, SaveIcon } from '@common/icons';
 import { useTranslation } from '@common/intl';
@@ -21,7 +25,6 @@ interface LabelPrinterSettings {
   labelHeight: number;
   labelWidth: number;
   port: number;
-  isUsb: boolean;
 }
 
 export const LabelPrinterSettings = () => {
@@ -36,8 +39,9 @@ export const LabelPrinterSettings = () => {
     labelHeight: 290,
     labelWidth: 576,
     port: 9100,
-    isUsb: false,
   });
+  const isAndroid = EnvUtils.platform === Platform.Android;
+  const [isUsb, setIsUsb] = useLocalStorage('/printlabel/isusb', false);
 
   const onChange = (patch: Partial<LabelPrinterSettings>) => {
     setDraft({ ...draft, ...patch });
@@ -79,9 +83,8 @@ export const LabelPrinterSettings = () => {
       });
   };
 
-  const isInvalid = draft.isUsb
-    ? false
-    : !draft.address || !draft.port || !draft.labelHeight || !draft.labelWidth;
+  const isInvalid =
+    !draft.address || !draft.port || !draft.labelHeight || !draft.labelWidth;
 
   useEffect(() => {
     if (settings) {
@@ -90,7 +93,6 @@ export const LabelPrinterSettings = () => {
         labelHeight: settings.labelHeight,
         labelWidth: settings.labelWidth,
         port: settings.port,
-        isUsb: settings.isUsb,
       });
     }
   }, [settings]);
@@ -98,22 +100,34 @@ export const LabelPrinterSettings = () => {
   return (
     <>
       <SettingsSubHeading title={t('settings.label-printing')} />
-      <Setting
-        component={
-          <Switch
-            checked={draft.isUsb}
-            onChange={(_, checked) => onChange({ isUsb: checked, address: '' })}
-            color="primary"
+      {!isAndroid && (
+        <>
+          <Setting
+            component={
+              <Switch
+                checked={isUsb ?? false}
+                onChange={(_, checked) => setIsUsb(checked)}
+                color="primary"
+              />
+            }
+            title={t('settings.print-via-usb')}
           />
-        }
-        title={t('settings.print-via-usb')}
-      />
+          <Box
+            sx={{
+              mb: 3,
+              display: 'flex',
+              justifyContent: 'center',
+            }}
+          >
+            <Divider sx={{ width: '80%' }} />
+          </Box>
+        </>
+      )}
       <Setting
         component={
           <BasicTextInput
             value={draft.address}
             onChange={event => onChange({ address: event.target.value })}
-            disabled={draft.isUsb}
           />
         }
         title={t('settings.printer-address')}
@@ -124,7 +138,6 @@ export const LabelPrinterSettings = () => {
             value={draft.port}
             noFormatting
             onChange={port => onChange({ port })}
-            disabled={draft.isUsb}
           />
         }
         title={t('settings.printer-port')}
@@ -136,7 +149,6 @@ export const LabelPrinterSettings = () => {
             onChange={labelHeight => {
               if (labelHeight !== undefined) onChange({ labelHeight });
             }}
-            disabled={draft.isUsb}
           />
         }
         title={t('settings.printer-label-height')}
@@ -148,7 +160,6 @@ export const LabelPrinterSettings = () => {
             onChange={labelWidth => {
               if (labelWidth !== undefined) onChange({ labelWidth });
             }}
-            disabled={draft.isUsb}
           />
         }
         title={t('settings.printer-label-width')}
@@ -158,7 +169,7 @@ export const LabelPrinterSettings = () => {
           startIcon={<CheckIcon />}
           isLoading={isTesting}
           onClick={test}
-          disabled={isInvalid || draft.isUsb} // TODO: add same logic for testing out printing via USB
+          disabled={isInvalid}
           label={t('button.test')}
         />
         <ButtonWithIcon

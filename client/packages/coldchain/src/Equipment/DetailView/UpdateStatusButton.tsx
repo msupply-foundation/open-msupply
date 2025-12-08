@@ -36,15 +36,16 @@ export const UpdateStatusButtonComponent = ({
   const { error, success, info } = useNotification();
   const [draft, setDraft] = useState<Partial<Draft>>(getEmptyAssetLog(''));
   const { insertLog, invalidateQueries } = useAssets.log.insert();
-
-  const permission = UserPermission.AssetMutate;
   const { userHasPermission } = useAuthContext();
   const isGaps = useIsGapsStoreOnly();
 
   const onUpdateStatus = () => {
-    if (userHasPermission(permission)) {
+    if (
+      userHasPermission(UserPermission.AssetMutate) ||
+      userHasPermission(UserPermission.AssetStatusMutate)
+    ) {
       showDialog();
-    } else info(t('error.no-asset-edit-permission'))();
+    } else info(t('error.no-asset-edit-status-permission'))();
   };
 
   const onOk = async () => {
