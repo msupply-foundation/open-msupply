@@ -68,6 +68,18 @@ export const StockLevelsSummary = () => {
             })
             .build(),
         },
+        ...(overStockAlert
+          ? [
+              {
+                label: t('label.overstocked-products', {
+                  num: overStockAlert,
+                }),
+                value: formatNumber.round(
+                  itemCountsData?.productsOverstocked || 0
+                ),
+              },
+            ]
+          : []),
         {
           label: t('label.more-than-six-months-stock-items', {
             count: Math.round(itemCountsData?.moreThanSixMonthsStock || 0),
@@ -111,18 +123,6 @@ export const StockLevelsSummary = () => {
                     productsAtRiskOfBeingOutOfStock: true,
                   })
                   .build(),
-              },
-            ]
-          : []),
-        ...(overStockAlert
-          ? [
-              {
-                label: t('label.overstocked-products', {
-                  count: Math.round(itemCountsData?.productsOverstocked || 0),
-                }),
-                value: formatNumber.round(
-                  itemCountsData?.productsOverstocked || 0
-                ),
               },
             ]
           : []),
