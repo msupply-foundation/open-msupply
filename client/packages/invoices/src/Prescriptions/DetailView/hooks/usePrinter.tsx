@@ -13,7 +13,9 @@ export const usePrintLabels = () => {
   const {
     isPrinting: isPrintingLabels,
     print,
+    show,
     DisabledNotification,
+    isUsbPrinting,
   } = usePrinter(settings);
 
   const printLabels = (
@@ -21,8 +23,8 @@ export const usePrintLabels = () => {
     lines: PrescriptionLineFragment[],
     e?: React.MouseEvent<HTMLButtonElement>
   ) => {
-    if (settings === null) {
-      e ? undefined : setPrinterExists(true);
+    if (settings === null && !isUsbPrinting) {
+      e ? show(e) : setPrinterExists(true);
       return;
     }
 
