@@ -3,6 +3,7 @@ use repository::{ItemFilter, ItemRepository, RepositoryError};
 use crate::{
     item_stats::{get_item_stats, ItemStats},
     preference::{
+        NumberOfMonthsThresholdToShowOverStockAlertsForProducts,
         NumberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts, Preference,
     },
     service_provider::ServiceContext,
@@ -16,6 +17,7 @@ pub struct ItemCounts {
     pub more_than_six_months_stock: i64,
     pub out_of_stock_products: i64,
     pub products_at_risk_of_being_out_of_stock: i64,
+    pub products_overstocked: i64,
 }
 
 pub trait ItemCountServiceTrait: Send + Sync {
@@ -32,34 +34,28 @@ pub trait ItemCountServiceTrait: Send + Sync {
     }
 
     fn get_no_stock_count(&self, item_stats: &Vec<ItemStats>) -> i64 {
-        let no_stock_count = item_stats
+        item_stats
             .iter()
             .filter(|i| i.total_stock_on_hand == 0.0)
-            .count() as i64;
-
-        return no_stock_count;
+            .count() as i64
     }
 
     fn get_low_stock_count(&self, item_stats: &Vec<ItemStats>, low_stock_threshold: i32) -> i64 {
-        let low_stock_count = item_stats
+        item_stats
             .iter()
             .filter(|&i| (i.average_monthly_consumption > 0.0)) // exclude items with 0 amc from count, because we assume that means there's no consumption data so we cannot tell how many months of stock there might be.
             .map(|i| i.total_stock_on_hand / i.average_monthly_consumption)
             .filter(|months_of_stock| *months_of_stock < low_stock_threshold as f64)
-            .count() as i64;
-
-        return low_stock_count;
+            .count() as i64
     }
 
     fn get_more_than_six_months_stock_count(&self, item_stats: &Vec<ItemStats>) -> i64 {
-        let more_than_six_mos_count = item_stats
+        item_stats
             .iter()
             .filter(|&i| (i.average_monthly_consumption > 0.0)) // exclude items with 0 amc from count, because we assume that means there's no consumption data so we cannot tell how many months of stock there might be.
             .map(|i| i.total_stock_on_hand / i.average_monthly_consumption)
             .filter(|months_of_stock| *months_of_stock > 6.0)
-            .count() as i64;
-
-        return more_than_six_mos_count;
+            .count() as i64
     }
 
     fn get_out_of_stock_products_count(&self, item_stats: &Vec<ItemStats>) -> i64 {
@@ -83,6 +79,21 @@ pub trait ItemCountServiceTrait: Send + Sync {
             })
             .count() as i64
     }
+
+    fn get_products_overstocked_count(
+        &self,
+        item_stats: &Vec<ItemStats>,
+        threshold_months: i32,
+    ) -> i64 {
+        item_stats
+            .iter()
+            .filter(|i| {
+                i.average_monthly_consumption > 0.0
+                    && (i.total_stock_on_hand / i.average_monthly_consumption)
+                        > threshold_months as f64
+            })
+            .count() as i64
+    }
 }
 
 pub struct ItemServiceCount {}
@@ -99,7 +110,7 @@ impl ItemCountServiceTrait for ItemServiceCount {
             Some(store_id.to_string()),
         )?;
 
-        let total_count = *&visible_or_on_hand_items.len() as i64;
+        let total_count = visible_or_on_hand_items.len() as i64;
 
         let item_ids: Vec<String> = visible_or_on_hand_items
             .into_iter()
@@ -108,12 +119,12 @@ impl ItemCountServiceTrait for ItemServiceCount {
 
         let item_stats = get_item_stats(&ctx.connection, store_id, None, item_ids.clone(), None)?;
 
-        let no_stock = Self::get_no_stock_count(&self, &item_stats);
+        let no_stock = Self::get_no_stock_count(self, &item_stats);
 
-        let low_stock = Self::get_low_stock_count(&self, &item_stats, low_stock_threshold);
+        let low_stock = Self::get_low_stock_count(self, &item_stats, low_stock_threshold);
 
         let more_than_six_months_stock =
-            Self::get_more_than_six_months_stock_count(&self, &item_stats);
+            Self::get_more_than_six_months_stock_count(self, &item_stats);
 
         let num_months_consumption =
             NumberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts
@@ -124,6 +135,15 @@ impl ItemCountServiceTrait for ItemServiceCount {
                         extra: Default::default(),
                     })
                 })?;
+
+        let show_over_stock_alerts = NumberOfMonthsThresholdToShowOverStockAlertsForProducts
+            .load(&ctx.connection, Some(store_id.to_string()))
+            .map_err(|e| {
+                PluginOrRepositoryError::RepositoryError(RepositoryError::DBError {
+                    msg: format!("Failed to load preference: {e}"),
+                    extra: Default::default(),
+                })
+            })?;
 
         let item_stats_with_time_window = get_item_stats(
             &ctx.connection,
@@ -143,6 +163,12 @@ impl ItemCountServiceTrait for ItemServiceCount {
                 num_months_consumption,
             );
 
+        let products_overstocked = Self::get_products_overstocked_count(
+            self,
+            &item_stats_with_time_window,
+            show_over_stock_alerts,
+        );
+
         Ok(ItemCounts {
             total: total_count,
             no_stock,
@@ -150,6 +176,7 @@ impl ItemCountServiceTrait for ItemServiceCount {
             more_than_six_months_stock,
             out_of_stock_products,
             products_at_risk_of_being_out_of_stock,
+            products_overstocked,
         })
     }
 }
