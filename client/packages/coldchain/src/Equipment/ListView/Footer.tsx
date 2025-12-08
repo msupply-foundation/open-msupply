@@ -5,6 +5,9 @@ import {
   DeleteIcon,
   useTranslation,
   AppFooterPortal,
+  UserPermission,
+  useAuthContext,
+  useNotification,
 } from '@openmsupply-client/common';
 import { AssetRowFragment, useAssets } from '../api';
 
@@ -16,17 +19,27 @@ export const FooterComponent = ({
   resetRowSelection: () => void;
 }) => {
   const t = useTranslation();
+  const { info } = useNotification();
+  const { userHasPermission } = useAuthContext();
 
   const { confirmAndDelete } = useAssets.document.deleteAssets(
     selectedRows,
     resetRowSelection
   );
 
+  const handleDelete = () => {
+    if (!userHasPermission(UserPermission.AssetMutate)) {
+      info(t('error.no-asset-delete-permission'))();
+      return;
+    }
+    confirmAndDelete();
+  };
+
   const actions: Action[] = [
     {
       label: t('button.delete-lines'),
       icon: <DeleteIcon />,
-      onClick: confirmAndDelete,
+      onClick: handleDelete,
     },
   ];
 
