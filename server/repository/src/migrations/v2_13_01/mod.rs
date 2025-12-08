@@ -17,7 +17,7 @@ impl Migration for V2_13_01 {
     fn migrate_fragments(&self) -> Vec<Box<dyn MigrationFragment>> {
         vec![
             Box::new(reintegrate_assets_and_asset_logs::Migrate),
-            Box::new(reintegrate_assets_and_asset_logs::Migrate),
+            Box::new(can_edit_asset_status_permission::Migrate),
         ]
     }
 }
