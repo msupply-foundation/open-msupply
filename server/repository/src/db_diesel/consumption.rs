@@ -63,7 +63,20 @@ impl<'a> ConsumptionRepository<'a> {
         &self,
         filter: Option<ConsumptionFilter>,
     ) -> Result<Vec<ConsumptionRow>, RepositoryError> {
-        let query = create_filtered_query(filter);
+        // Query Consumption
+        let mut query = consumption::table.into_boxed();
+
+        if let Some(f) = filter {
+            let ConsumptionFilter {
+                item_id,
+                date,
+                store_id,
+            } = f;
+
+            apply_equal_filter!(query, item_id, consumption::item_id);
+            apply_equal_filter!(query, store_id, consumption::store_id);
+            apply_date_filter!(query, date, consumption::date);
+        }
 
         // Debug diesel query
         // println!(
@@ -74,18 +87,20 @@ impl<'a> ConsumptionRepository<'a> {
         Ok(query.load::<ConsumptionRow>(self.connection.lock().connection())?)
     }
 
+    /// Get item ids with consumption > 0
     pub fn query_items_with_consumption(
         &self,
         filter: Option<ConsumptionFilter>,
-    ) -> Result<Vec<(String, i64)>, RepositoryError> {
+    ) -> Result<Vec<String>, RepositoryError> {
         let query = create_filtered_query(filter);
 
         let query = consumption::table
             .group_by(consumption::item_id)
-            .select((consumption::item_id, count(consumption::quantity)))
-            .filter(consumption::item_id.eq_any(query.select(consumption::item_id)));
+            .select(consumption::item_id)
+            .filter(consumption::item_id.eq_any(query.select(consumption::item_id)))
+            .having(count(consumption::quantity).gt(0));
 
-        Ok(query.load::<(String, i64)>(self.connection.lock().connection())?)
+        Ok(query.load::<String>(self.connection.lock().connection())?)
     }
 }
 
