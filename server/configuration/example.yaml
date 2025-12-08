@@ -30,6 +30,8 @@
 #   username: "postgres"
 #   password: "password"
 #   database_name: "omsupply-database"
+#   database_max_connections: 10
+#   database_connection_timeout: 30
 # logging:
 ##   one of: All | Console | File
 #   mode: Console
