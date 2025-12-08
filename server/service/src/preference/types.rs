@@ -41,6 +41,7 @@ pub enum PrefKey {
     SelectDestinationStoreForAnInternalOrder,
     NumberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts,
     NumberOfMonthsThresholdToShowLowStockAlertsForProducts,
+    NumberOfMonthsThresholdToShowOverStockAlertsForProducts,
     FirstThresholdForExpiringItems,
     SecondThresholdForExpiringItems,
     SkipIntermediateStatusesInOutbound,
