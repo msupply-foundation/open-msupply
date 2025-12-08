@@ -281,6 +281,7 @@
   "error.more-info": "المزيد من المعلومات",
   "error.name-program-duplicate": "اسم الدورة التدريبية للقاح موجود مسبقاً لهذا البرنامج",
   "error.no-asset-create-permission": "ليس لديك إذن لإنشاء تجهيزات جديدة.",
+  "error.no-asset-edit-permission": "ليس لديك إذن لإنشاء تجهيزات جديدة.",
   "error.no-asset-view-permission": "ليس لديك إذن لعرض التجهيزات.",
   "error.no-customer-return-items": "لم تتم إضافة أي عناصر إلى هذا الإرجاع.",
   "error.no-customer-returns": "لا توجد عائدات زبائن لعرضها.",

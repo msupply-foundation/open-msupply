@@ -360,6 +360,7 @@
   "error.name-program-duplicate": "Já existe um nome de curso de vacinação para este programa",
   "error.no-asset-create-permission": "Não possui permissão para criar um novo ativo.",
   "error.no-asset-create-scan-permission": "Você não tem permissão para criar um novo ativo via leitura de código Data Matrix.",
+  "error.no-asset-edit-permission": "O utilizador não possui permissão para editar os ativos.",
   "error.no-asset-import-permission": "Você não tem permissão para importar ativos",
   "error.no-asset-log-reasons": "Não há motivos de registro de ativos para exibir.",
   "error.no-asset-view-permission": "O utilizador não tem permissão para ver os ativos.",
