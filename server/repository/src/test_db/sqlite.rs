@@ -35,6 +35,8 @@ fn get_test_db_settings_etc(db_name: &str, is_template: bool) -> DatabaseSetting
         },
         init_sql: None,
         database_path: None,
+        database_max_connections: 10,
+        database_connection_timeout: 30,
     }
 }
 

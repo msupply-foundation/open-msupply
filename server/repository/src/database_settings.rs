@@ -3,6 +3,7 @@ use diesel::connection::SimpleConnection;
 use diesel::r2d2::{ConnectionManager, Pool};
 use log::info;
 use serde::{Deserialize, Serialize};
+use std::time::Duration;
 
 // Timeout for waiting for the SQLite lock (https://www.sqlite.org/c3ref/busy_timeout.html).
 // A locked DB results in the "SQLite database is locked" error.
@@ -20,6 +21,8 @@ pub struct DatabaseSettings {
     pub host: String,
     pub database_name: String,
     pub database_path: Option<String>,
+    pub database_max_connections: u32,
+    pub database_connection_timeout: u64,
     /// SQL run once at startup. For example, to run pragma statements
     pub init_sql: Option<String>,
 }
@@ -178,7 +181,11 @@ pub fn get_storage_connection_manager(settings: &DatabaseSettings) -> StorageCon
         }
     }
     info!("Connecting to database '{}'", settings.database_name);
-    let pool = Pool::new(connection_manager).expect("Failed to connect to database");
+    let pool = Pool::builder()
+        .max_size(settings.database_max_connections)
+        .connection_timeout(Duration::from_secs(settings.database_connection_timeout))
+        .build(connection_manager)
+        .expect("Failed to connect to database");
     StorageConnectionManager::new(pool)
 }
 
@@ -192,6 +199,8 @@ pub fn get_storage_connection_manager(settings: &DatabaseSettings) -> StorageCon
         .connection_customizer(Box::new(SqliteConnectionOptions {
             busy_timeout_ms: Some(SQLITE_LOCKWAIT_MS),
         }))
+        .max_size(settings.database_max_connections)
+        .connection_timeout(Duration::from_secs(settings.database_connection_timeout))
         .build(connection_manager)
         .expect("Failed to connect to database");
     StorageConnectionManager::new(pool)
@@ -211,6 +220,8 @@ mod database_setting_test {
             database_name: "".to_string(),
             init_sql,
             database_path: None,
+            database_max_connections: 10,
+            database_connection_timeout: 30,
         }
     }
 
