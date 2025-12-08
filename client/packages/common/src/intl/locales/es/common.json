@@ -322,7 +322,6 @@
   "error.name-program-duplicate": "Ya existe un nombre de esquema de vacunación para este programa",
   "error.no-asset-create-permission": "No tienes el permiso para crear un nuevo activo.",
   "error.no-asset-create-scan-permission": "No tienes permisos para crear un nuevo activo medainte escaneo de la matriz de datos.",
-  "error.no-asset-edit-permission": "No tienes permisos para editar activos.",
   "error.no-asset-import-permission": "No tienes permisos para importar activos",
   "error.no-asset-log-reasons": "No hay motivos de registro de activos para mostrar.",
   "error.no-asset-view-permission": "No tienes permisos para ver activos.",
