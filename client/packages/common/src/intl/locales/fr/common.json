@@ -363,7 +363,6 @@
   "error.name-program-duplicate": "Le nom du schéma de vaccination existe déjà pour ce programme",
   "error.no-asset-create-permission": "Vous n'avez pas les autorisations pour créer un nouvel actif.",
   "error.no-asset-create-scan-permission": "Vous n'avez pas la permission de créer un nouvel équipement en scannant les data matrix.",
-  "error.no-asset-edit-permission": "Vous n'avez pas le droit de modifier les équipements.",
   "error.no-asset-import-permission": "Vous n'avez pas la permission d'importer d'équipements",
   "error.no-asset-log-reasons": "Il n'y a pas de raison de journal d'équipements enregistrée.",
   "error.no-asset-view-permission": "Vous n'avez pas l'autorisation de visualiser les équipements.",
