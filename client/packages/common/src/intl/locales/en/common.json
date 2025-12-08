@@ -368,6 +368,7 @@
   "error.no-asset-create-scan-permission": "You do not have permission to create a new asset via data matrix scan.",
   "error.no-asset-edit-permission": "You do not have permission to edit assets.",
   "error.no-asset-delete-permission": "You do not have permission to delete assets.",
+  "error.no-asset-edit-status-permission": "You do not have permission to edit asset status.",
   "error.no-asset-import-permission": "You do not have permission to import assets",
   "error.no-asset-log-reasons": "There are no asset log reasons to display.",
   "error.no-asset-view-permission": "You do not have permission to view assets.",
