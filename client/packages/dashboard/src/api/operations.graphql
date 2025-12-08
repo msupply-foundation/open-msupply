@@ -24,6 +24,7 @@ query itemCounts($storeId: String!, $lowStockThreshold: Int!) {
       total
       outOfStockProducts
       productsAtRiskOfBeingOutOfStock
+      productsOverstocked
     }
   }
 }
