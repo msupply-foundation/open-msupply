@@ -82,6 +82,7 @@ export const StoreSelector: FC<PropsWithChildrenOnly> = ({ children }) => {
                 onChange={e => setSearch(e.target.value)}
                 placeholder={t('placeholder.search-by-name')}
                 sx={{ marginBottom: 1, width: '100%' }}
+                autoFocus
               />
               <Box
                 style={{
