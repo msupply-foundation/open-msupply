@@ -147,7 +147,7 @@ pub fn get_out_of_stock_products_item_ids(
     let item_ids: Vec<String> = repository
         .query(
             Pagination::all(),
-            Some(filter.clone().has_stock_on_hand(true)),
+            Some(filter.clone()),
             None,
             Some(store_id.to_owned()),
         )?
