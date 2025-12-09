@@ -50,9 +50,8 @@ pub fn get_items(
                 filter = filter.id(EqualFilter::equal_any(item_ids_filtered_by_mos));
             }
 
-            if filter.out_of_stock_with_recent_consumption.is_some() {
-                let item_ids =
-                    get_out_of_stock_products_item_ids(&connection, filter.clone(), store_id)?;
+            if filter.with_recent_consumption.is_some() {
+                let item_ids = get_items_with_consumption(&connection, filter.clone(), store_id)?;
                 filter = filter.id(EqualFilter::equal_any(item_ids))
             }
 
@@ -137,7 +136,7 @@ pub fn get_items_ids_for_months_of_stock(
         .collect()
 }
 
-pub fn get_out_of_stock_products_item_ids(
+pub fn get_items_with_consumption(
     connection: &StorageConnection,
     filter: ItemFilter,
     store_id: &str,
@@ -147,7 +146,7 @@ pub fn get_out_of_stock_products_item_ids(
     let item_ids: Vec<String> = repository
         .query(
             Pagination::all(),
-            Some(filter.clone().has_stock_on_hand(true)),
+            Some(filter.clone()),
             None,
             Some(store_id.to_owned()),
         )?

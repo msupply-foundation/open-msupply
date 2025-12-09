@@ -1,5 +1,5 @@
 use crate::{
-    item::get_out_of_stock_products_item_ids,
+    item::get_items_with_consumption,
     item_stats::{get_item_stats, ItemStats},
     preference::{NumberOfMonthsThresholdToShowLowStockAlertsForProducts, Preference},
     service_provider::ServiceContext,
@@ -67,9 +67,11 @@ pub trait ItemCountServiceTrait: Send + Sync {
         store_id: &str,
         item_ids: Vec<String>,
     ) -> Result<i64, PluginOrRepositoryError> {
-        let items_with_consumption_set = get_out_of_stock_products_item_ids(
+        let items_with_consumption_set = get_items_with_consumption(
             &ctx.connection,
-            ItemFilter::new().id(EqualFilter::equal_any(item_ids)),
+            ItemFilter::new()
+                .id(EqualFilter::equal_any(item_ids))
+                .has_stock_on_hand(false),
             store_id,
         )?;
 
