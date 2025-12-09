@@ -69,7 +69,9 @@ pub trait ItemCountServiceTrait: Send + Sync {
     ) -> Result<i64, PluginOrRepositoryError> {
         let items_with_consumption_set = get_out_of_stock_products_item_ids(
             &ctx.connection,
-            ItemFilter::new().id(EqualFilter::equal_any(item_ids)),
+            ItemFilter::new()
+                .id(EqualFilter::equal_any(item_ids))
+                .has_stock_on_hand(false),
             store_id,
         )?;
 

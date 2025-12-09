@@ -82,10 +82,10 @@ const getVisibleOrOnHandFilter = (stockStatus?: string) => {
       return { hasStockOnHand: false, isVisible: true };
 
     case 'inStockWithRecentConsumption':
-      return { outOfStockWithRecentConsumption: false };
+      return { outOfStockWithRecentConsumption: false, hasStockOnHand: true };
 
     case 'outOfStockWithRecentConsumption':
-      return { outOfStockWithRecentConsumption: true };
+      return { outOfStockWithRecentConsumption: true, hasStockOnHand: false };
 
     case undefined:
       // include non-visible items that have stock on hand
