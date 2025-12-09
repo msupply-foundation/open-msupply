@@ -12,8 +12,7 @@ impl MigrationFragment for Migrate {
             sql!(
                 connection,
                 r#"
-                    ALTER  TABLE asset_internal_location
-                    DROP CONSTRAINT IF EXISTS fk_asset_internal_location_location_id;
+                    ALTER TABLE asset_internal_location DROP CONSTRAINT IF EXISTS asset_internal_location_location_id_fkey;
                 "#
             )?;
         } else {
@@ -22,7 +21,7 @@ impl MigrationFragment for Migrate {
                 connection,
                 r#"
                     PRAGMA foreign_keys = OFF;
-                    
+
                     -- Create new temp table without foreign key
                     CREATE TABLE IF NOT EXISTS asset_internal_location_new (
                         id TEXT PRIMARY KEY NOT NULL,
