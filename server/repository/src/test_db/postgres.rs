@@ -24,8 +24,8 @@ pub fn get_test_db_settings(db_name: &str) -> DatabaseSettings {
         database_name: db_name.to_string(),
         init_sql: None,
         database_path: None,
-        database_max_connections: 10,
-        database_connection_timeout: 30,
+        connection_pool_max_connections: 10,
+        connection_pool_timeout: 30,
     }
 }
 
