@@ -1,8 +1,6 @@
 use super::asset_internal_location_row::asset_internal_location::dsl::*;
 
-use crate::asset_row::AssetRowRepository;
 use crate::Delete;
-use crate::LocationRowRepository;
 use crate::RepositoryError;
 use crate::StorageConnection;
 use crate::Upsert;
@@ -17,6 +15,7 @@ table! {
         id -> Text,
         asset_id -> Text,
         location_id -> Text,
+        store_id -> Nullable<Text>,
     }
 }
 
@@ -28,6 +27,7 @@ pub struct AssetInternalLocationRow {
     pub id: String,
     pub asset_id: String,
     pub location_id: String,
+    pub store_id: Option<String>,
 }
 
 pub struct AssetInternalLocationRowRepository<'a> {
@@ -57,17 +57,11 @@ impl<'a> AssetInternalLocationRowRepository<'a> {
         row: &AssetInternalLocationRow,
         action: RowActionType,
     ) -> Result<i64, RepositoryError> {
-        let asset = AssetRowRepository::new(self.connection).find_one_by_id(&row.location_id);
-        let store_id = match asset {
-            Ok(Some(asset)) => asset.store_id,
-            _ => None,
-        };
-
         let row = ChangeLogInsertRow {
             table_name: ChangelogTableName::AssetInternalLocation,
             record_id: row.id.clone(),
             row_action: action,
-            store_id,
+            store_id: row.store_id.clone(),
             name_link_id: None,
         };
 

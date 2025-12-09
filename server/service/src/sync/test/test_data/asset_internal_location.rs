@@ -19,6 +19,7 @@ fn asset_internal_location1() -> AssetInternalLocationRow {
         id: ASSET_INTERNAL_LOCATION1.0.to_string(),
         asset_id: "3de161ed-93ef-4210-aa31-3ae9e53748e8".to_string(),
         location_id: "cf5812e0c33911eb9757779d39ae2bdb".to_string(),
+        store_id: None,
     }
 }
 

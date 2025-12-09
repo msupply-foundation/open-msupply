@@ -1,6 +1,7 @@
 use super::{version::Version, Migration, MigrationFragment};
 use crate::StorageConnection;
 
+mod add_store_id_to_asset_internal_location;
 mod can_edit_asset_status_permission;
 mod reintegrate_assets_and_asset_logs;
 mod remove_fk_on_asset_internal_location;
@@ -20,6 +21,7 @@ impl Migration for V2_13_01 {
             Box::new(reintegrate_assets_and_asset_logs::Migrate),
             Box::new(can_edit_asset_status_permission::Migrate),
             Box::new(remove_fk_on_asset_internal_location::Migrate),
+            Box::new(add_store_id_to_asset_internal_location::Migrate),
         ]
     }
 }
