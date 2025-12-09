@@ -49,7 +49,7 @@ export type ImportRow = {
   type: string;
   typeId?: string;
   errorMessage?: string;
-  properties: Record<string, string>;
+  properties: Record<string, string | number>;
 };
 
 export type LineNumber = {
