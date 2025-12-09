@@ -244,27 +244,38 @@ pub(super) fn get_cost_plus_margin(
         .unwrap_or(false);
 
     let margin = match item_margin_overrides_supplier_margin {
-        // item margin (inbound store)
-        true => item_properties.as_ref().map_or(0.0, |i| i.margin),
-        // supplier margin (outbound store)
-        false => {
-            let suppliers = NameRepository::new(connection).query(
-                supplier_id,
-                Pagination::all(),
-                Some(NameFilter::new().id(EqualFilter::equal_to(supplier_id.to_string()))),
-                None,
-            )?;
-
-            suppliers
-                .into_iter()
-                .next()
-                .and_then(|name| name.name_row.margin)
-                .unwrap_or(0.0)
-        }
-    };
+        true => get_item_margin(item_properties)
+            .filter(|&m| m != 0.0)
+            .or_else(|| get_supplier_margin(connection, supplier_id)),
+        false => get_supplier_margin(connection, supplier_id)
+            .filter(|&m| m != 0.0)
+            .or_else(|| get_item_margin(item_properties)),
+    }
+    .unwrap_or(0.0);
 
     Ok(cost_price_per_pack + (cost_price_per_pack * margin) / 100.0)
 }
+
+fn get_item_margin(item_properties: Option<ItemStoreJoinRow>) -> Option<f64> {
+    item_properties.as_ref().map(|i| i.margin)
+}
+
+fn get_supplier_margin(connection: &StorageConnection, supplier_id: &String) -> Option<f64> {
+    let suppliers = NameRepository::new(connection)
+        .query(
+            supplier_id,
+            Pagination::all(),
+            Some(NameFilter::new().id(EqualFilter::equal_to(supplier_id.to_string()))),
+            None,
+        )
+        .ok()?;
+
+    suppliers
+        .into_iter()
+        .next()
+        .and_then(|name| name.name_row.margin)
+}
+
 #[cfg(test)]
 mod test {
     use super::{get_cost_plus_margin, get_default_price_for_pack};
@@ -300,6 +311,42 @@ mod test {
         let supplier_id = outbound_store.name_link_id;
         let item_properties = mock_item_a_join_store_a();
 
+        // Set preference to true -> item margin has priority
+        PreferenceRowRepository::new(&connection)
+            .upsert_one(&PreferenceRow {
+                id: "item margin overrides supplier margin".to_string(),
+                store_id: None,
+                key: ItemMarginOverridesSupplierMargin.key().to_string(),
+                value: "true".to_string(),
+            })
+            .unwrap();
+
+        assert_eq!(
+            get_cost_plus_margin(
+                &connection,
+                cost_price_per_pack,
+                Some(item_properties.clone()),
+                &supplier_id
+            ),
+            Ok(cost_price_per_pack + (cost_price_per_pack * 15.0) / 100.0)
+        );
+
+        // No item properties, fallback to supplier margin
+        assert_eq!(
+            get_cost_plus_margin(&connection, cost_price_per_pack, None, &supplier_id),
+            Ok(cost_price_per_pack + (cost_price_per_pack * 10.0) / 100.0)
+        );
+
+        // Set preference to false -> supplier margin has priority
+        PreferenceRowRepository::new(&connection)
+            .upsert_one(&PreferenceRow {
+                id: "item margin overrides supplier margin".to_string(),
+                store_id: None,
+                key: ItemMarginOverridesSupplierMargin.key().to_string(),
+                value: "false".to_string(),
+            })
+            .unwrap();
+
         assert_eq!(
             get_cost_plus_margin(
                 &connection,
@@ -310,46 +357,21 @@ mod test {
             Ok(cost_price_per_pack + (cost_price_per_pack * 10.0) / 100.0)
         );
 
-        PreferenceRowRepository::new(&connection)
-            .upsert_one(&PreferenceRow {
-                id: "item margin overrides supplier margin".to_string(),
-                store_id: None,
-                key: ItemMarginOverridesSupplierMargin.key().to_string(),
-                value: "true".to_string(),
-            })
-            .unwrap();
+        let store_c = mock_store_c();
+        let supplier_no_margin_id = store_c.name_link_id;
 
-        // Pref true, use item margin
+        // No supplier margin, fallback to item margin
         assert_eq!(
             get_cost_plus_margin(
                 &connection,
                 cost_price_per_pack,
                 Some(item_properties),
-                &supplier_id
+                &supplier_no_margin_id
             ),
             Ok(cost_price_per_pack + (cost_price_per_pack * 15.0) / 100.0)
         );
 
-        // Test defaults
-        // No item properties, use cost price (margin 0%)
-        assert_eq!(
-            get_cost_plus_margin(&connection, cost_price_per_pack, None, &supplier_id),
-            Ok(cost_price_per_pack)
-        );
-
-        // Reset preference to false
-        PreferenceRowRepository::new(&connection)
-            .upsert_one(&PreferenceRow {
-                id: "item margin overrides supplier margin".to_string(),
-                store_id: None,
-                key: ItemMarginOverridesSupplierMargin.key().to_string(),
-                value: "false".to_string(),
-            })
-            .unwrap();
-
-        // Supplier with no margin
-        let store_c = mock_store_c();
-        let supplier_no_margin_id = store_c.name_link_id;
+        // No item properties or supplier margin, use cost price (margin 0%)
         assert_eq!(
             get_cost_plus_margin(
                 &connection,
