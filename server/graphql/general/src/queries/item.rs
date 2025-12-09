@@ -62,7 +62,7 @@ pub struct ItemFilterInput {
     pub ignore_for_orders: Option<bool>,
     pub min_months_of_stock: Option<f64>,
     pub max_months_of_stock: Option<f64>,
-    pub out_of_stock_with_recent_consumption: Option<bool>,
+    pub with_recent_consumption: Option<bool>,
     pub products_at_risk_of_being_out_of_stock: Option<bool>,
 }
 
@@ -121,7 +121,7 @@ impl ItemFilterInput {
             ignore_for_orders,
             min_months_of_stock,
             max_months_of_stock,
-            out_of_stock_with_recent_consumption,
+            with_recent_consumption,
             products_at_risk_of_being_out_of_stock,
         } = self;
 
@@ -143,7 +143,7 @@ impl ItemFilterInput {
             ignore_for_orders,
             min_months_of_stock,
             max_months_of_stock,
-            out_of_stock_with_recent_consumption,
+            with_recent_consumption,
             products_at_risk_of_being_out_of_stock,
         }
     }
