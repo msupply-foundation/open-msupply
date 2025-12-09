@@ -13,6 +13,9 @@ const SQLITE_LOCKWAIT_MS: u32 = 30 * 1000;
 #[cfg(all(not(feature = "postgres"), not(feature = "memory")))]
 const SQLITE_WAL_PRAGMA: &str = "PRAGMA journal_mode = WAL; PRAGMA synchronous = NORMAL;";
 
+const DEFUALT_CONNECTION_POOL_MAX_CONNECTIONS: u32 = 10;
+const DEFAULT_CONNECTION_POOL_TIMEOUT_SECONDS: u64 = 30;
+
 #[derive(Deserialize, Serialize, Clone)]
 pub struct DatabaseSettings {
     pub username: String,
@@ -21,8 +24,8 @@ pub struct DatabaseSettings {
     pub host: String,
     pub database_name: String,
     pub database_path: Option<String>,
-    pub connection_pool_max_connections: u32,
-    pub connection_pool_timeout: u64,
+    pub connection_pool_max_connections: Option<u32>,
+    pub connection_pool_timeout_seconds: Option<u64>,
     /// SQL run once at startup. For example, to run pragma statements
     pub init_sql: Option<String>,
 }
@@ -182,8 +185,16 @@ pub fn get_storage_connection_manager(settings: &DatabaseSettings) -> StorageCon
     }
     info!("Connecting to database '{}'", settings.database_name);
     let pool = Pool::builder()
-        .max_size(settings.connection_pool_max_connections)
-        .connection_timeout(Duration::from_secs(settings.connection_pool_timeout))
+        .max_size(
+            settings
+                .connection_pool_max_connections
+                .unwrap_or(DEFUALT_CONNECTION_POOL_MAX_CONNECTIONS),
+        )
+        .connection_timeout(Duration::from_secs(
+            settings
+                .connection_pool_timeout_seconds
+                .unwrap_or(DEFAULT_CONNECTION_POOL_TIMEOUT_SECONDS),
+        ))
         .build(connection_manager)
         .expect("Failed to connect to database");
     StorageConnectionManager::new(pool)
@@ -199,8 +210,16 @@ pub fn get_storage_connection_manager(settings: &DatabaseSettings) -> StorageCon
         .connection_customizer(Box::new(SqliteConnectionOptions {
             busy_timeout_ms: Some(SQLITE_LOCKWAIT_MS),
         }))
-        .max_size(settings.connection_pool_max_connections)
-        .connection_timeout(Duration::from_secs(settings.connection_pool_timeout))
+        .max_size(
+            settings
+                .connection_pool_max_connections
+                .unwrap_or(DEFUALT_CONNECTION_POOL_MAX_CONNECTIONS),
+        )
+        .connection_timeout(Duration::from_secs(
+            settings
+                .connection_pool_timeout_seconds
+                .unwrap_or(DEFAULT_CONNECTION_POOL_TIMEOUT_SECONDS),
+        ))
         .build(connection_manager)
         .expect("Failed to connect to database");
     StorageConnectionManager::new(pool)
@@ -220,8 +239,8 @@ mod database_setting_test {
             database_name: "".to_string(),
             init_sql,
             database_path: None,
-            connection_pool_max_connections: 10,
-            connection_pool_timeout: 30,
+            connection_pool_max_connections: None,
+            connection_pool_timeout_seconds: None,
         }
     }
 
