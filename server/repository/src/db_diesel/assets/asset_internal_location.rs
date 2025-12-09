@@ -164,7 +164,6 @@ mod tests {
             id: asset_location_id.clone(),
             asset_id: mock_asset_a().id,
             location_id: mock_location_1().id,
-            store_id: None,
         };
 
         AssetInternalLocationRowRepository::new(&storage_connection)
