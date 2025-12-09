@@ -1607,6 +1607,8 @@
   "report.stock-take-variance-report": "تقرير التباين في جرد المخزون",
   "report.stocktake-number": "رقم جرد المخزون",
   "report.stocktake-sheet": "قائمة جرد المخزون",
+  "report.snapshot-number-of-packs": "لمحة عن عدد العبوات",
+  "report.counted-number-of-packs": "عدد العبوات المعدودة",
   "report.suggested-qty": "الكمية المقترحة",
   "report.supplied-to": "تم التزويد إلى",
   "report.target-qty": "الكمية المستهدفة",
