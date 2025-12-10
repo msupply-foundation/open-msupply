@@ -44,7 +44,7 @@ pub trait ItemCountServiceTrait: Send + Sync {
     fn get_low_stock_count(&self, item_stats: &Vec<ItemStats>, low_stock_threshold: i32) -> i64 {
         item_stats
             .iter()
-            .filter(|&i| (i.average_monthly_consumption > 0.0)) // exclude items with 0 amc from count, because we assume that means there's no consumption data so we cannot tell how many months of stock there might be.
+            .filter(|&i| i.average_monthly_consumption > 0.0 && i.total_stock_on_hand > 0.0)
             .map(|i| i.total_stock_on_hand / i.average_monthly_consumption)
             .filter(|months_of_stock| *months_of_stock < low_stock_threshold as f64)
             .count() as i64

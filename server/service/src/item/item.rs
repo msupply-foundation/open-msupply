@@ -127,7 +127,7 @@ pub fn get_items_ids_for_months_of_stock(
                 // include if it has less than the max months of stock
                 include &= mos <= max_mos;
             }
-            if v.average_monthly_consumption == 0.0 {
+            if v.average_monthly_consumption == 0.0 || v.total_stock_on_hand == 0.0 {
                 // If amc = 0, assume this is because there's no consumption data, so we cannot determine how many months of stock there are, so we'll exclude that item
                 include = false;
             }
