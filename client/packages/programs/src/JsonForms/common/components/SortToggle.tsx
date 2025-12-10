@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { rankWith, ControlProps, uiTypeIs } from '@jsonforms/core';
-import { withJsonFormsControlProps } from '@jsonforms/react';
+import { useJsonForms, withJsonFormsControlProps } from '@jsonforms/react';
 import {
   alpha,
   DetailInputWithLabelRow,
+  extractProperty,
   Theme,
   useTranslation,
 } from '@openmsupply-client/common';
@@ -18,7 +19,10 @@ type SortDirection = 'asc' | 'desc' | null;
 const UIComponent = (props: ControlProps) => {
   const { handleChange, label, path, enabled } = props;
   const t = useTranslation();
-  const [sortDirection, setSortDirection] = useState<SortDirection>();
+  const { core } = useJsonForms();
+
+  const sortDirection =
+    (extractProperty(core?.data, path) as SortDirection) ?? null;
 
   if (!props.visible) {
     return null;
@@ -37,7 +41,6 @@ const UIComponent = (props: ControlProps) => {
 
   const handleClick = (value: SortDirection) => {
     const newValue = sortDirection === value ? null : value;
-    setSortDirection(newValue);
     handleChange(path, newValue);
   };
 
