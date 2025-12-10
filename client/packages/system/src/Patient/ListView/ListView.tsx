@@ -15,6 +15,7 @@ import {
   GenderTypeNode,
   ColumnDataAccessor,
   ChipTableCell,
+  isSupportedGender,
 } from '@openmsupply-client/common';
 import { usePatient, PatientRowFragment } from '../api';
 import { AppBarButtons } from './AppBarButtons';
@@ -120,10 +121,12 @@ export const PatientListView = () => {
         enableColumnFilter: true,
         size: 120,
         filterVariant: 'select',
-        filterSelectOptions: Object.values(GenderTypeNode).map(status => ({
-          value: status,
-          label: t(getGenderTranslationKey(status)),
-        })),
+        filterSelectOptions: Object.values(GenderTypeNode)
+          .filter(isSupportedGender)
+          .map(status => ({
+            value: status,
+            label: t(getGenderTranslationKey(status)),
+          })),
       },
       {
         accessorKey: 'dateOfBirth',

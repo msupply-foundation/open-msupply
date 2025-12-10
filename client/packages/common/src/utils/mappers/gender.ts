@@ -1,6 +1,15 @@
 import { LocaleKey, GenderTypeNode } from '@openmsupply-client/common';
 import { noOtherVariants } from '../types';
 
+export const isSupportedGender = (gender: GenderTypeNode) => {
+  return ![
+    GenderTypeNode.TransgenderFemaleHormone,
+    GenderTypeNode.TransgenderFemaleSurgical,
+    GenderTypeNode.TransgenderMaleHormone,
+    GenderTypeNode.TransgenderMaleSurgical,
+  ].includes(gender);
+};
+
 export function getGenderTranslationKey(gender: GenderTypeNode): LocaleKey {
   switch (gender) {
     case GenderTypeNode.Female:
