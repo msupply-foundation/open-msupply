@@ -1,215 +1,6 @@
 {
   "reports": [
     {
-      "id": "pending-encounters_2_6_4_false",
-      "name": "Pending Encounters",
-      "template": {
-        "index": {
-          "template": "template.html",
-          "header": null,
-          "footer": null,
-          "query": [
-            "encountersQuery.graphql"
-          ],
-          "convert_data": "dmFyIHQ9ezQxMzp0PT57ZnVuY3Rpb24gZSh0KXtyZXR1cm4gdD43PyJMVEZVIjp0PjA/IkxBVEUiOiIifXQuZXhwb3J0cz17YXBwbHlEYXlzTGF0ZTpmdW5jdGlvbih0KXtyZXR1cm4gdC5tYXAodD0+e2NvbnN0IHI9bmV3IERhdGUodC5zdGFydERhdGV0aW1lKSxhPU1hdGguZmxvb3IoKG5ldyBEYXRlLXIpLzg2NGU1KSxuPWE+MD9hOjAsbz1lKG4pO3JldHVybnsuLi50LGRheXNMYXRlOm4sc3RhdHVzOm99fSl9LGdldFN0YXR1czplfX19LGU9e307ZnVuY3Rpb24gcihhKXt2YXIgbj1lW2FdO2lmKHZvaWQgMCE9PW4pcmV0dXJuIG4uZXhwb3J0czt2YXIgbz1lW2FdPXtleHBvcnRzOnt9fTtyZXR1cm4gdFthXShvLG8uZXhwb3J0cyxyKSxvLmV4cG9ydHN9ci5uPXQ9Pnt2YXIgZT10JiZ0Ll9fZXNNb2R1bGU/KCk9PnQuZGVmYXVsdDooKT0+dDtyZXR1cm4gci5kKGUse2E6ZX0pLGV9LHIuZD0odCxlKT0+e2Zvcih2YXIgYSBpbiBlKXIubyhlLGEpJiYhci5vKHQsYSkmJk9iamVjdC5kZWZpbmVQcm9wZXJ0eSh0LGEse2VudW1lcmFibGU6ITAsZ2V0OmVbYV19KX0sci5vPSh0LGUpPT5PYmplY3QucHJvdG90eXBlLmhhc093blByb3BlcnR5LmNhbGwodCxlKTt2YXIgYT17fTtyLmQoYSx7SDooKT0+b30pO3ZhciBuPXIoNDEzKTtmdW5jdGlvbiBvKHQpe3JldHVybiB0LmRhdGEuZW5jb3VudGVycy5ub2Rlcz0oMCxuLmFwcGx5RGF5c0xhdGUpKHQuZGF0YS5lbmNvdW50ZXJzLm5vZGVzKSx0fWNvbnN0IHM9YS5IO2V4cG9ydHtzIGFzIGNvbnZlcnRfZGF0YX07",
-          "convert_data_type": "BoaJs"
-        },
-        "entries": {
-          "encounters.css": {
-            "type": "Resource",
-            "data": "@page {\n    margin: 0;\n    size: A4 landscape;\n  }\n  \n  .container {\n    margin: auto;\n    padding: 10px;\n    font-size: 14px;\n    font-family: \"Helvetica Neue\", \"Helvetica\", Helvetica, Arial, sans-serif;\n    color: #555;\n  }\n  \n  .container table {\n    width: 100%;\n    font-size: inherit;\n    font-family: inherit;\n    text-align: left;\n    margin-top: 10;\n    margin-bottom: 15;\n    border-collapse: separate;\n  }\n  \n  .container table td {\n    padding: 10px;\n    vertical-align: top;\n    border-top: 1px solid rgb(164, 163, 163);\n  }\n  \n  .container table tr:last-child td {\n    border-bottom: none;\n  }\n  \n  .container>table>thead {\n    position: -webkit-sticky;\n    position: sticky;\n    top: 0;\n    background-color: #f1f1f1;\n  }\n  \n  .container,\n  body,\n  .container>table {\n    margin-top: 0px;\n    padding-top: 0px;\n  }\n  \n  .container table tr.heading td {\n    font-weight: bold;\n    margin-bottom: 15px;\n  }\n  \n"
-          },
-          "template.html": {
-            "type": "TeraTemplate",
-            "data": {
-              "output": "Html",
-              "template": "{% macro formatDate(datetime) %} {% if datetime %}{{ datetime |\ndate(format=\"%d/%m/%Y\", timezone=arguments.timezone) }}{% endif %} {% endmacro input %}\n\n<style>\n  {% include \"encounters.css\" %}\n</style>\n\n<div class=\"container\">\n  <table>\n    <thead>\n      <tr class=\"heading\">\n        <td>{{t(k=\"report.program-id\", f=\"Program ID\")}}</td>\n        <td>{{t(k=\"label.first-name\", f=\"First Name\")}}</td>\n        <td>{{t(k=\"label.last-name\", f=\"Last Name\")}}</td>\n        <td>{{t(k=\"label.date-of-birth\", f=\"Date of birth\")}}</td>\n        <td>{{t(k=\"label.next-of-kin\", f=\"Next of kin\")}}</td>\n        <td>{{t(k=\"label.phone\", f=\"Phone\")}}</td>\n        <td>\n          {{t(k=\"report.last-encounter-date\", f=\"Last appointment date\")}}\n        </td>\n        <td>{{t(k=\"report.encounter-date\", f=\"Appointment date\")}}</td>\n        <td>{{t(k=\"report.days-overdue\", f=\"Days overdue\")}}</td>\n        <td>{{t(k=\"label.status\", f=\"Status\")}}</td>\n      </tr>\n    </thead>\n    <tbody>\n      {% for encounter in data.encounters.nodes %}\n      <tr>\n        <td>{{encounter.programEnrolment.programEnrolmentId}}</td>\n        <td>{{encounter.patient.firstName}}</td>\n        <td>{{encounter.patient.lastName}}</td>\n        <td>{{self::formatDate(datetime=encounter.patient.dateOfBirth)}}</td>\n        <td>{{encounter.patient.nextOfKinName}}</td>\n        <td>{{encounter.patient.phone}}</td>\n        {% if encounter.previousEncounter %}\n        <td>\n          {{self::formatDate(datetime=encounter.previousEncounter.startDatetime)}}\n        </td>\n        {% else %}\n        <td></td>\n        {% endif %}\n        <td>{{self::formatDate(datetime=encounter.startDatetime)}}</td>\n        <td>{{encounter.daysLate}}</td>\n\n        {% if encounter.status == \"LTFU\" %}\n        <td>{{t(k=\"report.lost-to-follow-up\", f=\"Lost to follow-up\")}}</td>\n        {% elif encounter.status == \"LATE\" %}\n        <td>{{t(k=\"report.late\", f=\"Late\")}}</td>\n        {% else %}\n        <td>{{t(k=\"report.planned\", f=\"Planned\")}}</td>\n        {% endif %}\n      </tr>\n      {% endfor %}\n    </tbody>\n  </table>\n</div>\n"
-            }
-          },
-          "encountersQuery.graphql": {
-            "type": "GraphGLQuery",
-            "data": {
-              "query": "query encountersQuery(\n  $storeId: String!\n  $programId: String!\n  $after: DateTime\n  $before: DateTime\n) {\n  encounters(\n    storeId: $storeId\n    filter: {\n      programId: { equalTo: $programId }\n      status: { equalTo: \"PENDING\" }\n      startDatetime: { afterOrEqualTo: $after, beforeOrEqualTo: $before }\n    }\n    sort: { key: \"startDatetime\", desc: false }\n  ) {\n    ... on EncounterConnector {\n      nodes {\n        ... on EncounterNode {\n          id\n          startDatetime\n          type\n          patient {\n            firstName\n            lastName\n            dateOfBirth\n            phone\n            nextOfKinName\n          }\n          programEnrolment {\n            programEnrolmentId\n          }\n          previousEncounter {\n            startDatetime\n          }\n        }\n      }\n    }\n  }\n  store(id: $storeId) {\n    ... on StoreNode {\n      code\n      storeName\n      logo\n      name(storeId: $storeId) {\n        ... on NameNode {\n          address1\n          address2\n          chargeCode\n          code\n          comment\n          country\n          email\n          name\n          phone\n          website\n        }\n      }\n    }\n  }\n}\n",
-              "variables": null
-            }
-          }
-        }
-      },
-      "context": "DISPENSARY",
-      "sub_context": "Encounters",
-      "argument_schema_id": "for_report_pending-encounters_2_6_4_false",
-      "comment": null,
-      "is_custom": false,
-      "version": "2.6.4",
-      "code": "pending-encounters",
-      "form_schema": {
-        "id": "for_report_pending-encounters_2_6_4_false",
-        "type": "reportArgument",
-        "json_schema": {
-          "$schema": "http://json-schema.org/draft-07/schema#",
-          "allOf": [
-            {
-              "$ref": "#/definitions/Filters"
-            }
-          ],
-          "definitions": {
-            "Filters": {
-              "properties": {
-                "after": {
-                  "description": "From date",
-                  "format": "date-time",
-                  "type": [
-                    "string",
-                    "null"
-                  ]
-                },
-                "before": {
-                  "description": "To date",
-                  "format": "date-time",
-                  "type": [
-                    "string",
-                    "null"
-                  ]
-                },
-                "programId": {
-                  "description": "Program ID",
-                  "type": "string"
-                }
-              },
-              "required": [
-                "programId"
-              ]
-            }
-          },
-          "type": "object"
-        },
-        "ui_schema": {
-          "elements": [
-            {
-              "label": "T#label.program",
-              "scope": "#/properties/programId",
-              "type": "PatientProgramSearch"
-            },
-            {
-              "label": "T#label.from-date",
-              "options": {
-                "dateOnly": true
-              },
-              "scope": "#/properties/after",
-              "type": "Control"
-            },
-            {
-              "label": "T#label.to-date",
-              "options": {
-                "dateAsEndOfDay": true,
-                "dateOnly": true
-              },
-              "scope": "#/properties/before",
-              "type": "Control"
-            }
-          ],
-          "type": "VerticalLayout"
-        }
-      },
-      "excel_template_buffer": null
-    },
-    {
-      "id": "pending-encounters_2_9_0_false",
-      "name": "Pending Encounters",
-      "template": {
-        "index": {
-          "template": "template.html",
-          "header": null,
-          "footer": null,
-          "query": [
-            "encountersQuery.graphql"
-          ],
-          "convert_data": "dmFyIHQ9ezQxMzp0PT57ZnVuY3Rpb24gZSh0KXtyZXR1cm4gdD43PyJMVEZVIjp0PjA/IkxBVEUiOiIifXQuZXhwb3J0cz17YXBwbHlEYXlzTGF0ZTpmdW5jdGlvbih0KXtyZXR1cm4gdC5tYXAodD0+e2NvbnN0IHI9bmV3IERhdGUodC5zdGFydERhdGV0aW1lKSxhPU1hdGguZmxvb3IoKG5ldyBEYXRlLXIpLzg2NGU1KSxuPWE+MD9hOjAsbz1lKG4pO3JldHVybnsuLi50LGRheXNMYXRlOm4sc3RhdHVzOm99fSl9LGdldFN0YXR1czplfX19LGU9e307ZnVuY3Rpb24gcihhKXt2YXIgbj1lW2FdO2lmKHZvaWQgMCE9PW4pcmV0dXJuIG4uZXhwb3J0czt2YXIgbz1lW2FdPXtleHBvcnRzOnt9fTtyZXR1cm4gdFthXShvLG8uZXhwb3J0cyxyKSxvLmV4cG9ydHN9ci5uPXQ9Pnt2YXIgZT10JiZ0Ll9fZXNNb2R1bGU/KCk9PnQuZGVmYXVsdDooKT0+dDtyZXR1cm4gci5kKGUse2E6ZX0pLGV9LHIuZD0odCxlKT0+e2Zvcih2YXIgYSBpbiBlKXIubyhlLGEpJiYhci5vKHQsYSkmJk9iamVjdC5kZWZpbmVQcm9wZXJ0eSh0LGEse2VudW1lcmFibGU6ITAsZ2V0OmVbYV19KX0sci5vPSh0LGUpPT5PYmplY3QucHJvdG90eXBlLmhhc093blByb3BlcnR5LmNhbGwodCxlKTt2YXIgYT17fTtyLmQoYSx7SDooKT0+b30pO3ZhciBuPXIoNDEzKTtmdW5jdGlvbiBvKHQpe3JldHVybiB0LmRhdGEuZW5jb3VudGVycy5ub2Rlcz0oMCxuLmFwcGx5RGF5c0xhdGUpKHQuZGF0YS5lbmNvdW50ZXJzLm5vZGVzKSx0fWNvbnN0IHM9YS5IO2V4cG9ydHtzIGFzIGNvbnZlcnRfZGF0YX07",
-          "convert_data_type": "BoaJs"
-        },
-        "entries": {
-          "encountersQuery.graphql": {
-            "type": "GraphGLQuery",
-            "data": {
-              "query": "query encountersQuery(\n  $storeId: String!\n  $programId: String!\n  $startDatetime: DatetimeFilterInput\n) {\n  encounters(\n    storeId: $storeId\n    filter: {\n      programId: { equalTo: $programId }\n      status: { equalTo: \"PENDING\" }\n      startDatetime: $startDatetime\n    }\n    sort: { key: \"startDatetime\", desc: false }\n  ) {\n    ... on EncounterConnector {\n      nodes {\n        ... on EncounterNode {\n          id\n          startDatetime\n          type\n          patient {\n            firstName\n            lastName\n            dateOfBirth\n            phone\n            nextOfKinName\n          }\n          programEnrolment {\n            programEnrolmentId\n          }\n          previousEncounter {\n            startDatetime\n          }\n        }\n      }\n    }\n  }\n  store(id: $storeId) {\n    ... on StoreNode {\n      code\n      storeName\n      logo\n      name(storeId: $storeId) {\n        ... on NameNode {\n          address1\n          address2\n          chargeCode\n          code\n          comment\n          country\n          email\n          name\n          phone\n          website\n        }\n      }\n    }\n  }\n}\n",
-              "variables": null
-            }
-          },
-          "encounters.css": {
-            "type": "Resource",
-            "data": "@page {\n    margin: 0;\n    size: A4 landscape;\n  }\n  \n  .container {\n    margin: auto;\n    padding: 10px;\n    font-size: 14px;\n    font-family: \"Helvetica Neue\", \"Helvetica\", Helvetica, Arial, sans-serif;\n    color: #555;\n  }\n  \n  .container table {\n    width: 100%;\n    font-size: inherit;\n    font-family: inherit;\n    text-align: left;\n    margin-top: 10;\n    margin-bottom: 15;\n    border-collapse: separate;\n  }\n  \n  .container table td {\n    padding: 10px;\n    vertical-align: top;\n    border-top: 1px solid rgb(164, 163, 163);\n  }\n  \n  .container table tr:last-child td {\n    border-bottom: none;\n  }\n  \n  .container>table>thead {\n    position: -webkit-sticky;\n    position: sticky;\n    top: 0;\n    background-color: #f1f1f1;\n  }\n  \n  .container,\n  body,\n  .container>table {\n    margin-top: 0px;\n    padding-top: 0px;\n  }\n  \n  .container table tr.heading td {\n    font-weight: bold;\n    margin-bottom: 15px;\n  }\n  \n"
-          },
-          "template.html": {
-            "type": "TeraTemplate",
-            "data": {
-              "output": "Html",
-              "template": "{% macro formatDate(datetime) %} {% if datetime %}{{ datetime |\ndate(format=\"%d/%m/%Y\", timezone=arguments.timezone) }}{% endif %} {% endmacro input %}\n\n<style>\n  {% include \"encounters.css\" %}\n</style>\n\n<div class=\"container\">\n  <table>\n    <thead>\n      <tr class=\"heading\">\n        <td>{{t(k=\"report.program-id\", f=\"Program ID\")}}</td>\n        <td>{{t(k=\"label.first-name\", f=\"First Name\")}}</td>\n        <td>{{t(k=\"label.last-name\", f=\"Last Name\")}}</td>\n        <td>{{t(k=\"label.date-of-birth\", f=\"Date of birth\")}}</td>\n        <td>{{t(k=\"label.next-of-kin\", f=\"Next of kin\")}}</td>\n        <td>{{t(k=\"label.phone\", f=\"Phone\")}}</td>\n        <td>\n          {{t(k=\"report.last-encounter-date\", f=\"Last appointment date\")}}\n        </td>\n        <td>{{t(k=\"report.encounter-date\", f=\"Appointment date\")}}</td>\n        <td>{{t(k=\"report.days-overdue\", f=\"Days overdue\")}}</td>\n        <td>{{t(k=\"label.status\", f=\"Status\")}}</td>\n      </tr>\n    </thead>\n    <tbody>\n      {% for encounter in data.encounters.nodes %}\n      <tr>\n        <td>{{encounter.programEnrolment.programEnrolmentId}}</td>\n        <td>{{encounter.patient.firstName}}</td>\n        <td>{{encounter.patient.lastName}}</td>\n        <td>{{self::formatDate(datetime=encounter.patient.dateOfBirth)}}</td>\n        <td>{{encounter.patient.nextOfKinName}}</td>\n        <td>{{encounter.patient.phone}}</td>\n        {% if encounter.previousEncounter %}\n        <td>\n          {{self::formatDate(datetime=encounter.previousEncounter.startDatetime)}}\n        </td>\n        {% else %}\n        <td></td>\n        {% endif %}\n        <td>{{self::formatDate(datetime=encounter.startDatetime)}}</td>\n        <td>{{encounter.daysLate}}</td>\n\n        {% if encounter.status == \"LTFU\" %}\n        <td>{{t(k=\"report.lost-to-follow-up\", f=\"Lost to follow-up\")}}</td>\n        {% elif encounter.status == \"LATE\" %}\n        <td>{{t(k=\"report.late\", f=\"Late\")}}</td>\n        {% else %}\n        <td>{{t(k=\"report.planned\", f=\"Planned\")}}</td>\n        {% endif %}\n      </tr>\n      {% endfor %}\n    </tbody>\n  </table>\n</div>\n"
-            }
-          }
-        }
-      },
-      "context": "DISPENSARY",
-      "sub_context": "Encounters",
-      "argument_schema_id": "for_report_pending-encounters_2_9_0_false",
-      "comment": null,
-      "is_custom": false,
-      "version": "2.9.0",
-      "code": "pending-encounters",
-      "form_schema": {
-        "id": "for_report_pending-encounters_2_9_0_false",
-        "type": "reportArgument",
-        "json_schema": {
-          "$schema": "http://json-schema.org/draft-07/schema#",
-          "allOf": [
-            {
-              "$ref": "#/definitions/Filters"
-            }
-          ],
-          "definitions": {
-            "Filters": {
-              "properties": {
-                "programId": {
-                  "description": "Program ID",
-                  "type": "string"
-                },
-                "startDatetime": {
-                  "description": "Encounter Date",
-                  "format": "date-time",
-                  "type": [
-                    "object",
-                    "null"
-                  ]
-                }
-              },
-              "required": [
-                "programId"
-              ]
-            }
-          },
-          "type": "object"
-        },
-        "ui_schema": {
-          "elements": [
-            {
-              "label": "T#label.program",
-              "scope": "#/properties/programId",
-              "type": "PatientProgramSearch"
-            },
-            {
-              "label": "",
-              "options": {
-                "dateOnly": true
-              },
-              "scope": "#/properties/startDatetime",
-              "type": "DateRange"
-            }
-          ],
-          "type": "VerticalLayout"
-        }
-      },
-      "excel_template_buffer": null
-    },
-    {
       "id": "expiring-items_2_6_2_false",
       "name": "Expiring Items",
       "template": {
@@ -224,6 +15,13 @@
           "convert_data_type": "BoaJs"
         },
         "entries": {
+          "template.html": {
+            "type": "TeraTemplate",
+            "data": {
+              "output": "Html",
+              "template": "<style>{% include \"style.css\" %}</style>\n\n<div class=\"container\">\n  <table>\n    <thead>\n      <tr class=\"heading\">\n        <td>{{t(k=\"label.code\", f=\"Code\")}}</td>\n        <td>{{t(k=\"label.name\", f=\"Name\")}}</td>\n        <td>{{t(k=\"report.expiring-in-days\", f=\"Expiring in (days)\")}}</td>\n        <td>{{t(k=\"label.batch\", f=\"Batch\")}}</td>\n        <td>{{t(k=\"report.expiry-date\", f=\"Expiry date\")}}</td>\n        <td>{{t(k=\"report.stock-on-hand\", f=\"Stock on hand\")}}</td>\n        <td>{{t(k=\"report.average-monthly-consumption\", f=\"Average monthly consumption\")}}</td>\n        <td>{{t(k=\"report.expected-usage\", f=\"Expected usage\")}}</td>\n        <td>{{t(k=\"report.stock-at-risk\", f=\"Stock at risk\")}}</td>\n      </tr>\n    </thead>\n    <tbody>\n      {% for stockLine in data.stockLines.nodes %}\n      <tr>\n        <td>{{stockLine.item.code}}</td>\n        <td>{{stockLine.item.name}}</td>\n        <td class=\"expiry-date\">\n          {% if stockLine.daysUntilExpired %}\n            {% if stockLine.daysUntilExpired <= 0 %}\n              <span class=\"expired\">{{t(k=\"report.expired\", f=\"Expired\")}}</span>\n              {% elif stockLine.daysUntilExpired <= arguments.monthsItemsExpire *\n                (365.25 / 12.0) %}\n              <span class=\"soon\">{{ stockLine.daysUntilExpired }}</span>\n            {% else %}\n                <span class=\"all-good\">{{ stockLine.daysUntilExpired }}</span>\n            {% endif %}\n          {% else %}\n            <span class=\"na\">N/A</span>\n          {% endif %}\n        </td>\n        <td>{{stockLine.batch | default(value='')}}</td>\n        <td>\n          {% if stockLine.expiryDate %}\n            {{ stockLine.expiryDate | date(format=\"%d/%m/%Y\") }}\n          {% else %}\n            N/A\n          {% endif %}\n        </td>\n        <td>{{stockLine.totalNumberOfPacks * stockLine.packSize | round( precision=1)\n          }}</td>\n        <td>{{stockLine.averageMonthlyConsumption }}</td>\n        <td>\n          {% if stockLine.expectedUsage %}\n              {{ stockLine.expectedUsage | round( precision=1) }}\n          {% else %}\n            N/A\n          {% endif %}\n        </td>\n        <td>\n          {% if stockLine.stockAtRisk %}\n            {{ stockLine.stockAtRisk | round( precision=1) }}\n          {% else %}\n            N/A\n          {% endif %}\n        </td>\n      </tr>\n      {% endfor %}\n    </tbody>\n  </table>\n</div>"
+            }
+          },
           "query.graphql": {
             "type": "GraphGLQuery",
             "data": {
@@ -234,13 +32,6 @@
           "style.css": {
             "type": "Resource",
             "data": "@page {\n  margin: 0;\n  size: A4 landscape;\n}\n\n.paging {\n  width: 100%;\n}\n\n.container {\n  margin: auto;\n  padding: 10px;\n  font-size: 14px;\n  font-family: \"Helvetica Neue\", \"Helvetica\", Helvetica, Arial, sans-serif;\n  color: #555;\n}\n\n.container table {\n  width: 100%;\n  font-size: inherit;\n  font-family: inherit;\n  text-align: left;\n  margin-top: 10;\n  margin-bottom: 15;\n  border-collapse: separate;\n}\n\n.container table td {\n  padding: 10px;\n  vertical-align: top;\n  border-top: 1px solid rgb(164, 163, 163);\n}\n\n.container > table > thead {\n  position: -webkit-sticky;\n  position: sticky;\n  top: 0;\n  background-color: #f1f1f1;\n}\n\n.container,\nbody,\n.container>table {\n  margin-top: 0px;\n  padding-top: 0px;\n}\n\n.container table tr.heading td {\n  font-weight: bold;\n  margin-bottom: 15px;\n}\n\n.container table td.expiry-date span {\n  padding: 2px;\n  border-radius: 10px;\n}\n\n.container table td.expiry-date span.expired::before {\n  content: \"\";\n  display: inline-block;\n  width: 10px;\n  height: 10px;\n  border-radius: 50%;\n  background-color: rgba(245, 5, 1, 0.6);\n  margin-right: 5px;\n}\n\n.container table td.expiry-date span.expired {\n  background-color: rgba(245, 5, 1, 0.3);\n  padding: 3px 10px;\n  white-space: nowrap;\n}\n\n.container table td.expiry-date span.soon::before {\n  content: \"\";\n  display: inline-block;\n  width: 10px;\n  height: 10px;\n  border-radius: 50%;\n  background-color: rgba(248, 154, 1, 0.6);\n  margin-right: 5px;\n}\n\n.container table td.expiry-date span.soon {\n  background-color: rgba(248, 154, 1, 0.3);\n  padding: 3px 10px;\n  white-space: nowrap;\n}\n\n.container table td.expiry-date span.all-good::before {\n  content: \"\";\n  display: inline-block;\n  width: 10px;\n  height: 10px;\n  border-radius: 50%;\n  background-color: rgba(51, 169, 1, 0.6);\n  margin-right: 5px;\n}\n\n.container table td.expiry-date span.all-good {\n  background-color: rgba(51, 169, 1, 0.3);\n  padding: 3px 10px;\n  white-space: nowrap;\n}\n\n.container table span.na::before {\n  content: \"\";\n  display: inline-block;\n  width: 10px;\n  height: 10px;\n  border-radius: 50%;\n  background-color: rgba(143, 144, 166, 0.6);\n  margin-right: 5px;\n}\n\n.container table td.expiry-date span.na {\n  background-color: rgba(143, 144, 166, 0.3);\n  padding: 3px 10px;\n  white-space: nowrap;\n}"
-          },
-          "template.html": {
-            "type": "TeraTemplate",
-            "data": {
-              "output": "Html",
-              "template": "<style>{% include \"style.css\" %}</style>\n\n<div class=\"container\">\n  <table>\n    <thead>\n      <tr class=\"heading\">\n        <td>{{t(k=\"label.code\", f=\"Code\")}}</td>\n        <td>{{t(k=\"label.name\", f=\"Name\")}}</td>\n        <td>{{t(k=\"report.expiring-in-days\", f=\"Expiring in (days)\")}}</td>\n        <td>{{t(k=\"label.batch\", f=\"Batch\")}}</td>\n        <td>{{t(k=\"report.expiry-date\", f=\"Expiry date\")}}</td>\n        <td>{{t(k=\"report.stock-on-hand\", f=\"Stock on hand\")}}</td>\n        <td>{{t(k=\"report.average-monthly-consumption\", f=\"Average monthly consumption\")}}</td>\n        <td>{{t(k=\"report.expected-usage\", f=\"Expected usage\")}}</td>\n        <td>{{t(k=\"report.stock-at-risk\", f=\"Stock at risk\")}}</td>\n      </tr>\n    </thead>\n    <tbody>\n      {% for stockLine in data.stockLines.nodes %}\n      <tr>\n        <td>{{stockLine.item.code}}</td>\n        <td>{{stockLine.item.name}}</td>\n        <td class=\"expiry-date\">\n          {% if stockLine.daysUntilExpired %}\n            {% if stockLine.daysUntilExpired <= 0 %}\n              <span class=\"expired\">{{t(k=\"report.expired\", f=\"Expired\")}}</span>\n              {% elif stockLine.daysUntilExpired <= arguments.monthsItemsExpire *\n                (365.25 / 12.0) %}\n              <span class=\"soon\">{{ stockLine.daysUntilExpired }}</span>\n            {% else %}\n                <span class=\"all-good\">{{ stockLine.daysUntilExpired }}</span>\n            {% endif %}\n          {% else %}\n            <span class=\"na\">N/A</span>\n          {% endif %}\n        </td>\n        <td>{{stockLine.batch | default(value='')}}</td>\n        <td>\n          {% if stockLine.expiryDate %}\n            {{ stockLine.expiryDate | date(format=\"%d/%m/%Y\") }}\n          {% else %}\n            N/A\n          {% endif %}\n        </td>\n        <td>{{stockLine.totalNumberOfPacks * stockLine.packSize | round( precision=1)\n          }}</td>\n        <td>{{stockLine.averageMonthlyConsumption }}</td>\n        <td>\n          {% if stockLine.expectedUsage %}\n              {{ stockLine.expectedUsage | round( precision=1) }}\n          {% else %}\n            N/A\n          {% endif %}\n        </td>\n        <td>\n          {% if stockLine.stockAtRisk %}\n            {{ stockLine.stockAtRisk | round( precision=1) }}\n          {% else %}\n            N/A\n          {% endif %}\n        </td>\n      </tr>\n      {% endfor %}\n    </tbody>\n  </table>\n</div>"
-            }
           }
         }
       },
@@ -432,18 +223,18 @@
           "convert_data_type": "BoaJs"
         },
         "entries": {
-          "query.graphql": {
-            "type": "GraphGLQuery",
-            "data": {
-              "query": "query ExpiringItems(\n  $storeId: String\n  $itemCodeOrName: String\n  $expiryDate: String\n) {\n  stockLines(\n    storeId: $storeId\n    filter: {\n      itemCodeOrName: { like: $itemCodeOrName }\n      expiryDate: { beforeOrEqualTo: $expiryDate }\n      hasPacksInStore: true\n      isActive: true\n    }\n  ) {\n    ... on StockLineConnector {\n      nodes {\n        batch\n        expiryDate\n        id\n        packSize\n        storeId\n        totalNumberOfPacks\n        supplierName\n        location {\n          code\n        }\n        item {\n          code\n          name\n          unitName\n          stats(storeId: $storeId) {\n            averageMonthlyConsumption\n          }\n        }\n      }\n    }\n  }\n}\n",
-              "variables": null
-            }
-          },
           "template.html": {
             "type": "TeraTemplate",
             "data": {
               "output": "Html",
               "template": "<style>{% include \"style.css\" %}</style>\n\n<div class=\"container\">\n  <table>\n    <thead>\n      <tr class=\"heading\">\n        <td>{{t(k=\"label.code\", f=\"Code\")}}</td>\n        <td>{{t(k=\"label.name\", f=\"Name\")}}</td>\n        <td>{{t(k=\"report.expiring-in-days\", f=\"Expiring in (days)\")}}</td>\n        <td>{{t(k=\"label.batch\", f=\"Batch\")}}</td>\n        <td>{{t(k=\"report.expiry-date\", f=\"Expiry date\")}}</td>\n        <td>{{t(k=\"report.stock-on-hand\", f=\"Stock on hand\")}}</td>\n        <td>{{t(k=\"report.average-monthly-consumption\", f=\"Average monthly consumption\")}}</td>\n        <td>{{t(k=\"report.expected-usage\", f=\"Expected usage\")}}</td>\n        <td>{{t(k=\"report.stock-at-risk\", f=\"Stock at risk\")}}</td>\n      </tr>\n    </thead>\n    <tbody>\n      {% for stockLine in data.stockLines.nodes %}\n      <tr>\n        <td>{{stockLine.item.code}}</td>\n        <td>{{stockLine.item.name}}</td>\n        <td class=\"expiry-date\">\n          {% if stockLine.daysUntilExpired %}\n            {% if stockLine.daysUntilExpired <= 0 %}\n              <span class=\"expired\">{{t(k=\"report.expired\", f=\"Expired\")}}</span>\n              {% elif stockLine.daysUntilExpired <= arguments.monthsItemsExpire *\n                (365.25 / 12.0) %}\n              <span class=\"soon\">{{ stockLine.daysUntilExpired }}</span>\n            {% else %}\n                <span class=\"all-good\">{{ stockLine.daysUntilExpired }}</span>\n            {% endif %}\n          {% else %}\n            <span class=\"na\">N/A</span>\n          {% endif %}\n        </td>\n        <td>{{stockLine.batch | default(value='')}}</td>\n        <td>\n          {% if stockLine.expiryDate %}\n            {{ stockLine.expiryDate | date(format=\"%d/%m/%Y\") }}\n          {% else %}\n            N/A\n          {% endif %}\n        </td>\n        <td>{{stockLine.totalNumberOfPacks * stockLine.packSize | round( precision=1)\n          }}</td>\n        <td>{{stockLine.averageMonthlyConsumption }}</td>\n        <td>\n          {% if stockLine.expectedUsage %}\n              {{ stockLine.expectedUsage | round( precision=1) }}\n          {% else %}\n            N/A\n          {% endif %}\n        </td>\n        <td>\n          {% if stockLine.stockAtRisk %}\n            {{ stockLine.stockAtRisk | round( precision=1) }}\n          {% else %}\n            N/A\n          {% endif %}\n        </td>\n      </tr>\n      {% endfor %}\n    </tbody>\n  </table>\n</div>"
+            }
+          },
+          "query.graphql": {
+            "type": "GraphGLQuery",
+            "data": {
+              "query": "query ExpiringItems(\n  $storeId: String\n  $itemCodeOrName: String\n  $expiryDate: String\n) {\n  stockLines(\n    storeId: $storeId\n    filter: {\n      itemCodeOrName: { like: $itemCodeOrName }\n      expiryDate: { beforeOrEqualTo: $expiryDate }\n      hasPacksInStore: true\n      isActive: true\n    }\n  ) {\n    ... on StockLineConnector {\n      nodes {\n        batch\n        expiryDate\n        id\n        packSize\n        storeId\n        totalNumberOfPacks\n        supplierName\n        location {\n          code\n        }\n        item {\n          code\n          name\n          unitName\n          stats(storeId: $storeId) {\n            averageMonthlyConsumption\n          }\n        }\n      }\n    }\n  }\n}\n",
+              "variables": null
             }
           },
           "style.css": {
@@ -640,9 +431,12 @@
           "convert_data_type": "BoaJs"
         },
         "entries": {
-          "style.css": {
-            "type": "Resource",
-            "data": "@page {\n  margin: 0;\n  size: A4 landscape;\n}\n\n.paging {\n  width: 100%;\n}\n\n.container {\n  margin: auto;\n  padding: 10px;\n  font-size: 14px;\n  font-family: \"Helvetica Neue\", \"Helvetica\", Helvetica, Arial, sans-serif;\n  color: #555;\n}\n\n.container table {\n  width: 100%;\n  font-size: inherit;\n  font-family: inherit;\n  text-align: left;\n  margin-top: 10;\n  margin-bottom: 15;\n  border-collapse: separate;\n}\n\n.container table td {\n  padding: 10px;\n  vertical-align: top;\n  border-top: 1px solid rgb(164, 163, 163);\n}\n\n.container table tr:last-child td {\n  border-bottom: none;\n}\n\n.container>table>thead {\n  position: -webkit-sticky;\n  position: sticky;\n  top: 0;\n  background-color: #f1f1f1;\n}\n\n.container,\nbody,\n.container>table {\n  margin-top: 0px;\n  padding-top: 0px;\n}\n\n.container table tr.heading td {\n  font-weight: bold;\n  margin-bottom: 15px;\n}\n\n.container table td.status span {\n  padding: 2px;\n  border-radius: 10px;\n}\n"
+          "template.html": {
+            "type": "TeraTemplate",
+            "data": {
+              "output": "Html",
+              "template": "<style>\n  {% include \"style.css\" %}\n</style>\n\n<div class=\"container\">\n  <table>\n    <thead>\n      <tr class=\"heading\">\n        <td>{{t(k=\"label.supplier\", f=\"Supplier\")}}</td>\n        <td>{{t(k=\"label.code\", f=\"Code\")}}</td>\n        <td>{{t(k=\"label.name\", f=\"Name\")}}</td>\n        <td>{{t(k=\"label.batch\", f=\"Batch\")}}</td>\n        <td>{{t(k=\"label.expiry\", f=\"Expiry\")}}</td>\n        <td>{{t(k=\"label.pack-size\", f=\"Pack size\")}}</td>\n        <td>{{t(k=\"label.num-packs\", f=\"Number of packs\")}}</td>\n        <td>{{t(k=\"label.number-of-units\", f=\"Number of units\")}}</td>\n        <td>{{t(k=\"description.pack-cost\", f=\"Cost price per pack\")}}</td>\n        <td>{{t(k=\"label.total-cost\", f=\"Total cost\")}}</td>\n      </tr>\n    </thead>\n    <tbody>\n      {% for line in data.lines %}\n      <tr>\n        <td>{{line.otherPartyName}}</td>\n        <td>{{line.itemCode}}</td>\n        <td>{{line.itemName}}</td>\n        <td>{{line.batch | default(value='')}}</td>\n        <td>\n          {%if line.expiryDate %}\n          {{line.expiryDate | date(format=\"%d/%m/%Y\")}}\n          {% else %}\n          {% endif %}\n        </td>\n        <td style=\"text-align: right\">{{line.packSize}}</td>\n        <td style=\"text-align: right\">{{line.numberOfPacks}}</td>\n        <td style=\"text-align: right\">{{line.numberOfUnits}}</td>\n        <td style=\"text-align: right\">{{line.costPricePerPack}}</td>\n        <td style=\"text-align: right\">{{line.totalCost}}</td>\n      </tr>\n      {% endfor %}\n    </tbody>\n  </table>\n</div>"
+            }
           },
           "query.graphql": {
             "type": "GraphGLQuery",
@@ -651,12 +445,9 @@
               "variables": null
             }
           },
-          "template.html": {
-            "type": "TeraTemplate",
-            "data": {
-              "output": "Html",
-              "template": "<style>\n  {% include \"style.css\" %}\n</style>\n\n<div class=\"container\">\n  <table>\n    <thead>\n      <tr class=\"heading\">\n        <td>{{t(k=\"label.supplier\", f=\"Supplier\")}}</td>\n        <td>{{t(k=\"label.code\", f=\"Code\")}}</td>\n        <td>{{t(k=\"label.name\", f=\"Name\")}}</td>\n        <td>{{t(k=\"label.batch\", f=\"Batch\")}}</td>\n        <td>{{t(k=\"label.expiry\", f=\"Expiry\")}}</td>\n        <td>{{t(k=\"label.pack-size\", f=\"Pack size\")}}</td>\n        <td>{{t(k=\"label.num-packs\", f=\"Number of packs\")}}</td>\n        <td>{{t(k=\"label.number-of-units\", f=\"Number of units\")}}</td>\n        <td>{{t(k=\"description.pack-cost\", f=\"Cost price per pack\")}}</td>\n        <td>{{t(k=\"label.total-cost\", f=\"Total cost\")}}</td>\n      </tr>\n    </thead>\n    <tbody>\n      {% for line in data.lines %}\n      <tr>\n        <td>{{line.otherPartyName}}</td>\n        <td>{{line.itemCode}}</td>\n        <td>{{line.itemName}}</td>\n        <td>{{line.batch | default(value='')}}</td>\n        <td>\n          {%if line.expiryDate %}\n          {{line.expiryDate | date(format=\"%d/%m/%Y\")}}\n          {% else %}\n          {% endif %}\n        </td>\n        <td style=\"text-align: right\">{{line.packSize}}</td>\n        <td style=\"text-align: right\">{{line.numberOfPacks}}</td>\n        <td style=\"text-align: right\">{{line.numberOfUnits}}</td>\n        <td style=\"text-align: right\">{{line.costPricePerPack}}</td>\n        <td style=\"text-align: right\">{{line.totalCost}}</td>\n      </tr>\n      {% endfor %}\n    </tbody>\n  </table>\n</div>"
-            }
+          "style.css": {
+            "type": "Resource",
+            "data": "@page {\n  margin: 0;\n  size: A4 landscape;\n}\n\n.paging {\n  width: 100%;\n}\n\n.container {\n  margin: auto;\n  padding: 10px;\n  font-size: 14px;\n  font-family: \"Helvetica Neue\", \"Helvetica\", Helvetica, Arial, sans-serif;\n  color: #555;\n}\n\n.container table {\n  width: 100%;\n  font-size: inherit;\n  font-family: inherit;\n  text-align: left;\n  margin-top: 10;\n  margin-bottom: 15;\n  border-collapse: separate;\n}\n\n.container table td {\n  padding: 10px;\n  vertical-align: top;\n  border-top: 1px solid rgb(164, 163, 163);\n}\n\n.container table tr:last-child td {\n  border-bottom: none;\n}\n\n.container>table>thead {\n  position: -webkit-sticky;\n  position: sticky;\n  top: 0;\n  background-color: #f1f1f1;\n}\n\n.container,\nbody,\n.container>table {\n  margin-top: 0px;\n  padding-top: 0px;\n}\n\n.container table tr.heading td {\n  font-weight: bold;\n  margin-bottom: 15px;\n}\n\n.container table td.status span {\n  padding: 2px;\n  border-radius: 10px;\n}\n"
           }
         }
       },
@@ -739,6 +530,285 @@
       "excel_template_buffer": null
     },
     {
+      "id": "outbound-shipments_2_10_1_false",
+      "name": "Outbound Shipments",
+      "template": {
+        "index": {
+          "template": "template.html",
+          "header": null,
+          "footer": null,
+          "query": [
+            "query.graphql"
+          ],
+          "convert_data": "ZnVuY3Rpb24gZShlKXtyZXR1cm4oZT0+e2lmKCFlKXJldHVybntkYXRhOnZvaWQgMH07Y29uc3QgdD1uZXcgTWFwLGE9bmV3IE1hcDtlLm5vZGVzLmZvckVhY2goZT0+e2UubGluZXMubm9kZXMuZm9yRWFjaChyPT57Y29uc3Qgbz1gJHtyLml0ZW0uY29kZX0tJHtlLm90aGVyUGFydHlOYW1lfWA7dC5zZXQobywodC5nZXQobyl8fDApK3IuY29zdFByaWNlUGVyUGFjaypyLm51bWJlck9mUGFja3MpLGEuc2V0KG8sKGEuZ2V0KG8pfHwwKSsxKX0pfSk7Y29uc3Qgcj1bXSxvPW5ldyBNYXA7cmV0dXJuIGUubm9kZXMuZm9yRWFjaChlPT57ZS5saW5lcy5ub2Rlcy5mb3JFYWNoKGM9Pntjb25zdCBpPWAke2MuaXRlbS5jb2RlfS0ke2Uub3RoZXJQYXJ0eU5hbWV9YCxuPShvLmdldChpKXx8MCkrMTtvLnNldChpLG4pO2NvbnN0IHM9bj09PWEuZ2V0KGkpO3IucHVzaCh7aWQ6Yy5pZCxpdGVtQ29kZTpjLml0ZW0uY29kZSxpdGVtTmFtZTpjLml0ZW0ubmFtZSxiYXRjaDpjLmJhdGNoLGV4cGlyeURhdGU6Yy5leHBpcnlEYXRlLHBhY2tTaXplOmMucGFja1NpemUsbnVtYmVyT2ZQYWNrczpjLm51bWJlck9mUGFja3MsbnVtYmVyT2ZVbml0czpjLm51bWJlck9mUGFja3MqYy5wYWNrU2l6ZSxjb3N0UHJpY2VQZXJQYWNrOmMuY29zdFByaWNlUGVyUGFjayx0b3RhbENvc3Q6cz90LmdldChpKS50b0ZpeGVkKDIpOiItIixvdGhlclBhcnR5TmFtZTplLm90aGVyUGFydHlOYW1lfSl9KX0pLHtkYXRhOntsaW5lczpyLnNvcnQoKGUsdCk9PmUuaXRlbU5hbWUubG9jYWxlQ29tcGFyZSh0Lml0ZW1OYW1lKXx8ZS5vdGhlclBhcnR5TmFtZS5sb2NhbGVDb21wYXJlKHQub3RoZXJQYXJ0eU5hbWUpKX19fSkoZT8uZGF0YT8uaW52b2ljZXMpfWV4cG9ydHtlIGFzIGNvbnZlcnRfZGF0YX07",
+          "convert_data_type": "BoaJs"
+        },
+        "entries": {
+          "style.css": {
+            "type": "Resource",
+            "data": "@page {\n  margin: 0;\n  size: A4 landscape;\n}\n\n.paging {\n  width: 100%;\n}\n\n.container {\n  margin: auto;\n  padding: 10px;\n  font-size: 14px;\n  font-family: \"Helvetica Neue\", \"Helvetica\", Helvetica, Arial, sans-serif;\n  color: #555;\n}\n\n.container table {\n  width: 100%;\n  font-size: inherit;\n  font-family: inherit;\n  text-align: left;\n  margin-top: 10;\n  margin-bottom: 15;\n  border-collapse: separate;\n}\n\n.container table td {\n  padding: 10px;\n  vertical-align: top;\n  border-top: 1px solid rgb(164, 163, 163);\n}\n\n.container table tr:last-child td {\n  border-bottom: none;\n}\n\n.container>table>thead {\n  position: -webkit-sticky;\n  position: sticky;\n  top: 0;\n  background-color: #f1f1f1;\n}\n\n.container,\nbody,\n.container>table {\n  margin-top: 0px;\n  padding-top: 0px;\n}\n\n.container table tr.heading td {\n  font-weight: bold;\n  margin-bottom: 15px;\n}\n\n.container table td.status span {\n  padding: 2px;\n  border-radius: 10px;\n}\n"
+          },
+          "query.graphql": {
+            "type": "GraphGLQuery",
+            "data": {
+              "query": "query OutboundShipments(\n  $storeId: String\n  $otherPartyId: String\n  $before: String\n  $after: String\n) {\n  invoices(\n    storeId: $storeId\n    filter: {\n      type: { equalTo: OUTBOUND_SHIPMENT }\n      otherPartyId: { equalTo: $otherPartyId }\n      shippedDatetime: { afterOrEqualTo: $after, beforeOrEqualTo: $before }\n    }\n  ) {\n    ... on InvoiceConnector {\n      nodes {\n        id\n        otherPartyName\n        lines {\n          nodes {\n            id\n            item {\n              id\n              code\n              name\n            }\n            batch\n            expiryDate\n            numberOfPacks\n            packSize\n            costPricePerPack\n          }\n        }\n      }\n    }\n  }\n}\n",
+              "variables": null
+            }
+          },
+          "template.html": {
+            "type": "TeraTemplate",
+            "data": {
+              "output": "Html",
+              "template": "<style>\n  {% include \"style.css\" %}\n</style>\n\n<div class=\"container\">\n  <table>\n    <thead>\n      <tr class=\"heading\">\n        <td>{{t(k=\"label.customer\", f=\"Customer\")}}</td>\n        <td>{{t(k=\"label.code\", f=\"Code\")}}</td>\n        <td>{{t(k=\"label.name\", f=\"Name\")}}</td>\n        <td>{{t(k=\"label.batch\", f=\"Batch\")}}</td>\n        <td>{{t(k=\"label.expiry\", f=\"Expiry\")}}</td>\n        <td>{{t(k=\"label.pack-size\", f=\"Pack size\")}}</td>\n        <td>{{t(k=\"label.num-packs\", f=\"Number of packs\")}}</td>\n        <td>{{t(k=\"label.number-of-units\", f=\"Number of units\")}}</td>\n        <td>{{t(k=\"description.pack-cost\", f=\"Cost price per pack\")}}</td>\n        <td>{{t(k=\"label.total-cost\", f=\"Total cost\")}}</td>\n      </tr>\n    </thead>\n    <tbody>\n      {% for line in data.lines %}\n      <tr>\n        <td>{{line.otherPartyName}}</td>\n        <td>{{line.itemCode}}</td>\n        <td>{{line.itemName}}</td>\n        <td>{{line.batch | default(value='')}}</td>\n        <td>\n          {%if line.expiryDate %}\n          {{line.expiryDate | date(format=\"%d/%m/%Y\")}}\n          {% else %}\n          {% endif %}\n        </td>\n        <td style=\"text-align: right\">{{line.packSize}}</td>\n        <td style=\"text-align: right\">{{line.numberOfPacks}}</td>\n        <td style=\"text-align: right\">{{line.numberOfUnits}}</td>\n        <td style=\"text-align: right\">{{line.costPricePerPack}}</td>\n        <td style=\"text-align: right\">{{line.totalCost}}</td>\n      </tr>\n      {% endfor %}\n    </tbody>\n  </table>\n</div>"
+            }
+          }
+        }
+      },
+      "context": "REPORT",
+      "sub_context": "Distribution",
+      "argument_schema_id": "for_report_outbound-shipments_2_10_1_false",
+      "comment": null,
+      "is_custom": false,
+      "version": "2.10.1",
+      "code": "outbound-shipments",
+      "form_schema": {
+        "id": "for_report_outbound-shipments_2_10_1_false",
+        "type": "reportArgument",
+        "json_schema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "allOf": [
+            {
+              "$ref": "#/definitions/Filters"
+            }
+          ],
+          "definitions": {
+            "Filters": {
+              "properties": {
+                "after": {
+                  "description": "From date",
+                  "format": "date-time",
+                  "type": "string"
+                },
+                "before": {
+                  "description": "To date",
+                  "format": "date-time",
+                  "type": "string"
+                },
+                "otherPartyId": {
+                  "description": "Filter by other party",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              }
+            }
+          },
+          "type": "object"
+        },
+        "ui_schema": {
+          "elements": [
+            {
+              "label": "T#label.customer",
+              "options": {
+                "nameType": "customer"
+              },
+              "scope": "#/properties/otherPartyId",
+              "type": "NameSearch"
+            },
+            {
+              "label": "T#label.from-date",
+              "options": {
+                "dateOnly": true,
+                "disableFuture": true,
+                "max": "#/properties/before"
+              },
+              "scope": "#/properties/after",
+              "type": "Control"
+            },
+            {
+              "label": "T#label.to-date",
+              "options": {
+                "dateOnly": true,
+                "disableFuture": true,
+                "min": "#/properties/after"
+              },
+              "scope": "#/properties/before",
+              "type": "Control"
+            }
+          ],
+          "type": "VerticalLayout"
+        }
+      },
+      "excel_template_buffer": null
+    },
+    {
+      "id": "stock-status_2_6_3_false",
+      "name": "Stock Status",
+      "template": {
+        "index": {
+          "template": "template.html",
+          "header": null,
+          "footer": null,
+          "query": [
+            "query.graphql"
+          ],
+          "convert_data": "dmFyIGU9ezM3ODplPT57Y29uc3QgdD1lPT57bGV0IHI9e307cmV0dXJuIE9iamVjdC5rZXlzKGUpLmZvckVhY2goZnVuY3Rpb24obyl7IiIhPT1lW29dJiZ2b2lkIDAhPT1lW29dJiZudWxsIT09ZVtvXSYmKCJvYmplY3QiPT10eXBlb2YgZVtvXT9yW29dPXQoZVtvXSk6cltvXT1lW29dKX0pLHJ9LHI9KGUsdCk9Pih0Kz0iIikuc3BsaXQoIi4iKS5yZWR1Y2UoKGUsdCk9PmUmJmVbdF0sZSk7ZS5leHBvcnRzPXtjbGVhblVwT2JqZWN0OnQsY2xlYW5VcE5vZGVzOmU9PntsZXQgcj1bXTtyZXR1cm4gZS5mb3JFYWNoKGU9PnswIT1PYmplY3Qua2V5cyhlKS5sZW5ndGgmJnIucHVzaCh0KGUpKX0pLHJ9LGdldE5lc3RlZFZhbHVlOnIsc29ydE5vZGVzOihlLHQsbyk9Pih0JiZlLnNvcnQoKGUsbik9PntsZXQgcz1yKGUsdCk7InN0cmluZyI9PXR5cGVvZiBzJiYocz1zLnRvTG9jYWxlTG93ZXJDYXNlKCkpO2xldCBhPXIobix0KTtyZXR1cm4ic3RyaW5nIj09dHlwZW9mIGEmJihhPWEudG9Mb2NhbGVMb3dlckNhc2UoKSksbnVsbD09cyYmbnVsbD09YT8wOm51bGw9PXM/ImFzYyI9PT1vPy0xOjE6bnVsbD09YT8iYXNjIj09PW8/MTotMTpzPT09YT8wOiJhc2MiPT09bz9zPmE/MTotMTpzPGE/MTotMX0pLGUpfX19LHQ9e307ZnVuY3Rpb24gcihvKXt2YXIgbj10W29dO2lmKHZvaWQgMCE9PW4pcmV0dXJuIG4uZXhwb3J0czt2YXIgcz10W29dPXtleHBvcnRzOnt9fTtyZXR1cm4gZVtvXShzLHMuZXhwb3J0cyxyKSxzLmV4cG9ydHN9ci5kPShlLHQpPT57Zm9yKHZhciBvIGluIHQpci5vKHQsbykmJiFyLm8oZSxvKSYmT2JqZWN0LmRlZmluZVByb3BlcnR5KGUsbyx7ZW51bWVyYWJsZTohMCxnZXQ6dFtvXX0pfSxyLm89KGUsdCk9Pk9iamVjdC5wcm90b3R5cGUuaGFzT3duUHJvcGVydHkuY2FsbChlLHQpO3ZhciBvPXIoMzc4KTtmdW5jdGlvbiBuKGUpe3JldHVybiBlLmRhdGEuaXRlbXMubm9kZXM9KChlLHQscik9PntsZXQgbj0oMCxvLmNsZWFuVXBOb2RlcykoZSk7cmV0dXJuKDAsby5zb3J0Tm9kZXMpKG4sdCxyKX0pKGUuZGF0YS5pdGVtcy5ub2RlcyxlPy5hcmd1bWVudHM/LnNvcnQ/PyJuYW1lIixlPy5hcmd1bWVudHM/LmRpcj8/ImFzYyIpLGV9ZXhwb3J0e24gYXMgY29udmVydF9kYXRhfTs=",
+          "convert_data_type": "BoaJs"
+        },
+        "entries": {
+          "query.graphql": {
+            "type": "GraphGLQuery",
+            "data": {
+              "query": "query StockStatus($storeId: String, $itemCode: String, $itemName: String) {\n  items(\n    storeId: $storeId\n    filter: {\n      code: { like: $itemCode }\n      name: { like: $itemName }\n      isVisibleOrOnHand: true\n      isActive: true\n    }\n  ) {\n    ... on ItemConnector {\n      nodes {\n        code\n        name\n        stats(storeId: $storeId) {\n          totalConsumption\n          availableMonthsOfStockOnHand\n          stockOnHand\n          averageMonthlyConsumption\n        }\n      }\n    }\n  }\n}\n",
+              "variables": null
+            }
+          },
+          "style.css": {
+            "type": "Resource",
+            "data": "@page {\n  margin: 0;\n  size: A4 landscape;\n}\n\n.paging {\n  width: 100%;\n}\n\n.container {\n  margin: auto;\n  padding: 10px;\n  font-size: 14px;\n  font-family: \"Helvetica Neue\", \"Helvetica\", Helvetica, Arial, sans-serif;\n  color: #555;\n}\n\n.container table {\n  width: 100%;\n  font-size: inherit;\n  font-family: inherit;\n  text-align: left;\n  margin-top: 10;\n  margin-bottom: 15;\n  border-collapse: separate;\n}\n\n.container table td {\n  padding: 10px;\n  vertical-align: top;\n  border-top: 1px solid rgb(164, 163, 163);\n}\n\n.container table tr:last-child td {\n  border-bottom: none;\n}\n\n.container>table>thead {\n  position: -webkit-sticky;\n  position: sticky;\n  top: 0;\n  background-color: #f1f1f1;\n}\n\n.container,\nbody,\n.container>table {\n  margin-top: 0px;\n  padding-top: 0px;\n}\n\n.container table tr.heading td {\n  font-weight: bold;\n  margin-bottom: 15px;\n}\n\n.container table td.status span {\n  padding: 2px;\n  border-radius: 10px;\n}\n\n\n.container table td.status span::before {\n  content: '';\n  display: inline-block;\n  width: 10px;\n  height: 10px;\n  border-radius: 50%;\n  margin-right: 5px;\n}\n\n.container table td.status span.out-of-stock::before {\n  background-color: #f40502;\n}\n\n.container table td.status span.out-of-stock {\n   padding: 3px 10px;\n  white-space: nowrap;\n  background-color: #fbcdcc;\n}\n\n.container table td.status span.overstocked::before {\n  background-color: #0260f7;\n}\n\n.container table td.status span.overstocked {\n  padding: 3px 10px;\n  white-space: nowrap;\n  background-color: #d9d9ff;\n}\n\n.container table td.status span.understocked::before {\n  background-color: #f79a02;\n}\n\n.container table td.status span.understocked {\n  padding: 3px 10px;\n  white-space: nowrap;\n  background-color: #fdebcc;\n}\n\n.container table td.status span.well-stocked::before {\n  background-color: #33a902;\n}\n\n.container table td.status span.well-stocked {\n  padding: 3px 10px;\n  white-space: nowrap;\n  background-color: #d6eecc;\n}\n\n.container table td.status span.no-consumption::before {\n  background-color: #8f90a6;\n}\n\n.container table td.status span.no-consumption {\n  padding: 3px 10px;\n  white-space: nowrap;\n  background-color: #e9e9ed;\n}\n"
+          },
+          "template.html": {
+            "type": "TeraTemplate",
+            "data": {
+              "output": "Html",
+              "template": "<style>\n  {% include \"style.css\" %}\n</style>\n\n<div class=\"container\">\n  <table>\n    <thead>\n      <tr class=\"heading\">\n        <td>{{t(k=\"label.code\", f=\"Code\")}}</td>\n        <td>{{t(k=\"label.name\", f=\"Name\")}}</td>\n        <td>{{t(k=\"label.status\", f=\"Status\")}}</td>\n        <td>\n          {{t(k=\"report.consumption\", f=\"Consumption\")}}\n          ({{arguments.monthlyConsumptionLookBackPeriod | default(value=3)}})\n          {{t(k=\"label.months\", f=\"months\")}}\n        </td>\n        <td>{{t(k=\"label.soh\", f=\"SOH\")}}</td>\n        <td>\n          {{t(k=\"label.amc\", f=\"AMC\")}}\n          ({{arguments.monthlyConsumptionLookBackPeriod | default(value=3)}})\n          {{t(k=\"label.months\", f=\"months\")}}\n        </td>\n        <td>{{t(k=\"report.mos\", f=\"MOS\")}}</td>\n      </tr>\n    </thead>\n    <tbody>\n      {% for item in data.items.nodes %} \n      {% set SOH = item.stats.stockOnHand | default(value=0) | round( precision=1) %} \n      {% set AMC =  item.stats.averageMonthlyConsumption | default(value=0) |\n      round(precision=1) %} \n      {% set MOS = item.stats.availableMonthsOfStockOnHand | default(value=0) | round( precision=1) %}\n\n      <tr>\n        <td>{{item.code}}</td>\n        <td>{{item.name}}</td>\n        <td class=\"status\">\n          {% if SOH == 0 and AMC > 0 %}\n          <span class=\"out-of-stock\"\n            >{{t(k=\"report.out-of-stock\", f=\"Out of Stock\")}}</span\n          >\n          {% elif AMC == 0 %}\n          <span class=\"no-consumption\"\n            >{{t(k=\"report.no-consumption\", f=\"No consumption\")}}</span\n          >\n          {% elif MOS >= arguments.monthsUnderstock | default(value=0) and MOS\n          <= arguments.monthsOverstock | default(value=0) %}\n          <span class=\"well-stocked\"\n            >{{t(k=\"report.well-stocked\", f=\"Well stocked\")}}</span\n          >\n          {% elif MOS < arguments.monthsUnderstock | default(value=0) %}\n          <span class=\"understocked\">\n            {{t(k=\"report.understocked\", f=\"Understocked\")}}</span\n          >\n          {% elif MOS > arguments.monthsOverstock | default(value=0) %}\n          <span class=\"overstocked\"\n            >{{t(k=\"report.overstocked\", f=\"Overstocked\")}}</span\n          >\n          {% else %} {% endif %}\n        </td>\n        <td>\n          {{item.stats.totalConsumption | default(value=0) | round(\n          precision=1)}}\n        </td>\n        <td>{{SOH}}</td>\n        <td>{{AMC}}</td>\n        <td>\n          {{item.stats.availableMonthsOfStockOnHand | default(value=0) | round(\n          precision=1)}}\n        </td>\n      </tr>\n      {% endfor %}\n    </tbody>\n  </table>\n</div>\n"
+            }
+          }
+        }
+      },
+      "context": "REPORT",
+      "sub_context": "StockAndItems",
+      "argument_schema_id": "for_report_stock-status_2_6_3_false",
+      "comment": null,
+      "is_custom": false,
+      "version": "2.6.3",
+      "code": "stock-status",
+      "form_schema": {
+        "id": "for_report_stock-status_2_6_3_false",
+        "type": "reportArgument",
+        "json_schema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "allOf": [
+            {
+              "$ref": "#/definitions/StockFilters"
+            }
+          ],
+          "definitions": {
+            "StockFilters": {
+              "properties": {
+                "dir": {
+                  "description": "sort by dir",
+                  "format": "SortToggle",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "itemCode": {
+                  "description": "Item Code",
+                  "type": "string"
+                },
+                "itemName": {
+                  "description": "Item Name",
+                  "type": "string"
+                },
+                "monthlyConsumptionLookBackPeriod": {
+                  "description": "Average Monthly Consumption Look Back Period",
+                  "type": "number"
+                },
+                "monthsOverstock": {
+                  "description": "Months Overstock",
+                  "type": "number"
+                },
+                "monthsUnderstock": {
+                  "description": "Months Understock",
+                  "type": "number"
+                },
+                "sort": {
+                  "description": "sort by",
+                  "enum": [
+                    "name",
+                    "code"
+                  ],
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "type": "object"
+        },
+        "ui_schema": {
+          "elements": [
+            {
+              "label": "T#report.item-code",
+              "options": {
+                "useDebounce": false
+              },
+              "scope": "#/properties/itemCode",
+              "type": "Control"
+            },
+            {
+              "label": "T#report.item-name",
+              "options": {
+                "useDebounce": false
+              },
+              "scope": "#/properties/itemName",
+              "type": "Control"
+            },
+            {
+              "label": "T#report.amc-lookback",
+              "options": {
+                "readonly": true
+              },
+              "scope": "#/properties/monthlyConsumptionLookBackPeriod",
+              "type": "Control"
+            },
+            {
+              "label": "T#label.max-months-of-stock",
+              "options": {
+                "readonly": true
+              },
+              "scope": "#/properties/monthsOverstock",
+              "type": "Control"
+            },
+            {
+              "label": "T#label.min-months-of-stock",
+              "options": {
+                "readonly": true
+              },
+              "scope": "#/properties/monthsUnderstock",
+              "type": "Control"
+            },
+            {
+              "label": "T#report.sort-by",
+              "options": {
+                "show": [
+                  [
+                    "name",
+                    "T#report.item-name"
+                  ],
+                  [
+                    "code",
+                    "T#label.code"
+                  ]
+                ]
+              },
+              "scope": "#/properties/sort",
+              "type": "Control"
+            },
+            {
+              "label": "T#report.sort-direction",
+              "scope": "#/properties/dir",
+              "type": "SortToggle"
+            }
+          ],
+          "type": "VerticalLayout"
+        }
+      },
+      "excel_template_buffer": null
+    },
+    {
       "id": "item-usage_2_6_3_false",
       "name": "Item Usage",
       "template": {
@@ -757,15 +827,28 @@
             "AMCTwelve",
             "AMCTwentyFour"
           ],
-          "convert_data": "dmFyIHQ9ezI6KHQscixlKT0+e3ZhciBuPWUoMjE5OSksbz1lKDQ2NjQpLGE9ZSg1OTUwKTt0LmV4cG9ydHM9ZnVuY3Rpb24odCl7cmV0dXJuIG4odCxhLG8pfX0sNzk6KHQscixlKT0+e3ZhciBuPWUoMzcwMiksbz1lKDgwKSxhPWUoNDczOSksaT1lKDg2NTUpLHU9ZSgxMTc1KTtmdW5jdGlvbiBzKHQpe3ZhciByPS0xLGU9bnVsbD09dD8wOnQubGVuZ3RoO2Zvcih0aGlzLmNsZWFyKCk7KytyPGU7KXt2YXIgbj10W3JdO3RoaXMuc2V0KG5bMF0sblsxXSl9fXMucHJvdG90eXBlLmNsZWFyPW4scy5wcm90b3R5cGUuZGVsZXRlPW8scy5wcm90b3R5cGUuZ2V0PWEscy5wcm90b3R5cGUuaGFzPWkscy5wcm90b3R5cGUuc2V0PXUsdC5leHBvcnRzPXN9LDgwOih0LHIsZSk9Pnt2YXIgbj1lKDYwMjUpLG89QXJyYXkucHJvdG90eXBlLnNwbGljZTt0LmV4cG9ydHM9ZnVuY3Rpb24odCl7dmFyIHI9dGhpcy5fX2RhdGFfXyxlPW4ocix0KTtyZXR1cm4hKGU8MHx8KGU9PXIubGVuZ3RoLTE/ci5wb3AoKTpvLmNhbGwocixlLDEpLC0tdGhpcy5zaXplLDApKX19LDEwNDoodCxyLGUpPT57dmFyIG49ZSgzNjYxKTtmdW5jdGlvbiBvKHQscil7aWYoImZ1bmN0aW9uIiE9dHlwZW9mIHR8fG51bGwhPXImJiJmdW5jdGlvbiIhPXR5cGVvZiByKXRocm93IG5ldyBUeXBlRXJyb3IoIkV4cGVjdGVkIGEgZnVuY3Rpb24iKTt2YXIgZT1mdW5jdGlvbigpe3ZhciBuPWFyZ3VtZW50cyxvPXI/ci5hcHBseSh0aGlzLG4pOm5bMF0sYT1lLmNhY2hlO2lmKGEuaGFzKG8pKXJldHVybiBhLmdldChvKTt2YXIgaT10LmFwcGx5KHRoaXMsbik7cmV0dXJuIGUuY2FjaGU9YS5zZXQobyxpKXx8YSxpfTtyZXR1cm4gZS5jYWNoZT1uZXcoby5DYWNoZXx8biksZX1vLkNhY2hlPW4sdC5leHBvcnRzPW99LDI3MDoodCxyLGUpPT57dmFyIG49ZSg3MDY4KSxvPWUoMzQ2KTt0LmV4cG9ydHM9ZnVuY3Rpb24gdChyLGUsYSxpLHUpe3JldHVybiByPT09ZXx8KG51bGw9PXJ8fG51bGw9PWV8fCFvKHIpJiYhbyhlKT9yIT1yJiZlIT1lOm4ocixlLGEsaSx0LHUpKX19LDI4OToodCxyLGUpPT57dmFyIG49ZSgyNjUxKTt0LmV4cG9ydHM9ZnVuY3Rpb24odCl7cmV0dXJuIG4odGhpcyx0KS5nZXQodCl9fSwyOTQ6dD0+e3QuZXhwb3J0cz1mdW5jdGlvbih0KXtyZXR1cm4ibnVtYmVyIj09dHlwZW9mIHQmJnQ+LTEmJnQlMT09MCYmdDw9OTAwNzE5OTI1NDc0MDk5MX19LDMxNzp0PT57dC5leHBvcnRzPWZ1bmN0aW9uKHQpe3ZhciByPS0xLGU9QXJyYXkodC5zaXplKTtyZXR1cm4gdC5mb3JFYWNoKGZ1bmN0aW9uKHQsbil7ZVsrK3JdPVtuLHRdfSksZX19LDM0Njp0PT57dC5leHBvcnRzPWZ1bmN0aW9uKHQpe3JldHVybiBudWxsIT10JiYib2JqZWN0Ij09dHlwZW9mIHR9fSwzNjE6dD0+e3ZhciByPS9eKD86MHxbMS05XVxkKikkLzt0LmV4cG9ydHM9ZnVuY3Rpb24odCxlKXt2YXIgbj10eXBlb2YgdDtyZXR1cm4hIShlPW51bGw9PWU/OTAwNzE5OTI1NDc0MDk5MTplKSYmKCJudW1iZXIiPT1ufHwic3ltYm9sIiE9biYmci50ZXN0KHQpKSYmdD4tMSYmdCUxPT0wJiZ0PGV9fSwzOTI6dD0+e3QuZXhwb3J0cz1mdW5jdGlvbih0LHIpe3JldHVybiBudWxsPT10P3ZvaWQgMDp0W3JdfX0sNTgzOih0LHIsZSk9Pnt2YXIgbj1lKDcyMzcpLG89ZSg3MjU1KSxhPWUoODU4NiksaT1lKDc3OTcpO3QuZXhwb3J0cz1mdW5jdGlvbih0KXtyZXR1cm4gYSh0KT9uKGkodCkpOm8odCl9fSw2MzE6KHQscixlKT0+e3ZhciBuPWUoODA3Nyksbz1lKDkzMjYpO3QuZXhwb3J0cz1mdW5jdGlvbih0LHIpe3JldHVybiBudWxsIT10JiZvKHQscixuKX19LDY0MToodCxyLGUpPT57dmFyIG49ZSg2NjQ5KSxvPWUoNTk1MCk7dC5leHBvcnRzPWZ1bmN0aW9uKHQscil7cmV0dXJuIHQmJm4odCxyLG8pfX0sNjU5Oih0LHIsZSk9Pnt2YXIgbj1lKDE4NzMpLG89T2JqZWN0LnByb3RvdHlwZSxhPW8uaGFzT3duUHJvcGVydHksaT1vLnRvU3RyaW5nLHU9bj9uLnRvU3RyaW5nVGFnOnZvaWQgMDt0LmV4cG9ydHM9ZnVuY3Rpb24odCl7dmFyIHI9YS5jYWxsKHQsdSksZT10W3VdO3RyeXt0W3VdPXZvaWQgMDt2YXIgbj0hMH1jYXRjaCh0KXt9dmFyIG89aS5jYWxsKHQpO3JldHVybiBuJiYocj90W3VdPWU6ZGVsZXRlIHRbdV0pLG99fSw2ODk6KHQscixlKT0+e3ZhciBuPWUoMiksbz1PYmplY3QucHJvdG90eXBlLmhhc093blByb3BlcnR5O3QuZXhwb3J0cz1mdW5jdGlvbih0LHIsZSxhLGksdSl7dmFyIHM9MSZlLGM9bih0KSxwPWMubGVuZ3RoO2lmKHAhPW4ocikubGVuZ3RoJiYhcylyZXR1cm4hMTtmb3IodmFyIGY9cDtmLS07KXt2YXIgdj1jW2ZdO2lmKCEocz92IGluIHI6by5jYWxsKHIsdikpKXJldHVybiExfXZhciBsPXUuZ2V0KHQpLGg9dS5nZXQocik7aWYobCYmaClyZXR1cm4gbD09ciYmaD09dDt2YXIgeD0hMDt1LnNldCh0LHIpLHUuc2V0KHIsdCk7Zm9yKHZhciB5PXM7KytmPHA7KXt2YXIgZD10W3Y9Y1tmXV0sXz1yW3ZdO2lmKGEpdmFyIGI9cz9hKF8sZCx2LHIsdCx1KTphKGQsXyx2LHQscix1KTtpZighKHZvaWQgMD09PWI/ZD09PV98fGkoZCxfLGUsYSx1KTpiKSl7eD0hMTticmVha315fHwoeT0iY29uc3RydWN0b3IiPT12KX1pZih4JiYheSl7dmFyIGc9dC5jb25zdHJ1Y3RvcixqPXIuY29uc3RydWN0b3I7Zz09anx8ISgiY29uc3RydWN0b3IiaW4gdCl8fCEoImNvbnN0cnVjdG9yImluIHIpfHwiZnVuY3Rpb24iPT10eXBlb2YgZyYmZyBpbnN0YW5jZW9mIGcmJiJmdW5jdGlvbiI9PXR5cGVvZiBqJiZqIGluc3RhbmNlb2Yganx8KHg9ITEpfXJldHVybiB1LmRlbGV0ZSh0KSx1LmRlbGV0ZShyKSx4fX0sNjk1Oih0LHIsZSk9Pnt2YXIgbj1lKDgwOTYpLG89ZSgyNDI4KSxhPWUoNjQ0OSksaT1lKDM2NTYpLHU9ZSgzNjEpLHM9ZSg3MTY3KSxjPU9iamVjdC5wcm90b3R5cGUuaGFzT3duUHJvcGVydHk7dC5leHBvcnRzPWZ1bmN0aW9uKHQscil7dmFyIGU9YSh0KSxwPSFlJiZvKHQpLGY9IWUmJiFwJiZpKHQpLHY9IWUmJiFwJiYhZiYmcyh0KSxsPWV8fHB8fGZ8fHYsaD1sP24odC5sZW5ndGgsU3RyaW5nKTpbXSx4PWgubGVuZ3RoO2Zvcih2YXIgeSBpbiB0KSFyJiYhYy5jYWxsKHQseSl8fGwmJigibGVuZ3RoIj09eXx8ZiYmKCJvZmZzZXQiPT15fHwicGFyZW50Ij09eSl8fHYmJigiYnVmZmVyIj09eXx8ImJ5dGVMZW5ndGgiPT15fHwiYnl0ZU9mZnNldCI9PXkpfHx1KHkseCkpfHxoLnB1c2goeSk7cmV0dXJuIGh9fSw3NTY6KHQscixlKT0+e3ZhciBuPWUoMzgwNSk7dC5leHBvcnRzPWZ1bmN0aW9uKHQpe3JldHVybiB0PT10JiYhbih0KX19LDc3NjoodCxyLGUpPT57dmFyIG49ZSg3NTYpLG89ZSg1OTUwKTt0LmV4cG9ydHM9ZnVuY3Rpb24odCl7Zm9yKHZhciByPW8odCksZT1yLmxlbmd0aDtlLS07KXt2YXIgYT1yW2VdLGk9dFthXTtyW2VdPVthLGksbihpKV19cmV0dXJuIHJ9fSw5MDk6KHQscixlKT0+e3ZhciBuPWUoNjQxKSxvPWUoODMyOSkobik7dC5leHBvcnRzPW99LDkzODp0PT57dC5leHBvcnRzPWZ1bmN0aW9uKHQpe3ZhciByPXRoaXMuX19kYXRhX18sZT1yLmRlbGV0ZSh0KTtyZXR1cm4gdGhpcy5zaXplPXIuc2l6ZSxlfX0sOTQ1Oih0LHIsZSk9Pnt2YXIgbj1lKDc5KSxvPWUoODIyMyksYT1lKDM2NjEpO3QuZXhwb3J0cz1mdW5jdGlvbih0LHIpe3ZhciBlPXRoaXMuX19kYXRhX187aWYoZSBpbnN0YW5jZW9mIG4pe3ZhciBpPWUuX19kYXRhX187aWYoIW98fGkubGVuZ3RoPDE5OSlyZXR1cm4gaS5wdXNoKFt0LHJdKSx0aGlzLnNpemU9KytlLnNpemUsdGhpcztlPXRoaXMuX19kYXRhX189bmV3IGEoaSl9cmV0dXJuIGUuc2V0KHQsciksdGhpcy5zaXplPWUuc2l6ZSx0aGlzfX0sMTA0MjoodCxyLGUpPT57dmFyIG49ZSg2MTEwKShPYmplY3QsImNyZWF0ZSIpO3QuZXhwb3J0cz1ufSwxMTc1Oih0LHIsZSk9Pnt2YXIgbj1lKDYwMjUpO3QuZXhwb3J0cz1mdW5jdGlvbih0LHIpe3ZhciBlPXRoaXMuX19kYXRhX18sbz1uKGUsdCk7cmV0dXJuIG88MD8oKyt0aGlzLnNpemUsZS5wdXNoKFt0LHJdKSk6ZVtvXVsxXT1yLHRoaXN9fSwxMzgwOnQ9Pnt0LmV4cG9ydHM9ZnVuY3Rpb24odCl7cmV0dXJuIHRoaXMuX19kYXRhX18uc2V0KHQsIl9fbG9kYXNoX2hhc2hfdW5kZWZpbmVkX18iKSx0aGlzfX0sMTQyMDoodCxyLGUpPT57dmFyIG49ZSg3OSk7dC5leHBvcnRzPWZ1bmN0aW9uKCl7dGhpcy5fX2RhdGFfXz1uZXcgbix0aGlzLnNpemU9MH19LDE0NTk6dD0+e3QuZXhwb3J0cz1mdW5jdGlvbih0KXtyZXR1cm4gdGhpcy5fX2RhdGFfXy5oYXModCl9fSwxNTQ5Oih0LHIsZSk9Pnt2YXIgbj1lKDIwMzIpLG89ZSgzODYyKSxhPWUoNjcyMSksaT1lKDI3NDkpLHU9ZSg1NzQ5KTtmdW5jdGlvbiBzKHQpe3ZhciByPS0xLGU9bnVsbD09dD8wOnQubGVuZ3RoO2Zvcih0aGlzLmNsZWFyKCk7KytyPGU7KXt2YXIgbj10W3JdO3RoaXMuc2V0KG5bMF0sblsxXSl9fXMucHJvdG90eXBlLmNsZWFyPW4scy5wcm90b3R5cGUuZGVsZXRlPW8scy5wcm90b3R5cGUuZ2V0PWEscy5wcm90b3R5cGUuaGFzPWkscy5wcm90b3R5cGUuc2V0PXUsdC5leHBvcnRzPXN9LDE3Njk6KHQscixlKT0+e3ZhciBuPWUoNjQ0OSksbz1lKDg1ODYpLGE9ZSgxODAyKSxpPWUoMzIyMik7dC5leHBvcnRzPWZ1bmN0aW9uKHQscil7cmV0dXJuIG4odCk/dDpvKHQscik/W3RdOmEoaSh0KSl9fSwxNzk5Oih0LHIsZSk9Pnt2YXIgbj1lKDcyMTcpLG89ZSgyNzApO3QuZXhwb3J0cz1mdW5jdGlvbih0LHIsZSxhKXt2YXIgaT1lLmxlbmd0aCx1PWkscz0hYTtpZihudWxsPT10KXJldHVybiF1O2Zvcih0PU9iamVjdCh0KTtpLS07KXt2YXIgYz1lW2ldO2lmKHMmJmNbMl0/Y1sxXSE9PXRbY1swXV06IShjWzBdaW4gdCkpcmV0dXJuITF9Zm9yKDsrK2k8dTspe3ZhciBwPShjPWVbaV0pWzBdLGY9dFtwXSx2PWNbMV07aWYocyYmY1syXSl7aWYodm9pZCAwPT09ZiYmIShwIGluIHQpKXJldHVybiExfWVsc2V7dmFyIGw9bmV3IG47aWYoYSl2YXIgaD1hKGYsdixwLHQscixsKTtpZighKHZvaWQgMD09PWg/byh2LGYsMyxhLGwpOmgpKXJldHVybiExfX1yZXR1cm4hMH19LDE4MDI6KHQscixlKT0+e3ZhciBuPWUoMjIyNCksbz0vW14uW1xdXSt8XFsoPzooLT9cZCsoPzpcLlxkKyk/KXwoWyInXSkoKD86KD8hXDIpW15cXF18XFwuKSo/KVwyKVxdfCg/PSg/OlwufFxbXF0pKD86XC58XFtcXXwkKSkvZyxhPS9cXChcXCk/L2csaT1uKGZ1bmN0aW9uKHQpe3ZhciByPVtdO3JldHVybiA0Nj09PXQuY2hhckNvZGVBdCgwKSYmci5wdXNoKCIiKSx0LnJlcGxhY2UobyxmdW5jdGlvbih0LGUsbixvKXtyLnB1c2gobj9vLnJlcGxhY2UoYSwiJDEiKTplfHx0KX0pLHJ9KTt0LmV4cG9ydHM9aX0sMTg3MzoodCxyLGUpPT57dmFyIG49ZSg5MzI1KS5TeW1ib2w7dC5leHBvcnRzPW59LDE4ODI6KHQscixlKT0+e3ZhciBuPWUoMjU1Miksbz1lKDM4MDUpO3QuZXhwb3J0cz1mdW5jdGlvbih0KXtpZighbyh0KSlyZXR1cm4hMTt2YXIgcj1uKHQpO3JldHVybiJbb2JqZWN0IEZ1bmN0aW9uXSI9PXJ8fCJbb2JqZWN0IEdlbmVyYXRvckZ1bmN0aW9uXSI9PXJ8fCJbb2JqZWN0IEFzeW5jRnVuY3Rpb25dIj09cnx8IltvYmplY3QgUHJveHldIj09cn19LDE5ODY6KHQscixlKT0+e3ZhciBuPWUoMTg3Myksbz1lKDc4MjgpLGE9ZSg1Mjg4KSxpPWUoNTkxMSksdT1lKDMxNykscz1lKDQyNDcpLGM9bj9uLnByb3RvdHlwZTp2b2lkIDAscD1jP2MudmFsdWVPZjp2b2lkIDA7dC5leHBvcnRzPWZ1bmN0aW9uKHQscixlLG4sYyxmLHYpe3N3aXRjaChlKXtjYXNlIltvYmplY3QgRGF0YVZpZXddIjppZih0LmJ5dGVMZW5ndGghPXIuYnl0ZUxlbmd0aHx8dC5ieXRlT2Zmc2V0IT1yLmJ5dGVPZmZzZXQpcmV0dXJuITE7dD10LmJ1ZmZlcixyPXIuYnVmZmVyO2Nhc2UiW29iamVjdCBBcnJheUJ1ZmZlcl0iOnJldHVybiEodC5ieXRlTGVuZ3RoIT1yLmJ5dGVMZW5ndGh8fCFmKG5ldyBvKHQpLG5ldyBvKHIpKSk7Y2FzZSJbb2JqZWN0IEJvb2xlYW5dIjpjYXNlIltvYmplY3QgRGF0ZV0iOmNhc2UiW29iamVjdCBOdW1iZXJdIjpyZXR1cm4gYSgrdCwrcik7Y2FzZSJbb2JqZWN0IEVycm9yXSI6cmV0dXJuIHQubmFtZT09ci5uYW1lJiZ0Lm1lc3NhZ2U9PXIubWVzc2FnZTtjYXNlIltvYmplY3QgUmVnRXhwXSI6Y2FzZSJbb2JqZWN0IFN0cmluZ10iOnJldHVybiB0PT1yKyIiO2Nhc2UiW29iamVjdCBNYXBdIjp2YXIgbD11O2Nhc2UiW29iamVjdCBTZXRdIjp2YXIgaD0xJm47aWYobHx8KGw9cyksdC5zaXplIT1yLnNpemUmJiFoKXJldHVybiExO3ZhciB4PXYuZ2V0KHQpO2lmKHgpcmV0dXJuIHg9PXI7bnw9Mix2LnNldCh0LHIpO3ZhciB5PWkobCh0KSxsKHIpLG4sYyxmLHYpO3JldHVybiB2LmRlbGV0ZSh0KSx5O2Nhc2UiW29iamVjdCBTeW1ib2xdIjppZihwKXJldHVybiBwLmNhbGwodCk9PXAuY2FsbChyKX1yZXR1cm4hMX19LDJlMzoodCxyLGUpPT57dmFyIG49ZSgzOTQ1KSxvPWUoMjQyOSksYT1lKDUzODkpLGk9ZSg2NDQ5KTt0LmV4cG9ydHM9ZnVuY3Rpb24odCxyKXtyZXR1cm4gZnVuY3Rpb24oZSx1KXt2YXIgcz1pKGUpP246byxjPXI/cigpOnt9O3JldHVybiBzKGUsdCxhKHUsMiksYyl9fX0sMjAxMzoodCxyLGUpPT57dmFyIG49ZSgzMzYwKSxvPWUoMmUzKSxhPU9iamVjdC5wcm90b3R5cGUuaGFzT3duUHJvcGVydHksaT1vKGZ1bmN0aW9uKHQscixlKXthLmNhbGwodCxlKT90W2VdLnB1c2gocik6bih0LGUsW3JdKX0pO3QuZXhwb3J0cz1pfSwyMDMyOih0LHIsZSk9Pnt2YXIgbj1lKDEwNDIpO3QuZXhwb3J0cz1mdW5jdGlvbigpe3RoaXMuX19kYXRhX189bj9uKG51bGwpOnt9LHRoaXMuc2l6ZT0wfX0sMjE5OToodCxyLGUpPT57dmFyIG49ZSg0NTI4KSxvPWUoNjQ0OSk7dC5leHBvcnRzPWZ1bmN0aW9uKHQscixlKXt2YXIgYT1yKHQpO3JldHVybiBvKHQpP2E6bihhLGUodCkpfX0sMjIyNDoodCxyLGUpPT57dmFyIG49ZSgxMDQpO3QuZXhwb3J0cz1mdW5jdGlvbih0KXt2YXIgcj1uKHQsZnVuY3Rpb24odCl7cmV0dXJuIDUwMD09PWUuc2l6ZSYmZS5jbGVhcigpLHR9KSxlPXIuY2FjaGU7cmV0dXJuIHJ9fSwyNDI4Oih0LHIsZSk9Pnt2YXIgbj1lKDc1MzQpLG89ZSgzNDYpLGE9T2JqZWN0LnByb3RvdHlwZSxpPWEuaGFzT3duUHJvcGVydHksdT1hLnByb3BlcnR5SXNFbnVtZXJhYmxlLHM9bihmdW5jdGlvbigpe3JldHVybiBhcmd1bWVudHN9KCkpP246ZnVuY3Rpb24odCl7cmV0dXJuIG8odCkmJmkuY2FsbCh0LCJjYWxsZWUiKSYmIXUuY2FsbCh0LCJjYWxsZWUiKX07dC5leHBvcnRzPXN9LDI0Mjk6KHQscixlKT0+e3ZhciBuPWUoOTA5KTt0LmV4cG9ydHM9ZnVuY3Rpb24odCxyLGUsbyl7cmV0dXJuIG4odCxmdW5jdGlvbih0LG4sYSl7cihvLHQsZSh0KSxhKX0pLG99fSwyNTUyOih0LHIsZSk9Pnt2YXIgbj1lKDE4NzMpLG89ZSg2NTkpLGE9ZSg5MzUwKSxpPW4/bi50b1N0cmluZ1RhZzp2b2lkIDA7dC5leHBvcnRzPWZ1bmN0aW9uKHQpe3JldHVybiBudWxsPT10P3ZvaWQgMD09PXQ/IltvYmplY3QgVW5kZWZpbmVkXSI6IltvYmplY3QgTnVsbF0iOmkmJmkgaW4gT2JqZWN0KHQpP28odCk6YSh0KX19LDI2NTE6KHQscixlKT0+e3ZhciBuPWUoNDIxOCk7dC5leHBvcnRzPWZ1bmN0aW9uKHQscil7dmFyIGU9dC5fX2RhdGFfXztyZXR1cm4gbihyKT9lWyJzdHJpbmciPT10eXBlb2Ygcj8ic3RyaW5nIjoiaGFzaCJdOmUubWFwfX0sMjc0OToodCxyLGUpPT57dmFyIG49ZSgxMDQyKSxvPU9iamVjdC5wcm90b3R5cGUuaGFzT3duUHJvcGVydHk7dC5leHBvcnRzPWZ1bmN0aW9uKHQpe3ZhciByPXRoaXMuX19kYXRhX187cmV0dXJuIG4/dm9pZCAwIT09clt0XTpvLmNhbGwocix0KX19LDI4MDQ6KHQscixlKT0+e3ZhciBuPWUoNjExMCkoZSg5MzI1KSwiUHJvbWlzZSIpO3QuZXhwb3J0cz1ufSwyODc3Oih0LHIsZSk9Pnt2YXIgbj1lKDYxNTUpLG89ZSg2NDQ5KTt0LmV4cG9ydHM9ZnVuY3Rpb24odCxyLGUsYSl7cmV0dXJuIG51bGw9PXQ/W106KG8ocil8fChyPW51bGw9PXI/W106W3JdKSxvKGU9YT92b2lkIDA6ZSl8fChlPW51bGw9PWU/W106W2VdKSxuKHQscixlKSl9fSwyOTQ5Oih0LHIsZSk9Pnt2YXIgbj1lKDI2NTEpO3QuZXhwb3J0cz1mdW5jdGlvbih0LHIpe3ZhciBlPW4odGhpcyx0KSxvPWUuc2l6ZTtyZXR1cm4gZS5zZXQodCxyKSx0aGlzLnNpemUrPWUuc2l6ZT09bz8wOjEsdGhpc319LDMwNDA6KHQscixlKT0+e3ZhciBuPWUoMTU0OSksbz1lKDc5KSxhPWUoODIyMyk7dC5leHBvcnRzPWZ1bmN0aW9uKCl7dGhpcy5zaXplPTAsdGhpcy5fX2RhdGFfXz17aGFzaDpuZXcgbixtYXA6bmV3KGF8fG8pLHN0cmluZzpuZXcgbn19fSwzMjIxOnQ9Pnt0LmV4cG9ydHM9ZnVuY3Rpb24odCl7cmV0dXJuIGZ1bmN0aW9uKHIsZSxuKXtmb3IodmFyIG89LTEsYT1PYmplY3QociksaT1uKHIpLHU9aS5sZW5ndGg7dS0tOyl7dmFyIHM9aVt0P3U6KytvXTtpZighMT09PWUoYVtzXSxzLGEpKWJyZWFrfXJldHVybiByfX19LDMyMjI6KHQscixlKT0+e3ZhciBuPWUoNzU1Nik7dC5leHBvcnRzPWZ1bmN0aW9uKHQpe3JldHVybiBudWxsPT10PyIiOm4odCl9fSwzMjQzOih0LHIsZSk9Pnt2YXIgbj1lKDYxMTApLG89ZnVuY3Rpb24oKXt0cnl7dmFyIHQ9bihPYmplY3QsImRlZmluZVByb3BlcnR5Iik7cmV0dXJuIHQoe30sIiIse30pLHR9Y2F0Y2godCl7fX0oKTt0LmV4cG9ydHM9b30sMzM0NTp0PT57dC5leHBvcnRzPWZ1bmN0aW9uKCl7cmV0dXJuW119fSwzMzYwOih0LHIsZSk9Pnt2YXIgbj1lKDMyNDMpO3QuZXhwb3J0cz1mdW5jdGlvbih0LHIsZSl7Il9fcHJvdG9fXyI9PXImJm4/bih0LHIse2NvbmZpZ3VyYWJsZTohMCxlbnVtZXJhYmxlOiEwLHZhbHVlOmUsd3JpdGFibGU6ITB9KTp0W3JdPWV9fSwzNDg4OnQ9Pnt0LmV4cG9ydHM9ZnVuY3Rpb24odCl7cmV0dXJuIHR9fSwzNjA1OnQ9Pnt0LmV4cG9ydHM9ZnVuY3Rpb24odCl7cmV0dXJuIHRoaXMuX19kYXRhX18uZ2V0KHQpfX0sMzY1MDoodCxyLGUpPT57dmFyIG49ZSg0MzM1KShPYmplY3Qua2V5cyxPYmplY3QpO3QuZXhwb3J0cz1ufSwzNjU2Oih0LHIsZSk9Pnt0PWUubm1kKHQpO3ZhciBuPWUoOTMyNSksbz1lKDk5MzUpLGE9ciYmIXIubm9kZVR5cGUmJnIsaT1hJiZ0JiYhdC5ub2RlVHlwZSYmdCx1PWkmJmkuZXhwb3J0cz09PWE/bi5CdWZmZXI6dm9pZCAwLHM9KHU/dS5pc0J1ZmZlcjp2b2lkIDApfHxvO3QuZXhwb3J0cz1zfSwzNjYxOih0LHIsZSk9Pnt2YXIgbj1lKDMwNDApLG89ZSg3NjcwKSxhPWUoMjg5KSxpPWUoNDUwOSksdT1lKDI5NDkpO2Z1bmN0aW9uIHModCl7dmFyIHI9LTEsZT1udWxsPT10PzA6dC5sZW5ndGg7Zm9yKHRoaXMuY2xlYXIoKTsrK3I8ZTspe3ZhciBuPXRbcl07dGhpcy5zZXQoblswXSxuWzFdKX19cy5wcm90b3R5cGUuY2xlYXI9bixzLnByb3RvdHlwZS5kZWxldGU9byxzLnByb3RvdHlwZS5nZXQ9YSxzLnByb3RvdHlwZS5oYXM9aSxzLnByb3RvdHlwZS5zZXQ9dSx0LmV4cG9ydHM9c30sMzY2MzoodCxyLGUpPT57dmFyIG49ZSgxNzk5KSxvPWUoNzc2KSxhPWUoNzE5Nyk7dC5leHBvcnRzPWZ1bmN0aW9uKHQpe3ZhciByPW8odCk7cmV0dXJuIDE9PXIubGVuZ3RoJiZyWzBdWzJdP2EoclswXVswXSxyWzBdWzFdKTpmdW5jdGlvbihlKXtyZXR1cm4gZT09PXR8fG4oZSx0LHIpfX19LDM3MDI6dD0+e3QuZXhwb3J0cz1mdW5jdGlvbigpe3RoaXMuX19kYXRhX189W10sdGhpcy5zaXplPTB9fSwzNzE0Oih0LHIsZSk9Pnt2YXIgbj1lKDM3MzApO3QuZXhwb3J0cz1mdW5jdGlvbih0LHIsZSl7Zm9yKHZhciBvPS0xLGE9dC5jcml0ZXJpYSxpPXIuY3JpdGVyaWEsdT1hLmxlbmd0aCxzPWUubGVuZ3RoOysrbzx1Oyl7dmFyIGM9bihhW29dLGlbb10pO2lmKGMpcmV0dXJuIG8+PXM/YzpjKigiZGVzYyI9PWVbb10/LTE6MSl9cmV0dXJuIHQuaW5kZXgtci5pbmRleH19LDM3MzA6KHQscixlKT0+e3ZhciBuPWUoNDM5NCk7dC5leHBvcnRzPWZ1bmN0aW9uKHQscil7aWYodCE9PXIpe3ZhciBlPXZvaWQgMCE9PXQsbz1udWxsPT09dCxhPXQ9PXQsaT1uKHQpLHU9dm9pZCAwIT09cixzPW51bGw9PT1yLGM9cj09cixwPW4ocik7aWYoIXMmJiFwJiYhaSYmdD5yfHxpJiZ1JiZjJiYhcyYmIXB8fG8mJnUmJmN8fCFlJiZjfHwhYSlyZXR1cm4gMTtpZighbyYmIWkmJiFwJiZ0PHJ8fHAmJmUmJmEmJiFvJiYhaXx8cyYmZSYmYXx8IXUmJmF8fCFjKXJldHVybi0xfXJldHVybiAwfX0sMzgwNTp0PT57dC5leHBvcnRzPWZ1bmN0aW9uKHQpe3ZhciByPXR5cGVvZiB0O3JldHVybiBudWxsIT10JiYoIm9iamVjdCI9PXJ8fCJmdW5jdGlvbiI9PXIpfX0sMzg2Mjp0PT57dC5leHBvcnRzPWZ1bmN0aW9uKHQpe3ZhciByPXRoaXMuaGFzKHQpJiZkZWxldGUgdGhpcy5fX2RhdGFfX1t0XTtyZXR1cm4gdGhpcy5zaXplLT1yPzE6MCxyfX0sMzkzNzp0PT57dC5leHBvcnRzPWZ1bmN0aW9uKHQscil7dmFyIGU9dC5sZW5ndGg7Zm9yKHQuc29ydChyKTtlLS07KXRbZV09dFtlXS52YWx1ZTtyZXR1cm4gdH19LDM5NDU6dD0+e3QuZXhwb3J0cz1mdW5jdGlvbih0LHIsZSxuKXtmb3IodmFyIG89LTEsYT1udWxsPT10PzA6dC5sZW5ndGg7KytvPGE7KXt2YXIgaT10W29dO3IobixpLGUoaSksdCl9cmV0dXJuIG59fSw0MjE4OnQ9Pnt0LmV4cG9ydHM9ZnVuY3Rpb24odCl7dmFyIHI9dHlwZW9mIHQ7cmV0dXJuInN0cmluZyI9PXJ8fCJudW1iZXIiPT1yfHwic3ltYm9sIj09cnx8ImJvb2xlYW4iPT1yPyJfX3Byb3RvX18iIT09dDpudWxsPT09dH19LDQyNDc6dD0+e3QuZXhwb3J0cz1mdW5jdGlvbih0KXt2YXIgcj0tMSxlPUFycmF5KHQuc2l6ZSk7cmV0dXJuIHQuZm9yRWFjaChmdW5jdGlvbih0KXtlWysrcl09dH0pLGV9fSw0MjQ4OnQ9Pnt0LmV4cG9ydHM9ZnVuY3Rpb24odCxyKXtmb3IodmFyIGU9LTEsbj1udWxsPT10PzA6dC5sZW5ndGg7KytlPG47KWlmKHIodFtlXSxlLHQpKXJldHVybiEwO3JldHVybiExfX0sNDMzNTp0PT57dC5leHBvcnRzPWZ1bmN0aW9uKHQscil7cmV0dXJuIGZ1bmN0aW9uKGUpe3JldHVybiB0KHIoZSkpfX19LDQzOTQ6KHQscixlKT0+e3ZhciBuPWUoMjU1Miksbz1lKDM0Nik7dC5leHBvcnRzPWZ1bmN0aW9uKHQpe3JldHVybiJzeW1ib2wiPT10eXBlb2YgdHx8byh0KSYmIltvYmplY3QgU3ltYm9sXSI9PW4odCl9fSw0NTA5Oih0LHIsZSk9Pnt2YXIgbj1lKDI2NTEpO3QuZXhwb3J0cz1mdW5jdGlvbih0KXtyZXR1cm4gbih0aGlzLHQpLmhhcyh0KX19LDQ1Mjg6dD0+e3QuZXhwb3J0cz1mdW5jdGlvbih0LHIpe2Zvcih2YXIgZT0tMSxuPXIubGVuZ3RoLG89dC5sZW5ndGg7KytlPG47KXRbbytlXT1yW2VdO3JldHVybiB0fX0sNDY2NDoodCxyLGUpPT57dmFyIG49ZSg5NzcwKSxvPWUoMzM0NSksYT1PYmplY3QucHJvdG90eXBlLnByb3BlcnR5SXNFbnVtZXJhYmxlLGk9T2JqZWN0LmdldE93blByb3BlcnR5U3ltYm9scyx1PWk/ZnVuY3Rpb24odCl7cmV0dXJuIG51bGw9PXQ/W106KHQ9T2JqZWN0KHQpLG4oaSh0KSxmdW5jdGlvbihyKXtyZXR1cm4gYS5jYWxsKHQscil9KSl9Om87dC5leHBvcnRzPXV9LDQ3Mzk6KHQscixlKT0+e3ZhciBuPWUoNjAyNSk7dC5leHBvcnRzPWZ1bmN0aW9uKHQpe3ZhciByPXRoaXMuX19kYXRhX18sZT1uKHIsdCk7cmV0dXJuIGU8MD92b2lkIDA6cltlXVsxXX19LDQ4NDA6KHQscixlKT0+e3ZhciBuPSJvYmplY3QiPT10eXBlb2YgZS5nJiZlLmcmJmUuZy5PYmplY3Q9PT1PYmplY3QmJmUuZzt0LmV4cG9ydHM9bn0sNDg5NDoodCxyLGUpPT57dmFyIG49ZSgxODgyKSxvPWUoMjk0KTt0LmV4cG9ydHM9ZnVuY3Rpb24odCl7cmV0dXJuIG51bGwhPXQmJm8odC5sZW5ndGgpJiYhbih0KX19LDQ5MDE6KHQscixlKT0+e3ZhciBuPWUoMjU1Miksbz1lKDI5NCksYT1lKDM0NiksaT17fTtpWyJbb2JqZWN0IEZsb2F0MzJBcnJheV0iXT1pWyJbb2JqZWN0IEZsb2F0NjRBcnJheV0iXT1pWyJbb2JqZWN0IEludDhBcnJheV0iXT1pWyJbb2JqZWN0IEludDE2QXJyYXldIl09aVsiW29iamVjdCBJbnQzMkFycmF5XSJdPWlbIltvYmplY3QgVWludDhBcnJheV0iXT1pWyJbb2JqZWN0IFVpbnQ4Q2xhbXBlZEFycmF5XSJdPWlbIltvYmplY3QgVWludDE2QXJyYXldIl09aVsiW29iamVjdCBVaW50MzJBcnJheV0iXT0hMCxpWyJbb2JqZWN0IEFyZ3VtZW50c10iXT1pWyJbb2JqZWN0IEFycmF5XSJdPWlbIltvYmplY3QgQXJyYXlCdWZmZXJdIl09aVsiW29iamVjdCBCb29sZWFuXSJdPWlbIltvYmplY3QgRGF0YVZpZXddIl09aVsiW29iamVjdCBEYXRlXSJdPWlbIltvYmplY3QgRXJyb3JdIl09aVsiW29iamVjdCBGdW5jdGlvbl0iXT1pWyJbb2JqZWN0IE1hcF0iXT1pWyJbb2JqZWN0IE51bWJlcl0iXT1pWyJbb2JqZWN0IE9iamVjdF0iXT1pWyJbb2JqZWN0IFJlZ0V4cF0iXT1pWyJbb2JqZWN0IFNldF0iXT1pWyJbb2JqZWN0IFN0cmluZ10iXT1pWyJbb2JqZWN0IFdlYWtNYXBdIl09ITEsdC5leHBvcnRzPWZ1bmN0aW9uKHQpe3JldHVybiBhKHQpJiZvKHQubGVuZ3RoKSYmISFpW24odCldfX0sNDkzMjp0PT57dC5leHBvcnRzPWZ1bmN0aW9uKHQscil7Zm9yKHZhciBlPS0xLG49bnVsbD09dD8wOnQubGVuZ3RoLG89QXJyYXkobik7KytlPG47KW9bZV09cih0W2VdLGUsdCk7cmV0dXJuIG99fSw1MDgzOih0LHIsZSk9Pnt2YXIgbj1lKDE4ODIpLG89ZSg3Mjk2KSxhPWUoMzgwNSksaT1lKDc0NzMpLHU9L15cW29iamVjdCAuKz9Db25zdHJ1Y3RvclxdJC8scz1GdW5jdGlvbi5wcm90b3R5cGUsYz1PYmplY3QucHJvdG90eXBlLHA9cy50b1N0cmluZyxmPWMuaGFzT3duUHJvcGVydHksdj1SZWdFeHAoIl4iK3AuY2FsbChmKS5yZXBsYWNlKC9bXFxeJC4qKz8oKVtcXXt9fF0vZywiXFwkJiIpLnJlcGxhY2UoL2hhc093blByb3BlcnR5fChmdW5jdGlvbikuKj8oPz1cXFwoKXwgZm9yIC4rPyg/PVxcXF0pL2csIiQxLio/IikrIiQiKTt0LmV4cG9ydHM9ZnVuY3Rpb24odCl7cmV0dXJuISghYSh0KXx8byh0KSkmJihuKHQpP3Y6dSkudGVzdChpKHQpKX19LDUxMjg6KHQscixlKT0+e3ZhciBuPWUoOTA5KSxvPWUoNDg5NCk7dC5leHBvcnRzPWZ1bmN0aW9uKHQscil7dmFyIGU9LTEsYT1vKHQpP0FycmF5KHQubGVuZ3RoKTpbXTtyZXR1cm4gbih0LGZ1bmN0aW9uKHQsbixvKXthWysrZV09cih0LG4sbyl9KSxhfX0sNTI4ODp0PT57dC5leHBvcnRzPWZ1bmN0aW9uKHQscil7cmV0dXJuIHQ9PT1yfHx0IT10JiZyIT1yfX0sNTM4OToodCxyLGUpPT57dmFyIG49ZSgzNjYzKSxvPWUoNzk3OCksYT1lKDM0ODgpLGk9ZSg2NDQ5KSx1PWUoNTgzKTt0LmV4cG9ydHM9ZnVuY3Rpb24odCl7cmV0dXJuImZ1bmN0aW9uIj09dHlwZW9mIHQ/dDpudWxsPT10P2E6Im9iamVjdCI9PXR5cGVvZiB0P2kodCk/byh0WzBdLHRbMV0pOm4odCk6dSh0KX19LDU0ODE6KHQscixlKT0+e3ZhciBuPWUoOTMyNSlbIl9fY29yZS1qc19zaGFyZWRfXyJdO3QuZXhwb3J0cz1ufSw1NTI3OnQ9Pnt2YXIgcj1PYmplY3QucHJvdG90eXBlO3QuZXhwb3J0cz1mdW5jdGlvbih0KXt2YXIgZT10JiZ0LmNvbnN0cnVjdG9yO3JldHVybiB0PT09KCJmdW5jdGlvbiI9PXR5cGVvZiBlJiZlLnByb3RvdHlwZXx8cil9fSw1NTgwOih0LHIsZSk9Pnt2YXIgbj1lKDYxMTApKGUoOTMyNSksIkRhdGFWaWV3Iik7dC5leHBvcnRzPW59LDU3NDk6KHQscixlKT0+e3ZhciBuPWUoMTA0Mik7dC5leHBvcnRzPWZ1bmN0aW9uKHQscil7dmFyIGU9dGhpcy5fX2RhdGFfXztyZXR1cm4gdGhpcy5zaXplKz10aGlzLmhhcyh0KT8wOjEsZVt0XT1uJiZ2b2lkIDA9PT1yPyJfX2xvZGFzaF9oYXNoX3VuZGVmaW5lZF9fIjpyLHRoaXN9fSw1ODYxOih0LHIsZSk9Pnt2YXIgbj1lKDU1ODApLG89ZSg4MjIzKSxhPWUoMjgwNCksaT1lKDY1NDUpLHU9ZSg4MzAzKSxzPWUoMjU1MiksYz1lKDc0NzMpLHA9IltvYmplY3QgTWFwXSIsZj0iW29iamVjdCBQcm9taXNlXSIsdj0iW29iamVjdCBTZXRdIixsPSJbb2JqZWN0IFdlYWtNYXBdIixoPSJbb2JqZWN0IERhdGFWaWV3XSIseD1jKG4pLHk9YyhvKSxkPWMoYSksXz1jKGkpLGI9Yyh1KSxnPXM7KG4mJmcobmV3IG4obmV3IEFycmF5QnVmZmVyKDEpKSkhPWh8fG8mJmcobmV3IG8pIT1wfHxhJiZnKGEucmVzb2x2ZSgpKSE9Znx8aSYmZyhuZXcgaSkhPXZ8fHUmJmcobmV3IHUpIT1sKSYmKGc9ZnVuY3Rpb24odCl7dmFyIHI9cyh0KSxlPSJbb2JqZWN0IE9iamVjdF0iPT1yP3QuY29uc3RydWN0b3I6dm9pZCAwLG49ZT9jKGUpOiIiO2lmKG4pc3dpdGNoKG4pe2Nhc2UgeDpyZXR1cm4gaDtjYXNlIHk6cmV0dXJuIHA7Y2FzZSBkOnJldHVybiBmO2Nhc2UgXzpyZXR1cm4gdjtjYXNlIGI6cmV0dXJuIGx9cmV0dXJuIHJ9KSx0LmV4cG9ydHM9Z30sNTkxMToodCxyLGUpPT57dmFyIG49ZSg4ODU5KSxvPWUoNDI0OCksYT1lKDkyMTkpO3QuZXhwb3J0cz1mdW5jdGlvbih0LHIsZSxpLHUscyl7dmFyIGM9MSZlLHA9dC5sZW5ndGgsZj1yLmxlbmd0aDtpZihwIT1mJiYhKGMmJmY+cCkpcmV0dXJuITE7dmFyIHY9cy5nZXQodCksbD1zLmdldChyKTtpZih2JiZsKXJldHVybiB2PT1yJiZsPT10O3ZhciBoPS0xLHg9ITAseT0yJmU/bmV3IG46dm9pZCAwO2ZvcihzLnNldCh0LHIpLHMuc2V0KHIsdCk7KytoPHA7KXt2YXIgZD10W2hdLF89cltoXTtpZihpKXZhciBiPWM/aShfLGQsaCxyLHQscyk6aShkLF8saCx0LHIscyk7aWYodm9pZCAwIT09Yil7aWYoYiljb250aW51ZTt4PSExO2JyZWFrfWlmKHkpe2lmKCFvKHIsZnVuY3Rpb24odCxyKXtpZighYSh5LHIpJiYoZD09PXR8fHUoZCx0LGUsaSxzKSkpcmV0dXJuIHkucHVzaChyKX0pKXt4PSExO2JyZWFrfX1lbHNlIGlmKGQhPT1fJiYhdShkLF8sZSxpLHMpKXt4PSExO2JyZWFrfX1yZXR1cm4gcy5kZWxldGUodCkscy5kZWxldGUocikseH19LDU5NTA6KHQscixlKT0+e3ZhciBuPWUoNjk1KSxvPWUoODk4NCksYT1lKDQ4OTQpO3QuZXhwb3J0cz1mdW5jdGlvbih0KXtyZXR1cm4gYSh0KT9uKHQpOm8odCl9fSw2MDA5Oih0LHIsZSk9Pnt0PWUubm1kKHQpO3ZhciBuPWUoNDg0MCksbz1yJiYhci5ub2RlVHlwZSYmcixhPW8mJnQmJiF0Lm5vZGVUeXBlJiZ0LGk9YSYmYS5leHBvcnRzPT09byYmbi5wcm9jZXNzLHU9ZnVuY3Rpb24oKXt0cnl7cmV0dXJuIGEmJmEucmVxdWlyZSYmYS5yZXF1aXJlKCJ1dGlsIikudHlwZXN8fGkmJmkuYmluZGluZyYmaS5iaW5kaW5nKCJ1dGlsIil9Y2F0Y2godCl7fX0oKTt0LmV4cG9ydHM9dX0sNjAyNToodCxyLGUpPT57dmFyIG49ZSg1Mjg4KTt0LmV4cG9ydHM9ZnVuY3Rpb24odCxyKXtmb3IodmFyIGU9dC5sZW5ndGg7ZS0tOylpZihuKHRbZV1bMF0scikpcmV0dXJuIGU7cmV0dXJuLTF9fSw2MTEwOih0LHIsZSk9Pnt2YXIgbj1lKDUwODMpLG89ZSgzOTIpO3QuZXhwb3J0cz1mdW5jdGlvbih0LHIpe3ZhciBlPW8odCxyKTtyZXR1cm4gbihlKT9lOnZvaWQgMH19LDYxNTU6KHQscixlKT0+e3ZhciBuPWUoNDkzMiksbz1lKDc0MjIpLGE9ZSg1Mzg5KSxpPWUoNTEyOCksdT1lKDM5MzcpLHM9ZSg3MzAxKSxjPWUoMzcxNCkscD1lKDM0ODgpLGY9ZSg2NDQ5KTt0LmV4cG9ydHM9ZnVuY3Rpb24odCxyLGUpe3I9ci5sZW5ndGg/bihyLGZ1bmN0aW9uKHQpe3JldHVybiBmKHQpP2Z1bmN0aW9uKHIpe3JldHVybiBvKHIsMT09PXQubGVuZ3RoP3RbMF06dCl9OnR9KTpbcF07dmFyIHY9LTE7cj1uKHIscyhhKSk7dmFyIGw9aSh0LGZ1bmN0aW9uKHQsZSxvKXtyZXR1cm57Y3JpdGVyaWE6bihyLGZ1bmN0aW9uKHIpe3JldHVybiByKHQpfSksaW5kZXg6Kyt2LHZhbHVlOnR9fSk7cmV0dXJuIHUobCxmdW5jdGlvbih0LHIpe3JldHVybiBjKHQscixlKX0pfX0sNjQ0OTp0PT57dmFyIHI9QXJyYXkuaXNBcnJheTt0LmV4cG9ydHM9cn0sNjU0NToodCxyLGUpPT57dmFyIG49ZSg2MTEwKShlKDkzMjUpLCJTZXQiKTt0LmV4cG9ydHM9bn0sNjY0OToodCxyLGUpPT57dmFyIG49ZSgzMjIxKSgpO3QuZXhwb3J0cz1ufSw2NzIxOih0LHIsZSk9Pnt2YXIgbj1lKDEwNDIpLG89T2JqZWN0LnByb3RvdHlwZS5oYXNPd25Qcm9wZXJ0eTt0LmV4cG9ydHM9ZnVuY3Rpb24odCl7dmFyIHI9dGhpcy5fX2RhdGFfXztpZihuKXt2YXIgZT1yW3RdO3JldHVybiJfX2xvZGFzaF9oYXNoX3VuZGVmaW5lZF9fIj09PWU/dm9pZCAwOmV9cmV0dXJuIG8uY2FsbChyLHQpP3JbdF06dm9pZCAwfX0sNzA2ODoodCxyLGUpPT57dmFyIG49ZSg3MjE3KSxvPWUoNTkxMSksYT1lKDE5ODYpLGk9ZSg2ODkpLHU9ZSg1ODYxKSxzPWUoNjQ0OSksYz1lKDM2NTYpLHA9ZSg3MTY3KSxmPSJbb2JqZWN0IEFyZ3VtZW50c10iLHY9IltvYmplY3QgQXJyYXldIixsPSJbb2JqZWN0IE9iamVjdF0iLGg9T2JqZWN0LnByb3RvdHlwZS5oYXNPd25Qcm9wZXJ0eTt0LmV4cG9ydHM9ZnVuY3Rpb24odCxyLGUseCx5LGQpe3ZhciBfPXModCksYj1zKHIpLGc9Xz92OnUodCksaj1iP3Y6dShyKSxPPShnPWc9PWY/bDpnKT09bCx3PShqPWo9PWY/bDpqKT09bCxtPWc9PWo7aWYobSYmYyh0KSl7aWYoIWMocikpcmV0dXJuITE7Xz0hMCxPPSExfWlmKG0mJiFPKXJldHVybiBkfHwoZD1uZXcgbiksX3x8cCh0KT9vKHQscixlLHgseSxkKTphKHQscixnLGUseCx5LGQpO2lmKCEoMSZlKSl7dmFyIEE9TyYmaC5jYWxsKHQsIl9fd3JhcHBlZF9fIiksTT13JiZoLmNhbGwociwiX193cmFwcGVkX18iKTtpZihBfHxNKXt2YXIgej1BP3QudmFsdWUoKTp0LFM9TT9yLnZhbHVlKCk6cjtyZXR1cm4gZHx8KGQ9bmV3IG4pLHkoeixTLGUseCxkKX19cmV0dXJuISFtJiYoZHx8KGQ9bmV3IG4pLGkodCxyLGUseCx5LGQpKX19LDcxNjc6KHQscixlKT0+e3ZhciBuPWUoNDkwMSksbz1lKDczMDEpLGE9ZSg2MDA5KSxpPWEmJmEuaXNUeXBlZEFycmF5LHU9aT9vKGkpOm47dC5leHBvcnRzPXV9LDcxOTc6dD0+e3QuZXhwb3J0cz1mdW5jdGlvbih0LHIpe3JldHVybiBmdW5jdGlvbihlKXtyZXR1cm4gbnVsbCE9ZSYmZVt0XT09PXImJih2b2lkIDAhPT1yfHx0IGluIE9iamVjdChlKSl9fX0sNzIxNzoodCxyLGUpPT57dmFyIG49ZSg3OSksbz1lKDE0MjApLGE9ZSg5MzgpLGk9ZSgzNjA1KSx1PWUoOTgxNykscz1lKDk0NSk7ZnVuY3Rpb24gYyh0KXt2YXIgcj10aGlzLl9fZGF0YV9fPW5ldyBuKHQpO3RoaXMuc2l6ZT1yLnNpemV9Yy5wcm90b3R5cGUuY2xlYXI9byxjLnByb3RvdHlwZS5kZWxldGU9YSxjLnByb3RvdHlwZS5nZXQ9aSxjLnByb3RvdHlwZS5oYXM9dSxjLnByb3RvdHlwZS5zZXQ9cyx0LmV4cG9ydHM9Y30sNzIzNzp0PT57dC5leHBvcnRzPWZ1bmN0aW9uKHQpe3JldHVybiBmdW5jdGlvbihyKXtyZXR1cm4gbnVsbD09cj92b2lkIDA6clt0XX19fSw3MjU1Oih0LHIsZSk9Pnt2YXIgbj1lKDc0MjIpO3QuZXhwb3J0cz1mdW5jdGlvbih0KXtyZXR1cm4gZnVuY3Rpb24ocil7cmV0dXJuIG4ocix0KX19fSw3Mjk2Oih0LHIsZSk9Pnt2YXIgbixvPWUoNTQ4MSksYT0obj0vW14uXSskLy5leGVjKG8mJm8ua2V5cyYmby5rZXlzLklFX1BST1RPfHwiIikpPyJTeW1ib2woc3JjKV8xLiIrbjoiIjt0LmV4cG9ydHM9ZnVuY3Rpb24odCl7cmV0dXJuISFhJiZhIGluIHR9fSw3MzAxOnQ9Pnt0LmV4cG9ydHM9ZnVuY3Rpb24odCl7cmV0dXJuIGZ1bmN0aW9uKHIpe3JldHVybiB0KHIpfX19LDc0MjI6KHQscixlKT0+e3ZhciBuPWUoMTc2OSksbz1lKDc3OTcpO3QuZXhwb3J0cz1mdW5jdGlvbih0LHIpe2Zvcih2YXIgZT0wLGE9KHI9bihyLHQpKS5sZW5ndGg7bnVsbCE9dCYmZTxhOyl0PXRbbyhyW2UrK10pXTtyZXR1cm4gZSYmZT09YT90OnZvaWQgMH19LDc0NzM6dD0+e3ZhciByPUZ1bmN0aW9uLnByb3RvdHlwZS50b1N0cmluZzt0LmV4cG9ydHM9ZnVuY3Rpb24odCl7aWYobnVsbCE9dCl7dHJ5e3JldHVybiByLmNhbGwodCl9Y2F0Y2godCl7fXRyeXtyZXR1cm4gdCsiIn1jYXRjaCh0KXt9fXJldHVybiIifX0sNzUzNDoodCxyLGUpPT57dmFyIG49ZSgyNTUyKSxvPWUoMzQ2KTt0LmV4cG9ydHM9ZnVuY3Rpb24odCl7cmV0dXJuIG8odCkmJiJbb2JqZWN0IEFyZ3VtZW50c10iPT1uKHQpfX0sNzU1NjoodCxyLGUpPT57dmFyIG49ZSgxODczKSxvPWUoNDkzMiksYT1lKDY0NDkpLGk9ZSg0Mzk0KSx1PW4/bi5wcm90b3R5cGU6dm9pZCAwLHM9dT91LnRvU3RyaW5nOnZvaWQgMDt0LmV4cG9ydHM9ZnVuY3Rpb24gdChyKXtpZigic3RyaW5nIj09dHlwZW9mIHIpcmV0dXJuIHI7aWYoYShyKSlyZXR1cm4gbyhyLHQpKyIiO2lmKGkocikpcmV0dXJuIHM/cy5jYWxsKHIpOiIiO3ZhciBlPXIrIiI7cmV0dXJuIjAiPT1lJiYxL3I9PS0xLzA/Ii0wIjplfX0sNzY3MDoodCxyLGUpPT57dmFyIG49ZSgyNjUxKTt0LmV4cG9ydHM9ZnVuY3Rpb24odCl7dmFyIHI9bih0aGlzLHQpLmRlbGV0ZSh0KTtyZXR1cm4gdGhpcy5zaXplLT1yPzE6MCxyfX0sNzc5NzoodCxyLGUpPT57dmFyIG49ZSg0Mzk0KTt0LmV4cG9ydHM9ZnVuY3Rpb24odCl7aWYoInN0cmluZyI9PXR5cGVvZiB0fHxuKHQpKXJldHVybiB0O3ZhciByPXQrIiI7cmV0dXJuIjAiPT1yJiYxL3Q9PS0xLzA/Ii0wIjpyfX0sNzgyODoodCxyLGUpPT57dmFyIG49ZSg5MzI1KS5VaW50OEFycmF5O3QuZXhwb3J0cz1ufSw3OTc4Oih0LHIsZSk9Pnt2YXIgbj1lKDI3MCksbz1lKDgxNTYpLGE9ZSg2MzEpLGk9ZSg4NTg2KSx1PWUoNzU2KSxzPWUoNzE5NyksYz1lKDc3OTcpO3QuZXhwb3J0cz1mdW5jdGlvbih0LHIpe3JldHVybiBpKHQpJiZ1KHIpP3MoYyh0KSxyKTpmdW5jdGlvbihlKXt2YXIgaT1vKGUsdCk7cmV0dXJuIHZvaWQgMD09PWkmJmk9PT1yP2EoZSx0KTpuKHIsaSwzKX19fSw4MDc3OnQ9Pnt0LmV4cG9ydHM9ZnVuY3Rpb24odCxyKXtyZXR1cm4gbnVsbCE9dCYmciBpbiBPYmplY3QodCl9fSw4MDk2OnQ9Pnt0LmV4cG9ydHM9ZnVuY3Rpb24odCxyKXtmb3IodmFyIGU9LTEsbj1BcnJheSh0KTsrK2U8dDspbltlXT1yKGUpO3JldHVybiBufX0sODE1NjoodCxyLGUpPT57dmFyIG49ZSg3NDIyKTt0LmV4cG9ydHM9ZnVuY3Rpb24odCxyLGUpe3ZhciBvPW51bGw9PXQ/dm9pZCAwOm4odCxyKTtyZXR1cm4gdm9pZCAwPT09bz9lOm99fSw4MjIzOih0LHIsZSk9Pnt2YXIgbj1lKDYxMTApKGUoOTMyNSksIk1hcCIpO3QuZXhwb3J0cz1ufSw4MzAzOih0LHIsZSk9Pnt2YXIgbj1lKDYxMTApKGUoOTMyNSksIldlYWtNYXAiKTt0LmV4cG9ydHM9bn0sODMyOToodCxyLGUpPT57dmFyIG49ZSg0ODk0KTt0LmV4cG9ydHM9ZnVuY3Rpb24odCxyKXtyZXR1cm4gZnVuY3Rpb24oZSxvKXtpZihudWxsPT1lKXJldHVybiBlO2lmKCFuKGUpKXJldHVybiB0KGUsbyk7Zm9yKHZhciBhPWUubGVuZ3RoLGk9cj9hOi0xLHU9T2JqZWN0KGUpOyhyP2ktLTorK2k8YSkmJiExIT09byh1W2ldLGksdSk7KTtyZXR1cm4gZX19fSw4NTg2Oih0LHIsZSk9Pnt2YXIgbj1lKDY0NDkpLG89ZSg0Mzk0KSxhPS9cLnxcWyg/OlteW1xdXSp8KFsiJ10pKD86KD8hXDEpW15cXF18XFwuKSo/XDEpXF0vLGk9L15cdyokLzt0LmV4cG9ydHM9ZnVuY3Rpb24odCxyKXtpZihuKHQpKXJldHVybiExO3ZhciBlPXR5cGVvZiB0O3JldHVybiEoIm51bWJlciIhPWUmJiJzeW1ib2wiIT1lJiYiYm9vbGVhbiIhPWUmJm51bGwhPXQmJiFvKHQpKXx8aS50ZXN0KHQpfHwhYS50ZXN0KHQpfHxudWxsIT1yJiZ0IGluIE9iamVjdChyKX19LDg2NTU6KHQscixlKT0+e3ZhciBuPWUoNjAyNSk7dC5leHBvcnRzPWZ1bmN0aW9uKHQpe3JldHVybiBuKHRoaXMuX19kYXRhX18sdCk+LTF9fSw4ODU5Oih0LHIsZSk9Pnt2YXIgbj1lKDM2NjEpLG89ZSgxMzgwKSxhPWUoMTQ1OSk7ZnVuY3Rpb24gaSh0KXt2YXIgcj0tMSxlPW51bGw9PXQ/MDp0Lmxlbmd0aDtmb3IodGhpcy5fX2RhdGFfXz1uZXcgbjsrK3I8ZTspdGhpcy5hZGQodFtyXSl9aS5wcm90b3R5cGUuYWRkPWkucHJvdG90eXBlLnB1c2g9byxpLnByb3RvdHlwZS5oYXM9YSx0LmV4cG9ydHM9aX0sODk4NDoodCxyLGUpPT57dmFyIG49ZSg1NTI3KSxvPWUoMzY1MCksYT1PYmplY3QucHJvdG90eXBlLmhhc093blByb3BlcnR5O3QuZXhwb3J0cz1mdW5jdGlvbih0KXtpZighbih0KSlyZXR1cm4gbyh0KTt2YXIgcj1bXTtmb3IodmFyIGUgaW4gT2JqZWN0KHQpKWEuY2FsbCh0LGUpJiYiY29uc3RydWN0b3IiIT1lJiZyLnB1c2goZSk7cmV0dXJuIHJ9fSw5MjE5OnQ9Pnt0LmV4cG9ydHM9ZnVuY3Rpb24odCxyKXtyZXR1cm4gdC5oYXMocil9fSw5MzI1Oih0LHIsZSk9Pnt2YXIgbj1lKDQ4NDApLG89Im9iamVjdCI9PXR5cGVvZiBzZWxmJiZzZWxmJiZzZWxmLk9iamVjdD09PU9iamVjdCYmc2VsZixhPW58fG98fEZ1bmN0aW9uKCJyZXR1cm4gdGhpcyIpKCk7dC5leHBvcnRzPWF9LDkzMjY6KHQscixlKT0+e3ZhciBuPWUoMTc2OSksbz1lKDI0MjgpLGE9ZSg2NDQ5KSxpPWUoMzYxKSx1PWUoMjk0KSxzPWUoNzc5Nyk7dC5leHBvcnRzPWZ1bmN0aW9uKHQscixlKXtmb3IodmFyIGM9LTEscD0ocj1uKHIsdCkpLmxlbmd0aCxmPSExOysrYzxwOyl7dmFyIHY9cyhyW2NdKTtpZighKGY9bnVsbCE9dCYmZSh0LHYpKSlicmVhazt0PXRbdl19cmV0dXJuIGZ8fCsrYyE9cD9mOiEhKHA9bnVsbD09dD8wOnQubGVuZ3RoKSYmdShwKSYmaSh2LHApJiYoYSh0KXx8byh0KSl9fSw5MzUwOnQ9Pnt2YXIgcj1PYmplY3QucHJvdG90eXBlLnRvU3RyaW5nO3QuZXhwb3J0cz1mdW5jdGlvbih0KXtyZXR1cm4gci5jYWxsKHQpfX0sOTc3MDp0PT57dC5leHBvcnRzPWZ1bmN0aW9uKHQscil7Zm9yKHZhciBlPS0xLG49bnVsbD09dD8wOnQubGVuZ3RoLG89MCxhPVtdOysrZTxuOyl7dmFyIGk9dFtlXTtyKGksZSx0KSYmKGFbbysrXT1pKX1yZXR1cm4gYX19LDk4MTc6dD0+e3QuZXhwb3J0cz1mdW5jdGlvbih0KXtyZXR1cm4gdGhpcy5fX2RhdGFfXy5oYXModCl9fSw5OTM1OnQ9Pnt0LmV4cG9ydHM9ZnVuY3Rpb24oKXtyZXR1cm4hMX19fSxyPXt9O2Z1bmN0aW9uIGUobil7dmFyIG89cltuXTtpZih2b2lkIDAhPT1vKXJldHVybiBvLmV4cG9ydHM7dmFyIGE9cltuXT17aWQ6bixsb2FkZWQ6ITEsZXhwb3J0czp7fX07cmV0dXJuIHRbbl0oYSxhLmV4cG9ydHMsZSksYS5sb2FkZWQ9ITAsYS5leHBvcnRzfWUubj10PT57dmFyIHI9dCYmdC5fX2VzTW9kdWxlPygpPT50LmRlZmF1bHQ6KCk9PnQ7cmV0dXJuIGUuZChyLHthOnJ9KSxyfSxlLmQ9KHQscik9Pntmb3IodmFyIG4gaW4gcillLm8ocixuKSYmIWUubyh0LG4pJiZPYmplY3QuZGVmaW5lUHJvcGVydHkodCxuLHtlbnVtZXJhYmxlOiEwLGdldDpyW25dfSl9LGUuZz1mdW5jdGlvbigpe2lmKCJvYmplY3QiPT10eXBlb2YgZ2xvYmFsVGhpcylyZXR1cm4gZ2xvYmFsVGhpczt0cnl7cmV0dXJuIHRoaXN8fG5ldyBGdW5jdGlvbigicmV0dXJuIHRoaXMiKSgpfWNhdGNoKHQpe2lmKCJvYmplY3QiPT10eXBlb2Ygd2luZG93KXJldHVybiB3aW5kb3d9fSgpLGUubz0odCxyKT0+T2JqZWN0LnByb3RvdHlwZS5oYXNPd25Qcm9wZXJ0eS5jYWxsKHQsciksZS5ubWQ9dD0+KHQucGF0aHM9W10sdC5jaGlsZHJlbnx8KHQuY2hpbGRyZW49W10pLHQpO3ZhciBuPXt9O2UuZChuLHtIOigpPT5wfSk7dmFyIG89ZSg4MTU2KSxhPWUubihvKSxpPWUoMjg3NyksdT1lLm4oaSkscz1lKDIwMTMpLGM9ZS5uKHMpO2NvbnN0IHA9KHtkYXRhOnQsYXJndW1lbnRzOntzb3J0OnIsZGlyOmV9fSk9Pntjb25zdCBuPWMoKSh0LnRoaXNNb250aENvbnN1bXB0aW9uLCJpdGVtX2lkIiksbz1jKCkodC5sYXN0TW9udGhDb25zdW1wdGlvbiwiaXRlbV9pZCIpLGk9YygpKHQudHdvTW9udGhzQWdvQ29uc3VtcHRpb24sIml0ZW1faWQiKSxzPWMoKSh0LmV4cGlyaW5nSW5TaXhNb250aHMsIml0ZW1faWQiKSxwPWMoKSh0LmV4cGlyaW5nSW5Ud2VsdmVNb250aHMsIml0ZW1faWQiKSxmPWMoKSh0LnN0b2NrT25PcmRlciwiaXRlbV9pZCIpLHY9YygpKHQuQU1DVHdlbHZlLCJpdGVtX2lkIiksbD1jKCkodC5BTUNUd2VudHlGb3VyLCJpdGVtX2lkIik7bGV0IGg9dC5pdGVtcy5ub2Rlcy5tYXAodD0+KHsuLi50LG1vbnRoQ29uc3VtcHRpb246blt0LmlkXT8uWzBdPy5xdWFudGl0eXx8MCxsYXN0TW9udGhDb25zdW1wdGlvbjpvW3QuaWRdPy5bMF0/LnF1YW50aXR5fHwwLHR3b01vbnRoc0Fnb0NvbnN1bXB0aW9uOmlbdC5pZF0/LlswXT8ucXVhbnRpdHl8fDAsZXhwaXJpbmdJblNpeE1vbnRoczpzW3QuaWRdPy5bMF0/LnF1YW50aXR5fHwwLGV4cGlyaW5nSW5Ud2VsdmVNb250aHM6cFt0LmlkXT8uWzBdPy5xdWFudGl0eXx8MCxzdG9ja09uT3JkZXI6TWF0aC5tYXgoZlt0LmlkXT8uWzBdPy5xdWFudGl0eXx8MCksQU1DMTI6dlt0LmlkXT8uWzBdPy5xdWFudGl0eXx8MCxBTUMyNDpsW3QuaWRdPy5bMF0/LnF1YW50aXR5fHwwLFNPSDp0LnN0YXRzPy5zdG9ja09uSGFuZHx8MCxNT1M6dC5zdGF0cz8uYXZhaWxhYmxlTW9udGhzT2ZTdG9ja09uSGFuZHx8MCxBTUM6dC5zdGF0cz8uYXZlcmFnZU1vbnRobHlDb25zdW1wdGlvbnx8MH0pKTtyZXR1cm57ZGF0YTp7aXRlbXM6e25vZGVzOnUoKShoLHQ9Pntjb25zdCBlPWEoKSh0LHJ8fCJuYW1lIik7cmV0dXJuInN0cmluZyI9PXR5cGVvZiBlP2UudG9Mb2NhbGVMb3dlckNhc2UoKTplfSxlfHwiYXNjIil9fX19LGY9bi5IO2V4cG9ydHtmIGFzIGNvbnZlcnRfZGF0YX07",
+          "convert_data": "dmFyIHQ9ezI6KHQscixlKT0+e3ZhciBuPWUoMjE5OSksbz1lKDQ2NjQpLGE9ZSg1OTUwKTt0LmV4cG9ydHM9ZnVuY3Rpb24odCl7cmV0dXJuIG4odCxhLG8pfX0sNzk6KHQscixlKT0+e3ZhciBuPWUoMzcwMiksbz1lKDgwKSxhPWUoNDczOSksaT1lKDg2NTUpLHU9ZSgxMTc1KTtmdW5jdGlvbiBzKHQpe3ZhciByPS0xLGU9bnVsbD09dD8wOnQubGVuZ3RoO2Zvcih0aGlzLmNsZWFyKCk7KytyPGU7KXt2YXIgbj10W3JdO3RoaXMuc2V0KG5bMF0sblsxXSl9fXMucHJvdG90eXBlLmNsZWFyPW4scy5wcm90b3R5cGUuZGVsZXRlPW8scy5wcm90b3R5cGUuZ2V0PWEscy5wcm90b3R5cGUuaGFzPWkscy5wcm90b3R5cGUuc2V0PXUsdC5leHBvcnRzPXN9LDgwOih0LHIsZSk9Pnt2YXIgbj1lKDYwMjUpLG89QXJyYXkucHJvdG90eXBlLnNwbGljZTt0LmV4cG9ydHM9ZnVuY3Rpb24odCl7dmFyIHI9dGhpcy5fX2RhdGFfXyxlPW4ocix0KTtyZXR1cm4hKGU8MHx8KGU9PXIubGVuZ3RoLTE/ci5wb3AoKTpvLmNhbGwocixlLDEpLC0tdGhpcy5zaXplLDApKX19LDEwNDoodCxyLGUpPT57dmFyIG49ZSgzNjYxKTtmdW5jdGlvbiBvKHQscil7aWYoImZ1bmN0aW9uIiE9dHlwZW9mIHR8fG51bGwhPXImJiJmdW5jdGlvbiIhPXR5cGVvZiByKXRocm93IG5ldyBUeXBlRXJyb3IoIkV4cGVjdGVkIGEgZnVuY3Rpb24iKTt2YXIgZT1mdW5jdGlvbigpe3ZhciBuPWFyZ3VtZW50cyxvPXI/ci5hcHBseSh0aGlzLG4pOm5bMF0sYT1lLmNhY2hlO2lmKGEuaGFzKG8pKXJldHVybiBhLmdldChvKTt2YXIgaT10LmFwcGx5KHRoaXMsbik7cmV0dXJuIGUuY2FjaGU9YS5zZXQobyxpKXx8YSxpfTtyZXR1cm4gZS5jYWNoZT1uZXcoby5DYWNoZXx8biksZX1vLkNhY2hlPW4sdC5leHBvcnRzPW99LDI3MDoodCxyLGUpPT57dmFyIG49ZSg3MDY4KSxvPWUoMzQ2KTt0LmV4cG9ydHM9ZnVuY3Rpb24gdChyLGUsYSxpLHUpe3JldHVybiByPT09ZXx8KG51bGw9PXJ8fG51bGw9PWV8fCFvKHIpJiYhbyhlKT9yIT1yJiZlIT1lOm4ocixlLGEsaSx0LHUpKX19LDI4OToodCxyLGUpPT57dmFyIG49ZSgyNjUxKTt0LmV4cG9ydHM9ZnVuY3Rpb24odCl7cmV0dXJuIG4odGhpcyx0KS5nZXQodCl9fSwyOTQ6dD0+e3QuZXhwb3J0cz1mdW5jdGlvbih0KXtyZXR1cm4ibnVtYmVyIj09dHlwZW9mIHQmJnQ+LTEmJnQlMT09MCYmdDw9OTAwNzE5OTI1NDc0MDk5MX19LDMxNzp0PT57dC5leHBvcnRzPWZ1bmN0aW9uKHQpe3ZhciByPS0xLGU9QXJyYXkodC5zaXplKTtyZXR1cm4gdC5mb3JFYWNoKGZ1bmN0aW9uKHQsbil7ZVsrK3JdPVtuLHRdfSksZX19LDM0Njp0PT57dC5leHBvcnRzPWZ1bmN0aW9uKHQpe3JldHVybiBudWxsIT10JiYib2JqZWN0Ij09dHlwZW9mIHR9fSwzNjE6dD0+e3ZhciByPS9eKD86MHxbMS05XVxkKikkLzt0LmV4cG9ydHM9ZnVuY3Rpb24odCxlKXt2YXIgbj10eXBlb2YgdDtyZXR1cm4hIShlPW51bGw9PWU/OTAwNzE5OTI1NDc0MDk5MTplKSYmKCJudW1iZXIiPT1ufHwic3ltYm9sIiE9biYmci50ZXN0KHQpKSYmdD4tMSYmdCUxPT0wJiZ0PGV9fSwzOTI6dD0+e3QuZXhwb3J0cz1mdW5jdGlvbih0LHIpe3JldHVybiBudWxsPT10P3ZvaWQgMDp0W3JdfX0sNTgzOih0LHIsZSk9Pnt2YXIgbj1lKDcyMzcpLG89ZSg3MjU1KSxhPWUoODU4NiksaT1lKDc3OTcpO3QuZXhwb3J0cz1mdW5jdGlvbih0KXtyZXR1cm4gYSh0KT9uKGkodCkpOm8odCl9fSw2MzE6KHQscixlKT0+e3ZhciBuPWUoODA3Nyksbz1lKDkzMjYpO3QuZXhwb3J0cz1mdW5jdGlvbih0LHIpe3JldHVybiBudWxsIT10JiZvKHQscixuKX19LDY0MToodCxyLGUpPT57dmFyIG49ZSg2NjQ5KSxvPWUoNTk1MCk7dC5leHBvcnRzPWZ1bmN0aW9uKHQscil7cmV0dXJuIHQmJm4odCxyLG8pfX0sNjU5Oih0LHIsZSk9Pnt2YXIgbj1lKDE4NzMpLG89T2JqZWN0LnByb3RvdHlwZSxhPW8uaGFzT3duUHJvcGVydHksaT1vLnRvU3RyaW5nLHU9bj9uLnRvU3RyaW5nVGFnOnZvaWQgMDt0LmV4cG9ydHM9ZnVuY3Rpb24odCl7dmFyIHI9YS5jYWxsKHQsdSksZT10W3VdO3RyeXt0W3VdPXZvaWQgMDt2YXIgbj0hMH1jYXRjaCh0KXt9dmFyIG89aS5jYWxsKHQpO3JldHVybiBuJiYocj90W3VdPWU6ZGVsZXRlIHRbdV0pLG99fSw2ODk6KHQscixlKT0+e3ZhciBuPWUoMiksbz1PYmplY3QucHJvdG90eXBlLmhhc093blByb3BlcnR5O3QuZXhwb3J0cz1mdW5jdGlvbih0LHIsZSxhLGksdSl7dmFyIHM9MSZlLGM9bih0KSxwPWMubGVuZ3RoO2lmKHAhPW4ocikubGVuZ3RoJiYhcylyZXR1cm4hMTtmb3IodmFyIGY9cDtmLS07KXt2YXIgdj1jW2ZdO2lmKCEocz92IGluIHI6by5jYWxsKHIsdikpKXJldHVybiExfXZhciBsPXUuZ2V0KHQpLGg9dS5nZXQocik7aWYobCYmaClyZXR1cm4gbD09ciYmaD09dDt2YXIgeD0hMDt1LnNldCh0LHIpLHUuc2V0KHIsdCk7Zm9yKHZhciB5PXM7KytmPHA7KXt2YXIgZD10W3Y9Y1tmXV0sXz1yW3ZdO2lmKGEpdmFyIGI9cz9hKF8sZCx2LHIsdCx1KTphKGQsXyx2LHQscix1KTtpZighKHZvaWQgMD09PWI/ZD09PV98fGkoZCxfLGUsYSx1KTpiKSl7eD0hMTticmVha315fHwoeT0iY29uc3RydWN0b3IiPT12KX1pZih4JiYheSl7dmFyIGc9dC5jb25zdHJ1Y3RvcixqPXIuY29uc3RydWN0b3I7Zz09anx8ISgiY29uc3RydWN0b3IiaW4gdCl8fCEoImNvbnN0cnVjdG9yImluIHIpfHwiZnVuY3Rpb24iPT10eXBlb2YgZyYmZyBpbnN0YW5jZW9mIGcmJiJmdW5jdGlvbiI9PXR5cGVvZiBqJiZqIGluc3RhbmNlb2Yganx8KHg9ITEpfXJldHVybiB1LmRlbGV0ZSh0KSx1LmRlbGV0ZShyKSx4fX0sNjk1Oih0LHIsZSk9Pnt2YXIgbj1lKDgwOTYpLG89ZSgyNDI4KSxhPWUoNjQ0OSksaT1lKDM2NTYpLHU9ZSgzNjEpLHM9ZSg3MTY3KSxjPU9iamVjdC5wcm90b3R5cGUuaGFzT3duUHJvcGVydHk7dC5leHBvcnRzPWZ1bmN0aW9uKHQscil7dmFyIGU9YSh0KSxwPSFlJiZvKHQpLGY9IWUmJiFwJiZpKHQpLHY9IWUmJiFwJiYhZiYmcyh0KSxsPWV8fHB8fGZ8fHYsaD1sP24odC5sZW5ndGgsU3RyaW5nKTpbXSx4PWgubGVuZ3RoO2Zvcih2YXIgeSBpbiB0KSFyJiYhYy5jYWxsKHQseSl8fGwmJigibGVuZ3RoIj09eXx8ZiYmKCJvZmZzZXQiPT15fHwicGFyZW50Ij09eSl8fHYmJigiYnVmZmVyIj09eXx8ImJ5dGVMZW5ndGgiPT15fHwiYnl0ZU9mZnNldCI9PXkpfHx1KHkseCkpfHxoLnB1c2goeSk7cmV0dXJuIGh9fSw3NTY6KHQscixlKT0+e3ZhciBuPWUoMzgwNSk7dC5leHBvcnRzPWZ1bmN0aW9uKHQpe3JldHVybiB0PT10JiYhbih0KX19LDc3NjoodCxyLGUpPT57dmFyIG49ZSg3NTYpLG89ZSg1OTUwKTt0LmV4cG9ydHM9ZnVuY3Rpb24odCl7Zm9yKHZhciByPW8odCksZT1yLmxlbmd0aDtlLS07KXt2YXIgYT1yW2VdLGk9dFthXTtyW2VdPVthLGksbihpKV19cmV0dXJuIHJ9fSw5MDk6KHQscixlKT0+e3ZhciBuPWUoNjQxKSxvPWUoODMyOSkobik7dC5leHBvcnRzPW99LDkzODp0PT57dC5leHBvcnRzPWZ1bmN0aW9uKHQpe3ZhciByPXRoaXMuX19kYXRhX18sZT1yLmRlbGV0ZSh0KTtyZXR1cm4gdGhpcy5zaXplPXIuc2l6ZSxlfX0sOTQ1Oih0LHIsZSk9Pnt2YXIgbj1lKDc5KSxvPWUoODIyMyksYT1lKDM2NjEpO3QuZXhwb3J0cz1mdW5jdGlvbih0LHIpe3ZhciBlPXRoaXMuX19kYXRhX187aWYoZSBpbnN0YW5jZW9mIG4pe3ZhciBpPWUuX19kYXRhX187aWYoIW98fGkubGVuZ3RoPDE5OSlyZXR1cm4gaS5wdXNoKFt0LHJdKSx0aGlzLnNpemU9KytlLnNpemUsdGhpcztlPXRoaXMuX19kYXRhX189bmV3IGEoaSl9cmV0dXJuIGUuc2V0KHQsciksdGhpcy5zaXplPWUuc2l6ZSx0aGlzfX0sMTA0MjoodCxyLGUpPT57dmFyIG49ZSg2MTEwKShPYmplY3QsImNyZWF0ZSIpO3QuZXhwb3J0cz1ufSwxMTc1Oih0LHIsZSk9Pnt2YXIgbj1lKDYwMjUpO3QuZXhwb3J0cz1mdW5jdGlvbih0LHIpe3ZhciBlPXRoaXMuX19kYXRhX18sbz1uKGUsdCk7cmV0dXJuIG88MD8oKyt0aGlzLnNpemUsZS5wdXNoKFt0LHJdKSk6ZVtvXVsxXT1yLHRoaXN9fSwxMzgwOnQ9Pnt0LmV4cG9ydHM9ZnVuY3Rpb24odCl7cmV0dXJuIHRoaXMuX19kYXRhX18uc2V0KHQsIl9fbG9kYXNoX2hhc2hfdW5kZWZpbmVkX18iKSx0aGlzfX0sMTQyMDoodCxyLGUpPT57dmFyIG49ZSg3OSk7dC5leHBvcnRzPWZ1bmN0aW9uKCl7dGhpcy5fX2RhdGFfXz1uZXcgbix0aGlzLnNpemU9MH19LDE0NTk6dD0+e3QuZXhwb3J0cz1mdW5jdGlvbih0KXtyZXR1cm4gdGhpcy5fX2RhdGFfXy5oYXModCl9fSwxNTQ5Oih0LHIsZSk9Pnt2YXIgbj1lKDIwMzIpLG89ZSgzODYyKSxhPWUoNjcyMSksaT1lKDI3NDkpLHU9ZSg1NzQ5KTtmdW5jdGlvbiBzKHQpe3ZhciByPS0xLGU9bnVsbD09dD8wOnQubGVuZ3RoO2Zvcih0aGlzLmNsZWFyKCk7KytyPGU7KXt2YXIgbj10W3JdO3RoaXMuc2V0KG5bMF0sblsxXSl9fXMucHJvdG90eXBlLmNsZWFyPW4scy5wcm90b3R5cGUuZGVsZXRlPW8scy5wcm90b3R5cGUuZ2V0PWEscy5wcm90b3R5cGUuaGFzPWkscy5wcm90b3R5cGUuc2V0PXUsdC5leHBvcnRzPXN9LDE3Njk6KHQscixlKT0+e3ZhciBuPWUoNjQ0OSksbz1lKDg1ODYpLGE9ZSgxODAyKSxpPWUoMzIyMik7dC5leHBvcnRzPWZ1bmN0aW9uKHQscil7cmV0dXJuIG4odCk/dDpvKHQscik/W3RdOmEoaSh0KSl9fSwxNzk5Oih0LHIsZSk9Pnt2YXIgbj1lKDcyMTcpLG89ZSgyNzApO3QuZXhwb3J0cz1mdW5jdGlvbih0LHIsZSxhKXt2YXIgaT1lLmxlbmd0aCx1PWkscz0hYTtpZihudWxsPT10KXJldHVybiF1O2Zvcih0PU9iamVjdCh0KTtpLS07KXt2YXIgYz1lW2ldO2lmKHMmJmNbMl0/Y1sxXSE9PXRbY1swXV06IShjWzBdaW4gdCkpcmV0dXJuITF9Zm9yKDsrK2k8dTspe3ZhciBwPShjPWVbaV0pWzBdLGY9dFtwXSx2PWNbMV07aWYocyYmY1syXSl7aWYodm9pZCAwPT09ZiYmIShwIGluIHQpKXJldHVybiExfWVsc2V7dmFyIGw9bmV3IG47aWYoYSl2YXIgaD1hKGYsdixwLHQscixsKTtpZighKHZvaWQgMD09PWg/byh2LGYsMyxhLGwpOmgpKXJldHVybiExfX1yZXR1cm4hMH19LDE4MDI6KHQscixlKT0+e3ZhciBuPWUoMjIyNCksbz0vW14uW1xdXSt8XFsoPzooLT9cZCsoPzpcLlxkKyk/KXwoWyInXSkoKD86KD8hXDIpW15cXF18XFwuKSo/KVwyKVxdfCg/PSg/OlwufFxbXF0pKD86XC58XFtcXXwkKSkvZyxhPS9cXChcXCk/L2csaT1uKGZ1bmN0aW9uKHQpe3ZhciByPVtdO3JldHVybiA0Nj09PXQuY2hhckNvZGVBdCgwKSYmci5wdXNoKCIiKSx0LnJlcGxhY2UobyxmdW5jdGlvbih0LGUsbixvKXtyLnB1c2gobj9vLnJlcGxhY2UoYSwiJDEiKTplfHx0KX0pLHJ9KTt0LmV4cG9ydHM9aX0sMTg3MzoodCxyLGUpPT57dmFyIG49ZSg5MzI1KS5TeW1ib2w7dC5leHBvcnRzPW59LDE4ODI6KHQscixlKT0+e3ZhciBuPWUoMjU1Miksbz1lKDM4MDUpO3QuZXhwb3J0cz1mdW5jdGlvbih0KXtpZighbyh0KSlyZXR1cm4hMTt2YXIgcj1uKHQpO3JldHVybiJbb2JqZWN0IEZ1bmN0aW9uXSI9PXJ8fCJbb2JqZWN0IEdlbmVyYXRvckZ1bmN0aW9uXSI9PXJ8fCJbb2JqZWN0IEFzeW5jRnVuY3Rpb25dIj09cnx8IltvYmplY3QgUHJveHldIj09cn19LDE5ODY6KHQscixlKT0+e3ZhciBuPWUoMTg3Myksbz1lKDc4MjgpLGE9ZSg1Mjg4KSxpPWUoNTkxMSksdT1lKDMxNykscz1lKDQyNDcpLGM9bj9uLnByb3RvdHlwZTp2b2lkIDAscD1jP2MudmFsdWVPZjp2b2lkIDA7dC5leHBvcnRzPWZ1bmN0aW9uKHQscixlLG4sYyxmLHYpe3N3aXRjaChlKXtjYXNlIltvYmplY3QgRGF0YVZpZXddIjppZih0LmJ5dGVMZW5ndGghPXIuYnl0ZUxlbmd0aHx8dC5ieXRlT2Zmc2V0IT1yLmJ5dGVPZmZzZXQpcmV0dXJuITE7dD10LmJ1ZmZlcixyPXIuYnVmZmVyO2Nhc2UiW29iamVjdCBBcnJheUJ1ZmZlcl0iOnJldHVybiEodC5ieXRlTGVuZ3RoIT1yLmJ5dGVMZW5ndGh8fCFmKG5ldyBvKHQpLG5ldyBvKHIpKSk7Y2FzZSJbb2JqZWN0IEJvb2xlYW5dIjpjYXNlIltvYmplY3QgRGF0ZV0iOmNhc2UiW29iamVjdCBOdW1iZXJdIjpyZXR1cm4gYSgrdCwrcik7Y2FzZSJbb2JqZWN0IEVycm9yXSI6cmV0dXJuIHQubmFtZT09ci5uYW1lJiZ0Lm1lc3NhZ2U9PXIubWVzc2FnZTtjYXNlIltvYmplY3QgUmVnRXhwXSI6Y2FzZSJbb2JqZWN0IFN0cmluZ10iOnJldHVybiB0PT1yKyIiO2Nhc2UiW29iamVjdCBNYXBdIjp2YXIgbD11O2Nhc2UiW29iamVjdCBTZXRdIjp2YXIgaD0xJm47aWYobHx8KGw9cyksdC5zaXplIT1yLnNpemUmJiFoKXJldHVybiExO3ZhciB4PXYuZ2V0KHQpO2lmKHgpcmV0dXJuIHg9PXI7bnw9Mix2LnNldCh0LHIpO3ZhciB5PWkobCh0KSxsKHIpLG4sYyxmLHYpO3JldHVybiB2LmRlbGV0ZSh0KSx5O2Nhc2UiW29iamVjdCBTeW1ib2xdIjppZihwKXJldHVybiBwLmNhbGwodCk9PXAuY2FsbChyKX1yZXR1cm4hMX19LDJlMzoodCxyLGUpPT57dmFyIG49ZSgzOTQ1KSxvPWUoMjQyOSksYT1lKDUzODkpLGk9ZSg2NDQ5KTt0LmV4cG9ydHM9ZnVuY3Rpb24odCxyKXtyZXR1cm4gZnVuY3Rpb24oZSx1KXt2YXIgcz1pKGUpP246byxjPXI/cigpOnt9O3JldHVybiBzKGUsdCxhKHUsMiksYyl9fX0sMjAxMzoodCxyLGUpPT57dmFyIG49ZSgzMzYwKSxvPWUoMmUzKSxhPU9iamVjdC5wcm90b3R5cGUuaGFzT3duUHJvcGVydHksaT1vKGZ1bmN0aW9uKHQscixlKXthLmNhbGwodCxlKT90W2VdLnB1c2gocik6bih0LGUsW3JdKX0pO3QuZXhwb3J0cz1pfSwyMDMyOih0LHIsZSk9Pnt2YXIgbj1lKDEwNDIpO3QuZXhwb3J0cz1mdW5jdGlvbigpe3RoaXMuX19kYXRhX189bj9uKG51bGwpOnt9LHRoaXMuc2l6ZT0wfX0sMjE5OToodCxyLGUpPT57dmFyIG49ZSg0NTI4KSxvPWUoNjQ0OSk7dC5leHBvcnRzPWZ1bmN0aW9uKHQscixlKXt2YXIgYT1yKHQpO3JldHVybiBvKHQpP2E6bihhLGUodCkpfX0sMjIyNDoodCxyLGUpPT57dmFyIG49ZSgxMDQpO3QuZXhwb3J0cz1mdW5jdGlvbih0KXt2YXIgcj1uKHQsZnVuY3Rpb24odCl7cmV0dXJuIDUwMD09PWUuc2l6ZSYmZS5jbGVhcigpLHR9KSxlPXIuY2FjaGU7cmV0dXJuIHJ9fSwyNDI4Oih0LHIsZSk9Pnt2YXIgbj1lKDc1MzQpLG89ZSgzNDYpLGE9T2JqZWN0LnByb3RvdHlwZSxpPWEuaGFzT3duUHJvcGVydHksdT1hLnByb3BlcnR5SXNFbnVtZXJhYmxlLHM9bihmdW5jdGlvbigpe3JldHVybiBhcmd1bWVudHN9KCkpP246ZnVuY3Rpb24odCl7cmV0dXJuIG8odCkmJmkuY2FsbCh0LCJjYWxsZWUiKSYmIXUuY2FsbCh0LCJjYWxsZWUiKX07dC5leHBvcnRzPXN9LDI0Mjk6KHQscixlKT0+e3ZhciBuPWUoOTA5KTt0LmV4cG9ydHM9ZnVuY3Rpb24odCxyLGUsbyl7cmV0dXJuIG4odCxmdW5jdGlvbih0LG4sYSl7cihvLHQsZSh0KSxhKX0pLG99fSwyNTUyOih0LHIsZSk9Pnt2YXIgbj1lKDE4NzMpLG89ZSg2NTkpLGE9ZSg5MzUwKSxpPW4/bi50b1N0cmluZ1RhZzp2b2lkIDA7dC5leHBvcnRzPWZ1bmN0aW9uKHQpe3JldHVybiBudWxsPT10P3ZvaWQgMD09PXQ/IltvYmplY3QgVW5kZWZpbmVkXSI6IltvYmplY3QgTnVsbF0iOmkmJmkgaW4gT2JqZWN0KHQpP28odCk6YSh0KX19LDI2NTE6KHQscixlKT0+e3ZhciBuPWUoNDIxOCk7dC5leHBvcnRzPWZ1bmN0aW9uKHQscil7dmFyIGU9dC5fX2RhdGFfXztyZXR1cm4gbihyKT9lWyJzdHJpbmciPT10eXBlb2Ygcj8ic3RyaW5nIjoiaGFzaCJdOmUubWFwfX0sMjc0OToodCxyLGUpPT57dmFyIG49ZSgxMDQyKSxvPU9iamVjdC5wcm90b3R5cGUuaGFzT3duUHJvcGVydHk7dC5leHBvcnRzPWZ1bmN0aW9uKHQpe3ZhciByPXRoaXMuX19kYXRhX187cmV0dXJuIG4/dm9pZCAwIT09clt0XTpvLmNhbGwocix0KX19LDI4MDQ6KHQscixlKT0+e3ZhciBuPWUoNjExMCkoZSg5MzI1KSwiUHJvbWlzZSIpO3QuZXhwb3J0cz1ufSwyODc3Oih0LHIsZSk9Pnt2YXIgbj1lKDYxNTUpLG89ZSg2NDQ5KTt0LmV4cG9ydHM9ZnVuY3Rpb24odCxyLGUsYSl7cmV0dXJuIG51bGw9PXQ/W106KG8ocil8fChyPW51bGw9PXI/W106W3JdKSxvKGU9YT92b2lkIDA6ZSl8fChlPW51bGw9PWU/W106W2VdKSxuKHQscixlKSl9fSwyOTQ5Oih0LHIsZSk9Pnt2YXIgbj1lKDI2NTEpO3QuZXhwb3J0cz1mdW5jdGlvbih0LHIpe3ZhciBlPW4odGhpcyx0KSxvPWUuc2l6ZTtyZXR1cm4gZS5zZXQodCxyKSx0aGlzLnNpemUrPWUuc2l6ZT09bz8wOjEsdGhpc319LDMwNDA6KHQscixlKT0+e3ZhciBuPWUoMTU0OSksbz1lKDc5KSxhPWUoODIyMyk7dC5leHBvcnRzPWZ1bmN0aW9uKCl7dGhpcy5zaXplPTAsdGhpcy5fX2RhdGFfXz17aGFzaDpuZXcgbixtYXA6bmV3KGF8fG8pLHN0cmluZzpuZXcgbn19fSwzMjIxOnQ9Pnt0LmV4cG9ydHM9ZnVuY3Rpb24odCl7cmV0dXJuIGZ1bmN0aW9uKHIsZSxuKXtmb3IodmFyIG89LTEsYT1PYmplY3QociksaT1uKHIpLHU9aS5sZW5ndGg7dS0tOyl7dmFyIHM9aVt0P3U6KytvXTtpZighMT09PWUoYVtzXSxzLGEpKWJyZWFrfXJldHVybiByfX19LDMyMjI6KHQscixlKT0+e3ZhciBuPWUoNzU1Nik7dC5leHBvcnRzPWZ1bmN0aW9uKHQpe3JldHVybiBudWxsPT10PyIiOm4odCl9fSwzMjQzOih0LHIsZSk9Pnt2YXIgbj1lKDYxMTApLG89ZnVuY3Rpb24oKXt0cnl7dmFyIHQ9bihPYmplY3QsImRlZmluZVByb3BlcnR5Iik7cmV0dXJuIHQoe30sIiIse30pLHR9Y2F0Y2godCl7fX0oKTt0LmV4cG9ydHM9b30sMzM0NTp0PT57dC5leHBvcnRzPWZ1bmN0aW9uKCl7cmV0dXJuW119fSwzMzYwOih0LHIsZSk9Pnt2YXIgbj1lKDMyNDMpO3QuZXhwb3J0cz1mdW5jdGlvbih0LHIsZSl7Il9fcHJvdG9fXyI9PXImJm4/bih0LHIse2NvbmZpZ3VyYWJsZTohMCxlbnVtZXJhYmxlOiEwLHZhbHVlOmUsd3JpdGFibGU6ITB9KTp0W3JdPWV9fSwzNDg4OnQ9Pnt0LmV4cG9ydHM9ZnVuY3Rpb24odCl7cmV0dXJuIHR9fSwzNjA1OnQ9Pnt0LmV4cG9ydHM9ZnVuY3Rpb24odCl7cmV0dXJuIHRoaXMuX19kYXRhX18uZ2V0KHQpfX0sMzY1MDoodCxyLGUpPT57dmFyIG49ZSg0MzM1KShPYmplY3Qua2V5cyxPYmplY3QpO3QuZXhwb3J0cz1ufSwzNjU2Oih0LHIsZSk9Pnt0PWUubm1kKHQpO3ZhciBuPWUoOTMyNSksbz1lKDk5MzUpLGE9ciYmIXIubm9kZVR5cGUmJnIsaT1hJiZ0JiYhdC5ub2RlVHlwZSYmdCx1PWkmJmkuZXhwb3J0cz09PWE/bi5CdWZmZXI6dm9pZCAwLHM9KHU/dS5pc0J1ZmZlcjp2b2lkIDApfHxvO3QuZXhwb3J0cz1zfSwzNjYxOih0LHIsZSk9Pnt2YXIgbj1lKDMwNDApLG89ZSg3NjcwKSxhPWUoMjg5KSxpPWUoNDUwOSksdT1lKDI5NDkpO2Z1bmN0aW9uIHModCl7dmFyIHI9LTEsZT1udWxsPT10PzA6dC5sZW5ndGg7Zm9yKHRoaXMuY2xlYXIoKTsrK3I8ZTspe3ZhciBuPXRbcl07dGhpcy5zZXQoblswXSxuWzFdKX19cy5wcm90b3R5cGUuY2xlYXI9bixzLnByb3RvdHlwZS5kZWxldGU9byxzLnByb3RvdHlwZS5nZXQ9YSxzLnByb3RvdHlwZS5oYXM9aSxzLnByb3RvdHlwZS5zZXQ9dSx0LmV4cG9ydHM9c30sMzY2MzoodCxyLGUpPT57dmFyIG49ZSgxNzk5KSxvPWUoNzc2KSxhPWUoNzE5Nyk7dC5leHBvcnRzPWZ1bmN0aW9uKHQpe3ZhciByPW8odCk7cmV0dXJuIDE9PXIubGVuZ3RoJiZyWzBdWzJdP2EoclswXVswXSxyWzBdWzFdKTpmdW5jdGlvbihlKXtyZXR1cm4gZT09PXR8fG4oZSx0LHIpfX19LDM3MDI6dD0+e3QuZXhwb3J0cz1mdW5jdGlvbigpe3RoaXMuX19kYXRhX189W10sdGhpcy5zaXplPTB9fSwzNzE0Oih0LHIsZSk9Pnt2YXIgbj1lKDM3MzApO3QuZXhwb3J0cz1mdW5jdGlvbih0LHIsZSl7Zm9yKHZhciBvPS0xLGE9dC5jcml0ZXJpYSxpPXIuY3JpdGVyaWEsdT1hLmxlbmd0aCxzPWUubGVuZ3RoOysrbzx1Oyl7dmFyIGM9bihhW29dLGlbb10pO2lmKGMpcmV0dXJuIG8+PXM/YzpjKigiZGVzYyI9PWVbb10/LTE6MSl9cmV0dXJuIHQuaW5kZXgtci5pbmRleH19LDM3MzA6KHQscixlKT0+e3ZhciBuPWUoNDM5NCk7dC5leHBvcnRzPWZ1bmN0aW9uKHQscil7aWYodCE9PXIpe3ZhciBlPXZvaWQgMCE9PXQsbz1udWxsPT09dCxhPXQ9PXQsaT1uKHQpLHU9dm9pZCAwIT09cixzPW51bGw9PT1yLGM9cj09cixwPW4ocik7aWYoIXMmJiFwJiYhaSYmdD5yfHxpJiZ1JiZjJiYhcyYmIXB8fG8mJnUmJmN8fCFlJiZjfHwhYSlyZXR1cm4gMTtpZighbyYmIWkmJiFwJiZ0PHJ8fHAmJmUmJmEmJiFvJiYhaXx8cyYmZSYmYXx8IXUmJmF8fCFjKXJldHVybi0xfXJldHVybiAwfX0sMzgwNTp0PT57dC5leHBvcnRzPWZ1bmN0aW9uKHQpe3ZhciByPXR5cGVvZiB0O3JldHVybiBudWxsIT10JiYoIm9iamVjdCI9PXJ8fCJmdW5jdGlvbiI9PXIpfX0sMzg2Mjp0PT57dC5leHBvcnRzPWZ1bmN0aW9uKHQpe3ZhciByPXRoaXMuaGFzKHQpJiZkZWxldGUgdGhpcy5fX2RhdGFfX1t0XTtyZXR1cm4gdGhpcy5zaXplLT1yPzE6MCxyfX0sMzkzNzp0PT57dC5leHBvcnRzPWZ1bmN0aW9uKHQscil7dmFyIGU9dC5sZW5ndGg7Zm9yKHQuc29ydChyKTtlLS07KXRbZV09dFtlXS52YWx1ZTtyZXR1cm4gdH19LDM5NDU6dD0+e3QuZXhwb3J0cz1mdW5jdGlvbih0LHIsZSxuKXtmb3IodmFyIG89LTEsYT1udWxsPT10PzA6dC5sZW5ndGg7KytvPGE7KXt2YXIgaT10W29dO3IobixpLGUoaSksdCl9cmV0dXJuIG59fSw0MjE4OnQ9Pnt0LmV4cG9ydHM9ZnVuY3Rpb24odCl7dmFyIHI9dHlwZW9mIHQ7cmV0dXJuInN0cmluZyI9PXJ8fCJudW1iZXIiPT1yfHwic3ltYm9sIj09cnx8ImJvb2xlYW4iPT1yPyJfX3Byb3RvX18iIT09dDpudWxsPT09dH19LDQyNDc6dD0+e3QuZXhwb3J0cz1mdW5jdGlvbih0KXt2YXIgcj0tMSxlPUFycmF5KHQuc2l6ZSk7cmV0dXJuIHQuZm9yRWFjaChmdW5jdGlvbih0KXtlWysrcl09dH0pLGV9fSw0MjQ4OnQ9Pnt0LmV4cG9ydHM9ZnVuY3Rpb24odCxyKXtmb3IodmFyIGU9LTEsbj1udWxsPT10PzA6dC5sZW5ndGg7KytlPG47KWlmKHIodFtlXSxlLHQpKXJldHVybiEwO3JldHVybiExfX0sNDMzNTp0PT57dC5leHBvcnRzPWZ1bmN0aW9uKHQscil7cmV0dXJuIGZ1bmN0aW9uKGUpe3JldHVybiB0KHIoZSkpfX19LDQzOTQ6KHQscixlKT0+e3ZhciBuPWUoMjU1Miksbz1lKDM0Nik7dC5leHBvcnRzPWZ1bmN0aW9uKHQpe3JldHVybiJzeW1ib2wiPT10eXBlb2YgdHx8byh0KSYmIltvYmplY3QgU3ltYm9sXSI9PW4odCl9fSw0NTA5Oih0LHIsZSk9Pnt2YXIgbj1lKDI2NTEpO3QuZXhwb3J0cz1mdW5jdGlvbih0KXtyZXR1cm4gbih0aGlzLHQpLmhhcyh0KX19LDQ1Mjg6dD0+e3QuZXhwb3J0cz1mdW5jdGlvbih0LHIpe2Zvcih2YXIgZT0tMSxuPXIubGVuZ3RoLG89dC5sZW5ndGg7KytlPG47KXRbbytlXT1yW2VdO3JldHVybiB0fX0sNDY2NDoodCxyLGUpPT57dmFyIG49ZSg5NzcwKSxvPWUoMzM0NSksYT1PYmplY3QucHJvdG90eXBlLnByb3BlcnR5SXNFbnVtZXJhYmxlLGk9T2JqZWN0LmdldE93blByb3BlcnR5U3ltYm9scyx1PWk/ZnVuY3Rpb24odCl7cmV0dXJuIG51bGw9PXQ/W106KHQ9T2JqZWN0KHQpLG4oaSh0KSxmdW5jdGlvbihyKXtyZXR1cm4gYS5jYWxsKHQscil9KSl9Om87dC5leHBvcnRzPXV9LDQ3Mzk6KHQscixlKT0+e3ZhciBuPWUoNjAyNSk7dC5leHBvcnRzPWZ1bmN0aW9uKHQpe3ZhciByPXRoaXMuX19kYXRhX18sZT1uKHIsdCk7cmV0dXJuIGU8MD92b2lkIDA6cltlXVsxXX19LDQ4NDA6KHQscixlKT0+e3ZhciBuPSJvYmplY3QiPT10eXBlb2YgZS5nJiZlLmcmJmUuZy5PYmplY3Q9PT1PYmplY3QmJmUuZzt0LmV4cG9ydHM9bn0sNDg5NDoodCxyLGUpPT57dmFyIG49ZSgxODgyKSxvPWUoMjk0KTt0LmV4cG9ydHM9ZnVuY3Rpb24odCl7cmV0dXJuIG51bGwhPXQmJm8odC5sZW5ndGgpJiYhbih0KX19LDQ5MDE6KHQscixlKT0+e3ZhciBuPWUoMjU1Miksbz1lKDI5NCksYT1lKDM0NiksaT17fTtpWyJbb2JqZWN0IEZsb2F0MzJBcnJheV0iXT1pWyJbb2JqZWN0IEZsb2F0NjRBcnJheV0iXT1pWyJbb2JqZWN0IEludDhBcnJheV0iXT1pWyJbb2JqZWN0IEludDE2QXJyYXldIl09aVsiW29iamVjdCBJbnQzMkFycmF5XSJdPWlbIltvYmplY3QgVWludDhBcnJheV0iXT1pWyJbb2JqZWN0IFVpbnQ4Q2xhbXBlZEFycmF5XSJdPWlbIltvYmplY3QgVWludDE2QXJyYXldIl09aVsiW29iamVjdCBVaW50MzJBcnJheV0iXT0hMCxpWyJbb2JqZWN0IEFyZ3VtZW50c10iXT1pWyJbb2JqZWN0IEFycmF5XSJdPWlbIltvYmplY3QgQXJyYXlCdWZmZXJdIl09aVsiW29iamVjdCBCb29sZWFuXSJdPWlbIltvYmplY3QgRGF0YVZpZXddIl09aVsiW29iamVjdCBEYXRlXSJdPWlbIltvYmplY3QgRXJyb3JdIl09aVsiW29iamVjdCBGdW5jdGlvbl0iXT1pWyJbb2JqZWN0IE1hcF0iXT1pWyJbb2JqZWN0IE51bWJlcl0iXT1pWyJbb2JqZWN0IE9iamVjdF0iXT1pWyJbb2JqZWN0IFJlZ0V4cF0iXT1pWyJbb2JqZWN0IFNldF0iXT1pWyJbb2JqZWN0IFN0cmluZ10iXT1pWyJbb2JqZWN0IFdlYWtNYXBdIl09ITEsdC5leHBvcnRzPWZ1bmN0aW9uKHQpe3JldHVybiBhKHQpJiZvKHQubGVuZ3RoKSYmISFpW24odCldfX0sNDkzMjp0PT57dC5leHBvcnRzPWZ1bmN0aW9uKHQscil7Zm9yKHZhciBlPS0xLG49bnVsbD09dD8wOnQubGVuZ3RoLG89QXJyYXkobik7KytlPG47KW9bZV09cih0W2VdLGUsdCk7cmV0dXJuIG99fSw1MDgzOih0LHIsZSk9Pnt2YXIgbj1lKDE4ODIpLG89ZSg3Mjk2KSxhPWUoMzgwNSksaT1lKDc0NzMpLHU9L15cW29iamVjdCAuKz9Db25zdHJ1Y3RvclxdJC8scz1GdW5jdGlvbi5wcm90b3R5cGUsYz1PYmplY3QucHJvdG90eXBlLHA9cy50b1N0cmluZyxmPWMuaGFzT3duUHJvcGVydHksdj1SZWdFeHAoIl4iK3AuY2FsbChmKS5yZXBsYWNlKC9bXFxeJC4qKz8oKVtcXXt9fF0vZywiXFwkJiIpLnJlcGxhY2UoL2hhc093blByb3BlcnR5fChmdW5jdGlvbikuKj8oPz1cXFwoKXwgZm9yIC4rPyg/PVxcXF0pL2csIiQxLio/IikrIiQiKTt0LmV4cG9ydHM9ZnVuY3Rpb24odCl7cmV0dXJuISghYSh0KXx8byh0KSkmJihuKHQpP3Y6dSkudGVzdChpKHQpKX19LDUxMjg6KHQscixlKT0+e3ZhciBuPWUoOTA5KSxvPWUoNDg5NCk7dC5leHBvcnRzPWZ1bmN0aW9uKHQscil7dmFyIGU9LTEsYT1vKHQpP0FycmF5KHQubGVuZ3RoKTpbXTtyZXR1cm4gbih0LGZ1bmN0aW9uKHQsbixvKXthWysrZV09cih0LG4sbyl9KSxhfX0sNTI4ODp0PT57dC5leHBvcnRzPWZ1bmN0aW9uKHQscil7cmV0dXJuIHQ9PT1yfHx0IT10JiZyIT1yfX0sNTM4OToodCxyLGUpPT57dmFyIG49ZSgzNjYzKSxvPWUoNzk3OCksYT1lKDM0ODgpLGk9ZSg2NDQ5KSx1PWUoNTgzKTt0LmV4cG9ydHM9ZnVuY3Rpb24odCl7cmV0dXJuImZ1bmN0aW9uIj09dHlwZW9mIHQ/dDpudWxsPT10P2E6Im9iamVjdCI9PXR5cGVvZiB0P2kodCk/byh0WzBdLHRbMV0pOm4odCk6dSh0KX19LDU0ODE6KHQscixlKT0+e3ZhciBuPWUoOTMyNSlbIl9fY29yZS1qc19zaGFyZWRfXyJdO3QuZXhwb3J0cz1ufSw1NTI3OnQ9Pnt2YXIgcj1PYmplY3QucHJvdG90eXBlO3QuZXhwb3J0cz1mdW5jdGlvbih0KXt2YXIgZT10JiZ0LmNvbnN0cnVjdG9yO3JldHVybiB0PT09KCJmdW5jdGlvbiI9PXR5cGVvZiBlJiZlLnByb3RvdHlwZXx8cil9fSw1NTgwOih0LHIsZSk9Pnt2YXIgbj1lKDYxMTApKGUoOTMyNSksIkRhdGFWaWV3Iik7dC5leHBvcnRzPW59LDU3NDk6KHQscixlKT0+e3ZhciBuPWUoMTA0Mik7dC5leHBvcnRzPWZ1bmN0aW9uKHQscil7dmFyIGU9dGhpcy5fX2RhdGFfXztyZXR1cm4gdGhpcy5zaXplKz10aGlzLmhhcyh0KT8wOjEsZVt0XT1uJiZ2b2lkIDA9PT1yPyJfX2xvZGFzaF9oYXNoX3VuZGVmaW5lZF9fIjpyLHRoaXN9fSw1ODYxOih0LHIsZSk9Pnt2YXIgbj1lKDU1ODApLG89ZSg4MjIzKSxhPWUoMjgwNCksaT1lKDY1NDUpLHU9ZSg4MzAzKSxzPWUoMjU1MiksYz1lKDc0NzMpLHA9IltvYmplY3QgTWFwXSIsZj0iW29iamVjdCBQcm9taXNlXSIsdj0iW29iamVjdCBTZXRdIixsPSJbb2JqZWN0IFdlYWtNYXBdIixoPSJbb2JqZWN0IERhdGFWaWV3XSIseD1jKG4pLHk9YyhvKSxkPWMoYSksXz1jKGkpLGI9Yyh1KSxnPXM7KG4mJmcobmV3IG4obmV3IEFycmF5QnVmZmVyKDEpKSkhPWh8fG8mJmcobmV3IG8pIT1wfHxhJiZnKGEucmVzb2x2ZSgpKSE9Znx8aSYmZyhuZXcgaSkhPXZ8fHUmJmcobmV3IHUpIT1sKSYmKGc9ZnVuY3Rpb24odCl7dmFyIHI9cyh0KSxlPSJbb2JqZWN0IE9iamVjdF0iPT1yP3QuY29uc3RydWN0b3I6dm9pZCAwLG49ZT9jKGUpOiIiO2lmKG4pc3dpdGNoKG4pe2Nhc2UgeDpyZXR1cm4gaDtjYXNlIHk6cmV0dXJuIHA7Y2FzZSBkOnJldHVybiBmO2Nhc2UgXzpyZXR1cm4gdjtjYXNlIGI6cmV0dXJuIGx9cmV0dXJuIHJ9KSx0LmV4cG9ydHM9Z30sNTkxMToodCxyLGUpPT57dmFyIG49ZSg4ODU5KSxvPWUoNDI0OCksYT1lKDkyMTkpO3QuZXhwb3J0cz1mdW5jdGlvbih0LHIsZSxpLHUscyl7dmFyIGM9MSZlLHA9dC5sZW5ndGgsZj1yLmxlbmd0aDtpZihwIT1mJiYhKGMmJmY+cCkpcmV0dXJuITE7dmFyIHY9cy5nZXQodCksbD1zLmdldChyKTtpZih2JiZsKXJldHVybiB2PT1yJiZsPT10O3ZhciBoPS0xLHg9ITAseT0yJmU/bmV3IG46dm9pZCAwO2ZvcihzLnNldCh0LHIpLHMuc2V0KHIsdCk7KytoPHA7KXt2YXIgZD10W2hdLF89cltoXTtpZihpKXZhciBiPWM/aShfLGQsaCxyLHQscyk6aShkLF8saCx0LHIscyk7aWYodm9pZCAwIT09Yil7aWYoYiljb250aW51ZTt4PSExO2JyZWFrfWlmKHkpe2lmKCFvKHIsZnVuY3Rpb24odCxyKXtpZighYSh5LHIpJiYoZD09PXR8fHUoZCx0LGUsaSxzKSkpcmV0dXJuIHkucHVzaChyKX0pKXt4PSExO2JyZWFrfX1lbHNlIGlmKGQhPT1fJiYhdShkLF8sZSxpLHMpKXt4PSExO2JyZWFrfX1yZXR1cm4gcy5kZWxldGUodCkscy5kZWxldGUocikseH19LDU5NTA6KHQscixlKT0+e3ZhciBuPWUoNjk1KSxvPWUoODk4NCksYT1lKDQ4OTQpO3QuZXhwb3J0cz1mdW5jdGlvbih0KXtyZXR1cm4gYSh0KT9uKHQpOm8odCl9fSw2MDA5Oih0LHIsZSk9Pnt0PWUubm1kKHQpO3ZhciBuPWUoNDg0MCksbz1yJiYhci5ub2RlVHlwZSYmcixhPW8mJnQmJiF0Lm5vZGVUeXBlJiZ0LGk9YSYmYS5leHBvcnRzPT09byYmbi5wcm9jZXNzLHU9ZnVuY3Rpb24oKXt0cnl7cmV0dXJuIGEmJmEucmVxdWlyZSYmYS5yZXF1aXJlKCJ1dGlsIikudHlwZXN8fGkmJmkuYmluZGluZyYmaS5iaW5kaW5nKCJ1dGlsIil9Y2F0Y2godCl7fX0oKTt0LmV4cG9ydHM9dX0sNjAyNToodCxyLGUpPT57dmFyIG49ZSg1Mjg4KTt0LmV4cG9ydHM9ZnVuY3Rpb24odCxyKXtmb3IodmFyIGU9dC5sZW5ndGg7ZS0tOylpZihuKHRbZV1bMF0scikpcmV0dXJuIGU7cmV0dXJuLTF9fSw2MTEwOih0LHIsZSk9Pnt2YXIgbj1lKDUwODMpLG89ZSgzOTIpO3QuZXhwb3J0cz1mdW5jdGlvbih0LHIpe3ZhciBlPW8odCxyKTtyZXR1cm4gbihlKT9lOnZvaWQgMH19LDYxNTU6KHQscixlKT0+e3ZhciBuPWUoNDkzMiksbz1lKDc0MjIpLGE9ZSg1Mzg5KSxpPWUoNTEyOCksdT1lKDM5MzcpLHM9ZSg3MzAxKSxjPWUoMzcxNCkscD1lKDM0ODgpLGY9ZSg2NDQ5KTt0LmV4cG9ydHM9ZnVuY3Rpb24odCxyLGUpe3I9ci5sZW5ndGg/bihyLGZ1bmN0aW9uKHQpe3JldHVybiBmKHQpP2Z1bmN0aW9uKHIpe3JldHVybiBvKHIsMT09PXQubGVuZ3RoP3RbMF06dCl9OnR9KTpbcF07dmFyIHY9LTE7cj1uKHIscyhhKSk7dmFyIGw9aSh0LGZ1bmN0aW9uKHQsZSxvKXtyZXR1cm57Y3JpdGVyaWE6bihyLGZ1bmN0aW9uKHIpe3JldHVybiByKHQpfSksaW5kZXg6Kyt2LHZhbHVlOnR9fSk7cmV0dXJuIHUobCxmdW5jdGlvbih0LHIpe3JldHVybiBjKHQscixlKX0pfX0sNjQ0OTp0PT57dmFyIHI9QXJyYXkuaXNBcnJheTt0LmV4cG9ydHM9cn0sNjU0NToodCxyLGUpPT57dmFyIG49ZSg2MTEwKShlKDkzMjUpLCJTZXQiKTt0LmV4cG9ydHM9bn0sNjY0OToodCxyLGUpPT57dmFyIG49ZSgzMjIxKSgpO3QuZXhwb3J0cz1ufSw2NzIxOih0LHIsZSk9Pnt2YXIgbj1lKDEwNDIpLG89T2JqZWN0LnByb3RvdHlwZS5oYXNPd25Qcm9wZXJ0eTt0LmV4cG9ydHM9ZnVuY3Rpb24odCl7dmFyIHI9dGhpcy5fX2RhdGFfXztpZihuKXt2YXIgZT1yW3RdO3JldHVybiJfX2xvZGFzaF9oYXNoX3VuZGVmaW5lZF9fIj09PWU/dm9pZCAwOmV9cmV0dXJuIG8uY2FsbChyLHQpP3JbdF06dm9pZCAwfX0sNzA2ODoodCxyLGUpPT57dmFyIG49ZSg3MjE3KSxvPWUoNTkxMSksYT1lKDE5ODYpLGk9ZSg2ODkpLHU9ZSg1ODYxKSxzPWUoNjQ0OSksYz1lKDM2NTYpLHA9ZSg3MTY3KSxmPSJbb2JqZWN0IEFyZ3VtZW50c10iLHY9IltvYmplY3QgQXJyYXldIixsPSJbb2JqZWN0IE9iamVjdF0iLGg9T2JqZWN0LnByb3RvdHlwZS5oYXNPd25Qcm9wZXJ0eTt0LmV4cG9ydHM9ZnVuY3Rpb24odCxyLGUseCx5LGQpe3ZhciBfPXModCksYj1zKHIpLGc9Xz92OnUodCksaj1iP3Y6dShyKSxPPShnPWc9PWY/bDpnKT09bCx3PShqPWo9PWY/bDpqKT09bCxtPWc9PWo7aWYobSYmYyh0KSl7aWYoIWMocikpcmV0dXJuITE7Xz0hMCxPPSExfWlmKG0mJiFPKXJldHVybiBkfHwoZD1uZXcgbiksX3x8cCh0KT9vKHQscixlLHgseSxkKTphKHQscixnLGUseCx5LGQpO2lmKCEoMSZlKSl7dmFyIEE9TyYmaC5jYWxsKHQsIl9fd3JhcHBlZF9fIiksTT13JiZoLmNhbGwociwiX193cmFwcGVkX18iKTtpZihBfHxNKXt2YXIgej1BP3QudmFsdWUoKTp0LFM9TT9yLnZhbHVlKCk6cjtyZXR1cm4gZHx8KGQ9bmV3IG4pLHkoeixTLGUseCxkKX19cmV0dXJuISFtJiYoZHx8KGQ9bmV3IG4pLGkodCxyLGUseCx5LGQpKX19LDcxNjc6KHQscixlKT0+e3ZhciBuPWUoNDkwMSksbz1lKDczMDEpLGE9ZSg2MDA5KSxpPWEmJmEuaXNUeXBlZEFycmF5LHU9aT9vKGkpOm47dC5leHBvcnRzPXV9LDcxOTc6dD0+e3QuZXhwb3J0cz1mdW5jdGlvbih0LHIpe3JldHVybiBmdW5jdGlvbihlKXtyZXR1cm4gbnVsbCE9ZSYmZVt0XT09PXImJih2b2lkIDAhPT1yfHx0IGluIE9iamVjdChlKSl9fX0sNzIxNzoodCxyLGUpPT57dmFyIG49ZSg3OSksbz1lKDE0MjApLGE9ZSg5MzgpLGk9ZSgzNjA1KSx1PWUoOTgxNykscz1lKDk0NSk7ZnVuY3Rpb24gYyh0KXt2YXIgcj10aGlzLl9fZGF0YV9fPW5ldyBuKHQpO3RoaXMuc2l6ZT1yLnNpemV9Yy5wcm90b3R5cGUuY2xlYXI9byxjLnByb3RvdHlwZS5kZWxldGU9YSxjLnByb3RvdHlwZS5nZXQ9aSxjLnByb3RvdHlwZS5oYXM9dSxjLnByb3RvdHlwZS5zZXQ9cyx0LmV4cG9ydHM9Y30sNzIzNzp0PT57dC5leHBvcnRzPWZ1bmN0aW9uKHQpe3JldHVybiBmdW5jdGlvbihyKXtyZXR1cm4gbnVsbD09cj92b2lkIDA6clt0XX19fSw3MjU1Oih0LHIsZSk9Pnt2YXIgbj1lKDc0MjIpO3QuZXhwb3J0cz1mdW5jdGlvbih0KXtyZXR1cm4gZnVuY3Rpb24ocil7cmV0dXJuIG4ocix0KX19fSw3Mjk2Oih0LHIsZSk9Pnt2YXIgbixvPWUoNTQ4MSksYT0obj0vW14uXSskLy5leGVjKG8mJm8ua2V5cyYmby5rZXlzLklFX1BST1RPfHwiIikpPyJTeW1ib2woc3JjKV8xLiIrbjoiIjt0LmV4cG9ydHM9ZnVuY3Rpb24odCl7cmV0dXJuISFhJiZhIGluIHR9fSw3MzAxOnQ9Pnt0LmV4cG9ydHM9ZnVuY3Rpb24odCl7cmV0dXJuIGZ1bmN0aW9uKHIpe3JldHVybiB0KHIpfX19LDc0MjI6KHQscixlKT0+e3ZhciBuPWUoMTc2OSksbz1lKDc3OTcpO3QuZXhwb3J0cz1mdW5jdGlvbih0LHIpe2Zvcih2YXIgZT0wLGE9KHI9bihyLHQpKS5sZW5ndGg7bnVsbCE9dCYmZTxhOyl0PXRbbyhyW2UrK10pXTtyZXR1cm4gZSYmZT09YT90OnZvaWQgMH19LDc0NzM6dD0+e3ZhciByPUZ1bmN0aW9uLnByb3RvdHlwZS50b1N0cmluZzt0LmV4cG9ydHM9ZnVuY3Rpb24odCl7aWYobnVsbCE9dCl7dHJ5e3JldHVybiByLmNhbGwodCl9Y2F0Y2godCl7fXRyeXtyZXR1cm4gdCsiIn1jYXRjaCh0KXt9fXJldHVybiIifX0sNzUzNDoodCxyLGUpPT57dmFyIG49ZSgyNTUyKSxvPWUoMzQ2KTt0LmV4cG9ydHM9ZnVuY3Rpb24odCl7cmV0dXJuIG8odCkmJiJbb2JqZWN0IEFyZ3VtZW50c10iPT1uKHQpfX0sNzU1NjoodCxyLGUpPT57dmFyIG49ZSgxODczKSxvPWUoNDkzMiksYT1lKDY0NDkpLGk9ZSg0Mzk0KSx1PW4/bi5wcm90b3R5cGU6dm9pZCAwLHM9dT91LnRvU3RyaW5nOnZvaWQgMDt0LmV4cG9ydHM9ZnVuY3Rpb24gdChyKXtpZigic3RyaW5nIj09dHlwZW9mIHIpcmV0dXJuIHI7aWYoYShyKSlyZXR1cm4gbyhyLHQpKyIiO2lmKGkocikpcmV0dXJuIHM/cy5jYWxsKHIpOiIiO3ZhciBlPXIrIiI7cmV0dXJuIjAiPT1lJiYxL3I9PS0xLzA/Ii0wIjplfX0sNzY3MDoodCxyLGUpPT57dmFyIG49ZSgyNjUxKTt0LmV4cG9ydHM9ZnVuY3Rpb24odCl7dmFyIHI9bih0aGlzLHQpLmRlbGV0ZSh0KTtyZXR1cm4gdGhpcy5zaXplLT1yPzE6MCxyfX0sNzc5NzoodCxyLGUpPT57dmFyIG49ZSg0Mzk0KTt0LmV4cG9ydHM9ZnVuY3Rpb24odCl7aWYoInN0cmluZyI9PXR5cGVvZiB0fHxuKHQpKXJldHVybiB0O3ZhciByPXQrIiI7cmV0dXJuIjAiPT1yJiYxL3Q9PS0xLzA/Ii0wIjpyfX0sNzgyODoodCxyLGUpPT57dmFyIG49ZSg5MzI1KS5VaW50OEFycmF5O3QuZXhwb3J0cz1ufSw3OTc4Oih0LHIsZSk9Pnt2YXIgbj1lKDI3MCksbz1lKDgxNTYpLGE9ZSg2MzEpLGk9ZSg4NTg2KSx1PWUoNzU2KSxzPWUoNzE5NyksYz1lKDc3OTcpO3QuZXhwb3J0cz1mdW5jdGlvbih0LHIpe3JldHVybiBpKHQpJiZ1KHIpP3MoYyh0KSxyKTpmdW5jdGlvbihlKXt2YXIgaT1vKGUsdCk7cmV0dXJuIHZvaWQgMD09PWkmJmk9PT1yP2EoZSx0KTpuKHIsaSwzKX19fSw4MDc3OnQ9Pnt0LmV4cG9ydHM9ZnVuY3Rpb24odCxyKXtyZXR1cm4gbnVsbCE9dCYmciBpbiBPYmplY3QodCl9fSw4MDk2OnQ9Pnt0LmV4cG9ydHM9ZnVuY3Rpb24odCxyKXtmb3IodmFyIGU9LTEsbj1BcnJheSh0KTsrK2U8dDspbltlXT1yKGUpO3JldHVybiBufX0sODE1NjoodCxyLGUpPT57dmFyIG49ZSg3NDIyKTt0LmV4cG9ydHM9ZnVuY3Rpb24odCxyLGUpe3ZhciBvPW51bGw9PXQ/dm9pZCAwOm4odCxyKTtyZXR1cm4gdm9pZCAwPT09bz9lOm99fSw4MjIzOih0LHIsZSk9Pnt2YXIgbj1lKDYxMTApKGUoOTMyNSksIk1hcCIpO3QuZXhwb3J0cz1ufSw4MzAzOih0LHIsZSk9Pnt2YXIgbj1lKDYxMTApKGUoOTMyNSksIldlYWtNYXAiKTt0LmV4cG9ydHM9bn0sODMyOToodCxyLGUpPT57dmFyIG49ZSg0ODk0KTt0LmV4cG9ydHM9ZnVuY3Rpb24odCxyKXtyZXR1cm4gZnVuY3Rpb24oZSxvKXtpZihudWxsPT1lKXJldHVybiBlO2lmKCFuKGUpKXJldHVybiB0KGUsbyk7Zm9yKHZhciBhPWUubGVuZ3RoLGk9cj9hOi0xLHU9T2JqZWN0KGUpOyhyP2ktLTorK2k8YSkmJiExIT09byh1W2ldLGksdSk7KTtyZXR1cm4gZX19fSw4NTg2Oih0LHIsZSk9Pnt2YXIgbj1lKDY0NDkpLG89ZSg0Mzk0KSxhPS9cLnxcWyg/OlteW1xdXSp8KFsiJ10pKD86KD8hXDEpW15cXF18XFwuKSo/XDEpXF0vLGk9L15cdyokLzt0LmV4cG9ydHM9ZnVuY3Rpb24odCxyKXtpZihuKHQpKXJldHVybiExO3ZhciBlPXR5cGVvZiB0O3JldHVybiEoIm51bWJlciIhPWUmJiJzeW1ib2wiIT1lJiYiYm9vbGVhbiIhPWUmJm51bGwhPXQmJiFvKHQpKXx8aS50ZXN0KHQpfHwhYS50ZXN0KHQpfHxudWxsIT1yJiZ0IGluIE9iamVjdChyKX19LDg2NTU6KHQscixlKT0+e3ZhciBuPWUoNjAyNSk7dC5leHBvcnRzPWZ1bmN0aW9uKHQpe3JldHVybiBuKHRoaXMuX19kYXRhX18sdCk+LTF9fSw4ODU5Oih0LHIsZSk9Pnt2YXIgbj1lKDM2NjEpLG89ZSgxMzgwKSxhPWUoMTQ1OSk7ZnVuY3Rpb24gaSh0KXt2YXIgcj0tMSxlPW51bGw9PXQ/MDp0Lmxlbmd0aDtmb3IodGhpcy5fX2RhdGFfXz1uZXcgbjsrK3I8ZTspdGhpcy5hZGQodFtyXSl9aS5wcm90b3R5cGUuYWRkPWkucHJvdG90eXBlLnB1c2g9byxpLnByb3RvdHlwZS5oYXM9YSx0LmV4cG9ydHM9aX0sODk4NDoodCxyLGUpPT57dmFyIG49ZSg1NTI3KSxvPWUoMzY1MCksYT1PYmplY3QucHJvdG90eXBlLmhhc093blByb3BlcnR5O3QuZXhwb3J0cz1mdW5jdGlvbih0KXtpZighbih0KSlyZXR1cm4gbyh0KTt2YXIgcj1bXTtmb3IodmFyIGUgaW4gT2JqZWN0KHQpKWEuY2FsbCh0LGUpJiYiY29uc3RydWN0b3IiIT1lJiZyLnB1c2goZSk7cmV0dXJuIHJ9fSw5MjE5OnQ9Pnt0LmV4cG9ydHM9ZnVuY3Rpb24odCxyKXtyZXR1cm4gdC5oYXMocil9fSw5MzI1Oih0LHIsZSk9Pnt2YXIgbj1lKDQ4NDApLG89Im9iamVjdCI9PXR5cGVvZiBzZWxmJiZzZWxmJiZzZWxmLk9iamVjdD09PU9iamVjdCYmc2VsZixhPW58fG98fEZ1bmN0aW9uKCJyZXR1cm4gdGhpcyIpKCk7dC5leHBvcnRzPWF9LDkzMjY6KHQscixlKT0+e3ZhciBuPWUoMTc2OSksbz1lKDI0MjgpLGE9ZSg2NDQ5KSxpPWUoMzYxKSx1PWUoMjk0KSxzPWUoNzc5Nyk7dC5leHBvcnRzPWZ1bmN0aW9uKHQscixlKXtmb3IodmFyIGM9LTEscD0ocj1uKHIsdCkpLmxlbmd0aCxmPSExOysrYzxwOyl7dmFyIHY9cyhyW2NdKTtpZighKGY9bnVsbCE9dCYmZSh0LHYpKSlicmVhazt0PXRbdl19cmV0dXJuIGZ8fCsrYyE9cD9mOiEhKHA9bnVsbD09dD8wOnQubGVuZ3RoKSYmdShwKSYmaSh2LHApJiYoYSh0KXx8byh0KSl9fSw5MzUwOnQ9Pnt2YXIgcj1PYmplY3QucHJvdG90eXBlLnRvU3RyaW5nO3QuZXhwb3J0cz1mdW5jdGlvbih0KXtyZXR1cm4gci5jYWxsKHQpfX0sOTc3MDp0PT57dC5leHBvcnRzPWZ1bmN0aW9uKHQscil7Zm9yKHZhciBlPS0xLG49bnVsbD09dD8wOnQubGVuZ3RoLG89MCxhPVtdOysrZTxuOyl7dmFyIGk9dFtlXTtyKGksZSx0KSYmKGFbbysrXT1pKX1yZXR1cm4gYX19LDk4MTc6dD0+e3QuZXhwb3J0cz1mdW5jdGlvbih0KXtyZXR1cm4gdGhpcy5fX2RhdGFfXy5oYXModCl9fSw5OTM1OnQ9Pnt0LmV4cG9ydHM9ZnVuY3Rpb24oKXtyZXR1cm4hMX19fSxyPXt9O2Z1bmN0aW9uIGUobil7dmFyIG89cltuXTtpZih2b2lkIDAhPT1vKXJldHVybiBvLmV4cG9ydHM7dmFyIGE9cltuXT17aWQ6bixsb2FkZWQ6ITEsZXhwb3J0czp7fX07cmV0dXJuIHRbbl0oYSxhLmV4cG9ydHMsZSksYS5sb2FkZWQ9ITAsYS5leHBvcnRzfWUubj10PT57dmFyIHI9dCYmdC5fX2VzTW9kdWxlPygpPT50LmRlZmF1bHQ6KCk9PnQ7cmV0dXJuIGUuZChyLHthOnJ9KSxyfSxlLmQ9KHQscik9Pntmb3IodmFyIG4gaW4gcillLm8ocixuKSYmIWUubyh0LG4pJiZPYmplY3QuZGVmaW5lUHJvcGVydHkodCxuLHtlbnVtZXJhYmxlOiEwLGdldDpyW25dfSl9LGUuZz1mdW5jdGlvbigpe2lmKCJvYmplY3QiPT10eXBlb2YgZ2xvYmFsVGhpcylyZXR1cm4gZ2xvYmFsVGhpczt0cnl7cmV0dXJuIHRoaXN8fG5ldyBGdW5jdGlvbigicmV0dXJuIHRoaXMiKSgpfWNhdGNoKHQpe2lmKCJvYmplY3QiPT10eXBlb2Ygd2luZG93KXJldHVybiB3aW5kb3d9fSgpLGUubz0odCxyKT0+T2JqZWN0LnByb3RvdHlwZS5oYXNPd25Qcm9wZXJ0eS5jYWxsKHQsciksZS5ubWQ9dD0+KHQucGF0aHM9W10sdC5jaGlsZHJlbnx8KHQuY2hpbGRyZW49W10pLHQpO3ZhciBuPXt9O2UuZChuLHtIOigpPT5wfSk7dmFyIG89ZSg4MTU2KSxhPWUubihvKSxpPWUoMjg3NyksdT1lLm4oaSkscz1lKDIwMTMpLGM9ZS5uKHMpO2NvbnN0IHA9KHtkYXRhOnQsYXJndW1lbnRzOntzb3J0OnIsZGlyOmV9fSk9Pntjb25zdCBuPWMoKSh0LnRoaXNNb250aENvbnN1bXB0aW9uLCJpdGVtX2lkIiksbz1jKCkodC5sYXN0TW9udGhDb25zdW1wdGlvbiwiaXRlbV9pZCIpLGk9YygpKHQudHdvTW9udGhzQWdvQ29uc3VtcHRpb24sIml0ZW1faWQiKSxzPWMoKSh0LmV4cGlyaW5nSW5TaXhNb250aHMsIml0ZW1faWQiKSxwPWMoKSh0LmV4cGlyaW5nSW5Ud2VsdmVNb250aHMsIml0ZW1faWQiKSxmPWMoKSh0LnN0b2NrT25PcmRlciwiaXRlbV9pZCIpLHY9YygpKHQuQU1DVHdlbHZlLCJpdGVtX2lkIiksbD1jKCkodC5BTUNUd2VudHlGb3VyLCJpdGVtX2lkIik7bGV0IGg9dC5pdGVtcy5ub2Rlcy5tYXAodD0+KHsuLi50LG1vbnRoQ29uc3VtcHRpb246blt0LmlkXT8uWzBdPy5xdWFudGl0eXx8MCxsYXN0TW9udGhDb25zdW1wdGlvbjpvW3QuaWRdPy5bMF0/LnF1YW50aXR5fHwwLHR3b01vbnRoc0Fnb0NvbnN1bXB0aW9uOmlbdC5pZF0/LlswXT8ucXVhbnRpdHl8fDAsZXhwaXJpbmdJblNpeE1vbnRoczpzW3QuaWRdPy5bMF0/LnF1YW50aXR5fHwwLGV4cGlyaW5nSW5Ud2VsdmVNb250aHM6cFt0LmlkXT8uWzBdPy5xdWFudGl0eXx8MCxzdG9ja09uT3JkZXI6TWF0aC5tYXgoMCxmW3QuaWRdPy5bMF0/LnF1YW50aXR5fHwwKSxBTUMxMjp2W3QuaWRdPy5bMF0/LnF1YW50aXR5fHwwLEFNQzI0OmxbdC5pZF0/LlswXT8ucXVhbnRpdHl8fDAsU09IOnQuc3RhdHM/LnN0b2NrT25IYW5kfHwwLE1PUzp0LnN0YXRzPy5hdmFpbGFibGVNb250aHNPZlN0b2NrT25IYW5kfHwwLEFNQzp0LnN0YXRzPy5hdmVyYWdlTW9udGhseUNvbnN1bXB0aW9ufHwwfSkpO3JldHVybntkYXRhOntpdGVtczp7bm9kZXM6dSgpKGgsdD0+e2NvbnN0IGU9YSgpKHQscnx8Im5hbWUiKTtyZXR1cm4ic3RyaW5nIj09dHlwZW9mIGU/ZS50b0xvY2FsZUxvd2VyQ2FzZSgpOmV9LGV8fCJhc2MiKX19fX0sZj1uLkg7ZXhwb3J0e2YgYXMgY29udmVydF9kYXRhfTs=",
           "convert_data_type": "BoaJs"
         },
         "entries": {
-          "query.graphql": {
-            "type": "GraphGLQuery",
+          "style.css": {
+            "type": "Resource",
+            "data": "@page {\n  margin: 0;\n  size: A4 landscape;\n}\n\n.paging {\n  width: 100%;\n}\n\n.container {\n  margin: auto;\n  padding: 10px;\n  font-size: 14px;\n  font-family: \"Helvetica Neue\", \"Helvetica\", Helvetica, Arial, sans-serif;\n  color: #555;\n}\n\n.container table {\n  width: 100%;\n  font-size: inherit;\n  font-family: inherit;\n  text-align: left;\n  margin-top: 10;\n  margin-bottom: 15;\n  border-collapse: separate;\n}\n\n.container table td {\n  padding: 10px;\n  vertical-align: top;\n  border-top: 1px solid rgb(164, 163, 163);\n}\n\n.container table tr:last-child td {\n  border-bottom: none;\n}\n\n.container > table > thead {\n  position: -webkit-sticky;\n  position: sticky;\n  top: 0;\n  background-color: #f1f1f1;\n}\n\n.container,\nbody,\n.container > table {\n  margin-top: 0px;\n  padding-top: 0px;\n}\n\n.container table tr.heading td {\n  font-weight: bold;\n  margin-bottom: 15px;\n}\n\n.container table td.status span {\n  padding: 2px;\n  border-radius: 10px;\n}\n"
+          },
+          "lastMonthConsumption": {
+            "type": "SQLQuery",
             "data": {
-              "query": "query ItemUsage($storeId: String!, $itemCode: String, $itemName: String) {\n  items(\n    storeId: $storeId\n    filter: {\n      code: { like: $itemCode }\n      name: { like: $itemName }\n      isVisibleOrOnHand: true\n      isActive: true\n    }\n  ) {\n    ... on ItemConnector {\n      nodes {\n        id\n        code\n        name\n        stats(storeId: $storeId) {\n          totalConsumption\n          availableMonthsOfStockOnHand\n          stockOnHand\n          averageMonthlyConsumption\n        }\n      }\n    }\n  }\n}\n",
-              "variables": null
+              "name": "lastMonthConsumption",
+              "query_sqlite": "WITH\n    this_month AS (\n        SELECT date('now', 'start of month') AS this_month\n    ),\n    last_month AS (\n        SELECT date('now', 'start of month', '-1 month') AS last_month\n    )\nSELECT\n    SUM(quantity) AS quantity,\n    item_id\nFROM consumption, this_month, last_month\nWHERE date >= last_month AND date < this_month AND store_id = $storeId\nGROUP BY item_id\n",
+              "query_postgres": "WITH\n    this_month AS (\n        SELECT date_trunc('month', CURRENT_DATE) AS this_month\n    ),\n    last_month AS (\n        SELECT date_trunc('month', CURRENT_DATE - interval '1 month') AS last_month\n    )\nSELECT\n    SUM(quantity) AS quantity,\n    item_id\nFROM consumption, this_month, last_month\nWHERE date >= last_month AND date < this_month AND store_id = $storeId\nGROUP BY item_id\n"
+            }
+          },
+          "expiringInSixMonths": {
+            "type": "SQLQuery",
+            "data": {
+              "name": "expiringInSixMonths",
+              "query_sqlite": "WITH \n    this_month AS (\n        SELECT date('now') AS this_month\n    ),\n    six_months AS (\n        SELECT date('now', '+6 months') AS six_months\n    )\nSELECT \n    stock_line.id,\n    i.item_id,\n    SUM(stock_line.available_number_of_packs) AS quantity\nFROM stock_line, six_months, this_month\nINNER JOIN item_link i ON i.id = stock_line.item_link_id\nWHERE stock_line.expiry_date < six_months AND stock_line.store_id = $storeId\nGROUP BY i.item_id\n",
+              "query_postgres": "WITH \n    this_month AS (\n        SELECT date_trunc('month', CURRENT_DATE) AS this_month\n    ),\n    six_months AS (\n        SELECT date_trunc('month', CURRENT_DATE + interval '6 months') AS six_months\n    )\nSELECT \n    s.id,\n    i.item_id,\n    SUM(s.available_number_of_packs) AS quantity\nFROM stock_line s\nINNER JOIN item_link i ON i.id = s.item_link_id\nINNER JOIN this_month ON true\nINNER JOIN six_months ON true\nWHERE s.expiry_date < six_months AND s.store_id = $storeId\nGROUP BY s.id, i.item_id\n"
             }
           },
           "expiringInTwelveMonths": {
@@ -774,6 +857,44 @@
               "name": "expiringInTwelveMonths",
               "query_sqlite": "WITH \n    this_month AS (\n        SELECT date('now') AS this_month\n    ),\n    twelve_months AS (\n        SELECT date('now', '+12 months') AS twelve_months\n    )\nSELECT \n    stock_line.id,\n    i.item_id,\n    SUM(stock_line.available_number_of_packs) AS quantity\nFROM stock_line, twelve_months, this_month\nINNER JOIN item_link i ON i.id = stock_line.item_link_id\nWHERE stock_line.expiry_date < twelve_months AND stock_line.store_id = $storeId\nGROUP BY item_id\n",
               "query_postgres": "WITH \n    this_month AS (\n        SELECT date_trunc('month', CURRENT_DATE) AS this_month\n    ),\n    twelve_months AS (\n        SELECT date_trunc('month', CURRENT_DATE + interval '12 months') AS twelve_months\n    )\nSELECT \n    s.id,\n    i.item_id,\n    SUM(s.available_number_of_packs) AS quantity\nFROM stock_line s\nINNER JOIN item_link i ON i.id = s.item_link_id\nINNER JOIN this_month ON true\nINNER JOIN twelve_months ON true\nWHERE s.expiry_date < twelve_months AND s.store_id = $storeId\nGROUP BY s.id, i.item_id"
+            }
+          },
+          "template.html": {
+            "type": "TeraTemplate",
+            "data": {
+              "output": "Html",
+              "template": "<style>\n  {% include \"style.css\" %}\n</style>\n\n<div class=\"container\">\n  <table>\n    <thead>\n      <tr class=\"heading\">\n        <td>{{t(k=\"label.code\", f=\"Code\")}}</td>\n        <td>{{t(k=\"label.name\", f=\"Name\")}}</td>\n        <td>{{t(k=\"report.stock-on-hand\", f=\"Stock on hand\")}}</td>\n        <td>{{t(k=\"report.stock-on-order\", f=\"Stock on order\")}}</td>\n        <td>{{t(k=\"report.amc-12-months\", f=\"AMC (12 months)\")}}</td>\n        <td>{{t(k=\"report.amc-24-months\", f=\"AMC (24 months)\")}}</td>\n        <td>{{t(k=\"report.amc-for-lookback\", f=\"AMC (lookback period)\")}}</td>\n        <td>{{t(k=\"report.months-cover\", f=\"Months cover\")}}</td>\n        <td>\n          {{t(k=\"report.usage-this-month\", f=\"Monthly usage (this month)\")}}\n        </td>\n        <td>\n          {{t(k=\"report.usage-last-month\", f=\"Monthly usage (last month)\")}}\n        </td>\n        <td>\n          {{t(k=\"report.usage-2-months-prior\", f=\"Monthly usage (2 months\n          ago)\")}}\n        </td>\n        <td>{{t(k=\"report.expiring-6-months\", f=\"Expiring in 6 months\")}}</td>\n        <td>{{t(k=\"report.expiring-12-months\", f=\"Expiring in 12 months\")}}</td>\n      </tr>\n    </thead>\n    <tbody>\n      {% for item in data.items.nodes %}\n      <tr>\n        <td>{{item.code}}</td>\n        <td>{{item.name}}</td>\n        <td>{{item.SOH | round( precision=1)}}</td>\n        <td>{{item.stockOnOrder}}</td>\n        <td>{{item.AMC12}}</td>\n        <td>{{item.AMC24}}</td>\n        <td>{{item.AMC | round( precision=1)}}</td>\n        <td>{{item.MOS | round( precision=1)}}</td>\n        <td>{{item.monthConsumption}}</td>\n        <td>{{item.lastMonthConsumption}}</td>\n        <td>{{item.twoMonthsAgoConsumption}}</td>\n        <td>{{item.expiringInSixMonths}}</td>\n        <td>{{item.expiringInTwelveMonths}}</td>\n      </tr>\n      {% endfor %}\n    </tbody>\n  </table>\n</div>\n"
+            }
+          },
+          "query.graphql": {
+            "type": "GraphGLQuery",
+            "data": {
+              "query": "query ItemUsage($storeId: String!, $itemCode: String, $itemName: String) {\n  items(\n    storeId: $storeId\n    filter: {\n      code: { like: $itemCode }\n      name: { like: $itemName }\n      isVisibleOrOnHand: true\n      isActive: true\n    }\n  ) {\n    ... on ItemConnector {\n      nodes {\n        id\n        code\n        name\n        stats(storeId: $storeId) {\n          totalConsumption\n          availableMonthsOfStockOnHand\n          stockOnHand\n          averageMonthlyConsumption\n        }\n      }\n    }\n  }\n}\n",
+              "variables": null
+            }
+          },
+          "stockOnOrder": {
+            "type": "SQLQuery",
+            "data": {
+              "name": "stockOnOrder",
+              "query_sqlite": "SELECT \n    item.id as item_id,\n    SUM(rl.requested_quantity) - COALESCE(SUM(il.pack_size * il.number_of_packs), 0) AS quantity\nFROM item\nINNER JOIN item_link i ON item.id = i.item_id\nLEFT JOIN requisition_line rl ON rl.item_link_id = i.id\nLEFT JOIN requisition r ON r.id = rl.requisition_id\nLEFT JOIN invoice ON invoice.requisition_id = r.id\nLEFT JOIN invoice_line il on invoice.id = il.invoice_id AND il.item_link_id = i.id\nWHERE r.store_id = $storeId AND r.type = 'REQUEST' AND r.status = 'SENT'\nGROUP BY 1",
+              "query_postgres": "SELECT \n    item.id as item_id,\n    SUM(rl.requested_quantity) - COALESCE(SUM(il.pack_size * il.number_of_packs), 0) AS quantity\nFROM item\nINNER JOIN item_link i ON item.id = i.item_id\nLEFT JOIN requisition_line rl ON rl.item_link_id = i.id\nLEFT JOIN requisition r ON r.id = rl.requisition_id\nLEFT JOIN invoice ON invoice.requisition_id = r.id\nLEFT JOIN invoice_line il on invoice.id = il.invoice_id AND il.item_link_id = i.id\nWHERE r.store_id = $storeId AND r.type = 'REQUEST' AND r.status = 'SENT'\nGROUP BY 1"
+            }
+          },
+          "twoMonthsAgoConsumption": {
+            "type": "SQLQuery",
+            "data": {
+              "name": "twoMonthsAgoConsumption",
+              "query_sqlite": "WITH\n    last_month AS (\n        SELECT date('now', 'start of month', '-1 month') AS last_month\n    ),\n    two_months_ago AS (\n        SELECT date('now', 'start of month', '-2 month') AS two_months_ago\n    )\nSELECT\n    SUM(quantity) AS quantity,\n    item_id\nFROM consumption, two_months_ago, last_month\nWHERE date >= two_months_ago AND date < last_month AND store_id = $storeId\nGROUP BY item_id\n",
+              "query_postgres": "WITH\n    last_month AS (\n        SELECT date_trunc('month', CURRENT_DATE - interval '1 month') AS last_month\n    ),\n    two_months_ago AS (\n        SELECT date_trunc('month', CURRENT_DATE - interval '2 month') AS two_months_ago\n    )\nSELECT\n    SUM(quantity) AS quantity,\n    item_id\nFROM consumption, two_months_ago, last_month\nWHERE date >= two_months_ago AND date < last_month AND store_id = $storeId\nGROUP BY item_id\n"
+            }
+          },
+          "thisMonthConsumption": {
+            "type": "SQLQuery",
+            "data": {
+              "name": "thisMonthConsumption",
+              "query_sqlite": "WITH\n    this_month AS (\n        SELECT date('now', 'start of month') AS this_month\n    )\nSELECT\n    SUM(quantity) AS quantity,\n    item_id\nFROM consumption, this_month\nWHERE date >= this_month AND store_id = $storeId\nGROUP BY item_id\n",
+              "query_postgres": "WITH\n    this_month AS (\n        SELECT date_trunc('month', CURRENT_DATE) AS this_month\n    )\nSELECT\n    SUM(quantity) AS quantity,\n    item_id\nFROM consumption, this_month\nWHERE date >= this_month AND store_id = $storeId\nGROUP BY item_id\n"
             }
           },
           "AMCTwelve": {
@@ -790,57 +911,6 @@
               "name": "AMCTwentyFour",
               "query_sqlite": "WITH\n    twenty_four_months_ago AS (\n        SELECT date('now', 'start of month', '-24 month') AS twenty_four_months_ago\n    )\nSELECT\n    ROUND(SUM(quantity / 24), 1) AS quantity,    \n    item_id\nFROM consumption, twenty_four_months_ago\nWHERE date >= twenty_four_months_ago AND consumption.store_id = $storeId\nGROUP BY item_id\n",
               "query_postgres": "WITH\n    twenty_four_months_ago AS (\n        SELECT date_trunc('month', CURRENT_DATE - interval '24 months') AS twenty_four_months_ago\n    )\nSELECT\n    ROUND(SUM(quantity / 24)::numeric, 1) AS quantity,\n    item_id\nFROM consumption, twenty_four_months_ago\nWHERE date >= twenty_four_months_ago AND consumption.store_id = $storeId\nGROUP BY item_id\n"
-            }
-          },
-          "thisMonthConsumption": {
-            "type": "SQLQuery",
-            "data": {
-              "name": "thisMonthConsumption",
-              "query_sqlite": "WITH\n    this_month AS (\n        SELECT date('now', 'start of month') AS this_month\n    )\nSELECT\n    SUM(quantity) AS quantity,\n    item_id\nFROM consumption, this_month\nWHERE date >= this_month AND store_id = $storeId\nGROUP BY item_id\n",
-              "query_postgres": "WITH\n    this_month AS (\n        SELECT date_trunc('month', CURRENT_DATE) AS this_month\n    )\nSELECT\n    SUM(quantity) AS quantity,\n    item_id\nFROM consumption, this_month\nWHERE date >= this_month AND store_id = $storeId\nGROUP BY item_id\n"
-            }
-          },
-          "template.html": {
-            "type": "TeraTemplate",
-            "data": {
-              "output": "Html",
-              "template": "<style>\n  {% include \"style.css\" %}\n</style>\n\n<div class=\"container\">\n  <table>\n    <thead>\n      <tr class=\"heading\">\n        <td>{{t(k=\"label.code\", f=\"Code\")}}</td>\n        <td>{{t(k=\"label.name\", f=\"Name\")}}</td>\n        <td>{{t(k=\"report.stock-on-hand\", f=\"Stock on hand\")}}</td>\n        <td>{{t(k=\"report.stock-on-order\", f=\"Stock on order\")}}</td>\n        <td>{{t(k=\"report.amc-12-months\", f=\"AMC (12 months)\")}}</td>\n        <td>{{t(k=\"report.amc-24-months\", f=\"AMC (24 months)\")}}</td>\n        <td>{{t(k=\"report.amc-for-lookback\", f=\"AMC (lookback period)\")}}</td>\n        <td>{{t(k=\"report.months-cover\", f=\"Months cover\")}}</td>\n        <td>\n          {{t(k=\"report.usage-this-month\", f=\"Monthly usage (this month)\")}}\n        </td>\n        <td>\n          {{t(k=\"report.usage-last-month\", f=\"Monthly usage (last month)\")}}\n        </td>\n        <td>\n          {{t(k=\"report.usage-2-months-prior\", f=\"Monthly usage (2 months\n          ago)\")}}\n        </td>\n        <td>{{t(k=\"report.expiring-6-months\", f=\"Expiring in 6 months\")}}</td>\n        <td>{{t(k=\"report.expiring-12-months\", f=\"Expiring in 12 months\")}}</td>\n      </tr>\n    </thead>\n    <tbody>\n      {% for item in data.items.nodes %}\n      <tr>\n        <td>{{item.code}}</td>\n        <td>{{item.name}}</td>\n        <td>{{item.SOH | round( precision=1)}}</td>\n        <td>{{item.stockOnOrder}}</td>\n        <td>{{item.AMC12}}</td>\n        <td>{{item.AMC24}}</td>\n        <td>{{item.AMC | round( precision=1)}}</td>\n        <td>{{item.MOS | round( precision=1)}}</td>\n        <td>{{item.monthConsumption}}</td>\n        <td>{{item.lastMonthConsumption}}</td>\n        <td>{{item.twoMonthsAgoConsumption}}</td>\n        <td>{{item.expiringInSixMonths}}</td>\n        <td>{{item.expiringInTwelveMonths}}</td>\n      </tr>\n      {% endfor %}\n    </tbody>\n  </table>\n</div>\n"
-            }
-          },
-          "stockOnOrder": {
-            "type": "SQLQuery",
-            "data": {
-              "name": "stockOnOrder",
-              "query_sqlite": "SELECT \n    item.id as item_id,\n    SUM(rl.requested_quantity) - COALESCE(SUM(il.pack_size * il.number_of_packs), 0) AS quantity\nFROM item\nINNER JOIN item_link i ON item.id = i.item_id\nLEFT JOIN requisition_line rl ON rl.item_link_id = i.id\nLEFT JOIN requisition r ON r.id = rl.requisition_id\nLEFT JOIN invoice ON invoice.requisition_id = r.id\nLEFT JOIN invoice_line il on invoice.id = il.invoice_id AND il.item_link_id = i.id\nWHERE r.store_id = $storeId AND r.type = 'REQUEST' AND r.status = 'SENT'\nGROUP BY 1",
-              "query_postgres": "SELECT \n    item.id as item_id,\n    SUM(rl.requested_quantity) - COALESCE(SUM(il.pack_size * il.number_of_packs), 0) AS quantity\nFROM item\nINNER JOIN item_link i ON item.id = i.item_id\nLEFT JOIN requisition_line rl ON rl.item_link_id = i.id\nLEFT JOIN requisition r ON r.id = rl.requisition_id\nLEFT JOIN invoice ON invoice.requisition_id = r.id\nLEFT JOIN invoice_line il on invoice.id = il.invoice_id AND il.item_link_id = i.id\nWHERE r.store_id = $storeId AND r.type = 'REQUEST' AND r.status = 'SENT'\nGROUP BY 1"
-            }
-          },
-          "expiringInSixMonths": {
-            "type": "SQLQuery",
-            "data": {
-              "name": "expiringInSixMonths",
-              "query_sqlite": "WITH \n    this_month AS (\n        SELECT date('now') AS this_month\n    ),\n    six_months AS (\n        SELECT date('now', '+6 months') AS six_months\n    )\nSELECT \n    stock_line.id,\n    i.item_id,\n    SUM(stock_line.available_number_of_packs) AS quantity\nFROM stock_line, six_months, this_month\nINNER JOIN item_link i ON i.id = stock_line.item_link_id\nWHERE stock_line.expiry_date < six_months AND stock_line.store_id = $storeId\nGROUP BY i.item_id\n",
-              "query_postgres": "WITH \n    this_month AS (\n        SELECT date_trunc('month', CURRENT_DATE) AS this_month\n    ),\n    six_months AS (\n        SELECT date_trunc('month', CURRENT_DATE + interval '6 months') AS six_months\n    )\nSELECT \n    s.id,\n    i.item_id,\n    SUM(s.available_number_of_packs) AS quantity\nFROM stock_line s\nINNER JOIN item_link i ON i.id = s.item_link_id\nINNER JOIN this_month ON true\nINNER JOIN six_months ON true\nWHERE s.expiry_date < six_months AND s.store_id = $storeId\nGROUP BY s.id, i.item_id\n"
-            }
-          },
-          "twoMonthsAgoConsumption": {
-            "type": "SQLQuery",
-            "data": {
-              "name": "twoMonthsAgoConsumption",
-              "query_sqlite": "WITH\n    last_month AS (\n        SELECT date('now', 'start of month', '-1 month') AS last_month\n    ),\n    two_months_ago AS (\n        SELECT date('now', 'start of month', '-2 month') AS two_months_ago\n    )\nSELECT\n    SUM(quantity) AS quantity,\n    item_id\nFROM consumption, two_months_ago, last_month\nWHERE date >= two_months_ago AND date < last_month AND store_id = $storeId\nGROUP BY item_id\n",
-              "query_postgres": "WITH\n    last_month AS (\n        SELECT date_trunc('month', CURRENT_DATE - interval '1 month') AS last_month\n    ),\n    two_months_ago AS (\n        SELECT date_trunc('month', CURRENT_DATE - interval '2 month') AS two_months_ago\n    )\nSELECT\n    SUM(quantity) AS quantity,\n    item_id\nFROM consumption, two_months_ago, last_month\nWHERE date >= two_months_ago AND date < last_month AND store_id = $storeId\nGROUP BY item_id\n"
-            }
-          },
-          "style.css": {
-            "type": "Resource",
-            "data": "@page {\n  margin: 0;\n  size: A4 landscape;\n}\n\n.paging {\n  width: 100%;\n}\n\n.container {\n  margin: auto;\n  padding: 10px;\n  font-size: 14px;\n  font-family: \"Helvetica Neue\", \"Helvetica\", Helvetica, Arial, sans-serif;\n  color: #555;\n}\n\n.container table {\n  width: 100%;\n  font-size: inherit;\n  font-family: inherit;\n  text-align: left;\n  margin-top: 10;\n  margin-bottom: 15;\n  border-collapse: separate;\n}\n\n.container table td {\n  padding: 10px;\n  vertical-align: top;\n  border-top: 1px solid rgb(164, 163, 163);\n}\n\n.container table tr:last-child td {\n  border-bottom: none;\n}\n\n.container > table > thead {\n  position: -webkit-sticky;\n  position: sticky;\n  top: 0;\n  background-color: #f1f1f1;\n}\n\n.container,\nbody,\n.container > table {\n  margin-top: 0px;\n  padding-top: 0px;\n}\n\n.container table tr.heading td {\n  font-weight: bold;\n  margin-bottom: 15px;\n}\n\n.container table td.status span {\n  padding: 2px;\n  border-radius: 10px;\n}\n"
-          },
-          "lastMonthConsumption": {
-            "type": "SQLQuery",
-            "data": {
-              "name": "lastMonthConsumption",
-              "query_sqlite": "WITH\n    this_month AS (\n        SELECT date('now', 'start of month') AS this_month\n    ),\n    last_month AS (\n        SELECT date('now', 'start of month', '-1 month') AS last_month\n    )\nSELECT\n    SUM(quantity) AS quantity,\n    item_id\nFROM consumption, this_month, last_month\nWHERE date >= last_month AND date < this_month AND store_id = $storeId\nGROUP BY item_id\n",
-              "query_postgres": "WITH\n    this_month AS (\n        SELECT date_trunc('month', CURRENT_DATE) AS this_month\n    ),\n    last_month AS (\n        SELECT date_trunc('month', CURRENT_DATE - interval '1 month') AS last_month\n    )\nSELECT\n    SUM(quantity) AS quantity,\n    item_id\nFROM consumption, this_month, last_month\nWHERE date >= last_month AND date < this_month AND store_id = $storeId\nGROUP BY item_id\n"
             }
           }
         }
@@ -1002,119 +1072,6 @@
       "excel_template_buffer": null
     },
     {
-      "id": "outbound-shipments_2_10_1_false",
-      "name": "Outbound Shipments",
-      "template": {
-        "index": {
-          "template": "template.html",
-          "header": null,
-          "footer": null,
-          "query": [
-            "query.graphql"
-          ],
-          "convert_data": "ZnVuY3Rpb24gZShlKXtyZXR1cm4oZT0+e2lmKCFlKXJldHVybntkYXRhOnZvaWQgMH07Y29uc3QgdD1uZXcgTWFwLGE9bmV3IE1hcDtlLm5vZGVzLmZvckVhY2goZT0+e2UubGluZXMubm9kZXMuZm9yRWFjaChyPT57Y29uc3Qgbz1gJHtyLml0ZW0uY29kZX0tJHtlLm90aGVyUGFydHlOYW1lfWA7dC5zZXQobywodC5nZXQobyl8fDApK3IuY29zdFByaWNlUGVyUGFjaypyLm51bWJlck9mUGFja3MpLGEuc2V0KG8sKGEuZ2V0KG8pfHwwKSsxKX0pfSk7Y29uc3Qgcj1bXSxvPW5ldyBNYXA7cmV0dXJuIGUubm9kZXMuZm9yRWFjaChlPT57ZS5saW5lcy5ub2Rlcy5mb3JFYWNoKGM9Pntjb25zdCBpPWAke2MuaXRlbS5jb2RlfS0ke2Uub3RoZXJQYXJ0eU5hbWV9YCxuPShvLmdldChpKXx8MCkrMTtvLnNldChpLG4pO2NvbnN0IHM9bj09PWEuZ2V0KGkpO3IucHVzaCh7aWQ6Yy5pZCxpdGVtQ29kZTpjLml0ZW0uY29kZSxpdGVtTmFtZTpjLml0ZW0ubmFtZSxiYXRjaDpjLmJhdGNoLGV4cGlyeURhdGU6Yy5leHBpcnlEYXRlLHBhY2tTaXplOmMucGFja1NpemUsbnVtYmVyT2ZQYWNrczpjLm51bWJlck9mUGFja3MsbnVtYmVyT2ZVbml0czpjLm51bWJlck9mUGFja3MqYy5wYWNrU2l6ZSxjb3N0UHJpY2VQZXJQYWNrOmMuY29zdFByaWNlUGVyUGFjayx0b3RhbENvc3Q6cz90LmdldChpKS50b0ZpeGVkKDIpOiItIixvdGhlclBhcnR5TmFtZTplLm90aGVyUGFydHlOYW1lfSl9KX0pLHtkYXRhOntsaW5lczpyLnNvcnQoKGUsdCk9PmUuaXRlbU5hbWUubG9jYWxlQ29tcGFyZSh0Lml0ZW1OYW1lKXx8ZS5vdGhlclBhcnR5TmFtZS5sb2NhbGVDb21wYXJlKHQub3RoZXJQYXJ0eU5hbWUpKX19fSkoZT8uZGF0YT8uaW52b2ljZXMpfWV4cG9ydHtlIGFzIGNvbnZlcnRfZGF0YX07",
-          "convert_data_type": "BoaJs"
-        },
-        "entries": {
-          "style.css": {
-            "type": "Resource",
-            "data": "@page {\n  margin: 0;\n  size: A4 landscape;\n}\n\n.paging {\n  width: 100%;\n}\n\n.container {\n  margin: auto;\n  padding: 10px;\n  font-size: 14px;\n  font-family: \"Helvetica Neue\", \"Helvetica\", Helvetica, Arial, sans-serif;\n  color: #555;\n}\n\n.container table {\n  width: 100%;\n  font-size: inherit;\n  font-family: inherit;\n  text-align: left;\n  margin-top: 10;\n  margin-bottom: 15;\n  border-collapse: separate;\n}\n\n.container table td {\n  padding: 10px;\n  vertical-align: top;\n  border-top: 1px solid rgb(164, 163, 163);\n}\n\n.container table tr:last-child td {\n  border-bottom: none;\n}\n\n.container>table>thead {\n  position: -webkit-sticky;\n  position: sticky;\n  top: 0;\n  background-color: #f1f1f1;\n}\n\n.container,\nbody,\n.container>table {\n  margin-top: 0px;\n  padding-top: 0px;\n}\n\n.container table tr.heading td {\n  font-weight: bold;\n  margin-bottom: 15px;\n}\n\n.container table td.status span {\n  padding: 2px;\n  border-radius: 10px;\n}\n"
-          },
-          "template.html": {
-            "type": "TeraTemplate",
-            "data": {
-              "output": "Html",
-              "template": "<style>\n  {% include \"style.css\" %}\n</style>\n\n<div class=\"container\">\n  <table>\n    <thead>\n      <tr class=\"heading\">\n        <td>{{t(k=\"label.customer\", f=\"Customer\")}}</td>\n        <td>{{t(k=\"label.code\", f=\"Code\")}}</td>\n        <td>{{t(k=\"label.name\", f=\"Name\")}}</td>\n        <td>{{t(k=\"label.batch\", f=\"Batch\")}}</td>\n        <td>{{t(k=\"label.expiry\", f=\"Expiry\")}}</td>\n        <td>{{t(k=\"label.pack-size\", f=\"Pack size\")}}</td>\n        <td>{{t(k=\"label.num-packs\", f=\"Number of packs\")}}</td>\n        <td>{{t(k=\"label.number-of-units\", f=\"Number of units\")}}</td>\n        <td>{{t(k=\"description.pack-cost\", f=\"Cost price per pack\")}}</td>\n        <td>{{t(k=\"label.total-cost\", f=\"Total cost\")}}</td>\n      </tr>\n    </thead>\n    <tbody>\n      {% for line in data.lines %}\n      <tr>\n        <td>{{line.otherPartyName}}</td>\n        <td>{{line.itemCode}}</td>\n        <td>{{line.itemName}}</td>\n        <td>{{line.batch | default(value='')}}</td>\n        <td>\n          {%if line.expiryDate %}\n          {{line.expiryDate | date(format=\"%d/%m/%Y\")}}\n          {% else %}\n          {% endif %}\n        </td>\n        <td style=\"text-align: right\">{{line.packSize}}</td>\n        <td style=\"text-align: right\">{{line.numberOfPacks}}</td>\n        <td style=\"text-align: right\">{{line.numberOfUnits}}</td>\n        <td style=\"text-align: right\">{{line.costPricePerPack}}</td>\n        <td style=\"text-align: right\">{{line.totalCost}}</td>\n      </tr>\n      {% endfor %}\n    </tbody>\n  </table>\n</div>"
-            }
-          },
-          "query.graphql": {
-            "type": "GraphGLQuery",
-            "data": {
-              "query": "query OutboundShipments(\n  $storeId: String\n  $otherPartyId: String\n  $before: String\n  $after: String\n) {\n  invoices(\n    storeId: $storeId\n    filter: {\n      type: { equalTo: OUTBOUND_SHIPMENT }\n      status: { equalAny: [SHIPPED, DELIVERED, VERIFIED]}\n      otherPartyId: { equalTo: $otherPartyId }\n      shippedDatetime: { afterOrEqualTo: $after, beforeOrEqualTo: $before }\n    }\n  ) {\n    ... on InvoiceConnector {\n      nodes {\n        id\n        otherPartyName\n        lines {\n          nodes {\n            id\n            item {\n              id\n              code\n              name\n            }\n            batch\n            expiryDate\n            numberOfPacks\n            packSize\n            costPricePerPack\n          }\n        }\n      }\n    }\n  }\n}\n",
-              "variables": null
-            }
-          }
-        }
-      },
-      "context": "REPORT",
-      "sub_context": "Distribution",
-      "argument_schema_id": "for_report_outbound-shipments_2_10_1_false",
-      "comment": null,
-      "is_custom": false,
-      "version": "2.10.1",
-      "code": "outbound-shipments",
-      "form_schema": {
-        "id": "for_report_outbound-shipments_2_10_1_false",
-        "type": "reportArgument",
-        "json_schema": {
-          "$schema": "http://json-schema.org/draft-07/schema#",
-          "allOf": [
-            {
-              "$ref": "#/definitions/Filters"
-            }
-          ],
-          "definitions": {
-            "Filters": {
-              "properties": {
-                "after": {
-                  "description": "From date",
-                  "format": "date-time",
-                  "type": "string"
-                },
-                "before": {
-                  "description": "To date",
-                  "format": "date-time",
-                  "type": "string"
-                },
-                "otherPartyId": {
-                  "description": "Filter by other party",
-                  "type": [
-                    "string",
-                    "null"
-                  ]
-                }
-              }
-            }
-          },
-          "type": "object"
-        },
-        "ui_schema": {
-          "elements": [
-            {
-              "label": "T#label.customer",
-              "options": {
-                "nameType": "customer"
-              },
-              "scope": "#/properties/otherPartyId",
-              "type": "NameSearch"
-            },
-            {
-              "label": "T#label.from-date",
-              "options": {
-                "dateOnly": true,
-                "disableFuture": true,
-                "max": "#/properties/before"
-              },
-              "scope": "#/properties/after",
-              "type": "Control"
-            },
-            {
-              "label": "T#label.to-date",
-              "options": {
-                "dateOnly": true,
-                "disableFuture": true,
-                "min": "#/properties/after"
-              },
-              "scope": "#/properties/before",
-              "type": "Control"
-            }
-          ],
-          "type": "VerticalLayout"
-        }
-      },
-      "excel_template_buffer": null
-    },
-    {
       "id": "stock-detail_2_6_3_false",
       "name": "Stock Detail",
       "template": {
@@ -1136,16 +1093,16 @@
               "template": "<style>\n  {% include \"style.css\" %}\n</style>\n\n<div class=\"container\">\n  <table>\n    <thead>\n      <tr class=\"heading\">\n        <td>{{t(k=\"label.code\", f=\"Code\")}}</td>\n        <td>{{t(k=\"label.name\", f=\"Name\")}}</td>\n        <td>{{t(k=\"label.batch\", f=\"Batch\")}}</td>\n        <td>{{t(k=\"label.expiry\", f=\"Expiry\")}}</td>\n        <td>{{t(k=\"label.location\", f=\"Location\")}}</td>\n        <td>{{t(k=\"label.unit\", f=\"Unit\")}}</td>\n        <td>{{t(k=\"report.pack-size\", f=\"Pack size\")}}</td>\n        <td>{{t(k=\"report.pack-quantity\", f=\"Pack quantity\")}}</td>\n        <td>{{t(k=\"label.soh\", f=\"SOH\")}}</td>\n        <td>{{t(k=\"label.supplier\", f=\"Supplier\")}}</td>\n      </tr>\n    </thead>\n    <tbody>\n      {% for stockLine in data.stockLines.nodes %}\n\n      <tr>\n        <td>{{stockLine.item.code}}</td>\n        <td>{{stockLine.item.name}}</td>\n        <td>{{stockLine.batch | default(value='')}}</td>\n        <td>\n          {%if stockLine.expiryDate %}\n          {{stockLine.expiryDate | date(format=\"%d/%m/%Y\")}}\n          {% else %}\n          \n          {% endif %}\n        </td>\n        <td>{{stockLine.location.code | default(value='')}}</td>\n        <td>{{stockLine.item.unitName | default(value='')}}</td>\n        <td>{{stockLine.packSize }}</td>\n        <td>{{stockLine.totalNumberOfPacks}}</td>\n        <td>{{\n          stockLine.totalNumberOfPacks * stockLine.packSize | round( precision=1)  \n        }}</td>\n        <td>{{stockLine.supplierName | default(value='')}}</td>    \n      </tr>\n      {% endfor %}\n    </tbody>\n  </table>\n</div>\n"
             }
           },
-          "style.css": {
-            "type": "Resource",
-            "data": "@page {\n  margin: 0;\n  size: A4 landscape;\n}\n\n.paging {\n  width: 100%;\n}\n\n.container {\n  margin: auto;\n  padding: 10px;\n  font-size: 14px;\n  font-family: \"Helvetica Neue\", \"Helvetica\", Helvetica, Arial, sans-serif;\n  color: #555;\n}\n\n.container table {\n  width: 100%;\n  font-size: inherit;\n  font-family: inherit;\n  text-align: left;\n  margin-top: 10;\n  margin-bottom: 15;\n  border-collapse: separate;\n}\n\n.container table td {\n  padding: 10px;\n  vertical-align: top;\n  border-top: 1px solid rgb(164, 163, 163);\n}\n\n.container table tr:last-child td {\n  border-bottom: none;\n}\n\n.container>table>thead {\n  position: -webkit-sticky;\n  position: sticky;\n  top: 0;\n  background-color: #f1f1f1;\n}\n\n.container,\nbody,\n.container>table {\n  margin-top: 0px;\n  padding-top: 0px;\n}\n\n.container table tr.heading td {\n  font-weight: bold;\n  margin-bottom: 15px;\n}\n\n.container table td.status span {\n  padding: 2px;\n  border-radius: 10px;\n}\n"
-          },
           "query.graphql": {
             "type": "GraphGLQuery",
             "data": {
               "query": "query StockDetail($storeId: String, $itemCodeOrName: String) {\n  stockLines(\n    storeId: $storeId\n    filter: {\n      itemCodeOrName: { like: $itemCodeOrName }\n      hasPacksInStore: true\n      isActive: true\n    }\n  ) {\n    ... on StockLineConnector {\n      nodes {\n        batch\n        expiryDate\n        id\n        packSize\n        storeId\n        totalNumberOfPacks\n        supplierName\n        location {\n          code\n        }\n        item {\n          code\n          name\n          unitName\n        }\n      }\n    }\n  }\n}\n",
               "variables": null
             }
+          },
+          "style.css": {
+            "type": "Resource",
+            "data": "@page {\n  margin: 0;\n  size: A4 landscape;\n}\n\n.paging {\n  width: 100%;\n}\n\n.container {\n  margin: auto;\n  padding: 10px;\n  font-size: 14px;\n  font-family: \"Helvetica Neue\", \"Helvetica\", Helvetica, Arial, sans-serif;\n  color: #555;\n}\n\n.container table {\n  width: 100%;\n  font-size: inherit;\n  font-family: inherit;\n  text-align: left;\n  margin-top: 10;\n  margin-bottom: 15;\n  border-collapse: separate;\n}\n\n.container table td {\n  padding: 10px;\n  vertical-align: top;\n  border-top: 1px solid rgb(164, 163, 163);\n}\n\n.container table tr:last-child td {\n  border-bottom: none;\n}\n\n.container>table>thead {\n  position: -webkit-sticky;\n  position: sticky;\n  top: 0;\n  background-color: #f1f1f1;\n}\n\n.container,\nbody,\n.container>table {\n  margin-top: 0px;\n  padding-top: 0px;\n}\n\n.container table tr.heading td {\n  font-weight: bold;\n  margin-bottom: 15px;\n}\n\n.container table td.status span {\n  padding: 2px;\n  border-radius: 10px;\n}\n"
           }
         }
       },
@@ -1263,97 +1220,76 @@
       "excel_template_buffer": null
     },
     {
-      "id": "stock-status_2_6_3_false",
-      "name": "Stock Status",
+      "id": "pending-encounters_2_9_0_false",
+      "name": "Pending Encounters",
       "template": {
         "index": {
           "template": "template.html",
           "header": null,
           "footer": null,
           "query": [
-            "query.graphql"
+            "encountersQuery.graphql"
           ],
-          "convert_data": "dmFyIGU9ezM3ODplPT57Y29uc3QgdD1lPT57bGV0IHI9e307cmV0dXJuIE9iamVjdC5rZXlzKGUpLmZvckVhY2goZnVuY3Rpb24obyl7IiIhPT1lW29dJiZ2b2lkIDAhPT1lW29dJiZudWxsIT09ZVtvXSYmKCJvYmplY3QiPT10eXBlb2YgZVtvXT9yW29dPXQoZVtvXSk6cltvXT1lW29dKX0pLHJ9LHI9KGUsdCk9Pih0Kz0iIikuc3BsaXQoIi4iKS5yZWR1Y2UoKGUsdCk9PmUmJmVbdF0sZSk7ZS5leHBvcnRzPXtjbGVhblVwT2JqZWN0OnQsY2xlYW5VcE5vZGVzOmU9PntsZXQgcj1bXTtyZXR1cm4gZS5mb3JFYWNoKGU9PnswIT1PYmplY3Qua2V5cyhlKS5sZW5ndGgmJnIucHVzaCh0KGUpKX0pLHJ9LGdldE5lc3RlZFZhbHVlOnIsc29ydE5vZGVzOihlLHQsbyk9Pih0JiZlLnNvcnQoKGUsbik9PntsZXQgcz1yKGUsdCk7InN0cmluZyI9PXR5cGVvZiBzJiYocz1zLnRvTG9jYWxlTG93ZXJDYXNlKCkpO2xldCBhPXIobix0KTtyZXR1cm4ic3RyaW5nIj09dHlwZW9mIGEmJihhPWEudG9Mb2NhbGVMb3dlckNhc2UoKSksbnVsbD09cyYmbnVsbD09YT8wOm51bGw9PXM/ImFzYyI9PT1vPy0xOjE6bnVsbD09YT8iYXNjIj09PW8/MTotMTpzPT09YT8wOiJhc2MiPT09bz9zPmE/MTotMTpzPGE/MTotMX0pLGUpfX19LHQ9e307ZnVuY3Rpb24gcihvKXt2YXIgbj10W29dO2lmKHZvaWQgMCE9PW4pcmV0dXJuIG4uZXhwb3J0czt2YXIgcz10W29dPXtleHBvcnRzOnt9fTtyZXR1cm4gZVtvXShzLHMuZXhwb3J0cyxyKSxzLmV4cG9ydHN9ci5kPShlLHQpPT57Zm9yKHZhciBvIGluIHQpci5vKHQsbykmJiFyLm8oZSxvKSYmT2JqZWN0LmRlZmluZVByb3BlcnR5KGUsbyx7ZW51bWVyYWJsZTohMCxnZXQ6dFtvXX0pfSxyLm89KGUsdCk9Pk9iamVjdC5wcm90b3R5cGUuaGFzT3duUHJvcGVydHkuY2FsbChlLHQpO3ZhciBvPXIoMzc4KTtmdW5jdGlvbiBuKGUpe3JldHVybiBlLmRhdGEuaXRlbXMubm9kZXM9KChlLHQscik9PntsZXQgbj0oMCxvLmNsZWFuVXBOb2RlcykoZSk7cmV0dXJuKDAsby5zb3J0Tm9kZXMpKG4sdCxyKX0pKGUuZGF0YS5pdGVtcy5ub2RlcyxlPy5hcmd1bWVudHM/LnNvcnQ/PyJuYW1lIixlPy5hcmd1bWVudHM/LmRpcj8/ImFzYyIpLGV9ZXhwb3J0e24gYXMgY29udmVydF9kYXRhfTs=",
+          "convert_data": "dmFyIHQ9ezQxMzp0PT57ZnVuY3Rpb24gZSh0KXtyZXR1cm4gdD43PyJMVEZVIjp0PjA/IkxBVEUiOiIifXQuZXhwb3J0cz17YXBwbHlEYXlzTGF0ZTpmdW5jdGlvbih0KXtyZXR1cm4gdC5tYXAodD0+e2NvbnN0IHI9bmV3IERhdGUodC5zdGFydERhdGV0aW1lKSxhPU1hdGguZmxvb3IoKG5ldyBEYXRlLXIpLzg2NGU1KSxuPWE+MD9hOjAsbz1lKG4pO3JldHVybnsuLi50LGRheXNMYXRlOm4sc3RhdHVzOm99fSl9LGdldFN0YXR1czplfX19LGU9e307ZnVuY3Rpb24gcihhKXt2YXIgbj1lW2FdO2lmKHZvaWQgMCE9PW4pcmV0dXJuIG4uZXhwb3J0czt2YXIgbz1lW2FdPXtleHBvcnRzOnt9fTtyZXR1cm4gdFthXShvLG8uZXhwb3J0cyxyKSxvLmV4cG9ydHN9ci5uPXQ9Pnt2YXIgZT10JiZ0Ll9fZXNNb2R1bGU/KCk9PnQuZGVmYXVsdDooKT0+dDtyZXR1cm4gci5kKGUse2E6ZX0pLGV9LHIuZD0odCxlKT0+e2Zvcih2YXIgYSBpbiBlKXIubyhlLGEpJiYhci5vKHQsYSkmJk9iamVjdC5kZWZpbmVQcm9wZXJ0eSh0LGEse2VudW1lcmFibGU6ITAsZ2V0OmVbYV19KX0sci5vPSh0LGUpPT5PYmplY3QucHJvdG90eXBlLmhhc093blByb3BlcnR5LmNhbGwodCxlKTt2YXIgYT17fTtyLmQoYSx7SDooKT0+b30pO3ZhciBuPXIoNDEzKTtmdW5jdGlvbiBvKHQpe3JldHVybiB0LmRhdGEuZW5jb3VudGVycy5ub2Rlcz0oMCxuLmFwcGx5RGF5c0xhdGUpKHQuZGF0YS5lbmNvdW50ZXJzLm5vZGVzKSx0fWNvbnN0IHM9YS5IO2V4cG9ydHtzIGFzIGNvbnZlcnRfZGF0YX07",
           "convert_data_type": "BoaJs"
         },
         "entries": {
-          "style.css": {
+          "encounters.css": {
             "type": "Resource",
-            "data": "@page {\n  margin: 0;\n  size: A4 landscape;\n}\n\n.paging {\n  width: 100%;\n}\n\n.container {\n  margin: auto;\n  padding: 10px;\n  font-size: 14px;\n  font-family: \"Helvetica Neue\", \"Helvetica\", Helvetica, Arial, sans-serif;\n  color: #555;\n}\n\n.container table {\n  width: 100%;\n  font-size: inherit;\n  font-family: inherit;\n  text-align: left;\n  margin-top: 10;\n  margin-bottom: 15;\n  border-collapse: separate;\n}\n\n.container table td {\n  padding: 10px;\n  vertical-align: top;\n  border-top: 1px solid rgb(164, 163, 163);\n}\n\n.container table tr:last-child td {\n  border-bottom: none;\n}\n\n.container>table>thead {\n  position: -webkit-sticky;\n  position: sticky;\n  top: 0;\n  background-color: #f1f1f1;\n}\n\n.container,\nbody,\n.container>table {\n  margin-top: 0px;\n  padding-top: 0px;\n}\n\n.container table tr.heading td {\n  font-weight: bold;\n  margin-bottom: 15px;\n}\n\n.container table td.status span {\n  padding: 2px;\n  border-radius: 10px;\n}\n\n\n.container table td.status span::before {\n  content: '';\n  display: inline-block;\n  width: 10px;\n  height: 10px;\n  border-radius: 50%;\n  margin-right: 5px;\n}\n\n.container table td.status span.out-of-stock::before {\n  background-color: #f40502;\n}\n\n.container table td.status span.out-of-stock {\n   padding: 3px 10px;\n  white-space: nowrap;\n  background-color: #fbcdcc;\n}\n\n.container table td.status span.overstocked::before {\n  background-color: #0260f7;\n}\n\n.container table td.status span.overstocked {\n  padding: 3px 10px;\n  white-space: nowrap;\n  background-color: #d9d9ff;\n}\n\n.container table td.status span.understocked::before {\n  background-color: #f79a02;\n}\n\n.container table td.status span.understocked {\n  padding: 3px 10px;\n  white-space: nowrap;\n  background-color: #fdebcc;\n}\n\n.container table td.status span.well-stocked::before {\n  background-color: #33a902;\n}\n\n.container table td.status span.well-stocked {\n  padding: 3px 10px;\n  white-space: nowrap;\n  background-color: #d6eecc;\n}\n\n.container table td.status span.no-consumption::before {\n  background-color: #8f90a6;\n}\n\n.container table td.status span.no-consumption {\n  padding: 3px 10px;\n  white-space: nowrap;\n  background-color: #e9e9ed;\n}\n"
+            "data": "@page {\n    margin: 0;\n    size: A4 landscape;\n  }\n  \n  .container {\n    margin: auto;\n    padding: 10px;\n    font-size: 14px;\n    font-family: \"Helvetica Neue\", \"Helvetica\", Helvetica, Arial, sans-serif;\n    color: #555;\n  }\n  \n  .container table {\n    width: 100%;\n    font-size: inherit;\n    font-family: inherit;\n    text-align: left;\n    margin-top: 10;\n    margin-bottom: 15;\n    border-collapse: separate;\n  }\n  \n  .container table td {\n    padding: 10px;\n    vertical-align: top;\n    border-top: 1px solid rgb(164, 163, 163);\n  }\n  \n  .container table tr:last-child td {\n    border-bottom: none;\n  }\n  \n  .container>table>thead {\n    position: -webkit-sticky;\n    position: sticky;\n    top: 0;\n    background-color: #f1f1f1;\n  }\n  \n  .container,\n  body,\n  .container>table {\n    margin-top: 0px;\n    padding-top: 0px;\n  }\n  \n  .container table tr.heading td {\n    font-weight: bold;\n    margin-bottom: 15px;\n  }\n  \n"
           },
           "template.html": {
             "type": "TeraTemplate",
             "data": {
               "output": "Html",
-              "template": "<style>\n  {% include \"style.css\" %}\n</style>\n\n<div class=\"container\">\n  <table>\n    <thead>\n      <tr class=\"heading\">\n        <td>{{t(k=\"label.code\", f=\"Code\")}}</td>\n        <td>{{t(k=\"label.name\", f=\"Name\")}}</td>\n        <td>{{t(k=\"label.status\", f=\"Status\")}}</td>\n        <td>\n          {{t(k=\"report.consumption\", f=\"Consumption\")}}\n          ({{arguments.monthlyConsumptionLookBackPeriod | default(value=3)}})\n          {{t(k=\"label.months\", f=\"months\")}}\n        </td>\n        <td>{{t(k=\"label.soh\", f=\"SOH\")}}</td>\n        <td>\n          {{t(k=\"label.amc\", f=\"AMC\")}}\n          ({{arguments.monthlyConsumptionLookBackPeriod | default(value=3)}})\n          {{t(k=\"label.months\", f=\"months\")}}\n        </td>\n        <td>{{t(k=\"report.mos\", f=\"MOS\")}}</td>\n      </tr>\n    </thead>\n    <tbody>\n      {% for item in data.items.nodes %} \n      {% set SOH = item.stats.stockOnHand | default(value=0) | round( precision=1) %} \n      {% set AMC =  item.stats.averageMonthlyConsumption | default(value=0) |\n      round(precision=1) %} \n      {% set MOS = item.stats.availableMonthsOfStockOnHand | default(value=0) | round( precision=1) %}\n\n      <tr>\n        <td>{{item.code}}</td>\n        <td>{{item.name}}</td>\n        <td class=\"status\">\n          {% if SOH == 0 and AMC > 0 %}\n          <span class=\"out-of-stock\"\n            >{{t(k=\"report.out-of-stock\", f=\"Out of Stock\")}}</span\n          >\n          {% elif AMC == 0 %}\n          <span class=\"no-consumption\"\n            >{{t(k=\"report.no-consumption\", f=\"No consumption\")}}</span\n          >\n          {% elif MOS >= arguments.monthsUnderstock | default(value=0) and MOS\n          <= arguments.monthsOverstock | default(value=0) %}\n          <span class=\"well-stocked\"\n            >{{t(k=\"report.well-stocked\", f=\"Well stocked\")}}</span\n          >\n          {% elif MOS < arguments.monthsUnderstock | default(value=0) %}\n          <span class=\"understocked\">\n            {{t(k=\"report.understocked\", f=\"Understocked\")}}</span\n          >\n          {% elif MOS > arguments.monthsOverstock | default(value=0) %}\n          <span class=\"overstocked\"\n            >{{t(k=\"report.overstocked\", f=\"Overstocked\")}}</span\n          >\n          {% else %} {% endif %}\n        </td>\n        <td>\n          {{item.stats.totalConsumption | default(value=0) | round(\n          precision=1)}}\n        </td>\n        <td>{{SOH}}</td>\n        <td>{{AMC}}</td>\n        <td>\n          {{item.stats.availableMonthsOfStockOnHand | default(value=0) | round(\n          precision=1)}}\n        </td>\n      </tr>\n      {% endfor %}\n    </tbody>\n  </table>\n</div>\n"
+              "template": "{% macro formatDate(datetime) %} {% if datetime %}{{ datetime |\ndate(format=\"%d/%m/%Y\", timezone=arguments.timezone) }}{% endif %} {% endmacro input %}\n\n<style>\n  {% include \"encounters.css\" %}\n</style>\n\n<div class=\"container\">\n  <table>\n    <thead>\n      <tr class=\"heading\">\n        <td>{{t(k=\"report.program-id\", f=\"Program ID\")}}</td>\n        <td>{{t(k=\"label.first-name\", f=\"First Name\")}}</td>\n        <td>{{t(k=\"label.last-name\", f=\"Last Name\")}}</td>\n        <td>{{t(k=\"label.date-of-birth\", f=\"Date of birth\")}}</td>\n        <td>{{t(k=\"label.next-of-kin\", f=\"Next of kin\")}}</td>\n        <td>{{t(k=\"label.phone\", f=\"Phone\")}}</td>\n        <td>\n          {{t(k=\"report.last-encounter-date\", f=\"Last appointment date\")}}\n        </td>\n        <td>{{t(k=\"report.encounter-date\", f=\"Appointment date\")}}</td>\n        <td>{{t(k=\"report.days-overdue\", f=\"Days overdue\")}}</td>\n        <td>{{t(k=\"label.status\", f=\"Status\")}}</td>\n      </tr>\n    </thead>\n    <tbody>\n      {% for encounter in data.encounters.nodes %}\n      <tr>\n        <td>{{encounter.programEnrolment.programEnrolmentId}}</td>\n        <td>{{encounter.patient.firstName}}</td>\n        <td>{{encounter.patient.lastName}}</td>\n        <td>{{self::formatDate(datetime=encounter.patient.dateOfBirth)}}</td>\n        <td>{{encounter.patient.nextOfKinName}}</td>\n        <td>{{encounter.patient.phone}}</td>\n        {% if encounter.previousEncounter %}\n        <td>\n          {{self::formatDate(datetime=encounter.previousEncounter.startDatetime)}}\n        </td>\n        {% else %}\n        <td></td>\n        {% endif %}\n        <td>{{self::formatDate(datetime=encounter.startDatetime)}}</td>\n        <td>{{encounter.daysLate}}</td>\n\n        {% if encounter.status == \"LTFU\" %}\n        <td>{{t(k=\"report.lost-to-follow-up\", f=\"Lost to follow-up\")}}</td>\n        {% elif encounter.status == \"LATE\" %}\n        <td>{{t(k=\"report.late\", f=\"Late\")}}</td>\n        {% else %}\n        <td>{{t(k=\"report.planned\", f=\"Planned\")}}</td>\n        {% endif %}\n      </tr>\n      {% endfor %}\n    </tbody>\n  </table>\n</div>\n"
             }
           },
-          "query.graphql": {
+          "encountersQuery.graphql": {
             "type": "GraphGLQuery",
             "data": {
-              "query": "query StockStatus($storeId: String, $itemCode: String, $itemName: String) {\n  items(\n    storeId: $storeId\n    filter: {\n      code: { like: $itemCode }\n      name: { like: $itemName }\n      isVisibleOrOnHand: true\n      isActive: true\n    }\n  ) {\n    ... on ItemConnector {\n      nodes {\n        code\n        name\n        stats(storeId: $storeId) {\n          totalConsumption\n          availableMonthsOfStockOnHand\n          stockOnHand\n          averageMonthlyConsumption\n        }\n      }\n    }\n  }\n}\n",
+              "query": "query encountersQuery(\n  $storeId: String!\n  $programId: String!\n  $startDatetime: DatetimeFilterInput\n) {\n  encounters(\n    storeId: $storeId\n    filter: {\n      programId: { equalTo: $programId }\n      status: { equalTo: \"PENDING\" }\n      startDatetime: $startDatetime\n    }\n    sort: { key: \"startDatetime\", desc: false }\n  ) {\n    ... on EncounterConnector {\n      nodes {\n        ... on EncounterNode {\n          id\n          startDatetime\n          type\n          patient {\n            firstName\n            lastName\n            dateOfBirth\n            phone\n            nextOfKinName\n          }\n          programEnrolment {\n            programEnrolmentId\n          }\n          previousEncounter {\n            startDatetime\n          }\n        }\n      }\n    }\n  }\n  store(id: $storeId) {\n    ... on StoreNode {\n      code\n      storeName\n      logo\n      name(storeId: $storeId) {\n        ... on NameNode {\n          address1\n          address2\n          chargeCode\n          code\n          comment\n          country\n          email\n          name\n          phone\n          website\n        }\n      }\n    }\n  }\n}\n",
               "variables": null
             }
           }
         }
       },
-      "context": "REPORT",
-      "sub_context": "StockAndItems",
-      "argument_schema_id": "for_report_stock-status_2_6_3_false",
+      "context": "DISPENSARY",
+      "sub_context": "Encounters",
+      "argument_schema_id": "for_report_pending-encounters_2_9_0_false",
       "comment": null,
       "is_custom": false,
-      "version": "2.6.3",
-      "code": "stock-status",
+      "version": "2.9.0",
+      "code": "pending-encounters",
       "form_schema": {
-        "id": "for_report_stock-status_2_6_3_false",
+        "id": "for_report_pending-encounters_2_9_0_false",
         "type": "reportArgument",
         "json_schema": {
           "$schema": "http://json-schema.org/draft-07/schema#",
           "allOf": [
             {
-              "$ref": "#/definitions/StockFilters"
+              "$ref": "#/definitions/Filters"
             }
           ],
           "definitions": {
-            "StockFilters": {
+            "Filters": {
               "properties": {
-                "dir": {
-                  "description": "sort by dir",
-                  "format": "SortToggle",
+                "programId": {
+                  "description": "Program ID",
+                  "type": "string"
+                },
+                "startDatetime": {
+                  "description": "Encounter Date",
+                  "format": "date-time",
                   "type": [
-                    "string",
+                    "object",
                     "null"
                   ]
-                },
-                "itemCode": {
-                  "description": "Item Code",
-                  "type": "string"
-                },
-                "itemName": {
-                  "description": "Item Name",
-                  "type": "string"
-                },
-                "monthlyConsumptionLookBackPeriod": {
-                  "description": "Average Monthly Consumption Look Back Period",
-                  "type": "number"
-                },
-                "monthsOverstock": {
-                  "description": "Months Overstock",
-                  "type": "number"
-                },
-                "monthsUnderstock": {
-                  "description": "Months Understock",
-                  "type": "number"
-                },
-                "sort": {
-                  "description": "sort by",
-                  "enum": [
-                    "name",
-                    "code"
-                  ],
-                  "type": "string"
                 }
-              }
+              },
+              "required": [
+                "programId"
+              ]
             }
           },
           "type": "object"
@@ -1361,66 +1297,130 @@
         "ui_schema": {
           "elements": [
             {
-              "label": "T#report.item-code",
-              "options": {
-                "useDebounce": false
-              },
-              "scope": "#/properties/itemCode",
-              "type": "Control"
+              "label": "T#label.program",
+              "scope": "#/properties/programId",
+              "type": "PatientProgramSearch"
             },
             {
-              "label": "T#report.item-name",
+              "label": "",
               "options": {
-                "useDebounce": false
+                "dateOnly": true
               },
-              "scope": "#/properties/itemName",
-              "type": "Control"
-            },
+              "scope": "#/properties/startDatetime",
+              "type": "DateRange"
+            }
+          ],
+          "type": "VerticalLayout"
+        }
+      },
+      "excel_template_buffer": null
+    },
+    {
+      "id": "pending-encounters_2_6_4_false",
+      "name": "Pending Encounters",
+      "template": {
+        "index": {
+          "template": "template.html",
+          "header": null,
+          "footer": null,
+          "query": [
+            "encountersQuery.graphql"
+          ],
+          "convert_data": "dmFyIHQ9ezQxMzp0PT57ZnVuY3Rpb24gZSh0KXtyZXR1cm4gdD43PyJMVEZVIjp0PjA/IkxBVEUiOiIifXQuZXhwb3J0cz17YXBwbHlEYXlzTGF0ZTpmdW5jdGlvbih0KXtyZXR1cm4gdC5tYXAodD0+e2NvbnN0IHI9bmV3IERhdGUodC5zdGFydERhdGV0aW1lKSxhPU1hdGguZmxvb3IoKG5ldyBEYXRlLXIpLzg2NGU1KSxuPWE+MD9hOjAsbz1lKG4pO3JldHVybnsuLi50LGRheXNMYXRlOm4sc3RhdHVzOm99fSl9LGdldFN0YXR1czplfX19LGU9e307ZnVuY3Rpb24gcihhKXt2YXIgbj1lW2FdO2lmKHZvaWQgMCE9PW4pcmV0dXJuIG4uZXhwb3J0czt2YXIgbz1lW2FdPXtleHBvcnRzOnt9fTtyZXR1cm4gdFthXShvLG8uZXhwb3J0cyxyKSxvLmV4cG9ydHN9ci5uPXQ9Pnt2YXIgZT10JiZ0Ll9fZXNNb2R1bGU/KCk9PnQuZGVmYXVsdDooKT0+dDtyZXR1cm4gci5kKGUse2E6ZX0pLGV9LHIuZD0odCxlKT0+e2Zvcih2YXIgYSBpbiBlKXIubyhlLGEpJiYhci5vKHQsYSkmJk9iamVjdC5kZWZpbmVQcm9wZXJ0eSh0LGEse2VudW1lcmFibGU6ITAsZ2V0OmVbYV19KX0sci5vPSh0LGUpPT5PYmplY3QucHJvdG90eXBlLmhhc093blByb3BlcnR5LmNhbGwodCxlKTt2YXIgYT17fTtyLmQoYSx7SDooKT0+b30pO3ZhciBuPXIoNDEzKTtmdW5jdGlvbiBvKHQpe3JldHVybiB0LmRhdGEuZW5jb3VudGVycy5ub2Rlcz0oMCxuLmFwcGx5RGF5c0xhdGUpKHQuZGF0YS5lbmNvdW50ZXJzLm5vZGVzKSx0fWNvbnN0IHM9YS5IO2V4cG9ydHtzIGFzIGNvbnZlcnRfZGF0YX07",
+          "convert_data_type": "BoaJs"
+        },
+        "entries": {
+          "encountersQuery.graphql": {
+            "type": "GraphGLQuery",
+            "data": {
+              "query": "query encountersQuery(\n  $storeId: String!\n  $programId: String!\n  $after: DateTime\n  $before: DateTime\n) {\n  encounters(\n    storeId: $storeId\n    filter: {\n      programId: { equalTo: $programId }\n      status: { equalTo: \"PENDING\" }\n      startDatetime: { afterOrEqualTo: $after, beforeOrEqualTo: $before }\n    }\n    sort: { key: \"startDatetime\", desc: false }\n  ) {\n    ... on EncounterConnector {\n      nodes {\n        ... on EncounterNode {\n          id\n          startDatetime\n          type\n          patient {\n            firstName\n            lastName\n            dateOfBirth\n            phone\n            nextOfKinName\n          }\n          programEnrolment {\n            programEnrolmentId\n          }\n          previousEncounter {\n            startDatetime\n          }\n        }\n      }\n    }\n  }\n  store(id: $storeId) {\n    ... on StoreNode {\n      code\n      storeName\n      logo\n      name(storeId: $storeId) {\n        ... on NameNode {\n          address1\n          address2\n          chargeCode\n          code\n          comment\n          country\n          email\n          name\n          phone\n          website\n        }\n      }\n    }\n  }\n}\n",
+              "variables": null
+            }
+          },
+          "encounters.css": {
+            "type": "Resource",
+            "data": "@page {\n    margin: 0;\n    size: A4 landscape;\n  }\n  \n  .container {\n    margin: auto;\n    padding: 10px;\n    font-size: 14px;\n    font-family: \"Helvetica Neue\", \"Helvetica\", Helvetica, Arial, sans-serif;\n    color: #555;\n  }\n  \n  .container table {\n    width: 100%;\n    font-size: inherit;\n    font-family: inherit;\n    text-align: left;\n    margin-top: 10;\n    margin-bottom: 15;\n    border-collapse: separate;\n  }\n  \n  .container table td {\n    padding: 10px;\n    vertical-align: top;\n    border-top: 1px solid rgb(164, 163, 163);\n  }\n  \n  .container table tr:last-child td {\n    border-bottom: none;\n  }\n  \n  .container>table>thead {\n    position: -webkit-sticky;\n    position: sticky;\n    top: 0;\n    background-color: #f1f1f1;\n  }\n  \n  .container,\n  body,\n  .container>table {\n    margin-top: 0px;\n    padding-top: 0px;\n  }\n  \n  .container table tr.heading td {\n    font-weight: bold;\n    margin-bottom: 15px;\n  }\n  \n"
+          },
+          "template.html": {
+            "type": "TeraTemplate",
+            "data": {
+              "output": "Html",
+              "template": "{% macro formatDate(datetime) %} {% if datetime %}{{ datetime |\ndate(format=\"%d/%m/%Y\", timezone=arguments.timezone) }}{% endif %} {% endmacro input %}\n\n<style>\n  {% include \"encounters.css\" %}\n</style>\n\n<div class=\"container\">\n  <table>\n    <thead>\n      <tr class=\"heading\">\n        <td>{{t(k=\"report.program-id\", f=\"Program ID\")}}</td>\n        <td>{{t(k=\"label.first-name\", f=\"First Name\")}}</td>\n        <td>{{t(k=\"label.last-name\", f=\"Last Name\")}}</td>\n        <td>{{t(k=\"label.date-of-birth\", f=\"Date of birth\")}}</td>\n        <td>{{t(k=\"label.next-of-kin\", f=\"Next of kin\")}}</td>\n        <td>{{t(k=\"label.phone\", f=\"Phone\")}}</td>\n        <td>\n          {{t(k=\"report.last-encounter-date\", f=\"Last appointment date\")}}\n        </td>\n        <td>{{t(k=\"report.encounter-date\", f=\"Appointment date\")}}</td>\n        <td>{{t(k=\"report.days-overdue\", f=\"Days overdue\")}}</td>\n        <td>{{t(k=\"label.status\", f=\"Status\")}}</td>\n      </tr>\n    </thead>\n    <tbody>\n      {% for encounter in data.encounters.nodes %}\n      <tr>\n        <td>{{encounter.programEnrolment.programEnrolmentId}}</td>\n        <td>{{encounter.patient.firstName}}</td>\n        <td>{{encounter.patient.lastName}}</td>\n        <td>{{self::formatDate(datetime=encounter.patient.dateOfBirth)}}</td>\n        <td>{{encounter.patient.nextOfKinName}}</td>\n        <td>{{encounter.patient.phone}}</td>\n        {% if encounter.previousEncounter %}\n        <td>\n          {{self::formatDate(datetime=encounter.previousEncounter.startDatetime)}}\n        </td>\n        {% else %}\n        <td></td>\n        {% endif %}\n        <td>{{self::formatDate(datetime=encounter.startDatetime)}}</td>\n        <td>{{encounter.daysLate}}</td>\n\n        {% if encounter.status == \"LTFU\" %}\n        <td>{{t(k=\"report.lost-to-follow-up\", f=\"Lost to follow-up\")}}</td>\n        {% elif encounter.status == \"LATE\" %}\n        <td>{{t(k=\"report.late\", f=\"Late\")}}</td>\n        {% else %}\n        <td>{{t(k=\"report.planned\", f=\"Planned\")}}</td>\n        {% endif %}\n      </tr>\n      {% endfor %}\n    </tbody>\n  </table>\n</div>\n"
+            }
+          }
+        }
+      },
+      "context": "DISPENSARY",
+      "sub_context": "Encounters",
+      "argument_schema_id": "for_report_pending-encounters_2_6_4_false",
+      "comment": null,
+      "is_custom": false,
+      "version": "2.6.4",
+      "code": "pending-encounters",
+      "form_schema": {
+        "id": "for_report_pending-encounters_2_6_4_false",
+        "type": "reportArgument",
+        "json_schema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "allOf": [
             {
-              "label": "T#report.amc-lookback",
-              "options": {
-                "readonly": true
-              },
-              "scope": "#/properties/monthlyConsumptionLookBackPeriod",
-              "type": "Control"
-            },
-            {
-              "label": "T#label.max-months-of-stock",
-              "options": {
-                "readonly": true
-              },
-              "scope": "#/properties/monthsOverstock",
-              "type": "Control"
-            },
-            {
-              "label": "T#label.min-months-of-stock",
-              "options": {
-                "readonly": true
-              },
-              "scope": "#/properties/monthsUnderstock",
-              "type": "Control"
-            },
-            {
-              "label": "T#report.sort-by",
-              "options": {
-                "show": [
-                  [
-                    "name",
-                    "T#report.item-name"
-                  ],
-                  [
-                    "code",
-                    "T#label.code"
+              "$ref": "#/definitions/Filters"
+            }
+          ],
+          "definitions": {
+            "Filters": {
+              "properties": {
+                "after": {
+                  "description": "From date",
+                  "format": "date-time",
+                  "type": [
+                    "string",
+                    "null"
                   ]
-                ]
+                },
+                "before": {
+                  "description": "To date",
+                  "format": "date-time",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "programId": {
+                  "description": "Program ID",
+                  "type": "string"
+                }
               },
-              "scope": "#/properties/sort",
+              "required": [
+                "programId"
+              ]
+            }
+          },
+          "type": "object"
+        },
+        "ui_schema": {
+          "elements": [
+            {
+              "label": "T#label.program",
+              "scope": "#/properties/programId",
+              "type": "PatientProgramSearch"
+            },
+            {
+              "label": "T#label.from-date",
+              "options": {
+                "dateOnly": true
+              },
+              "scope": "#/properties/after",
               "type": "Control"
             },
             {
-              "label": "T#report.sort-direction",
-              "scope": "#/properties/dir",
-              "type": "SortToggle"
+              "label": "T#label.to-date",
+              "options": {
+                "dateAsEndOfDay": true,
+                "dateOnly": true
+              },
+              "scope": "#/properties/before",
+              "type": "Control"
             }
           ],
           "type": "VerticalLayout"
