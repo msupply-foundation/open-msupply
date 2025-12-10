@@ -60,11 +60,11 @@ impl From<SyncApiError> for SyncParsedErrorV6 {
         use SyncApiErrorVariantV5 as FromError;
         use SyncParsedErrorV6 as ToError;
 
-        let formated_error = format_error(&from);
+        let formatted_error = format_error(&from);
         match from.source {
             FromError::ParsedError { source, .. } => ToError::LegacyServerError(source),
-            FromError::ConnectionError(_) => ToError::CannotConnectToLegacyServer(formated_error),
-            _ => ToError::OtherLegacyServerError(formated_error),
+            FromError::ConnectionError(_) => ToError::CannotConnectToLegacyServer(formatted_error),
+            _ => ToError::OtherLegacyServerError(formatted_error),
         }
     }
 }

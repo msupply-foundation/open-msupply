@@ -56,6 +56,8 @@ pub enum ReportContext {
     InternalOrder,
     PurchaseOrder,
     GoodsReceived,
+    SupplierReturn,
+    CustomerReturn,
 }
 
 #[derive(InputObject, Clone)]
