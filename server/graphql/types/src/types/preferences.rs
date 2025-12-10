@@ -82,6 +82,10 @@ impl PreferencesNode {
         self.load_preference(&self.preferences.show_indicative_price_in_requisitions)
     }
 
+    pub async fn item_margin_overrides_supplier_margin(&self) -> Result<bool> {
+        self.load_preference(&self.preferences.item_margin_overrides_supplier_margin)
+    }
+
     // Store preferences
     pub async fn manage_vaccines_in_doses(&self) -> Result<bool> {
         self.load_preference(&self.preferences.manage_vaccines_in_doses)
@@ -238,6 +242,8 @@ pub enum PreferenceKey {
     DaysInMonth,
     ExpiredStockPreventIssue,
     ExpiredStockIssueThreshold,
+    ItemMarginOverridesSupplierMargin,
+
     // Store preferences
     ManageVaccinesInDoses,
     ManageVvmStatusForStock,
