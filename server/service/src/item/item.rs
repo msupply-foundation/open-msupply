@@ -165,7 +165,7 @@ pub fn get_items_with_consumption(
     let start_date = date_with_offset(&end_date, Duration::days(-(number_of_days as i64)));
 
     let consumption_filter = ConsumptionFilter::new()
-        .store_id(EqualFilter::equal_to(store_id))
+        .store_id(EqualFilter::equal_to(store_id.to_string()))
         .item_id(EqualFilter::equal_any(item_ids))
         .date(DateFilter::date_range(&start_date, &end_date));
 
