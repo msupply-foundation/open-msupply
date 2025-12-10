@@ -3,6 +3,7 @@ use diesel::connection::SimpleConnection;
 use diesel::r2d2::{ConnectionManager, Pool};
 use log::info;
 use serde::{Deserialize, Serialize};
+use std::time::Duration;
 
 // Timeout for waiting for the SQLite lock (https://www.sqlite.org/c3ref/busy_timeout.html).
 // A locked DB results in the "SQLite database is locked" error.
