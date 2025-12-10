@@ -117,7 +117,7 @@ pub fn update_request_requisition(
                 activity_log_entry(
                     ctx,
                     ActivityLogType::RequisitionStatusSent,
-                    Some(updated_requisition_row.id.to_owned()),
+                    Some(updated_requisition_row.id.to_string()),
                     None,
                     None,
                 )?;

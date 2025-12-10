@@ -21,8 +21,8 @@ mod query {
 
         // Create an immunisation program
         let program_insert = ProgramRow {
-            id: "program_id".to_owned(),
-            name: "program_name".to_owned(),
+            id: "program_id".to_string(),
+            name: "program_name".to_string(),
             master_list_id: None,
             context_id: IMMUNISATION_CONTEXT_ID.to_string(),
             is_immunisation: true,
@@ -35,8 +35,8 @@ mod query {
             .unwrap();
 
         assert_eq!(
-            service.get_program(&context.connection, "invalid_id".to_owned()),
-            Err(SingleRecordError::NotFound("invalid_id".to_owned()))
+            service.get_program(&context.connection, "invalid_id".to_string()),
+            Err(SingleRecordError::NotFound("invalid_id".to_string()))
         );
 
         let result = service
@@ -57,8 +57,8 @@ mod query {
 
         // Create 2 immunisation programs
         let program_insert_a = ProgramRow {
-            id: "program_id_a".to_owned(),
-            name: "program_name_a".to_owned(),
+            id: "program_id_a".to_string(),
+            name: "program_name_a".to_string(),
             master_list_id: None,
             context_id: IMMUNISATION_CONTEXT_ID.to_string(),
             is_immunisation: true,
@@ -66,8 +66,8 @@ mod query {
             deleted_datetime: None,
         };
         let program_insert_b = ProgramRow {
-            id: "program_id_b".to_owned(),
-            name: "program_name_b".to_owned(),
+            id: "program_id_b".to_string(),
+            name: "program_name_b".to_string(),
             master_list_id: None,
             context_id: IMMUNISATION_CONTEXT_ID.to_string(),
             is_immunisation: true,

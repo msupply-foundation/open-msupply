@@ -30,10 +30,10 @@ impl Loader<String> for UnitsInOtherPurchaseOrdersLoader {
 
             let other_confirmed_orders = repo.query_by_filter(
                 PurchaseOrderLineFilter::new()
-                    .item_id(EqualFilter::equal_to(&item_row.id))
+                    .item_id(EqualFilter::equal_to(item_row.id.to_string()))
                     .purchase_order(
                         PurchaseOrderFilter::new()
-                            .id(EqualFilter::not_equal_to(&line_row.purchase_order_id))
+                            .id(EqualFilter::not_equal_to(line_row.purchase_order_id.to_string()))
                             .status(PurchaseOrderStatus::Sent.equal_to()),
                     )
                     .status(PurchaseOrderLineStatus::Sent.equal_to()),

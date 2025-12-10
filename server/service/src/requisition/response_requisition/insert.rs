@@ -49,7 +49,7 @@ pub fn insert_response_requisition(
             activity_log_entry(
                 ctx,
                 ActivityLogType::RequisitionCreated,
-                Some(new_requisition.id.to_owned()),
+                Some(new_requisition.id.to_string()),
                 None,
                 None,
             )?;

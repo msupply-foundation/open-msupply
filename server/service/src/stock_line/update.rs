@@ -258,9 +258,9 @@ fn generate_location_movement(
                 LocationMovementFilter::new()
                     .enter_datetime(DatetimeFilter::is_null(false))
                     .exit_datetime(DatetimeFilter::is_null(true))
-                    .location_id(EqualFilter::equal_to(&location_id))
-                    .stock_line_id(EqualFilter::equal_to(&existing.id))
-                    .store_id(EqualFilter::equal_to(&store_id)),
+                    .location_id(EqualFilter::equal_to(location_id.to_string()))
+                    .stock_line_id(EqualFilter::equal_to(existing.id.to_string()))
+                    .store_id(EqualFilter::equal_to(store_id.to_string())),
             )?
             .into_iter()
             .map(|l| l.location_movement_row)
@@ -300,7 +300,7 @@ fn log_stock_changes(
         activity_log_entry(
             ctx,
             ActivityLogType::StockLocationChange,
-            Some(new.id.to_owned()),
+            Some(new.id.to_string()),
             previous_location,
             new.location_id,
         )?;
@@ -315,7 +315,7 @@ fn log_stock_changes(
         activity_log_entry(
             ctx,
             ActivityLogType::StockBatchChange,
-            Some(new.id.to_owned()),
+            Some(new.id.to_string()),
             previous_batch,
             new.batch,
         )?;
@@ -324,7 +324,7 @@ fn log_stock_changes(
         activity_log_entry(
             ctx,
             ActivityLogType::StockCostPriceChange,
-            Some(new.id.to_owned()),
+            Some(new.id.to_string()),
             Some(existing.cost_price_per_pack.to_string()),
             Some(new.cost_price_per_pack.to_string()),
         )?;
@@ -333,7 +333,7 @@ fn log_stock_changes(
         activity_log_entry(
             ctx,
             ActivityLogType::StockSellPriceChange,
-            Some(new.id.to_owned()),
+            Some(new.id.to_string()),
             Some(existing.sell_price_per_pack.to_string()),
             Some(new.sell_price_per_pack.to_string()),
         )?;
@@ -348,7 +348,7 @@ fn log_stock_changes(
         activity_log_entry(
             ctx,
             ActivityLogType::StockExpiryDateChange,
-            Some(new.id.to_owned()),
+            Some(new.id.to_string()),
             previous_expiry_date,
             new.expiry_date.map(|date| date.to_string()),
         )?;
@@ -357,7 +357,7 @@ fn log_stock_changes(
         activity_log_entry(
             ctx,
             ActivityLogType::StockOnHold,
-            Some(new.id.to_owned()),
+            Some(new.id.to_string()),
             None,
             None,
         )?;
@@ -366,7 +366,7 @@ fn log_stock_changes(
         activity_log_entry(
             ctx,
             ActivityLogType::StockOffHold,
-            Some(new.id.to_owned()),
+            Some(new.id.to_string()),
             None,
             None,
         )?;

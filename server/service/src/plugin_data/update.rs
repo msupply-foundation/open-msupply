@@ -41,7 +41,7 @@ pub fn update(
         .map_err(|error| error.to_inner_error())?;
 
     let plugin_data = PluginDataRepository::new(&ctx.connection)
-        .query_by_filter(PluginDataFilter::new().id(EqualFilter::equal_to(&input.id)))?
+        .query_by_filter(PluginDataFilter::new().id(EqualFilter::equal_to(input.id.to_string())))?
         .pop()
         .ok_or(UpdatePluginDataError::PluginDataDoesNotExist)?;
     Ok(plugin_data)

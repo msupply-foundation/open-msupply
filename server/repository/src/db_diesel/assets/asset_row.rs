@@ -150,7 +150,7 @@ impl<'a> AssetRowRepository<'a> {
         let asset_row = AssetRowRepository::find_one_by_id(self, asset_id)?;
 
         self.insert_changelog(
-            asset_id.to_owned(),
+            asset_id.to_string(),
             RowActionType::Upsert,
             asset_row.and_then(|row| row.store_id),
         )

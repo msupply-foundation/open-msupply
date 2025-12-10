@@ -47,7 +47,8 @@ pub fn add_from_master_list(
             }
 
             match InvoiceLineRepository::new(connection).query_by_filter(
-                InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(&input.shipment_id)),
+                InvoiceLineFilter::new()
+                    .invoice_id(EqualFilter::equal_to(input.shipment_id.to_string())),
             ) {
                 Ok(lines) => Ok(lines),
                 Err(error) => Err(InError::DatabaseError(error)),
@@ -98,7 +99,7 @@ fn generate(
     let master_list_lines_not_in_invoice = MasterListLineRepository::new(&ctx.connection)
         .query_by_filter(
             MasterListLineFilter::new()
-                .master_list_id(EqualFilter::equal_to(&input.master_list_id))
+                .master_list_id(EqualFilter::equal_to(input.master_list_id.to_string()))
                 .item_id(EqualFilter::not_equal_all(item_ids_in_invoice))
                 .item_type(ItemType::Stock.equal_to()),
             None,
@@ -144,8 +145,8 @@ mod test {
             service.add_to_inbound_shipment_from_master_list(
                 &context,
                 ServiceInput {
-                    shipment_id: "invalid".to_owned(),
-                    master_list_id: "n/a".to_owned()
+                    shipment_id: "invalid".to_string(),
+                    master_list_id: "n/a".to_string()
                 },
             ),
             Err(ServiceError::ShipmentDoesNotExist)
@@ -157,7 +158,7 @@ mod test {
                 &context,
                 ServiceInput {
                     shipment_id: mock_inbound_shipment_a().id,
-                    master_list_id: "n/a".to_owned()
+                    master_list_id: "n/a".to_string()
                 },
             ),
             Err(ServiceError::CannotEditShipment)
@@ -182,7 +183,7 @@ mod test {
                 &context,
                 ServiceInput {
                     shipment_id: mock_inbound_shipment_c().id,
-                    master_list_id: "n/a".to_owned()
+                    master_list_id: "n/a".to_string()
                 },
             ),
             Err(ServiceError::NotThisStoreShipment)
@@ -194,7 +195,7 @@ mod test {
                 &context,
                 ServiceInput {
                     shipment_id: mock_outbound_shipment_c().id,
-                    master_list_id: "n/a".to_owned()
+                    master_list_id: "n/a".to_string()
                 },
             ),
             Err(ServiceError::NotAnInboundShipment)
@@ -204,7 +205,7 @@ mod test {
     #[actix_rt::test]
     async fn add_from_master_list_success() {
         fn master_list() -> FullMockMasterList {
-            let id = "master_list".to_owned();
+            let id = "master_list".to_string();
             let join1 = format!("{}1", id);
             let line1 = format!("{}1", id);
             let line2 = format!("{}2", id);

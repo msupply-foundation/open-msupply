@@ -99,21 +99,21 @@ fn generate_stocktake_lines(
     }
 
     let mut stock_line_filter: StockLineFilter = StockLineFilter::new()
-        .store_id(EqualFilter::equal_to(store_id))
+        .store_id(EqualFilter::equal_to(store_id.to_string()))
         .has_packs_in_store(true);
 
     if let Some(master_list_id) = master_list_id {
         stock_line_filter = stock_line_filter
-            .master_list(MasterListFilter::new().id(EqualFilter::equal_to(&master_list_id)))
+            .master_list(MasterListFilter::new().id(EqualFilter::equal_to(master_list_id.to_string())))
     }
 
     if let Some(location_id) = location_id {
         stock_line_filter = stock_line_filter
-            .location(LocationFilter::new().id(EqualFilter::equal_to(&location_id)))
+            .location(LocationFilter::new().id(EqualFilter::equal_to(location_id.to_string())))
     }
 
     if let Some(vvm_status_id) = vvm_status_id {
-        stock_line_filter = stock_line_filter.vvm_status_id(EqualFilter::equal_to(&vvm_status_id));
+        stock_line_filter = stock_line_filter.vvm_status_id(EqualFilter::equal_to(vvm_status_id.to_string()));
     }
 
     if let Some(expires_before_date) = expires_before {
@@ -267,7 +267,7 @@ pub fn generate_lines_from_master_list(
     let item_ids: Vec<String> = MasterListLineRepository::new(connection)
         .query_by_filter(
             MasterListLineFilter::new()
-                .master_list_id(EqualFilter::equal_to(master_list_id))
+                .master_list_id(EqualFilter::equal_to(master_list_id.to_string()))
                 .item_type(ItemType::Stock.equal_to()),
             None,
         )?
@@ -290,8 +290,8 @@ fn generate_lines_from_item_ids(
         let stock_lines = StockLineRepository::new(connection)
             .query_by_filter(
                 StockLineFilter::new()
-                    .item_id(EqualFilter::equal_to(item_id))
-                    .store_id(EqualFilter::equal_to(store_id))
+                    .item_id(EqualFilter::equal_to(item_id.to_string()))
+                    .store_id(EqualFilter::equal_to(store_id.to_string()))
                     .has_packs_in_store(true),
                 Some(store_id.to_string()),
             )

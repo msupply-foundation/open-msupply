@@ -88,11 +88,12 @@ impl Processor for RequisitionAutoFinaliseProcessor {
         }
 
         let invoices = InvoiceRepository::new(connection).query_by_filter(
-            InvoiceFilter::new().requisition_id(EqualFilter::equal_to(&requisition.id)),
+            InvoiceFilter::new().requisition_id(EqualFilter::equal_to(requisition.id.to_string())),
         )?;
 
         let requisition_lines = RequisitionLineRepository::new(connection).query_by_filter(
-            RequisitionLineFilter::new().requisition_id(EqualFilter::equal_to(&requisition.id)),
+            RequisitionLineFilter::new()
+                .requisition_id(EqualFilter::equal_to(requisition.id.to_string())),
         )?;
         if requisition_lines.len() == 0 {
             return Ok(None);
@@ -127,7 +128,7 @@ impl Processor for RequisitionAutoFinaliseProcessor {
             .for_each(|il| {
                 let units = il.invoice_line_row.number_of_packs * il.invoice_line_row.pack_size;
                 invoice_line_item_units
-                    .entry(il.item_row.id.clone())
+                    .entry(il.item_row.id.to_string())
                     .and_modify(|v| *v += units)
                     .or_insert(units);
             });
@@ -150,7 +151,7 @@ impl Processor for RequisitionAutoFinaliseProcessor {
         update_response_requisition(
             &store_ctx,
             UpdateResponseRequisition {
-                id: requisition.id.clone(),
+                id: requisition.id.to_string(),
                 status: Some(UpdateResponseRequisitionStatus::Finalised),
                 ..Default::default()
             },

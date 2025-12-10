@@ -433,11 +433,11 @@ mod update {
 
         assert_eq!(
             result.vaccination_row.comment,
-            Some("Updated comment".to_owned())
+            Some("Updated comment".to_string())
         );
         assert_eq!(
             result.vaccination_row.facility_free_text,
-            Some("Facility".to_owned())
+            Some("Facility".to_string())
         );
 
         // ----------------------------

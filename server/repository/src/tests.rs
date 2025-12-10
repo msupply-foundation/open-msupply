@@ -469,7 +469,7 @@ mod repository_test {
         let id_rows: Vec<String> = repo
             .query_by_filter(
                 MasterListFilter::new()
-                    .exists_for_name_id(EqualFilter::equal_to(&mock_test_master_list_name1().id)),
+                    .exists_for_name_id(EqualFilter::equal_to(mock_test_master_list_name1().id)),
             )
             .unwrap()
             .into_iter()
@@ -487,7 +487,7 @@ mod repository_test {
         let id_rows: Vec<String> = repo
             .query_by_filter(
                 MasterListFilter::new()
-                    .exists_for_name_id(EqualFilter::equal_to(&mock_test_master_list_name2().id)),
+                    .exists_for_name_id(EqualFilter::equal_to(mock_test_master_list_name2().id)),
             )
             .unwrap()
             .into_iter()
@@ -505,7 +505,7 @@ mod repository_test {
         let id_rows: Vec<String> = repo
             .query_by_filter(
                 MasterListFilter::new()
-                    .exists_for_store_id(EqualFilter::equal_to(&mock_test_master_list_store1().id)),
+                    .exists_for_store_id(EqualFilter::equal_to(mock_test_master_list_store1().id)),
             )
             .unwrap()
             .into_iter()
@@ -639,7 +639,7 @@ mod repository_test {
             .query_by_filter(
                 InvoiceFilter::new()
                     .r#type(InvoiceType::OutboundShipment.equal_to())
-                    .name_id(EqualFilter::equal_to(&item1.name_link_id)),
+                    .name_id(EqualFilter::equal_to(item1.name_link_id.to_string())),
             )
             .unwrap();
         assert_eq!(1, loaded_item.len());
@@ -648,7 +648,7 @@ mod repository_test {
             .query_by_filter(
                 InvoiceFilter::new()
                     .r#type(InvoiceType::OutboundShipment.equal_to())
-                    .store_id(EqualFilter::equal_to(&item1.store_id)),
+                    .store_id(EqualFilter::equal_to(item1.store_id.to_string())),
             )
             .unwrap();
         assert_eq!(1, loaded_item.len());
@@ -869,7 +869,7 @@ mod repository_test {
 
         // Test insert
         let mut update_test_row = mock_request_draft_requisition();
-        update_test_row.comment = Some("unique_comment".to_owned());
+        update_test_row.comment = Some("unique_comment".to_string());
         RequisitionRowRepository::new(&connection)
             .upsert_one(&update_test_row)
             .unwrap();
@@ -883,7 +883,7 @@ mod repository_test {
         let result = RequisitionRepository::new(&connection)
             .query_by_filter(
                 RequisitionFilter::new()
-                    .id(EqualFilter::equal_to(&mock_request_draft_requisition2().id)),
+                    .id(EqualFilter::equal_to(mock_request_draft_requisition2().id)),
             )
             .unwrap();
 
@@ -978,7 +978,7 @@ mod repository_test {
         // Test query by id
         let result = RequisitionLineRepository::new(&connection)
             .query_by_filter(RequisitionLineFilter::new().id(EqualFilter::equal_to(
-                &mock_draft_request_requisition_line2().id,
+                mock_draft_request_requisition_line2().id,
             )))
             .unwrap();
 
@@ -1005,9 +1005,11 @@ mod repository_test {
             .query_by_filter(
                 RequisitionLineFilter::new()
                     .requisition_id(EqualFilter::equal_to(
-                        &mock_draft_request_requisition_line().requisition_id,
+                        mock_draft_request_requisition_line()
+                            .requisition_id
+                            .to_owned(),
                     ))
-                    .requested_quantity(EqualFilter::equal_to_f64(99.0)),
+                    .requested_quantity(EqualFilter::equal_to(99.0)),
             )
             .unwrap();
 

@@ -378,13 +378,15 @@ impl SyncTranslation for RequisitionTranslation {
             ..
         } = RequisitionRepository::new(connection)
             .query_by_filter(
-                RequisitionFilter::new().id(EqualFilter::equal_to(&changelog.record_id)),
+                RequisitionFilter::new().id(EqualFilter::equal_to(changelog.record_id.to_string())),
             )?
             .pop()
             .ok_or_else(|| anyhow::anyhow!("Requisition not found"))?;
 
         let has_outbound_shipment = !InvoiceRepository::new(connection)
-            .query_by_filter(InvoiceFilter::new().requisition_id(EqualFilter::equal_to(&id)))?
+            .query_by_filter(
+                InvoiceFilter::new().requisition_id(EqualFilter::equal_to(id.to_string())),
+            )?
             .is_empty();
 
         let oms_fields = if created_from_requisition_id.is_some() || original_customer_id.is_some()
