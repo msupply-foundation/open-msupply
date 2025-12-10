@@ -116,22 +116,18 @@ pub fn get_items_ids_for_months_of_stock(
     item_stats
         .into_iter()
         .filter_map(|(k, v)| {
-            let mos = v.total_stock_on_hand / v.average_monthly_consumption;
-            let mut include = true;
-
-            if let Some(min_mos) = min_months_of_stock {
-                // include if it has more than the min months of stock
-                include &= mos >= min_mos;
-            }
-            if let Some(max_mos) = max_months_of_stock {
-                // include if it has less than the max months of stock
-                include &= mos <= max_mos;
-            }
+            // Exclude items with zero consumption or stock
             if v.average_monthly_consumption == 0.0 || v.total_stock_on_hand == 0.0 {
-                // If amc = 0, assume this is because there's no consumption data, so we cannot determine how many months of stock there are, so we'll exclude that item
-                include = false;
+                return None;
             }
-            include.then_some(k)
+
+            let mos = v.total_stock_on_hand / v.average_monthly_consumption;
+
+            // Check if item meets the min/max bounds
+            let within_range = min_months_of_stock.is_none_or(|min| mos >= min)
+                && max_months_of_stock.is_none_or(|max| mos <= max);
+
+            within_range.then_some(k)
         })
         .collect()
 }
