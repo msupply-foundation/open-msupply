@@ -1,10 +1,10 @@
 use super::StorageConnection;
 use crate::{
     diesel_macros::{apply_date_filter, apply_equal_filter},
-    DateFilter, EqualFilter, InvoiceType, RepositoryError,
+    DBType, DateFilter, EqualFilter, InvoiceType, RepositoryError,
 };
 use chrono::NaiveDate;
-use diesel::prelude::*;
+use diesel::{dsl::count, prelude::*};
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
@@ -86,6 +86,36 @@ impl<'a> ConsumptionRepository<'a> {
 
         Ok(query.load::<ConsumptionRow>(self.connection.lock().connection())?)
     }
+
+    /// Get item ids with consumption > 0
+    pub fn query_items_with_consumption(
+        &self,
+        filter: Option<ConsumptionFilter>,
+    ) -> Result<Vec<String>, RepositoryError> {
+        let query = create_filtered_query(filter);
+
+        let query = consumption::table
+            .group_by(consumption::item_id)
+            .select(consumption::item_id)
+            .filter(consumption::item_id.eq_any(query.select(consumption::item_id)))
+            .having(count(consumption::quantity).gt(0));
+
+        Ok(query.load::<String>(self.connection.lock().connection())?)
+    }
+}
+
+type BoxedConsumptionQuery = consumption::BoxedQuery<'static, DBType>;
+
+fn create_filtered_query(filter: Option<ConsumptionFilter>) -> BoxedConsumptionQuery {
+    let mut query = consumption::table.into_boxed();
+
+    if let Some(filter) = filter {
+        apply_equal_filter!(query, filter.item_id, consumption::item_id);
+        apply_equal_filter!(query, filter.store_id, consumption::store_id);
+        apply_date_filter!(query, filter.date, consumption::date);
+    }
+
+    query
 }
 
 impl ConsumptionFilter {

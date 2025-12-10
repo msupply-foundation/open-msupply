@@ -64,6 +64,7 @@ pub enum UserPermission {
     AssetMutateViaDataMatrix,
     AssetQuery,
     AssetCatalogueItemMutate,
+    AssetStatusMutate,
     NamePropertiesMutate,
     EditCentralData,
     ViewAndEditVvmStatus,

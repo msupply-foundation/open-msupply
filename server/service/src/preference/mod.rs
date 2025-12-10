@@ -39,6 +39,7 @@ pub trait PreferenceServiceTrait: Sync + Send {
             expired_stock_prevent_issue,
             expired_stock_issue_threshold,
             show_indicative_price_in_requisitions,
+            item_margin_overrides_supplier_margin,
 
             // Store preferences
             manage_vaccines_in_doses,
@@ -89,6 +90,7 @@ pub trait PreferenceServiceTrait: Sync + Send {
         append_if_type(expired_stock_prevent_issue, &mut prefs, &input)?;
         append_if_type(expired_stock_issue_threshold, &mut prefs, &input)?;
         append_if_type(show_indicative_price_in_requisitions, &mut prefs, &input)?;
+        append_if_type(item_margin_overrides_supplier_margin, &mut prefs, &input)?;
 
         // Store preferences
         append_if_type(order_in_packs, &mut prefs, &input)?;
