@@ -35,34 +35,28 @@ pub trait ItemCountServiceTrait: Send + Sync {
     }
 
     fn get_no_stock_count(&self, item_stats: &Vec<ItemStats>) -> i64 {
-        let no_stock_count = item_stats
+        item_stats
             .iter()
             .filter(|i| i.total_stock_on_hand == 0.0)
-            .count() as i64;
-
-        return no_stock_count;
+            .count() as i64
     }
 
     fn get_low_stock_count(&self, item_stats: &Vec<ItemStats>, low_stock_threshold: i32) -> i64 {
-        let low_stock_count = item_stats
+        item_stats
             .iter()
             .filter(|&i| (i.average_monthly_consumption > 0.0)) // exclude items with 0 amc from count, because we assume that means there's no consumption data so we cannot tell how many months of stock there might be.
             .map(|i| i.total_stock_on_hand / i.average_monthly_consumption)
             .filter(|months_of_stock| *months_of_stock < low_stock_threshold as f64)
-            .count() as i64;
-
-        return low_stock_count;
+            .count() as i64
     }
 
     fn get_more_than_six_months_stock_count(&self, item_stats: &Vec<ItemStats>) -> i64 {
-        let more_than_six_mos_count = item_stats
+        item_stats
             .iter()
             .filter(|&i| (i.average_monthly_consumption > 0.0)) // exclude items with 0 amc from count, because we assume that means there's no consumption data so we cannot tell how many months of stock there might be.
             .map(|i| i.total_stock_on_hand / i.average_monthly_consumption)
             .filter(|months_of_stock| *months_of_stock > 6.0)
-            .count() as i64;
-
-        return more_than_six_mos_count;
+            .count() as i64
     }
 
     fn get_out_of_stock_products_count(
@@ -128,7 +122,7 @@ impl ItemCountServiceTrait for ItemServiceCount {
             Some(store_id.to_string()),
         )?;
 
-        let total_count = *&visible_or_on_hand_items.len() as i64;
+        let total_count = visible_or_on_hand_items.len() as i64;
 
         let item_ids: Vec<String> = visible_or_on_hand_items
             .into_iter()
@@ -137,12 +131,12 @@ impl ItemCountServiceTrait for ItemServiceCount {
 
         let item_stats = get_item_stats(&ctx.connection, store_id, None, item_ids.clone(), None)?;
 
-        let no_stock = Self::get_no_stock_count(&self, &item_stats);
+        let no_stock = Self::get_no_stock_count(self, &item_stats);
 
-        let low_stock = Self::get_low_stock_count(&self, &item_stats, low_stock_threshold);
+        let low_stock = Self::get_low_stock_count(self, &item_stats, low_stock_threshold);
 
         let more_than_six_months_stock =
-            Self::get_more_than_six_months_stock_count(&self, &item_stats);
+            Self::get_more_than_six_months_stock_count(self, &item_stats);
 
         let out_of_stock_products =
             self.get_out_of_stock_products_count(ctx, store_id, item_ids.clone())?;
