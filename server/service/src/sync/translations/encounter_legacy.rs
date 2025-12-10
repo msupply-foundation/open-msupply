@@ -134,7 +134,6 @@ mod tests {
         let (_, connection, _, _) =
             setup_all("test_translate_encounter_to_legacy", MockDataInserts::all()).await;
 
-        // test_util_set_is_central_server(true);
         let cursor = ChangelogRepository::new(&connection)
             .latest_cursor()
             .unwrap_or(0);
