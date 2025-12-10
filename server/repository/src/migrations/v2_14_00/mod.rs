@@ -2,7 +2,7 @@ use super::{version::Version, Migration, MigrationFragment};
 use crate::StorageConnection;
 
 mod requisition_line_add_price_per_unit;
-mod resync_existing_vaccination_records;
+mod resync_existing_vaccination_encounter_records;
 
 pub(crate) struct V2_14_00;
 impl Migration for V2_14_00 {
@@ -17,7 +17,7 @@ impl Migration for V2_14_00 {
     fn migrate_fragments(&self) -> Vec<Box<dyn MigrationFragment>> {
         vec![
             Box::new(requisition_line_add_price_per_unit::Migrate),
-            Box::new(resync_existing_vaccination_records::Migrate),
+            Box::new(resync_existing_vaccination_encounter_records::Migrate),
         ]
     }
 }
