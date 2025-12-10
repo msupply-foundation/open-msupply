@@ -2,7 +2,6 @@ import React, { useMemo } from 'react';
 import {
   useNavigate,
   useTranslation,
-  InvoiceNodeStatus,
   useToggle,
   useUrlQueryParams,
   TextWithTooltipCell,
@@ -13,8 +12,13 @@ import {
   ColumnType,
   NameAndColorSetterCell,
   NothingHere,
+  usePreferences,
 } from '@openmsupply-client/common';
-import { getStatusTranslator, isOutboundDisabled } from '../../utils';
+import {
+  getStatusTranslator,
+  isOutboundDisabled,
+  outboundStatuses,
+} from '../../utils';
 import { AppBarButtons } from './AppBarButtons';
 import { useOutbound } from '../api';
 import { OutboundRowFragment } from '../api/operations.generated';
@@ -23,6 +27,7 @@ import { Footer } from './Footer';
 export const OutboundShipmentListView = () => {
   const t = useTranslation();
   const navigate = useNavigate();
+  const { invoiceStatusOptions } = usePreferences();
   const modalController = useToggle();
   const simplifiedTabletView = useSimplifiedTabletUI();
 
@@ -44,6 +49,9 @@ export const OutboundShipmentListView = () => {
 
   const { data, isFetching, isError } = useOutbound.document.list(queryParams);
   const { mutate: onUpdate } = useOutbound.document.update();
+  const statuses = outboundStatuses.filter(status =>
+    invoiceStatusOptions?.includes(status)
+  );
 
   const mrtColumns = useMemo(
     (): ColumnDef<OutboundRowFragment>[] => [
@@ -70,15 +78,10 @@ export const OutboundShipmentListView = () => {
         enableSorting: true,
         enableColumnFilter: true,
         filterVariant: 'select',
-        filterSelectOptions: [
-          { value: InvoiceNodeStatus.New, label: t('label.new') },
-          { value: InvoiceNodeStatus.Allocated, label: t('label.allocated') },
-          { value: InvoiceNodeStatus.Picked, label: t('label.picked') },
-          { value: InvoiceNodeStatus.Shipped, label: t('label.shipped') },
-          { value: InvoiceNodeStatus.Delivered, label: t('label.delivered') },
-          { value: InvoiceNodeStatus.Received, label: t('label.received') },
-          { value: InvoiceNodeStatus.Verified, label: t('label.verified') },
-        ],
+        filterSelectOptions: statuses.map(status => ({
+          value: status,
+          label: getStatusTranslator(t)(status),
+        })),
       },
       {
         accessorKey: 'invoiceNumber',

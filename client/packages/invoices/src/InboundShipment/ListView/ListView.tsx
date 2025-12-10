@@ -11,10 +11,12 @@ import {
   usePaginatedMaterialTable,
   MaterialTable,
   NameAndColorSetterCell,
+  usePreferences,
 } from '@openmsupply-client/common';
 import { AppBarButtons } from './AppBarButtons';
 import {
   getStatusTranslator,
+  inboundStatuses,
   isInboundDisabled,
   isInboundListItemDisabled,
 } from '../../utils';
@@ -24,6 +26,7 @@ import { Footer } from './Footer';
 export const InboundListView = () => {
   const t = useTranslation();
   const navigate = useNavigate();
+  const { invoiceStatusOptions } = usePreferences();
   const invoiceModalController = useToggle();
   const linkRequestModalController = useToggle();
   const { mutate: onUpdate } = useInbound.document.update();
@@ -51,6 +54,9 @@ export const InboundListView = () => {
   };
 
   const { data, isFetching } = useInbound.document.list(listParams);
+  const statuses = inboundStatuses.filter(status =>
+    invoiceStatusOptions?.includes(status)
+  );
 
   const columns = useMemo(
     (): ColumnDef<InboundRowFragment>[] => [
@@ -98,7 +104,7 @@ export const InboundListView = () => {
         id: 'status',
         size: 140,
         filterVariant: 'select',
-        filterSelectOptions: Object.values(InvoiceNodeStatus).map(status => ({
+        filterSelectOptions: statuses.map(status => ({
           value: status,
           label: getStatusTranslator(t)(status),
         })),
