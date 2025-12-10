@@ -1,6 +1,7 @@
 use super::{version::Version, Migration, MigrationFragment};
 use crate::StorageConnection;
 
+mod add_encounter_changelog_table_name;
 mod requisition_line_add_price_per_unit;
 mod resync_existing_vaccination_encounter_records;
 
@@ -16,6 +17,7 @@ impl Migration for V2_14_00 {
 
     fn migrate_fragments(&self) -> Vec<Box<dyn MigrationFragment>> {
         vec![
+            Box::new(add_encounter_changelog_table_name::Migrate),
             Box::new(requisition_line_add_price_per_unit::Migrate),
             Box::new(resync_existing_vaccination_encounter_records::Migrate),
         ]
@@ -25,7 +27,7 @@ impl Migration for V2_14_00 {
 #[cfg(test)]
 mod test {
     #[actix_rt::test]
-    async fn migration_2_13_00() {
+    async fn migration_2_14_00() {
         use crate::migrations::*;
         use crate::test_db::*;
         use v2_13_00::V2_13_00;

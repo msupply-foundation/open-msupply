@@ -119,7 +119,6 @@ impl SyncTranslation for EncounterLegacyTranslation {
 #[cfg(test)]
 mod tests {
     use super::*;
-    // Add tests similar to vaccination_legacy.rs
     use crate::sync::test_util_set_is_central_server;
     use repository::db_diesel::encounter_row::EncounterRowRepository;
     use repository::mock::{
