@@ -221,6 +221,7 @@ query preferences($storeId: String!) {
     }
     warningForExcessRequest
     invoiceStatusOptions
+    itemMarginOverridesSupplierMargin
     showIndicativePriceInRequisitions
   }
 }

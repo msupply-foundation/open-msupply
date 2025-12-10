@@ -4758,11 +4758,6 @@ export type InvoiceSortInput = {
   key: InvoiceSortFieldInput;
 };
 
-export type InvoiceStatusOptionsInput = {
-  storeId: Scalars['String']['input'];
-  value: Array<InvoiceNodeStatus>;
-};
-
 export type InvoicesResponse = InvoiceConnector;
 
 export type ItemCannotBeOrdered = PurchaseOrderLineError & {
@@ -4828,9 +4823,9 @@ export type ItemFilterInput = {
   maxMonthsOfStock?: InputMaybe<Scalars['Float']['input']>;
   minMonthsOfStock?: InputMaybe<Scalars['Float']['input']>;
   name?: InputMaybe<StringFilterInput>;
-  outOfStockProducts?: InputMaybe<Scalars['Boolean']['input']>;
   productsAtRiskOfBeingOutOfStock?: InputMaybe<Scalars['Boolean']['input']>;
   type?: InputMaybe<EqualFilterItemTypeInput>;
+  withRecentConsumption?: InputMaybe<Scalars['Boolean']['input']>;
 };
 
 export type ItemLedgerConnector = {
@@ -6870,7 +6865,7 @@ export enum PreferenceKey {
   FirstThresholdForExpiringItems = 'firstThresholdForExpiringItems',
   GenderOptions = 'genderOptions',
   InboundShipmentAutoVerify = 'inboundShipmentAutoVerify',
-  InvoiceStatusOptions = 'invoiceStatusOptions',
+  ItemMarginOverridesSupplierMargin = 'itemMarginOverridesSupplierMargin',
   ManageVaccinesInDoses = 'manageVaccinesInDoses',
   ManageVvmStatusForStock = 'manageVvmStatusForStock',
   NumberOfMonthsThresholdToShowLowStockAlertsForProducts = 'numberOfMonthsThresholdToShowLowStockAlertsForProducts',
@@ -6931,7 +6926,7 @@ export type PreferencesNode = {
   firstThresholdForExpiringItems: Scalars['Int']['output'];
   genderOptions: Array<GenderTypeNode>;
   inboundShipmentAutoVerify: Scalars['Boolean']['output'];
-  invoiceStatusOptions: Array<InvoiceNodeStatus>;
+  itemMarginOverridesSupplierMargin: Scalars['Boolean']['output'];
   manageVaccinesInDoses: Scalars['Boolean']['output'];
   manageVvmStatusForStock: Scalars['Boolean']['output'];
   numberOfMonthsThresholdToShowLowStockAlertsForProducts: Scalars['Int']['output'];
@@ -6943,6 +6938,7 @@ export type PreferencesNode = {
   selectDestinationStoreForAnInternalOrder: Scalars['Boolean']['output'];
   showContactTracing: Scalars['Boolean']['output'];
   showIndicativePriceInRequisitions: Scalars['Boolean']['output'];
+  skipIntermediateStatusesInOutbound: Scalars['Boolean']['output'];
   sortByVvmStatusThenExpiry: Scalars['Boolean']['output'];
   storeCustomColour: Scalars['String']['output'];
   syncRecordsDisplayThreshold: Scalars['Int']['output'];
@@ -8611,6 +8607,7 @@ export type ReportConnector = {
 
 export enum ReportContext {
   Asset = 'ASSET',
+  CustomerReturn = 'CUSTOMER_RETURN',
   Dispensary = 'DISPENSARY',
   GoodsReceived = 'GOODS_RECEIVED',
   InboundReturn = 'INBOUND_RETURN',
@@ -8626,6 +8623,7 @@ export enum ReportContext {
   Requisition = 'REQUISITION',
   Resource = 'RESOURCE',
   Stocktake = 'STOCKTAKE',
+  SupplierReturn = 'SUPPLIER_RETURN',
 }
 
 export type ReportFilterInput = {
@@ -11274,7 +11272,7 @@ export type UpsertPreferencesInput = {
   firstThresholdForExpiringItems?: InputMaybe<Array<IntegerStorePrefInput>>;
   genderOptions?: InputMaybe<Array<GenderTypeNode>>;
   inboundShipmentAutoVerify?: InputMaybe<Array<BoolStorePrefInput>>;
-  invoiceStatusOptions?: InputMaybe<Array<InvoiceStatusOptionsInput>>;
+  itemMarginOverridesSupplierMargin?: InputMaybe<Scalars['Boolean']['input']>;
   manageVaccinesInDoses?: InputMaybe<Array<BoolStorePrefInput>>;
   manageVvmStatusForStock?: InputMaybe<Array<BoolStorePrefInput>>;
   numberOfMonthsThresholdToShowLowStockAlertsForProducts?: InputMaybe<
@@ -11294,6 +11292,7 @@ export type UpsertPreferencesInput = {
   >;
   showContactTracing?: InputMaybe<Scalars['Boolean']['input']>;
   showIndicativePriceInRequisitions?: InputMaybe<Scalars['Boolean']['input']>;
+  skipIntermediateStatusesInOutbound?: InputMaybe<Array<BoolStorePrefInput>>;
   sortByVvmStatusThenExpiry?: InputMaybe<Array<BoolStorePrefInput>>;
   storeCustomColour?: InputMaybe<Array<StringStorePrefInput>>;
   syncRecordsDisplayThreshold?: InputMaybe<Scalars['Int']['input']>;
@@ -11362,6 +11361,7 @@ export enum UserPermission {
   AssetMutate = 'ASSET_MUTATE',
   AssetMutateViaDataMatrix = 'ASSET_MUTATE_VIA_DATA_MATRIX',
   AssetQuery = 'ASSET_QUERY',
+  AssetStatusMutate = 'ASSET_STATUS_MUTATE',
   CancelFinalisedInvoices = 'CANCEL_FINALISED_INVOICES',
   ColdChainApi = 'COLD_CHAIN_API',
   CreateRepack = 'CREATE_REPACK',

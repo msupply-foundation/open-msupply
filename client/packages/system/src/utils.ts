@@ -92,7 +92,7 @@ interface ParsedRow {
 }
 
 export const processProperties = <
-  T extends { properties: Record<string, string> },
+  T extends { properties: Record<string, string | number> },
 >(
   properties: AssetPropertyFragment[] | PropertyNode[],
   row: ParsedRow,
@@ -125,7 +125,7 @@ export const processProperties = <
               })
             );
           }
-          importRow.properties[property.key] = value;
+          importRow.properties[property.key] = Number(value);
           break;
         case 'BOOLEAN':
           const isTrue =

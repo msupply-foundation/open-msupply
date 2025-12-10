@@ -1,6 +1,7 @@
 use repository::{
     EqualFilter, Invoice, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineType, InvoiceRow,
-    InvoiceType, ItemRow, ItemStoreJoinRowRepository, ItemStoreJoinRowRepositoryTrait,
+    InvoiceType, ItemRow, ItemStoreJoinRow, ItemStoreJoinRowRepository,
+    ItemStoreJoinRowRepositoryTrait, NameFilter, NameRepository, Pagination,
 };
 use repository::{InvoiceLineRow, RepositoryError, StorageConnection};
 use util::uuid::uuid;
@@ -9,7 +10,7 @@ use crate::invoice::common::calculate_total_after_tax;
 use crate::invoice::inbound_shipment::{
     update_inbound_shipment, UpdateInboundShipment, UpdateInboundShipmentStatus,
 };
-use crate::preference::{InboundShipmentAutoVerify, Preference};
+use crate::preference::{InboundShipmentAutoVerify, ItemMarginOverridesSupplierMargin, Preference};
 use crate::service_provider::ServiceContext;
 
 pub(crate) fn generate_inbound_lines(
@@ -76,7 +77,7 @@ pub(crate) fn generate_inbound_lines(
                     .find_one_by_item_and_store_id(&item_id, inbound_store_id)
                     .unwrap_or(None);
 
-                let margin = item_properties.as_ref().map_or(0.0, |i| i.margin);
+                let supplier_id = &source_invoice.store_row.name_link_id;
 
                 let cost_price_per_pack = sell_price_per_pack;
 
@@ -100,7 +101,13 @@ pub(crate) fn generate_inbound_lines(
                 let adjusted_sell_price_per_pack = if default_price_for_inbound_pack > 0.0 {
                     default_price_for_inbound_pack
                 } else {
-                    cost_price_per_pack + (cost_price_per_pack * margin) / 100.0
+                    get_cost_plus_margin(
+                        connection,
+                        cost_price_per_pack,
+                        item_properties,
+                        supplier_id,
+                    )
+                    .unwrap_or(cost_price_per_pack)
                 };
 
                 InvoiceLineRow {
@@ -226,9 +233,156 @@ pub(super) fn get_default_price_for_pack(
     price_per_unit * inbound_pack_size
 }
 
+pub(super) fn get_cost_plus_margin(
+    connection: &StorageConnection,
+    cost_price_per_pack: f64,
+    item_properties: Option<ItemStoreJoinRow>,
+    supplier_id: &String,
+) -> Result<f64, RepositoryError> {
+    let item_margin_overrides_supplier_margin = ItemMarginOverridesSupplierMargin
+        .load(connection, None)
+        .unwrap_or(false);
+
+    let margin = if item_margin_overrides_supplier_margin {
+        get_item_margin(item_properties)
+            .filter(|&m| m != 0.0)
+            .or_else(|| get_supplier_margin(connection, supplier_id))
+    } else {
+        get_supplier_margin(connection, supplier_id)
+            .filter(|&m| m != 0.0)
+            .or_else(|| get_item_margin(item_properties))
+    }
+    .unwrap_or(0.0);
+
+    Ok(cost_price_per_pack + (cost_price_per_pack * margin) / 100.0)
+}
+
+fn get_item_margin(item_properties: Option<ItemStoreJoinRow>) -> Option<f64> {
+    item_properties.as_ref().map(|i| i.margin)
+}
+
+fn get_supplier_margin(connection: &StorageConnection, supplier_id: &String) -> Option<f64> {
+    let suppliers = NameRepository::new(connection)
+        .query(
+            supplier_id,
+            Pagination::all(),
+            Some(NameFilter::new().id(EqualFilter::equal_to(supplier_id.to_string()))),
+            None,
+        )
+        .ok()?;
+
+    suppliers
+        .into_iter()
+        .next()
+        .and_then(|name| name.name_row.margin)
+}
+
 #[cfg(test)]
-mod tests {
-    use super::get_default_price_for_pack;
+mod test {
+    use super::{get_cost_plus_margin, get_default_price_for_pack};
+
+    use repository::{
+        mock::{
+            mock_item_a_join_store_a, mock_store_a, mock_store_b, mock_store_c, MockDataInserts,
+        },
+        test_db::setup_all,
+        PreferenceRow, PreferenceRowRepository,
+    };
+
+    use crate::{
+        preference::{ItemMarginOverridesSupplierMargin, Preference},
+        service_provider::ServiceProvider,
+    };
+
+    #[actix_rt::test]
+    async fn test_get_cost_plus_margin() {
+        let (_, _, connection_manager, _) =
+            setup_all("transfer_invoice_processor", MockDataInserts::all()).await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
+
+        let connection = context.connection;
+
+        let cost_price_per_pack = 5.0;
+
+        let outbound_store = mock_store_b();
+        let supplier_id = outbound_store.name_link_id;
+        let item_properties = mock_item_a_join_store_a();
+
+        // Set preference to true -> item margin has priority
+        PreferenceRowRepository::new(&connection)
+            .upsert_one(&PreferenceRow {
+                id: "item margin overrides supplier margin".to_string(),
+                store_id: None,
+                key: ItemMarginOverridesSupplierMargin.key().to_string(),
+                value: "true".to_string(),
+            })
+            .unwrap();
+
+        assert_eq!(
+            get_cost_plus_margin(
+                &connection,
+                cost_price_per_pack,
+                Some(item_properties.clone()),
+                &supplier_id
+            ),
+            Ok(cost_price_per_pack + (cost_price_per_pack * 15.0) / 100.0)
+        );
+
+        // No item properties, fallback to supplier margin
+        assert_eq!(
+            get_cost_plus_margin(&connection, cost_price_per_pack, None, &supplier_id),
+            Ok(cost_price_per_pack + (cost_price_per_pack * 10.0) / 100.0)
+        );
+
+        // Set preference to false -> supplier margin has priority
+        PreferenceRowRepository::new(&connection)
+            .upsert_one(&PreferenceRow {
+                id: "item margin overrides supplier margin".to_string(),
+                store_id: None,
+                key: ItemMarginOverridesSupplierMargin.key().to_string(),
+                value: "false".to_string(),
+            })
+            .unwrap();
+
+        assert_eq!(
+            get_cost_plus_margin(
+                &connection,
+                cost_price_per_pack,
+                Some(item_properties.clone()),
+                &supplier_id
+            ),
+            Ok(cost_price_per_pack + (cost_price_per_pack * 10.0) / 100.0)
+        );
+
+        let store_c = mock_store_c();
+        let supplier_no_margin_id = store_c.name_link_id;
+
+        // No supplier margin, fallback to item margin
+        assert_eq!(
+            get_cost_plus_margin(
+                &connection,
+                cost_price_per_pack,
+                Some(item_properties),
+                &supplier_no_margin_id
+            ),
+            Ok(cost_price_per_pack + (cost_price_per_pack * 15.0) / 100.0)
+        );
+
+        // No item properties or supplier margin, use cost price (margin 0%)
+        assert_eq!(
+            get_cost_plus_margin(
+                &connection,
+                cost_price_per_pack,
+                None,
+                &supplier_no_margin_id
+            ),
+            Ok(cost_price_per_pack)
+        );
+    }
 
     #[test]
     fn test_get_default_price_for_pack_conversion() {
