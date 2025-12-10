@@ -1,7 +1,6 @@
 import React, { useMemo } from 'react';
 import {
   useNavigate,
-  InvoiceNodeStatus,
   useTranslation,
   NothingHere,
   useToggle,
