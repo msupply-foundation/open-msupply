@@ -243,13 +243,14 @@ pub(super) fn get_cost_plus_margin(
         .load(connection, None)
         .unwrap_or(false);
 
-    let margin = match item_margin_overrides_supplier_margin {
-        true => get_item_margin(item_properties)
+    let margin = if item_margin_overrides_supplier_margin {
+        get_item_margin(item_properties)
             .filter(|&m| m != 0.0)
-            .or_else(|| get_supplier_margin(connection, supplier_id)),
-        false => get_supplier_margin(connection, supplier_id)
+            .or_else(|| get_supplier_margin(connection, supplier_id))
+    } else {
+        get_supplier_margin(connection, supplier_id)
             .filter(|&m| m != 0.0)
-            .or_else(|| get_item_margin(item_properties)),
+            .or_else(|| get_item_margin(item_properties))
     }
     .unwrap_or(0.0);
 
