@@ -20,7 +20,7 @@ AFFECTED_BRANCHES=()
 create_tag_for_branch() {
     local branch_name=$1
     
-    git checkout "$branch_name"
+    # git checkout "$branch_name"
     
     if [[ "$branch_name" =~ (R|r)(C|c) ]]; then
         BRANCH_TYPE="RC"
@@ -66,10 +66,8 @@ create_tag_for_branch() {
 RC_BRANCHES=$(git branch -r | grep -E 'v[0-9.]+-(R|r)(C|c)' | sed 's/.*origin\///')
 DEV_BRANCHES=$(git branch -r | grep -E 'v[0-9.]+-(dev|develop)$' | sed 's/.*origin\///')
 
-# Process all RC, develop branches, and the literal 'develop'
-for BRANCH in $RC_BRANCHES $DEV_BRANCHES 'develop'; do
-    create_tag_for_branch "$BRANCH"
-done
+
+create_tag_for_branch $1
 
 # Output results for GitHub Actions to capture
 echo "CREATED_TAGS=${CREATED_TAGS[*]}" >> $GITHUB_OUTPUT
