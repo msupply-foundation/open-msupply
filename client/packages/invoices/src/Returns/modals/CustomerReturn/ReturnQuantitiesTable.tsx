@@ -127,6 +127,7 @@ export const QuantityReturnedTableComponent = ({
         width: 100,
         accessor: ({ rowData }) => rowData?.volumePerPack,
         setter: updateLine,
+        getIsDisabled: () => isDisabled,
       }
     );
     return columnDefinitions;
