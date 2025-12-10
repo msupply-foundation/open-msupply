@@ -131,6 +131,7 @@ pub enum Resource {
     MutateAsset,
     MutateAssetCatalogueItem,
     QueryAsset,
+    MutateAssetStatus,
     // demographic
     QueryDemographic,
     MutateDemographic,
@@ -619,6 +620,10 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
     map.insert(
         Resource::MutateAssetCatalogueItem,
         PermissionDSL::HasPermission(PermissionType::AssetCatalogueItemMutate),
+    );
+    map.insert(
+        Resource::MutateAssetStatus,
+        PermissionDSL::HasPermission(PermissionType::AssetStatusMutate),
     );
     map.insert(
         Resource::QueryAsset,
