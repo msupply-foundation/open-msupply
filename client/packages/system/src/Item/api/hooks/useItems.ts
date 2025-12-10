@@ -36,11 +36,16 @@ export const useVisibleOrOnHandItems = (queryParams: ItemParams) => {
   };
 
   const queryFn = async () => {
+    const { stockStatus, ...restOfFilterBy } = filterBy ?? {};
+
+    const stockStatusValue =
+      typeof stockStatus === 'object' && stockStatus?.like
+        ? stockStatus?.like
+        : stockStatus;
+
     const filter: ItemFilterInput = {
-      ...filterBy,
-      ...getVisibleOrOnHandFilter(
-        filterBy?.['hasStockOnHand'] as boolean | undefined
-      ),
+      ...restOfFilterBy,
+      ...getVisibleOrOnHandFilter(stockStatusValue as string | undefined),
       isActive: true,
       minMonthsOfStock: filterBy?.['minMonthsOfStock'] as number | undefined,
       maxMonthsOfStock: filterBy?.['maxMonthsOfStock'] as number | undefined,
@@ -66,15 +71,21 @@ export const useVisibleOrOnHandItems = (queryParams: ItemParams) => {
   });
 };
 
-const getVisibleOrOnHandFilter = (hasStockOnHand?: boolean) => {
-  switch (hasStockOnHand) {
-    case true:
+const getVisibleOrOnHandFilter = (stockStatus?: string) => {
+  switch (stockStatus) {
+    case 'inStock':
       // All items with stock currently in the store, including non-visible items
       return { hasStockOnHand: true };
 
-    case false:
+    case 'outOfStock':
       // All items with no stock in store. Should only include visible items.
       return { hasStockOnHand: false, isVisible: true };
+
+    case 'inStockWithRecentConsumption':
+      return { withRecentConsumption: true, hasStockOnHand: true };
+
+    case 'outOfStockWithRecentConsumption':
+      return { withRecentConsumption: true, hasStockOnHand: false };
 
     case undefined:
       // include non-visible items that have stock on hand

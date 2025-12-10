@@ -80,6 +80,16 @@ export const ExpiringStockSummary = () => {
             })
             .build(),
         },
+        {
+          label: t('label.batches-expiring-between-days'),
+          value: formatNumber.round(expiryData?.expiringInNextThreeMonths),
+          link: RouteBuilder.create(AppRoute.Inventory)
+            .addPart(AppRoute.Stock)
+            .addQuery({
+              expiryDate: getBatchesExpiryDateRange(30, 90),
+            })
+            .build(),
+        },
         ...(haveThreshold
           ? [
               {
@@ -102,16 +112,6 @@ export const ExpiringStockSummary = () => {
               },
             ]
           : []),
-        {
-          label: t('label.batches-expiring-between-days'),
-          value: formatNumber.round(expiryData?.expiringInNextThreeMonths),
-          link: RouteBuilder.create(AppRoute.Inventory)
-            .addPart(AppRoute.Stock)
-            .addQuery({
-              expiryDate: getBatchesExpiryDateRange(30, 90),
-            })
-            .build(),
-        },
       ]}
       link={RouteBuilder.create(AppRoute.Inventory)
         .addPart(AppRoute.Stock)
