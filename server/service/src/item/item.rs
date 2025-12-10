@@ -80,7 +80,7 @@ pub fn get_item_ids_by_mos(
     min_months_of_stock: Option<f64>,
     max_months_of_stock: Option<f64>,
 ) -> Result<Vec<String>, ListError> {
-    let repository = ItemRepository::new(&connection);
+    let repository = ItemRepository::new(connection);
 
     let item_ids = repository
         .query(
@@ -94,7 +94,7 @@ pub fn get_item_ids_by_mos(
         .collect();
 
     let item_stats =
-        get_item_stats_map(&connection, store_id, None, item_ids, None).map_err(|e| match e {
+        get_item_stats_map(connection, store_id, None, item_ids, None).map_err(|e| match e {
             PluginOrRepositoryError::PluginError(err) => ListError::PluginError(err.to_string()),
             PluginOrRepositoryError::RepositoryError(err) => ListError::DatabaseError(err),
         })?;
@@ -111,7 +111,7 @@ pub fn get_items_ids_for_months_of_stock(
     max_months_of_stock: Option<f64>,
 ) -> Vec<String> {
     if min_months_of_stock.is_none() && max_months_of_stock.is_none() {
-        return item_stats.into_iter().map(|(k, _v)| k).collect();
+        return item_stats.into_keys().collect();
     }
     item_stats
         .into_iter()
@@ -131,7 +131,7 @@ pub fn get_items_ids_for_months_of_stock(
                 // If amc = 0, assume this is because there's no consumption data, so we cannot determine how many months of stock there are, so we'll exclude that item
                 include = false;
             }
-            include.then(|| k)
+            include.then_some(k)
         })
         .collect()
 }
@@ -141,7 +141,7 @@ pub fn get_items_with_consumption(
     filter: ItemFilter,
     store_id: &str,
 ) -> Result<Vec<String>, RepositoryError> {
-    let repository = ItemRepository::new(&connection);
+    let repository = ItemRepository::new(connection);
 
     let item_ids: Vec<String> = repository
         .query(
@@ -156,7 +156,7 @@ pub fn get_items_with_consumption(
 
     let num_months_consumption =
         NumberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts
-            .load(&connection, Some(store_id.to_string()))
+            .load(connection, Some(store_id.to_string()))
             .map_err(map_preference_error)?;
 
     let days_in_month = days_in_a_month(connection);
@@ -180,7 +180,7 @@ pub fn get_products_at_risk_item_ids(
     filter: ItemFilter,
     store_id: &str,
 ) -> Result<Vec<String>, ListError> {
-    let repository = ItemRepository::new(&connection);
+    let repository = ItemRepository::new(connection);
 
     let item_ids = repository
         .query(
@@ -194,11 +194,11 @@ pub fn get_products_at_risk_item_ids(
         .collect();
 
     let show_low_stock_alerts = NumberOfMonthsThresholdToShowLowStockAlertsForProducts
-        .load(&connection, Some(store_id.to_string()))
+        .load(connection, Some(store_id.to_string()))
         .map_err(map_preference_error)?;
 
     let item_stats =
-        get_item_stats_map(&connection, store_id, None, item_ids, None).map_err(|e| match e {
+        get_item_stats_map(connection, store_id, None, item_ids, None).map_err(|e| match e {
             PluginOrRepositoryError::PluginError(err) => ListError::PluginError(err.to_string()),
             PluginOrRepositoryError::RepositoryError(err) => ListError::DatabaseError(err),
         })?;
