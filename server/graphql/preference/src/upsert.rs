@@ -57,6 +57,7 @@ pub struct UpsertPreferencesInput {
     pub days_in_month: Option<f64>,
     pub expired_stock_prevent_issue: Option<bool>,
     pub expired_stock_issue_threshold: Option<i32>,
+    pub item_margin_overrides_supplier_margin: Option<bool>,
 
     // Store preferences
     pub manage_vaccines_in_doses: Option<Vec<BoolStorePrefInput>>,
@@ -121,6 +122,7 @@ impl UpsertPreferencesInput {
             days_in_month,
             expired_stock_prevent_issue,
             expired_stock_issue_threshold,
+            item_margin_overrides_supplier_margin,
             // Store preferences
             manage_vaccines_in_doses,
             manage_vvm_status_for_stock,
@@ -161,6 +163,8 @@ impl UpsertPreferencesInput {
             days_in_month: *days_in_month,
             expired_stock_prevent_issue: *expired_stock_prevent_issue,
             expired_stock_issue_threshold: *expired_stock_issue_threshold,
+            item_margin_overrides_supplier_margin: *item_margin_overrides_supplier_margin,
+
             // Store preferences
             manage_vaccines_in_doses: manage_vaccines_in_doses
                 .as_ref()
