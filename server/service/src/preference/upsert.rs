@@ -27,6 +27,7 @@ pub struct UpsertPreferences {
     pub expired_stock_prevent_issue: Option<bool>,
     pub expired_stock_issue_threshold: Option<i32>,
     pub show_indicative_price_in_requisitions:Option<bool>,
+    pub item_margin_overrides_supplier_margin: Option<bool>,
 
 
     // Store preferences
@@ -72,6 +73,7 @@ pub fn upsert_preferences(
         expired_stock_prevent_issue: expired_stock_prevent_issue_input,
         expired_stock_issue_threshold: expired_stock_issue_threshold_input,
         show_indicative_price_in_requisitions: show_indicative_price_in_requisitions_input,
+        item_margin_overrides_supplier_margin: item_margin_overrides_supplier_margin_input,
 
         // Store preferences
         manage_vaccines_in_doses: manage_vaccines_in_doses_input,
@@ -116,6 +118,7 @@ pub fn upsert_preferences(
         expired_stock_prevent_issue,
         expired_stock_issue_threshold,
         show_indicative_price_in_requisitions,
+        item_margin_overrides_supplier_margin,
 
         // Store preferences
         manage_vaccines_in_doses,
@@ -193,11 +196,15 @@ pub fn upsert_preferences(
             if let Some(input) = expired_stock_issue_threshold_input {
                 expired_stock_issue_threshold.upsert(connection, input, None)?;
             }
-
+           
             if let Some(input) = show_indicative_price_in_requisitions_input {
                 show_indicative_price_in_requisitions.upsert(connection, input, None)?;
             }
             
+            if let Some(input) = item_margin_overrides_supplier_margin_input {
+                item_margin_overrides_supplier_margin.upsert(connection, input, None)?;
+            }
+
             // Store preferences, input could be array of store IDs and values - iterate and insert...
             if let Some(inputs) = manage_vaccines_in_doses_input {
                 upsert_store_input(connection, manage_vaccines_in_doses, inputs)?;

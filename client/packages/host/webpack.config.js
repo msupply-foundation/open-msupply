@@ -125,6 +125,10 @@ module.exports = env => {
         patterns: [
           { from: './public/game', to: 'game' },
           {
+            from: './public/BrowserPrint-3.1.250.min.js',
+            to: 'BrowserPrint-3.1.250.min.js',
+          },
+          {
             context: path.resolve(
               __dirname,
               '..',
