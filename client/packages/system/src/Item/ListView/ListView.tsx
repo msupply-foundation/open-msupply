@@ -12,9 +12,16 @@ import {
   ColumnDef,
   usePaginatedMaterialTable,
   MaterialTable,
+  useFormatNumber,
+  usePreferences,
+  NumericTextDisplay,
+  Typography,
+  AlertIcon,
+  UNDEFINED_STRING_VALUE,
 } from '@openmsupply-client/common';
 import { useVisibleOrOnHandItems, ItemsWithStatsFragment } from '../api';
 import { Toolbar } from './Toolbar';
+import { MRT_Cell, MRT_Row } from 'material-react-table';
 
 const ItemListComponent = () => {
   const t = useTranslation();
@@ -63,8 +70,7 @@ const ItemListComponent = () => {
         description: t('description.stock-on-hand'),
         id: 'stockOnHand',
         accessorFn: row => row.stats.stockOnHand,
-        // TODO: make custom cell work with MRT
-        // Cell: UnitsAndMaybeDosesCell,
+        Cell: UnitsAndDosesCell,
         columnType: ColumnType.Number,
         size: 180,
       },
@@ -72,7 +78,7 @@ const ItemListComponent = () => {
         header: t('label.amc'),
         description: t('description.average-monthly-consumption'),
         accessorFn: row => row.stats.averageMonthlyConsumption,
-        // Cell: UnitsAndMaybeDosesCell,
+        Cell: UnitsAndDosesCell,
         columnType: ColumnType.Number,
         size: 180,
       },
@@ -120,17 +126,54 @@ export const ItemListView = () => (
   </TableProvider>
 );
 
-// const UnitsAndMaybeDosesCell = ({}) => {
-//   const { rowData, column } = props;
-//   const units = Number(column.accessor({ rowData })) ?? 0;
-//   const { isVaccine, doses } = rowData;
+export const UnitsAndDosesCell = ({
+  cell,
+  row,
+  showAlert,
+}: {
+  cell: MRT_Cell<ItemsWithStatsFragment>;
+  row: MRT_Row<ItemsWithStatsFragment>;
+  showAlert?: boolean;
+}) => {
+  const t = useTranslation();
+  const { format } = useFormatNumber();
+  const { manageVaccinesInDoses } = usePreferences();
+  const { doses, isVaccine } = row.original;
 
-//   return (
-//     <UnitsAndMaybeDoses
-//       numberCellProps={props}
-//       units={units}
-//       isVaccine={isVaccine}
-//       dosesPerUnit={doses}
-//     />
-//   );
-// };
+  const value = cell.getValue<number | undefined>();
+
+  // Doses should always be a whole number, round if fractional packs are giving
+  // us funky decimals
+  const doseCount = format(doses ?? 0 * (value ?? 0), {
+    maximumFractionDigits: 0,
+  });
+
+  return (
+    <>
+      <NumericTextDisplay
+        value={typeof value === 'number' ? value : undefined}
+        defaultValue={UNDEFINED_STRING_VALUE}
+      />
+      {manageVaccinesInDoses && isVaccine && (
+        <Typography
+          sx={{
+            fontSize: 'small',
+            color: 'text.secondary',
+            marginLeft: '4px',
+          }}
+        >
+          ({doseCount} {t('label.doses-short')})
+        </Typography>
+      )}
+      {showAlert && (
+        <AlertIcon
+          sx={{
+            color: theme => theme.palette.error.main,
+            marginLeft: '0.2em',
+            width: '0.7em',
+          }}
+        />
+      )}
+    </>
+  );
+};
