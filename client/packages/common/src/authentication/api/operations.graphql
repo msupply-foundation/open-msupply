@@ -200,6 +200,7 @@ query preferences($storeId: String!) {
     manageVaccinesInDoses
     manageVvmStatusForStock
     numberOfMonthsThresholdToShowLowStockAlertsForProducts
+    numberOfMonthsThresholdToShowOverStockAlertsForProducts
     numberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts
     orderInPacks
     preventTransfersMonthsBeforeInitialisation
