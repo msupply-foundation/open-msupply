@@ -37,7 +37,8 @@ impl ViewMigrationFragment for ViewMigration {
         ) THEN verified_datetime
         ELSE NULL
         END AS datetime,
-        name,
+        name.name AS name,
+        name.id AS name_id,
         invoice.type AS invoice_type,
         invoice.invoice_number AS invoice_number,
         invoice.id AS invoice_id,

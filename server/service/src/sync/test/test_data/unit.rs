@@ -51,7 +51,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
             UNIT_1,
             UnitRow {
                 id: UNIT_1.0.to_owned(),
-                name: "Units".to_owned(),
+                name: "Units".to_string(),
                 description: None,
                 index: 0,
                 is_active: true,
@@ -62,7 +62,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
             UNIT_2,
             UnitRow {
                 id: UNIT_2.0.to_owned(),
-                name: "Tab".to_owned(),
+                name: "Tab".to_string(),
                 description: None,
                 index: 1,
                 is_active: true,
@@ -73,8 +73,8 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
             UNIT_3,
             UnitRow {
                 id: UNIT_3.0.to_owned(),
-                name: "Bottle".to_owned(),
-                description: Some("This is a bottle unit type".to_owned()),
+                name: "Bottle".to_string(),
+                description: Some("This is a bottle unit type".to_string()),
                 index: 2,
                 is_active: true,
             },
@@ -84,8 +84,8 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
             UNIT_4,
             UnitRow {
                 id: UNIT_4.0.to_owned(),
-                name: "Vial".to_owned(),
-                description: Some("This is a vial unit type".to_owned()),
+                name: "Vial".to_string(),
+                description: Some("This is a vial unit type".to_string()),
                 index: 3,
                 is_active: true,
             },

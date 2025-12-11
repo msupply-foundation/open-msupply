@@ -28,7 +28,7 @@ pub fn generate(
     }: UpdateCustomerReturnLines,
 ) -> Result<GenerateResult, RepositoryError> {
     let existing_lines = InvoiceLineRepository::new(connection).query_by_filter(
-        InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(&customer_return_id)),
+        InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(customer_return_id.to_string())),
     )?;
     let check_already_exists = |id: &str| {
         existing_lines

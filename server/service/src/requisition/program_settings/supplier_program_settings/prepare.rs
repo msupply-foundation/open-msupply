@@ -26,7 +26,7 @@ pub(super) fn prepare_supplier_program_settings(
     ctx: &ServiceContext,
     store_id: &str,
 ) -> Result<Option<PrepareProgramSettings>, RepositoryError> {
-    let equal_to_store_id = EqualFilter::equal_to(store_id);
+    let equal_to_store_id = EqualFilter::equal_to(store_id.to_string());
 
     let ProgramSettingsAndOrderTypes {
         settings,
@@ -81,7 +81,7 @@ pub fn get_program_settings_and_order_types_for_store(
     ctx: &ServiceContext,
     store_id: &str,
 ) -> Result<Option<ProgramSettingsAndOrderTypes>, RepositoryError> {
-    let equal_to_store_id = EqualFilter::equal_to(store_id);
+    let equal_to_store_id = EqualFilter::equal_to(store_id.to_string());
 
     let filter = ProgramRequisitionSettingsFilter::new()
         .master_list(MasterListFilter::new().exists_for_store_id(equal_to_store_id.clone()))

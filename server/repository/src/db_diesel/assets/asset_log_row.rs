@@ -93,7 +93,7 @@ impl<'a> AssetLogRowRepository<'a> {
         self._upsert_one(asset_log_row)?;
         // Return the changelog id
         self.insert_changelog(
-            asset_log_row.id.to_owned(),
+            asset_log_row.id.to_string(),
             RowActionType::Upsert,
             Some(asset_log_row.clone()),
         )

@@ -191,7 +191,7 @@ mod tests {
         .await;
 
         let repo = ItemLedgerRepository::new(&storage_connection);
-        let filter = ItemLedgerFilter::new().item_id(EqualFilter::equal_to("ledger_test_item"));
+        let filter = ItemLedgerFilter::new().item_id(EqualFilter::equal_to("ledger_test_item".to_string()));
 
         let result = repo.query(Pagination::all(), Some(filter.clone())).unwrap();
 

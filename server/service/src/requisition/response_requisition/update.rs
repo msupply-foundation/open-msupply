@@ -74,7 +74,7 @@ pub fn update_response_requisition(
                 activity_log_entry(
                     ctx,
                     ActivityLogType::RequisitionStatusFinalised,
-                    Some(updated_requisition.id.to_owned()),
+                    Some(updated_requisition.id.to_string()),
                     None,
                     None,
                 )?;
@@ -116,7 +116,7 @@ pub fn validate(
     }
 
     let response_lines = RequisitionLineRepository::new(connection).query_by_filter(
-        RequisitionLineFilter::new().requisition_id(EqualFilter::equal_to(&requisition_row.id)),
+        RequisitionLineFilter::new().requisition_id(EqualFilter::equal_to(requisition_row.id.to_string())),
     )?;
 
     let reason_options = ReasonOptionRepository::new(connection).query_by_filter(
@@ -247,7 +247,7 @@ mod test_update {
             service.update_response_requisition(
                 &context,
                 UpdateResponseRequisition {
-                    id: "invalid".to_owned(),
+                    id: "invalid".to_string(),
                     colour: None,
                     status: None,
                     their_reference: None,
@@ -340,10 +340,10 @@ mod test_update {
                 &context,
                 UpdateResponseRequisition {
                     id: mock_new_response_requisition().id,
-                    colour: Some("new colour".to_owned()),
+                    colour: Some("new colour".to_string()),
                     status: Some(UpdateResponseRequisitionStatus::Finalised),
-                    their_reference: Some("new their_reference".to_owned()),
-                    comment: Some("new comment".to_owned()),
+                    their_reference: Some("new their_reference".to_string()),
+                    comment: Some("new comment".to_string()),
                 },
             )
             .unwrap();
@@ -366,9 +366,9 @@ mod test_update {
 
         assert_eq!(user_id, Some(mock_user_account_b().id));
         assert_eq!(id, mock_new_response_requisition().id);
-        assert_eq!(colour, Some("new colour".to_owned()));
-        assert_eq!(their_reference, Some("new their_reference".to_owned()));
-        assert_eq!(comment, Some("new comment".to_owned()));
+        assert_eq!(colour, Some("new colour".to_string()));
+        assert_eq!(their_reference, Some("new their_reference".to_string()));
+        assert_eq!(comment, Some("new comment".to_string()));
         assert_eq!(status, RequisitionStatus::Finalised);
 
         let log = ActivityLogRowRepository::new(&connection)

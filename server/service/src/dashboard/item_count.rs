@@ -106,7 +106,7 @@ impl ItemCountServiceTrait for ItemServiceCount {
     ) -> Result<ItemCounts, PluginOrRepositoryError> {
         let visible_or_on_hand_items = ItemRepository::new(&ctx.connection).query_by_filter(
             ItemFilter::new().visible_or_on_hand(true).is_active(true),
-            Some(store_id.to_owned()),
+            Some(store_id.to_string()),
         )?;
 
         let total_count = *&visible_or_on_hand_items.len() as i64;

@@ -20,7 +20,6 @@ impl EqualFilter<String> {
 
 #[cfg(test)]
 mod tests {
-    
 
     use crate::{
         mock::{mock_name_a, MockData, MockDataInserts},
@@ -98,7 +97,9 @@ mod tests {
 
         // test excluded entry is in the data set
         let result = repository
-            .query_by_filter(InvoiceFilter::new().user_id(EqualFilter::equal_to(&excluded_id)))
+            .query_by_filter(
+                InvoiceFilter::new().user_id(EqualFilter::equal_to(excluded_id.to_string())),
+            )
             .unwrap();
         assert!(result.len() == 1);
 
@@ -119,14 +120,15 @@ mod tests {
         let result = repository
             .query_by_filter(
                 InvoiceFilter::new()
-                    .user_id(EqualFilter::equal_to(&excluded_id).restrict_results(&allowed)),
+                    .user_id(EqualFilter::equal_to(excluded_id.to_string()).restrict_results(&allowed)),
             )
             .unwrap();
         assert!(result.is_empty());
         // equal_to: allow query allowed id
         let result = repository
             .query_by_filter(
-                InvoiceFilter::new().user_id(EqualFilter::equal_to("A").restrict_results(&allowed)),
+                InvoiceFilter::new()
+                    .user_id(EqualFilter::equal_to("A".to_string()).restrict_results(&allowed)),
             )
             .unwrap()
             .into_iter()
@@ -178,7 +180,7 @@ mod tests {
         let result = repository
             .query_by_filter(
                 InvoiceFilter::new()
-                    .user_id(EqualFilter::not_equal_to("A").restrict_results(&allowed)),
+                    .user_id(EqualFilter::not_equal_to("A".to_string()).restrict_results(&allowed)),
             )
             .unwrap()
             .into_iter()
@@ -200,7 +202,8 @@ mod tests {
         // is_null
         let result = repository
             .query_by_filter(
-                InvoiceFilter::new().user_id(EqualFilter::is_null(true).restrict_results(&allowed)),
+                InvoiceFilter::new()
+                    .user_id(EqualFilter::is_null(true).restrict_results(&allowed)),
             )
             .unwrap()
             .into_iter()

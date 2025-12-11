@@ -101,7 +101,7 @@ pub fn update_goods_received_line(
 pub fn map_response(from: Result<GoodsReceivedLineRow, ServiceError>) -> Result<UpdateResponse> {
     let result = match from {
         Ok(goods_received_line) => {
-            UpdateResponse::Response(IdResponse(goods_received_line.id.to_owned()))
+            UpdateResponse::Response(IdResponse(goods_received_line.id.to_string()))
         }
         Err(error) => UpdateResponse::Error(UpdateError {
             error: map_error(error)?,

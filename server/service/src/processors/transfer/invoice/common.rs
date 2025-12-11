@@ -1,11 +1,16 @@
 use repository::{
-    EqualFilter, Invoice, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineType, ItemRow,
-    ItemStoreJoinRowRepository, ItemStoreJoinRowRepositoryTrait,
+    EqualFilter, Invoice, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineType, InvoiceRow,
+    InvoiceType, ItemRow, ItemStoreJoinRowRepository, ItemStoreJoinRowRepositoryTrait,
 };
 use repository::{InvoiceLineRow, RepositoryError, StorageConnection};
 use util::uuid::uuid;
 
 use crate::invoice::common::calculate_total_after_tax;
+use crate::invoice::inbound_shipment::{
+    update_inbound_shipment, UpdateInboundShipment, UpdateInboundShipmentStatus,
+};
+use crate::preference::{InboundShipmentAutoVerify, Preference};
+use crate::service_provider::ServiceContext;
 
 pub(crate) fn generate_inbound_lines(
     connection: &StorageConnection,
@@ -15,7 +20,9 @@ pub(crate) fn generate_inbound_lines(
 ) -> Result<Vec<InvoiceLineRow>, RepositoryError> {
     let outbound_lines = InvoiceLineRepository::new(connection).query_by_filter(
         InvoiceLineFilter::new()
-            .invoice_id(EqualFilter::equal_to(&source_invoice.invoice_row.id))
+            .invoice_id(EqualFilter::equal_to(
+                source_invoice.invoice_row.id.to_string(),
+            ))
             // In mSupply you can finalise customer invoice with placeholder lines, we should remove them
             // when duplicating lines from outbound invoice to inbound invoice
             .r#type(InvoiceLineType::UnallocatedStock.not_equal_to()),
@@ -162,6 +169,51 @@ pub(crate) fn convert_invoice_line_to_single_pack(
         .collect()
 }
 
+pub(crate) fn auto_verify_if_store_preference(
+    ctx: &ServiceContext,
+    inbound_shipment: &InvoiceRow,
+) -> Result<(), RepositoryError> {
+    if inbound_shipment.r#type != InvoiceType::InboundShipment {
+        return Ok(());
+    }
+
+    match inbound_shipment.status {
+        repository::InvoiceStatus::New
+        | repository::InvoiceStatus::Allocated
+        | repository::InvoiceStatus::Picked
+        | repository::InvoiceStatus::Verified
+        | repository::InvoiceStatus::Cancelled => return Ok(()),
+        repository::InvoiceStatus::Shipped
+        | repository::InvoiceStatus::Received
+        | repository::InvoiceStatus::Delivered => (), // proceed to check auto verify pref
+    };
+    let should_auto_verify = InboundShipmentAutoVerify {}
+        .load(&ctx.connection, Some(inbound_shipment.store_id.to_string()))
+        .map_err(|e| {
+            RepositoryError::as_db_error(
+                "Could not load inbound shipment auto verify preference",
+                e,
+            )
+        })?;
+
+    if should_auto_verify {
+        update_inbound_shipment(
+            ctx,
+            UpdateInboundShipment {
+                id: inbound_shipment.id.to_string(),
+                status: Some(UpdateInboundShipmentStatus::Verified),
+                ..Default::default()
+            },
+            Some(&inbound_shipment.store_id),
+        )
+        .map_err(|e| {
+            log::error!("{:?}", e);
+            RepositoryError::as_db_error("Error attempting to verify inbound shipment", e)
+        })?;
+    }
+    Ok(())
+}
+
 pub(super) fn get_default_price_for_pack(
     default_sell_price_per_pack: f64,
     default_pack_size: f64,
@@ -174,6 +226,7 @@ pub(super) fn get_default_price_for_pack(
     price_per_unit * inbound_pack_size
 }
 
+#[cfg(test)]
 mod tests {
     use super::*;
 

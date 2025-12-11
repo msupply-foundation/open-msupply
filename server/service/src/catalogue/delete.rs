@@ -39,7 +39,7 @@ pub fn validate(
         };
 
     let assets_using_item = AssetRepository::new(connection).count(Some(
-        AssetFilter::new().catalogue_item_id(EqualFilter::equal_to(id)),
+        AssetFilter::new().catalogue_item_id(EqualFilter::equal_to(id.to_string())),
     ))?;
     if assets_using_item > 0 {
         return Err(DeleteAssetCatalogueItemError::AssetCatalogueItemInUse);

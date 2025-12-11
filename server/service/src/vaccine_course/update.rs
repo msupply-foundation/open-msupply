@@ -169,7 +169,7 @@ pub fn validate(
         // Using old row program id. If in future vaccine courses can change to different
         // program, then this will need to change
         &old_row.program_id,
-        Some(old_row.id.to_owned()),
+        Some(old_row.id.to_string()),
         connection,
     )? {
         return Err(UpdateVaccineCourseError::VaccineCourseNameExistsForThisProgram);
@@ -218,7 +218,7 @@ fn generate(
 
     let doses_in_course = VaccineCourseDoseRepository::new(&connection)
         .query_by_filter(
-            VaccineCourseDoseFilter::new().vaccine_course_id(EqualFilter::equal_to(&id)),
+            VaccineCourseDoseFilter::new().vaccine_course_id(EqualFilter::equal_to(id.to_string())),
         )?
         .iter()
         .map(|dose| dose.vaccine_course_dose_row.id.clone())
@@ -231,7 +231,7 @@ fn generate(
         .collect();
 
     let items_for_course = VaccineCourseItemRepository::new(&connection).query_by_filter(
-        VaccineCourseItemFilter::new().vaccine_course_id(EqualFilter::equal_to(&id)),
+        VaccineCourseItemFilter::new().vaccine_course_id(EqualFilter::equal_to(id.to_string())),
     )?;
 
     // Should remove any items that are not in the new list

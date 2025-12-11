@@ -54,7 +54,7 @@ impl<'a> NamePropertyRowRepository<'a> {
 
     pub fn upsert_one(&self, name_property_row: &NamePropertyRow) -> Result<i64, RepositoryError> {
         self._upsert_one(name_property_row)?;
-        self.insert_changelog(name_property_row.id.to_owned(), RowActionType::Upsert)
+        self.insert_changelog(name_property_row.id.to_string(), RowActionType::Upsert)
     }
 
     fn insert_changelog(

@@ -257,7 +257,7 @@ impl<'a> NameRowRepository<'a> {
         diesel::update(name::table.filter(name::id.eq(name_id)))
             .set(name::deleted_datetime.eq(Some(chrono::Utc::now().naive_utc())))
             .execute(self.connection.lock().connection())?;
-        self.insert_changelog(name_id.to_owned(), RowActionType::Delete)
+        self.insert_changelog(name_id.to_string(), RowActionType::Delete)
     }
 
     pub async fn insert_one(&self, name_row: &NameRow) -> Result<(), RepositoryError> {
@@ -311,7 +311,7 @@ impl<'a> NameRowRepository<'a> {
             .set(name_oms_fields::properties.eq(properties))
             .execute(self.connection.lock().connection())?;
 
-        self.insert_changelog_oms_fields(name_id.to_owned(), RowActionType::Upsert)
+        self.insert_changelog_oms_fields(name_id.to_string(), RowActionType::Upsert)
     }
 
     fn insert_changelog(
@@ -448,7 +448,7 @@ mod test {
         // Add properties to name
         row_repo.update_properties(&row.id, &properties).unwrap();
 
-        let name_filter = NameFilter::new().id(EqualFilter::equal_to(&row.id));
+        let name_filter = NameFilter::new().id(EqualFilter::equal_to(row.id.to_string()));
         let name = name_repo
             .query_one("store_id", name_filter.clone())
             .unwrap()

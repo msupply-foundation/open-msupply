@@ -55,7 +55,7 @@ pub fn validate(
     let supplier_name_link = purchase_order.supplier_name_link_id.clone();
 
     let goods_received_lines = GoodsReceivedLineRepository::new(connection).query_by_filter(
-        GoodsReceivedLineFilter::new().goods_received_id(EqualFilter::equal_to(&goods_received.id)),
+        GoodsReceivedLineFilter::new().goods_received_id(EqualFilter::equal_to(goods_received.id.to_string())),
     )?;
 
     if goods_received_lines.is_empty() {

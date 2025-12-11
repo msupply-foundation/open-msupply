@@ -279,7 +279,7 @@ fn log_stock_changes(
         activity_log_entry(
             ctx,
             ActivityLogType::StockLocationChange,
-            Some(existing.id.to_owned()),
+            Some(existing.id.to_string()),
             previous_location,
             new.location_id,
         )?;
@@ -294,7 +294,7 @@ fn log_stock_changes(
         activity_log_entry(
             ctx,
             ActivityLogType::StockBatchChange,
-            Some(existing.id.to_owned()),
+            Some(existing.id.to_string()),
             previous_batch,
             new.batch,
         )?;
@@ -304,7 +304,7 @@ fn log_stock_changes(
             activity_log_entry(
                 ctx,
                 ActivityLogType::StockCostPriceChange,
-                Some(existing.id.to_owned()),
+                Some(existing.id.to_string()),
                 Some(existing.cost_price_per_pack.to_string()),
                 Some(cost_price_per_pack.to_string()),
             )?;
@@ -315,7 +315,7 @@ fn log_stock_changes(
             activity_log_entry(
                 ctx,
                 ActivityLogType::StockSellPriceChange,
-                Some(existing.id.to_owned()),
+                Some(existing.id.to_string()),
                 Some(existing.sell_price_per_pack.to_string()),
                 Some(sell_price_per_pack.to_string()),
             )?;
@@ -331,7 +331,7 @@ fn log_stock_changes(
         activity_log_entry(
             ctx,
             ActivityLogType::StockExpiryDateChange,
-            Some(existing.id.to_owned()),
+            Some(existing.id.to_string()),
             previous_expiry_date,
             new.expiry_date.map(|date| date.to_string()),
         )?;
@@ -346,7 +346,7 @@ fn generate_new_stock_line(
     stocktake_line: &StocktakeLine,
 ) -> Result<StockLineJob, UpdateStocktakeError> {
     let stocktake_line_row = stocktake_line.line.to_owned();
-    let item_id = stocktake_line.item.id.to_owned();
+    let item_id = stocktake_line.item.id.to_string();
     let stock_line_id = uuid();
 
     let counted_number_of_packs = stocktake_line_row.counted_number_of_packs.unwrap_or(0.0);
@@ -413,7 +413,7 @@ fn generate_new_stock_line(
     // If new stock line has a location, create location movement
     let location_movement = if stocktake_line_row.location_id.is_some() {
         Some(generate_enter_location_movements(
-            store_id.to_owned(),
+            store_id.to_string(),
             stock_line_id,
             stocktake_line_row.location_id,
         ))
@@ -457,9 +457,9 @@ fn generate_exit_location_movements(
                     LocationMovementFilter::new()
                         .enter_datetime(DatetimeFilter::is_null(false))
                         .exit_datetime(DatetimeFilter::is_null(true))
-                        .location_id(EqualFilter::equal_to(&location_id))
-                        .stock_line_id(EqualFilter::equal_to(&stock_line.id))
-                        .store_id(EqualFilter::equal_to(store_id)),
+                        .location_id(EqualFilter::equal_to(location_id.to_string()))
+                        .stock_line_id(EqualFilter::equal_to(stock_line.id.to_string()))
+                        .store_id(EqualFilter::equal_to(store_id.to_string())),
                 )?
                 .into_iter()
                 .map(|l| l.location_movement_row)
@@ -486,7 +486,7 @@ fn unallocated_lines_to_trim(
         return Ok(None);
     }
     let stocktake_lines = StocktakeLineRepository::new(connection).query_by_filter(
-        StocktakeLineFilter::new().stocktake_id(EqualFilter::equal_to(&stocktake.id)),
+        StocktakeLineFilter::new().stocktake_id(EqualFilter::equal_to(stocktake.id.to_string())),
         Some(store_id.to_string()),
     )?;
     if stocktake_lines.is_empty() {

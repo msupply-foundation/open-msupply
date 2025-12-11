@@ -2,8 +2,8 @@ use crate::DemographicRow;
 
 pub fn mock_demographic_a() -> DemographicRow {
     DemographicRow {
-        id: "demographic_1".to_owned(),
-        name: "demographic_1".to_owned(),
+        id: "demographic_1".to_string(),
+        name: "demographic_1".to_string(),
         population_percentage: 25.0,
     }
 }

@@ -43,12 +43,12 @@ mod query {
         let service = service_provider.stock_line_service;
 
         assert_eq!(
-            service.get_stock_line(&context, "invalid_id".to_owned()),
-            Err(SingleRecordError::NotFound("invalid_id".to_owned()))
+            service.get_stock_line(&context, "invalid_id".to_string()),
+            Err(SingleRecordError::NotFound("invalid_id".to_string()))
         );
 
         let result = service
-            .get_stock_line(&context, "stock_line_on_hold".to_owned())
+            .get_stock_line(&context, "stock_line_on_hold".to_string())
             .unwrap();
 
         assert_eq!(result.stock_line_row.id, "stock_line_on_hold");
@@ -68,7 +68,7 @@ mod query {
             .get_stock_lines(
                 &context,
                 None,
-                Some(StockLineFilter::new().id(EqualFilter::equal_to("item_a_line_a"))),
+                Some(StockLineFilter::new().id(EqualFilter::equal_to("item_a_line_a".to_string()))),
                 None,
                 None,
             )
@@ -82,8 +82,8 @@ mod query {
                 &context,
                 None,
                 Some(StockLineFilter::new().id(EqualFilter::equal_any(vec![
-                    "item_a_line_a".to_owned(),
-                    "item_a_line_b".to_owned(),
+                    "item_a_line_a".to_string(),
+                    "item_a_line_b".to_string(),
                 ]))),
                 None,
                 None,
