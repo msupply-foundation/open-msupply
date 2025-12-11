@@ -35,7 +35,7 @@ export const StockLevelsSummary = () => {
   useEffect(() => {
     queryClient.invalidateQueries(dashboardApi.keys.items());
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [outOfStockProducts, lowStockAlert]);
+  }, [outOfStockProducts, lowStockAlert, overStockAlert]);
 
   return (
     <StatsPanel
