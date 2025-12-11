@@ -228,7 +228,7 @@ pub(super) fn get_default_price_for_pack(
 
 #[cfg(test)]
 mod tests {
-    use super::get_default_price_for_pack;
+    use super::*;
 
     #[test]
     fn test_get_default_price_for_pack_conversion() {

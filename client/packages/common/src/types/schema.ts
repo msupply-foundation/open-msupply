@@ -4823,9 +4823,9 @@ export type ItemFilterInput = {
   maxMonthsOfStock?: InputMaybe<Scalars['Float']['input']>;
   minMonthsOfStock?: InputMaybe<Scalars['Float']['input']>;
   name?: InputMaybe<StringFilterInput>;
-  outOfStockProducts?: InputMaybe<Scalars['Boolean']['input']>;
   productsAtRiskOfBeingOutOfStock?: InputMaybe<Scalars['Boolean']['input']>;
   type?: InputMaybe<EqualFilterItemTypeInput>;
+  withRecentConsumption?: InputMaybe<Scalars['Boolean']['input']>;
 };
 
 export type ItemLedgerConnector = {
@@ -9598,6 +9598,7 @@ export type StoreConnector = {
 
 export type StoreFilterInput = {
   code?: InputMaybe<StringFilterInput>;
+  codeOrName?: InputMaybe<StringFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
   name?: InputMaybe<StringFilterInput>;
   nameCode?: InputMaybe<StringFilterInput>;
@@ -11342,6 +11343,7 @@ export enum UserPermission {
   AssetMutate = 'ASSET_MUTATE',
   AssetMutateViaDataMatrix = 'ASSET_MUTATE_VIA_DATA_MATRIX',
   AssetQuery = 'ASSET_QUERY',
+  AssetStatusMutate = 'ASSET_STATUS_MUTATE',
   CancelFinalisedInvoices = 'CANCEL_FINALISED_INVOICES',
   ColdChainApi = 'COLD_CHAIN_API',
   CreateRepack = 'CREATE_REPACK',
