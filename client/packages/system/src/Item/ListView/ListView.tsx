@@ -1,8 +1,6 @@
 import React, { useMemo } from 'react';
 import {
   useNavigate,
-  TableProvider,
-  createTableStore,
   NothingHere,
   useTranslation,
   useUrlQueryParams,
@@ -121,9 +119,7 @@ const ItemListComponent = () => {
 };
 
 export const ItemListView = () => (
-  <TableProvider createStore={createTableStore}>
-    <ItemListComponent />
-  </TableProvider>
+  <ItemListComponent />
 );
 
 export const UnitsAndDosesCell = ({

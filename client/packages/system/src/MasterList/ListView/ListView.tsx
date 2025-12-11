@@ -1,11 +1,8 @@
 import React, { useMemo } from 'react';
 import {
-  TableProvider,
-  createTableStore,
   useNavigate,
   NothingHere,
   useTranslation,
-  createQueryParamsStore,
   useUrlQueryParams,
   TextWithTooltipCell,
   useAuthContext,
@@ -91,12 +88,5 @@ const MasterListComponent = () => {
 };
 
 export const MasterListListView = () => (
-  <TableProvider<MasterListRowFragment>
-    createStore={createTableStore}
-    queryParamsStore={createQueryParamsStore<MasterListRowFragment>({
-      initialSortBy: { key: 'name' },
-    })}
-  >
-    <MasterListComponent />
-  </TableProvider>
+  <MasterListComponent />
 );

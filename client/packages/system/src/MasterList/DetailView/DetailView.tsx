@@ -1,7 +1,5 @@
 import React, { FC, useEffect } from 'react';
 import {
-  TableProvider,
-  createTableStore,
   DetailViewSkeleton,
   AlertModal,
   RouteBuilder,
@@ -27,10 +25,10 @@ export const MasterListDetailView: FC = () => {
   if (isLoading) return <DetailViewSkeleton />;
 
   return !!data ? (
-    <TableProvider createStore={createTableStore}>
+    <>
       <Toolbar description={data.description} />
       <ContentArea />
-    </TableProvider>
+    </>
   ) : (
     <AlertModal
       open={true}
