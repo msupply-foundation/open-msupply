@@ -12,7 +12,6 @@ import {
   usePaginatedMaterialTable,
   ColumnDef,
   ColumnType,
-  GenderTypeNode,
   ColumnDataAccessor,
   ChipTableCell,
   usePreferences,
