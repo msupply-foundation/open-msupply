@@ -20,11 +20,13 @@ export const useSensorList = (queryParams?: ListParams) => {
   const queryFn = async () => {
     const { first, offset, sortBy, filterBy } = queryParams ?? {};
 
+    const sortKey = (sortBy?.key ||
+      SensorSortFieldInput.Serial) as SensorSortFieldInput;
     const result = await sensorApi.sensors({
       storeId,
       page: { offset, first },
       sort: {
-        key: sortBy?.key as SensorSortFieldInput,
+        key: sortKey,
         desc: !!sortBy?.isDesc,
       },
       filter: filterBy,
