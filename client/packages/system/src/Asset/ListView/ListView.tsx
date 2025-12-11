@@ -1,7 +1,5 @@
 import React, { FC, useEffect, useMemo, useState } from 'react';
 import {
-  TableProvider,
-  createTableStore,
   useTranslation,
   useUrlQueryParams,
   TextWithTooltipCell,
@@ -177,7 +175,5 @@ const AssetListComponent: FC = () => {
 };
 
 export const AssetListView: FC = () => (
-  <TableProvider createStore={createTableStore}>
-    <AssetListComponent />
-  </TableProvider>
+  <AssetListComponent />
 );
