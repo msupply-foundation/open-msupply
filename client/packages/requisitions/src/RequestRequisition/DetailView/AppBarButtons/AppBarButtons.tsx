@@ -29,7 +29,7 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
   const { OpenButton } = useDetailPanel();
   const { data } = useRequest.document.get();
 
-  const diableAddItem = isDisabled || isProgram;
+  const disableAddItem = isDisabled || isProgram;
   const disableUploadDocument = isDisabled; // Allow documents uploading only if not disabled (skip programs restriction)
 
   return (
@@ -39,7 +39,7 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
           onAddItem={onAddItem}
           openUploadModal={openUploadModal}
           status={data?.status}
-          disableAddItem={diableAddItem}
+          disableAddItem={disableAddItem}
           disableUploadDocument={disableUploadDocument}
         />
 
