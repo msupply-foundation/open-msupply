@@ -25,7 +25,6 @@ export const StoreProperties = ({
 }: StorePropertiesProps) => {
   const t = useTranslation();
   const isCentralServer = useIsCentralServerApi();
-
   const isGapsStore = useIsGapsStoreOnly();
 
   return !propertyConfigs?.length ? (
