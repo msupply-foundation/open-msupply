@@ -75,7 +75,7 @@ pub fn get_item_stats(
 
     let filter = ConsumptionFilter {
         item_id: Some(EqualFilter::equal_any(item_ids.clone())),
-        store_id: Some(EqualFilter::equal_to(store_id)),
+        store_id: Some(EqualFilter::equal_to(store_id.to_string())),
         date: Some(DateFilter::date_range(&start_date, &offset_end_date)),
     };
 
@@ -226,7 +226,7 @@ pub fn get_stock_on_hand_rows(
 ) -> Result<Vec<StockOnHandRow>, RepositoryError> {
     let filter = StockOnHandFilter {
         item_id: item_ids.map(EqualFilter::equal_any),
-        store_id: Some(EqualFilter::equal_to(store_id)),
+        store_id: Some(EqualFilter::equal_to(store_id.to_string())),
     };
 
     StockOnHandRepository::new(connection).query(Some(filter))

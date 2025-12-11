@@ -419,17 +419,17 @@ impl Document {
             extra: format!("{}", err),
         })?;
         Ok(DocumentRow {
-            id: self.id.to_owned(),
+            id: self.id.to_string(),
             name: self.name.to_owned(),
             parent_ids: parents,
-            user_id: self.user_id.to_owned(),
+            user_id: self.user_id.to_string(),
             datetime: self.datetime.naive_utc(),
             r#type: self.r#type.to_owned(),
             data,
             form_schema_id: self.form_schema_id.clone(),
             status: self.status.to_owned(),
             owner_name_link_id: self.owner_name_id.to_owned(),
-            context_id: self.context_id.to_owned(),
+            context_id: self.context_id.to_string(),
         })
     }
 }

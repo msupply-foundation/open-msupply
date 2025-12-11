@@ -6860,8 +6860,11 @@ export enum PreferenceKey {
   CustomTranslations = 'customTranslations',
   DaysInMonth = 'daysInMonth',
   DisableManualReturns = 'disableManualReturns',
+  ExpiredStockIssueThreshold = 'expiredStockIssueThreshold',
+  ExpiredStockPreventIssue = 'expiredStockPreventIssue',
   FirstThresholdForExpiringItems = 'firstThresholdForExpiringItems',
   GenderOptions = 'genderOptions',
+  InboundShipmentAutoVerify = 'inboundShipmentAutoVerify',
   ManageVaccinesInDoses = 'manageVaccinesInDoses',
   ManageVvmStatusForStock = 'manageVvmStatusForStock',
   NumberOfMonthsThresholdToShowLowStockAlertsForProducts = 'numberOfMonthsThresholdToShowLowStockAlertsForProducts',
@@ -6872,10 +6875,14 @@ export enum PreferenceKey {
   SecondThresholdForExpiringItems = 'secondThresholdForExpiringItems',
   SelectDestinationStoreForAnInternalOrder = 'selectDestinationStoreForAnInternalOrder',
   ShowContactTracing = 'showContactTracing',
+  ShowIndicativePriceInRequisitions = 'showIndicativePriceInRequisitions',
+  SkipIntermediateStatusesInOutbound = 'skipIntermediateStatusesInOutbound',
   SortByVvmStatusThenExpiry = 'sortByVvmStatusThenExpiry',
+  StoreCustomColour = 'storeCustomColour',
   SyncRecordsDisplayThreshold = 'syncRecordsDisplayThreshold',
   UseProcurementFunctionality = 'useProcurementFunctionality',
   UseSimplifiedMobileUi = 'useSimplifiedMobileUi',
+  WarnWhenMissingRecentStocktake = 'warnWhenMissingRecentStocktake',
   WarningForExcessRequest = 'warningForExcessRequest',
 }
 
@@ -6899,6 +6906,8 @@ export enum PreferenceValueNodeType {
   CustomTranslations = 'CUSTOM_TRANSLATIONS',
   Integer = 'INTEGER',
   MultiChoice = 'MULTI_CHOICE',
+  String = 'STRING',
+  WarnWhenMissingRecentStocktakeData = 'WARN_WHEN_MISSING_RECENT_STOCKTAKE_DATA',
 }
 
 export type PreferencesNode = {
@@ -6911,8 +6920,11 @@ export type PreferencesNode = {
   customTranslations: Scalars['JSONObject']['output'];
   daysInMonth: Scalars['Float']['output'];
   disableManualReturns: Scalars['Boolean']['output'];
+  expiredStockIssueThreshold: Scalars['Int']['output'];
+  expiredStockPreventIssue: Scalars['Boolean']['output'];
   firstThresholdForExpiringItems: Scalars['Int']['output'];
   genderOptions: Array<GenderTypeNode>;
+  inboundShipmentAutoVerify: Scalars['Boolean']['output'];
   manageVaccinesInDoses: Scalars['Boolean']['output'];
   manageVvmStatusForStock: Scalars['Boolean']['output'];
   numberOfMonthsThresholdToShowLowStockAlertsForProducts: Scalars['Int']['output'];
@@ -6923,10 +6935,14 @@ export type PreferencesNode = {
   secondThresholdForExpiringItems: Scalars['Int']['output'];
   selectDestinationStoreForAnInternalOrder: Scalars['Boolean']['output'];
   showContactTracing: Scalars['Boolean']['output'];
+  showIndicativePriceInRequisitions: Scalars['Boolean']['output'];
+  skipIntermediateStatusesInOutbound: Scalars['Boolean']['output'];
   sortByVvmStatusThenExpiry: Scalars['Boolean']['output'];
+  storeCustomColour: Scalars['String']['output'];
   syncRecordsDisplayThreshold: Scalars['Int']['output'];
   useProcurementFunctionality: Scalars['Boolean']['output'];
   useSimplifiedMobileUi: Scalars['Boolean']['output'];
+  warnWhenMissingRecentStocktake: WarnWhenMissingRecentStocktakeDataNode;
   warningForExcessRequest: Scalars['Boolean']['output'];
 };
 
@@ -8744,6 +8760,7 @@ export type RequisitionLineNode = {
   /** OutboundShipment lines linked to requisitions line */
   outboundShipmentLines: InvoiceLineConnector;
   outgoingUnits: Scalars['Float']['output'];
+  pricePerUnit?: Maybe<Scalars['Float']['output']>;
   reason?: Maybe<ReasonOptionNode>;
   /**
    * Quantity remaining to supply
@@ -8798,6 +8815,7 @@ export type RequisitionNode = {
   createdFromRequisition?: Maybe<RequisitionNode>;
   createdFromRequisitionId?: Maybe<Scalars['String']['output']>;
   destinationCustomer?: Maybe<NameNode>;
+  documents: SyncFileReferenceConnector;
   expectedDeliveryDate?: Maybe<Scalars['NaiveDate']['output']>;
   finalisedDatetime?: Maybe<Scalars['DateTime']['output']>;
   id: Scalars['String']['output'];
@@ -9657,6 +9675,11 @@ export type StringFilterInput = {
   equalTo?: InputMaybe<Scalars['String']['input']>;
   /** Search term must be included in search candidate (case insensitive) */
   like?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type StringStorePrefInput = {
+  storeId: Scalars['String']['input'];
+  value: Scalars['String']['input'];
 };
 
 export type Success = {
@@ -11227,8 +11250,11 @@ export type UpsertPreferencesInput = {
   customTranslations?: InputMaybe<Scalars['JSONObject']['input']>;
   daysInMonth?: InputMaybe<Scalars['Float']['input']>;
   disableManualReturns?: InputMaybe<Array<BoolStorePrefInput>>;
+  expiredStockIssueThreshold?: InputMaybe<Scalars['Int']['input']>;
+  expiredStockPreventIssue?: InputMaybe<Scalars['Boolean']['input']>;
   firstThresholdForExpiringItems?: InputMaybe<Array<IntegerStorePrefInput>>;
   genderOptions?: InputMaybe<Array<GenderTypeNode>>;
+  inboundShipmentAutoVerify?: InputMaybe<Array<BoolStorePrefInput>>;
   manageVaccinesInDoses?: InputMaybe<Array<BoolStorePrefInput>>;
   manageVvmStatusForStock?: InputMaybe<Array<BoolStorePrefInput>>;
   numberOfMonthsThresholdToShowLowStockAlertsForProducts?: InputMaybe<
@@ -11247,10 +11273,16 @@ export type UpsertPreferencesInput = {
     Array<BoolStorePrefInput>
   >;
   showContactTracing?: InputMaybe<Scalars['Boolean']['input']>;
+  showIndicativePriceInRequisitions?: InputMaybe<Scalars['Boolean']['input']>;
+  skipIntermediateStatusesInOutbound?: InputMaybe<Array<BoolStorePrefInput>>;
   sortByVvmStatusThenExpiry?: InputMaybe<Array<BoolStorePrefInput>>;
+  storeCustomColour?: InputMaybe<Array<StringStorePrefInput>>;
   syncRecordsDisplayThreshold?: InputMaybe<Scalars['Int']['input']>;
   useProcurementFunctionality?: InputMaybe<Array<BoolStorePrefInput>>;
   useSimplifiedMobileUi?: InputMaybe<Array<BoolStorePrefInput>>;
+  warnWhenMissingRecentStocktake?: InputMaybe<
+    Array<WarnWhenMissingRecentStocktakeInput>
+  >;
   warningForExcessRequest?: InputMaybe<Scalars['Boolean']['input']>;
 };
 
@@ -11590,6 +11622,24 @@ export type VvmstatusNode = {
 };
 
 export type VvmstatusesResponse = VvmstatusConnector;
+
+export type WarnWhenMissingRecentStocktakeDataInput = {
+  enabled: Scalars['Boolean']['input'];
+  maxAge: Scalars['Int']['input'];
+  minItems: Scalars['Int']['input'];
+};
+
+export type WarnWhenMissingRecentStocktakeDataNode = {
+  __typename: 'WarnWhenMissingRecentStocktakeDataNode';
+  enabled: Scalars['Boolean']['output'];
+  maxAge: Scalars['Int']['output'];
+  minItems: Scalars['Int']['output'];
+};
+
+export type WarnWhenMissingRecentStocktakeInput = {
+  storeId: Scalars['String']['input'];
+  value: WarnWhenMissingRecentStocktakeDataInput;
+};
 
 export type WarningNode = {
   __typename: 'WarningNode';

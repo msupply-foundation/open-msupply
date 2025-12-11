@@ -36,8 +36,8 @@ pub fn get_historic_consumption_for_item(
     let points = generate_consumption_series(reference_date, options);
     // Get rows
     let filter = ConsumptionFilter::new()
-        .store_id(EqualFilter::equal_to(store_id))
-        .item_id(EqualFilter::equal_to(item_id))
+        .store_id(EqualFilter::equal_to(store_id.to_string()))
+        .item_id(EqualFilter::equal_to(item_id.to_string()))
         .date(DateFilter::date_range(
             &points.first_date,
             &points.last_date,

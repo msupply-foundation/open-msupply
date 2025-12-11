@@ -184,3 +184,43 @@ query lastSuccessfulUserSync {
     ...UpdateUser
   }
 }
+
+query preferences($storeId: String!) {
+  preferences(storeId: $storeId) {
+    adjustForNumberOfDaysOutOfStock
+    allowTrackingOfStockByDonor
+    authoriseGoodsReceived
+    authorisePurchaseOrder
+    canCreateInternalOrderFromARequisition
+    customTranslations
+    daysInMonth
+    disableManualReturns
+    firstThresholdForExpiringItems
+    genderOptions
+    manageVaccinesInDoses
+    manageVvmStatusForStock
+    numberOfMonthsThresholdToShowLowStockAlertsForProducts
+    numberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts
+    orderInPacks
+    preventTransfersMonthsBeforeInitialisation
+    requisitionAutoFinalise
+    secondThresholdForExpiringItems
+    selectDestinationStoreForAnInternalOrder
+    showContactTracing
+    sortByVvmStatusThenExpiry
+    storeCustomColour
+    syncRecordsDisplayThreshold
+    useProcurementFunctionality
+    useSimplifiedMobileUi
+    expiredStockPreventIssue
+    expiredStockIssueThreshold
+    warnWhenMissingRecentStocktake {
+      enabled
+      maxAge
+      minItems
+    }
+    warningForExcessRequest
+    skipIntermediateStatusesInOutbound
+    showIndicativePriceInRequisitions
+  }
+}

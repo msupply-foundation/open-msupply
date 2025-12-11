@@ -6,7 +6,6 @@ use repository::{
 use crate::{
     get_pagination_or_default, i64_to_u32, service_provider::ServiceContext, ListError, ListResult,
 };
- 
 
 pub fn get_rnr_forms(
     ctx: &ServiceContext,
@@ -21,7 +20,7 @@ pub fn get_rnr_forms(
     // ensure filter restrict results to store id
     let filter = filter
         .unwrap_or_default()
-        .store_id(EqualFilter::equal_to(store_id));
+        .store_id(EqualFilter::equal_to(store_id.to_string()));
 
     Ok(ListResult {
         rows: repository.query(pagination, Some(filter.clone()), sort)?,
@@ -36,8 +35,8 @@ pub fn get_rnr_form(
 ) -> Result<Option<RnRForm>, RepositoryError> {
     let repository = RnRFormRepository::new(&ctx.connection);
     let filter = RnRFormFilter::new()
-        .id(EqualFilter::equal_to(&id))
-        .store_id(EqualFilter::equal_to(store_id));
+        .id(EqualFilter::equal_to(id.to_string()))
+        .store_id(EqualFilter::equal_to(store_id.to_string()));
 
     Ok(repository.query_by_filter(filter)?.pop())
 }

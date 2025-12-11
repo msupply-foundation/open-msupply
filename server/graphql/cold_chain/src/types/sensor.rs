@@ -147,7 +147,7 @@ impl SensorNode {
         ctx: &Context<'_>,
     ) -> Result<Option<TemperatureLogConnector>> {
         let filter = TemperatureLogFilter::new()
-            .sensor(SensorFilter::new().id(EqualFilter::equal_to(&self.row().id)));
+            .sensor(SensorFilter::new().id(EqualFilter::equal_to(self.row().id.to_string())));
 
         let latest_log = get_temperature_logs(
             &ctx.get_connection_manager().connection()?,
@@ -169,7 +169,7 @@ impl SensorNode {
     pub async fn breach(&self, ctx: &Context<'_>) -> Result<Option<TemperatureBreachNodeType>> {
         let filter = TemperatureBreachFilter::new()
             .end_datetime(DatetimeFilter::is_null(true))
-            .sensor(SensorFilter::new().id(EqualFilter::equal_to(&self.row().id)));
+            .sensor(SensorFilter::new().id(EqualFilter::equal_to(self.row().id.to_string())));
 
         let breach = temperature_breaches(
             &ctx.get_connection_manager().connection()?,

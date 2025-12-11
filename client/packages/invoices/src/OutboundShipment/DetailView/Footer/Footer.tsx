@@ -15,6 +15,7 @@ import {
   useBreadcrumbs,
   useConfirmationModal,
   InvoiceLineNodeType,
+  usePreferences,
 } from '@openmsupply-client/common';
 import { getStatusTranslator, outboundStatuses } from '../../../utils';
 import { useOutbound, OutboundFragment } from '../../api';
@@ -75,6 +76,7 @@ export const FooterComponent: FC<FooterComponentProps> = ({
 }) => {
   const t = useTranslation();
   const { navigateUpOne } = useBreadcrumbs();
+  const { skipIntermediateStatusesInOutbound } = usePreferences();
 
   const { data } = useOutbound.document.get();
   const onDelete = useOutbound.line.deleteSelected(
@@ -130,6 +132,13 @@ export const FooterComponent: FC<FooterComponentProps> = ({
     },
   ];
 
+  const statuses = outboundStatuses.filter(
+    status =>
+      !skipIntermediateStatusesInOutbound ||
+      (status !== InvoiceNodeStatus.Allocated &&
+        status !== InvoiceNodeStatus.Picked)
+  );
+
   return (
     <AppFooterPortal
       Content={
@@ -152,7 +161,7 @@ export const FooterComponent: FC<FooterComponentProps> = ({
               <OnHoldButton />
 
               <StatusCrumbs
-                statuses={outboundStatuses}
+                statuses={statuses}
                 statusLog={createStatusLog(data)}
                 statusFormatter={getStatusTranslator(t)}
               />
@@ -166,7 +175,6 @@ export const FooterComponent: FC<FooterComponentProps> = ({
                   sx={{ fontSize: '12px' }}
                   onClick={() => navigateUpOne()}
                 />
-
                 <StatusChangeButton />
               </Box>
             </Box>

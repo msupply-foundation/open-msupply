@@ -86,10 +86,9 @@ pub fn insert_goods_received_lines_from_purchase_order(
             validate_references(&input, connection)?;
 
             let purchase_order_lines = PurchaseOrderLineRepository::new(connection)
-                .query_by_filter(
-                    PurchaseOrderLineFilter::new()
-                        .purchase_order_id(EqualFilter::equal_to(&input.purchase_order_id)),
-                )?;
+                .query_by_filter(PurchaseOrderLineFilter::new().purchase_order_id(
+                    EqualFilter::equal_to(input.purchase_order_id.to_string()),
+                ))?;
 
             let mut goods_received_lines = Vec::new();
 

@@ -109,7 +109,7 @@ pub fn update_outbound_shipment(
                 activity_log_entry(
                     ctx,
                     log_type_from_invoice_status(&update_invoice.status, false),
-                    Some(update_invoice.id.to_owned()),
+                    Some(update_invoice.id.to_string()),
                     None,
                     None,
                 )?;

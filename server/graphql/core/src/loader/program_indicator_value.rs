@@ -56,9 +56,9 @@ impl Loader<IndicatorValueLoaderInput> for IndicatorValueLoader {
             };
 
         let filter = IndicatorValueFilter::new()
-            .store_id(EqualFilter::equal_to(&store_id))
-            .customer_name_id(EqualFilter::equal_to(&customer_name_id))
-            .period_id(EqualFilter::equal_to(&period_id));
+            .store_id(EqualFilter::equal_to(store_id.to_string()))
+            .customer_name_id(EqualFilter::equal_to(customer_name_id.to_string()))
+            .period_id(EqualFilter::equal_to(period_id.to_string()));
 
         let values =
             IndicatorValueRepository::new(&service_context.connection).query_by_filter(filter)?;

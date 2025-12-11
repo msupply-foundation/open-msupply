@@ -14,12 +14,16 @@ import {
   RouteBuilder,
   useSimplifiedTabletUI,
   useExportCSV,
+  usePreferences,
+  useConfirmationModal,
 } from '@openmsupply-client/common';
 import { useRequest } from '../api';
 import { requestsToCsv } from '../../utils';
 import { CreateRequisitionModal } from './CreateRequisitionModal';
 import { AppRoute } from '@openmsupply-client/config';
 import { NewRequisitionType } from '../../types';
+import { useRecentStocktakes } from '../api/hooks/utils/useRecentStocktakes';
+import { getUniqueItemCountInStocktakeLines } from './utils';
 
 export const AppBarButtons: FC<{
   modalController: ToggleState;
@@ -49,13 +53,56 @@ export const AppBarButtons: FC<{
     exportCSV(csv, t('filename.requests'));
   };
 
+  // Warning when you don't have a recent stocktake with enough items
+  const prefs = usePreferences();
+
+  const {
+    query: { data: recentStocktakeData, isLoading: stocktakeLoading },
+  } = useRecentStocktakes(
+    prefs.warnWhenMissingRecentStocktake?.enabled ?? false,
+    prefs.warnWhenMissingRecentStocktake?.maxAge
+  );
+
+  const uniqueStocktakeItemCount =
+    getUniqueItemCountInStocktakeLines(recentStocktakeData);
+
+  // Determine whether to show the stocktake too old warning
+  const showOldStocktakeWarning =
+    prefs.warnWhenMissingRecentStocktake?.enabled &&
+    prefs.warnWhenMissingRecentStocktake?.minItems !== undefined &&
+    uniqueStocktakeItemCount < prefs.warnWhenMissingRecentStocktake?.minItems;
+
+  const getConfirmation = useConfirmationModal({
+    message: t('warning.insufficient-recent-stocktake-items', {
+      minItems: prefs.warnWhenMissingRecentStocktake?.minItems,
+      maxAge: prefs.warnWhenMissingRecentStocktake?.maxAge,
+    }),
+    title: t('heading.are-you-sure'),
+    cancelButtonLabel: t('button.go-to-stocktakes'),
+  });
+
+  const handleAddRequisitionClick = () => {
+    if (showOldStocktakeWarning) {
+      const stocktakePath = RouteBuilder.create(AppRoute.Inventory)
+        .addPart(AppRoute.Stocktakes)
+        .build();
+      getConfirmation({
+        onConfirm: () => modalController.toggleOn(),
+        onCancel: () => setTimeout(() => navigate(stocktakePath), 50), // Delay to allow modal to close
+      });
+    } else {
+      modalController.toggleOn();
+    }
+  };
+
   return (
     <AppBarButtonsPortal>
       <Grid container gap={1}>
         <ButtonWithIcon
+          disabled={stocktakeLoading}
           Icon={<PlusCircleIcon />}
           label={t('label.new-internal-order')}
-          onClick={modalController.toggleOn}
+          onClick={handleAddRequisitionClick}
         />
         {!simplifiedTabletView && (
           <LoadingButton

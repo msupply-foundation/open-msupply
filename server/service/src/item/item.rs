@@ -65,11 +65,11 @@ pub fn get_items(
         })
         .transpose()?;
 
-    let rows = repository.query(pagination, filter.clone(), sort, Some(store_id.to_owned()))?;
+    let rows = repository.query(pagination, filter.clone(), sort, Some(store_id.to_string()))?;
 
     Ok(ListResult {
         rows,
-        count: i64_to_u32(repository.count(store_id.to_owned(), filter)?),
+        count: i64_to_u32(repository.count(store_id.to_string(), filter)?),
     })
 }
 
@@ -87,7 +87,7 @@ pub fn get_item_ids_by_mos(
             Pagination::all(), // get all items so we can then filter them by mos in the next part. We'll use pagination for the query that will be returned to the user.
             Some(filter),
             None,
-            Some(store_id.to_owned()),
+            Some(store_id.to_string()),
         )?
         .iter()
         .map(|item| item.item_row.id.clone())
@@ -165,7 +165,7 @@ pub fn get_items_with_consumption(
     let start_date = date_with_offset(&end_date, Duration::days(-(number_of_days as i64)));
 
     let consumption_filter = ConsumptionFilter::new()
-        .store_id(EqualFilter::equal_to(store_id))
+        .store_id(EqualFilter::equal_to(store_id.to_string()))
         .item_id(EqualFilter::equal_any(item_ids))
         .date(DateFilter::date_range(&start_date, &end_date));
 
@@ -187,7 +187,7 @@ pub fn get_products_at_risk_item_ids(
             Pagination::all(),
             Some(filter.clone()),
             None,
-            Some(store_id.to_owned()),
+            Some(store_id.to_string()),
         )?
         .iter()
         .map(|item| item.item_row.id.clone())
@@ -236,7 +236,7 @@ pub fn check_item_exists(
 ) -> Result<bool, RepositoryError> {
     let count = ItemRepository::new(connection).count(
         store_id,
-        Some(ItemFilter::new().id(EqualFilter::equal_to(item_id))),
+        Some(ItemFilter::new().id(EqualFilter::equal_to(item_id.to_string()))),
     )?;
     Ok(count > 0)
 }
@@ -248,7 +248,7 @@ pub fn get_item(
 ) -> Result<Option<Item>, RepositoryError> {
     Ok(ItemRepository::new(connection)
         .query_by_filter(
-            ItemFilter::new().id(EqualFilter::equal_to(item_id)),
+            ItemFilter::new().id(EqualFilter::equal_to(item_id.to_string())),
             Some(store_id),
         )?
         .pop())

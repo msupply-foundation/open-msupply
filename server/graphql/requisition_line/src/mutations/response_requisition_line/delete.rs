@@ -312,7 +312,7 @@ mod test {
                     id: "delete line id input".to_string(),
                 }
             );
-            Ok("deleted id".to_owned())
+            Ok("deleted id".to_string())
         }));
 
         let variables = json!({

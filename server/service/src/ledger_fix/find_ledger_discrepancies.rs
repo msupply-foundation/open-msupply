@@ -24,7 +24,7 @@ pub(super) fn find_stock_line_ledger_discrepancies(
 
     // Filters
     let (stock_line, stock_line_id) = match stock_line_id {
-        Some(id) => (None, Some(EqualFilter::equal_to(id))),
+        Some(id) => (None, Some(EqualFilter::equal_to(id.to_string()))),
         None => (
             Some(
                 StockLineFilter::new()

@@ -46,7 +46,7 @@ pub fn delete_response_requisition(
             validate(connection, &ctx.store_id, &input)?;
 
             let lines = RequisitionLineRepository::new(connection).query_by_filter(
-                RequisitionLineFilter::new().requisition_id(EqualFilter::equal_to(&input.id)),
+                RequisitionLineFilter::new().requisition_id(EqualFilter::equal_to(input.id.to_string())),
             )?;
             for line in lines {
                 delete_response_requisition_line(
@@ -97,7 +97,7 @@ fn validate(
     }
 
     let filter = InvoiceFilter {
-        requisition_id: Some(EqualFilter::equal_to(&requisition_row.id)),
+        requisition_id: Some(EqualFilter::equal_to(requisition_row.id.to_string())),
         ..Default::default()
     };
     if InvoiceRepository::new(connection)
@@ -155,7 +155,7 @@ mod test_delete {
             service.delete_response_requisition(
                 &context,
                 DeleteResponseRequisition {
-                    id: "invalid".to_owned(),
+                    id: "invalid".to_string(),
                 },
             ),
             Err(ServiceError::RequisitionDoesNotExist)

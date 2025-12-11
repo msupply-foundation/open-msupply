@@ -1,8 +1,10 @@
-import { PreferenceKey } from '@openmsupply-client/common';
+import { LocaleKey, PreferenceKey } from '@openmsupply-client/common';
 import { AdminPreferenceFragment } from '../api/operations.generated';
 
 // Grouping of global preferences
-export const PREFERENCE_GROUP_CONFIG: Record<string, PreferenceKey[]> = {
+export const PREFERENCE_GROUP_CONFIG: Partial<
+  Record<LocaleKey, PreferenceKey[]>
+> = {
   'title.average-monthly-consumption': [
     PreferenceKey.DaysInMonth,
     PreferenceKey.AdjustForNumberOfDaysOutOfStock,
@@ -10,6 +12,10 @@ export const PREFERENCE_GROUP_CONFIG: Record<string, PreferenceKey[]> = {
   'label.procurement': [
     PreferenceKey.AuthoriseGoodsReceived,
     PreferenceKey.AuthorisePurchaseOrder,
+  ],
+  'label.expired-stock': [
+    PreferenceKey.ExpiredStockPreventIssue,
+    PreferenceKey.ExpiredStockIssueThreshold,
   ],
 };
 

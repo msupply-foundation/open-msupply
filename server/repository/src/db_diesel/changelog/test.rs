@@ -338,7 +338,7 @@ fn test_changelog_name_and_store_id<T, F>(
         .changelogs(
             0,
             20,
-            Some(ChangelogFilter::new().record_id(EqualFilter::equal_to(&record.record_id))),
+            Some(ChangelogFilter::new().record_id(EqualFilter::equal_to(record.record_id.to_string()))),
         )
         .unwrap();
 

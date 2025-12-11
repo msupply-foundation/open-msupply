@@ -33,6 +33,7 @@ fragment RequestLine on RequisitionLineNode {
   additionInUnits
   expiringUnits
   daysOutOfStock
+  pricePerUnit
 
   itemStats {
     __typename
@@ -69,7 +70,12 @@ fragment Request on RequisitionNode {
   maxMonthsOfStock
   minMonthsOfStock
   approvalStatus
-
+  documents {
+    __typename
+    nodes {
+      ...SyncFileReference
+    }
+  }
   user {
     __typename
     username
