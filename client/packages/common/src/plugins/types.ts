@@ -56,7 +56,8 @@ export type Plugins = {
     tableStateLoader: React.ComponentType<{
       masterLists: MasterListRowFragment[];
     }>[];
-    tableColumn: ColumnDefinition<MasterListRowFragment>[];
+    // #QUESTION: Do any plugins needs updating?
+    tableColumn: ColumnDef<MasterListRowFragment>[];
   };
 };
 

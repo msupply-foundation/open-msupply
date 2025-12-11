@@ -1,23 +1,27 @@
 import {
+  FilterBy,
   LIST_KEY,
   MasterListLineSortFieldInput,
   SortBy,
   useParams,
   useQuery,
-  useUrlQueryParams,
 } from '@openmsupply-client/common';
 import { useMasterListGraphQL } from '../useMasterListGraphQL';
 import { MASTER_LIST } from './keys';
 import { MasterListLineFragment } from '../operations.generated';
 
-export const useMasterListLines = () => {
+export type MasterListLinesParams = {
+  sortBy: SortBy<MasterListLineFragment>;
+  first: number;
+  offset: number;
+  filterBy: FilterBy | null;
+};
+
+export const useMasterListLines = (queryParams: MasterListLinesParams) => {
   const { id } = useParams();
   const masterListId = id || '';
   const { masterListApi, storeId } = useMasterListGraphQL();
-  const { queryParams } = useUrlQueryParams({
-    initialSort: { key: 'itemName', dir: 'asc' },
-  });
-  const { first, offset, sortBy, filterBy } = queryParams ?? {};
+  const { first, offset, sortBy, filterBy } = queryParams;
 
   const queryKey = [
     MASTER_LIST,
