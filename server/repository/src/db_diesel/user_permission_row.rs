@@ -93,6 +93,7 @@ pub enum PermissionType {
     AssetMutate,
     AssetMutateViaDataMatrix,
     AssetCatalogueItemMutate,
+    AssetStatusMutate,
     // Names
     NamePropertiesMutate,
     // Central Server
