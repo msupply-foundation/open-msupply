@@ -29,7 +29,7 @@ pub fn configure_name_properties(
     validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::MutateNameProperties,
+            resource: Resource::ConfigureNameProperties,
             store_id: None,
         },
     )?;
