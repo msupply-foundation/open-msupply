@@ -4792,6 +4792,7 @@ export type ItemCountsResponse = {
   noStock: Scalars['Int']['output'];
   outOfStockProducts: Scalars['Int']['output'];
   productsAtRiskOfBeingOutOfStock: Scalars['Int']['output'];
+  productsOverstocked: Scalars['Int']['output'];
   total: Scalars['Int']['output'];
 };
 
@@ -6869,6 +6870,7 @@ export enum PreferenceKey {
   ManageVaccinesInDoses = 'manageVaccinesInDoses',
   ManageVvmStatusForStock = 'manageVvmStatusForStock',
   NumberOfMonthsThresholdToShowLowStockAlertsForProducts = 'numberOfMonthsThresholdToShowLowStockAlertsForProducts',
+  NumberOfMonthsThresholdToShowOverStockAlertsForProducts = 'numberOfMonthsThresholdToShowOverStockAlertsForProducts',
   NumberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts = 'numberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts',
   OrderInPacks = 'orderInPacks',
   PreventTransfersMonthsBeforeInitialisation = 'preventTransfersMonthsBeforeInitialisation',
@@ -6930,6 +6932,7 @@ export type PreferencesNode = {
   manageVaccinesInDoses: Scalars['Boolean']['output'];
   manageVvmStatusForStock: Scalars['Boolean']['output'];
   numberOfMonthsThresholdToShowLowStockAlertsForProducts: Scalars['Int']['output'];
+  numberOfMonthsThresholdToShowOverStockAlertsForProducts: Scalars['Int']['output'];
   numberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts: Scalars['Int']['output'];
   orderInPacks: Scalars['Boolean']['output'];
   preventTransfersMonthsBeforeInitialisation: Scalars['Int']['output'];
@@ -11276,6 +11279,9 @@ export type UpsertPreferencesInput = {
   manageVaccinesInDoses?: InputMaybe<Array<BoolStorePrefInput>>;
   manageVvmStatusForStock?: InputMaybe<Array<BoolStorePrefInput>>;
   numberOfMonthsThresholdToShowLowStockAlertsForProducts?: InputMaybe<
+    Array<IntegerStorePrefInput>
+  >;
+  numberOfMonthsThresholdToShowOverStockAlertsForProducts?: InputMaybe<
     Array<IntegerStorePrefInput>
   >;
   numberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts?: InputMaybe<
