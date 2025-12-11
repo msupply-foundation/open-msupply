@@ -22,6 +22,7 @@ pub(crate) mod demographic;
 pub(crate) mod diagnosis;
 pub(crate) mod document;
 pub(crate) mod document_registry;
+pub(crate) mod encounter_legacy;
 pub(crate) mod form_schema;
 pub(crate) mod frontend_plugin;
 pub(crate) mod goods_received;
@@ -192,6 +193,7 @@ pub(crate) fn all_translators() -> SyncTranslators {
         vaccine_course_dose_legacy::boxed(),
         vaccine_course_item::boxed(),
         vaccine_course_item_legacy::boxed(),
+        encounter_legacy::boxed(),
         demographic::boxed(),
         // Vaccination
         vaccination::boxed(),
