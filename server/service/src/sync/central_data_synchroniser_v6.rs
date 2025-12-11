@@ -107,8 +107,6 @@ impl SynchroniserV6 {
                 .pull(start_cursor, batch_size, is_initialised)
                 .await?;
 
-            let batch_length = records.len() as u64;
-
             logger.progress(SyncStepProgress::PullCentralV6, total_records)?;
 
             let last_cursor_in_batch = records.last().map(|r| r.cursor).unwrap_or(start_cursor);
@@ -126,10 +124,7 @@ impl SynchroniserV6 {
             // TODO it's likely that above update to cursor is redundant, this comment is to record this observation in a PR https://github.com/msupply-foundation/open-msupply/pull/4283/files/ac66350bc5aee585a10c2a8450e8d2abeffc527b#r1656344877
             cursor_controller.update(connection, end_cursor + 1)?;
 
-            logger.progress(
-                SyncStepProgress::PullCentralV6,
-                total_records - batch_length,
-            )?;
+            logger.progress(SyncStepProgress::PullCentralV6, 0)?;
 
             if is_last_batch {
                 break;
