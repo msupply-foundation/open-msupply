@@ -1,18 +1,17 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   useNavigate,
   TableProvider,
-  DataTable,
-  useColumns,
   createTableStore,
   NothingHere,
   useTranslation,
   useUrlQueryParams,
   ColumnAlign,
-  TooltipTextCell,
-  CellProps,
-  UnitsAndMaybeDoses,
-  NumberCell,
+  TextWithTooltipCell,
+  ColumnType,
+  ColumnDef,
+  usePaginatedMaterialTable,
+  MaterialTable,
 } from '@openmsupply-client/common';
 import { useVisibleOrOnHandItems, ItemsWithStatsFragment } from '../api';
 import { Toolbar } from './Toolbar';
@@ -20,13 +19,13 @@ import { Toolbar } from './Toolbar';
 const ItemListComponent = () => {
   const t = useTranslation();
   const navigate = useNavigate();
+
   const {
-    updatePaginationQuery,
-    updateSortQuery,
-    queryParams: { sortBy, page, first, offset, filterBy },
+    queryParams,
   } = useUrlQueryParams({
     filters: [
-      { key: 'codeOrName' },
+      { key: 'code' },
+      { key: 'name' },
       { key: 'hasStockOnHand', condition: '=' },
       { key: 'minMonthsOfStock', condition: 'isNumber' },
       { key: 'maxMonthsOfStock', condition: 'isNumber' },
@@ -34,89 +33,83 @@ const ItemListComponent = () => {
       { key: 'productsAtRiskOfBeingOutOfStock', condition: '=' },
     ],
   });
-
-  const queryParams = {
-    sortBy,
-    first,
-    offset,
-    filterBy: { ...filterBy },
-  };
-
   const { data, isError, isLoading } = useVisibleOrOnHandItems(queryParams);
-  const pagination = { page, first, offset };
 
-  const columns = useColumns<ItemsWithStatsFragment>(
-    [
-      ['code', { width: 75 }],
-      [
-        'name',
-        {
-          Cell: TooltipTextCell,
-          maxWidth: 350,
-        },
-      ],
+  const columns = useMemo(
+    (): ColumnDef<ItemsWithStatsFragment>[] => [
       {
-        key: 'packUnit',
-        label: 'label.unit',
-        align: ColumnAlign.Right,
-        accessor: ({ rowData }) => rowData.unitName,
-        width: 130,
-        sortable: false,
+        header: t('label.code'),
+        accessorKey: 'code',
+        size: 75,
+        enableSorting: true,
+        enableColumnFilter: true,
       },
-      [
-        'stockOnHand',
-        {
-          accessor: ({ rowData }) => rowData.stats.stockOnHand,
-          Cell: UnitsAndMaybeDosesCell,
-          width: 180,
-          sortable: false,
-        },
-      ],
-      [
-        'monthlyConsumption',
-        {
-          Cell: UnitsAndMaybeDosesCell,
-          accessor: ({ rowData }) => rowData.stats.averageMonthlyConsumption,
-
-          align: ColumnAlign.Right,
-          width: 180,
-          sortable: false,
-        },
-      ],
       {
-        Cell: NumberCell,
-        accessor: ({ rowData }) => rowData.stats.monthsOfStockOnHand ?? 0,
-        align: ColumnAlign.Right,
-        description: 'description.months-of-stock',
-        key: 'monthsOfStockOnHand',
-        label: 'label.months-of-stock',
-        sortable: false,
-        width: 120,
+        header: t('label.name'),
+        accessorKey: 'name',
+        Cell: TextWithTooltipCell,
+        size: 350,
+        enableSorting: true,
+        enableColumnFilter: true,
       },
+      {
+        header: t('label.unit'),
+        accessorFn: row => row.unitName,
+        align: ColumnAlign.Right,
+        size: 130,
+      },
+      {
+        header: t('label.stock-on-hand'),
+        description: t('description.stock-on-hand'),
+        id: 'stockOnHand',
+        accessorFn: row => row.stats.stockOnHand,
+        // TODO: make custom cell work with MRT
+        // Cell: UnitsAndMaybeDosesCell,
+        columnType: ColumnType.Number,
+        size: 180,
+      },
+      {
+        header: t('label.amc'),
+        description: t('description.average-monthly-consumption'),
+        accessorFn: row => row.stats.averageMonthlyConsumption,
+        // Cell: UnitsAndMaybeDosesCell,
+        columnType: ColumnType.Number,
+        size: 180,
+      },
+      {
+        header: t('label.months-of-stock'),
+        description: t('description.months-of-stock'),
+        accessorFn: row => row.stats.monthsOfStockOnHand ?? 0,
+        columnType: ColumnType.Number,
+        size: 120,
+        // TODO: Mix-max filter on months of stock
+        // enableColumnFilter: true,
+        // filterVariant: 'range',
+      }
     ],
-    {
-      sortBy,
-      onChangeSortBy: updateSortQuery,
-    },
-    [sortBy]
+    []
   );
+
+  const { table } =
+    usePaginatedMaterialTable<ItemsWithStatsFragment>({
+      tableId: 'item-list-view',
+      isLoading,
+      isError,
+      columns,
+      data: data?.nodes ?? [],
+      enableRowSelection: false,
+      onRowClick: row => navigate(row.id),
+      totalCount: data?.totalCount ?? 0,
+      noDataElement: (
+        <NothingHere body={t('error.no-items-to-display')} />
+      ),
+    });
 
   return (
     <>
       <Toolbar />
-      <DataTable
-        id="item-list"
-        pagination={{ ...pagination, total: data?.totalCount ?? 0 }}
-        onChangePage={updatePaginationQuery}
-        columns={columns}
-        data={data?.nodes}
-        isError={isError}
-        isLoading={isLoading}
-        onRowClick={row => {
-          navigate(`/catalogue/items/${row.id}`);
-        }}
-        noDataElement={<NothingHere body={t('error.no-items-to-display')} />}
-      />
+
+      <MaterialTable table={table} />
     </>
   );
 };
@@ -127,17 +120,17 @@ export const ItemListView = () => (
   </TableProvider>
 );
 
-const UnitsAndMaybeDosesCell = (props: CellProps<ItemsWithStatsFragment>) => {
-  const { rowData, column } = props;
-  const units = Number(column.accessor({ rowData })) ?? 0;
-  const { isVaccine, doses } = rowData;
+// const UnitsAndMaybeDosesCell = ({}) => {
+//   const { rowData, column } = props;
+//   const units = Number(column.accessor({ rowData })) ?? 0;
+//   const { isVaccine, doses } = rowData;
 
-  return (
-    <UnitsAndMaybeDoses
-      numberCellProps={props}
-      units={units}
-      isVaccine={isVaccine}
-      dosesPerUnit={doses}
-    />
-  );
-};
+//   return (
+//     <UnitsAndMaybeDoses
+//       numberCellProps={props}
+//       units={units}
+//       isVaccine={isVaccine}
+//       dosesPerUnit={doses}
+//     />
+//   );
+// };
