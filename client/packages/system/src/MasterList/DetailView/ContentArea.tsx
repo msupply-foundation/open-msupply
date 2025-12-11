@@ -28,8 +28,6 @@ export const ContentArea = () => {
         id: 'itemCode',
         accessorFn: row => row.item.code,
         size: 100,
-        enableSorting: true,
-        enableColumnFilter: true,
       },
       {
         header: t('label.name'),
@@ -38,7 +36,6 @@ export const ContentArea = () => {
         Cell: TextWithTooltipCell,
         size: 350,
         enableSorting: true,
-        enableColumnFilter: true,
       },
       {
         header: t('label.unit'),
