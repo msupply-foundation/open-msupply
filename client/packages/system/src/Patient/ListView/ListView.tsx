@@ -122,12 +122,10 @@ export const PatientListView = () => {
         enableColumnFilter: true,
         size: 120,
         filterVariant: 'select',
-        filterSelectOptions: Object.values(GenderTypeNode)
-          .filter(gender => genderOptions && genderOptions.includes(gender))
-          .map(gender => ({
-            value: gender,
-            label: t(getGenderTranslationKey(gender)),
-          })),
+        filterSelectOptions: genderOptions?.map(gender => ({
+          value: gender,
+          label: t(getGenderTranslationKey(gender)),
+        })),
       },
       {
         accessorKey: 'dateOfBirth',
