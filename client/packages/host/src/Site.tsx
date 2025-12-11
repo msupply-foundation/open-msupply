@@ -20,6 +20,8 @@ import {
   DetailLoadingSkeleton,
   useIsGapsStoreOnly,
   useBlockNavigation,
+  Platform,
+  EnvUtils,
 } from '@openmsupply-client/common';
 import { AppDrawer, AppBar, Footer, NotFound } from './components';
 import { CommandK } from './CommandK';
@@ -74,6 +76,7 @@ export const Site: FC = () => {
   const { setPageTitle } = useHostContext();
   const pageTitle = getPageTitle(location.pathname);
   const isGapsStore = useIsGapsStoreOnly();
+  const isAndroid = EnvUtils.platform === Platform.Android;
 
   useEffect(() => {
     setPageTitle(pageTitle);
@@ -216,7 +219,15 @@ export const Site: FC = () => {
                         element={
                           <Navigate
                             replace
-                            to={RouteBuilder.create(AppRoute.Dashboard).build()}
+                            to={
+                              isGapsStore && isAndroid
+                                ? RouteBuilder.create(AppRoute.Coldchain)
+                                    .addPart(AppRoute.Equipment)
+                                    .build()
+                                : RouteBuilder.create(
+                                    AppRoute.Dashboard
+                                  ).build()
+                            }
                           />
                         }
                       />
