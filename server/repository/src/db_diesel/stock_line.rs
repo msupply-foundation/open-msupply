@@ -23,10 +23,7 @@ use crate::{
     MasterListLineRepository, NameLinkRow, NameRow, Pagination, Sort, StringFilter,
 };
 
-use diesel::{
-    dsl::{Eq, InnerJoin, IntoBoxed, LeftJoin, LeftJoinOn, Nullable},
-    prelude::*,
-};
+use diesel::{dsl::IntoBoxed, prelude::*};
 
 #[derive(Debug, PartialEq, Clone, Default)]
 pub struct StockLine {
@@ -188,18 +185,7 @@ impl<'a> StockLineRepository<'a> {
         filter: Option<StockLineFilter>,
         query_store_id: Option<String>,
     ) -> BoxedStockLineQuery {
-        let mut query = stock_line::table
-            .inner_join(item_link::table.inner_join(item::table))
-            .left_join(item_variant::table)
-            .left_join(location::table)
-            .left_join(
-                name_link::table
-                    .on(stock_line::supplier_link_id.eq(name_link::id.nullable()))
-                    .inner_join(name::table),
-            )
-            .left_join(barcode::table)
-            .left_join(vvm_status::table)
-            .into_boxed();
+        let mut query = stock_line_query().into_boxed();
 
         if let Some(f) = filter {
             let StockLineFilter {
@@ -290,27 +276,22 @@ impl<'a> StockLineRepository<'a> {
     }
 }
 
-type BoxedStockLineQuery = IntoBoxed<
-    'static,
-    LeftJoin<
-        LeftJoin<
-            LeftJoinOn<
-                LeftJoin<
-                    LeftJoin<
-                        InnerJoin<stock_line::table, InnerJoin<item_link::table, item::table>>,
-                        item_variant::table,
-                    >,
-                    location::table,
-                >,
-                InnerJoin<name_link::table, name::table>,
-                Eq<stock_line::supplier_link_id, Nullable<name_link::id>>,
-            >,
-            barcode::table,
-        >,
-        vvm_status::table,
-    >,
-    DBType,
->;
+#[diesel::dsl::auto_type]
+fn stock_line_query() -> _ {
+    stock_line::table
+        .inner_join(item_link::table.inner_join(item::table))
+        .left_join(item_variant::table)
+        .left_join(location::table)
+        .left_join(
+            name_link::table
+                .on(stock_line::supplier_link_id.eq(name_link::id.nullable()))
+                .inner_join(name::table),
+        )
+        .left_join(barcode::table)
+        .left_join(vvm_status::table)
+}
+
+type BoxedStockLineQuery = IntoBoxed<'static, stock_line_query, DBType>;
 
 fn to_domain(
     (
