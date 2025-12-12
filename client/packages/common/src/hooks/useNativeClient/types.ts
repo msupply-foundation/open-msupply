@@ -59,8 +59,6 @@ export interface NativeAPI {
     fileInfo: FileInfo
   ) => Promise<{ success: boolean; error?: string }>;
   saveDatabase: () => Promise<{ success: boolean; error?: string }>;
-  setPreference: (key: string, value: string | null) => void;
-  getPreference: (key: string) => Promise<string | null>;
 }
 
 export enum NativeMode {

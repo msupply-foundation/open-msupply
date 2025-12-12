@@ -310,6 +310,7 @@ When adding plugins - add them to the android package; if they are not here, the
 [info] Found 3 Capacitor plugins for android:
 @capacitor-community/barcode-scanner@3.0.3
 @capacitor/keyboard@4.1.1
+@capacitor/preferences@4.0.2
 [info] Found 1 Cordova plugin for android:
 cordova-plugin-printer@0.8.0
 

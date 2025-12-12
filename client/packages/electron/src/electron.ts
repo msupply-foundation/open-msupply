@@ -221,9 +221,6 @@ const start = (): void => {
 
   const appLocale = app.getLocale();
 
-  // enable if you'd like to debug ;)
-  // window.webContents.openDevTools();
-
   // See if we have translations for the system language
   importDesktopTranslations(appLocale)
     // Some locales are in the format of 'fr-DJ', check if we have translations for the base (fr)
@@ -291,13 +288,6 @@ const start = (): void => {
   );
   ipcMain.handle(IPC_MESSAGES.GET_SCANNER_TYPE, async () =>
     store.get(SCANNER_TYPE, 'usb_serial')
-  );
-  ipcMain.handle(IPC_MESSAGES.GET_PREFERENCE, (_event, key: string) =>
-    store.get(key, null)
-  );
-  ipcMain.on(
-    IPC_MESSAGES.SET_PREFERENCE,
-    (_event, key: string, value: string | null) => store.set(key, value)
   );
 
   // not currently implemented in the desktop implementation
@@ -496,12 +486,16 @@ function configureMenus(
               message: t('clear-data-confirm-message'),
               buttons: [t('yes'), t('no')],
             })
-            .then(async result => {
+            .then(result => {
               // Bail if the user pressed "No" or escaped (ESC) from the dialog box
               if (result.response !== 0) {
                 return;
               }
               store.clear();
+              const contents = webContents.getFocusedWebContents();
+              if (contents) {
+                contents.executeJavaScript(`localStorage.clear();`);
+              }
               app.exit();
             });
         },
