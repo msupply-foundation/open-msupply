@@ -613,44 +613,58 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
 
     map.insert(
         Resource::AddAsset,
-        PermissionDSL::And(vec![
-            PermissionDSL::HasStoreAccess,
-            PermissionDSL::Any(vec![
+        PermissionDSL::Any(vec![
+            PermissionDSL::And(vec![PermissionDSL::Any(vec![
                 PermissionDSL::HasPermission(PermissionType::AssetMutate),
                 PermissionDSL::HasPermission(PermissionType::AssetMutateViaDataMatrix),
-            ]),
+            ])]),
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::EditCentralData),
         ]),
     );
 
     map.insert(
         Resource::EditAsset,
-        PermissionDSL::And(vec![
+        PermissionDSL::Any(vec![
+            PermissionDSL::And(vec![PermissionDSL::HasPermission(
+                PermissionType::AssetMutate,
+            )]),
             PermissionDSL::HasStoreAccess,
-            PermissionDSL::HasPermission(PermissionType::AssetMutate),
+            PermissionDSL::HasPermission(PermissionType::EditCentralData),
         ]),
     );
+
     map.insert(
         Resource::MutateAssetCatalogueItem,
-        PermissionDSL::And(vec![
+        PermissionDSL::Any(vec![
+            PermissionDSL::And(vec![PermissionDSL::HasPermission(
+                PermissionType::AssetCatalogueItemMutate,
+            )]),
             PermissionDSL::HasStoreAccess,
-            PermissionDSL::HasPermission(PermissionType::AssetCatalogueItemMutate),
+            PermissionDSL::HasPermission(PermissionType::EditCentralData),
         ]),
     );
+
     map.insert(
         Resource::MutateAssetStatus,
-        PermissionDSL::And(vec![
-            PermissionDSL::HasStoreAccess,
-            PermissionDSL::Any(vec![
+        PermissionDSL::Any(vec![
+            PermissionDSL::And(vec![PermissionDSL::Any(vec![
                 PermissionDSL::HasPermission(PermissionType::AssetMutate),
                 PermissionDSL::HasPermission(PermissionType::AssetStatusMutate),
-            ]),
+            ])]),
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::EditCentralData),
         ]),
     );
+
     map.insert(
         Resource::QueryAsset,
-        PermissionDSL::And(vec![
+        PermissionDSL::Any(vec![
+            PermissionDSL::And(vec![PermissionDSL::HasPermission(
+                PermissionType::AssetQuery,
+            )]),
             PermissionDSL::HasStoreAccess,
-            PermissionDSL::HasPermission(PermissionType::AssetQuery),
+            PermissionDSL::HasPermission(PermissionType::EditCentralData),
         ]),
     );
     map.insert(
