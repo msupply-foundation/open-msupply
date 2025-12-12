@@ -1,56 +1,33 @@
 import {
-  useTableStore,
   useTranslation,
   useDeleteConfirmation,
 } from '@openmsupply-client/common';
-import { useCustomerReturnRows } from './useCustomerReturnRows';
 import { useCustomerReturnIsDisabled } from '../utils/useCustomerReturnIsDisabled';
-import { useReturns } from '../..';
+import { CustomerReturnLineFragment, useReturns } from '../..';
 
-interface DeleteSelectedCustomerReturnLinesOutput {
-  confirmAndDelete: () => void;
-  selectedIds: string[];
-}
-
-interface DeleteSelectedCustomerReturnLines {
-  returnId: string;
-}
-
-export const useDeleteSelectedCustomerReturnLines = ({
-  returnId,
-}: DeleteSelectedCustomerReturnLines): DeleteSelectedCustomerReturnLinesOutput => {
-  const { items, lines } = useCustomerReturnRows();
+export const useDeleteSelectedCustomerReturnLines = (
+  returnId: string,
+  selectedRows: CustomerReturnLineFragment[],
+  resetRowSelection: () => void
+): () => void => {
   const isDisabled = useCustomerReturnIsDisabled();
   const t = useTranslation();
 
   const { mutateAsync: updateLines } = useReturns.lines.updateCustomerLines();
 
-  const selectedRows =
-    useTableStore(state => {
-      const { isGrouped } = state;
-
-      return isGrouped
-        ? items
-            ?.filter(({ id }) => state.rowState[id]?.isSelected)
-            .map(({ lines }) => lines.flat())
-            .flat()
-        : lines?.filter(({ id }) => state.rowState[id]?.isSelected);
-    })?.map(({ id, itemId, packSize, batch, expiryDate }) => ({
-      id,
-      itemId,
-      packSize,
-      batch,
-      expiryDate,
-      numberOfPacksReturned: 0,
-    })) || [];
-
   const onDelete = async () => {
     await updateLines({
       customerReturnId: returnId,
-      customerReturnLines: selectedRows,
+      customerReturnLines: selectedRows.map(({ id, itemId, packSize }) => ({
+        id,
+        itemId,
+        packSize,
+        numberOfPacksReturned: 0,
+      })),
     }).catch(err => {
       throw err;
     });
+    resetRowSelection();
   };
 
   const confirmAndDelete = useDeleteConfirmation({
@@ -68,8 +45,5 @@ export const useDeleteSelectedCustomerReturnLines = ({
     },
   });
 
-  return {
-    confirmAndDelete,
-    selectedIds: selectedRows.map(row => row.id),
-  };
+  return confirmAndDelete;
 };
