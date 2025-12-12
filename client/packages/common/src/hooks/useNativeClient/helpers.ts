@@ -1,11 +1,12 @@
 import { Capacitor, registerPlugin } from '@capacitor/core';
-import { Preferences } from '@capacitor/preferences';
 import { FrontEndHost, NativeMode, NativeAPI } from './types';
+
+const isElectron = () => !!window?.electronNativeAPI;
 
 export const getPreference = async (key: string, defaultValue?: string) => {
   try {
-    const result = Capacitor.isNativePlatform()
-      ? (await Preferences.get({ key }))?.value
+    const result = isElectron()
+      ? await window.electronNativeAPI.getPreference(key)
       : localStorage.getItem(`preference/${key}`);
     const value = result ?? defaultValue;
 
@@ -21,8 +22,8 @@ export const setPreference = async (
 ) => {
   try {
     const value = JSON.stringify(obj);
-    if (Capacitor.isNativePlatform()) {
-      await Preferences.set({ key, value });
+    if (isElectron()) {
+      window.electronNativeAPI.setPreference(key, value);
     } else {
       localStorage.setItem(`preference/${key}`, value);
     }
@@ -32,8 +33,8 @@ export const setPreference = async (
 };
 
 export const removePreference = async (key: string) => {
-  if (Capacitor.isNativePlatform()) {
-    await Preferences.remove({ key });
+  if (isElectron()) {
+    window.electronNativeAPI.setPreference(key, null);
   } else {
     localStorage.removeItem(`preference/${key}`);
   }
@@ -46,7 +47,7 @@ export const getNativeAPI = (): NativeAPI | null => {
   if (Capacitor.isNativePlatform()) return androidNativeAPI;
 
   // Electron
-  if (!!window.electronNativeAPI) return window.electronNativeAPI;
+  if (isElectron()) return window.electronNativeAPI;
 
   return null;
 };
