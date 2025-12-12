@@ -128,7 +128,8 @@ pub enum Resource {
     QueryStorePreferences,
     ColdChainApi,
     // assets
-    MutateAsset,
+    AddAsset,
+    EditAsset,
     MutateAssetCatalogueItem,
     QueryAsset,
     MutateAssetStatus,
@@ -611,23 +612,46 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
     );
 
     map.insert(
-        Resource::MutateAsset,
-        PermissionDSL::Any(vec![
+        Resource::AddAsset,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::Any(vec![
+                PermissionDSL::HasPermission(PermissionType::AssetMutate),
+                PermissionDSL::HasPermission(PermissionType::AssetMutateViaDataMatrix),
+            ]),
+        ]),
+    );
+
+    map.insert(
+        Resource::EditAsset,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
             PermissionDSL::HasPermission(PermissionType::AssetMutate),
-            PermissionDSL::HasPermission(PermissionType::AssetMutateViaDataMatrix),
         ]),
     );
     map.insert(
         Resource::MutateAssetCatalogueItem,
-        PermissionDSL::HasPermission(PermissionType::AssetCatalogueItemMutate),
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::AssetCatalogueItemMutate),
+        ]),
     );
     map.insert(
         Resource::MutateAssetStatus,
-        PermissionDSL::HasPermission(PermissionType::AssetStatusMutate),
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::Any(vec![
+                PermissionDSL::HasPermission(PermissionType::AssetMutate),
+                PermissionDSL::HasPermission(PermissionType::AssetStatusMutate),
+            ]),
+        ]),
     );
     map.insert(
         Resource::QueryAsset,
-        PermissionDSL::HasPermission(PermissionType::AssetQuery),
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::AssetQuery),
+        ]),
     );
     map.insert(
         Resource::QueryDemographic,
@@ -677,21 +701,16 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
     // configure
     map.insert(
         Resource::ConfigurePlugin,
-        PermissionDSL::Any(vec![
-            PermissionDSL::HasPermission(PermissionType::ServerAdmin), // Server admins can install plugins
-        ]),
+        PermissionDSL::HasPermission(PermissionType::ServerAdmin), // Server admins can install plugins
     );
 
     // plugin graphql
-    map.insert(
-        Resource::PluginGraphql,
-        PermissionDSL::Any(vec![PermissionDSL::HasStoreAccess]),
-    );
+    map.insert(Resource::PluginGraphql, PermissionDSL::HasStoreAccess);
 
     // vvm status
     map.insert(
         Resource::QueryAndMutateVvmStatus,
-        PermissionDSL::Any(vec![
+        PermissionDSL::And(vec![
             PermissionDSL::HasStoreAccess,
             PermissionDSL::HasPermission(PermissionType::ViewAndEditVvmStatus),
         ]),
@@ -702,10 +721,7 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
         PermissionDSL::HasPermission(PermissionType::EditCentralData),
     );
 
-    map.insert(
-        Resource::QueryCampaigns,
-        PermissionDSL::Any(vec![PermissionDSL::HasStoreAccess]),
-    );
+    map.insert(Resource::QueryCampaigns, PermissionDSL::HasStoreAccess);
 
     map.insert(
         Resource::QueryPurchaseOrder,
@@ -713,24 +729,39 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
     );
     map.insert(
         Resource::MutatePurchaseOrder,
-        PermissionDSL::HasPermission(PermissionType::PurchaseOrderMutate),
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::PurchaseOrderMutate),
+        ]),
     );
     map.insert(
         Resource::AuthorisePurchaseOrder,
-        PermissionDSL::HasPermission(PermissionType::PurchaseOrderAuthorise),
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::PurchaseOrderAuthorise),
+        ]),
     );
 
     map.insert(
         Resource::QueryGoodsReceived,
-        PermissionDSL::HasPermission(PermissionType::GoodsReceivedQuery),
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::GoodsReceivedQuery),
+        ]),
     );
     map.insert(
         Resource::MutateGoodsReceived,
-        PermissionDSL::HasPermission(PermissionType::GoodsReceivedMutate),
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::GoodsReceivedMutate),
+        ]),
     );
     map.insert(
         Resource::AuthoriseGoodsReceived,
-        PermissionDSL::HasPermission(PermissionType::GoodsReceivedAuthorise),
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::GoodsReceivedAuthorise),
+        ]),
     );
 
     map
