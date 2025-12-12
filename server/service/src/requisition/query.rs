@@ -7,7 +7,6 @@ use repository::{EqualFilter, PaginationOption};
 use crate::{
     get_pagination_or_default, i64_to_u32, service_provider::ServiceContext, ListError, ListResult,
 };
- 
 
 pub fn get_requisitions(
     ctx: &ServiceContext,
@@ -20,7 +19,7 @@ pub fn get_requisitions(
     let repository = RequisitionRepository::new(&ctx.connection);
 
     let mut filter = filter.unwrap_or_default();
-    filter.store_id = store_id_option.map(EqualFilter::equal_to);
+    filter.store_id = store_id_option.map(|id| EqualFilter::equal_to(id.to_string()));
 
     Ok(ListResult {
         rows: repository.query(pagination, Some(filter.clone()), sort)?,
@@ -33,8 +32,8 @@ pub fn get_requisition(
     store_id_option: Option<&str>,
     id: &str,
 ) -> Result<Option<Requisition>, RepositoryError> {
-    let mut filter = RequisitionFilter::new().id(EqualFilter::equal_to(id));
-    filter.store_id = store_id_option.map(EqualFilter::equal_to);
+    let mut filter = RequisitionFilter::new().id(EqualFilter::equal_to(id.to_string()));
+    filter.store_id = store_id_option.map(|id| EqualFilter::equal_to(id.to_string()));
 
     let mut result = RequisitionRepository::new(&ctx.connection).query_by_filter(filter)?;
 
@@ -49,8 +48,8 @@ pub fn get_requisition_by_number(
 ) -> Result<Option<Requisition>, RepositoryError> {
     let mut result = RequisitionRepository::new(&ctx.connection).query_by_filter(
         RequisitionFilter::new()
-            .store_id(EqualFilter::equal_to(store_id))
-            .requisition_number(EqualFilter::equal_to_i64(requisition_number as i64))
+            .store_id(EqualFilter::equal_to(store_id.to_string()))
+            .requisition_number(EqualFilter::equal_to(requisition_number as i64))
             .r#type(r#type.equal_to()),
     )?;
 
@@ -88,7 +87,7 @@ mod test {
                 None,
                 Some(
                     RequisitionFilter::new()
-                        .id(EqualFilter::equal_to(&mock_request_draft_requisition().id)),
+                        .id(EqualFilter::equal_to(mock_request_draft_requisition().id)),
                 ),
                 None,
             )

@@ -339,7 +339,7 @@ impl ItemNode {
     pub fn legacy_string(&self, key: &str) -> String {
         let json_value: serde_json::Value = match serde_json::from_str(&self.row().legacy_record) {
             Ok(value) => value,
-            Err(_) => return "".to_owned(),
+            Err(_) => return "".to_string(),
         };
 
         json_value

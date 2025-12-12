@@ -69,7 +69,7 @@ impl<'a> AssetPropertyRowRepository<'a> {
         asset_property_row: &AssetPropertyRow,
     ) -> Result<i64, RepositoryError> {
         self._upsert_one(asset_property_row)?;
-        self.insert_changelog(asset_property_row.id.to_owned(), RowActionType::Upsert)
+        self.insert_changelog(asset_property_row.id.to_string(), RowActionType::Upsert)
     }
 
     fn insert_changelog(

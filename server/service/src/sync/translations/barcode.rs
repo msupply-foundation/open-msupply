@@ -93,7 +93,9 @@ impl SyncTranslation for BarcodeTranslation {
                 },
             manufacturer_name_row,
         } = BarcodeRepository::new(connection)
-            .query_by_filter(BarcodeFilter::new().id(EqualFilter::equal_to(&changelog.record_id)))?
+            .query_by_filter(
+                BarcodeFilter::new().id(EqualFilter::equal_to(changelog.record_id.to_string())),
+            )?
             .pop()
             .ok_or_else(|| anyhow::anyhow!("Barcode not found"))?;
 

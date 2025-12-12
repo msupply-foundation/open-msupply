@@ -6,7 +6,6 @@ import {
   Divider,
   ExpandIcon,
   InputWithLabelRow,
-  LocaleKey,
   Typography,
   UpsertPreferencesInput,
   useTranslation,
@@ -51,21 +50,11 @@ export const PreferenceGroupAccordion = ({
         {preferences.map((pref, idx) => {
           const isLast = idx === preferences.length - 1;
           return (
-            <InputWithLabelRow
+            <EditPreference
               key={pref.key}
-              labelWidth={'100%'}
-              label={t(`preference.${pref.key}` as LocaleKey)}
-              Input={
-                <EditPreference
-                  preference={pref}
-                  update={value => update({ [pref.key]: value })}
-                />
-              }
-              sx={{
-                justifyContent: 'center',
-                borderBottom: isLast ? 'none' : '1px dashed',
-                padding: 1,
-              }}
+              preference={pref}
+              update={value => update({ [pref.key]: value })}
+              isLast={isLast}
             />
           );
         })}

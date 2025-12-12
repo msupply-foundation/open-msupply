@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import {
   Divider,
   Box,
@@ -6,20 +6,27 @@ import {
   useTranslation,
   useFormatNumber,
   useSimpleMaterialTable,
+  usePreferences,
+  DateUtils,
 } from '@openmsupply-client/common';
 
 import { usePrescriptionLineEditColumns } from './columns';
-import { getAllocatedQuantity, useAllocationContext } from '../../StockOut';
+import {
+  DraftStockOutLineFragment,
+  getAllocatedQuantity,
+  useAllocationContext,
+} from '../../StockOut';
 
 export interface PrescriptionLineEditTableProps {
   disabled?: boolean;
 }
 
 export const PrescriptionLineEditTable = ({
-  disabled,
+  disabled = false,
 }: PrescriptionLineEditTableProps) => {
   const t = useTranslation();
   const { format } = useFormatNumber();
+  const prefs = usePreferences();
   const { draftLines, allocateIn, item, manualAllocate } = useAllocationContext(
     state => ({
       ...state,
@@ -32,17 +39,41 @@ export const PrescriptionLineEditTable = ({
     return manualAllocate(key, num, format, t);
   };
 
+  const { expiredStockPreventIssue = false, expiredStockIssueThreshold = 0 } =
+    prefs;
+
+  const getIsDisabled = useCallback(
+    (row: DraftStockOutLineFragment) => {
+      if (disabled) return true;
+      if (!!row.vvmStatus?.unusable) return true;
+
+      // Prevent issuing expired stock if preference is set, up to threshold
+      if (expiredStockPreventIssue && !!row.expiryDate) {
+        const threshold = expiredStockIssueThreshold ?? 0;
+        const daysPastExpiry = DateUtils.differenceInDays(
+          Date.now(),
+          row.expiryDate
+        );
+        if (daysPastExpiry >= threshold) return true;
+      }
+
+      return false;
+    },
+    [expiredStockPreventIssue, expiredStockIssueThreshold, item]
+  );
+
   const columns = usePrescriptionLineEditColumns({
     allocate,
     item,
     allocateIn: allocateIn.type,
+    getIsDisabled,
   });
 
   const table = useSimpleMaterialTable({
     tableId: 'prescription-line-edit',
     columns,
     data: draftLines,
-    getIsRestrictedRow: row => disabled || !!row.vvmStatus?.unusable,
+    getIsRestrictedRow: getIsDisabled,
     enableRowSelection: false,
   });
 

@@ -3,7 +3,10 @@ use super::{
     program_row::program, StorageConnection,
 };
 
-use crate::repository_error::RepositoryError;
+use crate::{
+    repository_error::RepositoryError, ChangeLogInsertRow, ChangelogRepository, ChangelogTableName,
+    RowActionType,
+};
 
 use diesel::prelude::*;
 
@@ -76,14 +79,30 @@ impl<'a> EncounterRowRepository<'a> {
         EncounterRowRepository { connection }
     }
 
-    pub fn upsert_one(&self, row: &EncounterRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&self, row: &EncounterRow) -> Result<i64, RepositoryError> {
         diesel::insert_into(encounter::dsl::encounter)
             .values(row)
             .on_conflict(encounter::dsl::id)
             .do_update()
             .set(row)
             .execute(self.connection.lock().connection())?;
-        Ok(())
+        self.insert_changelog(row.clone(), RowActionType::Upsert)
+    }
+
+    fn insert_changelog(
+        &self,
+        row: EncounterRow,
+        action: RowActionType,
+    ) -> Result<i64, RepositoryError> {
+        let changelog_row = ChangeLogInsertRow {
+            table_name: ChangelogTableName::Encounter,
+            record_id: row.id,
+            row_action: action,
+            store_id: row.store_id,
+            name_link_id: Some(row.patient_link_id),
+        };
+
+        ChangelogRepository::new(self.connection).insert(&changelog_row)
     }
 
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<EncounterRow>, RepositoryError> {

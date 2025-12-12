@@ -51,7 +51,7 @@ pub fn generate_invoice_lines(
             let item_row = item_rows.iter().find(|item| item.id == line.item_link_id)?;
             Some(InsertStockInLine {
                 id: uuid(),
-                invoice_id: invoice_id.to_owned(),
+                invoice_id: invoice_id.to_string(),
                 pack_size: line.received_pack_size,
                 number_of_packs: line.number_of_packs_received,
                 item_id: item_row.id.clone(),

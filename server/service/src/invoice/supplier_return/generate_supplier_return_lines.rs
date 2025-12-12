@@ -99,9 +99,9 @@ fn stock_lines_for_item_id(
     match item_id {
         Some(item_id) => {
             let filter = StockLineFilter::new()
-                .item_id(EqualFilter::equal_to(item_id))
+                .item_id(EqualFilter::equal_to(item_id.to_string()))
                 .id(EqualFilter::not_equal_all(stock_line_ids_to_exclude))
-                .store_id(EqualFilter::equal_to(store_id))
+                .store_id(EqualFilter::equal_to(store_id.to_string()))
                 .is_available(true);
 
             stock_line_repo.query_by_filter(filter, None)
@@ -119,7 +119,8 @@ fn get_existing_return_lines(
     let Some(return_id) = return_id else {
         return Ok(vec![]);
     };
-    let base_filter = InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(&return_id));
+    let base_filter =
+        InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(return_id.to_string()));
     let repo = InvoiceLineRepository::new(&ctx.connection);
 
     let lines_by_stock_line = repo.query_by_filter(
@@ -134,8 +135,11 @@ fn get_existing_return_lines(
         return Ok(lines_by_stock_line);
     };
 
-    let lines_by_item_id =
-        repo.query_by_filter(base_filter.clone().item_id(EqualFilter::equal_to(item_id)))?;
+    let lines_by_item_id = repo.query_by_filter(
+        base_filter
+            .clone()
+            .item_id(EqualFilter::equal_to(item_id.to_string())),
+    )?;
 
     let all_lines = lines_by_stock_line.into_iter().chain(lines_by_item_id);
 

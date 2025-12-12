@@ -189,8 +189,8 @@ mod test {
         // Record already exists
         let test_service = TestService(Box::new(|_| {
             Ok(AssetLog {
-                id: "id".to_owned(),
-                asset_id: "asset_a".to_owned(),
+                id: "id".to_string(),
+                asset_id: "asset_a".to_string(),
                 status: Some(AssetLogStatus::Functioning),
                 ..Default::default()
             })

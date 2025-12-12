@@ -34,7 +34,7 @@ pub fn delete_stocktake(
             validate(connection, &ctx.store_id, &stocktake_id)?;
 
             let lines = StocktakeLineRepository::new(connection).query_by_filter(
-                StocktakeLineFilter::new().stocktake_id(EqualFilter::equal_to(&stocktake_id)),
+                StocktakeLineFilter::new().stocktake_id(EqualFilter::equal_to(stocktake_id.to_string())),
                 Some(ctx.store_id.clone()),
             )?;
             for line in lines {
@@ -49,7 +49,7 @@ pub fn delete_stocktake(
             activity_log_entry(
                 ctx,
                 ActivityLogType::StocktakeDeleted,
-                Some(stocktake_id.to_owned()),
+                Some(stocktake_id.to_string()),
                 None,
                 None,
             )?;

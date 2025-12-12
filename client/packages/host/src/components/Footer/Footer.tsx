@@ -77,7 +77,7 @@ const PaddedCell: FC<PaddedCellProps> = ({
   );
 };
 
-export const Footer = () => {
+export const Footer = ({ backgroundColor }: { backgroundColor?: string }) => {
   const t = useTranslation();
   const theme = useAppTheme();
   const isExtraSmallScreen = useMediaQuery(
@@ -92,7 +92,8 @@ export const Footer = () => {
   const Divider = styled(Box)({
     width: '1px',
     height: '24px',
-    backgroundColor: isCentralServer ? '#fff' : theme.palette.gray.main,
+    backgroundColor:
+      backgroundColor ?? (isCentralServer ? '#fff' : theme.palette.gray.main),
   });
 
   const iconStyles = {

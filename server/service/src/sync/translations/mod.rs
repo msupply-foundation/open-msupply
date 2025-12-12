@@ -22,6 +22,7 @@ pub(crate) mod demographic;
 pub(crate) mod diagnosis;
 pub(crate) mod document;
 pub(crate) mod document_registry;
+pub(crate) mod encounter_legacy;
 pub(crate) mod form_schema;
 pub(crate) mod frontend_plugin;
 pub(crate) mod goods_received;
@@ -192,6 +193,7 @@ pub(crate) fn all_translators() -> SyncTranslators {
         vaccine_course_dose_legacy::boxed(),
         vaccine_course_item::boxed(),
         vaccine_course_item_legacy::boxed(),
+        encounter_legacy::boxed(),
         demographic::boxed(),
         // Vaccination
         vaccination::boxed(),
@@ -581,7 +583,7 @@ fn is_active_record_on_site(
     let result = match &record {
         ActiveRecordCheck::InvoiceLine { invoice_id } => {
             let invoice = InvoiceRepository::new(connection)
-                .query_one(InvoiceFilter::new().id(EqualFilter::equal_to(invoice_id)))
+                .query_one(InvoiceFilter::new().id(EqualFilter::equal_to(invoice_id.to_string())))
                 .map_err(Error::DatabaseError)?
                 .ok_or(Error::ParentRecordNotFound(record))?;
             invoice.store_row.site_id == site_id

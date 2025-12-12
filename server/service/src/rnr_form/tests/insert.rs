@@ -31,7 +31,7 @@ mod insert {
                 .items()
                 .periods()
                 .program_requisition_settings()
-                .full_master_list(),
+                .full_master_lists(),
             MockData {
                 periods: vec![PeriodRow {
                     id: "future_period".to_string(),
@@ -339,7 +339,7 @@ mod insert {
                 .items()
                 .periods()
                 .program_requisition_settings()
-                .full_master_list(),
+                .full_master_lists(),
             MockData {
                 // make supplier store C visible in store A
                 name_store_joins: vec![NameStoreJoinRow {
@@ -386,9 +386,9 @@ mod insert {
 
         let created_line = form_lines.pop().unwrap();
         let blank_line = RnRFormLineRow {
-            id: created_line.id.to_owned(),
-            rnr_form_id: created_line.rnr_form_id.to_owned(),
-            item_link_id: created_line.item_link_id.to_owned(),
+            id: created_line.id.to_string(),
+            rnr_form_id: created_line.rnr_form_id.to_string(),
+            item_link_id: created_line.item_link_id.to_string(),
             ..Default::default()
         };
 
@@ -621,7 +621,7 @@ mod insert {
                 .name_store_joins()
                 .periods()
                 .items()
-                .full_master_list()
+                .full_master_lists()
                 .program_requisition_settings(),
             MockData {
                 items: perf_test_items,

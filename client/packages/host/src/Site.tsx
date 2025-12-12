@@ -22,6 +22,8 @@ import {
   useBlockNavigation,
   Platform,
   EnvUtils,
+  useTheme,
+  usePreferences,
 } from '@openmsupply-client/common';
 import { AppDrawer, AppBar, Footer, NotFound } from './components';
 import { CommandK } from './CommandK';
@@ -77,10 +79,35 @@ export const Site: FC = () => {
   const pageTitle = getPageTitle(location.pathname);
   const isGapsStore = useIsGapsStoreOnly();
   const isAndroid = EnvUtils.platform === Platform.Android;
+  const { storeCustomColour } = usePreferences();
+  const theme = useTheme();
 
   useEffect(() => {
     setPageTitle(pageTitle);
   }, [location, pageTitle, setPageTitle]);
+
+  // Colours for the Footer bar, if specified in Store prefs
+  let customColour: string | undefined;
+  let textColour: string | undefined;
+  if (storeCustomColour) {
+    // Try/catch allows us to validate the colour string, while also getting the
+    // complementary textColour using the `getContrastText` function. We need
+    // BOTH the CSS.supports() check and try/catch because:
+    // 1. `getContrastText` function will throw on most invalid inputs, but it
+    //    does let incomplete HEX values through (e.g. #257A2), which results in
+    //    invalid CSS and a non-contrasting text color
+    // 2. The CSS.supports() function rejects the above incomplete HEX values,
+    //    but it accepts CSS colour literals like "red", which the
+    //    `getContrastText` function does not
+    try {
+      if (!CSS.supports('color', storeCustomColour))
+        throw new Error('Invalid colour');
+      textColour = theme.palette.getContrastText(storeCustomColour);
+      customColour = storeCustomColour;
+    } catch (e) {
+      console.error('Error parsing footer colours from Store properties', e);
+    }
+  }
 
   return (
     <RequireAuthentication>
@@ -234,8 +261,13 @@ export const Site: FC = () => {
                       <Route path="*" element={<NotFound />} />
                     </Routes>
                   </Box>
-                  <AppFooter />
-                  <AppFooterPortal SessionDetails={<Footer />} />
+                  <AppFooter
+                    backgroundColor={customColour}
+                    textColor={textColour}
+                  />
+                  <AppFooterPortal
+                    SessionDetails={<Footer backgroundColor={textColour} />}
+                  />
                 </Box>
                 <DetailPanel />
                 <QueryErrorHandler />
