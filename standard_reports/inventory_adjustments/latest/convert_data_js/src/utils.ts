@@ -61,7 +61,7 @@ const calculateAdjustmentPacks = (
 ): number => {
   let adjustment: number;
 
-  if (isFromStocktake && !!snapshotPacks && !!countedPacks) {
+  if (isFromStocktake && snapshotPacks !== null && countedPacks !== null) {
     adjustment = countedPacks - snapshotPacks;
   } else {
     const packs = numberOfPacks ?? 0;

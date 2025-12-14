@@ -42,12 +42,12 @@
     {
       "type": "Control",
       "scope": "#/properties/adjustmentType",
-      "label": "Adjustment type"
+      "label": "T#label.adjustment-type"
     },
     {
       "type": "Control",
       "scope": "#/properties/adjustmentSource",
-      "label": "Adjustment source"
+      "label": "T#label.adjustment-source"
     },
     {
       "type": "ReasonOptionSearch",
@@ -57,7 +57,7 @@
     {
       "type": "Control",
       "scope": "#/properties/showZeroedLines",
-      "label": "Show lines where counted quantity is zero"
+      "label": "T#label.show-zeroed-lines"
     },
     {
       "type": "Control",
