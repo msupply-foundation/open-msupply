@@ -26,7 +26,7 @@ export type AdjustmentLineNode = InvoiceLineNode & {
   isFromStocktake: boolean;
   snapshotPacks: number | null;
   countedPacks: number | null;
-  adjustmentPacks: number | null;
+  adjustmentPacks: number;
 };
 
 export enum AdjustmentType {
