@@ -1,0 +1,93 @@
+@page {
+  margin: 0;
+  size: A4 landscape;
+}
+
+.paging {
+  width: 100%;
+}
+
+.container {
+  margin: auto;
+  padding: 10px;
+  font-size: 14px;
+  font-family: "Helvetica Neue", "Helvetica", Helvetica, Arial, sans-serif;
+  color: #000;
+}
+
+.container table {
+  width: 100%;
+}
+
+.container table td {
+  padding: 10px;
+  vertical-align: top;
+  border-top: 1px solid rgb(164, 163, 163);
+}
+
+.container table tr:last-child td {
+  border-bottom: none;
+}
+
+.container>table>thead {
+  position: -webkit-sticky;
+  position: sticky;
+  top: 0;
+  background-color: #f1f1f1;
+}
+
+.container,
+body,
+.container>table {
+  margin-top: 0px;
+}
+
+.container table tr.heading td,
+.container table tr.heading th {
+  background: #eee;
+  border-bottom: 1px solid #ddd;
+  font-weight: bold;
+  color: #000;
+}
+
+.container table td.status span {
+  display: inline;
+  padding: 5px 10px;
+  border-radius: 4px;
+}
+
+/* Header styles */
+.header-container {
+  width: 100%;
+  padding: 10px;
+  font-family: "Helvetica Neue", "Helvetica", Helvetica, Arial, sans-serif;
+  font-size: 10pt;
+  color: #000;
+}
+
+.header-title {
+  font-size: 20pt;
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 10px;
+  color: #000;
+}
+
+.header-info {
+  display: flex;
+  justify-content: space-between;
+  padding: 5px 0;
+  border-bottom: 1px solid #ccc;
+}
+
+.header-info-left {
+  text-align: left;
+}
+
+.header-info-right {
+  text-align: right;
+}
+
+.header-label {
+  font-weight: bold;
+}

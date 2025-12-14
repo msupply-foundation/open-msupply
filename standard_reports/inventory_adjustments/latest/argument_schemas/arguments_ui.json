@@ -1,0 +1,86 @@
+{
+  "type": "VerticalLayout",
+  "elements": [
+    {
+      "type": "Control",
+      "scope": "#/properties/itemCodeOrName",
+      "label": "T#report.item-code-or-name",
+      "options": {
+        "useDebounce": false
+      }
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/adjustmentDateFrom",
+      "label": "T#label.from-date",
+      "options": {
+        "dateOnly": true,
+        "disableFuture": true,
+        "max": "#/properties/adjustmentDateTo"
+      }
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/adjustmentDateTo",
+      "label": "T#label.to-date",
+      "options": {
+        "dateOnly": true,
+        "disableFuture": true,
+        "min": "#/properties/adjustmentDateFrom"
+      }
+    },
+    {
+      "type": "MasterListSearch",
+      "scope": "#/properties/masterListId",
+      "label": "T#label.master-list"
+    },
+    {
+      "type": "LocationSearch",
+      "scope": "#/properties/locationId",
+      "label": "T#label.location"
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/adjustmentType",
+      "label": "T#label.adjustment-type"
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/adjustmentSource",
+      "label": "T#label.adjustment-source"
+    },
+    {
+      "type": "ReasonOptionSearch",
+      "scope": "#/properties/reasonOptionId",
+      "label": "T#label.reason"
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/showZeroedLines",
+      "label": "T#label.show-zeroed-lines"
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/sort",
+      "label": "T#report.sort-by",
+      "options": {
+        "show": [
+          ["item.code", "T#label.code"],
+          ["item.name", "T#report.item-name"],
+          ["batch", "T#label.batch"],
+          ["expiryDate", "T#label.expiry-date"],
+          ["location.code", "T#label.location"],
+          ["snapshotPacks", "T#report.snapshot-number-of-packs"],
+          ["countedPacks", "T#report.counted-number-of-packs"],
+          ["adjustmentPacks", "T#label.adjustments"],
+          ["inventoryAdjustmentReason.reason", "T#label.reason"]
+        ]
+      }
+    },
+    {
+      "type": "SortToggle",
+      "scope": "#/properties/dir",
+      "label": "T#report.sort-direction"
+    }
+  ]
+}
