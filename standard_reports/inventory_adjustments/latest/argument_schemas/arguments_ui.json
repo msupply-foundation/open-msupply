@@ -72,6 +72,7 @@
           ["location.code", "T#label.location"],
           ["snapshotPacks", "T#report.snapshot-number-of-packs"],
           ["countedPacks", "T#report.counted-number-of-packs"],
+          ["adjustmentPacks", "T#label.adjustments"],
           ["inventoryAdjustmentReason.reason", "T#label.reason"]
         ]
       }

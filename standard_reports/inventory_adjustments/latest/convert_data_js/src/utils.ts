@@ -105,17 +105,6 @@ const getAdjustmentLines = (
           ? (stocktakeLine.countedNumberOfPacks ?? 0)
           : null;
 
-      // let adjustmentPacks: number | null;
-      // if (isFromStocktake && stocktakeLine) {
-      //   adjustmentPacks = calculateDifference(stocktakeLine);
-      // } else {
-      //   // Format adjustment: positive for addition, negative for reduction
-      //   adjustmentPacks =
-      //     invoice.type === InvoiceNodeType.InventoryReduction
-      //       ? -line.numberOfPacks
-      //       : line.numberOfPacks;
-      // }
-
       lines.push({
         ...line,
         invoiceId: invoice.id,
