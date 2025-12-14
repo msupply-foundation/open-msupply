@@ -55,6 +55,7 @@ export interface Filters {
     | "location.code"
     | "snapshotPacks"
     | "countedPacks"
+    | "adjustmentPacks"
     | "inventoryAdjustmentReason.reason";
   /**
    * Sort direction
