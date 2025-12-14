@@ -239,7 +239,7 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
       item?.doses ?? 0
     );
 
-    autoAllocate(quantityInNewPackSize, format, t);
+    autoAllocate(quantityInNewPackSize, format, t, 0);
   },
 
   setAlerts: alerts =>
