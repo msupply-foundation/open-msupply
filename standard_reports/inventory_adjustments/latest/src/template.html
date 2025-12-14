@@ -32,7 +32,7 @@
 					<td>{{ line.location.code | default(value='-') }}</td>
 					<td style="text-align: right">{{ line.snapshotPacks | default(value='-') }}</td>
 					<td style="text-align: right">{{ line.countedPacks | default(value='-') }}</td>
-					<td style="text-align: right">{{ line.adjustmentPacks | default(value='-') }}</td>
+					<td style="text-align: right">{{ line.adjustmentPacks }}</td>
 					<td>{{ line.inventoryAdjustmentReason.reason | default(value='') }}</td>
 				</tr>
 			{% endfor %}
