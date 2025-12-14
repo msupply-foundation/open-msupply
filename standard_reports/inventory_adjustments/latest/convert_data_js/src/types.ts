@@ -18,10 +18,6 @@ export type StocktakeLineNode = NonNullable<
   NonNullable<StocktakeNode["lines"]>["nodes"]
 >[number];
 
-export type StocktakeLineWithDifferenceNode = StocktakeLineNode & {
-  differenceNumberOfPacks: string;
-};
-
 export type AdjustmentLineNode = InvoiceLineNode & {
   invoiceId: string;
   invoiceType: InvoiceNodeType;
@@ -50,8 +46,9 @@ export enum SortKey {
   Batch = "batch",
   ExpiryDate = "expiryDate",
   LocationCode = "location.code",
-  SnapshotNumberOfPacks = "snapshotNumberOfPacks",
-  NumberOfPacks = "numberOfPacks",
+  SnapshotPacks = "snapshotPacks",
+  CountedPacks = "countedPacks",
+  AdjustmentPacks = "adjustmentPacks",
   ReasonOptionReason = "inventoryAdjustmentReason.reason",
 }
 export type SortDirection = "asc" | "desc";

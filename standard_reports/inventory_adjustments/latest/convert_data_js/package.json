@@ -17,7 +17,6 @@
     "@graphql-codegen/cli": "^5.0.5",
     "@graphql-codegen/import-types-preset": "^3.0.0",
     "@types/jest": "^29.5.0",
-    "@types/lodash": "^4.17.16",
     "@jest/globals": "^29.7.0",
     "graphql": "^16.10.0",
     "json-schema-to-typescript": "15.0.4",

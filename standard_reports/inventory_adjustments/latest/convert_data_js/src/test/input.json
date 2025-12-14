@@ -83,6 +83,8 @@
               {
                 "id": "st-line-1",
                 "snapshotNumberOfPacks": 100,
+                "countedNumberOfPacks": 95,
+                "itemCode": "ABC123",
                 "stockLine": { "id": "stock-line-1" }
               }
             ]

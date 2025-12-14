@@ -179,30 +179,30 @@ describe("processLines", () => {
       ).toHaveLength(1);
     });
 
-    it("filters by zeroed count - stocktake (countedPacks === 0)", () => {
+    it("filters by showZeroedLines - stocktake (countedPacks === 0)", () => {
       const invoice = createInvoice({ id: "invoice-1" });
       const stocktake = createStocktake({
         lines: { nodes: [createStocktakeLine({ countedNumberOfPacks: 0 })] },
       });
       const result = processLines([invoice], [stocktake], {
-        zeroedCount: true,
+        showZeroedLines: true,
       });
       expect(result).toHaveLength(1);
       expect(result[0].countedPacks).toBe(0);
     });
 
-    it("filters by zeroed count - direct adjustment (numberOfPacks === 0)", () => {
+    it("filters by showZeroedLines - direct adjustment (numberOfPacks === 0)", () => {
       const invoice = createInvoice({
         id: "inv-99",
         lines: { nodes: [createInvoiceLine({ numberOfPacks: 0 })] },
       });
-      const result = processLines([invoice], [], { zeroedCount: true });
+      const result = processLines([invoice], [], { showZeroedLines: true });
       expect(result).toHaveLength(1);
     });
 
-    it("includes non-zero when zeroedCount is true", () => {
+    it("includes non-zero when showZeroedLines is true", () => {
       const invoice = createInvoice({ id: "inv-99" }); // numberOfPacks: 50
-      const result = processLines([invoice], [], { zeroedCount: true });
+      const result = processLines([invoice], [], { showZeroedLines: true });
       expect(result).toHaveLength(1);
     });
 
@@ -218,7 +218,7 @@ describe("processLines", () => {
         processLines([invoice], [], { masterListId: "ml-1" })
       ).toHaveLength(1);
       expect(
-        processLines([invoice], [], { reasonId: "reason-1" })
+        processLines([invoice], [], { reasonOptionId: "reason-1" })
       ).toHaveLength(1);
     });
   });

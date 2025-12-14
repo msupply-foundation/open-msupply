@@ -29,8 +29,9 @@
         "verifiedDatetime": "2024-06-16T14:00:00Z",
         "stocktakeId": null,
         "stocktakeNumber": null,
-        "adjustmentPacks": "-20",
-        "snapshotPacks": "-",
+        "adjustmentPacks": -20,
+        "snapshotPacks": null,
+        "countedPacks": null,
         "isFromStocktake": false
       },
       {
@@ -60,8 +61,9 @@
         "verifiedDatetime": "2024-06-15T10:00:00Z",
         "stocktakeId": "stocktake-1",
         "stocktakeNumber": 1,
-        "adjustmentPacks": "+50",
-        "snapshotPacks": "100",
+        "adjustmentPacks": -5,
+        "snapshotPacks": 100,
+        "countedPacks": 95,
         "isFromStocktake": true
       }
     ],
