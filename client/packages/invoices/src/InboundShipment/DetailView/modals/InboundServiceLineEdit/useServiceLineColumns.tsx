@@ -1,94 +1,118 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   useTranslation,
   RecordPatch,
-  useColumns,
   IconButton,
   XCircleIcon,
-  TextInputCell,
-  CurrencyInputCell,
   ColumnAlign,
-  NumberInputCell,
-  CellProps,
-  CurrencyCell,
+  useFormatCurrency,
+  ColumnDef,
 } from '@openmsupply-client/common';
 import {
   ServiceItemSearchInput,
   toItemWithPackSize,
 } from '@openmsupply-client/system';
 import { DraftInboundLine } from './../../../../types';
+// Need to be re-exported when Legacy cells are removed
+import { TextInputCell } from '@openmsupply-client/common/src/ui/layout/tables/material-react-table/components/TextInputCell';
+import { NumberInputCell } from '@openmsupply-client/common/src/ui/layout/tables/material-react-table/components/NumberInputCell';
+import { CurrencyInputCell } from '@openmsupply-client/common/src/ui/layout/tables/material-react-table/components/CurrencyInputCell';
 
-const TaxPercentageCell = (props: CellProps<DraftInboundLine>) => (
-  <NumberInputCell {...props} max={100} decimalLimit={2} endAdornment="%" />
-);
 
 export const useServiceLineColumns = (
   setter: (patch: RecordPatch<DraftInboundLine>) => void
 ) => {
   const t = useTranslation();
-  return useColumns<DraftInboundLine>([
-    {
-      key: 'serviceItemName',
-      label: 'label.name',
-      width: 200,
-      accessor: ({ rowData }) => rowData?.item?.id,
-      Cell: ({ rowData, column }) => {
-        const id = column.accessor({ rowData }) as string;
-        return (
-          <ServiceItemSearchInput
-            refetchOnMount={false}
-            width={200}
-            onChange={item =>
-              item && setter({ ...rowData, item: toItemWithPackSize({ item }) })
-            }
-            currentItemId={id}
-          />
-        );
+  const formatCurrency = useFormatCurrency();
+
+  const columns = useMemo(
+    (): ColumnDef<DraftInboundLine>[] => [
+      {
+        id: 'serviceItemName',
+        accessorFn: row => row.item?.id,
+        header: t('label.name'),
+        size: 200,
+        Cell: ({ row }) => {
+          const rowData = row.original;
+          const id = rowData.item?.id;
+          return (
+            <ServiceItemSearchInput
+              refetchOnMount={false}
+              width={200}
+              onChange={item =>
+                item && setter({ ...rowData, item: toItemWithPackSize({ item }) })
+              }
+              currentItemId={id}
+            />
+          );
+        },
       },
-    },
-    {
-      key: 'note',
-      label: 'label.comment',
-      width: 150,
-      accessor: ({ rowData }) => rowData?.note,
-      setter,
-      Cell: TextInputCell,
-    },
-    {
-      key: 'totalBeforeTax',
-      label: 'label.amount',
-      width: 75,
-      setter,
-      Cell: CurrencyInputCell,
-    },
-    {
-      key: 'taxPercentage',
-      label: 'label.tax',
-      width: 75,
-      setter,
-      Cell: TaxPercentageCell,
-    },
-    {
-      key: 'totalAfterTax',
-      label: 'label.total',
-      align: ColumnAlign.Right,
-      width: 75,
-      Cell: CurrencyCell,
-      accessor: ({ rowData }) => rowData?.totalAfterTax,
-    },
-    {
-      key: 'isDeleted',
-      label: 'label.delete',
-      align: ColumnAlign.Center,
-      width: 50,
-      Cell: ({ rowData }) => (
-        <IconButton
-          icon={<XCircleIcon />}
-          onClick={() => setter({ ...rowData, isDeleted: true })}
-          label={t('messages.delete-this-line')}
-        />
-      ),
-      setter,
-    },
-  ]);
+      {
+        id: 'note',
+        accessorFn: row => row.note,
+        header: t('label.comment'),
+        size: 150,
+        Cell: ({ cell, row }) => (
+          <TextInputCell
+            cell={cell}
+            updateFn={value => setter({ ...row.original, note: value })}
+            autoFocus={row.index === 0}
+          />
+        ),
+      },
+      {
+        id: 'totalBeforeTax',
+        accessorFn: row => row.totalBeforeTax,
+        header: t('label.amount'),
+        size: 75,
+        Cell: ({ cell, row }) => (
+          <CurrencyInputCell
+            cell={cell}
+            updateFn={value => setter({ ...row.original, totalBeforeTax: value })}
+          />
+        ),
+      },
+      {
+        id: 'taxPercentage',
+        accessorFn: row => row.taxPercentage,
+        header: t('label.tax'),
+        size: 75,
+        Cell: ({ cell, row }) => (
+          <NumberInputCell
+            cell={cell}
+            updateFn={value => setter({ ...row.original, taxPercentage: value })}
+            max={100}
+            decimalLimit={2}
+            endAdornment="%"
+          />
+        ),
+      },
+      {
+        id: 'totalAfterTax',
+        accessorFn: row => row.totalAfterTax,
+        header: t('label.total'),
+        size: 75,
+        align: ColumnAlign.Right,
+        Cell: ({ row }) => (
+          <div style={{ textAlign: 'right' }}>{formatCurrency(row.original.totalAfterTax)}</div>
+        ),
+      },
+      {
+        id: 'delete',
+        header: t('label.delete'),
+        size: 50,
+        align: ColumnAlign.Center,
+        Cell: ({ row }) => (
+          <IconButton
+            icon={<XCircleIcon />}
+            onClick={() => setter({ ...row.original, isDeleted: true })}
+            label={t('messages.delete-this-line')}
+          />
+        ),
+      },
+    ],
+    []
+  );
+
+  return columns;
 };

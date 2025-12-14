@@ -5,14 +5,14 @@ import {
   ButtonWithIcon,
   Box,
   PlusCircleIcon,
-  DataTable,
   useDialog,
   useTranslation,
   DialogButton,
-  TableProvider,
-  createTableStore,
   QueryParamsProvider,
   createQueryParamsStore,
+  MaterialTable,
+  useSimpleMaterialTable,
+  NothingHere,
 } from '@openmsupply-client/common';
 import { useInbound } from '../../../api';
 import { useDraftServiceLines } from './useDraftServiceLines';
@@ -37,6 +37,13 @@ const InboundServiceLineEditComponent = ({
   const {
     serviceItem: { data: serviceItem },
   } = useItem();
+
+  const table = useSimpleMaterialTable({
+    tableId: 'inbound-detail-service-line',
+    columns,
+    data: lines.filter(({ isDeleted }) => !isDeleted),
+    noDataElement: <NothingHere body={!serviceItem ? t('error.no-service-charges') : t('error.no-results')} />,
+  });
 
   return (
     <Modal
@@ -77,24 +84,7 @@ const InboundServiceLineEditComponent = ({
               Icon={<PlusCircleIcon />}
             />
           </Box>
-          <TableProvider
-            createStore={createTableStore}
-            queryParamsStore={createQueryParamsStore({
-              initialSortBy: { key: 'serviceItemName' },
-            })}
-          >
-            <DataTable
-              id="inbound-detail-service-line"
-              columns={columns}
-              data={lines.filter(({ isDeleted }) => !isDeleted)}
-              dense
-              noDataMessage={
-                !serviceItem
-                  ? t('error.no-service-charges')
-                  : t('error.no-results')
-              }
-            />
-          </TableProvider>
+          <MaterialTable table={table} />
         </Box>
       )}
     </Modal>
