@@ -60,7 +60,12 @@ export const allocateQuantities = (
   {
     allocateIn,
     allowPartialPacks,
-  }: { allocateIn: AllocateInOption; allowPartialPacks?: boolean }
+    expiryThresholdDays,
+  }: {
+    allocateIn: AllocateInOption;
+    allowPartialPacks?: boolean;
+    expiryThresholdDays: number | undefined;
+  }
 ) => {
   // if invalid quantity entered, don't allocate
   if (quantity < 0 || Number.isNaN(quantity)) {
@@ -83,7 +88,7 @@ export const allocateQuantities = (
   const requiredPackSize =
     allocateIn.type === AllocateInType.Packs ? allocateIn.packSize : undefined;
   const validBatches = newDraftLines.filter(line =>
-    canAutoAllocate(line, requiredPackSize)
+    canAutoAllocate(line, expiryThresholdDays, requiredPackSize)
   );
 
   let quantityToAllocate = quantity;
