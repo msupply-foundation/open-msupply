@@ -2553,5 +2553,9 @@
   "report.available-eop": "Available stock (end of period)",
   "report.days-out-of-stock": "Days out of stock",
   "report.deliveries": "Deliveries in progress",
-  "report.quantity-to-order": "Quantity to order (packs)"
+  "report.quantity-to-order": "Quantity to order (packs)",
+  "report.opening-stock-store": "Opening stock of the store",
+  "report.opening-stock-clients": "Opening stock of the clients",
+  "report.amd": "AMD",
+  "report.consolidated-amc-clients": "Consolidated AMC of clients"
 }
