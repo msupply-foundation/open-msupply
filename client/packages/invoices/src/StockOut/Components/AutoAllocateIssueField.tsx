@@ -6,6 +6,7 @@ import {
   useFormatNumber,
   useBufferState,
   useDebounceCallback,
+  usePreferences,
 } from '@openmsupply-client/common';
 import { useAllocationContext } from '../useAllocationContext';
 import { getAllocatedQuantity } from '../utils';
@@ -21,6 +22,7 @@ export const AutoAllocateField = ({
 }) => {
   const t = useTranslation();
   const { format } = useFormatNumber();
+  const { expiredStockIssueThreshold } = usePreferences();
 
   const { autoAllocate, allocatedQuantity } = useAllocationContext(state => ({
     autoAllocate: state.autoAllocate,
@@ -31,7 +33,13 @@ export const AutoAllocateField = ({
 
   const debouncedAllocate = useDebounceCallback(
     quantity => {
-      const allocated = autoAllocate(quantity, format, t, allowPartialPacks);
+      const allocated = autoAllocate(
+        quantity,
+        format,
+        t,
+        expiredStockIssueThreshold,
+        allowPartialPacks
+      );
       setIssueQuantity(allocated);
     },
     [],

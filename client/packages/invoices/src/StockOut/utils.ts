@@ -169,15 +169,23 @@ export const canAllocate = (line: DraftStockOutLineFragment): boolean =>
 
 export const canAutoAllocate = (
   line: DraftStockOutLineFragment,
+  expiryThresholdDays: number | undefined,
   requiredPackSize?: number
-) =>
-  canAllocate(line) &&
-  // shouldn't auto-allocate expired lines
-  !(!!line.expiryDate && DateUtils.isExpired(new Date(line.expiryDate))) &&
-  // should not be able to auto-allocate lines with unusable VVM status
-  !line.vvmStatus?.unusable &&
-  // if pack size is specified, should match the line's pack size
-  (!requiredPackSize || line.packSize === requiredPackSize);
+) => {
+  const lastAllowableDate = line.expiryDate
+    ? DateUtils.addDays(new Date(line.expiryDate), -(expiryThresholdDays ?? 0))
+    : undefined;
+
+  return (
+    canAllocate(line) &&
+    // shouldn't auto-allocate expired lines
+    !(!!lastAllowableDate && DateUtils.isExpired(lastAllowableDate)) &&
+    // should not be able to auto-allocate lines with unusable VVM status
+    !line.vvmStatus?.unusable &&
+    // if pack size is specified, should match the line's pack size
+    (!requiredPackSize || line.packSize === requiredPackSize)
+  );
+};
 
 export const scannedBatchFilter = (
   allLines: DraftStockOutLineFragment[],
