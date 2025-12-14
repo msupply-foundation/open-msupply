@@ -33,11 +33,6 @@ export type Scalars = {
   NaiveDateTime: { input: string; output: string };
 };
 
-export enum StocktakeNodeStatus {
-  Finalised = "FINALISED",
-  New = "NEW",
-}
-
 export enum InvoiceNodeType {
   OutboundShipment = "OUTBOUND_SHIPMENT",
   InboundShipment = "INBOUND_SHIPMENT",
