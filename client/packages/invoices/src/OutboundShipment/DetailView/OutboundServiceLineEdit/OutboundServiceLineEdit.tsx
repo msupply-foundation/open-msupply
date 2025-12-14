@@ -5,19 +5,20 @@ import {
   ButtonWithIcon,
   Box,
   PlusCircleIcon,
-  DataTable,
   useDialog,
   useTranslation,
   DialogButton,
-  TableProvider,
-  createTableStore,
   QueryParamsProvider,
   createQueryParamsStore,
+  MaterialTable,
+  useSimpleMaterialTable,
+  NothingHere,
 } from '@openmsupply-client/common';
 import { useOutbound } from '../../api';
 import { useDraftServiceLines } from './useDraftServiceLines';
 import { useServiceLineColumns } from './useServiceLineColumns';
 import { ItemRowFragment, useItem } from '@openmsupply-client/system';
+
 interface OutboundServiceLineEditProps {
   isOpen: boolean;
   onClose: () => void;
@@ -36,6 +37,15 @@ const OutboundServiceLineEditComponent = ({
   const {
     serviceItem: { data: defaultServiceItem },
   } = useItem();
+
+  const table = useSimpleMaterialTable({
+    tableId: 'stocktake-batches',
+    columns,
+    data: lines.filter(({ isDeleted }) => !isDeleted),
+    noDataElement: <NothingHere body={!defaultServiceItem
+      ? t('error.no-service-charges')
+      : t('error.no-results')} />,
+  });
 
   return (
     <Modal
@@ -76,7 +86,7 @@ const OutboundServiceLineEditComponent = ({
               Icon={<PlusCircleIcon />}
             />
           </Box>
-          <TableProvider createStore={createTableStore}>
+          {/* <TableProvider createStore={createTableStore}>
             <DataTable
               id="outbound-service-line"
               columns={columns}
@@ -88,7 +98,9 @@ const OutboundServiceLineEditComponent = ({
                   : t('error.no-results')
               }
             />
-          </TableProvider>
+          </TableProvider> */}
+
+          <MaterialTable table={table} />
         </Box>
       )}
     </Modal>
