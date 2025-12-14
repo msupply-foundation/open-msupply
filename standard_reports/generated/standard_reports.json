@@ -8,9 +8,7 @@
           "template": "template.html",
           "header": null,
           "footer": null,
-          "query": [
-            "query.graphql"
-          ],
+          "query": ["query.graphql"],
           "convert_data": "dmFyIHQ9ezM3ODp0PT57Y29uc3QgZT10PT57bGV0IG89e307cmV0dXJuIE9iamVjdC5rZXlzKHQpLmZvckVhY2goZnVuY3Rpb24ocil7IiIhPT10W3JdJiZ2b2lkIDAhPT10W3JdJiZudWxsIT09dFtyXSYmKCJvYmplY3QiPT10eXBlb2YgdFtyXT9vW3JdPWUodFtyXSk6b1tyXT10W3JdKX0pLG99LG89KHQsZSk9PihlKz0iIikuc3BsaXQoIi4iKS5yZWR1Y2UoKHQsZSk9PnQmJnRbZV0sdCk7dC5leHBvcnRzPXtjbGVhblVwT2JqZWN0OmUsY2xlYW5VcE5vZGVzOnQ9PntsZXQgbz1bXTtyZXR1cm4gdC5mb3JFYWNoKHQ9PnswIT1PYmplY3Qua2V5cyh0KS5sZW5ndGgmJm8ucHVzaChlKHQpKX0pLG99LGdldE5lc3RlZFZhbHVlOm8sc29ydE5vZGVzOih0LGUscik9PihlJiZ0LnNvcnQoKHQsbik9PntsZXQgYT1vKHQsZSk7InN0cmluZyI9PXR5cGVvZiBhJiYoYT1hLnRvTG9jYWxlTG93ZXJDYXNlKCkpO2xldCBzPW8obixlKTtyZXR1cm4ic3RyaW5nIj09dHlwZW9mIHMmJihzPXMudG9Mb2NhbGVMb3dlckNhc2UoKSksbnVsbD09YSYmbnVsbD09cz8wOm51bGw9PWE/ImFzYyI9PT1yPy0xOjE6bnVsbD09cz8iYXNjIj09PXI/MTotMTphPT09cz8wOiJhc2MiPT09cj9hPnM/MTotMTphPHM/MTotMX0pLHQpfX19LGU9e307ZnVuY3Rpb24gbyhyKXt2YXIgbj1lW3JdO2lmKHZvaWQgMCE9PW4pcmV0dXJuIG4uZXhwb3J0czt2YXIgYT1lW3JdPXtleHBvcnRzOnt9fTtyZXR1cm4gdFtyXShhLGEuZXhwb3J0cyxvKSxhLmV4cG9ydHN9by5kPSh0LGUpPT57Zm9yKHZhciByIGluIGUpby5vKGUscikmJiFvLm8odCxyKSYmT2JqZWN0LmRlZmluZVByb3BlcnR5KHQscix7ZW51bWVyYWJsZTohMCxnZXQ6ZVtyXX0pfSxvLm89KHQsZSk9Pk9iamVjdC5wcm90b3R5cGUuaGFzT3duUHJvcGVydHkuY2FsbCh0LGUpO3ZhciByPW8oMzc4KTtmdW5jdGlvbiBuKHQpe3JldHVybiB0LmRhdGEuc3RvY2tMaW5lcy5ub2Rlcz0oKHQsZSxvKT0+e3QuZm9yRWFjaCh0PT57aWYoMD09T2JqZWN0LmtleXModCkubGVuZ3RoKXJldHVybjtjb25zdCBlPSh0PT57bGV0IGU7aWYodCl7bGV0IG89RGF0ZS5ub3coKTtlPShuZXcgRGF0ZSh0KS1vKS8xZTMvNjAvNjAvMjR9cmV0dXJuIGV9KSh0Py5leHBpcnlEYXRlKSxvPSgodCxlKT0+e2xldCBvLHI9ZT8uaXRlbT8uc3RhdHM/LmF2ZXJhZ2VNb250aGx5Q29uc3VtcHRpb24sbj1lPy50b3RhbE51bWJlck9mUGFja3MqZT8ucGFja1NpemU7aWYodCYmciYmbiYmdD49MCl7Y29uc3QgZT1NYXRoLnJvdW5kKHQqKHIvMzAuNDM3NSkpO289TWF0aC5taW4oZSxuPz9lKX1yZXR1cm4gb30pKGUsdCk7byYmKHQuZXhwZWN0ZWRVc2FnZT1vKTtjb25zdCByPSgodCxlLG8scik9PntsZXQgbjtpZih0JiZlJiZyKXtjb25zdCBhPXQqZTtvJiYobj1yPj0wP01hdGgucm91bmQoYS1vKihyLzMwLjQzNzUpKTpNYXRoLnJvdW5kKGEpKSxvfHxyPD0wJiYobj1NYXRoLnJvdW5kKGEpKX1yZXR1cm4gbjwwPzA6bn0pKHQ/LnBhY2tTaXplLHQ/LnRvdGFsTnVtYmVyT2ZQYWNrcyx0Py5pdGVtPy5zdGF0cz8uYXZlcmFnZU1vbnRobHlDb25zdW1wdGlvbixlKTtyJiYodC5zdG9ja0F0Umlzaz1yKSx0LmRheXNVbnRpbEV4cGlyZWQ9KHQ9PntsZXQgZTtyZXR1cm4gdCYmKGU9TWF0aC5yb3VuZCh0KSksZX0pKGUpLHQuYXZlcmFnZU1vbnRobHlDb25zdW1wdGlvbj1NYXRoLnJvdW5kKDEwKih0Py5pdGVtPy5zdGF0cz8uYXZlcmFnZU1vbnRobHlDb25zdW1wdGlvbj8/MCkpLzEwfSk7bGV0IG49KDAsci5jbGVhblVwTm9kZXMpKHQpO3JldHVybigwLHIuc29ydE5vZGVzKShuLGUsbyl9KSh0LmRhdGEuc3RvY2tMaW5lcy5ub2Rlcyx0Py5hcmd1bWVudHM/LnNvcnQ/PyJpdGVtLm5hbWUiLHQ/LmFyZ3VtZW50cz8uZGlyPz8iYXNjIiksdH1leHBvcnR7biBhcyBjb252ZXJ0X2RhdGF9Ow==",
           "convert_data_type": "BoaJs"
         },
@@ -58,10 +56,7 @@
                 "dir": {
                   "description": "sort by dir",
                   "format": "SortToggle",
-                  "type": [
-                    "string",
-                    "null"
-                  ]
+                  "type": ["string", "null"]
                 },
                 "expiryDate": {
                   "description": "T#label.expiry-date",
@@ -168,30 +163,12 @@
               "label": "T#report.sort-by",
               "options": {
                 "show": [
-                  [
-                    "item.name",
-                    "T#report.item-name"
-                  ],
-                  [
-                    "item.code",
-                    "T#label.code"
-                  ],
-                  [
-                    "expiryDate",
-                    "T#report.expiry-date"
-                  ],
-                  [
-                    "daysUntilExpired",
-                    "T#report.days-until-expired"
-                  ],
-                  [
-                    "stockAtRisk",
-                    "T#report.stock-at-risk"
-                  ],
-                  [
-                    "expectedUsage",
-                    "T#report.expected-usage"
-                  ]
+                  ["item.name", "T#report.item-name"],
+                  ["item.code", "T#label.code"],
+                  ["expiryDate", "T#report.expiry-date"],
+                  ["daysUntilExpired", "T#report.days-until-expired"],
+                  ["stockAtRisk", "T#report.stock-at-risk"],
+                  ["expectedUsage", "T#report.expected-usage"]
                 ]
               },
               "scope": "#/properties/sort",
@@ -216,9 +193,7 @@
           "template": "template.html",
           "header": null,
           "footer": null,
-          "query": [
-            "query.graphql"
-          ],
+          "query": ["query.graphql"],
           "convert_data": "dmFyIHQ9ezM3ODp0PT57Y29uc3QgZT10PT57bGV0IG89e307cmV0dXJuIE9iamVjdC5rZXlzKHQpLmZvckVhY2goZnVuY3Rpb24ocil7IiIhPT10W3JdJiZ2b2lkIDAhPT10W3JdJiZudWxsIT09dFtyXSYmKCJvYmplY3QiPT10eXBlb2YgdFtyXT9vW3JdPWUodFtyXSk6b1tyXT10W3JdKX0pLG99LG89KHQsZSk9PihlKz0iIikuc3BsaXQoIi4iKS5yZWR1Y2UoKHQsZSk9PnQmJnRbZV0sdCk7dC5leHBvcnRzPXtjbGVhblVwT2JqZWN0OmUsY2xlYW5VcE5vZGVzOnQ9PntsZXQgbz1bXTtyZXR1cm4gdC5mb3JFYWNoKHQ9PnswIT1PYmplY3Qua2V5cyh0KS5sZW5ndGgmJm8ucHVzaChlKHQpKX0pLG99LGdldE5lc3RlZFZhbHVlOm8sc29ydE5vZGVzOih0LGUscik9PihlJiZ0LnNvcnQoKHQsbik9PntsZXQgYT1vKHQsZSk7InN0cmluZyI9PXR5cGVvZiBhJiYoYT1hLnRvTG9jYWxlTG93ZXJDYXNlKCkpO2xldCBzPW8obixlKTtyZXR1cm4ic3RyaW5nIj09dHlwZW9mIHMmJihzPXMudG9Mb2NhbGVMb3dlckNhc2UoKSksbnVsbD09YSYmbnVsbD09cz8wOm51bGw9PWE/ImFzYyI9PT1yPy0xOjE6bnVsbD09cz8iYXNjIj09PXI/MTotMTphPT09cz8wOiJhc2MiPT09cj9hPnM/MTotMTphPHM/MTotMX0pLHQpfX19LGU9e307ZnVuY3Rpb24gbyhyKXt2YXIgbj1lW3JdO2lmKHZvaWQgMCE9PW4pcmV0dXJuIG4uZXhwb3J0czt2YXIgYT1lW3JdPXtleHBvcnRzOnt9fTtyZXR1cm4gdFtyXShhLGEuZXhwb3J0cyxvKSxhLmV4cG9ydHN9by5kPSh0LGUpPT57Zm9yKHZhciByIGluIGUpby5vKGUscikmJiFvLm8odCxyKSYmT2JqZWN0LmRlZmluZVByb3BlcnR5KHQscix7ZW51bWVyYWJsZTohMCxnZXQ6ZVtyXX0pfSxvLm89KHQsZSk9Pk9iamVjdC5wcm90b3R5cGUuaGFzT3duUHJvcGVydHkuY2FsbCh0LGUpO3ZhciByPW8oMzc4KTtmdW5jdGlvbiBuKHQpe3JldHVybiB0LmRhdGEuc3RvY2tMaW5lcy5ub2Rlcz0oKHQsZSxvKT0+e3QuZm9yRWFjaCh0PT57aWYoMD09T2JqZWN0LmtleXModCkubGVuZ3RoKXJldHVybjtjb25zdCBlPSh0PT57bGV0IGU7aWYodCl7bGV0IG89RGF0ZS5ub3coKTtlPShuZXcgRGF0ZSh0KS1vKS8xZTMvNjAvNjAvMjR9cmV0dXJuIGV9KSh0Py5leHBpcnlEYXRlKSxvPSgodCxlKT0+e2xldCBvLHI9ZT8uaXRlbT8uc3RhdHM/LmF2ZXJhZ2VNb250aGx5Q29uc3VtcHRpb24sbj1lPy50b3RhbE51bWJlck9mUGFja3MqZT8ucGFja1NpemU7aWYodCYmciYmbiYmdD49MCl7Y29uc3QgZT1NYXRoLnJvdW5kKHQqKHIvMzAuNDM3NSkpO289TWF0aC5taW4oZSxuPz9lKX1yZXR1cm4gb30pKGUsdCk7byYmKHQuZXhwZWN0ZWRVc2FnZT1vKTtjb25zdCByPSgodCxlLG8scik9PntsZXQgbjtpZih0JiZlJiZyKXtjb25zdCBhPXQqZTtvJiYobj1yPj0wP01hdGgucm91bmQoYS1vKihyLzMwLjQzNzUpKTpNYXRoLnJvdW5kKGEpKSxvfHxyPD0wJiYobj1NYXRoLnJvdW5kKGEpKX1yZXR1cm4gbjwwPzA6bn0pKHQ/LnBhY2tTaXplLHQ/LnRvdGFsTnVtYmVyT2ZQYWNrcyx0Py5pdGVtPy5zdGF0cz8uYXZlcmFnZU1vbnRobHlDb25zdW1wdGlvbixlKTtyJiYodC5zdG9ja0F0Umlzaz1yKSx0LmRheXNVbnRpbEV4cGlyZWQ9KHQ9PntsZXQgZTtyZXR1cm4gdCYmKGU9TWF0aC5yb3VuZCh0KSksZX0pKGUpLHQuYXZlcmFnZU1vbnRobHlDb25zdW1wdGlvbj1NYXRoLnJvdW5kKDEwKih0Py5pdGVtPy5zdGF0cz8uYXZlcmFnZU1vbnRobHlDb25zdW1wdGlvbj8/MCkpLzEwfSk7bGV0IG49KDAsci5jbGVhblVwTm9kZXMpKHQpO3JldHVybigwLHIuc29ydE5vZGVzKShuLGUsbyl9KSh0LmRhdGEuc3RvY2tMaW5lcy5ub2Rlcyx0Py5hcmd1bWVudHM/LnNvcnQ/PyJpdGVtLm5hbWUiLHQ/LmFyZ3VtZW50cz8uZGlyPz8iYXNjIiksdH1leHBvcnR7biBhcyBjb252ZXJ0X2RhdGF9Ow==",
           "convert_data_type": "BoaJs"
         },
@@ -266,10 +241,7 @@
                 "dir": {
                   "description": "sort by dir",
                   "format": "SortToggle",
-                  "type": [
-                    "string",
-                    "null"
-                  ]
+                  "type": ["string", "null"]
                 },
                 "expiryDate": {
                   "description": "T#label.expiry-date",
@@ -376,30 +348,12 @@
               "label": "T#report.sort-by",
               "options": {
                 "show": [
-                  [
-                    "item.name",
-                    "T#report.item-name"
-                  ],
-                  [
-                    "item.code",
-                    "T#label.code"
-                  ],
-                  [
-                    "expiryDate",
-                    "T#report.expiry-date"
-                  ],
-                  [
-                    "daysUntilExpired",
-                    "T#report.days-until-expired"
-                  ],
-                  [
-                    "stockAtRisk",
-                    "T#report.stock-at-risk"
-                  ],
-                  [
-                    "expectedUsage",
-                    "T#report.expected-usage"
-                  ]
+                  ["item.name", "T#report.item-name"],
+                  ["item.code", "T#label.code"],
+                  ["expiryDate", "T#report.expiry-date"],
+                  ["daysUntilExpired", "T#report.days-until-expired"],
+                  ["stockAtRisk", "T#report.stock-at-risk"],
+                  ["expectedUsage", "T#report.expected-usage"]
                 ]
               },
               "scope": "#/properties/sort",
@@ -424,9 +378,7 @@
           "template": "template.html",
           "header": null,
           "footer": null,
-          "query": [
-            "query.graphql"
-          ],
+          "query": ["query.graphql"],
           "convert_data": "ZnVuY3Rpb24gZShlKXtyZXR1cm4oZT0+e2lmKCFlKXJldHVybntkYXRhOnZvaWQgMH07Y29uc3QgdD1uZXcgTWFwLGE9bmV3IE1hcDtlLm5vZGVzLmZvckVhY2goZT0+e2UubGluZXMubm9kZXMuZm9yRWFjaChvPT57Y29uc3Qgcj1gJHtvLml0ZW0uY29kZX0tJHtlLm90aGVyUGFydHlOYW1lfWA7dC5zZXQociwodC5nZXQocil8fDApK28uY29zdFByaWNlUGVyUGFjaypvLm51bWJlck9mUGFja3MpLGEuc2V0KHIsKGEuZ2V0KHIpfHwwKSsxKX0pfSk7Y29uc3Qgbz1bXSxyPW5ldyBNYXA7cmV0dXJuIGUubm9kZXMuZm9yRWFjaChlPT57ZS5saW5lcy5ub2Rlcy5mb3JFYWNoKGM9Pntjb25zdCBpPWAke2MuaXRlbS5jb2RlfS0ke2Uub3RoZXJQYXJ0eU5hbWV9YCxuPShyLmdldChpKXx8MCkrMTtyLnNldChpLG4pO2NvbnN0IHM9bj09PWEuZ2V0KGkpO28ucHVzaCh7aWQ6Yy5pZCxpdGVtQ29kZTpjLml0ZW0uY29kZSxpdGVtTmFtZTpjLml0ZW0ubmFtZSxiYXRjaDpjLmJhdGNoLGV4cGlyeURhdGU6Yy5leHBpcnlEYXRlLHBhY2tTaXplOmMucGFja1NpemUsbnVtYmVyT2ZQYWNrczpjLm51bWJlck9mUGFja3MsbnVtYmVyT2ZVbml0czpjLm51bWJlck9mUGFja3MqYy5wYWNrU2l6ZSxjb3N0UHJpY2VQZXJQYWNrOmMuY29zdFByaWNlUGVyUGFjay50b0ZpeGVkKDIpLHRvdGFsQ29zdDpzP3QuZ2V0KGkpLnRvRml4ZWQoMik6Ii0iLG90aGVyUGFydHlOYW1lOmUub3RoZXJQYXJ0eU5hbWV9KX0pfSkse2RhdGE6e2xpbmVzOm8uc29ydCgoZSx0KT0+ZS5pdGVtTmFtZS5sb2NhbGVDb21wYXJlKHQuaXRlbU5hbWUpfHxlLm90aGVyUGFydHlOYW1lLmxvY2FsZUNvbXBhcmUodC5vdGhlclBhcnR5TmFtZSkpfX19KShlPy5kYXRhPy5pbnZvaWNlcyl9ZXhwb3J0e2UgYXMgY29udmVydF9kYXRhfTs=",
           "convert_data_type": "BoaJs"
         },
@@ -483,10 +435,7 @@
                 },
                 "otherPartyId": {
                   "description": "Filter by other party",
-                  "type": [
-                    "string",
-                    "null"
-                  ]
+                  "type": ["string", "null"]
                 }
               }
             }
@@ -537,9 +486,7 @@
           "template": "template.html",
           "header": null,
           "footer": null,
-          "query": [
-            "query.graphql"
-          ],
+          "query": ["query.graphql"],
           "convert_data": "ZnVuY3Rpb24gZShlKXtyZXR1cm4oZT0+e2lmKCFlKXJldHVybntkYXRhOnZvaWQgMH07Y29uc3QgdD1uZXcgTWFwLGE9bmV3IE1hcDtlLm5vZGVzLmZvckVhY2goZT0+e2UubGluZXMubm9kZXMuZm9yRWFjaChyPT57Y29uc3Qgbz1gJHtyLml0ZW0uY29kZX0tJHtlLm90aGVyUGFydHlOYW1lfWA7dC5zZXQobywodC5nZXQobyl8fDApK3IuY29zdFByaWNlUGVyUGFjaypyLm51bWJlck9mUGFja3MpLGEuc2V0KG8sKGEuZ2V0KG8pfHwwKSsxKX0pfSk7Y29uc3Qgcj1bXSxvPW5ldyBNYXA7cmV0dXJuIGUubm9kZXMuZm9yRWFjaChlPT57ZS5saW5lcy5ub2Rlcy5mb3JFYWNoKGM9Pntjb25zdCBpPWAke2MuaXRlbS5jb2RlfS0ke2Uub3RoZXJQYXJ0eU5hbWV9YCxuPShvLmdldChpKXx8MCkrMTtvLnNldChpLG4pO2NvbnN0IHM9bj09PWEuZ2V0KGkpO3IucHVzaCh7aWQ6Yy5pZCxpdGVtQ29kZTpjLml0ZW0uY29kZSxpdGVtTmFtZTpjLml0ZW0ubmFtZSxiYXRjaDpjLmJhdGNoLGV4cGlyeURhdGU6Yy5leHBpcnlEYXRlLHBhY2tTaXplOmMucGFja1NpemUsbnVtYmVyT2ZQYWNrczpjLm51bWJlck9mUGFja3MsbnVtYmVyT2ZVbml0czpjLm51bWJlck9mUGFja3MqYy5wYWNrU2l6ZSxjb3N0UHJpY2VQZXJQYWNrOmMuY29zdFByaWNlUGVyUGFjayx0b3RhbENvc3Q6cz90LmdldChpKS50b0ZpeGVkKDIpOiItIixvdGhlclBhcnR5TmFtZTplLm90aGVyUGFydHlOYW1lfSl9KX0pLHtkYXRhOntsaW5lczpyLnNvcnQoKGUsdCk9PmUuaXRlbU5hbWUubG9jYWxlQ29tcGFyZSh0Lml0ZW1OYW1lKXx8ZS5vdGhlclBhcnR5TmFtZS5sb2NhbGVDb21wYXJlKHQub3RoZXJQYXJ0eU5hbWUpKX19fSkoZT8uZGF0YT8uaW52b2ljZXMpfWV4cG9ydHtlIGFzIGNvbnZlcnRfZGF0YX07",
           "convert_data_type": "BoaJs"
         },
@@ -596,10 +543,7 @@
                 },
                 "otherPartyId": {
                   "description": "Filter by other party",
-                  "type": [
-                    "string",
-                    "null"
-                  ]
+                  "type": ["string", "null"]
                 }
               }
             }
@@ -650,9 +594,7 @@
           "template": "template.html",
           "header": null,
           "footer": null,
-          "query": [
-            "query.graphql"
-          ],
+          "query": ["query.graphql"],
           "convert_data": "dmFyIGU9ezM3ODplPT57Y29uc3QgdD1lPT57bGV0IHI9e307cmV0dXJuIE9iamVjdC5rZXlzKGUpLmZvckVhY2goZnVuY3Rpb24obyl7IiIhPT1lW29dJiZ2b2lkIDAhPT1lW29dJiZudWxsIT09ZVtvXSYmKCJvYmplY3QiPT10eXBlb2YgZVtvXT9yW29dPXQoZVtvXSk6cltvXT1lW29dKX0pLHJ9LHI9KGUsdCk9Pih0Kz0iIikuc3BsaXQoIi4iKS5yZWR1Y2UoKGUsdCk9PmUmJmVbdF0sZSk7ZS5leHBvcnRzPXtjbGVhblVwT2JqZWN0OnQsY2xlYW5VcE5vZGVzOmU9PntsZXQgcj1bXTtyZXR1cm4gZS5mb3JFYWNoKGU9PnswIT1PYmplY3Qua2V5cyhlKS5sZW5ndGgmJnIucHVzaCh0KGUpKX0pLHJ9LGdldE5lc3RlZFZhbHVlOnIsc29ydE5vZGVzOihlLHQsbyk9Pih0JiZlLnNvcnQoKGUsbik9PntsZXQgcz1yKGUsdCk7InN0cmluZyI9PXR5cGVvZiBzJiYocz1zLnRvTG9jYWxlTG93ZXJDYXNlKCkpO2xldCBhPXIobix0KTtyZXR1cm4ic3RyaW5nIj09dHlwZW9mIGEmJihhPWEudG9Mb2NhbGVMb3dlckNhc2UoKSksbnVsbD09cyYmbnVsbD09YT8wOm51bGw9PXM/ImFzYyI9PT1vPy0xOjE6bnVsbD09YT8iYXNjIj09PW8/MTotMTpzPT09YT8wOiJhc2MiPT09bz9zPmE/MTotMTpzPGE/MTotMX0pLGUpfX19LHQ9e307ZnVuY3Rpb24gcihvKXt2YXIgbj10W29dO2lmKHZvaWQgMCE9PW4pcmV0dXJuIG4uZXhwb3J0czt2YXIgcz10W29dPXtleHBvcnRzOnt9fTtyZXR1cm4gZVtvXShzLHMuZXhwb3J0cyxyKSxzLmV4cG9ydHN9ci5kPShlLHQpPT57Zm9yKHZhciBvIGluIHQpci5vKHQsbykmJiFyLm8oZSxvKSYmT2JqZWN0LmRlZmluZVByb3BlcnR5KGUsbyx7ZW51bWVyYWJsZTohMCxnZXQ6dFtvXX0pfSxyLm89KGUsdCk9Pk9iamVjdC5wcm90b3R5cGUuaGFzT3duUHJvcGVydHkuY2FsbChlLHQpO3ZhciBvPXIoMzc4KTtmdW5jdGlvbiBuKGUpe3JldHVybiBlLmRhdGEuaXRlbXMubm9kZXM9KChlLHQscik9PntsZXQgbj0oMCxvLmNsZWFuVXBOb2RlcykoZSk7cmV0dXJuKDAsby5zb3J0Tm9kZXMpKG4sdCxyKX0pKGUuZGF0YS5pdGVtcy5ub2RlcyxlPy5hcmd1bWVudHM/LnNvcnQ/PyJuYW1lIixlPy5hcmd1bWVudHM/LmRpcj8/ImFzYyIpLGV9ZXhwb3J0e24gYXMgY29udmVydF9kYXRhfTs=",
           "convert_data_type": "BoaJs"
         },
@@ -700,10 +642,7 @@
                 "dir": {
                   "description": "sort by dir",
                   "format": "SortToggle",
-                  "type": [
-                    "string",
-                    "null"
-                  ]
+                  "type": ["string", "null"]
                 },
                 "itemCode": {
                   "description": "Item Code",
@@ -727,10 +666,7 @@
                 },
                 "sort": {
                   "description": "sort by",
-                  "enum": [
-                    "name",
-                    "code"
-                  ],
+                  "enum": ["name", "code"],
                   "type": "string"
                 }
               }
@@ -784,14 +720,8 @@
               "label": "T#report.sort-by",
               "options": {
                 "show": [
-                  [
-                    "name",
-                    "T#report.item-name"
-                  ],
-                  [
-                    "code",
-                    "T#label.code"
-                  ]
+                  ["name", "T#report.item-name"],
+                  ["code", "T#label.code"]
                 ]
               },
               "scope": "#/properties/sort",
@@ -938,10 +868,7 @@
                 "dir": {
                   "description": "sort by dir",
                   "format": "SortToggle",
-                  "type": [
-                    "string",
-                    "null"
-                  ]
+                  "type": ["string", "null"]
                 },
                 "itemCode": {
                   "description": "Item Code",
@@ -1007,54 +934,21 @@
               "label": "T#report.sort-by",
               "options": {
                 "show": [
-                  [
-                    "name",
-                    "T#report.item-name"
-                  ],
-                  [
-                    "code",
-                    "T#label.code"
-                  ],
-                  [
-                    "SOH",
-                    "T#report.stock-on-hand"
-                  ],
-                  [
-                    "MOS",
-                    "T#report.months-cover"
-                  ],
-                  [
-                    "monthConsumption",
-                    "T#report.consumption-month"
-                  ],
-                  [
-                    "lastMonthConsumption",
-                    "T#report.consumption-last-month"
-                  ],
+                  ["name", "T#report.item-name"],
+                  ["code", "T#label.code"],
+                  ["SOH", "T#report.stock-on-hand"],
+                  ["MOS", "T#report.months-cover"],
+                  ["monthConsumption", "T#report.consumption-month"],
+                  ["lastMonthConsumption", "T#report.consumption-last-month"],
                   [
                     "twoMonthsAgoConsumption",
                     "T#report.consumption-two-months-ago"
                   ],
-                  [
-                    "expiringInSixMonths",
-                    "T#report.expiring-6-months"
-                  ],
-                  [
-                    "expiringInTwelveMonths",
-                    "T#report.expiring-12-months"
-                  ],
-                  [
-                    "stockOnOrder",
-                    "T#report.stock-on-order"
-                  ],
-                  [
-                    "AMC12",
-                    "T#report.amc-12-months"
-                  ],
-                  [
-                    "AMC24",
-                    "T#report.amc-24-months"
-                  ]
+                  ["expiringInSixMonths", "T#report.expiring-6-months"],
+                  ["expiringInTwelveMonths", "T#report.expiring-12-months"],
+                  ["stockOnOrder", "T#report.stock-on-order"],
+                  ["AMC12", "T#report.amc-12-months"],
+                  ["AMC24", "T#report.amc-24-months"]
                 ]
               },
               "scope": "#/properties/sort",
@@ -1079,9 +973,7 @@
           "template": "template.html",
           "header": null,
           "footer": null,
-          "query": [
-            "query.graphql"
-          ],
+          "query": ["query.graphql"],
           "convert_data": "dmFyIGU9ezM3ODplPT57Y29uc3QgdD1lPT57bGV0IHI9e307cmV0dXJuIE9iamVjdC5rZXlzKGUpLmZvckVhY2goZnVuY3Rpb24obyl7IiIhPT1lW29dJiZ2b2lkIDAhPT1lW29dJiZudWxsIT09ZVtvXSYmKCJvYmplY3QiPT10eXBlb2YgZVtvXT9yW29dPXQoZVtvXSk6cltvXT1lW29dKX0pLHJ9LHI9KGUsdCk9Pih0Kz0iIikuc3BsaXQoIi4iKS5yZWR1Y2UoKGUsdCk9PmUmJmVbdF0sZSk7ZS5leHBvcnRzPXtjbGVhblVwT2JqZWN0OnQsY2xlYW5VcE5vZGVzOmU9PntsZXQgcj1bXTtyZXR1cm4gZS5mb3JFYWNoKGU9PnswIT1PYmplY3Qua2V5cyhlKS5sZW5ndGgmJnIucHVzaCh0KGUpKX0pLHJ9LGdldE5lc3RlZFZhbHVlOnIsc29ydE5vZGVzOihlLHQsbyk9Pih0JiZlLnNvcnQoKGUsbik9PntsZXQgcz1yKGUsdCk7InN0cmluZyI9PXR5cGVvZiBzJiYocz1zLnRvTG9jYWxlTG93ZXJDYXNlKCkpO2xldCBhPXIobix0KTtyZXR1cm4ic3RyaW5nIj09dHlwZW9mIGEmJihhPWEudG9Mb2NhbGVMb3dlckNhc2UoKSksbnVsbD09cyYmbnVsbD09YT8wOm51bGw9PXM/ImFzYyI9PT1vPy0xOjE6bnVsbD09YT8iYXNjIj09PW8/MTotMTpzPT09YT8wOiJhc2MiPT09bz9zPmE/MTotMTpzPGE/MTotMX0pLGUpfX19LHQ9e307ZnVuY3Rpb24gcihvKXt2YXIgbj10W29dO2lmKHZvaWQgMCE9PW4pcmV0dXJuIG4uZXhwb3J0czt2YXIgcz10W29dPXtleHBvcnRzOnt9fTtyZXR1cm4gZVtvXShzLHMuZXhwb3J0cyxyKSxzLmV4cG9ydHN9ci5kPShlLHQpPT57Zm9yKHZhciBvIGluIHQpci5vKHQsbykmJiFyLm8oZSxvKSYmT2JqZWN0LmRlZmluZVByb3BlcnR5KGUsbyx7ZW51bWVyYWJsZTohMCxnZXQ6dFtvXX0pfSxyLm89KGUsdCk9Pk9iamVjdC5wcm90b3R5cGUuaGFzT3duUHJvcGVydHkuY2FsbChlLHQpO3ZhciBvPXIoMzc4KTtmdW5jdGlvbiBuKGUpe3JldHVybiBlLmRhdGEuc3RvY2tMaW5lcy5ub2Rlcz0oKGUsdCxyKT0+e2xldCBuPSgwLG8uY2xlYW5VcE5vZGVzKShlKTtyZXR1cm4oMCxvLnNvcnROb2Rlcykobix0LHIpfSkoZS5kYXRhLnN0b2NrTGluZXMubm9kZXMsZT8uYXJndW1lbnRzPy5zb3J0Pz8iaXRlbS5uYW1lIixlPy5hcmd1bWVudHM/LmRpcj8/ImFzYyIpLGV9ZXhwb3J0e24gYXMgY29udmVydF9kYXRhfTs=",
           "convert_data_type": "BoaJs"
         },
@@ -1129,10 +1021,7 @@
                 "dir": {
                   "description": "sort by dir",
                   "format": "SortToggle",
-                  "type": [
-                    "string",
-                    "null"
-                  ]
+                  "type": ["string", "null"]
                 },
                 "itemCodeOrName": {
                   "description": "Item Code or Name",
@@ -1171,38 +1060,14 @@
               "label": "T#report.sort-by",
               "options": {
                 "show": [
-                  [
-                    "item.name",
-                    "T#report.item-name"
-                  ],
-                  [
-                    "batch",
-                    "T#label.batch"
-                  ],
-                  [
-                    "item.code",
-                    "T#label.code"
-                  ],
-                  [
-                    "expiryDate",
-                    "T#report.expiry-date"
-                  ],
-                  [
-                    "location.code",
-                    "T#label.location"
-                  ],
-                  [
-                    "item.unitName",
-                    "T#label.unit"
-                  ],
-                  [
-                    "packSize",
-                    "T#label.pack-size"
-                  ],
-                  [
-                    "totalNumberOfPacks",
-                    "T#label.num-packs-total"
-                  ]
+                  ["item.name", "T#report.item-name"],
+                  ["batch", "T#label.batch"],
+                  ["item.code", "T#label.code"],
+                  ["expiryDate", "T#report.expiry-date"],
+                  ["location.code", "T#label.location"],
+                  ["item.unitName", "T#label.unit"],
+                  ["packSize", "T#label.pack-size"],
+                  ["totalNumberOfPacks", "T#label.num-packs-total"]
                 ]
               },
               "scope": "#/properties/sort",
@@ -1227,9 +1092,7 @@
           "template": "template.html",
           "header": null,
           "footer": null,
-          "query": [
-            "encountersQuery.graphql"
-          ],
+          "query": ["encountersQuery.graphql"],
           "convert_data": "dmFyIHQ9ezQxMzp0PT57ZnVuY3Rpb24gZSh0KXtyZXR1cm4gdD43PyJMVEZVIjp0PjA/IkxBVEUiOiIifXQuZXhwb3J0cz17YXBwbHlEYXlzTGF0ZTpmdW5jdGlvbih0KXtyZXR1cm4gdC5tYXAodD0+e2NvbnN0IHI9bmV3IERhdGUodC5zdGFydERhdGV0aW1lKSxhPU1hdGguZmxvb3IoKG5ldyBEYXRlLXIpLzg2NGU1KSxuPWE+MD9hOjAsbz1lKG4pO3JldHVybnsuLi50LGRheXNMYXRlOm4sc3RhdHVzOm99fSl9LGdldFN0YXR1czplfX19LGU9e307ZnVuY3Rpb24gcihhKXt2YXIgbj1lW2FdO2lmKHZvaWQgMCE9PW4pcmV0dXJuIG4uZXhwb3J0czt2YXIgbz1lW2FdPXtleHBvcnRzOnt9fTtyZXR1cm4gdFthXShvLG8uZXhwb3J0cyxyKSxvLmV4cG9ydHN9ci5uPXQ9Pnt2YXIgZT10JiZ0Ll9fZXNNb2R1bGU/KCk9PnQuZGVmYXVsdDooKT0+dDtyZXR1cm4gci5kKGUse2E6ZX0pLGV9LHIuZD0odCxlKT0+e2Zvcih2YXIgYSBpbiBlKXIubyhlLGEpJiYhci5vKHQsYSkmJk9iamVjdC5kZWZpbmVQcm9wZXJ0eSh0LGEse2VudW1lcmFibGU6ITAsZ2V0OmVbYV19KX0sci5vPSh0LGUpPT5PYmplY3QucHJvdG90eXBlLmhhc093blByb3BlcnR5LmNhbGwodCxlKTt2YXIgYT17fTtyLmQoYSx7SDooKT0+b30pO3ZhciBuPXIoNDEzKTtmdW5jdGlvbiBvKHQpe3JldHVybiB0LmRhdGEuZW5jb3VudGVycy5ub2Rlcz0oMCxuLmFwcGx5RGF5c0xhdGUpKHQuZGF0YS5lbmNvdW50ZXJzLm5vZGVzKSx0fWNvbnN0IHM9YS5IO2V4cG9ydHtzIGFzIGNvbnZlcnRfZGF0YX07",
           "convert_data_type": "BoaJs"
         },
@@ -1281,15 +1144,10 @@
                 "startDatetime": {
                   "description": "Encounter Date",
                   "format": "date-time",
-                  "type": [
-                    "object",
-                    "null"
-                  ]
+                  "type": ["object", "null"]
                 }
               },
-              "required": [
-                "programId"
-              ]
+              "required": ["programId"]
             }
           },
           "type": "object"
@@ -1323,9 +1181,7 @@
           "template": "template.html",
           "header": null,
           "footer": null,
-          "query": [
-            "encountersQuery.graphql"
-          ],
+          "query": ["encountersQuery.graphql"],
           "convert_data": "dmFyIHQ9ezQxMzp0PT57ZnVuY3Rpb24gZSh0KXtyZXR1cm4gdD43PyJMVEZVIjp0PjA/IkxBVEUiOiIifXQuZXhwb3J0cz17YXBwbHlEYXlzTGF0ZTpmdW5jdGlvbih0KXtyZXR1cm4gdC5tYXAodD0+e2NvbnN0IHI9bmV3IERhdGUodC5zdGFydERhdGV0aW1lKSxhPU1hdGguZmxvb3IoKG5ldyBEYXRlLXIpLzg2NGU1KSxuPWE+MD9hOjAsbz1lKG4pO3JldHVybnsuLi50LGRheXNMYXRlOm4sc3RhdHVzOm99fSl9LGdldFN0YXR1czplfX19LGU9e307ZnVuY3Rpb24gcihhKXt2YXIgbj1lW2FdO2lmKHZvaWQgMCE9PW4pcmV0dXJuIG4uZXhwb3J0czt2YXIgbz1lW2FdPXtleHBvcnRzOnt9fTtyZXR1cm4gdFthXShvLG8uZXhwb3J0cyxyKSxvLmV4cG9ydHN9ci5uPXQ9Pnt2YXIgZT10JiZ0Ll9fZXNNb2R1bGU/KCk9PnQuZGVmYXVsdDooKT0+dDtyZXR1cm4gci5kKGUse2E6ZX0pLGV9LHIuZD0odCxlKT0+e2Zvcih2YXIgYSBpbiBlKXIubyhlLGEpJiYhci5vKHQsYSkmJk9iamVjdC5kZWZpbmVQcm9wZXJ0eSh0LGEse2VudW1lcmFibGU6ITAsZ2V0OmVbYV19KX0sci5vPSh0LGUpPT5PYmplY3QucHJvdG90eXBlLmhhc093blByb3BlcnR5LmNhbGwodCxlKTt2YXIgYT17fTtyLmQoYSx7SDooKT0+b30pO3ZhciBuPXIoNDEzKTtmdW5jdGlvbiBvKHQpe3JldHVybiB0LmRhdGEuZW5jb3VudGVycy5ub2Rlcz0oMCxuLmFwcGx5RGF5c0xhdGUpKHQuZGF0YS5lbmNvdW50ZXJzLm5vZGVzKSx0fWNvbnN0IHM9YS5IO2V4cG9ydHtzIGFzIGNvbnZlcnRfZGF0YX07",
           "convert_data_type": "BoaJs"
         },
@@ -1373,27 +1229,19 @@
                 "after": {
                   "description": "From date",
                   "format": "date-time",
-                  "type": [
-                    "string",
-                    "null"
-                  ]
+                  "type": ["string", "null"]
                 },
                 "before": {
                   "description": "To date",
                   "format": "date-time",
-                  "type": [
-                    "string",
-                    "null"
-                  ]
+                  "type": ["string", "null"]
                 },
                 "programId": {
                   "description": "Program ID",
                   "type": "string"
                 }
               },
-              "required": [
-                "programId"
-              ]
+              "required": ["programId"]
             }
           },
           "type": "object"
@@ -1421,6 +1269,221 @@
               },
               "scope": "#/properties/before",
               "type": "Control"
+            }
+          ],
+          "type": "VerticalLayout"
+        }
+      },
+      "excel_template_buffer": null
+    },
+    {
+      "id": "inventory_adjustments_2_14_0_false",
+      "name": "Inventory Adjustments",
+      "template": {
+        "index": {
+          "template": "template.html",
+          "header": "header.html",
+          "footer": null,
+          "query": ["query.graphql"],
+          "convert_data": "dmFyIGUsdCxuLG87KGZ1bmN0aW9uKGUpe2UuT3V0Ym91bmRTaGlwbWVudD0iT1VUQk9VTkRfU0hJUE1FTlQiLGUuSW5ib3VuZFNoaXBtZW50PSJJTkJPVU5EX1NISVBNRU5UIixlLlByZXNjcmlwdGlvbj0iUFJFU0NSSVBUSU9OIixlLkludmVudG9yeUFkZGl0aW9uPSJJTlZFTlRPUllfQURESVRJT04iLGUuSW52ZW50b3J5UmVkdWN0aW9uPSJJTlZFTlRPUllfUkVEVUNUSU9OIixlLkN1c3RvbWVyUmV0dXJuPSJDVVNUT01FUl9SRVRVUk4iLGUuU3VwcGxpZXJSZXR1cm49IlNVUFBMSUVSX1JFVFVSTiIsZS5SZXBhY2s9IlJFUEFDSyJ9KShlfHwoZT17fSkpLGZ1bmN0aW9uKGUpe2UuUE9TSVRJVkU9IlBPU0lUSVZFIixlLk5FR0FUSVZFPSJORUdBVElWRSJ9KHR8fCh0PXt9KSksZnVuY3Rpb24oZSl7ZS5GSU5BTElTRURfU1RPQ0tUQUtFPSJGSU5BTElTRURfU1RPQ0tUQUtFIixlLklOVkVOVE9SWV9BREpVU1RNRU5UPSJJTlZFTlRPUllfQURKVVNUTUVOVCJ9KG58fChuPXt9KSksZnVuY3Rpb24oZSl7ZS5JdGVtQ29kZT0iaXRlbS5jb2RlIixlLkl0ZW1OYW1lPSJpdGVtLm5hbWUiLGUuQmF0Y2g9ImJhdGNoIixlLkV4cGlyeURhdGU9ImV4cGlyeURhdGUiLGUuTG9jYXRpb25Db2RlPSJsb2NhdGlvbi5jb2RlIixlLlNuYXBzaG90TnVtYmVyT2ZQYWNrcz0ic25hcHNob3ROdW1iZXJPZlBhY2tzIixlLk51bWJlck9mUGFja3M9Im51bWJlck9mUGFja3MiLGUuUmVhc29uT3B0aW9uUmVhc29uPSJpbnZlbnRvcnlBZGp1c3RtZW50UmVhc29uLnJlYXNvbiJ9KG98fChvPXt9KSk7Y29uc3QgaT0oZSx0KT0+ZSYmdD90LnNwbGl0KCIuIikucmVkdWNlKChlLHQpPT5lJiYib2JqZWN0Ij09dHlwZW9mIGUmJnQgaW4gZT9lW3RdOm51bGwsZSk6bnVsbCxzPSh0LG4sbyxpLHMpPT57bGV0IHI7aWYobyYmaSYmcylyPXMtaTtlbHNle2NvbnN0IG89bj8/MDtyPXQ9PT1lLkludmVudG9yeUFkZGl0aW9uP286LW99cmV0dXJuIHJ9LHI9KGUsdCxuKT0+ZSYmbnVsbCE9dD9uKHQpOmUsYz0obyxjLGEpPT57aWYoIW8/Lmxlbmd0aClyZXR1cm5bXTtjb25zdCB1PSgobyxpKT0+bz8ubGVuZ3RoP28uZmlsdGVyKG89PigobyxpKT0+e2xldCBzPSEwO3JldHVybiBzPXIocyxpLml0ZW1Db2RlT3JOYW1lLGU9PigoZSx0KT0+e2NvbnN0IG49dC50b0xvd2VyQ2FzZSgpO3JldHVybiBlLml0ZW0uY29kZS50b0xvd2VyQ2FzZSgpLmluY2x1ZGVzKG4pfHxlLml0ZW0ubmFtZS50b0xvd2VyQ2FzZSgpLmluY2x1ZGVzKG4pfSkobyxlKSkscz1yKHMsaS5tYXN0ZXJMaXN0SWQsZT0+KChlLHQpPT4oZS5pdGVtPy5tYXN0ZXJMaXN0cz8/W10pLnNvbWUoZT0+ZS5pZD09PXQpKShvLGUpKSxzPXIocyxpLmxvY2F0aW9uSWQsZT0+KChlLHQpPT5lLmxvY2F0aW9uPy5pZD09PXQpKG8sZSkpLHM9cihzLGkuYWRqdXN0bWVudFR5cGUsbj0+KChuLG8pPT5vPT09dC5QT1NJVElWRT9uLmludm9pY2VUeXBlPT09ZS5JbnZlbnRvcnlBZGRpdGlvbjpvIT09dC5ORUdBVElWRXx8bi5pbnZvaWNlVHlwZT09PWUuSW52ZW50b3J5UmVkdWN0aW9uKShvLG4pKSxzPXIocyxpLnJlYXNvbk9wdGlvbklkLGU9PigoZSx0KT0+ZS5pbnZlbnRvcnlBZGp1c3RtZW50UmVhc29uPy5pZD09PXQpKG8sZSkpLHM9cihzLGkuYWRqdXN0bWVudFNvdXJjZSxlPT4oKGUsdCk9PnQ9PT1uLkZJTkFMSVNFRF9TVE9DS1RBS0U/ZS5pc0Zyb21TdG9ja3Rha2U6dCE9PW4uSU5WRU5UT1JZX0FESlVTVE1FTlR8fCFlLmlzRnJvbVN0b2NrdGFrZSkobyxlKSksdm9pZCAwIT09aS5zaG93WmVyb2VkTGluZXMmJihzPXMmJigoZSx0KT0+ISF0fHwoZS5pc0Zyb21TdG9ja3Rha2U/MCE9PWUuY291bnRlZFBhY2tzOjAhPT1lLm51bWJlck9mUGFja3MpKShvLGkuc2hvd1plcm9lZExpbmVzKSksc30pKG8saSkpOltdKSgoKGUsdCk9Pntjb25zdHtpbnZvaWNlVG9TdG9ja3Rha2U6bixzdG9ja0xpbmVUb1N0b2NrdGFrZUxpbmU6b309KGU9Pntjb25zdCB0PW5ldyBNYXAsbj1uZXcgTWFwO2Zvcihjb25zdCBvIG9mIGUpaWYobyYmKG8uaW52ZW50b3J5QWRkaXRpb25JZCYmdC5zZXQoby5pbnZlbnRvcnlBZGRpdGlvbklkLG8pLG8uaW52ZW50b3J5UmVkdWN0aW9uSWQmJnQuc2V0KG8uaW52ZW50b3J5UmVkdWN0aW9uSWQsbyksbz8ubGluZXM/Lm5vZGVzKSlmb3IoY29uc3QgZSBvZiBvLmxpbmVzLm5vZGVzKWU/LnN0b2NrTGluZT8uaWQmJm4uc2V0KGUuc3RvY2tMaW5lLmlkLGUpO3JldHVybntpbnZvaWNlVG9TdG9ja3Rha2U6dCxzdG9ja0xpbmVUb1N0b2NrdGFrZUxpbmU6bn19KSh0KSxpPVtdO2Zvcihjb25zdCB0IG9mIGUpe2lmKCF0Py5saW5lcz8ubm9kZXMpY29udGludWU7Y29uc3QgZT1uLmdldCh0LmlkKT8/bnVsbCxyPW51bGwhPT1lO2Zvcihjb25zdCBuIG9mIHQubGluZXMubm9kZXMpe2lmKCFuKWNvbnRpbnVlO2NvbnN0IGM9by5nZXQobi5zdG9ja0xpbmU/LmlkPz8iIiksYT1yJiZjP2Muc25hcHNob3ROdW1iZXJPZlBhY2tzOm51bGwsdT1yJiZjP2MuY291bnRlZE51bWJlck9mUGFja3M/PzA6bnVsbDtpLnB1c2goey4uLm4saW52b2ljZUlkOnQuaWQsaW52b2ljZVR5cGU6dC50eXBlLHZlcmlmaWVkRGF0ZXRpbWU6dC52ZXJpZmllZERhdGV0aW1lPz9udWxsLHN0b2NrdGFrZUlkOmU/LmlkPz9udWxsLGlzRnJvbVN0b2NrdGFrZTpyLHNuYXBzaG90UGFja3M6YSxjb3VudGVkUGFja3M6dSxhZGp1c3RtZW50UGFja3M6cyh0LnR5cGUsbi5udW1iZXJPZlBhY2tzLHIsYSx1KX0pfX1yZXR1cm4gaX0pKG8sYyksYSk7cmV0dXJuKChlLHQsbik9PntpZighZXx8MD09PWUubGVuZ3RofHwhdClyZXR1cm4gZTtjb25zdCBvPSJkZXNjIj09PW47cmV0dXJuIGUuc29ydCgoZSxuKT0+KChlLHQsbik9PntpZihudWxsPT1lJiZudWxsPT10KXJldHVybiAwO2lmKG51bGw9PWUpcmV0dXJuIG4/LTE6MTtpZihudWxsPT10KXJldHVybiBuPzE6LTE7aWYoIm51bWJlciI9PXR5cGVvZiBlJiYibnVtYmVyIj09dHlwZW9mIHQpcmV0dXJuIG4/dC1lOmUtdDtpZigic3RyaW5nIj09dHlwZW9mIGUmJiJzdHJpbmciPT10eXBlb2YgdCl7Y29uc3Qgbz1uZXcgRGF0ZShlKS5nZXRUaW1lKCksaT1uZXcgRGF0ZSh0KS5nZXRUaW1lKCk7aWYoIWlzTmFOKG8pJiYhaXNOYU4oaSkpcmV0dXJuIG4/aS1vOm8taTtjb25zdCBzPWUubG9jYWxlQ29tcGFyZSh0KTtyZXR1cm4gbj8tczpzfXJldHVybiAwfSkoaShlLHQpLGkobix0KSxvKSl9KSh1LGEuc29ydCxhLmRpcil9LGE9KHtkYXRhOmUsYXJndW1lbnRzOnR9KT0+e2NvbnN0IG49KGU9PmU/Lmludm9pY2VzPy5ub2Rlcz8/W10pKGUpLG89KGU9PmU/LnN0b2NrdGFrZXM/Lm5vZGVzPz9bXSkoZSk7cmV0dXJuKChlLHQsbik9Pih7ZGF0YTp7ZGF0ZTp7ZnJvbTp0LmFkanVzdG1lbnREYXRlRnJvbSx0bzp0LmFkanVzdG1lbnREYXRlVG99LGxpbmVzOm4sc3RvcmU6ZT8uc3RvcmV9fSkpKGUsdCxjKG4sbyx0KSl9O2V4cG9ydHthIGFzIGNvbnZlcnRfZGF0YX07",
+          "convert_data_type": "BoaJs"
+        },
+        "entries": {
+          "template.html": {
+            "type": "TeraTemplate",
+            "data": {
+              "output": "Html",
+              "template": "<style>\n\t{% include \"style.css\" %}</style>\n\n<div class=\"container\">\n\t<table>\n\t\t<thead>\n\t\t\t<tr class=\"heading\">\n\t\t\t\t<th>{{t(k=\"label.code\", f=\"Code\")}}</th>\n\t\t\t\t<th>{{t(k=\"report.item-name\", f=\"Item name\")}}</th>\n\t\t\t\t<th>{{t(k=\"label.batch\", f=\"Batch\")}}</th>\n\t\t\t\t<th>{{t(k=\"label.expiry\", f=\"Expiry\")}}</th>\n\t\t\t\t<th>{{t(k=\"label.location\", f=\"Location\")}}</th>\n\t\t\t\t<th>{{t(k=\"label.snapshot-num-of-packs\",f=\"Snapshot Packs\")}}</th>\n\t\t\t\t<th>{{t(k=\"label.counted-num-of-packs\",f=\"Counted Packs\")}}</th>\n\t\t\t\t<th>{{t(k=\"label.adjustments\",f=\"Adjustments\")}}</th>\n\t\t\t\t<th>{{t(k=\"label.reason\",f=\"Reason\")}}</th>\n\t\t\t</tr>\n\t\t</thead>\n\t\t<tbody>\n\t\t\t{% for line in data.lines %}\n\t\t\t\t<tr>\n\t\t\t\t\t<td>{{ line.item.code }}</td>\n\t\t\t\t\t<td>{{ line.item.name }}</td>\n\t\t\t\t\t<td>{{ line.batch | default(value='-') }}</td>\n\t\t\t\t\t<td>\n\t\t\t\t\t\t{% if line.expiryDate %}\n\t\t\t\t\t\t\t{{ line.expiryDate | date(format=\"%d/%m/%Y\") }}\n\t\t\t\t\t\t{% else %}\n\t\t\t\t\t\t\t-\n\t\t\t\t\t\t{% endif %}\n\t\t\t\t\t</td>\n\t\t\t\t\t<td>{{ line.location.code | default(value='-') }}</td>\n\t\t\t\t\t<td style=\"text-align: right\">{{ line.snapshotPacks | default(value='-') }}</td>\n\t\t\t\t\t<td style=\"text-align: right\">{{ line.countedPacks | default(value='-') }}</td>\n\t\t\t\t\t<td style=\"text-align: right\">{{ line.adjustmentPacks | default(value='-') }}</td>\n\t\t\t\t\t<td>{{ line.inventoryAdjustmentReason.reason | default(value='') }}</td>\n\t\t\t\t</tr>\n\t\t\t{% endfor %}\n\t\t</tbody>\n\t</table>\n</div>\n"
+            }
+          },
+          "query.graphql": {
+            "type": "GraphGLQuery",
+            "data": {
+              "query": "query InventoryAdjustments(\n  $storeId: String!\n  $adjustmentDateFrom: DateTime\n  $adjustmentDateTo: DateTime\n) {\n  # Query inventory adjustment invoices\n  invoices(\n    storeId: $storeId\n    filter: {\n      type: { equalAny: [INVENTORY_ADDITION, INVENTORY_REDUCTION] }\n      verifiedDatetime: {\n        afterOrEqualTo: $adjustmentDateFrom\n        beforeOrEqualTo: $adjustmentDateTo\n      }\n    }\n  ) {\n    ... on InvoiceConnector {\n      nodes {\n        id\n        invoiceNumber\n        type\n        verifiedDatetime\n        lines {\n          ... on InvoiceLineConnector {\n            nodes {\n              id\n              itemCode\n              itemName\n              batch\n              expiryDate\n              numberOfPacks\n              packSize\n              location {\n                id\n                code\n                name\n              }\n              stockLine {\n                id\n              }\n              inventoryAdjustmentReason {\n                id\n                reason\n              }\n              item {\n                id\n                code\n                name\n                unitName\n                masterLists(storeId: $storeId) {\n                  id\n                  name\n                }\n              }\n            }\n          }\n        }\n      }\n    }\n  }\n  # Query finalised stocktakes that have inventory adjustments\n  stocktakes(\n    storeId: $storeId\n    filter: {\n      status: { equalTo: FINALISED }\n      finalisedDatetime: {\n        afterOrEqualTo: $adjustmentDateFrom\n        beforeOrEqualTo: $adjustmentDateTo\n      }\n    }\n  ) {\n    ... on StocktakeConnector {\n      nodes {\n        id\n        stocktakeNumber\n        finalisedDatetime\n        inventoryAdditionId\n        inventoryReductionId\n        lines {\n          ... on StocktakeLineConnector {\n            nodes {\n              id\n              snapshotNumberOfPacks\n              countedNumberOfPacks\n              stockLine {\n                id\n              }\n            }\n          }\n        }\n      }\n    }\n  }\n  store(id: $storeId) {\n    ... on StoreNode {\n      id\n      code\n      storeName\n      logo\n      name(storeId: $storeId) {\n        address1\n        address2\n        code\n        email\n        phone\n      }\n    }\n  }\n}\n",
+              "variables": null
+            }
+          },
+          "header.html": {
+            "type": "TeraTemplate",
+            "data": {
+              "output": "Html",
+              "template": "<style>\n\t{% include \"style.css\" %}</style>\n\n<div class=\"header-container\">\n\t<div class=\"header-title\">\n\t\t{{ t(k=\"report.inventory-adjustments\", f=\"Inventory Adjustments Report\") }}\n\t</div>\n\t<div class=\"header-info\">\n\t\t<div class=\"header-info-left\">\n\t\t\t<span class=\"header-label\">{{ t(k=\"label.store\", f=\"Store\") }}:</span>\n\t\t\t<span>{{ data.store.storeName }}</span>\n\t\t</div>\n\t\t<div class=\"header-info-right\">\n\t\t\t<span class=\"header-label\">{{ t(k=\"label.timeframe\", f=\"Timeframe\") }}:</span>\n\t\t\t{% if data.date.from and data.date.to %}\n\t\t\t\t<span>{{ data.date.from | date(format=\"%d/%m/%Y\") }}\n\t\t\t\t\t-\n\t\t\t\t\t{{ data.date.to | date(format=\"%d/%m/%Y\") }}</span>\n\t\t\t{% elif data.date.from %}\n\t\t\t\t<span>{{ t(k=\"label.from\", f=\"From\") }}\n\t\t\t\t\t{{ data.date.from | date(format=\"%d/%m/%Y\") }}</span>\n\t\t\t{% elif data.date.to %}\n\t\t\t\t<span>{{ t(k=\"label.to\", f=\"To\") }}\n\t\t\t\t\t{{ data.date.to | date(format=\"%d/%m/%Y\") }}</span>\n\t\t\t{% else %}\n\t\t\t\t<span>{{ t(k=\"label.all-dates\", f=\"All dates\") }}</span>\n\t\t\t{% endif %}\n\t\t</div>\n\t</div>\n</div>\n"
+            }
+          },
+          "style.css": {
+            "type": "Resource",
+            "data": "@page {\n  margin: 0;\n  size: A4 landscape;\n}\n\n.paging {\n  width: 100%;\n}\n\n.container {\n  margin: auto;\n  padding: 10px;\n  font-size: 14px;\n  font-family: \"Helvetica Neue\", \"Helvetica\", Helvetica, Arial, sans-serif;\n  color: #000;\n}\n\n.container table {\n  width: 100%;\n}\n\n.container table td {\n  padding: 10px;\n  vertical-align: top;\n  border-top: 1px solid rgb(164, 163, 163);\n}\n\n.container table tr:last-child td {\n  border-bottom: none;\n}\n\n.container>table>thead {\n  position: -webkit-sticky;\n  position: sticky;\n  top: 0;\n  background-color: #f1f1f1;\n}\n\n.container,\nbody,\n.container>table {\n  margin-top: 0px;\n}\n\n.container table tr.heading td,\n.container table tr.heading th {\n  background: #eee;\n  border-bottom: 1px solid #ddd;\n  font-weight: bold;\n  color: #000;\n}\n\n.container table td.status span {\n  display: inline;\n  padding: 5px 10px;\n  border-radius: 4px;\n}\n\n/* Header styles */\n.header-container {\n  width: 100%;\n  padding: 10px;\n  font-family: \"Helvetica Neue\", \"Helvetica\", Helvetica, Arial, sans-serif;\n  font-size: 10pt;\n  color: #000;\n}\n\n.header-title {\n  font-size: 20pt;\n  font-weight: bold;\n  text-align: center;\n  margin-bottom: 10px;\n  color: #000;\n}\n\n.header-info {\n  display: flex;\n  justify-content: space-between;\n  padding: 5px 0;\n  border-bottom: 1px solid #ccc;\n}\n\n.header-info-left {\n  text-align: left;\n}\n\n.header-info-right {\n  text-align: right;\n}\n\n.header-label {\n  font-weight: bold;\n}"
+          }
+        }
+      },
+      "context": "REPORT",
+      "sub_context": "StockAndItems",
+      "argument_schema_id": "for_report_inventory_adjustments_2_14_0_false",
+      "comment": null,
+      "is_custom": false,
+      "version": "2.14.0",
+      "code": "inventory_adjustments",
+      "form_schema": {
+        "id": "for_report_inventory_adjustments_2_14_0_false",
+        "type": "reportArgument",
+        "json_schema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "allOf": [
+            {
+              "$ref": "#/definitions/Filters"
+            }
+          ],
+          "definitions": {
+            "Filters": {
+              "properties": {
+                "adjustmentDateFrom": {
+                  "description": "Adjustment date from",
+                  "format": "date-time",
+                  "type": ["string", "null"]
+                },
+                "adjustmentDateTo": {
+                  "description": "Adjustment date to",
+                  "format": "date-time",
+                  "type": ["string", "null"]
+                },
+                "adjustmentSource": {
+                  "description": "Source of adjustment",
+                  "enum": ["FINALISED_STOCKTAKE", "INVENTORY_ADJUSTMENT"],
+                  "type": ["string", "null"]
+                },
+                "adjustmentType": {
+                  "description": "Type of adjustment",
+                  "enum": ["POSITIVE", "NEGATIVE"],
+                  "type": ["string", "null"]
+                },
+                "dir": {
+                  "description": "Sort direction",
+                  "format": "SortToggle",
+                  "type": ["string", "null"]
+                },
+                "itemCodeOrName": {
+                  "description": "Item Code or Name",
+                  "type": ["string", "null"]
+                },
+                "locationId": {
+                  "description": "Location",
+                  "type": ["string", "null"]
+                },
+                "masterListId": {
+                  "description": "Master List",
+                  "type": ["string", "null"]
+                },
+                "reasonOptionId": {
+                  "description": "Reason Option",
+                  "type": ["string", "null"]
+                },
+                "showZeroedLines": {
+                  "default": true,
+                  "description": "Show lines where counted quantity is zero",
+                  "type": "boolean"
+                },
+                "sort": {
+                  "description": "Sort by",
+                  "enum": [
+                    "item.code",
+                    "item.name",
+                    "batch",
+                    "expiryDate",
+                    "location.code",
+                    "snapshotPacks",
+                    "countedPacks",
+                    "adjustmentPacks",
+                    "inventoryAdjustmentReason.reason"
+                  ],
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "type": "object"
+        },
+        "ui_schema": {
+          "elements": [
+            {
+              "label": "T#report.item-code-or-name",
+              "options": {
+                "useDebounce": false
+              },
+              "scope": "#/properties/itemCodeOrName",
+              "type": "Control"
+            },
+            {
+              "label": "T#label.from-date",
+              "options": {
+                "dateOnly": true,
+                "disableFuture": true,
+                "max": "#/properties/adjustmentDateTo"
+              },
+              "scope": "#/properties/adjustmentDateFrom",
+              "type": "Control"
+            },
+            {
+              "label": "T#label.to-date",
+              "options": {
+                "dateOnly": true,
+                "disableFuture": true,
+                "min": "#/properties/adjustmentDateFrom"
+              },
+              "scope": "#/properties/adjustmentDateTo",
+              "type": "Control"
+            },
+            {
+              "label": "T#label.master-list",
+              "scope": "#/properties/masterListId",
+              "type": "MasterListSearch"
+            },
+            {
+              "label": "T#label.location",
+              "scope": "#/properties/locationId",
+              "type": "LocationSearch"
+            },
+            {
+              "label": "Adjustment type",
+              "scope": "#/properties/adjustmentType",
+              "type": "Control"
+            },
+            {
+              "label": "Adjustment source",
+              "scope": "#/properties/adjustmentSource",
+              "type": "Control"
+            },
+            {
+              "label": "T#label.reason",
+              "scope": "#/properties/reasonOptionId",
+              "type": "ReasonOptionSearch"
+            },
+            {
+              "label": "Show lines where counted quantity is zero",
+              "scope": "#/properties/showZeroedLines",
+              "type": "Control"
+            },
+            {
+              "label": "T#report.sort-by",
+              "options": {
+                "show": [
+                  ["item.code", "T#label.code"],
+                  ["item.name", "T#report.item-name"],
+                  ["batch", "T#label.batch"],
+                  ["expiryDate", "T#label.expiry-date"],
+                  ["location.code", "T#label.location"],
+                  ["snapshotPacks", "T#report.snapshot-number-of-packs"],
+                  ["countedPacks", "T#report.counted-number-of-packs"],
+                  ["adjustmentPacks", "T#label.adjustments"],
+                  ["inventoryAdjustmentReason.reason", "T#label.reason"]
+                ]
+              },
+              "scope": "#/properties/sort",
+              "type": "Control"
+            },
+            {
+              "label": "T#report.sort-direction",
+              "scope": "#/properties/dir",
+              "type": "SortToggle"
             }
           ],
           "type": "VerticalLayout"
