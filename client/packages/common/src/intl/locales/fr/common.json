@@ -2561,5 +2561,9 @@
   "report.available-eop": "Stock disponible (fin de période)",
   "report.days-out-of-stock": "Nombre de Jours de rupture",
   "report.deliveries": "Livraisons en cours",
-  "report.quantity-to-order": "Commande (conditionnements)"
+  "report.quantity-to-order": "Commande (conditionnements)",
+  "report.opening-stock-clients": "Stock d'ouverture des clients",
+  "report.available-after-stocktake": "Stock disponible (après inventaire mensuel)",
+  "report.amd": "AMD",
+  "report.consolidated-amc-clients": "CMM consolidée des clients",
 }
