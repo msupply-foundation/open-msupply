@@ -5,6 +5,7 @@ import {
   useFormatNumber,
   useDebounceCallback,
   InputLabel,
+  usePreferences,
 } from '@openmsupply-client/common';
 
 import { AllocateInType, useAllocationContext } from '../../StockOut';
@@ -12,6 +13,7 @@ import { AllocateInType, useAllocationContext } from '../../StockOut';
 export const AutoAllocatePrescribedQuantityField = () => {
   const t = useTranslation();
   const { format } = useFormatNumber();
+  const { expiredStockIssueThreshold } = usePreferences();
 
   const { autoAllocate, prescribedQuantity, setPrescribedQuantity } =
     useAllocationContext(state => ({
@@ -31,7 +33,7 @@ export const AutoAllocatePrescribedQuantityField = () => {
   // and https://github.com/msupply-foundation/open-msupply/issues/3532
   const debouncedAllocate = useDebounceCallback(
     quantity => {
-      autoAllocate(quantity, format, t, true);
+      autoAllocate(quantity, format, t, expiredStockIssueThreshold, true);
     },
     [],
     500
