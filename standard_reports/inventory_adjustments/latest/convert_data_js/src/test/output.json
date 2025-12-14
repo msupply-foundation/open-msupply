@@ -1,0 +1,82 @@
+{
+  "data": {
+    "date": {
+      "from": "2024-01-01T00:00:00Z",
+      "to": "2024-12-31T23:59:59Z"
+    },
+    "lines": [
+      {
+        "id": "line-2",
+        "itemCode": "DEF456",
+        "itemName": "Ibuprofen 200mg",
+        "batch": "BATCH002",
+        "expiryDate": "2026-06-30",
+        "numberOfPacks": 20,
+        "packSize": 20,
+        "location": { "id": "loc-2", "code": "B2", "name": "Shelf B2" },
+        "stockLine": { "id": "stock-line-2" },
+        "inventoryAdjustmentReason": { "id": "reason-2", "reason": "Damaged" },
+        "item": {
+          "id": "item-2",
+          "code": "DEF456",
+          "name": "Ibuprofen 200mg",
+          "unitName": "Tablet",
+          "masterLists": []
+        },
+        "invoiceId": "invoice-2",
+        "invoiceNumber": 102,
+        "invoiceType": "INVENTORY_REDUCTION",
+        "verifiedDatetime": "2024-06-16T14:00:00Z",
+        "stocktakeId": null,
+        "stocktakeNumber": null,
+        "adjustmentPacks": "-20",
+        "snapshotPacks": "-",
+        "isFromStocktake": false
+      },
+      {
+        "id": "line-1",
+        "itemCode": "ABC123",
+        "itemName": "Paracetamol 500mg",
+        "batch": "BATCH001",
+        "expiryDate": "2025-12-31",
+        "numberOfPacks": 50,
+        "packSize": 10,
+        "location": { "id": "loc-1", "code": "A1", "name": "Shelf A1" },
+        "stockLine": { "id": "stock-line-1" },
+        "inventoryAdjustmentReason": {
+          "id": "reason-1",
+          "reason": "Stock count"
+        },
+        "item": {
+          "id": "item-1",
+          "code": "ABC123",
+          "name": "Paracetamol 500mg",
+          "unitName": "Tablet",
+          "masterLists": [{ "id": "ml-1", "name": "Essential Medicines" }]
+        },
+        "invoiceId": "invoice-1",
+        "invoiceNumber": 101,
+        "invoiceType": "INVENTORY_ADDITION",
+        "verifiedDatetime": "2024-06-15T10:00:00Z",
+        "stocktakeId": "stocktake-1",
+        "stocktakeNumber": 1,
+        "adjustmentPacks": "+50",
+        "snapshotPacks": "100",
+        "isFromStocktake": true
+      }
+    ],
+    "store": {
+      "id": "store-1",
+      "code": "STORE1",
+      "storeName": "Central Pharmacy",
+      "logo": null,
+      "name": {
+        "address1": "123 Main St",
+        "address2": null,
+        "code": "STORE1",
+        "email": "pharmacy@example.com",
+        "phone": "555-1234"
+      }
+    }
+  }
+}

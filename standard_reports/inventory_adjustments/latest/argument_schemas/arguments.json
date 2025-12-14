@@ -1,0 +1,75 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "definitions": {
+    "Filters": {
+      "properties": {
+        "itemCodeOrName": {
+          "description": "Item Code or Name",
+          "type": ["string", "null"]
+        },
+        "adjustmentDateFrom": {
+          "description": "Adjustment date from",
+          "format": "date-time",
+          "type": ["string", "null"]
+        },
+        "adjustmentDateTo": {
+          "description": "Adjustment date to",
+          "format": "date-time",
+          "type": ["string", "null"]
+        },
+        "masterListId": {
+          "description": "Master List",
+          "type": ["string", "null"]
+        },
+        "locationId": {
+          "description": "Location",
+          "type": ["string", "null"]
+        },
+        "adjustmentType": {
+          "description": "Type of adjustment",
+          "type": ["string", "null"],
+          "enum": ["POSITIVE", "NEGATIVE"]
+        },
+        "adjustmentSource": {
+          "description": "Source of adjustment",
+          "type": ["string", "null"],
+          "enum": ["FINALISED_STOCKTAKE", "INVENTORY_ADJUSTMENT"]
+        },
+        "reasonOptionId": {
+          "description": "Reason Option",
+          "type": ["string", "null"]
+        },
+        "showZeroedLines": {
+          "description": "Show lines where counted quantity is zero",
+          "type": "boolean",
+          "default": true
+        },
+        "sort": {
+          "description": "Sort by",
+          "type": "string",
+          "enum": [
+            "item.code",
+            "item.name",
+            "batch",
+            "expiryDate",
+            "location.code",
+            "snapshotPacks",
+            "countedPacks",
+            "inventoryAdjustmentReason.reason"
+          ]
+        },
+        "dir": {
+          "description": "Sort direction",
+          "type": ["string", "null"],
+          "format": "SortToggle"
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "$ref": "#/definitions/Filters"
+    }
+  ]
+}
