@@ -17,7 +17,27 @@ pub struct ItemStatsLoaderInputPayload {
     pub period_end: Option<NaiveDate>,
 }
 
-pub type ItemStatsLoaderInput = IdPair<ItemStatsLoaderInputPayload>;
+impl Eq for ItemStatsLoaderInputPayload {}
+
+impl std::hash::Hash for ItemStatsLoaderInputPayload {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.amc_lookback_months.map(|f| f.to_bits()).hash(state);
+        self.period_end.hash(state);
+    }
+}
+
+#[derive(Clone, PartialEq, Eq)]
+// Newtype wrapper to provide custom Hash/Eq that includes payload
+pub struct ItemStatsLoaderInput(IdPair<ItemStatsLoaderInputPayload>);
+
+// Include payload in hash to differentiate from IdPair's hash
+impl std::hash::Hash for ItemStatsLoaderInput {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.0.primary_id.hash(state);
+        self.0.secondary_id.hash(state);
+        self.0.payload.hash(state);
+    }
+}
 
 impl ItemStatsLoaderInput {
     pub fn new(
@@ -26,14 +46,14 @@ impl ItemStatsLoaderInput {
         amc_lookback_months: Option<f64>,
         period_end: Option<chrono::NaiveDate>,
     ) -> Self {
-        ItemStatsLoaderInput {
+        ItemStatsLoaderInput(IdPair {
             primary_id: store_id.to_string(),
             secondary_id: item_id.to_string(),
             payload: ItemStatsLoaderInputPayload {
                 amc_lookback_months,
                 period_end,
             },
-        }
+        })
     }
 }
 
@@ -47,33 +67,45 @@ impl Loader<ItemStatsLoaderInput> for ItemsStatsForItemLoader {
     ) -> Result<HashMap<ItemStatsLoaderInput, Self::Value>, Self::Error> {
         let service_context = self.service_provider.basic_context()?;
 
-        let (store_id, payload) = if let Some(loader_input) = loader_inputs.first() {
-            (
-                loader_input.primary_id.clone(),
-                loader_input.payload.clone(),
-            )
-        } else {
-            return Ok(HashMap::new());
+        // Validate all same store
+        let store_id = match loader_inputs.first() {
+            Some(input) => &input.0.primary_id,
+            None => return Ok(HashMap::new()),
         };
-
-        let item_ids = IdPair::get_all_secondary_ids(loader_inputs);
-
-        let item_stats = self
-            .service_provider
-            .item_stats_service
-            .get_item_stats(
-                &service_context,
-                &store_id,
-                payload.amc_lookback_months,
-                item_ids,
-                payload.period_end,
+        if loader_inputs.iter().any(|i| &i.0.primary_id != store_id) {
+            return Err(StandardGraphqlError::BadUserInput(
+                "Cannot batch item stats across multiple stores".to_string(),
             )
-            .map_err(|e| StandardGraphqlError::from_error(&e))?;
+            .into());
+        }
+        let store_id = store_id.clone();
 
-        Ok(item_stats
-            .into_iter()
-            .map(|item_stat| {
-                (
+        let mut map = HashMap::<ItemStatsLoaderInputPayload, Vec<String>>::new();
+
+        // Group by payload -> Vec<item_id>
+        for input in loader_inputs {
+            map.entry(input.0.payload.clone())
+                .or_default()
+                .push(input.0.secondary_id.clone());
+        }
+
+        let mut out = HashMap::<ItemStatsLoaderInput, Self::Value>::new();
+
+        for (payload, item_ids) in map {
+            let item_stats = self
+                .service_provider
+                .item_stats_service
+                .get_item_stats(
+                    &service_context,
+                    &store_id,
+                    payload.amc_lookback_months,
+                    item_ids,
+                    payload.period_end,
+                )
+                .map_err(|e| StandardGraphqlError::from_error(&e))?;
+
+            for item_stat in item_stats {
+                out.insert(
                     ItemStatsLoaderInput::new(
                         &store_id,
                         &item_stat.item_id,
@@ -81,8 +113,9 @@ impl Loader<ItemStatsLoaderInput> for ItemsStatsForItemLoader {
                         payload.period_end,
                     ),
                     item_stat,
-                )
-            })
-            .collect())
+                );
+            }
+        }
+        Ok(out)
     }
 }
