@@ -66,10 +66,12 @@ create_tag_for_branch() {
 RC_BRANCHES=$(git branch -r | grep -E 'v[0-9.]+-(R|r)(C|c)' | sed 's/.*origin\///')
 DEV_BRANCHES=$(git branch -r | grep -E 'v[0-9.]+-(dev|develop)$' | sed 's/.*origin\///')
 
+create_tag_for_branch "$1"
+
 # Process all RC, develop branches, and the literal 'develop'
-for BRANCH in $RC_BRANCHES $DEV_BRANCHES 'develop'; do
-    create_tag_for_branch "$BRANCH"
-done
+# for BRANCH in $RC_BRANCHES $DEV_BRANCHES 'develop'; do
+#     create_tag_for_branch "$BRANCH"
+# done
 
 # Output results for GitHub Actions to capture
 echo "CREATED_TAGS=${CREATED_TAGS[*]}" >> $GITHUB_OUTPUT
