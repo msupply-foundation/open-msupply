@@ -127,21 +127,6 @@ export const getNextInboundStatus = (
   return nextStatus ?? null;
 };
 
-export const getPreviousStatus = (
-  currentStatus: InvoiceNodeStatus,
-  validStatuses: InvoiceNodeStatus[],
-  sequence: InvoiceNodeStatus[]
-): InvoiceNodeStatus => {
-  const currentIndex = sequence.findIndex(status => status === currentStatus);
-
-  const previousValidStatus = sequence
-    .slice(0, currentIndex)
-    .reverse()
-    .find(status => validStatuses.includes(status));
-
-  return previousValidStatus ?? InvoiceNodeStatus.New;
-};
-
 export const getNextCustomerReturnStatus = (
   currentStatus: InvoiceNodeStatus
 ): InvoiceNodeStatus | null => {
