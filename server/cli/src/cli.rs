@@ -1,6 +1,6 @@
 use anyhow::anyhow;
 use async_graphql::EmptySubscription;
-use chrono::Utc;
+use chrono::{NaiveDate, NaiveDateTime, Utc};
 use clap::{ArgAction, Parser};
 use graphql::{Mutations, OperationalSchema, Queries};
 use log::info;
@@ -113,6 +113,16 @@ enum Action {
         /// Enable sync after refresh, by default the sync is disabled after refreshing
         #[clap(short, long, action = ArgAction::SetTrue)]
         enable_sync: bool,
+        /// The reference date used to calculate how many days to adjust dates by. This is calculated as `reference_date - max_date_in_system`.
+        /// Typically we assume we're moving dates forward, e.g. max date is 30 days ago, reference date is today (default), so we want to shift all dates forward 30 days.
+        /// We can also use this to shift dates backwards (e.g. spoofing historic data). e.g. Max date is today; reference date is 30 days ago: shifts all dates back 30 days.
+        #[clap(short, long, default_value_t = Utc::now().date_naive())]
+        reference_date: NaiveDate,
+        /// Store ids as comma separated values. Only shift dates for the given stores.
+        /// Note shifting will be done relative the max date in the specified stores, rather than the max date in the database.
+        /// i.e. refreshing dates of stores A and B in one execution may yield a different result than refreshing dates of A then B in separate executions.
+        #[clap(short, long, num_args = 0.., value_delimiter=',')]
+        store_ids: Option<Vec<String>>,
     },
 
     SignPlugin {
@@ -248,7 +258,7 @@ async fn initialise_from_central(
     settings: Settings,
     users: &str,
 ) -> anyhow::Result<(Arc<ServiceProvider>, ServiceContext)> {
-    info!("Reseting database");
+    info!("Resetting database");
     test_db::setup(&settings.database).await;
     info!("Finished database reset");
 
@@ -446,7 +456,7 @@ async fn main() -> anyhow::Result<()> {
             if refresh {
                 info!("Refreshing dates");
                 let result = RefreshDatesRepository::new(&ctx.connection)
-                    .refresh_dates(Utc::now().naive_utc())?;
+                    .refresh_dates(Utc::now().naive_utc(), None)?;
                 info!("Refresh data result: {:#?}", result);
             }
 
@@ -472,13 +482,19 @@ async fn main() -> anyhow::Result<()> {
                 fs::read_to_string(users_file)?
             );
         }
-        Action::RefreshDates { enable_sync } => {
+        Action::RefreshDates {
+            enable_sync,
+            reference_date,
+            store_ids,
+        } => {
             let connection_manager = get_storage_connection_manager(&settings.database);
             let connection = connection_manager.connection()?;
 
             info!("Refreshing dates");
-            let result =
-                RefreshDatesRepository::new(&connection).refresh_dates(Utc::now().naive_utc())?;
+            let result = RefreshDatesRepository::new(&connection).refresh_dates(
+                NaiveDateTime::new(reference_date, Utc::now().time()),
+                store_ids,
+            )?;
 
             let service_provider = Arc::new(ServiceProvider::new(connection_manager.clone()));
             let ctx = service_provider.basic_context()?;

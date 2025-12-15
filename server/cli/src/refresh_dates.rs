@@ -199,8 +199,9 @@ impl<'a> RefreshDatesRepository<'a> {
     pub fn refresh_dates(
         &self,
         reference_date: NaiveDateTime,
+        store_ids: Option<Vec<String>>,
     ) -> Result<Option<(NaiveDateTime, u32)>, RepositoryError> {
-        let all_date_values = self.get_all_date_values()?;
+        let all_date_values = self.get_all_date_values(store_ids)?;
         let (updated_values, max_timestamp, days_adjustment) =
             match self.get_new_date_values(reference_date, all_date_values) {
                 Some(result) => result,
@@ -219,17 +220,7 @@ impl<'a> RefreshDatesRepository<'a> {
     ) -> Option<(AllDateValues, NaiveDateTime, u32)> {
         let max_record = all_date_values.timestamps.iter().max_by_key(|row| row.0.dt);
         let max_timestamp = max_record.map(|row| row.0.dt).unwrap_or(reference_date);
-
-        let days_difference = (reference_date - max_timestamp).num_days() - 1;
-
-        if days_difference < 0 {
-            println!(
-                "Reference date {} - 1 day is lower than the max date {} for record: {:#?}",
-                reference_date, max_timestamp, max_record
-            );
-            return None;
-        }
-
+        let days_difference = (reference_date - max_timestamp).num_days();
         let adjustment = Duration::days(days_difference);
 
         for timestamp in all_date_values.timestamps.iter_mut() {
@@ -243,13 +234,32 @@ impl<'a> RefreshDatesRepository<'a> {
         Some((all_date_values, max_timestamp, days_difference as u32))
     }
 
-    fn get_all_date_values(&self) -> Result<AllDateValues, RepositoryError> {
+    fn get_all_date_values(
+        &self,
+        store_ids: Option<Vec<String>>,
+    ) -> Result<AllDateValues, RepositoryError> {
+        let store_ids = if let Some(ids) = store_ids {
+            if !ids.is_empty() {
+                let ids = ids
+                    .iter()
+                    .map(|s| "'".to_string() + s + "'")
+                    .collect::<Vec<String>>()
+                    .join(",");
+                Some("(".to_string() + &ids + ")")
+            } else {
+                None
+            }
+        } else {
+            None
+        };
+
         let mut timestamps = Vec::new();
         for table_and_field_name in get_timestamp_fields() {
             for row in self
                 .get_timestamps(
                     table_and_field_name.table_name,
                     table_and_field_name.field_name,
+                    store_ids.clone(),
                 )?
                 .into_iter()
             {
@@ -263,6 +273,7 @@ impl<'a> RefreshDatesRepository<'a> {
                 .get_dates(
                     table_and_field_name.table_name,
                     table_and_field_name.field_name,
+                    store_ids.clone(),
                 )?
                 .into_iter()
             {
@@ -277,14 +288,17 @@ impl<'a> RefreshDatesRepository<'a> {
         &self,
         table_name: &str,
         field_name: &str,
+        store_ids: Option<String>,
     ) -> Result<Vec<IdAndTimestamp>, RepositoryError> {
         // the program_event table is using `9999-09-09 09:09:09` as a max timestamp value
         // we don't want to update this datetime value
-        let query = format!(
-            "select id, {} as dt from {} where {0} is not null and {0} <> '9999-09-09 09:09:09'",
-            field_name, table_name
-        );
-
+        let query = if let Some(store_ids) = store_ids {
+            format!(
+            "select id, {field_name} as dt from {table_name} t join changelog cl on cl.record_id = t.id where cl.store_id in {store_ids} and {field_name} is not null and {field_name} <> '9999-09-09 09:09:09'")
+        } else {
+            format!(
+            "select id, {field_name} as dt from {table_name} where {field_name} is not null and {field_name} <> '9999-09-09 09:09:09'")
+        };
         Ok(sql_query(query).load::<IdAndTimestamp>(self.connection.lock().connection())?)
     }
 
@@ -318,12 +332,13 @@ impl<'a> RefreshDatesRepository<'a> {
         &self,
         table_name: &str,
         field_name: &str,
+        store_ids: Option<String>,
     ) -> Result<Vec<IdAndDate>, RepositoryError> {
-        let query = format!(
-            "select id, {} as d from {} where {0} is not null",
-            field_name, table_name
-        );
-
+        let query = if let Some(store_ids) = store_ids {
+            format!("select id, {field_name} as d from {table_name} t join changelog cl on cl.record_id = t.id where cl.store_id in {store_ids} and {field_name} is not null")
+        } else {
+            format!("select id, {field_name} as d from {table_name} where {field_name} is not null")
+        };
         Ok(sql_query(query).load::<IdAndDate>(self.connection.lock().connection())?)
     }
 
@@ -468,7 +483,9 @@ mod tests {
 
         let repo = RefreshDatesRepository::new(&connection);
         // Test select timestamp
-        let mut result = repo.get_timestamps("invoice", "created_datetime").unwrap();
+        let mut result = repo
+            .get_timestamps("invoice", "created_datetime", None)
+            .unwrap();
         result.sort_by(|a, b| a.id.cmp(&b.id));
 
         assert_eq!(
@@ -491,7 +508,9 @@ mod tests {
             ]
         );
 
-        let mut result = repo.get_timestamps("invoice", "shipped_datetime").unwrap();
+        let mut result = repo
+            .get_timestamps("invoice", "shipped_datetime", None)
+            .unwrap();
         result.sort_by(|a, b| a.id.cmp(&b.id));
 
         assert_eq!(
@@ -507,7 +526,7 @@ mod tests {
 
         // Test select date
 
-        let mut result = repo.get_dates("stock_line", "expiry_date").unwrap();
+        let mut result = repo.get_dates("stock_line", "expiry_date", None).unwrap();
         result.sort_by(|a, b| a.id.cmp(&b.id));
 
         assert_eq!(
@@ -528,7 +547,7 @@ mod tests {
                     .unwrap()
                     .and_hms_opt(00, 00, 00)
                     .unwrap(),
-                repo.get_all_date_values().unwrap(),
+                repo.get_all_date_values(None).unwrap(),
             )
             .unwrap()
             .0;
@@ -644,6 +663,7 @@ mod tests {
                 .unwrap()
                 .and_hms_opt(00, 00, 00)
                 .unwrap(),
+            None,
         )
         .unwrap();
 
@@ -704,8 +724,8 @@ mod tests {
     }
 
     // Testing schema date and timestamp fields against get_timestamp_fields and get_date_fields
-    #[cfg(feature = "postgres")]
     #[actix_rt::test]
+    #[cfg(feature = "postgres")]
     async fn all_fields_are_present() {
         let (_, connection, _, _) = repository::test_db::setup_all(
             "all_fields_are_present_timestamps",
