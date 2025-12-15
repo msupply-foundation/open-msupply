@@ -77,8 +77,6 @@ const AssetListComponent: FC = () => {
     query: { data, isError, isLoading },
   } = useAssetList(queryParams);
 
-  console.log('types', mapIdNameToOptions(types));
-
   const columns = useMemo(
     (): ColumnDef<AssetCatalogueItemFragment>[] => [
       {
