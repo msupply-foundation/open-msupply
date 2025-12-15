@@ -44,6 +44,8 @@ pub mod number_of_months_to_check_for_consumption_when_calculating_out_of_stock_
 pub use number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products::*;
 pub mod number_of_months_threshold_to_show_low_stock_alerts_for_products;
 pub use number_of_months_threshold_to_show_low_stock_alerts_for_products::*;
+pub mod number_of_months_threshold_to_show_over_stock_alerts_for_products;
+pub use number_of_months_threshold_to_show_over_stock_alerts_for_products::*;
 pub mod first_threshold_for_expiring_items;
 pub use first_threshold_for_expiring_items::*;
 pub mod second_threshold_for_expiring_items;
@@ -97,6 +99,8 @@ pub struct PreferenceProvider {
         NumberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts,
     pub number_of_months_threshold_to_show_low_stock_alerts_for_products:
         NumberOfMonthsThresholdToShowLowStockAlertsForProducts,
+    pub number_of_months_threshold_to_show_over_stock_alerts_for_products:
+        NumberOfMonthsThresholdToShowOverStockAlertsForProducts,
     pub first_threshold_for_expiring_items: FirstThresholdForExpiringItems,
     pub second_threshold_for_expiring_items: SecondThresholdForExpiringItems,
     pub warn_when_missing_recent_stocktake: WarnWhenMissingRecentStocktake,
@@ -139,6 +143,8 @@ pub fn get_preference_provider() -> PreferenceProvider {
             NumberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts,
         number_of_months_threshold_to_show_low_stock_alerts_for_products:
             NumberOfMonthsThresholdToShowLowStockAlertsForProducts,
+        number_of_months_threshold_to_show_over_stock_alerts_for_products:
+            NumberOfMonthsThresholdToShowOverStockAlertsForProducts,
         first_threshold_for_expiring_items: FirstThresholdForExpiringItems,
         second_threshold_for_expiring_items: SecondThresholdForExpiringItems,
         store_custom_colour: StoreCustomColour,

@@ -21,6 +21,7 @@ export const StockLevelsSummary = () => {
   const {
     numberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts:
       outOfStockProducts,
+    numberOfMonthsThresholdToShowOverStockAlertsForProducts: overStockAlert,
     numberOfMonthsThresholdToShowLowStockAlertsForProducts: lowStockAlert,
   } = usePreferences();
 
@@ -34,7 +35,7 @@ export const StockLevelsSummary = () => {
   useEffect(() => {
     queryClient.invalidateQueries(dashboardApi.keys.items());
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [outOfStockProducts, lowStockAlert]);
+  }, [outOfStockProducts, lowStockAlert, overStockAlert]);
 
   return (
     <StatsPanel
@@ -76,6 +77,24 @@ export const StockLevelsSummary = () => {
             })
             .build(),
         },
+        ...(overStockAlert
+          ? [
+              {
+                label: t('label.overstocked-products', {
+                  num: overStockAlert,
+                }),
+                value: formatNumber.round(
+                  itemCountsData?.productsOverstocked || 0
+                ),
+                link: RouteBuilder.create(AppRoute.Catalogue)
+                  .addPart(AppRoute.Items)
+                  .addQuery({
+                    minMonthsOfStock: overStockAlert,
+                  })
+                  .build(),
+              },
+            ]
+          : []),
         {
           label: t('label.more-than-six-months-stock-items', {
             count: Math.round(itemCountsData?.moreThanSixMonthsStock || 0),

@@ -159,6 +159,16 @@ impl PreferencesNode {
         )
     }
 
+    pub async fn number_of_months_threshold_to_show_over_stock_alerts_for_products(
+        &self,
+    ) -> Result<i32> {
+        self.load_preference(
+            &self
+                .preferences
+                .number_of_months_threshold_to_show_over_stock_alerts_for_products,
+        )
+    }
+
     pub async fn first_threshold_for_expiring_items(&self) -> Result<i32> {
         self.load_preference(&self.preferences.first_threshold_for_expiring_items)
     }
@@ -264,6 +274,7 @@ pub enum PreferenceKey {
     SelectDestinationStoreForAnInternalOrder,
     NumberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts,
     NumberOfMonthsThresholdToShowLowStockAlertsForProducts,
+    NumberOfMonthsThresholdToShowOverStockAlertsForProducts,
     FirstThresholdForExpiringItems,
     SecondThresholdForExpiringItems,
     SkipIntermediateStatusesInOutbound,

@@ -14,7 +14,7 @@ import { PopoverOrigin } from '@mui/material';
 
 export interface SplitButtonOption<T> {
   label: string;
-  value?: T;
+  value: T;
   isDisabled?: boolean;
   Icon?: ButtonWithIconProps['Icon'];
 }
