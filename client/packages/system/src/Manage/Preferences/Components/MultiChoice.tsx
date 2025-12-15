@@ -9,6 +9,7 @@ import {
   LocaleKey,
   PreferenceKey,
   TypedTFunction,
+  groupBy,
 } from '@openmsupply-client/common';
 import { getInvoiceStatusTranslator } from '@openmsupply-client/invoices';
 
@@ -39,15 +40,7 @@ export const MultiChoice = <T extends string>({
     onChange(newValue);
   };
 
-  const groupedOptions = options.reduce(
-    (i, option) => {
-      const group = option.group || '';
-      if (!i[group]) i[group] = [];
-      i[group].push(option);
-      return i;
-    },
-    {} as Record<string, MultiChoice<T>[]>
-  );
+  const groupedOptions = groupBy(options, option => option.group || '');
 
   return (
     <Box display="grid" gridTemplateColumns="1fr 1fr" width="100%">
