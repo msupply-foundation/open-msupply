@@ -10,16 +10,20 @@ export const locationsToCsv = (
   t: TypedTFunction<LocaleKey>
 ) => {
   const fields: string[] = [
-    'id',
     t('label.code'),
     t('label.name'),
+    t('label.location-type'),
+    t('label.volume'),
+    t('label.volume-used'),
     t('label.on-hold'),
   ];
 
   const data = invoices.map(node => [
-    node.id,
     node.code,
     node.name,
+    node.locationType?.name,
+    node.volume,
+    node.volumeUsed,
     node.onHold,
   ]);
   return Formatter.csv({ fields, data });
@@ -51,7 +55,6 @@ export const stockLinesToCsv = (
   manageVvmStatusForStock: boolean
 ) => {
   const fields: string[] = [
-    'id',
     t('label.code'),
     t('label.name'),
     t('label.batch'),
@@ -62,11 +65,11 @@ export const stockLinesToCsv = (
     t('label.pack-size'),
     t('label.num-packs'),
     t('label.available-in-packs'),
+    t('label.pack-cost-price'),
     t('label.supplier'),
   ];
 
   const data = stockLines.map(node => [
-    node.id,
     node.item.code,
     node.item.name,
     node.batch,
@@ -77,6 +80,7 @@ export const stockLinesToCsv = (
     node.packSize,
     node.totalNumberOfPacks,
     node.availableNumberOfPacks,
+    node.costPricePerPack,
     node.supplierName,
   ]);
   return Formatter.csv({ fields, data });

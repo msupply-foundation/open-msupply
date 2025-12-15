@@ -4758,6 +4758,11 @@ export type InvoiceSortInput = {
   key: InvoiceSortFieldInput;
 };
 
+export type InvoiceStatusOptionsInput = {
+  storeId: Scalars['String']['input'];
+  value: Array<InvoiceNodeStatus>;
+};
+
 export type InvoicesResponse = InvoiceConnector;
 
 export type ItemCannotBeOrdered = PurchaseOrderLineError & {
@@ -4792,6 +4797,7 @@ export type ItemCountsResponse = {
   noStock: Scalars['Int']['output'];
   outOfStockProducts: Scalars['Int']['output'];
   productsAtRiskOfBeingOutOfStock: Scalars['Int']['output'];
+  productsOverstocked: Scalars['Int']['output'];
   total: Scalars['Int']['output'];
 };
 
@@ -6865,9 +6871,12 @@ export enum PreferenceKey {
   FirstThresholdForExpiringItems = 'firstThresholdForExpiringItems',
   GenderOptions = 'genderOptions',
   InboundShipmentAutoVerify = 'inboundShipmentAutoVerify',
+  InvoiceStatusOptions = 'invoiceStatusOptions',
+  ItemMarginOverridesSupplierMargin = 'itemMarginOverridesSupplierMargin',
   ManageVaccinesInDoses = 'manageVaccinesInDoses',
   ManageVvmStatusForStock = 'manageVvmStatusForStock',
   NumberOfMonthsThresholdToShowLowStockAlertsForProducts = 'numberOfMonthsThresholdToShowLowStockAlertsForProducts',
+  NumberOfMonthsThresholdToShowOverStockAlertsForProducts = 'numberOfMonthsThresholdToShowOverStockAlertsForProducts',
   NumberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts = 'numberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts',
   OrderInPacks = 'orderInPacks',
   PreventTransfersMonthsBeforeInitialisation = 'preventTransfersMonthsBeforeInitialisation',
@@ -6925,9 +6934,12 @@ export type PreferencesNode = {
   firstThresholdForExpiringItems: Scalars['Int']['output'];
   genderOptions: Array<GenderTypeNode>;
   inboundShipmentAutoVerify: Scalars['Boolean']['output'];
+  invoiceStatusOptions: Array<InvoiceNodeStatus>;
+  itemMarginOverridesSupplierMargin: Scalars['Boolean']['output'];
   manageVaccinesInDoses: Scalars['Boolean']['output'];
   manageVvmStatusForStock: Scalars['Boolean']['output'];
   numberOfMonthsThresholdToShowLowStockAlertsForProducts: Scalars['Int']['output'];
+  numberOfMonthsThresholdToShowOverStockAlertsForProducts: Scalars['Int']['output'];
   numberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts: Scalars['Int']['output'];
   orderInPacks: Scalars['Boolean']['output'];
   preventTransfersMonthsBeforeInitialisation: Scalars['Int']['output'];
@@ -6936,7 +6948,6 @@ export type PreferencesNode = {
   selectDestinationStoreForAnInternalOrder: Scalars['Boolean']['output'];
   showContactTracing: Scalars['Boolean']['output'];
   showIndicativePriceInRequisitions: Scalars['Boolean']['output'];
-  skipIntermediateStatusesInOutbound: Scalars['Boolean']['output'];
   sortByVvmStatusThenExpiry: Scalars['Boolean']['output'];
   storeCustomColour: Scalars['String']['output'];
   syncRecordsDisplayThreshold: Scalars['Int']['output'];
@@ -7506,6 +7517,7 @@ export type Queries = {
   clinicians: CliniciansResponse;
   contactTraces: ContactTraceResponse;
   contacts: ContactsResponse;
+  csvToExcel: PrintReportResponse;
   currencies: CurrenciesResponse;
   databaseSettings: DatabaseSettingsNode;
   demographicIndicators: DemographicIndicatorsResponse;
@@ -7554,6 +7566,7 @@ export type Queries = {
   goodsReceivedLine: GoodsReceivedLineResponse;
   goodsReceivedLines: GoodsReceivedLinesResponse;
   goodsReceivedList: GoodsReceivedListResponse;
+  hasCustomerProgramRequisitionSettings: Scalars['Boolean']['output'];
   /** Query for "historical_stock_line" entries */
   historicalStockLines: StockLinesResponse;
   /** Available without authorisation in operational and initialisation states */
@@ -7806,6 +7819,12 @@ export type QueriesContactsArgs = {
   storeId: Scalars['String']['input'];
 };
 
+export type QueriesCsvToExcelArgs = {
+  csvData: Scalars['String']['input'];
+  filename: Scalars['String']['input'];
+  storeId: Scalars['String']['input'];
+};
+
 export type QueriesCurrenciesArgs = {
   filter?: InputMaybe<CurrencyFilterInput>;
   sort?: InputMaybe<Array<CurrencySortInput>>;
@@ -7946,6 +7965,11 @@ export type QueriesGoodsReceivedListArgs = {
   filter?: InputMaybe<GoodsReceivedFilterInput>;
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<Array<GoodsReceivedSortInput>>;
+  storeId: Scalars['String']['input'];
+};
+
+export type QueriesHasCustomerProgramRequisitionSettingsArgs = {
+  customerNameIds: Array<Scalars['String']['input']>;
   storeId: Scalars['String']['input'];
 };
 
@@ -8592,6 +8616,7 @@ export type ReportConnector = {
 
 export enum ReportContext {
   Asset = 'ASSET',
+  CustomerReturn = 'CUSTOMER_RETURN',
   Dispensary = 'DISPENSARY',
   GoodsReceived = 'GOODS_RECEIVED',
   InboundReturn = 'INBOUND_RETURN',
@@ -8607,6 +8632,7 @@ export enum ReportContext {
   Requisition = 'REQUISITION',
   Resource = 'RESOURCE',
   Stocktake = 'STOCKTAKE',
+  SupplierReturn = 'SUPPLIER_RETURN',
 }
 
 export type ReportFilterInput = {
@@ -11255,9 +11281,14 @@ export type UpsertPreferencesInput = {
   firstThresholdForExpiringItems?: InputMaybe<Array<IntegerStorePrefInput>>;
   genderOptions?: InputMaybe<Array<GenderTypeNode>>;
   inboundShipmentAutoVerify?: InputMaybe<Array<BoolStorePrefInput>>;
+  invoiceStatusOptions?: InputMaybe<Array<InvoiceStatusOptionsInput>>;
+  itemMarginOverridesSupplierMargin?: InputMaybe<Scalars['Boolean']['input']>;
   manageVaccinesInDoses?: InputMaybe<Array<BoolStorePrefInput>>;
   manageVvmStatusForStock?: InputMaybe<Array<BoolStorePrefInput>>;
   numberOfMonthsThresholdToShowLowStockAlertsForProducts?: InputMaybe<
+    Array<IntegerStorePrefInput>
+  >;
+  numberOfMonthsThresholdToShowOverStockAlertsForProducts?: InputMaybe<
     Array<IntegerStorePrefInput>
   >;
   numberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts?: InputMaybe<
@@ -11274,7 +11305,6 @@ export type UpsertPreferencesInput = {
   >;
   showContactTracing?: InputMaybe<Scalars['Boolean']['input']>;
   showIndicativePriceInRequisitions?: InputMaybe<Scalars['Boolean']['input']>;
-  skipIntermediateStatusesInOutbound?: InputMaybe<Array<BoolStorePrefInput>>;
   sortByVvmStatusThenExpiry?: InputMaybe<Array<BoolStorePrefInput>>;
   storeCustomColour?: InputMaybe<Array<StringStorePrefInput>>;
   syncRecordsDisplayThreshold?: InputMaybe<Scalars['Int']['input']>;

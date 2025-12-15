@@ -1,5 +1,6 @@
 use async_graphql::*;
 mod mutations;
+use crate::export::csv_to_excel;
 use graphql_core::{generic_inputs::PrintReportSortInput, pagination::PaginationInput};
 use mutations::install::install_uploaded_reports;
 use print::{generate_report, generate_report_definition, PrintReportResponse};
@@ -10,6 +11,7 @@ use reports::{
 use repository::PaginationOption;
 use service::report::report_service::PrintFormat as ServicePrintFormat;
 
+mod export;
 mod print;
 mod reports;
 
@@ -126,6 +128,16 @@ impl ReportQueries {
             excel_template_buffer,
         )
         .await
+    }
+
+    pub async fn csv_to_excel(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        csv_data: String,
+        filename: String,
+    ) -> Result<PrintReportResponse> {
+        csv_to_excel(ctx, store_id, csv_data, filename).await
     }
 }
 

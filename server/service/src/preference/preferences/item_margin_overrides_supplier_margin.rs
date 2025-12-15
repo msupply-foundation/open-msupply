@@ -1,16 +1,16 @@
 use crate::preference::{PrefKey, Preference, PreferenceType, PreferenceValueType};
 
-pub struct SkipIntermediateStatusesInOutbound;
+pub struct ItemMarginOverridesSupplierMargin;
 
-impl Preference for SkipIntermediateStatusesInOutbound {
+impl Preference for ItemMarginOverridesSupplierMargin {
     type Value = bool;
 
     fn key(&self) -> PrefKey {
-        PrefKey::SkipIntermediateStatusesInOutbound
+        PrefKey::ItemMarginOverridesSupplierMargin
     }
 
     fn preference_type(&self) -> PreferenceType {
-        PreferenceType::Store
+        PreferenceType::Global
     }
 
     fn value_type(&self) -> PreferenceValueType {

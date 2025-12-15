@@ -26,6 +26,7 @@ pub enum PrefKey {
     DaysInMonth,
     ExpiredStockPreventIssue,
     ExpiredStockIssueThreshold,
+    ItemMarginOverridesSupplierMargin,
 
     // Store preferences
     ManageVaccinesInDoses,
@@ -41,11 +42,13 @@ pub enum PrefKey {
     SelectDestinationStoreForAnInternalOrder,
     NumberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts,
     NumberOfMonthsThresholdToShowLowStockAlertsForProducts,
+    NumberOfMonthsThresholdToShowOverStockAlertsForProducts,
     FirstThresholdForExpiringItems,
     SecondThresholdForExpiringItems,
     SkipIntermediateStatusesInOutbound,
     StoreCustomColour,
     WarnWhenMissingRecentStocktake,
+    InvoiceStatusOptions,
     ShowIndicativePriceInRequisitions,
 }
 

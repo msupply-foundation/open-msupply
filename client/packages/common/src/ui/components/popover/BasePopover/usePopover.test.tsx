@@ -59,11 +59,15 @@ describe('usePopover', () => {
 
     fireEvent.click(show);
 
-    await waitFor(() => expect(queryByRole('tooltip')).toBeVisible());
+    const tooltip = await waitFor(() => {
+      const element = queryByRole('tooltip');
+      expect(element).toBeVisible();
+      return element;
+    });
 
     fireEvent.click(hide);
 
-    await waitForElementToBeRemoved(queryByRole('tooltip'));
+    await waitForElementToBeRemoved(tooltip);
 
     expect(queryByRole('tooltip')).not.toBeInTheDocument();
   });

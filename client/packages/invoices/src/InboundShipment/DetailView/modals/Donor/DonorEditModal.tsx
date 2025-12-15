@@ -9,7 +9,7 @@ import {
   Select,
   ApplyToLinesInput,
 } from '@openmsupply-client/common';
-import { useName } from 'packages/system/src';
+import { useName } from '@openmsupply-client/system';
 import { useInbound } from '../../../api';
 
 interface DonorEditModalProps {
