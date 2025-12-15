@@ -2,7 +2,7 @@ use std::collections::BTreeMap;
 
 use super::{get_preference_provider, Preference, PreferenceProvider, UpsertPreferenceError};
 use crate::{preference::WarnWhenMissingRecentStocktakeData, service_provider::ServiceContext};
-use repository::{GenderType, StorageConnection, TransactionError};
+use repository::{GenderType, InvoiceStatus, StorageConnection, TransactionError};
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct StorePrefUpdate<T> {
@@ -51,8 +51,8 @@ pub struct UpsertPreferences {
     pub first_threshold_for_expiring_items: Option<Vec<StorePrefUpdate<i32>>>,
     pub second_threshold_for_expiring_items: Option<Vec<StorePrefUpdate<i32>>>,
     pub warn_when_missing_recent_stocktake: Option<Vec<StorePrefUpdate<WarnWhenMissingRecentStocktakeData>>>,
-    pub skip_intermediate_statuses_in_outbound: Option<Vec<StorePrefUpdate<bool>>>,
     pub store_custom_colour: Option<Vec<StorePrefUpdate<String>>>,
+    pub invoice_status_options: Option<Vec<StorePrefUpdate<Vec<InvoiceStatus>>>>,
 }
 
 pub fn upsert_preferences(
@@ -99,8 +99,8 @@ pub fn upsert_preferences(
         first_threshold_for_expiring_items: first_threshold_for_expiring_items_input,
         second_threshold_for_expiring_items: second_threshold_for_expiring_items_input,
         warn_when_missing_recent_stocktake: warn_when_missing_recent_stocktake_input,
-        skip_intermediate_statuses_in_outbound: skip_intermediate_statuses_in_outbound_input,
         store_custom_colour: store_custom_colour_input,
+        invoice_status_options: invoice_status_options_input,
     }: UpsertPreferences,
 ) -> Result<(), UpsertPreferenceError> {
     let PreferenceProvider {
@@ -139,8 +139,8 @@ pub fn upsert_preferences(
         first_threshold_for_expiring_items,
         second_threshold_for_expiring_items,
         warn_when_missing_recent_stocktake,
-        skip_intermediate_statuses_in_outbound,
         store_custom_colour,
+        invoice_status_options,
     }: PreferenceProvider = get_preference_provider();
 
     ctx.connection
@@ -306,17 +306,15 @@ pub fn upsert_preferences(
                 )?;
             }
 
-            if let Some(inputs) = skip_intermediate_statuses_in_outbound_input {
-                upsert_store_input(connection, skip_intermediate_statuses_in_outbound, inputs)?;
-            }
-            
             if let Some(input) = store_custom_colour_input {
                 upsert_store_input(connection, store_custom_colour, input)?;
             }
 
+            if let Some(input) = invoice_status_options_input {
+                upsert_store_input(connection, invoice_status_options, input)?;
+            }
+
             Ok(())
-
-
         })
         .map_err(|error: TransactionError<UpsertPreferenceError>| error.to_inner_error())?;
 

@@ -11,12 +11,13 @@ import {
   Action,
   DeleteIcon,
   ActionsFooter,
+  usePreferences,
 } from '@openmsupply-client/common';
 import {
   getStatusTranslator,
-  customerReturnStatuses,
   manualCustomerReturnStatuses,
   inboundStatuses,
+  customerReturnStatuses,
 } from '../../../utils';
 import { CustomerReturnFragment, useReturns } from '../../api';
 import { StatusChangeButton } from './StatusChangeButton';
@@ -56,9 +57,10 @@ const createStatusLog = (invoice: CustomerReturnFragment) => {
 
 export const FooterComponent: FC = () => {
   const t = useTranslation();
+  const { invoiceStatusOptions } = usePreferences();
+  const { navigateUpOne } = useBreadcrumbs();
   const { data } = useReturns.document.customerReturn();
   const { id } = data ?? { id: '' };
-  const { navigateUpOne } = useBreadcrumbs();
   const { confirmAndDelete } = useReturns.lines.deleteSelectedCustomerLines({
     returnId: id,
   });
@@ -75,6 +77,14 @@ export const FooterComponent: FC = () => {
       onClick: confirmAndDelete,
     },
   ];
+
+  const statuses = isManuallyCreated
+    ? manualCustomerReturnStatuses.filter(status =>
+        invoiceStatusOptions?.includes(status)
+      )
+    : customerReturnStatuses.filter(status =>
+        invoiceStatusOptions?.includes(status)
+      );
 
   return (
     <AppFooterPortal
@@ -96,11 +106,7 @@ export const FooterComponent: FC = () => {
             >
               <OnHoldButton />
               <StatusCrumbs
-                statuses={
-                  isManuallyCreated
-                    ? manualCustomerReturnStatuses
-                    : customerReturnStatuses
-                }
+                statuses={statuses}
                 statusLog={createStatusLog(data)}
                 statusFormatter={getStatusTranslator(t)}
               />
