@@ -169,11 +169,11 @@ export const canAllocate = (line: DraftStockOutLineFragment): boolean =>
 
 export const canAutoAllocate = (
   line: DraftStockOutLineFragment,
-  expiryThresholdDays: number | undefined,
+  expiryThresholdDays: number,
   requiredPackSize?: number
 ) => {
   const lastAllowableDate = line.expiryDate
-    ? DateUtils.addDays(new Date(line.expiryDate), -(expiryThresholdDays ?? 0))
+    ? DateUtils.addDays(new Date(line.expiryDate), -expiryThresholdDays)
     : undefined;
 
   return (

@@ -22,7 +22,8 @@ export const AutoAllocateField = ({
 }) => {
   const t = useTranslation();
   const { format } = useFormatNumber();
-  const { expiredStockIssueThreshold } = usePreferences();
+  const { expiredStockPreventIssue, expiredStockIssueThreshold } =
+    usePreferences();
 
   const { autoAllocate, allocatedQuantity } = useAllocationContext(state => ({
     autoAllocate: state.autoAllocate,
@@ -37,7 +38,7 @@ export const AutoAllocateField = ({
         quantity,
         format,
         t,
-        expiredStockIssueThreshold,
+        expiredStockPreventIssue ? (expiredStockIssueThreshold ?? 0) : 0,
         allowPartialPacks
       );
       setIssueQuantity(allocated);
