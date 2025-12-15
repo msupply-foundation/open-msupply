@@ -1,7 +1,7 @@
 use std::collections::BTreeMap;
 
 use crate::types::{
-    patient::GenderTypeNode,
+    invoice_query::InvoiceNodeStatus, patient::GenderTypeNode,
     warn_when_missing_recent_stocktake::WarnWhenMissingRecentStocktakeDataNode,
 };
 use async_graphql::*;
@@ -177,10 +177,6 @@ impl PreferencesNode {
         self.load_preference(&self.preferences.second_threshold_for_expiring_items)
     }
 
-    pub async fn skip_intermediate_statuses_in_outbound(&self) -> Result<bool> {
-        self.load_preference(&self.preferences.skip_intermediate_statuses_in_outbound)
-    }
-
     pub async fn store_custom_colour(&self) -> Result<String> {
         self.load_preference(&self.preferences.store_custom_colour)
     }
@@ -191,6 +187,15 @@ impl PreferencesNode {
         Ok(WarnWhenMissingRecentStocktakeDataNode::from_domain(
             self.load_preference(&self.preferences.warn_when_missing_recent_stocktake)?,
         ))
+    }
+
+    pub async fn invoice_status_options(&self) -> Result<Vec<InvoiceNodeStatus>> {
+        let domain_statuses = self.load_preference(&self.preferences.invoice_status_options)?;
+        let statuses = domain_statuses
+            .iter()
+            .map(|s| InvoiceNodeStatus::from(s.clone()))
+            .collect();
+        Ok(statuses)
     }
 }
 
@@ -275,6 +280,7 @@ pub enum PreferenceKey {
     SkipIntermediateStatusesInOutbound,
     StoreCustomColour,
     WarnWhenMissingRecentStocktake,
+    InvoiceStatusOptions,
     ShowIndicativePriceInRequisitions,
 }
 
