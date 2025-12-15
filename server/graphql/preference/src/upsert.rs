@@ -75,6 +75,8 @@ pub struct UpsertPreferencesInput {
         Option<Vec<IntegerStorePrefInput>>,
     pub number_of_months_threshold_to_show_low_stock_alerts_for_products:
         Option<Vec<IntegerStorePrefInput>>,
+    pub number_of_months_threshold_to_show_over_stock_alerts_for_products:
+        Option<Vec<IntegerStorePrefInput>>,
     pub first_threshold_for_expiring_items: Option<Vec<IntegerStorePrefInput>>,
     pub second_threshold_for_expiring_items: Option<Vec<IntegerStorePrefInput>>,
     pub warn_when_missing_recent_stocktake: Option<Vec<WarnWhenMissingRecentStocktakeInput>>,
@@ -137,6 +139,7 @@ impl UpsertPreferencesInput {
             select_destination_store_for_an_internal_order,
             number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products,
             number_of_months_threshold_to_show_low_stock_alerts_for_products,
+            number_of_months_threshold_to_show_over_stock_alerts_for_products,
             first_threshold_for_expiring_items,
             second_threshold_for_expiring_items,
             warn_when_missing_recent_stocktake,
@@ -152,7 +155,7 @@ impl UpsertPreferencesInput {
             custom_translations: custom_translations.clone(),
             gender_options: gender_options
                 .as_ref()
-                .map(|i| i.iter().map(|i| GenderType::from(i.clone())).collect()),
+                .map(|i| i.iter().map(|i| GenderType::from(*i)).collect()),
             prevent_transfers_months_before_initialisation:
                 *prevent_transfers_months_before_initialisation,
             show_contact_tracing: *show_contact_tracing,
@@ -207,6 +210,10 @@ impl UpsertPreferencesInput {
                     .map(|i| i.iter().map(|i| i.to_domain()).collect()),
             number_of_months_threshold_to_show_low_stock_alerts_for_products:
                 number_of_months_threshold_to_show_low_stock_alerts_for_products
+                    .as_ref()
+                    .map(|i| i.iter().map(|i| i.to_domain()).collect()),
+            number_of_months_threshold_to_show_over_stock_alerts_for_products:
+                number_of_months_threshold_to_show_over_stock_alerts_for_products
                     .as_ref()
                     .map(|i| i.iter().map(|i| i.to_domain()).collect()),
             first_threshold_for_expiring_items: first_threshold_for_expiring_items
