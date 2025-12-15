@@ -2573,7 +2573,7 @@
   "preference.warnWhenMissingRecentStocktake.enabled": "Activer",
   "preference.warnWhenMissingRecentStocktake.maxAge": "Âge maximal (nombre de jours depuis le dernier inventaire contenant des articles minimums)",
   "error.no-asset-delete-permission": "Vous n'avez pas l'autorisation de supprimer ces données.",
-  "error.no-asset-edit-status-permission": "You do not have permission to edit asset status.",
+  "error.no-asset-edit-status-permission": "Vous n'avez pas la permission de modifier le statut de l'équipement.",
   "error.no-usb-printer-found": "Aucune imprimante USB trouvée. Veuillez connecter une imprimante USB et réessayer.",
   "label.in-stock-with-recent-consumption": "En stock (avec consommation récente)",
   "label.out-of-stock-with-recent-consumption": "En rupture de stock (avec consommation récente)",
