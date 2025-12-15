@@ -55,6 +55,7 @@ pub trait PreferenceServiceTrait: Sync + Send {
             select_destination_store_for_an_internal_order,
             number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products,
             number_of_months_threshold_to_show_low_stock_alerts_for_products,
+            number_of_months_threshold_to_show_over_stock_alerts_for_products,
             first_threshold_for_expiring_items,
             second_threshold_for_expiring_items,
             warn_when_missing_recent_stocktake,
@@ -118,6 +119,11 @@ pub trait PreferenceServiceTrait: Sync + Send {
         )?;
         append_if_type(
             number_of_months_threshold_to_show_low_stock_alerts_for_products,
+            &mut prefs,
+            &input,
+        )?;
+        append_if_type(
+            number_of_months_threshold_to_show_over_stock_alerts_for_products,
             &mut prefs,
             &input,
         )?;
