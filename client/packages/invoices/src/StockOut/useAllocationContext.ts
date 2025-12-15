@@ -111,7 +111,7 @@ interface AllocationContext {
     quantity: number,
     format: (value: number, options?: Intl.NumberFormatOptions) => string,
     t: TypedTFunction<LocaleKey>,
-    expiryThresholdDays: number | undefined,
+    expiryThresholdDays: number,
     allowPartialPacks?: boolean
   ) => number;
 }
@@ -126,7 +126,6 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
   alerts: [],
   allocateIn: { type: AllocateInType.Units },
   note: null,
-  preferences: null,
 
   initialise: (
     {

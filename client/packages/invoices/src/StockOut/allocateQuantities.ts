@@ -64,7 +64,7 @@ export const allocateQuantities = (
   }: {
     allocateIn: AllocateInOption;
     allowPartialPacks?: boolean;
-    expiryThresholdDays: number | undefined;
+    expiryThresholdDays: number;
   }
 ) => {
   // if invalid quantity entered, don't allocate
