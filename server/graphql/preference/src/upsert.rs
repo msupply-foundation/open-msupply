@@ -2,8 +2,8 @@ use std::collections::BTreeMap;
 
 use async_graphql::*;
 use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
-use graphql_types::types::patient::GenderTypeNode;
-use repository::GenderType;
+use graphql_types::types::{patient::GenderTypeNode, InvoiceNodeStatus};
+use repository::{GenderType, InvoiceStatus};
 use service::{
     auth::{Resource, ResourceAccessRequest},
     preference::{StorePrefUpdate, UpsertPreferences, WarnWhenMissingRecentStocktakeData},
@@ -38,6 +38,12 @@ pub struct WarnWhenMissingRecentStocktakeDataInput {
 pub struct WarnWhenMissingRecentStocktakeInput {
     pub store_id: String,
     pub value: WarnWhenMissingRecentStocktakeDataInput,
+}
+
+#[derive(InputObject)]
+pub struct InvoiceStatusOptionsInput {
+    pub store_id: String,
+    pub value: Vec<InvoiceNodeStatus>,
 }
 
 #[derive(InputObject)]
@@ -80,8 +86,8 @@ pub struct UpsertPreferencesInput {
     pub first_threshold_for_expiring_items: Option<Vec<IntegerStorePrefInput>>,
     pub second_threshold_for_expiring_items: Option<Vec<IntegerStorePrefInput>>,
     pub warn_when_missing_recent_stocktake: Option<Vec<WarnWhenMissingRecentStocktakeInput>>,
-    pub skip_intermediate_statuses_in_outbound: Option<Vec<BoolStorePrefInput>>,
     pub store_custom_colour: Option<Vec<StringStorePrefInput>>,
+    pub invoice_status_options: Option<Vec<InvoiceStatusOptionsInput>>,
 }
 
 pub fn upsert_preferences(
@@ -143,8 +149,8 @@ impl UpsertPreferencesInput {
             first_threshold_for_expiring_items,
             second_threshold_for_expiring_items,
             warn_when_missing_recent_stocktake,
-            skip_intermediate_statuses_in_outbound,
             store_custom_colour,
+            invoice_status_options,
         } = self;
 
         UpsertPreferences {
@@ -225,10 +231,10 @@ impl UpsertPreferencesInput {
             warn_when_missing_recent_stocktake: warn_when_missing_recent_stocktake
                 .as_ref()
                 .map(|i| i.iter().map(|i| i.to_domain()).collect()),
-            skip_intermediate_statuses_in_outbound: skip_intermediate_statuses_in_outbound
+            store_custom_colour: store_custom_colour
                 .as_ref()
                 .map(|i| i.iter().map(|i| i.to_domain()).collect()),
-            store_custom_colour: store_custom_colour
+            invoice_status_options: invoice_status_options
                 .as_ref()
                 .map(|i| i.iter().map(|i| i.to_domain()).collect()),
         }
@@ -277,6 +283,15 @@ impl WarnWhenMissingRecentStocktakeInput {
         StorePrefUpdate {
             store_id: self.store_id.clone(),
             value: self.value.to_domain(),
+        }
+    }
+}
+
+impl InvoiceStatusOptionsInput {
+    pub fn to_domain(&self) -> StorePrefUpdate<Vec<InvoiceStatus>> {
+        StorePrefUpdate {
+            store_id: self.store_id.clone(),
+            value: self.value.iter().map(|s| (*s).into()).collect(),
         }
     }
 }
