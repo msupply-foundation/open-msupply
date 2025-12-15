@@ -48,6 +48,7 @@ pub enum PrefKey {
     SkipIntermediateStatusesInOutbound,
     StoreCustomColour,
     WarnWhenMissingRecentStocktake,
+    InvoiceStatusOptions,
     ShowIndicativePriceInRequisitions,
 }
 
