@@ -13,9 +13,11 @@ import {
   usePreferences,
 } from '@openmsupply-client/common';
 import {
-  getStatusTranslation,
   getPreviousStatus,
   outboundStatuses,
+  getButtonLabel,
+  getNextStatusOption,
+  getStatusTranslator,
 } from '../../../utils';
 import { useOutbound, useOutboundLines } from '../../api';
 
@@ -23,82 +25,36 @@ const getStatusOptions = (
   currentStatus: InvoiceNodeStatus,
   getButtonLabel: (status: InvoiceNodeStatus) => string
 ): SplitButtonOption<InvoiceNodeStatus>[] => {
-  const options: [
-    SplitButtonOption<InvoiceNodeStatus>,
-    SplitButtonOption<InvoiceNodeStatus>,
-    SplitButtonOption<InvoiceNodeStatus>,
-    SplitButtonOption<InvoiceNodeStatus>,
-    SplitButtonOption<InvoiceNodeStatus>,
-    SplitButtonOption<InvoiceNodeStatus>,
-  ] = [
-    {
-      value: InvoiceNodeStatus.New,
-      label: getButtonLabel(InvoiceNodeStatus.New),
-      isDisabled: true,
-    },
-    {
-      value: InvoiceNodeStatus.Allocated,
-      label: getButtonLabel(InvoiceNodeStatus.Allocated),
-      isDisabled: true,
-    },
-    {
-      value: InvoiceNodeStatus.Picked,
-      label: getButtonLabel(InvoiceNodeStatus.Picked),
-      isDisabled: true,
-    },
-    {
-      value: InvoiceNodeStatus.Shipped,
-      label: getButtonLabel(InvoiceNodeStatus.Shipped),
-      isDisabled: true,
-    },
-    {
-      value: InvoiceNodeStatus.Delivered,
-      label: getButtonLabel(InvoiceNodeStatus.Delivered),
-      isDisabled: true,
-    },
-    {
-      value: InvoiceNodeStatus.Verified,
-      label: getButtonLabel(InvoiceNodeStatus.Verified),
-      isDisabled: true,
-    },
-  ];
+  const options = [
+    InvoiceNodeStatus.New,
+    InvoiceNodeStatus.Allocated,
+    InvoiceNodeStatus.Picked,
+    InvoiceNodeStatus.Shipped,
+    InvoiceNodeStatus.Delivered,
+    InvoiceNodeStatus.Verified,
+  ].map(status => ({
+    value: status,
+    label: getButtonLabel(status),
+    isDisabled: true,
+  }));
 
   if (currentStatus === InvoiceNodeStatus.New) {
-    options[1].isDisabled = false;
-    options[2].isDisabled = false;
-    options[3].isDisabled = false;
+    if (options[1]) options[1].isDisabled = false;
+    if (options[2]) options[2].isDisabled = false;
+    if (options[3]) options[3].isDisabled = false;
   }
 
   if (currentStatus === InvoiceNodeStatus.Allocated) {
-    options[2].isDisabled = false;
-    options[3].isDisabled = false;
+    if (options[2]) options[2].isDisabled = false;
+    if (options[3]) options[3].isDisabled = false;
   }
 
   if (currentStatus === InvoiceNodeStatus.Picked) {
-    options[3].isDisabled = false;
+    if (options[3]) options[3].isDisabled = false;
   }
 
   return options;
 };
-
-const getNextStatusOption = (
-  status: InvoiceNodeStatus,
-  options: SplitButtonOption<InvoiceNodeStatus>[]
-): SplitButtonOption<InvoiceNodeStatus> | null => {
-  if (!status) return options[0] ?? null;
-
-  const currentIndex = options.findIndex(o => o.value === status);
-  const nextOption = options[currentIndex + 1];
-  return nextOption || null;
-};
-
-const getButtonLabel =
-  (t: ReturnType<typeof useTranslation>) =>
-  (invoiceStatus: InvoiceNodeStatus): string => {
-    return t('button.save-and-confirm-status', {
-      status: t(getStatusTranslation(invoiceStatus)),
-    });
-  };
 
 const useStatusChangeButton = () => {
   const t = useTranslation();
@@ -119,9 +75,7 @@ const useStatusChangeButton = () => {
     let statusOptions = getStatusOptions(status, getButtonLabel(t));
     if (invoiceStatusOptions) {
       statusOptions = statusOptions.filter(
-        option =>
-          option.value !== undefined &&
-          invoiceStatusOptions.includes(option.value)
+        option => !!option.value && invoiceStatusOptions.includes(option.value)
       );
     }
     return statusOptions;
@@ -168,7 +122,7 @@ const useStatusChangeButton = () => {
       ? t('messages.confirm-zero-quantity-status')
       : t('messages.confirm-status-as', {
           status: selectedOption?.value
-            ? getStatusTranslation(selectedOption?.value)
+            ? getStatusTranslator(t)(selectedOption?.value)
             : '',
         }),
     onConfirm: onConfirmStatusChange,
