@@ -16,7 +16,6 @@ import {
   NothingHere,
   MaterialTable,
 } from '@openmsupply-client/common';
-// import { ContentArea } from './ContentArea';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
 import { CustomerReturnLineFragment, useReturns } from '../api';
