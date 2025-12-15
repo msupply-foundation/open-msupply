@@ -11,7 +11,6 @@ use crate::{
 
 use self::middleware::{compress as compress_middleware, logger as logger_middleware};
 use actix_cors::Cors;
-use anyhow::Context;
 use graphql_core::loader::{get_loaders, LoaderRegistry};
 
 use graphql::{
@@ -100,9 +99,13 @@ pub async fn start_server(
         connection_manager.execute(init_sql).unwrap();
     }
     info!("Run DB migrations...");
-    let version = migrate(&connection_manager.connection().unwrap(), None)
-        .context("Failed to run DB migrations")
-        .unwrap();
+    let version = match migrate(&connection_manager.connection().unwrap(), None) {
+        Ok(version) => version,
+        Err(e) => {
+            log::error!("Failed to run DB migrations: {:#}", e);
+            std::process::exit(1);
+        }
+    };
     info!("Run DB migrations...done");
 
     // Upsert standard reports
