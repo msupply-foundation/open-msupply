@@ -1,69 +1,47 @@
 import {
-  ColumnAlign,
-  ColumnDescription,
-  ColumnFormat,
-  SortBy,
-  useColumns,
+  ColumnDef,
+  ColumnType,
   useTranslation,
 } from '@openmsupply-client/common';
 import { InsuranceFragment } from '../apiModern/operations.generated';
+import { useMemo } from 'react';
 
-type Status = 'Active' | 'Inactive';
-
-interface InsuranceColumns {
-  sortBy: SortBy<unknown>;
-  onChangeSortBy: (sort: string, dir: 'desc' | 'asc') => void;
-}
-
-export const useInsuranceColumns = ({
-  sortBy,
-  onChangeSortBy,
-}: InsuranceColumns) => {
+export const useInsuranceColumns = () => {
   const t = useTranslation();
-  const columns: ColumnDescription<InsuranceFragment>[] = [
-    {
-      label: 'label.policy-number',
-      key: 'policyNumber',
-      sortable: false,
-    },
-    {
-      label: 'label.provider-name',
-      key: 'providerName',
-      accessor: ({ rowData }) => rowData.insuranceProviders?.providerName,
-      sortable: false,
-    },
-    {
-      label: 'label.policy-type',
-      key: 'policyType',
-      accessor: ({ rowData }) => t(`policyType.${rowData.policyType}`),
-      sortable: false,
-    },
-    {
-      label: 'label.discount-rate',
-      key: 'discountRate',
-      accessor: ({ rowData }) => rowData.discountPercentage,
-      sortable: false,
-    },
-    {
-      label: 'label.expiry-date',
-      key: 'expiryDate',
-      format: ColumnFormat.Date,
-      align: ColumnAlign.Left,
-      accessor: ({ rowData }) => rowData.expiryDate,
-      sortable: true,
-    },
-    {
-      label: 'label.status',
-      key: 'isActive',
-      accessor: ({ rowData }): Status => {
-        const { isActive } = rowData;
-        return isActive ? 'Active' : 'Inactive';
+  const columns = useMemo(
+    (): ColumnDef<InsuranceFragment>[] => [
+      {
+        accessorKey: 'policyNumber',
+        header: t('label.policy-number'),
       },
-    },
-  ];
+      {
+        id: 'providerName',
+        accessorFn: row => row.insuranceProviders?.providerName,
+        header: t('label.provider-name'),
+      },
+      {
+        id: 'policyType',
+        accessorFn: row => t(`policyType.${row.policyType}`),
+        header: t('label.policy-type'),
+      },
+      {
+        accessorKey: 'discountPercentage',
+        header: t('label.discount-rate'),
+        columnType: ColumnType.Number,
+      },
+      {
+        accessorKey: 'expiryDate',
+        header: t('label.expiry-date'),
+        columnType: ColumnType.Date,
+      },
+      {
+        id: 'isActive',
+        accessorFn: row => row.isActive ? 'Active' : 'Inactive',
+        header: t('label.status'),
+      },
+    ],
+    []
+  );
 
-  return useColumns(columns, { sortBy, onChangeSortBy }, [
-    sortBy,
-    onChangeSortBy,
-  ]);
+  return columns;
 };
