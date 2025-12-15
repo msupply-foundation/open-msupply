@@ -116,8 +116,8 @@ pub fn get_items_ids_for_months_of_stock(
     item_stats
         .into_iter()
         .filter_map(|(k, v)| {
-            // Exclude items with zero consumption or stock
-            if v.average_monthly_consumption == 0.0 || v.total_stock_on_hand == 0.0 {
+            // Exclude items with zero consumption
+            if v.average_monthly_consumption == 0.0 {
                 return None;
             }
 
