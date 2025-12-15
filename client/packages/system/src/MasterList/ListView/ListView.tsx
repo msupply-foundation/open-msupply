@@ -14,7 +14,7 @@ import {
 import { AppBarButtons } from './AppBarButtons';
 import { MasterListRowFragment, useMasterLists } from '../api';
 
-const MasterListComponent = () => {
+export const MasterListListView = () => {
   const t = useTranslation();
   const navigate = useNavigate();
   const { store } = useAuthContext();
@@ -86,7 +86,3 @@ const MasterListComponent = () => {
     </>
   );
 };
-
-export const MasterListListView = () => (
-  <MasterListComponent />
-);

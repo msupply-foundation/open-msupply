@@ -1,4 +1,4 @@
-import React, { FC, useEffect, useMemo, useState } from 'react';
+import React, { FC, useMemo } from 'react';
 import {
   useTranslation,
   useUrlQueryParams,
@@ -19,42 +19,20 @@ import { useAssetTypes } from '../api/hooks';
 import { mapIdNameToOptions } from '../utils';
 import { useAssetCategories } from '@openmsupply-client/system';
 
-type ReferenceData = {
-  id: string;
-  name: string;
-  categoryId?: string;
-};
-
-const AssetListComponent: FC = () => {
+export const AssetListView: FC = () => {
   const { data: categoryData } = useAssetCategories();
   const { data: typeData } = useAssetTypes();
 
-  const [categories, setCategories] = useState<ReferenceData[]>([]);
-  const [types, setTypes] = useState<ReferenceData[]>([]);
-
-  const { urlQuery, updateQuery } = useUrlQuery({
+  const { urlQuery } = useUrlQuery({
     skipParse: ['classId', 'categoryId', 'typeId'],
   });
 
   const categoryId = urlQuery['categoryId'];
-  const typeId = urlQuery['typeId'];
 
-  useEffect(() => {
-    // only show type options in the filter which are relevant for the selected category
-    const newTypes = (typeData?.nodes || []).filter(
-      type => !categoryId || type.categoryId === categoryId
-    );
-    setTypes(newTypes);
-
-    // reset the selected type if it is not under the selected category
-    if (newTypes.find(t => t.name === typeId) === null) {
-      updateQuery({ categoryId: '' });
-    }
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [categoryId, typeData]);
-
-  useEffect(() => setCategories(categoryData?.nodes || []), [categoryData]);
+  // only show type options in the filter which are relevant for the selected category
+  const filteredTypes = (typeData?.nodes || []).filter(
+    type => !categoryId || type.categoryId === categoryId
+  );
 
   const t = useTranslation();
   const importModalController = useToggle();
@@ -99,7 +77,7 @@ const AssetListComponent: FC = () => {
         accessorFn: row => row.assetType?.name,
         enableColumnFilter: true,
         filterVariant: 'select',
-        filterSelectOptions: mapIdNameToOptions(types),
+        filterSelectOptions: mapIdNameToOptions(filteredTypes),
       },
       {
         header: t('label.manufacturer'),
@@ -128,10 +106,10 @@ const AssetListComponent: FC = () => {
         accessorFn: row => row.assetCategory?.name,
         enableColumnFilter: true,
         filterVariant: 'select',
-        filterSelectOptions: mapIdNameToOptions(categories),
+        filterSelectOptions: mapIdNameToOptions(categoryData?.nodes || []),
       },
     ],
-    [categories, types],
+    [filteredTypes],
   );
 
   const { table, selectedRows } =
@@ -145,7 +123,7 @@ const AssetListComponent: FC = () => {
       totalCount: data?.totalCount ?? 0,
       noDataElement: (
         <NothingHere
-          body={t('error.no-purchase-orders')}
+          body={t('error.no-assets')}
           onCreate={importModalController.toggleOn}
         />
       ),
@@ -171,7 +149,3 @@ const AssetListComponent: FC = () => {
     </>
   );
 };
-
-export const AssetListView: FC = () => (
-  <AssetListComponent />
-);

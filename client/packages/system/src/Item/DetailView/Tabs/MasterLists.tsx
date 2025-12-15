@@ -5,7 +5,6 @@ import {
 } from '@openmsupply-client/system';
 import { NothingHere } from '@common/components';
 import {
-  Box,
   useTranslation,
   useAuthContext,
   TextWithTooltipCell,
@@ -14,7 +13,7 @@ import {
   MaterialTable,
 } from '@openmsupply-client/common';
 
-const MasterListsTable = ({ itemId }: { itemId?: string }) => {
+export const MasterListsTab = ({ itemId }: { itemId?: string }) => {
   const t = useTranslation();
   const { store } = useAuthContext();
 
@@ -67,11 +66,3 @@ const MasterListsTable = ({ itemId }: { itemId?: string }) => {
 
   return <MaterialTable table={table} />;
 };
-
-export const MasterListsTab = ({ itemId }: { itemId?: string }) => (
-  <Box justifyContent="center" display="flex" flex={1}>
-    <Box flex={1} display="flex">
-      <MasterListsTable itemId={itemId} />
-    </Box>
-  </Box>
-);

@@ -24,23 +24,20 @@ export const ContentArea = () => {
   const columns = useMemo<ColumnDef<MasterListLineFragment>[]>(
     () => [
       {
+        accessorKey: 'item.code',
         header: t('label.code'),
-        id: 'itemCode',
-        accessorFn: row => row.item.code,
         size: 100,
       },
       {
+        accessorKey: 'item.name',
         header: t('label.name'),
-        id: 'itemName',
-        accessorFn: row => row.item.name,
         Cell: TextWithTooltipCell,
         size: 350,
         enableSorting: true,
       },
       {
+        accessorKey: 'item.unitName',
         header: t('label.unit'),
-        accessorFn: row => row.item.unitName,
-        enableSorting: false,
       },
     ],
     []
