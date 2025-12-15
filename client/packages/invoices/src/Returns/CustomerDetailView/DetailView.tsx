@@ -23,7 +23,6 @@ import { AppRoute } from '@openmsupply-client/config';
 import { SidePanel } from './SidePanel/SidePanel';
 import { ActivityLogList } from '@openmsupply-client/system';
 import { Footer } from './Footer';
-import { CustomerReturnItem } from '../../types';
 import { CustomerReturnEditModal } from '../modals';
 import { getNextItemId } from '../../utils';
 import { useCustomerReturnColumns } from './columns';
@@ -43,9 +42,6 @@ const CustomerReturnsDetailViewComponent = () => {
     mode,
   } = useEditModal<string>();
 
-  const onRowClick = (row: CustomerReturnLineFragment | CustomerReturnItem) =>
-    onOpen(row.itemId);
-
   useEffect(() => {
     setCustomBreadcrumbs({ 1: data?.invoiceNumber.toString() ?? '' });
   }, [setCustomBreadcrumbs, data?.invoiceNumber]);
@@ -56,7 +52,7 @@ const CustomerReturnsDetailViewComponent = () => {
   const { table, selectedRows } =
     useNonPaginatedMaterialTable<Groupable<CustomerReturnLineFragment>>({
       tableId: 'purchase-order-detail-view',
-      onRowClick: row => onRowClick?.(row),
+      onRowClick: row => onOpen(row.itemId),
       columns,
       isLoading,
       data: lines,

@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import {
   ColumnDef,
   useTranslation,
@@ -5,7 +6,6 @@ import {
   Groupable,
 } from '@openmsupply-client/common';
 import { CustomerReturnLineFragment } from '../api';
-import { useMemo } from 'react';
 
 export const useCustomerReturnColumns = () => {
   const t = useTranslation();
