@@ -24,7 +24,6 @@ import { SidePanel } from './SidePanel';
 import { SupplierReturnLineFragment, useReturns } from '../api';
 import { AppRoute } from '@openmsupply-client/config';
 import { SupplierReturnEditModal } from '../modals';
-import { SupplierReturnItem } from '../../types';
 import { getNextItemId } from '../../utils';
 import { useSupplierReturnColumns } from './columns';
 
@@ -42,9 +41,6 @@ export const SupplierReturnsDetailViewComponent = () => {
   const { setCustomBreadcrumbs } = useBreadcrumbs();
   const navigate = useNavigate();
 
-  const onRowClick = (row: SupplierReturnLineFragment | SupplierReturnItem) =>
-    onOpen(row.itemId);
-
   const onAddItem = () => onOpen();
 
   useEffect(() => {
@@ -54,10 +50,10 @@ export const SupplierReturnsDetailViewComponent = () => {
   const isDisabled = useReturns.utils.supplierIsDisabled();
   const columns = useSupplierReturnColumns();
 
-  const { table } =
+  const { table, selectedRows } =
     useNonPaginatedMaterialTable<Groupable<SupplierReturnLineFragment>>({
       tableId: 'supplier-return-detail',
-      onRowClick: row => onRowClick?.(row),
+      onRowClick: row => onOpen(row.itemId),
       columns,
       isLoading,
       data: lines,
@@ -118,7 +114,10 @@ export const SupplierReturnsDetailViewComponent = () => {
 
           <Toolbar />
           <DetailTabs tabs={tabs} />
-          <Footer />
+          <Footer
+            selectedRows={selectedRows}
+            resetRowSelection={table.resetRowSelection}
+          />
           <SidePanel />
         </>
       ) : (

@@ -68,11 +68,11 @@ export const FooterComponent = ({
   const { data } = useReturns.document.customerReturn();
   const { id } = data ?? { id: '' };
 
-  const confirmAndDelete = useReturns.lines.deleteSelectedCustomerLines(
-    id,
+  const confirmAndDelete = useReturns.lines.deleteSelectedCustomerLines({
+    returnId: id,
     selectedRows,
-    resetRowSelection
-  );
+    resetRowSelection,
+  });
 
   const isManuallyCreated = !data?.linkedShipment?.id;
 

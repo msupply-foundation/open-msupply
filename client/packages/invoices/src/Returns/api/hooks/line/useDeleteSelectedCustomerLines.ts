@@ -5,11 +5,15 @@ import {
 import { useCustomerReturnIsDisabled } from '../utils/useCustomerReturnIsDisabled';
 import { CustomerReturnLineFragment, useReturns } from '../..';
 
-export const useDeleteSelectedCustomerReturnLines = (
-  returnId: string,
-  selectedRows: CustomerReturnLineFragment[],
-  resetRowSelection: () => void
-): () => void => {
+export const useDeleteSelectedCustomerReturnLines = ({
+  returnId,
+  selectedRows,
+  resetRowSelection,
+}: {
+  returnId: string;
+  selectedRows: CustomerReturnLineFragment[];
+  resetRowSelection: () => void;
+}): () => void => {
   const isDisabled = useCustomerReturnIsDisabled();
   const t = useTranslation();
 
