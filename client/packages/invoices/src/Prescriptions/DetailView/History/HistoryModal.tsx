@@ -3,14 +3,13 @@ import {
   useDialog,
   useTranslation,
   ModalMode,
-  TableProvider,
-  createTableStore,
-  createQueryParamsStore,
-  DataTable,
   InvoiceNodeStatus,
   useIntlUtils,
   InvoiceLineNode,
   DialogButton,
+  MaterialTable,
+  useSimpleMaterialTable,
+  NothingHere,
 } from '@openmsupply-client/common';
 import { Draft } from 'packages/invoices/src/StockOut';
 
@@ -84,28 +83,23 @@ export const HistoryModal: React.FC<HistoryModalModalProps> = ({
     return compiled;
   }, [data]);
 
+  const table = useSimpleMaterialTable({
+    tableId: 'prescription-line-edit',
+    columns,
+    data: historyData,
+    isLoading,
+    noDataElement: <NothingHere body={t('error.no-results')} />,
+  });
+
   return (
-    <TableProvider
-      createStore={createTableStore}
-      queryParamsStore={createQueryParamsStore({
-        initialSortBy: { key: 'expiryDate' },
-      })}
+    <Modal
+      title={t('heading.recently-prescribed')}
+      width={900}
+      height={600}
+      okButton={<DialogButton variant="ok" onClick={onClose} />}
     >
-      <Modal
-        title={t('heading.recently-prescribed')}
-        width={900}
-        height={600}
-        okButton={<DialogButton variant="ok" onClick={onClose} />}
-      >
-        <DataTable
-          id="prescription-line-edit"
-          columns={columns}
-          data={historyData}
-          isLoading={isLoading}
-          dense
-        />
-      </Modal>
-    </TableProvider>
+      <MaterialTable table={table} />
+    </Modal>
   );
 };
 
