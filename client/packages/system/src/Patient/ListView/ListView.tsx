@@ -12,9 +12,9 @@ import {
   usePaginatedMaterialTable,
   ColumnDef,
   ColumnType,
-  GenderTypeNode,
   ColumnDataAccessor,
   ChipTableCell,
+  usePreferences,
 } from '@openmsupply-client/common';
 import { usePatient, PatientRowFragment } from '../api';
 import { AppBarButtons } from './AppBarButtons';
@@ -37,6 +37,7 @@ export const programEnrolmentLabelAccessor: ColumnDataAccessor<
 
 export const PatientListView = () => {
   const t = useTranslation();
+  const { genderOptions } = usePreferences();
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const {
     queryParams: { sortBy, filterBy, first, offset },
@@ -120,9 +121,9 @@ export const PatientListView = () => {
         enableColumnFilter: true,
         size: 120,
         filterVariant: 'select',
-        filterSelectOptions: Object.values(GenderTypeNode).map(status => ({
-          value: status,
-          label: t(getGenderTranslationKey(status)),
+        filterSelectOptions: genderOptions?.map(gender => ({
+          value: gender,
+          label: t(getGenderTranslationKey(gender)),
         })),
       },
       {
