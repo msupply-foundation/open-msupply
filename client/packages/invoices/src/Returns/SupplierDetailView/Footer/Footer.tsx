@@ -11,6 +11,7 @@ import {
   Action,
   DeleteIcon,
   ActionsFooter,
+  usePreferences,
 } from '@openmsupply-client/common';
 import {
   getStatusTranslator,
@@ -57,8 +58,9 @@ const createStatusLog = (invoice: SupplierReturnRowFragment) => {
 
 export const FooterComponent: FC = () => {
   const t = useTranslation();
-  const { data } = useReturns.document.supplierReturn();
   const { navigateUpOne } = useBreadcrumbs();
+  const { invoiceStatusOptions } = usePreferences();
+  const { data } = useReturns.document.supplierReturn();
   const { id } = data ?? { id: '' };
   const { selectedIds, confirmAndDelete } =
     useReturns.lines.deleteSelectedSupplierLines({
@@ -72,6 +74,10 @@ export const FooterComponent: FC = () => {
       onClick: confirmAndDelete,
     },
   ];
+
+  const statuses = supplierReturnStatuses.filter(status =>
+    invoiceStatusOptions?.includes(status)
+  );
 
   return (
     <AppFooterPortal
@@ -94,7 +100,7 @@ export const FooterComponent: FC = () => {
             >
               <OnHoldButton />
               <StatusCrumbs
-                statuses={supplierReturnStatuses}
+                statuses={statuses}
                 statusLog={createStatusLog(data)}
                 statusFormatter={getStatusTranslator(t)}
               />
@@ -107,7 +113,6 @@ export const FooterComponent: FC = () => {
                   sx={{ fontSize: '12px' }}
                   onClick={() => navigateUpOne()}
                 />
-
                 <StatusChangeButton />
               </Box>
             </Box>
