@@ -1086,7 +1086,6 @@
   "label.inbound-shipment-cant-delete-reserved-line": "Le lot {{batch}} (code article {{itemCode}})) est déjà affecté",
   "label.incoming": "Entrant(e)",
   "label.incoming-stock": "en transit",
-  "label.increase-qty": "Augmenter quantité",
   "label.indicative-price": "Prix indicatif",
   "label.indicators": "Indicateurs",
   "label.initial-stock-on-hand": "Stock total initial",
