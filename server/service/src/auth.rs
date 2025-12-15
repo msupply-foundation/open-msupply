@@ -905,7 +905,7 @@ fn validate_resource_permissions(
             if user_permissions.iter().any(|p| &p.permission == permission) {
                 return Ok(());
             }
-            return Err(format!("Missing permission: {:?}", permission));
+            return Err(format!("Missing permission: {permission:?}"));
         }
         PermissionDSL::HasDynamicPermission(permission) => {
             let user_permissions = user_permissions
@@ -913,7 +913,7 @@ fn validate_resource_permissions(
                 .filter(|p| &p.permission == permission)
                 .collect::<Vec<_>>();
             if user_permissions.is_empty() {
-                return Err(format!("Missing permission: {:?}", permission));
+                return Err(format!("Missing permission: {permission:?}"));
             }
             let mut contexts = user_permissions
                 .iter()
@@ -944,7 +944,7 @@ fn validate_resource_permissions(
                 return Ok(());
             }
 
-            return Err(format!("Missing access to store: {}", store_id));
+            return Err(format!("Missing access to store: {store_id}"));
         }
         PermissionDSL::And(children) => {
             for child in children {
@@ -975,7 +975,7 @@ fn validate_resource_permissions(
                 }
             }
             if !found_any {
-                return Err(format!("No permissions for any of: {:?}", children));
+                return Err(format!("No permissions for any of: {children:?}"));
             }
             return Ok(());
         }
@@ -1022,7 +1022,7 @@ impl AuthServiceTrait for AuthService {
         resource_request: &ResourceAccessRequest,
     ) -> Result<ValidatedUser, AuthError> {
         let user_id = if let Some(override_user_id) = override_user_id {
-            log::info!("Overriding user id with: {}", override_user_id);
+            log::info!("Overriding user id with: {override_user_id}");
             override_user_id.clone()
         } else {
             validate_auth(auth_data, auth_token)?.user_id
@@ -1092,7 +1092,7 @@ impl AuthServiceTrait for AuthService {
             Err(msg) => {
                 if auth_data.debug_no_access_control {
                     return Ok(ValidatedUser {
-                        user_id: user_id,
+                        user_id,
                         capabilities: Vec::new(),
                     });
                 }
@@ -1123,7 +1123,7 @@ impl AuthServiceTrait for AuthService {
 
 impl From<RepositoryError> for AuthError {
     fn from(error: RepositoryError) -> Self {
-        AuthError::InternalError(format!("{:#?}", error))
+        AuthError::InternalError(format!("{error:#?}"))
     }
 }
 
