@@ -1,13 +1,13 @@
 import React, { ReactElement, useState } from 'react';
 import {
-  TableProvider,
-  createTableStore,
-  DataTable,
   useTranslation,
   useEditModal,
   Box,
   ButtonWithIcon,
   PlusCircleIcon,
+  MaterialTable,
+  NothingHere,
+  useNonPaginatedMaterialTable,
 } from '@openmsupply-client/common';
 
 import { DraftStockLine, VvmStatusLogRowFragment } from '../../api';
@@ -24,7 +24,7 @@ export const StatusHistory = ({
   isLoading,
 }: StatusHistoryProps): ReactElement => {
   const t = useTranslation();
-  const { columns } = useStatusHistoryColumns();
+  const columns = useStatusHistoryColumns();
   const [selectedStatusLog, setSelectedStatusLog] =
     useState<VvmStatusLogRowFragment>();
   const { onOpen, onClose, isOpen } = useEditModal<DraftStockLine>();
@@ -39,18 +39,20 @@ export const StatusHistory = ({
     onOpen();
   };
 
+  const { table } = useNonPaginatedMaterialTable<VvmStatusLogRowFragment>({
+    tableId: 'stockline-status-history',
+    columns,
+    data: draft?.vvmStatusLogs?.nodes ?? [],
+    isLoading,
+    onRowClick: handleRowClick,
+    enableRowSelection: false,
+    noDataElement: <NothingHere body={t('messages.no-status-history')} />,
+  });
+
   return (
-    <TableProvider createStore={createTableStore}>
+    <>
       <Box width="100%">
-        <DataTable
-          id="stockline-status-history"
-          columns={columns}
-          data={draft?.vvmStatusLogs?.nodes ?? []}
-          onRowClick={handleRowClick}
-          isLoading={isLoading}
-          noDataMessage={t('messages.no-status-history')}
-          overflowX="auto"
-        />
+        <MaterialTable table={table} />
         <Box
           sx={{
             p: 2,
@@ -76,6 +78,6 @@ export const StatusHistory = ({
           selectedStatusLog={selectedStatusLog}
         />
       )}
-    </TableProvider>
+    </>
   );
 };
