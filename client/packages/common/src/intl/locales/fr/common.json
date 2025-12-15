@@ -2033,7 +2033,7 @@
   "messages.how-to-read-stock-detail": "Ce rapport contient les mêmes informations que la page de stock, sans aucune interactivité.",
   "messages.how-to-read-stock-status": "Descriptions des statuts :\r\n* Sous-stocké - La MDS est inférieure à la MDS minimale (préférence dépôt : seuil pour sous-stock)\r\n* En excès de stock - La MDS est supérieure à la MDS maximale (préférence dépôt : seuil pour excès de stock)\r\n* En rupture de stock - Le Stock disponible est à 0 et la CMM est supérieur à 0.\r\n* En quantité suffisante - La MDS est entre la MDS minimale et maximale\r\n* Pas de consommation - La CMM est à 0",
   "messages.import-error": "L'importation de certains ou de tous les éléments a échoué. Cliquez sur Exporter pour télécharger un fichier CSV contenant les lignes qui ont provoqué une erreur. Les lignes exemptes d'erreur auront été importées",
-  "messages.import-error-on-upload": "Erreur d'import lors du chargement. Corrigez les erreurs et réessayez",
+  "messages.import-error-on-upload": "Erreur d'import lors du chargement. Corrigez les erreurs et réessayez.",
   "messages.import-generic": "Import réussi",
   "messages.import-warning-on-upload": "Alerte : certaines valeurs n'ont pas pu être analysées. Veuillez corriger ces valeurs, sinon elles seront ignorées lors du téléchargement",
   "messages.inbound-shipment-created-on": "Livraison entrante créée le {{date}}",
@@ -2438,7 +2438,7 @@
   "server-error.DemographicIndicatorHasNoName": "L'indicateur démographique n'a pas de nom",
   "server-error.InvalidDates": "Dates invalides",
   "settings": "Paramètres",
-  "settings.label-printing": "Impression d'étiquette",
+  "settings.label-printing": "Impression d'étiquettes Zebra",
   "settings.printer-address": "Adresse IP",
   "settings.printer-label-height": "Hauteur de l'étiquette",
   "settings.printer-label-width": "Largeur d'étiquette",
@@ -2588,5 +2588,6 @@
   "settings.print-via-usb": "Imprimer via USB (ignore les paramètres réseau)",
   "plugin.amd": "DMM",
   "label.overstocked-products": "Articles dont le stock est supérieur à {{num}} mois",
-  "label.supplier-return": "Retour au fournisseur"
+  "label.supplier-return": "Retour au fournisseur",
+  "preference.itemMarginOverridesSupplierMargin": "La marge de l'article prévaut sur la marge du fournisseur"
 }
