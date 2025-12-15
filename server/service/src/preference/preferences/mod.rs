@@ -58,10 +58,10 @@ pub mod expired_stock_prevent_issue;
 pub use expired_stock_prevent_issue::*;
 pub mod warn_when_missing_recent_stocktake;
 pub use warn_when_missing_recent_stocktake::*;
-pub mod skip_intermediate_statuses_in_outbound;
-pub use skip_intermediate_statuses_in_outbound::*;
 pub mod store_custom_colour;
 pub use store_custom_colour::*;
+pub mod invoice_status_options;
+pub use invoice_status_options::*;
 pub mod item_margin_overrides_supplier_margin;
 pub use item_margin_overrides_supplier_margin::*;
 
@@ -103,9 +103,9 @@ pub struct PreferenceProvider {
         NumberOfMonthsThresholdToShowOverStockAlertsForProducts,
     pub first_threshold_for_expiring_items: FirstThresholdForExpiringItems,
     pub second_threshold_for_expiring_items: SecondThresholdForExpiringItems,
-    pub skip_intermediate_statuses_in_outbound: SkipIntermediateStatusesInOutbound,
     pub warn_when_missing_recent_stocktake: WarnWhenMissingRecentStocktake,
     pub store_custom_colour: StoreCustomColour,
+    pub invoice_status_options: InvoiceStatusOptions,
 }
 
 pub fn get_preference_provider() -> PreferenceProvider {
@@ -147,8 +147,8 @@ pub fn get_preference_provider() -> PreferenceProvider {
             NumberOfMonthsThresholdToShowOverStockAlertsForProducts,
         first_threshold_for_expiring_items: FirstThresholdForExpiringItems,
         second_threshold_for_expiring_items: SecondThresholdForExpiringItems,
-        skip_intermediate_statuses_in_outbound: SkipIntermediateStatusesInOutbound,
         store_custom_colour: StoreCustomColour,
         warn_when_missing_recent_stocktake: WarnWhenMissingRecentStocktake,
+        invoice_status_options: InvoiceStatusOptions,
     }
 }

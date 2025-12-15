@@ -12,6 +12,7 @@ import {
   TypedTFunction,
   noOtherVariants,
   InvoiceNodeType,
+  SplitButtonOption,
 } from '@openmsupply-client/common';
 import { OutboundFragment, OutboundRowFragment } from './OutboundShipment/api';
 import { InboundLineFragment } from './InboundShipment/api';
@@ -52,21 +53,6 @@ export const manualInboundStatuses: InvoiceNodeStatus[] = [
   InvoiceNodeStatus.Verified,
 ];
 
-export const nextStatusMap: { [k in InvoiceNodeStatus]?: InvoiceNodeStatus } = {
-  [InvoiceNodeStatus.New]: InvoiceNodeStatus.Delivered,
-  [InvoiceNodeStatus.Shipped]: InvoiceNodeStatus.Delivered,
-  [InvoiceNodeStatus.Delivered]: InvoiceNodeStatus.Received,
-  [InvoiceNodeStatus.Received]: InvoiceNodeStatus.Verified,
-};
-
-export const nextStatusMapCustomerReturn: {
-  [k in InvoiceNodeStatus]?: InvoiceNodeStatus;
-} = {
-  [InvoiceNodeStatus.New]: InvoiceNodeStatus.Received,
-  [InvoiceNodeStatus.Shipped]: InvoiceNodeStatus.Received,
-  [InvoiceNodeStatus.Received]: InvoiceNodeStatus.Verified,
-};
-
 export const prescriptionStatuses: InvoiceNodeStatus[] = [
   InvoiceNodeStatus.New,
   InvoiceNodeStatus.Picked,
@@ -106,53 +92,39 @@ const statusTranslation: Record<InvoiceNodeStatus, LocaleKey> = {
   CANCELLED: 'label.cancelled',
 };
 
-export const getStatusTranslation = (status: InvoiceNodeStatus): LocaleKey => {
-  return statusTranslation[status];
+export const getPreviousStatus = (
+  currentStatus: InvoiceNodeStatus,
+  validStatuses: InvoiceNodeStatus[],
+  sequence: InvoiceNodeStatus[]
+): InvoiceNodeStatus => {
+  const currentIndex = sequence.findIndex(status => status === currentStatus);
+
+  const previousValidStatus = sequence
+    .slice(0, currentIndex)
+    .reverse()
+    .find(status => validStatuses.includes(status));
+
+  return previousValidStatus ?? InvoiceNodeStatus.New;
 };
 
-export const getNextSupplierReturnStatus = (
-  currentStatus: InvoiceNodeStatus
-): InvoiceNodeStatus | null => {
-  const currentStatusIdx = supplierReturnStatuses.findIndex(
-    status => currentStatus === status
-  );
-  const nextStatus = supplierReturnStatuses[currentStatusIdx + 1];
-  return nextStatus ?? null;
+export const getNextStatusOption = (
+  status: InvoiceNodeStatus | undefined,
+  options: SplitButtonOption<InvoiceNodeStatus>[]
+): SplitButtonOption<InvoiceNodeStatus> | null => {
+  if (!status) return options[0] ?? null;
+
+  const currentIndex = options.findIndex(o => o.value === status);
+  const nextOption = options[currentIndex + 1];
+  return nextOption || null;
 };
 
-export const getNextInboundStatus = (
-  currentStatus: InvoiceNodeStatus
-): InvoiceNodeStatus | null => {
-  const nextStatus = nextStatusMap[currentStatus];
-  return nextStatus ?? null;
-};
-
-export const getNextCustomerReturnStatus = (
-  currentStatus: InvoiceNodeStatus
-): InvoiceNodeStatus | null => {
-  const nextStatus = nextStatusMapCustomerReturn[currentStatus];
-  return nextStatus ?? null;
-};
-
-export const getNextPrescriptionStatus = (
-  currentStatus: InvoiceNodeStatus
-): InvoiceNodeStatus | null => {
-  const currentStatusIdx = prescriptionStatuses.findIndex(
-    status => currentStatus === status
-  );
-  const nextStatus = prescriptionStatuses[currentStatusIdx + 1];
-  return nextStatus ?? null;
-};
-
-export const getNextInboundStatusButtonTranslation = (
-  currentStatus: InvoiceNodeStatus
-): LocaleKey | undefined => {
-  const nextStatus = getNextInboundStatus(currentStatus);
-
-  if (nextStatus) return statusTranslation[nextStatus];
-
-  return undefined;
-};
+export const getButtonLabel =
+  (t: ReturnType<typeof useTranslation>) =>
+  (invoiceStatus: InvoiceNodeStatus): string => {
+    return t('button.save-and-confirm-status', {
+      status: getStatusTranslator(t)(invoiceStatus),
+    });
+  };
 
 export const getStatusTranslator =
   (t: ReturnType<typeof useTranslation>) =>
@@ -445,7 +417,7 @@ export const prescriptionToCsv = (
 
   const data = invoices.map(node => [
     node.otherPartyName,
-    t(getStatusTranslation(node.status)),
+    getStatusTranslator(t)(node.status),
     node.invoiceNumber,
     Formatter.csvDateTimeString(node.prescriptionDate || node.createdDatetime),
     node.theirReference,
