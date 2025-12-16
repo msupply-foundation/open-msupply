@@ -20,10 +20,9 @@ import {
   DetailLoadingSkeleton,
   useIsGapsStoreOnly,
   useBlockNavigation,
-  Platform,
-  EnvUtils,
   useTheme,
   usePreferences,
+  useIsCentralServerApi,
 } from '@openmsupply-client/common';
 import { AppDrawer, AppBar, Footer, NotFound } from './components';
 import { CommandK } from './CommandK';
@@ -78,7 +77,8 @@ export const Site: FC = () => {
   const { setPageTitle } = useHostContext();
   const pageTitle = getPageTitle(location.pathname);
   const isGapsStore = useIsGapsStoreOnly();
-  const isAndroid = EnvUtils.platform === Platform.Android;
+  const { isGaps } = usePreferences();
+  const isCentralServer = useIsCentralServerApi();
   const { storeCustomColour } = usePreferences();
   const theme = useTheme();
 
@@ -247,13 +247,17 @@ export const Site: FC = () => {
                           <Navigate
                             replace
                             to={
-                              isGapsStore && isAndroid
-                                ? RouteBuilder.create(AppRoute.Coldchain)
+                              isGaps && isCentralServer
+                                ? RouteBuilder.create(AppRoute.Manage)
                                     .addPart(AppRoute.Equipment)
                                     .build()
-                                : RouteBuilder.create(
-                                    AppRoute.Dashboard
-                                  ).build()
+                                : isGaps
+                                  ? RouteBuilder.create(AppRoute.Coldchain)
+                                      .addPart(AppRoute.Equipment)
+                                      .build()
+                                  : RouteBuilder.create(
+                                      AppRoute.Dashboard
+                                    ).build()
                             }
                           />
                         }

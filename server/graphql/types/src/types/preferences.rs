@@ -82,6 +82,10 @@ impl PreferencesNode {
         self.load_preference(&self.preferences.show_indicative_price_in_requisitions)
     }
 
+    pub async fn is_gaps(&self) -> Result<bool> {
+        self.load_preference(&self.preferences.is_gaps)
+    }
+
     // Store preferences
     pub async fn manage_vaccines_in_doses(&self) -> Result<bool> {
         self.load_preference(&self.preferences.manage_vaccines_in_doses)
@@ -238,6 +242,7 @@ pub enum PreferenceKey {
     DaysInMonth,
     ExpiredStockPreventIssue,
     ExpiredStockIssueThreshold,
+    IsGaps,
     // Store preferences
     ManageVaccinesInDoses,
     ManageVvmStatusForStock,
