@@ -60,6 +60,8 @@ pub mod skip_intermediate_statuses_in_outbound;
 pub use skip_intermediate_statuses_in_outbound::*;
 pub mod store_custom_colour;
 pub use store_custom_colour::*;
+pub mod is_gaps;
+pub use is_gaps::*;
 
 pub struct PreferenceProvider {
     // Global preferences
@@ -77,6 +79,7 @@ pub struct PreferenceProvider {
     pub days_in_month: DaysInMonth,
     pub expired_stock_prevent_issue: ExpiredStockPreventIssue,
     pub expired_stock_issue_threshold: ExpiredStockIssueThreshold,
+    pub is_gaps: IsGaps,
 
     // Store preferences
     pub manage_vaccines_in_doses: ManageVaccinesInDoses,
@@ -118,6 +121,7 @@ pub fn get_preference_provider() -> PreferenceProvider {
         days_in_month: DaysInMonth,
         expired_stock_prevent_issue: ExpiredStockPreventIssue,
         expired_stock_issue_threshold: ExpiredStockIssueThreshold,
+        is_gaps: IsGaps,
 
         // Store preferences
         manage_vaccines_in_doses: ManageVaccinesInDoses,

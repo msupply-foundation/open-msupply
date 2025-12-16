@@ -2237,6 +2237,7 @@
   "preference.firstThresholdForExpiringItems": "First threshold for expiring items (days)",
   "preference.genderOptions": "Gender options",
   "preference.inboundShipmentAutoVerify": "Automatically verify inbound shipments",
+  "preference.isGaps": "Enable Gaps",
   "preference.manageVaccinesInDoses": "Manage vaccines in doses",
   "preference.manageVvmStatusForStock": "Manage VVM status for stock",
   "preference.numberOfMonthsThresholdToShowLowStockAlertsForProducts": "Number of months threshold to show low stock alerts for products",
