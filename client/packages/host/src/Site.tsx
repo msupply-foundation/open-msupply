@@ -247,11 +247,15 @@ export const Site: FC = () => {
                           <Navigate
                             replace
                             to={
-                              isGaps && isCentralServer
+                              // isGapsStore is going to be refactored to support isGaps
+                              // This is a temporary fix until the refactor
+                              // isGapsStore is just a CSS breakpoint check atm
+                              // but is required on small devices
+                              (isGaps || isGapsStore) && isCentralServer
                                 ? RouteBuilder.create(AppRoute.Manage)
                                     .addPart(AppRoute.Equipment)
                                     .build()
-                                : isGaps
+                                : isGaps || isGapsStore
                                   ? RouteBuilder.create(AppRoute.Coldchain)
                                       .addPart(AppRoute.Equipment)
                                       .build()
