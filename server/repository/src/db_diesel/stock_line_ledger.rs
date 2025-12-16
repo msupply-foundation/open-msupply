@@ -1,7 +1,8 @@
 use crate::{
+    db_diesel::stock_line_row::stock_line,
     diesel_macros::{apply_date_time_filter, apply_equal_filter, apply_sort, apply_sort_no_case},
     EqualFilter, InvoiceType, MasterListLineFilter, MasterListLineRepository, Pagination,
-    RepositoryError, Sort,
+    RepositoryError, Sort, StockLineFilter, StockLineRepository,
 };
 
 use super::{item_row::item, DBType, DatetimeFilter, InvoiceStatus, StorageConnection};
@@ -79,6 +80,7 @@ pub struct StockLineLedgerFilter {
     pub store_id: Option<EqualFilter<String>>,
     pub datetime: Option<DatetimeFilter>,
     pub master_list_id: Option<EqualFilter<String>>,
+    pub stock_line: Option<StockLineFilter>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -117,6 +119,16 @@ impl StockLineLedgerFilter {
         self.datetime = Some(filter);
         self
     }
+
+    pub fn master_list_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.master_list_id = Some(filter);
+        self
+    }
+
+    pub fn stock_line(mut self, filter: StockLineFilter) -> Self {
+        self.stock_line = Some(filter);
+        self
+    }
 }
 
 pub struct StockLineLedgerRepository<'a> {
@@ -136,7 +148,7 @@ impl<'a> StockLineLedgerRepository<'a> {
     }
 
     pub fn count(&self, filter: Option<StockLineLedgerFilter>) -> Result<i64, RepositoryError> {
-        let query = create_filtered_query(filter);
+        let query = create_filtered_query(self.connection, filter);
         Ok(query
             .count()
             .get_result(self.connection.lock().connection())?)
@@ -148,7 +160,7 @@ impl<'a> StockLineLedgerRepository<'a> {
         filter: Option<StockLineLedgerFilter>,
         sort: Option<StockLineLedgerSort>,
     ) -> Result<Vec<StockLineLedgerRow>, RepositoryError> {
-        let mut query = create_filtered_query(filter);
+        let mut query = create_filtered_query(self.connection, filter);
 
         if let Some(sort) = sort {
             match sort.key {
@@ -192,7 +204,10 @@ impl<'a> StockLineLedgerRepository<'a> {
 
 type BoxedLedgerQuery = stock_line_ledger::BoxedQuery<'static, DBType>;
 
-fn create_filtered_query(filter: Option<StockLineLedgerFilter>) -> BoxedLedgerQuery {
+fn create_filtered_query(
+    connection: &StorageConnection,
+    filter: Option<StockLineLedgerFilter>,
+) -> BoxedLedgerQuery {
     let mut query = stock_line_ledger::table.into_boxed();
     query = query.filter(stock_line_ledger::datetime.is_not_null());
 
@@ -203,7 +218,21 @@ fn create_filtered_query(filter: Option<StockLineLedgerFilter>) -> BoxedLedgerQu
             store_id,
             datetime,
             master_list_id,
+            stock_line,
         } = f;
+
+        if let Some(stock_line_filter) = stock_line {
+            let store_id_value = store_id.as_ref.and_then(|s| s.equal_to.clone());
+
+            let stock_line = StockLineRepository::create_filtered_query(
+                connection,
+                Some(stock_line_filter),
+                store_id_value.clone(),
+            );
+            let stock_line_ids = stock_line.select(stock_line::id.nullable());
+
+            query = query.filter(stock_line_ledger::stock_line_id.eq_any(stock_line_ids));
+        }
 
         apply_equal_filter!(query, stock_line_id, stock_line_ledger::stock_line_id);
         apply_equal_filter!(query, item_id, stock_line_ledger::item_id);

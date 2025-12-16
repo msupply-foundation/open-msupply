@@ -229,11 +229,14 @@ impl<'a> StockLineRepository<'a> {
                 item_filter.is_visible = Some(true);
                 item_filter.is_active = Some(true);
                 let items = ItemRepository::new(connection)
-                    .query_by_filter(item_filter, query_store_id)
+                    .query_by_filter(item_filter, query_store_id.clone())
                     .unwrap_or_default(); // if there is a database issue, allow the filter to fail silently
 
-                let item_ids: Vec<String> =
-                    items.into_iter().map(|item| item.item_row.id).collect();
+                let item_ids: Vec<String> = items
+                    .clone()
+                    .into_iter()
+                    .map(|item| item.item_row.id)
+                    .collect();
 
                 apply_string_filter!(query, search, stock_line::batch);
                 apply_string_or_filter!(query, Some(StringFilter::equal_any(item_ids)), item::id);
@@ -341,6 +344,11 @@ impl StockLineFilter {
 
     pub fn id(mut self, filter: EqualFilter<String>) -> Self {
         self.id = Some(filter);
+        self
+    }
+
+    pub fn item_code_or_name(mut self, filter: StringFilter) -> Self {
+        self.item_code_or_name = Some(filter);
         self
     }
 
