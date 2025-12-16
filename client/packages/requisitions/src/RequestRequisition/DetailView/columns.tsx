@@ -137,8 +137,8 @@ export const useRequestColumns = () => {
         enableSorting: true,
       },
       {
-        header: t('label.default-price-per-unit'),
-        description: t('description.default-price-per-unit'),
+        header: t('label.indicative-price-per-unit'),
+        description: t('description.indicative-price-per-unit'),
         accessorKey: 'pricePerUnit',
         columnType: ColumnType.Currency,
         includeColumn: showIndicativePriceInRequisitions,
