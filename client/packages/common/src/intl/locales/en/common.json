@@ -2542,5 +2542,21 @@
   "warning.insufficient-recent-stocktake-items": "You have not completed stocktake(s) containing at least {{ minItems }} items within the last {{maxAge}} days. Your stock levels may not be accurate. Are you sure that you want to continue?",
   "warning.manual-store-requisition": "Entering a requisition for this store may result in duplicates if the store also submits an Internal Order.",
   "warning.nothing-to-supply": "Nothing left to supply!",
-  "warning.requested-exceeds-suggested": "Your requested quantity is higher than the suggested"
+  "warning.requested-exceeds-suggested": "Your requested quantity is higher than the suggested",
+  "report.opening-stock": "Opening stock",
+  "report.goods-received": "Goods received in month",
+  "report.distributed": "Distributed quantities",
+  "report.transferred": "Transferred between HUs",
+  "report.returned": "Returned quantities",
+  "report.dispensed": "Dispensed quantities",
+  "report.adjustment-up": "Adjustment(+)",
+  "report.adjustment-down": "Wastage (adjustment -)",
+  "report.available-eop": "Available stock (end of period)",
+  "report.days-out-of-stock": "Days out of stock",
+  "report.deliveries": "Deliveries in progress",
+  "report.quantity-to-order": "Quantity to order (packs)",
+  "report.opening-stock-store": "Opening stock of the store",
+  "report.opening-stock-clients": "Opening stock of the clients",
+  "report.amd": "AMD",
+  "report.consolidated-amc-clients": "Consolidated AMC of clients"
 }
