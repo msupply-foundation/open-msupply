@@ -1,246 +1,101 @@
-import {
-  useColumns,
-  GenericColumnKey,
-  SortBy,
-  Column,
-  useCurrency,
-  TooltipTextCell,
-  useColumnUtils,
-  NumberCell,
-  getRowExpandColumn,
-  ArrayUtils,
-  ColumnAlign,
-  ColumnDescription,
-} from '@openmsupply-client/common';
+import { ColumnDef, useTranslation, ColumnType, Groupable, ArrayUtils } from '@openmsupply-client/common';
 import { SupplierReturnLineFragment } from '../api';
-import { SupplierReturnItem } from '../../types';
+import { useMemo } from 'react';
 
-interface UseSupplierColumnOptions {
-  sortBy: SortBy<SupplierReturnLineFragment | SupplierReturnItem>;
-  onChangeSortBy: (sort: string, dir: 'desc' | 'asc') => void;
-}
+export const useSupplierReturnColumns = () => {
+  const t = useTranslation();
 
-const expansionColumn = getRowExpandColumn<
-  SupplierReturnLineFragment | SupplierReturnItem
->();
-
-const getUnitQuantity = (row: SupplierReturnLineFragment) =>
-  row.packSize * row.numberOfPacks;
-
-export const useSupplierReturnColumns = ({
-  sortBy,
-  onChangeSortBy,
-}: UseSupplierColumnOptions): Column<
-  SupplierReturnLineFragment | SupplierReturnItem
->[] => {
-  const { c } = useCurrency();
-  const { getColumnProperty, getColumnPropertyAsString } = useColumnUtils();
-
-  const columns: ColumnDescription<
-    SupplierReturnLineFragment | SupplierReturnItem
-  >[] = [
-    GenericColumnKey.Selection,
-    [
-      'itemCode',
+  const columns = useMemo(
+    (): ColumnDef<Groupable<SupplierReturnLineFragment>>[] => [
       {
-        getSortValue: row =>
-          getColumnPropertyAsString(row, [
-            { path: ['lines', 'itemCode'] },
-            { path: ['itemCode'], default: '' },
-          ]),
-        accessor: ({ rowData }) =>
-          getColumnProperty(rowData, [
-            { path: ['lines', 'itemCode'] },
-            { path: ['itemCode'], default: '' },
-          ]),
-        isSticky: true,
+        accessorKey: 'itemCode',
+        header: t('label.code'),
+        enableSorting: true,
+        enableColumnFilter: true,
       },
-    ],
-    [
-      'itemName',
       {
-        Cell: TooltipTextCell,
-        getSortValue: row =>
-          getColumnPropertyAsString(row, [
-            { path: ['lines', 'itemName'] },
-            { path: ['itemName'], default: '' },
-          ]),
-        accessor: ({ rowData }) =>
-          getColumnProperty(rowData, [
-            { path: ['lines', 'itemName'] },
-            { path: ['itemName'], default: '' },
-          ]),
+        accessorKey: 'itemName',
+        header: t('label.name'),
+        enableSorting: true,
+        enableColumnFilter: true,
       },
-    ],
-    [
-      'batch',
       {
-        getSortValue: row =>
-          getColumnPropertyAsString(row, [{ path: ['batch'] }]),
-        accessor: ({ rowData }) =>
-          getColumnProperty(rowData, [{ path: ['batch'] }]),
+        accessorKey: 'batch',
+        header: t('label.batch'),
+        enableSorting: true,
+        enableColumnFilter: true,
       },
-    ],
-    [
-      'expiryDate',
       {
-        getSortValue: row =>
-          getColumnPropertyAsString(row, [{ path: ['expiryDate'] }]),
-        accessor: ({ rowData }) =>
-          getColumnProperty(rowData, [{ path: ['expiryDate'] }]),
+        id: 'expiryDate',
+        accessorFn: row => (row.expiryDate ? new Date(row.expiryDate) : null),
+        header: t('label.expiry'),
+        columnType: ColumnType.Date,
+        enableSorting: true,
+        enableColumnFilter: true,
       },
-    ],
-    [
-      'itemUnit',
       {
-        getSortValue: row =>
-          getColumnPropertyAsString(row, [
-            { path: ['lines', 'item', 'unitName'] },
-            { path: ['item', 'unitName'], default: '' },
-          ]),
-        accessor: ({ rowData }) =>
-          getColumnProperty(rowData, [
-            { path: ['lines', 'item', 'unitName'] },
-            { path: ['item', 'unitName'], default: '' },
-          ]),
+        accessorKey: 'item.unitName',
+        header: t('label.unit'),
+        enableSorting: true,
+        enableColumnFilter: true,
       },
-    ],
-    [
-      'packSize',
       {
-        getSortValue: row => {
-          if ('lines' in row) {
-            const { lines } = row;
-            return ArrayUtils.ifTheSameElseDefault(lines, 'packSize', '');
-          } else {
-            return row.packSize ?? '';
-          }
+        accessorKey: 'packSize',
+        header: t('label.pack-size'),
+        columnType: ColumnType.Number,
+        enableSorting: true,
+      },
+      {
+        id: 'numberOfPacks',
+        accessorFn: row => {
+          if (row.subRows)
+            return row.subRows.reduce((total, line) => total + line.numberOfPacks, 0);
+          return row.numberOfPacks;
         },
-        accessor: ({ rowData }) => {
-          if ('lines' in rowData) {
-            const { lines } = rowData;
-            return ArrayUtils.ifTheSameElseDefault(lines, 'packSize', '');
-          } else {
-            return rowData.packSize;
-          }
-        },
+        header: t('label.num-packs'),
+        columnType: ColumnType.Number,
+        enableSorting: true,
       },
-    ],
-    [
-      'numberOfPacks',
       {
-        Cell: NumberCell,
-        accessor: ({ rowData }) => {
-          if ('lines' in rowData) {
-            const { lines } = rowData;
-            return ArrayUtils.getSum(lines, 'numberOfPacks');
-          } else {
-            return rowData.numberOfPacks;
-          }
+        id: 'totalQuantity',
+        accessorFn: row => {
+          if (row.subRows)
+            return row.subRows.reduce((total, line) => total + line.packSize * line.numberOfPacks, 0);
+          return row.packSize * row.numberOfPacks;
         },
-        getSortValue: rowData => {
-          if ('lines' in rowData) {
-            const { lines } = rowData;
-            return ArrayUtils.getSum(lines, 'numberOfPacks');
-          } else {
-            return rowData.numberOfPacks;
-          }
-        },
+        header: t('label.total-quantity'),
+        columnType: ColumnType.Number,
+        enableSorting: true,
       },
-    ],
-    [
-      'unitQuantity',
       {
-        accessor: ({ rowData }) => {
-          if ('lines' in rowData) {
-            const { lines } = rowData;
-            return ArrayUtils.getUnitQuantity(lines);
-          } else {
-            return getUnitQuantity(rowData);
-          }
+        id: 'costPricePerPack',
+        accessorFn: row => {
+          if (row.subRows)
+            return ArrayUtils.getAveragePrice(row.subRows, 'costPricePerPack');
+          return row.costPricePerPack;
         },
-        getSortValue: rowData => {
-          if ('lines' in rowData) {
-            const { lines } = rowData;
-            return ArrayUtils.getUnitQuantity(lines);
-          } else {
-            return getUnitQuantity(rowData);
-          }
-        },
+        header: t('label.unit-price'),
+        columnType: ColumnType.Currency,
+        enableSorting: true,
       },
-    ],
-    {
-      label: 'label.unit-price',
-      key: 'costPricePerPack',
-      align: ColumnAlign.Right,
-      description: 'label.cost-price-per-unit',
-      accessor: ({ rowData }) => {
-        if ('lines' in rowData) {
-          return c(
-            Object.values(rowData.lines).reduce(
-              (sum, batch) =>
-                sum + (batch.costPricePerPack ?? 0) / batch.packSize,
+      {
+        id: 'lineTotal',
+        accessorFn: row => {
+          if (row.subRows) {
+            return Object.values(row.subRows).reduce(
+              (sum, batch) => sum + batch.costPricePerPack * batch.numberOfPacks,
               0
-            )
-          ).format();
-        } else {
-          return c((rowData.costPricePerPack ?? 0) / rowData.packSize).format();
-        }
+            );
+          }
+          return row.costPricePerPack * row.numberOfPacks;
+        },
+        header: t('label.line-total'),
+        columnType: ColumnType.Currency,
+        enableSorting: true,
       },
-      getSortValue: rowData => {
-        if ('lines' in rowData) {
-          return c(
-            Object.values(rowData.lines).reduce(
-              (sum, batch) =>
-                sum + (batch.costPricePerPack ?? 0) / batch.packSize,
-              0
-            )
-          ).format();
-        } else {
-          return c((rowData.costPricePerPack ?? 0) / rowData.packSize).format();
-        }
-      },
-    },
-    {
-      label: 'label.line-total',
-      key: 'lineTotal',
-      align: ColumnAlign.Right,
-      accessor: ({ rowData }) => {
-        if ('lines' in rowData) {
-          return c(
-            Object.values(rowData.lines).reduce(
-              (sum, batch) =>
-                sum + batch.costPricePerPack * batch.numberOfPacks,
-              0
-            )
-          ).format();
-        } else {
-          const x = c(
-            rowData.costPricePerPack * rowData.numberOfPacks
-          ).format();
-          return x;
-        }
-      },
-      getSortValue: row => {
-        if ('lines' in row) {
-          return c(
-            Object.values(row.lines).reduce(
-              (sum, batch) =>
-                sum + batch.costPricePerPack * batch.numberOfPacks,
-              0
-            )
-          ).format();
-        } else {
-          const x = c(row.costPricePerPack * row.numberOfPacks).format();
-          return x;
-        }
-      },
-    },
-    expansionColumn,
-  ];
+    ],
+    [],
+  );
 
-  return useColumns(columns, { onChangeSortBy, sortBy }, [sortBy]);
+  return columns;
 };
-
-export const useExpansionColumns = (): Column<SupplierReturnLineFragment>[] =>
-  useColumns(['batch', 'expiryDate', 'numberOfPacks', 'packSize']);
