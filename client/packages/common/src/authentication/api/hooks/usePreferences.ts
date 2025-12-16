@@ -40,7 +40,10 @@ export const usePreferences = (): Partial<PreferencesNode> => {
     // Or when switching stores
     cacheTime: Infinity,
     staleTime: Infinity,
+    suspense: true,
+    enabled: !!storeId,
   });
 
   return data ?? {};
 };
+``;

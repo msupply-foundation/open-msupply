@@ -29,6 +29,8 @@ impl PreferenceQueries {
             },
         )?;
 
+        tokio::time::sleep(tokio::time::Duration::from_secs(10)).await;
+
         let service_provider = ctx.service_provider();
         let service_ctx = service_provider.context(store_id.to_string(), user.user_id)?;
         let service = &service_provider.preference_service;
