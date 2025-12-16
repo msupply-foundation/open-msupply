@@ -8,15 +8,6 @@ import {
 } from '@openmsupply-client/common';
 import '@testing-library/jest-dom';
 
-jest.mock('@openmsupply-client/common', () => ({
-  ...jest.requireActual('@openmsupply-client/common'),
-  usePreferences: jest.fn(() => ({
-    isGaps: false,
-    storeCustomColour: undefined,
-  })),
-  useIsCentralServerApi: jest.fn(() => false),
-}));
-
 describe('AppDrawer', () => {
   it('Collapses when clicking the drawer open/close button for the first time on a large screen', async () => {
     setScreenSize_ONLY_FOR_TESTING(1441);

@@ -17,6 +17,17 @@ import common from '@common/intl/locales/en/common.json';
 import commonFr from '@common/intl/locales/fr/common.json';
 import commonAr from '@common/intl/locales/ar/common.json';
 
+jest.mock('../../authentication/api/hooks/useIsCentralServer', () => ({
+  useIsCentralServerApi: jest.fn(() => false),
+}));
+
+jest.mock('../../authentication/api/hooks/usePreferences', () => ({
+  usePreferences: jest.fn(() => ({
+    isGaps: false,
+    storeCustomColour: undefined,
+  })),
+}));
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {

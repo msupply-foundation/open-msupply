@@ -1,16 +1,8 @@
 import React, { FC } from 'react';
 import { fireEvent, render, waitFor } from '@testing-library/react';
+
 import { AppFooterPortal, AppFooter } from './AppFooter';
 import { TestingProvider } from '@common/utils';
-
-jest.mock('@openmsupply-client/common', () => ({
-  ...jest.requireActual('@openmsupply-client/common'),
-  usePreferences: jest.fn(() => ({
-    isGaps: false,
-    storeCustomColour: undefined,
-  })),
-  useIsCentralServerApi: jest.fn(() => false),
-}));
 
 describe('AppBarContent', () => {
   const TestAppBarContent: FC<{ initialShow: boolean }> = ({ initialShow }) => {
