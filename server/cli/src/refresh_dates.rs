@@ -293,6 +293,7 @@ impl<'a> RefreshDatesRepository<'a> {
         // the program_event table is using `9999-09-09 09:09:09` as a max timestamp value
         // we don't want to update this datetime value
         let query = if let Some(store_ids) = store_ids {
+            // It'd be good to filter changelog by table name too, however dealing with pg enums here is too annoying.
             format!(
             "select id, {field_name} as dt from {table_name} t join changelog cl on cl.record_id = t.id where cl.store_id in {store_ids} and {field_name} is not null and {field_name} <> '9999-09-09 09:09:09'")
         } else {
@@ -335,6 +336,7 @@ impl<'a> RefreshDatesRepository<'a> {
         store_ids: Option<String>,
     ) -> Result<Vec<IdAndDate>, RepositoryError> {
         let query = if let Some(store_ids) = store_ids {
+            // It'd be good to filter changelog by table name too, however dealing with pg enums here is too annoying.
             format!("select id, {field_name} as d from {table_name} t join changelog cl on cl.record_id = t.id where cl.store_id in {store_ids} and {field_name} is not null")
         } else {
             format!("select id, {field_name} as d from {table_name} where {field_name} is not null")
