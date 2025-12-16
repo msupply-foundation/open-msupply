@@ -1,10 +1,9 @@
 import React, { FC } from 'react';
 import { fireEvent, render, waitFor } from '@testing-library/react';
-
 import { AppFooterPortal, AppFooter } from './AppFooter';
 import { TestingProvider } from '@common/utils';
 
-describe('AppBarContent', () => {
+describe('AppFooter Portal', () => {
   const TestAppBarContent: FC<{ initialShow: boolean }> = ({ initialShow }) => {
     const [show, setShow] = React.useState(initialShow);
 
