@@ -1,12 +1,12 @@
+import React, { useMemo } from 'react';
 import {
-  DataTable,
-  NumberInputCell,
-  useColumns,
-  CellProps,
-  ColumnDescription,
+  MaterialTable,
+  useSimpleMaterialTable,
+  ColumnDef,
+  useTranslation,
+  RequiredNumberInputCell,
+  ColumnType,
 } from '@openmsupply-client/common';
-
-import React from 'react';
 import { GenerateSupplierReturnLineFragment } from '../../api';
 
 export const QuantityToReturnTableComponent = ({
@@ -20,62 +20,78 @@ export const QuantityToReturnTableComponent = ({
   ) => void;
   isDisabled: boolean;
 }) => {
-  const columnDescriptions: ColumnDescription<GenerateSupplierReturnLineFragment>[] =
-    [
-      'itemCode',
-      'itemName',
-      'batch',
-      'expiryDate',
-      [
-        'itemUnit',
-        {
-          accessor: ({ rowData }) => rowData.item.unitName ?? '',
-        },
-      ],
-      'packSize',
-      [
-        'availableNumberOfPacks',
-        {
-          description: 'description.pack-quantity',
-        },
-      ],
-      [
-        'numberOfPacksToReturn',
-        {
-          description: 'description.pack-quantity',
-          width: 100,
-          setter: updateLine,
-          getIsDisabled: () => isDisabled,
-          Cell: NumberOfPacksToReturnReturnInputCell,
-        },
-      ],
-    ];
+  const t = useTranslation();
 
-  const columns = useColumns<GenerateSupplierReturnLineFragment>(
-    columnDescriptions,
-    {},
-    [updateLine, lines]
+  const columns = useMemo(
+    (): ColumnDef<GenerateSupplierReturnLineFragment>[] => [
+      {
+        accessorKey: 'itemCode',
+        header: t('label.code'),
+        size: 100,
+      },
+      {
+        accessorKey: 'itemName',
+        header: t('label.name'),
+        size: 200,
+      },
+      {
+        accessorKey: 'batch',
+        header: t('label.batch'),
+        size: 100,
+      },
+      {
+        accessorKey: 'expiryDate',
+        header: t('label.expiry'),
+        size: 100,
+      },
+      {
+        accessorKey: 'item.unitName',
+        header: t('label.unit'),
+        size: 100,
+      },
+      {
+        accessorKey: 'packSize',
+        header: t('label.pack-size'),
+        columnType: ColumnType.Number,
+        size: 100,
+      },
+      {
+        accessorKey: 'availableNumberOfPacks',
+        header: t('label.available-quantity-for-return'),
+        description: t('description.pack-quantity'),
+        columnType: ColumnType.Number,
+        size: 100,
+      },
+      {
+        accessorKey: 'numberOfPacksToReturn',
+        header: t('label.quantity-to-return'),
+        description: t('description.pack-quantity'),
+        size: 100,
+        pin: 'right',
+        Cell: ({ cell, row: { original: row } }) => (
+          <RequiredNumberInputCell
+            cell={cell}
+            disabled={isDisabled}
+            updateFn={value =>
+              updateLine({ id: row.id, numberOfPacksToReturn: value })
+            }
+            defaultValue={0}
+            min={0}
+            max={Math.floor(row.availableNumberOfPacks)}
+          />
+        ),
+      }
+    ],
+    []
   );
 
-  return (
-    <DataTable
-      id="supplier-return-line-quantity"
-      columns={columns}
-      data={lines}
-      dense
-    />
-  );
+  const table = useSimpleMaterialTable<GenerateSupplierReturnLineFragment>({
+    tableId: 'supplier-return-line-quantity',
+    columns,
+    data: lines,
+  });
+
+  return <MaterialTable table={table} />;
 };
-
-// Input cells can't be defined inline, otherwise they lose focus on re-render
-const NumberOfPacksToReturnReturnInputCell: React.FC<
-  CellProps<GenerateSupplierReturnLineFragment>
-> = props => (
-  <NumberInputCell
-    {...props}
-    isRequired
-    max={Math.floor(props.rowData.availableNumberOfPacks)}
-  />
-);
 
 export const QuantityToReturnTable = React.memo(QuantityToReturnTableComponent);
