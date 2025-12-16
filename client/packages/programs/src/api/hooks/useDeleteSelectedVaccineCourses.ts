@@ -1,13 +1,14 @@
 import {
-  useTableStore,
   useDeleteConfirmation,
   useTranslation,
   useMutation,
 } from '@openmsupply-client/common';
 import { useProgramsGraphQL } from '../useProgramsGraphQL';
 import { VACCINE, LIST } from './keys';
+import { VaccineCourseFragment } from '../operations.generated';
 
-export const useDeleteSelectedVaccineCourses = () => {
+export const useDeleteSelectedVaccineCourses = (selectedRows: VaccineCourseFragment[]) => {
+  const t = useTranslation();
   const { api, queryClient } = useProgramsGraphQL();
   const { mutateAsync } = useMutation(
     async ({ vaccineCourseId }: { vaccineCourseId: string }) => {
@@ -23,18 +24,10 @@ export const useDeleteSelectedVaccineCourses = () => {
       throw new Error(t('error.could-not-delete-vaccine-course'));
     }
   );
-  const t = useTranslation();
-
-  const selectedRows =
-    useTableStore(state => {
-      return Object.keys(state.rowState).filter(
-        id => state.rowState[id]?.isSelected
-      );
-    }) || [];
 
   const onDelete = async () => {
     await Promise.all(
-      selectedRows.map(id => mutateAsync({ vaccineCourseId: id }))
+      selectedRows.map(row => mutateAsync({ vaccineCourseId: row.id }))
     ).then(() => queryClient.invalidateQueries([VACCINE, LIST]));
   };
 
