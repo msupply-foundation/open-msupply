@@ -27,7 +27,7 @@ pub struct UpsertPreferences {
     pub expired_stock_prevent_issue: Option<bool>,
     pub expired_stock_issue_threshold: Option<i32>,
     pub show_indicative_price_in_requisitions:Option<bool>,
-
+    pub is_gaps: Option<bool>,
 
     // Store preferences
     pub manage_vaccines_in_doses: Option<Vec<StorePrefUpdate<bool>>>,
@@ -70,6 +70,7 @@ pub fn upsert_preferences(
         expired_stock_prevent_issue: expired_stock_prevent_issue_input,
         expired_stock_issue_threshold: expired_stock_issue_threshold_input,
         show_indicative_price_in_requisitions: show_indicative_price_in_requisitions_input,
+        is_gaps: is_gaps_input,
 
         // Store preferences
         manage_vaccines_in_doses: manage_vaccines_in_doses_input,
@@ -112,6 +113,7 @@ pub fn upsert_preferences(
         expired_stock_prevent_issue,
         expired_stock_issue_threshold,
         show_indicative_price_in_requisitions,
+        is_gaps,
 
         // Store preferences
         manage_vaccines_in_doses,
@@ -191,6 +193,10 @@ pub fn upsert_preferences(
 
             if let Some(input) = show_indicative_price_in_requisitions_input {
                 show_indicative_price_in_requisitions.upsert(connection, input, None)?;
+            }
+
+            if let Some(input) = is_gaps_input { 
+                is_gaps.upsert(connection, input, None)?;
             }
             
             // Store preferences, input could be array of store IDs and values - iterate and insert...
