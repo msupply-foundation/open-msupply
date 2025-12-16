@@ -26,6 +26,7 @@ pub enum PrefKey {
     DaysInMonth,
     ExpiredStockPreventIssue,
     ExpiredStockIssueThreshold,
+    IsGaps,
 
     // Store preferences
     ManageVaccinesInDoses,
