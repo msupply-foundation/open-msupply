@@ -11,6 +11,9 @@ export const useIsCentralServerApi = () => {
     () => api.get.isCentralServer(),
     {
       refetchOnMount: false,
+      cacheTime: Infinity,
+      staleTime: Infinity,
+      suspense: true,
     }
   );
   return !!data;
