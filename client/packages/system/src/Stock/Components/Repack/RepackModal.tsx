@@ -1,13 +1,10 @@
 import React, { FC, useState } from 'react';
 import {
   useTranslation,
-  DataTable,
   Box,
   DialogButton,
   Typography,
   useDialog,
-  TableProvider,
-  createTableStore,
   Grid,
   useNotification,
   getErrorMessage,
@@ -20,6 +17,9 @@ import {
   useCallbackWithPermission,
   UserPermission,
   PlusCircleIcon,
+  MaterialTable,
+  useSimpleMaterialTable,
+  NothingHere,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { RepackEditForm } from './RepackEditForm';
@@ -60,7 +60,7 @@ export const RepackModal: FC<RepackModalControlProps> = ({
     onChange,
     onInsert: { mutateAsync: onInsert, isLoading: isInserting },
   } = useRepack({ stockLineId: stockLine?.id, invoiceId });
-  const { columns } = useRepackColumns();
+
   // only display the message if there are lines to click on
   // if there are no lines, the 'click new' message is displayed closer to the action
   const displayMessage = invoiceId == undefined && !isNew && !!repacks?.length;
@@ -125,6 +125,21 @@ export const RepackModal: FC<RepackModalControlProps> = ({
     UserPermission.CreateRepack,
     onNewClick
   );
+
+  const columns = useRepackColumns();
+
+  const table = useSimpleMaterialTable<RepackFragment>({
+    tableId: 'repack-list',
+    columns,
+    isLoading,
+    isError,
+    data: repacks,
+    onRowClick,
+    noDataElement: <NothingHere
+      body={t('messages.no-repacks')}
+      onCreate={newRepack}
+    />,
+  });
 
   return (
     <Modal
@@ -217,21 +232,8 @@ export const RepackModal: FC<RepackModalControlProps> = ({
           </Box>
         )}
         <Box display="flex" flexDirection="column">
-          <Box display="flex" flexDirection="column" flex={1}>
-            <Box sx={{ maxHeight: 260, overflowY: 'auto' }}>
-              <TableProvider createStore={createTableStore}>
-                <DataTable
-                  id="repack-list"
-                  columns={columns}
-                  data={repacks}
-                  isLoading={isLoading}
-                  isError={isError}
-                  noDataMessage={t('messages.no-repacks')}
-                  overflowX="auto"
-                  onRowClick={onRowClick}
-                />
-              </TableProvider>
-            </Box>
+          <Box sx={{ maxHeight: 300, overflowY: 'auto' }}>
+            <MaterialTable table={table} />
           </Box>
           <Box paddingLeft={3} paddingTop={3} flex={1}>
             {showRepackDetail && (
