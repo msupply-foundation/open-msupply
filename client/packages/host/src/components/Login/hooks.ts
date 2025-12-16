@@ -52,7 +52,7 @@ export const useLoginForm = (
     setPassword('');
     if (!token) return;
 
-    // Always navigate to root - let Site.tsx handle the redirect based on preferences
+    // Always navigate to root - let the Site component handle the redirect based on preferences
     const state = location.state as State | undefined;
     const from = state?.from?.pathname || `/`;
     navigate(from, { replace: true });
