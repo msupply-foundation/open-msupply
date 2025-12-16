@@ -15,17 +15,21 @@ const Container = styled('div')(() => ({
 }));
 
 interface AppFooterProps {
+  isCentralServer?: boolean;
   backgroundColor?: string;
   textColor?: string;
 }
 
-export const AppFooter = ({ backgroundColor, textColor }: AppFooterProps) => {
+export const AppFooter = ({
+  backgroundColor,
+  textColor,
+  isCentralServer,
+}: AppFooterProps) => {
   const { setAppFooterRef, setAppSessionDetailsRef, fullScreen } =
     useHostContext();
   const { keyboardIsOpen } = useKeyboard();
   const appFooterRef = useRef(null);
   const appSessionDetailsRef = useRef(null);
-  const isCentralServer = useIsCentralServerApi();
 
   useEffect(() => {
     setAppFooterRef(appFooterRef);
