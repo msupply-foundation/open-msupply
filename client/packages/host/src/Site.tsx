@@ -109,6 +109,24 @@ export const Site: FC = () => {
     }
   }
 
+  const getRootNavigationPath = () => {
+    // isGapsStore is going to be refactored to support isGaps
+    // This is a temporary fix until the refactor
+    // isGapsStore is just a CSS breakpoint check atm
+    // but is required on small devices
+    if ((isGaps || isGapsStore) && isCentralServer) {
+      return RouteBuilder.create(AppRoute.Manage)
+        .addPart(AppRoute.Equipment)
+        .build();
+    }
+    if (isGaps || isGapsStore) {
+      return RouteBuilder.create(AppRoute.Coldchain)
+        .addPart(AppRoute.Equipment)
+        .build();
+    }
+    return RouteBuilder.create(AppRoute.Dashboard).build();
+  };
+
   return (
     <RequireAuthentication>
       <Blocker />
@@ -244,26 +262,7 @@ export const Site: FC = () => {
                       <Route
                         path="/"
                         element={
-                          <Navigate
-                            replace
-                            to={
-                              // isGapsStore is going to be refactored to support isGaps
-                              // This is a temporary fix until the refactor
-                              // isGapsStore is just a CSS breakpoint check atm
-                              // but is required on small devices
-                              (isGaps || isGapsStore) && isCentralServer
-                                ? RouteBuilder.create(AppRoute.Manage)
-                                    .addPart(AppRoute.Equipment)
-                                    .build()
-                                : isGaps || isGapsStore
-                                  ? RouteBuilder.create(AppRoute.Coldchain)
-                                      .addPart(AppRoute.Equipment)
-                                      .build()
-                                  : RouteBuilder.create(
-                                      AppRoute.Dashboard
-                                    ).build()
-                            }
-                          />
+                          <Navigate replace to={getRootNavigationPath()} />
                         }
                       />
                       <Route path="*" element={<NotFound />} />
