@@ -6,15 +6,13 @@ use graphql_core::{
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
-
-use graphql_types::types::{InvoiceNodeType, StockLineNode};
+use graphql_types::types::{InvoiceNodeType, StockLineFilterInput, StockLineNode};
 use repository::{
     stock_line_ledger::{
         StockLineLedgerFilter, StockLineLedgerRow, StockLineLedgerSort, StockLineLedgerSortField,
     },
-    DatetimeFilter, EqualFilter,
+    DatetimeFilter, EqualFilter, StockLineFilter,
 };
-
 use service::{
     auth::{Resource, ResourceAccessRequest},
     ledger::get_ledger,
@@ -48,6 +46,7 @@ pub struct LedgerFilterInput {
     pub item_id: Option<EqualFilterStringInput>,
     pub datetime: Option<DatetimeFilterInput>,
     pub master_list_id: Option<EqualFilterStringInput>,
+    pub stock_line: Option<StockLineFilterInput>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -167,6 +166,7 @@ impl LedgerFilterInput {
             item_id,
             datetime,
             master_list_id,
+            stock_line,
         } = self;
 
         StockLineLedgerFilter {
@@ -175,6 +175,7 @@ impl LedgerFilterInput {
             store_id: Some(EqualFilter::equal_to(store_id.to_string())),
             datetime: datetime.map(DatetimeFilter::from),
             master_list_id: master_list_id.map(EqualFilter::from),
+            stock_line: stock_line.map(StockLineFilter::from),
         }
     }
 }

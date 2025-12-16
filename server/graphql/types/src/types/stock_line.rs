@@ -1,13 +1,16 @@
-use crate::types::{program_node::ProgramNode, program_order_type::ProgramOrderTypeNode};
-
 use super::{
     CampaignNode, ItemNode, ItemVariantNode, LocationNode, NameNode, VVMStatusLogConnector,
     VVMStatusNode,
+};
+use crate::types::{
+    program_node::ProgramNode, program_order_type::ProgramOrderTypeNode, LocationFilterInput,
+    MasterListFilterInput,
 };
 use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
 use chrono::NaiveDate;
 use graphql_core::{
+    generic_filters::{DateFilterInput, EqualFilterStringInput, StringFilterInput},
     loader::{
         CampaignByIdLoader, ItemLoader, NameByNameLinkIdLoader, NameByNameLinkIdLoaderInput,
         OrderTypesByProgramIdInput, OrderTypesByProgramIdLoader, ProgramByIdLoader,
@@ -17,9 +20,11 @@ use graphql_core::{
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
-
 use repository::{
-    item_variant::item_variant::ItemVariant, location::Location, ItemRow, StockLine, StockLineRow,
+    item_variant::item_variant::ItemVariant,
+    location::{Location, LocationFilter},
+    DateFilter, EqualFilter, ItemRow, StockLine, StockLineFilter, StockLineRow, StockLineSort,
+    StockLineSortField, StringFilter,
 };
 use service::{
     service_provider::ServiceContext, stock_line::query::get_stock_line, usize_to_u32, ListResult,
@@ -33,6 +38,50 @@ pub struct StockLineNode {
 pub struct StockLineConnector {
     total_count: u32,
     nodes: Vec<StockLineNode>,
+}
+
+#[derive(Enum, Copy, Clone, PartialEq, Eq)]
+#[graphql(rename_items = "camelCase")]
+#[graphql(remote = "repository::db_diesel::stock_line::StockLineSortField")]
+pub enum StockLineSortFieldInput {
+    ExpiryDate,
+    NumberOfPacks,
+    ItemCode,
+    ItemName,
+    Batch,
+    PackSize,
+    SupplierName,
+    LocationCode,
+    CostPricePerPack,
+    VvmStatusThenExpiry,
+}
+#[derive(InputObject)]
+pub struct StockLineSortInput {
+    /// Sort query result by `key`
+    key: StockLineSortFieldInput,
+    /// Sort query result is sorted descending or ascending (if not provided the default is
+    /// ascending)
+    desc: Option<bool>,
+}
+
+#[derive(InputObject, Clone)]
+pub struct StockLineFilterInput {
+    pub expiry_date: Option<DateFilterInput>,
+    pub id: Option<EqualFilterStringInput>,
+    pub code: Option<StringFilterInput>,
+    pub name: Option<StringFilterInput>,
+    pub is_available: Option<bool>,
+    pub item_code_or_name: Option<StringFilterInput>,
+    pub search: Option<StringFilterInput>,
+    pub item_id: Option<EqualFilterStringInput>,
+    pub location_id: Option<EqualFilterStringInput>,
+    pub vvm_status_id: Option<EqualFilterStringInput>,
+    pub store_id: Option<EqualFilterStringInput>,
+    pub has_packs_in_store: Option<bool>,
+    pub location: Option<LocationFilterInput>,
+    pub master_list: Option<MasterListFilterInput>,
+    pub is_active: Option<bool>,
+    pub is_program_stock_line: Option<bool>,
 }
 
 #[Object]
@@ -203,7 +252,7 @@ impl StockLineNode {
             .await?;
 
         Ok(result
-            .map(|order_types| ProgramOrderTypeNode::from_vec(order_types))
+            .map(ProgramOrderTypeNode::from_vec)
             .unwrap_or_default())
     }
 
@@ -231,6 +280,38 @@ pub fn get_stock_line_response(ctx: &ServiceContext, id: String) -> StockLineRes
     match get_stock_line(ctx, id) {
         Ok(stock_line) => StockLineResponse::Response(StockLineNode::from_domain(stock_line)),
         Err(error) => StockLineResponse::Error(error.into()),
+    }
+}
+
+impl From<StockLineFilterInput> for StockLineFilter {
+    fn from(f: StockLineFilterInput) -> Self {
+        StockLineFilter {
+            expiry_date: f.expiry_date.map(DateFilter::from),
+            id: f.id.map(EqualFilter::from),
+            code: f.code.map(StringFilter::from),
+            name: f.name.map(StringFilter::from),
+            is_available: f.is_available,
+            item_code_or_name: f.item_code_or_name.map(StringFilterInput::into),
+            search: f.search.map(StringFilterInput::into),
+            item_id: f.item_id.map(EqualFilter::from),
+            location_id: f.location_id.map(EqualFilter::from),
+            store_id: None,
+            vvm_status_id: f.vvm_status_id.map(EqualFilter::from),
+            has_packs_in_store: f.has_packs_in_store,
+            location: f.location.map(LocationFilter::from),
+            master_list: f.master_list.map(|f| f.to_domain()),
+            is_active: f.is_active,
+            is_program_stock_line: f.is_program_stock_line,
+        }
+    }
+}
+
+impl StockLineSortInput {
+    pub fn to_domain(self) -> StockLineSort {
+        StockLineSort {
+            key: StockLineSortField::from(self.key),
+            desc: self.desc,
+        }
     }
 }
 
