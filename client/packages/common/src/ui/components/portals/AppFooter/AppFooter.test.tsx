@@ -1,7 +1,16 @@
 import React, { FC } from 'react';
-import { fireEvent, render } from '@testing-library/react';
+import { fireEvent, render, waitFor } from '@testing-library/react';
 import { AppFooterPortal, AppFooter } from './AppFooter';
 import { TestingProvider } from '@common/utils';
+
+jest.mock('@openmsupply-client/common', () => ({
+  ...jest.requireActual('@openmsupply-client/common'),
+  usePreferences: jest.fn(() => ({
+    isGaps: false,
+    storeCustomColour: undefined,
+  })),
+  useIsCentralServerApi: jest.fn(() => false),
+}));
 
 describe('AppBarContent', () => {
   const TestAppBarContent: FC<{ initialShow: boolean }> = ({ initialShow }) => {
@@ -26,8 +35,12 @@ describe('AppBarContent', () => {
     );
   };
 
-  it('Portal children are rendered under the source', () => {
+  it('Portal children are rendered under the source', async () => {
     const { getByText } = render(<TestAppBarContent initialShow />);
+
+    await waitFor(() => {
+      expect(getByText(/josh/)).toBeInTheDocument();
+    });
 
     const node = getByText(/josh/);
     const node2 = getByText(/mark/);
@@ -38,14 +51,22 @@ describe('AppBarContent', () => {
     expect(node2.closest('#source')).toBeInTheDocument();
   });
 
-  it('Portal children dismount if the portal dismounts', () => {
+  it('Portal children dismount if the portal dismounts', async () => {
     const { queryByText, getByRole } = render(
       <TestAppBarContent initialShow />
     );
 
+    await waitFor(() => {
+      expect(getByRole('button')).toBeInTheDocument();
+    });
+
     const button = getByRole('button');
 
     fireEvent.click(button);
+
+    await waitFor(() => {
+      expect(queryByText(/josh/)).not.toBeInTheDocument();
+    });
 
     const node = queryByText(/josh/);
     const node2 = queryByText(/mark/);
