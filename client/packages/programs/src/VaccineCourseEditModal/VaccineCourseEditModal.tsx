@@ -4,30 +4,27 @@ import {
   BasicTextInput,
   Box,
   ButtonWithIcon,
-  CellProps,
   Checkbox,
+  ColumnDef,
   ColumnDataSetter,
+  ColumnType,
   Container,
-  createTableStore,
-  DataTable,
   DeleteIcon,
   DemographicNode,
   DialogButton,
   FnUtils,
   IconButton,
   InputWithLabelRow,
+  MaterialTable,
   ModalMode,
-  NumberCell,
-  NumberInputCell,
-  MultipleNumberInputCell,
+  NothingHere,
   NumericTextInput,
   PlusCircleIcon,
-  TableProvider,
-  TextInputCell,
-  useColumns,
   useDialog,
   useNotification,
+  useSimpleMaterialTable,
   useTranslation,
+  useBufferState,
 } from '@openmsupply-client/common';
 import React, { useMemo, FC } from 'react';
 import { useVaccineCourse } from '../api/hooks/useVaccineCourse';
@@ -35,6 +32,9 @@ import { useDemographicData } from '@openmsupply-client/system';
 import { VaccineItemSelect } from './VaccineCourseItemSelect';
 import { DraftVaccineCourse, VaccineCourseFragment } from '../api';
 import { VaccineCourseDoseFragment } from '../api/operations.generated';
+import { TextInputCell } from 'packages/common/src/ui/layout/tables/material-react-table/components/TextInputCell';
+import { NumberInputCell } from 'packages/common/src/ui/layout/tables/material-react-table/components/NumberInputCell';
+import { MRT_Cell, MRT_RowData } from 'material-react-table';
 
 const getDemographicOptions = (demographics: DemographicNode[]) => {
   const options = demographics.map(demographic => {
@@ -310,64 +310,94 @@ const VaccineCourseDoseTable = ({
     });
   };
 
-  const columns = useColumns<VaccineCourseDoseFragment>(
-    [
+  const columns = useMemo(
+    (): ColumnDef<VaccineCourseDoseFragment>[] => [
       {
-        key: 'doseNumber',
-        Cell: NumberCell,
-        width: 80,
-        label: 'label.dose-number',
-        accessor: ({ rowData }) => doseIndex(doses, rowData),
+        id: 'doseNumber',
+        accessorFn: row => doseIndex(doses, row),
+        header: t('label.dose-number'),
+        columnType: ColumnType.Number,
+        size: 60,
       },
       {
-        key: 'label',
-        Cell: LabelCell,
-        cellProps: { isRequired: true },
-        width: 280,
-        label: 'label.label',
-        setter: updateDose,
+        accessorKey: 'label',
+        header: t('label.label'),
+        Cell: ({ cell, row: { original: row } }) => (
+          <TextInputCell
+            cell={cell}
+            updateFn={value => updateDose({ ...row, label: value })}
+          />
+        ),
+        size: 200,
       },
       {
-        key: 'minAgeMonths',
-        Cell: AgeCell,
-        label: 'label.from-age',
-        setter: updateDose,
+        accessorKey: 'minAgeMonths',
+        header: t('label.from-age'),
+        Cell: ({ cell, row: { original: row } }) => (
+          <AgeInputCell
+            cell={cell}
+            updateFn={value => updateDose({ ...row, minAgeMonths: value })}
+          />
+        ),
+        size: 140,
       },
       {
-        key: 'maxAgeMonths',
-        Cell: AgeCell,
-        label: 'label.to-age',
-        setter: updateDose,
+        accessorKey: 'maxAgeMonths',
+        header: t('label.to-age'),
+        Cell: ({ cell, row: { original: row } }) => (
+          <AgeInputCell
+            cell={cell}
+            updateFn={value => updateDose({ ...row, maxAgeMonths: value })}
+          />
+        ),
+        size: 140,
       },
       {
-        key: 'customAgeLabel',
-        Cell: LabelCell,
-        label: 'label.custom-age-label',
-        accessor: ({ rowData }) => rowData.customAgeLabel ?? '',
-        cellProps: { debounceTime: 0 },
-        setter: updateDose,
-      },
-      {
-        key: 'minIntervalDays',
-        Cell: NumberInputCell,
-        width: 120,
-        label: 'label.min-interval',
-        setter: updateDose,
-      },
-      {
-        key: 'delete',
-        Cell: ({ rowData }) => (
-          <IconButton
-            icon={<DeleteIcon sx={{ height: '0.9em' }} />}
-            label={t('label.delete')}
-            onClick={() => deleteDose(rowData.id)}
+        accessorKey: 'customAgeLabel',
+        header: t('label.custom-age-label'),
+        Cell: ({ cell, row: { original: row } }) => (
+          <TextInputCell
+            cell={cell}
+            updateFn={value => updateDose({ ...row, customAgeLabel: value })}
           />
         ),
       },
+      {
+        accessorKey: 'minIntervalDays',
+        header: t('label.min-interval'),
+        Cell: ({ cell, row: { original: row } }) => (
+          <NumberInputCell
+            cell={cell}
+            updateFn={value => updateDose({ ...row, minIntervalDays: value })}
+          />
+        ),
+        size: 100,
+      },
+      {
+        accessorKey: 'delete',
+        header: t('label.delete'),
+        Cell: ({ row: { original: row } }) => (
+          <IconButton
+            icon={<DeleteIcon sx={{ height: '0.9em' }} />}
+            label={t('label.delete')}
+            onClick={() => deleteDose(row.id)}
+          />
+        ),
+        size: 50,
+      },
     ],
-    {},
-    [updateDose, doses]
+    [doses]
   );
+
+  const table = useSimpleMaterialTable<VaccineCourseDoseFragment>({
+    tableId: 'doses-list',
+    columns,
+    data: doses,
+    enableRowSelection: false,
+    noDataElement: (
+      <NothingHere body={t('message.add-a-dose')} />
+    ),
+  });
 
   return (
     <>
@@ -378,45 +408,76 @@ const VaccineCourseDoseTable = ({
           onClick={addDose}
         />
       </Box>
-      <TableProvider createStore={createTableStore}>
-        <DataTable
-          id={'doses-list'}
-          columns={columns}
-          data={doses}
-          noDataMessage={t('message.add-a-dose')}
-          dense
-        />
-      </TableProvider>
+      <MaterialTable table={table} />
     </>
   );
 };
 
-// Input cells can't be defined inline, otherwise they lose focus on re-render
-const LabelCell = (props: CellProps<VaccineCourseDoseFragment>) => (
-  <TextInputCell fullWidth {...props} />
-);
+const ARROW_KEYS = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'];
 
-const AgeCell = (props: CellProps<VaccineCourseDoseFragment>) => {
+export const AgeInputCell = <T extends MRT_RowData>({
+  cell,
+  updateFn,
+  ...numericTextProps
+}: {
+  cell: MRT_Cell<T>;
+  updateFn: (value: number) => void;
+}) => {
+  const { getValue, column, row } = cell;
+
+  const value = column.accessorFn
+    ? // Workaround for tanstack bug: https://github.com/TanStack/table/issues/5363
+    (column.accessorFn(row.original, row.index) as number)
+    : getValue<number>();
+
+  const [year, setYear] = useBufferState(Math.floor(value / 12));
+  const [month, setMonth] = useBufferState(value % 12);
+
   const t = useTranslation();
-  return (
-    <MultipleNumberInputCell
+
+  return <>
+    <NumericTextInput
       decimalLimit={2}
-      width={60}
-      {...props}
-      units={[
-        {
-          key: 'year',
-          ratio: 12,
-          label: t('label.years-abbreviation'),
-          max: 150,
-        },
-        {
-          key: 'month',
-          ratio: 1,
-          label: t('label.months-abbreviation'),
-          max: 11,
-        },
-      ]}
+      min={0}
+      value={year}
+      onChange={num => {
+        const newValue = num === undefined ? 0 : num;
+        if (newValue === year) return;
+        setYear(newValue);
+        updateFn(newValue * 12 + month);
+      }}
+      onKeyDown={e => {
+        // Allow using arrow keys to move input cursor without
+        // navigating to the next/previous cell
+        if (ARROW_KEYS.includes(e.key)) {
+          e.stopPropagation();
+        }
+      }}
+      endAdornment={t('label.years-abbreviation')}
+      fullWidth
+      {...numericTextProps}
     />
-  );
+    <NumericTextInput
+      decimalLimit={2}
+      min={0}
+      max={11}
+      value={month}
+      onChange={num => {
+        const newValue = num === undefined ? 0 : num;
+        if (newValue === month) return;
+        setMonth(newValue);
+        updateFn(year * 12 + newValue);
+      }}
+      onKeyDown={e => {
+        // Allow using arrow keys to move input cursor without
+        // navigating to the next/previous cell
+        if (ARROW_KEYS.includes(e.key)) {
+          e.stopPropagation();
+        }
+      }}
+      endAdornment={t('label.months-abbreviation')}
+      fullWidth
+      {...numericTextProps}
+    />
+  </>;
 };
