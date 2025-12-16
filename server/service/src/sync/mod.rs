@@ -177,6 +177,9 @@ impl CentralServerConfig {
     }
 }
 pub(crate) fn is_initialised(service_provider: &ServiceProvider) -> bool {
+    // We cache the initialised state to avoid having to check the database every time. This stops
+    // unnecessary database queries and avoids having to unwrap the database connection. We still
+    // unwrap on the first check as there's no point starting up without the database.
     if IS_INITIALISED.read().unwrap().clone() {
         return true;
     } else {
