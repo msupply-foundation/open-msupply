@@ -2,9 +2,11 @@ import { useQuery } from 'react-query';
 import { useAuthApi } from './useAuthApi';
 import { useNotification } from '@common/hooks';
 import { useTranslation } from '@common/intl';
+import { useAuthContext } from '../../AuthContext';
 
 export const useIsCentralServerApi = () => {
   const api = useAuthApi();
+  const { storeId } = useAuthContext();
   // api.keys.isCentralServer and "refetchOnMount: false" should guarantee that this is called just once, on page load
   const { data } = useQuery(
     api.keys.isCentralServer,
@@ -14,6 +16,7 @@ export const useIsCentralServerApi = () => {
       cacheTime: Infinity,
       staleTime: Infinity,
       suspense: true,
+      enabled: !!storeId,
     }
   );
   return !!data;
