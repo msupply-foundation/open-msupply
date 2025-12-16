@@ -1,9 +1,9 @@
 import React, { FC } from 'react';
-import { fireEvent, render, waitFor } from '@testing-library/react';
+import { fireEvent, render } from '@testing-library/react';
 import { AppFooterPortal, AppFooter } from './AppFooter';
 import { TestingProvider } from '@common/utils';
 
-describe('AppFooter Portal', () => {
+describe('AppBarContent', () => {
   const TestAppBarContent: FC<{ initialShow: boolean }> = ({ initialShow }) => {
     const [show, setShow] = React.useState(initialShow);
 
@@ -26,12 +26,10 @@ describe('AppFooter Portal', () => {
     );
   };
 
-  it('Portal children are rendered under the source', async () => {
+  it('Portal children are rendered under the source', () => {
     const { getByText } = render(<TestAppBarContent initialShow />);
 
-    await waitFor(() => {
-      expect(getByText(/josh/)).toBeInTheDocument();
-    });
+    expect(getByText(/josh/)).toBeInTheDocument();
 
     const node = getByText(/josh/);
     const node2 = getByText(/mark/);
@@ -42,23 +40,17 @@ describe('AppFooter Portal', () => {
     expect(node2.closest('#source')).toBeInTheDocument();
   });
 
-  it('Portal children dismount if the portal dismounts', async () => {
+  it('Portal children dismount if the portal dismounts', () => {
     const { queryByText, getByRole } = render(
       <TestAppBarContent initialShow />
     );
 
-    await waitFor(() => {
-      expect(getByRole('button')).toBeInTheDocument();
-    });
-
+    expect(getByRole('button')).toBeInTheDocument();
     const button = getByRole('button');
 
     fireEvent.click(button);
 
-    await waitFor(() => {
-      expect(queryByText(/josh/)).not.toBeInTheDocument();
-    });
-
+    expect(queryByText(/josh/)).not.toBeInTheDocument();
     const node = queryByText(/josh/);
     const node2 = queryByText(/mark/);
 

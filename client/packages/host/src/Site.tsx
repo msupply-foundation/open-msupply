@@ -269,6 +269,7 @@ export const Site: FC = () => {
                     </Routes>
                   </Box>
                   <AppFooter
+                    isCentralServer={isCentralServer}
                     backgroundColor={customColour}
                     textColor={textColour}
                   />
