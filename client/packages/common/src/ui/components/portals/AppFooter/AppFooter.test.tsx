@@ -29,8 +29,6 @@ describe('AppBarContent', () => {
   it('Portal children are rendered under the source', () => {
     const { getByText } = render(<TestAppBarContent initialShow />);
 
-    expect(getByText(/josh/)).toBeInTheDocument();
-
     const node = getByText(/josh/);
     const node2 = getByText(/mark/);
 
@@ -45,12 +43,10 @@ describe('AppBarContent', () => {
       <TestAppBarContent initialShow />
     );
 
-    expect(getByRole('button')).toBeInTheDocument();
     const button = getByRole('button');
 
     fireEvent.click(button);
 
-    expect(queryByText(/josh/)).not.toBeInTheDocument();
     const node = queryByText(/josh/);
     const node2 = queryByText(/mark/);
 
