@@ -104,6 +104,11 @@ impl<'a> SystemLogRowRepository<'a> {
             .get_results(self.connection.lock().connection())?;
         Ok(result)
     }
+
+    pub fn find_all(&self) -> Result<Vec<SystemLogRow>, RepositoryError> {
+        let result = system_log::table.load(self.connection.lock().connection())?;
+        Ok(result)
+    }
 }
 
 impl Upsert for SystemLogRow {

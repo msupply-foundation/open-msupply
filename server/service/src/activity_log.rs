@@ -271,17 +271,21 @@ pub fn log_type_from_purchase_order_status(status: &PurchaseOrderStatus) -> Acti
 #[cfg(test)]
 mod test {
     use crate::{
+        activity_log::add_migration_results_to_system_log,
         invoice::outbound_shipment::update::{
             UpdateOutboundShipment, UpdateOutboundShipmentStatus,
         },
         test_helpers::{setup_all_with_data_and_service_provider, ServiceTestContext},
     };
+    use chrono::{NaiveDate, Utc};
     use repository::{
         mock::{mock_name_a, mock_store_a, MockData, MockDataInserts},
+        system_log_row::{SystemLogRowRepository, SystemLogType},
+        test_db::setup_all,
         ActivityLogType, InvoiceRow, InvoiceStatus, InvoiceType,
     };
 
-    use super::get_activity_logs;
+    use super::{get_activity_logs, system_log_entry, SystemLogMessage};
 
     #[actix_rt::test]
     async fn invoice_activity_log_status() {
@@ -389,5 +393,106 @@ mod test {
             activity_logs[1].activity_log_row.r#type,
             ActivityLogType::InvoiceStatusShipped
         );
+    }
+
+    #[actix_rt::test]
+    async fn system_log_entry_with_custom_datetime_test() {
+        let (_, _, connection_manager, _) = setup_all(
+            "system_log_entry_with_custom_datetime_test",
+            MockDataInserts::none(),
+        )
+        .await;
+
+        let connection = connection_manager.connection().unwrap();
+        let repo = SystemLogRowRepository::new(&connection);
+
+        let custom_datetime = NaiveDate::from_ymd_opt(2025, 12, 10)
+            .unwrap()
+            .and_hms_opt(10, 30, 0)
+            .unwrap();
+
+        // Test with custom datetime
+        system_log_entry(
+            &connection,
+            SystemLogType::Migration,
+            Some(custom_datetime),
+            false,
+            SystemLogMessage::Message("Test with custom datetime"),
+        )
+        .unwrap();
+
+        // Test without datetime (should use current time)
+        let before_insert = Utc::now().naive_utc();
+        system_log_entry(
+            &connection,
+            SystemLogType::ServerStatus,
+            None,
+            false,
+            SystemLogMessage::Message("Test without custom datetime"),
+        )
+        .unwrap();
+        let after_insert = Utc::now().naive_utc();
+
+        let logs = repo.find_all().unwrap();
+        assert_eq!(logs.len(), 2);
+
+        // First log should have custom datetime
+        assert_eq!(logs[0].datetime, custom_datetime);
+        assert_eq!(
+            logs[0].message,
+            Some("Test with custom datetime".to_string())
+        );
+        assert_eq!(logs[0].r#type, SystemLogType::Migration);
+
+        // Second log should have a datetime within the before/after range
+        assert!(logs[1].datetime > before_insert && logs[1].datetime < after_insert);
+
+        assert_eq!(
+            logs[1].message,
+            Some("Test without custom datetime".to_string())
+        );
+        assert_eq!(logs[1].r#type, SystemLogType::ServerStatus);
+    }
+
+    #[actix_rt::test]
+    async fn add_migration_results_to_system_log_test() {
+        let (_, _, connection_manager, _) = setup_all(
+            "add_migration_results_to_system_log_test",
+            MockDataInserts::none(),
+        )
+        .await;
+
+        let connection = connection_manager.connection().unwrap();
+        let repo = SystemLogRowRepository::new(&connection);
+
+        // Create multiple migration results
+        let migration_results = vec![
+            (
+                "Migration 1 completed".to_string(),
+                NaiveDate::from_ymd_opt(2025, 12, 01)
+                    .unwrap()
+                    .and_hms_opt(10, 0, 0)
+                    .unwrap(),
+            ),
+            (
+                "Migration 2 completed".to_string(),
+                NaiveDate::from_ymd_opt(2025, 12, 01)
+                    .unwrap()
+                    .and_hms_opt(10, 5, 0)
+                    .unwrap(),
+            ),
+        ];
+
+        // Test the migration log function
+        add_migration_results_to_system_log(&connection, migration_results).unwrap();
+
+        let logs = repo.find_all().unwrap();
+        assert_eq!(logs.len(), 2);
+
+        assert_eq!(logs[0].r#type, SystemLogType::Migration);
+        assert_eq!(logs[0].message, Some("Migration 1 completed".to_string()));
+
+        assert_eq!(logs[1].r#type, SystemLogType::Migration);
+        assert_eq!(logs[1].message, Some("Migration 2 completed".to_string()));
     }
 }
