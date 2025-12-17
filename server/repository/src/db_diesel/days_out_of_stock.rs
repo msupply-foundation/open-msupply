@@ -142,13 +142,13 @@ pub(crate) mod test {
         let store_id = mock_store_a().id.clone();
         let repo = DaysOutOfStockRepository::new(&connection);
 
+        std::env::set_var("TZ", "Pacific/Auckland");
+
         // Set timezone, otherwise would use whatever is configured in postgres system
         if cfg!(feature = "postgres") {
             diesel::sql_query("SET TIME ZONE 'Pacific/Auckland';")
                 .execute(connection.lock().connection())
                 .unwrap();
-        } else {
-            std::env::set_var("TZ", "Pacific/Auckland");
         }
 
         let result = repo
@@ -160,9 +160,7 @@ pub(crate) mod test {
             })
             .unwrap();
 
-        if cfg!(not(feature = "postgres")) {
-            std::env::set_var("TZ", "");
-        }
+        std::env::set_var("TZ", "");
 
         let Some(expected_dos) = expected_dos else {
             assert_eq!(
@@ -215,15 +213,15 @@ pub(crate) mod test {
             vec![(5, 10), (6, -10), (25, 10)],
             /*
             Looking back 10 days from 30th, including 20th in calculation
-            +------------------------+----+----+----+----+----+----+----+----+-----+-----+-----+-----+
-            |                        | 19 | 20 | 21 | 22 | 23 | 24 | 25 | 26 | 27  | 28  | 29  | 30  |
-            +------------------------+----+----+----+----+----+----+----+----+-----+-----+-----+-----+
-            | end of day balance     | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 0  | 0   | 0   | 0   | 0   |
-            +------------------------+----+----+----+----+----+----+----+----+-----+-----+-----+-----+
-            | full day without stock |    | no | no | no | no | no | no | no | yes | yes | yes | yes |
-            +------------------------+----+----+----+----+----+----+----+----+-----+-----+-----+-----+
+            +------------------------+----+-----+-----+-----+-----+-----+----+----+----+----+----+----+
+            |                        | 19 | 20  | 21  | 22  | 23  | 24  | 25 | 26 | 27 | 28 | 29 | 30 |
+            +------------------------+----+-----+-----+-----+-----+-----+----+----+----+----+----+----+
+            | end of day balance     | 0  | 0   | 0   | 0   | 0   | 0   | 10 | 10 | 10 | 10 | 10 | 10 |
+            +------------------------+----+-----+-----+-----+-----+-----+----+----+----+----+----+----+
+            | full day without stock | no | yes | yes | yes | yes | yes | no | no | no | no | no | no |
+            +------------------------+----+-----+-----+-----+-----+-----+----+----+----+----+----+----+
             https://www.tablesgenerator.com/text_tables (file -> paste table data)
-            */
+                        */
             Some(5.0),
         )
         .await;
@@ -312,9 +310,6 @@ pub(crate) mod test {
         // If reference time is 23:00 UTC and local timezone iz 'Pacific/Auckland' then 20th will be 21st
         // making previous data lead to 9 days out of stock instead of 10
         let reference_date = datetime_now().with_hour(23).unwrap();
-
-        // Set TZ to UTC
-        // std::env::set_var("TZ", "Pacific/Auckland");
 
         test_one(
             "out_of_stock_timezone",
