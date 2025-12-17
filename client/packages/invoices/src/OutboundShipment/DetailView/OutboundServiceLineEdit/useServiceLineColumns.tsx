@@ -5,24 +5,23 @@ import {
   IconButton,
   XCircleIcon,
   ColumnAlign,
-  useFormatCurrency,
   ColumnDef,
+  ColumnType,
 } from '@openmsupply-client/common';
-import { ServiceItemSearchInput } from '@openmsupply-client/system';
-import { DraftStockOutLine } from './../../../types';
+import { ServiceItemSearchInput, toItemWithPackSize } from '@openmsupply-client/system';
+import { DraftInboundLine, DraftStockOutLine } from './../../../types';
 // Need to be re-exported when Legacy cells are removed
 import { TextInputCell } from '@openmsupply-client/common/src/ui/layout/tables/material-react-table/components/TextInputCell';
 import { NumberInputCell } from '@openmsupply-client/common/src/ui/layout/tables/material-react-table/components/NumberInputCell';
 import { CurrencyInputCell } from '@openmsupply-client/common/src/ui/layout/tables/material-react-table/components/CurrencyInputCell';
 
-export const useServiceLineColumns = (
-  setter: (patch: RecordPatch<DraftStockOutLine>) => void
+export const useServiceLineColumns = <T extends DraftInboundLine | DraftStockOutLine>(
+  setter: (patch: RecordPatch<T>) => void
 ) => {
   const t = useTranslation();
-  const formatCurrency = useFormatCurrency();
 
   const columns = useMemo(
-    (): ColumnDef<DraftStockOutLine>[] => [
+    (): ColumnDef<T>[] => [
       {
         id: 'serviceItemName',
         accessorFn: row => row.item?.id,
@@ -35,7 +34,7 @@ export const useServiceLineColumns = (
             <ServiceItemSearchInput
               refetchOnMount={false}
               width={200}
-              onChange={item => item && setter({ ...rowData, item })}
+              onChange={item => item && setter({ ...rowData, item: toItemWithPackSize({ item }) })}
               currentItemId={id}
             />
           );
@@ -86,11 +85,10 @@ export const useServiceLineColumns = (
         ),
       },
       {
-        id: 'totalAfterTax',
-        accessorFn: row => formatCurrency(row.totalAfterTax),
+        accessorKey: 'totalAfterTax',
         header: t('label.total'),
         size: 75,
-        align: ColumnAlign.Right,
+        columnType: ColumnType.Currency,
       },
       {
         id: 'delete',
@@ -104,7 +102,7 @@ export const useServiceLineColumns = (
             label={t('messages.delete-this-line')}
           />
         ),
-      }
+      },
     ],
     []
   );

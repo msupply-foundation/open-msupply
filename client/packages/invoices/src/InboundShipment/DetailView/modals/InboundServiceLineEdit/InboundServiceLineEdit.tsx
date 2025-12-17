@@ -8,23 +8,20 @@ import {
   useDialog,
   useTranslation,
   DialogButton,
-  QueryParamsProvider,
-  createQueryParamsStore,
   MaterialTable,
   useSimpleMaterialTable,
-  NothingHere,
 } from '@openmsupply-client/common';
 import { useInbound } from '../../../api';
 import { useDraftServiceLines } from './useDraftServiceLines';
-import { useServiceLineColumns } from './useServiceLineColumns';
-import { ItemRowFragment, useItem } from '@openmsupply-client/system';
+import { useItem } from '@openmsupply-client/system';
+import { useServiceLineColumns } from '@openmsupply-client/invoices/src/OutboundShipment/DetailView/OutboundServiceLineEdit/useServiceLineColumns';
 
 interface InboundServiceLineEditProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-const InboundServiceLineEditComponent = ({
+export const InboundServiceLineEdit = ({
   isOpen,
   onClose,
 }: InboundServiceLineEditProps) => {
@@ -38,11 +35,12 @@ const InboundServiceLineEditComponent = ({
     serviceItem: { data: serviceItem },
   } = useItem();
 
+  const linesFiltered = lines.filter(({ isDeleted }) => !isDeleted);
+
   const table = useSimpleMaterialTable({
     tableId: 'inbound-detail-service-line',
     columns,
-    data: lines.filter(({ isDeleted }) => !isDeleted),
-    noDataElement: <NothingHere body={!serviceItem ? t('error.no-service-charges') : t('error.no-results')} />,
+    data: linesFiltered,
   });
 
   return (
@@ -84,19 +82,11 @@ const InboundServiceLineEditComponent = ({
               Icon={<PlusCircleIcon />}
             />
           </Box>
-          <MaterialTable table={table} />
+          {linesFiltered.length > 0
+            ? <MaterialTable table={table} />
+            : (!serviceItem ? t('error.no-service-charges') : t('error.no-results'))}
         </Box>
       )}
     </Modal>
   );
 };
-
-export const InboundServiceLineEdit = (props: InboundServiceLineEditProps) => (
-  <QueryParamsProvider
-    createStore={createQueryParamsStore<ItemRowFragment>({
-      initialSortBy: { key: 'name' },
-    })}
-  >
-    <InboundServiceLineEditComponent {...props} />
-  </QueryParamsProvider>
-);

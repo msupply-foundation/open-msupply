@@ -27,7 +27,7 @@ export const useInsuranceColumns = () => {
       {
         accessorKey: 'discountPercentage',
         header: t('label.discount-rate'),
-        columnType: ColumnType.Number,
+        columnType: ColumnType.Percentage,
       },
       {
         accessorKey: 'expiryDate',

@@ -1,4 +1,4 @@
-import { ColumnDef, useTranslation } from '@openmsupply-client/common';
+import { ColumnDef, ColumnType, useTranslation } from '@openmsupply-client/common';
 import { HistoryItem } from './HistoryModal';
 import { useMemo } from 'react';
 
@@ -15,6 +15,7 @@ export const useHistoryColumns = () => {
       {
         accessorKey: 'unitQuantity',
         header: t('label.unit-quantity'),
+        columnType: ColumnType.Number,
         size: 150,
       },
       {
@@ -23,9 +24,9 @@ export const useHistoryColumns = () => {
         size: 150,
       },
       {
-        id: 'date',
-        accessorFn: row => row.date?.toLocaleDateString(),
+        accessorKey: 'date',
         header: t('label.date'),
+        columnType: ColumnType.Date,
         size: 150,
       },
       {
