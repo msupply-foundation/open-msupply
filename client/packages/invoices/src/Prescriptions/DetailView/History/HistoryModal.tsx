@@ -84,7 +84,7 @@ export const HistoryModal: React.FC<HistoryModalModalProps> = ({
   }, [data]);
 
   const table = useSimpleMaterialTable({
-    tableId: 'prescription-line-edit',
+    tableId: 'prescription-history-modal',
     columns,
     data: historyData,
     isLoading,

@@ -34,7 +34,7 @@ export const InsuranceListView = ({
   } = useInsurancePolicies(patientId);
 
   const { table } = useNonPaginatedMaterialTable<InsuranceFragment>({
-    tableId: 'insurance-list',
+    tableId: 'patient-insurance-list',
     columns,
     data,
     isLoading,

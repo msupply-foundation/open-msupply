@@ -49,35 +49,33 @@ export const StatusHistory = ({
     noDataElement: <NothingHere body={t('messages.no-status-history')} />,
   });
 
-  return (
-    <>
-      <Box width="100%">
-        <MaterialTable table={table} />
-        <Box
-          sx={{
-            p: 2,
-            zIndex: 2,
-            position: 'sticky',
-            bottom: 0,
-            backgroundColor: 'background.paper',
-            borderTop: theme => `1px solid ${theme.palette.divider}`,
-          }}
-        >
-          <ButtonWithIcon
-            label={t('button.add-status-entry')}
-            Icon={<PlusCircleIcon />}
-            onClick={handleAddClick}
-          />
-        </Box>
-      </Box>
-      {isOpen && (
-        <VvmStatusLogModal
-          isOpen={isOpen}
-          onClose={onClose}
-          stockLineId={draft.id}
-          selectedStatusLog={selectedStatusLog}
+  return <>
+    <Box width="100%">
+      <MaterialTable table={table} />
+      <Box
+        sx={{
+          p: 2,
+          zIndex: 2,
+          position: 'sticky',
+          bottom: 0,
+          backgroundColor: 'background.paper',
+          borderTop: theme => `1px solid ${theme.palette.divider}`,
+        }}
+      >
+        <ButtonWithIcon
+          label={t('button.add-status-entry')}
+          Icon={<PlusCircleIcon />}
+          onClick={handleAddClick}
         />
-      )}
-    </>
-  );
+      </Box>
+    </Box>
+    {isOpen && (
+      <VvmStatusLogModal
+        isOpen={isOpen}
+        onClose={onClose}
+        stockLineId={draft.id}
+        selectedStatusLog={selectedStatusLog}
+      />
+    )}
+  </>;
 };

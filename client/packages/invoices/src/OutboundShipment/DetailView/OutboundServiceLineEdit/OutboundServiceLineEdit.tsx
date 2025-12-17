@@ -12,7 +12,6 @@ import {
   createQueryParamsStore,
   MaterialTable,
   useSimpleMaterialTable,
-  NothingHere,
 } from '@openmsupply-client/common';
 import { useOutbound } from '../../api';
 import { useDraftServiceLines } from './useDraftServiceLines';
@@ -38,13 +37,12 @@ const OutboundServiceLineEditComponent = ({
     serviceItem: { data: defaultServiceItem },
   } = useItem();
 
+  const linesFiltered = lines.filter(({ isDeleted }) => !isDeleted);
+
   const table = useSimpleMaterialTable({
-    tableId: 'stocktake-batches',
+    tableId: 'outbound-detail-service-line',
     columns,
-    data: lines.filter(({ isDeleted }) => !isDeleted),
-    noDataElement: <NothingHere body={!defaultServiceItem
-      ? t('error.no-service-charges')
-      : t('error.no-results')} />,
+    data: linesFiltered,
   });
 
   return (
@@ -86,21 +84,9 @@ const OutboundServiceLineEditComponent = ({
               Icon={<PlusCircleIcon />}
             />
           </Box>
-          {/* <TableProvider createStore={createTableStore}>
-            <DataTable
-              id="outbound-service-line"
-              columns={columns}
-              data={lines.filter(({ isDeleted }) => !isDeleted)}
-              dense
-              noDataMessage={
-                !defaultServiceItem
-                  ? t('error.no-service-charges')
-                  : t('error.no-results')
-              }
-            />
-          </TableProvider> */}
-
-          <MaterialTable table={table} />
+          {linesFiltered.length > 0
+            ? <MaterialTable table={table} />
+            : (!defaultServiceItem ? t('error.no-service-charges') : t('error.no-results'))}
         </Box>
       )}
     </Modal>
