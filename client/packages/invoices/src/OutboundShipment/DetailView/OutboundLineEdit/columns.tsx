@@ -70,6 +70,8 @@ export const useOutboundLineEditColumns = ({
 
   const prefs = usePreferences();
 
+  const expiryThresholdDays = prefs.expiredStockIssueThreshold ?? 0;
+
   const columns = useMemo(() => {
     const packSize =
       allocateIn.type === AllocateInType.Packs
@@ -85,7 +87,7 @@ export const useOutboundLineEditColumns = ({
         Header: <></>,
         size: 30,
         defaultHideOnMobile: true,
-        accessorFn: row => canAutoAllocate(row, packSize),
+        accessorFn: row => canAutoAllocate(row, expiryThresholdDays, packSize),
         Cell: ({ cell }) => (
           <CheckCell
             cell={cell}
