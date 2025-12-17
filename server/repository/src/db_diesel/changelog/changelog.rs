@@ -735,6 +735,13 @@ impl ChangelogTableName {
             ..Default::default()
         }
     }
+
+    pub fn not_equal_to(&self) -> EqualFilter<Self> {
+        EqualFilter {
+            not_equal_to: Some(self.clone()),
+            ..Default::default()
+        }
+    }
 }
 
 impl RowActionType {
@@ -801,7 +808,13 @@ mod test {
             .unwrap();
 
         let changelogs = ChangelogRepository::new(&connection)
-            .changelogs(0, 10, None)
+            .changelogs(
+                0,
+                10,
+                Some(
+                    ChangelogFilter::new().table_name(ChangelogTableName::SystemLog.not_equal_to()),
+                ),
+            )
             .unwrap();
         assert_eq!(changelogs.len(), 3);
 

@@ -95,9 +95,10 @@ impl<'a> SystemLogRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn last_x_messages(&self, count: i64) -> Result<Vec<SystemLogRow>, RepositoryError> {
+    pub fn last_x_errors(&self, count: i64) -> Result<Vec<SystemLogRow>, RepositoryError> {
         let result = system_log::table
             .limit(count)
+            .filter(system_log::is_error.eq(true))
             .get_results(self.connection.lock().connection())?;
         Ok(result)
     }
