@@ -22,6 +22,7 @@ use repository::{get_storage_connection_manager, migrations::migrate};
 
 use scheduled_tasks::spawn_scheduled_task_runner;
 use service::{
+    activity_log::add_migration_results_to_system_log,
     auth_data::AuthData,
     boajs::context::BoaJsContext,
     ledger_fix::ledger_fix_driver::LedgerFixDriver,
@@ -40,6 +41,7 @@ use service::{
 
 use actix_web::{web, web::Data, App, HttpServer};
 use std::sync::{Arc, Mutex, RwLock};
+use util::format_error;
 
 mod authentication;
 pub mod certs;
@@ -99,13 +101,17 @@ pub async fn start_server(
         connection_manager.execute(init_sql).unwrap();
     }
     info!("Run DB migrations...");
-    let version = match migrate(&connection_manager.connection().unwrap(), None) {
-        Ok(version) => version,
+    let connection = connection_manager.connection().unwrap();
+    let (version, messages) = match migrate(&connection, None) {
+        Ok(result) => result,
         Err(e) => {
-            log::error!("Failed to run DB migrations: {:#}", e);
+            log::error!("Failed to run DB migrations: {}", format_error(&e));
             std::process::exit(1);
         }
     };
+
+    add_migration_results_to_system_log(&connection, messages).unwrap();
+
     info!("Run DB migrations...done");
 
     // Upsert standard reports
