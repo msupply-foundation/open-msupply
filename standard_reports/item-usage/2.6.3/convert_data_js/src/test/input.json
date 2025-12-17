@@ -1,5 +1,33 @@
 {
   "data": {
+    "AMCTwelve": [
+      {
+        "quantity": 150.8,
+        "item_id": "101"
+      },
+      {
+        "quantity": 92.4,
+        "item_id": "102"
+      },
+      {
+        "quantity": 200.5,
+        "item_id": "103"
+      }
+    ],
+    "AMCTwentyFour": [
+      {
+        "quantity": 250.8,
+        "item_id": "101"
+      },
+      {
+        "quantity": 192.4,
+        "item_id": "102"
+      },
+      {
+        "quantity": 300.5,
+        "item_id": "103"
+      }
+    ],
     "expiringInSixMonths": [
       {
         "id": 201,
@@ -96,12 +124,6 @@
             "availableMonthsOfStockOnHand": 4.5,
             "stockOnHand": 300.902,
             "averageMonthlyConsumption": 266.7
-          },
-          "AMC12Months": {
-            "averageMonthlyConsumption": 150.8
-          },
-          "AMC24Months": {
-            "averageMonthlyConsumption": 250.8
           }
         },
         {
@@ -113,12 +135,6 @@
             "availableMonthsOfStockOnHand": 4.5,
             "stockOnHand": 200,
             "averageMonthlyConsumption": 20
-          },
-          "AMC12Months": {
-            "averageMonthlyConsumption": 92.4
-          },
-          "AMC24Months": {
-            "averageMonthlyConsumption": 192.4
           }
         }
       ]

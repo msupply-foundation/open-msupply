@@ -22,14 +22,6 @@ export type ItemUsageQuery = {
         availableMonthsOfStockOnHand?: number | null,
         stockOnHand: number,
         averageMonthlyConsumption: number
-      },
-      AMC12Months: {
-        __typename?: 'ItemStatsNode',
-        averageMonthlyConsumption: number
-      },
-      AMC24Months: {
-        __typename?: 'ItemStatsNode',
-        averageMonthlyConsumption: number
       }
     }>
   }

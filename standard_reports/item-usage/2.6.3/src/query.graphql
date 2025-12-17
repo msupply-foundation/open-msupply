@@ -13,16 +13,10 @@ query ItemUsage($storeId: String!, $itemCode: String, $itemName: String) {
         id
         code
         name
-        stats: stats(storeId: $storeId) {
+        stats(storeId: $storeId) {
           totalConsumption
           availableMonthsOfStockOnHand
           stockOnHand
-          averageMonthlyConsumption
-        }
-        AMC12Months: stats(storeId: $storeId, amcLookbackMonths: 12) {
-          averageMonthlyConsumption
-        }
-        AMC24Months: stats(storeId: $storeId, amcLookbackMonths: 24) {
           averageMonthlyConsumption
         }
       }

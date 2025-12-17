@@ -1,6 +1,6 @@
 {
   "is_custom": false,
-  "version": "2.16.0",
+  "version": "2.6.3",
   "code": "item-usage",
   "context": "REPORT",
   "sub_context": "StockAndItems",
@@ -13,7 +13,9 @@
       "twoMonthsAgoConsumption",
       "expiringInSixMonths",
       "expiringInTwelveMonths",
-      "stockOnOrder"
+      "stockOnOrder",
+      "AMCTwelve",
+      "AMCTwentyFour"
     ]
   },
   "arguments": {
