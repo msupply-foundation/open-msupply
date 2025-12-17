@@ -20,6 +20,8 @@ import {
   DetailLoadingSkeleton,
   useIsGapsStoreOnly,
   useBlockNavigation,
+  Platform,
+  EnvUtils,
   useTheme,
   usePreferences,
 } from '@openmsupply-client/common';
@@ -76,6 +78,7 @@ export const Site: FC = () => {
   const { setPageTitle } = useHostContext();
   const pageTitle = getPageTitle(location.pathname);
   const isGapsStore = useIsGapsStoreOnly();
+  const isAndroid = EnvUtils.platform === Platform.Android;
   const { storeCustomColour } = usePreferences();
   const theme = useTheme();
 
@@ -243,7 +246,15 @@ export const Site: FC = () => {
                         element={
                           <Navigate
                             replace
-                            to={RouteBuilder.create(AppRoute.Dashboard).build()}
+                            to={
+                              isGapsStore && isAndroid
+                                ? RouteBuilder.create(AppRoute.Coldchain)
+                                    .addPart(AppRoute.Equipment)
+                                    .build()
+                                : RouteBuilder.create(
+                                    AppRoute.Dashboard
+                                  ).build()
+                            }
                           />
                         }
                       />
