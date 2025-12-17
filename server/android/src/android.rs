@@ -56,6 +56,8 @@ pub mod android {
                 host: "n/a".to_string(),
                 database_name: db_path.to_string_lossy().to_string(),
                 database_path: None,
+                connection_pool_max_connections: None,
+                connection_pool_timeout_seconds: None,
                 // See https://github.com/openmsupply/remote-server/issues/1076
                 init_sql: Some(format!("PRAGMA temp_store_directory = '{}';", cache_dir)),
             },

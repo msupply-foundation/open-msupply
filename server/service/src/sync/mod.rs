@@ -127,6 +127,7 @@ pub enum CentralServerConfig {
 
 static CENTRAL_SERVER_CONFIG: RwLock<CentralServerConfig> =
     RwLock::new(CentralServerConfig::NotConfigured);
+static IS_INITIALISED: RwLock<bool> = RwLock::new(false);
 
 impl CentralServerConfig {
     fn inner_is_central_server(&self) -> bool {
@@ -176,11 +177,24 @@ impl CentralServerConfig {
     }
 }
 pub(crate) fn is_initialised(service_provider: &ServiceProvider) -> bool {
-    let ctx = service_provider.basic_context().unwrap();
-    service_provider
-        .sync_status_service
-        .is_initialised(&ctx)
-        .unwrap()
+    // We cache the initialised state to avoid having to check the database every time. This stops
+    // unnecessary database queries and avoids having to unwrap the database connection. We still
+    // unwrap on the first check as there's no point starting up without the database.
+    if IS_INITIALISED.read().unwrap().clone() {
+        return true;
+    } else {
+        let ctx = service_provider.basic_context().unwrap();
+        let is_initialised = service_provider
+            .sync_status_service
+            .is_initialised(&ctx)
+            .unwrap();
+
+        if is_initialised {
+            *IS_INITIALISED.write().unwrap() = true;
+        }
+
+        is_initialised
+    }
 }
 
 // TEST ONLY

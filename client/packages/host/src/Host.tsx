@@ -26,6 +26,7 @@ import {
   initialiseI18n,
   KBarProvider,
   usePreferences,
+  useIsCentralServerApi,
 } from '@openmsupply-client/common';
 import { AppRoute, Environment } from '@openmsupply-client/config';
 import { Initialise, Login, Viewport } from './components';
@@ -72,6 +73,7 @@ const skipRequest = () =>
 const Init = () => {
   useInitPlugins();
   usePreferences(); // Ensure preferences are loaded on startup - they'll be cached indefinitely
+  useIsCentralServerApi();
   return <></>;
 };
 
