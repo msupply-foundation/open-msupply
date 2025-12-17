@@ -23,7 +23,11 @@ export const useRequestColumns = () => {
   const { store } = useAuthContext();
   const { errors } = useRequestRequisitionLineErrorContext();
   const { plugins } = usePluginProvider();
-  const { manageVaccinesInDoses, warningForExcessRequest } = usePreferences();
+  const {
+    manageVaccinesInDoses,
+    warningForExcessRequest,
+    showIndicativePriceInRequisitions,
+  } = usePreferences();
 
   const showExtraColumns =
     !!programName &&
@@ -132,6 +136,20 @@ export const useRequestColumns = () => {
         },
         enableSorting: true,
       },
+      {
+        header: t('label.indicative-price-per-unit'),
+        description: t('description.indicative-price-per-unit'),
+        accessorKey: 'pricePerUnit',
+        columnType: ColumnType.Currency,
+        includeColumn: showIndicativePriceInRequisitions,
+      },
+      {
+        header: t('label.indicative-price'),
+        description: t('description.indicative-price'),
+        accessorFn: row => row.requestedQuantity * (row?.pricePerUnit || 0),
+        columnType: ColumnType.Currency,
+        includeColumn: showIndicativePriceInRequisitions,
+      },
 
       // --- Extra consumption columns on program orders
       {
@@ -216,6 +234,7 @@ export const useRequestColumns = () => {
       warningForExcessRequest,
       showExtraColumns,
       usesRemoteAuthorisation,
+      showIndicativePriceInRequisitions,
       maxMonthsOfStock,
       plugins.requestRequisitionLine?.tableColumn,
       errors,

@@ -101,6 +101,57 @@ impl<T> Default for EqualFilter<T> {
     }
 }
 
+impl<T> EqualFilter<T> {
+    pub fn equal_to(value: T) -> Self {
+        Self {
+            equal_to: Some(value),
+            ..Default::default()
+        }
+    }
+
+    pub fn equal_any(value: Vec<T>) -> Self {
+        Self {
+            equal_any: Some(value),
+            ..Default::default()
+        }
+    }
+
+    pub fn equal_any_or_null(value: Vec<T>) -> Self {
+        Self {
+            equal_any_or_null: Some(value),
+            ..Default::default()
+        }
+    }
+
+    pub fn not_equal_to(value: T) -> Self {
+        Self {
+            not_equal_to: Some(value),
+            ..Default::default()
+        }
+    }
+
+    pub fn not_equal_to_or_null(value: T) -> Self {
+        Self {
+            not_equal_to_or_null: Some(value),
+            ..Default::default()
+        }
+    }
+
+    pub fn not_equal_all(value: Vec<T>) -> Self {
+        Self {
+            not_equal_all: Some(value),
+            ..Default::default()
+        }
+    }
+
+    pub fn is_null(value: bool) -> Self {
+        Self {
+            is_null: Some(value),
+            ..Default::default()
+        }
+    }
+}
+
 impl<F> EqualFilter<F> {
     pub(crate) fn convert_filter<T>(self) -> EqualFilter<T>
     where
@@ -124,120 +175,6 @@ impl<F> EqualFilter<F> {
             equal_any_or_null: equal_any_or_null.map(|r| r.into_iter().map(T::from).collect()),
             not_equal_all: not_equal_all.map(|r| r.into_iter().map(T::from).collect()),
             is_null,
-        }
-    }
-}
-
-impl EqualFilter<bool> {
-    pub fn equal_or_null_bool(value: bool) -> Self {
-        Self {
-            equal_any_or_null: Some(vec![value]),
-            ..Default::default()
-        }
-    }
-}
-
-impl EqualFilter<i64> {
-    pub fn equal_to_i64(value: i64) -> Self {
-        Self {
-            equal_to: Some(value),
-            ..Default::default()
-        }
-    }
-}
-
-impl EqualFilter<i32> {
-    pub fn equal_to_i32(value: i32) -> Self {
-        Self {
-            equal_to: Some(value),
-            ..Default::default()
-        }
-    }
-
-    pub fn not_equal_to_i32(value: i32) -> Self {
-        Self {
-            not_equal_to: Some(value),
-            ..Default::default()
-        }
-    }
-
-    pub fn not_equal_to_or_null_i32(value: i32) -> Self {
-        Self {
-            not_equal_to_or_null: Some(value),
-            ..Default::default()
-        }
-    }
-
-    pub fn i32_is_null(value: bool) -> Self {
-        Self {
-            is_null: Some(value),
-            ..Default::default()
-        }
-    }
-    pub fn equal_any_or_null_i32(value: Vec<i32>) -> Self {
-        Self {
-            equal_any_or_null: Some(value),
-            ..Default::default()
-        }
-    }
-}
-
-impl EqualFilter<f64> {
-    pub fn equal_to_f64(value: f64) -> Self {
-        Self {
-            equal_to: Some(value),
-            ..Default::default()
-        }
-    }
-
-    pub fn not_equal_to_f64(value: f64) -> Self {
-        Self {
-            not_equal_to: Some(value),
-            ..Default::default()
-        }
-    }
-}
-
-impl EqualFilter<String> {
-    pub fn equal_to(value: &str) -> Self {
-        Self {
-            equal_to: Some(value.to_owned()),
-            ..Default::default()
-        }
-    }
-
-    pub fn not_equal_to(value: &str) -> Self {
-        Self {
-            not_equal_to: Some(value.to_owned()),
-            ..Default::default()
-        }
-    }
-
-    pub fn equal_any(value: Vec<String>) -> Self {
-        Self {
-            equal_any: Some(value),
-            ..Default::default()
-        }
-    }
-
-    pub fn equal_any_or_null(value: Vec<String>) -> Self {
-        Self {
-            equal_any_or_null: Some(value),
-            ..Default::default()
-        }
-    }
-
-    pub fn not_equal_all(value: Vec<String>) -> Self {
-        Self {
-            not_equal_all: Some(value),
-            ..Default::default()
-        }
-    }
-
-    pub fn is_null(value: bool) -> Self {
-        Self {
-            is_null: Some(value),
-            ..Default::default()
         }
     }
 }

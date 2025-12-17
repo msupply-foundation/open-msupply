@@ -35,7 +35,7 @@ pub fn get_item_ledger(
     let repository = ItemLedgerRepository::new(connection);
     let filter = filter
         .unwrap_or_default()
-        .store_id(EqualFilter::equal_to(store_id));
+        .store_id(EqualFilter::equal_to(store_id.to_string()));
 
     let ledgers = repository.query(pagination, Some(filter.clone()))?;
 

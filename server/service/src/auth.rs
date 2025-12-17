@@ -35,6 +35,7 @@ pub enum Resource {
     // name
     QueryName,
     MutateNameProperties,
+    ConfigureNameProperties,
     // location
     QueryLocation,
     MutateLocation,
@@ -131,6 +132,7 @@ pub enum Resource {
     MutateAsset,
     MutateAssetCatalogueItem,
     QueryAsset,
+    MutateAssetStatus,
     // demographic
     QueryDemographic,
     MutateDemographic,
@@ -178,9 +180,14 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
     map.insert(Resource::QueryName, PermissionDSL::HasStoreAccess);
     map.insert(
         Resource::MutateNameProperties,
+        PermissionDSL::HasPermission(PermissionType::NamePropertiesMutate),
+    );
+
+    map.insert(
+        Resource::ConfigureNameProperties,
         PermissionDSL::And(vec![
-            PermissionDSL::HasPermission(PermissionType::NamePropertiesMutate),
             PermissionDSL::HasPermission(PermissionType::EditCentralData),
+            PermissionDSL::HasPermission(PermissionType::NamePropertiesMutate),
         ]),
     );
 
@@ -621,6 +628,10 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
         PermissionDSL::HasPermission(PermissionType::AssetCatalogueItemMutate),
     );
     map.insert(
+        Resource::MutateAssetStatus,
+        PermissionDSL::HasPermission(PermissionType::AssetStatusMutate),
+    );
+    map.insert(
         Resource::QueryAsset,
         PermissionDSL::HasPermission(PermissionType::AssetQuery),
     );
@@ -983,9 +994,10 @@ impl AuthServiceTrait for AuthService {
         let connection = &context.connection;
 
         let mut permission_filter =
-            UserPermissionFilter::new().user_id(EqualFilter::equal_to(&user_id));
+            UserPermissionFilter::new().user_id(EqualFilter::equal_to(user_id.to_string()));
         if let Some(store_id) = &resource_request.store_id {
-            permission_filter = permission_filter.store_id(EqualFilter::equal_to(store_id));
+            permission_filter =
+                permission_filter.store_id(EqualFilter::equal_to(store_id.to_string()));
         }
         let mut user_permissions = UserPermissionRepository::new(connection).query(
             Pagination::all(),

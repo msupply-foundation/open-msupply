@@ -94,8 +94,8 @@ pub fn get_historical_stock_lines(
         None,
         Some(
             StockLineFilter::new()
-                .store_id(EqualFilter::equal_to(store_id))
-                .item_id(EqualFilter::equal_to(item_id))
+                .store_id(EqualFilter::equal_to(store_id.to_string()))
+                .item_id(EqualFilter::equal_to(item_id.to_string()))
                 .is_available(true),
         ),
         None,

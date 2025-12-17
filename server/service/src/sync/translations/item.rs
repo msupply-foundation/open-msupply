@@ -232,7 +232,7 @@ fn translate_item_category_join(
     let mut integration_operations = Vec::new();
 
     let existing_item_category_join = ItemCategoryRepository::new(connection)
-        .query_one(ItemCategoryFilter::new().item_id(EqualFilter::equal_to(&data.ID)))?;
+        .query_one(ItemCategoryFilter::new().item_id(EqualFilter::equal_to(data.ID.to_owned())))?;
 
     if let Some(item_category) = existing_item_category_join {
         let existing_category_id = item_category.item_category_join_row.category_id.clone();

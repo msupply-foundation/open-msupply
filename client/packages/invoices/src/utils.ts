@@ -110,16 +110,6 @@ export const getStatusTranslation = (status: InvoiceNodeStatus): LocaleKey => {
   return statusTranslation[status];
 };
 
-export const getNextOutboundStatus = (
-  currentStatus: InvoiceNodeStatus
-): InvoiceNodeStatus | null => {
-  const currentStatusIdx = outboundStatuses.findIndex(
-    status => currentStatus === status
-  );
-  const nextStatus = outboundStatuses[currentStatusIdx + 1];
-  return nextStatus ?? null;
-};
-
 export const getNextSupplierReturnStatus = (
   currentStatus: InvoiceNodeStatus
 ): InvoiceNodeStatus | null => {
@@ -152,16 +142,6 @@ export const getNextPrescriptionStatus = (
   );
   const nextStatus = prescriptionStatuses[currentStatusIdx + 1];
   return nextStatus ?? null;
-};
-
-export const getNextOutboundStatusButtonTranslation = (
-  currentStatus: InvoiceNodeStatus
-): LocaleKey | undefined => {
-  const nextStatus = getNextOutboundStatus(currentStatus);
-
-  if (nextStatus) return statusTranslation[nextStatus];
-
-  return undefined;
 };
 
 export const getNextInboundStatusButtonTranslation = (

@@ -99,10 +99,12 @@ impl<'a> AssetRowRepository<'a> {
         )?;
 
         if let Some(original_store) = original_store_id {
-            // Insert "delete" changelog for the original store
+            // Insert upsert changelog for original store
+            // if store is on different site it should be synced there
+            // with new store_id, making it invisible in that store
             self.insert_changelog(
                 asset_row.id.to_string(),
-                RowActionType::Delete,
+                RowActionType::Upsert,
                 Some(original_store),
             )?;
         }
@@ -148,7 +150,7 @@ impl<'a> AssetRowRepository<'a> {
         let asset_row = AssetRowRepository::find_one_by_id(self, asset_id)?;
 
         self.insert_changelog(
-            asset_id.to_owned(),
+            asset_id.to_string(),
             RowActionType::Upsert,
             asset_row.and_then(|row| row.store_id),
         )

@@ -44,7 +44,7 @@ pub fn delete_outbound_shipment(
             activity_log_entry(
                 ctx,
                 ActivityLogType::InvoiceDeleted,
-                Some(id.to_owned()),
+                Some(id.to_string()),
                 None,
                 None,
             )?;

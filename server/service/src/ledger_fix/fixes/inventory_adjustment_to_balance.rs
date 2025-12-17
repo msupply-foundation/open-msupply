@@ -16,7 +16,8 @@ pub(crate) fn fix(
     operation_log.push_str("Starting inventory_adjustment_to_balance\n");
 
     let ledger_lines = StockLineLedgerRepository::new(connection).query_by_filter(
-        StockLineLedgerFilter::new().stock_line_id(EqualFilter::equal_to(stock_line_id)),
+        StockLineLedgerFilter::new()
+            .stock_line_id(EqualFilter::equal_to(stock_line_id.to_string())),
     )?;
 
     let balance_summary = ledger_balance_summary(connection, &ledger_lines, stock_line_id)?;
@@ -156,10 +157,9 @@ pub(crate) mod test {
         fix(&connection, &mut logs, "positive_running_balance_fix").unwrap();
 
         assert_eq!(
-            repo.query_by_filter(
-                StockLineLedgerFilter::new()
-                    .stock_line_id(EqualFilter::equal_to("positive_running_balance_fix"))
-            )
+            repo.query_by_filter(StockLineLedgerFilter::new().stock_line_id(
+                EqualFilter::equal_to("positive_running_balance_fix".to_string())
+            ))
             .unwrap()
             .into_iter()
             .map(|line| line.running_balance)
@@ -182,10 +182,9 @@ pub(crate) mod test {
         fix(&connection, &mut logs, "negative_running_balance_fix").unwrap();
 
         assert_eq!(
-            repo.query_by_filter(
-                StockLineLedgerFilter::new()
-                    .stock_line_id(EqualFilter::equal_to("negative_running_balance_fix"))
-            )
+            repo.query_by_filter(StockLineLedgerFilter::new().stock_line_id(
+                EqualFilter::equal_to("negative_running_balance_fix".to_string())
+            ))
             .unwrap()
             .into_iter()
             .map(|line| line.running_balance)

@@ -38,8 +38,8 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
             ABBREVIATION_1,
             AbbreviationRow {
                 id: ABBREVIATION_1.0.to_owned(),
-                text: "1".to_owned(),
-                expansion: "ABBREVIATION_1_exp".to_owned(),
+                text: "1".to_string(),
+                expansion: "ABBREVIATION_1_exp".to_string(),
             },
         ),
         TestSyncIncomingRecord::new_pull_upsert(
@@ -47,8 +47,8 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
             ABBREVIATION_2,
             AbbreviationRow {
                 id: ABBREVIATION_2.0.to_owned(),
-                text: "2".to_owned(),
-                expansion: "ABBREVIATION_2_exp".to_owned(),
+                text: "2".to_string(),
+                expansion: "ABBREVIATION_2_exp".to_string(),
             },
         ),
         TestSyncIncomingRecord::new_pull_upsert(
@@ -56,8 +56,8 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
             ABBREVIATION_3,
             AbbreviationRow {
                 id: ABBREVIATION_3.0.to_owned(),
-                text: "3".to_owned(),
-                expansion: "ABBREVIATION_3_exp".to_owned(),
+                text: "3".to_string(),
+                expansion: "ABBREVIATION_3_exp".to_string(),
             },
         ),
     ]
