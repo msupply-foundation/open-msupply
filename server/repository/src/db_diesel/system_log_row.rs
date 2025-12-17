@@ -27,6 +27,7 @@ pub enum SystemLogType {
     LedgerFixError,
     LedgerFix,
     Migration,
+    ServerStatus,
 }
 
 impl SystemLogType {
@@ -36,6 +37,7 @@ impl SystemLogType {
             SystemLogType::LedgerFixError => true,
             SystemLogType::LedgerFix => false,
             SystemLogType::Migration => false,
+            SystemLogType::ServerStatus => false,
         }
     }
 }
