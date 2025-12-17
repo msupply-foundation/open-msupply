@@ -222,7 +222,7 @@ fn create_filtered_query(
         } = f;
 
         if let Some(stock_line_filter) = stock_line {
-            let store_id_value = store_id.as_ref.and_then(|s| s.equal_to.clone());
+            let store_id_value = store_id.as_ref().and_then(|s| s.equal_to.clone());
 
             let stock_line = StockLineRepository::create_filtered_query(
                 connection,
