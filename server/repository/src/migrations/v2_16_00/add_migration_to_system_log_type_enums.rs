@@ -4,7 +4,7 @@ pub(crate) struct Migrate;
 
 impl MigrationFragment for Migrate {
     fn identifier(&self) -> &'static str {
-        "add_migration_version_to_system_log_type_enums"
+        "add_migration_to_system_log_type_enums"
     }
 
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
@@ -12,7 +12,7 @@ impl MigrationFragment for Migrate {
             sql!(
                 connection,
                 r#"
-                    ALTER TYPE system_log_type ADD VALUE IF NOT EXISTS 'MIGRATION_VERSION';
+                    ALTER TYPE system_log_type ADD VALUE IF NOT EXISTS 'MIGRATION';
                 "#
             )?;
         }
