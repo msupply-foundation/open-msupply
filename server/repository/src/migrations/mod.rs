@@ -67,6 +67,7 @@ use crate::{
     run_db_migrations, KeyType, KeyValueStoreRepository, MigrationFragmentLogRepository,
     RepositoryError, StorageConnection,
 };
+use chrono::{NaiveDateTime, Utc};
 use diesel::connection::SimpleConnection;
 use thiserror::Error;
 
@@ -118,7 +119,7 @@ pub enum MigrationError {
 pub fn migrate(
     connection: &StorageConnection,
     to_version: Option<Version>,
-) -> Result<Version, MigrationError> {
+) -> Result<(Version, Vec<(String, NaiveDateTime)>), MigrationError> {
     let migrations: Vec<Box<dyn Migration>> = vec![
         Box::new(V1_00_04),
         Box::new(V1_01_01),
@@ -180,7 +181,7 @@ pub fn migrate(
     let starting_database_version = get_database_version(connection);
 
     // Get migration fragment log repository and create table if it doesn't exist
-    create_migration_fragment_table(connection)?;
+    create_migration_fragment_table(connection).map_err(|e| MigrationError::DatabaseError(e))?;
     let migration_fragment_log_repo = MigrationFragmentLogRepository::new(connection);
 
     // for `>` see PartialOrd implementation of Version
@@ -194,6 +195,8 @@ pub fn migrate(
     // From v2.3 we drop all views and re-create them
     let min_version_for_dropping_views = v2_03_00::V2_03_00.version();
     let mut drop_view_has_run = false;
+
+    let mut migration_result = Vec::new();
 
     for migration in &migrations {
         let migration_version = migration.version();
@@ -215,7 +218,7 @@ pub fn migrate(
 
         // Drop view once during migrations, if next migration is 2.3.0 and above
         if !drop_view_has_run && migration_version >= min_version_for_dropping_views {
-            drop_views(connection).map_err(MigrationError::DatabaseViewsError)?;
+            drop_views(connection).map_err(|e| MigrationError::DatabaseViewsError(e))?;
             drop_view_has_run = true;
         }
 
@@ -223,20 +226,32 @@ pub fn migrate(
 
         // Run one time migrations only if we're on the last version, if we're in a test case checking an old creating migrations might fail
         if migration_version > database_version {
-            log::info!("Running one time database migration {migration_version}");
             migration
                 .migrate(connection)
                 .map_err(|source| MigrationError::MigrationError {
                     source,
                     version: migration_version.clone(),
                 })?;
-            set_database_version(connection, &migration_version)?;
+
+            migration_result.push((
+                format!(
+                    "Running one time database migration {}",
+                    migration_version.to_string()
+                ),
+                Utc::now().naive_utc(),
+            ));
+
+            set_database_version(connection, &migration_version)
+                .map_err(|e| MigrationError::DatabaseError(e))?;
         }
 
         // Run fragment migrations (can run on current version)
         if migration_version >= database_version {
             for fragment in migration.migrate_fragments() {
-                if migration_fragment_log_repo.has_run(migration, &fragment)? {
+                if migration_fragment_log_repo
+                    .has_run(migration, &fragment)
+                    .map_err(|e| MigrationError::DatabaseError(e))?
+                {
                     continue;
                 }
 
@@ -248,10 +263,17 @@ pub fn migrate(
                     }
                 })?;
 
-                migration_fragment_log_repo.insert(migration, &fragment)?;
+                migration_fragment_log_repo
+                    .insert(migration, &fragment)
+                    .map_err(|e| MigrationError::DatabaseError(e))?;
             }
         }
     }
+
+    migration_result.push((
+        format!("Migrations finished to version {}", to_version.to_string()),
+        Utc::now().naive_utc(),
+    ));
 
     let final_database_version = get_database_version(connection);
 
@@ -262,15 +284,21 @@ pub fn migrate(
     // Creating Views on an earlier version migration test might fail due to more recent views referencing schema elements that didn't previously exist
     // Note: When Migration tests run, views won't be available
     if final_database_version >= last_version_in_migration_vec && drop_view_has_run {
-        rebuild_views(connection).map_err(MigrationError::DatabaseViewsError)?;
+        rebuild_views(connection).map_err(|e| MigrationError::DatabaseViewsError(e))?;
     } else {
         log::warn!(
             "Not recreating views, database version is {final_database_version}, last version in migration vec is {last_version_in_migration_vec}"
         );
     }
 
-    set_database_version(connection, &to_version)?;
-    Ok(to_version)
+    set_database_version(connection, &to_version).map_err(|e| MigrationError::DatabaseError(e))?;
+
+    migration_result.push((
+        format!("Views recreated for {}", to_version.to_string()),
+        Utc::now().naive_utc(),
+    ));
+
+    Ok((to_version, migration_result))
 }
 
 fn get_database_version(connection: &StorageConnection) -> Version {

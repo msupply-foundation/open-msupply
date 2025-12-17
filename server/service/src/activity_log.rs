@@ -1,6 +1,6 @@
 use std::error::Error;
 
-use chrono::Utc;
+use chrono::{NaiveDateTime, Utc};
 use repository::{
     activity_log::{ActivityLog, ActivityLogFilter, ActivityLogRepository, ActivityLogSort},
     system_log_row::{SystemLogRow, SystemLogRowRepository, SystemLogType},
@@ -142,19 +142,46 @@ pub fn system_activity_log_entry(
     Ok(())
 }
 
-fn system_log_entry(
+pub enum SystemLogMessage<'a> {
+    Error(&'a dyn Error, &'a str),
+    Message(&'a str),
+}
+
+pub fn system_log_entry(
     connection: &StorageConnection,
     log_type: SystemLogType,
-    message: &str,
+    datetime: Option<NaiveDateTime>,
+    should_log_to_console: bool,
+    message: SystemLogMessage,
 ) -> Result<(), RepositoryError> {
     let sync_site_id =
         KeyValueStoreRepository::new(connection).get_i32(KeyType::SettingsSyncSiteId)?;
+
+    let message = match { message } {
+        SystemLogMessage::Error(error, context) => {
+            format!(
+                "{} - {} - {}",
+                context,
+                log_type.to_string(),
+                format_error(&error)
+            )
+        }
+        SystemLogMessage::Message(msg) => msg.to_string(),
+    };
+
+    if should_log_to_console {
+        if log_type.is_error() {
+            log::error!("{message}");
+        } else {
+            log::info!("{message}");
+        }
+    }
 
     let log = &SystemLogRow {
         id: uuid(),
         r#type: log_type.clone(),
         sync_site_id,
-        datetime: Utc::now().naive_utc(),
+        datetime: datetime.unwrap_or(Utc::now().naive_utc()),
         message: Some(message.to_string()),
         is_error: log_type.is_error(),
     };
@@ -170,14 +197,13 @@ pub fn system_error_log(
     error: &impl Error,
     context: &str,
 ) -> Result<(), RepositoryError> {
-    let error_message = format!(
-        "{} - {} - {}",
-        context,
-        log_type.to_string(),
-        format_error(error)
-    );
-    log::error!("{error_message}");
-    system_log_entry(connection, log_type, &error_message)?;
+    system_log_entry(
+        connection,
+        log_type,
+        None,
+        true,
+        SystemLogMessage::Error(error, context),
+    )?;
     Ok(())
 }
 
@@ -187,8 +213,29 @@ pub fn system_log(
     log_type: SystemLogType,
     log: &str,
 ) -> Result<(), RepositoryError> {
-    log::info!("{} {log}", log_type.to_string());
-    system_log_entry(connection, log_type, &log)?;
+    system_log_entry(
+        connection,
+        log_type,
+        None,
+        true,
+        SystemLogMessage::Message(log),
+    )?;
+    Ok(())
+}
+
+pub fn add_migration_results_to_system_log(
+    connection: &StorageConnection,
+    migration_result: Vec<(String, NaiveDateTime)>,
+) -> Result<(), RepositoryError> {
+    for (message, timestamp) in migration_result {
+        system_log_entry(
+            connection,
+            SystemLogType::Migration,
+            Some(timestamp),
+            true,
+            SystemLogMessage::Message(&message),
+        )?;
+    }
     Ok(())
 }
 
