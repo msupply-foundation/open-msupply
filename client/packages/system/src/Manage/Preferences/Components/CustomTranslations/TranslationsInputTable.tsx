@@ -18,7 +18,7 @@ import {
   TranslationOption,
   TranslationSearchInput,
 } from './TranslationSearchInput';
-import { TextInputCell } from 'packages/common/src/ui/layout/tables/material-react-table/components/TextInputCell';
+import { TextInputCell } from '@openmsupply-client/common/src/ui/layout/tables/material-react-table/components/TextInputCell';
 
 export const TranslationsTable = ({
   translations,

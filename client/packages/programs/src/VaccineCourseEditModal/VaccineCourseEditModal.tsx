@@ -32,8 +32,8 @@ import { useDemographicData } from '@openmsupply-client/system';
 import { VaccineItemSelect } from './VaccineCourseItemSelect';
 import { DraftVaccineCourse, VaccineCourseFragment } from '../api';
 import { VaccineCourseDoseFragment } from '../api/operations.generated';
-import { TextInputCell } from 'packages/common/src/ui/layout/tables/material-react-table/components/TextInputCell';
-import { NumberInputCell } from 'packages/common/src/ui/layout/tables/material-react-table/components/NumberInputCell';
+import { TextInputCell } from '@openmsupply-client/common/src/ui/layout/tables/material-react-table/components/TextInputCell';
+import { NumberInputCell } from '@openmsupply-client/common/src/ui/layout/tables/material-react-table/components/NumberInputCell';
 import { MRT_Cell, MRT_RowData } from 'material-react-table';
 
 const getDemographicOptions = (demographics: DemographicNode[]) => {
