@@ -154,7 +154,7 @@ pub(crate) mod test {
         let result = repo
             .query(DaysOutOfStockFilter {
                 item_id: Some(EqualFilter::equal_any(vec![mock_item_a().id])),
-                store_id: Some(EqualFilter::equal_to(&store_id)),
+                store_id: Some(EqualFilter::equal_to(store_id.to_string())),
                 from: start_date,
                 to: end_date,
             })
