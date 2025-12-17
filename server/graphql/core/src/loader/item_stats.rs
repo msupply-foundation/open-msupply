@@ -6,6 +6,7 @@ use async_graphql::dataloader::*;
 use chrono::NaiveDate;
 use service::{item_stats::ItemStats, service_provider::ServiceProvider};
 use std::collections::HashMap;
+use std::hash::Hasher;
 
 pub struct ItemsStatsForItemLoader {
     pub service_provider: Data<ServiceProvider>,
@@ -20,7 +21,7 @@ pub struct ItemStatsLoaderInputPayload {
 impl Eq for ItemStatsLoaderInputPayload {}
 
 impl std::hash::Hash for ItemStatsLoaderInputPayload {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+    fn hash<H: Hasher>(&self, state: &mut H) {
         self.amc_lookback_months.map(|f| f.to_bits()).hash(state);
         self.period_end.hash(state);
     }
@@ -32,7 +33,7 @@ pub struct ItemStatsLoaderInput(IdPair<ItemStatsLoaderInputPayload>);
 
 // Include payload in hash to differentiate from IdPair's hash
 impl std::hash::Hash for ItemStatsLoaderInput {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+    fn hash<H: Hasher>(&self, state: &mut H) {
         self.0.primary_id.hash(state);
         self.0.secondary_id.hash(state);
         self.0.payload.hash(state);
