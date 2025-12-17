@@ -2322,5 +2322,12 @@
   "warning.check-before-vaccinating": "Os registros de vacinação de outras unidades de saúde podem não estar atualizados. Certifique-se de que você sincronizou recentemente e sempre confirme primeiro com o cartão de vacinação físico do paciente.",
   "warning.field-not-parsed": "{{field}} não analisado",
   "warning.manual-store-requisition": "Inserir uma requisição para esta loja pode resultar em duplicados se a loja também enviar um Pedido Interno.",
-  "warning.nothing-to-supply": "Nada para fornecer!"
+  "warning.nothing-to-supply": "Nada para fornecer!",
+  "description.patient-filter-note": "Filtrar pelo último sobrenome apenas",
+  "button.export-csv": "Exportar CSV",
+  "description.indicative-price": "O preço estimado para o número de unidades",
+  "button.download-pdf": "Descarregar o PDF",
+  "button.create-order": "Criar Ordem",
+  "error.failed-to-create-internal-order": "Falha ao criar a Ordem Interna!",
+  "error.failed-to-save-supply-level": "Falha ao salvar o nível de abastecimento"
 }
