@@ -4823,9 +4823,9 @@ export type ItemFilterInput = {
   maxMonthsOfStock?: InputMaybe<Scalars['Float']['input']>;
   minMonthsOfStock?: InputMaybe<Scalars['Float']['input']>;
   name?: InputMaybe<StringFilterInput>;
-  outOfStockWithRecentConsumption?: InputMaybe<Scalars['Boolean']['input']>;
   productsAtRiskOfBeingOutOfStock?: InputMaybe<Scalars['Boolean']['input']>;
   type?: InputMaybe<EqualFilterItemTypeInput>;
+  withRecentConsumption?: InputMaybe<Scalars['Boolean']['input']>;
 };
 
 export type ItemLedgerConnector = {
@@ -4923,6 +4923,7 @@ export type ItemNodeProgramsArgs = {
 
 export type ItemNodeStatsArgs = {
   amcLookbackMonths?: InputMaybe<Scalars['Float']['input']>;
+  periodEnd?: InputMaybe<Scalars['NaiveDate']['input']>;
   storeId: Scalars['String']['input'];
 };
 
@@ -5037,7 +5038,6 @@ export type JsonschemaNode = {
 export type LabelPrinterSettingNode = {
   __typename: 'LabelPrinterSettingNode';
   address: Scalars['String']['output'];
-  isUsb: Scalars['Boolean']['output'];
   labelHeight: Scalars['Int']['output'];
   labelWidth: Scalars['Int']['output'];
   port: Scalars['Int']['output'];
@@ -5045,7 +5045,6 @@ export type LabelPrinterSettingNode = {
 
 export type LabelPrinterSettingsInput = {
   address: Scalars['String']['input'];
-  isUsb: Scalars['Boolean']['input'];
   labelHeight: Scalars['Int']['input'];
   labelWidth: Scalars['Int']['input'];
   port: Scalars['Int']['input'];
@@ -6861,8 +6860,12 @@ export enum PreferenceKey {
   CustomTranslations = 'customTranslations',
   DaysInMonth = 'daysInMonth',
   DisableManualReturns = 'disableManualReturns',
+  ExpiredStockIssueThreshold = 'expiredStockIssueThreshold',
+  ExpiredStockPreventIssue = 'expiredStockPreventIssue',
   FirstThresholdForExpiringItems = 'firstThresholdForExpiringItems',
   GenderOptions = 'genderOptions',
+  InboundShipmentAutoVerify = 'inboundShipmentAutoVerify',
+  IsGaps = 'isGaps',
   ManageVaccinesInDoses = 'manageVaccinesInDoses',
   ManageVvmStatusForStock = 'manageVvmStatusForStock',
   NumberOfMonthsThresholdToShowLowStockAlertsForProducts = 'numberOfMonthsThresholdToShowLowStockAlertsForProducts',
@@ -6873,10 +6876,14 @@ export enum PreferenceKey {
   SecondThresholdForExpiringItems = 'secondThresholdForExpiringItems',
   SelectDestinationStoreForAnInternalOrder = 'selectDestinationStoreForAnInternalOrder',
   ShowContactTracing = 'showContactTracing',
+  ShowIndicativePriceInRequisitions = 'showIndicativePriceInRequisitions',
+  SkipIntermediateStatusesInOutbound = 'skipIntermediateStatusesInOutbound',
   SortByVvmStatusThenExpiry = 'sortByVvmStatusThenExpiry',
+  StoreCustomColour = 'storeCustomColour',
   SyncRecordsDisplayThreshold = 'syncRecordsDisplayThreshold',
   UseProcurementFunctionality = 'useProcurementFunctionality',
   UseSimplifiedMobileUi = 'useSimplifiedMobileUi',
+  WarnWhenMissingRecentStocktake = 'warnWhenMissingRecentStocktake',
   WarningForExcessRequest = 'warningForExcessRequest',
 }
 
@@ -6900,6 +6907,8 @@ export enum PreferenceValueNodeType {
   CustomTranslations = 'CUSTOM_TRANSLATIONS',
   Integer = 'INTEGER',
   MultiChoice = 'MULTI_CHOICE',
+  String = 'STRING',
+  WarnWhenMissingRecentStocktakeData = 'WARN_WHEN_MISSING_RECENT_STOCKTAKE_DATA',
 }
 
 export type PreferencesNode = {
@@ -6912,8 +6921,12 @@ export type PreferencesNode = {
   customTranslations: Scalars['JSONObject']['output'];
   daysInMonth: Scalars['Float']['output'];
   disableManualReturns: Scalars['Boolean']['output'];
+  expiredStockIssueThreshold: Scalars['Int']['output'];
+  expiredStockPreventIssue: Scalars['Boolean']['output'];
   firstThresholdForExpiringItems: Scalars['Int']['output'];
   genderOptions: Array<GenderTypeNode>;
+  inboundShipmentAutoVerify: Scalars['Boolean']['output'];
+  isGaps: Scalars['Boolean']['output'];
   manageVaccinesInDoses: Scalars['Boolean']['output'];
   manageVvmStatusForStock: Scalars['Boolean']['output'];
   numberOfMonthsThresholdToShowLowStockAlertsForProducts: Scalars['Int']['output'];
@@ -6924,10 +6937,14 @@ export type PreferencesNode = {
   secondThresholdForExpiringItems: Scalars['Int']['output'];
   selectDestinationStoreForAnInternalOrder: Scalars['Boolean']['output'];
   showContactTracing: Scalars['Boolean']['output'];
+  showIndicativePriceInRequisitions: Scalars['Boolean']['output'];
+  skipIntermediateStatusesInOutbound: Scalars['Boolean']['output'];
   sortByVvmStatusThenExpiry: Scalars['Boolean']['output'];
+  storeCustomColour: Scalars['String']['output'];
   syncRecordsDisplayThreshold: Scalars['Int']['output'];
   useProcurementFunctionality: Scalars['Boolean']['output'];
   useSimplifiedMobileUi: Scalars['Boolean']['output'];
+  warnWhenMissingRecentStocktake: WarnWhenMissingRecentStocktakeDataNode;
   warningForExcessRequest: Scalars['Boolean']['output'];
 };
 
@@ -8745,6 +8762,7 @@ export type RequisitionLineNode = {
   /** OutboundShipment lines linked to requisitions line */
   outboundShipmentLines: InvoiceLineConnector;
   outgoingUnits: Scalars['Float']['output'];
+  pricePerUnit?: Maybe<Scalars['Float']['output']>;
   reason?: Maybe<ReasonOptionNode>;
   /**
    * Quantity remaining to supply
@@ -8767,6 +8785,7 @@ export type RequisitionLineNode = {
 
 export type RequisitionLineNodeItemStatsArgs = {
   amcLookbackMonths?: InputMaybe<Scalars['Float']['input']>;
+  periodEnd?: InputMaybe<Scalars['NaiveDate']['input']>;
 };
 
 export type RequisitionLineStatsError = {
@@ -8798,6 +8817,7 @@ export type RequisitionNode = {
   createdFromRequisition?: Maybe<RequisitionNode>;
   createdFromRequisitionId?: Maybe<Scalars['String']['output']>;
   destinationCustomer?: Maybe<NameNode>;
+  documents: SyncFileReferenceConnector;
   expectedDeliveryDate?: Maybe<Scalars['NaiveDate']['output']>;
   finalisedDatetime?: Maybe<Scalars['DateTime']['output']>;
   id: Scalars['String']['output'];
@@ -9657,6 +9677,11 @@ export type StringFilterInput = {
   equalTo?: InputMaybe<Scalars['String']['input']>;
   /** Search term must be included in search candidate (case insensitive) */
   like?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type StringStorePrefInput = {
+  storeId: Scalars['String']['input'];
+  value: Scalars['String']['input'];
 };
 
 export type Success = {
@@ -11227,8 +11252,12 @@ export type UpsertPreferencesInput = {
   customTranslations?: InputMaybe<Scalars['JSONObject']['input']>;
   daysInMonth?: InputMaybe<Scalars['Float']['input']>;
   disableManualReturns?: InputMaybe<Array<BoolStorePrefInput>>;
+  expiredStockIssueThreshold?: InputMaybe<Scalars['Int']['input']>;
+  expiredStockPreventIssue?: InputMaybe<Scalars['Boolean']['input']>;
   firstThresholdForExpiringItems?: InputMaybe<Array<IntegerStorePrefInput>>;
   genderOptions?: InputMaybe<Array<GenderTypeNode>>;
+  inboundShipmentAutoVerify?: InputMaybe<Array<BoolStorePrefInput>>;
+  isGaps?: InputMaybe<Scalars['Boolean']['input']>;
   manageVaccinesInDoses?: InputMaybe<Array<BoolStorePrefInput>>;
   manageVvmStatusForStock?: InputMaybe<Array<BoolStorePrefInput>>;
   numberOfMonthsThresholdToShowLowStockAlertsForProducts?: InputMaybe<
@@ -11247,10 +11276,16 @@ export type UpsertPreferencesInput = {
     Array<BoolStorePrefInput>
   >;
   showContactTracing?: InputMaybe<Scalars['Boolean']['input']>;
+  showIndicativePriceInRequisitions?: InputMaybe<Scalars['Boolean']['input']>;
+  skipIntermediateStatusesInOutbound?: InputMaybe<Array<BoolStorePrefInput>>;
   sortByVvmStatusThenExpiry?: InputMaybe<Array<BoolStorePrefInput>>;
+  storeCustomColour?: InputMaybe<Array<StringStorePrefInput>>;
   syncRecordsDisplayThreshold?: InputMaybe<Scalars['Int']['input']>;
   useProcurementFunctionality?: InputMaybe<Array<BoolStorePrefInput>>;
   useSimplifiedMobileUi?: InputMaybe<Array<BoolStorePrefInput>>;
+  warnWhenMissingRecentStocktake?: InputMaybe<
+    Array<WarnWhenMissingRecentStocktakeInput>
+  >;
   warningForExcessRequest?: InputMaybe<Scalars['Boolean']['input']>;
 };
 
@@ -11311,6 +11346,7 @@ export enum UserPermission {
   AssetMutate = 'ASSET_MUTATE',
   AssetMutateViaDataMatrix = 'ASSET_MUTATE_VIA_DATA_MATRIX',
   AssetQuery = 'ASSET_QUERY',
+  AssetStatusMutate = 'ASSET_STATUS_MUTATE',
   CancelFinalisedInvoices = 'CANCEL_FINALISED_INVOICES',
   ColdChainApi = 'COLD_CHAIN_API',
   CreateRepack = 'CREATE_REPACK',
@@ -11589,6 +11625,24 @@ export type VvmstatusNode = {
 };
 
 export type VvmstatusesResponse = VvmstatusConnector;
+
+export type WarnWhenMissingRecentStocktakeDataInput = {
+  enabled: Scalars['Boolean']['input'];
+  maxAge: Scalars['Int']['input'];
+  minItems: Scalars['Int']['input'];
+};
+
+export type WarnWhenMissingRecentStocktakeDataNode = {
+  __typename: 'WarnWhenMissingRecentStocktakeDataNode';
+  enabled: Scalars['Boolean']['output'];
+  maxAge: Scalars['Int']['output'];
+  minItems: Scalars['Int']['output'];
+};
+
+export type WarnWhenMissingRecentStocktakeInput = {
+  storeId: Scalars['String']['input'];
+  value: WarnWhenMissingRecentStocktakeDataInput;
+};
 
 export type WarningNode = {
   __typename: 'WarningNode';

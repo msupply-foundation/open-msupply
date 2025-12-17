@@ -598,7 +598,7 @@ impl MockDataInserts {
         self
     }
 
-    pub fn full_master_list(mut self) -> Self {
+    pub fn full_master_lists(mut self) -> Self {
         self.full_master_lists = true;
         self
     }

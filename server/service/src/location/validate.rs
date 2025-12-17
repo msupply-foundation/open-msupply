@@ -15,8 +15,8 @@ pub fn check_location_code_is_unique(
             let locations = LocationRepository::new(connection).query_by_filter(
                 LocationFilter::new()
                     .code(StringFilter::equal_to(&code))
-                    .id(EqualFilter::not_equal_to(id))
-                    .store_id(EqualFilter::equal_to("store_a")),
+                    .id(EqualFilter::not_equal_to(id.to_string()))
+                    .store_id(EqualFilter::equal_to("store_a".to_string())),
             )?;
 
             Ok(locations.is_empty())

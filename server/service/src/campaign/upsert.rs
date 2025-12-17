@@ -38,7 +38,7 @@ pub fn upsert_campaign(
             repo.upsert_one(&new_campaign)?;
 
             CampaignRepository::new(connection)
-                .query_one(CampaignFilter::new().id(EqualFilter::equal_to(&new_campaign.id)))?
+                .query_one(CampaignFilter::new().id(EqualFilter::equal_to(new_campaign.id.to_string())))?
                 .ok_or(UpsertCampaignError::CreatedRecordNotFound)
         })
         .map_err(|error| error.to_inner_error())?;
@@ -77,7 +77,7 @@ fn validate(
     let campaigns_with_duplicate_name = CampaignRepository::new(connection).query_by_filter(
         CampaignFilter::new()
             .name(StringFilter::equal_to(input.name.trim()))
-            .id(EqualFilter::not_equal_to(&input.id)),
+            .id(EqualFilter::not_equal_to(input.id.to_string())),
     )?;
 
     if !campaigns_with_duplicate_name.is_empty() {

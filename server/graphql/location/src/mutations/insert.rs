@@ -292,11 +292,11 @@ mod test {
         let test_service = TestService(Box::new(|_| {
             Ok(Location {
                 location_row: LocationRow {
-                    id: "id".to_owned(),
-                    name: "name".to_owned(),
-                    code: "code".to_owned(),
+                    id: "id".to_string(),
+                    name: "name".to_string(),
+                    code: "code".to_string(),
                     on_hold: true,
-                    store_id: "store_a".to_owned(),
+                    store_id: "store_a".to_string(),
                     ..Default::default()
                 },
             })

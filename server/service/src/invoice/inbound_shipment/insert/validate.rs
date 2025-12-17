@@ -59,6 +59,6 @@ pub fn check_requisition_exists(
     id: &str,
 ) -> Result<Option<Requisition>, RepositoryError> {
     Ok(RequisitionRepository::new(connection)
-        .query_by_filter(RequisitionFilter::new().id(EqualFilter::equal_to(id)))?
+        .query_by_filter(RequisitionFilter::new().id(EqualFilter::equal_to(id.to_string())))?
         .pop())
 }

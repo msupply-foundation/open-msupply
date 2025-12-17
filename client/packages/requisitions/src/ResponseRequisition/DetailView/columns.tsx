@@ -18,7 +18,11 @@ export const useResponseColumns = () => {
   const t = useTranslation();
 
   const { getError } = useResponseRequisitionLineErrorContext();
-  const { manageVaccinesInDoses, warningForExcessRequest } = usePreferences();
+  const {
+    manageVaccinesInDoses,
+    warningForExcessRequest,
+    showIndicativePriceInRequisitions,
+  } = usePreferences();
 
   const { store } = useAuthContext();
   const { isRemoteAuthorisation } = useResponse.utils.isRemoteAuthorisation();
@@ -212,6 +216,20 @@ export const useResponseColumns = () => {
         enableSorting: true,
       },
       {
+        header: t('label.indicative-price-per-unit'),
+        description: t('description.indicative-price-per-unit'),
+        accessorKey: 'pricePerUnit',
+        columnType: ColumnType.Currency,
+        includeColumn: showIndicativePriceInRequisitions,
+      },
+      {
+        header: t('label.indicative-price'),
+        description: t('description.indicative-price'),
+        accessorFn: row => row.requestedQuantity * (row?.pricePerUnit || 0),
+        columnType: ColumnType.Currency,
+        includeColumn: showIndicativePriceInRequisitions,
+      },
+      {
         accessorKey: 'approvedQuantity',
         header: t('label.approved-quantity'),
         size: 100,
@@ -232,7 +250,6 @@ export const useResponseColumns = () => {
         Cell: UnitsAndDosesCell,
         enableSorting: true,
       },
-      // TODO: Global pref to show/hide column
       {
         id: 'reason',
         header: t('label.reason'),
@@ -263,11 +280,13 @@ export const useResponseColumns = () => {
       },
     ],
     [
-      showExtraProgramColumns,
       isRemoteAuthorisation,
-      t,
       manageVaccinesInDoses,
       programName,
+      showExtraProgramColumns,
+      showIndicativePriceInRequisitions,
+      warningForExcessRequest,
+      getError,
     ]
   );
 

@@ -57,7 +57,7 @@ pub struct ItemFilter {
     pub ignore_for_orders: Option<bool>,
     pub min_months_of_stock: Option<f64>,
     pub max_months_of_stock: Option<f64>,
-    pub out_of_stock_with_recent_consumption: Option<bool>,
+    pub with_recent_consumption: Option<bool>,
     pub products_at_risk_of_being_out_of_stock: Option<bool>,
 }
 
@@ -247,7 +247,7 @@ fn create_filtered_query(store_id: String, filter: Option<ItemFilter>) -> BoxedI
             // Implementing these MOS filters requires consumption data, so they are handled in the service layer.
             max_months_of_stock: _,
             min_months_of_stock: _,
-            out_of_stock_with_recent_consumption: _,
+            with_recent_consumption: _,
             products_at_risk_of_being_out_of_stock: _,
         } = f;
 
@@ -568,7 +568,7 @@ mod tests {
                 .units()
                 .items()
                 .names()
-                .full_master_list(),
+                .full_master_lists(),
         )
         .await;
         let item_query_repository = ItemRepository::new(&storage_connection);

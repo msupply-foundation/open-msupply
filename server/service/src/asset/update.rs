@@ -100,7 +100,7 @@ pub fn validate(
             if AssetRepository::new(connection)
                 .query_one(
                     AssetFilter::new()
-                        .id(EqualFilter::not_equal_to(&asset_row.id))
+                        .id(EqualFilter::not_equal_to(asset_row.id.to_string()))
                         .serial_number(StringFilter::equal_to(serial_number)),
                 )?
                 .is_some()

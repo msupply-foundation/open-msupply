@@ -20,6 +20,9 @@ import {
   DetailLoadingSkeleton,
   useIsGapsStoreOnly,
   useBlockNavigation,
+  useTheme,
+  usePreferences,
+  useIsCentralServerApi,
 } from '@openmsupply-client/common';
 import { AppDrawer, AppBar, Footer, NotFound } from './components';
 import { CommandK } from './CommandK';
@@ -74,10 +77,55 @@ export const Site: FC = () => {
   const { setPageTitle } = useHostContext();
   const pageTitle = getPageTitle(location.pathname);
   const isGapsStore = useIsGapsStoreOnly();
+  const { isGaps } = usePreferences();
+  const isCentralServer = useIsCentralServerApi();
+  const { storeCustomColour } = usePreferences();
+  const theme = useTheme();
 
   useEffect(() => {
     setPageTitle(pageTitle);
   }, [location, pageTitle, setPageTitle]);
+
+  // Colours for the Footer bar, if specified in Store prefs
+  let customColour: string | undefined;
+  let textColour: string | undefined;
+  if (storeCustomColour) {
+    // Try/catch allows us to validate the colour string, while also getting the
+    // complementary textColour using the `getContrastText` function. We need
+    // BOTH the CSS.supports() check and try/catch because:
+    // 1. `getContrastText` function will throw on most invalid inputs, but it
+    //    does let incomplete HEX values through (e.g. #257A2), which results in
+    //    invalid CSS and a non-contrasting text color
+    // 2. The CSS.supports() function rejects the above incomplete HEX values,
+    //    but it accepts CSS colour literals like "red", which the
+    //    `getContrastText` function does not
+    try {
+      if (!CSS.supports('color', storeCustomColour))
+        throw new Error('Invalid colour');
+      textColour = theme.palette.getContrastText(storeCustomColour);
+      customColour = storeCustomColour;
+    } catch (e) {
+      console.error('Error parsing footer colours from Store properties', e);
+    }
+  }
+
+  const getRootNavigationPath = () => {
+    // isGapsStore is going to be refactored to support isGaps
+    // This is a temporary fix until the refactor
+    // isGapsStore is just a CSS breakpoint check atm
+    // but is required on small devices
+    if ((isGaps || isGapsStore) && isCentralServer) {
+      return RouteBuilder.create(AppRoute.Manage)
+        .addPart(AppRoute.Equipment)
+        .build();
+    }
+    if (isGaps || isGapsStore) {
+      return RouteBuilder.create(AppRoute.Coldchain)
+        .addPart(AppRoute.Equipment)
+        .build();
+    }
+    return RouteBuilder.create(AppRoute.Dashboard).build();
+  };
 
   return (
     <RequireAuthentication>
@@ -214,17 +262,20 @@ export const Site: FC = () => {
                       <Route
                         path="/"
                         element={
-                          <Navigate
-                            replace
-                            to={RouteBuilder.create(AppRoute.Dashboard).build()}
-                          />
+                          <Navigate replace to={getRootNavigationPath()} />
                         }
                       />
                       <Route path="*" element={<NotFound />} />
                     </Routes>
                   </Box>
-                  <AppFooter />
-                  <AppFooterPortal SessionDetails={<Footer />} />
+                  <AppFooter
+                    isCentralServer={isCentralServer}
+                    backgroundColor={customColour}
+                    textColor={textColour}
+                  />
+                  <AppFooterPortal
+                    SessionDetails={<Footer backgroundColor={textColour} />}
+                  />
                 </Box>
                 <DetailPanel />
                 <QueryErrorHandler />

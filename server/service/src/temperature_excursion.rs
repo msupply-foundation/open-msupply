@@ -14,7 +14,7 @@ pub trait TemperatureExcursionServiceTrait: Sync + Send {
         store_id: &str,
     ) -> Result<Vec<TemperatureExcursion>, RepositoryError> {
         let filter = TemperatureLogFilter::new()
-            .store_id(EqualFilter::equal_to(store_id))
+            .store_id(EqualFilter::equal_to(store_id.to_string()))
             .datetime(DatetimeFilter::after_or_equal_to(
                 Utc::now()
                     .naive_utc()

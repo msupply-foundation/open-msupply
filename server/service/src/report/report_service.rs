@@ -316,7 +316,7 @@ fn get_report(
     id: &str,
 ) -> Result<Report, GetReportError> {
     let report = ReportRepository::new(&ctx.connection)
-        .query_by_filter(ReportFilter::new().id(EqualFilter::equal_to(id)))
+        .query_by_filter(ReportFilter::new().id(EqualFilter::equal_to(id.to_string())))
         .map_err(|e| GetReportError::RepositoryError(e))?
         .pop()
         .ok_or(GetReportError::RepositoryError(RepositoryError::NotFound))?;
@@ -1053,7 +1053,7 @@ mod report_filter_test {
         let ctx = service_provider.basic_context().unwrap();
 
         // test standard reports
-        let filter = ReportFilter::new().code(EqualFilter::equal_to("standard_report"));
+        let filter = ReportFilter::new().code(EqualFilter::equal_to("standard_report".to_string()));
         let reports = ReportRepository::new(&ctx.connection)
             .query_meta_data(Some(filter), None)
             .unwrap();
@@ -1126,7 +1126,9 @@ mod report_filter_test {
         let ctx = service_provider.basic_context().unwrap();
 
         // test standard reports
-        let filter = ReportFilter::new().code(EqualFilter::equal_to("report_with_custom_option"));
+        let filter = ReportFilter::new().code(EqualFilter::equal_to(
+            "report_with_custom_option".to_string(),
+        ));
         let reports = ReportRepository::new(&ctx.connection)
             .query_meta_data(Some(filter), None)
             .unwrap();

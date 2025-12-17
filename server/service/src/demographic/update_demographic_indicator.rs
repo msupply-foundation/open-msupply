@@ -59,7 +59,7 @@ pub fn update_demographic_indicator(
             activity_log_entry(
                 ctx,
                 ActivityLogType::DemographicIndicatorUpdated,
-                Some(updated_demographic_indicator_row.id.to_owned()),
+                Some(updated_demographic_indicator_row.id.to_string()),
                 Some(serde_json::to_string(&demographic_indicator_row).unwrap_or_default()),
                 Some(serde_json::to_string(&updated_demographic_indicator_row).unwrap_or_default()),
             )?;

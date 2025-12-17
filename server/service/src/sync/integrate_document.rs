@@ -50,7 +50,8 @@ fn sync_upsert_document(
     }
     let Some(registry) = DocumentRegistryRepository::new(con)
         .query_by_filter(
-            DocumentRegistryFilter::new().document_type(EqualFilter::equal_to(&document.r#type)),
+            DocumentRegistryFilter::new()
+                .document_type(EqualFilter::equal_to(document.r#type.to_owned())),
         )?
         .pop()
     else {
@@ -84,7 +85,9 @@ fn update_program_enrolment(
         RepositoryError::as_db_error(&format!("Invalid program enrolment data: {}", err), "")
     })?;
     let program_row = ProgramRepository::new(con)
-        .query_one(ProgramFilter::new().context_id(EqualFilter::equal_to(&document.context_id)))?
+        .query_one(
+            ProgramFilter::new().context_id(EqualFilter::equal_to(document.context_id.to_string())),
+        )?
         .ok_or(RepositoryError::as_db_error("Program row not found", ""))?;
     update_program_enrolment_row(con, patient_id, document, program_enrolment, program_row)
         .map_err(|err| RepositoryError::as_db_error(&format!("{:?}", err), ""))?;
@@ -106,7 +109,7 @@ fn update_encounter(con: &StorageConnection, document: &Document) -> Result<(), 
     let encounter_start_time = encounter.start_datetime;
     let existing_encounter = EncounterRepository::new(con)
         .query_by_filter(
-            EncounterFilter::new().document_name(EqualFilter::equal_to(&document.name)),
+            EncounterFilter::new().document_name(EqualFilter::equal_to(document.name.to_owned())),
         )?
         .pop();
 
@@ -116,7 +119,9 @@ fn update_encounter(con: &StorageConnection, document: &Document) -> Result<(), 
         .as_ref()
         .and_then(|c| c.id.clone());
     let program_row = ProgramRepository::new(con)
-        .query_one(ProgramFilter::new().context_id(EqualFilter::equal_to(&document.context_id)))?
+        .query_one(
+            ProgramFilter::new().context_id(EqualFilter::equal_to(document.context_id.to_string())),
+        )?
         .ok_or(RepositoryError::as_db_error("Program row not found", ""))?;
     encounter_updated::update_encounter_row_and_events(
         con,
@@ -148,7 +153,9 @@ fn update_contact_trace(
             RepositoryError::as_db_error(&format!("Invalid contact trace data: {}", err), "")
         })?;
     let program_row = ProgramRepository::new(con)
-        .query_one(ProgramFilter::new().context_id(EqualFilter::equal_to(&document.context_id)))?
+        .query_one(
+            ProgramFilter::new().context_id(EqualFilter::equal_to(document.context_id.to_string())),
+        )?
         .ok_or(RepositoryError::as_db_error("Program row not found", ""))?;
     update_contact_trace_row(con, patient_id, document, contact_trace, program_row)
         .map_err(|err| RepositoryError::as_db_error(&format!("{:?}", err), ""))?;

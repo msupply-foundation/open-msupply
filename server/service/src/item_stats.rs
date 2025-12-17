@@ -75,8 +75,8 @@ pub fn get_item_stats(
 
     let consumption_filter = ConsumptionFilter {
         item_id: Some(EqualFilter::equal_any(item_ids.clone())),
-        store_id: Some(EqualFilter::equal_to(store_id)),
-        date: Some(DateFilter::date_range(&start_date, &end_date)),
+        store_id: Some(EqualFilter::equal_to(store_id.to_string())),
+        date: Some(DateFilter::date_range(&start_date, &offset_end_date)),
     };
 
     let consumption = get_consumption::Input {
@@ -97,7 +97,7 @@ pub fn get_item_stats(
 
     let dos_filter = DaysOutOfStockFilter {
         item_id: Some(EqualFilter::equal_any(item_ids.clone())),
-        store_id: Some(EqualFilter::equal_to(store_id)),
+        store_id: Some(EqualFilter::equal_to(store_id.to_string())),
         from: start_date,
         to: end_date,
     };
@@ -233,7 +233,7 @@ pub fn get_stock_on_hand_rows(
 ) -> Result<Vec<StockOnHandRow>, RepositoryError> {
     let filter = StockOnHandFilter {
         item_id: item_ids.map(EqualFilter::equal_any),
-        store_id: Some(EqualFilter::equal_to(store_id)),
+        store_id: Some(EqualFilter::equal_to(store_id.to_string())),
     };
 
     StockOnHandRepository::new(connection).query(Some(filter))

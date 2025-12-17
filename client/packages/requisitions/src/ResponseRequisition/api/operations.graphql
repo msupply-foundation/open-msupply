@@ -67,6 +67,7 @@ fragment ResponseLine on RequisitionLineNode {
   itemId
   itemName
   requestedQuantity
+  pricePerUnit
   supplyQuantity
   remainingQuantityToSupply
   alreadyIssued
@@ -126,7 +127,12 @@ fragment Response on RequisitionNode {
   maxMonthsOfStock
   minMonthsOfStock
   approvalStatus
-
+  documents {
+    __typename
+    nodes {
+      ...SyncFileReference
+    }
+  }
   user {
     __typename
     username
@@ -246,6 +252,12 @@ fragment ResponseRow on RequisitionNode {
   programName
   maxMonthsOfStock
   minMonthsOfStock
+  documents {
+    __typename
+    nodes {
+      ...SyncFileReference
+    }
+  }
   period {
     name
     startDate

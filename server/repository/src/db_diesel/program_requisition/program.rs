@@ -214,7 +214,7 @@ mod tests {
 
         let programs = program_repository
             .query_by_filter(
-                ProgramFilter::new().item_id(EqualFilter::equal_to("item_query_test1")),
+                ProgramFilter::new().item_id(EqualFilter::equal_to("item_query_test1".to_string())),
             )
             .unwrap();
 

@@ -48,8 +48,8 @@ pub fn set_prescribed_quantity(
 
             let existing_lines = InvoiceLineRepository::new(connection).query_by_filter(
                 InvoiceLineFilter::new()
-                    .item_id(EqualFilter::equal_to(&input.item_id))
-                    .invoice_id(EqualFilter::equal_to(&input.invoice_id)),
+                    .item_id(EqualFilter::equal_to(input.item_id.to_string()))
+                    .invoice_id(EqualFilter::equal_to(input.invoice_id.to_string())),
             )?;
 
             let has_prescribed_quantity_or_stock_line = existing_lines.iter().any(|line| {
@@ -264,9 +264,7 @@ mod test {
 
         let line_repo = InvoiceLineRepository::new(&context.connection);
 
-        let filter = InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(
-            &mock_prescription_unallocated_invoice_line().invoice_id,
-        ));
+        let filter = InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(mock_prescription_unallocated_invoice_line().invoice_id.to_string()));
         let line_count = line_repo.count(Some(filter.clone())).unwrap();
         assert_eq!(line_count, 1);
 

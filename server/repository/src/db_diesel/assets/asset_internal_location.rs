@@ -173,7 +173,7 @@ mod tests {
         // Query by id
         let result = AssetInternalLocationRepository::new(&storage_connection)
             .query_one(
-                AssetInternalLocationFilter::new().id(EqualFilter::equal_to(&asset_location_id)),
+                AssetInternalLocationFilter::new().id(EqualFilter::equal_to(asset_location_id.to_string())),
             )
             .unwrap()
             .unwrap();

@@ -90,7 +90,7 @@ export const importRowToCsv = (
       node.model,
       node.class,
       node.category,
-    ].concat(props.map(key => node.properties?.[key] ?? ''));
+    ].concat(props.map(key => String(node.properties?.[key] ?? '')));
     row.push(node.errorMessage);
     return row;
   });

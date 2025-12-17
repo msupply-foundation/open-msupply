@@ -294,7 +294,7 @@ mod test {
         let requisition_lines =
             RequisitionLineRepository::new(&connection)
                 .query_by_filter(RequisitionLineFilter::new().requisition_id(
-                    EqualFilter::equal_to(&mock_new_response_program_requisition().requisition.id),
+                    EqualFilter::equal_to(mock_new_response_program_requisition().requisition.id.to_string()),
                 ))
                 .unwrap();
 

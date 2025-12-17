@@ -65,7 +65,7 @@ pub fn upsert_item_variant(
             let existing_packaging_variant_ids = packaging_variant_repo
                 .query_by_filter(
                     PackagingVariantFilter::new()
-                        .item_variant_id(EqualFilter::equal_to(&new_item_variant.id)),
+                        .item_variant_id(EqualFilter::equal_to(new_item_variant.id.to_string())),
                 )?
                 .iter()
                 .map(|v| v.id.clone())
@@ -91,7 +91,7 @@ pub fn upsert_item_variant(
 
             let updated_variant = ItemVariantRepository::new(connection)
                 .query_one(
-                    ItemVariantFilter::new().id(EqualFilter::equal_to(&new_item_variant.id)),
+                    ItemVariantFilter::new().id(EqualFilter::equal_to(new_item_variant.id.to_string())),
                 )?
                 .ok_or(UpsertItemVariantError::CreatedRecordNotFound)?;
 
