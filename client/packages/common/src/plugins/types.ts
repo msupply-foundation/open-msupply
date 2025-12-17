@@ -1,6 +1,5 @@
 import {
   ColumnDef,
-  ColumnDefinition,
   UsePluginEvents,
 } from '@openmsupply-client/common';
 import {
@@ -56,7 +55,7 @@ export type Plugins = {
     tableStateLoader: React.ComponentType<{
       masterLists: MasterListRowFragment[];
     }>[];
-    tableColumn: ColumnDefinition<MasterListRowFragment>[];
+    tableColumn: ColumnDef<MasterListRowFragment>[];
   };
 };
 

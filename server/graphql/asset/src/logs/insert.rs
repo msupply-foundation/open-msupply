@@ -22,7 +22,7 @@ pub fn insert_asset_log(
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::MutateAsset,
+            resource: Resource::EditAsset,
             store_id: Some(store_id.to_string()),
         },
     )?;

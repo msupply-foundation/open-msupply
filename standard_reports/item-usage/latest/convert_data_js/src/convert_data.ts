@@ -13,8 +13,6 @@ export type Data = ItemUsageQuery & {
   expiringInSixMonths: SqlResult;
   expiringInTwelveMonths: SqlResult;
   stockOnOrder: SqlResult;
-  AMCTwelve: SqlResult;
-  AMCTwentyFour: SqlResult;
 };
 
 type OutputNode = ArrayElement<ItemUsageQuery['items']['nodes']> & {
@@ -43,8 +41,6 @@ export const convert_data: ConvertData<Data, Arguments, Result> = ({
   const expiringInSixMonthsMap = groupBy(data.expiringInSixMonths, 'item_id');
   const expiringInTwelveMonthsMap = groupBy(data.expiringInTwelveMonths, 'item_id');
   const stockOnOrderMap = groupBy(data.stockOnOrder, 'item_id');
-  const AMCTwelveMap = groupBy(data.AMCTwelve, 'item_id');
-  const AMCTwentyFourMap = groupBy(data.AMCTwentyFour, 'item_id');
 
   let output = data.items.nodes.map((item) => {
     let outputNode: OutputNode = {
@@ -56,11 +52,11 @@ export const convert_data: ConvertData<Data, Arguments, Result> = ({
       expiringInTwelveMonths: expiringInTwelveMonthsMap[item.id]?.[0]?.quantity || 0,
       // invoice lines could add up to more then requested stock
       stockOnOrder: Math.max(0, stockOnOrderMap[item.id]?.[0]?.quantity || 0),
-      AMC12: AMCTwelveMap[item.id]?.[0]?.quantity || 0,
-      AMC24: AMCTwentyFourMap[item.id]?.[0]?.quantity || 0,
       SOH: item.stats?.stockOnHand || 0,
       MOS: item.stats?.availableMonthsOfStockOnHand || 0,
       AMC: item.stats?.averageMonthlyConsumption || 0,
+      AMC12: item.AMC12Months.averageMonthlyConsumption || 0,
+      AMC24: item.AMC24Months.averageMonthlyConsumption || 0,
     };
     return outputNode;
   });
