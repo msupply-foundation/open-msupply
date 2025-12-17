@@ -11,6 +11,7 @@ use crate::{
 
 use self::middleware::{compress as compress_middleware, logger as logger_middleware};
 use actix_cors::Cors;
+use chrono::Utc;
 use graphql_core::loader::{get_loaders, LoaderRegistry};
 
 use graphql::{
@@ -18,11 +19,15 @@ use graphql::{
     PluginExecuteGraphql,
 };
 use log::info;
-use repository::{get_storage_connection_manager, migrations::migrate};
+use repository::{
+    get_storage_connection_manager, migrations::migrate, system_log_row::SystemLogType,
+};
 
 use scheduled_tasks::spawn_scheduled_task_runner;
 use service::{
-    activity_log::add_migration_results_to_system_log,
+    activity_log::{
+        add_migration_results_to_system_log, system_log, system_log_entry, SystemLogMessage,
+    },
     auth_data::AuthData,
     boajs::context::BoaJsContext,
     ledger_fix::ledger_fix_driver::LedgerFixDriver,
@@ -81,14 +86,19 @@ pub async fn start_server(
     settings: Settings,
     mut off_switch: tokio::sync::mpsc::Receiver<()>,
 ) -> std::io::Result<()> {
-    info!(
+    let server_start_timestamp = Utc::now().naive_utc();
+    let server_start_message = format!(
         "{} server starting on port {}",
         match is_develop() {
             true => "Development",
             false => "Production",
         },
-        settings.server.port
+        settings.server.port,
     );
+    // Run info log here. The system log for server starting is after the migrations
+    // because it can't upsert until the database is running. If there is an error in
+    // migrations the system log won't run.
+    info!("{}", server_start_message);
 
     // ON STARTUP OVERRIDE IS CENTRAL SERVER
     if settings.server.override_is_central_server {
@@ -109,9 +119,23 @@ pub async fn start_server(
             std::process::exit(1);
         }
     };
+    // Log the server starting message with the startup timestamp
+    if let Err(e) = system_log_entry(
+        &connection,
+        SystemLogType::ServerStatus,
+        Some(server_start_timestamp),
+        false,
+        SystemLogMessage::Message(&server_start_message),
+    ) {
+        log::warn!(
+            "Failed to write server starting message to system log: {}",
+            e
+        );
+    }
 
-    add_migration_results_to_system_log(&connection, messages).unwrap();
-
+    if let Err(e) = add_migration_results_to_system_log(&connection, messages) {
+        log::warn!("Failed to write migration logs to system_log: {}", e);
+    }
     info!("Run DB migrations...done");
 
     // Upsert standard reports
@@ -386,10 +410,20 @@ pub async fn start_server(
 
     let running_server = http_server.run();
     let server_handle = running_server.handle();
-    info!(
-        "Server started, running on port: {}, version: {}",
-        settings.server.port, version
-    );
+    if let Err(e) = system_log(
+        &connection,
+        SystemLogType::ServerStatus,
+        &format!(
+            "Server started, running on port: {}, version: {}",
+            settings.server.port, version
+        ),
+    ) {
+        log::warn!(
+            "Failed to write server started message to system log: {}",
+            e
+        );
+    }
+
     // run server in another task so that we can handle restart/off events here
     tokio::spawn(running_server);
 
@@ -404,7 +438,29 @@ pub async fn start_server(
         scheduled_error = scheduled_task_handle => unreachable!("Scheduled task stopped unexpectedly: {:?}", scheduled_error),
     };
 
+    if let Err(e) = system_log(
+        &connection,
+        SystemLogType::ServerStatus,
+        &format!(
+            "Server received request to stop. Stopping server on port {}",
+            settings.server.port
+        ),
+    ) {
+        log::warn!("Failed to write shutdown request to system log: {}", e);
+    }
+
     server_handle.stop(true).await;
+
+    if let Err(e) = system_log(
+        &connection,
+        SystemLogType::ServerStatus,
+        "Server has stopped successfully",
+    ) {
+        log::warn!(
+            "Failed to write server stopped message to system log: {}",
+            e
+        );
+    }
 
     Ok(())
 }
