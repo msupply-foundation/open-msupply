@@ -35,6 +35,7 @@ pub enum Resource {
     // name
     QueryName,
     MutateNameProperties,
+    ConfigureNameProperties,
     // location
     QueryLocation,
     MutateLocation,
@@ -180,9 +181,14 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
     map.insert(Resource::QueryName, PermissionDSL::HasStoreAccess);
     map.insert(
         Resource::MutateNameProperties,
+        PermissionDSL::HasPermission(PermissionType::NamePropertiesMutate),
+    );
+
+    map.insert(
+        Resource::ConfigureNameProperties,
         PermissionDSL::And(vec![
-            PermissionDSL::HasPermission(PermissionType::NamePropertiesMutate),
             PermissionDSL::HasPermission(PermissionType::EditCentralData),
+            PermissionDSL::HasPermission(PermissionType::NamePropertiesMutate),
         ]),
     );
 

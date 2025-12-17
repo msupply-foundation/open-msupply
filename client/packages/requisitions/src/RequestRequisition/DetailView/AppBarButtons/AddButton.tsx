@@ -16,14 +16,16 @@ interface AddButtonProps {
   status?: RequisitionNodeStatus;
   onAddItem: (newState: boolean) => void;
   openUploadModal: () => void;
-  disable: boolean /** Disable the whole control */;
+  disableAddItem?: boolean;
+  disableUploadDocument?: boolean;
 }
 
 export const AddButton = ({
   status,
   onAddItem,
   openUploadModal,
-  disable,
+  disableAddItem,
+  disableUploadDocument,
 }: AddButtonProps) => {
   const t = useTranslation();
   const { info } = useNotification();
@@ -39,20 +41,20 @@ export const AddButton = ({
       {
         value: 'add-item',
         label: t('button.add-item'),
-        isDisabled: disable,
+        isDisabled: disableAddItem,
       },
       {
         value: 'add-from-master-list',
         label: t('button.add-from-master-list'),
-        isDisabled: disable,
+        isDisabled: disableAddItem,
       },
       {
         value: 'upload-document',
         label: t('label.upload-document'),
-        isDisabled: disable,
+        isDisabled: disableUploadDocument,
       },
     ],
-    [disable, t]
+    [disableAddItem, disableUploadDocument, t]
   );
 
   const [selectedOption, setSelectedOption] = useState<
@@ -96,7 +98,7 @@ export const AddButton = ({
         selectedOption={selectedOption}
         onSelectOption={onSelectOption}
         onClick={handleOptionSelection}
-        isDisabled={disable}
+        isDisabled={disableAddItem && disableUploadDocument}
         openFrom="bottom"
         Icon={<PlusCircleIcon />}
       />

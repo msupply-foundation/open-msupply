@@ -11,6 +11,7 @@ import { InitialiseLayout } from './InitialiseLayout';
 import { useInitialiseForm } from './hooks';
 import { SyncProgress } from '../SyncProgress';
 import { SiteInfo } from '../SiteInfo';
+import { mapSyncError } from 'packages/system/src';
 
 export const Initialise = () => {
   const t = useTranslation();
@@ -32,6 +33,10 @@ export const Initialise = () => {
     syncStatus,
     siteName,
   } = useInitialiseForm();
+
+  const syncError =
+    syncStatus?.error &&
+    mapSyncError(t, syncStatus?.error, 'error.unknown-sync-error');
 
   useEffect(() => {
     setPageTitle(`${t('messages.not-initialised')} | ${t('app')} `);
@@ -105,6 +110,9 @@ export const Initialise = () => {
         />
       }
       ErrorMessage={error && <BoxedErrorWithDetails {...error} />}
+      SyncErrorMessage={
+        syncError && <BoxedErrorWithDetails {...syncError} width="100%" />
+      }
       onInitialise={async () => {
         /* onInitialise from layout only happens on form key event, form is disabled when isInitialising */
         if (isValid) await onInitialise();

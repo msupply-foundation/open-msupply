@@ -129,7 +129,7 @@ export const SensorListView: FC = () => {
         onOpen(sensor);
       }
     }
-  }, [data?.nodes]);
+  }, [data?.nodes, onOpen, updateQuery, urlQuery]);
 
   return (
     <>
