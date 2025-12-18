@@ -8,7 +8,7 @@ import { useIntlUtils, useTranslation } from '@common/intl';
 import { ColumnDef } from './types';
 import { useMaterialTableColumns } from './useMaterialTableColumns';
 import { getGroupedRows } from './utils';
-import { useTableFiltering } from './useTableFiltering';
+import { useNoUriTableFiltering, useUriTableFiltering } from './useTableFiltering';
 import { useTableDisplayOptions } from './useTableDisplayOptions';
 import { useUrlSortManagement } from './useUrlSortManagement';
 import {
@@ -41,6 +41,7 @@ export interface BaseTableConfig<T extends MRT_RowData>
     groupedByDefault?: boolean;
   };
   columns: ColumnDef<T>[];
+  noUriFiltering?: boolean;
   initialSort?: { key: string; dir: 'asc' | 'desc' };
   noDataElement?: React.ReactNode;
 }
@@ -59,6 +60,7 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
   enableRowSelection = true,
   enableColumnResizing = true,
   manualFiltering = false,
+  noUriFiltering = false,
   initialSort,
   noDataElement,
   muiTableBodyRowProps,
@@ -71,7 +73,9 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
   const { columns } = useMaterialTableColumns(omsColumns);
 
   // Filter needs to be applied after columns are processed
-  const { columnFilters, onColumnFiltersChange } = useTableFiltering(columns);
+  const { columnFilters, onColumnFiltersChange } = noUriFiltering
+    ? useNoUriTableFiltering()
+    : useUriTableFiltering(columns);
   const { sorting, onSortingChange } = useUrlSortManagement(initialSort);
 
   const { isGrouped, toggleGrouped, resetGrouped } = useIsGrouped(
