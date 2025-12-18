@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { FC, useRef } from 'react';
 import {
   NothingHere,
   useTranslation,
@@ -23,16 +23,38 @@ import { ImportFridgeTag } from '../../common/ImportFridgeTag';
 export const CardListView: FC = () => {
   const t = useTranslation();
   const navigate = useNavigate();
-  const { data, isError, isLoading } = useAssets.document.list();
+  const scrollRef = useRef<HTMLDivElement>(null);
   const modalController = useToggle();
   const equipmentRoute = RouteBuilder.create(AppRoute.Coldchain).addPart(
     AppRoute.Equipment
   );
+
+  const {
+    data,
+    isError,
+    isLoading,
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
+  } = useAssets.document.inifiniteAssets({
+    rowsPerPage: 20,
+  });
+
   const onAdd = useCallbackWithPermission(
     UserPermission.AssetMutate,
     modalController.toggleOn,
     t('error.no-asset-create-permission')
   );
+
+  const handleScroll = () => {
+    const el = scrollRef.current;
+    if (!el) return;
+
+    const atBottom =
+      Math.abs(el.scrollHeight - el.scrollTop - el.clientHeight) < 1;
+
+    if (atBottom && hasNextPage && !isFetchingNextPage) fetchNextPage();
+  };
 
   if (isLoading) return <BasicSpinner />;
 
@@ -46,6 +68,8 @@ export const CardListView: FC = () => {
     );
   }
 
+  const nodes = data?.pages?.flatMap(page => page.data?.nodes ?? []) ?? [];
+
   if (!data) {
     return <NothingHere body={t('error.no-items-to-display')} />;
   }
@@ -55,6 +79,8 @@ export const CardListView: FC = () => {
       sx={{
         width: '100%',
         flex: 1,
+        display: 'flex',
+        flexDirection: 'column',
       }}
     >
       <Box
@@ -76,17 +102,18 @@ export const CardListView: FC = () => {
         <ImportFridgeTag shouldShrink={true} />
       </Box>
       <Box
+        ref={scrollRef}
+        onScroll={handleScroll}
         sx={{
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          padding: '0px 0px',
+          padding: '20px 0px',
           gap: 1,
-          overflow: 'auto',
-          overflowY: 'scroll',
+          overflowY: 'auto',
         }}
       >
-        {data.nodes.map(n => (
+        {nodes?.map(n => (
           <Card
             key={n.id}
             sx={{
@@ -96,6 +123,7 @@ export const CardListView: FC = () => {
               border: '1px solid',
               borderColor: '#eee',
               borderRadius: '16px',
+              flexShrink: 0,
             }}
             onClick={() => {
               navigate(equipmentRoute.addPart(n.id).build());
