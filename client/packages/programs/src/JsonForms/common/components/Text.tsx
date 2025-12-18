@@ -79,7 +79,7 @@ const UIComponent = (props: ControlProps) => {
       ? t('error.json-bad-format-with-examples', {
           examples: examples.join('", "'),
         })
-      : (zErrors ?? errors);
+      : zErrors || errors;
 
   if (!props.visible) {
     return null;
