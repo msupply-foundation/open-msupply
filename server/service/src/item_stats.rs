@@ -76,7 +76,7 @@ pub fn get_item_stats(
     let consumption_filter = ConsumptionFilter {
         item_id: Some(EqualFilter::equal_any(item_ids.clone())),
         store_id: Some(EqualFilter::equal_to(store_id.to_string())),
-        date: Some(DateFilter::date_range(&start_date, &offset_end_date)),
+        date: Some(DateFilter::date_range(&start_date, &end_date)),
     };
 
     let consumption = get_consumption::Input {
