@@ -140,21 +140,23 @@ pub(crate) mod test {
         // Using a short DOS period so that stock movements can be created beforehand
         let start_date = date_with_offset(&end_date, Duration::days(-10));
         let store_id = mock_store_a().id.clone();
-        let repo = DaysOutOfStockRepository::new(&connection);
 
-        // Set timezone, otherwise would use whatever is configured in postgres system
-        if cfg!(feature = "postgres") {
-            diesel::sql_query("SET TIME ZONE 'Pacific/Auckland';")
-                .execute(connection.lock().connection())
-                .unwrap();
-        }
+        let result: Vec<DaysOutOfStockRow> = connection
+            .transaction_sync(|con| {
+                let repo = DaysOutOfStockRepository::new(&con);
+                // Set timezone, otherwise would use whatever is configured in postgres system
+                if cfg!(feature = "postgres") {
+                    diesel::sql_query("SET TIME ZONE 'Pacific/Auckland';")
+                        .execute(con.lock().connection())
+                        .unwrap();
+                }
 
-        let result = repo
-            .query(DaysOutOfStockFilter {
-                item_id: Some(EqualFilter::equal_any(vec![mock_item_a().id])),
-                store_id: Some(EqualFilter::equal_to(store_id.to_string())),
-                from: start_date,
-                to: end_date,
+                repo.query(DaysOutOfStockFilter {
+                    item_id: Some(EqualFilter::equal_any(vec![mock_item_a().id])),
+                    store_id: Some(EqualFilter::equal_to(store_id.to_string())),
+                    from: start_date,
+                    to: end_date,
+                })
             })
             .unwrap();
 
@@ -316,7 +318,5 @@ pub(crate) mod test {
             Some(9.0),
         )
         .await;
-
-        std::env::set_var("TZ", "");
     }
 }
