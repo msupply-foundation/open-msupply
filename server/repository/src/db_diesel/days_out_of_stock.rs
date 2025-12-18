@@ -142,8 +142,6 @@ pub(crate) mod test {
         let store_id = mock_store_a().id.clone();
         let repo = DaysOutOfStockRepository::new(&connection);
 
-        std::env::set_var("TZ", "Pacific/Auckland");
-
         // Set timezone, otherwise would use whatever is configured in postgres system
         if cfg!(feature = "postgres") {
             diesel::sql_query("SET TIME ZONE 'Pacific/Auckland';")
@@ -159,8 +157,6 @@ pub(crate) mod test {
                 to: end_date,
             })
             .unwrap();
-
-        std::env::set_var("TZ", "");
 
         let Some(expected_dos) = expected_dos else {
             assert_eq!(
@@ -186,6 +182,8 @@ pub(crate) mod test {
     #[actix_rt::test]
 
     async fn test_dos() {
+        std::env::set_var("TZ", "Pacific/Auckland");
+
         let reference_date = get_local_date_as_utc(datetime_now());
 
         test_one(
@@ -318,5 +316,7 @@ pub(crate) mod test {
             Some(9.0),
         )
         .await;
+
+        std::env::set_var("TZ", "");
     }
 }
