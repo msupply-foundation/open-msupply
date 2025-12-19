@@ -198,7 +198,7 @@ export const RepackModal: FC<RepackModalControlProps> = ({
         />
       }
     >
-      <Box>
+      <>
         <Grid container alignItems="center" flexDirection="column">
           <Typography sx={{ fontWeight: 'bold' }} variant="h6">
             {stockLine?.item.name}
@@ -231,22 +231,20 @@ export const RepackModal: FC<RepackModalControlProps> = ({
             <Typography>{t('messages.no-repack-detail')}</Typography>
           </Box>
         )}
-        <Box display="flex" flexDirection="column">
-          <Box sx={{ maxHeight: 300, overflowY: 'auto' }}>
-            <MaterialTable table={table} />
-          </Box>
-          <Box paddingLeft={3} paddingTop={3} flex={1}>
-            {showRepackDetail && (
-              <RepackEditForm
-                onChange={onChange}
-                availableNumberOfPacks={stockLine.availableNumberOfPacks}
-                data={getFormData()}
-                isNew={isNew}
-              />
-            )}
-          </Box>
+        <Box sx={{ maxHeight: 300, overflowY: 'auto' }}>
+          <MaterialTable table={table} />
         </Box>
-      </Box>
+        <Box paddingLeft={3} paddingTop={3} flex={1}>
+          {showRepackDetail && (
+            <RepackEditForm
+              onChange={onChange}
+              availableNumberOfPacks={stockLine.availableNumberOfPacks}
+              data={getFormData()}
+              isNew={isNew}
+            />
+          )}
+        </Box>
+      </>
     </Modal>
   );
 };

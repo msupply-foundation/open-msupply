@@ -18,7 +18,6 @@ import {
   usePaginatedMaterialTable,
   ColumnDef,
 } from '@openmsupply-client/common';
-import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
 import {
   VaccineCourseFragment,
@@ -101,7 +100,7 @@ export const ImmunisationProgramDetailView: FC = () => {
     ),
   });
 
-  const { confirmAndDelete } = useDeleteSelectedVaccineCourses(selectedRows);
+  const { confirmAndDelete } = useDeleteSelectedVaccineCourses({ selectedRows, resetRowSelection: table.resetRowSelection });
 
   const actions: Action[] = [
     {
@@ -124,7 +123,6 @@ export const ImmunisationProgramDetailView: FC = () => {
           mode={mode}
         />
       )}
-      <Toolbar />
       <AppBarButtons onCreate={onOpen} />
       <MaterialTable table={table} />
       <AppFooterPortal
@@ -133,6 +131,7 @@ export const ImmunisationProgramDetailView: FC = () => {
             <ActionsFooter
               actions={actions}
               selectedRowCount={selectedRows.length}
+              resetRowSelection={table.resetRowSelection}
             />
           ) : (
             <Box
