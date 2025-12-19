@@ -11,7 +11,7 @@ use crate::{
 
 use self::middleware::{compress as compress_middleware, logger as logger_middleware};
 use actix_cors::Cors;
-use chrono::Utc;
+use chrono::{NaiveDateTime, Utc};
 use graphql_core::loader::{get_loaders, LoaderRegistry};
 
 use graphql::{
@@ -21,6 +21,7 @@ use graphql::{
 use log::info;
 use repository::{
     get_storage_connection_manager, migrations::migrate, system_log_row::SystemLogType,
+    StorageConnection,
 };
 
 use scheduled_tasks::spawn_scheduled_task_runner;
@@ -120,14 +121,8 @@ pub async fn start_server(
         }
     };
     // Log the server starting message with the startup timestamp
-    system_log_entry(
-        &connection,
-        SystemLogType::ServerStatus,
-        Some(server_start_timestamp),
-        false,
-        SystemLogMessage::Message(&server_start_message),
-    )
-    .unwrap();
+    let status_log = StatusLog(&connection);
+    status_log.no_console_with_timestamp(&server_start_message, server_start_timestamp);
 
     add_migration_results_to_system_log(&connection, messages).unwrap();
     info!("Run DB migrations...done");
@@ -413,8 +408,12 @@ pub async fn start_server(
 
     tokio::select! {
         // TODO log error in ctrl_c and None in off_switch
-        _ = tokio::signal::ctrl_c() => {},
-        Some(_) = off_switch.recv() => {},
+        _ = tokio::signal::ctrl_c() => {
+            status_log.log("Server received Ctrl-C, stopping server");
+        },
+        Some(_) = off_switch.recv() => {
+            status_log.log("Server received request to stop with off switch");
+        },
         _ = synchroniser_task => unreachable!("Synchroniser unexpectedly stopped"),
         _ = file_sync_task => unreachable!("File sync unexpectedly stopped"),
           _ = ledger_fix_task => unreachable!("Ledger fix unexpectedly stopped"),
@@ -422,29 +421,28 @@ pub async fn start_server(
         scheduled_error = scheduled_task_handle => unreachable!("Scheduled task stopped unexpectedly: {:?}", scheduled_error),
     };
 
-    system_log(
-        &connection,
-        SystemLogType::ServerStatus,
-        &format!(
-            "Server received request to stop with {}",
-            tokio::select! {
-                _ = tokio::signal::ctrl_c() => "ctrl-c",
-                Some(_) = off_switch.recv() => "off switch",
-            }
-        ),
-    )
-    .unwrap();
-
     server_handle.stop(true).await;
 
-    system_log(
-        &connection,
-        SystemLogType::ServerStatus,
-        "Server has stopped successfully",
-    )
-    .unwrap();
+    status_log.log("Server stopped successfully");
 
     Ok(())
+}
+
+struct StatusLog<'a>(&'a StorageConnection);
+impl<'a> StatusLog<'a> {
+    fn log(&self, message: &str) {
+        system_log(self.0, SystemLogType::ServerStatus, message).unwrap();
+    }
+    fn no_console_with_timestamp(&self, message: &str, timestamp: NaiveDateTime) {
+        system_log_entry(
+            self.0,
+            SystemLogType::ServerStatus,
+            Some(timestamp),
+            false,
+            SystemLogMessage::Message(message),
+        )
+        .unwrap();
+    }
 }
 
 fn auth_data(
