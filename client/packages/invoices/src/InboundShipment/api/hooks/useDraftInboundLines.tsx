@@ -92,12 +92,12 @@ export const useDraftInboundLines = (
     [setDraftLines, setIsDirty]
   );
 
-  const removeDraftLine = async (id: string) => {
-    const batch = draftLines.find(line => line.id === id);
+  const removeDraftLine = async (lineId: string) => {
+    const batch = draftLines.find(line => line.id === lineId);
     if (!batch) return;
     if (batch.isCreated) {
       setDraftLines(draftLines => {
-        const newLines = draftLines.filter(line => line.id !== id);
+        const newLines = draftLines.filter(line => line.id !== lineId);
         if (newLines.length === 0 && item) {
           return [CreateDraft.stockInLine({ item, invoiceId: id })];
         }
