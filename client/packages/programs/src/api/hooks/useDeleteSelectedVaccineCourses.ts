@@ -7,7 +7,10 @@ import { useProgramsGraphQL } from '../useProgramsGraphQL';
 import { VACCINE, LIST } from './keys';
 import { VaccineCourseFragment } from '../operations.generated';
 
-export const useDeleteSelectedVaccineCourses = (selectedRows: VaccineCourseFragment[]) => {
+export const useDeleteSelectedVaccineCourses = ({ selectedRows, resetRowSelection }: {
+  selectedRows: VaccineCourseFragment[],
+  resetRowSelection: () => void,
+}) => {
   const t = useTranslation();
   const { api, queryClient } = useProgramsGraphQL();
   const { mutateAsync } = useMutation(
@@ -29,6 +32,7 @@ export const useDeleteSelectedVaccineCourses = (selectedRows: VaccineCourseFragm
     await Promise.all(
       selectedRows.map(row => mutateAsync({ vaccineCourseId: row.id }))
     ).then(() => queryClient.invalidateQueries([VACCINE, LIST]));
+    resetRowSelection();
   };
 
   const confirmAndDelete = useDeleteConfirmation({
@@ -44,5 +48,5 @@ export const useDeleteSelectedVaccineCourses = (selectedRows: VaccineCourseFragm
     },
   });
 
-  return { confirmAndDelete, selectedRows };
+  return { confirmAndDelete };
 };
