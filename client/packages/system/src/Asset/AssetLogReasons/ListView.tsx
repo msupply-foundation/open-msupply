@@ -8,8 +8,6 @@ import {
   MaterialTable,
   ColumnDef,
   useNonPaginatedMaterialTable,
-  TableProvider,
-  createTableStore,
 } from '@openmsupply-client/common';
 import { AssetLogReasonFragment, useAssetLogReasonList } from '../api';
 import { getStatusOptions, parseStatus } from '../utils';
@@ -69,7 +67,7 @@ export const AssetLogReasonsListView: FC = () => {
     useEditModal<InsertAssetLogReasonInput>();
 
   return (
-    <TableProvider createStore={createTableStore}>
+    <>
       {isOpen && (
         <LogReasonCreateModal
           isOpen={isOpen}
@@ -80,6 +78,6 @@ export const AssetLogReasonsListView: FC = () => {
       <AppBarButtons onCreate={() => onOpen()} />
       <MaterialTable table={table} />
       <Footer selectedRows={selectedRows} resetRowSelection={table.resetRowSelection} />
-    </TableProvider>
+    </>
   );
 };

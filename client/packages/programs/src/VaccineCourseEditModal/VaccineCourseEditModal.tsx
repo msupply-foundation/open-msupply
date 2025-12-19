@@ -24,7 +24,7 @@ import {
   useNotification,
   useSimpleMaterialTable,
   useTranslation,
-  useBufferState,
+  AgeInputCell,
 } from '@openmsupply-client/common';
 import React, { useMemo, FC } from 'react';
 import { useVaccineCourse } from '../api/hooks/useVaccineCourse';
@@ -34,7 +34,6 @@ import { DraftVaccineCourse, VaccineCourseFragment } from '../api';
 import { VaccineCourseDoseFragment } from '../api/operations.generated';
 import { TextInputCell } from '@openmsupply-client/common/src/ui/layout/tables/material-react-table/components/TextInputCell';
 import { NumberInputCell } from '@openmsupply-client/common/src/ui/layout/tables/material-react-table/components/NumberInputCell';
-import { MRT_Cell, MRT_RowData } from 'material-react-table';
 
 const getDemographicOptions = (demographics: DemographicNode[]) => {
   const options = demographics.map(demographic => {
@@ -411,73 +410,4 @@ const VaccineCourseDoseTable = ({
       <MaterialTable table={table} />
     </>
   );
-};
-
-const ARROW_KEYS = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'];
-
-export const AgeInputCell = <T extends MRT_RowData>({
-  cell,
-  updateFn,
-  ...numericTextProps
-}: {
-  cell: MRT_Cell<T>;
-  updateFn: (value: number) => void;
-}) => {
-  const { getValue, column, row } = cell;
-
-  const value = column.accessorFn
-    ? // Workaround for tanstack bug: https://github.com/TanStack/table/issues/5363
-    (column.accessorFn(row.original, row.index) as number)
-    : getValue<number>();
-
-  const [year, setYear] = useBufferState(Math.floor(value / 12));
-  const [month, setMonth] = useBufferState(value % 12);
-
-  const t = useTranslation();
-
-  return <>
-    <NumericTextInput
-      decimalLimit={2}
-      min={0}
-      value={year}
-      onChange={num => {
-        const newValue = num === undefined ? 0 : num;
-        if (newValue === year) return;
-        setYear(newValue);
-        updateFn(newValue * 12 + month);
-      }}
-      onKeyDown={e => {
-        // Allow using arrow keys to move input cursor without
-        // navigating to the next/previous cell
-        if (ARROW_KEYS.includes(e.key)) {
-          e.stopPropagation();
-        }
-      }}
-      endAdornment={t('label.years-abbreviation')}
-      fullWidth
-      {...numericTextProps}
-    />
-    <NumericTextInput
-      decimalLimit={2}
-      min={0}
-      max={11}
-      value={month}
-      onChange={num => {
-        const newValue = num === undefined ? 0 : num;
-        if (newValue === month) return;
-        setMonth(newValue);
-        updateFn(year * 12 + newValue);
-      }}
-      onKeyDown={e => {
-        // Allow using arrow keys to move input cursor without
-        // navigating to the next/previous cell
-        if (ARROW_KEYS.includes(e.key)) {
-          e.stopPropagation();
-        }
-      }}
-      endAdornment={t('label.months-abbreviation')}
-      fullWidth
-      {...numericTextProps}
-    />
-  </>;
 };

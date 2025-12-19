@@ -39,7 +39,6 @@ export const TextInputCell = <T extends MRT_RowData>({
       sx={sx}
       // Enable these as required?
       // required={isRequired}
-      // multiline={multiline}
       // slotProps={{
       //   input: {
       //     inputProps: {
