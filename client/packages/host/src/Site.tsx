@@ -22,6 +22,7 @@ import {
   useBlockNavigation,
   useTheme,
   usePreferences,
+  useIsCentralServerApi,
 } from '@openmsupply-client/common';
 import { AppDrawer, AppBar, Footer, NotFound } from './components';
 import { CommandK } from './CommandK';
@@ -76,6 +77,8 @@ export const Site: FC = () => {
   const { setPageTitle } = useHostContext();
   const pageTitle = getPageTitle(location.pathname);
   const isGapsStore = useIsGapsStoreOnly();
+  const { isGaps } = usePreferences();
+  const isCentralServer = useIsCentralServerApi();
   const { storeCustomColour } = usePreferences();
   const theme = useTheme();
 
@@ -105,6 +108,24 @@ export const Site: FC = () => {
       console.error('Error parsing footer colours from Store properties', e);
     }
   }
+
+  const getRootNavigationPath = () => {
+    // isGapsStore is going to be refactored to support isGaps
+    // This is a temporary fix until the refactor
+    // isGapsStore is just a CSS breakpoint check atm
+    // but is required on small devices
+    if ((isGaps || isGapsStore) && isCentralServer) {
+      return RouteBuilder.create(AppRoute.Manage)
+        .addPart(AppRoute.Equipment)
+        .build();
+    }
+    if (isGaps || isGapsStore) {
+      return RouteBuilder.create(AppRoute.Coldchain)
+        .addPart(AppRoute.Equipment)
+        .build();
+    }
+    return RouteBuilder.create(AppRoute.Dashboard).build();
+  };
 
   return (
     <RequireAuthentication>
@@ -241,16 +262,14 @@ export const Site: FC = () => {
                       <Route
                         path="/"
                         element={
-                          <Navigate
-                            replace
-                            to={RouteBuilder.create(AppRoute.Dashboard).build()}
-                          />
+                          <Navigate replace to={getRootNavigationPath()} />
                         }
                       />
                       <Route path="*" element={<NotFound />} />
                     </Routes>
                   </Box>
                   <AppFooter
+                    isCentralServer={isCentralServer}
                     backgroundColor={customColour}
                     textColor={textColour}
                   />

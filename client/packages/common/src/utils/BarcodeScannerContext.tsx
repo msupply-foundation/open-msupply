@@ -9,7 +9,7 @@ import { Gs1Barcode, parseBarcode } from 'gs1-barcode-parser-mod';
 import { Formatter } from './formatters';
 import { BarcodeScanner, ScannerType } from '@openmsupply-client/common';
 
-const SCAN_TIMEOUT_IN_MS = 5000;
+const SCAN_TIMEOUT_IN_MS = 10000;
 
 export interface ScanResult {
   gs1?: Gs1Barcode;
