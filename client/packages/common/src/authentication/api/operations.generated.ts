@@ -269,6 +269,7 @@ export type PreferencesQuery = {
     invoiceStatusOptions: Array<Types.InvoiceNodeStatus>;
     itemMarginOverridesSupplierMargin: boolean;
     showIndicativePriceInRequisitions: boolean;
+    isGaps: boolean;
     warnWhenMissingRecentStocktake: {
       __typename: 'WarnWhenMissingRecentStocktakeDataNode';
       enabled: boolean;
@@ -516,6 +517,7 @@ export const PreferencesDocument = gql`
       invoiceStatusOptions
       itemMarginOverridesSupplierMargin
       showIndicativePriceInRequisitions
+      isGaps
     }
   }
 `;

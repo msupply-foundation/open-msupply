@@ -85,6 +85,10 @@ impl PreferencesNode {
     pub async fn item_margin_overrides_supplier_margin(&self) -> Result<bool> {
         self.load_preference(&self.preferences.item_margin_overrides_supplier_margin)
     }
+    
+    pub async fn is_gaps(&self) -> Result<bool> {
+        self.load_preference(&self.preferences.is_gaps)
+    }
 
     // Store preferences
     pub async fn manage_vaccines_in_doses(&self) -> Result<bool> {
@@ -258,7 +262,7 @@ pub enum PreferenceKey {
     ExpiredStockPreventIssue,
     ExpiredStockIssueThreshold,
     ItemMarginOverridesSupplierMargin,
-
+    IsGaps,
     // Store preferences
     ManageVaccinesInDoses,
     ManageVvmStatusForStock,
