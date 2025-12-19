@@ -194,7 +194,7 @@ fn apply_data_rows(
     // Insert new rows below the first row. We'll copy the styles and formulae from the first row down.
     // Formulae cell references will be adjusted by umya i.e "=A2*3" will be adjusted to "=A3*3"
     // Any footer in the excel will be pushed down appropriately.
-    sheet.insert_new_row(&(row_idx + 1), &(rows_len - 1));
+    sheet.insert_new_row(&(row_idx + 1), &rows_len);
 
     for row in body_rows.into_iter() {
         // Duplicate any formulae/formatting to the next row before populating
