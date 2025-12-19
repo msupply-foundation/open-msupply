@@ -6,28 +6,29 @@ import {
   Grid,
   useTranslation,
   ToggleState,
+  FilterBy,
 } from '@openmsupply-client/common';
-import { ListParams, usePrescriptionList } from '../api';
+import { useExportPrescriptionList } from '../api';
 import { prescriptionToCsv } from '../../utils';
 import { NewPrescriptionModal } from './NewPrescriptionModal';
 import { ExportSelector } from '@openmsupply-client/system';
 
 interface AppBarButtonsComponentProps {
   modalController: ToggleState;
-  listParams: ListParams;
+  filterBy: FilterBy | null;
 }
 
 export const AppBarButtonsComponent = ({
   modalController,
-  listParams,
+  filterBy,
 }: AppBarButtonsComponentProps) => {
   const t = useTranslation();
 
-  const {
-    query: { data, isLoading },
-  } = usePrescriptionList(listParams);
-  const getCsvData = () =>
-    data?.nodes?.length ? prescriptionToCsv(data.nodes, t) : null;
+  const { fetchPrescription, isLoading } = useExportPrescriptionList(filterBy);
+  const getCsvData = async () => {
+    const { data } = await fetchPrescription();
+    return data?.nodes?.length ? prescriptionToCsv(data.nodes, t) : null;
+  };
 
   return (
     <AppBarButtonsPortal>

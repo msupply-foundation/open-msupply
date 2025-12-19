@@ -142,10 +142,7 @@ export const PrescriptionListView = () => {
 
   return (
     <>
-      <AppBarButtons
-        modalController={modalController}
-        listParams={listParams}
-      />
+      <AppBarButtons modalController={modalController} filterBy={filterBy} />
       <MaterialTable table={table} />
       <Footer
         selectedRows={selectedRows}
