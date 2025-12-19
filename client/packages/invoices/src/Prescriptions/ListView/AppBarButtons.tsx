@@ -7,8 +7,9 @@ import {
   useTranslation,
   ToggleState,
   FilterBy,
+  SortBy,
 } from '@openmsupply-client/common';
-import { useExportPrescriptionList } from '../api';
+import { PrescriptionRowFragment, useExportPrescriptionList } from '../api';
 import { prescriptionToCsv } from '../../utils';
 import { NewPrescriptionModal } from './NewPrescriptionModal';
 import { ExportSelector } from '@openmsupply-client/system';
@@ -16,15 +17,20 @@ import { ExportSelector } from '@openmsupply-client/system';
 interface AppBarButtonsComponentProps {
   modalController: ToggleState;
   filterBy: FilterBy | null;
+  sortBy: SortBy<PrescriptionRowFragment>;
 }
 
 export const AppBarButtonsComponent = ({
   modalController,
   filterBy,
+  sortBy,
 }: AppBarButtonsComponentProps) => {
   const t = useTranslation();
 
-  const { fetchPrescription, isLoading } = useExportPrescriptionList(filterBy);
+  const { fetchPrescription, isLoading } = useExportPrescriptionList(
+    filterBy,
+    sortBy
+  );
   const getCsvData = async () => {
     const { data } = await fetchPrescription();
     return data?.nodes?.length ? prescriptionToCsv(data.nodes, t) : null;
