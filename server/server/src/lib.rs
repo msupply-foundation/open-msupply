@@ -120,22 +120,16 @@ pub async fn start_server(
         }
     };
     // Log the server starting message with the startup timestamp
-    if let Err(e) = system_log_entry(
+    system_log_entry(
         &connection,
         SystemLogType::ServerStatus,
         Some(server_start_timestamp),
         false,
         SystemLogMessage::Message(&server_start_message),
-    ) {
-        log::warn!(
-            "Failed to write server starting message to system log: {}",
-            e
-        );
-    }
+    )
+    .unwrap();
 
-    if let Err(e) = add_migration_results_to_system_log(&connection, messages) {
-        log::warn!("Failed to write migration logs to system_log: {}", e);
-    }
+    add_migration_results_to_system_log(&connection, messages).unwrap();
     info!("Run DB migrations...done");
 
     // Upsert standard reports
@@ -410,20 +404,10 @@ pub async fn start_server(
 
     let running_server = http_server.run();
     let server_handle = running_server.handle();
-    if let Err(e) = system_log(
-        &connection,
-        SystemLogType::ServerStatus,
-        &format!(
-            "Server started, running on port: {}, version: {}",
-            settings.server.port, version
-        ),
-    ) {
-        log::warn!(
-            "Failed to write server started message to system log: {}",
-            e
-        );
-    }
-
+    info!(
+        "Server started, running on port: {}, version: {}",
+        settings.server.port, version
+    );
     // run server in another task so that we can handle restart/off events here
     tokio::spawn(running_server);
 
@@ -438,29 +422,27 @@ pub async fn start_server(
         scheduled_error = scheduled_task_handle => unreachable!("Scheduled task stopped unexpectedly: {:?}", scheduled_error),
     };
 
-    if let Err(e) = system_log(
+    system_log(
         &connection,
         SystemLogType::ServerStatus,
         &format!(
-            "Server received request to stop. Stopping server on port {}",
-            settings.server.port
+            "Server received request to stop with {}",
+            tokio::select! {
+                _ = tokio::signal::ctrl_c() => "ctrl-c",
+                Some(_) = off_switch.recv() => "off switch",
+            }
         ),
-    ) {
-        log::warn!("Failed to write shutdown request to system log: {}", e);
-    }
+    )
+    .unwrap();
 
     server_handle.stop(true).await;
 
-    if let Err(e) = system_log(
+    system_log(
         &connection,
         SystemLogType::ServerStatus,
         "Server has stopped successfully",
-    ) {
-        log::warn!(
-            "Failed to write server stopped message to system log: {}",
-            e
-        );
-    }
+    )
+    .unwrap();
 
     Ok(())
 }
