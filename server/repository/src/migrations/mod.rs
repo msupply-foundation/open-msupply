@@ -181,7 +181,7 @@ pub fn migrate(
     let starting_database_version = get_database_version(connection);
 
     // Get migration fragment log repository and create table if it doesn't exist
-    create_migration_fragment_table(connection).map_err(|e| MigrationError::DatabaseError(e))?;
+    create_migration_fragment_table(connection)?;
     let migration_fragment_log_repo = MigrationFragmentLogRepository::new(connection);
 
     // for `>` see PartialOrd implementation of Version
@@ -218,7 +218,7 @@ pub fn migrate(
 
         // Drop view once during migrations, if next migration is 2.3.0 and above
         if !drop_view_has_run && migration_version >= min_version_for_dropping_views {
-            drop_views(connection).map_err(|e| MigrationError::DatabaseViewsError(e))?;
+            drop_views(connection).map_err(MigrationError::DatabaseViewsError)?;
             drop_view_has_run = true;
         }
 
@@ -241,17 +241,13 @@ pub fn migrate(
                 Utc::now().naive_utc(),
             ));
 
-            set_database_version(connection, &migration_version)
-                .map_err(|e| MigrationError::DatabaseError(e))?;
+            set_database_version(connection, &migration_version)?;
         }
 
         // Run fragment migrations (can run on current version)
         if migration_version >= database_version {
             for fragment in migration.migrate_fragments() {
-                if migration_fragment_log_repo
-                    .has_run(migration, &fragment)
-                    .map_err(|e| MigrationError::DatabaseError(e))?
-                {
+                if migration_fragment_log_repo.has_run(migration, &fragment)? {
                     continue;
                 }
 
@@ -263,9 +259,7 @@ pub fn migrate(
                     }
                 })?;
 
-                migration_fragment_log_repo
-                    .insert(migration, &fragment)
-                    .map_err(|e| MigrationError::DatabaseError(e))?;
+                migration_fragment_log_repo.insert(migration, &fragment)?;
             }
         }
     }
@@ -284,14 +278,14 @@ pub fn migrate(
     // Creating Views on an earlier version migration test might fail due to more recent views referencing schema elements that didn't previously exist
     // Note: When Migration tests run, views won't be available
     if final_database_version >= last_version_in_migration_vec && drop_view_has_run {
-        rebuild_views(connection).map_err(|e| MigrationError::DatabaseViewsError(e))?;
+        rebuild_views(connection).map_err(MigrationError::DatabaseViewsError)?;
     } else {
         log::warn!(
             "Not recreating views, database version is {final_database_version}, last version in migration vec is {last_version_in_migration_vec}"
         );
     }
 
-    set_database_version(connection, &to_version).map_err(|e| MigrationError::DatabaseError(e))?;
+    set_database_version(connection, &to_version)?;
 
     migration_result.push((
         format!("Views recreated for {}", to_version.to_string()),
