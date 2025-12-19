@@ -73,9 +73,11 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
   const { columns } = useMaterialTableColumns(omsColumns);
 
   // Filter needs to be applied after columns are processed
+  const uriTableFiltering = useUriTableFiltering(columns);
+  const noUriTableFiltering = useNoUriTableFiltering();
   const { columnFilters, onColumnFiltersChange } = noUriFiltering
-    ? useNoUriTableFiltering()
-    : useUriTableFiltering(columns);
+    ? noUriTableFiltering
+    : uriTableFiltering;
   const { sorting, onSortingChange } = useUrlSortManagement(initialSort);
 
   const { isGrouped, toggleGrouped, resetGrouped } = useIsGrouped(
