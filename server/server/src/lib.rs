@@ -64,7 +64,7 @@ mod central;
 pub mod print;
 
 use serve_frontend_plugins::config_server_frontend_plugins;
-use upload::config_upload;
+use upload::{config_upload, get_default_directory};
 // Only import discovery for non android features (otherwise build for android targets would fail due to local-ip-address)
 #[cfg(any(target_os = "macos", target_os = "windows"))]
 mod discovery;
@@ -352,6 +352,7 @@ pub async fn start_server(
             .app_data(service_provider.clone())
             .app_data(auth.clone())
             .app_data(validated_plugins.clone())
+            .app_data(get_default_directory(&closure_settings))
             .configure(attach_graphql_schema(graphql_schema.clone()))
             .configure(config_static_files)
             .configure(config_cold_chain)

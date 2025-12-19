@@ -2586,5 +2586,21 @@
   "warning.insufficient-recent-stocktake-items": "Vous n'avez pas effectué d'inventaire contenant au moins {{ minItems }} articles au cours des {{maxAge}} derniers jours. Vos niveaux de stock peuvent ne pas être exacts. Êtes-vous sûr de vouloir continuer ?",
   "warning.manual-store-requisition": "Attention - La saisie d'une réquisition client pour un dépôt peut entraîner des doublons si ce dépôt soumet aussi une commande interne.",
   "warning.nothing-to-supply": "La quantité demandée à été fournie !",
-  "warning.requested-exceeds-suggested": "La quantité demandée est supérieure à la quantité suggérée"
+  "warning.requested-exceeds-suggested": "La quantité demandée est supérieure à la quantité suggérée",
+  "report.opening-stock": "Stock d'ouverture",
+  "report.goods-received": "Quantité reçue",
+  "report.distributed": "Quantité expédiée",
+  "report.transferred": "Transféré entre les unités de santé",
+  "report.returned": "Quantités retournées",
+  "report.dispensed": "Quantité dispensée aux patients pendant le mois",
+  "report.adjustment-up": "Ajustements +",
+  "report.adjustment-down": "Pertes (Ajustements -)",
+  "report.available-eop": "Stock disponible (fin de période)",
+  "report.days-out-of-stock": "Nombre de Jours de rupture",
+  "report.deliveries": "Livraisons en cours",
+  "report.quantity-to-order": "Commande (conditionnements)",
+  "report.opening-stock-clients": "Stock d'ouverture des clients",
+  "report.available-after-stocktake": "Stock disponible (après inventaire mensuel)",
+  "report.amd": "AMD",
+  "report.consolidated-amc-clients": "CMM consolidée des clients"
 }

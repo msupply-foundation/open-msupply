@@ -6872,6 +6872,7 @@ export enum PreferenceKey {
   GenderOptions = 'genderOptions',
   InboundShipmentAutoVerify = 'inboundShipmentAutoVerify',
   InvoiceStatusOptions = 'invoiceStatusOptions',
+  IsGaps = 'isGaps',
   ItemMarginOverridesSupplierMargin = 'itemMarginOverridesSupplierMargin',
   ManageVaccinesInDoses = 'manageVaccinesInDoses',
   ManageVvmStatusForStock = 'manageVvmStatusForStock',
@@ -6935,6 +6936,7 @@ export type PreferencesNode = {
   genderOptions: Array<GenderTypeNode>;
   inboundShipmentAutoVerify: Scalars['Boolean']['output'];
   invoiceStatusOptions: Array<InvoiceNodeStatus>;
+  isGaps: Scalars['Boolean']['output'];
   itemMarginOverridesSupplierMargin: Scalars['Boolean']['output'];
   manageVaccinesInDoses: Scalars['Boolean']['output'];
   manageVvmStatusForStock: Scalars['Boolean']['output'];
@@ -11282,6 +11284,7 @@ export type UpsertPreferencesInput = {
   genderOptions?: InputMaybe<Array<GenderTypeNode>>;
   inboundShipmentAutoVerify?: InputMaybe<Array<BoolStorePrefInput>>;
   invoiceStatusOptions?: InputMaybe<Array<InvoiceStatusOptionsInput>>;
+  isGaps?: InputMaybe<Scalars['Boolean']['input']>;
   itemMarginOverridesSupplierMargin?: InputMaybe<Scalars['Boolean']['input']>;
   manageVaccinesInDoses?: InputMaybe<Array<BoolStorePrefInput>>;
   manageVvmStatusForStock?: InputMaybe<Array<BoolStorePrefInput>>;
