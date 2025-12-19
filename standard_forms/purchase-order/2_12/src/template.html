@@ -1,0 +1,69 @@
+<style>
+  {% include "style.css" %}
+</style>
+
+<table class="body_section">
+  <thead>
+    <tr class="body_column_label">
+      <th>{{ t(k="report.line", f="Line") }}</th>
+      <th>{{ t(k="report.supplier-item-code", f="Supplier's item code") }}</th>
+      <th>{{ t(k="report.item-code",f="Item code") }}</th>
+      <th>{{ t(k="report.item-name",f="Item name") }}</th>
+      <th>{{ t(k="label.unit", f="Unit") }}</th>
+      <th>
+        {{ t(k="label.requested-packs", f="Requested number of packs")
+        }}
+      </th>
+      <th>{{ t(k="report.pack-size", f="Pack size") }}</th>
+      <th>
+        {{ t(k="label.expected-delivery-date", f="Expected delivery date") }}
+      </th>
+      <th>{{ t(k="label.line-cost", f="Line cost") }}</th>
+      <th>{{ t(k="label.comment", f="Comment") }}</th>
+    </tr>
+  </thead>
+  {% for line in data.purchaseOrder.lines.nodes -%}
+  <tr class="body_value">
+    <td>{{ line.lineNumber }}</td>
+    <td>{{ line.supplierItemCode | default(value="") }}</td>
+    <td>{{ line.item.code | default(value="") }}</td>
+    <td>{{ line.item.name | default(value="") }}</td>
+    <td>{{ line.item.unitName | default(value="") }}</td>
+    <td>{{ line.requestedNumberOfPacks | default(value="") }}</td>
+    <td>{{ line.requestedPackSize | default(value="") }}</td>
+    <td>{{ line.expectedDeliveryDate | default(value="") }}</td>
+    <td>{{ line.lineCost | default(value="") }}</td>
+    <td>{{ line.comment | default(value="") }}</td>
+  </tr>
+  {%- endfor %}
+</table>
+
+<table class="right-aligned-table">
+  <tr excel-type="total-row">
+    <td>{{ t(k="heading.total", f="Total")}}:</td>
+    <td>{{ data.purchaseOrder.orderTotalAfterDiscount *
+    data.purchaseOrder.foreignExchangeRate | default(value="") | round(precision=2) }} {{ data.purchaseOrder.currency.code
+    }}</td>
+  </tr>
+  <tr excel-type="total-row">
+    <td>{{ t(k="label.exchange-rate", f="Exchange rate")}}:</td>
+    <td>{{ data.purchaseOrder.foreignExchangeRate | default(value="") }} {{ data.purchaseOrder.currency.code
+      }}
+    </td>
+  </tr>
+  <tr excel-type="total-row">
+    <td>
+      {{ t(k="label.estimated-total", f="Estimated cost") }}:
+    </td>
+    <td>
+      {{ data.purchaseOrder.orderTotalAfterDiscount  | default(value="") | round(precision=2) }} {{ data.currencies.nodes[0].code
+      }}
+    </td>
+  </tr>
+</table>
+
+<div class="watermark">
+  {%if data.purchaseOrder.status == "CONFIRMED" or data.purchaseOrder.status ==
+  "SENT" or data.purchaseOrder.status ==
+  "FINALISED" %} AUTHORISED {% else %} UNAUTHORISED {% endif %}
+</div>
