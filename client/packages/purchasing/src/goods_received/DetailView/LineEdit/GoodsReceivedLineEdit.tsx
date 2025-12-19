@@ -1,12 +1,13 @@
 import React from 'react';
 import {
   Box,
-  DataTable,
   Divider,
   ButtonWithIcon,
   PlusCircleIcon,
   useTranslation,
   ModalRow,
+  MaterialTable,
+  useSimpleMaterialTable,
 } from '@openmsupply-client/common';
 import { StockItemSearchInput } from '@openmsupply-client/system/src';
 import { DraftGoodsReceivedLine } from '../../api/hooks/useGoodsReceivedLine';
@@ -34,9 +35,14 @@ export const GoodsReceivedLineEdit = ({
   const showContent = !!draft;
 
   const columns = useGoodsReceivedLineEditColumns({
-    draft,
     updateDraftLine,
     removeDraftLine,
+  });
+
+  const table = useSimpleMaterialTable<DraftGoodsReceivedLine>({
+    tableId: 'goods-received-line-edit',
+    columns,
+    data: draftLines,
   });
 
   return (
@@ -73,12 +79,7 @@ export const GoodsReceivedLineEdit = ({
             overflowX: 'auto',
           }}
         >
-          <DataTable
-            id="goods-received-line-edit"
-            columns={columns}
-            data={draftLines}
-            dense
-          />
+          <MaterialTable table={table} />
         </Box>
       )}
     </>
