@@ -1,26 +1,37 @@
 import {
   FilterBy,
+  InvoiceNodeType,
   InvoiceSortFieldInput,
+  SortBy,
   useQuery,
 } from '@openmsupply-client/common';
 import { usePrescriptionGraphQL } from '../usePrescriptionGraphQL';
 import { LIST, PRESCRIPTION } from './keys';
 import { PrescriptionRowFragment } from '../operations.generated';
+import { sortFieldMap } from './utils';
 
-export const useExportPrescriptionList = (filterBy: FilterBy | null) => {
+export const useExportPrescriptionList = (
+  filterBy: FilterBy | null,
+  sortBy: SortBy<PrescriptionRowFragment>
+) => {
   const { prescriptionApi, storeId } = usePrescriptionGraphQL();
 
   const queryKey = [LIST, PRESCRIPTION, storeId, filterBy];
+
+  const filter = {
+    ...filterBy,
+    type: { equalTo: InvoiceNodeType.Prescription },
+  };
 
   const queryFn = async (): Promise<{
     nodes: PrescriptionRowFragment[];
     totalCount: number;
   }> => {
     const result = await prescriptionApi.prescriptions({
-      key: InvoiceSortFieldInput.CreatedDatetime,
-      desc: false,
+      key: sortFieldMap[sortBy.key] || InvoiceSortFieldInput.CreatedDatetime,
+      desc: !!sortBy.isDesc,
       storeId,
-      filter: { ...filterBy },
+      filter,
     });
     return result?.invoices;
   };
