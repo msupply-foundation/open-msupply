@@ -1,10 +1,10 @@
 {
   "is_custom": false,
-  "version": "2.16.0",
-  "code": "stock-detail",
+  "version": "2.6.3",
+  "code": "stock-status",
   "context": "REPORT",
   "sub_context": "StockAndItems",
-  "name": "Stock Detail",
+  "name": "Stock Status",
   "queries": {
     "gql": "query.graphql"
   },

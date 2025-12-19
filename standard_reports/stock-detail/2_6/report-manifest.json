@@ -1,6 +1,6 @@
 {
   "is_custom": false,
-  "version": "2.16.0",
+  "version": "2.6.3",
   "code": "stock-detail",
   "context": "REPORT",
   "sub_context": "StockAndItems",
