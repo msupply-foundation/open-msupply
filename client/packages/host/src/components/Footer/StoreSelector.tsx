@@ -11,6 +11,10 @@ import {
   BasicTextInput,
   PersistentPaperPopover,
   usePopover,
+  useIsGapsStoreOnly,
+  EnvUtils,
+  Platform,
+  RouteBuilder,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { PropsWithChildrenOnly, UserStoreNodeFragment } from '@common/types';
@@ -21,6 +25,8 @@ export const StoreSelector: FC<PropsWithChildrenOnly> = ({ children }) => {
   const { store, setStore, token } = useAuthContext();
   const { data, isLoading } = useUserDetails(token);
   const popoverControls = usePopover();
+  const isGaps = useIsGapsStoreOnly();
+  const isAndroid = EnvUtils.platform === Platform.Android;
 
   const storeSorter = (a: UserStoreNodeFragment, b: UserStoreNodeFragment) => {
     if (a.name < b.name) return -1;
@@ -59,7 +65,13 @@ export const StoreSelector: FC<PropsWithChildrenOnly> = ({ children }) => {
       onClick={async () => {
         await setStore(s);
         popoverControls.hide();
-        navigate(AppRoute.Dashboard);
+        const route =
+          isGaps && isAndroid
+            ? RouteBuilder.create(AppRoute.Coldchain)
+                .addPart(AppRoute.Equipment)
+                .build()
+            : AppRoute.Dashboard;
+        navigate(route);
       }}
       key={s.id}
       sx={buttonStyle}

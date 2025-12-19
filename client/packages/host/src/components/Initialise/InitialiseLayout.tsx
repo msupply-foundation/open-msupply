@@ -19,6 +19,7 @@ type LoginLayoutProps = {
   Button: ReactNode;
   SyncProgress: ReactNode;
   ErrorMessage: ReactNode;
+  SyncErrorMessage: ReactNode;
   SiteInfo: React.ReactNode;
   onInitialise: () => Promise<void>;
 };
@@ -31,6 +32,7 @@ export const InitialiseLayout = ({
   ErrorMessage,
   SyncProgress,
   SiteInfo,
+  SyncErrorMessage,
   onInitialise,
 }: LoginLayoutProps) => {
   const t = useTranslation();
@@ -149,8 +151,16 @@ export const InitialiseLayout = ({
               </Stack>
             </form>
           </Box>
-          <Box paddingTop={2} width="100%">
+          <Box pt={2} width="100%">
             {SyncProgress}
+          </Box>
+          <Box
+            pt={4}
+            justifyItems="center"
+            width="auto"
+            px={isExtraSmallScreen ? 4 : 20}
+          >
+            {SyncErrorMessage}
           </Box>
         </Box>
         <AppVersion style={{ opacity: 0.4 }} SiteInfo={SiteInfo} />
