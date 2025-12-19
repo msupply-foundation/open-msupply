@@ -1,0 +1,54 @@
+query PurchaseOrder($dataId: String!, $storeId: String!) {
+  purchaseOrder(storeId: $storeId, id: $dataId) {
+    ... on PurchaseOrderNode {
+      id
+      store {
+        storeName
+        logo
+        name(storeId: $storeId) {
+          address1
+          address2
+          phone
+          email
+        }
+      }
+      supplier {
+        name
+        code
+        address1
+        address2
+      }
+      number
+      lines {
+        nodes {
+          lineNumber
+          item {
+            code
+            name
+            unitName
+          }
+          expectedDeliveryDate
+          requestedNumberOfUnits
+          requestedPackSize
+          pricePerPackAfterDiscount
+          supplierItemCode
+          comment
+        }
+      }
+      foreignExchangeRate
+      status
+      confirmedDatetime
+      orderTotalAfterDiscount
+      currency {
+        code
+      }
+    }
+  }
+  currencies(filter: { isActive: true, isHomeCurrency: true }) {
+    ... on CurrencyConnector {
+      nodes {
+        code
+      }
+    }
+  }
+}
