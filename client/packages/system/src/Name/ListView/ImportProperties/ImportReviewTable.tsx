@@ -19,7 +19,7 @@ import {
 } from '@openmsupply-client/common';
 import { ImportRow } from './PropertiesImportModal';
 
-interface ImportReviewDataTableProps {
+interface ImportReviewTableProps {
   rows: ImportRow[];
   properties: NamePropertyNode[] | undefined;
 }
@@ -47,7 +47,7 @@ const PropertyHeader = <T extends RecordWithId>({
   );
 };
 
-export const ImportReviewDataTable: FC<ImportReviewDataTableProps> = ({
+export const ImportReviewTable: FC<ImportReviewTableProps> = ({
   rows,
   properties,
 }) => {
