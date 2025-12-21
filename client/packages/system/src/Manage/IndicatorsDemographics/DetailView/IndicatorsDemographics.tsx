@@ -2,23 +2,15 @@ import React, { useEffect, useState } from 'react';
 import { AppBarButtons } from './AppBarButtons';
 import {
   Box,
-  ColumnAlign,
-  DataTable,
+  MaterialTable,
   RecordPatch,
-  TableProvider,
-  createTableStore,
-  useColumns,
-  useFormatNumber,
   useIntlUtils,
   useNotification,
+  useSimpleMaterialTable,
   useTranslation,
   useUrlQueryParams,
 } from '@openmsupply-client/common';
-
-import { percentageColumn } from './PercentageColumn';
-import { nameColumn } from './NameColumn';
-import { GrowthRow } from './GrowthRow';
-import { populationColumn } from './PopulationColumn';
+import { useIndicatorsDemographicsColumns } from './columns';
 import { Footer } from './Footer';
 import { GENERAL_POPULATION_ID, useDemographicData } from '../api';
 import {
@@ -30,17 +22,11 @@ import {
 } from './utils';
 import { HeaderData, Row } from '../types';
 
-const IndicatorsDemographicsComponent = () => {
-  const {
-    updateSortQuery,
-    queryParams: { sortBy },
-  } = useUrlQueryParams({
-    initialSort: { key: 'name', dir: 'asc' },
-  });
+export const IndicatorsDemographics = () => {
+  useUrlQueryParams({ initialSort: { key: 'name', dir: 'asc' } });
   const [headerDraft, setHeaderDraft] = useState<HeaderData>();
   const [indexPopulation, setIndexPopulation] = useState(0);
   const [isDirty, setIsDirty] = useState(false);
-  const formatNumber = useFormatNumber();
 
   const { error, success } = useNotification();
   const t = useTranslation();
@@ -189,20 +175,17 @@ const IndicatorsDemographicsComponent = () => {
     window.location.reload();
   };
 
-  const columns = useColumns<Row>(
-    [
-      [nameColumn(), { setter }],
-      [percentageColumn(), { setter }],
-      [populationColumn(), { setter: handlePopulationChange }],
-      yearColumn(1, formatNumber.format, t('label.year')),
-      yearColumn(2, formatNumber.format, t('label.year')),
-      yearColumn(3, formatNumber.format, t('label.year')),
-      yearColumn(4, formatNumber.format, t('label.year')),
-      yearColumn(5, formatNumber.format, t('label.year')),
-    ],
-    { sortBy, onChangeSortBy: updateSortQuery },
-    [draft, indexPopulation, sortBy]
-  );
+  const columns = useIndicatorsDemographicsColumns({
+    draft, setter, handlePopulationChange, handleGrowthChange, headerDraft
+  });
+
+  const table = useSimpleMaterialTable<Row>({
+    tableId: 'indicators-demographics-table',
+    columns,
+    isLoading: isLoadingProjection,
+    data: Object.values(draft),
+    enableRowSelection: false,
+  });
 
   useEffect(() => {
     if (!draft || !!indexPopulation) return;
@@ -225,54 +208,9 @@ const IndicatorsDemographicsComponent = () => {
     <>
       <AppBarButtons createNewRow={createNewRow} rows={Object.values(draft)} />
       <Box sx={{ width: '100%' }} padding={0}>
-        <GrowthRow
-          columns={columns}
-          data={headerDraft}
-          isLoading={isLoadingProjection}
-          setData={handleGrowthChange}
-        />
-        <DataTable
-          data={Object.values(draft)}
-          columns={columns}
-          id={'indicators-demographics-table'}
-        />
+        <MaterialTable table={table} />
       </Box>
       <Footer save={save} cancel={cancel} isDirty={isDirty} />
     </>
   );
 };
-
-export const IndicatorsDemographics = () => (
-  <TableProvider createStore={createTableStore}>
-    <IndicatorsDemographicsComponent />
-  </TableProvider>
-);
-
-const yearColumn = (
-  year: number,
-  format: (n: number) => string,
-  yearTranslation: string
-) => ({
-  key: String(year),
-  width: 150,
-  align: ColumnAlign.Right,
-  label: `${yearTranslation} ${year}`,
-  sortable: false,
-  accessor: ({ rowData }: { rowData: Row }) => {
-    // using a switch to appease typescript
-    switch (year) {
-      case 1:
-        return format(rowData[1]);
-      case 2:
-        return format(rowData[2]);
-      case 3:
-        return format(rowData[3]);
-      case 4:
-        return format(rowData[4]);
-      case 5:
-        return format(rowData[5]);
-      default:
-        return '';
-    }
-  },
-});
