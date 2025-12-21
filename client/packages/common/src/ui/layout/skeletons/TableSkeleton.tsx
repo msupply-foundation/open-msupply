@@ -1,11 +1,11 @@
 import React from 'react';
-
 import { Grid, Skeleton, Stack } from '@mui/material';
-interface DataTableSkeletonProps {
+
+interface TableSkeletonProps {
   hasGroupBy?: boolean;
 }
 
-export const DataTableSkeleton: React.FC<DataTableSkeletonProps> = ({
+export const TableSkeleton: React.FC<TableSkeletonProps> = ({
   hasGroupBy,
 }) => {
   return (
