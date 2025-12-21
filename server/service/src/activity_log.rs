@@ -232,7 +232,7 @@ pub fn add_migration_results_to_system_log(
             connection,
             SystemLogType::Migration,
             Some(timestamp),
-            true,
+            false,
             SystemLogMessage::Message(&message),
         )?;
     }
