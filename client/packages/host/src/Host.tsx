@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import Bugsnag from '@bugsnag/js';
 import {
   Routes,
@@ -27,6 +27,9 @@ import {
   KBarProvider,
   usePreferences,
   useIsCentralServerApi,
+  useInitialisationStatus,
+  InitialisationStatusType,
+  useAuthContext,
 } from '@openmsupply-client/common';
 import { AppRoute, Environment } from '@openmsupply-client/config';
 import { Initialise, Login, Viewport } from './components';
@@ -37,6 +40,7 @@ import { Android } from './components/Android';
 import { BackButtonHandler } from './BackButtonHandler';
 import { useInitPlugins } from './useInitPlugins';
 import { ScreenOrientation } from '@capacitor/screen-orientation';
+import Cookies from 'js-cookie';
 
 const appVersion = require('../../../../package.json').version; // eslint-disable-line @typescript-eslint/no-var-requires
 
@@ -65,6 +69,20 @@ Bugsnag.start({
 
 const skipRequest = () =>
   LocalStorage.getItem('/error/auth') === AuthError.NoStoreAssigned;
+
+const PreInit: React.FC<React.PropsWithChildren> = ({ children }) => {
+  let { logout } = useAuthContext();
+  let data = useInitialisationStatus(false, true);
+
+  // Technically this should not fire before query is loaded because we are doing suspense
+  if (data?.data?.status == InitialisationStatusType.Initialised)
+    return children;
+
+  // Clear token
+  logout();
+
+  return null;
+};
 
 /**
  * Empty component which can be used to call startup hooks.
@@ -160,7 +178,9 @@ const Host = () => (
                   skipRequest={skipRequest}
                 >
                   <AuthProvider>
-                    <Init />
+                    <PreInit>
+                      <Init />
+                    </PreInit>
                     <ConfirmationModalProvider>
                       <AlertModalProvider>
                         <RouterProvider router={router} />
