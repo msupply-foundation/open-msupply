@@ -226,6 +226,7 @@ pub fn migrate(
 
         // Run one time migrations only if we're on the last version, if we're in a test case checking an old creating migrations might fail
         if migration_version > database_version {
+            log::info!("Running one time database migration {migration_version}");
             migration
                 .migrate(connection)
                 .map_err(|source| MigrationError::MigrationError {
@@ -250,6 +251,11 @@ pub fn migrate(
                 if migration_fragment_log_repo.has_run(migration, &fragment)? {
                     continue;
                 }
+                log::info!(
+                    "Running database migration fragment version {}: {}",
+                    migration.version(),
+                    fragment.identifier()
+                );
 
                 fragment.migrate(connection).map_err(|source| {
                     MigrationError::FragmentMigrationError {
