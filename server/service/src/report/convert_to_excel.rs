@@ -258,7 +258,7 @@ impl Selectors {
         Self { html }
     }
 
-    fn excel_cells(&self) -> Vec<(&str, ElementRef)> {
+    fn excel_cells<'a>(&'a self) -> Vec<(&'a str, ElementRef<'a>)> {
         let cell_selector = Selector::parse("[excel-cell]").unwrap();
         self.html
             .select(&cell_selector)
@@ -298,7 +298,7 @@ impl Selectors {
             .collect()
     }
 
-    fn rows_and_cells(&self) -> Vec<Vec<ElementRef>> {
+    fn rows_and_cells<'a>(&'a self) -> Vec<Vec<ElementRef<'a>>> {
         let rows_selector = Selector::parse("tbody tr:not([excel-type=\"total-row\"])").unwrap();
         let cells_selector = Selector::parse("td").unwrap();
         self.html
@@ -317,7 +317,7 @@ impl Selectors {
     }
 }
 
-fn inner_text(element_ref: ElementRef) -> &str {
+fn inner_text<'a>(element_ref: ElementRef<'a>) -> &'a str {
     element_ref
         .text()
         .find(|t| !t.trim().is_empty())
@@ -347,6 +347,23 @@ fn apply_known_styles(cell: &mut Cell, el: ElementRef) {
     if let Some(color) = el.attr("excel-bg-color") {
         let color = color.trim_start_matches('#');
         style.set_background_color(color);
+    }
+
+    if let Some(border) = el.attr("excel-border") {
+        let border_mut = style.get_borders_mut();
+        let border_style = match border {
+            "thin" => umya_spreadsheet::Border::BORDER_THIN,
+            "medium" => umya_spreadsheet::Border::BORDER_MEDIUM,
+            "thick" => umya_spreadsheet::Border::BORDER_THICK,
+            "dashed" => umya_spreadsheet::Border::BORDER_DASHED,
+            "dotted" => umya_spreadsheet::Border::BORDER_DOTTED,
+            _ => umya_spreadsheet::Border::BORDER_NONE,
+        };
+
+        border_mut.get_left_mut().set_border_style(border_style);
+        border_mut.get_right_mut().set_border_style(border_style);
+        border_mut.get_top_mut().set_border_style(border_style);
+        border_mut.get_bottom_mut().set_border_style(border_style);
     }
 }
 
@@ -852,5 +869,54 @@ mod report_to_excel_test {
         assert_eq!(get_value("A3"), "Ibuprofen 200mg tabs");
         assert_eq!(get_value("B3"), "tab");
         assert_eq!(get_value("C3"), "5.25");
+    }
+
+    #[test]
+    fn test_apply_known_styles_only_on_marked_cells() {
+        let html = r#"<table><tbody>
+            <tr>
+                <td excel-border="thin">A</td>
+                <td>B</td>
+                <td excel-border="medium">C</td>
+            </tr>
+        </tbody></table>"#;
+        let fragment = Html::parse_fragment(html);
+        let td_sel = Selector::parse("td").unwrap();
+        let mut tds = fragment.select(&td_sel);
+
+        let mut book = umya_spreadsheet::new_file();
+        book.set_sheet_name(0, "test").unwrap();
+        let sheet = book.get_sheet_by_name_mut("test").unwrap();
+
+        let coords = vec![(1_u32, 1_u32), (2_u32, 1_u32), (3_u32, 1_u32)];
+        for (coord, td) in coords.iter().zip(tds.by_ref()) {
+            let cell = sheet.get_cell_mut(*coord);
+            cell.set_value(inner_text(td));
+            apply_known_styles(cell, td);
+        }
+
+        // First cell has thin border
+        let c1 = sheet.get_cell((1_u32, 1_u32)).unwrap();
+        let c1_border = c1.get_style().get_borders().unwrap();
+        assert_eq!(
+            c1_border.get_left().get_border_style(),
+            umya_spreadsheet::Border::BORDER_THIN
+        );
+
+        // Second cell has no border (default none)
+        let c2 = sheet.get_cell((2_u32, 1_u32)).unwrap();
+        let c2_border = c2.get_style().get_borders().cloned().unwrap_or_default();
+        assert_eq!(
+            c2_border.get_left().get_border_style(),
+            umya_spreadsheet::Border::BORDER_NONE
+        );
+
+        // Third cell has medium border
+        let c3 = sheet.get_cell((3_u32, 1_u32)).unwrap();
+        let c3_border = c3.get_style().get_borders().unwrap();
+        assert_eq!(
+            c3_border.get_left().get_border_style(),
+            umya_spreadsheet::Border::BORDER_MEDIUM
+        );
     }
 }
