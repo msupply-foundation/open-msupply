@@ -11,10 +11,10 @@ import {
 } from '@openmsupply-client/common';
 import { ImportRow } from './CatalogueItemImportModal';
 
-interface ImportReviewDataTableProps {
+interface ImportReviewTableProps {
   importRows: ImportRow[];
 }
-export const ImportReviewDataTable: FC<ImportReviewDataTableProps> = ({
+export const ImportReviewTable: FC<ImportReviewTableProps> = ({
   importRows,
 }) => {
   const t = useTranslation();
