@@ -1,5 +1,5 @@
 {
-  "name": "standard_forms",
+  "name": "standard_reports",
   "version": "0.0.0",
   "sideEffects": false,
   "private": true,
@@ -8,7 +8,7 @@
   },
   "workspaces": {
     "packages": [
-      "standard_forms/*"
+      "standard_reports/*"
     ]
   },
   "devDependencies": {
