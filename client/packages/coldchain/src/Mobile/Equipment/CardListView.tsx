@@ -1,4 +1,4 @@
-import React, { FC, useRef } from 'react';
+import React from 'react';
 import {
   NothingHere,
   useTranslation,
@@ -10,6 +10,7 @@ import {
   useToggle,
   UserPermission,
   useCallbackWithPermission,
+  BaseButton,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { Box, Typography, Card, CardContent } from '@mui/material';
@@ -20,10 +21,9 @@ import { AddFromScannerButton } from '../../Equipment/ListView/AddFromScannerBut
 import { CreateAssetModal } from '../../Equipment/ListView/CreateAssetModal';
 import { ImportFridgeTag } from '../../common/ImportFridgeTag';
 
-export const CardListView: FC = () => {
+export const CardListView = () => {
   const t = useTranslation();
   const navigate = useNavigate();
-  const scrollRef = useRef<HTMLDivElement>(null);
   const modalController = useToggle();
   const equipmentRoute = RouteBuilder.create(AppRoute.Coldchain).addPart(
     AppRoute.Equipment
@@ -37,7 +37,7 @@ export const CardListView: FC = () => {
     hasNextPage,
     fetchNextPage,
   } = useAssets.document.inifiniteAssets({
-    rowsPerPage: 20,
+    rowsPerPage: 2,
   });
 
   const onAdd = useCallbackWithPermission(
@@ -45,16 +45,6 @@ export const CardListView: FC = () => {
     modalController.toggleOn,
     t('error.no-asset-create-permission')
   );
-
-  const handleScroll = () => {
-    const el = scrollRef.current;
-    if (!el) return;
-
-    const atBottom =
-      Math.abs(el.scrollHeight - el.scrollTop - el.clientHeight) < 1;
-
-    if (atBottom && hasNextPage && !isFetchingNextPage) fetchNextPage();
-  };
 
   if (isLoading) return <BasicSpinner />;
 
@@ -79,8 +69,6 @@ export const CardListView: FC = () => {
       sx={{
         width: '100%',
         flex: 1,
-        display: 'flex',
-        flexDirection: 'column',
       }}
     >
       <Box
@@ -102,13 +90,11 @@ export const CardListView: FC = () => {
         <ImportFridgeTag shouldShrink={true} />
       </Box>
       <Box
-        ref={scrollRef}
-        onScroll={handleScroll}
         sx={{
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          padding: '20px 0px',
+          padding: '0px 0px',
           gap: 1,
           overflowY: 'auto',
         }}
@@ -123,7 +109,6 @@ export const CardListView: FC = () => {
               border: '1px solid',
               borderColor: '#eee',
               borderRadius: '16px',
-              flexShrink: 0,
             }}
             onClick={() => {
               navigate(equipmentRoute.addPart(n.id).build());
@@ -148,6 +133,16 @@ export const CardListView: FC = () => {
             </Box>
           </Card>
         ))}
+        {hasNextPage && (
+          <BaseButton
+            onClick={() => fetchNextPage()}
+            disabled={isFetchingNextPage}
+            sx={{ my: 2 }}
+          >
+            {t('button.more')}
+          </BaseButton>
+        )}
+        {isFetchingNextPage && <BasicSpinner />}
       </Box>
       <CreateAssetModal
         isOpen={modalController.isOn}
