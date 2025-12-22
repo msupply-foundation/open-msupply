@@ -16,5 +16,11 @@ export const useNestedNav = (path: string): NestedNavState => {
     setExpanded(!!match);
   }, [match]);
 
+  useEffect(() => {
+    if (clickedNavPath && !matchPath(path, clickedNavPath)) {
+      setExpanded(false);
+    }
+  }, [clickedNavPath, path]);
+
   return { isActive: isOpen && (expanded || matchPath(path, clickedNavPath)) };
 };

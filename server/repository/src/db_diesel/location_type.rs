@@ -1,6 +1,6 @@
 use super::{location_type_row::location_type, DBType, LocationTypeRow, StorageConnection};
 
-use diesel::{dsl::not, prelude::*};
+use diesel::prelude::*;
 
 use crate::{
     diesel_macros::{apply_equal_filter, apply_sort, apply_sort_no_case},
