@@ -814,7 +814,8 @@ mod test {
                 0,
                 10,
                 Some(
-                    ChangelogFilter::new().table_name(ChangelogTableName::SystemLog.not_equal_to()),
+                    ChangelogFilter::new()
+                        .table_name(EqualFilter::not_equal_to(ChangelogTableName::SystemLog)),
                 ),
             )
             .unwrap();
