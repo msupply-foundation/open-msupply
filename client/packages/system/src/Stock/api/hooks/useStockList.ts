@@ -22,6 +22,7 @@ export const useStockList = (queryParams: StockListParams) => {
     sortBy = {
       key: 'itemName',
       direction: 'asc',
+      isDesc: false,
     },
     first,
     offset,
