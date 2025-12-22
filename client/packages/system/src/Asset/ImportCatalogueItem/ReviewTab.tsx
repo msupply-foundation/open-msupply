@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
 import { ImportRow } from './CatalogueItemImportModal';
-import { ImportReviewDataTable } from './ImportReviewDataTable';
+import { ImportReviewTable } from './ImportReviewTable';
 import { ImportPanel } from '@common/components';
 
 interface AssetItemReviewTabProps {
@@ -12,6 +12,6 @@ export const AssetItemReviewTab: FC<ImportPanel & AssetItemReviewTabProps> = ({
   uploadedRows,
 }) => (
   <ImportPanel tab={tab}>
-    <ImportReviewDataTable importRows={uploadedRows} />
+    <ImportReviewTable importRows={uploadedRows} />
   </ImportPanel>
 );

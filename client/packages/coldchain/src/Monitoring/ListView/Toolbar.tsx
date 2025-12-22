@@ -6,7 +6,28 @@ import {
   FilterController,
   Box,
   TemperatureBreachNodeType,
+  TypedTFunction,
+  LocaleKey,
 } from '@openmsupply-client/common';
+
+export const breachTypeOptions = (t: TypedTFunction<LocaleKey>) => [
+  {
+    label: t('label.cold-cumulative'),
+    value: TemperatureBreachNodeType.ColdCumulative,
+  },
+  {
+    label: t('label.cold-consecutive'),
+    value: TemperatureBreachNodeType.ColdConsecutive,
+  },
+  {
+    label: t('label.hot-cumulative'),
+    value: TemperatureBreachNodeType.HotCumulative,
+  },
+  {
+    label: t('label.hot-consecutive'),
+    value: TemperatureBreachNodeType.HotConsecutive,
+  },
+];
 
 export const Toolbar: FC<{ filter: FilterController }> = () => {
   const t = useTranslation();
@@ -56,26 +77,9 @@ export const Toolbar: FC<{ filter: FilterController }> = () => {
             },
             {
               type: 'enum',
-              name: t('label.type'),
+              name: t('label.breach-type'),
               urlParameter: 'type',
-              options: [
-                {
-                  label: t('label.cold-cumulative'),
-                  value: TemperatureBreachNodeType.ColdCumulative,
-                },
-                {
-                  label: t('label.cold-consecutive'),
-                  value: TemperatureBreachNodeType.ColdConsecutive,
-                },
-                {
-                  label: t('label.hot-cumulative'),
-                  value: TemperatureBreachNodeType.HotCumulative,
-                },
-                {
-                  label: t('label.hot-consecutive'),
-                  value: TemperatureBreachNodeType.HotConsecutive,
-                },
-              ],
+              options: breachTypeOptions(t),
             },
             {
               type: 'boolean',
