@@ -1,21 +1,15 @@
-import React, { FC, ReactElement, useState } from 'react';
+import React, { FC, useMemo } from 'react';
 import {
-  ColumnDescription,
-  DataTable,
   Grid,
-  HeaderProps,
   LocaleKey,
   NamePropertyNode,
-  NothingHere,
-  Pagination,
   PropertyNode,
-  RecordWithId,
-  SearchBar,
-  TooltipTextCell,
   useTranslationExistsInLocale,
-  Typography,
-  useColumns,
   useTranslation,
+  MaterialTable,
+  useNonPaginatedMaterialTable,
+  ColumnDef,
+  TextWithTooltipCell,
 } from '@openmsupply-client/common';
 import { ImportRow } from './PropertiesImportModal';
 
@@ -24,39 +18,12 @@ interface ImportReviewTableProps {
   properties: NamePropertyNode[] | undefined;
 }
 
-const PropertyHeader = <T extends RecordWithId>({
-  column,
-}: HeaderProps<T>): ReactElement => {
-  const t = useTranslation();
-  const labelExistsInLocale = useTranslationExistsInLocale(column.label);
-  const header = labelExistsInLocale
-    ? t(column.label as LocaleKey, column.labelProps)
-    : column.label;
-  return (
-    <Typography
-      sx={{
-        display: '-webkit-box',
-        overflow: 'ellipsis',
-        fontWeight: 'bold',
-        WebkitBoxOrient: 'vertical',
-        WebkitLineClamp: 2,
-      }}
-    >
-      {header}
-    </Typography>
-  );
-};
-
 export const ImportReviewTable: FC<ImportReviewTableProps> = ({
   rows,
   properties,
 }) => {
   const t = useTranslation();
-  const [pagination, setPagination] = useState<Pagination>({
-    page: 0,
-    first: 20,
-    offset: 0,
-  });
+
   // Could filter here for only properties that are used in import
   const propertyNodes: PropertyNode[] | undefined = properties
     ?.map(property => {
@@ -64,66 +31,60 @@ export const ImportReviewTable: FC<ImportReviewTableProps> = ({
     })
     .sort();
 
-  const [searchString, setSearchString] = useState<string>(() => '');
-  const columnDescriptions: ColumnDescription<ImportRow>[] = [
-    {
-      key: 'code',
-      width: 80,
-      sortable: false,
-      label: 'label.code',
-    },
-    {
-      key: 'name',
-      width: 150,
-      sortable: false,
-      label: 'label.name',
-      Cell: TooltipTextCell,
-    },
-  ];
-  propertyNodes?.map(property =>
-    columnDescriptions.push({
-      key: property.key,
-      width: 150,
-      sortable: false,
-      label: property.name,
-      labelProps: {
-        defaultValue: property.name,
+  const columns = useMemo(
+    (): ColumnDef<ImportRow>[] => [
+      {
+        accessorKey: 'code',
+        header: t('label.code'),
+        size: 80,
+        enableSorting: true,
+        enableColumnFilter: true,
       },
-      Cell: TooltipTextCell,
-      Header: PropertyHeader,
-    })
+      {
+        accessorKey: 'name',
+        header: t('label.name'),
+        size: 150,
+        Cell: TextWithTooltipCell,
+        enableSorting: true,
+        enableColumnFilter: true,
+      },
+      ...((propertyNodes?.map(property => {
+        const t = useTranslation();
+        const labelExistsInLocale = useTranslationExistsInLocale(property.name);
+        const header = labelExistsInLocale
+          ? t(property.name as LocaleKey, { defaultValue: property.name })
+          : property.name;
+        return {
+          accessorKey: property.key,
+          header,
+          size: 150,
+          Cell: TextWithTooltipCell,
+          enableSorting: true,
+        };
+      })) || []),
+      {
+        accessorKey: 'errorMessage',
+        header: t('label.error-message'),
+        size: 150,
+        Cell: TextWithTooltipCell,
+        enableSorting: true,
+        enableColumnFilter: true,
+      },
+    ],
+    [propertyNodes]
   );
-
-  {
-    columnDescriptions.push({
-      key: 'errorMessage',
-      label: 'label.error-message',
-      width: 150,
-      Cell: TooltipTextCell,
-    });
-  }
 
   const rowsWithProperties = rows.map(row => {
     return { ...row, ...row.properties };
   });
 
-  const columns = useColumns<ImportRow>(columnDescriptions, {}, []);
-
-  const filteredFacilities = rowsWithProperties.filter(row => {
-    if (!searchString) {
-      return true;
-    }
-    return (
-      row.name.includes(searchString) ||
-      (row.code && row.code.includes(searchString)) ||
-      (row.errorMessage && row.errorMessage.includes(searchString)) ||
-      row.id === searchString
-    );
+  const { table } = useNonPaginatedMaterialTable<ImportRow>({
+    tableId: 'import-name-properties-review-table',
+    data: rowsWithProperties,
+    columns,
+    enableRowSelection: false,
+    noUriFiltering: true,
   });
-  const currentFacilitiesPage = filteredFacilities.slice(
-    pagination.offset,
-    pagination.offset + pagination.first
-  );
 
   const tableHeight = window.innerHeight - 360;
 
@@ -136,37 +97,7 @@ export const ImportReviewTable: FC<ImportReviewTableProps> = ({
       minHeight="350px"
       maxHeight="700px"
     >
-      <SearchBar
-        placeholder={t('messages.search')}
-        value={searchString}
-        debounceTime={300}
-        onChange={newValue => {
-          setSearchString(newValue);
-          setPagination({
-            first: pagination.first,
-            offset: 0,
-            page: 0,
-          });
-        }}
-      />
-      <DataTable
-        pagination={{
-          ...pagination,
-          total: filteredFacilities.length,
-        }}
-        onChangePage={page => {
-          setPagination({
-            first: pagination.first,
-            offset: pagination.first * page,
-            page: page,
-          });
-        }}
-        columns={columns}
-        data={currentFacilitiesPage}
-        noDataElement={<NothingHere body={t('error.facility-not-found')} />}
-        id="facilities' properties review table"
-        overflowX="auto"
-      />
+      <MaterialTable table={table} />
     </Grid>
   );
 };
