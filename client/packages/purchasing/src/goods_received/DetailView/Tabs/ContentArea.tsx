@@ -1,37 +1,20 @@
-import React, { useEffect } from 'react';
+import React, { useMemo } from 'react';
 import {
-  AppSxProp,
-  DataTable,
+  ColumnDef,
+  ColumnType,
+  MaterialTable,
   NothingHere,
-  useRowStyle,
+  TextWithTooltipCell,
+  useNonPaginatedMaterialTable,
   useTranslation,
 } from '@openmsupply-client/common';
 import { GoodsReceivedLineFragment } from '../../api/operations.generated';
-import { useGoodsReceivedColumns } from '../columns';
 
 interface ContentAreaProps {
   lines: GoodsReceivedLineFragment[];
   isDisabled: boolean;
   onRowClick: null | ((line: GoodsReceivedLineFragment) => void);
 }
-
-const useHighlightPlaceholderRows = (
-  rows: GoodsReceivedLineFragment[] | undefined
-) => {
-  const { setRowStyles } = useRowStyle();
-
-  useEffect(() => {
-    if (!rows) return;
-
-    const placeholders = rows
-      .filter(row => row.numberOfPacksReceived === 0)
-      .map(row => row.id);
-    const style: AppSxProp = {
-      color: theme => theme.palette.secondary.light,
-    };
-    setRowStyles(placeholders, style);
-  }, [rows, setRowStyles]);
-};
 
 export const ContentArea = ({
   lines,
@@ -40,24 +23,79 @@ export const ContentArea = ({
 }: ContentAreaProps) => {
   const t = useTranslation();
 
-  useHighlightPlaceholderRows(lines);
-
-  const { columns } = useGoodsReceivedColumns();
-
-  return (
-    <DataTable
-      id="goods-receiving-detail"
-      onRowClick={onRowClick}
-      columns={columns}
-      data={lines}
-      enableColumnSelection
-      noDataElement={
-        <NothingHere
-          body={t('error.no-purchase-order-items')}
-          buttonText={t('button.add-item')}
-          onCreate={isDisabled ? undefined : undefined}
-        />
-      }
-    />
+  const columns = useMemo(
+    (): ColumnDef<GoodsReceivedLineFragment>[] => [
+      {
+        accessorKey: 'lineNumber',
+        header: t('label.line-number'),
+        columnType: ColumnType.Number,
+        enableSorting: true,
+      },
+      {
+        accessorKey: 'item.code',
+        header: t('label.code'),
+        size: 90,
+        enableSorting: true,
+        enableColumnFilter: true,
+      },
+      {
+        accessorKey: 'item.name',
+        header: t('label.item-name'),
+        Cell: TextWithTooltipCell,
+        size: 300,
+        enableSorting: true,
+        enableColumnFilter: true,
+      },
+      {
+        accessorKey: 'batch',
+        header: t('label.batch'),
+        size: 150,
+      },
+      {
+        accessorKey: 'expiryDate',
+        header: t('label.expiry-date'),
+        columnType: ColumnType.Date,
+        size: 150,
+      },
+      {
+        accessorKey: 'receivedPackSize',
+        header: t('label.pack-size'),
+        columnType: ColumnType.Number,
+        size: 150,
+        defaultHideOnMobile: true,
+      },
+      {
+        id: 'numberOfPacks',
+        accessorFn: row =>
+          Math.ceil(
+            (row.numberOfPacksReceived ?? 0) /
+            (row.receivedPackSize &&
+              row.receivedPackSize !== 0 ? row.receivedPackSize : 1)
+          ),
+        header: t('label.num-packs'),
+        columnType: ColumnType.Number,
+        size: 150,
+      },
+    ],
+    []
   );
+
+  // TODO: Implement proper row selection when lines are implemented
+  const { table } = useNonPaginatedMaterialTable<GoodsReceivedLineFragment>({
+    tableId: 'goods-received-detail',
+    columns,
+    data: lines,
+    enableRowSelection: !isDisabled,
+    onRowClick: onRowClick ?? undefined,
+    getIsPlaceholderRow: row => row.numberOfPacksReceived === 0,
+    noDataElement: (
+      <NothingHere
+        body={t('error.no-purchase-order-items')}
+        buttonText={t('button.add-item')}
+        onCreate={isDisabled ? undefined : undefined}
+      />
+    ),
+  });
+
+  return <MaterialTable table={table} />;
 };
