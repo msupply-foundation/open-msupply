@@ -48,20 +48,21 @@ export const ImportReviewTable: FC<ImportReviewTableProps> = ({
         enableSorting: true,
         enableColumnFilter: true,
       },
-      ...((propertyNodes?.map(property => {
-        const t = useTranslation();
-        const labelExistsInLocale = useTranslationExistsInLocale(property.name);
-        const header = labelExistsInLocale
-          ? t(property.name as LocaleKey, { defaultValue: property.name })
-          : property.name;
-        return {
-          accessorKey: property.key,
-          header,
-          size: 150,
-          Cell: TextWithTooltipCell,
-          enableSorting: true,
-        };
-      })) || []),
+      ...((propertyNodes?.map(property => ({
+        accessorKey: property.key,
+        header: property.name,
+        size: 150,
+        Cell: TextWithTooltipCell,
+        Header: () => {
+          const labelExistsInLocale = useTranslationExistsInLocale(property.name);
+          const header = labelExistsInLocale
+            ? t(property.name as LocaleKey, { defaultValue: property.name })
+            : property.name;
+
+          return header;
+        },
+        enableSorting: true,
+      }))) || []),
       {
         accessorKey: 'errorMessage',
         header: t('label.error-message'),
