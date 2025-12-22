@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react';
 import { useMatch, useDrawer } from '@openmsupply-client/common';
 interface NestedNavState {
   isActive: boolean;
@@ -10,17 +9,9 @@ const matchPath = (path: string, clickedNavPath?: string) =>
 export const useNestedNav = (path: string): NestedNavState => {
   const { clickedNavPath, isOpen } = useDrawer();
   const match = useMatch(path);
-  const [expanded, setExpanded] = useState(false);
 
-  useEffect(() => {
-    setExpanded(!!match);
-  }, [match]);
+  const isActive =
+    isOpen && (clickedNavPath ? matchPath(path, clickedNavPath) : !!match);
 
-  useEffect(() => {
-    if (clickedNavPath && !matchPath(path, clickedNavPath)) {
-      setExpanded(false);
-    }
-  }, [clickedNavPath, path]);
-
-  return { isActive: isOpen && (expanded || matchPath(path, clickedNavPath)) };
+  return { isActive };
 };
