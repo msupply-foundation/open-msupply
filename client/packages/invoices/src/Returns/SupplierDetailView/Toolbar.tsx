@@ -6,8 +6,6 @@ import {
   BasicTextInput,
   Grid,
   useTranslation,
-  useIsGrouped,
-  Switch,
 } from '@openmsupply-client/common';
 import { SupplierReturnFragment, useReturns } from '../api';
 import { SupplierSearchInput } from '@openmsupply-client/system';
@@ -20,7 +18,6 @@ export const Toolbar: FC = () => {
     useReturns.document.supplierReturn();
   const { otherParty, theirReference, id, originalShipment } =
     bufferedState ?? { id: '' };
-  const { isGrouped, toggleIsGrouped } = useIsGrouped('supplierReturn');
   const { mutateAsync: updateOtherParty } =
     useReturns.document.updateOtherParty();
 
@@ -73,22 +70,6 @@ export const Toolbar: FC = () => {
                   }}
                 />
               }
-            />
-          </Box>
-        </Grid>
-        <Grid
-          display="flex"
-          gap={1}
-          justifyContent="flex-end"
-          alignItems="center"
-        >
-          <Box sx={{ marginRight: 2 }}>
-            <Switch
-              label={t('label.group-by-item')}
-              onChange={toggleIsGrouped}
-              checked={isGrouped}
-              size="small"
-              color="secondary"
             />
           </Box>
         </Grid>

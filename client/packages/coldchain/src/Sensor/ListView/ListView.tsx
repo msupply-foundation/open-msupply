@@ -1,7 +1,5 @@
 import React, { FC, useEffect, useMemo } from 'react';
 import {
-  TableProvider,
-  createTableStore,
   useTranslation,
   NothingHere,
   useUrlQueryParams,
@@ -144,9 +142,3 @@ export const SensorListView: FC = () => {
     </>
   );
 };
-
-export const ListView: FC = () => (
-  <TableProvider createStore={createTableStore}>
-    <SensorListView />
-  </TableProvider>
-);

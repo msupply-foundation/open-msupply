@@ -6,7 +6,7 @@ import {
   useIsGapsStoreOnly,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
-import { ListView } from './Sensor/ListView';
+import { SensorListView } from './Sensor';
 import { ListView as MonitoringListView } from './Monitoring/ListView';
 import { EquipmentListView } from './Equipment/ListView';
 import { EquipmentDetailView } from './Equipment/DetailView';
@@ -29,7 +29,7 @@ export const ColdchainService: FC = () => {
         path={monitoringRoute}
         element={!isGaps ? <MonitoringListView /> : <MobileTemperatureChart />}
       />
-      <Route path={sensorRoute} element={<ListView />} />
+      <Route path={sensorRoute} element={<SensorListView />} />
       <Route
         path={equipmentListRoute}
         element={!isGaps ? <EquipmentListView /> : <CardListView />}

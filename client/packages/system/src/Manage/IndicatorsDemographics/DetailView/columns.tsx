@@ -6,11 +6,11 @@ import {
   NumericTextInput,
   RecordPatch,
   useTranslation,
+  NumberInputCell,
+  TextInputCell,
 } from '@openmsupply-client/common';
 import { GENERAL_POPULATION_ID } from '../api';
 import { HeaderData, Row } from '../types';
-import { TextInputCell } from '@openmsupply-client/common/src/ui/layout/tables/material-react-table/components/TextInputCell';
-import { NumberInputCell } from '@openmsupply-client/common/src/ui/layout/tables/material-react-table/components/NumberInputCell';
 
 export const useIndicatorsDemographicsColumns = ({
   draft,

@@ -6,6 +6,8 @@ import {
   Formatter,
   usePreferences,
   useIntlUtils,
+  ExpiryDateCell,
+  NumberInputCell,
 } from '@openmsupply-client/common';
 import {
   DraftItem,
@@ -13,8 +15,6 @@ import {
   AllocateInType,
   packsToQuantity,
 } from '../../StockOut';
-import { NumberInputCell } from '@openmsupply-client/common/src/ui/layout/tables/material-react-table/components/NumberInputCell';
-import { ExpiryDateCell } from '@openmsupply-client/common/src/ui/layout/tables/material-react-table/components/ExpiryDateCell';
 
 export const usePrescriptionLineEditColumns = ({
   allocate,
