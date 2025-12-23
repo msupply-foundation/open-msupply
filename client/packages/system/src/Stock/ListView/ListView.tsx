@@ -22,10 +22,15 @@ import { NewStockLineModal } from '../Components/NewStockLineModal';
 import { ExpiryDateCell } from '@openmsupply-client/common/src/ui/layout/tables/material-react-table/components/ExpiryDateCell';
 
 export const StockListView = () => {
+  const t = useTranslation();
+  const navigate = useNavigate();
+  const { plugins } = usePluginProvider();
+  const { manageVvmStatusForStock } = usePreferences();
+  const { isOpen, onClose, onOpen } = useEditModal();
+
   const {
     queryParams: { sortBy, first, offset, filterBy },
   } = useUrlQueryParams({
-    initialSort: { key: 'itemName', dir: 'asc' },
     filters: [
       { key: 'vvmStatusId', condition: 'equalTo' },
       { key: 'search' },
@@ -47,7 +52,6 @@ export const StockListView = () => {
       },
     ],
   });
-  const navigate = useNavigate();
   const queryParams = {
     filterBy: { ...filterBy },
     offset,
@@ -55,12 +59,7 @@ export const StockListView = () => {
     first,
   };
 
-  const t = useTranslation();
   const { data, isFetching, isError } = useStockList(queryParams);
-  const { plugins } = usePluginProvider();
-  const { manageVvmStatusForStock } = usePreferences();
-
-  const { isOpen, onClose, onOpen } = useEditModal();
 
   const mrtColumns = useMemo(
     (): ColumnDef<StockLineRowFragment>[] => [
@@ -219,7 +218,6 @@ export const StockListView = () => {
     columns: mrtColumns,
     data: data?.nodes,
     totalCount: data?.totalCount ?? 0,
-    initialSort: { key: 'name', dir: 'desc' },
     enableRowSelection: false,
     noDataElement: (
       <NothingHere
