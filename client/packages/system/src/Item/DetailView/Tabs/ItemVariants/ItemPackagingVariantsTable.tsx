@@ -1,14 +1,12 @@
-import React from 'react';
-
+import React, { useMemo } from 'react';
 import {
-  DataTable,
-  useColumns,
-  TooltipTextCell,
-  TableProvider,
-  createTableStore,
+  TextWithTooltipCell,
+  MaterialTable,
+  useSimpleMaterialTable,
+  ColumnDef,
+  useTranslation,
   NumberInputCell,
   TextInputCell,
-  CellProps,
 } from '@openmsupply-client/common';
 import { PackagingVariantFragment } from '../../../api';
 
@@ -19,6 +17,8 @@ export const ItemPackagingVariantsTable = ({
   data: PackagingVariantFragment[];
   update?: (packagingVariant: Partial<PackagingVariantFragment>) => void;
 }) => {
+  const t = useTranslation();
+
   const updatePackaging = (
     packagingVariant?: Partial<PackagingVariantFragment>
   ) => {
@@ -26,52 +26,56 @@ export const ItemPackagingVariantsTable = ({
 
     update(packagingVariant);
   };
-  const columns = useColumns<PackagingVariantFragment>([
-    {
-      key: 'packagingLevel',
-      Cell: TooltipTextCell,
-      label: 'label.level',
-    },
-    {
-      key: 'name',
-      Cell: update ? TextInputCell : TooltipTextCell,
-      label: 'label.name',
-      setter: updatePackaging,
-    },
-    {
-      key: 'packSize',
-      Cell: update ? NonZeroInputCell : TooltipTextCell,
-      label: 'label.pack-size',
-      setter: updatePackaging,
-    },
-    {
-      key: 'volumePerUnit',
-      Cell: update ? NonZeroInputCell : TooltipTextCell,
-      label: 'label.volume-per-unit',
-      setter: updatePackaging,
-      width: 150,
-    },
-  ]);
 
-  return (
-    <TableProvider createStore={createTableStore}>
-      <DataTable
-        id="item-variant-packaging"
-        data={data}
-        columns={columns}
-        headerSx={{ height: '25px' }}
-        dense
-      />
-    </TableProvider>
+  const columns = useMemo(
+    (): ColumnDef<PackagingVariantFragment>[] => [
+      {
+        accessorKey: 'packagingLevel',
+        header: t('label.level'),
+        Cell: TextWithTooltipCell,
+        size: 100,
+      },
+      {
+        accessorKey: 'name',
+        header: t('label.name'),
+        Cell: update ? ({ cell, row: { original: row } }) => <TextInputCell
+          cell={cell}
+          updateFn={value => updatePackaging({ id: row.id, name: value })}
+        /> : TextWithTooltipCell,
+        size: 150,
+      },
+      {
+        accessorKey: 'packSize',
+        header: t('label.pack-size'),
+        Cell: update ? ({ cell, row: { original: row } }) => <NumberInputCell
+          cell={cell}
+          updateFn={value => updatePackaging({ id: row.id, packSize: value })}
+          min={1}
+          decimalLimit={0}
+          error={cell.getValue() === 0}
+        /> : TextWithTooltipCell,
+        size: 100,
+      },
+      {
+        accessorKey: 'volumePerUnit',
+        header: t('label.volume-per-unit'),
+        Cell: update ? ({ cell, row: { original: row } }) => <NumberInputCell
+          cell={cell}
+          updateFn={value => updatePackaging({ id: row.id, volumePerUnit: value })}
+          min={1}
+          error={cell.getValue() === 0}
+        /> : TextWithTooltipCell,
+        size: 100,
+      },
+    ],
+    []
   );
-};
 
-// Input cells can't be defined inline, otherwise they lose focus on re-render
-const NonZeroInputCell = (props: CellProps<PackagingVariantFragment>) => (
-  <NumberInputCell
-    step={1}
-    decimalLimit={10}
-    error={props.column.accessor({ rowData: props.rowData }) === 0}
-    {...props}
-  />
-);
+  const table = useSimpleMaterialTable<PackagingVariantFragment>({
+    tableId: 'item-variant-packaging',
+    data,
+    columns,
+  });
+
+  return <MaterialTable table={table} />;
+};

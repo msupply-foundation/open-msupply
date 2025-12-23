@@ -6,6 +6,8 @@ import {
   MaterialTable,
   useSimpleMaterialTable,
   useTranslation,
+  NumberInputCell,
+  TextInputCell,
 } from '@openmsupply-client/common';
 import {
   getVolumePerPackFromVariant,
@@ -14,8 +16,6 @@ import {
 } from '@openmsupply-client/system';
 import React, { useMemo } from 'react';
 import { GenerateCustomerReturnLineFragment } from '../../api';
-import { TextInputCell } from '@openmsupply-client/common/src/ui/layout/tables/material-react-table/components/TextInputCell';
-import { NumberInputCell } from '@openmsupply-client/common/src/ui/layout/tables/material-react-table/components/NumberInputCell';
 
 export const QuantityReturnedTableComponent = ({
   lines,
@@ -32,144 +32,136 @@ export const QuantityReturnedTableComponent = ({
   const showItemVariantsColumn = useIsItemVariantsEnabled();
 
   const columns = useMemo(
-    (): ColumnDef<GenerateCustomerReturnLineFragment>[] => {
-      const cols: ColumnDef<GenerateCustomerReturnLineFragment>[] = [
-        {
-          accessorKey: 'itemCode',
-          header: t('label.code'),
-          size: 100,
+    (): ColumnDef<GenerateCustomerReturnLineFragment>[] => [
+      {
+        accessorKey: 'itemCode',
+        header: t('label.code'),
+        size: 100,
+      },
+      {
+        accessorKey: 'itemName',
+        header: t('label.name'),
+        size: 200,
+      },
+      {
+        accessorKey: 'batch',
+        header: t('label.batch'),
+        size: 100,
+        Cell: ({ row: { original: row }, cell }) => (
+          <TextInputCell
+            cell={cell}
+            disabled={isDisabled}
+            updateFn={value => updateLine({ ...row, batch: value })}
+          />
+        ),
+      },
+      {
+        accessorKey: 'itemVariantId',
+        header: t('label.item-variant'),
+        includeColumn: showItemVariantsColumn,
+        size: 170,
+        Cell: ({ row: { original: row } }) => (
+          <ItemVariantInput
+            selectedId={row.itemVariantId}
+            itemId={row.item.id}
+            disabled={isDisabled}
+            width={"100%"}
+            onChange={variant =>
+              updateLine({
+                ...row,
+                itemVariantId: variant?.id ?? null,
+                volumePerPack:
+                  getVolumePerPackFromVariant({
+                    ...row,
+                    itemVariant: variant ?? undefined,
+                  }) ?? 0,
+              })
+            }
+          />
+        ),
+      },
+      {
+        id: 'expiryDate',
+        accessorFn: row => DateUtils.getDateOrNull(row.expiryDate),
+        header: t('label.expiry'),
+        size: 130,
+        Cell: ({ cell, row: { original: row } }) => {
+          const value = cell.getValue<Date | null>();
+          return <ExpiryDateInput
+            value={value}
+            onChange={newValue =>
+              updateLine({
+                ...row,
+                expiryDate: newValue
+                  ? Formatter.naiveDate(new Date(newValue))
+                  : null,
+              })
+            }
+            disabled={isDisabled}
+          />
         },
-        {
-          accessorKey: 'itemName',
-          header: t('label.name'),
-          size: 200,
-        },
-        {
-          accessorKey: 'batch',
-          header: t('label.batch'),
-          size: 100,
-          Cell: ({ row: { original: row }, cell }) => (
-            <TextInputCell
-              cell={cell}
-              disabled={isDisabled}
-              updateFn={value => updateLine({ ...row, batch: value })}
-            />
-          ),
-        },
-        {
-          id: 'expiryDate',
-          accessorFn: row => DateUtils.getDateOrNull(row.expiryDate),
-          header: t('label.expiry'),
-          size: 130,
-          Cell: ({ cell, row: { original: row } }) => {
-            const value = cell.getValue<Date | null>();
-            return <ExpiryDateInput
-              value={value}
-              onChange={newValue =>
-                updateLine({
-                  ...row,
-                  expiryDate: newValue
-                    ? Formatter.naiveDate(new Date(newValue))
-                    : null,
-                })
-              }
-              disabled={isDisabled}
-            />
-          },
-        },
-        {
-          accessorKey: 'packSize',
-          header: t('label.pack-size'),
-          size: 100,
-          accessorFn: row => row.packSize,
-          Cell: ({ cell, row: { original: row } }) => (
-            <NumberInputCell
-              cell={cell}
-              disabled={isDisabled}
-              defaultValue={0}
-              updateFn={packSize => updateLine({
+      },
+      {
+        accessorKey: 'numberOfPacksIssued',
+        header: t('label.pack-quantity-issued'),
+        includeColumn: lines.some(l => !!l.numberOfPacksIssued),
+        size: 100,
+      },
+      {
+        accessorKey: 'packSize',
+        header: t('label.pack-size'),
+        size: 100,
+        accessorFn: row => row.packSize,
+        Cell: ({ cell, row: { original: row } }) => (
+          <NumberInputCell
+            cell={cell}
+            disabled={isDisabled}
+            defaultValue={0}
+            updateFn={packSize => updateLine({
+              ...row,
+              packSize,
+              volumePerPack: getVolumePerPackFromVariant({
                 ...row,
                 packSize,
-                volumePerPack: getVolumePerPackFromVariant({
-                  ...row,
-                  packSize,
-                }) ?? 0,
-              })}
-            />
-          ),
-        },
-        {
-          accessorKey: 'numberOfPacksReturned',
-          header: t('label.quantity-returned'),
-          description: t('description.pack-quantity'),
-          size: 100,
-          Cell: ({ cell, row: { original: row } }) => (
-            <NumberInputCell
-              cell={cell}
-              disabled={isDisabled}
-              updateFn={value =>
-                updateLine({ id: row.id, numberOfPacksReturned: value })
-              }
-              defaultValue={0}
-              min={0}
-              max={row.numberOfPacksIssued ?? undefined}
-            />
-          ),
-        },
-        {
-          accessorKey: 'volumePerPack',
-          header: t('label.volume-per-pack'),
-          size: 100,
-          Cell: ({ cell, row: { original: row } }) => (
-            <NumberInputCell
-              cell={cell}
-              disabled={isDisabled}
-              updateFn={value =>
-                updateLine({ ...row, volumePerPack: value ?? 0 })
-              }
-              decimalLimit={10}
-            />
-          ),
-        }
-      ];
-
-      if (showItemVariantsColumn) {
-        cols.splice(3, 0, {
-          accessorKey: 'itemVariantId',
-          header: t('label.item-variant'),
-          size: 170,
-          Cell: ({ row: { original: row } }) => (
-            <ItemVariantInput
-              selectedId={row.itemVariantId}
-              itemId={row.item.id}
-              disabled={isDisabled}
-              width={"100%"}
-              onChange={variant =>
-                updateLine({
-                  ...row,
-                  itemVariantId: variant?.id ?? null,
-                  volumePerPack:
-                    getVolumePerPackFromVariant({
-                      ...row,
-                      itemVariant: variant ?? undefined,
-                    }) ?? 0,
-                })
-              }
-            />
-          ),
-        });
+              }) ?? 0,
+            })}
+          />
+        ),
+      },
+      {
+        accessorKey: 'numberOfPacksReturned',
+        header: t('label.quantity-returned'),
+        description: t('description.pack-quantity'),
+        size: 100,
+        Cell: ({ cell, row: { original: row } }) => (
+          <NumberInputCell
+            cell={cell}
+            disabled={isDisabled}
+            updateFn={value =>
+              updateLine({ id: row.id, numberOfPacksReturned: value })
+            }
+            defaultValue={0}
+            min={0}
+            max={row.numberOfPacksIssued ?? undefined}
+          />
+        ),
+      },
+      {
+        accessorKey: 'volumePerPack',
+        header: t('label.volume-per-pack'),
+        size: 100,
+        Cell: ({ cell, row: { original: row } }) => (
+          <NumberInputCell
+            cell={cell}
+            disabled={isDisabled}
+            updateFn={value =>
+              updateLine({ ...row, volumePerPack: value ?? 0 })
+            }
+            decimalLimit={10}
+          />
+        ),
       }
-
-      if (lines.some(l => !!l.numberOfPacksIssued)) {
-        cols.splice(4 + (showItemVariantsColumn ? 1 : 0), 0, {
-          accessorKey: 'numberOfPacksIssued',
-          header: t('label.pack-quantity-issued'),
-          size: 100,
-        });
-      }
-
-      return cols;
-    },
+    ],
     [lines, showItemVariantsColumn]
   );
 

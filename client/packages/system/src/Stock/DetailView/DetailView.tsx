@@ -1,7 +1,5 @@
 import React, { useEffect } from 'react';
 import {
-  TableProvider,
-  createTableStore,
   useTranslation,
   DetailTabs,
   useBreadcrumbs,
@@ -113,11 +111,11 @@ export const StockLineDetailView: React.FC = () => {
     },
     ...(isVaccine && manageVvmStatusForStock
       ? [
-          {
-            Component: <StatusHistory draft={draft} isLoading={isLoading} />,
-            value: t('label.statushistory'),
-          },
-        ]
+        {
+          Component: <StatusHistory draft={draft} isLoading={isLoading} />,
+          value: t('label.statushistory'),
+        },
+      ]
       : []),
     {
       Component: <ActivityLogList recordId={data?.id ?? ''} />,
@@ -162,12 +160,10 @@ export const StockLineDetailView: React.FC = () => {
         openAdjust={openInventoryAdjustmentModal}
         itemId={data?.itemId}
       />
-      <TableProvider createStore={createTableStore}>
-        <DetailTabs tabs={tabs} />
-        {(tab === t('label.details') || !tab || simplifiedTabletView) && (
-          <Footer {...footerProps} />
-        )}
-      </TableProvider>
+      <DetailTabs tabs={tabs} />
+      {(tab === t('label.details') || !tab || simplifiedTabletView) && (
+        <Footer {...footerProps} />
+      )}
     </>
   );
 };

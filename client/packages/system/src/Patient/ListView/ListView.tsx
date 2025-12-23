@@ -12,7 +12,6 @@ import {
   usePaginatedMaterialTable,
   ColumnDef,
   ColumnType,
-  ColumnDataAccessor,
   ChipTableCell,
   usePreferences,
 } from '@openmsupply-client/common';
@@ -21,19 +20,6 @@ import { AppBarButtons } from './AppBarButtons';
 import { usePatientStore } from '@openmsupply-client/programs';
 import { CreatePatientModal } from '../CreatePatientModal';
 import { PatientColumnData } from '../CreatePatientModal/PatientResultsTab';
-
-// TODO: REMOVE. KEEPING FOR LINK PATIENT MODAL USAGE
-export const programEnrolmentLabelAccessor: ColumnDataAccessor<
-  PatientRowFragment,
-  string[]
-> = ({ rowData }): string[] => {
-  return rowData.programEnrolments.nodes.map(it => {
-    const programEnrolmentId = it.programEnrolmentId
-      ? ` (${it.programEnrolmentId})`
-      : '';
-    return `${it.document.documentRegistry?.name}${programEnrolmentId}`;
-  });
-};
 
 export const PatientListView = () => {
   const t = useTranslation();
