@@ -44,6 +44,8 @@ pub mod number_of_months_to_check_for_consumption_when_calculating_out_of_stock_
 pub use number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products::*;
 pub mod number_of_months_threshold_to_show_low_stock_alerts_for_products;
 pub use number_of_months_threshold_to_show_low_stock_alerts_for_products::*;
+pub mod number_of_months_threshold_to_show_over_stock_alerts_for_products;
+pub use number_of_months_threshold_to_show_over_stock_alerts_for_products::*;
 pub mod first_threshold_for_expiring_items;
 pub use first_threshold_for_expiring_items::*;
 pub mod second_threshold_for_expiring_items;
@@ -56,10 +58,12 @@ pub mod expired_stock_prevent_issue;
 pub use expired_stock_prevent_issue::*;
 pub mod warn_when_missing_recent_stocktake;
 pub use warn_when_missing_recent_stocktake::*;
-pub mod skip_intermediate_statuses_in_outbound;
-pub use skip_intermediate_statuses_in_outbound::*;
 pub mod store_custom_colour;
 pub use store_custom_colour::*;
+pub mod invoice_status_options;
+pub use invoice_status_options::*;
+pub mod item_margin_overrides_supplier_margin;
+pub use item_margin_overrides_supplier_margin::*;
 pub mod is_gaps;
 pub use is_gaps::*;
 
@@ -79,6 +83,7 @@ pub struct PreferenceProvider {
     pub days_in_month: DaysInMonth,
     pub expired_stock_prevent_issue: ExpiredStockPreventIssue,
     pub expired_stock_issue_threshold: ExpiredStockIssueThreshold,
+    pub item_margin_overrides_supplier_margin: ItemMarginOverridesSupplierMargin,
     pub is_gaps: IsGaps,
 
     // Store preferences
@@ -97,11 +102,13 @@ pub struct PreferenceProvider {
         NumberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts,
     pub number_of_months_threshold_to_show_low_stock_alerts_for_products:
         NumberOfMonthsThresholdToShowLowStockAlertsForProducts,
+    pub number_of_months_threshold_to_show_over_stock_alerts_for_products:
+        NumberOfMonthsThresholdToShowOverStockAlertsForProducts,
     pub first_threshold_for_expiring_items: FirstThresholdForExpiringItems,
     pub second_threshold_for_expiring_items: SecondThresholdForExpiringItems,
-    pub skip_intermediate_statuses_in_outbound: SkipIntermediateStatusesInOutbound,
     pub warn_when_missing_recent_stocktake: WarnWhenMissingRecentStocktake,
     pub store_custom_colour: StoreCustomColour,
+    pub invoice_status_options: InvoiceStatusOptions,
 }
 
 pub fn get_preference_provider() -> PreferenceProvider {
@@ -121,6 +128,7 @@ pub fn get_preference_provider() -> PreferenceProvider {
         days_in_month: DaysInMonth,
         expired_stock_prevent_issue: ExpiredStockPreventIssue,
         expired_stock_issue_threshold: ExpiredStockIssueThreshold,
+        item_margin_overrides_supplier_margin: ItemMarginOverridesSupplierMargin,
         is_gaps: IsGaps,
 
         // Store preferences
@@ -139,10 +147,12 @@ pub fn get_preference_provider() -> PreferenceProvider {
             NumberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts,
         number_of_months_threshold_to_show_low_stock_alerts_for_products:
             NumberOfMonthsThresholdToShowLowStockAlertsForProducts,
+        number_of_months_threshold_to_show_over_stock_alerts_for_products:
+            NumberOfMonthsThresholdToShowOverStockAlertsForProducts,
         first_threshold_for_expiring_items: FirstThresholdForExpiringItems,
         second_threshold_for_expiring_items: SecondThresholdForExpiringItems,
-        skip_intermediate_statuses_in_outbound: SkipIntermediateStatusesInOutbound,
         store_custom_colour: StoreCustomColour,
         warn_when_missing_recent_stocktake: WarnWhenMissingRecentStocktake,
+        invoice_status_options: InvoiceStatusOptions,
     }
 }

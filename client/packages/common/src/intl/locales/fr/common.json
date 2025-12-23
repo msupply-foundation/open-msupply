@@ -2451,8 +2451,6 @@
   "report.stocktake-sheet": "Fiche d'inventaire",
   "report.stocktake-with-quantity": "Inventaire avec Quantité",
   "report.stocktake-without-quantity": "Inventaire sans Quantité",
-  "report.snapshot-number-of-packs": "Stock théorique (cond.)",
-  "report.counted-number-of-packs": "Nombre d'unités comptées (cond.)",
   "report.suggested-qty": "Qté suggérée",
   "report.summary-for-period": "Résumé pour la période",
   "report.supplied-to": "Fourni à",

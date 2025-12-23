@@ -171,6 +171,7 @@ export const RequestedSelection = ({
                 },
               },
             }}
+            disabled={disabled}
           />
         </Box>
       </Box>

@@ -250,6 +250,7 @@ export type PreferencesQuery = {
     manageVaccinesInDoses: boolean;
     manageVvmStatusForStock: boolean;
     numberOfMonthsThresholdToShowLowStockAlertsForProducts: number;
+    numberOfMonthsThresholdToShowOverStockAlertsForProducts: number;
     numberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts: number;
     orderInPacks: boolean;
     preventTransfersMonthsBeforeInitialisation: number;
@@ -265,7 +266,8 @@ export type PreferencesQuery = {
     expiredStockPreventIssue: boolean;
     expiredStockIssueThreshold: number;
     warningForExcessRequest: boolean;
-    skipIntermediateStatusesInOutbound: boolean;
+    invoiceStatusOptions: Array<Types.InvoiceNodeStatus>;
+    itemMarginOverridesSupplierMargin: boolean;
     showIndicativePriceInRequisitions: boolean;
     isGaps: boolean;
     warnWhenMissingRecentStocktake: {
@@ -491,6 +493,7 @@ export const PreferencesDocument = gql`
       manageVaccinesInDoses
       manageVvmStatusForStock
       numberOfMonthsThresholdToShowLowStockAlertsForProducts
+      numberOfMonthsThresholdToShowOverStockAlertsForProducts
       numberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts
       orderInPacks
       preventTransfersMonthsBeforeInitialisation
@@ -511,7 +514,8 @@ export const PreferencesDocument = gql`
         minItems
       }
       warningForExcessRequest
-      skipIntermediateStatusesInOutbound
+      invoiceStatusOptions
+      itemMarginOverridesSupplierMargin
       showIndicativePriceInRequisitions
       isGaps
     }

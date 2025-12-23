@@ -546,6 +546,8 @@
   "placeholder.search-by-name": "Buka bazeia ba naran",
   "placeholder.search-by-name-or-code": "Buka bazeia ba naran ka kodigu",
   "replenishment": "Reabastecimentu",
+  "report.counted-number-of-packs": "Numeru Pakotes konta",
+  "report.snapshot-number-of-packs": "Snapshot Numeru Pakotes",
   "reports": "Relatoriu",
   "saving": "Salva...",
   "searching": "Buka...",
@@ -581,7 +583,5 @@
   "title.stock-on-hand": "Stock on Hand",
   "tools": "Ekipamentus",
   "warning.caps-lock": "Alerta: Caps Lock ativu hela",
-  "warning.nothing-to-supply": "Laiha buat ida atu distribui!",
-  "report.snapshot-number-of-packs": "Snapshot Numeru Pakotes",
-  "report.counted-number-of-packs": "Numeru Pakotes konta"
+  "warning.nothing-to-supply": "Laiha buat ida atu distribui!"
 }
