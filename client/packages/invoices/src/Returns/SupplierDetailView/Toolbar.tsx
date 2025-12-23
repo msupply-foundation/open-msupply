@@ -13,7 +13,7 @@ import {
 } from '@openmsupply-client/common';
 import { SupplierReturnFragment, useReturns } from '../api';
 import { SupplierSearchInput } from '@openmsupply-client/system';
-import { AppRoute } from 'packages/config/src';
+import { AppRoute } from '@openmsupply-client/config';
 
 export const Toolbar: FC = () => {
   const t = useTranslation();
@@ -62,6 +62,7 @@ export const Toolbar: FC = () => {
                         id,
                         otherPartyId,
                       });
+                      if (!newId) return;
                       navigate(
                         RouteBuilder.create(AppRoute.Replenishment)
                           .addPart(AppRoute.SupplierReturn)
