@@ -22,6 +22,7 @@ interface ResponseNumInputRowProps {
   endAdornmentOverride?: string;
   unitName?: string | null;
   label: string;
+  disabled?: boolean;
   disabledOverride?: boolean;
   sx?: SxProps<Theme>;
   overrideDoseDisplay?: boolean;
@@ -35,6 +36,7 @@ export const ResponseNumInputRow = ({
   defaultPackSize,
   dosesPerUnit = 1,
   endAdornmentOverride,
+  disabled,
   disabledOverride,
   displayVaccinesInDoses = false,
   overrideDoseDisplay,
@@ -91,6 +93,7 @@ export const ResponseNumInputRow = ({
       onChange={handleChange}
       endAdornment={endAdornment}
       label={label}
+      disabled={disabled}
       disabledOverride={disabledOverride}
       sx={sx}
       dosesCaption={dosesCaption}
