@@ -82,7 +82,7 @@ impl<'a> DaysOutOfStockRepository<'a> {
         .as_dos_query()?;
 
         // Debug
-        println!("{}", diesel::debug_query::<crate::DBType, _>(&dos_query));
+        // println!("{}", diesel::debug_query::<crate::DBType, _>(&dos_query));
 
         Ok(dos_query.load::<DaysOutOfStockRow>(self.connection.lock().connection())?)
     }
@@ -91,8 +91,8 @@ impl<'a> DaysOutOfStockRepository<'a> {
 #[cfg(test)]
 
 pub(crate) mod test {
-    use chrono::{Duration, NaiveDateTime, Timelike};
-    use util::{date_now, date_with_offset, datetime_now, get_local_date_as_utc};
+    use chrono::{Duration, NaiveDateTime};
+    use util::{date_with_offset, get_local_date_as_utc, get_local_date_from_utc};
 
     use super::*;
 
@@ -106,7 +106,8 @@ pub(crate) mod test {
 
     async fn test_one(
         test_name: &str,
-        reference_date: NaiveDateTime,
+        movement_date: NaiveDateTime,
+        calculation_date: NaiveDateTime,
         movements: Vec<(i64, i64)>,
         expected_dos: Option<f64>,
     ) {
@@ -125,18 +126,18 @@ pub(crate) mod test {
         .join(make_movements_extended(MakeMovements {
             stock_line: test_stock_line,
             date_quantity: movements,
-            reference_datetime: reference_date,
+            reference_datetime: movement_date,
             offset_days: 30,
         }));
 
         let (_, connection, _, _) = setup_all_with_data(
-            &format!("test_dose_{test_name}"),
+            &format!("test_dos_{test_name}"),
             MockDataInserts::none().names().stores().units().items(),
             mock_data,
         )
         .await;
 
-        let end_date = date_now();
+        let end_date = get_local_date_from_utc(&calculation_date);
         // Using a short DOS period so that stock movements can be created beforehand
         let start_date = date_with_offset(&end_date, Duration::days(-10));
         let store_id = mock_store_a().id.clone();
@@ -186,11 +187,18 @@ pub(crate) mod test {
     async fn test_dos() {
         std::env::set_var("TZ", "Pacific/Auckland");
 
-        let reference_date = get_local_date_as_utc(datetime_now());
+        let movement_date = get_local_date_as_utc(
+            NaiveDate::from_ymd_opt(2025, 12, 30)
+                .unwrap()
+                .and_hms_opt(3, 3, 3)
+                .unwrap(),
+        );
+        let calculation_date = movement_date;
 
         test_one(
             "multiple_periods",
-            reference_date,
+            movement_date,
+            calculation_date,
             vec![(10, 3), (22, -3), (25, 3), (26, -3)],
             /*
             Looking back 10 days from 30th, including 20th in calculation
@@ -209,7 +217,8 @@ pub(crate) mod test {
 
         test_one(
             "out_of_stock_at_start",
-            reference_date,
+            movement_date,
+            calculation_date,
             vec![(5, 10), (6, -10), (25, 10)],
             /*
             Looking back 10 days from 30th, including 20th in calculation
@@ -228,7 +237,8 @@ pub(crate) mod test {
 
         test_one(
             "out_of_stock_at_end",
-            reference_date,
+            movement_date,
+            calculation_date,
             vec![(10, 6), (26, -6)],
             /*
             Looking back 10 days from 30th, including 20th in calculation
@@ -247,7 +257,8 @@ pub(crate) mod test {
 
         test_one(
             "out_of_stock_start_and_end",
-            reference_date,
+            movement_date,
+            calculation_date,
             vec![(5, 10), (6, -10), (24, 4), (25, -4)],
             /*
             Looking back 10 days from 30th, including 20th in calculation
@@ -266,7 +277,8 @@ pub(crate) mod test {
 
         test_one(
             "fully_out_of_stock",
-            reference_date,
+            movement_date,
+            calculation_date,
             vec![(5, 10), (6, -10)],
             /*
             Looking back 10 days from 30th, including 20th in calculation
@@ -284,12 +296,20 @@ pub(crate) mod test {
         )
         .await;
 
-        test_one("in_stock_whole_time", reference_date, vec![(5, 10)], None).await;
+        test_one(
+            "in_stock_whole_time",
+            movement_date,
+            calculation_date,
+            vec![(5, 10)],
+            None,
+        )
+        .await;
 
         let out_of_stock_first_day = vec![(5, 10), (20, -10)];
         test_one(
             "out_of_stock_first_day",
-            reference_date,
+            movement_date,
+            calculation_date,
             out_of_stock_first_day.clone(),
             /*
             Looking back 10 days from 30th, including 20th in calculation
@@ -307,16 +327,22 @@ pub(crate) mod test {
         )
         .await;
 
-        // If reference time is 23:00 UTC and local timezone iz 'Pacific/Auckland' then 20th will be 21st
+        // If reference time is 23:00 UTC and local timezone is 'Pacific/Auckland' then 20th will be 21st
         // making previous data lead to 9 days out of stock instead of 10
-        let reference_date = datetime_now().with_hour(23).unwrap();
+        let movement_date = NaiveDate::from_ymd_opt(2025, 12, 30)
+            .unwrap()
+            .and_hms_opt(23, 0, 0)
+            .unwrap();
 
         test_one(
             "out_of_stock_timezone",
-            reference_date,
+            movement_date,
+            calculation_date,
             out_of_stock_first_day,
             Some(9.0),
         )
         .await;
+
+        std::env::set_var("TZ", "");
     }
 }

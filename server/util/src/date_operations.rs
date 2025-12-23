@@ -106,28 +106,44 @@ pub fn create_datetime(
     NaiveDate::from_ymd_opt(year, month, day).and_then(|d| d.and_hms_opt(hour, minute, second))
 }
 
-pub fn get_timezone_date_as_utc(date: NaiveDateTime, tz: &impl TimeZone) -> NaiveDateTime {
-    tz.from_local_datetime(&date)
+// Convert from local datetime to UTC datetime
+// This is one of the only times NaiveDateTime is local, it would usually be UTC
+// Use as helper here and in tests
+pub fn get_local_date_as_utc(local_date: NaiveDateTime) -> NaiveDateTime {
+    Local
+        .from_local_datetime(&local_date)
         .earliest()
         .map(|dt| dt.with_timezone(&Utc).naive_utc())
         // If something fails return time as UTC could cause a very rare logic bug (daylight saving time)
         // although it's not clear if this is even likely with 'earliest' method
-        .unwrap_or(date)
+        .unwrap_or(local_date)
 }
 
-// First get local date at midnight, then convert to UTC and get the NaiveDateTime
-pub fn get_local_date_as_utc(date: NaiveDateTime) -> NaiveDateTime {
-    get_timezone_date_as_utc(date, &Local)
-}
-
+// NaiveDate should always be local
 pub fn start_of_the_day_for_date(date: &NaiveDate) -> NaiveDateTime {
     // Safe to unwrap as we know hour, min and sec are valid
     let start = date.and_hms_opt(0, 0, 0).unwrap();
     get_local_date_as_utc(start)
 }
 
+// NaiveDate should always be local
 pub fn end_of_the_day_for_date(date: &NaiveDate) -> NaiveDateTime {
     // Safe to unwrap as we know hour, min, sec, nanos are valid
     let end = date.and_hms_nano_opt(23, 59, 59, 999_999_999).unwrap();
     get_local_date_as_utc(end)
+}
+
+// Convert from utc datetime to local datetime and then get start of the day
+pub fn start_of_local_day(utc_datetime: &NaiveDateTime) -> NaiveDateTime {
+    let local_date = Utc
+        .from_utc_datetime(utc_datetime)
+        .with_timezone(&Local)
+        .date_naive();
+    start_of_the_day_for_date(&local_date)
+}
+
+pub fn get_local_date_from_utc(utc_datetime: &NaiveDateTime) -> NaiveDate {
+    Utc.from_utc_datetime(utc_datetime)
+        .with_timezone(&Local)
+        .date_naive()
 }
