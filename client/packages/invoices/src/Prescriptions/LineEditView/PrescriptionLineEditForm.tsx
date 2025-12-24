@@ -111,6 +111,7 @@ export const PrescriptionLineEditForm = ({
                     <BasicTextInput
                       inputRef={abbreviationRef}
                       value={abbreviation}
+                      disabled={disabled}
                       onChange={e => {
                         setAbbreviation(e.target.value);
                       }}
@@ -163,6 +164,7 @@ export const PrescriptionLineEditForm = ({
                   label={t('label.directions')}
                   Input={
                     <TextArea
+                      disabled={disabled}
                       value={note}
                       onChange={e => {
                         setNote(e.target.value);
