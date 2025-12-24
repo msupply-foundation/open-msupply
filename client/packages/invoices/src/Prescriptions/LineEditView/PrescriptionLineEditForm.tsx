@@ -133,6 +133,7 @@ export const PrescriptionLineEditForm = ({
                       ? defaultDirection
                       : t('placeholder.item-directions')
                   }
+                  disabled={disabled}
                 >
                   {item.itemDirections.length == 0 ? (
                     <DropdownMenuItem sx={{ fontSize: 14 }}>
