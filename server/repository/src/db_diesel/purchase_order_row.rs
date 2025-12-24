@@ -40,7 +40,7 @@ table! {
         reference -> Nullable<Text>,
         currency_id -> Nullable<Text>,
         foreign_exchange_rate -> Nullable<Double>,
-        shipping_method->  Nullable<Text>,
+        shipping_method ->  Nullable<Text>,
         sent_datetime -> Nullable<Timestamp>,
         contract_signed_date -> Nullable<Date>,
         advance_paid_date ->  Nullable<Date>,

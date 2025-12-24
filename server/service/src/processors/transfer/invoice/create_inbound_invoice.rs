@@ -285,6 +285,7 @@ fn generate_inbound_invoice(
         expected_delivery_date: outbound_invoice_row.expected_delivery_date,
         original_shipment_id,
         program_id: outbound_invoice_row.program_id.clone(),
+        shipping_method_id: outbound_invoice_row.shipping_method_id.clone(),
         // Default
         colour: None,
         user_id: None,
