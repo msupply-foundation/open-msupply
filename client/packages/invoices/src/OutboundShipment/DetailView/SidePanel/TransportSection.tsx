@@ -1,4 +1,4 @@
-import React, { FC, memo } from 'react';
+import React, { memo } from 'react';
 import {
   Grid,
   DetailPanelSection,
@@ -12,12 +12,17 @@ import {
   Formatter,
 } from '@openmsupply-client/common';
 import { useOutbound } from '../../api';
+import { ShippingMethodAutocomplete } from '@openmsupply-client/system';
 
-export const TransportSectionComponent: FC = () => {
+export const TransportSectionComponent = () => {
   const t = useTranslation();
   const isDisabled = useOutbound.utils.isDisabled();
-  const { transportReference, expectedDeliveryDate, update } =
-    useOutbound.document.fields(['transportReference', 'expectedDeliveryDate']);
+  const { transportReference, expectedDeliveryDate, shippingMethod, update } =
+    useOutbound.document.fields([
+      'transportReference',
+      'expectedDeliveryDate',
+      'shippingMethod',
+    ]);
   const [referenceBuffer, setReferenceBuffer] = useBufferState(
     transportReference ?? ''
   );
@@ -25,6 +30,16 @@ export const TransportSectionComponent: FC = () => {
   return (
     <DetailPanelSection title={t('heading.transport-details')}>
       <Grid container gap={0.5} key="transport-details">
+        <PanelRow>
+          <PanelLabel>{t('label.shipping-method')}</PanelLabel>
+          <ShippingMethodAutocomplete
+            value={shippingMethod}
+            onChange={shippingMethod => {
+              update({ shippingMethod });
+            }}
+            width={250}
+          />
+        </PanelRow>
         <PanelRow>
           <PanelLabel>{t('label.expected-delivery-date')}</PanelLabel>
           <DateTimePickerInput
@@ -44,7 +59,7 @@ export const TransportSectionComponent: FC = () => {
             }}
             textFieldSx={{
               backgroundColor: 'white',
-              width: 170,
+              width: 250,
             }}
             actions={['cancel', 'accept', 'clear']}
           />
