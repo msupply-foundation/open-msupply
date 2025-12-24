@@ -26,9 +26,8 @@ export const TransportSectionComponent = () => {
   const [referenceBuffer, setReferenceBuffer] = useBufferState(
     transportReference ?? ''
   );
-  const [shippingMethodBuffer, setShippingMethodBuffer] = useBufferState(
-    shippingMethod
-  );
+  const [shippingMethodBuffer, setShippingMethodBuffer] =
+    useBufferState(shippingMethod);
 
   return (
     <DetailPanelSection title={t('heading.transport-details')}>
@@ -36,8 +35,9 @@ export const TransportSectionComponent = () => {
         <PanelRow>
           <PanelLabel>{t('label.shipping-method')}</PanelLabel>
           <ShippingMethodSearchInput
-            value={shippingMethod}
+            value={shippingMethodBuffer}
             onChange={shippingMethod => {
+              setShippingMethodBuffer(shippingMethod);
               update({ shippingMethod });
             }}
             width={250}
