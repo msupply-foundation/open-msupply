@@ -26,6 +26,9 @@ export const TransportSectionComponent = () => {
   const [referenceBuffer, setReferenceBuffer] = useBufferState(
     transportReference ?? ''
   );
+  const [shippingMethodBuffer, setShippingMethodBuffer] = useBufferState(
+    shippingMethod
+  );
 
   return (
     <DetailPanelSection title={t('heading.transport-details')}>
@@ -38,6 +41,7 @@ export const TransportSectionComponent = () => {
               update({ shippingMethod });
             }}
             width={250}
+            disabled={isDisabled}
           />
         </PanelRow>
         <PanelRow>
