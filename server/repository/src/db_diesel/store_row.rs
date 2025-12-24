@@ -1,6 +1,6 @@
 use super::{item_link_row::item_link, name_link_row::name_link, StorageConnection};
 
-use crate::{repository_error::RepositoryError, Delete, Upsert};
+use crate::{repository_error::RepositoryError, Delete, StoreRowRefactor, Upsert};
 
 use chrono::NaiveDate;
 use diesel::prelude::*;
@@ -57,6 +57,20 @@ pub struct StoreRow {
     pub store_mode: StoreMode,
     pub created_date: Option<NaiveDate>,
     pub is_disabled: bool,
+}
+impl StoreRow {
+    pub(crate) fn from_refactor_row(sr: StoreRowRefactor) -> StoreRow {
+        StoreRow {
+            id: sr.id,
+            name_link_id: sr.name_id,
+            code: sr.code,
+            site_id: sr.site_id,
+            logo: sr.logo,
+            store_mode: sr.store_mode,
+            created_date: sr.created_date,
+            is_disabled: sr.is_disabled,
+        }
+    }
 }
 
 pub struct StoreRowRepository<'a> {

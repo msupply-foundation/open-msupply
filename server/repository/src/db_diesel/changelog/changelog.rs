@@ -4,7 +4,6 @@ use crate::{
     LockedConnection, NameLinkRow, RepositoryError, StorageConnection,
 };
 use diesel::{
-    dsl::InnerJoin,
     helper_types::{IntoBoxed, LeftJoin},
     prelude::*,
 };
@@ -579,7 +578,7 @@ fn create_filtered_outgoing_sync_query(
         .select(store::id.nullable());
 
     let patient_names_visible_on_site =
-        patient_names_visible_on_site(sync_site_id).select(name_link::name_id);
+        patient_names_visible_on_site(sync_site_id).select(name_store_join::name_id);
 
     // Filter the query for the matching records for each type
     query = query.filter(
@@ -603,17 +602,14 @@ fn create_filtered_outgoing_sync_query(
     query
 }
 
-type BoxedNameStoreJoinQuery =
-    IntoBoxed<'static, InnerJoin<name_store_join::table, name_link::table>, DBType>;
+type BoxedNameStoreJoinQuery = IntoBoxed<'static, name_store_join::table, DBType>;
 
 fn patient_names_visible_on_site(sync_site_id: i32) -> BoxedNameStoreJoinQuery {
     let active_stores_for_site = store::table
         .filter(store::site_id.eq(sync_site_id))
         .select(store::id.nullable());
 
-    let mut query = name_store_join::table
-        .inner_join(name_link::table)
-        .into_boxed();
+    let mut query = name_store_join::table.into_boxed();
 
     query = query.filter(
         name_store_join::store_id
@@ -634,7 +630,7 @@ fn create_filtered_outgoing_patient_sync_query(
     let mut query = create_base_query(earliest);
 
     let patient_names_visible_on_site =
-        patient_names_visible_on_site(sync_site_id).select(name_link::name_id);
+        patient_names_visible_on_site(sync_site_id).select(name_store_join::name_id);
 
     query = query
         .filter(name_link::name_id.eq(fetch_patient_id.clone()))

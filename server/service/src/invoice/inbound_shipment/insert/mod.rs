@@ -127,7 +127,7 @@ mod test {
         fn not_a_supplier_join() -> NameStoreJoinRow {
             NameStoreJoinRow {
                 id: "not_a_supplier_join".to_string(),
-                name_link_id: not_a_supplier().id,
+                name_id: not_a_supplier().id,
                 store_id: mock_store_a().id,
                 name_is_supplier: false,
                 ..Default::default()
@@ -215,7 +215,7 @@ mod test {
         fn supplier_join() -> NameStoreJoinRow {
             NameStoreJoinRow {
                 id: "supplier_join".to_string(),
-                name_link_id: supplier().id,
+                name_id: supplier().id,
                 store_id: mock_store_a().id,
                 name_is_supplier: true,
                 ..Default::default()
@@ -299,7 +299,7 @@ mod test {
                 &context,
                 InsertInboundShipment {
                     id: "test_name_store_id_linked".to_string(),
-                    other_party_id: mock_name_linked_to_store_join().name_link_id.clone(),
+                    other_party_id: mock_name_linked_to_store_join().name_id.clone(),
                     ..Default::default()
                 },
             )

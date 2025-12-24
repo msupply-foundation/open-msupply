@@ -71,7 +71,7 @@ async fn requests_link_patient_to_oms_central_store() {
 
     let nsj_non_visible_patient_remote = NameStoreJoinRow {
         id: uuid(),
-        name_link_id: non_visible_patient.id.clone(),
+        name_id: non_visible_patient.id.clone(),
         store_id: mock_store_a().id,
         ..Default::default()
     };

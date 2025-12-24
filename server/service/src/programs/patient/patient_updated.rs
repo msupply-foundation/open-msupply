@@ -30,7 +30,7 @@ pub fn create_patient_name_store_join(
         let name_store_join_repo = NameStoreJoinRepository::new(con);
         name_store_join_repo.upsert_one(&NameStoreJoinRow {
             id: name_store_join_id.unwrap_or(uuid()),
-            name_link_id: name_id.to_string(),
+            name_id: name_id.to_string(),
             store_id: store_id.to_string(),
             name_is_customer: true,
             name_is_supplier: false,
@@ -279,9 +279,7 @@ mod test {
         DocumentRegistryCategory, DocumentRegistryRow, DocumentRegistryRowRepository, EqualFilter,
         FormSchemaRowRepository, GenderType as GenderRepo, NameRow,
     };
-    use util::{
-        constants::{PATIENT_CONTEXT_ID, PATIENT_TYPE},
-    };
+    use util::constants::{PATIENT_CONTEXT_ID, PATIENT_TYPE};
 
     use crate::{
         programs::patient::{

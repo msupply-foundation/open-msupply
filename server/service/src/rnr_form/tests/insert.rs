@@ -247,7 +247,7 @@ mod insert {
                 // make supplier store C visible in store B
                 name_store_joins: vec![NameStoreJoinRow {
                     id: String::from("name_store_b_join_c"),
-                    name_link_id: String::from("name_store_c"),
+                    name_id: String::from("name_store_c"),
                     store_id: String::from("store_b"),
                     name_is_customer: false,
                     name_is_supplier: true,
@@ -344,7 +344,7 @@ mod insert {
                 // make supplier store C visible in store A
                 name_store_joins: vec![NameStoreJoinRow {
                     id: String::from("name_store_a_join_c"),
-                    name_link_id: String::from("name_store_c"),
+                    name_id: String::from("name_store_c"),
                     store_id: String::from("store_a"),
                     name_is_customer: false,
                     name_is_supplier: true,
@@ -588,12 +588,12 @@ mod insert {
                 MasterListNameJoinRow {
                     id: "perf_master_list_join_store_a".to_string(),
                     master_list_id: "perf_master_list".to_string(),
-                    name_link_id: "name_store_a".to_string(),
+                    name_id: "name_store_a".to_string(),
                 },
                 MasterListNameJoinRow {
                     id: "perf_master_list_join_store_c".to_string(),
                     master_list_id: "perf_master_list".to_string(),
-                    name_link_id: "name_store_c".to_string(),
+                    name_id: "name_store_c".to_string(),
                 },
             ],
             lines: master_list_lines.clone(),

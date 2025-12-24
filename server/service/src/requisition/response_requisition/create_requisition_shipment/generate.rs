@@ -38,8 +38,8 @@ pub fn generate(
         user_id: Some(user_id.to_string()),
         name_link_id: original_customer
             .as_ref()
-            .map(|customer| customer.name_link_row.id.clone())
-            .unwrap_or_else(|| other_party.name_link_row.id.clone()),
+            .map(|customer| customer.name_row.id.clone())
+            .unwrap_or_else(|| other_party.name_row.id.clone()),
         name_store_id: original_customer
             .as_ref()
             .and_then(|customer| customer.store_id().map(|id| id.to_string()))

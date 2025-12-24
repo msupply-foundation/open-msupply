@@ -235,7 +235,7 @@ mod test {
                 joins: vec![MasterListNameJoinRow {
                     id: join1,
                     master_list_id: id.clone(),
-                    name_link_id: mock_new_outbound_shipment_no_lines().name_link_id,
+                    name_id: mock_new_outbound_shipment_no_lines().name_link_id,
                 }],
                 lines: vec![
                     MasterListLineRow {

@@ -117,7 +117,7 @@ mod repository_test {
             MasterListNameJoinRow {
                 id: "masterlistnamejoin1".to_string(),
                 master_list_id: master_list_1().id.to_string(),
-                name_link_id: name_1().id.to_string(),
+                name_id: name_1().id.to_string(),
             }
         }
 

@@ -1,24 +1,19 @@
 use super::{
-    name_link_row::name_link, name_row::name, name_store_join::name_store_join, store_row::store,
-    DBType, NameRow, NameStoreJoinRow, StorageConnection, StoreRow,
+    name_row::name, name_store_join::name_store_join, DBType, NameRow, NameStoreJoinRow,
+    StorageConnection, StoreRow,
 };
 
 use crate::{
     diesel_macros::{
         apply_equal_filter, apply_sort_no_case, apply_string_filter, apply_string_or_filter,
     },
-    name_oms_fields_alias,
+    name_link, name_oms_fields_alias,
     repository_error::RepositoryError,
-    EqualFilter, NameLinkRow, NameOmsFields, NameOmsFieldsRow, NameRowType, Pagination, Sort,
-    StringFilter,
+    store_row_refactor::store_refactor,
+    EqualFilter, NameOmsFieldsRow, NameRowType, Pagination, Sort, StoreRowRefactor, StringFilter,
 };
 
-use diesel::{
-    dsl::{And, Eq, IntoBoxed, LeftJoin, On},
-    helper_types::InnerJoin,
-    prelude::*,
-    query_source::Alias,
-};
+use diesel::{dsl::IntoBoxed, prelude::*};
 use util::constants::SYSTEM_NAME_CODES;
 
 #[derive(PartialEq, Debug, Clone, Default)]
@@ -27,7 +22,6 @@ pub struct Name {
     pub name_store_join_row: Option<NameStoreJoinRow>,
     pub store_row: Option<StoreRow>,
     pub properties: Option<String>,
-    pub name_link_row: NameLinkRow,
 }
 
 #[derive(Clone, Default, PartialEq, Debug)]
@@ -61,7 +55,7 @@ pub struct NameFilter {
     pub email: Option<StringFilter>,
 
     pub code_or_name: Option<StringFilter>,
-    pub name_link_id: Option<StringFilter>,
+    pub name_link_id: Option<EqualFilter<String>>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -79,7 +73,8 @@ pub type NameSort = Sort<NameSortField>;
 
 type NameAndNameStoreJoin = (
     NameRow,
-    (NameLinkRow, Option<NameStoreJoinRow>, Option<StoreRow>),
+    Option<NameStoreJoinRow>,
+    Option<StoreRowRefactor>,
     NameOmsFieldsRow,
 );
 
@@ -167,24 +162,14 @@ impl<'a> NameRepository<'a> {
     /// Names will still be present in result even if name_store_join doesn't match store_id in parameters
     /// but it's considered invisible in subsequent filters.
     pub fn create_filtered_query(store_id: String, filter: Option<NameFilter>) -> BoxedNameQuery {
-        let mut query = name::table
-            .inner_join(
-                name_link::table
-                    .left_join(
-                        name_store_join::table.on(name_store_join::name_link_id
-                            .eq(name_link::id)
-                            .and(name_store_join::store_id.eq(store_id.clone()))),
-                    )
-                    .left_join(store::table),
-            )
-            .inner_join(name_oms_fields_alias)
+        let mut query = query(store_id)
+            .into_boxed()
             .filter(name::type_.ne(NameRowType::Patient))
             .filter(
-                store::is_disabled
+                store_refactor::is_disabled
                     .is_null()
-                    .or(store::is_disabled.eq(false)),
-            ) // Filter out disabled stores, these are usually due to store merge, and should not be visible
-            .into_boxed();
+                    .or(store_refactor::is_disabled.eq(false)),
+            ); // Filter out disabled stores, these are usually due to store merge, and should not be visible
 
         if let Some(f) = filter {
             let NameFilter {
@@ -218,10 +203,9 @@ impl<'a> NameRepository<'a> {
 
             apply_equal_filter!(query, id, name::id);
             apply_string_filter!(query, code, name::code);
-            apply_string_filter!(query, name_link_id, name_link::id);
 
             apply_string_filter!(query, name, name::name_);
-            apply_string_filter!(query, store_code, store::code);
+            apply_string_filter!(query, store_code, store_refactor::code);
 
             let r#type = r#type.map(|r| r.convert_filter::<NameRowType>());
             apply_equal_filter!(query, r#type, name::type_);
@@ -261,10 +245,17 @@ impl<'a> NameRepository<'a> {
             };
 
             query = match is_store {
-                Some(true) => query.filter(store::id.is_not_null()),
-                Some(false) => query.filter(store::id.is_null()),
+                Some(true) => query.filter(store_refactor::id.is_not_null()),
+                Some(false) => query.filter(store_refactor::id.is_null()),
                 None => query,
             };
+
+            if name_link_id.is_some() {
+                let mut inner_query = name_link::table.into_boxed();
+                apply_equal_filter!(inner_query, name_link_id, name_link::id);
+
+                query = query.filter(name::id.eq_any(inner_query.select(name_link::name_id)));
+            }
         };
 
         // Only return active (not deleted) names
@@ -275,14 +266,13 @@ impl<'a> NameRepository<'a> {
 
 impl Name {
     pub fn from_join(
-        (name_row, (name_link_row, name_store_join_row, store_row), name_oms_fields): NameAndNameStoreJoin,
+        (name_row, name_store_join_row, store_row, name_oms_fields): NameAndNameStoreJoin,
     ) -> Name {
         Name {
             name_row,
             name_store_join_row,
-            store_row,
+            store_row: store_row.map(|sr| StoreRow::from_refactor_row(sr)),
             properties: name_oms_fields.properties,
-            name_link_row,
         }
     }
 
@@ -295,24 +285,19 @@ impl Name {
     }
 }
 
-// name_store_join::name_id.eq(name::id)
-type NameLinkIdEqualToId = Eq<name_store_join::name_link_id, name_link::id>;
-// name_store_join::store_id.eq(store_id)
-type StoreIdEqualToStr = Eq<name_store_join::store_id, String>;
-type OnNameStoreJoinToNameLinkJoin =
-    On<name_store_join::table, And<NameLinkIdEqualToId, StoreIdEqualToStr>>;
+#[diesel::dsl::auto_type]
+fn query(store_id: String) -> _ {
+    name::table
+        .left_join(
+            name_store_join::table.on(name_store_join::name_id
+                .eq(name::id)
+                .and(name_store_join::store_id.eq(store_id))),
+        )
+        .left_join(store_refactor::table)
+        .inner_join(name_oms_fields_alias)
+}
 
-type BoxedNameQuery = IntoBoxed<
-    'static,
-    InnerJoin<
-        InnerJoin<
-            name::table,
-            LeftJoin<LeftJoin<name_link::table, OnNameStoreJoinToNameLinkJoin>, store::table>,
-        >,
-        Alias<NameOmsFields>,
-    >,
-    DBType,
->;
+type BoxedNameQuery = IntoBoxed<'static, query, DBType>;
 
 impl NameFilter {
     pub fn new() -> NameFilter {
@@ -379,7 +364,7 @@ impl NameFilter {
         self
     }
 
-    pub fn name_link_id(mut self, filter: StringFilter) -> Self {
+    pub fn name_link_id(mut self, filter: EqualFilter<String>) -> Self {
         self.name_link_id = Some(filter);
         self
     }
@@ -456,8 +441,7 @@ mod tests {
             mock_name_1, mock_test_name_query_store_1, mock_test_name_query_store_2,
             MockDataInserts,
         },
-        test_db, NameFilter, NameLinkRow, NameRepository, NameRow, NameRowRepository, Pagination,
-        StringFilter,
+        test_db, NameFilter, NameRepository, NameRow, NameRowRepository, Pagination, StringFilter,
     };
 
     use std::convert::TryFrom;
@@ -489,10 +473,6 @@ mod tests {
                 name_store_join_row: None,
                 store_row: None,
                 properties: None,
-                name_link_row: NameLinkRow {
-                    id: format!("id{:05}", index),
-                    name_id: format!("id{:05}", index),
-                },
             });
         }
         (rows, queries)
