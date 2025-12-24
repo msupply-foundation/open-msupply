@@ -1,6 +1,6 @@
 use actix_web::web::Data;
 use async_graphql::dataloader::*;
-use repository::{EqualFilter, StringFilter};
+use repository::{EqualFilter, NameLinkRowRepository};
 use service::service_provider::ServiceProvider;
 use std::collections::HashMap;
 
@@ -80,6 +80,7 @@ pub struct NameByNameLinkIdLoader {
     pub service_provider: Data<ServiceProvider>,
 }
 
+// TODO should not use name link ids outside of repository
 impl Loader<NameByNameLinkIdLoaderInput> for NameByNameLinkIdLoader {
     type Value = Name;
     type Error = async_graphql::Error;
@@ -99,7 +100,16 @@ impl Loader<NameByNameLinkIdLoaderInput> for NameByNameLinkIdLoader {
             entry.push(item.secondary_id.clone())
         }
         let mut output = HashMap::<NameByNameLinkIdLoaderInput, Self::Value>::new();
+
         for (store_id, name_link_ids) in store_name_link_map {
+            let name_links = NameLinkRowRepository::new(&service_context.connection)
+                .find_all_by_id(name_link_ids.clone())?;
+
+            let link_map: HashMap<String, String> = name_links
+                .iter()
+                .map(|link| (link.name_id.clone(), link.id.clone()))
+                .collect();
+
             let names = self
                 .service_provider
                 .name_service
@@ -107,15 +117,18 @@ impl Loader<NameByNameLinkIdLoaderInput> for NameByNameLinkIdLoader {
                     &service_context,
                     &store_id,
                     None,
-                    Some(NameFilter::new().name_link_id(StringFilter::equal_any(name_link_ids))),
+                    Some(NameFilter::new().id(EqualFilter::equal_any(
+                        name_links.into_iter().map(|l| l.name_id).collect(),
+                    ))),
                     None,
                 )
                 .map_err(|err| StandardGraphqlError::InternalError(format!("{:?}", err)))?;
             for name in names.rows {
-                output.insert(
-                    NameByNameLinkIdLoaderInput::new(&store_id, &name.name_link_row.id),
-                    name,
-                );
+                let Some(link) = link_map.get(&name.name_row.id) else {
+                    continue;
+                };
+
+                output.insert(NameByNameLinkIdLoaderInput::new(&store_id, link), name);
             }
         }
         Ok(output)

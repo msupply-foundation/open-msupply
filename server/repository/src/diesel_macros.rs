@@ -377,6 +377,72 @@ macro_rules! apply_sort_asc_nulls_first {
         }
     }};
 }
+macro_rules! define_linked_tables {
+    (
+        view: $view_table:ident = $view_sql_name:literal,
+        core: $core_table:ident = $core_sql_name:literal,
+        struct: $struct_name:ident,
+        repo: $repo_name:ident,
+        shared: {
+            $(
+                $(#[$attr:meta])?
+                $field:ident -> $field_type:ty
+            ),* $(,)?
+        },
+        links: {
+            $(
+                $link_id:ident -> $resolved_id:ident
+            ),* $(,)?
+        }
+    ) => {
+        // Core table with link IDs
+        table! {
+            #[sql_name = $core_sql_name]
+            $core_table (id) {
+                id -> Text,
+                $(
+                    $(#[$attr])?
+                    $field -> $field_type,
+                )*
+                $($link_id -> Text,)*
+            }
+        }
+
+        // View table with resolved IDs
+        table! {
+            #[sql_name = $view_sql_name]
+            $view_table (id) {
+                id -> Text,
+                $(
+                    $(#[$attr])?
+                    $field -> $field_type,
+                )*
+                $($resolved_id -> Text,)*
+            }
+        }
+
+        // Generate upsert method on repository
+        impl<'a> $repo_name<'a> {
+            pub fn _upsert(&self, record: &$struct_name) -> Result<(), crate::RepositoryError> {
+                diesel::insert_into($core_table::table)
+                    .values((
+                        $core_table::id.eq(&record.id),
+                        $($core_table::$field.eq(&record.$field),)*
+                        $($core_table::$link_id.eq(&record.$resolved_id),)*
+                    ))
+                    .on_conflict($core_table::id)
+                    .do_update()
+                    .set((
+                        $($core_table::$field.eq(&record.$field),)*
+                        $($core_table::$link_id.eq(&record.$resolved_id),)*
+                    ))
+                    .execute(self.connection.lock().connection())?;
+
+                Ok(())
+            }
+        }
+    };
+}
 
 pub(crate) use apply_date_filter;
 pub(crate) use apply_date_time_filter;
@@ -389,3 +455,4 @@ pub(crate) use apply_sort_no_case;
 pub(crate) use apply_string_filter;
 pub(crate) use apply_string_filter_method;
 pub(crate) use apply_string_or_filter;
+pub(crate) use define_linked_tables;

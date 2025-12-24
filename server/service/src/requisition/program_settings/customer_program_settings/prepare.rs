@@ -57,9 +57,12 @@ pub(super) fn prepare_program_requisition_settings_by_customer(
 ) -> Result<CustomerProgramRequisitionSetting, RepositoryError> {
     let filter = ProgramRequisitionSettingsFilter::new()
         .master_list(
-            MasterListFilter::new().exists_for_name_id(EqualFilter::equal_to(customer_name_id.to_string())),
+            MasterListFilter::new()
+                .exists_for_name_id(EqualFilter::equal_to(customer_name_id.to_string())),
         )
-        .name_tag(NameTagFilter::new().name_id(EqualFilter::equal_to(customer_name_id.to_string())));
+        .name_tag(
+            NameTagFilter::new().name_id(EqualFilter::equal_to(customer_name_id.to_string())),
+        );
 
     // All program settings for store
     let settings =
@@ -209,7 +212,7 @@ mod test {
         let name_tag_join1 = NameTagJoinRow {
             id: "name_tag_join1".to_string(),
             name_tag_id: name_tag1.id.clone(),
-            name_link_id: mock_name_store_a().id,
+            name_id: mock_name_store_a().id,
         };
         let name_tag2 = NameTagRow {
             id: "name_tag2".to_string(),
@@ -218,7 +221,7 @@ mod test {
         let name_tag_join2 = NameTagJoinRow {
             id: "name_tag_join2".to_string(),
             name_tag_id: name_tag2.id.clone(),
-            name_link_id: mock_name_store_a().id,
+            name_id: mock_name_store_a().id,
         };
 
         // Two programs, with master list both joined to store b (customer store)
@@ -229,7 +232,7 @@ mod test {
         };
         let master_list_name_join1 = MasterListNameJoinRow {
             id: "master_list_name_join1".to_string(),
-            name_link_id: mock_name_store_a().id,
+            name_id: mock_name_store_a().id,
             master_list_id: master_list1.id.clone(),
         };
         let context1 = ContextRow {
@@ -250,7 +253,7 @@ mod test {
         };
         let master_list_name_join2 = MasterListNameJoinRow {
             id: "master_list_name_join2".to_string(),
-            name_link_id: mock_name_store_b().id,
+            name_id: mock_name_store_b().id,
             master_list_id: master_list2.id.clone(),
         };
         let context2 = ContextRow {
@@ -347,13 +350,13 @@ mod test {
         let name_tag_join3 = NameTagJoinRow {
             id: "name_tag_join3".to_string(),
             name_tag_id: name_tag1.id.clone(),
-            name_link_id: mock_name_store_b().id,
+            name_id: mock_name_store_b().id,
         };
         // store c
         let name_tag_join4 = NameTagJoinRow {
             id: "name_tag_join4".to_string(),
             name_tag_id: name_tag2.id.clone(),
-            name_link_id: mock_name_store_b().id,
+            name_id: mock_name_store_b().id,
         };
         let program_requisition_setting4 = ProgramRequisitionSettingsRow {
             id: "program_setting4".to_string(),
@@ -390,24 +393,24 @@ mod test {
         // to program 1 and program 2 respectively and visible in mock_store_a
         let master_list_name_join3 = MasterListNameJoinRow {
             id: "master_list_name_join3".to_string(),
-            name_link_id: mock_name_store_b().id,
+            name_id: mock_name_store_b().id,
             master_list_id: master_list1.id.clone(),
         };
         let master_list_name_join4 = MasterListNameJoinRow {
             id: "master_list_name_join4".to_string(),
-            name_link_id: mock_name_store_c().id,
+            name_id: mock_name_store_c().id,
             master_list_id: master_list2.id.clone(),
         };
         let name_store_join1 = NameStoreJoinRow {
             id: "name_store_join1".to_string(),
-            name_link_id: mock_name_store_b().id.clone(),
+            name_id: mock_name_store_b().id.clone(),
             store_id: mock_store_a().id,
             name_is_customer: true,
             ..Default::default()
         };
         let name_store_join2 = NameStoreJoinRow {
             id: "name_store_join2".to_string(),
-            name_link_id: mock_name_store_c().id.clone(),
+            name_id: mock_name_store_c().id.clone(),
             store_id: mock_store_a().id,
             name_is_customer: true,
             ..Default::default()

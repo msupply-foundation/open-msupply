@@ -424,7 +424,7 @@ mod test {
         fn customer_join() -> NameStoreJoinRow {
             NameStoreJoinRow {
                 id: "customer_join".to_string(),
-                name_link_id: customer().id,
+                name_id: customer().id,
                 store_id: mock_store_a().id,
                 name_is_customer: true,
                 ..Default::default()

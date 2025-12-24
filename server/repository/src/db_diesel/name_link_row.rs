@@ -72,6 +72,13 @@ impl<'a> NameLinkRowRepository<'a> {
             .load::<NameLinkRow>(self.connection.lock().connection())?;
         Ok(result)
     }
+
+    pub fn find_all_by_id(&self, ids: Vec<String>) -> Result<Vec<NameLinkRow>, RepositoryError> {
+        let result = name_link
+            .filter(name_link::id.eq_any(ids))
+            .load::<NameLinkRow>(self.connection.lock().connection())?;
+        Ok(result)
+    }
 }
 
 impl Upsert for NameLinkRow {

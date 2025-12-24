@@ -2,23 +2,22 @@ use diesel::prelude::*;
 
 use crate::{
     db_diesel::{
-        master_list_name_join::master_list_name_join, master_list_row::master_list,
-        name_link_row::name_link, name_row::name, name_store_join::name_store_join,
-        program_row::program, store_row::store,
+        master_list_name_join::master_list_name_join, master_list_row::master_list, name_row::name,
+        name_store_join::name_store_join, program_row::program,
     },
     diesel_macros::apply_equal_filter,
     name_oms_fields, name_oms_fields_alias,
     repository_error::RepositoryError,
-    EqualFilter, Name, NameFilter, NameLinkRow, NameOmsFieldsRow, NameRepository, NameRow,
-    NameStoreJoinRow, ProgramRow, StorageConnection, StoreRow,
+    store_row_refactor::store_refactor,
+    EqualFilter, Name, NameFilter, NameOmsFieldsRow, NameRepository, NameRow, NameStoreJoinRow,
+    ProgramRow, StorageConnection, StoreRowRefactor,
 };
 
 pub type ProgramSupplierJoin = (
     NameRow,
     NameOmsFieldsRow,
-    NameLinkRow,
     NameStoreJoinRow,
-    StoreRow,
+    StoreRowRefactor,
     ProgramRow,
 );
 
@@ -58,10 +57,7 @@ impl<'a> ProgramSupplierRepository<'a> {
 
         let mut query =
             NameRepository::create_filtered_query(store_id.to_string(), Some(name_filter))
-                .inner_join(
-                    master_list_name_join::table
-                        .on(master_list_name_join::name_link_id.eq(name_link::id)),
-                )
+                .inner_join(master_list_name_join::table)
                 .inner_join(
                     master_list::table
                         .on(master_list::id.eq(master_list_name_join::master_list_id)),
@@ -82,11 +78,12 @@ impl<'a> ProgramSupplierRepository<'a> {
             // Same as NameRepository
             name::table::all_columns(),
             name_oms_fields_alias.fields((name_oms_fields::id, name_oms_fields::properties)),
-            name_link::table::all_columns().nullable().assume_not_null(),
             name_store_join::table::all_columns()
                 .nullable()
                 .assume_not_null(),
-            store::table::all_columns().nullable().assume_not_null(),
+            store_refactor::table::all_columns()
+                .nullable()
+                .assume_not_null(),
             program::table::all_columns().nullable().assume_not_null(),
         ));
         let result = query.load::<ProgramSupplierJoin>(self.connection.lock().connection())?;
@@ -94,18 +91,12 @@ impl<'a> ProgramSupplierRepository<'a> {
         Ok(result
             .into_iter()
             .map(
-                |(
-                    name_row,
-                    name_oms_fields_row,
-                    name_link_row,
-                    name_store_join_row,
-                    store_row,
-                    program,
-                )| {
+                |(name_row, name_oms_fields_row, name_store_join_row, store_row, program)| {
                     ProgramSupplier {
                         supplier: Name::from_join((
                             name_row,
-                            (name_link_row, Some(name_store_join_row), Some(store_row)),
+                            Some(name_store_join_row),
+                            Some(store_row),
                             name_oms_fields_row,
                         )),
                         program,
@@ -225,30 +216,30 @@ mod test {
 
         let master_list_name_join1 = MasterListNameJoinRow {
             id: "master_list_name_join1".to_string(),
-            name_link_id: name1.id.clone(),
+            name_id: name1.id.clone(),
             master_list_id: master_list1.id.clone(),
         };
         let master_list_name_join2 = MasterListNameJoinRow {
             id: "master_list_name_join2".to_string(),
-            name_link_id: store_name1.id.clone(),
+            name_id: store_name1.id.clone(),
             master_list_id: master_list1.id.clone(),
         };
         let master_list_name_join3 = MasterListNameJoinRow {
             id: "master_list_name_join3".to_string(),
-            name_link_id: store_name2.id.clone(),
+            name_id: store_name2.id.clone(),
             master_list_id: master_list2.id.clone(),
         };
 
         let name_store_join1 = NameStoreJoinRow {
             id: "name_store_join1".to_string(),
-            name_link_id: name1.id.clone(),
+            name_id: name1.id.clone(),
             store_id: store3.id.clone(),
             name_is_supplier: true,
             ..Default::default()
         };
         let name_store_join2 = NameStoreJoinRow {
             id: "name_store_join2".to_string(),
-            name_link_id: store_name1.id.clone(),
+            name_id: store_name1.id.clone(),
             store_id: store3.id.clone(),
             name_is_supplier: true,
             ..Default::default()
@@ -256,7 +247,7 @@ mod test {
 
         let name_store_join3 = NameStoreJoinRow {
             id: "name_store_join3".to_string(),
-            name_link_id: store_name2.id.clone(),
+            name_id: store_name2.id.clone(),
             store_id: store3.id.clone(),
             name_is_supplier: true,
             ..Default::default()
@@ -318,7 +309,6 @@ mod test {
             Ok(vec![ProgramSupplier {
                 supplier: Name {
                     name_row: store_name1.clone(),
-                    name_link_row: store_name_link1.clone(),
                     name_store_join_row: Some(name_store_join2.clone()),
                     store_row: Some(store1.clone()),
                     properties: None,
@@ -349,7 +339,6 @@ mod test {
                 ProgramSupplier {
                     supplier: Name {
                         name_row: store_name1.clone(),
-                        name_link_row: store_name_link1,
                         name_store_join_row: Some(name_store_join2.clone()),
                         store_row: Some(store1.clone()),
                         properties: None,
@@ -359,7 +348,6 @@ mod test {
                 ProgramSupplier {
                     supplier: Name {
                         name_row: store_name2.clone(),
-                        name_link_row: store_name_link2,
                         name_store_join_row: Some(name_store_join3.clone()),
                         store_row: Some(store2.clone()),
                         properties: None,

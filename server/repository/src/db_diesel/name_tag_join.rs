@@ -1,27 +1,33 @@
-use super::{name_link, name_oms_fields, name_tag_row::name_tag, StorageConnection};
+use super::{name_oms_fields, name_tag_row::name_tag, StorageConnection};
+use crate::diesel_macros::define_linked_tables;
+use crate::name_row::name;
 use crate::repository_error::RepositoryError;
 use crate::{Delete, Upsert};
 use diesel::prelude::*;
-
-table! {
-    name_tag_join (id) {
-        id -> Text,
-        name_link_id -> Text,
-        name_tag_id -> Text,
-    }
-}
 
 #[derive(Clone, Queryable, Insertable, Debug, PartialEq, Eq, AsChangeset, Default)]
 #[diesel(table_name = name_tag_join)]
 pub struct NameTagJoinRow {
     pub id: String,
-    pub name_link_id: String,
     pub name_tag_id: String,
+    pub name_id: String,
 }
 
-joinable!(name_tag_join -> name_link (name_link_id));
+define_linked_tables!(
+    view: name_tag_join = "name_tag_join_view",
+    core: name_tag_join_with_links = "name_tag_join",
+    struct: NameTagJoinRow,
+    repo: NameTagJoinRepository,
+    shared: {
+        name_tag_id -> Text,
+    },
+    links: {
+        name_link_id -> name_id,
+    }
+);
+
+joinable!(name_tag_join -> name (name_id));
 joinable!(name_tag_join -> name_tag (name_tag_id));
-allow_tables_to_appear_in_same_query!(name_tag_join, name_link);
 allow_tables_to_appear_in_same_query!(name_tag_join, name_oms_fields);
 
 pub struct NameTagJoinRepository<'a> {
@@ -34,12 +40,7 @@ impl<'a> NameTagJoinRepository<'a> {
     }
 
     pub fn upsert_one(&self, row: &NameTagJoinRow) -> Result<(), RepositoryError> {
-        diesel::insert_into(name_tag_join::table)
-            .values(row)
-            .on_conflict(name_tag_join::id)
-            .do_update()
-            .set(row)
-            .execute(self.connection.lock().connection())?;
+        self._upsert(row)?;
         Ok(())
     }
 
@@ -52,7 +53,7 @@ impl<'a> NameTagJoinRepository<'a> {
     }
 
     pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
-        diesel::delete(name_tag_join::table.filter(name_tag_join::id.eq(id)))
+        diesel::delete(name_tag_join_with_links::table.filter(name_tag_join_with_links::id.eq(id)))
             .execute(self.connection.lock().connection())?;
         Ok(())
     }
@@ -129,7 +130,7 @@ mod test_name_tag_row {
         // Check we can insert a name tag join
         let name_tag_join_row = NameTagJoinRow {
             id: "name_tag_join_id".to_string(),
-            name_link_id: "name1".to_string(),
+            name_id: "name1".to_string(),
             name_tag_id: name_tag_row.id.clone(),
         };
         repo.upsert_one(&name_tag_join_row).unwrap();

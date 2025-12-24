@@ -118,7 +118,7 @@ mod test {
         fn not_a_patient_join() -> NameStoreJoinRow {
             NameStoreJoinRow {
                 id: "not_a_patient_join".to_string(),
-                name_link_id: not_a_patient().id.clone(),
+                name_id: not_a_patient().id.clone(),
                 store_id: mock_store_a().id.clone(),
                 name_is_supplier: false,
                 ..Default::default()
@@ -181,7 +181,7 @@ mod test {
         fn patient_join() -> NameStoreJoinRow {
             NameStoreJoinRow {
                 id: "patient_join".to_string(),
-                name_link_id: patient().id.clone(),
+                name_id: patient().id.clone(),
                 store_id: mock_store_a().id.clone(),
                 name_is_customer: true,
                 ..Default::default()

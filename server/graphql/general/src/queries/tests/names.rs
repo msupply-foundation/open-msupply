@@ -9,8 +9,8 @@ mod graphql {
             mock_name_a, mock_name_linked_to_store, mock_name_not_linked_to_store,
             mock_store_linked_to_name, MockDataInserts,
         },
-        EqualFilter, Name, NameFilter, NameLinkRow, NameSort, NameSortField, NameType,
-        PaginationOption, StorageConnectionManager, StringFilter,
+        EqualFilter, Name, NameFilter, NameSort, NameSortField, NameType, PaginationOption,
+        StorageConnectionManager, StringFilter,
     };
     use serde_json::json;
     use service::{
@@ -191,7 +191,10 @@ mod graphql {
                 name_link_id: _,
             } = filter.unwrap();
 
-            assert_eq!(id, Some(EqualFilter::not_equal_to("id_not_equal_to".to_string())));
+            assert_eq!(
+                id,
+                Some(EqualFilter::not_equal_to("id_not_equal_to".to_string()))
+            );
             assert_eq!(name, Some(StringFilter::like("name like")));
             assert_eq!(code, Some(StringFilter::equal_to("code equal to")));
 
@@ -217,10 +220,6 @@ mod graphql {
                     name_store_join_row: None,
                     store_row: None,
                     properties: None,
-                    name_link_row: NameLinkRow {
-                        id: "test_id".to_string(),
-                        name_id: "test_id".to_string(),
-                    },
                 }],
                 count: 1,
             })

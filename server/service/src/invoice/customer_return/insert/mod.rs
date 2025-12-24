@@ -190,7 +190,7 @@ mod test {
         fn not_a_customer_join() -> NameStoreJoinRow {
             NameStoreJoinRow {
                 id: "not_a_customer_join".to_string(),
-                name_link_id: not_a_customer().id,
+                name_id: not_a_customer().id,
                 store_id: mock_store_a().id,
                 name_is_customer: false,
                 ..Default::default()

@@ -124,10 +124,17 @@ impl<'a> RequisitionRepository<'a> {
             query = query.order(requisition::id.asc())
         }
 
-        let result = query
+        let final_query = query
             .offset(pagination.offset as i64)
-            .limit(pagination.limit as i64)
-            .load::<RequisitionJoin>(self.connection.lock().connection())?;
+            .limit(pagination.limit as i64);
+
+        // Debug diesel query
+        // println!(
+        //     "{}",
+        //     diesel::debug_query::<DBType, _>(&final_query).to_string()
+        // );
+
+        let result = final_query.load::<RequisitionJoin>(self.connection.lock().connection())?;
 
         Ok(result.into_iter().map(to_domain).collect())
     }
