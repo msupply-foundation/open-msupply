@@ -71,6 +71,7 @@ pub fn generate(
         is_cancellation: false,
         expected_delivery_date: None,
         default_donor_link_id: None,
+        shipping_method_id: None,
     };
 
     Ok(result)
