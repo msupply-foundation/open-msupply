@@ -1,4 +1,4 @@
-use crate::types::SyncFileReferenceConnector;
+use crate::types::{ShippingMethodNode, SyncFileReferenceConnector};
 
 use super::patient::PatientNode;
 use super::program_node::ProgramNode;
@@ -13,7 +13,8 @@ use dataloader::DataLoader;
 use graphql_core::loader::{
     CurrencyByIdLoader, DiagnosisLoader, InvoiceByIdLoader, InvoiceLineByInvoiceIdLoader,
     NameByIdLoaderInput, NameByNameLinkIdLoader, NameByNameLinkIdLoaderInput,
-    NameInsuranceJoinLoader, PatientLoader, ProgramByIdLoader, SyncFileReferenceLoader, UserLoader,
+    NameInsuranceJoinLoader, PatientLoader, ProgramByIdLoader, ShippingMethodByIdLoader,
+    SyncFileReferenceLoader, UserLoader,
 };
 use graphql_core::{
     loader::{InvoiceStatsLoader, NameByIdLoader, RequisitionsByIdLoader},
@@ -501,6 +502,22 @@ impl InvoiceNode {
         let documents = SyncFileReferenceConnector::from_vec(result_option.unwrap_or(vec![]));
 
         Ok(documents)
+    }
+
+    pub async fn shipping_method(&self, ctx: &Context<'_>) -> Result<Option<ShippingMethodNode>> {
+        let shipping_method_id = match &self.row().shipping_method_id {
+            Some(shipping_method_id) => shipping_method_id,
+            None => return Ok(None),
+        };
+
+        let loader = ctx.get_loader::<DataLoader<ShippingMethodByIdLoader>>();
+
+        let result = loader
+            .load_one(shipping_method_id.clone())
+            .await?
+            .map(ShippingMethodNode::from_domain);
+
+        Ok(result)
     }
 }
 
