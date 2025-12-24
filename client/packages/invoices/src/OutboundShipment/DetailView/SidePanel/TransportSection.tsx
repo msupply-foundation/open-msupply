@@ -12,7 +12,7 @@ import {
   Formatter,
 } from '@openmsupply-client/common';
 import { useOutbound } from '../../api';
-import { ShippingMethodAutocomplete } from '@openmsupply-client/system';
+import { ShippingMethodSearchInput } from '@openmsupply-client/system';
 
 export const TransportSectionComponent = () => {
   const t = useTranslation();
@@ -32,7 +32,7 @@ export const TransportSectionComponent = () => {
       <Grid container gap={0.5} key="transport-details">
         <PanelRow>
           <PanelLabel>{t('label.shipping-method')}</PanelLabel>
-          <ShippingMethodAutocomplete
+          <ShippingMethodSearchInput
             value={shippingMethod}
             onChange={shippingMethod => {
               update({ shippingMethod });
