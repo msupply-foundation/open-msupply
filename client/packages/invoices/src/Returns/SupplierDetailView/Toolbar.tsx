@@ -8,12 +8,16 @@ import {
   useTranslation,
   useIsGrouped,
   Switch,
+  useNavigate,
+  RouteBuilder,
 } from '@openmsupply-client/common';
 import { SupplierReturnFragment, useReturns } from '../api';
 import { SupplierSearchInput } from '@openmsupply-client/system';
+import { AppRoute } from '@openmsupply-client/config';
 
 export const Toolbar: FC = () => {
   const t = useTranslation();
+  const navigate = useNavigate();
   const { debouncedMutateAsync } = useReturns.document.updateSupplierReturn();
 
   const { bufferedState, setBufferedState } =
@@ -52,9 +56,19 @@ export const Toolbar: FC = () => {
                     disabled={isDisabled || !!originalShipment}
                     value={otherParty}
                     onChange={async v => {
-                      const otherPartyId = v?.id;
-                      if (!otherPartyId) return;
-                      await updateOtherParty({ id, otherPartyId });
+                      if (!v) return;
+                      const otherPartyId = v.id;
+                      const newId = await updateOtherParty({
+                        id,
+                        otherPartyId,
+                      });
+                      if (!newId) return;
+                      navigate(
+                        RouteBuilder.create(AppRoute.Replenishment)
+                          .addPart(AppRoute.SupplierReturn)
+                          .addPart(newId)
+                          .build()
+                      );
                     }}
                   />
                 }
