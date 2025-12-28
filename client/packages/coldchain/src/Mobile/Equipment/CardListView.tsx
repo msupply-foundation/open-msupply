@@ -11,6 +11,7 @@ import {
   UserPermission,
   useCallbackWithPermission,
   BaseButton,
+  InlineSpinner,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { Box, Typography, Card, CardContent } from '@mui/material';
@@ -36,8 +37,8 @@ export const CardListView = () => {
     isFetchingNextPage,
     hasNextPage,
     fetchNextPage,
-  } = useAssets.document.inifiniteAssets({
-    rowsPerPage: 2,
+  } = useAssets.document.infiniteAssets({
+    rowsPerPage: 20,
   });
 
   const onAdd = useCallbackWithPermission(
@@ -142,7 +143,7 @@ export const CardListView = () => {
             {t('button.more')}
           </BaseButton>
         )}
-        {isFetchingNextPage && <BasicSpinner />}
+        {isFetchingNextPage && <InlineSpinner />}
       </Box>
       <CreateAssetModal
         isOpen={modalController.isOn}
