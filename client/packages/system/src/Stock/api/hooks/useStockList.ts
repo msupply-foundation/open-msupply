@@ -22,6 +22,7 @@ export const useStockList = (queryParams: StockListParams) => {
     sortBy = {
       key: 'itemName',
       direction: 'asc',
+      isDesc: false,
     },
     first,
     offset,
@@ -61,26 +62,17 @@ export const useStockList = (queryParams: StockListParams) => {
 const toSortField = (
   sortBy: SortBy<StockLineRowFragment>
 ): StockLineSortFieldInput => {
-  switch (sortBy.key) {
-    case 'batch':
-      return StockLineSortFieldInput.Batch;
-    case 'itemCode':
-      return StockLineSortFieldInput.ItemCode;
-    case 'itemName':
-      return StockLineSortFieldInput.ItemName;
-    case 'packSize':
-      return StockLineSortFieldInput.PackSize;
-    case 'supplierName':
-      return StockLineSortFieldInput.SupplierName;
-    case 'numberOfPacks':
-      return StockLineSortFieldInput.NumberOfPacks;
-    case 'location':
-      return StockLineSortFieldInput.LocationCode;
-    case 'costPricePerPack':
-      return StockLineSortFieldInput.CostPricePerPack;
-    case 'expiryDate':
-      return StockLineSortFieldInput.ExpiryDate;
-    default:
-      return StockLineSortFieldInput.ItemName;
-  }
+  const sortFieldMap: Record<string, StockLineSortFieldInput> = {
+    batch: StockLineSortFieldInput.Batch,
+    itemCode: StockLineSortFieldInput.ItemCode,
+    itemName: StockLineSortFieldInput.ItemName,
+    packSize: StockLineSortFieldInput.PackSize,
+    supplierName: StockLineSortFieldInput.SupplierName,
+    numberOfPacks: StockLineSortFieldInput.NumberOfPacks,
+    location: StockLineSortFieldInput.LocationCode,
+    costPricePerPack: StockLineSortFieldInput.CostPricePerPack,
+    expiryDate: StockLineSortFieldInput.ExpiryDate,
+  };
+
+  return sortFieldMap[sortBy.key] ?? StockLineSortFieldInput.ItemName;
 };
