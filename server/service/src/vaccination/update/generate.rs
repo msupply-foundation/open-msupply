@@ -42,6 +42,7 @@ fn generate_given(
         existing_vaccination,
         patient_id,
         new_stock_line,
+        program_id,
     }: ChangeToGiven,
     update_input: UpdateVaccination,
 ) -> GenerateResult {
@@ -63,6 +64,7 @@ fn generate_given(
                 stock_line,
                 patient_id,
                 vaccination.clinician_link_id.clone(),
+                program_id.clone(),
             )
         })
     } else {
@@ -156,7 +158,7 @@ fn generate_change_stock_line(
     let vaccination = get_vaccination_with_updated_base_fields(existing_vaccination, update_input);
 
     let cancel_prescription = if update_transactions {
-        existing_prescription.map(|p| CancelPrescription {
+        existing_prescription.as_ref().map(|p| CancelPrescription {
             prescription_id: p.prescription_line.invoice_row.id.clone(),
         })
     } else {
@@ -169,6 +171,9 @@ fn generate_change_stock_line(
                 stock_line,
                 patient_id,
                 vaccination.clinician_link_id.clone(),
+                existing_prescription
+                    .and_then(|p| p.prescription_line.invoice_row.program_id.clone())
+                    .unwrap_or_default(),
             )
         })
     } else {

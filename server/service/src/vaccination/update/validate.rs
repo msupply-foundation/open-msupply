@@ -26,6 +26,7 @@ pub struct ChangeToGiven {
     pub existing_vaccination: VaccinationRow,
     pub patient_id: String,
     pub new_stock_line: Option<StockLine>,
+    pub program_id: String,
 }
 
 pub struct ChangeToNotGiven {
@@ -117,6 +118,7 @@ pub fn validate(
                     stock_line_id,
                     item_id,
                 )?,
+                program_id: encounter.program_id,
             })
         }
         // Changing given -> not given
