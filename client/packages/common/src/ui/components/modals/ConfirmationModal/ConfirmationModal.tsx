@@ -3,14 +3,8 @@ import { Typography } from '@mui/material';
 import { BasicModal } from '../BasicModal';
 import { DialogButton, LoadingButton } from '../../buttons';
 import { useTranslation } from '@common/intl';
-import {
-  Grid,
-  AlertIcon,
-  CheckIcon,
-  HelpIcon,
-  InfoIcon,
-  Alert,
-} from '@openmsupply-client/common';
+import { AlertIcon, CheckIcon, HelpIcon, InfoIcon } from '@common/icons';
+import { Grid, Alert } from '@openmsupply-client/common';
 
 interface ConfirmationModalProps {
   open: boolean;
