@@ -9,7 +9,7 @@ import {
 } from '@openmsupply-client/common';
 import {
   DonorSearchInput,
-  ShippingMethodAutocomplete,
+  ShippingMethodSearchInput,
   useShippingMethod,
 } from '@openmsupply-client/system';
 import { PurchaseOrderFragment } from '../../api';
@@ -51,7 +51,7 @@ export const OtherSection = ({
         </PanelRow>
         <PanelRow>
           <PanelLabel>{t('label.shipping-method')}</PanelLabel>
-          <ShippingMethodAutocomplete
+          <ShippingMethodSearchInput
             value={selectedShippingMethod}
             onChange={shippingMethod => {
               onChange({ shippingMethod: shippingMethod?.method ?? null });

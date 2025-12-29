@@ -286,6 +286,8 @@ pub use rnr_form_line_row::*;
 pub use rnr_form_row::*;
 pub use sensor::*;
 pub use sensor_row::*;
+pub use shipping_method::*;
+pub use shipping_method_row::*;
 pub use stock_line::*;
 pub use stock_line_row::*;
 pub use stock_movement::*;
