@@ -501,6 +501,14 @@ mod update {
         // ----------------------------
         // Update: Not given -> given, from another store
         // ----------------------------
+        let vaccinations_repo = VaccinationRowRepository::new(&context.connection);
+        vaccinations_repo
+            .upsert_one(&VaccinationRow {
+                given: false,
+                ..mock_vaccination_a()
+            })
+            .unwrap();
+
         let result = service_provider
             .vaccination_service
             .update_vaccination(
@@ -533,6 +541,13 @@ mod update {
         // ----------------------------
         // Update: Not given -> given
         // ----------------------------
+        let vaccinations_repo = VaccinationRowRepository::new(&context.connection);
+        vaccinations_repo
+            .upsert_one(&VaccinationRow {
+                given: false,
+                ..mock_vaccination_a()
+            })
+            .unwrap();
         let result = service_provider
             .vaccination_service
             .update_vaccination(
