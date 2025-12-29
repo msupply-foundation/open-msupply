@@ -142,6 +142,7 @@ fn generate_change_stock_line(
         patient_id,
         existing_prescription,
         new_stock_line,
+        program_id,
     }: ChangeStockLine,
     update_input: UpdateVaccination,
 ) -> GenerateResult {
@@ -153,7 +154,7 @@ fn generate_change_stock_line(
         .as_ref()
         .map(|sl| sl.stock_line_row.item_link_id.clone());
 
-    let update_transactions = update_input.update_transactions.clone().unwrap_or(false);
+    let update_transactions = update_input.update_transactions.unwrap_or(false);
 
     let vaccination = get_vaccination_with_updated_base_fields(existing_vaccination, update_input);
 
@@ -171,9 +172,7 @@ fn generate_change_stock_line(
                 stock_line,
                 patient_id,
                 vaccination.clinician_link_id.clone(),
-                existing_prescription
-                    .and_then(|p| p.prescription_line.invoice_row.program_id.clone())
-                    .unwrap_or_default(),
+                program_id.clone(),
             )
         })
     } else {

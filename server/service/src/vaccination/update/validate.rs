@@ -43,6 +43,7 @@ pub struct ChangeStockLine {
     pub patient_id: String,
     pub existing_prescription: Option<VaccinationPrescription>,
     pub new_stock_line: Option<StockLine>,
+    pub program_id: String,
 }
 
 pub fn validate(
@@ -152,6 +153,7 @@ pub fn validate(
                         stock_line_id,
                         item_id,
                     )?,
+                    program_id: encounter.program_id,
                 })
             } else {
                 ValidateResult::NoStatusChangeEdit(vaccination_row)
