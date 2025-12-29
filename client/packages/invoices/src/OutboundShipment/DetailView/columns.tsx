@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
 import {
   ArrayUtils,
   InvoiceLineNodeType,
@@ -7,6 +7,7 @@ import {
   ColumnDef,
   Groupable,
   ColumnType,
+  Box,
 } from '@openmsupply-client/common';
 import { StockOutLineFragment } from '../../StockOut';
 
@@ -26,6 +27,7 @@ export const useOutboundColumns = () => {
         pin: 'left',
         enableColumnFilter: true,
         enableSorting: true,
+        Footer: () => <Box>{t('label.total')}</Box>,
       },
       {
         accessorKey: 'itemName',
@@ -188,6 +190,33 @@ export const useOutboundColumns = () => {
               (rowData.stockLine?.volumePerPack ?? 0) * rowData.numberOfPacks
             );
           }
+        },
+        Footer: ({ table }) => {
+          const totalVolume = table
+            .getFilteredRowModel()
+            .rows.reduce((sum, row) => {
+              const rowVolume = row.original.subRows
+                ? row.original.subRows.reduce(
+                    (subSum, subRow) =>
+                      subSum +
+                      (subRow.stockLine?.volumePerPack ?? 0) *
+                        subRow.numberOfPacks,
+                    0
+                  )
+                : (row.original.stockLine?.volumePerPack ?? 0) *
+                  row.original.numberOfPacks;
+              return sum + rowVolume;
+            }, 0);
+          return (
+            <Box
+              sx={{
+                textAlign: 'right',
+                width: '100%',
+              }}
+            >
+              {totalVolume}
+            </Box>
+          );
         },
       },
     ];
