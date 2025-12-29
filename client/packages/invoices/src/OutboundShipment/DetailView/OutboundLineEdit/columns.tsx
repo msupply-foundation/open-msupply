@@ -180,7 +180,6 @@ export const useOutboundLineEditColumns = ({
         accessorFn: rowData =>
           currency ? rowData.sellPricePerPack / currency.rate : undefined,
       },
-
       {
         accessorKey: 'packSize',
         header: t('label.pack-size'),
@@ -188,7 +187,6 @@ export const useOutboundLineEditColumns = ({
         size: 80,
         defaultHideOnMobile: true,
       },
-
       {
         accessorKey: 'dosesPerUnit',
         header: unit
@@ -269,6 +267,13 @@ export const useOutboundLineEditColumns = ({
         columnType: ColumnType.Number,
         size: 100,
         defaultHideOnMobile: true,
+      },
+      {
+        id: 'volume',
+        header: t('label.volume'),
+        size: 100,
+        columnType: ColumnType.Number,
+        accessorFn: row => (row.volumePerPack ?? 0) * row.numberOfPacks,
       },
       {
         id: 'onHold',
