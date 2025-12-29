@@ -170,6 +170,26 @@ export const useOutboundColumns = () => {
           }
         },
       },
+      {
+        id: 'volume',
+        header: t('label.volume'),
+        size: 100,
+        columnType: ColumnType.Number,
+        accessorFn: rowData => {
+          if ('subRows' in rowData) {
+            return (rowData.subRows ?? []).reduce(
+              (sum, batch) =>
+                sum +
+                (batch.stockLine?.volumePerPack ?? 0) * batch.numberOfPacks,
+              0
+            );
+          } else {
+            return (
+              (rowData.stockLine?.volumePerPack ?? 0) * rowData.numberOfPacks
+            );
+          }
+        },
+      },
     ];
 
     return cols;
