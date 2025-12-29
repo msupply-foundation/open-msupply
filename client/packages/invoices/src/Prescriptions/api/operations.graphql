@@ -170,6 +170,7 @@ fragment PrescriptionLine on InvoiceLineNode {
       unusable
       description
     }
+    volumePerPack
   }
 }
 
@@ -220,6 +221,7 @@ fragment PartialPrescriptionLine on StockLineNode {
     code
     onHold
   }
+  volumePerPack
 }
 
 query prescriptions(

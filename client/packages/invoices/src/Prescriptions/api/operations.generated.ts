@@ -105,6 +105,7 @@ export type PrescriptionRowFragment = {
         costPricePerPack: number;
         packSize: number;
         expiryDate?: string | null;
+        volumePerPack: number;
         item: {
           __typename: 'ItemNode';
           name: string;
@@ -236,6 +237,7 @@ export type PrescriptionLineFragment = {
     costPricePerPack: number;
     packSize: number;
     expiryDate?: string | null;
+    volumePerPack: number;
     item: {
       __typename: 'ItemNode';
       name: string;
@@ -296,6 +298,7 @@ export type PartialPrescriptionLineFragment = {
   sellPricePerPack: number;
   packSize: number;
   expiryDate?: string | null;
+  volumePerPack: number;
   item: {
     __typename: 'ItemNode';
     name: string;
@@ -443,6 +446,7 @@ export type PrescriptionsQuery = {
             costPricePerPack: number;
             packSize: number;
             expiryDate?: string | null;
+            volumePerPack: number;
             item: {
               __typename: 'ItemNode';
               name: string;
@@ -626,6 +630,7 @@ export type PrescriptionByNumberQuery = {
               costPricePerPack: number;
               packSize: number;
               expiryDate?: string | null;
+              volumePerPack: number;
               item: {
                 __typename: 'ItemNode';
                 name: string;
@@ -818,6 +823,7 @@ export type PrescriptionByIdQuery = {
               costPricePerPack: number;
               packSize: number;
               expiryDate?: string | null;
+              volumePerPack: number;
               item: {
                 __typename: 'ItemNode';
                 name: string;
@@ -1312,6 +1318,7 @@ export const PrescriptionLineFragmentDoc = gql`
         unusable
         description
       }
+      volumePerPack
     }
   }
   ${ItemDirectionFragmentDoc}
@@ -1435,6 +1442,7 @@ export const PartialPrescriptionLineFragmentDoc = gql`
       code
       onHold
     }
+    volumePerPack
   }
   ${ItemDirectionFragmentDoc}
   ${WarningFragmentDoc}
