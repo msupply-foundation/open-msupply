@@ -143,6 +143,7 @@ export const createPrescriptionPlaceholderRow = (
         },
       ],
     },
+    volumePerPack: 0,
   },
 });
 
