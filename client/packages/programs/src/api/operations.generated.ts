@@ -1608,7 +1608,10 @@ export type DeleteVaccineCourseMutation = {
       __typename: 'VaccineCourseMutations';
       deleteVaccineCourse:
         | { __typename: 'DeleteResponse'; id: string }
-        | { __typename: 'DeleteVaccineCourseError' };
+        | {
+            __typename: 'DeleteVaccineCourseError';
+            error: { __typename: 'VaccineCourseInUse'; description: string };
+          };
     };
   };
 };
@@ -2478,6 +2481,16 @@ export const DeleteVaccineCourseDocument = gql`
           ... on DeleteResponse {
             __typename
             id
+          }
+          ... on DeleteVaccineCourseError {
+            __typename
+            error {
+              description
+              ... on VaccineCourseInUse {
+                __typename
+                description
+              }
+            }
           }
         }
       }
