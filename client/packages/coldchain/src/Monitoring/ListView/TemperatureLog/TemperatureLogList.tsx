@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { FC, useMemo } from 'react';
 import { useUrlQueryParams } from '@common/hooks';
 import { useTranslation } from '@common/intl';
 import {
@@ -6,115 +6,96 @@ import {
   useTemperatureLog,
 } from '../../api/TemperatureLog';
 import {
-  DataTable,
+  ColumnDef,
   Formatter,
+  MaterialTable,
   NothingHere,
-  TableProvider,
-  createTableStore,
-  useColumns,
+  usePaginatedMaterialTable,
 } from '@openmsupply-client/common';
 import { BreachTypeCell, useFormatTemperature } from '../../../common';
-import { Toolbar } from './Toolbar';
+import { breachTypeOptions, Toolbar } from '../Toolbar';
 
-const temperatureLogFilterAndSort = {
-  initialSort: { key: 'datetime', dir: 'asc' as 'asc' | 'desc' },
-  filters: [
-    { key: 'datetime', condition: 'between' },
-    {
-      key: 'sensor.name',
-    },
-    {
-      key: 'location.code',
-    },
-    {
-      key: 'temperatureBreach.type',
-      condition: 'equalTo',
-    },
-  ],
-};
-
-const ListView: FC = () => {
+export const TemperatureLogList: FC = () => {
   const {
-    updateSortQuery,
-    updatePaginationQuery,
     filter,
-    queryParams: { sortBy, page, first, offset, filterBy },
-  } = useUrlQueryParams(temperatureLogFilterAndSort);
-  const queryParams = {
-    filterBy,
-    offset,
-    sortBy,
-    first,
-  };
+    queryParams,
+  } = useUrlQueryParams({
+    initialSort: { key: 'datetime', dir: 'asc' },
+    filters: [
+      { key: 'datetime', condition: 'between' },
+      {
+        key: 'sensor.name',
+      },
+      {
+        key: 'location.code',
+      },
+      {
+        key: 'temperatureBreach.type',
+        condition: 'equalTo',
+      },
+    ],
+  });
 
-  const { data, isLoading, isError } =
-    useTemperatureLog.document.list(queryParams);
-  const pagination = { page, first, offset };
+  const { data, isLoading, isError } = useTemperatureLog.document.list(queryParams);
+
   const t = useTranslation();
   const formatTemperature = useFormatTemperature();
 
-  const columns = useColumns<TemperatureLogFragment>(
-    [
+  const columns = useMemo(
+    (): ColumnDef<TemperatureLogFragment>[] => [
       {
-        key: 'datetime',
-        label: 'label.date-time',
-        accessor: ({ rowData }) =>
-          Formatter.csvDateTimeString(rowData.datetime),
+        accessorKey: 'datetime',
+        header: t('label.date-time'),
+        Cell: ({ row: { original: row } }) => Formatter.csvDateTimeString(row.datetime),
+        enableSorting: true,
       },
       {
-        key: 'sensor',
-        label: 'label.sensor-name',
-        accessor: ({ rowData }) => rowData.sensor?.name,
-        sortable: false,
+        accessorKey: 'sensor.name',
+        header: t('label.sensor-name'),
+        enableColumnFilter: true,
       },
       {
-        key: 'location',
-        label: 'label.location',
-        accessor: ({ rowData }) => rowData.location?.code,
-        sortable: false,
+        accessorKey: 'location.code',
+        header: t('label.location'),
+        enableColumnFilter: true,
       },
       {
-        key: 'cce',
-        label: 'label.cce',
-        sortable: false,
+        accessorKey: 'cce',
+        header: t('label.cce'),
       },
       {
-        key: 'temperature',
-        label: 'label.temperature',
-        accessor: ({ rowData }) => `${formatTemperature(rowData.temperature)}`,
+        accessorKey: 'temperature',
+        header: t('label.temperature'),
+        Cell: ({ row: { original: row } }) => formatTemperature(row.temperature),
+        enableSorting: true,
       },
       {
-        key: 'breach',
-        label: 'label.breach-type',
+        accessorKey: 'temperatureBreach.type',
+        header: t('label.breach-type'),
         description: 'description.breach-type',
-        accessor: ({ rowData }) => rowData?.temperatureBreach?.type,
         Cell: BreachTypeCell,
-        sortable: false,
+        enableColumnFilter: true,
+        filterVariant: 'select',
+        filterSelectOptions: breachTypeOptions(t),
       },
     ],
-    { onChangeSortBy: updateSortQuery, sortBy },
-    [sortBy]
+    []
   );
+
+  const { table } = usePaginatedMaterialTable<TemperatureLogFragment>({
+    tableId: 'temperature-log-list',
+    isLoading,
+    isError,
+    columns,
+    data: data?.nodes,
+    totalCount: data?.totalCount ?? 0,
+    noDataElement: <NothingHere body={t('error.no-temperature-logs')} />,
+  });
 
   return (
     <>
       <Toolbar filter={filter} />
-      <DataTable
-        id="temperature-log-list"
-        pagination={{ ...pagination, total: data?.totalCount ?? 0 }}
-        onChangePage={updatePaginationQuery}
-        columns={columns}
-        data={data?.nodes ?? []}
-        isLoading={isLoading}
-        isError={isError}
-        noDataElement={<NothingHere body={t('error.no-temperature-logs')} />}
-      />
+      <MaterialTable table={table} />
     </>
   );
 };
-
-export const TemperatureLogList: FC = () => (
-  <TableProvider createStore={createTableStore}>
-    <ListView />
-  </TableProvider>
-);
