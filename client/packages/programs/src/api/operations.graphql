@@ -782,6 +782,16 @@ mutation deleteVaccineCourse($vaccineCourseId: String!) {
           __typename
           id
         }
+        ... on DeleteVaccineCourseError {
+          __typename
+          error {
+            description
+            ... on VaccineCourseInUse {
+              __typename
+              description
+            }
+          }
+        }
       }
     }
   }
