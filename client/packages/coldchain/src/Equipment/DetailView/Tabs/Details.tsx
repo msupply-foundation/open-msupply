@@ -202,6 +202,16 @@ export const Details = ({ draft, onChange }: DetailsProps) => {
                           })
                         }
                         disabled={isCatalogue}
+                        textSx={
+                          isGaps
+                            ? {
+                                backgroundColor: theme =>
+                                  isCatalogue
+                                    ? theme.palette.background.input.disabled
+                                    : 'white',
+                              }
+                            : undefined
+                        }
                       />
                     </Row>
                   );
