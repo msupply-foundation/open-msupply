@@ -8,8 +8,11 @@ import {
   ErrorWithDetails,
   frontEndHostDisplay,
   SnackbarProvider,
+  TranslateIcon,
 } from '@openmsupply-client/common';
 import { LoginIcon } from '@openmsupply-client/host/src/components/Login/LoginIcon';
+import { LanguageSelector } from '@openmsupply-client/host/src/components/Footer/LanguageSelector';
+import { useIntlUtils } from '@common/intl';
 import { Theme } from '@common/styles';
 import { DiscoveredServers } from './DiscoveredServers';
 import { ManualServerConfig } from './ManualServerConfig';
@@ -34,6 +37,7 @@ const isTimedOut = () => {
 
 export const ServerDiscovery = () => {
   const t = useTranslation();
+  const { currentLanguageName } = useIntlUtils();
 
   const {
     servers,
@@ -165,6 +169,36 @@ export const ServerDiscovery = () => {
               discover={discover}
             />
           </Box>
+        </Box>
+        <Box
+          sx={{
+            position: 'fixed',
+            bottom: 16,
+            right: 16,
+            zIndex: 1000,
+          }}
+        >
+          <LanguageSelector>
+            <Box
+              display="flex"
+              alignItems="center"
+              gap={1}
+              sx={{
+                cursor: 'pointer',
+                padding: '8px 12px',
+                borderRadius: '8px',
+                backgroundColor: 'background.menu',
+                '&:hover': {
+                  backgroundColor: 'gray.light',
+                },
+              }}
+            >
+              <TranslateIcon fontSize="small" />
+              <Typography sx={{ fontSize: '14px' }}>
+                {currentLanguageName}
+              </Typography>
+            </Box>
+          </LanguageSelector>
         </Box>
       </Stack>
     </SnackbarProvider>
