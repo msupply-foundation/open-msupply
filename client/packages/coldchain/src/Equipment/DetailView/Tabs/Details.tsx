@@ -147,11 +147,11 @@ export const Details = ({ draft, onChange }: DetailsProps) => {
   });
 
   if (!draft) return null;
+  if (isLoading) return <BasicSpinner />;
 
   return (
     <Box display="flex" flex={3} justifyContent={'center'}>
       <Container>
-        {isLoading ? <BasicSpinner /> : null}
         <Section heading={t('label.asset-properties')}>
           {!draft.parsedProperties ? (
             <Typography sx={{ textAlign: 'center' }}>
@@ -159,12 +159,6 @@ export const Details = ({ draft, onChange }: DetailsProps) => {
             </Typography>
           ) : (
             <>
-              {isGaps && (
-                <Typography>
-                  {/* Need to add to translate */}
-                  {'Non-editable properties are defined in the catalogue'}
-                </Typography>
-              )}
               {assetProperties &&
                 ArrayUtils.uniqBy(assetProperties, 'key').map(property => {
                   const isCatalogue =
