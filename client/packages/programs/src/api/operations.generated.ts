@@ -1555,11 +1555,11 @@ export type UpdateVaccineCourseMutation = {
         | {
             __typename: 'UpdateVaccineCourseError';
             error:
-              | { __typename: 'DatabaseError'; description: string }
               | {
                   __typename: 'RecordProgramCombinationAlreadyExists';
                   description: string;
-                };
+                }
+              | { __typename: 'VaccineDosesInUse'; description: string };
           }
         | {
             __typename: 'VaccineCourseNode';
@@ -2464,6 +2464,14 @@ export const UpdateVaccineCourseDocument = gql`
           ... on UpdateVaccineCourseError {
             __typename
             error {
+              ... on VaccineDosesInUse {
+                __typename
+                description
+              }
+              ... on RecordProgramCombinationAlreadyExists {
+                __typename
+                description
+              }
               description
             }
           }

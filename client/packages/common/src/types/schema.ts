@@ -1681,7 +1681,6 @@ export type DatabaseError = DeleteAssetCatalogueItemErrorInterface &
   UpdateGoodsReceivedLineErrorInterface &
   UpdateLocationErrorInterface &
   UpdateSensorErrorInterface &
-  UpdateVaccineCourseErrorInterface &
   UpsertBundledItemErrorInterface &
   UpsertCampaignErrorInterface &
   UpsertItemVariantErrorInterface & {
@@ -11610,6 +11609,11 @@ export type VaccineCourseSortInput = {
 };
 
 export type VaccineCoursesResponse = VaccineCourseConnector;
+
+export type VaccineDosesInUse = UpdateVaccineCourseErrorInterface & {
+  __typename: 'VaccineDosesInUse';
+  description: Scalars['String']['output'];
+};
 
 export type ValueTypeNotCorrect = UpdateIndicatorValueErrorInterface & {
   __typename: 'ValueTypeNotCorrect';

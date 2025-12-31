@@ -766,6 +766,14 @@ mutation updateVaccineCourse(
         ... on UpdateVaccineCourseError {
           __typename
           error {
+            ... on VaccineDosesInUse {
+              __typename
+              description
+            }
+            ... on RecordProgramCombinationAlreadyExists {
+              __typename
+              description
+            }
             description
           }
         }
