@@ -13,16 +13,14 @@ import {
   RouteBuilder,
   Stack,
   Theme,
-  TranslateIcon,
   Typography,
-  useIntlUtils,
   useNativeClient,
   useNavigate,
 } from '@openmsupply-client/common';
 import { useTranslation } from '@common/intl';
 import Viewport from './Viewport';
 import { LoginIcon } from './Login/LoginIcon';
-import { LanguageSelector } from './Footer/LanguageSelector';
+import { LanguageButton } from './LanguageButton';
 
 const Heading = ({ text }: { text: string }) => (
   <Typography
@@ -107,7 +105,6 @@ export const Android = () => {
   const navigate = useNavigate();
   const [mode, setLocalMode] = useState(NativeMode.None);
   const { setMode, setServerMode } = useNativeClient();
-  const { currentLanguageName } = useIntlUtils();
 
   const handleSetMode = (mode: NativeMode) => {
     setMode(mode);
@@ -209,36 +206,7 @@ export const Android = () => {
             />
           </Stack>
         </Stack>
-        <Box
-          sx={{
-            position: 'fixed',
-            bottom: 16,
-            right: 16,
-            zIndex: 1000,
-          }}
-        >
-          <LanguageSelector>
-            <Box
-              display="flex"
-              alignItems="center"
-              gap={1}
-              sx={{
-                cursor: 'pointer',
-                padding: '8px 12px',
-                borderRadius: '8px',
-                backgroundColor: 'background.menu',
-                '&:hover': {
-                  backgroundColor: 'gray.light',
-                },
-              }}
-            >
-              <TranslateIcon fontSize="small" />
-              <Typography sx={{ fontSize: '14px' }}>
-                {currentLanguageName}
-              </Typography>
-            </Box>
-          </LanguageSelector>
-        </Box>
+        <LanguageButton />
       </Viewport>
     );
 
