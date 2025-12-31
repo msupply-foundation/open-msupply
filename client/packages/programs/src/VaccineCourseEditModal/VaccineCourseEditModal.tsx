@@ -158,7 +158,8 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
         onClose();
       }
     } catch (e) {
-      error(t('error.failed-to-save-vaccine-course'))();
+      error(String(e))();
+      resetDraft();
       console.error(e);
     }
   };

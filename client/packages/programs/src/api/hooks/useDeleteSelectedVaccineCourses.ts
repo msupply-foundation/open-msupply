@@ -3,27 +3,23 @@ import {
   useDeleteConfirmation,
   useTranslation,
   useMutation,
+  noOtherVariants,
 } from '@openmsupply-client/common';
 import { useProgramsGraphQL } from '../useProgramsGraphQL';
 import { VACCINE, LIST } from './keys';
 
 export const useDeleteSelectedVaccineCourses = () => {
+  const t = useTranslation();
+
   const { api, queryClient } = useProgramsGraphQL();
   const { mutateAsync } = useMutation(
     async ({ vaccineCourseId }: { vaccineCourseId: string }) => {
       const apiResult = await api.deleteVaccineCourse({ vaccineCourseId });
 
       // The `?` after `centralServer` handles empty `apiResult` (see issue: https://github.com/msupply-foundation/open-msupply/issues/4191)
-      const result = apiResult.centralServer?.vaccineCourse.deleteVaccineCourse;
-
-      if (result?.__typename === 'DeleteResponse') {
-        return result.id;
-      }
-
-      throw new Error(t('error.could-not-delete-vaccine-course'));
+      return apiResult.centralServer?.vaccineCourse.deleteVaccineCourse;
     }
   );
-  const t = useTranslation();
 
   const selectedRows =
     useTableStore(state => {
@@ -32,10 +28,33 @@ export const useDeleteSelectedVaccineCourses = () => {
       );
     }) || [];
 
+  const mapStructuredErrors = (
+    result: Awaited<ReturnType<typeof mutateAsync>>
+  ) => {
+    if (result?.__typename === 'DeleteResponse') return;
+    if (!result) return;
+
+    const { error } = result;
+
+    switch (error?.__typename) {
+      case 'VaccineCourseInUse': {
+        return t('error.vaccine-course-in-use');
+      }
+      default:
+        return noOtherVariants(error.__typename);
+    }
+  };
+
   const onDelete = async () => {
-    await Promise.all(
-      selectedRows.map(id => mutateAsync({ vaccineCourseId: id }))
-    ).then(() => queryClient.invalidateQueries([VACCINE, LIST]));
+    for (const id of selectedRows) {
+      const result = await mutateAsync({ vaccineCourseId: id });
+      const errorMessage = mapStructuredErrors(result);
+      if (errorMessage) {
+        throw new Error(errorMessage);
+      }
+
+      await queryClient.invalidateQueries([VACCINE, LIST]);
+    }
   };
 
   const confirmAndDelete = useDeleteConfirmation({
@@ -48,6 +67,7 @@ export const useDeleteSelectedVaccineCourses = () => {
       deleteSuccess: t('messages.deleted-vaccine-courses', {
         count: selectedRows.length,
       }),
+      cantDelete: (err: Error) => err.message,
     },
   });
 

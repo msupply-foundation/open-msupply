@@ -530,7 +530,6 @@
   "error.unable-to-scan-barcode": "Impossible de scanner le code-barre : {{error}}",
   "error.unable-to-start-scanning": "Impossible de scanner : {{error}}",
   "error.unable-to-update-immunisation-program": "Impossible de mettre à jour le Programme de Vaccination",
-  "error.unable-to-update-vaccine-course": "Impossible de mettre à jour le calendrier de vaccination",
   "error.unable-to-upload-reports": "Impossible d'importer des rapports",
   "error.unique-value-violation": "Un enregistrement avec ce/cette {{ field }} existe déjà",
   "error.unknown-geolocation-error": "Une erreur inconnue s'est produite lors de la récupération de votre localisation.",

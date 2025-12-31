@@ -440,7 +440,6 @@
   "error.unable-to-scan-barcode": "No se puede escasear código de barras: {{error}}",
   "error.unable-to-start-scanning": "No se puede iniciar el escaneo: {{error}}",
   "error.unable-to-update-immunisation-program": "No se puede actualizar Programa de inmunización",
-  "error.unable-to-update-vaccine-course": "No se puede actualizar esquema de vacunación",
   "error.unique-value-violation": "Ya existe un registro con este {{ field }}",
   "error.unknown-sync-error": "Error de sincronización desconocido",
   "error.upserting-vaccine-courses": "Error desconocido. No se puede cambiar los esquemas de vacunación",
