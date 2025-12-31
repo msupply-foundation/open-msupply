@@ -52,6 +52,15 @@ export const CustomerSearchInput = ({
         setBuffer(name);
         onChange(name);
       }}
+      onInputChange={(
+        _event: React.SyntheticEvent<Element, Event>,
+        _value: string,
+        reason: string
+      ) => {
+        if (reason === 'clear') {
+          onChange(null);
+        }
+      }}
       options={data?.nodes ?? []}
       renderOption={NameOptionRenderer}
       width={`${width}px`}
