@@ -208,7 +208,7 @@ export const Details = ({ draft, onChange }: DetailsProps) => {
                                 backgroundColor: theme =>
                                   isCatalogue
                                     ? theme.palette.background.input.disabled
-                                    : 'white',
+                                    : theme.palette.background.white,
                               }
                             : undefined
                         }
