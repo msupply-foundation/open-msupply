@@ -1,293 +1,245 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { RequestLineFragment } from '../api';
 import {
-  ColumnAlign,
-  useColumns,
-  GenericColumnKey,
-  getCommentPopoverColumn,
-  useUrlQueryParams,
-  ColumnDescription,
-  TooltipTextCell,
   useAuthContext,
-  getLinesFromRow,
   usePluginProvider,
   UNDEFINED_STRING_VALUE,
   usePreferences,
-  UnitsAndMaybeDoses,
-  CellProps,
+  ColumnDef,
+  useTranslation,
+  ColumnType,
+  UnitsAndDosesCell,
 } from '@openmsupply-client/common';
 import { useRequest } from '../api';
-import { NumericCell, PackQuantityCell } from '@openmsupply-client/system';
 import { useRequestRequisitionLineErrorContext } from '../context';
 
-const MonthsOfStockCell = (props: CellProps<RequestLineFragment>) => (
-  <NumericCell {...props} precision={1} />
-);
-
 export const useRequestColumns = () => {
+  const t = useTranslation();
   const { maxMonthsOfStock, programName } = useRequest.document.fields([
     'maxMonthsOfStock',
     'programName',
   ]);
-  const {
-    updateSortQuery,
-    queryParams: { sortBy },
-  } = useUrlQueryParams({ initialSort: { key: 'itemName', dir: 'asc' } });
   const { usesRemoteAuthorisation } = useRequest.utils.isRemoteAuthorisation();
   const { store } = useAuthContext();
-  const { getError } = useRequestRequisitionLineErrorContext();
+  const { errors } = useRequestRequisitionLineErrorContext();
   const { plugins } = usePluginProvider();
-  const { manageVaccinesInDoses } = usePreferences();
+  const {
+    manageVaccinesInDoses,
+    warningForExcessRequest,
+    showIndicativePriceInRequisitions,
+  } = usePreferences();
 
   const showExtraColumns =
-    programName &&
+    !!programName &&
     store?.preferences.useConsumptionAndStockFromCustomersForInternalOrders;
 
-  const columnDefinitions: ColumnDescription<RequestLineFragment>[] = [
-    GenericColumnKey.Selection,
-    getCommentPopoverColumn(),
-    [
-      'itemCode',
+  const columns = useMemo(
+    (): ColumnDef<RequestLineFragment>[] => [
       {
-        width: 130,
-        accessor: ({ rowData }) => rowData.item.code,
-        getSortValue: rowData => rowData.item.code,
-        isSticky: true,
+        accessorKey: 'comment',
+        header: t('label.comment'),
+        columnType: ColumnType.Comment,
+        pin: 'left',
       },
-    ],
-    [
-      'itemName',
       {
-        Cell: TooltipTextCell,
-        width: 350,
-        accessor: ({ rowData }) => rowData.itemName,
-        getSortValue: rowData => rowData.itemName,
+        accessorKey: 'item.code',
+        header: t('label.code'),
+        pin: 'left',
+        size: 140,
+        enableSorting: true,
+        enableColumnFilter: true,
       },
-    ],
-    {
-      key: 'packUnit',
-      label: 'label.unit',
-      align: ColumnAlign.Right,
-      accessor: ({ rowData }) => rowData.item.unitName,
-      sortable: false,
-      defaultHideOnMobile: true,
-    },
-  ];
+      {
+        accessorKey: 'itemName',
+        header: t('label.name'),
+        size: 250,
+        enableSorting: true,
+        enableColumnFilter: true,
+      },
+      {
+        id: 'packUnit',
+        header: t('label.unit'),
+        accessorFn: row => row.item.unitName,
+        size: 120,
+        defaultHideOnMobile: true,
+      },
+      {
+        id: 'dosesPerUnit',
+        header: t('label.doses-per-unit'),
+        accessorFn: row =>
+          row.item?.isVaccine ? row.item.doses : UNDEFINED_STRING_VALUE,
+        columnType: ColumnType.Number,
+        includeColumn: manageVaccinesInDoses,
+      },
+      {
+        accessorKey: 'item.defaultPackSize',
+        header: t('label.dps'),
+        enableSorting: true,
+        columnType: ColumnType.Number,
+        defaultHideOnMobile: true,
+      },
+      {
+        accessorKey: 'itemStats.availableStockOnHand',
+        header: t('label.available-soh'),
+        description: t('description.available-soh'),
+        columnType: ColumnType.Number,
+        Cell: UnitsAndDosesCell,
+        enableSorting: true,
+      },
+      {
+        accessorKey: 'itemStats.averageMonthlyConsumption',
+        header: t('label.amc'),
+        description: t('description.average-monthly-consumption'),
+        columnType: ColumnType.Number,
+        Cell: UnitsAndDosesCell,
+        enableSorting: true,
+      },
+      {
+        accessorKey: 'itemStats.availableMonthsOfStockOnHand',
+        header: t('label.months-of-stock'),
+        description: t('description.available-months-of-stock'),
+        columnType: ColumnType.Number,
+        enableSorting: true,
+      },
+      {
+        id: 'targetStock',
+        header: t('label.target-stock'),
+        description: t('description.target-stock'),
+        columnType: ColumnType.Number,
+        Cell: UnitsAndDosesCell,
+        accessorFn: row =>
+          row.itemStats.averageMonthlyConsumption * maxMonthsOfStock,
+        enableSorting: true,
+        defaultHideOnMobile: true,
+      },
+      {
+        accessorKey: 'suggestedQuantity',
+        header: t('label.forecast-quantity'),
+        description: t('description.forecast-quantity'),
+        columnType: ColumnType.Number,
+        Cell: UnitsAndDosesCell,
+        enableSorting: true,
+      },
+      {
+        accessorKey: 'requestedQuantity',
+        header: t('label.requested'),
+        description: t('description.doses-quantity'),
+        columnType: ColumnType.Number,
+        Cell: ({ row, ...props }) => {
+          const showAlert =
+            warningForExcessRequest &&
+            row.original.requestedQuantity - row.original.suggestedQuantity >=
+              1;
+          return (
+            <UnitsAndDosesCell row={row} {...props} showAlert={showAlert} />
+          );
+        },
+        enableSorting: true,
+      },
+      {
+        header: t('label.indicative-price-per-unit'),
+        description: t('description.indicative-price-per-unit'),
+        accessorKey: 'pricePerUnit',
+        columnType: ColumnType.Currency,
+        includeColumn: showIndicativePriceInRequisitions,
+      },
+      {
+        header: t('label.indicative-price'),
+        description: t('description.indicative-price'),
+        accessorFn: row => row.requestedQuantity * (row?.pricePerUnit || 0),
+        columnType: ColumnType.Currency,
+        includeColumn: showIndicativePriceInRequisitions,
+      },
 
-  if (manageVaccinesInDoses) {
-    columnDefinitions.push({
-      key: 'dosesPerUnit',
-      label: 'label.doses-per-unit',
-      width: 100,
-      align: ColumnAlign.Right,
-      sortable: false,
-      accessor: ({ rowData }) =>
-        rowData.item?.isVaccine ? rowData.item.doses : UNDEFINED_STRING_VALUE,
-    });
-  }
-
-  columnDefinitions.push(
-    {
-      key: 'defaultPackSize',
-      label: 'label.dps',
-      description: 'description.default-pack-size',
-      align: ColumnAlign.Right,
-      accessor: ({ rowData }) => rowData.item.defaultPackSize,
-      getSortValue: rowData => rowData.item.defaultPackSize,
-      defaultHideOnMobile: true,
-    },
-    {
-      key: 'availableStockOnHand',
-      label: 'label.available-soh',
-      description: 'description.available-soh',
-      align: ColumnAlign.Right,
-      width: 200,
-      Cell: UnitsAndMaybeDosesCell,
-      accessor: ({ rowData }) => rowData.itemStats.availableStockOnHand,
-      getSortValue: rowData => rowData.itemStats.availableStockOnHand,
-    },
-    [
-      'monthlyConsumption',
+      // --- Extra consumption columns on program orders
       {
-        width: 150,
-        align: ColumnAlign.Right,
-        Cell: UnitsAndMaybeDosesCell,
-        accessor: ({ rowData }) => rowData.itemStats.averageMonthlyConsumption,
-        getSortValue: rowData => rowData.itemStats.averageMonthlyConsumption,
-      },
-    ],
-    {
-      key: 'monthsOfStock',
-      label: 'label.months-of-stock',
-      description: 'description.available-months-of-stock',
-      align: ColumnAlign.Right,
-      width: 150,
-      Cell: MonthsOfStockCell,
-      accessor: ({ rowData }) => rowData.itemStats.availableMonthsOfStockOnHand,
-      getSortValue: rowData =>
-        rowData.itemStats.availableMonthsOfStockOnHand ?? 0,
-    }
-  );
-
-  columnDefinitions.push(
-    {
-      key: 'targetStock',
-      label: 'label.target-stock',
-      description: 'description.target-stock',
-      align: ColumnAlign.Right,
-      width: 150,
-      Cell: UnitsAndMaybeDosesCell,
-      accessor: ({ rowData }) =>
-        rowData.itemStats.averageMonthlyConsumption * maxMonthsOfStock,
-      getSortValue: rowData =>
-        rowData.itemStats.averageMonthlyConsumption * maxMonthsOfStock,
-      defaultHideOnMobile: true,
-    },
-    {
-      key: 'suggestedQuantity',
-      label: 'label.forecast-quantity',
-      description: 'description.forecast-quantity',
-      align: ColumnAlign.Right,
-      width: 200,
-      Cell: UnitsAndMaybeDosesCell,
-      getSortValue: rowData => rowData.suggestedQuantity,
-    },
-    {
-      key: 'requestedQuantity',
-      label: 'label.requested',
-      description: 'description.doses-quantity',
-      align: ColumnAlign.Right,
-      width: 150,
-      Cell: UnitsAndMaybeDosesCell,
-      getSortValue: rowData => rowData.requestedQuantity,
-    }
-  );
-
-  if (showExtraColumns) {
-    columnDefinitions.push(
-      // TODO: Global pref to show/hide the next columns
-      {
-        key: 'initialStockOnHand',
-        label: 'label.initial-stock-on-hand',
-        width: 100,
-        align: ColumnAlign.Right,
-        sortable: false,
-        description: 'description.initial-stock-on-hand',
-        Cell: UnitsAndMaybeDosesCell,
-        accessor: ({ rowData }) => rowData.initialStockOnHandUnits,
+        accessorKey: 'initialStockOnHandUnits',
+        header: t('label.initial-stock-on-hand'),
+        description: t('description.initial-stock-on-hand'),
+        columnType: ColumnType.Number,
+        Cell: UnitsAndDosesCell,
+        includeColumn: showExtraColumns,
       },
       {
-        key: 'incomingStock',
-        label: 'label.incoming',
-        width: 100,
-        align: ColumnAlign.Right,
-        sortable: false,
-        Cell: UnitsAndMaybeDosesCell,
-        accessor: ({ rowData }) => rowData.incomingUnits,
+        accessorKey: 'incomingUnits',
+        header: t('label.incoming'),
+        columnType: ColumnType.Number,
+        Cell: UnitsAndDosesCell,
+        includeColumn: showExtraColumns,
       },
       {
-        key: 'outgoingUnits',
-        label: 'label.outgoing',
-        width: 100,
-        align: ColumnAlign.Right,
-        sortable: false,
-        Cell: UnitsAndMaybeDosesCell,
-        accessor: ({ rowData }) => rowData.outgoingUnits,
+        accessorKey: 'outgoingUnits',
+        header: t('label.outgoing'),
+        columnType: ColumnType.Number,
+        Cell: UnitsAndDosesCell,
+        includeColumn: showExtraColumns,
       },
       {
-        key: 'losses',
-        label: 'label.losses',
-        width: 100,
-        align: ColumnAlign.Right,
-        sortable: false,
-        Cell: UnitsAndMaybeDosesCell,
-        accessor: ({ rowData }) => rowData.lossInUnits,
+        accessorKey: 'lossInUnits',
+        header: t('label.losses'),
+        columnType: ColumnType.Number,
+        Cell: UnitsAndDosesCell,
+        includeColumn: showExtraColumns,
       },
       {
-        key: 'additions',
-        label: 'label.additions',
-        width: 100,
-        align: ColumnAlign.Right,
-        sortable: false,
-        Cell: UnitsAndMaybeDosesCell,
-        accessor: ({ rowData }) => rowData.additionInUnits,
+        accessorKey: 'additionInUnits',
+        header: t('label.additions'),
+        columnType: ColumnType.Number,
+        Cell: UnitsAndDosesCell,
+        includeColumn: showExtraColumns,
       },
       {
-        key: 'expiringUnits',
-        label: 'label.short-expiry',
-        width: 100,
-        align: ColumnAlign.Right,
-        sortable: false,
-        Cell: UnitsAndMaybeDosesCell,
-        accessor: ({ rowData }) => rowData.expiringUnits,
+        accessorKey: 'expiringUnits',
+        header: t('label.short-expiry'),
+        columnType: ColumnType.Number,
+        Cell: UnitsAndDosesCell,
+        includeColumn: showExtraColumns,
       },
       {
-        key: 'daysOutOfStock',
-        label: 'label.days-out-of-stock',
-        width: 100,
-        align: ColumnAlign.Right,
-        sortable: false,
-        Cell: PackQuantityCell,
-        accessor: ({ rowData }) => rowData.daysOutOfStock,
+        accessorKey: 'daysOutOfStock',
+        header: t('label.days-out-of-stock'),
+        columnType: ColumnType.Number,
+        includeColumn: showExtraColumns,
       },
       {
-        key: 'reason',
-        label: 'label.reason',
-        sortable: false,
+        id: 'reason',
+        header: t('label.reason'),
+        includeColumn: showExtraColumns,
+        accessorFn: row => row.reason?.reason,
         getIsError: row =>
-          getLinesFromRow(row).some(
-            r => getError(r)?.__typename === 'RequisitionReasonNotProvided'
-          ),
-        accessor: ({ rowData }) => rowData.reason?.reason,
-      }
-    );
-  }
+          errors?.[row.id]?.__typename === 'RequisitionReasonNotProvided',
+      },
 
-  if (usesRemoteAuthorisation) {
-    columnDefinitions.push({
-      key: 'approvedNumPacks',
-      label: 'label.approved-packs',
-      align: ColumnAlign.Right,
-      Cell: PackQuantityCell,
-      accessor: ({ rowData }) =>
-        rowData.linkedRequisitionLine?.approvedQuantity ?? 0,
-      getSortValue: rowData =>
-        rowData.linkedRequisitionLine?.approvedQuantity ?? 0,
-    });
-    columnDefinitions.push({
-      key: 'approvalComment',
-      label: 'label.approval-comment',
-      sortable: false,
-      accessor: ({ rowData }) => rowData.linkedRequisitionLine?.approvalComment,
-    });
-  }
+      // --- Remote authorisation columns
+      {
+        id: 'approvedNumPacks',
+        header: t('label.approved-packs'),
+        columnType: ColumnType.Number,
+        accessorFn: row => row.linkedRequisitionLine?.approvedQuantity ?? 0,
+        includeColumn: usesRemoteAuthorisation,
+        enableSorting: true,
+      },
+      {
+        id: 'approvalComment',
+        header: t('label.approval-comment'),
+        accessorFn: row => row.linkedRequisitionLine?.approvalComment,
+        includeColumn: usesRemoteAuthorisation,
+      },
 
-  const columns = useColumns<RequestLineFragment>(
-    [
-      ...columnDefinitions,
+      // Plugin columns
       ...(plugins.requestRequisitionLine?.tableColumn || []),
     ],
-    {
-      onChangeSortBy: updateSortQuery,
-      sortBy,
-    },
-    [updateSortQuery, sortBy, plugins.requestRequisitionLine]
+    [
+      manageVaccinesInDoses,
+      warningForExcessRequest,
+      showExtraColumns,
+      usesRemoteAuthorisation,
+      showIndicativePriceInRequisitions,
+      maxMonthsOfStock,
+      plugins.requestRequisitionLine?.tableColumn,
+      errors,
+    ]
   );
 
-  return { columns, sortBy, onChangeSortBy: updateSortQuery };
-};
-
-const UnitsAndMaybeDosesCell = (props: CellProps<RequestLineFragment>) => {
-  const { rowData, column } = props;
-  const units = Number(column.accessor({ rowData })) ?? 0;
-  const { isVaccine, doses } = rowData.item;
-
-  return (
-    <UnitsAndMaybeDoses
-      numberCellProps={{ ...props, decimalLimit: 0 }}
-      units={units}
-      isVaccine={isVaccine}
-      dosesPerUnit={doses}
-    />
-  );
+  return columns;
 };

@@ -94,7 +94,7 @@ mod query {
 
         assert_eq!(reason.id, "test_reason_id");
 
-        // Check adding log with reason but no status fails
+        // Check status null
         assert_eq!(
             service.insert_asset_log(
                 &ctx,
@@ -102,6 +102,22 @@ mod query {
                     id: id2.clone(),
                     asset_id: mock_asset_a().id,
                     status: None,
+                    comment: None,
+                    r#type: None,
+                    reason_id: None,
+                },
+            ),
+            Err(InsertAssetLogError::StatusNotProvided)
+        );
+
+        // Check adding log with reason but no status fails
+        assert_eq!(
+            service.insert_asset_log(
+                &ctx,
+                InsertAssetLog {
+                    id: id2.clone(),
+                    asset_id: mock_asset_a().id,
+                    status: Some(AssetLogStatus::Functioning),
                     comment: None,
                     r#type: None,
                     reason_id: Some("test_reason_id".to_string()),

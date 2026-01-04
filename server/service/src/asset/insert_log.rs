@@ -18,6 +18,7 @@ use repository::{
 pub enum InsertAssetLogError {
     AssetLogAlreadyExists,
     AssetDoesNotExist,
+    StatusNotProvided,
     CreatedRecordNotFound,
     ReasonDoesNotExist,
     DatabaseError(RepositoryError),
@@ -65,6 +66,10 @@ pub fn validate(
 ) -> Result<(), InsertAssetLogError> {
     if check_asset_log_exists(&input.id, connection)?.is_some() {
         return Err(InsertAssetLogError::AssetLogAlreadyExists);
+    }
+
+    if input.status.is_none() {
+        return Err(InsertAssetLogError::StatusNotProvided);
     }
 
     if !check_reason_matches_status(&input.status, &input.reason_id, connection) {

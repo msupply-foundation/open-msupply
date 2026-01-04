@@ -7,15 +7,14 @@ import {
   BasicTextInput,
 } from '@openmsupply-client/common';
 import {
+  ItemRowFragment,
   ItemStockOnHandFragment,
   StockItemSearchInput,
 } from '@openmsupply-client/system';
-import { InboundLineFragment, useInbound } from '../../../api';
-
-type InboundLineItem = InboundLineFragment['item'];
+import { useInbound } from '../../../api';
 
 interface InboundLineEditProps {
-  item: InboundLineItem | null;
+  item: ItemRowFragment | null;
   disabled: boolean;
   onChangeItem: (item: ItemStockOnHandFragment | null) => void;
 }
@@ -27,6 +26,8 @@ export const InboundLineEditForm = ({
 }: InboundLineEditProps) => {
   const t = useTranslation();
   const { data: items } = useInbound.lines.items();
+
+  const existingItemIds = items?.map(line => line.itemId);
 
   return (
     <>
@@ -42,11 +43,7 @@ export const InboundLineEditForm = ({
             disabled={disabled}
             currentItemId={item?.id}
             onChange={newItem => onChangeItem(newItem)}
-            extraFilter={
-              disabled
-                ? undefined
-                : item => !items?.some(({ id }) => id === item.id)
-            }
+            filter={{ id: { notEqualAll: existingItemIds } }}
             // A scanned-in item will only have an ID, not a full item object,
             // so this flag makes the StockItemSearchInput component update the
             // current item on initial load from the API

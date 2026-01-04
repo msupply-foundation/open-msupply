@@ -125,6 +125,7 @@ impl SynchroniserV6 {
             cursor_controller.update(connection, end_cursor + 1)?;
 
             if is_last_batch {
+                logger.progress(SyncStepProgress::PullCentralV6, 0)?;
                 break;
             }
         }

@@ -1,11 +1,10 @@
-import { useQuery, useQueryParamsStore } from '@openmsupply-client/common';
+import { useQuery } from '@openmsupply-client/common';
 import { useNameApi } from '../utils/useNameApi';
 
 export const useInternalSuppliers = () => {
   const api = useNameApi();
-  const queryParams = useQueryParamsStore();
 
-  return useQuery(api.keys.paramList(queryParams.paramList()), () =>
-    api.get.internalSuppliers(queryParams.paramList())
+  return useQuery([...api.keys.list(), 'internalSuppliers'], () =>
+    api.get.internalSuppliers()
   );
 };

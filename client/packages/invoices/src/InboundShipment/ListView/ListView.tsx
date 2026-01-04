@@ -1,45 +1,37 @@
-import React, { FC, useEffect } from 'react';
+import React, { useMemo } from 'react';
 import {
   useNavigate,
-  DataTable,
-  useColumns,
-  getNameAndColorColumn,
-  TableProvider,
-  createTableStore,
-  InvoiceNodeStatus,
   useTranslation,
-  useTableStore,
   NothingHere,
   useToggle,
   useUrlQueryParams,
-  TooltipTextCell,
-  GenericColumnKey,
-  getCommentPopoverColumn,
-  useSimplifiedTabletUI,
+  ColumnType,
+  ColumnDef,
+  usePaginatedMaterialTable,
+  MaterialTable,
+  NameAndColorSetterCell,
+  usePreferences,
 } from '@openmsupply-client/common';
-import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
-import { getStatusTranslator, isInboundListItemDisabled } from '../../utils';
+import {
+  getStatusTranslator,
+  inboundStatuses,
+  isInboundDisabled,
+  isInboundListItemDisabled,
+} from '../../utils';
 import { useInbound, InboundRowFragment } from '../api';
 import { Footer } from './Footer';
 
-const useDisableInboundRows = (rows?: InboundRowFragment[]) => {
-  const { setDisabledRows } = useTableStore();
-  useEffect(() => {
-    const disabledRows = rows
-      ?.filter(isInboundListItemDisabled)
-      .map(({ id }) => id);
-    if (disabledRows) setDisabledRows(disabledRows);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [rows]);
-};
-export const InboundListView: FC = () => {
+export const InboundListView = () => {
+  const t = useTranslation();
+  const navigate = useNavigate();
+  const { invoiceStatusOptions } = usePreferences();
+  const invoiceModalController = useToggle();
+  const linkRequestModalController = useToggle();
   const { mutate: onUpdate } = useInbound.document.update();
+
   const {
-    updateSortQuery,
-    updatePaginationQuery,
-    filter,
-    queryParams: { sortBy, page, first, offset },
+    queryParams: { first, offset, sortBy, filterBy },
   } = useUrlQueryParams({
     initialSort: { key: 'invoiceNumber', dir: 'desc' },
     filters: [
@@ -53,91 +45,123 @@ export const InboundListView: FC = () => {
     ],
   });
 
-  const pagination = { page, first, offset };
-  const queryParams = { ...filter, sortBy, first, offset };
+  const listParams = {
+    sortBy,
+    first,
+    offset,
+    filterBy,
+  };
 
-  const navigate = useNavigate();
-  const invoiceModalController = useToggle();
-  const linkRequestModalController = useToggle();
-  const simplifiedTabletView = useSimplifiedTabletUI();
+  const { data, isFetching } = useInbound.document.list(listParams);
+  const statuses = inboundStatuses.filter(status =>
+    invoiceStatusOptions?.includes(status)
+  );
 
-  const { data, isError, isLoading } = useInbound.document.list(queryParams);
-  useDisableInboundRows(data?.nodes);
-
-  const t = useTranslation();
-
-  const columns = useColumns<InboundRowFragment>(
-    [
-      GenericColumnKey.Selection,
-      [
-        getNameAndColorColumn(),
-        { setter: onUpdate, defaultHideOnMobile: true },
-      ],
-      [
-        'status',
-        {
-          formatter: status =>
-            getStatusTranslator(t)(status as InvoiceNodeStatus),
-        },
-      ],
-      ['invoiceNumber', { maxWidth: 100 }],
-      'createdDatetime',
-      ['deliveredDatetime', { defaultHideOnMobile: true }],
-      getCommentPopoverColumn(),
-      [
-        'theirReference',
-        {
-          Cell: TooltipTextCell,
-          width: 225,
-          defaultHideOnMobile: true,
-        },
-      ],
-      [
-        'totalAfterTax',
-        {
-          accessor: ({ rowData }) => rowData.pricing.totalAfterTax,
-          defaultHideOnMobile: true,
-        },
-      ],
+  const columns = useMemo(
+    (): ColumnDef<InboundRowFragment>[] => [
+      {
+        header: t('label.supplier'),
+        accessorKey: 'otherPartyName',
+        enableColumnFilter: true,
+        Cell: ({ row }) => (
+          <NameAndColorSetterCell
+            onColorChange={onUpdate}
+            getIsDisabled={isInboundDisabled}
+            row={row.original}
+          />
+        ),
+        enableSorting: true,
+      },
+      {
+        header: t('label.number'),
+        accessorKey: 'invoiceNumber',
+        columnType: ColumnType.Number,
+        size: 90,
+        enableColumnFilter: true,
+        enableSorting: true,
+      },
+      {
+        header: t('label.created'),
+        accessorKey: 'createdDatetime',
+        columnType: ColumnType.Date,
+        enableColumnFilter: true,
+        enableSorting: true,
+        size: 100,
+      },
+      {
+        header: t('label.delivered'),
+        accessorKey: 'deliveredDatetime',
+        columnType: ColumnType.Date,
+        defaultHideOnMobile: true,
+        enableColumnFilter: true,
+        enableSorting: true,
+        size: 100,
+      },
+      {
+        header: t('label.status'),
+        accessorFn: row => getStatusTranslator(t)(row.status),
+        id: 'status',
+        size: 140,
+        filterVariant: 'select',
+        filterSelectOptions: statuses.map(status => ({
+          value: status,
+          label: getStatusTranslator(t)(status),
+        })),
+        enableColumnFilter: true,
+        enableSorting: true,
+      },
+      {
+        header: t('label.reference'),
+        accessorKey: 'theirReference',
+        size: 225,
+        defaultHideOnMobile: true,
+        enableSorting: true,
+      },
+      {
+        header: t('label.total'),
+        accessorFn: row => row.pricing.totalAfterTax,
+        columnType: ColumnType.Currency,
+        defaultHideOnMobile: true,
+      },
+      {
+        header: t('label.comment'),
+        accessorKey: 'comment',
+        columnType: ColumnType.Comment,
+      },
     ],
-    { onChangeSortBy: updateSortQuery, sortBy },
-    [sortBy]
+    []
+  );
+
+  const { table, selectedRows } = usePaginatedMaterialTable<InboundRowFragment>(
+    {
+      tableId: 'inbound-shipment-list-view',
+      isLoading: isFetching,
+      onRowClick: row => navigate(row.id),
+      columns,
+      data: data?.nodes ?? [],
+      totalCount: data?.totalCount ?? 0,
+      initialSort: { key: 'invoiceNumber', dir: 'desc' },
+      getIsRestrictedRow: isInboundListItemDisabled,
+      noDataElement: (
+        <NothingHere
+          body={t('error.no-inbound-shipments')}
+          onCreate={invoiceModalController.toggleOn}
+        />
+      ),
+    }
   );
 
   return (
     <>
-      <Toolbar filter={filter} simplifiedTabletView={simplifiedTabletView} />
       <AppBarButtons
         invoiceModalController={invoiceModalController}
         linkRequestModalController={linkRequestModalController}
-        simplifiedTabletView={simplifiedTabletView}
       />
-      <DataTable
-        id="inbound-line-list"
-        pagination={{ ...pagination, total: data?.totalCount ?? 0 }}
-        onChangePage={updatePaginationQuery}
-        columns={columns}
-        data={data?.nodes ?? []}
-        isLoading={isLoading}
-        onRowClick={row => {
-          navigate(row.id);
-        }}
-        isError={isError}
-        noDataElement={
-          <NothingHere
-            body={t('error.no-inbound-shipments')}
-            onCreate={invoiceModalController.toggleOn}
-          />
-        }
-        enableColumnSelection
+      <MaterialTable table={table} />
+      <Footer
+        selectedRows={selectedRows}
+        resetRowSelection={table.resetRowSelection}
       />
-      <Footer />
     </>
   );
 };
-
-export const ListView: FC = () => (
-  <TableProvider createStore={createTableStore}>
-    <InboundListView />
-  </TableProvider>
-);

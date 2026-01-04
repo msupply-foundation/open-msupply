@@ -1,9 +1,6 @@
 import React from 'react';
 import {
   useTranslation,
-  TableProvider,
-  createTableStore,
-  createQueryParamsStore,
   Grid,
   useAuthContext,
   Typography,
@@ -17,7 +14,7 @@ export const AllocationSection = ({
   disabled,
   hasLines,
 }: {
-  disabled?: boolean;
+  disabled: boolean;
   hasLines: boolean;
 }) => {
   const t = useTranslation();
@@ -34,6 +31,7 @@ export const AllocationSection = ({
           inputColor="white"
           allowPartialPacks
           autoFocus={!showPrescribedQuantity}
+          disabled={disabled}
         />
         <AllocateInSelector />
       </Grid>
@@ -44,7 +42,7 @@ export const AllocationSection = ({
           key={'item_table'}
           backgroundColor="background.white"
         >
-          <TableWrapper disabled={disabled} />
+          <PrescriptionLineEditTable disabled={disabled} />
         </AccordionPanelSection>
       ) : (
         <Typography style={{ width: '100%' }}>
@@ -52,22 +50,5 @@ export const AllocationSection = ({
         </Typography>
       )}
     </>
-  );
-};
-
-interface TableProps {
-  disabled?: boolean;
-}
-
-const TableWrapper = ({ disabled }: TableProps) => {
-  return (
-    <TableProvider
-      createStore={createTableStore}
-      queryParamsStore={createQueryParamsStore({
-        initialSortBy: { key: 'expiryDate' },
-      })}
-    >
-      <PrescriptionLineEditTable disabled={disabled} />
-    </TableProvider>
   );
 };

@@ -9,6 +9,8 @@ import {
   useIsGapsStoreOnly,
   PropertyNodeValueType,
   NamePropertyNode,
+  useAuthContext,
+  UserPermission,
 } from '@openmsupply-client/common';
 import { DraftProperties } from './useDraftStoreProperties';
 
@@ -25,8 +27,8 @@ export const StoreProperties = ({
 }: StorePropertiesProps) => {
   const t = useTranslation();
   const isCentralServer = useIsCentralServerApi();
-
   const isGapsStore = useIsGapsStoreOnly();
+  const { userHasPermission } = useAuthContext();
 
   return !propertyConfigs?.length ? (
     <Typography sx={{ textAlign: 'center' }}>
@@ -55,7 +57,9 @@ export const StoreProperties = ({
             label={p.property.name}
             isGapsStore={isGapsStore}
             inputProperties={{
-              disabled: !isCentralServer && !p.remoteEditable,
+              disabled:
+                (!isCentralServer && !p.remoteEditable) ||
+                !userHasPermission(UserPermission.NamePropertiesMutate),
               valueType: p.property.valueType,
               allowedValues: p.property.allowedValues?.split(','),
               value: draftProperties[p.property.key],

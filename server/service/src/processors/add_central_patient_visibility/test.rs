@@ -95,7 +95,7 @@ async fn requests_link_patient_to_oms_central_store() {
     // Currently not possible to mock the call to central from the processor
     // So let's just check it errors in the right place :violent_sob:
     let error_log = SystemLogRowRepository::new(&ctx.connection)
-        .last_x_messages(1)
+        .last_x_errors(1)
         .unwrap()
         .pop()
         .unwrap();
@@ -119,8 +119,8 @@ fn is_patient_visible_on_central(
     let patient_visible_on_central = repo
         .query_by_filter(
             NameStoreJoinFilter::new()
-                .name_id(EqualFilter::equal_to(patient_id))
-                .store_id(EqualFilter::equal_to(central_store_id)),
+                .name_id(EqualFilter::equal_to(patient_id.to_string()))
+                .store_id(EqualFilter::equal_to(central_store_id.to_string())),
         )
         .unwrap();
 

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState, useMemo } from 'react';
 import {
   useToggle,
   useFormatNumber,
@@ -26,11 +26,10 @@ export const StockItemSearchInput = ({
   onChange,
   currentItemId,
   disabled = false,
-  extraFilter,
   width,
   autoFocus = false,
   openOnFocus,
-  filter: apiFilter = { isVisible: true },
+  filter: apiFilter,
   itemCategoryName,
   programId,
   initialUpdate = false,
@@ -40,8 +39,8 @@ export const StockItemSearchInput = ({
   const selectControl = useToggle();
 
   const { filter, onFilter } = useStringFilter('codeOrName');
-  const [search, setSearch] = useState('');
 
+  const [search, setSearch] = useState('');
   const [selectedCode, setSelectedCode] = useState('');
 
   const debounceOnFilter = useDebouncedValueCallback(
@@ -50,22 +49,38 @@ export const StockItemSearchInput = ({
     DEBOUNCE_TIMEOUT
   );
 
-  const fullFilter: ItemFilterInput = { ...filter, ...apiFilter };
-  if (itemCategoryName) fullFilter['categoryName'] = itemCategoryName;
-  // For now, we are filtering items by "master_list", as they have the same ID
-  // as their equivalent program. In the future, this may change, so we can add
-  // another filter specifically for programs if required.
-  if (programId) fullFilter['masterListId'] = { equalTo: programId };
+  const fullFilter: ItemFilterInput = useMemo(() => {
+    const result: ItemFilterInput = { ...filter, ...apiFilter };
+    if (itemCategoryName) result['categoryName'] = itemCategoryName;
+    // For now, we are filtering items by "master_list", as they have the same ID
+    // as their equivalent program. In the future, this may change, so we can add
+    // another filter specifically for programs if required.
+    if (programId) result['masterListId'] = { equalTo: programId };
+    return result;
+  }, [filter, apiFilter, itemCategoryName, programId]);
 
   const { data, isLoading, fetchNextPage, isFetchingNextPage } =
     useItemStockOnHandInfinite({
       rowsPerPage: ROWS_PER_PAGE,
-      filter: fullFilter,
+      filter: disabled ? undefined : fullFilter,
     });
 
-  // Note - important that we do a separate query for current item
-  // The infinite query above may not yet include the currently selected item in its results!
-  const { data: currentItem } = useGetById(currentItemId ?? '');
+  // Try to find current item in the infinite query cache first (optimization)
+  const currentItemFromCache = useMemo(() => {
+    if (!currentItemId) return null;
+    const allItems = data?.pages.flatMap(page => page.data.nodes) ?? [];
+    return allItems.find(item => item.id === currentItemId) ?? null;
+  }, [currentItemId, data?.pages]);
+
+  // Fallback: fetch current item separately if not in cache
+  // This is important because the infinite query may have filters that exclude the current item
+  // (e.g., when editing a stocktake line, the item is excluded from the search results)
+  const { data: currentItemFromAPI } = useGetById(
+    currentItemId && !currentItemFromCache ? currentItemId : ''
+  );
+
+  // Use cached item if available, otherwise use API result
+  const currentItem = currentItemFromCache ?? currentItemFromAPI ?? null;
 
   const pageNumber = data?.pages[data?.pages.length - 1]?.pageNumber ?? 0;
 
@@ -85,7 +100,8 @@ export const StockItemSearchInput = ({
       onChange(currentItem);
     }
     if (currentItem && search === '') setSearch(getOptionLabel(currentItem));
-  }, [currentItem]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentItem, search]);
 
   useEffect(() => {
     // Using the Autocomplete openOnFocus prop, the popper is incorrectly
@@ -104,6 +120,7 @@ export const StockItemSearchInput = ({
         input?.focus();
       }, 50);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
@@ -141,10 +158,9 @@ export const StockItemSearchInput = ({
       paginationDebounce={DEBOUNCE_TIMEOUT}
       onPageChange={pageNumber => fetchNextPage({ pageParam: pageNumber })}
       mapOptions={items =>
-        defaultOptionMapper(
-          extraFilter ? items.filter(extraFilter) : items,
-          'name'
-        ).sort((a, b) => a.label.localeCompare(b.label))
+        defaultOptionMapper(items, 'name').sort((a, b) =>
+          a.label.localeCompare(b.label)
+        )
       }
       inputValue={search}
       inputProps={{

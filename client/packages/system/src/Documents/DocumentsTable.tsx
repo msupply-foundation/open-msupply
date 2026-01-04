@@ -1,12 +1,10 @@
-import React, { ReactElement } from 'react';
+import React, { ReactElement, useMemo } from 'react';
 import {
-  ColumnFormat,
-  createTableStore,
-  DataTable,
-  GenericColumnKey,
+  ColumnDef,
+  ColumnType,
+  MaterialTable,
   NothingHere,
-  TableProvider,
-  useColumns,
+  useNonPaginatedMaterialTable,
   useTranslation,
 } from '@openmsupply-client/common';
 import { SyncFileReferenceFragment } from '@openmsupply-client/system';
@@ -20,58 +18,67 @@ interface DocumentsProps {
   recordId: string;
   tableName: string;
   documents: SyncFileReferenceFragment[];
-  noDataElement?: JSX.Element;
-  openUploadModal?: () => void;
+  isFetching?: boolean;
   invalidateQueries?: () => void;
+  openUploadModal?: () => void;
+  deletableDocumentIds?: Set<string>;
 }
 
+// TODO: Replace upload table with how we have it in other modules (i.e. Not table)
 export const DocumentsTable = ({
   recordId,
   tableName,
   documents,
-  noDataElement,
-  openUploadModal,
+  isFetching,
   invalidateQueries,
+  openUploadModal,
+  deletableDocumentIds,
 }: DocumentsProps): ReactElement => {
   const t = useTranslation();
 
-  const columns = useColumns<SyncFileReferenceFragment>([
-    GenericColumnKey.Selection,
-    {
-      key: 'fileName',
-      label: 'label.filename',
-      accessor: ({ rowData }) => rowData.fileName,
-    },
-    {
-      key: 'createdDatetime',
-      label: 'label.created-datetime',
-      accessor: ({ rowData }) => rowData.createdDatetime,
-      format: ColumnFormat.Date,
-    },
-  ]);
+  const columns = useMemo(
+    (): ColumnDef<SyncFileReferenceFragment>[] => [
+      {
+        header: t('label.filename'),
+        accessorKey: 'fileName',
+        enableSorting: true,
+      },
+      {
+        header: t('label.created-datetime'),
+        accessorKey: 'createdDatetime',
+        columnType: ColumnType.Date,
+        enableSorting: true,
+      },
+    ],
+    [t]
+  );
+
+  const { table, selectedRows } =
+    useNonPaginatedMaterialTable<SyncFileReferenceFragment>({
+      tableId: `${tableName}-documents-table`,
+      isLoading: isFetching,
+      columns,
+      data: documents,
+      initialSort: { key: 'createdDatetime', dir: 'desc' },
+      noDataElement: (
+        <NothingHere
+          body={t('messages.no-documents-uploaded')}
+          onCreate={openUploadModal}
+        />
+      ),
+    });
 
   return (
-    <TableProvider createStore={createTableStore}>
-      <DataTable
-        id={recordId}
-        columns={columns}
-        data={documents}
-        noDataElement={
-          noDataElement ?? (
-            <NothingHere
-              body={t('messages.no-documents-uploaded')}
-              onCreate={openUploadModal}
-              buttonText={t('label.upload-document')}
-            />
-          )
-        }
-      />
+    <>
+      <MaterialTable table={table} />
       <Footer
         tableName={tableName}
         recordId={recordId}
-        documents={documents}
         invalidateQueries={invalidateQueries}
+        selectedRows={selectedRows}
+        resetRowSelection={table.resetRowSelection}
+        deletableDocumentIds={deletableDocumentIds}
       />
-    </TableProvider>
+    </>
   );
 };

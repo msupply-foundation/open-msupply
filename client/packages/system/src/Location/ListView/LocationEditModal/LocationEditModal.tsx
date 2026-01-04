@@ -175,7 +175,7 @@ export const LocationEditModal: FC<LocationEditModalProps> = ({
           </Box>
           <Grid alignSelf="center">
             <ToggleButton
-              label="On hold"
+              label={t('label.on-hold')}
               value={draft.onHold}
               selected={draft.onHold}
               onClick={(_, val) => {

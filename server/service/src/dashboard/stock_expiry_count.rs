@@ -4,16 +4,14 @@ use repository::{DateFilter, EqualFilter, RepositoryError, StockLineFilter, Stoc
 use crate::service_provider::ServiceContext;
 
 pub trait StockExpiryCountServiceTrait: Send + Sync {
-    /// # Arguments
-    ///
-    /// * date_time date at which the expired stock is counted
     fn count_expired_stock(
         &self,
         ctx: &ServiceContext,
         store_id: &str,
-        date_time: NaiveDate,
+        from_date: Option<NaiveDate>,
+        to_date: Option<NaiveDate>,
     ) -> Result<i64, RepositoryError> {
-        StockExpiryServiceCount {}.count_expired_stock(ctx, store_id, date_time)
+        StockExpiryServiceCount {}.count_expired_stock(ctx, store_id, from_date, to_date)
     }
 }
 
@@ -24,7 +22,8 @@ impl StockExpiryCountServiceTrait for StockExpiryServiceCount {
         &self,
         ctx: &ServiceContext,
         store_id: &str,
-        date_time: NaiveDate,
+        from_date: Option<NaiveDate>,
+        to_date: Option<NaiveDate>,
     ) -> Result<i64, RepositoryError> {
         let repo = StockLineRepository::new(&ctx.connection);
         repo.count(
@@ -32,10 +31,10 @@ impl StockExpiryCountServiceTrait for StockExpiryServiceCount {
                 StockLineFilter::new()
                     .expiry_date(DateFilter {
                         equal_to: None,
-                        before_or_equal_to: Some(date_time),
-                        after_or_equal_to: None,
+                        before_or_equal_to: to_date,
+                        after_or_equal_to: from_date,
                     })
-                    .store_id(EqualFilter::equal_to(store_id))
+                    .store_id(EqualFilter::equal_to(store_id.to_string()))
                     .is_available(true),
             ),
             None,
@@ -105,7 +104,7 @@ mod stock_count_test {
         let date_now = Utc::now().naive_utc().date();
 
         let expired_stock_count = count_service
-            .count_expired_stock(&context, &mock_store_a().id, date_now)
+            .count_expired_stock(&context, &mock_store_a().id, None, Some(date_now))
             .unwrap();
         assert_eq!(expired_stock_count, 2);
 
@@ -122,7 +121,7 @@ mod stock_count_test {
             .unwrap();
 
         let expired_stock_count = count_service
-            .count_expired_stock(&context, &mock_store_a().id, date_now)
+            .count_expired_stock(&context, &mock_store_a().id, None, Some(date_now))
             .unwrap();
         assert_eq!(expired_stock_count, 1);
     }

@@ -191,7 +191,7 @@ mod graphql {
                 name_link_id: _,
             } = filter.unwrap();
 
-            assert_eq!(id, Some(EqualFilter::not_equal_to("id_not_equal_to")));
+            assert_eq!(id, Some(EqualFilter::not_equal_to("id_not_equal_to".to_string())));
             assert_eq!(name, Some(StringFilter::like("name like")));
             assert_eq!(code, Some(StringFilter::equal_to("code equal to")));
 

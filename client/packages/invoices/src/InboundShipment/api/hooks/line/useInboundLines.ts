@@ -1,6 +1,9 @@
 import { useCallback } from 'react';
-import { isA } from './../../../../utils';
-import { InboundFragment } from '../../operations.generated';
+import { isA, isInboundPlaceholderRow } from './../../../../utils';
+import {
+  InboundFragment,
+  InboundLineFragment,
+} from '../../operations.generated';
 import { useQuery } from '@openmsupply-client/common';
 import { useInboundId } from '../document/useInbound';
 import { useInboundApi } from '../utils/useInboundApi';
@@ -11,22 +14,22 @@ export const useInboundSelector = <T = InboundFragment>(
   const invoiceId = useInboundId();
   const api = useInboundApi();
 
-  return useQuery(
-    api.keys.detail(invoiceId),
-    () => api.get.byId(invoiceId),
-    { select }
-  );
+  return useQuery(api.keys.detail(invoiceId), () => api.get.byId(invoiceId), {
+    select,
+  });
 };
 
 export const useInboundLines = (itemId?: string) => {
-  const selectItems = useCallback(
+  const selectLines = useCallback(
     (invoice: InboundFragment) => {
+      const forListView = (line: InboundLineFragment) =>
+        isA.stockInLine(line) || isInboundPlaceholderRow(line);
       return itemId
         ? invoice.lines.nodes.filter(({ item }) => itemId === item.id)
-        : invoice.lines.nodes.filter(line => isA.stockInLine(line));
+        : invoice.lines.nodes.filter(forListView);
     },
     [itemId]
   );
 
-  return useInboundSelector(selectItems);
+  return useInboundSelector(selectLines);
 };

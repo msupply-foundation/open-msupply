@@ -1,48 +1,34 @@
-import React, { FC, useEffect } from 'react';
+import React, { useMemo } from 'react';
 import {
   useNavigate,
-  DataTable,
-  useColumns,
-  getNameAndColorColumn,
-  TableProvider,
-  createTableStore,
   useTranslation,
   InvoiceNodeStatus,
-  useTableStore,
   NothingHere,
   useToggle,
   useUrlQueryParams,
-  ColumnFormat,
-  GenericColumnKey,
-  getCommentPopoverColumn,
+  MaterialTable,
+  usePaginatedMaterialTable,
+  ColumnDef,
+  ColumnType,
+  NameAndColorSetterCell,
 } from '@openmsupply-client/common';
-import { getStatusTranslator, isPrescriptionDisabled } from '../../utils';
+import {
+  getStatusTranslator,
+  isPrescriptionDisabled,
+  prescriptionStatuses,
+} from '../../utils';
 import { usePrescriptionList, usePrescription } from '../api';
 import { PrescriptionRowFragment } from '../api/operations.generated';
-import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
 import { Footer } from './Footer';
 
-const useDisablePrescriptionRows = (rows?: PrescriptionRowFragment[]) => {
-  const { setDisabledRows } = useTableStore();
-  useEffect(() => {
-    const disabledRows = rows
-      ?.filter(isPrescriptionDisabled)
-      .map(({ id }) => id);
-    if (disabledRows) setDisabledRows(disabledRows);
-  }, [rows]);
-};
-
-const PrescriptionListViewComponent: FC = () => {
+export const PrescriptionListView = () => {
   const {
     update: { update },
   } = usePrescription();
   const t = useTranslation();
   const {
-    updateSortQuery,
-    updatePaginationQuery,
-    filter,
-    queryParams: { page, first, offset, sortBy, filterBy },
+    queryParams: { first, offset, sortBy, filterBy },
   } = useUrlQueryParams({
     initialSort: { key: 'prescriptionDatetime', dir: 'desc' },
     filters: [
@@ -68,76 +54,104 @@ const PrescriptionListViewComponent: FC = () => {
   const navigate = useNavigate();
   const modalController = useToggle();
   const {
-    query: { data, isError, isLoading },
+    query: { data, isError, isFetching },
   } = usePrescriptionList(listParams);
-  const pagination = { page, first, offset };
-  useDisablePrescriptionRows(data?.nodes);
 
-  const columns = useColumns<PrescriptionRowFragment>(
-    [
-      GenericColumnKey.Selection,
-      [getNameAndColorColumn(), { setter: update }],
-      [
-        'status',
-        {
-          formatter: status =>
-            getStatusTranslator(t)(status as InvoiceNodeStatus),
-        },
-      ],
-      [
-        'invoiceNumber',
-        { description: 'description.invoice-number', maxWidth: 110 },
-      ],
+  const columns = useMemo(
+    (): ColumnDef<PrescriptionRowFragment>[] => [
       {
-        key: 'prescriptionDatetime',
-        label: 'label.prescription-date',
-        format: ColumnFormat.Date,
-        accessor: ({ rowData }) =>
-          rowData.prescriptionDate
-            ? rowData.prescriptionDate
-            : rowData.createdDatetime,
-        sortable: true,
+        accessorKey: 'otherPartyName',
+        header: t('label.name'),
+        enableSorting: true,
+        enableColumnFilter: true,
+        Cell: ({ row }) => (
+          <NameAndColorSetterCell
+            row={row.original}
+            onColorChange={update}
+            getIsDisabled={isPrescriptionDisabled}
+          />
+        ),
       },
-      ['theirReference', { description: '', maxWidth: 110 }],
-      getCommentPopoverColumn(),
+      {
+        accessorKey: 'status',
+        header: t('label.status'),
+        enableSorting: true,
+        enableColumnFilter: true,
+        filterVariant: 'select',
+        filterSelectOptions: prescriptionStatuses.map(status => ({
+          value: status,
+          label: getStatusTranslator(t)(status),
+        })),
+        accessorFn: (row: PrescriptionRowFragment) =>
+          getStatusTranslator(t)(row.status as InvoiceNodeStatus),
+        size: 120,
+      },
+      {
+        accessorKey: 'invoiceNumber',
+        header: t('label.invoice-number'),
+        enableSorting: true,
+        enableColumnFilter: true,
+        size: 110,
+      },
+      {
+        accessorKey: 'prescriptionDatetime',
+        header: t('label.prescription-date'),
+        columnType: ColumnType.Date,
+        enableSorting: true,
+        accessorFn: (row: PrescriptionRowFragment) =>
+          row.prescriptionDate || row.createdDatetime,
+        size: 150,
+        enableColumnFilter: true,
+        filterKey: 'createdOrBackdatedDatetime',
+      },
+      {
+        accessorKey: 'theirReference',
+        header: t('label.reference'),
+        enableSorting: true,
+        size: 110,
+        enableColumnFilter: true,
+      },
+      {
+        accessorKey: 'comment',
+        header: t('label.comment'),
+        columnType: ColumnType.Comment,
+        size: 120,
+      },
     ],
-    { onChangeSortBy: updateSortQuery, sortBy },
-    [sortBy]
+    []
   );
+
+  const { table, selectedRows } = usePaginatedMaterialTable({
+    tableId: 'prescription-list',
+    columns,
+    data: data?.nodes,
+    totalCount: data?.totalCount ?? 0,
+    isLoading: isFetching,
+    isError,
+    onRowClick: row => {
+      navigate(row.id);
+    },
+    noDataElement: (
+      <NothingHere
+        body={t('error.no-prescriptions')}
+        onCreate={modalController.toggleOn}
+      />
+    ),
+    getIsRestrictedRow: isPrescriptionDisabled,
+  });
 
   return (
     <>
-      <Toolbar filter={filter} />
       <AppBarButtons
         modalController={modalController}
-        listParams={listParams}
+        filterBy={filterBy}
+        sortBy={sortBy}
       />
-      <DataTable
-        id="prescription-list"
-        enableColumnSelection
-        pagination={{ ...pagination, total: data?.totalCount ?? 0 }}
-        onChangePage={updatePaginationQuery}
-        columns={columns}
-        data={data?.nodes ?? []}
-        isError={isError}
-        isLoading={isLoading}
-        noDataElement={
-          <NothingHere
-            body={t('error.no-prescriptions')}
-            onCreate={modalController.toggleOn}
-          />
-        }
-        onRowClick={row => {
-          navigate(row.id);
-        }}
+      <MaterialTable table={table} />
+      <Footer
+        selectedRows={selectedRows}
+        resetRowSelection={table.resetRowSelection}
       />
-      <Footer listParams={listParams} />
     </>
   );
 };
-
-export const PrescriptionListView: FC = () => (
-  <TableProvider createStore={createTableStore}>
-    <PrescriptionListViewComponent />
-  </TableProvider>
-);

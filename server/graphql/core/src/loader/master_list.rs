@@ -45,8 +45,8 @@ impl Loader<MasterListByItemIdLoaderInput> for MasterListByItemIdLoader {
             for item_id in item_ids {
                 let master_list = MasterListRepository::new(&connection).query_by_filter(
                     MasterListFilter::new()
-                        .exists_for_store_id(EqualFilter::equal_to(&store_id))
-                        .item_id(EqualFilter::equal_to(&item_id)),
+                        .exists_for_store_id(EqualFilter::equal_to(store_id.to_string()))
+                        .item_id(EqualFilter::equal_to(item_id.to_string())),
                 )?;
 
                 let entry = output.entry(MasterListByItemIdLoaderInput {

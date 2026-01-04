@@ -6,14 +6,24 @@ import {
   usePreferences,
   NumericTextDisplay,
   UNDEFINED_STRING_VALUE,
-  DefaultCellProps,
+  AlertIcon,
 } from '@openmsupply-client/common';
-import { ItemRowFragment } from '@openmsupply-client/system';
+import { MRT_Cell, MRT_Row, MRT_RowData } from 'material-react-table';
 
-export const UnitsAndDosesCell = <T extends { item: ItemRowFragment }>({
+interface ItemData {
+  doses?: number;
+  isVaccine?: boolean;
+}
+
+export const UnitsAndDosesCell = <T extends MRT_RowData>({
   cell,
   row,
-}: DefaultCellProps<T>) => {
+  showAlert,
+}: {
+  cell: MRT_Cell<T>;
+  row: MRT_Row<T & { item: ItemData }>;
+  showAlert?: boolean;
+}) => {
   const t = useTranslation();
   const { format } = useFormatNumber();
   const { manageVaccinesInDoses } = usePreferences();
@@ -21,8 +31,9 @@ export const UnitsAndDosesCell = <T extends { item: ItemRowFragment }>({
 
   const value = cell.getValue<number | undefined>();
 
-  // Doses should always be a whole number, round if fractional packs are giving us funky decimals
-  const doseCount = format(item.doses * (value ?? 0), {
+  // Doses should always be a whole number, round if fractional packs are giving
+  // us funky decimals
+  const doseCount = format(item.doses ?? 0 * (value ?? 0), {
     maximumFractionDigits: 0,
   });
 
@@ -42,6 +53,15 @@ export const UnitsAndDosesCell = <T extends { item: ItemRowFragment }>({
         >
           ({doseCount} {t('label.doses-short')})
         </Typography>
+      )}
+      {showAlert && (
+        <AlertIcon
+          sx={{
+            color: theme => theme.palette.error.main,
+            marginLeft: '0.2em',
+            width: '0.7em',
+          }}
+        />
       )}
     </>
   );

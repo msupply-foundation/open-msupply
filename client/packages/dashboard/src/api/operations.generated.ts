@@ -15,6 +15,8 @@ export type StockCountsQuery = {
     __typename: 'StockCounts';
     expired: number;
     expiringSoon: number;
+    expiringBetweenThresholds: number;
+    expiringInNextThreeMonths: number;
   };
 };
 
@@ -33,6 +35,9 @@ export type ItemCountsQuery = {
       noStock: number;
       moreThanSixMonthsStock: number;
       total: number;
+      outOfStockProducts: number;
+      productsAtRiskOfBeingOutOfStock: number;
+      productsOverstocked: number;
     };
   };
 };
@@ -109,6 +114,8 @@ export const StockCountsDocument = gql`
     ) {
       expired
       expiringSoon
+      expiringBetweenThresholds
+      expiringInNextThreeMonths
     }
   }
 `;
@@ -120,6 +127,9 @@ export const ItemCountsDocument = gql`
         noStock
         moreThanSixMonthsStock
         total
+        outOfStockProducts
+        productsAtRiskOfBeingOutOfStock
+        productsOverstocked
       }
     }
   }

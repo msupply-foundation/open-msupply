@@ -10,6 +10,7 @@ pub fn mock_item_a_join_store_a() -> ItemStoreJoinRow {
         store_id: mock_store_a().id.clone(),
         default_sell_price_per_pack: 100.0,
         ignore_for_orders: false,
+        margin: 15.0,
     }
 }
 
@@ -20,6 +21,7 @@ pub fn mock_item_query_test1_join_store_() -> ItemStoreJoinRow {
         store_id: mock_store_b().id.clone(),
         default_sell_price_per_pack: 50.0,
         ignore_for_orders: false,
+        margin: 10.0,
     }
 }
 

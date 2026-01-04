@@ -58,7 +58,13 @@ pub fn update_asset(
         .transaction_sync(|connection| {
             let asset_row = validate(connection, &input)?;
             let updated_asset_row = generate(&ctx.store_id, input.clone(), asset_row.clone());
-            AssetRowRepository::new(connection).upsert_one(&updated_asset_row)?;
+            let original_store_id = if updated_asset_row.store_id != asset_row.store_id {
+                asset_row.store_id.clone()
+            } else {
+                None
+            };
+            AssetRowRepository::new(connection)
+                .upsert_one(&updated_asset_row, original_store_id.clone())?;
 
             activity_log_entry(
                 ctx,
@@ -94,7 +100,7 @@ pub fn validate(
             if AssetRepository::new(connection)
                 .query_one(
                     AssetFilter::new()
-                        .id(EqualFilter::not_equal_to(&asset_row.id))
+                        .id(EqualFilter::not_equal_to(asset_row.id.to_string()))
                         .serial_number(StringFilter::equal_to(serial_number)),
                 )?
                 .is_some()
@@ -106,38 +112,33 @@ pub fn validate(
 
     // Check asset number is unique (on this site)
     if let Some(asset_number) = &input.asset_number {
-        if check_asset_number_exists(connection, &asset_number, Some(input.id.clone()))?.len() >= 1
+        if !check_asset_number_exists(connection, asset_number, Some(input.id.clone()))?.is_empty()
         {
             return Err(UpdateAssetError::AssetNumberAlreadyExists);
         }
     }
 
-    match &input.location_ids {
-        Some(location_ids) => {
-            // Check locations aren't assigned to other assets already
-            match check_locations_are_assigned(location_ids.to_vec(), &input.id, connection) {
-                Ok(locations) => {
-                    if !locations.is_empty() {
-                        return Err(UpdateAssetError::LocationsAlreadyAssigned);
-                    };
-                }
-                Err(repository_error) => {
-                    return Err(UpdateAssetError::DatabaseError(repository_error))
-                }
+    if let Some(location_ids) = &input.location_ids {
+        // Check locations aren't assigned to other assets already
+        match check_locations_are_assigned(location_ids.to_vec(), &input.id, connection) {
+            Ok(locations) => {
+                if !locations.is_empty() {
+                    return Err(UpdateAssetError::LocationsAlreadyAssigned);
+                };
             }
-
-            // Check the asset belongs to the current store
-            let store_id = match asset_row.store_id {
-                Some(ref store_id) => store_id,
-                None => return Err(UpdateAssetError::LocationDoesNotBelongToStore),
-            };
-
-            match check_locations_belong_to_store(location_ids.to_vec(), store_id, connection) {
-                Ok(_) => (),
-                Err(error) => return Err(error),
-            }
+            Err(repository_error) => return Err(UpdateAssetError::DatabaseError(repository_error)),
         }
-        None => (),
+
+        // Check the asset belongs to the current store
+        let store_id = match asset_row.store_id {
+            Some(ref store_id) => store_id,
+            None => return Err(UpdateAssetError::LocationDoesNotBelongToStore),
+        };
+
+        match check_locations_belong_to_store(location_ids.to_vec(), store_id, connection) {
+            Ok(_) => (),
+            Err(error) => return Err(error),
+        }
     };
 
     Ok(asset_row)
@@ -163,6 +164,7 @@ pub fn generate(
     }: UpdateAsset,
     mut asset_row: AssetRow,
 ) -> AssetRow {
+    asset_row.deleted_datetime = None;
     asset_row.notes = notes;
     asset_row.asset_number = asset_number;
 
@@ -186,10 +188,6 @@ pub fn generate(
         asset_row.replacement_date = replacement_date.value;
     }
 
-    if let Some(properties) = properties {
-        asset_row.properties = Some(properties);
-    }
-
     if let Some(donor_name_id) = donor_name_id {
         asset_row.donor_name_id = donor_name_id.value;
     }
@@ -202,9 +200,8 @@ pub fn generate(
         asset_row.warranty_end = warranty_end.value;
     }
 
-    if let Some(needs_replacement) = needs_replacement {
-        asset_row.needs_replacement = Some(needs_replacement);
-    }
+    asset_row.properties = properties;
+    asset_row.needs_replacement = needs_replacement;
 
     // Set the modified date time
     asset_row.modified_datetime = Utc::now().naive_utc();

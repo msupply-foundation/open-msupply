@@ -1,10 +1,16 @@
 #[cfg(test)]
 mod generate_rnr_form_lines {
+    use crate::rnr_form::generate_rnr_form_lines::{
+        generate_rnr_form_lines, get_adjusted_quantity_consumed, get_amc,
+        get_bulk_earliest_expiries, get_bulk_opening_balances, get_previous_monthly_consumption,
+        get_stock_out_durations_batch, get_usage_map, UsageStats,
+    };
+    use crate::service_provider::ServiceProvider;
     use chrono::NaiveDate;
     use repository::mock::{
-        item_query_test1, mock_item_a, mock_master_list_program_b, mock_name_invad,
-        mock_period_2_a, mock_period_2_b, mock_period_2_c, mock_period_2_d, mock_program_b,
-        mock_rnr_form_a, MockData,
+        item_query_test1, item_query_test2, mock_item_a, mock_master_list_program_b,
+        mock_name_invad, mock_period_2_a, mock_period_2_b, mock_period_2_c, mock_period_2_d,
+        mock_program_b, mock_rnr_form_a, MockData,
     };
     use repository::mock::{mock_store_a, MockDataInserts};
     use repository::test_db::setup_all_with_data;
@@ -13,13 +19,7 @@ mod generate_rnr_form_lines {
         RnRFormFilter, RnRFormLineRow, RnRFormLowStock, RnRFormRow, StockLineRow,
         StorePreferenceRow, StorePreferenceRowRepository,
     };
-
-    use crate::rnr_form::generate_rnr_form_lines::{
-        generate_rnr_form_lines, get_adjusted_quantity_consumed, get_amc, get_earliest_expiry,
-        get_opening_balance, get_previous_monthly_consumption, get_stock_out_duration,
-        get_usage_map, UsageStats,
-    };
-    use crate::service_provider::ServiceProvider;
+    use std::collections::HashMap;
 
     #[actix_rt::test]
     async fn test_generate_rnr_form_lines() {
@@ -30,7 +30,7 @@ mod generate_rnr_form_lines {
                 .name_store_joins()
                 .items()
                 .rnr_forms()
-                .full_master_list(),
+                .full_master_lists(),
             MockData {
                 // During the R&R period (jan 2024)
                 invoices: vec![
@@ -175,7 +175,7 @@ mod generate_rnr_form_lines {
         let result = get_usage_map(
             &connection,
             &mock_store_a().id,
-            Some(EqualFilter::equal_to(&item_query_test1().id)),
+            Some(EqualFilter::equal_to(item_query_test1().id)),
             31,
             &NaiveDate::from_ymd_opt(2024, 1, 31).unwrap(),
         )
@@ -204,7 +204,6 @@ mod generate_rnr_form_lines {
                     // +5
                     invoice_line_inbound(),
                 ],
-                // Current stock on hand for item, 10 packs
                 stock_lines: vec![StockLineRow {
                     item_link_id: item_query_test1().id,
                     store_id: mock_store_a().id,
@@ -217,30 +216,28 @@ mod generate_rnr_form_lines {
         )
         .await;
 
-        // When previous row provided, use that value
-        let result = get_opening_balance(
-            &connection,
-            Some(&RnRFormLineRow {
+        let mut previous_lines = HashMap::new();
+        previous_lines.insert(
+            item_query_test2().id.clone(),
+            RnRFormLineRow {
                 final_balance: 7.0,
                 ..Default::default()
-            }),
-            &mock_store_a().id,
-            &item_query_test1().id,
-            NaiveDate::from_ymd_opt(2024, 1, 1).unwrap(),
-        )
-        .unwrap();
-        assert_eq!(result, 7.0);
+            },
+        );
+        let item_ids = vec![item_query_test1().id.clone(), item_query_test2().id.clone()];
 
-        // When no previous row, calculate as of starting date
-        let result = get_opening_balance(
+        let opening_balances = get_bulk_opening_balances(
             &connection,
-            None,
+            &previous_lines,
             &mock_store_a().id,
-            &item_query_test1().id,
+            &item_ids,
             NaiveDate::from_ymd_opt(2024, 1, 1).unwrap(),
         )
         .unwrap();
-        assert_eq!(result, 8.0);
+
+        assert_eq!(opening_balances.len(), 2);
+        assert_eq!(opening_balances.get(&item_query_test2().id).unwrap(), &7.0);
+        assert_eq!(opening_balances.get(&item_query_test1().id).unwrap(), &8.0);
     }
 
     #[actix_rt::test]
@@ -261,30 +258,45 @@ mod generate_rnr_form_lines {
         )
         .await;
 
-        let result = get_stock_out_duration(
+        let usage_by_item_map = get_usage_map(
             &connection,
             &mock_store_a().id,
-            &item_query_test1().id,
-            NaiveDate::from_ymd_opt(2024, 1, 31).unwrap(),
+            Some(EqualFilter::equal_any(vec![
+                item_query_test1().id.clone(),
+                item_query_test2().id.clone(),
+            ])),
             31,
-            5.0, // closing balance
+            &NaiveDate::from_ymd_opt(2024, 1, 31).unwrap(),
         )
         .unwrap();
 
-        assert_eq!(result, 8);
-
-        // If no transactions, stock out duration is 0
-        let result = get_stock_out_duration(
+        let opening_balances = get_bulk_opening_balances(
             &connection,
+            &HashMap::new(),
             &mock_store_a().id,
-            &mock_item_a().id, // different item, which we have no transactions for
-            NaiveDate::from_ymd_opt(2024, 1, 31).unwrap(),
-            31,
-            0.0, // closing balance
+            &[item_query_test1().id.clone(), item_query_test2().id.clone()],
+            NaiveDate::from_ymd_opt(2024, 1, 1).unwrap(),
         )
         .unwrap();
 
-        assert_eq!(result, 0);
+        let result = get_stock_out_durations_batch(
+            &connection,
+            &mock_store_a().id,
+            &[item_query_test1().id.clone(), item_query_test2().id.clone()],
+            NaiveDate::from_ymd_opt(2024, 1, 31).unwrap(),
+            31,
+            &opening_balances,
+            &usage_by_item_map,
+        )
+        .unwrap();
+
+        assert_eq!(result, {
+            let mut map = HashMap::new();
+            map.insert(item_query_test1().id.clone(), 8);
+            map.insert(item_query_test2().id.clone(), 0); // If no transactions, stockout duration is 0
+
+            map
+        });
     }
 
     #[actix_rt::test]
@@ -337,15 +349,18 @@ mod generate_rnr_form_lines {
         )
         .await;
 
-        // When no stock lines with expiries, return None
-        let result =
-            get_earliest_expiry(&connection, &mock_store_a().id, &mock_item_a().id).unwrap();
-        assert_eq!(result, None);
+        let result = get_bulk_earliest_expiries(
+            &connection,
+            &mock_store_a().id,
+            &[item_query_test1().id.clone(), mock_item_a().id.clone()],
+        )
+        .unwrap();
 
-        // Selects the earliest expiry date
-        let result =
-            get_earliest_expiry(&connection, &mock_store_a().id, &item_query_test1().id).unwrap();
-        assert_eq!(result, Some(NaiveDate::from_ymd_opt(2024, 1, 31).unwrap()));
+        assert_eq!(
+            result.get(&item_query_test1().id),
+            NaiveDate::from_ymd_opt(2024, 1, 31).as_ref()
+        );
+        assert_eq!(result.get(&mock_item_a().id), None);
     }
 
     #[actix_rt::test]
@@ -437,7 +452,7 @@ mod generate_rnr_form_lines {
         let result = get_previous_monthly_consumption(
             &connection,
             // Filter so that no rnr_forms are returned
-            RnRFormFilter::new().id(EqualFilter::equal_to("not-exists")),
+            RnRFormFilter::new().id(EqualFilter::equal_to("not-exists".to_string())),
         )
         .unwrap();
         assert_eq!(result.get(&item_query_test1().id), None);
@@ -446,7 +461,7 @@ mod generate_rnr_form_lines {
         let result = get_previous_monthly_consumption(
             &connection,
             // Filter so that no rnr_forms are returned
-            RnRFormFilter::new().id(EqualFilter::equal_to("rnr_form_1")),
+            RnRFormFilter::new().id(EqualFilter::equal_to("rnr_form_1".to_string())),
         )
         .unwrap();
         assert_eq!(

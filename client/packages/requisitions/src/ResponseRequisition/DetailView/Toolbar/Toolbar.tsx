@@ -1,33 +1,40 @@
-import React, { FC } from 'react';
+import React from 'react';
 import {
   AppBarContentPortal,
   Box,
   InputWithLabelRow,
   Grid,
   useTranslation,
-  SearchBar,
   Typography,
   BufferedTextInput,
   Tooltip,
   BasicTextInput,
+  usePreferences,
 } from '@openmsupply-client/common';
 import { CustomerSearchInput } from '@openmsupply-client/system';
 
 import { useResponse } from '../../api';
 import { getApprovalStatusKey } from '../../../utils';
 
-export const Toolbar: FC = () => {
+export const Toolbar = () => {
   const t = useTranslation();
   const isDisabled = useResponse.utils.isDisabled();
-  const { itemFilter, setItemFilter } = useResponse.line.list();
 
-  const { approvalStatus, otherParty, theirReference, programName, update } =
-    useResponse.document.fields([
-      'approvalStatus',
-      'otherParty',
-      'theirReference',
-      'programName',
-    ]);
+  const {
+    approvalStatus,
+    otherParty,
+    theirReference,
+    programName,
+    destinationCustomer,
+    update,
+  } = useResponse.document.fields([
+    'approvalStatus',
+    'otherParty',
+    'theirReference',
+    'programName',
+    'destinationCustomer',
+  ]);
+  const { selectDestinationStoreForAnInternalOrder } = usePreferences();
   const { isRemoteAuthorisation } = useResponse.utils.isRemoteAuthorisation();
 
   return (
@@ -71,6 +78,19 @@ export const Toolbar: FC = () => {
                   </Tooltip>
                 }
               />
+              {selectDestinationStoreForAnInternalOrder && (
+                <InputWithLabelRow
+                  label={t('label.destination-customer')}
+                  Input={
+                    <CustomerSearchInput
+                      disabled
+                      value={destinationCustomer ?? null}
+                      onChange={() => {}}
+                      clearable
+                    />
+                  }
+                />
+              )}
               {isRemoteAuthorisation && (
                 <InputWithLabelRow
                   label={t('label.auth-status')}
@@ -90,14 +110,6 @@ export const Toolbar: FC = () => {
             </Box>
           </Box>
         </Grid>
-        <SearchBar
-          placeholder={t('placeholder.filter-items')}
-          value={itemFilter}
-          onChange={newValue => {
-            setItemFilter(newValue);
-          }}
-          debounceTime={0}
-        />
       </Grid>
     </AppBarContentPortal>
   );

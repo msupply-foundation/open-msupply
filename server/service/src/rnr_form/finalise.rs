@@ -96,8 +96,9 @@ fn validate(
         return Err(FinaliseRnRFormError::RnRFormAlreadyFinalised);
     };
 
-    let lines = RnRFormLineRepository::new(connection)
-        .query_by_filter(RnRFormLineFilter::new().rnr_form_id(EqualFilter::equal_to(&input.id)))?;
+    let lines = RnRFormLineRepository::new(connection).query_by_filter(
+        RnRFormLineFilter::new().rnr_form_id(EqualFilter::equal_to(input.id.to_string())),
+    )?;
 
     if lines.iter().any(|line| {
         line.rnr_form_line_row.initial_balance < 0.0 || line.rnr_form_line_row.final_balance < 0.0
@@ -155,6 +156,8 @@ fn generate(
         period_id: Some(rnr_form_row.period_id.clone()),
         order_type: None, // Should we capture this in the RnR form?
         is_emergency: false,
+        created_from_requisition_id: None,
+        original_customer_id: None,
     };
 
     let rnr_form_id = rnr_form_row.id.clone();
@@ -171,7 +174,7 @@ fn generate(
 
     // Get R&R Form lines and create requisition lines
     let rnr_form_lines = RnRFormLineRepository::new(&ctx.connection).query_by_filter(
-        RnRFormLineFilter::new().rnr_form_id(EqualFilter::equal_to(&rnr_form_id)),
+        RnRFormLineFilter::new().rnr_form_id(EqualFilter::equal_to(rnr_form_id.to_string())),
     )?;
 
     // Loop through the rnr lines and create requisition lines
@@ -215,6 +218,7 @@ fn generate(
                     expiring_units: 0.0,
                     days_out_of_stock: rnr_form_line_row.stock_out_duration as f64,
                     option_id: None,
+                    price_per_unit: None,
                 };
 
                 // Also return rnr_form_line_id, so we can update the rnr form line with the requisition line id

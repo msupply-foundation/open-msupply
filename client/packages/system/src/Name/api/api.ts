@@ -18,6 +18,7 @@ export type ListParams = {
   first?: number;
   offset?: number;
   sortBy?: SortBy<NameRowFragment>;
+  filterBy?: FilterBy | null;
 };
 
 const nameParsers = {
@@ -41,7 +42,7 @@ export const getNameQueries = (sdk: Sdk, storeId: string) => ({
 
       throw new Error('Name not found');
     },
-    internalSuppliers: async ({ sortBy }: ListParams) => {
+    internalSuppliers: async ({ sortBy }: ListParams = {}) => {
       const key = nameParsers.toSort(sortBy?.key ?? '');
 
       const result = await sdk.names({
@@ -106,7 +107,7 @@ export const getNameQueries = (sdk: Sdk, storeId: string) => ({
 
       return result?.names;
     },
-    customers: async ({ sortBy }: ListParams) => {
+    customers: async ({ sortBy, filterBy }: ListParams) => {
       const key = nameParsers.toSort(sortBy?.key ?? '');
 
       const result = await sdk.names({
@@ -116,6 +117,7 @@ export const getNameQueries = (sdk: Sdk, storeId: string) => ({
         filter: {
           isCustomer: true,
           type: { equalAny: [NameNodeType.Facility, NameNodeType.Store] },
+          ...filterBy,
         },
         first: 1000,
       });

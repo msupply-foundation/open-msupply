@@ -16,6 +16,8 @@ import {
   useTranslation,
   getGenderTranslationKey,
   Alert,
+  TableProvider,
+  createTableStore,
 } from '@openmsupply-client/common';
 import { PatientPanel } from './PatientPanel';
 import { FetchPatientModal } from './FetchPatientModal';
@@ -37,6 +39,8 @@ const genderToGenderType = (gender: Gender): GenderTypeNode => {
       return GenderTypeNode.Unknown;
     case Gender.NON_BINARY:
       return GenderTypeNode.NonBinary;
+    case Gender.TRANSGENDER:
+      return GenderTypeNode.Transgender;
     default:
       return noOtherVariants(gender);
   }
@@ -251,21 +255,23 @@ export const PatientResultsTab: FC<
       <Alert severity="info" style={{ marginBottom: 2 }}>
         {t('messages.patients-create', { count })}
       </Alert>
-      <DataTable
-        dense
-        id="create-patient-duplicates"
-        data={data}
-        columns={columns}
-        noDataMessage={t('messages.no-matching-patients')}
-        onRowClick={handleRowClick}
-        generateRowTooltip={({ firstName, lastName, isOnCentral }) => {
-          if (isOnCentral) {
-            return t('messages.click-to-fetch');
-          } else {
-            return t('messages.click-to-view', { firstName, lastName });
-          }
-        }}
-      />
+      <TableProvider createStore={createTableStore}>
+        <DataTable
+          dense
+          id="create-patient-duplicates"
+          data={data}
+          columns={columns}
+          noDataMessage={t('messages.no-matching-patients')}
+          onRowClick={handleRowClick}
+          generateRowTooltip={({ firstName, lastName, isOnCentral }) => {
+            if (isOnCentral) {
+              return t('messages.click-to-fetch');
+            } else {
+              return t('messages.click-to-view', { firstName, lastName });
+            }
+          }}
+        />
+      </TableProvider>
     </PatientPanel>
   );
 };

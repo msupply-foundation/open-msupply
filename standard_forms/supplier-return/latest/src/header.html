@@ -1,0 +1,58 @@
+{% macro dateOrNA(datetime) %}
+{% if datetime %}{{ datetime | date(format="%d/%m/%Y", timezone=arguments.timezone) }}{% else
+%}{{t(k="messages.not-applicable", f="N/A")}}{% endif %}
+{% endmacro input %}
+
+<table class="header_image_section" style="width: 100%;height: 98%;">
+    <tr>
+        {% if data.store.logo %}
+        <th style="text-align:left;width:10%;height:70%;">
+            <img class="logo" src="{{ data.store.logo }}" />
+        </th>
+        {% endif %}
+        <th style="text-align:left;width:20%;">
+            <span
+                style="font-weight:bold;" 
+                excel-cell="E1" 
+                excel-type="bold"
+            >{{ data.store.storeName }}</span><br>
+            <span style="font-size:6pt;">{{ data.store.name.address1 }}</span><br>
+            <span style="font-size:6pt;">{{ data.store.name.address2 }}</span><br>
+            <span style="font-size:6pt;">
+                {{t(k="label.phone",f="Telephone")}}: {{ data.store.name.phone }}
+            </span><br>
+            <span style="font-size:6pt;">
+                {{t(k="label.email",f="Email")}}: {{ data.store.name.email }}
+            </span>
+            <br>
+            <br>
+        </th>
+        <th style="text-align:right;width:70%;font-size:28pt;" excel-cell="A1" excel-type="title">
+            {{ t(k="label.supplier-return", f="Supplier return") }}<br>
+        </th>
+    </tr>
+</table>
+
+<div class="header_supplied_section" style="display: flex; flex-direction: column;">
+    <div class="header-space-between">
+        <span excel-cell="A3">{{ t(k="label.supplier", f="Supplier") }}:</span>
+        <span excel-cell="E3">{{ t(k="label.number", f="Number") }}: {{ data.invoice.invoiceNumber }}</span>
+    </div>
+    <div class="header-space-between">
+        <span excel-cell="B3">{{ data.invoice.otherParty.name }}</span>
+        <span excel-cell="E4">{{ t(k="report.their-ref", f="Their ref") }}: {{ data.invoice.theirReference }}</span>
+    </div>
+    <div class="header-space-between">
+        <span>{{ data.invoice.otherParty.code }}</span>
+        <span id="date">
+            {{t(k="report.printed-date", f="Printed date") }}: {{self::dateOrNA(datetime=now())}}
+        </span>
+    </div>
+    <div class="header-space-between">
+        <span>
+            {{data.invoice.otherParty.address1 }}{% if data.invoice.otherParty.address2 %},
+            {{data.invoice.otherParty.address2 }} {% endif %} 
+        </span>
+        <span>{{t(k="report.shipped-date",f="Shipped date")}}: {{self::dateOrNA(datetime=data.invoice.shippedDatetime)}}</span>
+    </div>
+</div>

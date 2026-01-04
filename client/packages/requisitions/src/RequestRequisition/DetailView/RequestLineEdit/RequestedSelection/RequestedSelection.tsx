@@ -1,21 +1,18 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   Box,
+  DosesCaption,
   NumericTextInput,
   Select,
   Typography,
   useDebounceCallback,
-  useFormatNumber,
   useIntlUtils,
   useTranslation,
+  Representation,
+  RepresentationValue,
 } from '@openmsupply-client/common';
 import { getCurrentValue, getUpdatedRequest } from './utils';
 import { DraftRequestLine } from '../hooks';
-import {
-  calculateValueInDoses,
-  Representation,
-  RepresentationValue,
-} from '../../../../common';
 
 interface Option {
   label: string;
@@ -52,7 +49,6 @@ export const RequestedSelection = ({
 }: RequestedSelectionProps) => {
   const t = useTranslation();
   const { getPlural } = useIntlUtils();
-  const { round } = useFormatNumber();
 
   const currentValue = useMemo(
     (): number =>
@@ -102,28 +98,6 @@ export const RequestedSelection = ({
     debouncedUpdate(newValue);
   };
 
-  // doses always rounded to display in whole numbers
-  const valueInDoses = useMemo(
-    () =>
-      displayVaccinesInDoses
-        ? round(
-            calculateValueInDoses(
-              representation,
-              defaultPackSize || 1,
-              dosesPerUnit,
-              value
-            )
-          )
-        : undefined,
-    [
-      displayVaccinesInDoses,
-      representation,
-      defaultPackSize,
-      dosesPerUnit,
-      value,
-    ]
-  );
-
   return (
     <Box
       sx={{
@@ -165,15 +139,12 @@ export const RequestedSelection = ({
             }}
           />
           {displayVaccinesInDoses && !!value && (
-            <Typography
-              variant="caption"
-              color="text.secondary"
-              pt={0.3}
-              pr={1.5}
-              sx={{ textAlign: 'right' }}
-            >
-              {valueInDoses} {t('label.doses').toLowerCase()}
-            </Typography>
+            <DosesCaption
+              value={value}
+              representation={representation}
+              dosesPerUnit={dosesPerUnit}
+              displayVaccinesInDoses={displayVaccinesInDoses}
+            />
           )}
         </Box>
         <Box flex={1}>
@@ -200,6 +171,7 @@ export const RequestedSelection = ({
                 },
               },
             }}
+            disabled={disabled}
           />
         </Box>
       </Box>

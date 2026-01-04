@@ -6,6 +6,7 @@ fragment PrescriptionRow on InvoiceNode {
   pickedDatetime
   verifiedDatetime
   cancelledDatetime
+  isCancellation
   id
   invoiceNumber
   patientId: otherPartyId

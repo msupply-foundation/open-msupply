@@ -33,6 +33,7 @@ fragment RequestLine on RequisitionLineNode {
   additionInUnits
   expiringUnits
   daysOutOfStock
+  pricePerUnit
 
   itemStats {
     __typename
@@ -69,7 +70,12 @@ fragment Request on RequisitionNode {
   maxMonthsOfStock
   minMonthsOfStock
   approvalStatus
-
+  documents {
+    __typename
+    nodes {
+      ...SyncFileReference
+    }
+  }
   user {
     __typename
     username
@@ -111,6 +117,20 @@ fragment Request on RequisitionNode {
     isSupplier
     isOnHold
     name
+    margin
+    store {
+      id
+      code
+    }
+  }
+
+  destinationCustomer(storeId: $storeId) {
+    id
+    code
+    isCustomer
+    isSupplier
+    isOnHold
+    name
     store {
       id
       code
@@ -129,6 +149,16 @@ fragment Request on RequisitionNode {
   }
   orderType
   isEmergency
+
+  createdFromRequisition {
+    id
+    requisitionNumber
+    createdDatetime
+    user {
+      __typename
+      username
+    }
+  }
 }
 
 query OnlyHereToAvoidUnusedWarnings {

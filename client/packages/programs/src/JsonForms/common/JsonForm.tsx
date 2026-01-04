@@ -65,6 +65,7 @@ import {
 } from './styleConstants';
 import { FormActionStructure } from '../useFormActions';
 import { PreviousData } from '../usePreviousEncounter';
+import { useAdditionalErrors } from './hooks/useAdditionalErrors';
 
 export type JsonType = string | number | boolean | null | undefined;
 
@@ -132,7 +133,17 @@ export type JsonFormsConfig = {
    * The initial data of the form before doing any modifications.
    */
   initialData?: JsonData;
+  // "Custom" error management functions
+  customErrors?: {
+    add: (path: string, message: string) => void;
+    remove: (path: string) => void;
+  };
 };
+
+// This allows "default" values to be set in the JSON schema, though it
+// currently can't add defaults on nested properties unless a default object is
+// defined at the root level -- see issue #6971
+const handleDefaultsAjv = createAjv({ useDefaults: true });
 
 const FormComponent = ({
   data,
@@ -147,9 +158,15 @@ const FormComponent = ({
   const t = useTranslation();
   const { currentLanguage } = useIntlUtils();
   const { user, store } = useAuthContext();
+  const { additionalErrors, addAdditionalError, removeAdditionalError } =
+    useAdditionalErrors(setError);
   const fullConfig: JsonFormsConfig = {
     store,
     user,
+    customErrors: {
+      add: addAdditionalError,
+      remove: removeAdditionalError,
+    },
     ...config,
   };
 
@@ -172,11 +189,6 @@ const FormComponent = ({
       error.message = messages?.[keyword] ?? error.message;
       return error.message ?? '';
     });
-
-  // This allows "default" values to be set in the JSON schema, though it
-  // currently can't add defaults on nested properties unless a
-  // default object is defined at the root level -- see issue #6971
-  const handleDefaultsAjv = createAjv({ useDefaults: true });
 
   const translateError = useCallback(
     (error: {
@@ -216,6 +228,7 @@ const FormComponent = ({
       }}
       ajv={handleDefaultsAjv}
       i18n={{ locale: currentLanguage, translateError }}
+      additionalErrors={additionalErrors}
     />
   );
 };

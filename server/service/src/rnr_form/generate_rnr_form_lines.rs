@@ -1,5 +1,8 @@
-use std::{collections::HashMap, ops::Neg};
-
+use super::get_period_length;
+use crate::{
+    requisition_line::chart::calculate_historic_stock_evolution, service_provider::ServiceContext,
+    store_preference::get_store_preferences,
+};
 use chrono::{Duration, NaiveDate, Utc};
 use repository::{
     AdjustmentFilter, AdjustmentRepository, ConsumptionFilter, ConsumptionRepository, DateFilter,
@@ -7,21 +10,18 @@ use repository::{
     PeriodRow, ReplenishmentFilter, ReplenishmentRepository, RepositoryError, RnRForm,
     RnRFormFilter, RnRFormLineRow, RnRFormLineRowRepository, RnRFormLowStock, RnRFormRepository,
     StockLineFilter, StockLineRepository, StockLineSort, StockLineSortField, StockMovementFilter,
-    StockMovementRepository, StockOnHandFilter, StockOnHandRepository, StorageConnection,
+    StockMovementRepository, StockMovementRow, StockOnHandFilter, StockOnHandRepository,
+    StorageConnection,
 };
+use std::{collections::HashMap, ops::Neg};
 use util::{
-    constants::APPROX_NUMBER_OF_DAYS_IN_A_MONTH_IS_30, date_now, date_with_offset, pos_zero,
-    uuid::uuid,
+    constants::APPROX_NUMBER_OF_DAYS_IN_A_MONTH_IS_30, date_with_offset, pos_zero, uuid::uuid,
 };
 
-use crate::{
-    requisition_line::chart::{get_stock_evolution_for_item, StockEvolutionOptions},
-    service_provider::ServiceContext,
-    store_preference::get_store_preferences,
-};
-
-use super::get_period_length;
-
+// Further improvements to R&R performance could include:
+// - Querying stock movements once
+// - Moving some of the calculations to SQL (e.g. stock out durations, opening
+//   balances)
 pub fn generate_rnr_form_lines(
     ctx: &ServiceContext,
     store_id: &str,
@@ -47,46 +47,54 @@ pub fn generate_rnr_form_lines(
     // Get previous form data for initial balances
     let previous_rnr_form_lines_by_item_id = get_rnr_form_lines_map(
         &ctx.connection,
-        previous_form.as_ref().map(|f| f.rnr_form_row.id.to_owned()),
+        previous_form
+            .as_ref()
+            .map(|f| f.rnr_form_row.id.to_string()),
     )?;
 
     // Get monthly consumption for each item from previous forms
     let previous_monthly_consumption = get_previous_monthly_consumption(
         &ctx.connection,
         RnRFormFilter::new()
-            .store_id(EqualFilter::equal_to(store_id))
-            .period_schedule_id(EqualFilter::equal_to(&period.period_schedule_id))
-            .program_id(EqualFilter::equal_to(program_id)),
+            .store_id(EqualFilter::equal_to(store_id.to_string()))
+            .period_schedule_id(EqualFilter::equal_to(period.period_schedule_id.to_string()))
+            .program_id(EqualFilter::equal_to(program_id.to_string())),
     )?;
+
+    let store_preferences = get_store_preferences(&ctx.connection, store_id)?;
+
+    let opening_balances = get_bulk_opening_balances(
+        &ctx.connection,
+        &previous_rnr_form_lines_by_item_id,
+        store_id,
+        &master_list_item_ids,
+        period.start_date,
+    )?;
+
+    let stock_out_durations = get_stock_out_durations_batch(
+        &ctx.connection,
+        store_id,
+        &master_list_item_ids,
+        period.end_date,
+        period_length_in_days as u32,
+        &opening_balances,
+        &usage_by_item_map,
+    )?;
+
+    let earliest_expiries =
+        get_bulk_earliest_expiries(&ctx.connection, store_id, &master_list_item_ids)?;
 
     // Generate line for each item in the master list
     let rnr_form_lines = master_list_item_ids
         .into_iter()
         .map(|item_id| {
-            // Initial balance is either:
-            // - Use the previous form's final balance
-            // - If not available, calculate retrospectively from stock movements
-            let initial_balance = get_opening_balance(
-                &ctx.connection,
-                previous_rnr_form_lines_by_item_id.get(&item_id),
-                store_id,
-                &item_id,
-                period.start_date,
-            )?;
-
+            let initial_balance = opening_balances.get(&item_id).copied().unwrap_or(0.0);
             let usage = usage_by_item_map.get(&item_id).copied().unwrap_or_default();
 
             let final_balance =
                 initial_balance + usage.replenished - usage.consumed + usage.adjusted;
 
-            let stock_out_duration = get_stock_out_duration(
-                &ctx.connection,
-                store_id,
-                &item_id,
-                period.end_date,
-                period_length_in_days as u32,
-                final_balance,
-            )?;
+            let stock_out_duration = stock_out_durations.get(&item_id).copied().unwrap_or(0);
 
             let adjusted_quantity_consumed = get_adjusted_quantity_consumed(
                 period_length_in_days,
@@ -113,8 +121,6 @@ pub fn generate_rnr_form_lines(
                 .collect::<Vec<String>>()
                 .join(",");
 
-            let store_preferences = get_store_preferences(&ctx.connection, store_id)?;
-
             let minimum_quantity =
                 average_monthly_consumption * store_preferences.months_understock;
             let maximum_quantity = average_monthly_consumption * store_preferences.months_overstock;
@@ -125,7 +131,7 @@ pub fn generate_rnr_form_lines(
                 0.0
             };
 
-            let earliest_expiry = get_earliest_expiry(&ctx.connection, store_id, &item_id)?;
+            let earliest_expiry = earliest_expiries.get(&item_id).copied();
 
             Ok(RnRFormLineRow {
                 id: uuid(),
@@ -165,14 +171,14 @@ pub fn generate_rnr_form_lines(
 // ---- ---- ---- ----
 // HELPER FUNCTIONS
 // ---- ---- ---- ----
-
 fn get_master_list_item_ids(
     ctx: &ServiceContext,
     master_list_id: &str,
 ) -> Result<Vec<String>, RepositoryError> {
     MasterListLineRepository::new(&ctx.connection)
         .query_by_filter(
-            MasterListLineFilter::new().master_list_id(EqualFilter::equal_to(master_list_id)),
+            MasterListLineFilter::new()
+                .master_list_id(EqualFilter::equal_to(master_list_id.to_string())),
             None,
         )
         .map(|lines| lines.into_iter().map(|line| line.item_id).collect())
@@ -210,10 +216,8 @@ pub fn get_amc(
         previous_monthly_consumption_values.iter().sum::<f64>();
 
     // Calculate AMC for this period
-    let this_period_amc = (total_previous_monthly_consumption + monthly_consumption_this_period)
-        / (num_previous_data_points + 1.0);
-
-    this_period_amc
+    (total_previous_monthly_consumption + monthly_consumption_this_period)
+        / (num_previous_data_points + 1.0)
 }
 
 pub fn get_previous_monthly_consumption(
@@ -258,91 +262,6 @@ pub fn get_previous_monthly_consumption(
     Ok(monthly_consumption_by_item_id)
 }
 
-pub fn get_opening_balance(
-    connection: &StorageConnection,
-    previous_row: Option<&RnRFormLineRow>,
-    store_id: &str,
-    item_id: &str,
-    start_date: NaiveDate,
-) -> Result<f64, RepositoryError> {
-    if let Some(previous_row) = previous_row {
-        return Ok(previous_row.final_balance);
-    }
-
-    // Find all the store movement values between the start_date and now
-    // Take those stock movements away from the current stock on hand, to retrospectively calculate what was available at that time.
-    let filter = StockMovementFilter::new()
-        .store_id(EqualFilter::equal_to(store_id))
-        .item_id(EqualFilter::equal_to(item_id))
-        .datetime(DatetimeFilter::date_range(
-            start_date.into(),
-            Utc::now().naive_utc(),
-        ));
-
-    let stock_movement_rows = StockMovementRepository::new(connection).query(Some(filter))?;
-
-    let total_movements_since_start_date: f64 = stock_movement_rows
-        .into_iter()
-        .map(|row| row.quantity)
-        .sum();
-
-    let stock_on_hand_now = StockOnHandRepository::new(connection)
-        .query_one(
-            StockOnHandFilter::new()
-                .store_id(EqualFilter::equal_to(store_id))
-                .item_id(EqualFilter::equal_to(item_id)),
-        )?
-        .map(|row| row.total_stock_on_hand)
-        .unwrap_or(0.0);
-
-    Ok(stock_on_hand_now - total_movements_since_start_date)
-}
-
-pub fn get_stock_out_duration(
-    connection: &StorageConnection,
-    store_id: &str,
-    item_id: &str,
-    end_date: NaiveDate,
-    days_in_period: u32,
-    closing_quantity: f64,
-) -> Result<i32, RepositoryError> {
-    let end_datetime = end_date
-        .and_hms_milli_opt(23, 59, 59, 999)
-        // Should always be able to create end of day datetime, so this error shouldn't be possible
-        .ok_or(RepositoryError::as_db_error(
-            "Could not determine closing datetime",
-            "",
-        ))?;
-
-    let evolution = get_stock_evolution_for_item(
-        connection,
-        store_id,
-        item_id,
-        end_datetime,
-        closing_quantity as u32,
-        date_now(), // only used for future projections, not needed here
-        0,          // only used for future projections, not needed here
-        0.0,        // only used for future projections, not needed here
-        StockEvolutionOptions {
-            number_of_historic_data_points: days_in_period,
-            number_of_projected_data_points: 0,
-        },
-    )?;
-
-    let days_out_of_stock = evolution
-        .historic_stock
-        .into_iter()
-        .filter(|point| point.quantity == 0.0)
-        .count() as i32;
-
-    if days_out_of_stock == days_in_period as i32 {
-        // If there was no consumption data, we'll set stock out duration to 0 and let the user input this
-        Ok(0)
-    } else {
-        Ok(days_out_of_stock)
-    }
-}
-
 // If stock had been available for the entire period, this is the quantity that 'would' have been consumed
 pub fn get_adjusted_quantity_consumed(
     period_length_in_days: i64,
@@ -375,7 +294,7 @@ pub fn get_usage_map(
     let lookback_days = period_length_in_days - 1;
 
     let start_date = date_with_offset(end_date, Duration::days(lookback_days).neg());
-    let store_id_filter = Some(EqualFilter::equal_to(store_id));
+    let store_id_filter = Some(EqualFilter::equal_to(store_id.to_string()));
     let date_filter = Some(DateFilter::date_range(&start_date, end_date));
 
     // Get all usage rows for the period
@@ -422,33 +341,6 @@ pub fn get_usage_map(
     Ok(usage_map)
 }
 
-pub fn get_earliest_expiry(
-    connection: &StorageConnection,
-    store_id: &str,
-    item_id: &str,
-) -> Result<Option<NaiveDate>, RepositoryError> {
-    let filter = StockLineFilter::new()
-        .store_id(EqualFilter::equal_to(store_id))
-        .item_id(EqualFilter::equal_to(item_id))
-        // Note: this is available stock _now_, not what would have been available at the closing time of the period
-        .is_available(true);
-
-    let earliest_expiring = StockLineRepository::new(connection)
-        .query(
-            Pagination::all(),
-            Some(filter),
-            Some(StockLineSort {
-                key: StockLineSortField::ExpiryDate,
-                // Descending, then pop last entry for earliest expiry
-                desc: Some(true),
-            }),
-            Some(store_id.to_string()),
-        )?
-        .pop();
-
-    Ok(earliest_expiring.and_then(|line| line.stock_line_row.expiry_date))
-}
-
 fn get_low_stock_status(final_balance: f64, maximum_quantity: f64) -> RnRFormLowStock {
     if final_balance < maximum_quantity / 4.0 {
         return RnRFormLowStock::BelowQuarter;
@@ -458,4 +350,182 @@ fn get_low_stock_status(final_balance: f64, maximum_quantity: f64) -> RnRFormLow
     }
 
     RnRFormLowStock::Ok
+}
+
+/**
+ * Opening balance for R&R form lines is either:
+ * - The final balance from the previous R&R form for that item (if it exists)
+ * - Or, if there is no previous R&R form line for that item, we calculate it from stock movements
+ */
+pub fn get_bulk_opening_balances(
+    connection: &StorageConnection,
+    previous_rnr_form_lines_by_item_id: &HashMap<String, RnRFormLineRow>,
+    store_id: &str,
+    item_ids: &[String],
+    start_date: NaiveDate,
+) -> Result<HashMap<String, f64>, RepositoryError> {
+    let mut opening_balances = HashMap::new();
+
+    for item_id in item_ids {
+        if let Some(previous_row) = previous_rnr_form_lines_by_item_id.get(item_id) {
+            opening_balances.insert(item_id.clone(), previous_row.final_balance);
+        }
+    }
+
+    let items_needing_calculation: Vec<String> = item_ids
+        .iter()
+        .filter(|item_id| !opening_balances.contains_key(*item_id))
+        .cloned()
+        .collect();
+
+    if !items_needing_calculation.is_empty() {
+        // Get all movements between the start date and now for all items needing calculation
+        let stock_movement_rows = StockMovementRepository::new(connection).query(Some(
+            StockMovementFilter::new()
+                .store_id(EqualFilter::equal_to(store_id.to_string()))
+                .item_id(EqualFilter::equal_any(items_needing_calculation.clone()))
+                .datetime(DatetimeFilter::date_range(
+                    start_date.into(),
+                    Utc::now().naive_utc(),
+                )),
+        ))?;
+
+        let mut movements_by_item: HashMap<String, f64> = HashMap::new();
+        for movement in stock_movement_rows {
+            *movements_by_item
+                .entry(movement.item_id.clone())
+                .or_insert(0.0) += movement.quantity;
+        }
+
+        let stock_on_hand_rows = StockOnHandRepository::new(connection).query(Some(
+            StockOnHandFilter::new()
+                .store_id(EqualFilter::equal_to(store_id.to_string()))
+                .item_id(EqualFilter::equal_any(items_needing_calculation.clone())),
+        ))?;
+
+        let stock_on_hand_by_item: HashMap<String, f64> = stock_on_hand_rows
+            .into_iter()
+            .map(|row| (row.item_id, row.total_stock_on_hand))
+            .collect();
+
+        for item_id in items_needing_calculation {
+            let stock_on_hand_now = stock_on_hand_by_item.get(&item_id).copied().unwrap_or(0.0);
+            let total_movements_since_start =
+                movements_by_item.get(&item_id).copied().unwrap_or(0.0);
+            let opening_balance = stock_on_hand_now - total_movements_since_start;
+            opening_balances.insert(item_id, opening_balance);
+        }
+    }
+
+    Ok(opening_balances)
+}
+
+pub fn get_stock_out_durations_batch(
+    connection: &StorageConnection,
+    store_id: &str,
+    item_ids: &[String],
+    end_date: NaiveDate,
+    days_in_period: u32,
+    opening_balances: &HashMap<String, f64>,
+    usage_by_item_map: &HashMap<String, UsageStats>,
+) -> Result<HashMap<String, i32>, RepositoryError> {
+    let mut stock_out_durations = HashMap::new();
+
+    let period_start_date =
+        date_with_offset(&end_date, Duration::days((days_in_period as i64 - 1).neg()));
+
+    let stock_movement_rows = StockMovementRepository::new(connection).query(Some(
+        StockMovementFilter::new()
+            .store_id(EqualFilter::equal_to(store_id.to_string()))
+            .item_id(EqualFilter::equal_any(item_ids.to_vec()))
+            .datetime(DatetimeFilter::date_range(
+                period_start_date.and_hms_opt(0, 0, 0).unwrap(),
+                end_date.and_hms_milli_opt(23, 59, 59, 999).unwrap(),
+            )),
+    ))?;
+
+    for item_id in item_ids {
+        let usage = usage_by_item_map.get(item_id).copied().unwrap_or_default();
+        let initial_balance = opening_balances.get(item_id).copied().unwrap_or(0.0);
+        let closing_quantity =
+            initial_balance + usage.replenished - usage.consumed + usage.adjusted;
+
+        // When calculated closing quantity is 0 or negative but there was replenishment,
+        // use the replenishment amount as the final stock quantity
+        let final_stock_quantity = if closing_quantity <= 0.0 && usage.replenished > 0.0 {
+            usage.replenished.max(0.0)
+        } else {
+            closing_quantity.max(0.0)
+        };
+
+        let item_movements: Vec<StockMovementRow> = stock_movement_rows
+            .iter()
+            .filter(|movement| movement.item_id == *item_id)
+            .cloned()
+            .collect();
+
+        // Generate the list of dates for the period
+        let mut historic_points = Vec::new();
+        for day_offset in 0..days_in_period {
+            let date = date_with_offset(&period_start_date, Duration::days(day_offset as i64));
+            historic_points.push(date);
+        }
+
+        let stock_evolution = calculate_historic_stock_evolution(
+            final_stock_quantity as u32,
+            historic_points,
+            item_movements,
+        );
+
+        let days_out_of_stock = stock_evolution
+            .into_iter()
+            .filter(|point| point.quantity == 0.0)
+            .count() as i32;
+
+        let stock_out_duration = if days_out_of_stock == days_in_period as i32 {
+            0
+        } else {
+            days_out_of_stock
+        };
+
+        stock_out_durations.insert(item_id.clone(), stock_out_duration);
+    }
+
+    Ok(stock_out_durations)
+}
+
+pub fn get_bulk_earliest_expiries(
+    connection: &StorageConnection,
+    store_id: &str,
+    item_ids: &[String],
+) -> Result<HashMap<String, NaiveDate>, RepositoryError> {
+    let mut expiries = HashMap::new();
+
+    let filter = StockLineFilter::new()
+        .store_id(EqualFilter::equal_to(store_id.to_string()))
+        .item_id(EqualFilter::equal_any(item_ids.to_vec()))
+        // Note: this is available stock _now_, not what would have been available at the closing time of the period
+        .is_available(true);
+
+    let stock_lines = StockLineRepository::new(connection).query(
+        Pagination::all(),
+        Some(filter),
+        Some(StockLineSort {
+            key: StockLineSortField::ExpiryDate,
+            // Descending, then pop last entry for earliest expiry
+            desc: Some(true),
+        }),
+        Some(store_id.to_string()),
+    )?;
+
+    for line in stock_lines.into_iter() {
+        if let Some(expiry) = line.stock_line_row.expiry_date {
+            let entry = expiries.entry(line.item_row.id.clone()).or_insert(expiry);
+            if expiry < *entry {
+                *entry = expiry;
+            }
+        }
+    }
+
+    Ok(expiries)
 }

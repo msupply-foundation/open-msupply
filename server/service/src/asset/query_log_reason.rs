@@ -30,8 +30,8 @@ pub fn get_asset_log_reason(
 ) -> Result<AssetLogReason, SingleRecordError> {
     let repository = AssetLogReasonRepository::new(&ctx.connection);
 
-    let mut result =
-        repository.query_by_filter(AssetLogReasonFilter::new().id(EqualFilter::equal_to(&id)))?;
+    let mut result = repository
+        .query_by_filter(AssetLogReasonFilter::new().id(EqualFilter::equal_to(id.to_string())))?;
 
     if let Some(record) = result.pop() {
         Ok(record)

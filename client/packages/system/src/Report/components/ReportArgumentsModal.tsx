@@ -5,6 +5,12 @@ import {
   JsonForm,
   NameSearch,
   nameSearchTester,
+  MasterListSearch,
+  masterListSearchTester,
+  LocationSearch,
+  locationSearchTester,
+  ReasonOptionSearch,
+  reasonOptionSearchTester,
 } from '@openmsupply-client/programs';
 import { ReportRowFragment } from '../api';
 import { useDialog, useUrlQuery } from '@common/hooks';
@@ -76,6 +82,9 @@ export const ReportArgumentsModal = ({
             renderer: programsModule.DateRange,
           },
           { tester: nameSearchTester, renderer: NameSearch },
+          { tester: masterListSearchTester, renderer: MasterListSearch },
+          { tester: locationSearchTester, renderer: LocationSearch },
+          { tester: reasonOptionSearchTester, renderer: ReasonOptionSearch },
         ];
         setAdditionalRenderers(renderers);
       } catch (error) {

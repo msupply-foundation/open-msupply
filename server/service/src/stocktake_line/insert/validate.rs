@@ -173,7 +173,7 @@ fn check_stocktake_line_does_not_exist(
     id: &str,
 ) -> Result<bool, RepositoryError> {
     let count = StocktakeLineRepository::new(connection).count(
-        Some(StocktakeLineFilter::new().id(EqualFilter::equal_to(id))),
+        Some(StocktakeLineFilter::new().id(EqualFilter::equal_to(id.to_string()))),
         None,
     )?;
     Ok(count == 0)
@@ -185,7 +185,7 @@ fn check_stock_line_is_unique(
     stock_line_id: &str,
 ) -> Result<bool, RepositoryError> {
     let stocktake_lines = StocktakeLineRepository::new(connection).query_by_filter(
-        StocktakeLineFilter::new().stocktake_id(EqualFilter::equal_to(id)),
+        StocktakeLineFilter::new().stocktake_id(EqualFilter::equal_to(id.to_string())),
         None,
     )?;
     let already_has_stock_line = stocktake_lines.iter().find(|line| {
@@ -239,7 +239,7 @@ pub fn check_item_exists_and_get_item_details(
 ) -> Result<(String, Option<String>), InsertStocktakeLineError> {
     let item = ItemRepository::new(connection)
         .query_by_filter(
-            ItemFilter::new().id(EqualFilter::equal_to(item_id)),
+            ItemFilter::new().id(EqualFilter::equal_to(item_id.to_string())),
             Some(store_id.to_string()),
         )?
         .pop()

@@ -32,6 +32,7 @@ pub enum KeyType {
     LoadPluginProcessorCursor,
     AssignRequisitionNumberProcessorCursor,
     AddCentralPatientVisibilityProcessorCursor,
+    RequisitionAutoFinaliseProcessorCursor,
     SupportUploadFilesProcessorCursor,
     // Nested key value store to store dynamic cursor values as JSON text
     DynamicCursor,

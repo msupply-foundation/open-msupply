@@ -113,7 +113,7 @@ mod test {
             service.delete_request_requisition_line(
                 &context,
                 DeleteRequestRequisitionLine {
-                    id: "invalid".to_owned(),
+                    id: "invalid".to_string(),
                 },
             ),
             Err(ServiceError::RequisitionLineDoesNotExist)

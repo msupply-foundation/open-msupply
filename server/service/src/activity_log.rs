@@ -1,6 +1,6 @@
 use std::error::Error;
 
-use chrono::Utc;
+use chrono::{NaiveDateTime, Utc};
 use repository::{
     activity_log::{ActivityLog, ActivityLogFilter, ActivityLogRepository, ActivityLogSort},
     system_log_row::{SystemLogRow, SystemLogRowRepository, SystemLogType},
@@ -9,6 +9,7 @@ use repository::{
 };
 
 use repository::{PaginationOption, RepositoryError};
+use util::serde_json_diff::json_diff;
 use util::uuid::uuid;
 use util::{constants::SYSTEM_USER_ID, format_error};
 
@@ -62,6 +63,64 @@ pub fn activity_log_entry(
     Ok(())
 }
 
+/// Use instead of `activity_log_entry()` to provide the store_id if the ctx doesn't include it (e.g. system or basic context used in changelog processors)
+pub fn activity_log_entry_with_store(
+    ctx: &ServiceContext,
+    log_type: ActivityLogType,
+    record_id: Option<String>,
+    changed_from: Option<String>,
+    changed_to: Option<String>,
+    store_id: Option<String>,
+) -> Result<(), RepositoryError> {
+    let log = &ActivityLogRow {
+        id: uuid(),
+        r#type: log_type,
+        user_id: if !ctx.user_id.is_empty() {
+            Some(ctx.user_id.clone())
+        } else {
+            None
+        },
+        store_id,
+        record_id,
+        datetime: Utc::now().naive_utc(),
+        changed_to,
+        changed_from,
+    };
+
+    let _change_log_id = ActivityLogRowRepository::new(&ctx.connection).insert_one(log)?;
+    Ok(())
+}
+
+pub fn activity_log_entry_with_diff(
+    ctx: &ServiceContext,
+    log_type: ActivityLogType,
+    record_id: Option<String>,
+    old_value: Option<&impl serde::Serialize>,
+    new_value: &impl serde::Serialize,
+) -> Result<(), RepositoryError> {
+    // Create a diff showing only the changes
+    let (changed_from, changed_to) = match old_value {
+        Some(old) => {
+            match json_diff(&old, &new_value).map_err(|e| RepositoryError::DBError {
+                msg: format!("{:?}", e),
+                extra: "JSON diff error".to_string(),
+            })? {
+                Some((from, to)) => (
+                    Some(serde_json::to_string(&from).unwrap_or_default()),
+                    Some(serde_json::to_string(&to).unwrap_or_default()),
+                ),
+                None => (None, None), // No changes
+            }
+        }
+        None => (
+            None,
+            Some(serde_json::to_string(&new_value).unwrap_or_default()),
+        ),
+    };
+
+    activity_log_entry(ctx, log_type, record_id, changed_from, changed_to)
+}
+
 pub fn system_activity_log_entry(
     connection: &StorageConnection,
     log_type: ActivityLogType,
@@ -83,19 +142,46 @@ pub fn system_activity_log_entry(
     Ok(())
 }
 
-fn system_log_entry(
+pub enum SystemLogMessage<'a> {
+    Error(&'a dyn Error, &'a str),
+    Message(&'a str),
+}
+
+pub fn system_log_entry(
     connection: &StorageConnection,
     log_type: SystemLogType,
-    message: &str,
+    datetime: Option<NaiveDateTime>,
+    should_log_to_console: bool,
+    message: SystemLogMessage,
 ) -> Result<(), RepositoryError> {
     let sync_site_id =
         KeyValueStoreRepository::new(connection).get_i32(KeyType::SettingsSyncSiteId)?;
+
+    let message = match { message } {
+        SystemLogMessage::Error(error, context) => {
+            format!(
+                "{} - {} - {}",
+                context,
+                log_type.to_string(),
+                format_error(&error)
+            )
+        }
+        SystemLogMessage::Message(msg) => msg.to_string(),
+    };
+
+    if should_log_to_console {
+        if log_type.is_error() {
+            log::error!("{message}");
+        } else {
+            log::info!("{message}");
+        }
+    }
 
     let log = &SystemLogRow {
         id: uuid(),
         r#type: log_type.clone(),
         sync_site_id,
-        datetime: Utc::now().naive_utc(),
+        datetime: datetime.unwrap_or(Utc::now().naive_utc()),
         message: Some(message.to_string()),
         is_error: log_type.is_error(),
     };
@@ -111,14 +197,13 @@ pub fn system_error_log(
     error: &impl Error,
     context: &str,
 ) -> Result<(), RepositoryError> {
-    let error_message = format!(
-        "{} - {} - {}",
-        context,
-        log_type.to_string(),
-        format_error(error)
-    );
-    log::error!("{error_message}");
-    system_log_entry(connection, log_type, &error_message)?;
+    system_log_entry(
+        connection,
+        log_type,
+        None,
+        true,
+        SystemLogMessage::Error(error, context),
+    )?;
     Ok(())
 }
 
@@ -128,8 +213,29 @@ pub fn system_log(
     log_type: SystemLogType,
     log: &str,
 ) -> Result<(), RepositoryError> {
-    log::info!("{} {log}", log_type.to_string());
-    system_log_entry(connection, log_type, &log)?;
+    system_log_entry(
+        connection,
+        log_type,
+        None,
+        true,
+        SystemLogMessage::Message(log),
+    )?;
+    Ok(())
+}
+
+pub fn add_migration_results_to_system_log(
+    connection: &StorageConnection,
+    migration_result: Vec<(String, NaiveDateTime)>,
+) -> Result<(), RepositoryError> {
+    for (message, timestamp) in migration_result {
+        system_log_entry(
+            connection,
+            SystemLogType::Migration,
+            Some(timestamp),
+            false,
+            SystemLogMessage::Message(&message),
+        )?;
+    }
     Ok(())
 }
 
@@ -165,17 +271,21 @@ pub fn log_type_from_purchase_order_status(status: &PurchaseOrderStatus) -> Acti
 #[cfg(test)]
 mod test {
     use crate::{
+        activity_log::add_migration_results_to_system_log,
         invoice::outbound_shipment::update::{
             UpdateOutboundShipment, UpdateOutboundShipmentStatus,
         },
         test_helpers::{setup_all_with_data_and_service_provider, ServiceTestContext},
     };
+    use chrono::{NaiveDate, Utc};
     use repository::{
         mock::{mock_name_a, mock_store_a, MockData, MockDataInserts},
+        system_log_row::{SystemLogRowRepository, SystemLogType},
+        test_db::setup_all,
         ActivityLogType, InvoiceRow, InvoiceStatus, InvoiceType,
     };
 
-    use super::get_activity_logs;
+    use super::{get_activity_logs, system_log_entry, SystemLogMessage};
 
     #[actix_rt::test]
     async fn invoice_activity_log_status() {
@@ -204,7 +314,7 @@ mod test {
             .context(mock_store_a().id, "n/a".to_string())
             .unwrap();
 
-        // Test dupilcate status
+        // Test duplicate status
         service_provider
             .invoice_service
             .update_outbound_shipment(
@@ -283,5 +393,106 @@ mod test {
             activity_logs[1].activity_log_row.r#type,
             ActivityLogType::InvoiceStatusShipped
         );
+    }
+
+    #[actix_rt::test]
+    async fn system_log_entry_with_custom_datetime_test() {
+        let (_, _, connection_manager, _) = setup_all(
+            "system_log_entry_with_custom_datetime_test",
+            MockDataInserts::none(),
+        )
+        .await;
+
+        let connection = connection_manager.connection().unwrap();
+        let repo = SystemLogRowRepository::new(&connection);
+
+        let custom_datetime = NaiveDate::from_ymd_opt(2025, 12, 10)
+            .unwrap()
+            .and_hms_opt(10, 30, 0)
+            .unwrap();
+
+        // Test with custom datetime
+        system_log_entry(
+            &connection,
+            SystemLogType::Migration,
+            Some(custom_datetime),
+            false,
+            SystemLogMessage::Message("Test with custom datetime"),
+        )
+        .unwrap();
+
+        // Test without datetime (should use current time)
+        let before_insert = Utc::now().naive_utc();
+        system_log_entry(
+            &connection,
+            SystemLogType::ServerStatus,
+            None,
+            false,
+            SystemLogMessage::Message("Test without custom datetime"),
+        )
+        .unwrap();
+        let after_insert = Utc::now().naive_utc();
+
+        let logs = repo.find_all().unwrap();
+        assert_eq!(logs.len(), 2);
+
+        // First log should have custom datetime
+        assert_eq!(logs[0].datetime, custom_datetime);
+        assert_eq!(
+            logs[0].message,
+            Some("Test with custom datetime".to_string())
+        );
+        assert_eq!(logs[0].r#type, SystemLogType::Migration);
+
+        // Second log should have a datetime within the before/after range
+        assert!(logs[1].datetime > before_insert && logs[1].datetime < after_insert);
+
+        assert_eq!(
+            logs[1].message,
+            Some("Test without custom datetime".to_string())
+        );
+        assert_eq!(logs[1].r#type, SystemLogType::ServerStatus);
+    }
+
+    #[actix_rt::test]
+    async fn add_migration_results_to_system_log_test() {
+        let (_, _, connection_manager, _) = setup_all(
+            "add_migration_results_to_system_log_test",
+            MockDataInserts::none(),
+        )
+        .await;
+
+        let connection = connection_manager.connection().unwrap();
+        let repo = SystemLogRowRepository::new(&connection);
+
+        // Create multiple migration results
+        let migration_results = vec![
+            (
+                "Migration 1 completed".to_string(),
+                NaiveDate::from_ymd_opt(2025, 12, 01)
+                    .unwrap()
+                    .and_hms_opt(10, 0, 0)
+                    .unwrap(),
+            ),
+            (
+                "Migration 2 completed".to_string(),
+                NaiveDate::from_ymd_opt(2025, 12, 01)
+                    .unwrap()
+                    .and_hms_opt(10, 5, 0)
+                    .unwrap(),
+            ),
+        ];
+
+        // Test the migration log function
+        add_migration_results_to_system_log(&connection, migration_results).unwrap();
+
+        let logs = repo.find_all().unwrap();
+        assert_eq!(logs.len(), 2);
+
+        assert_eq!(logs[0].r#type, SystemLogType::Migration);
+        assert_eq!(logs[0].message, Some("Migration 1 completed".to_string()));
+
+        assert_eq!(logs[1].r#type, SystemLogType::Migration);
+        assert_eq!(logs[1].message, Some("Migration 2 completed".to_string()));
     }
 }

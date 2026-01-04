@@ -12,13 +12,11 @@ export const useInbound = {
     listAll: Document.useInboundsAll,
 
     delete: Document.useInboundDelete,
-    deleteRows: Document.useInboundDeleteRows,
     insert: Document.useInsertInbound,
     update: Document.useUpdateInbound,
     updateTax: Document.useUpdateInboundServiceTax,
 
     fields: Document.useInboundFields,
-    next: Document.useNextItem,
 
     listInternalOrders: Document.useListInternalOrders,
     listInternalOrdersPromise: Document.useListInternalOrdersPromise,
@@ -27,12 +25,12 @@ export const useInbound = {
   lines: {
     list: Lines.useInboundLines,
     items: Lines.useInboundItems,
-    rows: Lines.useInboundRows,
     serviceLines: Lines.useInboundServiceLines,
+    lines: Lines.useInboundLines,
 
     insertFromInternalOrder: Lines.useLinesFromInternalOrder,
     delete: Lines.useDeleteInboundLines,
-    deleteSelected: Lines.useDeleteSelectedLines,
+    deleteSelected: Lines.useInboundDeleteSelectedLines,
     save: Lines.useSaveInboundLines,
 
     zeroQuantities: Lines.useZeroInboundLinesQuantity,
@@ -43,6 +41,5 @@ export const useInbound = {
     isDisabled: Utils.useIsInboundDisabled,
     isHoldable: Utils.useIsInboundHoldable,
     isStatusChangeDisabled: Utils.useIsStatusChangeDisabled,
-    selectedLines: Utils.useSelectedLines,
   },
 };

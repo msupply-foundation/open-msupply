@@ -56,6 +56,8 @@ pub enum ReportContext {
     InternalOrder,
     PurchaseOrder,
     GoodsReceived,
+    SupplierReturn,
+    CustomerReturn,
 }
 
 #[derive(InputObject, Clone)]
@@ -63,6 +65,7 @@ pub struct EqualFilterReportContextInput {
     pub equal_to: Option<ReportContext>,
     pub equal_any: Option<Vec<ReportContext>>,
     pub not_equal_to: Option<ReportContext>,
+    pub not_equal_all: Option<Vec<ReportContext>>,
 }
 
 #[derive(InputObject, Clone)]

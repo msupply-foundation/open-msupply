@@ -31,6 +31,9 @@ pub struct LegacyVaccinationRow {
     pub name_ID: String,
     pub facility_ID: Option<String>,
     pub item_ID: Option<String>,
+    pub encounter_ID: Option<String>,
+    pub program_enrolment_ID: Option<String>,
+    pub given_store_ID: Option<String>,
 }
 
 const LEGACY_VACCINATION_TABLE_NAME: &str = "om_vaccination";
@@ -78,9 +81,9 @@ impl SyncTranslation for VaccinationLegacyTranslation {
         let VaccinationRow {
             id,
             store_id,
-            given_store_id: _,
-            program_enrolment_id: _,
-            encounter_id: _,
+            given_store_id,
+            program_enrolment_id,
+            encounter_id,
             patient_link_id,
             user_id,
             vaccine_course_dose_id,
@@ -147,6 +150,9 @@ impl SyncTranslation for VaccinationLegacyTranslation {
             name_ID: patient_name_id,
             facility_ID: facility_name_id,
             item_ID: item_id,
+            encounter_ID: Some(encounter_id),
+            program_enrolment_ID: Some(program_enrolment_id),
+            given_store_ID: given_store_id,
         };
 
         let json_record = serde_json::to_value(legacy_row)?;

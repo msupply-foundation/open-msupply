@@ -216,7 +216,7 @@ mod tests {
 
         let asset_log_id = "log_a".to_string();
         let log = asset_log_repository
-            .query_one(AssetLogFilter::new().id(EqualFilter::equal_to(&asset_log_id)))
+            .query_one(AssetLogFilter::new().id(EqualFilter::equal_to(asset_log_id.to_string())))
             .unwrap()
             .unwrap();
 

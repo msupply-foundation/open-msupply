@@ -1,21 +1,30 @@
-import { ColumnDefinition, UsePluginEvents } from '@openmsupply-client/common';
 import {
+  ColumnDef,
+  UsePluginEvents,
+} from '@openmsupply-client/common';
+import {
+  ItemFragment,
+  MasterListRowFragment,
   RequestFragment,
   RequestLineFragment,
   StockLineRowFragment,
 } from '@openmsupply-client/system';
 import { InboundFragment } from '@openmsupply-client/invoices';
 import { PrescriptionPaymentComponentProps } from './prescriptionTypes';
+import { DraftRequestLine } from 'packages/requisitions/src/RequestRequisition/DetailView/RequestLineEdit';
 
 export type Plugins = {
   prescriptionPaymentForm?: React.ComponentType<PrescriptionPaymentComponentProps>[];
   inboundShipmentAppBar?: React.ComponentType<{ shipment: InboundFragment }>[];
+  item?: {
+    detailViewField: React.ComponentType<{ item: ItemFragment }>[];
+  };
   dashboard?: React.ComponentType[];
   stockLine?: {
     tableStateLoader: React.ComponentType<{
       stockLines: StockLineRowFragment[];
     }>[];
-    tableColumn: ColumnDefinition<StockLineRowFragment>[];
+    tableColumn: ColumnDef<StockLineRowFragment>[];
     editViewField: React.ComponentType<{
       stockLine: StockLineRowFragment;
       events: UsePluginEvents<{ isDirty: boolean }>;
@@ -24,16 +33,29 @@ export type Plugins = {
   requestRequisitionLine?: {
     tableStateLoader: React.ComponentType<{
       requestLines: RequestLineFragment[];
+      requisition: RequestFragment;
     }>[];
-    tableColumn: ColumnDefinition<RequestLineFragment>[];
+    tableColumn: ColumnDef<RequestLineFragment>[];
     editViewField: React.ComponentType<{
       line: RequestLineFragment;
+      draft?: DraftRequestLine;
       unitName?: string;
     }>[];
     editViewInfo: React.ComponentType<{
       line: RequestLineFragment;
       requisition: RequestFragment;
     }>[];
+  };
+  requestRequisition?: {
+    sidePanelSection: React.ComponentType<{
+      requisition: RequestFragment;
+    }>[];
+  };
+  masterLists?: {
+    tableStateLoader: React.ComponentType<{
+      masterLists: MasterListRowFragment[];
+    }>[];
+    tableColumn: ColumnDef<MasterListRowFragment>[];
   };
 };
 

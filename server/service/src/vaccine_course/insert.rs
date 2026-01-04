@@ -40,6 +40,7 @@ pub struct InsertVaccineCourse {
     pub coverage_rate: f64,
     pub use_in_gaps_calculations: bool,
     pub wastage_rate: f64,
+    pub can_skip_dose: bool,
 }
 
 pub fn insert_vaccine_course(
@@ -119,6 +120,7 @@ pub fn generate(
         coverage_rate,
         use_in_gaps_calculations,
         wastage_rate,
+        can_skip_dose,
     }: InsertVaccineCourse,
 ) -> VaccineCourseRow {
     VaccineCourseRow {
@@ -130,6 +132,7 @@ pub fn generate(
         use_in_gaps_calculations,
         wastage_rate,
         deleted_datetime: None,
+        can_skip_dose,
     }
 }
 

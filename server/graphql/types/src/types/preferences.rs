@@ -1,6 +1,9 @@
 use std::collections::BTreeMap;
 
-use crate::types::patient::GenderTypeNode;
+use crate::types::{
+    invoice_query::InvoiceNodeStatus, patient::GenderTypeNode,
+    warn_when_missing_recent_stocktake::WarnWhenMissingRecentStocktakeDataNode,
+};
 use async_graphql::*;
 use repository::StorageConnection;
 use service::preference::{preferences::PreferenceProvider, Preference, PreferenceDescription};
@@ -55,6 +58,38 @@ impl PreferencesNode {
         self.load_preference(&self.preferences.sync_records_display_threshold)
     }
 
+    pub async fn warning_for_excess_request(&self) -> Result<bool> {
+        self.load_preference(&self.preferences.warning_for_excess_request)
+    }
+
+    pub async fn adjust_for_number_of_days_out_of_stock(&self) -> Result<bool> {
+        self.load_preference(&self.preferences.adjust_for_number_of_days_out_of_stock)
+    }
+
+    pub async fn days_in_month(&self) -> Result<f64> {
+        self.load_preference(&self.preferences.days_in_month)
+    }
+
+    pub async fn expired_stock_prevent_issue(&self) -> Result<bool> {
+        self.load_preference(&self.preferences.expired_stock_prevent_issue)
+    }
+
+    pub async fn expired_stock_issue_threshold(&self) -> Result<i32> {
+        self.load_preference(&self.preferences.expired_stock_issue_threshold)
+    }
+
+    pub async fn show_indicative_price_in_requisitions(&self) -> Result<bool> {
+        self.load_preference(&self.preferences.show_indicative_price_in_requisitions)
+    }
+
+    pub async fn item_margin_overrides_supplier_margin(&self) -> Result<bool> {
+        self.load_preference(&self.preferences.item_margin_overrides_supplier_margin)
+    }
+    
+    pub async fn is_gaps(&self) -> Result<bool> {
+        self.load_preference(&self.preferences.is_gaps)
+    }
+
     // Store preferences
     pub async fn manage_vaccines_in_doses(&self) -> Result<bool> {
         self.load_preference(&self.preferences.manage_vaccines_in_doses)
@@ -82,6 +117,89 @@ impl PreferencesNode {
 
     pub async fn disable_manual_returns(&self) -> Result<bool> {
         self.load_preference(&self.preferences.disable_manual_returns)
+    }
+
+    pub async fn requisition_auto_finalise(&self) -> Result<bool> {
+        self.load_preference(&self.preferences.requisition_auto_finalise)
+    }
+
+    pub async fn inbound_shipment_auto_verify(&self) -> Result<bool> {
+        self.load_preference(&self.preferences.inbound_shipment_auto_verify)
+    }
+
+    pub async fn can_create_internal_order_from_a_requisition(&self) -> Result<bool> {
+        self.load_preference(
+            &self
+                .preferences
+                .can_create_internal_order_from_a_requisition,
+        )
+    }
+
+    pub async fn select_destination_store_for_an_internal_order(&self) -> Result<bool> {
+        self.load_preference(
+            &self
+                .preferences
+                .select_destination_store_for_an_internal_order,
+        )
+    }
+
+    pub async fn number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products(
+        &self,
+    ) -> Result<i32> {
+        self.load_preference(
+            &self
+                .preferences
+                .number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products,
+        )
+    }
+
+    pub async fn number_of_months_threshold_to_show_low_stock_alerts_for_products(
+        &self,
+    ) -> Result<i32> {
+        self.load_preference(
+            &self
+                .preferences
+                .number_of_months_threshold_to_show_low_stock_alerts_for_products,
+        )
+    }
+
+    pub async fn number_of_months_threshold_to_show_over_stock_alerts_for_products(
+        &self,
+    ) -> Result<i32> {
+        self.load_preference(
+            &self
+                .preferences
+                .number_of_months_threshold_to_show_over_stock_alerts_for_products,
+        )
+    }
+
+    pub async fn first_threshold_for_expiring_items(&self) -> Result<i32> {
+        self.load_preference(&self.preferences.first_threshold_for_expiring_items)
+    }
+
+    pub async fn second_threshold_for_expiring_items(&self) -> Result<i32> {
+        self.load_preference(&self.preferences.second_threshold_for_expiring_items)
+    }
+
+    pub async fn store_custom_colour(&self) -> Result<String> {
+        self.load_preference(&self.preferences.store_custom_colour)
+    }
+
+    pub async fn warn_when_missing_recent_stocktake(
+        &self,
+    ) -> Result<WarnWhenMissingRecentStocktakeDataNode> {
+        Ok(WarnWhenMissingRecentStocktakeDataNode::from_domain(
+            self.load_preference(&self.preferences.warn_when_missing_recent_stocktake)?,
+        ))
+    }
+
+    pub async fn invoice_status_options(&self) -> Result<Vec<InvoiceNodeStatus>> {
+        let domain_statuses = self.load_preference(&self.preferences.invoice_status_options)?;
+        let statuses = domain_statuses
+            .iter()
+            .map(|s| InvoiceNodeStatus::from(s.clone()))
+            .collect();
+        Ok(statuses)
     }
 }
 
@@ -139,6 +257,12 @@ pub enum PreferenceKey {
     PreventTransfersMonthsBeforeInitialisation,
     ShowContactTracing,
     SyncRecordsDisplayThreshold,
+    AdjustForNumberOfDaysOutOfStock,
+    DaysInMonth,
+    ExpiredStockPreventIssue,
+    ExpiredStockIssueThreshold,
+    ItemMarginOverridesSupplierMargin,
+    IsGaps,
     // Store preferences
     ManageVaccinesInDoses,
     ManageVvmStatusForStock,
@@ -147,6 +271,21 @@ pub enum PreferenceKey {
     SortByVvmStatusThenExpiry,
     UseSimplifiedMobileUi,
     DisableManualReturns,
+    RequisitionAutoFinalise,
+    InboundShipmentAutoVerify,
+    WarningForExcessRequest,
+    CanCreateInternalOrderFromARequisition,
+    SelectDestinationStoreForAnInternalOrder,
+    NumberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts,
+    NumberOfMonthsThresholdToShowLowStockAlertsForProducts,
+    NumberOfMonthsThresholdToShowOverStockAlertsForProducts,
+    FirstThresholdForExpiringItems,
+    SecondThresholdForExpiringItems,
+    SkipIntermediateStatusesInOutbound,
+    StoreCustomColour,
+    WarnWhenMissingRecentStocktake,
+    InvoiceStatusOptions,
+    ShowIndicativePriceInRequisitions,
 }
 
 #[derive(Enum, Copy, Clone, Debug, Eq, PartialEq)]
@@ -163,4 +302,6 @@ pub enum PreferenceValueNodeType {
     Integer,
     MultiChoice,
     CustomTranslations, // Specific type for CustomTranslations preference
+    WarnWhenMissingRecentStocktakeData,
+    String,
 }

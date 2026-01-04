@@ -1,5 +1,5 @@
 use super::UpdatePurchaseOrderInput;
-use crate::NullableUpdate;
+use crate::nullable_update;
 use chrono::{NaiveDate, Utc};
 use repository::{
     EqualFilter, PurchaseOrderLineFilter, PurchaseOrderLineRepository, PurchaseOrderLineRow,
@@ -136,13 +136,6 @@ pub fn generate(
     })
 }
 
-fn nullable_update<T: Clone>(input: &Option<NullableUpdate<T>>, current: Option<T>) -> Option<T> {
-    match input {
-        Some(NullableUpdate { value }) => value.clone(),
-        None => current,
-    }
-}
-
 fn set_new_status_datetime(
     purchase_order: &mut PurchaseOrderRow,
     input_status: Option<PurchaseOrderStatus>,
@@ -190,7 +183,7 @@ fn update_lines(
     if let Some(new_status) = status {
         let lines = PurchaseOrderLineRepository::new(connection).query_by_filter(
             PurchaseOrderLineFilter::new()
-                .purchase_order_id(EqualFilter::equal_to(purchase_order_id)),
+                .purchase_order_id(EqualFilter::equal_to(purchase_order_id.to_string())),
         )?;
 
         let updated_lines: Vec<PurchaseOrderLineRow> = lines
