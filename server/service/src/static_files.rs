@@ -202,31 +202,7 @@ impl StaticFileService {
             path: file.path.to_string(),
         })
     }
-
-    pub fn list_files(&self, category: &StaticFileCategory) -> anyhow::Result<Vec<StaticFile>> {
-        let dir = self.dir.join(category.to_path_buf());
-        std::fs::create_dir_all(&dir)?;
-        let mut files = Vec::new();
-
-        for entry in std::fs::read_dir(&dir)? {
-            let entry = entry?;
-            let path = entry.path();
-            let metadata = entry.metadata()?;
-            if !metadata.is_file() {
-                continue;
-            }
-            let file_name = path.file_name().unwrap().to_string_lossy();
-            if let Some((id, name)) = file_name.split_once('_') {
-                files.push(StaticFile {
-                    id: id.to_string(),
-                    name: name.to_string(),
-                    path: path.to_string_lossy().to_string(),
-                });
-            }
-        }
-        Ok(files)
-    }
-}
+  
 
 /// Returns the file name part of the path like:
 /// `./static_file_path/{uuid}_{file_name};
