@@ -144,61 +144,55 @@ export const DetailView = () => {
     },
   ];
 
-  return (
-    <React.Suspense
-      fallback={<DetailViewSkeleton hasGroupBy={true} hasHold={true} />}
-    >
-      {data ? (
-        <>
-          <AppBarButtons onAddItem={onAddItem} />
-          {isOpen && (
-            <OutboundLineEdit
-              openedWith={entity}
-              mode={mode}
-              isOpen={isOpen}
-              onClose={onClose}
-              status={data.status}
-              invoiceId={data.id}
-              getSortedItems={getSortedItems}
-            />
-          )}
-
-          {returnsIsOpen && (
-            <CustomerReturnEditModal
-              isOpen={returnsIsOpen}
-              onClose={onCloseReturns}
-              outboundShipmentLineIds={outboundShipmentLineIds || []}
-              customerId={data.otherPartyId}
-              modalMode={returnModalMode}
-              outboundShipmentId={data.id}
-              onCreate={table.resetRowSelection}
-              isNewReturn
-            />
-          )}
-
-          <Toolbar />
-          <DetailTabs tabs={tabs} />
-          <Footer
-            onReturnLines={onReturn}
-            selectedRows={selectedRows}
-            resetRowSelection={table.resetRowSelection}
-          />
-          <SidePanel />
-        </>
-      ) : (
-        <AlertModal
-          open={true}
-          onOk={() =>
-            navigate(
-              RouteBuilder.create(AppRoute.Distribution)
-                .addPart(AppRoute.OutboundShipment)
-                .build()
-            )
-          }
-          title={t('error.shipment-not-found')}
-          message={t('messages.click-to-return-to-shipments')}
+  return data ? (
+    <>
+      <AppBarButtons onAddItem={onAddItem} />
+      {isOpen && (
+        <OutboundLineEdit
+          openedWith={entity}
+          mode={mode}
+          isOpen={isOpen}
+          onClose={onClose}
+          status={data.status}
+          invoiceId={data.id}
+          getSortedItems={getSortedItems}
         />
       )}
-    </React.Suspense>
+
+      {returnsIsOpen && (
+        <CustomerReturnEditModal
+          isOpen={returnsIsOpen}
+          onClose={onCloseReturns}
+          outboundShipmentLineIds={outboundShipmentLineIds || []}
+          customerId={data.otherPartyId}
+          modalMode={returnModalMode}
+          outboundShipmentId={data.id}
+          onCreate={table.resetRowSelection}
+          isNewReturn
+        />
+      )}
+
+      <Toolbar />
+      <DetailTabs tabs={tabs} />
+      <Footer
+        onReturnLines={onReturn}
+        selectedRows={selectedRows}
+        resetRowSelection={table.resetRowSelection}
+      />
+      <SidePanel />
+    </>
+  ) : (
+    <AlertModal
+      open={true}
+      onOk={() =>
+        navigate(
+          RouteBuilder.create(AppRoute.Distribution)
+            .addPart(AppRoute.OutboundShipment)
+            .build()
+        )
+      }
+      title={t('error.shipment-not-found')}
+      message={t('messages.click-to-return-to-shipments')}
+    />
   );
 };

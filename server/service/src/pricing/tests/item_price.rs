@@ -11,8 +11,11 @@ mod query {
 
     #[actix_rt::test]
     async fn discount_from_master_list() {
-        let (_, _, connection_manager, _) =
-            setup_all("discount_from_master_list", MockDataInserts::all()).await;
+        let (_, _, connection_manager, _) = setup_all(
+            "discount_from_master_list",
+            MockDataInserts::none().items().names().stores(),
+        )
+        .await;
 
         let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider.basic_context().unwrap();
@@ -51,10 +54,12 @@ mod query {
             .get_pricing_for_item(
                 &context,
                 ItemPriceLookup {
-                    item_id: mock_item_a().id.clone(),
-                    customer_name_id: Some(mock_name_store_a().id.clone()),
+                    item_ids: vec![mock_item_a().id],
+                    customer_name_id: Some(mock_name_store_a().id),
                 },
             )
+            .unwrap()
+            .remove(&mock_item_a().id)
             .unwrap();
 
         assert_eq!(pricing.discount_percentage, Some(discount));
@@ -65,10 +70,12 @@ mod query {
             .get_pricing_for_item(
                 &context,
                 ItemPriceLookup {
-                    item_id: mock_item_b().id.clone(),
-                    customer_name_id: Some(mock_name_store_a().id.clone()),
+                    item_ids: vec![mock_item_b().id],
+                    customer_name_id: Some(mock_name_store_a().id),
                 },
             )
+            .unwrap()
+            .remove(&mock_item_b().id)
             .unwrap();
 
         assert_eq!(pricing.default_price_per_unit, None);
@@ -78,8 +85,11 @@ mod query {
 
     #[actix_rt::test]
     async fn default_price_list() {
-        let (_, _, connection_manager, _) =
-            setup_all("default_price_list", MockDataInserts::all()).await;
+        let (_, _, connection_manager, _) = setup_all(
+            "default_price_list",
+            MockDataInserts::none().items().names().stores(),
+        )
+        .await;
 
         let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider.basic_context().unwrap();
@@ -118,10 +128,12 @@ mod query {
             .get_pricing_for_item(
                 &context,
                 ItemPriceLookup {
-                    item_id: mock_item_a().id.clone(),
+                    item_ids: vec![mock_item_a().id],
                     customer_name_id: None,
                 },
             )
+            .unwrap()
+            .remove(&mock_item_a().id)
             .unwrap();
 
         assert_eq!(pricing.default_price_per_unit, Some(default_price_per_unit));
@@ -136,10 +148,12 @@ mod query {
             .get_pricing_for_item(
                 &context,
                 ItemPriceLookup {
-                    item_id: mock_item_b().id.clone(),
-                    customer_name_id: Some(mock_name_store_a().id.clone()),
+                    item_ids: vec![mock_item_b().id],
+                    customer_name_id: Some(mock_name_store_a().id),
                 },
             )
+            .unwrap()
+            .remove(&mock_item_b().id)
             .unwrap();
 
         assert_eq!(pricing.default_price_per_unit, None);
@@ -149,8 +163,11 @@ mod query {
 
     #[actix_rt::test]
     async fn default_price_plus_discount() {
-        let (_, _, connection_manager, _) =
-            setup_all("default_price_plus_discount", MockDataInserts::all()).await;
+        let (_, _, connection_manager, _) = setup_all(
+            "default_price_plus_discount",
+            MockDataInserts::none().items().names().stores(),
+        )
+        .await;
 
         let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider.basic_context().unwrap();
@@ -216,10 +233,12 @@ mod query {
             .get_pricing_for_item(
                 &context,
                 ItemPriceLookup {
-                    item_id: mock_item_a().id.clone(),
+                    item_ids: vec![mock_item_a().id],
                     customer_name_id: None,
                 },
             )
+            .unwrap()
+            .remove(&mock_item_a().id)
             .unwrap();
 
         assert_eq!(pricing.default_price_per_unit, Some(default_price_per_unit));
@@ -234,10 +253,12 @@ mod query {
             .get_pricing_for_item(
                 &context,
                 ItemPriceLookup {
-                    item_id: mock_item_b().id.clone(),
-                    customer_name_id: Some(mock_name_store_a().id.clone()),
+                    item_ids: vec![mock_item_b().id],
+                    customer_name_id: Some(mock_name_store_a().id),
                 },
             )
+            .unwrap()
+            .remove(&mock_item_b().id)
             .unwrap();
 
         assert_eq!(pricing.default_price_per_unit, None);

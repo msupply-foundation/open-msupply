@@ -45,6 +45,7 @@ query StocktakeDetailQuery(
             reason
           }
         }
+        comment
       }
     }
   }

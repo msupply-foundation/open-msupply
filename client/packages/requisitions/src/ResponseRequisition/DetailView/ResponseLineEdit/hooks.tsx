@@ -58,7 +58,7 @@ export const useDraftRequisitionLine = (
   item?: ItemWithStatsFragment | null
 ) => {
   const t = useTranslation();
-  const { lines } = useResponse.line.list();
+  const lines = useResponse.line.list();
   const { data } = useResponse.document.get();
   const { mutateAsync: saveMutation, isLoading } = useResponse.line.save();
   const [isReasonsError, setIsReasonsError] = useState(false);

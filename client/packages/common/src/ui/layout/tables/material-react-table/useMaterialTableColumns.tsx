@@ -37,15 +37,29 @@ export const useMaterialTableColumns = <T extends MRT_RowData>(
                   alignment === 'right'
                     ? {
                         justifyContent: 'flex-end',
-                        paddingRight: '2em', // Padding to account for header icons
                       }
                     : alignment === 'center'
                       ? // To-DO: Add padding for center aligned cells
                         { justifyContent: 'center' }
-                      : {},
+                      : {
+                          // Left aligned (fallback):
+                          // Padding varies based on density
+                          paddingLeft:
+                            params.table.getState().density === 'compact'
+                              ? '0.7em'
+                              : '1.2em',
+                        },
               },
               params
             );
+          };
+        }
+
+        // Merge any custom cell props with defaults
+        const cellProps = col.muiTableBodyCellProps;
+        if (cellProps) {
+          col.muiTableBodyCellProps = params => {
+            return mergeCellProps(cellProps, params);
           };
         }
 

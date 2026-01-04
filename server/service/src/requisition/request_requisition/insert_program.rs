@@ -24,10 +24,10 @@ use repository::{
     requisition_row::{RequisitionRow, RequisitionStatus, RequisitionType},
     ActivityLogType, EqualFilter, IndicatorValueRow, IndicatorValueRowRepository,
     IndicatorValueType, MasterListLineFilter, MasterListLineRepository, NameFilter, NameRepository,
-    NumberRowType, Pagination, PluginDataRowRepository, ProgramIndicatorFilter,
-    ProgramRequisitionOrderTypeRow, ProgramRow, RepositoryError, Requisition, RequisitionLineRow,
-    RequisitionLineRowRepository, RequisitionRowRepository, StorageConnection, StoreFilter,
-    StoreRepository,
+    NumberRowType, Pagination, PeriodRowRepository, PluginDataRowRepository,
+    ProgramIndicatorFilter, ProgramRequisitionOrderTypeRow, ProgramRow, RepositoryError,
+    Requisition, RequisitionLineRow, RequisitionLineRowRepository, RequisitionRowRepository,
+    StorageConnection, StoreFilter, StoreRepository,
 };
 use util::uuid::uuid;
 
@@ -225,31 +225,43 @@ fn generate(
         approval_status: None,
         finalised_datetime: None,
         linked_requisition_id: None,
+        created_from_requisition_id: None,
+        original_customer_id: None,
     };
 
     let master_list_id = program.master_list_id.clone().unwrap_or_default();
 
     let program_item_ids: Vec<String> = MasterListLineRepository::new(connection)
         .query_by_filter(
-            MasterListLineFilter::new().master_list_id(EqualFilter::equal_to(&master_list_id)),
+            MasterListLineFilter::new().master_list_id(EqualFilter::equal_to(master_list_id.to_string())),
             None,
         )?
         .into_iter()
         .map(|line| line.item_id)
         .collect();
 
-    let requisition_lines =
-        generate_requisition_lines(ctx, &ctx.store_id, &requisition, program_item_ids)?;
+    let period = PeriodRowRepository::new(connection)
+        .find_one_by_id(&period_id)
+        .unwrap()
+        .unwrap_or_default();
+
+    let requisition_lines = generate_requisition_lines(
+        ctx,
+        &ctx.store_id,
+        &requisition,
+        program_item_ids,
+        Some(period.end_date),
+    )?;
 
     let program_indicators = program_indicators(
         connection,
         Pagination::all(),
         None,
-        Some(ProgramIndicatorFilter::new().program_id(EqualFilter::equal_to(&program.id))),
+        Some(ProgramIndicatorFilter::new().program_id(EqualFilter::equal_to(program.id.to_string()))),
     )?;
 
     let customer_name_id = StoreRepository::new(connection)
-        .query_by_filter(StoreFilter::new().id(EqualFilter::equal_to(&ctx.store_id)))?
+        .query_by_filter(StoreFilter::new().id(EqualFilter::equal_to(ctx.store_id.to_string())))?
         .pop()
         .ok_or(RepositoryError::NotFound)?
         .name_row
@@ -288,7 +300,7 @@ fn generate_program_indicator_values(
             Pagination::all(),
             Some(
                 NameFilter::new()
-                    .supplying_store_id(EqualFilter::equal_to(store_id))
+                    .supplying_store_id(EqualFilter::equal_to(store_id.to_string()))
                     .is_customer(true)
                     .is_store(true),
             ),
@@ -319,7 +331,7 @@ fn generate_program_indicator_values(
 
     let customer_values = IndicatorValueRepository::new(connection).query_by_filter(
         IndicatorValueFilter::new()
-            .period_id(EqualFilter::equal_to(period_id))
+            .period_id(EqualFilter::equal_to(period_id.to_string()))
             .indicator_line_id(EqualFilter::equal_any(indicator_line_ids))
             .indicator_column_id(EqualFilter::equal_any(indicator_column_ids))
             .customer_name_id(EqualFilter::equal_any(customer_name_ids.clone())),
@@ -509,7 +521,7 @@ mod test_insert {
             .unwrap();
         let requisition_lines = RequisitionLineRepository::new(&connection)
             .query_by_filter(
-                RequisitionLineFilter::new().requisition_id(EqualFilter::equal_to(&new_row.id)),
+                RequisitionLineFilter::new().requisition_id(EqualFilter::equal_to(new_row.id.to_string())),
             )
             .unwrap();
 

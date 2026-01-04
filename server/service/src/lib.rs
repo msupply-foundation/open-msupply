@@ -225,30 +225,6 @@ impl<'a> BatchMutationsProcessor<'a> {
 
         (has_errors, result)
     }
-
-    pub fn do_mutations_with_user_id<I, R, E, M>(
-        &self,
-        inputs: Option<Vec<I>>,
-        mutation: M,
-    ) -> (bool, Vec<InputWithResult<I, Result<R, E>>>)
-    where
-        I: Clone,
-        M: Fn(&ServiceContext, I) -> Result<R, E>,
-    {
-        let mut has_errors = false;
-        let mut result = vec![];
-
-        for input in inputs.unwrap_or_default() {
-            let mutation_result = mutation(self.ctx, input.clone());
-            has_errors = has_errors || mutation_result.is_err();
-            result.push(InputWithResult {
-                input,
-                result: mutation_result,
-            });
-        }
-
-        (has_errors, result)
-    }
 }
 
 // Pagination helpers
@@ -272,9 +248,6 @@ pub fn get_pagination_or_default(
     let check_limit = |limit: u32| -> Result<u32, ListError> {
         if limit < DEFAULT_PAGINATION_MIN_LIMIT {
             return Err(ListError::LimitBelowMin(DEFAULT_PAGINATION_MIN_LIMIT));
-        }
-        if limit > DEFAULT_PAGINATION_MAX_LIMIT {
-            return Err(ListError::LimitAboveMax(DEFAULT_PAGINATION_MAX_LIMIT));
         }
 
         Ok(limit)
@@ -332,6 +305,16 @@ pub struct NullableUpdate<T> {
     pub value: Option<T>,
 }
 
+pub fn nullable_update<T: Clone>(
+    input: &Option<NullableUpdate<T>>,
+    current: Option<T>,
+) -> Option<T> {
+    match input {
+        Some(NullableUpdate { value }) => value.clone(),
+        None => current,
+    }
+}
+
 fn check_location_exists(
     connection: &StorageConnection,
     store_id: &str,
@@ -339,8 +322,8 @@ fn check_location_exists(
 ) -> Result<bool, RepositoryError> {
     let count = LocationRepository::new(connection).count(Some(
         LocationFilter::new()
-            .id(EqualFilter::equal_to(location_id))
-            .store_id(EqualFilter::equal_to(store_id)),
+            .id(EqualFilter::equal_to(location_id.to_string()))
+            .store_id(EqualFilter::equal_to(store_id.to_string())),
     ))?;
     Ok(count > 0)
 }
@@ -355,15 +338,15 @@ fn check_location_type_is_valid(
     let location = LocationRepository::new(connection)
         .query_by_filter(
             LocationFilter::new()
-                .id(EqualFilter::equal_to(location_id))
-                .store_id(EqualFilter::equal_to(store_id)),
+                .id(EqualFilter::equal_to(location_id.to_string()))
+                .store_id(EqualFilter::equal_to(store_id.to_string())),
         )?
         .pop();
 
     match location {
         Some(location) => {
             Ok(location.location_row.location_type_id
-                == Some(restricted_location_type_id.to_owned()))
+                == Some(restricted_location_type_id.to_string()))
         }
         None => Ok(false),
     }

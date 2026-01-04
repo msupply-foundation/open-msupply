@@ -1,6 +1,4 @@
-import { useQueryParamsStore } from '@common/hooks';
-import { SortUtils } from '@common/utils';
-import { InboundItem } from '../../../../types';
+import { useCallback } from 'react';
 import { inboundLinesToSummaryItems, isA } from '../../../../utils';
 import {
   InboundFragment,
@@ -9,24 +7,15 @@ import {
 import { useInboundSelector } from './useInboundLines';
 
 export const useInboundItems = () => {
-  const { sort } = useQueryParamsStore();
-  const { sortBy } = sort;
-  const selectItems = (invoice: InboundFragment) =>
-    inboundLinesToSummaryItems(
-      invoice.lines.nodes.filter(line => isA.stockInLine(line))
-    )
-      .map(item => ({
-        ...item,
-        [String(sortBy.key)]:
-          item.lines[0]?.[sortBy.key as keyof InboundLineFragment],
-      }))
-      .sort(
-        SortUtils.getDataSorter(
-          sortBy.key as keyof InboundItem,
-          !!sortBy.isDesc
-        )
-      );
-  const { data } = useInboundSelector(selectItems);
+  const selectItems = useCallback((invoice: InboundFragment) => {
+    const forListView = (line: InboundLineFragment) => isA.stockInLine(line);
+    const { lines } = invoice;
+    const stockLines = lines.nodes.filter(forListView);
 
-  return { data, sortBy };
+    const items = inboundLinesToSummaryItems(stockLines);
+
+    return items;
+  }, []);
+
+  return useInboundSelector(selectItems);
 };

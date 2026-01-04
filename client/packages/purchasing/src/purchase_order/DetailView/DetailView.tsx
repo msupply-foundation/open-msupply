@@ -1,32 +1,47 @@
 import React, { useCallback, useEffect } from 'react';
 import {
   AlertModal,
-  createQueryParamsStore,
-  createTableStore,
   DetailTabs,
   DetailViewSkeleton,
+  MaterialTable,
+  NothingHere,
+  PurchaseOrderLineStatusNode,
   RouteBuilder,
-  TableProvider,
   useBreadcrumbs,
   useEditModal,
   useNavigate,
+  useNonPaginatedMaterialTable,
   useTranslation,
   useUrlQuery,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { ActivityLogList } from '@openmsupply-client/system';
-
 import { canAddNewLines, isPurchaseOrderDisabled } from '../../utils';
 import { PurchaseOrderLineFragment, usePurchaseOrder } from '../api';
-import { PurchaseOrderLineErrorProvider } from '../context';
-import { ContentArea, Details, GoodsReceived, Documents } from './Tabs';
+import { Details, GoodsReceived, Documents } from './Tabs';
 import { AppBarButtons } from './AppBarButtons';
 import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
 import { SidePanel } from './SidePanel';
 import { PurchaseOrderLineEditModal } from './LineEdit/PurchaseOrderLineEditModal';
+import { usePurchaseOrderColumns } from './columns';
+import { PurchaseOrderLineErrorProvider } from '../context';
 
-export const DetailViewInner = () => {
+const getPlaceholderRow = (line: PurchaseOrderLineFragment) => {
+  return line.requestedNumberOfUnits === 0;
+};
+
+const getClosedLine = (line: PurchaseOrderLineFragment) => {
+  return line.status === PurchaseOrderLineStatusNode.Closed;
+};
+
+export const PurchaseOrderDetailView = () => (
+  <PurchaseOrderLineErrorProvider>
+    <DetailViewInner />
+  </PurchaseOrderLineErrorProvider>
+);
+
+const DetailViewInner = () => {
   const t = useTranslation();
   const navigate = useNavigate();
   const { setCustomBreadcrumbs } = useBreadcrumbs();
@@ -34,8 +49,7 @@ export const DetailViewInner = () => {
   const currentTab = urlQuery['tab'];
 
   const {
-    query: { data, isLoading },
-    lines: { sortedAndFilteredLines },
+    query: { data, isFetching, isLoading },
     draft,
     handleChange,
     invalidateQueries,
@@ -49,6 +63,8 @@ export const DetailViewInner = () => {
     isOpen,
   } = useEditModal<string | null>();
 
+  const lines = React.useMemo(() => data?.lines.nodes ?? [], [data]);
+
   const onRowClick = useCallback(
     (line: PurchaseOrderLineFragment) => {
       onOpen(line.id);
@@ -57,33 +73,41 @@ export const DetailViewInner = () => {
   );
 
   const openNext = useCallback(() => {
-    const currentIndex = sortedAndFilteredLines.findIndex(
-      line => line.id === lineId
-    );
-    const nextLine = sortedAndFilteredLines[currentIndex + 1];
+    const currentIndex = lines?.findIndex(line => line.id === lineId);
+    const nextLine = lines[currentIndex + 1];
     if (!nextLine) return;
     onOpen(nextLine.id);
-  }, [onOpen, lineId, sortedAndFilteredLines]);
+  }, [lines, onOpen, lineId]);
 
   useEffect(() => {
     setCustomBreadcrumbs({ 1: data?.number.toString() ?? '' });
   }, [setCustomBreadcrumbs, data?.number]);
 
-  if (isLoading) return <DetailViewSkeleton />;
-
   const disableNewLines = !data || !canAddNewLines(data);
   const isDisabled = !data || isPurchaseOrderDisabled(data);
+  const columns = usePurchaseOrderColumns();
+
+  const { table, selectedRows } =
+    useNonPaginatedMaterialTable<PurchaseOrderLineFragment>({
+      tableId: 'purchase-order-detail-view',
+      isLoading: isFetching,
+      onRowClick: onRowClick,
+      columns,
+      data: lines,
+      initialSort: { key: 'lineNumber', dir: 'asc' },
+      getIsRestrictedRow: getClosedLine,
+      getIsPlaceholderRow: getPlaceholderRow,
+      noDataElement: (
+        <NothingHere
+          body={t('error.no-purchase-order-items')}
+          onCreate={disableNewLines ? undefined : onOpen}
+        />
+      ),
+    });
 
   const tabs = [
     {
-      Component: (
-        <ContentArea
-          lines={sortedAndFilteredLines}
-          isDisabled={isDisabled}
-          onAddItem={onOpen}
-          onRowClick={onRowClick}
-        />
-      ),
+      Component: <MaterialTable table={table} />,
       value: t('label.general'),
     },
     {
@@ -109,72 +133,51 @@ export const DetailViewInner = () => {
       value: t('label.log'),
     },
   ];
+  if (isLoading) return <DetailViewSkeleton hasGroupBy={true} hasHold={true} />;
 
-  return (
-    <React.Suspense
-      fallback={<DetailViewSkeleton hasGroupBy={true} hasHold={true} />}
-    >
-      {data ? (
-        <>
-          <AppBarButtons
-            isDisabled={isDisabled}
-            disableNewLines={disableNewLines}
-            onAddItem={onOpen}
-          />
-          <Toolbar isDisabled={isDisabled} />
-          <DetailTabs tabs={tabs} />
-          <Footer
-            showStatusBar={currentTab !== 'Documents'}
-            status={data.status}
-          />
-          <SidePanel />
-          {isOpen && (
-            <PurchaseOrderLineEditModal
-              purchaseOrder={data}
-              isOpen={isOpen}
-              onClose={onClose}
-              mode={mode}
-              lineId={lineId}
-              isDisabled={isDisabled}
-              hasNext={
-                sortedAndFilteredLines.findIndex(line => line.id === lineId) <
-                sortedAndFilteredLines.length - 1
-              }
-              openNext={openNext}
-            />
-          )}
-        </>
-      ) : (
-        <AlertModal
-          open={true}
-          onOk={() =>
-            navigate(
-              RouteBuilder.create(AppRoute.Replenishment)
-                .addPart(AppRoute.PurchaseOrder)
-                .build()
-            )
+  return data ? (
+    <>
+      <AppBarButtons
+        isDisabled={isDisabled}
+        disableNewLines={disableNewLines}
+        onAddItem={onOpen}
+      />
+      <Toolbar isDisabled={isDisabled} />
+      <DetailTabs tabs={tabs} />
+      <Footer
+        showStatusBar={currentTab !== 'Documents'}
+        status={data.status}
+        selectedRows={selectedRows}
+        resetRowSelection={table.resetRowSelection}
+      />
+      <SidePanel />
+      {isOpen && (
+        <PurchaseOrderLineEditModal
+          purchaseOrder={data}
+          isOpen={isOpen}
+          onClose={onClose}
+          mode={mode}
+          lineId={lineId}
+          isDisabled={isDisabled}
+          hasNext={
+            lines.findIndex(line => line.id === lineId) < lines.length - 1
           }
-          title={t('error.purchase-order-not-found')}
-          message={t('messages.click-to-return-to-purchase-orders')}
+          openNext={openNext}
         />
       )}
-    </React.Suspense>
-  );
-};
-
-export const PurchaseOrderDetailView = () => {
-  return (
-    <PurchaseOrderLineErrorProvider>
-      <TableProvider
-        createStore={createTableStore}
-        queryParamsStore={createQueryParamsStore<PurchaseOrderLineFragment>({
-          initialSortBy: {
-            key: 'itemName',
-          },
-        })}
-      >
-        <DetailViewInner />
-      </TableProvider>
-    </PurchaseOrderLineErrorProvider>
+    </>
+  ) : (
+    <AlertModal
+      open={true}
+      onOk={() =>
+        navigate(
+          RouteBuilder.create(AppRoute.Replenishment)
+            .addPart(AppRoute.PurchaseOrder)
+            .build()
+        )
+      }
+      title={t('error.purchase-order-not-found')}
+      message={t('messages.click-to-return-to-purchase-orders')}
+    />
   );
 };

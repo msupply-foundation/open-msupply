@@ -694,6 +694,7 @@ fragment VaccineCourse on VaccineCourseNode {
   coverageRate
   wastageRate
   useInGapsCalculations
+  canSkipDose
   demographic {
     name
     id

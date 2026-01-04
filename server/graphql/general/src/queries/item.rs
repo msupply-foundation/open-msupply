@@ -37,6 +37,7 @@ pub struct EqualFilterItemTypeInput {
     pub equal_to: Option<ItemNodeType>,
     pub equal_any: Option<Vec<ItemNodeType>>,
     pub not_equal_to: Option<ItemNodeType>,
+    pub not_equal_all: Option<Vec<ItemNodeType>>,
 }
 
 #[derive(InputObject, Clone)]
@@ -61,6 +62,8 @@ pub struct ItemFilterInput {
     pub ignore_for_orders: Option<bool>,
     pub min_months_of_stock: Option<f64>,
     pub max_months_of_stock: Option<f64>,
+    pub with_recent_consumption: Option<bool>,
+    pub products_at_risk_of_being_out_of_stock: Option<bool>,
 }
 
 #[derive(Union)]
@@ -118,6 +121,8 @@ impl ItemFilterInput {
             ignore_for_orders,
             min_months_of_stock,
             max_months_of_stock,
+            with_recent_consumption,
+            products_at_risk_of_being_out_of_stock,
         } = self;
 
         ItemFilter {
@@ -138,6 +143,8 @@ impl ItemFilterInput {
             ignore_for_orders,
             min_months_of_stock,
             max_months_of_stock,
+            with_recent_consumption,
+            products_at_risk_of_being_out_of_stock,
         }
     }
 }

@@ -12,7 +12,6 @@ import {
 import { DefaultFormRowSx, FORM_LABEL_WIDTH } from '../styleConstants';
 import { z } from 'zod';
 import { useZodOptionsValidation } from '../hooks/useZodOptionsValidation';
-import { useJSONFormsCustomError } from '../hooks/useJSONFormsCustomError';
 import { DateOrTimeView, PickersActionBarAction } from '@mui/x-date-pickers';
 
 const Options = z
@@ -37,16 +36,13 @@ const UIComponent = (props: ControlProps) => {
   const t = useTranslation();
   const { core } = useJsonForms();
   const [error, setError] = React.useState<string | undefined>(undefined);
-  const { data, handleChange, label, path, uischema } = props;
+  const { data, handleChange, label, path, uischema, config } = props;
   const { errors: zErrors, options } = useZodOptionsValidation(
     Options,
     uischema.options
   );
 
-  const { customError, setCustomError } = useJSONFormsCustomError(
-    path,
-    'Date-Time'
-  );
+  const { customErrors } = config;
 
   if (!props.visible) {
     return null;
@@ -63,7 +59,7 @@ const UIComponent = (props: ControlProps) => {
 
   const onChange = (e: Date | null) => {
     if (!e) handleChange(path, undefined);
-    setCustomError(undefined);
+    customErrors.remove(path);
 
     try {
       setError(undefined);
@@ -82,7 +78,7 @@ const UIComponent = (props: ControlProps) => {
     inputFormat,
     readOnly: !!props.uischema.options?.['readonly'],
     disabled: !props.enabled,
-    error: zErrors ?? error ?? customError ?? props.errors,
+    error: zErrors || error || props.errors,
     dateAsEndOfDay: !!props.uischema.options?.['dateAsEndOfDay'],
     disableFuture: !!props.uischema.options?.['disableFuture'],
     ...(options?.monthOnly
@@ -111,9 +107,7 @@ const UIComponent = (props: ControlProps) => {
         ) : (
           <DateTimePickerInput
             {...sharedComponentProps}
-            onError={validationError =>
-              setCustomError(validationError ?? undefined)
-            }
+            onError={validationError => customErrors.add(path, validationError)}
           />
         )
       }

@@ -29,6 +29,8 @@ pub(super) enum BackupError {
     PgCommandNotFoundInBinPath,
     #[error("Problem create folder at path: {1}")]
     CannotCreateBackupFolder(#[source] io::Error, PathBuf),
+    #[error("Problem create folder at path: {1}")]
+    CannotCreateBaseDirFolder(#[source] io::Error, PathBuf),
     #[error("base_dir must be configured in configuration files")]
     BaseDirNotSet,
     #[error("Invalid path specified: {0}")]
@@ -100,13 +102,21 @@ fn get_dirs_from_settings(settings: &Settings) -> Result<DirSettings, BackupErro
 }
 
 fn get_base_dir(settings: &Settings) -> Result<PathBuf, BackupError> {
-    settings
+    let base_dir = settings
         .server
         .base_dir
         .as_ref()
         .map(|dir| PathBuf::from_str(dir).map_err(|_| BackupError::InvalidPath(dir.to_string())))
         .transpose()?
-        .ok_or(BackupError::BaseDirNotSet)
+        .ok_or(BackupError::BaseDirNotSet)?;
+
+    // Create the app base directory if it does not exist
+    if !base_dir.exists() {
+        fs::create_dir_all(&base_dir)
+            .map_err(|e| BackupError::CannotCreateBaseDirFolder(e, base_dir.clone()))?;
+    }
+
+    Ok(base_dir)
 }
 
 fn get_sqlite_files_paths(settings: &Settings) -> Result<Vec<PathBuf>, BackupError> {

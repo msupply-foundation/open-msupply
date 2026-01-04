@@ -85,6 +85,7 @@ pub struct EqualFilterStatusInput {
     pub equal_to: Option<AssetLogStatusNodeType>,
     pub equal_any: Option<Vec<AssetLogStatusNodeType>>,
     pub not_equal_to: Option<AssetLogStatusNodeType>,
+    pub not_equal_all: Option<Vec<AssetLogStatusNodeType>>,
 }
 
 #[derive(PartialEq, Debug)]

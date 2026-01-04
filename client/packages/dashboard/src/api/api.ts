@@ -15,6 +15,10 @@ export const getDashboardQueries = (
       return {
         expired: result?.stockCounts?.expired ?? 0,
         expiringSoon: result?.stockCounts?.expiringSoon ?? 0,
+        expiringBetweenThresholds:
+          result?.stockCounts?.expiringBetweenThresholds ?? 0,
+        expiringInNextThreeMonths:
+          result?.stockCounts?.expiringInNextThreeMonths ?? 0,
       };
     },
     itemCounts: async (lowStockThreshold: number) => {

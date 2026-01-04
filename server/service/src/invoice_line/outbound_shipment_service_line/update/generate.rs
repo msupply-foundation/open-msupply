@@ -151,7 +151,7 @@ mod outbound_shipment_service_line_update_test {
             &connection,
             UpdateOutboundShipmentServiceLine {
                 id: "".to_string(),
-                item_id: Some(item2.id.to_owned()),
+                item_id: Some(item2.id.to_string()),
                 name: Some("input name 2".to_string()),
                 total_before_tax: None,
                 tax: None,
@@ -170,7 +170,7 @@ mod outbound_shipment_service_line_update_test {
             &connection,
             UpdateOutboundShipmentServiceLine {
                 id: "".to_string(),
-                item_id: Some(item2.id.to_owned()),
+                item_id: Some(item2.id.to_string()),
                 name: None,
                 total_before_tax: None,
                 tax: None,

@@ -56,7 +56,7 @@ jobs:
           git apply docker/async-dataloader.patch
           
       - name: Build server
-        run: docker run --rm --user "$(id -u)":"$(id -g)" -v "$PWD":/usr/src/omsupply -w /usr/src/omsupply/server rust:slim cargo build --release --bin remote_server --bin remote_server_cli
+        run: docker run --rm --user "$(id -u)":"$(id -g)" -v "$PWD":/usr/src/omsupply -w /usr/src/omsupply/server rust:1.88-slim cargo build --release --bin remote_server --bin remote_server_cli
 
       - name: Save server executable artifacts
         uses: actions/upload-artifact@v4

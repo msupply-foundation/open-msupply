@@ -5,10 +5,14 @@ export const useStores = () => {
   const api = useNameApi();
   const { queryParams } = useUrlQueryParams({
     initialSort: { key: 'name', dir: 'asc' },
-    filters: [{ key: 'codeOrName' }],
+    filters: [{ key: 'code' }, { key: 'name' }],
   });
 
-  return useQuery(api.keys.paramList(queryParams), () =>
-    api.get.stores(queryParams)
+  return useQuery(
+    api.keys.paramList(queryParams),
+    () => api.get.stores(queryParams),
+    {
+      keepPreviousData: true,
+    }
   );
 };

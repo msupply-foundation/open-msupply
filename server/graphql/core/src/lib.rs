@@ -146,7 +146,9 @@ macro_rules! map_filter {
                 .map(|inputs| inputs.into_iter().map($f).collect()),
             not_equal_to_or_null: None,
             equal_any_or_null: None,
-            not_equal_all: None,
+            not_equal_all: $from
+                .not_equal_all
+                .map(|inputs| inputs.into_iter().map($f).collect()),
             is_null: None,
         }
     }};

@@ -38,7 +38,7 @@ const PurchaseOrderSearchComponent: FC<PurchaseOrderSearchModalProps> = ({
   };
 
   const {
-    query: { data, isLoading },
+    query: { data, isFetching },
   } = usePurchaseOrderList(listParams);
   const t = useTranslation();
 
@@ -81,7 +81,7 @@ const PurchaseOrderSearchComponent: FC<PurchaseOrderSearchModalProps> = ({
 
   return (
     <ListSearch
-      loading={isLoading}
+      loading={isFetching}
       open={open}
       options={data?.nodes ?? []}
       onClose={onClose}

@@ -17,8 +17,8 @@ export const useAssets = () => {
       { key: 'notes' },
       { key: 'model' },
       { key: 'assetNumber' },
-      { key: 'installationDate', condition: 'equalTo' },
-      { key: 'replacementDate', condition: 'equalTo' },
+      { key: 'installationDate', condition: 'between' },
+      { key: 'replacementDate', condition: 'between' },
       { key: 'serialNumber' },
       { key: 'categoryId', condition: 'equalTo' },
       { key: 'typeId', condition: 'equalTo' },
@@ -31,7 +31,9 @@ export const useAssets = () => {
   const storeCodeFilter = isCentralServer ? undefined : store?.code;
 
   const api = useAssetApi();
-  return useQuery(api.keys.paramList(queryParams), () =>
-    api.get.list(queryParams, storeCodeFilter, isColdChain)
+  return useQuery(
+    api.keys.paramList(queryParams),
+    () => api.get.list(queryParams, storeCodeFilter, isColdChain),
+    { keepPreviousData: true }
   );
 };

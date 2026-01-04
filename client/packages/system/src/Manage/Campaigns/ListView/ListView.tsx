@@ -1,20 +1,16 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
-  TableProvider,
-  DataTable,
-  useColumns,
-  createTableStore,
   NothingHere,
   useUrlQueryParams,
   useEditModal,
   useTranslation,
-  ColumnFormat,
   CampaignNode,
-  GenericColumnKey,
-  useTableStore,
   useDeleteConfirmation,
   useNotification,
-  DateUtils,
+  usePaginatedMaterialTable,
+  MaterialTable,
+  ColumnType,
+  ColumnDef,
 } from '@openmsupply-client/common';
 import { Footer } from './Footer';
 import { CampaignEditModal } from './CampaignEditModal';
@@ -26,35 +22,24 @@ import {
   useCampaigns,
 } from '../api';
 
-const CampaignsComponent = () => {
+export const CampaignsList = () => {
   const t = useTranslation();
   const {
-    updateSortQuery,
-    updatePaginationQuery,
-    queryParams: { sortBy, page, first, offset, filterBy },
+    queryParams: { sortBy, first, offset, filterBy },
   } = useUrlQueryParams({ initialSort: { key: 'name', dir: 'asc' } });
 
   const queryParams = { sortBy, first, offset, filterBy };
   const {
-    query: { data, isError, isLoading },
+    query: { data, isError, isFetching },
     upsert: { upsert },
     delete: { deleteCampaign },
     draft,
     updateDraft,
   } = useCampaigns(queryParams);
 
-  const pagination = { page, first, offset };
-
   const { isOpen, onClose, onOpen } = useEditModal();
 
   const { error, success } = useNotification();
-
-  const { selectedRows } = useTableStore(state => ({
-    selectedRows: Object.keys(state.rowState)
-      .filter(id => state.rowState[id]?.isSelected)
-      .map(selectedId => data?.nodes?.find(({ id }) => selectedId === id))
-      .filter(Boolean),
-  }));
 
   const save = async () => {
     const result = await upsert();
@@ -78,6 +63,41 @@ const CampaignsComponent = () => {
       error(errorMessage)();
     }
   };
+  const columns = useMemo(
+    (): ColumnDef<CampaignRowFragment>[] => [
+      { accessorKey: 'name', header: t('label.name'), enableSorting: true },
+      {
+        accessorKey: 'startDate',
+        header: t('label.start-date'),
+        columnType: ColumnType.Date,
+      },
+      {
+        accessorKey: 'endDate',
+        header: t('label.end-date'),
+        columnType: ColumnType.Date,
+      },
+    ],
+    []
+  );
+
+  const onRowClick = (row: CampaignNode) => {
+    const selected = data?.nodes.find(campaign => campaign.id === row.id);
+    updateDraft(selected as DraftCampaign);
+    onOpen();
+  };
+
+  const { table, selectedRows } = usePaginatedMaterialTable({
+    tableId: 'campaign-list',
+    columns,
+    data: data?.nodes,
+    totalCount: data?.totalCount ?? 0,
+    isLoading: isFetching,
+    isError,
+    onRowClick,
+    noDataElement: (
+      <NothingHere body={t('error.no-campaigns')} onCreate={onOpen} />
+    ),
+  });
 
   const confirmAndDelete = useDeleteConfirmation({
     selectedRows,
@@ -94,6 +114,7 @@ const CampaignsComponent = () => {
         // fail to delete
         throw new Error('Delete failed');
       }
+      table.resetRowSelection();
     },
     messages: {
       confirmMessage: t('messages.confirm-delete-campaigns', {
@@ -105,59 +126,14 @@ const CampaignsComponent = () => {
     },
   });
 
-  const onRowClick = (row: CampaignNode) => {
-    const selected = data?.nodes.find(campaign => campaign.id === row.id);
-    updateDraft(selected as DraftCampaign);
-    onOpen();
-  };
-
-  const columns = useColumns<CampaignRowFragment>(
-    [
-      GenericColumnKey.Selection,
-      'name',
-      {
-        key: 'startDate',
-        label: 'label.start-date',
-        width: 150,
-        format: ColumnFormat.Date,
-        sortable: false,
-        accessor: ({ rowData }) => DateUtils.getNaiveDate(rowData.startDate),
-      },
-      {
-        key: 'endDate',
-        label: 'label.end-date',
-        width: 150,
-        format: ColumnFormat.Date,
-        sortable: false,
-        accessor: ({ rowData }) => DateUtils.getNaiveDate(rowData.endDate),
-      },
-    ],
-    {
-      sortBy,
-      onChangeSortBy: updateSortQuery,
-    },
-    [sortBy]
-  );
-
   return (
     <>
       <AppBarButtons onOpen={onOpen} />
-      <DataTable
-        id="campaign-list"
-        pagination={{ ...pagination, total: data?.totalCount ?? 0 }}
-        onChangePage={updatePaginationQuery}
-        columns={columns}
-        data={data?.nodes}
-        isLoading={isLoading}
-        isError={isError}
-        noDataElement={
-          <NothingHere body={t('error.no-campaigns')} onCreate={onOpen} />
-        }
-        onRowClick={onRowClick}
-      />
+      <MaterialTable table={table} />
       <Footer
         selectedRowCount={selectedRows.length}
         deleteRows={confirmAndDelete}
+        resetRowSelection={table.resetRowSelection}
       />
       {isOpen && (
         <CampaignEditModal
@@ -171,9 +147,3 @@ const CampaignsComponent = () => {
     </>
   );
 };
-
-export const CampaignsList = () => (
-  <TableProvider createStore={createTableStore}>
-    <CampaignsComponent />
-  </TableProvider>
-);

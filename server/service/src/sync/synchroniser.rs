@@ -327,6 +327,9 @@ impl Synchroniser {
             .trigger_processor(ProcessorType::Plugins);
 
         ctx.processors_trigger
+            .trigger_processor(ProcessorType::RequisitionAutoFinalise);
+
+        ctx.processors_trigger
             .trigger_processor(ProcessorType::SupportUploadFiles);
 
         Ok(())

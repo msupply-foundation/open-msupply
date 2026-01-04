@@ -1,15 +1,10 @@
+use super::{PullTranslateResult, PushTranslateResult, SyncTranslation};
 use crate::sync::translations::{
     clinician::ClinicianTranslation, currency::CurrencyTranslation,
     diagnosis::DiagnosisTranslation, name::NameTranslation,
     name_insurance_join::NameInsuranceJoinTranslation, store::StoreTranslation, to_legacy_time,
 };
-
 use anyhow::Context;
-use util::sync_serde::{
-    date_from_date_time, date_option_to_isostring, date_to_isostring, empty_str_as_option,
-    empty_str_as_option_string, naive_time, zero_date_as_option, zero_f64_as_none,
-};
-
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 use repository::{
     ChangelogRow, ChangelogTableName, CurrencyFilter, CurrencyRepository, EqualFilter, Invoice,
@@ -20,8 +15,10 @@ use repository::{
 };
 use serde::{Deserialize, Serialize};
 use util::constants::INVENTORY_ADJUSTMENT_NAME_CODE;
-
-use super::{PullTranslateResult, PushTranslateResult, SyncTranslation};
+use util::sync_serde::{
+    date_option_to_isostring, date_to_isostring, empty_str_as_option, empty_str_as_option_string,
+    naive_time, zero_date_as_option, zero_f64_as_none,
+};
 
 #[derive(Deserialize, Serialize, Debug, PartialEq)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
@@ -176,20 +173,19 @@ pub struct LegacyTransactRow {
     /// time in seconds
     #[serde(deserialize_with = "naive_time")]
     pub entry_time: NaiveTime, // e.g. 47046,
-    /// shipped_datetime
-    #[serde(deserialize_with = "zero_date_as_option")]
-    #[serde(serialize_with = "date_option_to_isostring")]
-    pub ship_date: Option<NaiveDate>, // "0000-00-00",
-    /// delivered_datetime
-    #[serde(deserialize_with = "zero_date_as_option")]
-    #[serde(serialize_with = "date_option_to_isostring")]
-    pub arrival_date_actual: Option<NaiveDate>,
-    /// verified_datetime
+    /// delivered_datetime / picked_datetime
     #[serde(deserialize_with = "zero_date_as_option")]
     #[serde(serialize_with = "date_option_to_isostring")]
     pub confirm_date: Option<NaiveDate>,
     #[serde(deserialize_with = "naive_time")]
     pub confirm_time: NaiveTime,
+
+    /// verified_datetime / shipped_datetime
+    #[serde(deserialize_with = "zero_date_as_option")]
+    #[serde(serialize_with = "date_option_to_isostring")]
+    pub finalised_date: Option<NaiveDate>,
+    #[serde(deserialize_with = "naive_time")]
+    pub finalised_time: NaiveTime,
 
     pub mode: TransactMode,
     #[serde(rename = "tax_rate")]
@@ -359,7 +355,9 @@ impl SyncTranslation for InvoiceTranslation {
             )))?;
 
         let name_store_id = StoreRepository::new(connection)
-            .query_by_filter(StoreFilter::new().name_id(EqualFilter::equal_to(&data.name_ID)))?
+            .query_by_filter(
+                StoreFilter::new().name_id(EqualFilter::equal_to(data.name_ID.to_owned())),
+            )?
             .pop()
             .map(|store| store.store_row.id);
 
@@ -485,13 +483,15 @@ impl SyncTranslation for InvoiceTranslation {
         changelog: &ChangelogRow,
     ) -> Result<PushTranslateResult, anyhow::Error> {
         let Some(invoice) = InvoiceRepository::new(connection)
-            .query_by_filter(InvoiceFilter::new().id(EqualFilter::equal_to(&changelog.record_id)))?
+            .query_by_filter(
+                InvoiceFilter::new().id(EqualFilter::equal_to(changelog.record_id.to_string())),
+            )?
             .pop()
         else {
             return Err(anyhow::anyhow!("Invoice not found"));
         };
 
-        let confirm_datetime = to_legacy_confirm_time(&invoice.invoice_row);
+        let legacy_datetimes = to_legacy_datetime(&invoice.invoice_row);
 
         let Invoice {
             invoice_row:
@@ -544,8 +544,7 @@ impl SyncTranslation for InvoiceTranslation {
             Some(_type) => _type,
             None => {
                 return Ok(PushTranslateResult::Ignored(format!(
-                    "Unsupported invoice type {:?}",
-                    r#type
+                    "Unsupported invoice type {type:?}"
                 )))
             }
         };
@@ -554,8 +553,7 @@ impl SyncTranslation for InvoiceTranslation {
             Some(legacy_status) => legacy_status,
             None => {
                 return Ok(PushTranslateResult::Ignored(format!(
-                    "Unsupported invoice status: {:?}",
-                    status
+                    "Unsupported invoice status: {status:?}"
                 )))
             }
         };
@@ -575,12 +573,10 @@ impl SyncTranslation for InvoiceTranslation {
             linked_transaction_id: linked_invoice_id,
             entry_date: created_datetime.date(),
             entry_time: to_legacy_time(created_datetime),
-            ship_date: shipped_datetime
-                .map(|shipped_datetime| date_from_date_time(&shipped_datetime)),
-            arrival_date_actual: delivered_datetime
-                .map(|delivered_datetime| date_from_date_time(&delivered_datetime)),
-            confirm_date: confirm_datetime.0,
-            confirm_time: confirm_datetime.1,
+            confirm_date: legacy_datetimes.confirm_datetime.0,
+            confirm_time: legacy_datetimes.confirm_datetime.1,
+            finalised_date: legacy_datetimes.finalised_datetime.0,
+            finalised_time: legacy_datetimes.finalised_datetime.1,
             tax_percentage,
             mode: if r#type == InvoiceType::Prescription {
                 TransactMode::Dispensary
@@ -733,6 +729,11 @@ fn map_legacy(
         .confirm_date
         .map(|confirm_date| NaiveDateTime::new(confirm_date, data.confirm_time));
 
+    let finalised_datetime = data
+        .finalised_date
+        .map(|finalised_date| NaiveDateTime::new(finalised_date, data.finalised_time))
+        .or(confirm_datetime);
+
     // Try to figure out if a legacy record was backdated
     let backdated_datetime = map_backdated_datetime(&mapping.created_datetime, &confirm_datetime);
     if backdated_datetime.is_some() {
@@ -748,7 +749,7 @@ fn map_legacy(
             LegacyTransactStatus::Fn => {
                 mapping.allocated_datetime = confirm_datetime;
                 mapping.picked_datetime = confirm_datetime;
-                mapping.shipped_datetime = confirm_datetime;
+                mapping.shipped_datetime = finalised_datetime;
             }
             _ => {}
         },
@@ -763,7 +764,7 @@ fn map_legacy(
             LegacyTransactStatus::Fn => {
                 mapping.received_datetime = confirm_datetime;
                 mapping.delivered_datetime = confirm_datetime;
-                mapping.verified_datetime = confirm_datetime;
+                mapping.verified_datetime = finalised_datetime;
             }
             _ => {}
         },
@@ -773,38 +774,44 @@ fn map_legacy(
             }
             LegacyTransactStatus::Fn => {
                 mapping.picked_datetime = confirm_datetime;
-                mapping.verified_datetime = confirm_datetime;
+                mapping.verified_datetime = finalised_datetime;
             }
             _ => {}
         },
         InvoiceType::InventoryAddition | InvoiceType::InventoryReduction => match data.status {
             LegacyTransactStatus::Cn => {
-                mapping.verified_datetime = confirm_datetime;
+                mapping.verified_datetime = finalised_datetime;
             }
             LegacyTransactStatus::Fn => {
-                mapping.verified_datetime = confirm_datetime;
+                mapping.verified_datetime = finalised_datetime;
             }
             _ => {}
         },
         InvoiceType::Repack => {
             if let LegacyTransactStatus::Fn = data.status {
-                mapping.verified_datetime = confirm_datetime;
+                mapping.verified_datetime = finalised_datetime;
             }
         }
     };
     mapping
 }
 
-fn to_legacy_confirm_time(
+struct ToLegacyDatetime {
+    confirm_datetime: (Option<NaiveDate>, NaiveTime),
+    finalised_datetime: (Option<NaiveDate>, NaiveTime),
+}
+
+fn to_legacy_datetime(
     InvoiceRow {
         r#type,
         picked_datetime,
         received_datetime: delivered_datetime,
         verified_datetime,
+        shipped_datetime,
         ..
     }: &InvoiceRow,
-) -> (Option<NaiveDate>, NaiveTime) {
-    let datetime = match r#type {
+) -> ToLegacyDatetime {
+    let confirm_datetime = match r#type {
         InvoiceType::OutboundShipment => picked_datetime,
         InvoiceType::InboundShipment => delivered_datetime,
         InvoiceType::Prescription => picked_datetime,
@@ -816,11 +823,31 @@ fn to_legacy_confirm_time(
         InvoiceType::SupplierReturn => picked_datetime,
     };
 
-    let date = datetime.map(|datetime| datetime.date());
-    let time = datetime
+    let finalised_datetime = match r#type {
+        InvoiceType::OutboundShipment | InvoiceType::Prescription | InvoiceType::SupplierReturn => {
+            shipped_datetime
+        }
+        InvoiceType::InboundShipment
+        | InvoiceType::InventoryAddition
+        | InvoiceType::InventoryReduction
+        | InvoiceType::Repack
+        | InvoiceType::CustomerReturn => verified_datetime,
+    };
+
+    let confirm_date = confirm_datetime.map(|datetime| datetime.date());
+    let confirm_time = confirm_datetime
         .map(to_legacy_time)
         .unwrap_or(NaiveTime::from_hms_opt(0, 0, 0).unwrap());
-    (date, time)
+
+    let finalised_date = finalised_datetime.map(|datetime| datetime.date());
+    let finalised_time = finalised_datetime
+        .map(to_legacy_time)
+        .unwrap_or(NaiveTime::from_hms_opt(0, 0, 0).unwrap());
+
+    ToLegacyDatetime {
+        confirm_datetime: (confirm_date, confirm_time),
+        finalised_datetime: (finalised_date, finalised_time),
+    }
 }
 
 fn invoice_status(

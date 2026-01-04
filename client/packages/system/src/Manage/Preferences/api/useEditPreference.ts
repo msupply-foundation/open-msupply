@@ -58,6 +58,12 @@ const useUpsertPref = () => {
       onSuccess: () => {
         queryClient.invalidateQueries(PREFERENCES_QUERY_KEY);
         queryClient.invalidateQueries(PREFERENCE_DESCRIPTION_QUERY_KEY);
+        queryClient.invalidateQueries([
+          'dashboard',
+          'count',
+          requestStoreId,
+          'stock',
+        ]);
       },
     }
   );

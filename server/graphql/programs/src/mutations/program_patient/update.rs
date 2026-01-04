@@ -38,7 +38,8 @@ pub fn update_program_patient(
     let allowed_ctx = user.capabilities();
 
     let service_provider = ctx.service_provider();
-    let service_context = service_provider.basic_context()?;
+    let service_context =
+        service_provider.context(store_id.to_string(), user.user_id.to_string())?;
 
     match service_provider.patient_service.upsert_program_patient(
         &service_context,

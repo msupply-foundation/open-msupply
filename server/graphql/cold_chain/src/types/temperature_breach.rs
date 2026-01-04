@@ -56,6 +56,7 @@ pub struct EqualFilterTemperatureBreachRowTypeInput {
     pub equal_to: Option<TemperatureBreachNodeType>,
     pub equal_any: Option<Vec<TemperatureBreachNodeType>>,
     pub not_equal_to: Option<TemperatureBreachNodeType>,
+    pub not_equal_all: Option<Vec<TemperatureBreachNodeType>>,
 }
 
 #[derive(InputObject, Clone)]

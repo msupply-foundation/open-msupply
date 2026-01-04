@@ -4,7 +4,7 @@ use super::{mock_name_a, mock_name_store_a, mock_name_store_b, program_master_li
 
 pub fn store_a_join_name_b() -> NameStoreJoinRow {
     NameStoreJoinRow {
-        id: String::from("name_store_join_b"),
+        id: String::from("name_store_a_join_b"),
         name_link_id: String::from("name_store_b"),
         store_id: String::from("store_a"),
         name_is_customer: true,

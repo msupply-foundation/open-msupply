@@ -58,7 +58,7 @@ export const RepackModal: FC<RepackModalControlProps> = ({
     repack: { repackData },
     draft,
     onChange,
-    onInsert,
+    onInsert: { mutateAsync: onInsert, isLoading: isInserting },
   } = useRepack({ stockLineId: stockLine?.id, invoiceId });
   const { columns } = useRepackColumns();
   // only display the message if there are lines to click on
@@ -135,7 +135,7 @@ export const RepackModal: FC<RepackModalControlProps> = ({
       okButton={
         <DialogButton
           variant="save"
-          disabled={!draft?.newPackSize || !draft?.numberOfPacks}
+          disabled={!draft?.newPackSize || !draft?.numberOfPacks || isInserting}
           onClick={async () => {
             try {
               const result = await onInsert();

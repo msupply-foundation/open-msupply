@@ -1,30 +1,45 @@
-import React, { FC } from 'react';
+import React, { FC, useMemo } from 'react';
 import {
-  TableProvider,
-  DataTable,
-  useColumns,
-  createTableStore,
-  NothingHere,
   useTranslation,
   useUrlQueryParams,
-  TooltipTextCell,
+  TextWithTooltipCell,
   useToggle,
   useIsCentralServerApi,
-  ColumnDescription,
-  GenericColumnKey,
+  ColumnDef,
+  usePaginatedMaterialTable,
+  MaterialTable,
+  NothingHere,
+  useUrlQuery,
 } from '@openmsupply-client/common';
 import { AssetCatalogueItemFragment, useAssetList } from '../api';
-import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
 import { AssetCatalogueItemImportModal } from '../ImportCatalogueItem';
 import { Footer } from './Footer';
+import { useAssetTypes } from '../api/hooks';
+import { mapIdNameToOptions } from '../utils';
+import { useAssetCategories } from '@openmsupply-client/system';
 
-const AssetListComponent: FC = () => {
+export const AssetListView: FC = () => {
+  const { data: categoryData } = useAssetCategories();
+  const { data: typeData } = useAssetTypes();
+
+  const { urlQuery } = useUrlQuery({
+    skipParse: ['classId', 'categoryId', 'typeId'],
+  });
+
+  const categoryId = urlQuery['categoryId'];
+
+  // only show type options in the filter which are relevant for the selected category
+  const filteredTypes = (typeData?.nodes || []).filter(
+    type => !categoryId || type.categoryId === categoryId
+  );
+
+  const t = useTranslation();
+  const importModalController = useToggle();
   const isCentralServer = useIsCentralServerApi();
+
   const {
-    updateSortQuery,
-    updatePaginationQuery,
-    queryParams: { sortBy, page, first, offset, filterBy },
+    queryParams,
   } = useUrlQueryParams({
     initialSort: { key: 'code', dir: 'asc' },
     filters: [
@@ -38,66 +53,81 @@ const AssetListComponent: FC = () => {
   });
   const {
     query: { data, isError, isLoading },
-  } = useAssetList({
-    first,
-    offset,
-    sortBy,
-    filterBy,
-  });
-  const pagination = { page, first, offset };
-  const t = useTranslation();
-  const importModalController = useToggle();
+  } = useAssetList(queryParams);
 
-  const columnDescriptions: ColumnDescription<AssetCatalogueItemFragment>[] = [
-    ...(isCentralServer ? [GenericColumnKey.Selection] : []),
-    {
-      key: 'subCatalogue',
-      label: 'label.sub-catalogue',
-      sortable: true,
-      width: 165,
-    },
-    ['code', { width: 150 }],
-    {
-      key: 'type',
-      label: 'label.type',
-      sortable: false,
-      accessor: ({ rowData }) => rowData.assetType?.name,
-    },
-    {
-      key: 'manufacturer',
-      Cell: TooltipTextCell,
-      width: 300,
-      label: 'label.manufacturer',
-    },
-    {
-      Cell: TooltipTextCell,
-      key: 'model',
-      label: 'label.model',
-      width: 200,
-    },
-    {
-      key: 'class',
-      label: 'label.class',
-      sortable: false,
-      accessor: ({ rowData }) => rowData.assetClass?.name,
-    },
-    {
-      key: 'category',
-      label: 'label.category',
-      sortable: false,
-      accessor: ({ rowData }) => rowData.assetCategory?.name,
-    },
-  ];
-
-  const columns = useColumns<AssetCatalogueItemFragment>(
-    columnDescriptions,
-    {
-      sortBy,
-      onChangeSortBy: updateSortQuery,
-    },
-
-    [sortBy]
+  const columns = useMemo(
+    (): ColumnDef<AssetCatalogueItemFragment>[] => [
+      {
+        header: t('label.sub-catalogue'),
+        accessorKey: 'subCatalogue',
+        size: 165,
+        enableSorting: true,
+        enableColumnFilter: true,
+      },
+      {
+        header: t('label.code'),
+        accessorKey: 'code',
+        size: 150,
+        enableSorting: true,
+        enableColumnFilter: true,
+      },
+      {
+        header: t('label.type'),
+        id: 'typeId',
+        accessorFn: row => row.assetType?.name,
+        enableColumnFilter: true,
+        filterVariant: 'select',
+        filterSelectOptions: mapIdNameToOptions(filteredTypes),
+      },
+      {
+        header: t('label.manufacturer'),
+        accessorKey: 'manufacturer',
+        Cell: TextWithTooltipCell,
+        size: 300,
+        enableSorting: true,
+        enableColumnFilter: true,
+      },
+      {
+        header: t('label.model'),
+        accessorKey: 'model',
+        Cell: TextWithTooltipCell,
+        size: 200,
+        enableSorting: true,
+        enableColumnFilter: true,
+      },
+      {
+        header: t('label.class'),
+        id: 'classId',
+        accessorFn: row => row.assetClass?.name,
+      },
+      {
+        header: t('label.category'),
+        id: 'categoryId',
+        accessorFn: row => row.assetCategory?.name,
+        enableColumnFilter: true,
+        filterVariant: 'select',
+        filterSelectOptions: mapIdNameToOptions(categoryData?.nodes || []),
+      },
+    ],
+    [filteredTypes],
   );
+
+  const { table, selectedRows } =
+    usePaginatedMaterialTable<AssetCatalogueItemFragment>({
+      tableId: 'asset-list-view',
+      isLoading,
+      isError,
+      columns,
+      data: data?.nodes ?? [],
+      enableRowSelection: isCentralServer,
+      totalCount: data?.totalCount ?? 0,
+      noDataElement: (
+        <NothingHere
+          body={t('error.no-assets')}
+          onCreate={importModalController.toggleOn}
+        />
+      ),
+    });
 
   return (
     <>
@@ -109,25 +139,13 @@ const AssetListComponent: FC = () => {
         importModalController={importModalController}
         assets={data?.nodes ?? []}
       />
-      <Toolbar />
-      <DataTable
-        id="item-list"
-        pagination={{ ...pagination, total: data?.totalCount ?? 0 }}
-        onChangePage={updatePaginationQuery}
-        columns={columns}
-        data={data?.nodes}
-        isError={isError}
-        isLoading={isLoading}
-        noDataElement={<NothingHere body={t('error.no-assets')} />}
-        enableColumnSelection
+
+      <MaterialTable table={table} />
+
+      <Footer
+        selectedRows={selectedRows}
+        resetRowSelection={table.resetRowSelection}
       />
-      <Footer />
     </>
   );
 };
-
-export const AssetListView: FC = () => (
-  <TableProvider createStore={createTableStore}>
-    <AssetListComponent />
-  </TableProvider>
-);

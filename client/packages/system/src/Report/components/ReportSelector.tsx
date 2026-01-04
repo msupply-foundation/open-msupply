@@ -58,21 +58,6 @@ export const ReportSelector = ({
 
   const { printAsync, isPrinting } = usePrintReport();
 
-  const onReportSelected = async (
-    report: ReportOption,
-    format: PrintFormat
-  ) => {
-    if (report.argumentSchema) {
-      onOpenArguments({
-        report,
-        format,
-      });
-    } else {
-      const timezone = new Intl.DateTimeFormat().resolvedOptions().timeZone;
-      await print(report, { timezone, ...extraArguments }, format);
-    }
-  };
-
   const print = async (
     report: ReportRowFragment,
     args: JsonData,
@@ -88,6 +73,21 @@ export const ReportSelector = ({
       });
     } catch (err) {
       // Error is already displayed by global graphql error handler, we just need to catch
+    }
+  };
+
+  const handleReportSelected = async (
+    report: ReportOption,
+    format: PrintFormat
+  ) => {
+    if (report.argumentSchema) {
+      onOpenArguments({
+        report,
+        format,
+      });
+    } else {
+      const timezone = new Intl.DateTimeFormat().resolvedOptions().timeZone;
+      await print(report, { timezone, ...extraArguments }, format);
     }
   };
 
@@ -115,7 +115,7 @@ export const ReportSelector = ({
       )}
       {modalOpen.isOn && (
         <SelectReportModal
-          onSelectReport={onReportSelected}
+          onSelectReport={handleReportSelected}
           reportOptions={options}
           onClose={modalOpen.toggleOff}
         />

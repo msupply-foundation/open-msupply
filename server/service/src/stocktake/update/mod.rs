@@ -164,7 +164,7 @@ pub fn update_stocktake(
                 activity_log_entry(
                     ctx,
                     ActivityLogType::StocktakeStatusFinalised,
-                    Some(stocktake_id.to_owned()),
+                    Some(stocktake_id.to_string()),
                     None,
                     None,
                 )?;
@@ -650,7 +650,8 @@ mod test {
             .unwrap();
         let stocktake_line = StocktakeLineRepository::new(&context.connection)
             .query_by_filter(
-                StocktakeLineFilter::new().stocktake_id(EqualFilter::equal_to(&result.id)),
+                StocktakeLineFilter::new()
+                    .stocktake_id(EqualFilter::equal_to(result.id.to_string())),
                 None,
             )
             .unwrap();
@@ -674,7 +675,8 @@ mod test {
 
         let stocktake_line = StocktakeLineRepository::new(&context.connection)
             .query_by_filter(
-                StocktakeLineFilter::new().stocktake_id(EqualFilter::equal_to(&result.id)),
+                StocktakeLineFilter::new()
+                    .stocktake_id(EqualFilter::equal_to(result.id.to_string())),
                 None,
             )
             .unwrap();
@@ -738,9 +740,9 @@ mod test {
             .query_by_filter(
                 StocktakeLineFilter::new()
                     .id(EqualFilter::equal_to(
-                        &mock_stocktake_line_stock_surplus().id,
+                        mock_stocktake_line_stock_surplus().id,
                     ))
-                    .stocktake_id(EqualFilter::equal_to(&result.id)),
+                    .stocktake_id(EqualFilter::equal_to(result.id.to_string())),
                 None,
             )
             .unwrap()

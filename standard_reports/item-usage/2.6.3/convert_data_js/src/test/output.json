@@ -1,0 +1,52 @@
+{
+  "data": {
+    "items": {
+      "nodes": [
+        {
+          "id": "102",
+          "code": "ITEM001",
+          "name": "item Aa",
+          "stats": {
+            "stockOnHand": 200,
+            "totalConsumption": 100,
+            "availableMonthsOfStockOnHand": 4.5,
+            "averageMonthlyConsumption": 20
+          },
+          "AMC": 20,
+          "AMC12": 92.4,
+          "AMC24": 192.4,
+          "SOH": 200,
+          "MOS": 4.5,
+          "monthConsumption": 150,
+          "expiringInSixMonths": 75,
+          "expiringInTwelveMonths": 92,
+          "lastMonthConsumption": 300,
+          "stockOnOrder": 4,
+          "twoMonthsAgoConsumption": 421
+        },
+        {
+          "id": "101",
+          "code": "ITEM002",
+          "name": "Item ab",
+          "stats": {
+            "totalConsumption": 1200,
+            "availableMonthsOfStockOnHand": 4.5,
+            "stockOnHand": 300.902,
+            "averageMonthlyConsumption": 266.7
+          },
+          "monthConsumption": 200,
+          "lastMonthConsumption": 500,
+          "twoMonthsAgoConsumption": 123,
+          "expiringInSixMonths": 150,
+          "expiringInTwelveMonths": 170,
+          "stockOnOrder": 5,
+          "AMC12": 150.8,
+          "AMC24": 250.8,
+          "AMC": 266.7,
+          "SOH": 300.902,
+          "MOS": 4.5
+        }
+      ]
+    }
+  }
+}

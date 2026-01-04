@@ -1,4 +1,4 @@
-import React, { FC, memo } from 'react';
+import React, { memo } from 'react';
 import {
   Box,
   ButtonWithIcon,
@@ -11,13 +11,14 @@ import {
   Action,
   DeleteIcon,
   ActionsFooter,
+  usePreferences,
 } from '@openmsupply-client/common';
 import {
   getStatusTranslator,
   supplierReturnStatuses,
   outboundStatuses,
 } from '../../../utils';
-import { SupplierReturnRowFragment, useReturns } from '../../api';
+import { SupplierReturnLineFragment, SupplierReturnRowFragment, useReturns } from '../../api';
 import { StatusChangeButton } from './StatusChangeButton';
 import { OnHoldButton } from './OnHoldButton';
 
@@ -55,14 +56,23 @@ const createStatusLog = (invoice: SupplierReturnRowFragment) => {
   return statusLog;
 };
 
-export const FooterComponent: FC = () => {
+export const FooterComponent = ({
+  selectedRows,
+  resetRowSelection,
+}: {
+  selectedRows: SupplierReturnLineFragment[];
+  resetRowSelection: () => void;
+}) => {
   const t = useTranslation();
-  const { data } = useReturns.document.supplierReturn();
   const { navigateUpOne } = useBreadcrumbs();
+  const { invoiceStatusOptions } = usePreferences();
+  const { data } = useReturns.document.supplierReturn();
   const { id } = data ?? { id: '' };
-  const { selectedIds, confirmAndDelete } =
+  const { confirmAndDelete } =
     useReturns.lines.deleteSelectedSupplierLines({
       returnId: id,
+      selectedRows,
+      resetRowSelection,
     });
 
   const actions: Action[] = [
@@ -73,18 +83,23 @@ export const FooterComponent: FC = () => {
     },
   ];
 
+  const statuses = supplierReturnStatuses.filter(status =>
+    invoiceStatusOptions?.includes(status)
+  );
+
   return (
     <AppFooterPortal
       Content={
         <>
           {' '}
-          {selectedIds.length !== 0 && (
+          {selectedRows.length !== 0 && (
             <ActionsFooter
               actions={actions}
-              selectedRowCount={selectedIds.length}
+              selectedRowCount={selectedRows.length}
+              resetRowSelection={resetRowSelection}
             />
           )}
-          {data && selectedIds.length === 0 && (
+          {data && selectedRows.length === 0 && (
             <Box
               gap={2}
               display="flex"
@@ -94,7 +109,7 @@ export const FooterComponent: FC = () => {
             >
               <OnHoldButton />
               <StatusCrumbs
-                statuses={supplierReturnStatuses}
+                statuses={statuses}
                 statusLog={createStatusLog(data)}
                 statusFormatter={getStatusTranslator(t)}
               />
@@ -107,7 +122,6 @@ export const FooterComponent: FC = () => {
                   sx={{ fontSize: '12px' }}
                   onClick={() => navigateUpOne()}
                 />
-
                 <StatusChangeButton />
               </Box>
             </Box>

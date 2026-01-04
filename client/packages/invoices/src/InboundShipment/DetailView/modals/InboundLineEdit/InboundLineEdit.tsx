@@ -7,26 +7,22 @@ import {
   useDialog,
   useNotification,
   ModalMode,
-  TableProvider,
-  createTableStore,
-  createQueryParamsStore,
   useSimplifiedTabletUI,
   Box,
   ButtonWithIcon,
   PlusCircleIcon,
 } from '@openmsupply-client/common';
 import { InboundLineEditForm } from './InboundLineEditForm';
-import {
-  InboundLineFragment,
-  useDraftInboundLines,
-  useInbound,
-} from '../../../api';
-
+import { InboundLineFragment, useDraftInboundLines } from '../../../api';
 import { TabLayout } from './TabLayout';
-import { CurrencyRowFragment } from '@openmsupply-client/system';
+import {
+  CurrencyRowFragment,
+  ItemRowFragment,
+} from '@openmsupply-client/system';
 import { QuantityTable } from './TabTables';
 import { isInboundPlaceholderRow } from '../../../../utils';
 import { ScannedBatchData } from '../../DetailView';
+import { useNextItem } from '../../../../useNextItem';
 
 type InboundLineItem = InboundLineFragment['item'];
 interface InboundLineEditProps {
@@ -40,6 +36,7 @@ interface InboundLineEditProps {
   hasVvmStatusesEnabled?: boolean;
   hasItemVariantsEnabled?: boolean;
   scannedBatchData?: ScannedBatchData;
+  getSortedItems: () => ItemRowFragment[];
 }
 
 export const InboundLineEdit = ({
@@ -53,11 +50,13 @@ export const InboundLineEdit = ({
   hasVvmStatusesEnabled = false,
   hasItemVariantsEnabled = false,
   scannedBatchData,
+  getSortedItems,
 }: InboundLineEditProps) => {
   const t = useTranslation();
   const { error } = useNotification();
-  const [currentItem, setCurrentItem] = useState<InboundLineItem | null>(item);
-  const { next: nextItem, disabled: nextDisabled } = useInbound.document.next(
+  const [currentItem, setCurrentItem] = useState<ItemRowFragment | null>(item);
+  const { next: nextItem, disabled: nextDisabled } = useNextItem(
+    getSortedItems,
     currentItem?.id ?? ''
   );
 
@@ -69,7 +68,7 @@ export const InboundLineEdit = ({
     removeDraftLine,
     isLoading,
     saveLines,
-  } = useDraftInboundLines(currentItem, scannedBatchData);
+  } = useDraftInboundLines(currentItem?.id, scannedBatchData);
   const okNextDisabled =
     (mode === ModalMode.Update && nextDisabled) || !currentItem;
   const manualLinesWithZeroNumberOfPacks = draftLines.some(
@@ -120,66 +119,59 @@ export const InboundLineEdit = ({
   );
 
   return (
-    <TableProvider
-      createStore={createTableStore}
-      queryParamsStore={createQueryParamsStore({
-        initialSortBy: { key: 'expiryDate' },
-      })}
-    >
-      <Modal
-        title={
-          mode === ModalMode.Create
-            ? t('heading.add-item')
-            : t('heading.edit-item')
-        }
-        cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
-        nextButton={
-          <DialogButton
-            variant="next-and-ok"
-            disabled={okNextDisabled || manualLinesWithZeroNumberOfPacks}
-            onClick={async () => {
+    <Modal
+      title={
+        mode === ModalMode.Create
+          ? t('heading.add-item')
+          : t('heading.edit-item')
+      }
+      cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
+      nextButton={
+        <DialogButton
+          variant="next-and-ok"
+          disabled={okNextDisabled || manualLinesWithZeroNumberOfPacks}
+          onClick={async () => {
+            await saveLines();
+            if (mode === ModalMode.Update && nextItem) {
+              setCurrentItem(nextItem);
+            } else if (mode === ModalMode.Create) setCurrentItem(null);
+            else onClose();
+            // Returning true here triggers the slide animation
+            return true;
+          }}
+        />
+      }
+      okButton={
+        <DialogButton
+          variant="ok"
+          disabled={!currentItem || manualLinesWithZeroNumberOfPacks}
+          onClick={async () => {
+            try {
               await saveLines();
-              if (mode === ModalMode.Update && nextItem) {
-                setCurrentItem(nextItem);
-              } else if (mode === ModalMode.Create) setCurrentItem(null);
-              else onClose();
-              // Returning true here triggers the slide animation
-              return true;
-            }}
+              onClose();
+            } catch (e) {
+              error((e as Error).message)();
+            }
+          }}
+        />
+      }
+      height={700}
+      width={1200}
+      enableAutocomplete /* Required for previously entered batches to be remembered and suggested in future shipments */
+    >
+      {isLoading ? (
+        <BasicSpinner messageKey="saving" />
+      ) : (
+        <>
+          <InboundLineEditForm
+            disabled={mode === ModalMode.Update}
+            item={currentItem}
+            onChangeItem={setCurrentItem}
           />
-        }
-        okButton={
-          <DialogButton
-            variant="ok"
-            disabled={!currentItem || manualLinesWithZeroNumberOfPacks}
-            onClick={async () => {
-              try {
-                await saveLines();
-                onClose();
-              } catch (e) {
-                error((e as Error).message)();
-              }
-            }}
-          />
-        }
-        height={700}
-        width={1200}
-        enableAutocomplete /* Required for previously entered batches to be remembered and suggested in future shipments */
-      >
-        {isLoading ? (
-          <BasicSpinner messageKey="saving" />
-        ) : (
-          <>
-            <InboundLineEditForm
-              disabled={mode === ModalMode.Update}
-              item={currentItem}
-              onChangeItem={setCurrentItem}
-            />
-            <Divider margin={5} />
-            {tableContent}
-          </>
-        )}
-      </Modal>
-    </TableProvider>
+          <Divider margin={5} />
+          {tableContent}
+        </>
+      )}
+    </Modal>
   );
 };

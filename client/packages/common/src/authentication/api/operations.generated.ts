@@ -229,6 +229,56 @@ export type LastSuccessfulUserSyncQuery = {
   };
 };
 
+export type PreferencesQueryVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+}>;
+
+export type PreferencesQuery = {
+  __typename: 'Queries';
+  preferences: {
+    __typename: 'PreferencesNode';
+    adjustForNumberOfDaysOutOfStock: boolean;
+    allowTrackingOfStockByDonor: boolean;
+    authoriseGoodsReceived: boolean;
+    authorisePurchaseOrder: boolean;
+    canCreateInternalOrderFromARequisition: boolean;
+    customTranslations: any;
+    daysInMonth: number;
+    disableManualReturns: boolean;
+    firstThresholdForExpiringItems: number;
+    genderOptions: Array<Types.GenderTypeNode>;
+    manageVaccinesInDoses: boolean;
+    manageVvmStatusForStock: boolean;
+    numberOfMonthsThresholdToShowLowStockAlertsForProducts: number;
+    numberOfMonthsThresholdToShowOverStockAlertsForProducts: number;
+    numberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts: number;
+    orderInPacks: boolean;
+    preventTransfersMonthsBeforeInitialisation: number;
+    requisitionAutoFinalise: boolean;
+    secondThresholdForExpiringItems: number;
+    selectDestinationStoreForAnInternalOrder: boolean;
+    showContactTracing: boolean;
+    sortByVvmStatusThenExpiry: boolean;
+    storeCustomColour: string;
+    syncRecordsDisplayThreshold: number;
+    useProcurementFunctionality: boolean;
+    useSimplifiedMobileUi: boolean;
+    expiredStockPreventIssue: boolean;
+    expiredStockIssueThreshold: number;
+    warningForExcessRequest: boolean;
+    invoiceStatusOptions: Array<Types.InvoiceNodeStatus>;
+    itemMarginOverridesSupplierMargin: boolean;
+    showIndicativePriceInRequisitions: boolean;
+    isGaps: boolean;
+    warnWhenMissingRecentStocktake: {
+      __typename: 'WarnWhenMissingRecentStocktakeDataNode';
+      enabled: boolean;
+      maxAge: number;
+      minItems: number;
+    };
+  };
+};
+
 export const UserStoreNodeFragmentDoc = gql`
   fragment UserStoreNode on UserStoreNode {
     code
@@ -427,6 +477,50 @@ export const LastSuccessfulUserSyncDocument = gql`
   }
   ${UpdateUserFragmentDoc}
 `;
+export const PreferencesDocument = gql`
+  query preferences($storeId: String!) {
+    preferences(storeId: $storeId) {
+      adjustForNumberOfDaysOutOfStock
+      allowTrackingOfStockByDonor
+      authoriseGoodsReceived
+      authorisePurchaseOrder
+      canCreateInternalOrderFromARequisition
+      customTranslations
+      daysInMonth
+      disableManualReturns
+      firstThresholdForExpiringItems
+      genderOptions
+      manageVaccinesInDoses
+      manageVvmStatusForStock
+      numberOfMonthsThresholdToShowLowStockAlertsForProducts
+      numberOfMonthsThresholdToShowOverStockAlertsForProducts
+      numberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts
+      orderInPacks
+      preventTransfersMonthsBeforeInitialisation
+      requisitionAutoFinalise
+      secondThresholdForExpiringItems
+      selectDestinationStoreForAnInternalOrder
+      showContactTracing
+      sortByVvmStatusThenExpiry
+      storeCustomColour
+      syncRecordsDisplayThreshold
+      useProcurementFunctionality
+      useSimplifiedMobileUi
+      expiredStockPreventIssue
+      expiredStockIssueThreshold
+      warnWhenMissingRecentStocktake {
+        enabled
+        maxAge
+        minItems
+      }
+      warningForExcessRequest
+      invoiceStatusOptions
+      itemMarginOverridesSupplierMargin
+      showIndicativePriceInRequisitions
+      isGaps
+    }
+  }
+`;
 
 export type SdkFunctionWrapper = <T>(
   action: (requestHeaders?: Record<string, string>) => Promise<T>,
@@ -550,6 +644,21 @@ export function getSdk(
             { ...requestHeaders, ...wrappedRequestHeaders }
           ),
         'lastSuccessfulUserSync',
+        'query',
+        variables
+      );
+    },
+    preferences(
+      variables: PreferencesQueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders
+    ): Promise<PreferencesQuery> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<PreferencesQuery>(PreferencesDocument, variables, {
+            ...requestHeaders,
+            ...wrappedRequestHeaders,
+          }),
+        'preferences',
         'query',
         variables
       );

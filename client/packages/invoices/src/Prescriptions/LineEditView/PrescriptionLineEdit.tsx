@@ -89,6 +89,8 @@ export const PrescriptionLineEdit = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentItemId]);
 
+  const existingItemIds = lines.map(line => line.item.id);
+
   return (
     <Grid
       container
@@ -107,12 +109,10 @@ export const PrescriptionLineEdit = ({
             disabled={!isNew || isDisabled}
             currentItemId={itemId ?? currentItemId}
             onChange={item => setCurrentItemId(item?.id)}
-            filter={{ isVisibleOrOnHand: true }}
-            extraFilter={
-              isDisabled
-                ? undefined
-                : item => !lines?.some(line => line.item.id === item.id)
-            }
+            filter={{
+              isVisibleOrOnHand: true,
+              id: { notEqualAll: existingItemIds },
+            }}
             programId={programId}
           />
         </Grid>

@@ -11,9 +11,12 @@ import {
   useEditModal,
   DetailTabs,
   useBreadcrumbs,
+  NothingHere,
+  useNonPaginatedMaterialTable,
+  MaterialTable,
+  Groupable,
 } from '@openmsupply-client/common';
 import { ActivityLogList } from '@openmsupply-client/system';
-import { ContentArea } from './ContentArea';
 import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
 import { AppBarButtons } from './AppBarButtons';
@@ -21,8 +24,8 @@ import { SidePanel } from './SidePanel';
 import { SupplierReturnLineFragment, useReturns } from '../api';
 import { AppRoute } from '@openmsupply-client/config';
 import { SupplierReturnEditModal } from '../modals';
-import { SupplierReturnItem } from '../../types';
 import { getNextItemId } from '../../utils';
+import { useSupplierReturnColumns } from './columns';
 
 export const SupplierReturnsDetailViewComponent = () => {
   const {
@@ -33,13 +36,10 @@ export const SupplierReturnsDetailViewComponent = () => {
     mode,
   } = useEditModal<string>();
   const { data, isLoading } = useReturns.document.supplierReturn();
-  const { rows } = useReturns.lines.supplierReturnRows();
+  const { lines } = useReturns.lines.supplierReturnRows();
   const t = useTranslation();
   const { setCustomBreadcrumbs } = useBreadcrumbs();
   const navigate = useNavigate();
-
-  const onRowClick = (row: SupplierReturnLineFragment | SupplierReturnItem) =>
-    onOpen(row.itemId);
 
   const onAddItem = () => onOpen();
 
@@ -47,11 +47,30 @@ export const SupplierReturnsDetailViewComponent = () => {
     setCustomBreadcrumbs({ 1: data?.invoiceNumber.toString() ?? '' });
   }, [setCustomBreadcrumbs, data?.invoiceNumber]);
 
-  if (isLoading) return <DetailViewSkeleton hasGroupBy={true} hasHold={true} />;
+  const isDisabled = useReturns.utils.supplierIsDisabled();
+  const columns = useSupplierReturnColumns();
+
+  const { table, selectedRows } =
+    useNonPaginatedMaterialTable<Groupable<SupplierReturnLineFragment>>({
+      tableId: 'supplier-return-detail',
+      onRowClick: row => onOpen(row.itemId),
+      columns,
+      isLoading,
+      data: lines,
+      grouping: { enabled: true },
+      enableRowSelection: !isDisabled,
+      noDataElement: (
+        <NothingHere
+          body={t('error.no-outbound-items')}
+          onCreate={isDisabled ? undefined : () => onAddItem()}
+          buttonText={t('button.add-item')}
+        />
+      ),
+    });
 
   const tabs = [
     {
-      Component: <ContentArea onRowClick={onRowClick} onAddItem={onAddItem} />,
+      Component: <MaterialTable table={table} />,
       value: 'Details',
     },
     {
@@ -60,7 +79,9 @@ export const SupplierReturnsDetailViewComponent = () => {
     },
   ];
 
-  const nextItemId = getNextItemId(rows ?? [], itemId);
+  const nextItemId = getNextItemId(lines ?? [], itemId);
+
+  if (isLoading) return <DetailViewSkeleton hasGroupBy={true} hasHold={true} />;
 
   return (
     <React.Suspense
@@ -93,7 +114,10 @@ export const SupplierReturnsDetailViewComponent = () => {
 
           <Toolbar />
           <DetailTabs tabs={tabs} />
-          <Footer />
+          <Footer
+            selectedRows={selectedRows}
+            resetRowSelection={table.resetRowSelection}
+          />
           <SidePanel />
         </>
       ) : (

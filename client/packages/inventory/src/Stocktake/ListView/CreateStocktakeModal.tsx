@@ -1,33 +1,30 @@
 import React, { useState } from 'react';
 import {
+  Alert,
   BasicSpinner,
-  Checkbox,
-  DateTimePickerInput,
   DialogButton,
-  InputWithLabelRow,
+  RadioGroup,
 } from '@common/components';
-import { DateUtils, useFormatDateTime, useTranslation } from '@common/intl';
+import { DateUtils, useTranslation } from '@common/intl';
+import { FormControlLabel, Radio, Typography } from '@mui/material';
 import { useDialog } from '@common/hooks';
 import {
   useStockListCount,
-  LocationSearchInput,
-  LocationRowFragment,
-  MasterListSearchInput,
-  MasterListRowFragment,
-  useMasterListLineCount,
-  VVMStatusSearchInput,
+  useItemsByFilter,
 } from '@openmsupply-client/system';
 import {
   Box,
   Formatter,
+  ItemNodeType,
   StockLineFilterInput,
   useNavigate,
-  usePreferences,
 } from '@openmsupply-client/common';
 import { CreateStocktakeInput } from '../api/hooks/useStocktake';
-import { VvmStatusFragment } from 'packages/system/src/Stock/api';
+import { CreateStocktakeModalState, StocktakeType } from './types';
+import { useGenerateComment } from './useGenerateComment';
+import { StocktakeFilters } from './StocktakeFilters';
+import { FullStocktakeOnHandSelector } from './FullStocktakeOnHandSelector';
 
-const LABEL_FLEX = '0 0 150px';
 interface NewStocktakeModalProps {
   open: boolean;
   onClose: () => void;
@@ -36,14 +33,14 @@ interface NewStocktakeModalProps {
   description?: string;
 }
 
-interface ModalState {
-  location: LocationRowFragment | null;
-  masterList: MasterListRowFragment | null;
-  expiryDate: Date | null;
-  createBlankStocktake: boolean;
-  includeAllMasterListItems: boolean;
-  vvmStatus: VvmStatusFragment | null;
-}
+const defaultFormState: CreateStocktakeModalState = {
+  type: StocktakeType.FULL,
+  location: null,
+  vvmStatus: null,
+  masterList: null,
+  expiryDate: null,
+  includeAllItems: false,
+};
 
 export const CreateStocktakeModal = ({
   open,
@@ -55,141 +52,104 @@ export const CreateStocktakeModal = ({
   const navigate = useNavigate();
   const t = useTranslation();
 
-  const { manageVvmStatusForStock } = usePreferences();
-
   const { Modal } = useDialog({
     isOpen: open,
     onClose,
     disableBackdrop: true,
   });
 
-  const [
-    {
-      location,
-      masterList,
-      vvmStatus,
-      expiryDate,
-      createBlankStocktake,
-      includeAllMasterListItems,
-    },
-    setState,
-  ] = useState<ModalState>({
-    location: null,
-    vvmStatus: null,
-    masterList: null,
-    expiryDate: null,
-    createBlankStocktake: false,
-    includeAllMasterListItems: false,
-  });
+  const [state, setState] =
+    useState<CreateStocktakeModalState>(defaultFormState);
+  const { location, masterList, vvmStatus, expiryDate, type, includeAllItems } =
+    state;
 
   const stockFilter: StockLineFilterInput = {
-    location: location && {
-      id: { equalTo: location.id },
-    },
-    masterList: masterList && {
-      id: { equalTo: masterList.id },
-    },
+    location: location && { id: { equalTo: location.id } },
+    masterList: masterList && { id: { equalTo: masterList.id } },
+    vvmStatusId: vvmStatus && { equalTo: vvmStatus.id },
     expiryDate: expiryDate && {
       beforeOrEqualTo: Formatter.naiveDate(expiryDate),
-    },
-    vvmStatusId: vvmStatus && {
-      equalTo: vvmStatus.id,
     },
   };
 
   const { data } = useStockListCount(stockFilter);
-  const { data: masterListLineCount } = useMasterListLineCount(masterList?.id);
+  const { data: { totalCount: noStockItemsCount } = {} } = useItemsByFilter({
+    filterBy: {
+      masterListId: masterList ? { equalTo: masterList.id } : undefined,
+      hasStockOnHand: false,
+      type: { equalTo: ItemNodeType.Stock },
+    },
+  });
 
-  const { localisedDate } = useFormatDateTime();
+  const generateComment = useGenerateComment(state);
 
-  const generateComment = () => {
-    if (createBlankStocktake) return '';
-
-    const filterComments: string[] = [];
-
-    if (!!masterList) {
-      filterComments.push(
-        t('stocktake.master-list-template', {
-          masterList: masterList.name,
-        })
-      );
-    }
-    if (!!location) {
-      filterComments.push(
-        t('stocktake.location-template', {
-          location: location.code,
-        })
-      );
-    }
-    if (!!expiryDate) {
-      filterComments.push(
-        t('stocktake.expires-before-template', {
-          date: localisedDate(expiryDate),
-        })
-      );
-    }
-    if (!!vvmStatus) {
-      filterComments.push(
-        t('stocktake.vvm-status-template', {
-          vvmStatus: vvmStatus.description,
-        })
-      );
-    }
-
-    if (filterComments.length === 0) return undefined;
-    if (filterComments.length === 1)
-      return t('stocktake.comment-template', { filters: filterComments[0] });
-
-    const comments = t('stocktake.comment-and-template', {
-      start: filterComments.slice(0, -1).join(', '),
-      end: filterComments[filterComments.length - 1],
-    });
-
-    return t('stocktake.comment-template', { filters: comments });
-  };
+  const createBlankStocktake = type === StocktakeType.BLANK;
 
   const onSave = () => {
+    const comment = generateComment();
+
     // Our API only has a `beforeOrEqualTo` filter, so just kludging the date back 1 day here
     const adjustedExpiryDate = expiryDate
       ? DateUtils.addDays(expiryDate, -1)
       : null;
 
-    const args: CreateStocktakeInput = {
-      masterListId: masterList?.id,
-      locationId: location?.id,
-      vvmStatusId: vvmStatus?.id,
-      createBlankStocktake,
-      expiresBefore: Formatter.naiveDate(adjustedExpiryDate),
-      isInitialStocktake: false,
-      includeAllMasterListItems,
-      description,
-      comment: generateComment(),
-    };
-    onCreate(args).then(id => {
-      if (id) {
-        navigate(id);
+    const argsByType = ((): CreateStocktakeInput => {
+      switch (type) {
+        case StocktakeType.FULL:
+          return {
+            isAllItemsStocktake: includeAllItems,
+          };
+        case StocktakeType.FILTERED:
+          return {
+            masterListId: masterList?.id,
+            locationId: location?.id,
+            vvmStatusId: vvmStatus?.id,
+            expiresBefore: Formatter.naiveDate(adjustedExpiryDate),
+            includeAllMasterListItems: includeAllItems,
+          };
+        case StocktakeType.BLANK:
+          return {
+            createBlankStocktake: true,
+          };
       }
-    });
+    })();
+
+    onCreate({
+      ...argsByType,
+      description,
+      comment,
+    }).then(id => id && navigate(id));
   };
 
-  let estimatedLineCount = 0;
-  if (createBlankStocktake) {
-    estimatedLineCount = 0;
-  } else {
+  const estimateLineCount = (): number => {
     const stockCount = data?.totalCount ?? 0;
-    estimatedLineCount =
-      includeAllMasterListItems && masterListLineCount
-        ? Math.max(masterListLineCount, stockCount)
-        : stockCount;
-  }
+    return includeAllItems ? (noStockItemsCount ?? 0) + stockCount : stockCount;
+  };
 
   return (
     <>
       <Modal
         slideAnimation={false}
         title={t('label.new-stocktake')}
-        width={650}
-        cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
+        width={675}
+        height={725}
+        contentProps={{
+          sx: {
+            paddingY: 0,
+            display: 'flex',
+            flexDirection: 'column',
+            '& > div': { flex: 1, display: 'flex', flexDirection: 'column' },
+          },
+        }}
+        cancelButton={
+          <DialogButton
+            variant="cancel"
+            onClick={() => {
+              setState(defaultFormState);
+              onClose();
+            }}
+          />
+        }
         okButton={
           <DialogButton
             disabled={isCreating}
@@ -201,127 +161,99 @@ export const CreateStocktakeModal = ({
           />
         }
       >
-        <Box flex={1} display="flex" justifyContent="center">
+        <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
           {!isCreating ? (
-            <Box paddingLeft={2} display="flex" flexDirection="column" gap={2}>
-              <InputWithLabelRow
-                labelProps={{ sx: { flex: `${LABEL_FLEX}` } }}
-                Input={
-                  <Checkbox
-                    style={{ paddingLeft: 0 }}
-                    checked={!!createBlankStocktake}
-                    onChange={e =>
-                      setState(() => ({
-                        createBlankStocktake: e.target.checked,
-                        masterList: null,
-                        includeAllMasterListItems: false,
-                        location: null,
-                        expiryDate: null,
-                        vvmStatus: null,
-                      }))
-                    }
-                  />
-                }
-                label={t('stocktake.create-blank')}
-              />
-              <InputWithLabelRow
-                labelProps={{ sx: { flex: `${LABEL_FLEX}` } }}
-                Input={
-                  <MasterListSearchInput
-                    disabled={!!createBlankStocktake}
-                    onChange={masterList =>
-                      setState(prev => ({ ...prev, masterList }))
-                    }
-                    selectedMasterList={masterList}
-                    width={380}
-                  />
-                }
-                label={t('label.master-list')}
-              />
-              {masterList ? (
-                <InputWithLabelRow
-                  labelProps={{ sx: { flex: `0 0 250px` } }}
-                  sx={{ paddingLeft: '160px' }}
-                  Input={
-                    <Checkbox
-                      style={{ paddingLeft: 0 }}
-                      disabled={!masterList || createBlankStocktake}
-                      checked={!!includeAllMasterListItems}
-                      onChange={e =>
-                        setState(prev => ({
-                          ...prev,
-                          includeAllMasterListItems: e.target.checked,
-                          vvmStatus: null,
-                          location: null,
-                          expiryDate: null,
-                        }))
-                      }
-                    />
+            <Box
+              sx={{
+                flex: 1,
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+                gap: 2,
+                width: 630,
+                margin: '0 auto',
+              }}
+            >
+              <Box>
+                <RadioGroup
+                  value={type}
+                  sx={{ margin: 1.5 }}
+                  onChange={(_, type) =>
+                    setState({
+                      // reset the other inputs when changing stocktake type
+                      ...defaultFormState,
+                      type: type as StocktakeType,
+                    })
                   }
-                  label={t('stocktake.all-master-list-items')}
-                  labelRight={true}
-                />
-              ) : null}
-              <InputWithLabelRow
-                labelProps={{ sx: { flex: `${LABEL_FLEX}` } }}
-                Input={
-                  <LocationSearchInput
-                    disabled={
-                      !!createBlankStocktake || includeAllMasterListItems
-                    }
-                    onChange={location =>
-                      setState(prev => ({ ...prev, location }))
-                    }
-                    width={380}
-                    selectedLocation={location}
+                >
+                  <FormControlLabel
+                    value={StocktakeType.FULL}
+                    control={<Radio sx={{ paddingY: '7px' }} />}
+                    label={t('stocktake.create-full')}
+                    slotProps={{ typography: { fontWeight: 'bold' } }}
                   />
-                }
-                label={t('label.location')}
-              />
-              <InputWithLabelRow
-                labelProps={{ sx: { flex: `${LABEL_FLEX}` } }}
-                Input={
-                  <DateTimePickerInput
-                    width="100%"
-                    disabled={
-                      !!createBlankStocktake || includeAllMasterListItems
-                    }
-                    value={expiryDate}
-                    onChange={expiryDate =>
-                      setState(prev => ({ ...prev, expiryDate }))
-                    }
-                  />
-                }
-                label={t('label.items-expiring-before')}
-              />
 
-              {manageVvmStatusForStock && (
-                <InputWithLabelRow
-                  label={t('label.vvm-status')}
-                  labelProps={{ sx: { flex: `${LABEL_FLEX}` } }}
-                  Input={
-                    <VVMStatusSearchInput
-                      disabled={
-                        !!createBlankStocktake || includeAllMasterListItems
-                      }
-                      onChange={vvmStatus =>
-                        setState(prev => ({
-                          ...prev,
-                          vvmStatus: vvmStatus ?? null,
-                        }))
-                      }
-                      width={380}
-                      selected={vvmStatus}
-                    />
-                  }
-                />
+                  <FormControlLabel
+                    value={StocktakeType.FILTERED}
+                    control={<Radio sx={{ paddingY: '7px' }} />}
+                    label={t('stocktake.create-filtered')}
+                    slotProps={{ typography: { fontWeight: 'bold' } }}
+                  />
+
+                  <FormControlLabel
+                    value={StocktakeType.BLANK}
+                    control={<Radio sx={{ paddingY: '7px' }} />}
+                    label={t('stocktake.create-blank')}
+                    slotProps={{ typography: { fontWeight: 'bold' } }}
+                  />
+                </RadioGroup>
+
+                <Box
+                  sx={{
+                    backgroundColor: 'background.group.light',
+                    padding: 2,
+                    borderRadius: '10px',
+                  }}
+                >
+                  {type === StocktakeType.FULL && (
+                    <>
+                      <Typography variant="body2">
+                        {t('stocktake.description-full')}
+                      </Typography>
+                      <FullStocktakeOnHandSelector
+                        includeAllItems={includeAllItems}
+                        setState={setState}
+                      />
+                    </>
+                  )}
+                  {type === StocktakeType.FILTERED && (
+                    <>
+                      <Typography variant="body2">
+                        {t('stocktake.description-filters')}
+                      </Typography>
+                      <StocktakeFilters state={state} setState={setState} />
+                    </>
+                  )}
+                  {type === StocktakeType.BLANK && (
+                    <Typography variant="body2">
+                      {t('stocktake.description-blank')}
+                    </Typography>
+                  )}
+                </Box>
+              </Box>
+
+              {/* Estimated lines */}
+              {createBlankStocktake ? (
+                <Alert severity="success" sx={{ marginRight: 0 }}>
+                  {t('message.create-blank-stocktake')}
+                </Alert>
+              ) : (
+                <Alert severity="info" sx={{ marginRight: 0 }}>
+                  {t('message.lines-estimated', {
+                    count: estimateLineCount(),
+                  })}
+                </Alert>
               )}
-
-              <InputWithLabelRow
-                labelProps={{ sx: { flex: `${LABEL_FLEX}` } }}
-                Input={estimatedLineCount}
-                label={t('label.stocktake-estimated-lines')}
-              />
             </Box>
           ) : (
             <Box sx={{ height: '100%' }}>

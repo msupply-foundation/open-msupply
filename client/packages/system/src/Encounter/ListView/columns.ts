@@ -1,55 +1,44 @@
+import { useCallback, useMemo } from 'react';
 import {
-  useColumns,
-  ColumnDescription,
-  SortBy,
-  ColumnDataAccessor,
+  ColumnDef,
   EncounterNodeStatus,
   DocumentRegistryCategoryNode,
+  ChipTableCell,
+  ColumnType,
+  useTranslation,
 } from '@openmsupply-client/common';
-import { useFormatDateTime, useTranslation } from '@common/intl';
 import {
   EncounterRowFragment,
   getStatusEventData,
   useDocumentRegistry,
 } from '@openmsupply-client/programs';
-import { getLogicalStatus } from '../utils';
-import { ChipTableCell } from '../../Patient';
+import { encounterStatusTranslation, getLogicalStatus } from '../utils';
 
 interface useEncounterListColumnsProps {
-  onChangeSortBy: (sort: string, dir: 'desc' | 'asc') => void;
-  sortBy: SortBy<EncounterRowFragment>;
   includePatient?: boolean;
 }
 
-const useEncounterAdditionalInfoAccessor: () => {
-  additionalInfoAccessor: ColumnDataAccessor<EncounterRowFragment, string[]>;
-} = () => {
+const useEncounterAdditionalInfoAccessor = () => {
   const t = useTranslation();
-  return {
-    additionalInfoAccessor: ({ rowData }): string[] => {
-      const additionalInfo = getStatusEventData(
-        rowData.activeProgramEvents.nodes
-      );
+  return useCallback((row: EncounterRowFragment): string[] => {
+    const additionalInfo = getStatusEventData(row.activeProgramEvents.nodes);
 
-      if (rowData?.status === EncounterNodeStatus.Pending) {
-        const startDatetime = new Date(rowData?.startDatetime);
-        const status = getLogicalStatus(startDatetime, t);
-        if (status) {
-          additionalInfo.push(status);
-        }
+    if (row?.status === EncounterNodeStatus.Pending) {
+      const startDatetime = new Date(row?.startDatetime);
+      const status = getLogicalStatus(startDatetime, t);
+      if (status) {
+        additionalInfo.push(status);
       }
+    }
 
-      return additionalInfo;
-    },
-  };
+    return additionalInfo;
+  }, []);
 };
 
 export const useEncounterListColumns = ({
-  onChangeSortBy,
-  sortBy,
   includePatient = false,
 }: useEncounterListColumnsProps) => {
-  const { localisedDate } = useFormatDateTime();
+  const t = useTranslation();
   const { data: enrolmentRegistries } =
     useDocumentRegistry.get.documentRegistries({
       filter: {
@@ -58,58 +47,72 @@ export const useEncounterListColumns = ({
         },
       },
     });
-  includePatient;
 
-  const { additionalInfoAccessor } = useEncounterAdditionalInfoAccessor();
+  const additionalInfoAccessor = useEncounterAdditionalInfoAccessor();
 
-  const columnList: ColumnDescription<EncounterRowFragment>[] = [
-    {
-      key: 'type',
-      label: 'label.encounter-type',
-      accessor: ({ rowData }) => rowData?.document.documentRegistry?.name,
-    },
-    {
-      key: 'program',
-      label: 'label.program',
-      accessor: ({ rowData }) =>
-        enrolmentRegistries?.nodes.find(
-          it => it.contextId === rowData.contextId
-        )?.name,
-    },
-    {
-      key: 'startDatetime',
-      label: 'label.date',
-      accessor: ({ rowData }) => rowData?.startDatetime,
-      formatter: dateString =>
-        dateString ? localisedDate((dateString as string) || '') : '',
-    },
-  ];
+  const columns: ColumnDef<EncounterRowFragment>[] = useMemo(
+    () => [
+      {
+        id: 'Type',
+        header: t('label.encounter-type'),
+        accessorFn: (row: EncounterRowFragment) =>
+          row?.document.documentRegistry?.name,
+        enableSorting: true,
+      },
+      {
+        id: 'Program',
+        header: t('label.program'),
+        accessorFn: (row: EncounterRowFragment) =>
+          enrolmentRegistries?.nodes.find(it => it.contextId === row.contextId)
+            ?.name,
+        enableSorting: true,
+        enableColumnFilter: true,
+        // GraphQL uses a different key for filtering than for sorting, so need
+        // to specify here
+        filterKey: 'programEnrolment.programName',
+      },
+      {
+        accessorKey: 'startDatetime',
+        header: t('label.date'),
+        columnType: ColumnType.Date,
+        enableSorting: true,
+        enableColumnFilter: true,
+      },
 
-  if (includePatient)
-    columnList.push({
-      key: 'patientId',
-      label: 'label.patient',
-      accessor: ({ rowData }) => rowData?.patient?.name,
-    });
-  columnList.push({
-    key: 'effectiveStatus',
-    label: 'label.status',
-    sortable: false,
-    width: 175,
-  });
-  columnList.push({
-    label: 'label.additional-info',
-    key: 'events',
-    sortable: false,
-    accessor: additionalInfoAccessor,
-    Cell: ChipTableCell,
-    minWidth: 300,
-  });
-
-  const columns = useColumns<EncounterRowFragment>(
-    columnList,
-    { onChangeSortBy, sortBy },
-    [sortBy]
+      {
+        id: 'patient.lastName',
+        header: t('label.patient'),
+        description: t('description.patient-filter-note'),
+        accessorFn: (row: EncounterRowFragment) => row?.patient?.name,
+        // enableSorting: true, -- not sortable, as only has patientId as sort
+        // key
+        enableColumnFilter: true,
+        includeColumn: includePatient,
+      },
+      {
+        accessorKey: 'status',
+        header: t('label.status'),
+        size: 175,
+        filterVariant: 'select',
+        accessorFn: (row: EncounterRowFragment) =>
+          row.status ? encounterStatusTranslation(row.status, t) : '',
+        filterSelectOptions: Object.values(EncounterNodeStatus).map(status => ({
+          value: status,
+          label: encounterStatusTranslation(status, t),
+        })),
+        enableColumnFilter: true,
+        enableSorting: true,
+      },
+      {
+        accessorKey: 'events',
+        header: t('label.additional-info'),
+        accessorFn: (row: EncounterRowFragment) => additionalInfoAccessor(row),
+        Cell: ChipTableCell,
+        size: 300,
+        enableSorting: false,
+      },
+    ],
+    [includePatient, enrolmentRegistries, additionalInfoAccessor]
   );
 
   return columns;

@@ -10,6 +10,8 @@ query stockCounts(
   ) {
     expired
     expiringSoon
+    expiringBetweenThresholds
+    expiringInNextThreeMonths
   }
 }
 
@@ -20,6 +22,9 @@ query itemCounts($storeId: String!, $lowStockThreshold: Int!) {
       noStock
       moreThanSixMonthsStock
       total
+      outOfStockProducts
+      productsAtRiskOfBeingOutOfStock
+      productsOverstocked
     }
   }
 }

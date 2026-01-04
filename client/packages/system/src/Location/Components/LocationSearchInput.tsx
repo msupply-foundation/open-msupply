@@ -26,6 +26,10 @@ interface LocationSearchInputProps {
   fullWidth?: boolean;
   enableAPI?: boolean;
   originalSelectedLocation?: LocationRowFragment | null;
+  clearable?: boolean;
+  /** Alternative to `clearable`, ideal for tables where the X takes up valuable real estate */
+  includeRemoveOption?: boolean;
+  placeholder?: string;
 }
 
 interface LocationOption {
@@ -103,6 +107,9 @@ export const LocationSearchInput = ({
   volumeRequired,
   enableAPI = true,
   originalSelectedLocation = null,
+  clearable = false,
+  includeRemoveOption = !clearable,
+  placeholder,
 }: LocationSearchInputProps) => {
   const t = useTranslation();
   const theme = useTheme();
@@ -164,6 +171,7 @@ export const LocationSearchInput = ({
   }));
 
   if (
+    includeRemoveOption &&
     filteredLocations.length > 0 &&
     selectedLocation !== null &&
     selectedLocation !== undefined
@@ -204,7 +212,7 @@ export const LocationSearchInput = ({
       disabled={disabled}
       width={`${width}px`}
       popperMinWidth={Number(width)}
-      clearable={false}
+      clearable={clearable}
       value={selectedLocationOption}
       loading={isLoading}
       onChange={(_, option) => {
@@ -214,6 +222,7 @@ export const LocationSearchInput = ({
       noOptionsText={t('messages.no-locations')}
       renderOption={optionRenderer}
       getOptionLabel={getOptionLabel}
+      placeholder={placeholder}
       isOptionEqualToValue={(option, value) => option.value === value?.value}
       slots={{
         paper:

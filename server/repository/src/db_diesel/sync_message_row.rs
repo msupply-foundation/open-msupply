@@ -135,7 +135,7 @@ impl<'a> SyncMessageRowRepository<'a> {
 impl Upsert for SyncMessageRow {
     fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
         let change_log_id = SyncMessageRowRepository::new(con).upsert_one(self)?;
-        Ok(Some(change_log_id)) // Table not in Changelog
+        Ok(Some(change_log_id))
     }
 
     // Test only

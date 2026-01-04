@@ -8,6 +8,7 @@ pub(crate) mod asset;
 pub(crate) mod asset_catalogue_item;
 pub(crate) mod asset_category;
 pub(crate) mod asset_class;
+pub(crate) mod asset_internal_location;
 pub(crate) mod asset_log;
 pub(crate) mod asset_log_reason;
 pub(crate) mod asset_property;
@@ -130,6 +131,7 @@ pub(crate) fn get_all_pull_upsert_central_test_records() -> Vec<TestSyncIncoming
     test_records.append(&mut goods_received::test_pull_upsert_records());
     test_records.append(&mut asset_catalogue_item::test_pull_upsert_records());
     test_records.append(&mut asset::test_pull_upsert_records());
+    test_records.append(&mut asset_internal_location::test_pull_upsert_records());
     test_records.append(&mut asset_log::test_pull_upsert_records());
     test_records.append(&mut asset_log_reason::test_pull_upsert_records());
     test_records.append(&mut sync_file_reference::test_pull_upsert_records());
@@ -285,6 +287,7 @@ pub(crate) fn get_all_sync_v6_records() -> Vec<TestSyncOutgoingRecord> {
 
     // Remote
     test_records.append(&mut asset::test_v6_records());
+    test_records.append(&mut asset_internal_location::test_v6_records());
     test_records.append(&mut asset_log::test_v6_records());
     test_records.append(&mut asset_log_reason::test_v6_records());
     test_records.append(&mut sync_file_reference::test_v6_records());

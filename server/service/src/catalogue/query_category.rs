@@ -5,7 +5,6 @@ use repository::{
 };
 
 use crate::{get_pagination_or_default, i64_to_u32, ListError, ListResult};
- 
 
 pub fn get_asset_categories(
     connection: &StorageConnection,
@@ -26,7 +25,7 @@ pub fn get_asset_category(
     id: String,
 ) -> Result<Option<AssetCategoryRow>, RepositoryError> {
     let repository = AssetCategoryRepository::new(connection);
-    let mut result =
-        repository.query_by_filter(AssetCategoryFilter::new().id(EqualFilter::equal_to(&id)))?;
+    let mut result = repository
+        .query_by_filter(AssetCategoryFilter::new().id(EqualFilter::equal_to(id.to_string())))?;
     Ok(result.pop())
 }

@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 import {
   useTranslation,
   DetailContainer,
@@ -19,18 +19,18 @@ interface CampaignEditModalProps {
   upsert: () => Promise<void>;
 }
 
-export const CampaignEditModal: FC<CampaignEditModalProps> = ({
+export const CampaignEditModal = ({
   campaign,
   isOpen,
   onClose,
   updateDraft,
   upsert,
-}) => {
+}: CampaignEditModalProps) => {
   const t = useTranslation();
-
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
 
   const { name, startDate, endDate, id } = campaign;
+  const isValidName = name?.trim().length > 0;
 
   return (
     <Modal
@@ -44,7 +44,9 @@ export const CampaignEditModal: FC<CampaignEditModalProps> = ({
           }}
         />
       }
-      okButton={<DialogButton variant="ok" onClick={upsert} />}
+      okButton={
+        <DialogButton variant="ok" onClick={upsert} disabled={!isValidName} />
+      }
     >
       <DetailContainer>
         <Box display="flex" flexDirection="column" gap={2}>
@@ -56,6 +58,7 @@ export const CampaignEditModal: FC<CampaignEditModalProps> = ({
                 sx={{ width: 250 }}
                 value={name}
                 onChange={e => updateDraft({ name: e.target.value })}
+                onBlur={e => updateDraft({ name: e.target.value.trim() })}
               />
             }
           />

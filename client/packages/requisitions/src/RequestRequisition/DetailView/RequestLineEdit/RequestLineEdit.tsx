@@ -12,9 +12,15 @@ import {
   ReasonOptionNodeType,
   usePluginProvider,
   Typography,
-  BufferedTextArea,
   ModalGridLayout,
   usePreferences,
+  Alert,
+  ModalPanelArea,
+  MultilineTextInput,
+  InfoRow,
+  ValueInfoRow,
+  ValueInfo,
+  RepresentationValue,
 } from '@openmsupply-client/common';
 import { DraftRequestLine } from './hooks';
 import { RequestLineFragment } from '../../api';
@@ -22,12 +28,6 @@ import { RequestedSelection } from './RequestedSelection';
 import { ConsumptionHistory } from './ItemCharts/ConsumptionHistory';
 import { StockEvolution } from './ItemCharts/StockEvolution';
 import { StockDistribution } from './ItemCharts/StockDistribution';
-import {
-  InfoRow,
-  ValueInfoRow,
-  ValueInfo,
-  RepresentationValue,
-} from '../../../common';
 import {
   getLeftPanel,
   getExtraMiddlePanels,
@@ -69,7 +69,7 @@ export const RequestLineEdit = ({
 }: RequestLineEditProps) => {
   const t = useTranslation();
   const { plugins } = usePluginProvider();
-  const { manageVaccinesInDoses } = usePreferences();
+  const { manageVaccinesInDoses, warningForExcessRequest } = usePreferences();
 
   const unitName = currentItem?.unitName || t('label.unit');
   const defaultPackSize = currentItem?.defaultPackSize || 1;
@@ -136,16 +136,13 @@ export const RequestLineEdit = ({
   const getRightPanelContent = () => {
     if (!showContent) return null;
 
+    const showExcessRequestWarning =
+      warningForExcessRequest &&
+      draft.requestedQuantity - draft.suggestedQuantity >= 1;
+
     return (
       <>
-        <Box
-          sx={{
-            background: theme => theme.palette.background.group,
-            padding: '0px 8px',
-            borderRadius: 2,
-            pb: 1,
-          }}
-        >
+        <ModalPanelArea>
           {!showExtraFields && renderValueInfoRows(getSuggestedRow(t, draft))}
           <RequestedSelection
             disabled={disabled}
@@ -160,6 +157,11 @@ export const RequestLineEdit = ({
             dosesPerUnit={currentItem?.doses}
             setIsEditingRequested={setIsEditingRequested}
           />
+          {showExcessRequestWarning && (
+            <Alert severity="warning" sx={{ mt: 1 }}>
+              {t('warning.requested-exceeds-suggested')}
+            </Alert>
+          )}
           {showExtraFields && (
             <Typography variant="body1" fontWeight="bold">
               {t('label.reason')}:
@@ -188,27 +190,13 @@ export const RequestLineEdit = ({
               />
             </Typography>
           )}
-          <Typography variant="body1" fontWeight="bold" pb={0.5}>
-            {t('heading.comment')}:
-          </Typography>
-          <BufferedTextArea
+          <MultilineTextInput
+            label={t('label.comment')}
             value={draft?.comment ?? ''}
-            onChange={e => update({ comment: e.target.value })}
-            slotProps={{
-              input: {
-                sx: {
-                  backgroundColor: theme =>
-                    disabled
-                      ? theme.palette.background.toolbar
-                      : theme.palette.background.white,
-                },
-              },
-            }}
+            onChange={(value?: string) => update({ comment: value })}
             disabled={disabled}
-            minRows={3}
-            maxRows={3}
           />
-        </Box>
+        </ModalPanelArea>
       </>
     );
   };
@@ -234,9 +222,9 @@ export const RequestLineEdit = ({
                 onChange={(newItem: ItemWithStatsFragment | null) =>
                   newItem && onChangeItem(newItem)
                 }
-                extraFilter={item =>
-                  !lines.some(line => line.item.id === item.id)
-                }
+                filter={{
+                  id: { notEqualAll: lines.map(line => line.item.id) },
+                }}
               />
             )}
           </>
@@ -263,7 +251,12 @@ export const RequestLineEdit = ({
               {line &&
                 plugins.requestRequisitionLine?.editViewField?.map(
                   (Field, index) => (
-                    <Field key={index} line={line} unitName={unitName} />
+                    <Field
+                      key={index}
+                      line={line}
+                      draft={draft}
+                      unitName={unitName}
+                    />
                   )
                 )}
             </>

@@ -107,7 +107,7 @@ def handle_tag_notification():
     rc_tags = []
 
     for tag, branch in zip(created_tags, affected_branches):
-        if branch == 'develop':
+        if branch == 'develop' or re.search(r'-(dev|develop)$', branch, re.IGNORECASE):
             develop_tags.append(tag)
         else:
             rc_tags.append(tag)

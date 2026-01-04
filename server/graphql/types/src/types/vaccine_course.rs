@@ -48,6 +48,10 @@ impl VaccineCourseNode {
         self.row().wastage_rate
     }
 
+    pub async fn can_skip_dose(&self) -> bool {
+        self.row().can_skip_dose
+    }
+
     pub async fn demographic(&self, ctx: &Context<'_>) -> Result<Option<DemographicNode>> {
         let demographic_id = match &self.row().demographic_id {
             Some(id) => id,

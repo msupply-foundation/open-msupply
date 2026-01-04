@@ -71,6 +71,7 @@ pub struct UpdateVaccineCourseInput {
     pub coverage_rate: f64,
     pub use_in_gaps_calculations: bool,
     pub wastage_rate: f64,
+    pub can_skip_dose: Option<bool>,
 }
 
 impl From<UpdateVaccineCourseInput> for UpdateVaccineCourse {
@@ -84,6 +85,7 @@ impl From<UpdateVaccineCourseInput> for UpdateVaccineCourse {
             coverage_rate,
             use_in_gaps_calculations,
             wastage_rate,
+            can_skip_dose,
         }: UpdateVaccineCourseInput,
     ) -> Self {
         UpdateVaccineCourse {
@@ -111,6 +113,7 @@ impl From<UpdateVaccineCourseInput> for UpdateVaccineCourse {
             coverage_rate,
             use_in_gaps_calculations,
             wastage_rate,
+            can_skip_dose,
         }
     }
 }

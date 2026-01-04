@@ -68,7 +68,7 @@ const useGet = (queryParams: StocktakesParams) => {
     return { nodes, totalCount };
   };
 
-  const query = useQuery({ queryKey, queryFn });
+  const query = useQuery({ queryKey, queryFn, keepPreviousData: true });
   return query;
 };
 
@@ -128,8 +128,6 @@ const toSortField = (
       return StocktakeSortFieldInput.Description;
     case 'createdDatetime':
       return StocktakeSortFieldInput.CreatedDatetime;
-    case 'stocktakeDate':
-      return StocktakeSortFieldInput.StocktakeDate;
     case 'comment':
       return StocktakeSortFieldInput.Comment;
     case 'finalisedDatetime':

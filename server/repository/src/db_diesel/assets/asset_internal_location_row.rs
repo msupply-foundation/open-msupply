@@ -1,10 +1,14 @@
 use super::asset_internal_location_row::asset_internal_location::dsl::*;
 
+use crate::asset_row::AssetRowRepository;
+use crate::Delete;
 use crate::LocationRowRepository;
 use crate::RepositoryError;
 use crate::StorageConnection;
 use crate::Upsert;
 use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
+use serde::Deserialize;
+use serde::Serialize;
 
 use diesel::prelude::*;
 
@@ -16,7 +20,9 @@ table! {
     }
 }
 
-#[derive(Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq)]
+#[derive(
+    Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq, Serialize, Deserialize,
+)]
 #[diesel(table_name = asset_internal_location)]
 pub struct AssetInternalLocationRow {
     pub id: String,
@@ -51,17 +57,20 @@ impl<'a> AssetInternalLocationRowRepository<'a> {
         row: &AssetInternalLocationRow,
         action: RowActionType,
     ) -> Result<i64, RepositoryError> {
-        let location = LocationRowRepository::new(self.connection).find_one_by_id(&row.location_id);
-        let store_id = match location {
-            Ok(Some(location)) => Some(location.store_id),
-            _ => None,
-        };
+        let store_id_location = LocationRowRepository::new(self.connection)
+            .find_one_by_id(&row.location_id)?
+            .map(|r| r.store_id);
+
+        let store_id_asset = AssetRowRepository::new(self.connection)
+            .find_one_by_id(&row.asset_id)?
+            .map(|r| r.store_id)
+            .flatten();
 
         let row = ChangeLogInsertRow {
             table_name: ChangelogTableName::AssetInternalLocation,
             record_id: row.id.clone(),
             row_action: action,
-            store_id,
+            store_id: store_id_location.or_else(|| store_id_asset),
             name_link_id: None,
         };
 
@@ -99,20 +108,28 @@ impl<'a> AssetInternalLocationRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn delete(&self, asset_internal_location_id: &str) -> Result<(), RepositoryError> {
+    pub fn delete(&self, asset_internal_location_id: &str) -> Result<i64, RepositoryError> {
+        let row = self.find_one_by_id(asset_internal_location_id)?;
+        let ail = match row {
+            Some(ail) => ail,
+            None => {
+                return Ok(0); // already deleted?
+            }
+        };
         diesel::delete(asset_internal_location)
             .filter(id.eq(asset_internal_location_id))
             .execute(self.connection.lock().connection())?;
-        Ok(())
+
+        self.insert_changelog(&ail, RowActionType::Delete)
     }
 
     pub fn delete_all_for_asset_id(
         &self,
         asset_id_to_delete_locations: &str,
     ) -> Result<(), RepositoryError> {
-        diesel::delete(asset_internal_location)
-            .filter(asset_id.eq(asset_id_to_delete_locations))
-            .execute(self.connection.lock().connection())?;
+        for asset in self.find_all_by_asset(asset_id_to_delete_locations)? {
+            self.delete(&asset.id)?;
+        }
         Ok(())
     }
 }
@@ -129,5 +146,22 @@ impl Upsert for AssetInternalLocationRow {
             AssetInternalLocationRowRepository::new(con).find_one_by_id(&self.id),
             Ok(Some(self.clone()))
         )
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct AssetInternalLocationRowDelete(pub String);
+impl Delete for AssetInternalLocationRowDelete {
+    fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        let cursor_id = AssetInternalLocationRowRepository::new(con).delete(&self.0)?;
+        Ok(Some(cursor_id))
+    }
+
+    // Test only
+    fn assert_deleted(&self, con: &StorageConnection) {
+        assert_eq!(
+            AssetInternalLocationRowRepository::new(con).find_one_by_id(&self.0),
+            Ok(None)
+        );
     }
 }

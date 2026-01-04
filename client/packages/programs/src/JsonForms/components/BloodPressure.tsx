@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { ControlProps, rankWith, subErrorsAt, uiTypeIs } from '@jsonforms/core';
 import {
   Box,
@@ -11,7 +11,6 @@ import {
 } from '@openmsupply-client/common';
 import { FORM_LABEL_WIDTH } from '../common';
 import { useJsonForms, withJsonFormsControlProps } from '@jsonforms/react';
-import { useJSONFormsCustomError } from '../common/hooks/useJSONFormsCustomError';
 
 export const bloodPressureTester = rankWith(10, uiTypeIs('BloodPressure'));
 
@@ -28,18 +27,7 @@ export const UIComponent = (props: ControlProps) => {
     BloodPressureData | undefined
   >(data);
 
-  const { customError, setCustomError } = useJSONFormsCustomError(
-    path,
-    'BloodPressure'
-  );
-
-  useEffect(() => {
-    if (core) {
-      const getChildErrors = subErrorsAt(path, schema);
-      const errors = getChildErrors(core);
-      setCustomError(errors[0]?.message);
-    }
-  }, [core]);
+  const childErrors = core ? subErrorsAt(path, schema)(core) : [];
 
   const onChange = useDebounceCallback(
     (value: BloodPressureData) => {
@@ -58,7 +46,7 @@ export const UIComponent = (props: ControlProps) => {
 
   const inputProps = {
     type: 'number',
-    error: !!customError,
+    error: childErrors.length > 0,
     InputLabelProps: { shrink: true },
   };
 
@@ -113,8 +101,10 @@ export const UIComponent = (props: ControlProps) => {
             />
           </Box>
           <Box display="flex" flexDirection="row" alignSelf="center">
-            {customError && (
-              <Typography variant="caption">{customError}</Typography>
+            {childErrors && (
+              <Typography variant="caption">
+                {childErrors[0]?.message}
+              </Typography>
             )}
           </Box>
         </Box>

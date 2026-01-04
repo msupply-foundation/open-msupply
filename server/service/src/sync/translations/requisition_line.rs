@@ -16,10 +16,9 @@ use super::{PullTranslateResult, PushTranslateResult, SyncTranslation};
 
 #[derive(Deserialize, Serialize, PartialEq)]
 pub struct RequisitionLineOmsFields {
-    #[serde(deserialize_with = "empty_str_as_option_string")]
-    pub rnr_form_line_id: Option<String>,
-    #[serde(deserialize_with = "empty_str_as_option")]
-    pub expiry_date: Option<NaiveDate>,
+    pub rnr_form_line_id: Option<String>, // Actually from rnr table and only included in sync push so that OG auth module can use
+    pub expiry_date: Option<NaiveDate>, // Actually from rnr table and only included in sync push so that OG auth module can use
+    pub price_per_unit: Option<f64>,
 }
 
 #[allow(non_snake_case)]
@@ -87,7 +86,6 @@ pub struct LegacyRequisitionLineRow {
     pub oms_fields: Option<RequisitionLineOmsFields>,
 }
 // Needs to be added to all_translators()
-#[deny(dead_code)]
 pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
     Box::new(RequisitionLineTranslation)
 }
@@ -140,6 +138,7 @@ impl SyncTranslation for RequisitionLineTranslation {
             expiring_units: data.expiring_units,
             days_out_of_stock: data.days_out_of_stock,
             option_id: data.option_id,
+            price_per_unit: data.oms_fields.and_then(|f| f.price_per_unit),
         };
 
         Ok(PullTranslateResult::upsert(result))
@@ -183,6 +182,7 @@ impl SyncTranslation for RequisitionLineTranslation {
             expiring_units,
             days_out_of_stock,
             option_id,
+            price_per_unit,
         } = RequisitionLineRowRepository::new(connection)
             .find_one_by_id(&changelog.record_id)?
             .ok_or(anyhow::Error::msg(format!(
@@ -199,7 +199,9 @@ impl SyncTranslation for RequisitionLineTranslation {
             .item_id;
 
         let is_program_requisition = RequisitionRepository::new(connection)
-            .query_by_filter(RequisitionFilter::new().id(EqualFilter::equal_to(&requisition_id)))?
+            .query_by_filter(
+                RequisitionFilter::new().id(EqualFilter::equal_to(requisition_id.to_string())),
+            )?
             .pop()
             .map(|requisition| requisition.program.is_some())
             .unwrap_or(false);
@@ -210,8 +212,9 @@ impl SyncTranslation for RequisitionLineTranslation {
             available_stock_on_hand
         };
 
-        let rnr_form_line = RnRFormLineRepository::new(connection)
-            .query_one(RnRFormLineFilter::new().requisition_line_id(EqualFilter::equal_to(&id)))?;
+        let rnr_form_line = RnRFormLineRepository::new(connection).query_one(
+            RnRFormLineFilter::new().requisition_line_id(EqualFilter::equal_to(id.to_string())),
+        )?;
 
         let expiry_date = rnr_form_line
             .as_ref()
@@ -223,6 +226,7 @@ impl SyncTranslation for RequisitionLineTranslation {
         let oms_fields = Some(RequisitionLineOmsFields {
             rnr_form_line_id,
             expiry_date,
+            price_per_unit,
         });
 
         let legacy_row = LegacyRequisitionLineRow {

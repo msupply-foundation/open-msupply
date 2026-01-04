@@ -49,9 +49,10 @@ export const StocktakeLineEdit = ({
   const isMediumScreen = useMediaQuery(theme.breakpoints.down(Breakpoints.lg));
   const [currentItem, setCurrentItem] = useState(item);
 
-  const { isDisabled, items, totalLineCount } = useStocktakeOld.line.rows();
+  const { isDisabled, items, totalLineCount, lines } =
+    useStocktakeOld.line.rows();
   const { draftLines, update, addLine, isSaving, save, nextItem } =
-    useStocktakeLineEdit(currentItem);
+    useStocktakeLineEdit(currentItem, items, lines);
   const t = useTranslation();
   const { error } = useNotification();
   const {

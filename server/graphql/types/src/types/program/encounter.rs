@@ -58,6 +58,7 @@ pub struct EqualFilterEncounterStatusInput {
     pub equal_to: Option<EncounterNodeStatus>,
     pub equal_any: Option<Vec<EncounterNodeStatus>>,
     pub not_equal_to: Option<EncounterNodeStatus>,
+    pub not_equal_all: Option<Vec<EncounterNodeStatus>>,
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
@@ -370,11 +371,11 @@ impl EncounterNode {
             .as_ref()
             .map(|f| f.clone().to_domain())
             .unwrap_or_default()
-            .patient_id(EqualFilter::equal_to(&self.patient_row().id))
-            .document_type(EqualFilter::equal_to(&self.encounter_row().document_type));
+            .patient_id(EqualFilter::equal_to(self.patient_row().id.to_string()))
+            .document_type(EqualFilter::equal_to(self.encounter_row().document_type.to_owned()));
         if filter.and_then(|f| f.is_current_encounter).unwrap_or(false) {
             program_filter = program_filter
-                .document_name(EqualFilter::equal_to(&self.encounter_row().document_name))
+                .document_name(EqualFilter::equal_to(self.encounter_row().document_name.to_owned()))
         };
         let list_result = ctx
             .service_provider()
@@ -419,11 +420,11 @@ impl EncounterNode {
             .as_ref()
             .map(|f| f.clone().to_domain())
             .unwrap_or_default()
-            .patient_id(EqualFilter::equal_to(&self.patient_row().id))
-            .document_type(EqualFilter::equal_to(&self.encounter_row().document_type));
+            .patient_id(EqualFilter::equal_to(self.patient_row().id.to_string()))
+            .document_type(EqualFilter::equal_to(self.encounter_row().document_type.to_owned()));
         if filter.and_then(|f| f.is_current_encounter).unwrap_or(false) {
             program_filter = program_filter
-                .document_name(EqualFilter::equal_to(&self.encounter_row().document_name))
+                .document_name(EqualFilter::equal_to(self.encounter_row().document_name.to_owned()))
         };
         let list_result = ctx
             .service_provider()

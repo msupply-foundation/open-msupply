@@ -40,7 +40,7 @@ pub fn insert_inbound_shipment(
             activity_log_entry(
                 ctx,
                 ActivityLogType::InvoiceCreated,
-                Some(new_invoice.id.to_owned()),
+                Some(new_invoice.id.to_string()),
                 None,
                 None,
             )?;

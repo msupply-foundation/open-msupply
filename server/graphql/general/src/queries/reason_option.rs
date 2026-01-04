@@ -38,6 +38,7 @@ pub struct EqualFilterReasonOptionTypeInput {
     pub equal_to: Option<ReasonOptionNodeType>,
     pub equal_any: Option<Vec<ReasonOptionNodeType>>,
     pub not_equal_to: Option<ReasonOptionNodeType>,
+    pub not_equal_all: Option<Vec<ReasonOptionNodeType>>,
 }
 
 #[derive(InputObject, Clone)]

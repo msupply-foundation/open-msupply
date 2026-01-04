@@ -110,7 +110,7 @@ pub fn item_query_test2() -> ItemRow {
         id: String::from("item_query_test2"),
         name: String::from("name_item_query_test2"),
         code: String::from("code_item_query_test2"),
-        unit_id: Some("item_query_test2".to_owned()),
+        unit_id: Some("item_query_test2".to_string()),
         default_pack_size: 1.0,
         r#type: ItemType::Stock,
         ..Default::default()

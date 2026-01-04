@@ -26,7 +26,7 @@ export interface BaseTableConfig<T extends MRT_RowData>
   extends Omit<MRT_TableOptions<T>, 'data'> {
   tableId: string; // key for local storage
   data: T[] | undefined;
-  onRowClick?: (row: T) => void;
+  onRowClick?: (row: T, isCtrlClick: boolean) => void;
   isLoading?: boolean;
   isError?: boolean;
   getIsPlaceholderRow?: (row: T) => boolean;
@@ -61,6 +61,7 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
   manualFiltering = false,
   initialSort,
   noDataElement,
+  muiTableBodyRowProps,
   ...tableOptions
 }: BaseTableConfig<T>) => {
   const t = useTranslation();
@@ -99,34 +100,56 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
     isGrouped
   );
 
+  const hasSavedState =
+    density.hasSavedState ||
+    columnSizing.hasSavedState ||
+    columnPinning.hasSavedState ||
+    columnVisibility.hasSavedState ||
+    columnOrder.hasSavedState;
+
   const resetTableState = () => {
     clearSavedState(tableId);
 
     // We have to call each of these reset fns, as MRT's general
-    // reset function doesn't fire the onChange handlers (needed to trigger our state handlers)
+    // reset function doesn't fire the onChange handlers (needed to trigger our
+    // state handlers).
     // Seeing as local storage has already been cleared,
     // these shouldn't trigger additional local storage updates
-    table.resetColumnOrder();
     table.resetColumnPinning();
     table.resetColumnSizing();
     resetGrouped();
 
-    // Visibility `initial` could change if prefs have come on/screen size changed
-    // so reset to latest initial value rather than default initial mount state
+    // column order doesn't need resetting - state reset directly from clearing
+    // local storage
+
+    // Visibility `initial` could change if prefs have come on/screen size
+    // changed so reset to latest initial value rather than default initial
+    // mount state
     table.setColumnVisibility(columnVisibility.initial);
 
     // Density doesn't have a `reset` function
     table.setDensity(density.initial);
+
+    // Reset the flags for each state slice too
+    density.resetHasSavedState();
+    columnSizing.resetHasSavedState();
+    columnPinning.resetHasSavedState();
+    columnVisibility.resetHasSavedState();
+    columnOrder.resetHasSavedState();
   };
 
+  const hasColumnFilters = columns.some(col => col.enableColumnFilter);
+
   const displayOptions = useTableDisplayOptions({
-    tableId,
     isGrouped,
+    hasColumnFilters,
     toggleGrouped: grouping?.enabled ? toggleGrouped : undefined,
     resetTableState,
+    hasSavedState,
     onRowClick,
     getIsPlaceholderRow,
     getIsRestrictedRow,
+    muiTableBodyRowProps,
   });
 
   const table = useMaterialReactTable<T>({
@@ -146,6 +169,12 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
     enableRowSelection,
     enableFacetedValues: true,
     enableStickyHeader: true,
+    // We want tab navigation to follow our normal behaviour of moving to the
+    // next INPUT, not move through every table cell. If we need specific Table
+    // keyboard navigation in future, we can enable this in a more granular way
+    // using our own custom shortcuts:
+    // https://www.material-react-table.com/docs/guides/accessibility#custom-keyboard-shortcuts
+    enableKeyboardShortcuts: false,
 
     // Disable bottom footer - use OMS custom action footer instead
     enableBottomToolbar: false,

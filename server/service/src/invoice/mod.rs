@@ -99,7 +99,7 @@ pub trait InvoiceServiceTrait: Sync + Send {
         ctx: &ServiceContext,
         input: UpdateInboundShipment,
     ) -> Result<Invoice, UpdateInboundShipmentError> {
-        update_inbound_shipment(ctx, input)
+        update_inbound_shipment(ctx, input, None)
     }
 
     fn delete_inbound_shipment(

@@ -10,7 +10,6 @@ import {
   InsertInboundShipmentLineInput,
   DeleteInboundShipmentLineInput,
   UpdateInboundShipmentInput,
-  Formatter,
   UpdateInboundShipmentStatusInput,
   setNullableInput,
   InsertInboundShipmentServiceLineInput,
@@ -112,14 +111,12 @@ const inboundParsers = {
       batch: line.batch,
       costPricePerPack: line.costPricePerPack,
       sellPricePerPack: line.sellPricePerPack,
-      expiryDate: line.expiryDate
-        ? Formatter.naiveDate(new Date(line.expiryDate))
-        : null,
+      expiryDate: line.expiryDate,
       packSize: line.packSize,
       numberOfPacks: line.numberOfPacks,
       invoiceId: line.invoiceId,
       location: setNullableInput('id', line.location),
-      itemVariantId: line.itemVariantId,
+      itemVariantId: 'itemVariant' in line ? line.itemVariant?.id : undefined,
       vvmStatusId: 'vvmStatus' in line ? line.vvmStatus?.id : undefined,
       donorId: line.donor?.id,
       campaignId: line.campaign?.id,
@@ -145,17 +142,13 @@ const inboundParsers = {
     batch: line.batch,
     costPricePerPack: line.costPricePerPack,
     expiryDate: {
-      value: line.expiryDate
-        ? Formatter.naiveDate(new Date(line.expiryDate))
-        : null,
+      value: line.expiryDate || null,
     },
     sellPricePerPack: line.sellPricePerPack,
     packSize: line.packSize,
     numberOfPacks: line.numberOfPacks,
     location: setNullableInput('id', line.location),
-    itemVariantId: setNullableInput('itemVariantId', {
-      itemVariantId: line.itemVariantId,
-    }),
+    itemVariantId: setNullableInput('id', line.itemVariant),
     vvmStatusId: 'vvmStatus' in line ? line.vvmStatus?.id : undefined,
     donorId: setNullableInput('donorId', { donorId: line.donor?.id ?? null }), // set to null if undefined, so value is cleared
     campaignId: setNullableInput('campaignId', {

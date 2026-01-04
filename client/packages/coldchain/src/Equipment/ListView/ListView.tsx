@@ -1,18 +1,15 @@
-import React, { FC } from 'react';
+import React from 'react';
 import {
   useNavigate,
-  TableProvider,
-  DataTable,
-  createTableStore,
   NothingHere,
   useTranslation,
-  useUrlQueryParams,
   useToggle,
   RouteBuilder,
   usePathnameIncludes,
+  MaterialTable,
+  usePaginatedMaterialTable,
 } from '@openmsupply-client/common';
 import { useAssets } from '../api';
-import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
 import { CreateAssetModal } from './CreateAssetModal';
 import { EquipmentImportModal } from '../ImportAsset';
@@ -21,7 +18,7 @@ import { AppRoute } from '@openmsupply-client/config';
 import { Footer } from './Footer';
 import { useAssetColumns } from './columns';
 
-const AssetList = () => {
+export const EquipmentListView = () => {
   const t = useTranslation();
   const navigate = useNavigate();
   const isColdChain = usePathnameIncludes('cold-chain');
@@ -29,21 +26,7 @@ const AssetList = () => {
   const modalController = useToggle();
   const importModalController = useToggle();
 
-  const { data, isError, isLoading } = useAssets.document.list();
-
-  const {
-    updateSortQuery,
-    updatePaginationQuery,
-    queryParams: { sortBy, page, first, offset },
-  } = useUrlQueryParams({
-    initialSort: { key: 'installationDate', dir: 'desc' },
-  });
-  const pagination = { page, first, offset };
-
-  const columns = useAssetColumns({
-    sortBy,
-    onChangeSortBy: updateSortQuery,
-  });
+  const { data, isError, isFetching } = useAssets.document.list();
 
   const handleRowClick = (row: AssetRowFragment): void => {
     const appRoute = isColdChain ? AppRoute.Coldchain : AppRoute.Manage;
@@ -54,26 +37,31 @@ const AssetList = () => {
     navigate(path);
   };
 
+  const columns = useAssetColumns();
+
+  const { table, selectedRows } = usePaginatedMaterialTable({
+    tableId: 'equipment-list',
+    columns,
+    data: data?.nodes,
+    totalCount: data?.totalCount ?? 0,
+    isError,
+    isLoading: isFetching,
+    onRowClick: handleRowClick,
+    noDataElement: <NothingHere body={t('error.no-items-to-display')} />,
+  });
+
   return (
     <>
       <AppBarButtons
         importModalController={importModalController}
         modalController={modalController}
       />
-      <Toolbar />
-      <DataTable
-        id="item-list"
-        pagination={{ ...pagination, total: data?.totalCount ?? 0 }}
-        onChangePage={updatePaginationQuery}
-        columns={columns}
-        data={data?.nodes}
-        isError={isError}
-        isLoading={isLoading}
-        onRowClick={handleRowClick}
-        noDataElement={<NothingHere body={t('error.no-items-to-display')} />}
-        enableColumnSelection
+      <MaterialTable table={table} />
+
+      <Footer
+        selectedRows={selectedRows}
+        resetRowSelection={table.resetRowSelection}
       />
-      <Footer />
       <CreateAssetModal
         isOpen={modalController.isOn}
         onClose={modalController.toggleOff}
@@ -85,9 +73,3 @@ const AssetList = () => {
     </>
   );
 };
-
-export const EquipmentListView: FC = () => (
-  <TableProvider createStore={createTableStore}>
-    <AssetList />
-  </TableProvider>
-);

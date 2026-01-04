@@ -5,26 +5,23 @@ import {
   ButtonWithIcon,
   Box,
   PlusCircleIcon,
-  DataTable,
   useDialog,
   useTranslation,
   DialogButton,
-  TableProvider,
-  createTableStore,
-  QueryParamsProvider,
-  createQueryParamsStore,
+  MaterialTable,
+  useSimpleMaterialTable,
 } from '@openmsupply-client/common';
 import { useInbound } from '../../../api';
 import { useDraftServiceLines } from './useDraftServiceLines';
-import { useServiceLineColumns } from './useServiceLineColumns';
-import { ItemRowFragment, useItem } from '@openmsupply-client/system';
+import { useItem } from '@openmsupply-client/system';
+import { useServiceLineColumns } from '@openmsupply-client/invoices/src/OutboundShipment/DetailView/OutboundServiceLineEdit/useServiceLineColumns';
 
 interface InboundServiceLineEditProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-const InboundServiceLineEditComponent = ({
+export const InboundServiceLineEdit = ({
   isOpen,
   onClose,
 }: InboundServiceLineEditProps) => {
@@ -37,6 +34,14 @@ const InboundServiceLineEditComponent = ({
   const {
     serviceItem: { data: serviceItem },
   } = useItem();
+
+  const linesFiltered = lines.filter(({ isDeleted }) => !isDeleted);
+
+  const table = useSimpleMaterialTable({
+    tableId: 'inbound-detail-service-line',
+    columns,
+    data: linesFiltered,
+  });
 
   return (
     <Modal
@@ -77,36 +82,11 @@ const InboundServiceLineEditComponent = ({
               Icon={<PlusCircleIcon />}
             />
           </Box>
-          <TableProvider
-            createStore={createTableStore}
-            queryParamsStore={createQueryParamsStore({
-              initialSortBy: { key: 'serviceItemName' },
-            })}
-          >
-            <DataTable
-              id="inbound-detail-service-line"
-              columns={columns}
-              data={lines.filter(({ isDeleted }) => !isDeleted)}
-              dense
-              noDataMessage={
-                !serviceItem
-                  ? t('error.no-service-charges')
-                  : t('error.no-results')
-              }
-            />
-          </TableProvider>
+          {linesFiltered.length > 0
+            ? <MaterialTable table={table} />
+            : (!serviceItem ? t('error.no-service-charges') : t('error.no-results'))}
         </Box>
       )}
     </Modal>
   );
 };
-
-export const InboundServiceLineEdit = (props: InboundServiceLineEditProps) => (
-  <QueryParamsProvider
-    createStore={createQueryParamsStore<ItemRowFragment>({
-      initialSortBy: { key: 'name' },
-    })}
-  >
-    <InboundServiceLineEditComponent {...props} />
-  </QueryParamsProvider>
-);

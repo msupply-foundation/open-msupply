@@ -4446,9 +4446,6 @@ if ((queryResult == SERVICE_PAUSED) or (queryResult == SERVICE_STOPPED)) then
 	bServiceExists = true;
 end
 
-if (bServiceExists) then
-	Service.Delete("Open mSupply Server", "omsupply-server");
-end
 				</Script>
 <BookMarks count="0">
 </BookMarks>
@@ -4566,23 +4563,27 @@ else
 	end
 end
 
-if (omSupplyServerDatabase == "sqlite") then
-	Service.Create(SessionVar.Expand("%AppFolder%\\omSupply-sqlite.exe"), "Open mSupply Server", "omsupply-server", SERVICE_WIN32_OWN_PROCESS, false, SERVICE_AUTO_START, SERVICE_ERROR_NORMAL, "", nil, nil, "", "");
-	sFileToBeDeletePath = SessionVar.Expand("%AppFolder%\\omSupply-postgres.exe");
-	File.Delete(SessionVar.Expand("%AppFolder%\\omSupply-cli-postgres.exe"));
-	File.Rename(SessionVar.Expand("%AppFolder%\\omSupply-cli-sqlite.exe"), SessionVar.Expand("%AppFolder%\\omSupply-cli.exe"));
-	File.Delete(SessionVar.Expand("%AppFolder%\\test-connection-postgres.exe"));
-	File.Rename(SessionVar.Expand("%AppFolder%\\test-connection-sqlite.exe"), SessionVar.Expand("%AppFolder%\\test-connectioncli.exe"));
-else
-	Service.Create(SessionVar.Expand("%AppFolder%\\omSupply-postgres.exe"), "Open mSupply Server", "omsupply-server", SERVICE_WIN32_OWN_PROCESS, false, SERVICE_AUTO_START, SERVICE_ERROR_NORMAL, "", nil, nil, "", "");
-	sFileToBeDeletePath = SessionVar.Expand("%AppFolder%\\omSupply-sqlite.exe");
-	File.Delete(SessionVar.Expand("%AppFolder%\\omSupply-cli-sqlite.exe"));
-	File.Rename(SessionVar.Expand("%AppFolder%\\omSupply-cli-postgres.exe"), SessionVar.Expand("%AppFolder%\\omSupply-cli.exe"));
-	File.Delete(SessionVar.Expand("%AppFolder%\\test-connection-sqlite.exe"));
-	File.Rename(SessionVar.Expand("%AppFolder%\\test-connection-postgres.exe"), SessionVar.Expand("%AppFolder%\\test-connection.exe"));
+queryResult = Service.Query("Open mSupply Server", "omsupply-server");
+if (queryResult == SERVICE_NOT_FOUND) then
+	-- Delete unchoosen app file (.exe) by a user
+	if (omSupplyServerDatabase == "sqlite") then
+		Service.Create(SessionVar.Expand("%AppFolder%\\omSupply-sqlite.exe"), "Open mSupply Server", "omsupply-server", SERVICE_WIN32_OWN_PROCESS, false, SERVICE_AUTO_START, SERVICE_ERROR_NORMAL, "", nil, nil, "", "");
+		File.Delete(SessionVar.Expand("%AppFolder%\\omSupply-postgres.exe"));
+		File.Delete(SessionVar.Expand("%AppFolder%\\omSupply-cli-postgres.exe"));
+		File.Delete(SessionVar.Expand("%AppFolder%\\test-connection-postgres.exe"));
+	else
+		Service.Create(SessionVar.Expand("%AppFolder%\\omSupply-postgres.exe"), "Open mSupply Server", "omsupply-server", SERVICE_WIN32_OWN_PROCESS, false, SERVICE_AUTO_START, SERVICE_ERROR_NORMAL, "", nil, nil, "", "");
+		File.Delete(SessionVar.Expand("%AppFolder%\\omSupply-sqlite.exe"));
+		File.Delete(SessionVar.Expand("%AppFolder%\\omSupply-cli-sqlite.exe"));
+		File.Delete(SessionVar.Expand("%AppFolder%\\test-connection-sqlite.exe"));
+	end
 end
 
-File.Delete(sFileToBeDeletePath); -- Delete unchoosen app file (.exe) by a user
+-- set the startup to Automatic (Delayed Start) (not possible with a service startup type enum, it requires the flag to be set)
+local serviceKey = "SYSTEM\\CurrentControlSet\\Services\\omsupply-server";
+if (Registry.DoesKeyExist(HKEY_LOCAL_MACHINE, serviceKey)) then
+	Registry.SetValue(HKEY_LOCAL_MACHINE, serviceKey, "DelayedAutoStart", 1, REG_DWORD);
+end
 
 -- Add a firewall rule to allow incoming requests
 local firewallRuleKey = "SYSTEM\\CurrentControlSet\\Services\\SharedAccess\\Parameters\\FirewallPolicy\\FirewallRules";

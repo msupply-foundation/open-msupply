@@ -15,9 +15,8 @@ export const CheckCell = <T extends MRT_RowData>({
     <Tooltip title={tooltipText}>
       <Typography
         style={{
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
           textAlign: 'center',
+          width: '100%',
         }}
       >
         {check ? '✓' : ''}

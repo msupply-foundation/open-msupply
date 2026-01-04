@@ -173,7 +173,7 @@ impl SyncTranslation for StockLineTranslation {
     ) -> Result<PushTranslateResult, anyhow::Error> {
         let Some(stock_line) = StockLineRepository::new(connection)
             .query_by_filter(
-                StockLineFilter::new().id(EqualFilter::equal_to(&changelog.record_id)),
+                StockLineFilter::new().id(EqualFilter::equal_to(changelog.record_id.to_string())),
                 None,
             )?
             .pop()

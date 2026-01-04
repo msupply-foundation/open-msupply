@@ -148,6 +148,8 @@ fragment Inbound on InvoiceNode {
       __typename
       username
     }
+
+    createdFromRequisitionId
   }
 
   lines {

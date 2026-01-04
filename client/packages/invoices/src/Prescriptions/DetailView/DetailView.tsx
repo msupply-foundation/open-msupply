@@ -12,11 +12,14 @@ import {
   ModalMode,
   useEditModal,
   useBreadcrumbs,
+  useNonPaginatedMaterialTable,
+  Groupable,
+  NothingHere,
+  MaterialTable,
 } from '@openmsupply-client/common';
 import { toItemRow, ActivityLogList } from '@openmsupply-client/system';
 import { AppRoute } from '@openmsupply-client/config';
-import { usePrescription } from '../api';
-import { ContentArea } from './ContentArea';
+import { PrescriptionLineFragment, usePrescription } from '../api';
 import { AppBarButtons } from './AppBarButton';
 import { Toolbar } from './Toolbar';
 import { SidePanel } from './SidePanel';
@@ -24,6 +27,8 @@ import { Footer } from './Footer';
 import { StockOutLineFragment, Draft } from '../../StockOut';
 import { StockOutItem } from '../../types';
 import { HistoryModal } from './History/HistoryModal';
+import { isPrescriptionPlaceholderRow } from '../../utils';
+import { usePrescriptionColumn } from './columns';
 
 export const PrescriptionDetailView = () => {
   const t = useTranslation();
@@ -31,7 +36,10 @@ export const PrescriptionDetailView = () => {
   const navigate = useNavigate();
   const {
     query: { data, loading },
+    rows,
+    isDisabled,
   } = usePrescription();
+  const columns = usePrescriptionColumn();
 
   const {
     entity: historyEntity,
@@ -68,6 +76,27 @@ export const PrescriptionDetailView = () => {
     setHistoryMode(ModalMode.Create);
   };
 
+  const { table, selectedRows } = useNonPaginatedMaterialTable<
+    Groupable<PrescriptionLineFragment>
+  >({
+    tableId: 'prescription-detail',
+    columns,
+    data: rows,
+    grouping: { enabled: true },
+    isLoading: false,
+    initialSort: { key: 'itemName', dir: 'asc' },
+    isError: false,
+    onRowClick: onRowClick ? row => onRowClick(row) : undefined,
+    getIsPlaceholderRow: isPrescriptionPlaceholderRow,
+    noDataElement: (
+      <NothingHere
+        body={t('error.no-prescriptions')}
+        onCreate={isDisabled ? undefined : () => onAddItem()}
+        buttonText={t('button.add-item')}
+      />
+    ),
+  });
+
   useEffect(() => {
     setCustomBreadcrumbs({ 1: data?.invoiceNumber.toString() ?? '' });
   }, [setCustomBreadcrumbs, data?.invoiceNumber]);
@@ -76,7 +105,7 @@ export const PrescriptionDetailView = () => {
 
   const tabs = [
     {
-      Component: <ContentArea onRowClick={onRowClick} onAddItem={onAddItem} />,
+      Component: <MaterialTable table={table} />,
       value: 'Details',
     },
     {
@@ -111,7 +140,10 @@ export const PrescriptionDetailView = () => {
           />
           <Toolbar />
           <DetailTabs tabs={tabs} />
-          <Footer />
+          <Footer
+            selectedRows={selectedRows}
+            resetRowSelection={table.resetRowSelection}
+          />
           <SidePanel />
         </TableProvider>
       ) : (

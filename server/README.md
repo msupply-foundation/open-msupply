@@ -15,6 +15,8 @@ Remote server can use `sqlite` or `postgres`, quick start guide is for `sqlite` 
 
 N.B. The version of rust used by open mSupply as of July 2025 is 1.88, so, once you've installed rust in the guides below, set up your environment to use that version. You can do that by running `rustup install 1.88` and then `rustup default 1.88`.
 
+When changing to newer rust version please make sure to update docker build container as per [this commit](https://github.com/msupply-foundation/open-msupply/commit/049928040b3c181df7ebe95d32ac82a1a1ba3902).
+
 ### Windows
 
 - Follow [Microsoft's Rust installation guide](https://docs.microsoft.com/en-us/windows/dev-environment/rust/setup)

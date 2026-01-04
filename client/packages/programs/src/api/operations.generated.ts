@@ -1414,6 +1414,7 @@ export type VaccineCourseFragment = {
   coverageRate: number;
   wastageRate: number;
   useInGapsCalculations: boolean;
+  canSkipDose: boolean;
   demographic?: {
     __typename: 'DemographicNode';
     name: string;
@@ -1458,6 +1459,7 @@ export type VaccineCoursesQuery = {
       coverageRate: number;
       wastageRate: number;
       useInGapsCalculations: boolean;
+      canSkipDose: boolean;
       demographic?: {
         __typename: 'DemographicNode';
         name: string;
@@ -1512,6 +1514,7 @@ export type InsertVaccineCourseMutation = {
             coverageRate: number;
             wastageRate: number;
             useInGapsCalculations: boolean;
+            canSkipDose: boolean;
             demographic?: {
               __typename: 'DemographicNode';
               name: string;
@@ -1567,6 +1570,7 @@ export type UpdateVaccineCourseMutation = {
             coverageRate: number;
             wastageRate: number;
             useInGapsCalculations: boolean;
+            canSkipDose: boolean;
             demographic?: {
               __typename: 'DemographicNode';
               name: string;
@@ -1896,6 +1900,7 @@ export const VaccineCourseFragmentDoc = gql`
     coverageRate
     wastageRate
     useInGapsCalculations
+    canSkipDose
     demographic {
       name
       id

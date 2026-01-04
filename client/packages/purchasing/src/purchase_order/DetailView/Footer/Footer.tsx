@@ -8,7 +8,6 @@ import {
   ActionsFooter,
   PurchaseOrderNodeStatus,
   StatusCrumbs,
-  useTableStore,
   usePreferences,
   useDeleteConfirmation,
   CloseIcon,
@@ -22,6 +21,7 @@ import {
   usePurchaseOrder,
   PurchaseOrderFragment,
   usePurchaseOrderLine,
+  PurchaseOrderLineFragment,
 } from '../../api';
 import { getStatusTranslator, purchaseOrderStatuses } from './utils';
 import { StatusChangeButton } from './StatusChangeButton';
@@ -55,15 +55,18 @@ const createStatusLog = (
 interface FooterProps {
   showStatusBar: boolean;
   status: PurchaseOrderNodeStatus;
+  selectedRows: PurchaseOrderLineFragment[];
+  resetRowSelection: () => void;
 }
 
 export const Footer = ({
   showStatusBar,
   status,
+  selectedRows,
+  resetRowSelection,
 }: FooterProps): ReactElement => {
   const t = useTranslation();
   const { success } = useNotification();
-  const { clearSelected } = useTableStore();
   const { isOn, toggleOn, toggleOff } = useToggle();
   const { authorisePurchaseOrder = false } = usePreferences();
 
@@ -76,17 +79,11 @@ export const Footer = ({
     delete: { deleteLines },
   } = usePurchaseOrderLine();
 
-  const selectedRows = useTableStore(state => {
-    const selectedLines =
-      data?.lines.nodes.filter(line => state.rowState[line.id]?.isSelected) ||
-      [];
-    return selectedLines;
-  });
-
   const deleteAction = async () => {
     const ids = selectedRows.map(row => row.id);
     if (ids.length === 0) return;
-    return await deleteLines(ids);
+    await deleteLines(ids);
+    resetRowSelection();
   };
 
   const confirmAndDelete = useDeleteConfirmation({
@@ -126,7 +123,7 @@ export const Footer = ({
           count: selectedRows.length,
         })
       )();
-      clearSelected();
+      resetRowSelection();
     } catch (e) {
       console.error('Error closing purchase order lines:', e);
     }
@@ -162,6 +159,7 @@ export const Footer = ({
             <ActionsFooter
               actions={actions}
               selectedRowCount={selectedRows.length}
+              resetRowSelection={resetRowSelection}
             />
           )}
           {data && selectedRows.length === 0 && showStatusBar ? (
@@ -188,6 +186,7 @@ export const Footer = ({
               selectedRows={selectedRows}
               isOpen={isOn}
               onClose={toggleOff}
+              resetRowSelection={resetRowSelection}
             />
           )}
         </>

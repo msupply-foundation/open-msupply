@@ -120,7 +120,7 @@ const ListView = () => {
           navigate(row.id);
         }}
       />
-      <Footer />
+      <Footer data={data?.nodes} />
     </>
   );
 };

@@ -11,10 +11,16 @@ import {
   Select,
   useCurrency,
   useAuthContext,
-  useMediaQuery,
   UserPermission,
   useTranslation,
   NumUtils,
+  NumInputRow,
+  TextInput,
+  MultilineTextInput,
+  DateInput,
+  commonLabelProps,
+  InfoRow,
+  Grid,
 } from '@openmsupply-client/common';
 import { PurchaseOrderLineFragment } from '../../api';
 import {
@@ -23,13 +29,6 @@ import {
   StockItemSearchInput,
 } from '@openmsupply-client/system/src';
 import { DraftPurchaseOrderLine } from '../../api/hooks/usePurchaseOrderLine';
-import {
-  commonLabelProps,
-  NumInputRow,
-  TextInput,
-  MultilineTextInput,
-  DateInput,
-} from '../../../common';
 import {
   calculatePricesAndDiscount,
   calculateUnitQuantities,
@@ -62,7 +61,6 @@ export const PurchaseOrderLineEdit = ({
   const t = useTranslation();
   const showContent = !!draft?.itemId;
   const { userHasPermission } = useAuthContext();
-  const isVerticalScreen = useMediaQuery('(max-width:800px)');
   const { options } = useCurrency(
     draft?.purchaseOrder?.currency?.code as Currencies
   );
@@ -85,10 +83,7 @@ export const PurchaseOrderLineEdit = ({
     StatusGroup.BeforeConfirmed
   );
 
-  const commonProps = {
-    disabled: true,
-    isVerticalScreen,
-  };
+  const existingItemIds = lines.map(line => line.item.id);
 
   return (
     <ModalGridLayout
@@ -101,8 +96,10 @@ export const PurchaseOrderLineEdit = ({
             disabled={isUpdateMode || disabled}
             currentItemId={draft?.itemId}
             onChange={newItem => newItem && onChangeItem(newItem)}
-            extraFilter={item => !lines.some(line => line.item.id === item.id)}
-            filter={{ isVisible: true, ignoreForOrders: false }}
+            filter={{
+              ignoreForOrders: false,
+              id: { notEqualAll: existingItemIds },
+            }}
             width={825}
           />
           <InputWithLabelRow
@@ -135,59 +132,63 @@ export const PurchaseOrderLineEdit = ({
       Left={
         showContent ? (
           <>
-            <NumInputRow
+            <InfoRow
               value={draft?.lineNumber || lineCount + 1}
               label={t('label.line-number')}
-              {...commonProps}
             />
-            <NumInputRow
+            <InfoRow
               value={draft?.item.stats.stockOnHand || 0}
               label={t('label.stock-on-hand')}
-              {...commonProps}
             />
-            <TextInput
-              label={t('label.unit')}
-              value={draft?.unit || ''}
-              onChange={(value?: string) => update({ unit: value })}
-              disabled={
-                disabled || isFieldDisabled(status, StatusGroup.AfterConfirmed)
-              }
-              isVerticalScreen={isVerticalScreen}
-            />
-            <TextInput
-              label={t('label.supplier-item-code')}
-              value={draft?.supplierItemCode || ''}
-              onChange={(value?: string) => update({ supplierItemCode: value })}
-              disabled={disabled}
-              isVerticalScreen={isVerticalScreen}
-            />
-            <InputWithLabelRow
-              Input={
-                <ManufacturerSearchInput
-                  disabled={isFieldDisabled(status, StatusGroup.AfterConfirmed)}
-                  value={draft?.manufacturer ?? null}
-                  onChange={manufacturer =>
-                    update({ manufacturer: manufacturer || null })
-                  }
-                  textSx={
-                    disabled
-                      ? {
-                          backgroundColor: theme =>
-                            theme.palette.background.toolbar,
-                          boxShadow: 'none',
-                        }
-                      : {
-                          backgroundColor: theme =>
-                            theme.palette.background.white,
-                          boxShadow: theme => theme.shadows[2],
-                        }
-                  }
-                  width={185}
-                />
-              }
-              label={t('label.manufacturer')}
-              labelProps={commonLabelProps}
-            />
+            <Grid pl={1}>
+              <TextInput
+                label={t('label.unit')}
+                value={draft?.unit || ''}
+                onChange={(value?: string) => update({ unit: value })}
+                disabled={
+                  disabled ||
+                  isFieldDisabled(status, StatusGroup.AfterConfirmed)
+                }
+              />
+              <TextInput
+                label={t('label.supplier-item-code')}
+                value={draft?.supplierItemCode || ''}
+                onChange={(value?: string) =>
+                  update({ supplierItemCode: value })
+                }
+                disabled={disabled}
+              />
+              <InputWithLabelRow
+                Input={
+                  <ManufacturerSearchInput
+                    disabled={isFieldDisabled(
+                      status,
+                      StatusGroup.AfterConfirmed
+                    )}
+                    value={draft?.manufacturer ?? null}
+                    onChange={manufacturer =>
+                      update({ manufacturer: manufacturer || null })
+                    }
+                    textSx={
+                      disabled
+                        ? {
+                            backgroundColor: theme =>
+                              theme.palette.background.toolbar,
+                            boxShadow: 'none',
+                          }
+                        : {
+                            backgroundColor: theme =>
+                              theme.palette.background.white,
+                            boxShadow: theme => theme.shadows[2],
+                          }
+                    }
+                    width={185}
+                  />
+                }
+                label={t('label.manufacturer')}
+                labelProps={commonLabelProps()}
+              />
+            </Grid>
           </>
         ) : null
       }
@@ -204,7 +205,6 @@ export const PurchaseOrderLineEdit = ({
               disabled={
                 isDisabled || (!canEditRequestedQuantity && !userIsAuthorised)
               }
-              isVerticalScreen={isVerticalScreen}
               onChange={(value: number | undefined) => {
                 // Adjust the requested and adjusted number of units based
                 // on the number of packs * pack size
@@ -223,7 +223,6 @@ export const PurchaseOrderLineEdit = ({
               disabled={
                 disabled || isFieldDisabled(status, StatusGroup.AfterConfirmed)
               }
-              isVerticalScreen={isVerticalScreen}
               onChange={(requestedPackSize: number | undefined) => {
                 // Adjust the requested and adjusted number of units based
                 // on the number of packs * pack size
@@ -235,19 +234,16 @@ export const PurchaseOrderLineEdit = ({
               }}
               decimalLimit={2}
             />
-            <NumInputRow
+            <InfoRow
               label={t('label.requested-quantity')}
               value={draft?.requestedNumberOfUnits}
-              disabled={true}
-              isVerticalScreen={isVerticalScreen}
               decimalLimit={2}
             />
-            {!canEditRequestedQuantity && (
-              <NumInputRow
+            {(!canEditRequestedQuantity ||
+              status == PurchaseOrderNodeStatus.Finalised) && (
+              <InfoRow
                 label={t('label.adjusted-units')}
                 value={draft?.adjustedNumberOfUnits ?? undefined}
-                disabled={true}
-                isVerticalScreen={isVerticalScreen}
                 decimalLimit={2}
               />
             )}
@@ -258,7 +254,6 @@ export const PurchaseOrderLineEdit = ({
               disabled={
                 disabled || isFieldDisabled(status, StatusGroup.AfterConfirmed)
               }
-              isVerticalScreen={isVerticalScreen}
               onChange={(value: number | undefined) => {
                 const adjustedPatch = calculatePricesAndDiscount(
                   'pricePerPackBeforeDiscount',
@@ -275,7 +270,6 @@ export const PurchaseOrderLineEdit = ({
               disabled={
                 disabled || isFieldDisabled(status, StatusGroup.AfterConfirmed)
               }
-              isVerticalScreen={isVerticalScreen}
               onChange={(value: number | undefined) => {
                 const adjustedPatch = calculatePricesAndDiscount(
                   'discountPercentage',
@@ -289,11 +283,10 @@ export const PurchaseOrderLineEdit = ({
             />
             <NumInputRow
               label={t('label.price-per-pack-after-discount')}
-              value={getCurrencyValue(draft?.pricePerPackAfterDiscount)}
+              value={getCurrencyValue(draft?.pricePerPackAfterDiscount) || 0}
               disabled={
                 disabled || isFieldDisabled(status, StatusGroup.AfterConfirmed)
               }
-              isVerticalScreen={isVerticalScreen}
               onChange={(value: number | undefined) => {
                 const adjustedPatch = calculatePricesAndDiscount(
                   'pricePerPackAfterDiscount',
@@ -311,12 +304,12 @@ export const PurchaseOrderLineEdit = ({
                   ? getCurrencyValue(
                       (draft.pricePerPackAfterDiscount ?? 0) *
                         (draft.numberOfPacks ?? 0)
-                    )
+                    ) || 0
                   : 0
               }
-              {...commonProps}
               decimalLimit={options.precision}
               endAdornment={options.symbol}
+              disabled={true}
             />
           </>
         ) : null
@@ -330,7 +323,6 @@ export const PurchaseOrderLineEdit = ({
               disabled={
                 disabled || isFieldDisabled(status, StatusGroup.AfterConfirmed)
               }
-              isVerticalScreen={isVerticalScreen}
               onChange={(value: string | null) =>
                 update({ requestedDeliveryDate: value })
               }
@@ -341,7 +333,6 @@ export const PurchaseOrderLineEdit = ({
               disabled={
                 disabled || isFieldDisabled(status, StatusGroup.AfterSent)
               }
-              isVerticalScreen={isVerticalScreen}
               onChange={(value: string | null) =>
                 update({ expectedDeliveryDate: value })
               }

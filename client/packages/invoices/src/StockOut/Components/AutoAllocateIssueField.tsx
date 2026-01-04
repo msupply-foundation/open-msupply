@@ -6,6 +6,7 @@ import {
   useFormatNumber,
   useBufferState,
   useDebounceCallback,
+  usePreferences,
 } from '@openmsupply-client/common';
 import { useAllocationContext } from '../useAllocationContext';
 import { getAllocatedQuantity } from '../utils';
@@ -14,13 +15,17 @@ export const AutoAllocateField = ({
   inputColor,
   allowPartialPacks,
   autoFocus = true,
+  disabled,
 }: {
   inputColor?: string;
   allowPartialPacks?: boolean;
   autoFocus?: boolean;
+  disabled?: boolean;
 }) => {
   const t = useTranslation();
   const { format } = useFormatNumber();
+  const { expiredStockPreventIssue, expiredStockIssueThreshold } =
+    usePreferences();
 
   const { autoAllocate, allocatedQuantity } = useAllocationContext(state => ({
     autoAllocate: state.autoAllocate,
@@ -31,7 +36,13 @@ export const AutoAllocateField = ({
 
   const debouncedAllocate = useDebounceCallback(
     quantity => {
-      const allocated = autoAllocate(quantity, format, t, allowPartialPacks);
+      const allocated = autoAllocate(
+        quantity,
+        format,
+        t,
+        expiredStockPreventIssue ? (expiredStockIssueThreshold ?? 0) : 0,
+        allowPartialPacks
+      );
       setIssueQuantity(allocated);
     },
     [],
@@ -51,6 +62,7 @@ export const AutoAllocateField = ({
     <>
       <ModalLabel label={t('label.issue')} />
       <NumericTextInput
+        disabled={disabled}
         autoFocus={autoFocus}
         value={issueQuantity}
         onChange={handleIssueQuantityChange}

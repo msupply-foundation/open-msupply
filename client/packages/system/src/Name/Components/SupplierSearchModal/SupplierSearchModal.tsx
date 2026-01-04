@@ -19,8 +19,8 @@ const SupplierSearchComponent = ({
   onChange,
   external,
 }: SupplierSearchProps) => {
-  const { data, isLoading } = useName.document.suppliers(external);
   const t = useTranslation();
+  const { data, isLoading } = useName.document.suppliers(external);
   const NameOptionRenderer = getNameOptionRenderer(t('label.on-hold'));
 
   return (

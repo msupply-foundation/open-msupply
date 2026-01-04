@@ -9,7 +9,7 @@ export const useNameApi = () => {
     base: () => ['name'] as const,
     detail: (id: string) => [...keys.base(), storeId, id] as const,
     list: () => [...keys.base(), storeId, 'list'] as const,
-    paramList: (params: ListParams) => [...keys.list(), params] as const,
+    paramList: (params?: ListParams) => [...keys.list(), params] as const,
     donors: () => [...keys.base(), storeId, 'donors'] as const,
     properties: () => [NAME_PROPERTIES_KEY] as const,
   };

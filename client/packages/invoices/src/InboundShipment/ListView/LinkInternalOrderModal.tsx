@@ -10,6 +10,8 @@ import {
   useDialog,
   DialogButton,
   Typography,
+  TableProvider,
+  createTableStore,
 } from '@openmsupply-client/common';
 import { NameRowFragment } from '@openmsupply-client/system';
 
@@ -82,14 +84,17 @@ export const LinkInternalOrderModal = ({
         >
           {t('message.continue-to-make-inbound-shipment')}
         </Typography>
-        <DataTable
-          id="link-internal-order-to-inbound"
-          columns={columns}
-          data={data?.nodes ?? []}
-          dense
-          onRowClick={onRowClick}
-          isLoading={isLoading}
-        />
+
+        <TableProvider createStore={createTableStore}>
+          <DataTable
+            id="link-internal-order-to-inbound"
+            columns={columns}
+            data={data?.nodes ?? []}
+            dense
+            onRowClick={onRowClick}
+            isLoading={isLoading}
+          />
+        </TableProvider>
       </>
     </Modal>
   );

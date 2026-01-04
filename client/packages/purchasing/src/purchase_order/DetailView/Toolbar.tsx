@@ -5,7 +5,6 @@ import {
   BufferedTextInput,
   Grid,
   useTranslation,
-  SearchBar,
   Tooltip,
   DateTimePickerInput,
   Formatter,
@@ -19,7 +18,7 @@ import {
   SupplierSearchInput,
 } from '@openmsupply-client/system';
 import { usePurchaseOrder } from '../api/hooks/usePurchaseOrder';
-import { NameFragment } from 'packages/system/src/Name/api/operations.generated';
+import { NameFragment } from '@openmsupply-client/system';
 import { PurchaseOrderFragment, usePurchaseOrderLine } from '../api';
 import { isFieldDisabled, StatusGroup } from '../../utils';
 
@@ -32,8 +31,7 @@ export const Toolbar = ({ isDisabled }: ToolbarProps) => {
   const { error } = useNotification();
   const {
     draft,
-    query: { data, isLoading },
-    lines: { itemFilter, setItemFilter },
+    query: { data, isFetching },
     update: { update },
     handleChange,
   } = usePurchaseOrder();
@@ -122,7 +120,7 @@ export const Toolbar = ({ isDisabled }: ToolbarProps) => {
               Input={
                 <SupplierSearchInput
                   external
-                  disabled={isDisabled || isLoading}
+                  disabled={isDisabled || isFetching}
                   value={(data?.supplier as NameFragment) ?? null}
                   onChange={supplier => {
                     if (!supplier) return;
@@ -203,14 +201,6 @@ export const Toolbar = ({ isDisabled }: ToolbarProps) => {
                   disabled={disabledExpectedDeliveryDate}
                 />
               }
-            />
-          </Grid>
-          <Grid display="flex" flexGrow={1} justifyContent="flex-end">
-            <SearchBar
-              placeholder={t('placeholder.filter-items')}
-              value={itemFilter ?? ''}
-              onChange={newValue => setItemFilter(newValue)}
-              debounceTime={0}
             />
           </Grid>
         </Grid>

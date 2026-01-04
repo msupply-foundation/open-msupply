@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React from 'react';
 import { ControlProps, rankWith, schemaTypeIs } from '@jsonforms/core';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import {
@@ -10,18 +10,14 @@ import { z } from 'zod';
 import { useZodOptionsValidation } from '../hooks/useZodOptionsValidation';
 import { useDebouncedTextInput } from '../hooks/useDebouncedTextInput';
 import { FORM_LABEL_WIDTH, DefaultFormRowSx } from '../styleConstants';
-import { useJSONFormsCustomError } from '../hooks/useJSONFormsCustomError';
 import { usePrevious } from '../hooks/usePrevious';
 import { PreviousValueDisplay } from '../utilityComponents';
 
 const Options = z
   .object({
     /**
-     * Additional pattern to be matched that can be defined in ui schema
-     */
-    pattern: z.string().optional(),
-    /**
-     * Examples for the correct pattern
+     * Examples for the correct Regex pattern, which is defined in the Json
+     * schema (not the uischema options)
      */
     examples: z.array(z.string()).optional(),
     width: z.string().optional(),
@@ -50,83 +46,16 @@ const Options = z
 
 type Options = z.infer<typeof Options>;
 
-// Validates the option and parses the pattern into RegEx
-const useOptions = (
-  options?: Record<string, unknown>
-): { errors?: string; options?: Options; pattern?: RegExp } => {
-  const [regexError, setRegexErrors] = useState<string | undefined>();
-  const { errors: zErrors, options: schemaOptions } = useZodOptionsValidation(
-    Options,
-    options
-  );
-  const pattern = useMemo(() => {
-    if (!schemaOptions?.pattern) {
-      return undefined;
-    }
-    try {
-      return new RegExp(schemaOptions?.pattern);
-    } catch {
-      setRegexErrors(`Invalid regex: ${schemaOptions.pattern}`);
-      return undefined;
-    }
-  }, [schemaOptions?.pattern]);
-
-  return { errors: zErrors ?? regexError, options: schemaOptions, pattern };
-};
-
-// Returns error if value doesn't match the pattern
-const usePatternValidation = (
-  path: string,
-  pattern?: RegExp,
-  value?: string
-): string | undefined => {
-  const { customError, setCustomError } = useJSONFormsCustomError(path, 'Text');
-  const lastValidatedValue = useRef<{ pattern?: string; value?: string }>({});
-
-  useEffect(() => {
-    // Skip validation if pattern or value hasn't actually changed
-    const patternString = pattern?.toString();
-    if (
-      lastValidatedValue.current.pattern === patternString &&
-      lastValidatedValue.current.value === value
-    ) {
-      return;
-    }
-
-    // Update last validated values
-    lastValidatedValue.current = {
-      pattern: patternString,
-      value,
-    };
-
-    // Process validation
-    if (!pattern || !value) {
-      setCustomError(undefined);
-      return;
-    }
-
-    const result = pattern.exec(value);
-    if (result == null) {
-      setCustomError('Invalid format');
-    } else {
-      setCustomError(undefined);
-    }
-  }, [pattern, setCustomError, value]);
-
-  return customError;
-};
-
 export const stringTester = rankWith(3, schemaTypeIs('string'));
 
 const UIComponent = (props: ControlProps) => {
-  const { data, path, handleChange, errors, label } = props;
-  const {
-    errors: zErrors,
-    options: schemaOptions,
-    pattern,
-  } = useOptions(props.uischema.options);
-  const customErrors = usePatternValidation(path, pattern, data);
-  const error = !!errors || !!zErrors || !!customErrors;
+  const { data, path, handleChange, errors, label, uischema } = props;
+
+  const { errors: zErrors, options: schemaOptions } = useZodOptionsValidation(
+    Options,
+    uischema.options
+  );
+  const error = !!errors || !!zErrors;
   const onChange = (value: string | undefined) =>
     handleChange(path, !!value ? value : undefined);
   const { text, onChange: onDebounceChange } = useDebouncedTextInput(
@@ -146,11 +75,11 @@ const UIComponent = (props: ControlProps) => {
     (props.schema as Record<string, string[]>)['examples'] ??
     schemaOptions?.examples;
   const helperText =
-    (!!customErrors || !!errors) && examples && Array.isArray(examples)
+    !!errors && examples && Array.isArray(examples)
       ? t('error.json-bad-format-with-examples', {
           examples: examples.join('", "'),
         })
-      : (zErrors ?? errors ?? customErrors);
+      : zErrors || errors;
 
   if (!props.visible) {
     return null;

@@ -1,18 +1,15 @@
-import React, { FC, useState } from 'react';
+import React, { FC, useMemo, useState } from 'react';
 import {
-  ColumnDescription,
-  ColumnFormat,
-  DataTable,
-  DotCell,
   Grid,
-  NothingHere,
   SearchBar,
-  TooltipTextCell,
-  useColumns,
   useIsCentralServerApi,
   useTranslation,
-  useUserPreferencePagination,
   useWindowDimensions,
+  MaterialTable,
+  ColumnDef,
+  useSimpleMaterialTable,
+  ColumnType,
+  TextWithTooltipCell,
 } from '@openmsupply-client/common';
 import { ImportRow } from './EquipmentImportModal';
 import { Status } from '../Components';
@@ -20,112 +17,106 @@ import { Status } from '../Components';
 interface ImportReviewDataTableProps {
   importRows: ImportRow[];
   showWarnings: boolean;
+  showErrors: boolean;
 }
 export const ImportReviewDataTable: FC<ImportReviewDataTableProps> = ({
   importRows,
   showWarnings,
+  showErrors,
 }) => {
   const t = useTranslation();
   const isCentralServer = useIsCentralServerApi();
   const { height } = useWindowDimensions();
 
-  const { pagination, updateUserPreferencePagination } =
-    useUserPreferencePagination();
-
   const [searchString, setSearchString] = useState<string>(() => '');
-  const columnDescriptions: ColumnDescription<ImportRow>[] = [];
 
-  if (isCentralServer) {
-    columnDescriptions.push({
-      key: 'store',
-      width: 80,
-      sortable: false,
-      label: 'label.store',
-      accessor: ({ rowData }) => rowData.store?.code,
-    });
-  }
+  const columns = useMemo(
+    (): ColumnDef<ImportRow>[] => [
+      {
+        id: 'storeCode',
+        accessorFn: row => row.store?.code,
+        size: 90,
+        header: t('label.store'),
+        includeColumn: isCentralServer,
+      },
+      {
+        accessorKey: 'assetNumber',
+        size: 90,
+        header: t('label.asset-number'),
+      },
+      {
+        accessorKey: 'catalogueItemCode',
+        size: 150,
+        header: t('label.catalogue-item-code'),
+      },
+      {
+        accessorKey: 'installationDate',
+        header: t('label.installation-date'),
+        size: 120,
+        columnType: ColumnType.Date,
+      },
+      {
+        accessorKey: 'replacementDate',
+        header: t('label.replacement-date'),
+        size: 120,
+        columnType: ColumnType.Date,
+      },
+      {
+        accessorKey: 'warrantyStart',
+        header: t('label.warranty-start-date'),
+        size: 120,
+        columnType: ColumnType.Date,
+      },
+      {
+        accessorKey: 'warrantyEnd',
+        header: t('label.warranty-end-date'),
+        size: 120,
+        columnType: ColumnType.Date,
+      },
 
-  columnDescriptions.push(
-    {
-      key: 'assetNumber',
-      width: 90,
-      sortable: false,
-      label: 'label.asset-number',
-    },
-    {
-      key: 'catalogueItemCode',
-      sortable: false,
-      label: 'label.catalogue-item-code',
-    },
-    {
-      key: 'installationDate',
-      sortable: false,
-      label: 'label.installation-date',
-      format: ColumnFormat.Date,
-    },
-    {
-      key: 'replacementDate',
-      sortable: false,
-      label: 'label.replacement-date',
-      format: ColumnFormat.Date,
-    },
-    {
-      key: 'warrantyStart',
-      sortable: false,
-      label: 'label.warranty-start-date',
-      Cell: TooltipTextCell,
-    },
-    {
-      key: 'warrantyEnd',
-      sortable: false,
-      label: 'label.warranty-end-date',
-      Cell: TooltipTextCell,
-    },
-    {
-      key: 'serialNumber',
-      sortable: false,
-      label: 'label.serial',
-      Cell: TooltipTextCell,
-    },
-    {
-      key: 'status',
-      sortable: false,
-      label: 'label.status',
-      Cell: ({ rowData }) => <Status status={rowData.status} />,
-    },
-    {
-      key: 'needsReplacement',
-      sortable: false,
-      label: 'label.needs-replacement',
-      Cell: DotCell,
-      accessor: ({ rowData }) => !!rowData.needsReplacement,
-    },
-    {
-      key: 'notes',
-      width: 100,
-      sortable: false,
-      label: 'label.asset-notes',
-      Cell: TooltipTextCell,
-    }
+      {
+        accessorKey: 'serialNumber',
+        header: t('label.serial'),
+        size: 100,
+        Cell: TextWithTooltipCell,
+      },
+      {
+        id: 'status',
+        accessorFn: row => row.status,
+        header: t('label.status'),
+        size: 100,
+        Cell: ({ row }) => <Status status={row.original.status} />,
+      },
+      {
+        id: 'need-replacement',
+        accessorFn: row => !!row.needsReplacement,
+        header: t('label.needs-replacement'),
+        size: 130,
+        columnType: ColumnType.Boolean,
+      },
+      {
+        accessorKey: 'notes',
+        size: 160,
+        header: t('label.asset-notes'),
+        Cell: TextWithTooltipCell,
+      },
+      {
+        accessorKey: 'warningMessage',
+        header: t('label.warning-message'),
+        size: 150,
+        Cell: TextWithTooltipCell,
+        includeColumn: showWarnings,
+      },
+      {
+        accessorKey: 'errorMessage',
+        header: t('label.error-message'),
+        size: 150,
+        Cell: TextWithTooltipCell,
+        includeColumn: showErrors,
+      },
+    ],
+    [showWarnings, showErrors, isCentralServer]
   );
-
-  if (showWarnings) {
-    columnDescriptions.push({
-      key: 'warningMessage',
-      label: 'label.warning-message',
-      width: 150,
-      Cell: TooltipTextCell,
-    });
-  } else {
-    columnDescriptions.push({
-      key: 'errorMessage',
-      label: 'label.error-message',
-      width: 150,
-      Cell: TooltipTextCell,
-    });
-  }
-
-  const columns = useColumns<ImportRow>(columnDescriptions, {}, []);
 
   const filteredEquipment = importRows.filter(row => {
     if (!searchString) {
@@ -139,33 +130,30 @@ export const ImportReviewDataTable: FC<ImportReviewDataTableProps> = ({
     );
   });
 
-  const currentEquipmentPage = filteredEquipment.slice(
-    pagination.offset,
-    pagination.offset + pagination.first
-  );
+  const table = useSimpleMaterialTable<ImportRow>({
+    tableId: 'import-equipment-review-table',
+    data: filteredEquipment,
+    columns,
+    enableRowSelection: false,
+    enableRowVirtualization: true,
+  });
 
   return (
-    <Grid flexDirection="column" display="flex" gap={0} height={height * 0.5}>
+    <Grid
+      flexDirection="column"
+      display="flex"
+      gap={2}
+      maxHeight={height * 0.6}
+    >
       <SearchBar
         placeholder={t('messages.search')}
         value={searchString}
         debounceTime={300}
         onChange={newValue => {
           setSearchString(newValue);
-          updateUserPreferencePagination(0);
         }}
       />
-      <DataTable
-        pagination={{
-          ...pagination,
-          total: filteredEquipment.length,
-        }}
-        onChangePage={updateUserPreferencePagination}
-        columns={columns}
-        data={currentEquipmentPage}
-        noDataElement={<NothingHere body={t('error.asset-not-found')} />}
-        id={''}
-      />
+      <MaterialTable table={table} />
     </Grid>
   );
 };

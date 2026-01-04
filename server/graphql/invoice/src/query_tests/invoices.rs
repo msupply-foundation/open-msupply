@@ -21,7 +21,7 @@ mod test {
         .await;
 
         let invoices = InvoiceRepository::new(&connection)
-            .query_by_filter(InvoiceFilter::new().store_id(EqualFilter::equal_to("store_a")))
+            .query_by_filter(InvoiceFilter::new().store_id(EqualFilter::equal_to("store_a".to_string())))
             .unwrap();
 
         let query = r#"{
@@ -43,7 +43,7 @@ mod test {
             .iter()
             .map(|invoice| {
                 json!({
-                    "id": invoice.invoice_row.id.to_owned(),
+                    "id": invoice.invoice_row.id.to_string(),
                     "pricing": {
                         "totalAfterTax":
                              get_invoice_lines_inline!(&invoice.invoice_row.id, &connection)
@@ -74,7 +74,7 @@ mod test {
         .await;
 
         let invoices = InvoiceRepository::new(&connection)
-            .query_by_filter(InvoiceFilter::new().store_id(EqualFilter::equal_to("store_a")))
+            .query_by_filter(InvoiceFilter::new().store_id(EqualFilter::equal_to("store_a".to_string())))
             .unwrap();
 
         // filter query
@@ -193,7 +193,7 @@ mod test {
         .await;
 
         let mut invoices = InvoiceRepository::new(&connection)
-            .query_by_filter(InvoiceFilter::new().store_id(EqualFilter::equal_to("store_a")))
+            .query_by_filter(InvoiceFilter::new().store_id(EqualFilter::equal_to("store_a".to_string())))
             .unwrap();
 
         // invoice number

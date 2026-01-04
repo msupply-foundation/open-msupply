@@ -16,6 +16,7 @@
             <th>{{t(k="label.counted-num-of-packs",f="Counted Packs")}}</th>
             <th>{{t(k="label.difference",f="Difference")}}</th>
             <th>{{t(k="label.reason-adjustment",f="Adjustment Reason")}}</th>
+            <th>{{t(k="label.comment",f="Comment")}}</th>
         </tr>
     </thead>
     {% for line in data.stocktakeLines.nodes -%}
@@ -51,6 +52,7 @@
             {% endif %}
         </td>
         <td>{{ line.reasonOption.reason | default(value='') }}</td>
+        <td style="white-space: pre-line; word-break: break-word;">{{ line.comment | default(value='') }}</td>
     </tr>
     {%- endfor %}
 </table>
