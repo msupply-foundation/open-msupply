@@ -71,15 +71,17 @@ const skipRequest = () =>
 
 const PreInit: React.FC<React.PropsWithChildren> = ({ children }) => {
   const { logout } = useAuthContext();
-  const data = useInitialisationStatus(false, true);
+  const { data, isLoading } = useInitialisationStatus();
 
-  // Technically this should not fire before query is loaded because we are doing suspense
-  if (data?.data?.status == InitialisationStatusType.Initialised)
+  // If query successful and initialisation complete, render children
+  if (data?.status == InitialisationStatusType.Initialised)
     return children;
 
-  // Clear token
-  logout();
+  // If finished loading and not initialised, log out
+  if (!isLoading)
+    logout();
 
+  // Skip startup hooks, they dont work if not initialised
   return null;
 };
 

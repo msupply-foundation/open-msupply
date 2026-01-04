@@ -3,7 +3,6 @@ import { getSdk } from '../operations.generated';
 
 export const useInitialisationStatus = (
   refetchInterval: number | false = false,
-  shouldSuspend?: boolean
 ) => {
   const { client } = useGql();
   const sdk = getSdk(client);
@@ -16,7 +15,6 @@ export const useInitialisationStatus = (
     },
     {
       cacheTime: 0,
-      suspense: shouldSuspend,
       refetchInterval,
     }
   );
