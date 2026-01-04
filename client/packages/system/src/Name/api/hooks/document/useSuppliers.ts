@@ -5,9 +5,10 @@ export const useSuppliers = (external?: boolean) => {
   const api = useNameApi();
   const queryParams = useQueryParamsStore();
 
-  return useQuery(api.keys.paramList(queryParams.paramList()), () =>
+  const params = queryParams?.paramList ? queryParams.paramList() : {};
+  return useQuery(api.keys.paramList(params), () =>
     api.get.suppliers({
-      ...queryParams.paramList(),
+      ...params,
       external,
     })
   );

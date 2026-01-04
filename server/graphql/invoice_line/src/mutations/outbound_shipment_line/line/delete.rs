@@ -318,7 +318,7 @@ mod test {
                     r#type: Some(StockOutType::OutboundShipment)
                 }
             );
-            Ok("deleted id".to_owned())
+            Ok("deleted id".to_string())
         }));
 
         let variables = json!({

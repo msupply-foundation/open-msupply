@@ -15,8 +15,8 @@ import {
   ActionsFooter,
   ArrowRightIcon,
   useEditModal,
-  useTableStore,
   useNotification,
+  usePreferences,
 } from '@openmsupply-client/common';
 import { ChangeCampaignOrProgramConfirmationModal } from '@openmsupply-client/system';
 import {
@@ -66,20 +66,31 @@ const createStatusLog = (invoice: InboundFragment) => {
 };
 
 interface FooterComponentProps {
-  onReturnLines: (selectedLines: InboundLineFragment[]) => void;
+  onReturnLines: () => void;
+  selectedRows: InboundLineFragment[];
+  resetRowSelection: () => void;
 }
 
-export const FooterComponent = ({ onReturnLines }: FooterComponentProps) => {
+export const FooterComponent = ({
+  onReturnLines,
+  selectedRows,
+  resetRowSelection,
+}: FooterComponentProps) => {
   const t = useTranslation();
   const { navigateUpOne } = useBreadcrumbs();
-  const { clearSelected } = useTableStore();
   const { info } = useNotification();
   const changeCampaignOrProgramModal = useEditModal();
+  const { invoiceStatusOptions } = usePreferences();
 
   const { data } = useInbound.document.get();
-  const onDelete = useInbound.lines.deleteSelected();
-  const onZeroQuantities = useInbound.lines.zeroQuantities();
-  const selectedLines = useInbound.utils.selectedLines();
+  const onDelete = useInbound.lines.deleteSelected(
+    selectedRows,
+    resetRowSelection
+  );
+  const onZeroQuantities = useInbound.lines.zeroQuantities(
+    selectedRows,
+    resetRowSelection
+  );
   const { mutateAsync } = useInbound.lines.save();
   const isDisabled = useIsInboundDisabled();
   const isManuallyCreated = !data?.linkedShipment?.id;
@@ -115,22 +126,28 @@ export const FooterComponent = ({ onReturnLines }: FooterComponentProps) => {
     {
       label: t('button.return-lines'),
       icon: <ArrowLeftIcon />,
-      onClick: () => onReturnLines(selectedLines),
+      onClick: () => onReturnLines(),
       shouldShrink: false,
     },
   ];
+  const statuses = isManuallyCreated
+    ? manualInboundStatuses.filter(status =>
+        invoiceStatusOptions?.includes(status)
+      )
+    : inboundStatuses.filter(status => invoiceStatusOptions?.includes(status));
 
   return (
     <AppFooterPortal
       Content={
         <>
-          {selectedLines.length !== 0 && (
+          {selectedRows.length !== 0 && (
             <ActionsFooter
               actions={actions}
-              selectedRowCount={selectedLines.length}
+              selectedRowCount={selectedRows.length}
+              resetRowSelection={resetRowSelection}
             />
           )}
-          {data && selectedLines.length === 0 ? (
+          {data && selectedRows.length === 0 ? (
             <Box
               gap={2}
               display="flex"
@@ -141,9 +158,7 @@ export const FooterComponent = ({ onReturnLines }: FooterComponentProps) => {
               <OnHoldButton />
 
               <StatusCrumbs
-                statuses={
-                  isManuallyCreated ? manualInboundStatuses : inboundStatuses
-                }
+                statuses={statuses}
                 statusLog={createStatusLog(data)}
                 statusFormatter={getStatusTranslator(t)}
               />
@@ -166,8 +181,8 @@ export const FooterComponent = ({ onReturnLines }: FooterComponentProps) => {
             <ChangeCampaignOrProgramConfirmationModal
               isOpen={changeCampaignOrProgramModal.isOpen}
               onCancel={changeCampaignOrProgramModal.onClose}
-              clearSelected={clearSelected}
-              rows={selectedLines}
+              clearSelected={resetRowSelection}
+              rows={selectedRows}
               onChange={mutateAsync}
             />
           }

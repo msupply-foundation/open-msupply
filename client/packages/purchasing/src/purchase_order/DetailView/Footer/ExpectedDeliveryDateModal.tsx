@@ -5,7 +5,6 @@ import {
   useConfirmationModal,
   useDialog,
   useNotification,
-  useTableStore,
   useTranslation,
 } from '@openmsupply-client/common';
 import { PurchaseOrderLineFragment, usePurchaseOrderLine } from '../../api';
@@ -15,16 +14,17 @@ interface ExpectedDeliveryDateModalProps {
   selectedRows: PurchaseOrderLineFragment[];
   isOpen: boolean;
   onClose: () => void;
+  resetRowSelection: () => void;
 }
 
 export const ExpectedDeliveryDateModal = ({
   selectedRows,
   isOpen,
   onClose,
+  resetRowSelection,
 }: ExpectedDeliveryDateModalProps): ReactElement => {
   const t = useTranslation();
   const { success } = useNotification();
-  const { clearSelected } = useTableStore();
   const { Modal } = useDialog({ isOpen, onClose });
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
 
@@ -39,7 +39,7 @@ export const ExpectedDeliveryDateModal = ({
         expectedDeliveryDate: formattedDate,
       });
       success(t('messages.updated-purchase-order-expected-delivery-date'))();
-      clearSelected();
+      resetRowSelection();
       onClose();
     } catch (e) {
       console.error('Error updating expected delivery date: ', e);

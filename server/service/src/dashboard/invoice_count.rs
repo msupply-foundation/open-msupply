@@ -109,7 +109,7 @@ fn invoices_count(
     }
     let mut invoice_filter = InvoiceFilter::new()
         .r#type(invoice_type.equal_to())
-        .store_id(EqualFilter::equal_to(store_id));
+        .store_id(EqualFilter::equal_to(store_id.to_string()));
     match invoice_status {
         InvoiceStatus::New => invoice_filter = invoice_filter.created_datetime(datetime_filter),
         InvoiceStatus::Allocated => {
@@ -174,7 +174,7 @@ impl InvoiceCountServiceTrait for InvoiceCountService {
         let repo = InvoiceRepository::new(&ctx.connection);
         repo.count(Some(
             InvoiceFilter::new()
-                .store_id(EqualFilter::equal_to(store_id))
+                .store_id(EqualFilter::equal_to(store_id.to_string()))
                 .r#type(InvoiceType::OutboundShipment.equal_to())
                 .status(InvoiceStatus::equal_any(vec![
                     InvoiceStatus::New,
@@ -192,7 +192,7 @@ impl InvoiceCountServiceTrait for InvoiceCountService {
         let repo = InvoiceRepository::new(&ctx.connection);
         repo.count(Some(
             InvoiceFilter::new()
-                .store_id(EqualFilter::equal_to(store_id))
+                .store_id(EqualFilter::equal_to(store_id.to_string()))
                 .r#type(InvoiceType::InboundShipment.equal_to())
                 .status(InvoiceStatus::Shipped.equal_to()),
         ))

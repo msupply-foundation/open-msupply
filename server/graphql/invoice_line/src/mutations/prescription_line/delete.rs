@@ -315,7 +315,7 @@ mod test {
                     r#type: Some(StockOutType::Prescription)
                 }
             );
-            Ok("deleted id".to_owned())
+            Ok("deleted id".to_string())
         }));
 
         let variables = json!({

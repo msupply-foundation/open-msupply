@@ -177,8 +177,8 @@ const getFilename = (type?: string, title?: string) => {
       break;
   }
 
-  const today = Formatter.naiveDate(new Date());
-  const filename = `${title || 'export'}_${today}.${extension}`;
+  const today = Formatter.toIsoString(new Date()); // to match backend datetime
+  const filename = `${today}_${title || 'export'}.${extension}`;
 
   return filename;
 };

@@ -1,17 +1,54 @@
-import React, { FC, memo } from 'react';
+import React, { memo } from 'react';
 import {
   Action,
   ActionsFooter,
   DeleteIcon,
   useTranslation,
   AppFooterPortal,
+  useMutation,
+  useQueryClient,
+  InvoiceNodeStatus,
+  useDeleteConfirmation,
 } from '@openmsupply-client/common';
-import { useInbound } from '../api';
+import { InboundRowFragment } from '../api';
+import { useInboundApi } from '../api/hooks/utils/useInboundApi';
 
-export const FooterComponent: FC = () => {
+export const FooterComponent = ({
+  selectedRows,
+  resetRowSelection,
+}: {
+  selectedRows: InboundRowFragment[];
+  resetRowSelection: () => void;
+}) => {
   const t = useTranslation();
+  const queryClient = useQueryClient();
+  const api = useInboundApi();
+  const { mutateAsync } = useMutation(api.delete);
 
-  const { selectedRows, confirmAndDelete } = useInbound.document.deleteRows();
+  const deleteAction = async () => {
+    await mutateAsync(selectedRows)
+      .then(() => queryClient.invalidateQueries(api.keys.base()))
+      .catch(err => {
+        throw err;
+      });
+    resetRowSelection();
+  };
+
+  const confirmAndDelete = useDeleteConfirmation({
+    selectedRows,
+    deleteAction,
+    canDelete: selectedRows.every(
+      ({ status }) => status === InvoiceNodeStatus.New
+    ),
+    messages: {
+      confirmMessage: t('messages.confirm-delete-shipments', {
+        count: selectedRows.length,
+      }),
+      deleteSuccess: t('messages.deleted-shipments', {
+        count: selectedRows.length,
+      }),
+    },
+  });
 
   const actions: Action[] = [
     {
@@ -29,6 +66,7 @@ export const FooterComponent: FC = () => {
             <ActionsFooter
               actions={actions}
               selectedRowCount={selectedRows.length}
+              resetRowSelection={resetRowSelection}
             />
           )}
         </>

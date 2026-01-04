@@ -53,8 +53,8 @@ pub(crate) fn test_pull_upsert_record_1() -> TestSyncIncomingRecord {
         TABLE_NAME,
         GOODS_RECEIVED,
         GoodsReceivedRow {
-            id: "3486239A597646B2B7259D91A24988E8".to_owned(),
-            store_id: "4E27CEB263354EB7B1B33CEA8F7884D8".to_owned(),
+            id: "3486239A597646B2B7259D91A24988E8".to_string(),
+            store_id: "4E27CEB263354EB7B1B33CEA8F7884D8".to_string(),
             purchase_order_id: Some("sync_test_purchase_order_1".to_string()),
             inbound_shipment_id: Some("12e889c0f0d211eb8dddb54df6d741bc".to_string()),
             goods_received_number: 1,
@@ -99,8 +99,8 @@ pub(crate) fn test_pull_upsert_record_2() -> TestSyncIncomingRecord {
         TABLE_NAME,
         GOODS_RECEIVED_2,
         GoodsReceivedRow {
-            id: "3486239A597646B2B7259D91A24988E9".to_owned(),
-            store_id: "4E27CEB263354EB7B1B33CEA8F7884D8".to_owned(),
+            id: "3486239A597646B2B7259D91A24988E9".to_string(),
+            store_id: "4E27CEB263354EB7B1B33CEA8F7884D8".to_string(),
             purchase_order_id: None,
             inbound_shipment_id: None,
             goods_received_number: 2,

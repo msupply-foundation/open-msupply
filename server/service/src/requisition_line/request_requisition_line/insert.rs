@@ -137,7 +137,7 @@ fn generate(
     }: InsertRequestRequisitionLine,
 ) -> Result<RequisitionLineRow, OutError> {
     let mut requisition_line =
-        generate_requisition_lines(ctx, store_id, requisition_row, vec![item_id])?
+        generate_requisition_lines(ctx, store_id, requisition_row, vec![item_id], None)?
             .pop()
             .ok_or(OutError::CannotFindItemStatusForRequisitionLine)?;
 
@@ -176,7 +176,6 @@ mod test {
         test_db::{setup_all, setup_all_with_data},
         RequisitionLineRow, RequisitionLineRowRepository,
     };
-   
 
     use crate::{
         requisition_line::request_requisition_line::{
@@ -353,8 +352,9 @@ mod test {
             RequisitionLineRow {
                 available_stock_on_hand: test_item_stats::item_2_soh(),
                 average_monthly_consumption: test_item_stats::item2_amc_3_months(),
-                suggested_quantity: test_item_stats::item2_amc_3_months() * 10.0
-                    - test_item_stats::item_2_soh(),
+                suggested_quantity: (test_item_stats::item2_amc_3_months() * 10.0
+                    - test_item_stats::item_2_soh())
+                .ceil(),
                 ..line.clone()
             }
         );

@@ -27,6 +27,7 @@ export enum ColumnType {
   Date = 'date',
   Comment = 'comment',
   Boolean = 'boolean',
+  Percentage = 'percentage',
 }
 
 export const useGetColumnTypeDefaults = () => {
@@ -49,6 +50,27 @@ export const useGetColumnTypeDefaults = () => {
           },
           align: 'right',
           filterVariant: 'date-range',
+          muiFilterDatePickerProps: ({ column, rangeFilterIndex }) => {
+            const [start, end] =
+              (column.getFilterValue() as [
+                Date | undefined,
+                Date | undefined,
+              ]) ?? [];
+            // Enforces date range validity, e.g. end date can't be before start
+            // date
+            switch (rangeFilterIndex) {
+              case 0:
+                return {
+                  maxDate: end ? new Date(end) : undefined,
+                };
+              case 1:
+                return {
+                  minDate: start ? new Date(start) : undefined,
+                };
+              default:
+                return {};
+            }
+          },
         };
 
       case ColumnType.Number:
@@ -105,6 +127,22 @@ export const useGetColumnTypeDefaults = () => {
             return value ? (
               <CircleIcon sx={{ transform: 'scale(0.5)' }} />
             ) : null;
+          },
+        };
+      
+      case ColumnType.Percentage:
+        return {
+          align: 'right',
+          size: 130,
+          Cell: ({ cell }: { cell: MRT_Cell<T> }) => {
+            const value = cell.getValue();
+            return <>
+              <NumericTextDisplay
+                value={typeof value === 'number' ? value : undefined}
+                defaultValue={UNDEFINED_STRING_VALUE}
+              />
+              %
+            </>;
           },
         };
 

@@ -184,7 +184,7 @@ mod test {
 
     fn consumption_history_options() -> ConsumptionHistoryOptions {
         ConsumptionHistoryOptions {
-            amc_lookback_months: 3,
+            amc_lookback_months: 3.0,
             number_of_data_points: 3,
         }
     }
@@ -447,7 +447,7 @@ mod test {
                 &context,
                 &requisition_line().id,
                 ConsumptionHistoryOptions {
-                    amc_lookback_months: 5,
+                    amc_lookback_months: 5.0,
                     number_of_data_points: 3,
                 },
                 StockEvolutionOptions::default(),

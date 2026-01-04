@@ -6,28 +6,18 @@ import {
   useItemLedger,
 } from '@openmsupply-client/system';
 import {
-  BasicSpinner,
-  FilterDefinition,
-  FilterMenu,
-  GroupFilterDefinition,
-  NothingHere,
-} from '@common/components';
-import {
-  DataTable,
-  TableProvider,
-  useColumns,
-  createTableStore,
-  Box,
+  MaterialTable,
+  ColumnDef,
+  ColumnType,
+  usePaginatedMaterialTable,
   useTranslation,
   useUrlQueryParams,
   useFormatDateTime,
-  ColumnFormat,
-  CurrencyCell,
-  InvoiceNodeType,
   InvoiceNodeStatus,
-  NumberCell,
+  InvoiceNodeType,
+  NothingHere,
 } from '@openmsupply-client/common';
-import { getStatusTranslation } from '@openmsupply-client/invoices/src/utils';
+import { getInvoiceStatusTranslator } from '@openmsupply-client/invoices/';
 
 interface ItemLedgerTableProps {
   itemLedgers: {
@@ -36,153 +26,133 @@ interface ItemLedgerTableProps {
   };
   isLoading: boolean;
   onRowClick: (ledger: ItemLedgerFragment) => void;
-  queryParams: {
-    page: number;
-    first: number;
-    offset: number;
-  };
-  updateSortQuery: (sortBy: string, dir: 'asc' | 'desc') => void;
-  updatePaginationQuery: (page: number) => void;
 }
 
 const ItemLedgerTable = ({
   onRowClick,
   itemLedgers: { ledgers, totalCount },
   isLoading,
-  queryParams: { page, first, offset },
-  updateSortQuery,
-  updatePaginationQuery,
 }: ItemLedgerTableProps) => {
   const t = useTranslation();
   const { localisedTime } = useFormatDateTime();
-  const pagination = {
-    page,
-    first,
-    offset,
-  };
 
-  const columns = useColumns<ItemLedgerFragment>(
-    [
+  const columns = React.useMemo(
+    (): ColumnDef<ItemLedgerFragment>[] => [
       {
-        key: 'type',
-        label: 'label.type',
-        accessor: ({ rowData }) =>
-          t(getInvoiceLocalisationKey(rowData.invoiceType)),
-        sortable: false,
+        accessorKey: 'invoiceType',
+        header: t('label.type'),
+        Cell: ({ row }) =>
+          t(getInvoiceLocalisationKey(row.original.invoiceType)),
+        pin: 'left',
+        enableColumnFilter: true,
+        filterVariant: 'select',
+        filterSelectOptions: Object.values(InvoiceNodeType).map(type => ({
+          value: type,
+          label: t(getInvoiceLocalisationKey(type)),
+        })),
       },
       {
-        key: 'invoiceNumber',
-        label: 'label.invoice-number',
-        sortable: false,
+        accessorKey: 'invoiceNumber',
+        header: t('label.invoice-number'),
+        columnType: ColumnType.Number,
+        size: 80,
       },
       {
-        key: 'datetime',
-        label: 'label.date',
-        format: ColumnFormat.Date,
-        sortable: false,
+        accessorKey: 'datetime',
+        header: t('label.date'),
+        columnType: ColumnType.Date,
+        size: 100,
+        enableColumnFilter: true,
       },
       {
-        key: 'time',
-        label: 'label.time',
-        accessor: ({ rowData }) => localisedTime(rowData.datetime),
-        sortable: false,
+        id: 'time',
+        header: t('label.time'),
+        accessorFn: row => localisedTime(row.datetime),
+        size: 80,
       },
       {
-        key: 'name',
-        label: 'label.name',
-        sortable: false,
-        accessor: ({ rowData }) => getNameValue(t, rowData.name),
+        id: 'name',
+        header: t('label.name'),
+        accessorFn: row => getNameValue(t, row.name),
       },
       {
-        key: 'status',
-        label: 'label.status',
-        sortable: false,
-        accessor: ({ rowData }) =>
-          t(getStatusTranslation(rowData.invoiceStatus)),
+        id: 'invoiceStatus',
+        header: t('label.status'),
+        accessorFn: row => getInvoiceStatusTranslator(t)(row.invoiceStatus),
+        filterVariant: 'select',
+        filterSelectOptions: Object.values(InvoiceNodeStatus).map(status => ({
+          value: status,
+          label: getInvoiceStatusTranslator(t)(status),
+        })),
+        enableColumnFilter: true,
       },
       {
-        key: 'expiryDate',
-        label: 'label.expiry',
-        format: ColumnFormat.Date,
-        sortable: false,
+        accessorKey: 'expiryDate',
+        header: t('label.expiry'),
+        columnType: ColumnType.Date,
+        size: 100,
       },
       {
-        key: 'batch',
-        label: 'label.batch',
-        sortable: false,
+        accessorKey: 'batch',
+        header: t('label.batch'),
+        size: 120,
       },
       {
-        key: 'packSize',
-        label: 'label.pack-size',
-        sortable: false,
+        accessorKey: 'packSize',
+        header: t('label.pack-size'),
+        columnType: ColumnType.Number,
+        size: 80,
       },
       {
-        key: 'numberOfPacks',
-        sortable: false,
-        label: 'label.num-packs',
-        Cell: NumberCell,
+        accessorKey: 'numberOfPacks',
+        header: t('label.num-packs'),
+        columnType: ColumnType.Number,
       },
       {
-        key: 'movementInUnits',
-        label: 'label.change',
-        sortable: false,
-        description: 'description.unit-quantity',
-        Cell: NumberCell,
-      },
-
-      {
-        key: 'balance',
-        label: 'label.balance',
-        sortable: false,
-        Cell: NumberCell,
+        accessorKey: 'movementInUnits',
+        header: t('label.change'),
+        columnType: ColumnType.Number,
       },
       {
-        key: 'costPricePerPack',
-        label: 'label.pack-cost-price',
-        sortable: false,
-        accessor: ({ rowData }) => rowData.costPricePerPack,
-        Cell: CurrencyCell,
+        accessorKey: 'balance',
+        header: t('label.balance'),
+        columnType: ColumnType.Number,
       },
       {
-        key: 'sellPricePerPack',
-        label: 'label.pack-sell-price',
-        sortable: false,
-        accessor: ({ rowData }) => rowData.sellPricePerPack,
-        Cell: CurrencyCell,
+        accessorKey: 'costPricePerPack',
+        header: t('label.pack-cost-price'),
+        columnType: ColumnType.Currency,
       },
       {
-        key: 'foreignCurrencyPriceBeforeTax',
-        label: 'label.total-before-tax',
-        sortable: false,
-        accessor: ({ rowData }) => rowData.totalBeforeTax,
-        Cell: CurrencyCell,
+        accessorKey: 'sellPricePerPack',
+        header: t('label.pack-sell-price'),
+        columnType: ColumnType.Currency,
       },
       {
-        key: 'reason',
-        label: 'label.reason',
-        sortable: false,
+        accessorKey: 'totalBeforeTax',
+        header: t('label.total-before-tax'),
+        columnType: ColumnType.Currency,
+      },
+      {
+        accessorKey: 'reason',
+        header: t('label.reason'),
       },
     ],
-    {
-      onChangeSortBy: updateSortQuery,
-    },
-    [updateSortQuery]
+    [localisedTime]
   );
 
-  if (isLoading) return <BasicSpinner />;
+  const { table } = usePaginatedMaterialTable<ItemLedgerFragment>({
+    tableId: 'item-ledger-table',
+    data: ledgers,
+    columns,
+    isLoading,
+    totalCount,
+    onRowClick: row => onRowClick(row),
+    noDataElement: <NothingHere body={t('messages.no-item-ledger')} />,
+    enableRowSelection: false,
+  });
 
-  return (
-    <DataTable
-      id="item-ledger-table"
-      data={ledgers}
-      columns={columns}
-      pagination={{ ...pagination, total: totalCount }}
-      onChangePage={updatePaginationQuery}
-      isLoading={isLoading}
-      onRowClick={onRowClick}
-      noDataElement={<NothingHere body={t('messages.no-item-ledger')} />}
-    />
-  );
+  return <MaterialTable table={table} />;
 };
 
 export const ItemLedgerTab = ({
@@ -192,11 +162,8 @@ export const ItemLedgerTab = ({
   itemId: string;
   onRowClick: (ledger: ItemLedgerFragment) => void;
 }) => {
-  const t = useTranslation();
   const {
-    updateSortQuery,
-    updatePaginationQuery,
-    queryParams: { page, first, offset, filterBy },
+    queryParams: { first, offset, filterBy },
   } = useUrlQueryParams({
     filters: [
       { key: 'datetime', condition: 'between' },
@@ -204,86 +171,17 @@ export const ItemLedgerTab = ({
       { key: 'invoiceStatus', condition: 'equalTo' },
     ],
   });
-  const { data, isLoading } = useItemLedger(itemId, {
+  const { data, isFetching } = useItemLedger(itemId, {
     first,
     offset,
     filterBy,
   });
 
-  const filters: (FilterDefinition | GroupFilterDefinition)[] = [
-    {
-      type: 'group',
-      name: t('label.datetime'),
-      elements: [
-        {
-          type: 'dateTime',
-          name: t('label.from-datetime'),
-          urlParameter: 'datetime',
-          range: 'from',
-          isDefault: true,
-        },
-        {
-          type: 'dateTime',
-          name: t('label.to-datetime'),
-          urlParameter: 'datetime',
-          range: 'to',
-          isDefault: true,
-        },
-      ],
-    },
-    {
-      type: 'enum',
-      name: t('label.type'),
-      urlParameter: 'invoiceType',
-      options: [
-        ...Object.values(InvoiceNodeType).map(type => ({
-          label: t(getInvoiceLocalisationKey(type)),
-          value: type,
-        })),
-      ],
-    },
-    {
-      type: 'enum',
-      name: t('label.status'),
-      urlParameter: 'invoiceStatus',
-      options: [
-        ...Object.values(InvoiceNodeStatus)
-          .filter(
-            status =>
-              status !== InvoiceNodeStatus.New &&
-              status !== InvoiceNodeStatus.Allocated
-          )
-          .map(status => ({
-            label: t(getStatusTranslation(status)),
-            value: status,
-          })),
-      ],
-    },
-  ];
-
   return (
-    <Box display="flex" flexDirection="column" flex={1} mt={1}>
-      <Box display="flex" ml={2} mb={1}>
-        <FilterMenu filters={filters} />
-      </Box>
-      <Box
-        display="flex"
-        flex={1}
-        sx={{
-          boxShadow: theme => theme.shadows[4],
-        }}
-      >
-        <TableProvider createStore={createTableStore}>
-          <ItemLedgerTable
-            itemLedgers={data ?? { ledgers: [], totalCount: 0 }}
-            isLoading={isLoading}
-            onRowClick={onRowClick}
-            queryParams={{ page, first, offset }}
-            updateSortQuery={updateSortQuery}
-            updatePaginationQuery={updatePaginationQuery}
-          />
-        </TableProvider>
-      </Box>
-    </Box>
+    <ItemLedgerTable
+      itemLedgers={data ?? { ledgers: [], totalCount: 0 }}
+      isLoading={isFetching}
+      onRowClick={onRowClick}
+    />
   );
 };

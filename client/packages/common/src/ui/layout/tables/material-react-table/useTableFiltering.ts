@@ -27,7 +27,7 @@ export const useTableFiltering = <T extends MRT_RowData>(
   ) => void;
 } => {
   const { urlQuery, updateQuery } = useUrlQuery();
-  const { customDate, urlQueryDateTime } = useFormatDateTime();
+  const { customDate, urlQueryDateTime, urlQueryDate } = useFormatDateTime();
 
   const filterState = useMemo(
     () => getFilterState(urlQuery, columns),
@@ -37,32 +37,43 @@ export const useTableFiltering = <T extends MRT_RowData>(
   const filterUpdaters = useMemo(() => {
     const filterUpdaters: Record<string, (value: any) => void> = {};
 
-    columns.forEach(({ filterKey, id, accessorKey, filterVariant }) => {
-      const key = (filterKey || id || accessorKey) as string;
+    columns.forEach(
+      ({
+        filterKey,
+        id,
+        accessorKey,
+        filterVariant,
+        dateFilterFormat = 'date-time',
+      }) => {
+        const key = (filterKey || id || accessorKey) as string;
 
-      switch (filterVariant) {
-        case 'date-range':
-          filterUpdaters[key] = ([date1, date2]: [Date | '', Date | '']) => {
-            updateQuery({
-              [key]: {
-                from: date1 ? customDate(date1, urlQueryDateTime) : '',
-                to: date2 ? customDate(date2, urlQueryDateTime) : '',
-              },
-            });
-          };
-          break;
+        const format =
+          dateFilterFormat === 'date-time' ? urlQueryDateTime : urlQueryDate;
 
-        case 'select':
-        case 'text':
-        case undefined: // default to text
-          filterUpdaters[key] = (value: string) => {
-            updateQuery({ [key]: value });
-          };
-          break;
+        switch (filterVariant) {
+          case 'date-range':
+            filterUpdaters[key] = ([date1, date2]: [Date | '', Date | '']) => {
+              updateQuery({
+                [key]: {
+                  from: date1 ? customDate(date1, format) : '',
+                  to: date2 ? customDate(date2, format) : '',
+                },
+              });
+            };
+            break;
 
-        // TODO: other filter types, number
+          case 'select':
+          case 'text':
+          case undefined: // default to text
+            filterUpdaters[key] = (value: string) => {
+              updateQuery({ [key]: value });
+            };
+            break;
+
+          // TODO: other filter types, number
+        }
       }
-    });
+    );
 
     return filterUpdaters;
   }, [columns]);
@@ -111,7 +122,7 @@ const getFilterState = <T extends MRT_RowData>(
   return (
     Object.entries(urlQuery)
       // Ignore sort params from URL
-      .filter(([id]) => id !== 'sort' && id !== 'dir')
+      .filter(([id]) => id !== 'sort' && id !== 'dir' && id !== 'tab')
       .map(([urlKey, val]) => {
         const column = columns.find(col => col.filterKey === urlKey);
         const id = column?.id || column?.accessorKey || urlKey;

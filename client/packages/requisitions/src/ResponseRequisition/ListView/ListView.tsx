@@ -1,20 +1,16 @@
-import React, { FC, useEffect } from 'react';
+import React, { useMemo } from 'react';
 import {
   useNavigate,
-  DataTable,
-  useColumns,
-  TableProvider,
-  createTableStore,
-  getNameAndColorColumn,
-  useTableStore,
   RequisitionNodeStatus,
   useTranslation,
   NothingHere,
   useUrlQueryParams,
-  ColumnDescription,
   useToggle,
-  GenericColumnKey,
-  getCommentPopoverColumn,
+  ColumnDef,
+  NameAndColorSetterCell,
+  usePaginatedMaterialTable,
+  MaterialTable,
+  ColumnType,
 } from '@openmsupply-client/common';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
@@ -23,25 +19,16 @@ import {
   getRequisitionTranslator,
   isResponseDisabled,
 } from '../../utils';
-import { useResponse, ResponseRowFragment } from '../api';
+import { useResponse, ResponseRowFragment, ResponseFragment } from '../api';
 import { Footer } from './Footer';
 
-const useDisableResponseRows = (rows?: ResponseRowFragment[]) => {
-  const { setDisabledRows } = useTableStore();
-  useEffect(() => {
-    const disabledRows = rows?.filter(isResponseDisabled).map(({ id }) => id);
-    if (disabledRows) setDisabledRows(disabledRows);
-  }, [rows]);
-};
-
-export const ResponseRequisitionListView: FC = () => {
+export const ListView = () => {
   const t = useTranslation();
   const navigate = useNavigate();
-  const modalController = useToggle();
+  const requisitionModalController = useToggle();
+  const createOrderModalController = useToggle();
   const { mutate: onUpdate } = useResponse.document.update();
   const {
-    updateSortQuery,
-    updatePaginationQuery,
     filter,
     queryParams: { sortBy, page, first, offset },
   } = useUrlQueryParams({
@@ -66,119 +53,130 @@ export const ResponseRequisitionListView: FC = () => {
       },
     ],
   });
-  const pagination = { page, first, offset };
   const queryParams = { ...filter, sortBy, page, first, offset };
-  const { data, isError, isLoading } = useResponse.document.list(queryParams);
+  const { data, isError, isFetching } = useResponse.document.list(queryParams);
   const { authoriseResponseRequisitions } = useResponse.utils.preferences();
-  useDisableResponseRows(data?.nodes);
   const program =
     data?.nodes.some(row => row.programName) ||
     data?.nodes.some(row => row.orderType) ||
     data?.nodes.some(row => row.period);
 
-  const columnDefinitions: ColumnDescription<ResponseRowFragment>[] = [
-    GenericColumnKey.Selection,
-    [
-      getNameAndColorColumn(),
-      { setter: ({ id, colour }) => onUpdate({ id, colour }) },
-    ],
-    {
-      key: 'requisitionNumber',
-      label: 'label.number',
-      width: 100,
-    },
-    ['createdDatetime', { width: 150 }],
-    [
-      'status',
+  const columns = useMemo(
+    (): ColumnDef<ResponseRowFragment>[] => [
       {
-        formatter: status =>
-          getRequisitionTranslator(t)(status as RequisitionNodeStatus),
-        width: 100,
+        accessorKey: 'otherPartyName',
+        header: t('label.name'),
+        enableSorting: true,
+        enableColumnFilter: true,
+        size: 250,
+        Cell: ({ row }) => (
+          <NameAndColorSetterCell
+            row={row.original}
+            onColorChange={onUpdate}
+            getIsDisabled={isResponseDisabled}
+          />
+        ),
+      },
+      {
+        accessorKey: 'requisitionNumber',
+        header: t('label.number'),
+        enableSorting: true,
+        columnType: ColumnType.Number,
+      },
+      {
+        accessorKey: 'createdDatetime',
+        header: t('label.created'),
+        enableSorting: true,
+        columnType: ColumnType.Date,
+      },
+      {
+        id: 'status',
+        header: t('label.status'),
+        enableSorting: true,
+        enableColumnFilter: true,
+        accessorFn: row => getRequisitionTranslator(t)(row.status),
+        filterVariant: 'select',
+        filterSelectOptions: [
+          { label: t('label.draft'), value: RequisitionNodeStatus.Draft },
+          { label: t('label.sent'), value: RequisitionNodeStatus.Sent },
+          {
+            label: t('label.finalised'),
+            value: RequisitionNodeStatus.Finalised,
+          },
+        ],
+      },
+      {
+        id: 'numberOfShipments',
+        header: t('label.shipments'),
+        description: t('description.number-of-shipments'),
+        accessorFn: rowData => rowData?.shipments?.totalCount ?? 0,
+        columnType: ColumnType.Number,
+      },
+      {
+        accessorKey: 'comment',
+        header: t('label.comment'),
+        columnType: ColumnType.Comment,
+      },
+      {
+        accessorKey: 'programName',
+        header: t('label.program'),
+        description: t('description.program'),
+        enableSorting: true,
+        includeColumn: !!program,
+      },
+      {
+        accessorKey: 'orderType',
+        header: t('label.order-type'),
+        enableSorting: true,
+        includeColumn: !!program,
+      },
+      {
+        id: 'period',
+        header: t('label.period'),
+        accessorFn: rowData => rowData.period?.name ?? '',
+        enableSorting: true,
+        includeColumn: !!program,
+      },
+      {
+        id: 'approvalStatus',
+        header: t('label.auth-status'),
+        size: 150,
+        accessorFn: rowData => t(getApprovalStatusKey(rowData.approvalStatus)),
+        includeColumn: authoriseResponseRequisitions,
       },
     ],
-    {
-      key: 'numberOfShipments',
-      label: 'label.shipments',
-      description: 'description.number-of-shipments',
-      accessor: ({ rowData }) => rowData?.shipments?.totalCount ?? 0,
-      sortable: false,
-    },
-    getCommentPopoverColumn(),
-  ];
-
-  if (program) {
-    columnDefinitions.push(
-      {
-        key: 'programName',
-        accessor: ({ rowData }) => rowData.programName,
-        label: 'label.program',
-        description: 'description.program',
-        sortable: true,
-      },
-      {
-        key: 'orderType',
-        accessor: ({ rowData }) => rowData.orderType,
-        label: 'label.order-type',
-        sortable: true,
-      },
-      {
-        key: 'period',
-        accessor: ({ rowData }) => rowData.period?.name ?? '',
-        label: 'label.period',
-        sortable: true,
-      }
-    );
-  }
-
-  if (authoriseResponseRequisitions) {
-    columnDefinitions.push({
-      key: 'approvalStatus',
-      label: 'label.auth-status',
-      minWidth: 150,
-      sortable: false,
-      accessor: ({ rowData }) =>
-        t(getApprovalStatusKey(rowData.approvalStatus)),
-    });
-  }
-
-  const columns = useColumns<ResponseRowFragment>(
-    columnDefinitions,
-    { onChangeSortBy: updateSortQuery, sortBy },
-    [sortBy]
+    []
   );
+
+  const { table, selectedRows } = usePaginatedMaterialTable({
+    tableId: 'internal-order-list',
+    columns,
+    data: data?.nodes,
+    totalCount: data?.totalCount ?? 0,
+    isError,
+    isLoading: isFetching,
+    onRowClick: row => navigate(String(row.id)),
+    getIsRestrictedRow: isResponseDisabled,
+    noDataElement: (
+      <NothingHere
+        body={t('error.no-requisitions')}
+        onCreate={requisitionModalController.toggleOn}
+      />
+    ),
+  });
 
   return (
     <>
       <Toolbar filter={filter} />
-      <AppBarButtons modalController={modalController} />
-
-      <DataTable
-        id="requisition-list"
-        pagination={{ ...pagination, total: data?.totalCount ?? 0 }}
-        onChangePage={updatePaginationQuery}
-        columns={columns}
-        data={data?.nodes}
-        onRowClick={row => {
-          navigate(String(row.id));
-        }}
-        isError={isError}
-        isLoading={isLoading}
-        noDataElement={
-          <NothingHere
-            body={t('error.no-requisitions')}
-            onCreate={modalController.toggleOn}
-          />
-        }
+      <AppBarButtons
+        requisitionModalController={requisitionModalController}
+        createOrderModalController={createOrderModalController}
       />
-      <Footer />
+      <MaterialTable table={table} />
+      <Footer
+        selectedRows={selectedRows as ResponseFragment[]}
+        resetRowSelection={table.resetRowSelection}
+      />
     </>
-  );
-};
-
-export const ListView: FC = () => {
-  return (
-    <TableProvider createStore={createTableStore}>
-      <ResponseRequisitionListView />
-    </TableProvider>
   );
 };

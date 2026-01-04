@@ -34,6 +34,8 @@ pub enum ContextType {
     InternalOrder,
     PurchaseOrder,
     GoodsReceived,
+    SupplierReturn,
+    CustomerReturn,
 }
 
 table! {
@@ -163,7 +165,7 @@ impl Delete for ReportRowDelete {
 impl Upsert for ReportRow {
     fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
         let change_log = ReportRowRepository::new(con).upsert_one(self)?;
-        Ok(Some(change_log)) // Table not in Changelog
+        Ok(Some(change_log))
     }
 
     // Test only

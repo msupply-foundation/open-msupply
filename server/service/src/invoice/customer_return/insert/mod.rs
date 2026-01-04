@@ -115,7 +115,7 @@ pub fn insert_customer_return(
             activity_log_entry(
                 ctx,
                 ActivityLogType::InvoiceCreated,
-                Some(customer_return.id.to_owned()),
+                Some(customer_return.id.to_string()),
                 None,
                 None,
             )?;

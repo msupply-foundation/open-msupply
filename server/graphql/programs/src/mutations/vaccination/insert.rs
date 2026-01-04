@@ -57,6 +57,7 @@ impl From<InsertVaccinationInput> for InsertVaccination {
             item_id,
             stock_line_id,
             not_given_reason,
+            create_not_given_records_for_skipped_doses: false, // Default to false for API inputs
         }
     }
 }

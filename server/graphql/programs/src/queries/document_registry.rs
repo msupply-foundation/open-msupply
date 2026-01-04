@@ -113,6 +113,7 @@ impl DocumentRegistryFilterInput {
             document_type: document_type.map(EqualFilter::from),
             context_id: context_id.map(EqualFilter::from),
             category: r#type.map(|t| map_filter!(t, |c| DocumentRegistryCategory::from(c))),
+            name: None,
         }
     }
 }

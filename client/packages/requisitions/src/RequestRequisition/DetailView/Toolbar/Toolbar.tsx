@@ -10,8 +10,13 @@ import {
   Switch,
   Autocomplete,
   useConfirmationModal,
+  usePreferences,
+  NameNodeType,
 } from '@openmsupply-client/common';
-import { InternalSupplierSearchInput } from '@openmsupply-client/system';
+import {
+  CustomerSearchInput,
+  InternalSupplierSearchInput,
+} from '@openmsupply-client/system';
 import { useHideOverStocked, useRequest } from '../../api';
 
 const MONTHS = [1, 2, 3, 4, 5, 6];
@@ -27,12 +32,15 @@ export const Toolbar = () => {
     theirReference,
     update,
     otherParty,
+    destinationCustomer,
   } = useRequest.document.fields([
     'theirReference',
     'otherParty',
     'minMonthsOfStock',
     'maxMonthsOfStock',
+    'destinationCustomer',
   ]);
+  const { selectDestinationStoreForAnInternalOrder } = usePreferences();
 
   const getMinMOSConfirmation = useConfirmationModal({
     title: t('heading.are-you-sure'),
@@ -87,6 +95,27 @@ export const Toolbar = () => {
               </Tooltip>
             }
           />
+          {selectDestinationStoreForAnInternalOrder && (
+            <InputWithLabelRow
+              label={t('label.destination-customer')}
+              Input={
+                <CustomerSearchInput
+                  disabled={isDisabled}
+                  value={destinationCustomer ?? null}
+                  onChange={destinationCustomer =>
+                    update({
+                      destinationCustomer: destinationCustomer,
+                    })
+                  }
+                  clearable
+                  extraFilter={option => option.id !== otherParty?.id}
+                  filterBy={{
+                    type: { equalTo: NameNodeType.Store },
+                  }}
+                />
+              }
+            />
+          )}
           {isProgram && (
             <Alert severity="info" sx={{ maxWidth: 1000 }}>
               {t('info.cannot-edit-program-requisition')}

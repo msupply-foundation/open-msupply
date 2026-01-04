@@ -21,10 +21,13 @@ pub enum PrefKey {
     PreventTransfersMonthsBeforeInitialisation,
     ShowContactTracing,
     SyncRecordsDisplayThreshold,
-    UseDaysInMonth,
+    WarningForExcessRequest,
     AdjustForNumberOfDaysOutOfStock,
     DaysInMonth,
-    ExcludeTransfers,
+    ExpiredStockPreventIssue,
+    ExpiredStockIssueThreshold,
+    ItemMarginOverridesSupplierMargin,
+    IsGaps,
 
     // Store preferences
     ManageVaccinesInDoses,
@@ -34,12 +37,20 @@ pub enum PrefKey {
     SortByVvmStatusThenExpiry,
     UseSimplifiedMobileUi,
     DisableManualReturns,
+    RequisitionAutoFinalise,
+    InboundShipmentAutoVerify,
     CanCreateInternalOrderFromARequisition,
     SelectDestinationStoreForAnInternalOrder,
     NumberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts,
     NumberOfMonthsThresholdToShowLowStockAlertsForProducts,
+    NumberOfMonthsThresholdToShowOverStockAlertsForProducts,
     FirstThresholdForExpiringItems,
     SecondThresholdForExpiringItems,
+    SkipIntermediateStatusesInOutbound,
+    StoreCustomColour,
+    WarnWhenMissingRecentStocktake,
+    InvoiceStatusOptions,
+    ShowIndicativePriceInRequisitions,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -57,7 +68,8 @@ pub enum PreferenceValueType {
     MultiChoice,
     // specific type to CustomTranslations preference
     CustomTranslations,
-    // String,
+    WarnWhenMissingRecentStocktakeData,
+    String,
     // MultilineString,
     // Add scalar or custom value types here - mapped to frontend renderers
 }

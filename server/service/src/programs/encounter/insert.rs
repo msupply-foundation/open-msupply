@@ -163,7 +163,7 @@ fn validate_encounter_registry(
     let encounter_registry = DocumentRegistryRepository::new(&ctx.connection)
         .query_by_filter(
             DocumentRegistryFilter::new()
-                .document_type(EqualFilter::equal_to(encounter_document_type)),
+                .document_type(EqualFilter::equal_to(encounter_document_type.to_owned())),
         )?
         .pop();
     Ok(encounter_registry)
@@ -177,8 +177,8 @@ fn validate_patient_program_exists(
     Ok(ProgramEnrolmentRepository::new(&ctx.connection)
         .query_by_filter(
             ProgramEnrolmentFilter::new()
-                .patient_id(EqualFilter::equal_to(patient_id))
-                .context_id(EqualFilter::equal_to(&encounter_registry.context_id)),
+                .patient_id(EqualFilter::equal_to(patient_id.to_string()))
+                .context_id(EqualFilter::equal_to(encounter_registry.context_id.to_string())),
         )?
         .pop())
 }
@@ -235,9 +235,7 @@ mod test {
         EncounterFilter, EncounterRepository, EqualFilter, FormSchemaRowRepository,
     };
     use serde_json::json;
-    use util::{
-        constants::{PATIENT_CONTEXT_ID, PATIENT_TYPE},
-    };
+    use util::constants::{PATIENT_CONTEXT_ID, PATIENT_TYPE};
 
     use crate::{
         programs::{
@@ -263,7 +261,7 @@ mod test {
                 .names()
                 .stores()
                 .name_store_joins()
-                .full_master_list()
+                .full_master_lists()
                 .contexts()
                 .programs(),
         )
@@ -483,7 +481,7 @@ mod test {
         // check that encounter table has been updated
         let row = EncounterRepository::new(&ctx.connection)
             .query_by_filter(
-                EncounterFilter::new().document_name(EqualFilter::equal_to(&found.name)),
+                EncounterFilter::new().document_name(EqualFilter::equal_to(found.name.to_owned())),
             )
             .unwrap()
             .pop();

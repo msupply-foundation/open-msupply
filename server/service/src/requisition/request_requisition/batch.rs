@@ -73,7 +73,7 @@ pub fn batch_request_requisition(
             let mutations_processor = BatchMutationsProcessor::new(ctx);
 
             let (has_errors, result) = mutations_processor
-                .do_mutations_with_user_id(input.insert_requisition, insert_request_requisition);
+                .do_mutations(input.insert_requisition, insert_request_requisition);
             results.insert_requisition = result;
             if has_errors && !continue_on_error {
                 return Err(WithDBError::err(results));

@@ -88,6 +88,7 @@ use repository::{
     PaginationOption, RepositoryError, StorageConnection, StorageConnectionManager, Store,
     StoreFilter, StoreSort,
 };
+use util::constants::SYSTEM_USER_ID;
 
 pub struct ServiceProvider {
     pub connection_manager: StorageConnectionManager,
@@ -326,6 +327,19 @@ impl ServiceProvider {
             processors_trigger: self.processors_trigger.clone(),
             user_id: "".to_string(),
             store_id: "".to_string(),
+            frontend_plugins_cache: self.frontend_plugins_cache.clone(),
+        })
+    }
+
+    pub fn system_context(
+        &self,
+        store_id: Option<String>,
+    ) -> Result<ServiceContext, RepositoryError> {
+        Ok(ServiceContext {
+            connection: self.connection()?,
+            processors_trigger: self.processors_trigger.clone(),
+            user_id: SYSTEM_USER_ID.to_string(),
+            store_id: store_id.unwrap_or("".to_string()),
             frontend_plugins_cache: self.frontend_plugins_cache.clone(),
         })
     }

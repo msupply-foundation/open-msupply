@@ -1,4 +1,4 @@
-use crate::activity_log::{activity_log_entry, log_type_from_invoice_status};
+use crate::activity_log::{activity_log_entry_with_store, log_type_from_invoice_status};
 use crate::invoice_line::ShipmentTaxUpdate;
 use crate::{invoice::query::get_invoice, service_provider::ServiceContext, WithDBError};
 use repository::vvm_status::vvm_status_log_row::VVMStatusLogRowRepository;
@@ -58,12 +58,13 @@ type OutError = UpdateInboundShipmentError;
 pub fn update_inbound_shipment(
     ctx: &ServiceContext,
     patch: UpdateInboundShipment,
+    store_id: Option<&str>,
 ) -> Result<Invoice, OutError> {
     let invoice = ctx
         .connection
         .transaction_sync(|connection| {
             let (invoice, other_party, status_changed) =
-                validate(connection, &ctx.store_id, &patch)?;
+                validate(connection, store_id.unwrap_or(&ctx.store_id), &patch)?;
             let GenerateResult {
                 batches_to_update,
                 update_invoice,
@@ -139,12 +140,13 @@ pub fn update_inbound_shipment(
             }
 
             if status_changed {
-                activity_log_entry(
+                activity_log_entry_with_store(
                     ctx,
                     log_type_from_invoice_status(&update_invoice.status, false),
-                    Some(update_invoice.id.to_owned()),
+                    Some(update_invoice.id.to_string()),
                     None,
                     None,
+                    store_id.map(|id| id.to_string()),
                 )?;
             }
 
@@ -889,8 +891,9 @@ mod test {
         )
         .unwrap();
 
-        let vvm_log_filter = VVMStatusLogFilter::new()
-            .invoice_line_id(EqualFilter::equal_to("invoice_line_with_vvm_status"));
+        let vvm_log_filter = VVMStatusLogFilter::new().invoice_line_id(EqualFilter::equal_to(
+            "invoice_line_with_vvm_status".to_string(),
+        ));
 
         let vvm_status_log = VVMStatusLogRepository::new(&connection)
             .query_by_filter(vvm_log_filter.clone())

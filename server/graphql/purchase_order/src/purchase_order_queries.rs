@@ -142,6 +142,7 @@ impl PurchaseOrderFilterInput {
                 .map(|t| map_filter!(t, |s| PurchaseOrderStatus::from(s))),
             supplier: self.supplier.map(StringFilter::from),
             store_id: self.store_id.map(EqualFilter::from),
+            created_datetime: self.created_datetime.map(DatetimeFilter::from),
             confirmed_datetime: self.confirmed_datetime.map(DatetimeFilter::from),
             requested_delivery_date: self.requested_delivery_date.map(DateFilter::from),
             sent_datetime: self.sent_datetime.map(DatetimeFilter::from),

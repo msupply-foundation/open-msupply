@@ -56,6 +56,8 @@ pub enum StockLineSortField {
 pub struct StockLineFilter {
     pub id: Option<EqualFilter<String>>,
     pub item_code_or_name: Option<StringFilter>,
+    pub code: Option<StringFilter>,
+    pub name: Option<StringFilter>,
     pub search: Option<StringFilter>,
     pub item_id: Option<EqualFilter<String>>,
     pub location_id: Option<EqualFilter<String>>,
@@ -201,10 +203,12 @@ impl<'a> StockLineRepository<'a> {
 
         if let Some(f) = filter {
             let StockLineFilter {
-                expiry_date,
                 id,
+                code,
+                name,
                 is_available,
                 item_code_or_name,
+                expiry_date,
                 search,
                 item_id,
                 location_id,
@@ -236,6 +240,8 @@ impl<'a> StockLineRepository<'a> {
             }
 
             apply_equal_filter!(query, id, stock_line::id);
+            apply_string_filter!(query, code, item::code);
+            apply_string_filter!(query, name, item::name);
             apply_equal_filter!(query, item_id, item::id);
             apply_equal_filter!(query, location_id, stock_line::location_id);
             apply_date_filter!(query, expiry_date, stock_line::expiry_date);

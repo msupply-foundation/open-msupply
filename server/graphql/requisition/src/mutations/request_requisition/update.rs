@@ -1,9 +1,10 @@
 use async_graphql::*;
 use chrono::NaiveDate;
 use graphql_core::{
+    generic_inputs::NullableUpdateInput,
     simple_generic_errors::{
-        CannotEditRequisition, OrderingTooManyItems, OtherPartyNotASupplier, OtherPartyNotVisible,
-        RecordNotFound,
+        CannotEditRequisition, OrderingTooManyItems, OtherPartyNotACustomer,
+        OtherPartyNotASupplier, OtherPartyNotVisible, RecordNotFound,
     },
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
@@ -16,6 +17,7 @@ use service::{
         UpdateRequestRequisition as ServiceInput, UpdateRequestRequisitionError as ServiceError,
         UpdateRequestRequisitionStatus,
     },
+    NullableUpdate,
 };
 
 use crate::mutations::response_requisition::update::RequisitionReasonsNotProvided;
@@ -32,6 +34,7 @@ pub struct UpdateInput {
     pub status: Option<UpdateRequestRequisitionStatusInput>,
     pub other_party_id: Option<String>,
     pub expected_delivery_date: Option<NaiveDate>,
+    pub original_customer_id: Option<NullableUpdateInput<String>>,
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
@@ -45,6 +48,7 @@ pub enum UpdateRequestRequisitionStatusInput {
 pub enum UpdateErrorInterface {
     OtherPartyNotVisible(OtherPartyNotVisible),
     OtherPartyNotASupplier(OtherPartyNotASupplier),
+    OtherPartyNotACustomer(OtherPartyNotACustomer),
     RecordNotFound(RecordNotFound),
     CannotEditRequisition(CannotEditRequisition),
     OrderingTooManyItems(OrderingTooManyItems),
@@ -116,6 +120,7 @@ impl UpdateInput {
             status,
             other_party_id,
             expected_delivery_date,
+            original_customer_id,
         } = self;
 
         ServiceInput {
@@ -128,6 +133,7 @@ impl UpdateInput {
             status: status.map(|status| status.to_domain()),
             other_party_id,
             expected_delivery_date,
+            original_customer_id: original_customer_id.map(|c| NullableUpdate { value: c.value }),
         }
     }
 }
@@ -137,7 +143,6 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
     let formatted_error = format!("{:#?}", error);
 
     let graphql_error = match error {
-        // Structured Errors
         ServiceError::RequisitionDoesNotExist => {
             return Ok(UpdateErrorInterface::RecordNotFound(RecordNotFound))
         }
@@ -166,14 +171,24 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
                 RequisitionReasonsNotProvided(lines),
             ))
         }
-        // Standard Graphql Errors
-        ServiceError::NotThisStoreRequisition | ServiceError::OrderTypeNotFound => {
-            BadUserInput(formatted_error)
+        ServiceError::OriginalCustomerNotACustomer => {
+            return Ok(UpdateErrorInterface::OtherPartyNotACustomer(
+                OtherPartyNotACustomer,
+            ))
         }
-        ServiceError::NotARequestRequisition => BadUserInput(formatted_error),
-        ServiceError::OtherPartyDoesNotExist => BadUserInput(formatted_error),
-        ServiceError::OtherPartyIsNotAStore => BadUserInput(formatted_error),
-        ServiceError::CannotEditProgramRequisitionInformation => BadUserInput(formatted_error),
+        ServiceError::OriginalCustomerNotVisible => {
+            return Ok(UpdateErrorInterface::OtherPartyNotVisible(
+                OtherPartyNotVisible,
+            ))
+        }
+        ServiceError::NotThisStoreRequisition
+        | ServiceError::OrderTypeNotFound
+        | ServiceError::NotARequestRequisition
+        | ServiceError::OtherPartyDoesNotExist
+        | ServiceError::OtherPartyIsNotAStore
+        | ServiceError::CannotEditProgramRequisitionInformation
+        | ServiceError::OriginalCustomerDoesNotExist
+        | ServiceError::OriginalCustomerIsNotAStore => BadUserInput(formatted_error),
         ServiceError::UpdatedRequisitionDoesNotExist => InternalError(formatted_error),
         ServiceError::DatabaseError(_) | ServiceError::PluginError(_) => {
             InternalError(formatted_error)
@@ -214,7 +229,6 @@ mod test {
         },
         service_provider::{ServiceContext, ServiceProvider},
     };
-    
 
     use crate::RequisitionMutations;
 
@@ -428,7 +442,8 @@ mod test {
                     min_months_of_stock: Some(2.0),
                     other_party_id: Some("other_party_id".to_string()),
                     status: Some(UpdateRequestRequisitionStatus::Sent),
-                    expected_delivery_date: Some(NaiveDate::from_ymd_opt(2022, 1, 3).unwrap())
+                    expected_delivery_date: Some(NaiveDate::from_ymd_opt(2022, 1, 3).unwrap()),
+                    original_customer_id: None,
                 }
             );
             Ok(Requisition {

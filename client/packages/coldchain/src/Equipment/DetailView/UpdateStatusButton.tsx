@@ -28,23 +28,24 @@ export const UpdateStatusButtonComponent = ({
 }: {
   assetId: string | undefined;
 }) => {
+  const t = useTranslation();
+  const { error, success, info } = useNotification();
+  const { userHasPermission } = useAuthContext();
   const onClose = () => {
     setDraft(getEmptyAssetLog(assetId ?? 'closed'));
   };
-  const t = useTranslation();
   const { Modal, hideDialog, showDialog } = useDialog({ onClose });
-  const { error, success, info } = useNotification();
-  const [draft, setDraft] = useState<Partial<Draft>>(getEmptyAssetLog(''));
   const { insertLog, invalidateQueries } = useAssets.log.insert();
-
-  const permission = UserPermission.AssetMutate;
-  const { userHasPermission } = useAuthContext();
+  const [draft, setDraft] = useState<Partial<Draft>>(getEmptyAssetLog(''));
   const isGaps = useIsGapsStoreOnly();
 
   const onUpdateStatus = () => {
-    if (userHasPermission(permission)) {
+    if (
+      userHasPermission(UserPermission.AssetMutate) ||
+      userHasPermission(UserPermission.AssetStatusMutate)
+    ) {
       showDialog();
-    } else info(t('error.no-asset-edit-permission'))();
+    } else info(t('error.no-asset-edit-status-permission'))();
   };
 
   const onOk = async () => {
@@ -101,7 +102,9 @@ export const UpdateStatusButtonComponent = ({
             }}
           />
         }
-        okButton={<DialogButton variant="ok" onClick={onOk} />}
+        okButton={
+          <DialogButton variant="ok" onClick={onOk} disabled={!draft.status} />
+        }
       >
         <DetailContainer paddingTop={1}>
           <Box

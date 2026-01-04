@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 import {
   NothingHere,
   useTranslation,
@@ -10,6 +10,8 @@ import {
   useToggle,
   UserPermission,
   useCallbackWithPermission,
+  BaseButton,
+  InlineSpinner,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { Box, Typography, Card, CardContent } from '@mui/material';
@@ -18,18 +20,27 @@ import { useAssets } from '../../Equipment/api';
 import { SimpleLabelDisplay } from '../Components/SimpleLabelDisplay';
 import { AddFromScannerButton } from '../../Equipment/ListView/AddFromScannerButton';
 import { CreateAssetModal } from '../../Equipment/ListView/CreateAssetModal';
-import { useIsGapsStoreOnly } from '@openmsupply-client/common';
 import { ImportFridgeTag } from '../../common/ImportFridgeTag';
 
-export const CardListView: FC = () => {
+export const CardListView = () => {
   const t = useTranslation();
   const navigate = useNavigate();
-  const isGaps = useIsGapsStoreOnly();
-  const { data, isError, isLoading } = useAssets.document.list();
   const modalController = useToggle();
   const equipmentRoute = RouteBuilder.create(AppRoute.Coldchain).addPart(
     AppRoute.Equipment
   );
+
+  const {
+    data,
+    isError,
+    isLoading,
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
+  } = useAssets.document.infiniteAssets({
+    rowsPerPage: 20,
+  });
+
   const onAdd = useCallbackWithPermission(
     UserPermission.AssetMutate,
     modalController.toggleOn,
@@ -47,6 +58,8 @@ export const CardListView: FC = () => {
       </Box>
     );
   }
+
+  const nodes = data?.pages?.flatMap(page => page.data?.nodes ?? []) ?? [];
 
   if (!data) {
     return <NothingHere body={t('error.no-items-to-display')} />;
@@ -69,13 +82,13 @@ export const CardListView: FC = () => {
         }}
       >
         <ButtonWithIcon
-          shouldShrink={!isGaps}
+          shouldShrink={true}
           label={t('button.new-asset')}
           onClick={onAdd}
           Icon={<PlusCircleIcon />}
         />
         <AddFromScannerButton />
-        <ImportFridgeTag shouldShrink={false} />
+        <ImportFridgeTag shouldShrink={true} />
       </Box>
       <Box
         sx={{
@@ -84,11 +97,10 @@ export const CardListView: FC = () => {
           alignItems: 'center',
           padding: '0px 0px',
           gap: 1,
-          overflow: 'auto',
-          overflowY: 'scroll',
+          overflowY: 'auto',
         }}
       >
-        {data.nodes.map(n => (
+        {nodes?.map(n => (
           <Card
             key={n.id}
             sx={{
@@ -122,6 +134,16 @@ export const CardListView: FC = () => {
             </Box>
           </Card>
         ))}
+        {hasNextPage && (
+          <BaseButton
+            onClick={() => fetchNextPage()}
+            disabled={isFetchingNextPage}
+            sx={{ my: 2 }}
+          >
+            {t('button.more')}
+          </BaseButton>
+        )}
+        {isFetchingNextPage && <InlineSpinner />}
       </Box>
       <CreateAssetModal
         isOpen={modalController.isOn}

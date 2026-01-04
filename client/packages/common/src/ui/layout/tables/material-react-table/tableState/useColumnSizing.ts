@@ -13,12 +13,17 @@ export const useColumnSizing = (tableId: string) => {
   const [state, setState] = useState<MRT_ColumnSizingState>(
     getSavedState(tableId).columnSizing ?? initial
   );
+  const [hasSavedState, setHasSavedState] = useState(
+    !!getSavedState(tableId).columnSizing
+  );
 
   const debouncedUpdateSavedState = useDebounceCallback(
     (newState: MRT_ColumnSizingState) => {
+      const savedColumnSizing = differentOrUndefined(newState, initial);
       updateSavedState(tableId, {
-        columnSizing: differentOrUndefined(newState, initial),
+        columnSizing: savedColumnSizing,
       });
+      if (savedColumnSizing) setHasSavedState(true);
     },
     [],
     500
@@ -35,11 +40,16 @@ export const useColumnSizing = (tableId: string) => {
             : updaterOrValue;
 
         debouncedUpdateSavedState(newColumnSizing);
-
         return newColumnSizing;
       }),
     []
   );
 
-  return { initial, state, update };
+  return {
+    initial,
+    state,
+    update,
+    hasSavedState,
+    resetHasSavedState: () => setHasSavedState(false),
+  };
 };

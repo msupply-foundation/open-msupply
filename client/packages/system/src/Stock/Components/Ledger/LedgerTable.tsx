@@ -1,41 +1,33 @@
-import React, { FC, useState } from 'react';
+import React from 'react';
 import {
   useTranslation,
-  TableProvider,
-  createTableStore,
-  DataTable,
-  SortBy,
+  useNonPaginatedMaterialTable,
+  MaterialTable,
+  NothingHere,
 } from '@openmsupply-client/common';
 import { LedgerRowFragment, StockLineRowFragment } from '../../api';
 import { useStockLedger } from '../../api/hooks/useStockLedger';
-import { ColumnKey, useLedgerColumns } from './useLedgerColumns';
+import { useLedgerColumns } from './useLedgerColumns';
 
 interface LedgerTableProps {
   stockLine: StockLineRowFragment;
 }
-export const LedgerTable: FC<LedgerTableProps> = ({ stockLine }) => {
+export const LedgerTable = ({ stockLine }: LedgerTableProps) => {
   const t = useTranslation();
 
-  const [sortBy, setSortBy] = useState<SortBy<LedgerRowFragment>>({
-    key: ColumnKey.DateTime,
-    direction: 'desc',
-  });
-  const { data, isLoading, isError } = useStockLedger(stockLine, sortBy);
-  const { columns } = useLedgerColumns(sortBy, (key, direction) => {
-    setSortBy({ key, direction });
+  const { data, isFetching, isError } = useStockLedger(stockLine);
+  const columns = useLedgerColumns();
+
+  const { table } = useNonPaginatedMaterialTable<LedgerRowFragment>({
+    tableId: 'stockline-ledger',
+    columns,
+    data: data?.nodes,
+    initialSort: { key: 'datetime', dir: 'desc' },
+    isError,
+    isLoading: isFetching,
+    enableRowSelection: false,
+    noDataElement: <NothingHere body={t('messages.no-ledger')} />,
   });
 
-  return (
-    <TableProvider createStore={createTableStore}>
-      <DataTable
-        id="stockline-ledger"
-        columns={columns}
-        data={data?.nodes}
-        isLoading={isLoading}
-        isError={isError}
-        noDataMessage={t('messages.no-ledger')}
-        overflowX="auto"
-      />
-    </TableProvider>
-  );
+  return <MaterialTable table={table} />;
 };

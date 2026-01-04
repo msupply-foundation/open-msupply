@@ -1,152 +1,115 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
-  CellProps,
-  ColumnAlign,
-  ColumnDescription,
-  ExpiryDateCell,
-  Formatter,
-  NumberCell,
-  NumberInputCell,
-  useColumns,
-  useIntlUtils,
-  usePreferences,
+  ColumnDef,
+  ColumnType,
   useTranslation,
-  VvmStatusCell,
+  Formatter,
+  usePreferences,
+  useIntlUtils,
 } from '@openmsupply-client/common';
-import { getPrescriptionLineDosesColumns } from './columnsDoses';
 import {
   DraftItem,
   DraftStockOutLineFragment,
   AllocateInType,
   packsToQuantity,
 } from '../../StockOut';
+import { NumberInputCell } from '@openmsupply-client/common/src/ui/layout/tables/material-react-table/components/NumberInputCell';
+import { ExpiryDateCell } from '@openmsupply-client/common/src/ui/layout/tables/material-react-table/components/ExpiryDateCell';
 
 export const usePrescriptionLineEditColumns = ({
   allocate,
   item,
   allocateIn,
+  getIsDisabled,
 }: {
   allocate: (key: string, value: number) => number;
   item: DraftItem | null;
   allocateIn: AllocateInType;
-  disabled?: boolean;
-}) => {
+  getIsDisabled: (row: DraftStockOutLineFragment) => boolean;
+}): ColumnDef<DraftStockOutLineFragment>[] => {
   const t = useTranslation();
   const { getPlural } = useIntlUtils();
 
   const unit = Formatter.sentenceCase(item?.unitName ?? t('label.unit'));
-  const pluralisedUnitName = getPlural(unit, 2);
-
   const { sortByVvmStatusThenExpiry, manageVvmStatusForStock } =
     usePreferences();
-
+  const hasVvmStatusesEnabled =
+    manageVvmStatusForStock && sortByVvmStatusThenExpiry;
+  const pluralisedUnitName = getPlural(unit, 2);
   const displayInDoses = allocateIn === AllocateInType.Doses;
 
-  const columnDefinitions: ColumnDescription<
-    // unitQuantity field added by UnitQuantity column setter
-    DraftStockOutLineFragment & { unitQuantity?: number }
-  >[] = [
-    [
-      'batch',
+  return useMemo((): ColumnDef<DraftStockOutLineFragment>[] => {
+    return [
       {
-        accessor: ({ rowData }) => rowData.batch,
+        accessorKey: 'batch',
+        header: t('label.batch'),
+        size: 100,
       },
-    ],
-    [
-      'expiryDate',
       {
+        accessorKey: 'expiryDate',
+        header: t('label.expiry'),
         Cell: ExpiryDateCell,
-        width: 100,
+        size: 100,
       },
-    ],
-  ];
-
-  // If we have use VVM status, we need to show the VVM status column
-  // TODO: But just for vaccines?
-  if (
-    (manageVvmStatusForStock || sortByVvmStatusThenExpiry) &&
-    item?.isVaccine
-  ) {
-    columnDefinitions.push({
-      key: 'vvmStatus',
-      label: 'label.vvm-status',
-      Cell: VvmStatusCell,
-      accessor: ({ rowData }) => rowData?.vvmStatus,
-      width: 85,
-    });
-  }
-
-  if (displayInDoses) {
-    columnDefinitions.push({
-      key: 'dosesPerUnit',
-      label: unit
-        ? t('label.doses-per-unit-name', {
-            unit,
-          })
-        : 'label.doses-per-unit',
-      width: 80,
-      align: ColumnAlign.Right,
-      accessor: ({ rowData }) => rowData.dosesPerUnit,
-    });
-  } else {
-    columnDefinitions.push(['packSize', { width: 90 }]);
-  }
-
-  columnDefinitions.push({
-    Cell: NumberCell,
-    label: t('label.units-in-stock', {
-      unit: pluralisedUnitName,
-    }),
-    key: 'totalUnits',
-    align: ColumnAlign.Right,
-    width: 80,
-    accessor: ({ rowData }) =>
-      (rowData.inStorePacks ?? 0) * (rowData.packSize ?? 1),
-  });
-
-  if (displayInDoses) {
-    columnDefinitions.push(...getPrescriptionLineDosesColumns(allocate));
-  } else {
-    columnDefinitions.push(
       {
-        Cell: NumberCell,
-        label: t('label.units-available', {
+        id: 'vvmStatus',
+        header: t('label.vvm-status'),
+        size: 150,
+        accessorFn: row => row.vvmStatus?.description || '',
+        includeColumn: hasVvmStatusesEnabled && item?.isVaccine,
+      },
+      {
+        accessorKey: 'dosesPerUnit  ',
+        header: unit
+          ? t('label.doses-per-unit-name', {
+              unit,
+            })
+          : 'label.doses-per-unit',
+        size: 80,
+        includeColumn: item?.isVaccine && displayInDoses,
+      },
+      {
+        accessorKey: 'packSize',
+        header: t('label.pack-size'),
+        columnType: ColumnType.Number,
+        size: 90,
+        includeColumn: !item?.isVaccine,
+      },
+      {
+        accessorKey: 'totalUnits',
+        header: t('label.units-in-stock', {
           unit: pluralisedUnitName,
         }),
-        key: 'availableUnits',
-        align: ColumnAlign.Right,
-        width: 85,
-        accessor: ({ rowData }) =>
-          (rowData.availablePacks ?? 0) * (rowData.packSize ?? 1),
+        accessorFn: row => (row.inStorePacks ?? 0) * (row.packSize ?? 1),
+        size: 120,
+        columnType: ColumnType.Number,
       },
       {
-        key: 'unitQuantity',
-        Cell: UnitQuantityCell,
-        width: 100,
-        label: t('label.units-issued', { unit: pluralisedUnitName }),
-        setter: ({
-          id,
-          unitQuantity,
-        }: Partial<DraftStockOutLineFragment> & {
-          id: string;
-          // Extra field only in the context of this setter, based on key above
-          unitQuantity?: number;
-        }) => allocate(id, unitQuantity ?? 0),
-        accessor: ({ rowData }) =>
-          packsToQuantity(AllocateInType.Units, rowData.numberOfPacks, rowData),
-      }
-    );
-  }
-
-  return useColumns(columnDefinitions, {}, [allocate]);
+        accessorKey: 'availableUnits',
+        header: t('label.units-available', { unit: pluralisedUnitName }),
+        accessorFn: row => (row.availablePacks ?? 0) * (row.packSize ?? 1),
+        columnType: ColumnType.Number,
+        size: 120,
+      },
+      {
+        accessorKey: 'unitQuantity',
+        header: t('label.units-issued', { unit: pluralisedUnitName }),
+        size: 120,
+        columnType: ColumnType.Number,
+        accessorFn: row =>
+          packsToQuantity(AllocateInType.Units, row.numberOfPacks, row),
+        Cell: ({ cell, row }) => (
+          <NumberInputCell
+            max={row.original.availablePacks * row.original.packSize}
+            cell={cell}
+            updateFn={(value: number) => allocate(row.original.id, value)}
+            sx={{
+              '& .MuiInputBase-input': { backgroundColor: 'background.paper' },
+            }}
+            disabled={getIsDisabled(row.original)}
+          />
+        ),
+      },
+    ];
+  }, [unit, allocate, getIsDisabled]);
 };
-
-const UnitQuantityCell = (props: CellProps<DraftStockOutLineFragment>) => (
-  <NumberInputCell
-    {...props}
-    max={props.rowData.availablePacks * props.rowData.packSize}
-    decimalLimit={2}
-    min={0}
-    slotProps={{ htmlInput: { sx: { backgroundColor: 'white' } } }}
-  />
-);

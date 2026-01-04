@@ -16,7 +16,6 @@ use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
-
 table! {
     requisition (id) {
         id -> Text,
@@ -41,6 +40,8 @@ table! {
         period_id -> Nullable<Text>,
         order_type -> Nullable<Text>,
         is_emergency -> Bool,
+        created_from_requisition_id -> Nullable<Text>,
+        original_customer_id -> Nullable<Text>,
     }
 }
 
@@ -52,16 +53,18 @@ joinable!(requisition -> program (program_id));
 allow_tables_to_appear_in_same_query!(requisition, name_link);
 allow_tables_to_appear_in_same_query!(requisition, item_link);
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq, TS, Serialize, Deserialize)]
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, TS, Serialize, Deserialize, Default)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum RequisitionType {
+    #[default]
     Request,
     Response,
 }
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq, TS, Serialize, Deserialize)]
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, TS, Serialize, Deserialize, Default)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum RequisitionStatus {
+    #[default]
     Draft,
     New,
     Sent,
@@ -81,7 +84,7 @@ pub enum ApprovalStatusType {
 }
 
 #[derive(
-    Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, TS, Serialize, Deserialize,
+    Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, TS, Serialize, Deserialize, Default,
 )]
 #[diesel(treat_none_as_null = true)]
 #[diesel(table_name = requisition)]
@@ -109,36 +112,8 @@ pub struct RequisitionRow {
     pub period_id: Option<String>,
     pub order_type: Option<String>,
     pub is_emergency: bool,
-}
-
-impl Default for RequisitionRow {
-    fn default() -> Self {
-        Self {
-            r#type: RequisitionType::Request,
-            status: RequisitionStatus::Draft,
-            created_datetime: Default::default(),
-            // Defaults
-            id: Default::default(),
-            user_id: Default::default(),
-            requisition_number: Default::default(),
-            name_link_id: Default::default(),
-            store_id: Default::default(),
-            sent_datetime: Default::default(),
-            finalised_datetime: Default::default(),
-            expected_delivery_date: Default::default(),
-            colour: Default::default(),
-            comment: Default::default(),
-            their_reference: Default::default(),
-            max_months_of_stock: Default::default(),
-            min_months_of_stock: Default::default(),
-            approval_status: Default::default(),
-            linked_requisition_id: Default::default(),
-            program_id: None,
-            period_id: None,
-            order_type: None,
-            is_emergency: false,
-        }
-    }
+    pub created_from_requisition_id: Option<String>, // for Internal Orders created from a Requisition
+    pub original_customer_id: Option<String>,
 }
 
 pub struct RequisitionRowRepository<'a> {

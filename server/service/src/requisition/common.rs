@@ -10,6 +10,8 @@ use repository::{
     RequisitionType,
 };
 
+use crate::preference::{Preference, ShowIndicativePriceInRequisitions};
+
 pub fn check_requisition_row_exists(
     connection: &StorageConnection,
     id: &str,
@@ -22,7 +24,7 @@ pub fn check_requisition_exists(
     id: &str,
 ) -> Result<Option<Requisition>, RepositoryError> {
     Ok(RequisitionRepository::new(connection)
-        .query_by_filter(RequisitionFilter::new().id(EqualFilter::equal_to(id)))?
+        .query_by_filter(RequisitionFilter::new().id(EqualFilter::equal_to(id.to_string())))?
         .pop())
 }
 
@@ -31,7 +33,8 @@ pub fn get_lines_for_requisition(
     requisition_id: &str,
 ) -> Result<Vec<RequisitionLine>, RepositoryError> {
     RequisitionLineRepository::new(connection).query_by_filter(
-        RequisitionLineFilter::new().requisition_id(EqualFilter::equal_to(requisition_id)),
+        RequisitionLineFilter::new()
+            .requisition_id(EqualFilter::equal_to(requisition_id.to_string())),
     )
 }
 
@@ -71,7 +74,7 @@ pub fn check_emergency_order_within_max_items_limit(
 ) -> Result<(bool, i32), OrderTypeNotFoundError> {
     let program_settings_ids = ProgramRequisitionSettingsRepository::new(connection)
         .query(Some(ProgramRequisitionSettingsFilter::new().program(
-            ProgramFilter::new().id(EqualFilter::equal_to(program_id)),
+            ProgramFilter::new().id(EqualFilter::equal_to(program_id.to_string())),
         )))?
         .iter()
         .map(|settings| settings.program_settings_row.id.clone())
@@ -118,14 +121,14 @@ pub fn check_exceeded_max_orders_for_period(
     match order_type {
         Some(order_type) => {
             let mut filter = RequisitionFilter::new()
-                .program_id(EqualFilter::equal_to(input.program_id))
-                .order_type(EqualFilter::equal_to(&order_type.name))
-                .period_id(EqualFilter::equal_to(input.period_id))
-                .store_id(EqualFilter::equal_to(input.store_id))
+                .program_id(EqualFilter::equal_to(input.program_id.to_string()))
+                .order_type(EqualFilter::equal_to(order_type.name.to_owned()))
+                .period_id(EqualFilter::equal_to(input.period_id.to_string()))
+                .store_id(EqualFilter::equal_to(input.store_id.to_string()))
                 .r#type(input.requisition_type.equal_to());
 
             if let Some(other_party_id) = input.other_party_id {
-                filter = filter.name_id(EqualFilter::equal_to(other_party_id));
+                filter = filter.name_id(EqualFilter::equal_to(other_party_id.to_string()));
             };
 
             let current_orders = RequisitionRepository::new(connection).count(Some(filter))?;
@@ -170,9 +173,20 @@ pub fn check_master_list_for_store(
 ) -> Result<Option<MasterList>, RepositoryError> {
     let mut rows = MasterListRepository::new(connection).query_by_filter(
         MasterListFilter::new()
-            .id(EqualFilter::equal_to(master_list_id))
-            .exists_for_store_id(EqualFilter::equal_to(store_id))
+            .id(EqualFilter::equal_to(master_list_id.to_string()))
+            .exists_for_store_id(EqualFilter::equal_to(store_id.to_string()))
             .is_program(false),
     )?;
     Ok(rows.pop())
+}
+
+pub(crate) fn get_indicative_price_pref(
+    connection: &StorageConnection,
+) -> Result<bool, RepositoryError> {
+    ShowIndicativePriceInRequisitions {}
+        .load(connection, None)
+        .map_err(|e| RepositoryError::DBError {
+            msg: "Could not load showIndicativePriceInRequisitions global preference".to_string(),
+            extra: e.to_string(),
+        })
 }

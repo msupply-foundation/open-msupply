@@ -27,7 +27,7 @@ const PurchaseOrderSearchComponent = ({
 }: PurchaseOrderLineSearchModalProps) => {
   const t = useTranslation();
   const {
-    query: { data, isLoading },
+    query: { data, isFetching },
   } = usePurchaseOrder(purchaseOrderId);
 
   const filterOptions = (
@@ -79,7 +79,7 @@ const PurchaseOrderSearchComponent = ({
 
   return (
     <ListSearch
-      loading={isLoading}
+      loading={isFetching}
       open={open}
       options={data?.lines.nodes ?? []}
       onClose={onClose}

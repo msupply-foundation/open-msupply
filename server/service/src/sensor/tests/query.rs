@@ -37,12 +37,12 @@ mod query {
         let service = service_provider.sensor_service;
 
         assert_eq!(
-            service.get_sensor(&context, "invalid_id".to_owned()),
-            Err(SingleRecordError::NotFound("invalid_id".to_owned()))
+            service.get_sensor(&context, "invalid_id".to_string()),
+            Err(SingleRecordError::NotFound("invalid_id".to_string()))
         );
 
         let result = service
-            .get_sensor(&context, "sensor_is_active".to_owned())
+            .get_sensor(&context, "sensor_is_active".to_string())
             .unwrap();
 
         assert_eq!(result.sensor_row.id, "sensor_is_active");
@@ -62,7 +62,7 @@ mod query {
             .get_sensors(
                 &context,
                 None,
-                Some(SensorFilter::new().id(EqualFilter::equal_to("sensor_1"))),
+                Some(SensorFilter::new().id(EqualFilter::equal_to("sensor_1".to_string()))),
                 None,
             )
             .unwrap();
@@ -75,8 +75,8 @@ mod query {
                 &context,
                 None,
                 Some(SensorFilter::new().id(EqualFilter::equal_any(vec![
-                    "sensor_1".to_owned(),
-                    "sensor_is_active".to_owned(),
+                    "sensor_1".to_string(),
+                    "sensor_is_active".to_string(),
                 ]))),
                 None,
             )

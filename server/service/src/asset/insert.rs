@@ -77,7 +77,7 @@ pub fn insert_asset(
             };
 
             let new_asset = generate(input);
-            AssetRowRepository::new(connection).upsert_one(&new_asset)?;
+            AssetRowRepository::new(connection).upsert_one(&new_asset, None)?;
 
             // Automatically create a location for this asset (if it's a cold chain asset, and store is active on this site)
             if new_asset.asset_class_id == Some(COLD_CHAIN_EQUIPMENT_UUID.to_string()) {
@@ -138,7 +138,7 @@ pub fn validate(
 
     // Check asset number is unique (on this site)
     if let Some(asset_number) = &input.asset_number {
-        if check_asset_number_exists(connection, asset_number, None)?.len() >= 1 {
+        if !check_asset_number_exists(connection, asset_number, None)?.is_empty() {
             return Err(InsertAssetError::AssetNumberAlreadyExists);
         }
     }

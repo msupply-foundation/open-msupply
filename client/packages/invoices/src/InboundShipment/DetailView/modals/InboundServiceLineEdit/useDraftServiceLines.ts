@@ -40,7 +40,7 @@ export const useDraftServiceLines = () => {
       }
       setDraftLines(newDraftLines);
     }
-  }, [draftLines, lines, defaultServiceItem]);
+  }, [draftLines, lines, defaultServiceItem, id]);
 
   const update = (patch: RecordPatch<DraftInboundLine>) => {
     setDraftLines(currLines => {

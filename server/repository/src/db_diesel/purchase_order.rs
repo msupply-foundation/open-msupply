@@ -29,6 +29,7 @@ pub struct PurchaseOrderFilter {
     pub store_id: Option<EqualFilter<String>>,
     pub status: Option<EqualFilter<PurchaseOrderStatus>>,
     pub supplier: Option<StringFilter>,
+    pub created_datetime: Option<DatetimeFilter>,
     pub confirmed_datetime: Option<DatetimeFilter>,
     pub requested_delivery_date: Option<DateFilter>,
     pub sent_datetime: Option<DatetimeFilter>,
@@ -117,6 +118,7 @@ impl<'a> PurchaseOrderRepository<'a> {
                 store_id,
                 status,
                 supplier,
+                created_datetime,
                 confirmed_datetime,
                 requested_delivery_date,
                 sent_datetime,
@@ -133,6 +135,7 @@ impl<'a> PurchaseOrderRepository<'a> {
 
                 query = query.filter(purchase_order::supplier_name_link_id.eq_any(sub_query));
             }
+            apply_date_time_filter!(query, created_datetime, purchase_order::created_datetime);
             apply_date_time_filter!(
                 query,
                 confirmed_datetime,

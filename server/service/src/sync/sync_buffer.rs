@@ -66,15 +66,15 @@ impl<'a> SyncBuffer<'a> {
         for legacy_table_name in order {
             let mut rows = self.query_repository.query_by_filter(
                 SyncBufferFilter::new()
-                    .table_name(EqualFilter::equal_to(legacy_table_name))
+                    .table_name(EqualFilter::equal_to(legacy_table_name.to_owned()))
                     .action(action.equal_to())
                     .integration_datetime(DatetimeFilter::is_null(true))
                     .source_site_id(match record_type {
                         SyncBufferSource::Central(source_site_id) => {
-                            EqualFilter::equal_any_or_null_i32(vec![source_site_id])
+                            EqualFilter::equal_any_or_null(vec![source_site_id])
                         } // Includes all records with no source site ID (OMS Cetntral) + the site passed in
                         SyncBufferSource::Remote(source_site_id) => {
-                            EqualFilter::equal_to_i32(source_site_id)
+                            EqualFilter::equal_to(source_site_id)
                         }
                     }),
             )?;
@@ -92,7 +92,6 @@ mod test {
         test_db::setup_all_with_data,
         SyncAction, SyncBufferRow, SyncBufferRowRepository,
     };
-    
 
     use crate::sync::{
         sync_buffer::SyncBufferSource,

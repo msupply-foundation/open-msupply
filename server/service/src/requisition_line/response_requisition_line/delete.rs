@@ -75,7 +75,7 @@ fn validate(
     }
 
     let invoice_lines = InvoiceLineRepository::new(connection).query_by_filter(
-        InvoiceLineFilter::new().requisition_id(EqualFilter::equal_to(&requisition_row.id)),
+        InvoiceLineFilter::new().requisition_id(EqualFilter::equal_to(requisition_row.id.to_string())),
     )?;
 
     if invoice_lines.iter().any(|invoice_line| {
@@ -114,7 +114,7 @@ mod test {
 
     fn invoice_linked_to_req() -> InvoiceRow {
         InvoiceRow {
-            id: "invoice_linked_to_req".to_owned(),
+            id: "invoice_linked_to_req".to_string(),
             store_id: mock_store_a().id,
             requisition_id: Some(
                 mock_full_new_response_requisition_for_update_test()
@@ -129,7 +129,7 @@ mod test {
 
     fn invoice_line_linked_to_requisition_line() -> InvoiceLineRow {
         InvoiceLineRow {
-            id: "invoice_line_linked_to_requisition_line".to_owned(),
+            id: "invoice_line_linked_to_requisition_line".to_string(),
             invoice_id: invoice_linked_to_req().id,
             item_link_id: mock_full_new_response_requisition_for_update_test().lines[0]
                 .item_link_id
@@ -162,7 +162,7 @@ mod test {
             service.delete_response_requisition_line(
                 &context,
                 DeleteResponseRequisitionLine {
-                    id: "invalid".to_owned(),
+                    id: "invalid".to_string(),
                 },
             ),
             Err(ServiceError::RequisitionLineDoesNotExist)

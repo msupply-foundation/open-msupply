@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 import {
   BasicSpinner,
   ModalTabs,
@@ -31,23 +31,23 @@ interface CreateRequisitionModalProps {
   ) => void;
 }
 
-export const CreateRequisitionModal: FC<CreateRequisitionModalProps> = ({
+export const CreateRequisitionModal = ({
   isOpen,
   onClose,
   onCreate,
-}) => {
+}: CreateRequisitionModalProps) => {
+  const t = useTranslation();
   const { data: programSettings, isLoading } =
     useRequest.utils.programSettings();
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: false });
-
-  // const { data, isLoading } = useName.document.internalSuppliers();
-  const t = useTranslation();
-  // const NameOptionRenderer = getNameOptionRenderer(t('label.on-hold'));
+  const noSuppliers = programSettings?.every(
+    setting => setting.suppliers.length === 0
+  );
 
   const InnerComponent = () => {
     if (isLoading) return <BasicSpinner />;
 
-    if (programSettings && programSettings.length > 0)
+    if (programSettings && !noSuppliers)
       return (
         <ModalTabs
           tabs={[

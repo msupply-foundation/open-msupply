@@ -169,6 +169,7 @@ export const SupplySelection = ({
                 },
               },
             }}
+            disabled={disabled}
           />
         </Box>
       </Box>

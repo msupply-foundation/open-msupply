@@ -18,7 +18,7 @@ use crate::{
 
 use crate::Pagination;
 use diesel::{
-    dsl::{InnerJoin, IntoBoxed},
+    dsl::{sum, InnerJoin, IntoBoxed},
     helper_types::LeftJoin,
     prelude::*,
 };
@@ -183,6 +183,7 @@ fn create_filtered_query(
         is_emergency,
         automatically_created,
         is_program_requisition,
+        has_outstanding_lines,
     }) = filter
     {
         apply_equal_filter!(query, id, requisition::id);
@@ -224,7 +225,7 @@ fn create_filtered_query(
         if let Some(automatically_created) = automatically_created {
             apply_equal_filter!(
                 query,
-                Some(EqualFilter::is_null(automatically_created)),
+                Some(EqualFilter::<String>::is_null(automatically_created)),
                 requisition::linked_requisition_id
             );
         }
@@ -240,6 +241,25 @@ fn create_filtered_query(
                 query = query.filter(requisition::id.nullable().eq_any(requisition_ids))
             } else {
                 query = query.filter(requisition::id.nullable().ne_all(requisition_ids))
+            }
+        }
+
+        if let Some(has_outstanding_lines) = has_outstanding_lines {
+            use crate::db_diesel::requisition_line_row::requisition_line;
+
+            let requisition_ids = requisition_line::table
+                .select(requisition_line::requisition_id)
+                .group_by(requisition_line::requisition_id)
+                .having(
+                    sum(requisition_line::requested_quantity)
+                        .gt(sum(requisition_line::supply_quantity)),
+                )
+                .into_boxed();
+
+            if has_outstanding_lines {
+                query = query.filter(requisition::id.eq_any(requisition_ids))
+            } else {
+                query = query.filter(requisition::id.ne_all(requisition_ids))
             }
         }
     }

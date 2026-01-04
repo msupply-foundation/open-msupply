@@ -6,7 +6,7 @@ import { PurchaseOrderListView } from './purchase_order/ListView/ListView';
 import { PurchaseOrderDetailView } from './purchase_order/DetailView';
 import { GoodsReceivedListView } from './goods_received/ListView';
 import { GoodsReceivedDetailView } from './goods_received/DetailView';
-import { OutstandingPurchaseOrderLinesListView } from './purchase_order/ListView/OutstandingLines/OutstandingLines';
+import { OutstandingLinesListView } from './purchase_order/ListView/OutstandingLines/OutstandingLines';
 
 const PurchasingService = () => {
   const purchaseOrdersRoute = RouteBuilder.create(
@@ -37,7 +37,7 @@ const PurchasingService = () => {
       <Route path={purchaseOrderRoute} element={<PurchaseOrderDetailView />} />
       <Route
         path={outstandingPurchaseOrderLinesRoute}
-        element={<OutstandingPurchaseOrderLinesListView />}
+        element={<OutstandingLinesListView />}
       />
       <Route path={goodsReceivedRoute} element={<GoodsReceivedListView />} />
       <Route

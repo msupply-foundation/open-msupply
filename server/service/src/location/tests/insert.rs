@@ -28,7 +28,7 @@ mod query {
         let service = service_provider.location_service;
 
         let locations_in_store = location_repository
-            .query_by_filter(LocationFilter::new().store_id(EqualFilter::equal_to("store_a")))
+            .query_by_filter(LocationFilter::new().store_id(EqualFilter::equal_to("store_a".to_string())))
             .unwrap();
 
         assert_eq!(
@@ -36,7 +36,7 @@ mod query {
                 &context,
                 InsertLocation {
                     id: mock_data["base"].locations[0].id.clone(),
-                    code: "invalid".to_owned(),
+                    code: "invalid".to_string(),
                     name: None,
                     on_hold: None,
                     location_type_id: None,
@@ -50,7 +50,7 @@ mod query {
             service.insert_location(
                 &context,
                 InsertLocation {
-                    id: "new_id".to_owned(),
+                    id: "new_id".to_string(),
                     code: locations_in_store[0].location_row.code.clone(),
                     name: None,
                     on_hold: None,
@@ -77,11 +77,11 @@ mod query {
 
         let result_location = Location {
             location_row: LocationRow {
-                id: "new_id".to_owned(),
-                code: "new_code".to_owned(),
-                name: "new_code".to_owned(),
+                id: "new_id".to_string(),
+                code: "new_code".to_string(),
+                name: "new_code".to_string(),
                 on_hold: false,
-                store_id: "store_a".to_owned(),
+                store_id: "store_a".to_string(),
                 location_type_id: None,
                 volume: 0.0,
             },
@@ -91,8 +91,8 @@ mod query {
             service.insert_location(
                 &context,
                 InsertLocation {
-                    id: "new_id".to_owned(),
-                    code: "new_code".to_owned(),
+                    id: "new_id".to_string(),
+                    code: "new_code".to_string(),
                     name: None,
                     on_hold: None,
                     location_type_id: None,
@@ -106,8 +106,8 @@ mod query {
             location_repository
                 .query_by_filter(
                     LocationFilter::new()
-                        .id(EqualFilter::equal_to("new_id"))
-                        .store_id(EqualFilter::equal_to("store_a",))
+                        .id(EqualFilter::equal_to("new_id".to_string()))
+                        .store_id(EqualFilter::equal_to("store_a".to_string()))
                 )
                 .unwrap(),
             vec![result_location]
@@ -118,9 +118,9 @@ mod query {
             service.insert_location(
                 &context,
                 InsertLocation {
-                    id: "new_id2".to_owned(),
-                    code: "store_b_location_code".to_owned(),
-                    name: Some("new_location_name".to_owned()),
+                    id: "new_id2".to_string(),
+                    code: "store_b_location_code".to_string(),
+                    name: Some("new_location_name".to_string()),
                     on_hold: Some(true),
                     location_type_id: None,
                     volume: Some(2.0)
@@ -128,11 +128,11 @@ mod query {
             ),
             Ok(Location {
                 location_row: LocationRow {
-                    id: "new_id2".to_owned(),
-                    name: "new_location_name".to_owned(),
-                    code: "store_b_location_code".to_owned(),
+                    id: "new_id2".to_string(),
+                    name: "new_location_name".to_string(),
+                    code: "store_b_location_code".to_string(),
                     on_hold: true,
-                    store_id: "store_a".to_owned(),
+                    store_id: "store_a".to_string(),
                     location_type_id: None,
                     volume: 2.0,
                 }

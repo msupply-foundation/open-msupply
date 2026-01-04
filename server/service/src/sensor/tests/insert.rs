@@ -26,7 +26,7 @@ mod query {
         let service = service_provider.sensor_service;
 
         let sensors_in_store = sensor_repository
-            .query_by_filter(SensorFilter::new().store_id(EqualFilter::equal_to("store_a")))
+            .query_by_filter(SensorFilter::new().store_id(EqualFilter::equal_to("store_a".to_string())))
             .unwrap();
 
         assert_eq!(
@@ -34,7 +34,7 @@ mod query {
                 &context,
                 InsertSensor {
                     id: mock_data["base"].sensors[0].id.clone(),
-                    serial: "invalid".to_owned(),
+                    serial: "invalid".to_string(),
                     name: None,
                     is_active: None,
                     r#type: SensorType::BlueMaestro,
@@ -49,7 +49,7 @@ mod query {
             service.insert_sensor(
                 &context,
                 InsertSensor {
-                    id: "new_id".to_owned(),
+                    id: "new_id".to_string(),
                     serial: sensors_in_store[0].sensor_row.serial.clone(),
                     name: None,
                     is_active: None,
@@ -77,11 +77,11 @@ mod query {
 
         let result_sensor = Sensor {
             sensor_row: SensorRow {
-                id: "new_id".to_owned(),
-                serial: "new_serial".to_owned(),
-                name: "new_name".to_owned(),
+                id: "new_id".to_string(),
+                serial: "new_serial".to_string(),
+                name: "new_name".to_string(),
                 is_active: false,
-                store_id: "store_a".to_owned(),
+                store_id: "store_a".to_string(),
                 location_id: None,
                 battery_level: Some(99),
                 log_interval: Some(10),
@@ -94,9 +94,9 @@ mod query {
             service.insert_sensor(
                 &context,
                 InsertSensor {
-                    id: "new_id".to_owned(),
-                    serial: "new_serial".to_owned(),
-                    name: Some("new_name".to_owned()),
+                    id: "new_id".to_string(),
+                    serial: "new_serial".to_string(),
+                    name: Some("new_name".to_string()),
                     is_active: None,
                     r#type: SensorType::BlueMaestro,
                     log_interval: Some(10),
@@ -110,8 +110,8 @@ mod query {
             sensor_repository
                 .query_by_filter(
                     SensorFilter::new()
-                        .id(EqualFilter::equal_to("new_id"))
-                        .store_id(EqualFilter::equal_to("store_a",))
+                        .id(EqualFilter::equal_to("new_id".to_string()))
+                        .store_id(EqualFilter::equal_to("store_a".to_string()))
                 )
                 .unwrap(),
             vec![result_sensor]
@@ -122,9 +122,9 @@ mod query {
             service.insert_sensor(
                 &context,
                 InsertSensor {
-                    id: "new_id2".to_owned(),
-                    serial: "store_b_sensor_serial".to_owned(),
-                    name: Some("new_sensor_name".to_owned()),
+                    id: "new_id2".to_string(),
+                    serial: "store_b_sensor_serial".to_string(),
+                    name: Some("new_sensor_name".to_string()),
                     is_active: Some(true),
                     r#type: SensorType::BlueMaestro,
                     log_interval: None,
@@ -133,11 +133,11 @@ mod query {
             ),
             Ok(Sensor {
                 sensor_row: SensorRow {
-                    id: "new_id2".to_owned(),
-                    name: "new_sensor_name".to_owned(),
-                    serial: "store_b_sensor_serial".to_owned(),
+                    id: "new_id2".to_string(),
+                    name: "new_sensor_name".to_string(),
+                    serial: "store_b_sensor_serial".to_string(),
                     is_active: true,
-                    store_id: "store_a".to_owned(),
+                    store_id: "store_a".to_string(),
                     location_id: None,
                     battery_level: None,
                     log_interval: None,

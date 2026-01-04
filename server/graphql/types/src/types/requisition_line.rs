@@ -1,4 +1,5 @@
 use async_graphql::*;
+use chrono::NaiveDate;
 use dataloader::DataLoader;
 use repository::{
     requisition_row::{RequisitionRow, RequisitionType},
@@ -85,6 +86,10 @@ impl RequisitionLineNode {
         &self.row().approval_comment
     }
 
+    pub async fn price_per_unit(&self) -> &Option<f64> {
+        &self.row().price_per_unit
+    }
+
     /// OutboundShipment lines linked to requisitions line
     pub async fn outbound_shipment_lines(&self, ctx: &Context<'_>) -> Result<InvoiceLineConnector> {
         // Outbound shipments link to response requisition, so for request requisition
@@ -143,6 +148,7 @@ impl RequisitionLineNode {
         &self,
         ctx: &Context<'_>,
         #[graphql(desc = "Defaults to 3 months")] amc_lookback_months: Option<f64>,
+        period_end: Option<NaiveDate>,
     ) -> Result<ItemStatsNode> {
         if self.requisition_row().r#type == RequisitionType::Request {
             return Ok(ItemStatsNode {
@@ -156,6 +162,7 @@ impl RequisitionLineNode {
                 &self.requisition_row().store_id,
                 &self.item_row().id,
                 amc_lookback_months,
+                period_end,
             ))
             .await?
             .ok_or(
@@ -333,7 +340,6 @@ mod test {
         RequisitionLine,
     };
     use serde_json::json;
-    
 
     use crate::types::RequisitionLineNode;
 

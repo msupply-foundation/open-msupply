@@ -21,7 +21,7 @@ pub fn mock_test_master_list_repository() -> MockData {
 }
 
 pub fn mock_test_master_list_name1() -> NameRow {
-    let id = "mock_test_master_list_name1".to_owned();
+    let id = "mock_test_master_list_name1".to_string();
     NameRow {
         id: id.clone(),
         name: id.clone(),
@@ -33,7 +33,7 @@ pub fn mock_test_master_list_name1() -> NameRow {
 }
 
 pub fn mock_test_master_list_name2() -> NameRow {
-    let id = "mock_test_master_list_name2".to_owned();
+    let id = "mock_test_master_list_name2".to_string();
     NameRow {
         id: id.clone(),
         name: id.clone(),
@@ -45,7 +45,7 @@ pub fn mock_test_master_list_name2() -> NameRow {
 }
 
 pub fn mock_test_master_list_name3() -> NameRow {
-    let id = "mock_test_master_list_name3".to_owned();
+    let id = "mock_test_master_list_name3".to_string();
     NameRow {
         id: id.clone(),
         name: id.clone(),
@@ -67,7 +67,7 @@ pub fn mock_test_master_list_store1() -> StoreRow {
 
 // For name 1 and 2
 pub fn mock_test_master_list_name_filter1() -> FullMockMasterList {
-    let id = "mock_test_master_list_name_filter1".to_owned();
+    let id = "mock_test_master_list_name_filter1".to_string();
     let join1 = format!("{}1", id);
     let join2 = format!("{}2", id);
 
@@ -98,7 +98,7 @@ pub fn mock_test_master_list_name_filter1() -> FullMockMasterList {
 
 // For name 2 and 3
 pub fn mock_test_master_list_name_filter2() -> FullMockMasterList {
-    let id = "mock_test_master_list_name_filter2".to_owned();
+    let id = "mock_test_master_list_name_filter2".to_string();
     let join1 = format!("{}1", id);
     let join2 = format!("{}2", id);
 
@@ -129,7 +129,7 @@ pub fn mock_test_master_list_name_filter2() -> FullMockMasterList {
 
 // For name 1 and 3
 pub fn mock_test_master_list_name_filter3() -> FullMockMasterList {
-    let id = "mock_test_master_list_name_filter3".to_owned();
+    let id = "mock_test_master_list_name_filter3".to_string();
     let join1 = format!("{}1", id);
     let join2 = format!("{}2", id);
 

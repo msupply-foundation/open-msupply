@@ -8,10 +8,7 @@ import {
   PlusCircleIcon,
   useTranslation,
 } from '@openmsupply-client/common';
-import {
-  ProgramIndicatorFragment,
-  RequestFragment,
-} from '../../RequestRequisition/api';
+import { ProgramIndicatorFragment, RequestFragment } from '../api';
 
 interface IndicatorTabProps {
   onClick: (

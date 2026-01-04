@@ -1,45 +1,24 @@
 import {
-  useTableStore,
   useTranslation,
   useDeleteConfirmation,
 } from '@openmsupply-client/common';
 import { useIsInboundDisabled } from '../utils/useIsInboundDisabled';
 import { useDeleteInboundLines } from './useDeleteInboundLines';
-import { useInboundRows } from './useInboundRows';
 import { useInboundShipmentLineErrorContext } from '../../../context/inboundShipmentLineError';
 import { mapErrorToMessageAndSetContext } from '../mapErrorToMessageAndSetContext';
+import { InboundLineFragment } from '../../operations.generated';
 
-export const useDeleteSelectedLines = (): (() => void) => {
+export const useInboundDeleteSelectedLines = (
+  rowsToDelete: InboundLineFragment[],
+  resetRowSelection: () => void
+): (() => void) => {
   const t = useTranslation();
-  const { items, lines } = useInboundRows();
   const { mutateAsync } = useDeleteInboundLines();
   const isDisabled = useIsInboundDisabled();
   const errorsContext = useInboundShipmentLineErrorContext();
 
-  const selectedRows =
-    useTableStore(state => {
-      const { isGrouped } = state;
-
-      return isGrouped
-        ? items
-            ?.filter(({ id }) => state.rowState[id]?.isSelected)
-            .map(({ lines }) =>
-              lines.map(line => ({
-                ...line,
-                isDeleted: true,
-              }))
-            )
-            .flat()
-        : lines
-            ?.filter(({ id }) => state.rowState[id]?.isSelected)
-            .map(line => ({
-              ...line,
-              isDeleted: true,
-            }));
-    }) || [];
-
   const onDelete = async () => {
-    const result = await mutateAsync(selectedRows).catch(err => {
+    const result = await mutateAsync(rowsToDelete).catch(err => {
       throw err;
     });
     const deletedLines = result.batchInboundShipment.deleteInboundShipmentLines;
@@ -51,7 +30,7 @@ export const useDeleteSelectedLines = (): (() => void) => {
     deletedLines?.forEach(line => {
       const errMessage = mapErrorToMessageAndSetContext(
         line,
-        selectedRows,
+        rowsToDelete,
         t,
         errorsContext.setError
       );
@@ -59,6 +38,7 @@ export const useDeleteSelectedLines = (): (() => void) => {
         throw new Error(errMessage);
       }
     });
+    resetRowSelection();
   };
 
   const handleCantDelete = ({ isDisabled }: { isDisabled: boolean }) => {
@@ -67,15 +47,15 @@ export const useDeleteSelectedLines = (): (() => void) => {
   };
 
   const confirmAndDelete = useDeleteConfirmation({
-    selectedRows,
+    selectedRows: rowsToDelete,
     deleteAction: onDelete,
     canDelete: !isDisabled,
     messages: {
       confirmMessage: t('messages.confirm-delete-shipment-lines', {
-        count: selectedRows.length,
+        count: rowsToDelete.length,
       }),
       deleteSuccess: t('messages.deleted-lines', {
-        count: selectedRows.length,
+        count: rowsToDelete.length,
       }),
       cantDelete: handleCantDelete({ isDisabled }),
     },
