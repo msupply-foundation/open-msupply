@@ -14,7 +14,7 @@ pub fn get_sync_message(
     id: &str,
 ) -> Result<Option<SyncMessageRow>, RepositoryError> {
     let repository = SyncMessageRepository::new(&ctx.connection);
-    let filter = SyncMessageFilter::new().id(EqualFilter::equal_to(id));
+    let filter = SyncMessageFilter::new().id(EqualFilter::equal_to(id.to_string()));
     Ok(repository.query_by_filter(filter)?.pop())
 }
 

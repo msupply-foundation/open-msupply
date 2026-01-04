@@ -14,17 +14,14 @@ use service::sync_message::insert::{
 #[derive(Enum, Copy, Clone, Eq, PartialEq)]
 #[graphql(name = "SyncMessageRowTypeInput")]
 pub enum SyncMessageRowTypeInput {
-    RequestFieldChange,
+    // RequestFieldChange, Not supported yet
     SupportUpload,
+    // Other, Not supported yet
 }
 
-// TODO:
-// Need to add support for Other type
-// Figure out what action is taken for Other and RequestFieldChange types
 impl From<SyncMessageRowTypeInput> for SyncMessageRowType {
     fn from(input: SyncMessageRowTypeInput) -> Self {
         match input {
-            SyncMessageRowTypeInput::RequestFieldChange => SyncMessageRowType::RequestFieldChange,
             SyncMessageRowTypeInput::SupportUpload => SyncMessageRowType::SupportUpload,
         }
     }

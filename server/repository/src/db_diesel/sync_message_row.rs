@@ -105,20 +105,6 @@ impl<'a> SyncMessageRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn find_all_for_store(
-        &self,
-        store_id: &str,
-    ) -> Result<Vec<SyncMessageRow>, RepositoryError> {
-        let results = sync_message::table
-            .filter(
-                sync_message::to_store_id
-                    .eq(store_id)
-                    .or(sync_message::from_store_id.eq(store_id)),
-            )
-            .load::<SyncMessageRow>(self.connection.lock().connection())?;
-        Ok(results)
-    }
-
     fn insert_changelog(&self, row: &SyncMessageRow) -> Result<i64, RepositoryError> {
         let row = ChangeLogInsertRow {
             table_name: ChangelogTableName::SyncMessage,

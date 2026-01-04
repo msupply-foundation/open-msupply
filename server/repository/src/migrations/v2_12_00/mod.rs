@@ -1,7 +1,6 @@
 use super::{version::Version, Migration, MigrationFragment};
 use crate::StorageConnection;
 
-mod add_in_progress_status_sync_message;
 mod add_purchase_order_status_logs_to_activity_log_type_enum;
 mod add_requisition_auto_finalise_processor_cursor_pg_enum;
 mod add_shipping_method_table;
