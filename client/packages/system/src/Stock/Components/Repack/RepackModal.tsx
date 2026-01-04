@@ -139,6 +139,7 @@ export const RepackModal: FC<RepackModalControlProps> = ({
       body={t('messages.no-repacks')}
       onCreate={newRepack}
     />,
+    muiTableContainerProps: { sx: { maxHeight: 300 } },
   });
 
   return (
@@ -231,9 +232,7 @@ export const RepackModal: FC<RepackModalControlProps> = ({
             <Typography>{t('messages.no-repack-detail')}</Typography>
           </Box>
         )}
-        <Box sx={{ maxHeight: 300, overflowY: 'auto' }}>
-          <MaterialTable table={table} />
-        </Box>
+        <MaterialTable table={table} />
         <Box paddingLeft={3} paddingTop={3} flex={1}>
           {showRepackDetail && (
             <RepackEditForm
