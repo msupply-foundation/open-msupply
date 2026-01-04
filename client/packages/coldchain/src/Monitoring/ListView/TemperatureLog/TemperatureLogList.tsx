@@ -72,7 +72,7 @@ export const TemperatureLogList: FC = () => {
       {
         accessorKey: 'temperatureBreach.type',
         header: t('label.breach-type'),
-        description: 'description.breach-type',
+        description: t('description.breach-type'),
         Cell: BreachTypeCell,
         enableColumnFilter: true,
         filterVariant: 'select',

@@ -85,13 +85,11 @@ export const TemperatureBreachList: FC = () => {
       {
         accessorKey: 'sensor.name',
         header: t('label.sensor-name'),
-        enableSorting: true,
         enableColumnFilter: true,
       },
       {
         accessorKey: 'location.code',
         header: t('label.location'),
-        enableSorting: true,
         enableColumnFilter: true,
       },
       {
@@ -129,7 +127,7 @@ export const TemperatureBreachList: FC = () => {
       {
         accessorKey: 'temperature',
         header: t('label.max-min-temperature'),
-        description: 'description.max-min-temperature',
+        description: t('description.max-min-temperature'),
         size: 125,
         accessorFn: row =>
           !!row.maxOrMinTemperature

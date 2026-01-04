@@ -116,6 +116,7 @@ export const ImportReviewDataTable: FC<ImportReviewDataTableProps> = ({
         size: 150,
         Cell: TextWithTooltipCell,
         includeColumn: showWarnings,
+        enableColumnFilter: true,
       },
       {
         accessorKey: 'errorMessage',
