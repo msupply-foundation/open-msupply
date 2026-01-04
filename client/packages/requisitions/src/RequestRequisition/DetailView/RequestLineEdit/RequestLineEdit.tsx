@@ -14,6 +14,7 @@ import {
   Typography,
   ModalGridLayout,
   usePreferences,
+  Alert,
   ModalPanelArea,
   MultilineTextInput,
   InfoRow,
@@ -68,7 +69,7 @@ export const RequestLineEdit = ({
 }: RequestLineEditProps) => {
   const t = useTranslation();
   const { plugins } = usePluginProvider();
-  const { manageVaccinesInDoses } = usePreferences();
+  const { manageVaccinesInDoses, warningForExcessRequest } = usePreferences();
 
   const unitName = currentItem?.unitName || t('label.unit');
   const defaultPackSize = currentItem?.defaultPackSize || 1;
@@ -135,6 +136,10 @@ export const RequestLineEdit = ({
   const getRightPanelContent = () => {
     if (!showContent) return null;
 
+    const showExcessRequestWarning =
+      warningForExcessRequest &&
+      draft.requestedQuantity - draft.suggestedQuantity >= 1;
+
     return (
       <>
         <ModalPanelArea>
@@ -152,6 +157,11 @@ export const RequestLineEdit = ({
             dosesPerUnit={currentItem?.doses}
             setIsEditingRequested={setIsEditingRequested}
           />
+          {showExcessRequestWarning && (
+            <Alert severity="warning" sx={{ mt: 1 }}>
+              {t('warning.requested-exceeds-suggested')}
+            </Alert>
+          )}
           {showExtraFields && (
             <Typography variant="body1" fontWeight="bold">
               {t('label.reason')}:
@@ -241,7 +251,12 @@ export const RequestLineEdit = ({
               {line &&
                 plugins.requestRequisitionLine?.editViewField?.map(
                   (Field, index) => (
-                    <Field key={index} line={line} unitName={unitName} />
+                    <Field
+                      key={index}
+                      line={line}
+                      draft={draft}
+                      unitName={unitName}
+                    />
                   )
                 )}
             </>

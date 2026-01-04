@@ -94,7 +94,7 @@ pub fn insert_encounter(
         .encounter_service
         .encounter(
             &service_context,
-            EncounterFilter::new().document_name(EqualFilter::equal_to(&document.name)),
+            EncounterFilter::new().document_name(EqualFilter::equal_to(document.name.to_owned())),
             allowed_ctx.clone(),
         )?
         .ok_or(

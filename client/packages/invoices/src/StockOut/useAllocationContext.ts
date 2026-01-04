@@ -21,7 +21,7 @@ import {
   unitsToQuantity,
 } from '.';
 import { allocateQuantities } from './allocateQuantities';
-import { VvmStatusFragment } from 'packages/system/src/Stock/api';
+import { VvmStatusFragment } from '@openmsupply-client/system';
 
 /**
  * Allocation can be in units, doses, or packs of a specific size.
@@ -111,6 +111,7 @@ interface AllocationContext {
     quantity: number,
     format: (value: number, options?: Intl.NumberFormatOptions) => string,
     t: TypedTFunction<LocaleKey>,
+    expiryThresholdDays: number,
     allowPartialPacks?: boolean
   ) => number;
 }
@@ -237,7 +238,7 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
       item?.doses ?? 0
     );
 
-    autoAllocate(quantityInNewPackSize, format, t);
+    autoAllocate(quantityInNewPackSize, format, t, 0);
   },
 
   setAlerts: alerts =>
@@ -288,7 +289,13 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
     }));
   },
 
-  autoAllocate: (quantity, format, t, allowPartialPacks = false) => {
+  autoAllocate: (
+    quantity,
+    format,
+    t,
+    expiryThresholdDays,
+    allowPartialPacks = false
+  ) => {
     const {
       draftLines,
       nonAllocatableLines,
@@ -300,6 +307,7 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
     const result = allocateQuantities(draftLines, quantity, {
       allocateIn,
       allowPartialPacks,
+      expiryThresholdDays,
     });
 
     // Early return if no allocation was possible

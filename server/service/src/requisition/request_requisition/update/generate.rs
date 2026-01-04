@@ -1,5 +1,6 @@
 use super::{UpdateRequestRequisition, UpdateRequestRequisitionStatus};
 use crate::{
+    nullable_update,
     requisition::{
         common::get_lines_for_requisition,
         request_requisition::{generate_suggested_quantity, GenerateSuggestedQuantity},
@@ -32,6 +33,7 @@ pub fn generate(
         max_months_of_stock: update_max_months_of_stock,
         min_months_of_stock: update_threshold_months_of_stock,
         expected_delivery_date: update_expected_delivery_date,
+        original_customer_id,
     }: UpdateRequestRequisition,
 ) -> Result<GenerateResult, RepositoryError> {
     let keep_requisition_lines_with_zero_requested_quantity_on_finalised =
@@ -40,13 +42,12 @@ pub fn generate(
 
     // Recalculate lines only if max_months_of_stock or min_months_of_stock changed
     let update_threshold_months_of_stock =
-        update_threshold_months_of_stock.unwrap_or(existing.min_months_of_stock.clone());
+        update_threshold_months_of_stock.unwrap_or(existing.min_months_of_stock);
     let update_max_months_of_stock =
-        update_max_months_of_stock.unwrap_or(existing.max_months_of_stock.clone());
+        update_max_months_of_stock.unwrap_or(existing.max_months_of_stock);
 
-    let should_recalculate = update_threshold_months_of_stock
-        != existing.min_months_of_stock.clone()
-        || update_max_months_of_stock != existing.max_months_of_stock.clone();
+    let should_recalculate = update_threshold_months_of_stock != existing.min_months_of_stock
+        || update_max_months_of_stock != existing.max_months_of_stock;
 
     let updated_requisition_row = RequisitionRow {
         // Only sent status is available in UpdateRequestRequisitionStatus
@@ -58,7 +59,7 @@ pub fn generate(
         sent_datetime: if update_status.is_some() {
             Some(Utc::now().naive_utc())
         } else {
-            existing.sent_datetime.clone()
+            existing.sent_datetime
         },
         colour: update_colour.or(existing.colour.clone()),
         comment: update_comment.or(existing.comment.clone()),
@@ -66,8 +67,11 @@ pub fn generate(
         min_months_of_stock: update_threshold_months_of_stock,
         max_months_of_stock: update_max_months_of_stock,
         name_link_id: update_other_party_id.unwrap_or(existing.name_link_id.clone()),
-        expected_delivery_date: update_expected_delivery_date
-            .or(existing.expected_delivery_date.clone()),
+        expected_delivery_date: update_expected_delivery_date.or(existing.expected_delivery_date),
+        original_customer_id: nullable_update(
+            &original_customer_id,
+            existing.original_customer_id.clone(),
+        ),
         ..existing.clone()
     };
 
@@ -135,8 +139,8 @@ pub fn empty_lines_to_trim(
 
     let lines = RequisitionLineRepository::new(connection).query_by_filter(
         RequisitionLineFilter::new()
-            .requisition_id(EqualFilter::equal_to(&requisition.id))
-            .requested_quantity(EqualFilter::equal_to_f64(0.0)),
+            .requisition_id(EqualFilter::equal_to(requisition.id.to_string()))
+            .requested_quantity(EqualFilter::equal_to(0.0)),
     )?;
 
     if lines.is_empty() {

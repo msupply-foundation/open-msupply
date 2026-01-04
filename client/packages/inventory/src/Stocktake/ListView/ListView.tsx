@@ -93,6 +93,7 @@ export const ListView = () => {
         columnType: ColumnType.Comment,
       },
     ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     []
   );
 

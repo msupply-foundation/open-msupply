@@ -1,20 +1,21 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useInbound } from '.';
-import { useConfirmOnLeaving, useNotification } from '@common/hooks';
+import {
+  useConfirmOnLeaving,
+  useNotification,
+  useTranslation,
+} from '@openmsupply-client/common';
+import { useItem } from '@openmsupply-client/system';
 import { DraftInboundLine } from '../../../types';
-import { InboundLineFragment } from '../operations.generated';
 import { CreateDraft } from '../../DetailView/modals/utils';
 import { useDeleteInboundLines } from './line/useDeleteInboundLines';
 import { mapErrorToMessageAndSetContext } from './mapErrorToMessageAndSetContext';
-import { useTranslation } from '@common/intl';
 import { ScannedBatchData } from '../../DetailView';
-
-type InboundLineItem = InboundLineFragment['item'];
 
 export type PatchDraftLineInput = Partial<DraftInboundLine> & { id: string };
 
 export const useDraftInboundLines = (
-  item: InboundLineItem | null,
+  itemId?: string,
   scannedBatchData?: ScannedBatchData
 ) => {
   const t = useTranslation();
@@ -23,19 +24,22 @@ export const useDraftInboundLines = (
   const [draftLines, setDraftLines] = useState<DraftInboundLine[]>([]);
 
   const { id } = useInbound.document.fields('id');
-  const { data: lines } = useInbound.lines.list(item?.id ?? '');
+  const { data: lines } = useInbound.lines.list(itemId ?? '');
   const { mutateAsync, isLoading } = useInbound.lines.save();
   const { mutateAsync: deleteMutation } = useDeleteInboundLines();
 
   const { isDirty, setIsDirty } = useConfirmOnLeaving(
     'inbound-shipment-line-edit'
   );
+  const {
+    byId: { data: item },
+  } = useItem(itemId ?? '');
 
   useEffect(() => {
     if (lines && item) {
       const drafts = lines.map(line =>
         CreateDraft.stockInLine({
-          item: line.item,
+          item,
           invoiceId: line.invoiceId,
           seed: line,
           // From scanned barcode:
@@ -43,7 +47,7 @@ export const useDraftInboundLines = (
           expiryDate: scannedBatchData?.expiryDate,
         })
       );
-      if (drafts.length === 0)
+      if (drafts.length === 0 && item) {
         drafts.push(
           CreateDraft.stockInLine({
             item,
@@ -53,6 +57,7 @@ export const useDraftInboundLines = (
             expiryDate: scannedBatchData?.expiryDate,
           })
         );
+      }
       setDraftLines(drafts);
     } else {
       setDraftLines([]);
@@ -87,51 +92,63 @@ export const useDraftInboundLines = (
     [setDraftLines, setIsDirty]
   );
 
-  const removeDraftLine = async (id: string) => {
-    const batch = draftLines.find(line => line.id === id);
+  const removeDraftLine = (lineId: string) => {
+    const batch = draftLines.find(line => line.id === lineId);
     if (!batch) return;
     if (batch.isCreated) {
       setDraftLines(draftLines => {
-        const newLines = draftLines.filter(line => line.id !== id);
+        const newLines = draftLines.filter(line => line.id !== lineId);
         if (newLines.length === 0 && item) {
           return [CreateDraft.stockInLine({ item, invoiceId: id })];
         }
         return newLines;
       });
     } else {
-      const deletedBatch = { ...batch, isDeleted: true };
-      try {
-        const response = await deleteMutation([deletedBatch]);
-
-        const responseForLine =
-          response.batchInboundShipment.deleteInboundShipmentLines?.[0];
-
-        if (!responseForLine) {
-          error(t('error.something-wrong'))();
-          return;
-        }
-        const errorMessage = mapErrorToMessageAndSetContext(
-          responseForLine,
-          [deletedBatch],
-          t
+      setDraftLines(draftLines => {
+        const updatedLines = draftLines.map(line =>
+          line.id === lineId ? { ...line, isDeleted: true } : line
         );
-        if (errorMessage) error(errorMessage)();
-      } catch {
-        error(t('error.something-wrong'))();
-      }
+        setIsDirty(true);
+        return updatedLines;
+      });
     }
   };
 
   const saveLines = async () => {
     if (isDirty) {
-      const { errorMessage } = await mutateAsync(draftLines);
-      if (errorMessage) throw new Error(errorMessage);
+      const linesToDelete = draftLines.filter(line => line.isDeleted);
+      if (linesToDelete.length > 0) {
+        const response = await deleteMutation(linesToDelete);
+
+        linesToDelete.forEach((lineToDelete, index) => {
+          const responseForLine =
+            response.batchInboundShipment.deleteInboundShipmentLines?.[index];
+          if (!responseForLine) {
+            error(t('error.something-wrong'))();
+            return;
+          }
+
+          const errorMessage = mapErrorToMessageAndSetContext(
+            responseForLine,
+            [lineToDelete],
+            t
+          );
+          if (errorMessage) error(errorMessage)();
+        });
+      }
+
+      const linesToSave = draftLines.filter(line => !line.isDeleted);
+      if (linesToSave.length > 0) {
+        const { errorMessage } = await mutateAsync(linesToSave);
+        if (errorMessage) throw new Error(errorMessage);
+      }
+
       setIsDirty(false);
     }
   };
 
   return {
-    draftLines,
+    draftLines: draftLines.filter(line => !line.isDeleted),
     addDraftLine,
     updateDraftLine,
     removeDraftLine,

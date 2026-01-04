@@ -11,7 +11,7 @@ use crate::{
 
 use self::middleware::{compress as compress_middleware, logger as logger_middleware};
 use actix_cors::Cors;
-use anyhow::Context;
+use chrono::{NaiveDateTime, Utc};
 use graphql_core::loader::{get_loaders, LoaderRegistry};
 
 use graphql::{
@@ -19,10 +19,16 @@ use graphql::{
     PluginExecuteGraphql,
 };
 use log::info;
-use repository::{get_storage_connection_manager, migrations::migrate};
+use repository::{
+    get_storage_connection_manager, migrations::migrate, system_log_row::SystemLogType,
+    StorageConnection,
+};
 
 use scheduled_tasks::spawn_scheduled_task_runner;
 use service::{
+    activity_log::{
+        add_migration_results_to_system_log, system_log, system_log_entry, SystemLogMessage,
+    },
     auth_data::AuthData,
     boajs::context::BoaJsContext,
     ledger_fix::ledger_fix_driver::LedgerFixDriver,
@@ -41,6 +47,7 @@ use service::{
 
 use actix_web::{web, web::Data, App, HttpServer};
 use std::sync::{Arc, Mutex, RwLock};
+use util::format_error;
 
 mod authentication;
 pub mod certs;
@@ -64,7 +71,7 @@ mod central;
 pub mod print;
 
 use serve_frontend_plugins::config_server_frontend_plugins;
-use upload::config_upload;
+use upload::{config_upload, get_default_directory};
 // Only import discovery for non android features (otherwise build for android targets would fail due to local-ip-address)
 #[cfg(any(target_os = "macos", target_os = "windows"))]
 mod discovery;
@@ -80,14 +87,19 @@ pub async fn start_server(
     settings: Settings,
     mut off_switch: tokio::sync::mpsc::Receiver<()>,
 ) -> std::io::Result<()> {
-    info!(
+    let server_start_timestamp = Utc::now().naive_utc();
+    let server_start_message = format!(
         "{} server starting on port {}",
         match is_develop() {
             true => "Development",
             false => "Production",
         },
-        settings.server.port
+        settings.server.port,
     );
+    // Run info log here. The system log for server starting is after the migrations
+    // because it can't upsert until the database is running. If there is an error in
+    // migrations the system log won't run.
+    info!("{}", server_start_message);
 
     // ON STARTUP OVERRIDE IS CENTRAL SERVER
     if settings.server.override_is_central_server {
@@ -100,9 +112,19 @@ pub async fn start_server(
         connection_manager.execute(init_sql).unwrap();
     }
     info!("Run DB migrations...");
-    let version = migrate(&connection_manager.connection().unwrap(), None)
-        .context("Failed to run DB migrations")
-        .unwrap();
+    let connection = connection_manager.connection().unwrap();
+    let (version, messages) = match migrate(&connection, None) {
+        Ok(result) => result,
+        Err(e) => {
+            log::error!("Failed to run DB migrations: {}", format_error(&e));
+            std::process::exit(1);
+        }
+    };
+    // Log the server starting message with the startup timestamp
+    let status_log = StatusLog(&connection);
+    status_log.no_console_with_timestamp(&server_start_message, server_start_timestamp);
+
+    add_migration_results_to_system_log(&connection, messages).unwrap();
     info!("Run DB migrations...done");
 
     // Upsert standard reports
@@ -352,6 +374,7 @@ pub async fn start_server(
             .app_data(service_provider.clone())
             .app_data(auth.clone())
             .app_data(validated_plugins.clone())
+            .app_data(get_default_directory(&closure_settings))
             .configure(attach_graphql_schema(graphql_schema.clone()))
             .configure(config_static_files)
             .configure(config_cold_chain)
@@ -386,8 +409,12 @@ pub async fn start_server(
 
     tokio::select! {
         // TODO log error in ctrl_c and None in off_switch
-        _ = tokio::signal::ctrl_c() => {},
-        Some(_) = off_switch.recv() => {},
+        _ = tokio::signal::ctrl_c() => {
+            status_log.log("Server received Ctrl-C, stopping server");
+        },
+        Some(_) = off_switch.recv() => {
+            status_log.log("Server received request to stop with off switch");
+        },
         _ = synchroniser_task => unreachable!("Synchroniser unexpectedly stopped"),
         _ = file_sync_task => unreachable!("File sync unexpectedly stopped"),
           _ = ledger_fix_task => unreachable!("Ledger fix unexpectedly stopped"),
@@ -397,7 +424,26 @@ pub async fn start_server(
 
     server_handle.stop(true).await;
 
+    status_log.log("Server stopped successfully");
+
     Ok(())
+}
+
+struct StatusLog<'a>(&'a StorageConnection);
+impl<'a> StatusLog<'a> {
+    fn log(&self, message: &str) {
+        system_log(self.0, SystemLogType::ServerStatus, message).unwrap();
+    }
+    fn no_console_with_timestamp(&self, message: &str, timestamp: NaiveDateTime) {
+        system_log_entry(
+            self.0,
+            SystemLogType::ServerStatus,
+            Some(timestamp),
+            false,
+            SystemLogMessage::Message(message),
+        )
+        .unwrap();
+    }
 }
 
 fn auth_data(

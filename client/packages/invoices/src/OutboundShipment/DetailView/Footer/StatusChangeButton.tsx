@@ -10,93 +10,55 @@ import {
   useAlertModal,
   InvoiceLineNodeType,
   useDisabledNotificationToast,
+  usePreferences,
 } from '@openmsupply-client/common';
-import { getNextOutboundStatus, getStatusTranslation } from '../../../utils';
+import {
+  getPreviousStatus,
+  outboundStatuses,
+  getButtonLabel,
+  getNextStatusOption,
+  getStatusTranslator,
+} from '../../../utils';
 import { useOutbound, useOutboundLines } from '../../api';
 
 const getStatusOptions = (
   currentStatus: InvoiceNodeStatus,
   getButtonLabel: (status: InvoiceNodeStatus) => string
 ): SplitButtonOption<InvoiceNodeStatus>[] => {
-  const options: [
-    SplitButtonOption<InvoiceNodeStatus>,
-    SplitButtonOption<InvoiceNodeStatus>,
-    SplitButtonOption<InvoiceNodeStatus>,
-    SplitButtonOption<InvoiceNodeStatus>,
-    SplitButtonOption<InvoiceNodeStatus>,
-    SplitButtonOption<InvoiceNodeStatus>,
-  ] = [
-    {
-      value: InvoiceNodeStatus.New,
-      label: getButtonLabel(InvoiceNodeStatus.New),
-      isDisabled: true,
-    },
-    {
-      value: InvoiceNodeStatus.Allocated,
-      label: getButtonLabel(InvoiceNodeStatus.Allocated),
-      isDisabled: true,
-    },
-    {
-      value: InvoiceNodeStatus.Picked,
-      label: getButtonLabel(InvoiceNodeStatus.Picked),
-      isDisabled: true,
-    },
-    {
-      value: InvoiceNodeStatus.Shipped,
-      label: getButtonLabel(InvoiceNodeStatus.Shipped),
-      isDisabled: true,
-    },
-    {
-      value: InvoiceNodeStatus.Delivered,
-      label: getButtonLabel(InvoiceNodeStatus.Delivered),
-      isDisabled: true,
-    },
-    {
-      value: InvoiceNodeStatus.Verified,
-      label: getButtonLabel(InvoiceNodeStatus.Verified),
-      isDisabled: true,
-    },
-  ];
+  const options = [
+    InvoiceNodeStatus.New,
+    InvoiceNodeStatus.Allocated,
+    InvoiceNodeStatus.Picked,
+    InvoiceNodeStatus.Shipped,
+    InvoiceNodeStatus.Delivered,
+    InvoiceNodeStatus.Verified,
+  ].map(status => ({
+    value: status,
+    label: getButtonLabel(status),
+    isDisabled: true,
+  }));
 
   if (currentStatus === InvoiceNodeStatus.New) {
-    options[1].isDisabled = false;
-    options[2].isDisabled = false;
-    options[3].isDisabled = false;
+    if (options[1]) options[1].isDisabled = false;
+    if (options[2]) options[2].isDisabled = false;
+    if (options[3]) options[3].isDisabled = false;
   }
 
   if (currentStatus === InvoiceNodeStatus.Allocated) {
-    options[2].isDisabled = false;
-    options[3].isDisabled = false;
+    if (options[2]) options[2].isDisabled = false;
+    if (options[3]) options[3].isDisabled = false;
   }
 
   if (currentStatus === InvoiceNodeStatus.Picked) {
-    options[3].isDisabled = false;
+    if (options[3]) options[3].isDisabled = false;
   }
 
   return options;
 };
 
-const getNextStatusOption = (
-  status: InvoiceNodeStatus,
-  options: SplitButtonOption<InvoiceNodeStatus>[]
-): SplitButtonOption<InvoiceNodeStatus> | null => {
-  if (!status) return options[0] ?? null;
-
-  const nextStatus = getNextOutboundStatus(status);
-  const nextStatusOption = options.find(o => o.value === nextStatus);
-  return nextStatusOption || null;
-};
-
-const getButtonLabel =
-  (t: ReturnType<typeof useTranslation>) =>
-  (invoiceStatus: InvoiceNodeStatus): string => {
-    return t('button.save-and-confirm-status', {
-      status: t(getStatusTranslation(invoiceStatus)),
-    });
-  };
-
 const useStatusChangeButton = () => {
   const t = useTranslation();
+  const { invoiceStatusOptions } = usePreferences();
   const { lines, status, onHold } = useOutbound.document.fields([
     'status',
     'onHold',
@@ -109,14 +71,25 @@ const useStatusChangeButton = () => {
     data?.status === InvoiceNodeStatus.New &&
     (data?.lines?.nodes ?? []).some(line => line.numberOfPacks === 0);
 
-  const options = useMemo(
-    () => getStatusOptions(status, getButtonLabel(t)),
-    [status, getButtonLabel]
-  );
+  const options = useMemo(() => {
+    let statusOptions = getStatusOptions(status, getButtonLabel(t));
+    if (invoiceStatusOptions) {
+      statusOptions = statusOptions.filter(
+        option => !!option.value && invoiceStatusOptions.includes(option.value)
+      );
+    }
+    return statusOptions;
+  }, [status, getButtonLabel, invoiceStatusOptions]);
+
+  // If the status has already been set, but is not included in the preferences,
+  // then use the previous valid status.
+  const currentStatus = invoiceStatusOptions?.includes(status)
+    ? status
+    : getPreviousStatus(status, invoiceStatusOptions ?? [], outboundStatuses);
 
   const [selectedOption, setSelectedOption] =
     useState<SplitButtonOption<InvoiceNodeStatus> | null>(() =>
-      getNextStatusOption(status, options)
+      getNextStatusOption(currentStatus, options)
     );
 
   const onConfirmStatusChange = async () => {
@@ -149,7 +122,7 @@ const useStatusChangeButton = () => {
       ? t('messages.confirm-zero-quantity-status')
       : t('messages.confirm-status-as', {
           status: selectedOption?.value
-            ? getStatusTranslation(selectedOption?.value)
+            ? getStatusTranslator(t)(selectedOption?.value)
             : '',
         }),
     onConfirm: onConfirmStatusChange,
@@ -158,8 +131,8 @@ const useStatusChangeButton = () => {
   // When the status of the invoice changes (after an update), set the selected option to the next status.
   // It would be set to the current status, which is now a disabled option.
   useEffect(() => {
-    setSelectedOption(() => getNextStatusOption(status, options));
-  }, [status, options]);
+    setSelectedOption(() => getNextStatusOption(currentStatus, options));
+  }, [status, options, currentStatus]);
 
   return {
     options,
@@ -211,7 +184,9 @@ export const StatusChangeButton = () => {
     t('messages.no-lines')
   );
 
-  const onHoldNotication = useDisabledNotificationToast(t('messages.on-hold'));
+  const onHoldNotification = useDisabledNotificationToast(
+    t('messages.on-hold')
+  );
 
   if (!selectedOption) return null;
   if (isDisabled) return null;
@@ -219,7 +194,7 @@ export const StatusChangeButton = () => {
   const onStatusClick = () => {
     if (hasPlaceholder) return alert();
     if (noLines) return noLinesNotification();
-    if (onHold) return onHoldNotication();
+    if (onHold) return onHoldNotification();
     return getConfirmation();
   };
 

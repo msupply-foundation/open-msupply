@@ -3,6 +3,7 @@ import * as Types from '@openmsupply-client/common';
 import { GraphQLClient, RequestOptions } from 'graphql-request';
 import gql from 'graphql-tag';
 import { ReasonOptionRowFragmentDoc } from '../ReasonOption/api/operations.generated';
+import { SyncFileReferenceFragmentDoc } from '../Documents/types.generated';
 type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
 export type ItemWithStatsFragment = {
   __typename: 'ItemNode';
@@ -41,6 +42,7 @@ export type RequestLineFragment = {
   additionInUnits: number;
   expiringUnits: number;
   daysOutOfStock: number;
+  pricePerUnit?: number | null;
   itemStats: {
     __typename: 'ItemStatsNode';
     availableStockOnHand: number;
@@ -101,6 +103,16 @@ export type RequestFragment = {
   programName?: string | null;
   orderType?: string | null;
   isEmergency: boolean;
+  documents: {
+    __typename: 'SyncFileReferenceConnector';
+    nodes: Array<{
+      __typename: 'SyncFileReferenceNode';
+      id: string;
+      fileName: string;
+      recordId: string;
+      createdDatetime: string;
+    }>;
+  };
   user?: {
     __typename: 'UserNode';
     username: string;
@@ -125,6 +137,7 @@ export type RequestFragment = {
       additionInUnits: number;
       expiringUnits: number;
       daysOutOfStock: number;
+      pricePerUnit?: number | null;
       itemStats: {
         __typename: 'ItemStatsNode';
         availableStockOnHand: number;
@@ -185,8 +198,19 @@ export type RequestFragment = {
     isSupplier: boolean;
     isOnHold: boolean;
     name: string;
+    margin?: number | null;
     store?: { __typename: 'StoreNode'; id: string; code: string } | null;
   };
+  destinationCustomer?: {
+    __typename: 'NameNode';
+    id: string;
+    code: string;
+    isCustomer: boolean;
+    isSupplier: boolean;
+    isOnHold: boolean;
+    name: string;
+    store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+  } | null;
   linkedRequisition?: {
     __typename: 'RequisitionNode';
     approvalStatus: Types.RequisitionNodeApprovalStatus;
@@ -197,6 +221,13 @@ export type RequestFragment = {
     name: string;
     startDate: string;
     endDate: string;
+  } | null;
+  createdFromRequisition?: {
+    __typename: 'RequisitionNode';
+    id: string;
+    requisitionNumber: number;
+    createdDatetime: string;
+    user?: { __typename: 'UserNode'; username: string } | null;
   } | null;
 };
 
@@ -246,6 +277,7 @@ export const RequestLineFragmentDoc = gql`
     additionInUnits
     expiringUnits
     daysOutOfStock
+    pricePerUnit
     itemStats {
       __typename
       availableStockOnHand
@@ -284,6 +316,12 @@ export const RequestFragmentDoc = gql`
     maxMonthsOfStock
     minMonthsOfStock
     approvalStatus
+    documents {
+      __typename
+      nodes {
+        ...SyncFileReference
+      }
+    }
     user {
       __typename
       username
@@ -320,6 +358,19 @@ export const RequestFragmentDoc = gql`
       isSupplier
       isOnHold
       name
+      margin
+      store {
+        id
+        code
+      }
+    }
+    destinationCustomer(storeId: $storeId) {
+      id
+      code
+      isCustomer
+      isSupplier
+      isOnHold
+      name
       store {
         id
         code
@@ -337,7 +388,17 @@ export const RequestFragmentDoc = gql`
     }
     orderType
     isEmergency
+    createdFromRequisition {
+      id
+      requisitionNumber
+      createdDatetime
+      user {
+        __typename
+        username
+      }
+    }
   }
+  ${SyncFileReferenceFragmentDoc}
   ${RequestLineFragmentDoc}
 `;
 export const OnlyHereToAvoidUnusedWarningsDocument = gql`

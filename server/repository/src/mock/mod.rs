@@ -179,6 +179,8 @@ use super::{
     StoreRowRepository, UnitRow, UnitRowRepository,
 };
 
+pub mod test_helpers;
+
 #[derive(Default, Clone, Debug)]
 pub struct MockData {
     pub user_accounts: Vec<UserAccountRow>,
@@ -596,7 +598,7 @@ impl MockDataInserts {
         self
     }
 
-    pub fn full_master_list(mut self) -> Self {
+    pub fn full_master_lists(mut self) -> Self {
         self.full_master_lists = true;
         self
     }
@@ -1365,7 +1367,7 @@ pub fn insert_mock_data(
         if inserts.assets {
             for row in &mock_data.assets {
                 let repo = AssetRowRepository::new(connection);
-                repo.upsert_one(row).unwrap();
+                repo.upsert_one(row, None).unwrap();
             }
         }
 

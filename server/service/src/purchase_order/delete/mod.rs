@@ -36,7 +36,7 @@ pub fn delete_purchase_order(
                 activity_log_entry(
                     ctx,
                     ActivityLogType::PurchaseOrderDeleted,
-                    Some(id.to_owned()),
+                    Some(id.to_string()),
                     None,
                     None,
                 )?;

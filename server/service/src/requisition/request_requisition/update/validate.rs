@@ -6,6 +6,7 @@ use crate::{
     },
     store_preference::get_store_preferences,
     validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors},
+    NullableUpdate,
 };
 use repository::{
     reason_option_row::ReasonOptionType,
@@ -22,7 +23,7 @@ pub fn validate(
     let requisition_row = check_requisition_row_exists(connection, &input.id)?
         .ok_or(OutError::RequisitionDoesNotExist)?;
     let requisition_lines = RequisitionLineRepository::new(connection).query_by_filter(
-        RequisitionLineFilter::new().requisition_id(EqualFilter::equal_to(&requisition_row.id)),
+        RequisitionLineFilter::new().requisition_id(EqualFilter::equal_to(requisition_row.id.to_string())),
     )?;
     let status_changed = input.status.is_some();
 
@@ -95,15 +96,29 @@ pub fn validate(
         }
     }
 
-    let other_party_id = match &input.other_party_id {
-        None => return Ok((requisition_row, status_changed)),
-        Some(other_party_id) => other_party_id,
+    let Some(supplier_id) = &input.other_party_id else {
+        return Ok((requisition_row, status_changed));
     };
+    validate_supplier(connection, store_id, supplier_id)?;
 
-    let other_party = check_other_party(
+    let original_customer_id = match &input.original_customer_id {
+        Some(NullableUpdate { value: Some(id) }) => id,
+        _ => return Ok((requisition_row, status_changed)),
+    };
+    validate_original_customer(connection, store_id, original_customer_id)?;
+
+    Ok((requisition_row, status_changed))
+}
+
+fn validate_supplier(
+    connection: &StorageConnection,
+    store_id: &str,
+    supplier_id: &str,
+) -> Result<(), OutError> {
+    let supplier = check_other_party(
         connection,
         store_id,
-        other_party_id,
+        supplier_id,
         CheckOtherPartyType::Supplier,
     )
     .map_err(|e| match e {
@@ -115,9 +130,34 @@ pub fn validate(
         }
     })?;
 
-    other_party
-        .store_id()
-        .ok_or(OutError::OtherPartyIsNotAStore)?;
+    supplier.store_id().ok_or(OutError::OtherPartyIsNotAStore)?;
 
-    Ok((requisition_row, status_changed))
+    Ok(())
+}
+
+fn validate_original_customer(
+    connection: &StorageConnection,
+    store_id: &str,
+    original_customer_id: &str,
+) -> Result<(), OutError> {
+    let original_customer = check_other_party(
+        connection,
+        store_id,
+        original_customer_id,
+        CheckOtherPartyType::Customer,
+    )
+    .map_err(|e| match e {
+        OtherPartyErrors::OtherPartyDoesNotExist => OutError::OriginalCustomerDoesNotExist,
+        OtherPartyErrors::OtherPartyNotVisible => OutError::OriginalCustomerNotVisible,
+        OtherPartyErrors::TypeMismatched => OutError::OriginalCustomerNotACustomer,
+        OtherPartyErrors::DatabaseError(repository_error) => {
+            OutError::DatabaseError(repository_error)
+        }
+    })?;
+
+    original_customer
+        .store_id()
+        .ok_or(OutError::OriginalCustomerIsNotAStore)?;
+
+    Ok(())
 }

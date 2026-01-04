@@ -20,7 +20,7 @@ pub fn insert_asset_log_reason(
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::MutateAsset,
+            resource: Resource::EditAsset,
             store_id: None,
         },
     )?;
@@ -177,9 +177,9 @@ mod test {
         // Record already exists
         let test_service = TestService(Box::new(|_| {
             Ok(AssetLogReason {
-                id: "id".to_owned(),
+                id: "id".to_string(),
                 asset_log_status: AssetLogStatus::Functioning,
-                reason: "reason".to_owned(),
+                reason: "reason".to_string(),
                 ..Default::default()
             })
         }));

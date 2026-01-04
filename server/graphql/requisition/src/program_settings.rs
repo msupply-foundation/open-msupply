@@ -172,3 +172,24 @@ pub fn get_program_requisition_settings_by_customer(
 
     Ok(response)
 }
+
+pub fn has_customer_program_requisition_settings(
+    ctx: &Context<'_>,
+    store_id: &str,
+    customer_name_ids: &[String],
+) -> Result<bool> {
+    let user = validate_auth(
+        ctx,
+        &ResourceAccessRequest {
+            resource: Resource::QueryRequisition,
+            store_id: Some(store_id.to_string()),
+        },
+    )?;
+
+    let service_provider = ctx.service_provider();
+    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
+
+    Ok(service_provider
+        .requisition_service
+        .has_customer_program_requisition_settings(&service_context, customer_name_ids)?)
+}

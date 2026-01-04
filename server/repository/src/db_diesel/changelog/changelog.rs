@@ -75,7 +75,6 @@ pub enum ChangelogTableName {
     Requisition,
     RequisitionLine,
     ActivityLog,
-    InventoryAdjustmentReason,
     Barcode,
     Clinician,
     ClinicianStoreJoin,
@@ -111,6 +110,7 @@ pub enum ChangelogTableName {
     VaccineCourseItem,
     VaccineCourseDose,
     Vaccination,
+    Encounter,
     ItemVariant,
     PackagingVariant,
     IndicatorValue,
@@ -131,6 +131,7 @@ pub enum ChangelogTableName {
     PurchaseOrder,
     PurchaseOrderLine,
     GoodsReceived,
+    MasterList,
 }
 
 pub(crate) enum ChangeLogSyncStyle {
@@ -140,6 +141,7 @@ pub(crate) enum ChangeLogSyncStyle {
     File,
     RemoteAndCentral, // These records will sync like remote record if store_id exist, otherwise they will sync like central records
     RemoteToCentral,  // These records won't sync back to the remote site on re-initalisation
+    ProcessorOnly,    // There records won't sync anywhere, only used for processor tasks
 }
 // When adding a new change log record type, specify how it should be synced
 // If new requirements are needed a different ChangeLogSyncStyle can be added
@@ -158,7 +160,6 @@ impl ChangelogTableName {
             ChangelogTableName::Requisition => ChangeLogSyncStyle::Legacy,
             ChangelogTableName::RequisitionLine => ChangeLogSyncStyle::Legacy,
             ChangelogTableName::ActivityLog => ChangeLogSyncStyle::Legacy,
-            ChangelogTableName::InventoryAdjustmentReason => ChangeLogSyncStyle::Legacy,
             ChangelogTableName::Barcode => ChangeLogSyncStyle::Legacy,
             ChangelogTableName::Clinician => ChangeLogSyncStyle::Legacy,
             ChangelogTableName::ClinicianStoreJoin => ChangeLogSyncStyle::Legacy,
@@ -194,12 +195,13 @@ impl ChangelogTableName {
             ChangelogTableName::VaccineCourseItem => ChangeLogSyncStyle::Central,
             ChangelogTableName::VaccineCourseDose => ChangeLogSyncStyle::Central,
             ChangelogTableName::Vaccination => ChangeLogSyncStyle::Remote,
+            ChangelogTableName::Encounter => ChangeLogSyncStyle::Remote,
             ChangelogTableName::ItemVariant => ChangeLogSyncStyle::Central,
             ChangelogTableName::PackagingVariant => ChangeLogSyncStyle::Central,
             ChangelogTableName::IndicatorValue => ChangeLogSyncStyle::Legacy,
             ChangelogTableName::BundledItem => ChangeLogSyncStyle::Central,
             ChangelogTableName::ContactForm => ChangeLogSyncStyle::RemoteToCentral,
-            ChangelogTableName::SystemLog => ChangeLogSyncStyle::RemoteToCentral, // System Log records won't be synced to remote site on initialisation
+            ChangelogTableName::SystemLog => ChangeLogSyncStyle::RemoteToCentral,
             ChangelogTableName::InsuranceProvider => ChangeLogSyncStyle::Legacy,
             ChangelogTableName::FrontendPlugin => ChangeLogSyncStyle::Central,
             ChangelogTableName::NameInsuranceJoin => ChangeLogSyncStyle::Legacy,
@@ -214,6 +216,7 @@ impl ChangelogTableName {
             ChangelogTableName::PurchaseOrderLine => ChangeLogSyncStyle::Legacy,
             ChangelogTableName::GoodsReceived => ChangeLogSyncStyle::Legacy,
             ChangelogTableName::GoodsReceivedLine => ChangeLogSyncStyle::Legacy,
+            ChangelogTableName::MasterList => ChangeLogSyncStyle::ProcessorOnly,
         }
     }
 }
@@ -228,7 +231,7 @@ pub struct ChangeLogInsertRow {
     pub store_id: Option<String>,
 }
 
-#[derive(Clone, Queryable, Debug, PartialEq, Insertable, Serialize, Deserialize, TS)]
+#[derive(Clone, Queryable, Debug, PartialEq, Insertable, Serialize, Deserialize, TS, Default)]
 #[diesel(table_name = changelog)]
 pub struct ChangelogRow {
     pub cursor: i64,
@@ -686,22 +689,6 @@ where
     }
 }
 
-impl Default for ChangelogRow {
-    fn default() -> Self {
-        Self {
-            row_action: RowActionType::Upsert,
-            table_name: ChangelogTableName::Invoice,
-            // Default
-            cursor: Default::default(),
-            record_id: Default::default(),
-            name_id: Default::default(),
-            store_id: Default::default(),
-            is_sync_update: Default::default(),
-            source_site_id: Default::default(),
-        }
-    }
-}
-
 impl ChangelogFilter {
     pub fn new() -> Self {
         Default::default()
@@ -750,6 +737,13 @@ impl ChangelogTableName {
             ..Default::default()
         }
     }
+
+    pub fn not_equal_to(&self) -> EqualFilter<Self> {
+        EqualFilter {
+            not_equal_to: Some(self.clone()),
+            ..Default::default()
+        }
+    }
 }
 
 impl RowActionType {
@@ -763,11 +757,14 @@ impl RowActionType {
 
 #[cfg(test)]
 mod test {
+    use super::*;
+    use strum::IntoEnumIterator;
     use tokio::sync::oneshot;
+    use util::assert_matches;
 
     use crate::{
-        mock::MockDataInserts, test_db::setup_all, ChangelogRepository, ClinicianRow,
-        ClinicianRowRepository, ClinicianRowRepositoryTrait, RepositoryError, TransactionError,
+        mock::MockDataInserts, test_db::setup_all, ClinicianRow, ClinicianRowRepository,
+        ClinicianRowRepositoryTrait, RepositoryError, TransactionError,
     };
 
     /// Example from with_locked_changelog_table() comment
@@ -813,11 +810,40 @@ mod test {
             .unwrap();
 
         let changelogs = ChangelogRepository::new(&connection)
-            .changelogs(0, 10, None)
+            .changelogs(
+                0,
+                10,
+                Some(
+                    ChangelogFilter::new()
+                        .table_name(EqualFilter::not_equal_to(ChangelogTableName::SystemLog)),
+                ),
+            )
             .unwrap();
         assert_eq!(changelogs.len(), 3);
 
         // being good and awaiting the task to finish orderly and check it did run fine
         process_2.await.unwrap().unwrap();
+    }
+
+    #[actix_rt::test]
+    async fn changelog_enum_check() {
+        let (_, connection, _, _) =
+            setup_all("changelog_enum_check", MockDataInserts::none()).await;
+
+        let repo = ChangelogRepository::new(&connection);
+        // Try upsert all variants, confirm that diesel enums match postgres
+        for table_name in ChangelogTableName::iter() {
+            let filter = ChangelogFilter::new().table_name(table_name.equal_to());
+
+            let result = repo.insert(&ChangeLogInsertRow {
+                table_name,
+                ..Default::default()
+            });
+            assert_matches!(result, Ok(_));
+
+            let result = repo.changelogs(1, 100, Some(filter)).unwrap().pop();
+
+            assert_matches!(result, Some(_));
+        }
     }
 }

@@ -48,7 +48,7 @@ pub fn update_demographic_projection(
             activity_log_entry(
                 ctx,
                 ActivityLogType::DemographicProjectionUpdated,
-                Some(updated_demographic_projection_row.id.to_owned()),
+                Some(updated_demographic_projection_row.id.to_string()),
                 Some(serde_json::to_string(&demographic_projection_row).unwrap_or_default()),
                 Some(
                     serde_json::to_string(&updated_demographic_projection_row).unwrap_or_default(),

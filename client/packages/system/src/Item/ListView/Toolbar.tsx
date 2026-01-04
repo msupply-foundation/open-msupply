@@ -4,10 +4,16 @@ import {
   useTranslation,
   FilterMenu,
   Box,
+  usePreferences,
 } from '@openmsupply-client/common';
 
 export const Toolbar: FC = () => {
   const t = useTranslation();
+  const {
+    numberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts:
+      numMonthsConsumption,
+  } = usePreferences();
+
   return (
     <AppBarContentPortal
       sx={{
@@ -30,15 +36,23 @@ export const Toolbar: FC = () => {
             {
               type: 'enum',
               name: t('label.in-stock'),
-              urlParameter: 'hasStockOnHand',
+              urlParameter: 'stockStatus',
               options: [
                 {
                   label: t('label.in-stock'),
-                  value: 'true', // string value will be parsed as boolean from URL query params
+                  value: 'inStock', // string value will be parsed as boolean from URL query params
+                },
+                {
+                  label: t('label.in-stock-with-recent-consumption'),
+                  value: 'inStockWithRecentConsumption',
                 },
                 {
                   label: t('label.out-of-stock'),
-                  value: 'false',
+                  value: 'outOfStock',
+                },
+                {
+                  label: t('label.out-of-stock-with-recent-consumption'),
+                  value: 'outOfStockWithRecentConsumption',
                 },
               ],
             },
@@ -56,6 +70,25 @@ export const Toolbar: FC = () => {
               minValue: 0,
               decimalLimit: 0,
             },
+            ...(numMonthsConsumption
+              ? [
+                  {
+                    type: 'enum' as const,
+                    name: t('label.products-at-risk-of-being-out-of-stock'),
+                    urlParameter: 'productsAtRiskOfBeingOutOfStock',
+                    options: [
+                      {
+                        label: t('label.show-products-at-risk'),
+                        value: 'true',
+                      },
+                      {
+                        label: t('label.show-products-not-at-risk'),
+                        value: 'false',
+                      },
+                    ],
+                  },
+                ]
+              : []),
           ]}
         />
       </Box>

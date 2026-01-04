@@ -14,7 +14,8 @@ pub(crate) fn fix(
     operation_log.push_str("Starting fix_cancellations\n");
 
     let ledger_lines = StockLineLedgerRepository::new(connection).query_by_filter(
-        StockLineLedgerFilter::new().stock_line_id(EqualFilter::equal_to(stock_line_id)),
+        StockLineLedgerFilter::new()
+            .stock_line_id(EqualFilter::equal_to(stock_line_id.to_string())),
     )?;
 
     let balance_summary = ledger_balance_summary(connection, &ledger_lines, stock_line_id)?;
@@ -28,7 +29,7 @@ pub(crate) fn fix(
 
     let cancelled = InvoiceLineRepository::new(connection).query_by_filter(
         InvoiceLineFilter::new()
-            .stock_line_id(EqualFilter::equal_to(stock_line_id))
+            .stock_line_id(EqualFilter::equal_to(stock_line_id.to_string()))
             .invoice_status(InvoiceStatus::Cancelled.equal_to()),
     )?;
 
@@ -78,12 +79,12 @@ pub(crate) mod test {
     use super::*;
     use crate::{
         ledger_fix::is_ledger_fixed,
-        test_helpers::{
-            make_movements, setup_all_with_data_and_service_provider, ServiceTestContext,
-        },
+        test_helpers::{setup_all_with_data_and_service_provider, ServiceTestContext},
     };
     use repository::{
-        mock::{mock_item_a, mock_store_a, MockData, MockDataInserts},
+        mock::{
+            mock_item_a, mock_store_a, test_helpers::make_movements, MockData, MockDataInserts,
+        },
         InvoiceType, KeyValueStoreRepository, StockLineRow,
     };
 

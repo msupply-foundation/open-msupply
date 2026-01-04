@@ -20,7 +20,7 @@ pub fn get_master_list_lines(
 
     let filter = filter
         .unwrap_or_default()
-        .master_list_id(EqualFilter::equal_to(master_list_id));
+        .master_list_id(EqualFilter::equal_to(master_list_id.to_string()));
 
     Ok(ListResult {
         rows: repository.query(
@@ -38,7 +38,7 @@ pub fn get_master_list_lines_count(
     master_list_id: &str,
 ) -> Result<u32, RepositoryError> {
     let repository = MasterListLineRepository::new(connection);
-    let filter = MasterListLineFilter::new().master_list_id(EqualFilter::equal_to(master_list_id));
+    let filter = MasterListLineFilter::new().master_list_id(EqualFilter::equal_to(master_list_id.to_string()));
 
     Ok(i64_to_u32(repository.count(Some(filter))?))
 }

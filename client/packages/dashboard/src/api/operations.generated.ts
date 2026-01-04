@@ -35,6 +35,9 @@ export type ItemCountsQuery = {
       noStock: number;
       moreThanSixMonthsStock: number;
       total: number;
+      outOfStockProducts: number;
+      productsAtRiskOfBeingOutOfStock: number;
+      productsOverstocked: number;
     };
   };
 };
@@ -124,6 +127,9 @@ export const ItemCountsDocument = gql`
         noStock
         moreThanSixMonthsStock
         total
+        outOfStockProducts
+        productsAtRiskOfBeingOutOfStock
+        productsOverstocked
       }
     }
   }

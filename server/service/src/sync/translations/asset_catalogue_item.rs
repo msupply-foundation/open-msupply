@@ -4,8 +4,8 @@ use repository::{
 };
 
 use crate::sync::translations::{
-    asset_category::AssetCategoryTranslation, asset_class::AssetClassTranslation,
-    asset_type::AssetTypeTranslation,
+    asset_catalogue_type::AssetCatalogueTypeTranslation, asset_category::AssetCategoryTranslation,
+    asset_class::AssetClassTranslation,
 };
 
 use super::{
@@ -28,7 +28,7 @@ impl SyncTranslation for AssetCatalogueItemTranslation {
     fn pull_dependencies(&self) -> Vec<&str> {
         vec![
             AssetCategoryTranslation.table_name(),
-            AssetTypeTranslation.table_name(),
+            AssetCatalogueTypeTranslation.table_name(),
             AssetClassTranslation.table_name(),
         ]
     }

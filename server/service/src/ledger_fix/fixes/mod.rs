@@ -235,13 +235,14 @@ fn find_latest_finalised_stocktake_for_stock_line(
     store_id: &String,
 ) -> Result<chrono::NaiveDateTime, LedgerFixError> {
     let filter = StocktakeFilter::new()
-        .store_id(EqualFilter::equal_to(store_id))
+        .store_id(EqualFilter::equal_to(store_id.to_string()))
         .status(EqualFilter {
             equal_to: Some(StocktakeStatus::Finalised),
             ..Default::default()
         })
         .stocktake_line(
-            StocktakeLineFilter::new().stock_line_id(EqualFilter::equal_to(stock_line_id)),
+            StocktakeLineFilter::new()
+                .stock_line_id(EqualFilter::equal_to(stock_line_id.to_string())),
         );
     Ok(StocktakeRepository::new(connection)
         .query(

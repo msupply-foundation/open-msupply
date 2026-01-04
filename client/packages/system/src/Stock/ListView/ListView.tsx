@@ -1,44 +1,47 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
-  TableProvider,
-  DataTable,
-  useColumns,
-  createTableStore,
   useTranslation,
   NothingHere,
   useUrlQueryParams,
-  DateUtils,
-  ColumnDescription,
-  TooltipTextCell,
+  TextWithTooltipCell,
   useNavigate,
-  RouteBuilder,
-  CurrencyCell,
-  ExpiryDateCell,
   usePluginProvider,
   useEditModal,
-  CellProps,
-  UnitsAndMaybeDoses,
   usePreferences,
+  MaterialTable,
+  usePaginatedMaterialTable,
+  ColumnDef,
+  ColumnType,
+  UnitsAndDosesCell,
+  ChipTableCell,
 } from '@openmsupply-client/common';
 import { StockLineRowFragment } from '../api';
 import { AppBarButtons } from './AppBarButtons';
-import { Toolbar } from './Toolbar';
-import { AppRoute } from '@openmsupply-client/config';
 import { useStockList } from '../api/hooks/useStockList';
 import { NewStockLineModal } from '../Components/NewStockLineModal';
+import { ExpiryDateCell } from '@openmsupply-client/common/src/ui/layout/tables/material-react-table/components/ExpiryDateCell';
 
-const StockListComponent = () => {
+export const StockListView = () => {
+  const t = useTranslation();
+  const navigate = useNavigate();
+  const { plugins } = usePluginProvider();
+  const { manageVvmStatusForStock } = usePreferences();
+  const { isOpen, onClose, onOpen } = useEditModal();
+
   const {
-    updatePaginationQuery,
-    updateSortQuery,
-    queryParams: { sortBy, page, first, offset, filterBy },
+    queryParams: { sortBy, first, offset, filterBy },
   } = useUrlQueryParams({
-    initialSort: { key: 'itemName', dir: 'asc' },
     filters: [
       { key: 'vvmStatusId', condition: 'equalTo' },
       { key: 'search' },
       {
         key: 'location.code',
+      },
+      {
+        key: 'name',
+      },
+      {
+        key: 'code',
       },
       {
         key: 'expiryDate',
@@ -49,7 +52,6 @@ const StockListComponent = () => {
       },
     ],
   });
-  const navigate = useNavigate();
   const queryParams = {
     filterBy: { ...filterBy },
     offset,
@@ -57,216 +59,183 @@ const StockListComponent = () => {
     first,
   };
 
-  const pagination = { page, first, offset };
+  const { data, isFetching, isError } = useStockList(queryParams);
 
-  const t = useTranslation();
-  const { data, isLoading, isError } = useStockList(queryParams);
-  const { plugins } = usePluginProvider();
-  const { manageVvmStatusForStock } = usePreferences();
-
-  const { isOpen, onClose, onOpen } = useEditModal();
-
-  const columnDefinitions: ColumnDescription<StockLineRowFragment>[] = [
-    {
-      key: 'itemCode',
-      accessor: ({ rowData }) => rowData.item.code,
-      label: 'label.code',
-      Cell: TooltipTextCell,
-      width: 100,
-    },
-    {
-      key: 'itemName',
-      accessor: ({ rowData }) => rowData.item.name,
-      label: 'label.name',
-      Cell: TooltipTextCell,
-      width: 350,
-    },
-    // TODO: Add back when design has been decided
-    // {
-    //   key: 'masterList',
-    //   label: 'label.master-list',
-    //   Cell: ChipTableCell,
-    //   width: 150,
-    //   accessor: ({ rowData }) => rowData.item.masterLists.map(m => m.name),
-    // },
-    {
-      key: 'batch',
-      label: 'label.batch',
-      Cell: TooltipTextCell,
-      width: 100,
-      defaultHideOnMobile: true,
-    },
-    {
-      key: 'expiryDate',
-      label: 'label.expiry',
-      accessor: ({ rowData }) => DateUtils.getNaiveDate(rowData.expiryDate),
-      Cell: ExpiryDateCell,
-      width: 120,
-      defaultHideOnMobile: true,
-    },
-  ];
-
-  if (manageVvmStatusForStock) {
-    columnDefinitions.push({
-      key: 'vvmStatus',
-      label: 'label.vvm-status',
-      width: 150,
-      accessor: ({ rowData }) => rowData.vvmStatus?.description,
-      defaultHideOnMobile: true,
-    });
-  }
-
-  columnDefinitions.push(
-    {
-      key: 'location',
-      label: 'label.location',
-      Cell: TooltipTextCell,
-      width: 100,
-      defaultHideOnMobile: true,
-      accessor: ({ rowData }) => rowData.location?.code,
-    },
-    {
-      key: 'itemUnit',
-      label: 'label.unit',
-      accessor: ({ rowData }) => rowData.item.unitName,
-      sortable: false,
-      Cell: TooltipTextCell,
-      width: 75,
-      defaultHideOnMobile: true,
-    },
-    {
-      key: 'packSize',
-      label: 'label.pack-size',
-      Cell: TooltipTextCell,
-      width: 125,
-      defaultHideOnMobile: true,
-    },
-    [
-      'numberOfPacks',
+  const mrtColumns = useMemo(
+    (): ColumnDef<StockLineRowFragment>[] => [
       {
-        accessor: ({ rowData }) => rowData.totalNumberOfPacks,
-        width: 125,
+        id: 'code',
+        accessorKey: 'item.code',
+        header: t('label.code'),
+        Cell: TextWithTooltipCell,
+        size: 100,
+        enableSorting: true,
+        enableColumnFilter: true,
       },
-    ],
-    [
-      'stockOnHand',
       {
-        accessor: ({ rowData }) =>
-          rowData.totalNumberOfPacks * rowData.packSize,
-        sortable: false,
-        maxWidth: 'unset',
+        id: 'name',
+        accessorKey: 'item.name',
+        header: t('label.name'),
+        Cell: TextWithTooltipCell,
+        size: 350,
+        enableSorting: true,
+        enableColumnFilter: true,
+      },
+      {
+        id: 'masterList.name',
+        header: t('label.master-lists'),
+        accessorFn: row => row.item?.masterLists?.map(m => m.name) ?? [],
+        Cell: ChipTableCell,
+        size: 150,
+        enableColumnFilter: true,
+      },
+      {
+        accessorKey: 'batch',
+        header: t('label.batch'),
+        Cell: TextWithTooltipCell,
+        size: 100,
         defaultHideOnMobile: true,
-        Cell: UnitsAndMaybeDosesCell,
+        enableSorting: true,
       },
-    ],
-    [
-      'availableStockOnHand',
       {
-        label: 'label.available-soh',
-        description: 'description.available-soh',
-        accessor: ({ rowData }) =>
-          rowData.availableNumberOfPacks * rowData.packSize,
-        sortable: false,
-        maxWidth: 'unset',
+        id: 'expiryDate',
+        header: t('label.expiry'),
+        accessorFn: row => (row.expiryDate ? new Date(row.expiryDate) : null),
+        columnType: ColumnType.Date,
+        Cell: ExpiryDateCell,
+        size: 120,
         defaultHideOnMobile: true,
-        Cell: UnitsAndMaybeDosesCell,
+        enableColumnFilter: true,
+        dateFilterFormat: 'date',
+        enableSorting: true,
       },
+
+      {
+        id: 'vvmStatus',
+        header: t('label.vvm-status'),
+        accessorFn: row => row.vvmStatus?.description ?? '',
+        Cell: TextWithTooltipCell,
+        size: 150,
+        defaultHideOnMobile: true,
+        includeColumn: manageVvmStatusForStock,
+        enableSorting: true,
+      },
+
+      {
+        id: 'location.code',
+        accessorFn: row => row.location?.code || '',
+        header: t('label.location'),
+        Cell: TextWithTooltipCell,
+        size: 100,
+        defaultHideOnMobile: true,
+        enableSorting: true,
+        enableColumnFilter: true,
+      },
+      {
+        id: 'itemUnit',
+        accessorKey: 'item.unitName',
+        header: t('label.unit'),
+        enableSorting: false,
+        Cell: TextWithTooltipCell,
+        size: 75,
+        defaultHideOnMobile: true,
+      },
+      {
+        header: t('label.pack-size'),
+        accessorKey: 'packSize',
+        Cell: TextWithTooltipCell,
+        align: 'right',
+        size: 125,
+        defaultHideOnMobile: true,
+        enableSorting: true,
+      },
+      {
+        header: t('label.pack-quantity'),
+        accessorKey: 'totalNumberOfPacks',
+        columnType: ColumnType.Number,
+        align: 'right',
+        size: 125,
+        enableSorting: true,
+      },
+      {
+        header: t('label.soh'),
+        description: t('description.soh'),
+        accessorFn: row => row.totalNumberOfPacks * row.packSize,
+        Cell: UnitsAndDosesCell,
+        align: 'right',
+        enableSorting: false,
+        defaultHideOnMobile: true,
+      },
+      {
+        id: 'availableStockOnHand',
+        header: t('label.available-soh'),
+        description: t('description.available-soh'),
+        accessorFn: row => row.availableNumberOfPacks * row.packSize,
+        Cell: UnitsAndDosesCell,
+        align: 'right',
+        enableSorting: false,
+        defaultHideOnMobile: true,
+      },
+      {
+        header: t('label.pack-cost-price'),
+        accessorKey: 'costPricePerPack',
+        description: t('description.pack-cost'),
+        columnType: ColumnType.Currency,
+        size: 125,
+        defaultHideOnMobile: true,
+        enableSorting: true,
+      },
+      {
+        id: 'totalCost',
+        header: t('label.total'),
+        description: t('description.total-cost'),
+        accessorFn: row => row.totalNumberOfPacks * row.costPricePerPack,
+        columnType: ColumnType.Currency,
+        enableSorting: false,
+        size: 125,
+        defaultHideOnMobile: true,
+      },
+      {
+        id: 'supplierName',
+        header: t('label.supplier'),
+        accessorFn: row =>
+          row.supplierName ? row.supplierName : t('message.no-supplier'),
+        Cell: TextWithTooltipCell,
+        size: 190,
+        defaultHideOnMobile: true,
+        enableSorting: true,
+      },
+      ...(plugins.stockLine?.tableColumn || []),
     ],
-    {
-      key: 'costPricePerPack',
-      label: 'label.pack-cost-price',
-      description: 'description.pack-cost',
-      Cell: CurrencyCell,
-      width: 125,
-      defaultHideOnMobile: true,
-    },
-    {
-      key: 'totalValue',
-      label: 'label.total',
-      accessor: ({ rowData }) =>
-        rowData.totalNumberOfPacks * rowData.costPricePerPack,
-      Cell: CurrencyCell,
-      description: 'description.total-cost',
-      sortable: false,
-      width: 125,
-      defaultHideOnMobile: true,
-    },
-    {
-      key: 'supplierName',
-      label: 'label.supplier',
-      accessor: ({ rowData }) =>
-        rowData.supplierName ? rowData.supplierName : t('message.no-supplier'),
-      Cell: TooltipTextCell,
-      width: 190,
-      defaultHideOnMobile: true,
-    }
-    // TODO: re-enable when this table is updated, plugin column API is for the new table implementation
-    // ...(plugins.stockLine?.tableColumn || [])
+    [manageVvmStatusForStock, plugins.stockLine?.tableColumn]
   );
 
-  const columns = useColumns<StockLineRowFragment>(
-    columnDefinitions,
-    {
-      sortBy,
-      onChangeSortBy: updateSortQuery,
-    },
-    [sortBy, plugins.stockLine?.tableColumn]
-  );
+  const { table } = usePaginatedMaterialTable<StockLineRowFragment>({
+    tableId: 'stock-list',
+    isLoading: isFetching,
+    isError,
+    onRowClick: row => navigate(row.id),
+    columns: mrtColumns,
+    data: data?.nodes,
+    totalCount: data?.totalCount ?? 0,
+    enableRowSelection: false,
+    noDataElement: (
+      <NothingHere
+        body={t('error.no-stock')}
+        onCreate={onOpen}
+        buttonText={t('button.add-new-stock')}
+      />
+    ),
+  });
 
   return (
     <>
-      <Toolbar />
       <AppBarButtons exportFilter={filterBy} />
       {plugins.stockLine?.tableStateLoader?.map((StateLoader, index) => (
         <StateLoader key={index} stockLines={data?.nodes ?? []} />
       ))}
       {isOpen && <NewStockLineModal isOpen={isOpen} onClose={onClose} />}
-      <DataTable
-        id="stock-list"
-        pagination={{ ...pagination, total: data?.totalCount ?? 0 }}
-        columns={columns}
-        data={data?.nodes ?? []}
-        onChangePage={updatePaginationQuery}
-        noDataElement={
-          <NothingHere
-            body={t('error.no-stock')}
-            onCreate={onOpen}
-            buttonText={t('button.add-new-stock')}
-          />
-        }
-        isError={isError}
-        isLoading={isLoading}
-        enableColumnSelection
-        onRowClick={stockline => {
-          navigate(
-            RouteBuilder.create(AppRoute.Inventory)
-              .addPart(AppRoute.Stock)
-              .addPart(stockline.id)
-              .build()
-          );
-        }}
-      />
+      <MaterialTable table={table} />
     </>
-  );
-};
-
-export const StockListView = () => (
-  <TableProvider createStore={createTableStore}>
-    <StockListComponent />
-  </TableProvider>
-);
-
-const UnitsAndMaybeDosesCell = (props: CellProps<StockLineRowFragment>) => {
-  const { rowData, column } = props;
-  const units = Number(column.accessor({ rowData })) ?? 0;
-  const { isVaccine, dosesPerUnit } = rowData.item;
-
-  return (
-    <UnitsAndMaybeDoses
-      numberCellProps={props}
-      units={units}
-      isVaccine={isVaccine}
-      dosesPerUnit={dosesPerUnit}
-    />
   );
 };

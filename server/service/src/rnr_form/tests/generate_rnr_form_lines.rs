@@ -30,7 +30,7 @@ mod generate_rnr_form_lines {
                 .name_store_joins()
                 .items()
                 .rnr_forms()
-                .full_master_list(),
+                .full_master_lists(),
             MockData {
                 // During the R&R period (jan 2024)
                 invoices: vec![
@@ -175,7 +175,7 @@ mod generate_rnr_form_lines {
         let result = get_usage_map(
             &connection,
             &mock_store_a().id,
-            Some(EqualFilter::equal_to(&item_query_test1().id)),
+            Some(EqualFilter::equal_to(item_query_test1().id)),
             31,
             &NaiveDate::from_ymd_opt(2024, 1, 31).unwrap(),
         )
@@ -452,7 +452,7 @@ mod generate_rnr_form_lines {
         let result = get_previous_monthly_consumption(
             &connection,
             // Filter so that no rnr_forms are returned
-            RnRFormFilter::new().id(EqualFilter::equal_to("not-exists")),
+            RnRFormFilter::new().id(EqualFilter::equal_to("not-exists".to_string())),
         )
         .unwrap();
         assert_eq!(result.get(&item_query_test1().id), None);
@@ -461,7 +461,7 @@ mod generate_rnr_form_lines {
         let result = get_previous_monthly_consumption(
             &connection,
             // Filter so that no rnr_forms are returned
-            RnRFormFilter::new().id(EqualFilter::equal_to("rnr_form_1")),
+            RnRFormFilter::new().id(EqualFilter::equal_to("rnr_form_1".to_string())),
         )
         .unwrap();
         assert_eq!(

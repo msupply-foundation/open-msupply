@@ -250,7 +250,7 @@ mod graphql {
         "#;
 
         // Success
-        let test_service = TestService(Box::new(|_| Ok("deleted".to_owned())));
+        let test_service = TestService(Box::new(|_| Ok("deleted".to_string())));
         let expected = json!({
             "deleteOutboundShipmentUnallocatedLine": {
                 "id": "deleted",

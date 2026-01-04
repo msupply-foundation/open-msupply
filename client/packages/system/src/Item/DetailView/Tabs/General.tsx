@@ -7,6 +7,7 @@ import {
   Checkbox,
   Grid,
   NumericTextInput,
+  usePluginProvider,
 } from '@openmsupply-client/common';
 import { ItemFragment } from '../../api';
 import { LocationTypeInput } from '../../Components';
@@ -18,6 +19,8 @@ interface GeneralTabProps {
 
 export const GeneralTab = ({ item, isLoading }: GeneralTabProps) => {
   const t = useTranslation();
+  const { plugins } = usePluginProvider();
+
   const isDisabled = true;
 
   if (isLoading) return null;
@@ -185,6 +188,13 @@ export const GeneralTab = ({ item, isLoading }: GeneralTabProps) => {
             }
           />
         </DetailSection>
+        {plugins.item?.detailViewField && (
+          <DetailSection title={t('title.catalogue-price')}>
+            {plugins.item.detailViewField.map((Plugin, index) => (
+              <Plugin key={index} item={item} />
+            ))}
+          </DetailSection>
+        )}
       </Grid>
     </DetailContainer>
   );

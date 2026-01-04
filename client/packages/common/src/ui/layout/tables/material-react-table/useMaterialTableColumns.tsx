@@ -37,7 +37,6 @@ export const useMaterialTableColumns = <T extends MRT_RowData>(
                   alignment === 'right'
                     ? {
                         justifyContent: 'flex-end',
-                        paddingRight: '2em', // Padding to account for header icons
                       }
                     : alignment === 'center'
                       ? // To-DO: Add padding for center aligned cells
@@ -53,6 +52,14 @@ export const useMaterialTableColumns = <T extends MRT_RowData>(
               },
               params
             );
+          };
+        }
+
+        // Merge any custom cell props with defaults
+        const cellProps = col.muiTableBodyCellProps;
+        if (cellProps) {
+          col.muiTableBodyCellProps = params => {
+            return mergeCellProps(cellProps, params);
           };
         }
 

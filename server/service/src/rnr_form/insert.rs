@@ -150,9 +150,9 @@ fn validate(
     // Query one, as query sorts by created date, will return latest
     let most_recent_form = RnRFormRepository::new(&ctx.connection).query_one(
         RnRFormFilter::new()
-            .store_id(EqualFilter::equal_to(&ctx.store_id))
-            .program_id(EqualFilter::equal_to(&input.program_id))
-            .period_schedule_id(EqualFilter::equal_to(&period.period_schedule_id)),
+            .store_id(EqualFilter::equal_to(ctx.store_id.to_string()))
+            .program_id(EqualFilter::equal_to(input.program_id.to_string()))
+            .period_schedule_id(EqualFilter::equal_to(period.period_schedule_id.to_string())),
     )?;
 
     if let Some(form) = most_recent_form.clone() {

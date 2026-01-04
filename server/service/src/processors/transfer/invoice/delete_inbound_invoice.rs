@@ -1,11 +1,11 @@
 use repository::{
     ActivityLogType, InvoiceLineRowRepository, InvoiceRowRepository, InvoiceStatus, InvoiceType,
-    RepositoryError, StorageConnection,
+    RepositoryError,
 };
 
 use crate::{
     activity_log::system_activity_log_entry, invoice::common::get_lines_for_invoice,
-    processors::transfer::invoice::InvoiceTransferOutput,
+    processors::transfer::invoice::InvoiceTransferOutput, service_provider::ServiceContext,
 };
 
 use super::{InvoiceTransferProcessor, InvoiceTransferProcessorRecord, Operation};
@@ -36,7 +36,7 @@ impl InvoiceTransferProcessor for DeleteInboundInvoiceProcessor {
     /// 6. Because linked inbound invoice is deleted. `3.` will never be true again
     fn try_process_record(
         &self,
-        connection: &StorageConnection,
+        ctx: &ServiceContext,
         record_for_processing: &InvoiceTransferProcessorRecord,
     ) -> Result<InvoiceTransferOutput, RepositoryError> {
         // Check can execute
@@ -68,18 +68,19 @@ impl InvoiceTransferProcessor for DeleteInboundInvoiceProcessor {
 
         // Execute
         let deleted_inbound_invoice = inbound_invoice.invoice_row.clone();
-        let deleted_inbound_lines = get_lines_for_invoice(connection, &deleted_inbound_invoice.id)?;
+        let deleted_inbound_lines =
+            get_lines_for_invoice(&ctx.connection, &deleted_inbound_invoice.id)?;
 
-        let invoice_line_repository = InvoiceLineRowRepository::new(connection);
+        let invoice_line_repository = InvoiceLineRowRepository::new(&ctx.connection);
 
         for line in deleted_inbound_lines.iter() {
             invoice_line_repository.delete(&line.invoice_line_row.id)?;
         }
         // 6.
-        InvoiceRowRepository::new(connection).delete(&deleted_inbound_invoice.id)?;
+        InvoiceRowRepository::new(&ctx.connection).delete(&deleted_inbound_invoice.id)?;
 
         system_activity_log_entry(
-            connection,
+            &ctx.connection,
             ActivityLogType::InvoiceDeleted,
             &deleted_inbound_invoice.store_id,
             &deleted_inbound_invoice.id,

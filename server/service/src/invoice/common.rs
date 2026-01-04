@@ -25,8 +25,9 @@ pub(crate) fn get_lines_for_invoice(
     connection: &StorageConnection,
     invoice_id: &str,
 ) -> Result<Vec<InvoiceLine>, RepositoryError> {
-    let result = InvoiceLineRepository::new(connection)
-        .query_by_filter(InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(invoice_id)))?;
+    let result = InvoiceLineRepository::new(connection).query_by_filter(
+        InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(invoice_id.to_string())),
+    )?;
 
     Ok(result)
 }
@@ -76,8 +77,8 @@ pub fn check_master_list_for_name_link_id(
     };
     let mut rows = MasterListRepository::new(connection).query_by_filter(
         MasterListFilter::new()
-            .id(EqualFilter::equal_to(master_list_id))
-            .exists_for_name_id(EqualFilter::equal_to(&name_link.name_id)),
+            .id(EqualFilter::equal_to(master_list_id.to_string()))
+            .exists_for_name_id(EqualFilter::equal_to(name_link.name_id.to_string())),
     )?;
     Ok(rows.pop())
 }
@@ -89,8 +90,8 @@ pub fn check_master_list_for_store(
 ) -> Result<Option<MasterList>, RepositoryError> {
     let mut rows = MasterListRepository::new(connection).query_by_filter(
         MasterListFilter::new()
-            .id(EqualFilter::equal_to(master_list_id))
-            .exists_for_store_id(EqualFilter::equal_to(store_id)),
+            .id(EqualFilter::equal_to(master_list_id.to_string()))
+            .exists_for_store_id(EqualFilter::equal_to(store_id.to_string())),
     )?;
     Ok(rows.pop())
 }
@@ -116,7 +117,7 @@ pub fn generate_batches_total_number_of_packs_update(
     let invoice_lines = InvoiceLineRepository::new(connection)
         .query_by_filter(
             InvoiceLineFilter::new()
-                .invoice_id(EqualFilter::equal_to(invoice_id))
+                .invoice_id(EqualFilter::equal_to(invoice_id.to_string()))
                 .r#type(InvoiceLineType::StockOut.equal_to()),
         )
         .map_err(InvoiceLineHasNoStockLine::DatabaseError)?;
@@ -125,7 +126,7 @@ pub fn generate_batches_total_number_of_packs_update(
     for invoice_line in invoice_lines {
         let invoice_line_row = invoice_line.invoice_line_row;
         let mut stock_line = invoice_line.stock_line_option.ok_or(
-            InvoiceLineHasNoStockLine::InvoiceLineHasNoStockLine(invoice_line_row.id.to_owned()),
+            InvoiceLineHasNoStockLine::InvoiceLineHasNoStockLine(invoice_line_row.id.to_string()),
         )?;
 
         stock_line.total_number_of_packs -= invoice_line_row.number_of_packs;

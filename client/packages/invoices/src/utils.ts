@@ -12,11 +12,15 @@ import {
   TypedTFunction,
   noOtherVariants,
   InvoiceNodeType,
+  SplitButtonOption,
 } from '@openmsupply-client/common';
 import { OutboundFragment, OutboundRowFragment } from './OutboundShipment/api';
 import { InboundLineFragment } from './InboundShipment/api';
 import { InboundItem } from './types';
-import { PrescriptionRowFragment } from './Prescriptions/api';
+import {
+  PrescriptionLineFragment,
+  PrescriptionRowFragment,
+} from './Prescriptions/api';
 import {
   CustomerReturnFragment,
   CustomerReturnRowFragment,
@@ -48,21 +52,6 @@ export const manualInboundStatuses: InvoiceNodeStatus[] = [
   InvoiceNodeStatus.Received,
   InvoiceNodeStatus.Verified,
 ];
-
-export const nextStatusMap: { [k in InvoiceNodeStatus]?: InvoiceNodeStatus } = {
-  [InvoiceNodeStatus.New]: InvoiceNodeStatus.Delivered,
-  [InvoiceNodeStatus.Shipped]: InvoiceNodeStatus.Delivered,
-  [InvoiceNodeStatus.Delivered]: InvoiceNodeStatus.Received,
-  [InvoiceNodeStatus.Received]: InvoiceNodeStatus.Verified,
-};
-
-export const nextStatusMapCustomerReturn: {
-  [k in InvoiceNodeStatus]?: InvoiceNodeStatus;
-} = {
-  [InvoiceNodeStatus.New]: InvoiceNodeStatus.Received,
-  [InvoiceNodeStatus.Shipped]: InvoiceNodeStatus.Received,
-  [InvoiceNodeStatus.Received]: InvoiceNodeStatus.Verified,
-};
 
 export const prescriptionStatuses: InvoiceNodeStatus[] = [
   InvoiceNodeStatus.New,
@@ -103,73 +92,39 @@ const statusTranslation: Record<InvoiceNodeStatus, LocaleKey> = {
   CANCELLED: 'label.cancelled',
 };
 
-export const getStatusTranslation = (status: InvoiceNodeStatus): LocaleKey => {
-  return statusTranslation[status];
+export const getPreviousStatus = (
+  currentStatus: InvoiceNodeStatus,
+  validStatuses: InvoiceNodeStatus[],
+  sequence: InvoiceNodeStatus[]
+): InvoiceNodeStatus => {
+  const currentIndex = sequence.findIndex(status => status === currentStatus);
+
+  const previousValidStatus = sequence
+    .slice(0, currentIndex)
+    .reverse()
+    .find(status => validStatuses.includes(status));
+
+  return previousValidStatus ?? InvoiceNodeStatus.New;
 };
 
-export const getNextOutboundStatus = (
-  currentStatus: InvoiceNodeStatus
-): InvoiceNodeStatus | null => {
-  const currentStatusIdx = outboundStatuses.findIndex(
-    status => currentStatus === status
-  );
-  const nextStatus = outboundStatuses[currentStatusIdx + 1];
-  return nextStatus ?? null;
+export const getNextStatusOption = (
+  status: InvoiceNodeStatus | undefined,
+  options: SplitButtonOption<InvoiceNodeStatus>[]
+): SplitButtonOption<InvoiceNodeStatus> | null => {
+  if (!status) return options[0] ?? null;
+
+  const currentIndex = options.findIndex(o => o.value === status);
+  const nextOption = options[currentIndex + 1];
+  return nextOption || null;
 };
 
-export const getNextSupplierReturnStatus = (
-  currentStatus: InvoiceNodeStatus
-): InvoiceNodeStatus | null => {
-  const currentStatusIdx = supplierReturnStatuses.findIndex(
-    status => currentStatus === status
-  );
-  const nextStatus = supplierReturnStatuses[currentStatusIdx + 1];
-  return nextStatus ?? null;
-};
-
-export const getNextInboundStatus = (
-  currentStatus: InvoiceNodeStatus
-): InvoiceNodeStatus | null => {
-  const nextStatus = nextStatusMap[currentStatus];
-  return nextStatus ?? null;
-};
-
-export const getNextCustomerReturnStatus = (
-  currentStatus: InvoiceNodeStatus
-): InvoiceNodeStatus | null => {
-  const nextStatus = nextStatusMapCustomerReturn[currentStatus];
-  return nextStatus ?? null;
-};
-
-export const getNextPrescriptionStatus = (
-  currentStatus: InvoiceNodeStatus
-): InvoiceNodeStatus | null => {
-  const currentStatusIdx = prescriptionStatuses.findIndex(
-    status => currentStatus === status
-  );
-  const nextStatus = prescriptionStatuses[currentStatusIdx + 1];
-  return nextStatus ?? null;
-};
-
-export const getNextOutboundStatusButtonTranslation = (
-  currentStatus: InvoiceNodeStatus
-): LocaleKey | undefined => {
-  const nextStatus = getNextOutboundStatus(currentStatus);
-
-  if (nextStatus) return statusTranslation[nextStatus];
-
-  return undefined;
-};
-
-export const getNextInboundStatusButtonTranslation = (
-  currentStatus: InvoiceNodeStatus
-): LocaleKey | undefined => {
-  const nextStatus = getNextInboundStatus(currentStatus);
-
-  if (nextStatus) return statusTranslation[nextStatus];
-
-  return undefined;
-};
+export const getButtonLabel =
+  (t: ReturnType<typeof useTranslation>) =>
+  (invoiceStatus: InvoiceNodeStatus): string => {
+    return t('button.save-and-confirm-status', {
+      status: getStatusTranslator(t)(invoiceStatus),
+    });
+  };
 
 export const getStatusTranslator =
   (t: ReturnType<typeof useTranslation>) =>
@@ -245,6 +200,9 @@ export const isPrescriptionDisabled = (
     prescription.status === InvoiceNodeStatus.Cancelled
   );
 };
+
+export const isPrescriptionPlaceholderRow = (row: PrescriptionLineFragment) =>
+  row.type === InvoiceLineNodeType.UnallocatedStock && !row.numberOfPacks;
 
 export const isInboundListItemDisabled = (
   inbound: InboundRowFragment | CustomerReturnRowFragment
@@ -349,25 +307,23 @@ export const outboundsToCsv = (
   t: TypedTFunction<LocaleKey>
 ) => {
   const fields: string[] = [
-    'id',
     t('label.name'),
     t('label.status'),
     t('label.invoice-number'),
     t('label.created'),
     t('label.reference'),
-    t('label.comment'),
     t('label.total'),
+    t('label.comment'),
   ];
 
   const data = invoices.map(node => [
-    node.id,
     node.otherPartyName,
     node.status,
     node.invoiceNumber,
     Formatter.csvDateTimeString(node.createdDatetime),
     node.theirReference,
-    node.comment,
     node.pricing.totalAfterTax,
+    node.comment,
   ]);
   return Formatter.csv({ fields, data });
 };
@@ -377,19 +333,19 @@ export const supplierReturnsToCsv = (
   t: TypedTFunction<LocaleKey>
 ) => {
   const fields: string[] = [
-    'id',
     t('label.name'),
     t('label.status'),
     t('label.invoice-number'),
     t('label.created'),
+    t('label.reference'),
   ];
 
   const data = returns.map(node => [
-    node.id,
     node.otherPartyName,
     node.status,
     node.invoiceNumber,
     Formatter.csvDateTimeString(node.createdDatetime),
+    node.theirReference,
   ]);
   return Formatter.csv({ fields, data });
 };
@@ -399,21 +355,21 @@ export const customerReturnsToCsv = (
   t: TypedTFunction<LocaleKey>
 ) => {
   const fields: string[] = [
-    'id',
     t('label.name'),
     t('label.status'),
     t('label.invoice-number'),
     t('label.created'),
-    t('label.confirmed'),
+    t('label.reference'),
+    t('label.comment'),
   ];
 
   const data = returns.map(node => [
-    node.id,
     node.otherPartyName,
     node.status,
     node.invoiceNumber,
     Formatter.csvDateTimeString(node.createdDatetime),
-    Formatter.csvDateTimeString(node.deliveredDatetime),
+    node.theirReference,
+    node.comment,
   ]);
   return Formatter.csv({ fields, data });
 };
@@ -423,25 +379,25 @@ export const inboundsToCsv = (
   t: TypedTFunction<LocaleKey>
 ) => {
   const fields: string[] = [
-    'id',
     t('label.name'),
-    t('label.status'),
     t('label.invoice-number'),
     t('label.created'),
-    t('label.confirmed'),
-    t('label.comment'),
+    t('label.delivered'),
+    t('label.status'),
+    t('label.reference'),
     t('label.total'),
+    t('label.comment'),
   ];
 
   const data = invoices.map(node => [
-    node.id,
     node.otherPartyName,
-    node.status,
     node.invoiceNumber,
     Formatter.csvDateTimeString(node.createdDatetime),
     Formatter.csvDateTimeString(node.deliveredDatetime),
-    node.comment,
+    node.status,
+    node.theirReference,
     node.pricing.totalAfterTax,
+    node.comment,
   ]);
   return Formatter.csv({ fields, data });
 };
@@ -451,20 +407,20 @@ export const prescriptionToCsv = (
   t: TypedTFunction<LocaleKey>
 ) => {
   const fields: string[] = [
-    'id',
     t('label.name'),
     t('label.status'),
     t('label.invoice-number'),
-    t('label.created'),
+    t('label.prescription-date'),
+    t('label.reference'),
     t('label.comment'),
   ];
 
   const data = invoices.map(node => [
-    node.id,
     node.otherPartyName,
-    t(getStatusTranslation(node.status)),
+    getStatusTranslator(t)(node.status),
     node.invoiceNumber,
-    Formatter.csvDateTimeString(node.createdDatetime),
+    Formatter.csvDateTimeString(node.prescriptionDate || node.createdDatetime),
+    node.theirReference,
     node.comment,
   ]);
   return Formatter.csv({ fields, data });

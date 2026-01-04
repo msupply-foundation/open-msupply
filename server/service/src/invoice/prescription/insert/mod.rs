@@ -50,7 +50,7 @@ pub fn insert_prescription(
             activity_log_entry(
                 ctx,
                 ActivityLogType::PrescriptionCreated,
-                Some(new_invoice.id.to_owned()),
+                Some(new_invoice.id.to_string()),
                 None,
                 None,
             )?;

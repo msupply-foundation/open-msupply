@@ -57,9 +57,12 @@ pub(super) fn prepare_program_requisition_settings_by_customer(
 ) -> Result<CustomerProgramRequisitionSetting, RepositoryError> {
     let filter = ProgramRequisitionSettingsFilter::new()
         .master_list(
-            MasterListFilter::new().exists_for_name_id(EqualFilter::equal_to(customer_name_id)),
+            MasterListFilter::new()
+                .exists_for_name_id(EqualFilter::equal_to(customer_name_id.to_string())),
         )
-        .name_tag(NameTagFilter::new().name_id(EqualFilter::equal_to(customer_name_id)));
+        .name_tag(
+            NameTagFilter::new().name_id(EqualFilter::equal_to(customer_name_id.to_string())),
+        );
 
     // All program settings for store
     let settings =
@@ -68,7 +71,7 @@ pub(super) fn prepare_program_requisition_settings_by_customer(
     // If there's no program settings at all, don't try query everything else (early return)
     if settings.is_empty() {
         return Ok(CustomerProgramRequisitionSetting {
-            customer_name_id: customer_name_id.to_owned(),
+            customer_name_id: customer_name_id.to_string(),
             program_settings: vec![],
         });
     }
@@ -97,7 +100,7 @@ pub(super) fn prepare_program_requisition_settings_by_customer(
 
     // Requisitions in Period (for all periods and store)
     let filter = RequisitionsInPeriodFilter::new()
-        .other_party_id(EqualFilter::equal_to(customer_name_id))
+        .other_party_id(EqualFilter::equal_to(customer_name_id.to_string()))
         .program_id(EqualFilter::equal_any(program_ids.clone()))
         .period_id(EqualFilter::equal_any(period_ids))
         .r#type(RequisitionType::Response.equal_to());
@@ -106,7 +109,7 @@ pub(super) fn prepare_program_requisition_settings_by_customer(
         RequisitionsInPeriodRepository::new(&ctx.connection).query(filter)?;
 
     Ok(CustomerProgramRequisitionSetting {
-        customer_name_id: customer_name_id.to_owned(),
+        customer_name_id: customer_name_id.to_string(),
         program_settings: settings
             .iter()
             .map(|setting| {

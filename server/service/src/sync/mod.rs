@@ -64,7 +64,7 @@ pub(crate) fn get_sync_push_changelogs_filter(
             .ok_or(SyncChangelogError::CentralSiteIdNotSet)?;
 
         return Ok(Some(ChangelogFilter::new().source_site_id(
-            EqualFilter::not_equal_to_or_null_i32(msupply_central_server_id),
+            EqualFilter::not_equal_to_or_null(msupply_central_server_id),
         )));
     }
 
@@ -73,7 +73,7 @@ pub(crate) fn get_sync_push_changelogs_filter(
     Ok(Some(
         ChangelogFilter::new()
             .store_id(EqualFilter::equal_any_or_null(active_stores.store_ids()))
-            .is_sync_update(EqualFilter::equal_or_null_bool(false)),
+            .is_sync_update(EqualFilter::equal_any_or_null(vec![false])),
     ))
 }
 
@@ -96,7 +96,7 @@ impl ActiveStoresOnSite {
             .ok_or(Error::SiteIdNotSet)?;
 
         let stores = StoreRepository::new(connection)
-            .query_by_filter(StoreFilter::new().site_id(EqualFilter::equal_to_i32(site_id)))?;
+            .query_by_filter(StoreFilter::new().site_id(EqualFilter::equal_to(site_id)))?;
 
         Ok(ActiveStoresOnSite { stores })
     }
@@ -127,6 +127,7 @@ pub enum CentralServerConfig {
 
 static CENTRAL_SERVER_CONFIG: RwLock<CentralServerConfig> =
     RwLock::new(CentralServerConfig::NotConfigured);
+static IS_INITIALISED: RwLock<bool> = RwLock::new(false);
 
 impl CentralServerConfig {
     fn inner_is_central_server(&self) -> bool {
@@ -176,11 +177,24 @@ impl CentralServerConfig {
     }
 }
 pub(crate) fn is_initialised(service_provider: &ServiceProvider) -> bool {
-    let ctx = service_provider.basic_context().unwrap();
-    service_provider
-        .sync_status_service
-        .is_initialised(&ctx)
-        .unwrap()
+    // We cache the initialised state to avoid having to check the database every time. This stops
+    // unnecessary database queries and avoids having to unwrap the database connection. We still
+    // unwrap on the first check as there's no point starting up without the database.
+    if IS_INITIALISED.read().unwrap().clone() {
+        return true;
+    } else {
+        let ctx = service_provider.basic_context().unwrap();
+        let is_initialised = service_provider
+            .sync_status_service
+            .is_initialised(&ctx)
+            .unwrap();
+
+        if is_initialised {
+            *IS_INITIALISED.write().unwrap() = true;
+        }
+
+        is_initialised
+    }
 }
 
 // TEST ONLY

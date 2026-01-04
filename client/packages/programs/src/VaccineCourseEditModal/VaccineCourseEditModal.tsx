@@ -214,14 +214,22 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
         <Row label={t('label.vaccine-items')}>
           <VaccineItemSelect draft={draft} onChange={updatePatch} />
         </Row>
-        <Row label={t('label.calculate-demand')}>
-          <Checkbox
-            checked={draft?.useInGapsCalculations ?? true}
-            onChange={e =>
-              updatePatch({ useInGapsCalculations: e.target.checked })
-            }
-          ></Checkbox>
-        </Row>
+        <Box display="flex">
+          <Row label={t('label.calculate-demand')}>
+            <Checkbox
+              checked={draft?.useInGapsCalculations ?? true}
+              onChange={e =>
+                updatePatch({ useInGapsCalculations: e.target.checked })
+              }
+            />
+          </Row>
+          <Row label={t('label.can-skip-dose')}>
+            <Checkbox
+              checked={draft?.canSkipDose ?? false}
+              onChange={e => updatePatch({ canSkipDose: e.target.checked })}
+            />
+          </Row>
+        </Box>
         <VaccineCourseDoseTable
           courseName={draft.name}
           doses={doses}

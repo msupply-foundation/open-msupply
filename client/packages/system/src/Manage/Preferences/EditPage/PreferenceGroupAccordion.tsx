@@ -2,15 +2,18 @@ import {
   Accordion,
   AccordionDetails,
   AccordionSummary,
+  Box,
+  Divider,
   ExpandIcon,
   InputWithLabelRow,
-  LocaleKey,
+  Typography,
   UpsertPreferencesInput,
   useTranslation,
 } from '@openmsupply-client/common';
 import React from 'react';
 import { AdminPreferenceFragment } from '../api/operations.generated';
 import { EditPreference } from './EditPreference';
+import { isAnyAmcPrefOn } from './utils';
 
 interface PreferenceGroupAccordionProps {
   label: string;
@@ -24,6 +27,8 @@ export const PreferenceGroupAccordion = ({
   update,
 }: PreferenceGroupAccordionProps) => {
   const t = useTranslation();
+
+  const showAmcFormula = isAnyAmcPrefOn(preferences);
 
   return (
     <Accordion
@@ -45,24 +50,52 @@ export const PreferenceGroupAccordion = ({
         {preferences.map((pref, idx) => {
           const isLast = idx === preferences.length - 1;
           return (
-            <InputWithLabelRow
+            <EditPreference
               key={pref.key}
-              labelWidth={'100%'}
-              label={t(`preference.${pref.key}` as LocaleKey)}
-              Input={
-                <EditPreference
-                  preference={pref}
-                  update={value => update({ [pref.key]: value })}
-                />
-              }
-              sx={{
-                justifyContent: 'center',
-                borderBottom: isLast ? 'none' : '1px dashed',
-                padding: 1,
-              }}
+              preference={pref}
+              update={value => update({ [pref.key]: value })}
+              isLast={isLast}
             />
           );
         })}
+        {showAmcFormula && (
+          <>
+            <Divider />
+            <InputWithLabelRow
+              label={t('label.amc-calculation')}
+              sx={{
+                display: 'flex',
+                alignItems: 'start',
+                flexDirection: 'column',
+                padding: 1,
+              }}
+              labelProps={{
+                sx: { display: 'flex', textAlign: 'start' },
+              }}
+              Input={
+                <Typography variant="caption">
+                  {t('messages.amc-calculation')}
+                </Typography>
+              }
+            />
+            <Divider />
+            <Box padding={1}>
+              <Typography variant="caption" color="text.secondary">
+                {t('messages.amc-consumption')}
+                <br />
+                {t('messages.amc-lookback-months')}
+                <br />
+                {t('messages.amc-lookback-days')}
+                <br />
+                {t('messages.amc-days-out-of-stock')}
+                <br />
+                {t('messages.amc-days-out-of-stock-adjustment')}
+                <br />
+                {t('messages.amc-minus-transfers')}
+              </Typography>
+            </Box>
+          </>
+        )}
       </AccordionDetails>
     </Accordion>
   );

@@ -8,7 +8,7 @@ pub fn check_item_variant_exists(
     item_variant_id: &str,
 ) -> Result<bool, RepositoryError> {
     let count = ItemVariantRepository::new(connection).count(Some(
-        ItemVariantFilter::new().id(EqualFilter::equal_to(item_variant_id)),
+        ItemVariantFilter::new().id(EqualFilter::equal_to(item_variant_id.to_string())),
     ))?;
     Ok(count > 0)
 }

@@ -3,8 +3,9 @@ use super::{
 };
 
 use crate::{
-    diesel_macros::{apply_equal_filter, apply_sort, apply_sort_no_case},
+    diesel_macros::{apply_equal_filter, apply_sort, apply_sort_no_case, apply_string_filter},
     DocumentRegistryCategory, DocumentRegistryConfig, DocumentRegistryRow, FormSchemaRow,
+    StringFilter,
 };
 
 use crate::{repository_error::RepositoryError, DBType, EqualFilter, Pagination, Sort};
@@ -19,6 +20,7 @@ pub struct DocumentRegistryFilter {
     pub document_type: Option<EqualFilter<String>>,
     pub context_id: Option<EqualFilter<String>>,
     pub category: Option<EqualFilter<DocumentRegistryCategory>>,
+    pub name: Option<StringFilter>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -53,7 +55,7 @@ impl<'a> DocumentRegistryRepository<'a> {
     }
 
     pub fn count(&self, filter: Option<DocumentRegistryFilter>) -> Result<i64, RepositoryError> {
-        let query = create_filtered_query(filter);
+        let query = Self::create_filtered_query(filter);
 
         Ok(query
             .count()
@@ -74,7 +76,7 @@ impl<'a> DocumentRegistryRepository<'a> {
         sort: Option<DocumentRegistrySort>,
     ) -> Result<Vec<DocumentRegistry>, RepositoryError> {
         // TODO (beyond M2), check that store_id matches current store
-        let mut query = create_filtered_query(filter);
+        let mut query = Self::create_filtered_query(filter);
 
         if let Some(sort) = sort {
             match sort.key {
@@ -99,31 +101,32 @@ impl<'a> DocumentRegistryRepository<'a> {
 
         result
     }
+
+    pub fn create_filtered_query(filter: Option<DocumentRegistryFilter>) -> BoxedDocRegistryQuery {
+        let mut query = document_registry::table
+            .inner_join(form_schema::table)
+            .into_boxed();
+
+        if let Some(filter) = filter {
+            apply_equal_filter!(query, filter.id, document_registry::id);
+            apply_equal_filter!(
+                query,
+                filter.document_type,
+                document_registry::document_type
+            );
+            apply_equal_filter!(query, filter.context_id, document_registry::context_id);
+            apply_equal_filter!(query, filter.category, document_registry::category);
+            apply_string_filter!(query, filter.name, document_registry::name);
+        }
+
+        query
+    }
 }
 
 type DocumentRegistrySchemaJoin = (DocumentRegistryRow, FormSchemaRow);
 
 type BoxedDocRegistryQuery =
     IntoBoxed<'static, InnerJoin<document_registry::table, form_schema::table>, DBType>;
-
-fn create_filtered_query(filter: Option<DocumentRegistryFilter>) -> BoxedDocRegistryQuery {
-    let mut query = document_registry::table
-        .inner_join(form_schema::table)
-        .into_boxed();
-
-    if let Some(filter) = filter {
-        apply_equal_filter!(query, filter.id, document_registry::id);
-        apply_equal_filter!(
-            query,
-            filter.document_type,
-            document_registry::document_type
-        );
-        apply_equal_filter!(query, filter.context_id, document_registry::context_id);
-        apply_equal_filter!(query, filter.category, document_registry::category);
-    }
-
-    query
-}
 
 impl DocumentRegistryFilter {
     pub fn new() -> DocumentRegistryFilter {
@@ -147,6 +150,11 @@ impl DocumentRegistryFilter {
 
     pub fn r#type(mut self, filter: EqualFilter<DocumentRegistryCategory>) -> Self {
         self.category = Some(filter);
+        self
+    }
+
+    pub fn name(mut self, filter: StringFilter) -> Self {
+        self.name = Some(filter);
         self
     }
 }

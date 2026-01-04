@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { RequestLineFragment } from '../api';
 import {
   useAuthContext,
@@ -23,7 +23,11 @@ export const useRequestColumns = () => {
   const { store } = useAuthContext();
   const { errors } = useRequestRequisitionLineErrorContext();
   const { plugins } = usePluginProvider();
-  const { manageVaccinesInDoses } = usePreferences();
+  const {
+    manageVaccinesInDoses,
+    warningForExcessRequest,
+    showIndicativePriceInRequisitions,
+  } = usePreferences();
 
   const showExtraColumns =
     !!programName &&
@@ -121,8 +125,30 @@ export const useRequestColumns = () => {
         header: t('label.requested'),
         description: t('description.doses-quantity'),
         columnType: ColumnType.Number,
-        Cell: UnitsAndDosesCell,
+        Cell: ({ row, ...props }) => {
+          const showAlert =
+            warningForExcessRequest &&
+            row.original.requestedQuantity - row.original.suggestedQuantity >=
+              1;
+          return (
+            <UnitsAndDosesCell row={row} {...props} showAlert={showAlert} />
+          );
+        },
         enableSorting: true,
+      },
+      {
+        header: t('label.indicative-price-per-unit'),
+        description: t('description.indicative-price-per-unit'),
+        accessorKey: 'pricePerUnit',
+        columnType: ColumnType.Currency,
+        includeColumn: showIndicativePriceInRequisitions,
+      },
+      {
+        header: t('label.indicative-price'),
+        description: t('description.indicative-price'),
+        accessorFn: row => row.requestedQuantity * (row?.pricePerUnit || 0),
+        columnType: ColumnType.Currency,
+        includeColumn: showIndicativePriceInRequisitions,
       },
 
       // --- Extra consumption columns on program orders
@@ -181,7 +207,7 @@ export const useRequestColumns = () => {
         includeColumn: showExtraColumns,
         accessorFn: row => row.reason?.reason,
         getIsError: row =>
-          errors[row.id]?.__typename === 'RequisitionReasonNotProvided',
+          errors?.[row.id]?.__typename === 'RequisitionReasonNotProvided',
       },
 
       // --- Remote authorisation columns
@@ -205,8 +231,10 @@ export const useRequestColumns = () => {
     ],
     [
       manageVaccinesInDoses,
+      warningForExcessRequest,
       showExtraColumns,
       usesRemoteAuthorisation,
+      showIndicativePriceInRequisitions,
       maxMonthsOfStock,
       plugins.requestRequisitionLine?.tableColumn,
       errors,
