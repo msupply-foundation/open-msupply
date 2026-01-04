@@ -202,7 +202,7 @@ impl StaticFileService {
             path: file.path.to_string(),
         })
     }
-  
+}
 
 /// Returns the file name part of the path like:
 /// `./static_file_path/{uuid}_{file_name};
