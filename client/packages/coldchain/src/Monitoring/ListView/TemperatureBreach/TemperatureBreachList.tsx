@@ -2,7 +2,6 @@ import React, { FC, useMemo } from 'react';
 import { useUrlQueryParams } from '@common/hooks';
 import { useTranslation } from '@common/intl';
 import {
-  ColumnAlign,
   ColumnDef,
   Formatter,
   MaterialTable,
@@ -57,7 +56,7 @@ export const TemperatureBreachList: FC = () => {
         accessorKey: 'icon',
         header: '',
         size: 60,
-        align: ColumnAlign.Center,
+        align: 'center',
         Cell: ({ row: { original: row } }) => (
           <IconCell acknowledgeBreach={acknowledgeBreach} rowData={row} />
         ),

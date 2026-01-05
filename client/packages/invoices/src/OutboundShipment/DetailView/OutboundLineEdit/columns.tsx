@@ -15,10 +15,9 @@ import {
   Tooltip,
   TextWithTooltipCell,
   CurrencyValueCell,
+  ExpiryDateCell,
+  NumberInputCell,
 } from '@openmsupply-client/common';
-// Need to be re-exported when Legacy cells are removed
-import { NumberInputCell } from '@openmsupply-client/common/src/ui/layout/tables/material-react-table/components/NumberInputCell';
-import { ExpiryDateCell } from '@openmsupply-client/common/src/ui/layout/tables/material-react-table/components/ExpiryDateCell';
 import {
   CurrencyRowFragment,
   ItemVariantInfoIcon,
