@@ -31,7 +31,6 @@ export const DetailViewInner = (): ReactElement => {
 
   const {
     query: { data, isLoading },
-    lines: { sortedAndFilteredLines },
   } = useGoodsReceived();
 
   const {
@@ -60,7 +59,7 @@ export const DetailViewInner = (): ReactElement => {
     {
       Component: (
         <ContentArea
-          lines={sortedAndFilteredLines}
+          lines={data?.lines.nodes || []}
           isDisabled={isDisabled}
           onRowClick={onRowClick}
         />

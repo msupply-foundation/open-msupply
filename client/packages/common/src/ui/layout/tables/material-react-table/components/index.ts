@@ -1,3 +1,4 @@
+export * from './AgeInputCell';
 export * from './CheckCell';
 export * from './CheckBoxCell';
 export * from './ChipTableCell';

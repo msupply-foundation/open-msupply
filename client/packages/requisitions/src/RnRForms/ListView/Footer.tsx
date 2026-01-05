@@ -5,7 +5,6 @@ import {
   DeleteIcon,
   useTranslation,
   AppFooterPortal,
-  useTableStore,
   useDeleteConfirmation,
   RnRFormNodeStatus,
 } from '@openmsupply-client/common';
@@ -13,19 +12,14 @@ import { useDeleteRnRForm } from '../api/hooks/useDeleteRnRForm';
 import { RnRFormFragment } from '../api';
 
 export const FooterComponent = ({
-  rnrForms,
+  selectedRows,
+  resetRowSelection,
 }: {
-  rnrForms?: RnRFormFragment[];
+  selectedRows: RnRFormFragment[];
+  resetRowSelection: () => void;
 }) => {
   const t = useTranslation();
   const { deleteRnRForms } = useDeleteRnRForm();
-
-  const { selectedRows } = useTableStore(state => ({
-    selectedRows: Object.keys(state.rowState)
-      .filter(id => state.rowState[id]?.isSelected)
-      .map(selectedId => rnrForms?.find(({ id }) => selectedId === id))
-      .filter(Boolean) as RnRFormFragment[],
-  }));
 
   const deleteAction = async () => {
     if (selectedRows.length > 0) {
@@ -33,6 +27,7 @@ export const FooterComponent = ({
         throw err;
       });
     }
+    resetRowSelection();
   };
   const showDeleteConfirmation = useDeleteConfirmation({
     selectedRows,
@@ -67,6 +62,7 @@ export const FooterComponent = ({
             <ActionsFooter
               actions={actions}
               selectedRowCount={selectedRows.length}
+              resetRowSelection={resetRowSelection}
             />
           )}
         </>

@@ -1,20 +1,15 @@
-import React, { useEffect } from 'react';
+import React, { useMemo } from 'react';
 import {
-  TableProvider,
-  DataTable,
-  useColumns,
   useUrlQueryParams,
   useNavigate,
   NothingHere,
   useTranslation,
-  createTableStore,
-  createQueryParamsStore,
   useEditModal,
-  useTableStore,
-  RnRFormNodeStatus,
-  GenericColumnKey,
+  MaterialTable,
+  ColumnDef,
+  ColumnType,
+  usePaginatedMaterialTable,
 } from '@openmsupply-client/common';
-import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
 import { useRnRFormList } from '../api';
 import { RnRFormFragment } from '../api/operations.generated';
@@ -22,101 +17,71 @@ import { RnRFormCreateModal } from './RnRFormCreateModal';
 import { getStatusTranslator, isRnRFormDisabled } from '../utils';
 import { Footer } from './Footer';
 
-const RnRFormListComponent = () => {
+export const RnRFormListView = () => {
   const t = useTranslation();
   const navigate = useNavigate();
   const { isOpen, onClose, onOpen } = useEditModal();
   const {
-    updateSortQuery,
-    updatePaginationQuery,
-    queryParams: { sortBy, page, first, offset, filterBy },
+    queryParams,
   } = useUrlQueryParams({
     filters: [{ key: 'name' }],
     initialSort: { key: 'createdDatetime', dir: 'desc' },
   });
-  const { setDisabledRows } = useTableStore();
-  const pagination = { page, first, offset };
 
-  const queryParams = {
-    filterBy,
-    offset,
-    sortBy,
-    first,
-  };
   const { data, isLoading, isError } = useRnRFormList(queryParams);
 
-  const columns = useColumns<RnRFormFragment>(
-    [
-      GenericColumnKey.Selection,
+  const columns = useMemo(
+    (): ColumnDef<RnRFormFragment>[] => [
       {
-        key: 'periodName',
-        label: 'label.period',
-      },
-      [
-        'createdDatetime',
-        { accessor: ({ rowData }) => rowData.createdDatetime },
-      ],
-      {
-        key: 'programName',
-        label: 'label.program-name',
+        id: 'name',
+        accessorFn: row => row.periodName,
+        header: t('label.period'),
+        enableSorting: true,
       },
       {
-        key: 'supplierName',
-        label: 'label.supplier',
+        accessorKey: 'createdDatetime',
+        header: t('label.created'),
+        columnType: ColumnType.Date,
+        enableSorting: true,
       },
-      [
-        'status',
-        {
-          label: 'label.status',
-          formatter: status =>
-            getStatusTranslator(t)(status as RnRFormNodeStatus),
-        },
-      ],
+      {
+        accessorKey: 'programName',
+        header: t('label.program-name'),
+        enableSorting: true,
+      },
+      {
+        accessorKey: 'supplierName',
+        header: t('label.supplier'),
+        enableSorting: true,
+      },
+      {
+        accessorKey: 'status',
+        header: t('label.status'),
+        Cell: ({ row: { original: row } }) => getStatusTranslator(t)(row.status),
+      }
     ],
-    {
-      onChangeSortBy: updateSortQuery,
-      sortBy,
-    },
-    [updateSortQuery, sortBy]
+    []
   );
 
-  useEffect(() => {
-    const disabledRows = data?.nodes
-      .filter(isRnRFormDisabled)
-      .map(({ id }) => id);
-    if (disabledRows) setDisabledRows(disabledRows);
-  }, [data?.nodes, setDisabledRows]);
+  const { table, selectedRows } = usePaginatedMaterialTable<RnRFormFragment>({
+    tableId: 'rnr-form-list',
+    columns,
+    data: data?.nodes,
+    totalCount: data?.totalCount ?? 0,
+    isLoading,
+    isError,
+    onRowClick: row => navigate(row.id),
+    getIsRestrictedRow: isRnRFormDisabled,
+    enableRowSelection: row => !isRnRFormDisabled(row.original),
+    noDataElement: <NothingHere body={t('error.no-rnr-forms')} onCreate={onOpen} />,
+  });
 
   return (
     <>
       {isOpen && <RnRFormCreateModal isOpen={isOpen} onClose={onClose} />}
-      <Toolbar />
       <AppBarButtons onCreate={onOpen} />
-      <DataTable
-        id={'rnr-form-list'}
-        pagination={{ ...pagination }}
-        onChangePage={updatePaginationQuery}
-        columns={columns}
-        data={data?.nodes ?? []}
-        isLoading={isLoading}
-        isError={isError}
-        onRowClick={row => navigate(row.id)}
-        noDataElement={
-          <NothingHere body={t('error.no-rnr-forms')} onCreate={onOpen} />
-        }
-      />
-      <Footer rnrForms={data?.nodes} />
+      <MaterialTable table={table} />
+      <Footer selectedRows={selectedRows} resetRowSelection={table.resetRowSelection} />
     </>
   );
 };
-
-export const RnRFormListView = () => (
-  <TableProvider
-    createStore={createTableStore}
-    queryParamsStore={createQueryParamsStore({
-      initialSortBy: { key: 'name' },
-    })}
-  >
-    <RnRFormListComponent />
-  </TableProvider>
-);

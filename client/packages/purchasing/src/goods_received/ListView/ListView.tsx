@@ -1,15 +1,13 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   useNavigate,
-  DataTable,
-  useColumns,
-  TableProvider,
-  createTableStore,
   useTranslation,
   NothingHere,
   useUrlQueryParams,
-  GenericColumnKey,
-  ColumnFormat,
+  MaterialTable,
+  usePaginatedMaterialTable,
+  ColumnDef,
+  ColumnType,
 } from '@openmsupply-client/common';
 import { useGoodsReceivedList } from '../api';
 import { GoodsReceivedRowFragment } from '../api/operations.generated';
@@ -18,12 +16,10 @@ import { AppBarButtons } from './AppBarButtons';
 import { Footer } from './Footer';
 import { getGoodsReceivedStatusTranslator } from '../../utils';
 
-const ListView = () => {
+export const GoodsReceivedListView = () => {
   const t = useTranslation();
   const {
-    updateSortQuery,
-    updatePaginationQuery,
-    queryParams: { page, first, offset, sortBy, filterBy },
+    queryParams,
   } = useUrlQueryParams({
     initialSort: { key: 'createdDatetime', dir: 'desc' },
     filters: [
@@ -34,99 +30,79 @@ const ListView = () => {
       },
     ],
   });
-  const listParams = {
-    sortBy,
-    first,
-    offset,
-    filterBy,
-  };
 
   const navigate = useNavigate();
   const {
     query: { data, isError, isLoading },
-  } = useGoodsReceivedList(listParams);
-  const pagination = { page, first, offset };
+  } = useGoodsReceivedList(queryParams);
 
-  const columns = useColumns<GoodsReceivedRowFragment>(
-    [
-      GenericColumnKey.Selection,
+  const columns = useMemo(
+    (): ColumnDef<GoodsReceivedRowFragment>[] => [
       {
-        key: 'supplier',
-        label: 'label.supplier',
-        accessor: ({ rowData }) => rowData.supplier?.name ?? '',
-        sortable: false, // Will be true once added to sort enum
+        accessorKey: 'supplier.name',
+        header: t('label.supplier'),
+        // enableSorting: false, // Will be true once added to sort enum
       },
       {
-        key: 'status',
-        label: 'label.status',
-        accessor: ({ rowData }) => rowData.status,
-        formatter: getGoodsReceivedStatusTranslator(t),
-        sortable: false, // Will be true once sorting is added
+        id: 'status',
+        accessorFn: row => getGoodsReceivedStatusTranslator(t)(row.status),
+        header: t('label.status'),
+        // enableSorting: false, // Will be true once sorting is added
       },
       {
-        key: 'number',
-        label: 'label.number',
-        maxWidth: 110,
-        accessor: ({ rowData }) => rowData.number,
-        sortable: false, // Will be true once sorting is added
+        accessorKey: 'number',
+        header: t('label.number'),
+        columnType: ColumnType.Number,
+        // enableSorting: false, // Will be true once sorting is added
       },
       {
-        key: 'purchaseOrderNumber',
-        label: 'label.purchase-order-number',
-        accessor: ({ rowData }) =>
-          rowData.purchaseOrderNumber?.toString() ?? '',
-        sortable: false,
+        accessorKey: 'purchaseOrderNumber',
+        header: t('label.purchase-order-number'),
+        columnType: ColumnType.Number,
+        // enableSorting: false,
       },
       {
-        key: 'supplierReference',
-        label: 'label.supplier-reference',
-        accessor: ({ rowData }) => rowData.supplierReference ?? '',
-        sortable: false,
+        accessorKey: 'supplierReference',
+        header: t('label.supplier-reference'),
+        // enableSorting: false,
       },
       {
-        key: 'createdDatetime',
-        label: 'label.created',
-        accessor: ({ rowData }) => rowData.createdDatetime,
-        format: ColumnFormat.Date,
-        sortable: true, // Available in sort enum
+        accessorKey: 'createdDatetime',
+        header: t('label.created'),
+        accessorFn: row => row.createdDatetime,
+        columnType: ColumnType.Date,
+        enableSorting: true,
       },
       {
-        key: 'receivedDatetime',
-        label: 'label.received',
-        accessor: ({ rowData }) => rowData.receivedDatetime ?? '',
-        format: ColumnFormat.Date,
-        sortable: false,
+        accessorKey: 'receivedDatetime',
+        header: t('label.received'),
+        accessorFn: row => row.receivedDatetime ?? '',
+        columnType: ColumnType.Date,
+        // sortable: false,
       },
     ],
-    { onChangeSortBy: updateSortQuery, sortBy },
-    [sortBy]
+    []
   );
+
+  const { table, selectedRows } = usePaginatedMaterialTable<GoodsReceivedRowFragment>({
+    tableId: 'goods-received-list',
+    data: data?.nodes,
+    columns,
+    totalCount: data?.totalCount ?? 0,
+    isLoading,
+    isError,
+    onRowClick: row => {
+      navigate(row.id);
+    },
+    noDataElement: <NothingHere body={t('error.no-items')} />,
+  });
 
   return (
     <>
       <Toolbar />
       <AppBarButtons />
-      <DataTable
-        id="goods-received-list"
-        enableColumnSelection
-        pagination={{ ...pagination, total: data?.totalCount ?? 0 }}
-        onChangePage={updatePaginationQuery}
-        columns={columns}
-        data={data?.nodes ?? []}
-        isError={isError}
-        isLoading={isLoading}
-        noDataElement={<NothingHere body={t('error.no-items')} />}
-        onRowClick={row => {
-          navigate(row.id);
-        }}
-      />
-      <Footer data={data?.nodes} />
+      <MaterialTable table={table} />
+      <Footer selectedRows={selectedRows} resetRowSelection={table.resetRowSelection} />
     </>
   );
 };
-
-export const GoodsReceivedListView = () => (
-  <TableProvider createStore={createTableStore}>
-    <ListView />
-  </TableProvider>
-);

@@ -1,16 +1,15 @@
-import React, { useState } from 'react';
+import React, { useMemo } from 'react';
 import {
-  ColumnDescription,
-  DataTable,
   Grid,
   NothingHere,
-  SearchBar,
-  TooltipTextCell,
-  useColumns,
   useTranslation,
-  useUserPreferencePagination,
   useWindowDimensions,
   ImportPanel,
+  MaterialTable,
+  ColumnDef,
+  ColumnType,
+  TextWithTooltipCell,
+  useNonPaginatedMaterialTable,
 } from '@openmsupply-client/common';
 import { ImportRow } from './utils';
 
@@ -27,142 +26,132 @@ export const ReviewTab = ({
 }: ReviewTabProps) => {
   const t = useTranslation();
   const { height } = useWindowDimensions();
-  const [searchString, setSearchString] = useState<string>('');
-  const { pagination, updateUserPreferencePagination } =
-    useUserPreferencePagination();
 
-  const columnDescriptions: ColumnDescription<ImportRow>[] = [
-    {
-      key: 'itemCode',
-      width: 90,
-      sortable: false,
-      label: 'label.code',
-    },
-    {
-      width: 90,
-      key: 'requestedPackSize',
-      sortable: false,
-      label: 'label.pack-size',
-    },
-    {
-      width: 90,
-      key: 'numberOfPacks',
-      sortable: false,
-      label: 'label.requested-packs',
-    },
-    {
-      width: 90,
-      key: 'unit',
-      sortable: false,
-      label: 'label.unit',
-    },
-    {
-      width: 90,
-      key: 'supplierItemCode',
-      sortable: false,
-      label: 'label.supplier-item-code',
-    },
-    {
-      width: 90,
-      key: 'pricePerPackBeforeDiscount',
-      sortable: false,
-      label: 'label.price-per-pack-before-discount',
-    },
-    {
-      width: 90,
-      key: 'discountPercentage',
-      sortable: false,
-      label: 'label.discount-percentage',
-    },
-    {
-      width: 90,
-      key: 'pricePerPackAfterDiscount',
-      sortable: false,
-      label: 'label.price-per-pack-after-discount',
-    },
-    {
-      width: 90,
-      key: 'requestedDeliveryDate',
-      sortable: false,
-      label: 'label.requested-delivery-date',
-    },
-    {
-      width: 90,
-      key: 'expectedDeliveryDate',
-      sortable: false,
-      label: 'label.expected-delivery-date',
-    },
-    {
-      width: 90,
-      key: 'comment',
-      sortable: false,
-      label: 'label.comment',
-    },
-    {
-      width: 90,
-      key: 'note',
-      sortable: false,
-      label: 'label.notes',
-    },
-  ];
-
-  if (showWarnings) {
-    columnDescriptions.push({
-      key: 'warningMessage',
-      label: 'label.warning-message',
-      width: 150,
-      Cell: TooltipTextCell,
-    });
-  } else {
-    columnDescriptions.push({
-      key: 'errorMessage',
-      label: 'label.error-message',
-      width: 200,
-      Cell: TooltipTextCell,
-    });
-  }
-
-  // TODO implement searching for item & mapping item name to table for more easeful UI (Currently users need to know the item code)
-  const columns = useColumns<ImportRow>(columnDescriptions, {}, []);
-
-  const filteredEquipment = uploadedRows.filter(row => {
-    if (!searchString) return true;
-    return (
-      row.id.includes(searchString) ||
-      (row.itemCode && row.itemCode.includes(searchString))
-    );
-  });
-
-  const currentEquipmentPage = filteredEquipment.slice(
-    pagination.offset,
-    pagination.offset + pagination.first
+  const columns = useMemo(
+    (): ColumnDef<ImportRow>[] => [
+      {
+        accessorKey: 'itemCode',
+        header: t('label.code'),
+        size: 90,
+        enableSorting: true,
+        enableColumnFilter: true,
+      },
+      {
+        accessorKey: 'requestedPackSize',
+        header: t('label.pack-size'),
+        columnType: ColumnType.Number,
+        size: 90,
+        enableSorting: true,
+        enableColumnFilter: true,
+        filterVariant: 'range-slider',
+      },
+      {
+        accessorKey: 'numberOfPacks',
+        header: t('label.requested-packs'),
+        columnType: ColumnType.Number,
+        size: 90,
+        enableSorting: true,
+        enableColumnFilter: true,
+        filterVariant: 'range-slider',
+      },
+      {
+        accessorKey: 'unit',
+        header: t('label.unit'),
+        size: 90,
+        enableColumnFilter: true,
+      },
+      {
+        accessorKey: 'supplierItemCode',
+        header: t('label.supplier-item-code'),
+        size: 90,
+        enableColumnFilter: true,
+      },
+      {
+        accessorKey: 'pricePerPackBeforeDiscount',
+        header: t('label.price-per-pack-before-discount'),
+        columnType: ColumnType.Currency,
+        size: 90,
+        enableSorting: true,
+        enableColumnFilter: true,
+        filterVariant: 'range-slider',
+      },
+      {
+        accessorKey: 'discountPercentage',
+        header: t('label.discount-percentage'),
+        columnType: ColumnType.Number,
+        size: 90,
+        enableSorting: true,
+        enableColumnFilter: true,
+        filterVariant: 'range-slider',
+      },
+      {
+        accessorKey: 'pricePerPackAfterDiscount',
+        header: t('label.price-per-pack-after-discount'),
+        size: 90,
+        enableSorting: true,
+        columnType: ColumnType.Currency,
+        enableColumnFilter: true,
+        filterVariant: 'range-slider',
+      },
+      {
+        accessorKey: 'requestedDeliveryDate',
+        header: t('label.requested-delivery-date'),
+        columnType: ColumnType.Date,
+        size: 90,
+        enableSorting: true,
+        enableColumnFilter: true,
+      },
+      {
+        accessorKey: 'expectedDeliveryDate',
+        header: t('label.expected-delivery-date'),
+        columnType: ColumnType.Date,
+        size: 90,
+        enableSorting: true,
+        enableColumnFilter: true,
+      },
+      {
+        accessorKey: 'comment',
+        header: t('label.comment'),
+        size: 90,
+        enableColumnFilter: true,
+      },
+      {
+        accessorKey: 'note',
+        header: t('label.notes'),
+        size: 90,
+        enableColumnFilter: true,
+      },
+      {
+        accessorKey: 'warningMessage',
+        header: t('label.warning-message'),
+        includeColumn: showWarnings,
+        size: 150,
+        Cell: TextWithTooltipCell,
+      },
+      {
+        accessorKey: 'errorMessage',
+        header: t('label.error-message'),
+        includeColumn: !showWarnings,
+        size: 200,
+        Cell: TextWithTooltipCell,
+      },
+    ],
+    []
   );
+
+  const { table } = useNonPaginatedMaterialTable<ImportRow>({
+    tableId: 'purchase-order-import-review-table',
+    data: uploadedRows,
+    columns,
+    enableRowSelection: false,
+    noUriFiltering: true,
+    noDataElement: <NothingHere body={t('error.purchase-order-line-not-found')} />,
+  });
 
   return (
     <ImportPanel tab={tab}>
       <Grid flexDirection="column" display="flex" gap={0} height={height * 0.5}>
-        <SearchBar
-          placeholder={t('messages.search')}
-          value={searchString}
-          debounceTime={300}
-          onChange={newValue => {
-            setSearchString(newValue);
-            updateUserPreferencePagination(0);
-          }}
-        />
-        <DataTable
-          id={''}
-          pagination={{
-            ...pagination,
-            total: filteredEquipment.length,
-          }}
-          onChangePage={updateUserPreferencePagination}
-          columns={columns}
-          data={currentEquipmentPage}
-          noDataElement={
-            <NothingHere body={t('error.purchase-order-line-not-found')} />
-          }
-        />
+        <MaterialTable table={table} />
       </Grid>
     </ImportPanel>
   );
