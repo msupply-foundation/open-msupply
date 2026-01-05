@@ -37,6 +37,7 @@ pub enum PluginInstanceVariant {
 pub struct PluginInstance {
     pub code: String,
     variant: PluginInstanceVariant,
+    pub version: Version,
 }
 
 pub type PluginResult<T> = Result<T, PluginError>;
@@ -47,7 +48,7 @@ pub enum PluginErrorVariant {
     BoaJs(#[from] BoaJsError),
 }
 
-pub static PLUGINS: RwLock<Vec<Plugin>> = RwLock::new(Vec::new());
+static PLUGINS: RwLock<Vec<Plugin>> = RwLock::new(Vec::new());
 
 fn plugin_type_to_string(r#type: PluginType) -> String {
     serde_json::to_string(&r#type).unwrap().replace("\"", "")
@@ -81,11 +82,15 @@ fn compatible_plugins_with_current_app_version() -> Vec<Plugin> {
     let plugins = PLUGINS.read().unwrap();
     let app_version: Version = Version::from_package_json();
 
-    plugins
+    let mut filtered_plugins: Vec<Plugin> = plugins
         .iter()
         .filter(|p| p.version.is_compatible_by_major_and_minor(&app_version))
         .map(|p| p.clone())
-        .collect()
+        .collect();
+
+    // to get the latest compatable versions listed first
+    filtered_plugins.sort_by(|a, b| b.version.cmp(&a.version));
+    filtered_plugins
 }
 
 #[derive(Serialize, Deserialize, Default)]
@@ -134,18 +139,14 @@ impl PluginInstance {
             PluginVariantType::BoaJs => PluginInstance {
                 code: code.clone(),
                 variant: PluginInstanceVariant::BoaJs(plugin_bundle),
+                version: Version::from_str(&version),
             },
         };
 
         let instance = Arc::new(plugin);
+        let version = Version::from_str(&version);
 
         let mut plugins = PLUGINS.write().unwrap();
-
-        // Remove all plugins with this code
-        (*plugins).retain(|Plugin { instance, .. }| instance.code != code);
-
-        let version = Version::from_str(&version);
-        // Add plugin with this code
         (*plugins).push(Plugin {
             types,
             instance,
