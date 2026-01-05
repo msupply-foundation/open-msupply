@@ -1,6 +1,6 @@
 {
   "is_custom": false,
-  "version": "2.10.1",
+  "version": "2.10.2",
   "code": "expiring-items",
   "context": "REPORT",
   "sub_context": "StockAndItems",
