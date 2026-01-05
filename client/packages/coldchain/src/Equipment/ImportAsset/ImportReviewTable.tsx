@@ -13,12 +13,12 @@ import {
 import { ImportRow } from './EquipmentImportModal';
 import { Status } from '../Components';
 
-interface ImportReviewDataTableProps {
+interface ImportReviewTableProps {
   importRows: ImportRow[];
   showWarnings: boolean;
   showErrors: boolean;
 }
-export const ImportReviewDataTable: FC<ImportReviewDataTableProps> = ({
+export const ImportReviewTable: FC<ImportReviewTableProps> = ({
   importRows,
   showWarnings,
   showErrors,
@@ -134,7 +134,7 @@ export const ImportReviewDataTable: FC<ImportReviewDataTableProps> = ({
     data: importRows,
     columns,
     enableRowSelection: false,
-    noUriFiltering: true,
+    noUrlFiltering: true,
   });
 
   return (

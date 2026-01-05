@@ -144,8 +144,10 @@ export const ReviewTab = ({
     data: uploadedRows,
     columns,
     enableRowSelection: false,
-    noUriFiltering: true,
-    noDataElement: <NothingHere body={t('error.purchase-order-line-not-found')} />,
+    noUrlFiltering: true,
+    noDataElement: (
+      <NothingHere body={t('error.purchase-order-line-not-found')} />
+    ),
   });
 
   return (
