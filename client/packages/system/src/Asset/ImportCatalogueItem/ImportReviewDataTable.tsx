@@ -1,14 +1,13 @@
-import React, { FC, useState } from 'react';
+import React, { FC, useMemo } from 'react';
 import {
-  DataTable,
   Grid,
   NothingHere,
-  useUserPreferencePagination,
-  SearchBar,
-  TooltipTextCell,
-  useColumns,
+  TextWithTooltipCell,
   useTranslation,
   useWindowDimensions,
+  MaterialTable,
+  useNonPaginatedMaterialTable,
+  ColumnDef,
 } from '@openmsupply-client/common';
 import { ImportRow } from './CatalogueItemImportModal';
 
@@ -21,107 +20,87 @@ export const ImportReviewDataTable: FC<ImportReviewDataTableProps> = ({
   const t = useTranslation();
   const { height } = useWindowDimensions();
 
-  const { pagination, updateUserPreferencePagination } =
-    useUserPreferencePagination();
-
-  const [searchString, setSearchString] = useState<string>(() => '');
-  const columns = useColumns<ImportRow>(
-    [
+  const columns = useMemo(
+    (): ColumnDef<ImportRow>[] => [
       {
-        key: 'subCatalogue',
-        width: 70,
-        sortable: false,
-        label: 'label.sub-catalogue',
+        accessorKey: 'subCatalogue',
+        header: t('label.sub-catalogue'),
+        size: 70,
+        enableSorting: true,
+        enableColumnFilter: true,
       },
       {
-        key: 'code',
-        width: 50,
-        sortable: false,
-        label: 'label.code',
+        accessorKey: 'code',
+        header: t('label.code'),
+        size: 50,
+        enableSorting: true,
+        enableColumnFilter: true,
       },
       {
-        key: 'type',
-        width: 100,
-        sortable: false,
-        label: 'label.type',
-        Cell: TooltipTextCell,
+        accessorKey: 'type',
+        header: t('label.type'),
+        size: 100,
+        Cell: TextWithTooltipCell,
+        enableSorting: true,
+        enableColumnFilter: true,
+        filterVariant: 'select',
       },
       {
-        key: 'manufacturer',
-        width: 100,
-        sortable: false,
-        label: 'label.manufacturer',
-        Cell: TooltipTextCell,
+        accessorKey: 'manufacturer',
+        header: t('label.manufacturer'),
+        size: 100,
+        Cell: TextWithTooltipCell,
+        enableSorting: true,
+        enableColumnFilter: true,
       },
       {
-        key: 'model',
-        width: 100,
-        sortable: false,
-        label: 'label.model',
-        Cell: TooltipTextCell,
+        accessorKey: 'model',
+        header: t('label.model'),
+        size: 100,
+        Cell: TextWithTooltipCell,
+        enableSorting: true,
+        enableColumnFilter: true,
       },
       {
-        key: 'class',
-        width: 100,
-        sortable: false,
-        label: 'label.class',
-        Cell: TooltipTextCell,
+        accessorKey: 'class',
+        header: t('label.class'),
+        size: 100,
+        Cell: TextWithTooltipCell,
+        enableSorting: true,
+        enableColumnFilter: true,
+        filterVariant: 'select',
       },
       {
-        key: 'category',
-        width: 100,
-        sortable: false,
-        label: 'label.category',
-        Cell: TooltipTextCell,
+        accessorKey: 'category',
+        header: t('label.category'),
+        size: 100,
+        Cell: TextWithTooltipCell,
+        enableSorting: true,
+        enableColumnFilter: true,
+        filterVariant: 'select',
       },
       {
-        key: 'errorMessage',
-        label: 'label.error-message',
-        width: 150,
-        Cell: TooltipTextCell,
+        accessorKey: 'errorMessage',
+        header: t('label.error-message'),
+        size: 150,
+        Cell: TextWithTooltipCell,
       },
     ],
-    {},
     []
   );
 
-  const filteredAssetItem = importRows.filter(row => {
-    if (!searchString) {
-      return true;
-    }
-    return (
-      row.code.includes(searchString) ||
-      row.errorMessage?.includes(searchString) ||
-      row.id === searchString
-    );
+  const { table } = useNonPaginatedMaterialTable<ImportRow>({
+    tableId: 'asset-import-review-table',
+    data: importRows,
+    columns,
+    enableRowSelection: false,
+    noUriFiltering: true,
+    noDataElement: <NothingHere body={t('error.asset-not-found')} />,
   });
-  const currentAssetItemPage = filteredAssetItem.slice(
-    pagination.offset,
-    pagination.offset + pagination.first
-  );
 
   return (
     <Grid flexDirection="column" display="flex" gap={0} height={height * 0.5}>
-      <SearchBar
-        placeholder={t('messages.search')}
-        value={searchString}
-        debounceTime={300}
-        onChange={newValue => {
-          setSearchString(newValue);
-          updateUserPreferencePagination(0);
-        }}
-      />
-      <DataTable
-        pagination={{
-          ...pagination,
-          total: filteredAssetItem.length,
-        }}
-        onChangePage={updateUserPreferencePagination}
-        columns={columns}
-        data={currentAssetItemPage}
-        noDataElement={<NothingHere body={t('error.asset-not-found')} />}
-        id={'import-review'}
-      />
+      <MaterialTable table={table} />
     </Grid>
   );
 };
