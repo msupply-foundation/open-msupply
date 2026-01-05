@@ -2375,5 +2375,16 @@
   "warning.check-before-vaccinating": "Os registros de vacinação de outras unidades de saúde podem não estar atualizados. Certifique-se de que você sincronizou recentemente e sempre confirme primeiro com o cartão de vacinação físico do paciente.",
   "warning.field-not-parsed": "{{field}} não analisado",
   "warning.manual-store-requisition": "Inserir uma requisição para esta loja pode resultar em duplicados se a loja também enviar um Pedido Interno.",
-  "warning.nothing-to-supply": "Nada para fornecer!"
+  "warning.nothing-to-supply": "Nada para fornecer!",
+  "label.adjust-packs": "Ajustar pacotes",
+  "label.decrease": "Diminuir",
+  "error.invalid-custom-translation": "Traduções podem conter apenas variáveis e devem ser ligadas no número correto de parênteses",
+  "label.amc-calculation": "Cálculo de AMC",
+  "label.batches-expiring-between-days": "Lotes que vencem entre 30 e 90 dias",
+  "label.created-from-requisition": "Criado de Requisição",
+  "label.delete-supply-level": "Excluir Nível de Abastecimento",
+  "label.destination-customer": "Beneficiário final",
+  "label.show-in-stock-products": "Mostrar produtos em estoque",
+  "label.show-products-at-risk": "Mostrar produto em risco",
+  "label.show-out-of-stock-products": "Mostrar produtos sem estoque"
 }
