@@ -30,7 +30,7 @@ impl PackageJsonAsset {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone)]
 pub struct Version {
     pub major: i16,
     pub minor: i16,
@@ -93,23 +93,41 @@ impl Version {
     }
 }
 
-impl PartialOrd for Version {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+impl Ord for Version {
+    fn cmp(&self, other: &Self) -> Ordering {
         if self.major != other.major {
-            return Some(self.major.cmp(&other.major));
+            return self.major.cmp(&other.major);
         }
 
         if self.minor != other.minor {
-            return Some(self.minor.cmp(&other.minor));
+            return self.minor.cmp(&other.minor);
         }
 
         if self.patch != other.patch {
-            return Some(self.patch.cmp(&other.patch));
+            return self.patch.cmp(&other.patch);
         }
 
-        Some(Ordering::Equal)
+        Ordering::Equal
 
         // pre release version (RC or TEST etc), are not compared
+    }
+}
+
+impl PartialOrd for Version {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Eq for Version {}
+
+impl PartialEq for Version {
+    fn eq(&self, other: &Self) -> bool {
+        self.major == other.major && self.minor == other.minor && self.patch == other.patch
+    }
+
+    fn ne(&self, other: &Self) -> bool {
+        !self.eq(other)
     }
 }
 
@@ -177,6 +195,9 @@ mod test {
         assert!(Version::from_str("12.10.03") < Version::from_str("12.11.02"));
         assert!(Version::from_str("10.11.01") < Version::from_str("10.11.2"));
 
-        assert!(Version::from_str("10.11.01-RC1") >= Version::from_str("10.11.1-RC2"));
+        assert_eq!(
+            Version::from_str("10.11.01-RC1"),
+            Version::from_str("10.11.1-RC2")
+        );
     }
 }
