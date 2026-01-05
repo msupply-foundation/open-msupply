@@ -22,15 +22,10 @@ use crate::{
     stocktake::query::get_stocktake,
 };
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub enum UpdateStocktakeStatus {
+    #[default]
     Finalised,
-}
-
-impl Default for UpdateStocktakeStatus {
-    fn default() -> Self {
-        Self::Finalised
-    }
 }
 
 #[derive(Default, Debug, Clone)]
