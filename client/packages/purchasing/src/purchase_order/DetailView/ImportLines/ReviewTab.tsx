@@ -9,9 +9,9 @@ import {
   ColumnDef,
   ColumnType,
   TextWithTooltipCell,
+  useNonPaginatedMaterialTable,
 } from '@openmsupply-client/common';
 import { ImportRow } from './utils';
-import { useBaseMaterialTable } from 'packages/common/src/ui/layout/tables/material-react-table/useBaseMaterialTable';
 
 interface ReviewTabProps {
   uploadedRows: ImportRow[];
@@ -28,118 +28,123 @@ export const ReviewTab = ({
   const { height } = useWindowDimensions();
 
   const columns = useMemo(
-    (): ColumnDef<ImportRow>[] => {
-      const columns: ColumnDef<ImportRow>[] = [
-        {
-          accessorKey: 'itemCode',
-          header: t('label.code'),
-          size: 90,
-          enableSorting: true,
-          enableColumnFilter: true,
-        },
-        {
-          accessorKey: 'requestedPackSize',
-          header: t('label.pack-size'),
-          size: 90,
-          enableSorting: true,
-          columnType: ColumnType.Number,
-        },
-        {
-          accessorKey: 'numberOfPacks',
-          header: t('label.requested-packs'),
-          size: 90,
-          enableSorting: true,
-          columnType: ColumnType.Number,
-        },
-        {
-          accessorKey: 'unit',
-          header: t('label.unit'),
-          size: 90,
-          enableColumnFilter: true,
-        },
-        {
-          accessorKey: 'supplierItemCode',
-          header: t('label.supplier-item-code'),
-          size: 90,
-          enableColumnFilter: true,
-        },
-        {
-          accessorKey: 'pricePerPackBeforeDiscount',
-          header: t('label.price-per-pack-before-discount'),
-          size: 90,
-          enableSorting: true,
-          columnType: ColumnType.Currency,
-        },
-        {
-          accessorKey: 'discountPercentage',
-          header: t('label.discount-percentage'),
-          size: 90,
-          enableSorting: true,
-          columnType: ColumnType.Number,
-        },
-        {
-          accessorKey: 'pricePerPackAfterDiscount',
-          header: t('label.price-per-pack-after-discount'),
-          size: 90,
-          enableSorting: true,
-          columnType: ColumnType.Currency,
-        },
-        {
-          accessorKey: 'requestedDeliveryDate',
-          header: t('label.requested-delivery-date'),
-          size: 90,
-          enableSorting: true,
-          columnType: ColumnType.Date,
-        },
-        {
-          accessorKey: 'expectedDeliveryDate',
-          header: t('label.expected-delivery-date'),
-          size: 90,
-          enableSorting: true,
-          columnType: ColumnType.Date,
-        },
-        {
-          accessorKey: 'comment',
-          header: t('label.comment'),
-          size: 90,
-          enableColumnFilter: true,
-        },
-        {
-          accessorKey: 'note',
-          header: t('label.notes'),
-          size: 90,
-          enableColumnFilter: true,
-        },
-      ];
-
-      if (showWarnings) {
-        columns.push({
-          accessorKey: 'warningMessage',
-          header: t('label.warning-message'),
-          size: 150,
-          Cell: TextWithTooltipCell,
-        });
-      } else {
-        columns.push({
-          accessorKey: 'errorMessage',
-          header: t('label.error-message'),
-          size: 200,
-          Cell: TextWithTooltipCell,
-        });
-      }
-
-      return columns;
-    },
+    (): ColumnDef<ImportRow>[] => [
+      {
+        accessorKey: 'itemCode',
+        header: t('label.code'),
+        size: 90,
+        enableSorting: true,
+        enableColumnFilter: true,
+      },
+      {
+        accessorKey: 'requestedPackSize',
+        header: t('label.pack-size'),
+        columnType: ColumnType.Number,
+        size: 90,
+        enableSorting: true,
+        enableColumnFilter: true,
+        filterVariant: 'range-slider',
+      },
+      {
+        accessorKey: 'numberOfPacks',
+        header: t('label.requested-packs'),
+        columnType: ColumnType.Number,
+        size: 90,
+        enableSorting: true,
+        enableColumnFilter: true,
+        filterVariant: 'range-slider',
+      },
+      {
+        accessorKey: 'unit',
+        header: t('label.unit'),
+        size: 90,
+        enableColumnFilter: true,
+      },
+      {
+        accessorKey: 'supplierItemCode',
+        header: t('label.supplier-item-code'),
+        size: 90,
+        enableColumnFilter: true,
+      },
+      {
+        accessorKey: 'pricePerPackBeforeDiscount',
+        header: t('label.price-per-pack-before-discount'),
+        columnType: ColumnType.Currency,
+        size: 90,
+        enableSorting: true,
+        enableColumnFilter: true,
+        filterVariant: 'range-slider',
+      },
+      {
+        accessorKey: 'discountPercentage',
+        header: t('label.discount-percentage'),
+        columnType: ColumnType.Number,
+        size: 90,
+        enableSorting: true,
+        enableColumnFilter: true,
+        filterVariant: 'range-slider',
+      },
+      {
+        accessorKey: 'pricePerPackAfterDiscount',
+        header: t('label.price-per-pack-after-discount'),
+        size: 90,
+        enableSorting: true,
+        columnType: ColumnType.Currency,
+        enableColumnFilter: true,
+        filterVariant: 'range-slider',
+      },
+      {
+        accessorKey: 'requestedDeliveryDate',
+        header: t('label.requested-delivery-date'),
+        columnType: ColumnType.Date,
+        size: 90,
+        enableSorting: true,
+        enableColumnFilter: true,
+      },
+      {
+        accessorKey: 'expectedDeliveryDate',
+        header: t('label.expected-delivery-date'),
+        columnType: ColumnType.Date,
+        size: 90,
+        enableSorting: true,
+        enableColumnFilter: true,
+      },
+      {
+        accessorKey: 'comment',
+        header: t('label.comment'),
+        size: 90,
+        enableColumnFilter: true,
+      },
+      {
+        accessorKey: 'note',
+        header: t('label.notes'),
+        size: 90,
+        enableColumnFilter: true,
+      },
+      {
+        accessorKey: 'warningMessage',
+        header: t('label.warning-message'),
+        includeColumn: showWarnings,
+        size: 150,
+        Cell: TextWithTooltipCell,
+      },
+      {
+        accessorKey: 'errorMessage',
+        header: t('label.error-message'),
+        includeColumn: !showWarnings,
+        size: 200,
+        Cell: TextWithTooltipCell,
+      },
+    ],
     []
   );
 
-  const table = useBaseMaterialTable<ImportRow>({
+  const { table } = useNonPaginatedMaterialTable<ImportRow>({
     tableId: 'purchase-order-import-review-table',
     data: uploadedRows,
     columns,
     enableRowSelection: false,
-    enablePagination: true,
-    enableBottomToolbar: true,
+    noUriFiltering: true,
     noDataElement: <NothingHere body={t('error.purchase-order-line-not-found')} />,
   });
 

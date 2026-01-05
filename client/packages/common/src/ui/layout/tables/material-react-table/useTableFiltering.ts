@@ -3,7 +3,7 @@
  * based on the filter type; and "getFilterState" function, which converts the
  * current URL query into the filter state required by MRT.
  */
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import {
   MRT_ColumnFiltersState,
   MRT_RowData,
@@ -18,14 +18,16 @@ import {
   useUrlQuery,
 } from '@openmsupply-client/common';
 
-export const useTableFiltering = <T extends MRT_RowData>(
-  columns: ColumnDef<T>[]
-): {
+interface FilteringState {
   columnFilters: MRT_ColumnFiltersState;
   onColumnFiltersChange: (
     filterUpdate: MRT_Updater<MRT_ColumnFiltersState>
   ) => void;
-} => {
+}
+
+export const useUriTableFiltering = <T extends MRT_RowData>(
+  columns: ColumnDef<T>[]
+): FilteringState => {
   const { urlQuery, updateQuery } = useUrlQuery();
   const { customDate, urlQueryDateTime, urlQueryDate } = useFormatDateTime();
 
@@ -162,4 +164,24 @@ const getFilterKey = <T extends MRT_RowData>(
   const key = column?.filterKey || columnId;
 
   return key;
+};
+
+export const useNoUriTableFiltering = (): FilteringState => {
+  const [filterState, setFilterState] = useState<MRT_ColumnFiltersState>([]);
+  
+  const handleFilterChange = (
+    filterUpdate: MRT_Updater<MRT_ColumnFiltersState>
+  ) => {
+    setFilterState(prevState => {
+      if (typeof filterUpdate === 'function') {
+        return filterUpdate(prevState);
+      }
+      return filterUpdate;
+    });
+  };
+
+  return {
+    columnFilters: filterState,
+    onColumnFiltersChange: handleFilterChange,
+  };
 };

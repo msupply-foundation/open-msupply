@@ -1,31 +1,28 @@
-import React, { FC } from 'react';
+import React, { FC, useMemo } from 'react';
 import { useUrlQueryParams } from '@common/hooks';
 import { useTranslation } from '@common/intl';
 import {
   ColumnAlign,
-  DataTable,
+  ColumnDef,
   Formatter,
+  MaterialTable,
   NothingHere,
-  TableProvider,
-  createTableStore,
-  useColumns,
+  usePaginatedMaterialTable,
 } from '@openmsupply-client/common';
 import {
   TemperatureBreachFragment,
   useTemperatureBreach,
 } from '../../api/TemperatureBreach';
 import { BreachTypeCell } from '../../../common';
-import { Toolbar } from './Toolbar';
+import { breachTypeOptions, Toolbar } from '../Toolbar';
 import { useAcknowledgeBreachModal } from './useAcknowledgeBreachModal';
 import { DurationCell, IconCell } from './TempereatureBreachCells';
 import { useFormatTemperature } from '../../../common/utils';
 
-const ListView: FC = () => {
+export const TemperatureBreachList: FC = () => {
   const {
-    updateSortQuery,
-    updatePaginationQuery,
     filter,
-    queryParams: { sortBy, page, first, offset, filterBy },
+    queryParams,
   } = useUrlQueryParams({
     initialSort: { key: 'datetime', dir: 'desc' },
     filters: [
@@ -46,123 +43,119 @@ const ListView: FC = () => {
       },
     ],
   });
-  const queryParams = {
-    filterBy,
-    offset,
-    sortBy,
-    first,
-  };
   const { data, isLoading, isError } =
     useTemperatureBreach.document.list(queryParams);
   const { AcknowledgeBreachModal, acknowledgeBreach } =
     useAcknowledgeBreachModal();
 
-  const pagination = { page, first, offset };
   const t = useTranslation();
   const formatTemperature = useFormatTemperature();
 
-  const columns = useColumns<TemperatureBreachFragment>(
-    [
+  const columns = useMemo(
+    (): ColumnDef<TemperatureBreachFragment>[] => [
       {
-        key: 'icon',
-        sortable: false,
-        width: 60,
+        accessorKey: 'icon',
+        header: '',
+        size: 60,
         align: ColumnAlign.Center,
-        Cell: ({ rowData }) => (
-          <IconCell acknowledgeBreach={acknowledgeBreach} rowData={rowData} />
+        Cell: ({ row: { original: row } }) => (
+          <IconCell acknowledgeBreach={acknowledgeBreach} rowData={row} />
         ),
       },
       {
-        key: 'unacknowledged',
-        label: 'label.status',
-        accessor: ({ rowData }) =>
-          !rowData?.unacknowledged
+        id: 'unacknowledged',
+        accessorFn: row =>
+          !row?.unacknowledged
             ? t('label.acknowledged')
             : t('label.unacknowledged'),
-        sortable: false,
+        header: t('label.status'),
+        enableColumnFilter: true,
+        filterVariant: 'select',
+        filterSelectOptions: [
+          {
+            label: t('label.acknowledged'),
+            value: 'false',
+          },
+          {
+            label: t('label.unacknowledged'),
+            value: 'true',
+          },
+        ],
       },
       {
-        key: 'sensor',
-        label: 'label.sensor-name',
-        accessor: ({ rowData }) => rowData.sensor?.name,
-        sortable: false,
+        accessorKey: 'sensor.name',
+        header: t('label.sensor-name'),
+        enableColumnFilter: true,
       },
       {
-        key: 'location',
-        label: 'label.location',
-        accessor: ({ rowData }) => rowData.location?.code,
-        sortable: false,
+        accessorKey: 'location.code',
+        header: t('label.location'),
+        enableColumnFilter: true,
       },
       {
-        key: 'cce',
-        label: 'label.cce',
-        sortable: false,
+        accessorKey: 'cce',
+        header: t('label.cce'),
       },
       {
-        key: 'datetime',
-        label: 'label.type-start',
-        accessor: ({ rowData }) =>
-          Formatter.csvDateTimeString(rowData.startDatetime),
-        getSortValue: row => row.startDatetime,
+        id: 'datetime',
+        accessorFn: row => row.startDatetime,
+        header: t('label.type-start'),
+        enableSorting: true,
+        Cell: ({ row: { original: row } }) =>
+          Formatter.csvDateTimeString(row.startDatetime),
       },
       {
-        key: 'endDatetime',
-        label: 'label.type-end',
-        accessor: ({ rowData }) =>
-          Formatter.csvDateTimeString(rowData.endDatetime),
+        accessorKey: 'endDatetime',
+        header: t('label.type-end'),
+        enableSorting: true,
+        Cell: ({ row: { original: row } }) =>
+          Formatter.csvDateTimeString(row.endDatetime),
       },
       {
-        key: 'duration',
-        label: 'label.duration',
+        accessorKey: 'duration',
+        header: t('label.duration'),
         Cell: DurationCell,
-        sortable: false,
       },
       {
-        key: 'breach',
-        label: 'label.type',
-        accessor: ({ rowData }) => rowData?.type,
+        accessorKey: 'type',
+        header: t('label.type'),
         Cell: BreachTypeCell,
-        sortable: false,
+        enableColumnFilter: true,
+        filterVariant: 'select',
+        filterSelectOptions: breachTypeOptions(t),
       },
       {
-        key: 'temperature',
-        label: 'label.max-min-temperature',
-        description: 'description.max-min-temperature',
-        width: 125,
-        accessor: ({ rowData }) =>
-          !!rowData.maxOrMinTemperature
-            ? `${formatTemperature(rowData.maxOrMinTemperature)}`
+        accessorKey: 'temperature',
+        header: t('label.max-min-temperature'),
+        description: t('description.max-min-temperature'),
+        size: 125,
+        accessorFn: row =>
+          !!row.maxOrMinTemperature
+            ? `${formatTemperature(row.maxOrMinTemperature)}`
             : null,
-        sortable: false,
       },
     ],
-    { onChangeSortBy: updateSortQuery, sortBy },
-    [sortBy]
+    []
   );
+
+  const { table } = usePaginatedMaterialTable<TemperatureBreachFragment>({
+    tableId: 'temperature-breach-list',
+    columns,
+    data: data?.nodes,
+    totalCount: data?.totalCount ?? 0,
+    isLoading,
+    isError,
+    enableRowSelection: false,
+    noDataElement: (
+      <NothingHere body={t('error.no-temperature-breaches')} />
+    ),
+  })
 
   return (
     <>
       <Toolbar filter={filter} />
-      <DataTable
-        id="temperature-breach-list"
-        pagination={{ ...pagination, total: data?.totalCount ?? 0 }}
-        onChangePage={updatePaginationQuery}
-        columns={columns}
-        data={data?.nodes ?? []}
-        isLoading={isLoading}
-        isError={isError}
-        noDataElement={
-          <NothingHere body={t('error.no-temperature-breaches')} />
-        }
-        enableColumnSelection
-      />
+      <MaterialTable table={table} />
       <AcknowledgeBreachModal />
     </>
   );
 };
-
-export const TemperatureBreachList: FC = () => (
-  <TableProvider createStore={createTableStore}>
-    <ListView />
-  </TableProvider>
-);
