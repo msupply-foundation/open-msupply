@@ -25,16 +25,21 @@ interface FilteringState {
   ) => void;
 }
 
-export const useUriTableFiltering = <T extends MRT_RowData>(
-  columns: ColumnDef<T>[]
+export const useTableFiltering = <T extends MRT_RowData>(
+  columns: ColumnDef<T>[],
+  noUrlFiltering: boolean
 ): FilteringState => {
+  const [nonUrlFilterState, setNonUrlFilterState] =
+    useState<MRT_ColumnFiltersState>([]);
+
   const { urlQuery, updateQuery } = useUrlQuery();
   const { customDate, urlQueryDateTime, urlQueryDate } = useFormatDateTime();
 
-  const filterState = useMemo(
-    () => getFilterState(urlQuery, columns),
-    [urlQuery]
-  );
+  const filterState = useMemo(() => {
+    return noUrlFiltering
+      ? nonUrlFilterState
+      : getFilterState(urlQuery, columns);
+  }, [urlQuery, noUrlFiltering, nonUrlFilterState]);
 
   const filterUpdaters = useMemo(() => {
     const filterUpdaters: Record<string, (value: any) => void> = {};
@@ -83,6 +88,16 @@ export const useUriTableFiltering = <T extends MRT_RowData>(
   const handleFilterChange = (
     filterUpdate: MRT_Updater<MRT_ColumnFiltersState>
   ) => {
+    if (noUrlFiltering) {
+      setNonUrlFilterState(prevState => {
+        if (typeof filterUpdate === 'function') {
+          return filterUpdate(prevState);
+        }
+        return filterUpdate;
+      });
+      return;
+    }
+
     // The "filterUpdate" function mutates the state in place, which messes up
     // subsequent comparisons, so we generate a new instance just for the
     // "filterUpdate" function, and ensure we use the original `filterState` for
@@ -164,24 +179,4 @@ const getFilterKey = <T extends MRT_RowData>(
   const key = column?.filterKey || columnId;
 
   return key;
-};
-
-export const useNoUriTableFiltering = (): FilteringState => {
-  const [filterState, setFilterState] = useState<MRT_ColumnFiltersState>([]);
-  
-  const handleFilterChange = (
-    filterUpdate: MRT_Updater<MRT_ColumnFiltersState>
-  ) => {
-    setFilterState(prevState => {
-      if (typeof filterUpdate === 'function') {
-        return filterUpdate(prevState);
-      }
-      return filterUpdate;
-    });
-  };
-
-  return {
-    columnFilters: filterState,
-    onColumnFiltersChange: handleFilterChange,
-  };
 };
