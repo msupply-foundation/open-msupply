@@ -48,13 +48,15 @@ export const ImportReviewTable: FC<ImportReviewTableProps> = ({
         enableSorting: true,
         enableColumnFilter: true,
       },
-      ...((propertyNodes?.map(property => ({
+      ...(propertyNodes?.map(property => ({
         accessorKey: property.key,
         header: property.name,
         size: 150,
         Cell: TextWithTooltipCell,
         Header: () => {
-          const labelExistsInLocale = useTranslationExistsInLocale(property.name);
+          const labelExistsInLocale = useTranslationExistsInLocale(
+            property.name
+          );
           const header = labelExistsInLocale
             ? t(property.name as LocaleKey, { defaultValue: property.name })
             : property.name;
@@ -62,7 +64,7 @@ export const ImportReviewTable: FC<ImportReviewTableProps> = ({
           return header;
         },
         enableSorting: true,
-      }))) || []),
+      })) || []),
       {
         accessorKey: 'errorMessage',
         header: t('label.error-message'),
@@ -84,7 +86,7 @@ export const ImportReviewTable: FC<ImportReviewTableProps> = ({
     data: rowsWithProperties,
     columns,
     enableRowSelection: false,
-    noUriFiltering: true,
+    noUrlFiltering: true,
   });
 
   const tableHeight = window.innerHeight - 360;
