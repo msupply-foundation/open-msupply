@@ -56,6 +56,10 @@ export const StockLineTable = ({
               const numberOfPacks = value / (row.packSize ?? 1);
               updateQuantity(row.id, numberOfPacks);
             }}
+            max={
+              (row.stockLine?.availableNumberOfPacks ?? 0) *
+              (row.stockLine?.packSize ?? 1)
+            }
           />;
         }
       },
