@@ -27,7 +27,7 @@ import { RepackEditForm } from './RepackEditForm';
 import { ReportSelector, useActivityLog } from '@openmsupply-client/system';
 import { RepackFragment, StockLineRowFragment } from '../../api';
 import { useRepackColumns } from './column';
-import { useRepack } from '../../api/hooks';
+import { useRepack, useStockLine } from '../../api/hooks';
 
 interface RepackModalControlProps {
   isOpen: boolean;
@@ -64,6 +64,13 @@ export const RepackModal: FC<RepackModalControlProps> = ({
     onChange,
     onInsert: { mutateAsync: onInsert, isLoading: isInserting },
   } = useRepack({ stockLineId: stockLine?.id, invoiceId });
+
+  const {
+    query: { data: repackedFromData },
+  } = useStockLine(logData?.nodes[0]?.from || '');
+  const repackedFromHasPacks = repackedFromData
+    ? repackedFromData.totalNumberOfPacks > 0
+    : false;
 
   // only display the message if there are lines to click on
   // if there are no lines, the 'click new' message is displayed closer to the action
@@ -212,7 +219,7 @@ export const RepackModal: FC<RepackModalControlProps> = ({
           </Typography>
           {showLogEvent && (
             <Typography sx={{ fontWeight: 'bold', marginBottom: 3 }}>
-              {t('messages.repack-log-info')} : {logData?.nodes[0]?.from}
+              {t('messages.repack-log-info')} : {repackedFromData?.batch || ''}
             </Typography>
           )}
         </Grid>
