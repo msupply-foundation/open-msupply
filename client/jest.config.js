@@ -16,8 +16,6 @@ module.exports = {
       prefix: '<rootDir>/',
     }),
     '.+\\.(gif)$': 'jest-transform-stub',
-    '@capacitor-community/barcode-scanner':
-      '<rootDir>/__mocks__/barcode_scanner.ts',
   },
   transformIgnorePatterns: [
     '/node_modules/(?!uuid|@mui/x-date-pickers|@babel)',
