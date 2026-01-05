@@ -20,6 +20,7 @@ import {
   MaterialTable,
   useSimpleMaterialTable,
   NothingHere,
+  ActivityLogNodeType,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { RepackEditForm } from './RepackEditForm';
@@ -51,7 +52,10 @@ export const RepackModal: FC<RepackModalControlProps> = ({
   const [invoiceId, setInvoiceId] = useState<string | undefined>(undefined);
   const [isNew, setIsNew] = useState<boolean>(false);
 
-  const { data: logData } = useActivityLog(stockLine?.id ?? '');
+  const { data: logData } = useActivityLog(
+    stockLine?.id ?? '',
+    ActivityLogNodeType.Repack
+  );
 
   const {
     list: { repacks, isError, isLoading },
@@ -135,10 +139,9 @@ export const RepackModal: FC<RepackModalControlProps> = ({
     isError,
     data: repacks,
     onRowClick,
-    noDataElement: <NothingHere
-      body={t('messages.no-repacks')}
-      onCreate={newRepack}
-    />,
+    noDataElement: (
+      <NothingHere body={t('messages.no-repacks')} onCreate={newRepack} />
+    ),
     muiTableContainerProps: { sx: { maxHeight: 300 } },
   });
 
@@ -209,7 +212,7 @@ export const RepackModal: FC<RepackModalControlProps> = ({
           </Typography>
           {showLogEvent && (
             <Typography sx={{ fontWeight: 'bold', marginBottom: 3 }}>
-              {`${t('messages.repack-log-info')} : ${logData?.nodes[0]?.to}`}
+              {t('messages.repack-log-info')} : {logData?.nodes[0]?.from}
             </Typography>
           )}
         </Grid>
