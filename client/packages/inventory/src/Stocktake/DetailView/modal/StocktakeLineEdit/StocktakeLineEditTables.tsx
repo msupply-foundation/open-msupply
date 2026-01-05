@@ -19,6 +19,9 @@ import {
   RequiredNumberInputCell,
   RecordWithId,
   ReasonOptionNodeType,
+  TextInputCell,
+  NumberInputCell,
+  CurrencyInputCell,
 } from '@openmsupply-client/common';
 import { DraftStocktakeLine } from './utils';
 import {
@@ -37,10 +40,6 @@ import {
   StocktakeLineError,
   useStocktakeLineErrorContext,
 } from '../../../context';
-// Need to be re-exported when Legacy cells are removed
-import { NumberInputCell } from '@openmsupply-client/common/src/ui/layout/tables/material-react-table/components/NumberInputCell';
-import { CurrencyInputCell } from '@openmsupply-client/common/src/ui/layout/tables/material-react-table/components/CurrencyInputCell';
-import { TextInputCell } from '@openmsupply-client/common/src/ui/layout/tables/material-react-table/components/TextInputCell';
 
 interface StocktakeLineEditTableProps {
   disabled?: boolean;
@@ -457,7 +456,7 @@ const getPackSizeChangePatch = (
   const shouldClearSellPrice =
     row.item.defaultPackSize !== newPackSize &&
     row.item.itemStoreProperties?.defaultSellPricePerPack ===
-      row.sellPricePerPack;
+    row.sellPricePerPack;
 
   return {
     id: row.id,
@@ -479,7 +478,7 @@ const getCountedPacksChangePatch = (
   const keepReason =
     typeof row.countedNumberOfPacks === 'number' &&
     countedPacks > row.snapshotNumberOfPacks ===
-      row.countedNumberOfPacks > row.snapshotNumberOfPacks;
+    row.countedNumberOfPacks > row.snapshotNumberOfPacks;
 
   return {
     id: row.id,
