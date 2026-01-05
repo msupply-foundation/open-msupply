@@ -24,7 +24,7 @@ import { DraftAsset } from '../types';
 
 export const AddFromScannerButtonComponent = () => {
   const t = useTranslation();
-  const { isConnected, isEnabled, isScanning, startScanning, stopScan } =
+  const { isConnected, isEnabled, isScanning, scan, stopScan } =
     useBarcodeScannerContext();
   const { error, info } = useNotification();
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -81,6 +81,7 @@ export const AddFromScannerButtonComponent = () => {
           return;
         }
         error(t('error.no-matching-asset', { id }))();
+        stopScan();
         return;
       }
 
@@ -89,6 +90,7 @@ export const AddFromScannerButtonComponent = () => {
 
       if (asset?.__typename !== 'AssetNode') {
         error(t('error.no-matching-asset', { id: result.content }))();
+        stopScan();
         return;
       }
       if (asset?.id) {
@@ -127,9 +129,10 @@ export const AddFromScannerButtonComponent = () => {
       stopScan();
     } else {
       try {
-        await startScanning(handleScanResult);
+        const result = await scan();
+        await handleScanResult(result);
       } catch (e) {
-        error(t('error.unable-to-start-scanning', { error: e }))();
+        error(t('error.unable-to-read-barcode', { error: e }))();
       }
     }
   };
