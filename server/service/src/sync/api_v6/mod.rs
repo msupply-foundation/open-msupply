@@ -216,6 +216,10 @@ pub struct SyncUploadFileRequestV6 {
     pub sync_v5_settings: SyncApiSettings,
     #[serde(default)]
     pub(crate) sync_v6_version: u32,
+    #[serde(default)]
+    pub record_id: Option<String>,
+    #[serde(default)]
+    pub table_name: Option<String>,
 }
 
 #[derive(Deserialize, Debug, Serialize)]
@@ -231,6 +235,8 @@ async fn response_or_err<T: DeserializeOwned>(
     let response = match result {
         Ok(result) => result,
         Err(error) => {
+            log::info!("Request error: {:#?}", error);
+
             if error.is_connect() {
                 return Err(SyncApiErrorVariantV6::ConnectionError(error));
             } else {
