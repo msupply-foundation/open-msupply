@@ -68,7 +68,10 @@ export const View = ({ data, t }: ViewProps): ReactElement => {
       </Box>
       {data?.type === SyncMessageNodeType.SupportUpload &&
         data?.status === SyncMessageNodeStatus.Processed && (
-          <FileList data={data} />
+          <FileList
+            files={data?.files?.nodes ?? []}
+            syncMessageId={data?.id ?? ''}
+          />
         )}
     </Stack>
   );

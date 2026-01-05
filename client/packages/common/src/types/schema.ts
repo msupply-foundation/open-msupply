@@ -9849,12 +9849,22 @@ export type SyncFileReferenceConnector = {
 export type SyncFileReferenceNode = {
   __typename: 'SyncFileReferenceNode';
   createdDatetime: Scalars['NaiveDateTime']['output'];
+  error?: Maybe<Scalars['String']['output']>;
   fileName: Scalars['String']['output'];
   id: Scalars['String']['output'];
   mimeType?: Maybe<Scalars['String']['output']>;
   recordId: Scalars['String']['output'];
+  status: SyncFileReferenceNodeStatus;
   tableName: Scalars['String']['output'];
 };
+
+export enum SyncFileReferenceNodeStatus {
+  Done = 'DONE',
+  Error = 'ERROR',
+  InProgress = 'IN_PROGRESS',
+  New = 'NEW',
+  PermanentFailure = 'PERMANENT_FAILURE',
+}
 
 export type SyncMessageConnector = {
   __typename: 'SyncMessageConnector';
@@ -9918,7 +9928,6 @@ export type SyncMessageQueriesSyncMessagesArgs = {
 export type SyncMessageResponse = RecordNotFound | SyncMessageNode;
 
 export enum SyncMessageRowTypeInput {
-  RequestFieldChange = 'REQUEST_FIELD_CHANGE',
   SupportUpload = 'SUPPORT_UPLOAD',
 }
 
