@@ -21,6 +21,7 @@ import {
   useSimpleMaterialTable,
   NothingHere,
   ActivityLogNodeType,
+  Link,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { RepackEditForm } from './RepackEditForm';
@@ -56,6 +57,7 @@ export const RepackModal: FC<RepackModalControlProps> = ({
     stockLine?.id ?? '',
     ActivityLogNodeType.Repack
   );
+  const toLogData = logData?.nodes.find(node => !!node.from);
 
   const {
     list: { repacks, isError, isLoading },
@@ -67,7 +69,7 @@ export const RepackModal: FC<RepackModalControlProps> = ({
 
   const {
     query: { data: repackedFromData },
-  } = useStockLine(logData?.nodes[0]?.from || '');
+  } = useStockLine(toLogData?.from || '');
   const repackedFromHasPacks = repackedFromData
     ? repackedFromData.totalNumberOfPacks > 0
     : false;
@@ -76,7 +78,7 @@ export const RepackModal: FC<RepackModalControlProps> = ({
   // if there are no lines, the 'click new' message is displayed closer to the action
   const displayMessage = invoiceId == undefined && !isNew && !!repacks?.length;
   const showRepackDetail = invoiceId || isNew;
-  const showLogEvent = !!logData?.nodes.length;
+  const showLogEvent = !!toLogData;
 
   const onRowClick = (rowData: RepackFragment) => {
     setInvoiceId(rowData.id);
@@ -217,11 +219,28 @@ export const RepackModal: FC<RepackModalControlProps> = ({
           <Typography sx={{ fontWeight: 'bold' }}>
             {`${t('label.code')} : ${stockLine?.item.code}`}
           </Typography>
-          {showLogEvent && (
-            <Typography sx={{ fontWeight: 'bold', marginBottom: 3 }}>
-              {t('messages.repack-log-info')} : {repackedFromData?.batch || ''}
-            </Typography>
-          )}
+          {showLogEvent &&
+            (() => {
+              const content = (
+                <Typography sx={{ fontWeight: 'bold', marginBottom: 3 }}>
+                  {t('messages.repack-log-info')} :{' '}
+                  {repackedFromData?.batch || ''}
+                </Typography>
+              );
+
+              return repackedFromHasPacks ? (
+                <Link
+                  to={RouteBuilder.create(AppRoute.Inventory)
+                    .addPart(AppRoute.Stock)
+                    .addPart(logData?.nodes[0]?.from || '')
+                    .build()}
+                >
+                  {content}
+                </Link>
+              ) : (
+                content
+              );
+            })()}
         </Grid>
         <Box
           display="flex"
