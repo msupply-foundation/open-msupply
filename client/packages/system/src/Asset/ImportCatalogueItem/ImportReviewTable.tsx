@@ -94,7 +94,7 @@ export const ImportReviewTable: FC<ImportReviewTableProps> = ({
     data: importRows,
     columns,
     enableRowSelection: false,
-    noUriFiltering: true,
+    noUrlFiltering: true,
     noDataElement: <NothingHere body={t('error.asset-not-found')} />,
   });
 
