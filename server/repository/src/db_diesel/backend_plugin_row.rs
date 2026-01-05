@@ -46,10 +46,10 @@ table! {
   backend_plugin (id) {
       id -> Text,
       code -> Text,
+      version -> Text,
       bundle_base64 -> Text,
       types -> Text,
       variant_type  -> crate::db_diesel::backend_plugin_row::PluginVariantTypeMapping,
-      version -> Text
   }
 }
 
@@ -60,12 +60,12 @@ table! {
 pub struct BackendPluginRow {
     pub id: String,
     pub code: String,
+    pub version: String,
     pub bundle_base64: String,
     #[diesel(serialize_as = String)]
     #[diesel(deserialize_as = String)]
     pub types: PluginTypes,
     pub variant_type: PluginVariantType,
-    pub version: String,
 }
 
 pub struct BackendPluginRowRepository<'a> {

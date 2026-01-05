@@ -111,6 +111,7 @@ struct ManifestJson {
     #[serde(rename = "name")]
     code: String,
     om_supply_plugin: PluginDescription,
+    version: String,
 }
 
 pub fn generate_plugin_bundle(
@@ -173,6 +174,7 @@ fn process_manifest(bundle: &mut PluginBundle, path: &PathBuf) -> Result<(), Err
     let ManifestJson {
         code,
         om_supply_plugin,
+        version,
     } = match serde_json::from_reader(
         fs::File::open(path).map_err(|e| Error::CannotOpenManifestFile(path.clone(), e))?,
     ) {
@@ -213,9 +215,9 @@ fn process_manifest(bundle: &mut PluginBundle, path: &PathBuf) -> Result<(), Err
         PluginDescription::Backend {
             types,
             variant_type,
-        } => bundle_backend_plugin(bundle, code, types, variant_type, plugin_root)?,
+        } => bundle_backend_plugin(bundle, code, types, variant_type, plugin_root, version)?,
         PluginDescription::FrontEnd { types } => {
-            bundle_frontend_plugin(bundle, code, types, plugin_root)?
+            bundle_frontend_plugin(bundle, code, types, plugin_root, version)?
         }
     }
 
@@ -228,6 +230,7 @@ fn bundle_backend_plugin(
     types: PluginTypes,
     variant_type: PluginVariantType,
     plugin_root: &Path,
+    version: String,
 ) -> Result<(), Error> {
     // Backend plugin bundle will be located in {plugindir}/dist/plugin.js
     let bundle_base64 = BASE64_STANDARD.encode(
@@ -235,13 +238,15 @@ fn bundle_backend_plugin(
             .map_err(|e| Error::FailedToReadBundleFile(plugin_root.to_path_buf(), e))?,
     );
 
+    let version_id = str::replace(&version, ".", "_");
+
     bundle.backend_plugins.push(BackendPluginRow {
-        // TODO for now id = code in the future id = code + version (similar to reports)
-        id: format!("backend_{code}"),
+        id: format!("backend_{code}_{version_id}"),
         bundle_base64: bundle_base64,
         variant_type,
         types,
         code,
+        version, // TODO parse version to check format is valid?
     });
 
     Ok(())
@@ -252,6 +257,7 @@ fn bundle_frontend_plugin(
     code: String,
     types: FrontendPluginTypes,
     plugin_root: &Path,
+    version: String,
 ) -> Result<(), Error> {
     // Frontend plugin bundle will be in {plugindir}/dist/ folder, consisting of one or many files
     // with entry point starting with plugin code. Any files starting with 'main' or having 'LICENSE' in their name
@@ -307,12 +313,15 @@ fn bundle_frontend_plugin(
         ));
     };
 
+    let version_id = str::replace(&version, ".", "_");
+
     bundle.frontend_plugins.push(FrontendPluginRow {
-        id: format!("frontend_{code}"),
+        id: format!("frontend_{code}_{version_id}"),
         code,
         entry_point,
         files: FrontendPluginFiles(files),
         types,
+        version,
     });
 
     Ok(())
