@@ -1,10 +1,6 @@
 import React from 'react';
 import { useIntlUtils } from '@common/intl';
-import {
-  Grid,
-  ShrinkableBaseButton,
-  TranslateIcon,
-} from '@openmsupply-client/common';
+import { Grid, FlatButton, TranslateIcon } from '@openmsupply-client/common';
 import { LanguageSelector } from './Footer/LanguageSelector';
 
 export const LanguageButton = () => {
@@ -13,12 +9,17 @@ export const LanguageButton = () => {
   return (
     <Grid container alignSelf="flex-end" p={1}>
       <LanguageSelector>
-        <ShrinkableBaseButton
+        <FlatButton
           startIcon={<TranslateIcon fontSize="small" />}
           label={currentLanguageName || ''}
           shrinkThreshold={'sm'}
-          variant="outlined"
+          onClick={() => {}}
           shouldShrink
+          sx={{
+            boxShadow: theme => theme.shadows[2],
+            borderRadius: 2,
+            px: 2,
+          }}
         />
       </LanguageSelector>
     </Grid>
