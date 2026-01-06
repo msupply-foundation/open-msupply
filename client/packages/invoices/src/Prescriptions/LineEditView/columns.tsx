@@ -6,6 +6,7 @@ import {
   Formatter,
   usePreferences,
   useIntlUtils,
+  CheckCell,
 } from '@openmsupply-client/common';
 import {
   DraftItem,
@@ -109,6 +110,14 @@ export const usePrescriptionLineEditColumns = ({
             disabled={getIsDisabled(row.original)}
           />
         ),
+      },
+      {
+        id: 'onHold',
+        header: t('label.on-hold'),
+        size: 30,
+        defaultHideOnMobile: true,
+        accessorFn: row => row.stockLineOnHold || row.location?.onHold,
+        Cell: CheckCell,
       },
     ];
   }, [unit, allocate, getIsDisabled]);
