@@ -8,8 +8,7 @@ import { useIntlUtils, useTranslation } from '@common/intl';
 import { ColumnDef } from './types';
 import { useMaterialTableColumns } from './useMaterialTableColumns';
 import { getGroupedRows } from './utils';
-import { useTableFiltering,
-} from './useTableFiltering';
+import { useTableFiltering } from './useTableFiltering';
 import { useTableDisplayOptions } from './useTableDisplayOptions';
 import { useUrlSortManagement } from './useUrlSortManagement';
 import {
