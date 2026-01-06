@@ -41,7 +41,7 @@ pub(crate) fn generate(
 
     if let Some(other_party) = other_party_option {
         updated_return.name_store_id = other_party.store_id().map(|id| id.to_string());
-        updated_return.name_link_id = other_party.name_row.id;
+        updated_return.name_id = other_party.name_row.id;
     }
 
     if let Some(status) = patch.status.clone() {
@@ -55,7 +55,7 @@ pub(crate) fn generate(
             connection,
             &updated_return.store_id,
             &updated_return.id,
-            &updated_return.name_link_id,
+            &updated_return.name_id,
         )?)
     } else {
         None

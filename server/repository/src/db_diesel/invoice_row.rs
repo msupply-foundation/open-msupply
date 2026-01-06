@@ -1,7 +1,6 @@
 use super::{
-    clinician_link_row::clinician_link, currency_row::currency, invoice_row::invoice::dsl::*,
-    item_link_row::item_link, name_link_row::name_link, store_row::store, user_row::user_account,
-    StorageConnection,
+    clinician_link_row::clinician_link, currency_row::currency, item_link_row::item_link,
+    name_row::name, store_row::store, user_row::user_account, StorageConnection,
 };
 use crate::{
     repository_error::RepositoryError, ChangeLogInsertRow, ChangelogRepository, ChangelogTableName,
@@ -14,8 +13,56 @@ use serde::{Deserialize, Serialize};
 use std::any::Any;
 use strum::Display;
 
+// View table - used for SELECT queries (has resolved name_id)
 table! {
+    #[sql_name = "invoice_view"]
     invoice (id) {
+        id -> Text,
+        name_store_id -> Nullable<Text>,
+        store_id -> Text,
+        user_id -> Nullable<Text>,
+        invoice_number -> BigInt,
+        #[sql_name = "type"] type_ -> crate::db_diesel::invoice_row::InvoiceTypeMapping,
+        status -> crate::db_diesel::invoice_row::InvoiceStatusMapping,
+        on_hold -> Bool,
+        comment -> Nullable<Text>,
+        their_reference -> Nullable<Text>,
+        transport_reference -> Nullable<Text>,
+        created_datetime -> Timestamp,
+        allocated_datetime -> Nullable<Timestamp>,
+        picked_datetime -> Nullable<Timestamp>,
+        shipped_datetime -> Nullable<Timestamp>,
+        delivered_datetime -> Nullable<Timestamp>,
+        received_datetime -> Nullable<Timestamp>,
+        verified_datetime -> Nullable<Timestamp>,
+        cancelled_datetime -> Nullable<Timestamp>,
+        colour -> Nullable<Text>,
+        requisition_id -> Nullable<Text>,
+        linked_invoice_id -> Nullable<Text>,
+        tax_percentage -> Nullable<Double>,
+        currency_id -> Nullable<Text>,
+        currency_rate -> Double,
+        clinician_link_id -> Nullable<Text>,
+        original_shipment_id -> Nullable<Text>,
+        backdated_datetime -> Nullable<Timestamp>,
+        diagnosis_id -> Nullable<Text>,
+        program_id -> Nullable<Text>,
+        name_insurance_join_id -> Nullable<Text>,
+        insurance_discount_amount -> Nullable<Double>,
+        insurance_discount_percentage -> Nullable<Double>,
+        is_cancellation -> Bool,
+        expected_delivery_date -> Nullable<Date>,
+        default_donor_link_id -> Nullable<Text>,
+        goods_received_id -> Nullable<Text>,
+        // Resolved from name_link join in the view
+        name_id -> Text,
+    }
+}
+
+// Core table - used for INSERT/UPDATE (has name_link_id)
+table! {
+    #[sql_name = "invoice"]
+    invoice_with_links (id) {
         id -> Text,
         name_link_id -> Text,
         name_store_id -> Nullable<Text>,
@@ -57,13 +104,12 @@ table! {
     }
 }
 
-joinable!(invoice -> name_link (name_link_id));
+joinable!(invoice -> name (name_id));
 joinable!(invoice -> store (store_id));
 joinable!(invoice -> user_account (user_id));
 joinable!(invoice -> currency (currency_id));
 joinable!(invoice -> clinician_link (clinician_link_id));
 allow_tables_to_appear_in_same_query!(invoice, item_link);
-allow_tables_to_appear_in_same_query!(invoice, name_link);
 
 #[derive(
     DbEnum, Debug, Display, Clone, PartialEq, Eq, Serialize, Deserialize, Default, PartialOrd, Ord,
@@ -107,7 +153,6 @@ pub enum InvoiceStatus {
 #[diesel(table_name = invoice)]
 pub struct InvoiceRow {
     pub id: String,
-    pub name_link_id: String,
     pub name_store_id: Option<String>,
     pub store_id: String,
     pub user_id: Option<String>,
@@ -145,6 +190,8 @@ pub struct InvoiceRow {
     pub expected_delivery_date: Option<NaiveDate>,
     pub default_donor_link_id: Option<String>,
     pub goods_received_id: Option<String>,
+    // Resolved from name_link - must be last to match view column order
+    pub name_id: String,
 }
 
 pub struct InvoiceRowRepository<'a> {
@@ -157,11 +204,91 @@ impl<'a> InvoiceRowRepository<'a> {
     }
 
     pub fn upsert_one(&self, row: &InvoiceRow) -> Result<i64, RepositoryError> {
-        diesel::insert_into(invoice)
-            .values(row)
-            .on_conflict(id)
+        // Write to core table (invoice_with_links) which has name_link_id column
+        diesel::insert_into(invoice_with_links::table)
+            .values((
+                invoice_with_links::id.eq(&row.id),
+                invoice_with_links::name_link_id.eq(&row.name_id),
+                invoice_with_links::name_store_id.eq(&row.name_store_id),
+                invoice_with_links::store_id.eq(&row.store_id),
+                invoice_with_links::user_id.eq(&row.user_id),
+                invoice_with_links::invoice_number.eq(&row.invoice_number),
+                invoice_with_links::type_.eq(&row.r#type),
+                invoice_with_links::status.eq(&row.status),
+                invoice_with_links::on_hold.eq(&row.on_hold),
+                invoice_with_links::comment.eq(&row.comment),
+                invoice_with_links::their_reference.eq(&row.their_reference),
+                invoice_with_links::transport_reference.eq(&row.transport_reference),
+                invoice_with_links::created_datetime.eq(&row.created_datetime),
+                invoice_with_links::allocated_datetime.eq(&row.allocated_datetime),
+                invoice_with_links::picked_datetime.eq(&row.picked_datetime),
+                invoice_with_links::shipped_datetime.eq(&row.shipped_datetime),
+                invoice_with_links::delivered_datetime.eq(&row.delivered_datetime),
+                invoice_with_links::received_datetime.eq(&row.received_datetime),
+                invoice_with_links::verified_datetime.eq(&row.verified_datetime),
+                invoice_with_links::cancelled_datetime.eq(&row.cancelled_datetime),
+                invoice_with_links::colour.eq(&row.colour),
+                invoice_with_links::requisition_id.eq(&row.requisition_id),
+                invoice_with_links::linked_invoice_id.eq(&row.linked_invoice_id),
+                invoice_with_links::tax_percentage.eq(&row.tax_percentage),
+                invoice_with_links::currency_id.eq(&row.currency_id),
+                invoice_with_links::currency_rate.eq(&row.currency_rate),
+                invoice_with_links::clinician_link_id.eq(&row.clinician_link_id),
+                invoice_with_links::original_shipment_id.eq(&row.original_shipment_id),
+                invoice_with_links::backdated_datetime.eq(&row.backdated_datetime),
+                invoice_with_links::diagnosis_id.eq(&row.diagnosis_id),
+                invoice_with_links::program_id.eq(&row.program_id),
+                invoice_with_links::name_insurance_join_id.eq(&row.name_insurance_join_id),
+                invoice_with_links::insurance_discount_amount.eq(&row.insurance_discount_amount),
+                invoice_with_links::insurance_discount_percentage
+                    .eq(&row.insurance_discount_percentage),
+                invoice_with_links::is_cancellation.eq(&row.is_cancellation),
+                invoice_with_links::expected_delivery_date.eq(&row.expected_delivery_date),
+                invoice_with_links::default_donor_link_id.eq(&row.default_donor_link_id),
+                invoice_with_links::goods_received_id.eq(&row.goods_received_id),
+            ))
+            .on_conflict(invoice_with_links::id)
             .do_update()
-            .set(row)
+            .set((
+                invoice_with_links::name_link_id.eq(&row.name_id),
+                invoice_with_links::name_store_id.eq(&row.name_store_id),
+                invoice_with_links::store_id.eq(&row.store_id),
+                invoice_with_links::user_id.eq(&row.user_id),
+                invoice_with_links::invoice_number.eq(&row.invoice_number),
+                invoice_with_links::type_.eq(&row.r#type),
+                invoice_with_links::status.eq(&row.status),
+                invoice_with_links::on_hold.eq(&row.on_hold),
+                invoice_with_links::comment.eq(&row.comment),
+                invoice_with_links::their_reference.eq(&row.their_reference),
+                invoice_with_links::transport_reference.eq(&row.transport_reference),
+                invoice_with_links::created_datetime.eq(&row.created_datetime),
+                invoice_with_links::allocated_datetime.eq(&row.allocated_datetime),
+                invoice_with_links::picked_datetime.eq(&row.picked_datetime),
+                invoice_with_links::shipped_datetime.eq(&row.shipped_datetime),
+                invoice_with_links::delivered_datetime.eq(&row.delivered_datetime),
+                invoice_with_links::received_datetime.eq(&row.received_datetime),
+                invoice_with_links::verified_datetime.eq(&row.verified_datetime),
+                invoice_with_links::cancelled_datetime.eq(&row.cancelled_datetime),
+                invoice_with_links::colour.eq(&row.colour),
+                invoice_with_links::requisition_id.eq(&row.requisition_id),
+                invoice_with_links::linked_invoice_id.eq(&row.linked_invoice_id),
+                invoice_with_links::tax_percentage.eq(&row.tax_percentage),
+                invoice_with_links::currency_id.eq(&row.currency_id),
+                invoice_with_links::currency_rate.eq(&row.currency_rate),
+                invoice_with_links::clinician_link_id.eq(&row.clinician_link_id),
+                invoice_with_links::original_shipment_id.eq(&row.original_shipment_id),
+                invoice_with_links::backdated_datetime.eq(&row.backdated_datetime),
+                invoice_with_links::diagnosis_id.eq(&row.diagnosis_id),
+                invoice_with_links::program_id.eq(&row.program_id),
+                invoice_with_links::name_insurance_join_id.eq(&row.name_insurance_join_id),
+                invoice_with_links::insurance_discount_amount.eq(&row.insurance_discount_amount),
+                invoice_with_links::insurance_discount_percentage
+                    .eq(&row.insurance_discount_percentage),
+                invoice_with_links::is_cancellation.eq(&row.is_cancellation),
+                invoice_with_links::expected_delivery_date.eq(&row.expected_delivery_date),
+                invoice_with_links::default_donor_link_id.eq(&row.default_donor_link_id),
+                invoice_with_links::goods_received_id.eq(&row.goods_received_id),
+            ))
             .execute(self.connection.lock().connection())?;
         self.insert_changelog(row, RowActionType::Upsert)
     }
@@ -176,7 +303,7 @@ impl<'a> InvoiceRowRepository<'a> {
             record_id: row.id.clone(),
             row_action: action,
             store_id: Some(row.store_id.clone()),
-            name_link_id: Some(row.name_link_id.clone()),
+            name_link_id: Some(row.name_id.clone()),
         };
 
         ChangelogRepository::new(self.connection).insert(&row)
@@ -191,22 +318,22 @@ impl<'a> InvoiceRowRepository<'a> {
             }
         };
 
-        diesel::delete(invoice.filter(id.eq(invoice_id)))
+        diesel::delete(invoice_with_links::table.filter(invoice_with_links::id.eq(invoice_id)))
             .execute(self.connection.lock().connection())?;
         Ok(Some(change_log_id))
     }
 
     pub fn find_one_by_id(&self, invoice_id: &str) -> Result<Option<InvoiceRow>, RepositoryError> {
-        let result = invoice
-            .filter(id.eq(invoice_id))
+        let result = invoice::table
+            .filter(invoice::id.eq(invoice_id))
             .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
     }
 
     pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<InvoiceRow>, RepositoryError> {
-        let result = invoice
-            .filter(id.eq_any(ids))
+        let result = invoice::table
+            .filter(invoice::id.eq_any(ids))
             .load(self.connection.lock().connection())?;
         Ok(result)
     }
@@ -216,9 +343,9 @@ impl<'a> InvoiceRowRepository<'a> {
         r#type: InvoiceType,
         store: &str,
     ) -> Result<Option<i64>, RepositoryError> {
-        let result = invoice
-            .filter(type_.eq(r#type).and(store_id.eq(store)))
-            .select(max(invoice_number))
+        let result = invoice::table
+            .filter(invoice::type_.eq(r#type).and(invoice::store_id.eq(store)))
+            .select(max(invoice::invoice_number))
             .first(self.connection.lock().connection())?;
         Ok(result)
     }

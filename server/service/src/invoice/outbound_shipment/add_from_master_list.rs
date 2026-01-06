@@ -83,7 +83,7 @@ fn validate(
 
     check_master_list_for_name_link_id(
         connection,
-        &invoice_row.name_link_id,
+        &invoice_row.name_id,
         &input.master_list_id,
     )?
     .ok_or(OutError::MasterListNotFoundForThisName)?;
@@ -235,7 +235,7 @@ mod test {
                 joins: vec![MasterListNameJoinRow {
                     id: join1,
                     master_list_id: id.clone(),
-                    name_id: mock_new_outbound_shipment_no_lines().name_link_id,
+                    name_id: mock_new_outbound_shipment_no_lines().name_id,
                 }],
                 lines: vec![
                     MasterListLineRow {

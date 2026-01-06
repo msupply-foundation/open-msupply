@@ -380,7 +380,7 @@ pub fn mock_new_response_requisition_test_invoice() -> FullMockInvoice {
     FullMockInvoice {
         invoice: InvoiceRow {
             id: invoice_id.clone(),
-            name_link_id: mock_name_a().id,
+            name_id: mock_name_a().id,
             store_id: "store_a".to_string(),
             invoice_number: 20,
             requisition_id: Some(mock_new_response_requisition_test().requisition.id),

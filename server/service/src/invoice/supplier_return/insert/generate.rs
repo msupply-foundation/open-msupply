@@ -40,7 +40,7 @@ pub fn generate(
     let supplier_return = InvoiceRow {
         id,
         user_id: Some(user_id.to_string()),
-        name_link_id: other_party_id,
+        name_id: other_party_id,
         r#type: InvoiceType::SupplierReturn,
         invoice_number: next_number(connection, &NumberRowType::SupplierReturn, store_id)?,
         name_store_id: other_party.store_id().map(|id| id.to_string()),

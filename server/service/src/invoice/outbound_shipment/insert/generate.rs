@@ -25,7 +25,7 @@ pub fn generate(
     let result = InvoiceRow {
         id: input.id,
         user_id: Some(user_id.to_string()),
-        name_link_id: input.other_party_id,
+        name_id: input.other_party_id,
         r#type: InvoiceType::OutboundShipment,
         comment: input.comment,
         their_reference: input.their_reference,

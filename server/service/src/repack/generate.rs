@@ -83,7 +83,7 @@ fn generate_invoice_and_lines(
 
     let invoice = InvoiceRow {
         id: uuid(),
-        name_link_id: repack_name.id,
+        name_id: repack_name.id,
         store_id: ctx.store_id.clone(),
         user_id: Some(ctx.user_id.clone()),
         invoice_number: next_number(connection, &NumberRowType::Repack, &ctx.store_id)?,

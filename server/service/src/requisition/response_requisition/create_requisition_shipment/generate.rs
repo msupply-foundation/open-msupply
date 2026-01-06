@@ -36,7 +36,7 @@ pub fn generate(
     let new_invoice = InvoiceRow {
         id: uuid(),
         user_id: Some(user_id.to_string()),
-        name_link_id: original_customer
+        name_id: original_customer
             .as_ref()
             .map(|customer| customer.name_row.id.clone())
             .unwrap_or_else(|| other_party.name_row.id.clone()),
