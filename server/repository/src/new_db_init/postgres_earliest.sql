@@ -31,13 +31,6 @@ COMMENT ON SCHEMA public IS 'standard public schema';
 
 
 --
--- Name: nocase; Type: COLLATION; Schema: public; Owner: -
---
-
-CREATE COLLATION public.nocase (provider = icu, deterministic = false, locale = 'pg-catalog');
-
-
---
 -- Name: activity_log_type; Type: TYPE; Schema: public; Owner: -
 --
 
