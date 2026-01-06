@@ -94,7 +94,7 @@ pub(crate) trait MigrationFragment {
 pub enum MigrationError {
     #[error("The database you are connecting to is a later version ({0}) than the server ({1}). It is unsafe to run with this configuration, the server is stopping")]
     DatabaseVersionAboveAppVersion(Version, Version),
-    #[error("Database version is no supported ({0}), it cannot be upgraded")]
+    #[error("Database version is not supported ({0}), it cannot be upgraded")]
     DatabaseVersionNotSupported(Version),
     #[error("Migration version ({0}) is higher then app version ({1}), consider increasing app version in root package.json")]
     MigrationAboveAppVersion(Version, Version),
