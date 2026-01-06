@@ -170,7 +170,7 @@ pub fn mock_invoice1_linked_to_requisition() -> FullMockInvoice {
     FullMockInvoice {
         invoice: InvoiceRow {
             id: invoice_id.clone(),
-            name_link_id: mock_name_a().id,
+            name_id: mock_name_a().id,
             store_id: "store_a".to_string(),
             invoice_number: 20,
             r#type: InvoiceType::InboundShipment,
@@ -272,7 +272,7 @@ pub fn mock_invoice2_linked_to_requisition() -> FullMockInvoice {
     FullMockInvoice {
         invoice: InvoiceRow {
             id: invoice_id.clone(),
-            name_link_id: mock_name_a().id,
+            name_id: mock_name_a().id,
             store_id: "store_a".to_string(),
             invoice_number: 20,
             r#type: InvoiceType::InboundShipment,
@@ -333,7 +333,7 @@ pub fn mock_invoice3_linked_to_requisition() -> FullMockInvoice {
     FullMockInvoice {
         invoice: InvoiceRow {
             id: invoice_id.clone(),
-            name_link_id: mock_name_a().id,
+            name_id: mock_name_a().id,
             store_id: "store_a".to_string(),
             invoice_number: 20,
             r#type: InvoiceType::OutboundShipment,

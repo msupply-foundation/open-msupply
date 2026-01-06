@@ -56,7 +56,7 @@ pub fn generate(
     let invoice = InvoiceRow {
         id: uuid(),
         user_id: Some(user_id.to_string()),
-        name_link_id: inventory_adjustment_name.id,
+        name_id: inventory_adjustment_name.id,
         r#type: match adjustment_type {
             AdjustmentType::Addition => InvoiceType::InventoryAddition,
             AdjustmentType::Reduction => InvoiceType::InventoryReduction,

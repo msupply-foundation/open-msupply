@@ -406,7 +406,7 @@ impl SyncTranslation for InvoiceTranslation {
             id: data.ID,
             user_id: data.user_id,
             store_id: data.store_ID,
-            name_link_id: data.name_ID,
+            name_id: data.name_ID,
             name_store_id,
             invoice_number: data.invoice_num,
             r#type: data.om_type.unwrap_or(invoice_type),
@@ -498,7 +498,7 @@ impl SyncTranslation for InvoiceTranslation {
                 InvoiceRow {
                     id,
                     user_id,
-                    name_link_id: _,
+                    name_id: _,
                     name_store_id: _,
                     store_id,
                     invoice_number,

@@ -57,7 +57,7 @@ pub fn generate(
     let invoice = InvoiceRow {
         id: invoice_id.clone(),
         user_id: Some(user_id.to_string()),
-        name_link_id: inventory_adjustment_name.id,
+        name_id: inventory_adjustment_name.id,
         r#type: InvoiceType::InventoryAddition,
         invoice_number,
         store_id: store_id.to_string(),

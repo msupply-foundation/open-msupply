@@ -441,7 +441,7 @@ async fn test_changelog_name_and_store_id_in_trigger() {
         TestRecord {
             record: invoice_line(),
             record_id: invoice_line().id,
-            name_id: invoice().name_link_id,
+            name_id: invoice().name_id,
             store_id: invoice().store_id,
         },
         RowActionType::Upsert,
@@ -457,7 +457,7 @@ async fn test_changelog_name_and_store_id_in_trigger() {
         TestRecord {
             record: invoice_line(),
             record_id: invoice_line().id,
-            name_id: invoice().name_link_id,
+            name_id: invoice().name_id,
             store_id: invoice().store_id,
         },
         RowActionType::Upsert,
@@ -475,7 +475,7 @@ async fn test_changelog_name_and_store_id_in_trigger() {
         TestRecord {
             record: invoice_line(),
             record_id: invoice_line().id,
-            name_id: invoice().name_link_id,
+            name_id: invoice().name_id,
             store_id: invoice().store_id,
         },
         RowActionType::Delete,
@@ -493,7 +493,7 @@ async fn test_changelog_name_and_store_id_in_trigger() {
         TestRecord {
             record: invoice(),
             record_id: invoice().id,
-            name_id: invoice().name_link_id,
+            name_id: invoice().name_id,
             store_id: invoice().store_id,
         },
         RowActionType::Upsert,
@@ -509,7 +509,7 @@ async fn test_changelog_name_and_store_id_in_trigger() {
         TestRecord {
             record: invoice(),
             record_id: invoice().id,
-            name_id: invoice().name_link_id,
+            name_id: invoice().name_id,
             store_id: invoice().store_id,
         },
         RowActionType::Upsert,
@@ -525,7 +525,7 @@ async fn test_changelog_name_and_store_id_in_trigger() {
         TestRecord {
             record: invoice(),
             record_id: invoice().id,
-            name_id: invoice().name_link_id,
+            name_id: invoice().name_id,
             store_id: invoice().store_id,
         },
         RowActionType::Delete,
@@ -541,7 +541,7 @@ async fn test_changelog_name_and_store_id_in_trigger() {
         TestRecord {
             record: requisition_line(),
             record_id: requisition_line().id,
-            name_id: requisition().name_link_id,
+            name_id: requisition().name_id,
             store_id: requisition().store_id,
         },
         RowActionType::Upsert,
@@ -557,7 +557,7 @@ async fn test_changelog_name_and_store_id_in_trigger() {
         TestRecord {
             record: requisition_line(),
             record_id: requisition_line().id,
-            name_id: requisition().name_link_id,
+            name_id: requisition().name_id,
             store_id: requisition().store_id,
         },
         RowActionType::Upsert,
@@ -575,7 +575,7 @@ async fn test_changelog_name_and_store_id_in_trigger() {
         TestRecord {
             record: requisition_line(),
             record_id: requisition_line().id,
-            name_id: requisition().name_link_id,
+            name_id: requisition().name_id,
             store_id: requisition().store_id,
         },
         RowActionType::Delete,
@@ -593,7 +593,7 @@ async fn test_changelog_name_and_store_id_in_trigger() {
         TestRecord {
             record: requisition(),
             record_id: requisition().id,
-            name_id: requisition().name_link_id,
+            name_id: requisition().name_id,
             store_id: requisition().store_id,
         },
         RowActionType::Upsert,
@@ -609,7 +609,7 @@ async fn test_changelog_name_and_store_id_in_trigger() {
         TestRecord {
             record: requisition(),
             record_id: requisition().id,
-            name_id: requisition().name_link_id,
+            name_id: requisition().name_id,
             store_id: requisition().store_id,
         },
         RowActionType::Upsert,
@@ -627,7 +627,7 @@ async fn test_changelog_name_and_store_id_in_trigger() {
         TestRecord {
             record: requisition(),
             record_id: requisition().id,
-            name_id: requisition().name_link_id,
+            name_id: requisition().name_id,
             store_id: requisition().store_id,
         },
         RowActionType::Delete,

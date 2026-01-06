@@ -191,7 +191,7 @@ fn create_inventory_adjustment(
     // Similar to stock take
     let adjustment_invoice = InvoiceRow {
         id: uuid(),
-        name_link_id: inventory_adjustment_name_id,
+        name_id: inventory_adjustment_name_id,
         currency_id: Some(currency.currency_row.id),
         currency_rate: currency.currency_row.rate,
         r#type: invoice_type,

@@ -266,7 +266,7 @@ fn generate_inbound_invoice(
             InboundInvoiceType::CustomerReturn => InvoiceType::CustomerReturn,
             InboundInvoiceType::InboundShipment => InvoiceType::InboundShipment,
         },
-        name_link_id: name_id,
+        name_id: name_id,
         store_id,
         status,
         requisition_id: request_requisition_id,

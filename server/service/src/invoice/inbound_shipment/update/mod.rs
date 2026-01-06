@@ -1072,7 +1072,7 @@ mod test {
             }
         );
         assert_eq!(log.r#type, ActivityLogType::InvoiceStatusVerified);
-        assert_eq!(Some(invoice.name_link_id), stock_line.supplier_link_id);
+        assert_eq!(Some(invoice.name_id), stock_line.supplier_link_id);
     }
 
     #[actix_rt::test]

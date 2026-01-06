@@ -338,8 +338,8 @@ mod test {
             updated_invoice.invoice_row
         );
         assert_ne!(
-            updated_invoice.invoice_row.name_link_id,
-            invoice().name_link_id
+            updated_invoice.invoice_row.name_id,
+            invoice().name_id
         );
         assert_eq!(
             updated_lines,

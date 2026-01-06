@@ -36,7 +36,7 @@ pub fn mock_invoice_loader_requisition1() -> RequisitionRow {
 pub fn mock_invoice_loader_invoice1() -> InvoiceRow {
     InvoiceRow {
         id: "mock_invoice_loader_invoice1".to_string(),
-        name_link_id: mock_name_store_b().id,
+        name_id: mock_name_store_b().id,
         store_id: mock_store_a().id,
         invoice_number: 1,
         requisition_id: Some(mock_invoice_loader_requisition1().id),
@@ -53,7 +53,7 @@ pub fn mock_invoice_loader_invoice1() -> InvoiceRow {
 pub fn mock_invoice_loader_invoice2() -> InvoiceRow {
     InvoiceRow {
         id: "mock_invoice_loader_invoice2".to_string(),
-        name_link_id: mock_name_store_b().id,
+        name_id: mock_name_store_b().id,
         store_id: mock_store_a().id,
         invoice_number: 1,
         r#type: InvoiceType::OutboundShipment,

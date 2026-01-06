@@ -18,14 +18,14 @@ fn consumption_points() -> MockData {
             InvoiceRow {
                 id: invoice_id.clone(),
                 store_id: mock_store_a().id,
-                name_link_id: mock_name_a().id,
+                name_id: mock_name_a().id,
                 r#type: InvoiceType::OutboundShipment,
                 ..Default::default()
             },
             InvoiceRow {
                 id: format!("{}-invoice-2", invoice_id),
                 store_id: mock_store_a().id,
-                name_link_id: mock_name_a().id,
+                name_id: mock_name_a().id,
                 r#type: InvoiceType::OutboundShipment,
                 linked_invoice_id: Some(invoice_id.clone()),
                 ..Default::default()

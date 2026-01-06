@@ -67,7 +67,7 @@ pub fn generate(
             StockLineInput {
                 stock_line_id,
                 store_id: existing_invoice_row.store_id.clone(),
-                supplier_link_id: existing_invoice_row.name_link_id.clone(),
+                supplier_link_id: existing_invoice_row.name_id.clone(),
                 on_hold: false,
                 barcode_id: None,
                 overwrite_stock_levels: true,

@@ -75,7 +75,7 @@ pub(crate) fn generate(
         update_invoice.name_store_id = other_party.store_id().map(|id| id.to_string());
         // Assigning name_row id as name_link is ok, input name_row should always an active name
         // - only querying needs to go via link table
-        update_invoice.name_link_id = other_party.name_row.id;
+        update_invoice.name_id = other_party.name_row.id;
     }
 
     update_invoice.currency_id = patch.currency_id.or(update_invoice.currency_id);
@@ -88,7 +88,7 @@ pub(crate) fn generate(
                 store_id: &update_invoice.store_id,
                 id: &update_invoice.id,
                 tax_percentage: update_invoice.tax_percentage,
-                supplier_id: &update_invoice.name_link_id,
+                supplier_id: &update_invoice.name_id,
                 currency_id: update_invoice.currency_id.clone(),
                 currency_rate: &update_invoice.currency_rate,
             },

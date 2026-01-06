@@ -32,7 +32,7 @@ pub fn generate(
     let mut invoice = InvoiceRow {
         id,
         user_id: Some(user_id.to_string()),
-        name_link_id: patient_id,
+        name_id: patient_id,
         name_store_id: None,
         r#type: InvoiceType::Prescription,
         invoice_number: next_number(connection, &NumberRowType::Prescription, store_id)?,

@@ -44,7 +44,7 @@ pub fn generate(
         &ctx.connection,
         ItemPriceLookup {
             item_ids: vec![item_row.id.clone()],
-            customer_name_id: Some(invoice.name_link_id.clone()),
+            customer_name_id: Some(invoice.name_id.clone()),
         },
     )?
     .remove(&item_row.id)

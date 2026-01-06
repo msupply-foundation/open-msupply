@@ -12,6 +12,7 @@ impl ViewMigrationFragment for ViewMigration {
                 DROP VIEW IF EXISTS store_view;
                 DROP VIEW IF EXISTS name_tag_join_view;
                 DROP VIEW IF EXISTS master_list_name_join_view;
+                DROP VIEW IF EXISTS invoice_view;
             "#
         )?;
 
@@ -58,6 +59,15 @@ impl ViewMigrationFragment for ViewMigration {
                     master_list_name_join
                 JOIN
                     name_link ON master_list_name_join.name_link_id = name_link.id;
+
+                CREATE VIEW invoice_view AS
+                SELECT
+                    invoice.*,
+                    name_link.name_id as name_id
+                FROM
+                    invoice
+                JOIN
+                    name_link ON invoice.name_link_id = name_link.id;
             "#
         )?;
 
