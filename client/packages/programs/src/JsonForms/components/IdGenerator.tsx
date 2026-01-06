@@ -419,7 +419,7 @@ const UIComponent = (props: ControlProps) => {
             value={text}
             style={{ flex: 1 }}
             helperText={zErrors ?? errors}
-            onChange={e => onChange(e.target.value)}
+            onChange={e => onChange(e.target.value || undefined)}
             error={!!zErrors || !!errors}
             FormHelperTextProps={
               errors ? { sx: { color: 'error.main' } } : undefined
