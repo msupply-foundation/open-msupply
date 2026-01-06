@@ -170,7 +170,7 @@ pub fn migrate(
 
 
     // Check if the database has been initialised, if not run the base sql to kick start the process
-    if is_empty_db(connection).expect("Unable to checking for empty db on startup: Nothing returned") {
+    if is_empty_db(connection).expect("Unable to check for empty db on startup: Nothing returned") {
         log::info!("Empty database detected, creating base schema...");
 
         if to_version.is_some() {
@@ -178,9 +178,9 @@ pub fn migrate(
             // We always use the earliest base schema when migrating to a specific version
             // This is the easiest way to makes sure migration tests can still run.
                 initialize_earliest_db(connection)
-            .expect("Failed to initialize earliest database schema")
+            .expect("Failed to initialize earliest database schema");
 
-        } else{
+        } else {
             log::info!("No target version specified, initializing latest base schema");
             initialize_latest_db(connection)
             .expect("Unable to initialize latest database schema");
