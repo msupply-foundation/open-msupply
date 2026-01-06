@@ -55,10 +55,21 @@ export const useTableFiltering = <T extends MRT_RowData>(
         const key = (filterKey || id || accessorKey) as string;
 
         const format =
-          dateFilterFormat === 'date-time' ? urlQueryDateTime : urlQueryDate;
+          (dateFilterFormat === 'date-time' || filterVariant === 'datetime-range') ? urlQueryDateTime : urlQueryDate;
 
         switch (filterVariant) {
           case 'date-range':
+            filterUpdaters[key] = ([date1, date2]: [Date | '', Date | '']) => {
+              updateQuery({
+                [key]: {
+                  from: date1 ? customDate(date1, format) : '',
+                  to: date2 ? customDate(date2, format) : '',
+                },
+              });
+            };
+            break;
+
+          case 'datetime-range':
             filterUpdaters[key] = ([date1, date2]: [Date | '', Date | '']) => {
               updateQuery({
                 [key]: {
