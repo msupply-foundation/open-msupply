@@ -14,6 +14,8 @@ import {
   LocaleKey,
   BasicTextInput,
   isString,
+  useAuthContext,
+  UserPermission,
 } from '@openmsupply-client/common';
 import { MultiChoice, getMultiChoiceOptions } from '../Components/MultiChoice';
 import { EditCustomTranslations } from '../Components/CustomTranslations/CustomTranslationsModal';
@@ -39,6 +41,9 @@ export const EditPreference = ({
 }: EditPreferenceProps) => {
   const t = useTranslation();
   const { error } = useNotification();
+  const { userHasPermission } = useAuthContext();
+  const isDisabled =
+    disabled || !userHasPermission(UserPermission.EditCentralData);
 
   const preferenceLabel =
     label ?? t(`preference.${preference.key}` as LocaleKey);
@@ -77,7 +82,7 @@ export const EditPreference = ({
           label={preferenceLabel}
           Input={
             <Switch
-              disabled={disabled}
+              disabled={isDisabled}
               checked={value}
               onChange={(_, checked) => handleChange(checked)}
             />
@@ -98,7 +103,7 @@ export const EditPreference = ({
               value={value}
               onChange={handleChange}
               onBlur={() => {}}
-              disabled={disabled}
+              disabled={isDisabled}
             />
           }
           isLast={isLast}
@@ -117,7 +122,7 @@ export const EditPreference = ({
               value={value}
               onChange={e => handleChange(e.target.value)}
               onBlur={() => {}}
-              disabled={disabled}
+              disabled={isDisabled}
               sx={
                 hasError
                   ? {
@@ -145,7 +150,7 @@ export const EditPreference = ({
           label={preferenceLabel}
           Input={
             <MultiChoice
-              disabled={disabled}
+              disabled={isDisabled}
               options={options}
               value={value}
               onChange={handleChange}
@@ -173,7 +178,7 @@ export const EditPreference = ({
         <EditWarningWhenMissingRecentStocktakeData
           value={value}
           update={handleChange}
-          disabled={disabled}
+          disabled={isDisabled}
           label={preferenceLabel}
         />
       );

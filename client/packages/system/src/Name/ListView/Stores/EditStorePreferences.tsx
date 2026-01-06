@@ -3,9 +3,7 @@ import {
   NothingHere,
   PreferenceNodeType,
   PreferenceValueNodeType,
-  useAuthContext,
   useIsCentralServerApi,
-  UserPermission,
 } from '@openmsupply-client/common';
 import {
   EditPreference,
@@ -22,7 +20,6 @@ export const EditStorePreferences = ({
   storeId,
 }: EditStorePreferencesProps) => {
   const isCentralServer = useIsCentralServerApi();
-  const { userHasPermission } = useAuthContext();
   const { update, preferences } = useEditPreferences(
     PreferenceNodeType.Store,
     storeId
@@ -43,10 +40,7 @@ export const EditStorePreferences = ({
           return (
             <EditPreference
               key={pref.key}
-              disabled={
-                !isCentralServer ||
-                !userHasPermission(UserPermission.EditCentralData)
-              }
+              disabled={!isCentralServer}
               preference={pref}
               update={value => {
                 const finalValue =
