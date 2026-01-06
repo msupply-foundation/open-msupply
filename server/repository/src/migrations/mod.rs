@@ -63,8 +63,7 @@ mod templates;
 pub use self::version::*;
 
 use crate::{
-    run_db_migrations, KeyType, KeyValueStoreRepository, MigrationFragmentLogRepository,
-    RepositoryError, StorageConnection,
+    KeyType, KeyValueStoreRepository, MigrationFragmentLogRepository, RepositoryError, StorageConnection, db_init::{initialize_earliest_db, initialize_latest_db, is_empty_db}, run_db_migrations
 };
 use diesel::connection::SimpleConnection;
 use thiserror::Error;
@@ -169,12 +168,33 @@ pub fn migrate(
         Box::new(v2_15_00::V2_15_00),
     ];
 
+
+    // Check if the database has been initialised, if not run the base sql to kick start the process
+    if is_empty_db(connection).expect("Unable to checking for empty db on startup: Nothing returned") {
+        log::info!("Empty database detected, creating base schema...");
+
+        if to_version.is_some() {
+            log::info!("Target version specified, initializing earliest base schema");
+            // We always use the earliest base schema when migrating to a specific version
+            // This is the easiest way to makes sure migration tests can still run.
+                initialize_earliest_db(connection)
+            .expect("Failed to initialize earliest database schema")
+
+        } else{
+            log::info!("No target version specified, initializing latest base schema");
+            initialize_latest_db(connection)
+            .expect("Unable to initialize latest database schema");
+        }
+        log::info!("Base schema...installed");
+    }
+
+
+    let to_version = to_version.unwrap_or(Version::from_package_json());
+
     // Historic diesel migrations
     run_db_migrations(connection).unwrap();
 
-    // Rust migrations
-    let to_version = to_version.unwrap_or(Version::from_package_json());
-
+    // Rust migrations  
     let starting_database_version = get_database_version(connection);
 
     // Get migration fragment log repository and create table if it doesn't exist
