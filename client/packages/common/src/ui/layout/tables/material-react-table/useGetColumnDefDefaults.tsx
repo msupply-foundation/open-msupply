@@ -25,6 +25,7 @@ export enum ColumnType {
   Number = 'number',
   Currency = 'currency',
   Date = 'date',
+  DateTime = 'datetime',
   Comment = 'comment',
   Boolean = 'boolean',
   Percentage = 'percentage',
@@ -32,7 +33,7 @@ export enum ColumnType {
 
 export const useGetColumnTypeDefaults = () => {
   const t = useTranslation();
-  const { localisedDate } = useFormatDateTime();
+  const { localisedDate, localisedDateTime } = useFormatDateTime();
 
   return <T extends MRT_RowData>(
     column: ColumnDef<T>
@@ -51,6 +52,41 @@ export const useGetColumnTypeDefaults = () => {
           align: 'right',
           filterVariant: 'date-range',
           muiFilterDatePickerProps: ({ column, rangeFilterIndex }) => {
+            const [start, end] =
+              (column.getFilterValue() as [
+                Date | undefined,
+                Date | undefined,
+              ]) ?? [];
+            // Enforces date range validity, e.g. end date can't be before start
+            // date
+            switch (rangeFilterIndex) {
+              case 0:
+                return {
+                  maxDate: end ? new Date(end) : undefined,
+                };
+              case 1:
+                return {
+                  minDate: start ? new Date(start) : undefined,
+                };
+              default:
+                return {};
+            }
+          },
+        };
+
+      case ColumnType.DateTime:
+        return {
+          size: 175, // allow for filters
+          Cell: ({ cell }: { cell: MRT_Cell<T> }) => {
+            const date = cell.getValue();
+            if (date === t('multiple')) return date;
+
+            const maybeDate = DateUtils.getDateOrNull(date as string | null);
+            return maybeDate ? localisedDateTime(maybeDate) : '';
+          },
+          align: 'right',
+          filterVariant: 'datetime-range',
+          muiFilterDateTimePickerProps: ({ column, rangeFilterIndex }) => {
             const [start, end] =
               (column.getFilterValue() as [
                 Date | undefined,
@@ -129,7 +165,7 @@ export const useGetColumnTypeDefaults = () => {
             ) : null;
           },
         };
-      
+
       case ColumnType.Percentage:
         return {
           align: 'right',

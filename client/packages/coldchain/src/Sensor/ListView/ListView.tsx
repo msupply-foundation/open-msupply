@@ -13,6 +13,7 @@ import {
   MaterialTable,
   usePaginatedMaterialTable,
   ColumnDef,
+  ColumnType,
 } from '@openmsupply-client/common';
 import { SensorFragment, useSensorList } from '../api';
 import { SensorEditModal } from '../Components';
@@ -98,11 +99,8 @@ export const SensorListView: FC = () => {
         id: 'lastRecording',
         header: t('label.date-time'),
         description: 'description.last-reading-datetime',
-        accessorFn: row => {
-          return Formatter.csvDateTimeString(
-            row.latestTemperatureLog?.nodes[0]?.datetime
-          );
-        },
+        accessorFn: row => row.latestTemperatureLog?.nodes[0]?.datetime,
+        columnType: ColumnType.DateTime,
       },
       {
         id: 'type',

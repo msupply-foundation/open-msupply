@@ -7,7 +7,7 @@ import {
 } from '../../api/TemperatureLog';
 import {
   ColumnDef,
-  Formatter,
+  ColumnType,
   MaterialTable,
   NothingHere,
   usePaginatedMaterialTable,
@@ -27,7 +27,7 @@ export const TemperatureLogList: FC = () => {
         key: 'location.code',
       },
       {
-        key: 'temperatureBreach.type',
+        key: 'type',
         condition: 'equalTo',
       },
     ],
@@ -44,9 +44,9 @@ export const TemperatureLogList: FC = () => {
       {
         accessorKey: 'datetime',
         header: t('label.date-time'),
-        Cell: ({ row: { original: row } }) =>
-          Formatter.csvDateTimeString(row.datetime),
+        columnType: ColumnType.DateTime,
         enableSorting: true,
+        enableColumnFilter: true,
       },
       {
         accessorKey: 'sensor.name',
@@ -70,10 +70,10 @@ export const TemperatureLogList: FC = () => {
         enableSorting: true,
       },
       {
-        accessorKey: 'type',
-        accessorFn: row => row.temperatureBreach?.type,
+        accessorKey: 'temperatureBreach.type',
         header: t('label.breach-type'),
         description: t('description.breach-type'),
+        filterKey: 'type',
         Cell: BreachTypeCell,
         enableColumnFilter: true,
         filterVariant: 'select',
