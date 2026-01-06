@@ -215,7 +215,7 @@ mod database_setting_test {
             empty_db_settings_with_startup_sql(None).startup_sql(),
             Some(SQLITE_WAL_PRAGMA.to_string())
         );
-        //Ensure sqlite WAL is enabled if no startup is provided
+        //Ensure sqlite WAL is enabled if no startup_sql is provided
         let init_sql = "PRAGMA temp_store_directory = '{}';";
         let expected_init_sql = format!("{init_sql};{SQLITE_WAL_PRAGMA}");
         assert_eq!(
