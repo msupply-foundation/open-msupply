@@ -8,9 +8,10 @@ use chrono::NaiveDateTime;
 use diesel::{dsl::IntoBoxed, prelude::*};
 use diesel_derive_enum::DbEnum;
 
-#[derive(DbEnum, Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(DbEnum, Default, Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum SyncAction {
+    #[default]
     Upsert,
     Delete,
     Merge,
@@ -26,11 +27,13 @@ table! {
         action -> crate::SyncActionMapping,
         data -> Text,
         source_site_id -> Nullable<Integer>,
+        store_id -> Nullable<Text>,
+        name_id -> Nullable<Text>,
     }
 }
 
 #[derive(
-    Clone, Queryable, Insertable, Serialize, Deserialize, Debug, AsChangeset, PartialEq, Eq,
+    Clone, Default, Queryable, Insertable, Serialize, Deserialize, Debug, AsChangeset, PartialEq, Eq,
 )]
 #[diesel(treat_none_as_null = true)]
 #[diesel(table_name = sync_buffer)]
@@ -43,21 +46,8 @@ pub struct SyncBufferRow {
     pub action: SyncAction,
     pub data: String,
     pub source_site_id: Option<i32>,
-}
-
-impl Default for SyncBufferRow {
-    fn default() -> Self {
-        Self {
-            record_id: Default::default(),
-            received_datetime: Default::default(),
-            integration_datetime: Default::default(),
-            integration_error: Default::default(),
-            table_name: Default::default(),
-            action: SyncAction::Upsert,
-            data: Default::default(),
-            source_site_id: Default::default(),
-        }
-    }
+    pub store_id: Option<String>,
+    pub name_id: Option<String>,
 }
 
 pub struct SyncBufferRowRepository<'a> {
@@ -162,6 +152,8 @@ impl SyncAction {
         }
     }
 }
+
+impl SyncBufferRow {}
 
 type SyncBuffer = SyncBufferRow;
 

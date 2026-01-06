@@ -378,6 +378,147 @@ macro_rules! apply_sort_asc_nulls_first {
     }};
 }
 
+macro_rules! diesel_string_enum {
+    (
+        $(#[$meta:meta])*
+        $vis:vis enum $name:ident {
+            $(
+                $(#[$variant_meta:meta])*
+                $variant:ident
+            ),* $(,)?
+        }
+    ) => {
+        #[derive(
+            strum::AsRefStr,
+            strum::EnumString,
+            strum::Display,
+            Debug,
+            Default,
+            PartialEq,
+            diesel::expression::AsExpression,
+        )]
+        #[strum(serialize_all = "snake_case")]
+        #[diesel(sql_type = diesel::sql_types::Text)]
+        $(#[$meta])*
+        $vis enum $name {
+            $(
+                $(#[$variant_meta])*
+                $variant
+            ),*
+        }
+
+        impl From<String> for $name {
+            fn from(value: String) -> Self {
+                use std::str::FromStr;
+                Self::from_str(&value).unwrap()
+            }
+        }
+
+        impl diesel::serialize::ToSql<diesel::sql_types::Text, diesel::sqlite::Sqlite> for $name
+        where
+            str: diesel::serialize::ToSql<diesel::sql_types::Text, diesel::sqlite::Sqlite>,
+        {
+            fn to_sql<'b>(
+                &'b self,
+                out: &mut diesel::serialize::Output<'b, '_, diesel::sqlite::Sqlite>,
+            ) -> diesel::serialize::Result {
+                <str as
+                 diesel::serialize::ToSql<diesel::sql_types::Text, diesel::sqlite::Sqlite>>::to_sql(
+                    self.as_ref(),
+                    out,
+                )
+            }
+        }
+    };
+}
+
+macro_rules! diesel_string_json {
+    (
+        $(#[$meta:meta])*
+        $vis:vis struct $name:ident {
+            $(
+                $(#[$variant_meta:meta])*
+                $variant:ident
+            ),* $(,)?
+        }
+    ) => {
+        #[derive(
+            strum::AsRefStr,
+            strum::EnumString,
+            strum::Display,
+            Debug,
+            Default,
+            PartialEq,
+            diesel::expression::AsExpression,
+        )]
+        #[strum(serialize_all = "snake_case")]
+        #[diesel(sql_type = diesel::sql_types::Text)]
+        $(#[$meta])*
+        $vis enum $name {
+            $(
+                $(#[$variant_meta])*
+                $variant
+            ),*
+        }
+
+        impl From<String> for $name {
+            fn from(value: String) -> Self {
+                use std::str::FromStr;
+                Self::from_str(&value).unwrap()
+            }
+        }
+
+        impl diesel::serialize::ToSql<diesel::sql_types::Text, diesel::sqlite::Sqlite> for $name
+        where
+            str: diesel::serialize::ToSql<diesel::sql_types::Text, diesel::sqlite::Sqlite>,
+        {
+            fn to_sql<'b>(
+                &'b self,
+                out: &mut diesel::serialize::Output<'b, '_, diesel::sqlite::Sqlite>,
+            ) -> diesel::serialize::Result {
+                <str as
+                 diesel::serialize::ToSql<diesel::sql_types::Text, diesel::sqlite::Sqlite>>::to_sql(
+                    self.as_ref(),
+                    out,
+                )
+            }
+        }
+    };
+}
+
+macro_rules! diesel_json_type {
+    (
+        $(#[$meta:meta])*
+        $vis:vis $kind:ident $name:ident $($body:tt)*
+    ) => {
+        #[derive(serde::Serialize, serde::Deserialize, diesel::expression::AsExpression, diesel::deserialize::FromSqlRow)]
+        #[diesel(sql_type = diesel::sql_types::Text)]
+        $(#[$meta])*
+        $vis $kind $name $($body)*
+
+        impl diesel::deserialize::FromSql<diesel::sql_types::Text, diesel::sqlite::Sqlite> for $name {
+            fn from_sql(bytes: <diesel::sqlite::Sqlite as diesel::backend::Backend>::RawValue<'_>) -> diesel::deserialize::Result<Self> {
+                let string_value = <String as diesel::deserialize::FromSql<diesel::sql_types::Text, diesel::sqlite::Sqlite>>::from_sql(bytes)?;
+                let deserialized: $name = serde_json::from_str(&string_value)?;
+                Ok(deserialized)
+            }
+        }
+
+        impl diesel::serialize::ToSql<diesel::sql_types::Text, diesel::sqlite::Sqlite> for $name
+        where
+            str: diesel::serialize::ToSql<diesel::sql_types::Text, diesel::sqlite::Sqlite>,
+        {
+            fn to_sql<'b>(
+                &self,
+                out: &mut diesel::serialize::Output<'b, '_, diesel::sqlite::Sqlite>,
+            ) -> diesel::serialize::Result {
+                out.set_value(serde_json::to_string(self)?);
+                Ok(diesel::serialize::IsNull::No)
+            }
+        }
+    };
+}
+
 pub(crate) use apply_date_filter;
 pub(crate) use apply_date_time_filter;
 pub(crate) use apply_equal_filter;
@@ -389,3 +530,5 @@ pub(crate) use apply_sort_no_case;
 pub(crate) use apply_string_filter;
 pub(crate) use apply_string_filter_method;
 pub(crate) use apply_string_or_filter;
+pub(crate) use diesel_json_type;
+pub(crate) use diesel_string_enum;

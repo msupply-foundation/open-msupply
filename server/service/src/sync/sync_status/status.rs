@@ -1,7 +1,8 @@
 use chrono::{NaiveDateTime, Utc};
 use repository::{
-    ChangelogRepository, DatetimeFilter, EqualFilter, KeyType, Pagination, RepositoryError, Sort,
-    SyncLogFilter, SyncLogRepository, SyncLogRow, SyncLogSortField,
+    dynamic_query::FilterBuilder, ChangelogRepository, DatetimeFilter, EqualFilter, KeyType,
+    Pagination, RepositoryError, Sort, SyncLogFilter, SyncLogRepository, SyncLogRow,
+    SyncLogSortField, SyncLogV7Repository,
 };
 
 use crate::{
@@ -9,7 +10,7 @@ use crate::{
     i32_to_u32,
     service_provider::ServiceContext,
     settings_service::{SettingsService, SettingsServiceTrait},
-    sync::{get_sync_push_changelogs_filter, SyncChangelogError},
+    sync::{get_sync_push_changelogs_filter, CentralServerConfig, SyncChangelogError},
 };
 
 use super::SyncLogError;
@@ -210,28 +211,48 @@ impl SyncStatusTrait for SyncStatusService {}
 fn get_initialisation_status(
     ctx: &ServiceContext,
 ) -> Result<InitialisationStatus, RepositoryError> {
-    let sort = Sort {
-        key: SyncLogSortField::DoneDatetime,
-        desc: Some(true),
-    };
+    if CentralServerConfig::is_central_server() {
+        let sort = Sort {
+            key: SyncLogSortField::DoneDatetime,
+            desc: Some(true),
+        };
 
-    let latest_log_sorted_by_finished_datetime = SyncLogRepository::new(&ctx.connection)
-        .query(Pagination::one(), None, Some(sort))?
-        .pop();
+        let latest_log_sorted_by_finished_datetime = SyncLogRepository::new(&ctx.connection)
+            .query(Pagination::one(), None, Some(sort))?
+            .pop();
 
-    let Some(sync_log) = latest_log_sorted_by_finished_datetime else {
-        return Ok(InitialisationStatus::PreInitialisation);
-    };
+        let Some(sync_log) = latest_log_sorted_by_finished_datetime else {
+            return Ok(InitialisationStatus::PreInitialisation);
+        };
 
-    if sync_log.sync_log_row.finished_datetime.is_none() {
-        return Ok(InitialisationStatus::Initialising);
-    };
+        if sync_log.sync_log_row.finished_datetime.is_none() {
+            return Ok(InitialisationStatus::Initialising);
+        };
 
-    // Get sync site name
-    // Safe to unwrap since sync settings will be available after initialisation
-    let site_name = SettingsService.sync_settings(ctx)?.unwrap().username;
+        // Get sync site name
+        // Safe to unwrap since sync settings will be available after initialisation
+        let site_name = SettingsService.sync_settings(ctx)?.unwrap().username;
 
-    Ok(InitialisationStatus::Initialised(site_name))
+        Ok(InitialisationStatus::Initialised(site_name))
+    } else {
+        use repository::sync_log_v7::Condition;
+
+        let filter = Condition::And(vec![
+            Condition::finished_datetime::is_not_null(),
+            Condition::error::is_null(),
+        ]);
+
+        match SyncLogV7Repository::new(&ctx.connection).query_one(filter)? {
+            Some(_) => {
+                // Get sync site name
+                // Safe to unwrap since sync settings will be available after initialisation
+                let site_name = SettingsService.sync_settings(ctx)?.unwrap().username;
+
+                Ok(InitialisationStatus::Initialised(site_name))
+            }
+            None => Ok(InitialisationStatus::PreInitialisation),
+        }
+    }
 }
 
 /// During initial sync remote server asks central server to initialise remote data

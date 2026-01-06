@@ -13,6 +13,7 @@ pub mod settings;
 pub mod site_info;
 pub mod sync_buffer;
 pub mod sync_on_central;
+pub mod sync_on_central_v7;
 pub mod sync_status;
 pub mod sync_user;
 pub(crate) mod sync_utils;
@@ -39,6 +40,7 @@ use self::api::SiteInfoV5;
 #[derive(Serialize, Deserialize, TS, Debug)]
 pub(crate) struct ActiveStoresOnSite {
     stores: Vec<Store>,
+    pub(crate) site_id: i32,
 }
 
 #[derive(Error, Debug)]
@@ -46,7 +48,7 @@ pub enum SyncChangelogError {
     #[error(transparent)]
     DatabaseError(#[from] RepositoryError),
     #[error("Failed to get active stores on site")]
-    GetActiveStoresOnSiteError(#[from] GetActiveStoresOnSiteError),
+    GetActiveStoresOnSiteError(#[from] GetCurrentSiteIdError),
     #[error("mSupply Central site id is not set in database")]
     CentralSiteIdNotSet,
 }
@@ -68,7 +70,7 @@ pub(crate) fn get_sync_push_changelogs_filter(
         )));
     }
 
-    let active_stores = ActiveStoresOnSite::get(connection)?;
+    let active_stores = ActiveStoresOnSite::get(connection, None)?;
 
     Ok(Some(
         ChangelogFilter::new()
@@ -77,32 +79,48 @@ pub(crate) fn get_sync_push_changelogs_filter(
     ))
 }
 
-#[derive(Error, Debug)]
-pub enum GetActiveStoresOnSiteError {
-    #[error(transparent)]
-    DatabaseError(#[from] RepositoryError),
-    #[error("Site id is not set in database")]
-    SiteIdNotSet,
+pub use repository::syncv7::GetCurrentSiteIdError;
+
+pub fn get_current_site_id(connection: &StorageConnection) -> Result<i32, GetCurrentSiteIdError> {
+    let site_id = KeyValueStoreRepository::new(connection)
+        .get_i32(repository::KeyType::SettingsSyncSiteId)?
+        .ok_or(GetCurrentSiteIdError::SiteIdNotSet)?;
+
+    Ok(site_id)
 }
 
 impl ActiveStoresOnSite {
     pub(crate) fn get(
         connection: &StorageConnection,
-    ) -> Result<ActiveStoresOnSite, GetActiveStoresOnSiteError> {
-        use GetActiveStoresOnSiteError as Error;
-
-        let site_id = KeyValueStoreRepository::new(connection)
-            .get_i32(repository::KeyType::SettingsSyncSiteId)?
-            .ok_or(Error::SiteIdNotSet)?;
+        // Use current site id if None
+        site_id: Option<i32>,
+    ) -> Result<ActiveStoresOnSite, GetCurrentSiteIdError> {
+        let site_id = match site_id {
+            Some(id) => id,
+            None => get_current_site_id(connection)?,
+        };
 
         let stores = StoreRepository::new(connection)
             .query_by_filter(StoreFilter::new().site_id(EqualFilter::equal_to(site_id)))?;
 
-        Ok(ActiveStoresOnSite { stores })
+        Ok(ActiveStoresOnSite { stores, site_id })
     }
 
     pub(crate) fn name_ids(&self) -> Vec<String> {
         self.stores.iter().map(|r| r.name_row.id.clone()).collect()
+    }
+
+    // TODO: is it faster with HashSet ?
+    pub(crate) fn store_id_match(&self, store_id: &str) -> bool {
+        self.stores
+            .iter()
+            .any(|r| r.store_row.id.as_str() == store_id)
+    }
+
+    pub(crate) fn name_id_match(&self, name_id: &str) -> bool {
+        self.stores
+            .iter()
+            .any(|r| r.name_row.id.as_str() == name_id)
     }
 
     pub(crate) fn get_store_id_for_name_id(&self, name_id: &str) -> Option<String> {

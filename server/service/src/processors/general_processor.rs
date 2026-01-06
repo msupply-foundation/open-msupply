@@ -15,7 +15,7 @@ use crate::{
     email::EmailServiceError,
     processors::log_system_error,
     service_provider::{ServiceContext, ServiceProvider},
-    sync::GetActiveStoresOnSiteError,
+    sync::GetCurrentSiteIdError,
 };
 
 use super::{
@@ -34,7 +34,7 @@ pub(crate) enum ProcessorError {
     #[error("Error in email service {0:?}")]
     EmailServiceError(EmailServiceError),
     #[error("{0}")]
-    GetActiveStoresOnSiteError(GetActiveStoresOnSiteError),
+    GetActiveStoresOnSiteError(GetCurrentSiteIdError),
     #[error("Error in plugin processor, with input {0:?}")]
     PluginError(processor::Input, #[source] PluginError),
     #[error("Unexpected plugin result for input {0:?}")]

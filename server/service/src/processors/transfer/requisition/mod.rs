@@ -28,7 +28,7 @@ use crate::{
         },
     },
     service_provider::ServiceProvider,
-    sync::{ActiveStoresOnSite, GetActiveStoresOnSiteError},
+    sync::{ActiveStoresOnSite, GetCurrentSiteIdError},
 };
 
 use super::GetRequisitionAndLinkedRequisitionError;
@@ -49,7 +49,7 @@ pub(crate) enum ProcessRequisitionTransfersError {
     #[error("Problem getting upsert record {0}")]
     GetRequisitionAndLinkedRequisitionError(GetRequisitionAndLinkedRequisitionError),
     #[error("{0}")]
-    GetActiveStoresOnSiteError(GetActiveStoresOnSiteError),
+    GetActiveStoresOnSiteError(GetCurrentSiteIdError),
     #[error("{0:?}")]
     DatabaseError(RepositoryError),
     #[error("{0}")]
@@ -113,8 +113,8 @@ pub(crate) fn process_requisition_transfers(
         .basic_context()
         .map_err(Error::DatabaseError)?;
 
-    let active_stores =
-        ActiveStoresOnSite::get(&ctx.connection).map_err(Error::GetActiveStoresOnSiteError)?;
+    let active_stores = ActiveStoresOnSite::get(&ctx.connection, None)
+        .map_err(Error::GetActiveStoresOnSiteError)?;
 
     let changelog_repo = ChangelogRepository::new(&ctx.connection);
     let cursor_controller = CursorController::new(KeyType::RequisitionTransferProcessorCursor);

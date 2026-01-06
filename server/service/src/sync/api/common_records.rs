@@ -100,9 +100,8 @@ impl CommonSyncRecord {
                 record: data.clone(),
             })?,
             received_datetime: Utc::now().naive_utc(),
-            integration_datetime: None,
-            integration_error: None,
             source_site_id,
+            ..Default::default()
         })
     }
 

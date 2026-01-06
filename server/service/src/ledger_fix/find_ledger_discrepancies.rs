@@ -6,21 +6,21 @@ use repository::{
 };
 use thiserror::Error;
 
-use crate::sync::{ActiveStoresOnSite, GetActiveStoresOnSiteError};
+use crate::sync::{ActiveStoresOnSite, GetCurrentSiteIdError};
 
 #[derive(Error, Debug)]
 pub enum FindStockLineLedgerDiscrepanciesError {
     #[error(transparent)]
     DatabaseError(#[from] RepositoryError),
     #[error("Failed to get active stores on site")]
-    GetActiveStoresOnSiteError(#[from] GetActiveStoresOnSiteError),
+    GetActiveStoresOnSiteError(#[from] GetCurrentSiteIdError),
 }
 
 pub(super) fn find_stock_line_ledger_discrepancies(
     connection: &StorageConnection,
     stock_line_id: Option<&str>,
 ) -> Result</* stock line ids */ Vec<String>, FindStockLineLedgerDiscrepanciesError> {
-    let active_stores = ActiveStoresOnSite::get(connection)?;
+    let active_stores = ActiveStoresOnSite::get(connection, None)?;
 
     // Filters
     let (stock_line, stock_line_id) = match stock_line_id {

@@ -1,3 +1,5 @@
+use std::{collections::HashMap, sync::RwLock};
+
 use diesel::prelude::*;
 
 use super::StorageConnection;
@@ -17,7 +19,7 @@ table! {
 }
 
 // Snippet for adding new, including migration : https://github.com/msupply-foundation/open-msupply/wiki/Snippets "New Key Type for KeyValueStore"
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Default)]
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Default, Hash)]
 #[cfg_attr(test, derive(strum::EnumIter))]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum KeyType {
@@ -59,6 +61,9 @@ pub enum KeyType {
     LogFileName,
 
     LastLedgerFixRun,
+
+    SyncPushCursorV7,
+    SyncPullCursorV7,
 }
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
@@ -77,6 +82,23 @@ pub struct KeyValueStoreRepository<'a> {
     connection: &'a StorageConnection,
 }
 
+static KEY_VALUE_STORE_CACHE: RwLock<Option<HashMap<KeyType, KeyValueStoreRow>>> =
+    RwLock::new(None);
+
+fn get_cached_row(key: &KeyType) -> Option<KeyValueStoreRow> {
+    let cache = KEY_VALUE_STORE_CACHE.read().unwrap();
+    cache.as_ref()?.get(key).cloned()
+}
+
+fn set_cached_row(row: KeyValueStoreRow) {
+    let mut cache = KEY_VALUE_STORE_CACHE.write().unwrap();
+    if cache.is_none() {
+        *cache = Some(HashMap::new());
+    }
+
+    cache.as_mut().unwrap().insert(row.id.clone(), row);
+}
+
 impl<'a> KeyValueStoreRepository<'a> {
     pub fn new(connection: &'a StorageConnection) -> Self {
         KeyValueStoreRepository { connection }
@@ -89,14 +111,23 @@ impl<'a> KeyValueStoreRepository<'a> {
             .do_update()
             .set(value)
             .execute(self.connection.lock().connection())?;
+        set_cached_row(value.clone());
         Ok(())
     }
 
     fn get_row(&self, key: KeyType) -> Result<Option<KeyValueStoreRow>, RepositoryError> {
-        let result = key_value_store::table
+        if let Some(cached) = get_cached_row(&key) {
+            return Ok(Some(cached));
+        }
+
+        let result: Option<KeyValueStoreRow> = key_value_store::table
             .filter(key_value_store::id.eq(key))
             .first(self.connection.lock().connection())
             .optional()?;
+
+        if let Some(result) = &result {
+            set_cached_row(result.clone());
+        }
         Ok(result)
     }
 

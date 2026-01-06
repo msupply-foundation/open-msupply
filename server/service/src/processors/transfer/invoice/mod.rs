@@ -15,7 +15,7 @@ use crate::{
         },
     },
     service_provider::{ServiceContext, ServiceProvider},
-    sync::{ActiveStoresOnSite, GetActiveStoresOnSiteError},
+    sync::{ActiveStoresOnSite, GetCurrentSiteIdError},
 };
 use repository::{
     ChangelogFilter, ChangelogRepository, ChangelogRow, ChangelogTableName, EqualFilter, Invoice,
@@ -85,7 +85,7 @@ pub(crate) enum ProcessInvoiceTransfersError {
     #[error("Problem getting delete operation {0}")]
     GetDeleteOperationError(RepositoryError),
     #[error("{0}")]
-    GetActiveStoresOnSiteError(GetActiveStoresOnSiteError),
+    GetActiveStoresOnSiteError(GetCurrentSiteIdError),
     #[error("{0:?}")]
     DatabaseError(RepositoryError),
     #[error("{0}")]
@@ -155,8 +155,8 @@ pub(crate) fn process_invoice_transfers(
         .basic_context()
         .map_err(Error::DatabaseError)?;
 
-    let active_stores =
-        ActiveStoresOnSite::get(&ctx.connection).map_err(Error::GetActiveStoresOnSiteError)?;
+    let active_stores = ActiveStoresOnSite::get(&ctx.connection, None)
+        .map_err(Error::GetActiveStoresOnSiteError)?;
 
     let changelog_repo = ChangelogRepository::new(&ctx.connection);
     let cursor_controller = CursorController::new(KeyType::ShipmentTransferProcessorCursor);
