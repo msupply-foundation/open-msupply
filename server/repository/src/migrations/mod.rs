@@ -63,7 +63,9 @@ mod templates;
 pub use self::version::*;
 
 use crate::{
-    KeyType, KeyValueStoreRepository, MigrationFragmentLogRepository, RepositoryError, StorageConnection, db_init::{initialize_earliest_db, initialize_latest_db, is_empty_db}, 
+    db_init::{initialize_earliest_db, initialize_latest_db, is_empty_db},
+    KeyType, KeyValueStoreRepository, MigrationFragmentLogRepository, RepositoryError,
+    StorageConnection,
 };
 use diesel::connection::SimpleConnection;
 use thiserror::Error;
@@ -92,8 +94,8 @@ pub(crate) trait MigrationFragment {
 pub enum MigrationError {
     #[error("The database you are connecting to is a later version ({0}) than the server ({1}). It is unsafe to run with this configuration, the server is stopping")]
     DatabaseVersionAboveAppVersion(Version, Version),
-    #[error("Database version is pre release ({0}), it cannot be upgraded")]
-    DatabaseVersionIsPreRelease(Version),
+    #[error("Database version is no supported ({0}), it cannot be upgraded")]
+    DatabaseVersionNotSupported(Version),
     #[error("Migration version ({0}) is higher then app version ({1}), consider increasing app version in root package.json")]
     MigrationAboveAppVersion(Version, Version),
     #[error("Problem dropping or re-creating views {0}")]
@@ -168,7 +170,6 @@ pub fn migrate(
         Box::new(v2_15_00::V2_15_00),
     ];
 
-
     // Check if the database has been initialised, if not run the base sql to kick start the process
     if is_empty_db(connection).expect("Unable to check for empty db on startup: Nothing returned") {
         log::info!("Empty database detected, creating base schema...");
@@ -177,22 +178,29 @@ pub fn migrate(
             log::info!("Target version specified, initializing earliest base schema");
             // We always use the earliest base schema when migrating to a specific version
             // This is the easiest way to makes sure migration tests can still run.
-                initialize_earliest_db(connection)
-            .expect("Failed to initialize earliest database schema");
-
+            initialize_earliest_db(connection)
+                .expect("Failed to initialize earliest database schema");
         } else {
             log::info!("No target version specified, initializing latest base schema");
-            initialize_latest_db(connection)
-            .expect("Unable to initialize latest database schema");
+            initialize_latest_db(connection).expect("Unable to initialize latest database schema");
         }
         log::info!("Base schema...installed");
     }
 
-
     let to_version = to_version.unwrap_or(Version::from_package_json());
 
-    // Run migrations  
+    // Run migrations
     let starting_database_version = get_database_version(connection);
+
+    if starting_database_version < migrations[0].version() {
+        log::error!(
+                "Database version < {} cannot be upgraded. Please install 2.15.0 first, or re-initialise to upgrade",
+                migrations[0].version()
+            );
+        return Err(MigrationError::DatabaseVersionNotSupported(
+            starting_database_version,
+        ));
+    }
 
     // Get migration fragment log repository and create table if it doesn't exist
     create_migration_fragment_table(connection)?;
