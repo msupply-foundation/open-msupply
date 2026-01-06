@@ -1,7 +1,7 @@
 use std::collections::BTreeMap;
 
 use crate::types::{
-    patient::GenderTypeNode,
+    invoice_query::InvoiceNodeStatus, patient::GenderTypeNode,
     warn_when_missing_recent_stocktake::WarnWhenMissingRecentStocktakeDataNode,
 };
 use async_graphql::*;
@@ -82,6 +82,10 @@ impl PreferencesNode {
         self.load_preference(&self.preferences.show_indicative_price_in_requisitions)
     }
 
+    pub async fn item_margin_overrides_supplier_margin(&self) -> Result<bool> {
+        self.load_preference(&self.preferences.item_margin_overrides_supplier_margin)
+    }
+    
     pub async fn is_gaps(&self) -> Result<bool> {
         self.load_preference(&self.preferences.is_gaps)
     }
@@ -159,16 +163,22 @@ impl PreferencesNode {
         )
     }
 
+    pub async fn number_of_months_threshold_to_show_over_stock_alerts_for_products(
+        &self,
+    ) -> Result<i32> {
+        self.load_preference(
+            &self
+                .preferences
+                .number_of_months_threshold_to_show_over_stock_alerts_for_products,
+        )
+    }
+
     pub async fn first_threshold_for_expiring_items(&self) -> Result<i32> {
         self.load_preference(&self.preferences.first_threshold_for_expiring_items)
     }
 
     pub async fn second_threshold_for_expiring_items(&self) -> Result<i32> {
         self.load_preference(&self.preferences.second_threshold_for_expiring_items)
-    }
-
-    pub async fn skip_intermediate_statuses_in_outbound(&self) -> Result<bool> {
-        self.load_preference(&self.preferences.skip_intermediate_statuses_in_outbound)
     }
 
     pub async fn store_custom_colour(&self) -> Result<String> {
@@ -181,6 +191,15 @@ impl PreferencesNode {
         Ok(WarnWhenMissingRecentStocktakeDataNode::from_domain(
             self.load_preference(&self.preferences.warn_when_missing_recent_stocktake)?,
         ))
+    }
+
+    pub async fn invoice_status_options(&self) -> Result<Vec<InvoiceNodeStatus>> {
+        let domain_statuses = self.load_preference(&self.preferences.invoice_status_options)?;
+        let statuses = domain_statuses
+            .iter()
+            .map(|s| InvoiceNodeStatus::from(s.clone()))
+            .collect();
+        Ok(statuses)
     }
 }
 
@@ -242,6 +261,7 @@ pub enum PreferenceKey {
     DaysInMonth,
     ExpiredStockPreventIssue,
     ExpiredStockIssueThreshold,
+    ItemMarginOverridesSupplierMargin,
     IsGaps,
     // Store preferences
     ManageVaccinesInDoses,
@@ -258,11 +278,13 @@ pub enum PreferenceKey {
     SelectDestinationStoreForAnInternalOrder,
     NumberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts,
     NumberOfMonthsThresholdToShowLowStockAlertsForProducts,
+    NumberOfMonthsThresholdToShowOverStockAlertsForProducts,
     FirstThresholdForExpiringItems,
     SecondThresholdForExpiringItems,
     SkipIntermediateStatusesInOutbound,
     StoreCustomColour,
     WarnWhenMissingRecentStocktake,
+    InvoiceStatusOptions,
     ShowIndicativePriceInRequisitions,
 }
 

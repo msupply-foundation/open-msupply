@@ -141,7 +141,7 @@ export const AddFromScannerButtonComponent = () => {
     };
   }, []);
 
-  const label = t(isScanning ? 'button.stop' : 'button.scan');
+  const label = isScanning ? t('button.stop') : t('button.scan');
   useRegisterActions(
     [
       {

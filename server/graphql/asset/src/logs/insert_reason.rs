@@ -20,7 +20,7 @@ pub fn insert_asset_log_reason(
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::MutateAsset,
+            resource: Resource::EditAsset,
             store_id: None,
         },
     )?;

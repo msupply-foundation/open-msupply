@@ -92,51 +92,63 @@ export const useDraftInboundLines = (
     [setDraftLines, setIsDirty]
   );
 
-  const removeDraftLine = async (id: string) => {
-    const batch = draftLines.find(line => line.id === id);
+  const removeDraftLine = (lineId: string) => {
+    const batch = draftLines.find(line => line.id === lineId);
     if (!batch) return;
     if (batch.isCreated) {
       setDraftLines(draftLines => {
-        const newLines = draftLines.filter(line => line.id !== id);
+        const newLines = draftLines.filter(line => line.id !== lineId);
         if (newLines.length === 0 && item) {
           return [CreateDraft.stockInLine({ item, invoiceId: id })];
         }
         return newLines;
       });
     } else {
-      const deletedBatch = { ...batch, isDeleted: true };
-      try {
-        const response = await deleteMutation([deletedBatch]);
-
-        const responseForLine =
-          response.batchInboundShipment.deleteInboundShipmentLines?.[0];
-
-        if (!responseForLine) {
-          error(t('error.something-wrong'))();
-          return;
-        }
-        const errorMessage = mapErrorToMessageAndSetContext(
-          responseForLine,
-          [deletedBatch],
-          t
+      setDraftLines(draftLines => {
+        const updatedLines = draftLines.map(line =>
+          line.id === lineId ? { ...line, isDeleted: true } : line
         );
-        if (errorMessage) error(errorMessage)();
-      } catch {
-        error(t('error.something-wrong'))();
-      }
+        setIsDirty(true);
+        return updatedLines;
+      });
     }
   };
 
   const saveLines = async () => {
     if (isDirty) {
-      const { errorMessage } = await mutateAsync(draftLines);
-      if (errorMessage) throw new Error(errorMessage);
+      const linesToDelete = draftLines.filter(line => line.isDeleted);
+      if (linesToDelete.length > 0) {
+        const response = await deleteMutation(linesToDelete);
+
+        linesToDelete.forEach((lineToDelete, index) => {
+          const responseForLine =
+            response.batchInboundShipment.deleteInboundShipmentLines?.[index];
+          if (!responseForLine) {
+            error(t('error.something-wrong'))();
+            return;
+          }
+
+          const errorMessage = mapErrorToMessageAndSetContext(
+            responseForLine,
+            [lineToDelete],
+            t
+          );
+          if (errorMessage) error(errorMessage)();
+        });
+      }
+
+      const linesToSave = draftLines.filter(line => !line.isDeleted);
+      if (linesToSave.length > 0) {
+        const { errorMessage } = await mutateAsync(linesToSave);
+        if (errorMessage) throw new Error(errorMessage);
+      }
+
       setIsDirty(false);
     }
   };
 
   return {
-    draftLines,
+    draftLines: draftLines.filter(line => !line.isDeleted),
     addDraftLine,
     updateDraftLine,
     removeDraftLine,

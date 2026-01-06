@@ -41,6 +41,7 @@ export interface BaseTableConfig<T extends MRT_RowData>
     groupedByDefault?: boolean;
   };
   columns: ColumnDef<T>[];
+  noUrlFiltering?: boolean;
   initialSort?: { key: string; dir: 'asc' | 'desc' };
   noDataElement?: React.ReactNode;
 }
@@ -59,6 +60,7 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
   enableRowSelection = true,
   enableColumnResizing = true,
   manualFiltering = false,
+  noUrlFiltering = false,
   initialSort,
   noDataElement,
   muiTableBodyRowProps,
@@ -71,7 +73,10 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
   const { columns } = useMaterialTableColumns(omsColumns);
 
   // Filter needs to be applied after columns are processed
-  const { columnFilters, onColumnFiltersChange } = useTableFiltering(columns);
+  const { columnFilters, onColumnFiltersChange } = useTableFiltering(
+    columns,
+    noUrlFiltering
+  );
   const { sorting, onSortingChange } = useUrlSortManagement(initialSort);
 
   const { isGrouped, toggleGrouped, resetGrouped } = useIsGrouped(

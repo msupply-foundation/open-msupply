@@ -50,7 +50,7 @@ pub enum ReportError {
 
 use ReportError as Error;
 
-use crate::helpers::{run_command_with_error, CommandError};
+use crate::{helpers::{run_command_with_error, CommandError}, YARN_COMMAND};
 
 pub fn generate_reports_recursive(
     reports_data: &mut ReportsData,
@@ -58,7 +58,7 @@ pub fn generate_reports_recursive(
     manifest_name: &OsStr,
     path: &PathBuf,
 ) -> Result<(), Error> {
-    if let Some(_) = ignore_paths.iter().find(|p| Some(**p) == path.file_name()) {
+    if ignore_paths.iter().any(|p| Some(*p) == path.file_name()) {
         return Ok(());
     }
     if path.is_file() && Some(manifest_name) == path.file_name() {
@@ -80,7 +80,7 @@ pub fn generate_reports_recursive(
         let next_path = file_or_folder
             .map_err(|e| Error::FailedToGetFileOrDir(path.clone(), e))?
             .path();
-        generate_reports_recursive(reports_data, &ignore_paths, manifest_name, &next_path)?;
+        generate_reports_recursive(reports_data, ignore_paths, manifest_name, &next_path)?;
     }
     Ok(())
 }
@@ -115,11 +115,11 @@ pub fn generate_report_data(path: &PathBuf) -> Result<ReportData, Error> {
         .arguments
         .clone()
         .and_then(|a| a.schema)
-        .and_then(|schema| Some(path.join(schema)));
+        .map(|schema| path.join(schema));
     let arguments_ui_path = manifest
         .arguments
         .and_then(|a| a.ui)
-        .and_then(|ui| Some(path.join(ui)));
+        .map(|ui| path.join(ui));
     let graphql_query = manifest.queries.clone().and_then(|q| q.gql);
     let sql_queries = manifest.queries.clone().and_then(|q| q.sql);
     let query_default = manifest.query_default;
@@ -131,7 +131,7 @@ pub fn generate_report_data(path: &PathBuf) -> Result<ReportData, Error> {
         header: manifest.header,
         footer: manifest.footer,
         query_gql: graphql_query,
-        query_default: query_default,
+        query_default,
         query_sql: sql_queries,
     };
 
@@ -147,7 +147,7 @@ pub fn generate_report_data(path: &PathBuf) -> Result<ReportData, Error> {
         }
         (Some(arguments_path), Some(arguments_ui_path)) => Some(
             schema_from_row(FormSchemaRow {
-                id: (format!("for_report_{}", id)),
+                id: (format!("for_report_{id}")),
                 r#type: "reportArgument".to_string(),
                 json_schema: fs::read_to_string(arguments_path)
                     .map_err(|e| Error::CannotReadSchemaFile(path.clone(), e))?,
@@ -192,13 +192,13 @@ fn generate_convert_data(path: &PathBuf, manifest: &Manifest) -> Result<Option<S
     let convert_dir = path.join(convert_data);
     // Yarn install, use lock file bit it should be git ignored
     run_command_with_error(
-        Command::new("yarn")
+        Command::new(YARN_COMMAND)
             .args(["install", "--cwd"])
             .arg(&convert_dir),
     )
     .map_err(|e| Error::FailedToYarnInstall(convert_dir.clone(), e))?;
 
-    run_command_with_error(Command::new("yarn").arg("build").current_dir(&convert_dir))
+    run_command_with_error(Command::new(YARN_COMMAND).arg("build").current_dir(&convert_dir))
         .map_err(|e| Error::FailedToBuildConvertData(convert_dir.clone(), e))?;
 
     let bundle_path: PathBuf = convert_dir

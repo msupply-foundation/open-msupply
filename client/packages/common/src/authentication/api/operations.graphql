@@ -200,6 +200,7 @@ query preferences($storeId: String!) {
     manageVaccinesInDoses
     manageVvmStatusForStock
     numberOfMonthsThresholdToShowLowStockAlertsForProducts
+    numberOfMonthsThresholdToShowOverStockAlertsForProducts
     numberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts
     orderInPacks
     preventTransfersMonthsBeforeInitialisation
@@ -220,7 +221,8 @@ query preferences($storeId: String!) {
       minItems
     }
     warningForExcessRequest
-    skipIntermediateStatusesInOutbound
+    invoiceStatusOptions
+    itemMarginOverridesSupplierMargin
     showIndicativePriceInRequisitions
     isGaps
   }

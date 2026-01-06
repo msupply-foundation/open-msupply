@@ -26,6 +26,7 @@ pub enum PrefKey {
     DaysInMonth,
     ExpiredStockPreventIssue,
     ExpiredStockIssueThreshold,
+    ItemMarginOverridesSupplierMargin,
     IsGaps,
 
     // Store preferences
@@ -42,11 +43,13 @@ pub enum PrefKey {
     SelectDestinationStoreForAnInternalOrder,
     NumberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts,
     NumberOfMonthsThresholdToShowLowStockAlertsForProducts,
+    NumberOfMonthsThresholdToShowOverStockAlertsForProducts,
     FirstThresholdForExpiringItems,
     SecondThresholdForExpiringItems,
     SkipIntermediateStatusesInOutbound,
     StoreCustomColour,
     WarnWhenMissingRecentStocktake,
+    InvoiceStatusOptions,
     ShowIndicativePriceInRequisitions,
 }
 

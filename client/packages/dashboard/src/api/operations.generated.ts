@@ -37,6 +37,7 @@ export type ItemCountsQuery = {
       total: number;
       outOfStockProducts: number;
       productsAtRiskOfBeingOutOfStock: number;
+      productsOverstocked: number;
     };
   };
 };
@@ -128,6 +129,7 @@ export const ItemCountsDocument = gql`
         total
         outOfStockProducts
         productsAtRiskOfBeingOutOfStock
+        productsOverstocked
       }
     }
   }

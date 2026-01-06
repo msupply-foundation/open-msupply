@@ -2,8 +2,8 @@ use std::collections::BTreeMap;
 
 use async_graphql::*;
 use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
-use graphql_types::types::patient::GenderTypeNode;
-use repository::GenderType;
+use graphql_types::types::{patient::GenderTypeNode, InvoiceNodeStatus};
+use repository::{GenderType, InvoiceStatus};
 use service::{
     auth::{Resource, ResourceAccessRequest},
     preference::{StorePrefUpdate, UpsertPreferences, WarnWhenMissingRecentStocktakeData},
@@ -41,6 +41,12 @@ pub struct WarnWhenMissingRecentStocktakeInput {
 }
 
 #[derive(InputObject)]
+pub struct InvoiceStatusOptionsInput {
+    pub store_id: String,
+    pub value: Vec<InvoiceNodeStatus>,
+}
+
+#[derive(InputObject)]
 pub struct UpsertPreferencesInput {
     // Global preferences
     pub allow_tracking_of_stock_by_donor: Option<bool>,
@@ -57,6 +63,7 @@ pub struct UpsertPreferencesInput {
     pub days_in_month: Option<f64>,
     pub expired_stock_prevent_issue: Option<bool>,
     pub expired_stock_issue_threshold: Option<i32>,
+    pub item_margin_overrides_supplier_margin: Option<bool>,
     pub is_gaps: Option<bool>,
 
     // Store preferences
@@ -75,11 +82,13 @@ pub struct UpsertPreferencesInput {
         Option<Vec<IntegerStorePrefInput>>,
     pub number_of_months_threshold_to_show_low_stock_alerts_for_products:
         Option<Vec<IntegerStorePrefInput>>,
+    pub number_of_months_threshold_to_show_over_stock_alerts_for_products:
+        Option<Vec<IntegerStorePrefInput>>,
     pub first_threshold_for_expiring_items: Option<Vec<IntegerStorePrefInput>>,
     pub second_threshold_for_expiring_items: Option<Vec<IntegerStorePrefInput>>,
     pub warn_when_missing_recent_stocktake: Option<Vec<WarnWhenMissingRecentStocktakeInput>>,
-    pub skip_intermediate_statuses_in_outbound: Option<Vec<BoolStorePrefInput>>,
     pub store_custom_colour: Option<Vec<StringStorePrefInput>>,
+    pub invoice_status_options: Option<Vec<InvoiceStatusOptionsInput>>,
 }
 
 pub fn upsert_preferences(
@@ -122,6 +131,7 @@ impl UpsertPreferencesInput {
             days_in_month,
             expired_stock_prevent_issue,
             expired_stock_issue_threshold,
+            item_margin_overrides_supplier_margin,
             is_gaps,
             // Store preferences
             manage_vaccines_in_doses,
@@ -137,11 +147,12 @@ impl UpsertPreferencesInput {
             select_destination_store_for_an_internal_order,
             number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products,
             number_of_months_threshold_to_show_low_stock_alerts_for_products,
+            number_of_months_threshold_to_show_over_stock_alerts_for_products,
             first_threshold_for_expiring_items,
             second_threshold_for_expiring_items,
             warn_when_missing_recent_stocktake,
-            skip_intermediate_statuses_in_outbound,
             store_custom_colour,
+            invoice_status_options,
         } = self;
 
         UpsertPreferences {
@@ -152,7 +163,7 @@ impl UpsertPreferencesInput {
             custom_translations: custom_translations.clone(),
             gender_options: gender_options
                 .as_ref()
-                .map(|i| i.iter().map(|i| GenderType::from(i.clone())).collect()),
+                .map(|i| i.iter().map(|i| GenderType::from(*i)).collect()),
             prevent_transfers_months_before_initialisation:
                 *prevent_transfers_months_before_initialisation,
             show_contact_tracing: *show_contact_tracing,
@@ -163,6 +174,8 @@ impl UpsertPreferencesInput {
             days_in_month: *days_in_month,
             expired_stock_prevent_issue: *expired_stock_prevent_issue,
             expired_stock_issue_threshold: *expired_stock_issue_threshold,
+            item_margin_overrides_supplier_margin: *item_margin_overrides_supplier_margin,
+
             is_gaps: *is_gaps,
             // Store preferences
             manage_vaccines_in_doses: manage_vaccines_in_doses
@@ -208,6 +221,10 @@ impl UpsertPreferencesInput {
                 number_of_months_threshold_to_show_low_stock_alerts_for_products
                     .as_ref()
                     .map(|i| i.iter().map(|i| i.to_domain()).collect()),
+            number_of_months_threshold_to_show_over_stock_alerts_for_products:
+                number_of_months_threshold_to_show_over_stock_alerts_for_products
+                    .as_ref()
+                    .map(|i| i.iter().map(|i| i.to_domain()).collect()),
             first_threshold_for_expiring_items: first_threshold_for_expiring_items
                 .as_ref()
                 .map(|i| i.iter().map(|i| i.to_domain()).collect()),
@@ -217,10 +234,10 @@ impl UpsertPreferencesInput {
             warn_when_missing_recent_stocktake: warn_when_missing_recent_stocktake
                 .as_ref()
                 .map(|i| i.iter().map(|i| i.to_domain()).collect()),
-            skip_intermediate_statuses_in_outbound: skip_intermediate_statuses_in_outbound
+            store_custom_colour: store_custom_colour
                 .as_ref()
                 .map(|i| i.iter().map(|i| i.to_domain()).collect()),
-            store_custom_colour: store_custom_colour
+            invoice_status_options: invoice_status_options
                 .as_ref()
                 .map(|i| i.iter().map(|i| i.to_domain()).collect()),
         }
@@ -269,6 +286,15 @@ impl WarnWhenMissingRecentStocktakeInput {
         StorePrefUpdate {
             store_id: self.store_id.clone(),
             value: self.value.to_domain(),
+        }
+    }
+}
+
+impl InvoiceStatusOptionsInput {
+    pub fn to_domain(&self) -> StorePrefUpdate<Vec<InvoiceStatus>> {
+        StorePrefUpdate {
+            store_id: self.store_id.clone(),
+            value: self.value.iter().map(|s| (*s).into()).collect(),
         }
     }
 }
