@@ -1,15 +1,11 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import {
   BasicSpinner,
   Checkbox,
-  Column,
-  ColumnAlign,
-  createTableStore,
-  DataTable,
-  TableProvider,
-  useColumns,
-  useRowStyle,
-  useTableStore,
+  ColumnDef,
+  ColumnType,
+  MaterialTable,
+  useSimpleMaterialTable,
   useTranslation,
 } from '@openmsupply-client/common';
 import { StockLineFragment, useItem } from '../../Item';
@@ -28,6 +24,7 @@ export const SelectBatch = ({
   stockLine,
   setStockLine,
 }: SelectBatchProps) => {
+  const t = useTranslation();
   const {
     stockLinesFromItem: { data, isLoading },
   } = useItem(itemId);
@@ -39,55 +36,61 @@ export const SelectBatch = ({
     }
   }, [data, isNewlyGiven, stockLine]);
 
-  const columns = useColumns<StockLineFragment>(
-    [
+  const columns = useMemo(
+    (): ColumnDef<StockLineFragment>[] => [
       {
-        width: '55px',
-        key: 'select',
-        Cell: ({ rowData, isDisabled }) => (
+        accessorKey: 'select',
+        header: '',
+        size: 50,
+        Cell: ({ row: { original: row } }) => (
           <Checkbox
-            disabled={isDisabled}
-            checked={rowData.id === stockLine?.id}
+            disabled={getRemainingDoses(row) < 1}
+            checked={row.id === stockLine?.id}
           />
         ),
       },
-      'batch',
-      ['expiryDate', { align: ColumnAlign.Left }],
       {
-        key: 'doses',
-        label: 'label.doses',
-        accessor: ({ rowData }) => {
-          const remainingDoses = getRemainingDoses(rowData);
-
-          if (remainingDoses < 1) {
-            return '<1';
-          }
-          return Math.floor(remainingDoses);
+        accessorKey: 'batch',
+        header: t('label.batch'),
+        size: 150,
+      },
+      {
+        accessorKey: 'expiryDate',
+        header: t('label.expiry-date'),
+        columnType: ColumnType.Date,
+        size: 100,
+      },
+      {
+        id: 'doses',
+        accessorFn: row => {
+          const remainingDoses = getRemainingDoses(row);
+          return remainingDoses < 1
+            ? '<1'
+            : Math.floor(remainingDoses);
         },
+        header: t('label.doses'),
+        size: 80,
       },
     ],
-    {},
-    [itemId, stockLine]
+    [stockLine]
   );
 
   return (
-    <TableProvider createStore={createTableStore}>
-      {isLoading ? (
-        <BasicSpinner />
-      ) : (
-        <BatchTable
-          columns={columns}
-          data={data?.nodes ?? []}
-          // Allow un-selecting of stock line, if don't want to record
-          // transaction
-          setStockLine={newStockLine =>
-            setStockLine(
-              newStockLine.id === stockLine?.id ? null : newStockLine
-            )
-          }
-        />
-      )}
-    </TableProvider>
+    isLoading ? (
+      <BasicSpinner />
+    ) : (
+      <BatchTable
+        columns={columns}
+        data={data?.nodes ?? []}
+        // Allow un-selecting of stock line, if don't want to record
+        // transaction
+        setStockLine={newStockLine =>
+          setStockLine(
+            newStockLine.id === stockLine?.id ? null : newStockLine
+          )
+        }
+      />
+    )
   );
 };
 
@@ -96,43 +99,22 @@ const BatchTable = ({
   data,
   setStockLine,
 }: {
-  columns: Column<StockLineFragment>[];
+  columns: ColumnDef<StockLineFragment>[];
   data: StockLineFragment[];
   setStockLine: (stockLine: VaccinationStockLine) => void;
 }) => {
   const t = useTranslation();
-  const { setRowStyles } = useRowStyle();
-  const { setDisabledRows } = useTableStore();
 
-  useEffect(() => {
-    setRowStyles(
-      data.map(r => r.id),
-      {
-        // Make the table a little more compact
-        height: 'unset',
-        '& td': {
-          paddingY: 0,
-          paddingLeft: '16',
-        },
-      }
-    );
+  const table = useSimpleMaterialTable<StockLineFragment>({
+    tableId: 'vaccination-batch-select-table',
+    data,
+    columns,
+    onRowClick: row => getRemainingDoses(row) >= 1 && setStockLine(row),
+    getIsRestrictedRow: row => getRemainingDoses(row) < 1,
+    noDataElement: t('messages.no-stock-available'),
+  });
 
-    const rowsToDisable = data
-      ?.filter(row => getRemainingDoses(row) < 1)
-      .map(({ id }) => id);
-    if (rowsToDisable) setDisabledRows(rowsToDisable);
-  }, [data]);
-
-  return (
-    <DataTable
-      id="vaccination-batches"
-      columns={columns}
-      data={data}
-      noDataMessage={t('messages.no-stock-available')}
-      onRowClick={row => getRemainingDoses(row) >= 1 && setStockLine(row)}
-      dense
-    />
-  );
+  return <MaterialTable table={table} />;
 };
 
 const getRemainingDoses = (rowData: StockLineFragment) => {

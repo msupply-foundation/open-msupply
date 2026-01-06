@@ -2,7 +2,6 @@ import React from 'react';
 import { useFormatDateTime, useTranslation } from '@common/intl';
 import {
   Box,
-  CellProps,
   CircleAlertIcon,
   IconButton,
   MessageSquareIcon,
@@ -13,14 +12,12 @@ import {
 } from '@openmsupply-client/common';
 import { TemperatureBreachFragment } from '../../api/TemperatureBreach';
 
-export const DurationCell = ({
-  rowData,
-}: CellProps<TemperatureBreachFragment>) => {
+export const DurationCell = ({ row: { original } }: { row: { original: TemperatureBreachFragment } }) => {
   const t = useTranslation();
   const { localisedDistance } = useFormatDateTime();
-  const duration = !rowData.endDatetime
+  const duration = !original.endDatetime
     ? t('label.ongoing')
-    : localisedDistance(rowData.startDatetime, rowData.endDatetime);
+    : localisedDistance(original.startDatetime, original.endDatetime);
 
   return (
     <Box
@@ -28,11 +25,11 @@ export const DurationCell = ({
       display="flex"
       flex={1}
       sx={
-        !rowData.endDatetime
+        !original.endDatetime
           ? {
-              color: 'error.main',
-              fontStyle: 'italic',
-            }
+            color: 'error.main',
+            fontStyle: 'italic',
+          }
           : {}
       }
     >

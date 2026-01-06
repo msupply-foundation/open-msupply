@@ -27,6 +27,7 @@ export enum ColumnType {
   Date = 'date',
   Comment = 'comment',
   Boolean = 'boolean',
+  Percentage = 'percentage',
 }
 
 export const useGetColumnTypeDefaults = () => {
@@ -126,6 +127,22 @@ export const useGetColumnTypeDefaults = () => {
             return value ? (
               <CircleIcon sx={{ transform: 'scale(0.5)' }} />
             ) : null;
+          },
+        };
+      
+      case ColumnType.Percentage:
+        return {
+          align: 'right',
+          size: 130,
+          Cell: ({ cell }: { cell: MRT_Cell<T> }) => {
+            const value = cell.getValue();
+            return <>
+              <NumericTextDisplay
+                value={typeof value === 'number' ? value : undefined}
+                defaultValue={UNDEFINED_STRING_VALUE}
+              />
+              %
+            </>;
           },
         };
 

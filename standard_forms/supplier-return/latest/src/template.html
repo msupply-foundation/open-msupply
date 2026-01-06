@@ -1,0 +1,60 @@
+<style>
+    {% include "style.css" %}
+</style>
+
+{% macro dateOrNA(datetime) %} 
+{% if datetime %}{{ datetime | date(format="%d/%m/%Y", timezone=arguments.timezone) }}{% else %}{{t(k="messages.not-applicable", f="N/A")}}{% endif %} 
+{% endmacro input %}
+
+{% macro formatCurrency(amount) %}
+  {% if amount %}
+    {{ amount | round(precision=2) }}
+  {% else %}
+    0.00
+  {% endif %}
+{% endmacro %}
+
+<body>
+    <table class="body_section" cellpadding="2" cellspacing="0">
+        <thead>
+            <tr class="body_column_label">
+                <th class="item_code" style="width: 80px;">{{t(k="report.item-code",f="Item code")}}</th>
+                <th class="item_name" style="width: 500px;">{{t(k="report.item-name", f="Item name")}}</th>
+                <th class="quantity" style="width: 50px;">{{t(k="label.quantity",f="Quantity")}}</th>
+                <th class="pack" style="width: 50px;">{{t(k="report.pack-size",f="Pack size")}}</th>
+                <th class="batch" style="width: 60px;">{{t(k="label.batch", f="Batch")}}</th>
+                <th class="expiry" style="width: 80px;">{{t(k="label.expiry",f="Expiry")}}</th>
+                <th class="cost_price" style="width: 60px;">{{t(k="label.cost-price",f="Cost Price")}}</th>
+                <th class="total_extension" style="width: 70px;">{{t(k="report.extension",f="Extension")}}</th>
+            </tr>
+        </thead>
+        {% for line in data.invoiceLines.nodes -%}
+        <tr class="body_value">
+            <td class="item_code" style="width: 80px;">{{ line.itemCode }}</td>
+            <td class="item_name" style="width: 500px;">{{ line.itemName }}</td>
+            <td class="quantity" style="width: 50px;">{{ line.numberOfPacks }}</td>
+            <td class="pack" style="width: 50px;">{{ line.packSize }}</td>
+            <td class="batch batch-wrap" style="width: 60px;">{{ line.batch }}</td>
+            <td class="expiry" style="width: 80px;">{{self::dateOrNA(datetime=line.expiryDate)}}</td>
+            <td class="cost_price" style="width: 60px;">{{self::formatCurrency(amount=line.costPricePerPack)}}</td>
+            <td class="total_extension" style="width: 70px;">{{self::formatCurrency(amount=line.numberOfPacks * line.costPricePerPack)}}</td>
+        </tr>
+        {%- endfor %}
+    </table>
+</body>
+
+<!-- commenting out the totals section until such times as the totals are actually calculated correctly!!
+
+<table class="body_total_section" cellpadding="2" cellspacing="0">
+    <tr class="body_total_column_label" excel-type="total-row">
+        <th class="header_section_field_right">{{t(k="heading.sub-total",f="Sub total")}}: {{ self::formatCurrency(amount=data.invoice.pricing.totalBeforeTax) }}</th>
+    </tr>
+      <tr class="body_total_column_label" excel-type="total-row">
+        <th class="header_section_field_right">{{t(k="heading.tax",f="Tax")}} (%): {{ self::formatCurrency(amount=data.invoice.pricing.taxPercentage) }}</th>
+    </tr>
+    <tr class="body_total_column_label" excel-type="total-row">
+        <th class="header_section_field_right">{{t(k="heading.total",f="Total")}}: {{ self::formatCurrency(amount=data.invoice.pricing.totalAfterTax) }}</th>
+    </tr>
+</table>
+
+-->

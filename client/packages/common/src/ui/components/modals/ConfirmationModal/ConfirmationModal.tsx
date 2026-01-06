@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { Typography } from '@mui/material';
 import { BasicModal } from '../BasicModal';
-import { AlertIcon, CheckIcon, HelpIcon, InfoIcon } from '@common/icons';
 import { DialogButton, LoadingButton } from '../../buttons';
-import { Alert } from '@common/components';
-import { useTranslation, Grid } from '@openmsupply-client/common';
+import { useTranslation } from '@common/intl';
+import { AlertIcon, CheckIcon, HelpIcon, InfoIcon } from '@common/icons';
+import { Grid, Alert } from '@openmsupply-client/common';
 
 interface ConfirmationModalProps {
   open: boolean;

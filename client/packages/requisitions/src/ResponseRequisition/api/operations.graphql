@@ -681,3 +681,13 @@ mutation insertRequestFromResponseRequisition(
     }
   }
 }
+
+query hasCustomerProgramRequisitionSettings(
+  $storeId: String!
+  $customerNameIds: [String!]!
+) {
+  hasCustomerProgramRequisitionSettings(
+    storeId: $storeId
+    customerNameIds: $customerNameIds
+  )
+}
