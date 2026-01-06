@@ -38,7 +38,7 @@ export const OutboundShipmentListView = () => {
     initialSort: { key: 'invoiceNumber', dir: 'desc' },
     filters: [
       { key: 'otherPartyName' },
-      { key: 'status', condition: 'equalTo' },
+      { key: 'status', condition: 'equalAny' },
       { key: 'theirReference' },
       { key: 'createdDatetime', condition: 'between' },
       { key: 'shippedDatetime', condition: 'between' },
