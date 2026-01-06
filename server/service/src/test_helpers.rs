@@ -75,6 +75,7 @@ pub(crate) async fn setup_all_with_data_and_service_provider(
         ledger_fix_trigger,
         site_is_initialise_trigger,
         settings.mail.clone(),
+        Some(settings.clone()),
     ));
 
     let processors_task = processors.spawn(service_provider.clone());

@@ -63,6 +63,7 @@ use graphql_requisition_line::RequisitionLineMutations;
 use graphql_stock_line::{StockLineMutations, StockLineQueries};
 use graphql_stocktake::{StocktakeMutations, StocktakeQueries};
 use graphql_stocktake_line::{StocktakeLineMutations, StocktakeLineQueries};
+use graphql_sync_message::{SyncMessageMutations, SyncMessageQueries};
 use graphql_vaccine_course::{VaccineCourseMutations, VaccineCourseQueries};
 use graphql_vvm::{VVMMutations, VVMQueries};
 
@@ -132,6 +133,10 @@ pub struct CentralServerQueryNode;
 impl CentralServerQueryNode {
     async fn plugin(&self) -> CentralPluginQueries {
         CentralPluginQueries
+    }
+
+    async fn sync_message(&self) -> SyncMessageQueries {
+        SyncMessageQueries
     }
 }
 
@@ -266,6 +271,7 @@ pub struct Mutations(
     pub PurchaseOrderLineMutations,
     pub GoodsReceivedMutations,
     pub GoodsReceivedLineMutations,
+    pub SyncMessageMutations,
 );
 
 impl Mutations {
@@ -298,6 +304,7 @@ impl Mutations {
             PurchaseOrderLineMutations,
             GoodsReceivedMutations,
             GoodsReceivedLineMutations,
+            SyncMessageMutations,
         )
     }
 }

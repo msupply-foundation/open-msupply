@@ -1,6 +1,6 @@
 use super::{
-    store_row::store, ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType,
-    StorageConnection,
+    name_row::name, store_row::store, ChangeLogInsertRow, ChangelogRepository, ChangelogTableName,
+    RowActionType, StorageConnection,
 };
 use crate::{RepositoryError, Upsert};
 use ts_rs::TS;
@@ -16,6 +16,7 @@ use serde::{Deserialize, Serialize};
 pub enum SyncMessageRowStatus {
     #[default]
     New,
+    InProgress,
     Processed,
 }
 
@@ -23,6 +24,7 @@ pub enum SyncMessageRowStatus {
 pub enum SyncMessageRowType {
     #[default]
     RequestFieldChange,
+    SupportUpload,
     #[serde(untagged)]
     Other(String),
 }
@@ -55,6 +57,7 @@ table! {
 
 joinable!(sync_message -> store (to_store_id));
 allow_tables_to_appear_in_same_query!(sync_message, store);
+allow_tables_to_appear_in_same_query!(sync_message, name);
 
 #[derive(
     Clone, Queryable, Insertable, Debug, PartialEq, AsChangeset, Default, Serialize, Deserialize, TS,
@@ -91,7 +94,7 @@ impl<'a> SyncMessageRowRepository<'a> {
             .do_update()
             .set(row.clone())
             .execute(self.connection.lock().connection())?;
-        self.insert_changelog(&row.id)
+        self.insert_changelog(&row)
     }
 
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<SyncMessageRow>, RepositoryError> {
@@ -102,13 +105,13 @@ impl<'a> SyncMessageRowRepository<'a> {
         Ok(result)
     }
 
-    fn insert_changelog(&self, id: &str) -> Result<i64, RepositoryError> {
+    fn insert_changelog(&self, row: &SyncMessageRow) -> Result<i64, RepositoryError> {
         let row = ChangeLogInsertRow {
             table_name: ChangelogTableName::SyncMessage,
-            record_id: id.to_string(),
+            record_id: row.id.to_string(),
             row_action: RowActionType::Upsert,
             name_link_id: None,
-            store_id: None,
+            store_id: row.to_store_id.clone(),
         };
 
         ChangelogRepository::new(self.connection).insert(&row)

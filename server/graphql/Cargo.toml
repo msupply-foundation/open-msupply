@@ -48,6 +48,7 @@ graphql_purchase_order_line = { path = "purchase_order_line" }
 graphql_goods_received = { path = "goods_received" }
 graphql_goods_received_line = { path = "goods_received_line" }
 graphql_contact = { path = "contact" }
+graphql_sync_message = { path = "sync_message" }
 
 actix-web = { workspace = true }
 async-graphql = { workspace = true }

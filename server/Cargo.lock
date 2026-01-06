@@ -3723,6 +3723,7 @@ dependencies = [
  "graphql_stock_line",
  "graphql_stocktake",
  "graphql_stocktake_line",
+ "graphql_sync_message",
  "graphql_types",
  "graphql_vaccine_course",
  "graphql_vvm",
@@ -4386,6 +4387,26 @@ dependencies = [
  "serde_json",
  "service",
  "strum 0.27.2",
+ "util",
+]
+
+[[package]]
+name = "graphql_sync_message"
+version = "0.1.0"
+dependencies = [
+ "actix-rt",
+ "actix-web",
+ "assert-json-diff",
+ "async-graphql",
+ "async-graphql-actix-web",
+ "async-trait",
+ "chrono",
+ "graphql_core",
+ "graphql_types",
+ "repository",
+ "serde",
+ "serde_json",
+ "service",
  "util",
 ]
 

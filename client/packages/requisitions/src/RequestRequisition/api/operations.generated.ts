@@ -35,6 +35,8 @@ export type RequestRowFragment = {
       fileName: string;
       recordId: string;
       createdDatetime: string;
+      status: Types.SyncFileReferenceNodeStatus;
+      error?: string | null;
     }>;
   };
   period?: {
@@ -105,6 +107,8 @@ export type RequestByNumberQuery = {
             fileName: string;
             recordId: string;
             createdDatetime: string;
+            status: Types.SyncFileReferenceNodeStatus;
+            error?: string | null;
           }>;
         };
         user?: {
@@ -263,6 +267,8 @@ export type RequestByIdQuery = {
             fileName: string;
             recordId: string;
             createdDatetime: string;
+            status: Types.SyncFileReferenceNodeStatus;
+            error?: string | null;
           }>;
         };
         user?: {
@@ -467,6 +473,8 @@ export type RequestsQuery = {
           fileName: string;
           recordId: string;
           createdDatetime: string;
+          status: Types.SyncFileReferenceNodeStatus;
+          error?: string | null;
         }>;
       };
       period?: {

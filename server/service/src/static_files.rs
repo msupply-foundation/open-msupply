@@ -2,6 +2,7 @@ use actix_multipart::form::tempfile::TempFile;
 use anyhow::Context;
 use repository::sync_file_reference_row::SyncFileReferenceRow;
 use reqwest::Response;
+use serde::Serialize;
 use std::io::Error;
 use std::ops::Deref;
 use std::path::{Path, PathBuf};
@@ -10,7 +11,7 @@ use std::time::{Duration, SystemTime};
 use tokio::fs::File;
 use util::uuid::uuid;
 use util::{move_file, sanitize_filename};
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Serialize)]
 pub struct StaticFile {
     pub id: String,
     pub name: String,
