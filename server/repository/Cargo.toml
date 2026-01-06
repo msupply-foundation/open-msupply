@@ -21,7 +21,6 @@ diesel = { version = "2.2.12", default-features = false, features = [
     "with-deprecated",
 ] }
 diesel-derive-enum = { version = "2.1.0", default-features = false }
-diesel_migrations = "2.2.0"
 futures-util = { workspace = true }
 libsqlite3-sys = { version = "0.35.0", features = ["bundled"], optional = true }
 rusqlite = "0.37.0"

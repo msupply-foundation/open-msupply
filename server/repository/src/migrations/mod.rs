@@ -63,7 +63,7 @@ mod templates;
 pub use self::version::*;
 
 use crate::{
-    KeyType, KeyValueStoreRepository, MigrationFragmentLogRepository, RepositoryError, StorageConnection, db_init::{initialize_earliest_db, initialize_latest_db, is_empty_db}, run_db_migrations
+    KeyType, KeyValueStoreRepository, MigrationFragmentLogRepository, RepositoryError, StorageConnection, db_init::{initialize_earliest_db, initialize_latest_db, is_empty_db}, 
 };
 use diesel::connection::SimpleConnection;
 use thiserror::Error;
@@ -191,10 +191,7 @@ pub fn migrate(
 
     let to_version = to_version.unwrap_or(Version::from_package_json());
 
-    // Historic diesel migrations
-    run_db_migrations(connection).unwrap();
-
-    // Rust migrations  
+    // Run migrations  
     let starting_database_version = get_database_version(connection);
 
     // Get migration fragment log repository and create table if it doesn't exist
