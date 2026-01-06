@@ -92,7 +92,6 @@ mod test {
         TransactionError,
     };
 
-    #[cfg(not(feature = "memory"))]
     const TEST_SLEEP_TIME: u64 = 100;
     const MAX_CONCURRENCY: u64 = 10;
 
@@ -216,7 +215,6 @@ mod test {
     /// If we were to use shared cache in production, we'd probably need to use a mutex (or
     /// similar) to protect the database connection.
     #[actix_rt::test]
-    #[cfg(not(feature = "memory"))]
     async fn test_concurrent_next_number() {
         let (_, _, connection_manager, _) = test_db::setup_all(
             "test_concurrent_numbers",
@@ -297,7 +295,6 @@ mod test {
             // To run this test use something like `RUN_CONCURRENT_TESTS=true cargo test --package service --lib -- number::test::test_highly_concurrent_next_number --exact --nocapture`
 
             // Performance M1 Macbook Pro (postgres in docker)
-            // --features=memory 0.13s
             // --features=postgres 0.62s
             // --features=sqlite 0.14s
 

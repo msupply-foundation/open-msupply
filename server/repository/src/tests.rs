@@ -1080,7 +1080,6 @@ mod repository_test {
         assert_eq!(result, Some(true));
     }
 
-    #[cfg(not(feature = "memory"))]
     #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
     async fn test_tx_deadlock() {
         use crate::{ItemRow, RepositoryError, TransactionError};
