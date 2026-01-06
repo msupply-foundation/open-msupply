@@ -10,11 +10,11 @@ use crate::diesel::connection::SimpleConnection;
 
 
 // To refresh run tests to create template databases, then run...
-//  pg_dump -h localhost -U postgres -d ___template_1.0.4 --inserts  --no-owner --no-privileges --schema=public | sed -E '/^\\(un)?restrict [A-Za-z0-9]+$/d' > repository/src/new_db_init/postgres_earliest.sql
+//  pg_dump -h localhost -U postgres -d ___template_1.0.4 --inserts  --no-owner --no-privileges --schema=public | sed -E '/^\\(un)?restrict [A-Za-z0-9]+$/d' | sed '/^CREATE SCHEMA public;$/d' | sed "s/SELECT pg_catalog.set_config('search_path', '', false);/SET search_path = public;/" > repository/src/new_db_init/postgres_earliest.sql
 #[cfg(feature = "postgres")]
-pub const BASE_SCHEMA_EARLIEST: &str = include_str!("new_db_init/sqlite_earliest.sql");
+pub const BASE_SCHEMA_EARLIEST: &str = include_str!("new_db_init/postgres_earliest.sql");
 
-// pg_dump -h localhost -U postgres -d ___template_2.15.0 --inserts  --no-owner --no-privileges --schema=public | sed -E '/^\\(un)?restrict [A-Za-z0-9]+$/d' > repository/src/new_db_init/postgres_latest.sql
+// pg_dump -h localhost -U postgres -d ___template_2.15.0 --inserts  --no-owner --no-privileges --schema=public | sed -E '/^\\(un)?restrict [A-Za-z0-9]+$/d' | sed '/^CREATE SCHEMA public;$/d' | sed "s/SELECT pg_catalog.set_config('search_path', '', false);/SET search_path = public;/" > repository/src/new_db_init/postgres_latest.sql
 #[cfg(feature = "postgres")]
 pub const BASE_SCHEMA_LATEST: &str = include_str!("new_db_init/postgres_latest.sql");
 
