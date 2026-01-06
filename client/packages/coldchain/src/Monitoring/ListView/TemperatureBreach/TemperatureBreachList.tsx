@@ -20,10 +20,7 @@ import { DurationCell, IconCell } from './TempereatureBreachCells';
 import { useFormatTemperature } from '../../../common/utils';
 
 export const TemperatureBreachList: FC = () => {
-  const {
-    filter,
-    queryParams,
-  } = useUrlQueryParams({
+  const { filter, queryParams } = useUrlQueryParams({
     initialSort: { key: 'datetime', dir: 'desc' },
     filters: [
       { key: 'datetime', condition: 'between' },
@@ -146,10 +143,8 @@ export const TemperatureBreachList: FC = () => {
     isLoading,
     isError,
     enableRowSelection: false,
-    noDataElement: (
-      <NothingHere body={t('error.no-temperature-breaches')} />
-    ),
-  })
+    noDataElement: <NothingHere body={t('error.no-temperature-breaches')} />,
+  });
 
   return (
     <>
