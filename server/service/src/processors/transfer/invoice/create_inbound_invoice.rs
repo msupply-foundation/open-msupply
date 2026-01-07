@@ -136,7 +136,7 @@ impl InvoiceTransferProcessor for CreateInboundInvoiceProcessor {
                         .and_then(|initialisation_date| {
                             initialisation_date.checked_sub_months(Months::new(pref_months as u32))
                         })
-                        .map_or(false, |cutoff_date| picked_date < cutoff_date)
+                        .is_some_and(|cutoff_date| picked_date < cutoff_date)
                     {
                         return Ok(InvoiceTransferOutput::BeforeInitialisationMonths);
                     }
@@ -243,11 +243,11 @@ fn generate_inbound_invoice(
 
     let formatted_comment = match r#type {
         InboundInvoiceType::InboundShipment => match &outbound_invoice_row.comment {
-            Some(comment) => format!("Stock transfer ({})", comment),
+            Some(comment) => format!("Stock transfer ({comment})"),
             None => "Stock transfer".to_string(),
         },
         InboundInvoiceType::CustomerReturn => match &outbound_invoice_row.comment {
-            Some(comment) => format!("Stock return ({})", comment),
+            Some(comment) => format!("Stock return ({comment})"),
             None => "Stock return".to_string(),
         },
     };
