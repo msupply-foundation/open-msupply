@@ -33,15 +33,20 @@
         "packSize": 5,
         "storeId": "STORE002",
         "totalNumberOfPacks": 100,
+        "supplierName": "",
         "location": {
-          "code": "abc"
+          "code": "abc",
+          "someKey": ""
         },
         "item": {
           "code": "ITEM003",
           "name": "drug",
           "unitName": "box",
-          "stats": {}
+          "stats": {
+            "someKey": ""
+          }
         },
+        "someOtherKey": "",
         "daysUntilExpired": -82,
         "stockAtRisk": 500
       },

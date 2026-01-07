@@ -8,6 +8,7 @@ import {
 import { LoginIcon } from './LoginIcon';
 import { Theme } from '@common/styles';
 import { AppVersion } from '../AppVersion';
+import { LanguageButton } from '../LanguageButton';
 
 type LoginLayoutProps = {
   UsernameInput: React.ReactNode;
@@ -121,6 +122,7 @@ export const LoginLayout = ({
           </form>
         </Box>
         <AppVersion style={{ opacity: 0.4 }} SiteInfo={SiteInfo} />
+        <LanguageButton />
       </Box>
     </Box>
   );

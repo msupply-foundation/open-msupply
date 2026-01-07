@@ -1,23 +1,20 @@
 import React, { ReactElement } from 'react';
 import { RecordWithId, TemperatureBreachNodeType } from '@common/types';
 import {
-  CellProps,
   SnowflakeIcon,
   SunIcon,
   Typography,
   useTranslation,
 } from '@openmsupply-client/common';
 import { parseBreachType } from './utils';
+import { MRT_Cell } from 'material-react-table';
 
-export const BreachTypeCell = <T extends RecordWithId>({
-  rowData,
-  column,
-}: CellProps<T>): ReactElement => {
+export const BreachTypeCell = <T extends RecordWithId>(
+  { cell }: { cell: MRT_Cell<T> }
+): ReactElement => {
   const t = useTranslation();
 
-  const breachType = column.accessor({
-    rowData,
-  }) as TemperatureBreachNodeType | null;
+  const breachType = cell.getValue<TemperatureBreachNodeType | null>();
   const { temperature, type } = parseBreachType(breachType);
 
   return (
