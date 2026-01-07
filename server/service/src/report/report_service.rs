@@ -7,7 +7,7 @@ use repository::{
     RepositoryError,
 };
 use serde::{Deserialize, Serialize};
-use std::{cmp::Ordering, collections::HashMap, time::SystemTime};
+use std::{collections::HashMap, time::SystemTime};
 use thiserror::Error;
 use util::{format_error, uuid::uuid};
 
