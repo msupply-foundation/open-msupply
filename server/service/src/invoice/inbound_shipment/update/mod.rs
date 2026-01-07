@@ -414,7 +414,7 @@ mod test {
         fn invoice_test() -> InvoiceRow {
             InvoiceRow {
                 id: "invoice_test".to_string(),
-                name_link_id: "supplier".to_string(),
+                name_id: "supplier".to_string(),
                 store_id: "store_a".to_string(),
                 ..Default::default()
             }
@@ -500,7 +500,7 @@ mod test {
         assert_eq!(
             invoice,
             InvoiceRow {
-                name_link_id: supplier().id,
+                name_id: supplier().id,
                 user_id: Some(mock_user_account_a().id),
                 ..invoice.clone()
             }

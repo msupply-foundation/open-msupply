@@ -77,7 +77,7 @@ mod query {
         let invoice = InvoiceRow {
             id: format!("invoice_{}", invoice_number),
             invoice_number,
-            name_link_id: name.to_string(),
+            name_id: name.to_string(),
             r#type: invoice_type,
             store_id: STORE_ID.to_string(),
             created_datetime: datetime.clone(),

@@ -65,7 +65,7 @@ mod test {
         fn invoice1() -> InvoiceRow {
             InvoiceRow {
                 id: "invoice2".to_string(),
-                name_link_id: mock_name_b().id,
+                name_id: mock_name_b().id,
                 store_id: mock_store_a().id,
                 r#type: InvoiceType::InboundShipment,
                 invoice_number: 1,
@@ -90,7 +90,7 @@ mod test {
         fn invoice2() -> InvoiceRow {
             InvoiceRow {
                 id: "invoice2".to_string(),
-                name_link_id: mock_name_b().id,
+                name_id: mock_name_b().id,
                 store_id: mock_store_a().id,
                 r#type: InvoiceType::OutboundShipment,
                 status: InvoiceStatus::Picked,
@@ -128,7 +128,7 @@ mod test {
         fn prescription1() -> InvoiceRow {
             InvoiceRow {
                 id: "prescription1".to_string(),
-                name_link_id: mock_name_b().id,
+                name_id: mock_name_b().id,
                 store_id: mock_store_a().id,
                 r#type: InvoiceType::Prescription,
                 status: InvoiceStatus::Verified,

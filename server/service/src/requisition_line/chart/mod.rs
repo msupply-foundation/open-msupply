@@ -288,7 +288,7 @@ mod test {
                 invoices: vec![InvoiceRow {
                     id: invoice_id.clone(),
                     store_id: store().id,
-                    name_link_id: mock_name_a().id,
+                    name_id: mock_name_a().id,
                     r#type: InvoiceType::OutboundShipment,
                     ..Default::default()
                 }],
@@ -554,7 +554,7 @@ mod test {
                 invoices: vec![InvoiceRow {
                     id: invoice_id.clone(),
                     store_id: store().id,
-                    name_link_id: mock_name_a().id,
+                    name_id: mock_name_a().id,
                     r#type: InvoiceType::OutboundShipment,
                     ..Default::default()
                 }],

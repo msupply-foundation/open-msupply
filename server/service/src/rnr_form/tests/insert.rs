@@ -479,7 +479,7 @@ mod insert {
             let invoice_id = format!("{period_idx}");
             let invoice = InvoiceRow {
                 id: invoice_id.clone(),
-                name_link_id: "name_store_c".to_string(),
+                name_id: "name_store_c".to_string(),
                 store_id: mock_store_a().id.clone(),
                 r#type: InvoiceType::OutboundShipment,
                 status: InvoiceStatus::Verified,
@@ -552,7 +552,7 @@ mod insert {
         let test_invoice_id = "consumption_invoice".to_string();
         let test_invoice = InvoiceRow {
             id: test_invoice_id.clone(),
-            name_link_id: "name_store_c".to_string(),
+            name_id: "name_store_c".to_string(),
             store_id: mock_store_a().id.clone(),
             r#type: InvoiceType::OutboundShipment,
             status: InvoiceStatus::Picked,

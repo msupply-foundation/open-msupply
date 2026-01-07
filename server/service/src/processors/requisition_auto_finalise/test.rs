@@ -140,7 +140,7 @@ async fn test_requisition_auto_finalise() {
     let mut linked_invoice = InvoiceRow {
         id: uuid(),
         store_id: store.id.clone(),
-        name_link_id: customer_name.id.clone(),
+        name_id: customer_name.id.clone(),
         r#type: InvoiceType::OutboundShipment,
         status: InvoiceStatus::Allocated,
         requisition_id: Some(requisition.id.clone()),
@@ -207,7 +207,7 @@ async fn test_requisition_auto_finalise() {
     let mut linked_invoice_2 = InvoiceRow {
         id: uuid(),
         store_id: store.id.clone(),
-        name_link_id: customer_name.id.clone(),
+        name_id: customer_name.id.clone(),
         r#type: InvoiceType::OutboundShipment,
         status: InvoiceStatus::New,
         requisition_id: Some(requisition.id.clone()),

@@ -259,7 +259,7 @@ mod test {
         assert_eq!(
             invoice,
             InvoiceRow {
-                name_link_id: supplier().id,
+                name_id: supplier().id,
                 user_id: Some(mock_user_account_a().id),
                 currency_id: Some(currency_a().id),
                 ..invoice.clone()
@@ -287,7 +287,7 @@ mod test {
         assert_eq!(
             invoice,
             InvoiceRow {
-                name_link_id: supplier().id,
+                name_id: supplier().id,
                 on_hold: true,
                 ..invoice.clone()
             }

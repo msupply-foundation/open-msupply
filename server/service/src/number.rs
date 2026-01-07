@@ -103,7 +103,7 @@ mod test {
         fn invoice1() -> InvoiceRow {
             InvoiceRow {
                 id: "invoice1".to_string(),
-                name_link_id: mock_name_c().id,
+                name_id: mock_name_c().id,
                 store_id: mock_store_c().id,
                 r#type: InvoiceType::OutboundShipment,
                 invoice_number: 100,

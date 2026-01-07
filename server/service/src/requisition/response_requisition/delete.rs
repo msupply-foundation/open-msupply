@@ -208,7 +208,7 @@ mod test_delete {
         // RequisitionWithShipment
         let invoice = InvoiceRow {
             id: "invoice_id".to_string(),
-            name_link_id: "name_a".to_string(),
+            name_id: "name_a".to_string(),
             store_id: mock_store_a().id,
             invoice_number: 3,
             r#type: InvoiceType::OutboundShipment,

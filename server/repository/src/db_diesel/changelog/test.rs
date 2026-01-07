@@ -384,7 +384,7 @@ async fn test_changelog_name_and_store_id_in_trigger() {
     fn invoice() -> InvoiceRow {
         InvoiceRow {
             id: "invoice".to_string(),
-            name_link_id: name().id,
+            name_id: name().id,
             store_id: store().id,
             currency_id: Some(currency().id),
             ..Default::default()
@@ -541,7 +541,7 @@ async fn test_changelog_name_and_store_id_in_trigger() {
         TestRecord {
             record: requisition_line(),
             record_id: requisition_line().id,
-            name_id: requisition().name_id,
+            name_id: requisition().name_link_id,
             store_id: requisition().store_id,
         },
         RowActionType::Upsert,
@@ -557,7 +557,7 @@ async fn test_changelog_name_and_store_id_in_trigger() {
         TestRecord {
             record: requisition_line(),
             record_id: requisition_line().id,
-            name_id: requisition().name_id,
+            name_id: requisition().name_link_id,
             store_id: requisition().store_id,
         },
         RowActionType::Upsert,
@@ -575,7 +575,7 @@ async fn test_changelog_name_and_store_id_in_trigger() {
         TestRecord {
             record: requisition_line(),
             record_id: requisition_line().id,
-            name_id: requisition().name_id,
+            name_id: requisition().name_link_id,
             store_id: requisition().store_id,
         },
         RowActionType::Delete,
@@ -593,7 +593,7 @@ async fn test_changelog_name_and_store_id_in_trigger() {
         TestRecord {
             record: requisition(),
             record_id: requisition().id,
-            name_id: requisition().name_id,
+            name_id: requisition().name_link_id,
             store_id: requisition().store_id,
         },
         RowActionType::Upsert,
@@ -609,7 +609,7 @@ async fn test_changelog_name_and_store_id_in_trigger() {
         TestRecord {
             record: requisition(),
             record_id: requisition().id,
-            name_id: requisition().name_id,
+            name_id: requisition().name_link_id,
             store_id: requisition().store_id,
         },
         RowActionType::Upsert,
@@ -627,7 +627,7 @@ async fn test_changelog_name_and_store_id_in_trigger() {
         TestRecord {
             record: requisition(),
             record_id: requisition().id,
-            name_id: requisition().name_id,
+            name_id: requisition().name_link_id,
             store_id: requisition().store_id,
         },
         RowActionType::Delete,

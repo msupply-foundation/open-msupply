@@ -243,7 +243,7 @@ mod test {
         fn invoice() -> InvoiceRow {
             InvoiceRow {
                 id: "test_other_party_change".to_string(),
-                name_link_id: mock_name_a().id,
+                name_id: mock_name_a().id,
                 store_id: mock_store_c().id,
                 r#type: InvoiceType::SupplierReturn,
                 status: InvoiceStatus::Picked,

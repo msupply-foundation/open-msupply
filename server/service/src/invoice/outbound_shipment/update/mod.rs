@@ -203,7 +203,7 @@ mod test {
         fn outbound_shipment_no_stock() -> InvoiceRow {
             InvoiceRow {
                 id: String::from("outbound_shipment_no_stock"),
-                name_link_id: String::from("name_store_a"),
+                name_id: String::from("name_store_a"),
                 store_id: String::from("store_a"),
                 r#type: InvoiceType::OutboundShipment,
                 status: InvoiceStatus::Allocated,
@@ -346,7 +346,7 @@ mod test {
         fn invoice() -> InvoiceRow {
             InvoiceRow {
                 id: "invoice".to_string(),
-                name_link_id: mock_name_a().id,
+                name_id: mock_name_a().id,
                 store_id: mock_store_a().id,
                 r#type: InvoiceType::OutboundShipment,
                 ..Default::default()
@@ -407,7 +407,7 @@ mod test {
         fn invoice() -> InvoiceRow {
             InvoiceRow {
                 id: "test_invoice_pricing".to_string(),
-                name_link_id: mock_name_a().id,
+                name_id: mock_name_a().id,
                 store_id: mock_store_a().id,
                 r#type: InvoiceType::OutboundShipment,
                 ..Default::default()
@@ -577,7 +577,7 @@ mod test {
         fn invoice() -> InvoiceRow {
             InvoiceRow {
                 id: "invoice".to_string(),
-                name_link_id: mock_name_a().id,
+                name_id: mock_name_a().id,
                 store_id: mock_store_a().id,
                 r#type: InvoiceType::OutboundShipment,
                 ..Default::default()

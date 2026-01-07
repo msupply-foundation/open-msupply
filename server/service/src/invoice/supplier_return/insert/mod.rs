@@ -447,7 +447,7 @@ mod test {
         assert_eq!(invoice.id, "new_supplier_return_id");
         assert_eq!(invoice, {
             let mut u = invoice.clone();
-            u.name_link_id = supplier().id;
+            u.name_id = supplier().id;
             u.user_id = Some(mock_user_account_a().id);
             u.original_shipment_id = Some(mock_inbound_shipment_a().id);
             u.status = InvoiceStatus::Shipped;
@@ -491,7 +491,7 @@ mod test {
         assert_eq!(invoice.id, "new_supplier_return_id_2");
         assert_eq!(invoice, {
             let mut u = invoice.clone();
-            u.name_link_id = supplier().id;
+            u.name_id = supplier().id;
             u.user_id = Some(mock_user_account_a().id);
             u.status = InvoiceStatus::New;
             u
