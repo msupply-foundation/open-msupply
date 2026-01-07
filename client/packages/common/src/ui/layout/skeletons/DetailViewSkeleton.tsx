@@ -7,7 +7,7 @@ import {
   AppFooterPortal,
 } from '../../components/portals';
 import { ButtonSkeleton } from './ButtonSkeleton';
-import { DataTableSkeleton } from './DataTableSkeleton';
+import { TableSkeleton } from './TableSkeleton';
 import { DropdownSkeleton } from './DropdownSkeleton';
 
 interface DetailViewSkeletonProps {
@@ -56,7 +56,7 @@ export const DetailViewSkeleton: React.FC<DetailViewSkeletonProps> = ({
         </Box>
       </AppBarContentPortal>
       <AppFooterPortal Content={footerContent} />
-      <DataTableSkeleton hasGroupBy={hasGroupBy} />
+      <TableSkeleton hasGroupBy={hasGroupBy} />
     </>
   );
 };
