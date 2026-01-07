@@ -155,7 +155,12 @@ export const Details = ({ draft, onChange }: DetailsProps) => {
   const { data: assetProperties, isLoading } = useAssetProperties(filterBy);
 
   if (!draft) return null;
-  if (isLoading) return <InlineSpinner />;
+  if (!isLoading)
+    return (
+      <Box marginBottom={2}>
+        <InlineSpinner />
+      </Box>
+    );
 
   return (
     <Box display="flex" flex={3} justifyContent={'center'}>
