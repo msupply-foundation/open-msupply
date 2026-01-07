@@ -74,7 +74,7 @@ const UIComponent = (props: ControlProps) => {
           openTo={noDay ? 'month' : 'day'}
           format="P"
           disabled={!props.enabled}
-          error={props.errors ?? zErrors ?? ''}
+          error={zErrors || props.errors || ''}
           disableFuture={disableFuture}
           onError={validationError => customErrors.add(path, validationError)}
         />

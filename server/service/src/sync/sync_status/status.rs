@@ -14,7 +14,7 @@ use crate::{
 
 use super::SyncLogError;
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Default)]
 
 pub struct SyncStatus {
     pub started: NaiveDateTime,
@@ -318,16 +318,6 @@ fn number_of_records_in_push_queue(
         .map_err(Error::DatabaseError)?;
 
     Ok(change_logs_total)
-}
-
-impl Default for SyncStatus {
-    fn default() -> Self {
-        Self {
-            started: Default::default(),
-            duration_in_seconds: Default::default(),
-            finished: Default::default(),
-        }
-    }
 }
 
 impl SyncLogError {

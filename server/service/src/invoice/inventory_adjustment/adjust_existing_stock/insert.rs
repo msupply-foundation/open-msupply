@@ -14,17 +14,11 @@ use crate::invoice_line::stock_in_line::{insert_stock_in_line, InsertStockInLine
 use crate::invoice_line::stock_out_line::{insert_stock_out_line, InsertStockOutLineError};
 use crate::service_provider::ServiceContext;
 
-#[derive(Clone, Debug, PartialEq)]
-
+#[derive(Clone, Debug, PartialEq, Default)]
 pub enum AdjustmentType {
+    #[default]
     Addition,
     Reduction,
-}
-
-impl Default for AdjustmentType {
-    fn default() -> Self {
-        Self::Addition
-    }
 }
 
 #[derive(Clone, Debug, PartialEq, Default)]
