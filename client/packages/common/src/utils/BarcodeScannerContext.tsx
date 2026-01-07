@@ -1,6 +1,11 @@
 import React, { createContext, useMemo, FC, useState, useEffect } from 'react';
 import { PropsWithChildrenOnly } from '@common/types';
-import { BarcodeScanner as BarcodeScannerPlugin } from '@capacitor-mlkit/barcode-scanning';
+import {
+  BarcodeFormat,
+  BarcodeScanner as BarcodeScannerPlugin,
+  GoogleBarcodeScannerModuleInstallProgressEvent,
+  GoogleBarcodeScannerModuleInstallState,
+} from '@capacitor-mlkit/barcode-scanning';
 
 import { Capacitor } from '@capacitor/core';
 import { GlobalStyles } from '@mui/material';
@@ -11,6 +16,7 @@ import { Formatter } from './formatters';
 import { BarcodeScanner, ScannerType } from '@openmsupply-client/common';
 
 const SCAN_TIMEOUT_IN_MS = 50000;
+const INSTALL_TIMEOUT_IN_MS = 30000;
 
 export interface ScanResult {
   gs1?: Gs1Barcode;
@@ -27,7 +33,7 @@ interface BarcodeScannerControl {
   isEnabled: boolean;
   isConnected: boolean;
   isScanning: boolean;
-  scan: () => Promise<ScanResult>;
+  scan: (formats?: BarcodeFormat[]) => Promise<ScanResult>;
   startScanning: (
     callback: (result: ScanResult, err?: any) => void
   ) => Promise<void>;
@@ -101,7 +107,41 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
   const hasElectronApi = !!electronNativeAPI;
   const isEnabled = hasNativeBarcodeScanner || hasElectronApi;
 
-  const scanBarcode = async () => {
+  const googleBarcodeScannerAvailable = new Promise<boolean>(async resolve => {
+    const handleScannerInstall = (
+      event: GoogleBarcodeScannerModuleInstallProgressEvent
+    ) => {
+      switch (event.state) {
+        case GoogleBarcodeScannerModuleInstallState.COMPLETED:
+          BarcodeScannerPlugin.removeAllListeners();
+          resolve(true);
+          break;
+        case GoogleBarcodeScannerModuleInstallState.FAILED:
+        case GoogleBarcodeScannerModuleInstallState.CANCELED:
+          BarcodeScannerPlugin.removeAllListeners();
+          resolve(false);
+          break;
+        default:
+          break;
+      }
+    };
+
+    const { available } =
+      await BarcodeScannerPlugin.isGoogleBarcodeScannerModuleAvailable();
+
+    if (available) {
+      resolve(true);
+      return;
+    }
+
+    await BarcodeScannerPlugin.addListener(
+      'googleBarcodeScannerModuleInstallProgress',
+      handleScannerInstall
+    );
+    await BarcodeScannerPlugin.installGoogleBarcodeScannerModule();
+  });
+
+  const scanBarcode = async (formats?: BarcodeFormat[]) => {
     switch (true) {
       case hasElectronApi:
         const timeoutPromise = new Promise<undefined>((_, reject) =>
@@ -121,31 +161,47 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
         return barcode;
 
       case hasNativeBarcodeScanner:
+        const installTimeoutPromise = new Promise<undefined>((_, reject) =>
+          setTimeout(reject, INSTALL_TIMEOUT_IN_MS, 'Install timed out')
+        );
+        const isInstalled = await Promise.race([
+          installTimeoutPromise,
+          googleBarcodeScannerAvailable,
+        ]);
+
+        if (!isInstalled) {
+          throw new Error(
+            t('error.unable-to-scan-barcode', { error: 'Not installed' })
+          );
+        }
+
         const { barcodes } = await BarcodeScannerPlugin.scan({
           autoZoom: true,
+          formats,
         });
+
         if (barcodes && barcodes.length > 0 && barcodes[0]) {
           return barcodes[0].rawValue;
         }
-        break;
-      default:
-        break;
     }
 
     return '';
   };
 
-  const scan = async () => {
+  const scan = async (formats?: BarcodeFormat[]) => {
     setIsScanning(true);
 
     let result: ScanResult = {};
 
     try {
-      const barcode = await scanBarcode();
+      const barcode = await scanBarcode(formats);
       result = parseResult(barcode);
     } catch (e) {
-      error(t('error.unable-to-read-barcode'))();
-      console.error(e);
+      const msg = (e as Error)?.message || '';
+      if (!msg.includes('canceled')) {
+        error(t('error.unable-to-read-barcode'))();
+        console.error(e);
+      }
     } finally {
       await stopScan();
       setIsScanning(false);
