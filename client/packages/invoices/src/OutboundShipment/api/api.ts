@@ -39,27 +39,15 @@ export type ListParams = {
 
 const outboundParsers = {
   toSortField: (sortBy: SortBy<OutboundRowFragment>): InvoiceSortFieldInput => {
-    switch (sortBy.key) {
-      case 'createdDatetime': {
-        return InvoiceSortFieldInput.CreatedDatetime;
-      }
-      case 'otherPartyName': {
-        return InvoiceSortFieldInput.OtherPartyName;
-      }
-      case 'comment': {
-        return InvoiceSortFieldInput.Comment;
-      }
-      case 'invoiceNumber': {
-        return InvoiceSortFieldInput.InvoiceNumber;
-      }
-      case 'theirReference': {
-        return InvoiceSortFieldInput.TheirReference;
-      }
-      case 'status':
-      default: {
-        return InvoiceSortFieldInput.Status;
-      }
-    }
+    const sortFieldMap: Record<string, InvoiceSortFieldInput> = {
+      createdDatetime: InvoiceSortFieldInput.CreatedDatetime,
+      otherPartyName: InvoiceSortFieldInput.OtherPartyName,
+      comment: InvoiceSortFieldInput.Comment,
+      invoiceNumber: InvoiceSortFieldInput.InvoiceNumber,
+      theirReference: InvoiceSortFieldInput.TheirReference,
+    };
+
+    return sortFieldMap[sortBy.key] ?? InvoiceSortFieldInput.Status;
   },
   toStatus: (patch: RecordPatch<OutboundRowFragment>) => {
     switch (patch.status) {
@@ -98,6 +86,7 @@ const outboundParsers = {
     currencyId: 'currency' in patch ? patch.currency?.id : undefined,
     currencyRate: 'currency' in patch ? patch.currency?.rate : undefined,
     expectedDeliveryDate: setNullableInput('expectedDeliveryDate', patch),
+    shippingMethodId: setNullableInput('id', patch?.shippingMethod),
   }),
   toUpdateName: (
     patch: RecordPatch<OutboundRowFragment> | RecordPatch<OutboundFragment>
