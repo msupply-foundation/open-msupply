@@ -7,7 +7,7 @@ pub trait Upsert: Send + Sync {
         &self,
         connection: &StorageConnection,
         source_site_id: Option<i32>,
-        extra: ChangeLogInsertRowV7,
+        extra: Option<ChangeLogInsertRowV7>,
     ) -> Result<(), RepositoryError>;
     fn sync_type(&self) -> &'static SyncType;
     fn boxed(self) -> Box<dyn Upsert>
@@ -18,12 +18,12 @@ pub trait Upsert: Send + Sync {
     }
 }
 
-impl<T: Record + Sync + Send> Upsert for T {
+impl<T: SyncRecord + Sync + Send> Upsert for T {
     fn upsert_sync(
         &self,
         connection: &StorageConnection,
         source_site_id: Option<i32>,
-        extra: ChangeLogInsertRowV7,
+        extra: Option<ChangeLogInsertRowV7>,
     ) -> Result<(), RepositoryError> {
         self.upsert_internal(connection)?;
 
@@ -34,7 +34,7 @@ impl<T: Record + Sync + Send> Upsert for T {
             table_name,
             record_id,
             source_site_id,
-            ..extra
+            ..extra.unwrap_or_default()
         }
         .insert(connection)?)
     }

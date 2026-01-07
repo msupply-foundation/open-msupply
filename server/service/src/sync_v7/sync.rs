@@ -142,7 +142,7 @@ pub(crate) struct SyncRecordV7 {
     pub(crate) record: SyncBufferV7Row,
 }
 
-pub(crate) async fn sync(
+pub(crate) async fn sync_v7(
     connection: &StorageConnection,
     settings: SyncSettings,
     is_initialising: bool,
@@ -200,14 +200,14 @@ async fn sync_inner<'a>(
     Ok(())
 }
 
-static VERSION: u32 = 1;
+pub(crate) static VERSION: u32 = 1;
 
 #[derive(Clone)]
-struct SyncApiV7 {
-    url: reqwest::Url,
-    version: u32,
-    username: String,
-    password: String,
+pub(crate) struct SyncApiV7 {
+    pub(crate) url: reqwest::Url,
+    pub(crate) version: u32,
+    pub(crate) username: String,
+    pub(crate) password: String,
 }
 
 impl SyncApiV7 {
@@ -223,7 +223,7 @@ impl SyncApiV7 {
             password,
         } = self.clone();
 
-        let url = url.join(route).unwrap();
+        let url = url.join("central/sync_v7/").unwrap().join(route).unwrap();
 
         let request = ApiV7::Request {
             input,
@@ -260,7 +260,7 @@ async fn response_or_err<T: DeserializeOwned>(
             let formatted_error = format_error(&error);
             if error.is_connect() {
                 return Err(SyncError::ConnectionError {
-                    url,
+                    url: url.to_string(),
                     e: formatted_error,
                 });
             } else {

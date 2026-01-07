@@ -76,9 +76,10 @@ fn validate_site_credentials(
     username: &str,
     password: &str,
 ) -> Result<Option<i32>, RepositoryError> {
+    log::info!("{}", password);
     SiteRowRepository::new(connection)
         .find_by_username_and_password(username, password)
-        .map(|opt| opt.map(|row| row.site_id))
+        .map(|opt| opt.map(|row| row.id))
 }
 
 /// Receive Records from a remote open-mSupply Server

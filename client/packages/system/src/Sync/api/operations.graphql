@@ -80,6 +80,12 @@ fragment FullSyncStatus on FullSyncStatusNode {
   pullV6 {
     ...SyncStatusWithProgress
   }
+  pull {
+    ...SyncStatusWithProgress
+  }
+  waitingForIntegration {
+    ...SyncStatus
+  }
   pushV6 {
     ...SyncStatusWithProgress
   }

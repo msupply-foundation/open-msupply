@@ -1,11 +1,13 @@
 use super::StorageConnection;
-use crate::{Delete, Upsert};
+use crate::syncv7::{add_sync_visitor, Record, SyncRecord, SyncType, TranslatorTrait};
+use crate::{impl_record, ChangeLogInsertRowV7, Delete, Upsert};
 
 use crate::repository_error::RepositoryError;
 use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
 
 use chrono::NaiveDate;
 use diesel::prelude::*;
+use serde::{Deserialize, Serialize};
 
 table! {
     currency (id) {
@@ -18,7 +20,9 @@ table! {
     }
 }
 
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
+#[derive(
+    Clone, Queryable, Insertable, Serialize, Deserialize, AsChangeset, Debug, PartialEq, Default,
+)]
 #[diesel(treat_none_as_null = true)]
 #[diesel(table_name = currency)]
 pub struct CurrencyRow {
@@ -28,6 +32,40 @@ pub struct CurrencyRow {
     pub is_home_currency: bool,
     pub date_updated: Option<NaiveDate>,
     pub is_active: bool,
+}
+
+impl_record! {
+    struct: CurrencyRow,
+    table: currency,
+    id_field: id
+}
+
+impl SyncRecord for CurrencyRow {
+    fn table_name() -> &'static ChangelogTableName {
+        &ChangelogTableName::Currency
+    }
+
+    fn sync_type() -> &'static SyncType {
+        &SyncType::Central
+    }
+
+    fn changelog_extra(
+        &self,
+        _connection: &StorageConnection,
+    ) -> Result<Option<ChangeLogInsertRowV7>, RepositoryError> {
+        Ok(None)
+    }
+}
+
+struct Translator;
+
+impl TranslatorTrait for Translator {
+    type Item = CurrencyRow;
+}
+
+#[ctor::ctor]
+fn register_my_struct() {
+    add_sync_visitor(Box::new(Translator));
 }
 
 pub struct CurrencyRowRepository<'a> {
@@ -40,12 +78,7 @@ impl<'a> CurrencyRowRepository<'a> {
     }
 
     pub fn upsert_one(&self, row: &CurrencyRow) -> Result<i64, RepositoryError> {
-        diesel::insert_into(currency::table)
-            .values(row)
-            .on_conflict(currency::id)
-            .do_update()
-            .set(row)
-            .execute(self.connection.lock().connection())?;
+        row.upsert_internal(&self.connection)?;
         self.insert_changelog(&row.id, RowActionType::Upsert)
     }
 
@@ -69,11 +102,7 @@ impl<'a> CurrencyRowRepository<'a> {
         &self,
         currency_id: &str,
     ) -> Result<Option<CurrencyRow>, RepositoryError> {
-        let result = currency::table
-            .filter(currency::id.eq(currency_id))
-            .first(self.connection.lock().connection())
-            .optional()?;
-        Ok(result)
+        CurrencyRow::find_by_id(self.connection, currency_id)
     }
 
     pub fn delete(&self, currency_id: &str) -> Result<i64, RepositoryError> {

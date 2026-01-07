@@ -4,12 +4,13 @@ use super::{
     name_store_join::name_store_join, program_row::program, store_row::store, NameType,
     StorageConnection,
 };
+use crate::syncv7::{add_sync_visitor, Record, SyncRecord, SyncType, TranslatorTrait};
 use crate::{
     item_link, name_link, repository_error::RepositoryError, ChangeLogInsertRow,
     ChangelogRepository, ChangelogTableName, EqualFilter, NameLinkRow, NameLinkRowRepository,
     RowActionType,
 };
-use crate::{Delete, Upsert};
+use crate::{ChangeLogInsertRowV7, Delete, Upsert};
 use chrono::{NaiveDate, NaiveDateTime};
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
@@ -231,18 +232,68 @@ fn insert_or_ignore_name_link(
     Ok(())
 }
 
+impl Record for NameRow {
+    fn find_by_id(
+        connection: &StorageConnection,
+        id: &str,
+    ) -> Result<Option<Self>, RepositoryError> {
+        let result = name::table
+            .filter(name::id.eq(id))
+            .first::<NameRow>(connection.lock().connection())
+            .optional()?;
+        Ok(result)
+    }
+    fn get_id(&self) -> &str {
+        &self.id
+    }
+    fn upsert_internal(&self, connection: &StorageConnection) -> Result<(), RepositoryError> {
+        diesel::insert_into(name::table)
+            .values(self)
+            .on_conflict(name::id)
+            .do_update()
+            .set(self)
+            .execute(connection.lock().connection())?;
+
+        insert_or_ignore_name_link(connection, self)?;
+        Ok(())
+    }
+}
+
+impl SyncRecord for NameRow {
+    fn table_name() -> &'static ChangelogTableName {
+        &ChangelogTableName::Name
+    }
+
+    fn sync_type() -> &'static SyncType {
+        &SyncType::Central
+    }
+
+    fn changelog_extra(
+        &self,
+        _connection: &StorageConnection,
+    ) -> Result<Option<ChangeLogInsertRowV7>, RepositoryError> {
+        Ok(None)
+    }
+}
+
+struct Translator;
+
+impl TranslatorTrait for Translator {
+    type Item = NameRow;
+}
+
+#[ctor::ctor]
+fn register_my_struct() {
+    add_sync_visitor(Box::new(Translator));
+}
+
 impl<'a> NameRowRepository<'a> {
     pub fn new(connection: &'a StorageConnection) -> Self {
         NameRowRepository { connection }
     }
 
     fn _upsert_one(&self, name_row: &NameRow) -> Result<(), RepositoryError> {
-        diesel::insert_into(name::table)
-            .values(name_row)
-            .on_conflict(name::id)
-            .do_update()
-            .set(name_row)
-            .execute(self.connection.lock().connection())?;
+        name_row.upsert_internal(&self.connection)?;
         Ok(())
     }
 
@@ -269,11 +320,7 @@ impl<'a> NameRowRepository<'a> {
     }
 
     pub fn find_one_by_id(&self, name_id: &str) -> Result<Option<NameRow>, RepositoryError> {
-        let result = name::table
-            .filter(name::id.eq(name_id))
-            .first(self.connection.lock().connection())
-            .optional()?;
-        Ok(result)
+        NameRow::find_by_id(self.connection, name_id)
     }
 
     pub fn find_one_by_code(&self, name_code: &str) -> Result<Option<NameRow>, RepositoryError> {

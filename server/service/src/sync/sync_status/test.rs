@@ -24,7 +24,10 @@ use crate::{
             SyncPushResponseV6, SyncPushSuccessV6,
         },
         settings::{BatchSize, SyncSettings},
-        sync_status::{status::InitialisationStatus, SyncLogError},
+        sync_status::{
+            status::{InitialisationStatus, SyncStatusVariant},
+            SyncLogError,
+        },
         synchroniser::{SyncError, Synchroniser},
     },
     test_helpers::{setup_all_and_service_provider, ServiceTestContext},
@@ -714,14 +717,19 @@ impl Tester {
 
         let now = Utc::now().naive_utc();
 
+        let SyncStatusVariant::Original(current_status) = self
+            .service_provider
+            .sync_status_service
+            .get_latest_sync_status(&ctx)
+            .unwrap()
+            .unwrap()
+        else {
+            unimplemented!();
+        };
+
         let input = TestInput {
             now,
-            current_status: self
-                .service_provider
-                .sync_status_service
-                .get_latest_sync_status(&ctx)
-                .unwrap()
-                .unwrap(),
+            current_status,
             previous_status: self.previous_status.clone(),
             iteration: *iteration,
             previous_datetime: self.previous_date,

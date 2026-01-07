@@ -209,6 +209,8 @@ impl<'a> SyncLogger<'a> {
             }
         };
 
+        self.sync_log_repo.upsert_one(&self.row)?;
+
         Ok(())
     }
 }

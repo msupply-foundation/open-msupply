@@ -1,6 +1,6 @@
 use async_trait::async_trait;
 use log::info;
-use repository::{KeyType, KeyValueStoreRepository, RepositoryError};
+use repository::{syncv7::SyncError, KeyType, KeyValueStoreRepository, RepositoryError};
 use thiserror::Error;
 use util::format_error;
 
@@ -9,7 +9,9 @@ use crate::{
     sync::{
         api::{SiteInfoV5, SyncApiV5},
         settings::{SyncSettings, SYNC_V5_VERSION},
+        CentralServerConfig,
     },
+    sync_v7::sync::{ApiV7, SyncApiV7, VERSION},
 };
 
 use super::api::{SyncApiError, SyncApiV5CreatingError};
@@ -24,6 +26,8 @@ pub enum RequestAndSetSiteInfoError {
     SiteUUIDIsBeingChanged(String, String),
     #[error("Error while requesting and setting site info")]
     SyncApiV5CreatingError(#[from] SyncApiV5CreatingError),
+    #[error(transparent)]
+    SyncV7(#[from] SyncError),
 }
 
 // For unwrap and expect debug implementation is used
@@ -33,13 +37,18 @@ impl std::fmt::Debug for RequestAndSetSiteInfoError {
     }
 }
 
+pub enum SiteInfo {
+    V5(SiteInfoV5),
+    V7(ApiV7::Status::Output),
+}
+
 #[async_trait]
 pub trait SiteInfoTrait: Sync + Send {
     async fn request_and_set_site_info(
         &self,
         service_provider: &ServiceProvider,
         settings: &SyncSettings,
-    ) -> Result<SiteInfoV5, RequestAndSetSiteInfoError>;
+    ) -> Result<SiteInfo, RequestAndSetSiteInfoError>;
     fn get_site_id(&self, ctx: &ServiceContext) -> Result<Option<i32>, RepositoryError>;
 }
 
@@ -51,39 +60,71 @@ impl SiteInfoTrait for SiteInfoService {
         &self,
         service_provider: &ServiceProvider,
         settings: &SyncSettings,
-    ) -> Result<SiteInfoV5, RequestAndSetSiteInfoError> {
+    ) -> Result<SiteInfo, RequestAndSetSiteInfoError> {
         use RequestAndSetSiteInfoError as Error;
-
-        // This can be simplified
-        let sync_api_v5 = SyncApiV5::new(SyncApiV5::new_settings(
-            settings,
-            service_provider,
-            SYNC_V5_VERSION,
-        )?)?;
         let ctx = service_provider.basic_context()?;
-
-        info!("Requesting site info");
-        let site_info = sync_api_v5.get_site_info().await?;
-
         let repo = KeyValueStoreRepository::new(&ctx.connection);
 
-        // If site uuid is in database check against new site uuid
-        if let Some(site_uuid) = repo.get_string(KeyType::SettingsSyncSiteUuid)? {
-            if site_uuid != site_info.id {
-                return Err(Error::SiteUUIDIsBeingChanged(site_uuid, site_info.id));
+        if CentralServerConfig::is_central_server() {
+            // This can be simplified
+            let sync_api_v5 = SyncApiV5::new(SyncApiV5::new_settings(
+                settings,
+                service_provider,
+                SYNC_V5_VERSION,
+            )?)?;
+
+            info!("Requesting site info");
+            let site_info = sync_api_v5.get_site_info().await?;
+
+            // If site uuid is in database check against new site uuid
+            if let Some(site_uuid) = repo.get_string(KeyType::SettingsSyncSiteUuid)? {
+                if site_uuid != site_info.id {
+                    return Err(Error::SiteUUIDIsBeingChanged(site_uuid, site_info.id));
+                }
             }
+
+            repo.set_string(KeyType::SettingsSyncSiteUuid, Some(site_info.id.clone()))?;
+            repo.set_i32(KeyType::SettingsSyncSiteId, Some(site_info.site_id))?;
+            repo.set_i32(
+                KeyType::SettingsSyncCentralServerSiteId,
+                Some(site_info.site_id),
+            )?;
+
+            info!("Received site info");
+
+            Ok(SiteInfo::V5(site_info))
+        } else {
+            info!("Requesting site info v7");
+            let sync_api_v7 = SyncApiV7 {
+                url: settings.url.parse().unwrap(),
+                version: VERSION,
+                username: settings.username.clone(),
+                password: settings.password_sha256.clone(),
+            };
+
+            let site_info = sync_api_v7.site_status(()).await?;
+
+            // // If site uuid is in database check against new site uuid
+            // if let Some(site_uuid) = repo.get_string(KeyType::SettingsSyncSiteUuid)? {
+            //     if site_uuid != site_info.site_id {
+            //         return Err(Error::SiteUUIDIsBeingChanged(site_uuid, site_info.site_id));
+            //     }
+            // }
+
+            // repo.set_string(
+            //     KeyType::SettingsSyncSiteUuid,
+            //     Some(site_info.site_id.clone()),
+            // )?;
+            repo.set_i32(KeyType::SettingsSyncSiteId, Some(site_info.site_id))?;
+            repo.set_i32(
+                KeyType::SettingsSyncCentralServerSiteId,
+                Some(site_info.central_site_id),
+            )?;
+
+            info!("Received site info v7");
+
+            Ok(SiteInfo::V7(site_info))
         }
-
-        repo.set_string(KeyType::SettingsSyncSiteUuid, Some(site_info.id.clone()))?;
-        repo.set_i32(KeyType::SettingsSyncSiteId, Some(site_info.site_id))?;
-        repo.set_i32(
-            KeyType::SettingsSyncCentralServerSiteId,
-            Some(site_info.site_id),
-        )?;
-
-        info!("Received site info");
-
-        Ok(site_info)
     }
 
     fn get_site_id(&self, ctx: &ServiceContext) -> Result<Option<i32>, RepositoryError> {

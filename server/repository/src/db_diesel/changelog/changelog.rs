@@ -878,6 +878,7 @@ create_condition!(
     Source,
     (site_id, i32, store::site_id),
     (cursor, number, changelog_deduped::cursor),
+    (action, RowActionType, changelog_deduped::row_action),
     (source_site_id, i32, changelog_deduped::source_site_id),
     (
         table_name,
@@ -904,10 +905,18 @@ pub fn get_total_and_changelogs(
     let filter = Condition::And(vec![filter, Condition::cursor::greater_then(cursor)]);
     let select_query = query().filter(filter.clone().to_boxed_condition());
 
-    let changelogs: Vec<ChangelogRow> = select_query
+    let select_query = select_query
         .select(changelog_deduped::all_columns)
-        .limit(limit)
-        .load::<ChangelogRow>(connection.lock().connection())?;
+        .limit(limit);
+
+    // Debug diesel query
+    println!(
+        "{}",
+        diesel::debug_query::<DBType, _>(&select_query).to_string()
+    );
+
+    let changelogs: Vec<ChangelogRow> =
+        select_query.load::<ChangelogRow>(connection.lock().connection())?;
 
     let total_query = query().filter(filter.to_boxed_condition());
     let total: i64 = total_query
@@ -948,9 +957,16 @@ impl Site {
             or_conditions.push(self.remote_data_for_site());
         }
 
-        Condition::Or(or_conditions)
+        let filter = Condition::Or(or_conditions);
+        if is_initialising {
+            Condition::And(vec![
+                filter,
+                Condition::action::not_equal(RowActionType::Delete),
+            ])
+        } else {
+            filter
+        }
     }
-
     fn transfer_data_for_site(&self) -> Condition::Inner {
         let table_names = get_table_names_for_sync_types(&[SyncType::Remote]);
 

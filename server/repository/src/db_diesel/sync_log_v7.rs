@@ -4,6 +4,8 @@ use crate::{
 
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
+use serde::{Deserialize, Serialize};
+use ts_rs::TS;
 
 table! {
     sync_log_v7(id) {
@@ -28,7 +30,18 @@ table! {
     }
 }
 
-#[derive(Clone, Queryable, Selectable, Insertable, AsChangeset, Debug, Default)]
+#[derive(
+    Clone,
+    Queryable,
+    Selectable,
+    Insertable,
+    Deserialize,
+    Serialize,
+    AsChangeset,
+    Debug,
+    Default,
+    TS,
+)]
 #[diesel(treat_none_as_null = true)]
 #[diesel(table_name = sync_log_v7)]
 pub struct SyncLogV7Row {
@@ -60,6 +73,7 @@ type Source = sync_log_v7::table;
 
 create_condition!(
     Source,
+    (started_datetime, string, sync_log_v7::started_datetime),
     (finished_datetime, string, sync_log_v7::finished_datetime),
     (error, string, sync_log_v7::error),
 );
@@ -78,13 +92,14 @@ impl<'a> SyncLogV7Repository<'a> {
             .execute(self.connection.lock().connection())?;
         Ok(())
     }
-
+    // Sorts by started_datetime descending
     pub fn query_one(
         &self,
         filter: Condition::Inner,
     ) -> Result<Option<SyncLogV7Row>, RepositoryError> {
         let results = sync_log_v7::table
             .filter(filter.to_boxed_condition())
+            .order(sync_log_v7::started_datetime.desc())
             .first::<SyncLogV7Row>(self.connection.lock().connection())
             .optional()?;
         Ok(results)

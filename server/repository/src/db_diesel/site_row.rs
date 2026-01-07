@@ -3,8 +3,8 @@ use diesel::prelude::*;
 use crate::{RepositoryError, StorageConnection};
 
 table! {
-    site (site_id) {
-        site_id -> Integer,
+    site (id) {
+        id -> Integer,
         username -> Text,
         password_sha256 -> Text,
     }
@@ -14,7 +14,7 @@ table! {
 #[diesel(treat_none_as_null = true)]
 #[diesel(table_name = site)]
 pub struct SiteRow {
-    pub site_id: i32,
+    pub id: i32,
     pub username: String,
     pub password_sha256: String,
 }
@@ -31,7 +31,7 @@ impl<'a> SiteRowRepository<'a> {
     pub fn upsert(&self, row: &SiteRow) -> Result<(), RepositoryError> {
         diesel::insert_into(site::table)
             .values(row)
-            .on_conflict(site::site_id)
+            .on_conflict(site::id)
             .do_update()
             .set(row)
             .execute(self.connection.lock().connection())?;
@@ -41,7 +41,7 @@ impl<'a> SiteRowRepository<'a> {
 
     pub fn find_one_by_id(&self, id: i32) -> Result<Option<SiteRow>, RepositoryError> {
         let result = site::table
-            .filter(site::site_id.eq(id))
+            .filter(site::id.eq(id))
             .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)

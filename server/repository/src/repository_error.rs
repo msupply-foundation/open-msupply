@@ -1,7 +1,8 @@
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
+use ts_rs::TS;
 
-#[derive(Clone, Error, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Error, Debug, PartialEq, Serialize, Deserialize, TS)]
 pub enum RepositoryError {
     /// Row not found but expected at least one row
     #[error("row not found but expected at least one row")]

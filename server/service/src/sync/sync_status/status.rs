@@ -1,8 +1,8 @@
 use chrono::{NaiveDateTime, Utc};
 use repository::{
     dynamic_query::FilterBuilder, ChangelogRepository, DatetimeFilter, EqualFilter, KeyType,
-    Pagination, RepositoryError, Sort, SyncLogFilter, SyncLogRepository, SyncLogRow,
-    SyncLogSortField, SyncLogV7Repository,
+    Pagination, RepositoryError, Sort, SyncLog, SyncLogFilter, SyncLogRepository, SyncLogRow,
+    SyncLogSortField, SyncLogV7Repository, SyncLogV7Row,
 };
 
 use crate::{
@@ -160,11 +160,16 @@ pub enum InitialisationStatus {
     PreInitialisation,
 }
 
+pub enum SyncStatusVariant {
+    Original(FullSyncStatus),
+    V7(SyncLogV7Row),
+}
+
 pub trait SyncStatusTrait: Sync + Send {
     fn get_latest_sync_status(
         &self,
         ctx: &ServiceContext,
-    ) -> Result<Option<FullSyncStatus>, RepositoryError> {
+    ) -> Result<Option<SyncStatusVariant>, RepositoryError> {
         get_latest_sync_status(ctx)
     }
 
@@ -196,7 +201,7 @@ pub trait SyncStatusTrait: Sync + Send {
     fn get_latest_successful_sync_status(
         &self,
         ctx: &ServiceContext,
-    ) -> Result<Option<FullSyncStatus>, RepositoryError> {
+    ) -> Result<Option<SyncStatusVariant>, RepositoryError> {
         get_latest_successful_sync_status(ctx)
     }
 }
@@ -267,52 +272,91 @@ fn is_sync_queue_initialised(ctx: &ServiceContext) -> Result<bool, RepositoryErr
     Ok(log_with_done_prepare_initial_datetime.is_some())
 }
 
-fn get_latest_sync_status(ctx: &ServiceContext) -> Result<Option<FullSyncStatus>, RepositoryError> {
+fn get_latest_sync_status(
+    ctx: &ServiceContext,
+) -> Result<Option<SyncStatusVariant>, RepositoryError> {
     let sort = Sort {
         key: SyncLogSortField::StartedDatetime,
         desc: Some(true),
     };
 
-    let sync_log = match SyncLogRepository::new(&ctx.connection)
-        .query(Pagination::one(), None, Some(sort))?
-        .pop()
-    {
-        Some(sync_log) => sync_log,
-        None => return Ok(None),
-    };
+    if CentralServerConfig::is_central_server() {
+        let sync_log = match SyncLogRepository::new(&ctx.connection)
+            .query(Pagination::one(), None, Some(sort))?
+            .pop()
+        {
+            Some(sync_log) => sync_log,
+            None => return Ok(None),
+        };
 
-    let result = Some(FullSyncStatus::from_sync_log_row(sync_log.sync_log_row));
+        let result = Some(SyncStatusVariant::Original(
+            FullSyncStatus::from_sync_log_row(sync_log.sync_log_row),
+        ));
 
-    Ok(result)
+        Ok(result)
+    } else {
+        use repository::sync_log_v7::Condition;
+
+        let sync_log = match SyncLogV7Repository::new(&ctx.connection)
+            .query_one(Condition::started_datetime::is_not_null())?
+        {
+            Some(sync_log) => sync_log,
+            None => return Ok(None),
+        };
+
+        let result = Some(SyncStatusVariant::V7(sync_log));
+
+        Ok(result)
+    }
 }
 
 fn get_latest_successful_sync_status(
     ctx: &ServiceContext,
-) -> Result<Option<FullSyncStatus>, RepositoryError> {
+) -> Result<Option<SyncStatusVariant>, RepositoryError> {
     let sort = Sort {
         key: SyncLogSortField::StartedDatetime,
         desc: Some(true),
     };
 
-    let sync_log = match SyncLogRepository::new(&ctx.connection)
-        .query(
-            Pagination::one(),
-            Some(
-                SyncLogFilter::new()
-                    .finished_datetime(DatetimeFilter::is_null(false))
-                    .error_message(EqualFilter::is_null(true)),
-            ),
-            Some(sort),
-        )?
-        .pop()
-    {
-        Some(sync_log) => sync_log,
-        None => return Ok(None),
-    };
+    if CentralServerConfig::is_central_server() {
+        let sync_log = match SyncLogRepository::new(&ctx.connection)
+            .query(
+                Pagination::one(),
+                Some(
+                    SyncLogFilter::new()
+                        .finished_datetime(DatetimeFilter::is_null(false))
+                        .error_message(EqualFilter::is_null(true)),
+                ),
+                Some(sort),
+            )?
+            .pop()
+        {
+            Some(sync_log) => sync_log,
+            None => return Ok(None),
+        };
 
-    let result = Some(FullSyncStatus::from_sync_log_row(sync_log.sync_log_row));
+        let result = Some(SyncStatusVariant::Original(
+            FullSyncStatus::from_sync_log_row(sync_log.sync_log_row),
+        ));
 
-    Ok(result)
+        return Ok(result);
+    } else {
+        use repository::sync_log_v7::Condition;
+
+        let filter = Condition::And(vec![
+            Condition::finished_datetime::is_not_null(),
+            Condition::error::is_null(),
+        ]);
+
+        let sync_log = match SyncLogV7Repository::new(&ctx.connection).query_one(filter)? {
+            Some(sync_log) => sync_log,
+            None => return Ok(None),
+        };
+
+        let result = Some(SyncStatusVariant::V7(sync_log));
+
+        return Ok(result);
+    }
 }
 
 #[derive(Debug)]

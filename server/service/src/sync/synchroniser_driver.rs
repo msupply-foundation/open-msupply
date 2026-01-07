@@ -1,7 +1,8 @@
 use std::{future::Future, sync::Arc};
 
-use crate::service_provider::ServiceProvider;
-use crate::sync::is_initialised;
+use crate::sync::{self, is_initialised};
+use crate::sync_v7::sync::sync_v7;
+use crate::{service_provider::ServiceProvider, sync::CentralServerConfig};
 
 use super::{
     file_sync_driver::FileSyncTrigger, settings::SyncSettings, synchroniser::Synchroniser,
@@ -95,10 +96,18 @@ impl SynchroniserDriver {
         // Pause file sync
         self.file_sync_trigger.pause();
 
-        let _ = Synchroniser::new(get_sync_settings(&service_provider), service_provider)
-            .unwrap()
-            .sync(fetch_patient_id)
-            .await;
+        if CentralServerConfig::is_central_server() {
+            // When running as central server, we do not fetch patient data from other sites
+            let _ = Synchroniser::new(get_sync_settings(&service_provider), service_provider)
+                .unwrap()
+                .sync(fetch_patient_id)
+                .await;
+        } else {
+            let ctx = service_provider.basic_context().unwrap();
+            let settings = get_sync_settings(&service_provider);
+            let is_initialising = !is_initialised(&service_provider);
+            let _ = sync_v7(&ctx.connection, settings, is_initialising).await;
+        }
 
         // Unpause file sync
         self.file_sync_trigger.unpause();

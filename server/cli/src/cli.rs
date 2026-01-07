@@ -47,10 +47,10 @@ use backup::*;
 #[cfg(feature = "integration_test")]
 use cli::LoadTest;
 use cli::{
-    generate_and_install_plugin_bundle, generate_plugin_bundle, generate_plugin_typescript_types,
-    generate_report_data, generate_reports_recursive, install_plugin_bundle,
-    GenerateAndInstallPluginBundle, GeneratePluginBundle, InstallPluginBundle,
-    RefreshDatesRepository, ReportError,
+    generate_and_install_plugin_bundle, generate_graphql_typescript_types, generate_plugin_bundle,
+    generate_plugin_typescript_types, generate_report_data, generate_reports_recursive,
+    install_plugin_bundle, GenerateAndInstallPluginBundle, GeneratePluginBundle,
+    InstallPluginBundle, RefreshDatesRepository, ReportError,
 };
 
 const DATA_EXPORT_FOLDER: &str = "data";
@@ -229,6 +229,18 @@ enum Action {
             short,
             long,
             default_value = "../client/packages/plugins/backendCommon/generated"
+        )]
+        path: PathBuf,
+        /// Run prettier on the generated typescript files
+        #[clap(long, short, default_value = "false")]
+        skip_prettify: bool,
+    },
+    GenerateGraphqlTypescriptTypes {
+        /// Optional path to save typescript types, if not provided will save to `../client/packages/common/src/types/graphqlTS`
+        #[clap(
+            short,
+            long,
+            default_value = "../client/packages/common/src/types/graphqlTS"
         )]
         path: PathBuf,
         /// Run prettier on the generated typescript files
@@ -773,6 +785,12 @@ async fn main() -> anyhow::Result<()> {
             skip_prettify,
         } => {
             generate_plugin_typescript_types(path, skip_prettify)?;
+        }
+        Action::GenerateGraphqlTypescriptTypes {
+            path,
+            skip_prettify,
+        } => {
+            generate_graphql_typescript_types(path, skip_prettify)?;
         }
         #[cfg(feature = "integration_test")]
         Action::LoadTest(LoadTest {

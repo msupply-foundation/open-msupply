@@ -12,7 +12,7 @@ pub(crate) fn integrate(
     upsert.upsert_sync(
         connection,
         sync_buffer_row.source_site_id,
-        sync_buffer_row.clone().to_changelog_extra(),
+        Some(sync_buffer_row.clone().to_changelog_extra()),
     )
 }
 

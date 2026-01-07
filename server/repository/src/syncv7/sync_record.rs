@@ -1,13 +1,13 @@
-use serde::{Deserialize, Serialize};
-use thiserror::Error;
-
 use super::*;
 use crate::{
     diesel_macros::diesel_json_type, ChangelogTableName, RepositoryError, StorageConnection,
 };
+use serde::{de::DeserializeOwned, Deserialize, Serialize};
+use thiserror::Error;
+use ts_rs::TS;
 
 diesel_json_type! {
-    #[derive(Debug, Error, Clone)]
+    #[derive(Debug, Error, Clone, TS)]
     pub enum SyncError {
         #[error(transparent)]
         DatabaseError(#[from] RepositoryError),
@@ -28,7 +28,7 @@ diesel_json_type! {
         SiteLockError(#[from] SiteLockError),
         #[error("Could not connect to server {url} {e}")]
         ConnectionError {
-            url: reqwest::Url,
+            url: String,
             e: String,
         },
         #[error("Could not parse response, {response_text}, error: {e}")]
@@ -46,7 +46,7 @@ diesel_json_type! {
     }
 }
 
-#[derive(Error, Debug, Clone, Serialize, Deserialize)]
+#[derive(Error, Debug, Clone, Serialize, Deserialize, TS)]
 pub enum GetCurrentSiteIdError {
     #[error(transparent)]
     DatabaseError(#[from] RepositoryError),
@@ -54,13 +54,13 @@ pub enum GetCurrentSiteIdError {
     SiteIdNotSet,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Error)]
+#[derive(Debug, Clone, Serialize, Deserialize, Error, TS)]
 pub enum SiteLockError {
     #[error("Integration in progress")]
     IntegrationInProgress,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Error)]
+#[derive(Debug, Clone, Serialize, Deserialize, Error, TS)]
 pub enum SyncRecordSerializeError {
     #[error(transparent)]
     DatabaseError(#[from] RepositoryError),
@@ -79,7 +79,16 @@ pub enum SyncRecordSerializeError {
     },
 }
 
-pub trait SyncRecord: Send + Sync {
+pub trait SyncRecord: Record + Serialize + DeserializeOwned {
+    fn table_name() -> &'static ChangelogTableName;
+    fn sync_type() -> &'static SyncType;
+    fn changelog_extra(
+        &self,
+        connection: &StorageConnection,
+    ) -> Result<Option<ChangeLogInsertRowV7>, RepositoryError>;
+}
+
+pub trait BoxableSyncRecord: Send + Sync {
     fn serialize(
         &self,
         connection: &StorageConnection,

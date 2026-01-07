@@ -5,10 +5,10 @@ use crate::{ChangelogTableName, StorageConnection};
 use super::*;
 
 pub trait TranslatorTrait {
-    type Item: Record + Upsert + 'static;
+    type Item: SyncRecord + Upsert + 'static;
 }
 
-impl<T: TranslatorTrait + Sync + Send> SyncRecord for T {
+impl<T: TranslatorTrait + Sync + Send> BoxableSyncRecord for T {
     fn serialize(
         &self,
         connection: &StorageConnection,
@@ -51,7 +51,7 @@ impl<T: TranslatorTrait + Sync + Send> SyncRecord for T {
     }
 
     fn sync_type(&self) -> &'static SyncType {
-        <T::Item as Record>::sync_type()
+        <T::Item as SyncRecord>::sync_type()
     }
 
     fn table_name(&self) -> ChangelogTableName {

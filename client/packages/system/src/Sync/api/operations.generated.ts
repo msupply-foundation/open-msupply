@@ -134,6 +134,19 @@ export type FullSyncStatusFragment = {
     done?: number | null;
     total?: number | null;
   } | null;
+  pull?: {
+    __typename: 'SyncStatusWithProgressNode';
+    finished?: string | null;
+    started: string;
+    done?: number | null;
+    total?: number | null;
+  } | null;
+  waitingForIntegration?: {
+    __typename: 'SyncStatusNode';
+    finished?: string | null;
+    durationInSeconds: number;
+    started: string;
+  } | null;
   pushV6?: {
     __typename: 'SyncStatusWithProgressNode';
     finished?: string | null;
@@ -211,6 +224,19 @@ export type SyncInfoQuery = {
       done?: number | null;
       total?: number | null;
     } | null;
+    pull?: {
+      __typename: 'SyncStatusWithProgressNode';
+      finished?: string | null;
+      started: string;
+      done?: number | null;
+      total?: number | null;
+    } | null;
+    waitingForIntegration?: {
+      __typename: 'SyncStatusNode';
+      finished?: string | null;
+      durationInSeconds: number;
+      started: string;
+    } | null;
     pushV6?: {
       __typename: 'SyncStatusWithProgressNode';
       finished?: string | null;
@@ -287,6 +313,19 @@ export type SyncStatusQuery = {
       started: string;
       done?: number | null;
       total?: number | null;
+    } | null;
+    pull?: {
+      __typename: 'SyncStatusWithProgressNode';
+      finished?: string | null;
+      started: string;
+      done?: number | null;
+      total?: number | null;
+    } | null;
+    waitingForIntegration?: {
+      __typename: 'SyncStatusNode';
+      finished?: string | null;
+      durationInSeconds: number;
+      started: string;
     } | null;
     pushV6?: {
       __typename: 'SyncStatusWithProgressNode';
@@ -375,6 +414,12 @@ export const FullSyncStatusFragmentDoc = gql`
     }
     pullV6 {
       ...SyncStatusWithProgress
+    }
+    pull {
+      ...SyncStatusWithProgress
+    }
+    waitingForIntegration {
+      ...SyncStatus
     }
     pushV6 {
       ...SyncStatusWithProgress
