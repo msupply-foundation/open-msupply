@@ -155,7 +155,7 @@ export const Details = ({ draft, onChange }: DetailsProps) => {
   const { data: assetProperties, isLoading } = useAssetProperties(filterBy);
 
   if (!draft) return null;
-  if (!isLoading)
+  if (isLoading)
     return (
       <Box marginBottom={2}>
         <InlineSpinner />
