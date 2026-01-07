@@ -107,39 +107,40 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
   const hasElectronApi = !!electronNativeAPI;
   const isEnabled = hasNativeBarcodeScanner || hasElectronApi;
 
-  const googleBarcodeScannerAvailable = new Promise<boolean>(async resolve => {
-    const handleScannerInstall = (
-      event: GoogleBarcodeScannerModuleInstallProgressEvent
-    ) => {
-      switch (event.state) {
-        case GoogleBarcodeScannerModuleInstallState.COMPLETED:
-          BarcodeScannerPlugin.removeAllListeners();
-          resolve(true);
-          break;
-        case GoogleBarcodeScannerModuleInstallState.FAILED:
-        case GoogleBarcodeScannerModuleInstallState.CANCELED:
-          BarcodeScannerPlugin.removeAllListeners();
-          resolve(false);
-          break;
-        default:
-          break;
+  const googleBarcodeScannerAvailable = () =>
+    new Promise<boolean>(async resolve => {
+      const handleScannerInstall = (
+        event: GoogleBarcodeScannerModuleInstallProgressEvent
+      ) => {
+        switch (event.state) {
+          case GoogleBarcodeScannerModuleInstallState.COMPLETED:
+            BarcodeScannerPlugin.removeAllListeners();
+            resolve(true);
+            break;
+          case GoogleBarcodeScannerModuleInstallState.FAILED:
+          case GoogleBarcodeScannerModuleInstallState.CANCELED:
+            BarcodeScannerPlugin.removeAllListeners();
+            resolve(false);
+            break;
+          default:
+            break;
+        }
+      };
+
+      const { available } =
+        await BarcodeScannerPlugin.isGoogleBarcodeScannerModuleAvailable();
+
+      if (available) {
+        resolve(true);
+        return;
       }
-    };
 
-    const { available } =
-      await BarcodeScannerPlugin.isGoogleBarcodeScannerModuleAvailable();
-
-    if (available) {
-      resolve(true);
-      return;
-    }
-
-    await BarcodeScannerPlugin.addListener(
-      'googleBarcodeScannerModuleInstallProgress',
-      handleScannerInstall
-    );
-    await BarcodeScannerPlugin.installGoogleBarcodeScannerModule();
-  });
+      await BarcodeScannerPlugin.addListener(
+        'googleBarcodeScannerModuleInstallProgress',
+        handleScannerInstall
+      );
+      await BarcodeScannerPlugin.installGoogleBarcodeScannerModule();
+    });
 
   const scanBarcode = async (formats?: BarcodeFormat[]) => {
     switch (true) {
@@ -166,7 +167,7 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
         );
         const isInstalled = await Promise.race([
           installTimeoutPromise,
-          googleBarcodeScannerAvailable,
+          googleBarcodeScannerAvailable(),
         ]);
 
         if (!isInstalled) {
