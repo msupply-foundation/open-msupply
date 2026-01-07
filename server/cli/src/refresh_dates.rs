@@ -411,7 +411,7 @@ mod tests {
         fn invoice1() -> InvoiceRow {
             InvoiceRow {
                 id: "invoice1".to_string(),
-                name_link_id: mock_name_a().id,
+                name_id: mock_name_a().id,
                 store_id: mock_store_a().id,
                 created_datetime: NaiveDate::from_ymd_opt(2021, 1, 1)
                     .unwrap()
@@ -424,7 +424,7 @@ mod tests {
         fn invoice2() -> InvoiceRow {
             InvoiceRow {
                 id: "invoice2".to_string(),
-                name_link_id: mock_name_a().id,
+                name_id: mock_name_a().id,
                 store_id: mock_store_a().id,
                 created_datetime: NaiveDate::from_ymd_opt(2021, 2, 1)
                     .unwrap()

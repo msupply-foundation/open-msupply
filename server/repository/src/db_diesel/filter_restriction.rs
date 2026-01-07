@@ -29,7 +29,7 @@ mod tests {
     fn mock_invoice_a() -> InvoiceRow {
         InvoiceRow {
             id: "invoice1".to_string(),
-            name_link_id: mock_name_a().id,
+            name_id: mock_name_a().id,
             store_id: "store_a".to_string(),
             user_id: Some("A".to_string()),
             ..Default::default()
@@ -39,7 +39,7 @@ mod tests {
     fn mock_invoice_b() -> InvoiceRow {
         InvoiceRow {
             id: "invoice2".to_string(),
-            name_link_id: mock_name_a().id,
+            name_id: mock_name_a().id,
             store_id: "store_a".to_string(),
             user_id: Some("B".to_string()),
             ..Default::default()
@@ -49,7 +49,7 @@ mod tests {
     fn mock_invoice_excluded() -> InvoiceRow {
         InvoiceRow {
             id: "invoice3".to_string(),
-            name_link_id: mock_name_a().id,
+            name_id: mock_name_a().id,
             store_id: "store_a".to_string(),
             user_id: Some("Excluded".to_string()),
             ..Default::default()
@@ -59,7 +59,7 @@ mod tests {
     fn mock_invoice_none() -> InvoiceRow {
         InvoiceRow {
             id: "invoice4".to_string(),
-            name_link_id: mock_name_a().id,
+            name_id: mock_name_a().id,
             store_id: "store_a".to_string(),
             user_id: None,
             ..Default::default()

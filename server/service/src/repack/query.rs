@@ -128,7 +128,7 @@ mod test {
     async fn query_repacks() {
         let invoice = InvoiceRow {
             id: "repack_invoice_a".to_string(),
-            name_link_id: "name_store_a".to_string(),
+            name_id: "name_store_a".to_string(),
             store_id: "store_a".to_string(),
             invoice_number: 10,
             r#type: InvoiceType::Repack,

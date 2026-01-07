@@ -129,7 +129,7 @@ mod stocktake_line_test {
         fn outbound_shipment() -> InvoiceRow {
             InvoiceRow {
                 id: "reduced_stock_outbound_shipment".to_string(),
-                name_link_id: "name_store_b".to_string(),
+                name_id: "name_store_b".to_string(),
                 store_id: "store_a".to_string(),
                 invoice_number: 15,
                 r#type: InvoiceType::OutboundShipment,

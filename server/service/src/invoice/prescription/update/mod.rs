@@ -220,7 +220,7 @@ mod test {
         fn prescription_no_stock() -> InvoiceRow {
             InvoiceRow {
                 id: String::from("prescription_no_stock"),
-                name_link_id: String::from("name_store_a"),
+                name_id: String::from("name_store_a"),
                 store_id: String::from("store_a"),
                 r#type: InvoiceType::Prescription,
                 status: InvoiceStatus::New,
@@ -353,7 +353,7 @@ mod test {
         fn prescription() -> InvoiceRow {
             InvoiceRow {
                 id: "test_prescription_pricing".to_string(),
-                name_link_id: mock_patient().id,
+                name_id: mock_patient().id,
                 store_id: mock_store_a().id,
                 r#type: InvoiceType::Prescription,
                 ..Default::default()
@@ -442,7 +442,7 @@ mod test {
                 insurance_discount_percentage: _,
             } = get_update();
             InvoiceRow {
-                name_link_id: patient_id.unwrap(),
+                name_id: patient_id.unwrap(),
                 clinician_link_id: clinician_id.unwrap().value,
                 comment,
                 colour,

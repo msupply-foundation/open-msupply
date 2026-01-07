@@ -515,7 +515,7 @@ mod generate_rnr_form_lines {
     fn invoice_adjust_up() -> InvoiceRow {
         InvoiceRow {
             id: "adjust_up".to_string(),
-            name_link_id: mock_name_invad().id,
+            name_id: mock_name_invad().id,
             store_id: mock_store_a().id,
             r#type: InvoiceType::InventoryAddition,
             status: InvoiceStatus::Verified,
@@ -539,7 +539,7 @@ mod generate_rnr_form_lines {
     fn invoice_outbound() -> InvoiceRow {
         InvoiceRow {
             id: "outbound".to_string(),
-            name_link_id: "name_store_b".to_string(),
+            name_id: "name_store_b".to_string(),
             store_id: mock_store_a().id,
             r#type: InvoiceType::OutboundShipment,
             status: InvoiceStatus::Shipped,
@@ -565,7 +565,7 @@ mod generate_rnr_form_lines {
     fn invoice_inbound() -> InvoiceRow {
         InvoiceRow {
             id: "inbound".to_string(),
-            name_link_id: "name_store_b".to_string(),
+            name_id: "name_store_b".to_string(),
             store_id: mock_store_a().id,
             r#type: InvoiceType::InboundShipment,
             status: InvoiceStatus::Received,
@@ -590,7 +590,7 @@ mod generate_rnr_form_lines {
     fn invoice_adjust_down() -> InvoiceRow {
         InvoiceRow {
             id: "adjust_down".to_string(),
-            name_link_id: mock_name_invad().id,
+            name_id: mock_name_invad().id,
             store_id: mock_store_a().id,
             r#type: InvoiceType::InventoryReduction,
             status: InvoiceStatus::Verified,

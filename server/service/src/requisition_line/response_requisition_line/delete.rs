@@ -121,7 +121,7 @@ mod test {
                     .requisition
                     .id,
             ),
-            name_link_id: "name_a".to_string(),
+            name_id: "name_a".to_string(),
             status: InvoiceStatus::New,
             ..Default::default()
         }

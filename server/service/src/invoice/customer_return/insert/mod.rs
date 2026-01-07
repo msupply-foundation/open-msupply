@@ -380,7 +380,7 @@ mod test {
                 r#type: InvoiceType::OutboundShipment,
                 status: InvoiceStatus::Verified,
                 store_id: mock_store_a().id,
-                name_link_id: mock_name_customer_a().id,
+                name_id: mock_name_customer_a().id,
                 ..Default::default()
             }
         }
@@ -441,7 +441,7 @@ mod test {
         assert_eq!(
             invoice,
             InvoiceRow {
-                name_link_id: mock_name_customer_a().id,
+                name_id: mock_name_customer_a().id,
                 user_id: Some(mock_user_account_a().id),
                 original_shipment_id: Some(returnable_outbound_shipment().id),
                 status: InvoiceStatus::Verified,
@@ -489,7 +489,7 @@ mod test {
         assert_eq!(
             invoice,
             InvoiceRow {
-                name_link_id: mock_name_customer_a().id,
+                name_id: mock_name_customer_a().id,
                 user_id: Some(mock_user_account_a().id),
                 status: InvoiceStatus::New,
                 ..invoice.clone()

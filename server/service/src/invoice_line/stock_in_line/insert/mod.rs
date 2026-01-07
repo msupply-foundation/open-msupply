@@ -173,7 +173,7 @@ mod test {
                 id: "verified_customer_return".to_string(),
                 status: InvoiceStatus::Verified,
                 store_id: mock_store_a().id,
-                name_link_id: mock_name_store_b().id,
+                name_id: mock_name_store_b().id,
                 r#type: InvoiceType::CustomerReturn,
                 ..Default::default()
             }

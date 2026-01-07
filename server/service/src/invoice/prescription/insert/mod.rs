@@ -225,7 +225,7 @@ mod test {
         assert_eq!(
             invoice,
             InvoiceRow {
-                name_link_id: patient().id,
+                name_id: patient().id,
                 user_id: Some(mock_user_account_a().id),
                 ..invoice.clone()
             }

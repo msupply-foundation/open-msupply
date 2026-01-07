@@ -39,7 +39,7 @@ impl SyncRecordTester for InvoiceRecordTester {
         let inventory_adjustment_reason_id = uuid();
         let base_invoice_row = InvoiceRow {
             id: uuid(),
-            name_link_id: uuid(),
+            name_id: uuid(),
             name_store_id: Some(uuid()),
             store_id: store_id.to_string(),
             user_id: Some("user 1".to_string()),
