@@ -12,8 +12,10 @@ import { canAutoAllocate } from '../utils';
 
 export const AllocateInSelector = ({
   includePackSizeOptions = false,
+  disabled = false,
 }: {
   includePackSizeOptions?: boolean;
+  disabled?: boolean;
 }) => {
   const t = useTranslation();
   const { format } = useFormatNumber();
@@ -102,6 +104,7 @@ export const AllocateInSelector = ({
         handleAllocateInChange(e.target.value as AllocateInType | number)
       }
       sx={{ width: '150px' }}
+      disabled={disabled}
     />
   );
 };

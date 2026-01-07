@@ -158,7 +158,21 @@ const useUpdate = (id: string) => {
 
   return useMutation({
     mutationFn,
-    onSuccess: () => {
+    onSuccess: (_result, patch) => {
+      // Keep cached prescription in sync immediately, to avoid a window where a
+      // newly-cancelled prescription is still editable before refetch completes.
+      queryClient.setQueryData<PrescriptionRowFragment | undefined>(
+        [PRESCRIPTION, PRESCRIPTION_LINE, id],
+        (current: PrescriptionRowFragment | undefined) => {
+          if (!current) return current;
+
+          const cleanedPatch = Object.fromEntries(
+            Object.entries(patch).filter(([, value]) => value !== undefined)
+          ) as Partial<PrescriptionRowFragment>;
+
+          return { ...current, ...cleanedPatch };
+        }
+      );
       queryClient.invalidateQueries([PRESCRIPTION]);
     },
   });

@@ -25,7 +25,9 @@ export const AllocationSection = ({
 
   return (
     <>
-      {showPrescribedQuantity && <AutoAllocatePrescribedQuantityField />}
+      {showPrescribedQuantity && (
+        <AutoAllocatePrescribedQuantityField disabled={disabled} />
+      )}
       <Grid display="flex" alignItems="center" gap={1}>
         <AutoAllocateField
           inputColor="white"
@@ -33,7 +35,7 @@ export const AllocationSection = ({
           autoFocus={!showPrescribedQuantity}
           disabled={disabled}
         />
-        <AllocateInSelector />
+        <AllocateInSelector disabled={disabled} />
       </Grid>
       {hasLines ? (
         <AccordionPanelSection

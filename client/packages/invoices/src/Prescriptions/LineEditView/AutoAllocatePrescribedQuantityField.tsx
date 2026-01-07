@@ -9,7 +9,11 @@ import {
 
 import { AllocateInType, useAllocationContext } from '../../StockOut';
 
-export const AutoAllocatePrescribedQuantityField = () => {
+export const AutoAllocatePrescribedQuantityField = ({
+  disabled = false,
+}: {
+  disabled?: boolean;
+}) => {
   const t = useTranslation();
   const { format } = useFormatNumber();
 
@@ -38,6 +42,8 @@ export const AutoAllocatePrescribedQuantityField = () => {
   );
 
   const handlePrescribedQuantityChange = (quantity: number | undefined) => {
+    if (disabled) return;
+
     // this method is also called onBlur... check that there actually has been a change
     // in quantity (to prevent triggering auto allocation if only focus has moved)
     if (quantity === prescribedQuantity) return;
@@ -54,7 +60,8 @@ export const AutoAllocatePrescribedQuantityField = () => {
         {t('label.prescribed-quantity')}
       </InputLabel>
       <NumericTextInput
-        autoFocus
+        autoFocus={!disabled}
+        disabled={disabled}
         value={prescribedQuantity ?? 0}
         onChange={handlePrescribedQuantityChange}
         slotProps={{ htmlInput: { sx: { backgroundColor: 'white' } } }}

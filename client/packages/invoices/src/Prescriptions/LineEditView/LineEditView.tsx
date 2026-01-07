@@ -111,6 +111,8 @@ export const PrescriptionLineEditView = () => {
   }, [allocationIsDirty]);
 
   const onSave = async () => {
+    if (isDisabled) return;
+
     // Save should only be enabled if we have an item anyway...
     const contextItemId = item?.id ?? itemId;
     if (!contextItemId) {
@@ -148,7 +150,12 @@ export const PrescriptionLineEditView = () => {
   if (!data) return <NothingHere />;
 
   const itemIdList = items.map(item => item.id);
-  if (status !== InvoiceNodeStatus.Verified) itemIdList.push('new');
+  if (
+    status !== InvoiceNodeStatus.Verified &&
+    status !== InvoiceNodeStatus.Cancelled
+  ) {
+    itemIdList.push('new');
+  }
 
   return (
     <>
@@ -197,6 +204,7 @@ export const PrescriptionLineEditView = () => {
       <Footer
         isSaving={isSavingLines}
         disabled={
+          isDisabled ||
           !item?.id ||
           !allocationIsDirty ||
           (allocatedQuantity === 0 && prescribedUnits === 0)
