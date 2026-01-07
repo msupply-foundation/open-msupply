@@ -160,7 +160,7 @@ const Host = () => (
                   skipRequest={skipRequest}
                 >
                   <AuthProvider>
-                      <Init />
+                    <Init />
                     <ConfirmationModalProvider>
                       <AlertModalProvider>
                         <RouterProvider router={router} />
