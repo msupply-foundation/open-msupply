@@ -19,11 +19,11 @@ pub(crate) fn generate_inbound_lines(
     inbound_store_id: &str,
     source_invoice: &Invoice,
 ) -> Result<Vec<InvoiceLineRow>, RepositoryError> {
+    let invoice_row = &source_invoice.invoice_row;
+
     let outbound_lines = InvoiceLineRepository::new(connection).query_by_filter(
         InvoiceLineFilter::new()
-            .invoice_id(EqualFilter::equal_to(
-                source_invoice.invoice_row.id.to_string(),
-            ))
+            .invoice_id(EqualFilter::equal_to(invoice_row.id.to_string()))
             // In mSupply you can finalise customer invoice with placeholder lines, we should remove them
             // when duplicating lines from outbound invoice to inbound invoice
             .r#type(InvoiceLineType::UnallocatedStock.not_equal_to()),
@@ -121,7 +121,10 @@ pub(crate) fn generate_inbound_lines(
                     pack_size,
                     total_before_tax,
                     total_after_tax: calculate_total_after_tax(total_before_tax, tax_percentage),
-                    cost_price_per_pack: sell_price_per_pack,
+                    cost_price_per_pack: match invoice_row.r#type {
+                        InvoiceType::SupplierReturn => cost_price_per_pack,
+                        _ => sell_price_per_pack,
+                    },
                     r#type: match r#type {
                         InvoiceLineType::Service => InvoiceLineType::Service,
                         _ => InvoiceLineType::StockIn,
@@ -132,14 +135,17 @@ pub(crate) fn generate_inbound_lines(
                     tax_percentage,
                     foreign_currency_price_before_tax,
                     item_variant_id,
-                    linked_invoice_id: Some(source_invoice.invoice_row.id.to_string()),
+                    linked_invoice_id: Some(invoice_row.id.to_string()),
                     vvm_status_id,
                     donor_link_id,
                     campaign_id,
                     program_id,
                     shipped_number_of_packs,
                     volume_per_pack,
-                    sell_price_per_pack: adjusted_sell_price_per_pack,
+                    sell_price_per_pack: match invoice_row.r#type {
+                        InvoiceType::SupplierReturn => sell_price_per_pack,
+                        _ => adjusted_sell_price_per_pack,
+                    },
                     shipped_pack_size,
                     // Default
                     stock_line_id: None,
