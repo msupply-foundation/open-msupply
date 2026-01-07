@@ -15,7 +15,7 @@ export const useIsCentralServerApi = () => {
       refetchOnMount: false,
       cacheTime: Infinity,
       staleTime: Infinity,
-      suspense: true,
+      suspense: false,
       enabled: !!storeId,
     }
   );
