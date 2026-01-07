@@ -4,12 +4,12 @@ import {
   Box,
   PropertyInput,
   useIsGapsStoreOnly,
-  BasicSpinner,
   InfoTooltipIcon,
   InputWithLabelRow,
   Typography,
   useTranslation,
   AssetPropertyFilterInput,
+  InlineSpinner,
 } from '@openmsupply-client/common';
 import { DraftAsset } from '../../types';
 import { useAssetProperties } from '@openmsupply-client/system';
@@ -155,7 +155,7 @@ export const Details = ({ draft, onChange }: DetailsProps) => {
   const { data: assetProperties, isLoading } = useAssetProperties(filterBy);
 
   if (!draft) return null;
-  if (isLoading) return <BasicSpinner />;
+  if (isLoading) return <InlineSpinner />;
 
   return (
     <Box display="flex" flex={3} justifyContent={'center'}>
