@@ -11,7 +11,7 @@ use serde::{Deserialize, Serialize};
 #[cfg(not(feature = "postgres"))]
 const SQLITE_LOCKWAIT_MS: u32 = 30 * 1000;
 
-#[cfg(all(not(feature = "postgres")))]
+#[cfg(not(feature = "postgres"))]
 const SQLITE_WAL_PRAGMA: &str = "PRAGMA journal_mode = WAL; PRAGMA synchronous = NORMAL;";
 
 #[derive(Deserialize, Serialize, Clone)]
@@ -60,7 +60,7 @@ impl DatabaseSettings {
 }
 
 // feature sqlite
-#[cfg(all(not(feature = "postgres")))]
+#[cfg(not(feature = "postgres"))]
 impl DatabaseSettings {
     pub fn connection_string(&self) -> String {
         use std::path::Path;
@@ -205,7 +205,7 @@ mod database_setting_test {
     }
 
     // feature sqlite
-    #[cfg(all(not(feature = "postgres")))]
+    #[cfg(not(feature = "postgres"))]
     #[test]
     fn test_database_settings_full_startup_sql() {
         use super::SQLITE_WAL_PRAGMA;
