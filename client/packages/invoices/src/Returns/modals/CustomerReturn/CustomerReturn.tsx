@@ -172,7 +172,6 @@ export const CustomerReturnEditModal = ({
 
           {lines.length > 0 && (
             <ReturnSteps
-              returnId={returnId}
               currentTab={currentTab}
               lines={lines}
               update={update}
