@@ -31,7 +31,11 @@ interface ProgramInfoSectionProps {
   } | null;
 }
 
-export const ProgramInfoSection: FC<ProgramInfoSectionProps> = ({ orderType, programName, period }) => {
+export const ProgramInfoSection: FC<ProgramInfoSectionProps> = ({
+  orderType,
+  programName,
+  period,
+}) => {
   const t = useTranslation();
 
   return programName ? (
@@ -64,7 +68,9 @@ interface AdditionalInfoSectionProps {
     username?: string | null;
     email?: string | null;
   } | null;
-  update: FieldUpdateMutation<RequestFragment> | FieldUpdateMutation<ResponseFragment>;
+  update:
+    | FieldUpdateMutation<RequestFragment>
+    | FieldUpdateMutation<ResponseFragment>;
   isDisabled: boolean;
 }
 
@@ -152,15 +158,24 @@ interface RelatedDocumentsSectionProps {
   inbound?: boolean;
 }
 
-export const RelatedDocumentsSection: FC<RelatedDocumentsSectionProps> = ({ shipments, createdFromRequisition, inbound = false }) => {
+export const RelatedDocumentsSection: FC<RelatedDocumentsSectionProps> = ({
+  shipments,
+  createdFromRequisition,
+  inbound = false,
+}) => {
   const t = useTranslation();
   const { localisedDate: d } = useFormatDateTime();
   const { canCreateInternalOrderFromARequisition = false } = usePreferences();
 
   const getTooltip = (createdDatetime: string, username?: string) => {
-    let tooltip = t(inbound ? 'messages.inbound-shipment-created-on' : 'messages.outbound-shipment-created-on', {
-      date: d(createdDatetime),
-    });
+    let tooltip = t(
+      inbound
+        ? 'messages.inbound-shipment-created-on'
+        : 'messages.outbound-shipment-created-on',
+      {
+        date: d(createdDatetime),
+      }
+    );
 
     return (tooltip += ` ${t('messages.by-user', { username })}`);
   };
@@ -184,15 +199,17 @@ export const RelatedDocumentsSection: FC<RelatedDocumentsSectionProps> = ({ ship
                 key={shipment.id}
                 label={t('label.shipment')}
                 value={shipment.invoiceNumber}
-                to={inbound
-                  ? RouteBuilder.create(AppRoute.Replenishment)
-                    .addPart(AppRoute.InboundShipment)
-                    .addPart(shipment.id)
-                    .build()
-                  : RouteBuilder.create(AppRoute.Distribution)
-                    .addPart(AppRoute.OutboundShipment)
-                    .addPart(shipment?.id)
-                    .build()}
+                to={
+                  inbound
+                    ? RouteBuilder.create(AppRoute.Replenishment)
+                        .addPart(AppRoute.InboundShipment)
+                        .addPart(shipment.id)
+                        .build()
+                    : RouteBuilder.create(AppRoute.Distribution)
+                        .addPart(AppRoute.OutboundShipment)
+                        .addPart(shipment?.id)
+                        .build()
+                }
               />
             </Grid>
           </Tooltip>
@@ -227,19 +244,26 @@ interface PricingLines {
   nodes: Array<{
     pricePerUnit?: number | null;
     requestedQuantity: number;
+    supplyQuantity?: number | null;
   }>;
 }
 
-export const PricingSectionComponent: React.FC<{ lines: PricingLines }> = ({ lines }) => {
+export const PricingSectionComponent: React.FC<{
+  lines: PricingLines;
+  isResponseReq: boolean;
+}> = ({ lines, isResponseReq }) => {
   const t = useTranslation();
   const { c } = useCurrency();
   const { showIndicativePriceInRequisitions } = usePreferences();
-  
+
   if (!showIndicativePriceInRequisitions) return null;
 
-  const totalPrice = lines
-    .nodes
-    .map(line => (line.pricePerUnit ?? 0) * line.requestedQuantity)
+  const totalPrice = lines.nodes
+    .map(
+      line =>
+        (line.pricePerUnit ?? 0) *
+        (isResponseReq ? (line.supplyQuantity ?? 0) : line.requestedQuantity)
+    )
     .reduce((a, b) => a + b, 0);
 
   return (
@@ -248,6 +272,6 @@ export const PricingSectionComponent: React.FC<{ lines: PricingLines }> = ({ lin
         <PanelLabel fontWeight="bold">{t('heading.grand-total')}</PanelLabel>
         <PanelField>{c(totalPrice).format()}</PanelField>
       </PanelRow>
-    </DetailPanelSection >
-  )
+    </DetailPanelSection>
+  );
 };
