@@ -25,6 +25,8 @@ import {
   useSimpleMaterialTable,
   useTranslation,
   AgeInputCell,
+  NumberInputCell,
+  TextInputCell,
 } from '@openmsupply-client/common';
 import React, { useMemo, FC } from 'react';
 import { useVaccineCourse } from '../api/hooks/useVaccineCourse';
@@ -32,8 +34,6 @@ import { useDemographicData } from '@openmsupply-client/system';
 import { VaccineItemSelect } from './VaccineCourseItemSelect';
 import { DraftVaccineCourse, VaccineCourseFragment } from '../api';
 import { VaccineCourseDoseFragment } from '../api/operations.generated';
-import { TextInputCell } from '@openmsupply-client/common/src/ui/layout/tables/material-react-table/components/TextInputCell';
-import { NumberInputCell } from '@openmsupply-client/common/src/ui/layout/tables/material-react-table/components/NumberInputCell';
 
 const getDemographicOptions = (demographics: DemographicNode[]) => {
   const options = demographics.map(demographic => {
