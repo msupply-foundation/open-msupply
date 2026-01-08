@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useRef } from 'react';
 import {
   useTranslation,
   useBarcodeScannerContext,
@@ -25,7 +25,7 @@ import { BarcodeFormat } from '@capacitor-mlkit/barcode-scanning/dist/esm/defini
 
 export const AddFromScannerButtonComponent = () => {
   const t = useTranslation();
-  const { isConnected, isEnabled, isScanning, scan, stopScan } =
+  const { isConnected, isEnabled, isScanning, scan } =
     useBarcodeScannerContext();
   const { error, info } = useNotification();
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -82,7 +82,6 @@ export const AddFromScannerButtonComponent = () => {
           return;
         }
         error(t('error.no-matching-asset', { id }))();
-        stopScan();
         return;
       }
 
@@ -91,7 +90,6 @@ export const AddFromScannerButtonComponent = () => {
 
       if (asset?.__typename !== 'AssetNode') {
         error(t('error.no-matching-asset', { id: result.content }))();
-        stopScan();
         return;
       }
       if (asset?.id) {
@@ -126,24 +124,18 @@ export const AddFromScannerButtonComponent = () => {
       return;
     }
     buttonRef.current?.blur();
+
     if (isScanning) {
-      stopScan();
-    } else {
-      try {
-        const result = await scan([BarcodeFormat.DataMatrix]);
-        await handleScanResult(result);
-      } catch (e) {
-        error(t('error.unable-to-read-barcode', { error: e }))();
-      }
+      return;
+    }
+
+    try {
+      const result = await scan([BarcodeFormat.DataMatrix]);
+      await handleScanResult(result);
+    } catch (e) {
+      error(t('error.unable-to-read-barcode', { error: e }))();
     }
   };
-
-  //   stop scanning when the component unloads
-  useEffect(() => {
-    return () => {
-      stopScan();
-    };
-  }, []);
 
   const label = isScanning ? t('button.stop') : t('button.scan');
   useRegisterActions(

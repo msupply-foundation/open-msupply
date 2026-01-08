@@ -10,13 +10,11 @@ import { getSdk } from '../operations.generated';
 /** Fields undefined until query has loaded */
 export const usePreferences = (): Partial<PreferencesNode> => {
   const { client } = useGql();
-  const { storeId, token } = useAuthContext();
+  const { storeId } = useAuthContext();
   const sdk = getSdk(client);
 
   const { data } = useQuery({
-    // Adding the token in as this query will fail and log the user out if the token is incorrect
-    // Am having issues with an old token being used here on android after a logout/login cycle
-    queryKey: [PREFERENCES_QUERY_KEY, storeId, token],
+    queryKey: [PREFERENCES_QUERY_KEY, storeId],
     queryFn: async () => {
       const result = await sdk.preferences({ storeId });
       return result.preferences;
