@@ -15,7 +15,12 @@ import {
 import { useRequest } from '../api';
 import { AppRoute } from '@openmsupply-client/config';
 import { OrderInfoSection } from './OrderInfoSection';
-import { AdditionalInfoSection, PricingSectionComponent, ProgramInfoSection, RelatedDocumentsSection } from '../../common';
+import {
+  AdditionalInfoSection,
+  PricingSectionComponent,
+  ProgramInfoSection,
+  RelatedDocumentsSection,
+} from '../../common';
 
 export const SidePanel: FC = () => {
   const t = useTranslation();
@@ -74,13 +79,26 @@ export const SidePanel: FC = () => {
       }
     >
       <OrderInfoSection />
-      <ProgramInfoSection {...useRequest.document.fields(['orderType', 'programName', 'period'])} />
+      <ProgramInfoSection
+        {...useRequest.document.fields(['orderType', 'programName', 'period'])}
+      />
       <AdditionalInfoSection
         isDisabled={useRequest.utils.isDisabled()}
-        {...useRequest.document.fields(['colour', 'comment', 'createdDatetime', 'user'])}
+        {...useRequest.document.fields([
+          'colour',
+          'comment',
+          'createdDatetime',
+          'user',
+        ])}
       />
-      <RelatedDocumentsSection inbound {...useRequest.document.fields(['shipments', 'createdFromRequisition'])} />
-      <PricingSectionComponent {...useRequest.document.fields('lines')} />
+      <RelatedDocumentsSection
+        inbound
+        {...useRequest.document.fields(['shipments', 'createdFromRequisition'])}
+      />
+      <PricingSectionComponent
+        isResponseReq={false}
+        {...useRequest.document.fields('lines')}
+      />
       {data &&
         plugins.requestRequisition?.sidePanelSection?.map((Plugin, index) => (
           <Plugin key={index} requisition={data} />
