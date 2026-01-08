@@ -3243,29 +3243,29 @@
     "@jridgewell/resolve-uri" "^3.1.0"
     "@jridgewell/sourcemap-codec" "^1.4.14"
 
-"@jsonforms/core@^3.5.1":
-  version "3.7.0"
-  resolved "https://registry.yarnpkg.com/@jsonforms/core/-/core-3.7.0.tgz#444fff8860342d097443e6c33374d90fc076a8cc"
-  integrity sha512-CE9viWtwi9QWLqlWLeOul1/R1GRAyOA9y6OoUpsCc0FhyR+g5p29F3k0fUExHWxL0Sf4KHcXYkfhtqfRBPS8ww==
+"@jsonforms/core@3.5.1":
+  version "3.5.1"
+  resolved "https://registry.yarnpkg.com/@jsonforms/core/-/core-3.5.1.tgz#1c8aa9323bb80677bbd538022f4d8e039516fef0"
+  integrity sha512-Jrq/UcfvKsAprLJ+9TMFa8pKsfdyv3dAw85XstSNRcjDT19LreBlhVqIvTvtgZidg8Iet3yqy5xlNnB+XyrvrQ==
   dependencies:
     "@types/json-schema" "^7.0.3"
     ajv "^8.6.1"
     ajv-formats "^2.1.0"
     lodash "^4.17.21"
 
-"@jsonforms/material-renderers@^3.5.1":
-  version "3.7.0"
-  resolved "https://registry.yarnpkg.com/@jsonforms/material-renderers/-/material-renderers-3.7.0.tgz#43ed043dcf479938bed84e2cd4e4e8f7bfaad70b"
-  integrity sha512-WO9D3zigJ/x/gCckEGxvfQgrdLuy6X6g76hHMlo3KCsusEvabLQHvYz3EJmOOBsuEu8JYXgZetTKjZ44WaBXww==
+"@jsonforms/material-renderers@3.5.1":
+  version "3.5.1"
+  resolved "https://registry.yarnpkg.com/@jsonforms/material-renderers/-/material-renderers-3.5.1.tgz#9936621f141a6d77ccb1e904cd82cc186042f323"
+  integrity sha512-IJczFIHE7kNycazXMpee5HshEZY9At5q4f6qnb4BOqQ1LAkuYAHaZ82tvzG8l0SJHmdv83VqFYkASmWTpcK0lw==
   dependencies:
     "@date-io/dayjs" "^3.0.0"
     dayjs "1.10.7"
     lodash "^4.17.21"
 
-"@jsonforms/react@^3.5.1":
-  version "3.7.0"
-  resolved "https://registry.yarnpkg.com/@jsonforms/react/-/react-3.7.0.tgz#758a6a07fbe7299252928a8d75fe869ed9297044"
-  integrity sha512-HkY7qAx8vW97wPEgZ7GxCB3iiXG1c95GuObxtcDHGPBJWMwnxWBnVYJmv5h7nthrInKsQKHZL5OusnC/sj/1GQ==
+"@jsonforms/react@3.5.1":
+  version "3.5.1"
+  resolved "https://registry.yarnpkg.com/@jsonforms/react/-/react-3.5.1.tgz#30e3b75afaf678848ca7f7fb0d39c8499a719e96"
+  integrity sha512-fQwCpzyNcf0FruYhc46dK6GfCcX09HkRX2PGYir7dllQPRI1axHd6t98To/h+48/L2PkFdRMGMCcIsoTXNC1qg==
   dependencies:
     lodash "^4.17.21"
 
