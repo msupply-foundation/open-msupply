@@ -2484,6 +2484,7 @@
   "status.scheduled": "Scheduled",
   "status.sent": "Sent",
   "status.shipped": "Shipped",
+  "status.finalise": "Finalise",
   "status.unserviceable": "Unserviceable",
   "status.verified": "Verified",
   "status.visited": "Visited",

@@ -47,12 +47,6 @@ export const getNextRequisitionStatus = (
   statusSequence: RequisitionNodeStatus[] = requestStatuses
 ): RequisitionNodeStatus | null => {
   const currentStatusIdx = statusSequence.indexOf(currentStatus);
-  if (
-    currentStatusIdx === -1 ||
-    currentStatusIdx === statusSequence.length - 1
-  ) {
-    return null;
-  }
   return statusSequence[currentStatusIdx + 1] ?? null;
 };
 
