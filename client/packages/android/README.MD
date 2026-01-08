@@ -59,14 +59,14 @@ Validate that `$NDK_BIN` is set correctly using `ls $NDK_BIN` (this should give 
 
 ## Java Installation
 
-In your terminal, run `java --version` to check if you have it installed. As at 19/12/2024 version `17.0.7-tem` is tested and works with our setup
+In your terminal, run `java --version` to check if you have it installed. As at 08/01/2026 version `21.0.9-tem` is tested and works with our setup
 
 We normally use [SDK man](https://sdkman.io/) to manage java versions, this can be installed using the following terminal command:
 `curl -s "https://get.sdkman.io" | bash`
 
-Then install Java 17.0.7-tem (Temurin) using the following terminal command:
-Install the last tested version of Java: Run `sdk install java 17.0.7-tem`
-To make this the default version of Java `sdk default java 17.0.7-tem`.
+Then install Java 21.0.9-tem (Temurin) using the following terminal command:
+Install the last tested version of Java: Run `sdk install java 21.0.9-tem`
+To make this the default version of Java `sdk default java 21.0.9-tem`.
 
 ### Configure Java in Android Studio
 
@@ -74,7 +74,7 @@ Now we'll set up Android Studio so that it will use the version of Java that we 
 First of all, open Android Studio and click Open. Open '<your Open mSupply repository>/client/packages/android'.
 Then, when you're in that project, go to Android Studio settings -> Build, Execution, Deployment -> Build Tools -> Gradle.
 You should see a dropdown to select 'Default Gradle JDK'.
-That dropdown should have an option to use a JDK called '17.0.7-temurin' - select that one.
+That dropdown should have an option to use a JDK called '21.0.9-temurin' - select that one.
 Here's a screenshot of what that should look like (the sidebar shows you what you should click on to get to this part of the settings):
 
 ![choosing OMS Android Gradle JDK](./doc/choosing_OMS_Android_Gradle_JDK.png)
