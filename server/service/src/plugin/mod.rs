@@ -159,14 +159,15 @@ pub trait PluginServiceTrait: Sync + Send {
         }
 
         // Get the existing cached version of the plugin
-        let plugins = ctx.frontend_plugins_cache.0.read().unwrap();
-        if let Some(existing_plugin) = (*plugins).get(&code) {
-            if existing_plugin.metadata.version > version {
-                // Existing cached plugin is higher version, skip (still install if same version)
-                return;
+        {
+            let plugins = ctx.frontend_plugins_cache.0.read().unwrap();
+            if let Some(existing_plugin) = (*plugins).get(&code) {
+                if existing_plugin.metadata.version > version {
+                    // Existing cached plugin is higher version, skip (still install if same version)
+                    return;
+                }
             }
-        }
-        drop(plugins);
+        } // Drop read lock
 
         let mut files_content = HashMap::new();
         // Prepare
@@ -180,7 +181,7 @@ pub trait PluginServiceTrait: Sync + Send {
                 BASE64_STANDARD.decode(file_content_base64).unwrap(),
             );
         }
-        
+
         let mut plugins = ctx.frontend_plugins_cache.0.write().unwrap();
         // Remove all plugins with this code
         (*plugins).remove(&code);
