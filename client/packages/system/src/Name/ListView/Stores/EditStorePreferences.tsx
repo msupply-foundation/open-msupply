@@ -3,7 +3,6 @@ import {
   NothingHere,
   PreferenceNodeType,
   PreferenceValueNodeType,
-  useIsCentralServerApi,
 } from '@openmsupply-client/common';
 import {
   EditPreference,
@@ -19,7 +18,6 @@ interface EditStorePreferencesProps {
 export const EditStorePreferences = ({
   storeId,
 }: EditStorePreferencesProps) => {
-  const isCentralServer = useIsCentralServerApi();
   const { update, preferences } = useEditPreferences(
     PreferenceNodeType.Store,
     storeId
@@ -40,7 +38,6 @@ export const EditStorePreferences = ({
           return (
             <EditPreference
               key={pref.key}
-              disabled={!isCentralServer}
               preference={pref}
               update={value => {
                 const finalValue =

@@ -16,6 +16,7 @@ import {
   isString,
   useAuthContext,
   UserPermission,
+  useIsCentralServerApi,
 } from '@openmsupply-client/common';
 import { MultiChoice, getMultiChoiceOptions } from '../Components/MultiChoice';
 import { EditCustomTranslations } from '../Components/CustomTranslations/CustomTranslationsModal';
@@ -27,7 +28,6 @@ interface EditPreferenceProps {
   update: (
     input: UpsertPreferencesInput[keyof UpsertPreferencesInput]
   ) => Promise<boolean>;
-  disabled?: boolean;
   label?: string;
   isLast?: boolean;
 }
@@ -35,15 +35,16 @@ interface EditPreferenceProps {
 export const EditPreference = ({
   preference,
   update,
-  disabled = false,
   label,
   isLast = false,
 }: EditPreferenceProps) => {
   const t = useTranslation();
   const { error } = useNotification();
   const { userHasPermission } = useAuthContext();
-  const isDisabled =
-    disabled || !userHasPermission(UserPermission.EditCentralData);
+  const isCentralServer = useIsCentralServerApi();
+
+  const disabled =
+    isCentralServer || !userHasPermission(UserPermission.EditCentralData);
 
   const preferenceLabel =
     label ?? t(`preference.${preference.key}` as LocaleKey);
@@ -82,7 +83,7 @@ export const EditPreference = ({
           label={preferenceLabel}
           Input={
             <Switch
-              disabled={isDisabled}
+              disabled={disabled}
               checked={value}
               onChange={(_, checked) => handleChange(checked)}
             />
@@ -103,7 +104,7 @@ export const EditPreference = ({
               value={value}
               onChange={handleChange}
               onBlur={() => {}}
-              disabled={isDisabled}
+              disabled={disabled}
             />
           }
           isLast={isLast}
@@ -122,7 +123,7 @@ export const EditPreference = ({
               value={value}
               onChange={e => handleChange(e.target.value)}
               onBlur={() => {}}
-              disabled={isDisabled}
+              disabled={disabled}
               sx={
                 hasError
                   ? {
@@ -150,7 +151,7 @@ export const EditPreference = ({
           label={preferenceLabel}
           Input={
             <MultiChoice
-              disabled={isDisabled}
+              disabled={disabled}
               options={options}
               value={value}
               onChange={handleChange}
@@ -178,7 +179,7 @@ export const EditPreference = ({
         <EditWarningWhenMissingRecentStocktakeData
           value={value}
           update={handleChange}
-          disabled={isDisabled}
+          disabled={disabled}
           label={preferenceLabel}
         />
       );
