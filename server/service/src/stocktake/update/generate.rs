@@ -81,6 +81,7 @@ fn generate_stock_in_out_or_update(
     stocktake_number: &i64,
 ) -> Result<StockLineJob, UpdateStocktakeError> {
     let stocktake_line_row = stocktake_line.line.to_owned();
+    let item = &stocktake_line.item;
     let counted_number_of_packs = match stocktake_line_row.counted_number_of_packs {
         Some(counted_number_of_packs) => counted_number_of_packs,
         None => {
@@ -202,7 +203,7 @@ fn generate_stock_in_out_or_update(
             item_variant_id,
             // From existing stock line
             stock_line_id: Some(stock_line_row.id),
-            item_id: stock_line_row.item_link_id,
+            item_id: item.id.clone(),
             stock_on_hold: stock_line_row.on_hold,
             barcode: stock_line_row.barcode_id,
             // Default
@@ -664,6 +665,7 @@ pub fn generate(
         expected_delivery_date: None,
         default_donor_link_id: None,
         goods_received_id: None,
+        shipping_method_id: None,
     };
 
     let inventory_addition = if !inventory_addition_lines.is_empty() {

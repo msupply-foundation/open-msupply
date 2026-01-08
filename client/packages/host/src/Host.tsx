@@ -26,6 +26,10 @@ import {
   initialiseI18n,
   KBarProvider,
   usePreferences,
+  useIsCentralServerApi,
+  useInitialisationStatus,
+  InitialisationStatusType,
+  useAuthContext,
 } from '@openmsupply-client/common';
 import { AppRoute, Environment } from '@openmsupply-client/config';
 import { Initialise, Login, Viewport } from './components';
@@ -65,6 +69,20 @@ Bugsnag.start({
 const skipRequest = () =>
   LocalStorage.getItem('/error/auth') === AuthError.NoStoreAssigned;
 
+const PreInit: React.FC<React.PropsWithChildren> = ({ children }) => {
+  const { logout } = useAuthContext();
+  const data = useInitialisationStatus(false, true);
+
+  // Technically this should not fire before query is loaded because we are doing suspense
+  if (data?.data?.status == InitialisationStatusType.Initialised)
+    return children;
+
+  // Clear token
+  logout();
+
+  return null;
+};
+
 /**
  * Empty component which can be used to call startup hooks.
  * For example, this component is called when auth information such as user or store id changed.
@@ -72,6 +90,7 @@ const skipRequest = () =>
 const Init = () => {
   useInitPlugins();
   usePreferences(); // Ensure preferences are loaded on startup - they'll be cached indefinitely
+  useIsCentralServerApi();
   return <></>;
 };
 
@@ -158,7 +177,9 @@ const Host = () => (
                   skipRequest={skipRequest}
                 >
                   <AuthProvider>
-                    <Init />
+                    <PreInit>
+                      <Init />
+                    </PreInit>
                     <ConfirmationModalProvider>
                       <AlertModalProvider>
                         <RouterProvider router={router} />

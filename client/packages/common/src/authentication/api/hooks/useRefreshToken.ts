@@ -9,10 +9,7 @@ import { useGetRefreshToken } from './useGetRefreshToken';
 
 export const useRefreshToken = (onTimeout: () => void) => {
   const { mutateAsync } = useGetRefreshToken();
-  const {
-    setHeader,
-    client: { getLastRequestTime },
-  } = useGql();
+  const { client } = useGql();
 
   const refreshToken = () => {
     const authCookie = getAuthCookie();
@@ -27,7 +24,7 @@ export const useRefreshToken = (onTimeout: () => void) => {
 
     const minutesSinceLastRequest = DateUtils.differenceInMinutes(
       Date.now(),
-      getLastRequestTime()
+      client.getLastRequestTime()
     );
 
     const expiresSoon = expiresIn === 1 || expiresIn === 2;
@@ -42,7 +39,7 @@ export const useRefreshToken = (onTimeout: () => void) => {
         const token = data?.token ?? '';
         const newCookie = { ...authCookie, token };
         setAuthCookie(newCookie);
-        setHeader('Authorization', `Bearer ${token}`);
+        client.setHeader('Authorization', `Bearer ${token}`);
       });
     }
   };
