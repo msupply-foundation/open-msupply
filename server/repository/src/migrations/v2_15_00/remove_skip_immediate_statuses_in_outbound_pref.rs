@@ -8,6 +8,8 @@ impl MigrationFragment for Migrate {
     }
 
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
+        // Note: even though we're removing the old preference, if a client has the old preference set, we'll keep the legacy record around incase the re-initialise on an old version.
+        // This should only affect a very small number of clients
         sql!(
             connection,
             r#"
