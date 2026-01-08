@@ -27,7 +27,7 @@ export const useOutboundColumns = () => {
         pin: 'left',
         enableColumnFilter: true,
         enableSorting: true,
-        Footer: () => <Box>{t('label.total')}</Box>,
+        Footer: t('label.total'),
       },
       {
         accessorKey: 'itemName',
