@@ -377,7 +377,173 @@ macro_rules! apply_sort_asc_nulls_first {
         }
     }};
 }
+/// Generates table definitions and repository methods for the entity linking abstraction pattern.
+///
+/// This macro automates the creation of:
+/// 1. Core table definition (with link_id columns for database storage)
+/// 2. View table definition (with resolved_id columns for queries)
+/// 3. Repository `_upsert` method that translates between resolved IDs and link IDs
+///
+/// # Entity Linking Pattern
+///
+/// The pattern hides internal `*_link_id` columns from the public API, exposing only resolved IDs.
+/// - Database tables store `name_link_id` (reference to name_link table)
+/// - Views join with name_link to resolve `name_link_id` → `name_id`
+/// - Row structs use `name_id` for clean public API
+/// - Repository methods translate back to `name_link_id` when writing
+///
+/// # Two Variants
+///
+/// ## 1. Standard fields (table and struct use same field names)
+///
+/// ```rust,ignore
+/// define_linked_tables!(
+///     view: name_store_join = "name_store_join_view",
+///     core: name_store_join_with_links = "name_store_join",
+///     struct: NameStoreJoinRow,
+///     repo: NameStoreJoinRepository,
+///     shared: {
+///         store_id -> Text,
+///         name_is_customer -> Bool,
+///     },
+///     links: {
+///         name_link_id -> name_id,
+///     }
+/// );
+/// ```
+///
+/// ## 2. Renamed fields (table field name differs from struct field name)
+///
+/// Use this when struct fields need different names than table columns,
+/// such as when table columns are Rust keywords requiring raw identifiers:
+///
+/// ```rust,ignore
+/// define_linked_tables!(
+///     view: invoice = "invoice_view",
+///     core: invoice_with_links = "invoice",
+///     struct: InvoiceRow,
+///     repo: InvoiceRowRepository,
+///     shared: {
+///         store_id -> Text,
+///         invoice_number -> BigInt,
+///         #[sql_name = "type"] type_ as r#type -> crate::db_diesel::invoice_row::InvoiceTypeMapping,
+///         status -> crate::db_diesel::invoice_row::InvoiceStatusMapping,
+///         on_hold -> Bool,
+///     },
+///     links: {
+///         name_link_id -> name_id,
+///     }
+/// );
+/// ```
+///
+/// Note the `type_ as r#type` syntax: `type_` is the table column name, `r#type` is the struct field name.
+///
+/// # Arguments
+///
+/// * `view` - View table identifier and SQL name (e.g., `invoice = "invoice_view"`)
+/// * `core` - Core table identifier and SQL name (e.g., `invoice_with_links = "invoice"`)
+/// * `struct` - The Row struct type name
+/// * `repo` - The Repository struct type name
+/// * `shared` - Fields that appear in both core and view tables (all fields except ID and links)
+/// * `links` - Link field mappings (format: `link_id -> resolved_id`)
+///
+/// # Shared Field Syntax
+///
+/// Each field in `shared` can be:
+/// - Simple: `field_name -> Type` (table and struct use same name)
+/// - Renamed: `table_field as struct_field -> Type` (different names)
+/// - With attributes: `#[attr] field_name -> Type`
+/// - Combined: `#[attr] table_field as struct_field -> Type`
+///
+/// # Generated Code
+///
+/// The macro generates:
+/// - Two `table!` blocks (core and view)
+/// - An `impl` block for the repository with `_upsert` method
+/// - The `_upsert` method handles link ID translation automatically
+///
+/// # Usage in Repository
+///
+/// After macro invocation, implement `upsert_one` that calls `_upsert`:
+///
+/// ```rust,ignore
+/// impl<'a> InvoiceRowRepository<'a> {
+///     pub fn upsert_one(&self, row: &InvoiceRow) -> Result<i64, RepositoryError> {
+///         self._upsert(row)?;
+///         self.insert_changelog(row, RowActionType::Upsert)
+///     }
+/// }
+/// ```
 macro_rules! define_linked_tables {
+    // Version with renamed struct fields (e.g., type_ as r#type)
+    (
+        view: $view_table:ident = $view_sql_name:literal,
+        core: $core_table:ident = $core_sql_name:literal,
+        struct: $struct_name:ident,
+        repo: $repo_name:ident,
+        shared: {
+            $(
+                $(#[$attr:meta])?
+                $table_field:ident as $struct_field:tt -> $field_type:ty
+            ),* $(,)?
+        },
+        links: {
+            $(
+                $link_id:ident -> $resolved_id:ident
+            ),* $(,)?
+        }
+    ) => {
+        // Core table with link IDs
+        table! {
+            #[sql_name = $core_sql_name]
+            $core_table (id) {
+                id -> Text,
+                $(
+                    $(#[$attr])?
+                    $table_field -> $field_type,
+                )*
+                $($link_id -> Text,)*
+            }
+        }
+
+        // View table with resolved IDs
+        table! {
+            #[sql_name = $view_sql_name]
+            $view_table (id) {
+                id -> Text,
+                $(
+                    $(#[$attr])?
+                    $table_field -> $field_type,
+                )*
+                $($resolved_id -> Text,)*
+            }
+        }
+
+        // Generate upsert method on repository
+        impl<'a> $repo_name<'a> {
+            pub fn _upsert(&self, record: &$struct_name) -> Result<(), crate::RepositoryError> {
+                use diesel::prelude::*;
+
+                diesel::insert_into($core_table::table)
+                    .values((
+                        $core_table::id.eq(&record.id),
+                        $($core_table::$table_field.eq(&record.$struct_field),)*
+                        $($core_table::$link_id.eq(&record.$resolved_id),)*
+                    ))
+                    .on_conflict($core_table::id)
+                    .do_update()
+                    .set((
+                        $($core_table::$table_field.eq(&record.$struct_field),)*
+                        $($core_table::$link_id.eq(&record.$resolved_id),)*
+                    ))
+                    .execute(self.connection.lock().connection())?;
+
+                Ok(())
+            }
+        }
+    };
+
+    // Original version without field renaming (backward compatible)
     (
         view: $view_table:ident = $view_sql_name:literal,
         core: $core_table:ident = $core_sql_name:literal,
@@ -424,6 +590,8 @@ macro_rules! define_linked_tables {
         // Generate upsert method on repository
         impl<'a> $repo_name<'a> {
             pub fn _upsert(&self, record: &$struct_name) -> Result<(), crate::RepositoryError> {
+                use diesel::prelude::*;
+
                 diesel::insert_into($core_table::table)
                     .values((
                         $core_table::id.eq(&record.id),
