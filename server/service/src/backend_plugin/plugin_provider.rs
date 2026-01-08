@@ -137,8 +137,8 @@ impl PluginInstance {
         // Get existing plugin with same code in the plugin provider
         let plugins = PLUGINS.read().unwrap();
         if let Some(existing_plugin) = (*plugins).iter().find(|p| p.instance.code == code) {
-            if existing_plugin.instance.version >= version {
-                // Existing plugin is same or higher version, skip
+            if existing_plugin.instance.version > version {
+                // Existing plugin is higher version, skip (still install if same version)
                 return;
             }
         }
