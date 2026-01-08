@@ -216,6 +216,13 @@ export const useResponseColumns = () => {
         enableSorting: true,
       },
       {
+        header: t('label.indicative-price-per-unit'),
+        description: t('description.indicative-price-per-unit'),
+        accessorKey: 'pricePerUnit',
+        columnType: ColumnType.Currency,
+        includeColumn: showIndicativePriceInRequisitions,
+      },
+      {
         header: t('label.indicative-price'),
         description: t('description.indicative-price'),
         accessorFn: row => row.requestedQuantity * (row?.pricePerUnit || 0),

@@ -33,6 +33,7 @@ export const SupplierReturnListView = () => {
     filters: [
       { key: 'otherPartyName' },
       { key: 'status', condition: 'equalTo' },
+      { key: 'createdDatetime', condition: 'between' },
     ],
   });
   const navigate = useNavigate();
@@ -114,6 +115,7 @@ export const SupplierReturnListView = () => {
       {
         accessorKey: 'createdDatetime',
         header: t('label.created-datetime'),
+        enableColumnFilter: true,
         enableSorting: true,
         columnType: ColumnType.Date,
       },
