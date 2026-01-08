@@ -571,5 +571,12 @@ pub async fn get_loaders(
         tokio::spawn,
     ));
 
+    loaders.insert(DataLoader::new(
+        ShippingMethodByIdLoader {
+            connection_manager: connection_manager.clone(),
+        },
+        tokio::spawn,
+    ));
+
     loaders
 }

@@ -1,17 +1,15 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { LinkedRequestRowFragment, useInbound } from '../api';
 import {
-  useColumns,
-  getNotePopoverColumn,
-  ColumnAlign,
-  DataTable,
   useWindowDimensions,
   useTranslation,
   useDialog,
   DialogButton,
   Typography,
-  TableProvider,
-  createTableStore,
+  MaterialTable,
+  useSimpleMaterialTable,
+  ColumnDef,
+  ColumnType,
 } from '@openmsupply-client/common';
 import { NameRowFragment } from '@openmsupply-client/system';
 
@@ -37,36 +35,51 @@ export const LinkInternalOrderModal = ({
     name?.id ?? ''
   );
 
-  const columns = useColumns<LinkedRequestRowFragment>([
-    {
-      key: 'requisitionNumber',
-      label: 'label.number',
-      width: 80,
-      align: ColumnAlign.Right,
-    },
-    ['createdDatetime', { width: 80, align: ColumnAlign.Right }],
-    {
-      key: 'username',
-      label: 'label.entered-by',
-      width: 150,
-      accessor: ({ rowData }) => rowData?.user?.username ?? '',
-    },
-    {
-      key: 'programName',
-      label: 'label.program',
-      accessor: ({ rowData }) => rowData.program?.name ?? '',
-      width: 200,
-    },
-    ['theirReference', { width: 150 }],
-    [
-      getNotePopoverColumn(),
+  const columns = useMemo(
+    (): ColumnDef<LinkedRequestRowFragment>[] => [
       {
-        accessor: ({ rowData }) => {
-          return { header: '', body: rowData.comment };
-        },
+        accessorKey: 'requisitionNumber',
+        header: t('label.number'),
+        columnType: ColumnType.Number,
+        size: 80,
+      },
+      {
+        accessorKey: 'createdDatetime',
+        header: t('label.created'),
+        columnType: ColumnType.Date,
+        size: 80,
+      },
+      {
+        accessorKey: 'user.username',
+        header: t('label.entered-by'),
+        size: 150,
+      },
+      {
+        accessorKey: 'program.name',
+        header: t('label.program'),
+        size: 200,
+      },
+      {
+        accessorKey: 'theirReference',
+        header: t('label.reference'),
+        size: 150,
+      },
+      {
+        accessorKey: 'comment',
+        header: t('label.comment'),
+        columnType: ColumnType.Comment,
       },
     ],
-  ]);
+    []
+  );
+
+  const table = useSimpleMaterialTable<LinkedRequestRowFragment>({
+    tableId: 'link-internal-order-to-inbound',
+    columns,
+    data: data?.nodes,
+    isLoading,
+    onRowClick,
+  });
 
   return (
     <Modal
@@ -84,17 +97,7 @@ export const LinkInternalOrderModal = ({
         >
           {t('message.continue-to-make-inbound-shipment')}
         </Typography>
-
-        <TableProvider createStore={createTableStore}>
-          <DataTable
-            id="link-internal-order-to-inbound"
-            columns={columns}
-            data={data?.nodes ?? []}
-            dense
-            onRowClick={onRowClick}
-            isLoading={isLoading}
-          />
-        </TableProvider>
+        <MaterialTable table={table} />
       </>
     </Modal>
   );

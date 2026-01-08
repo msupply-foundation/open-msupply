@@ -19,7 +19,7 @@ use thiserror::Error as ThisError;
 use util::format_error;
 
 use crate::{
-    queries_mutations::INSTALL_PLUGINS, run_command_with_error, Api, ApiError, CommandError,
+    queries_mutations::INSTALL_PLUGINS, run_command_with_error, Api, ApiError, CommandError, YARN_COMMAND,
 };
 
 #[derive(ThisError, Debug)]
@@ -196,7 +196,7 @@ fn process_manifest(bundle: &mut PluginBundle, path: &PathBuf) -> Result<(), Err
 
     // Yarn install
     run_command_with_error(
-        Command::new("yarn")
+        Command::new(YARN_COMMAND)
             .args(["install", "--cwd"])
             .arg(&plugin_root),
     )
@@ -204,7 +204,7 @@ fn process_manifest(bundle: &mut PluginBundle, path: &PathBuf) -> Result<(), Err
 
     // Yarn build plugin
     run_command_with_error(
-        Command::new("yarn")
+        Command::new(YARN_COMMAND)
             .arg("--cwd")
             .arg(&plugin_root)
             .arg("build-plugin"),

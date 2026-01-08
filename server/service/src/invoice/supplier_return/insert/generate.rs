@@ -77,6 +77,7 @@ pub fn generate(
         expected_delivery_date: None,
         default_donor_link_id: None,
         goods_received_id: None,
+        shipping_method_id: None,
     };
 
     let lines_with_packs: Vec<&SupplierReturnLineInput> = supplier_return_lines
