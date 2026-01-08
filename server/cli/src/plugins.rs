@@ -246,7 +246,7 @@ fn bundle_backend_plugin(
         variant_type,
         types,
         code,
-        version, // TODO parse version to check format is valid?
+        version,
     });
 
     Ok(())
