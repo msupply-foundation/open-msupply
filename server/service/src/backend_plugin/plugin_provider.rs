@@ -78,18 +78,27 @@ where
     })
 }
 
-fn compatible_plugins_with_current_app_version() -> Vec<Plugin> {
+fn latest_plugins_compatible_with_current_app_version() -> Vec<Plugin> {
     let plugins = PLUGINS.read().unwrap();
     let app_version: Version = Version::from_package_json();
 
+    // remove all plugins that are not compatible with current app version
     let mut filtered_plugins: Vec<Plugin> = plugins
         .iter()
         .filter(|p| p.version.is_compatible_by_major_and_minor(&app_version))
         .map(|p| p.clone())
         .collect();
 
-    // to get the latest compatable versions listed first
-    filtered_plugins.sort_by(|a, b| b.version.cmp(&a.version));
+    // first group plugins by code, then sort by version descending, then dedup to keep highest version per code
+    filtered_plugins.sort_by(|a, b| {
+        if a.instance.code != b.instance.code {
+            return a.instance.code.cmp(&b.instance.code);
+        }
+
+        b.version.cmp(&a.version)
+    });
+    filtered_plugins.dedup_by(|a, b| a.instance.code == b.instance.code);
+
     filtered_plugins
 }
 
@@ -101,23 +110,22 @@ pub struct PluginBundle {
 
 impl PluginInstance {
     pub fn get_one(r#type: PluginType) -> Option<Arc<PluginInstance>> {
-        compatible_plugins_with_current_app_version()
+        latest_plugins_compatible_with_current_app_version()
             .into_iter()
             .find(|p| p.has_type(&r#type))
             .map(|p| p.instance)
     }
 
     pub fn get_all(r#type: PluginType) -> Vec<Arc<PluginInstance>> {
-        compatible_plugins_with_current_app_version()
+        latest_plugins_compatible_with_current_app_version()
             .into_iter()
             .filter(|p| p.has_type(&r#type))
             .map(|p| p.instance)
             .collect()
     }
 
-    // Sort by version filter by is_compatible_by_major_and_minor
     pub fn get_one_with_code(code: &str, r#type: PluginType) -> Option<Arc<PluginInstance>> {
-        compatible_plugins_with_current_app_version()
+        latest_plugins_compatible_with_current_app_version()
             .into_iter()
             .find(|p| p.has_type(&r#type) && p.instance.code == code)
             .map(|p| p.instance)
