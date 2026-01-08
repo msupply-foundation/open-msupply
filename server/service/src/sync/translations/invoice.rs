@@ -1,4 +1,5 @@
 use super::{PullTranslateResult, PushTranslateResult, SyncTranslation};
+use crate::sync::translations::shipping_method::ShippingMethodTranslation;
 use crate::sync::translations::{
     clinician::ClinicianTranslation, currency::CurrencyTranslation,
     diagnosis::DiagnosisTranslation, name::NameTranslation,
@@ -271,6 +272,11 @@ pub struct LegacyTransactRow {
     #[serde(deserialize_with = "zero_date_as_option")]
     #[serde(serialize_with = "date_option_to_isostring")]
     pub expected_delivery_date: Option<NaiveDate>,
+
+    #[serde(default)]
+    #[serde(rename = "ship_method_ID")]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    pub shipping_method_id: Option<String>,
 }
 
 /// The mSupply central server will map outbound invoices from omSupply to "si" invoices for the
@@ -328,6 +334,7 @@ impl SyncTranslation for InvoiceTranslation {
             CurrencyTranslation.table_name(),
             DiagnosisTranslation.table_name(),
             NameInsuranceJoinTranslation.table_name(),
+            ShippingMethodTranslation.table_name(),
         ]
     }
 
@@ -445,6 +452,7 @@ impl SyncTranslation for InvoiceTranslation {
             insurance_discount_percentage: data.insurance_discount_percentage,
             expected_delivery_date: data.expected_delivery_date,
             goods_received_id: data.goods_received_ID,
+            shipping_method_id: data.shipping_method_id,
         };
 
         // HACK...
@@ -534,6 +542,7 @@ impl SyncTranslation for InvoiceTranslation {
                     expected_delivery_date,
                     default_donor_link_id: default_donor_id,
                     goods_received_id,
+                    shipping_method_id,
                 },
             name_row,
             clinician_row,
@@ -608,6 +617,7 @@ impl SyncTranslation for InvoiceTranslation {
             expected_delivery_date,
             default_donor_id,
             goods_received_ID: goods_received_id,
+            shipping_method_id,
         };
 
         let json_record = serde_json::to_value(legacy_row)?;

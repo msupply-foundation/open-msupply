@@ -37,6 +37,7 @@ pub struct UpdateOutboundShipment {
     pub currency_id: Option<String>,
     pub currency_rate: Option<f64>,
     pub expected_delivery_date: Option<NullableUpdate<NaiveDate>>,
+    pub shipping_method_id: Option<NullableUpdate<String>>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -49,6 +50,7 @@ pub enum UpdateOutboundShipmentError {
     NotThisStoreInvoice,
     CannotIssueInForeignCurrency,
     OtherPartyDoesNotExist,
+    ShippingMethodDoesNotExist,
     // Error applies to unallocated lines with above zero quantity
     CanOnlyChangeToAllocatedWhenNoUnallocatedLines(Vec<InvoiceLine>),
     CannotHaveEstimatedDeliveryDateBeforeShippedDate,
@@ -493,6 +495,7 @@ mod test {
                 currency_id: _,
                 currency_rate: _,
                 expected_delivery_date,
+                shipping_method_id: _,
             } = get_update();
             InvoiceRow {
                 on_hold: on_hold.unwrap(),

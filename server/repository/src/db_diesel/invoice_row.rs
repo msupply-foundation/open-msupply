@@ -1,9 +1,11 @@
 use super::{
     clinician_link_row::clinician_link, currency_row::currency, item_link_row::item_link,
-    name_row::name, store_row::store, user_row::user_account, StorageConnection,
+    name_row::name, shipping_method_row::shipping_method, store_row::store,
+    user_row::user_account, StorageConnection,
 };
 use crate::{
-    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, Delete, RowActionType, Upsert, diesel_macros::define_linked_tables, repository_error::RepositoryError
+    diesel_macros::define_linked_tables, repository_error::RepositoryError, ChangeLogInsertRow,
+    ChangelogRepository, ChangelogTableName, Delete, RowActionType, Upsert,
 };
 use chrono::{NaiveDate, NaiveDateTime};
 use diesel::{dsl::max, prelude::*};
@@ -55,6 +57,7 @@ define_linked_tables! {
         expected_delivery_date -> Nullable<Date>,
         default_donor_link_id -> Nullable<Text>,
         goods_received_id -> Nullable<Text>,
+        shipping_method_id -> Nullable<Text>,
     },
     links:{
          name_link_id -> name_id,
@@ -66,6 +69,7 @@ joinable!(invoice -> store (store_id));
 joinable!(invoice -> user_account (user_id));
 joinable!(invoice -> currency (currency_id));
 joinable!(invoice -> clinician_link (clinician_link_id));
+joinable!(invoice -> shipping_method (shipping_method_id));
 allow_tables_to_appear_in_same_query!(invoice, item_link);
 
 #[derive(
@@ -147,6 +151,7 @@ pub struct InvoiceRow {
     pub expected_delivery_date: Option<NaiveDate>,
     pub default_donor_link_id: Option<String>,
     pub goods_received_id: Option<String>,
+    pub shipping_method_id: Option<String>,
     // Resolved from name_link - must be last to match view column order
     pub name_id: String,
 }
