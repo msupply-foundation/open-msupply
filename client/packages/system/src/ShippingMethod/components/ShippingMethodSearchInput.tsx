@@ -9,7 +9,7 @@ import {
 } from '@openmsupply-client/common';
 import { ShippingMethodRowFragment, useShippingMethod } from '../api';
 
-interface ShippingMethodAutocompleteProps {
+interface ShippingMethodSearchInputProps {
   value?: ShippingMethodRowFragment | null;
   width?: number;
   popperMinWidth?: number;
@@ -30,14 +30,14 @@ const getShippingMethodRenderer =
     );
   };
 
-export const ShippingMethodAutocomplete = ({
+export const ShippingMethodSearchInput = ({
   value,
   width,
   popperMinWidth,
   onChange,
   disabled = false,
   sx,
-}: ShippingMethodAutocompleteProps) => {
+}: ShippingMethodSearchInputProps) => {
   const { data, isLoading } = useShippingMethod();
 
   const shippingMethodOptionRenderer = getShippingMethodRenderer();
