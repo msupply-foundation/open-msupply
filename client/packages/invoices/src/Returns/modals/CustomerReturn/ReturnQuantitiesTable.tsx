@@ -6,6 +6,8 @@ import {
   MaterialTable,
   useSimpleMaterialTable,
   useTranslation,
+  NumberInputCell,
+  TextInputCell,
 } from '@openmsupply-client/common';
 import {
   getVolumePerPackFromVariant,
@@ -14,8 +16,6 @@ import {
 } from '@openmsupply-client/system';
 import React, { useMemo } from 'react';
 import { GenerateCustomerReturnLineFragment } from '../../api';
-import { TextInputCell } from '@openmsupply-client/common/src/ui/layout/tables/material-react-table/components/TextInputCell';
-import { NumberInputCell } from '@openmsupply-client/common/src/ui/layout/tables/material-react-table/components/NumberInputCell';
 
 export const QuantityReturnedTableComponent = ({
   lines,

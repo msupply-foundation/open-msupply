@@ -5,10 +5,10 @@ import {
   useSimpleMaterialTable,
   ColumnDef,
   useTranslation,
+  NumberInputCell,
+  TextInputCell,
 } from '@openmsupply-client/common';
 import { PackagingVariantFragment } from '../../../api';
-import { TextInputCell } from '@openmsupply-client/common/src/ui/layout/tables/material-react-table/components/TextInputCell';
-import { NumberInputCell } from '@openmsupply-client/common/src/ui/layout/tables/material-react-table/components/NumberInputCell';
 
 export const ItemPackagingVariantsTable = ({
   data,
