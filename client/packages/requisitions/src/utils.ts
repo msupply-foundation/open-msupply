@@ -27,10 +27,10 @@ export const responseStatuses = [
 ];
 
 const requisitionStatusToLocaleKey: Record<RequisitionNodeStatus, LocaleKey> = {
-  [RequisitionNodeStatus.Draft]: 'label.draft',
-  [RequisitionNodeStatus.New]: 'label.new',
-  [RequisitionNodeStatus.Sent]: 'label.sent',
-  [RequisitionNodeStatus.Finalised]: 'label.finalised',
+  [RequisitionNodeStatus.Draft]: 'status.draft',
+  [RequisitionNodeStatus.New]: 'status.new',
+  [RequisitionNodeStatus.Sent]: 'status.sent',
+  [RequisitionNodeStatus.Finalised]: 'status.finalised',
 };
 
 export const getStatusTranslation = (status: RequisitionNodeStatus) => {
