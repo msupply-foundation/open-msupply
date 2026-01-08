@@ -25,6 +25,13 @@ import { RepackModal } from '../Components';
 import { InventoryAdjustmentModal } from '../Components';
 import { StatusHistory } from '../Components/StatusHistory';
 
+enum StockLineDetailTabs {
+  Details = 'details',
+  StatusHistory = 'statushistory',
+  Log = 'log',
+  Ledger = 'ledger',
+}
+
 export const StockLineDetailView: React.FC = () => {
   const t = useTranslation();
   const { id } = useParams();
@@ -107,23 +114,23 @@ export const StockLineDetailView: React.FC = () => {
           existingStockLine={data}
         />
       ),
-      value: t('label.details'),
+      value: StockLineDetailTabs.Details,
     },
     ...(isVaccine && manageVvmStatusForStock
       ? [
-        {
-          Component: <StatusHistory draft={draft} isLoading={isLoading} />,
-          value: t('label.statushistory'),
-        },
-      ]
+          {
+            Component: <StatusHistory draft={draft} isLoading={isLoading} />,
+            value: StockLineDetailTabs.StatusHistory,
+          },
+        ]
       : []),
     {
       Component: <ActivityLogList recordId={data?.id ?? ''} />,
-      value: t('label.log'),
+      value: StockLineDetailTabs.Log,
     },
     {
       Component: <LedgerTable stockLine={draft} />,
-      value: t('label.ledger'),
+      value: StockLineDetailTabs.Ledger,
     },
   ];
 
@@ -160,10 +167,12 @@ export const StockLineDetailView: React.FC = () => {
         openAdjust={openInventoryAdjustmentModal}
         itemId={data?.itemId}
       />
-      <DetailTabs tabs={tabs} />
-      {(tab === t('label.details') || !tab || simplifiedTabletView) && (
-        <Footer {...footerProps} />
-      )}
+      <TableProvider createStore={createTableStore}>
+        <DetailTabs tabs={tabs} />
+        {(tab === StockLineDetailTabs.Details ||
+          !tab ||
+          simplifiedTabletView) && <Footer {...footerProps} />}
+      </TableProvider>
     </>
   );
 };

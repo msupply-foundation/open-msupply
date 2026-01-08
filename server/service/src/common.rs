@@ -1,10 +1,9 @@
-use repository::{
-    EqualFilter, ProgramRow, ProgramRowRepository, RepositoryError, StockLine, StockLineFilter,
-    StockLineRepository, StorageConnection,
-};
-
 use crate::preference::{DaysInMonth, Preference};
-
+use repository::{
+    shipping_method_row::ShippingMethodRowRepository, EqualFilter, ProgramRow,
+    ProgramRowRepository, RepositoryError, StockLine, StockLineFilter, StockLineRepository,
+    StorageConnection,
+};
 use util::constants::AVG_NUMBER_OF_DAYS_IN_A_MONTH;
 
 #[derive(Debug, PartialEq)]
@@ -68,6 +67,15 @@ pub fn days_in_a_month(connection: &StorageConnection) -> f64 {
         Ok(custom_days) if custom_days > 0.0 => custom_days,
         _ => AVG_NUMBER_OF_DAYS_IN_A_MONTH,
     }
+}
+
+pub fn check_shipping_method_exists(
+    connection: &StorageConnection,
+    shipping_method_id: &str,
+) -> Result<bool, RepositoryError> {
+    Ok(ShippingMethodRowRepository::new(connection)
+        .find_one_by_id(shipping_method_id)?
+        .is_some())
 }
 
 #[cfg(test)]
