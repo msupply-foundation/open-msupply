@@ -1,5 +1,4 @@
 use chrono::{NaiveDate, Utc};
-
 use repository::{
     location_movement::{LocationMovementFilter, LocationMovementRepository},
     DatetimeFilter, EqualFilter, InvoiceLineFilter, InvoiceLineRepository, LocationMovementRow,
@@ -44,6 +43,7 @@ pub(crate) fn generate(
         currency_id: input_currency_id,
         currency_rate: input_currency_rate,
         expected_delivery_date: input_expected_delivery_date,
+        shipping_method_id,
     }: UpdateOutboundShipment,
     connection: &StorageConnection,
 ) -> Result<GenerateResult, UpdateOutboundShipmentError> {
@@ -65,6 +65,9 @@ pub(crate) fn generate(
         .unwrap_or(update_invoice.tax_percentage);
     update_invoice.currency_id = input_currency_id.or(update_invoice.currency_id);
     update_invoice.currency_rate = input_currency_rate.unwrap_or(update_invoice.currency_rate);
+    update_invoice.shipping_method_id = shipping_method_id
+        .map(|s| s.value)
+        .unwrap_or(update_invoice.shipping_method_id);
 
     if let Some(status) = input_status.clone() {
         update_invoice.status = status.full_status()

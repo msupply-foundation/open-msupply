@@ -2,7 +2,7 @@ import React from 'react';
 import {
   Box,
   ButtonWithIcon,
-  DataTableSkeleton,
+  TableSkeleton,
   IndicatorLineRowNode,
   LocaleKey,
   NothingHere,
@@ -31,7 +31,7 @@ export const IndicatorsTab = ({
 }: IndicatorTabProps) => {
   const t = useTranslation();
   if (isLoading) {
-    return <DataTableSkeleton />;
+    return <TableSkeleton />;
   }
   if (!indicators || indicators.length === 0) {
     return <NothingHere body={t('error.no-indicators')} />;

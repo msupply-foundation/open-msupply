@@ -3,7 +3,7 @@
  * based on the filter type; and "getFilterState" function, which converts the
  * current URL query into the filter state required by MRT.
  */
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import {
   MRT_ColumnFiltersState,
   MRT_RowData,
@@ -18,21 +18,28 @@ import {
   useUrlQuery,
 } from '@openmsupply-client/common';
 
-export const useTableFiltering = <T extends MRT_RowData>(
-  columns: ColumnDef<T>[]
-): {
+interface FilteringState {
   columnFilters: MRT_ColumnFiltersState;
   onColumnFiltersChange: (
     filterUpdate: MRT_Updater<MRT_ColumnFiltersState>
   ) => void;
-} => {
+}
+
+export const useTableFiltering = <T extends MRT_RowData>(
+  columns: ColumnDef<T>[],
+  noUrlFiltering: boolean
+): FilteringState => {
+  const [nonUrlFilterState, setNonUrlFilterState] =
+    useState<MRT_ColumnFiltersState>([]);
+
   const { urlQuery, updateQuery } = useUrlQuery();
   const { customDate, urlQueryDateTime, urlQueryDate } = useFormatDateTime();
 
-  const filterState = useMemo(
-    () => getFilterState(urlQuery, columns),
-    [urlQuery]
-  );
+  const filterState = useMemo(() => {
+    return noUrlFiltering
+      ? nonUrlFilterState
+      : getFilterState(urlQuery, columns);
+  }, [urlQuery, noUrlFiltering, nonUrlFilterState]);
 
   const filterUpdaters = useMemo(() => {
     const filterUpdaters: Record<string, (value: any) => void> = {};
@@ -81,6 +88,16 @@ export const useTableFiltering = <T extends MRT_RowData>(
   const handleFilterChange = (
     filterUpdate: MRT_Updater<MRT_ColumnFiltersState>
   ) => {
+    if (noUrlFiltering) {
+      setNonUrlFilterState(prevState => {
+        if (typeof filterUpdate === 'function') {
+          return filterUpdate(prevState);
+        }
+        return filterUpdate;
+      });
+      return;
+    }
+
     // The "filterUpdate" function mutates the state in place, which messes up
     // subsequent comparisons, so we generate a new instance just for the
     // "filterUpdate" function, and ensure we use the original `filterState` for

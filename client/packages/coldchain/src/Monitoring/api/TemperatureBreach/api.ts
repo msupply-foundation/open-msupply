@@ -22,19 +22,14 @@ export const getTemperatureBreachQueries = (sdk: Sdk, storeId: string) => ({
       ({ first, offset, sortBy, filterBy }: ListParams) =>
       async () => {
         const key =
-          sortBy.key === 'datetime' || sortBy.key === 'temperature'
+          sortBy.key === 'datetime' || sortBy.key === 'temperature' || sortBy.key === ''
             ? TemperatureBreachSortFieldInput.StartDatetime
             : (sortBy.key as TemperatureBreachSortFieldInput);
 
         let filter = undefined;
         if (filterBy !== null) {
           const { datetime, ...rest } = filterBy;
-          if (!!datetime) {
-            filter = {
-              ...rest,
-              startDatetime: datetime,
-            };
-          }
+          filter = { ...rest, startDatetime: datetime };
         }
 
         const result = await sdk.temperatureBreaches({

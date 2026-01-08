@@ -6,32 +6,26 @@ import {
   useTranslation,
   AppFooterPortal,
   useDeleteConfirmation,
-  useTableStore,
 } from '@openmsupply-client/common';
 import { useGoodsReceivedList } from '../api';
 import { canDeleteGoodsReceived } from '../utils';
 import { GoodsReceivedRowFragment } from '../api/operations.generated';
 
-interface FooterProps {
-  data?: GoodsReceivedRowFragment[];
-}
-
-export const FooterComponent = ({ data }: FooterProps) => {
+export const FooterComponent = ({ selectedRows, resetRowSelection }: {
+  selectedRows: GoodsReceivedRowFragment[];
+  resetRowSelection: () => void
+}) => {
   const t = useTranslation();
   const {
     delete: { deleteGoodsReceived },
   } = useGoodsReceivedList();
 
-  const { selectedRows } = useTableStore(state => ({
-    selectedRows: Object.keys(state.rowState)
-      .filter(id => state.rowState[id]?.isSelected)
-      .map(selectedId => data?.find(({ id }) => selectedId === id))
-      .filter(Boolean) as GoodsReceivedRowFragment[],
-  }));
-
   const confirmAndDelete = useDeleteConfirmation({
     selectedRows,
-    deleteAction: () => deleteGoodsReceived(selectedRows),
+    deleteAction: async () => {
+      await deleteGoodsReceived(selectedRows);
+      resetRowSelection();
+    },
     canDelete: selectedRows.every(canDeleteGoodsReceived),
     messages: {
       confirmMessage: t('messages.confirm-delete-goods-received', {

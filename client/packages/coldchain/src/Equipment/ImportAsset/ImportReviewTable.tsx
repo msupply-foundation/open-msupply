@@ -1,25 +1,24 @@
-import React, { FC, useMemo, useState } from 'react';
+import React, { FC, useMemo } from 'react';
 import {
   Grid,
-  SearchBar,
   useIsCentralServerApi,
   useTranslation,
   useWindowDimensions,
   MaterialTable,
   ColumnDef,
-  useSimpleMaterialTable,
   ColumnType,
   TextWithTooltipCell,
+  useNonPaginatedMaterialTable,
 } from '@openmsupply-client/common';
 import { ImportRow } from './EquipmentImportModal';
 import { Status } from '../Components';
 
-interface ImportReviewDataTableProps {
+interface ImportReviewTableProps {
   importRows: ImportRow[];
   showWarnings: boolean;
   showErrors: boolean;
 }
-export const ImportReviewDataTable: FC<ImportReviewDataTableProps> = ({
+export const ImportReviewTable: FC<ImportReviewTableProps> = ({
   importRows,
   showWarnings,
   showErrors,
@@ -27,8 +26,6 @@ export const ImportReviewDataTable: FC<ImportReviewDataTableProps> = ({
   const t = useTranslation();
   const isCentralServer = useIsCentralServerApi();
   const { height } = useWindowDimensions();
-
-  const [searchString, setSearchString] = useState<string>(() => '');
 
   const columns = useMemo(
     (): ColumnDef<ImportRow>[] => [
@@ -38,47 +35,57 @@ export const ImportReviewDataTable: FC<ImportReviewDataTableProps> = ({
         size: 90,
         header: t('label.store'),
         includeColumn: isCentralServer,
+        enableColumnFilter: true,
       },
       {
         accessorKey: 'assetNumber',
         size: 90,
         header: t('label.asset-number'),
+        enableSorting: true,
+        enableColumnFilter: true,
       },
       {
         accessorKey: 'catalogueItemCode',
         size: 150,
         header: t('label.catalogue-item-code'),
+        enableSorting: true,
+        enableColumnFilter: true,
       },
       {
         accessorKey: 'installationDate',
         header: t('label.installation-date'),
         size: 120,
         columnType: ColumnType.Date,
+        enableSorting: true,
       },
       {
         accessorKey: 'replacementDate',
         header: t('label.replacement-date'),
         size: 120,
         columnType: ColumnType.Date,
+        enableSorting: true,
       },
       {
         accessorKey: 'warrantyStart',
         header: t('label.warranty-start-date'),
         size: 120,
         columnType: ColumnType.Date,
+        enableSorting: true,
       },
       {
         accessorKey: 'warrantyEnd',
         header: t('label.warranty-end-date'),
         size: 120,
         columnType: ColumnType.Date,
+        enableSorting: true,
       },
-
       {
         accessorKey: 'serialNumber',
         header: t('label.serial'),
         size: 100,
         Cell: TextWithTooltipCell,
+        enableColumnFilter: true,
+        enableSorting: true,
       },
       {
         id: 'status',
@@ -86,6 +93,8 @@ export const ImportReviewDataTable: FC<ImportReviewDataTableProps> = ({
         header: t('label.status'),
         size: 100,
         Cell: ({ row }) => <Status status={row.original.status} />,
+        enableColumnFilter: true,
+        filterVariant: 'select',
       },
       {
         id: 'need-replacement',
@@ -99,6 +108,7 @@ export const ImportReviewDataTable: FC<ImportReviewDataTableProps> = ({
         size: 160,
         header: t('label.asset-notes'),
         Cell: TextWithTooltipCell,
+        enableColumnFilter: true,
       },
       {
         accessorKey: 'warningMessage',
@@ -106,6 +116,7 @@ export const ImportReviewDataTable: FC<ImportReviewDataTableProps> = ({
         size: 150,
         Cell: TextWithTooltipCell,
         includeColumn: showWarnings,
+        enableColumnFilter: true,
       },
       {
         accessorKey: 'errorMessage',
@@ -118,24 +129,12 @@ export const ImportReviewDataTable: FC<ImportReviewDataTableProps> = ({
     [showWarnings, showErrors, isCentralServer]
   );
 
-  const filteredEquipment = importRows.filter(row => {
-    if (!searchString) {
-      return true;
-    }
-    return (
-      row.assetNumber.includes(searchString) ||
-      (row.catalogueItemCode && row.catalogueItemCode.includes(searchString)) ||
-      row.errorMessage?.includes(searchString) ||
-      row.id === searchString
-    );
-  });
-
-  const table = useSimpleMaterialTable<ImportRow>({
+  const { table } = useNonPaginatedMaterialTable<ImportRow>({
     tableId: 'import-equipment-review-table',
-    data: filteredEquipment,
+    data: importRows,
     columns,
     enableRowSelection: false,
-    enableRowVirtualization: true,
+    noUrlFiltering: true,
   });
 
   return (
@@ -145,14 +144,6 @@ export const ImportReviewDataTable: FC<ImportReviewDataTableProps> = ({
       gap={2}
       maxHeight={height * 0.6}
     >
-      <SearchBar
-        placeholder={t('messages.search')}
-        value={searchString}
-        debounceTime={300}
-        onChange={newValue => {
-          setSearchString(newValue);
-        }}
-      />
       <MaterialTable table={table} />
     </Grid>
   );
