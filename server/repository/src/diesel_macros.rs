@@ -381,9 +381,9 @@ macro_rules! apply_sort_asc_nulls_first {
 /// Generates table definitions and repository methods for the entity linking abstraction pattern.
 ///
 /// This macro automates the creation of:
-/// 1. Core table definition (with link_id columns for database storage)
-/// 2. View table definition (with resolved_id columns for queries)
-/// 3. Repository `_upsert` method that translates between resolved IDs and link IDs
+/// 1. **Core table** definition (with `link_id` columns for database storage)
+/// 2. **View table** definition (with resolved `id` columns for queries)
+/// 3. **Repository `_upsert` method** that translates between resolved IDs and link IDs
 ///
 /// # Entity Linking Pattern
 ///
@@ -393,16 +393,108 @@ macro_rules! apply_sort_asc_nulls_first {
 /// - Row structs use `name_id` for clean public API
 /// - Repository methods translate back to `name_link_id` when writing
 ///
-/// # Generated Code
+/// # Syntax
 ///
-/// The macro generates:
-/// - Two `table!` blocks (core and view)
-/// - An `impl` block for the repository with `_upsert` method
-/// - The `_upsert` method handles link ID translation automatically
+/// ```rust,ignore
+/// define_linked_tables!(
+///     view: <view_table_name> = "<view_sql_name>",
+///     core: <core_table_name> = "<core_sql_name>",
+///     struct: <StructName>,
+///     repo: <RepositoryName>,
+///     shared: {
+///         field1 -> Type1,
+///         field2 -> Type2,
+///         #[attribute] field3 -> Type3,  // Attributes supported
+///         // ... other fields
+///     },
+///     links: {
+///         link_id -> resolved_id,
+///     }
+/// );
+/// ```
+///
+/// # Implicit Behavior
+///
+/// **The `id` field is automatically added** - you don't need to specify it in the `shared` section.
+/// The macro always includes `id -> Text` as the first field in both core and view tables.
+///
+/// # Special Case: `type_` Field
+///
+/// The macro automatically handles Rust keywords like `type`:
+/// - In the table schema: use `type_` with `#[sql_name = "type"]` attribute
+/// - In the Row struct: the field must be `r#type` (raw identifier)
+/// - The macro's `@field_access` helper automatically translates between them
+///
+/// This works transparently - just declare `type_` in your `shared` section with the
+/// `#[sql_name = "type"]` attribute, and the macro handles the `r#type` mapping.
+///
+/// # Example: Invoice Table
+///
+/// **Input:**
+/// ```rust,ignore
+/// define_linked_tables!(
+///     view: invoice = "invoice_view",
+///     core: invoice_with_links = "invoice",
+///     struct: InvoiceRow,
+///     repo: InvoiceRowRepository,
+///     shared: {
+///         store_id -> Text,
+///         #[sql_name = "type"] type_ -> InvoiceTypeMapping,
+///         status -> InvoiceStatusMapping,
+///         on_hold -> Bool,
+///         comment -> Nullable<Text>,
+///     },
+///     links: {
+///         name_link_id -> name_id,
+///     }
+/// );
+/// ```
+///
+/// **Generated Output:**
+/// ```rust,ignore
+/// // Core table - used for INSERT/UPDATE operations
+/// table! {
+///     #[sql_name = "invoice"]
+///     invoice_with_links (id) {
+///         id -> Text,                    // Implicit - added automatically
+///         store_id -> Text,
+///         #[sql_name = "type"] type_ -> InvoiceTypeMapping,
+///         status -> InvoiceStatusMapping,
+///         on_hold -> Bool,
+///         comment -> Nullable<Text>,
+///         name_link_id -> Text,          // From links section
+///     }
+/// }
+///
+/// // View table - used for SELECT queries
+/// table! {
+///     #[sql_name = "invoice_view"]
+///     invoice (id) {
+///         id -> Text,                    // Implicit - added automatically
+///         store_id -> Text,
+///         #[sql_name = "type"] type_ -> InvoiceTypeMapping,
+///         status -> InvoiceStatusMapping,
+///         on_hold -> Bool,
+///         comment -> Nullable<Text>,
+///         name_id -> Text,               // Resolved from name_link_id
+///     }
+/// }
+///
+/// // Generated repository method
+/// impl<'a> InvoiceRowRepository<'a> {
+///     pub fn _upsert(&self, record: &InvoiceRow) -> Result<(), RepositoryError> {
+///         // Automatically handles:
+///         // - Writing to core table (invoice_with_links)
+///         // - Translating name_id -> name_link_id
+///         // - Special case: record.r#type -> table.type_
+///         // - INSERT with ON CONFLICT DO UPDATE logic
+///     }
+/// }
+/// ```
 ///
 /// # Usage in Repository
 ///
-/// After macro invocation, implement `upsert_one` that calls `_upsert`:
+/// After macro invocation, implement `upsert_one` that calls the generated `_upsert`:
 ///
 /// ```rust,ignore
 /// impl<'a> InvoiceRowRepository<'a> {
