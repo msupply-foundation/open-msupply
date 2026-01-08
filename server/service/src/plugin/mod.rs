@@ -161,8 +161,8 @@ pub trait PluginServiceTrait: Sync + Send {
         // Get the existing cached version of the plugin
         let plugins = ctx.frontend_plugins_cache.0.read().unwrap();
         if let Some(existing_plugin) = (*plugins).get(&code) {
-            if existing_plugin.metadata.version >= version {
-                // Existing cached plugin is same or higher version, skip
+            if existing_plugin.metadata.version > version {
+                // Existing cached plugin is higher version, skip (still install if same version)
                 return;
             }
         }
