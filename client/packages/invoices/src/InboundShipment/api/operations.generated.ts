@@ -261,6 +261,11 @@ export type InboundFragment = {
       createdDatetime: string;
     }>;
   };
+  shippingMethod?: {
+    __typename: 'ShippingMethodNode';
+    id: string;
+    method: string;
+  } | null;
 };
 
 export type InboundRowFragment = {
@@ -527,6 +532,11 @@ export type InvoiceQuery = {
             createdDatetime: string;
           }>;
         };
+        shippingMethod?: {
+          __typename: 'ShippingMethodNode';
+          id: string;
+          method: string;
+        } | null;
       }
     | {
         __typename: 'NodeError';
@@ -726,6 +736,11 @@ export type InboundByNumberQuery = {
             createdDatetime: string;
           }>;
         };
+        shippingMethod?: {
+          __typename: 'ShippingMethodNode';
+          id: string;
+          method: string;
+        } | null;
       }
     | {
         __typename: 'NodeError';
@@ -1349,6 +1364,10 @@ export const InboundFragmentDoc = gql`
       nodes {
         ...SyncFileReference
       }
+    }
+    shippingMethod {
+      id
+      method
     }
   }
   ${InboundLineFragmentDoc}

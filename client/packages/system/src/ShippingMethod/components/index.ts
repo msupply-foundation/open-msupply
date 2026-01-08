@@ -1,1 +1,1 @@
-export * from './ShippingMethodAutocomplete';
+export * from './ShippingMethodSearchInput';
