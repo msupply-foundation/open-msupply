@@ -19,7 +19,6 @@ import {
   NumberInputCell,
   CurrencyInputCell,
 } from '@openmsupply-client/common';
-// Need to be re-exported when Legacy cells are removed
 import { DraftInboundLine } from '../../../../types';
 import {
   CampaignOrProgramCell,
