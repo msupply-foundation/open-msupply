@@ -97,7 +97,11 @@ impl PluginInstance {
         let plugins = PLUGINS.read().unwrap();
 
         for plugin in plugins.iter() {
-            log::info!("Plugin loaded: {} (version {})", plugin.instance.code, plugin.instance.version);
+            log::info!(
+                "Plugin loaded: {} (version {})",
+                plugin.instance.code,
+                plugin.instance.version
+            );
         }
 
         plugins
@@ -135,14 +139,15 @@ impl PluginInstance {
         }
 
         // Get existing plugin with same code in the plugin provider
-        let plugins = PLUGINS.read().unwrap();
-        if let Some(existing_plugin) = (*plugins).iter().find(|p| p.instance.code == code) {
-            if existing_plugin.instance.version > version {
-                // Existing plugin is higher version, skip (still install if same version)
-                return;
+        {
+            let plugins = PLUGINS.read().unwrap();
+            if let Some(existing_plugin) = (*plugins).iter().find(|p| p.instance.code == code) {
+                if existing_plugin.instance.version > version {
+                    // Existing plugin is higher version, skip (still install if same version)
+                    return;
+                }
             }
-        }
-        drop(plugins);
+        } // Drop read lock
 
         // Prepare plugin bundle
         let plugin_bundle = BASE64_STANDARD.decode(bundle_base64).unwrap();
@@ -157,7 +162,7 @@ impl PluginInstance {
         let instance = Arc::new(plugin);
 
         let mut plugins = PLUGINS.write().unwrap();
- 
+
         // Remove existing plugins of older versions with same code
         (*plugins).retain(|p| p.instance.code != code);
 
