@@ -7,7 +7,7 @@ import {
 } from '../../api/TemperatureLog';
 import {
   ColumnDef,
-  Formatter,
+  ColumnType,
   MaterialTable,
   NothingHere,
   usePaginatedMaterialTable,
@@ -16,10 +16,7 @@ import { BreachTypeCell, useFormatTemperature } from '../../../common';
 import { breachTypeOptions, Toolbar } from '../Toolbar';
 
 export const TemperatureLogList: FC = () => {
-  const {
-    filter,
-    queryParams,
-  } = useUrlQueryParams({
+  const { filter, queryParams } = useUrlQueryParams({
     initialSort: { key: 'datetime', dir: 'asc' },
     filters: [
       { key: 'datetime', condition: 'between' },
@@ -30,13 +27,14 @@ export const TemperatureLogList: FC = () => {
         key: 'location.code',
       },
       {
-        key: 'temperatureBreach.type',
+        key: 'type',
         condition: 'equalTo',
       },
     ],
   });
 
-  const { data, isLoading, isError } = useTemperatureLog.document.list(queryParams);
+  const { data, isLoading, isError } =
+    useTemperatureLog.document.list(queryParams);
 
   const t = useTranslation();
   const formatTemperature = useFormatTemperature();
@@ -46,8 +44,9 @@ export const TemperatureLogList: FC = () => {
       {
         accessorKey: 'datetime',
         header: t('label.date-time'),
-        Cell: ({ row: { original: row } }) => Formatter.csvDateTimeString(row.datetime),
+        columnType: ColumnType.DateTime,
         enableSorting: true,
+        enableColumnFilter: true,
       },
       {
         accessorKey: 'sensor.name',
@@ -66,13 +65,15 @@ export const TemperatureLogList: FC = () => {
       {
         accessorKey: 'temperature',
         header: t('label.temperature'),
-        Cell: ({ row: { original: row } }) => formatTemperature(row.temperature),
+        Cell: ({ row: { original: row } }) =>
+          formatTemperature(row.temperature),
         enableSorting: true,
       },
       {
         accessorKey: 'temperatureBreach.type',
         header: t('label.breach-type'),
         description: t('description.breach-type'),
+        filterKey: 'type',
         Cell: BreachTypeCell,
         enableColumnFilter: true,
         filterVariant: 'select',
