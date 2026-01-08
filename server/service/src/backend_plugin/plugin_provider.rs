@@ -22,7 +22,6 @@ pub struct PluginError {
 #[derive(Clone)]
 pub struct Plugin {
     types: PluginTypes,
-    version: Version,
     instance: Arc<PluginInstance>,
 }
 
@@ -78,30 +77,6 @@ where
     })
 }
 
-fn latest_plugins_compatible_with_current_app_version() -> Vec<Plugin> {
-    let plugins = PLUGINS.read().unwrap();
-    let app_version: Version = Version::from_package_json();
-
-    // remove all plugins that are not compatible with current app version
-    let mut filtered_plugins: Vec<Plugin> = plugins
-        .iter()
-        .filter(|p| p.version.is_compatible_by_major_and_minor(&app_version))
-        .map(|p| p.clone())
-        .collect();
-
-    // first group plugins by code, then sort by version descending, then dedup to keep highest version per code
-    filtered_plugins.sort_by(|a, b| {
-        if a.instance.code != b.instance.code {
-            return a.instance.code.cmp(&b.instance.code);
-        }
-
-        b.version.cmp(&a.version)
-    });
-    filtered_plugins.dedup_by(|a, b| a.instance.code == b.instance.code);
-
-    filtered_plugins
-}
-
 #[derive(Serialize, Deserialize, Default)]
 pub struct PluginBundle {
     pub backend_plugins: Vec<BackendPluginRow>,
@@ -110,25 +85,35 @@ pub struct PluginBundle {
 
 impl PluginInstance {
     pub fn get_one(r#type: PluginType) -> Option<Arc<PluginInstance>> {
-        latest_plugins_compatible_with_current_app_version()
-            .into_iter()
+        let plugins = PLUGINS.read().unwrap();
+
+        plugins
+            .iter()
             .find(|p| p.has_type(&r#type))
-            .map(|p| p.instance)
+            .map(|p| p.instance.clone())
     }
 
     pub fn get_all(r#type: PluginType) -> Vec<Arc<PluginInstance>> {
-        latest_plugins_compatible_with_current_app_version()
-            .into_iter()
+        let plugins = PLUGINS.read().unwrap();
+
+        for plugin in plugins.iter() {
+            log::info!("Plugin loaded: {} (version {})", plugin.instance.code, plugin.instance.version);
+        }
+
+        plugins
+            .iter()
             .filter(|p| p.has_type(&r#type))
-            .map(|p| p.instance)
+            .map(|p| p.instance.clone())
             .collect()
     }
 
     pub fn get_one_with_code(code: &str, r#type: PluginType) -> Option<Arc<PluginInstance>> {
-        latest_plugins_compatible_with_current_app_version()
-            .into_iter()
+        let plugins = PLUGINS.read().unwrap();
+
+        plugins
+            .iter()
             .find(|p| p.has_type(&r#type) && p.instance.code == code)
-            .map(|p| p.instance)
+            .map(|p| p.instance.clone())
     }
 
     pub fn bind(
@@ -141,24 +126,41 @@ impl PluginInstance {
             ..
         }: BackendPluginRow,
     ) {
-        let plugin_bundle = BASE64_STANDARD.decode(bundle_base64).unwrap();
+        let version = Version::from_str(&version);
+        let app_version = Version::from_package_json();
 
+        // Skip if not compatible
+        if !version.is_compatible_by_major_and_minor(&app_version) {
+            return;
+        }
+
+        // Get existing plugin with same code in the plugin provider
+        let plugins = PLUGINS.read().unwrap();
+        if let Some(existing_plugin) = (*plugins).iter().find(|p| p.instance.code == code) {
+            if existing_plugin.instance.version >= version {
+                // Existing plugin is same or higher version, skip
+                return;
+            }
+        }
+        drop(plugins);
+
+        // Prepare plugin bundle
+        let plugin_bundle = BASE64_STANDARD.decode(bundle_base64).unwrap();
         let plugin = match variant_type {
             PluginVariantType::BoaJs => PluginInstance {
                 code: code.clone(),
                 variant: PluginInstanceVariant::BoaJs(plugin_bundle),
-                version: Version::from_str(&version),
+                version,
             },
         };
 
         let instance = Arc::new(plugin);
-        let version = Version::from_str(&version);
 
         let mut plugins = PLUGINS.write().unwrap();
-        (*plugins).push(Plugin {
-            types,
-            instance,
-            version,
-        });
+ 
+        // Remove existing plugins of older versions with same code
+        (*plugins).retain(|p| p.instance.code != code);
+
+        (*plugins).push(Plugin { types, instance });
     }
 }

@@ -5,8 +5,8 @@ use std::{
 
 use base64::{prelude::BASE64_STANDARD, Engine};
 use repository::{
-    BackendPluginRowRepository, FrontendPluginFile, FrontendPluginRow, FrontendPluginRowRepository,
-    PluginType, RepositoryError,
+    migrations::Version, BackendPluginRowRepository, FrontendPluginFile, FrontendPluginRow,
+    FrontendPluginRowRepository, PluginType, RepositoryError,
 };
 use serde::Deserialize;
 use thiserror::Error;
@@ -57,6 +57,7 @@ pub enum PluginGraphqlQueryError {
 #[derive(Clone, Debug)]
 pub struct FrontendPluginMetadata {
     pub code: String,
+    pub version: Version,
     pub entry_point: String,
 }
 
@@ -145,9 +146,28 @@ pub trait PluginServiceTrait: Sync + Send {
             code,
             entry_point,
             files,
+            version,
             ..
         }: FrontendPluginRow,
     ) {
+        let version = Version::from_str(&version);
+        let app_version = Version::from_package_json();
+
+        // Skip if not compatible
+        if !version.is_compatible_by_major_and_minor(&app_version) {
+            return;
+        }
+
+        // Get the existing cached version of the plugin
+        let plugins = ctx.frontend_plugins_cache.0.read().unwrap();
+        if let Some(existing_plugin) = (*plugins).get(&code) {
+            if existing_plugin.metadata.version >= version {
+                // Existing cached plugin is same or higher version, skip
+                return;
+            }
+        }
+        drop(plugins);
+
         let mut files_content = HashMap::new();
         // Prepare
         for FrontendPluginFile {
@@ -160,7 +180,7 @@ pub trait PluginServiceTrait: Sync + Send {
                 BASE64_STANDARD.decode(file_content_base64).unwrap(),
             );
         }
-
+        
         let mut plugins = ctx.frontend_plugins_cache.0.write().unwrap();
         // Remove all plugins with this code
         (*plugins).remove(&code);
@@ -169,7 +189,11 @@ pub trait PluginServiceTrait: Sync + Send {
         (*plugins).insert(
             code.clone(),
             FrontendPlugin {
-                metadata: FrontendPluginMetadata { code, entry_point },
+                metadata: FrontendPluginMetadata {
+                    code,
+                    version,
+                    entry_point,
+                },
                 files_content,
             },
         );
