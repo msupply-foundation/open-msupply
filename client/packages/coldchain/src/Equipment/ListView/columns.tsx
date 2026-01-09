@@ -8,6 +8,7 @@ import {
   TextWithTooltipCell,
   AssetLogStatusNodeType,
   useUrlQuery,
+  StatusCellNew,
 } from '@openmsupply-client/common';
 import {
   mapIdNameToOptions,
@@ -15,7 +16,6 @@ import {
   useAssetTypes,
 } from '@openmsupply-client/system';
 
-import { Status } from '../Components';
 import { AssetRowFragment } from '../api/operations.generated';
 import { CCE_CLASS_ID } from '../utils';
 
@@ -88,7 +88,37 @@ export const useAssetColumns = () => {
         id: 'functionalStatus',
         header: t('label.functional-status'),
         accessorFn: row => row.statusLog?.status,
-        Cell: ({ row }) => <Status status={row.original.statusLog?.status} />,
+        Cell: ({ cell }) => (
+          <StatusCellNew
+            cell={cell}
+            statusMap={{
+              [AssetLogStatusNodeType.Decommissioned]: {
+                color: 'cceStatus.decommissioned',
+                label: t('status.decommissioned'),
+              },
+              [AssetLogStatusNodeType.Functioning]: {
+                color: 'cceStatus.functioning',
+                label: t('status.functioning'),
+              },
+              [AssetLogStatusNodeType.FunctioningButNeedsAttention]: {
+                color: 'cceStatus.functioningButNeedsAttention',
+                label: t('status.functioning-but-needs-attention'),
+              },
+              [AssetLogStatusNodeType.NotFunctioning]: {
+                color: 'cceStatus.notFunctioning',
+                label: t('status.not-functioning'),
+              },
+              [AssetLogStatusNodeType.NotInUse]: {
+                color: 'cceStatus.notInUse',
+                label: t('status.not-in-use'),
+              },
+              [AssetLogStatusNodeType.Unserviceable]: {
+                color: 'cceStatus.unserviceable',
+                label: t('status.unserviceable'),
+              },
+            }}
+          />
+        ),
         enableColumnFilter: true,
         filterVariant: 'select',
         filterSelectOptions: [
@@ -161,6 +191,6 @@ export const useAssetColumns = () => {
         enableColumnFilter: true,
       },
     ],
-    [typeOptions, categoryData?.nodes, isColdChain, isCentralServer]
+    [typeOptions, categoryData?.nodes, isColdChain, isCentralServer, t]
   );
 };
