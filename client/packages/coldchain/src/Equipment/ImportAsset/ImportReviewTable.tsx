@@ -9,7 +9,7 @@ import {
   ColumnType,
   TextWithTooltipCell,
   useNonPaginatedMaterialTable,
-  StatusCellNew,
+  StatusCell,
 } from '@openmsupply-client/common';
 import { ImportRow } from './EquipmentImportModal';
 import { fullStatusColorMap } from '../utils';
@@ -94,7 +94,7 @@ export const ImportReviewTable: FC<ImportReviewTableProps> = ({
         header: t('label.status'),
         size: 100,
         Cell: ({ cell }) => (
-          <StatusCellNew cell={cell} statusMap={fullStatusColorMap(t)} />
+          <StatusCell cell={cell} statusMap={fullStatusColorMap(t)} />
         ),
         enableColumnFilter: true,
         filterVariant: 'select',
