@@ -19,7 +19,7 @@ pub fn mock_invoice_loader_requisition1() -> RequisitionRow {
     RequisitionRow {
         id: "mock_invoice_loader_requisition1".to_string(),
         requisition_number: 1,
-        name_link_id: "name_a".to_string(),
+        name_id: "name_a".to_string(),
         store_id: mock_store_a().id,
         r#type: RequisitionType::Request,
         status: RequisitionStatus::Draft,
