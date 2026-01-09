@@ -115,7 +115,7 @@ pub enum MigrationError {
         identifier: &'static str,
     },
     #[error("Error initializing base database schema: {0}")]
-    InitializeDatabaseError(#[from] diesel::result::Error),
+    InitializeDatabaseError(anyhow::Error),
     #[error(transparent)]
     DatabaseError(#[from] RepositoryError),
 }
@@ -177,7 +177,7 @@ pub fn migrate(
     ];
 
     // Check if the database has been initialised, if not run the base sql to kick start the process
-    if is_empty_db(connection)? {
+    if is_empty_db(connection).map_err(|e| MigrationError::InitializeDatabaseError(e.into()))? {
         log::info!("Empty database detected, creating base schema...");
 
         if to_version.is_some() {
