@@ -9,6 +9,7 @@
 SET statement_timeout = 0;
 SET lock_timeout = 0;
 SET idle_in_transaction_session_timeout = 0;
+SET transaction_timeout = 0;
 SET client_encoding = 'UTF8';
 SET standard_conforming_strings = on;
 SET search_path = public;
@@ -28,6 +29,13 @@ SET row_security = off;
 --
 
 COMMENT ON SCHEMA public IS 'standard public schema';
+
+
+--
+-- Name: nocase; Type: COLLATION; Schema: public; Owner: -
+--
+
+CREATE COLLATION public.nocase (provider = icu, deterministic = false, locale = pg_catalog."default");
 
 
 --
@@ -942,354 +950,6 @@ CREATE TABLE public.activity_log (
 
 
 --
--- Name: invoice; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.invoice (
-    id text NOT NULL,
-    name_store_id text,
-    user_id text,
-    store_id text NOT NULL,
-    invoice_number bigint NOT NULL,
-    type public.invoice_type NOT NULL,
-    status public.invoice_status NOT NULL,
-    on_hold boolean NOT NULL,
-    comment text,
-    their_reference text,
-    transport_reference text,
-    created_datetime timestamp without time zone NOT NULL,
-    allocated_datetime timestamp without time zone,
-    picked_datetime timestamp without time zone,
-    shipped_datetime timestamp without time zone,
-    delivered_datetime timestamp without time zone,
-    verified_datetime timestamp without time zone,
-    colour text,
-    requisition_id text,
-    linked_invoice_id text,
-    tax_percentage double precision,
-    currency_id text,
-    currency_rate double precision DEFAULT 1.0 NOT NULL,
-    name_link_id text DEFAULT 'temp_for_migration'::text NOT NULL,
-    clinician_link_id text,
-    original_shipment_id text,
-    backdated_datetime timestamp without time zone,
-    diagnosis_id text,
-    program_id text,
-    name_insurance_join_id text,
-    insurance_discount_amount double precision,
-    insurance_discount_percentage double precision,
-    is_cancellation boolean DEFAULT false NOT NULL,
-    cancelled_datetime timestamp without time zone,
-    expected_delivery_date date,
-    default_donor_link_id text,
-    received_datetime timestamp without time zone,
-    goods_received_id text
-);
-
-
---
--- Name: invoice_line; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.invoice_line (
-    id text NOT NULL,
-    invoice_id text NOT NULL,
-    item_name text NOT NULL,
-    item_code text NOT NULL,
-    stock_line_id text,
-    location_id text,
-    batch text,
-    expiry_date date,
-    cost_price_per_pack double precision NOT NULL,
-    sell_price_per_pack double precision NOT NULL,
-    total_before_tax double precision NOT NULL,
-    total_after_tax double precision NOT NULL,
-    tax_percentage double precision,
-    type public.invoice_line_type NOT NULL,
-    number_of_packs double precision NOT NULL,
-    pack_size double precision NOT NULL,
-    note text,
-    foreign_currency_price_before_tax double precision,
-    item_link_id text DEFAULT 'temp_for_migration'::text NOT NULL,
-    item_variant_id text,
-    prescribed_quantity double precision,
-    linked_invoice_id text,
-    reason_option_id text,
-    vvm_status_id text,
-    donor_link_id text,
-    campaign_id text,
-    shipped_number_of_packs double precision,
-    shipped_pack_size double precision,
-    volume_per_pack double precision DEFAULT 0.0 NOT NULL,
-    program_id text
-);
-
-
---
--- Name: item_link; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.item_link (
-    id text NOT NULL,
-    item_id text NOT NULL
-);
-
-
---
--- Name: invoice_line_stock_movement; Type: VIEW; Schema: public; Owner: -
---
-
-CREATE VIEW public.invoice_line_stock_movement AS
- SELECT invoice_line.id,
-    invoice_line.invoice_id,
-    invoice_line.item_name,
-    invoice_line.item_code,
-    invoice_line.stock_line_id,
-    invoice_line.location_id,
-    invoice_line.batch,
-    invoice_line.expiry_date,
-    invoice_line.cost_price_per_pack,
-    invoice_line.sell_price_per_pack,
-    invoice_line.total_before_tax,
-    invoice_line.total_after_tax,
-    invoice_line.tax_percentage,
-    invoice_line.number_of_packs,
-    invoice_line.pack_size,
-    invoice_line.note,
-    invoice_line.type,
-    invoice_line.reason_option_id,
-    invoice_line.foreign_currency_price_before_tax,
-    invoice_line.item_link_id,
-    item_link.item_id,
-        CASE
-            WHEN (invoice_line.type = 'STOCK_IN'::public.invoice_line_type) THEN (invoice_line.number_of_packs * invoice_line.pack_size)
-            WHEN (invoice_line.type = 'STOCK_OUT'::public.invoice_line_type) THEN ((invoice_line.number_of_packs * invoice_line.pack_size) * ('-1'::integer)::double precision)
-            ELSE NULL::double precision
-        END AS quantity_movement
-   FROM (public.invoice_line
-     JOIN public.item_link ON ((item_link.id = invoice_line.item_link_id)))
-  WHERE ((invoice_line.number_of_packs > (0)::double precision) AND (invoice_line.type = ANY (ARRAY['STOCK_IN'::public.invoice_line_type, 'STOCK_OUT'::public.invoice_line_type])));
-
-
---
--- Name: item; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.item (
-    id text NOT NULL,
-    name text NOT NULL,
-    code text NOT NULL,
-    unit_id text,
-    type public.item_type NOT NULL,
-    default_pack_size double precision NOT NULL,
-    legacy_record text NOT NULL,
-    is_active boolean DEFAULT true NOT NULL,
-    is_vaccine boolean DEFAULT false NOT NULL,
-    strength text,
-    ven_category public.ven_category DEFAULT 'NOT_ASSIGNED'::public.ven_category NOT NULL,
-    vaccine_doses integer DEFAULT 0 NOT NULL,
-    restricted_location_type_id text
-);
-
-
---
--- Name: name; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.name (
-    id text NOT NULL,
-    name text NOT NULL,
-    code text NOT NULL,
-    type public.name_type NOT NULL,
-    is_customer boolean NOT NULL,
-    is_supplier boolean NOT NULL,
-    supplying_store_id text,
-    first_name text,
-    last_name text,
-    gender public.gender_type,
-    date_of_birth date,
-    phone text,
-    charge_code text,
-    comment text,
-    country text,
-    address1 text,
-    address2 text,
-    email text,
-    website text,
-    is_manufacturer boolean,
-    is_donor boolean,
-    on_hold boolean,
-    created_datetime timestamp without time zone,
-    is_deceased boolean DEFAULT false NOT NULL,
-    national_health_number text,
-    is_sync_update boolean DEFAULT false NOT NULL,
-    date_of_death date,
-    custom_data text,
-    deleted_datetime timestamp without time zone,
-    properties text,
-    next_of_kin_id text,
-    next_of_kin_name text,
-    hsh_code text,
-    hsh_name text,
-    margin double precision,
-    freight_factor double precision,
-    currency_id text
-);
-
-
---
--- Name: name_link; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.name_link (
-    id text NOT NULL,
-    name_id text NOT NULL
-);
-
-
---
--- Name: reason_option; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.reason_option (
-    id text NOT NULL,
-    type public.reason_option_type DEFAULT 'POSITIVE_INVENTORY_ADJUSTMENT'::public.reason_option_type NOT NULL,
-    is_active boolean DEFAULT true NOT NULL,
-    reason text NOT NULL
-);
-
-
---
--- Name: stock_line; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.stock_line (
-    id text NOT NULL,
-    store_id text NOT NULL,
-    location_id text,
-    batch text,
-    expiry_date date,
-    cost_price_per_pack double precision NOT NULL,
-    sell_price_per_pack double precision NOT NULL,
-    available_number_of_packs double precision NOT NULL,
-    total_number_of_packs double precision NOT NULL,
-    pack_size double precision NOT NULL,
-    on_hold boolean NOT NULL,
-    note text,
-    barcode_id text,
-    item_link_id text DEFAULT 'temp_for_migration'::text NOT NULL,
-    supplier_link_id text,
-    item_variant_id text,
-    vvm_status_id text,
-    campaign_id text,
-    donor_link_id text,
-    total_volume double precision DEFAULT 0.0 NOT NULL,
-    volume_per_pack double precision DEFAULT 0.0 NOT NULL,
-    program_id text
-);
-
-
---
--- Name: stock_movement; Type: VIEW; Schema: public; Owner: -
---
-
-CREATE VIEW public.stock_movement AS
- WITH all_movements AS (
-         SELECT invoice_line_stock_movement.id,
-            invoice_line_stock_movement.quantity_movement AS quantity,
-            invoice_line_stock_movement.item_id,
-            invoice.store_id,
-                CASE
-                    WHEN (invoice.type = ANY (ARRAY['OUTBOUND_SHIPMENT'::public.invoice_type, 'SUPPLIER_RETURN'::public.invoice_type, 'PRESCRIPTION'::public.invoice_type])) THEN invoice.picked_datetime
-                    WHEN (invoice.type = ANY (ARRAY['INBOUND_SHIPMENT'::public.invoice_type, 'CUSTOMER_RETURN'::public.invoice_type])) THEN invoice.received_datetime
-                    WHEN (invoice.type = ANY (ARRAY['INVENTORY_ADDITION'::public.invoice_type, 'INVENTORY_REDUCTION'::public.invoice_type, 'REPACK'::public.invoice_type])) THEN invoice.verified_datetime
-                    ELSE NULL::timestamp without time zone
-                END AS datetime,
-            name.name,
-            invoice.type AS invoice_type,
-            invoice.invoice_number,
-            invoice.id AS invoice_id,
-            invoice.linked_invoice_id,
-            name.id AS name_id,
-            name.properties AS name_properties,
-            reason_option.reason,
-            invoice_line_stock_movement.stock_line_id,
-            invoice_line_stock_movement.expiry_date,
-            invoice_line_stock_movement.batch,
-            invoice_line_stock_movement.cost_price_per_pack,
-            invoice_line_stock_movement.sell_price_per_pack,
-            invoice.status AS invoice_status,
-            invoice_line_stock_movement.total_before_tax,
-            invoice_line_stock_movement.pack_size,
-            invoice_line_stock_movement.number_of_packs
-           FROM (((((public.invoice_line_stock_movement
-             LEFT JOIN public.reason_option ON ((invoice_line_stock_movement.reason_option_id = reason_option.id)))
-             LEFT JOIN public.stock_line ON ((stock_line.id = invoice_line_stock_movement.stock_line_id)))
-             JOIN public.invoice ON ((invoice.id = invoice_line_stock_movement.invoice_id)))
-             JOIN public.name_link ON ((invoice.name_link_id = name_link.id)))
-             JOIN public.name ON ((name_link.name_id = name.id)))
-        )
- SELECT id,
-    quantity,
-    item_id,
-    store_id,
-    datetime,
-    name,
-    invoice_type,
-    invoice_number,
-    invoice_id,
-    linked_invoice_id,
-    name_id,
-    name_properties,
-    reason,
-    stock_line_id,
-    expiry_date,
-    batch,
-    cost_price_per_pack,
-    sell_price_per_pack,
-    invoice_status,
-    total_before_tax,
-    pack_size,
-    number_of_packs
-   FROM all_movements
-  WHERE (datetime IS NOT NULL);
-
-
---
--- Name: store; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.store (
-    id text NOT NULL,
-    code text NOT NULL,
-    site_id integer NOT NULL,
-    store_mode public.store_mode DEFAULT 'STORE'::public.store_mode NOT NULL,
-    logo text,
-    created_date date,
-    name_link_id text,
-    is_disabled boolean DEFAULT false NOT NULL
-);
-
-
---
--- Name: adjustments; Type: VIEW; Schema: public; Owner: -
---
-
-CREATE VIEW public.adjustments AS
- SELECT 'n/a'::text AS id,
-    items_and_stores.item_id,
-    items_and_stores.store_id,
-    stock_movement.quantity,
-    date(stock_movement.datetime) AS date
-   FROM (( SELECT item.id AS item_id,
-            store.id AS store_id
-           FROM public.item,
-            public.store) items_and_stores
-     LEFT JOIN public.stock_movement ON (((stock_movement.item_id = items_and_stores.item_id) AND (stock_movement.store_id = items_and_stores.store_id))))
-  WHERE ((stock_movement.invoice_type = 'CUSTOMER_RETURN'::public.invoice_type) OR (stock_movement.invoice_type = 'SUPPLIER_RETURN'::public.invoice_type) OR (stock_movement.invoice_type = 'INVENTORY_ADDITION'::public.invoice_type) OR (stock_movement.invoice_type = 'INVENTORY_REDUCTION'::public.invoice_type));
-
-
---
 -- Name: asset; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -1525,28 +1185,6 @@ ALTER SEQUENCE public.changelog_cursor_seq OWNED BY public.changelog.cursor;
 
 
 --
--- Name: changelog_deduped; Type: VIEW; Schema: public; Owner: -
---
-
-CREATE VIEW public.changelog_deduped AS
- SELECT c.cursor,
-    c.table_name,
-    c.record_id,
-    c.row_action,
-    c.name_link_id,
-    c.store_id,
-    c.is_sync_update,
-    c.source_site_id
-   FROM (( SELECT changelog.record_id,
-            changelog.store_id,
-            max(changelog.cursor) AS max_cursor
-           FROM public.changelog
-          GROUP BY changelog.record_id, changelog.store_id) grouped
-     JOIN public.changelog c ON (((c.record_id = grouped.record_id) AND ((c.store_id = grouped.store_id) OR ((c.store_id IS NULL) AND (grouped.store_id IS NULL))) AND (c.cursor = grouped.max_cursor))))
-  ORDER BY c.cursor;
-
-
---
 -- Name: clinician; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -1588,27 +1226,6 @@ CREATE TABLE public.clinician_store_join (
     is_sync_update boolean DEFAULT false NOT NULL,
     clinician_link_id text DEFAULT 'temp_for_migration'::text NOT NULL
 );
-
-
---
--- Name: consumption; Type: VIEW; Schema: public; Owner: -
---
-
-CREATE VIEW public.consumption AS
- SELECT 'n/a'::text AS id,
-    items_and_stores.item_id,
-    items_and_stores.store_id,
-    (@ COALESCE(stock_movement.quantity, (0)::double precision)) AS quantity,
-    date(stock_movement.datetime) AS date,
-    stock_movement.invoice_type,
-    stock_movement.name_id,
-    stock_movement.name_properties
-   FROM (( SELECT item.id AS item_id,
-            store.id AS store_id
-           FROM public.item,
-            public.store) items_and_stores
-     LEFT JOIN public.stock_movement ON (((stock_movement.item_id = items_and_stores.item_id) AND (stock_movement.store_id = items_and_stores.store_id))))
-  WHERE ((stock_movement.invoice_type = 'OUTBOUND_SHIPMENT'::public.invoice_type) OR (stock_movement.invoice_type = 'PRESCRIPTION'::public.invoice_type));
 
 
 --
@@ -1668,29 +1285,6 @@ CREATE TABLE public.contact_trace (
     patient_link_id text DEFAULT 'temp_for_migration'::text NOT NULL,
     contact_patient_link_id text
 );
-
-
---
--- Name: contact_trace_name_link_view; Type: VIEW; Schema: public; Owner: -
---
-
-CREATE VIEW public.contact_trace_name_link_view AS
- SELECT ct.id,
-    ct.program_id,
-    ct.document_id,
-    ct.datetime,
-    ct.contact_trace_id,
-    patient_name_link.name_id AS patient_id,
-    contact_patient_name_link.name_id AS contact_patient_id,
-    ct.first_name,
-    ct.last_name,
-    ct.gender,
-    (ct.date_of_birth)::date AS date_of_birth,
-    ct.store_id,
-    ct.relationship
-   FROM ((public.contact_trace ct
-     JOIN public.name_link patient_name_link ON ((ct.patient_link_id = patient_name_link.id)))
-     LEFT JOIN public.name_link contact_patient_name_link ON ((ct.contact_patient_link_id = contact_patient_name_link.id)));
 
 
 --
@@ -1920,21 +1514,6 @@ CREATE TABLE public.goods_received_line (
 
 
 --
--- Name: inbound_shipment_stock_movement; Type: VIEW; Schema: public; Owner: -
---
-
-CREATE VIEW public.inbound_shipment_stock_movement AS
- SELECT 'n/a'::text AS id,
-    invoice_line_stock_movement.quantity_movement AS quantity,
-    invoice_line_stock_movement.item_id,
-    invoice.store_id,
-    invoice.received_datetime AS datetime
-   FROM (public.invoice_line_stock_movement
-     JOIN public.invoice ON ((invoice_line_stock_movement.invoice_id = invoice.id)))
-  WHERE ((invoice.type = 'INBOUND_SHIPMENT'::public.invoice_type) AND (invoice.received_datetime IS NOT NULL));
-
-
---
 -- Name: indicator_column; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -1995,36 +1574,108 @@ CREATE TABLE public.insurance_provider (
 
 
 --
--- Name: inventory_adjustment_stock_movement; Type: VIEW; Schema: public; Owner: -
+-- Name: invoice; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE VIEW public.inventory_adjustment_stock_movement AS
- SELECT 'n/a'::text AS id,
-    invoice_line_stock_movement.quantity_movement AS quantity,
-    invoice_line_stock_movement.item_id,
-    invoice.store_id,
-    invoice.verified_datetime AS datetime
-   FROM (public.invoice_line_stock_movement
-     JOIN public.invoice ON ((invoice_line_stock_movement.invoice_id = invoice.id)))
-  WHERE ((invoice.type = ANY (ARRAY['INVENTORY_REDUCTION'::public.invoice_type, 'INVENTORY_ADDITION'::public.invoice_type])) AND (invoice.verified_datetime IS NOT NULL));
+CREATE TABLE public.invoice (
+    id text NOT NULL,
+    name_store_id text,
+    user_id text,
+    store_id text NOT NULL,
+    invoice_number bigint NOT NULL,
+    type public.invoice_type NOT NULL,
+    status public.invoice_status NOT NULL,
+    on_hold boolean NOT NULL,
+    comment text,
+    their_reference text,
+    transport_reference text,
+    created_datetime timestamp without time zone NOT NULL,
+    allocated_datetime timestamp without time zone,
+    picked_datetime timestamp without time zone,
+    shipped_datetime timestamp without time zone,
+    delivered_datetime timestamp without time zone,
+    verified_datetime timestamp without time zone,
+    colour text,
+    requisition_id text,
+    linked_invoice_id text,
+    tax_percentage double precision,
+    currency_id text,
+    currency_rate double precision DEFAULT 1.0 NOT NULL,
+    name_link_id text DEFAULT 'temp_for_migration'::text NOT NULL,
+    clinician_link_id text,
+    original_shipment_id text,
+    backdated_datetime timestamp without time zone,
+    diagnosis_id text,
+    program_id text,
+    name_insurance_join_id text,
+    insurance_discount_amount double precision,
+    insurance_discount_percentage double precision,
+    is_cancellation boolean DEFAULT false NOT NULL,
+    cancelled_datetime timestamp without time zone,
+    expected_delivery_date date,
+    default_donor_link_id text,
+    received_datetime timestamp without time zone,
+    goods_received_id text
+);
 
 
 --
--- Name: invoice_stats; Type: VIEW; Schema: public; Owner: -
+-- Name: invoice_line; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE VIEW public.invoice_stats AS
- SELECT invoice_id,
-    sum(total_before_tax) AS total_before_tax,
-    sum(total_after_tax) AS total_after_tax,
-    (COALESCE(((sum(total_after_tax) / NULLIF(sum(total_before_tax), (0)::double precision)) - (1)::double precision), (0)::double precision) * (100)::double precision) AS tax_percentage,
-    (COALESCE(sum(foreign_currency_price_before_tax), (0)::double precision) + (COALESCE(sum(foreign_currency_price_before_tax), (0)::double precision) * COALESCE(((sum(total_after_tax) / NULLIF(sum(total_before_tax), (0)::double precision)) - (1)::double precision), (0)::double precision))) AS foreign_currency_total_after_tax,
-    COALESCE(sum(total_before_tax) FILTER (WHERE (type = 'SERVICE'::public.invoice_line_type)), (0)::double precision) AS service_total_before_tax,
-    COALESCE(sum(total_after_tax) FILTER (WHERE (type = 'SERVICE'::public.invoice_line_type)), (0)::double precision) AS service_total_after_tax,
-    COALESCE(sum(total_before_tax) FILTER (WHERE (type = ANY (ARRAY['STOCK_IN'::public.invoice_line_type, 'STOCK_OUT'::public.invoice_line_type]))), (0)::double precision) AS stock_total_before_tax,
-    COALESCE(sum(total_after_tax) FILTER (WHERE (type = ANY (ARRAY['STOCK_IN'::public.invoice_line_type, 'STOCK_OUT'::public.invoice_line_type]))), (0)::double precision) AS stock_total_after_tax
-   FROM public.invoice_line
-  GROUP BY invoice_id;
+CREATE TABLE public.invoice_line (
+    id text NOT NULL,
+    invoice_id text NOT NULL,
+    item_name text NOT NULL,
+    item_code text NOT NULL,
+    stock_line_id text,
+    location_id text,
+    batch text,
+    expiry_date date,
+    cost_price_per_pack double precision NOT NULL,
+    sell_price_per_pack double precision NOT NULL,
+    total_before_tax double precision NOT NULL,
+    total_after_tax double precision NOT NULL,
+    tax_percentage double precision,
+    type public.invoice_line_type NOT NULL,
+    number_of_packs double precision NOT NULL,
+    pack_size double precision NOT NULL,
+    note text,
+    foreign_currency_price_before_tax double precision,
+    item_link_id text DEFAULT 'temp_for_migration'::text NOT NULL,
+    item_variant_id text,
+    prescribed_quantity double precision,
+    linked_invoice_id text,
+    reason_option_id text,
+    vvm_status_id text,
+    donor_link_id text,
+    campaign_id text,
+    shipped_number_of_packs double precision,
+    shipped_pack_size double precision,
+    volume_per_pack double precision DEFAULT 0.0 NOT NULL,
+    program_id text
+);
+
+
+--
+-- Name: item; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.item (
+    id text NOT NULL,
+    name text NOT NULL,
+    code text NOT NULL,
+    unit_id text,
+    type public.item_type NOT NULL,
+    default_pack_size double precision NOT NULL,
+    legacy_record text NOT NULL,
+    is_active boolean DEFAULT true NOT NULL,
+    is_vaccine boolean DEFAULT false NOT NULL,
+    strength text,
+    ven_category public.ven_category DEFAULT 'NOT_ASSIGNED'::public.ven_category NOT NULL,
+    vaccine_doses integer DEFAULT 0 NOT NULL,
+    restricted_location_type_id text
+);
 
 
 --
@@ -2052,73 +1703,13 @@ CREATE TABLE public.item_direction (
 
 
 --
--- Name: item_ledger; Type: VIEW; Schema: public; Owner: -
+-- Name: item_link; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE VIEW public.item_ledger AS
- WITH all_movements AS (
-         SELECT invoice_line_stock_movement.id,
-            invoice_line_stock_movement.quantity_movement AS movement_in_units,
-            invoice_line_stock_movement.item_id,
-            invoice.store_id,
-                CASE
-                    WHEN (invoice.type = ANY (ARRAY['OUTBOUND_SHIPMENT'::public.invoice_type, 'SUPPLIER_RETURN'::public.invoice_type, 'PRESCRIPTION'::public.invoice_type])) THEN invoice.picked_datetime
-                    WHEN (invoice.type = ANY (ARRAY['INBOUND_SHIPMENT'::public.invoice_type, 'CUSTOMER_RETURN'::public.invoice_type])) THEN invoice.received_datetime
-                    WHEN (invoice.type = ANY (ARRAY['INVENTORY_ADDITION'::public.invoice_type, 'INVENTORY_REDUCTION'::public.invoice_type, 'REPACK'::public.invoice_type])) THEN invoice.verified_datetime
-                    ELSE NULL::timestamp without time zone
-                END AS datetime,
-            name.name,
-            name.id AS name_id,
-            invoice.type AS invoice_type,
-            invoice.invoice_number,
-            invoice.id AS invoice_id,
-            reason_option.reason,
-            invoice_line_stock_movement.stock_line_id,
-            invoice_line_stock_movement.expiry_date,
-            invoice_line_stock_movement.batch,
-            invoice_line_stock_movement.cost_price_per_pack,
-            invoice_line_stock_movement.sell_price_per_pack,
-            invoice.status AS invoice_status,
-            invoice_line_stock_movement.total_before_tax,
-            invoice_line_stock_movement.pack_size,
-            invoice_line_stock_movement.number_of_packs,
-                CASE
-                    WHEN (invoice.type = ANY (ARRAY['INBOUND_SHIPMENT'::public.invoice_type, 'CUSTOMER_RETURN'::public.invoice_type, 'INVENTORY_ADDITION'::public.invoice_type])) THEN 1
-                    WHEN (invoice.type = ANY (ARRAY['OUTBOUND_SHIPMENT'::public.invoice_type, 'SUPPLIER_RETURN'::public.invoice_type, 'PRESCRIPTION'::public.invoice_type, 'INVENTORY_REDUCTION'::public.invoice_type])) THEN 2
-                    ELSE 3
-                END AS type_precedence
-           FROM (((((public.invoice_line_stock_movement
-             LEFT JOIN public.reason_option ON ((invoice_line_stock_movement.reason_option_id = reason_option.id)))
-             LEFT JOIN public.stock_line ON ((stock_line.id = invoice_line_stock_movement.stock_line_id)))
-             JOIN public.invoice ON ((invoice.id = invoice_line_stock_movement.invoice_id)))
-             JOIN public.name_link ON ((invoice.name_link_id = name_link.id)))
-             JOIN public.name ON ((name_link.name_id = name.id)))
-        )
- SELECT id,
-    movement_in_units,
-    item_id,
-    store_id,
-    datetime,
-    name,
-    name_id,
-    invoice_type,
-    invoice_number,
-    invoice_id,
-    reason,
-    stock_line_id,
-    expiry_date,
-    batch,
-    cost_price_per_pack,
-    sell_price_per_pack,
-    invoice_status,
-    total_before_tax,
-    pack_size,
-    number_of_packs,
-    type_precedence,
-    sum(movement_in_units) OVER (PARTITION BY store_id, item_id ORDER BY datetime, id, type_precedence ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS running_balance
-   FROM all_movements
-  WHERE (datetime IS NOT NULL)
-  ORDER BY datetime, id, type_precedence;
+CREATE TABLE public.item_link (
+    id text NOT NULL,
+    item_id text NOT NULL
+);
 
 
 --
@@ -2176,50 +1767,6 @@ CREATE TABLE public.key_value_store (
     value_float double precision,
     value_bool boolean
 );
-
-
---
--- Name: latest_asset_log; Type: VIEW; Schema: public; Owner: -
---
-
-CREATE VIEW public.latest_asset_log AS
- SELECT al.id,
-    al.asset_id,
-    al.user_id,
-    al.comment,
-    al.type,
-    al.log_datetime,
-    al.status,
-    al.reason_id
-   FROM (( SELECT asset_log.asset_id,
-            max(asset_log.log_datetime) AS latest_log_datetime
-           FROM public.asset_log
-          GROUP BY asset_log.asset_id) grouped
-     JOIN public.asset_log al ON (((al.asset_id = grouped.asset_id) AND (al.log_datetime = grouped.latest_log_datetime))));
-
-
---
--- Name: latest_document; Type: VIEW; Schema: public; Owner: -
---
-
-CREATE VIEW public.latest_document AS
- SELECT d.id,
-    d.name,
-    d.parent_ids,
-    d.user_id,
-    d.datetime,
-    d.type,
-    d.data,
-    d.form_schema_id,
-    d.status,
-    d.is_sync_update,
-    d.context_id,
-    d.owner_name_link_id
-   FROM (( SELECT document.name,
-            max(document.datetime) AS datetime
-           FROM public.document
-          GROUP BY document.name) grouped
-     JOIN public.document d ON (((d.name = grouped.name) AND (d.datetime = grouped.datetime))));
 
 
 --
@@ -2312,6 +1859,51 @@ CREATE TABLE public.migration_fragment_log (
 
 
 --
+-- Name: name; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.name (
+    id text NOT NULL,
+    name text NOT NULL,
+    code text NOT NULL,
+    type public.name_type NOT NULL,
+    is_customer boolean NOT NULL,
+    is_supplier boolean NOT NULL,
+    supplying_store_id text,
+    first_name text,
+    last_name text,
+    gender public.gender_type,
+    date_of_birth date,
+    phone text,
+    charge_code text,
+    comment text,
+    country text,
+    address1 text,
+    address2 text,
+    email text,
+    website text,
+    is_manufacturer boolean,
+    is_donor boolean,
+    on_hold boolean,
+    created_datetime timestamp without time zone,
+    is_deceased boolean DEFAULT false NOT NULL,
+    national_health_number text,
+    is_sync_update boolean DEFAULT false NOT NULL,
+    date_of_death date,
+    custom_data text,
+    deleted_datetime timestamp without time zone,
+    properties text,
+    next_of_kin_id text,
+    next_of_kin_name text,
+    hsh_code text,
+    hsh_name text,
+    margin double precision,
+    freight_factor double precision,
+    currency_id text
+);
+
+
+--
 -- Name: name_insurance_join; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -2328,6 +1920,16 @@ CREATE TABLE public.name_insurance_join (
     is_active boolean NOT NULL,
     entered_by_id text,
     name_of_insured text
+);
+
+
+--
+-- Name: name_link; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.name_link (
+    id text NOT NULL,
+    name_id text NOT NULL
 );
 
 
@@ -2387,21 +1989,6 @@ CREATE TABLE public.number (
     store_id text NOT NULL,
     type text NOT NULL
 );
-
-
---
--- Name: outbound_shipment_stock_movement; Type: VIEW; Schema: public; Owner: -
---
-
-CREATE VIEW public.outbound_shipment_stock_movement AS
- SELECT 'n/a'::text AS id,
-    invoice_line_stock_movement.quantity_movement AS quantity,
-    invoice_line_stock_movement.item_id,
-    invoice.store_id,
-    invoice.picked_datetime AS datetime
-   FROM (public.invoice_line_stock_movement
-     JOIN public.invoice ON ((invoice_line_stock_movement.invoice_id = invoice.id)))
-  WHERE ((invoice.type = 'OUTBOUND_SHIPMENT'::public.invoice_type) AND (invoice.picked_datetime IS NOT NULL));
 
 
 --
@@ -2659,32 +2246,15 @@ CREATE TABLE public.purchase_order_line (
 
 
 --
--- Name: purchase_order_stats; Type: VIEW; Schema: public; Owner: -
+-- Name: reason_option; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE VIEW public.purchase_order_stats AS
-SELECT
-    NULL::text AS purchase_order_id,
-    NULL::double precision AS order_total_before_discount,
-    NULL::double precision AS order_total_after_discount;
-
-
---
--- Name: replenishment; Type: VIEW; Schema: public; Owner: -
---
-
-CREATE VIEW public.replenishment AS
- SELECT 'n/a'::text AS id,
-    items_and_stores.item_id,
-    items_and_stores.store_id,
-    (@ COALESCE(stock_movement.quantity, (0)::double precision)) AS quantity,
-    date(stock_movement.datetime) AS date
-   FROM (( SELECT item.id AS item_id,
-            store.id AS store_id
-           FROM public.item,
-            public.store) items_and_stores
-     LEFT JOIN public.stock_movement ON (((stock_movement.item_id = items_and_stores.item_id) AND (stock_movement.store_id = items_and_stores.store_id))))
-  WHERE (stock_movement.invoice_type = 'INBOUND_SHIPMENT'::public.invoice_type);
+CREATE TABLE public.reason_option (
+    id text NOT NULL,
+    type public.reason_option_type DEFAULT 'POSITIVE_INVENTORY_ADJUSTMENT'::public.reason_option_type NOT NULL,
+    is_active boolean DEFAULT true NOT NULL,
+    reason text NOT NULL
+);
 
 
 --
@@ -2705,113 +2275,6 @@ CREATE TABLE public.report (
     is_active boolean DEFAULT true NOT NULL,
     excel_template_buffer bytea
 );
-
-
---
--- Name: report_document; Type: VIEW; Schema: public; Owner: -
---
-
-CREATE VIEW public.report_document AS
- SELECT d.name,
-    d.datetime,
-    d.type,
-    d.data,
-    nl.name_id AS owner_name_id
-   FROM ((( SELECT document.name AS doc_name,
-            max(document.datetime) AS doc_time
-           FROM public.document
-          GROUP BY document.name) grouped
-     JOIN public.document d ON (((d.name = grouped.doc_name) AND (d.datetime = grouped.doc_time))))
-     LEFT JOIN public.name_link nl ON ((nl.id = d.owner_name_link_id)))
-  WHERE (d.status <> 'DELETED'::public.document_status);
-
-
---
--- Name: report_encounter; Type: VIEW; Schema: public; Owner: -
---
-
-CREATE VIEW public.report_encounter AS
- SELECT encounter.id,
-    encounter.created_datetime,
-    encounter.start_datetime,
-    encounter.end_datetime,
-    encounter.status,
-    encounter.store_id,
-    nl.name_id AS patient_id,
-    encounter.document_type,
-    doc.data AS document_data
-   FROM ((public.encounter
-     LEFT JOIN public.name_link nl ON ((nl.id = encounter.patient_link_id)))
-     LEFT JOIN public.report_document doc ON ((doc.name = encounter.document_name)));
-
-
---
--- Name: report_patient; Type: VIEW; Schema: public; Owner: -
---
-
-CREATE VIEW public.report_patient AS
- SELECT id,
-    code,
-    national_health_number AS code_2,
-    first_name,
-    last_name,
-    gender,
-    date_of_birth,
-    address1,
-    phone,
-    date_of_death,
-    is_deceased
-   FROM public.name;
-
-
---
--- Name: report_program_enrolment; Type: VIEW; Schema: public; Owner: -
---
-
-CREATE VIEW public.report_program_enrolment AS
- SELECT program_enrolment.id,
-    program_enrolment.document_type,
-    program_enrolment.enrolment_datetime,
-    program_enrolment.program_enrolment_id,
-    program_enrolment.status,
-    nl.name_id AS patient_id,
-    doc.data AS document_data
-   FROM ((public.program_enrolment
-     LEFT JOIN public.name_link nl ON ((nl.id = program_enrolment.patient_link_id)))
-     LEFT JOIN public.report_document doc ON ((doc.name = program_enrolment.document_name)));
-
-
---
--- Name: report_program_event; Type: VIEW; Schema: public; Owner: -
---
-
-CREATE VIEW public.report_program_event AS
- SELECT e.id,
-    nl.name_id AS patient_id,
-    e.datetime,
-    e.active_start_datetime,
-    e.active_end_datetime,
-    e.document_type,
-    e.document_name,
-    e.type,
-    e.data
-   FROM (public.program_event e
-     LEFT JOIN public.name_link nl ON ((nl.id = e.patient_link_id)));
-
-
---
--- Name: report_store; Type: VIEW; Schema: public; Owner: -
---
-
-CREATE VIEW public.report_store AS
- SELECT store.id,
-    store.code,
-    store.store_mode,
-    store.logo,
-    name.name
-   FROM ((public.store
-     JOIN public.name_link ON ((store.name_link_id = name_link.id)))
-     JOIN public.name ON ((name_link.name_id = name.id)));
 
 
 --
@@ -2876,26 +2339,6 @@ CREATE TABLE public.requisition_line (
     option_id text,
     price_per_unit double precision
 );
-
-
---
--- Name: requisitions_in_period; Type: VIEW; Schema: public; Owner: -
---
-
-CREATE VIEW public.requisitions_in_period AS
- SELECT 'n/a'::text AS id,
-    r.program_id,
-    r.period_id,
-    r.store_id,
-    r.order_type,
-    r.type,
-    n.id AS other_party_id,
-    count(*) AS count
-   FROM ((public.requisition r
-     JOIN public.name_link nl ON ((r.name_link_id = nl.id)))
-     JOIN public.name n ON ((nl.name_id = n.id)))
-  WHERE (r.order_type IS NOT NULL)
-  GROUP BY 'n/a'::text, r.program_id, r.period_id, r.store_id, r.order_type, r.type, n.id;
 
 
 --
@@ -2980,147 +2423,33 @@ CREATE TABLE public.shipping_method (
 
 
 --
--- Name: stock_line_ledger; Type: VIEW; Schema: public; Owner: -
+-- Name: stock_line; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE VIEW public.stock_line_ledger AS
- WITH movements_with_precedence AS (
-         SELECT stock_movement.id,
-            stock_movement.quantity,
-            stock_movement.item_id,
-            stock_movement.store_id,
-            stock_movement.datetime,
-            stock_movement.name,
-            stock_movement.invoice_type,
-            stock_movement.invoice_number,
-            stock_movement.invoice_id,
-            stock_movement.linked_invoice_id,
-            stock_movement.name_id,
-            stock_movement.name_properties,
-            stock_movement.reason,
-            stock_movement.stock_line_id,
-            stock_movement.expiry_date,
-            stock_movement.batch,
-            stock_movement.cost_price_per_pack,
-            stock_movement.sell_price_per_pack,
-            stock_movement.invoice_status,
-            stock_movement.total_before_tax,
-            stock_movement.pack_size,
-            stock_movement.number_of_packs,
-                CASE
-                    WHEN (stock_movement.invoice_type = ANY (ARRAY['INBOUND_SHIPMENT'::public.invoice_type, 'CUSTOMER_RETURN'::public.invoice_type, 'INVENTORY_ADDITION'::public.invoice_type])) THEN 1
-                    WHEN (stock_movement.invoice_type = ANY (ARRAY['OUTBOUND_SHIPMENT'::public.invoice_type, 'SUPPLIER_RETURN'::public.invoice_type, 'PRESCRIPTION'::public.invoice_type, 'INVENTORY_REDUCTION'::public.invoice_type])) THEN 2
-                    ELSE 3
-                END AS type_precedence
-           FROM public.stock_movement
-          WHERE (stock_movement.stock_line_id IS NOT NULL)
-        )
- SELECT id,
-    quantity,
-    item_id,
-    store_id,
-    datetime,
-    name,
-    invoice_type,
-    invoice_number,
-    invoice_id,
-    linked_invoice_id,
-    name_id,
-    name_properties,
-    reason,
-    stock_line_id,
-    expiry_date,
-    batch,
-    cost_price_per_pack,
-    sell_price_per_pack,
-    invoice_status,
-    total_before_tax,
-    pack_size,
-    number_of_packs,
-    type_precedence,
-    sum(quantity) OVER (PARTITION BY store_id, stock_line_id ORDER BY datetime, type_precedence ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS running_balance
-   FROM movements_with_precedence
-  ORDER BY datetime, type_precedence;
-
-
---
--- Name: stock_line_ledger_discrepancy; Type: VIEW; Schema: public; Owner: -
---
-
-CREATE VIEW public.stock_line_ledger_discrepancy AS
- WITH allocated_not_picked AS (
-         SELECT invoice_line.stock_line_id,
-            sum((invoice_line.number_of_packs * invoice_line.pack_size)) AS q
-           FROM (public.invoice_line
-             JOIN public.invoice ON ((invoice.id = invoice_line.invoice_id)))
-          WHERE ((invoice_line.type = 'STOCK_OUT'::public.invoice_line_type) AND (invoice.status = ANY (ARRAY['NEW'::public.invoice_status, 'ALLOCATED'::public.invoice_status])))
-          GROUP BY invoice_line.stock_line_id
-        ), max_ledger_datetime AS (
-         SELECT stock_movement.stock_line_id,
-            max(stock_movement.datetime) AS dt
-           FROM public.stock_movement
-          GROUP BY stock_movement.stock_line_id
-        ), running_balance AS (
-         SELECT stock_line_ledger.stock_line_id,
-            stock_line_ledger.running_balance AS q
-           FROM (public.stock_line_ledger
-             JOIN max_ledger_datetime ON (((stock_line_ledger.stock_line_id = max_ledger_datetime.stock_line_id) AND (stock_line_ledger.datetime = max_ledger_datetime.dt))))
-        ), current_balance AS (
-         SELECT stock_line.id AS stock_line_id,
-            (stock_line.available_number_of_packs * stock_line.pack_size) AS a_q,
-            (stock_line.total_number_of_packs * stock_line.pack_size) AS t_q
-           FROM public.stock_line
-        )
- SELECT DISTINCT stock_line_ledger.stock_line_id
-   FROM public.stock_line_ledger
-  WHERE (stock_line_ledger.running_balance < (0)::double precision)
-UNION
- SELECT current_balance.stock_line_id
-   FROM ((current_balance
-     LEFT JOIN running_balance ON ((running_balance.stock_line_id = current_balance.stock_line_id)))
-     LEFT JOIN allocated_not_picked ON ((allocated_not_picked.stock_line_id = current_balance.stock_line_id)))
-  WHERE ((NOT ((running_balance.q = current_balance.t_q) AND (((allocated_not_picked.q IS NULL) AND (current_balance.t_q = current_balance.a_q)) OR ((allocated_not_picked.q IS NOT NULL) AND ((current_balance.a_q + allocated_not_picked.q) = current_balance.t_q))))) OR ((running_balance.q IS NULL) AND ((current_balance.t_q <> (0)::double precision) OR (current_balance.a_q <> (0)::double precision))));
-
-
---
--- Name: store_items; Type: VIEW; Schema: public; Owner: -
---
-
-CREATE VIEW public.store_items AS
- SELECT i.id AS item_id,
-    sl.store_id,
-    sl.pack_size,
-    sl.available_number_of_packs,
-    sl.total_number_of_packs
-   FROM (((public.item i
-     LEFT JOIN public.item_link il ON ((il.item_id = i.id)))
-     LEFT JOIN public.stock_line sl ON ((sl.item_link_id = il.id)))
-     LEFT JOIN public.store s ON ((s.id = sl.store_id)));
-
-
---
--- Name: stock_on_hand; Type: VIEW; Schema: public; Owner: -
---
-
-CREATE VIEW public.stock_on_hand AS
- SELECT 'n/a'::text AS id,
-    items_and_stores.item_id,
-    items_and_stores.item_name,
-    items_and_stores.store_id,
-    COALESCE(stock.available_stock_on_hand, (0)::double precision) AS available_stock_on_hand,
-    COALESCE(stock.total_stock_on_hand, (0)::double precision) AS total_stock_on_hand
-   FROM (( SELECT item.id AS item_id,
-            item.name AS item_name,
-            store.id AS store_id
-           FROM public.item,
-            public.store) items_and_stores
-     LEFT JOIN ( SELECT store_items.item_id,
-            store_items.store_id,
-            sum((store_items.pack_size * store_items.available_number_of_packs)) AS available_stock_on_hand,
-            sum((store_items.pack_size * store_items.total_number_of_packs)) AS total_stock_on_hand
-           FROM public.store_items
-          WHERE ((store_items.available_number_of_packs > (0)::double precision) OR (store_items.total_number_of_packs > (0)::double precision))
-          GROUP BY store_items.item_id, store_items.store_id) stock ON (((stock.item_id = items_and_stores.item_id) AND (stock.store_id = items_and_stores.store_id))));
+CREATE TABLE public.stock_line (
+    id text NOT NULL,
+    store_id text NOT NULL,
+    location_id text,
+    batch text,
+    expiry_date date,
+    cost_price_per_pack double precision NOT NULL,
+    sell_price_per_pack double precision NOT NULL,
+    available_number_of_packs double precision NOT NULL,
+    total_number_of_packs double precision NOT NULL,
+    pack_size double precision NOT NULL,
+    on_hold boolean NOT NULL,
+    note text,
+    barcode_id text,
+    item_link_id text DEFAULT 'temp_for_migration'::text NOT NULL,
+    supplier_link_id text,
+    item_variant_id text,
+    vvm_status_id text,
+    campaign_id text,
+    donor_link_id text,
+    total_volume double precision DEFAULT 0.0 NOT NULL,
+    volume_per_pack double precision DEFAULT 0.0 NOT NULL,
+    program_id text
+);
 
 
 --
@@ -3175,6 +2504,22 @@ CREATE TABLE public.stocktake_line (
     campaign_id text,
     program_id text,
     vvm_status_id text
+);
+
+
+--
+-- Name: store; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.store (
+    id text NOT NULL,
+    code text NOT NULL,
+    site_id integer NOT NULL,
+    store_mode public.store_mode DEFAULT 'STORE'::public.store_mode NOT NULL,
+    logo text,
+    created_date date,
+    name_link_id text,
+    is_disabled boolean DEFAULT false NOT NULL
 );
 
 
@@ -3483,38 +2828,6 @@ CREATE TABLE public.vaccine_course_dose (
 
 
 --
--- Name: vaccination_card; Type: VIEW; Schema: public; Owner: -
---
-
-CREATE VIEW public.vaccination_card AS
- SELECT ((vcd.id || '_'::text) || pe.id) AS id,
-    vcd.id AS vaccine_course_dose_id,
-    vcd.label,
-    vcd.min_interval_days,
-    vcd.min_age,
-    vcd.max_age,
-    vcd.custom_age_label,
-    vc.id AS vaccine_course_id,
-    vc.can_skip_dose,
-    v.id AS vaccination_id,
-    v.vaccination_date,
-    v.given,
-    v.stock_line_id,
-    n.id AS facility_name_id,
-    v.facility_free_text,
-    s.batch,
-    pe.id AS program_enrolment_id
-   FROM ((((((public.vaccine_course_dose vcd
-     JOIN public.vaccine_course vc ON ((vcd.vaccine_course_id = vc.id)))
-     JOIN public.program_enrolment pe ON ((pe.program_id = vc.program_id)))
-     LEFT JOIN public.vaccination v ON (((v.vaccine_course_dose_id = vcd.id) AND (v.program_enrolment_id = pe.id))))
-     LEFT JOIN public.name_link nl ON ((v.facility_name_link_id = nl.id)))
-     LEFT JOIN public.name n ON ((nl.name_id = n.id)))
-     LEFT JOIN public.stock_line s ON ((v.stock_line_id = s.id)))
-  WHERE ((vcd.deleted_datetime IS NULL) OR (v.id IS NOT NULL));
-
-
---
 -- Name: vaccine_course_item; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -3524,49 +2837,6 @@ CREATE TABLE public.vaccine_course_item (
     item_link_id text NOT NULL,
     deleted_datetime timestamp without time zone
 );
-
-
---
--- Name: vaccination_course; Type: VIEW; Schema: public; Owner: -
---
-
-CREATE VIEW public.vaccination_course AS
- SELECT vc.id,
-    vc.name AS vaccine_course_name,
-    vc.coverage_rate,
-    vc.wastage_rate,
-    vcd.id AS vaccine_course_dose_id,
-    vcd.label AS dose_label,
-    vcd.min_interval_days,
-    vcd.min_age,
-    vcd.max_age,
-    vcd.custom_age_label,
-    vci.id AS vaccine_course_item_id,
-    item.id AS item_id,
-    il.id AS item_link_id,
-    item.name AS item_name,
-    item.code AS item_code,
-    item.type AS item_type,
-    item.default_pack_size,
-    item.is_vaccine AS is_vaccine_item,
-    item.vaccine_doses,
-    item.unit_id,
-    unit.name AS unit,
-    unit.index AS unit_index,
-    d.id AS demographic_id,
-    d.name AS demographic_name,
-    d.population_percentage,
-    p.id AS program_id,
-    p.name AS program_name
-   FROM (((((((public.vaccine_course vc
-     JOIN public.vaccine_course_dose vcd ON ((vc.id = vcd.vaccine_course_id)))
-     JOIN public.vaccine_course_item vci ON ((vci.vaccine_course_id = vc.id)))
-     JOIN public.item_link il ON ((vci.item_link_id = il.id)))
-     JOIN public.item ON ((item.id = il.item_id)))
-     LEFT JOIN public.unit ON ((item.unit_id = unit.id)))
-     LEFT JOIN public.demographic d ON ((d.id = vc.demographic_id)))
-     JOIN public.program p ON ((p.id = vc.program_id)))
-  WHERE ((vc.deleted_datetime IS NULL) AND (vcd.deleted_datetime IS NULL) AND (vci.deleted_datetime IS NULL));
 
 
 --
@@ -3622,66 +2892,66 @@ ALTER TABLE ONLY public.changelog ALTER COLUMN cursor SET DEFAULT nextval('publi
 -- Data for Name: __diesel_schema_migrations; Type: TABLE DATA; Schema: public; Owner: -
 --
 
-INSERT INTO public.__diesel_schema_migrations VALUES ('20210705T1000', '2026-01-05 21:26:01.186361');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20210710T1000', '2026-01-05 21:26:01.25216');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20210805T1000', '2026-01-05 21:26:01.253076');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20210810T1000', '2026-01-05 21:26:01.2541');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20210815T1000', '2026-01-05 21:26:01.254953');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20210825T1000', '2026-01-05 21:26:01.256541');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20210905T1000', '2026-01-05 21:26:01.257967');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20210910T1000', '2026-01-05 21:26:01.258971');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20210915T1000', '2026-01-05 21:26:01.260051');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20210917T1000', '2026-01-05 21:26:01.261498');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20210918T1000', '2026-01-05 21:26:01.262781');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20210920T1000', '2026-01-05 21:26:01.264063');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20210925T1000', '2026-01-05 21:26:01.265709');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20211005T1000', '2026-01-05 21:26:01.267225');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20211105T1000', '2026-01-05 21:26:01.268325');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20211110T1000', '2026-01-05 21:26:01.269302');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20211115T1000', '2026-01-05 21:26:01.270203');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20211120T1000', '2026-01-05 21:26:01.27115');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20211125T1000', '2026-01-05 21:26:01.272916');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20211210T1000', '2026-01-05 21:26:01.274173');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20211215T1000', '2026-01-05 21:26:01.275533');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20211220T1000', '2026-01-05 21:26:01.276918');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20211225T1000', '2026-01-05 21:26:01.27816');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20220127T0800', '2026-01-05 21:26:01.280544');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20220211T1500', '2026-01-05 21:26:01.282187');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20220223T1015', '2026-01-05 21:26:01.283368');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20220223T1030', '2026-01-05 21:26:01.283606');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20220223T1130', '2026-01-05 21:26:01.283811');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20220223T1200', '2026-01-05 21:26:01.284085');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20220223T1230', '2026-01-05 21:26:01.284398');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20220223T1300', '2026-01-05 21:26:01.284607');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20220223T1330', '2026-01-05 21:26:01.284807');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20220223T1400', '2026-01-05 21:26:01.285167');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20220315T1000', '2026-01-05 21:26:01.285438');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20220325T1400', '2026-01-05 21:26:01.286452');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20220325T1430', '2026-01-05 21:26:01.287834');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20220401T1000', '2026-01-05 21:26:01.289159');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20220401T1100', '2026-01-05 21:26:01.29009');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20220427T1000', '2026-01-05 21:26:01.291239');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20220427T1300', '2026-01-05 21:26:01.292203');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20220607T1500', '2026-01-05 21:26:01.294002');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20220607T1600', '2026-01-05 21:26:01.295253');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20220607T1700', '2026-01-05 21:26:01.29639');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20220607T1800', '2026-01-05 21:26:01.297705');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20220621013225', '2026-01-05 21:26:01.298736');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20220831235556', '2026-01-05 21:26:01.299935');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20221010220020', '2026-01-05 21:26:01.30142');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20221011T1022', '2026-01-05 21:26:01.301697');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20221027T0915', '2026-01-05 21:26:01.301957');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20221106232001', '2026-01-05 21:26:01.302274');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20221114012026', '2026-01-05 21:26:01.30353');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20221116021440', '2026-01-05 21:26:01.303757');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20221117221434', '2026-01-05 21:26:01.30416');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20221201194340', '2026-01-05 21:26:01.304399');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20230116T1000', '2026-01-05 21:26:01.304626');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20230327T1000', '2026-01-05 21:26:01.305042');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20230330220342', '2026-01-05 21:26:01.305446');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20230421T1000', '2026-01-05 21:26:01.30594');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20230421T1100', '2026-01-05 21:26:01.306531');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20230620T1000', '2026-01-05 21:26:01.30768');
+INSERT INTO public.__diesel_schema_migrations VALUES ('20210705T1000', '2026-01-08 02:41:35.194613');
+INSERT INTO public.__diesel_schema_migrations VALUES ('20210710T1000', '2026-01-08 02:41:35.195592');
+INSERT INTO public.__diesel_schema_migrations VALUES ('20210805T1000', '2026-01-08 02:41:35.19615');
+INSERT INTO public.__diesel_schema_migrations VALUES ('20210810T1000', '2026-01-08 02:41:35.197059');
+INSERT INTO public.__diesel_schema_migrations VALUES ('20210815T1000', '2026-01-08 02:41:35.197814');
+INSERT INTO public.__diesel_schema_migrations VALUES ('20210825T1000', '2026-01-08 02:41:35.198977');
+INSERT INTO public.__diesel_schema_migrations VALUES ('20210905T1000', '2026-01-08 02:41:35.200014');
+INSERT INTO public.__diesel_schema_migrations VALUES ('20210910T1000', '2026-01-08 02:41:35.20102');
+INSERT INTO public.__diesel_schema_migrations VALUES ('20210915T1000', '2026-01-08 02:41:35.201877');
+INSERT INTO public.__diesel_schema_migrations VALUES ('20210917T1000', '2026-01-08 02:41:35.203169');
+INSERT INTO public.__diesel_schema_migrations VALUES ('20210918T1000', '2026-01-08 02:41:35.204474');
+INSERT INTO public.__diesel_schema_migrations VALUES ('20210920T1000', '2026-01-08 02:41:35.205529');
+INSERT INTO public.__diesel_schema_migrations VALUES ('20210925T1000', '2026-01-08 02:41:35.207417');
+INSERT INTO public.__diesel_schema_migrations VALUES ('20211005T1000', '2026-01-08 02:41:35.208762');
+INSERT INTO public.__diesel_schema_migrations VALUES ('20211105T1000', '2026-01-08 02:41:35.20965');
+INSERT INTO public.__diesel_schema_migrations VALUES ('20211110T1000', '2026-01-08 02:41:35.210572');
+INSERT INTO public.__diesel_schema_migrations VALUES ('20211115T1000', '2026-01-08 02:41:35.211276');
+INSERT INTO public.__diesel_schema_migrations VALUES ('20211120T1000', '2026-01-08 02:41:35.212224');
+INSERT INTO public.__diesel_schema_migrations VALUES ('20211125T1000', '2026-01-08 02:41:35.213225');
+INSERT INTO public.__diesel_schema_migrations VALUES ('20211210T1000', '2026-01-08 02:41:35.214182');
+INSERT INTO public.__diesel_schema_migrations VALUES ('20211215T1000', '2026-01-08 02:41:35.215237');
+INSERT INTO public.__diesel_schema_migrations VALUES ('20211220T1000', '2026-01-08 02:41:35.216314');
+INSERT INTO public.__diesel_schema_migrations VALUES ('20211225T1000', '2026-01-08 02:41:35.217452');
+INSERT INTO public.__diesel_schema_migrations VALUES ('20220127T0800', '2026-01-08 02:41:35.219878');
+INSERT INTO public.__diesel_schema_migrations VALUES ('20220211T1500', '2026-01-08 02:41:35.22137');
+INSERT INTO public.__diesel_schema_migrations VALUES ('20220223T1015', '2026-01-08 02:41:35.222213');
+INSERT INTO public.__diesel_schema_migrations VALUES ('20220223T1030', '2026-01-08 02:41:35.222443');
+INSERT INTO public.__diesel_schema_migrations VALUES ('20220223T1130', '2026-01-08 02:41:35.222631');
+INSERT INTO public.__diesel_schema_migrations VALUES ('20220223T1200', '2026-01-08 02:41:35.222921');
+INSERT INTO public.__diesel_schema_migrations VALUES ('20220223T1230', '2026-01-08 02:41:35.223203');
+INSERT INTO public.__diesel_schema_migrations VALUES ('20220223T1300', '2026-01-08 02:41:35.223387');
+INSERT INTO public.__diesel_schema_migrations VALUES ('20220223T1330', '2026-01-08 02:41:35.223588');
+INSERT INTO public.__diesel_schema_migrations VALUES ('20220223T1400', '2026-01-08 02:41:35.223887');
+INSERT INTO public.__diesel_schema_migrations VALUES ('20220315T1000', '2026-01-08 02:41:35.224187');
+INSERT INTO public.__diesel_schema_migrations VALUES ('20220325T1400', '2026-01-08 02:41:35.225103');
+INSERT INTO public.__diesel_schema_migrations VALUES ('20220325T1430', '2026-01-08 02:41:35.226017');
+INSERT INTO public.__diesel_schema_migrations VALUES ('20220401T1000', '2026-01-08 02:41:35.227011');
+INSERT INTO public.__diesel_schema_migrations VALUES ('20220401T1100', '2026-01-08 02:41:35.227895');
+INSERT INTO public.__diesel_schema_migrations VALUES ('20220427T1000', '2026-01-08 02:41:35.228779');
+INSERT INTO public.__diesel_schema_migrations VALUES ('20220427T1300', '2026-01-08 02:41:35.229503');
+INSERT INTO public.__diesel_schema_migrations VALUES ('20220607T1500', '2026-01-08 02:41:35.231188');
+INSERT INTO public.__diesel_schema_migrations VALUES ('20220607T1600', '2026-01-08 02:41:35.232139');
+INSERT INTO public.__diesel_schema_migrations VALUES ('20220607T1700', '2026-01-08 02:41:35.232891');
+INSERT INTO public.__diesel_schema_migrations VALUES ('20220607T1800', '2026-01-08 02:41:35.233935');
+INSERT INTO public.__diesel_schema_migrations VALUES ('20220621013225', '2026-01-08 02:41:35.234973');
+INSERT INTO public.__diesel_schema_migrations VALUES ('20220831235556', '2026-01-08 02:41:35.235886');
+INSERT INTO public.__diesel_schema_migrations VALUES ('20221010220020', '2026-01-08 02:41:35.236848');
+INSERT INTO public.__diesel_schema_migrations VALUES ('20221011T1022', '2026-01-08 02:41:35.237221');
+INSERT INTO public.__diesel_schema_migrations VALUES ('20221027T0915', '2026-01-08 02:41:35.237455');
+INSERT INTO public.__diesel_schema_migrations VALUES ('20221106232001', '2026-01-08 02:41:35.23788');
+INSERT INTO public.__diesel_schema_migrations VALUES ('20221114012026', '2026-01-08 02:41:35.239091');
+INSERT INTO public.__diesel_schema_migrations VALUES ('20221116021440', '2026-01-08 02:41:35.239406');
+INSERT INTO public.__diesel_schema_migrations VALUES ('20221117221434', '2026-01-08 02:41:35.239767');
+INSERT INTO public.__diesel_schema_migrations VALUES ('20221201194340', '2026-01-08 02:41:35.240102');
+INSERT INTO public.__diesel_schema_migrations VALUES ('20230116T1000', '2026-01-08 02:41:35.240453');
+INSERT INTO public.__diesel_schema_migrations VALUES ('20230327T1000', '2026-01-08 02:41:35.240855');
+INSERT INTO public.__diesel_schema_migrations VALUES ('20230330220342', '2026-01-08 02:41:35.241221');
+INSERT INTO public.__diesel_schema_migrations VALUES ('20230421T1000', '2026-01-08 02:41:35.241528');
+INSERT INTO public.__diesel_schema_migrations VALUES ('20230421T1100', '2026-01-08 02:41:35.241913');
+INSERT INTO public.__diesel_schema_migrations VALUES ('20230620T1000', '2026-01-08 02:41:35.242696');
 
 
 --
@@ -3726,8 +2996,8 @@ INSERT INTO public.asset_catalogue_item VALUES ('b1278bbb-e818-4bb5-9839-2b8b287
 INSERT INTO public.asset_catalogue_item VALUES ('33cad6a0-4e2c-4b0f-8bb0-c1961aba8740', 'E003/025', 'WHO PQS', 'fad280b6-8384-41af-84cf-c7b6b4526ef0', '02cbea92-d5bf-4832-863b-c04e093a7760', '710194ce-8c6c-47ab-b7fe-13ba8cf091f6', 'Vestfrost Solutions', 'MF 214', NULL, '{"climate_zone": "Hot", "energy_source": "Electricity", "hold_over_time": 2.9, "refrigerant_type": "R600A", "expected_lifespan": 10, "external_dimensions": "84 x 113 x 70", "storage_capacity_5c": 0.0, "storage_capacity_20c": 171.0, "storage_capacity_70c": 0.0, "energy_consumption_stable": 3.0, "waterpack_storage_capacity": 96.0, "energy_consumption_freezing": 3.56, "waterpack_freezing_capacity": 7.2}');
 INSERT INTO public.asset_catalogue_item VALUES ('5752325d-f156-45d2-ae37-3905edf43690', 'E003/030', 'WHO PQS', 'fad280b6-8384-41af-84cf-c7b6b4526ef0', '02cbea92-d5bf-4832-863b-c04e093a7760', 'd4434727-dc35-437d-a5fa-739a491381b7', 'B Medical Systems Sarl', 'TCW 3000 SDD', NULL, '{"climate_zone": "Temperate", "energy_source": "Solar", "hold_over_time": 94.08, "refrigerant_type": "R600A", "expected_lifespan": 10, "freeze_protection": "Grade A", "external_dimensions": "91 x 127 x 78", "storage_capacity_5c": 156.0, "storage_capacity_20c": 0.0, "storage_capacity_70c": 0.0, "energy_consumption_stable": 0.0, "waterpack_storage_capacity": 9.6, "waterpack_freezing_capacity": 0.0}');
 INSERT INTO public.asset_catalogue_item VALUES ('783da0b3-f157-46a2-9b78-1430b8680753', 'E003/035', 'WHO PQS', 'fad280b6-8384-41af-84cf-c7b6b4526ef0', '02cbea92-d5bf-4832-863b-c04e093a7760', '8b32f63b-28ac-4c31-94dc-55ddb5aa131a', 'B Medical Systems Sarl', 'TCW 2000 SDD', NULL, '{"climate_zone": "Temperate", "energy_source": "Solar", "hold_over_time": 94.0, "refrigerant_type": "R600A", "expected_lifespan": 10, "freeze_protection": "Grade A", "external_dimensions": "127 x 78 x 91", "storage_capacity_5c": 99.0, "storage_capacity_20c": 42.0, "storage_capacity_70c": 0.0, "energy_consumption_stable": 0.0, "waterpack_storage_capacity": 14.4, "waterpack_freezing_capacity": 0.0}');
+INSERT INTO public.asset_catalogue_item VALUES ('bcf6e728-1df6-4b30-bd24-300981eecbaa', 'E003/073', 'WHO PQS', 'fad280b6-8384-41af-84cf-c7b6b4526ef0', '02cbea92-d5bf-4832-863b-c04e093a7760', '525b614e-f9f5-4866-9553-24bad2b7b826', 'B Medical Systems Sarl', 'TFW 40 SDD', NULL, '{"climate_zone": "Hot", "energy_source": "Solar", "refrigerant_type": "R600A", "expected_lifespan": 10, "freeze_protection": "Grade A", "external_dimensions": "90 x 103 78", "storage_capacity_5c": 0.0, "storage_capacity_20c": 64.0, "storage_capacity_70c": 0.0, "energy_consumption_stable": 0.0, "waterpack_storage_capacity": 11.24, "waterpack_freezing_capacity": 2.16}');
 INSERT INTO public.asset_catalogue_item VALUES ('b5c76f4d-c0ef-4260-897c-f8e661ec1b68', 'E003/037', 'WHO PQS', 'fad280b6-8384-41af-84cf-c7b6b4526ef0', '02cbea92-d5bf-4832-863b-c04e093a7760', 'd4434727-dc35-437d-a5fa-739a491381b7', 'Zero Appliances (Pty) Ltd', 'ZLF 100 DC (SureChill ®)', NULL, '{"climate_zone": "Temperate", "energy_source": "Solar", "hold_over_time": 125.0, "refrigerant_type": "R600A", "expected_lifespan": 10, "freeze_protection": "Grade A", "external_dimensions": "180 x 85 x 73", "storage_capacity_5c": 93.0, "storage_capacity_20c": 0.0, "storage_capacity_70c": 0.0, "energy_consumption_stable": 0.0, "waterpack_storage_capacity": 0.0, "waterpack_freezing_capacity": 0.0}');
-INSERT INTO public.asset_catalogue_item VALUES ('61fd9f8f-fa2c-4b91-b67c-aa4810ad089c', 'E004/005', 'WHO PQS', 'fad280b6-8384-41af-84cf-c7b6b4526ef0', 'b7eea921-5a14-44cc-b5e0-ea59f2e9cb8d', '99906787-bd32-4ec2-bd2d-ba5547622bb0', 'B Medical Systems Sarl', 'RCW25', NULL, '{"expected_lifespan": 10, "external_dimensions": "40.6 x 25.2 x 20.2"}');
 INSERT INTO public.asset_catalogue_item VALUES ('d3239141-6073-4fb0-b3ea-55664a415917', 'E003/040', 'WHO PQS', 'fad280b6-8384-41af-84cf-c7b6b4526ef0', '02cbea92-d5bf-4832-863b-c04e093a7760', 'd4434727-dc35-437d-a5fa-739a491381b7', 'Dulas Ltd', 'VC200SDD', NULL, '{"climate_zone": "Hot", "energy_source": "Solar", "refrigerant_type": "R600A", "expected_lifespan": 10, "freeze_protection": "Grade A", "external_dimensions": "98 x 128.2 x 74", "storage_capacity_5c": 132.0, "storage_capacity_20c": 0.0, "storage_capacity_70c": 0.0, "energy_consumption_stable": 0.0, "waterpack_freezing_capacity": 0.0}');
 INSERT INTO public.asset_catalogue_item VALUES ('7b54d581-13c6-4f70-8a2f-a736fb12c881', 'E003/042', 'WHO PQS', 'fad280b6-8384-41af-84cf-c7b6b4526ef0', '02cbea92-d5bf-4832-863b-c04e093a7760', '8b32f63b-28ac-4c31-94dc-55ddb5aa131a', 'B Medical Systems Sarl', 'TCW 40 SDD', NULL, '{"climate_zone": "Hot", "energy_source": "Solar", "hold_over_time": 94.4, "refrigerant_type": "R600A", "expected_lifespan": 10, "freeze_protection": "Grade A", "external_dimensions": "90 x 78 x 103", "storage_capacity_5c": 36.0, "storage_capacity_20c": 4.8, "storage_capacity_70c": 0.0, "energy_consumption_stable": 0.0, "waterpack_storage_capacity": 3.6, "waterpack_freezing_capacity": 1.89}');
 INSERT INTO public.asset_catalogue_item VALUES ('6ff0747c-1639-403b-95e9-7e1dbca8a917', 'E003/043', 'WHO PQS', 'fad280b6-8384-41af-84cf-c7b6b4526ef0', '02cbea92-d5bf-4832-863b-c04e093a7760', '8b32f63b-28ac-4c31-94dc-55ddb5aa131a', 'B Medical Systems Sarl', 'TCW 2043 SDD', NULL, '{"climate_zone": "Hot", "energy_source": "Solar", "hold_over_time": 79.0, "refrigerant_type": "R600A", "expected_lifespan": 10, "freeze_protection": "Grade A", "external_dimensions": "91 x 127 x 78", "storage_capacity_5c": 70.0, "storage_capacity_20c": 42.0, "storage_capacity_70c": 0.0, "energy_consumption_stable": 0.0, "waterpack_storage_capacity": 10.5, "waterpack_freezing_capacity": 2.5}');
@@ -3739,8 +3009,8 @@ INSERT INTO public.asset_catalogue_item VALUES ('1b3c5ed3-3dc5-4a94-b70b-bbc7442
 INSERT INTO public.asset_catalogue_item VALUES ('aee18a7b-0b1f-4448-a08d-37b9d61c240c', 'E003/051', 'WHO PQS', 'fad280b6-8384-41af-84cf-c7b6b4526ef0', '02cbea92-d5bf-4832-863b-c04e093a7760', '4d7302b8-e47b-42fd-ac5e-4645376aa349', 'Zero Appliances (Pty) Ltd', 'ZLF30 AC (SureChill ®)', NULL, '{"climate_zone": "Hot", "energy_source": "Electricity", "hold_over_time": 77.2, "refrigerant_type": "R134A", "expected_lifespan": 10, "freeze_protection": "Grade A", "external_dimensions": "102.8 x 61.9 x 56.3", "storage_capacity_5c": 27.0, "storage_capacity_20c": 0.0, "storage_capacity_70c": 0.0, "energy_consumption_stable": 1.68, "waterpack_storage_capacity": 0.0, "energy_consumption_freezing": 2.56, "waterpack_freezing_capacity": 0.0}');
 INSERT INTO public.asset_catalogue_item VALUES ('ca835a1e-984d-46b5-b7e0-67d26dbbd630', 'E003/052', 'WHO PQS', 'fad280b6-8384-41af-84cf-c7b6b4526ef0', '02cbea92-d5bf-4832-863b-c04e093a7760', 'd4434727-dc35-437d-a5fa-739a491381b7', 'Zero Appliances (Pty) Ltd', 'ZLF 150 DC (SureChill ®)', NULL, '{"climate_zone": "Hot", "energy_source": "Solar", "hold_over_time": 167.9, "refrigerant_type": "R134A", "expected_lifespan": 10, "freeze_protection": "Grade A", "external_dimensions": "189 x 83 x 71", "storage_capacity_5c": 128.0, "storage_capacity_20c": 0.0, "storage_capacity_70c": 0.0, "energy_consumption_stable": 0.0, "waterpack_storage_capacity": 0.0, "waterpack_freezing_capacity": 0.0}');
 INSERT INTO public.asset_catalogue_item VALUES ('3f2f5cb5-11f7-4f70-8cf3-1facf6e81ef0', 'E003/055', 'WHO PQS', 'fad280b6-8384-41af-84cf-c7b6b4526ef0', '02cbea92-d5bf-4832-863b-c04e093a7760', 'd4434727-dc35-437d-a5fa-739a491381b7', 'Zero Appliances (Pty) Ltd', 'ZLF 30DC SDD (SureChill ®)', NULL, '{"climate_zone": "Hot", "energy_source": "Solar", "hold_over_time": 87.27, "refrigerant_type": "R600A", "expected_lifespan": 10, "freeze_protection": "Grade A", "external_dimensions": "102.5 x 56 x 60", "storage_capacity_5c": 27.0, "storage_capacity_20c": 0.0, "storage_capacity_70c": 0.0, "energy_consumption_stable": 0.0, "waterpack_storage_capacity": 0.0, "waterpack_freezing_capacity": 0.0}');
+INSERT INTO public.asset_catalogue_item VALUES ('61fd9f8f-fa2c-4b91-b67c-aa4810ad089c', 'E004/005', 'WHO PQS', 'fad280b6-8384-41af-84cf-c7b6b4526ef0', 'b7eea921-5a14-44cc-b5e0-ea59f2e9cb8d', '99906787-bd32-4ec2-bd2d-ba5547622bb0', 'B Medical Systems Sarl', 'RCW25', NULL, '{"expected_lifespan": 10, "external_dimensions": "40.6 x 25.2 x 20.2"}');
 INSERT INTO public.asset_catalogue_item VALUES ('1b2c352a-5c69-4b76-a411-d93be56cc05a', 'E003/057', 'WHO PQS', 'fad280b6-8384-41af-84cf-c7b6b4526ef0', '02cbea92-d5bf-4832-863b-c04e093a7760', '8b32f63b-28ac-4c31-94dc-55ddb5aa131a', 'Qingdao Haier Biomedical Co., Ltd', 'HTCD-160-SDD', NULL, '{"climate_zone": "Hot", "energy_source": "Solar", "refrigerant_type": "R600A", "expected_lifespan": 10, "freeze_protection": "Grade A", "external_dimensions": "169.5 x 86.5 x 82.5", "storage_capacity_5c": 100.0, "storage_capacity_20c": 40.0, "storage_capacity_70c": 0.0, "energy_consumption_stable": 0.0, "waterpack_storage_capacity": 10.68, "waterpack_freezing_capacity": 2.08}');
-INSERT INTO public.asset_catalogue_item VALUES ('55042f99-370b-407b-9155-d4a594595abc', 'E004/007', 'WHO PQS', 'fad280b6-8384-41af-84cf-c7b6b4526ef0', 'b7eea921-5a14-44cc-b5e0-ea59f2e9cb8d', '0b7ac91d-6cfa-49bb-bac2-35e7cb31564b', 'AOV International LLP', 'ADVC-24', NULL, '{"expected_lifespan": 10, "external_dimensions": "17.3 x 10.3 x 4.5"}');
 INSERT INTO public.asset_catalogue_item VALUES ('f1d7348d-f38d-4a74-ab0a-45227b89d314', 'E003/058', 'WHO PQS', 'fad280b6-8384-41af-84cf-c7b6b4526ef0', '02cbea92-d5bf-4832-863b-c04e093a7760', 'd4434727-dc35-437d-a5fa-739a491381b7', 'Dulas Ltd', 'Dulas VC110SDD', NULL, '{"climate_zone": "Hot", "energy_source": "Solar", "hold_over_time": 91.65, "refrigerant_type": "R600A", "expected_lifespan": 10, "freeze_protection": "Grade A", "external_dimensions": "98 x 128.2 x 74", "storage_capacity_5c": 110.0, "storage_capacity_20c": 0.0, "storage_capacity_70c": 0.0, "energy_consumption_stable": 0.0, "waterpack_storage_capacity": 0.0, "waterpack_freezing_capacity": 0.0}');
 INSERT INTO public.asset_catalogue_item VALUES ('03a22d21-658c-4b4d-92f7-ae0b5e5f96ce', 'E003/059', 'WHO PQS', 'fad280b6-8384-41af-84cf-c7b6b4526ef0', '02cbea92-d5bf-4832-863b-c04e093a7760', 'd4434727-dc35-437d-a5fa-739a491381b7', 'Dulas Ltd', 'VC88SDD', NULL, '{"climate_zone": "Hot", "energy_source": "Solar", "hold_over_time": 1.65, "refrigerant_type": "R600A", "expected_lifespan": 10, "freeze_protection": "Grade A", "external_dimensions": "98 x 128.2 x 74", "storage_capacity_5c": 88.0, "storage_capacity_20c": 0.0, "storage_capacity_70c": 0.0, "energy_consumption_stable": 0.0, "waterpack_storage_capacity": 0.0, "waterpack_freezing_capacity": 0.0}');
 INSERT INTO public.asset_catalogue_item VALUES ('7d73bfdb-76ca-4cfa-ac52-6215048bebbb', 'E003/060', 'WHO PQS', 'fad280b6-8384-41af-84cf-c7b6b4526ef0', '02cbea92-d5bf-4832-863b-c04e093a7760', '710194ce-8c6c-47ab-b7fe-13ba8cf091f6', 'Qingdao Aucma Global Medical Co.,Ltd.', 'DW-25W147', NULL, '{"climate_zone": "Hot", "energy_source": "Electricity", "hold_over_time": 6.73, "refrigerant_type": "R600A", "expected_lifespan": 10, "external_dimensions": "79 X 59.5 X 880", "storage_capacity_5c": 0.0, "storage_capacity_20c": 96.0, "storage_capacity_70c": 0.0, "energy_consumption_stable": 3.31, "waterpack_storage_capacity": 19.4, "energy_consumption_freezing": 2.81, "waterpack_freezing_capacity": 14.5}');
@@ -3752,8 +3022,7 @@ INSERT INTO public.asset_catalogue_item VALUES ('a00dffee-a550-44d8-b473-1d512f6
 INSERT INTO public.asset_catalogue_item VALUES ('f17c924d-cb72-431d-8a00-514a50570449', 'E003/070', 'WHO PQS', 'fad280b6-8384-41af-84cf-c7b6b4526ef0', '02cbea92-d5bf-4832-863b-c04e093a7760', 'c9017d0b-ce3c-40f1-9986-e4afe0185ddd', 'Vestfrost Solutions', 'VLS 064 RF AC', NULL, '{"climate_zone": "Hot", "energy_source": "Electricity", "hold_over_time": 45.0, "refrigerant_type": "R600A", "expected_lifespan": 10, "freeze_protection": "Grade A", "external_dimensions": "84.5 x 72.5 x 71", "storage_capacity_5c": 52.5, "storage_capacity_20c": 5.1, "storage_capacity_70c": 0.0, "energy_consumption_stable": 0.63, "waterpack_storage_capacity": 3.6, "energy_consumption_freezing": 1.8, "waterpack_freezing_capacity": 1.6}');
 INSERT INTO public.asset_catalogue_item VALUES ('e6be81b8-151f-4e90-87e9-f8af776c7252', 'E003/071', 'WHO PQS', 'fad280b6-8384-41af-84cf-c7b6b4526ef0', '02cbea92-d5bf-4832-863b-c04e093a7760', '710194ce-8c6c-47ab-b7fe-13ba8cf091f6', 'B Medical Systems Sarl', 'TFW 3000 AC', NULL, '{"climate_zone": "Hot", "energy_source": "Electricity", "refrigerant_type": "R290", "expected_lifespan": 10, "freeze_protection": "Grade A", "external_dimensions": "91 x 127 x 78", "storage_capacity_5c": 0.0, "storage_capacity_20c": 204.0, "storage_capacity_70c": 0.0, "energy_consumption_stable": 2.15, "waterpack_storage_capacity": 97.2, "waterpack_freezing_capacity": 32.4}');
 INSERT INTO public.asset_catalogue_item VALUES ('f1ba0107-8465-44f2-aa3b-36944dce498a', 'E003/072', 'WHO PQS', 'fad280b6-8384-41af-84cf-c7b6b4526ef0', '02cbea92-d5bf-4832-863b-c04e093a7760', '4d7302b8-e47b-42fd-ac5e-4645376aa349', 'Dulas Ltd', 'VC225ILR', NULL, '{"climate_zone": "Hot", "energy_source": "Electricity", "hold_over_time": 94.0, "refrigerant_type": "R600A", "expected_lifespan": 10, "freeze_protection": "Grade A", "external_dimensions": "98 x 128.2 x 74", "storage_capacity_5c": 184.0, "storage_capacity_20c": 0.0, "storage_capacity_70c": 0.0, "energy_consumption_stable": 803.0, "waterpack_storage_capacity": 0.0, "waterpack_freezing_capacity": 0.0}');
-INSERT INTO public.asset_catalogue_item VALUES ('bcf6e728-1df6-4b30-bd24-300981eecbaa', 'E003/073', 'WHO PQS', 'fad280b6-8384-41af-84cf-c7b6b4526ef0', '02cbea92-d5bf-4832-863b-c04e093a7760', '525b614e-f9f5-4866-9553-24bad2b7b826', 'B Medical Systems Sarl', 'TFW 40 SDD', NULL, '{"climate_zone": "Hot", "energy_source": "Solar", "refrigerant_type": "R600A", "expected_lifespan": 10, "freeze_protection": "Grade A", "external_dimensions": "90 x 103 78", "storage_capacity_5c": 0.0, "storage_capacity_20c": 64.0, "storage_capacity_70c": 0.0, "energy_consumption_stable": 0.0, "waterpack_storage_capacity": 11.24, "waterpack_freezing_capacity": 2.16}');
-INSERT INTO public.asset_catalogue_item VALUES ('c6ee8e1f-1219-4455-83a2-dd991a89d6a0', 'E004/008', 'WHO PQS', 'fad280b6-8384-41af-84cf-c7b6b4526ef0', 'b7eea921-5a14-44cc-b5e0-ea59f2e9cb8d', '0b7ac91d-6cfa-49bb-bac2-35e7cb31564b', 'AOV International LLP', 'AVC-44', NULL, '{"expected_lifespan": 10, "external_dimensions": "9 x 9.1 x 16.5"}');
+INSERT INTO public.asset_catalogue_item VALUES ('55042f99-370b-407b-9155-d4a594595abc', 'E004/007', 'WHO PQS', 'fad280b6-8384-41af-84cf-c7b6b4526ef0', 'b7eea921-5a14-44cc-b5e0-ea59f2e9cb8d', '0b7ac91d-6cfa-49bb-bac2-35e7cb31564b', 'AOV International LLP', 'ADVC-24', NULL, '{"expected_lifespan": 10, "external_dimensions": "17.3 x 10.3 x 4.5"}');
 INSERT INTO public.asset_catalogue_item VALUES ('f400cd20-29f2-42c6-9805-df6458eba554', 'E003/074', 'WHO PQS', 'fad280b6-8384-41af-84cf-c7b6b4526ef0', '02cbea92-d5bf-4832-863b-c04e093a7760', '8b32f63b-28ac-4c31-94dc-55ddb5aa131a', 'Qingdao Haier Biomedical Co., Ltd', 'HTCD 90 SDD', NULL, '{"climate_zone": "Hot", "energy_source": "Solar", "refrigerant_type": "R600A", "expected_lifespan": 10, "freeze_protection": "Grade A", "external_dimensions": "72 x 87.5 x 112.8", "storage_capacity_5c": 37.5, "storage_capacity_20c": 32.0, "storage_capacity_70c": 0.0, "energy_consumption_stable": 0.0, "waterpack_storage_capacity": 12.0, "waterpack_freezing_capacity": 2.43}');
 INSERT INTO public.asset_catalogue_item VALUES ('cf2569d8-e3cf-4e00-b11c-e1088555bb7a', 'E003/075', 'WHO PQS', 'fad280b6-8384-41af-84cf-c7b6b4526ef0', '02cbea92-d5bf-4832-863b-c04e093a7760', 'd4434727-dc35-437d-a5fa-739a491381b7', 'Qingdao Haier Biomedical Co., Ltd', 'HTC 40 SDD', NULL, '{"climate_zone": "Hot", "energy_source": "Solar", "refrigerant_type": "R600A", "expected_lifespan": 10, "freeze_protection": "Grade A", "external_dimensions": "72 x 87.5 x 78.8", "storage_capacity_5c": 22.5, "storage_capacity_20c": 0.0, "storage_capacity_70c": 0.0, "energy_consumption_stable": 0.0, "waterpack_storage_capacity": 0.0, "waterpack_freezing_capacity": 0.0}');
 INSERT INTO public.asset_catalogue_item VALUES ('8db398a9-3640-4675-81d9-19f5ab3f25de', 'E003/076', 'WHO PQS', 'fad280b6-8384-41af-84cf-c7b6b4526ef0', '02cbea92-d5bf-4832-863b-c04e093a7760', 'd4434727-dc35-437d-a5fa-739a491381b7', 'Qingdao Haier Biomedical Co., Ltd', 'HTC 110 SDD', NULL, '{"climate_zone": "Hot", "energy_source": "Solar", "refrigerant_type": "R600A", "expected_lifespan": 10, "freeze_protection": "Grade A", "external_dimensions": "72 x 87.5 x 112.8", "storage_capacity_5c": 59.0, "storage_capacity_20c": 0.0, "storage_capacity_70c": 0.0, "energy_consumption_stable": 0.0, "waterpack_storage_capacity": 0.0, "waterpack_freezing_capacity": 0.0}');
@@ -3780,7 +3049,7 @@ INSERT INTO public.asset_catalogue_item VALUES ('9ba05fbe-3a24-4f1b-af33-d45dd9d
 INSERT INTO public.asset_catalogue_item VALUES ('57a4b8f7-0863-4a8d-a24a-1ee81dc61648', 'E003/097', 'WHO PQS', 'fad280b6-8384-41af-84cf-c7b6b4526ef0', '02cbea92-d5bf-4832-863b-c04e093a7760', '0e58c7e6-e603-4513-a088-79fe9f08e22f', 'Qingdao Haier Biomedical Co., Ltd', 'HBCD-90', NULL, '{"climate_zone": "Hot", "energy_source": "Electricity", "hold_over_time": 63.8, "refrigerant_type": "R600A", "expected_lifespan": 10, "freeze_protection": "Grade A", "external_dimensions": "87.2 x 112.8 x 71.7", "storage_capacity_5c": 30.0, "storage_capacity_20c": 32.0, "storage_capacity_70c": 0.0, "energy_consumption_stable": 0.7, "waterpack_storage_capacity": 16.0, "energy_consumption_freezing": 0.97, "waterpack_freezing_capacity": 4.0}');
 INSERT INTO public.asset_catalogue_item VALUES ('0fbb3210-3c90-41df-b39e-eefe032f738a', 'E003/098', 'WHO PQS', 'fad280b6-8384-41af-84cf-c7b6b4526ef0', '02cbea92-d5bf-4832-863b-c04e093a7760', 'd4434727-dc35-437d-a5fa-739a491381b7', 'Qingdao Aucma Global Medical Co.,Ltd.', 'CFD-50 SDD', NULL, '{"climate_zone": "Hot", "energy_source": "Solar", "refrigerant_type": "R600A", "expected_lifespan": 10, "freeze_protection": "Grade A", "external_dimensions": "158.8 x 54.5 x 65.5", "storage_capacity_5c": 50.0, "storage_capacity_20c": 0.0, "storage_capacity_70c": 0.0, "waterpack_freezing_capacity": 0.0}');
 INSERT INTO public.asset_catalogue_item VALUES ('8948b544-8283-4d19-b523-bfff7ef10967', 'E003/099', 'WHO PQS', 'fad280b6-8384-41af-84cf-c7b6b4526ef0', '02cbea92-d5bf-4832-863b-c04e093a7760', '525b614e-f9f5-4866-9553-24bad2b7b826', 'Vestfrost Solutions', 'VFS 048 SDD', NULL, '{"energy_source": "Solar", "refrigerant_type": "R600A", "expected_lifespan": 10, "external_dimensions": "85 x 55.5 x 65", "storage_capacity_5c": 0.0, "storage_capacity_20c": 34.3, "storage_capacity_70c": 0.0, "waterpack_storage_capacity": 17.4, "waterpack_freezing_capacity": 1.6}');
-INSERT INTO public.asset_catalogue_item VALUES ('40f215fb-3eb9-4fa4-9c80-b08f275db34f', 'E004/009', 'WHO PQS', 'fad280b6-8384-41af-84cf-c7b6b4526ef0', 'b7eea921-5a14-44cc-b5e0-ea59f2e9cb8d', '0b7ac91d-6cfa-49bb-bac2-35e7cb31564b', 'AOV International LLP', 'AVC-46', NULL, '{"expected_lifespan": 10, "external_dimensions": "11.38 x 11.38 x 19"}');
+INSERT INTO public.asset_catalogue_item VALUES ('c6ee8e1f-1219-4455-83a2-dd991a89d6a0', 'E004/008', 'WHO PQS', 'fad280b6-8384-41af-84cf-c7b6b4526ef0', 'b7eea921-5a14-44cc-b5e0-ea59f2e9cb8d', '0b7ac91d-6cfa-49bb-bac2-35e7cb31564b', 'AOV International LLP', 'AVC-44', NULL, '{"expected_lifespan": 10, "external_dimensions": "9 x 9.1 x 16.5"}');
 INSERT INTO public.asset_catalogue_item VALUES ('b50409f4-89d5-4cef-a6e0-6185e2df9ce7', 'E003/100', 'WHO PQS', 'fad280b6-8384-41af-84cf-c7b6b4526ef0', '02cbea92-d5bf-4832-863b-c04e093a7760', '4d7302b8-e47b-42fd-ac5e-4645376aa349', 'B Medical Systems Sarl', 'TCW 40R AC', NULL, '{"climate_zone": "Hot", "energy_source": "Electricity", "hold_over_time": 121.9, "refrigerant_type": "R600A", "expected_lifespan": 10, "freeze_protection": "Grade A", "external_dimensions": "103 x 78 x 89", "storage_capacity_5c": 36.5, "storage_capacity_20c": 0.0, "storage_capacity_70c": 0.0, "energy_consumption_stable": 0.8, "waterpack_freezing_capacity": 0.0}');
 INSERT INTO public.asset_catalogue_item VALUES ('9cb9524f-b96d-4750-8d1d-28a3f239ef2b', 'E003/101', 'WHO PQS', 'fad280b6-8384-41af-84cf-c7b6b4526ef0', '02cbea92-d5bf-4832-863b-c04e093a7760', '4d7302b8-e47b-42fd-ac5e-4645376aa349', 'B Medical Systems Sarl', 'TCW 80 AC', NULL, '{"climate_zone": "Hot", "energy_source": "Electricity", "hold_over_time": 72.15, "refrigerant_type": "R600A", "expected_lifespan": 10, "freeze_protection": "Grade A", "external_dimensions": "103 x 78 x 90", "storage_capacity_5c": 80.5, "storage_capacity_20c": 0.0, "storage_capacity_70c": 0.0, "energy_consumption_stable": 1.16, "waterpack_freezing_capacity": 0.0}');
 INSERT INTO public.asset_catalogue_item VALUES ('407d4a90-c403-46c3-bf57-31c2fe1ad0e0', 'E003/102', 'WHO PQS', 'fad280b6-8384-41af-84cf-c7b6b4526ef0', '02cbea92-d5bf-4832-863b-c04e093a7760', 'd4434727-dc35-437d-a5fa-739a491381b7', 'Qingdao Haier Biomedical Co., Ltd', 'HTC-112', NULL, '{"climate_zone": "Hot", "energy_source": "Solar", "refrigerant_type": "R600A", "expected_lifespan": 10, "freeze_protection": "Grade A", "external_dimensions": "72 x 87.5 x 112.8", "storage_capacity_5c": 75.0, "storage_capacity_20c": 0.0, "storage_capacity_70c": 0.0, "waterpack_freezing_capacity": 0.0}');
@@ -3823,6 +3092,7 @@ INSERT INTO public.asset_catalogue_item VALUES ('869ff8de-9c4b-4425-a894-0b0c6cd
 INSERT INTO public.asset_catalogue_item VALUES ('c74a3f72-fda6-4bb8-a08f-5f79a20a8716', 'E004/002', 'WHO PQS', 'fad280b6-8384-41af-84cf-c7b6b4526ef0', 'b7eea921-5a14-44cc-b5e0-ea59f2e9cb8d', '0b7ac91d-6cfa-49bb-bac2-35e7cb31564b', 'B Medical Systems Sarl', 'RCW4', NULL, '{"expected_lifespan": 10, "external_dimensions": "36.2 x 28.3 x 29.9"}');
 INSERT INTO public.asset_catalogue_item VALUES ('86dbb025-30ab-457a-981f-9d34841f9188', 'E004/003', 'WHO PQS', 'fad280b6-8384-41af-84cf-c7b6b4526ef0', 'b7eea921-5a14-44cc-b5e0-ea59f2e9cb8d', 'bbab79fe-8112-4f90-aabc-726f88a15410', 'B Medical Systems Sarl', 'RCW8', NULL, '{"expected_lifespan": 10, "external_dimensions": "32.6 x 10.7 x 20.2"}');
 INSERT INTO public.asset_catalogue_item VALUES ('4f13efbe-4349-4fc3-ac22-584728003e63', 'E004/004', 'WHO PQS', 'fad280b6-8384-41af-84cf-c7b6b4526ef0', 'b7eea921-5a14-44cc-b5e0-ea59f2e9cb8d', '99906787-bd32-4ec2-bd2d-ba5547622bb0', 'B Medical Systems Sarl', 'RCW12', NULL, '{"expected_lifespan": 10, "external_dimensions": "25.1 x 17.6 x 20.9"}');
+INSERT INTO public.asset_catalogue_item VALUES ('40f215fb-3eb9-4fa4-9c80-b08f275db34f', 'E004/009', 'WHO PQS', 'fad280b6-8384-41af-84cf-c7b6b4526ef0', 'b7eea921-5a14-44cc-b5e0-ea59f2e9cb8d', '0b7ac91d-6cfa-49bb-bac2-35e7cb31564b', 'AOV International LLP', 'AVC-46', NULL, '{"expected_lifespan": 10, "external_dimensions": "11.38 x 11.38 x 19"}');
 INSERT INTO public.asset_catalogue_item VALUES ('88ebf779-dce3-4814-b4d4-38fbbd7d3437', 'E004/010', 'WHO PQS', 'fad280b6-8384-41af-84cf-c7b6b4526ef0', 'b7eea921-5a14-44cc-b5e0-ea59f2e9cb8d', '99906787-bd32-4ec2-bd2d-ba5547622bb0', 'Apex International', 'AICB-444L', NULL, '{"expected_lifespan": 10, "external_dimensions": "76.1 x 61.1 x 51.3"}');
 INSERT INTO public.asset_catalogue_item VALUES ('32181403-62bc-4895-b5eb-4d76cd566920', 'E004/011', 'WHO PQS', 'fad280b6-8384-41af-84cf-c7b6b4526ef0', 'b7eea921-5a14-44cc-b5e0-ea59f2e9cb8d', '0b7ac91d-6cfa-49bb-bac2-35e7cb31564b', 'Apex International', 'AIDVC-24', NULL, '{"expected_lifespan": 10, "external_dimensions": "25 x 18 x 12"}');
 INSERT INTO public.asset_catalogue_item VALUES ('6b472fc0-41dd-4aa1-857c-905a2e882f0b', 'E004/013', 'WHO PQS', 'fad280b6-8384-41af-84cf-c7b6b4526ef0', 'b7eea921-5a14-44cc-b5e0-ea59f2e9cb8d', '99906787-bd32-4ec2-bd2d-ba5547622bb0', 'Nilkamal Limited', 'RCB-444L', NULL, '{"expected_lifespan": 10, "external_dimensions": "77.4 x 61.6 x 53"}');
@@ -4263,223 +3533,223 @@ INSERT INTO public.master_list VALUES ('missing_program', 'missing_program', 'mi
 -- Data for Name: migration_fragment_log; Type: TABLE DATA; Schema: public; Owner: -
 --
 
-INSERT INTO public.migration_fragment_log VALUES ('2.2.0-add_low_stock_and_requisition_line_id', '2026-01-05 21:26:01.52607');
-INSERT INTO public.migration_fragment_log VALUES ('2.2.0-requisitions_in_period', '2026-01-05 21:26:01.527046');
-INSERT INTO public.migration_fragment_log VALUES ('2.2.0-add_requisition_approved_activity_type', '2026-01-05 21:26:01.527307');
-INSERT INTO public.migration_fragment_log VALUES ('2.2.0-fix_rnr_form_line_columns', '2026-01-05 21:26:01.529423');
-INSERT INTO public.migration_fragment_log VALUES ('2.2.1-add_store_ids_to_existing_rnr_form_changelogs', '2026-01-05 21:26:01.530172');
-INSERT INTO public.migration_fragment_log VALUES ('2.2.2-master_list_default_price_list', '2026-01-05 21:26:01.530869');
-INSERT INTO public.migration_fragment_log VALUES ('2.2.2-master_list_line_price_per_unit', '2026-01-05 21:26:01.531159');
-INSERT INTO public.migration_fragment_log VALUES ('2.3.0-drop_program_deleted_datetime', '2026-01-05 21:26:01.537245');
-INSERT INTO public.migration_fragment_log VALUES ('2.3.0-rename_vaccine_course_schedule_to_dose', '2026-01-05 21:26:01.53786');
-INSERT INTO public.migration_fragment_log VALUES ('2.3.0-remove_num_doses_from_vaccine_course', '2026-01-05 21:26:01.538117');
-INSERT INTO public.migration_fragment_log VALUES ('2.3.0-remove_vaccine_course_dose_dose_number', '2026-01-05 21:26:01.538364');
-INSERT INTO public.migration_fragment_log VALUES ('2.3.0-add_vaccine_course_changelog_table_names', '2026-01-05 21:26:01.538627');
-INSERT INTO public.migration_fragment_log VALUES ('2.3.0-add_vaccinations_table', '2026-01-05 21:26:01.539946');
-INSERT INTO public.migration_fragment_log VALUES ('2.3.0-add_vaccination_activity_log_type', '2026-01-05 21:26:01.54021');
-INSERT INTO public.migration_fragment_log VALUES ('2.3.0-add_vaccine_doses_to_item', '2026-01-05 21:26:01.540557');
-INSERT INTO public.migration_fragment_log VALUES ('2.3.0-add_max_age_to_vaccine_dose', '2026-01-05 21:26:01.540879');
-INSERT INTO public.migration_fragment_log VALUES ('2.3.0-add_report_version_fields', '2026-01-05 21:26:01.541526');
-INSERT INTO public.migration_fragment_log VALUES ('2.3.0-add_facility_to_vaccination', '2026-01-05 21:26:01.541898');
-INSERT INTO public.migration_fragment_log VALUES ('2.3.0-add_vaccine_course_dose_deleted_datetime', '2026-01-05 21:26:01.54214');
-INSERT INTO public.migration_fragment_log VALUES ('2.3.0-add_vaccine_course_dose_custom_age_label', '2026-01-05 21:26:01.542372');
-INSERT INTO public.migration_fragment_log VALUES ('2.3.0-add_backdated_datetime', '2026-01-05 21:26:01.542587');
-INSERT INTO public.migration_fragment_log VALUES ('2.3.0-add_vaccine_course_item_deleted_datetime', '2026-01-05 21:26:01.542815');
-INSERT INTO public.migration_fragment_log VALUES ('2.3.0-add_store_id_to_program_enrolment', '2026-01-05 21:26:01.543764');
-INSERT INTO public.migration_fragment_log VALUES ('2.3.0-remove_stops_from_report_ids', '2026-01-05 21:26:01.544046');
-INSERT INTO public.migration_fragment_log VALUES ('2.3.1-add_demographic_table', '2026-01-05 21:26:01.546087');
-INSERT INTO public.migration_fragment_log VALUES ('2.3.1-move_vaccine_course_to_demographic', '2026-01-05 21:26:01.546588');
-INSERT INTO public.migration_fragment_log VALUES ('2.3.1-add_reference_and_comment_to_rnr_form', '2026-01-05 21:26:01.546995');
-INSERT INTO public.migration_fragment_log VALUES ('2.3.1-add_rnr_columns', '2026-01-05 21:26:01.54736');
-INSERT INTO public.migration_fragment_log VALUES ('2.4.0-delete_pack_variant', '2026-01-05 21:26:01.548294');
-INSERT INTO public.migration_fragment_log VALUES ('2.4.0-add_reason_option_table', '2026-01-05 21:26:01.549578');
-INSERT INTO public.migration_fragment_log VALUES ('2.4.0-add_manual_requisition_line_fields', '2026-01-05 21:26:01.550719');
-INSERT INTO public.migration_fragment_log VALUES ('2.4.0-add_unserviceable_status_to_asset_status_enum', '2026-01-05 21:26:01.551112');
-INSERT INTO public.migration_fragment_log VALUES ('2.4.0-add_expected_lifespan_to_assets', '2026-01-05 21:26:01.55345');
-INSERT INTO public.migration_fragment_log VALUES ('2.4.0-add_cold_storage_type_table', '2026-01-05 21:26:01.554555');
-INSERT INTO public.migration_fragment_log VALUES ('2.4.0-item_variant', '2026-01-05 21:26:01.556894');
-INSERT INTO public.migration_fragment_log VALUES ('2.4.0-program_indicator_create_table', '2026-01-05 21:26:01.55791');
-INSERT INTO public.migration_fragment_log VALUES ('2.4.0-add_item_variant_id_to_stock_line_and_invoice_line', '2026-01-05 21:26:01.558643');
-INSERT INTO public.migration_fragment_log VALUES ('2.4.0-indicator_column_create_table', '2026-01-05 21:26:01.560996');
-INSERT INTO public.migration_fragment_log VALUES ('2.4.0-indicator_value_create_table', '2026-01-05 21:26:01.562963');
-INSERT INTO public.migration_fragment_log VALUES ('2.4.0-add_bundled_item_table', '2026-01-05 21:26:01.564247');
-INSERT INTO public.migration_fragment_log VALUES ('2.4.0-add_demographic_indicator_types_to_activity_log', '2026-01-05 21:26:01.564541');
-INSERT INTO public.migration_fragment_log VALUES ('2.4.0-indicator_indexes', '2026-01-05 21:26:01.566504');
-INSERT INTO public.migration_fragment_log VALUES ('2.4.0-add_store_pref_use_extra_fields', '2026-01-05 21:26:01.56686');
-INSERT INTO public.migration_fragment_log VALUES ('2.4.0-add_item_variant_id_to_stocktake_line', '2026-01-05 21:26:01.56737');
-INSERT INTO public.migration_fragment_log VALUES ('2.4.0-item_changelog', '2026-01-05 21:26:01.567591');
-INSERT INTO public.migration_fragment_log VALUES ('2.4.0-fix_asset_log_reasons_postgres', '2026-01-05 21:26:01.568028');
-INSERT INTO public.migration_fragment_log VALUES ('2.4.1-item_categories', '2026-01-05 21:26:01.570332');
-INSERT INTO public.migration_fragment_log VALUES ('2.4.1-system_log_table', '2026-01-05 21:26:01.571373');
-INSERT INTO public.migration_fragment_log VALUES ('2.5.0-add_contact_form_table', '2026-01-05 21:26:01.573291');
-INSERT INTO public.migration_fragment_log VALUES ('2.5.0-new_store_preferences', '2026-01-05 21:26:01.573766');
-INSERT INTO public.migration_fragment_log VALUES ('2.5.0-remove_unique_description_on_tmp_breach', '2026-01-05 21:26:01.574132');
-INSERT INTO public.migration_fragment_log VALUES ('2.5.0-add_emergency_orders', '2026-01-05 21:26:01.574835');
-INSERT INTO public.migration_fragment_log VALUES ('2.5.0-abbreviation_create_table', '2026-01-05 21:26:01.575784');
-INSERT INTO public.migration_fragment_log VALUES ('2.5.0-remove_contact_form_site_id', '2026-01-05 21:26:01.576034');
-INSERT INTO public.migration_fragment_log VALUES ('2.5.0-item_direction_create_table', '2026-01-05 21:26:01.576937');
-INSERT INTO public.migration_fragment_log VALUES ('2.5.0-diagnosis_create_table', '2026-01-05 21:26:01.577767');
-INSERT INTO public.migration_fragment_log VALUES ('2.5.0-add_email_queue_table', '2026-01-05 21:26:01.57894');
-INSERT INTO public.migration_fragment_log VALUES ('2.5.0-add_elmis_code_to_program', '2026-01-05 21:26:01.579214');
-INSERT INTO public.migration_fragment_log VALUES ('2.5.0-diagnosis_add_to_invoice', '2026-01-05 21:26:01.579773');
-INSERT INTO public.migration_fragment_log VALUES ('2.5.0-add_email_retry_at', '2026-01-05 21:26:01.580002');
-INSERT INTO public.migration_fragment_log VALUES ('2.5.0-remove_contact_form_user_account_fk', '2026-01-05 21:26:01.580417');
-INSERT INTO public.migration_fragment_log VALUES ('2.5.0-add_contact_form_processor_pg_enum_type', '2026-01-05 21:26:01.580622');
-INSERT INTO public.migration_fragment_log VALUES ('2.5.0-remove_vaccination_user_account_fk', '2026-01-05 21:26:01.580909');
-INSERT INTO public.migration_fragment_log VALUES ('2.5.0-add_requisition_is_emergency', '2026-01-05 21:26:01.581208');
-INSERT INTO public.migration_fragment_log VALUES ('2.6.0-add_index_to_sync_buffer', '2026-01-05 21:26:01.582084');
-INSERT INTO public.migration_fragment_log VALUES ('2.6.0-add_invoice_line_prescribed_quantity', '2026-01-05 21:26:01.582343');
-INSERT INTO public.migration_fragment_log VALUES ('2.6.0-add_program_deleted_datetime', '2026-01-05 21:26:01.582586');
-INSERT INTO public.migration_fragment_log VALUES ('2.6.0-backend_plugin', '2026-01-05 21:26:01.5837');
-INSERT INTO public.migration_fragment_log VALUES ('2.6.0-add_create_invoice_from_requisition_permission', '2026-01-05 21:26:01.583937');
-INSERT INTO public.migration_fragment_log VALUES ('2.6.0-add_name_next_of_kin_id', '2026-01-05 21:26:01.584602');
-INSERT INTO public.migration_fragment_log VALUES ('2.6.0-add_load_plugin_processor_pg_enum_type', '2026-01-05 21:26:01.584829');
-INSERT INTO public.migration_fragment_log VALUES ('2.6.0-add_program_id_to_invoice', '2026-01-05 21:26:01.585333');
-INSERT INTO public.migration_fragment_log VALUES ('2.6.0-add_insurance_provider', '2026-01-05 21:26:01.586322');
-INSERT INTO public.migration_fragment_log VALUES ('2.6.0-plugin_data_update', '2026-01-05 21:26:01.587982');
-INSERT INTO public.migration_fragment_log VALUES ('2.6.0-frontend_plugins', '2026-01-05 21:26:01.589029');
-INSERT INTO public.migration_fragment_log VALUES ('2.6.0-prescribed_quantity_store_pref', '2026-01-05 21:26:01.589465');
-INSERT INTO public.migration_fragment_log VALUES ('2.6.0-add_name_next_of_kin_name', '2026-01-05 21:26:01.589718');
-INSERT INTO public.migration_fragment_log VALUES ('2.6.0-add_program_id_to_stocktake', '2026-01-05 21:26:01.590191');
-INSERT INTO public.migration_fragment_log VALUES ('2.6.0-add_name_insurance_join', '2026-01-05 21:26:01.591649');
-INSERT INTO public.migration_fragment_log VALUES ('2.6.0-printer_configuration_create_table', '2026-01-05 21:26:01.592997');
-INSERT INTO public.migration_fragment_log VALUES ('2.6.0-add_insurance_fields_to_invoice', '2026-01-05 21:26:01.593566');
-INSERT INTO public.migration_fragment_log VALUES ('2.6.0-add_cancelled_status_to_invoice', '2026-01-05 21:26:01.593835');
-INSERT INTO public.migration_fragment_log VALUES ('2.6.0-report_add_prescription_context', '2026-01-05 21:26:01.594198');
-INSERT INTO public.migration_fragment_log VALUES ('2.6.0-add_cancellation_fields_to_invoice', '2026-01-05 21:26:01.594546');
-INSERT INTO public.migration_fragment_log VALUES ('2.6.0-reinitialise_reports_updated', '2026-01-05 21:26:01.596487');
-INSERT INTO public.migration_fragment_log VALUES ('2.6.0-report', '2026-01-05 21:26:01.59676');
-INSERT INTO public.migration_fragment_log VALUES ('2.6.0-om_form_schema', '2026-01-05 21:26:01.597024');
-INSERT INTO public.migration_fragment_log VALUES ('2.6.0-add_report_is_active', '2026-01-05 21:26:01.597341');
-INSERT INTO public.migration_fragment_log VALUES ('2.6.0-plugin_data_changelog', '2026-01-05 21:26:01.597606');
-INSERT INTO public.migration_fragment_log VALUES ('2.6.0-report_fix_prescriptions_report_code_updated', '2026-01-05 21:26:01.597951');
-INSERT INTO public.migration_fragment_log VALUES ('2.6.1-change_vaccination_date_to_nullable', '2026-01-05 21:26:01.598774');
-INSERT INTO public.migration_fragment_log VALUES ('2.6.1-remove_plugins', '2026-01-05 21:26:01.599124');
-INSERT INTO public.migration_fragment_log VALUES ('2.6.1-report_add_internal_order_context', '2026-01-05 21:26:01.599354');
-INSERT INTO public.migration_fragment_log VALUES ('2.6.2-store_reintegrate_for_created_date', '2026-01-05 21:26:01.599828');
-INSERT INTO public.migration_fragment_log VALUES ('2.6.2-add_assign_requisition_number_processor_cursor_pg_enum_type', '2026-01-05 21:26:01.60005');
-INSERT INTO public.migration_fragment_log VALUES ('2.6.3-remove_non_custom_standard_reports', '2026-01-05 21:26:01.600557');
-INSERT INTO public.migration_fragment_log VALUES ('2.7.0-add_preference_table', '2026-01-05 21:26:01.601908');
-INSERT INTO public.migration_fragment_log VALUES ('2.7.0-add_linked_invoice_id_to_invoice_line', '2026-01-05 21:26:01.602167');
-INSERT INTO public.migration_fragment_log VALUES ('2.7.0-add_expected_delivery_date', '2026-01-05 21:26:01.602391');
-INSERT INTO public.migration_fragment_log VALUES ('2.7.0-new_stocktake_fields', '2026-01-05 21:26:01.602611');
-INSERT INTO public.migration_fragment_log VALUES ('2.7.0-asset_data_matrix_permission', '2026-01-05 21:26:01.602789');
-INSERT INTO public.migration_fragment_log VALUES ('2.7.0-asset_data_matrix_locked_fields', '2026-01-05 21:26:01.603001');
-INSERT INTO public.migration_fragment_log VALUES ('2.7.0-add_patient_link_id_to_vaccination', '2026-01-05 21:26:01.603641');
-INSERT INTO public.migration_fragment_log VALUES ('2.7.0-change_vaccination_date_to_not_nullable', '2026-01-05 21:26:01.604088');
-INSERT INTO public.migration_fragment_log VALUES ('2.7.0-remove_encounter_clinician_link_constraint2', '2026-01-05 21:26:01.604373');
-INSERT INTO public.migration_fragment_log VALUES ('2.7.0-add_warning_table', '2026-01-05 21:26:01.605851');
-INSERT INTO public.migration_fragment_log VALUES ('2.7.0-add_item_warning_join_table', '2026-01-05 21:26:01.610708');
-INSERT INTO public.migration_fragment_log VALUES ('2.7.0-add_given_store_id_to_vaccination', '2026-01-05 21:26:01.611278');
-INSERT INTO public.migration_fragment_log VALUES ('2.7.0-trigger_patient_visibility_sync', '2026-01-05 21:26:01.611711');
-INSERT INTO public.migration_fragment_log VALUES ('2.7.0-add_central_patient_visibility_processor_pg_enum_type', '2026-01-05 21:26:01.616362');
-INSERT INTO public.migration_fragment_log VALUES ('2.7.0-drop_encounters_report', '2026-01-05 21:26:01.616558');
-INSERT INTO public.migration_fragment_log VALUES ('2.7.4-create_dynamic_cursor_key', '2026-01-05 21:26:01.616963');
-INSERT INTO public.migration_fragment_log VALUES ('2.7.4-create_sync_message_table', '2026-01-05 21:26:01.618808');
-INSERT INTO public.migration_fragment_log VALUES ('2.7.4-create_plugin_user', '2026-01-05 21:26:01.619013');
-INSERT INTO public.migration_fragment_log VALUES ('2.8.0-add_vvm_status_table', '2026-01-05 21:26:01.620042');
-INSERT INTO public.migration_fragment_log VALUES ('2.8.0-add_doses_columns_to_item_variant', '2026-01-05 21:26:01.620331');
-INSERT INTO public.migration_fragment_log VALUES ('2.8.0-add_initial_stocktake_field', '2026-01-05 21:26:01.620749');
-INSERT INTO public.migration_fragment_log VALUES ('2.8.0-add_created_fields_to_item_variant', '2026-01-05 21:26:01.62103');
-INSERT INTO public.migration_fragment_log VALUES ('2.8.0-add_item_variant_enums_to_activity_log', '2026-01-05 21:26:01.621309');
-INSERT INTO public.migration_fragment_log VALUES ('2.8.0-add_vvm_status_log_change_log_table_name', '2026-01-05 21:26:01.621487');
-INSERT INTO public.migration_fragment_log VALUES ('2.8.0-add_view_and_edit_vvm_status_permission', '2026-01-05 21:26:01.621668');
-INSERT INTO public.migration_fragment_log VALUES ('2.8.0-add_donor_id_to_invoice_and_invoice_lines', '2026-01-05 21:26:01.621982');
-INSERT INTO public.migration_fragment_log VALUES ('2.8.0-add_vvm_status_log_update_to_activity_log', '2026-01-05 21:26:01.622175');
-INSERT INTO public.migration_fragment_log VALUES ('2.8.0-add_vvm_status_id_to_stock_line', '2026-01-05 21:26:01.622785');
-INSERT INTO public.migration_fragment_log VALUES ('2.8.0-add_campaign_table', '2026-01-05 21:26:01.623695');
-INSERT INTO public.migration_fragment_log VALUES ('2.8.0-add_campaign_change_log_table_name', '2026-01-05 21:26:01.623886');
-INSERT INTO public.migration_fragment_log VALUES ('2.8.0-add_donor_id_to_stock_lines', '2026-01-05 21:26:01.624075');
-INSERT INTO public.migration_fragment_log VALUES ('2.8.0-add_donor_id_to_stocktake_line', '2026-01-05 21:26:01.624277');
-INSERT INTO public.migration_fragment_log VALUES ('2.8.0-migrate_reason_option_ids', '2026-01-05 21:26:01.626853');
-INSERT INTO public.migration_fragment_log VALUES ('2.8.0-add_vvm_status_log_table', '2026-01-05 21:26:01.628001');
-INSERT INTO public.migration_fragment_log VALUES ('2.8.0-add_vvm_status_id_to_invoice_line', '2026-01-05 21:26:01.628408');
-INSERT INTO public.migration_fragment_log VALUES ('2.8.0-add_open_vial_wastage_to_reason_option_type', '2026-01-05 21:26:01.628585');
-INSERT INTO public.migration_fragment_log VALUES ('2.8.0-add_campaign_id_to_stock_line', '2026-01-05 21:26:01.628894');
-INSERT INTO public.migration_fragment_log VALUES ('2.8.0-reintegrate_options_sync_buffer_records', '2026-01-05 21:26:01.629054');
-INSERT INTO public.migration_fragment_log VALUES ('2.8.0-donor_id_to_donor_link_id', '2026-01-05 21:26:01.630085');
-INSERT INTO public.migration_fragment_log VALUES ('2.8.0-add_campaign_id_to_invoice_line_row', '2026-01-05 21:26:01.630415');
-INSERT INTO public.migration_fragment_log VALUES ('2.8.0-add_population_percentage_to_demographic', '2026-01-05 21:26:01.630993');
-INSERT INTO public.migration_fragment_log VALUES ('2.8.0-rename_vaccine_course_is_active_to_use_in_gaps', '2026-01-05 21:26:01.63118');
-INSERT INTO public.migration_fragment_log VALUES ('2.8.0-sync_donor_id_to_existing_stock_and_invoice_lines', '2026-01-05 21:26:01.632419');
-INSERT INTO public.migration_fragment_log VALUES ('2.8.3-invoice_received_status', '2026-01-05 21:26:01.633042');
-INSERT INTO public.migration_fragment_log VALUES ('2.9.0-process_clinician_store_join_deletes', '2026-01-05 21:26:01.633379');
-INSERT INTO public.migration_fragment_log VALUES ('2.9.0-add_mutate_clinician_permission', '2026-01-05 21:26:01.633569');
-INSERT INTO public.migration_fragment_log VALUES ('2.9.0-add_store_id_to_clinician', '2026-01-05 21:26:01.633889');
-INSERT INTO public.migration_fragment_log VALUES ('2.9.0-extend_name_table_fields', '2026-01-05 21:26:01.634268');
-INSERT INTO public.migration_fragment_log VALUES ('2.9.0-resync_existing_vaccine_course_records', '2026-01-05 21:26:01.634453');
-INSERT INTO public.migration_fragment_log VALUES ('2.9.0-resync_existing_vaccine_course_dose_and_item', '2026-01-05 21:26:01.634694');
-INSERT INTO public.migration_fragment_log VALUES ('2.9.0-add_shipped_number_of_packs_to_invoice_line', '2026-01-05 21:26:01.634988');
-INSERT INTO public.migration_fragment_log VALUES ('2.9.0-add_shipped_number_of_packs_to_invoice_line_legacy', '2026-01-05 21:26:01.635194');
-INSERT INTO public.migration_fragment_log VALUES ('2.9.0-add_excel_template_to_report', '2026-01-05 21:26:01.635388');
-INSERT INTO public.migration_fragment_log VALUES ('2.9.0-resync_existing_vaccination_records', '2026-01-05 21:26:01.635563');
-INSERT INTO public.migration_fragment_log VALUES ('2.9.0-remove_item_variant_doses_column', '2026-01-05 21:26:01.635787');
-INSERT INTO public.migration_fragment_log VALUES ('2.9.0-reintegrate_clinician_gender', '2026-01-05 21:26:01.635989');
-INSERT INTO public.migration_fragment_log VALUES ('2.9.1-add_can_cancel_finalised_invoices_user_permission', '2026-01-05 21:26:01.63633');
-INSERT INTO public.migration_fragment_log VALUES ('2.9.1-add_delete_rnr_form_activity_log_enum', '2026-01-05 21:26:01.636593');
-INSERT INTO public.migration_fragment_log VALUES ('2.9.1-remove_rnr_form_line_entered_losses_default', '2026-01-05 21:26:01.636797');
-INSERT INTO public.migration_fragment_log VALUES ('2.9.1-add_invoice_line_shipped_pack_size', '2026-01-05 21:26:01.637038');
-INSERT INTO public.migration_fragment_log VALUES ('2.9.1-invoice_line_shipped_pack_size_sync_buffer', '2026-01-05 21:26:01.637255');
-INSERT INTO public.migration_fragment_log VALUES ('2.9.2-add_last_fix_ledger_run_key_value_store', '2026-01-05 21:26:01.637621');
-INSERT INTO public.migration_fragment_log VALUES ('2.10.0-add_contact_table', '2026-01-05 21:26:01.638961');
-INSERT INTO public.migration_fragment_log VALUES ('2.10.0-add_purchase_order_tables', '2026-01-05 21:26:01.642029');
-INSERT INTO public.migration_fragment_log VALUES ('2.10.0-add_purchase_order_to_number_type', '2026-01-05 21:26:01.642361');
-INSERT INTO public.migration_fragment_log VALUES ('2.10.0-add_purchase_order_report_context', '2026-01-05 21:26:01.642627');
-INSERT INTO public.migration_fragment_log VALUES ('2.10.0-add_item_store_join', '2026-01-05 21:26:01.643765');
-INSERT INTO public.migration_fragment_log VALUES ('2.10.0-add_purchase_order_permission_enum_values', '2026-01-05 21:26:01.644093');
-INSERT INTO public.migration_fragment_log VALUES ('2.10.0-rename_cold_storage_type_to_location_type', '2026-01-05 21:26:01.644471');
-INSERT INTO public.migration_fragment_log VALUES ('2.10.0-delete_unused_number_type', '2026-01-05 21:26:01.64461');
-INSERT INTO public.migration_fragment_log VALUES ('2.10.0-add_restricted_location_type_id_to_item', '2026-01-05 21:26:01.644957');
-INSERT INTO public.migration_fragment_log VALUES ('2.10.0-add_goods_received_table', '2026-01-05 21:26:01.646622');
-INSERT INTO public.migration_fragment_log VALUES ('2.10.0-add_supplier_discount_percentage_to_purchase_order', '2026-01-05 21:26:01.646989');
-INSERT INTO public.migration_fragment_log VALUES ('2.10.0-add_stock_volume', '2026-01-05 21:26:01.647585');
-INSERT INTO public.migration_fragment_log VALUES ('2.10.0-stock_volume_sync_buffer', '2026-01-05 21:26:01.647922');
-INSERT INTO public.migration_fragment_log VALUES ('2.10.0-add_item_variant_enums_to_activity_log', '2026-01-05 21:26:01.648105');
-INSERT INTO public.migration_fragment_log VALUES ('2.10.0-add_more_dates_to_purchase_order', '2026-01-05 21:26:01.648317');
-INSERT INTO public.migration_fragment_log VALUES ('2.10.0-add_goods_received_line_table', '2026-01-05 21:26:01.650179');
-INSERT INTO public.migration_fragment_log VALUES ('2.10.0-add_closed_vial_wastage_reason_option_type', '2026-01-05 21:26:01.650449');
-INSERT INTO public.migration_fragment_log VALUES ('2.10.0-add_campaign_and_program_to_stocktake_line_row', '2026-01-05 21:26:01.651048');
-INSERT INTO public.migration_fragment_log VALUES ('2.10.0-rename_vvm_status_level_to_priority', '2026-01-05 21:26:01.651243');
-INSERT INTO public.migration_fragment_log VALUES ('2.10.0-add_program_id_to_stock_and_invoice_lines', '2026-01-05 21:26:01.651793');
-INSERT INTO public.migration_fragment_log VALUES ('2.10.0-add_volume_to_location', '2026-01-05 21:26:01.652103');
-INSERT INTO public.migration_fragment_log VALUES ('2.10.0-reintegrate_location_volume', '2026-01-05 21:26:01.65246');
-INSERT INTO public.migration_fragment_log VALUES ('2.10.0-rename_cold_storage_type_fk.rs', '2026-01-05 21:26:01.653383');
-INSERT INTO public.migration_fragment_log VALUES ('2.10.0-add_vvm_status_to_stocktake_line', '2026-01-05 21:26:01.653622');
-INSERT INTO public.migration_fragment_log VALUES ('2.10.0-add_comment_to_purchase_order_line', '2026-01-05 21:26:01.653835');
-INSERT INTO public.migration_fragment_log VALUES ('2.10.0-add_goods_received_permission_enum_values', '2026-01-05 21:26:01.654091');
-INSERT INTO public.migration_fragment_log VALUES ('2.10.0-rename_authorised_to_adjusted_number_of_units', '2026-01-05 21:26:01.654322');
-INSERT INTO public.migration_fragment_log VALUES ('2.10.0-remove_use_campaigns_pref', '2026-01-05 21:26:01.654574');
-INSERT INTO public.migration_fragment_log VALUES ('2.10.0-activity_log_goods_received', '2026-01-05 21:26:01.654831');
-INSERT INTO public.migration_fragment_log VALUES ('2.10.0-add_purchase_order_activity_logs', '2026-01-05 21:26:01.655253');
-INSERT INTO public.migration_fragment_log VALUES ('2.10.0-add_goods_received_report_context', '2026-01-05 21:26:01.655522');
-INSERT INTO public.migration_fragment_log VALUES ('2.10.0-add_extra_purchase_order_fields', '2026-01-05 21:26:01.655924');
-INSERT INTO public.migration_fragment_log VALUES ('2.10.0-add_goods_received_id_to_invoice', '2026-01-05 21:26:01.656136');
-INSERT INTO public.migration_fragment_log VALUES ('2.10.0-rename_cold_storage_type_activity_log_enum', '2026-01-05 21:26:01.656331');
-INSERT INTO public.migration_fragment_log VALUES ('2.10.1-add_name_of_insured_to_name_insurance_join', '2026-01-05 21:26:01.65671');
-INSERT INTO public.migration_fragment_log VALUES ('2.11.0-add_permission_to_verify_inbound_shipment', '2026-01-05 21:26:01.657051');
-INSERT INTO public.migration_fragment_log VALUES ('2.11.0-update_goods_received_report_context', '2026-01-05 21:26:01.657294');
-INSERT INTO public.migration_fragment_log VALUES ('2.11.0-add_purchase_order_line_status_enums', '2026-01-05 21:26:01.658377');
-INSERT INTO public.migration_fragment_log VALUES ('2.11.0-add_ignore_for_orders_to_item_store_join', '2026-01-05 21:26:01.658644');
-INSERT INTO public.migration_fragment_log VALUES ('2.11.2-add_patient_updated_to_activity_log', '2026-01-05 21:26:01.659121');
-INSERT INTO public.migration_fragment_log VALUES ('2.12.0-update_purchase_order_status_enum', '2026-01-05 21:26:01.659593');
-INSERT INTO public.migration_fragment_log VALUES ('2.12.0-update_purchase_order_activity_log_type_enum', '2026-01-05 21:26:01.659909');
-INSERT INTO public.migration_fragment_log VALUES ('2.12.0-rename_authorised_datetime_to_request_approval_datetime', '2026-01-05 21:26:01.660113');
-INSERT INTO public.migration_fragment_log VALUES ('2.12.0-add_shipping_method_table', '2026-01-05 21:26:01.660966');
-INSERT INTO public.migration_fragment_log VALUES ('2.12.0-add_purchase_order_status_logs_to_activity_log_type_enum', '2026-01-05 21:26:01.66119');
-INSERT INTO public.migration_fragment_log VALUES ('2.12.0-rename_purchase_order_line_price_per_unit_per_pack', '2026-01-05 21:26:01.66138');
-INSERT INTO public.migration_fragment_log VALUES ('2.12.0-add_skip_dose_option_to_vaccine_course', '2026-01-05 21:26:01.661748');
-INSERT INTO public.migration_fragment_log VALUES ('2.12.0-add_requisition_auto_finalise_processor_cursor_pg_enum', '2026-01-05 21:26:01.66194');
-INSERT INTO public.migration_fragment_log VALUES ('2.13.0-add_created_from_req_ids_to_requisition', '2026-01-05 21:26:01.662517');
-INSERT INTO public.migration_fragment_log VALUES ('2.13.0-add_master_list_to_changelog', '2026-01-05 21:26:01.662709');
-INSERT INTO public.migration_fragment_log VALUES ('2.13.0-add_margin_to_item_store_join', '2026-01-05 21:26:01.662973');
-INSERT INTO public.migration_fragment_log VALUES ('2.13.1-reintegrate asset tables', '2026-01-05 21:26:01.663312');
-INSERT INTO public.migration_fragment_log VALUES ('2.13.1-can_edit_asset_status_permission', '2026-01-05 21:26:01.663527');
-INSERT INTO public.migration_fragment_log VALUES ('2.13.1-remove_fk_on_asset_internal_location', '2026-01-05 21:26:01.66383');
-INSERT INTO public.migration_fragment_log VALUES ('2.13.1-update_store_id_for_asset_internal_location_changelog', '2026-01-05 21:26:01.664484');
-INSERT INTO public.migration_fragment_log VALUES ('2.14.0-add_encounter_changelog_table_name', '2026-01-05 21:26:01.66495');
-INSERT INTO public.migration_fragment_log VALUES ('2.14.0-requisition_line_add_price_per_unit', '2026-01-05 21:26:01.665177');
-INSERT INTO public.migration_fragment_log VALUES ('2.14.0-resync_existing_vaccination_encounter_records', '2026-01-05 21:26:01.665519');
-INSERT INTO public.migration_fragment_log VALUES ('2.15.0-remove_skip_immediate_statuses_in_outbound_pref', '2026-01-05 21:26:01.665841');
+INSERT INTO public.migration_fragment_log VALUES ('2.2.0-add_low_stock_and_requisition_line_id', '2026-01-08 02:41:35.455415');
+INSERT INTO public.migration_fragment_log VALUES ('2.2.0-requisitions_in_period', '2026-01-08 02:41:35.456207');
+INSERT INTO public.migration_fragment_log VALUES ('2.2.0-add_requisition_approved_activity_type', '2026-01-08 02:41:35.456488');
+INSERT INTO public.migration_fragment_log VALUES ('2.2.0-fix_rnr_form_line_columns', '2026-01-08 02:41:35.458781');
+INSERT INTO public.migration_fragment_log VALUES ('2.2.1-add_store_ids_to_existing_rnr_form_changelogs', '2026-01-08 02:41:35.459561');
+INSERT INTO public.migration_fragment_log VALUES ('2.2.2-master_list_default_price_list', '2026-01-08 02:41:35.460202');
+INSERT INTO public.migration_fragment_log VALUES ('2.2.2-master_list_line_price_per_unit', '2026-01-08 02:41:35.460561');
+INSERT INTO public.migration_fragment_log VALUES ('2.3.0-drop_program_deleted_datetime', '2026-01-08 02:41:35.465379');
+INSERT INTO public.migration_fragment_log VALUES ('2.3.0-rename_vaccine_course_schedule_to_dose', '2026-01-08 02:41:35.465762');
+INSERT INTO public.migration_fragment_log VALUES ('2.3.0-remove_num_doses_from_vaccine_course', '2026-01-08 02:41:35.465977');
+INSERT INTO public.migration_fragment_log VALUES ('2.3.0-remove_vaccine_course_dose_dose_number', '2026-01-08 02:41:35.466179');
+INSERT INTO public.migration_fragment_log VALUES ('2.3.0-add_vaccine_course_changelog_table_names', '2026-01-08 02:41:35.466392');
+INSERT INTO public.migration_fragment_log VALUES ('2.3.0-add_vaccinations_table', '2026-01-08 02:41:35.467676');
+INSERT INTO public.migration_fragment_log VALUES ('2.3.0-add_vaccination_activity_log_type', '2026-01-08 02:41:35.467892');
+INSERT INTO public.migration_fragment_log VALUES ('2.3.0-add_vaccine_doses_to_item', '2026-01-08 02:41:35.468315');
+INSERT INTO public.migration_fragment_log VALUES ('2.3.0-add_max_age_to_vaccine_dose', '2026-01-08 02:41:35.468625');
+INSERT INTO public.migration_fragment_log VALUES ('2.3.0-add_report_version_fields', '2026-01-08 02:41:35.469237');
+INSERT INTO public.migration_fragment_log VALUES ('2.3.0-add_facility_to_vaccination', '2026-01-08 02:41:35.469596');
+INSERT INTO public.migration_fragment_log VALUES ('2.3.0-add_vaccine_course_dose_deleted_datetime', '2026-01-08 02:41:35.469871');
+INSERT INTO public.migration_fragment_log VALUES ('2.3.0-add_vaccine_course_dose_custom_age_label', '2026-01-08 02:41:35.470075');
+INSERT INTO public.migration_fragment_log VALUES ('2.3.0-add_backdated_datetime', '2026-01-08 02:41:35.470408');
+INSERT INTO public.migration_fragment_log VALUES ('2.3.0-add_vaccine_course_item_deleted_datetime', '2026-01-08 02:41:35.470655');
+INSERT INTO public.migration_fragment_log VALUES ('2.3.0-add_store_id_to_program_enrolment', '2026-01-08 02:41:35.471065');
+INSERT INTO public.migration_fragment_log VALUES ('2.3.0-remove_stops_from_report_ids', '2026-01-08 02:41:35.471292');
+INSERT INTO public.migration_fragment_log VALUES ('2.3.1-add_demographic_table', '2026-01-08 02:41:35.472824');
+INSERT INTO public.migration_fragment_log VALUES ('2.3.1-move_vaccine_course_to_demographic', '2026-01-08 02:41:35.47342');
+INSERT INTO public.migration_fragment_log VALUES ('2.3.1-add_reference_and_comment_to_rnr_form', '2026-01-08 02:41:35.473777');
+INSERT INTO public.migration_fragment_log VALUES ('2.3.1-add_rnr_columns', '2026-01-08 02:41:35.474156');
+INSERT INTO public.migration_fragment_log VALUES ('2.4.0-delete_pack_variant', '2026-01-08 02:41:35.475213');
+INSERT INTO public.migration_fragment_log VALUES ('2.4.0-add_reason_option_table', '2026-01-08 02:41:35.476309');
+INSERT INTO public.migration_fragment_log VALUES ('2.4.0-add_manual_requisition_line_fields', '2026-01-08 02:41:35.478334');
+INSERT INTO public.migration_fragment_log VALUES ('2.4.0-add_unserviceable_status_to_asset_status_enum', '2026-01-08 02:41:35.478569');
+INSERT INTO public.migration_fragment_log VALUES ('2.4.0-add_expected_lifespan_to_assets', '2026-01-08 02:41:35.480977');
+INSERT INTO public.migration_fragment_log VALUES ('2.4.0-add_cold_storage_type_table', '2026-01-08 02:41:35.482161');
+INSERT INTO public.migration_fragment_log VALUES ('2.4.0-item_variant', '2026-01-08 02:41:35.484311');
+INSERT INTO public.migration_fragment_log VALUES ('2.4.0-program_indicator_create_table', '2026-01-08 02:41:35.48526');
+INSERT INTO public.migration_fragment_log VALUES ('2.4.0-add_item_variant_id_to_stock_line_and_invoice_line', '2026-01-08 02:41:35.485818');
+INSERT INTO public.migration_fragment_log VALUES ('2.4.0-indicator_column_create_table', '2026-01-08 02:41:35.487748');
+INSERT INTO public.migration_fragment_log VALUES ('2.4.0-indicator_value_create_table', '2026-01-08 02:41:35.489319');
+INSERT INTO public.migration_fragment_log VALUES ('2.4.0-add_bundled_item_table', '2026-01-08 02:41:35.490497');
+INSERT INTO public.migration_fragment_log VALUES ('2.4.0-add_demographic_indicator_types_to_activity_log', '2026-01-08 02:41:35.490779');
+INSERT INTO public.migration_fragment_log VALUES ('2.4.0-indicator_indexes', '2026-01-08 02:41:35.492232');
+INSERT INTO public.migration_fragment_log VALUES ('2.4.0-add_store_pref_use_extra_fields', '2026-01-08 02:41:35.49264');
+INSERT INTO public.migration_fragment_log VALUES ('2.4.0-add_item_variant_id_to_stocktake_line', '2026-01-08 02:41:35.492997');
+INSERT INTO public.migration_fragment_log VALUES ('2.4.0-item_changelog', '2026-01-08 02:41:35.493199');
+INSERT INTO public.migration_fragment_log VALUES ('2.4.0-fix_asset_log_reasons_postgres', '2026-01-08 02:41:35.493704');
+INSERT INTO public.migration_fragment_log VALUES ('2.4.1-item_categories', '2026-01-08 02:41:35.495871');
+INSERT INTO public.migration_fragment_log VALUES ('2.4.1-system_log_table', '2026-01-08 02:41:35.49734');
+INSERT INTO public.migration_fragment_log VALUES ('2.5.0-add_contact_form_table', '2026-01-08 02:41:35.499317');
+INSERT INTO public.migration_fragment_log VALUES ('2.5.0-new_store_preferences', '2026-01-08 02:41:35.499995');
+INSERT INTO public.migration_fragment_log VALUES ('2.5.0-remove_unique_description_on_tmp_breach', '2026-01-08 02:41:35.500378');
+INSERT INTO public.migration_fragment_log VALUES ('2.5.0-add_emergency_orders', '2026-01-08 02:41:35.500813');
+INSERT INTO public.migration_fragment_log VALUES ('2.5.0-abbreviation_create_table', '2026-01-08 02:41:35.501586');
+INSERT INTO public.migration_fragment_log VALUES ('2.5.0-remove_contact_form_site_id', '2026-01-08 02:41:35.501826');
+INSERT INTO public.migration_fragment_log VALUES ('2.5.0-item_direction_create_table', '2026-01-08 02:41:35.502715');
+INSERT INTO public.migration_fragment_log VALUES ('2.5.0-diagnosis_create_table', '2026-01-08 02:41:35.503608');
+INSERT INTO public.migration_fragment_log VALUES ('2.5.0-add_email_queue_table', '2026-01-08 02:41:35.504608');
+INSERT INTO public.migration_fragment_log VALUES ('2.5.0-add_elmis_code_to_program', '2026-01-08 02:41:35.504837');
+INSERT INTO public.migration_fragment_log VALUES ('2.5.0-diagnosis_add_to_invoice', '2026-01-08 02:41:35.505229');
+INSERT INTO public.migration_fragment_log VALUES ('2.5.0-add_email_retry_at', '2026-01-08 02:41:35.505435');
+INSERT INTO public.migration_fragment_log VALUES ('2.5.0-remove_contact_form_user_account_fk', '2026-01-08 02:41:35.50589');
+INSERT INTO public.migration_fragment_log VALUES ('2.5.0-add_contact_form_processor_pg_enum_type', '2026-01-08 02:41:35.506083');
+INSERT INTO public.migration_fragment_log VALUES ('2.5.0-remove_vaccination_user_account_fk', '2026-01-08 02:41:35.506415');
+INSERT INTO public.migration_fragment_log VALUES ('2.5.0-add_requisition_is_emergency', '2026-01-08 02:41:35.506815');
+INSERT INTO public.migration_fragment_log VALUES ('2.6.0-add_index_to_sync_buffer', '2026-01-08 02:41:35.507608');
+INSERT INTO public.migration_fragment_log VALUES ('2.6.0-add_invoice_line_prescribed_quantity', '2026-01-08 02:41:35.507908');
+INSERT INTO public.migration_fragment_log VALUES ('2.6.0-add_program_deleted_datetime', '2026-01-08 02:41:35.50816');
+INSERT INTO public.migration_fragment_log VALUES ('2.6.0-backend_plugin', '2026-01-08 02:41:35.509483');
+INSERT INTO public.migration_fragment_log VALUES ('2.6.0-add_create_invoice_from_requisition_permission', '2026-01-08 02:41:35.509668');
+INSERT INTO public.migration_fragment_log VALUES ('2.6.0-add_name_next_of_kin_id', '2026-01-08 02:41:35.510349');
+INSERT INTO public.migration_fragment_log VALUES ('2.6.0-add_load_plugin_processor_pg_enum_type', '2026-01-08 02:41:35.510532');
+INSERT INTO public.migration_fragment_log VALUES ('2.6.0-add_program_id_to_invoice', '2026-01-08 02:41:35.51095');
+INSERT INTO public.migration_fragment_log VALUES ('2.6.0-add_insurance_provider', '2026-01-08 02:41:35.511908');
+INSERT INTO public.migration_fragment_log VALUES ('2.6.0-plugin_data_update', '2026-01-08 02:41:35.513429');
+INSERT INTO public.migration_fragment_log VALUES ('2.6.0-frontend_plugins', '2026-01-08 02:41:35.514396');
+INSERT INTO public.migration_fragment_log VALUES ('2.6.0-prescribed_quantity_store_pref', '2026-01-08 02:41:35.515744');
+INSERT INTO public.migration_fragment_log VALUES ('2.6.0-add_name_next_of_kin_name', '2026-01-08 02:41:35.516169');
+INSERT INTO public.migration_fragment_log VALUES ('2.6.0-add_program_id_to_stocktake', '2026-01-08 02:41:35.516752');
+INSERT INTO public.migration_fragment_log VALUES ('2.6.0-add_name_insurance_join', '2026-01-08 02:41:35.518675');
+INSERT INTO public.migration_fragment_log VALUES ('2.6.0-printer_configuration_create_table', '2026-01-08 02:41:35.534205');
+INSERT INTO public.migration_fragment_log VALUES ('2.6.0-add_insurance_fields_to_invoice', '2026-01-08 02:41:35.534888');
+INSERT INTO public.migration_fragment_log VALUES ('2.6.0-add_cancelled_status_to_invoice', '2026-01-08 02:41:35.535205');
+INSERT INTO public.migration_fragment_log VALUES ('2.6.0-report_add_prescription_context', '2026-01-08 02:41:35.535493');
+INSERT INTO public.migration_fragment_log VALUES ('2.6.0-add_cancellation_fields_to_invoice', '2026-01-08 02:41:35.536056');
+INSERT INTO public.migration_fragment_log VALUES ('2.6.0-reinitialise_reports_updated', '2026-01-08 02:41:35.538732');
+INSERT INTO public.migration_fragment_log VALUES ('2.6.0-report', '2026-01-08 02:41:35.539005');
+INSERT INTO public.migration_fragment_log VALUES ('2.6.0-om_form_schema', '2026-01-08 02:41:35.539246');
+INSERT INTO public.migration_fragment_log VALUES ('2.6.0-add_report_is_active', '2026-01-08 02:41:35.539545');
+INSERT INTO public.migration_fragment_log VALUES ('2.6.0-plugin_data_changelog', '2026-01-08 02:41:35.539751');
+INSERT INTO public.migration_fragment_log VALUES ('2.6.0-report_fix_prescriptions_report_code_updated', '2026-01-08 02:41:35.540158');
+INSERT INTO public.migration_fragment_log VALUES ('2.6.1-change_vaccination_date_to_nullable', '2026-01-08 02:41:35.540803');
+INSERT INTO public.migration_fragment_log VALUES ('2.6.1-remove_plugins', '2026-01-08 02:41:35.541124');
+INSERT INTO public.migration_fragment_log VALUES ('2.6.1-report_add_internal_order_context', '2026-01-08 02:41:35.541333');
+INSERT INTO public.migration_fragment_log VALUES ('2.6.2-store_reintegrate_for_created_date', '2026-01-08 02:41:35.541765');
+INSERT INTO public.migration_fragment_log VALUES ('2.6.2-add_assign_requisition_number_processor_cursor_pg_enum_type', '2026-01-08 02:41:35.541972');
+INSERT INTO public.migration_fragment_log VALUES ('2.6.3-remove_non_custom_standard_reports', '2026-01-08 02:41:35.542461');
+INSERT INTO public.migration_fragment_log VALUES ('2.7.0-add_preference_table', '2026-01-08 02:41:35.543669');
+INSERT INTO public.migration_fragment_log VALUES ('2.7.0-add_linked_invoice_id_to_invoice_line', '2026-01-08 02:41:35.543951');
+INSERT INTO public.migration_fragment_log VALUES ('2.7.0-add_expected_delivery_date', '2026-01-08 02:41:35.544212');
+INSERT INTO public.migration_fragment_log VALUES ('2.7.0-new_stocktake_fields', '2026-01-08 02:41:35.544464');
+INSERT INTO public.migration_fragment_log VALUES ('2.7.0-asset_data_matrix_permission', '2026-01-08 02:41:35.544652');
+INSERT INTO public.migration_fragment_log VALUES ('2.7.0-asset_data_matrix_locked_fields', '2026-01-08 02:41:35.544874');
+INSERT INTO public.migration_fragment_log VALUES ('2.7.0-add_patient_link_id_to_vaccination', '2026-01-08 02:41:35.545478');
+INSERT INTO public.migration_fragment_log VALUES ('2.7.0-change_vaccination_date_to_not_nullable', '2026-01-08 02:41:35.545844');
+INSERT INTO public.migration_fragment_log VALUES ('2.7.0-remove_encounter_clinician_link_constraint2', '2026-01-08 02:41:35.546167');
+INSERT INTO public.migration_fragment_log VALUES ('2.7.0-add_warning_table', '2026-01-08 02:41:35.546869');
+INSERT INTO public.migration_fragment_log VALUES ('2.7.0-add_item_warning_join_table', '2026-01-08 02:41:35.547795');
+INSERT INTO public.migration_fragment_log VALUES ('2.7.0-add_given_store_id_to_vaccination', '2026-01-08 02:41:35.548321');
+INSERT INTO public.migration_fragment_log VALUES ('2.7.0-trigger_patient_visibility_sync', '2026-01-08 02:41:35.548825');
+INSERT INTO public.migration_fragment_log VALUES ('2.7.0-add_central_patient_visibility_processor_pg_enum_type', '2026-01-08 02:41:35.549107');
+INSERT INTO public.migration_fragment_log VALUES ('2.7.0-drop_encounters_report', '2026-01-08 02:41:35.549302');
+INSERT INTO public.migration_fragment_log VALUES ('2.7.4-create_dynamic_cursor_key', '2026-01-08 02:41:35.549737');
+INSERT INTO public.migration_fragment_log VALUES ('2.7.4-create_sync_message_table', '2026-01-08 02:41:35.554451');
+INSERT INTO public.migration_fragment_log VALUES ('2.7.4-create_plugin_user', '2026-01-08 02:41:35.554795');
+INSERT INTO public.migration_fragment_log VALUES ('2.8.0-add_vvm_status_table', '2026-01-08 02:41:35.556062');
+INSERT INTO public.migration_fragment_log VALUES ('2.8.0-add_doses_columns_to_item_variant', '2026-01-08 02:41:35.556438');
+INSERT INTO public.migration_fragment_log VALUES ('2.8.0-add_initial_stocktake_field', '2026-01-08 02:41:35.556795');
+INSERT INTO public.migration_fragment_log VALUES ('2.8.0-add_created_fields_to_item_variant', '2026-01-08 02:41:35.557135');
+INSERT INTO public.migration_fragment_log VALUES ('2.8.0-add_item_variant_enums_to_activity_log', '2026-01-08 02:41:35.557472');
+INSERT INTO public.migration_fragment_log VALUES ('2.8.0-add_vvm_status_log_change_log_table_name', '2026-01-08 02:41:35.557736');
+INSERT INTO public.migration_fragment_log VALUES ('2.8.0-add_view_and_edit_vvm_status_permission', '2026-01-08 02:41:35.557964');
+INSERT INTO public.migration_fragment_log VALUES ('2.8.0-add_donor_id_to_invoice_and_invoice_lines', '2026-01-08 02:41:35.558378');
+INSERT INTO public.migration_fragment_log VALUES ('2.8.0-add_vvm_status_log_update_to_activity_log', '2026-01-08 02:41:35.558593');
+INSERT INTO public.migration_fragment_log VALUES ('2.8.0-add_vvm_status_id_to_stock_line', '2026-01-08 02:41:35.559006');
+INSERT INTO public.migration_fragment_log VALUES ('2.8.0-add_campaign_table', '2026-01-08 02:41:35.559785');
+INSERT INTO public.migration_fragment_log VALUES ('2.8.0-add_campaign_change_log_table_name', '2026-01-08 02:41:35.560021');
+INSERT INTO public.migration_fragment_log VALUES ('2.8.0-add_donor_id_to_stock_lines', '2026-01-08 02:41:35.560272');
+INSERT INTO public.migration_fragment_log VALUES ('2.8.0-add_donor_id_to_stocktake_line', '2026-01-08 02:41:35.560525');
+INSERT INTO public.migration_fragment_log VALUES ('2.8.0-migrate_reason_option_ids', '2026-01-08 02:41:35.563408');
+INSERT INTO public.migration_fragment_log VALUES ('2.8.0-add_vvm_status_log_table', '2026-01-08 02:41:35.564615');
+INSERT INTO public.migration_fragment_log VALUES ('2.8.0-add_vvm_status_id_to_invoice_line', '2026-01-08 02:41:35.565048');
+INSERT INTO public.migration_fragment_log VALUES ('2.8.0-add_open_vial_wastage_to_reason_option_type', '2026-01-08 02:41:35.565298');
+INSERT INTO public.migration_fragment_log VALUES ('2.8.0-add_campaign_id_to_stock_line', '2026-01-08 02:41:35.56569');
+INSERT INTO public.migration_fragment_log VALUES ('2.8.0-reintegrate_options_sync_buffer_records', '2026-01-08 02:41:35.565914');
+INSERT INTO public.migration_fragment_log VALUES ('2.8.0-donor_id_to_donor_link_id', '2026-01-08 02:41:35.567192');
+INSERT INTO public.migration_fragment_log VALUES ('2.8.0-add_campaign_id_to_invoice_line_row', '2026-01-08 02:41:35.567632');
+INSERT INTO public.migration_fragment_log VALUES ('2.8.0-add_population_percentage_to_demographic', '2026-01-08 02:41:35.568329');
+INSERT INTO public.migration_fragment_log VALUES ('2.8.0-rename_vaccine_course_is_active_to_use_in_gaps', '2026-01-08 02:41:35.568578');
+INSERT INTO public.migration_fragment_log VALUES ('2.8.0-sync_donor_id_to_existing_stock_and_invoice_lines', '2026-01-08 02:41:35.568982');
+INSERT INTO public.migration_fragment_log VALUES ('2.8.3-invoice_received_status', '2026-01-08 02:41:35.56975');
+INSERT INTO public.migration_fragment_log VALUES ('2.9.0-process_clinician_store_join_deletes', '2026-01-08 02:41:35.570128');
+INSERT INTO public.migration_fragment_log VALUES ('2.9.0-add_mutate_clinician_permission', '2026-01-08 02:41:35.570341');
+INSERT INTO public.migration_fragment_log VALUES ('2.9.0-add_store_id_to_clinician', '2026-01-08 02:41:35.570735');
+INSERT INTO public.migration_fragment_log VALUES ('2.9.0-extend_name_table_fields', '2026-01-08 02:41:35.571243');
+INSERT INTO public.migration_fragment_log VALUES ('2.9.0-resync_existing_vaccine_course_records', '2026-01-08 02:41:35.571505');
+INSERT INTO public.migration_fragment_log VALUES ('2.9.0-resync_existing_vaccine_course_dose_and_item', '2026-01-08 02:41:35.571807');
+INSERT INTO public.migration_fragment_log VALUES ('2.9.0-add_shipped_number_of_packs_to_invoice_line', '2026-01-08 02:41:35.572062');
+INSERT INTO public.migration_fragment_log VALUES ('2.9.0-add_shipped_number_of_packs_to_invoice_line_legacy', '2026-01-08 02:41:35.572322');
+INSERT INTO public.migration_fragment_log VALUES ('2.9.0-add_excel_template_to_report', '2026-01-08 02:41:35.572557');
+INSERT INTO public.migration_fragment_log VALUES ('2.9.0-resync_existing_vaccination_records', '2026-01-08 02:41:35.57278');
+INSERT INTO public.migration_fragment_log VALUES ('2.9.0-remove_item_variant_doses_column', '2026-01-08 02:41:35.573077');
+INSERT INTO public.migration_fragment_log VALUES ('2.9.0-reintegrate_clinician_gender', '2026-01-08 02:41:35.573354');
+INSERT INTO public.migration_fragment_log VALUES ('2.9.1-add_can_cancel_finalised_invoices_user_permission', '2026-01-08 02:41:35.573795');
+INSERT INTO public.migration_fragment_log VALUES ('2.9.1-add_delete_rnr_form_activity_log_enum', '2026-01-08 02:41:35.574127');
+INSERT INTO public.migration_fragment_log VALUES ('2.9.1-remove_rnr_form_line_entered_losses_default', '2026-01-08 02:41:35.574407');
+INSERT INTO public.migration_fragment_log VALUES ('2.9.1-add_invoice_line_shipped_pack_size', '2026-01-08 02:41:35.574707');
+INSERT INTO public.migration_fragment_log VALUES ('2.9.1-invoice_line_shipped_pack_size_sync_buffer', '2026-01-08 02:41:35.574969');
+INSERT INTO public.migration_fragment_log VALUES ('2.9.2-add_last_fix_ledger_run_key_value_store', '2026-01-08 02:41:35.57544');
+INSERT INTO public.migration_fragment_log VALUES ('2.10.0-add_contact_table', '2026-01-08 02:41:35.576604');
+INSERT INTO public.migration_fragment_log VALUES ('2.10.0-add_purchase_order_tables', '2026-01-08 02:41:35.579635');
+INSERT INTO public.migration_fragment_log VALUES ('2.10.0-add_purchase_order_to_number_type', '2026-01-08 02:41:35.579929');
+INSERT INTO public.migration_fragment_log VALUES ('2.10.0-add_purchase_order_report_context', '2026-01-08 02:41:35.580143');
+INSERT INTO public.migration_fragment_log VALUES ('2.10.0-add_item_store_join', '2026-01-08 02:41:35.58111');
+INSERT INTO public.migration_fragment_log VALUES ('2.10.0-add_purchase_order_permission_enum_values', '2026-01-08 02:41:35.58138');
+INSERT INTO public.migration_fragment_log VALUES ('2.10.0-rename_cold_storage_type_to_location_type', '2026-01-08 02:41:35.581651');
+INSERT INTO public.migration_fragment_log VALUES ('2.10.0-delete_unused_number_type', '2026-01-08 02:41:35.581819');
+INSERT INTO public.migration_fragment_log VALUES ('2.10.0-add_restricted_location_type_id_to_item', '2026-01-08 02:41:35.582207');
+INSERT INTO public.migration_fragment_log VALUES ('2.10.0-add_goods_received_table', '2026-01-08 02:41:35.583635');
+INSERT INTO public.migration_fragment_log VALUES ('2.10.0-add_supplier_discount_percentage_to_purchase_order', '2026-01-08 02:41:35.583848');
+INSERT INTO public.migration_fragment_log VALUES ('2.10.0-add_stock_volume', '2026-01-08 02:41:35.58458');
+INSERT INTO public.migration_fragment_log VALUES ('2.10.0-stock_volume_sync_buffer', '2026-01-08 02:41:35.584933');
+INSERT INTO public.migration_fragment_log VALUES ('2.10.0-add_item_variant_enums_to_activity_log', '2026-01-08 02:41:35.585126');
+INSERT INTO public.migration_fragment_log VALUES ('2.10.0-add_more_dates_to_purchase_order', '2026-01-08 02:41:35.585345');
+INSERT INTO public.migration_fragment_log VALUES ('2.10.0-add_goods_received_line_table', '2026-01-08 02:41:35.587167');
+INSERT INTO public.migration_fragment_log VALUES ('2.10.0-add_closed_vial_wastage_reason_option_type', '2026-01-08 02:41:35.587465');
+INSERT INTO public.migration_fragment_log VALUES ('2.10.0-add_campaign_and_program_to_stocktake_line_row', '2026-01-08 02:41:35.588022');
+INSERT INTO public.migration_fragment_log VALUES ('2.10.0-rename_vvm_status_level_to_priority', '2026-01-08 02:41:35.588225');
+INSERT INTO public.migration_fragment_log VALUES ('2.10.0-add_program_id_to_stock_and_invoice_lines', '2026-01-08 02:41:35.588849');
+INSERT INTO public.migration_fragment_log VALUES ('2.10.0-add_volume_to_location', '2026-01-08 02:41:35.58918');
+INSERT INTO public.migration_fragment_log VALUES ('2.10.0-reintegrate_location_volume', '2026-01-08 02:41:35.589457');
+INSERT INTO public.migration_fragment_log VALUES ('2.10.0-rename_cold_storage_type_fk.rs', '2026-01-08 02:41:35.590506');
+INSERT INTO public.migration_fragment_log VALUES ('2.10.0-add_vvm_status_to_stocktake_line', '2026-01-08 02:41:35.590731');
+INSERT INTO public.migration_fragment_log VALUES ('2.10.0-add_comment_to_purchase_order_line', '2026-01-08 02:41:35.590938');
+INSERT INTO public.migration_fragment_log VALUES ('2.10.0-add_goods_received_permission_enum_values', '2026-01-08 02:41:35.591163');
+INSERT INTO public.migration_fragment_log VALUES ('2.10.0-rename_authorised_to_adjusted_number_of_units', '2026-01-08 02:41:35.591353');
+INSERT INTO public.migration_fragment_log VALUES ('2.10.0-remove_use_campaigns_pref', '2026-01-08 02:41:35.59155');
+INSERT INTO public.migration_fragment_log VALUES ('2.10.0-activity_log_goods_received', '2026-01-08 02:41:35.591766');
+INSERT INTO public.migration_fragment_log VALUES ('2.10.0-add_purchase_order_activity_logs', '2026-01-08 02:41:35.592076');
+INSERT INTO public.migration_fragment_log VALUES ('2.10.0-add_goods_received_report_context', '2026-01-08 02:41:35.592303');
+INSERT INTO public.migration_fragment_log VALUES ('2.10.0-add_extra_purchase_order_fields', '2026-01-08 02:41:35.592686');
+INSERT INTO public.migration_fragment_log VALUES ('2.10.0-add_goods_received_id_to_invoice', '2026-01-08 02:41:35.592929');
+INSERT INTO public.migration_fragment_log VALUES ('2.10.0-rename_cold_storage_type_activity_log_enum', '2026-01-08 02:41:35.593126');
+INSERT INTO public.migration_fragment_log VALUES ('2.10.1-add_name_of_insured_to_name_insurance_join', '2026-01-08 02:41:35.593516');
+INSERT INTO public.migration_fragment_log VALUES ('2.11.0-add_permission_to_verify_inbound_shipment', '2026-01-08 02:41:35.593876');
+INSERT INTO public.migration_fragment_log VALUES ('2.11.0-update_goods_received_report_context', '2026-01-08 02:41:35.594073');
+INSERT INTO public.migration_fragment_log VALUES ('2.11.0-add_purchase_order_line_status_enums', '2026-01-08 02:41:35.594832');
+INSERT INTO public.migration_fragment_log VALUES ('2.11.0-add_ignore_for_orders_to_item_store_join', '2026-01-08 02:41:35.595187');
+INSERT INTO public.migration_fragment_log VALUES ('2.11.2-add_patient_updated_to_activity_log', '2026-01-08 02:41:35.595609');
+INSERT INTO public.migration_fragment_log VALUES ('2.12.0-update_purchase_order_status_enum', '2026-01-08 02:41:35.595927');
+INSERT INTO public.migration_fragment_log VALUES ('2.12.0-update_purchase_order_activity_log_type_enum', '2026-01-08 02:41:35.596227');
+INSERT INTO public.migration_fragment_log VALUES ('2.12.0-rename_authorised_datetime_to_request_approval_datetime', '2026-01-08 02:41:35.596445');
+INSERT INTO public.migration_fragment_log VALUES ('2.12.0-add_shipping_method_table', '2026-01-08 02:41:35.597268');
+INSERT INTO public.migration_fragment_log VALUES ('2.12.0-add_purchase_order_status_logs_to_activity_log_type_enum', '2026-01-08 02:41:35.597516');
+INSERT INTO public.migration_fragment_log VALUES ('2.12.0-rename_purchase_order_line_price_per_unit_per_pack', '2026-01-08 02:41:35.597717');
+INSERT INTO public.migration_fragment_log VALUES ('2.12.0-add_skip_dose_option_to_vaccine_course', '2026-01-08 02:41:35.597965');
+INSERT INTO public.migration_fragment_log VALUES ('2.12.0-add_requisition_auto_finalise_processor_cursor_pg_enum', '2026-01-08 02:41:35.598146');
+INSERT INTO public.migration_fragment_log VALUES ('2.13.0-add_created_from_req_ids_to_requisition', '2026-01-08 02:41:35.598775');
+INSERT INTO public.migration_fragment_log VALUES ('2.13.0-add_master_list_to_changelog', '2026-01-08 02:41:35.598997');
+INSERT INTO public.migration_fragment_log VALUES ('2.13.0-add_margin_to_item_store_join', '2026-01-08 02:41:35.599309');
+INSERT INTO public.migration_fragment_log VALUES ('2.13.1-reintegrate asset tables', '2026-01-08 02:41:35.599645');
+INSERT INTO public.migration_fragment_log VALUES ('2.13.1-can_edit_asset_status_permission', '2026-01-08 02:41:35.599824');
+INSERT INTO public.migration_fragment_log VALUES ('2.13.1-remove_fk_on_asset_internal_location', '2026-01-08 02:41:35.600112');
+INSERT INTO public.migration_fragment_log VALUES ('2.13.1-update_store_id_for_asset_internal_location_changelog', '2026-01-08 02:41:35.60066');
+INSERT INTO public.migration_fragment_log VALUES ('2.14.0-add_encounter_changelog_table_name', '2026-01-08 02:41:35.601023');
+INSERT INTO public.migration_fragment_log VALUES ('2.14.0-requisition_line_add_price_per_unit', '2026-01-08 02:41:35.601273');
+INSERT INTO public.migration_fragment_log VALUES ('2.14.0-resync_existing_vaccination_encounter_records', '2026-01-08 02:41:35.601678');
+INSERT INTO public.migration_fragment_log VALUES ('2.15.0-remove_skip_immediate_statuses_in_outbound_pref', '2026-01-08 02:41:35.602007');
 
 
 --
@@ -6739,27 +6009,6 @@ CREATE UNIQUE INDEX ix_number_store_type_unique ON public.number USING btree (st
 --
 
 CREATE INDEX program_indicator_program_id ON public.program_indicator USING btree (program_id);
-
-
---
--- Name: purchase_order_stats _RETURN; Type: RULE; Schema: public; Owner: -
---
-
-CREATE OR REPLACE VIEW public.purchase_order_stats AS
- SELECT po.id AS purchase_order_id,
-    COALESCE(sum(
-        CASE
-            WHEN (pol.adjusted_number_of_units IS NOT NULL) THEN ((pol.adjusted_number_of_units / NULLIF(pol.requested_pack_size, (0)::double precision)) * pol.price_per_pack_after_discount)
-            ELSE ((pol.requested_number_of_units / NULLIF(pol.requested_pack_size, (0)::double precision)) * pol.price_per_pack_after_discount)
-        END), (0)::double precision) AS order_total_before_discount,
-    (COALESCE(sum(
-        CASE
-            WHEN (pol.adjusted_number_of_units IS NOT NULL) THEN ((pol.adjusted_number_of_units / NULLIF(pol.requested_pack_size, (0)::double precision)) * pol.price_per_pack_after_discount)
-            ELSE ((pol.requested_number_of_units / NULLIF(pol.requested_pack_size, (0)::double precision)) * pol.price_per_pack_after_discount)
-        END), (0)::double precision) * ((1)::double precision - (COALESCE(po.supplier_discount_percentage, (0)::double precision) / (100)::double precision))) AS order_total_after_discount
-   FROM (public.purchase_order po
-     JOIN public.purchase_order_line pol ON ((po.id = pol.purchase_order_id)))
-  GROUP BY po.id;
 
 
 --
