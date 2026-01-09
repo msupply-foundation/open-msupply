@@ -3,6 +3,8 @@ export {
   DetailView as RequestRequisitionDetailView,
   RequestRequisitionCreateModal,
   useRequest,
+  NewGeneralOrder,
+  NewProgramRequisition,
 } from './RequestRequisition';
 export {
   ListView as ResponseRequisitionListView,
