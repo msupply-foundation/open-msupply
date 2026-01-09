@@ -13,14 +13,12 @@ import {
   useTranslation,
   Widget,
 } from '@openmsupply-client/common';
-import {
-  InternalSupplierSearchModal,
-  NameRowFragment,
-} from '@openmsupply-client/system';
 import { useRequest } from '@openmsupply-client/requisitions';
 import { AppRoute } from '@openmsupply-client/config';
 import { ExpiringStockSummary } from './ExpiringStockSummary';
 import { StockLevelsSummary } from './StockLevelsSummary';
+import { RequestRequisitionCreateModal } from '@openmsupply-client/requisitions';
+import { NewRequisitionType } from 'packages/requisitions/src/types';
 
 export const StockWidget = () => {
   const t = useTranslation();
@@ -29,6 +27,7 @@ export const StockWidget = () => {
   const { userHasPermission } = useAuthContext();
   const { error: errorNotification } = useNotification();
   const { mutateAsync: onCreate } = useRequest.document.insert();
+  const { insert: onProgramCreate } = useRequest.document.insertProgram();
 
   const handleClick = () => {
     if (!userHasPermission(UserPermission.RequisitionMutate)) {
@@ -38,44 +37,8 @@ export const StockWidget = () => {
     modalControl.toggleOn();
   };
 
-  const onError = (e: unknown) =>
-    errorNotification(
-      t('error.failed-to-create-requisition', {
-        message: (e as Error).message ?? '',
-      })
-    )();
-
-  const handleModalChange = async ({ id: otherPartyId }: NameRowFragment) => {
-    modalControl.toggleOff();
-    try {
-      const result = await onCreate(
-        {
-          id: FnUtils.generateUUID(),
-          otherPartyId,
-        },
-        { onError }
-      );
-      if (result)
-        navigate(
-          RouteBuilder.create(AppRoute.Replenishment)
-            .addPart(AppRoute.InternalOrder)
-            .addPart(result.id)
-            .build()
-        );
-    } catch (e) {
-      // onError is already managing error state
-    }
-  };
-
   return (
     <>
-      {modalControl.isOn ? (
-        <InternalSupplierSearchModal
-          open={true}
-          onClose={modalControl.toggleOff}
-          onChange={handleModalChange}
-        />
-      ) : null}
       <Widget title={t('inventory-management')}>
         <Grid
           container
@@ -102,6 +65,44 @@ export const StockWidget = () => {
             />
           </Grid>
         </Grid>
+        <RequestRequisitionCreateModal
+          isOpen={modalControl.isOn}
+          onClose={modalControl.toggleOff}
+          onCreate={async newRequisition => {
+            switch (newRequisition.type) {
+              case NewRequisitionType.General:
+                return onCreate({
+                  id: FnUtils.generateUUID(),
+                  otherPartyId: newRequisition.name.id,
+                }).then(({ id }) => {
+                  modalControl.toggleOff();
+                  navigate(
+                    RouteBuilder.create(AppRoute.Replenishment)
+                      .addPart(AppRoute.InternalOrder)
+                      .addPart(id)
+                      .build()
+                  );
+                });
+              case NewRequisitionType.Program:
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                const { type: _, ...rest } = newRequisition;
+                return onProgramCreate({
+                  id: FnUtils.generateUUID(),
+                  ...rest,
+                }).then(request => {
+                  if (request.__typename == 'RequisitionNode') {
+                    modalControl.toggleOff();
+                    navigate(
+                      RouteBuilder.create(AppRoute.Replenishment)
+                        .addPart(AppRoute.InternalOrder)
+                        .addPart(String(request.id))
+                        .build()
+                    );
+                  }
+                });
+            }
+          }}
+        />
       </Widget>
     </>
   );
