@@ -186,6 +186,22 @@ export const StockLineForm = ({
                   </Box>
                 </Box>
               </Box>
+              <Box display="flex" alignItems="center">
+                <Box style={{ textAlign: 'end', whiteSpace: 'nowrap' }}>
+                  <FormLabel
+                    sx={{
+                      fontWeight: 'bold',
+                      display: 'inline-block',
+                      width: '100px',
+                    }}
+                  >
+                    {t('label.unit')}:
+                  </FormLabel>
+                </Box>
+                <Box paddingLeft={1} paddingRight={1.5}>
+                  <Box>{draft.item.unitName}</Box>
+                </Box>
+              </Box>
             </Box>
           )}
           <Box>
@@ -224,6 +240,48 @@ export const StockLineForm = ({
                             onUpdate({ availableNumberOfPacks })
                           }
                           {...getDosesProps(draft.availableNumberOfPacks)}
+                        />
+                      }
+                    />
+                  </>
+                )}
+                {!isNewModal && (
+                  <>
+                    <StyledInputRow
+                      label={t('label.available-soh')}
+                      Input={
+                        <NumericTextInput
+                          autoFocus
+                          disabled={true}
+                          width={160}
+                          value={parseFloat(
+                            (
+                              draft.availableNumberOfPacks * draft.packSize
+                            ).toFixed(2)
+                          )}
+                          onChange={() => {}}
+                          {...getDosesProps(
+                            draft.availableNumberOfPacks * draft.packSize
+                          )}
+                        />
+                      }
+                    />
+                    <StyledInputRow
+                      label={t('label.soh')}
+                      Input={
+                        <NumericTextInput
+                          autoFocus
+                          disabled={true}
+                          width={160}
+                          value={parseFloat(
+                            (draft.totalNumberOfPacks * draft.packSize).toFixed(
+                              2
+                            )
+                          )}
+                          onChange={() => {}}
+                          {...getDosesProps(
+                            draft.totalNumberOfPacks * draft.packSize
+                          )}
                         />
                       }
                     />
