@@ -1,3 +1,4 @@
+mod base_migration;
 pub mod constants;
 mod types;
 mod v1_00_04;
@@ -64,7 +65,7 @@ mod templates;
 pub use self::version::*;
 
 use crate::{
-    db_init::{initialize_earliest_db, initialize_latest_db, is_empty_db},
+    migrations::base_migration::{initialize_earliest_db, initialize_latest_db, is_empty_db},
     run_db_migrations, KeyType, KeyValueStoreRepository, MigrationFragmentLogRepository,
     RepositoryError, StorageConnection,
 };
@@ -113,6 +114,8 @@ pub enum MigrationError {
         version: Version,
         identifier: &'static str,
     },
+    #[error("Error initializing base database schema: {0}")]
+    InitializeDatabaseError(#[from] diesel::result::Error),
     #[error(transparent)]
     DatabaseError(#[from] RepositoryError),
 }
@@ -174,7 +177,7 @@ pub fn migrate(
     ];
 
     // Check if the database has been initialised, if not run the base sql to kick start the process
-    if is_empty_db(connection).expect("Unable to check for empty db on startup: Nothing returned") {
+    if is_empty_db(connection)? {
         log::info!("Empty database detected, creating base schema...");
 
         if to_version.is_some() {
@@ -182,10 +185,11 @@ pub fn migrate(
             // We always use the earliest base schema when migrating to a specific version
             // This is the easiest way to makes sure migration tests can still run.
             initialize_earliest_db(connection)
-                .expect("Failed to initialize earliest database schema");
+                .map_err(|e| MigrationError::InitializeDatabaseError(e.into()))?;
         } else {
             log::info!("No target version specified, initializing latest base schema");
-            initialize_latest_db(connection).expect("Unable to initialize latest database schema");
+            initialize_latest_db(connection)
+                .map_err(|e| MigrationError::InitializeDatabaseError(e.into()))?;
         }
         log::info!("Base schema...installed");
     }
