@@ -12,6 +12,24 @@ import { ImportRow, LineNumber } from './ImportAsset';
 // the reference data is loaded in migrations so the id here is hardcoded
 export const CCE_CLASS_ID = 'fad280b6-8384-41af-84cf-c7b6b4526ef0';
 
+const statusTranslation: Record<AssetLogStatusNodeType, LocaleKey> = {
+  [AssetLogStatusNodeType.Decommissioned]: 'status.decommissioned',
+  [AssetLogStatusNodeType.Functioning]: 'status.functioning',
+  [AssetLogStatusNodeType.FunctioningButNeedsAttention]:
+    'status.functioning-but-needs-attention',
+  [AssetLogStatusNodeType.NotFunctioning]: 'status.not-functioning',
+  [AssetLogStatusNodeType.NotInUse]: 'status.not-in-use',
+  [AssetLogStatusNodeType.Unserviceable]: 'status.unserviceable',
+};
+
+export const getEquipmentStatusTranslation = (
+  t: TypedTFunction<LocaleKey>,
+  status: AssetLogStatusNodeType
+): string => {
+  const translationKey = statusTranslation[status];
+  return t(translationKey);
+};
+
 function baseAssetFields(t: TypedTFunction<LocaleKey>) {
   return [
     t('label.asset-number'),
