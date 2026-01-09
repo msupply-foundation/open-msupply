@@ -15,9 +15,12 @@ import {
   useAssetCategories,
   useAssetTypes,
 } from '@openmsupply-client/system';
-
 import { AssetRowFragment } from '../api/operations.generated';
-import { CCE_CLASS_ID, getEquipmentStatusTranslation } from '../utils';
+import {
+  CCE_CLASS_ID,
+  fullStatusColorMap,
+  getEquipmentStatusTranslation,
+} from '../utils';
 
 export const useAssetColumns = () => {
   const t = useTranslation();
@@ -89,35 +92,7 @@ export const useAssetColumns = () => {
         header: t('label.functional-status'),
         accessorFn: row => row.statusLog?.status,
         Cell: ({ cell }) => (
-          <StatusCellNew
-            cell={cell}
-            statusMap={{
-              [AssetLogStatusNodeType.Decommissioned]: {
-                color: 'cceStatus.decommissioned',
-                label: t('status.decommissioned'),
-              },
-              [AssetLogStatusNodeType.Functioning]: {
-                color: 'cceStatus.functioning',
-                label: t('status.functioning'),
-              },
-              [AssetLogStatusNodeType.FunctioningButNeedsAttention]: {
-                color: 'cceStatus.functioningButNeedsAttention',
-                label: t('status.functioning-but-needs-attention'),
-              },
-              [AssetLogStatusNodeType.NotFunctioning]: {
-                color: 'cceStatus.notFunctioning',
-                label: t('status.not-functioning'),
-              },
-              [AssetLogStatusNodeType.NotInUse]: {
-                color: 'cceStatus.notInUse',
-                label: t('status.not-in-use'),
-              },
-              [AssetLogStatusNodeType.Unserviceable]: {
-                color: 'cceStatus.unserviceable',
-                label: t('status.unserviceable'),
-              },
-            }}
-          />
+          <StatusCellNew cell={cell} statusMap={fullStatusColorMap(t)} />
         ),
         enableColumnFilter: true,
         filterVariant: 'select',
