@@ -128,7 +128,18 @@ macro_rules! create_condition {
                 )+
                 And(Vec<Inner>),
                 Or(Vec<Inner>),
+                True,
+                False
             }
+
+            impl Inner {
+                pub fn to_boxed(self) -> BoxedCondition {
+                    self.to_boxed_condition().unwrap_or_else(|| Box::new(true.into_sql::<diesel::sql_types::Bool>().nullable()))
+                }
+            }
+
+            pub const TRUE: Inner = Inner::True;
+            pub const FALSE: Inner = Inner::False;
 
             $(
                 #[allow(non_snake_case)]
@@ -148,41 +159,36 @@ macro_rules! create_condition {
             type BoxedCondition = Box<dyn BoxableExpression<$source, crate::DBType, SqlType = diesel::sql_types::Nullable<diesel::sql_types::Bool>>>;
 
             impl Inner {
-                pub fn to_boxed_condition(self) -> BoxedCondition {
+                 fn to_boxed_condition(self) -> Option<BoxedCondition> {
                    match self {
                         $(
                             Inner::$variant(f) => {
-                                create_condition!(@filter_macro $filter_kind, f, $dsl_expr)
+                                Some(create_condition!(@filter_macro $filter_kind, f, $dsl_expr))
                             },
                         )+
                         Inner::And(conditions) => create_filter(conditions, crate::dynamic_query::AndOr::And),
                         Inner::Or(conditions) => create_filter(conditions, crate::dynamic_query::AndOr::Or),
+                        Inner::True => Some(Box::new(true.into_sql::<diesel::sql_types::Bool>().nullable())),
+                        Inner::False => Some(Box::new(false.into_sql::<diesel::sql_types::Bool>().nullable())),
                     }
                 }
             }
 
-            fn create_filter(mut conditions: Vec<Inner>, and_or: crate::dynamic_query::AndOr) -> BoxedCondition {
-                let first = if !conditions.is_empty() {
-                    conditions.remove(0).to_boxed_condition()
-                } else {
-                    Box::new(diesel::dsl::sql::<
-                        diesel::sql_types::Nullable<diesel::sql_types::Bool>,
-                    >("1 = 1"))
-                };
-
+            fn create_filter(conditions: Vec<Inner>, and_or: crate::dynamic_query::AndOr) -> Option<BoxedCondition> {
                 conditions
                     .into_iter()
-                    .map::<BoxedCondition, _>(Inner::to_boxed_condition)
-                    .fold(first, |boxed_conditions, boxed_condition| {
-                     match and_or {
-                        crate::dynamic_query::AndOr::And => Box::new(boxed_conditions.and(boxed_condition)),
-                        crate::dynamic_query::AndOr::Or => Box::new(boxed_conditions.or(boxed_condition)),
+                    .filter_map::<BoxedCondition, _>(Inner::to_boxed_condition)
+                    .fold(None, |boxed_conditions, boxed_condition| {
+                        Some(match boxed_conditions {
+                            None => boxed_condition,
+                            Some(bc) =>
+                                match and_or {
+                                    crate::dynamic_query::AndOr::And => Box::new(bc.and(boxed_condition)),
+                                    crate::dynamic_query::AndOr::Or => Box::new(bc.or(boxed_condition)),
 
-                    }})
-            }
-
-            fn create_and_filter(conditions: Vec<Inner>) -> BoxedCondition {
-                create_filter(conditions, crate::dynamic_query::AndOr::And)
+                                }
+                            })
+                        })
             }
         }
     };

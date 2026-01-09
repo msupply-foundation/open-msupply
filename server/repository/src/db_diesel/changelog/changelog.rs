@@ -10,7 +10,7 @@ use crate::{
     RepositoryError, StorageConnection, SyncBufferV7Row,
 };
 use diesel::{
-    dsl::{InnerJoin, LeftJoinQuerySource},
+    dsl::{InnerJoin, InnerJoinQuerySource, LeftJoinQuerySource},
     helper_types::{IntoBoxed, LeftJoin},
     prelude::*,
 };
@@ -844,11 +844,12 @@ mod test {
 
 use crate::dynamic_query::*;
 
-diesel::alias!(store as transfer_stores: TransferStores);
+diesel::alias!(store as transfer_stores: TransferStores,store as name_join_stores: NameJoinStores);
 
 allow_tables_to_appear_in_same_query!(changelog_deduped, store);
+allow_tables_to_appear_in_same_query!(changelog_deduped, name_store_join);
 
-// Hover over to get the type, remove ON statements and change joins to LeftJoin
+// Expand macro, copy, remove ON statements and change joins to LeftJoinQuerySource
 #[diesel::dsl::auto_type]
 fn query() -> _ {
     changelog_deduped::table
@@ -859,19 +860,40 @@ fn query() -> _ {
                 .nullable()
                 .eq(changelog_deduped::name_link_id)),
         )
+        .left_join(
+            name_store_join::table.on(name_store_join::name_link_id
+                .nullable()
+                .eq(changelog_deduped::name_link_id)),
+        )
+        .left_join(
+            name_join_stores.on(name_join_stores
+                .field(store::id)
+                .eq(name_store_join::store_id)),
+        )
 }
 
 type Source = LeftJoinQuerySource<
     LeftJoinQuerySource<
-        changelog_deduped::table,
-        store::table,
-        diesel::dsl::Eq<diesel::dsl::Nullable<store::id>, changelog_deduped::store_id>,
+        LeftJoinQuerySource<
+            LeftJoinQuerySource<
+                changelog_deduped::table,
+                store::table,
+                diesel::dsl::Eq<diesel::dsl::Nullable<store::id>, changelog_deduped::store_id>,
+            >,
+            transfer_stores,
+            diesel::dsl::Eq<
+                diesel::dsl::Nullable<diesel::dsl::Field<transfer_stores, store::name_link_id>>,
+                changelog_deduped::name_link_id,
+            >,
+        >,
+        name_store_join::table,
+        diesel::dsl::Eq<
+            diesel::dsl::Nullable<name_store_join::name_link_id>,
+            changelog_deduped::name_link_id,
+        >,
     >,
-    transfer_stores,
-    diesel::dsl::Eq<
-        diesel::dsl::Nullable<diesel::dsl::Field<transfer_stores, store::name_link_id>>,
-        changelog_deduped::name_link_id,
-    >,
+    name_join_stores,
+    diesel::dsl::Eq<diesel::dsl::Field<name_join_stores, store::id>, name_store_join::store_id>,
 >;
 
 create_condition!(
@@ -888,7 +910,17 @@ create_condition!(
     (store_id, string, changelog_deduped::store_id),
     (name_link_id, string, changelog_deduped::name_link_id),
     (transfer_site_id, i32, transfer_stores.field(store::site_id)),
-    (transfer_store_id, string, transfer_stores.field(store::id))
+    (transfer_store_id, string, transfer_stores.field(store::id)),
+    (
+        name_join_site_id,
+        i32,
+        name_join_stores.field(store::site_id)
+    ),
+    (
+        name_join_store_id,
+        string,
+        name_join_stores.field(store::id)
+    )
 );
 
 pub struct CursorAndLimit {
@@ -903,7 +935,7 @@ pub fn get_total_and_changelogs(
     CursorAndLimit { cursor, limit }: CursorAndLimit,
 ) -> Result<(i64, Vec<ChangelogRow>), RepositoryError> {
     let filter = Condition::And(vec![filter, Condition::cursor::greater_then(cursor)]);
-    let select_query = query().filter(filter.clone().to_boxed_condition());
+    let select_query = query().filter(filter.clone().to_boxed());
 
     let select_query = select_query
         .select(changelog_deduped::all_columns)
@@ -918,7 +950,7 @@ pub fn get_total_and_changelogs(
     let changelogs: Vec<ChangelogRow> =
         select_query.load::<ChangelogRow>(connection.lock().connection())?;
 
-    let total_query = query().filter(filter.to_boxed_condition());
+    let total_query = query().filter(filter.to_boxed());
     let total: i64 = total_query
         .count()
         .get_result(connection.lock().connection())?;
@@ -937,7 +969,21 @@ fn central_data() -> Condition::Inner {
     Condition::table_name::any(table_names)
 }
 
+enum SyncDirection {
+    RemoteToCentral,
+    CentralToRemote { is_initialising: bool },
+}
+
 impl Site {
+    pub fn current_site(connection: &StorageConnection) -> Result<Self, RepositoryError> {
+        let site = KeyValueStoreRepository::new(connection)
+            .get_i32(KeyType::SettingsSyncSiteId)?
+            .map(Site::SiteId)
+            .unwrap_or(Site::StoreIds(vec![]));
+
+        Ok(site)
+    }
+
     pub fn remote_data_for_site(&self) -> Condition::Inner {
         let table_names = get_table_names_for_sync_types(&[SyncType::Remote]);
 
@@ -948,6 +994,54 @@ impl Site {
                 Site::StoreIds(ids) => Condition::store_id::any(ids.clone()),
             },
         ])
+    }
+
+    pub fn filter_for_sync_type(
+        &self,
+        sync_direction: SyncDirection,
+        sync_type: SyncType,
+    ) -> Condition::Inner {
+        let and = match &sync_type {
+            SyncType::Central => match sync_direction {
+                SyncDirection::RemoteToCentral => Condition::TRUE,
+                SyncDirection::CentralToRemote { .. } => Condition::FALSE,
+            },
+            SyncType::Remote => {
+                let store_data = match self {
+                    Site::SiteId(site_id) => Condition::site_id::equal(*site_id),
+                    Site::StoreIds(ids) => Condition::store_id::any(ids.clone()),
+                };
+                let transfer = match self {
+                    Site::SiteId(site_id) => Condition::transfer_site_id::equal(*site_id),
+                    Site::StoreIds(ids) => Condition::transfer_store_id::any(ids.clone()),
+                };
+                match sync_direction {
+                    SyncDirection::CentralToRemote {
+                        is_initialising: false,
+                    } => transfer,
+                    SyncDirection::CentralToRemote {
+                        is_initialising: true,
+                    } => Condition::Or(vec![store_data, transfer]),
+                    SyncDirection::RemoteToCentral => store_data,
+                }
+            }
+            // If name has name_link_id it's a patient
+            SyncType::Name => {
+                let patient_is_visible = match self {
+                    Site::SiteId(site_id) => Condition::name_join_site_id::equal(*site_id),
+                    Site::StoreIds(ids) => Condition::name_join_store_id::any(ids.clone()),
+                };
+                match sync_direction {
+                    SyncDirection::CentralToRemote { .. } => {
+                        Condition::Or(vec![patient_is_visible, Condition::name_link_id::is_null()])
+                    }
+                    SyncDirection::RemoteToCentral => patient_is_visible,
+                }
+            }
+        };
+
+        let table_names = get_table_names_for_sync_types(&[sync_type]);
+        Condition::And(vec![and, Condition::table_name::any(table_names)])
     }
 
     pub fn all_data_for_site(&self, is_initialising: bool) -> Condition::Inner {
@@ -967,6 +1061,7 @@ impl Site {
             filter
         }
     }
+
     fn transfer_data_for_site(&self) -> Condition::Inner {
         let table_names = get_table_names_for_sync_types(&[SyncType::Remote]);
 
@@ -977,15 +1072,6 @@ impl Site {
                 Site::StoreIds(ids) => Condition::transfer_store_id::any(ids.clone()),
             },
         ])
-    }
-
-    pub fn current_site(connection: &StorageConnection) -> Result<Self, RepositoryError> {
-        let site = KeyValueStoreRepository::new(connection)
-            .get_i32(KeyType::SettingsSyncSiteId)?
-            .map(Site::SiteId)
-            .unwrap_or(Site::StoreIds(vec![]));
-
-        Ok(site)
     }
 }
 

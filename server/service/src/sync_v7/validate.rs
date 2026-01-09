@@ -51,6 +51,9 @@ pub fn validate_on_remote(
                 return Some(ValidationError::SiteAlreadyInitialised);
             }
         }
+        SyncType::Name =>
+            /* TODO is it central name or patient with name_store_join here */
+            {}
     };
 
     None
@@ -70,6 +73,9 @@ pub fn validate_on_central(
                 return Some(ValidationError::InactiveStore);
             }
         }
+        SyncType::Name =>
+            /* TODO don't allow central name changes only allow edits of patients from sites with name_store_join */
+            {}
     };
 
     None

@@ -108,7 +108,7 @@ impl<'a> SyncBufferV7Repository<'a> {
     ) -> Result<Vec<SyncBufferV7Row>, RepositoryError> {
         let mut query = sync_buffer_v7::table.into_boxed();
         if let Some(filter) = filter {
-            query = query.filter(filter.to_boxed_condition());
+            query = query.filter(filter.to_boxed());
         }
         let results = query.load::<SyncBufferV7Row>(self.connection.lock().connection())?;
         Ok(results)

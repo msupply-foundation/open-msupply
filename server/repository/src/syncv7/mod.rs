@@ -16,4 +16,6 @@ pub use upsert::*;
 pub enum SyncType {
     Remote,
     Central,
+    /// Name record has
+    Name,
 }
