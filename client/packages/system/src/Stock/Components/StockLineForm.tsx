@@ -311,18 +311,6 @@ export const StockLineForm = ({
                   }
                 />
                 <StyledInputRow
-                  label={t('label.expiry')}
-                  Input={
-                    <ExpiryDateInput
-                      value={DateUtils.getNaiveDate(draft.expiryDate)}
-                      onChange={date =>
-                        onUpdate({ expiryDate: Formatter.naiveDate(date) })
-                      }
-                      width={160}
-                    />
-                  }
-                />
-                <StyledInputRow
                   label={t('label.batch')}
                   Input={
                     <BufferedTextInput
@@ -407,6 +395,18 @@ export const StockLineForm = ({
                             : draft.sellPricePerPack,
                         });
                       }}
+                    />
+                  }
+                />
+                <StyledInputRow
+                  label={t('label.expiry')}
+                  Input={
+                    <ExpiryDateInput
+                      value={DateUtils.getNaiveDate(draft.expiryDate)}
+                      onChange={date =>
+                        onUpdate({ expiryDate: Formatter.naiveDate(date) })
+                      }
+                      width={160}
                     />
                   }
                 />
