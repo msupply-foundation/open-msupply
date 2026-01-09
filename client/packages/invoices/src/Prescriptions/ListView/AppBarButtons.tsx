@@ -6,28 +6,35 @@ import {
   Grid,
   useTranslation,
   ToggleState,
+  FilterBy,
+  SortBy,
 } from '@openmsupply-client/common';
-import { ListParams, usePrescriptionList } from '../api';
+import { PrescriptionRowFragment, useExportPrescriptionList } from '../api';
 import { prescriptionToCsv } from '../../utils';
 import { NewPrescriptionModal } from './NewPrescriptionModal';
 import { ExportSelector } from '@openmsupply-client/system';
 
 interface AppBarButtonsComponentProps {
   modalController: ToggleState;
-  listParams: ListParams;
+  filterBy: FilterBy | null;
+  sortBy: SortBy<PrescriptionRowFragment>;
 }
 
 export const AppBarButtonsComponent = ({
   modalController,
-  listParams,
+  filterBy,
+  sortBy,
 }: AppBarButtonsComponentProps) => {
   const t = useTranslation();
 
-  const {
-    query: { data, isLoading },
-  } = usePrescriptionList(listParams);
-  const getCsvData = () =>
-    data?.nodes?.length ? prescriptionToCsv(data.nodes, t) : null;
+  const { fetchPrescription, isLoading } = useExportPrescriptionList(
+    filterBy,
+    sortBy
+  );
+  const getCsvData = async () => {
+    const { data } = await fetchPrescription();
+    return data?.nodes?.length ? prescriptionToCsv(data.nodes, t) : null;
+  };
 
   return (
     <AppBarButtonsPortal>

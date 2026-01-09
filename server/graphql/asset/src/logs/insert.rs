@@ -22,7 +22,7 @@ pub fn insert_asset_log(
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::MutateAsset,
+            resource: Resource::EditAsset,
             store_id: Some(store_id.to_string()),
         },
     )?;
@@ -95,20 +95,20 @@ pub enum InsertAssetLogErrorInterface {
     InternalError(InternalError),
     DatabaseError(DatabaseError),
 }
-
 fn map_error(error: ServiceError) -> Result<InsertAssetLogErrorInterface> {
     use StandardGraphqlError::*;
-    let formatted_error = format!("{:?}", error);
+    let formatted_error = format!("{error:?}");
 
     let graphql_error = match error {
-        // Standard Graphql Errors
-        ServiceError::AssetLogAlreadyExists => BadUserInput(formatted_error),
-        ServiceError::CreatedRecordNotFound => InternalError(formatted_error),
-        ServiceError::DatabaseError(_) => InternalError(formatted_error),
-        ServiceError::AssetDoesNotExist => BadUserInput(formatted_error),
-        ServiceError::InsufficientPermission => BadUserInput(formatted_error),
-        ServiceError::ReasonInvalidForStatus => BadUserInput(formatted_error),
-        ServiceError::ReasonDoesNotExist => BadUserInput(formatted_error),
+        ServiceError::AssetLogAlreadyExists
+        | ServiceError::AssetDoesNotExist
+        | ServiceError::InsufficientPermission
+        | ServiceError::ReasonInvalidForStatus
+        | ServiceError::ReasonDoesNotExist
+        | ServiceError::StatusNotProvided => BadUserInput(formatted_error),
+        ServiceError::CreatedRecordNotFound | ServiceError::DatabaseError(_) => {
+            InternalError(formatted_error)
+        }
     };
 
     Err(graphql_error.extend())

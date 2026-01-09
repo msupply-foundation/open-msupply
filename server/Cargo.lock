@@ -8343,8 +8343,8 @@ checksum = "fe470bf03e694eccaac03d81297cbc22e681f60d3af29d4b69369f014895bf06"
 
 [[package]]
 name = "temperature-sensor"
-version = "0.1.0"
-source = "git+https://github.com/openmsupply/temperature-sensor.git?tag=v0.1.0-beta3#5764b9b4d8f673060ec492d95f11bf13bbf19b46"
+version = "0.2.0"
+source = "git+https://github.com/openmsupply/temperature-sensor.git?tag=v0.2.0-beta.1#6a7f521a86814cedfff11385ca6e21a252ed732a"
 dependencies = [
  "chrono",
  "json",
@@ -8352,6 +8352,7 @@ dependencies = [
  "rand 0.8.5",
  "rs-drivelist",
  "serde_json",
+ "winapi",
 ]
 
 [[package]]

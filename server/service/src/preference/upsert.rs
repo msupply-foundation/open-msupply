@@ -29,6 +29,7 @@ pub struct UpsertPreferences {
     pub show_indicative_price_in_requisitions:Option<bool>,
     pub item_margin_overrides_supplier_margin: Option<bool>,
 
+    pub is_gaps: Option<bool>,
 
     // Store preferences
     pub manage_vaccines_in_doses: Option<Vec<StorePrefUpdate<bool>>>,
@@ -74,6 +75,7 @@ pub fn upsert_preferences(
         expired_stock_issue_threshold: expired_stock_issue_threshold_input,
         show_indicative_price_in_requisitions: show_indicative_price_in_requisitions_input,
         item_margin_overrides_supplier_margin: item_margin_overrides_supplier_margin_input,
+        is_gaps: is_gaps_input,
 
         // Store preferences
         manage_vaccines_in_doses: manage_vaccines_in_doses_input,
@@ -119,6 +121,7 @@ pub fn upsert_preferences(
         expired_stock_issue_threshold,
         show_indicative_price_in_requisitions,
         item_margin_overrides_supplier_margin,
+        is_gaps,
 
         // Store preferences
         manage_vaccines_in_doses,
@@ -199,6 +202,10 @@ pub fn upsert_preferences(
            
             if let Some(input) = show_indicative_price_in_requisitions_input {
                 show_indicative_price_in_requisitions.upsert(connection, input, None)?;
+            }
+
+            if let Some(input) = is_gaps_input { 
+                is_gaps.upsert(connection, input, None)?;
             }
             
             if let Some(input) = item_margin_overrides_supplier_margin_input {

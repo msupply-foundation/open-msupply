@@ -3,7 +3,6 @@ extern crate diesel;
 
 pub mod database_settings;
 pub mod db_diesel;
-pub mod db_init;
 pub mod diesel_extensions;
 pub(crate) mod diesel_helper_types;
 pub mod diesel_macros;

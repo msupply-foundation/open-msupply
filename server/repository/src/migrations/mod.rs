@@ -1,3 +1,4 @@
+mod base_migration;
 pub mod constants;
 mod types;
 mod v1_00_04;
@@ -48,6 +49,7 @@ mod v2_13_00;
 mod v2_13_01;
 mod v2_14_00;
 mod v2_15_00;
+mod v2_16_00;
 mod version;
 mod views;
 
@@ -63,10 +65,11 @@ mod templates;
 pub use self::version::*;
 
 use crate::{
-    db_init::{initialize_earliest_db, initialize_latest_db, is_empty_db},
-    KeyType, KeyValueStoreRepository, MigrationFragmentLogRepository, RepositoryError,
-    StorageConnection,
+    migrations::base_migration::{initialize_earliest_db, initialize_latest_db, is_empty_db},
+    run_db_migrations, KeyType, KeyValueStoreRepository, MigrationFragmentLogRepository,
+    RepositoryError, StorageConnection,
 };
+use chrono::{NaiveDateTime, Utc};
 use diesel::connection::SimpleConnection;
 use thiserror::Error;
 
@@ -111,6 +114,8 @@ pub enum MigrationError {
         version: Version,
         identifier: &'static str,
     },
+    #[error("Error initializing base database schema: {0}")]
+    InitializeDatabaseError(#[from] diesel::result::Error),
     #[error(transparent)]
     DatabaseError(#[from] RepositoryError),
 }
@@ -118,7 +123,7 @@ pub enum MigrationError {
 pub fn migrate(
     connection: &StorageConnection,
     to_version: Option<Version>,
-) -> Result<Version, MigrationError> {
+) -> Result<(Version, Vec<(String, NaiveDateTime)>), MigrationError> {
     let migrations: Vec<Box<dyn Migration>> = vec![
         Box::new(V1_00_04),
         Box::new(V1_01_01),
@@ -168,10 +173,11 @@ pub fn migrate(
         Box::new(v2_13_01::V2_13_01),
         Box::new(v2_14_00::V2_14_00),
         Box::new(v2_15_00::V2_15_00),
+        Box::new(v2_16_00::V2_16_00),
     ];
 
     // Check if the database has been initialised, if not run the base sql to kick start the process
-    if is_empty_db(connection).expect("Unable to check for empty db on startup: Nothing returned") {
+    if is_empty_db(connection)? {
         log::info!("Empty database detected, creating base schema...");
 
         if to_version.is_some() {
@@ -179,17 +185,21 @@ pub fn migrate(
             // We always use the earliest base schema when migrating to a specific version
             // This is the easiest way to makes sure migration tests can still run.
             initialize_earliest_db(connection)
-                .expect("Failed to initialize earliest database schema");
+                .map_err(|e| MigrationError::InitializeDatabaseError(e.into()))?;
         } else {
             log::info!("No target version specified, initializing latest base schema");
-            initialize_latest_db(connection).expect("Unable to initialize latest database schema");
+            initialize_latest_db(connection)
+                .map_err(|e| MigrationError::InitializeDatabaseError(e.into()))?;
         }
         log::info!("Base schema...installed");
     }
 
     let to_version = to_version.unwrap_or(Version::from_package_json());
 
-    // Run migrations
+    // Historic diesel migrations
+    run_db_migrations(connection).unwrap();
+
+    // Rust migrations
     let starting_database_version = get_database_version(connection);
 
     if starting_database_version < migrations[0].version() {
@@ -217,6 +227,8 @@ pub fn migrate(
     // From v2.3 we drop all views and re-create them
     let min_version_for_dropping_views = v2_03_00::V2_03_00.version();
     let mut drop_view_has_run = false;
+
+    let mut migration_result = Vec::new();
 
     for migration in &migrations {
         let migration_version = migration.version();
@@ -253,6 +265,15 @@ pub fn migrate(
                     source,
                     version: migration_version.clone(),
                 })?;
+
+            migration_result.push((
+                format!(
+                    "Running one time database migration {}",
+                    migration_version.to_string()
+                ),
+                Utc::now().naive_utc(),
+            ));
+
             set_database_version(connection, &migration_version)?;
         }
 
@@ -262,6 +283,11 @@ pub fn migrate(
                 if migration_fragment_log_repo.has_run(migration, &fragment)? {
                     continue;
                 }
+                log::info!(
+                    "Running database migration fragment version {}: {}",
+                    migration.version(),
+                    fragment.identifier()
+                );
 
                 fragment.migrate(connection).map_err(|source| {
                     MigrationError::FragmentMigrationError {
@@ -275,6 +301,11 @@ pub fn migrate(
             }
         }
     }
+
+    migration_result.push((
+        format!("Migrations finished to version {}", to_version.to_string()),
+        Utc::now().naive_utc(),
+    ));
 
     let final_database_version = get_database_version(connection);
 
@@ -293,7 +324,13 @@ pub fn migrate(
     }
 
     set_database_version(connection, &to_version)?;
-    Ok(to_version)
+
+    migration_result.push((
+        format!("Views recreated for {}", to_version.to_string()),
+        Utc::now().naive_utc(),
+    ));
+
+    Ok((to_version, migration_result))
 }
 
 fn get_database_version(connection: &StorageConnection) -> Version {

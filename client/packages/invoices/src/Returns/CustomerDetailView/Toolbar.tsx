@@ -6,8 +6,6 @@ import {
   BasicTextInput,
   Grid,
   useTranslation,
-  useIsGrouped,
-  Switch,
   Alert,
   InvoiceNodeStatus,
 } from '@openmsupply-client/common';
@@ -27,8 +25,6 @@ export const Toolbar: FC = () => {
   } = draft ?? { id: '' };
 
   const { debouncedMutateAsync } = useReturns.document.updateCustomerReturn();
-
-  const { isGrouped, toggleIsGrouped } = useIsGrouped('customerReturn');
 
   const update = (data: Partial<CustomerReturnFragment>) => {
     if (!id) return;
@@ -76,22 +72,6 @@ export const Toolbar: FC = () => {
               }
             />
             <InfoAlert customerReturn={draft} />
-          </Box>
-        </Grid>
-        <Grid
-          display="flex"
-          gap={1}
-          justifyContent="flex-end"
-          alignItems="center"
-        >
-          <Box sx={{ marginRight: 2 }}>
-            <Switch
-              label={t('label.group-by-item')}
-              onChange={toggleIsGrouped}
-              checked={isGrouped}
-              size="small"
-              color="secondary"
-            />
           </Box>
         </Grid>
       </Grid>

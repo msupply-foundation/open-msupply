@@ -4642,6 +4642,7 @@ export type InvoiceNode = {
    */
   requisition?: Maybe<RequisitionNode>;
   shippedDatetime?: Maybe<Scalars['DateTime']['output']>;
+  shippingMethod?: Maybe<ShippingMethodNode>;
   status: InvoiceNodeStatus;
   store: StoreNode;
   taxPercentage?: Maybe<Scalars['Float']['output']>;
@@ -6872,6 +6873,7 @@ export enum PreferenceKey {
   GenderOptions = 'genderOptions',
   InboundShipmentAutoVerify = 'inboundShipmentAutoVerify',
   InvoiceStatusOptions = 'invoiceStatusOptions',
+  IsGaps = 'isGaps',
   ItemMarginOverridesSupplierMargin = 'itemMarginOverridesSupplierMargin',
   ManageVaccinesInDoses = 'manageVaccinesInDoses',
   ManageVvmStatusForStock = 'manageVvmStatusForStock',
@@ -6935,6 +6937,7 @@ export type PreferencesNode = {
   genderOptions: Array<GenderTypeNode>;
   inboundShipmentAutoVerify: Scalars['Boolean']['output'];
   invoiceStatusOptions: Array<InvoiceNodeStatus>;
+  isGaps: Scalars['Boolean']['output'];
   itemMarginOverridesSupplierMargin: Scalars['Boolean']['output'];
   manageVaccinesInDoses: Scalars['Boolean']['output'];
   manageVvmStatusForStock: Scalars['Boolean']['output'];
@@ -9227,6 +9230,7 @@ export enum SensorNodeType {
   Berlinger = 'BERLINGER',
   BlueMaestro = 'BLUE_MAESTRO',
   Laird = 'LAIRD',
+  LogTag = 'LOG_TAG',
 }
 
 export enum SensorSortFieldInput {
@@ -10451,6 +10455,7 @@ export type UpdateOutboundShipmentInput = {
   /** The new invoice id provided by the client */
   id: Scalars['String']['input'];
   onHold?: InputMaybe<Scalars['Boolean']['input']>;
+  shippingMethodId?: InputMaybe<NullableStringUpdate>;
   /**
    * When changing the status from DRAFT to CONFIRMED or FINALISED the total_number_of_packs for
    * existing invoice items gets updated.
@@ -11282,6 +11287,7 @@ export type UpsertPreferencesInput = {
   genderOptions?: InputMaybe<Array<GenderTypeNode>>;
   inboundShipmentAutoVerify?: InputMaybe<Array<BoolStorePrefInput>>;
   invoiceStatusOptions?: InputMaybe<Array<InvoiceStatusOptionsInput>>;
+  isGaps?: InputMaybe<Scalars['Boolean']['input']>;
   itemMarginOverridesSupplierMargin?: InputMaybe<Scalars['Boolean']['input']>;
   manageVaccinesInDoses?: InputMaybe<Array<BoolStorePrefInput>>;
   manageVvmStatusForStock?: InputMaybe<Array<BoolStorePrefInput>>;

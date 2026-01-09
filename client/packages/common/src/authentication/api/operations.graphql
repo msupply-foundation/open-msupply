@@ -224,5 +224,6 @@ query preferences($storeId: String!) {
     invoiceStatusOptions
     itemMarginOverridesSupplierMargin
     showIndicativePriceInRequisitions
+    isGaps
   }
 }

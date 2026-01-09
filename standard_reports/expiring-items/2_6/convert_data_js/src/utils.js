@@ -1,10 +1,10 @@
-import { cleanUpNodes, sortNodes, getNestedValue } from '../../../../utils';
+import { sortNodes, getNestedValue } from '../../../../utils';
 
 const processStockLines = (nodes, sort, dir) => {
-  nodes.forEach((line) => {
-    if (Object.keys(line).length == 0) {
-      return;
-    }
+  // Filter out empty objects first
+  const filteredNodes = nodes.filter(line => Object.keys(line).length > 0);
+
+  filteredNodes.forEach(line => {
     const daysUntilExpiredFloat = calculateDaysUntilExpired(line?.expiryDate);
     const expectedUsage = calculateExpectedUsage(daysUntilExpiredFloat, line);
     if (!!expectedUsage) {
@@ -24,12 +24,11 @@ const processStockLines = (nodes, sort, dir) => {
       Math.round((line?.item?.stats?.averageMonthlyConsumption ?? 0) * 10) / 10;
   });
 
-  let cleanNodes = cleanUpNodes(nodes);
-  let sortedNodes = sortNodes(cleanNodes, sort, dir);
+  let sortedNodes = sortNodes(filteredNodes, sort, dir);
   return sortedNodes;
 };
 
-const calculateDaysUntilExpired = (expiryDateString) => {
+const calculateDaysUntilExpired = expiryDateString => {
   let daysUntilExpired = undefined;
   if (!!expiryDateString) {
     let now = Date.now();
@@ -45,7 +44,9 @@ const calculateExpectedUsage = (daysUntilExpired, line) => {
   let expectedUsage = undefined;
   if (!!daysUntilExpired && !!averageMonthlyConsumption && !!totalStock) {
     if (daysUntilExpired >= 0) {
-      const usage = Math.round(daysUntilExpired * (averageMonthlyConsumption / (365.25 / 12.0)));
+      const usage = Math.round(
+        daysUntilExpired * (averageMonthlyConsumption / (365.25 / 12.0))
+      );
       expectedUsage = Math.min(usage, totalStock ?? usage);
     }
   }
@@ -64,7 +65,8 @@ const calculateStockAtRisk = (
     if (!!averageMonthlyConsumption) {
       if (daysUntilExpired >= 0) {
         stockAtRisk = Math.round(
-          totalStock - averageMonthlyConsumption * (daysUntilExpired / (365.25 / 12.0))
+          totalStock -
+            averageMonthlyConsumption * (daysUntilExpired / (365.25 / 12.0))
         );
       } else {
         stockAtRisk = Math.round(totalStock);
@@ -82,7 +84,7 @@ const calculateStockAtRisk = (
   return stockAtRisk;
 };
 
-const roundDaysToInteger = (daysUntilExpired) => {
+const roundDaysToInteger = daysUntilExpired => {
   let rounded = undefined;
   if (!!daysUntilExpired) {
     rounded = Math.round(daysUntilExpired);
