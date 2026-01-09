@@ -8,7 +8,7 @@ import {
   TextWithTooltipCell,
   AssetLogStatusNodeType,
   useUrlQuery,
-  StatusCellNew,
+  StatusCell,
 } from '@openmsupply-client/common';
 import {
   mapIdNameToOptions,
@@ -92,7 +92,7 @@ export const useAssetColumns = () => {
         header: t('label.functional-status'),
         accessorFn: row => row.statusLog?.status,
         Cell: ({ cell }) => (
-          <StatusCellNew cell={cell} statusMap={fullStatusColorMap(t)} />
+          <StatusCell cell={cell} statusMap={fullStatusColorMap(t)} />
         ),
         enableColumnFilter: true,
         filterVariant: 'select',

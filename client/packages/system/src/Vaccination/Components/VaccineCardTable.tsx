@@ -9,7 +9,7 @@ import {
   ColumnDef,
   ColumnType,
 } from '@openmsupply-client/common';
-import { StatusCellNew } from '@openmsupply-client/common';
+import { StatusCell } from '@openmsupply-client/common';
 import {
   VaccinationCardFragment,
   VaccinationCardItemFragment,
@@ -107,7 +107,7 @@ export const VaccineCardTable = ({
         header: t('label.status'),
         size: 140,
         Cell: ({ cell }) => (
-          <StatusCellNew
+          <StatusCell
             cell={cell}
             statusMap={{
               [VaccinationCardItemNodeStatus.Given]: {
