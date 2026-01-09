@@ -146,6 +146,6 @@ export const useAssetColumns = () => {
         enableColumnFilter: true,
       },
     ],
-    [typeOptions, categoryData?.nodes, isColdChain, isCentralServer, t]
+    [typeOptions, categoryData?.nodes, isColdChain, isCentralServer]
   );
 };
