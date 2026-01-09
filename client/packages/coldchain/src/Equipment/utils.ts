@@ -30,6 +30,71 @@ export const getEquipmentStatusTranslation = (
   return t(translationKey);
 };
 
+export const statusColorMap = (
+  t: TypedTFunction<LocaleKey>,
+  status: AssetLogStatusNodeType
+): { color: string; label: string } | undefined => {
+  const map: Record<AssetLogStatusNodeType, { color: string; label: string }> =
+    {
+      [AssetLogStatusNodeType.Decommissioned]: {
+        color: 'cceStatus.decommissioned',
+        label: t('status.decommissioned'),
+      },
+      [AssetLogStatusNodeType.Functioning]: {
+        color: 'cceStatus.functioning',
+        label: t('status.functioning'),
+      },
+      [AssetLogStatusNodeType.FunctioningButNeedsAttention]: {
+        color: 'cceStatus.functioningButNeedsAttention',
+        label: t('status.functioning-but-needs-attention'),
+      },
+      [AssetLogStatusNodeType.NotFunctioning]: {
+        color: 'cceStatus.notFunctioning',
+        label: t('status.not-functioning'),
+      },
+      [AssetLogStatusNodeType.NotInUse]: {
+        color: 'cceStatus.notInUse',
+        label: t('status.not-in-use'),
+      },
+      [AssetLogStatusNodeType.Unserviceable]: {
+        color: 'cceStatus.unserviceable',
+        label: t('status.unserviceable'),
+      },
+    };
+  return map[status];
+};
+
+export const fullStatusColorMap = (
+  t: TypedTFunction<LocaleKey>
+): Record<AssetLogStatusNodeType, { color: string; label: string }> => {
+  return {
+    [AssetLogStatusNodeType.Decommissioned]: {
+      color: 'cceStatus.decommissioned',
+      label: t('status.decommissioned'),
+    },
+    [AssetLogStatusNodeType.Functioning]: {
+      color: 'cceStatus.functioning',
+      label: t('status.functioning'),
+    },
+    [AssetLogStatusNodeType.FunctioningButNeedsAttention]: {
+      color: 'cceStatus.functioningButNeedsAttention',
+      label: t('status.functioning-but-needs-attention'),
+    },
+    [AssetLogStatusNodeType.NotFunctioning]: {
+      color: 'cceStatus.notFunctioning',
+      label: t('status.not-functioning'),
+    },
+    [AssetLogStatusNodeType.NotInUse]: {
+      color: 'cceStatus.notInUse',
+      label: t('status.not-in-use'),
+    },
+    [AssetLogStatusNodeType.Unserviceable]: {
+      color: 'cceStatus.unserviceable',
+      label: t('status.unserviceable'),
+    },
+  };
+};
+
 function baseAssetFields(t: TypedTFunction<LocaleKey>) {
   return [
     t('label.asset-number'),
