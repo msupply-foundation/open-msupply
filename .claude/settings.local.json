@@ -11,7 +11,9 @@
       "Bash(git push:*)",
       "Bash(git merge:*)",
       "Bash(cargo test:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(grep:*)",
+      "Bash(ls:*)"
     ]
   }
 }

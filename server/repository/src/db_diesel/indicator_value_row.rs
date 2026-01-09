@@ -1,37 +1,45 @@
 use super::{
-    name_link_row::name_link, name_row::name, ChangeLogInsertRow, ChangelogRepository,
+    name_row::name, ChangeLogInsertRow, ChangelogRepository,
     ChangelogTableName, RowActionType, StorageConnection,
 };
-use crate::{repository_error::RepositoryError, Delete, Upsert};
+use crate::{
+    diesel_macros::define_linked_tables,
+    repository_error::RepositoryError, Delete, Upsert
+};
 use diesel::prelude::*;
 
-table! {
-    indicator_value (id) {
-        id -> Text,
-        customer_name_link_id -> Text,
+define_linked_tables! {
+    view: indicator_value = "indicator_value_view",
+    core: indicator_value_with_links = "indicator_value",
+    struct: IndicatorValueRow,
+    repo: IndicatorValueRowRepository,
+    shared: {
         store_id -> Text,
         period_id -> Text,
         indicator_line_id -> Text,
         indicator_column_id -> Text,
         value -> Text,
+    },
+    links: {
+        customer_name_link_id -> customer_name_id,
     }
 }
+
+joinable!(indicator_value -> name (customer_name_id));
+allow_tables_to_appear_in_same_query!(indicator_value, name);
 
 #[derive(Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Default)]
 #[diesel(table_name = indicator_value)]
 pub struct IndicatorValueRow {
     pub id: String,
-    pub customer_name_link_id: String,
     pub store_id: String,
     pub period_id: String,
     pub indicator_line_id: String,
     pub indicator_column_id: String,
     pub value: String,
+    // Resolved from name_link - must be last to match view column order
+    pub customer_name_id: String,
 }
-
-joinable!(indicator_value -> name_link (customer_name_link_id));
-allow_tables_to_appear_in_same_query!(indicator_value, name_link);
-allow_tables_to_appear_in_same_query!(indicator_value, name);
 
 pub struct IndicatorValueRowRepository<'a> {
     connection: &'a StorageConnection,
@@ -43,13 +51,7 @@ impl<'a> IndicatorValueRowRepository<'a> {
     }
 
     pub fn upsert_one(&self, row: &IndicatorValueRow) -> Result<i64, RepositoryError> {
-        diesel::insert_into(indicator_value::table)
-            .values(row)
-            .on_conflict(indicator_value::id)
-            .do_update()
-            .set(row)
-            .execute(self.connection.lock().connection())?;
-
+        self._upsert(row)?;
         self.insert_changelog(row, RowActionType::Upsert)
     }
 
@@ -62,7 +64,7 @@ impl<'a> IndicatorValueRowRepository<'a> {
             }
         };
 
-        diesel::delete(indicator_value::table.filter(indicator_value::id.eq(id)))
+        diesel::delete(indicator_value_with_links::table.filter(indicator_value_with_links::id.eq(id)))
             .execute(self.connection.lock().connection())?;
         Ok(Some(change_log_id))
     }
