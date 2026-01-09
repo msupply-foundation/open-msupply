@@ -1,8 +1,10 @@
 import React, { FC } from 'react';
-import { Box, DetailFormSkeleton } from '@openmsupply-client/common';
+import {
+  Box,
+  DetailFormSkeleton,
+  StatusChip,
+} from '@openmsupply-client/common';
 import { SimpleLabelDisplay } from '../../Components/SimpleLabelDisplay';
-import { Status } from 'packages/coldchain/src/Equipment/Components';
-
 import { AccordionPanelSection } from 'packages/invoices/src/Prescriptions/LineEditView/PanelSection';
 import { useEquipmentDetailView } from 'packages/coldchain/src/Equipment/DetailView';
 import {
@@ -14,6 +16,7 @@ import { StatusLogs } from 'packages/coldchain/src/Equipment/DetailView/Tabs/Sta
 import { UpdateStatusButton } from 'packages/coldchain/src/Equipment/DetailView/UpdateStatusButton';
 import { Documents } from 'packages/coldchain/src/Equipment/DetailView/Tabs/Documents';
 import { LogCardListView } from './LogCardListView';
+import { statusColorMap } from 'packages/coldchain/src/Equipment/utils';
 
 export const EquipmentDetailView: FC = () => {
   const {
@@ -31,8 +34,11 @@ export const EquipmentDetailView: FC = () => {
   } = useEquipmentDetailView();
 
   if (isLoading && isLoadingLocations) return <DetailFormSkeleton />;
-
   if (!data) return <h1>{t('error.asset-not-found')}</h1>;
+
+  const status = data.statusLog?.status
+    ? statusColorMap(t, data.statusLog?.status)
+    : undefined;
 
   return (
     <Box
@@ -69,7 +75,7 @@ export const EquipmentDetailView: FC = () => {
       </Box>
 
       <Box sx={{ padding: '.2rem', marginBottom: '.5em' }}>
-        <Status status={data.statusLog?.status} />
+        <StatusChip label={status?.label} color={status?.color} />
       </Box>
 
       <Box

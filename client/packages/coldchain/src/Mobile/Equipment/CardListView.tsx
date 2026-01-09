@@ -12,15 +12,16 @@ import {
   useCallbackWithPermission,
   BaseButton,
   InlineSpinner,
+  StatusChip,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { Box, Typography, Card, CardContent } from '@mui/material';
-import { Status } from '../../Equipment/Components';
 import { useAssets } from '../../Equipment/api';
 import { SimpleLabelDisplay } from '../Components/SimpleLabelDisplay';
 import { AddFromScannerButton } from '../../Equipment/ListView/AddFromScannerButton';
 import { CreateAssetModal } from '../../Equipment/ListView/CreateAssetModal';
 import { ImportFridgeTag } from '../../common/ImportFridgeTag';
+import { statusColorMap } from '../../Equipment/utils';
 
 export const CardListView = () => {
   const t = useTranslation();
@@ -130,7 +131,18 @@ export const CardListView = () => {
               />
             </CardContent>
             <Box padding=".2em">
-              <Status status={n.statusLog?.status} />
+              <StatusChip
+                label={
+                  n.statusLog?.status
+                    ? statusColorMap(t, n.statusLog?.status)?.label
+                    : undefined
+                }
+                color={
+                  n.statusLog?.status
+                    ? statusColorMap(t, n.statusLog?.status)?.color
+                    : undefined
+                }
+              />
             </Box>
           </Card>
         ))}
