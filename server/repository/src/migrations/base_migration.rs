@@ -9,11 +9,11 @@ use diesel::result::Error;
 // I've used the test db templating feature to get a `base` database to use for tests and initialisation of a new db.
 
 // To refresh run tests to create template databases, then run...
-//  pg_dump -h localhost -U postgres -d ___template_1.0.4 --inserts  --no-owner --no-privileges --schema=public | sed -E '/^\\(un)?restrict [A-Za-z0-9]+$/d' | sed '/^CREATE SCHEMA public;$/d' | sed "s/SELECT pg_catalog.set_config('search_path', '', false);/SET search_path = public;/" > repository/src/migrations/base_migrations/postgres_earliest.sql
+//  pg_dump -h localhost -U postgres -d ___template_1.0.4 --inserts  --no-owner --no-privileges --schema=public | sed -E '/^\\(un)?restrict [A-Za-z0-9]+$/d' | sed '/^CREATE SCHEMA public;$/d' | sed "s/SELECT pg_catalog.set_config('search_path', '', false);/SET search_path = public;/" > repository/src/base_migrations/postgres_earliest.sql
 #[cfg(feature = "postgres")]
 pub const BASE_SCHEMA_EARLIEST: &str = include_str!("base_migrations/postgres_earliest.sql");
 
-// pg_dump -h localhost -U postgres -d ___template_2.15.0 --inserts  --no-owner --no-privileges --schema=public | sed -E '/^\\(un)?restrict [A-Za-z0-9]+$/d' | sed '/^CREATE SCHEMA public;$/d' | sed "s/SELECT pg_catalog.set_config('search_path', '', false);/SET search_path = public;/" > repository/src/migrations/base_migrations/postgres_latest.sql
+// pg_dump -h localhost -U postgres -d ___template_2.15.0 --inserts  --no-owner --no-privileges --schema=public | sed -E '/^\\(un)?restrict [A-Za-z0-9]+$/d' | sed '/^CREATE SCHEMA public;$/d' | sed "s/SELECT pg_catalog.set_config('search_path', '', false);/SET search_path = public;/" > repository/src/base_migrations/postgres_latest.sql
 #[cfg(feature = "postgres")]
 pub const BASE_SCHEMA_LATEST: &str = include_str!("base_migrations/postgres_latest.sql");
 
