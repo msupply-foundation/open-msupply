@@ -15,6 +15,7 @@ impl ViewMigrationFragment for ViewMigration {
                 DROP VIEW IF EXISTS invoice_view;
                 DROP VIEW IF EXISTS requisition_view;
                 DROP VIEW IF EXISTS rnr_form_view;
+                DROP VIEW IF EXISTS name_insurance_join_view;
             "#
         )?;
 
@@ -88,6 +89,15 @@ impl ViewMigrationFragment for ViewMigration {
                     rnr_form
                 JOIN
                     name_link ON rnr_form.name_link_id = name_link.id;
+
+                CREATE VIEW name_insurance_join_view AS
+                SELECT
+                    name_insurance_join.*,
+                    name_link.name_id as name_id
+                FROM
+                    name_insurance_join
+                JOIN
+                    name_link ON name_insurance_join.name_link_id = name_link.id;
             "#
         )?;
 
