@@ -81,7 +81,7 @@ export const TransportSectionComponent = () => {
               input: {
                 style: {
                   backgroundColor: 'white',
-                  width: 170,
+                  width: 250,
                 },
               },
             }}

@@ -69,7 +69,7 @@ export const StockLineForm = ({
 
   const preferences = usePreferences();
 
-  const { isConnected, isEnabled, isScanning, startScan } =
+  const { isConnected, isEnabled, isScanning, scan } =
     useBarcodeScannerContext();
   const showItemVariantsInput = useIsItemVariantsEnabled();
   const { plugins } = usePluginProvider();
@@ -86,7 +86,7 @@ export const StockLineForm = ({
 
   const scanBarcode = async () => {
     try {
-      const result = await startScan();
+      const result = await scan();
       if (!!result.content) {
         const { batch, content, expiryDate, gtin } = result;
         const barcode = gtin ?? content;
