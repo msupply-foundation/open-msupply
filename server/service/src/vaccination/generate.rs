@@ -18,14 +18,15 @@ pub fn generate_create_prescription(
     stock_line: StockLine,
     patient_id: String,
     clinician_id: Option<String>,
+    program_id: String,
 ) -> CreatePrescription {
     let prescription_id = uuid();
 
     let create_prescription = InsertPrescription {
         id: prescription_id.clone(),
         patient_id,
+        program_id: Some(program_id),
         diagnosis_id: None,
-        program_id: None,
         their_reference: None,
         clinician_id: None,
         prescription_date: None,
@@ -42,7 +43,7 @@ pub fn generate_create_prescription(
         number_of_packs,
         vvm_status_id: stock_line.stock_line_row.vvm_status_id.clone(),
         volume_per_pack: Some(stock_line.stock_line_row.volume_per_pack),
-        prescribed_quantity: Some(number_of_packs * stock_line.stock_line_row.pack_size as f64),
+        prescribed_quantity: Some(number_of_packs * stock_line.stock_line_row.pack_size),
         // default
         total_before_tax: None,
         tax_percentage: None,

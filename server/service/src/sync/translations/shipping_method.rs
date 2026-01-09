@@ -17,12 +17,12 @@ pub struct LegacyShippingMethod {
 // Needs to be added to all_translators()
 #[deny(dead_code)]
 pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
-    Box::new(ShippingMethodTranslator)
+    Box::new(ShippingMethodTranslation)
 }
 
-pub(crate) struct ShippingMethodTranslator;
+pub(crate) struct ShippingMethodTranslation;
 
-impl SyncTranslation for ShippingMethodTranslator {
+impl SyncTranslation for ShippingMethodTranslation {
     fn table_name(&self) -> &str {
         "ship_method"
     }
@@ -66,7 +66,7 @@ mod tests {
     #[actix_rt::test]
     async fn test_shipping_method_translation() {
         use crate::sync::test::test_data::shipping_method as test_data;
-        let translator = ShippingMethodTranslator;
+        let translator = ShippingMethodTranslation;
 
         let (_, connection, _, _) =
             setup_all("test_shipping_method_translation", MockDataInserts::none()).await;

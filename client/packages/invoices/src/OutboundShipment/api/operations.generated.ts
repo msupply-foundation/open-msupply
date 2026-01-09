@@ -132,6 +132,11 @@ export type OutboundFragment = {
     rate: number;
     isHomeCurrency: boolean;
   } | null;
+  shippingMethod?: {
+    __typename: 'ShippingMethodNode';
+    id: string;
+    method: string;
+  } | null;
 };
 
 export type OutboundRowFragment = {
@@ -167,6 +172,11 @@ export type OutboundRowFragment = {
     code: string;
     rate: number;
     isHomeCurrency: boolean;
+  } | null;
+  shippingMethod?: {
+    __typename: 'ShippingMethodNode';
+    id: string;
+    method: string;
   } | null;
 };
 
@@ -225,6 +235,11 @@ export type InvoicesQuery = {
         code: string;
         rate: number;
         isHomeCurrency: boolean;
+      } | null;
+      shippingMethod?: {
+        __typename: 'ShippingMethodNode';
+        id: string;
+        method: string;
       } | null;
     }>;
   };
@@ -365,6 +380,11 @@ export type InvoiceQuery = {
           code: string;
           rate: number;
           isHomeCurrency: boolean;
+        } | null;
+        shippingMethod?: {
+          __typename: 'ShippingMethodNode';
+          id: string;
+          method: string;
         } | null;
       }
     | {
@@ -514,6 +534,11 @@ export type OutboundByNumberQuery = {
           code: string;
           rate: number;
           isHomeCurrency: boolean;
+        } | null;
+        shippingMethod?: {
+          __typename: 'ShippingMethodNode';
+          id: string;
+          method: string;
         } | null;
       }
     | {
@@ -1134,6 +1159,10 @@ export const OutboundFragmentDoc = gql`
       rate
       isHomeCurrency
     }
+    shippingMethod {
+      id
+      method
+    }
     currencyRate
   }
   ${StockOutLineFragmentDoc}
@@ -1172,6 +1201,10 @@ export const OutboundRowFragmentDoc = gql`
       isHomeCurrency
     }
     currencyRate
+    shippingMethod {
+      id
+      method
+    }
   }
 `;
 export const BarcodeFragmentDoc = gql`

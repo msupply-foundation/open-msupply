@@ -80,6 +80,11 @@ fragment Outbound on InvoiceNode {
     isHomeCurrency
   }
 
+  shippingMethod {
+    id
+    method
+  }
+
   currencyRate
 }
 
@@ -116,6 +121,11 @@ fragment OutboundRow on InvoiceNode {
     isHomeCurrency
   }
   currencyRate
+
+  shippingMethod {
+    id
+    method
+  }
 }
 
 fragment Barcode on BarcodeNode {

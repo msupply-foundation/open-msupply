@@ -1,4 +1,10 @@
-import { ColumnDef, useTranslation, ColumnType, Groupable, ArrayUtils } from '@openmsupply-client/common';
+import {
+  ColumnDef,
+  useTranslation,
+  ColumnType,
+  Groupable,
+  ArrayUtils,
+} from '@openmsupply-client/common';
 import { SupplierReturnLineFragment } from '../api';
 import { useMemo } from 'react';
 
@@ -49,7 +55,10 @@ export const useSupplierReturnColumns = () => {
         id: 'numberOfPacks',
         accessorFn: row => {
           if (row.subRows)
-            return row.subRows.reduce((total, line) => total + line.numberOfPacks, 0);
+            return row.subRows.reduce(
+              (total, line) => total + line.numberOfPacks,
+              0
+            );
           return row.numberOfPacks;
         },
         header: t('label.num-packs'),
@@ -60,7 +69,10 @@ export const useSupplierReturnColumns = () => {
         id: 'totalQuantity',
         accessorFn: row => {
           if (row.subRows)
-            return row.subRows.reduce((total, line) => total + line.packSize * line.numberOfPacks, 0);
+            return row.subRows.reduce(
+              (total, line) => total + line.packSize * line.numberOfPacks,
+              0
+            );
           return row.packSize * row.numberOfPacks;
         },
         header: t('label.total-quantity'),
@@ -83,7 +95,8 @@ export const useSupplierReturnColumns = () => {
         accessorFn: row => {
           if (row.subRows) {
             return Object.values(row.subRows).reduce(
-              (sum, batch) => sum + batch.costPricePerPack * batch.numberOfPacks,
+              (sum, batch) =>
+                sum + batch.costPricePerPack * batch.numberOfPacks,
               0
             );
           }
@@ -94,7 +107,7 @@ export const useSupplierReturnColumns = () => {
         enableSorting: true,
       },
     ],
-    [],
+    []
   );
 
   return columns;

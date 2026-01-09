@@ -28,8 +28,8 @@ When running in development mode, the required plugin files are loaded directly 
 
 In production mode the process differs:
 
-- the server provides an endpoint to fetch the list of available plugins
-- the client app fetches the full list on startup, then individually fetches each plugin bundle
+- the server provides an endpoint to fetch the list of compatible plugins. This list is filtered to contain the latest version of each plugin that is supported by the remote server.
+- the client app fetches this list on startup, then individually fetches each plugin bundle
 - Using federation module and webpack low level api the plugin is dynamically added to scope
 - When plugin and it's dependencies are resolved it's added to PluginProvider and it becomes available to be used by the core functionality
 
@@ -206,7 +206,7 @@ You can work on plugins as if they were part of the app (types should be shared,
 cargo run --bin remote_server_cli -- generate-plugin-bundle -i ../client/packages/plugins/myPluginBundle/frontend -o pluginbundle.json
 ```
 
-Above will generate `pluginbundle.json` with all backend and frontend plugins in the directory specified by `-i`, this bundle includes metadata, like code and plugin types and base64 contents of all of the files in the `dist` directory which was generated with `yarn build` command that was executed in every plugin directory.
+Above will generate `pluginbundle.json` with all backend and frontend plugins in the directory specified by `-i`. This bundle includes metadata, like code, version, plugin types and base64 contents of all of the files in the `dist` directory which was generated with `yarn build` command that was executed in every plugin directory.
 
 This can now be uploaded to the server via
 
@@ -223,7 +223,7 @@ Alternatively one command can be used for both:
 cargo run --bin remote_server_cli -- generate-and-install-plugin-bundle -i '../client/packages/plugins/myPluginBundle/frontend' --url 'http://localhost:8000' --username admin --password pass
 ```
 
-In order to test this plugins in front end, you will need to start front end via `yarn -- -- --env LOAD_REMOTE_PLUGINS` which fetched plugins from the server rather then serving them from local directory, this is how plugins will be loaded in production (and plugins will sync and be served by remote site servers)
+In order to test this plugins in front end, you will need to start front end by running `yarn build` in the root directory then restarting the backend. You then have to access the frontend via the backend <http://localhost:8000>. The frontend will now fetch plugins from the server rather then serving them from local directory, this is how plugins will be loaded in production (and plugins will sync and be served by remote site servers).
 
 ## Example plugin types
 

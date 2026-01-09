@@ -201,6 +201,11 @@ fragment Inbound on InvoiceNode {
       ...SyncFileReference
     }
   }
+
+  shippingMethod {
+    id
+    method
+  }
 }
 
 fragment InboundRow on InvoiceNode {
