@@ -43,7 +43,7 @@ pub(crate) fn generate_inbound_lines(
                     cost_price_per_pack: _,
                     total_after_tax: _,
                     linked_invoice_id: _,
-                    reason_option_id: _,
+                    reason_option_id,
                     item_link_id,
                     item_name,
                     item_code,
@@ -147,10 +147,10 @@ pub(crate) fn generate_inbound_lines(
                         _ => adjusted_sell_price_per_pack,
                     },
                     shipped_pack_size,
+                    reason_option_id,
                     // Default
                     stock_line_id: None,
                     location_id: None,
-                    reason_option_id: None,
                 }
             },
         )
@@ -220,7 +220,7 @@ pub(crate) fn auto_verify_if_store_preference(
             Some(&inbound_shipment.store_id),
         )
         .map_err(|e| {
-            log::error!("{:?}", e);
+            log::error!("{e:?}");
             RepositoryError::as_db_error("Error attempting to verify inbound shipment", e)
         })?;
     }

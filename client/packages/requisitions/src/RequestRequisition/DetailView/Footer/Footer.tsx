@@ -32,8 +32,8 @@ export const Footer = ({
   selectedRows: RequestLineFragment[];
   resetRowSelection: () => void;
 }) => {
-  const { data } = useRequest.document.get();
   const t = useTranslation();
+  const { data } = useRequest.document.get();
   const { confirmAndDelete } = useRequest.line.delete(
     selectedRows,
     resetRowSelection

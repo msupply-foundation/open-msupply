@@ -3,8 +3,6 @@ import {
   useTranslation,
   useDialog,
   DialogButton,
-  TableProvider,
-  createTableStore,
   useTabs,
   ModalMode,
   Box,
@@ -146,43 +144,40 @@ export const CustomerReturnEditModal = ({
   );
 
   return (
-    <TableProvider createStore={createTableStore}>
-      <Modal
-        title={t('heading.return-items')}
-        cancelButton={currentTab === Tabs.Quantity ? CancelButton : BackButton}
-        // zeroQuantityAlert === warning implies all lines are 0 and user has
-        // been already warned, so we act immediately to update them
-        okButton={
-          currentTab === Tabs.Quantity && zeroQuantityAlert !== 'warning'
-            ? NextStepButton
-            : OkButton
-        }
-        nextButton={!isNewReturn ? OkAndNextButton : undefined}
-        height={700}
-        width={1200}
-      >
-        <Box ref={alertRef}>
-          {returnId && (
-            <ItemSelector
-              disabled={!!itemId}
-              itemId={itemId}
-              onChangeItemId={setItemId}
-            />
-          )}
-
-          {lines.length > 0 && (
-            <ReturnSteps
-              currentTab={currentTab}
-              lines={lines}
-              update={update}
-              zeroQuantityAlert={zeroQuantityAlert}
-              setZeroQuantityAlert={setZeroQuantityAlert}
-              // We only allow adding draft lines when we are adding by item
-              addDraftLine={itemId ? addDraftLine : undefined}
-            />
-          )}
-        </Box>
-      </Modal>
-    </TableProvider>
+    <Modal
+      title={t('heading.return-items')}
+      cancelButton={currentTab === Tabs.Quantity ? CancelButton : BackButton}
+      // zeroQuantityAlert === warning implies all lines are 0 and user has
+      // been already warned, so we act immediately to update them
+      okButton={
+        currentTab === Tabs.Quantity && zeroQuantityAlert !== 'warning'
+          ? NextStepButton
+          : OkButton
+      }
+      nextButton={!isNewReturn ? OkAndNextButton : undefined}
+      height={700}
+      width={1200}
+    >
+      <Box ref={alertRef}>
+        {returnId && (
+          <ItemSelector
+            disabled={!!itemId}
+            itemId={itemId}
+            onChangeItemId={setItemId}
+          />
+        )}
+        {lines.length > 0 && (
+          <ReturnSteps
+            currentTab={currentTab}
+            lines={lines}
+            update={update}
+            zeroQuantityAlert={zeroQuantityAlert}
+            setZeroQuantityAlert={setZeroQuantityAlert}
+            // We only allow adding draft lines when we are adding by item
+            addDraftLine={itemId ? addDraftLine : undefined}
+          />
+        )}
+      </Box>
+    </Modal>
   );
 };

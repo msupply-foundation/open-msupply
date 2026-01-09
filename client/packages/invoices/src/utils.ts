@@ -82,14 +82,14 @@ export const manualCustomerReturnStatuses: InvoiceNodeStatus[] = [
 ];
 
 const statusTranslation: Record<InvoiceNodeStatus, LocaleKey> = {
-  ALLOCATED: 'label.allocated',
-  PICKED: 'label.picked',
-  SHIPPED: 'label.shipped',
-  DELIVERED: 'label.delivered',
-  RECEIVED: 'label.received',
-  NEW: 'label.new',
-  VERIFIED: 'label.verified',
-  CANCELLED: 'label.cancelled',
+  ALLOCATED: 'status.allocated',
+  PICKED: 'status.picked',
+  SHIPPED: 'status.shipped',
+  DELIVERED: 'status.delivered',
+  RECEIVED: 'status.received',
+  NEW: 'status.new',
+  VERIFIED: 'status.verified',
+  CANCELLED: 'status.cancelled',
 };
 
 export const getPreviousStatus = (

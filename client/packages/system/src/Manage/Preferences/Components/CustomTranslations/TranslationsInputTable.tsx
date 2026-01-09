@@ -1,24 +1,21 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { DeleteIcon } from '@common/icons';
 import { useTranslation } from '@common/intl';
 import {
-  alpha,
-  AppSxProp,
   Box,
   ColumnDef,
   IconButton,
   MaterialTable,
   NothingHere,
   TextWithTooltipCell,
-  useRowStyle,
   useSimpleMaterialTable,
+  TextInputCell,
 } from '@openmsupply-client/common';
 import { checkInvalidVariables, Translation } from './helpers';
 import {
   TranslationOption,
   TranslationSearchInput,
 } from './TranslationSearchInput';
-import { TextInputCell } from '@openmsupply-client/common/src/ui/layout/tables/material-react-table/components/TextInputCell';
 
 export const TranslationsTable = ({
   translations,
@@ -30,18 +27,6 @@ export const TranslationsTable = ({
   showValidationErrors: boolean;
 }) => {
   const t = useTranslation();
-
-  const { setRowStyles } = useRowStyle();
-
-  useEffect(() => {
-    const newLines = translations.filter(tr => tr.isNew).map(tr => tr.id);
-
-    const style: AppSxProp = {
-      backgroundColor: theme =>
-        `${alpha(theme.palette.secondary.main, 0.1)} !important`,
-    };
-    setRowStyles(newLines, style);
-  }, [translations, setRowStyles]);
 
   const onAdd = (options: TranslationOption[]) => {
     if (options.length === 0) return;
@@ -121,6 +106,7 @@ export const TranslationsTable = ({
     tableId: 'custom-translations-input-table',
     data: translations,
     columns,
+    getIsPlaceholderRow: row => row.isNew ?? false,
     noDataElement: <NothingHere body={t('message.add-a-translation')} />,
   });
 

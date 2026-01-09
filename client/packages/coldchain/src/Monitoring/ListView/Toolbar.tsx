@@ -8,6 +8,7 @@ import {
   TemperatureBreachNodeType,
   TypedTFunction,
   LocaleKey,
+  useUrlQuery,
 } from '@openmsupply-client/common';
 
 export const breachTypeOptions = (t: TypedTFunction<LocaleKey>) => [
@@ -31,6 +32,8 @@ export const breachTypeOptions = (t: TypedTFunction<LocaleKey>) => [
 
 export const Toolbar: FC<{ filter: FilterController }> = () => {
   const t = useTranslation();
+  const { urlQuery } = useUrlQuery();
+  const currentUrlTab = urlQuery['tab'] as string | undefined;
 
   return (
     <AppBarContentPortal
@@ -42,53 +45,55 @@ export const Toolbar: FC<{ filter: FilterController }> = () => {
       }}
     >
       <Box display="flex" gap={1}>
-        <FilterMenu
-          filters={[
-            {
-              type: 'text',
-              name: t('label.sensor-name'),
-              urlParameter: 'sensor.name',
-            },
-            {
-              type: 'text',
-              name: t('label.location'),
-              urlParameter: 'location.code',
-              placeholder: t('placeholder.search-by-location-code'),
-            },
-            {
-              type: 'group',
-              name: 'Date/Time Range',
-              elements: [
-                {
-                  type: 'dateTime',
-                  showTimepicker: true,
-                  name: t('label.from-start-datetime'),
-                  urlParameter: 'datetime',
-                  range: 'from',
-                },
-                {
-                  type: 'dateTime',
-                  showTimepicker: true,
-                  name: t('label.to-start-datetime'),
-                  urlParameter: 'datetime',
-                  range: 'to',
-                },
-              ],
-            },
-            {
-              type: 'enum',
-              name: t('label.breach-type'),
-              urlParameter: 'type',
-              options: breachTypeOptions(t),
-            },
-            {
-              type: 'boolean',
-              name: t('label.unacknowledged'),
-              urlParameter: 'unacknowledged',
-              isDefault: true,
-            },
-          ]}
-        />
+        {currentUrlTab === 'Breaches' || currentUrlTab === 'Log' ? null : (
+          <FilterMenu
+            filters={[
+              {
+                type: 'text',
+                name: t('label.sensor-name'),
+                urlParameter: 'sensor.name',
+              },
+              {
+                type: 'text',
+                name: t('label.location'),
+                urlParameter: 'location.code',
+                placeholder: t('placeholder.search-by-location-code'),
+              },
+              {
+                type: 'group',
+                name: 'Date/Time Range',
+                elements: [
+                  {
+                    type: 'dateTime',
+                    showTimepicker: true,
+                    name: t('label.from-start-datetime'),
+                    urlParameter: 'datetime',
+                    range: 'from',
+                  },
+                  {
+                    type: 'dateTime',
+                    showTimepicker: true,
+                    name: t('label.to-start-datetime'),
+                    urlParameter: 'datetime',
+                    range: 'to',
+                  },
+                ],
+              },
+              {
+                type: 'enum',
+                name: t('label.breach-type'),
+                urlParameter: 'type',
+                options: breachTypeOptions(t),
+              },
+              {
+                type: 'boolean',
+                name: t('label.unacknowledged'),
+                urlParameter: 'unacknowledged',
+                isDefault: true,
+              },
+            ]}
+          />
+        )}
       </Box>
     </AppBarContentPortal>
   );

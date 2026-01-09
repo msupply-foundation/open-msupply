@@ -68,10 +68,12 @@ impl<'a> DaysOutOfStockRepository<'a> {
         } = filter;
 
         // Build filter_helper query for any present fields
-        let mut filter_helper_query = dos_filter_helper::table.into_boxed();
+        let mut filter_helper_query = dos_filter_helper::table
+            .select((dos_filter_helper::item_id, dos_filter_helper::store_id))
+            .distinct()
+            .into_boxed();
 
         apply_equal_filter!(filter_helper_query, item_id, dos_filter_helper::item_id);
-
         apply_equal_filter!(filter_helper_query, store_id, dos_filter_helper::store_id);
 
         let dos_query = Dos {

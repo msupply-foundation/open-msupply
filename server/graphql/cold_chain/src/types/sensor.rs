@@ -73,6 +73,7 @@ pub enum SensorNodeType {
     BlueMaestro,
     Laird,
     Berlinger,
+    LogTag,
 }
 
 #[Object]
