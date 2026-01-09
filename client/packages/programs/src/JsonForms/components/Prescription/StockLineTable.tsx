@@ -5,9 +5,9 @@ import {
   MaterialTable,
   useSimpleMaterialTable,
   useTranslation,
+  NumberInputCell,
 } from '@openmsupply-client/common';
 import { DraftPrescriptionLine } from '@openmsupply-client/invoices/src/types';
-import { NumberInputCell } from '@openmsupply-client/common/src/ui/layout/tables/material-react-table/components/NumberInputCell';
 
 interface StockLineTableProps {
   stocklines: DraftPrescriptionLine[];

@@ -12,7 +12,7 @@ It's generally best if you get confirmation of your bug or approval for your fea
 
 Note that the issue tracker is only for bugs and feature requests. If you have a general question, please ask elsewhere.
 
-The best place to start are the issues which have the label [good first issue](https://github.com/openmsupply/open-msupply/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22)
+The best place to start are the issues which have the label [good first issue](https://github.com/msupply-foundation/open-msupply/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22)
 
 Working on your first Pull Request? You might find http://makeapullrequest.com/ and http://www.firsttimersonly.com/ helpful.
 
@@ -63,14 +63,19 @@ everyone is a beginner at first :smile_cat:
 
 ### View your changes in the client application
 
-To see the application running, you can get up and running quickly by running this from the client folder:
+To see the application running, you can get up and running quickly in one of two ways:
 
 ```sh
+# Option 1: run server + client locally (requires Rust + Node)
 yarn start
+
+# Option 2: run client against the demo server API (no Rust required)
+cd ./client
+yarn start-remote
 ```
 
-This will compile the react app and launch a browser on <http://localhost:3003>. We're using mostly chrome and firefox.. but you be you!
-Running `yarn start` will connect you to our [demo server](https://demo-open.msupply.org/)
+This will compile the React app and launch a browser on <http://localhost:3003>. We're using mostly chrome and firefox.. but you be you!
+Running `yarn start-remote` will connect you to our [demo server](https://demo-open.msupply.org/)
 You can log in using:
 
 *User*: developer
@@ -82,7 +87,8 @@ Your patch should follow the same conventions & pass the same code quality check
 The valdiation is running 
 
 ```sh
-yarn pre-commit-lint
+cd ./client
+yarn lint-and-format
 ```
 
 and you can run that yourself to test!
@@ -93,7 +99,7 @@ At this point, you should switch back to your main branch and make sure it's
 up to date with open mSupply's develop branch:
 
 ```sh
-git remote add upstream git@github.com:openmsupply/open-msupply.git
+git remote add upstream git@github.com:msupply-foundation/open-msupply.git
 git checkout develop
 git pull upstream develop
 ```
@@ -123,12 +129,12 @@ To learn more about rebasing in Git, there are a lot of [good][git rebasing] [re
 ```sh
 git checkout 325-fix-a-bug
 git pull --rebase upstream develop
-git push --force-with-lease fix-a-bug
+git push --force-with-lease origin 325-fix-a-bug
 ```
 
 [Stack Overflow]: http://stackoverflow.com/questions/tagged/activeadmin
-[new issue]: https://github.com//openmsupply/open-msupply/issues/new
-[fork Active Admin]: https://help.github.com/articles/fork-a-repo
+[new issue]: https://github.com/msupply-foundation/open-msupply/issues/new/choose
+[fork Open mSupply]: https://github.com/msupply-foundation/open-msupply/fork
 [make a pull request]: https://help.github.com/articles/creating-a-pull-request
 [git rebasing]: http://git-scm.com/book/en/Git-Branching-Rebasing
 [interactive rebase]: https://help.github.com/en/github/using-git/about-git-rebase

@@ -2,9 +2,8 @@ import React, { FC, useMemo } from 'react';
 import { useUrlQueryParams } from '@common/hooks';
 import { useTranslation } from '@common/intl';
 import {
-  ColumnAlign,
   ColumnDef,
-  Formatter,
+  ColumnType,
   MaterialTable,
   NothingHere,
   usePaginatedMaterialTable,
@@ -20,13 +19,11 @@ import { DurationCell, IconCell } from './TempereatureBreachCells';
 import { useFormatTemperature } from '../../../common/utils';
 
 export const TemperatureBreachList: FC = () => {
-  const {
-    filter,
-    queryParams,
-  } = useUrlQueryParams({
+  const { filter, queryParams } = useUrlQueryParams({
     initialSort: { key: 'datetime', dir: 'desc' },
     filters: [
       { key: 'datetime', condition: 'between' },
+      { key: 'endDatetime', condition: 'between' },
       {
         key: 'sensor.name',
       },
@@ -57,7 +54,7 @@ export const TemperatureBreachList: FC = () => {
         accessorKey: 'icon',
         header: '',
         size: 60,
-        align: ColumnAlign.Center,
+        align: 'center',
         Cell: ({ row: { original: row } }) => (
           <IconCell acknowledgeBreach={acknowledgeBreach} rowData={row} />
         ),
@@ -100,16 +97,16 @@ export const TemperatureBreachList: FC = () => {
         id: 'datetime',
         accessorFn: row => row.startDatetime,
         header: t('label.type-start'),
+        columnType: ColumnType.DateTime,
         enableSorting: true,
-        Cell: ({ row: { original: row } }) =>
-          Formatter.csvDateTimeString(row.startDatetime),
+        enableColumnFilter: true,
       },
       {
         accessorKey: 'endDatetime',
         header: t('label.type-end'),
+        columnType: ColumnType.DateTime,
         enableSorting: true,
-        Cell: ({ row: { original: row } }) =>
-          Formatter.csvDateTimeString(row.endDatetime),
+        enableColumnFilter: true,
       },
       {
         accessorKey: 'duration',
@@ -146,10 +143,8 @@ export const TemperatureBreachList: FC = () => {
     isLoading,
     isError,
     enableRowSelection: false,
-    noDataElement: (
-      <NothingHere body={t('error.no-temperature-breaches')} />
-    ),
-  })
+    noDataElement: <NothingHere body={t('error.no-temperature-breaches')} />,
+  });
 
   return (
     <>

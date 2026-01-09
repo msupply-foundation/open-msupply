@@ -51,6 +51,7 @@ pub fn generate(
             stock_line,
             program_enrolment.patient_link_id.clone(),
             clinician_id.clone(),
+            program_enrolment.program_id.clone(),
         )),
         None => None,
     };

@@ -42,7 +42,7 @@ impl InvoiceTransferProcessor for CreateInboundInvoiceProcessor {
     /// 2. Source invoice is either Outbound shipment or Supplier Return
     /// 3. Source outbound invoice is either Shipped or Picked
     ///    (outbounds can also be New or Allocated, but we only want to generate transfer when it's Shipped or Picked, as per
-    ///     ./doc/omSupply_shipment_transfer_workflow.png)
+    ///    ./doc/omSupply_shipment_transfer_workflow.png)
     /// 4. The outbound_invoice.linked_invoice_id is None. This check rather than looking for the Some inbound invoice gives us an escape hatch to prevent transfers being generated.
     /// 5. Source invoice was not created a month before receiving store was created.
     /// 6. Source invoice was not picked more than 3 months before initialisation of the site that we skip generating the transfer
@@ -136,7 +136,7 @@ impl InvoiceTransferProcessor for CreateInboundInvoiceProcessor {
                         .and_then(|initialisation_date| {
                             initialisation_date.checked_sub_months(Months::new(pref_months as u32))
                         })
-                        .map_or(false, |cutoff_date| picked_date < cutoff_date)
+                        .is_some_and(|cutoff_date| picked_date < cutoff_date)
                     {
                         return Ok(InvoiceTransferOutput::BeforeInitialisationMonths);
                     }
@@ -243,11 +243,11 @@ fn generate_inbound_invoice(
 
     let formatted_comment = match r#type {
         InboundInvoiceType::InboundShipment => match &outbound_invoice_row.comment {
-            Some(comment) => format!("Stock transfer ({})", comment),
+            Some(comment) => format!("Stock transfer ({comment})"),
             None => "Stock transfer".to_string(),
         },
         InboundInvoiceType::CustomerReturn => match &outbound_invoice_row.comment {
-            Some(comment) => format!("Stock return ({})", comment),
+            Some(comment) => format!("Stock return ({comment})"),
             None => "Stock return".to_string(),
         },
     };
@@ -285,6 +285,7 @@ fn generate_inbound_invoice(
         expected_delivery_date: outbound_invoice_row.expected_delivery_date,
         original_shipment_id,
         program_id: outbound_invoice_row.program_id.clone(),
+        shipping_method_id: outbound_invoice_row.shipping_method_id.clone(),
         // Default
         colour: None,
         user_id: None,
@@ -324,7 +325,7 @@ mod test {
         let log_1 = SyncLogRow {
             id: "sync_log_1".to_string(),
             integration_finished_datetime: Some(
-                NaiveDate::from_ymd_opt(2025, 01, 01)
+                NaiveDate::from_ymd_opt(2025, 1, 1)
                     .unwrap()
                     .and_hms_opt(0, 0, 0)
                     .unwrap(),
@@ -335,7 +336,7 @@ mod test {
         let log_2 = SyncLogRow {
             id: "sync_log_2".to_string(),
             integration_finished_datetime: Some(
-                NaiveDate::from_ymd_opt(2024, 01, 01)
+                NaiveDate::from_ymd_opt(2024, 1, 1)
                     .unwrap()
                     .and_hms_opt(0, 0, 0)
                     .unwrap(),
@@ -518,7 +519,7 @@ mod test {
         }
 
         CreateInboundInvoiceProcessor {}
-            .try_process_record(&ctx, &new_status_invoice_input)
+            .try_process_record(ctx, &new_status_invoice_input)
             .unwrap();
 
         let invoice = get_linked_invoice(&ctx.connection, new_invoice_row.id.to_string());
@@ -528,7 +529,7 @@ mod test {
         );
 
         CreateInboundInvoiceProcessor {}
-            .try_process_record(&ctx, &picked_status_invoice_input)
+            .try_process_record(ctx, &picked_status_invoice_input)
             .unwrap();
         let invoice_status = get_linked_invoice(&ctx.connection, picked_invoice_row.id.to_string())
             .unwrap()
@@ -541,7 +542,7 @@ mod test {
         );
 
         CreateInboundInvoiceProcessor {}
-            .try_process_record(&ctx, &shipped_status_invoice_input)
+            .try_process_record(ctx, &shipped_status_invoice_input)
             .unwrap();
         let invoice_status =
             get_linked_invoice(&ctx.connection, shipped_invoice_row.id.to_string())
@@ -580,7 +581,7 @@ mod test {
             .unwrap();
 
         CreateInboundInvoiceProcessor {}
-            .try_process_record(&ctx, &picked_status_invoice_input)
+            .try_process_record(ctx, &picked_status_invoice_input)
             .unwrap();
         let invoice_status = get_linked_invoice(&ctx.connection, picked_invoice_row.id.to_string())
             .unwrap()
@@ -593,7 +594,7 @@ mod test {
         );
 
         CreateInboundInvoiceProcessor {}
-            .try_process_record(&ctx, &shipped_status_invoice_input)
+            .try_process_record(ctx, &shipped_status_invoice_input)
             .unwrap();
         let invoice_status =
             get_linked_invoice(&ctx.connection, shipped_invoice_row.id.to_string())
@@ -607,7 +608,7 @@ mod test {
         );
 
         CreateInboundInvoiceProcessor {}
-            .try_process_record(&ctx, &supplier_return_shipped)
+            .try_process_record(ctx, &supplier_return_shipped)
             .unwrap();
 
         let invoice_status =

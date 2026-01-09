@@ -7,7 +7,7 @@ use repository::{
     RepositoryError,
 };
 use serde::{Deserialize, Serialize};
-use std::{cmp::Ordering, collections::HashMap, time::SystemTime};
+use std::{collections::HashMap, time::SystemTime};
 use thiserror::Error;
 use util::{format_error, uuid::uuid};
 
@@ -410,7 +410,7 @@ fn query_all_report_versions(
 fn report_filter_method(reports: Vec<ReportMetaData>, app_version: Version) -> Vec<String> {
     let reports_with_compatible_versions: Vec<ReportMetaData> = reports
         .into_iter()
-        .filter(|r| compare_major_minor(r.version.clone(), &app_version) != Ordering::Greater)
+        .filter(|r| r.version.is_compatible_by_major_and_minor(&app_version))
         .collect();
 
     let mut codes: Vec<String> = reports_with_compatible_versions
@@ -446,16 +446,6 @@ fn find_latest_report(reports: Vec<ReportMetaData>) -> Option<ReportMetaData> {
     reports
         .into_iter()
         .max_by(|a, b| a.version.partial_cmp(&b.version).unwrap())
-}
-
-fn compare_major_minor(first: Version, second: &Version) -> Ordering {
-    if first.major != second.major {
-        return first.major.cmp(&second.major);
-    }
-    if first.minor != second.minor {
-        return first.minor.cmp(&second.minor);
-    }
-    Ordering::Equal
 }
 
 fn resolve_report(
