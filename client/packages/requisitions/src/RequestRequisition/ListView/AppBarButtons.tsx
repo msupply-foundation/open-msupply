@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { FC, useState } from 'react';
 import {
   FnUtils,
   PlusCircleIcon,
@@ -11,7 +11,8 @@ import {
   RouteBuilder,
   useSimplifiedTabletUI,
   usePreferences,
-  useConfirmationModal,
+  DialogButton,
+  ConfirmationModal,
 } from '@openmsupply-client/common';
 import { ExportSelector } from '@openmsupply-client/system';
 import { useRequest } from '../api';
@@ -56,24 +57,11 @@ export const AppBarButtons: FC<{
     prefs.warnWhenMissingRecentStocktake?.minItems !== undefined &&
     uniqueStocktakeItemCount < prefs.warnWhenMissingRecentStocktake?.minItems;
 
-  const getConfirmation = useConfirmationModal({
-    message: t('warning.insufficient-recent-stocktake-items', {
-      minItems: prefs.warnWhenMissingRecentStocktake?.minItems,
-      maxAge: prefs.warnWhenMissingRecentStocktake?.maxAge,
-    }),
-    title: t('heading.are-you-sure'),
-    cancelButtonLabel: t('button.go-to-stocktakes'),
-  });
+  const [confirmationState, setConfirmationState] = useState<boolean>(false);
 
   const handleAddRequisitionClick = () => {
     if (showOldStocktakeWarning) {
-      const stocktakePath = RouteBuilder.create(AppRoute.Inventory)
-        .addPart(AppRoute.Stocktakes)
-        .build();
-      getConfirmation({
-        onConfirm: () => modalController.toggleOn(),
-        onCancel: () => setTimeout(() => navigate(stocktakePath), 50), // Delay to allow modal to close
-      });
+      setConfirmationState(true);
     } else {
       modalController.toggleOn();
     }
@@ -101,6 +89,27 @@ export const AppBarButtons: FC<{
           />
         )}
       </Grid>
+      <ConfirmationModal
+        open={confirmationState}
+        title={t('heading.are-you-sure')}
+        message={t('warning.insufficient-recent-stocktake-items', {
+          minItems: prefs.warnWhenMissingRecentStocktake?.minItems,
+          maxAge: prefs.warnWhenMissingRecentStocktake?.maxAge,
+        })}
+        buttonLabel={t('button.continue-without-stocktake')}
+        width={700}
+        onConfirm={() => { setConfirmationState(false); modalController.toggleOn(); }}
+        onCancel={() => { setConfirmationState(false); }}
+        otherButtons={[<DialogButton
+          variant='back'
+          customLabel={t('button.go-to-stocktakes')}
+          onClick={() => navigate(
+            RouteBuilder.create(AppRoute.Inventory)
+              .addPart(AppRoute.Stocktakes)
+              .build()
+          )}
+        />]}
+      />
       <CreateRequisitionModal
         isOpen={modalController.isOn}
         onClose={modalController.toggleOff}
