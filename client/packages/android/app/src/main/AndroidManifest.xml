@@ -12,7 +12,7 @@
         android:theme="@style/AppTheme">
 
         <activity
-            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale|smallestScreenSize|screenLayout|uiMode"
+            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale|smallestScreenSize|screenLayout|uiMode|navigation|density"
             android:name=".MainActivity"
             android:label="@string/title_activity_main"
             android:theme="@style/AppTheme.NoActionBarLaunch"
@@ -25,6 +25,7 @@
             </intent-filter>
 
         </activity>
+        <meta-data android:name="com.google.mlkit.vision.DEPENDENCIES" android:value="barcode_ui"/>
 
         <provider
             android:name="androidx.core.content.FileProvider"
@@ -38,7 +39,7 @@
     </application>
 
     <!-- Permissions -->
-
+    <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.INTERNET" />
     <!-- Geolocation Plugin -->
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />

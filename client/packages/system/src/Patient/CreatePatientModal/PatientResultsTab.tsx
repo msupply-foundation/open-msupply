@@ -2,22 +2,19 @@ import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
 import {
   BasicSpinner,
   Box,
-  ColumnAlign,
-  DataTable,
-  DotCell,
   DownloadIcon,
   GenderTypeNode,
   HomeIcon,
   InfoTooltipIcon,
   LoadingButton,
   noOtherVariants,
-  useColumns,
-  useFormatDateTime,
   useTranslation,
   getGenderTranslationKey,
   Alert,
-  TableProvider,
-  createTableStore,
+  MaterialTable,
+  useSimpleMaterialTable,
+  ColumnDef,
+  ColumnType,
 } from '@openmsupply-client/common';
 import { PatientPanel } from './PatientPanel';
 import { FetchPatientModal } from './FetchPatientModal';
@@ -81,7 +78,6 @@ export const PatientResultsTab: FC<
 > = ({ patient, value, active, onRowClick }) => {
   const t = useTranslation();
   const { setCreateNewPatient } = usePatientStore();
-  const { localisedDate } = useFormatDateTime();
 
   const [data, setData] = useState<PatientColumnData[]>([]);
   const [fetchingPatient, setFetchingPatient] = useState<
@@ -120,50 +116,6 @@ export const PatientResultsTab: FC<
     }),
     [patient]
   );
-
-  const columns = useColumns<PatientColumnData>([
-    {
-      key: 'code',
-      label: 'label.patient-id',
-    },
-    {
-      key: 'code2',
-      label: 'label.patient-nuic',
-    },
-    {
-      key: 'firstName',
-      label: 'label.first-name',
-    },
-    {
-      key: 'lastName',
-      label: 'label.last-name',
-    },
-    {
-      key: 'dateOfBirth',
-      label: 'label.date-of-birth',
-      formatter: dateString =>
-        dateString ? localisedDate((dateString as string) || '') : '',
-    },
-    {
-      key: 'gender',
-      label: 'label.gender',
-      accessor: ({ rowData }) =>
-        rowData.gender ? t(getGenderTranslationKey(rowData.gender)) : '',
-    },
-    {
-      key: 'isDeceased',
-      label: 'label.deceased',
-      align: ColumnAlign.Center,
-      Cell: DotCell,
-      sortable: false,
-    },
-    {
-      key: 'isOnCentral',
-      Cell: ({ rowData }) => {
-        return rowData.isOnCentral ? <DownloadIcon /> : <HomeIcon />;
-      },
-    },
-  ]);
 
   const count = data?.length ?? 0;
 
@@ -204,6 +156,62 @@ export const PatientResultsTab: FC<
     setCreateNewPatient(undefined);
     onRowClick(row);
   };
+
+  const columns = useMemo(
+    (): ColumnDef<PatientColumnData>[] => [
+      {
+        accessorKey: 'code',
+        header: t('label.patient-id'),
+        size: 100,
+      },
+      {
+        accessorKey: 'code2',
+        header: t('label.patient-nuic'),
+        size: 100,
+      },
+      {
+        accessorKey: 'firstName',
+        header: t('label.first-name'),
+      },
+      {
+        accessorKey: 'lastName',
+        header: t('label.last-name'),
+      },
+      {
+        accessorKey: 'dateOfBirth',
+        header: t('label.date-of-birth'),
+        columnType: ColumnType.Date,
+        size: 100,
+      },
+      {
+        id: 'gender',
+        accessorFn: row => row.gender ? t(getGenderTranslationKey(row.gender)) : '',
+        header: t('label.gender'),
+      },
+      {
+        accessorKey: 'isDeceased',
+        header: t('label.deceased'),
+        columnType: ColumnType.Boolean,
+        size: 80,
+      },
+      {
+        id: 'isOnCentral',
+        header: '',
+        Cell: ({ row: { original: row } }) => {
+          return row.isOnCentral ? <DownloadIcon /> : <HomeIcon />;
+        },
+      },
+    ],
+    []
+  );
+
+  const table = useSimpleMaterialTable<PatientColumnData>({
+    tableId: 'create-patient-search-results',
+    data,
+    columns,
+    onRowClick: handleRowClick,
+    noDataElement: t('messages.no-matching-patients'),
+  });
 
   if (!active) {
     return null;
@@ -255,23 +263,7 @@ export const PatientResultsTab: FC<
       <Alert severity="info" style={{ marginBottom: 2 }}>
         {t('messages.patients-create', { count })}
       </Alert>
-      <TableProvider createStore={createTableStore}>
-        <DataTable
-          dense
-          id="create-patient-duplicates"
-          data={data}
-          columns={columns}
-          noDataMessage={t('messages.no-matching-patients')}
-          onRowClick={handleRowClick}
-          generateRowTooltip={({ firstName, lastName, isOnCentral }) => {
-            if (isOnCentral) {
-              return t('messages.click-to-fetch');
-            } else {
-              return t('messages.click-to-view', { firstName, lastName });
-            }
-          }}
-        />
-      </TableProvider>
+      <MaterialTable table={table} />
     </PatientPanel>
   );
 };

@@ -376,7 +376,7 @@ const UIComponent = (props: ControlProps) => {
           clearable={!props.config?.required}
           inputProps={{
             error: !!zErrors || !!props.errors,
-            helperText: zErrors ?? props.errors,
+            helperText: zErrors || props.errors,
           }}
           isOptionEqualToValue={option => option.value === data}
         />

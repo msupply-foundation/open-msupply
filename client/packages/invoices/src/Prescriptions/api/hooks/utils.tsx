@@ -5,8 +5,6 @@ import {
   InvoiceSortFieldInput,
   RecordPatch,
   UpdatePrescriptionStatusInput,
-  NumberInputCell,
-  CellProps,
   FnUtils,
   SortUtils,
 } from '@openmsupply-client/common';
@@ -15,9 +13,6 @@ import {
   PrescriptionLineFragment,
   PrescriptionRowFragment,
 } from '../operations.generated';
-import React from 'react';
-
-import { getStockOutQuantityCellId } from '../../../utils';
 import { DraftPrescriptionLine } from '../../../types';
 
 export const sortFieldMap: Record<string, InvoiceSortFieldInput> = {
@@ -544,54 +539,3 @@ export const shouldUpdatePlaceholder = (
   quantity: number,
   placeholder: DraftPrescriptionLine
 ) => quantity > 0 && !placeholder.isCreated;
-
-export const UnitQuantityCell = (props: CellProps<DraftPrescriptionLine>) => (
-  <NumberInputCell
-    {...props}
-    max={
-      (props.rowData.stockLine?.availableNumberOfPacks ?? 0) *
-      (props.rowData.stockLine?.packSize ?? 1)
-    }
-    id={getStockOutQuantityCellId(props.rowData.stockLine?.batch)}
-    min={0}
-    decimalLimit={2}
-    slotProps={{
-      htmlInput: {
-        sx: {
-          backgroundColor: 'background.white',
-        },
-      },
-    }}
-  />
-);
-
-export const PackQuantityCell = (props: CellProps<DraftPrescriptionLine>) => (
-  <NumberInputCell
-    {...props}
-    max={props.rowData.stockLine?.availableNumberOfPacks}
-    id={getStockOutQuantityCellId(props.rowData.stockLine?.batch)}
-    decimalLimit={2}
-    min={0}
-  />
-);
-
-export const DosesQuantityCell = (props: CellProps<DraftPrescriptionLine>) => (
-  <NumberInputCell
-    {...props}
-    max={
-      (props.rowData.stockLine?.availableNumberOfPacks ?? 0) *
-      (props.rowData.stockLine?.packSize ?? 1) *
-      props.rowData.item.doses
-    }
-    id={getStockOutQuantityCellId(props.rowData.stockLine?.batch)}
-    min={0}
-    decimalLimit={2}
-    slotProps={{
-      htmlInput: {
-        sx: {
-          backgroundColor: 'background.white',
-        },
-      },
-    }}
-  />
-);

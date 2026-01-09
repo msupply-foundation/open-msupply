@@ -1,30 +1,24 @@
 import React, { FC, useEffect, useMemo, useState } from 'react';
 import {
   Box,
-  DataTable,
   DetailContainer,
   DialogButton,
   SearchBar,
-  TableProvider,
-  useColumns,
   useDialog,
-  useFormatDateTime,
   useTranslation,
-  createTableStore,
   InputWithLabelRow,
   BasicTextInput,
   Grid,
   ButtonWithIcon,
   RewindIcon,
-  useRowStyle,
-  AppSxProp,
-  alpha,
   ModalProps,
+  MaterialTable,
+  useSimpleMaterialTable,
+  ColumnDef,
+  ColumnType,
 } from '@openmsupply-client/common';
 import {
-  ChipTableCell,
   PatientRowFragment,
-  programEnrolmentLabelAccessor,
   usePatient,
 } from '../../Patient';
 import { ContactTrace } from './useContactTraceData';
@@ -94,8 +88,6 @@ const ModalContent: FC<ModalContentProps> = ({
   setLinkedPatientId,
 }) => {
   const t = useTranslation();
-  const { localisedDate } = useFormatDateTime();
-  const { setRowStyles } = useRowStyle();
 
   const searchEnabled =
     (filter.firstName?.length ?? 0) > 0 ||
@@ -122,46 +114,49 @@ const ModalContent: FC<ModalContentProps> = ({
     [localSearchData?.nodes, searchEnabled]
   );
 
-  const columns = useColumns<PatientRowFragment>([
-    {
-      key: 'firstName',
-      label: 'label.first-name',
-    },
-    {
-      key: 'lastName',
-      label: 'label.last-name',
-    },
-    {
-      key: 'dateOfBirth',
-      label: 'label.date-of-birth',
-      formatter: dateString =>
-        dateString ? localisedDate((dateString as string) || '') : '',
-    },
-    {
-      key: 'gender',
-      label: 'label.gender',
-    },
-    {
-      label: 'label.program-enrolments',
-      key: 'programEnrolments',
-      accessor: programEnrolmentLabelAccessor,
-      Cell: ChipTableCell,
-      maxWidth: 250,
-    },
-  ]);
+  const columns = useMemo(
+    (): ColumnDef<PatientRowFragment>[] => [
+      {
+        accessorKey: 'firstName',
+        header: t('label.first-name'),
+      },
+      {
+        accessorKey: 'lastName',
+        header: t('label.last-name'),
+      },
+      {
+        accessorKey: 'dateOfBirth',
+        header: t('label.date-of-birth'),
+        columnType: ColumnType.Date,
+      },
+      {
+        accessorKey: 'gender',
+        header: t('label.gender'),
+      },
+      {
+        id: 'programEnrolments',
+        header: t('label.program-enrolments'),
+        // TODO: Update for MRT
+        // accessorFn: programEnrolmentLabelAccessor,
+        // Cell: ChipTableCell,
+        maxSize: 250,
+      },
+    ],
+    []
+  );
   const { data: linkedPatient } = usePatient.document.get(linkedPatientId);
 
-  useEffect(() => {
-    const style: AppSxProp = {
-      backgroundColor: theme =>
-        `${alpha(theme.palette.secondary.main, 0.1)}!important`,
-      '& .MuiTableCell-root': { fontWeight: 700 },
-    };
-    const patients =
-      matchingPatients?.filter(p => p.id === linkedPatientId).map(p => p.id) ??
-      [];
-    setRowStyles(patients, style);
-  }, [linkedPatientId, matchingPatients, setRowStyles]);
+  // TODO: test this table works now its using MRT
+  const table = useSimpleMaterialTable<PatientRowFragment>({
+    tableId: 'link-patient-contact-trace',
+    columns,
+    data: matchingPatients,
+    onRowClick: row => setLinkedPatientId(row.id),
+    getIsPlaceholderRow: row => row.id === linkedPatientId,
+    noDataElement: searchEnabled
+      ? t('messages.no-matching-patients-for-contact-trace')
+      : t('messages.patient-data-required-for-search'),
+  });
 
   return (
     <>
@@ -204,20 +199,7 @@ const ModalContent: FC<ModalContentProps> = ({
           width="100%"
         >
           <FilterBar onChange={onChangeFilter} filter={filter} />
-          <DataTable
-            dense
-            id="create-patient-duplicates"
-            data={matchingPatients ?? []}
-            columns={columns}
-            noDataMessage={
-              searchEnabled
-                ? t('messages.no-matching-patients-for-contact-trace')
-                : t('messages.patient-data-required-for-search')
-            }
-            onRowClick={row => {
-              setLinkedPatientId(row.id);
-            }}
-          />
+          <MaterialTable table={table} />
         </Box>
       </DetailContainer>
     </>
@@ -240,38 +222,36 @@ const LinkPatientModal = ({
     documentData?.contact?.id
   );
 
-  return (
-    <TableProvider createStore={createTableStore}>
-      <Modal
-        sx={{
-          maxWidth: '90%',
-          minWidth: '65%',
-          height: '100%',
-        }}
-        title={''}
-        contentProps={{ sx: { padding: 0 } }}
-        cancelButton={<DialogButton variant="cancel" onClick={hideDialog} />}
-        okButton={
-          <DialogButton
-            variant="ok"
-            onClick={() => {
-              onPatientLinked(linkedPatientId);
-              hideDialog();
-            }}
-          />
-        }
-        slideAnimation={false}
-      >
-        <ModalContent
-          documentData={documentData}
-          linkedPatientId={linkedPatientId}
-          setLinkedPatientId={setLinkedPatientId}
-          onChangeFilter={onChange}
-          filter={filter}
+  return <>
+    <Modal
+      sx={{
+        maxWidth: '90%',
+        minWidth: '65%',
+        height: '100%',
+      }}
+      title={''}
+      contentProps={{ sx: { padding: 0 } }}
+      cancelButton={<DialogButton variant="cancel" onClick={hideDialog} />}
+      okButton={
+        <DialogButton
+          variant="ok"
+          onClick={() => {
+            onPatientLinked(linkedPatientId);
+            hideDialog();
+          }}
         />
-      </Modal>
-    </TableProvider>
-  );
+      }
+      slideAnimation={false}
+    >
+      <ModalContent
+        documentData={documentData}
+        linkedPatientId={linkedPatientId}
+        setLinkedPatientId={setLinkedPatientId}
+        onChangeFilter={onChange}
+        filter={filter}
+      />
+    </Modal>
+  </>;
 };
 
 export const useLinkPatientModal = (
@@ -298,3 +278,16 @@ export const useLinkPatientModal = (
     ),
   };
 };
+
+// TODO: Update for MRT
+// export const programEnrolmentLabelAccessor: ColumnDataAccessor<
+//   PatientRowFragment,
+//   string[]
+// > = ({ rowData }): string[] => {
+//   return rowData.programEnrolments.nodes.map(it => {
+//     const programEnrolmentId = it.programEnrolmentId
+//       ? ` (${it.programEnrolmentId})`
+//       : '';
+//     return `${it.document.documentRegistry?.name}${programEnrolmentId}`;
+//   });
+// };

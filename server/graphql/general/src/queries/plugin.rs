@@ -25,7 +25,7 @@ pub fn frontend_plugin_metadata(
 }
 
 impl FrontendPluginMetadataNode {
-    fn from_domain(FrontendPluginMetadata { code, entry_point }: FrontendPluginMetadata) -> Self {
+    fn from_domain(FrontendPluginMetadata { code, entry_point, .. }: FrontendPluginMetadata) -> Self {
         Self {
             path: format!("{code}/{entry_point}"),
             code,
