@@ -10,7 +10,7 @@ use super::{
 pub fn requisition() -> RequisitionRow {
     RequisitionRow {
         id: "test_loader".to_string(),
-        name_link_id: mock_name_a().id,
+        name_id: mock_name_a().id,
         store_id: mock_store_a().id,
         r#type: RequisitionType::Response,
         ..Default::default()

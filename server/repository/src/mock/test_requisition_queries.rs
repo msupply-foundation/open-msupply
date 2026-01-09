@@ -59,7 +59,7 @@ pub fn mock_request_draft_requisition_all_fields() -> FullMockRequisition {
             id: requisition_id.clone(),
             user_id: Some("user_id".to_string()),
             requisition_number: 3,
-            name_link_id: mock_name_a().id,
+            name_id: mock_name_a().id,
             store_id: mock_store_a().id,
             r#type: RequisitionType::Request,
             status: RequisitionStatus::Draft,
@@ -121,7 +121,7 @@ pub fn mock_response_draft_requisition_all_fields() -> FullMockRequisition {
         requisition: RequisitionRow {
             id: requisition_id.clone(),
             requisition_number: 3,
-            name_link_id: mock_name_b().id,
+            name_id: mock_name_b().id,
             store_id: mock_store_a().id,
             r#type: RequisitionType::Response,
             status: RequisitionStatus::Draft,

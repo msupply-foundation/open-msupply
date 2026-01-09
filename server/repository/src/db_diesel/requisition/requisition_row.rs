@@ -1,11 +1,12 @@
 use std::any::Any;
 
 use crate::db_diesel::{
-    item_link_row::item_link, name_link_row::name_link, period::period_row::period,
+    item_link_row::item_link, name_row::name, period::period_row::period,
     program_requisition::program_row::program, store_row::store, user_row::user_account,
+    StorageConnection,
 };
+use crate::diesel_macros::define_linked_tables;
 use crate::repository_error::RepositoryError;
-use crate::StorageConnection;
 
 use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
 use crate::{Delete, Upsert};
@@ -16,15 +17,19 @@ use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
-table! {
-    requisition (id) {
-        id -> Text,
+define_linked_tables! {
+    view: requisition = "requisition_view",
+    core: requisition_with_links = "requisition",
+    struct: RequisitionRow,
+    repo: RequisitionRowRepository,
+    shared: {
         requisition_number -> Bigint,
-        name_link_id -> Text,
         store_id -> Text,
         user_id -> Nullable<Text>,
-        #[sql_name = "type"] type_ -> crate::db_diesel::requisition::requisition_row::RequisitionTypeMapping,
-        #[sql_name = "status"] status -> crate::db_diesel::requisition::requisition_row::RequisitionStatusMapping,
+        #[sql_name = "type"]
+        type_ -> crate::db_diesel::requisition::requisition_row::RequisitionTypeMapping,
+        #[sql_name = "status"]
+        status -> crate::db_diesel::requisition::requisition_row::RequisitionStatusMapping,
         created_datetime -> Timestamp,
         sent_datetime -> Nullable<Timestamp>,
         finalised_datetime -> Nullable<Timestamp>,
@@ -42,15 +47,17 @@ table! {
         is_emergency -> Bool,
         created_from_requisition_id -> Nullable<Text>,
         original_customer_id -> Nullable<Text>,
+    },
+    links: {
+        name_link_id -> name_id,
     }
 }
 
-joinable!(requisition -> name_link (name_link_id));
+joinable!(requisition -> name (name_id));
 joinable!(requisition -> store (store_id));
 joinable!(requisition -> user_account (user_id));
 joinable!(requisition -> period (period_id));
 joinable!(requisition -> program (program_id));
-allow_tables_to_appear_in_same_query!(requisition, name_link);
 allow_tables_to_appear_in_same_query!(requisition, item_link);
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, TS, Serialize, Deserialize, Default)]
@@ -91,7 +98,6 @@ pub enum ApprovalStatusType {
 pub struct RequisitionRow {
     pub id: String,
     pub requisition_number: i64,
-    pub name_link_id: String,
     pub store_id: String,
     pub user_id: Option<String>,
     #[diesel(column_name = type_)]
@@ -114,6 +120,8 @@ pub struct RequisitionRow {
     pub is_emergency: bool,
     pub created_from_requisition_id: Option<String>, // for Internal Orders created from a Requisition
     pub original_customer_id: Option<String>,
+    // Resolved from name_link - must be last to match view column order
+    pub name_id: String,
 }
 
 pub struct RequisitionRowRepository<'a> {
@@ -126,12 +134,7 @@ impl<'a> RequisitionRowRepository<'a> {
     }
 
     pub fn upsert_one(&self, row: &RequisitionRow) -> Result<i64, RepositoryError> {
-        diesel::insert_into(requisition::table)
-            .values(row)
-            .on_conflict(requisition::id)
-            .do_update()
-            .set(row)
-            .execute(self.connection.lock().connection())?;
+        self._upsert(row)?;
         self.insert_changelog(row, RowActionType::Upsert)
     }
 
@@ -145,7 +148,7 @@ impl<'a> RequisitionRowRepository<'a> {
             record_id: row.id.clone(),
             row_action: action,
             store_id: Some(row.store_id.clone()),
-            name_link_id: Some(row.name_link_id.clone()),
+            name_link_id: Some(row.name_id.clone()),
         };
 
         ChangelogRepository::new(self.connection).insert(&row)
@@ -160,7 +163,7 @@ impl<'a> RequisitionRowRepository<'a> {
 
         let change_log_id = self.insert_changelog(&requisition, RowActionType::Delete)?;
 
-        diesel::delete(requisition::table.filter(requisition::id.eq(requisition_id)))
+        diesel::delete(requisition_with_links::table.filter(requisition_with_links::id.eq(requisition_id)))
             .execute(self.connection.lock().connection())?;
 
         Ok(Some(change_log_id))
