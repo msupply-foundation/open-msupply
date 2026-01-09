@@ -73,9 +73,9 @@ impl<FH: QueryFragment<DBType>, SQ: QueryFragment<DBType>> QueryFragment<DBType>
     for DosInner<FH, SQ>
 {
     fn walk_ast<'b>(&'b self, mut out: AstPass<'_, 'b, DBType>) -> QueryResult<()> {
-        out.push_sql("WITH inner_query AS (SELECT * FROM (");
+        out.push_sql("WITH inner_query AS (");
         self.filter_helper.walk_ast(out.reborrow())?;
-        out.push_sql("))");
+        out.push_sql(")");
 
         // Variables
         // bind the timestamp directly for suitability with sqlite & postgres
@@ -107,6 +107,13 @@ impl<FH: QueryFragment<DBType>, SQ: QueryFragment<DBType>> QueryFragment<DBType>
 
         let cast_to_double = if cfg!(feature = "postgres") {
             "::DOUBLE PRECISION"
+        } else {
+            ""
+        };
+
+        // Need alias for the subquery in daily_stock for PostgreSQL
+        let ranked_alias = if cfg!(feature = "postgres") {
+            " AS ranked"
         } else {
             ""
         };
@@ -184,7 +191,7 @@ impl<FH: QueryFragment<DBType>, SQ: QueryFragment<DBType>> QueryFragment<DBType>
                             ORDER BY datetime DESC
                         ) as rn
                     FROM ledger
-                    )
+                    ){ranked_alias}
                 WHERE rn = 1
             ),
             days_with_no_stock AS (

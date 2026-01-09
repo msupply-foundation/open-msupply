@@ -279,6 +279,11 @@ export const SyncModal = ({ onCancel, open, width = 800 }: SyncModalProps) => {
               color: theme.palette.common.white,
               fontSize: '14px',
               minWidth: '130px',
+              // the text 'Sync Now' is being split over two lines on phones which is messing up the layout
+              // this is a quick and dirty fix
+              [theme.breakpoints.down('sm')]: {
+                fontSize: '12px',
+              },
             })}
           />
           {userHasPermission(UserPermission.ServerAdmin) && (

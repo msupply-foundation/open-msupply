@@ -3,7 +3,6 @@ import {
   LocaleKey,
   StocktakeNodeStatus,
   TypedTFunction,
-  useTranslation,
 } from '@openmsupply-client/common';
 import { StocktakeRowFragment } from './Stocktake/api';
 
@@ -13,8 +12,8 @@ export const stocktakeStatuses = [
 ];
 
 const stocktakeStatusToLocaleKey: Record<StocktakeNodeStatus, LocaleKey> = {
-  [StocktakeNodeStatus.New]: 'label.new',
-  [StocktakeNodeStatus.Finalised]: 'label.finalised',
+  [StocktakeNodeStatus.New]: 'status.new',
+  [StocktakeNodeStatus.Finalised]: 'status.finalised',
 };
 
 export const getStatusTranslation = (status: StocktakeNodeStatus) => {
@@ -28,16 +27,6 @@ export const getNextStocktakeStatus = (
   const nextStatus = stocktakeStatuses[idx + 1];
   return nextStatus ?? null;
 };
-
-export const getStocktakeTranslator =
-  (t: ReturnType<typeof useTranslation>) =>
-  (currentStatus: StocktakeNodeStatus | null): string => {
-    if (currentStatus === StocktakeNodeStatus.New) {
-      return t('label.new');
-    }
-
-    return t('label.finalised');
-  };
 
 export const canDeleteStocktake = (row: StocktakeRowFragment): boolean =>
   row.status === StocktakeNodeStatus.New && !row.isLocked;
