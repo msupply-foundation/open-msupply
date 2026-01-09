@@ -78,22 +78,12 @@ pub(crate) struct GraphqlRequest {
     query: String,
     variables: serde_json::Value,
 }
+#[derive(Default)]
 struct TestStepData {
     central_upsert: serde_json::Value,
     central_delete: serde_json::Value,
     integration_records: Vec<IntegrationOperation>,
     om_supply_central_graphql_operations: Vec<GraphqlRequest>,
-}
-
-impl Default for TestStepData {
-    fn default() -> Self {
-        Self {
-            central_upsert: json!({}),
-            central_delete: json!({}),
-            integration_records: Default::default(),
-            om_supply_central_graphql_operations: Default::default(),
-        }
-    }
 }
 
 trait SyncRecordTester {

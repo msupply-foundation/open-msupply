@@ -1,8 +1,7 @@
-import { cleanUpNodes, sortNodes } from '../../../../utils';
+import { sortNodes } from '../../../../utils';
 
 const processItemLines = (nodes, sort, dir) => {
-  let cleanNodes = cleanUpNodes(nodes);
-  let sortedNodes = sortNodes(cleanNodes, sort, dir);
+  let sortedNodes = sortNodes(nodes, sort, dir);
   return sortedNodes;
 };
 

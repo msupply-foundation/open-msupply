@@ -1,25 +1,12 @@
 use boa_engine::*;
-use chrono::NaiveDate;
 use repository::{
-    ConsumptionFilter, DateFilter, DaysOutOfStockRepository, DaysOutOfStockRow, EqualFilter,
-    PluginDataRow, PluginDataRowRepository, SyncMessageRow, SyncMessageRowRepository,
+    DaysOutOfStockFilter, DaysOutOfStockRepository, DaysOutOfStockRow, PluginDataRow,
+    PluginDataRowRepository, SyncMessageRow, SyncMessageRowRepository,
 };
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
 use crate::{boajs::context::BoaJsContext, boajs::utils::*};
-
-#[derive(Clone, Debug, PartialEq, Default, TS, Serialize, Deserialize)]
-pub struct GetDaysOutOfStockFilter {
-    #[ts(optional)]
-    pub store_id: Option<EqualFilter<String>>,
-    #[ts(optional)]
-    pub item_id: Option<EqualFilter<String>>,
-    #[ts(optional)]
-    pub from: Option<NaiveDate>,
-    #[ts(optional)]
-    pub to: Option<NaiveDate>,
-}
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 #[serde(tag = "t", content = "v")]
@@ -27,7 +14,7 @@ pub(crate) enum UseRepositoryInput {
     GetSyncMessageById(String),
     UpsertPluginData(PluginDataRow),
     UpsertSyncMessage(SyncMessageRow),
-    GetDaysOutOfStock(GetDaysOutOfStockFilter),
+    GetDaysOutOfStock(DaysOutOfStockFilter),
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
@@ -72,23 +59,11 @@ pub(crate) fn bind_method(context: &mut Context) -> Result<(), JsError> {
                             .upsert_one(&plugin_data_row)
                             .map_err(std_error_to_js_error)?,
                     ),
-                    In::GetDaysOutOfStock(filter) => {
-                        let repo_filter = ConsumptionFilter {
-                            item_id: filter.item_id,
-                            store_id: filter.store_id,
-                            date: Some(DateFilter {
-                                equal_to: None,
-                                before_or_equal_to: filter.to,
-                                after_or_equal_to: filter.from,
-                            }),
-                        };
-
-                        Out::GetDaysOutOfStock(
-                            DaysOutOfStockRepository::new(&connection)
-                                .query(Some(repo_filter))
-                                .map_err(std_error_to_js_error)?,
-                        )
-                    }
+                    In::GetDaysOutOfStock(filter) => Out::GetDaysOutOfStock(
+                        DaysOutOfStockRepository::new(&connection)
+                            .query(filter)
+                            .map_err(std_error_to_js_error)?,
+                    ),
                 }
             };
 

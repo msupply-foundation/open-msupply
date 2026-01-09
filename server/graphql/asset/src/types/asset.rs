@@ -89,7 +89,7 @@ impl From<AssetFilterInput> for AssetFilter {
             store_id: f.store_id.map(StringFilter::from),
             functional_status: f
                 .functional_status
-                .map(|t| map_filter!(t, |s| AssetLogStatus::from(s))),
+                .map(|t| map_filter!(t, AssetLogStatus::from)),
         }
     }
 }
@@ -400,7 +400,7 @@ pub(crate) fn map_parse_error(
     error: ServiceScannedDataParseError,
 ) -> Result<ScannedDataParseErrorInterface> {
     use StandardGraphqlError::*;
-    let formatted_error = format!("{:#?}", error);
+    let formatted_error = format!("{error:#?}");
 
     let graphql_error = match error {
         // Structured Errors

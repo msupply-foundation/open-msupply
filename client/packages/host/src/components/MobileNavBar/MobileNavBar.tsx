@@ -31,7 +31,7 @@ import {
   AppRoute,
   ExternalURL,
   useExternalUrl,
-} from 'packages/config/src/routes';
+} from '@openmsupply-client/config';
 import { SyncNavLink } from '../AppDrawer/SyncNavLink';
 import { ColdChainNav } from '../Navigation/ColdChainNav';
 const commonListContainerStyles = {

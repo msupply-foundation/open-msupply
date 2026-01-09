@@ -214,10 +214,11 @@ fn apply_data_table_headers(
         // Store the mapping from HTML index to column index - used for data rows
         index_to_column_map.insert(html_index, column_index);
 
-        let cell = sheet.get_cell_mut((column_index, row_idx));
-
-        cell.set_value(header);
-        cell.get_style_mut().get_font_mut().set_bold(true);
+        if !body.ignore_table_header() {
+            let cell = sheet.get_cell_mut((column_index, row_idx));
+            cell.set_value(header);
+            cell.get_style_mut().get_font_mut().set_bold(true);
+        }
     }
 
     index_to_column_map
@@ -234,7 +235,9 @@ fn apply_data_rows(
     let body_rows = body.rows_and_cells();
     let rows_len = body_rows.len() as u32;
 
-    // Insert new rows below (leave any footer from the excel template in place)
+    // Insert new rows below the first row. We'll copy the styles and formulae from the first row down.
+    // Formulae cell references will be adjusted by umya i.e "=A2*3" will be adjusted to "=A3*3"
+    // Any footer in the excel will be pushed down appropriately.
     sheet.insert_new_row(&(row_idx + 1), &rows_len);
 
     for row in body_rows.into_iter() {
@@ -299,7 +302,7 @@ impl Selectors {
         Self { html }
     }
 
-    fn excel_cells(&self) -> Vec<(&str, ElementRef)> {
+    fn excel_cells<'a>(&'a self) -> Vec<(&'a str, ElementRef<'a>)> {
         let cell_selector = Selector::parse("[excel-cell]").unwrap();
         self.html
             .select(&cell_selector)
@@ -319,6 +322,13 @@ impl Selectors {
         })?
     }
 
+    /// Put excel-ignore-table-header on any element to not copy the HTML headers into the
+    /// spreadsheet. Useful if the excel template has custom/styled headers
+    fn ignore_table_header(&self) -> bool {
+        let cell_selector = Selector::parse("[excel-ignore-table-header]").unwrap();
+        self.html.select(&cell_selector).next().is_some()
+    }
+
     fn data_headers(&self) -> Vec<(Option<&str>, &str)> {
         let headers_selector = Selector::parse("thead tr td,thead tr th").unwrap();
         self.html
@@ -332,7 +342,7 @@ impl Selectors {
             .collect()
     }
 
-    fn rows_and_cells(&self) -> Vec<Vec<ElementRef>> {
+    fn rows_and_cells<'a>(&'a self) -> Vec<Vec<ElementRef<'a>>> {
         let rows_selector = Selector::parse("tbody tr:not([excel-type=\"total-row\"])").unwrap();
         let cells_selector = Selector::parse("td").unwrap();
         self.html
@@ -351,7 +361,7 @@ impl Selectors {
     }
 }
 
-fn inner_text(element_ref: ElementRef) -> &str {
+fn inner_text<'a>(element_ref: ElementRef<'a>) -> &'a str {
     element_ref
         .text()
         .find(|t| !t.trim().is_empty())
@@ -382,6 +392,23 @@ fn apply_known_styles(cell: &mut Cell, el: ElementRef) {
         let color = color.trim_start_matches('#');
         style.set_background_color(color);
     }
+
+    if let Some(border) = el.attr("excel-border") {
+        let border_mut = style.get_borders_mut();
+        let border_style = match border {
+            "thin" => umya_spreadsheet::Border::BORDER_THIN,
+            "medium" => umya_spreadsheet::Border::BORDER_MEDIUM,
+            "thick" => umya_spreadsheet::Border::BORDER_THICK,
+            "dashed" => umya_spreadsheet::Border::BORDER_DASHED,
+            "dotted" => umya_spreadsheet::Border::BORDER_DOTTED,
+            _ => umya_spreadsheet::Border::BORDER_NONE,
+        };
+
+        border_mut.get_left_mut().set_border_style(border_style);
+        border_mut.get_right_mut().set_border_style(border_style);
+        border_mut.get_top_mut().set_border_style(border_style);
+        border_mut.get_bottom_mut().set_border_style(border_style);
+    }
 }
 
 #[cfg(test)]
@@ -390,6 +417,13 @@ mod report_to_excel_test {
 
     use super::*;
     use scraper::Html;
+
+    fn get_value(sheet: &Worksheet, coordinate: &str) -> String {
+        sheet
+            .get_cell(coordinate)
+            .map(|c| c.get_raw_value().to_string())
+            .unwrap_or_default()
+    }
 
     #[test]
     fn test_generate_excel_no_attributes() {
@@ -438,12 +472,7 @@ mod report_to_excel_test {
 
         apply_report(sheet, report);
 
-        let get_value = |coord: &str| {
-            sheet
-                .get_cell(coord)
-                .map(|c| c.get_raw_value().to_string())
-                .unwrap_or_default()
-        };
+        let get_value = |coord: &str| get_value(sheet, coord);
 
         // Header is ignored, data table headers are in the first row
         assert_eq!(get_value("A1"), "Item");
@@ -506,12 +535,7 @@ mod report_to_excel_test {
 
         apply_report(sheet, report);
 
-        let get_value = |coord: &str| {
-            sheet
-                .get_cell(coord)
-                .map(|c| c.get_raw_value().to_string())
-                .unwrap_or_default()
-        };
+        let get_value = |coord: &str| get_value(sheet, coord);
 
         // Custom header cells are populated
         assert_eq!(get_value("A2"), "Title Here");
@@ -829,12 +853,7 @@ mod report_to_excel_test {
         let generated_book = umya_spreadsheet::reader::xlsx::read(&generated_file.path).unwrap();
         let sheet = generated_book.get_sheet(&0).unwrap();
 
-        let get_value = |coord: &str| {
-            sheet
-                .get_cell(coord)
-                .map(|c| c.get_raw_value().to_string())
-                .unwrap_or_default()
-        };
+        let get_value = |coord: &str| get_value(sheet, coord);
 
         let is_bold = |coord: &str| {
             sheet
@@ -881,5 +900,108 @@ mod report_to_excel_test {
 
         // Clean up temp file
         std::fs::remove_file(temp_path).ok();
+    }
+
+    #[test]
+    fn generate_excel_with_ignore_table_header() {
+        let report: GeneratedReport = GeneratedReport {
+            document: r#"
+          <table excel-ignore-table-header>
+            <thead>
+              <tr>
+                <th>Item</th>
+                <th>Unit</th>
+                <th>Price</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Acetylsalicylic Acid 100mg tabs</td>
+                <td>tab</td>
+                <td>10.5</td>
+              </tr>
+              <tr>
+                <td>Ibuprofen 200mg tabs</td>
+                <td>tab</td>
+                <td>5.25</td>
+              </tr>
+            </tbody>
+          </table>
+        "#
+            .to_string(),
+            header: None,
+            footer: None,
+        };
+
+        let mut book = umya_spreadsheet::new_file();
+        book.set_sheet_name(0, "test").unwrap();
+        let sheet = book.get_sheet_by_name_mut("test").unwrap();
+
+        apply_report(sheet, report);
+
+        let get_value = |coord: &str| get_value(sheet, coord);
+
+        // With excel-ignore-table-header present, table headers should be ignored
+        assert_eq!(get_value("A1"), "");
+        assert_eq!(get_value("B1"), "");
+        assert_eq!(get_value("C1"), "");
+
+        // Data rows start from the first row instead of second
+        assert_eq!(get_value("A2"), "Acetylsalicylic Acid 100mg tabs");
+        assert_eq!(get_value("B2"), "tab");
+        assert_eq!(get_value("C2"), "10.5");
+
+        assert_eq!(get_value("A3"), "Ibuprofen 200mg tabs");
+        assert_eq!(get_value("B3"), "tab");
+        assert_eq!(get_value("C3"), "5.25");
+    }
+
+    #[test]
+    fn test_apply_known_styles_only_on_marked_cells() {
+        let html = r#"<table><tbody>
+            <tr>
+                <td excel-border="thin">A</td>
+                <td>B</td>
+                <td excel-border="medium">C</td>
+            </tr>
+        </tbody></table>"#;
+        let fragment = Html::parse_fragment(html);
+        let td_sel = Selector::parse("td").unwrap();
+        let mut tds = fragment.select(&td_sel);
+
+        let mut book = umya_spreadsheet::new_file();
+        book.set_sheet_name(0, "test").unwrap();
+        let sheet = book.get_sheet_by_name_mut("test").unwrap();
+
+        let coords = vec![(1_u32, 1_u32), (2_u32, 1_u32), (3_u32, 1_u32)];
+        for (coord, td) in coords.iter().zip(tds.by_ref()) {
+            let cell = sheet.get_cell_mut(*coord);
+            cell.set_value(inner_text(td));
+            apply_known_styles(cell, td);
+        }
+
+        // First cell has thin border
+        let c1 = sheet.get_cell((1_u32, 1_u32)).unwrap();
+        let c1_border = c1.get_style().get_borders().unwrap();
+        assert_eq!(
+            c1_border.get_left().get_border_style(),
+            umya_spreadsheet::Border::BORDER_THIN
+        );
+
+        // Second cell has no border (default none)
+        let c2 = sheet.get_cell((2_u32, 1_u32)).unwrap();
+        let c2_border = c2.get_style().get_borders().cloned().unwrap_or_default();
+        assert_eq!(
+            c2_border.get_left().get_border_style(),
+            umya_spreadsheet::Border::BORDER_NONE
+        );
+
+        // Third cell has medium border
+        let c3 = sheet.get_cell((3_u32, 1_u32)).unwrap();
+        let c3_border = c3.get_style().get_borders().unwrap();
+        assert_eq!(
+            c3_border.get_left().get_border_style(),
+            umya_spreadsheet::Border::BORDER_MEDIUM
+        );
     }
 }

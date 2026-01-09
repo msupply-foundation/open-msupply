@@ -1,16 +1,16 @@
+import React, { useMemo } from 'react';
 import {
-  CellProps,
-  DataTable,
+  ColumnDef,
+  MaterialTable,
   ReasonOptionNodeType,
+  useSimpleMaterialTable,
+  useTranslation,
   TextInputCell,
-  useColumns,
 } from '@openmsupply-client/common';
 import {
   ReasonOptionRowFragment,
   ReasonOptionsSearchInput,
-  INPUT_WIDTH,
 } from '@openmsupply-client/system';
-import React from 'react';
 
 interface ReturnWithReason {
   id: string;
@@ -22,24 +22,6 @@ interface ReturnWithReason {
   reasonOption?: ReasonOptionRowFragment | null;
 }
 
-const ReturnReasonCell = ({
-  rowData,
-  rowIndex,
-  column,
-  isDisabled,
-}: CellProps<ReturnWithReason>): JSX.Element => {
-  return (
-    <ReasonOptionsSearchInput
-      type={ReasonOptionNodeType.ReturnReason}
-      onChange={reason => column.setter({ ...rowData, reasonOption: reason })}
-      disabled={isDisabled}
-      autoFocus={rowIndex === 0}
-      width={INPUT_WIDTH}
-      value={rowData.reasonOption}
-    />
-  );
-};
-
 export const ReturnReasonsComponent = ({
   lines,
   updateLine,
@@ -49,38 +31,70 @@ export const ReturnReasonsComponent = ({
   updateLine: (line: Partial<ReturnWithReason> & { id: string }) => void;
   isDisabled: boolean;
 }) => {
-  const columns = useColumns<ReturnWithReason>(
-    [
-      'itemCode',
-      'itemName',
-      'batch',
-      'expiryDate',
-      // 'itemUnit', // not implemented for now
-      [
-        'returnReason',
-        {
-          Cell: ReturnReasonCell,
-          setter: updateLine,
-          getIsDisabled: () => isDisabled,
-        },
-      ],
+  const t = useTranslation();
+
+  const columns = useMemo(
+    (): ColumnDef<ReturnWithReason>[] => [
       {
-        key: 'note',
-        label: 'label.comment',
-        Cell: TextInputCell,
-        width: 200,
-        setter: updateLine,
-        accessor: ({ rowData }) => rowData.note ?? '',
-        getIsDisabled: () => isDisabled,
+        accessorKey: 'itemCode',
+        header: t('label.code'),
+        size: 100,
       },
+      {
+        accessorKey: 'itemName',
+        header: t('label.name'),
+        size: 200,
+      },
+      {
+        accessorKey: 'batch',
+        header: t('label.batch'),
+        size: 100,
+      },
+      {
+        accessorKey: 'expiryDate',
+        header: t('label.expiry'),
+        size: 100,
+      },
+      // 'itemUnit', // not implemented for now
+      {
+        accessorKey: 'returnReason',
+        header: t('label.reason'),
+        Cell: ({ row: { original: row } }) => (
+          <ReasonOptionsSearchInput
+            type={ReasonOptionNodeType.ReturnReason}
+            onChange={reason => updateLine({ ...row, reasonOption: reason })}
+            disabled={isDisabled}
+            value={row.reasonOption}
+          />
+        ),
+        size: 200,
+        pin: 'right',
+      },
+      {
+        accessorKey: 'note',
+        header: t('label.comment'),
+        Cell: ({ cell, row: { original: row } }) => (
+          <TextInputCell
+            cell={cell}
+            disabled={isDisabled}
+            updateFn={value => updateLine({ ...row, note: value })}
+          />
+        ),
+        size: 200,
+        pin: 'right',
+      }
     ],
-    {},
-    [updateLine, lines]
+    []
   );
 
-  return (
-    <DataTable id="return-line-reason" columns={columns} data={lines} dense />
-  );
+  const table = useSimpleMaterialTable<ReturnWithReason>({
+    tableId: 'return-line-reason',
+    columns,
+    data: lines,
+    enableRowSelection: false,
+  });
+
+  return <MaterialTable table={table} />;
 };
 
 export const ReturnReasonsTable = React.memo(ReturnReasonsComponent);

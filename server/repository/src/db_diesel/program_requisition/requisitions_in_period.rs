@@ -29,7 +29,7 @@ pub struct RequisitionsInPeriodFilter {
     pub other_party_id: Option<EqualFilter<String>>,
 }
 
-#[derive(Clone, Queryable, AsChangeset, Insertable, Debug, PartialEq)]
+#[derive(Clone, Queryable, AsChangeset, Insertable, Debug, PartialEq, Default)]
 #[diesel(table_name = requisitions_in_period)]
 pub struct RequisitionsInPeriod {
     id: String,
@@ -41,22 +41,6 @@ pub struct RequisitionsInPeriod {
     pub other_party_id: String,
     #[diesel(column_name = type_)]
     pub r#type: RequisitionType,
-}
-
-impl Default for RequisitionsInPeriod {
-    fn default() -> Self {
-        Self {
-            r#type: RequisitionType::Request,
-            // Default
-            id: Default::default(),
-            program_id: Default::default(),
-            period_id: Default::default(),
-            store_id: Default::default(),
-            order_type: Default::default(),
-            count: Default::default(),
-            other_party_id: Default::default(),
-        }
-    }
 }
 
 pub struct RequisitionsInPeriodRepository<'a> {
