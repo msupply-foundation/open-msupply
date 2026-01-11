@@ -114,8 +114,8 @@ pub enum MigrationError {
         version: Version,
         identifier: &'static str,
     },
-    #[error("Error initializing base database schema: {0}")]
-    InitializeDatabaseError(anyhow::Error),
+    #[error("Error initializing base database schema")]
+    InitializeDatabaseError(#[source] RepositoryError),
     #[error(transparent)]
     DatabaseError(#[from] RepositoryError),
 }
@@ -177,19 +177,17 @@ pub fn migrate(
     ];
 
     // Check if the database has been initialised, if not run the base sql to kick start the process
-    if is_empty_db(connection).map_err(|e| MigrationError::InitializeDatabaseError(e.into()))? {
+    if is_empty_db(connection).map_err(MigrationError::InitializeDatabaseError)? {
         log::info!("Empty database detected, creating base schema...");
 
         if to_version.is_some() {
             log::info!("Target version specified, initializing earliest base schema");
             // We always use the earliest base schema when migrating to a specific version
             // This is the easiest way to makes sure migration tests can still run.
-            initialize_earliest_db(connection)
-                .map_err(|e| MigrationError::InitializeDatabaseError(e.into()))?;
+            initialize_earliest_db(connection).map_err(MigrationError::InitializeDatabaseError)?;
         } else {
             log::info!("No target version specified, initializing latest base schema");
-            initialize_latest_db(connection)
-                .map_err(|e| MigrationError::InitializeDatabaseError(e.into()))?;
+            initialize_latest_db(connection).map_err(MigrationError::InitializeDatabaseError)?;
         }
         log::info!("Base schema...installed");
     }
