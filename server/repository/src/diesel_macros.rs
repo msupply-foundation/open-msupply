@@ -530,6 +530,11 @@ macro_rules! define_linked_tables {
                 $link_id:ident -> $resolved_id:ident
             ),* $(,)?
         }
+        optional_links: {
+            $(
+                $opt_link_id:ident -> $opt_resolved_id:ident
+            ),* $(,)?
+        }
     ) => {
         // Core table with link IDs
         table! {
@@ -541,6 +546,7 @@ macro_rules! define_linked_tables {
                     $field -> $field_type,
                 )*
                 $($link_id -> Text,)*
+                $($opt_link_id -> Nullable<Text>,)*
             }
         }
 
@@ -554,6 +560,7 @@ macro_rules! define_linked_tables {
                     $field -> $field_type,
                 )*
                 $($resolved_id -> Text,)*
+                $($opt_resolved_id -> Nullable<Text>,)*
             }
         }
 
@@ -565,12 +572,14 @@ macro_rules! define_linked_tables {
                         $core_table::id.eq(&record.id),
                         $(define_linked_tables!(@field_access $core_table, $field, record),)*
                         $($core_table::$link_id.eq(&record.$resolved_id),)*
+                        $($core_table::$opt_link_id.eq(&record.$opt_resolved_id),)*
                     ))
                     .on_conflict($core_table::id)
                     .do_update()
                     .set((
                         $(define_linked_tables!(@field_access $core_table, $field, record),)*
                         $($core_table::$link_id.eq(&record.$resolved_id),)*
+                        $($core_table::$opt_link_id.eq(&record.$opt_resolved_id),)*
                     ))
                     .execute(self.connection.lock().connection())?;
 
