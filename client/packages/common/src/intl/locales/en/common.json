@@ -2135,7 +2135,7 @@
   "messages.reduced-to-zero_one": "Reduced 1 line to quantity of 0",
   "messages.reduced-to-zero_other": "Reduced {{ count }} lines to quantity of 0",
   "messages.regenerate-id-confirm": "This will create a new ID and cannot be undone.",
-  "messages.repack-log-info": "Repacked from stock line",
+  "messages.repack-log-info": "Repacked from batch",
   "messages.report-upload-helper": "Select a file which contains the reports to add. The file must be a generated json file of the reports, and must have a .json extension.",
   "messages.reports-uploaded-successfully": "Added reports successfully",
   "messages.requested-exceeds-suggested": "The quantity requested exceeds the suggested quantity",
