@@ -75,8 +75,8 @@ export const ConfirmationModal = ({
           flex={1}
           display="flex"
         >
-          {otherButtons && otherButtons.map((button) => (
-            <Grid>{button}</Grid>
+          {otherButtons && otherButtons.map((button, idx) => (
+            <Grid key={idx}>{button}</Grid>
           ))}
           <Grid>
             <DialogButton
