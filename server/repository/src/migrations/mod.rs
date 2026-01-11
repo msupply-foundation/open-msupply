@@ -66,8 +66,8 @@ pub use self::version::*;
 
 use crate::{
     migrations::base_migration::{initialize_earliest_db, initialize_latest_db, is_empty_db},
-    run_db_migrations, KeyType, KeyValueStoreRepository, MigrationFragmentLogRepository,
-    RepositoryError, StorageConnection,
+    KeyType, KeyValueStoreRepository, MigrationFragmentLogRepository, RepositoryError,
+    StorageConnection,
 };
 use chrono::{NaiveDateTime, Utc};
 use diesel::connection::SimpleConnection;
