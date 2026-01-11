@@ -1,8 +1,7 @@
 use crate::diesel::connection::SimpleConnection;
 use crate::diesel::RunQueryDsl;
 use crate::diesel_helper_types::Count;
-use crate::StorageConnection;
-use diesel::result::Error;
+use crate::{RepositoryError, StorageConnection};
 
 // This file defines the base database migrations that gets run when creating new database from scratch
 // This means new installs shouldn't need to run as many migrations, as long as this is kept up todate.
@@ -39,17 +38,17 @@ const EMPTY_DB_QUERY: &str = "
     WHERE table_schema = 'public';
 ";
 
-pub fn is_empty_db(conn: &StorageConnection) -> Result<bool, Error> {
+pub fn is_empty_db(conn: &StorageConnection) -> Result<bool, RepositoryError> {
     let result: Count = diesel::sql_query(EMPTY_DB_QUERY).get_result(conn.lock().connection())?;
     Ok(result.count == 0)
 }
 
-pub fn initialize_latest_db(conn: &StorageConnection) -> Result<(), Error> {
+pub fn initialize_latest_db(conn: &StorageConnection) -> Result<(), RepositoryError> {
     conn.lock().connection().batch_execute(BASE_SCHEMA_LATEST)?;
     Ok(())
 }
 
-pub fn initialize_earliest_db(conn: &StorageConnection) -> Result<(), Error> {
+pub fn initialize_earliest_db(conn: &StorageConnection) -> Result<(), RepositoryError> {
     conn.lock()
         .connection()
         .batch_execute(BASE_SCHEMA_EARLIEST)?;
