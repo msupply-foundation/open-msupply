@@ -196,9 +196,6 @@ pub fn migrate(
 
     let to_version = to_version.unwrap_or(Version::from_package_json());
 
-    // Historic diesel migrations
-    run_db_migrations(connection).unwrap();
-
     // Rust migrations
     let starting_database_version = get_database_version(connection);
 
