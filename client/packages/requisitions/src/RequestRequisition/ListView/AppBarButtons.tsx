@@ -101,6 +101,7 @@ export const AppBarButtons: FC<{
         onConfirm={() => { setConfirmationState(false); modalController.toggleOn(); }}
         onCancel={() => { setConfirmationState(false); }}
         otherButtons={[<DialogButton
+          key='go-to-stocktakes'
           variant='back'
           customLabel={t('button.go-to-stocktakes')}
           onClick={() => navigate(
