@@ -98,7 +98,7 @@ impl<'a> SyncLogV7Repository<'a> {
         filter: Condition::Inner,
     ) -> Result<Option<SyncLogV7Row>, RepositoryError> {
         let results = sync_log_v7::table
-            .filter(filter.to_boxed_condition())
+            .filter(filter.to_boxed())
             .order(sync_log_v7::started_datetime.desc())
             .first::<SyncLogV7Row>(self.connection.lock().connection())
             .optional()?;

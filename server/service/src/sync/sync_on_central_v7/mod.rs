@@ -37,6 +37,7 @@ pub async fn pull(
     let (batch, _) = SyncBatchV7::generate(
         &ctx.connection,
         filter,
+        request.input.previous_total,
         request.input.cursor,
         request.input.batch_size as i64,
     )?;

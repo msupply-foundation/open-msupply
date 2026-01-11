@@ -3,10 +3,9 @@ use std::time::{Duration, SystemTime};
 use repository::{
     changelog,
     dynamic_query::FilterBuilder,
-    get_total_and_changelogs, sync_buffer_v7,
+    get_changelogs_fast, get_total_changelogs_fast, sync_buffer_v7,
     syncv7::{SiteLockError, SyncError},
-    CursorAndLimit, KeyType, KeyValueStoreRepository, Site, StorageConnection,
-    SyncBufferV7Repository, SyncBufferV7Row,
+    CursorAndLimit, KeyType, Site, StorageConnection, SyncBufferV7Repository, SyncBufferV7Row,
 };
 use reqwest::Response;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
@@ -36,11 +35,17 @@ impl SyncBatchV7 {
     pub fn generate(
         connection: &StorageConnection,
         filter: changelog::Condition::Inner,
+        previous_total: Option<i64>,
         cursor: i64,
         limit: i64,
     ) -> Result<(Self, /* total */ i64), SyncError> {
-        let (total, changelogs) =
-            get_total_and_changelogs(connection, filter.clone(), CursorAndLimit { cursor, limit })?;
+        let total = if let Some(total) = previous_total {
+            total
+        } else {
+            get_total_changelogs_fast(connection, filter.clone(), cursor)?
+        };
+
+        let changelogs = get_changelogs_fast(connection, filter, CursorAndLimit { cursor, limit })?;
 
         let records = changelogs
             .into_iter()
@@ -103,6 +108,7 @@ pub mod ApiV7 {
             pub cursor: i64,
             pub batch_size: u32,
             pub is_initialising: bool,
+            pub previous_total: Option<i64>,
             pub filter: Option<changelog::Condition::Inner>,
         }
         pub type Request = super::Request<Input>;
@@ -175,7 +181,7 @@ async fn sync_inner<'a>(
             username: settings.username,
             password: settings.password_sha256,
         },
-        batch_size: 1000,
+        batch_size: 5000,
     };
 
     logger.start_step(SyncStep::Push)?;
@@ -293,12 +299,26 @@ impl<'a> SyncV7<'a> {
     pub(crate) async fn push<'b>(&self, logger: &mut SyncLogger<'b>) -> Result<(), SyncError> {
         let filter = Site::current_site(self.connection)?.remote_data_for_site();
         let cursor_controller = CursorController::new(KeyType::SyncPushCursorV7);
+        let mut previous_total: Option<i64> = None;
 
         loop {
             let cursor = cursor_controller.get(self.connection)? as i64;
 
-            let (batch, total) =
-                SyncBatchV7::generate(self.connection, filter.clone(), cursor, self.batch_size)?;
+            let (batch, total) = SyncBatchV7::generate(
+                self.connection,
+                filter.clone(),
+                previous_total.clone(),
+                cursor,
+                self.batch_size,
+            )?;
+            let remaining = batch.remaining;
+
+            // TODO this is optimisation, how does it effect sync log and display?
+            if batch.records.len() < self.batch_size as usize {
+                previous_total = None;
+            } else {
+                previous_total = Some(remaining);
+            }
 
             let last_cursor = batch.records.last().map(|r| r.cursor);
             logger.progress(total)?;
@@ -306,8 +326,6 @@ impl<'a> SyncV7<'a> {
             if total == 0 {
                 break; // Nothing more to do, break out of the loop
             };
-
-            let remaining = batch.remaining;
 
             self.sync_api_v7.push(batch).await?;
 
@@ -359,6 +377,7 @@ impl<'a> SyncV7<'a> {
         is_initialising: bool,
     ) -> Result<(), SyncError> {
         let cursor_controller = CursorController::new(KeyType::SyncPullCursorV7);
+        let mut previous_total: Option<i64> = None;
         // TODO protection from infinite loop
         loop {
             let cursor = cursor_controller.get(self.connection)? as i64;
@@ -373,9 +392,16 @@ impl<'a> SyncV7<'a> {
                     cursor,
                     batch_size: self.batch_size as u32,
                     is_initialising,
+                    previous_total: previous_total.clone(),
                     filter: None,
                 })
                 .await?;
+
+            if records.len() < self.batch_size as usize {
+                previous_total = None;
+            } else {
+                previous_total = Some(remaining);
+            }
 
             // We need to call total for the first (remaining + current number or records)
             logger.progress(remaining + records.len() as i64)?;

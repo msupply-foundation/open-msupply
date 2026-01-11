@@ -4,8 +4,11 @@ use super::{
     StorageConnection,
 };
 use crate::{
-    repository_error::RepositoryError, ChangeLogInsertRow, ChangelogRepository, ChangelogTableName,
-    Delete, RowActionType, Upsert,
+    changelog, impl_record,
+    repository_error::RepositoryError,
+    syncv7::{add_sync_visitor, SyncRecord, SyncType, TranslatorTrait},
+    ChangeLogInsertRow, ChangeLogInsertRowV7, ChangelogRepository, ChangelogTableName, Delete,
+    RowActionType, Upsert,
 };
 use chrono::{NaiveDate, NaiveDateTime};
 use diesel::{dsl::max, prelude::*};
@@ -102,7 +105,9 @@ pub enum InvoiceStatus {
     Cancelled,
 }
 
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
+#[derive(
+    Clone, Queryable, Insertable, Serialize, Deserialize, AsChangeset, Debug, PartialEq, Default,
+)]
 #[diesel(treat_none_as_null = true)]
 #[diesel(table_name = invoice)]
 pub struct InvoiceRow {
@@ -145,6 +150,44 @@ pub struct InvoiceRow {
     pub expected_delivery_date: Option<NaiveDate>,
     pub default_donor_link_id: Option<String>,
     pub goods_received_id: Option<String>,
+}
+
+impl_record! {
+    struct: InvoiceRow,
+    table: invoice,
+    id_field: id
+}
+
+impl SyncRecord for InvoiceRow {
+    fn table_name() -> &'static ChangelogTableName {
+        &ChangelogTableName::Invoice
+    }
+
+    fn sync_type() -> &'static SyncType {
+        &SyncType::Remote
+    }
+
+    fn changelog_extra(
+        &self,
+        _connection: &StorageConnection,
+    ) -> Result<Option<ChangeLogInsertRowV7>, RepositoryError> {
+        Ok(Some(changelog::ChangeLogInsertRowV7 {
+            store_id: Some(self.store_id.clone()),
+            name_link_id: Some(self.name_link_id.clone()),
+            ..Default::default()
+        }))
+    }
+}
+
+struct Translator;
+
+impl TranslatorTrait for Translator {
+    type Item = InvoiceRow;
+}
+
+#[ctor::ctor]
+fn register_my_struct() {
+    add_sync_visitor(Box::new(Translator));
 }
 
 pub struct InvoiceRowRepository<'a> {

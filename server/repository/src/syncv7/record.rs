@@ -24,11 +24,11 @@ macro_rules! impl_record {
         impl $crate::syncv7::Record for $struct_name {
             fn find_by_id(
                 connection: &$crate::StorageConnection,
-                id: &str,
+                record_id: &str,
             ) -> Result<Option<Self>, $crate::RepositoryError> {
                 use diesel::prelude::*;
                 let result = $table_mod::table
-                    .filter($table_mod::$id_field.eq(id))
+                    .filter($table_mod::$id_field.eq(record_id))
                     .first::<$struct_name>(connection.lock().connection())
                     .optional()?;
 

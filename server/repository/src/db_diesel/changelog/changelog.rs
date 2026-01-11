@@ -6,13 +6,14 @@ use crate::{
     name_store_join::name_store_join,
     syncv7::{SyncType, SYNC_VISITORS},
     vaccination_row::vaccination,
-    DBType, EqualFilter, KeyType, KeyValueStoreRepository, LockedConnection, NameLinkRow,
-    RepositoryError, StorageConnection, SyncBufferV7Row,
+    DBConnection, DBType, EqualFilter, KeyType, KeyValueStoreRepository, LockedConnection,
+    NameLinkRow, RepositoryError, StorageConnection, SyncBufferV7Row,
 };
 use diesel::{
-    dsl::{InnerJoin, InnerJoinQuerySource, LeftJoinQuerySource},
+    dsl::{InnerJoin, LeftJoinQuerySource},
     helper_types::{IntoBoxed, LeftJoin},
     prelude::*,
+    query_builder::{AstPass, Query, QueryFragment},
 };
 use serde::{Deserialize, Serialize};
 use std::convert::TryInto;
@@ -846,24 +847,24 @@ use crate::dynamic_query::*;
 
 diesel::alias!(store as transfer_stores: TransferStores,store as name_join_stores: NameJoinStores);
 
-allow_tables_to_appear_in_same_query!(changelog_deduped, store);
-allow_tables_to_appear_in_same_query!(changelog_deduped, name_store_join);
+allow_tables_to_appear_in_same_query!(changelog, store);
+allow_tables_to_appear_in_same_query!(changelog, name_store_join);
 
 // Expand macro, copy, remove ON statements and change joins to LeftJoinQuerySource
 #[diesel::dsl::auto_type]
 fn query() -> _ {
-    changelog_deduped::table
-        .left_join(store::table.on(store::id.nullable().eq(changelog_deduped::store_id)))
+    changelog::table
+        .left_join(store::table.on(store::id.nullable().eq(changelog::store_id)))
         .left_join(
             transfer_stores.on(transfer_stores
                 .field(store::name_link_id)
                 .nullable()
-                .eq(changelog_deduped::name_link_id)),
+                .eq(changelog::name_link_id)),
         )
         .left_join(
             name_store_join::table.on(name_store_join::name_link_id
                 .nullable()
-                .eq(changelog_deduped::name_link_id)),
+                .eq(changelog::name_link_id)),
         )
         .left_join(
             name_join_stores.on(name_join_stores
@@ -876,20 +877,20 @@ type Source = LeftJoinQuerySource<
     LeftJoinQuerySource<
         LeftJoinQuerySource<
             LeftJoinQuerySource<
-                changelog_deduped::table,
+                changelog::table,
                 store::table,
-                diesel::dsl::Eq<diesel::dsl::Nullable<store::id>, changelog_deduped::store_id>,
+                diesel::dsl::Eq<diesel::dsl::Nullable<store::id>, changelog::store_id>,
             >,
             transfer_stores,
             diesel::dsl::Eq<
                 diesel::dsl::Nullable<diesel::dsl::Field<transfer_stores, store::name_link_id>>,
-                changelog_deduped::name_link_id,
+                changelog::name_link_id,
             >,
         >,
         name_store_join::table,
         diesel::dsl::Eq<
             diesel::dsl::Nullable<name_store_join::name_link_id>,
-            changelog_deduped::name_link_id,
+            changelog::name_link_id,
         >,
     >,
     name_join_stores,
@@ -899,16 +900,12 @@ type Source = LeftJoinQuerySource<
 create_condition!(
     Source,
     (site_id, i32, store::site_id),
-    (cursor, number, changelog_deduped::cursor),
-    (action, RowActionType, changelog_deduped::row_action),
-    (source_site_id, i32, changelog_deduped::source_site_id),
-    (
-        table_name,
-        ChangelogTableName,
-        changelog_deduped::table_name
-    ),
-    (store_id, string, changelog_deduped::store_id),
-    (name_link_id, string, changelog_deduped::name_link_id),
+    (cursor, number, changelog::cursor),
+    (action, RowActionType, changelog::row_action),
+    (source_site_id, i32, changelog::source_site_id),
+    (table_name, ChangelogTableName, changelog::table_name),
+    (store_id, string, changelog::store_id),
+    (name_link_id, string, changelog::name_link_id),
     (transfer_site_id, i32, transfer_stores.field(store::site_id)),
     (transfer_store_id, string, transfer_stores.field(store::id)),
     (
@@ -928,35 +925,35 @@ pub struct CursorAndLimit {
     pub limit: i64,
 }
 
-pub fn get_total_and_changelogs(
-    connection: &StorageConnection,
-    filter: Condition::Inner,
+// pub fn get_total_and_changelogs(
+//     connection: &StorageConnection,
+//     filter: Condition::Inner,
 
-    CursorAndLimit { cursor, limit }: CursorAndLimit,
-) -> Result<(i64, Vec<ChangelogRow>), RepositoryError> {
-    let filter = Condition::And(vec![filter, Condition::cursor::greater_then(cursor)]);
-    let select_query = query().filter(filter.clone().to_boxed());
+//     CursorAndLimit { cursor, limit }: CursorAndLimit,
+// ) -> Result<(i64, Vec<ChangelogRow>), RepositoryError> {
+//     let filter = Condition::And(vec![filter, Condition::cursor::greater_then(cursor)]);
+//     let select_query = query().filter(filter.clone().to_boxed());
 
-    let select_query = select_query
-        .select(changelog_deduped::all_columns)
-        .limit(limit);
+//     let select_query = select_query
+//         .select(changelog_deduped::all_columns)
+//         .limit(limit);
 
-    // Debug diesel query
-    println!(
-        "{}",
-        diesel::debug_query::<DBType, _>(&select_query).to_string()
-    );
+//     // Debug diesel query
+//     println!(
+//         "{}",
+//         diesel::debug_query::<DBType, _>(&select_query).to_string()
+//     );
 
-    let changelogs: Vec<ChangelogRow> =
-        select_query.load::<ChangelogRow>(connection.lock().connection())?;
+//     let changelogs: Vec<ChangelogRow> =
+//         select_query.load::<ChangelogRow>(connection.lock().connection())?;
 
-    let total_query = query().filter(filter.to_boxed());
-    let total: i64 = total_query
-        .count()
-        .get_result(connection.lock().connection())?;
+//     let total_query = query().filter(filter.to_boxed());
+//     let total: i64 = total_query
+//         .count()
+//         .get_result(connection.lock().connection())?;
 
-    Ok((total, changelogs))
-}
+//     Ok((total, changelogs))
+// }
 
 pub enum Site {
     SiteId(i32),
@@ -1106,4 +1103,149 @@ impl ChangelogRow {
             ..Default::default()
         }
     }
+}
+
+table! {
+    changelog_deduped_fast (cursor) {
+        cursor -> BigInt,
+        table_name ->  Text,
+        record_id -> Text,
+        row_action -> crate::db_diesel::changelog::RowActionTypeMapping,
+        name_link_id -> Nullable<Text>,
+        store_id -> Nullable<Text>,
+        is_sync_update -> Bool,
+        source_site_id -> Nullable<Integer>,
+    }
+}
+
+pub struct Logs<FH, SQ> {
+    pub filter: FH,
+    pub select_query: SQ,
+}
+
+impl<FH: 'static, SQ: 'static> diesel::query_builder::QueryId for Logs<FH, SQ> {
+    type QueryId = Logs<FH, SQ>;
+    const HAS_STATIC_QUERY_ID: bool = false;
+
+    fn query_id() -> Option<std::any::TypeId> {
+        if Self::HAS_STATIC_QUERY_ID {
+            Some(std::any::TypeId::of::<Self::QueryId>())
+        } else {
+            None
+        }
+    }
+}
+
+impl<FH: QueryFragment<DBType> + 'static, SQ: Query + QueryFragment<DBType> + 'static> Query
+    for Logs<FH, SQ>
+// The SqlType for Dos is manually specified below due to Diesel macro expansion limitations.
+// It is defining the days_out_of_stock table structure.
+{
+    type SqlType = SQ::SqlType;
+}
+
+impl<FH: QueryFragment<DBType> + 'static, SQ: QueryFragment<DBType> + 'static>
+    RunQueryDsl<DBConnection> for Logs<FH, SQ>
+{
+}
+
+impl<FH: QueryFragment<DBType>, SQ: QueryFragment<DBType>> QueryFragment<DBType> for Logs<FH, SQ> {
+    fn walk_ast<'b>(&'b self, mut out: AstPass<'_, 'b, DBType>) -> QueryResult<()> {
+        out.push_sql(
+            r#"
+WITH changelog_deduped_fast AS (
+    SELECT *
+    FROM (
+            SELECT cursor,
+                table_name,
+                record_id,
+                row_action,
+                changelog.name_link_id,
+                store_id,
+                is_sync_update,
+                source_site_id,
+                ROW_NUMBER() OVER (
+                    PARTITION BY record_id
+                    ORDER BY cursor DESC
+                ) AS rn
+            FROM changelog
+            WHERE record_id in 
+                (
+        "#,
+        );
+
+        self.filter.walk_ast(out.reborrow())?;
+
+        out.push_sql(
+            r#"
+                )
+            )
+    WHERE rn = 1)
+    SELECT * FROM (
+        "#,
+        );
+
+        self.select_query.walk_ast(out.reborrow())?;
+
+        out.push_sql(
+            r#"
+    )
+        "#,
+        );
+
+        Ok(())
+    }
+}
+
+pub fn get_changelogs_fast(
+    connection: &StorageConnection,
+    filter: Condition::Inner,
+    CursorAndLimit { cursor, limit }: CursorAndLimit,
+) -> Result<Vec<ChangelogRow>, RepositoryError> {
+    let filter = Condition::And(vec![filter, Condition::cursor::greater_then(cursor)]);
+
+    let select_query = Logs {
+        filter: query()
+            .filter(filter.to_boxed())
+            .select(changelog::record_id),
+        select_query: changelog_deduped_fast::table
+            .order_by(changelog_deduped_fast::cursor.asc())
+            .limit(limit),
+    };
+
+    // Debug diesel query
+    println!(
+        "\n{}\n",
+        diesel::debug_query::<DBType, _>(&select_query).to_string()
+    );
+
+    let changelogs: Vec<ChangelogRow> =
+        select_query.load::<ChangelogRow>(connection.lock().connection())?;
+
+    Ok(changelogs)
+}
+
+pub fn get_total_changelogs_fast(
+    connection: &StorageConnection,
+    filter: Condition::Inner,
+    cursor: i64,
+) -> Result<i64, RepositoryError> {
+    let filter = Condition::And(vec![filter, Condition::cursor::greater_then(cursor)]);
+
+    let total_query = Logs {
+        filter: query()
+            .filter(filter.clone().to_boxed())
+            .select(changelog::record_id),
+        select_query: changelog_deduped_fast::table.count(),
+    };
+
+    // Debug diesel query
+    println!(
+        "\n{}\n",
+        diesel::debug_query::<DBType, _>(&total_query).to_string()
+    );
+
+    let total: i64 = total_query.get_result(connection.lock().connection())?;
+
+    Ok(total)
 }
