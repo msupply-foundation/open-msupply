@@ -204,7 +204,10 @@ export const CreateAssetModal = ({
         <Box>
           <Box display="flex" justifyContent="flex-end">
             <Switch
-              onChange={() => setIsCatalogueAsset(!isCatalogueAsset)}
+              onChange={() => {
+                setIsCatalogueAsset(!isCatalogueAsset);
+                updateDraft({ catalogueItemId: undefined, typeId: undefined });
+              }}
               checked={isCatalogueAsset}
               label={t('label.use-catalogue')}
             />
@@ -231,12 +234,11 @@ export const CreateAssetModal = ({
                 fullWidth
                 onChange={e => {
                   updateDraft({
-                    catalogueItemId: undefined,
                     categoryId: e.target.value,
-                    typeId: '',
                   });
                 }}
                 value={draft.categoryId ?? ''}
+                clearable
               />
             }
           />

@@ -2521,6 +2521,7 @@ export type DraftStockOutLineNode = {
   sellPricePerPack: Scalars['Float']['output'];
   stockLineId: Scalars['String']['output'];
   stockLineOnHold: Scalars['Boolean']['output'];
+  volumePerPack?: Maybe<Scalars['Float']['output']>;
   vvmStatus?: Maybe<VvmstatusNode>;
   vvmStatusId?: Maybe<Scalars['String']['output']>;
 };
@@ -4642,6 +4643,7 @@ export type InvoiceNode = {
    */
   requisition?: Maybe<RequisitionNode>;
   shippedDatetime?: Maybe<Scalars['DateTime']['output']>;
+  shippingMethod?: Maybe<ShippingMethodNode>;
   status: InvoiceNodeStatus;
   store: StoreNode;
   taxPercentage?: Maybe<Scalars['Float']['output']>;
@@ -9229,6 +9231,7 @@ export enum SensorNodeType {
   Berlinger = 'BERLINGER',
   BlueMaestro = 'BLUE_MAESTRO',
   Laird = 'LAIRD',
+  LogTag = 'LOG_TAG',
 }
 
 export enum SensorSortFieldInput {
@@ -10453,6 +10456,7 @@ export type UpdateOutboundShipmentInput = {
   /** The new invoice id provided by the client */
   id: Scalars['String']['input'];
   onHold?: InputMaybe<Scalars['Boolean']['input']>;
+  shippingMethodId?: InputMaybe<NullableStringUpdate>;
   /**
    * When changing the status from DRAFT to CONFIRMED or FINALISED the total_number_of_packs for
    * existing invoice items gets updated.

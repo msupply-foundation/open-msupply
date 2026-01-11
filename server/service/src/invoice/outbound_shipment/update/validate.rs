@@ -1,17 +1,18 @@
+use super::{UpdateOutboundShipment, UpdateOutboundShipmentError};
+use crate::common::check_shipping_method_exists;
 use crate::invoice::common::check_can_issue_in_foreign_currency;
 use crate::invoice::{
     check_invoice_exists, check_invoice_is_editable, check_invoice_status, check_invoice_type,
     check_status_change, check_store, InvoiceRowStatusError,
 };
 use crate::validate::get_other_party;
+use crate::NullableUpdate;
 use chrono::Utc;
 use repository::{EqualFilter, NameLinkRowRepository};
 use repository::{
     InvoiceLineFilter, InvoiceLineRepository, InvoiceLineType, InvoiceRow, InvoiceStatus,
     InvoiceType, StorageConnection,
 };
-
-use super::{UpdateOutboundShipment, UpdateOutboundShipmentError};
 
 pub fn validate(
     connection: &StorageConnection,
@@ -42,6 +43,15 @@ pub fn validate(
         && other_party.store_row.is_some()
     {
         return Err(CannotIssueInForeignCurrency);
+    }
+
+    if let Some(NullableUpdate {
+        value: Some(shipping_method_id),
+    }) = &patch.shipping_method_id
+    {
+        if !check_shipping_method_exists(connection, shipping_method_id)? {
+            return Err(ShippingMethodDoesNotExist);
+        }
     }
 
     // Status check

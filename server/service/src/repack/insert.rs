@@ -1,14 +1,13 @@
-use repository::{
-    ActivityLogRowRepository, EqualFilter, Invoice, InvoiceFilter, InvoiceLineRowRepository,
-    InvoiceRepository, InvoiceRowRepository, LocationMovementRowRepository, RepositoryError,
-    StockLine, StockLineRowRepository,
-};
-
-use crate::service_provider::ServiceContext;
-
 use super::{
     generate::{generate, GenerateRepack},
     validate,
+};
+use crate::{activity_log::activity_log_entry_with_diff, service_provider::ServiceContext};
+use repository::{
+    ActivityLogRowRepository, ActivityLogType, EqualFilter, Invoice, InvoiceFilter,
+    InvoiceLineRowRepository, InvoiceRepository, InvoiceRowRepository,
+    LocationMovementRowRepository, RepositoryError, StockLine, StockLineRow,
+    StockLineRowRepository,
 };
 
 #[derive(Default)]
@@ -48,7 +47,7 @@ pub fn insert_repack(
 
             let stock_line_repo = StockLineRowRepository::new(connection);
 
-            for line in stock_lines {
+            for line in stock_lines.clone() {
                 stock_line_repo.upsert_one(&line)?;
             }
 
@@ -65,6 +64,14 @@ pub fn insert_repack(
             }
 
             ActivityLogRowRepository::new(connection).insert_one(&activity_log)?;
+            // log changes to old stock line too
+            activity_log_entry_with_diff(
+                ctx,
+                ActivityLogType::Repack,
+                Some(stock_lines[0].id.clone()),
+                None::<&StockLineRow>,
+                &stock_lines[1],
+            )?;
 
             InvoiceRepository::new(connection)
                 .query_by_filter(

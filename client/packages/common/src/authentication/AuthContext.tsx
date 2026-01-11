@@ -124,10 +124,10 @@ export const AuthProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
     setCookie(undefined);
     setError(AuthError.Timeout);
   });
-  const { setHeader } = useGql();
+  const { client } = useGql();
   const mostRecentUsername = mostRecentCredentials[0]?.username ?? undefined;
   // initialise the auth header with the cookie value i.e. on page refresh
-  setHeader('Authorization', `Bearer ${authCookie?.token}`);
+  client.setHeader('Authorization', `Bearer ${authCookie?.token}`);
   const setStore = async (store: UserStoreNodeFragment) => {
     if (!cookie?.token) return;
 

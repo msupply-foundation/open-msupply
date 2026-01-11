@@ -46,6 +46,7 @@ export const PrescriptionLineEditTable = ({
     (row: DraftStockOutLineFragment) => {
       if (disabled) return true;
       if (!!row.vvmStatus?.unusable) return true;
+      if (row.stockLineOnHold || row.location?.onHold) return true;
 
       // Prevent issuing expired stock if preference is set, up to threshold
       if (expiredStockPreventIssue && !!row.expiryDate) {
@@ -59,7 +60,7 @@ export const PrescriptionLineEditTable = ({
 
       return false;
     },
-    [expiredStockPreventIssue, expiredStockIssueThreshold, item]
+    [disabled, expiredStockPreventIssue, expiredStockIssueThreshold]
   );
 
   const columns = usePrescriptionLineEditColumns({

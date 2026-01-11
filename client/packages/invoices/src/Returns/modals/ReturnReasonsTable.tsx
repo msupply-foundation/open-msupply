@@ -5,12 +5,12 @@ import {
   ReasonOptionNodeType,
   useSimpleMaterialTable,
   useTranslation,
+  TextInputCell,
 } from '@openmsupply-client/common';
 import {
   ReasonOptionRowFragment,
   ReasonOptionsSearchInput,
 } from '@openmsupply-client/system';
-import { TextInputCell } from '@openmsupply-client/common/src/ui/layout/tables/material-react-table/components/TextInputCell';
 
 interface ReturnWithReason {
   id: string;
