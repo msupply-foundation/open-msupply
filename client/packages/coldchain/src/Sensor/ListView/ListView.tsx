@@ -1,9 +1,5 @@
-import React, { FC, useEffect } from 'react';
+import React, { FC, useEffect, useMemo } from 'react';
 import {
-  DataTable,
-  useColumns,
-  TableProvider,
-  createTableStore,
   useTranslation,
   NothingHere,
   useUrlQueryParams,
@@ -12,6 +8,10 @@ import {
   useUrlQuery,
   SensorNodeType,
   UNDEFINED_STRING_VALUE,
+  MaterialTable,
+  usePaginatedMaterialTable,
+  ColumnDef,
+  ColumnType,
 } from '@openmsupply-client/common';
 import { SensorFragment, useSensorList } from '../api';
 import { SensorEditModal } from '../Components';
@@ -23,97 +23,16 @@ export const SensorListView: FC = () => {
   const formatTemperature = useFormatTemperature();
 
   const {
-    updateSortQuery,
-    updatePaginationQuery,
-    queryParams: { sortBy, page, first, offset, filterBy },
+    queryParams,
   } = useUrlQueryParams({
     initialSort: { key: 'serial', dir: 'desc' },
-    filters: [{ key: 'serial' }],
-  });
-  const pagination = { page, first, offset };
-
-  const { data, isError, isLoading } = useSensorList({
-    first,
-    offset,
-    sortBy,
-    filterBy,
-  });
-
-  const columns = useColumns<SensorFragment>(
-    [
-      ['name', { width: 200 }],
-      {
-        key: 'cce',
-        label: 'label.cce',
-        sortable: false,
-        accessor: ({ rowData }) =>
-          rowData.assets?.nodes?.map(asset => asset.assetNumber).join(', '),
-      },
-      {
-        key: 'location',
-        label: 'label.location',
-        accessor: ({ rowData }) => rowData.location?.code,
-        sortable: false,
-      },
-      {
-        key: 'serial',
-        label: 'label.serial',
-        accessor: ({ rowData }) => rowData?.serial,
-      },
-      {
-        key: 'battery',
-        label: 'label.battery-level',
-        accessor: ({ rowData }) => {
-          const batteryLevel = rowData.batteryLevel;
-
-          return batteryLevel ? `${batteryLevel}%` : UNDEFINED_STRING_VALUE;
-        },
-        sortable: false,
-      },
-      {
-        key: 'lastReading',
-        label: 'label.last-reading',
-        accessor: ({ rowData }) =>
-          !!rowData.latestTemperatureLog?.nodes[0]?.temperature
-            ? `${formatTemperature(
-                rowData.latestTemperatureLog?.nodes[0]?.temperature
-              )}`
-            : UNDEFINED_STRING_VALUE,
-        sortable: false,
-      },
-      {
-        key: 'lastRecording',
-        label: 'label.date-time',
-        description: 'description.last-reading-datetime',
-        accessor: ({ rowData }) => {
-          return Formatter.csvDateTimeString(
-            rowData.latestTemperatureLog?.nodes[0]?.datetime
-          );
-        },
-        sortable: false,
-      },
-      {
-        key: 'type',
-        label: 'label.sensor-type',
-        accessor: ({ rowData }) => {
-          return rowData?.type === SensorNodeType.BlueMaestro
-            ? t('label.rtmd')
-            : Formatter.enumCase(rowData?.type);
-        },
-        sortable: false,
-      },
-      {
-        key: 'breach',
-        label: 'label.breach-type',
-        description: 'description.breach-type',
-        accessor: ({ rowData }) => rowData?.breach,
-        Cell: BreachTypeCell,
-        sortable: false,
-      },
+    filters: [
+      { key: 'serial' },
+      { key: 'name' },
     ],
-    { onChangeSortBy: updateSortQuery, sortBy },
-    [sortBy]
-  );
+  });
+
+  const { data, isError, isLoading } = useSensorList(queryParams);
 
   const { isOpen, entity, onClose, onOpen } = useEditModal<SensorFragment>();
 
@@ -131,29 +50,93 @@ export const SensorListView: FC = () => {
     }
   }, [data?.nodes, onOpen, updateQuery, urlQuery]);
 
+  const columns = useMemo(
+    (): ColumnDef<SensorFragment>[] => [
+      {
+        accessorKey: 'name',
+        header: t('label.name'),
+        size: 200,
+        enableSorting: true,
+        enableColumnFilter: true,
+      },
+      {
+        id: 'cce',
+        accessorFn: row =>
+          row.assets?.nodes?.map(asset => asset.assetNumber).join(', '),
+        header: t('label.cce'),
+      },
+      {
+        accessorKey: 'location.code',
+        header: t('label.location'),
+      },
+      {
+        accessorKey: 'serial',
+        header: t('label.serial'),
+        enableSorting: true,
+      },
+      {
+        id: 'battery',
+        header: t('label.battery-level'),
+        accessorFn: row => {
+          const batteryLevel = row.batteryLevel;
+          return batteryLevel ? `${batteryLevel}%` : UNDEFINED_STRING_VALUE;
+        },
+      },
+      {
+        id: 'lastReading',
+        header: t('label.last-reading'),
+        accessorFn: row =>
+          !!row.latestTemperatureLog?.nodes[0]?.temperature
+            ? `${formatTemperature(
+              row.latestTemperatureLog?.nodes[0]?.temperature
+            )}`
+            : UNDEFINED_STRING_VALUE,
+        size: 130,
+      },
+      {
+        id: 'lastRecording',
+        header: t('label.date-time'),
+        description: 'description.last-reading-datetime',
+        accessorFn: row => row.latestTemperatureLog?.nodes[0]?.datetime,
+        columnType: ColumnType.DateTime,
+      },
+      {
+        id: 'type',
+        header: t('label.sensor-type'),
+        accessorFn: row => {
+          return row?.type === SensorNodeType.BlueMaestro
+            ? t('label.rtmd')
+            : Formatter.enumCase(row?.type);
+        },
+      },
+      {
+        accessorKey: 'breach',
+        header: t('label.breach-type'),
+        description: 'description.breach-type',
+        Cell: BreachTypeCell,
+      },
+    ],
+    []
+  );
+
+  const { table } = usePaginatedMaterialTable<SensorFragment>({
+    tableId: 'sensor-list',
+    columns,
+    data: data?.nodes,
+    totalCount: data?.totalCount ?? 0,
+    isLoading,
+    isError,
+    enableRowSelection: false,
+    onRowClick: onOpen,
+    noDataElement: <NothingHere body={t('error.no-sensors')} />,
+  });
+
   return (
     <>
       {isOpen && entity && (
         <SensorEditModal isOpen={isOpen} onClose={onClose} sensor={entity} />
       )}
-      <DataTable
-        id="sensor-list"
-        pagination={{ ...pagination, total: data?.totalCount ?? 0 }}
-        onChangePage={updatePaginationQuery}
-        columns={columns}
-        data={data?.nodes ?? []}
-        isLoading={isLoading}
-        onRowClick={onOpen}
-        isError={isError}
-        noDataElement={<NothingHere body={t('error.no-sensors')} />}
-        enableColumnSelection
-      />
+      <MaterialTable table={table} />
     </>
   );
 };
-
-export const ListView: FC = () => (
-  <TableProvider createStore={createTableStore}>
-    <SensorListView />
-  </TableProvider>
-);

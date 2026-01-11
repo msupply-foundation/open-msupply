@@ -164,8 +164,18 @@ export const issue = (
   };
   return newDraftLines;
 };
-export const canAllocate = (line: DraftStockOutLineFragment): boolean =>
-  !line.stockLineOnHold && !line.location?.onHold && line.availablePacks > 0;
+
+export const showLines = (line: DraftStockOutLineFragment): boolean => {
+  const isOnHold = line.stockLineOnHold || line.location?.onHold;
+
+  // If on hold, can only be in allocatable set if there are already packs allocated
+  if (isOnHold) {
+    return line.numberOfPacks > 0 && line.availablePacks > 0;
+  }
+
+  // If not on hold, can allocate if there are available packs
+  return line.availablePacks > 0;
+};
 
 export const canAutoAllocate = (
   line: DraftStockOutLineFragment,
@@ -177,7 +187,10 @@ export const canAutoAllocate = (
     : undefined;
 
   return (
-    canAllocate(line) &&
+    showLines(line) &&
+    // should not auto-allocate from on-hold lines
+    !line.stockLineOnHold &&
+    !line.location?.onHold &&
     // shouldn't auto-allocate expired lines
     !(!!lastAllowableDate && DateUtils.isExpired(lastAllowableDate)) &&
     // should not be able to auto-allocate lines with unusable VVM status

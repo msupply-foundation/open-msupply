@@ -1,10 +1,10 @@
 import { sortNodes, getNestedValue } from '../../../../utils';
 
 const processStockLines = (nodes, sort, dir) => {
-  nodes.forEach(line => {
-    if (Object.keys(line).length == 0) {
-      return;
-    }
+  // Filter out empty objects first
+  const filteredNodes = nodes.filter(line => Object.keys(line).length > 0);
+
+  filteredNodes.forEach(line => {
     const daysUntilExpiredFloat = calculateDaysUntilExpired(line?.expiryDate);
     const expectedUsage = calculateExpectedUsage(daysUntilExpiredFloat, line);
     if (!!expectedUsage) {
@@ -24,7 +24,7 @@ const processStockLines = (nodes, sort, dir) => {
       Math.round((line?.item?.stats?.averageMonthlyConsumption ?? 0) * 10) / 10;
   });
 
-  let sortedNodes = sortNodes(nodes, sort, dir);
+  let sortedNodes = sortNodes(filteredNodes, sort, dir);
   return sortedNodes;
 };
 

@@ -1,17 +1,15 @@
-import React, { useEffect } from 'react';
-import { IconButton } from '@common/components';
+import React, { useMemo } from 'react';
 import { DeleteIcon } from '@common/icons';
 import { useTranslation } from '@common/intl';
 import {
-  alpha,
-  AppSxProp,
   Box,
-  CellProps,
-  DataTable,
+  ColumnDef,
+  IconButton,
+  MaterialTable,
+  NothingHere,
+  TextWithTooltipCell,
+  useSimpleMaterialTable,
   TextInputCell,
-  TooltipTextCell,
-  useColumns,
-  useRowStyle,
 } from '@openmsupply-client/common';
 import { checkInvalidVariables, Translation } from './helpers';
 import {
@@ -30,70 +28,6 @@ export const TranslationsTable = ({
 }) => {
   const t = useTranslation();
 
-  const { setRowStyles } = useRowStyle();
-
-  useEffect(() => {
-    const newLines = translations.filter(tr => tr.isNew).map(tr => tr.id);
-
-    const style: AppSxProp = {
-      backgroundColor: theme =>
-        `${alpha(theme.palette.secondary.main, 0.1)} !important`,
-    };
-    setRowStyles(newLines, style);
-  }, [translations, setRowStyles]);
-
-  const columns = useColumns<Translation>(
-    [
-      {
-        key: 'key',
-        Cell: TooltipTextCell,
-        label: 'label.key',
-        width: 200,
-      },
-      {
-        key: 'default',
-        Cell: TooltipTextCell,
-        cellProps: {
-          style: { textWrap: 'wrap', margin: '5px 0' },
-        },
-        label: 'label.default',
-        width: 300,
-      },
-      {
-        key: 'custom',
-        Cell: CustomTranslationInputCell,
-        label: 'label.custom',
-        cellProps: { showValidationErrors },
-        setter: updatedRow => {
-          const isInvalid = checkInvalidVariables(updatedRow);
-
-          setTranslations(translations =>
-            translations.map(tr =>
-              tr.id === updatedRow.id ? { ...tr, ...updatedRow, isInvalid } : tr
-            )
-          );
-        },
-      },
-      {
-        key: 'delete',
-        width: 50,
-        Cell: ({ rowData }) => (
-          <IconButton
-            icon={<DeleteIcon sx={{ height: '0.9em' }} />}
-            label={t('label.delete')}
-            onClick={() =>
-              setTranslations(translations =>
-                translations.filter(tr => tr.id !== rowData.id)
-              )
-            }
-          />
-        ),
-      },
-    ],
-    {},
-    [showValidationErrors]
-  );
-
   const onAdd = (options: TranslationOption[]) => {
     if (options.length === 0) return;
     const newLines = options.map(option => ({
@@ -106,6 +40,76 @@ export const TranslationsTable = ({
     setTranslations(translations => [...newLines, ...translations]);
   };
 
+  const columns = useMemo(
+    (): ColumnDef<Translation>[] => [
+      {
+        accessorKey: 'key',
+        header: t('label.key'),
+        Cell: TextWithTooltipCell,
+        size: 150,
+      },
+      {
+        accessorKey: 'default',
+        header: t('label.default'),
+        size: 300,
+        Cell: ({ cell }) => (<Box style={{ whiteSpace: 'normal' }}>{cell.getValue<string>()}</Box>),
+      },
+      {
+        accessorKey: 'custom',
+        header: t('label.custom'),
+        Cell: ({ cell, row }) => {
+          const showInvalid = row.original.isInvalid && showValidationErrors;
+          return <TextInputCell
+            cell={cell}
+            updateFn={value => {
+              const isInvalid = checkInvalidVariables({ ...row.original, custom: value });
+              setTranslations(translations =>
+                translations.map(tr =>
+                  tr.id === row.original.id ? { ...tr, custom: value, isInvalid } : tr
+                )
+              );
+            }}
+            multiline
+            sx={{
+              ...(showInvalid ? {
+                borderColor: theme => theme.palette.error.main,
+                borderWidth: '2px',
+                borderStyle: 'solid',
+                borderRadius: '8px',
+              } : undefined),
+            }}
+          />
+        },
+        size: 300,
+      },
+      {
+        id: 'delete',
+        header: t('label.delete'),
+        size: 50,
+        Cell: ({ row }) => (
+          <IconButton
+            icon={<DeleteIcon sx={{ height: '0.9em' }} />}
+            label={t('label.delete')}
+            onClick={() =>
+              setTranslations(translations =>
+                translations.filter(tr => tr.id !== row.original.id)
+              )
+            }
+          />
+        ),
+      },
+    ],
+    [showValidationErrors]
+  );
+
+  const table = useSimpleMaterialTable<Translation>({
+    tableId: 'custom-translations-input-table',
+    data: translations,
+    columns,
+    getIsPlaceholderRow: row => row.isNew ?? false,
+    noDataElement: <NothingHere body={t('message.add-a-translation')} />,
+  });
+
   return (
     <>
       <Box display="flex" justifyContent="flex-start" marginBottom="8px">
@@ -115,39 +119,7 @@ export const TranslationsTable = ({
         />
       </Box>
 
-      <DataTable
-        id={'translations-list'}
-        columns={columns}
-        data={translations}
-        noDataMessage={t('message.add-a-translation')}
-      />
+      <MaterialTable table={table} />
     </>
-  );
-};
-
-const CustomTranslationInputCell = (
-  props: CellProps<Translation> & {
-    showValidationErrors?: boolean;
-  }
-) => {
-  const showInvalid = props.rowData.isInvalid && props.showValidationErrors;
-
-  return (
-    <TextInputCell
-      fullWidth
-      multiline
-      sx={{
-        marginY: '5px',
-        ...(showInvalid
-          ? {
-              borderColor: theme => theme.palette.error.main,
-              borderWidth: '2px',
-              borderStyle: 'solid',
-              borderRadius: '8px',
-            }
-          : undefined),
-      }}
-      {...props}
-    />
   );
 };

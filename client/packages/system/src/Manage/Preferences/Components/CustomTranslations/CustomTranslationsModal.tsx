@@ -9,10 +9,6 @@ import { useIntlUtils, useTranslation } from '@common/intl';
 import { useDialog, useNotification, useToggle } from '@common/hooks';
 import { mapTranslationsToArray, mapTranslationsToObject } from './helpers';
 import { TranslationsTable } from './TranslationsInputTable';
-import {
-  createTableStore,
-  TableProvider,
-} from '@openmsupply-client/common/src';
 
 export const EditCustomTranslations = ({
   value,
@@ -108,13 +104,11 @@ export const CustomTranslationsModal = ({
           />
         }
       >
-        <TableProvider createStore={createTableStore}>
-          <TranslationsTable
-            translations={translations}
-            setTranslations={setTranslations}
-            showValidationErrors={showValidationErrors}
-          />
-        </TableProvider>
+        <TranslationsTable
+          translations={translations}
+          setTranslations={setTranslations}
+          showValidationErrors={showValidationErrors}
+        />
       </Modal>
     </>
   );

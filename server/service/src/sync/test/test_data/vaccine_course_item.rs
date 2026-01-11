@@ -8,7 +8,7 @@ const TABLE_NAME: &str = "vaccine_course_item";
 const VACCINE_COURSE_ITEM1: (&str, &str) = (
     "test_vaccine_course_item",
     r#"{
-        "id":  "test_vaccine_course_item",
+        "id": "test_vaccine_course_item",
         "vaccine_course_id": "test_vaccine_course",
         "item_link_id": "item_a"
     }"#,
