@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import {
   Autocomplete,
+  CLEAR,
   useBufferState,
   useTranslation,
 } from '@openmsupply-client/common';
@@ -57,7 +58,7 @@ export const CustomerSearchInput = ({
         _value: string,
         reason: string
       ) => {
-        if (reason === 'clear') {
+        if (reason === CLEAR) {
           onChange(null);
         }
       }}
