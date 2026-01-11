@@ -337,7 +337,7 @@ async fn main() -> anyhow::Result<()> {
         Action::Migrate => {
             info!("Applying database migrations");
             let connection_manager = get_storage_connection_manager(&settings.database);
-            if let Some(init_sql) = &settings.database.full_init_sql() {
+            if let Some(init_sql) = &settings.database.startup_sql() {
                 connection_manager.execute(init_sql).unwrap();
             }
             migrate(&connection_manager.connection().unwrap(), None)
