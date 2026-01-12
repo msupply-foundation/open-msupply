@@ -1,4 +1,27 @@
-use crate::{migrations::sql, StorageConnection};
+use crate::migrations::*;
+
+pub(crate) struct Migrate;
+impl MigrationFragment for Migrate {
+    fn identifier(&self) -> &'static str {
+        "is_sync_update"
+    }
+
+    fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
+        sql!(
+            connection,
+            r#"
+        ALTER TABLE name ADD is_sync_update BOOLEAN NOT NULL DEFAULT FALSE;
+        ALTER TABLE name_store_join ADD is_sync_update BOOLEAN NOT NULL DEFAULT FALSE;
+        ALTER TABLE clinician ADD is_sync_update BOOLEAN NOT NULL DEFAULT FALSE;
+        ALTER TABLE clinician_store_join ADD is_sync_update BOOLEAN NOT NULL DEFAULT FALSE;
+      "#
+        )?;
+
+        migrate_triggers(connection)?;
+
+        Ok(())
+    }
+}
 
 #[cfg(not(feature = "postgres"))]
 fn migrate_triggers(connection: &StorageConnection) -> anyhow::Result<()> {
@@ -191,21 +214,5 @@ fn migrate_triggers(connection: &StorageConnection) -> anyhow::Result<()> {
         FOR EACH ROW EXECUTE FUNCTION update_changelog_upsert_with_sync();
         "#
     )?;
-    Ok(())
-}
-
-pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
-    sql!(
-        connection,
-        r#"
-        ALTER TABLE name ADD is_sync_update BOOLEAN NOT NULL DEFAULT FALSE;
-        ALTER TABLE name_store_join ADD is_sync_update BOOLEAN NOT NULL DEFAULT FALSE;
-        ALTER TABLE clinician ADD is_sync_update BOOLEAN NOT NULL DEFAULT FALSE;
-        ALTER TABLE clinician_store_join ADD is_sync_update BOOLEAN NOT NULL DEFAULT FALSE;
-      "#
-    )?;
-
-    migrate_triggers(connection)?;
-
     Ok(())
 }

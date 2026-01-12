@@ -1,20 +1,24 @@
-use super::{version::Version, Migration};
+use super::{version::Version, Migration, MigrationFragment};
+use crate::StorageConnection;
 
 mod barcode_changelog;
 mod is_sync_update;
 
-use crate::StorageConnection;
 pub(crate) struct V1_01_14;
-
 impl Migration for V1_01_14 {
     fn version(&self) -> Version {
         Version::from_str("1.1.14")
     }
 
-    fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
-        is_sync_update::migrate(connection)?;
-        barcode_changelog::migrate(connection)?;
+    fn migrate(&self, _connection: &StorageConnection) -> anyhow::Result<()> {
         Ok(())
+    }
+
+    fn migrate_fragments(&self) -> Vec<Box<dyn MigrationFragment>> {
+        vec![
+            Box::new(is_sync_update::Migrate),
+            Box::new(barcode_changelog::Migrate),
+        ]
     }
 }
 
