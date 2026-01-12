@@ -1,25 +1,30 @@
-use crate::StorageConnection;
+use crate::{migrations::*, StorageConnection};
 
-pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
-    use crate::migrations::sql;
+pub(crate) struct Migrate;
+impl MigrationFragment for Migrate {
+    fn identifier(&self) -> &'static str {
+        "permissions_preferences"
+    }
 
-    if cfg!(feature = "postgres") {
+    fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
+        if cfg!(feature = "postgres") {
+            sql!(
+                connection,
+                r#"
+                    ALTER TYPE permission_type ADD VALUE 'SENSOR_QUERY';
+                    ALTER TYPE permission_type ADD VALUE 'SENSOR_MUTATE'; 
+                    ALTER TYPE permission_type ADD VALUE 'TEMPERATURE_BREACH_QUERY';
+                    ALTER TYPE permission_type ADD VALUE 'TEMPERATURE_LOG_QUERY';
+                "#
+            )?;
+        }
         sql!(
             connection,
             r#"
-            ALTER TYPE permission_type ADD VALUE 'SENSOR_QUERY';
-            ALTER TYPE permission_type ADD VALUE 'SENSOR_MUTATE'; 
-            ALTER TYPE permission_type ADD VALUE 'TEMPERATURE_BREACH_QUERY';
-            ALTER TYPE permission_type ADD VALUE 'TEMPERATURE_LOG_QUERY';
-        "#
+                ALTER TABLE store_preference ADD COLUMN vaccine_module bool NOT NULL DEFAULT false;
+            "#
         )?;
-    }
-    sql!(
-        connection,
-        r#"
-            ALTER TABLE store_preference ADD COLUMN vaccine_module bool NOT NULL DEFAULT false;
-        "#
-    )?;
 
-    Ok(())
+        Ok(())
+    }
 }

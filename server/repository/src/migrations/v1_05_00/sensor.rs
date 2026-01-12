@@ -1,26 +1,32 @@
-use crate::migrations::DATETIME;
-use crate::{migrations::sql, StorageConnection};
+use crate::migrations::*;
+use crate::StorageConnection;
 
-pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
-    #[cfg(not(feature = "postgres"))]
-    const SENSOR_TYPE: &str = "TEXT";
-    #[cfg(feature = "postgres")]
-    const SENSOR_TYPE: &str = "sensor_type";
-    #[cfg(feature = "postgres")]
-    sql!(
-        connection,
-        r#"
+pub(crate) struct Migrate;
+impl MigrationFragment for Migrate {
+    fn identifier(&self) -> &'static str {
+        "sensor"
+    }
+
+    fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
+        #[cfg(not(feature = "postgres"))]
+        const SENSOR_TYPE: &str = "TEXT";
+        #[cfg(feature = "postgres")]
+        const SENSOR_TYPE: &str = "sensor_type";
+        #[cfg(feature = "postgres")]
+        sql!(
+            connection,
+            r#"
             CREATE TYPE {SENSOR_TYPE} AS ENUM (
                 'BLUE_MAESTRO',
                 'LAIRD', 
                 'BERLINGER'
             );
         "#
-    )?;
+        )?;
 
-    sql!(
-        connection,
-        r#"
+        sql!(
+            connection,
+            r#"
             CREATE TABLE sensor (
                 id TEXT NOT NULL PRIMARY KEY,
                 serial TEXT NOT NULL,
@@ -34,23 +40,23 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
                 type {SENSOR_TYPE}
             );
             "#
-    )?;
+        )?;
 
-    if cfg!(feature = "postgres") {
-        sql!(
-            connection,
-            r#"
+        if cfg!(feature = "postgres") {
+            sql!(
+                connection,
+                r#"
                 ALTER TYPE changelog_table_name ADD VALUE IF NOT EXISTS 'sensor';
 
                 CREATE TRIGGER sensor_trigger
                 AFTER INSERT OR UPDATE OR DELETE ON sensor
                 FOR EACH ROW EXECUTE PROCEDURE update_changelog();
             "#
-        )?;
-    } else {
-        sql!(
-            connection,
-            r#"
+            )?;
+        } else {
+            sql!(
+                connection,
+                r#"
                 CREATE TRIGGER sensor_insert_trigger
                 AFTER INSERT ON sensor
                 BEGIN
@@ -58,11 +64,11 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
                     VALUES ("sensor", NEW.id, "UPSERT");
                 END;
             "#
-        )?;
+            )?;
 
-        sql!(
-            connection,
-            r#"
+            sql!(
+                connection,
+                r#"
                 CREATE TRIGGER sensor_update_trigger
                 AFTER UPDATE ON sensor
                 BEGIN
@@ -70,11 +76,11 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
                     VALUES ('sensor', NEW.id, 'UPSERT');
                 END;
             "#
-        )?;
+            )?;
 
-        sql!(
-            connection,
-            r#"
+            sql!(
+                connection,
+                r#"
                 CREATE TRIGGER sensor_delete_trigger
                 AFTER DELETE ON sensor
                 BEGIN
@@ -82,7 +88,8 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
                     VALUES ('sensor', OLD.id, 'DELETE');
                 END;
             "#
-        )?;
+            )?;
+        }
+        Ok(())
     }
-    Ok(())
 }

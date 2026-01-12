@@ -1,22 +1,29 @@
-use crate::{migrations::sql, StorageConnection};
+use crate::{migrations::*, StorageConnection};
 
-pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
-    sql!(
-        connection,
-        r#"
-        UPDATE name set is_deceased = false WHERE is_deceased is null;
-      "#
-    )?;
+pub(crate) struct Migrate;
+impl MigrationFragment for Migrate {
+    fn identifier(&self) -> &'static str {
+        "name_is_deceased"
+    }
 
-    if cfg!(feature = "postgres") {
+    fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
         sql!(
             connection,
             r#"
-            ALTER TABLE name ALTER COLUMN is_deceased SET NOT NULL;
-            ALTER TABLE name ALTER COLUMN is_deceased SET DEFAULT false;
-          "#
+        UPDATE name set is_deceased = false WHERE is_deceased is null;
+      "#
         )?;
-    }
 
-    Ok(())
+        if cfg!(feature = "postgres") {
+            sql!(
+                connection,
+                r#"
+                    ALTER TABLE name ALTER COLUMN is_deceased SET NOT NULL;
+                    ALTER TABLE name ALTER COLUMN is_deceased SET DEFAULT false;
+                "#
+            )?;
+        }
+
+        Ok(())
+    }
 }

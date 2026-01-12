@@ -1,4 +1,38 @@
-use crate::{migrations::sql, StorageConnection};
+use crate::{migrations::*, StorageConnection};
+
+pub(crate) struct Migrate;
+impl MigrationFragment for Migrate {
+    fn identifier(&self) -> &'static str {
+        "is_sync_update"
+    }
+
+    fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
+        // this migration may have been run, however if the upgrade is from < 1.2.00 then it
+        // will have failed, as the clinician table was only added in 1.2, while the migration
+        // was added in 1.1.14. Unable to use IF EXISTS in sqlite, so we are catching errors
+
+        if sql!(
+            connection,
+            r#"
+              ALTER TABLE name ADD is_sync_update BOOLEAN NOT NULL DEFAULT FALSE;
+              ALTER TABLE name_store_join ADD is_sync_update BOOLEAN NOT NULL DEFAULT FALSE;
+              ALTER TABLE clinician ADD is_sync_update BOOLEAN NOT NULL DEFAULT FALSE;
+              ALTER TABLE clinician_store_join ADD is_sync_update BOOLEAN NOT NULL DEFAULT FALSE;
+            "#
+        )
+        .is_err()
+        {
+            log::debug!("Database migration warning: Failed to add is_sync_update column to name, name_store_join, clinician and clinician_store_join as current version is < 1.2.00");
+        }
+
+        // these statements would have had the same problem
+        if migrate_triggers(connection).is_err() {
+            log::debug!("Database migration warning: Failed to add triggers for is_sync_update as version is < 1.2.00");
+        }
+
+        Ok(())
+    }
+}
 
 #[cfg(not(feature = "postgres"))]
 fn migrate_triggers(connection: &StorageConnection) -> anyhow::Result<()> {
@@ -191,32 +225,5 @@ fn migrate_triggers(connection: &StorageConnection) -> anyhow::Result<()> {
         FOR EACH ROW EXECUTE FUNCTION update_changelog_upsert_with_sync();
         "#
     )?;
-    Ok(())
-}
-
-pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
-    // this migration may have been run, however if the upgrade is from < 1.2.00 then it
-    // will have failed, as the clinician table was only added in 1.2, while the migration
-    // was added in 1.1.14. Unable to use IF EXISTS in sqlite, so we are catching errors
-
-    if sql!(
-        connection,
-        r#"
-        ALTER TABLE name ADD is_sync_update BOOLEAN NOT NULL DEFAULT FALSE;
-        ALTER TABLE name_store_join ADD is_sync_update BOOLEAN NOT NULL DEFAULT FALSE;
-        ALTER TABLE clinician ADD is_sync_update BOOLEAN NOT NULL DEFAULT FALSE;
-        ALTER TABLE clinician_store_join ADD is_sync_update BOOLEAN NOT NULL DEFAULT FALSE;
-      "#
-    )
-    .is_err()
-    {
-        log::debug!("Database migration warning: Failed to add is_sync_update column to name, name_store_join, clinician and clinician_store_join as current version is < 1.2.00");
-    }
-
-    // these statements would have had the same problem
-    if migrate_triggers(connection).is_err() {
-        log::debug!("Database migration warning: Failed to add triggers for is_sync_update as version is < 1.2.00");
-    }
-
     Ok(())
 }

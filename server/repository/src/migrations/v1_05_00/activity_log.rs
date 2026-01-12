@@ -1,16 +1,21 @@
-use crate::StorageConnection;
+use crate::{migrations::*, StorageConnection};
 
-pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
-    use crate::migrations::sql;
-
-    if cfg!(feature = "postgres") {
-        sql!(
-            connection,
-            r#"
-            ALTER TYPE activity_log_type ADD VALUE 'SENSOR_LOCATION_CHANGED';
-        "#
-        )?;
+pub(crate) struct Migrate;
+impl MigrationFragment for Migrate {
+    fn identifier(&self) -> &'static str {
+        "activity_log"
     }
 
-    Ok(())
+    fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
+        if cfg!(feature = "postgres") {
+            sql!(
+                connection,
+                r#"
+                    ALTER TYPE activity_log_type ADD VALUE 'SENSOR_LOCATION_CHANGED';
+                "#
+            )?;
+        }
+
+        Ok(())
+    }
 }

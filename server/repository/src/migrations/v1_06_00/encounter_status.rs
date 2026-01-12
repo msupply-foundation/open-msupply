@@ -1,18 +1,21 @@
-use crate::StorageConnection;
+use crate::{migrations::*, StorageConnection};
 
-#[cfg(feature = "postgres")]
-pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
-    crate::migrations::sql!(
-        connection,
-        r#"
-        ALTER TYPE encounter_status ADD VALUE 'DELETED' AFTER 'CANCELLED';
-        "#,
-    )?;
+pub(crate) struct Migrate;
+impl MigrationFragment for Migrate {
+    fn identifier(&self) -> &'static str {
+        "encounter_status"
+    }
 
-    Ok(())
-}
+    fn migrate(&self, _connection: &StorageConnection) -> anyhow::Result<()> {
+        if cfg!(feature = "postgres") {
+            sql!(
+                _connection,
+                r#"
+                ALTER TYPE encounter_status ADD VALUE 'DELETED' AFTER 'CANCELLED';
+            "#,
+            )?;
+        }
 
-#[cfg(not(feature = "postgres"))]
-pub(crate) fn migrate(_connection: &StorageConnection) -> anyhow::Result<()> {
-    Ok(())
+        Ok(())
+    }
 }

@@ -1,19 +1,18 @@
-use crate::StorageConnection;
+use crate::{migrations::*, StorageConnection};
 
-#[cfg(feature = "postgres")]
-pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
-    use crate::migrations::sql;
+pub(crate) struct Migrate;
+impl MigrationFragment for Migrate {
+    fn identifier(&self) -> &'static str {
+        "permission"
+    }
 
-    sql!(
-        connection,
-        r#"ALTER TYPE permission_type ADD VALUE 'ITEM_NAMES_CODES_AND_UNITS_MUTATE';
-        "#
-    )?;
+    fn migrate(&self, _connection: &StorageConnection) -> anyhow::Result<()> {
+        #[cfg(feature = "postgres")]
+        sql!(
+            _connection,
+            r#"ALTER TYPE permission_type ADD VALUE 'ITEM_NAMES_CODES_AND_UNITS_MUTATE';"#
+        )?;
 
-    Ok(())
-}
-
-#[cfg(not(feature = "postgres"))]
-pub(crate) fn migrate(_connection: &StorageConnection) -> anyhow::Result<()> {
-    Ok(())
+        Ok(())
+    }
 }

@@ -1,25 +1,28 @@
-use super::{version::Version, Migration};
-
+use super::{version::Version, Migration, MigrationFragment};
 use crate::StorageConnection;
 
 mod activity_log;
 mod cold_chain;
 mod permissions_preferences;
 mod sensor;
-pub(crate) struct V1_05_00;
 
+pub(crate) struct V1_05_00;
 impl Migration for V1_05_00 {
     fn version(&self) -> Version {
         Version::from_str("1.5.0")
     }
 
-    fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
-        permissions_preferences::migrate(connection)?;
-        activity_log::migrate(connection)?;
-        sensor::migrate(connection)?;
-        cold_chain::migrate(connection)?;
-
+    fn migrate(&self, _connection: &StorageConnection) -> anyhow::Result<()> {
         Ok(())
+    }
+
+    fn migrate_fragments(&self) -> Vec<Box<dyn MigrationFragment>> {
+        vec![
+            Box::new(permissions_preferences::Migrate),
+            Box::new(activity_log::Migrate),
+            Box::new(sensor::Migrate),
+            Box::new(cold_chain::Migrate),
+        ]
     }
 }
 

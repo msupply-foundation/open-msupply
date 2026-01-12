@@ -1,27 +1,20 @@
-use super::{sql, version::Version, Migration};
-
+use super::{version::Version, Migration, MigrationFragment};
 use crate::StorageConnection;
 
-pub(crate) struct V1_05_04;
+mod add_custom_data_for_name;
 
+pub(crate) struct V1_05_04;
 impl Migration for V1_05_04 {
     fn version(&self) -> Version {
         Version::from_str("1.5.04")
     }
 
-    fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
-        // Update integration_datetime on facility/store type name records in sync_buffer
-        // when server start, or on next sync these will be re-integrated
-        sql!(
-            connection,
-            r#"
-                ALTER TABLE name ADD COLUMN custom_data TEXT DEFAULT NULL;
-                UPDATE sync_buffer SET integration_datetime = NULL 
-                    WHERE record_id IN (SELECT id FROM name where name."type" IN ('FACILITY', 'STORE'));
-            "#
-        )?;
-
+    fn migrate(&self, _connection: &StorageConnection) -> anyhow::Result<()> {
         Ok(())
+    }
+
+    fn migrate_fragments(&self) -> Vec<Box<dyn MigrationFragment>> {
+        vec![Box::new(add_custom_data_for_name::Migrate)]
     }
 }
 

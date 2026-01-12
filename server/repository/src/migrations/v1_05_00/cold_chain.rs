@@ -1,19 +1,25 @@
-use crate::migrations::{DATETIME, DOUBLE};
-use crate::{migrations::sql, StorageConnection};
+use crate::migrations::*;
+use crate::StorageConnection;
 
-pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
-    if cfg!(feature = "postgres") {
+pub(crate) struct Migrate;
+impl MigrationFragment for Migrate {
+    fn identifier(&self) -> &'static str {
+        "cold_chain"
+    }
+
+    fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
+        if cfg!(feature = "postgres") {
+            sql!(
+                connection,
+                r#"
+                ALTER TYPE permission_type ADD VALUE IF NOT EXISTS 'COLD_CHAIN_API';
+            "#,
+            )?;
+        }
+
         sql!(
             connection,
             r#"
-                ALTER TYPE permission_type ADD VALUE IF NOT EXISTS 'COLD_CHAIN_API';
-            "#,
-        )?;
-    }
-
-    sql!(
-        connection,
-        r#"
             CREATE TABLE temperature_breach (
                 id TEXT NOT NULL PRIMARY KEY,
                 duration_milliseconds INTEGER NOT NULL,
@@ -50,12 +56,12 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
                 maximum_temperature {DOUBLE} NOT NULL
             );
             "#
-    )?;
+        )?;
 
-    if cfg!(feature = "postgres") {
-        sql!(
-            connection,
-            r#"
+        if cfg!(feature = "postgres") {
+            sql!(
+                connection,
+                r#"
                 ALTER TYPE changelog_table_name ADD VALUE IF NOT EXISTS 'temperature_breach';
                 ALTER TYPE changelog_table_name ADD VALUE IF NOT EXISTS 'temperature_log';
                 ALTER TYPE changelog_table_name ADD VALUE IF NOT EXISTS 'temperature_breach_config';
@@ -73,11 +79,11 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
                 FOR EACH ROW EXECUTE PROCEDURE update_changelog();
                 
             "#
-        )?;
-    } else {
-        sql!(
-            connection,
-            r#"
+            )?;
+        } else {
+            sql!(
+                connection,
+                r#"
                 CREATE TRIGGER temperature_breach_insert_trigger
                 AFTER INSERT ON temperature_breach
                 BEGIN
@@ -100,11 +106,11 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
                     VALUES ("temperature_breach_config", NEW.id, "UPSERT");
                 END;
             "#
-        )?;
+            )?;
 
-        sql!(
-            connection,
-            r#"
+            sql!(
+                connection,
+                r#"
                 CREATE TRIGGER temperature_breach_update_trigger
                 AFTER UPDATE ON temperature_breach
                 BEGIN
@@ -126,11 +132,11 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
                     VALUES ('temperature_breach_config', NEW.id, 'UPSERT');
                 END;         
             "#
-        )?;
+            )?;
 
-        sql!(
-            connection,
-            r#"
+            sql!(
+                connection,
+                r#"
                 CREATE TRIGGER temperature_breach_delete_trigger
                 AFTER DELETE ON temperature_breach
                 BEGIN
@@ -152,8 +158,9 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
                     VALUES ('temperature_breach_config', OLD.id, 'DELETE');
                 END;
             "#
-        )?;
-    }
+            )?;
+        }
 
-    Ok(())
+        Ok(())
+    }
 }
