@@ -21,7 +21,7 @@ import { SimpleLabelDisplay } from '../Components/SimpleLabelDisplay';
 import { AddFromScannerButton } from '../../Equipment/ListView/AddFromScannerButton';
 import { CreateAssetModal } from '../../Equipment/ListView/CreateAssetModal';
 import { ImportFridgeTag } from '../../common/ImportFridgeTag';
-import { statusColorMap } from '../../Equipment/utils';
+import { statusColourMap } from '../../Equipment/utils';
 
 export const CardListView = () => {
   const t = useTranslation();
@@ -134,12 +134,12 @@ export const CardListView = () => {
               <StatusChip
                 label={
                   n.statusLog?.status
-                    ? statusColorMap(t, n.statusLog?.status)?.label
+                    ? statusColourMap(n.statusLog?.status)?.label
                     : undefined
                 }
-                color={
+                colour={
                   n.statusLog?.status
-                    ? statusColorMap(t, n.statusLog?.status)?.color
+                    ? statusColourMap(n.statusLog?.status)?.colour
                     : undefined
                 }
               />

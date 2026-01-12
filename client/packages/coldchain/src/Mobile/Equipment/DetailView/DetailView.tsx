@@ -16,7 +16,7 @@ import { StatusLogs } from 'packages/coldchain/src/Equipment/DetailView/Tabs/Sta
 import { UpdateStatusButton } from 'packages/coldchain/src/Equipment/DetailView/UpdateStatusButton';
 import { Documents } from 'packages/coldchain/src/Equipment/DetailView/Tabs/Documents';
 import { LogCardListView } from './LogCardListView';
-import { statusColorMap } from 'packages/coldchain/src/Equipment/utils';
+import { statusColourMap } from 'packages/coldchain/src/Equipment/utils';
 
 export const EquipmentDetailView: FC = () => {
   const {
@@ -37,7 +37,7 @@ export const EquipmentDetailView: FC = () => {
   if (!data) return <h1>{t('error.asset-not-found')}</h1>;
 
   const status = data.statusLog?.status
-    ? statusColorMap(t, data.statusLog?.status)
+    ? statusColourMap(data.statusLog?.status)
     : undefined;
 
   return (
@@ -75,7 +75,7 @@ export const EquipmentDetailView: FC = () => {
       </Box>
 
       <Box sx={{ padding: '.2rem', marginBottom: '.5em' }}>
-        <StatusChip label={status?.label} color={status?.color} />
+        <StatusChip label={status?.label} colour={status?.colour} />
       </Box>
 
       <Box

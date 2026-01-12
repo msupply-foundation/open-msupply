@@ -11,7 +11,7 @@ import {
 import { useFormatDateTime, useIntlUtils, useTranslation } from '@common/intl';
 import { ColdchainAssetLogFragment, useAssets } from '../../api';
 import { FileList } from '../../Components';
-import { statusColorMap } from '../../utils';
+import { statusColourMap } from '../../utils';
 
 const Divider = () => (
   <Box
@@ -106,7 +106,7 @@ const StatusLog = ({
 }) => {
   const t = useTranslation();
   const { localisedDate } = useFormatDateTime();
-  const status = log.status ? statusColorMap(t, log.status) : undefined;
+  const status = log.status ? statusColourMap(log.status) : undefined;
 
   return (
     <Box
@@ -176,7 +176,10 @@ const StatusLog = ({
             >
               {localisedDate(log.logDatetime)}
             </Typography>
-            <StatusChip label={status?.label} color={status?.color} />
+            <StatusChip
+              label={status ? t(status.label) : undefined}
+              colour={status?.colour}
+            />
           </Box>
           <User user={log.user} />
           <Box display="flex" alignItems="flex-start">

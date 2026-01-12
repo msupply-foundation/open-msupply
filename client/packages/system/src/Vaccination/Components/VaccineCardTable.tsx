@@ -111,19 +111,19 @@ export const VaccineCardTable = ({
             cell={cell}
             statusMap={{
               [VaccinationCardItemNodeStatus.Given]: {
-                color: theme.palette.vaccinationStatus.given,
+                colour: theme.palette.vaccinationStatus.given,
                 label: t('label.status-given'),
               },
               [VaccinationCardItemNodeStatus.NotGiven]: {
-                color: theme.palette.vaccinationStatus.notGiven,
+                colour: theme.palette.vaccinationStatus.notGiven,
                 label: t('label.status-not-given'),
               },
               [VaccinationCardItemNodeStatus.Pending]: {
-                color: theme.palette.vaccinationStatus.pending,
+                colour: theme.palette.vaccinationStatus.pending,
                 label: t('label.status-pending'),
               },
               [VaccinationCardItemNodeStatus.Late]: {
-                color: theme.palette.vaccinationStatus.late,
+                colour: theme.palette.vaccinationStatus.late,
                 label: t('label.status-late'),
               },
             }}
