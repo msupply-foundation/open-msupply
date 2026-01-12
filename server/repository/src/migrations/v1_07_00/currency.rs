@@ -1,12 +1,15 @@
-use crate::{
-    migrations::{sql, DATE, DOUBLE},
-    StorageConnection,
-};
+use crate::migrations::*;
 
-pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
-    sql!(
-        connection,
-        r#"
+pub(crate) struct Migrate;
+impl MigrationFragment for Migrate {
+    fn identifier(&self) -> &'static str {
+        "currency"
+    }
+
+    fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
+        sql!(
+            connection,
+            r#"
         CREATE TABLE currency (
             id TEXT NOT NULL PRIMARY KEY,
             rate {DOUBLE} NOT NULL,
@@ -16,27 +19,27 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
         );
 
         "#,
-    )?;
+        )?;
 
-    #[cfg(feature = "postgres")]
-    {
-        sql!(
-            connection,
-            r#"
+        #[cfg(feature = "postgres")]
+        {
+            sql!(
+                connection,
+                r#"
                 ALTER TYPE changelog_table_name ADD VALUE IF NOT EXISTS 'currency';
 
                 CREATE TRIGGER currency_trigger
                 AFTER INSERT OR UPDATE OR DELETE ON currency
                 FOR EACH ROW EXECUTE PROCEDURE update_changelog(); 
             "#
-        )?;
-    }
+            )?;
+        }
 
-    #[cfg(not(feature = "postgres"))]
-    {
-        sql!(
-            connection,
-            r#"
+        #[cfg(not(feature = "postgres"))]
+        {
+            sql!(
+                connection,
+                r#"
                 CREATE TRIGGER currency_insert_trigger
                 AFTER INSERT ON currency
                 BEGIN
@@ -58,8 +61,9 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
                     VALUES ("currency", OLD.id, "DELETE");
                 END;
             "#
-        )?;
-    }
+            )?;
+        }
 
-    Ok(())
+        Ok(())
+    }
 }

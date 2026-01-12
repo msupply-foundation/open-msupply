@@ -1,14 +1,20 @@
-use crate::StorageConnection;
+use crate::{migrations::*, StorageConnection};
 
-pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
-    use crate::migrations::sql;
+pub(crate) struct Migrate;
 
-    sql!(
-        connection,
-        r#"
+impl MigrationFragment for Migrate {
+    fn identifier(&self) -> &'static str {
+        "store_preference_add_issue_in_foreign_currency"
+    }
+
+    fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
+        sql!(
+            connection,
+            r#"
             ALTER TABLE store_preference ADD COLUMN issue_in_foreign_currency bool NOT NULL DEFAULT false;
         "#
-    )?;
+        )?;
 
-    Ok(())
+        Ok(())
+    }
 }

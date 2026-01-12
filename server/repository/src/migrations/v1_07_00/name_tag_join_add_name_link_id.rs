@@ -1,10 +1,17 @@
-use crate::{migrations::sql, StorageConnection};
+use crate::{migrations::*, StorageConnection};
 
-pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
-    #[cfg(feature = "postgres")]
-    sql!(
-        connection,
-        r#"
+pub(crate) struct Migrate;
+
+impl MigrationFragment for Migrate {
+    fn identifier(&self) -> &'static str {
+        "name_tag_join_add_name_link_id"
+    }
+
+    fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
+        #[cfg(feature = "postgres")]
+        sql!(
+            connection,
+            r#"
             ALTER TABLE name_tag_join
             ADD COLUMN name_link_id TEXT NOT NULL DEFAULT 'temp_for_migration';
         
@@ -13,26 +20,27 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
         
             ALTER TABLE name_tag_join ADD CONSTRAINT name_tag_join_name_link_id_fkey FOREIGN KEY (name_link_id) REFERENCES name_link(id);
        "#,
-    )?;
-    #[cfg(not(feature = "postgres"))]
-    sql!(
-        connection,
-        r#"
+        )?;
+        #[cfg(not(feature = "postgres"))]
+        sql!(
+            connection,
+            r#"
             PRAGMA foreign_keys = OFF;
             ALTER TABLE name_tag_join
             ADD COLUMN name_link_id TEXT NOT NULL REFERENCES name_link (id) DEFAULT 'temp_for_migration'; 
             UPDATE name_tag_join SET name_link_id = name_id;
             PRAGMA foreign_keys = ON;
         "#,
-    )?;
+        )?;
 
-    sql!(
-        connection,
-        r#"
+        sql!(
+            connection,
+            r#"
             ALTER TABLE name_tag_join DROP COLUMN name_id;
             CREATE INDEX "index_name_tag_join_name_link_id_fkey" ON "name_tag_join" ("name_link_id");
         "#
-    )?;
+        )?;
 
-    Ok(())
+        Ok(())
+    }
 }

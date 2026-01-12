@@ -1,10 +1,17 @@
-use crate::{migrations::sql, StorageConnection};
+use crate::{migrations::*, StorageConnection};
 
-pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
-    #[cfg(feature = "postgres")]
-    sql!(
-        connection,
-        r#"
+pub(crate) struct Migrate;
+
+impl MigrationFragment for Migrate {
+    fn identifier(&self) -> &'static str {
+        "requisition_add_name_link_id"
+    }
+
+    fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
+        #[cfg(feature = "postgres")]
+        sql!(
+            connection,
+            r#"
             ALTER TABLE requisition
             ADD COLUMN name_link_id TEXT NOT NULL DEFAULT 'temp_for_migration';
         
@@ -56,12 +63,12 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
             ALTER TABLE requisition ENABLE TRIGGER ALL;
             ALTER TABLE requisition_line ENABLE TRIGGER ALL;
        "#,
-    )?;
+        )?;
 
-    #[cfg(not(feature = "postgres"))]
-    sql!(
-        connection,
-        r#"
+        #[cfg(not(feature = "postgres"))]
+        sql!(
+            connection,
+            r#"
             PRAGMA foreign_keys = OFF;
             ALTER TABLE requisition
             ADD COLUMN name_link_id TEXT NOT NULL REFERENCES name_link (id) DEFAULT 'temp_for_migration'; 
@@ -106,16 +113,17 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
             SELECT 'requisition_line', OLD.id, 'DELETE', store_id, name_link_id, OLD.is_sync_update FROM requisition WHERE id = OLD.requisition_id;
             END;
         "#,
-    )?;
+        )?;
 
-    sql!(
-        connection,
-        r#"
+        sql!(
+            connection,
+            r#"
             DROP INDEX index_requisition_name_id_fkey;
             ALTER TABLE requisition DROP COLUMN name_id;
             CREATE INDEX "index_requisition_name_link_id_fkey" ON "requisition" ("name_link_id");
         "#
-    )?;
+        )?;
 
-    Ok(())
+        Ok(())
+    }
 }

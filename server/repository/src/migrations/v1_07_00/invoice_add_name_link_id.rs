@@ -1,7 +1,19 @@
-use crate::{migrations::sql, StorageConnection};
+use crate::{migrations::*, StorageConnection};
+
+pub(crate) struct Migrate;
+
+impl MigrationFragment for Migrate {
+    fn identifier(&self) -> &'static str {
+        "invoice_add_name_link_id"
+    }
+
+    fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
+        migrate_impl(connection)
+    }
+}
 
 #[cfg(feature = "postgres")]
-pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
+fn migrate_impl(connection: &StorageConnection) -> anyhow::Result<()> {
     sql!(
         connection,
         r#"
@@ -66,7 +78,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
 }
 
 #[cfg(not(feature = "postgres"))]
-pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
+fn migrate_impl(connection: &StorageConnection) -> anyhow::Result<()> {
     sql!(
         connection,
         r#"

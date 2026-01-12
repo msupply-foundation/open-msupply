@@ -1,4 +1,4 @@
-use super::{helpers::run_without_change_log_updates, version::Version, Migration};
+use super::{version::Version, Migration, MigrationFragment};
 
 use crate::StorageConnection;
 
@@ -40,50 +40,43 @@ impl Migration for V1_07_00 {
         Version::from_str("1.7.0")
     }
 
-    fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
-        sync_log::migrate(connection)?;
-        currency::migrate(connection)?;
-        store_preference_add_issue_in_foreign_currency::migrate(connection)?;
-        invoice_add_currency_fields::migrate(connection)?;
-
-        // We don't want merge-migration updates to sync back.
-        run_without_change_log_updates(connection, |connection| {
-            item_add_is_active::migrate(connection)?;
-            unit_add_is_active::migrate(connection)?;
-            // Item link migrations
-            item_link_create_table::migrate(connection)?;
-            stocktake_line_add_item_link_id::migrate(connection)?;
-            stock_line_add_item_link_id::migrate(connection)?;
-            invoice_line_add_item_link_id::migrate(connection)?;
-            master_list_line_add_item_link_id::migrate(connection)?;
-            requisition_line_add_item_link_id::migrate(connection)?;
-
-            // Name link migrations
-            name_link::migrate(connection)?;
-            changelog_add_name_link_id::migrate(connection)?;
-            invoice_add_name_link_id::migrate(connection)?;
-            name_store_join_add_name_link_id::migrate(connection)?;
-            master_list_name_join_add_name_link_id::migrate(connection)?;
-            name_tag_join_add_name_link_id::migrate(connection)?;
-            requisition_add_name_link_id::migrate(connection)?;
-            stock_line_add_supplier_link_id::migrate(connection)?;
-            barcode_add_manufacturer_link_id::migrate(connection)?;
-            document_owner_name_link_id::migrate(connection)?;
-            // Patient link migrations
-            program_event_patient_link_id::migrate(connection)?;
-            program_enrolment_add_patient_link_id::migrate(connection)?;
-            encounter_add_patient_link_id::migrate(connection)?;
-
-            // Clinician link migrations
-            clinician_link::migrate(connection)?;
-            clinician_store_join_add_clinician_link_id::migrate(connection)?;
-            encounter_add_clinician_link_id::migrate(connection)?;
-            invoice_add_clinician_link_id::migrate(connection)?;
-            contact_trace_link_id::migrate(connection)?;
-
-            Ok(())
-        })?;
+    fn migrate(&self, _connection: &StorageConnection) -> anyhow::Result<()> {
         Ok(())
+    }
+
+    fn migrate_fragments(&self) -> Vec<Box<dyn MigrationFragment>> {
+        vec![
+            Box::new(sync_log::Migrate),
+            Box::new(currency::Migrate),
+            Box::new(store_preference_add_issue_in_foreign_currency::Migrate),
+            Box::new(invoice_add_currency_fields::Migrate),
+            Box::new(item_add_is_active::Migrate),
+            Box::new(unit_add_is_active::Migrate),
+            Box::new(item_link_create_table::Migrate),
+            Box::new(stocktake_line_add_item_link_id::Migrate),
+            Box::new(stock_line_add_item_link_id::Migrate),
+            Box::new(invoice_line_add_item_link_id::Migrate),
+            Box::new(master_list_line_add_item_link_id::Migrate),
+            Box::new(requisition_line_add_item_link_id::Migrate),
+            Box::new(name_link::Migrate),
+            Box::new(changelog_add_name_link_id::Migrate),
+            Box::new(invoice_add_name_link_id::Migrate),
+            Box::new(name_store_join_add_name_link_id::Migrate),
+            Box::new(master_list_name_join_add_name_link_id::Migrate),
+            Box::new(name_tag_join_add_name_link_id::Migrate),
+            Box::new(requisition_add_name_link_id::Migrate),
+            Box::new(stock_line_add_supplier_link_id::Migrate),
+            Box::new(barcode_add_manufacturer_link_id::Migrate),
+            Box::new(document_owner_name_link_id::Migrate),
+            Box::new(program_event_patient_link_id::Migrate),
+            Box::new(program_enrolment_add_patient_link_id::Migrate),
+            Box::new(encounter_add_patient_link_id::Migrate),
+            Box::new(clinician_link::Migrate),
+            Box::new(clinician_store_join_add_clinician_link_id::Migrate),
+            Box::new(encounter_add_clinician_link_id::Migrate),
+            Box::new(invoice_add_clinician_link_id::Migrate),
+            Box::new(contact_trace_link_id::Migrate),
+        ]
     }
 }
 

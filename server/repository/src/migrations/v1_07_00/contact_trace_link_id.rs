@@ -1,62 +1,68 @@
-use crate::{migrations::sql, StorageConnection};
+use crate::{migrations::*, StorageConnection};
 
-pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
-    #[cfg(feature = "postgres")]
-    sql!(
-        connection,
-        r#"
-          -- Adding contact_trace.patient_link_id and contact_trace.contact_patient_link_id
-          ALTER TABLE contact_trace
-          ADD COLUMN patient_link_id TEXT NOT NULL DEFAULT 'temp_for_migration';
-          ALTER TABLE contact_trace
-          ADD COLUMN contact_patient_link_id TEXT;
+pub(crate) struct Migrate;
+impl MigrationFragment for Migrate {
+    fn identifier(&self) -> &'static str {
+        "contact_trace_link_id"
+    }
 
-          UPDATE contact_trace SET patient_link_id = patient_id;
-          UPDATE contact_trace SET contact_patient_link_id = contact_patient_id;
+    fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
+        #[cfg(feature = "postgres")]
+        sql!(
+            connection,
+            r#"
+                -- Adding contact_trace.patient_link_id and contact_trace.contact_patient_link_id
+                ALTER TABLE contact_trace
+                ADD COLUMN patient_link_id TEXT NOT NULL DEFAULT 'temp_for_migration';
+                ALTER TABLE contact_trace
+                ADD COLUMN contact_patient_link_id TEXT;
 
-          ALTER TABLE contact_trace ADD CONSTRAINT contact_trace_patient_link_id
-            FOREIGN KEY (patient_link_id)
-            REFERENCES name_link(id);
-          ALTER TABLE contact_trace ADD CONSTRAINT contact_trace_contact_patient_link_id
-            FOREIGN KEY (contact_patient_link_id)
-            REFERENCES name_link(id);
-     "#,
-    )?;
-    #[cfg(not(feature = "postgres"))]
-    sql!(
-        connection,
-        r#"
-        -- Adding contact_trace.patient_link_id and contact_trace.contact_patient_link_id
-          PRAGMA foreign_keys = OFF;
+                UPDATE contact_trace SET patient_link_id = patient_id;
+                UPDATE contact_trace SET contact_patient_link_id = contact_patient_id;
 
-          ALTER TABLE contact_trace
-          ADD COLUMN patient_link_id TEXT NOT NULL REFERENCES name_link (id) DEFAULT 'temp_for_migration'; 
-          ALTER TABLE contact_trace
-          ADD COLUMN contact_patient_link_id TEXT REFERENCES name_link (id); 
+                ALTER TABLE contact_trace ADD CONSTRAINT contact_trace_patient_link_id
+                  FOREIGN KEY (patient_link_id)
+                  REFERENCES name_link(id);
+                ALTER TABLE contact_trace ADD CONSTRAINT contact_trace_contact_patient_link_id
+                  FOREIGN KEY (contact_patient_link_id)
+                  REFERENCES name_link(id);
+              "#,
+        )?;
+        #[cfg(not(feature = "postgres"))]
+        sql!(
+            connection,
+            r#"
+              -- Adding contact_trace.patient_link_id and contact_trace.contact_patient_link_id
+                PRAGMA foreign_keys = OFF;
 
-          UPDATE contact_trace SET patient_link_id = patient_id;
-          UPDATE contact_trace SET contact_patient_link_id = contact_patient_id;
+                ALTER TABLE contact_trace
+                ADD COLUMN patient_link_id TEXT NOT NULL REFERENCES name_link (id) DEFAULT 'temp_for_migration'; 
+                ALTER TABLE contact_trace
+                ADD COLUMN contact_patient_link_id TEXT REFERENCES name_link (id); 
 
-          PRAGMA foreign_keys = ON;
-          "#,
-    )?;
+                UPDATE contact_trace SET patient_link_id = patient_id;
+                UPDATE contact_trace SET contact_patient_link_id = contact_patient_id;
 
-    sql!(
-        connection,
-        r#"
-        DROP INDEX index_contact_trace_patient_id;
-        DROP INDEX index_contact_trace_contact_patient_id;
-        ALTER TABLE contact_trace DROP COLUMN patient_id;
-        ALTER TABLE contact_trace DROP COLUMN contact_patient_id;
-        CREATE INDEX "index_contact_trace_patient_link_id" ON "contact_trace" ("patient_link_id");
-        CREATE INDEX "index_contact_trace_contact_patient_link_id" ON "contact_trace" ("contact_patient_link_id");
-    "#
-    )?;
+                PRAGMA foreign_keys = ON;
+            "#,
+        )?;
 
-    #[cfg(feature = "postgres")]
-    sql!(
-        connection,
-        r#"
+        sql!(
+            connection,
+            r#"
+                DROP INDEX index_contact_trace_patient_id;
+                DROP INDEX index_contact_trace_contact_patient_id;
+                ALTER TABLE contact_trace DROP COLUMN patient_id;
+                ALTER TABLE contact_trace DROP COLUMN contact_patient_id;
+                CREATE INDEX "index_contact_trace_patient_link_id" ON "contact_trace" ("patient_link_id");
+                CREATE INDEX "index_contact_trace_contact_patient_link_id" ON "contact_trace" ("contact_patient_link_id");
+            "#
+        )?;
+
+        #[cfg(feature = "postgres")]
+        sql!(
+            connection,
+            r#"
         CREATE VIEW contact_trace_name_link_view AS
           SELECT 
             ct.id AS id,
@@ -79,12 +85,12 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
             ON ct.contact_patient_link_id = contact_patient_name_link.id
         ;
         "#
-    )?;
+        )?;
 
-    #[cfg(not(feature = "postgres"))]
-    sql!(
-        connection,
-        r#"
+        #[cfg(not(feature = "postgres"))]
+        sql!(
+            connection,
+            r#"
         CREATE VIEW contact_trace_name_link_view AS
           SELECT 
             ct.id AS id,
@@ -107,6 +113,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
             ON ct.contact_patient_link_id = contact_patient_name_link.id
         ;
         "#
-    )?;
-    Ok(())
+        )?;
+        Ok(())
+    }
 }
