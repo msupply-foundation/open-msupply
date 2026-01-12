@@ -319,7 +319,7 @@ pub fn migrate(
     set_database_version(connection, &to_version)?;
 
     migration_result.push((
-        format!("Views recreated for {}", to_version.to_string()),
+        format!("Views recreated for {}", to_version),
         Utc::now().naive_utc(),
     ));
 
@@ -329,10 +329,10 @@ pub fn migrate(
 fn get_database_version(connection: &StorageConnection) -> Version {
     match KeyValueStoreRepository::new(connection).get_string(KeyType::DatabaseVersion) {
         Ok(Some(version_str)) => Version::from_str(&version_str),
-        // Rust migrations start at "1.0.3"
+        // Rust migrations start at "1.0.4" when version key is first added
         // DatabaseVersion key is introduced in 1.0.4 and first app version to have manual rust migrations
         // is in 1.1.0 (there is an intentional gap between 1.0.4 and 1.1.0 to allow example migrations to be runnable and testable)
-        _ => Version::from_str("1.0.3"),
+        _ => Version::from_str("1.0.4"),
     }
 }
 
