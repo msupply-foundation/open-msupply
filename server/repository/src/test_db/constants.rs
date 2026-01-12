@@ -2,7 +2,7 @@ use std::{path::PathBuf, str::FromStr};
 
 #[allow(dead_code)]
 pub(crate) const TEST_OUTPUT_DIR: &str = "test_output";
-#[cfg(all(not(feature = "postgres"), not(feature = "memory")))]
+#[cfg(not(feature = "postgres"))]
 #[allow(dead_code)]
 pub(crate) const TEMPLATE_MARKER_FILE: &str = "___template_needs_update.marker";
 #[cfg(feature = "postgres")]

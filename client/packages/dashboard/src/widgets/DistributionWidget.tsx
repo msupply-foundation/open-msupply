@@ -103,7 +103,13 @@ export const DistributionWidget = () => {
                   value: formatNumber.round(outboundCount?.notShipped),
                   link: RouteBuilder.create(AppRoute.Distribution)
                     .addPart(AppRoute.OutboundShipment)
-                    .addQuery({ status: InvoiceNodeStatus.Picked })
+                    .addQuery({
+                      status: [
+                        InvoiceNodeStatus.New,
+                        InvoiceNodeStatus.Allocated,
+                        InvoiceNodeStatus.Picked,
+                      ],
+                    })
                     .build(),
                 },
               ]}
