@@ -15,10 +15,9 @@ import {
   Tooltip,
   TextWithTooltipCell,
   CurrencyValueCell,
+  ExpiryDateCell,
+  NumberInputCell,
 } from '@openmsupply-client/common';
-// Need to be re-exported when Legacy cells are removed
-import { NumberInputCell } from '@openmsupply-client/common/src/ui/layout/tables/material-react-table/components/NumberInputCell';
-import { ExpiryDateCell } from '@openmsupply-client/common/src/ui/layout/tables/material-react-table/components/ExpiryDateCell';
 import {
   CurrencyRowFragment,
   ItemVariantInfoIcon,
@@ -180,7 +179,6 @@ export const useOutboundLineEditColumns = ({
         accessorFn: rowData =>
           currency ? rowData.sellPricePerPack / currency.rate : undefined,
       },
-
       {
         accessorKey: 'packSize',
         header: t('label.pack-size'),
@@ -188,7 +186,6 @@ export const useOutboundLineEditColumns = ({
         size: 80,
         defaultHideOnMobile: true,
       },
-
       {
         accessorKey: 'dosesPerUnit',
         header: unit
@@ -269,6 +266,13 @@ export const useOutboundLineEditColumns = ({
         columnType: ColumnType.Number,
         size: 100,
         defaultHideOnMobile: true,
+      },
+      {
+        id: 'volume',
+        header: t('label.volume'),
+        size: 100,
+        columnType: ColumnType.Number,
+        accessorFn: row => (row.volumePerPack ?? 0) * row.numberOfPacks,
       },
       {
         id: 'onHold',

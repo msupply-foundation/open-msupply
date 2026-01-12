@@ -1,13 +1,10 @@
 import React, { ReactElement, Suspense, useCallback, useEffect } from 'react';
 import {
   AlertModal,
-  createQueryParamsStore,
-  createTableStore,
   DetailTabs,
   DetailViewSkeleton,
   GoodsReceivedNodeStatus,
   RouteBuilder,
-  TableProvider,
   useBreadcrumbs,
   useEditModal,
   useNavigate,
@@ -24,7 +21,7 @@ import { SidePanel } from './SidePanel';
 import { GoodsReceivedLineEditModal } from './LineEdit';
 import { GoodsReceivedLineFragment } from '../api/operations.generated';
 
-export const DetailViewInner = (): ReactElement => {
+export const GoodsReceivedDetailView = (): ReactElement => {
   const t = useTranslation();
   const navigate = useNavigate();
   const { setCustomBreadcrumbs } = useBreadcrumbs();
@@ -102,20 +99,5 @@ export const DetailViewInner = (): ReactElement => {
         />
       )}
     </Suspense>
-  );
-};
-
-export const GoodsReceivedDetailView = () => {
-  return (
-    <TableProvider
-      createStore={createTableStore}
-      queryParamsStore={createQueryParamsStore<GoodsReceivedLineFragment>({
-        initialSortBy: {
-          key: 'itemName',
-        },
-      })}
-    >
-      <DetailViewInner />
-    </TableProvider>
   );
 };

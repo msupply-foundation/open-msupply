@@ -1,1 +1,0 @@
-DROP TABLE IF EXISTS name_store_join CASCADE;

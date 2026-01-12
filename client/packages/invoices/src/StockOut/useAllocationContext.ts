@@ -7,7 +7,7 @@ import {
 } from '@openmsupply-client/common';
 import {
   StockOutAlert,
-  canAllocate,
+  showLines,
   getAllocatedQuantity,
   issue,
   packsToQuantity,
@@ -152,7 +152,7 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
       sortedLines,
       line => {
         return (
-          canAllocate(line) &&
+          showLines(line) &&
           (!scannedBatch || scannedBatchFilter(sortedLines, line, scannedBatch))
         );
       }
@@ -320,8 +320,8 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
     });
 
     const hasOnHold = nonAllocatableLines.some(
-      ({ availablePacks, stockLineOnHold }) =>
-        availablePacks > 0 && !!stockLineOnHold
+      ({ availablePacks, stockLineOnHold, location }) =>
+        availablePacks > 0 && (!!stockLineOnHold || !!location?.onHold)
     );
 
     // Note that a placeholder is always considered to be pack size 1

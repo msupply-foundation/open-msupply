@@ -102,7 +102,7 @@ pub fn activity_log_entry_with_diff(
     let (changed_from, changed_to) = match old_value {
         Some(old) => {
             match json_diff(&old, &new_value).map_err(|e| RepositoryError::DBError {
-                msg: format!("{:?}", e),
+                msg: format!("{e:?}"),
                 extra: "JSON diff error".to_string(),
             })? {
                 Some((from, to)) => (
@@ -157,7 +157,7 @@ pub fn system_log_entry(
     let sync_site_id =
         KeyValueStoreRepository::new(connection).get_i32(KeyType::SettingsSyncSiteId)?;
 
-    let message = match { message } {
+    let message = match message {
         SystemLogMessage::Error(error, context) => {
             format!(
                 "{} - {} - {}",

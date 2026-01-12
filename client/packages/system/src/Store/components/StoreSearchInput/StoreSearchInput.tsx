@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { StoreRowFragment, usePaginatedStores } from '../../api';
 import {
   AutocompleteWithPagination,
+  CLEAR,
   useDebouncedValue,
 } from '@openmsupply-client/common';
 import { StoreOptionRender } from './StoreOptionRenderer';
@@ -81,7 +82,7 @@ export const StoreSearchInput = ({
         },
       }}
       onInputChange={(event, value, reason) => {
-        if (reason === 'clear') {
+        if (reason === CLEAR) {
           setInput('');
         }
         onInputChange(event, value, reason);

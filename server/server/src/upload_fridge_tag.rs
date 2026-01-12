@@ -12,7 +12,7 @@ use serde::Deserialize;
 
 use service::{
     auth_data::AuthData,
-    sensor::berlinger::{read_sensor, ReadSensor},
+    sensor::fridge_tag::{read_sensor, ReadSensor},
     service_provider::ServiceProvider,
     settings::Settings,
     static_files::{StaticFileCategory, StaticFileService},

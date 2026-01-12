@@ -10,9 +10,9 @@ import {
   IconButton,
   DeleteIcon,
   DateUtils,
+  NumberInputCell,
+  TextInputCell,
 } from '@openmsupply-client/common';
-import { TextInputCell } from '@openmsupply-client/common/src/ui/layout/tables/material-react-table/components/TextInputCell';
-import { NumberInputCell } from '@openmsupply-client/common/src/ui/layout/tables/material-react-table/components/NumberInputCell';
 
 interface GoodsReceivedLineEditColumnsProps {
   updateDraftLine: (patch: PatchDraftLineInput) => void;

@@ -1,13 +1,10 @@
 import React, { useEffect } from 'react';
 import {
-  TableProvider,
-  createTableStore,
   DetailViewSkeleton,
   AlertModal,
   useNavigate,
   RouteBuilder,
   useTranslation,
-  createQueryParamsStore,
   DetailTabs,
   useEditModal,
   useBreadcrumbs,
@@ -27,7 +24,7 @@ import { CustomerReturnEditModal } from '../modals';
 import { getNextItemId } from '../../utils';
 import { useCustomerReturnColumns } from './columns';
 
-const CustomerReturnsDetailViewComponent = () => {
+export const CustomerReturnDetailView = () => {
   const { data, isLoading } = useReturns.document.customerReturn();
   const { lines } = useReturns.lines.customerReturnRows();
   const t = useTranslation();
@@ -135,16 +132,3 @@ const CustomerReturnsDetailViewComponent = () => {
     </React.Suspense>
   );
 };
-
-export const CustomerReturnDetailView = () => (
-  <TableProvider
-    createStore={createTableStore}
-    queryParamsStore={createQueryParamsStore<CustomerReturnLineFragment>({
-      initialSortBy: {
-        key: 'itemName',
-      },
-    })}
-  >
-    <CustomerReturnsDetailViewComponent />
-  </TableProvider>
-);
