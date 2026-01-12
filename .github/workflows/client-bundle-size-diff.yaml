@@ -102,6 +102,8 @@ jobs:
           pr_path: "./pr/stats.json"
 
       - name: Comment
+        if: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
+        continue-on-error: true
         uses: NejcZdovc/comment-pr@v1
         with:
           file: "comment.md"
