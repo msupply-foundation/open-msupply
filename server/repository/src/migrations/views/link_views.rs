@@ -21,6 +21,7 @@ impl ViewMigrationFragment for ViewMigration {
                 DROP VIEW IF EXISTS stock_line_view;
                 DROP VIEW IF EXISTS purchase_order_view;
                 DROP VIEW IF EXISTS invoice_line_view;
+                DROP VIEW IF EXISTS purchase_order_line_view;
             "#
         )?;
 
@@ -232,6 +233,34 @@ impl ViewMigrationFragment for ViewMigration {
                     invoice_line
                 LEFT JOIN
                     name_link AS donor_link ON invoice_line.donor_link_id = donor_link.id;
+
+                CREATE VIEW purchase_order_line_view AS
+                SELECT
+                    purchase_order_line.id,
+                    purchase_order_line.store_id,
+                    purchase_order_line.purchase_order_id,
+                    purchase_order_line.line_number,
+                    purchase_order_line.item_link_id,
+                    purchase_order_line.item_name,
+                    purchase_order_line.requested_pack_size,
+                    purchase_order_line.requested_number_of_units,
+                    purchase_order_line.adjusted_number_of_units,
+                    purchase_order_line.received_number_of_units,
+                    purchase_order_line.requested_delivery_date,
+                    purchase_order_line.expected_delivery_date,
+                    purchase_order_line.stock_on_hand_in_units,
+                    purchase_order_line.supplier_item_code,
+                    purchase_order_line.price_per_pack_before_discount,
+                    purchase_order_line.price_per_pack_after_discount,
+                    purchase_order_line.comment,
+                    purchase_order_line.note,
+                    purchase_order_line.unit,
+                    purchase_order_line.status,
+                    manufacturer_link.name_id as manufacturer_id
+                FROM
+                    purchase_order_line
+                LEFT JOIN
+                    name_link AS manufacturer_link ON purchase_order_line.manufacturer_link_id = manufacturer_link.id;
             "#
         )?;
 
