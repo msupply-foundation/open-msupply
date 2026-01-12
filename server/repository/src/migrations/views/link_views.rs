@@ -20,6 +20,7 @@ impl ViewMigrationFragment for ViewMigration {
                 DROP VIEW IF EXISTS indicator_value_view;
                 DROP VIEW IF EXISTS stock_line_view;
                 DROP VIEW IF EXISTS purchase_order_view;
+                DROP VIEW IF EXISTS invoice_line_view;
             "#
         )?;
 
@@ -194,6 +195,43 @@ impl ViewMigrationFragment for ViewMigration {
                     name_link AS supplier_link ON purchase_order.supplier_name_link_id = supplier_link.id
                 LEFT JOIN
                     name_link AS donor_link ON purchase_order.donor_link_id = donor_link.id;
+
+                CREATE VIEW invoice_line_view AS
+                SELECT
+                    invoice_line.id,
+                    invoice_line.invoice_id,
+                    invoice_line.item_link_id,
+                    invoice_line.item_name,
+                    invoice_line.item_code,
+                    invoice_line.stock_line_id,
+                    invoice_line.location_id,
+                    invoice_line.batch,
+                    invoice_line.expiry_date,
+                    invoice_line.pack_size,
+                    invoice_line.cost_price_per_pack,
+                    invoice_line.sell_price_per_pack,
+                    invoice_line.total_before_tax,
+                    invoice_line.total_after_tax,
+                    invoice_line.tax_percentage,
+                    invoice_line.type,
+                    invoice_line.number_of_packs,
+                    invoice_line.prescribed_quantity,
+                    invoice_line.note,
+                    invoice_line.foreign_currency_price_before_tax,
+                    invoice_line.item_variant_id,
+                    invoice_line.linked_invoice_id,
+                    invoice_line.vvm_status_id,
+                    invoice_line.reason_option_id,
+                    invoice_line.campaign_id,
+                    invoice_line.program_id,
+                    invoice_line.shipped_number_of_packs,
+                    invoice_line.volume_per_pack,
+                    invoice_line.shipped_pack_size,
+                    donor_link.name_id as donor_id
+                FROM
+                    invoice_line
+                LEFT JOIN
+                    name_link AS donor_link ON invoice_line.donor_link_id = donor_link.id;
             "#
         )?;
 
