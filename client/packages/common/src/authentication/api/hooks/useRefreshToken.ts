@@ -9,7 +9,9 @@ import { useGetRefreshToken } from './useGetRefreshToken';
 
 export const useRefreshToken = (onTimeout: () => void) => {
   const { mutateAsync } = useGetRefreshToken();
-  const { client } = useGql();
+  const {
+    client: { getLastRequestTime },
+  } = useGql();
 
   const refreshToken = () => {
     const authCookie = getAuthCookie();
@@ -24,7 +26,7 @@ export const useRefreshToken = (onTimeout: () => void) => {
 
     const minutesSinceLastRequest = DateUtils.differenceInMinutes(
       Date.now(),
-      client.getLastRequestTime()
+      getLastRequestTime()
     );
 
     const expiresSoon = expiresIn === 1 || expiresIn === 2;
