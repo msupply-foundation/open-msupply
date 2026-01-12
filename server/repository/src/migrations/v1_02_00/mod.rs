@@ -1,4 +1,4 @@
-use super::{version::Version, Migration};
+use super::{version::Version, Migration, MigrationFragment};
 
 use crate::StorageConnection;
 mod context_table;
@@ -10,10 +10,15 @@ impl Migration for V1_02_00 {
         Version::from_str("1.2.00")
     }
 
-    fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
-        log_settings::migrate(connection)?;
-        context_table::migrate(connection)?;
+    fn migrate(&self, _connection: &StorageConnection) -> anyhow::Result<()> {
         Ok(())
+    }
+
+    fn migrate_fragments(&self) -> Vec<Box<dyn MigrationFragment>> {
+        vec![
+            Box::new(log_settings::Migrate),
+            Box::new(context_table::Migrate),
+        ]
     }
 }
 

@@ -1,17 +1,20 @@
-use super::{version::Version, Migration};
-
+use super::{version::Version, Migration, MigrationFragment};
 use crate::StorageConnection;
-pub(crate) struct V1_03_00;
+
 mod user;
 
+pub(crate) struct V1_03_00;
 impl Migration for V1_03_00 {
     fn version(&self) -> Version {
         Version::from_str("1.3.0")
     }
 
-    fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
-        user::migrate(connection)?;
+    fn migrate(&self, _connection: &StorageConnection) -> anyhow::Result<()> {
         Ok(())
+    }
+
+    fn migrate_fragments(&self) -> Vec<Box<dyn MigrationFragment>> {
+        vec![Box::new(user::Migrate)]
     }
 }
 
