@@ -5,6 +5,7 @@ use super::{
     vvm_status::vvm_status_row::vvm_status, StorageConnection,
 };
 
+use crate::diesel_macros::define_linked_tables;
 use crate::repository_error::RepositoryError;
 use crate::{
     ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, InvoiceRowRepository,
@@ -17,9 +18,12 @@ use diesel::prelude::*;
 use chrono::NaiveDate;
 use diesel_derive_enum::DbEnum;
 
-table! {
-    invoice_line (id) {
-        id -> Text,
+define_linked_tables! {
+    view: invoice_line = "invoice_line_view",
+    core: invoice_line_with_links = "invoice_line",
+    struct: InvoiceLineRow,
+    repo: InvoiceLineRowRepository,
+    shared: {
         invoice_id -> Text,
         item_link_id -> Text,
         item_name -> Text,
@@ -34,21 +38,26 @@ table! {
         total_before_tax -> Double,
         total_after_tax -> Double,
         tax_percentage -> Nullable<Double>,
-        #[sql_name = "type"] type_ -> crate::db_diesel::invoice_line_row::InvoiceLineTypeMapping,
+        #[sql_name = "type"]
+        type_ -> crate::db_diesel::invoice_line_row::InvoiceLineTypeMapping,
         number_of_packs -> Double,
         prescribed_quantity -> Nullable<Double>,
         note -> Nullable<Text>,
         foreign_currency_price_before_tax -> Nullable<Double>,
         item_variant_id -> Nullable<Text>,
         linked_invoice_id -> Nullable<Text>,
-        donor_link_id -> Nullable<Text>,
         vvm_status_id -> Nullable<Text>,
         reason_option_id -> Nullable<Text>,
         campaign_id -> Nullable<Text>,
         program_id -> Nullable<Text>,
         shipped_number_of_packs -> Nullable<Double>,
         volume_per_pack -> Double,
-        shipped_pack_size -> Nullable<Double>
+        shipped_pack_size -> Nullable<Double>,
+    },
+    links: {
+    },
+    optional_links: {
+        donor_link_id -> donor_id,
     }
 }
 
@@ -74,8 +83,7 @@ pub enum InvoiceLineType {
     Service,
 }
 
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
-#[diesel(treat_none_as_null = true)]
+#[derive(Clone, Queryable, Debug, PartialEq, Default)]
 #[diesel(table_name = invoice_line)]
 pub struct InvoiceLineRow {
     pub id: String,
@@ -103,7 +111,6 @@ pub struct InvoiceLineRow {
     pub foreign_currency_price_before_tax: Option<f64>,
     pub item_variant_id: Option<String>,
     pub linked_invoice_id: Option<String>,
-    pub donor_link_id: Option<String>,
     pub vvm_status_id: Option<String>,
     pub reason_option_id: Option<String>,
     pub campaign_id: Option<String>,
@@ -111,6 +118,8 @@ pub struct InvoiceLineRow {
     pub shipped_number_of_packs: Option<f64>,
     pub volume_per_pack: f64,
     pub shipped_pack_size: Option<f64>,
+    // Resolved from name_link - must be last to match view column order
+    pub donor_id: Option<String>,
 }
 
 pub struct InvoiceLineRowRepository<'a> {
@@ -123,12 +132,7 @@ impl<'a> InvoiceLineRowRepository<'a> {
     }
 
     pub fn upsert_one(&self, row: &InvoiceLineRow) -> Result<i64, RepositoryError> {
-        diesel::insert_into(invoice_line)
-            .values(row)
-            .on_conflict(id)
-            .do_update()
-            .set(row)
-            .execute(self.connection.lock().connection())?;
+        self._upsert(row)?;
         self.insert_changelog(row, RowActionType::Upsert)
     }
 
@@ -219,7 +223,7 @@ impl<'a> InvoiceLineRowRepository<'a> {
             }
         };
 
-        diesel::delete(invoice_line.filter(id.eq(invoice_line_id)))
+        diesel::delete(invoice_line_with_links::table.filter(invoice_line_with_links::id.eq(invoice_line_id)))
             .execute(self.connection.lock().connection())?;
         Ok(Some(change_log_id))
     }
