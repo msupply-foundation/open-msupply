@@ -3,21 +3,20 @@ use diesel::prelude::*;
 use crate::{
     db_diesel::{
         master_list_name_join::master_list_name_join, master_list_row::master_list, name_row::name,
-        name_store_join::name_store_join, program_row::program,
+        name_store_join::name_store_join, program_row::program, store_row::store,
     },
     diesel_macros::apply_equal_filter,
     name_oms_fields, name_oms_fields_alias,
     repository_error::RepositoryError,
-    store_row_refactor::store_refactor,
     EqualFilter, Name, NameFilter, NameOmsFieldsRow, NameRepository, NameRow, NameStoreJoinRow,
-    ProgramRow, StorageConnection, StoreRowRefactor,
+    ProgramRow, StorageConnection, StoreRow,
 };
 
 pub type ProgramSupplierJoin = (
     NameRow,
     NameOmsFieldsRow,
     NameStoreJoinRow,
-    StoreRowRefactor,
+    StoreRow,
     ProgramRow,
 );
 
@@ -81,7 +80,7 @@ impl<'a> ProgramSupplierRepository<'a> {
             name_store_join::table::all_columns()
                 .nullable()
                 .assume_not_null(),
-            store_refactor::table::all_columns()
+            store::table::all_columns()
                 .nullable()
                 .assume_not_null(),
             program::table::all_columns().nullable().assume_not_null(),
@@ -149,7 +148,7 @@ mod test {
         };
         let store1 = StoreRow {
             id: "store1".to_string(),
-            name_link_id: store_name1.id.clone(),
+            name_id: store_name1.id.clone(),
             ..Default::default()
         };
         let store_name2 = NameRow {
@@ -163,7 +162,7 @@ mod test {
 
         let store2 = StoreRow {
             id: "store2".to_string(),
-            name_link_id: store_name2.id.clone(),
+            name_id: store_name2.id.clone(),
             ..Default::default()
         };
 
@@ -177,7 +176,7 @@ mod test {
         };
         let store3 = StoreRow {
             id: "store3".to_string(),
-            name_link_id: store_name3.id.clone(),
+            name_id: store_name3.id.clone(),
             ..Default::default()
         };
 

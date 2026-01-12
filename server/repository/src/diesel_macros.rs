@@ -529,7 +529,7 @@ macro_rules! define_linked_tables {
             $(
                 $link_id:ident -> $resolved_id:ident
             ),* $(,)?
-        }
+        } $(,)?
         optional_links: {
             $(
                 $opt_link_id:ident -> $opt_resolved_id:ident
@@ -572,14 +572,14 @@ macro_rules! define_linked_tables {
                         $core_table::id.eq(&record.id),
                         $(define_linked_tables!(@field_access $core_table, $field, record),)*
                         $($core_table::$link_id.eq(&record.$resolved_id),)*
-                        $($core_table::$opt_link_id.eq(&record.$opt_resolved_id),)*
+                        $($core_table::$opt_link_id.eq(&record.$opt_resolved_id.as_ref()),)*
                     ))
                     .on_conflict($core_table::id)
                     .do_update()
                     .set((
                         $(define_linked_tables!(@field_access $core_table, $field, record),)*
                         $($core_table::$link_id.eq(&record.$resolved_id),)*
-                        $($core_table::$opt_link_id.eq(&record.$opt_resolved_id),)*
+                        $($core_table::$opt_link_id.eq(&record.$opt_resolved_id.as_ref()),)*
                     ))
                     .execute(self.connection.lock().connection())?;
 

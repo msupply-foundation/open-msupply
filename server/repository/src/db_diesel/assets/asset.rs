@@ -7,7 +7,7 @@ use diesel::{
 
 use crate::{
     asset_log_row::{latest_asset_log, AssetLogRow, AssetLogStatus},
-    db_diesel::{name_link_row::name_link, name_row::name, store_row::store},
+    db_diesel::{name_row::name, store_row::store},
     diesel_macros::{
         apply_date_filter, apply_equal_filter, apply_sort, apply_sort_no_case, apply_string_filter,
         apply_string_or_filter,
@@ -259,7 +259,7 @@ fn create_filtered_query(filter: Option<AssetFilter>) -> BoxedAssetQuery {
         if store.is_some() {
             let mut sub_query = store::table
                 .select(store::id)
-                .left_join(name_link::table.inner_join(name::table))
+                .inner_join(name::table)
                 .into_boxed();
             apply_string_filter!(sub_query, store.clone(), store::code);
             apply_string_or_filter!(sub_query, store, name::name_);

@@ -59,7 +59,7 @@ pub fn mock_test_master_list_name3() -> NameRow {
 pub fn mock_test_master_list_store1() -> StoreRow {
     StoreRow {
         id: "mock_test_master_list_store1".to_string(),
-        name_link_id: mock_test_master_list_name3().id,
+        name_id: mock_test_master_list_name3().id,
         code: "mock_test_master_list_store1".to_string(),
         ..Default::default()
     }

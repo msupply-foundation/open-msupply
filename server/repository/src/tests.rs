@@ -17,7 +17,7 @@ mod repository_test {
         pub fn store_1() -> StoreRow {
             StoreRow {
                 id: "store1".to_string(),
-                name_link_id: "name1".to_string(),
+                name_id: "name1".to_string(),
                 code: "code1".to_string(),
                 ..Default::default()
             }
@@ -68,7 +68,7 @@ mod repository_test {
                 on_hold: false,
                 note: None,
                 location_id: None,
-                supplier_link_id: Some(String::from("name1")),
+                supplier_id: Some(String::from("name1")),
                 ..Default::default()
             }
         }

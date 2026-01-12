@@ -303,7 +303,7 @@ fn create_filtered_query(store_id: String, filter: Option<ItemFilter>) -> BoxedI
                     .on(master_list_name_join::master_list_id.eq(master_list::id)),
             )
             .inner_join(
-                store::table.on(store::name_link_id
+                store::table.on(store::name_id
                     .eq(master_list_name_join::name_id)
                     .and(store::id.eq(store_id.clone()))),
             )
@@ -744,7 +744,7 @@ mod tests {
 
         let store_row = StoreRow {
             id: "name1_store".to_string(),
-            name_link_id: "name1".to_string(),
+            name_id: "name1".to_string(),
             ..Default::default()
         };
 
