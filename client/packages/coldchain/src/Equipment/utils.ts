@@ -30,66 +30,32 @@ export const getEquipmentStatusTranslation = (
   return t(translationKey);
 };
 
-export const statusColorMap = (
-  t: TypedTFunction<LocaleKey>,
-  status: AssetLogStatusNodeType
-): { color: string; label: string } | undefined => {
-  const map: Record<AssetLogStatusNodeType, { color: string; label: string }> =
-    {
-      [AssetLogStatusNodeType.Decommissioned]: {
-        color: 'cceStatus.decommissioned',
-        label: t('status.decommissioned'),
-      },
-      [AssetLogStatusNodeType.Functioning]: {
-        color: 'cceStatus.functioning',
-        label: t('status.functioning'),
-      },
-      [AssetLogStatusNodeType.FunctioningButNeedsAttention]: {
-        color: 'cceStatus.functioningButNeedsAttention',
-        label: t('status.functioning-but-needs-attention'),
-      },
-      [AssetLogStatusNodeType.NotFunctioning]: {
-        color: 'cceStatus.notFunctioning',
-        label: t('status.not-functioning'),
-      },
-      [AssetLogStatusNodeType.NotInUse]: {
-        color: 'cceStatus.notInUse',
-        label: t('status.not-in-use'),
-      },
-      [AssetLogStatusNodeType.Unserviceable]: {
-        color: 'cceStatus.unserviceable',
-        label: t('status.unserviceable'),
-      },
-    };
-  return map[status];
-};
-
-export const fullStatusColorMap = (
+export const fullStatusColourMap = (
   t: TypedTFunction<LocaleKey>
-): Record<AssetLogStatusNodeType, { color: string; label: string }> => {
+): Record<AssetLogStatusNodeType, { colour: string; label: string }> => {
   return {
     [AssetLogStatusNodeType.Decommissioned]: {
-      color: 'cceStatus.decommissioned',
+      colour: 'cceStatus.decommissioned',
       label: t('status.decommissioned'),
     },
     [AssetLogStatusNodeType.Functioning]: {
-      color: 'cceStatus.functioning',
+      colour: 'cceStatus.functioning',
       label: t('status.functioning'),
     },
     [AssetLogStatusNodeType.FunctioningButNeedsAttention]: {
-      color: 'cceStatus.functioningButNeedsAttention',
+      colour: 'cceStatus.functioningButNeedsAttention',
       label: t('status.functioning-but-needs-attention'),
     },
     [AssetLogStatusNodeType.NotFunctioning]: {
-      color: 'cceStatus.notFunctioning',
+      colour: 'cceStatus.notFunctioning',
       label: t('status.not-functioning'),
     },
     [AssetLogStatusNodeType.NotInUse]: {
-      color: 'cceStatus.notInUse',
+      colour: 'cceStatus.notInUse',
       label: t('status.not-in-use'),
     },
     [AssetLogStatusNodeType.Unserviceable]: {
-      color: 'cceStatus.unserviceable',
+      colour: 'cceStatus.unserviceable',
       label: t('status.unserviceable'),
     },
   };
@@ -136,7 +102,7 @@ export const assetsToCsv = (
     const parsedCatalogProperties = ObjUtils.parse(node.catalogProperties);
 
     const status =
-      node.statusLog?.status && parseLogStatus(node.statusLog.status);
+      node.statusLog?.status && statusColourMap(node.statusLog.status);
 
     return [
       node.id,
@@ -148,7 +114,7 @@ export const assetsToCsv = (
       Formatter.csvDateString(node.warrantyStart),
       Formatter.csvDateString(node.warrantyEnd),
       node.serialNumber,
-      status ? t(status.key) : '',
+      status ? t(status.label) : '',
       node.needsReplacement ? node.needsReplacement : false,
       node.notes,
       Formatter.csvDateTimeString(node.createdDatetime),
@@ -162,42 +128,40 @@ export const assetsToCsv = (
   return Formatter.csv({ fields, data });
 };
 
-export const parseLogStatus = (
+export const statusColourMap = (
   status: AssetLogStatusNodeType
-): { key: LocaleKey; colour: string } | undefined => {
+): { label: LocaleKey; colour: string } | undefined => {
   switch (status) {
     case AssetLogStatusNodeType.Decommissioned:
       return {
-        key: 'status.decommissioned',
+        label: 'status.decommissioned',
         colour: 'cceStatus.decommissioned',
       };
     case AssetLogStatusNodeType.Functioning:
       return {
-        key: 'status.functioning',
+        label: 'status.functioning',
         colour: 'cceStatus.functioning',
       };
     case AssetLogStatusNodeType.FunctioningButNeedsAttention:
       return {
-        key: 'status.functioning-but-needs-attention',
+        label: 'status.functioning-but-needs-attention',
         colour: 'cceStatus.functioningButNeedsAttention',
       };
     case AssetLogStatusNodeType.NotFunctioning:
       return {
-        key: 'status.not-functioning',
+        label: 'status.not-functioning',
         colour: 'cceStatus.notFunctioning',
       };
     case AssetLogStatusNodeType.NotInUse:
       return {
-        key: 'status.not-in-use',
+        label: 'status.not-in-use',
         colour: 'cceStatus.notInUse',
       };
     case AssetLogStatusNodeType.Unserviceable:
       return {
-        key: 'status.unserviceable',
+        label: 'status.unserviceable',
         colour: 'cceStatus.unserviceable',
       };
-    default:
-      console.warn(`Unknown equipment status: ${status}`);
   }
 };
 
@@ -254,9 +218,9 @@ export const importEquipmentToCsv = (
   fields.push(...baseAssetFields(t), ...dedupedAssetProperties);
 
   const data = assets.map(node => {
-    const statusKey = parseLogStatus(
+    const statusKey = statusColourMap(
       node.status ?? AssetLogStatusNodeType.Functioning // to avoid status being undefined
-    )?.key;
+    )?.label;
     const row = [
       ...(isCentralServer ? [node.store?.code] : []),
       node.assetNumber,
