@@ -255,7 +255,7 @@ mod tests {
         let purchase_order_id = "test-po-1";
         let row = PurchaseOrderRow {
             id: purchase_order_id.to_string(),
-            supplier_name_link_id: mock_name_c().id,
+            supplier_name_id: mock_name_c().id,
             status: PurchaseOrderStatus::New,
             store_id: mock_store_a().id.clone(),
             created_datetime: chrono::Utc::now().naive_utc(),

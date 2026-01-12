@@ -19,6 +19,7 @@ impl ViewMigrationFragment for ViewMigration {
                 DROP VIEW IF EXISTS contact_view;
                 DROP VIEW IF EXISTS indicator_value_view;
                 DROP VIEW IF EXISTS stock_line_view;
+                DROP VIEW IF EXISTS purchase_order_view;
             "#
         )?;
 
@@ -150,6 +151,49 @@ impl ViewMigrationFragment for ViewMigration {
                     name_link AS supplier_link ON stock_line.supplier_link_id = supplier_link.id
                 LEFT JOIN
                     name_link AS donor_link ON stock_line.donor_link_id = donor_link.id;
+
+                CREATE VIEW purchase_order_view AS
+                SELECT
+                    purchase_order.id,
+                    purchase_order.store_id,
+                    purchase_order.created_by,
+                    purchase_order.purchase_order_number,
+                    purchase_order.status,
+                    purchase_order.created_datetime,
+                    purchase_order.confirmed_datetime,
+                    purchase_order.target_months,
+                    purchase_order.comment,
+                    purchase_order.reference,
+                    purchase_order.currency_id,
+                    purchase_order.foreign_exchange_rate,
+                    purchase_order.shipping_method,
+                    purchase_order.sent_datetime,
+                    purchase_order.contract_signed_date,
+                    purchase_order.advance_paid_date,
+                    purchase_order.received_at_port_date,
+                    purchase_order.requested_delivery_date,
+                    purchase_order.supplier_agent,
+                    purchase_order.authorising_officer_1,
+                    purchase_order.authorising_officer_2,
+                    purchase_order.additional_instructions,
+                    purchase_order.heading_message,
+                    purchase_order.agent_commission,
+                    purchase_order.document_charge,
+                    purchase_order.communications_charge,
+                    purchase_order.insurance_charge,
+                    purchase_order.freight_charge,
+                    purchase_order.freight_conditions,
+                    purchase_order.supplier_discount_percentage,
+                    purchase_order.request_approval_datetime,
+                    purchase_order.finalised_datetime,
+                    supplier_link.name_id as supplier_name_id,
+                    donor_link.name_id as donor_id
+                FROM
+                    purchase_order
+                LEFT JOIN
+                    name_link AS supplier_link ON purchase_order.supplier_name_link_id = supplier_link.id
+                LEFT JOIN
+                    name_link AS donor_link ON purchase_order.donor_link_id = donor_link.id;
             "#
         )?;
 
