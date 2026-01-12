@@ -9,7 +9,7 @@ use crate::repository_error::RepositoryError;
 use crate::{Delete, Upsert};
 use diesel::prelude::*;
 
-define_linked_tables!(
+define_linked_tables! {
     view: master_list_name_join = "master_list_name_join_view",
     core: master_list_name_join_with_links = "master_list_name_join",
     struct: MasterListNameJoinRow,
@@ -19,8 +19,10 @@ define_linked_tables!(
     },
     links: {
         name_link_id -> name_id,
+    },
+    optional_links: {
     }
-);
+}
 
 #[derive(Clone, Queryable, Debug, PartialEq, Eq)]
 #[diesel(table_name = master_list_name_join)]

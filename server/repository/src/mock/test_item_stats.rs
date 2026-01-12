@@ -191,7 +191,7 @@ pub fn stock_line1() -> StockLineRow {
         pack_size: 10.0,
         available_number_of_packs: 1.0,
         total_number_of_packs: 40.0,
-        supplier_link_id: Some(String::from("name_store_b")),
+        supplier_id: Some(String::from("name_store_b")),
         ..Default::default()
     }
 }
@@ -205,7 +205,7 @@ pub fn stock_line2() -> StockLineRow {
         available_number_of_packs: 20.0,
         pack_size: 10.0,
         total_number_of_packs: 40.0,
-        supplier_link_id: Some(String::from("name_store_b")),
+        supplier_id: Some(String::from("name_store_b")),
         ..Default::default()
     }
 }
@@ -219,7 +219,7 @@ pub fn stock_line3() -> StockLineRow {
         available_number_of_packs: 10.0,
         pack_size: 1.0,
         total_number_of_packs: 40.0,
-        supplier_link_id: Some(String::from("name_store_b")),
+        supplier_id: Some(String::from("name_store_b")),
         ..Default::default()
     }
 }
@@ -237,7 +237,7 @@ pub fn stock_line_1_store_b() -> StockLineRow {
         available_number_of_packs: 1.0,
         pack_size: 10.0,
         total_number_of_packs: 40.0,
-        supplier_link_id: Some(String::from("name_store_b")),
+        supplier_id: Some(String::from("name_store_b")),
         ..Default::default()
     }
 }
@@ -266,7 +266,7 @@ pub fn stock_line1_item2() -> StockLineRow {
         available_number_of_packs: 11.0,
         pack_size: 2.0,
         total_number_of_packs: 40.0,
-        supplier_link_id: Some(String::from("name_store_b")),
+        supplier_id: Some(String::from("name_store_b")),
         ..Default::default()
     }
 }

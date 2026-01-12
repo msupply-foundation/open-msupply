@@ -122,7 +122,7 @@ pub fn mock_stock_line_stocktake_surplus() -> StockLineRow {
         expiry_date: None,
         on_hold: false,
         note: None,
-        supplier_link_id: Some(String::from("name_store_c")),
+        supplier_id: Some(String::from("name_store_c")),
         ..Default::default()
     }
 }
@@ -170,7 +170,7 @@ pub fn mock_stock_line_stocktake_deficit() -> StockLineRow {
         expiry_date: None,
         on_hold: false,
         note: None,
-        supplier_link_id: Some(String::from("name_store_c")),
+        supplier_id: Some(String::from("name_store_c")),
         ..Default::default()
     }
 }

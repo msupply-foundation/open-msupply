@@ -1,6 +1,6 @@
 use super::{
-    name_row::name, name_store_join::name_store_join, DBType, NameRow, NameStoreJoinRow,
-    StorageConnection, StoreRow,
+    name_row::name, name_store_join::name_store_join, store_row::store, DBType, NameRow,
+    NameStoreJoinRow, StorageConnection, StoreRow,
 };
 
 use crate::{
@@ -9,8 +9,7 @@ use crate::{
     },
     name_link, name_oms_fields_alias,
     repository_error::RepositoryError,
-    store_row_refactor::store_refactor,
-    EqualFilter, NameOmsFieldsRow, NameRowType, Pagination, Sort, StoreRowRefactor, StringFilter,
+    EqualFilter, NameOmsFieldsRow, NameRowType, Pagination, Sort, StringFilter,
 };
 
 use diesel::{dsl::IntoBoxed, prelude::*};
@@ -74,7 +73,7 @@ pub type NameSort = Sort<NameSortField>;
 type NameAndNameStoreJoin = (
     NameRow,
     Option<NameStoreJoinRow>,
-    Option<StoreRowRefactor>,
+    Option<StoreRow>,
     NameOmsFieldsRow,
 );
 
@@ -166,9 +165,9 @@ impl<'a> NameRepository<'a> {
             .into_boxed()
             .filter(name::type_.ne(NameRowType::Patient))
             .filter(
-                store_refactor::is_disabled
+                store::is_disabled
                     .is_null()
-                    .or(store_refactor::is_disabled.eq(false)),
+                    .or(store::is_disabled.eq(false)),
             ); // Filter out disabled stores, these are usually due to store merge, and should not be visible
 
         if let Some(f) = filter {
@@ -205,7 +204,7 @@ impl<'a> NameRepository<'a> {
             apply_string_filter!(query, code, name::code);
 
             apply_string_filter!(query, name, name::name_);
-            apply_string_filter!(query, store_code, store_refactor::code);
+            apply_string_filter!(query, store_code, store::code);
 
             let r#type = r#type.map(|r| r.convert_filter::<NameRowType>());
             apply_equal_filter!(query, r#type, name::type_);
@@ -245,8 +244,8 @@ impl<'a> NameRepository<'a> {
             };
 
             query = match is_store {
-                Some(true) => query.filter(store_refactor::id.is_not_null()),
-                Some(false) => query.filter(store_refactor::id.is_null()),
+                Some(true) => query.filter(store::id.is_not_null()),
+                Some(false) => query.filter(store::id.is_null()),
                 None => query,
             };
 
@@ -271,7 +270,7 @@ impl Name {
         Name {
             name_row,
             name_store_join_row,
-            store_row: store_row.map(|sr| StoreRow::from_refactor_row(sr)),
+            store_row,
             properties: name_oms_fields.properties,
         }
     }
@@ -293,7 +292,7 @@ fn query(store_id: String) -> _ {
                 .eq(name::id)
                 .and(name_store_join::store_id.eq(store_id))),
         )
-        .left_join(store_refactor::table)
+        .left_join(store::table)
         .inner_join(name_oms_fields_alias)
 }
 
@@ -715,7 +714,7 @@ mod tests {
         assert_eq!(result.len(), 1);
         assert_eq!(
             result.first().unwrap().name_row.id,
-            mock_test_name_query_store_2().name_link_id
+            mock_test_name_query_store_2().name_id
         );
 
         // Test is visible

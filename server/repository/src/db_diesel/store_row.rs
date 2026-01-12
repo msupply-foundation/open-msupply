@@ -1,25 +1,14 @@
-use super::{item_link_row::item_link, name_link_row::name_link, StorageConnection};
+use super::{item_link_row::item_link, name_row::name, StorageConnection};
 
-use crate::{repository_error::RepositoryError, Delete, StoreRowRefactor, Upsert};
+use crate::{
+    diesel_macros::define_linked_tables, repository_error::RepositoryError, Delete, Upsert,
+};
 
 use chrono::NaiveDate;
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
-
-table! {
-    store (id) {
-        id -> Text,
-        name_link_id -> Text,
-        code -> Text,
-        site_id -> Integer,
-        logo -> Nullable<Text>,
-        store_mode -> crate::db_diesel::store_row::StoreModeMapping,
-        created_date -> Nullable<Date>,
-        is_disabled -> Bool,
-    }
-}
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Hash, Default, Serialize, Deserialize, TS)]
 #[cfg_attr(test, derive(strum::EnumIter))]
@@ -30,8 +19,27 @@ pub enum StoreMode {
     Dispensary,
 }
 
-joinable!(store -> name_link (name_link_id));
-allow_tables_to_appear_in_same_query!(store, name_link);
+define_linked_tables! {
+    view: store = "store_view",
+    core: store_with_links = "store",
+    struct: StoreRow,
+    repo: StoreRowRepository,
+    shared: {
+        code -> Text,
+        site_id -> Integer,
+        logo -> Nullable<Text>,
+        store_mode -> crate::db_diesel::store_row::StoreModeMapping,
+        created_date -> Nullable<Date>,
+        is_disabled -> Bool,
+    },
+    links: {
+        name_link_id -> name_id,
+    },
+    optional_links: {
+    }
+}
+
+joinable!(store -> name (name_id));
 allow_tables_to_appear_in_same_query!(store, item_link);
 
 #[derive(
@@ -50,27 +58,14 @@ allow_tables_to_appear_in_same_query!(store, item_link);
 #[diesel(table_name = store)]
 pub struct StoreRow {
     pub id: String,
-    pub name_link_id: String,
     pub code: String,
     pub site_id: i32,
     pub logo: Option<String>,
     pub store_mode: StoreMode,
     pub created_date: Option<NaiveDate>,
     pub is_disabled: bool,
-}
-impl StoreRow {
-    pub(crate) fn from_refactor_row(sr: StoreRowRefactor) -> StoreRow {
-        StoreRow {
-            id: sr.id,
-            name_link_id: sr.name_id,
-            code: sr.code,
-            site_id: sr.site_id,
-            logo: sr.logo,
-            store_mode: sr.store_mode,
-            created_date: sr.created_date,
-            is_disabled: sr.is_disabled,
-        }
-    }
+    // Resolved from name_link - must be last to match view column order
+    pub name_id: String,
 }
 
 pub struct StoreRowRepository<'a> {
@@ -94,19 +89,12 @@ impl<'a> StoreRowRepository<'a> {
     }
 
     pub fn upsert_one(&self, row: &StoreRow) -> Result<(), RepositoryError> {
-        diesel::insert_into(store::table)
-            .values(row)
-            .on_conflict(store::id)
-            .do_update()
-            .set(row)
-            .execute(self.connection.lock().connection())?;
+        self._upsert(row)?;
         Ok(())
     }
 
     pub async fn insert_one(&self, store_row: &StoreRow) -> Result<(), RepositoryError> {
-        diesel::insert_into(store::table)
-            .values(store_row)
-            .execute(self.connection.lock().connection())?;
+        self._upsert(store_row)?;
         Ok(())
     }
 
@@ -131,7 +119,7 @@ impl<'a> StoreRowRepository<'a> {
     }
 
     pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
-        diesel::delete(store::table.filter(store::id.eq(id)))
+        diesel::delete(store_with_links::table.filter(store_with_links::id.eq(id)))
             .execute(self.connection.lock().connection())?;
         Ok(())
     }

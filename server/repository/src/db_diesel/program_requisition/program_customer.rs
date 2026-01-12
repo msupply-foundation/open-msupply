@@ -10,20 +10,20 @@ use crate::{
         name_tag_row::name_tag,
         program_requisition_settings_row::program_requisition_settings,
         program_row::program,
+        store_row::store,
     },
     diesel_macros::apply_equal_filter,
     name_oms_fields, name_oms_fields_alias,
     repository_error::RepositoryError,
-    store_row_refactor::store_refactor,
     EqualFilter, Name, NameFilter, NameOmsFieldsRow, NameRepository, NameRow, NameStoreJoinRow,
-    ProgramRow, StorageConnection, StoreRowRefactor,
+    ProgramRow, StorageConnection, StoreRow,
 };
 
 pub type ProgramCustomerJoin = (
     NameRow,
     NameOmsFieldsRow,
     Option<NameStoreJoinRow>,
-    Option<StoreRowRefactor>,
+    Option<StoreRow>,
     ProgramRow,
 );
 
@@ -84,7 +84,7 @@ impl<'a> ProgramCustomerRepository<'a> {
                 name::table::all_columns(),
                 name_oms_fields_alias.fields((name_oms_fields::id, name_oms_fields::properties)),
                 name_store_join::table::all_columns().nullable(),
-                store_refactor::table::all_columns().nullable(),
+                store::table::all_columns().nullable(),
                 program::table::all_columns().nullable().assume_not_null(),
             ))
             .distinct();

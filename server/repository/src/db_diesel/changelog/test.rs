@@ -367,7 +367,7 @@ async fn test_changelog_name_and_store_id_in_trigger() {
     fn store() -> StoreRow {
         StoreRow {
             id: "store".to_string(),
-            name_link_id: name().id,
+            name_id: name().id,
             ..Default::default()
         }
     }

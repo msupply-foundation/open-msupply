@@ -218,7 +218,7 @@ pub fn mock_invoice1_linked_to_requisition() -> FullMockInvoice {
                     expiry_date: None,
                     on_hold: false,
                     note: None,
-                    supplier_link_id: Some(String::from("name_store_b")),
+                    supplier_id: Some(String::from("name_store_b")),
                     ..Default::default()
                 },
             },
@@ -257,7 +257,7 @@ pub fn mock_invoice1_linked_to_requisition() -> FullMockInvoice {
                     expiry_date: None,
                     on_hold: false,
                     note: None,
-                    supplier_link_id: Some(String::from("name_store_b")),
+                    supplier_id: Some(String::from("name_store_b")),
                     ..Default::default()
                 },
             },
@@ -319,7 +319,7 @@ pub fn mock_invoice2_linked_to_requisition() -> FullMockInvoice {
                 expiry_date: None,
                 on_hold: false,
                 note: None,
-                supplier_link_id: Some(String::from("name_store_b")),
+                supplier_id: Some(String::from("name_store_b")),
                 ..Default::default()
             },
         }],
@@ -380,7 +380,7 @@ pub fn mock_invoice3_linked_to_requisition() -> FullMockInvoice {
                 expiry_date: None,
                 on_hold: false,
                 note: None,
-                supplier_link_id: Some(String::from("name_store_b")),
+                supplier_id: Some(String::from("name_store_b")),
                 ..Default::default()
             },
         }],

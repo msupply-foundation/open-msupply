@@ -28,6 +28,8 @@ define_linked_tables! {
     },
     links: {
         name_link_id -> name_id,
+    },
+    optional_links: {
     }
 }
 

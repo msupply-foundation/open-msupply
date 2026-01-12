@@ -18,6 +18,7 @@ impl ViewMigrationFragment for ViewMigration {
                 DROP VIEW IF EXISTS name_insurance_join_view;
                 DROP VIEW IF EXISTS contact_view;
                 DROP VIEW IF EXISTS indicator_value_view;
+                DROP VIEW IF EXISTS stock_line_view;
             "#
         )?;
 
@@ -118,6 +119,37 @@ impl ViewMigrationFragment for ViewMigration {
                     indicator_value
                 JOIN
                     name_link ON indicator_value.customer_name_link_id = name_link.id;
+
+                CREATE VIEW stock_line_view AS
+                SELECT
+                    stock_line.id,
+                    stock_line.item_link_id,
+                    stock_line.store_id,
+                    stock_line.location_id,
+                    stock_line.batch,
+                    stock_line.pack_size,
+                    stock_line.cost_price_per_pack,
+                    stock_line.sell_price_per_pack,
+                    stock_line.available_number_of_packs,
+                    stock_line.total_number_of_packs,
+                    stock_line.expiry_date,
+                    stock_line.on_hold,
+                    stock_line.note,
+                    stock_line.barcode_id,
+                    stock_line.item_variant_id,
+                    stock_line.vvm_status_id,
+                    stock_line.campaign_id,
+                    stock_line.program_id,
+                    stock_line.total_volume,
+                    stock_line.volume_per_pack,
+                    supplier_link.name_id as supplier_id,
+                    donor_link.name_id as donor_id
+                FROM
+                    stock_line
+                LEFT JOIN
+                    name_link AS supplier_link ON stock_line.supplier_link_id = supplier_link.id
+                LEFT JOIN
+                    name_link AS donor_link ON stock_line.donor_link_id = donor_link.id;
             "#
         )?;
 

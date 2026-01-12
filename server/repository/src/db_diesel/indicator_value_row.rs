@@ -22,6 +22,8 @@ define_linked_tables! {
     },
     links: {
         customer_name_link_id -> customer_name_id,
+    },
+    optional_links: {
     }
 }
 
