@@ -1,4 +1,4 @@
-use super::{version::Version, Migration};
+use super::{version::Version, Migration, MigrationFragment};
 
 mod barcode_sync;
 mod local_authorisation;
@@ -13,12 +13,17 @@ impl Migration for V1_01_12 {
         Version::from_str("1.1.12")
     }
 
-    fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
-        location_movement_triggers::migrate(connection)?;
-        stock_line_barcode_id::migrate(connection)?;
-        local_authorisation::migrate(connection)?;
-        barcode_sync::migrate(connection)?;
+    fn migrate(&self, _connection: &StorageConnection) -> anyhow::Result<()> {
         Ok(())
+    }
+
+    fn migrate_fragments(&self) -> Vec<Box<dyn MigrationFragment>> {
+        vec![
+            Box::new(location_movement_triggers::Migrate),
+            Box::new(stock_line_barcode_id::Migrate),
+            Box::new(local_authorisation::Migrate),
+            Box::new(barcode_sync::Migrate),
+        ]
     }
 }
 
