@@ -66,8 +66,8 @@ pub use self::version::*;
 
 use crate::{
     migrations::base_migration::{initialize_earliest_db, initialize_latest_db, is_empty_db},
-    run_db_migrations, KeyType, KeyValueStoreRepository, MigrationFragmentLogRepository,
-    RepositoryError, StorageConnection,
+    KeyType, KeyValueStoreRepository, MigrationFragmentLogRepository, RepositoryError,
+    StorageConnection,
 };
 use chrono::{NaiveDateTime, Utc};
 use diesel::connection::SimpleConnection;
@@ -97,8 +97,8 @@ pub(crate) trait MigrationFragment {
 pub enum MigrationError {
     #[error("The database you are connecting to is a later version ({0}) than the server ({1}). It is unsafe to run with this configuration, the server is stopping")]
     DatabaseVersionAboveAppVersion(Version, Version),
-    #[error("Database version is pre release ({0}), it cannot be upgraded")]
-    DatabaseVersionIsPreRelease(Version),
+    #[error("Database version is not supported ({0}), it cannot be upgraded")]
+    DatabaseVersionNotSupported(Version),
     #[error("Migration version ({0}) is higher then app version ({1}), consider increasing app version in root package.json")]
     MigrationAboveAppVersion(Version, Version),
     #[error("Problem dropping or re-creating views {0}")]
@@ -192,11 +192,18 @@ pub fn migrate(
 
     let to_version = to_version.unwrap_or(Version::from_package_json());
 
-    // Historic diesel migrations
-    run_db_migrations(connection).unwrap();
-
     // Rust migrations
     let starting_database_version = get_database_version(connection);
+
+    if starting_database_version < migrations[0].version() {
+        log::error!(
+                "Database version < {} cannot be upgraded. Please install 2.15.0 first, or re-initialise to upgrade",
+                migrations[0].version()
+            );
+        return Err(MigrationError::DatabaseVersionNotSupported(
+            starting_database_version,
+        ));
+    }
 
     // Get migration fragment log repository and create table if it doesn't exist
     create_migration_fragment_table(connection)?;
