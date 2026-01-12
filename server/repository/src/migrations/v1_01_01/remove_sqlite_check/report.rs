@@ -1,24 +1,31 @@
-use crate::{migrations::sql, StorageConnection};
+use crate::migrations::*;
 
-pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
-    sql!(
-        connection,
-        r#"
-            ALTER TABLE report ADD COLUMN context_temp NOT NULL DEFAULT 'INBOUND_SHIPMENT';
-            ALTER TABLE report ADD COLUMN type_temp NOT NULL DEFAULT 'OM_SUPPLY';
+pub(crate) struct Migrate;
+impl MigrationFragment for Migrate {
+    fn identifier(&self) -> &'static str {
+        "remove_sqlite_check_report"
+    }
 
-            UPDATE report SET context_temp = context;
-            UPDATE report SET type_temp = type;
+    fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
+        sql!(
+            connection,
+            r#"
+                ALTER TABLE report ADD COLUMN context_temp NOT NULL DEFAULT 'INBOUND_SHIPMENT';
+                ALTER TABLE report ADD COLUMN type_temp NOT NULL DEFAULT 'OM_SUPPLY';
 
-            ALTER TABLE report DROP COLUMN context;
-            ALTER TABLE report DROP COLUMN type;
+                UPDATE report SET context_temp = context;
+                UPDATE report SET type_temp = type;
 
-            ALTER TABLE report RENAME COLUMN context_temp TO context;
-            ALTER TABLE report RENAME COLUMN type_temp to type;
-        "#
-    )?;
+                ALTER TABLE report DROP COLUMN context;
+                ALTER TABLE report DROP COLUMN type;
 
-    Ok(())
+                ALTER TABLE report RENAME COLUMN context_temp TO context;
+                ALTER TABLE report RENAME COLUMN type_temp to type;
+            "#
+        )?;
+
+        Ok(())
+    }
 }
 
 #[cfg(test)]

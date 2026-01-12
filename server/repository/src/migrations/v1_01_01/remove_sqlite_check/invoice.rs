@@ -1,23 +1,30 @@
-use crate::{migrations::sql, StorageConnection};
+use crate::migrations::*;
 
-pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
-    sql!(
-        connection,
-        r#"
-        ALTER TABLE invoice ADD COLUMN status_temp NOT NULL DEFAULT 'NEW';
-        ALTER TABLE invoice ADD COLUMN type_temp NOT NULL DEFAULT 'OUTBOUND_SHIPMENT';
+pub(crate) struct Migrate;
+impl MigrationFragment for Migrate {
+    fn identifier(&self) -> &'static str {
+        "remove_sqlite_check_invoice"
+    }
 
-        UPDATE invoice SET status_temp = status;
-        UPDATE invoice SET type_temp = type;
+    fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
+        sql!(
+            connection,
+            r#"
+                ALTER TABLE invoice ADD COLUMN status_temp NOT NULL DEFAULT 'NEW';
+                ALTER TABLE invoice ADD COLUMN type_temp NOT NULL DEFAULT 'OUTBOUND_SHIPMENT';
 
-        ALTER TABLE invoice DROP COLUMN status;
-        ALTER TABLE invoice DROP COLUMN type;
+                UPDATE invoice SET status_temp = status;
+                UPDATE invoice SET type_temp = type;
 
-        ALTER TABLE invoice RENAME COLUMN status_temp TO status;
-        ALTER TABLE invoice RENAME COLUMN type_temp to type;
-        "#
-    )?;
-    Ok(())
+                ALTER TABLE invoice DROP COLUMN status;
+                ALTER TABLE invoice DROP COLUMN type;
+
+                ALTER TABLE invoice RENAME COLUMN status_temp TO status;
+                ALTER TABLE invoice RENAME COLUMN type_temp to type;
+            "#
+        )?;
+        Ok(())
+    }
 }
 
 #[cfg(test)]

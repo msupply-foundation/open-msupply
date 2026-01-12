@@ -5,13 +5,19 @@ mod report;
 mod requisition;
 mod stocktake;
 
-use crate::{migrations::sql, StorageConnection};
+use crate::migrations::*;
 
-pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
-    // First remove views
-    sql!(
-        connection,
-        r#"
+pub(crate) struct Migrate;
+impl MigrationFragment for Migrate {
+    fn identifier(&self) -> &'static str {
+        "remove_sqlite_check"
+    }
+
+    fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
+        // First remove views
+        sql!(
+            connection,
+            r#"
             DROP VIEW invoice_stats;
             DROP VIEW consumption;
             DROP VIEW stock_movement;
@@ -20,19 +26,19 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
             DROP VIEW outbound_shipment_stock_movement;
             DROP VIEW invoice_line_stock_movement;
         "#
-    )?;
+        )?;
 
-    report::migrate(connection)?;
-    requisition::migrate(connection)?;
-    stocktake::migrate(connection)?;
-    name::migrate(connection)?;
-    invoice_line::migrate(connection)?;
-    invoice::migrate(connection)?;
+        report::Migrate.migrate(connection)?;
+        requisition::Migrate.migrate(connection)?;
+        stocktake::Migrate.migrate(connection)?;
+        name::Migrate.migrate(connection)?;
+        invoice_line::Migrate.migrate(connection)?;
+        invoice::Migrate.migrate(connection)?;
 
-    // Re create views
-    sql!(
-        connection,
-        r#"
+        // Re create views
+        sql!(
+            connection,
+            r#"
             CREATE VIEW invoice_stats AS
             SELECT
                 invoice_line.invoice_id,
@@ -120,9 +126,10 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
                 ON stock_movement.item_id = items_and_stores.item_id 
                     AND stock_movement.store_id = items_and_stores.store_id;
         "#
-    )?;
+        )?;
 
-    Ok(())
+        Ok(())
+    }
 }
 
 #[cfg(test)]

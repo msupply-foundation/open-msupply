@@ -1,60 +1,24 @@
-use super::{version::Version, Migration};
+use super::{version::Version, Migration, MigrationFragment};
 use crate::StorageConnection;
 
-pub(crate) struct V1_01_02;
+mod add_supplier_id_to_stock_line;
+mod inventory_adjustment;
 
+pub(crate) struct V1_01_02;
 impl Migration for V1_01_02 {
     fn version(&self) -> Version {
         Version::from_str("1.1.2")
     }
 
-    fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
-        use crate::migrations::sql;
-
-        sql!(
-            connection,
-            r#"ALTER TABLE stock_line
-                ADD supplier_id TEXT REFERENCES name(id);"#
-        )?;
-
-        #[cfg(not(feature = "postgres"))]
-        const INVENTORY_ADJUSTMENT_REASON_TYPE: &str = "TEXT";
-        #[cfg(feature = "postgres")]
-        const INVENTORY_ADJUSTMENT_REASON_TYPE: &str = "inventory_adjustment_type";
-        #[cfg(feature = "postgres")]
-        sql!(
-            connection,
-            r#"
-                CREATE TYPE {INVENTORY_ADJUSTMENT_REASON_TYPE} AS ENUM (
-                    'POSITIVE',
-                    'NEGATIVE'
-                );
-                "#
-        )?;
-
-        sql!(
-            connection,
-            r#"CREATE TABLE inventory_adjustment_reason (
-                id TEXT NOT NULL PRIMARY KEY,
-                type {INVENTORY_ADJUSTMENT_REASON_TYPE},
-                is_active BOOLEAN,
-                reason TEXT NOT NULL
-            );"#
-        )?;
-
-        sql!(
-            connection,
-            r#"ALTER TABLE invoice_line 
-                ADD inventory_adjustment_reason_id TEXT REFERENCES inventory_adjustment_reason(id);"#
-        )?;
-
-        sql!(
-            connection,
-            r#"ALTER TABLE stocktake_line 
-                ADD inventory_adjustment_reason_id TEXT REFERENCES inventory_adjustment_reason(id);"#
-        )?;
-
+    fn migrate(&self, _connection: &StorageConnection) -> anyhow::Result<()> {
         Ok(())
+    }
+
+    fn migrate_fragments(&self) -> Vec<Box<dyn MigrationFragment>> {
+        vec![
+            Box::new(add_supplier_id_to_stock_line::Migrate),
+            Box::new(inventory_adjustment::Migrate),
+        ]
     }
 }
 

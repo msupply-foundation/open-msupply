@@ -1,43 +1,49 @@
-use crate::{migrations::sql, StorageConnection};
+use crate::migrations::*;
 
-pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
-    // Split INVENTORY_ADJUSTMENT to INVENTORY_REDUCTION and INVENTORY_ADDITION
-    if cfg!(feature = "postgres") {
-        sql!(
-            connection,
-            r#"
+pub(crate) struct Migrate;
+impl MigrationFragment for Migrate {
+    fn identifier(&self) -> &'static str {
+        "split_inventory_adjustment"
+    }
+
+    fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
+        // Split INVENTORY_ADJUSTMENT to INVENTORY_REDUCTION and INVENTORY_ADDITION
+        if cfg!(feature = "postgres") {
+            sql!(
+                connection,
+                r#"
                 ALTER TYPE invoice_type ADD VALUE IF NOT EXISTS 'INVENTORY_REDUCTION';
                 ALTER TYPE invoice_type RENAME VALUE 'INVENTORY_ADJUSTMENT' TO 'INVENTORY_ADDITION';
             "#
-        )?;
-    } else {
-        // For Sqlite need to migrate data
-        sql!(
-            connection,
-            r#"
+            )?;
+        } else {
+            // For Sqlite need to migrate data
+            sql!(
+                connection,
+                r#"
                 UPDATE invoice SET type = 'INVENTORY_ADDITION' WHERE type = 'INVENTORY_ADJUSTMENT';
             "#
-        )?;
-    }
+            )?;
+        }
 
-    sql!(
-        connection,
-        r#" ALTER TABLE stocktake 
+        sql!(
+            connection,
+            r#" ALTER TABLE stocktake 
                 RENAME COLUMN inventory_adjustment_id TO inventory_addition_id;
 
                 ALTER TABLE stocktake 
                 ADD COLUMN inventory_reduction_id TEXT REFERENCES invoice(id);"#
-    )?;
+        )?;
 
-    // Update inventory_adjustment_stock_movement VIEW to use INVENTORY_REDUCTION and INVENTORY_ADDITION
-    let create_or_replace_view = if cfg!(feature = "postgres") {
-        "CREATE OR REPLACE VIEW"
-    } else {
-        "DROP VIEW inventory_adjustment_stock_movement; CREATE VIEW"
-    };
-    sql!(
-        connection,
-        r#"
+        // Update inventory_adjustment_stock_movement VIEW to use INVENTORY_REDUCTION and INVENTORY_ADDITION
+        let create_or_replace_view = if cfg!(feature = "postgres") {
+            "CREATE OR REPLACE VIEW"
+        } else {
+            "DROP VIEW inventory_adjustment_stock_movement; CREATE VIEW"
+        };
+        sql!(
+            connection,
+            r#"
                 {create_or_replace_view} inventory_adjustment_stock_movement AS
                 SELECT 
                     'n/a' as id,
@@ -51,9 +57,10 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
                 WHERE invoice.type IN ('INVENTORY_REDUCTION', 'INVENTORY_ADDITION') 
                     AND verified_datetime IS NOT NULL;
             "#,
-    )?;
+        )?;
 
-    Ok(())
+        Ok(())
+    }
 }
 
 #[cfg(test)]

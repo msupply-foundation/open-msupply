@@ -1,9 +1,10 @@
 mod create_indexes;
+mod delete_self_referencing_name_store_joins;
 #[cfg(not(feature = "postgres"))]
 mod remove_sqlite_check;
 mod split_inventory_adjustment;
 
-use super::{sql, version::Version, Migration};
+use super::{version::Version, Migration, MigrationFragment};
 use crate::StorageConnection;
 
 pub(crate) struct V1_01_01;
@@ -13,29 +14,27 @@ impl Migration for V1_01_01 {
         Version::from_str("1.1.1")
     }
 
-    fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
-        #[cfg(not(feature = "postgres"))]
-        remove_sqlite_check::migrate(connection)?;
-
-        split_inventory_adjustment::migrate(connection)?;
-
-        create_indexes::migrate(connection)?;
-
-        // Remove self-referencing name_store_joins
-        sql!(
-            connection,
-            r#"DELETE
-                FROM name_store_join 
-                WHERE name_store_join.name_id IN (SELECT name_id FROM store WHERE store.id = name_store_join.store_id);"#
-        )?;
-
+    fn migrate(&self, _connection: &StorageConnection) -> anyhow::Result<()> {
         Ok(())
+    }
+
+    fn migrate_fragments(&self) -> Vec<Box<dyn MigrationFragment>> {
+        vec![
+            #[cfg(not(feature = "postgres"))]
+            Box::new(remove_sqlite_check::Migrate),
+            Box::new(split_inventory_adjustment::Migrate),
+            Box::new(create_indexes::Migrate),
+            Box::new(delete_self_referencing_name_store_joins::Migrate),
+        ]
     }
 }
 
 #[cfg(test)]
 async fn setup_data_migration(name: &str) -> StorageConnection {
-    use crate::{migrations::templates::add_data_from_sync_buffer::V1_00_08, test_db::*};
+    use crate::{
+        migrations::{sql, templates::add_data_from_sync_buffer::V1_00_08},
+        test_db::*,
+    };
 
     // Migrate to version - 1
     let SetupResult { connection, .. } = setup_test(SetupOption {

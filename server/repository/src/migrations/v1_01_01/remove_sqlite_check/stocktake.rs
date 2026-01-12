@@ -1,20 +1,24 @@
-use crate::{migrations::sql, StorageConnection};
+use crate::migrations::*;
 
-pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
-    sql!(
-        connection,
-        r#"
-            ALTER TABLE stocktake ADD COLUMN status_temp NOT NULL DEFAULT 'NEW';
+pub(crate) struct Migrate;
+impl MigrationFragment for Migrate {
+    fn identifier(&self) -> &'static str {
+        "remove_sqlite_check_stocktake"
+    }
 
-            UPDATE stocktake SET status_temp = status;
+    fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
+        sql!(
+            connection,
+            r#"
+                ALTER TABLE stocktake ADD COLUMN status_temp NOT NULL DEFAULT 'NEW';
+                UPDATE stocktake SET status_temp = status;
+                ALTER TABLE stocktake DROP COLUMN status;
+                ALTER TABLE stocktake RENAME COLUMN status_temp TO status;
+            "#
+        )?;
 
-            ALTER TABLE stocktake DROP COLUMN status;
-
-            ALTER TABLE stocktake RENAME COLUMN status_temp TO status;
-        "#
-    )?;
-
-    Ok(())
+        Ok(())
+    }
 }
 
 #[cfg(test)]

@@ -1,28 +1,20 @@
+use super::{version::Version, Migration, MigrationFragment};
 use crate::StorageConnection;
 
-use super::{version::Version, Migration};
+mod add_database_version_to_key_type;
 
 pub(crate) struct V1_00_04;
-
 impl Migration for V1_00_04 {
     fn version(&self) -> Version {
         Version::from_str("1.0.4")
     }
 
-    #[cfg(feature = "postgres")]
-    fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
-        use crate::migrations::sql;
-
-        sql!(
-            connection,
-            r#"ALTER TYPE key_type ADD VALUE 'DATABASE_VERSION';"#
-        )?;
-
+    fn migrate(&self, _connection: &StorageConnection) -> anyhow::Result<()> {
         Ok(())
     }
-    #[cfg(not(feature = "postgres"))]
-    fn migrate(&self, _: &StorageConnection) -> anyhow::Result<()> {
-        Ok(())
+
+    fn migrate_fragments(&self) -> Vec<Box<dyn MigrationFragment>> {
+        vec![Box::new(add_database_version_to_key_type::Migrate)]
     }
 }
 

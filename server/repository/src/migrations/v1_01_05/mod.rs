@@ -1,20 +1,19 @@
-use super::{version::Version, Migration};
+use super::{version::Version, Migration, MigrationFragment};
+
+mod add_api_verson_incompatible;
 
 pub(crate) struct V1_01_05;
-
 impl Migration for V1_01_05 {
     fn version(&self) -> Version {
         Version::from_str("1.1.5")
     }
-    #[cfg(feature = "postgres")]
-    fn migrate(&self, connection: &crate::StorageConnection) -> anyhow::Result<()> {
-        use crate::migrations::sql;
-        sql!(
-            connection,
-            r#"ALTER TYPE sync_api_error_code ADD VALUE IF NOT EXISTS 'API_VERSION_INCOMPATIBLE';"#
-        )?;
 
+    fn migrate(&self, _connection: &crate::StorageConnection) -> anyhow::Result<()> {
         Ok(())
+    }
+
+    fn migrate_fragments(&self) -> Vec<Box<dyn MigrationFragment>> {
+        vec![Box::new(add_api_verson_incompatible::Migrate)]
     }
 }
 
