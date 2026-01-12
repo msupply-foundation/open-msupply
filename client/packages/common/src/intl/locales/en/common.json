@@ -55,6 +55,7 @@
   "button.configure-printers": "Configure Printers",
   "button.connect": "Connect",
   "button.continue": "Continue",
+  "button.continue-without-stocktake": "Continue without stocktake",
   "button.create": "Create",
   "button.create-a-new-one": "Create a new one",
   "button.create-log-reason": "Create log reason",
