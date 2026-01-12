@@ -156,7 +156,6 @@ class GQLClient extends GraphQLClient {
 
 interface GqlControl {
   client: GQLClient;
-  setHeader: (header: string, value: string) => void;
   setUrl: (url: string) => void;
   setSkipRequest: (skipRequest: SkipRequest) => void;
 }
@@ -188,8 +187,13 @@ export const GqlProvider: FC<PropsWithChildren<ApiProviderProps>> = ({
     clientRef.current.setSkipRequest(skipRequest);
   };
 
+  const setUrl = (url: string) => {
+    clientRef.current.setEndpoint(url);
+  };
+
   const val = {
     setSkipRequest,
+    setUrl,
     client: clientRef.current,
   };
 
