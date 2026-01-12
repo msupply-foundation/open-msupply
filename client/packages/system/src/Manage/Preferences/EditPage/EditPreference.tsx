@@ -44,7 +44,7 @@ export const EditPreference = ({
   const isCentralServer = useIsCentralServerApi();
 
   const disabled =
-    isCentralServer || !userHasPermission(UserPermission.EditCentralData);
+    !isCentralServer || !userHasPermission(UserPermission.EditCentralData);
 
   const preferenceLabel =
     label ?? t(`preference.${preference.key}` as LocaleKey);
