@@ -129,11 +129,11 @@ impl<'a> PurchaseOrderRepository<'a> {
             if let Some(supplier_string) = supplier {
                 let mut sub_query = name_link::table
                     .inner_join(name::table)
-                    .select(name_link::id)
+                    .select(name::id)
                     .into_boxed();
                 apply_string_filter!(sub_query, Some(supplier_string), name::name_);
 
-                query = query.filter(purchase_order::supplier_name_link_id.eq_any(sub_query));
+                query = query.filter(purchase_order::supplier_name_id.eq_any(sub_query));
             }
             apply_date_time_filter!(query, created_datetime, purchase_order::created_datetime);
             apply_date_time_filter!(
