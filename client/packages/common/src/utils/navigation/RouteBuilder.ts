@@ -1,4 +1,4 @@
-type Query = Record<string, string | number | boolean>;
+type Query = Record<string, string | number | boolean | string[]>;
 
 export class RouteBuilder {
   parts: string[];
@@ -30,7 +30,10 @@ export class RouteBuilder {
 
   build(): string {
     const queryString = Object.entries(this.query)
-      .reduce((str, [key, value]) => `${str}&${key}=${value}`, '')
+      .reduce((str, [key, v]) => {
+        const value = Array.isArray(v) ? v.join(',') : v;
+        return `${str}&${key}=${value}`;
+      }, '')
       // Should start with a "?" not "&"
       .replace('&', '?');
     return `/${this.parts.join('/')}${queryString}`;

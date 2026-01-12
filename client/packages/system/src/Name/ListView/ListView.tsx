@@ -1,7 +1,5 @@
 import React, { ReactElement, useMemo, useState } from 'react';
 import {
-  TableProvider,
-  createTableStore,
   useDialog,
   DialogButton,
   Fade,
@@ -76,8 +74,7 @@ export const NameListView = ({ type }: NameListProps): ReactElement => {
     onRowClick: handleRowClick,
   });
 
-  return (
-    <TableProvider createStore={createTableStore}>
+  return <>
       <MaterialTable table={table} />
       {type === 'customer' && (
         <Modal
@@ -90,6 +87,5 @@ export const NameListView = ({ type }: NameListProps): ReactElement => {
           <Details nameId={selectedId} />
         </Modal>
       )}
-    </TableProvider>
-  );
+  </>;
 };

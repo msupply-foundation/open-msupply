@@ -1,7 +1,5 @@
 import React, { useEffect } from 'react';
 import {
-  TableProvider,
-  createTableStore,
   useTranslation,
   DetailTabs,
   useBreadcrumbs,
@@ -169,12 +167,10 @@ export const StockLineDetailView: React.FC = () => {
         openAdjust={openInventoryAdjustmentModal}
         itemId={data?.itemId}
       />
-      <TableProvider createStore={createTableStore}>
-        <DetailTabs tabs={tabs} />
-        {(tab === StockLineDetailTabs.Details ||
-          !tab ||
-          simplifiedTabletView) && <Footer {...footerProps} />}
-      </TableProvider>
+      <DetailTabs tabs={tabs} />
+      {(tab === StockLineDetailTabs.Details ||
+        !tab ||
+        simplifiedTabletView) && <Footer {...footerProps} />}
     </>
   );
 };

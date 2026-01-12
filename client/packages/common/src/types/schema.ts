@@ -2521,6 +2521,7 @@ export type DraftStockOutLineNode = {
   sellPricePerPack: Scalars['Float']['output'];
   stockLineId: Scalars['String']['output'];
   stockLineOnHold: Scalars['Boolean']['output'];
+  volumePerPack?: Maybe<Scalars['Float']['output']>;
   vvmStatus?: Maybe<VvmstatusNode>;
   vvmStatusId?: Maybe<Scalars['String']['output']>;
 };
@@ -9230,6 +9231,7 @@ export enum SensorNodeType {
   Berlinger = 'BERLINGER',
   BlueMaestro = 'BLUE_MAESTRO',
   Laird = 'LAIRD',
+  LogTag = 'LOG_TAG',
 }
 
 export enum SensorSortFieldInput {

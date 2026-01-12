@@ -18,6 +18,7 @@ import {
   useDebounceCallback,
   AssetLogStatusNodeType,
   usePathnameIncludes,
+  CLEAR,
 } from '@openmsupply-client/common';
 import {
   AssetCatalogueItemFragment,
@@ -155,7 +156,7 @@ export const CreateAssetModal = ({
     _value: string,
     reason: string
   ) => {
-    if (reason === 'clear') updateDraft({ store: null });
+    if (reason === CLEAR) updateDraft({ store: null });
   };
 
   const isDisabled =

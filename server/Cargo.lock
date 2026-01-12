@@ -2595,17 +2595,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "diesel_migrations"
-version = "2.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ee060f709c3e3b1cadd83fcd0f61711f7a8cf493348f758d3a1c1147d70b3c97"
-dependencies = [
- "diesel",
- "migrations_internals",
- "migrations_macros",
-]
-
-[[package]]
 name = "diesel_table_macro_syntax"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5796,27 +5785,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "migrations_internals"
-version = "2.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "36c791ecdf977c99f45f23280405d7723727470f6689a5e6dbf513ac547ae10d"
-dependencies = [
- "serde",
- "toml 0.9.7",
-]
-
-[[package]]
-name = "migrations_macros"
-version = "2.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "36fc5ac76be324cfd2d3f2cf0fdf5d5d3c4f14ed8aaebadb09e304ba42282703"
-dependencies = [
- "migrations_internals",
- "proc-macro2",
- "quote",
-]
-
-[[package]]
 name = "mime"
 version = "0.3.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -7151,7 +7119,6 @@ dependencies = [
  "clap",
  "diesel",
  "diesel-derive-enum",
- "diesel_migrations",
  "futures-util",
  "glob",
  "libsqlite3-sys",
@@ -8376,8 +8343,8 @@ checksum = "fe470bf03e694eccaac03d81297cbc22e681f60d3af29d4b69369f014895bf06"
 
 [[package]]
 name = "temperature-sensor"
-version = "0.1.0"
-source = "git+https://github.com/openmsupply/temperature-sensor.git?tag=v0.1.0-beta3#5764b9b4d8f673060ec492d95f11bf13bbf19b46"
+version = "0.2.0"
+source = "git+https://github.com/openmsupply/temperature-sensor.git?tag=v0.2.0-beta.1#6a7f521a86814cedfff11385ca6e21a252ed732a"
 dependencies = [
  "chrono",
  "json",
@@ -8385,6 +8352,7 @@ dependencies = [
  "rand 0.8.5",
  "rs-drivelist",
  "serde_json",
+ "winapi",
 ]
 
 [[package]]

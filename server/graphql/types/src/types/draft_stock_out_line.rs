@@ -184,4 +184,8 @@ impl DraftStockOutLineNode {
         let result = loader.load_one(item_variant_id).await?;
         Ok(result.map(ItemVariantNode::from_domain))
     }
+
+    pub async fn volume_per_pack(&self) -> Option<f64> {
+        Some(self.shipment_line.volume_per_pack)
+    }
 }

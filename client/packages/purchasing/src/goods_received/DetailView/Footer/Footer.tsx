@@ -55,6 +55,7 @@ export const Footer = ({ showStatusBar = true }: FooterProps): ReactElement => {
             <ActionsFooter
               actions={actions}
               selectedRowCount={selectedRows.length}
+              resetRowSelection={() => {}} // TODO: Implement row selection reset
             />
           )}
           {data && selectedRows.length === 0 && showStatusBar ? (

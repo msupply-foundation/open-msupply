@@ -1,6 +1,8 @@
 use crate::db_diesel::{DBBackendConnection, StorageConnectionManager};
-use diesel::connection::SimpleConnection;
-use diesel::r2d2::{ConnectionManager, Pool};
+use diesel::{
+    connection::{ SimpleConnection},
+    r2d2::{ConnectionManager, Pool},
+};
 use log::info;
 use serde::{Deserialize, Serialize};
 use std::time::Duration;
@@ -10,7 +12,7 @@ use std::time::Duration;
 #[cfg(not(feature = "postgres"))]
 const SQLITE_LOCKWAIT_MS: u32 = 30 * 1000;
 
-#[cfg(all(not(feature = "postgres"), not(feature = "memory")))]
+#[cfg(not(feature = "postgres"))]
 const SQLITE_WAL_PRAGMA: &str = "PRAGMA journal_mode = WAL; PRAGMA synchronous = NORMAL;";
 
 const DEFUALT_CONNECTION_POOL_MAX_CONNECTIONS: u32 = 10;
@@ -54,7 +56,7 @@ impl DatabaseSettings {
         )
     }
 
-    pub fn full_init_sql(&self) -> Option<String> {
+    pub fn startup_sql(&self) -> Option<String> {
         self.init_sql.clone()
     }
 
@@ -64,7 +66,7 @@ impl DatabaseSettings {
 }
 
 // feature sqlite
-#[cfg(all(not(feature = "postgres"), not(feature = "memory")))]
+#[cfg(not(feature = "postgres"))]
 impl DatabaseSettings {
     pub fn connection_string(&self) -> String {
         use std::path::Path;
@@ -99,24 +101,12 @@ impl DatabaseSettings {
         }
     }
 
-    pub fn full_init_sql(&self) -> Option<String> {
-        //For SQLite we want to enable the Write Head Log on server startup
+    pub fn startup_sql(&self) -> Option<String> {
+        // For SQLite we want to enable the Write Head Log on server startup
         match &self.init_sql {
             Some(sql_statement) => Some(format!("{sql_statement};{SQLITE_WAL_PRAGMA}")),
             None => Some(SQLITE_WAL_PRAGMA.to_string()),
         }
-    }
-}
-
-// feature memory
-#[cfg(feature = "memory")]
-impl DatabaseSettings {
-    pub fn connection_string(&self) -> String {
-        format!("file:{}?mode=memory&cache=shared", self.database_name)
-    }
-
-    pub fn full_init_sql(&self) -> Option<String> {
-        self.init_sql.clone()
     }
 }
 
@@ -131,7 +121,7 @@ pub struct SqliteConnectionOptions {
 impl diesel::r2d2::CustomizeConnection<diesel::SqliteConnection, diesel::r2d2::Error>
     for SqliteConnectionOptions
 {
-    //TODO: make relevant sqlite customisation settings configurable at runtime.
+    // TODO: make relevant sqlite customisation settings configurable at runtime.
     fn on_acquire(&self, conn: &mut diesel::SqliteConnection) -> Result<(), diesel::r2d2::Error> {
         //Set busy_timeout first as setting WAL can generate busy during a write
         if let Some(d) = self.busy_timeout_ms {
@@ -149,8 +139,7 @@ impl diesel::r2d2::CustomizeConnection<diesel::SqliteConnection, diesel::r2d2::E
 // feature postgres
 #[cfg(feature = "postgres")]
 pub fn get_storage_connection_manager(settings: &DatabaseSettings) -> StorageConnectionManager {
-    use diesel::r2d2::ManageConnection;
-
+    use crate::diesel::r2d2::ManageConnection;
     let connection_manager =
         ConnectionManager::<DBBackendConnection>::new(&settings.connection_string());
 
@@ -204,8 +193,8 @@ pub fn get_storage_connection_manager(settings: &DatabaseSettings) -> StorageCon
 #[cfg(not(feature = "postgres"))]
 pub fn get_storage_connection_manager(settings: &DatabaseSettings) -> StorageConnectionManager {
     info!("Connecting to database '{}'", settings.database_path());
-    let connection_manager =
-        ConnectionManager::<DBBackendConnection>::new(settings.database_path());
+    let db_path = settings.database_path();
+      let connection_manager = ConnectionManager::<DBBackendConnection>::new(db_path);
     let pool = Pool::builder()
         .connection_customizer(Box::new(SqliteConnectionOptions {
             busy_timeout_ms: Some(SQLITE_LOCKWAIT_MS),
@@ -222,6 +211,7 @@ pub fn get_storage_connection_manager(settings: &DatabaseSettings) -> StorageCon
         ))
         .build(connection_manager)
         .expect("Failed to connect to database");
+
     StorageConnectionManager::new(pool)
 }
 
@@ -230,14 +220,14 @@ mod database_setting_test {
     use super::DatabaseSettings;
 
     #[allow(dead_code)]
-    pub fn empty_db_settings_with_init_sql(init_sql: Option<String>) -> DatabaseSettings {
+    pub fn empty_db_settings_with_startup_sql(startup_sql: Option<String>) -> DatabaseSettings {
         DatabaseSettings {
             username: "".to_string(),
             password: "".to_string(),
             port: 0,
             host: "".to_string(),
             database_name: "".to_string(),
-            init_sql,
+            init_sql: startup_sql,
             database_path: None,
             connection_pool_max_connections: None,
             connection_pool_timeout_seconds: None,
@@ -245,21 +235,21 @@ mod database_setting_test {
     }
 
     // feature sqlite
-    #[cfg(all(not(feature = "postgres"), not(feature = "memory")))]
+    #[cfg(not(feature = "postgres"))]
     #[test]
-    fn test_database_settings_full_init_sql() {
+    fn test_database_settings_full_startup_sql() {
         use super::SQLITE_WAL_PRAGMA;
 
-        //Ensure sqlite WAL is enabled if no init_sql is provided
+        //Ensure sqlite WAL is enabled if no startup_sql is provided
         assert_eq!(
-            empty_db_settings_with_init_sql(None).full_init_sql(),
+            empty_db_settings_with_startup_sql(None).startup_sql(),
             Some(SQLITE_WAL_PRAGMA.to_string())
         );
-        //Ensure sqlite WAL is enabled if no init_sql is provided
+        //Ensure sqlite WAL is enabled if no startup_sql is provided
         let init_sql = "PRAGMA temp_store_directory = '{}';";
         let expected_init_sql = format!("{init_sql};{SQLITE_WAL_PRAGMA}");
         assert_eq!(
-            empty_db_settings_with_init_sql(Some(init_sql.to_string())).full_init_sql(),
+            empty_db_settings_with_startup_sql(Some(init_sql.to_string())).startup_sql(),
             Some(expected_init_sql)
         );
 
@@ -267,8 +257,8 @@ mod database_setting_test {
         let init_sql_missing_semi_colon = "PRAGMA temp_store_directory = '{}'";
         let expected_init_sql = format!("{init_sql_missing_semi_colon};{SQLITE_WAL_PRAGMA}");
         assert_eq!(
-            empty_db_settings_with_init_sql(Some(init_sql_missing_semi_colon.to_string()))
-                .full_init_sql(),
+            empty_db_settings_with_startup_sql(Some(init_sql_missing_semi_colon.to_string()))
+                .startup_sql(),
             Some(expected_init_sql)
         )
     }
