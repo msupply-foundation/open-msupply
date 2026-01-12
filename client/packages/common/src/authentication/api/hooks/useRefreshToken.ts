@@ -10,7 +10,6 @@ import { useGetRefreshToken } from './useGetRefreshToken';
 export const useRefreshToken = (onTimeout: () => void) => {
   const { mutateAsync } = useGetRefreshToken();
   const {
-    setHeader,
     client: { getLastRequestTime },
   } = useGql();
 
