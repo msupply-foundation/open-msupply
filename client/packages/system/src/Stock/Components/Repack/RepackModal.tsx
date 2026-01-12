@@ -20,13 +20,15 @@ import {
   MaterialTable,
   useSimpleMaterialTable,
   NothingHere,
+  ActivityLogNodeType,
+  Link,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { RepackEditForm } from './RepackEditForm';
 import { ReportSelector, useActivityLog } from '@openmsupply-client/system';
 import { RepackFragment, StockLineRowFragment } from '../../api';
 import { useRepackColumns } from './column';
-import { useRepack } from '../../api/hooks';
+import { useRepack, useStockLine } from '../../api/hooks';
 
 interface RepackModalControlProps {
   isOpen: boolean;
@@ -51,7 +53,11 @@ export const RepackModal: FC<RepackModalControlProps> = ({
   const [invoiceId, setInvoiceId] = useState<string | undefined>(undefined);
   const [isNew, setIsNew] = useState<boolean>(false);
 
-  const { data: logData } = useActivityLog(stockLine?.id ?? '');
+  const { data: logData } = useActivityLog(
+    stockLine?.id ?? '',
+    ActivityLogNodeType.Repack
+  );
+  const toLogData = logData?.nodes.find(node => !!node.from);
 
   const {
     list: { repacks, isError, isLoading },
@@ -61,11 +67,18 @@ export const RepackModal: FC<RepackModalControlProps> = ({
     onInsert: { mutateAsync: onInsert, isLoading: isInserting },
   } = useRepack({ stockLineId: stockLine?.id, invoiceId });
 
+  const {
+    query: { data: repackedFromData },
+  } = useStockLine(toLogData?.from || '');
+  const repackedFromHasPacks = repackedFromData
+    ? repackedFromData.totalNumberOfPacks > 0
+    : false;
+
   // only display the message if there are lines to click on
   // if there are no lines, the 'click new' message is displayed closer to the action
   const displayMessage = invoiceId == undefined && !isNew && !!repacks?.length;
   const showRepackDetail = invoiceId || isNew;
-  const showLogEvent = !!logData?.nodes.length;
+  const showLogEvent = !!toLogData;
 
   const onRowClick = (rowData: RepackFragment) => {
     setInvoiceId(rowData.id);
@@ -135,10 +148,9 @@ export const RepackModal: FC<RepackModalControlProps> = ({
     isError,
     data: repacks,
     onRowClick,
-    noDataElement: <NothingHere
-      body={t('messages.no-repacks')}
-      onCreate={newRepack}
-    />,
+    noDataElement: (
+      <NothingHere body={t('messages.no-repacks')} onCreate={newRepack} />
+    ),
     muiTableContainerProps: { sx: { maxHeight: 300 } },
   });
 
@@ -207,11 +219,28 @@ export const RepackModal: FC<RepackModalControlProps> = ({
           <Typography sx={{ fontWeight: 'bold' }}>
             {`${t('label.code')} : ${stockLine?.item.code}`}
           </Typography>
-          {showLogEvent && (
-            <Typography sx={{ fontWeight: 'bold', marginBottom: 3 }}>
-              {`${t('messages.repack-log-info')} : ${logData?.nodes[0]?.to}`}
-            </Typography>
-          )}
+          {showLogEvent &&
+            (() => {
+              const content = (
+                <Typography sx={{ fontWeight: 'bold', marginBottom: 3 }}>
+                  {t('messages.repack-log-info')} :{' '}
+                  {repackedFromData?.batch || ''}
+                </Typography>
+              );
+
+              return repackedFromHasPacks ? (
+                <Link
+                  to={RouteBuilder.create(AppRoute.Inventory)
+                    .addPart(AppRoute.Stock)
+                    .addPart(logData?.nodes[0]?.from || '')
+                    .build()}
+                >
+                  {content}
+                </Link>
+              ) : (
+                content
+              );
+            })()}
         </Grid>
         <Box
           display="flex"
