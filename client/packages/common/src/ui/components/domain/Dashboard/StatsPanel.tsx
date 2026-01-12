@@ -104,7 +104,7 @@ const Statistic = ({
         >
           <StatusChip
             label={t('label.needs-attention')}
-            color={'red'}
+            colour={'red'}
             typographySx={{ fontSize: '12px', fontWeight: 500 }}
           />
         </Grid>

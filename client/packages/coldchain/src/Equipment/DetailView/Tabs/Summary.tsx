@@ -27,7 +27,7 @@ import {
 import { DraftAsset } from '../../types';
 import { formatLocationLabel } from '../DetailView';
 import { useIsGapsStoreOnly } from '@openmsupply-client/common';
-import { statusColorMap } from '../../utils';
+import { statusColourMap } from '../../utils';
 
 interface SummaryProps {
   draft?: DraftAsset;
@@ -168,7 +168,7 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
   if (!draft) return null;
 
   const status = draft.statusLog?.status
-    ? statusColorMap(t, draft.statusLog.status)
+    ? statusColourMap(draft.statusLog.status)
     : undefined;
 
   const defaultLocations = draft.locations.nodes.map(location => ({
@@ -363,7 +363,7 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
         <Section heading={t('heading.functional-status')}>
           <Row isGaps={isGaps} label={t('label.current-status')}>
             <Box display="flex">
-              <StatusChip label={status?.label} color={status?.color} />
+              <StatusChip label={status?.label} colour={status?.colour} />
             </Box>
           </Row>
           <Row isGaps={isGaps} label={t('label.last-updated')}>

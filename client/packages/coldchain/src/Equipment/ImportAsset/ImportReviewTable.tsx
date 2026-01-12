@@ -12,7 +12,7 @@ import {
   StatusCell,
 } from '@openmsupply-client/common';
 import { ImportRow } from './EquipmentImportModal';
-import { fullStatusColorMap } from '../utils';
+import { fullStatusColourMap } from '../utils';
 
 interface ImportReviewTableProps {
   importRows: ImportRow[];
@@ -94,7 +94,7 @@ export const ImportReviewTable: FC<ImportReviewTableProps> = ({
         header: t('label.status'),
         size: 100,
         Cell: ({ cell }) => (
-          <StatusCell cell={cell} statusMap={fullStatusColorMap(t)} />
+          <StatusCell cell={cell} statusMap={fullStatusColourMap(t)} />
         ),
         enableColumnFilter: true,
         filterVariant: 'select',

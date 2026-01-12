@@ -15,7 +15,7 @@ import {
   UploadFile,
 } from '@openmsupply-client/common';
 import { FileList } from '../Components';
-import { parseLogStatus } from '../utils';
+import { statusColourMap } from '../utils';
 import { useAssetLogReasonList } from '@openmsupply-client/system';
 import { TakePhotoButton } from './TakePhotoButton';
 
@@ -88,15 +88,17 @@ export const StatusForm = ({ draft, onChange }: StatusForm) => {
 
   const getOptionsFromEnum = (
     enumObject: Record<string, string>,
-    parser: (value: never) => { key: LocaleKey } | undefined
+    parser: (value: never) => { label: LocaleKey } | undefined
   ) =>
     Object.values(enumObject).map(value => {
       if (value === undefined) return undefined;
       const parsed = parser(value as never);
-      return parsed == undefined ? undefined : getOption(t(parsed.key), value);
+      return parsed == undefined
+        ? undefined
+        : getOption(t(parsed.label), value);
     });
 
-  const statuses = getOptionsFromEnum(AssetLogStatusNodeType, parseLogStatus);
+  const statuses = getOptionsFromEnum(AssetLogStatusNodeType, statusColourMap);
   const { data } = useAssetLogReasonList(
     draft.status
       ? {

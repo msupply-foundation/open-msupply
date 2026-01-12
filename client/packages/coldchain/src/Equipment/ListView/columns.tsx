@@ -18,7 +18,7 @@ import {
 import { AssetRowFragment } from '../api/operations.generated';
 import {
   CCE_CLASS_ID,
-  fullStatusColorMap,
+  fullStatusColourMap,
   getEquipmentStatusTranslation,
 } from '../utils';
 
@@ -92,7 +92,7 @@ export const useAssetColumns = () => {
         header: t('label.functional-status'),
         accessorFn: row => row.statusLog?.status,
         Cell: ({ cell }) => (
-          <StatusCell cell={cell} statusMap={fullStatusColorMap(t)} />
+          <StatusCell cell={cell} statusMap={fullStatusColourMap(t)} />
         ),
         enableColumnFilter: true,
         filterVariant: 'select',
