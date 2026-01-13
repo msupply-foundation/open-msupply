@@ -112,7 +112,7 @@ export const getItemQueries = (sdk: Sdk, storeId: string) => ({
         filter: {
           ...filterBy,
           // includes non-visible items that have stock on hand
-          isVisibleOrOnHand: true,
+          isVisible: true,
           isActive: true,
         },
       });
