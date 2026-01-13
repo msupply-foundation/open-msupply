@@ -60,6 +60,7 @@ fragment StockOutLine on InvoiceLineNode {
       isVaccine
       doses
     }
+    volumePerPack
   }
 }
 
@@ -104,6 +105,7 @@ fragment DraftStockOutLine on DraftStockOutLineNode {
     name
     id
   }
+  volumePerPack
 }
 
 query getOutboundEditLines(

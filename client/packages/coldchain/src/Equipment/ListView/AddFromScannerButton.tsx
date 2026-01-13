@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useRef } from 'react';
 import {
   useTranslation,
   useBarcodeScannerContext,
@@ -21,10 +21,11 @@ import {
 import { AppRoute } from '@openmsupply-client/config';
 import { useAssets } from '../api';
 import { DraftAsset } from '../types';
+import { BarcodeFormat } from '@capacitor-mlkit/barcode-scanning';
 
 export const AddFromScannerButtonComponent = () => {
   const t = useTranslation();
-  const { isConnected, isEnabled, isScanning, startScanning, stopScan } =
+  const { isConnected, isEnabled, isScanning, scan } =
     useBarcodeScannerContext();
   const { error, info } = useNotification();
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -123,23 +124,18 @@ export const AddFromScannerButtonComponent = () => {
       return;
     }
     buttonRef.current?.blur();
+
     if (isScanning) {
-      stopScan();
-    } else {
-      try {
-        await startScanning(handleScanResult);
-      } catch (e) {
-        error(t('error.unable-to-start-scanning', { error: e }))();
-      }
+      return;
+    }
+
+    try {
+      const result = await scan([BarcodeFormat.DataMatrix]);
+      await handleScanResult(result);
+    } catch (e) {
+      error(t('error.unable-to-read-barcode', { error: e }))();
     }
   };
-
-  //   stop scanning when the component unloads
-  useEffect(() => {
-    return () => {
-      stopScan();
-    };
-  }, []);
 
   const label = isScanning ? t('button.stop') : t('button.scan');
   useRegisterActions(

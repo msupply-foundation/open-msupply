@@ -9,7 +9,7 @@ use super::{ListError, ListResult};
 use crate::{service_provider::ServiceContext, SingleRecordError};
 use repository::{PaginationOption, Sensor, SensorFilter, SensorSort};
 
-pub mod berlinger;
+pub mod fridge_tag;
 pub mod insert;
 pub mod query;
 pub mod update;

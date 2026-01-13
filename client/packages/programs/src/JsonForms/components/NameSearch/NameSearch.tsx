@@ -56,8 +56,8 @@ const UIComponent = (props: ControlProps) => {
         onChange={onChange}
         width={250}
         disabled={false}
-        clearable={true}
         currentId={otherPartyId}
+        clearable
       />
     ) : (
       <SupplierSearchInput
@@ -65,8 +65,8 @@ const UIComponent = (props: ControlProps) => {
         onChange={onChange}
         width={250}
         disabled={false}
-        clearable={true}
         currentId={otherPartyId}
+        clearable
       />
     );
 

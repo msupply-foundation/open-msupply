@@ -8,17 +8,23 @@ import {
   InputWithLabelRow,
   Typography,
 } from '@common/components';
-import { DateUtils, useFormatDateTime, useTranslation } from '@common/intl';
+import {
+  DateUtils,
+  LocaleKey,
+  useFormatDateTime,
+  useTranslation,
+} from '@common/intl';
 import {
   ArrayUtils,
   Box,
+  CLEAR,
   Formatter,
   UNDEFINED_STRING_VALUE,
   useAuthContext,
   useIsCentralServerApi,
   UserPermission,
+  StatusChip,
 } from '@openmsupply-client/common';
-import { Status } from '../../Components';
 import {
   DonorSearchInput,
   StoreRowFragment,
@@ -27,6 +33,8 @@ import {
 import { DraftAsset } from '../../types';
 import { formatLocationLabel } from '../DetailView';
 import { useIsGapsStoreOnly } from '@openmsupply-client/common';
+import { statusColourMap } from '../../utils';
+
 interface SummaryProps {
   draft?: DraftAsset;
   onChange: (patch: Partial<DraftAsset>) => void;
@@ -161,10 +169,13 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
   const { storeId, userHasPermission } = useAuthContext();
   const isCentralServer = useIsCentralServerApi();
   const isGaps = useIsGapsStoreOnly();
-
   const isServerAdmin = userHasPermission(UserPermission.ServerAdmin);
 
   if (!draft) return null;
+
+  const status = draft.statusLog?.status
+    ? statusColourMap(draft.statusLog.status)
+    : undefined;
 
   const defaultLocations = draft.locations.nodes.map(location => ({
     label: formatLocationLabel(location),
@@ -187,7 +198,7 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
     _value: string,
     reason: string
   ) => {
-    if (reason === 'clear') onChange({ store: null });
+    if (reason === CLEAR) onChange({ store: null });
   };
 
   return (
@@ -358,7 +369,10 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
         <Section heading={t('heading.functional-status')}>
           <Row isGaps={isGaps} label={t('label.current-status')}>
             <Box display="flex">
-              <Status status={draft.statusLog?.status} />
+              <StatusChip
+                label={t(status?.label as LocaleKey)}
+                colour={status?.colour}
+              />
             </Box>
           </Row>
           <Row isGaps={isGaps} label={t('label.last-updated')}>

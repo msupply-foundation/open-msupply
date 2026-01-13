@@ -94,6 +94,7 @@ export type OutboundFragment = {
         costPricePerPack: number;
         packSize: number;
         expiryDate?: string | null;
+        volumePerPack: number;
         item: {
           __typename: 'ItemNode';
           name: string;
@@ -343,6 +344,7 @@ export type InvoiceQuery = {
               costPricePerPack: number;
               packSize: number;
               expiryDate?: string | null;
+              volumePerPack: number;
               item: {
                 __typename: 'ItemNode';
                 name: string;
@@ -497,6 +499,7 @@ export type OutboundByNumberQuery = {
               costPricePerPack: number;
               packSize: number;
               expiryDate?: string | null;
+              volumePerPack: number;
               item: {
                 __typename: 'ItemNode';
                 name: string;

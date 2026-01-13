@@ -4,7 +4,6 @@ pub(crate) mod update_request_requisition_approved_quantities;
 pub(crate) mod update_request_requisition_status;
 
 #[cfg(test)]
-#[cfg(not(feature = "memory"))]
 pub(crate) mod test;
 
 use repository::{

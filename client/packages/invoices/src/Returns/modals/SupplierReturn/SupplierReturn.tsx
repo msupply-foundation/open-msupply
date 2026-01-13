@@ -3,8 +3,6 @@ import {
   useTranslation,
   useDialog,
   DialogButton,
-  TableProvider,
-  createTableStore,
   useTabs,
   Box,
   ModalMode,
@@ -143,42 +141,38 @@ export const SupplierReturnEditModal = ({
     />
   );
 
-  return (
-    <TableProvider createStore={createTableStore}>
-      <Modal
-        title={t('heading.return-items')}
-        cancelButton={currentTab === Tabs.Quantity ? CancelButton : BackButton}
-        // zeroQuantityAlert === warning implies all lines are 0 and user has
-        // been already warned, so we act immediately to update them
-        okButton={
-          currentTab === Tabs.Quantity && zeroQuantityAlert !== 'warning'
-            ? NextStepButton
-            : OkButton
-        }
-        nextButton={!isNewReturn ? OkAndNextButton : undefined}
-        height={600}
-        width={1200}
-      >
-        <Box ref={alertRef}>
-          {returnId && (
-            <ItemSelector
-              disabled={!!itemId}
-              itemId={itemId}
-              onChangeItemId={setItemId}
-            />
-          )}
-          {lines.length > 0 && (
-            <ReturnSteps
-              currentTab={currentTab}
-              lines={lines}
-              update={update}
-              returnId={returnId}
-              zeroQuantityAlert={zeroQuantityAlert}
-              setZeroQuantityAlert={setZeroQuantityAlert}
-            />
-          )}
-        </Box>
-      </Modal>
-    </TableProvider>
-  );
+  return <Modal
+    title={t('heading.return-items')}
+    cancelButton={currentTab === Tabs.Quantity ? CancelButton : BackButton}
+    // zeroQuantityAlert === warning implies all lines are 0 and user has
+    // been already warned, so we act immediately to update them
+    okButton={
+      currentTab === Tabs.Quantity && zeroQuantityAlert !== 'warning'
+        ? NextStepButton
+        : OkButton
+    }
+    nextButton={!isNewReturn ? OkAndNextButton : undefined}
+    height={600}
+    width={1200}
+  >
+    <Box ref={alertRef}>
+      {returnId && (
+        <ItemSelector
+          disabled={!!itemId}
+          itemId={itemId}
+          onChangeItemId={setItemId}
+        />
+      )}
+      {lines.length > 0 && (
+        <ReturnSteps
+          currentTab={currentTab}
+          lines={lines}
+          update={update}
+          returnId={returnId}
+          zeroQuantityAlert={zeroQuantityAlert}
+          setZeroQuantityAlert={setZeroQuantityAlert}
+        />
+      )}
+    </Box>
+  </Modal>;
 };
