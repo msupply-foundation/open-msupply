@@ -10,7 +10,6 @@ import { useGetRefreshToken } from './useGetRefreshToken';
 export const useRefreshToken = (onTimeout: () => void) => {
   const { mutateAsync } = useGetRefreshToken();
   const {
-    setHeader,
     client: { getLastRequestTime },
   } = useGql();
 
@@ -42,7 +41,6 @@ export const useRefreshToken = (onTimeout: () => void) => {
         const token = data?.token ?? '';
         const newCookie = { ...authCookie, token };
         setAuthCookie(newCookie);
-        setHeader('Authorization', `Bearer ${token}`);
       });
     }
   };
