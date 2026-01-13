@@ -1,9 +1,16 @@
-use crate::{migrations::sql, StorageConnection};
+use crate::migrations::*;
 
-pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
-    sql!(
-        connection,
-        r#"
+pub(crate) struct Migrate;
+
+impl MigrationFragment for Migrate {
+    fn identifier(&self) -> &'static str {
+        "store_add_name_link_id_and_is_disabled"
+    }
+
+    fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
+        sql!(
+            connection,
+            r#"
         -- Drop views early
         -- These views are re-created in the decimal_pack_size migration
         DROP VIEW stock_on_hand;
@@ -12,12 +19,12 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
         -- Recreated below
         DROP VIEW report_store;
     "#,
-    )?;
+        )?;
 
-    #[cfg(feature = "postgres")]
-    sql!(
-        connection,
-        r#"
+        #[cfg(feature = "postgres")]
+        sql!(
+            connection,
+            r#"
         -- Adding store.name_link_id
         DROP INDEX index_store_name_id_fkey;
         ALTER TABLE store ADD COLUMN name_link_id TEXT;
@@ -28,12 +35,12 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
         ALTER TABLE store ADD CONSTRAINT store_name_link_id_fkey FOREIGN KEY (name_link_id) REFERENCES name_link(id);
         ALTER TABLE store DROP COLUMN name_id;
         "#,
-    )?;
+        )?;
 
-    #[cfg(not(feature = "postgres"))]
-    sql!(
-        connection,
-        r#"
+        #[cfg(not(feature = "postgres"))]
+        sql!(
+            connection,
+            r#"
         CREATE TABLE store_new (
           id TEXT NOT NULL PRIMARY KEY,
           name_link_id TEXT NOT NULL REFERENCES name_link(id),
@@ -52,11 +59,11 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
         ALTER TABLE store_new RENAME TO store;
         PRAGMA foreign_keys=on;
      "#,
-    )?;
+        )?;
 
-    sql!(
-        connection,
-        r#"
+        sql!(
+            connection,
+            r#"
         CREATE VIEW report_store AS
         SELECT
             store.id,
@@ -68,7 +75,8 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
         JOIN name_link ON store.name_link_id = name_link.id
         JOIN name ON name_link.name_id = name.id;
         "#,
-    )?;
+        )?;
 
-    Ok(())
+        Ok(())
+    }
 }

@@ -1,47 +1,52 @@
 use util::constants::IMMUNISATION_CONTEXT_ID;
 
-use crate::{
-    migrations::{sql, DATETIME},
-    StorageConnection,
-};
+use crate::migrations::*;
 
-pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
-    if cfg!(feature = "postgres") {
-        sql!(
-            connection,
-            r#"
-            ALTER TABLE program ALTER COLUMN master_list_id DROP NOT NULL;
-            ALTER TABLE program ADD COLUMN IF NOT EXISTS is_immunisation BOOLEAN NOT NULL DEFAULT false;
-            ALTER TABLE program ADD COLUMN IF NOT EXISTS deleted_datetime {DATETIME};
-            "#
-        )?;
-    } else {
-        sql!(
-            connection,
-            r#"
-            CREATE TABLE tmp_program (
-                id TEXT NOT NULL PRIMARY KEY,
-                master_list_id TEXT,
-                name TEXT NOT NULL,
-                context_id TEXT NOT NULL REFERENCES context(id),
-                is_immunisation BOOLEAN NOT NULL,
-                deleted_datetime {DATETIME}
-            );
-            INSERT INTO tmp_program SELECT id, master_list_id, name, context_id, false, null FROM program;
+pub(crate) struct Migrate;
 
-            PRAGMA foreign_keys = OFF;
-            DROP TABLE program;
-            ALTER TABLE tmp_program RENAME TO program;
-            PRAGMA foreign_keys = ON;
-        "#
-        )?;
+impl MigrationFragment for Migrate {
+    fn identifier(&self) -> &'static str {
+        "program"
     }
 
-    sql!(
-        connection,
-        "INSERT INTO context (id, name) VALUES('{}', 'Immunisation context');",
-        IMMUNISATION_CONTEXT_ID
-    )?;
+    fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
+        if cfg!(feature = "postgres") {
+            sql!(
+                connection,
+                r#"
+                    ALTER TABLE program ALTER COLUMN master_list_id DROP NOT NULL;
+                    ALTER TABLE program ADD COLUMN IF NOT EXISTS is_immunisation BOOLEAN NOT NULL DEFAULT false;
+                    ALTER TABLE program ADD COLUMN IF NOT EXISTS deleted_datetime {DATETIME};
+                "#
+            )?;
+        } else {
+            sql!(
+                connection,
+                r#"
+                    CREATE TABLE tmp_program (
+                        id TEXT NOT NULL PRIMARY KEY,
+                        master_list_id TEXT,
+                        name TEXT NOT NULL,
+                        context_id TEXT NOT NULL REFERENCES context(id),
+                        is_immunisation BOOLEAN NOT NULL,
+                        deleted_datetime {DATETIME}
+                    );
+                    INSERT INTO tmp_program SELECT id, master_list_id, name, context_id, false, null FROM program;
 
-    Ok(())
+                    PRAGMA foreign_keys = OFF;
+                    DROP TABLE program;
+                    ALTER TABLE tmp_program RENAME TO program;
+                    PRAGMA foreign_keys = ON;
+                "#
+            )?;
+        }
+
+        sql!(
+            connection,
+            "INSERT INTO context (id, name) VALUES('{}', 'Immunisation context');",
+            IMMUNISATION_CONTEXT_ID
+        )?;
+
+        Ok(())
+    }
 }

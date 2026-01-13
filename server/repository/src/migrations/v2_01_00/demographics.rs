@@ -1,12 +1,16 @@
-use crate::{
-    migrations::{sql, DOUBLE},
-    StorageConnection,
-};
+use crate::migrations::*;
 
-pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
-    sql!(
-        connection,
-        r#"
+pub(crate) struct Migrate;
+
+impl MigrationFragment for Migrate {
+    fn identifier(&self) -> &'static str {
+        "demographics"
+    }
+
+    fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
+        sql!(
+            connection,
+            r#"
             CREATE TABLE demographic_indicator (
                 id TEXT NOT NULL PRIMARY KEY,
                 name TEXT NOT NULL,
@@ -30,7 +34,8 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
                 year_5 {DOUBLE} NOT NULL
             );
         "#
-    )?;
+        )?;
 
-    Ok(())
+        Ok(())
+    }
 }
