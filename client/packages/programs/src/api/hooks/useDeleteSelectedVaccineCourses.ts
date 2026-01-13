@@ -44,10 +44,16 @@ export const useDeleteSelectedVaccineCourses = ({
   };
 
   const onDelete = async () => {
-    await Promise.all(
-      selectedRows.map(row => mutateAsync({ vaccineCourseId: row.id }))
-    ).then(() => queryClient.invalidateQueries([VACCINE, LIST]));
-    resetRowSelection();
+    for (const row of selectedRows) {
+      const result = await mutateAsync({ vaccineCourseId: row.id });
+      const errorMessage = mapStructuredErrors(result);
+      if (errorMessage) {
+        throw new Error(errorMessage);
+      }
+
+      await queryClient.invalidateQueries([VACCINE, LIST]);
+      resetRowSelection();
+    }
   };
 
   const confirmAndDelete = useDeleteConfirmation({
