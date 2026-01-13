@@ -14,6 +14,9 @@ import {
   LocaleKey,
   BasicTextInput,
   isString,
+  useAuthContext,
+  UserPermission,
+  useIsCentralServerApi,
 } from '@openmsupply-client/common';
 import { MultiChoice, getMultiChoiceOptions } from '../Components/MultiChoice';
 import { EditCustomTranslations } from '../Components/CustomTranslations/CustomTranslationsModal';
@@ -25,7 +28,6 @@ interface EditPreferenceProps {
   update: (
     input: UpsertPreferencesInput[keyof UpsertPreferencesInput]
   ) => Promise<boolean>;
-  disabled?: boolean;
   label?: string;
   isLast?: boolean;
 }
@@ -33,12 +35,16 @@ interface EditPreferenceProps {
 export const EditPreference = ({
   preference,
   update,
-  disabled = false,
   label,
   isLast = false,
 }: EditPreferenceProps) => {
   const t = useTranslation();
   const { error } = useNotification();
+  const { userHasPermission } = useAuthContext();
+  const isCentralServer = useIsCentralServerApi();
+
+  const disabled =
+    !isCentralServer || !userHasPermission(UserPermission.EditCentralData);
 
   const preferenceLabel =
     label ?? t(`preference.${preference.key}` as LocaleKey);

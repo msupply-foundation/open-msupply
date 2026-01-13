@@ -18,6 +18,7 @@ interface ConfirmationModalProps {
   iconType?: 'alert' | 'info' | 'help';
   buttonLabel?: string | undefined;
   cancelButtonLabel?: string | undefined;
+  otherButtons?: Array<React.ReactNode>;
 }
 
 const iconLookup = {
@@ -38,6 +39,7 @@ export const ConfirmationModal = ({
   iconType = 'alert',
   buttonLabel,
   cancelButtonLabel,
+  otherButtons,
 }: ConfirmationModalProps) => {
   const [loading, setLoading] = useState(false);
   const Icon = iconLookup[iconType];
@@ -73,6 +75,9 @@ export const ConfirmationModal = ({
           flex={1}
           display="flex"
         >
+          {otherButtons && otherButtons.map((button, idx) => (
+            <Grid key={idx}>{button}</Grid>
+          ))}
           <Grid>
             <DialogButton
               variant="cancel"

@@ -1,9 +1,6 @@
-import React, { FC, useEffect } from 'react';
+import React, { FC, useEffect, useMemo } from 'react';
 import {
-  TableProvider,
-  createTableStore,
   useBreadcrumbs,
-  createQueryParamsStore,
   useParams,
   InlineSpinner,
   AppFooterPortal,
@@ -12,17 +9,15 @@ import {
   CloseIcon,
   useTranslation,
   useUrlQueryParams,
-  DataTable,
-  useColumns,
   NothingHere,
   useEditModal,
-  UNDEFINED_STRING_VALUE,
-  GenericColumnKey,
   ActionsFooter,
   Action,
   DeleteIcon,
+  MaterialTable,
+  usePaginatedMaterialTable,
+  ColumnDef,
 } from '@openmsupply-client/common';
-import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
 import {
   VaccineCourseFragment,
@@ -32,20 +27,16 @@ import {
 import { VaccineCourseEditModal } from '../VaccineCourseEditModal';
 import { useDeleteSelectedVaccineCourses } from '../api';
 
-export const ProgramComponent: FC = () => {
+export const ImmunisationProgramDetailView: FC = () => {
   const {
-    updateSortQuery,
-    updatePaginationQuery,
-    queryParams: { sortBy, page, first, offset, filterBy },
+    queryParams: { sortBy, first, offset, filterBy },
   } = useUrlQueryParams({ filters: [{ key: 'name' }] });
-  const pagination = { page, first, offset };
   const t = useTranslation();
   const { setCustomBreadcrumbs, navigateUpOne } = useBreadcrumbs();
   const { id } = useParams();
   const {
     query: { data, isLoading },
   } = useImmunisationProgram(id);
-  const { selectedRows, confirmAndDelete } = useDeleteSelectedVaccineCourses();
 
   const queryParams = {
     filterBy: { ...filterBy, programId: { equalTo: id } },
@@ -60,33 +51,6 @@ export const ProgramComponent: FC = () => {
     isError: vaccineCoursesError,
   } = useVaccineCourseList(queryParams);
 
-  const columns = useColumns<VaccineCourseFragment>(
-    [
-      GenericColumnKey.Selection,
-      { key: 'name', label: 'label.name' },
-      {
-        key: 'demographicIndicator',
-        label: 'label.target-demographic',
-
-        sortable: false,
-        accessor: ({ rowData }) =>
-          rowData?.demographic
-            ? rowData.demographic.name
-            : UNDEFINED_STRING_VALUE,
-      },
-      {
-        key: 'doses',
-        label: 'label.doses',
-        accessor: ({ rowData }) => rowData?.vaccineCourseDoses?.length ?? 0,
-      },
-    ],
-    {
-      onChangeSortBy: updateSortQuery,
-      sortBy,
-    },
-    [updateSortQuery, sortBy]
-  );
-
   useEffect(() => {
     setCustomBreadcrumbs({ 1: data?.name ?? '' });
   }, [setCustomBreadcrumbs, data]);
@@ -98,6 +62,45 @@ export const ProgramComponent: FC = () => {
     entity: vaccineCourse,
     mode,
   } = useEditModal<VaccineCourseFragment>();
+
+  const columns = useMemo(
+    (): ColumnDef<VaccineCourseFragment>[] => [
+      {
+        accessorKey: 'name',
+        header: t('label.name'),
+        enableSorting: true,
+        enableColumnFilter: true,
+      },
+      {
+        accessorKey: 'demographic.name',
+        header: t('label.target-demographic'),
+      },
+      {
+        accessorKey: 'vaccineCourseDoses.length',
+        header: t('label.doses'),
+      },
+    ],
+    []
+  );
+
+  const { table, selectedRows } = usePaginatedMaterialTable<VaccineCourseFragment>({
+    tableId: 'vaccine-course-list',
+    isLoading: vaccineCoursesLoading,
+    isError: vaccineCoursesError,
+    columns,
+    data: vaccineCoursesData?.nodes ?? [],
+    enableRowSelection: true,
+    onRowClick: onOpen,
+    totalCount: vaccineCoursesData?.totalCount ?? 0,
+    noDataElement: (
+      <NothingHere
+        body={t('error.no-vaccine-courses')}
+        onCreate={onOpen}
+      />
+    ),
+  });
+
+  const { confirmAndDelete } = useDeleteSelectedVaccineCourses({ selectedRows, resetRowSelection: table.resetRowSelection });
 
   const actions: Action[] = [
     {
@@ -120,27 +123,15 @@ export const ProgramComponent: FC = () => {
           mode={mode}
         />
       )}
-      <Toolbar />
       <AppBarButtons onCreate={onOpen} />
-      <DataTable
-        id={'Vaccine Course List'}
-        pagination={{ ...pagination }}
-        onChangePage={updatePaginationQuery}
-        columns={columns}
-        data={vaccineCoursesData?.nodes ?? []}
-        isLoading={vaccineCoursesLoading}
-        isError={vaccineCoursesError}
-        onRowClick={onOpen}
-        noDataElement={
-          <NothingHere body={t('error.no-vaccine-courses')} onCreate={onOpen} />
-        }
-      />
+      <MaterialTable table={table} />
       <AppFooterPortal
         Content={
           selectedRows.length ? (
             <ActionsFooter
               actions={actions}
               selectedRowCount={selectedRows.length}
+              resetRowSelection={table.resetRowSelection}
             />
           ) : (
             <Box
@@ -167,14 +158,3 @@ export const ProgramComponent: FC = () => {
     </>
   );
 };
-
-export const ImmunisationProgramDetailView: FC = () => (
-  <TableProvider
-    createStore={createTableStore}
-    queryParamsStore={createQueryParamsStore({
-      initialSortBy: { key: 'name' },
-    })}
-  >
-    <ProgramComponent />
-  </TableProvider>
-);

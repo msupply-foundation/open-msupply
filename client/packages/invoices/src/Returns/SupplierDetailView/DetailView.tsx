@@ -1,13 +1,10 @@
 import React, { useEffect } from 'react';
 import {
-  TableProvider,
-  createTableStore,
   DetailViewSkeleton,
   AlertModal,
   useNavigate,
   RouteBuilder,
   useTranslation,
-  createQueryParamsStore,
   useEditModal,
   DetailTabs,
   useBreadcrumbs,
@@ -27,7 +24,7 @@ import { SupplierReturnEditModal } from '../modals';
 import { getNextItemId } from '../../utils';
 import { useSupplierReturnColumns } from './columns';
 
-export const SupplierReturnsDetailViewComponent = () => {
+export const SupplierReturnsDetailView = () => {
   const {
     onOpen,
     onClose,
@@ -137,16 +134,3 @@ export const SupplierReturnsDetailViewComponent = () => {
     </React.Suspense>
   );
 };
-
-export const SupplierReturnsDetailView = () => (
-  <TableProvider
-    createStore={createTableStore}
-    queryParamsStore={createQueryParamsStore<SupplierReturnLineFragment>({
-      initialSortBy: {
-        key: 'itemName',
-      },
-    })}
-  >
-    <SupplierReturnsDetailViewComponent />
-  </TableProvider>
-);

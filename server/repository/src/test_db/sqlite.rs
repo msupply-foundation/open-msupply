@@ -27,7 +27,6 @@ fn get_test_db_settings_etc(db_name: &str, is_template: bool) -> DatabaseSetting
         password: "password".to_string(),
         port: 5432,
         host: "localhost".to_string(),
-        // put DB test files into a test directory (also works for in-memory)
         database_name: if is_template {
             format!("{}/{}.sqlite", template_dir().to_string_lossy(), db_name)
         } else {
@@ -73,8 +72,7 @@ pub(crate) async fn setup_with_version(
     inserts: MockDataInserts,
 ) -> (StorageConnectionManager, MockDataCollection) {
     let db_path = db_settings.connection_string();
-    let memory_mode = db_path.starts_with("file:");
-    if memory_mode || env_msupply_no_test_db_template() {
+    if env_msupply_no_test_db_template() {
         return setup_with_version_no_template(db_settings, version, inserts).await;
     }
 
@@ -165,16 +163,12 @@ fn connection_manager(db_settings: &DatabaseSettings) -> StorageConnectionManage
 fn create_db(db_settings: &DatabaseSettings, version: Option<Version>) -> StorageConnectionManager {
     let db_path = db_settings.connection_string();
 
-    // If not in-memory mode clean up and create test directory
-    // (in in-memory mode the db_path starts with "file:")
-    if !db_path.starts_with("file:") {
-        // remove existing db file
-        fs::remove_file(&db_path).ok();
-        // create parent dirs
-        let path = Path::new(&db_path);
-        let prefix = path.parent().unwrap();
-        fs::create_dir_all(prefix).unwrap();
-    }
+    // remove existing db file
+    fs::remove_file(&db_path).ok();
+    // create parent dirs
+    let path = Path::new(&db_path);
+    let prefix = path.parent().unwrap();
+    fs::create_dir_all(prefix).unwrap();
 
     let connection_manager = connection_manager(db_settings);
     let connection = connection_manager

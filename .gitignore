@@ -9,3 +9,6 @@ server/data
 
 
 standard_reports/test-config.json
+
+# IDEs
+.idea/

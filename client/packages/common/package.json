@@ -13,7 +13,6 @@
   },
   "dependencies": {
     "@bugsnag/js": "^7.25.0",
-    "@capacitor-community/barcode-scanner": "^4.0.1",
     "@capacitor/app": "^6.0.2",
     "@capacitor/core": "^6.1.2",
     "@emotion/react": "^11.14.0",
