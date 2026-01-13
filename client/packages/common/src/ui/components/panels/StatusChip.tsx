@@ -44,7 +44,7 @@ export const StatusChip = ({
           opacity: bgColour ? 1 : 0.2,
         }}
       />
-      <CircleIcon sx={{ colour, transform: 'scale(0.4)' }} />
+      <CircleIcon sx={{ color: colour, transform: 'scale(0.4)' }} />
       <Typography sx={{ paddingRight: 1, zIndex: 1, ...typographySx }}>
         {label}
       </Typography>

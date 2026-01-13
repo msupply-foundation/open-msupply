@@ -8,7 +8,12 @@ import {
   InputWithLabelRow,
   Typography,
 } from '@common/components';
-import { DateUtils, useFormatDateTime, useTranslation } from '@common/intl';
+import {
+  DateUtils,
+  LocaleKey,
+  useFormatDateTime,
+  useTranslation,
+} from '@common/intl';
 import {
   ArrayUtils,
   Box,
@@ -364,7 +369,10 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
         <Section heading={t('heading.functional-status')}>
           <Row isGaps={isGaps} label={t('label.current-status')}>
             <Box display="flex">
-              <StatusChip label={status?.label} colour={status?.colour} />
+              <StatusChip
+                label={t(status?.label as LocaleKey)}
+                colour={status?.colour}
+              />
             </Box>
           </Row>
           <Row isGaps={isGaps} label={t('label.last-updated')}>
