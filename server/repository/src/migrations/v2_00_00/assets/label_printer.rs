@@ -5,7 +5,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
         sql!(
             connection,
             r#"
-            ALTER TYPE key_type ADD value 'SETTINGS_LABEL_PRINTER';
+                ALTER TYPE key_type ADD value IF NOT EXISTS 'SETTINGS_LABEL_PRINTER';
             "#,
         )?;
     }
