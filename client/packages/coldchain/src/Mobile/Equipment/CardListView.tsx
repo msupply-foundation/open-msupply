@@ -133,13 +133,9 @@ export const CardListView = () => {
             </CardContent>
             <Box padding=".2em">
               <StatusChip
-                label={
-                  n.statusLog?.status
-                    ? t(
-                        statusColourMap(n.statusLog?.status)?.label as LocaleKey
-                      )
-                    : undefined
-                }
+                label={t(
+                  statusColourMap(n.statusLog?.status)?.label as LocaleKey
+                )}
                 colour={
                   n.statusLog?.status
                     ? statusColourMap(n.statusLog?.status)?.colour
