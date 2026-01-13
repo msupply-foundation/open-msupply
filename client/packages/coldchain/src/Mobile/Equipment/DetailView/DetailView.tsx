@@ -2,6 +2,7 @@ import React, { FC } from 'react';
 import {
   Box,
   DetailFormSkeleton,
+  LocaleKey,
   StatusChip,
 } from '@openmsupply-client/common';
 import { SimpleLabelDisplay } from '../../Components/SimpleLabelDisplay';
@@ -75,7 +76,10 @@ export const EquipmentDetailView: FC = () => {
       </Box>
 
       <Box sx={{ padding: '.2rem', marginBottom: '.5em' }}>
-        <StatusChip label={status?.label} colour={status?.colour} />
+        <StatusChip
+          label={t(status?.label as LocaleKey)}
+          colour={status?.colour}
+        />
       </Box>
 
       <Box

@@ -13,6 +13,7 @@ import {
   BaseButton,
   InlineSpinner,
   StatusChip,
+  LocaleKey,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { Box, Typography, Card, CardContent } from '@mui/material';
@@ -134,7 +135,9 @@ export const CardListView = () => {
               <StatusChip
                 label={
                   n.statusLog?.status
-                    ? statusColourMap(n.statusLog?.status)?.label
+                    ? t(
+                        statusColourMap(n.statusLog?.status)?.label as LocaleKey
+                      )
                     : undefined
                 }
                 colour={
