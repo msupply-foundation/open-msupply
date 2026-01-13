@@ -78,6 +78,7 @@ pub struct UpsertPreferencesInput {
     pub inbound_shipment_auto_verify: Option<Vec<BoolStorePrefInput>>,
     pub can_create_internal_order_from_a_requisition: Option<Vec<BoolStorePrefInput>>,
     pub select_destination_store_for_an_internal_order: Option<Vec<BoolStorePrefInput>>,
+    pub external_inbound_shipment_lines_must_be_authorised: Option<Vec<BoolStorePrefInput>>,
     pub number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products:
         Option<Vec<IntegerStorePrefInput>>,
     pub number_of_months_threshold_to_show_low_stock_alerts_for_products:
@@ -153,6 +154,7 @@ impl UpsertPreferencesInput {
             warn_when_missing_recent_stocktake,
             store_custom_colour,
             invoice_status_options,
+            external_inbound_shipment_lines_must_be_authorised,
         } = self;
 
         UpsertPreferences {
@@ -240,6 +242,10 @@ impl UpsertPreferencesInput {
             invoice_status_options: invoice_status_options
                 .as_ref()
                 .map(|i| i.iter().map(|i| i.to_domain()).collect()),
+            external_inbound_shipment_lines_must_be_authorised:
+                external_inbound_shipment_lines_must_be_authorised
+                    .as_ref()
+                    .map(|i| i.iter().map(|i| i.to_domain()).collect()),
         }
     }
 }
