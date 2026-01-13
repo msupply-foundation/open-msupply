@@ -1,8 +1,9 @@
 use super::{
-    clinician_link, clinician_row::clinician, name_link_row::name_link, name_row::name,
+    clinician_link, clinician_row::clinician, name_row::name,
     program_row::program, StorageConnection,
 };
 
+use crate::diesel_macros::define_linked_tables;
 use crate::{
     repository_error::RepositoryError, ChangeLogInsertRow, ChangelogRepository, ChangelogTableName,
     RowActionType,
@@ -25,33 +26,36 @@ pub enum EncounterStatus {
     Deleted,
 }
 
-table! {
-    encounter (id) {
-        id -> Text,
+define_linked_tables! {
+    view: encounter = "encounter_view",
+    core: encounter_with_links = "encounter",
+    struct: EncounterRow,
+    repo: EncounterRowRepository,
+    shared: {
         document_type -> Text,
         document_name -> Text,
         program_id -> Text,
-        patient_link_id -> Text,
         created_datetime -> Timestamp,
         start_datetime -> Timestamp,
         end_datetime -> Nullable<Timestamp>,
         status -> Nullable<crate::db_diesel::encounter_row::EncounterStatusMapping>,
         clinician_link_id -> Nullable<Text>,
         store_id -> Nullable<Text>,
-    }
+    },
+    links: {
+        patient_link_id -> patient_id,
+    },
+    optional_links: {}
 }
 
 joinable!(encounter -> program (program_id));
 joinable!(encounter -> clinician_link (clinician_link_id));
-joinable!(encounter -> name_link (patient_link_id));
 allow_tables_to_appear_in_same_query!(encounter, program);
 allow_tables_to_appear_in_same_query!(encounter, clinician_link);
 allow_tables_to_appear_in_same_query!(encounter, clinician);
-allow_tables_to_appear_in_same_query!(encounter, name_link);
 allow_tables_to_appear_in_same_query!(encounter, name);
 
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Eq, Default)]
-#[diesel(treat_none_as_null = true)]
+#[derive(Clone, Queryable, Debug, PartialEq, Eq, Default)]
 #[diesel(table_name = encounter)]
 pub struct EncounterRow {
     pub id: String,
@@ -60,7 +64,6 @@ pub struct EncounterRow {
     /// The encounter document name
     pub document_name: String,
     pub program_id: String,
-    pub patient_link_id: String,
     pub created_datetime: NaiveDateTime,
     pub start_datetime: NaiveDateTime,
     pub end_datetime: Option<NaiveDateTime>,
@@ -68,6 +71,8 @@ pub struct EncounterRow {
     pub clinician_link_id: Option<String>,
     ///  The encounter's location (if the location is a store)
     pub store_id: Option<String>,
+    // Resolved from name_link - must be last to match view column order
+    pub patient_id: String,
 }
 
 pub struct EncounterRowRepository<'a> {
@@ -80,12 +85,7 @@ impl<'a> EncounterRowRepository<'a> {
     }
 
     pub fn upsert_one(&self, row: &EncounterRow) -> Result<i64, RepositoryError> {
-        diesel::insert_into(encounter::dsl::encounter)
-            .values(row)
-            .on_conflict(encounter::dsl::id)
-            .do_update()
-            .set(row)
-            .execute(self.connection.lock().connection())?;
+        self._upsert(row)?;
         self.insert_changelog(row.clone(), RowActionType::Upsert)
     }
 
@@ -99,15 +99,15 @@ impl<'a> EncounterRowRepository<'a> {
             record_id: row.id,
             row_action: action,
             store_id: row.store_id,
-            name_link_id: Some(row.patient_link_id),
+            name_link_id: Some(row.patient_id),
         };
 
         ChangelogRepository::new(self.connection).insert(&changelog_row)
     }
 
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<EncounterRow>, RepositoryError> {
-        let result = encounter::dsl::encounter
-            .filter(encounter::dsl::id.eq(id))
+        let result = encounter::table
+            .filter(encounter::id.eq(id))
             .first(self.connection.lock().connection())
             .optional();
         result.map_err(RepositoryError::from)

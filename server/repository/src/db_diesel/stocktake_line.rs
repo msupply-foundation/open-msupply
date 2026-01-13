@@ -1,12 +1,12 @@
 use super::{
-    item_link_row::item_link, item_row::item, location_row::location, name_link_row::name_link,
+    item_link_row::item_link, item_row::item, location_row::location,
     name_row::name, reason_option_row::reason_option, stock_line_row::stock_line,
-    stocktake_line_row::stocktake_line, LocationRow, NameLinkRow, NameRow, ReasonOptionRow,
+    stocktake_line_row::stocktake_line, LocationRow, NameRow, ReasonOptionRow,
     StockLineRow, StocktakeLineRow, StorageConnection,
 };
 
 use diesel::{
-    dsl::{InnerJoin, IntoBoxed, LeftJoin},
+    dsl::{Eq, InnerJoin, IntoBoxed, LeftJoin, LeftJoinOn, Nullable},
     prelude::*,
 };
 
@@ -78,7 +78,7 @@ type StocktakeLineJoin = (
     (ItemLinkRow, ItemRow),
     Option<StockLineRow>,
     Option<LocationRow>,
-    Option<(NameLinkRow, NameRow)>,
+    Option<NameRow>,
     Option<ReasonOptionRow>,
 );
 
@@ -180,7 +180,7 @@ impl<'a> StocktakeLineRepository<'a> {
             .inner_join(item_link::table.inner_join(item::table))
             .left_join(stock_line::table)
             .left_join(location::table)
-            .left_join(name_link::table.inner_join(name::table))
+            .left_join(name::table.on(stocktake_line::donor_id.eq(name::id.nullable())))
             .left_join(reason_option::table)
             .into_boxed();
 
@@ -199,7 +199,7 @@ impl<'a> StocktakeLineRepository<'a> {
 type BoxedStocktakeLineQuery = IntoBoxed<
     'static,
     LeftJoin<
-        LeftJoin<
+        LeftJoinOn<
             LeftJoin<
                 LeftJoin<
                     InnerJoin<stocktake_line::table, InnerJoin<item_link::table, item::table>>,
@@ -207,7 +207,8 @@ type BoxedStocktakeLineQuery = IntoBoxed<
                 >,
                 location::table,
             >,
-            InnerJoin<name_link::table, name::table>,
+            name::table,
+            Eq<stocktake_line::donor_id, Nullable<name::id>>,
         >,
         reason_option::table,
     >,
@@ -215,14 +216,14 @@ type BoxedStocktakeLineQuery = IntoBoxed<
 >;
 
 fn to_domain(
-    (line, (_, item), stock_line, location, name_link, reason_option): StocktakeLineJoin,
+    (line, (_, item), stock_line, location, donor, reason_option): StocktakeLineJoin,
 ) -> StocktakeLine {
     StocktakeLine {
         line,
         item,
         stock_line,
         location,
-        donor: name_link.map(|(_, name_row)| name_row),
+        donor,
         reason_option,
     }
 }

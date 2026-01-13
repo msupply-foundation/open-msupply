@@ -22,6 +22,9 @@ impl ViewMigrationFragment for ViewMigration {
                 DROP VIEW IF EXISTS purchase_order_view;
                 DROP VIEW IF EXISTS invoice_line_view;
                 DROP VIEW IF EXISTS purchase_order_line_view;
+                DROP VIEW IF EXISTS stocktake_line_view;
+                DROP VIEW IF EXISTS encounter_view;
+                DROP VIEW IF EXISTS program_enrolment_view;
             "#
         )?;
 
@@ -261,6 +264,69 @@ impl ViewMigrationFragment for ViewMigration {
                     purchase_order_line
                 LEFT JOIN
                     name_link AS manufacturer_link ON purchase_order_line.manufacturer_link_id = manufacturer_link.id;
+
+                CREATE VIEW stocktake_line_view AS
+                SELECT
+                    stocktake_line.id,
+                    stocktake_line.stocktake_id,
+                    stocktake_line.stock_line_id,
+                    stocktake_line.location_id,
+                    stocktake_line.comment,
+                    stocktake_line.snapshot_number_of_packs,
+                    stocktake_line.counted_number_of_packs,
+                    stocktake_line.item_link_id,
+                    stocktake_line.item_name,
+                    stocktake_line.batch,
+                    stocktake_line.expiry_date,
+                    stocktake_line.pack_size,
+                    stocktake_line.cost_price_per_pack,
+                    stocktake_line.sell_price_per_pack,
+                    stocktake_line.note,
+                    stocktake_line.item_variant_id,
+                    stocktake_line.reason_option_id,
+                    stocktake_line.vvm_status_id,
+                    stocktake_line.volume_per_pack,
+                    stocktake_line.campaign_id,
+                    stocktake_line.program_id,
+                    donor_link.name_id as donor_id
+                FROM
+                    stocktake_line
+                LEFT JOIN
+                    name_link AS donor_link ON stocktake_line.donor_link_id = donor_link.id;
+
+                CREATE VIEW encounter_view AS
+                SELECT
+                    encounter.id,
+                    encounter.document_type,
+                    encounter.document_name,
+                    encounter.program_id,
+                    encounter.created_datetime,
+                    encounter.start_datetime,
+                    encounter.end_datetime,
+                    encounter.status,
+                    encounter.clinician_link_id,
+                    encounter.store_id,
+                    patient_link.name_id as patient_id
+                FROM
+                    encounter
+                JOIN
+                    name_link AS patient_link ON encounter.patient_link_id = patient_link.id;
+
+                CREATE VIEW program_enrolment_view AS
+                SELECT
+                    program_enrolment.id,
+                    program_enrolment.document_type,
+                    program_enrolment.document_name,
+                    program_enrolment.program_id,
+                    program_enrolment.enrolment_datetime,
+                    program_enrolment.program_enrolment_id,
+                    program_enrolment.status,
+                    program_enrolment.store_id,
+                    patient_link.name_id as patient_id
+                FROM
+                    program_enrolment
+                JOIN
+                    name_link AS patient_link ON program_enrolment.patient_link_id = patient_link.id;
             "#
         )?;
 
