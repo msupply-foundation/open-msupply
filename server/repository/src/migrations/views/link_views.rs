@@ -25,6 +25,7 @@ impl ViewMigrationFragment for ViewMigration {
                 DROP VIEW IF EXISTS stocktake_line_view;
                 DROP VIEW IF EXISTS encounter_view;
                 DROP VIEW IF EXISTS program_enrolment_view;
+                DROP VIEW IF EXISTS vaccination_view;
             "#
         )?;
 
@@ -327,6 +328,34 @@ impl ViewMigrationFragment for ViewMigration {
                     program_enrolment
                 JOIN
                     name_link AS patient_link ON program_enrolment.patient_link_id = patient_link.id;
+
+                CREATE VIEW vaccination_view AS
+                SELECT
+                    vaccination.id,
+                    vaccination.store_id,
+                    vaccination.given_store_id,
+                    vaccination.program_enrolment_id,
+                    vaccination.encounter_id,
+                    vaccination.user_id,
+                    vaccination.vaccine_course_dose_id,
+                    vaccination.created_datetime,
+                    vaccination.facility_free_text,
+                    vaccination.invoice_id,
+                    vaccination.stock_line_id,
+                    vaccination.item_link_id,
+                    vaccination.clinician_link_id,
+                    vaccination.vaccination_date,
+                    vaccination.given,
+                    vaccination.not_given_reason,
+                    vaccination.comment,
+                    patient_link.name_id as patient_id,
+                    facility_link.name_id as facility_name_id
+                FROM
+                    vaccination
+                JOIN
+                    name_link AS patient_link ON vaccination.patient_link_id = patient_link.id
+                LEFT JOIN
+                    name_link AS facility_link ON vaccination.facility_name_link_id = facility_link.id;
             "#
         )?;
 
