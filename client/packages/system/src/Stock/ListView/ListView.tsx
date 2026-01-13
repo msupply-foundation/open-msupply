@@ -14,12 +14,12 @@ import {
   ColumnType,
   UnitsAndDosesCell,
   ChipTableCell,
+  ExpiryDateCell,
 } from '@openmsupply-client/common';
 import { StockLineRowFragment } from '../api';
 import { AppBarButtons } from './AppBarButtons';
 import { useStockList } from '../api/hooks/useStockList';
 import { NewStockLineModal } from '../Components/NewStockLineModal';
-import { ExpiryDateCell } from '@openmsupply-client/common/src/ui/layout/tables/material-react-table/components/ExpiryDateCell';
 
 export const StockListView = () => {
   const t = useTranslation();
@@ -109,7 +109,6 @@ export const StockListView = () => {
         dateFilterFormat: 'date',
         enableSorting: true,
       },
-
       {
         id: 'vvmStatus',
         header: t('label.vvm-status'),
@@ -120,7 +119,6 @@ export const StockListView = () => {
         includeColumn: manageVvmStatusForStock,
         enableSorting: true,
       },
-
       {
         id: 'location.code',
         accessorFn: row => row.location?.code || '',

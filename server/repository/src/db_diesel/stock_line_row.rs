@@ -12,6 +12,7 @@ use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActi
 use diesel::prelude::*;
 
 use chrono::NaiveDate;
+use serde::{Deserialize, Serialize};
 
 define_linked_tables! {
     view: stock_line = "stock_line_view",
@@ -58,7 +59,7 @@ allow_tables_to_appear_in_same_query!(stock_line, item_link);
 allow_tables_to_appear_in_same_query!(stock_line, item_variant);
 allow_tables_to_appear_in_same_query!(stock_line, name_link);
 
-#[derive(Clone, Queryable, Debug, PartialEq, Default)]
+#[derive(Clone, Queryable, Debug, PartialEq, Default, Serialize, Deserialize)]
 #[diesel(table_name = stock_line)]
 pub struct StockLineRow {
     pub id: String,

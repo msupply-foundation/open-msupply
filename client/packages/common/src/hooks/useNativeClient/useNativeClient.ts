@@ -23,7 +23,7 @@ import { useAuthContext } from '../../authentication';
 
 declare global {
   interface Window {
-    electronNativeAPI: NativeAPI;
+    electronNativeAPI?: NativeAPI;
   }
 }
 

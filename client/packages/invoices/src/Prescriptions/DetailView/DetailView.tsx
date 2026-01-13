@@ -1,13 +1,10 @@
 import React, { useCallback, useEffect } from 'react';
 import {
-  TableProvider,
-  createTableStore,
   DetailViewSkeleton,
   AlertModal,
   useNavigate,
   RouteBuilder,
   useTranslation,
-  createQueryParamsStore,
   DetailTabs,
   ModalMode,
   useEditModal,
@@ -25,7 +22,6 @@ import { Toolbar } from './Toolbar';
 import { SidePanel } from './SidePanel';
 import { Footer } from './Footer';
 import { StockOutLineFragment, Draft } from '../../StockOut';
-import { StockOutItem } from '../../types';
 import { HistoryModal } from './History/HistoryModal';
 import { isPrescriptionPlaceholderRow } from '../../utils';
 import { usePrescriptionColumn } from './columns';
@@ -119,16 +115,7 @@ export const PrescriptionDetailView = () => {
       fallback={<DetailViewSkeleton hasGroupBy={true} hasHold={true} />}
     >
       {data ? (
-        <TableProvider
-          createStore={createTableStore}
-          queryParamsStore={createQueryParamsStore<
-            StockOutLineFragment | StockOutItem
-          >({
-            initialSortBy: {
-              key: 'itemName',
-            },
-          })}
-        >
+        <>
           <AppBarButtons onAddItem={onAddItem} onViewHistory={onViewHistory} />
           <HistoryModal
             draft={historyEntity}
@@ -145,7 +132,7 @@ export const PrescriptionDetailView = () => {
             resetRowSelection={table.resetRowSelection}
           />
           <SidePanel />
-        </TableProvider>
+        </>
       ) : (
         <AlertModal
           open={true}

@@ -6,11 +6,12 @@ import {
   SettingsCircleIcon,
   UNDEFINED_STRING_VALUE,
   UserCircleIcon,
+  StatusChip,
 } from '@openmsupply-client/common';
 import { useFormatDateTime, useIntlUtils, useTranslation } from '@common/intl';
 import { ColdchainAssetLogFragment, useAssets } from '../../api';
-import { Status } from '../../Components';
 import { FileList } from '../../Components';
+import { statusColourMap } from '../../utils';
 
 const Divider = () => (
   <Box
@@ -103,8 +104,9 @@ const StatusLog = ({
   isLast: boolean;
   log: ColdchainAssetLogFragment;
 }) => {
-  const { localisedDate } = useFormatDateTime();
   const t = useTranslation();
+  const { localisedDate } = useFormatDateTime();
+  const status = log.status ? statusColourMap(log.status) : undefined;
 
   return (
     <Box
@@ -174,7 +176,10 @@ const StatusLog = ({
             >
               {localisedDate(log.logDatetime)}
             </Typography>
-            <Status status={log.status} />
+            <StatusChip
+              label={status ? t(status.label) : undefined}
+              colour={status?.colour}
+            />
           </Box>
           <User user={log.user} />
           <Box display="flex" alignItems="flex-start">

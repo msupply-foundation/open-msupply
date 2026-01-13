@@ -1,6 +1,5 @@
 import React, { FC, PropsWithChildren, ReactNode } from 'react';
 import {
-  createColumnWithDefaults,
   FilterRule,
   TestingRouterContext,
 } from '@openmsupply-client/common';
@@ -12,11 +11,6 @@ import {
   createQueryParamsStore,
   useQueryParamsStore,
 } from './useQueryParamsStore';
-
-type TestSortBy = {
-  id: string;
-  quantity: number;
-};
 
 type ThemeChangererProps = {
   paginationRowHeight: number;
@@ -184,14 +178,11 @@ describe('filter', () => {
 
 describe('sort', () => {
   it('has the correct values after triggering a sort by', () => {
-    const quantityColumn = createColumnWithDefaults<TestSortBy>({
-      key: 'quantity',
-    });
     const { result } = renderHook(() => useQueryParamsStore(), {
       wrapper: getWrapper(),
     });
     act(() => {
-      result.current.sort.onChangeSortBy(quantityColumn.key, 'asc');
+      result.current.sort.onChangeSortBy('quantity', 'asc');
     });
     expect(result.current.sort.sortBy).toEqual({
       key: 'quantity',
@@ -201,12 +192,11 @@ describe('sort', () => {
   });
 
   it('has the correct values after triggering a sort by for the same column that is set', () => {
-    const idColumn = createColumnWithDefaults<TestSortBy>({ key: 'id' });
     const { result } = renderHook(() => useQueryParamsStore(), {
       wrapper: getWrapper(),
     });
     act(() => {
-      result.current.sort.onChangeSortBy(idColumn.key, 'desc');
+      result.current.sort.onChangeSortBy('id', 'desc');
     });
     expect(result.current.sort.sortBy).toEqual({
       key: 'id',
@@ -216,16 +206,12 @@ describe('sort', () => {
   });
 
   it('has the correct values after sorts', () => {
-    const idColumn = createColumnWithDefaults<TestSortBy>({ key: 'id' });
-    const quantityColumn = createColumnWithDefaults<TestSortBy>({
-      key: 'quantity',
-    });
     const { result } = renderHook(() => useQueryParamsStore(), {
       wrapper: getWrapper(),
     });
     act(() => {
       // initially: id/asc
-      result.current.sort.onChangeSortBy(idColumn.key, 'asc');
+      result.current.sort.onChangeSortBy('id', 'asc');
     });
     expect(result.current.sort.sortBy).toEqual({
       key: 'id',
@@ -235,7 +221,7 @@ describe('sort', () => {
 
     act(() => {
       // should be: id/desc
-      result.current.sort.onChangeSortBy(idColumn.key, 'desc');
+      result.current.sort.onChangeSortBy('id', 'desc');
     });
     expect(result.current.sort.sortBy).toEqual({
       key: 'id',
@@ -245,7 +231,7 @@ describe('sort', () => {
 
     act(() => {
       // should be: quantity/desc
-      result.current.sort.onChangeSortBy(quantityColumn.key, 'desc');
+      result.current.sort.onChangeSortBy('quantity', 'desc');
     });
     expect(result.current.sort.sortBy).toEqual({
       key: 'quantity',
