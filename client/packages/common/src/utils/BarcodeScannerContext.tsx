@@ -255,9 +255,12 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
   };
 
   const setScannerType = (type: ScannerType) => {
-    electronNativeAPI.setScannerType(type);
-    electronNativeAPI?.linkedBarcodeScannerDevice().then(setScanner);
     setLocalScannerType(type);
+
+    if (!electronNativeAPI) return;
+
+    electronNativeAPI.setScannerType(type);
+    electronNativeAPI.linkedBarcodeScannerDevice().then(setScanner);
   };
   // calling this outside of a useEffect so that it will detect when a new scanner is added
   useEffect(() => {

@@ -85,12 +85,14 @@ export const ElectronSettings = () => {
 
     const getDevicePromise = () =>
       new Promise<BarcodeScanner | undefined>(async resolve => {
-        const { startDeviceScan } = electronNativeAPI;
-        await startDeviceScan();
+        if (!electronNativeAPI) {
+          resolve(undefined);
+          return;
+        }
 
-        electronNativeAPI.onDeviceMatched((_event, scanner) =>
-          resolve(scanner)
-        );
+        await electronNativeAPI.startDeviceScan();
+
+        electronNativeAPI.onDeviceMatched((_event, scanner) => resolve(scanner));
       });
 
     try {
