@@ -2,11 +2,12 @@ use crate::{
     ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RepositoryError, RowActionType,
     StorageConnection, Upsert,
 };
+use crate::diesel_macros::define_linked_tables;
 
 use super::{
     clinician_link_row::clinician_link, clinician_row::clinician, item_link_row::item_link,
-    item_row::item, name_link_row::name_link, name_row::name, name_store_join::name_store_join,
-    store_row::store, vaccination_row::vaccination::dsl::*,
+    item_row::item, name_row::name, name_store_join::name_store_join,
+    store_row::store,
     vaccine_course::vaccine_course_dose_row::vaccine_course_dose,
 };
 
@@ -16,18 +17,19 @@ use serde::{Deserialize, Serialize};
 
 use diesel::prelude::*;
 
-table! {
-    vaccination (id) {
-        id -> Text,
+define_linked_tables! {
+    view: vaccination = "vaccination_view",
+    core: vaccination_with_links = "vaccination",
+    struct: VaccinationRow,
+    repo: VaccinationRowRepository,
+    shared: {
         store_id -> Text,
         given_store_id -> Nullable<Text>,
         program_enrolment_id -> Text,
         encounter_id -> Text,
-        patient_link_id -> Text,
         user_id -> Text,
         vaccine_course_dose_id -> Text,
         created_datetime -> Timestamp,
-        facility_name_link_id -> Nullable<Text>,
         facility_free_text -> Nullable<Text>,
         invoice_id -> Nullable<Text>,
         stock_line_id -> Nullable<Text>,
@@ -37,16 +39,19 @@ table! {
         given -> Bool,
         not_given_reason -> Nullable<Text>,
         comment -> Nullable<Text>,
+    },
+    links: {
+        patient_link_id -> patient_id,
+    },
+    optional_links: {
+        facility_name_link_id -> facility_name_id,
     }
 }
 
-// NOTE: both patient_link_id and facility_name_link_id are foreign keys to name_link
-// so not defining a default joinable here, so as not to accidentally join on the wrong one
 joinable!(vaccination -> clinician_link (clinician_link_id));
 joinable!(vaccination -> item_link (item_link_id));
 joinable!(vaccination -> vaccine_course_dose (vaccine_course_dose_id));
 
-allow_tables_to_appear_in_same_query!(vaccination, name_link);
 allow_tables_to_appear_in_same_query!(vaccination, name);
 allow_tables_to_appear_in_same_query!(vaccination, clinician_link);
 allow_tables_to_appear_in_same_query!(vaccination, clinician);
@@ -57,10 +62,9 @@ allow_tables_to_appear_in_same_query!(vaccination, name_store_join);
 allow_tables_to_appear_in_same_query!(vaccination, store);
 
 #[derive(
-    Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq, Serialize, Deserialize, Default,
+    Clone, Queryable, Debug, PartialEq, Eq, Serialize, Deserialize, Default,
 )]
 #[diesel(table_name = vaccination)]
-#[diesel(treat_none_as_null = true)]
 pub struct VaccinationRow {
     pub id: String,
     // Store where record was originally created
@@ -69,11 +73,9 @@ pub struct VaccinationRow {
     pub given_store_id: Option<String>,
     pub program_enrolment_id: String,
     pub encounter_id: String,
-    pub patient_link_id: String,
     pub user_id: String,
     pub vaccine_course_dose_id: String,
     pub created_datetime: NaiveDateTime,
-    pub facility_name_link_id: Option<String>,
     pub facility_free_text: Option<String>,
     pub invoice_id: Option<String>,
     pub stock_line_id: Option<String>,
@@ -84,6 +86,9 @@ pub struct VaccinationRow {
     pub given: bool,
     pub not_given_reason: Option<String>,
     pub comment: Option<String>,
+    // Resolved from name_link - must be last to match view column order
+    pub patient_id: String,
+    pub facility_name_id: Option<String>,
 }
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
@@ -105,12 +110,7 @@ impl<'a> VaccinationRowRepository<'a> {
     }
 
     pub fn _upsert_one(&self, vaccination_row: &VaccinationRow) -> Result<(), RepositoryError> {
-        diesel::insert_into(vaccination)
-            .values(vaccination_row)
-            .on_conflict(id)
-            .do_update()
-            .set(vaccination_row)
-            .execute(self.connection.lock().connection())?;
+        self._upsert(vaccination_row)?;
         Ok(())
     }
 
@@ -129,7 +129,7 @@ impl<'a> VaccinationRowRepository<'a> {
             record_id: row.id,
             row_action: action,
             store_id: None,
-            name_link_id: Some(row.patient_link_id),
+            name_link_id: Some(row.patient_id),
         };
 
         ChangelogRepository::new(self.connection).insert(&row)
@@ -139,16 +139,15 @@ impl<'a> VaccinationRowRepository<'a> {
         &self,
         vaccination_id: &str,
     ) -> Result<Option<VaccinationRow>, RepositoryError> {
-        let result = vaccination
-            .filter(id.eq(vaccination_id))
+        let result = vaccination::table
+            .filter(vaccination::id.eq(vaccination_id))
             .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
     }
 
     pub fn delete(&self, vaccination_id: &str) -> Result<(), RepositoryError> {
-        diesel::delete(vaccination)
-            .filter(id.eq(vaccination_id))
+        diesel::delete(vaccination_with_links::table.filter(vaccination_with_links::id.eq(vaccination_id)))
             .execute(self.connection.lock().connection())?;
         Ok(())
     }
