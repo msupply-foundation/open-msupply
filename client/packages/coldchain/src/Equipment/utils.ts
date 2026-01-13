@@ -22,6 +22,16 @@ const statusTranslation: Record<AssetLogStatusNodeType, LocaleKey> = {
   [AssetLogStatusNodeType.Unserviceable]: 'status.unserviceable',
 };
 
+const statusColorMapping: Record<AssetLogStatusNodeType, string> = {
+  [AssetLogStatusNodeType.Decommissioned]: 'cceStatus.decommissioned',
+  [AssetLogStatusNodeType.Functioning]: 'cceStatus.functioning',
+  [AssetLogStatusNodeType.FunctioningButNeedsAttention]:
+    'cceStatus.functioningButNeedsAttention',
+  [AssetLogStatusNodeType.NotFunctioning]: 'cceStatus.notFunctioning',
+  [AssetLogStatusNodeType.NotInUse]: 'cceStatus.notInUse',
+  [AssetLogStatusNodeType.Unserviceable]: 'cceStatus.unserviceable',
+};
+
 export const getEquipmentStatusTranslation = (
   t: TypedTFunction<LocaleKey>,
   status: AssetLogStatusNodeType
@@ -30,35 +40,31 @@ export const getEquipmentStatusTranslation = (
   return t(translationKey);
 };
 
+export const statusColourMap = (
+  status: AssetLogStatusNodeType
+): { label: LocaleKey; colour: string } | undefined => {
+  const label = statusTranslation[status];
+  const colour = statusColorMapping[status];
+
+  if (!label || !colour) return undefined;
+
+  return { label, colour };
+};
+
 export const fullStatusColourMap = (
   t: TypedTFunction<LocaleKey>
 ): Record<AssetLogStatusNodeType, { colour: string; label: string }> => {
-  return {
-    [AssetLogStatusNodeType.Decommissioned]: {
-      colour: 'cceStatus.decommissioned',
-      label: t('status.decommissioned'),
+  const entries = Object.entries(statusTranslation).map(([status, label]) => [
+    status,
+    {
+      colour: statusColorMapping[status as AssetLogStatusNodeType],
+      label: t(label),
     },
-    [AssetLogStatusNodeType.Functioning]: {
-      colour: 'cceStatus.functioning',
-      label: t('status.functioning'),
-    },
-    [AssetLogStatusNodeType.FunctioningButNeedsAttention]: {
-      colour: 'cceStatus.functioningButNeedsAttention',
-      label: t('status.functioning-but-needs-attention'),
-    },
-    [AssetLogStatusNodeType.NotFunctioning]: {
-      colour: 'cceStatus.notFunctioning',
-      label: t('status.not-functioning'),
-    },
-    [AssetLogStatusNodeType.NotInUse]: {
-      colour: 'cceStatus.notInUse',
-      label: t('status.not-in-use'),
-    },
-    [AssetLogStatusNodeType.Unserviceable]: {
-      colour: 'cceStatus.unserviceable',
-      label: t('status.unserviceable'),
-    },
-  };
+  ]);
+  return Object.fromEntries(entries) as Record<
+    AssetLogStatusNodeType,
+    { colour: string; label: string }
+  >;
 };
 
 function baseAssetFields(t: TypedTFunction<LocaleKey>) {
@@ -126,43 +132,6 @@ export const assetsToCsv = (
   });
 
   return Formatter.csv({ fields, data });
-};
-
-export const statusColourMap = (
-  status: AssetLogStatusNodeType
-): { label: LocaleKey; colour: string } | undefined => {
-  switch (status) {
-    case AssetLogStatusNodeType.Decommissioned:
-      return {
-        label: 'status.decommissioned',
-        colour: 'cceStatus.decommissioned',
-      };
-    case AssetLogStatusNodeType.Functioning:
-      return {
-        label: 'status.functioning',
-        colour: 'cceStatus.functioning',
-      };
-    case AssetLogStatusNodeType.FunctioningButNeedsAttention:
-      return {
-        label: 'status.functioning-but-needs-attention',
-        colour: 'cceStatus.functioningButNeedsAttention',
-      };
-    case AssetLogStatusNodeType.NotFunctioning:
-      return {
-        label: 'status.not-functioning',
-        colour: 'cceStatus.notFunctioning',
-      };
-    case AssetLogStatusNodeType.NotInUse:
-      return {
-        label: 'status.not-in-use',
-        colour: 'cceStatus.notInUse',
-      };
-    case AssetLogStatusNodeType.Unserviceable:
-      return {
-        label: 'status.unserviceable',
-        colour: 'cceStatus.unserviceable',
-      };
-  }
 };
 
 export const importEquipmentToCsvWithErrors = (
