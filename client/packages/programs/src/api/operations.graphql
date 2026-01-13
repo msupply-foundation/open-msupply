@@ -743,6 +743,14 @@ mutation insertVaccineCourse(
         ... on InsertVaccineCourseError {
           __typename
           error {
+            ... on RecordAlreadyExist {
+              __typename
+              description
+            }
+            ... on RecordProgramCombinationAlreadyExists {
+              __typename
+              description
+            }
             description
           }
         }
