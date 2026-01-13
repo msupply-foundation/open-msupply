@@ -5,7 +5,7 @@ import {
   useMediaQuery,
   useUrlQueryParams,
 } from '@openmsupply-client/common';
-import { Toolbar } from '../../../Monitoring/ListView/TemperatureLog/Toolbar';
+import { Toolbar } from '../../../Monitoring/ListView/Toolbar';
 import { useTemperatureLogs } from '../../../Monitoring/api/TemperatureLog/hooks/document/useTemperatureLogs';
 import { MAX_DATA_POINTS } from './utils';
 import { getDateRangeAndFilter } from './utils';

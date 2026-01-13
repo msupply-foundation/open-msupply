@@ -242,6 +242,24 @@ const getFilterEntry = (
     return Number(filterValue);
   }
 
+  if (
+    (condition === 'equalAny' || condition === 'equalAnyOrNull') &&
+    typeof filterValue === 'string'
+  ) {
+    const arrayValue = filterValue.split(',');
+    if (nestedKey) {
+      return {
+        [nestedKey]: {
+          [condition]: arrayValue,
+        },
+      };
+    } else {
+      return {
+        [condition]: arrayValue,
+      };
+    }
+  }
+
   if (nestedKey) {
     return {
       [nestedKey]: {

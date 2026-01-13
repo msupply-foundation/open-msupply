@@ -1,5 +1,4 @@
 import {
-  useTableStore,
   useDeleteConfirmation,
   useTranslation,
   useMutation,
@@ -7,10 +6,16 @@ import {
 } from '@openmsupply-client/common';
 import { useProgramsGraphQL } from '../useProgramsGraphQL';
 import { VACCINE, LIST } from './keys';
+import { VaccineCourseFragment } from '../operations.generated';
 
-export const useDeleteSelectedVaccineCourses = () => {
+export const useDeleteSelectedVaccineCourses = ({
+  selectedRows,
+  resetRowSelection,
+}: {
+  selectedRows: VaccineCourseFragment[];
+  resetRowSelection: () => void;
+}) => {
   const t = useTranslation();
-
   const { api, queryClient } = useProgramsGraphQL();
   const { mutateAsync } = useMutation(
     async ({ vaccineCourseId }: { vaccineCourseId: string }) => {
@@ -20,13 +25,6 @@ export const useDeleteSelectedVaccineCourses = () => {
       return apiResult.centralServer?.vaccineCourse.deleteVaccineCourse;
     }
   );
-
-  const selectedRows =
-    useTableStore(state => {
-      return Object.keys(state.rowState).filter(
-        id => state.rowState[id]?.isSelected
-      );
-    }) || [];
 
   const mapStructuredErrors = (
     result: Awaited<ReturnType<typeof mutateAsync>>
@@ -46,15 +44,10 @@ export const useDeleteSelectedVaccineCourses = () => {
   };
 
   const onDelete = async () => {
-    for (const id of selectedRows) {
-      const result = await mutateAsync({ vaccineCourseId: id });
-      const errorMessage = mapStructuredErrors(result);
-      if (errorMessage) {
-        throw new Error(errorMessage);
-      }
-
-      await queryClient.invalidateQueries([VACCINE, LIST]);
-    }
+    await Promise.all(
+      selectedRows.map(row => mutateAsync({ vaccineCourseId: row.id }))
+    ).then(() => queryClient.invalidateQueries([VACCINE, LIST]));
+    resetRowSelection();
   };
 
   const confirmAndDelete = useDeleteConfirmation({
@@ -71,5 +64,5 @@ export const useDeleteSelectedVaccineCourses = () => {
     },
   });
 
-  return { confirmAndDelete, selectedRows };
+  return { confirmAndDelete };
 };

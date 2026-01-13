@@ -3,6 +3,7 @@ import {
   SortBy,
   ActivityLogSortInput,
   ActivityLogSortFieldInput,
+  ActivityLogNodeType,
 } from '@openmsupply-client/common';
 import { ActivityLogRowFragment } from '../operations.generated';
 import { useActivityLogGraphQL } from '../useActivityLogGraphQL';
@@ -10,6 +11,7 @@ import { ACTIVITY_LOG } from './keys';
 
 export function useActivityLog(
   recordId: string,
+  logType?: ActivityLogNodeType,
   sortBy?: SortBy<ActivityLogRowFragment>
 ) {
   const { activityLogApi } = useActivityLogGraphQL();
@@ -19,7 +21,10 @@ export function useActivityLog(
     nodes: ActivityLogRowFragment[];
     totalCount: number;
   }> => {
-    const filter = { recordId: { equalTo: recordId } };
+    const filter = {
+      recordId: { equalTo: recordId },
+      ...(logType ? { type: { equalTo: logType } } : {}),
+    };
 
     const query = await activityLogApi.activityLogs({
       offset: 0,

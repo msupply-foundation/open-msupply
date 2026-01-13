@@ -12,6 +12,7 @@ import { DateUtils, useFormatDateTime, useTranslation } from '@common/intl';
 import {
   ArrayUtils,
   Box,
+  CLEAR,
   Formatter,
   UNDEFINED_STRING_VALUE,
   useAuthContext,
@@ -187,7 +188,7 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
     _value: string,
     reason: string
   ) => {
-    if (reason === 'clear') onChange({ store: null });
+    if (reason === CLEAR) onChange({ store: null });
   };
 
   return (
