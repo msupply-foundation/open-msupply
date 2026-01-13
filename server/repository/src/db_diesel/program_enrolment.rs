@@ -1,5 +1,5 @@
 use super::{
-    name_link_row::name_link, name_row::name, program_enrolment_row::program_enrolment,
+    name_row::name, program_enrolment_row::program_enrolment,
     program_row::program, StorageConnection,
 };
 
@@ -7,11 +7,11 @@ use crate::{
     diesel_macros::{apply_date_time_filter, apply_equal_filter, apply_sort, apply_string_filter},
     document_registry_row::document_registry,
     DBType, DatetimeFilter, DocumentRegistryFilter, DocumentRegistryRepository, EqualFilter,
-    NameLinkRow, NameRow, Pagination, ProgramEnrolmentRow, ProgramRow, RepositoryError, Sort,
+    NameRow, Pagination, ProgramEnrolmentRow, ProgramRow, RepositoryError, Sort,
     StringFilter,
 };
 
-use diesel::{dsl::IntoBoxed, helper_types::InnerJoin, prelude::*};
+use diesel::{dsl::{Eq, InnerJoinOn, IntoBoxed}, helper_types::InnerJoin, prelude::*};
 
 #[derive(Clone, Default)]
 pub struct ProgramEnrolmentFilter {
@@ -97,7 +97,7 @@ pub enum ProgramEnrolmentSortField {
     Status,
 }
 
-type ProgramEnrolmentJoin = (ProgramEnrolmentRow, ProgramRow, (NameLinkRow, NameRow));
+type ProgramEnrolmentJoin = (ProgramEnrolmentRow, ProgramRow, NameRow);
 
 #[derive(Clone, Debug)]
 pub struct ProgramEnrolment {
@@ -110,9 +110,10 @@ pub type ProgramEnrolmentSort = Sort<ProgramEnrolmentSortField>;
 
 type BoxedProgramEnrolmentQuery = IntoBoxed<
     'static,
-    InnerJoin<
+    InnerJoinOn<
         InnerJoin<program_enrolment::table, program::table>,
-        InnerJoin<name_link::table, name::table>,
+        name::table,
+        Eq<program_enrolment::patient_id, name::id>,
     >,
     DBType,
 >;
@@ -177,7 +178,7 @@ impl<'a> ProgramEnrolmentRepository<'a> {
             .load::<ProgramEnrolmentJoin>(self.connection.lock().connection())?;
         let result = result
             .into_iter()
-            .map(|(row, program_row, (_, patient_row))| ProgramEnrolment {
+            .map(|(row, program_row, patient_row)| ProgramEnrolment {
                 row,
                 program_row,
                 patient_row,
@@ -192,7 +193,7 @@ impl<'a> ProgramEnrolmentRepository<'a> {
     ) -> BoxedProgramEnrolmentQuery {
         let mut query = program_enrolment::table
             .inner_join(program::table)
-            .inner_join(name_link::table.inner_join(name::table))
+            .inner_join(name::table.on(program_enrolment::patient_id.eq(name::id)))
             .into_boxed();
 
         if let Some(ProgramEnrolmentFilter {

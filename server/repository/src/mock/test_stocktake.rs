@@ -275,7 +275,7 @@ pub fn mock_stocktake_line_new_stock_line() -> StocktakeLineRow {
         cost_price_per_pack: Some(11.0),
         sell_price_per_pack: Some(12.0),
         note: Some("note".to_string()),
-        donor_link_id: Some(mock_donor_a().id),
+        donor_id: Some(mock_donor_a().id),
         ..Default::default()
     }
 }
