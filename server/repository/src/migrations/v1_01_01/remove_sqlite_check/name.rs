@@ -1,15 +1,9 @@
 use crate::migrations::*;
 
-pub(crate) struct Migrate;
-impl MigrationFragment for Migrate {
-    fn identifier(&self) -> &'static str {
-        "remove_sqlite_check_name"
-    }
-
-    fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
-        sql!(
-            connection,
-            r#"
+pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
+    sql!(
+        connection,
+        r#"
                 ALTER TABLE name ADD COLUMN gender_temp;
                 ALTER TABLE name ADD COLUMN type_temp NOT NULL DEFAULT 'FACILITY';
 
@@ -22,10 +16,9 @@ impl MigrationFragment for Migrate {
                 ALTER TABLE name RENAME COLUMN gender_temp TO gender;
                 ALTER TABLE name RENAME COLUMN type_temp to type;
             "#
-        )?;
+    )?;
 
-        Ok(())
-    }
+    Ok(())
 }
 
 #[cfg(test)]

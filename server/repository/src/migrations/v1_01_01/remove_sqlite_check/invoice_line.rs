@@ -1,23 +1,16 @@
 use crate::migrations::*;
 
-pub(crate) struct Migrate;
-impl MigrationFragment for Migrate {
-    fn identifier(&self) -> &'static str {
-        "remove_sqlite_check_invoice_line"
-    }
-
-    fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
-        sql!(
-            connection,
-            r#"
+pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
+    sql!(
+        connection,
+        r#"
                 ALTER TABLE invoice_line ADD COLUMN type_temp NOT NULL DEFAULT 'STOCK_IN';
                 UPDATE invoice_line SET type_temp = type;
                 ALTER TABLE invoice_line DROP COLUMN type;
                 ALTER TABLE invoice_line RENAME COLUMN type_temp TO type;
             "#
-        )?;
-        Ok(())
-    }
+    )?;
+    Ok(())
 }
 
 #[cfg(test)]

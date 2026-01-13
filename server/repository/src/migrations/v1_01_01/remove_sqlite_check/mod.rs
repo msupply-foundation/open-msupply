@@ -28,12 +28,12 @@ impl MigrationFragment for Migrate {
         "#
         )?;
 
-        report::Migrate.migrate(connection)?;
-        requisition::Migrate.migrate(connection)?;
-        stocktake::Migrate.migrate(connection)?;
-        name::Migrate.migrate(connection)?;
-        invoice_line::Migrate.migrate(connection)?;
-        invoice::Migrate.migrate(connection)?;
+        report::migrate(connection)?;
+        requisition::migrate(connection)?;
+        stocktake::migrate(connection)?;
+        name::migrate(connection)?;
+        invoice_line::migrate(connection)?;
+        invoice::migrate(connection)?;
 
         // Re create views
         sql!(
