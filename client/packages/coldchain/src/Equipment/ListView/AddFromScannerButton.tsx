@@ -21,7 +21,7 @@ import {
 import { AppRoute } from '@openmsupply-client/config';
 import { useAssets } from '../api';
 import { DraftAsset } from '../types';
-import { BarcodeFormat } from '@capacitor-mlkit/barcode-scanning/dist/esm/definitions';
+import { BarcodeFormat } from '@capacitor-mlkit/barcode-scanning';
 
 export const AddFromScannerButtonComponent = () => {
   const t = useTranslation();
