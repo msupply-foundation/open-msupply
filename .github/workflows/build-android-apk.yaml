@@ -50,8 +50,8 @@ jobs:
       - name: Set Up Java
         uses: actions/setup-java@v4
         with:
-          distribution: "temurin"
-          java-version: "21"
+          distribution: temurin
+          java-version-file: client/.java-version
 
       - name: Build Android App
         uses: borales/actions-yarn@v4
