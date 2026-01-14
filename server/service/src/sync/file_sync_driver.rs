@@ -129,9 +129,14 @@ impl FileSyncDriver {
     pub async fn sync(&self, sync_v6_url: &str, service_provider: Arc<ServiceProvider>) -> usize {
         // ...Try to upload a file
 
+        let Some(sync_settings) = get_sync_settings(&service_provider) else {
+            log::error!("Unable to fetch sync settings, skipping file sync");
+            return 0;
+        };
+
         let synchroniser = FileSynchroniser::new(
             sync_v6_url,
-            get_sync_settings(&service_provider),
+            sync_settings,
             service_provider,
             self.static_file_service.clone(),
         );
@@ -189,11 +194,26 @@ impl FileSyncTrigger {
 }
 
 // Should this really be inside FileSyncrhoniser::new ? (similar with other sync)
-pub fn get_sync_settings(service_provider: &ServiceProvider) -> SyncSettings {
-    let ctx = service_provider.basic_context().unwrap();
-    service_provider
-        .settings
-        .sync_settings(&ctx)
-        .unwrap()
-        .expect("Sync settings should be in database after initialisation was started")
+pub fn get_sync_settings(service_provider: &ServiceProvider) -> Option<SyncSettings> {
+    let ctx = match service_provider.basic_context() {
+        Ok(ctx) => ctx,
+        Err(error) => {
+            log::error!("Failed to create DB context while getting sync settings: {error:?}");
+            return None;
+        }
+    };
+
+    match service_provider.settings.sync_settings(&ctx) {
+        Ok(Some(sync_settings)) => Some(sync_settings),
+        Ok(None) => {
+            // This can happen if initialisation has started but settings haven't been written yet.
+            // Avoid panicking so a transient DB issue can't kill the server.
+            log::error!("Sync settings missing from database");
+            None
+        }
+        Err(error) => {
+            log::error!("Failed to get sync settings: {}", format_error(&error));
+            None
+        }
+    }
 }

@@ -10,6 +10,9 @@ use tokio::{
     sync::mpsc::{self, Receiver, Sender},
     time::Duration,
 };
+use util::format_error;
+
+const FALLBACK_SYNC_INTERVAL_SECONDS: u64 = 60;
 
 pub struct SynchroniserDriver {
     receiver: Receiver<Option<String>>,
@@ -66,8 +69,10 @@ impl SynchroniserDriver {
                     // OR wait for SyncSettings.interval_seconds
                     _ = async {
                         // Need to get interval_seconds from database on every iteration, since it could have been updated
-                        let sync_settings = get_sync_settings(&service_provider);
-                        let duration = Duration::from_secs(sync_settings.interval_seconds);
+                        let duration = match get_sync_settings(&service_provider) {
+                            Some(sync_settings) => Duration::from_secs(sync_settings.interval_seconds),
+                            None => Duration::from_secs(FALLBACK_SYNC_INTERVAL_SECONDS),
+                        };
                         tokio::time::sleep(duration).await;
                      } => None,
                     else => break,
@@ -95,10 +100,25 @@ impl SynchroniserDriver {
         // Pause file sync
         self.file_sync_trigger.pause();
 
-        let _ = Synchroniser::new(get_sync_settings(&service_provider), service_provider)
-            .unwrap()
-            .sync(fetch_patient_id)
-            .await;
+        async {
+            let Some(sync_settings) = get_sync_settings(&service_provider) else {
+                log::error!("Unable to fetch sync settings, skipping sync");
+                return;
+            };
+
+            let synchroniser = match Synchroniser::new(sync_settings, service_provider) {
+                Ok(synchroniser) => synchroniser,
+                Err(error) => {
+                    log::error!("Problem creating synchroniser {}", format_error(&error));
+                    return;
+                }
+            };
+
+            if let Err(error) = synchroniser.sync(fetch_patient_id).await {
+                log::error!("Sync failed {}", format_error(&error));
+            };
+        }
+        .await;
 
         // Unpause file sync
         self.file_sync_trigger.unpause();
@@ -119,13 +139,28 @@ impl SyncTrigger {
     }
 }
 
-fn get_sync_settings(service_provider: &ServiceProvider) -> SyncSettings {
-    let ctx = service_provider.basic_context().unwrap();
-    service_provider
-        .settings
-        .sync_settings(&ctx)
-        .unwrap()
-        .expect("Sync settings should be in database after initialisation was started")
+fn get_sync_settings(service_provider: &ServiceProvider) -> Option<SyncSettings> {
+    let ctx = match service_provider.basic_context() {
+        Ok(ctx) => ctx,
+        Err(error) => {
+            log::error!("Failed to create DB context while getting sync settings: {error:?}");
+            return None;
+        }
+    };
+
+    match service_provider.settings.sync_settings(&ctx) {
+        Ok(Some(sync_settings)) => Some(sync_settings),
+        Ok(None) => {
+            // This can happen if initialisation has started but settings haven't been written yet.
+            // Avoid panicking so a transient DB issue can't kill the server.
+            log::error!("Sync settings missing from database");
+            None
+        }
+        Err(error) => {
+            log::error!("Failed to get sync settings: {}", format_error(&error));
+            None
+        }
+    }
 }
 
 pub struct SiteIsInitialisedTrigger {
