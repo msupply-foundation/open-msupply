@@ -60,5 +60,4 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version-file: .java-version
-          
+          java-version-file: client/.java-version
