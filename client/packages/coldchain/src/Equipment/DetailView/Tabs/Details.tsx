@@ -8,7 +8,6 @@ import {
   InputWithLabelRow,
   Typography,
   useTranslation,
-  AssetPropertyFilterInput,
   InlineSpinner,
 } from '@openmsupply-client/common';
 import { DraftAsset } from '../../types';
