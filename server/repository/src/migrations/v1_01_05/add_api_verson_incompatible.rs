@@ -7,12 +7,14 @@ impl MigrationFragment for Migrate {
     }
 
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
-        sql!(
-            connection,
-            r#"
+        if cfg!(feature = "postgres") {
+            sql!(
+                connection,
+                r#"
                ALTER TYPE sync_api_error_code ADD VALUE IF NOT EXISTS 'API_VERSION_INCOMPATIBLE';
             "#
-        )?;
+            )?;
+        }
         Ok(())
     }
 }
