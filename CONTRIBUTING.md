@@ -20,6 +20,8 @@ Working on your first Pull Request? You might find http://makeapullrequest.com/ 
 
 If this is something you think you can fix, then [fork Open mSupply] and create a branch with a descriptive name.
 
+Every Pull Request should have a corresponding issue in the upstream repo, and the PR description should reference it (e.g. `Fixes #325`).
+
 A good branch name would be (where issue #325 is the ticket you're working on):
 
 ```sh
@@ -113,6 +115,16 @@ git push --set-upstream origin 325-fix-a-bug
 ```
 
 Finally, go to GitHub and [make a Pull Request][] :D
+
+#### Fork PR notes (issues + CI)
+
+- **Target the upstream repo**: make sure the base repository is `msupply-foundation/open-msupply` and the base branch is `develop`. Referencing `#123` will then link to the upstream issue tracker.
+- **Reference the issue**: include something like `Fixes #123` or `Refs #123` in the PR description.
+- **CI permissions on forks**: GitHub restricts what Actions can do on PRs opened from forks (e.g. limited token permissions, no access to secrets). Some checks (especially ones that try to comment on PRs) may be skipped or show as failing even though build/tests pass.
+  - If this happens, include the commands you ran locally in the PR description (`yarn test`, `cargo test`, etc.).
+  - Maintainers may re-run workflows with the required permissions, or disable untrusted workflows for additional protection.
+- **Disable Actions on your fork** (optional): if you don't want GitHub Actions running on your fork, you can disable it in your fork repo settings.
+- **Use a token in your fork** (optional): if you need a workflow to comment/write during Actions runs on *your fork*, add a personal access token as a secret in your fork repo settings (never commit tokens to the repo).
 
 Github Actions will run our test suite for changes to the server. An action will run to check the bundle size for client changes. 
 We care about quality, so your PR won't be merged until all tests pass.
