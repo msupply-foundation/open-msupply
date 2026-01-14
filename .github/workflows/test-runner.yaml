@@ -24,6 +24,9 @@ jobs:
         with:
           node-version: '${{ steps.nvm.outputs.NVMRC }}'
 
+      - name: Install Yarn
+        run: npm install -g yarn
+
       - name: Debug shell and environment
         run: |
           echo "Current shell: $SHELL"
@@ -57,5 +60,5 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: "temurin"
-          java-version: "17"
+          java-version: "21"
 
