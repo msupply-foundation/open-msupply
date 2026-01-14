@@ -1,7 +1,7 @@
 on:
   push:
     branches:
-    - android-test
+    - actions-test
   workflow_dispatch:
 
 name: Android Test
