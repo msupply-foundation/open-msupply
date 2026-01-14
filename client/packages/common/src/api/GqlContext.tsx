@@ -1,17 +1,11 @@
-import React, {
-  FC,
-  useMemo,
-  useCallback,
-  PropsWithChildren,
-  useRef,
-} from 'react';
+import React, { FC, PropsWithChildren, useRef } from 'react';
 import {
   GraphQLClient,
   RequestDocument,
   RequestOptions,
   Variables,
 } from 'graphql-request';
-import { AuthError } from '../authentication/AuthContext';
+import { AuthError, getAuthCookie } from '../authentication/AuthContext';
 import { LocalStorage } from '../localStorage';
 import { DefinitionNode, DocumentNode, OperationDefinitionNode } from 'graphql';
 import { RequestConfig } from 'graphql-request/build/esm/types';
@@ -123,6 +117,7 @@ class GQLClient extends GraphQLClient {
 
     if (shouldSaveRequestTime(document)) this.lastRequestTime = new Date();
 
+    super.setHeader('Authorization', `Bearer ${getAuthCookie().token}`);
     const response = options.document
       ? super.request(options)
       : super.request(
@@ -153,6 +148,7 @@ class GQLClient extends GraphQLClient {
 
 interface GqlControl {
   client: GQLClient;
+  setUrl: (url: string) => void;
   setSkipRequest: (skipRequest: SkipRequest) => void;
 }
 
@@ -173,24 +169,25 @@ export const GqlProvider: FC<PropsWithChildren<ApiProviderProps>> = ({
   skipRequest,
   children,
 }) => {
-  const client = useRef(
+  const clientRef = useRef(
     new GQLClient(url, { credentials: 'include' }, skipRequest)
-  ).current;
-
-  const setSkipRequest = useCallback(
-    (skipRequest: (documentNode: DocumentNode) => boolean) => {
-      client.setSkipRequest(skipRequest);
-    },
-    [client]
   );
 
-  const val = useMemo(
-    () => ({
-      client,
-      setSkipRequest,
-    }),
-    [client, setSkipRequest]
-  );
+  const setSkipRequest = (
+    skipRequest: (documentNode: DocumentNode) => boolean
+  ) => {
+    clientRef.current.setSkipRequest(skipRequest);
+  };
+
+  const setUrl = (url: string) => {
+    clientRef.current.setEndpoint(url);
+  };
+
+  const val = {
+    setSkipRequest,
+    setUrl,
+    client: clientRef.current,
+  };
 
   return <Provider value={val}>{children}</Provider>;
 };
