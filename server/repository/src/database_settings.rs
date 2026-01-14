@@ -1,11 +1,17 @@
 use crate::db_diesel::{DBBackendConnection, StorageConnectionManager};
 use diesel::{
-    connection::{ SimpleConnection},
+    connection::SimpleConnection,
     r2d2::{ConnectionManager, Pool},
 };
 use log::info;
+
+#[cfg(feature = "postgres")]
+use log::warn;
 use serde::{Deserialize, Serialize};
 use std::time::Duration;
+
+#[cfg(feature = "postgres")]
+use std::time::Instant;
 
 // Timeout for waiting for the SQLite lock (https://www.sqlite.org/c3ref/busy_timeout.html).
 // A locked DB results in the "SQLite database is locked" error.
@@ -18,6 +24,14 @@ const SQLITE_WAL_PRAGMA: &str = "PRAGMA journal_mode = WAL; PRAGMA synchronous =
 const DEFUALT_CONNECTION_POOL_MAX_CONNECTIONS: u32 = 10;
 const DEFAULT_CONNECTION_POOL_TIMEOUT_SECONDS: u64 = 30;
 
+// For production deployments using Postgres (central server), transient outages such as VM restarts
+// or temporary "too many clients" errors should not immediately kill the server process.
+// Defaulting to 10 minutes aligns with issue #9574 (tolerance of 5–10 minutes).
+#[cfg(feature = "postgres")]
+const DEFAULT_CONNECTION_RETRY_SECONDS: u64 = 60 * 10;
+#[cfg(feature = "postgres")]
+const DEFAULT_CONNECTION_RETRY_DELAY_SECONDS: u64 = 5;
+
 #[derive(Deserialize, Serialize, Clone)]
 pub struct DatabaseSettings {
     pub username: String,
@@ -28,6 +42,11 @@ pub struct DatabaseSettings {
     pub database_path: Option<String>,
     pub connection_pool_max_connections: Option<u32>,
     pub connection_pool_timeout_seconds: Option<u64>,
+    /// How long to retry the initial Postgres connection before failing (in seconds).
+    ///
+    /// Intended to make production deployments more tolerant of transient Postgres outages
+    /// (VM restart, brief network flap, max_connections spikes). Set to 0 to fail fast.
+    pub connection_retry_seconds: Option<u64>,
     /// SQL run once at startup. For example, to run pragma statements
     pub init_sql: Option<String>,
 }
@@ -143,35 +162,89 @@ pub fn get_storage_connection_manager(settings: &DatabaseSettings) -> StorageCon
     let connection_manager =
         ConnectionManager::<DBBackendConnection>::new(&settings.connection_string());
 
+    let retry_seconds = settings
+        .connection_retry_seconds
+        .unwrap_or(DEFAULT_CONNECTION_RETRY_SECONDS);
+    let deadline = if retry_seconds == 0 {
+        None
+    } else {
+        Some(Instant::now() + Duration::from_secs(retry_seconds))
+    };
+
+    let mut last_error: Option<String> = None;
+    let mut delay = Duration::from_secs(DEFAULT_CONNECTION_RETRY_DELAY_SECONDS);
+
     // Check the database connection, and attempt to create the database if required
     // Note: the build() call isn't failing when you have an incorrect server or database name
     // so we need to explicitly call connect() to test the connection
-    if let Err(e) = connection_manager.connect() {
-        if e.to_string()
-            .contains(format!("database \"{}\" does not exist", &settings.database_name).as_str())
-        {
-            info!(
-                "Database {} does not exist. Attempting to create it.",
-                &settings.database_name
-            );
-            let root_connection_manager = ConnectionManager::<DBBackendConnection>::new(
-                &settings.connection_string_without_db(),
-            );
+    loop {
+        match connection_manager.connect() {
+            Ok(_) => break,
+            Err(e) => {
+                let err_string = e.to_string();
 
-            match root_connection_manager.connect() {
-                Ok(mut root_connection) => {
+                // Database doesn't exist: attempt to create it, then retry the connection.
+                if err_string.contains(
+                    format!("database \"{}\" does not exist", &settings.database_name).as_str(),
+                ) {
+                    info!(
+                        "Database {} does not exist. Attempting to create it.",
+                        &settings.database_name
+                    );
+                    let root_connection_manager = ConnectionManager::<DBBackendConnection>::new(
+                        &settings.connection_string_without_db(),
+                    );
+
+                    // Root connect can also fail transiently (e.g. postgres restarting).
+                    let mut root_connection = loop {
+                        match root_connection_manager.connect() {
+                            Ok(con) => break con,
+                            Err(root_err) => {
+                                let root_err_string = root_err.to_string();
+                                if !should_retry_postgres_connect(&root_err_string)
+                                    || is_past_deadline(deadline)
+                                {
+                                    panic!("Failed to connect to postgres root: {}", root_err);
+                                }
+
+                                warn!(
+                                    "Waiting for postgres root connection ({}s remaining): {}",
+                                    remaining_seconds(deadline),
+                                    root_err_string
+                                );
+                                std::thread::sleep(delay);
+                            }
+                        }
+                    };
+
                     root_connection
                         .batch_execute(&format!("CREATE DATABASE \"{}\";", &settings.database_name))
                         .expect("Failed to create database");
+
+                    // Retry connecting to the newly created database.
+                    continue;
                 }
-                Err(e) => {
-                    panic!("Failed to connect to postgres root: {}", e);
+
+                // Non-retryable errors should fail fast to avoid long hangs on misconfig.
+                if !should_retry_postgres_connect(&err_string) || is_past_deadline(deadline) {
+                    panic!("Failed to connect to database: {}", e);
                 }
+
+                // Avoid spamming identical log lines while waiting.
+                if last_error.as_deref() != Some(&err_string) {
+                    warn!(
+                        "Postgres connection unavailable ({}s remaining): {}",
+                        remaining_seconds(deadline),
+                        err_string
+                    );
+                    last_error = Some(err_string);
+                }
+
+                std::thread::sleep(delay);
             }
-        } else {
-            panic!("Failed to connect to database: {}", e);
         }
     }
+
     info!("Connecting to database '{}'", settings.database_name);
     let pool = Pool::builder()
         .max_size(
@@ -189,12 +262,58 @@ pub fn get_storage_connection_manager(settings: &DatabaseSettings) -> StorageCon
     StorageConnectionManager::new(pool)
 }
 
+#[cfg(feature = "postgres")]
+fn should_retry_postgres_connect(error: &str) -> bool {
+    let msg = error.to_lowercase();
+
+    // Fail fast for common configuration errors.
+    if msg.contains("password authentication failed")
+        || (msg.contains("role") && msg.contains("does not exist"))
+        || msg.contains("could not translate host name")
+    {
+        return false;
+    }
+
+    // Retry for transient connectivity issues.
+    msg.contains("could not connect to server")
+        || msg.contains("connection refused")
+        || msg.contains("connection reset")
+        || msg.contains("connection timed out")
+        || msg.contains("timeout")
+        || msg.contains("no route to host")
+        || msg.contains("server closed the connection unexpectedly")
+        || msg.contains("terminating connection due to administrator command")
+        || msg.contains("the database system is starting up")
+        || msg.contains("the database system is shutting down")
+        || msg.contains("too many clients already")
+        || msg.contains("remaining connection slots are reserved")
+}
+
+#[cfg(feature = "postgres")]
+fn is_past_deadline(deadline: Option<Instant>) -> bool {
+    match deadline {
+        Some(d) => Instant::now() >= d,
+        None => true,
+    }
+}
+
+#[cfg(feature = "postgres")]
+fn remaining_seconds(deadline: Option<Instant>) -> u64 {
+    match deadline {
+        Some(d) => d
+            .checked_duration_since(Instant::now())
+            .unwrap_or_default()
+            .as_secs(),
+        None => 0,
+    }
+}
+
 // feature sqlite
 #[cfg(not(feature = "postgres"))]
 pub fn get_storage_connection_manager(settings: &DatabaseSettings) -> StorageConnectionManager {
     info!("Connecting to database '{}'", settings.database_path());
     let db_path = settings.database_path();
-      let connection_manager = ConnectionManager::<DBBackendConnection>::new(db_path);
+    let connection_manager = ConnectionManager::<DBBackendConnection>::new(db_path);
     let pool = Pool::builder()
         .connection_customizer(Box::new(SqliteConnectionOptions {
             busy_timeout_ms: Some(SQLITE_LOCKWAIT_MS),
@@ -231,6 +350,7 @@ mod database_setting_test {
             database_path: None,
             connection_pool_max_connections: None,
             connection_pool_timeout_seconds: None,
+            connection_retry_seconds: None,
         }
     }
 
