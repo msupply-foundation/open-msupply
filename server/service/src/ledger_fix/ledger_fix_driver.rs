@@ -1,7 +1,9 @@
 use std::sync::Arc;
 
 use crate::activity_log::system_log;
+use crate::ledger_fix::find_ledger_discrepancies::FindStockLineLedgerDiscrepanciesError;
 use crate::ledger_fix::find_ledger_discrepancies::find_stock_line_ledger_discrepancies;
+use crate::ledger_fix::stock_line_ledger_fix::StockLineLedgerFixError;
 use crate::ledger_fix::stock_line_ledger_fix::stock_line_ledger_fix;
 use crate::{activity_log::system_error_log, service_provider::ServiceProvider};
 
@@ -79,9 +81,15 @@ async fn ledger_fix(service_provider: Arc<ServiceProvider>) -> Result<(), Reposi
                 &error,
                 "Error while finding stock line ledger discrepancies",
             ) {
-                log::error!("Failed to write system error log: {}", format_error(&log_error));
-            }
-            return Err(error);
+                    log::error!("Failed to write system error log: {}", format_error(&log_error));
+                }
+
+            return Err(match error {
+                FindStockLineLedgerDiscrepanciesError::DatabaseError(repository_error) => {
+                    repository_error
+                }
+                other => RepositoryError::as_db_error("Ledger fix preflight failed", other),
+            });
         }
     };
 
@@ -112,36 +120,45 @@ async fn ledger_fix(service_provider: Arc<ServiceProvider>) -> Result<(), Reposi
                 )?;
             }
             Err(error) => {
-                // If DB becomes unavailable mid-run, bail out so we don't record last-run.
-                if matches!(error, RepositoryError::DBError { .. }) {
-                    if let Err(log_error) = system_error_log(
-                        &ctx.connection,
-                        SystemLogType::LedgerFixError,
-                        &error,
-                        &format!(
-                            "Ledger fix aborted due to database error, {}",
-                            operation_log
-                        ),
-                    ) {
-                        log::error!(
-                            "Failed to write system error log: {}",
-                            format_error(&log_error)
-                        );
-                    }
-                    return Err(error);
-                }
+                match error {
+                    StockLineLedgerFixError::DatabaseError(repository_error)
+                        if matches!(repository_error, RepositoryError::DBError { .. }) =>
+                    {
+                        // If DB becomes unavailable mid-run, bail out so we don't record last-run.
+                        if let Err(log_error) = system_error_log(
+                            &ctx.connection,
+                            SystemLogType::LedgerFixError,
+                            &repository_error,
+                            &format!(
+                                "Ledger fix aborted due to database error, {}",
+                                operation_log
+                            ),
+                        ) {
+                            log::error!(
+                                "Failed to write system error log: {}",
+                                format_error(&log_error)
+                            );
+                        }
 
-                if let Err(log_error) = system_error_log(
-                    &ctx.connection,
-                    SystemLogType::LedgerFixError,
-                    &error,
-                    &format!(
-                        "Error fixing stock line {}, {}",
-                        stock_line_id, operation_log
-                    ),
-                ) {
-                    log::error!("Failed to write system error log: {}", format_error(&log_error));
-                }
+                        return Err(repository_error);
+                    }
+                    other_error => {
+                        if let Err(log_error) = system_error_log(
+                            &ctx.connection,
+                            SystemLogType::LedgerFixError,
+                            &other_error,
+                            &format!(
+                                "Error fixing stock line {}, {}",
+                                stock_line_id, operation_log
+                            ),
+                        ) {
+                            log::error!(
+                                "Failed to write system error log: {}",
+                                format_error(&log_error)
+                            );
+                        }
+                    }
+                };
             }
         }
     }

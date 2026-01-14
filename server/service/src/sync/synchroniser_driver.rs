@@ -10,7 +10,6 @@ use tokio::{
     sync::mpsc::{self, Receiver, Sender},
     time::Duration,
 };
-use util::format_error;
 
 const FALLBACK_SYNC_INTERVAL_SECONDS: u64 = 60;
 
@@ -109,13 +108,13 @@ impl SynchroniserDriver {
             let synchroniser = match Synchroniser::new(sync_settings, service_provider) {
                 Ok(synchroniser) => synchroniser,
                 Err(error) => {
-                    log::error!("Problem creating synchroniser {}", format_error(&error));
+                    log::error!("Problem creating synchroniser: {}", error);
                     return;
                 }
             };
 
             if let Err(error) = synchroniser.sync(fetch_patient_id).await {
-                log::error!("Sync failed {}", format_error(&error));
+                log::error!("Sync failed: {}", error);
             };
         }
         .await;
@@ -157,7 +156,7 @@ fn get_sync_settings(service_provider: &ServiceProvider) -> Option<SyncSettings>
             None
         }
         Err(error) => {
-            log::error!("Failed to get sync settings: {}", format_error(&error));
+            log::error!("Failed to get sync settings: {}", error);
             None
         }
     }
