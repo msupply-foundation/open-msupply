@@ -1,0 +1,61 @@
+on:
+  push:
+    branches:
+    - android-test
+  workflow_dispatch:
+
+name: Android Test
+
+jobs:
+  create-android-build:
+    runs-on: self-hosted
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Read .nvmrc
+        run: echo "##[set-output name=NVMRC;]$(cat ./client/.nvmrc)"
+        id: nvm
+
+      - name: Use Node.js (.nvmrc)
+        uses: actions/setup-node@v4
+        with:
+          node-version: '${{ steps.nvm.outputs.NVMRC }}'
+
+      - name: Debug shell and environment
+        run: |
+          echo "Current shell: $SHELL"
+          echo "PATH: $PATH"
+          which node || echo "node not found"
+          which npm || echo "npm not found"
+          which yarn || echo "yarn not found"
+          ls -la /opt/homebrew/bin/ || echo "Homebrew directory not found"
+
+      - name: Install Dependencies
+        run: |
+          cd client
+          rm -rf node_modules
+          yarn install --frozen-lockfile
+
+      - name: Get Properties
+        id: properties
+        run: |
+          cp "$HOME/android/local.properties" ./client/packages/android
+          cp "$HOME/android/release.keystore" ./client/packages/android/app
+
+      - name: Set Up Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          targets: aarch64-linux-android
+            armv7-linux-androideabi
+        # Targets need to match in the config.toml of the self-hosted machine
+
+      - name: Set Up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: "17"
+
