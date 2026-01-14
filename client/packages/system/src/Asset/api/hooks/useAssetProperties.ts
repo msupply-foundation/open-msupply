@@ -4,7 +4,7 @@ import { ASSET, PROPERTIES } from './keys';
 
 export const useAssetProperties = (filterBy?: FilterBy | null) => {
   const { assetApi, storeId } = useAssetGraphQL();
-  const queryKey = [ASSET, storeId, PROPERTIES];
+  const queryKey = [ASSET, storeId, PROPERTIES, filterBy];
 
   const queryFn = async () => {
     const query = await assetApi.assetProperties({

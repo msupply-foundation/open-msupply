@@ -141,17 +141,20 @@ export const Details = ({ draft, onChange }: DetailsProps) => {
   const t = useTranslation();
   const isGaps = useIsGapsStoreOnly();
 
-  const filterBy: AssetPropertyFilterInput = {
-    ...(draft?.assetCategory?.id && {
-      assetCategoryId: { equalAny: [draft.assetCategory.id] },
+  const filterBy: AssetPropertyFilterInput = React.useMemo(
+    () => ({
+      ...(draft?.assetCategory?.id && {
+        assetCategoryId: { equalAnyOrNull: [draft.assetCategory.id] },
+      }),
+      ...(draft?.assetClass?.id && {
+        assetClassId: { equalAnyOrNull: [draft.assetClass.id] },
+      }),
+      ...(draft?.assetType?.id && {
+        assetTypeId: { equalAnyOrNull: [draft.assetType.id] },
+      }),
     }),
-    ...(draft?.assetClass?.id && {
-      assetClassId: { equalAny: [draft.assetClass.id] },
-    }),
-    ...(draft?.assetType?.id && {
-      assetTypeId: { equalAny: [draft.assetType.id] },
-    }),
-  };
+    [draft?.assetCategory?.id, draft?.assetClass?.id, draft?.assetType?.id]
+  );
   const { data: assetProperties, isLoading } = useAssetProperties(filterBy);
 
   if (!draft) return null;
