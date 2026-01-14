@@ -172,7 +172,7 @@ pub fn get_storage_connection_manager(settings: &DatabaseSettings) -> StorageCon
     };
 
     let mut last_error: Option<String> = None;
-    let mut delay = Duration::from_secs(DEFAULT_CONNECTION_RETRY_DELAY_SECONDS);
+    let delay = Duration::from_secs(DEFAULT_CONNECTION_RETRY_DELAY_SECONDS);
 
     // Check the database connection, and attempt to create the database if required
     // Note: the build() call isn't failing when you have an incorrect server or database name
