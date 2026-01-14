@@ -111,7 +111,6 @@ export const getItemQueries = (sdk: Sdk, storeId: string) => ({
         // because service items don't have SOH & AMC so it's odd to show them alongside stock items
         filter: {
           ...filterBy,
-          // includes non-visible items that have stock on hand
           isVisible: true,
           isActive: true,
         },
