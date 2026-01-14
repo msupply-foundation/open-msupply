@@ -1,5 +1,5 @@
 {
-  "name": "convert-data-js-standard-forms-purchase-order-latest",
+  "name": "convert_data_js",
   "version": "1.0.0",
   "main": "convert_data.js",
   "scripts": {
