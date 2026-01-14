@@ -1,74 +1,82 @@
-use crate::{migrations::sql, StorageConnection};
+use crate::migrations::*;
 
-pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
-    sql!(
-        connection,
-        r#"
-        -- Drop views early
-        -- These views are re-created in the decimal_pack_size migration
-        DROP VIEW stock_on_hand;
-        DROP VIEW store_items;
-        DROP VIEW IF EXISTS consumption;
-        -- Recreated below
-        DROP VIEW report_store;
-    "#,
-    )?;
+pub(crate) struct Migrate;
 
-    #[cfg(feature = "postgres")]
-    sql!(
-        connection,
-        r#"
-        -- Adding store.name_link_id
-        DROP INDEX index_store_name_id_fkey;
-        ALTER TABLE store ADD COLUMN name_link_id TEXT;
-        ALTER TABLE store ADD COLUMN is_disabled BOOLEAN DEFAULT FALSE NOT NULL;
+impl MigrationFragment for Migrate {
+    fn identifier(&self) -> &'static str {
+        "store_add_name_link_id_and_is_disabled"
+    }
 
-        UPDATE store SET name_link_id = name_id;
+    fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
+        sql!(
+            connection,
+            r#"
+                -- Drop views early
+                -- These views are re-created in the decimal_pack_size migration
+                DROP VIEW stock_on_hand;
+                DROP VIEW store_items;
+                DROP VIEW IF EXISTS consumption;
+                -- Recreated below
+                DROP VIEW report_store;
+            "#,
+        )?;
 
-        ALTER TABLE store ADD CONSTRAINT store_name_link_id_fkey FOREIGN KEY (name_link_id) REFERENCES name_link(id);
-        ALTER TABLE store DROP COLUMN name_id;
-        "#,
-    )?;
+        #[cfg(feature = "postgres")]
+        sql!(
+            connection,
+            r#"
+                -- Adding store.name_link_id
+                DROP INDEX index_store_name_id_fkey;
+                ALTER TABLE store ADD COLUMN name_link_id TEXT;
+                ALTER TABLE store ADD COLUMN is_disabled BOOLEAN DEFAULT FALSE NOT NULL;
 
-    #[cfg(not(feature = "postgres"))]
-    sql!(
-        connection,
-        r#"
-        CREATE TABLE store_new (
-          id TEXT NOT NULL PRIMARY KEY,
-          name_link_id TEXT NOT NULL REFERENCES name_link(id),
-          code TEXT NOT NULL,
-          site_id INTEGER NOT NULL,
-          logo TEXT,
-          store_mode TEXT DEFAULT 'store' NOT NULL,
-          created_date TEXT,
-          is_disabled BOOLEAN DEFAULT FALSE NOT NULL
-        );
+                UPDATE store SET name_link_id = name_id;
 
-        INSERT INTO store_new SELECT id, name_id, code, site_id, logo, store_mode, created_date, false FROM store;
-        
-        PRAGMA foreign_keys=off;
-        DROP TABLE store;
-        ALTER TABLE store_new RENAME TO store;
-        PRAGMA foreign_keys=on;
-     "#,
-    )?;
+                ALTER TABLE store ADD CONSTRAINT store_name_link_id_fkey FOREIGN KEY (name_link_id) REFERENCES name_link(id);
+                ALTER TABLE store DROP COLUMN name_id;
+            "#,
+        )?;
 
-    sql!(
-        connection,
-        r#"
-        CREATE VIEW report_store AS
-        SELECT
-            store.id,
-            store.code,
-            store.store_mode,
-            store.logo,
-            name.name
-        FROM store
-        JOIN name_link ON store.name_link_id = name_link.id
-        JOIN name ON name_link.name_id = name.id;
-        "#,
-    )?;
+        #[cfg(not(feature = "postgres"))]
+        sql!(
+            connection,
+            r#"
+                CREATE TABLE store_new (
+                id TEXT NOT NULL PRIMARY KEY,
+                name_link_id TEXT NOT NULL REFERENCES name_link(id),
+                code TEXT NOT NULL,
+                site_id INTEGER NOT NULL,
+                logo TEXT,
+                store_mode TEXT DEFAULT 'store' NOT NULL,
+                created_date TEXT,
+                is_disabled BOOLEAN DEFAULT FALSE NOT NULL
+                );
 
-    Ok(())
+                INSERT INTO store_new SELECT id, name_id, code, site_id, logo, store_mode, created_date, false FROM store;
+                
+                PRAGMA foreign_keys=off;
+                DROP TABLE store;
+                ALTER TABLE store_new RENAME TO store;
+                PRAGMA foreign_keys=on;
+            "#,
+        )?;
+
+        sql!(
+            connection,
+            r#"
+                CREATE VIEW report_store AS
+                SELECT
+                    store.id,
+                    store.code,
+                    store.store_mode,
+                    store.logo,
+                    name.name
+                FROM store
+                JOIN name_link ON store.name_link_id = name_link.id
+                JOIN name ON name_link.name_id = name.id;
+            "#,
+        )?;
+
+        Ok(())
+    }
 }

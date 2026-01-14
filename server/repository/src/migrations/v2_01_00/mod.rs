@@ -1,4 +1,4 @@
-use super::{version::Version, Migration};
+use super::{version::Version, Migration, MigrationFragment};
 
 use crate::StorageConnection;
 
@@ -24,26 +24,31 @@ impl Migration for V2_01_00 {
         Version::from_str("2.1.0")
     }
 
-    fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
-        // Note, this migration deletes the consumption view which is recreated in decimal_pack_size
-        // migration, i.e. this migration has to run first.
-        store_add_name_link_id_and_is_disabled::migrate(connection)?;
-        activity_log::migrate(connection)?;
-        // The ledger is migrated in decimal_pack_size because the same views needed to be
-        // re-created
-        // ledger::migrate(connection)?;
-        pg_enums::migrate(connection)?;
-        decimal_pack_size::migrate(connection)?;
-        decimal_requisition_quantities::migrate(connection)?;
-        assets::migrate_assets(connection)?;
-        v6_sync_api_error_code::migrate(connection)?;
-        property::migrate(connection)?;
-        name_property::migrate(connection)?;
-        demographics::migrate(connection)?;
-        vaccine_course::migrate(connection)?;
-        program::migrate(connection)?;
-        item_add_is_vaccine::migrate(connection)?;
+    fn migrate(&self, _connection: &StorageConnection) -> anyhow::Result<()> {
         Ok(())
+    }
+
+    fn migrate_fragments(&self) -> Vec<Box<dyn MigrationFragment>> {
+        vec![
+            // Note, this migration deletes the consumption view which is recreated in decimal_pack_size
+            // migration, i.e. this migration has to run first.
+            Box::new(store_add_name_link_id_and_is_disabled::Migrate),
+            Box::new(activity_log::Migrate),
+            // The ledger is migrated in decimal_pack_size because the same views needed to be
+            // re-created
+            // ledger::migrate(connection)?;
+            Box::new(pg_enums::Migrate),
+            Box::new(decimal_pack_size::Migrate),
+            Box::new(decimal_requisition_quantities::Migrate),
+            Box::new(assets::MigrateAssets),
+            Box::new(v6_sync_api_error_code::Migrate),
+            Box::new(property::Migrate),
+            Box::new(name_property::Migrate),
+            Box::new(demographics::Migrate),
+            Box::new(vaccine_course::Migrate),
+            Box::new(program::Migrate),
+            Box::new(item_add_is_vaccine::Migrate),
+        ]
     }
 }
 

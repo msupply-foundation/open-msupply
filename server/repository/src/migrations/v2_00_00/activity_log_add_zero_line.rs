@@ -1,19 +1,20 @@
-use crate::StorageConnection;
+use crate::migrations::*;
 
-#[cfg(feature = "postgres")]
-pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
-    use crate::migrations::sql;
+pub(crate) struct Migrate;
+impl MigrationFragment for Migrate {
+    fn identifier(&self) -> &'static str {
+        "activity_log_add_zero_line"
+    }
 
-    sql!(
-        connection,
-        r#"ALTER TYPE activity_log_type ADD VALUE 'QUANTITY_FOR_LINE_HAS_BEEN_SET_TO_ZERO';
-        "#
-    )?;
+    fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
+        if cfg!(feature = "postgres") {
+            sql!(
+                connection,
+                r#"ALTER TYPE activity_log_type ADD VALUE 'QUANTITY_FOR_LINE_HAS_BEEN_SET_TO_ZERO';
+            "#
+            )?;
+        }
 
-    Ok(())
-}
-
-#[cfg(not(feature = "postgres"))]
-pub(crate) fn migrate(_connection: &StorageConnection) -> anyhow::Result<()> {
-    Ok(())
+        Ok(())
+    }
 }

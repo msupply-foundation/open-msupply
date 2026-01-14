@@ -1,12 +1,19 @@
-use crate::{migrations::sql, StorageConnection};
+use crate::migrations::*;
 
-pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
-    sql!(
-        connection,
-        r#"
-        ALTER TABLE currency ADD COLUMN is_active BOOLEAN NOT NULL DEFAULT TRUE;
-        "#
-    )?;
+pub(crate) struct Migrate;
+impl MigrationFragment for Migrate {
+    fn identifier(&self) -> &'static str {
+        "currency_add_is_active"
+    }
 
-    Ok(())
+    fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
+        sql!(
+            connection,
+            r#"
+                ALTER TABLE currency ADD COLUMN is_active BOOLEAN NOT NULL DEFAULT TRUE;
+            "#
+        )?;
+
+        Ok(())
+    }
 }

@@ -1,33 +1,41 @@
-use crate::{migrations::sql, StorageConnection};
+use crate::migrations::*;
 
-pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
-    const PROPERTY_VALUE_TYPE: &str = if cfg!(feature = "postgres") {
-        "property_value_type" // This is created as part of the asset_catalogue_property migration
-    } else {
-        "TEXT"
-    };
+pub(crate) struct Migrate;
 
-    sql!(
-        connection,
-        r#"
-            CREATE TABLE property (
-                id TEXT NOT NULL PRIMARY KEY,
-                key TEXT NOT NULL,
-                name TEXT NOT NULL,
-                value_type {PROPERTY_VALUE_TYPE} NOT NULL,
-                allowed_values TEXT
-            );
-        "#
-    )?;
+impl MigrationFragment for Migrate {
+    fn identifier(&self) -> &'static str {
+        "property"
+    }
 
-    if cfg!(feature = "postgres") {
+    fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
+        const PROPERTY_VALUE_TYPE: &str = if cfg!(feature = "postgres") {
+            "property_value_type" // This is created as part of the asset_catalogue_property migration
+        } else {
+            "TEXT"
+        };
+
         sql!(
             connection,
             r#"
-            ALTER TYPE changelog_table_name ADD VALUE IF NOT EXISTS 'property';
+                CREATE TABLE property (
+                    id TEXT NOT NULL PRIMARY KEY,
+                    key TEXT NOT NULL,
+                    name TEXT NOT NULL,
+                    value_type {PROPERTY_VALUE_TYPE} NOT NULL,
+                    allowed_values TEXT
+                );
             "#
         )?;
-    }
 
-    Ok(())
+        if cfg!(feature = "postgres") {
+            sql!(
+                connection,
+                r#"
+                    ALTER TYPE changelog_table_name ADD VALUE IF NOT EXISTS 'property';
+                "#
+            )?;
+        }
+
+        Ok(())
+    }
 }

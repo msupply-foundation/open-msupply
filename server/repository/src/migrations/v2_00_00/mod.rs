@@ -1,4 +1,4 @@
-use super::{helpers::run_without_change_log_updates, version::Version, Migration};
+use super::{version::Version, Migration, MigrationFragment};
 
 use crate::StorageConnection;
 
@@ -30,33 +30,34 @@ impl Migration for V2_00_00 {
         Version::from_str("2.0.0")
     }
 
-    fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
-        // Remove changelog triggers (time travelling, as the code was actually introduced in 2.2.0, but we want to run it early in a patch to avoid syncing changes updated in this version invoice_line_tax for example)
-        remove_changelog_triggers::migrate(connection)?;
-        add_source_site_id::migrate(connection)?;
-        central_omsupply::migrate(connection)?;
-        assets::migrate_assets(connection)?;
-        returns::migrate_returns(connection)?;
-        pack_variant::migrate(connection)?;
-        inventory_adjustment_permissions::migrate(connection)?;
-        store_add_created_date::migrate(connection)?;
-        activity_log_add_zero_line::migrate(connection)?;
-        linked_shipment::migrate(connection)?;
-        sync_file_reference::migrate(connection)?;
-        user_change_last_synced_to_optional::migrate(connection)?;
-        inventory_adjustment_logtype::migrate(connection)?;
-        report_views::migrate(connection)?;
-        run_without_change_log_updates(connection, |_| {
-            requisition_line_add_item_name::migrate(connection)
-        })?;
-        stock_on_hand_add_item_name::migrate(connection)?;
-        currency_add_is_active::migrate(connection)?;
-        invoice_rename_tax::migrate(connection)?;
-        run_without_change_log_updates(connection, |_| {
-            stocktake_line_add_item_name::migrate(connection)
-        })?;
-        name_deleted_datetime::migrate(connection)?;
+    fn migrate(&self, _connection: &StorageConnection) -> anyhow::Result<()> {
         Ok(())
+    }
+
+    fn migrate_fragments(&self) -> Vec<Box<dyn MigrationFragment>> {
+        vec![
+            // Remove changelog triggers (time travelling, as the code was actually introduced in 2.2.0, but we want to run it early in a patch to avoid syncing changes updated in this version invoice_line_tax for example)
+            Box::new(remove_changelog_triggers::Migrate),
+            Box::new(add_source_site_id::Migrate),
+            Box::new(central_omsupply::Migrate),
+            Box::new(assets::MigrateAssets),
+            Box::new(returns::MigrateReturns),
+            Box::new(pack_variant::Migrate),
+            Box::new(inventory_adjustment_permissions::Migrate),
+            Box::new(store_add_created_date::Migrate),
+            Box::new(activity_log_add_zero_line::Migrate),
+            Box::new(linked_shipment::Migrate),
+            Box::new(sync_file_reference::Migrate),
+            Box::new(user_change_last_synced_to_optional::Migrate),
+            Box::new(inventory_adjustment_logtype::Migrate),
+            Box::new(report_views::Migrate),
+            Box::new(requisition_line_add_item_name::Migrate),
+            Box::new(stock_on_hand_add_item_name::Migrate),
+            Box::new(currency_add_is_active::Migrate),
+            Box::new(invoice_rename_tax::Migrate),
+            Box::new(stocktake_line_add_item_name::Migrate),
+            Box::new(name_deleted_datetime::Migrate),
+        ]
     }
 }
 

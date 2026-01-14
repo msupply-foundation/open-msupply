@@ -25,23 +25,23 @@ impl Migration for V2_02_00 {
         Version::from_str("2.2.0")
     }
 
-    fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
-        add_asset_internal_location_changelog::migrate(connection)?;
-        remove_changelog_triggers::migrate(connection)?;
-        create_missing_master_list_and_program::migrate(connection)?;
-        create_system_user::migrate(connection)?;
-        store_preferences_for_reports::migrate(connection)?;
-        rnr_form::migrate(connection)?;
-        report_add_report_context::migrate(connection)?;
-        item_ven::migrate(connection)?;
-        consumption_and_replenishment_views::migrate(connection)?;
-        sync::migrate(connection)?;
-        stock_on_hand_add_total_stock::migrate(connection)?;
-
+    fn migrate(&self, _connection: &StorageConnection) -> anyhow::Result<()> {
         Ok(())
     }
+
     fn migrate_fragments(&self) -> Vec<Box<dyn MigrationFragment>> {
         vec![
+            Box::new(add_asset_internal_location_changelog::Migrate),
+            Box::new(remove_changelog_triggers::Migrate),
+            Box::new(create_missing_master_list_and_program::Migrate),
+            Box::new(create_system_user::Migrate),
+            Box::new(store_preferences_for_reports::Migrate),
+            Box::new(rnr_form::Migrate),
+            Box::new(report_add_report_context::Migrate),
+            Box::new(item_ven::Migrate),
+            Box::new(consumption_and_replenishment_views::Migrate),
+            Box::new(sync::Migrate),
+            Box::new(stock_on_hand_add_total_stock::Migrate),
             Box::new(add_low_stock_and_requisition_line_id::Migrate),
             Box::new(requisitions_in_period::Migrate),
             Box::new(add_requisition_approved_activity_type::Migrate),

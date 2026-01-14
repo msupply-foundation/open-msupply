@@ -1,13 +1,19 @@
-use crate::migrations::DATETIME;
-use crate::{migrations::sql, StorageConnection};
+use crate::migrations::*;
 
-pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
-    sql!(
-        connection,
-        r#"
-        ALTER TABLE name ADD COLUMN deleted_datetime {DATETIME};
-        "#
-    )?;
+pub(crate) struct Migrate;
+impl MigrationFragment for Migrate {
+    fn identifier(&self) -> &'static str {
+        "name_deleted_datetime"
+    }
 
-    Ok(())
+    fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
+        sql!(
+            connection,
+            r#"
+                ALTER TABLE name ADD COLUMN deleted_datetime {DATETIME};
+            "#
+        )?;
+
+        Ok(())
+    }
 }
