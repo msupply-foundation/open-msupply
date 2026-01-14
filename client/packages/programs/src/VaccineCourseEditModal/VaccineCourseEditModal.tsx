@@ -194,20 +194,22 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
         </Row>
         <Row label={t('label.coverage-rate')}>
           <NumericTextInput
-            value={draft?.coverageRate ?? 1}
+            value={draft?.coverageRate}
             fullWidth
             onChange={value => updatePatch({ coverageRate: value })}
             endAdornment="%"
             decimalLimit={1}
+            max={100}
           />
         </Row>
         <Row label={t('label.wastage-rate')}>
           <NumericTextInput
-            value={draft?.wastageRate ?? 1}
+            value={draft?.wastageRate}
             fullWidth
             onChange={value => updatePatch({ wastageRate: value })}
             endAdornment="%"
             decimalLimit={1}
+            max={100}
           />
         </Row>
         <Row label={t('label.vaccine-items')}>
@@ -393,9 +395,7 @@ const VaccineCourseDoseTable = ({
     columns,
     data: doses,
     enableRowSelection: false,
-    noDataElement: (
-      <NothingHere body={t('message.add-a-dose')} />
-    ),
+    noDataElement: <NothingHere body={t('message.add-a-dose')} />,
   });
 
   return (
