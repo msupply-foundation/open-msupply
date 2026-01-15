@@ -8,7 +8,6 @@ import {
   InputWithLabelRow,
   Typography,
   useTranslation,
-  AssetPropertyFilterInput,
   InlineSpinner,
 } from '@openmsupply-client/common';
 import { DraftAsset } from '../../types';
@@ -141,18 +140,11 @@ export const Details = ({ draft, onChange }: DetailsProps) => {
   const t = useTranslation();
   const isGaps = useIsGapsStoreOnly();
 
-  const filterBy: AssetPropertyFilterInput = {
-    ...(draft?.assetCategory?.id && {
-      assetCategoryId: { equalAny: [draft.assetCategory.id] },
-    }),
-    ...(draft?.assetClass?.id && {
-      assetClassId: { equalAny: [draft.assetClass.id] },
-    }),
-    ...(draft?.assetType?.id && {
-      assetTypeId: { equalAny: [draft.assetType.id] },
-    }),
-  };
-  const { data: assetProperties, isLoading } = useAssetProperties(filterBy);
+  const { data: assetProperties, isLoading } = useAssetProperties({
+    assetCategoryId: { equalAnyOrNull: [draft?.assetCategory?.id ?? ''] },
+    assetClassId: { equalAnyOrNull: [draft?.assetClass?.id ?? ''] },
+    assetTypeId: { equalAnyOrNull: [draft?.assetType?.id ?? ''] },
+  });
 
   if (!draft) return null;
   if (isLoading)
