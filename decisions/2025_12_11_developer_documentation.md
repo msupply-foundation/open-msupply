@@ -18,7 +18,7 @@ The purpose of this KDD is to discuss the requirements for the developer documen
 
 Before adding a ton of comments... let's schedule a meeting where the general outline can be discussed and documented here.
 
-## \_Consi_derations
+## Considerations
 
 - Features vs simplicity to create and maintain
 - Easy integration of the existing README.md files from the repository
@@ -27,21 +27,86 @@ Before adding a ton of comments... let's schedule a meeting where the general ou
 - Who needs access to view these?
 - Who needs access to edit these, and what tradeoffs are there? Eg. UI editing may have no review process and commit to the repo directly
 
-### What features are must-haves vs nice-to-haves?
+## Technical Specification
 
-- Automation of updating the site when README.md contents are updated
-- Automation of updating the navigation and file structure when files are created/moved/renamed
-- Search functionality
-- Navigation structure (sidebar, table of contents, etc)
-- Images, diagrams and media support
-- Importance of custom or polished UI
-- API documentation
-- PR process of preview of changes before publishing
+### 1. Project Overview
 
-## Requirements
+Static site generator in `/docs` that builds from markdown files across repository. READMEs stay in original locations (single source of truth). Pre-build script creates symlinks in `/docs/packages/` to mirror original structure.
 
-## Options
+### 2. README Discovery & Linking
 
+**Primary:** Pre-build script creates symlinks in `/docs/packages/` to all `README.md` files in `/packages/**`
+
+**Fallback:** If symlinks unsupported, copy files with `sourcePath` frontmatter for correct edit links
+
+**Link Resolution:** Relative links auto-resolved for docs site context
+
+### 3. Search
+
+Client-side full-text search. Results show page title and highlighted snippets with context. Deep linking to sections with auto-scroll and highlight fade.
+
+### 4. Navigation
+
+**Auto-generated:** Landing table of contents, sidebar (from file structure), and page-level TOC (H2/H3 headers)
+
+**Features:** Collapsible sections, persistent state, sticky TOC, active page highlighting
+
+**Custom Ordering:** Define the docs structure via frontmatter or config JSON
+
+### 5. Content Format
+
+GitHub Flavored Markdown (no changes required to existing READMEs). Optional frontmatter for title/order/category. Supports code highlighting, GitHub alerts, tables, task lists, relative links/images.
+
+### 6. Editing Workflow
+
+"Edit this page on GitHub" link on every page → opens source file in GitHub editor → standard PR workflow. Link resolves to actual file path (from symlink or frontmatter).
+
+### 7. Version History
+
+"View History" link to GitHub commits. Page metadata shows last updated timestamp and contributor (from git, embedded at build time).
+
+### 8. Configuration
+
+**Minimal Configuration:**
+
+```json
+{
+  "title": "Open mSupply Documentation",
+  "description": "Developer documentation",
+  "repo": "https://github.com/org/repo",
+  "logo": "/logo.svg",
+  "theme": {
+    "primaryColor": "#0066cc"
+  }
+}
+```
+
+**Optional:**
+
+- Custom navigation ordering
+- Footer links
+- Light/dark mode (respects system preference)
+
+### 9. Build Process
+
+1. Discover READMEs → create symlinks → transform links
+2. Build site → generate search index → output static files
+
+**CI/CD:** Auto-deploy on push to main/develop or `*.md` changes
+
+## Initial Options
+
+<details>
+
+<summary>
+Initial options considered before specs revision.
+Option 1 (Zola) could still potentially be used
+
+- Option 1: Zola
+- Option 2: Wiki.js
+- Option 3: DokuWiki (OG Docs tool)
+
+</summary>
 All options will require some set up and configuration effort, and change the place where README.md files are stored and edited. The existing README.md files in the OMS repository can instead contain a link to the relevant page in the documentation site.
 
 Other documentation in various places eg Google docs will likely need reformatting to the new documentation type and location regardless of the chosen option.
@@ -106,5 +171,176 @@ _Cons:_
 - Doesn't use traditional markdown. Plugins can convert markdown to DokuWiki format but may lose some formatting
 - No native github integration. Would need to use plugins which may be fragile with DokuWiki versions
 - Could have significant time investment to generate initial documentation pages from existing README.md files, and harder to move away from DokuWiki later if needed
+
+</details>
+
+## Revised Options Comparison
+
+[!NOTE] The following comparison is AI generated based on the technical specs provided above. These have not been individually verified.
+
+## README Discovery & Single Source of Truth
+
+| Feature                            | VitePress    | Docusaurus   | Nextra       | Fumadocs     | Starlight    | Zola             |
+| ---------------------------------- | ------------ | ------------ | ------------ | ------------ | ------------ | ---------------- |
+| **Symlink support**                | 🟢 Native    | 🟢 Native    | 🟢 Native    | 🟢 Native    | 🟢 Native    | 🟢 Native        |
+| **Custom pre-build script needed** | 🟡 Yes       | 🟡 Yes       | 🟡 Yes       | 🟡 Yes       | 🟡 Yes       | 🟡 Yes           |
+| **Link transformation**            | 🟢 Built-in  | 🟢 Built-in  | 🟢 Built-in  | 🟢 Built-in  | 🟢 Built-in  | 🟡 Manual config |
+| **Frontmatter support**            | 🟢 Excellent | 🟢 Excellent | 🟢 Excellent | 🟢 Excellent | 🟢 Excellent | 🟢 Excellent     |
+
+---
+
+## Search Capabilities
+
+| Feature                       | VitePress             | Docusaurus       | Nextra        | Fumadocs              | Starlight    | Zola           |
+| ----------------------------- | --------------------- | ---------------- | ------------- | --------------------- | ------------ | -------------- |
+| **Built-in search**           | 🟢 Local (MiniSearch) | 🟢 Yes (Algolia) | 🟢 FlexSearch | 🟢 FlexSearch/Algolia | 🟢 Pagefind  | 🟡 Elasticlunr |
+| **External service required** | 🟢 No                 | 🔴 Yes (Algolia) | 🟢 No         | 🟢 No (optional)      | 🟢 No        | 🟢 No          |
+| **Search quality**            | 🟢 Excellent          | 🟢 Excellent     | 🟢 Good       | 🟢 Good               | 🟢 Excellent | 🟡 Basic       |
+| **Context snippets**          | 🟢 Yes                | 🟢 Yes           | 🟢 Yes        | 🟢 Yes                | 🟢 Yes       | 🔴 Limited     |
+| **Highlighting**              | 🟢 Yes                | 🟢 Yes           | 🟡 Basic      | 🟡 Basic              | 🟢 Yes       | 🔴 No          |
+| **Section-level navigation**  | 🟢 Yes                | 🟢 Yes           | 🟡 Limited    | 🟡 Limited            | 🟢 Yes       | 🔴 No          |
+| **Deep linking**              | 🟢 Yes                | 🟢 Yes           | 🟢 Yes        | 🟢 Yes                | 🟢 Yes       | 🟡 Manual      |
+| **Offline capable**           | 🟢 Yes                | 🔴 No            | 🟢 Yes        | 🟢 Yes                | 🟢 Yes       | 🟢 Yes         |
+
+---
+
+## Navigation & Structure
+
+| Feature                    | VitePress             | Docusaurus            | Nextra                | Fumadocs              | Starlight             | Zola                  |
+| -------------------------- | --------------------- | --------------------- | --------------------- | --------------------- | --------------------- | --------------------- |
+| **Auto-generated sidebar** | 🟢 Yes                | 🟡 Semi-auto          | 🟢 Yes                | 🟢 Yes                | 🟢 Yes                | 🟡 Semi-manual        |
+| **Auto-generated TOC**     | 🟢 Yes                | 🟢 Yes                | 🟢 Yes                | 🟢 Yes                | 🟢 Yes                | 🟢 Yes                |
+| **Collapsible sections**   | 🟢 Yes                | 🟢 Yes                | 🟢 Yes                | 🟢 Yes                | 🟢 Yes                | 🟡 Custom JS needed   |
+| **Breadcrumbs**            | 🟢 Yes                | 🟢 Yes                | 🟢 Yes                | 🟢 Yes                | 🟢 Yes                | 🟡 Custom template    |
+| **Custom ordering**        | 🟢 Config/frontmatter | 🟢 Config/frontmatter | 🟢 Config/frontmatter | 🟢 Config/frontmatter | 🟢 Config/frontmatter | 🟢 Config/frontmatter |
+| **Persistent state**       | 🟢 Yes                | 🟢 Yes                | 🟢 Yes                | 🟢 Yes                | 🟢 Yes                | 🟡 Custom JS needed   |
+| **Sticky TOC**             | 🟢 Yes                | 🟢 Yes                | 🟢 Yes                | 🟢 Yes                | 🟢 Yes                | 🟡 Custom CSS needed  |
+
+---
+
+## Content Format Support
+
+| Feature                      | VitePress        | Docusaurus       | Nextra           | Fumadocs         | Starlight        | Zola                 |
+| ---------------------------- | ---------------- | ---------------- | ---------------- | ---------------- | ---------------- | -------------------- |
+| **GitHub Flavored Markdown** | 🟢 Full support  | 🟢 Full support  | 🟢 Full support  | 🟢 Full support  | 🟢 Full support  | 🟡 Most features     |
+| **Code syntax highlighting** | 🟢 Shiki         | 🟢 Prism         | 🟢 Prism/Shiki   | 🟢 Shiki         | 🟢 Shiki         | 🟢 Built-in          |
+| **GitHub-style alerts**      | 🟢 Native        | 🟡 Via plugin    | 🟡 Via plugin    | 🟢 Native        | 🟢 Native        | 🔴 Manual shortcodes |
+| **Relative links**           | 🟢 Auto-resolved | 🟢 Auto-resolved | 🟢 Auto-resolved | 🟢 Auto-resolved | 🟢 Auto-resolved | 🟢 Auto-resolved     |
+| **Image handling**           | 🟢 Excellent     | 🟢 Excellent     | 🟢 Excellent     | 🟢 Excellent     | 🟢 Excellent     | 🟢 Good              |
+| **Tables**                   | 🟢 Yes           | 🟢 Yes           | 🟢 Yes           | 🟢 Yes           | 🟢 Yes           | 🟢 Yes               |
+| **Task lists**               | 🟢 Yes           | 🟢 Yes           | 🟢 Yes           | 🟢 Yes           | 🟢 Yes           | 🟡 Limited           |
+| **MDX support**              | 🔴 No            | 🟢 Yes           | 🟢 Yes           | 🟢 Yes           | 🟢 Yes           | 🔴 No                |
+
+---
+
+## Editing Workflow
+
+| Feature                         | VitePress    | Docusaurus   | Nextra       | Fumadocs     | Starlight    | Zola               |
+| ------------------------------- | ------------ | ------------ | ------------ | ------------ | ------------ | ------------------ |
+| **Edit link configuration**     | 🟢 Built-in  | 🟢 Built-in  | 🟢 Built-in  | 🟢 Built-in  | 🟢 Built-in  | 🟡 Manual template |
+| **Custom link resolver**        | 🟢 Easy      | 🟢 Easy      | 🟢 Easy      | 🟢 Easy      | 🟢 Easy      | 🟡 Template logic  |
+| **Symlink path resolution**     | 🟢 Automatic | 🟢 Automatic | 🟢 Automatic | 🟢 Automatic | 🟢 Automatic | 🟡 Manual tracking |
+| **Frontmatter source tracking** | 🟢 Supported | 🟢 Supported | 🟢 Supported | 🟢 Supported | 🟢 Supported | 🟢 Supported       |
+
+---
+
+## Version History & Git Integration
+
+| Feature                    | VitePress      | Docusaurus     | Nextra         | Fumadocs       | Starlight      | Zola               |
+| -------------------------- | -------------- | -------------- | -------------- | -------------- | -------------- | ------------------ |
+| **Last updated timestamp** | 🟢 Built-in    | 🟢 Built-in    | 🟡 Manual      | 🟡 Manual      | 🟢 Built-in    | 🔴 No built-in     |
+| **Contributor info**       | 🟢 Built-in    | 🟢 Built-in    | 🔴 No          | 🔴 No          | 🟢 Built-in    | 🔴 No built-in     |
+| **Git history links**      | 🟢 Easy config | 🟢 Easy config | 🟢 Easy config | 🟢 Easy config | 🟢 Easy config | 🟡 Manual template |
+| **Automatic git metadata** | 🟢 Yes         | 🟢 Yes         | 🔴 No          | 🔴 No          | 🟢 Yes         | 🔴 No              |
+
+---
+
+## Configuration & Customization
+
+| Feature                   | VitePress       | Docusaurus   | Nextra          | Fumadocs        | Starlight       | Zola                     |
+| ------------------------- | --------------- | ------------ | --------------- | --------------- | --------------- | ------------------------ |
+| **Minimal config needed** | 🟢 Very minimal | 🟡 Moderate  | 🟢 Very minimal | 🟢 Very minimal | 🟢 Very minimal | 🟢 Minimal               |
+| **TypeScript config**     | 🟢 Yes          | 🟢 Yes       | 🟢 Yes          | 🟢 Native       | 🟢 Yes          | 🔴 TOML only             |
+| **Theme customization**   | 🟢 CSS vars     | 🟢 CSS/React | 🟢 CSS/React    | 🟢 CSS/React    | 🟢 CSS/Props    | 🟢 CSS/Tera templates    |
+| **Light/dark mode**       | 🟢 Built-in     | 🟢 Built-in  | 🟢 Built-in     | 🟢 Built-in     | 🟢 Built-in     | 🟡 Custom implementation |
+| **Logo/branding**         | 🟢 Simple       | 🟢 Simple    | 🟢 Simple       | 🟢 Simple       | 🟢 Simple       | 🟢 Simple                |
+
+---
+
+## Build & Performance
+
+| Feature                 | VitePress    | Docusaurus   | Nextra       | Fumadocs     | Starlight    | Zola                  |
+| ----------------------- | ------------ | ------------ | ------------ | ------------ | ------------ | --------------------- |
+| **Build speed**         | 🟢 Fastest   | 🟡 Moderate  | 🟢 Fast      | 🟢 Fast      | 🟢 Fast      | 🟢 **Extremely fast** |
+| **Runtime performance** | 🟢 Excellent | 🟡 Good      | 🟢 Very good | 🟢 Very good | 🟢 Excellent | 🟢 Excellent          |
+| **Bundle size**         | 🟢 Small     | 🟡 Large     | 🟡 Medium    | 🟡 Medium    | 🟢 Smallest  | 🟢 Very small         |
+| **Hot reload**          | 🟢 Instant   | 🟢 Fast      | 🟢 Fast      | 🟢 Fast      | 🟢 Instant   | 🟢 Instant            |
+| **Incremental builds**  | 🟢 Yes       | 🟡 Limited   | 🟢 Yes       | 🟢 Yes       | 🟢 Yes       | 🟢 Yes                |
+| **Single binary**       | 🔴 No (Node) | 🔴 No (Node) | 🔴 No (Node) | 🔴 No (Node) | 🔴 No (Node) | 🟢 **Yes**            |
+
+---
+
+## Technology Stack Alignment
+
+| Feature                          | VitePress              | Docusaurus          | Nextra              | Fumadocs            | Starlight           | Zola                       |
+| -------------------------------- | ---------------------- | ------------------- | ------------------- | ------------------- | ------------------- | -------------------------- |
+| **Framework**                    | Vue 3                  | React               | Next.js/React       | Next.js/React       | Astro               | **Rust**                   |
+| **Alignment with TS/React/Rust** | 🟡 Different           | 🟢 Partial          | 🟢 Partial          | 🟢 Partial          | 🟡 Different        | 🟢 **Rust match**          |
+| **Learning curve**               | 🟢 Low (just markdown) | 🟢 Low              | 🟢 Low              | 🟢 Low              | 🟡 Medium           | 🟡 Medium (Tera templates) |
+| **Team familiarity**             | 🟡 New framework       | 🟢 Familiar         | 🟢 Familiar         | 🟢 Familiar         | 🟡 New framework    | 🟢 **Already used**        |
+| **Component extension**          | 🟡 Vue components      | 🟢 React components | 🟢 React components | 🟢 React components | 🟢 React components | 🟡 Tera shortcodes         |
+
+---
+
+## Maturity & Ecosystem
+
+| Feature                   | VitePress       | Docusaurus     | Nextra     | Fumadocs   | Starlight     | Zola            |
+| ------------------------- | --------------- | -------------- | ---------- | ---------- | ------------- | --------------- |
+| **Maturity**              | 🟢 Stable (v1+) | 🟢 Very mature | 🟡 Stable  | 🟡 New     | 🟡 Stable     | 🟢 Very stable  |
+| **Community size**        | 🟢 Large        | 🟢 Very large  | 🟡 Medium  | 🔴 Small   | 🟡 Growing    | 🟡 Medium       |
+| **Documentation quality** | 🟢 Excellent    | 🟢 Excellent   | 🟢 Good    | 🟡 Good    | 🟢 Excellent  | 🟢 Good         |
+| **Plugin ecosystem**      | 🟡 Growing      | 🟢 Extensive   | 🟡 Limited | 🟡 Limited | 🟡 Growing    | 🔴 Very limited |
+| **Maintenance**           | 🟢 Vue team     | 🟢 Meta        | 🟢 Active  | 🟢 Active  | 🟢 Astro team | 🟢 Active       |
+| **GitHub stars**          | 🟢 12k+         | 🟢 55k+        | 🟢 11k+    | 🟡 2k+     | 🟢 5k+        | 🟢 13k+         |
+| **Theme availability**    | 🟢 Multiple     | 🟢 Many        | 🟡 Few     | 🟡 Few     | 🟢 Several    | 🟡 Limited      |
+
+---
+
+## Deployment & CI/CD
+
+| Feature                     | VitePress     | Docusaurus    | Nextra        | Fumadocs      | Starlight     | Zola                 |
+| --------------------------- | ------------- | ------------- | ------------- | ------------- | ------------- | -------------------- |
+| **GitHub Pages support**    | 🟢 Native     | 🟢 Native     | 🟢 Yes        | 🟢 Yes        | 🟢 Yes        | 🟢 Native            |
+| **Static export**           | 🟢 Yes        | 🟢 Yes        | 🟢 Yes        | 🟢 Yes        | 🟢 Yes        | 🟢 Yes               |
+| **GitHub Actions examples** | 🟢 Official   | 🟢 Official   | 🟢 Available  | 🟡 Community  | 🟢 Official   | 🟢 Official          |
+| **Build reliability**       | 🟢 Excellent  | 🟢 Excellent  | 🟢 Good       | 🟡 Good       | 🟢 Excellent  | 🟢 Excellent         |
+| **CI/CD simplicity**        | 🟡 Node setup | 🟡 Node setup | 🟡 Node setup | 🟡 Node setup | 🟡 Node setup | 🟢 **Single binary** |
+
+---
+
+## Documentation-Specific Features
+
+| Feature                 | VitePress   | Docusaurus   | Nextra      | Fumadocs    | Starlight    | Zola               |
+| ----------------------- | ----------- | ------------ | ----------- | ----------- | ------------ | ------------------ |
+| **Built for docs**      | 🟢 Yes      | 🟢 Yes       | 🟢 Yes      | 🟢 Yes      | 🟢 Yes       | 🟡 General purpose |
+| **API docs generation** | 🟡 Limited  | 🟢 Good      | 🟡 Limited  | 🟢 Good     | 🟡 Limited   | 🔴 No              |
+| **Versioning support**  | 🟡 Basic    | 🟢 Excellent | 🟡 Basic    | 🟡 Basic    | 🟡 Basic     | 🔴 Manual          |
+| **i18n support**        | 🟢 Built-in | 🟢 Excellent | 🟢 Built-in | 🟢 Built-in | 🟢 Excellent | 🟡 Manual          |
+
+---
+
+## Overall Score Summary
+
+| Category            | VitePress | Docusaurus | Nextra   | Fumadocs | Starlight | Zola         |
+| ------------------- | --------- | ---------- | -------- | -------- | --------- | ------------ |
+| **Search**          | 🟢 10/10  | 🟡 7/10    | 🟢 8/10  | 🟢 8/10  | 🟢 9/10   | 🔴 **4/10**  |
+| **Navigation**      | 🟢 10/10  | 🟢 10/10   | 🟢 9/10  | 🟢 9/10  | 🟢 10/10  | 🟡 **6/10**  |
+| **Content Support** | 🟢 9/10   | 🟢 10/10   | 🟢 10/10 | 🟢 10/10 | 🟢 10/10  | 🟡 **7/10**  |
+| **Git Integration** | 🟢 10/10  | 🟢 10/10   | 🟡 6/10  | 🟡 6/10  | 🟢 10/10  | 🔴 **3/10**  |
+| **Performance**     | 🟢 10/10  | 🟡 7/10    | 🟢 8/10  | 🟢 8/10  | 🟢 10/10  | 🟢 **10/10** |
+| **Stack Alignment** | 🟡 6/10   | 🟢 10/10   | 🟢 10/10 | 🟢 10/10 | 🟡 6/10   | 🟢 **9/10**  |
+| **Maturity**        | 🟢 9/10   | 🟢 10/10   | 🟢 8/10  | 🟡 6/10  | 🟢 8/10   | 🟢 **9/10**  |
+| **Ease of Setup**   | 🟢 10/10  | 🟡 7/10    | 🟢 9/10  | 🟢 9/10  | 🟢 9/10   | 🟡 **7/10**  |
+| **TOTAL**           | 🟢 74/80  | 🟢 71/80   | 🟢 68/80 | 🟡 66/80 | 🟢 72/80  | 🟡 **55/80** |
 
 ## Decision
