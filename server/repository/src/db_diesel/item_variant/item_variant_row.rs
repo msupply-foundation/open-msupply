@@ -1,33 +1,41 @@
 use crate::{
     db_diesel::{
         barcode_row::barcode, item_row::item, location_row::location,
-        location_type_row::location_type, name_row::name,
+        location_type_row::location_type, name_link_row::name_link, name_row::name,
     },
-    item_link, name_link, user_account, ChangeLogInsertRow, ChangelogRepository,
-    ChangelogTableName, RepositoryError, RowActionType, StorageConnection, Upsert,
+    diesel_macros::define_linked_tables,
+    item_link, user_account, ChangeLogInsertRow, ChangelogRepository, ChangelogTableName,
+    RepositoryError, RowActionType, StorageConnection, Upsert,
 };
 
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 
-table! {
-    item_variant(id) {
-        id -> Text,
+define_linked_tables! {
+    view: item_variant = "item_variant_view",
+    core: item_variant_with_links = "item_variant",
+    struct: ItemVariantRow,
+    repo: ItemVariantRowRepository,
+    shared: {
         name -> Text,
         item_link_id -> Text,
         location_type_id -> Nullable<Text>,
-        manufacturer_link_id -> Nullable<Text>,
         deleted_datetime -> Nullable<Timestamp>,
         vvm_type -> Nullable<Text>,
         created_datetime -> Timestamp,
         created_by -> Nullable<Text>,
+    },
+    links: {},
+    optional_links: {
+        manufacturer_link_id -> manufacturer_id,
     }
 }
 
 joinable!(item_variant -> item_link (item_link_id));
-joinable!(item_variant -> name_link (manufacturer_link_id));
 joinable!(item_variant -> location_type (location_type_id));
+joinable!(item_variant -> name (manufacturer_id));
+joinable!(item_variant_with_links -> name_link (manufacturer_link_id));
 allow_tables_to_appear_in_same_query!(item_variant, item_link);
 allow_tables_to_appear_in_same_query!(item_variant, item);
 allow_tables_to_appear_in_same_query!(item_variant, user_account);
@@ -36,24 +44,23 @@ allow_tables_to_appear_in_same_query!(item_variant, name);
 allow_tables_to_appear_in_same_query!(item_variant, location_type);
 allow_tables_to_appear_in_same_query!(item_variant, barcode);
 allow_tables_to_appear_in_same_query!(item_variant, location);
+allow_tables_to_appear_in_same_query!(item_variant_with_links, name_link);
 
-#[derive(
-    Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default, Serialize, Deserialize,
-)]
+#[derive(Clone, Queryable, Debug, PartialEq, Default, Serialize, Deserialize)]
 #[diesel(table_name = item_variant)]
-#[diesel(treat_none_as_null = true)]
 pub struct ItemVariantRow {
     pub id: String,
     pub name: String,
     pub item_link_id: String,
     #[serde(rename = "cold_storage_type_id")] // To prevent breaking change in v6 sync API
     pub location_type_id: Option<String>,
-    pub manufacturer_link_id: Option<String>,
     pub deleted_datetime: Option<chrono::NaiveDateTime>,
     pub vvm_type: Option<String>,
     pub created_datetime: NaiveDateTime,
     #[serde(default)]
     pub created_by: Option<String>,
+    // Resolved from name_link - must be last to match view column order
+    pub manufacturer_id: Option<String>,
 }
 
 pub struct ItemVariantRowRepository<'a> {
@@ -66,13 +73,7 @@ impl<'a> ItemVariantRowRepository<'a> {
     }
 
     pub fn upsert_one(&self, row: &ItemVariantRow) -> Result<i64, RepositoryError> {
-        diesel::insert_into(item_variant::table)
-            .values(row)
-            .on_conflict(item_variant::id)
-            .do_update()
-            .set(row)
-            .execute(self.connection.lock().connection())?;
-
+        self._upsert(row)?;
         self.insert_changelog(row.id.to_string(), RowActionType::Upsert)
     }
 
@@ -114,8 +115,8 @@ impl<'a> ItemVariantRowRepository<'a> {
     }
 
     pub fn mark_deleted(&self, item_variant_id: &str) -> Result<i64, RepositoryError> {
-        diesel::update(item_variant::table.filter(item_variant::id.eq(item_variant_id)))
-            .set(item_variant::deleted_datetime.eq(Some(chrono::Utc::now().naive_utc())))
+        diesel::update(item_variant_with_links::table.filter(item_variant_with_links::id.eq(item_variant_id)))
+            .set(item_variant_with_links::deleted_datetime.eq(Some(chrono::Utc::now().naive_utc())))
             .execute(self.connection.lock().connection())?;
 
         // Upsert row action as this is a soft delete, not actual delete

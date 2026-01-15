@@ -1,6 +1,8 @@
 use super::item_row::item;
 use crate::db_diesel::goods_received_row::goods_received;
 use crate::db_diesel::item_link_row::item_link;
+use crate::db_diesel::name_link_row::name_link;
+use crate::diesel_macros::define_linked_tables;
 use crate::EqualFilter;
 use crate::{
     goods_received_row::GoodsReceivedRowRepository, ChangeLogInsertRow, ChangelogRepository,
@@ -12,9 +14,12 @@ use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
 
-table! {
-    goods_received_line (id) {
-        id -> Text,
+define_linked_tables! {
+    view: goods_received_line = "goods_received_line_view",
+    core: goods_received_line_with_links = "goods_received_line",
+    struct: GoodsReceivedLineRow,
+    repo: GoodsReceivedLineRowRepository,
+    shared: {
         goods_received_id -> Text,
         purchase_order_line_id -> Text,
         received_pack_size -> Double,
@@ -27,23 +32,25 @@ table! {
         item_name -> Text,
         location_id -> Nullable<Text>,
         volume_per_pack -> Nullable<Double>,
-        manufacturer_link_id -> Nullable<Text>,
         status -> crate::db_diesel::goods_received_line_row::GoodsReceivedLineStatusMapping,
         comment -> Nullable<Text>,
+    },
+    links: {},
+    optional_links: {
+        manufacturer_link_id -> manufacturer_id,
     }
 }
 
 joinable!(goods_received_line -> item_link(item_link_id));
 joinable!(goods_received_line -> goods_received(goods_received_id));
+joinable!(goods_received_line_with_links -> name_link (manufacturer_link_id));
 allow_tables_to_appear_in_same_query!(goods_received_line, item_link);
 allow_tables_to_appear_in_same_query!(goods_received_line, item);
 allow_tables_to_appear_in_same_query!(goods_received_line, goods_received);
+allow_tables_to_appear_in_same_query!(goods_received_line_with_links, name_link);
 
-#[derive(
-    Clone, Insertable, Queryable, Debug, AsChangeset, Serialize, Deserialize, Default, PartialEq,
-)]
+#[derive(Clone, Queryable, Debug, Serialize, Deserialize, Default, PartialEq)]
 #[diesel(table_name = goods_received_line)]
-#[diesel(treat_none_as_null = true)]
 pub struct GoodsReceivedLineRow {
     pub id: String,
     pub goods_received_id: String,
@@ -58,9 +65,10 @@ pub struct GoodsReceivedLineRow {
     pub item_name: String,
     pub location_id: Option<String>,
     pub volume_per_pack: Option<f64>,
-    pub manufacturer_link_id: Option<String>,
     pub status: GoodsReceivedLineStatus,
     pub comment: Option<String>,
+    // Resolved from name_link - must be last to match view column order
+    pub manufacturer_id: Option<String>,
 }
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
@@ -92,12 +100,7 @@ impl<'a> GoodsReceivedLineRowRepository<'a> {
     }
 
     pub fn _upsert_one(&self, row: &GoodsReceivedLineRow) -> Result<(), RepositoryError> {
-        diesel::insert_into(goods_received_line::table)
-            .values(row)
-            .on_conflict(goods_received_line::id)
-            .do_update()
-            .set(row)
-            .execute(self.connection.lock().connection())?;
+        self._upsert(row)?;
         Ok(())
     }
 
@@ -140,8 +143,8 @@ impl<'a> GoodsReceivedLineRowRepository<'a> {
     }
 
     pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
-        diesel::delete(goods_received_line::table)
-            .filter(goods_received_line::id.eq(id))
+        diesel::delete(goods_received_line_with_links::table)
+            .filter(goods_received_line_with_links::id.eq(id))
             .execute(self.connection.lock().connection())?;
         Ok(())
     }

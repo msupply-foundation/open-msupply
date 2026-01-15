@@ -1,4 +1,5 @@
-use crate::db_diesel::{item_link_row::item_link, item_row::item};
+use crate::db_diesel::{item_link_row::item_link, item_row::item, name_link_row::name_link};
+use crate::diesel_macros::define_linked_tables;
 use crate::{
     ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, Delete, RepositoryError,
     RowActionType, StorageConnection, Upsert,
@@ -10,9 +11,12 @@ use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
 
-table! {
-    goods_received (id) {
-        id -> Text,
+define_linked_tables! {
+    view: goods_received = "goods_received_view",
+    core: goods_received_with_links = "goods_received",
+    struct: GoodsReceivedRow,
+    repo: GoodsReceivedRowRepository,
+    shared: {
         store_id -> Text,
         purchase_order_id -> Nullable<Text>,
         inbound_shipment_id -> Nullable<Text>,
@@ -21,21 +25,23 @@ table! {
         received_date -> Nullable<Date>,
         comment -> Nullable<Text>,
         supplier_reference -> Nullable<Text>,
-        donor_link_id -> Nullable<Text>,
         created_datetime -> Timestamp,
         finalised_datetime -> Nullable<Timestamp>,
         created_by -> Nullable<Text>,
+    },
+    links: {},
+    optional_links: {
+        donor_link_id -> donor_id,
     }
 }
 
+joinable!(goods_received_with_links -> name_link (donor_link_id));
 allow_tables_to_appear_in_same_query!(goods_received, item_link);
 allow_tables_to_appear_in_same_query!(goods_received, item);
+allow_tables_to_appear_in_same_query!(goods_received_with_links, name_link);
 
-#[derive(
-    Clone, Insertable, Queryable, Debug, AsChangeset, Serialize, Deserialize, Default, PartialEq,
-)]
+#[derive(Clone, Queryable, Debug, Serialize, Deserialize, Default, PartialEq)]
 #[diesel(table_name = goods_received)]
-#[diesel(treat_none_as_null = true)]
 pub struct GoodsReceivedRow {
     pub id: String,
     pub store_id: String,
@@ -46,10 +52,11 @@ pub struct GoodsReceivedRow {
     pub received_date: Option<NaiveDate>,
     pub comment: Option<String>,
     pub supplier_reference: Option<String>,
-    pub donor_link_id: Option<String>,
     pub created_datetime: NaiveDateTime,
     pub finalised_datetime: Option<NaiveDateTime>,
     pub created_by: Option<String>,
+    // Resolved from name_link - must be last to match view column order
+    pub donor_id: Option<String>,
 }
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
@@ -72,12 +79,7 @@ impl<'a> GoodsReceivedRowRepository<'a> {
     }
 
     pub fn _upsert_one(&self, row: &GoodsReceivedRow) -> Result<(), RepositoryError> {
-        diesel::insert_into(goods_received::table)
-            .values(row)
-            .on_conflict(goods_received::id)
-            .do_update()
-            .set(row)
-            .execute(self.connection.lock().connection())?;
+        self._upsert(row)?;
         Ok(())
     }
 
@@ -122,8 +124,8 @@ impl<'a> GoodsReceivedRowRepository<'a> {
             }
         };
 
-        diesel::delete(goods_received::table)
-            .filter(goods_received::id.eq(goods_receiving_id))
+        diesel::delete(goods_received_with_links::table)
+            .filter(goods_received_with_links::id.eq(goods_receiving_id))
             .execute(self.connection.lock().connection())?;
         Ok(Some(change_log_id))
     }

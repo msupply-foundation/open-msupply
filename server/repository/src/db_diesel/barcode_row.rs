@@ -4,37 +4,47 @@ use super::{
     invoice_line_row::invoice_line, item_link_row::item_link, item_row::item,
     name_link_row::name_link, RepositoryError, StorageConnection,
 };
+use crate::diesel_macros::define_linked_tables;
 use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
 
 use diesel::prelude::*;
 
-table! {
-    barcode (id) {
-        id -> Text,
+define_linked_tables! {
+    view: barcode = "barcode_view",
+    core: barcode_with_links = "barcode",
+    struct: BarcodeRow,
+    repo: BarcodeRowRepository,
+    shared: {
         gtin -> Text,
         item_id -> Text,
-        manufacturer_link_id -> Nullable<Text>,
         pack_size -> Nullable<Double>,
         parent_id -> Nullable<Text>,
+    },
+    links: {},
+    optional_links: {
+        manufacturer_link_id -> manufacturer_id,
     }
 }
 
+use crate::db_diesel::name_row::name;
+
 joinable!(barcode -> item (item_id));
 joinable!(barcode -> invoice_line (id));
-joinable!(barcode -> name_link (manufacturer_link_id));
+joinable!(barcode -> name (manufacturer_id));
+joinable!(barcode_with_links -> name_link (manufacturer_link_id));
 allow_tables_to_appear_in_same_query!(barcode, item_link);
-allow_tables_to_appear_in_same_query!(barcode, name_link);
+allow_tables_to_appear_in_same_query!(barcode_with_links, name_link);
 
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
-#[diesel(treat_none_as_null = true)]
+#[derive(Clone, Queryable, Debug, PartialEq, Default)]
 #[diesel(table_name = barcode)]
 pub struct BarcodeRow {
     pub id: String,
     pub gtin: String,
     pub item_id: String,
-    pub manufacturer_link_id: Option<String>,
     pub pack_size: Option<f64>,
     pub parent_id: Option<String>,
+    // Resolved from name_link - must be last to match view column order
+    pub manufacturer_id: Option<String>,
 }
 
 pub struct BarcodeRowRepository<'a> {
@@ -47,13 +57,7 @@ impl<'a> BarcodeRowRepository<'a> {
     }
 
     pub fn upsert_one(&self, row: &BarcodeRow) -> Result<i64, RepositoryError> {
-        diesel::insert_into(barcode::table)
-            .values(row)
-            .on_conflict(barcode::id)
-            .do_update()
-            .set(row)
-            .execute(self.connection.lock().connection())?;
-
+        self._upsert(row)?;
         self.insert_changelog(row, RowActionType::Upsert)
     }
 
