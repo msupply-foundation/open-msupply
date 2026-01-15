@@ -3,7 +3,7 @@ use std::fs;
 use diesel::prelude::*;
 use diesel::r2d2::{ConnectionManager, Pool};
 use diesel::{PgConnection, RunQueryDsl};
-use util::file::lock_file;
+use util::lock_file;
 
 use crate::{
     database_settings::DatabaseSettings,
@@ -145,6 +145,7 @@ pub(crate) async fn setup_with_version(
     let test_output_dir = find_workspace_root()
         .join("repository")
         .join(TEST_OUTPUT_DIR);
+
     // use file lock for template operations, as cargo nextest runs crate tests in parallel
     // this requires a file lock instead of thread synchronisation
     let _fs_lock = lock_file(test_output_dir.clone(), "___template.lock".to_string())
