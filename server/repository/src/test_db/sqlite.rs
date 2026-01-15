@@ -1,10 +1,10 @@
 use std::{
     fs,
     path::{Path, PathBuf},
-    sync::Mutex,
 };
 
 use diesel::r2d2::{ConnectionManager, Pool};
+use util::lock_file;
 
 use crate::{
     database_settings::{DatabaseSettings, SqliteConnectionOptions},
@@ -63,8 +63,6 @@ async fn setup_with_version_no_template(
     (connection_manager, collection)
 }
 
-static TEMPLATE_LOCK: Mutex<()> = Mutex::new(());
-
 #[allow(clippy::await_holding_lock)]
 pub(crate) async fn setup_with_version(
     db_settings: &DatabaseSettings,
@@ -90,8 +88,9 @@ pub(crate) async fn setup_with_version(
         )
     };
 
-    let guard = TEMPLATE_LOCK.lock().unwrap();
     let template_output_dir = template_dir();
+    let fs_lock = lock_file(template_output_dir.clone(), "___template.lock".to_string())
+        .expect("Failed to acquire template fs lock");
 
     // if marker exists, DB needs to be recreated -> delete all template files
     let marker_path = template_output_dir.join(TEMPLATE_MARKER_FILE);
@@ -124,7 +123,7 @@ pub(crate) async fn setup_with_version(
             insert_all_mock_data(&connection, inserts.clone()).await;
         }
     }
-    drop(guard);
+    drop(fs_lock);
 
     // copy template
 

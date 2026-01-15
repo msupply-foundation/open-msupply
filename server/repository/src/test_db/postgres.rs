@@ -1,8 +1,9 @@
-use std::{fs, sync::Mutex};
+use std::fs;
 
 use diesel::prelude::*;
 use diesel::r2d2::{ConnectionManager, Pool};
 use diesel::{PgConnection, RunQueryDsl};
+use util::file::lock_file;
 
 use crate::{
     database_settings::DatabaseSettings,
@@ -28,8 +29,6 @@ pub fn get_test_db_settings(db_name: &str) -> DatabaseSettings {
         connection_pool_timeout_seconds: None,
     }
 }
-
-static TEMPLATE_LOCK: Mutex<()> = Mutex::new(());
 
 fn create_template_db(
     root_connection: &mut DBConnection,
@@ -142,19 +141,22 @@ pub(crate) async fn setup_with_version(
 
     // check if we need to refresh the cache
     let template_settings = get_test_db_settings(&template_name);
-    {
-        let _guard = TEMPLATE_LOCK.lock().unwrap();
 
+    let test_output_dir = find_workspace_root()
+        .join("repository")
+        .join(TEST_OUTPUT_DIR);
+    // use file lock for template operations, as cargo nextest runs crate tests in parallel
+    // this requires a file lock instead of thread synchronisation
+    let _fs_lock = lock_file(test_output_dir.clone(), "___template.lock".to_string())
+        .expect("Failed to acquire template fs lock");
+
+    {
         let existing_templates: Vec<String> = pg_database::table
             .select(pg_database::dsl::datname)
             .filter(pg_database::dsl::datname.ilike("___template_%"))
             .load(&mut root_connection)
             .unwrap();
 
-        // only clear the DB once, i.e. use the repository test_output directory as reference
-        let test_output_dir = find_workspace_root()
-            .join("repository")
-            .join(TEST_OUTPUT_DIR);
         let marker_path = test_output_dir.join(TEMPLATE_MARKER_FILE).to_path_buf();
         let marker_exists = marker_path.exists();
 
