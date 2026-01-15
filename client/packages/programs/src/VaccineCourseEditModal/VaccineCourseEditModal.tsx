@@ -105,11 +105,10 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
     isDirty,
     resetDraft,
   } = useVaccineCourse(vaccineCourse?.id ?? undefined);
+  const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
   const doses = draft.vaccineCourseDoses ?? [];
 
   const { data: demographicData } = useDemographicData.demographics.list();
-
-  const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
 
   const options = useMemo(
     () => getDemographicOptions(demographicData?.nodes ?? []),
@@ -165,6 +164,12 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
   const isValid =
     draft.name.trim() &&
     !draft.vaccineCourseDoses?.some(dose => !dose.label.trim());
+  const disable =
+    !isDirty ||
+    !programId ||
+    !isValid ||
+    draft.wastageRate === undefined ||
+    draft.coverageRate === undefined;
 
   const modalContent = isLoading ? (
     <BasicSpinner />
@@ -248,13 +253,7 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
           : t('heading.edit-vaccine-course')
       }
       cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
-      okButton={
-        <DialogButton
-          disabled={!isDirty || !programId || !isValid}
-          variant="ok"
-          onClick={save}
-        />
-      }
+      okButton={<DialogButton disabled={disable} variant="ok" onClick={save} />}
       height={900}
       width={1100}
       slideAnimation={false}
