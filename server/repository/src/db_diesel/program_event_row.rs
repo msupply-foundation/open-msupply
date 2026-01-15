@@ -1,31 +1,41 @@
 use super::StorageConnection;
 
 use crate::db_diesel::{name_link_row::name_link, name_row::name};
+use crate::diesel_macros::define_linked_tables;
 use crate::repository_error::RepositoryError;
 
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
 
-table! {
-    program_event (id) {
-        id -> Text,
+define_linked_tables! {
+    view: program_event = "program_event_view",
+    core: program_event_with_links = "program_event",
+    struct: ProgramEventRow,
+    repo: ProgramEventRowRepository,
+    shared: {
         datetime -> Timestamp,
         active_start_datetime -> Timestamp,
         active_end_datetime -> Timestamp,
-        patient_link_id -> Nullable<Text>,
         context_id -> Text,
         document_type -> Text,
         document_name -> Nullable<Text>,
         #[sql_name = "type"] type_ -> Text,
         data -> Nullable<Text>,
+    },
+    links: {},
+    optional_links: {
+        patient_link_id -> patient_id,
     }
 }
 
-joinable!(program_event -> name_link (patient_link_id));
+joinable!(program_event -> name (patient_id));
+joinable!(program_event_with_links -> name_link (patient_link_id));
+allow_tables_to_appear_in_same_query!(program_event, program_event_with_links);
 allow_tables_to_appear_in_same_query!(program_event, name_link);
 allow_tables_to_appear_in_same_query!(program_event, name);
+allow_tables_to_appear_in_same_query!(program_event_with_links, name_link);
 
-#[derive(Clone, Insertable, Queryable, Debug, PartialEq, Eq, AsChangeset)]
+#[derive(Clone, Queryable, Debug, PartialEq, Eq)]
 #[diesel(table_name = program_event)]
 pub struct ProgramEventRow {
     /// The row id
@@ -46,8 +56,6 @@ pub struct ProgramEventRow {
     /// Other than the active_start_datetime the active_end_datetime might get updated when other
     /// events are inserted, i.e. it depends on other events in the system.
     pub active_end_datetime: NaiveDateTime,
-    /// Patient id, if event is associated with a patient
-    pub patient_link_id: Option<String>,
     pub context_id: String,
     /// The document type the event is associated with (might be different from the source of the
     /// event). For example, an encounter could set the status of a program enrolment.
@@ -62,6 +70,9 @@ pub struct ProgramEventRow {
     pub r#type: String,
     /// The event data
     pub data: Option<String>,
+    // Resolved from name_link - must be last to match view column order
+    /// Patient id, if event is associated with a patient
+    pub patient_id: Option<String>,
 }
 
 pub struct ProgramEventRowRepository<'a> {
@@ -82,12 +93,7 @@ impl<'a> ProgramEventRowRepository<'a> {
     }
 
     pub fn upsert_one(&self, row: &ProgramEventRow) -> Result<(), RepositoryError> {
-        diesel::insert_into(program_event::dsl::program_event)
-            .values(row)
-            .on_conflict(program_event::dsl::id)
-            .do_update()
-            .set(row)
-            .execute(self.connection.lock().connection())?;
+        self._upsert(row)?;
         Ok(())
     }
 }

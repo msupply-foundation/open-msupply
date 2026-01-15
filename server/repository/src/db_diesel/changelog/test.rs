@@ -731,7 +731,7 @@ async fn test_changelog_outgoing_patient_sync_records() {
     // create a vaccination record from store B (site 2) for patient2
     let vaccination = VaccinationRow {
         id: "mock_vax_id".to_string(),
-        patient_link_id: "patient2".to_string(),
+        patient_id: "patient2".to_string(),
         store_id: "store_b".to_string(),
         vaccine_course_dose_id: "vaccine_course_a_dose_a".to_string(),
         user_id: "user_account_a".to_string(),

@@ -26,6 +26,11 @@ impl ViewMigrationFragment for ViewMigration {
                 DROP VIEW IF EXISTS encounter_view;
                 DROP VIEW IF EXISTS program_enrolment_view;
                 DROP VIEW IF EXISTS vaccination_view;
+                DROP VIEW IF EXISTS barcode_view;
+                DROP VIEW IF EXISTS goods_received_view;
+                DROP VIEW IF EXISTS goods_received_line_view;
+                DROP VIEW IF EXISTS item_variant_view;
+                DROP VIEW IF EXISTS program_event_view;
             "#
         )?;
 
@@ -356,6 +361,80 @@ impl ViewMigrationFragment for ViewMigration {
                     name_link AS patient_link ON vaccination.patient_link_id = patient_link.id
                 LEFT JOIN
                     name_link AS facility_link ON vaccination.facility_name_link_id = facility_link.id;
+
+                CREATE VIEW barcode_view AS
+                SELECT
+                    barcode.*,
+                    manufacturer_link.name_id as manufacturer_id
+                FROM
+                    barcode
+                LEFT JOIN
+                    name_link AS manufacturer_link ON barcode.manufacturer_link_id = manufacturer_link.id;
+
+                CREATE VIEW goods_received_view AS
+                SELECT
+                    goods_received.*,
+                    donor_link.name_id as donor_id
+                FROM
+                    goods_received
+                LEFT JOIN
+                    name_link AS donor_link ON goods_received.donor_link_id = donor_link.id;
+
+                CREATE VIEW goods_received_line_view AS
+                SELECT
+                    goods_received_line.id,
+                    goods_received_line.goods_received_id,
+                    goods_received_line.purchase_order_line_id,
+                    goods_received_line.received_pack_size,
+                    goods_received_line.number_of_packs_received,
+                    goods_received_line.batch,
+                    goods_received_line.weight_per_pack,
+                    goods_received_line.expiry_date,
+                    goods_received_line.line_number,
+                    goods_received_line.item_link_id,
+                    goods_received_line.item_name,
+                    goods_received_line.location_id,
+                    goods_received_line.volume_per_pack,
+                    goods_received_line.status,
+                    goods_received_line.comment,
+                    manufacturer_link.name_id as manufacturer_id
+                FROM
+                    goods_received_line
+                LEFT JOIN
+                    name_link AS manufacturer_link ON goods_received_line.manufacturer_link_id = manufacturer_link.id;
+
+                CREATE VIEW item_variant_view AS
+                SELECT
+                    item_variant.id,
+                    item_variant.name,
+                    item_variant.item_link_id,
+                    item_variant.location_type_id,
+                    item_variant.deleted_datetime,
+                    item_variant.vvm_type,
+                    item_variant.created_datetime,
+                    item_variant.created_by,
+                    manufacturer_link.name_id as manufacturer_id
+                FROM
+                    item_variant
+                LEFT JOIN
+                    name_link AS manufacturer_link ON item_variant.manufacturer_link_id = manufacturer_link.id;
+
+                CREATE VIEW program_event_view AS
+                SELECT
+                    program_event.id,
+                    program_event.datetime,
+                    program_event.active_start_datetime,
+                    program_event.active_end_datetime,
+                    program_event.context_id,
+                    program_event.document_type,
+                    program_event.document_name,
+                    program_event.type,
+                    program_event.data,
+                    patient_link.name_id as patient_id
+                FROM
+                    program_event
+                LEFT JOIN
+                    name_link AS patient_link ON program_event.patient_link_id = patient_link.id;
             "#
         )?;
 

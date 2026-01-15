@@ -1,15 +1,18 @@
-use super::{program_event_row::program_event, StorageConnection};
+use super::{
+    program_event_row::{program_event, program_event_with_links},
+    StorageConnection,
+};
 
 use crate::{
     db_diesel::{name_link_row::name_link, name_row::name},
     diesel_macros::{apply_date_time_filter, apply_equal_filter, apply_sort, apply_string_filter},
-    DBType, DatetimeFilter, EqualFilter, NameLinkRow, NameRow, Pagination, ProgramEventRow,
-    RepositoryError, Sort, StringFilter,
+    DBType, DatetimeFilter, EqualFilter, NameRow, Pagination, ProgramEventRow, RepositoryError,
+    Sort, StringFilter,
 };
 
 use diesel::{
     dsl::IntoBoxed,
-    helper_types::{InnerJoin, LeftJoin},
+    helper_types::LeftJoin,
     prelude::*,
 };
 
@@ -110,19 +113,43 @@ macro_rules! apply_program_event_filters {
     }};
 }
 
+macro_rules! apply_program_event_filters_with_links {
+    ($query:ident, $filter:expr ) => {{
+        if let Some(f) = $filter {
+            apply_date_time_filter!($query, f.datetime, program_event_with_links::datetime);
+            apply_date_time_filter!(
+                $query,
+                f.active_start_datetime,
+                program_event_with_links::active_start_datetime
+            );
+            apply_date_time_filter!(
+                $query,
+                f.active_end_datetime,
+                program_event_with_links::active_end_datetime
+            );
+            apply_equal_filter!($query, f.context_id, program_event_with_links::context_id);
+            apply_equal_filter!($query, f.document_type, program_event_with_links::document_type);
+            apply_equal_filter!($query, f.document_name, program_event_with_links::document_name);
+            apply_equal_filter!($query, f.r#type, program_event_with_links::type_);
+            apply_string_filter!($query, f.data, program_event_with_links::data);
+        }
+        $query
+    }};
+}
+
 // This part is split out because otherwise apply_program_event_filters doesn't work for deletes.
 // See special patient id filter handling in ProgramEventRepository::delete...
 macro_rules! apply_patient_id_filters {
     ($query:ident, $filter:expr ) => {{
         if let Some(f) = $filter {
-            apply_equal_filter!($query, f.patient_id, name_link::name_id);
+            apply_equal_filter!($query, f.patient_id, name::id);
         }
         $query
     }};
 }
 
 pub type ProgramEventSort = Sort<ProgramEventSortField>;
-pub type ProgramEventJoin = (ProgramEventRow, Option<(NameLinkRow, NameRow)>);
+pub type ProgramEventJoin = (ProgramEventRow, Option<NameRow>);
 pub struct ProgramEvent {
     pub program_event_row: ProgramEventRow,
     pub name_row: Option<NameRow>,
@@ -130,13 +157,15 @@ pub struct ProgramEvent {
 
 type BoxedProgramEventQuery = IntoBoxed<
     'static,
-    LeftJoin<program_event::table, InnerJoin<name_link::table, name::table>>,
+    LeftJoin<program_event::table, name::table>,
     DBType,
 >;
 
-fn create_filtered_query(filter: Option<ProgramEventFilter>) -> BoxedProgramEventQuery {
+fn create_filtered_query(
+    filter: Option<ProgramEventFilter>,
+) -> BoxedProgramEventQuery {
     let mut query = program_event::table
-        .left_join(name_link::table.inner_join(name::table))
+        .left_join(name::table)
         .into_boxed();
     query = apply_program_event_filters!(query, filter.clone());
     apply_patient_id_filters!(query, filter)
@@ -204,7 +233,7 @@ impl<'a> ProgramEventRepository<'a> {
             .into_iter()
             .map(|it| ProgramEvent {
                 program_event_row: it.0,
-                name_row: it.1.map(|(_, name_row)| name_row),
+                name_row: it.1,
             })
             .collect();
 
@@ -212,15 +241,15 @@ impl<'a> ProgramEventRepository<'a> {
     }
 
     pub fn delete(&self, filter: ProgramEventFilter) -> Result<(), RepositoryError> {
-        let mut query = diesel::delete(program_event::table).into_boxed();
+        let mut query = diesel::delete(program_event_with_links::table).into_boxed();
         if let Some(patient_id) = &filter.patient_id {
             let mut sub_query = name_link::table.into_boxed();
             apply_equal_filter!(sub_query, Some(patient_id.clone()), name_link::name_id);
             query = query.filter(
-                program_event::patient_link_id.eq_any(sub_query.select(name_link::id).nullable()),
+                program_event_with_links::patient_link_id.eq_any(sub_query.select(name_link::id).nullable()),
             );
         }
-        query = apply_program_event_filters!(query, Some(filter));
+        query = apply_program_event_filters_with_links!(query, Some(filter));
         query.execute(self.connection.lock().connection())?;
         Ok(())
     }
@@ -248,7 +277,7 @@ mod test {
                 datetime: DateTime::from_timestamp(5, 0).unwrap().naive_utc(),
                 active_start_datetime: DateTime::from_timestamp(5, 0).unwrap().naive_utc(),
                 active_end_datetime: DateTime::from_timestamp(1000, 0).unwrap().naive_utc(),
-                patient_link_id: Some(mock_patient().id),
+                patient_id: Some(mock_patient().id),
                 context_id: context_program_a().id,
                 document_type: "type1".to_string(),
                 document_name: None,
@@ -262,7 +291,7 @@ mod test {
                 datetime: DateTime::from_timestamp(5, 0).unwrap().naive_utc(),
                 active_start_datetime: DateTime::from_timestamp(5, 0).unwrap().naive_utc(),
                 active_end_datetime: DateTime::from_timestamp(1000, 0).unwrap().naive_utc(),
-                patient_link_id: Some(mock_patient_b().id),
+                patient_id: Some(mock_patient_b().id),
                 context_id: context_program_a().id,
                 document_type: "type2".to_string(),
                 document_name: None,
