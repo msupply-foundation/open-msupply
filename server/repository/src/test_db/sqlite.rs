@@ -89,6 +89,9 @@ pub(crate) async fn setup_with_version(
     };
 
     let template_output_dir = template_dir();
+
+    // use file lock for template operations, as cargo nextest runs crate tests in parallel
+    // this requires a file lock instead of thread synchronisation
     let fs_lock = lock_file(template_output_dir.clone(), "___template.lock".to_string())
         .expect("Failed to acquire template fs lock");
 
