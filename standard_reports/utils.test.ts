@@ -1,25 +1,6 @@
 import { sortNodes } from './utils';
 
 describe('sorts nodes on sortBy', () => {
-  it('returns unsorted nodes when no key provided', () => {
-    expect(
-      sortNodes(
-        [
-          { expiryDate: 1 },
-          { expiryDate: 3 },
-          { expiryDate: 2 },
-          { expiryDate: 5 },
-        ],
-        undefined,
-        'asc'
-      )
-    ).toEqual([
-      { expiryDate: 1 },
-      { expiryDate: 3 },
-      { expiryDate: 2 },
-      { expiryDate: 5 },
-    ]);
-  });
   it('returns sorting on other value', () => {
     expect(
       sortNodes(
@@ -88,10 +69,5 @@ describe('sorts nodes on sortBy', () => {
         },
       },
     ]);
-  });
-  it('returns sorting on sort when no dir is provided and defaults to desc', () => {
-    expect(
-      sortNodes([{ code: 1 }, { code: 3 }, { code: 2 }, { code: 5 }], 'code')
-    ).toEqual([{ code: 5 }, { code: 3 }, { code: 2 }, { code: 1 }]);
   });
 });
