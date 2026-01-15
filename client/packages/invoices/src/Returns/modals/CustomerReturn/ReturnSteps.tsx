@@ -40,7 +40,7 @@ export const ReturnSteps = ({
   const t = useTranslation();
   const isDisabled = useReturns.utils.customerIsDisabled();
   const { data } = useReturns.document.customerReturn();
-  const disabled = !!data?.linkedShipment || isDisabled;
+  const disabledLinked = !!data?.linkedShipment || isDisabled;
 
   useAddBatchKeyBinding(addDraftLine);
 
@@ -65,7 +65,7 @@ export const ReturnSteps = ({
       {addDraftLine && (
         <AddBatchButton
           addDraftLine={addDraftLine}
-          disabled={currentTab !== Tabs.Quantity || disabled}
+          disabled={currentTab !== Tabs.Quantity || disabledLinked}
         />
       )}
       <TabPanel value={Tabs.Quantity}>
@@ -74,7 +74,7 @@ export const ReturnSteps = ({
         )}
         <QuantityReturnedTable
           lines={lines}
-          isDisabled={disabled}
+          isDisabled={disabledLinked}
           updateLine={line => {
             if (zeroQuantityAlert) setZeroQuantityAlert(undefined);
             update(line);
@@ -84,6 +84,7 @@ export const ReturnSteps = ({
       <TabPanel value={Tabs.Reason}>
         <ReturnReasonsTable
           isDisabled={isDisabled}
+          disabledLinked={disabledLinked}
           lines={lines.filter(line => line.numberOfPacksReturned > 0)}
           updateLine={line => update(line)}
         />
