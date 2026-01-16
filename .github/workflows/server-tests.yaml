@@ -31,19 +31,19 @@ jobs:
           command: clean
           args: -p repository -p graphql_types -p graphql_plugin -p graphql_invoice --manifest-path server/Cargo.toml
       - name: Run tests and generate report
-        run: cargo nextest run --profile=ci --features=sqlite --manifest-path server/Cargo.toml --junit-xml test-results-sqlite.xml
+        run: cargo nextest run --profile=ci-sqlite --features=sqlite --manifest-path server/Cargo.toml
       - name: Upload JUnit test results
         uses: actions/upload-artifact@v4
         if: always()
         with:
           name: test-results-sqlite
-          path: test-results-sqlite.xml
+          path: /tmp/target/sqlite/nextest/ci-sqlite/sqlite-test-results.xml
           retention-days: 7
       - name: Publish test results
         uses: EnricoMi/publish-unit-test-result-action/macos@v2
         if: always()
         with:
-          files: test-results-sqlite.xml
+          files: /tmp/target/sqlite/nextest/ci-sqlite/sqlite-test-results.xml
           check_name: "Rust Tests (SQLite)"
           comment_mode: create-new
           report_individual_runs: true
@@ -67,19 +67,19 @@ jobs:
           command: clean
           args: -p repository -p graphql_types -p graphql_plugin -p graphql_invoice --manifest-path server/Cargo.toml
       - name: Run test and generate report
-        run: cargo nextest run --profile=ci --features=postgres --manifest-path server/Cargo.toml --junit-xml test-results-postgres.xml
+        run: cargo nextest run --profile=ci-postgres --features=postgres --manifest-path server/Cargo.toml
       - name: Upload JUnit test results
         uses: actions/upload-artifact@v4
         if: always()
         with:
           name: test-results-postgres
-          path: test-results-postgres.xml
+          path: /tmp/target/postgres/nextest/ci-postgres/postgres-test-results.xml
           retention-days: 7
       - name: Publish test results
         uses: EnricoMi/publish-unit-test-result-action/macos@v2
         if: always()
         with:
-          files: test-results-postgres.xml
+          files: /tmp/target/postgres/nextest/ci-postgres/postgres-test-results.xml
           check_name: "Rust Tests (Postgres)"
           comment_mode: create-new
           report_individual_runs: true
