@@ -94,6 +94,14 @@ pub async fn setup_test(
         extra_mock_data,
     }: SetupOption<'_>,
 ) -> SetupResult {
+    // Validate db_name
+    if db_name.contains(' ') {
+        panic!(
+            "Database name '{}' contains spaces. Test database names must not contain spaces as they can cause issues with some setups.",
+            db_name
+        );
+    }
+
     let db_settings = get_test_db_settings(db_name);
     let (connection_manager, core_data) =
         setup_with_version(&db_settings, version.clone(), inserts).await;
