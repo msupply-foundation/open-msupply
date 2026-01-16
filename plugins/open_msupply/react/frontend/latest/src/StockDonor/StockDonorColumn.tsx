@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import {
   ArrayElement,
-  BasicCellLayout,
+  Box,
   ColumnDef,
   create,
   PluginDataStore,
@@ -40,7 +40,7 @@ export const StateLoader: ArrayElement<
 const DonorColumn = ({ row }: { row: StockLineRowFragment }) => {
   const { getById } = useColumnStore();
 
-  return <BasicCellLayout>{getById(row)?.data || ''}</BasicCellLayout>;
+  return <Box>{getById(row)?.data || ''}</Box>;
 };
 
 export const StockDonorColumn: ColumnDef<StockLineRowFragment> = {

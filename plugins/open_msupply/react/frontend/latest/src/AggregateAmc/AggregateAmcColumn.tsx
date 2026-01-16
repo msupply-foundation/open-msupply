@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import {
   ArrayElement,
-  BasicCellLayout,
+  Box,
   ColumnDef,
   create,
   InputWithLabelRow,
@@ -74,7 +74,7 @@ export const StateLoader: ArrayElement<
 const ColumnInner = ({ row }: { row: RequestLineFragment }) => {
   const { getById } = useColumnStore();
 
-  return <BasicCellLayout>{getById(row)?.data || ''}</BasicCellLayout>;
+  return <Box>{getById(row)?.data || ''}</Box>;
 };
 
 export const AggregateAmcEditView: AggregateAmcEditView = ({ line }) => {
