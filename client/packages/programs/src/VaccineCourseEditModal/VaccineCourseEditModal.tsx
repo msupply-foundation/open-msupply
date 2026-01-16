@@ -105,11 +105,10 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
     isDirty,
     resetDraft,
   } = useVaccineCourse(vaccineCourse?.id ?? undefined);
+  const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
   const doses = draft.vaccineCourseDoses ?? [];
 
   const { data: demographicData } = useDemographicData.demographics.list();
-
-  const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
 
   const options = useMemo(
     () => getDemographicOptions(demographicData?.nodes ?? []),
@@ -165,6 +164,12 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
   const isValid =
     draft.name.trim() &&
     !draft.vaccineCourseDoses?.some(dose => !dose.label.trim());
+  const disable =
+    !isDirty ||
+    !programId ||
+    !isValid ||
+    draft.wastageRate === undefined ||
+    draft.coverageRate === undefined;
 
   const modalContent = isLoading ? (
     <BasicSpinner />
@@ -194,20 +199,22 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
         </Row>
         <Row label={t('label.coverage-rate')}>
           <NumericTextInput
-            value={draft?.coverageRate ?? 1}
+            value={draft?.coverageRate}
             fullWidth
             onChange={value => updatePatch({ coverageRate: value })}
             endAdornment="%"
             decimalLimit={1}
+            max={100}
           />
         </Row>
         <Row label={t('label.wastage-rate')}>
           <NumericTextInput
-            value={draft?.wastageRate ?? 1}
+            value={draft?.wastageRate}
             fullWidth
             onChange={value => updatePatch({ wastageRate: value })}
             endAdornment="%"
             decimalLimit={1}
+            max={100}
           />
         </Row>
         <Row label={t('label.vaccine-items')}>
@@ -246,13 +253,7 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
           : t('heading.edit-vaccine-course')
       }
       cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
-      okButton={
-        <DialogButton
-          disabled={!isDirty || !programId || !isValid}
-          variant="ok"
-          onClick={save}
-        />
-      }
+      okButton={<DialogButton disabled={disable} variant="ok" onClick={save} />}
       height={900}
       width={1100}
       slideAnimation={false}
@@ -393,9 +394,7 @@ const VaccineCourseDoseTable = ({
     columns,
     data: doses,
     enableRowSelection: false,
-    noDataElement: (
-      <NothingHere body={t('message.add-a-dose')} />
-    ),
+    noDataElement: <NothingHere body={t('message.add-a-dose')} />,
   });
 
   return (
