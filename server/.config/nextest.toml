@@ -4,3 +4,17 @@ fail-fast = false
 
 [profile.ci.slow-timeout]
 period = "10s"
+
+[profile.ci-sqlite]
+inherits = "ci"
+
+[profile.ci-sqlite.junit]
+path = "sqlite-test-results.xml"
+report-name = "Backend tests (SQLite)"
+
+[profile.ci-postgres]
+inherits = "ci"
+
+[profile.ci-postgres.junit]
+path = "postgres-test-results.xml"
+report-name = "Backend tests (Postgres)"
