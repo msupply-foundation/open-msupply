@@ -1,0 +1,7 @@
+[profile.ci]
+junit = "junit.xml"
+test-threads = "num-cpus"
+fail-fast = false
+
+[profile.ci.slow-timeout]
+period = "10s"
