@@ -40,7 +40,7 @@ jobs:
           path: test-results-sqlite.xml
           retention-days: 7
       - name: Publish test results
-        uses: EnricoMi/publish-unit-test-result-action@v2
+        uses: EnricoMi/publish-unit-test-result-action/macos@v2
         if: always()
         with:
           files: test-results-sqlite.xml
@@ -76,7 +76,7 @@ jobs:
           path: test-results-postgres.xml
           retention-days: 7
       - name: Publish test results
-        uses: EnricoMi/publish-unit-test-result-action@v2
+        uses: EnricoMi/publish-unit-test-result-action/macos@v2
         if: always()
         with:
           files: test-results-postgres.xml
