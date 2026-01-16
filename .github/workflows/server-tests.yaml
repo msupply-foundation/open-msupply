@@ -34,18 +34,18 @@ jobs:
         run: cargo nextest run --profile=ci-sqlite --features=sqlite --manifest-path server/Cargo.toml
       - name: Upload JUnit test results
         uses: actions/upload-artifact@v4
-        if: always()
+        if: (!cancelled())
         with:
           name: test-results-sqlite
           path: /tmp/target/sqlite/nextest/ci-sqlite/sqlite-test-results.xml
           retention-days: 7
       - name: Publish test results
         uses: EnricoMi/publish-unit-test-result-action/macos@v2
-        if: always()
+        if: (!cancelled())
         with:
           files: /tmp/target/sqlite/nextest/ci-sqlite/sqlite-test-results.xml
           check_name: "Rust Tests (SQLite)"
-          comment_mode: create-new
+          comment_mode: always
           report_individual_runs: true
   build_and_test_pg:
     name: Remote Server Tests (postgres)
@@ -70,16 +70,16 @@ jobs:
         run: cargo nextest run --profile=ci-postgres --features=postgres --manifest-path server/Cargo.toml
       - name: Upload JUnit test results
         uses: actions/upload-artifact@v4
-        if: always()
+        if: (!cancelled())
         with:
           name: test-results-postgres
           path: /tmp/target/postgres/nextest/ci-postgres/postgres-test-results.xml
           retention-days: 7
       - name: Publish test results
         uses: EnricoMi/publish-unit-test-result-action/macos@v2
-        if: always()
+        if: (!cancelled())
         with:
           files: /tmp/target/postgres/nextest/ci-postgres/postgres-test-results.xml
           check_name: "Rust Tests (Postgres)"
-          comment_mode: create-new
+          comment_mode: always
           report_individual_runs: true
