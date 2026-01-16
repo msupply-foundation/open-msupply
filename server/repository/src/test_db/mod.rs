@@ -115,3 +115,30 @@ pub async fn setup_test(
         db_settings,
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[tokio::test]
+    #[should_panic(expected = "contains spaces")]
+    async fn test_db_name_validation_panics_with_spaces() {
+        setup_test(SetupOption {
+            db_name: "test db with spaces",
+            ..Default::default()
+        })
+        .await;
+    }
+
+    #[tokio::test]
+    async fn test_db_name_validation_succeeds_when_valid() {
+        let db_name = "test_db_without_spaces";
+        let result = setup_test(SetupOption {
+            db_name,
+            ..Default::default()
+        })
+        .await;
+
+        assert!(result.db_settings.database_name.contains(db_name));
+    }
+}
