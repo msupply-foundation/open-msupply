@@ -20,7 +20,7 @@ schema.graphql
 ___template_needs_update.marker
 ___template_needs_update_pg.marker
 # test template DB lock files
-*.lock
+___template.lock
 
 # directories used by the server at runtime
 plugins
