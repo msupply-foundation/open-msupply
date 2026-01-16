@@ -17,7 +17,7 @@ use crate::{
     sync::{ActiveStoresOnSite, CentralServerConfig, GetCurrentSiteIdError},
     sync_v7::{
         sync::{ApiV7, SyncBatchV7},
-        translate_validate_integrate::{translate_validate_integrate, SyncContext},
+        validate_translate_integrate::{validate_translate_integrate, SyncContext},
     },
 };
 
@@ -175,13 +175,12 @@ async fn spawn_integration_inner(
     let filter = Condition::source_site_id::equal(site_id);
     let active_stores = ActiveStoresOnSite::get(&ctx.connection, Some(site_id))?;
 
-    translate_validate_integrate(
+    validate_translate_integrate(
         &ctx.connection,
         None,
         Some(filter),
         SyncContext::Central { active_stores },
     )?;
-
     Ok(())
 }
 

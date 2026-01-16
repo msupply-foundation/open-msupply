@@ -4,13 +4,12 @@ use super::{
     name_store_join::name_store_join, program_row::program, store_row::store, NameType,
     StorageConnection,
 };
-use crate::syncv7::{add_sync_visitor, Record, SyncRecord, SyncType, TranslatorTrait};
 use crate::{
     item_link, name_link, repository_error::RepositoryError, ChangeLogInsertRow,
-    ChangelogRepository, ChangelogTableName, EqualFilter, NameLinkRow, NameLinkRowRepository,
-    RowActionType,
+    ChangelogRepository, EqualFilter, NameLinkRow, NameLinkRowRepository, RowActionType,
 };
-use crate::{ChangeLogInsertRowV7, Delete, Upsert};
+use crate::{syncv7::*, ChangeLogInsertRowV7, ChangelogTableName};
+use crate::{Delete, Upsert};
 use chrono::{NaiveDate, NaiveDateTime};
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
@@ -276,15 +275,18 @@ impl SyncRecord for NameRow {
     }
 }
 
-struct Translator;
+pub(crate) struct Translator;
 
 impl TranslatorTrait for Translator {
     type Item = NameRow;
 }
 
-#[ctor::ctor]
-fn register_my_struct() {
-    add_sync_visitor(Box::new(Translator));
+impl Translator {
+    // Needs to be added to translators() in ..
+    #[deny(dead_code)]
+    pub(crate) fn boxed() -> Box<dyn BoxableSyncRecord> {
+        Box::new(Self)
+    }
 }
 
 impl<'a> NameRowRepository<'a> {

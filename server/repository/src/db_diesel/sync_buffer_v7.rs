@@ -68,6 +68,7 @@ create_condition!(
     (source_site_id, i32, sync_buffer_v7::source_site_id),
     (store_id, string, sync_buffer_v7::store_id),
     (name_id, string, sync_buffer_v7::name_id),
+    (table_name, ChangelogTableName, sync_buffer_v7::table_name),
     (
         integration_datetime,
         NaiveDateTime,
@@ -110,8 +111,19 @@ impl<'a> SyncBufferV7Repository<'a> {
         if let Some(filter) = filter {
             query = query.filter(filter.to_boxed());
         }
-        let results = query.load::<SyncBufferV7Row>(self.connection.lock().connection())?;
+        let results = query.load(self.connection.lock().connection())?;
         Ok(results)
+    }
+
+    pub fn count(&self, filter: Option<Condition::Inner>) -> Result<i64, RepositoryError> {
+        let mut query = sync_buffer_v7::table.into_boxed();
+        if let Some(filter) = filter {
+            query = query.filter(filter.to_boxed());
+        }
+        let result = query
+            .count()
+            .get_result(self.connection.lock().connection())?;
+        Ok(result)
     }
 }
 

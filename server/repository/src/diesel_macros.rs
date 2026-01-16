@@ -414,16 +414,16 @@ macro_rules! diesel_string_enum {
             }
         }
 
-        impl diesel::serialize::ToSql<diesel::sql_types::Text, diesel::sqlite::Sqlite> for $name
+        impl diesel::serialize::ToSql<diesel::sql_types::Text, crate::DBType> for $name
         where
-            str: diesel::serialize::ToSql<diesel::sql_types::Text, diesel::sqlite::Sqlite>,
+            str: diesel::serialize::ToSql<diesel::sql_types::Text, crate::DBType>,
         {
             fn to_sql<'b>(
                 &'b self,
-                out: &mut diesel::serialize::Output<'b, '_, diesel::sqlite::Sqlite>,
+                out: &mut diesel::serialize::Output<'b, '_, crate::DBType>,
             ) -> diesel::serialize::Result {
                 <str as
-                 diesel::serialize::ToSql<diesel::sql_types::Text, diesel::sqlite::Sqlite>>::to_sql(
+                 diesel::serialize::ToSql<diesel::sql_types::Text, crate::DBType>>::to_sql(
                     self.as_ref(),
                     out,
                 )
@@ -468,16 +468,16 @@ macro_rules! diesel_string_json {
             }
         }
 
-        impl diesel::serialize::ToSql<diesel::sql_types::Text, diesel::sqlite::Sqlite> for $name
+        impl diesel::serialize::ToSql<diesel::sql_types::Text, crate::DBType> for $name
         where
-            str: diesel::serialize::ToSql<diesel::sql_types::Text, diesel::sqlite::Sqlite>,
+            str: diesel::serialize::ToSql<diesel::sql_types::Text, crate::DBType>,
         {
             fn to_sql<'b>(
                 &'b self,
-                out: &mut diesel::serialize::Output<'b, '_, diesel::sqlite::Sqlite>,
+                out: &mut diesel::serialize::Output<'b, '_, crate::DBType>,
             ) -> diesel::serialize::Result {
                 <str as
-                 diesel::serialize::ToSql<diesel::sql_types::Text, diesel::sqlite::Sqlite>>::to_sql(
+                 diesel::serialize::ToSql<diesel::sql_types::Text, crate::DBType>>::to_sql(
                     self.as_ref(),
                     out,
                 )
@@ -496,21 +496,21 @@ macro_rules! diesel_json_type {
         $(#[$meta])*
         $vis $kind $name $($body)*
 
-        impl diesel::deserialize::FromSql<diesel::sql_types::Text, diesel::sqlite::Sqlite> for $name {
-            fn from_sql(bytes: <diesel::sqlite::Sqlite as diesel::backend::Backend>::RawValue<'_>) -> diesel::deserialize::Result<Self> {
-                let string_value = <String as diesel::deserialize::FromSql<diesel::sql_types::Text, diesel::sqlite::Sqlite>>::from_sql(bytes)?;
+        impl diesel::deserialize::FromSql<diesel::sql_types::Text, crate::DBType> for $name {
+            fn from_sql(bytes: <crate::DBType as diesel::backend::Backend>::RawValue<'_>) -> diesel::deserialize::Result<Self> {
+                let string_value = <String as diesel::deserialize::FromSql<diesel::sql_types::Text, crate::DBType>>::from_sql(bytes)?;
                 let deserialized: $name = serde_json::from_str(&string_value)?;
                 Ok(deserialized)
             }
         }
 
-        impl diesel::serialize::ToSql<diesel::sql_types::Text, diesel::sqlite::Sqlite> for $name
+        impl diesel::serialize::ToSql<diesel::sql_types::Text, crate::DBType> for $name
         where
-            str: diesel::serialize::ToSql<diesel::sql_types::Text, diesel::sqlite::Sqlite>,
+            str: diesel::serialize::ToSql<diesel::sql_types::Text, crate::DBType>,
         {
             fn to_sql<'b>(
                 &self,
-                out: &mut diesel::serialize::Output<'b, '_, diesel::sqlite::Sqlite>,
+                out: &mut diesel::serialize::Output<'b, '_, crate::DBType>,
             ) -> diesel::serialize::Result {
                 out.set_value(serde_json::to_string(self)?);
                 Ok(diesel::serialize::IsNull::No)

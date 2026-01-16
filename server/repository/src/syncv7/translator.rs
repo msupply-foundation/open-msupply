@@ -1,6 +1,8 @@
+use crate::{
+    currency_row, invoice_line_row, invoice_row, item_row, location_type_row, name_row,
+    stock_line_row, store_row, unit_row, ChangelogTableName, StorageConnection,
+};
 use util::format_error;
-
-use crate::{ChangelogTableName, StorageConnection};
 
 use super::*;
 
@@ -36,18 +38,10 @@ impl<T: TranslatorTrait + Sync + Send> BoxableSyncRecord for T {
         Ok(Some(result))
     }
 
-    fn deserialize(
-        &self,
-        table_name: &ChangelogTableName,
-        value: &serde_json::Value,
-    ) -> Result<Option<Box<dyn Upsert>>, serde_json::Error> {
-        if T::Item::table_name() != table_name {
-            return Ok(None);
-        };
-
+    fn deserialize(&self, value: &serde_json::Value) -> Result<Box<dyn Upsert>, serde_json::Error> {
         let record: T::Item = serde_json::from_value(value.to_owned())?;
 
-        Ok(Some(record.boxed()))
+        Ok(record.boxed())
     }
 
     fn sync_type(&self) -> &'static SyncType {
@@ -57,4 +51,18 @@ impl<T: TranslatorTrait + Sync + Send> BoxableSyncRecord for T {
     fn table_name(&self) -> ChangelogTableName {
         T::Item::table_name().to_owned()
     }
+}
+
+pub fn translators() -> Vec<Box<dyn BoxableSyncRecord>> {
+    vec![
+        unit_row::Translator::boxed(),
+        currency_row::Translator::boxed(),
+        name_row::Translator::boxed(),
+        store_row::Translator::boxed(),
+        location_type_row::Translator::boxed(),
+        item_row::Translator::boxed(),
+        stock_line_row::Translator::boxed(),
+        invoice_row::Translator::boxed(),
+        invoice_line_row::Translator::boxed(),
+    ]
 }

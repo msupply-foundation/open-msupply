@@ -1,8 +1,10 @@
 use super::*;
-use crate::{ChangeLogInsertRowV7, RepositoryError, StorageConnection};
+use crate::{
+    ChangeLogInsertRowV7, KeyType, KeyValueStoreRepository, RepositoryError, StorageConnection,
+};
 
 pub trait Upsert: Send + Sync {
-    fn upsert(&self, connection: &StorageConnection) -> Result<(), RepositoryError>;
+    fn upsert(&self, connection: &StorageConnection) -> Result<(), GetCurrentSiteIdError>;
     fn upsert_sync(
         &self,
         connection: &StorageConnection,
@@ -39,11 +41,15 @@ impl<T: SyncRecord + Sync + Send> Upsert for T {
         .insert(connection)?)
     }
 
-    fn upsert(&self, connection: &StorageConnection) -> Result<(), RepositoryError> {
+    fn upsert(&self, connection: &StorageConnection) -> Result<(), GetCurrentSiteIdError> {
         let extra_changelog = self.changelog_extra(connection)?;
-        let source_site_id = get_sync_site();
 
-        self.upsert_sync(connection, Some(source_site_id), extra_changelog)
+        let source_site_id = KeyValueStoreRepository::new(connection)
+            .get_i32(KeyType::SettingsSyncSiteId)?
+            .ok_or(GetCurrentSiteIdError::SiteIdNotSet)?;
+
+        self.upsert_sync(connection, Some(source_site_id), extra_changelog)?;
+        Ok(())
     }
 
     fn sync_type(&self) -> &'static SyncType {

@@ -1,5 +1,5 @@
 use super::StorageConnection;
-use crate::syncv7::{add_sync_visitor, Record, SyncRecord, SyncType, TranslatorTrait};
+use crate::syncv7::*;
 use crate::{impl_record, ChangeLogInsertRowV7, Delete, Upsert};
 
 use crate::repository_error::RepositoryError;
@@ -57,15 +57,18 @@ impl SyncRecord for CurrencyRow {
     }
 }
 
-struct Translator;
+pub(crate) struct Translator;
 
 impl TranslatorTrait for Translator {
     type Item = CurrencyRow;
 }
 
-#[ctor::ctor]
-fn register_my_struct() {
-    add_sync_visitor(Box::new(Translator));
+impl Translator {
+    // Needs to be added to translators() in ..
+    #[deny(dead_code)]
+    pub(crate) fn boxed() -> Box<dyn BoxableSyncRecord> {
+        Box::new(Self)
+    }
 }
 
 pub struct CurrencyRowRepository<'a> {

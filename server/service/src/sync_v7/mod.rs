@@ -5,9 +5,8 @@ pub mod prepare;
 pub mod serde;
 pub mod sync;
 pub mod sync_logger;
-pub mod translate;
-pub mod translate_validate_integrate;
 pub mod validate;
+pub mod validate_translate_integrate;
 
 pub(crate) fn write_sync_buffer_error(
     row: SyncBufferV7Row,

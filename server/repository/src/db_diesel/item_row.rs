@@ -1,4 +1,4 @@
-use crate::{Delete, Upsert};
+use crate::{syncv7::*, Delete, Upsert};
 
 use super::{
     clinician_link_row::clinician_link, item_link_row::item_link, item_row::item::dsl::*,
@@ -8,6 +8,7 @@ use super::{
 
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
+use serde::{Deserialize, Serialize};
 
 table! {
     item (id) {
@@ -42,7 +43,7 @@ allow_tables_to_appear_in_same_query!(item, name_link);
 allow_tables_to_appear_in_same_query!(item, clinician_link);
 allow_tables_to_appear_in_same_query!(item, location_type);
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
+#[derive(DbEnum, Debug, Clone, PartialEq, Serialize, Deserialize, Eq)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum ItemType {
     Stock,
@@ -50,7 +51,7 @@ pub enum ItemType {
     NonStock,
 }
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Default)]
+#[derive(DbEnum, Debug, Clone, PartialEq, Serialize, Deserialize, Eq, Default)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum VENCategory {
     V,
@@ -60,7 +61,7 @@ pub enum VENCategory {
     NotAssigned,
 }
 
-#[derive(Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset)]
+#[derive(Clone, Insertable, Queryable, Debug, PartialEq, Serialize, Deserialize, AsChangeset)]
 #[diesel(treat_none_as_null = true)]
 #[diesel(table_name = item)]
 pub struct ItemRow {
@@ -79,6 +80,48 @@ pub struct ItemRow {
     pub is_vaccine: bool,
     pub vaccine_doses: i32,
     pub restricted_location_type_id: Option<String>,
+}
+
+impl Record for ItemRow {
+    fn find_by_id(
+        connection: &StorageConnection,
+        item_id: &str,
+    ) -> Result<Option<Self>, RepositoryError> {
+        let result = item::table
+            .filter(item::id.eq(item_id))
+            .first::<ItemRow>(connection.lock().connection())
+            .optional()?;
+        Ok(result)
+    }
+    fn get_id(&self) -> &str {
+        &self.id
+    }
+    fn upsert_internal(&self, connection: &StorageConnection) -> Result<(), RepositoryError> {
+        diesel::insert_into(item)
+            .values(self)
+            .on_conflict(item::id)
+            .do_update()
+            .set(self)
+            .execute(connection.lock().connection())?;
+        insert_or_ignore_item_link(connection, self)?;
+        Ok(())
+    }
+}
+
+crate::impl_central_sync_record!(ItemRow, crate::ChangelogTableName::Item);
+
+pub(crate) struct Translator;
+
+impl TranslatorTrait for Translator {
+    type Item = ItemRow;
+}
+
+impl Translator {
+    // Needs to be added to translators() in ..
+    #[deny(dead_code)]
+    pub(crate) fn boxed() -> Box<dyn BoxableSyncRecord> {
+        Box::new(Self)
+    }
 }
 
 impl Default for ItemRow {
@@ -123,15 +166,7 @@ impl<'a> ItemRowRepository<'a> {
     }
 
     pub fn upsert_one(&self, item_row: &ItemRow) -> Result<(), RepositoryError> {
-        diesel::insert_into(item)
-            .values(item_row)
-            .on_conflict(id)
-            .do_update()
-            .set(item_row)
-            .execute(self.connection.lock().connection())?;
-
-        insert_or_ignore_item_link(self.connection, item_row)?;
-        Ok(())
+        item_row.upsert_internal(&self.connection)
     }
 
     pub async fn insert_one(&self, item_row: &ItemRow) -> Result<(), RepositoryError> {
@@ -164,11 +199,7 @@ impl<'a> ItemRowRepository<'a> {
     }
 
     pub fn find_one_by_id(&self, item_id: &str) -> Result<Option<ItemRow>, RepositoryError> {
-        let result = item
-            .filter(id.eq(item_id))
-            .first(self.connection.lock().connection())
-            .optional()?;
-        Ok(result)
+        ItemRow::find_by_id(self.connection, item_id)
     }
 
     pub fn find_one_by_item_link_id(

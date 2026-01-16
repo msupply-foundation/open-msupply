@@ -1,6 +1,7 @@
 use super::*;
 use crate::{
-    diesel_macros::diesel_json_type, ChangelogTableName, RepositoryError, StorageConnection,
+    diesel_macros::diesel_json_type, ChangeLogInsertRowV7, ChangelogTableName, RepositoryError,
+    StorageConnection,
 };
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use thiserror::Error;
@@ -96,12 +97,43 @@ pub trait BoxableSyncRecord: Send + Sync {
         id: &str,
     ) -> Result<Option<serde_json::Value>, SyncRecordSerializeError>;
 
-    fn deserialize(
-        &self,
-        table_name: &ChangelogTableName,
-        value: &serde_json::Value,
-    ) -> Result<Option<Box<dyn Upsert>>, serde_json::Error>;
+    fn deserialize(&self, value: &serde_json::Value) -> Result<Box<dyn Upsert>, serde_json::Error>;
 
     fn sync_type(&self) -> &'static SyncType;
     fn table_name(&self) -> ChangelogTableName;
 }
+
+/// Macro to implement SyncRecord trait and Translator for central sync records
+///
+/// This macro generates:
+/// 1. SyncRecord trait implementation with Central sync type
+/// 2. A Translator struct implementing TranslatorTrait
+/// 3. A registration function using ctor to add the translator to global visitors
+///
+/// Usage:
+/// ```
+/// impl_central_sync_record!(MyRow, ChangelogTableName::MyTable);
+/// ```
+#[macro_export]
+macro_rules! impl_central_sync_record {
+    ($struct_name:ident, $table_name:expr) => {
+        impl $crate::syncv7::SyncRecord for $struct_name {
+            fn table_name() -> &'static $crate::ChangelogTableName {
+                &$table_name
+            }
+
+            fn sync_type() -> &'static $crate::syncv7::SyncType {
+                &$crate::syncv7::SyncType::Central
+            }
+
+            fn changelog_extra(
+                &self,
+                _connection: &$crate::StorageConnection,
+            ) -> Result<Option<$crate::ChangeLogInsertRowV7>, $crate::RepositoryError> {
+                Ok(None)
+            }
+        }
+    };
+}
+
+pub(crate) use impl_central_sync_record;

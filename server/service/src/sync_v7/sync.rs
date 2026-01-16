@@ -17,7 +17,7 @@ use crate::{
     sync_v7::{
         prepare::prepare,
         sync_logger::{SyncLogger, SyncStep},
-        translate_validate_integrate::{translate_validate_integrate, SyncContext},
+        validate_translate_integrate::{validate_translate_integrate, SyncContext},
     },
 };
 
@@ -181,7 +181,7 @@ async fn sync_inner<'a>(
             username: settings.username,
             password: settings.password_sha256,
         },
-        batch_size: 5000,
+        batch_size: 50000,
     };
 
     logger.start_step(SyncStep::Push)?;
@@ -445,7 +445,7 @@ impl<'a> SyncV7<'a> {
 
         let filter = sync_buffer_v7::Condition::source_site_id::equal(active_stores.site_id);
 
-        translate_validate_integrate(
+        validate_translate_integrate(
             self.connection,
             Some(logger),
             Some(filter),

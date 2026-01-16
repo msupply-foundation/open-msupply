@@ -330,7 +330,7 @@ mod repository_test {
 
         let repo = StoreRowRepository::new(&connection);
         let store_1 = data::store_1();
-        repo.insert_one(&store_1).await.unwrap();
+        repo.upsert_one(&store_1).unwrap();
         let loaded_item = repo.find_one_by_id(store_1.id.as_str()).unwrap().unwrap();
         assert_eq!(store_1, loaded_item);
     }
@@ -360,8 +360,7 @@ mod repository_test {
             .await
             .unwrap();
         StoreRowRepository::new(&connection)
-            .insert_one(&data::store_1())
-            .await
+            .upsert_one(&data::store_1())
             .unwrap();
 
         // test insert
@@ -390,8 +389,7 @@ mod repository_test {
             .await
             .unwrap();
         StoreRowRepository::new(&connection)
-            .insert_one(&data::store_1())
-            .await
+            .upsert_one(&data::store_1())
             .unwrap();
         let stock_line = data::stock_line_1();
         StockLineRowRepository::new(&connection)
@@ -612,8 +610,7 @@ mod repository_test {
             .await
             .unwrap();
         StoreRowRepository::new(&connection)
-            .insert_one(&data::store_1())
-            .await
+            .upsert_one(&data::store_1())
             .unwrap();
         CurrencyRowRepository::new(&connection)
             .upsert_one(&currency_a())
@@ -669,8 +666,7 @@ mod repository_test {
             .await
             .unwrap();
         StoreRowRepository::new(&connection)
-            .insert_one(&data::store_1())
-            .await
+            .upsert_one(&data::store_1())
             .unwrap();
         StockLineRowRepository::new(&connection)
             .upsert_one(&data::stock_line_1())
@@ -726,8 +722,7 @@ mod repository_test {
             .await
             .unwrap();
         StoreRowRepository::new(&connection)
-            .insert_one(&data::store_1())
-            .await
+            .upsert_one(&data::store_1())
             .unwrap();
         StockLineRowRepository::new(&connection)
             .upsert_one(&data::stock_line_1())

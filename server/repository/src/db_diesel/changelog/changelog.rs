@@ -4,7 +4,7 @@ use crate::{
     dynamic_query::create_condition,
     name_link,
     name_store_join::name_store_join,
-    syncv7::{SyncType, SYNC_VISITORS},
+    syncv7::{translators, SyncType},
     vaccination_row::vaccination,
     DBConnection, DBType, EqualFilter, KeyType, KeyValueStoreRepository, LockedConnection,
     NameLinkRow, RepositoryError, StorageConnection, SyncBufferV7Row,
@@ -138,12 +138,16 @@ diesel_string_enum! {
         PurchaseOrderLine,
         GoodsReceived,
         MasterList,
+        Unit,
+        Store,
+        LocationType,
     }
 }
 
 pub(crate) enum ChangeLogSyncStyle {
     Legacy,  // Everything that goes to Legacy mSupply server
     Central, // Data created on Open-mSupply central server
+    V7,      // Data created on Open-mSupply central server
     Remote,
     File,
     RemoteAndCentral, // These records will sync like remote record if store_id exist, otherwise they will sync like central records
@@ -177,7 +181,6 @@ impl ChangelogTableName {
             ChangelogTableName::TemperatureBreach => ChangeLogSyncStyle::Legacy,
             ChangelogTableName::TemperatureBreachConfig => ChangeLogSyncStyle::Legacy,
             ChangelogTableName::TemperatureLog => ChangeLogSyncStyle::Legacy,
-            ChangelogTableName::Currency => ChangeLogSyncStyle::Legacy,
             ChangelogTableName::Item => ChangeLogSyncStyle::Legacy,
             ChangelogTableName::PackVariant => ChangeLogSyncStyle::Central,
             ChangelogTableName::AssetClass => ChangeLogSyncStyle::Central,
@@ -224,6 +227,10 @@ impl ChangelogTableName {
             ChangelogTableName::GoodsReceived => ChangeLogSyncStyle::Legacy,
             ChangelogTableName::GoodsReceivedLine => ChangeLogSyncStyle::Legacy,
             ChangelogTableName::MasterList => ChangeLogSyncStyle::ProcessorOnly,
+            ChangelogTableName::Unit => ChangeLogSyncStyle::V7,
+            ChangelogTableName::Store => ChangeLogSyncStyle::V7,
+            ChangelogTableName::Currency => ChangeLogSyncStyle::V7,
+            ChangelogTableName::LocationType => ChangeLogSyncStyle::V7,
         }
     }
 }
@@ -1073,8 +1080,7 @@ impl Site {
 }
 
 pub fn get_table_names_for_sync_types(sync_types: &[SyncType]) -> Vec<ChangelogTableName> {
-    let visitors = SYNC_VISITORS.read().unwrap();
-    visitors
+    translators()
         .iter()
         .filter(|r| sync_types.contains(&r.sync_type()))
         .map(|visitor| visitor.table_name().to_owned())

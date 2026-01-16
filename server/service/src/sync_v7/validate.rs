@@ -21,15 +21,16 @@ pub enum ValidationError {
 }
 
 pub fn validate_on_remote(
-    (sync_buffer_row, upsert): &(SyncBufferV7Row, Box<dyn Upsert>),
+    sync_buffer_row: &SyncBufferV7Row,
+    upsert: &Box<dyn Upsert>,
     active_on_site: &ActiveStoresOnSite,
     is_initialising: bool,
-) -> Option<ValidationError> {
+) -> Result<(), ValidationError> {
     match upsert.sync_type() {
         SyncType::Central => {}
         SyncType::Remote => {
             let Some(store_id) = sync_buffer_row.store_id.clone() else {
-                return Some(ValidationError::NoStoreId);
+                return Err(ValidationError::NoStoreId);
             };
             let is_active_store = active_on_site.store_id_match(&store_id);
             let is_active_name = sync_buffer_row
@@ -38,17 +39,17 @@ pub fn validate_on_remote(
                 .map_or(false, |name_id| active_on_site.name_id_match(&name_id));
             // If name is active, it's transfer it's ok to integrate
             if is_active_name {
-                return None;
+                return Ok(());
             }
 
             // If name is not active then store must be active
             if !is_active_store {
-                return Some(ValidationError::InactiveStore);
+                return Err(ValidationError::InactiveStore);
             }
 
             // If store is active, integrate only when initialising
             if !is_initialising {
-                return Some(ValidationError::SiteAlreadyInitialised);
+                return Err(ValidationError::SiteAlreadyInitialised);
             }
         }
         SyncType::Name =>
@@ -56,21 +57,22 @@ pub fn validate_on_remote(
             {}
     };
 
-    None
+    Ok(())
 }
 pub fn validate_on_central(
-    (sync_buffer_row, upsert): &(SyncBufferV7Row, Box<dyn Upsert>),
+    sync_buffer_row: &SyncBufferV7Row,
+    upsert: &Box<dyn Upsert>,
     active_on_site: &ActiveStoresOnSite,
-) -> Option<ValidationError> {
+) -> Result<(), ValidationError> {
     match upsert.sync_type() {
-        SyncType::Central => return Some(ValidationError::CentralRecordEditsOnCentralOnly),
+        SyncType::Central => return Err(ValidationError::CentralRecordEditsOnCentralOnly),
         SyncType::Remote => {
             let Some(store_id) = sync_buffer_row.store_id.clone() else {
-                return Some(ValidationError::NoStoreId);
+                return Err(ValidationError::NoStoreId);
             };
 
             if !active_on_site.store_id_match(&store_id) {
-                return Some(ValidationError::InactiveStore);
+                return Err(ValidationError::InactiveStore);
             }
         }
         SyncType::Name =>
@@ -78,5 +80,5 @@ pub fn validate_on_central(
             {}
     };
 
-    None
+    Ok(())
 }

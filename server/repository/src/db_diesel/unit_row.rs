@@ -1,6 +1,7 @@
 use super::{unit_row::unit::dsl::*, StorageConnection};
-use crate::{repository_error::RepositoryError, Delete, Upsert};
+use crate::{repository_error::RepositoryError, syncv7::*, Delete, Upsert};
 use diesel::prelude::*;
+use serde::{Deserialize, Serialize};
 
 table! {
     unit (id) {
@@ -12,7 +13,9 @@ table! {
     }
 }
 
-#[derive(Clone, Insertable, Queryable, Debug, PartialEq, Eq, AsChangeset, Default)]
+#[derive(
+    Clone, Insertable, Queryable, Debug, PartialEq, Eq, AsChangeset, Default, Serialize, Deserialize,
+)]
 #[diesel(table_name = unit)]
 pub struct UnitRow {
     pub id: String,
@@ -20,6 +23,28 @@ pub struct UnitRow {
     pub description: Option<String>,
     pub index: i32,
     pub is_active: bool,
+}
+
+crate::impl_record! {
+    struct: UnitRow,
+    table: unit,
+    id_field: id
+}
+
+crate::impl_central_sync_record!(UnitRow, crate::ChangelogTableName::Unit);
+
+pub(crate) struct Translator;
+
+impl TranslatorTrait for Translator {
+    type Item = UnitRow;
+}
+
+impl Translator {
+    // Needs to be added to translators() in ..
+    #[deny(dead_code)]
+    pub(crate) fn boxed() -> Box<dyn BoxableSyncRecord> {
+        Box::new(Self)
+    }
 }
 
 pub struct UnitRowRepository<'a> {
@@ -32,13 +57,7 @@ impl<'a> UnitRowRepository<'a> {
     }
 
     pub fn upsert_one(&self, row: &UnitRow) -> Result<(), RepositoryError> {
-        diesel::insert_into(unit)
-            .values(row)
-            .on_conflict(id)
-            .do_update()
-            .set(row)
-            .execute(self.connection.lock().connection())?;
-        Ok(())
+        row.upsert_internal(&self.connection)
     }
 
     pub async fn find_active_by_id(&self, unit_id: &str) -> Result<UnitRow, RepositoryError> {
@@ -49,11 +68,7 @@ impl<'a> UnitRowRepository<'a> {
     }
 
     pub fn find_one_by_id(&self, unit_id: &str) -> Result<Option<UnitRow>, RepositoryError> {
-        let result = unit
-            .filter(id.eq(unit_id))
-            .first(self.connection.lock().connection())
-            .optional()?;
-        Ok(result)
+        UnitRow::find_by_id(self.connection, unit_id)
     }
 
     pub fn find_inactive_by_id(&self, unit_id: &str) -> Result<Option<UnitRow>, RepositoryError> {

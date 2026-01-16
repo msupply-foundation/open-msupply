@@ -1,6 +1,6 @@
 use super::{item_link_row::item_link, name_link_row::name_link, StorageConnection};
 
-use crate::{repository_error::RepositoryError, Delete, Upsert};
+use crate::{repository_error::RepositoryError, syncv7::*, Delete, Upsert};
 
 use chrono::NaiveDate;
 use diesel::prelude::*;
@@ -59,6 +59,28 @@ pub struct StoreRow {
     pub is_disabled: bool,
 }
 
+crate::impl_record! {
+    struct: StoreRow,
+    table: store,
+    id_field: id
+}
+
+crate::impl_central_sync_record!(StoreRow, crate::ChangelogTableName::Store);
+
+pub(crate) struct Translator;
+
+impl TranslatorTrait for Translator {
+    type Item = StoreRow;
+}
+
+impl Translator {
+    // Needs to be added to translators() in ..
+    #[deny(dead_code)]
+    pub(crate) fn boxed() -> Box<dyn BoxableSyncRecord> {
+        Box::new(Self)
+    }
+}
+
 pub struct StoreRowRepository<'a> {
     connection: &'a StorageConnection,
 }
@@ -80,28 +102,11 @@ impl<'a> StoreRowRepository<'a> {
     }
 
     pub fn upsert_one(&self, row: &StoreRow) -> Result<(), RepositoryError> {
-        diesel::insert_into(store::table)
-            .values(row)
-            .on_conflict(store::id)
-            .do_update()
-            .set(row)
-            .execute(self.connection.lock().connection())?;
-        Ok(())
-    }
-
-    pub async fn insert_one(&self, store_row: &StoreRow) -> Result<(), RepositoryError> {
-        diesel::insert_into(store::table)
-            .values(store_row)
-            .execute(self.connection.lock().connection())?;
-        Ok(())
+        row.upsert_internal(&self.connection)
     }
 
     pub fn find_one_by_id(&self, store_id: &str) -> Result<Option<StoreRow>, RepositoryError> {
-        let result = store::table
-            .filter(store::id.eq(store_id))
-            .first(self.connection.lock().connection())
-            .optional()?;
-        Ok(result)
+        StoreRow::find_by_id(self.connection, store_id)
     }
 
     pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<StoreRow>, RepositoryError> {

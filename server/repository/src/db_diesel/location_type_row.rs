@@ -3,6 +3,7 @@ use super::StorageConnection;
 use crate::{repository_error::RepositoryError, Upsert};
 
 use diesel::prelude::*;
+use serde::{Deserialize, Serialize};
 
 table! {
     location_type (id) {
@@ -14,7 +15,7 @@ table! {
 }
 
 #[derive(
-    Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default, serde::Serialize,
+    Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default, Serialize, Deserialize,
 )]
 #[diesel(table_name = location_type)]
 pub struct LocationTypeRow {
@@ -22,6 +23,30 @@ pub struct LocationTypeRow {
     pub name: String,
     pub min_temperature: f64,
     pub max_temperature: f64,
+}
+
+use crate::syncv7::*;
+
+crate::impl_record! {
+    struct: LocationTypeRow,
+    table: location_type,
+    id_field: id
+}
+
+crate::impl_central_sync_record!(LocationTypeRow, crate::ChangelogTableName::LocationType);
+
+pub(crate) struct Translator;
+
+impl TranslatorTrait for Translator {
+    type Item = LocationTypeRow;
+}
+
+impl Translator {
+    // Needs to be added to translators() in ..
+    #[deny(dead_code)]
+    pub(crate) fn boxed() -> Box<dyn BoxableSyncRecord> {
+        Box::new(Self)
+    }
 }
 
 pub struct LocationTypeRowRepository<'a> {
@@ -34,21 +59,11 @@ impl<'a> LocationTypeRowRepository<'a> {
     }
 
     pub fn upsert_one(&self, row: &LocationTypeRow) -> Result<(), RepositoryError> {
-        diesel::insert_into(location_type::table)
-            .values(row)
-            .on_conflict(location_type::id)
-            .do_update()
-            .set(row)
-            .execute(self.connection.lock().connection())?;
-        Ok(())
+        row.upsert_internal(&self.connection)
     }
 
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<LocationTypeRow>, RepositoryError> {
-        let result = location_type::table
-            .filter(location_type::id.eq(id))
-            .first(self.connection.lock().connection())
-            .optional()?;
-        Ok(result)
+        LocationTypeRow::find_by_id(self.connection, id)
     }
 
     pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {

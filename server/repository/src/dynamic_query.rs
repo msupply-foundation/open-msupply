@@ -121,7 +121,7 @@ macro_rules! create_condition {
             use super::*;
 
             #[derive(Clone, serde::Serialize, serde::Deserialize)]
-            #[allow(non_camel_case_types)]
+            #[allow(non_snake_case)]
             pub enum Inner {
                 $(
                     $variant(create_condition!(@filter_type $filter_kind)),
