@@ -100,7 +100,7 @@ fn update_encounter_row(
         id,
         document_type: doc.r#type.clone(),
         document_name: doc.name.clone(),
-        patient_link_id: patient_id.to_string(),
+        patient_id: patient_id.to_string(),
         program_id: program_row.id,
         created_datetime: validated_encounter.created_datetime,
         start_datetime: validated_encounter.start_datetime,

@@ -251,7 +251,7 @@ mod insert {
             EncounterRow {
                 id: "encounter_for_unenrolled_program".to_string(),
                 program_id: mock_program_a().id,
-                patient_link_id: mock_patient_b().id,
+                patient_id: mock_patient_b().id,
                 ..Default::default()
             }
         }

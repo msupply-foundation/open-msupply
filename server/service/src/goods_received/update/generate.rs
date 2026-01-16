@@ -31,8 +31,8 @@ pub fn generate(
     updated_goods_received.received_date =
         nullable_update(&received_date, updated_goods_received.received_date);
     updated_goods_received.comment = comment.or(updated_goods_received.comment);
-    updated_goods_received.donor_link_id =
-        nullable_update(&donor_id, updated_goods_received.donor_link_id);
+    updated_goods_received.donor_id =
+        nullable_update(&donor_id, updated_goods_received.donor_id);
     updated_goods_received.supplier_reference =
         supplier_reference.or(updated_goods_received.supplier_reference);
 

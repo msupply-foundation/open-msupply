@@ -42,6 +42,6 @@ pub fn generate(
         expiry_date: input.expiry_date,
         location_id: None,
         volume_per_pack: None,
-        manufacturer_link_id: input.manufacturer_id,
+        manufacturer_id: input.manufacturer_id,
     })
 }

@@ -174,7 +174,7 @@ pub fn generate_lines_and_stock_lines(
                     store_id: store_id.to_string(),
                     on_hold: existing_stock_line.map_or(false, |stock_line| stock_line.on_hold),
                     barcode_id: None,
-                    supplier_link_id: supplier_id.to_string(),
+                    supplier_id: supplier_id.to_string(),
                     // Update existing stock levels if the stock line already exists
                     overwrite_stock_levels: false,
                 },

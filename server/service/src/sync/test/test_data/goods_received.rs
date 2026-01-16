@@ -62,7 +62,7 @@ pub(crate) fn test_pull_upsert_record_1() -> TestSyncIncomingRecord {
             received_date: Some("2025-07-24".parse().unwrap()),
             comment: None,
             supplier_reference: Some("test po 1".to_string()),
-            donor_link_id: Some("1FB32324AF8049248D929CFB35F255BA".to_string()),
+            donor_id: Some("1FB32324AF8049248D929CFB35F255BA".to_string()),
             created_datetime: NaiveDate::from_ymd_opt(2025, 7, 24)
                 .unwrap()
                 .and_hms_opt(0, 0, 0)
@@ -88,7 +88,7 @@ fn goods_received_push_record() -> TestSyncOutgoingRecord {
             received_date: Some(NaiveDate::from_ymd_opt(2025, 7, 24).unwrap()),
             comment: None,
             supplier_reference: Some("test po 1".to_string()),
-            donor_link_id: Some("1FB32324AF8049248D929CFB35F255BA".to_string()),
+            donor_id: Some("1FB32324AF8049248D929CFB35F255BA".to_string()),
             created_by: Some("user1".to_string()),
         }),
     }
@@ -108,7 +108,7 @@ pub(crate) fn test_pull_upsert_record_2() -> TestSyncIncomingRecord {
             received_date: None,
             comment: None,
             supplier_reference: Some("test po 2".to_string()),
-            donor_link_id: None,
+            donor_id: None,
             created_datetime: NaiveDate::from_ymd_opt(2025, 7, 24)
                 .unwrap()
                 .and_hms_opt(0, 0, 0)
@@ -134,7 +134,7 @@ fn goods_received_2_push_record() -> TestSyncOutgoingRecord {
             received_date: None,
             comment: None,
             supplier_reference: Some("test po 2".to_string()),
-            donor_link_id: None,
+            donor_id: None,
             created_by: Some("user1".to_string()),
         }),
     }

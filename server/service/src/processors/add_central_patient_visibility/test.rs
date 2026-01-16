@@ -30,7 +30,7 @@ async fn requests_link_patient_to_oms_central_store() {
 
     let central_store = StoreRow {
         id: uuid(),
-        name_link_id: central_store_name.id.clone(),
+        name_id: central_store_name.id.clone(),
         site_id: central_site_id,
         ..Default::default()
     };

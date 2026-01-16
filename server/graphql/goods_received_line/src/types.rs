@@ -76,7 +76,7 @@ impl GoodsReceivedLineNode {
         &self.row().volume_per_pack
     }
     pub async fn manufacturer_link_id(&self) -> &Option<String> {
-        &self.row().manufacturer_link_id
+        &self.row().manufacturer_id
     }
     pub async fn status(&self) -> GoodsReceivedLineNodeStatus {
         GoodsReceivedLineNodeStatus::from(self.row().status.clone())

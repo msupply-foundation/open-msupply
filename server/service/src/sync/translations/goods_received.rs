@@ -57,7 +57,7 @@ pub struct LegacyGoodsReceived {
     #[serde(default)]
     #[serde(rename = "donor_id")]
     #[serde(deserialize_with = "empty_str_as_option")]
-    pub donor_link_id: Option<String>,
+    pub donor_id: Option<String>,
     #[serde(default)]
     #[serde(rename = "user_id_created")]
     #[serde(deserialize_with = "empty_str_as_option")]
@@ -106,7 +106,7 @@ impl SyncTranslation for GoodsReceivedTranslation {
             received_date: legacy.received_date,
             comment: legacy.comment,
             supplier_reference: legacy.supplier_reference,
-            donor_link_id: legacy.donor_link_id,
+            donor_id: legacy.donor_id,
             created_datetime: legacy.created_datetime.and_hms_opt(0, 0, 0).unwrap(),
             finalised_datetime: None,
             created_by: legacy.created_by,
@@ -136,7 +136,7 @@ impl SyncTranslation for GoodsReceivedTranslation {
             received_date: row.received_date,
             comment: row.comment,
             supplier_reference: row.supplier_reference,
-            donor_link_id: row.donor_link_id,
+            donor_id: row.donor_id,
             created_by: row.created_by,
         };
         Ok(PushTranslateResult::upsert(

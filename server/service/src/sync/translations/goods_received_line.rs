@@ -86,7 +86,7 @@ impl SyncTranslation for GoodsReceivedLineTranslation {
             item_name: legacy_row.item_name,
             location_id: legacy_row.location_ID,
             volume_per_pack: legacy_row.volume_per_pack,
-            manufacturer_link_id: legacy_row.manufacturer_ID,
+            manufacturer_id: legacy_row.manufacturer_ID,
             status: match legacy_row.is_authorised {
                 true => GoodsReceivedLineStatus::Authorised,
                 false => GoodsReceivedLineStatus::Unauthorised,
@@ -134,7 +134,7 @@ impl SyncTranslation for GoodsReceivedLineTranslation {
             item_name: row.item_name,
             location_ID: row.location_id,
             volume_per_pack: row.volume_per_pack,
-            manufacturer_ID: row.manufacturer_link_id,
+            manufacturer_ID: row.manufacturer_id,
             is_authorised: match row.status {
                 GoodsReceivedLineStatus::Authorised => true,
                 GoodsReceivedLineStatus::Unauthorised => false,

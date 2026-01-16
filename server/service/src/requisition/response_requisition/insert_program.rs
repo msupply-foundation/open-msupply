@@ -340,7 +340,7 @@ fn generate_program_indicator_values(
             for column in line.columns {
                 let indicator_value = IndicatorValueRow {
                     id: uuid(),
-                    customer_name_link_id: customer_name_id.to_string(),
+                    customer_name_id: customer_name_id.to_string(),
                     store_id: store_id.to_string(),
                     period_id: period_id.to_string(),
                     value: default_indicator_value(&line.line, &column),

@@ -160,7 +160,7 @@ pub struct LegacyTransactRow {
     pub name_insurance_join_id: Option<String>,
     #[serde(deserialize_with = "empty_str_as_option_string")]
     #[serde(rename = "donor_default_id")]
-    pub default_donor_id: Option<String>,
+    pub default_donor_link_id: Option<String>,
     #[serde(deserialize_with = "zero_f64_as_none")]
     #[serde(rename = "insuranceDiscountAmount")]
     pub insurance_discount_amount: Option<f64>,
@@ -441,7 +441,7 @@ impl SyncTranslation for InvoiceTranslation {
 
             requisition_id: data.requisition_ID,
             linked_invoice_id: data.linked_transaction_id,
-            default_donor_link_id: data.default_donor_id,
+            default_donor_link_id: data.default_donor_link_id,
             transport_reference: data.transport_reference,
             original_shipment_id: data.original_shipment_id,
             backdated_datetime: mapping.backdated_datetime,

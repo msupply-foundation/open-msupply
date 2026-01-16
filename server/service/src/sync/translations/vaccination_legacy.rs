@@ -206,7 +206,7 @@ mod tests {
             given: true,
             given_store_id: Some(mock_store_a().id),
             item_link_id: Some(mock_vaccine_item_a().id),
-            patient_link_id: mock_patient().id,
+            patient_id: mock_patient().id,
             created_datetime: NaiveDate::from_ymd_opt(2024, 2, 1)
                 .unwrap()
                 .and_hms_opt(0, 0, 0)

@@ -53,9 +53,9 @@ pub fn generate(
         item_variant_id: item_variant_id
             .map(|v| v.value)
             .unwrap_or(existing_line.item_variant_id),
-        donor_link_id: donor_id
+        donor_id: donor_id
             .map(|d| d.value)
-            .unwrap_or(existing_line.donor_link_id),
+            .unwrap_or(existing_line.donor_id),
         reason_option_id: reason_option_id.or(existing_line.reason_option_id),
         vvm_status_id: vvm_status_id.or(existing_line.vvm_status_id),
         volume_per_pack: volume_per_pack.unwrap_or(existing_line.volume_per_pack),

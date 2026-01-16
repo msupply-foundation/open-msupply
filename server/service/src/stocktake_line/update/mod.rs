@@ -502,7 +502,7 @@ mod stocktake_line_test {
             .unwrap();
 
         // check that the fields were set correctly
-        assert_eq!(line.line.donor_link_id, Some(donor_id.clone()));
+        assert_eq!(line.line.donor_id, Some(donor_id.clone()));
         assert_eq!(
             line.line.expiry_date,
             Some(NaiveDate::from_ymd_opt(2025, 10, 1).unwrap())
@@ -522,7 +522,7 @@ mod stocktake_line_test {
             .unwrap();
 
         // Fields stayed the same
-        assert_eq!(line.line.donor_link_id, Some(donor_id));
+        assert_eq!(line.line.donor_id, Some(donor_id));
         assert_eq!(
             line.line.expiry_date,
             Some(NaiveDate::from_ymd_opt(2025, 10, 1).unwrap())
@@ -542,7 +542,7 @@ mod stocktake_line_test {
             .unwrap();
 
         // Fields stayed the same
-        assert_eq!(line.line.donor_link_id, None);
+        assert_eq!(line.line.donor_id, None);
         assert_eq!(line.line.expiry_date, None);
     }
 }

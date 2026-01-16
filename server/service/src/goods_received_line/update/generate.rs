@@ -33,7 +33,7 @@ pub fn generate(
     }
 
     if let Some(new_manufacturer_id) = manufacturer_id {
-        updated_line.manufacturer_link_id = Some(new_manufacturer_id);
+        updated_line.manufacturer_id = Some(new_manufacturer_id);
     }
 
     if let Some(new_comment) = comment {
