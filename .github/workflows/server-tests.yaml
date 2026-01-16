@@ -25,14 +25,14 @@ jobs:
         with:
           toolchain: stable
       - name: Install cargo-nextest
-        uses: taiki-e/install-action@nextest
+        run: command -v cargo-nextest || cargo install cargo-nextest --locked
       - uses: actions-rs/cargo@v1
         with:
           command: clean
           args: -p repository -p graphql_types -p graphql_plugin -p graphql_invoice --manifest-path server/Cargo.toml
       - name: Run tests and generate report
         continue-on-error: true
-        run: cargo nextest run --profile=ci --features=sqlite --manifest-path server/Cargo.toml --message-format junit --output-file junit.xml
+        run: cargo nextest run --profile=ci --features=sqlite --manifest-path server/Cargo.toml
   build_and_test_pg:
     name: Remote Server Tests (postgres)
     runs-on: self-hosted
@@ -47,11 +47,11 @@ jobs:
         with:
           toolchain: stable
       - name: Install cargo-nextest
-        uses: taiki-e/install-action@nextest
+        run: command -v cargo-nextest || cargo install cargo-nextest --locked
       - uses: actions-rs/cargo@v1
         with:
           command: clean
           args: -p repository -p graphql_types -p graphql_plugin -p graphql_invoice --manifest-path server/Cargo.toml
       - name: Run test and generate report
         continue-on-error: true
-        run: cargo nextest run --profile=ci --features=postgres --manifest-path server/Cargo.toml --message-format junit --output-file junit.xml
+        run: cargo nextest run --profile=ci --features=postgres --manifest-path server/Cargo.toml
