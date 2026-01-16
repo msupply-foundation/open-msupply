@@ -29,7 +29,7 @@ pub fn generate(
         StockLineInput {
             stock_line_id: None,
             store_id: existing_invoice_row.store_id.clone(),
-            supplier_link_id: existing_invoice_row.name_id.clone(),
+            supplier_id: existing_invoice_row.name_id.clone(),
             on_hold: false,
             barcode_id: None,
             overwrite_stock_levels: true,
@@ -87,7 +87,7 @@ fn generate_line(
         location_id: None,
         foreign_currency_price_before_tax: None,
         linked_invoice_id: None,
-        donor_link_id: None,
+        donor_id: None,
         vvm_status_id: None,
         reason_option_id: None,
         campaign_id: None,

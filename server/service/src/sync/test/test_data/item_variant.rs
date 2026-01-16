@@ -24,7 +24,7 @@ fn item_variant1() -> ItemVariantRow {
         name: "Item Variant 1".to_string(),
         item_link_id: "8F252B5884B74888AAB73A0D42C09E7A".to_string(), // ITEM_1.0
         location_type_id: None,
-        manufacturer_link_id: None,
+        manufacturer_id: None,
         deleted_datetime: None,
         vvm_type: None,
         created_datetime: NaiveDate::from_ymd_opt(2023, 1, 1)
@@ -55,7 +55,7 @@ fn item_variant2() -> ItemVariantRow {
         name: "Item Variant 2".to_string(),
         item_link_id: "8F252B5884B74888AAB73A0D42C09E7A".to_string(), // ITEM_1.0
         location_type_id: None,
-        manufacturer_link_id: Some("1FB32324AF8049248D929CFB35F255BA".to_string()), // NAME_1.0 (currently marked as manufacturer)
+        manufacturer_id: Some("1FB32324AF8049248D929CFB35F255BA".to_string()), // NAME_1.0 (currently marked as manufacturer)
         deleted_datetime: None,
         vvm_type: Some("VVM 1".to_string()),
         created_datetime: NaiveDate::from_ymd_opt(2023, 1, 1)

@@ -144,7 +144,7 @@ fn generate_batch_update(
         item_variant_id: item_variant_id
             .map(|i| i.value)
             .unwrap_or(batch.item_variant_id),
-        donor_link_id: donor_id.map(|d| d.value).unwrap_or(batch.donor_link_id),
+        donor_id: donor_id.map(|d| d.value).unwrap_or(batch.donor_id),
         ..batch
     }
 }
@@ -188,7 +188,7 @@ fn generate_line(
         expiry_date,
         location_id,
         item_variant_id,
-        donor_link_id,
+        donor_id: donor_link_id,
         vvm_status_id,
         volume_per_pack,
         campaign_id,
@@ -237,7 +237,7 @@ fn generate_line(
         total_before_tax,
         total_after_tax,
         tax_percentage,
-        donor_link_id,
+        donor_id: donor_link_id,
         note,
         foreign_currency_price_before_tax,
         vvm_status_id,

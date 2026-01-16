@@ -45,7 +45,7 @@ pub(crate) fn update_program_enrolment_row(
         document_type: document.r#type.clone(),
         program_id: program_row.id,
         document_name: document.name.clone(),
-        patient_link_id: patient_id.to_string(),
+        patient_id: patient_id.to_string(),
         enrolment_datetime,
         program_enrolment_id: program.program_enrolment_id,
         status,

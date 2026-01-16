@@ -59,7 +59,7 @@ fn goods_received_line_pull_record() -> TestSyncIncomingRecord {
             item_name: "Salbutamol Inhaler".to_string(),
             location_id: Some("cf5812e0c33911eb9757779d39ae2bdb".to_string()),
             volume_per_pack: None,
-            manufacturer_link_id: Some("1FB32324AF8049248D929CFB35F255BA".to_string()),
+            manufacturer_id: Some("1FB32324AF8049248D929CFB35F255BA".to_string()),
             status: repository::GoodsReceivedLineStatus::Authorised,
             comment: None,
         },

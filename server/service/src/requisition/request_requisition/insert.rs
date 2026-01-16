@@ -120,7 +120,7 @@ fn generate(
         id,
         user_id: Some(user_id.to_string()),
         requisition_number: next_number(connection, &NumberRowType::RequestRequisition, store_id)?,
-        name_link_id: other_party_id,
+        name_id: other_party_id,
         store_id: store_id.to_string(),
         r#type: RequisitionType::Request,
         status: RequisitionStatus::Draft,

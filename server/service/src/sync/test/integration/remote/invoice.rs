@@ -103,7 +103,7 @@ impl SyncRecordTester for InvoiceRecordTester {
             item_variant_id: None,
             prescribed_quantity: None,
             linked_invoice_id: None,
-            donor_link_id: None,
+            donor_id: None,
             ..Default::default()
         };
         let invoice_row_1 = base_invoice_row.clone();

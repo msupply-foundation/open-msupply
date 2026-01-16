@@ -163,7 +163,7 @@ mod update {
         fn mock_vaccination_b_given() -> VaccinationRow {
             VaccinationRow {
                 id: "mock_vaccination_b_given".to_string(),
-                patient_link_id: mock_patient().id,
+                patient_id: mock_patient().id,
                 store_id: mock_store_a().id,
                 user_id: mock_user_account_a().id,
                 program_enrolment_id: mock_immunisation_program_enrolment_a().id,

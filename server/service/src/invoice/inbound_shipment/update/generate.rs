@@ -378,7 +378,7 @@ pub fn generate_lines_and_stock_lines(
             batch,
             expiry_date,
             pack_size,
-            donor_link_id,
+            donor_id: donor_link_id,
             note,
             vvm_status_id,
             campaign_id,
@@ -401,9 +401,9 @@ pub fn generate_lines_and_stock_lines(
             total_number_of_packs: number_of_packs,
             expiry_date,
             note,
-            supplier_link_id: Some(supplier_id.to_string()),
+            supplier_id: Some(supplier_id.to_string()),
             item_variant_id,
-            donor_link_id,
+            donor_id: donor_link_id,
             vvm_status_id,
             campaign_id,
             program_id,
@@ -445,7 +445,7 @@ pub fn generate_location_movements(
 fn update_donor_on_lines_and_stock(
     connection: &StorageConnection,
     invoice_id: &str,
-    updated_default_donor_id: Option<String>,
+    updated_default_donor_link_id: Option<String>,
     donor_update_method: ApplyDonorToInvoiceLines,
 ) -> Result<Vec<LineAndStockLine>, UpdateInboundShipmentError> {
     let invoice_lines = InvoiceLineRepository::new(connection).query_by_filter(
@@ -460,21 +460,21 @@ fn update_donor_on_lines_and_stock(
         let mut stock_line = invoice_line.stock_line_option;
 
         let new_donor_id = match donor_update_method.clone() {
-            ApplyDonorToInvoiceLines::None => line.donor_link_id.clone(),
-            ApplyDonorToInvoiceLines::UpdateExistingDonor => match line.donor_link_id {
-                Some(_) => updated_default_donor_id.clone(),
+            ApplyDonorToInvoiceLines::None => line.donor_id.clone(),
+            ApplyDonorToInvoiceLines::UpdateExistingDonor => match line.donor_id {
+                Some(_) => updated_default_donor_link_id.clone(),
                 None => None,
             },
             ApplyDonorToInvoiceLines::AssignIfNone => line
-                .donor_link_id
+                .donor_id
                 .clone()
-                .or(updated_default_donor_id.clone()),
-            ApplyDonorToInvoiceLines::AssignToAll => updated_default_donor_id.clone(),
+                .or(updated_default_donor_link_id.clone()),
+            ApplyDonorToInvoiceLines::AssignToAll => updated_default_donor_link_id.clone(),
         };
 
-        line.donor_link_id = new_donor_id.clone();
+        line.donor_id = new_donor_id.clone();
         if let Some(ref mut stock_line) = stock_line {
-            stock_line.donor_link_id = new_donor_id;
+            stock_line.donor_id = new_donor_id;
         }
 
         result.push(LineAndStockLine { line, stock_line });

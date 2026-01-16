@@ -34,7 +34,7 @@ pub fn generate(
         name,
         item_link_id: item_id,
         location_type_id: location_type_id.map(|l| l.value).unwrap_or_default(),
-        manufacturer_link_id: manufacturer_id
+        manufacturer_id: manufacturer_id
             .map(|manufacturer_id| manufacturer_id.value)
             .unwrap_or_default(),
         vvm_type: vvm_type.map(|vvm_type| vvm_type.value).unwrap_or_default(),
@@ -80,7 +80,7 @@ pub fn generate_logs(
             )?;
         }
 
-        if existing_item_variant.manufacturer_link_id != updated_item_variant.manufacturer_link_id {
+        if existing_item_variant.manufacturer_id != updated_item_variant.manufacturer_id {
             let existing_manufacturer_name = existing_variant
                 .manufacturer_row
                 .map(|row| row.name.clone());

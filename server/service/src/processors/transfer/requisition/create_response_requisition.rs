@@ -268,7 +268,7 @@ fn generate_response_requisition(
     let result = RequisitionRow {
         id: uuid(),
         requisition_number,
-        name_link_id: store_name.id,
+        name_id: store_name.id,
         store_id,
         r#type: RequisitionType::Response,
         status: RequisitionStatus::New,

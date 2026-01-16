@@ -558,7 +558,7 @@ mod test {
         assert_eq!(inbound_line, {
             let mut expected = inbound_line.clone();
             expected.id = "new_invoice_line_id_with_donor".to_string();
-            expected.donor_link_id = Some("donor_a".to_string());
+            expected.donor_id = Some("donor_a".to_string());
             expected
         });
 
@@ -585,7 +585,7 @@ mod test {
         assert_eq!(inbound_line, {
             let mut expected = inbound_line.clone();
             expected.id = "new_invoice_line_id_with_no_donor".to_string();
-            expected.donor_link_id = None;
+            expected.donor_id = None;
             expected
         });
 

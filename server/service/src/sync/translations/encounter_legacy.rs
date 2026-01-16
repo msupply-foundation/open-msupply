@@ -81,10 +81,10 @@ impl SyncTranslation for EncounterLegacyTranslation {
         let name_link_repo = NameLinkRowRepository::new(connection);
 
         let patient_name_id = name_link_repo
-            .find_one_by_id(&encounter_row.patient_link_id)?
+            .find_one_by_id(&encounter_row.patient_id)?
             .ok_or(anyhow::Error::msg(format!(
                 "Patient name link ({}) not found",
-                encounter_row.patient_link_id
+                encounter_row.patient_id
             )))?
             .id;
 
@@ -144,7 +144,7 @@ mod tests {
             document_type: "Test Document Type".to_string(),
             document_name: "Test Document Name".to_string(),
             program_id: mock_immunisation_program_enrolment_a().program_id,
-            patient_link_id: mock_encounter_a().patient_link_id,
+            patient_id: mock_encounter_a().patient_id,
             created_datetime: mock_encounter_a().created_datetime,
             start_datetime: mock_encounter_a().start_datetime,
             end_datetime: None,

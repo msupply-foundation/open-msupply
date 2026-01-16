@@ -37,9 +37,9 @@ pub fn generate(
             .unwrap_or(purchase_order_line.price_per_pack_before_discount),
         price_per_pack_after_discount: price_per_pack_after_discount
             .unwrap_or(purchase_order_line.price_per_pack_after_discount),
-        manufacturer_link_id: manufacturer_id
+        manufacturer_id: manufacturer_id
             .map(|v| v.value)
-            .unwrap_or(purchase_order_line.manufacturer_link_id),
+            .unwrap_or(purchase_order_line.manufacturer_id),
         note: note.map(|v| v.value).unwrap_or(purchase_order_line.note),
         unit: unit.or(purchase_order_line.unit),
         supplier_item_code: supplier_item_code

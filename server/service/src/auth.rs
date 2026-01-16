@@ -1538,7 +1538,7 @@ mod permission_validation_test {
         fn store() -> StoreRow {
             StoreRow {
                 id: "store".to_string(),
-                name_link_id: name().id,
+                name_id: name().id,
                 code: "n/a".to_string(),
                 ..Default::default()
             }
