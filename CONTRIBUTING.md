@@ -36,6 +36,7 @@ Toolchains:
 
 - Rust is pinned via `server/rust-toolchain.toml` (currently `1.88`). If you're using rustup, it will prompt you to install the right version when you run `cargo`.
 - Client requires Node.js `v20+` and Yarn (see `client/README.md`).
+- For platform-specific system dependencies (e.g. `libpq` on Apple Silicon), see `server/README.md#dependencies`.
 
 To get started, have a look at the [readme](README.md)
 
@@ -75,10 +76,13 @@ To see the application running, you can get up and running quickly in one of two
 yarn start
 
 # Option 2: run client against the demo server API (no Rust required)
-(cd ./client && yarn start-remote)
+cd ./client
+yarn start-remote
 
 # Option 3: run full stack locally without legacy mSupply (initialise from bundled reference data)
-(cd ./server && cargo run --bin remote_server_cli -- initialise-from-export -n reference1)
+cd ./server
+cargo run --bin remote_server_cli -- initialise-from-export -n reference1
+cd ..
 yarn start
 ```
 
