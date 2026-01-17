@@ -73,8 +73,16 @@ type Source = sync_log_v7::table;
 
 create_condition!(
     Source,
-    (started_datetime, string, sync_log_v7::started_datetime),
-    (finished_datetime, string, sync_log_v7::finished_datetime),
+    (
+        started_datetime,
+        NaiveDateTime,
+        sync_log_v7::started_datetime
+    ),
+    (
+        finished_datetime,
+        NaiveDateTime,
+        sync_log_v7::finished_datetime
+    ),
     (error, string, sync_log_v7::error),
 );
 

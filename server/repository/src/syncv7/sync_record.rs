@@ -133,7 +133,35 @@ macro_rules! impl_central_sync_record {
                 Ok(None)
             }
         }
+
+        impl $crate::syncv7::AutoImplementUpsert for $struct_name {}
     };
 }
 
 pub(crate) use impl_central_sync_record;
+
+impl<T> crate::Upsert for T
+where
+    T: AutoImplementUpsert,
+{
+    fn upsert(&self, connection: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        self.upsert_internal(connection)?;
+        let record_id = self.get_id().to_string();
+        let table_name = Self::table_name().clone();
+
+        ChangeLogInsertRowV7 {
+            table_name,
+            record_id,
+            ..Default::default()
+        }
+        .insert(connection)?;
+
+        Ok(None)
+    }
+
+    fn assert_upserted(&self, con: &StorageConnection) {
+        todo!()
+    }
+}
+
+pub trait AutoImplementUpsert: SyncRecord + Record + std::fmt::Debug {}

@@ -105,18 +105,3 @@ impl Delete for UnitRowDelete {
         ));
     }
 }
-
-impl Upsert for UnitRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        UnitRowRepository::new(con).upsert_one(self)?;
-        Ok(None) // Table not in Changelog
-    }
-
-    // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
-        assert_eq!(
-            UnitRowRepository::new(con).find_one_by_id(&self.id),
-            Ok(Some(self.clone()))
-        )
-    }
-}

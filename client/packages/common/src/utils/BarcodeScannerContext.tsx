@@ -1,6 +1,6 @@
 import React, { createContext, useMemo, FC, useState, useEffect } from 'react';
 import { PropsWithChildrenOnly } from '@common/types';
-import { BarcodeScanner as BarcodeScannerPlugin } from '@capacitor-community/barcode-scanner';
+// import { BarcodeScanner as BarcodeScannerPlugin } from '@capacitor-community/barcode-scanner';
 import { Capacitor } from '@capacitor/core';
 import { GlobalStyles } from '@mui/material';
 import { useNotification } from '../hooks/useNotification';
@@ -124,17 +124,17 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
             );
             break;
           case hasNativeBarcodeScanner:
-            // Check camera permission
-            await BarcodeScannerPlugin.checkPermission({ force: true });
+            // // Check camera permission
+            // await BarcodeScannerPlugin.checkPermission({ force: true });
 
-            // make background of WebView transparent
-            BarcodeScannerPlugin.hideBackground();
+            // // make background of WebView transparent
+            // BarcodeScannerPlugin.hideBackground();
 
-            // start scanning and wait for a result
-            const result = await BarcodeScannerPlugin.startScan();
-            BarcodeScannerPlugin.showBackground();
+            // // start scanning and wait for a result
+            // const result = await BarcodeScannerPlugin.startScan();
+            // BarcodeScannerPlugin.showBackground();
 
-            resolve(sanitiseBarcodeResult(result));
+            // resolve(sanitiseBarcodeResult(result));
             break;
           default:
             reject(new Error('Cannot find scan api'));
@@ -182,17 +182,17 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
         if (!hasElectronApi) error(t('error.unable-to-read-barcode'))();
       }, SCAN_TIMEOUT_IN_MS);
 
-      // Check camera permission
-      await BarcodeScannerPlugin.checkPermission({ force: true });
+      // // Check camera permission
+      // await BarcodeScannerPlugin.checkPermission({ force: true });
 
-      // make background of WebView transparent
-      BarcodeScannerPlugin.hideBackground();
-      const result = await BarcodeScannerPlugin.startScan(); // start scanning and wait for a result
+      // // make background of WebView transparent
+      // BarcodeScannerPlugin.hideBackground();
+      // const result = await BarcodeScannerPlugin.startScan(); // start scanning and wait for a result
 
-      clearTimeout(timeout);
-      setIsScanning(false);
-      BarcodeScannerPlugin.showBackground();
-      callback(parseResult(sanitiseBarcodeResult(result)));
+      // clearTimeout(timeout);
+      // setIsScanning(false);
+      // BarcodeScannerPlugin.showBackground();
+      // callback(parseResult(sanitiseBarcodeResult(result)));
     }
   };
 
@@ -203,8 +203,8 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
     }
 
     if (hasNativeBarcodeScanner) {
-      await BarcodeScannerPlugin.stopScan({ resolveScan: true });
-      await BarcodeScannerPlugin.showBackground();
+      // await BarcodeScannerPlugin.stopScan({ resolveScan: true });
+      // await BarcodeScannerPlugin.showBackground();
     }
   };
 

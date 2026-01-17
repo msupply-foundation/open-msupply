@@ -512,8 +512,16 @@ macro_rules! diesel_json_type {
                 &self,
                 out: &mut diesel::serialize::Output<'b, '_, crate::DBType>,
             ) -> diesel::serialize::Result {
-                out.set_value(serde_json::to_string(self)?);
-                Ok(diesel::serialize::IsNull::No)
+               #[cfg(not(feature = "postgres"))]
+                {
+                    out.set_value(serde_json::to_string(self)?);
+                    Ok(diesel::serialize::IsNull::No)
+                }
+                #[cfg(feature = "postgres")]
+                <String as diesel::serialize::ToSql<
+                    diesel::sql_types::Text,
+                    crate::DBType,
+                >>::to_sql(&serde_json::to_string(self)?, &mut out.reborrow())
             }
         }
     };

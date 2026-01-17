@@ -259,21 +259,6 @@ impl Delete for ItemRowDelete {
     }
 }
 
-impl Upsert for ItemRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        ItemRowRepository::new(con).upsert_one(self)?;
-        Ok(None) // Table not in Changelog
-    }
-
-    // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
-        assert_eq!(
-            ItemRowRepository::new(con).find_active_by_id(&self.id),
-            Ok(Some(self.clone()))
-        )
-    }
-}
-
 #[cfg(test)]
 mod test {
 

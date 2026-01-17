@@ -27,8 +27,6 @@ table! {
         action -> crate::SyncActionMapping,
         data -> Text,
         source_site_id -> Nullable<Integer>,
-        store_id -> Nullable<Text>,
-        name_id -> Nullable<Text>,
     }
 }
 
@@ -46,8 +44,6 @@ pub struct SyncBufferRow {
     pub action: SyncAction,
     pub data: String,
     pub source_site_id: Option<i32>,
-    pub store_id: Option<String>,
-    pub name_id: Option<String>,
 }
 
 pub struct SyncBufferRowRepository<'a> {

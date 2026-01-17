@@ -72,18 +72,3 @@ impl<'a> LocationTypeRowRepository<'a> {
         Ok(())
     }
 }
-
-impl Upsert for LocationTypeRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        LocationTypeRowRepository::new(con).upsert_one(self)?;
-        Ok(None)
-    }
-
-    // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
-        assert_eq!(
-            LocationTypeRowRepository::new(con).find_one_by_id(&self.id),
-            Ok(Some(self.clone()))
-        )
-    }
-}

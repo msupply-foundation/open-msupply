@@ -8,7 +8,8 @@ use repository::{
     dynamic_query::FilterBuilder,
     sync_buffer_v7::{self, Condition},
     syncv7::{translators, BoxableSyncRecord},
-    RepositoryError, StorageConnection, SyncBufferV7Repository, SyncBufferV7Row,
+    ChangelogTableName, RepositoryError, StorageConnection, SyncBufferV7Repository,
+    SyncBufferV7Row,
 };
 use thiserror::Error;
 
@@ -36,7 +37,7 @@ enum Error {
     IntegrationError(#[source] RepositoryError),
 }
 
-fn validate_translate_integrate_single(
+fn validate_translate_integrate_one(
     connection: &StorageConnection,
     row: &SyncBufferV7Row,
     translator: &Box<dyn BoxableSyncRecord>,
@@ -65,6 +66,9 @@ pub fn validate_translate_integrate<'a>(
 ) -> Result<(), RepositoryError> {
     use sync_buffer_v7::Condition as C;
 
+    // TODO this is too hacky
+    let mut sync_context = sync_context;
+
     let filter = sync_buffer_filter
         .map(|f| C::And(vec![f, C::integration_datetime::is_null()]))
         .unwrap_or(C::integration_datetime::is_null());
@@ -83,8 +87,7 @@ pub fn validate_translate_integrate<'a>(
         ]);
 
         for row in SyncBufferV7Repository::new(connection).query(Some(filter.clone()))? {
-            match validate_translate_integrate_single(connection, &row, &translator, &sync_context)
-            {
+            match validate_translate_integrate_one(connection, &row, &translator, &sync_context) {
                 Ok(()) => write_sync_buffer_success(row, connection)?,
                 Err(e) => {
                     write_sync_buffer_error(row, connection, &e)?;
@@ -97,6 +100,16 @@ pub fn validate_translate_integrate<'a>(
                     logger.progress(total);
                     last_progress -= 1;
                 }
+            }
+        }
+        // TODO this is too hacky and unwraps
+        if translator.table_name() == ChangelogTableName::Store {
+            if let SyncContext::Remote {
+                is_initialising: _,
+                active_stores,
+            } = &mut sync_context
+            {
+                *active_stores = ActiveStoresOnSite::get(connection, None).unwrap();
             }
         }
     }

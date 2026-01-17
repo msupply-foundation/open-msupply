@@ -53,6 +53,15 @@ impl MigrationFragment for Migrate {
             "#,
         )?;
 
+        if cfg!(feature = "postgres") {
+            sql!(
+                connection,
+                r#"
+                    ALTER TABLE changelog ALTER COLUMN table_name TYPE TEXT USING table_name::TEXT
+                "#,
+            )?;
+        }
+
         Ok(())
     }
 }

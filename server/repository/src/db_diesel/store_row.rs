@@ -145,21 +145,6 @@ impl Delete for StoreRowDelete {
     }
 }
 
-impl Upsert for StoreRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        StoreRowRepository::new(con).upsert_one(self)?;
-        Ok(None) // Table not in Changelog
-    }
-
-    // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
-        assert_eq!(
-            StoreRowRepository::new(con).find_one_by_id(&self.id),
-            Ok(Some(self.clone()))
-        )
-    }
-}
-
 #[derive(Default)]
 pub struct MockStoreRowRepository {
     pub find_one_by_id_result: Option<StoreRow>,
