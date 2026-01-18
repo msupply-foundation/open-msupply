@@ -20,6 +20,7 @@ export type Plugins = {
   dashboard?: {
     widget?: React.ComponentType[];
     panel?: React.ComponentType<{ context?: DashboardContext }>[];
+    statistic?: React.ComponentType<{ subContext?: string }>[];
   };
   stockLine?: {
     tableStateLoader: React.ComponentType<{

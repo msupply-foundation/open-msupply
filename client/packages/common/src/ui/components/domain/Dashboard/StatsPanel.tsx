@@ -4,7 +4,7 @@ import { InlineSpinner, StockIcon } from '../../../';
 import { useTranslation } from '@common/intl';
 import { ApiException, isPermissionDeniedException } from '@common/types';
 import { SimpleLink } from '../../navigation/AppNavLink/SimpleLink';
-import { Grid } from '@openmsupply-client/common';
+import { Grid, usePluginProvider } from '@openmsupply-client/common';
 import { StatusChip } from '../../panels/StatusChip';
 
 export type Stat = {
@@ -13,6 +13,7 @@ export type Stat = {
   link?: string;
   extraMessage?: string;
   alertFlag?: boolean;
+  subContext?: string;
 };
 export interface StatsPanelProps {
   error?: ApiException;
@@ -23,9 +24,10 @@ export interface StatsPanelProps {
   width?: number;
   link?: string;
   alertFlag?: boolean;
+  subContext?: string;
 }
 
-const Statistic = ({
+export const Statistic = ({
   label,
   value,
   link,
@@ -118,14 +120,28 @@ const Content = ({
   isError,
   isLoading,
   stats,
+  subContext,
 }: {
   error?: ApiException;
   isError: boolean;
   isLoading: boolean;
   stats: Stat[];
+  subContext?: string;
 }) => {
   const t = useTranslation();
   const isPermissionDenied = isPermissionDeniedException(error);
+
+  const { plugins } = usePluginProvider();
+
+  const pluginStatistics =
+    plugins.dashboard?.statistic?.map((Component, index) => (
+      <Component key={index} subContext={subContext} />
+    )) ?? [];
+
+  const statistics = [
+    ...stats.map(stat => <Statistic key={stat.label} {...stat} />),
+    ...pluginStatistics,
+  ];
 
   switch (true) {
     case isError:
@@ -137,13 +153,7 @@ const Content = ({
     case isLoading:
       return <InlineSpinner color="secondary" />;
     default:
-      return (
-        <Grid>
-          {stats.map(stat => (
-            <Statistic key={stat.label} {...stat} />
-          ))}
-        </Grid>
-      );
+      return <Grid>{statistics}</Grid>;
   }
 };
 
@@ -155,6 +165,7 @@ export const StatsPanel: FC<StatsPanelProps> = ({
   title,
   width,
   link,
+  subContext,
 }) => (
   <Paper
     sx={{
@@ -192,6 +203,7 @@ export const StatsPanel: FC<StatsPanelProps> = ({
           isLoading={isLoading}
           stats={stats}
           error={error}
+          subContext={subContext}
         />
       </Grid>
     </Grid>
