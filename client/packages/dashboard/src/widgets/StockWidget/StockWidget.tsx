@@ -8,6 +8,7 @@ import {
   useAuthContext,
   useNavigate,
   useNotification,
+  usePluginProvider,
   UserPermission,
   useToggle,
   useTranslation,
@@ -23,10 +24,12 @@ import {
 import { AppRoute } from '@openmsupply-client/config';
 import { ExpiringStockSummary } from './ExpiringStockSummary';
 import { StockLevelsSummary } from './StockLevelsSummary';
+import { DashboardContext } from '../../DashboardService';
 
 export const StockWidget = () => {
   const t = useTranslation();
   const navigate = useNavigate();
+  const { plugins } = usePluginProvider();
   const modalControl = useToggle(false);
   const { userHasPermission } = useAuthContext();
   const { error: errorNotification } = useNotification();
@@ -96,6 +99,10 @@ export const StockWidget = () => {
     ]
   );
 
+  const pluginPanels = plugins.dashboard?.panel?.map((Component, index) => (
+    <Component key={index} context={DashboardContext.Stock} />
+  ));
+
   return (
     <Widget title={t('inventory-management')}>
       <Grid
@@ -107,6 +114,7 @@ export const StockWidget = () => {
         <Grid>
           <ExpiringStockSummary />
           <StockLevelsSummary />
+          {pluginPanels}
         </Grid>
         <Grid
           flex={1}

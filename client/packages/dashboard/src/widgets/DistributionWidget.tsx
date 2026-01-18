@@ -16,16 +16,19 @@ import {
   useNavigate,
   useAuthContext,
   UserPermission,
+  usePluginProvider,
 } from '@openmsupply-client/common';
 import { useFormatNumber, useTranslation } from '@common/intl';
 import { useDashboard } from '../api';
 import { useOutbound } from '@openmsupply-client/invoices';
 import { AppRoute } from '@openmsupply-client/config';
+import { DashboardContext } from '../DashboardService';
 
 export const DistributionWidget = () => {
   const t = useTranslation();
   const modalControl = useToggle(false);
   const navigate = useNavigate();
+  const { plugins } = usePluginProvider();
   const { error: errorNotification } = useNotification();
   const { userHasPermission } = useAuthContext();
   const formatNumber = useFormatNumber();
@@ -58,6 +61,10 @@ export const DistributionWidget = () => {
     }
     modalControl.toggleOn();
   };
+
+  const pluginPanels = plugins.dashboard?.panel?.map((Component, index) => (
+    <Component key={index} context={DashboardContext.Distribution} />
+  ));
 
   return (
     <>
@@ -150,6 +157,7 @@ export const DistributionWidget = () => {
                 .addPart(AppRoute.CustomerRequisition)
                 .build()}
             />
+            {pluginPanels}
           </Grid>
           <Grid
             flex={1}

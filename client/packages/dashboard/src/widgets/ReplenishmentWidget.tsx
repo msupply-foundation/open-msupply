@@ -10,6 +10,7 @@ import {
   useAuthContext,
   useNavigate,
   useNotification,
+  usePluginProvider,
   useToggle,
   Widget,
 } from '@openmsupply-client/common';
@@ -30,6 +31,7 @@ import { useDashboard } from '../api';
 import { useInbound } from '@openmsupply-client/invoices';
 import { SupplierSearchModal } from '@openmsupply-client/system';
 import { AppRoute } from '@openmsupply-client/config';
+import { DashboardContext } from '../DashboardService';
 
 export const ReplenishmentWidget: React.FC<PropsWithChildrenOnly> = () => {
   const t = useTranslation();
@@ -38,6 +40,7 @@ export const ReplenishmentWidget: React.FC<PropsWithChildrenOnly> = () => {
   const formatNumber = useFormatNumber();
   const { userHasPermission } = useAuthContext();
   const navigate = useNavigate();
+  const { plugins } = usePluginProvider();
   const { data, isLoading, isError, error } = useDashboard.statistics.inbound();
   const {
     data: requisitionCount,
@@ -89,6 +92,10 @@ export const ReplenishmentWidget: React.FC<PropsWithChildrenOnly> = () => {
     modalControl.toggleOn();
   };
 
+  const pluginPanels = plugins.dashboard?.panel?.map((Component, index) => (
+    <Component key={index} context={DashboardContext.Replenishment} />
+  ));
+
   return (
     <>
       {modalControl.isOn ? (
@@ -127,6 +134,7 @@ export const ReplenishmentWidget: React.FC<PropsWithChildrenOnly> = () => {
               isError={isError}
               isLoading={isLoading}
               title={t('inbound-shipment')}
+              subContext="inbound-shipment"
               stats={[
                 {
                   label: t('label.today'),
@@ -168,6 +176,7 @@ export const ReplenishmentWidget: React.FC<PropsWithChildrenOnly> = () => {
               isError={isRequisitionCountError}
               isLoading={isRequisitionCountLoading}
               title={t('internal-order')}
+              subContext="internal-order"
               stats={[
                 {
                   label: t('label.new'),
@@ -183,6 +192,7 @@ export const ReplenishmentWidget: React.FC<PropsWithChildrenOnly> = () => {
                 .build()}
             />
           </Grid>
+          {pluginPanels}
           <Grid
             flex={1}
             container
