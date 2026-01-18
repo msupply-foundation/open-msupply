@@ -45,7 +45,7 @@ jobs:
         if: (!cancelled())
         with:
           files: server/target/nextest/ci-sqlite/sqlite-test-results.xml
-          check_name: "Backend Tests (SQLite)"
+          check_name: "Test report (sqlite)"
           comment_mode: always
           report_individual_runs: true
       - name: Clean up test results
@@ -85,7 +85,7 @@ jobs:
         if: (!cancelled())
         with:
           files: server/target/nextest/ci-postgres/postgres-test-results.xml
-          check_name: "Backend Tests (Postgres)"
+          check_name: "Test report (postgres)"
           comment_mode: always
           report_individual_runs: true
       - name: Clean up test results
