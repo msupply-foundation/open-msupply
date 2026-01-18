@@ -1,7 +1,4 @@
-import {
-  ColumnDef,
-  UsePluginEvents,
-} from '@openmsupply-client/common';
+import { ColumnDef, UsePluginEvents } from '@openmsupply-client/common';
 import {
   ItemFragment,
   MasterListRowFragment,
@@ -11,6 +8,7 @@ import {
 } from '@openmsupply-client/system';
 import { InboundFragment } from '@openmsupply-client/invoices';
 import { PrescriptionPaymentComponentProps } from './prescriptionTypes';
+import { DashboardContext } from '@openmsupply-client/dashboard/src/DashboardService';
 import { DraftRequestLine } from 'packages/requisitions/src/RequestRequisition/DetailView/RequestLineEdit';
 
 export type Plugins = {
@@ -19,7 +17,10 @@ export type Plugins = {
   item?: {
     detailViewField: React.ComponentType<{ item: ItemFragment }>[];
   };
-  dashboard?: React.ComponentType[];
+  dashboard?: {
+    widget?: React.ComponentType[];
+    panel?: React.ComponentType<{ context?: DashboardContext }>[];
+  };
   stockLine?: {
     tableStateLoader: React.ComponentType<{
       stockLines: StockLineRowFragment[];

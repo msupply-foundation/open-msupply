@@ -6,6 +6,12 @@ import {
   StockWidget,
 } from './widgets';
 
+export enum DashboardContext {
+  Replenishment = 'replenishment',
+  Distribution = 'distribution',
+  Stock = 'stock',
+}
+
 const Dashboard: React.FC = () => {
   const { plugins } = usePluginProvider();
 
@@ -22,7 +28,9 @@ const Dashboard: React.FC = () => {
       <ReplenishmentWidget />
       <DistributionWidget />
       <StockWidget />
-      {plugins.dashboard?.map((Plugin, index) => <Plugin key={index} />)}
+      {plugins.dashboard?.widget?.map((Plugin, index) => (
+        <Plugin key={index} />
+      ))}
     </Grid>
   );
 };
