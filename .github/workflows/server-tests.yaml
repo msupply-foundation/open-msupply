@@ -32,33 +32,25 @@ jobs:
           args: -p repository -p graphql_types -p graphql_plugin -p graphql_invoice --manifest-path server/Cargo.toml
       - name: Run tests and generate report
         run: cargo nextest run --profile=ci-sqlite --features=sqlite --manifest-path server/Cargo.toml
-      - name: Debug working directory and test results
-        if: (!cancelled())
-        run: |
-          echo "Current working directory: $(pwd)"
-          echo "Looking for sqlite-test-results.xml:"
-          ls -la sqlite-test-results.xml 2>/dev/null || echo "  Not found in repo root"
-          ls -la server/sqlite-test-results.xml 2>/dev/null || echo "  Not found in server/"
-          find . -name "sqlite-test-results.xml" -type f 2>/dev/null || echo "  Not found anywhere"
       - name: Upload JUnit test results
         uses: actions/upload-artifact@v4
         if: (!cancelled())
         with:
           name: test-results-sqlite
-          path: server/sqlite-test-results.xml
+          path: server/target/nextest/ci-sqlite/sqlite-test-results.xml
           if-no-files-found: warn
           retention-days: 7
       - name: Publish test results
         uses: EnricoMi/publish-unit-test-result-action/macos@v2
         if: (!cancelled())
         with:
-          files: server/sqlite-test-results.xml
+          files: server/target/nextest/ci-sqlite/sqlite-test-results.xml
           check_name: "Backend Tests (SQLite)"
           comment_mode: always
           report_individual_runs: true
       - name: Clean up test results
         if: always()
-        run: rm -f server/sqlite-test-results.xml
+        run: rm -f server/target/nextest/ci-sqlite/sqlite-test-results.xml
   build_and_test_pg:
     name: Remote Server Tests (postgres)
     runs-on: self-hosted
@@ -80,30 +72,22 @@ jobs:
           args: -p repository -p graphql_types -p graphql_plugin -p graphql_invoice --manifest-path server/Cargo.toml
       - name: Run test and generate report
         run: cargo nextest run --profile=ci-postgres --features=postgres --manifest-path server/Cargo.toml
-      - name: Debug working directory and test results
-        if: (!cancelled())
-        run: |
-          echo "Current working directory: $(pwd)"
-          echo "Looking for postgres-test-results.xml:"
-          ls -la postgres-test-results.xml 2>/dev/null || echo "  Not found in repo root"
-          ls -la server/postgres-test-results.xml 2>/dev/null || echo "  Not found in server/"
-          find . -name "postgres-test-results.xml" -type f 2>/dev/null || echo "  Not found anywhere"
       - name: Upload JUnit test results
         uses: actions/upload-artifact@v4
         if: (!cancelled())
         with:
           name: test-results-postgres
-          path: server/postgres-test-results.xml
+          path: server/target/nextest/ci-postgres/postgres-test-results.xml
           if-no-files-found: warn
           retention-days: 7
       - name: Publish test results
         uses: EnricoMi/publish-unit-test-result-action/macos@v2
         if: (!cancelled())
         with:
-          files: server/postgres-test-results.xml
+          files: server/target/nextest/ci-postgres/postgres-test-results.xml
           check_name: "Backend Tests (Postgres)"
           comment_mode: always
           report_individual_runs: true
       - name: Clean up test results
         if: always()
-        run: rm -f server/postgres-test-results.xml
+        run: rm -f server/target/nextest/ci-postgres/postgres-test-results.xml
