@@ -32,30 +32,25 @@ jobs:
           args: -p repository -p graphql_types -p graphql_plugin -p graphql_invoice --manifest-path server/Cargo.toml
       - name: Run tests and generate report
         run: cargo nextest run --profile=ci-sqlite --features=sqlite --manifest-path server/Cargo.toml
-      - name: Copy test results to relative path
-        if: (!cancelled())
-        run: |
-          mkdir -p test-results
-          cp -Lpr /tmp/target/sqlite/nextest/ci-sqlite/sqlite-test-results.xml test-results/ 2>/dev/null || echo "Warning: Test results file not found"
       - name: Upload JUnit test results
         uses: actions/upload-artifact@v4
         if: (!cancelled())
         with:
           name: test-results-sqlite
-          path: test-results/sqlite-test-results.xml
+          path: sqlite-test-results.xml
           if-no-files-found: warn
           retention-days: 7
       - name: Publish test results
         uses: EnricoMi/publish-unit-test-result-action/macos@v2
         if: (!cancelled())
         with:
-          files: test-results/sqlite-test-results.xml
-          check_name: "Rust Tests (SQLite)"
+          files: sqlite-test-results.xml
+          check_name: "Backend Tests (SQLite)"
           comment_mode: always
           report_individual_runs: true
       - name: Clean up test results
         if: always()
-        run: rm -rf test-results
+        run: rm -f sqlite-test-results.xml
   build_and_test_pg:
     name: Remote Server Tests (postgres)
     runs-on: self-hosted
@@ -77,27 +72,22 @@ jobs:
           args: -p repository -p graphql_types -p graphql_plugin -p graphql_invoice --manifest-path server/Cargo.toml
       - name: Run test and generate report
         run: cargo nextest run --profile=ci-postgres --features=postgres --manifest-path server/Cargo.toml
-      - name: Copy test results to relative path
-        if: (!cancelled())
-        run: |
-          mkdir -p test-results
-          cp -Lpr /tmp/target/postgres/nextest/ci-postgres/postgres-test-results.xml test-results/ 2>/dev/null || echo "Warning: Test results file not found"
       - name: Upload JUnit test results
         uses: actions/upload-artifact@v4
         if: (!cancelled())
         with:
           name: test-results-postgres
-          path: test-results/postgres-test-results.xml
+          path: postgres-test-results.xml
           if-no-files-found: warn
           retention-days: 7
       - name: Publish test results
         uses: EnricoMi/publish-unit-test-result-action/macos@v2
         if: (!cancelled())
         with:
-          files: test-results/postgres-test-results.xml
-          check_name: "Rust Tests (Postgres)"
+          files: postgres-test-results.xml
+          check_name: "Backend Tests (Postgres)"
           comment_mode: always
           report_individual_runs: true
       - name: Clean up test results
         if: always()
-        run: rm -rf test-results
+        run: rm -f postgres-test-results.xml
