@@ -13,7 +13,13 @@ import { AppRoute } from '@openmsupply-client/config';
 
 const LOW_MOS_THRESHOLD = 3;
 
-export const StockLevelsSummary = () => {
+interface StockLevelsSummaryProps {
+  widgetContext: string;
+}
+
+export const StockLevelsSummary = ({
+  widgetContext,
+}: StockLevelsSummaryProps) => {
   const t = useTranslation();
   const formatNumber = useFormatNumber();
   const queryClient = useQueryClient();
@@ -43,6 +49,8 @@ export const StockLevelsSummary = () => {
       isError={hasItemStatsError}
       isLoading={isItemStatsLoading}
       title={t('heading.stock-levels')}
+      widgetContext={widgetContext}
+      panelContext={'stock-levels'}
       stats={[
         {
           label: t('label.total-items', {

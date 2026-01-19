@@ -24,7 +24,6 @@ import {
 import { AppRoute } from '@openmsupply-client/config';
 import { ExpiringStockSummary } from './ExpiringStockSummary';
 import { StockLevelsSummary } from './StockLevelsSummary';
-import { DashboardContext } from '../../DashboardService';
 
 export const StockWidget = () => {
   const t = useTranslation();
@@ -35,6 +34,8 @@ export const StockWidget = () => {
   const { error: errorNotification } = useNotification();
   const { mutateAsync: onCreate } = useRequest.document.insert();
   const { insert: onProgramCreate } = useRequest.document.insertProgram();
+
+  const widgetContext = 'stock';
 
   const handleClick = useCallback(() => {
     if (!userHasPermission(UserPermission.RequisitionMutate)) {
@@ -100,7 +101,7 @@ export const StockWidget = () => {
   );
 
   const pluginPanels = plugins.dashboard?.panel?.map((Component, index) => (
-    <Component key={index} context={DashboardContext.Stock} />
+    <Component key={index} widgetContext={widgetContext} />
   ));
 
   return (
@@ -112,8 +113,8 @@ export const StockWidget = () => {
         flexDirection="column"
       >
         <Grid>
-          <ExpiringStockSummary />
-          <StockLevelsSummary />
+          <ExpiringStockSummary widgetContext={widgetContext} />
+          <StockLevelsSummary widgetContext={widgetContext} />
           {pluginPanels}
         </Grid>
         <Grid

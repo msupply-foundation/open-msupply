@@ -22,7 +22,6 @@ import { useFormatNumber, useTranslation } from '@common/intl';
 import { useDashboard } from '../api';
 import { useOutbound } from '@openmsupply-client/invoices';
 import { AppRoute } from '@openmsupply-client/config';
-import { DashboardContext } from '../DashboardService';
 
 export const DistributionWidget = () => {
   const t = useTranslation();
@@ -45,6 +44,8 @@ export const DistributionWidget = () => {
     error: requisitionCountError,
   } = useDashboard.statistics.requisitions();
 
+  const widgetContext = 'distribution';
+
   const { mutateAsync: onCreate } = useOutbound.document.insert();
   const onError = (e: unknown) => {
     const message = (e as Error).message ?? '';
@@ -63,7 +64,7 @@ export const DistributionWidget = () => {
   };
 
   const pluginPanels = plugins.dashboard?.panel?.map((Component, index) => (
-    <Component key={index} context={DashboardContext.Distribution} />
+    <Component key={index} widgetContext={widgetContext} />
   ));
 
   return (
@@ -104,6 +105,8 @@ export const DistributionWidget = () => {
               isError={isOutboundCountError}
               isLoading={isOutboundCountLoading}
               title={t('heading.shipments')}
+              widgetContext={widgetContext}
+              panelContext={'outbound-shipments'}
               stats={[
                 {
                   label: t('label.have-not-shipped'),
@@ -131,6 +134,8 @@ export const DistributionWidget = () => {
               isError={isRequisitionCountError}
               isLoading={isRequisitionCountLoading}
               title={t('customer-requisition')}
+              widgetContext={widgetContext}
+              panelContext={'customer-requisitions'}
               stats={[
                 {
                   label: t('label.new'),

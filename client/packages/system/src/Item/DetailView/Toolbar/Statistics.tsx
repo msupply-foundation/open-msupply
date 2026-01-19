@@ -19,6 +19,8 @@ export const Statistics = () => {
   const { manageVaccinesInDoses } = usePreferences();
   const { stats, isVaccine, doses } = data || {};
 
+  const widgetContext = 'itemDetailView';
+
   if (!stats) return null;
 
   const getDosesMessage = (quan: number) => {
@@ -37,6 +39,9 @@ export const Statistics = () => {
       display="flex"
     >
       <StatsPanel
+        title={t('title.stock-on-hand')}
+        widgetContext={widgetContext}
+        panelContext={'stock-on-hand'}
         isLoading={false}
         stats={[
           {
@@ -45,7 +50,6 @@ export const Statistics = () => {
             extraMessage: getDosesMessage(stats.stockOnHand),
           },
         ]}
-        title={t('title.stock-on-hand')}
         link={
           data?.code &&
           RouteBuilder.create(AppRoute.Inventory)
@@ -59,6 +63,9 @@ export const Statistics = () => {
       />
       <StatsPanel
         isLoading={false}
+        title={t('title.average-monthly-consumption')}
+        widgetContext={widgetContext}
+        panelContext={'average-monthly-consumption'}
         stats={[
           {
             label: t('label.units'),
@@ -66,18 +73,19 @@ export const Statistics = () => {
             extraMessage: getDosesMessage(stats.averageMonthlyConsumption),
           },
         ]}
-        title={t('title.average-monthly-consumption')}
         width={300}
       />
       <StatsPanel
         isLoading={false}
+        title={t('title.months-of-stock')}
+        widgetContext={widgetContext}
+        panelContext={'months-of-stock'}
         stats={[
           {
             label: t('text.months'),
             value: formatNumber.round(stats?.monthsOfStockOnHand ?? 0, 2),
           },
         ]}
-        title={t('title.months-of-stock')}
         width={300}
       />
     </Grid>

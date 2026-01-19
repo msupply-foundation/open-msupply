@@ -13,7 +13,6 @@ export type Stat = {
   link?: string;
   extraMessage?: string;
   alertFlag?: boolean;
-  subContext?: string;
 };
 export interface StatsPanelProps {
   error?: ApiException;
@@ -21,10 +20,11 @@ export interface StatsPanelProps {
   isLoading: boolean;
   stats: Stat[];
   title: string;
+  widgetContext: string;
+  panelContext: string;
   width?: number;
   link?: string;
   alertFlag?: boolean;
-  subContext?: string;
 }
 
 export const Statistic = ({
@@ -120,13 +120,15 @@ const Content = ({
   isError,
   isLoading,
   stats,
-  subContext,
+  widgetContext,
+  panelContext,
 }: {
   error?: ApiException;
   isError: boolean;
   isLoading: boolean;
   stats: Stat[];
-  subContext?: string;
+  widgetContext: string;
+  panelContext: string;
 }) => {
   const t = useTranslation();
   const isPermissionDenied = isPermissionDeniedException(error);
@@ -135,7 +137,11 @@ const Content = ({
 
   const pluginStatistics =
     plugins.dashboard?.statistic?.map((Component, index) => (
-      <Component key={index} subContext={subContext} />
+      <Component
+        key={index}
+        widgetContext={widgetContext}
+        panelContext={panelContext}
+      />
     )) ?? [];
 
   const statistics = [
@@ -165,7 +171,8 @@ export const StatsPanel: FC<StatsPanelProps> = ({
   title,
   width,
   link,
-  subContext,
+  widgetContext,
+  panelContext,
 }) => (
   <Paper
     sx={{
@@ -203,7 +210,8 @@ export const StatsPanel: FC<StatsPanelProps> = ({
           isLoading={isLoading}
           stats={stats}
           error={error}
-          subContext={subContext}
+          widgetContext={widgetContext}
+          panelContext={panelContext}
         />
       </Grid>
     </Grid>
