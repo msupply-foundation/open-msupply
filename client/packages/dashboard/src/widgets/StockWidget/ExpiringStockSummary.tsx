@@ -13,7 +13,13 @@ import {
 import { useDashboard } from '../../api';
 import { AppRoute } from '@openmsupply-client/config';
 
-export const ExpiringStockSummary = () => {
+interface ExpiringStockSummaryProps {
+  widgetContext: string;
+}
+
+export const ExpiringStockSummary = ({
+  widgetContext,
+}: ExpiringStockSummaryProps) => {
   const t = useTranslation();
   const formatNumber = useFormatNumber();
 
@@ -55,6 +61,8 @@ export const ExpiringStockSummary = () => {
       isError={hasExpiryError}
       isLoading={isExpiryLoading}
       title={t('heading.expiring-stock')}
+      widgetContext={widgetContext}
+      panelContext={'expiring-stock'}
       stats={[
         {
           label: t('label.expired', {

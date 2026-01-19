@@ -8,7 +8,6 @@ import {
 } from '@openmsupply-client/system';
 import { InboundFragment } from '@openmsupply-client/invoices';
 import { PrescriptionPaymentComponentProps } from './prescriptionTypes';
-import { DashboardContext } from '@openmsupply-client/dashboard/src/DashboardService';
 import { DraftRequestLine } from 'packages/requisitions/src/RequestRequisition/DetailView/RequestLineEdit';
 
 export type Plugins = {
@@ -19,8 +18,11 @@ export type Plugins = {
   };
   dashboard?: {
     widget?: React.ComponentType[];
-    panel?: React.ComponentType<{ context?: DashboardContext }>[];
-    statistic?: React.ComponentType<{ subContext?: string }>[];
+    panel?: React.ComponentType<{ widgetContext: string }>[];
+    statistic?: React.ComponentType<{
+      widgetContext: string;
+      panelContext: string;
+    }>[];
   };
   stockLine?: {
     tableStateLoader: React.ComponentType<{

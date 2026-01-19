@@ -6,12 +6,6 @@ import {
   StockWidget,
 } from './widgets';
 
-export enum DashboardContext {
-  Replenishment = 'replenishment',
-  Distribution = 'distribution',
-  Stock = 'stock',
-}
-
 const Dashboard: React.FC = () => {
   const { plugins } = usePluginProvider();
 

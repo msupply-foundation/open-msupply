@@ -31,7 +31,6 @@ import { useDashboard } from '../api';
 import { useInbound } from '@openmsupply-client/invoices';
 import { SupplierSearchModal } from '@openmsupply-client/system';
 import { AppRoute } from '@openmsupply-client/config';
-import { DashboardContext } from '../DashboardService';
 
 export const ReplenishmentWidget: React.FC<PropsWithChildrenOnly> = () => {
   const t = useTranslation();
@@ -48,6 +47,8 @@ export const ReplenishmentWidget: React.FC<PropsWithChildrenOnly> = () => {
     isError: isRequisitionCountError,
     error: requisitionCountError,
   } = useDashboard.statistics.requisitions();
+
+  const widgetContext = 'replenishment';
 
   const { customDate, urlQueryDateTime } = useFormatDateTime();
 
@@ -93,7 +94,7 @@ export const ReplenishmentWidget: React.FC<PropsWithChildrenOnly> = () => {
   };
 
   const pluginPanels = plugins.dashboard?.panel?.map((Component, index) => (
-    <Component key={index} context={DashboardContext.Replenishment} />
+    <Component key={index} widgetContext={widgetContext} />
   ));
 
   return (
@@ -134,7 +135,8 @@ export const ReplenishmentWidget: React.FC<PropsWithChildrenOnly> = () => {
               isError={isError}
               isLoading={isLoading}
               title={t('inbound-shipment')}
-              subContext="inbound-shipment"
+              widgetContext={widgetContext}
+              panelContext={'inbound-shipments'}
               stats={[
                 {
                   label: t('label.today'),
@@ -176,7 +178,8 @@ export const ReplenishmentWidget: React.FC<PropsWithChildrenOnly> = () => {
               isError={isRequisitionCountError}
               isLoading={isRequisitionCountLoading}
               title={t('internal-order')}
-              subContext="internal-order"
+              widgetContext={widgetContext}
+              panelContext={'internal-orders'}
               stats={[
                 {
                   label: t('label.new'),
