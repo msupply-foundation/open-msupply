@@ -5,7 +5,7 @@ use crate::sync::CentralServerConfig;
 use super::{PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType};
 use repository::{
     vaccination_row::VaccinationRowRepository, ChangelogRow, ChangelogTableName,
-    ItemLinkRowRepository, NameLinkRowRepository, StorageConnection, VaccinationRow,
+    ItemLinkRowRepository, StorageConnection, VaccinationRow,
 };
 
 /*
