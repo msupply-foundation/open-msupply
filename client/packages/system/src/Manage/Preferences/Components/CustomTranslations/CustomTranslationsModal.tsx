@@ -13,9 +13,11 @@ import { TranslationsTable } from './TranslationsInputTable';
 export const EditCustomTranslations = ({
   value,
   update,
+  disabled,
 }: {
   value: Record<string, string>;
   update: (value: Record<string, string>) => Promise<boolean>;
+  disabled: boolean;
 }) => {
   const t = useTranslation();
   const isOpen = useToggle();
@@ -30,6 +32,7 @@ export const EditCustomTranslations = ({
         label={t('button.edit')}
         onClick={isOpen.toggleOn}
         Icon={<EditIcon />}
+        disabled={disabled}
       />
       {isOpen.isOn && (
         <CustomTranslationsModal
