@@ -1157,17 +1157,15 @@ export function getSdk(
   return {
     purchaseOrders(
       variables: PurchaseOrdersQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<PurchaseOrdersQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<PurchaseOrdersQuery>({
-            document: PurchaseOrdersDocument,
+          client.request<PurchaseOrdersQuery>(
+            PurchaseOrdersDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'purchaseOrders',
         'query',
         variables
@@ -1175,17 +1173,15 @@ export function getSdk(
     },
     purchaseOrderById(
       variables: PurchaseOrderByIdQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<PurchaseOrderByIdQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<PurchaseOrderByIdQuery>({
-            document: PurchaseOrderByIdDocument,
+          client.request<PurchaseOrderByIdQuery>(
+            PurchaseOrderByIdDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'purchaseOrderById',
         'query',
         variables
@@ -1193,17 +1189,15 @@ export function getSdk(
     },
     insertPurchaseOrder(
       variables: InsertPurchaseOrderMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<InsertPurchaseOrderMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<InsertPurchaseOrderMutation>({
-            document: InsertPurchaseOrderDocument,
+          client.request<InsertPurchaseOrderMutation>(
+            InsertPurchaseOrderDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'insertPurchaseOrder',
         'mutation',
         variables
@@ -1211,17 +1205,15 @@ export function getSdk(
     },
     updatePurchaseOrder(
       variables: UpdatePurchaseOrderMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<UpdatePurchaseOrderMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<UpdatePurchaseOrderMutation>({
-            document: UpdatePurchaseOrderDocument,
+          client.request<UpdatePurchaseOrderMutation>(
+            UpdatePurchaseOrderDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'updatePurchaseOrder',
         'mutation',
         variables
@@ -1229,17 +1221,15 @@ export function getSdk(
     },
     deletePurchaseOrder(
       variables: DeletePurchaseOrderMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<DeletePurchaseOrderMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<DeletePurchaseOrderMutation>({
-            document: DeletePurchaseOrderDocument,
+          client.request<DeletePurchaseOrderMutation>(
+            DeletePurchaseOrderDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'deletePurchaseOrder',
         'mutation',
         variables
@@ -1247,17 +1237,15 @@ export function getSdk(
     },
     purchaseOrderLines(
       variables: PurchaseOrderLinesQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<PurchaseOrderLinesQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<PurchaseOrderLinesQuery>({
-            document: PurchaseOrderLinesDocument,
+          client.request<PurchaseOrderLinesQuery>(
+            PurchaseOrderLinesDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'purchaseOrderLines',
         'query',
         variables
@@ -1265,17 +1253,15 @@ export function getSdk(
     },
     purchaseOrderLine(
       variables: PurchaseOrderLineQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<PurchaseOrderLineQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<PurchaseOrderLineQuery>({
-            document: PurchaseOrderLineDocument,
+          client.request<PurchaseOrderLineQuery>(
+            PurchaseOrderLineDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'purchaseOrderLine',
         'query',
         variables
@@ -1283,17 +1269,15 @@ export function getSdk(
     },
     purchaseOrderLinesCount(
       variables: PurchaseOrderLinesCountQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<PurchaseOrderLinesCountQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<PurchaseOrderLinesCountQuery>({
-            document: PurchaseOrderLinesCountDocument,
+          client.request<PurchaseOrderLinesCountQuery>(
+            PurchaseOrderLinesCountDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'purchaseOrderLinesCount',
         'query',
         variables
@@ -1301,17 +1285,15 @@ export function getSdk(
     },
     insertPurchaseOrderLine(
       variables: InsertPurchaseOrderLineMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<InsertPurchaseOrderLineMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<InsertPurchaseOrderLineMutation>({
-            document: InsertPurchaseOrderLineDocument,
+          client.request<InsertPurchaseOrderLineMutation>(
+            InsertPurchaseOrderLineDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'insertPurchaseOrderLine',
         'mutation',
         variables
@@ -1319,17 +1301,15 @@ export function getSdk(
     },
     addToPurchaseOrderFromMasterList(
       variables: AddToPurchaseOrderFromMasterListMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<AddToPurchaseOrderFromMasterListMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<AddToPurchaseOrderFromMasterListMutation>({
-            document: AddToPurchaseOrderFromMasterListDocument,
+          client.request<AddToPurchaseOrderFromMasterListMutation>(
+            AddToPurchaseOrderFromMasterListDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'addToPurchaseOrderFromMasterList',
         'mutation',
         variables
@@ -1337,17 +1317,15 @@ export function getSdk(
     },
     updatePurchaseOrderLine(
       variables: UpdatePurchaseOrderLineMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<UpdatePurchaseOrderLineMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<UpdatePurchaseOrderLineMutation>({
-            document: UpdatePurchaseOrderLineDocument,
+          client.request<UpdatePurchaseOrderLineMutation>(
+            UpdatePurchaseOrderLineDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'updatePurchaseOrderLine',
         'mutation',
         variables
@@ -1355,17 +1333,15 @@ export function getSdk(
     },
     deletePurchaseOrderLines(
       variables: DeletePurchaseOrderLinesMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<DeletePurchaseOrderLinesMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<DeletePurchaseOrderLinesMutation>({
-            document: DeletePurchaseOrderLinesDocument,
+          client.request<DeletePurchaseOrderLinesMutation>(
+            DeletePurchaseOrderLinesDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'deletePurchaseOrderLines',
         'mutation',
         variables
