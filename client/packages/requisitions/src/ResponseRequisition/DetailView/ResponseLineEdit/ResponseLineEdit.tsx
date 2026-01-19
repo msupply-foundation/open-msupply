@@ -376,6 +376,7 @@ export const ResponseLineEdit = ({
               }}
               filter={{
                 id: { notEqualAll: lines.map(line => line.itemId) },
+                isVisibleOrOnHand: true,
               }}
             />
           )}

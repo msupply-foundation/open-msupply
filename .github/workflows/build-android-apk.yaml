@@ -20,9 +20,12 @@ jobs:
         id: nvm
 
       - name: Use Node.js (.nvmrc)
-        uses: actions/setup-node@v1
+        uses: actions/setup-node@v4
         with:
-          node-version: "${{ steps.nvm.outputs.NVMRC }}"
+          node-version: '${{ steps.nvm.outputs.NVMRC }}'
+
+      - name: Install Yarn
+        run: npm install -g yarn
 
       - name: Install Dependencies
         run: |
@@ -47,8 +50,8 @@ jobs:
       - name: Set Up Java
         uses: actions/setup-java@v4
         with:
-          distribution: "temurin"
-          java-version: "17"
+          distribution: temurin
+          java-version-file: client/.java-version
 
       - name: Build Android App
         uses: borales/actions-yarn@v4

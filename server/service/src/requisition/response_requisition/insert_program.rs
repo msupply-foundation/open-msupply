@@ -118,7 +118,7 @@ fn validate(
             master_list
                 .order_types
                 .iter()
-                .find(|order_type| (order_type.id == input.program_order_type_id))
+                .find(|order_type| order_type.id == input.program_order_type_id)
                 .map(|order_type| (master_list, order_type))
         })
         .ok_or(OutError::ProgramOrderTypeDoesNotExist)?;
