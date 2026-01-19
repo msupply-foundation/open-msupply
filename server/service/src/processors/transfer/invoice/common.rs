@@ -66,6 +66,7 @@ pub(crate) fn generate_inbound_lines(
                     shipped_number_of_packs,
                     volume_per_pack,
                     shipped_pack_size,
+                    status,
                 },
                 ItemRow {
                     id: item_id,
@@ -145,6 +146,7 @@ pub(crate) fn generate_inbound_lines(
                     // Default
                     stock_line_id: None,
                     location_id: None,
+                    status,
                 }
             },
         )

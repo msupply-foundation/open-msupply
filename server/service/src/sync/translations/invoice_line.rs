@@ -47,6 +47,9 @@ pub struct TransLineRowOmsFields {
     #[serde(default)]
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub program_id: Option<String>,
+    #[serde(default)]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    pub status: Option<String>,
 }
 
 #[allow(non_snake_case)]
@@ -296,6 +299,7 @@ impl SyncTranslation for InvoiceLineTranslation {
         let TransLineRowOmsFields {
             campaign_id,
             program_id,
+            status,
         } = oms_fields.unwrap_or_default();
 
         let result = InvoiceLineRow {
@@ -329,6 +333,12 @@ impl SyncTranslation for InvoiceLineTranslation {
             shipped_number_of_packs,
             volume_per_pack,
             shipped_pack_size,
+            status: match status.as_deref() {
+                Some("PENDING") => Some(repository::InvoiceLineStatus::Pending),
+                Some("PASSED") => Some(repository::InvoiceLineStatus::Passed),
+                Some("REJECTED") => Some(repository::InvoiceLineStatus::Rejected),
+                _ => None,
+            },
         };
 
         let result = adjust_negative_values(result);
@@ -392,6 +402,7 @@ impl SyncTranslation for InvoiceLineTranslation {
                     shipped_number_of_packs,
                     volume_per_pack,
                     shipped_pack_size,
+                    status,
                 },
             item_row,
             ..
@@ -400,6 +411,12 @@ impl SyncTranslation for InvoiceLineTranslation {
         let oms_fields = Some(TransLineRowOmsFields {
             campaign_id,
             program_id,
+            status: match status {
+                Some(repository::InvoiceLineStatus::Pending) => Some("PENDING".to_string()),
+                Some(repository::InvoiceLineStatus::Passed) => Some("PASSED".to_string()),
+                Some(repository::InvoiceLineStatus::Rejected) => Some("REJECTED".to_string()),
+                None => None,
+            },
         });
 
         let legacy_row = LegacyTransLineRow {
