@@ -83,9 +83,8 @@ const shouldIgnoreQuery = (definitionNode: DefinitionNode) => {
   return ignoredQueries.indexOf(operationNode.name?.value ?? '') !== -1;
 };
 
-const shouldSaveRequestTime = (documentNode?: DocumentNode) => {
-  return documentNode && !documentNode.definitions.some(shouldIgnoreQuery);
-};
+const shouldSaveRequestTime = (documentNode?: DocumentNode) =>
+  documentNode && !documentNode?.definitions?.some(shouldIgnoreQuery);
 
 class GQLClient extends GraphQLClient {
   private emptyData: object;
@@ -109,7 +108,11 @@ class GQLClient extends GraphQLClient {
     requestHeaders?: RequestInit['headers']
   ): Promise<T> {
     const options = documentOrOptions as RequestOptions<Variables>;
-    const document = (documentOrOptions as DocumentNode) || options.document;
+    const document = (
+      typeof documentOrOptions !== 'string' && 'document' in documentOrOptions
+        ? options.document
+        : documentOrOptions
+    ) as DocumentNode;
 
     if (this.skipRequest(document)) {
       return new Promise(() => this.emptyData);
