@@ -71,6 +71,7 @@ pub fn mock_purchase_order_e() -> PurchaseOrderRow {
         status: db_diesel::purchase_order_row::PurchaseOrderStatus::Finalised,
         supplier_name_id: "name_a".to_string(),
         purchase_order_number: 3,
+        foreign_exchange_rate: Some(1.00),
         ..Default::default()
     }
 }
