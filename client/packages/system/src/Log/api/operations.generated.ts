@@ -113,13 +113,16 @@ export function getSdk(
   return {
     logLevel(
       variables?: LogLevelQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<LogLevelQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<LogLevelQuery>(LogLevelDocument, variables, {
-            ...requestHeaders,
-            ...wrappedRequestHeaders,
+          client.request<LogLevelQuery>({
+            document: LogLevelDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
           }),
         'logLevel',
         'query',
@@ -128,13 +131,16 @@ export function getSdk(
     },
     logFileNames(
       variables?: LogFileNamesQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<LogFileNamesQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<LogFileNamesQuery>(LogFileNamesDocument, variables, {
-            ...requestHeaders,
-            ...wrappedRequestHeaders,
+          client.request<LogFileNamesQuery>({
+            document: LogFileNamesDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
           }),
         'logFileNames',
         'query',
@@ -143,15 +149,17 @@ export function getSdk(
     },
     logContentsByFileName(
       variables: LogContentsByFileNameQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<LogContentsByFileNameQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<LogContentsByFileNameQuery>(
-            LogContentsByFileNameDocument,
+          client.request<LogContentsByFileNameQuery>({
+            document: LogContentsByFileNameDocument,
             variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
         'logContentsByFileName',
         'query',
         variables
