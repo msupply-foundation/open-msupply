@@ -48,7 +48,8 @@ table! {
         program_id -> Nullable<Text>,
         shipped_number_of_packs -> Nullable<Double>,
         volume_per_pack -> Double,
-        shipped_pack_size -> Nullable<Double>
+        shipped_pack_size -> Nullable<Double>,
+        status -> Nullable<crate::db_diesel::invoice_line_row::InvoiceLineStatusMapping>,
     }
 }
 
@@ -72,6 +73,14 @@ pub enum InvoiceLineType {
     StockOut,
     UnallocatedStock,
     Service,
+}
+
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
+#[DbValueStyle = "SCREAMING_SNAKE_CASE"]
+pub enum InvoiceLineStatus {
+    Pending,
+    Passed,
+    Rejected,
 }
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
@@ -111,6 +120,7 @@ pub struct InvoiceLineRow {
     pub shipped_number_of_packs: Option<f64>,
     pub volume_per_pack: f64,
     pub shipped_pack_size: Option<f64>,
+    pub status: Option<InvoiceLineStatus>,
 }
 
 pub struct InvoiceLineRowRepository<'a> {
