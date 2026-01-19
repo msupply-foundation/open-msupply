@@ -65,11 +65,11 @@ impl SyncTranslation for IndicatorValue {
                 "The store record for facility_ID/customer_store_id could not be found! {customer_store_id}"
             ))?
             .store_row
-            .name_link_id;
+            .name_id;
 
         Ok(PullTranslateResult::upsert(IndicatorValueRow {
             id,
-            customer_name_link_id,
+            customer_name_id: customer_name_link_id,
             store_id,
             period_id,
             indicator_line_id,
@@ -95,7 +95,7 @@ impl SyncTranslation for IndicatorValue {
 
         let IndicatorValueRow {
             id,
-            customer_name_link_id,
+            customer_name_id: customer_name_link_id,
             store_id,
             period_id,
             indicator_line_id,

@@ -370,7 +370,7 @@ mod test {
         let requisition1 = RequisitionRow {
             id: "requisition1".to_string(),
             order_type: Some("Order Type 1".to_string()),
-            name_link_id: mock_name_store_b().id,
+            name_id: mock_name_store_b().id,
             store_id: mock_store_a().id,
             period_id: Some(period1.id.clone()),
             program_id: Some(program1.id.clone()),
@@ -381,7 +381,7 @@ mod test {
             id: "requisition2".to_string(),
             // Checking case insensitive match
             order_type: Some("OrDeR TyPe 2".to_string()),
-            name_link_id: mock_name_store_b().id,
+            name_id: mock_name_store_b().id,
             store_id: mock_store_a().id,
             period_id: Some(period4.id.clone()),
             program_id: Some(program2.id.clone()),

@@ -234,7 +234,7 @@ impl SyncTranslation for StockLineTranslation {
             supplier_id: supplier_name_row.map(|supplier| supplier.id),
             barcode_id,
             item_variant_id,
-            donor_id: donor_id: donor_link_id,
+            donor_id: donor_link_id,
             vvm_status_id,
             oms_fields,
             total_volume,

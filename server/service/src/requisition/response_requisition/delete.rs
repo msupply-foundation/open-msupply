@@ -187,7 +187,7 @@ mod test_delete {
         let transfer_requisition = RequisitionRow {
             id: "transfer_requisition".to_string(),
             requisition_number: 3,
-            name_link_id: "name_a".to_string(),
+            name_id: "name_a".to_string(),
             store_id: mock_store_a().id,
             r#type: RequisitionType::Response,
             status: RequisitionStatus::New,

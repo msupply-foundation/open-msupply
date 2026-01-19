@@ -110,7 +110,7 @@ mod test {
         RequisitionRow {
             id: "requisition_test".to_string(),
             requisition_number: 5,
-            name_link_id: mock_name_store_b().id,
+            name_id: mock_name_store_b().id,
             store_id: mock_store_a().id,
             ..Default::default()
         }
@@ -164,7 +164,7 @@ mod test {
             RequisitionRow {
                 id: "requisition_not_linked_to_invoice".to_string(),
                 requisition_number: 5,
-                name_link_id: mock_name_store_b().id,
+                name_id: mock_name_store_b().id,
                 store_id: mock_store_a().id,
                 ..Default::default()
             }

@@ -196,7 +196,7 @@ fn generate_stock_in_out_or_update(
             expiry_date,
             volume_per_pack: Some(stocktake_line_row.volume_per_pack),
             campaign_id,
-            donor_id: donor_id: donor_link_id,
+            donor_id: donor_link_id,
             vvm_status_id,
             program_id,
             note: stocktake_line_row.note,
@@ -238,7 +238,7 @@ fn generate_stock_in_out_or_update(
                 value: item_variant_id,
             }),
             donor_id: Some(NullableUpdate {
-                value: donor_id: donor_link_id,
+                value: donor_link_id,
             }),
             campaign_id: Some(NullableUpdate { value: campaign_id }),
             program_id: Some(NullableUpdate { value: program_id }),

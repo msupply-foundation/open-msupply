@@ -127,7 +127,7 @@ pub fn name2() -> NameRow {
 pub fn store() -> StoreRow {
     StoreRow {
         id: "8576512519B44CCF840E191BABA89596".to_string(),
-        name_link_id: name2().id,
+        name_id: name2().id,
         ..Default::default()
     }
 }

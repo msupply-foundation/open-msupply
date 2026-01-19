@@ -249,7 +249,7 @@ mod test {
         fn store() -> StoreRow {
             StoreRow {
                 id: "store".to_string(),
-                name_link_id: name().id,
+                name_id: name().id,
                 code: "n/a".to_string(),
                 ..Default::default()
             }
@@ -259,7 +259,7 @@ mod test {
             RequisitionRow {
                 id: "requisition".to_string(),
                 store_id: store().id,
-                name_link_id: mock_name_a().id,
+                name_id: mock_name_a().id,
                 expected_delivery_date: Some(date_now()),
                 r#type: RequisitionType::Request,
                 ..Default::default()
@@ -513,7 +513,7 @@ mod test {
         fn store() -> StoreRow {
             StoreRow {
                 id: "store".to_string(),
-                name_link_id: name().id,
+                name_id: name().id,
                 code: "n/a".to_string(),
                 ..Default::default()
             }
@@ -523,7 +523,7 @@ mod test {
             RequisitionRow {
                 id: "requisition".to_string(),
                 store_id: store().id,
-                name_link_id: mock_name_a().id,
+                name_id: mock_name_a().id,
                 expected_delivery_date: Some(NaiveDate::from_ymd_opt(2021, 1, 5).unwrap()),
                 r#type: RequisitionType::Request,
                 ..Default::default()

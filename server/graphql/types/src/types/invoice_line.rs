@@ -219,7 +219,7 @@ impl InvoiceLineNode {
     pub async fn donor(&self, ctx: &Context<'_>, store_id: String) -> Result<Option<NameNode>> {
         let donor_link_id = match &self.row().donor_id {
             None => return Ok(None),
-            Some(donor_link_id) => donor_id: donor_link_id,
+            Some(donor_link_id) => donor_link_id,
         };
         let loader = ctx.get_loader::<DataLoader<NameByNameLinkIdLoader>>();
         let result = loader

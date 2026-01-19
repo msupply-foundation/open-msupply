@@ -84,11 +84,11 @@ impl SyncTranslation for VaccinationLegacyTranslation {
             given_store_id,
             program_enrolment_id,
             encounter_id,
-            patient_link_id,
+            patient_id,
             user_id,
             vaccine_course_dose_id,
             created_datetime,
-            facility_name_link_id,
+            facility_name_id,
             facility_free_text: _,
             invoice_id,
             stock_line_id,
@@ -105,23 +105,9 @@ impl SyncTranslation for VaccinationLegacyTranslation {
                 changelog.record_id
             )))?;
 
-        let name_link_repo = NameLinkRowRepository::new(connection);
-
-        let patient_name_id = name_link_repo
-            .find_one_by_id(&patient_link_id)?
-            .ok_or(anyhow::Error::msg(format!(
-                "Patient name link ({}) not found",
-                patient_link_id
-            )))?
-            .id;
-
-        // If the facility name link is not set, or not found, we use None
-        let facility_name_id = match facility_name_link_id {
-            Some(facility_name_link_id) => name_link_repo
-                .find_one_by_id(&facility_name_link_id)?
-                .map(|name_link| name_link.id),
-            None => None,
-        };
+        // patient_id and facility_name_id are already resolved by the view
+        let patient_name_id = patient_id;
+        let legacy_facility_name_id = facility_name_id;
 
         // Look up item link ID, if it exists
 
@@ -148,7 +134,7 @@ impl SyncTranslation for VaccinationLegacyTranslation {
             not_given_reason,
             comment,
             name_ID: patient_name_id,
-            facility_ID: facility_name_id,
+            facility_ID: legacy_facility_name_id,
             item_ID: item_id,
             encounter_ID: Some(encounter_id),
             program_enrolment_ID: Some(program_enrolment_id),

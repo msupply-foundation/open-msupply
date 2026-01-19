@@ -466,7 +466,7 @@ mod insert {
             let rnr_form = RnRFormRow {
                 id: form_id.clone(),
                 store_id: mock_store_a().id.clone(),
-                name_link_id: "name_store_c".to_string(),
+                name_id: "name_store_c".to_string(),
                 period_id: period_id.clone(),
                 program_id: mock_program_b().id.clone(),
                 status: RnRFormStatus::Finalised,

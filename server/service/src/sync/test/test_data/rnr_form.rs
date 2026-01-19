@@ -23,7 +23,7 @@ fn rnr_form1() -> RnRFormRow {
     RnRFormRow {
         id: RNR_FORM1.0.to_string(),
         store_id: "store_a".to_string(),
-        name_link_id: "1FB32324AF8049248D929CFB35F255BA".to_string(),
+        name_id: "1FB32324AF8049248D929CFB35F255BA".to_string(),
         period_id: "period_1".to_string(),
         program_id: "program_test".to_string(),
         created_datetime: chrono::NaiveDate::from_ymd_opt(2020, 01, 22)

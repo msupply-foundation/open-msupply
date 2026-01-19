@@ -46,7 +46,7 @@ fn vaccination1() -> VaccinationRow {
         given_store_id: None,
         not_given_reason: None,
         comment: None,
-        facility_name_link_id: None,
+        facility_name_id: None,
         facility_free_text: Some("Other facility".to_string()),
     }
 }
