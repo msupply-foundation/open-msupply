@@ -1665,7 +1665,6 @@ export type DatabaseError = DeleteAssetCatalogueItemErrorInterface &
   DeleteAssetLogReasonErrorInterface &
   DeleteCampaignErrorInterface &
   DeleteLocationErrorInterface &
-  DeleteVaccineCourseErrorInterface &
   InsertAssetCatalogueItemErrorInterface &
   InsertAssetErrorInterface &
   InsertAssetLogErrorInterface &
@@ -1682,7 +1681,6 @@ export type DatabaseError = DeleteAssetCatalogueItemErrorInterface &
   UpdateGoodsReceivedLineErrorInterface &
   UpdateLocationErrorInterface &
   UpdateSensorErrorInterface &
-  UpdateVaccineCourseErrorInterface &
   UpsertBundledItemErrorInterface &
   UpsertCampaignErrorInterface &
   UpsertItemVariantErrorInterface & {
@@ -8529,7 +8527,6 @@ export type RecordNotFound = AddFromMasterListErrorInterface &
   DeleteResponseRequisitionErrorInterface &
   DeleteResponseRequisitionLineErrorInterface &
   DeleteSupplierReturnErrorInterface &
-  DeleteVaccineCourseErrorInterface &
   NodeErrorInterface &
   RequisitionLineChartErrorInterface &
   RequisitionLineStatsErrorInterface &
@@ -11556,6 +11553,11 @@ export type VaccineCourseFilterInput = {
   programId?: InputMaybe<EqualFilterStringInput>;
 };
 
+export type VaccineCourseInUse = DeleteVaccineCourseErrorInterface & {
+  __typename: 'VaccineCourseInUse';
+  description: Scalars['String']['output'];
+};
+
 export type VaccineCourseItemNode = {
   __typename: 'VaccineCourseItemNode';
   id: Scalars['String']['output'];
@@ -11611,6 +11613,11 @@ export type VaccineCourseSortInput = {
 };
 
 export type VaccineCoursesResponse = VaccineCourseConnector;
+
+export type VaccineDosesInUse = UpdateVaccineCourseErrorInterface & {
+  __typename: 'VaccineDosesInUse';
+  description: Scalars['String']['output'];
+};
 
 export type ValueTypeNotCorrect = UpdateIndicatorValueErrorInterface & {
   __typename: 'ValueTypeNotCorrect';
