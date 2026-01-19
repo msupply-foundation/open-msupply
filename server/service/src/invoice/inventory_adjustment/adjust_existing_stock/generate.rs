@@ -139,7 +139,7 @@ pub fn generate(
             stock_on_hold: on_hold,
             note,
             item_variant_id,
-            donor_id: donor_id: donor_link_id,
+            donor_id: donor_link_id,
             vvm_status_id,
             campaign_id,
             program_id,

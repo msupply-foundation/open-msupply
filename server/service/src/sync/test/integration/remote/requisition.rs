@@ -91,7 +91,7 @@ impl SyncRecordTester for RequisitionRecordTester {
                     "type_of": "general"
                 }],
                 "name": [{
-                    "ID": base_requisition_row.name_link_id,
+                    "ID": base_requisition_row.name_id,
                     "type": "store"
                 }],
             }),

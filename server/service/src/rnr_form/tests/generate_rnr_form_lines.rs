@@ -385,7 +385,7 @@ mod generate_rnr_form_lines {
                 rnr_forms: vec![
                     RnRFormRow {
                         id: "rnr_form_1".to_string(),
-                        name_link_id: "name_store_b".to_string(),
+                        name_id: "name_store_b".to_string(),
                         store_id: mock_store_a().id,
                         program_id: mock_program_b().id,
                         period_id: mock_period_2_a().id,
@@ -397,7 +397,7 @@ mod generate_rnr_form_lines {
                     },
                     RnRFormRow {
                         id: "rnr_form_2".to_string(),
-                        name_link_id: "name_store_b".to_string(),
+                        name_id: "name_store_b".to_string(),
                         store_id: mock_store_a().id,
                         program_id: mock_program_b().id,
                         period_id: mock_period_2_b().id,
@@ -409,7 +409,7 @@ mod generate_rnr_form_lines {
                     },
                     RnRFormRow {
                         id: "rnr_form_3".to_string(),
-                        name_link_id: "name_store_b".to_string(),
+                        name_id: "name_store_b".to_string(),
                         store_id: mock_store_a().id,
                         program_id: mock_program_b().id,
                         period_id: mock_period_2_c().id,

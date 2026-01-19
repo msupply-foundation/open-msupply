@@ -205,7 +205,7 @@ fn generate(
             &NumberRowType::RequestRequisition,
             &ctx.store_id,
         )?,
-        name_link_id: other_party_id.clone(),
+        name_id: other_party_id.clone(),
         store_id: ctx.store_id.clone(),
         r#type: RequisitionType::Request,
         status: RequisitionStatus::Draft,

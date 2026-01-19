@@ -100,7 +100,7 @@ fn generate(
 ) -> IndicatorValueRow {
     IndicatorValueRow {
         id: indicator_value_row.id,
-        customer_name_id: indicator_value_row.customer_name_link_id,
+        customer_name_id: indicator_value_row.customer_name_id,
         store_id: indicator_value_row.store_id,
         period_id: indicator_value_row.period_id,
         indicator_line_id: indicator_value_row.indicator_line_id,
@@ -135,7 +135,7 @@ mod test {
         RequisitionRow {
             id: "response_program_req".to_string(),
             requisition_number: 3,
-            name_link_id: mock_name_store_b().id,
+            name_id: mock_name_store_b().id,
             store_id: mock_store_a().id,
             r#type: RequisitionType::Response,
             status: RequisitionStatus::New,

@@ -426,7 +426,7 @@ impl SyncTranslation for InvoiceLineTranslation {
             item_variant_id,
             reason_option_id,
             linked_invoice_id,
-            donor_id: donor_id: donor_link_id,
+            donor_id: donor_link_id,
             vvm_status_id,
             oms_fields,
             shipped_number_of_packs,

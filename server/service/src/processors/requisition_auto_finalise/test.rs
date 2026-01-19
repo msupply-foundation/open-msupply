@@ -33,7 +33,7 @@ async fn test_requisition_auto_finalise() {
 
     let store = StoreRow {
         id: uuid(),
-        name_link_id: response_store_name.id.clone(),
+        name_id: response_store_name.id.clone(),
         site_id,
         ..Default::default()
     };
@@ -83,7 +83,7 @@ async fn test_requisition_auto_finalise() {
     let requisition = RequisitionRow {
         id: uuid(),
         requisition_number: 1,
-        name_link_id: customer_name.id.clone(),
+        name_id: customer_name.id.clone(),
         store_id: store.id.clone(),
         r#type: RequisitionType::Response,
         status: RequisitionStatus::New,

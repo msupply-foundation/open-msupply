@@ -615,7 +615,7 @@ impl SyncTranslation for InvoiceTranslation {
             insurance_discount_percentage,
             is_cancellation,
             expected_delivery_date,
-            default_donor_id,
+            default_donor_link_id: default_donor_id,
             goods_received_ID: goods_received_id,
             shipping_method_id,
         };

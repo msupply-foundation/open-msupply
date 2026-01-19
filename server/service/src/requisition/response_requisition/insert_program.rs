@@ -189,7 +189,7 @@ fn generate(
             &NumberRowType::ResponseRequisition,
             &ctx.store_id,
         )?,
-        name_link_id: other_party_id.clone(),
+        name_id: other_party_id.clone(),
         store_id: ctx.store_id.clone(),
         r#type: RequisitionType::Response,
         status: RequisitionStatus::New,

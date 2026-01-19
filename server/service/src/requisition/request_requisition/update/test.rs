@@ -213,7 +213,7 @@ mod test_update {
             expected.status = RequisitionStatus::Sent;
             expected.their_reference = Some("new their_reference".to_string());
             expected.comment = Some("new comment".to_string());
-            expected.name_link_id = mock_name_store_c().id;
+            expected.name_id = mock_name_store_c().id;
             expected.expected_delivery_date = Some(NaiveDate::from_ymd_opt(2022, 1, 3).unwrap());
             expected
         });

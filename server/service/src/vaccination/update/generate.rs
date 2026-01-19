@@ -221,7 +221,7 @@ fn get_vaccination_with_updated_base_fields(
         encounter_id,
         vaccine_course_dose_id,
         user_id,
-        patient_link_id,
+        patient_id: patient_link_id,
         created_datetime,
 
         vaccination_date,
@@ -233,7 +233,7 @@ fn get_vaccination_with_updated_base_fields(
         item_link_id,
 
         comment,
-        facility_name_link_id,
+        facility_name_id: facility_name_link_id,
         facility_free_text,
         clinician_link_id,
     } = existing_vaccination;
@@ -246,7 +246,7 @@ fn get_vaccination_with_updated_base_fields(
         encounter_id,
         vaccine_course_dose_id,
         user_id,
-        patient_link_id,
+        patient_id: patient_link_id,
         created_datetime,
 
         // Copy from existing, could be overwritten by further generate logic
@@ -262,7 +262,7 @@ fn get_vaccination_with_updated_base_fields(
             Some(NullableUpdate { value }) => value,
             None => clinician_link_id,
         },
-        facility_name_link_id: match update_input.facility_name_id {
+        facility_name_id: match update_input.facility_name_id {
             Some(NullableUpdate { value }) => value,
             None => facility_name_link_id,
         },

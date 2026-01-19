@@ -475,7 +475,7 @@ impl InvoiceNode {
     ) -> Result<Option<NameNode>> {
         let donor_link_id = match &self.row().default_donor_link_id {
             None => return Ok(None),
-            Some(donor_link_id) => donor_id: donor_link_id,
+            Some(donor_link_id) => donor_link_id,
         };
         let loader = ctx.get_loader::<DataLoader<NameByNameLinkIdLoader>>();
         let result = loader

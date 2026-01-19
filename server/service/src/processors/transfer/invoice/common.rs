@@ -77,7 +77,7 @@ pub(crate) fn generate_inbound_lines(
                     .find_one_by_item_and_store_id(&item_id, inbound_store_id)
                     .unwrap_or(None);
 
-                let supplier_id = &source_invoice.store_row.name_link_id;
+                let supplier_id = &source_invoice.store_row.name_id;
 
                 let cost_price_per_pack = sell_price_per_pack;
 
@@ -309,7 +309,7 @@ mod test {
         let cost_price_per_pack = 5.0;
 
         let outbound_store = mock_store_b();
-        let supplier_id = outbound_store.name_link_id;
+        let supplier_id = outbound_store.name_id;
         let item_properties = mock_item_a_join_store_a();
 
         // Set preference to true -> item margin has priority
@@ -359,7 +359,7 @@ mod test {
         );
 
         let store_c = mock_store_c();
-        let supplier_no_margin_id = store_c.name_link_id;
+        let supplier_no_margin_id = store_c.name_id;
 
         // No supplier margin, fallback to item margin
         assert_eq!(

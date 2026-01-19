@@ -14,7 +14,10 @@
       "Bash(find:*)",
       "Bash(grep:*)",
       "Bash(ls:*)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(cargo clean:*)",
+      "Bash(cargo build:*)",
+      "Bash(1)"
     ]
   }
 }

@@ -301,7 +301,7 @@ mod test_insert {
         let mut expected = new_row.clone();
         expected.id = "new_request_requisition".to_string();
         expected.user_id = Some(mock_user_account_a().id);
-        expected.name_link_id = mock_name_store_c().id;
+        expected.name_id = mock_name_store_c().id;
         expected.colour = Some("new colour".to_string());
         expected.their_reference = Some("new their_reference".to_string());
         expected.comment = Some("new comment".to_string());

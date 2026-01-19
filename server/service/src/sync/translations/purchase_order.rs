@@ -335,7 +335,7 @@ impl SyncTranslation for PurchaseOrderTranslation {
             id,
             store_id,
             created_by,
-            supplier_name_link_id,
+            supplier_name_id: supplier_name_link_id,
             purchase_order_number,
             status,
             created_datetime,

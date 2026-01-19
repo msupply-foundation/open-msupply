@@ -196,7 +196,7 @@ impl SyncTranslation for PurchaseOrderLineTranslation {
             price_per_pack_before_discount,
             price_per_pack_after_discount,
             comment,
-            manufacturer_link_id,
+            manufacturer_id: manufacturer_link_id,
             note,
             unit,
             status,
