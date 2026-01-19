@@ -11,6 +11,7 @@ pub fn mock_purchase_order_a() -> PurchaseOrderRow {
         status: db_diesel::purchase_order_row::PurchaseOrderStatus::New,
         supplier_name_id: "name_a".to_string(),
         purchase_order_number: 1234567890,
+        foreign_exchange_rate: Some(1.00),
         ..Default::default()
     }
 }
@@ -22,6 +23,7 @@ pub fn mock_purchase_order_b() -> PurchaseOrderRow {
         status: db_diesel::purchase_order_row::PurchaseOrderStatus::New,
         supplier_name_id: "name_a".to_string(),
         purchase_order_number: 9876543210,
+        foreign_exchange_rate: Some(1.00),
         ..Default::default()
     }
 }
@@ -33,6 +35,7 @@ pub fn mock_purchase_order_b_finalised() -> PurchaseOrderRow {
         status: db_diesel::purchase_order_row::PurchaseOrderStatus::Finalised,
         supplier_name_id: "name_a".to_string(),
         purchase_order_number: 9876543210,
+        foreign_exchange_rate: Some(1.00),
         ..Default::default()
     }
 }
@@ -44,6 +47,7 @@ pub fn mock_purchase_order_c() -> PurchaseOrderRow {
         status: db_diesel::purchase_order_row::PurchaseOrderStatus::Finalised,
         supplier_name_id: "name_a".to_string(),
         purchase_order_number: 3,
+        foreign_exchange_rate: Some(1.00),
         ..Default::default()
     }
 }
@@ -55,6 +59,7 @@ pub fn mock_purchase_order_d() -> PurchaseOrderRow {
         status: db_diesel::purchase_order_row::PurchaseOrderStatus::New,
         supplier_name_id: "name_a".to_string(),
         purchase_order_number: 3,
+        foreign_exchange_rate: Some(1.00),
         ..Default::default()
     }
 }
