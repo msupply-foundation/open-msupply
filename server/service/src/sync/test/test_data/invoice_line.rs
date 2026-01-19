@@ -392,7 +392,7 @@ fn trans_line_om_fields_pull_record() -> TestSyncIncomingRecord {
             shipped_number_of_packs: Some(0.0),
             volume_per_pack: 0.0,
             shipped_pack_size: Some(100.0),
-            status: None,
+            status: Some(repository::InvoiceLineStatus::Pending),
         },
     )
 }
@@ -497,7 +497,7 @@ const TRANS_LINE_OM_UNSET_TAX_FIELDS: (&str, &str) = (
         "om_total_after_tax": 130.5,
         "om_item_variant_id": "",
         "donor_id": "",
-        "oms_fields": {},
+        "oms_fields": {}
     }"#,
 );
 fn trans_line_om_fields_unset_tax_pull_record() -> TestSyncIncomingRecord {
