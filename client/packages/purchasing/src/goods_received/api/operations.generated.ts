@@ -632,17 +632,15 @@ export function getSdk(
   return {
     goodsReceivedList(
       variables: GoodsReceivedListQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<GoodsReceivedListQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<GoodsReceivedListQuery>({
-            document: GoodsReceivedListDocument,
+          client.request<GoodsReceivedListQuery>(
+            GoodsReceivedListDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'goodsReceivedList',
         'query',
         variables
@@ -650,17 +648,15 @@ export function getSdk(
     },
     goodsReceivedById(
       variables: GoodsReceivedByIdQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<GoodsReceivedByIdQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<GoodsReceivedByIdQuery>({
-            document: GoodsReceivedByIdDocument,
+          client.request<GoodsReceivedByIdQuery>(
+            GoodsReceivedByIdDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'goodsReceivedById',
         'query',
         variables
@@ -668,17 +664,15 @@ export function getSdk(
     },
     insertGoodsReceived(
       variables: InsertGoodsReceivedMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<InsertGoodsReceivedMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<InsertGoodsReceivedMutation>({
-            document: InsertGoodsReceivedDocument,
+          client.request<InsertGoodsReceivedMutation>(
+            InsertGoodsReceivedDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'insertGoodsReceived',
         'mutation',
         variables
@@ -686,17 +680,15 @@ export function getSdk(
     },
     updateGoodsReceived(
       variables: UpdateGoodsReceivedMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<UpdateGoodsReceivedMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<UpdateGoodsReceivedMutation>({
-            document: UpdateGoodsReceivedDocument,
+          client.request<UpdateGoodsReceivedMutation>(
+            UpdateGoodsReceivedDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'updateGoodsReceived',
         'mutation',
         variables
@@ -704,17 +696,15 @@ export function getSdk(
     },
     deleteGoodsReceived(
       variables: DeleteGoodsReceivedMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<DeleteGoodsReceivedMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<DeleteGoodsReceivedMutation>({
-            document: DeleteGoodsReceivedDocument,
+          client.request<DeleteGoodsReceivedMutation>(
+            DeleteGoodsReceivedDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'deleteGoodsReceived',
         'mutation',
         variables
@@ -722,17 +712,15 @@ export function getSdk(
     },
     goodsReceivedLines(
       variables: GoodsReceivedLinesQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<GoodsReceivedLinesQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<GoodsReceivedLinesQuery>({
-            document: GoodsReceivedLinesDocument,
+          client.request<GoodsReceivedLinesQuery>(
+            GoodsReceivedLinesDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'goodsReceivedLines',
         'query',
         variables
@@ -740,17 +728,15 @@ export function getSdk(
     },
     goodsReceivedLine(
       variables: GoodsReceivedLineQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<GoodsReceivedLineQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<GoodsReceivedLineQuery>({
-            document: GoodsReceivedLineDocument,
+          client.request<GoodsReceivedLineQuery>(
+            GoodsReceivedLineDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'goodsReceivedLine',
         'query',
         variables
@@ -758,17 +744,15 @@ export function getSdk(
     },
     goodsReceivedLinesCount(
       variables: GoodsReceivedLinesCountQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<GoodsReceivedLinesCountQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<GoodsReceivedLinesCountQuery>({
-            document: GoodsReceivedLinesCountDocument,
+          client.request<GoodsReceivedLinesCountQuery>(
+            GoodsReceivedLinesCountDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'goodsReceivedLinesCount',
         'query',
         variables
@@ -776,17 +760,15 @@ export function getSdk(
     },
     insertGoodsReceivedLine(
       variables: InsertGoodsReceivedLineMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<InsertGoodsReceivedLineMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<InsertGoodsReceivedLineMutation>({
-            document: InsertGoodsReceivedLineDocument,
+          client.request<InsertGoodsReceivedLineMutation>(
+            InsertGoodsReceivedLineDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'insertGoodsReceivedLine',
         'mutation',
         variables
@@ -794,17 +776,15 @@ export function getSdk(
     },
     insertGoodsReceivedLinesFromPurchaseOrder(
       variables: InsertGoodsReceivedLinesFromPurchaseOrderMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<InsertGoodsReceivedLinesFromPurchaseOrderMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<InsertGoodsReceivedLinesFromPurchaseOrderMutation>({
-            document: InsertGoodsReceivedLinesFromPurchaseOrderDocument,
+          client.request<InsertGoodsReceivedLinesFromPurchaseOrderMutation>(
+            InsertGoodsReceivedLinesFromPurchaseOrderDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'insertGoodsReceivedLinesFromPurchaseOrder',
         'mutation',
         variables
@@ -812,17 +792,15 @@ export function getSdk(
     },
     saveGoodsReceivedLines(
       variables: SaveGoodsReceivedLinesMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<SaveGoodsReceivedLinesMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<SaveGoodsReceivedLinesMutation>({
-            document: SaveGoodsReceivedLinesDocument,
+          client.request<SaveGoodsReceivedLinesMutation>(
+            SaveGoodsReceivedLinesDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'saveGoodsReceivedLines',
         'mutation',
         variables

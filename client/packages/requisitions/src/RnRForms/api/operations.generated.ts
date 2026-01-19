@@ -527,16 +527,13 @@ export function getSdk(
   return {
     rnrForms(
       variables: RnrFormsQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<RnrFormsQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<RnrFormsQuery>({
-            document: RnrFormsDocument,
-            variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
+          client.request<RnrFormsQuery>(RnrFormsDocument, variables, {
+            ...requestHeaders,
+            ...wrappedRequestHeaders,
           }),
         'rnrForms',
         'query',
@@ -545,17 +542,15 @@ export function getSdk(
     },
     schedulesAndPeriods(
       variables: SchedulesAndPeriodsQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<SchedulesAndPeriodsQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<SchedulesAndPeriodsQuery>({
-            document: SchedulesAndPeriodsDocument,
+          client.request<SchedulesAndPeriodsQuery>(
+            SchedulesAndPeriodsDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'schedulesAndPeriods',
         'query',
         variables
@@ -563,17 +558,15 @@ export function getSdk(
     },
     rAndRFormDetail(
       variables: RAndRFormDetailQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<RAndRFormDetailQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<RAndRFormDetailQuery>({
-            document: RAndRFormDetailDocument,
+          client.request<RAndRFormDetailQuery>(
+            RAndRFormDetailDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'rAndRFormDetail',
         'query',
         variables
@@ -581,17 +574,15 @@ export function getSdk(
     },
     createRnRForm(
       variables: CreateRnRFormMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<CreateRnRFormMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<CreateRnRFormMutation>({
-            document: CreateRnRFormDocument,
+          client.request<CreateRnRFormMutation>(
+            CreateRnRFormDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'createRnRForm',
         'mutation',
         variables
@@ -599,17 +590,15 @@ export function getSdk(
     },
     updateRnRForm(
       variables: UpdateRnRFormMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<UpdateRnRFormMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<UpdateRnRFormMutation>({
-            document: UpdateRnRFormDocument,
+          client.request<UpdateRnRFormMutation>(
+            UpdateRnRFormDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'updateRnRForm',
         'mutation',
         variables
@@ -617,17 +606,15 @@ export function getSdk(
     },
     finaliseRnRForm(
       variables: FinaliseRnRFormMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<FinaliseRnRFormMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<FinaliseRnRFormMutation>({
-            document: FinaliseRnRFormDocument,
+          client.request<FinaliseRnRFormMutation>(
+            FinaliseRnRFormDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'finaliseRnRForm',
         'mutation',
         variables
@@ -635,17 +622,15 @@ export function getSdk(
     },
     deleteRnRForm(
       variables: DeleteRnRFormMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<DeleteRnRFormMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<DeleteRnRFormMutation>({
-            document: DeleteRnRFormDocument,
+          client.request<DeleteRnRFormMutation>(
+            DeleteRnRFormDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'deleteRnRForm',
         'mutation',
         variables

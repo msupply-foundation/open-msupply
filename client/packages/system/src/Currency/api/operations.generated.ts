@@ -76,16 +76,13 @@ export function getSdk(
   return {
     currencies(
       variables?: CurrenciesQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<CurrenciesQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<CurrenciesQuery>({
-            document: CurrenciesDocument,
-            variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
+          client.request<CurrenciesQuery>(CurrenciesDocument, variables, {
+            ...requestHeaders,
+            ...wrappedRequestHeaders,
           }),
         'currencies',
         'query',
