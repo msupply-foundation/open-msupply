@@ -44,6 +44,13 @@ export const AssetLogReasonsListView: FC = () => {
         accessorKey: 'reason',
         header: t('label.reason'),
       },
+      {
+        accessorKey: 'commentsRequired',
+        description: t('description.comments-required'),
+        header: t('label.comments-required'),
+        Cell: ({ row }) =>
+          row.original.commentsRequired ? t('label.yes') : t('label.no'),
+      },
     ],
     []
   );

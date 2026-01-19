@@ -560,6 +560,7 @@ export type AssetLogReasonMutationsInsertAssetLogReasonArgs = {
 export type AssetLogReasonNode = {
   __typename: 'AssetLogReasonNode';
   assetLogStatus: AssetLogStatusNodeType;
+  commentsRequired: Scalars['Boolean']['output'];
   id: Scalars['String']['output'];
   reason: Scalars['String']['output'];
 };
@@ -3305,6 +3306,7 @@ export type InsertAssetLogReasonErrorInterface = {
 
 export type InsertAssetLogReasonInput = {
   assetLogStatus: AssetLogStatusNodeType;
+  commentsRequired: Scalars['Boolean']['input'];
   id: Scalars['String']['input'];
   reason: Scalars['String']['input'];
 };
