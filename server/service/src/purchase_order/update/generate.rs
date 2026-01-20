@@ -74,7 +74,7 @@ pub fn generate(
 
     updated_order.currency_id = currency_id.or(updated_order.currency_id);
     updated_order.foreign_exchange_rate =
-        foreign_exchange_rate.or(updated_order.foreign_exchange_rate);
+        foreign_exchange_rate.unwrap_or(updated_order.foreign_exchange_rate);
     updated_order.shipping_method = shipping_method.or(updated_order.shipping_method);
     updated_order.reference = reference.or(updated_order.reference);
     updated_order.comment = comment.or(updated_order.comment);

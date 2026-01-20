@@ -48,6 +48,7 @@ mod insert {
                 created_by: Some(mock_user_account_a().id.clone()),
                 supplier_name_id: mock_name_a().id,
                 status: PurchaseOrderStatus::New,
+                foreign_exchange_rate: 1.0,
                 ..Default::default()
             })
             .unwrap();

@@ -17,7 +17,8 @@
       "Bash(cat:*)",
       "Bash(cargo clean:*)",
       "Bash(cargo build:*)",
-      "Bash(1)"
+      "Bash(1)",
+      "Bash(cargo expand:*)"
     ]
   }
 }

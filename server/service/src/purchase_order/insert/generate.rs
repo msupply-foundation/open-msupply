@@ -27,7 +27,7 @@ pub fn generate(
         created_datetime,
         status: PurchaseOrderStatus::New,
         currency_id: other_party_currency_id,
-        foreign_exchange_rate: currency.map(|c| c.rate),
+        foreign_exchange_rate: currency.map_or(1.0, |c| c.rate),
         // Default
         confirmed_datetime: None,
         target_months: None,
