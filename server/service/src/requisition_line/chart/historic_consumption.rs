@@ -269,7 +269,7 @@ mod tests {
     #[actix_rt::test]
     async fn test_calculate_consumption() {
         let (_, connection, _, _) =
-            setup_all("calculate historic consumption", MockDataInserts::none()).await;
+            setup_all("calculate_historic_consumption", MockDataInserts::none()).await;
         let days_in_month: f64 = days_in_a_month(&connection);
 
         let mut adjust_for_dos = 1.0; // item in stock on all days
