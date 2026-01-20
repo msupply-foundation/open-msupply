@@ -12,7 +12,7 @@ const VACCINATION1: (&str, &str) = (
         "id": "vacc1234-c3d5-4a04-a466-0ac81dde2aab",
         "encounter_id": "encounter_a",
         "program_enrolment_id": "program_test_enrolment",
-        "patient_link_id": "C3FB3B30A8D04DDF9AF59A15BB48668A",
+        "patient_id": "C3FB3B30A8D04DDF9AF59A15BB48668A",
         "vaccine_course_dose_id": "test_vaccine_course_dose",
         "store_id": "store_a",
         "user_id": "user1",

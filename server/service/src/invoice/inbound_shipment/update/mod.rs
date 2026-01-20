@@ -1146,7 +1146,7 @@ mod test {
         result.sort_by(|a, b| a.id.cmp(&b.id));
 
         assert_eq!(
-            invoice.invoice_row.default_donor_link_id,
+            invoice.invoice_row.default_donor_id,
             Some(mock_donor_b().id)
         );
         assert_eq!(result.len(), 2);
@@ -1176,7 +1176,7 @@ mod test {
         result.sort_by(|a, b| a.id.cmp(&b.id));
 
         assert_eq!(
-            invoice.invoice_row.default_donor_link_id,
+            invoice.invoice_row.default_donor_id,
             Some(mock_donor_b().id)
         );
         assert_eq!(result[0].donor_id, Some(mock_donor_b().id));

@@ -303,7 +303,7 @@ pub fn mock_inbound_shipment_c() -> InvoiceRow {
             .unwrap()
             .and_hms_milli_opt(21, 30, 0, 0)
             .unwrap(),
-        default_donor_link_id: Some("donor_a".to_string()),
+        default_donor_id: Some("donor_a".to_string()),
         ..Default::default()
     }
 }

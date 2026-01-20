@@ -10,7 +10,7 @@ const RNR_FORM1: (&str, &str) = (
     r#"{
         "id":  "cfd578f8-c3d5-4a04-a466-0ac81dde2aab",
         "store_id": "store_a",
-        "name_link_id": "1FB32324AF8049248D929CFB35F255BA",
+        "name_id": "1FB32324AF8049248D929CFB35F255BA",
         "period_id": "period_1",
         "program_id": "program_test",
         "created_datetime": "2020-01-22T15:16:00",

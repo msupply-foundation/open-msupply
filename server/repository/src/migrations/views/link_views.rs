@@ -81,11 +81,14 @@ impl ViewMigrationFragment for ViewMigration {
                 CREATE VIEW invoice_view AS
                 SELECT
                     invoice.*,
-                    name_link.name_id as name_id
+                    name_link.name_id as name_id,
+                    default_donor_link.name_id as default_donor_id
                 FROM
                     invoice
                 JOIN
-                    name_link ON invoice.name_link_id = name_link.id;
+                    name_link ON invoice.name_link_id = name_link.id
+                LEFT JOIN
+                    name_link AS default_donor_link ON invoice.default_donor_link_id = default_donor_link.id;
 
                 CREATE VIEW requisition_view AS
                 SELECT
