@@ -90,15 +90,22 @@ define_linked_tables!(
         name_is_supplier -> Bool,
     },
     links: {
-        name_link_id -> name_id,  // Maps link column to resolved column
+        name_link_id -> name_id,  // Required link: Maps link column to resolved column
+    },
+    optional_links: {
+        donor_link_id -> donor_id,  // Optional link: For nullable foreign keys
     }
 );
 ```
 
 This generates:
-- **View table** (`name_store_join`): Queries the view with resolved `name_id`
-- **Core table** (`name_store_join_with_links`): Writes to the actual table with `name_link_id`
-- **Upsert method**: Automatically maps `name_id` back to `name_link_id` on insert
+- **View table** (`name_store_join`): Queries the view with resolved `name_id` and `donor_id`
+- **Core table** (`name_store_join_with_links`): Writes to the actual table with `name_link_id` and `donor_link_id`
+- **Upsert method**: Automatically maps `name_id` → `name_link_id` and `donor_id` → `donor_link_id` on insert
+
+**Links vs Optional Links:**
+- `links`: For required (NOT NULL) foreign keys - generates non-optional fields in the struct
+- `optional_links`: For nullable foreign keys - generates `Option<String>` fields in the struct
 
 #### 3. Domain Structs Without Link References
 
@@ -148,12 +155,17 @@ if name_link_id.is_some() {
 CREATE VIEW my_table_view AS
 SELECT
     my_table.*,
-    name_link.name_id as name_id
+    name_link.name_id as name_id,
+    donor_link.name_id as donor_id
 FROM
     my_table
 JOIN
-    name_link ON my_table.name_link_id = name_link.id;
+    name_link ON my_table.name_link_id = name_link.id
+LEFT JOIN
+    name_link AS donor_link ON my_table.donor_link_id = donor_link.id;
 ```
+
+**Note:** Use `JOIN` for required links and `LEFT JOIN` for optional links.
 
 2. **Use `define_linked_tables!`** in your row module:
 
@@ -170,8 +182,10 @@ define_linked_tables!(
         some_field -> Text,
     },
     links: {
-        name_link_id -> name_id,
-        // Add other link mappings as needed
+        name_link_id -> name_id,  // Required link
+    },
+    optional_links: {
+        donor_link_id -> donor_id,  // Optional link (for nullable FKs)
     }
 );
 ```
@@ -182,9 +196,13 @@ define_linked_tables!(
 pub struct MyTableRow {
     pub id: String,
     pub some_field: String,
-    pub name_id: String,  // NOT name_link_id
+    // Resolved from name_link - must be last to match view column order
+    pub name_id: String,  // NOT name_link_id (required field)
+    pub donor_id: Option<String>,  // NOT donor_link_id (optional field)
 }
 ```
+
+**Important:** Resolved link fields must appear at the end of the struct in the same order as the view definition to match Diesel's query column order.
 
 4. **Update queries** to use the view table for reading and core table for writing.
 
@@ -196,15 +214,7 @@ When refactoring existing code:
 2. **Change filters** from `StringFilter` to `EqualFilter<String>` for link ID fields
 3. **Remove direct joins** to link tables; use subqueries instead
 4. **Update tests** to not construct `*LinkRow` objects
-
-## Tables Using This Pattern
-
-| Table | View | Link Column | Resolved Column |
-|-------|------|-------------|-----------------|
-| `name_store_join` | `name_store_join_view` | `name_link_id` | `name_id` |
-| `store` | `store_view` | `name_link_id` | `name_id` |
-| `name_tag_join` | `name_tag_join_view` | `name_link_id` | `name_id` |
-| `master_list_name_join` | `master_list_name_join_view` | `name_link_id` | `name_id` |
+5. **Update mock data** to use resolved IDs instead of link IDs
 
 ## Benefits
 
