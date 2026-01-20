@@ -53,7 +53,7 @@ pub(crate) fn generate(
 
     let input_donor_id = match patch.default_donor.clone() {
         Some(update) => update.donor_id,
-        None => update_invoice.default_donor_link_id.clone(),
+        None => update_invoice.default_donor_id.clone(),
     };
 
     update_invoice.user_id = Some(ctx.user_id.clone());
@@ -65,7 +65,7 @@ pub(crate) fn generate(
         .tax
         .map(|tax| tax.percentage)
         .unwrap_or(update_invoice.tax_percentage);
-    update_invoice.default_donor_link_id = input_donor_id.clone();
+    update_invoice.default_donor_id = input_donor_id.clone();
 
     if let Some(status) = patch.status.clone() {
         update_invoice.status = status.full_status()
@@ -445,7 +445,7 @@ pub fn generate_location_movements(
 fn update_donor_on_lines_and_stock(
     connection: &StorageConnection,
     invoice_id: &str,
-    updated_default_donor_link_id: Option<String>,
+    updated_default_donor_id: Option<String>,
     donor_update_method: ApplyDonorToInvoiceLines,
 ) -> Result<Vec<LineAndStockLine>, UpdateInboundShipmentError> {
     let invoice_lines = InvoiceLineRepository::new(connection).query_by_filter(
@@ -462,14 +462,14 @@ fn update_donor_on_lines_and_stock(
         let new_donor_id = match donor_update_method.clone() {
             ApplyDonorToInvoiceLines::None => line.donor_id.clone(),
             ApplyDonorToInvoiceLines::UpdateExistingDonor => match line.donor_id {
-                Some(_) => updated_default_donor_link_id.clone(),
+                Some(_) => updated_default_donor_id.clone(),
                 None => None,
             },
             ApplyDonorToInvoiceLines::AssignIfNone => line
                 .donor_id
                 .clone()
-                .or(updated_default_donor_link_id.clone()),
-            ApplyDonorToInvoiceLines::AssignToAll => updated_default_donor_link_id.clone(),
+                .or(updated_default_donor_id.clone()),
+            ApplyDonorToInvoiceLines::AssignToAll => updated_default_donor_id.clone(),
         };
 
         line.donor_id = new_donor_id.clone();

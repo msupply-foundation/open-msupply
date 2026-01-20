@@ -12,9 +12,8 @@ use dataloader::DataLoader;
 
 use graphql_core::loader::{
     CurrencyByIdLoader, DiagnosisLoader, InvoiceByIdLoader, InvoiceLineByInvoiceIdLoader,
-    NameByIdLoaderInput, NameByNameLinkIdLoader, NameByNameLinkIdLoaderInput,
-    NameInsuranceJoinLoader, PatientLoader, ProgramByIdLoader, ShippingMethodByIdLoader,
-    SyncFileReferenceLoader, UserLoader,
+    NameByIdLoaderInput, NameInsuranceJoinLoader, PatientLoader, ProgramByIdLoader,
+    ShippingMethodByIdLoader, SyncFileReferenceLoader, UserLoader,
 };
 use graphql_core::{
     loader::{InvoiceStatsLoader, NameByIdLoader, RequisitionsByIdLoader},
@@ -473,13 +472,13 @@ impl InvoiceNode {
         ctx: &Context<'_>,
         store_id: String,
     ) -> Result<Option<NameNode>> {
-        let donor_link_id = match &self.row().default_donor_link_id {
+        let donor_id = match &self.row().default_donor_id {
             None => return Ok(None),
-            Some(donor_link_id) => donor_link_id,
+            Some(donor_id) => donor_id,
         };
-        let loader = ctx.get_loader::<DataLoader<NameByNameLinkIdLoader>>();
+        let loader = ctx.get_loader::<DataLoader<NameByIdLoader>>();
         let result = loader
-            .load_one(NameByNameLinkIdLoaderInput::new(&store_id, donor_link_id))
+            .load_one(NameByIdLoaderInput::new(&store_id, donor_id))
             .await?;
 
         Ok(result.map(NameNode::from_domain))

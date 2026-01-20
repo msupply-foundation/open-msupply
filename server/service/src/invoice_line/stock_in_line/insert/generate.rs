@@ -141,7 +141,7 @@ fn generate_line(
     }: ItemRow,
     InvoiceRow {
         tax_percentage,
-        default_donor_link_id: default_donor_id,
+        default_donor_id,
         ..
     }: InvoiceRow,
 ) -> InvoiceLineRow {

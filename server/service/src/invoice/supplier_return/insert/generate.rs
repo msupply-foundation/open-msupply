@@ -75,7 +75,7 @@ pub fn generate(
         insurance_discount_percentage: None,
         is_cancellation: false,
         expected_delivery_date: None,
-        default_donor_link_id: None,
+        default_donor_id: None,
         goods_received_id: None,
         shipping_method_id: None,
     };
