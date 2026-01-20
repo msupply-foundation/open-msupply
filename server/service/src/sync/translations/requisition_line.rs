@@ -19,6 +19,7 @@ pub struct RequisitionLineOmsFields {
     pub rnr_form_line_id: Option<String>, // Actually from rnr table and only included in sync push so that OG auth module can use
     pub expiry_date: Option<NaiveDate>, // Actually from rnr table and only included in sync push so that OG auth module can use
     pub price_per_unit: Option<f64>,
+    pub available_volume: Option<f64>,
 }
 
 #[allow(non_snake_case)]
@@ -138,7 +139,8 @@ impl SyncTranslation for RequisitionLineTranslation {
             expiring_units: data.expiring_units,
             days_out_of_stock: data.days_out_of_stock,
             option_id: data.option_id,
-            price_per_unit: data.oms_fields.and_then(|f| f.price_per_unit),
+            price_per_unit: data.oms_fields.as_ref().and_then(|f| f.price_per_unit),
+            available_volume: data.oms_fields.and_then(|f| f.available_volume),
         };
 
         Ok(PullTranslateResult::upsert(result))
@@ -183,6 +185,7 @@ impl SyncTranslation for RequisitionLineTranslation {
             days_out_of_stock,
             option_id,
             price_per_unit,
+            available_volume,
         } = RequisitionLineRowRepository::new(connection)
             .find_one_by_id(&changelog.record_id)?
             .ok_or(anyhow::Error::msg(format!(
@@ -227,6 +230,7 @@ impl SyncTranslation for RequisitionLineTranslation {
             rnr_form_line_id,
             expiry_date,
             price_per_unit,
+            available_volume,
         });
 
         let legacy_row = LegacyRequisitionLineRow {
