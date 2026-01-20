@@ -217,6 +217,7 @@ fn generate(
                     None
                 },
                 // Defaults
+                available_volume: None,
                 initial_stock_on_hand_units: 0.0,
                 incoming_units: 0.0,
                 outgoing_units: 0.0,

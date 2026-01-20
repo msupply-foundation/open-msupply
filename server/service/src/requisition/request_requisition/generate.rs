@@ -97,6 +97,7 @@ pub fn generate_requisition_lines(
                     None
                 },
                 // Default
+                available_volume: None,
                 comment: None,
                 supply_quantity: 0.0,
                 requested_quantity: 0.0,

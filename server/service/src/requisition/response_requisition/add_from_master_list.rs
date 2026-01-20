@@ -169,6 +169,7 @@ fn generate(
                 comment: None,
                 approved_quantity: 0.0,
                 approval_comment: None,
+                available_volume: None,
             }
         })
         .collect();

@@ -219,6 +219,7 @@ fn generate(
                     days_out_of_stock: rnr_form_line_row.stock_out_duration as f64,
                     option_id: None,
                     price_per_unit: None,
+                    available_volume: None,
                 };
 
                 // Also return rnr_form_line_id, so we can update the rnr form line with the requisition line id
