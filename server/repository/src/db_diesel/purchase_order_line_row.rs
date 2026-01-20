@@ -262,7 +262,7 @@ mod tests {
             store_id: mock_store_a().id.clone(),
             created_datetime: chrono::Utc::now().naive_utc(),
             purchase_order_number: 1,
-            foreign_exchange_rate: Some(1.00),
+            foreign_exchange_rate: 1.00,
             ..Default::default()
         };
 
