@@ -34,7 +34,7 @@ export type PurchaseOrderFragment = {
   createdDatetime: string;
   currencyId?: string | null;
   documentCharge?: number | null;
-  foreignExchangeRate?: number | null;
+  foreignExchangeRate: number;
   freightCharge?: number | null;
   freightConditions?: string | null;
   headingMessage?: string | null;
@@ -249,7 +249,7 @@ export type PurchaseOrderByIdQuery = {
         createdDatetime: string;
         currencyId?: string | null;
         documentCharge?: number | null;
-        foreignExchangeRate?: number | null;
+        foreignExchangeRate: number;
         freightCharge?: number | null;
         freightConditions?: string | null;
         headingMessage?: string | null;
