@@ -265,7 +265,7 @@ mod test {
                 store_id: mock_store_a().id.clone(),
                 created_datetime: chrono::Utc::now().naive_utc(),
                 purchase_order_number: po_number,
-                foreign_exchange_rate: Some(1.00),
+                foreign_exchange_rate: 1.00,
                 ..Default::default()
             };
             po_number += 1;
