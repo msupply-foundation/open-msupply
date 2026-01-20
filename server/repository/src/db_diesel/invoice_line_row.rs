@@ -163,9 +163,9 @@ impl<'a> InvoiceLineRowRepository<'a> {
         record_id: &str,
         reason_id: Option<String>,
     ) -> Result<(), RepositoryError> {
-        diesel::update(invoice_line)
-            .filter(id.eq(record_id))
-            .set(reason_option_id.eq(reason_id))
+        diesel::update(invoice_line_with_links::table)
+            .filter(invoice_line_with_links::id.eq(record_id))
+            .set(invoice_line_with_links::reason_option_id.eq(reason_id))
             .execute(self.connection.lock().connection())?;
         Ok(())
     }
@@ -176,11 +176,11 @@ impl<'a> InvoiceLineRowRepository<'a> {
         tax_input: Option<f64>,
         total_after_tax_calculation: f64,
     ) -> Result<(), RepositoryError> {
-        diesel::update(invoice_line)
-            .filter(id.eq(record_id))
+        diesel::update(invoice_line_with_links::table)
+            .filter(invoice_line_with_links::id.eq(record_id))
             .set((
-                tax_percentage.eq(tax_input),
-                total_after_tax.eq(total_after_tax_calculation),
+                invoice_line_with_links::tax_percentage.eq(tax_input),
+                invoice_line_with_links::total_after_tax.eq(total_after_tax_calculation),
             ))
             .execute(self.connection.lock().connection())?;
         Ok(())
@@ -191,10 +191,10 @@ impl<'a> InvoiceLineRowRepository<'a> {
         record_id: &str,
         foreign_currency_price_before_tax_calculation: Option<f64>,
     ) -> Result<(), RepositoryError> {
-        diesel::update(invoice_line)
-            .filter(id.eq(record_id))
+        diesel::update(invoice_line_with_links::table)
+            .filter(invoice_line_with_links::id.eq(record_id))
             .set(
-                foreign_currency_price_before_tax.eq(foreign_currency_price_before_tax_calculation),
+                invoice_line_with_links::foreign_currency_price_before_tax.eq(foreign_currency_price_before_tax_calculation),
             )
             .execute(self.connection.lock().connection())?;
         Ok(())
@@ -206,10 +206,10 @@ impl<'a> InvoiceLineRowRepository<'a> {
         item_link: &str,
         new_note: Option<String>,
     ) -> Result<(), RepositoryError> {
-        diesel::update(invoice_line)
-            .filter(invoice_id.eq(invoice))
-            .filter(item_link_id.eq(item_link))
-            .set(note.eq(new_note))
+        diesel::update(invoice_line_with_links::table)
+            .filter(invoice_line_with_links::invoice_id.eq(invoice))
+            .filter(invoice_line_with_links::item_link_id.eq(item_link))
+            .set(invoice_line_with_links::note.eq(new_note))
             .execute(self.connection.lock().connection())?;
         Ok(())
     }
