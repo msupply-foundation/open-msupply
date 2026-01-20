@@ -174,6 +174,7 @@ mod test {
                 "id": "n/a",
                 "assetLogStatus": "FUNCTIONING",
                 "reason": "reason",
+                "commentsRequired": false,
             }
         }));
 
