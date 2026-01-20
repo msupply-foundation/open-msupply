@@ -107,8 +107,8 @@ impl PurchaseOrderNode {
     pub async fn currency_id(&self) -> &Option<String> {
         &self.row().currency_id
     }
-    pub async fn foreign_exchange_rate(&self) -> &Option<f64> {
-        &self.row().foreign_exchange_rate
+    pub async fn foreign_exchange_rate(&self) -> f64 {
+        self.row().foreign_exchange_rate
     }
     pub async fn shipping_method(&self) -> &Option<String> {
         &self.row().shipping_method

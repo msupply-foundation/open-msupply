@@ -147,6 +147,7 @@ mod test {
             status: PurchaseOrderStatus::Confirmed,
             supplier_name_id: "name_a".to_string(),
             purchase_order_number: 1111111111,
+            foreign_exchange_rate: 1.0,
             ..Default::default()
         };
 

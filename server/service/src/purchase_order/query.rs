@@ -72,6 +72,7 @@ mod test {
             created_datetime: chrono::Utc::now().naive_utc(),
             status: repository::PurchaseOrderStatus::New,
             purchase_order_number: 1,
+            foreign_exchange_rate: 1.0,
             ..Default::default()
         };
         repo.upsert_one(&po).unwrap();
