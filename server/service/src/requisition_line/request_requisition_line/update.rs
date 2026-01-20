@@ -1,4 +1,5 @@
 use crate::{
+    location::query::get_available_volume_by_location_type,
     requisition::common::check_requisition_row_exists,
     requisition_line::{common::check_requisition_line_exists, query::get_requisition_line},
     service_provider::ServiceContext,
@@ -42,7 +43,7 @@ pub fn update_request_requisition_line(
         .connection
         .transaction_sync(|connection| {
             let requisition_row = validate(connection, &ctx.store_id, &input)?;
-            let updated_requisition_line_row = generate(requisition_row, input);
+            let updated_requisition_line_row = generate(ctx, requisition_row, input)?;
 
             RequisitionLineRowRepository::new(connection)
                 .upsert_one(&updated_requisition_line_row)?;
@@ -106,6 +107,7 @@ fn validate(
 }
 
 fn generate(
+    ctx: &ServiceContext,
     existing: RequisitionLineRow,
     UpdateRequestRequisitionLine {
         id: _,
@@ -113,13 +115,20 @@ fn generate(
         comment: updated_comment,
         option_id,
     }: UpdateRequestRequisitionLine,
-) -> RequisitionLineRow {
-    RequisitionLineRow {
+) -> Result<RequisitionLineRow, RepositoryError> {
+    let available_volume = get_available_volume_by_location_type(
+        &ctx.connection,
+        &ctx.store_id,
+        &existing.item_link_id,
+    )?;
+
+    Ok(RequisitionLineRow {
         requested_quantity: updated_requested_quantity.unwrap_or(existing.requested_quantity),
         comment: updated_comment.or(existing.comment),
         option_id: option_id.or(existing.option_id),
+        available_volume: Some(available_volume),
         ..existing
-    }
+    })
 }
 
 impl From<RepositoryError> for UpdateRequestRequisitionLineError {
@@ -303,6 +312,7 @@ mod test {
             RequisitionLineRow {
                 requested_quantity: 99.0,
                 comment: Some("comment".to_string()),
+                available_volume: Some(-1000.0), // from stock_line_with_volume
                 ..test_line
             }
         );
@@ -340,6 +350,7 @@ mod test {
             RequisitionLineRow {
                 requested_quantity: 15.0,
                 option_id: Some(mock_requisition_variance_reason_option().id.clone()),
+                available_volume: Some(-1000.0),
                 ..progam_request_line()
             }
         )
