@@ -52,7 +52,7 @@ mod test {
     #[actix_rt::test]
     async fn purchase_order_service_queries() {
         let (_, connection, connection_manager, _) = setup_all(
-            "purchase order service queries",
+            "purchase_order_service_queries",
             MockDataInserts::none().stores(),
         )
         .await;
