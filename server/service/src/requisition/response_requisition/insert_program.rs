@@ -320,6 +320,7 @@ fn generate_lines(
                 expiring_units: 0.0,
                 days_out_of_stock: 0.0,
                 option_id: None,
+                available_volume: None,
             }
         })
         .collect();
