@@ -26,6 +26,7 @@ table! {
         approval_comment -> Nullable<Text>,
         price_per_unit -> Nullable<Double>,
         comment -> Nullable<Text>,
+        available_volume -> Nullable<Double>,
         // Manual requisition fields
         initial_stock_on_hand_units -> Double,
         incoming_units -> Double,
@@ -34,7 +35,7 @@ table! {
         addition_in_units -> Double,
         expiring_units -> Double,
         days_out_of_stock -> Double,
-        option_id -> Nullable<Text>
+        option_id -> Nullable<Text>,
     }
 }
 
@@ -62,6 +63,7 @@ pub struct RequisitionLineRow {
     pub approval_comment: Option<String>,
     pub price_per_unit: Option<f64>,
     pub comment: Option<String>,
+    pub available_volume: Option<f64>,
     // Manual requisition fields
     pub initial_stock_on_hand_units: f64,
     pub incoming_units: f64,
