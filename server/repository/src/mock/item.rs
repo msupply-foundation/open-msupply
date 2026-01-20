@@ -4,7 +4,6 @@ pub fn mock_item_link_from_item(item: &ItemRow) -> ItemLinkRow {
     ItemLinkRow {
         id: item.id.clone(),
         item_id: item.id.clone(),
-        ..Default::default()
     }
 }
 
