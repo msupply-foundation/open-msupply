@@ -19,11 +19,11 @@ impl Migration for V2_16_00 {
 
     fn migrate_fragments(&self) -> Vec<Box<dyn MigrationFragment>> {
         vec![
-            Box::new(add_comments_required_to_asset_log_reason::Migrate),
             Box::new(add_log_tag_sensor_type::Migrate),
             Box::new(add_migration_and_server_status_to_system_log_type_enums::Migrate),
             Box::new(add_shipping_method_id_to_invoice::Migrate),
             Box::new(add_version_to_plugins::Migrate),
+            Box::new(add_comments_required_to_asset_log_reason::Migrate),
         ]
     }
 }
