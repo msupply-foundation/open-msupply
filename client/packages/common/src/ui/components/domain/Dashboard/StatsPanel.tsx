@@ -6,6 +6,7 @@ import { ApiException, isPermissionDeniedException } from '@common/types';
 import { SimpleLink } from '../../navigation/AppNavLink/SimpleLink';
 import { Grid, usePluginProvider } from '@openmsupply-client/common';
 import { StatusChip } from '../../panels/StatusChip';
+import { filterCoreStats } from './utils';
 
 export type Stat = {
   label: string;
@@ -133,13 +134,21 @@ const Content = ({
 
   const { plugins } = usePluginProvider();
 
+  const statPlugins = plugins.dashboard?.statistic;
+
+  // Filter out core stats that should be hidden based on active plugins
+  const visibleCoreStats = filterCoreStats(stats, statPlugins);
+
   const pluginStatistics =
-    plugins.dashboard?.statistic?.map((Plugin, index) => (
-      <Plugin key={index} panelContext={panelContext} />
-    )) ?? [];
+    statPlugins?.map((plugin, index) => {
+      const { Component } = plugin;
+      return <Component key={index} panelContext={panelContext} />;
+    }) ?? [];
 
   const statistics = [
-    ...stats.map(stat => <Statistic key={stat.label} {...stat} />),
+    ...visibleCoreStats.map(stat => (
+      <Statistic key={stat.statContext} {...stat} />
+    )),
     ...pluginStatistics,
   ];
 
