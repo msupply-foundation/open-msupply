@@ -31,6 +31,7 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
   getIsPlaceholderRow = () => false,
   getIsRestrictedRow = () => false,
   muiTableBodyRowProps = {},
+  isMobile,
 }: {
   resetTableState: () => void;
   hasSavedState: boolean;
@@ -44,6 +45,8 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
   // This object is merged with the default row props in muiTableBodyRowProps
   // below. We can do the same for other muiTable props if needed in future.
   muiTableBodyRowProps?: MRT_TableOptions<T>['muiTableBodyRowProps'];
+
+  isMobile: boolean;
 }): Partial<MRT_TableOptions<T>> => {
   const t = useTranslation();
 
@@ -133,6 +136,7 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
           : {}),
       }),
     }),
+    muiTableHeadProps: { sx: { display: isMobile ? 'none' : undefined } },
 
     muiTableHeadCellProps: ({ column, table }) => ({
       sx: {
@@ -205,22 +209,47 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
           );
           if (onRowClick) onRowClick(row.original, isCtrlClick);
         },
-        sx: {
-          backgroundColor: row.original['isSubRow']
-            ? 'background.secondary'
-            : 'inherit',
-          // these two selectors are to change the background color of a selected
-          // row from the default which is to use primary.main of the theme
-          // with an opacity of 0.2 and 0.4 on hover
-          '&.Mui-selected td:after': {
-            backgroundColor: theme => alpha(theme.palette.gray.pale, 0.2),
+        sx:
+          // isMobile
+          //   ? {
+          //       // height: 0,
+          //       // overflow: 'hidden',
+          //       '& > td': {
+          //         padding: 0,
+          //         border: 'none',
+          //         height: 0,
+          //         // minHeight: 0,
+          //         // maxHeight: 0,
+          //         // lineHeight: 0,
+          //         // fontSize: 0,
+          //         // whiteSpace: 'nowrap',
+          //       },
+          //     }
+          //   :
+          {
+            border: 'none',
+            padding: 0,
+            lineHeight: 0,
+            fontSize: 0,
+            height: 0,
+            // overflow: 'hidden',
+            // '& > td': { height: 0 },
+            backgroundColor: row.original['isSubRow']
+              ? 'background.secondary'
+              : 'inherit',
+            // these two selectors are to change the background color of a selected
+            // row from the default which is to use primary.main of the theme
+            // with an opacity of 0.2 and 0.4 on hover
+            '&.Mui-selected td:after': {
+              backgroundColor: theme => alpha(theme.palette.gray.pale, 0.2),
+            },
+            '&.Mui-selected:hover td:after': {
+              backgroundColor: theme => alpha(theme.palette.gray.pale, 0.4),
+            },
+            fontStyle: row.getCanExpand() ? 'italic' : 'normal',
+            cursor: onRowClick ? 'pointer' : 'default',
+            // display: isMobile ? 'none' : undefined,
           },
-          '&.Mui-selected:hover td:after': {
-            backgroundColor: theme => alpha(theme.palette.gray.pale, 0.4),
-          },
-          fontStyle: row.getCanExpand() ? 'italic' : 'normal',
-          cursor: onRowClick ? 'pointer' : 'default',
-        },
       };
       return {
         ...defaultProps,
@@ -258,6 +287,7 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
             '& button.Mui-disabled': {
               color: !row.getCanExpand() ? 'transparent' : undefined,
             },
+            display: isMobile ? 'none' : undefined,
           }),
           minHeight: table.getState().density === 'compact' ? '32px' : '40px',
           padding:

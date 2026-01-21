@@ -20,7 +20,9 @@ import {
   useIsGrouped,
 } from './tableState';
 import { clearSavedState } from './tableState/utils';
-import { NothingHere } from '@common/components';
+import { Card, NothingHere, Typography } from '@common/components';
+import { Box, Stack } from '@mui/material';
+import { flexRender } from '@tanstack/react-table';
 
 export interface BaseTableConfig<T extends MRT_RowData>
   extends Omit<MRT_TableOptions<T>, 'data'> {
@@ -44,6 +46,8 @@ export interface BaseTableConfig<T extends MRT_RowData>
   noUrlFiltering?: boolean;
   initialSort?: { key: string; dir: 'asc' | 'desc' };
   noDataElement?: React.ReactNode;
+
+  isMobile?: boolean;
 }
 
 export const useBaseMaterialTable = <T extends MRT_RowData>({
@@ -64,6 +68,7 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
   initialSort,
   noDataElement,
   muiTableBodyRowProps,
+  isMobile = false,
   ...tableOptions
 }: BaseTableConfig<T>) => {
   const t = useTranslation();
@@ -155,6 +160,7 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
     getIsPlaceholderRow,
     getIsRestrictedRow,
     muiTableBodyRowProps,
+    isMobile,
   });
 
   const table = useMaterialReactTable<T>({
@@ -201,6 +207,8 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
       columnVisibility: columnVisibility.initial,
       columnPinning: columnPinning.initial,
       columnOrder: columnOrder.initial,
+      expanded: true,
+      // isMobile ? true : {},
     },
     state: {
       showLoadingOverlay: isLoading,
@@ -230,6 +238,48 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
 
     ...displayOptions,
     ...tableOptions,
+
+    // Mobile options
+    renderDetailPanel: ({ row, table }) => {
+      if (!isMobile) return null;
+
+      const cells = row.getVisibleCells();
+      return isMobile ? (
+        <Card sx={{ mb: 2 }}>
+          <Stack spacing={1.5}>
+            {cells.map(cell => {
+              const cellContext = cell.getContext();
+              const renderedCellValue = cell.renderValue();
+              const content = cell.column.columnDef.Cell
+                ? flexRender(cell.column.columnDef.Cell, {
+                    ...cellContext,
+                    renderedCellValue,
+                  })
+                : renderedCellValue;
+              return (
+                <Box
+                  key={cell.id}
+                  display="flex"
+                  justifyContent="space-between"
+                  alignItems="flex-start"
+                >
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{ mr: 2, whiteSpace: 'nowrap' }}
+                  >
+                    {cell.column.columnDef.header}
+                  </Typography>
+
+                  <Box textAlign="right">{content}</Box>
+                </Box>
+              );
+            })}
+          </Stack>
+        </Card>
+      ) : null;
+    },
+    enableExpandAll: false,
   });
 
   return table;

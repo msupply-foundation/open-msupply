@@ -48,6 +48,8 @@ export const EquipmentListView = () => {
     isLoading: isFetching,
     onRowClick: handleRowClick,
     noDataElement: <NothingHere body={t('error.no-items-to-display')} />,
+
+    isMobile: true,
   });
 
   return (
