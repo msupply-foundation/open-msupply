@@ -90,45 +90,33 @@ pub(crate) async fn setup_with_version(
 
     let template_output_dir = template_dir();
 
-    // Two-level locking strategy for better parallelization:
-    // 1. Global lock: Only for marker cleanup (this should happen in series)
-    // 2. Per-template lock: For template creation/copying (allows parallel work on different templates)
+    // use file lock for template operations, as cargo nextest runs crate tests in parallel
+    // this requires a file lock instead of thread synchronisation
+    let fs_lock = lock_file(template_output_dir.clone(), "___template.lock".to_string())
+        .expect("Failed to acquire template fs lock");
 
-    // Check and handle marker file with global lock
-    {
-        let _global_lock = lock_file(
-            template_output_dir.clone(),
-            "___template_global.lock".to_string(),
-        )
-        .expect("Failed to acquire global template fs lock");
-
-        let marker_path = template_output_dir.join(TEMPLATE_MARKER_FILE);
-        if marker_path.exists() {
-            // remove all DB templates
-            for entry in fs::read_dir(&template_output_dir).unwrap() {
-                let entry = entry.unwrap();
-                if entry.file_name().to_string_lossy() == TEMPLATE_MARKER_FILE {
-                    // delete marker after all template DBs to ensure we deleted all DBs, e.g. if
-                    // this loop is interrupted
-                    continue;
-                }
-                if entry
-                    .file_name()
-                    .to_string_lossy()
-                    .starts_with("___template_")
-                {
-                    fs::remove_file(entry.path()).unwrap();
-                }
+    // if marker exists, DB needs to be recreated -> delete all template files
+    let marker_path = template_output_dir.join(TEMPLATE_MARKER_FILE);
+    if marker_path.exists() {
+        // remove all DB templates
+        for entry in fs::read_dir(&template_output_dir).unwrap() {
+            let entry = entry.unwrap();
+            if entry.file_name().to_string_lossy() == TEMPLATE_MARKER_FILE {
+                // delete marker after all template DBs to ensure we deleted all DBs, e.g. if
+                // this loop is interrupted
+                continue;
             }
-            // remove marker
-            fs::remove_file(&marker_path).unwrap();
+            if entry
+                .file_name()
+                .to_string_lossy()
+                .starts_with("___template_")
+            {
+                fs::remove_file(entry.path()).unwrap();
+            }
         }
-    } // global lock released
-
-    // Per-template lock: allows parallel creation of different templates
-    let template_lock_name = format!("{}.lock", template_name);
-    let _template_lock = lock_file(template_output_dir.clone(), template_lock_name)
-        .expect("Failed to acquire per-template fs lock");
+        // remove marker
+        fs::remove_file(&marker_path).unwrap();
+    }
 
     let template_settings = get_test_db_settings_etc(&template_name, true);
     if !Path::new(&template_settings.database_name).exists() {
@@ -138,7 +126,7 @@ pub(crate) async fn setup_with_version(
             insert_all_mock_data(&connection, inserts.clone()).await;
         }
     }
-    // template lock held during copy to prevent races
+    drop(fs_lock);
 
     // copy template
 
@@ -149,9 +137,6 @@ pub(crate) async fn setup_with_version(
     let parent = path.parent().unwrap();
     fs::create_dir_all(parent).unwrap();
     fs::copy(&template_settings.database_name, &db_path).unwrap();
-
-    // template lock released after copy completes
-    drop(_template_lock);
 
     let connection_manager = connection_manager(db_settings);
     let collection = if !cache_all_mock_data {

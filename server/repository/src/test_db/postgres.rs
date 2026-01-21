@@ -146,17 +146,12 @@ pub(crate) async fn setup_with_version(
         .join("repository")
         .join(TEST_OUTPUT_DIR);
 
-    // Two-level locking strategy for better parallelization:
-    // 1. Global lock: Only for marker cleanup (this should happen in series)
-    // 2. Per-template lock: For template creation/copying (allows parallel work on different templates)
+    // use file lock for template operations, as cargo nextest runs crate tests in parallel
+    // this requires a file lock instead of thread synchronisation
+    let _fs_lock = lock_file(test_output_dir.clone(), "___template.lock".to_string())
+        .expect("Failed to acquire template fs lock");
 
-    let template_dbs = {
-        let _global_lock = lock_file(
-            test_output_dir.clone(),
-            "___template_global.lock".to_string(),
-        )
-        .expect("Failed to acquire global template fs lock");
-
+    {
         let existing_templates: Vec<String> = pg_database::table
             .select(pg_database::dsl::datname)
             .filter(pg_database::dsl::datname.ilike("___template_%"))
@@ -167,7 +162,7 @@ pub(crate) async fn setup_with_version(
         let marker_exists = marker_path.exists();
 
         // if test_output_dir doesn't exist or if the marker exist, refresh the cache
-        if !test_output_dir.exists() || marker_exists {
+        let template_dbs = if !test_output_dir.exists() || marker_exists {
             // create the directory so that we don't recreate the cache on the next run
             fs::create_dir_all(&test_output_dir).unwrap();
 
@@ -184,21 +179,15 @@ pub(crate) async fn setup_with_version(
             vec![]
         } else {
             existing_templates
-        }
-    }; // global lock released
-
-    // Per-template lock: allows parallel creation of different templates
-    let template_lock_name = format!("{}.lock", template_name);
-    let _template_lock = lock_file(test_output_dir.clone(), template_lock_name)
-        .expect("Failed to acquire per-template fs lock");
-
-    // create template
-    if !template_dbs.contains(&template_settings.database_name) {
-        let connection_manager =
-            create_template_db(&mut root_connection, &template_settings, version.clone());
-        let connection = connection_manager.connection().unwrap();
-        if cache_all_mock_data {
-            insert_all_mock_data(&connection, inserts.clone()).await;
+        };
+        // create template
+        if !template_dbs.contains(&template_settings.database_name) {
+            let connection_manager =
+                create_template_db(&mut root_connection, &template_settings, version.clone());
+            let connection = connection_manager.connection().unwrap();
+            if cache_all_mock_data {
+                insert_all_mock_data(&connection, inserts.clone()).await;
+            }
         }
     }
 
@@ -217,9 +206,6 @@ pub(crate) async fn setup_with_version(
     ))
     .execute(&mut root_connection)
     .unwrap();
-
-    // template lock released after copy completes
-    drop(_template_lock);
 
     let connection_manager = get_storage_connection_manager(db_settings);
     let collection = if !cache_all_mock_data {
