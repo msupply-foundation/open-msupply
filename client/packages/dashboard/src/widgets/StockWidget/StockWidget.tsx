@@ -100,8 +100,8 @@ export const StockWidget = () => {
     ]
   );
 
-  const pluginPanels = plugins.dashboard?.panel?.map((Component, index) => (
-    <Component key={index} widgetContext={widgetContext} />
+  const pluginPanels = plugins.dashboard?.panel?.map((Plugin, index) => (
+    <Plugin key={index} widgetContext={widgetContext} />
   ));
 
   return (
