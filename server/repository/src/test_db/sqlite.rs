@@ -89,74 +89,62 @@ pub(crate) async fn setup_with_version(
     };
 
     let template_output_dir = template_dir();
-
-    // Checking marker files and template creation should be globally locked.
-    let fs_lock = lock_file(template_output_dir.clone(), "___template.lock".to_string())
-        .expect("Failed to acquire template fs lock");
-
-    // if marker exists, DB needs to be recreated -> delete all template files
-    let marker_path = template_output_dir.join(TEMPLATE_MARKER_FILE);
-    if marker_path.exists() {
-        // remove all DB templates
-        for entry in fs::read_dir(&template_output_dir).unwrap() {
-            let entry = entry.unwrap();
-            if entry.file_name().to_string_lossy() == TEMPLATE_MARKER_FILE {
-                // delete marker after all template DBs to ensure we deleted all DBs, e.g. if
-                // this loop is interrupted
-                continue;
-            }
-            if entry
-                .file_name()
-                .to_string_lossy()
-                .starts_with("___template_")
-            {
-                fs::remove_file(entry.path()).unwrap();
-            }
-        }
-        // remove marker
-        fs::remove_file(&marker_path).unwrap();
-    }
-
     let template_settings = get_test_db_settings_etc(&template_name, true);
-    if !Path::new(&template_settings.database_name).exists() {
-        let connection_manager = create_db(&template_settings, version.clone());
-        let connection = connection_manager.connection().unwrap();
-        if cache_all_mock_data {
-            insert_all_mock_data(&connection, inserts.clone()).await;
-        }
-    }
-    drop(fs_lock);
-
-    // copy template
 
     {
-        let db_filename = Path::new(&db_settings.database_name)
-            .file_name()
-            .and_then(|f| f.to_str())
-            .unwrap_or("unknown");
+        // Checking marker files and template creation should be globally locked.
+        let _fs_lock = lock_file(template_output_dir.clone(), "___template.lock".to_string())
+            .expect("Failed to acquire template fs lock");
 
-        let _scoped_lock = lock_file(
-            template_output_dir.clone(),
-            format!("___db_{}.lock", db_filename),
-        )
-        .expect("Failed to acquire database fs lock");
-        // remove existing db file
-        fs::remove_file(&db_path).ok();
-        // create parent dirs
-        let path = Path::new(&db_path);
-        let parent = path.parent().unwrap();
-        fs::create_dir_all(parent).unwrap();
-        fs::copy(&template_settings.database_name, &db_path).unwrap();
+        // if marker exists, DB needs to be recreated -> delete all template files
+        let marker_path = template_output_dir.join(TEMPLATE_MARKER_FILE);
+        if marker_path.exists() {
+            // remove all DB templates
+            for entry in fs::read_dir(&template_output_dir).unwrap() {
+                let entry = entry.unwrap();
+                if entry.file_name().to_string_lossy() == TEMPLATE_MARKER_FILE {
+                    // delete marker after all template DBs to ensure we deleted all DBs, e.g. if
+                    // this loop is interrupted
+                    continue;
+                }
+                if entry
+                    .file_name()
+                    .to_string_lossy()
+                    .starts_with("___template_")
+                {
+                    fs::remove_file(entry.path()).unwrap();
+                }
+            }
+            // remove marker
+            fs::remove_file(&marker_path).unwrap();
+        }
 
-        let connection_manager = connection_manager(db_settings);
-        let collection = if !cache_all_mock_data {
+        if !Path::new(&template_settings.database_name).exists() {
+            let connection_manager = create_db(&template_settings, version.clone());
             let connection = connection_manager.connection().unwrap();
-            insert_all_mock_data(&connection, inserts).await
-        } else {
-            all_mock_data()
-        };
-        (connection_manager, collection)
+            if cache_all_mock_data {
+                insert_all_mock_data(&connection, inserts.clone()).await;
+            }
+        }
     }
+    // copy template
+
+    // remove existing db file
+    fs::remove_file(&db_path).ok();
+    // create parent dirs
+    let path = Path::new(&db_path);
+    let parent = path.parent().unwrap();
+    fs::create_dir_all(parent).unwrap();
+    fs::copy(&template_settings.database_name, &db_path).unwrap();
+
+    let connection_manager = connection_manager(db_settings);
+    let collection = if !cache_all_mock_data {
+        let connection = connection_manager.connection().unwrap();
+        insert_all_mock_data(&connection, inserts).await
+    } else {
+        all_mock_data()
+    };
+    (connection_manager, collection)
 }
 
 fn connection_manager(db_settings: &DatabaseSettings) -> StorageConnectionManager {
