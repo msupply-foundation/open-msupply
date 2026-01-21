@@ -146,12 +146,11 @@ pub(crate) async fn setup_with_version(
         .join("repository")
         .join(TEST_OUTPUT_DIR);
 
-    // use file lock for template operations, as cargo nextest runs crate tests in parallel
-    // this requires a file lock instead of thread synchronisation
-    let _fs_lock = lock_file(test_output_dir.clone(), "___template.lock".to_string())
-        .expect("Failed to acquire template fs lock");
-
     {
+        // Checking marker files and template creation should be globally locked.
+        let _fs_lock = lock_file(test_output_dir.clone(), "___template.lock".to_string())
+            .expect("Failed to acquire template fs lock");
+
         let existing_templates: Vec<String> = pg_database::table
             .select(pg_database::dsl::datname)
             .filter(pg_database::dsl::datname.ilike("___template_%"))
@@ -194,25 +193,33 @@ pub(crate) async fn setup_with_version(
     // copy template
 
     // remove existing db
-    diesel::sql_query(format!(
-        "DROP DATABASE IF EXISTS \"{}\";",
-        &db_settings.database_name
-    ))
-    .execute(&mut root_connection)
-    .unwrap();
-    diesel::sql_query(format!(
-        "CREATE DATABASE \"{}\" WITH TEMPLATE \"{}\";",
-        db_settings.database_name, template_settings.database_name
-    ))
-    .execute(&mut root_connection)
-    .unwrap();
+    {
+        // For drop and create DB, we need to lock on the DB name to prevent race conditions
+        let _scoped_lock = lock_file(
+            test_output_dir.clone(),
+            format!("___db_{}.lock", db_settings.database_name),
+        )
+        .expect("Failed to acquire database fs lock");
+        diesel::sql_query(format!(
+            "DROP DATABASE IF EXISTS \"{}\";",
+            &db_settings.database_name
+        ))
+        .execute(&mut root_connection)
+        .unwrap();
+        diesel::sql_query(format!(
+            "CREATE DATABASE \"{}\" WITH TEMPLATE \"{}\";",
+            db_settings.database_name, template_settings.database_name
+        ))
+        .execute(&mut root_connection)
+        .unwrap();
 
-    let connection_manager = get_storage_connection_manager(db_settings);
-    let collection = if !cache_all_mock_data {
-        let connection = connection_manager.connection().unwrap();
-        insert_all_mock_data(&connection, inserts).await
-    } else {
-        all_mock_data()
-    };
-    (connection_manager, collection)
+        let connection_manager = get_storage_connection_manager(db_settings);
+        let collection = if !cache_all_mock_data {
+            let connection = connection_manager.connection().unwrap();
+            insert_all_mock_data(&connection, inserts).await
+        } else {
+            all_mock_data()
+        };
+        (connection_manager, collection)
+    }
 }
