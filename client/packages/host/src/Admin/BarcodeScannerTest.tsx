@@ -10,7 +10,7 @@ import {
   Alert,
   ButtonWithIcon,
 } from '@openmsupply-client/common';
-import { XCircleIcon, DeleteIcon } from '@common/icons';
+import { XCircleIcon, DeleteIcon, CheckIcon, RefreshIcon } from '@common/icons';
 import { useTranslation } from '@common/intl';
 
 // Extend window type to include honeywell plugin
@@ -188,14 +188,14 @@ export const BarcodeScannerTest = () => {
           {!isScanning ? (
             <>
               <ButtonWithIcon
-                Icon={<XCircleIcon />}
+                Icon={<CheckIcon />}
                 label="Start Scanning"
                 variant="contained"
                 color="primary"
                 onClick={startScanning}
               />
               <ButtonWithIcon
-                Icon={<XCircleIcon />}
+                Icon={<RefreshIcon />}
                 label="Restart Scanning"
                 variant="outlined"
                 onClick={restartScanning}
