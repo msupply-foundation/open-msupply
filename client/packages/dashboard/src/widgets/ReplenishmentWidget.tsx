@@ -182,7 +182,7 @@ export const ReplenishmentWidget: React.FC<PropsWithChildrenOnly> = () => {
               isError={isRequisitionCountError}
               isLoading={isRequisitionCountLoading}
               title={t('internal-order')}
-              panelContext={internalOrdersPanelContext}
+              panelContext={`${widgetContext}-${internalOrdersPanelContext}`}
               stats={[
                 {
                   label: t('label.new'),
