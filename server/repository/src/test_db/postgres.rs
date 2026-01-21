@@ -197,30 +197,30 @@ pub(crate) async fn setup_with_version(
                 insert_all_mock_data(&connection, inserts.clone()).await;
             }
         }
-
-        // copy template
-
-        // remove existing db
-        diesel::sql_query(format!(
-            "DROP DATABASE IF EXISTS \"{}\";",
-            &db_settings.database_name
-        ))
-        .execute(&mut root_connection)
-        .unwrap();
-        diesel::sql_query(format!(
-            "CREATE DATABASE \"{}\" WITH TEMPLATE \"{}\";",
-            db_settings.database_name, template_settings.database_name
-        ))
-        .execute(&mut root_connection)
-        .unwrap();
-
-        let connection_manager = get_storage_connection_manager(db_settings);
-        let collection = if !cache_all_mock_data {
-            let connection = connection_manager.connection().unwrap();
-            insert_all_mock_data(&connection, inserts).await
-        } else {
-            all_mock_data()
-        };
-        (connection_manager, collection)
     }
+
+    // copy template
+
+    // remove existing db
+    diesel::sql_query(format!(
+        "DROP DATABASE IF EXISTS \"{}\";",
+        &db_settings.database_name
+    ))
+    .execute(&mut root_connection)
+    .unwrap();
+    diesel::sql_query(format!(
+        "CREATE DATABASE \"{}\" WITH TEMPLATE \"{}\";",
+        db_settings.database_name, template_settings.database_name
+    ))
+    .execute(&mut root_connection)
+    .unwrap();
+
+    let connection_manager = get_storage_connection_manager(db_settings);
+    let collection = if !cache_all_mock_data {
+        let connection = connection_manager.connection().unwrap();
+        insert_all_mock_data(&connection, inserts).await
+    } else {
+        all_mock_data()
+    };
+    (connection_manager, collection)
 }
