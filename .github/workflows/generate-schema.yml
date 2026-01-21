@@ -3,8 +3,8 @@ name: Generate GraphQL Schema
 on:
   pull_request:
     paths:
-      - "client/packages/**/src/**/*.graphql"
-      - "server/graphql/**"
+      - 'client/packages/**/src/**/*.graphql'
+      - 'server/graphql/**'
   workflow_dispatch:
 
 concurrency:
@@ -27,9 +27,12 @@ jobs:
         id: nvm
 
       - name: Use Node.js (.nvmrc)
-        uses: actions/setup-node@v1
+        uses: actions/setup-node@v4
         with:
-          node-version: "${{ steps.nvm.outputs.NVMRC }}"
+          node-version: '${{ steps.nvm.outputs.NVMRC }}'
+
+      - name: Install Yarn
+        run: npm install -g yarn
 
       - name: Install dependencies
         run: cd ./client && rm -rf node_modules && yarn install --frozen-lockfile
