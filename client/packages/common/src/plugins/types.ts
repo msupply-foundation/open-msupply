@@ -20,7 +20,6 @@ export type Plugins = {
     widget?: React.ComponentType[];
     panel?: React.ComponentType<{ widgetContext: string }>[];
     statistic?: React.ComponentType<{
-      widgetContext: string;
       panelContext: string;
     }>[];
   };

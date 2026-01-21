@@ -23,6 +23,8 @@ export const ExpiringStockSummary = ({
   const t = useTranslation();
   const formatNumber = useFormatNumber();
 
+  const expiringStockPanelContext = 'expiring-stock';
+
   const {
     firstThresholdForExpiringItems: firstThreshold,
     secondThresholdForExpiringItems: secondThreshold,
@@ -61,8 +63,7 @@ export const ExpiringStockSummary = ({
       isError={hasExpiryError}
       isLoading={isExpiryLoading}
       title={t('heading.expiring-stock')}
-      widgetContext={widgetContext}
-      panelContext={'expiring-stock'}
+      panelContext={`${widgetContext}-${expiringStockPanelContext}`}
       stats={[
         {
           label: t('label.expired', {
@@ -75,6 +76,7 @@ export const ExpiringStockSummary = ({
               expiryDate: getExpiredUrlQuery,
             })
             .build(),
+          statContext: `${widgetContext}-${expiringStockPanelContext}-expired`,
         },
         {
           label: t('label.expiring-soon', {
@@ -87,6 +89,7 @@ export const ExpiringStockSummary = ({
               expiryDate: getExpiredInAMonthUrlQuery,
             })
             .build(),
+          statContext: `${widgetContext}-${expiringStockPanelContext}-expiring-soon`,
         },
         {
           label: t('label.batches-expiring-between-days'),
@@ -97,6 +100,7 @@ export const ExpiringStockSummary = ({
               expiryDate: getBatchesExpiryDateRange(30, 90),
             })
             .build(),
+          statContext: `${widgetContext}-${expiringStockPanelContext}-batches-expiring-between-days`,
         },
         ...(haveThreshold
           ? [
@@ -117,6 +121,7 @@ export const ExpiringStockSummary = ({
                     ),
                   })
                   .build(),
+                statContext: `${widgetContext}-${expiringStockPanelContext}-batches-expiring-in-days`,
               },
             ]
           : []),

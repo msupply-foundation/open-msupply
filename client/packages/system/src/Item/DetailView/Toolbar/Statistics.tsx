@@ -20,6 +20,9 @@ export const Statistics = () => {
   const { stats, isVaccine, doses } = data || {};
 
   const widgetContext = 'itemDetailView';
+  const stockOnHandPanelContext = 'stock-on-hand';
+  const AMCPanelContext = 'amc';
+  const monthsOfStockPanelContext = 'months-of-stock';
 
   if (!stats) return null;
 
@@ -40,14 +43,14 @@ export const Statistics = () => {
     >
       <StatsPanel
         title={t('title.stock-on-hand')}
-        widgetContext={widgetContext}
-        panelContext={'stock-on-hand'}
+        panelContext={`${widgetContext}-${stockOnHandPanelContext}`}
         isLoading={false}
         stats={[
           {
             label: t('label.units'),
             value: formatNumber.round(stats.stockOnHand),
             extraMessage: getDosesMessage(stats.stockOnHand),
+            statContext: `${widgetContext}-${stockOnHandPanelContext}-units`,
           },
         ]}
         link={
@@ -64,13 +67,13 @@ export const Statistics = () => {
       <StatsPanel
         isLoading={false}
         title={t('title.average-monthly-consumption')}
-        widgetContext={widgetContext}
-        panelContext={'average-monthly-consumption'}
+        panelContext={AMCPanelContext}
         stats={[
           {
             label: t('label.units'),
             value: formatNumber.round(stats.averageMonthlyConsumption, 2),
             extraMessage: getDosesMessage(stats.averageMonthlyConsumption),
+            statContext: `${widgetContext}-${AMCPanelContext}-units`,
           },
         ]}
         width={300}
@@ -78,12 +81,12 @@ export const Statistics = () => {
       <StatsPanel
         isLoading={false}
         title={t('title.months-of-stock')}
-        widgetContext={widgetContext}
-        panelContext={'months-of-stock'}
+        panelContext={monthsOfStockPanelContext}
         stats={[
           {
             label: t('text.months'),
             value: formatNumber.round(stats?.monthsOfStockOnHand ?? 0, 2),
+            statContext: `${widgetContext}-${monthsOfStockPanelContext}-months`,
           },
         ]}
         width={300}
