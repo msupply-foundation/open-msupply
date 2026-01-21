@@ -90,8 +90,7 @@ pub(crate) async fn setup_with_version(
 
     let template_output_dir = template_dir();
 
-    // use file lock for template operations, as cargo nextest runs crate tests in parallel
-    // this requires a file lock instead of thread synchronisation
+    // Checking marker files and template creation should be globally locked.
     let fs_lock = lock_file(template_output_dir.clone(), "___template.lock".to_string())
         .expect("Failed to acquire template fs lock");
 
@@ -130,22 +129,34 @@ pub(crate) async fn setup_with_version(
 
     // copy template
 
-    // remove existing db file
-    fs::remove_file(&db_path).ok();
-    // create parent dirs
-    let path = Path::new(&db_path);
-    let parent = path.parent().unwrap();
-    fs::create_dir_all(parent).unwrap();
-    fs::copy(&template_settings.database_name, &db_path).unwrap();
+    {
+        let db_filename = Path::new(&db_settings.database_name)
+            .file_name()
+            .and_then(|f| f.to_str())
+            .unwrap_or("unknown");
 
-    let connection_manager = connection_manager(db_settings);
-    let collection = if !cache_all_mock_data {
-        let connection = connection_manager.connection().unwrap();
-        insert_all_mock_data(&connection, inserts).await
-    } else {
-        all_mock_data()
-    };
-    (connection_manager, collection)
+        let _scoped_lock = lock_file(
+            template_output_dir.clone(),
+            format!("___db_{}.lock", db_filename),
+        )
+        .expect("Failed to acquire database fs lock");
+        // remove existing db file
+        fs::remove_file(&db_path).ok();
+        // create parent dirs
+        let path = Path::new(&db_path);
+        let parent = path.parent().unwrap();
+        fs::create_dir_all(parent).unwrap();
+        fs::copy(&template_settings.database_name, &db_path).unwrap();
+
+        let connection_manager = connection_manager(db_settings);
+        let collection = if !cache_all_mock_data {
+            let connection = connection_manager.connection().unwrap();
+            insert_all_mock_data(&connection, inserts).await
+        } else {
+            all_mock_data()
+        };
+        (connection_manager, collection)
+    }
 }
 
 fn connection_manager(db_settings: &DatabaseSettings) -> StorageConnectionManager {
