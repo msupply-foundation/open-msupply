@@ -73,6 +73,15 @@ struct PgDatabaseRow {
     datname: String,
 }
 
+fn terminate_db_connections(root_connection: &mut DBConnection, db_name: &str) {
+    let _ = diesel::sql_query(format!(
+        "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = '{}' AND pid <> pg_backend_pid();",
+        db_name
+    ))
+    .execute(root_connection);
+    // Ignore errors - if no connections exist or termination fails, DROP DATABASE will handle it
+}
+
 pub async fn setup(db_settings: &DatabaseSettings) -> StorageConnectionManager {
     setup_with_version(db_settings, None, MockDataInserts::none())
         .await
@@ -188,18 +197,10 @@ pub(crate) async fn setup_with_version(
                 insert_all_mock_data(&connection, inserts.clone()).await;
             }
         }
-    }
 
-    // copy template
+        // copy template
 
-    // remove existing db
-    {
-        // For drop and create DB, we need to lock on the DB name to prevent race conditions
-        let _scoped_lock = lock_file(
-            test_output_dir.clone(),
-            format!("___db_{}.lock", db_settings.database_name),
-        )
-        .expect("Failed to acquire database fs lock");
+        // remove existing db
         diesel::sql_query(format!(
             "DROP DATABASE IF EXISTS \"{}\";",
             &db_settings.database_name
