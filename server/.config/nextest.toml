@@ -5,12 +5,12 @@ fail-fast = false
 [profile.ci.slow-timeout]
 period = "10s"
 
-[[profile.ci.overrides]]
-filter = 'test(test_generate_excel_performance)'
-threads-required = "num-cpus"
-
 [profile.ci-sqlite]
 inherits = "ci"
+
+[[profile.ci-sqlite.overrides]]
+filter = 'test(test_generate_excel_performance)'
+threads-required = "num-cpus"
 
 [profile.ci-sqlite.junit]
 path = "sqlite-test-results.xml"
