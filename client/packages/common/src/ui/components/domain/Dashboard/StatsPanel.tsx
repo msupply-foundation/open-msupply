@@ -9,6 +9,7 @@ import { StatusChip } from '../../panels/StatusChip';
 
 export type Stat = {
   label: string;
+  statContext: string;
   value?: string;
   link?: string;
   extraMessage?: string;
@@ -20,7 +21,6 @@ export interface StatsPanelProps {
   isLoading: boolean;
   stats: Stat[];
   title: string;
-  widgetContext: string;
   panelContext: string;
   width?: number;
   link?: string;
@@ -120,14 +120,12 @@ const Content = ({
   isError,
   isLoading,
   stats,
-  widgetContext,
   panelContext,
 }: {
   error?: ApiException;
   isError: boolean;
   isLoading: boolean;
   stats: Stat[];
-  widgetContext: string;
   panelContext: string;
 }) => {
   const t = useTranslation();
@@ -137,11 +135,7 @@ const Content = ({
 
   const pluginStatistics =
     plugins.dashboard?.statistic?.map((Component, index) => (
-      <Component
-        key={index}
-        widgetContext={widgetContext}
-        panelContext={panelContext}
-      />
+      <Component key={index} panelContext={panelContext} />
     )) ?? [];
 
   const statistics = [
@@ -171,7 +165,6 @@ export const StatsPanel: FC<StatsPanelProps> = ({
   title,
   width,
   link,
-  widgetContext,
   panelContext,
 }) => (
   <Paper
@@ -210,7 +203,6 @@ export const StatsPanel: FC<StatsPanelProps> = ({
           isLoading={isLoading}
           stats={stats}
           error={error}
-          widgetContext={widgetContext}
           panelContext={panelContext}
         />
       </Grid>

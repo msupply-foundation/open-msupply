@@ -45,6 +45,8 @@ export const DistributionWidget = () => {
   } = useDashboard.statistics.requisitions();
 
   const widgetContext = 'distribution';
+  const outboundShipmentsPanelContext = 'outbound-shipments';
+  const customerRequisitionsPanelContext = 'customer-requisitions';
 
   const { mutateAsync: onCreate } = useOutbound.document.insert();
   const onError = (e: unknown) => {
@@ -105,8 +107,7 @@ export const DistributionWidget = () => {
               isError={isOutboundCountError}
               isLoading={isOutboundCountLoading}
               title={t('heading.shipments')}
-              widgetContext={widgetContext}
-              panelContext={'outbound-shipments'}
+              panelContext={`${widgetContext}-${outboundShipmentsPanelContext}`}
               stats={[
                 {
                   label: t('label.have-not-shipped'),
@@ -121,6 +122,7 @@ export const DistributionWidget = () => {
                       ],
                     })
                     .build(),
+                  statContext: `${widgetContext}-${outboundShipmentsPanelContext}-not-shipped`,
                 },
               ]}
               link={RouteBuilder.create(AppRoute.Distribution)
@@ -134,8 +136,7 @@ export const DistributionWidget = () => {
               isError={isRequisitionCountError}
               isLoading={isRequisitionCountLoading}
               title={t('customer-requisition')}
-              widgetContext={widgetContext}
-              panelContext={'customer-requisitions'}
+              panelContext={`${widgetContext}-${customerRequisitionsPanelContext}`}
               stats={[
                 {
                   label: t('label.new'),
@@ -144,6 +145,7 @@ export const DistributionWidget = () => {
                     .addPart(AppRoute.CustomerRequisition)
                     .addQuery({ status: RequisitionNodeStatus.New })
                     .build(),
+                  statContext: `${widgetContext}-${customerRequisitionsPanelContext}-new`,
                 },
                 {
                   label: t('label.emergency'),
@@ -153,6 +155,7 @@ export const DistributionWidget = () => {
                     .addQuery({ isEmergency: true })
                     .addQuery({ status: RequisitionNodeStatus.New })
                     .build(),
+                  statContext: `${widgetContext}-${customerRequisitionsPanelContext}-emergency`,
                   alertFlag:
                     !!requisitionCount?.emergency?.new &&
                     requisitionCount?.emergency?.new > 0,

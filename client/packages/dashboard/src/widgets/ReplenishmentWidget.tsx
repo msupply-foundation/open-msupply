@@ -49,6 +49,8 @@ export const ReplenishmentWidget: React.FC<PropsWithChildrenOnly> = () => {
   } = useDashboard.statistics.requisitions();
 
   const widgetContext = 'replenishment';
+  const inboundShipmentsPanelContext = 'inbound-shipments';
+  const internalOrdersPanelContext = 'internal-orders';
 
   const { customDate, urlQueryDateTime } = useFormatDateTime();
 
@@ -135,8 +137,7 @@ export const ReplenishmentWidget: React.FC<PropsWithChildrenOnly> = () => {
               isError={isError}
               isLoading={isLoading}
               title={t('inbound-shipment')}
-              widgetContext={widgetContext}
-              panelContext={'inbound-shipments'}
+              panelContext={`${widgetContext}-${inboundShipmentsPanelContext}`}
               stats={[
                 {
                   label: t('label.today'),
@@ -147,6 +148,7 @@ export const ReplenishmentWidget: React.FC<PropsWithChildrenOnly> = () => {
                       createdDatetime: getTodayUrlQuery(),
                     })
                     .build(),
+                  statContext: `${widgetContext}-${inboundShipmentsPanelContext}-today`,
                 },
                 {
                   label: t('label.this-week'),
@@ -157,6 +159,7 @@ export const ReplenishmentWidget: React.FC<PropsWithChildrenOnly> = () => {
                       createdDatetime: getThisWeekUrlQuery(),
                     })
                     .build(),
+                  statContext: `${widgetContext}-${inboundShipmentsPanelContext}-this-week`,
                 },
                 {
                   label: t('label.inbound-not-delivered'),
@@ -165,6 +168,7 @@ export const ReplenishmentWidget: React.FC<PropsWithChildrenOnly> = () => {
                     .addPart(AppRoute.InboundShipment)
                     .addQuery({ status: InvoiceNodeStatus.Shipped })
                     .build(),
+                  statContext: `${widgetContext}-${inboundShipmentsPanelContext}-not-delivered`,
                 },
               ]}
               link={RouteBuilder.create(AppRoute.Replenishment)
@@ -178,8 +182,7 @@ export const ReplenishmentWidget: React.FC<PropsWithChildrenOnly> = () => {
               isError={isRequisitionCountError}
               isLoading={isRequisitionCountLoading}
               title={t('internal-order')}
-              widgetContext={widgetContext}
-              panelContext={'internal-orders'}
+              panelContext={internalOrdersPanelContext}
               stats={[
                 {
                   label: t('label.new'),
@@ -188,6 +191,7 @@ export const ReplenishmentWidget: React.FC<PropsWithChildrenOnly> = () => {
                     .addPart(AppRoute.InternalOrder)
                     .addQuery({ status: RequisitionNodeStatus.Draft })
                     .build(),
+                  statContext: `${widgetContext}-${internalOrdersPanelContext}-new`,
                 },
               ]}
               link={RouteBuilder.create(AppRoute.Replenishment)
