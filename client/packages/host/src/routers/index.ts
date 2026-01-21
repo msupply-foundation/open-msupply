@@ -8,3 +8,4 @@ export * from './ColdChainRouter';
 export * from './ManageRouter';
 export * from './ProgramRouter';
 export * from './ReportsRouter';
+export * from './SettingsRouter';

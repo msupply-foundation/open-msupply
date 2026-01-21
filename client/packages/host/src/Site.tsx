@@ -27,7 +27,6 @@ import {
 import { AppDrawer, AppBar, Footer, NotFound } from './components';
 import { CommandK } from './CommandK';
 import { AppRoute } from '@openmsupply-client/config';
-import { Settings } from './Admin/Settings';
 import {
   DashboardRouter,
   CatalogueRouter,
@@ -39,6 +38,7 @@ import {
   ManageRouter,
   ProgramsRouter,
   ReportsRouter,
+  SettingsRouter,
 } from './routers';
 import { RequireAuthentication } from './components/Navigation/RequireAuthentication';
 import { QueryErrorHandler } from './QueryErrorHandler';
@@ -221,7 +221,7 @@ export const Site: FC = () => {
                         path={RouteBuilder.create(AppRoute.Settings)
                           .addWildCard()
                           .build()}
-                        element={<Settings />}
+                        element={<SettingsRouter />}
                       />
                       <Route
                         path={RouteBuilder.create(AppRoute.Help)

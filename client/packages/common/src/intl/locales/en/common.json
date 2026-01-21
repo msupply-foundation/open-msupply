@@ -2462,6 +2462,7 @@
   "server-error.InvalidDates": "Invalid dates",
   "settings": "Settings",
   "settings.label-printing": "Zebra Label Printing",
+  "settings.barcode-scanner": "Barcode Scanner",
   "settings.print-via-usb": "Print via USB (ignores network settings)",
   "settings.printer-address": "IP address",
   "settings.printer-label-height": "Label height",

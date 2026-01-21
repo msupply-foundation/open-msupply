@@ -8,6 +8,7 @@ import {
   UserPermission,
   useAuthContext,
 } from '@openmsupply-client/common';
+
 import {
   RadioIcon,
   CustomersIcon,
@@ -24,6 +25,7 @@ import { LabelPrinterSettings } from './LabelPrinterSettings';
 import { ConfigurationSettings } from './ConfigurationSettings';
 import { ServerInfo } from './ServerInfo';
 import { useIsGapsStoreOnly } from '@openmsupply-client/common';
+import { BarcodeScannerSettings } from './BarcodeScannerSettings';
 
 export const Settings: React.FC = () => {
   const { data: initStatus } = useInitialisationStatus();
@@ -74,6 +76,7 @@ export const Settings: React.FC = () => {
       >
         <LabelPrinterSettings />
         <ElectronSettings />
+        <BarcodeScannerSettings />
       </SettingsSection>
 
       {isCentralServer && (
