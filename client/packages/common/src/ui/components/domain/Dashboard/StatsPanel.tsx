@@ -134,8 +134,8 @@ const Content = ({
   const { plugins } = usePluginProvider();
 
   const pluginStatistics =
-    plugins.dashboard?.statistic?.map((Component, index) => (
-      <Component key={index} panelContext={panelContext} />
+    plugins.dashboard?.statistic?.map((Plugin, index) => (
+      <Plugin key={index} panelContext={panelContext} />
     )) ?? [];
 
   const statistics = [
