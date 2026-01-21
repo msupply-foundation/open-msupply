@@ -19,7 +19,7 @@ export const Statistics = () => {
   const { manageVaccinesInDoses } = usePreferences();
   const { stats, isVaccine, doses } = data || {};
 
-  const widgetContext = 'itemDetailView';
+  const widgetContext = 'item-details';
   const stockOnHandPanelContext = 'stock-on-hand';
   const AMCPanelContext = 'amc';
   const monthsOfStockPanelContext = 'months-of-stock';
@@ -67,7 +67,7 @@ export const Statistics = () => {
       <StatsPanel
         isLoading={false}
         title={t('title.average-monthly-consumption')}
-        panelContext={AMCPanelContext}
+        panelContext={`${widgetContext}-${AMCPanelContext}`}
         stats={[
           {
             label: t('label.units'),
@@ -81,7 +81,7 @@ export const Statistics = () => {
       <StatsPanel
         isLoading={false}
         title={t('title.months-of-stock')}
-        panelContext={monthsOfStockPanelContext}
+        panelContext={`${widgetContext}-${monthsOfStockPanelContext}`}
         stats={[
           {
             label: t('text.months'),
