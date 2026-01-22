@@ -65,12 +65,19 @@ impl<'a> StockOnHandRepository<'a> {
         }
 
         // Debug diesel query
-        // println!(
-        //     "{}",
-        //     diesel::debug_query::<crate::DBType, _>(&query).to_string()
-        // );
+        println!(
+            "{}",
+            diesel::debug_query::<crate::DBType, _>(&query).to_string()
+        );
 
-        Ok(query.load::<StockOnHandRow>(self.connection.lock().connection())?)
+        let now = std::time::SystemTime::now();
+        let result = query.load::<StockOnHandRow>(self.connection.lock().connection())?;
+        println!(
+            "SPEED TEST StockOnHandRepository::query executed in seconds: {}",
+            now.elapsed().unwrap().as_secs_f64()
+        );
+
+        Ok(result)
     }
 }
 

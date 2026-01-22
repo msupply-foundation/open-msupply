@@ -42,6 +42,7 @@ pub(crate) async fn setup_all_with_data_and_service_provider(
             port: 0,
             discovery: DiscoveryMode::Disabled,
             danger_allow_http: false,
+            force_generate_certs: false,
             debug_no_access_control: false,
             cors_origins: vec![],
             base_dir: Some("test_output".to_string()),

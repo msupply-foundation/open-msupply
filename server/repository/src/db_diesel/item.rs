@@ -1,3 +1,5 @@
+use std::time::SystemTime;
+
 use super::{
     item_category_row::item_category_join, item_link_row::item_link, item_row::item,
     master_list_line_row::master_list_line, master_list_name_join::master_list_name_join,
@@ -207,12 +209,17 @@ impl<'a> ItemRepository<'a> {
 
         // Debug diesel query
         //
-        // println!(
-        //    "{}",
-        //     diesel::debug_query::<DBType, _>(&final_query).to_string()
-        // );
+        println!(
+            "{}",
+            diesel::debug_query::<DBType, _>(&final_query).to_string()
+        );
 
+        let now = SystemTime::now();
         let result = final_query.load::<ItemAndUnit>(self.connection.lock().connection())?;
+        println!(
+            "SPEED TEST ItemRepository::query executed in seconds: {}",
+            now.elapsed().unwrap().as_secs_f64()
+        );
 
         Ok(result.into_iter().map(to_domain).collect())
     }

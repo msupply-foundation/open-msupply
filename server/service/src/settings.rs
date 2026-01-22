@@ -25,6 +25,8 @@ pub struct ServerSettings {
     /// Allow to run the server in http mode
     #[serde(default)]
     pub danger_allow_http: bool,
+    #[serde(default)]
+    pub force_generate_certs: bool,
     /// Only used in development mode
     #[serde(default)]
     pub debug_no_access_control: bool,

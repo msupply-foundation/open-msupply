@@ -1,3 +1,5 @@
+use std::time::SystemTime;
+
 use super::StorageConnection;
 use crate::{
     diesel_macros::{apply_date_filter, apply_equal_filter},
@@ -79,12 +81,20 @@ impl<'a> ConsumptionRepository<'a> {
         }
 
         // Debug diesel query
-        // println!(
-        //     "{}",
-        //     diesel::debug_query::<crate::DBType, _>(&query).to_string()
-        // );
 
-        Ok(query.load::<ConsumptionRow>(self.connection.lock().connection())?)
+        println!(
+            "{}",
+            diesel::debug_query::<crate::DBType, _>(&query).to_string()
+        );
+
+        let now = SystemTime::now();
+        let result = query.load::<ConsumptionRow>(self.connection.lock().connection())?;
+        println!(
+            "SPEED TEST ConsumptionRepository::query executed in seconds: {}",
+            now.elapsed().unwrap().as_secs_f64()
+        );
+
+        Ok(result)
     }
 
     /// Get item ids with consumption > 0
@@ -100,7 +110,19 @@ impl<'a> ConsumptionRepository<'a> {
             .filter(consumption::item_id.eq_any(query.select(consumption::item_id)))
             .having(count(consumption::quantity).gt(0));
 
-        Ok(query.load::<String>(self.connection.lock().connection())?)
+        println!(
+            "{}",
+            diesel::debug_query::<crate::DBType, _>(&query).to_string()
+        );
+
+        let now = SystemTime::now();
+
+        let result = query.load::<String>(self.connection.lock().connection())?;
+        println!(
+            "SPEED TEST ConsumptionRepository::query_items_with_consumption executed in seconds: {}",
+            now.elapsed().unwrap().as_secs_f64()
+        );
+        Ok(result)
     }
 }
 
