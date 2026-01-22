@@ -59,6 +59,7 @@ pub struct ItemFilter {
     pub max_months_of_stock: Option<f64>,
     pub with_recent_consumption: Option<bool>,
     pub products_at_risk_of_being_out_of_stock: Option<bool>,
+    pub universal_code: Option<StringFilter>,
 }
 
 impl ItemFilter {
@@ -133,6 +134,11 @@ impl ItemFilter {
 
     pub fn ignore_for_orders(mut self, value: bool) -> Self {
         self.ignore_for_orders = Some(value);
+        self
+    }
+
+    pub fn universal_code(mut self, filter: StringFilter) -> Self {
+        self.universal_code = Some(filter);
         self
     }
 }
@@ -249,6 +255,7 @@ fn create_filtered_query(store_id: String, filter: Option<ItemFilter>) -> BoxedI
             min_months_of_stock: _,
             with_recent_consumption: _,
             products_at_risk_of_being_out_of_stock: _,
+            universal_code,
         } = f;
 
         // or filter need to be applied before and filters
@@ -261,6 +268,7 @@ fn create_filtered_query(store_id: String, filter: Option<ItemFilter>) -> BoxedI
         apply_string_filter!(query, code, item::code);
         apply_string_filter!(query, name, item::name);
         apply_equal_filter!(query, r#type, item::type_);
+        apply_string_filter!(query, universal_code, item::universal_code);
 
         if let Some(is_active) = is_active {
             query = query.filter(item::is_active.eq(is_active));
