@@ -82,17 +82,19 @@ impl<'a> ConsumptionRepository<'a> {
 
         // Debug diesel query
 
-        println!(
+        log::info!(
             "{}",
             diesel::debug_query::<crate::DBType, _>(&query).to_string()
         );
 
         let now = SystemTime::now();
         let result = query.load::<ConsumptionRow>(self.connection.lock().connection())?;
-        println!(
+        log::info!(
             "SPEED TEST ConsumptionRepository::query executed in seconds: {}",
             now.elapsed().unwrap().as_secs_f64()
         );
+        println!("check");
+
 
         Ok(result)
     }
@@ -110,7 +112,7 @@ impl<'a> ConsumptionRepository<'a> {
             .filter(consumption::item_id.eq_any(query.select(consumption::item_id)))
             .having(count(consumption::quantity).gt(0));
 
-        println!(
+        log::info!(
             "{}",
             diesel::debug_query::<crate::DBType, _>(&query).to_string()
         );
@@ -118,7 +120,7 @@ impl<'a> ConsumptionRepository<'a> {
         let now = SystemTime::now();
 
         let result = query.load::<String>(self.connection.lock().connection())?;
-        println!(
+        log::info!(
             "SPEED TEST ConsumptionRepository::query_items_with_consumption executed in seconds: {}",
             now.elapsed().unwrap().as_secs_f64()
         );
