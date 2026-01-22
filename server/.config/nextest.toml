@@ -19,6 +19,10 @@ report-name = "Backend tests (SQLite)"
 [profile.ci-postgres]
 inherits = "ci"
 
+[[profile.ci-postgres.overrides]]
+filter = 'test(test_generate_excel_performance)'
+threads-required = "num-cpus"
+
 [profile.ci-postgres.junit]
 path = "postgres-test-results.xml"
 report-name = "Backend tests (Postgres)"
