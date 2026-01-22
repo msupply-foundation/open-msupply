@@ -277,13 +277,16 @@ export function getSdk(
   return {
     report(
       variables: ReportQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<ReportQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<ReportQuery>(ReportDocument, variables, {
-            ...requestHeaders,
-            ...wrappedRequestHeaders,
+          client.request<ReportQuery>({
+            document: ReportDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
           }),
         'report',
         'query',
@@ -292,13 +295,16 @@ export function getSdk(
     },
     reports(
       variables: ReportsQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<ReportsQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<ReportsQuery>(ReportsDocument, variables, {
-            ...requestHeaders,
-            ...wrappedRequestHeaders,
+          client.request<ReportsQuery>({
+            document: ReportsDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
           }),
         'reports',
         'query',
@@ -307,15 +313,17 @@ export function getSdk(
     },
     generateReport(
       variables: GenerateReportQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<GenerateReportQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<GenerateReportQuery>(
-            GenerateReportDocument,
+          client.request<GenerateReportQuery>({
+            document: GenerateReportDocument,
             variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
         'generateReport',
         'query',
         variables
@@ -323,13 +331,16 @@ export function getSdk(
     },
     csvToExcel(
       variables: CsvToExcelQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<CsvToExcelQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<CsvToExcelQuery>(CsvToExcelDocument, variables, {
-            ...requestHeaders,
-            ...wrappedRequestHeaders,
+          client.request<CsvToExcelQuery>({
+            document: CsvToExcelDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
           }),
         'csvToExcel',
         'query',

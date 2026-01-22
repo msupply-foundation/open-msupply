@@ -26,10 +26,12 @@ export const ReturnReasonsComponent = ({
   lines,
   updateLine,
   isDisabled,
+  disabledLinked,
 }: {
   lines: ReturnWithReason[];
   updateLine: (line: Partial<ReturnWithReason> & { id: string }) => void;
   isDisabled: boolean;
+  disabledLinked: boolean;
 }) => {
   const t = useTranslation();
 
@@ -63,7 +65,7 @@ export const ReturnReasonsComponent = ({
           <ReasonOptionsSearchInput
             type={ReasonOptionNodeType.ReturnReason}
             onChange={reason => updateLine({ ...row, reasonOption: reason })}
-            disabled={isDisabled}
+            disabled={disabledLinked}
             value={row.reasonOption}
           />
         ),
@@ -82,7 +84,7 @@ export const ReturnReasonsComponent = ({
         ),
         size: 200,
         pin: 'right',
-      }
+      },
     ],
     []
   );
