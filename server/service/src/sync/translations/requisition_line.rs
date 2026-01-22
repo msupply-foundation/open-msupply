@@ -20,6 +20,7 @@ pub struct RequisitionLineOmsFields {
     pub expiry_date: Option<NaiveDate>, // Actually from rnr table and only included in sync push so that OG auth module can use
     pub price_per_unit: Option<f64>,
     pub available_volume: Option<f64>,
+    pub location_type_id: Option<String>,
 }
 
 #[allow(non_snake_case)]
@@ -115,6 +116,15 @@ impl SyncTranslation for RequisitionLineTranslation {
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let data = serde_json::from_str::<LegacyRequisitionLineRow>(&sync_record.data)?;
 
+        let (price_per_unit, available_volume, location_type_id) = match data.oms_fields {
+            Some(fields) => (
+                fields.price_per_unit,
+                fields.available_volume,
+                fields.location_type_id,
+            ),
+            None => (None, None, None),
+        };
+
         let result = RequisitionLineRow {
             id: data.ID.to_string(),
             requisition_id: data.requisition_ID,
@@ -139,8 +149,9 @@ impl SyncTranslation for RequisitionLineTranslation {
             expiring_units: data.expiring_units,
             days_out_of_stock: data.days_out_of_stock,
             option_id: data.option_id,
-            price_per_unit: data.oms_fields.as_ref().and_then(|f| f.price_per_unit),
-            available_volume: data.oms_fields.and_then(|f| f.available_volume),
+            price_per_unit,
+            available_volume,
+            location_type_id,
         };
 
         Ok(PullTranslateResult::upsert(result))
@@ -186,6 +197,7 @@ impl SyncTranslation for RequisitionLineTranslation {
             option_id,
             price_per_unit,
             available_volume,
+            location_type_id,
         } = RequisitionLineRowRepository::new(connection)
             .find_one_by_id(&changelog.record_id)?
             .ok_or(anyhow::Error::msg(format!(
@@ -231,6 +243,7 @@ impl SyncTranslation for RequisitionLineTranslation {
             expiry_date,
             price_per_unit,
             available_volume,
+            location_type_id,
         });
 
         let legacy_row = LegacyRequisitionLineRow {
