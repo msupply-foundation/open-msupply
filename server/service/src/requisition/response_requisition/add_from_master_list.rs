@@ -170,6 +170,7 @@ fn generate(
                 approved_quantity: 0.0,
                 approval_comment: None,
                 available_volume: None,
+                location_type_id: None,
             }
         })
         .collect();

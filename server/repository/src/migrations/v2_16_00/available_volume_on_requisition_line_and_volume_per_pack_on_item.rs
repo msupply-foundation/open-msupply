@@ -12,6 +12,7 @@ impl MigrationFragment for Migrate {
             r#"
                 ALTER TABLE item ADD COLUMN volume_per_pack {DOUBLE} DEFAULT 0.0 NOT NULL;
                 ALTER TABLE requisition_line ADD COLUMN available_volume {DOUBLE};
+                ALTER TABLE requisition_line ADD COLUMN location_type_id TEXT REFERENCES location_type(id);
             "#
         )?;
 
