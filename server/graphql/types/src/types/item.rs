@@ -193,9 +193,14 @@ impl ItemNode {
 
         Ok(WarningNode::from_vec(result))
     }
-
+    
+    #[deprecated(note = "Use universalCode instead")]
     pub async fn msupply_universal_code(&self) -> String {
-        self.legacy_string("universalcodes_code")
+        self.row().universal_code.clone().unwrap_or_default()
+    }
+
+    pub async fn universal_code(&self) -> String {
+        self.row().universal_code.clone().unwrap_or_default()
     }
 
     pub async fn msupply_universal_name(&self) -> String {
