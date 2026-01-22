@@ -457,7 +457,7 @@ mod tests {
     use std::convert::TryFrom;
 
     use crate::{
-        mock::{mock_item_b, mock_item_link_from_item, MockDataInserts},
+        mock::{mock_item_b, mock_item_link_from_item, mock_item_universal_code, MockDataInserts},
         test_db, EqualFilter, ItemFilter, ItemLinkRowRepository, ItemRepository, ItemRow,
         ItemRowRepository, ItemType, MasterListLineRow, MasterListLineRowRepository,
         MasterListNameJoinRepository, MasterListNameJoinRow, MasterListRow,
@@ -628,6 +628,34 @@ mod tests {
                         .code(StringFilter::equal_to("does not exist"))
                         .code_or_name(StringFilter::equal_to(&mock_item_b().name)),
                 ),
+                None,
+                Some("store_a".to_string()),
+            )
+            .unwrap();
+        assert_eq!(results.len(), 0);
+
+        // test universal code filter
+        let results = item_query_repository
+            .query(
+                Pagination::new(),
+                Some(
+                    ItemFilter::new().universal_code(StringFilter::equal_to(
+                        &mock_item_universal_code()
+                            .universal_code
+                            .unwrap_or_default(),
+                    )),
+                ),
+                None,
+                Some("store_a".to_string()),
+            )
+            .unwrap();
+        assert_eq!(results[0].item_row.id, mock_item_universal_code().id);
+
+        // no result when `AND universal code is "does not exist"` clause
+        let results = item_query_repository
+            .query(
+                Pagination::new(),
+                Some(ItemFilter::new().universal_code(StringFilter::equal_to("does not exist"))),
                 None,
                 Some("store_a".to_string()),
             )
