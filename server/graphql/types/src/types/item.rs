@@ -491,7 +491,6 @@ mod test {
                                 "category3_ID": "",
                                 "buy_price": 0,
                                 "VEN_category": "",
-                                "universalcodes_code": "universal code",
                                 "universalcodes_name": "universal name",
                                 "kit_data": null,
                                 "custom_data": null,
@@ -500,6 +499,7 @@ mod test {
                                 "restricted_location_type_ID": "84AA2B7A18694A2AB1E84DCABAD19617"
                             }"#
                             .to_string(),
+                            universal_code: Some("universal code".to_string()),
                             ..Default::default()
                         },
                         ..Default::default()
@@ -515,6 +515,7 @@ mod test {
               "ddd": "0.1",
               "margin": 0.3,
               "msupplyUniversalCode": "universal code",
+              "universalCode": "universal code",
               "msupplyUniversalName": "universal name",
               "outerPackSize": 10,
               "volumePerOuterPack": 11.2,
@@ -529,6 +530,7 @@ mod test {
             testQuery {
                 __typename
                msupplyUniversalCode
+               universalCode
                msupplyUniversalName
                outerPackSize
                volumePerPack
