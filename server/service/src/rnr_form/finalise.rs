@@ -220,6 +220,7 @@ fn generate(
                     option_id: None,
                     price_per_unit: None,
                     available_volume: None,
+                    location_type_id: None,
                 };
 
                 // Also return rnr_form_line_id, so we can update the rnr form line with the requisition line id

@@ -218,6 +218,7 @@ fn generate(
                 },
                 // Defaults
                 available_volume: None,
+                location_type_id: None,
                 initial_stock_on_hand_units: 0.0,
                 incoming_units: 0.0,
                 outgoing_units: 0.0,

@@ -27,6 +27,7 @@ table! {
         price_per_unit -> Nullable<Double>,
         comment -> Nullable<Text>,
         available_volume -> Nullable<Double>,
+        location_type_id -> Nullable<Text>,
         // Manual requisition fields
         initial_stock_on_hand_units -> Double,
         incoming_units -> Double,
@@ -64,6 +65,7 @@ pub struct RequisitionLineRow {
     pub price_per_unit: Option<f64>,
     pub comment: Option<String>,
     pub available_volume: Option<f64>,
+    pub location_type_id: Option<String>,
     // Manual requisition fields
     pub initial_stock_on_hand_units: f64,
     pub incoming_units: f64,

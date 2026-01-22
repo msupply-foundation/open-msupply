@@ -87,6 +87,7 @@ pub fn insert_response_requisition_line(
                 approved_quantity: 0.0,
                 approval_comment: None,
                 available_volume: None,
+                location_type_id: None,
             };
 
             RequisitionLineRowRepository::new(connection).upsert_one(&new_requisition_line_row)?;
