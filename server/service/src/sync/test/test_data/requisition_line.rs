@@ -47,7 +47,8 @@ const REQUISITION_LINE_1: (&str, &str) = (
         "oms_fields": {
             "rnr_form_line_id": "",
             "expiry_date": null,
-            "available_volume": 5.0
+            "available_volume": 5.0,
+            "location_type_id": null
         }
     }"#,
 );
@@ -79,6 +80,7 @@ fn requisition_line_request_pull_record() -> TestSyncIncomingRecord {
             option_id: None,
             price_per_unit: None,
             available_volume: Some(5.0),
+            location_type_id: None,
         },
     )
 }
@@ -114,6 +116,7 @@ fn requisition_line_request_push_record() -> TestSyncOutgoingRecord {
                 expiry_date: None,
                 price_per_unit: None,
                 available_volume: Some(5.0),
+                location_type_id: None,
             }),
         }),
     }
@@ -157,7 +160,8 @@ const REQUISITION_LINE_OM_FIELD: (&str, &str) = (
             "rnr_form_line_id": "rnr_form_line_with_expiry",
             "expiry_date": "2023-12-31",
             "price_per_unit": 1.1,
-            "available_volume": null
+            "available_volume": null,
+            "location_type_id": null
         }
     }"#,
 );
@@ -194,6 +198,7 @@ fn requisition_line_om_fields_pull_record() -> TestSyncIncomingRecord {
             option_id: None,
             price_per_unit: Some(1.1),
             available_volume: None,
+            location_type_id: None,
         },
     )
 }
@@ -234,6 +239,7 @@ fn requisition_line_om_fields_push_record() -> TestSyncOutgoingRecord {
                 expiry_date: Some(NaiveDate::from_ymd_opt(2023, 12, 31).unwrap()),
                 price_per_unit: Some(1.1),
                 available_volume: None,
+                location_type_id: None,
             }),
         }),
     }

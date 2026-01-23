@@ -297,7 +297,7 @@ pub fn mock_request_draft_requisition_calculation_test() -> FullMockRequisition 
             },
             RequisitionLineRow {
                 id: line4_id,
-                requisition_id: requisition_id,
+                requisition_id,
                 item_link_id: mock_item_d().id,
                 requested_quantity: 10.0,
                 suggested_quantity: 200.0,
