@@ -46,17 +46,15 @@ export function getSdk(
   return {
     initialisationStatus(
       variables?: InitialisationStatusQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<InitialisationStatusQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<InitialisationStatusQuery>({
-            document: InitialisationStatusDocument,
+          client.request<InitialisationStatusQuery>(
+            InitialisationStatusDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'initialisationStatus',
         'query',
         variables

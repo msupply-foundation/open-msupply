@@ -5247,6 +5247,12 @@ export type LocationTypeSortInput = {
   key: LocationTypeSortFieldInput;
 };
 
+export type LocationTypeWithVolume = {
+  __typename: 'LocationTypeWithVolume';
+  locationType: LocationTypeNode;
+  volume: Scalars['Float']['output'];
+};
+
 export type LocationTypesResponse = LocationTypeConnector;
 
 export type LocationsResponse = LocationConnector;
@@ -8806,6 +8812,7 @@ export type RequisitionLineNode = {
   suggestedQuantity: Scalars['Float']['output'];
   /** Quantity to be supplied in the next shipment, only used in response requisition */
   supplyQuantity: Scalars['Float']['output'];
+  volumeByLocationType?: Maybe<LocationTypeWithVolume>;
 };
 
 export type RequisitionLineNodeItemStatsArgs = {

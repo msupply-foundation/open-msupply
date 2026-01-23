@@ -102,16 +102,13 @@ export function getSdk(
   return {
     pluginData(
       variables: PluginDataQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<PluginDataQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<PluginDataQuery>({
-            document: PluginDataDocument,
-            variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
+          client.request<PluginDataQuery>(PluginDataDocument, variables, {
+            ...requestHeaders,
+            ...wrappedRequestHeaders,
           }),
         'pluginData',
         'query',
@@ -120,17 +117,15 @@ export function getSdk(
     },
     insertPluginData(
       variables: InsertPluginDataMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<InsertPluginDataMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<InsertPluginDataMutation>({
-            document: InsertPluginDataDocument,
+          client.request<InsertPluginDataMutation>(
+            InsertPluginDataDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'insertPluginData',
         'mutation',
         variables
@@ -138,17 +133,15 @@ export function getSdk(
     },
     updatePluginData(
       variables: UpdatePluginDataMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<UpdatePluginDataMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<UpdatePluginDataMutation>({
-            document: UpdatePluginDataDocument,
+          client.request<UpdatePluginDataMutation>(
+            UpdatePluginDataDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'updatePluginData',
         'mutation',
         variables
