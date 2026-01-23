@@ -49,7 +49,15 @@ jobs:
         with:
           command: clean
           args: -p repository -p graphql_types -p graphql_plugin -p graphql_invoice --manifest-path server/Cargo.toml
+      - name: Check for marker files (before build)
+        run: ls -la server/repository/test_output/*.marker || echo "No marker files found"
+      - name: Trigger cargo build
+        run: cargo build --manifest-path server/Cargo.toml
+      - name: Check for marker files (after build)
+        run: ls -la server/repository/test_output/*.marker || echo "No marker files found"
       - uses: actions-rs/cargo@v1
         with:
           command: test
           args: --features=postgres --manifest-path server/Cargo.toml
+      - name: Check for marker files (after test)
+        run: ls -la server/repository/test_output/*.marker || echo "No marker files found"
