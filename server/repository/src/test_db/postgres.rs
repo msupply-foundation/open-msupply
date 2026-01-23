@@ -146,12 +146,11 @@ pub(crate) async fn setup_with_version(
         .join("repository")
         .join(TEST_OUTPUT_DIR);
 
-    // use file lock for template operations, as cargo nextest runs crate tests in parallel
-    // this requires a file lock instead of thread synchronisation
-    let _fs_lock = lock_file(test_output_dir.clone(), "___template.lock".to_string())
-        .expect("Failed to acquire template fs lock");
-
     {
+        // Checking marker files and template creation should be globally locked.
+        let _fs_lock = lock_file(test_output_dir.clone(), "___template.lock".to_string())
+            .expect("Failed to acquire template fs lock");
+
         let existing_templates: Vec<String> = pg_database::table
             .select(pg_database::dsl::datname)
             .filter(pg_database::dsl::datname.ilike("___template_%"))
