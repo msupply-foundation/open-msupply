@@ -1,3 +1,4 @@
+/* eslint-disable camelcase */
 import { BackendPlugins } from '@common/types';
 
 type Graphql = {
@@ -6,7 +7,7 @@ type Graphql = {
 };
 
 const plugins: BackendPlugins = {
-graphql_query: ({ store_id, input: inputUntyped }): Graphql['output'] => {
+  graphql_query: ({ store_id, input: inputUntyped }): Graphql['output'] => {
     const input = inputUntyped as Graphql['input'];
 
     switch (input.type) {
@@ -15,10 +16,10 @@ graphql_query: ({ store_id, input: inputUntyped }): Graphql['output'] => {
       case 'doubleEcho':
         use_graphql({
           query: `
-            query MyQuery($input: JSON = "", $pluginCode: String = "", $storeId: String = "") {
-              pluginGraphqlQuery(input: $input, pluginCode: $pluginCode, storeId: $storeId)
-            }
-        `,
+              query MyQuery($input: JSON = "", $pluginCode: String = "", $storeId: String = "") {
+                pluginGraphqlQuery(input: $input, pluginCode: $pluginCode, storeId: $storeId)
+              }
+          `,
           variables: {
             storeId: store_id,
             input: { type: 'echo', echo: 'yow' },
@@ -31,4 +32,6 @@ graphql_query: ({ store_id, input: inputUntyped }): Graphql['output'] => {
         };
     }
   },
-}
+};
+
+export { plugins };
