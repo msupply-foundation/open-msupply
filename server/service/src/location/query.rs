@@ -64,7 +64,7 @@ pub fn get_available_volume_by_location_type(
     connection: &StorageConnection,
     store_id: &str,
     item_id: &str,
-) -> Result<(Option<String>, f64), RepositoryError> {
+) -> Result<(Option<String>, Option<f64>), RepositoryError> {
     let item = ItemRowRepository::new(connection)
         .find_one_by_id(item_id)?
         .ok_or(RepositoryError::NotFound)?;
@@ -87,7 +87,7 @@ pub fn get_available_volume_by_location_type(
     )?;
 
     if lines.is_empty() {
-        return Ok((None, 0.0));
+        return Ok((None, None));
     }
 
     let location_repo = LocationRepository::new(connection);
@@ -105,6 +105,6 @@ pub fn get_available_volume_by_location_type(
 
     Ok((
         (!restricted_location_type_id.is_empty()).then_some(restricted_location_type_id),
-        total_volume - used_volume,
+        Some(total_volume - used_volume),
     ))
 }

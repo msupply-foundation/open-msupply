@@ -116,7 +116,7 @@ fn generate(
         option_id,
     }: UpdateRequestRequisitionLine,
 ) -> Result<RequisitionLineRow, RepositoryError> {
-    let available_volume = get_available_volume_by_location_type(
+    let (location_type_id, available_volume) = get_available_volume_by_location_type(
         &ctx.connection,
         &ctx.store_id,
         &existing.item_link_id,
@@ -126,7 +126,8 @@ fn generate(
         requested_quantity: updated_requested_quantity.unwrap_or(existing.requested_quantity),
         comment: updated_comment.or(existing.comment),
         option_id: option_id.or(existing.option_id),
-        available_volume: Some(available_volume),
+        available_volume,
+        location_type_id,
         ..existing
     })
 }
@@ -312,7 +313,6 @@ mod test {
             RequisitionLineRow {
                 requested_quantity: 99.0,
                 comment: Some("comment".to_string()),
-                available_volume: Some(-1000.0), // from stock_line_with_volume
                 ..test_line
             }
         );
@@ -350,7 +350,6 @@ mod test {
             RequisitionLineRow {
                 requested_quantity: 15.0,
                 option_id: Some(mock_requisition_variance_reason_option().id.clone()),
-                available_volume: Some(-1000.0),
                 ..progam_request_line()
             }
         )
