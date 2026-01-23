@@ -1,0 +1,17 @@
+{
+  "name": "bes-plugins",
+  "version": "1.0.0",
+  "description": "Backend plugins for BES",
+  "main": "plugin.js",
+  "scripts": {
+        "build-plugin": "webpack"
+    },
+  "repository": "https://github.com/msupply-foundation/bes-plugins.git",
+  "license": "MIT",
+  "devDependencies": {
+        "ts-loader": "^9.4.4",
+        "typescript": "^5.0.2",
+        "webpack": "^5.76.2",
+        "webpack-cli": "^5.0.1"
+    }
+}
