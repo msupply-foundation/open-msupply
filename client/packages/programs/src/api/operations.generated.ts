@@ -2535,16 +2535,13 @@ export function getSdk(
   return {
     programs(
       variables: ProgramsQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<ProgramsQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<ProgramsQuery>({
-            document: ProgramsDocument,
-            variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
+          client.request<ProgramsQuery>(ProgramsDocument, variables, {
+            ...requestHeaders,
+            ...wrappedRequestHeaders,
           }),
         'programs',
         'query',
@@ -2553,16 +2550,13 @@ export function getSdk(
     },
     periods(
       variables: PeriodsQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<PeriodsQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<PeriodsQuery>({
-            document: PeriodsDocument,
-            variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
+          client.request<PeriodsQuery>(PeriodsDocument, variables, {
+            ...requestHeaders,
+            ...wrappedRequestHeaders,
           }),
         'periods',
         'query',
@@ -2571,17 +2565,15 @@ export function getSdk(
     },
     documentByName(
       variables: DocumentByNameQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<DocumentByNameQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<DocumentByNameQuery>({
-            document: DocumentByNameDocument,
+          client.request<DocumentByNameQuery>(
+            DocumentByNameDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'documentByName',
         'query',
         variables
@@ -2589,16 +2581,13 @@ export function getSdk(
     },
     documents(
       variables: DocumentsQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<DocumentsQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<DocumentsQuery>({
-            document: DocumentsDocument,
-            variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
+          client.request<DocumentsQuery>(DocumentsDocument, variables, {
+            ...requestHeaders,
+            ...wrappedRequestHeaders,
           }),
         'documents',
         'query',
@@ -2607,17 +2596,15 @@ export function getSdk(
     },
     documentRegistries(
       variables: DocumentRegistriesQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<DocumentRegistriesQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<DocumentRegistriesQuery>({
-            document: DocumentRegistriesDocument,
+          client.request<DocumentRegistriesQuery>(
+            DocumentRegistriesDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'documentRegistries',
         'query',
         variables
@@ -2625,17 +2612,15 @@ export function getSdk(
     },
     getDocumentHistory(
       variables: GetDocumentHistoryQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<GetDocumentHistoryQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<GetDocumentHistoryQuery>({
-            document: GetDocumentHistoryDocument,
+          client.request<GetDocumentHistoryQuery>(
+            GetDocumentHistoryDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'getDocumentHistory',
         'query',
         variables
@@ -2643,17 +2628,15 @@ export function getSdk(
     },
     allocateProgramNumber(
       variables: AllocateProgramNumberMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<AllocateProgramNumberMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<AllocateProgramNumberMutation>({
-            document: AllocateProgramNumberDocument,
+          client.request<AllocateProgramNumberMutation>(
+            AllocateProgramNumberDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'allocateProgramNumber',
         'mutation',
         variables
@@ -2661,17 +2644,15 @@ export function getSdk(
     },
     encounterFields(
       variables: EncounterFieldsQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<EncounterFieldsQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<EncounterFieldsQuery>({
-            document: EncounterFieldsDocument,
+          client.request<EncounterFieldsQuery>(
+            EncounterFieldsDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'encounterFields',
         'query',
         variables
@@ -2679,17 +2660,15 @@ export function getSdk(
     },
     encountersWithDocument(
       variables: EncountersWithDocumentQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<EncountersWithDocumentQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<EncountersWithDocumentQuery>({
-            document: EncountersWithDocumentDocument,
+          client.request<EncountersWithDocumentQuery>(
+            EncountersWithDocumentDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'encountersWithDocument',
         'query',
         variables
@@ -2697,16 +2676,13 @@ export function getSdk(
     },
     encounterById(
       variables: EncounterByIdQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<EncounterByIdQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<EncounterByIdQuery>({
-            document: EncounterByIdDocument,
-            variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
+          client.request<EncounterByIdQuery>(EncounterByIdDocument, variables, {
+            ...requestHeaders,
+            ...wrappedRequestHeaders,
           }),
         'encounterById',
         'query',
@@ -2715,17 +2691,15 @@ export function getSdk(
     },
     encounterByDocName(
       variables: EncounterByDocNameQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<EncounterByDocNameQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<EncounterByDocNameQuery>({
-            document: EncounterByDocNameDocument,
+          client.request<EncounterByDocNameQuery>(
+            EncounterByDocNameDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'encounterByDocName',
         'query',
         variables
@@ -2733,16 +2707,13 @@ export function getSdk(
     },
     encounters(
       variables: EncountersQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<EncountersQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<EncountersQuery>({
-            document: EncountersDocument,
-            variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
+          client.request<EncountersQuery>(EncountersDocument, variables, {
+            ...requestHeaders,
+            ...wrappedRequestHeaders,
           }),
         'encounters',
         'query',
@@ -2751,17 +2722,15 @@ export function getSdk(
     },
     insertEncounter(
       variables: InsertEncounterMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<InsertEncounterMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<InsertEncounterMutation>({
-            document: InsertEncounterDocument,
+          client.request<InsertEncounterMutation>(
+            InsertEncounterDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'insertEncounter',
         'mutation',
         variables
@@ -2769,17 +2738,15 @@ export function getSdk(
     },
     updateEncounter(
       variables: UpdateEncounterMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<UpdateEncounterMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<UpdateEncounterMutation>({
-            document: UpdateEncounterDocument,
+          client.request<UpdateEncounterMutation>(
+            UpdateEncounterDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'updateEncounter',
         'mutation',
         variables
@@ -2787,17 +2754,15 @@ export function getSdk(
     },
     programEnrolments(
       variables: ProgramEnrolmentsQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<ProgramEnrolmentsQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<ProgramEnrolmentsQuery>({
-            document: ProgramEnrolmentsDocument,
+          client.request<ProgramEnrolmentsQuery>(
+            ProgramEnrolmentsDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'programEnrolments',
         'query',
         variables
@@ -2805,17 +2770,15 @@ export function getSdk(
     },
     programEnrolmentByDocName(
       variables: ProgramEnrolmentByDocNameQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<ProgramEnrolmentByDocNameQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<ProgramEnrolmentByDocNameQuery>({
-            document: ProgramEnrolmentByDocNameDocument,
+          client.request<ProgramEnrolmentByDocNameQuery>(
+            ProgramEnrolmentByDocNameDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'programEnrolmentByDocName',
         'query',
         variables
@@ -2823,17 +2786,15 @@ export function getSdk(
     },
     insertProgramEnrolment(
       variables: InsertProgramEnrolmentMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<InsertProgramEnrolmentMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<InsertProgramEnrolmentMutation>({
-            document: InsertProgramEnrolmentDocument,
+          client.request<InsertProgramEnrolmentMutation>(
+            InsertProgramEnrolmentDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'insertProgramEnrolment',
         'mutation',
         variables
@@ -2841,17 +2802,15 @@ export function getSdk(
     },
     updateProgramEnrolment(
       variables: UpdateProgramEnrolmentMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<UpdateProgramEnrolmentMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<UpdateProgramEnrolmentMutation>({
-            document: UpdateProgramEnrolmentDocument,
+          client.request<UpdateProgramEnrolmentMutation>(
+            UpdateProgramEnrolmentDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'updateProgramEnrolment',
         'mutation',
         variables
@@ -2859,16 +2818,13 @@ export function getSdk(
     },
     clinicians(
       variables: CliniciansQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<CliniciansQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<CliniciansQuery>({
-            document: CliniciansDocument,
-            variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
+          client.request<CliniciansQuery>(CliniciansDocument, variables, {
+            ...requestHeaders,
+            ...wrappedRequestHeaders,
           }),
         'clinicians',
         'query',
@@ -2877,16 +2833,13 @@ export function getSdk(
     },
     formSchemas(
       variables?: FormSchemasQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<FormSchemasQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<FormSchemasQuery>({
-            document: FormSchemasDocument,
-            variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
+          client.request<FormSchemasQuery>(FormSchemasDocument, variables, {
+            ...requestHeaders,
+            ...wrappedRequestHeaders,
           }),
         'formSchemas',
         'query',
@@ -2895,17 +2848,15 @@ export function getSdk(
     },
     activeProgramEvents(
       variables: ActiveProgramEventsQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<ActiveProgramEventsQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<ActiveProgramEventsQuery>({
-            document: ActiveProgramEventsDocument,
+          client.request<ActiveProgramEventsQuery>(
+            ActiveProgramEventsDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'activeProgramEvents',
         'query',
         variables
@@ -2913,16 +2864,13 @@ export function getSdk(
     },
     contactTraces(
       variables: ContactTracesQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<ContactTracesQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<ContactTracesQuery>({
-            document: ContactTracesDocument,
-            variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
+          client.request<ContactTracesQuery>(ContactTracesDocument, variables, {
+            ...requestHeaders,
+            ...wrappedRequestHeaders,
           }),
         'contactTraces',
         'query',
@@ -2931,17 +2879,15 @@ export function getSdk(
     },
     insertContactTrace(
       variables: InsertContactTraceMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<InsertContactTraceMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<InsertContactTraceMutation>({
-            document: InsertContactTraceDocument,
+          client.request<InsertContactTraceMutation>(
+            InsertContactTraceDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'insertContactTrace',
         'mutation',
         variables
@@ -2949,17 +2895,15 @@ export function getSdk(
     },
     updateContactTrace(
       variables: UpdateContactTraceMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<UpdateContactTraceMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<UpdateContactTraceMutation>({
-            document: UpdateContactTraceDocument,
+          client.request<UpdateContactTraceMutation>(
+            UpdateContactTraceDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'updateContactTrace',
         'mutation',
         variables
@@ -2967,17 +2911,15 @@ export function getSdk(
     },
     immunisationPrograms(
       variables: ImmunisationProgramsQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<ImmunisationProgramsQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<ImmunisationProgramsQuery>({
-            document: ImmunisationProgramsDocument,
+          client.request<ImmunisationProgramsQuery>(
+            ImmunisationProgramsDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'immunisationPrograms',
         'query',
         variables
@@ -2985,17 +2927,15 @@ export function getSdk(
     },
     vaccineCourses(
       variables: VaccineCoursesQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<VaccineCoursesQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<VaccineCoursesQuery>({
-            document: VaccineCoursesDocument,
+          client.request<VaccineCoursesQuery>(
+            VaccineCoursesDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'vaccineCourses',
         'query',
         variables
@@ -3003,17 +2943,15 @@ export function getSdk(
     },
     insertVaccineCourse(
       variables: InsertVaccineCourseMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<InsertVaccineCourseMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<InsertVaccineCourseMutation>({
-            document: InsertVaccineCourseDocument,
+          client.request<InsertVaccineCourseMutation>(
+            InsertVaccineCourseDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'insertVaccineCourse',
         'mutation',
         variables
@@ -3021,17 +2959,15 @@ export function getSdk(
     },
     updateVaccineCourse(
       variables: UpdateVaccineCourseMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<UpdateVaccineCourseMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<UpdateVaccineCourseMutation>({
-            document: UpdateVaccineCourseDocument,
+          client.request<UpdateVaccineCourseMutation>(
+            UpdateVaccineCourseDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'updateVaccineCourse',
         'mutation',
         variables
@@ -3039,17 +2975,15 @@ export function getSdk(
     },
     deleteVaccineCourse(
       variables: DeleteVaccineCourseMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<DeleteVaccineCourseMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<DeleteVaccineCourseMutation>({
-            document: DeleteVaccineCourseDocument,
+          client.request<DeleteVaccineCourseMutation>(
+            DeleteVaccineCourseDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'deleteVaccineCourse',
         'mutation',
         variables

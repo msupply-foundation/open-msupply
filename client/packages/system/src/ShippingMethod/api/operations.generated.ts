@@ -71,17 +71,15 @@ export function getSdk(
   return {
     shippingMethods(
       variables: ShippingMethodsQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<ShippingMethodsQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<ShippingMethodsQuery>({
-            document: ShippingMethodsDocument,
+          client.request<ShippingMethodsQuery>(
+            ShippingMethodsDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'shippingMethods',
         'query',
         variables
