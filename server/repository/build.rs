@@ -4,7 +4,7 @@ use std::path::Path;
 
 #[path = "src/test_db/constants.rs"]
 mod constants;
-use crate::constants::{TEMPLATE_MARKER_FILE, TEST_OUTPUT_DIR};
+use crate::constants::{TEMPLATE_MARKER_FILE_SQLITE, TEMPLATE_MARKER_FILE_POSTGRES, TEST_OUTPUT_DIR};
 
 fn main() {
     // when migrations are changing mark the template DBs to be recreated
@@ -21,7 +21,8 @@ fn main() {
         for entry in glob(&pattern).expect("Failed to read glob pattern") {
             match entry {
                 Ok(path) => {
-                    fs::File::create(Path::new(&path).join(TEMPLATE_MARKER_FILE)).unwrap();
+                    fs::File::create(Path::new(&path).join(TEMPLATE_MARKER_FILE_SQLITE)).unwrap();
+                    fs::File::create(Path::new(&path).join(TEMPLATE_MARKER_FILE_POSTGRES)).unwrap();
                 }
                 Err(e) => println!("cargo:warning={:?}", e),
             }
