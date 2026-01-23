@@ -78,6 +78,8 @@ jobs:
         run: ls -la server/repository/test_output/*.marker || echo "No marker files found"
       - name: Run test and generate report
         run: cargo nextest run --profile=ci-postgres --features=postgres --manifest-path server/Cargo.toml
+      - name: Check for marker files (after test)
+        run: ls -la server/repository/test_output/*.marker || echo "No marker files found"
       - name: Upload JUnit test results
         uses: actions/upload-artifact@v4
         if: (!cancelled())
@@ -97,5 +99,3 @@ jobs:
       - name: Clean up test results
         if: always()
         run: rm -f server/target/nextest/ci-postgres/postgres-test-results.xml
-      - name: Check for marker files (after test)
-        run: ls -la server/repository/test_output/*.marker || echo "No marker files found"
