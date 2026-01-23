@@ -28,6 +28,7 @@ fn main() {
         }
     }
 
-    println!("cargo:rerun-if-changed=src/migrations");
-    println!("cargo:rerun-if-changed=src/mock");
+    // Removed cargo:rerun-if-changed directives to ensure marker files are always created on every build
+    // println!("cargo:rerun-if-changed=src/migrations");
+    // println!("cargo:rerun-if-changed=src/mock");
 }
