@@ -14,7 +14,7 @@ use crate::{
 };
 
 use super::constants::{
-    env_msupply_no_test_db_template, find_workspace_root, TEMPLATE_MARKER_FILE, TEST_OUTPUT_DIR,
+    env_msupply_no_test_db_template, find_workspace_root, TEMPLATE_MARKER_FILE_SQLITE, TEST_OUTPUT_DIR,
 };
 
 pub fn get_test_db_settings(db_name: &str) -> DatabaseSettings {
@@ -97,12 +97,12 @@ pub(crate) async fn setup_with_version(
             .expect("Failed to acquire template fs lock");
 
         // if marker exists, DB needs to be recreated -> delete all template files
-        let marker_path = template_output_dir.join(TEMPLATE_MARKER_FILE);
+        let marker_path = template_output_dir.join(TEMPLATE_MARKER_FILE_SQLITE);
         if marker_path.exists() {
             // remove all DB templates
             for entry in fs::read_dir(&template_output_dir).unwrap() {
                 let entry = entry.unwrap();
-                if entry.file_name().to_string_lossy() == TEMPLATE_MARKER_FILE {
+                if entry.file_name().to_string_lossy() == TEMPLATE_MARKER_FILE_SQLITE {
                     // delete marker after all template DBs to ensure we deleted all DBs, e.g. if
                     // this loop is interrupted
                     continue;
