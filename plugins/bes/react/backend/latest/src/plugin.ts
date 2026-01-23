@@ -23,7 +23,7 @@ const plugins: BackendPlugins = {
           variables: {
             storeId: store_id,
             input: { type: 'echo', echo: 'yow' },
-            pluginCode: 'plugin_examples',
+            pluginCode: 'bes-plugins',
           },
         });
         return {
