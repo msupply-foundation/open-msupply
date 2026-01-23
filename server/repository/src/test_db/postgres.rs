@@ -73,15 +73,6 @@ struct PgDatabaseRow {
     datname: String,
 }
 
-fn terminate_db_connections(root_connection: &mut DBConnection, db_name: &str) {
-    let _ = diesel::sql_query(format!(
-        "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = '{}' AND pid <> pg_backend_pid();",
-        db_name
-    ))
-    .execute(root_connection);
-    // Ignore errors - if no connections exist or termination fails, DROP DATABASE will handle it
-}
-
 pub async fn setup(db_settings: &DatabaseSettings) -> StorageConnectionManager {
     setup_with_version(db_settings, None, MockDataInserts::none())
         .await
