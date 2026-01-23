@@ -4,8 +4,8 @@ use crate::{
 };
 use repository::{
     location::{Location, LocationFilter, LocationRepository, LocationSort},
-    EqualFilter, LocationRow, PaginationOption, RepositoryError, StockLineFilter,
-    StockLineRepository, StorageConnection,
+    EqualFilter, ItemRowRepository, LocationRow, PaginationOption, RepositoryError,
+    StockLineFilter, StockLineRepository, StorageConnection,
 };
 
 pub fn get_locations(
@@ -64,29 +64,37 @@ pub fn get_available_volume_by_location_type(
     connection: &StorageConnection,
     store_id: &str,
     item_id: &str,
-) -> Result<f64, RepositoryError> {
+) -> Result<(Option<String>, f64), RepositoryError> {
+    let item = ItemRowRepository::new(connection)
+        .find_one_by_id(item_id)?
+        .ok_or(RepositoryError::NotFound)?;
+
+    // TODO: Use store location restrictions when they are implemented
+    let restricted_location_type_id = match item.restricted_location_type_id {
+        Some(ref id) => id.clone(),
+        None => String::new(),
+    };
+
     let stock_line_repo = StockLineRepository::new(connection);
     let lines = stock_line_repo.query_by_filter(
         StockLineFilter::new()
-            .item_id(EqualFilter::equal_to(item_id.to_string()))
+            .location(
+                LocationFilter::new()
+                    .location_type_id(EqualFilter::equal_to(restricted_location_type_id.clone())),
+            )
             .has_packs_in_store(true),
         Some(store_id.to_string()),
     )?;
 
-    let restricted_location_type_ids: Vec<String> = lines
-        .iter()
-        .filter_map(|line| line.item_row.restricted_location_type_id.clone())
-        .collect();
+    if lines.is_empty() {
+        return Ok((None, 0.0));
+    }
 
     let location_repo = LocationRepository::new(connection);
     let locations = location_repo.query_by_filter(
         LocationFilter::new()
-            .location_type_id(EqualFilter::equal_any(restricted_location_type_ids)),
+            .location_type_id(EqualFilter::equal_to(restricted_location_type_id.clone())),
     )?;
-
-    if lines.is_empty() {
-        return Ok(0.0);
-    }
 
     let used_volume: f64 = lines
         .iter()
@@ -95,5 +103,8 @@ pub fn get_available_volume_by_location_type(
 
     let total_volume: f64 = locations.iter().map(|loc| loc.location_row.volume).sum();
 
-    Ok(total_volume - used_volume)
+    Ok((
+        (!restricted_location_type_id.is_empty()).then_some(restricted_location_type_id),
+        total_volume - used_volume,
+    ))
 }
