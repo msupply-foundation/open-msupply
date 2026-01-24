@@ -35,7 +35,9 @@ jobs:
       - name: Check for marker files (before build)
         run: ls -la server/repository/test_output/*.marker || echo "No marker files found"
       - name: Trigger cargo build
-        run: cargo build --manifest-path server/Cargo.toml
+        run: |
+          cargo build --manifest-path server/Cargo.toml -vv 2>&1 | grep -i "repository.*build script" || true
+          ls -la server/repository/test_output/ || echo "test_output dir does not exist"
       - name: Check for marker files (after build)
         run: ls -la server/repository/test_output/*.marker || echo "No marker files found"
       - name: Run tests and generate report
@@ -85,7 +87,9 @@ jobs:
       - name: Check for marker files (before build)
         run: ls -la server/repository/test_output/*.marker || echo "No marker files found"
       - name: Trigger cargo build
-        run: cargo build --manifest-path server/Cargo.toml
+        run: |
+          cargo build --manifest-path server/Cargo.toml -vv 2>&1 | grep -i "repository.*build script" || true
+          ls -la server/repository/test_output/ || echo "test_output dir does not exist"
       - name: Check for marker files (after build)
         run: ls -la server/repository/test_output/*.marker || echo "No marker files found"
       - name: Run test and generate report
