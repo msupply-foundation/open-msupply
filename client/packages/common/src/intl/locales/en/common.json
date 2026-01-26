@@ -2244,6 +2244,7 @@
   "preference.disableManualReturns": "Disable manual returns",
   "preference.expiredStockIssueThreshold": "Expired stock issue threshold (days)",
   "preference.expiredStockPreventIssue": "Prevent issuing expired stock",
+  "preference.externalInboundShipmentLinesMustBeAuthorised": "Inbound shipment (external) lines must be authorised",
   "preference.firstThresholdForExpiringItems": "First threshold for expiring items (days)",
   "preference.genderOptions": "Gender options",
   "preference.inboundShipmentAutoVerify": "Automatically verify inbound shipments",

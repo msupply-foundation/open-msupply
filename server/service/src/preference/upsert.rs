@@ -43,6 +43,7 @@ pub struct UpsertPreferences {
     pub inbound_shipment_auto_verify: Option<Vec<StorePrefUpdate<bool>>>,
     pub can_create_internal_order_from_a_requisition: Option<Vec<StorePrefUpdate<bool>>>,
     pub select_destination_store_for_an_internal_order: Option<Vec<StorePrefUpdate<bool>>>,
+    pub external_inbound_shipment_lines_must_be_authorised: Option<Vec<StorePrefUpdate<bool>>>,
     pub number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products:
         Option<Vec<StorePrefUpdate<i32>>>,
     pub number_of_months_threshold_to_show_low_stock_alerts_for_products:
@@ -92,6 +93,7 @@ pub fn upsert_preferences(
             can_create_internal_order_from_a_requisition_input,
         select_destination_store_for_an_internal_order:
             select_destination_store_for_an_internal_order_input,
+        external_inbound_shipment_lines_must_be_authorised: external_inbound_shipment_lines_must_be_authorised_input,
         number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products:
             number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products_input,
         number_of_months_threshold_to_show_low_stock_alerts_for_products:
@@ -144,6 +146,7 @@ pub fn upsert_preferences(
         warn_when_missing_recent_stocktake,
         store_custom_colour,
         invoice_status_options,
+        external_inbound_shipment_lines_must_be_authorised,
     }: PreferenceProvider = get_preference_provider();
 
     ctx.connection
@@ -265,8 +268,12 @@ pub fn upsert_preferences(
                 )?;
             }
 
+            if let Some(input) = external_inbound_shipment_lines_must_be_authorised_input {
+                upsert_store_input(connection, external_inbound_shipment_lines_must_be_authorised, input)?;
+            }
+
             if let Some(input) = number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products_input {
-                           upsert_store_input(
+                upsert_store_input(
                     connection,
                     number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products,
                     input,
@@ -274,7 +281,7 @@ pub fn upsert_preferences(
             }
 
              if let Some(input) = number_of_months_threshold_to_show_low_stock_alerts_for_products_input {
-                           upsert_store_input(
+                upsert_store_input(
                     connection,
                     number_of_months_threshold_to_show_low_stock_alerts_for_products,
                     input,
@@ -282,7 +289,7 @@ pub fn upsert_preferences(
             }
 
             if let Some(input) = number_of_months_threshold_to_show_over_stock_alerts_for_products_input {
-                           upsert_store_input(
+                upsert_store_input(
                     connection,
                     number_of_months_threshold_to_show_over_stock_alerts_for_products,
                     input,
@@ -290,7 +297,7 @@ pub fn upsert_preferences(
             }
             
             if let Some(input) = first_threshold_for_expiring_items_input {
-                           upsert_store_input(
+                upsert_store_input(
                     connection,
                     first_threshold_for_expiring_items,
                     input,
@@ -298,7 +305,7 @@ pub fn upsert_preferences(
             }
 
             if let Some(input) = second_threshold_for_expiring_items_input {
-                           upsert_store_input(
+                upsert_store_input(
                     connection,
                     second_threshold_for_expiring_items,
                     input,
@@ -306,7 +313,7 @@ pub fn upsert_preferences(
             }
 
             if let Some(input) = warn_when_missing_recent_stocktake_input {
-                           upsert_store_input(
+                upsert_store_input(
                     connection,
                     warn_when_missing_recent_stocktake,
                     input,
