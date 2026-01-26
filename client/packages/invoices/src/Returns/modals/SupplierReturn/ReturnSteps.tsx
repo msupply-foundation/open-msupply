@@ -78,6 +78,7 @@ export const ReturnSteps = ({
           isDisabled={inputsDisabled}
           lines={lines.filter(l => l.numberOfPacksToReturn > 0)}
           updateLine={line => update(line)}
+          disabledLinked={false}
         />
       </TabPanel>
     </TabContext>

@@ -154,7 +154,10 @@ export const EquipmentDetailView = () => {
       value: 'Summary',
     },
     {
-      Component: <Details onChange={onChange} draft={draft} />,
+      Component:
+        draft === undefined ? null : (
+          <Details onChange={onChange} draft={draft} />
+        ),
       value: 'Details',
     },
     {

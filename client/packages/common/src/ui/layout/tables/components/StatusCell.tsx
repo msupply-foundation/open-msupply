@@ -1,22 +1,19 @@
 import React from 'react';
 import { MRT_Cell, MRT_RowData } from 'material-react-table';
-import { StatusChip } from '@openmsupply-client/common/src/ui/components/panels/StatusChip';
+import { StatusChip } from '@openmsupply-client/common';
 
-const StatusCell = <T extends MRT_RowData>({
+export const StatusCell = <T extends MRT_RowData>({
   cell,
   statusMap,
 }: {
   cell: MRT_Cell<T>;
   statusMap: Record<
     string,
-    { label: string; color: string; bgColor?: string }
+    { label: string; colour: string; bgColour?: string }
   > | null;
 }) => {
   const status = cell.getValue<string>();
 
-  const { label, color, bgColor } = statusMap?.[status] ?? {};
-  return <StatusChip label={label} color={color} bgColor={bgColor} />;
+  const { label, colour, bgColour } = statusMap?.[status] ?? {};
+  return <StatusChip label={label} colour={colour} bgColour={bgColour} />;
 };
-
-// TO-DO: Please rename once the old StatusCell is removed from the codebase
-export { StatusCell as StatusCellNew };
