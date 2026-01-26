@@ -4,7 +4,7 @@ use repository::{
 };
 use std::collections::HashMap;
 
-pub fn used_volume_on_lines_for_type(
+fn used_volume_on_lines_for_type(
     connection: &StorageConnection,
     requisition_id: &str,
 ) -> Result<HashMap<String, f64>, RepositoryError> {
@@ -41,7 +41,7 @@ pub struct AvailableVolumeInfo {
     pub volume_per_unit: f64,
 }
 
-pub fn get_available_volume_for_items(
+pub fn get_requisition_available_volume_for_items(
     connection: &StorageConnection,
     requisition_id: &str,
     item_ids: &[String],
@@ -121,4 +121,137 @@ pub fn get_available_volume_for_items(
     }
 
     Ok(output)
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use repository::{
+        mock::{
+            mock_item_a, mock_item_b, mock_item_c, mock_location_1, mock_location_type_a,
+            mock_location_type_b, mock_new_response_requisition, MockData, MockDataInserts,
+        },
+        test_db::setup_all_with_data,
+        ItemRow, LocationRow, RequisitionLineRow,
+    };
+
+    fn location_a() -> LocationRow {
+        LocationRow {
+            location_type_id: Some(mock_location_type_a().id.clone()),
+            ..mock_location_1()
+        }
+    }
+
+    fn location_b() -> LocationRow {
+        LocationRow {
+            location_type_id: Some(mock_location_type_b().id.clone()),
+            ..mock_location_1()
+        }
+    }
+
+    fn item_a() -> ItemRow {
+        ItemRow {
+            volume_per_pack: 100.0,
+            default_pack_size: 10.0,
+            restricted_location_type_id: Some(mock_location_type_a().id.clone()),
+            ..mock_item_a()
+        }
+    }
+    fn item_b() -> ItemRow {
+        ItemRow {
+            volume_per_pack: 200.0,
+            default_pack_size: 5.0,
+            restricted_location_type_id: Some(mock_location_type_a().id.clone()),
+            ..mock_item_b()
+        }
+    }
+
+    fn item_c() -> ItemRow {
+        ItemRow {
+            volume_per_pack: 150.0,
+            default_pack_size: 3.0,
+            restricted_location_type_id: Some(mock_location_type_b().id.clone()),
+            ..mock_item_c()
+        }
+    }
+
+    fn requisition_line_a() -> RequisitionLineRow {
+        RequisitionLineRow {
+            id: "test_line_a".to_string(),
+            requisition_id: mock_new_response_requisition().id.clone(),
+            item_link_id: item_a().id.clone(),
+            supply_quantity: 3.0, // 3 units * 10 = 30
+            location_type_id: Some(mock_location_type_a().id.clone()),
+            available_volume: Some(1000.0),
+            ..Default::default()
+        }
+    }
+
+    fn requisition_line_b() -> RequisitionLineRow {
+        RequisitionLineRow {
+            id: "test_line_b".to_string(),
+            requisition_id: mock_new_response_requisition().id.clone(),
+            item_link_id: item_b().id.clone(),
+            supply_quantity: 2.0, // 2 units * 40 = 80
+            location_type_id: Some(mock_location_type_a().id.clone()),
+            available_volume: Some(1000.0),
+            ..Default::default()
+        }
+    }
+
+    fn requisition_line_c() -> RequisitionLineRow {
+        RequisitionLineRow {
+            id: "test_line_c".to_string(),
+            requisition_id: mock_new_response_requisition().id.clone(),
+            item_link_id: item_c().id.clone(),
+            location_type_id: Some(mock_location_type_b().id.clone()),
+            available_volume: Some(500.0),
+            ..Default::default()
+        }
+    }
+
+    #[tokio::test]
+    async fn test_get_requisition_available_volume_for_items() {
+        let (_, connection, _, _) = setup_all_with_data(
+            "test_get_requisition_available_volume_for_items",
+            MockDataInserts::all(),
+            MockData {
+                items: vec![item_a(), item_b(), item_c()],
+                locations: vec![location_a(), location_b()],
+                requisition_lines: vec![
+                    requisition_line_a(),
+                    requisition_line_b(),
+                    requisition_line_c(),
+                ],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        let requisition_id = &mock_new_response_requisition().id;
+
+        let item_ids = vec![
+            item_a().id.clone(),
+            item_b().id.clone(),
+            item_c().id.clone(),
+        ];
+        let result =
+            get_requisition_available_volume_for_items(&connection, requisition_id, &item_ids)
+                .unwrap();
+
+        assert_eq!(result.len(), 3);
+
+        let item_a_info = result.get(&item_a().id).unwrap();
+        assert_eq!(item_a_info.volume_per_unit, 10.0); // 100 / 10
+
+        let item_b_info = result.get(&item_b().id).unwrap();
+        assert_eq!(item_b_info.volume_per_unit, 40.0); // 200 / 5
+
+        let item_c_info = result.get(&item_c().id).unwrap();
+        assert_eq!(item_c_info.volume_per_unit, 50.0); // 150 / 3
+
+        assert_eq!(item_a_info.available_volume, 920.0); // Available for item1: 1000 - 110 + 30 = 920
+        assert_eq!(item_b_info.available_volume, 970.0); // Available for item2: 1000 - 110 + 80 = 970
+        assert_eq!(item_c_info.available_volume, 500.0); // Available for item3: 500ml
+    }
 }

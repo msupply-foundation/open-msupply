@@ -4,7 +4,7 @@ use async_graphql::dataloader::Loader;
 use async_graphql::*;
 use repository::LocationTypeRow;
 use service::{
-    requisition_line::response_requisition_line::get_available_volume_for_items,
+    requisition_line::response_requisition_line::get_requisition_available_volume_for_items,
     service_provider::ServiceProvider,
 };
 use std::collections::HashMap;
@@ -52,7 +52,7 @@ impl Loader<AvailableVolumeOnRequisitionLineByTypeLoaderInput>
             .collect();
 
         let available_volumes =
-            get_available_volume_for_items(connection, requisition_id, &item_ids)?;
+            get_requisition_available_volume_for_items(connection, requisition_id, &item_ids)?;
 
         let mut output = HashMap::<
             AvailableVolumeOnRequisitionLineByTypeLoaderInput,
