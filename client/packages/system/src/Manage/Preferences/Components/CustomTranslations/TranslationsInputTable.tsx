@@ -52,33 +52,44 @@ export const TranslationsTable = ({
         accessorKey: 'default',
         header: t('label.default'),
         size: 300,
-        Cell: ({ cell }) => (<Box style={{ whiteSpace: 'normal' }}>{cell.getValue<string>()}</Box>),
+        Cell: ({ cell }) => (
+          <Box style={{ whiteSpace: 'normal' }}>{cell.getValue<string>()}</Box>
+        ),
       },
       {
         accessorKey: 'custom',
         header: t('label.custom'),
         Cell: ({ cell, row }) => {
           const showInvalid = row.original.isInvalid && showValidationErrors;
-          return <TextInputCell
-            cell={cell}
-            updateFn={value => {
-              const isInvalid = checkInvalidVariables({ ...row.original, custom: value });
-              setTranslations(translations =>
-                translations.map(tr =>
-                  tr.id === row.original.id ? { ...tr, custom: value, isInvalid } : tr
-                )
-              );
-            }}
-            multiline
-            sx={{
-              ...(showInvalid ? {
-                borderColor: theme => theme.palette.error.main,
-                borderWidth: '2px',
-                borderStyle: 'solid',
-                borderRadius: '8px',
-              } : undefined),
-            }}
-          />
+          return (
+            <TextInputCell
+              cell={cell}
+              updateFn={value => {
+                const isInvalid = checkInvalidVariables({
+                  ...row.original,
+                  custom: value,
+                });
+                setTranslations(translations =>
+                  translations.map(tr =>
+                    tr.id === row.original.id
+                      ? { ...tr, custom: value, isInvalid }
+                      : tr
+                  )
+                );
+              }}
+              multiline
+              sx={{
+                ...(showInvalid
+                  ? {
+                      borderColor: theme => theme.palette.error.main,
+                      borderWidth: '2px',
+                      borderStyle: 'solid',
+                      borderRadius: '8px',
+                    }
+                  : undefined),
+              }}
+            />
+          );
         },
         size: 300,
       },
