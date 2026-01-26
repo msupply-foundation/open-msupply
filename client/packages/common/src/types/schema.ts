@@ -4831,6 +4831,7 @@ export type ItemFilterInput = {
   name?: InputMaybe<StringFilterInput>;
   productsAtRiskOfBeingOutOfStock?: InputMaybe<Scalars['Boolean']['input']>;
   type?: InputMaybe<EqualFilterItemTypeInput>;
+  universalCode?: InputMaybe<StringFilterInput>;
   withRecentConsumption?: InputMaybe<Scalars['Boolean']['input']>;
 };
 
@@ -4898,6 +4899,7 @@ export type ItemNode = {
   strength?: Maybe<Scalars['String']['output']>;
   type: ItemNodeType;
   unitName?: Maybe<Scalars['String']['output']>;
+  universalCode: Scalars['String']['output'];
   userField4: Scalars['Boolean']['output'];
   variants: Array<ItemVariantNode>;
   venCategory: VenCategoryType;
