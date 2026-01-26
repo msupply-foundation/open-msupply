@@ -11,6 +11,7 @@ import {
   Representation,
   RepresentationValue,
   QuantityUtils,
+  NumUtils,
 } from '@openmsupply-client/common';
 import { calculatePercentage } from './utils';
 
@@ -22,6 +23,9 @@ export interface RequestStoreStatsProps {
   suggestedQuantity: number;
   availableStockOnHand: number;
   averageMonthlyConsumption: number;
+  volumeTypeName?: string | null;
+  availableVolume?: number | null;
+  itemVolume?: number | null;
 }
 
 const MIN_MC_WIDTH_TO_SHOW_TEXT = 5;
@@ -120,6 +124,9 @@ export const RequestStoreStats = ({
   suggestedQuantity,
   availableStockOnHand,
   averageMonthlyConsumption,
+  volumeTypeName,
+  availableVolume,
+  itemVolume,
 }: RequestStoreStatsProps) => {
   const t = useTranslation();
   const { getPlural } = useIntlUtils();
@@ -143,12 +150,8 @@ export const RequestStoreStats = ({
     averageMonthlyConsumption
   );
 
-  if (formattedAmc === 0) return <CalculationError isAmcZero />;
-
   const targetQuantity = maxMonthsOfStock * formattedAmc;
-
-  if (formattedSuggested === 0 && formattedSoh === 0)
-    return <CalculationError isSohAndQtyZero />;
+  const availableVolumeDisplay = availableVolume! - itemVolume!;
 
   const monthlyConsumptionPercent = calculatePercentage(
     targetQuantity,
@@ -169,6 +172,10 @@ export const RequestStoreStats = ({
         p: '16px 16px',
       }}
     >
+      {formattedAmc === 0 && <CalculationError isAmcZero />}
+      {formattedSuggested === 0 && formattedSoh === 0 && (
+        <CalculationError isSohAndQtyZero />
+      )}
       <Typography variant="body1" fontWeight={700} fontSize={12}>
         {t('heading.target-quantity')} ({display})
       </Typography>
@@ -212,6 +219,36 @@ export const RequestStoreStats = ({
           colour="primary.light"
         />
       </Box>
+
+      {volumeTypeName && availableVolume !== null && itemVolume !== null && (
+        <Box marginTop={2}>
+          <Box>
+            <Typography variant="h6" style={{ textAlign: 'start' }}>
+              {t('label.volume')}
+            </Typography>
+          </Box>
+          <Typography variant="body1">
+            {t('label.volume-for-item', {
+              itemVolume: NumUtils.round(itemVolume ?? 0, 5),
+            })}
+          </Typography>
+          {availableVolumeDisplay <= 0 ? (
+            <Typography variant="body2" fontWeight={700} color="error.main">
+              {t('label.location-type-full', {
+                locationType: volumeTypeName,
+              })}
+            </Typography>
+          ) : (
+            <Typography variant="body1">
+              {t('label.available-volume-for-location-type', {
+                locationType: volumeTypeName,
+                availableVolume: NumUtils.round(availableVolumeDisplay, 5),
+              })}
+            </Typography>
+          )}
+          <Typography variant="body2" fontWeight={700}></Typography>
+        </Box>
+      )}
     </Box>
   );
 };
