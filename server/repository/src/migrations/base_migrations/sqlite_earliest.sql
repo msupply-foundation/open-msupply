@@ -1,61 +1,5 @@
 PRAGMA foreign_keys=OFF;
 BEGIN TRANSACTION;
-CREATE TABLE __diesel_schema_migrations (version VARCHAR(50) PRIMARY KEY NOT NULL,run_on TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP);
-INSERT INTO __diesel_schema_migrations VALUES('20210805T1000','2026-01-14 21:52:43');
-INSERT INTO __diesel_schema_migrations VALUES('20210810T1000','2026-01-14 21:52:43');
-INSERT INTO __diesel_schema_migrations VALUES('20210815T1000','2026-01-14 21:52:43');
-INSERT INTO __diesel_schema_migrations VALUES('20210820T1000','2026-01-14 21:52:43');
-INSERT INTO __diesel_schema_migrations VALUES('20210905T1000','2026-01-14 21:52:43');
-INSERT INTO __diesel_schema_migrations VALUES('20210910T1000','2026-01-14 21:52:43');
-INSERT INTO __diesel_schema_migrations VALUES('20210915T1000','2026-01-14 21:52:43');
-INSERT INTO __diesel_schema_migrations VALUES('20210917T1000','2026-01-14 21:52:43');
-INSERT INTO __diesel_schema_migrations VALUES('20210918T1000','2026-01-14 21:52:43');
-INSERT INTO __diesel_schema_migrations VALUES('20210920T1000','2026-01-14 21:52:43');
-INSERT INTO __diesel_schema_migrations VALUES('20210925T1000','2026-01-14 21:52:43');
-INSERT INTO __diesel_schema_migrations VALUES('20211005T1000','2026-01-14 21:52:43');
-INSERT INTO __diesel_schema_migrations VALUES('20211105T1000','2026-01-14 21:52:43');
-INSERT INTO __diesel_schema_migrations VALUES('20211110T1000','2026-01-14 21:52:43');
-INSERT INTO __diesel_schema_migrations VALUES('20211115T1000','2026-01-14 21:52:43');
-INSERT INTO __diesel_schema_migrations VALUES('20211120T1000','2026-01-14 21:52:43');
-INSERT INTO __diesel_schema_migrations VALUES('20211125T1000','2026-01-14 21:52:43');
-INSERT INTO __diesel_schema_migrations VALUES('20211210T1000','2026-01-14 21:52:43');
-INSERT INTO __diesel_schema_migrations VALUES('20211215T1000','2026-01-14 21:52:43');
-INSERT INTO __diesel_schema_migrations VALUES('20211220T1000','2026-01-14 21:52:43');
-INSERT INTO __diesel_schema_migrations VALUES('20211225T1000','2026-01-14 21:52:43');
-INSERT INTO __diesel_schema_migrations VALUES('20220127T0800','2026-01-14 21:52:43');
-INSERT INTO __diesel_schema_migrations VALUES('20220211T1500','2026-01-14 21:52:43');
-INSERT INTO __diesel_schema_migrations VALUES('20220223T1015','2026-01-14 21:52:43');
-INSERT INTO __diesel_schema_migrations VALUES('20220223T1030','2026-01-14 21:52:43');
-INSERT INTO __diesel_schema_migrations VALUES('20220223T1130','2026-01-14 21:52:43');
-INSERT INTO __diesel_schema_migrations VALUES('20220223T1200','2026-01-14 21:52:43');
-INSERT INTO __diesel_schema_migrations VALUES('20220223T1230','2026-01-14 21:52:43');
-INSERT INTO __diesel_schema_migrations VALUES('20220223T1300','2026-01-14 21:52:43');
-INSERT INTO __diesel_schema_migrations VALUES('20220223T1330','2026-01-14 21:52:43');
-INSERT INTO __diesel_schema_migrations VALUES('20220223T1400','2026-01-14 21:52:43');
-INSERT INTO __diesel_schema_migrations VALUES('20220315T1000','2026-01-14 21:52:43');
-INSERT INTO __diesel_schema_migrations VALUES('20220325T1400','2026-01-14 21:52:43');
-INSERT INTO __diesel_schema_migrations VALUES('20220325T1430','2026-01-14 21:52:43');
-INSERT INTO __diesel_schema_migrations VALUES('20220401T1000','2026-01-14 21:52:43');
-INSERT INTO __diesel_schema_migrations VALUES('20220401T1100','2026-01-14 21:52:43');
-INSERT INTO __diesel_schema_migrations VALUES('20220427T1000','2026-01-14 21:52:43');
-INSERT INTO __diesel_schema_migrations VALUES('20220427T1300','2026-01-14 21:52:43');
-INSERT INTO __diesel_schema_migrations VALUES('20220607T1500','2026-01-14 21:52:43');
-INSERT INTO __diesel_schema_migrations VALUES('20220607T1600','2026-01-14 21:52:43');
-INSERT INTO __diesel_schema_migrations VALUES('20220607T1700','2026-01-14 21:52:43');
-INSERT INTO __diesel_schema_migrations VALUES('20220607T1800','2026-01-14 21:52:43');
-INSERT INTO __diesel_schema_migrations VALUES('20220621013232','2026-01-14 21:52:43');
-INSERT INTO __diesel_schema_migrations VALUES('20220831235605','2026-01-14 21:52:43');
-INSERT INTO __diesel_schema_migrations VALUES('20221010220028','2026-01-14 21:52:43');
-INSERT INTO __diesel_schema_migrations VALUES('20221027T0915','2026-01-14 21:52:43');
-INSERT INTO __diesel_schema_migrations VALUES('20221106232008','2026-01-14 21:52:43');
-INSERT INTO __diesel_schema_migrations VALUES('20221117221441','2026-01-14 21:52:43');
-INSERT INTO __diesel_schema_migrations VALUES('20221201194347','2026-01-14 21:52:43');
-INSERT INTO __diesel_schema_migrations VALUES('20230116T1000','2026-01-14 21:52:43');
-INSERT INTO __diesel_schema_migrations VALUES('20230327T1000','2026-01-14 21:52:43');
-INSERT INTO __diesel_schema_migrations VALUES('20230330220349','2026-01-14 21:52:43');
-INSERT INTO __diesel_schema_migrations VALUES('20230421T1000','2026-01-14 21:52:43');
-INSERT INTO __diesel_schema_migrations VALUES('20230421T1100','2026-01-14 21:52:43');
-INSERT INTO __diesel_schema_migrations VALUES('20230620T1000','2026-01-14 21:52:43');
 CREATE TABLE unit (
     id TEXT NOT NULL PRIMARY KEY,
     name TEXT NOT NULL,
@@ -68,8 +12,8 @@ CREATE TABLE user_account (
     -- Hashed password
     hashed_password TEXT NOT NULL,
     email TEXT
-, "language" varchar NOT NULL DEFAULT 'ENGLISH', first_name text NULL, last_name text NULL, phone_number text NULL, job_title text NULL);
-INSERT INTO user_account VALUES('omsupply_system','omsupply_system','',NULL,'ENGLISH',NULL,NULL,NULL,NULL);
+, "language" varchar NOT NULL DEFAULT 'ENGLISH', first_name text NULL, last_name text NULL, phone_number text NULL, job_title text NULL, last_successful_sync TIMESTAMP NOT NULL DEFAULT 0);
+INSERT INTO user_account VALUES('omsupply_system','omsupply_system','',NULL,'ENGLISH',NULL,NULL,NULL,NULL,'2020-01-22 15:16:00');
 CREATE TABLE name (
     id TEXT NOT NULL PRIMARY KEY,
     -- Human-readable representation of the entity associated with the name record.
@@ -305,8 +249,8 @@ CREATE TABLE key_value_store (
     value_float REAL,
     value_bool BOOLEAN
 );
-INSERT INTO key_value_store VALUES('DATABASE_VERSION','1.2.0',NULL,NULL,NULL,NULL);
-INSERT INTO key_value_store VALUES('SETTINGS_TOKEN_SECRET','b68c6e74-823b-4b11-bd37-15b32b7d2ed8',NULL,NULL,NULL,NULL);
+INSERT INTO key_value_store VALUES('DATABASE_VERSION','1.3.0',NULL,NULL,NULL,NULL);
+INSERT INTO key_value_store VALUES('SETTINGS_TOKEN_SECRET','313e9a24-3ac4-4b46-b7c0-7dc310abed65',NULL,NULL,NULL,NULL);
 INSERT INTO key_value_store VALUES('LOG_DIRECTORY',NULL,NULL,NULL,NULL,NULL);
 INSERT INTO key_value_store VALUES('LOG_FILE_NAME',NULL,NULL,NULL,NULL,NULL);
 INSERT INTO key_value_store VALUES('LOG_LEVEL','info',NULL,NULL,NULL,NULL);
@@ -355,7 +299,7 @@ CREATE TABLE document (
     status TEXT NOT NULL,
     owner_name_id TEXT REFERENCES name (id),
     is_sync_update BOOLEAN NOT NULL DEFAULT FALSE
-, context TEXT NOT NULL);
+, context_id TEXT REFERENCES context(id));
 CREATE TABLE program_enrolment (
     id TEXT NOT NULL PRIMARY KEY,
     document_name TEXT NOT NULL,
@@ -363,7 +307,7 @@ CREATE TABLE program_enrolment (
     enrolment_datetime TIMESTAMP NOT NULL,
     program_enrolment_id TEXT,
     status TEXT NOT NULL
-, context TEXT NOT NULL, document_type TEXT NOT NULL);
+, document_type TEXT NOT NULL, program_id TEXT REFERENCES program(id));
 CREATE TABLE encounter (
     id TEXT NOT NULL PRIMARY KEY,
     document_name TEXT NOT NULL,
@@ -374,7 +318,7 @@ CREATE TABLE encounter (
     status TEXT,
     clinician_id TEXT REFERENCES clinician(id),
     store_id TEXT
-, document_type TEXT NOT NULL, context TEXT NOT NULL);
+, document_type TEXT NOT NULL, program_id TEXT REFERENCES program(id));
 CREATE TABLE program_event (
     id TEXT NOT NULL PRIMARY KEY,
     patient_id TEXT,
@@ -384,7 +328,7 @@ CREATE TABLE program_event (
     document_type TEXT NOT NULL,
     document_name TEXT,
     type TEXT NOT NULL,
-    data TEXT, context TEXT NOT NULL,
+    data TEXT, context_id TEXT REFERENCES context(id),
     FOREIGN KEY(patient_id) REFERENCES name(id)
 );
 CREATE TABLE activity_log (
@@ -436,8 +380,7 @@ CREATE TABLE user_permission (
     user_id TEXT NOT NULL,
     store_id TEXT NOT NULL REFERENCES store(id),
     permission TEXT NOT NULL,
-    context TEXT
-);
+    context_id TEXT REFERENCES context(id));
 CREATE TABLE IF NOT EXISTS "report"
 (
     id TEXT NOT NULL PRIMARY KEY,
@@ -449,14 +392,12 @@ CREATE TABLE IF NOT EXISTS "report"
 , context NOT NULL DEFAULT 'INBOUND_SHIPMENT', type NOT NULL DEFAULT 'OM_SUPPLY');
 CREATE TABLE document_registry (
     id TEXT NOT NULL PRIMARY KEY,
-    type TEXT NOT NULL,
+    category TEXT NOT NULL,
     document_type TEXT NOT NULL,
-    document_context TEXT NOT NULL,
     name TEXT,
-    parent_id TEXT REFERENCES document_registry(id),
     form_schema_id TEXT REFERENCES form_schema(id),
     config Text
-);
+, context_id TEXT REFERENCES context(id));
 CREATE TABLE inventory_adjustment_reason (
                 id TEXT NOT NULL PRIMARY KEY,
                 type TEXT,
@@ -492,8 +433,8 @@ CREATE TABLE program (
                 id TEXT NOT NULL PRIMARY KEY,
                 master_list_id TEXT NOT NULL REFERENCES master_list(id),
                 name TEXT NOT NULL
-            );
-INSERT INTO program VALUES('missing_program','missing_program','missing_program');
+            , context_id TEXT NOT NULL DEFAULT temp REFERENCES context(id));
+INSERT INTO program VALUES('missing_program','missing_program','missing_program','missing_program');
 CREATE TABLE program_requisition_settings (
                 id TEXT NOT NULL PRIMARY KEY,
                 name_tag_id TEXT NOT NULL REFERENCES name_tag(id),
@@ -516,6 +457,12 @@ CREATE TABLE barcode (
                 pack_size int4,
                 parent_id text
             , is_sync_update bool NOT NULL DEFAULT False);
+CREATE TABLE context (
+          id TEXT NOT NULL PRIMARY KEY,
+          name TEXT NOT NULL
+        );
+INSERT INTO context VALUES('Patient','Patient context');
+INSERT INTO context VALUES('missing_program','missing_program');
 INSERT INTO sqlite_sequence VALUES('changelog',0);
 CREATE VIEW stock_on_hand AS
 SELECT 
