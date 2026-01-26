@@ -1665,7 +1665,6 @@ export type DatabaseError = DeleteAssetCatalogueItemErrorInterface &
   DeleteAssetLogReasonErrorInterface &
   DeleteCampaignErrorInterface &
   DeleteLocationErrorInterface &
-  DeleteVaccineCourseErrorInterface &
   InsertAssetCatalogueItemErrorInterface &
   InsertAssetErrorInterface &
   InsertAssetLogErrorInterface &
@@ -1682,7 +1681,6 @@ export type DatabaseError = DeleteAssetCatalogueItemErrorInterface &
   UpdateGoodsReceivedLineErrorInterface &
   UpdateLocationErrorInterface &
   UpdateSensorErrorInterface &
-  UpdateVaccineCourseErrorInterface &
   UpsertBundledItemErrorInterface &
   UpsertCampaignErrorInterface &
   UpsertItemVariantErrorInterface & {
@@ -4833,6 +4831,7 @@ export type ItemFilterInput = {
   name?: InputMaybe<StringFilterInput>;
   productsAtRiskOfBeingOutOfStock?: InputMaybe<Scalars['Boolean']['input']>;
   type?: InputMaybe<EqualFilterItemTypeInput>;
+  universalCode?: InputMaybe<StringFilterInput>;
   withRecentConsumption?: InputMaybe<Scalars['Boolean']['input']>;
 };
 
@@ -4900,6 +4899,7 @@ export type ItemNode = {
   strength?: Maybe<Scalars['String']['output']>;
   type: ItemNodeType;
   unitName?: Maybe<Scalars['String']['output']>;
+  universalCode: Scalars['String']['output'];
   userField4: Scalars['Boolean']['output'];
   variants: Array<ItemVariantNode>;
   venCategory: VenCategoryType;
@@ -8529,7 +8529,6 @@ export type RecordNotFound = AddFromMasterListErrorInterface &
   DeleteResponseRequisitionErrorInterface &
   DeleteResponseRequisitionLineErrorInterface &
   DeleteSupplierReturnErrorInterface &
-  DeleteVaccineCourseErrorInterface &
   NodeErrorInterface &
   RequisitionLineChartErrorInterface &
   RequisitionLineStatsErrorInterface &
@@ -11556,6 +11555,11 @@ export type VaccineCourseFilterInput = {
   programId?: InputMaybe<EqualFilterStringInput>;
 };
 
+export type VaccineCourseInUse = DeleteVaccineCourseErrorInterface & {
+  __typename: 'VaccineCourseInUse';
+  description: Scalars['String']['output'];
+};
+
 export type VaccineCourseItemNode = {
   __typename: 'VaccineCourseItemNode';
   id: Scalars['String']['output'];
@@ -11611,6 +11615,11 @@ export type VaccineCourseSortInput = {
 };
 
 export type VaccineCoursesResponse = VaccineCourseConnector;
+
+export type VaccineDosesInUse = UpdateVaccineCourseErrorInterface & {
+  __typename: 'VaccineDosesInUse';
+  description: Scalars['String']['output'];
+};
 
 export type ValueTypeNotCorrect = UpdateIndicatorValueErrorInterface & {
   __typename: 'ValueTypeNotCorrect';

@@ -3,6 +3,7 @@ use graphql_core::{
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
+use repository::PaginationOption;
 use service::auth::{Resource, ResourceAccessRequest};
 
 mod mutations;
@@ -31,7 +32,15 @@ impl ItemVariantQueries {
 
         let item_variants = service_provider
             .item_service
-            .get_item_variants(&service_context, None, None, None)
+            .get_item_variants(
+                &service_context,
+                Some(PaginationOption {
+                    limit: Some(1),
+                    offset: None,
+                }),
+                None,
+                None,
+            )
             .map_err(StandardGraphqlError::from_list_error)?;
 
         Ok(item_variants.count > 0)

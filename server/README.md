@@ -274,15 +274,19 @@ openssl req -x509 -newkey rsa:4096 -nodes -keyout app_data/certs/key.pem -out ap
 
 # Test
 
-Devs should run both postgres and sqlite test before publishing PR
+Devs should run both postgres and sqlite tests before publishing a PR. The CI uses cargo nextest which is an alternative test runner tailored for use with CI. By default it runs crates in parallel which should speed up test execution times.
+
+More info: https://nexte.st/
 
 - To run all tests:
 
 ```bash
+# Install nextest runner
+cargo install cargo-nextest --locked
 # Use sqlite (sqlite is default feature)
-cargo test
+cargo nextest run
 # Use postgres
-cargo test --features postgres
+cargo nextest run --features postgres
 ```
 
 - To run email tests:

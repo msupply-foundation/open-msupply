@@ -29,7 +29,7 @@ mod test {
     #[actix_rt::test]
     async fn shipping_method_service_queries() {
         let (_, _, connection_manager, _) =
-            setup_all("shipping method service queries", MockDataInserts::none()).await;
+            setup_all("shipping_method_service_queries", MockDataInserts::none()).await;
 
         let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider.basic_context().unwrap();
