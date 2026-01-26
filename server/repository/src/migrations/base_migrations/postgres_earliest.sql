@@ -2,13 +2,12 @@
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 18.1 (Postgres.app)
--- Dumped by pg_dump version 18.1 (Postgres.app)
+-- Dumped from database version 12.22 (Postgres.app)
+-- Dumped by pg_dump version 12.22 (Postgres.app)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
 SET idle_in_transaction_session_timeout = 0;
-SET transaction_timeout = 0;
 SET client_encoding = 'UTF8';
 SET standard_conforming_strings = on;
 SET search_path = public;
@@ -34,7 +33,7 @@ COMMENT ON SCHEMA public IS 'standard public schema';
 -- Name: nocase; Type: COLLATION; Schema: public; Owner: -
 --
 
-CREATE COLLATION public.nocase (provider = icu, deterministic = false, locale = 'pg-catalog');
+CREATE COLLATION public.nocase (provider = icu, deterministic = false, locale = 'pg_catalog.default');
 
 
 --
@@ -66,7 +65,11 @@ CREATE TYPE public.activity_log_type AS ENUM (
     'STOCK_OFF_HOLD',
     'INVOICE_NUMBER_ALLOCATED',
     'REQUISITION_NUMBER_ALLOCATED',
-    'REPACK'
+    'REPACK',
+    'PRESCRIPTION_CREATED',
+    'PRESCRIPTION_DELETED',
+    'PRESCRIPTION_STATUS_PICKED',
+    'PRESCRIPTION_STATUS_VERIFIED'
 );
 
 
@@ -732,15 +735,6 @@ SET default_tablespace = '';
 
 SET default_table_access_method = heap;
 
---
--- Name: __diesel_schema_migrations; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.__diesel_schema_migrations (
-    version character varying(50) NOT NULL,
-    run_on timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL
-);
-
 
 --
 -- Name: activity_log; Type: TABLE; Schema: public; Owner: -
@@ -763,7 +757,7 @@ CREATE TABLE public.activity_log (
 
 CREATE TABLE public.barcode (
     id text NOT NULL,
-    gtin text CONSTRAINT barcode_value_not_null NOT NULL,
+    gtin text NOT NULL,
     item_id text NOT NULL,
     manufacturer_id text,
     pack_size integer,
@@ -811,18 +805,18 @@ ALTER SEQUENCE public.changelog_cursor_seq OWNED BY public.changelog.cursor;
 --
 
 CREATE VIEW public.changelog_deduped AS
- SELECT cursor,
-    table_name,
-    record_id,
-    row_action,
-    name_id,
-    store_id,
-    is_sync_update
+ SELECT t1.cursor,
+    t1.table_name,
+    t1.record_id,
+    t1.row_action,
+    t1.name_id,
+    t1.store_id,
+    t1.is_sync_update
    FROM public.changelog t1
-  WHERE (cursor = ( SELECT max(t2.cursor) AS max
+  WHERE (t1.cursor = ( SELECT max(t2.cursor) AS max
            FROM public.changelog t2
           WHERE (t2.record_id = t1.record_id)))
-  ORDER BY cursor;
+  ORDER BY t1.cursor;
 
 
 --
@@ -921,31 +915,31 @@ CREATE TABLE public.invoice_line (
 --
 
 CREATE VIEW public.invoice_line_stock_movement AS
- SELECT id,
-    invoice_id,
-    item_id,
-    item_name,
-    item_code,
-    stock_line_id,
-    location_id,
-    batch,
-    expiry_date,
-    cost_price_per_pack,
-    sell_price_per_pack,
-    total_before_tax,
-    total_after_tax,
-    tax,
-    type,
-    number_of_packs,
-    pack_size,
-    note,
+ SELECT invoice_line.id,
+    invoice_line.invoice_id,
+    invoice_line.item_id,
+    invoice_line.item_name,
+    invoice_line.item_code,
+    invoice_line.stock_line_id,
+    invoice_line.location_id,
+    invoice_line.batch,
+    invoice_line.expiry_date,
+    invoice_line.cost_price_per_pack,
+    invoice_line.sell_price_per_pack,
+    invoice_line.total_before_tax,
+    invoice_line.total_after_tax,
+    invoice_line.tax,
+    invoice_line.type,
+    invoice_line.number_of_packs,
+    invoice_line.pack_size,
+    invoice_line.note,
         CASE
-            WHEN (type = 'STOCK_IN'::public.invoice_line_type) THEN ((number_of_packs * (pack_size)::double precision))::bigint
-            WHEN (type = 'STOCK_OUT'::public.invoice_line_type) THEN (((number_of_packs * (pack_size)::double precision))::bigint * '-1'::integer)
+            WHEN (invoice_line.type = 'STOCK_IN'::public.invoice_line_type) THEN ((invoice_line.number_of_packs * (invoice_line.pack_size)::double precision))::bigint
+            WHEN (invoice_line.type = 'STOCK_OUT'::public.invoice_line_type) THEN (((invoice_line.number_of_packs * (invoice_line.pack_size)::double precision))::bigint * '-1'::integer)
             ELSE NULL::bigint
         END AS quantity_movement
    FROM public.invoice_line
-  WHERE ((number_of_packs > (0)::double precision) AND (type = ANY (ARRAY['STOCK_IN'::public.invoice_line_type, 'STOCK_OUT'::public.invoice_line_type])));
+  WHERE ((invoice_line.number_of_packs > (0)::double precision) AND (invoice_line.type = ANY (ARRAY['STOCK_IN'::public.invoice_line_type, 'STOCK_OUT'::public.invoice_line_type])));
 
 
 --
@@ -1010,6 +1004,16 @@ CREATE VIEW public.consumption AS
 
 
 --
+-- Name: context; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.context (
+    id text NOT NULL,
+    name text NOT NULL
+);
+
+
+--
 -- Name: document; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -1025,7 +1029,7 @@ CREATE TABLE public.document (
     status public.document_status NOT NULL,
     owner_name_id text,
     is_sync_update boolean DEFAULT false NOT NULL,
-    context text NOT NULL
+    context_id text NOT NULL
 );
 
 
@@ -1035,11 +1039,10 @@ CREATE TABLE public.document (
 
 CREATE TABLE public.document_registry (
     id text NOT NULL,
-    type public.document_registry_type NOT NULL,
+    category public.document_registry_type NOT NULL,
     document_type text NOT NULL,
-    document_context text NOT NULL,
+    context_id text NOT NULL,
     name text,
-    parent_id text,
     form_schema_id text,
     config text
 );
@@ -1060,7 +1063,7 @@ CREATE TABLE public.encounter (
     clinician_id text,
     store_id text,
     document_type text NOT NULL,
-    context text NOT NULL
+    program_id text NOT NULL
 );
 
 
@@ -1123,16 +1126,16 @@ CREATE VIEW public.inventory_adjustment_stock_movement AS
 --
 
 CREATE VIEW public.invoice_stats AS
- SELECT invoice_id,
-    sum(total_before_tax) AS total_before_tax,
-    sum(total_after_tax) AS total_after_tax,
-    (COALESCE(((sum(total_after_tax) / NULLIF(sum(total_before_tax), (0)::double precision)) - (1)::double precision), (0)::double precision) * (100)::double precision) AS tax_percentage,
-    COALESCE(sum(total_before_tax) FILTER (WHERE (type = 'SERVICE'::public.invoice_line_type)), (0)::double precision) AS service_total_before_tax,
-    COALESCE(sum(total_after_tax) FILTER (WHERE (type = 'SERVICE'::public.invoice_line_type)), (0)::double precision) AS service_total_after_tax,
-    COALESCE(sum(total_before_tax) FILTER (WHERE (type = ANY (ARRAY['STOCK_IN'::public.invoice_line_type, 'STOCK_OUT'::public.invoice_line_type]))), (0)::double precision) AS stock_total_before_tax,
-    COALESCE(sum(total_after_tax) FILTER (WHERE (type = ANY (ARRAY['STOCK_IN'::public.invoice_line_type, 'STOCK_OUT'::public.invoice_line_type]))), (0)::double precision) AS stock_total_after_tax
+ SELECT invoice_line.invoice_id,
+    sum(invoice_line.total_before_tax) AS total_before_tax,
+    sum(invoice_line.total_after_tax) AS total_after_tax,
+    (COALESCE(((sum(invoice_line.total_after_tax) / NULLIF(sum(invoice_line.total_before_tax), (0)::double precision)) - (1)::double precision), (0)::double precision) * (100)::double precision) AS tax_percentage,
+    COALESCE(sum(invoice_line.total_before_tax) FILTER (WHERE (invoice_line.type = 'SERVICE'::public.invoice_line_type)), (0)::double precision) AS service_total_before_tax,
+    COALESCE(sum(invoice_line.total_after_tax) FILTER (WHERE (invoice_line.type = 'SERVICE'::public.invoice_line_type)), (0)::double precision) AS service_total_after_tax,
+    COALESCE(sum(invoice_line.total_before_tax) FILTER (WHERE (invoice_line.type = ANY (ARRAY['STOCK_IN'::public.invoice_line_type, 'STOCK_OUT'::public.invoice_line_type]))), (0)::double precision) AS stock_total_before_tax,
+    COALESCE(sum(invoice_line.total_after_tax) FILTER (WHERE (invoice_line.type = ANY (ARRAY['STOCK_IN'::public.invoice_line_type, 'STOCK_OUT'::public.invoice_line_type]))), (0)::double precision) AS stock_total_after_tax
    FROM public.invoice_line
-  GROUP BY invoice_id;
+  GROUP BY invoice_line.invoice_id;
 
 
 --
@@ -1165,7 +1168,7 @@ CREATE VIEW public.latest_document AS
     d.status,
     d.owner_name_id,
     d.is_sync_update,
-    d.context
+    d.context_id
    FROM (( SELECT document.name,
             max(document.datetime) AS datetime
            FROM public.document
@@ -1345,7 +1348,8 @@ CREATE TABLE public.period_schedule (
 CREATE TABLE public.program (
     id text NOT NULL,
     master_list_id text NOT NULL,
-    name text NOT NULL
+    name text NOT NULL,
+    context_id text DEFAULT ''::text NOT NULL
 );
 
 
@@ -1360,7 +1364,7 @@ CREATE TABLE public.program_enrolment (
     enrolment_datetime timestamp without time zone NOT NULL,
     program_enrolment_id text,
     status public.program_enrolment_status NOT NULL,
-    context text NOT NULL,
+    program_id text NOT NULL,
     document_type text NOT NULL
 );
 
@@ -1379,7 +1383,7 @@ CREATE TABLE public.program_event (
     document_name text,
     type text NOT NULL,
     data text,
-    context text NOT NULL,
+    context_id text NOT NULL,
     CONSTRAINT program_event_check CHECK ((datetime <= active_start_datetime)),
     CONSTRAINT program_event_check1 CHECK ((datetime <= active_end_datetime))
 );
@@ -1391,7 +1395,7 @@ CREATE TABLE public.program_event (
 
 CREATE TABLE public.program_requisition_order_type (
     id text NOT NULL,
-    program_requisition_settings_id text CONSTRAINT program_requisition_order_t_program_requisition_settin_not_null NOT NULL,
+    program_requisition_settings_id text NOT NULL,
     name text NOT NULL,
     threshold_mos double precision NOT NULL,
     max_mos double precision NOT NULL,
@@ -1484,14 +1488,14 @@ CREATE TABLE public.requisition_line (
 
 CREATE VIEW public.requisitions_in_period AS
  SELECT 'n/a'::text AS id,
-    program_id,
-    period_id,
-    store_id,
-    order_type,
-    type,
+    requisition.program_id,
+    requisition.period_id,
+    requisition.store_id,
+    requisition.order_type,
+    requisition.type,
     count(*) AS count
    FROM public.requisition
-  GROUP BY 'n/a'::text, program_id, period_id, store_id, order_type, type;
+  GROUP BY 'n/a'::text, requisition.program_id, requisition.period_id, requisition.store_id, requisition.order_type, requisition.type;
 
 
 --
@@ -1617,8 +1621,8 @@ CREATE TABLE public.store_preference (
     id text NOT NULL,
     type public.store_preference_type DEFAULT 'STORE_PREFERENCES'::public.store_preference_type,
     pack_to_one boolean DEFAULT false NOT NULL,
-    response_requisition_requires_authorisation boolean DEFAULT false CONSTRAINT store_preference_response_requisition_requires_authori_not_null NOT NULL,
-    request_requisition_requires_authorisation boolean DEFAULT false CONSTRAINT store_preference_request_requisition_requires_authoris_not_null NOT NULL,
+    response_requisition_requires_authorisation boolean DEFAULT false NOT NULL,
+    request_requisition_requires_authorisation boolean DEFAULT false NOT NULL,
     om_program_module boolean DEFAULT false NOT NULL
 );
 
@@ -1692,7 +1696,8 @@ CREATE TABLE public.user_account (
     first_name text,
     last_name text,
     phone_number text,
-    job_title text
+    job_title text,
+    last_successful_sync timestamp without time zone DEFAULT '1970-01-01 00:00:00'::timestamp without time zone NOT NULL
 );
 
 
@@ -1705,7 +1710,7 @@ CREATE TABLE public.user_permission (
     user_id text NOT NULL,
     store_id text NOT NULL,
     permission public.permission_type NOT NULL,
-    context text
+    context_id text
 );
 
 
@@ -1726,72 +1731,6 @@ CREATE TABLE public.user_store_join (
 --
 
 ALTER TABLE ONLY public.changelog ALTER COLUMN cursor SET DEFAULT nextval('public.changelog_cursor_seq'::regclass);
-
-
---
--- Data for Name: __diesel_schema_migrations; Type: TABLE DATA; Schema: public; Owner: -
---
-
-INSERT INTO public.__diesel_schema_migrations VALUES ('20210705T1000', '2026-01-14 21:54:42.933429');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20210710T1000', '2026-01-14 21:54:42.940816');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20210805T1000', '2026-01-14 21:54:42.942007');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20210810T1000', '2026-01-14 21:54:42.943222');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20210815T1000', '2026-01-14 21:54:42.944224');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20210825T1000', '2026-01-14 21:54:42.945865');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20210905T1000', '2026-01-14 21:54:42.948076');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20210910T1000', '2026-01-14 21:54:42.949273');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20210915T1000', '2026-01-14 21:54:42.950772');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20210917T1000', '2026-01-14 21:54:42.952195');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20210918T1000', '2026-01-14 21:54:42.954069');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20210920T1000', '2026-01-14 21:54:42.955533');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20210925T1000', '2026-01-14 21:54:42.957182');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20211005T1000', '2026-01-14 21:54:42.958695');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20211105T1000', '2026-01-14 21:54:42.960763');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20211110T1000', '2026-01-14 21:54:42.961795');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20211115T1000', '2026-01-14 21:54:42.962853');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20211120T1000', '2026-01-14 21:54:42.963876');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20211125T1000', '2026-01-14 21:54:42.96514');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20211210T1000', '2026-01-14 21:54:42.966455');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20211215T1000', '2026-01-14 21:54:42.967961');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20211220T1000', '2026-01-14 21:54:42.969563');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20211225T1000', '2026-01-14 21:54:42.971303');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20220127T0800', '2026-01-14 21:54:42.974545');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20220211T1500', '2026-01-14 21:54:42.976573');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20220223T1015', '2026-01-14 21:54:42.978487');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20220223T1030', '2026-01-14 21:54:42.979019');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20220223T1130', '2026-01-14 21:54:42.979475');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20220223T1200', '2026-01-14 21:54:42.980025');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20220223T1230', '2026-01-14 21:54:42.980556');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20220223T1300', '2026-01-14 21:54:42.98102');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20220223T1330', '2026-01-14 21:54:42.981515');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20220223T1400', '2026-01-14 21:54:42.982101');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20220315T1000', '2026-01-14 21:54:42.982649');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20220325T1400', '2026-01-14 21:54:42.984433');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20220325T1430', '2026-01-14 21:54:42.986047');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20220401T1000', '2026-01-14 21:54:42.987445');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20220401T1100', '2026-01-14 21:54:42.988538');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20220427T1000', '2026-01-14 21:54:42.989887');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20220427T1300', '2026-01-14 21:54:42.991183');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20220607T1500', '2026-01-14 21:54:42.993431');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20220607T1600', '2026-01-14 21:54:42.994929');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20220607T1700', '2026-01-14 21:54:42.996212');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20220607T1800', '2026-01-14 21:54:42.997903');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20220621013225', '2026-01-14 21:54:42.99908');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20220831235556', '2026-01-14 21:54:43.000436');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20221010220020', '2026-01-14 21:54:43.00146');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20221011T1022', '2026-01-14 21:54:43.003182');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20221027T0915', '2026-01-14 21:54:43.003648');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20221106232001', '2026-01-14 21:54:43.004149');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20221114012026', '2026-01-14 21:54:43.005438');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20221116021440', '2026-01-14 21:54:43.005864');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20221117221434', '2026-01-14 21:54:43.006305');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20221201194340', '2026-01-14 21:54:43.006637');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20230116T1000', '2026-01-14 21:54:43.006973');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20230327T1000', '2026-01-14 21:54:43.007628');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20230330220342', '2026-01-14 21:54:43.008344');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20230421T1000', '2026-01-14 21:54:43.008846');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20230421T1100', '2026-01-14 21:54:43.009488');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20230620T1000', '2026-01-14 21:54:43.010548');
 
 
 --
@@ -1822,6 +1761,14 @@ INSERT INTO public.__diesel_schema_migrations VALUES ('20230620T1000', '2026-01-
 -- Data for Name: clinician_store_join; Type: TABLE DATA; Schema: public; Owner: -
 --
 
+
+
+--
+-- Data for Name: context; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+INSERT INTO public.context VALUES ('Patient', 'Patient context');
+INSERT INTO public.context VALUES ('missing_program', 'missing_program');
 
 
 --
@@ -1876,11 +1823,7 @@ INSERT INTO public.__diesel_schema_migrations VALUES ('20230620T1000', '2026-01-
 -- Data for Name: key_value_store; Type: TABLE DATA; Schema: public; Owner: -
 --
 
-INSERT INTO public.key_value_store VALUES ('DATABASE_VERSION', '1.2.0', NULL, NULL, NULL, NULL);
-INSERT INTO public.key_value_store VALUES ('SETTINGS_TOKEN_SECRET', '4fbd1034-ded9-468b-a0fd-feef69192bc4', NULL, NULL, NULL, NULL);
-INSERT INTO public.key_value_store VALUES ('LOG_DIRECTORY', NULL, NULL, NULL, NULL, NULL);
-INSERT INTO public.key_value_store VALUES ('LOG_FILE_NAME', NULL, NULL, NULL, NULL, NULL);
-INSERT INTO public.key_value_store VALUES ('LOG_LEVEL', 'info', NULL, NULL, NULL, NULL);
+INSERT INTO public.key_value_store VALUES ('DATABASE_VERSION', '1.3.0', NULL, NULL, NULL, NULL);
 
 
 --
@@ -1960,7 +1903,7 @@ INSERT INTO public.master_list VALUES ('missing_program', 'missing_program', 'mi
 -- Data for Name: program; Type: TABLE DATA; Schema: public; Owner: -
 --
 
-INSERT INTO public.program VALUES ('missing_program', 'missing_program', 'missing_program');
+INSERT INTO public.program VALUES ('missing_program', 'missing_program', 'missing_program', 'missing_program');
 
 
 --
@@ -2057,7 +2000,7 @@ INSERT INTO public.program VALUES ('missing_program', 'missing_program', 'missin
 -- Data for Name: user_account; Type: TABLE DATA; Schema: public; Owner: -
 --
 
-INSERT INTO public.user_account VALUES ('omsupply_system', 'omsupply_system', '', NULL, 'ENGLISH', NULL, NULL, NULL, NULL);
+INSERT INTO public.user_account VALUES ('omsupply_system', 'omsupply_system', '', NULL, 'ENGLISH', NULL, NULL, NULL, NULL, '2020-01-22 15:16:00');
 
 
 --
@@ -2077,14 +2020,6 @@ INSERT INTO public.user_account VALUES ('omsupply_system', 'omsupply_system', ''
 --
 
 SELECT pg_catalog.setval('public.changelog_cursor_seq', 1, false);
-
-
---
--- Name: __diesel_schema_migrations __diesel_schema_migrations_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.__diesel_schema_migrations
-    ADD CONSTRAINT __diesel_schema_migrations_pkey PRIMARY KEY (version);
 
 
 --
@@ -2133,6 +2068,14 @@ ALTER TABLE ONLY public.clinician
 
 ALTER TABLE ONLY public.clinician_store_join
     ADD CONSTRAINT clinician_store_join_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: context context_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.context
+    ADD CONSTRAINT context_pkey PRIMARY KEY (id);
 
 
 --
@@ -3139,6 +3082,14 @@ ALTER TABLE ONLY public.clinician_store_join
 
 
 --
+-- Name: document document_context_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.document
+    ADD CONSTRAINT document_context_id_fkey FOREIGN KEY (context_id) REFERENCES public.context(id);
+
+
+--
 -- Name: document document_form_schema_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -3155,6 +3106,14 @@ ALTER TABLE ONLY public.document
 
 
 --
+-- Name: document_registry document_registry_context_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.document_registry
+    ADD CONSTRAINT document_registry_context_id_fkey FOREIGN KEY (context_id) REFERENCES public.context(id);
+
+
+--
 -- Name: document_registry document_registry_form_schema_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -3163,19 +3122,19 @@ ALTER TABLE ONLY public.document_registry
 
 
 --
--- Name: document_registry document_registry_parent_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.document_registry
-    ADD CONSTRAINT document_registry_parent_id_fkey FOREIGN KEY (parent_id) REFERENCES public.document_registry(id);
-
-
---
 -- Name: encounter encounter_clinician_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.encounter
     ADD CONSTRAINT encounter_clinician_id_fkey FOREIGN KEY (clinician_id) REFERENCES public.clinician(id);
+
+
+--
+-- Name: encounter encounter_enrolment_program_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.encounter
+    ADD CONSTRAINT encounter_enrolment_program_id_fkey FOREIGN KEY (program_id) REFERENCES public.program(id);
 
 
 --
@@ -3368,6 +3327,30 @@ ALTER TABLE ONLY public.number
 
 ALTER TABLE ONLY public.period
     ADD CONSTRAINT period_period_schedule_id_fkey FOREIGN KEY (period_schedule_id) REFERENCES public.period_schedule(id);
+
+
+--
+-- Name: program program_context_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.program
+    ADD CONSTRAINT program_context_id_fkey FOREIGN KEY (context_id) REFERENCES public.context(id);
+
+
+--
+-- Name: program_enrolment program_enrolment_program_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.program_enrolment
+    ADD CONSTRAINT program_enrolment_program_id_fkey FOREIGN KEY (program_id) REFERENCES public.program(id);
+
+
+--
+-- Name: program_event program_event_context_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.program_event
+    ADD CONSTRAINT program_event_context_id_fkey FOREIGN KEY (context_id) REFERENCES public.context(id);
 
 
 --
@@ -3579,6 +3562,14 @@ ALTER TABLE ONLY public.store
 
 
 --
+-- Name: user_permission user_permission_context_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.user_permission
+    ADD CONSTRAINT user_permission_context_id_fkey FOREIGN KEY (context_id) REFERENCES public.context(id);
+
+
+--
 -- Name: user_permission user_permission_store_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -3605,6 +3596,4 @@ ALTER TABLE ONLY public.user_store_join
 --
 -- PostgreSQL database dump complete
 --
-
-\unrestrict eKVTpTqvxfsXR7uG51aVjJFypVCIOLgGmRdxJeauveVtbNorAF12XAwVK9P9gvV
 
