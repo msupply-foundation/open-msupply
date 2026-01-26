@@ -1,16 +1,13 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useDialog, useWindowDimensions } from '@common/hooks';
 import { useTranslation } from '@common/intl';
 import { LinkedRequestLineFragment, useInbound } from '../api';
 import {
-  ColumnAlign,
-  createTableStore,
-  DataTable,
+  ColumnDef,
+  ColumnType,
   DialogButton,
-  GenericColumnKey,
-  TableProvider,
-  useColumns,
-  useTableStore,
+  MaterialTable,
+  useNonPaginatedMaterialTable,
 } from '@openmsupply-client/common';
 
 interface AddFromInternalOrderProps {
@@ -20,41 +17,7 @@ interface AddFromInternalOrderProps {
   invoiceId?: string;
 }
 
-export const useInternalOrderLineColumns = (requisitionId: string) => {
-  const { data, isLoading } = useInbound.document.listInternalOrderLines(
-    requisitionId ?? ''
-  );
-  const lines = data?.lines?.nodes;
-
-  const columns = useColumns<LinkedRequestLineFragment>([
-    [
-      GenericColumnKey.Selection,
-      {
-        width: 50,
-        align: ColumnAlign.Center,
-      },
-    ],
-    [
-      'itemCode',
-      {
-        width: 100,
-        accessor: ({ rowData }) => rowData.item.code ?? '',
-      },
-    ],
-    [
-      'itemName',
-      {
-        width: 200,
-        accessor: ({ rowData }) => rowData.item.name ?? '',
-      },
-    ],
-    ['requestedQuantity'],
-  ]);
-
-  return { columns, lines, isLoading };
-};
-
-const AddFromInternalOrderComponent = ({
+export const AddFromInternalOrder = ({
   isOpen,
   onClose,
   requisitionId,
@@ -63,13 +26,42 @@ const AddFromInternalOrderComponent = ({
   const t = useTranslation();
   const { width, height } = useWindowDimensions();
   const { Modal } = useDialog({ isOpen, onClose });
-  const { columns, lines, isLoading } = useInternalOrderLineColumns(
+  const { mutateAsync } = useInbound.lines.insertFromInternalOrder();
+  const { data, isLoading } = useInbound.document.listInternalOrderLines(
     requisitionId ?? ''
   );
-  const { mutateAsync } = useInbound.lines.insertFromInternalOrder();
-  const selectedRows = useTableStore(state => {
-    return lines?.filter(({ id }) => state.rowState[id]?.isSelected) ?? [];
-  });
+
+  const columns = useMemo(
+    (): ColumnDef<LinkedRequestLineFragment>[] => [
+      {
+        accessorKey: 'item.code',
+        header: t('label.code'),
+        size: 100,
+        enableSorting: true,
+      },
+      {
+        accessorKey: 'item.name',
+        header: t('label.name'),
+        size: 200,
+        enableSorting: true,
+      },
+      {
+        accessorKey: 'requestedQuantity',
+        header: t('label.requested-quantity'),
+        columnType: ColumnType.Number,
+        enableSorting: true,
+      },
+    ],
+    []
+  );
+
+  const { table, selectedRows } =
+    useNonPaginatedMaterialTable<LinkedRequestLineFragment>({
+      tableId: 'link-internal-order-to-inbound',
+      columns,
+      data: data?.lines.nodes,
+      isLoading,
+    });
 
   const onSelect = async () => {
     const rowsToInsert = selectedRows.map(row => ({
@@ -89,19 +81,7 @@ const AddFromInternalOrderComponent = ({
       okButton={<DialogButton variant="select" onClick={onSelect} />}
       cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
     >
-      <TableProvider createStore={createTableStore}>
-        <DataTable
-          id="link-internal-order-to-inbound"
-          columns={columns}
-          data={lines}
-          isLoading={isLoading}
-          dense
-        />
-      </TableProvider>
+      <MaterialTable table={table} />
     </Modal>
   );
 };
-
-export const AddFromInternalOrder = (props: AddFromInternalOrderProps) => (
-  <AddFromInternalOrderComponent {...props} />
-);
