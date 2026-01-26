@@ -87,7 +87,7 @@ export const useLogin = (
 ) => {
   const { mutateAsync, isLoading: isLoggingIn } = useGetAuthToken();
   const { changeLanguage, getLocaleCode, getUserLocale } = useIntlUtils();
-  const { client, setSkipRequest } = useGql();
+  const { setSkipRequest } = useGql();
   const { mutateAsync: getUserDetails } = useGetUserDetails();
   const queryClient = useQueryClient();
   const api = useAuthApi();
@@ -133,7 +133,6 @@ export const useLogin = (
 
   const login = async (username: string, password: string) => {
     const { token, error } = await mutateAsync({ username, password });
-    client.setHeader('Authorization', `Bearer ${token}`);
     const userDetails = await getUserDetails(token);
     queryClient.setQueryData(api.keys.me(token), userDetails);
     const store = await getStore(userDetails, mostRecentCredentials);

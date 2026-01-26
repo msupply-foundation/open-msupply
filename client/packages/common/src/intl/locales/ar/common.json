@@ -388,7 +388,6 @@
   "error.unable-to-scan-barcode": "غير قادر على مسح الرمز الشريطي: {{error}}",
   "error.unable-to-start-scanning": "غير قادر على بدء المسح:{{error}}",
   "error.unable-to-update-immunisation-program": "غير قادر على تحديث برنامج التلقيح",
-  "error.unable-to-update-vaccine-course": "تعذر تحديث دورة اللقاح",
   "error.unique-value-violation": "يوجد سجل مع هذا الحقل {{ field }}} مسبقاً",
   "error.unknown-sync-error": "خطأ في المزامنة غير معروف",
   "error.upserting-vaccine-courses": "خطأ غير معروف. لا يمكن تغيير دورات اللقاح",
