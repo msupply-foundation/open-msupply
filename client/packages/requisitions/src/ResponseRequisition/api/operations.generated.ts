@@ -139,6 +139,12 @@ export type ResponseLineFragment = {
     reason: string;
     isActive: boolean;
   } | null;
+  availableVolumeByLocationType?: {
+    __typename: 'AvailableVolumeAtLocationType';
+    availableVolume: number;
+    itemVolumePerUnit: number;
+    locationType: { __typename: 'LocationTypeNode'; name: string };
+  } | null;
 };
 
 export type ResponseFragment = {
@@ -261,6 +267,12 @@ export type ResponseFragment = {
         type: Types.ReasonOptionNodeType;
         reason: string;
         isActive: boolean;
+      } | null;
+      availableVolumeByLocationType?: {
+        __typename: 'AvailableVolumeAtLocationType';
+        availableVolume: number;
+        itemVolumePerUnit: number;
+        locationType: { __typename: 'LocationTypeNode'; name: string };
       } | null;
     }>;
   };
@@ -424,6 +436,12 @@ export type ResponseByNumberQuery = {
               type: Types.ReasonOptionNodeType;
               reason: string;
               isActive: boolean;
+            } | null;
+            availableVolumeByLocationType?: {
+              __typename: 'AvailableVolumeAtLocationType';
+              availableVolume: number;
+              itemVolumePerUnit: number;
+              locationType: { __typename: 'LocationTypeNode'; name: string };
             } | null;
           }>;
         };
@@ -595,6 +613,12 @@ export type ResponseByIdQuery = {
               type: Types.ReasonOptionNodeType;
               reason: string;
               isActive: boolean;
+            } | null;
+            availableVolumeByLocationType?: {
+              __typename: 'AvailableVolumeAtLocationType';
+              availableVolume: number;
+              itemVolumePerUnit: number;
+              locationType: { __typename: 'LocationTypeNode'; name: string };
             } | null;
           }>;
         };
@@ -1184,6 +1208,13 @@ export const ResponseLineFragmentDoc = gql`
     }
     reason {
       ...ReasonOptionRow
+    }
+    availableVolumeByLocationType {
+      locationType {
+        name
+      }
+      availableVolume
+      itemVolumePerUnit
     }
   }
   ${ItemWithStatsFragmentDoc}

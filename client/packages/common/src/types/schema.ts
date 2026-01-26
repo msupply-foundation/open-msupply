@@ -744,6 +744,13 @@ export type AuthTokenErrorInterface = {
 
 export type AuthTokenResponse = AuthToken | AuthTokenError;
 
+export type AvailableVolumeAtLocationType = {
+  __typename: 'AvailableVolumeAtLocationType';
+  availableVolume: Scalars['Float']['output'];
+  itemVolumePerUnit: Scalars['Float']['output'];
+  locationType: LocationTypeNode;
+};
+
 export type BarcodeNode = {
   __typename: 'BarcodeNode';
   gtin: Scalars['String']['output'];
@@ -5247,12 +5254,6 @@ export type LocationTypeSortInput = {
   key: LocationTypeSortFieldInput;
 };
 
-export type LocationTypeWithVolume = {
-  __typename: 'LocationTypeWithVolume';
-  locationType: LocationTypeNode;
-  volume: Scalars['Float']['output'];
-};
-
 export type LocationTypesResponse = LocationTypeConnector;
 
 export type LocationsResponse = LocationConnector;
@@ -8770,6 +8771,7 @@ export type RequisitionLineNode = {
   approvalComment?: Maybe<Scalars['String']['output']>;
   approvedQuantity: Scalars['Float']['output'];
   availableStockOnHand: Scalars['Float']['output'];
+  availableVolumeByLocationType?: Maybe<AvailableVolumeAtLocationType>;
   averageMonthlyConsumption: Scalars['Float']['output'];
   comment?: Maybe<Scalars['String']['output']>;
   daysOutOfStock: Scalars['Float']['output'];
@@ -8812,7 +8814,6 @@ export type RequisitionLineNode = {
   suggestedQuantity: Scalars['Float']['output'];
   /** Quantity to be supplied in the next shipment, only used in response requisition */
   supplyQuantity: Scalars['Float']['output'];
-  volumeByLocationType?: Maybe<LocationTypeWithVolume>;
 };
 
 export type RequisitionLineNodeItemStatsArgs = {
