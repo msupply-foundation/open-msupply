@@ -18,7 +18,7 @@ import {
 } from './ProgramRequisitionOptions';
 import { NewRequisitionType } from '../../types';
 
-interface NewGeneralRequisition {
+export interface NewGeneralRequisition {
   type: NewRequisitionType.General;
   name: NameRowFragment;
 }
