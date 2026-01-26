@@ -5,6 +5,7 @@ mod add_log_tag_sensor_type;
 mod add_migration_and_server_status_to_system_log_type_enums;
 mod add_shipping_method_id_to_invoice;
 mod add_version_to_plugins;
+mod add_universal_code_to_item;
 
 pub(crate) struct V2_16_00;
 impl Migration for V2_16_00 {
@@ -22,6 +23,7 @@ impl Migration for V2_16_00 {
             Box::new(add_migration_and_server_status_to_system_log_type_enums::Migrate),
             Box::new(add_shipping_method_id_to_invoice::Migrate),
             Box::new(add_version_to_plugins::Migrate),
+            Box::new(add_universal_code_to_item::Migrate),
         ]
     }
 }
