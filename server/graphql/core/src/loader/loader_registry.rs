@@ -578,5 +578,12 @@ pub async fn get_loaders(
         tokio::spawn,
     ));
 
+    loaders.insert(DataLoader::new(
+        AvailableVolumeOnRequisitionLineByTypeLoader {
+            service_provider: service_provider.clone(),
+        },
+        tokio::spawn,
+    ));
+
     loaders
 }
