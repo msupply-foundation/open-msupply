@@ -1,12 +1,12 @@
-import React, { FC } from 'react';
+import React from 'react';
 import { Paper, Tooltip, Typography } from '@mui/material';
 import { InlineSpinner, StockIcon } from '../../../';
 import { useTranslation } from '@common/intl';
 import { ApiException, isPermissionDeniedException } from '@common/types';
 import { SimpleLink } from '../../navigation/AppNavLink/SimpleLink';
-import { Grid, usePluginProvider } from '@openmsupply-client/common';
+import { Grid } from '@openmsupply-client/common';
 import { StatusChip } from '../../panels/StatusChip';
-import { filterCoreStats } from './utils';
+import { useDashboardStats } from '@openmsupply-client/dashboard/src/utils';
 
 export type Stat = {
   label: string;
@@ -132,25 +132,7 @@ const Content = ({
   const t = useTranslation();
   const isPermissionDenied = isPermissionDeniedException(error);
 
-  const { plugins } = usePluginProvider();
-
-  const statPlugins = plugins.dashboard?.statistic;
-
-  // Filter out core stats that should be hidden based on active plugins
-  const visibleCoreStats = filterCoreStats(stats, statPlugins);
-
-  const pluginStatistics =
-    statPlugins?.map((plugin, index) => {
-      const { Component } = plugin;
-      return <Component key={index} panelContext={panelContext} />;
-    }) ?? [];
-
-  const statistics = [
-    ...visibleCoreStats.map(stat => (
-      <Statistic key={stat.statContext} {...stat} />
-    )),
-    ...pluginStatistics,
-  ];
+  const statistics = useDashboardStats(stats, panelContext);
 
   switch (true) {
     case isError:
