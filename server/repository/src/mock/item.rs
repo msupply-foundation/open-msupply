@@ -147,6 +147,17 @@ pub fn mock_item_restricted_location_type_b() -> ItemRow {
     }
 }
 
+pub fn mock_item_universal_code() -> ItemRow {
+    ItemRow {
+        id: String::from("universal_code_item"),
+        name: String::from("item with univeral code"),
+        code: String::from("univeral_code_item"),
+        r#type: ItemType::Stock,
+        universal_code: Some(String::from("12345")),
+        ..Default::default()
+    }
+}
+
 pub fn mock_items() -> Vec<ItemRow> {
     vec![
         mock_item_a(),
@@ -162,5 +173,6 @@ pub fn mock_items() -> Vec<ItemRow> {
         mock_item_service_item(),
         mock_default_service_item(),
         mock_item_restricted_location_type_b(),
+        mock_item_universal_code(),
     ]
 }
