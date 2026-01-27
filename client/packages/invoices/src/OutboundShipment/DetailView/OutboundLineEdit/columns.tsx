@@ -11,6 +11,7 @@ import {
   ColumnDef,
   ColumnType,
   CheckCell,
+  Box,
   Tooltip,
   TextWithTooltipCell,
   CurrencyValueCell,
@@ -293,15 +294,15 @@ const LocationCell = ({ row }: { row: MRT_Row<DraftStockOutLineFragment> }) => {
 
   return (
     <Tooltip title={code} placement="bottom-start">
-      <div
-        style={{
+      <Box
+        sx={{
           overflow: 'hidden',
           textOverflow: 'ellipsis',
-          color: onHold ? 'error' : 'inherit',
+          color: onHold ? 'error.main' : 'inherit',
         }}
       >
         {code + onHoldText}
-      </div>
+      </Box>
     </Tooltip>
   );
 };
