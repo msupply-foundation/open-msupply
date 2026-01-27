@@ -22,7 +22,6 @@ import {
 import {
   ApiException,
   InvoiceNodeStatus,
-  PropsWithChildrenOnly,
   RequisitionNodeStatus,
   UserPermission,
 } from '@common/types';
@@ -32,7 +31,11 @@ import { SupplierSearchModal } from '@openmsupply-client/system';
 import { AppRoute } from '@openmsupply-client/config';
 import { useDashboardPanels } from '../utils';
 
-export const ReplenishmentWidget: React.FC<PropsWithChildrenOnly> = () => {
+export const ReplenishmentWidget = ({
+  widgetContext,
+}: {
+  widgetContext: string;
+}) => {
   const t = useTranslation();
   const modalControl = useToggle(false);
   const { error: errorNotification } = useNotification();
@@ -47,7 +50,6 @@ export const ReplenishmentWidget: React.FC<PropsWithChildrenOnly> = () => {
     error: requisitionCountError,
   } = useDashboard.statistics.requisitions();
 
-  const widgetContext = 'replenishment';
   const inboundShipmentsPanelContext = `${widgetContext}-inbound-shipments`;
   const internalOrdersPanelContext = `${widgetContext}-internal-orders`;
 

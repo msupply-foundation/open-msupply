@@ -3,6 +3,37 @@ import { Statistic, usePluginProvider } from '@openmsupply-client/common';
 
 import type { Stat } from '@openmsupply-client/common';
 
+export const useDashboardWidgets = (coreWidgets: React.ReactElement[]) => {
+  const { plugins } = usePluginProvider();
+  const widgetPlugins = plugins.dashboard?.widget;
+
+  if (!widgetPlugins) return coreWidgets;
+
+  // Get widget contexts that should be hidden from core dashboard
+  const hiddenContexts = new Set(
+    widgetPlugins.flatMap(plugin => plugin.hiddenWidgets ?? [])
+  );
+
+  // Filter core widgets to exclude the contexts defined in plugin hiddenWidgets
+  // Or return original core widget array if no hidden contexts
+  const visibleCoreWidgets =
+    hiddenContexts.size > 0
+      ? coreWidgets.filter(
+          widget => !hiddenContexts.has(widget.props.widgetContext)
+        )
+      : coreWidgets;
+
+  const pluginWidgets =
+    widgetPlugins?.map((plugin, index) => {
+      const { Component } = plugin;
+      return <Component key={index} />;
+    }) ?? [];
+
+  const widgets = [...visibleCoreWidgets, ...pluginWidgets];
+
+  return widgets;
+};
+
 export const useDashboardPanels = (
   corePanels: React.ReactElement[],
   widgetContext: string

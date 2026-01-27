@@ -17,6 +17,7 @@ export type Plugins = {
     detailViewField: React.ComponentType<{ item: ItemFragment }>[];
   };
   dashboard?: {
+    widget?: { Component: React.ComponentType; hiddenWidgets?: string[] }[];
     panel?: {
       Component: React.ComponentType<{ widgetContext: string }>;
       hiddenPanels?: string[];
