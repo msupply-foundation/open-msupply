@@ -24,6 +24,7 @@ mod graphql {
                       name
                       code
                       unitName
+                      universalCode
                       availableBatches(storeId: \"store_a\") {
                          ... on StockLineConnector {
                             nodes {
@@ -52,6 +53,7 @@ mod graphql {
                           "name": "name_item_query_test1",
                           "code": "code_item_query_test1",
                           "unitName": null,
+                          "universalCode": "",
                           "availableBatches": {
                               "nodes": [ { "id": "item_query_test1" } ]
                           }
@@ -61,6 +63,7 @@ mod graphql {
                           "name": "name_item_query_test2",
                           "code": "code_item_query_test2",
                           "unitName": "name_item_query_test2",
+                          "universalCode": "",
                            "availableBatches": {
                               "nodes": []
                           }
@@ -69,6 +72,34 @@ mod graphql {
               }
           }
         );
+        assert_graphql_query!(&settings, query, &Some(variables), &expected, None);
+
+        // Test filtering by universal code
+        let variables = json!({
+            "itemFilter": {
+                "universalCode": {
+                    "equalTo": "12345"
+                }
+            }
+        });
+
+        let expected = json!({
+            "items": {
+                "nodes": [
+                    {
+                        "id": "universal_code_item",
+                        "name": "item with univeral code",
+                        "code": "univeral_code_item",
+                        "unitName": null,
+                        "universalCode": "12345",
+                        "availableBatches": {
+                            "nodes": []
+                        }
+                    }
+                ]
+            }
+        });
+
         assert_graphql_query!(&settings, query, &Some(variables), &expected, None);
     }
 }
