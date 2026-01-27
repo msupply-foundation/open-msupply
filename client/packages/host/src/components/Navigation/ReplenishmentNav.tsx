@@ -67,7 +67,6 @@ export const ReplenishmentNav = ({
             text={t('internal-order')}
           />
           <AppNavLink
-            visible={!isGaps}
             to={RouteBuilder.create(AppRoute.Replenishment)
               .addPart(AppRoute.InboundShipment)
               .build()}
