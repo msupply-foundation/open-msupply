@@ -129,10 +129,14 @@ jobs:
           PERCENT="${{needs.report.outputs.diff_percent}}"
           THRESHOLD=3
 
+          echo "📊 Bundle size change: ${PERCENT}%"
+          echo "Bundle size diff: ${{needs.report.outputs.diff_string}}"
+          echo "Threshold: ${THRESHOLD}%"
+          echo ""
+
           if (( $(echo "$PERCENT > $THRESHOLD" | bc -l) )); then
-            echo "❌ Bundle size increased by ${PERCENT}% (threshold: ${THRESHOLD}%)"
-            echo "Bundle size diff: ${{needs.report.outputs.diff_string}}"
+            echo "❌ Bundle size increase exceeds threshold!"
             exit 1
           else
-            echo "✅ Bundle size change (${PERCENT}%) is within acceptable limits"
+            echo "✅ Bundle size change is within acceptable limits"
           fi
