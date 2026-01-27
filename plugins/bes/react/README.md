@@ -4,6 +4,14 @@
 
     * graphql_query -> issue stock via outboundShipment
 
+TODO:
+
+1. Refactor code (better naming of things, trim generated graphql, move things to their own space )
+2. Figure out codegen work flow to work better.
+3. Better error handling and error messages. Handle edge cases.
+4. Testing
+5. Improve Readme
+
 ### Installation
 
 This was initially developed using the [open-msupply](https://github.com/msupply-foundation/open-msupply-plugins.git) repo, and the plugin installed as a submodule of the open-msupply repo. To read about plugins and modules, go to [plugins and submodules](https://github.com/msupply-foundation/open-msupply/blob/develop/client/packages/plugins/README.md).
