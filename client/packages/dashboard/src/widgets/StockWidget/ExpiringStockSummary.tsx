@@ -10,8 +10,11 @@ import {
   usePreferences,
   useTranslation,
 } from '@openmsupply-client/common';
-import { useDashboard } from '../../api';
+
 import { AppRoute } from '@openmsupply-client/config';
+import { useStockCounts } from '../../api';
+
+const DAYS_TILL_EXPIRY = 30;
 
 export const ExpiringStockSummary = () => {
   const t = useTranslation();
@@ -22,12 +25,7 @@ export const ExpiringStockSummary = () => {
     secondThresholdForExpiringItems: secondThreshold,
   } = usePreferences();
 
-  const {
-    data: expiryData,
-    error: expiryError,
-    isLoading: isExpiryLoading,
-    isError: hasExpiryError,
-  } = useDashboard.statistics.stock();
+  const { stats, isLoading, isError, error } = useStockCounts(DAYS_TILL_EXPIRY);
 
   const { customDate, urlQueryDate, formatDaysFromToday } = useFormatDateTime();
   const today = new Date();
@@ -51,16 +49,16 @@ export const ExpiringStockSummary = () => {
 
   return (
     <StatsPanel
-      error={expiryError as ApiException}
-      isError={hasExpiryError}
-      isLoading={isExpiryLoading}
+      error={error as ApiException}
+      isError={isError}
+      isLoading={isLoading}
       title={t('heading.expiring-stock')}
       stats={[
         {
           label: t('label.expired', {
-            count: Math.round(expiryData?.expired || 0),
+            count: Math.round(stats?.expired || 0),
           }),
-          value: formatNumber.round(expiryData?.expired),
+          value: formatNumber.round(stats?.expired),
           link: RouteBuilder.create(AppRoute.Inventory)
             .addPart(AppRoute.Stock)
             .addQuery({
@@ -70,9 +68,9 @@ export const ExpiringStockSummary = () => {
         },
         {
           label: t('label.expiring-soon', {
-            count: Math.round(expiryData?.expiringSoon || 0),
+            count: Math.round(stats?.expiringSoon || 0),
           }),
-          value: formatNumber.round(expiryData?.expiringSoon),
+          value: formatNumber.round(stats?.expiringSoon),
           link: RouteBuilder.create(AppRoute.Inventory)
             .addPart(AppRoute.Stock)
             .addQuery({
@@ -82,7 +80,7 @@ export const ExpiringStockSummary = () => {
         },
         {
           label: t('label.batches-expiring-between-days'),
-          value: formatNumber.round(expiryData?.expiringInNextThreeMonths),
+          value: formatNumber.round(stats?.expiringInNextThreeMonths),
           link: RouteBuilder.create(AppRoute.Inventory)
             .addPart(AppRoute.Stock)
             .addQuery({
@@ -97,9 +95,7 @@ export const ExpiringStockSummary = () => {
                   firstThreshold,
                   secondThreshold,
                 }),
-                value: formatNumber.round(
-                  expiryData?.expiringBetweenThresholds
-                ),
+                value: formatNumber.round(stats?.expiringBetweenThresholds),
                 link: RouteBuilder.create(AppRoute.Inventory)
                   .addPart(AppRoute.Stock)
                   .addQuery({
