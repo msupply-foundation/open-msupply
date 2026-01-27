@@ -197,15 +197,17 @@ export function getSdk(
   return {
     insurancePolicies(
       variables: InsurancePoliciesQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<InsurancePoliciesQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<InsurancePoliciesQuery>(
-            InsurancePoliciesDocument,
+          client.request<InsurancePoliciesQuery>({
+            document: InsurancePoliciesDocument,
             variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
         'insurancePolicies',
         'query',
         variables
@@ -213,15 +215,17 @@ export function getSdk(
     },
     insertInsurance(
       variables: InsertInsuranceMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<InsertInsuranceMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<InsertInsuranceMutation>(
-            InsertInsuranceDocument,
+          client.request<InsertInsuranceMutation>({
+            document: InsertInsuranceDocument,
             variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
         'insertInsurance',
         'mutation',
         variables
@@ -229,15 +233,17 @@ export function getSdk(
     },
     updateInsurance(
       variables: UpdateInsuranceMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<UpdateInsuranceMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<UpdateInsuranceMutation>(
-            UpdateInsuranceDocument,
+          client.request<UpdateInsuranceMutation>({
+            document: UpdateInsuranceDocument,
             variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
         'updateInsurance',
         'mutation',
         variables
@@ -245,15 +251,17 @@ export function getSdk(
     },
     insuranceProviders(
       variables: InsuranceProvidersQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<InsuranceProvidersQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<InsuranceProvidersQuery>(
-            InsuranceProvidersDocument,
+          client.request<InsuranceProvidersQuery>({
+            document: InsuranceProvidersDocument,
             variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
         'insuranceProviders',
         'query',
         variables
