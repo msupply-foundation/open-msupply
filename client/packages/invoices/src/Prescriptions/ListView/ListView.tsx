@@ -45,7 +45,6 @@ export const PrescriptionListView = () => {
       },
     ],
   });
-  console.log({ sortBy });
 
   const listParams = {
     sortBy,

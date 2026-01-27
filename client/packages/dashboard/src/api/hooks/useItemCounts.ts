@@ -1,12 +1,12 @@
 import { useQuery } from '@openmsupply-client/common';
-import { DASHBOARD, ITEMS, STOCK } from './keys';
+import { DASHBOARD, ITEMS } from './keys';
 import { useApi } from './useApi';
 
 export const useItemCounts = (lowStockThreshold: number) => {
   const { storeId, api } = useApi();
 
   const { data, ...rest } = useQuery(
-    [DASHBOARD, STOCK, ITEMS, storeId],
+    [DASHBOARD, ITEMS, storeId],
     () =>
       api.itemCounts({
         storeId,
