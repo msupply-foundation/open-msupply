@@ -14,7 +14,6 @@ import { SettingsSubHeading } from './SettingsSection';
 import { AppRoute } from '@openmsupply-client/config';
 
 interface BarcodeScannerInfo {
-  cordovaAvailable: boolean;
   honeywellAvailable: boolean;
   honeywellInfo: string;
 }
@@ -22,15 +21,11 @@ interface BarcodeScannerInfo {
 export const BarcodeScannerSettings = () => {
   const t = useTranslation();
   const [scannerInfo, setScannerInfo] = useState<BarcodeScannerInfo>({
-    cordovaAvailable: false,
     honeywellAvailable: false,
     honeywellInfo: 'Not available',
   });
 
   useEffect(() => {
-    // Check if Cordova is available
-    const cordovaAvailable = typeof window.cordova !== 'undefined';
-
     // Check if Honeywell plugin is available
     const honeywellAvailable = typeof window.plugins?.honeywell !== 'undefined';
 
@@ -45,7 +40,6 @@ export const BarcodeScannerSettings = () => {
     }
 
     setScannerInfo({
-      cordovaAvailable,
       honeywellAvailable,
       honeywellInfo,
     });
@@ -61,7 +55,13 @@ export const BarcodeScannerSettings = () => {
             {scannerInfo.honeywellAvailable ? (
               <>
                 <CheckIcon color="success" />
-                <Typography>Available</Typography>
+                <Link
+                  to={RouteBuilder.create(AppRoute.Settings)
+                    .addPart('barcode-scanner-test')
+                    .build()}
+                >
+                  <Typography>Available</Typography>
+                </Link>
               </>
             ) : (
               <>
@@ -93,18 +93,6 @@ export const BarcodeScannerSettings = () => {
               </Box>
             }
             title="Honeywell Plugin Information"
-          />
-          <Setting
-            component={
-              <Link
-                to={RouteBuilder.create(AppRoute.Settings)
-                  .addPart('barcode-scanner-test')
-                  .build()}
-              >
-                Open Scanner Test Page
-              </Link>
-            }
-            title="Test Scanner"
           />
         </>
       )}
