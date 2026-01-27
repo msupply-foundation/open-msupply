@@ -1,0 +1,18 @@
+query Items($storeId: String!, $filter: ItemFilterInput) {
+  items(storeId: $storeId, filter: $filter) {
+    __typename
+    ... on ItemConnector {
+      totalCount
+      nodes {
+        id
+        code
+        name
+        availableStockOnHand(storeId: $storeId)
+        stats(storeId: $storeId) {
+          availableStockOnHand
+          averageMonthlyConsumption
+        }
+      }
+    }
+  }
+}

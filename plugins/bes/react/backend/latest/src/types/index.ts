@@ -1,5 +1,7 @@
 import { EqualFilter } from '@common/generated/EqualFilter';
 
+import { NameFilterInput, ItemFilterInput } from '../generated-types/graphql';
+
 export type LikeFilter<T> = {
   equalTo?: T;
 };
@@ -85,8 +87,8 @@ export type ItemsFilter = {
 };
 
 export type IssueStockEndpointInput = {
-  customerFilter: NamesFilter;
-  itemFilter: ItemsFilter;
+  customerFilter: NameFilterInput;
+  itemFilter: ItemFilterInput;
   quantity: number;
 };
 
