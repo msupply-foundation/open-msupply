@@ -14,11 +14,11 @@ import { AppRoute } from '@openmsupply-client/config';
 const LOW_MOS_THRESHOLD = 3;
 
 interface StockLevelsSummaryProps {
-  widgetContext: string;
+  panelContext: string;
 }
 
 export const StockLevelsSummary = ({
-  widgetContext,
+  panelContext,
 }: StockLevelsSummaryProps) => {
   const t = useTranslation();
   const formatNumber = useFormatNumber();
@@ -30,8 +30,6 @@ export const StockLevelsSummary = ({
     numberOfMonthsThresholdToShowOverStockAlertsForProducts: overStockAlert,
     numberOfMonthsThresholdToShowLowStockAlertsForProducts: lowStockAlert,
   } = usePreferences();
-
-  const stockLevelsPanelContext = 'stock-levels';
 
   const {
     data: itemCountsData,
@@ -47,11 +45,12 @@ export const StockLevelsSummary = ({
 
   return (
     <StatsPanel
+      key={panelContext}
       error={itemCountsError as ApiException}
       isError={hasItemStatsError}
       isLoading={isItemStatsLoading}
       title={t('heading.stock-levels')}
-      panelContext={`${widgetContext}-${stockLevelsPanelContext}`}
+      panelContext={panelContext}
       stats={[
         {
           label: t('label.total-items', {
@@ -61,7 +60,7 @@ export const StockLevelsSummary = ({
           link: RouteBuilder.create(AppRoute.Catalogue)
             .addPart(AppRoute.Items)
             .build(),
-          statContext: `${widgetContext}-${stockLevelsPanelContext}-total-items`,
+          statContext: `${panelContext}-total-items`,
         },
         {
           label: t('label.items-no-stock', {
@@ -74,7 +73,7 @@ export const StockLevelsSummary = ({
               stockStatus: 'outOfStock',
             })
             .build(),
-          statContext: `${widgetContext}-${stockLevelsPanelContext}-items-no-stock`,
+          statContext: `${panelContext}-items-no-stock`,
         },
         {
           label: t('label.low-stock-items', {
@@ -87,7 +86,7 @@ export const StockLevelsSummary = ({
               maxMonthsOfStock: 3,
             })
             .build(),
-          statContext: `${widgetContext}-${stockLevelsPanelContext}-low-stock-items`,
+          statContext: `${panelContext}-low-stock-items`,
         },
         ...(overStockAlert
           ? [
@@ -104,7 +103,7 @@ export const StockLevelsSummary = ({
                     minMonthsOfStock: overStockAlert,
                   })
                   .build(),
-                statContext: `${widgetContext}-${stockLevelsPanelContext}-overstocked-products`,
+                statContext: `${panelContext}-overstocked-products`,
               },
             ]
           : []),
@@ -121,7 +120,7 @@ export const StockLevelsSummary = ({
               minMonthsOfStock: 6,
             })
             .build(),
-          statContext: `${widgetContext}-${stockLevelsPanelContext}-over-six-months-stock`,
+          statContext: `${panelContext}-over-six-months-stock`,
         },
         ...(outOfStockProducts
           ? [
@@ -138,7 +137,7 @@ export const StockLevelsSummary = ({
                     stockStatus: 'outOfStockWithRecentConsumption',
                   })
                   .build(),
-                statContext: `${widgetContext}-${stockLevelsPanelContext}-out-of-stock-products`,
+                statContext: `${panelContext}-out-of-stock-products`,
               },
             ]
           : []),
@@ -159,7 +158,7 @@ export const StockLevelsSummary = ({
                     productsAtRiskOfBeingOutOfStock: true,
                   })
                   .build(),
-                statContext: `${widgetContext}-${stockLevelsPanelContext}-products-at-risk-of-stockout`,
+                statContext: `${panelContext}-products-at-risk-of-stockout`,
               },
             ]
           : []),

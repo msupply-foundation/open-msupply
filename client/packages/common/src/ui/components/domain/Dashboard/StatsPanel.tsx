@@ -148,7 +148,7 @@ const Content = ({
   }
 };
 
-export const StatsPanel: FC<StatsPanelProps> = ({
+export const StatsPanel = ({
   error,
   isError = false,
   isLoading,
@@ -157,7 +157,7 @@ export const StatsPanel: FC<StatsPanelProps> = ({
   width,
   link,
   panelContext,
-}) => (
+}: StatsPanelProps) => (
   <Paper
     sx={{
       borderRadius: '16px',
