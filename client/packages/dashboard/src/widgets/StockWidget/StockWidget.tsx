@@ -25,7 +25,7 @@ import { ExpiringStockSummary } from './ExpiringStockSummary';
 import { StockLevelsSummary } from './StockLevelsSummary';
 import { useDashboardPanels } from '../../utils';
 
-export const StockWidget = () => {
+export const StockWidget = ({ widgetContext }: { widgetContext: string }) => {
   const t = useTranslation();
   const navigate = useNavigate();
   const modalControl = useToggle(false);
@@ -33,8 +33,6 @@ export const StockWidget = () => {
   const { error: errorNotification } = useNotification();
   const { mutateAsync: onCreate } = useRequest.document.insert();
   const { insert: onProgramCreate } = useRequest.document.insertProgram();
-
-  const widgetContext = 'stock';
 
   const handleClick = useCallback(() => {
     if (!userHasPermission(UserPermission.RequisitionMutate)) {

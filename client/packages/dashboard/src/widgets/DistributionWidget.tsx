@@ -23,7 +23,11 @@ import { useOutbound } from '@openmsupply-client/invoices';
 import { AppRoute } from '@openmsupply-client/config';
 import { useDashboardPanels } from '../utils';
 
-export const DistributionWidget = () => {
+export const DistributionWidget = ({
+  widgetContext,
+}: {
+  widgetContext: string;
+}) => {
   const t = useTranslation();
   const modalControl = useToggle(false);
   const navigate = useNavigate();
@@ -43,7 +47,6 @@ export const DistributionWidget = () => {
     error: requisitionCountError,
   } = useDashboard.statistics.requisitions();
 
-  const widgetContext = 'distribution';
   const outboundShipmentsPanelContext = `${widgetContext}-outbound-shipments`;
   const customerRequisitionsPanelContext = `${widgetContext}-customer-requisitions`;
 
