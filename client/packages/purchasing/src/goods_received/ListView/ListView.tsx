@@ -8,6 +8,8 @@ import {
   usePaginatedMaterialTable,
   ColumnDef,
   ColumnType,
+  useIsGapsStoreOnly,
+  MobileCardList,
 } from '@openmsupply-client/common';
 import { useGoodsReceivedList } from '../api';
 import { GoodsReceivedRowFragment } from '../api/operations.generated';
@@ -18,9 +20,7 @@ import { getGoodsReceivedStatusTranslator } from '../../utils';
 
 export const GoodsReceivedListView = () => {
   const t = useTranslation();
-  const {
-    queryParams,
-  } = useUrlQueryParams({
+  const { queryParams } = useUrlQueryParams({
     initialSort: { key: 'createdDatetime', dir: 'desc' },
     filters: [
       { key: 'createdDatetime' },
@@ -35,6 +35,8 @@ export const GoodsReceivedListView = () => {
   const {
     query: { data, isError, isLoading },
   } = useGoodsReceivedList(queryParams);
+
+  const isMobile = useIsGapsStoreOnly();
 
   const columns = useMemo(
     (): ColumnDef<GoodsReceivedRowFragment>[] => [
@@ -84,25 +86,33 @@ export const GoodsReceivedListView = () => {
     []
   );
 
-  const { table, selectedRows } = usePaginatedMaterialTable<GoodsReceivedRowFragment>({
-    tableId: 'goods-received-list',
-    data: data?.nodes,
-    columns,
-    totalCount: data?.totalCount ?? 0,
-    isLoading,
-    isError,
-    onRowClick: row => {
-      navigate(row.id);
-    },
-    noDataElement: <NothingHere body={t('error.no-items')} />,
-  });
+  const { table, selectedRows } =
+    usePaginatedMaterialTable<GoodsReceivedRowFragment>({
+      tableId: 'goods-received-list',
+      data: data?.nodes,
+      columns,
+      totalCount: data?.totalCount ?? 0,
+      isLoading,
+      isError,
+      onRowClick: row => {
+        navigate(row.id);
+      },
+      noDataElement: <NothingHere body={t('error.no-items')} />,
+    });
 
   return (
     <>
       <Toolbar />
       <AppBarButtons />
-      <MaterialTable table={table} />
-      <Footer selectedRows={selectedRows} resetRowSelection={table.resetRowSelection} />
+      {isMobile ? (
+        <MobileCardList table={table} />
+      ) : (
+        <MaterialTable table={table} />
+      )}
+      <Footer
+        selectedRows={selectedRows}
+        resetRowSelection={table.resetRowSelection}
+      />
     </>
   );
 };

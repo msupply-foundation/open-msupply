@@ -6,12 +6,23 @@ import {
   MRT_TableInstance,
   MRT_TopToolbar,
 } from 'material-react-table';
+
 import React from 'react';
 
-const TableCard = <T extends MRT_RowData>({ row }: { row: MRT_Row<T> }) => {
+const TableCard = <T extends MRT_RowData>({
+  row,
+  onClick,
+}: {
+  row: MRT_Row<T>;
+  onClick?: React.MouseEventHandler<HTMLDivElement>;
+}) => {
   const cells = row.getVisibleCells();
+
   return (
-    <Card sx={{ overflow: 'visible', maxWidth: 400, width: '100%' }}>
+    <Card
+      sx={{ overflow: 'visible', maxWidth: 400, width: '100%' }}
+      onClick={onClick}
+    >
       <CardContent>
         <Stack spacing={0.5}>
           {cells.map(cell => {
@@ -26,7 +37,7 @@ const TableCard = <T extends MRT_RowData>({ row }: { row: MRT_Row<T> }) => {
                 <Typography color="text.secondary">
                   {flexRender(cell.column.columnDef.header, cell.getContext())}
                 </Typography>
-                <Box>{content}</Box>
+                <Box>{content as React.ReactNode}</Box>
               </Box>
             );
           })}
@@ -45,9 +56,23 @@ export const MobileCardList = <T extends MRT_RowData>({
     <>
       <Stack spacing={2} sx={{ width: '100%', alignItems: 'center', m: 2 }}>
         <MRT_TopToolbar table={table} />
-        {table.getRowModel().rows.map(row => (
-          <TableCard key={row.id} row={row} />
-        ))}
+        {table.getRowModel().rows.map(row => {
+          const rowProps =
+            typeof table.options.muiTableBodyRowProps === 'function'
+              ? ((
+                  table.options.muiTableBodyRowProps as
+                    | ((args: {
+                        row: typeof row;
+                        table: typeof table;
+                      }) => React.HTMLProps<HTMLDivElement>)
+                    | undefined
+                )?.({ row, table }) ?? {})
+              : (table.options.muiTableBodyRowProps ?? {});
+
+          const onClick = rowProps.onClick;
+
+          return <TableCard key={row.id} row={row} onClick={onClick} />;
+        })}
       </Stack>
     </>
   );
