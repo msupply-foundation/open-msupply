@@ -743,6 +743,14 @@ mutation insertVaccineCourse(
         ... on InsertVaccineCourseError {
           __typename
           error {
+            ... on RecordAlreadyExist {
+              __typename
+              description
+            }
+            ... on RecordProgramCombinationAlreadyExists {
+              __typename
+              description
+            }
             description
           }
         }
@@ -766,6 +774,14 @@ mutation updateVaccineCourse(
         ... on UpdateVaccineCourseError {
           __typename
           error {
+            ... on VaccineDosesInUse {
+              __typename
+              description
+            }
+            ... on RecordProgramCombinationAlreadyExists {
+              __typename
+              description
+            }
             description
           }
         }
@@ -781,6 +797,16 @@ mutation deleteVaccineCourse($vaccineCourseId: String!) {
         ... on DeleteResponse {
           __typename
           id
+        }
+        ... on DeleteVaccineCourseError {
+          __typename
+          error {
+            description
+            ... on VaccineCourseInUse {
+              __typename
+              description
+            }
+          }
         }
       }
     }

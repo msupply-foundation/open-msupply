@@ -243,6 +243,10 @@ impl AssetLogReasonNode {
     pub async fn reason(&self) -> &str {
         &self.row().reason
     }
+
+    pub async fn comments_required(&self) -> bool {
+        self.row().comments_required
+    }
 }
 
 #[derive(Union)]

@@ -25,6 +25,7 @@ table! {
         is_vaccine -> Bool,
         vaccine_doses -> Integer,
         restricted_location_type_id ->  Nullable<Text>,
+        universal_code -> Nullable<Text>,
     }
 }
 
@@ -79,6 +80,7 @@ pub struct ItemRow {
     pub is_vaccine: bool,
     pub vaccine_doses: i32,
     pub restricted_location_type_id: Option<String>,
+    pub universal_code: Option<String>,
 }
 
 impl Default for ItemRow {
@@ -97,6 +99,7 @@ impl Default for ItemRow {
             ven_category: VENCategory::NotAssigned,
             vaccine_doses: 0,
             restricted_location_type_id: None,
+            universal_code: None,
         }
     }
 }
