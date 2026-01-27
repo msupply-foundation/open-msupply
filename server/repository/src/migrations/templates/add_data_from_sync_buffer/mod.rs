@@ -43,7 +43,7 @@ pub(crate) struct V2_15_01;
 
 impl Migration for V2_15_01 {
     fn version(&self) -> Version {
-        Version::from_str("1.0.8")
+        Version::from_str("2.15.1")
     }
 
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
@@ -113,10 +113,10 @@ async fn migration_2_15_01() {
     sql!(
         &connection,
         r#"
-        INSERT INTO store 
-        (id, name_id, site_id, code)
+        INSERT INTO name_link
+        (id, name_id)
         VALUES 
-        ('store1_id', 'name_id', 1, '');
+        ('name_link_id', 'name_id');
     "#
     )
     .unwrap();
@@ -125,9 +125,9 @@ async fn migration_2_15_01() {
         &connection,
         r#"
         INSERT INTO store 
-        (id, name_id, site_id, code)
+        (id, name_link_id, site_id, code)
         VALUES 
-        ('store2_id', 'name_id', 1, '');
+        ('store1_id', 'name_link_id', 1, '');
     "#
     )
     .unwrap();
@@ -136,9 +136,20 @@ async fn migration_2_15_01() {
         &connection,
         r#"
         INSERT INTO store 
-        (id, name_id, site_id, code) 
+        (id, name_link_id, site_id, code)
         VALUES 
-        ('store3_id', 'name_id', 1, '');
+        ('store2_id', 'name_link_id', 1, '');
+    "#
+    )
+    .unwrap();
+
+    sql!(
+        &connection,
+        r#"
+        INSERT INTO store 
+        (id, name_link_id, site_id, code) 
+        VALUES 
+        ('store3_id', 'name_link_id', 1, '');
     "#
     )
     .unwrap();
