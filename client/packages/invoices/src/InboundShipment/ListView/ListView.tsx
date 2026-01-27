@@ -11,6 +11,7 @@ import {
   MaterialTable,
   NameAndColorSetterCell,
   usePreferences,
+  DetailTabs,
 } from '@openmsupply-client/common';
 import { AppBarButtons } from './AppBarButtons';
 import {
@@ -24,6 +25,33 @@ import { Footer } from './Footer';
 
 export const InboundListView = () => {
   const t = useTranslation();
+  const invoiceModalController = useToggle();
+  const linkRequestModalController = useToggle();
+
+  const tabs = [
+    {
+      Component: <InboundShipments />,
+      value: t('label.internal'),
+    },
+    {
+      Component: <InboundShipments external />,
+      value: t('label.external'),
+    },
+  ];
+
+  return (
+    <>
+      <AppBarButtons
+        invoiceModalController={invoiceModalController}
+        linkRequestModalController={linkRequestModalController}
+      />
+      <DetailTabs tabs={tabs} overwriteQuery={false} restoreTabQuery={false} />
+    </>
+  );
+};
+
+const InboundShipments: React.FC<{ external?: boolean }> = ({ external = false }) => {
+  const t = useTranslation();
   const navigate = useNavigate();
   const { invoiceStatusOptions } = usePreferences();
   const invoiceModalController = useToggle();
@@ -33,7 +61,7 @@ export const InboundListView = () => {
   const {
     queryParams: { first, offset, sortBy, filterBy },
   } = useUrlQueryParams({
-    initialSort: { key: 'invoiceNumber', dir: 'desc' },
+    // initialSort: { key: 'invoiceNumber', dir: 'desc' },
     filters: [
       { key: 'invoiceNumber', condition: 'equalTo', isNumber: true },
       { key: 'otherPartyName' },
@@ -49,7 +77,12 @@ export const InboundListView = () => {
     sortBy,
     first,
     offset,
-    filterBy,
+    filterBy: {
+      ...filterBy,
+      purchaseOrderId: external
+        ? { notEqualTo: '' } // Removes results where purchaseOrderId is null
+        : { equalAnyOrNull: '' } // Only gives results where purchaseOrderId is null
+    },
   };
 
   const { data, isFetching } = useInbound.document.list(listParams);
@@ -79,6 +112,12 @@ export const InboundListView = () => {
         size: 90,
         enableColumnFilter: true,
         enableSorting: true,
+      },
+      {
+        header: t('label.purchase-order-number'),
+        accessorKey: 'purchaseOrder.number',
+        columnType: ColumnType.Number,
+        includeColumn: external,
       },
       {
         header: t('label.created'),
@@ -164,4 +203,4 @@ export const InboundListView = () => {
       />
     </>
   );
-};
+}

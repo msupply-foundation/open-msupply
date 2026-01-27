@@ -237,8 +237,11 @@ fragment InboundRow on InvoiceNode {
     rate
     isHomeCurrency
   }
-
   currencyRate
+  purchaseOrder {
+    id
+    number
+  }
 }
 
 query invoices(

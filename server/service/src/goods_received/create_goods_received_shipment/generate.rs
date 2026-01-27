@@ -20,7 +20,7 @@ pub fn generate(
         id: uuid(),
         other_party_id: supplier_name_link,
         their_reference: goods_received.supplier_reference.clone(),
-        goods_received_id: Some(goods_received.id),
+        purchase_order_id: None,
         requisition_id: None,
         on_hold: None,
         comment: None,

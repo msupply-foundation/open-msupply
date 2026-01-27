@@ -21,7 +21,7 @@ pub fn generate(
         their_reference,
         colour,
         requisition_id,
-        goods_received_id,
+        purchase_order_id,
     }: InsertInboundShipment,
     other_party: Name,
 ) -> Result<InvoiceRow, RepositoryError> {
@@ -46,7 +46,7 @@ pub fn generate(
         on_hold: on_hold.unwrap_or(false),
         colour,
         requisition_id,
-        goods_received_id,
+        purchase_order_id,
         // Default
         currency_id: Some(currency.currency_row.id),
         currency_rate: 1.0,
