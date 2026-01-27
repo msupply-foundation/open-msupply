@@ -90,7 +90,7 @@ impl Certificates {
                 Some(load_certs_rustls(cert_files).expect("Invalid self signed certificates"))
             }
             None => {
-                if is_develop() || settings.danger_allow_http {
+                if (is_develop() || settings.danger_allow_http) && !settings.force_generate_certs {
                     warn!("No certificates found: Run in HTTP development mode");
                     None
                 } else {

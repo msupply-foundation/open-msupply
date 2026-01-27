@@ -16,10 +16,11 @@
     "@capacitor/screen-orientation": "^6.0.3"
   },
   "scripts": {
-    "build:server": "./build_remote_server_libs.sh",
+    "build:server:release": "./build_remote_server_libs.sh release",
+    "build:server:debug": "./build_remote_server_libs.sh debug",
     "//": "assembleDebug and assembleRelease will build both arm64 and universal flavors in client/packages/android/app/build.gradle",
-    "build:debug": "yarn build:server && yarn apply-config:debug && ./gradlew assembleDebug",
-    "build:release": "yarn build:server && yarn apply-config && ./gradlew assembleRelease",
+    "build:debug": "yarn build:server:debug && yarn apply-config:debug && ./gradlew assembleDebug",
+    "build:release": "yarn build:server:release && yarn apply-config && ./gradlew assembleRelease",
     "apply-config:debug": "DEBUG_BUILD=true yarn apply-config",
     "apply-config": "npx cap copy"
   },

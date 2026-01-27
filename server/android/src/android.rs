@@ -48,6 +48,7 @@ pub mod android {
                 base_dir: Some(files_dir.to_str().unwrap().to_string()),
                 machine_uid: Some(android_id),
                 override_is_central_server: false,
+                force_generate_certs: true,
             },
             database: DatabaseSettings {
                 username: "n/a".to_string(),
