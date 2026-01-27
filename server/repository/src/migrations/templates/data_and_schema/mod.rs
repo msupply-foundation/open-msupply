@@ -84,7 +84,7 @@ async fn migration_2_15_01() {
 
     // Migrate to version - 1
     let SetupResult { connection, .. } = setup_test(SetupOption {
-        db_name: &format!("migration_{version}"),
+        db_name: &format!("migration_{version}_data_and_schema"),
         version: Some(previous_version.clone()),
         ..Default::default()
     })

@@ -97,7 +97,7 @@ async fn migration_2_15_01() {
 
     // This test allows checking sql syntax
     let SetupResult { connection, .. } = setup_test(SetupOption {
-        db_name: &format!("migration_{version}"),
+        db_name: &format!("migration_{version}_adding_table"),
         version: Some(version.clone()),
         ..Default::default()
     })
