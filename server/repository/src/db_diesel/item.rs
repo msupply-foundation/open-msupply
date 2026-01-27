@@ -229,18 +229,12 @@ impl<'a> ItemRepository<'a> {
             .limit(pagination.limit as i64);
 
         // Debug diesel query
-        //
-        log::info!(
-            "{}",
-            diesel::debug_query::<DBType, _>(&final_query).to_string()
-        );
+        // log::info!(
+        //     "{}",
+        //     diesel::debug_query::<DBType, _>(&final_query).to_string()
+        // );
 
-        let now = SystemTime::now();
         let result = final_query.load::<ItemAndUnit>(self.connection.lock().connection())?;
-        log::info!(
-            "SPEED TEST ItemRepository::query executed in seconds: {}",
-            now.elapsed().unwrap().as_secs_f64()
-        );
 
         Ok(result.into_iter().map(to_domain).collect())
     }

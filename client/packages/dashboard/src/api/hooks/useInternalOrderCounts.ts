@@ -1,12 +1,12 @@
 import { useQuery } from '@openmsupply-client/common';
-import { DASHBOARD, REQUISITION } from './keys';
+import { DASHBOARD, INTERNAL_ORDER } from './keys';
 import { useApi } from './useApi';
 
 export const useInternalOrderCounts = () => {
   const { storeId, api } = useApi();
 
   const { data, ...rest } = useQuery(
-    [DASHBOARD, REQUISITION, storeId],
+    [DASHBOARD, INTERNAL_ORDER, storeId],
     () =>
       api.internalOrderCounts({
         storeId,
