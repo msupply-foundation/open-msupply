@@ -30,7 +30,9 @@ cargo run --bin remote_server_cli install-plugin-bundle --path ../path/to/plugin
 
 ### graphql_query params
 
-```input json
+request structure
+
+```json
 {
   "input": {
     "customerFilter": { "isStore": true, "isVisible": true }, // NameFilterInput type of 'names' graphql endpoint
@@ -40,20 +42,20 @@ cargo run --bin remote_server_cli install-plugin-bundle --path ../path/to/plugin
 }
 ```
 
-```response json example
+response structure
+
+```json
 {
-      "message": "Issued stock for store: Kamo Regional Warehouse, item: AR33197, quantity: 60",
-      "success": true
+  "message": "Issued stock for store: Kamo Regional Warehouse, item: AR33197, quantity: 60",
+  "success": true
 }
 ```
 
-```example graphql query
+example graphql query
+
+```gql
 query GraphqlPlugin($input: JSON!) {
-  pluginGraphqlQuery(
-    pluginCode: "bes-plugins"
-    storeId: "8D967C2618BE4D78B3A6FAD6C1C8FF25"
-    input: $input
-  )
+  pluginGraphqlQuery(pluginCode: "bes-plugins", storeId: "8D967C2618BE4D78B3A6FAD6C1C8FF25", input: $input)
 }
 ```
 
