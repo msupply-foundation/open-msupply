@@ -1,5 +1,7 @@
 import React from 'react';
 import Bugsnag from '@bugsnag/js';
+// Import large library to test bundle size increase
+import * as lodash from 'lodash';
 import {
   Routes,
   Route,
@@ -42,6 +44,10 @@ import { useInitPlugins } from './useInitPlugins';
 import { ScreenOrientation } from '@capacitor/screen-orientation';
 
 const appVersion = require('../../../../package.json').version; // eslint-disable-line @typescript-eslint/no-var-requires
+
+// Test bundle size increase - using lodash to trigger significant bundle change
+const testBundleSize = lodash.debounce(() => console.log('test'), 1000);
+testBundleSize();
 
 const queryClient = new QueryClient({
   defaultOptions: {
