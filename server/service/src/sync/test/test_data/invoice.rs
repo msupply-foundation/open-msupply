@@ -63,7 +63,7 @@ const TRANSACT_1: (&str, &str) = (
       "name_ID": "name_store_a",
       "number_of_cartons": 0,
       "optionID": "",
-      "original_PO_ID": "",
+      "original_PO_ID": "purchase_order_a",
       "paymentTypeID": "",
       "pickslip_printed_date": "0000-00-00",
       "prescriber_ID": "",
@@ -156,7 +156,7 @@ fn transact_1_pull_row() -> InvoiceRow {
         is_cancellation: false,
         expected_delivery_date: None,
         default_donor_link_id: Some("donor_a".to_string()),
-        purchase_order_id: None,
+        purchase_order_id: Some("purchase_order_a".to_string()),
         shipping_method_id: Some("SHIPPING_METHOD_1_ID".to_string()),
     }
 }
@@ -230,6 +230,7 @@ fn transact_1_push_legacy_row() -> LegacyTransactRow {
         expected_delivery_date: None,
         default_donor_id: Some("donor_a".to_string()),
         goods_received_ID: Some("some goods id".to_string()),
+        purchase_order_id: Some("purchase_order_a".to_string()),
         shipping_method_id: Some("SHIPPING_METHOD_1_ID".to_string()),
     }
 }
@@ -432,6 +433,7 @@ fn transact_2_push_record() -> TestSyncOutgoingRecord {
             expected_delivery_date: None,
             default_donor_id: None,
             goods_received_ID: None,
+            purchase_order_id: None,
             shipping_method_id: None,
         }),
     }
@@ -695,6 +697,7 @@ fn transact_om_fields_push_record() -> TestSyncOutgoingRecord {
             expected_delivery_date: None,
             default_donor_id: None,
             goods_received_ID: None,
+            purchase_order_id: None,
             shipping_method_id: None,
         }),
     }
@@ -910,6 +913,7 @@ fn inventory_addition_push_record() -> TestSyncOutgoingRecord {
             expected_delivery_date: None,
             default_donor_id: None,
             goods_received_ID: None,
+            purchase_order_id: None,
             shipping_method_id: None,
         }),
     }
@@ -1124,6 +1128,7 @@ fn inventory_reduction_push_record() -> TestSyncOutgoingRecord {
             expected_delivery_date: None,
             default_donor_id: None,
             goods_received_ID: None,
+            purchase_order_id: None,
             shipping_method_id: None,
         }),
     }
@@ -1335,6 +1340,7 @@ fn prescription_1_push_record() -> TestSyncOutgoingRecord {
             expected_delivery_date: None,
             default_donor_id: None,
             goods_received_ID: None,
+            purchase_order_id: None,
             shipping_method_id: None,
         }),
     }
@@ -1557,6 +1563,7 @@ fn cancelled_prescription_push_record() -> TestSyncOutgoingRecord {
             expected_delivery_date: NaiveDate::from_ymd_opt(2021, 7, 30),
             default_donor_id: None,
             goods_received_ID: None,
+            purchase_order_id: None,
             shipping_method_id: None,
         }),
     }
