@@ -193,8 +193,8 @@ impl ItemNode {
 
         Ok(WarningNode::from_vec(result))
     }
-    
-    #[deprecated(note = "Use universalCode instead")]
+
+    #[graphql(deprecation = "Since 2.16.0. Use universalCode instead")]
     pub async fn msupply_universal_code(&self) -> String {
         self.row().universal_code.clone().unwrap_or_default()
     }
