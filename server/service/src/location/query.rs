@@ -92,6 +92,10 @@ pub fn get_available_volume_by_location_type(
             .location_type_id(EqualFilter::equal_to(restricted_location_type_id.clone())),
     )?;
 
+    if locations.is_empty() {
+        return Ok((None, None));
+    }
+
     let used_volume: f64 = lines
         .iter()
         .map(|line| line.stock_line_row.total_volume)
