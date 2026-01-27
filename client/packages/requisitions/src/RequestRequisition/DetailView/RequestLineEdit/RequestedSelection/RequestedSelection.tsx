@@ -141,7 +141,6 @@ export const RequestedSelection = ({
           {displayVaccinesInDoses && !!value && (
             <DosesCaption
               value={value}
-              representation={representation}
               dosesPerUnit={dosesPerUnit}
               displayVaccinesInDoses={displayVaccinesInDoses}
             />

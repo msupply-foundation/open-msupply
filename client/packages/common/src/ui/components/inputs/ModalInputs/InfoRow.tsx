@@ -129,10 +129,8 @@ export const ValueInfoRow = ({
     displayVaccinesInDoses && !!value ? (
       <DosesCaption
         value={value}
-        representation={representation}
         dosesPerUnit={dosesPerUnit}
         displayVaccinesInDoses={displayVaccinesInDoses}
-        defaultPackSize={defaultPackSize}
         sx={{ pr: 0 }}
       />
     ) : null;

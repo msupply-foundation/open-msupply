@@ -80,10 +80,8 @@ export const ResponseNumInputRow = ({
     displayVaccinesInDoses && !!value && !overrideDoseDisplay ? (
       <DosesCaption
         value={value}
-        representation={representation}
         dosesPerUnit={dosesPerUnit}
         displayVaccinesInDoses={displayVaccinesInDoses}
-        defaultPackSize={defaultPackSize}
       />
     ) : null;
 
