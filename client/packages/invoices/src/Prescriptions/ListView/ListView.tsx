@@ -45,6 +45,7 @@ export const PrescriptionListView = () => {
       },
     ],
   });
+
   const listParams = {
     sortBy,
     first,
