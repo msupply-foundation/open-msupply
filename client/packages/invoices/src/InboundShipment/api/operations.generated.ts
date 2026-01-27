@@ -297,6 +297,11 @@ export type InboundRowFragment = {
     rate: number;
     isHomeCurrency: boolean;
   } | null;
+  purchaseOrder?: {
+    __typename: 'PurchaseOrderNode';
+    id: string;
+    number: number;
+  } | null;
 };
 
 export type InvoicesQueryVariables = Types.Exact<{
@@ -341,6 +346,11 @@ export type InvoicesQuery = {
         code: string;
         rate: number;
         isHomeCurrency: boolean;
+      } | null;
+      purchaseOrder?: {
+        __typename: 'PurchaseOrderNode';
+        id: string;
+        number: number;
       } | null;
     }>;
   };
@@ -1404,6 +1414,10 @@ export const InboundRowFragmentDoc = gql`
       isHomeCurrency
     }
     currencyRate
+    purchaseOrder {
+      id
+      number
+    }
   }
 `;
 export const LineLinkedToTransferredInvoiceErrorFragmentDoc = gql`

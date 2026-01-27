@@ -20,6 +20,7 @@ pub struct InsertInput {
     pub their_reference: Option<String>,
     pub colour: Option<String>,
     pub requisition_id: Option<String>,
+    pub purchase_order_id: Option<String>,
 }
 
 #[derive(SimpleObject)]
@@ -72,6 +73,7 @@ impl InsertInput {
             their_reference,
             colour,
             requisition_id,
+            purchase_order_id,
         } = self;
 
         ServiceInput {
@@ -82,7 +84,7 @@ impl InsertInput {
             their_reference,
             colour,
             requisition_id,
-            goods_received_id: None,
+            purchase_order_id,
         }
     }
 }
@@ -331,7 +333,7 @@ mod test {
                     their_reference: Some("reference input".to_string()),
                     colour: Some("colour input".to_string()),
                     requisition_id: None,
-                    goods_received_id: None,
+                    purchase_order_id: None,
                 }
             );
             Ok(Invoice {

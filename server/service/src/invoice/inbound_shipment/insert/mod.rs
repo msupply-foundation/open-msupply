@@ -20,7 +20,7 @@ pub struct InsertInboundShipment {
     pub their_reference: Option<String>,
     pub colour: Option<String>,
     pub requisition_id: Option<String>,
-    pub goods_received_id: Option<String>,
+    pub purchase_order_id: Option<String>,
 }
 
 type OutError = InsertInboundShipmentError;
