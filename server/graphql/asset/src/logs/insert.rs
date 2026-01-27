@@ -105,7 +105,8 @@ fn map_error(error: ServiceError) -> Result<InsertAssetLogErrorInterface> {
         | ServiceError::InsufficientPermission
         | ServiceError::ReasonInvalidForStatus
         | ServiceError::ReasonDoesNotExist
-        | ServiceError::StatusNotProvided => BadUserInput(formatted_error),
+        | ServiceError::StatusNotProvided
+        | ServiceError::CommentRequiredForReason => BadUserInput(formatted_error),
         ServiceError::CreatedRecordNotFound | ServiceError::DatabaseError(_) => {
             InternalError(formatted_error)
         }

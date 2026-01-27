@@ -13,10 +13,12 @@ import {
   UserPermission,
   useAuthContext,
   useIsGapsStoreOnly,
+  AssetLogStatusNodeType,
 } from '@openmsupply-client/common';
 import { StatusForm, Draft } from './StatusForm';
 import { useAssets } from '../api';
 import { Environment } from '@openmsupply-client/config/src';
+import { useAssetLogReasonList } from '@openmsupply-client/system';
 
 const getEmptyAssetLog = (assetId: string) => ({
   id: FnUtils.generateUUID(),
@@ -38,6 +40,39 @@ export const UpdateStatusButtonComponent = ({
   const { insertLog, invalidateQueries } = useAssets.log.insert();
   const [draft, setDraft] = useState<Partial<Draft>>(getEmptyAssetLog(''));
   const isGaps = useIsGapsStoreOnly();
+
+  const { data: reasonsData } = useAssetLogReasonList(
+    draft.status
+      ? {
+          assetLogStatus: { equalTo: draft.status },
+        }
+      : undefined
+  );
+
+  // Disable submit if:
+  // - no status selected
+  // - if status is Not Functional, but no reason selected
+  // - comments required for AssetLogReason but no comment provided
+  const isSubmitDisabled = () => {
+    if (!draft.status) return true;
+
+    if (
+      draft.status === AssetLogStatusNodeType.NotFunctioning &&
+      (draft.reasonId === undefined || draft.reasonId === '')
+    ) {
+      return true;
+    }
+
+    const selectedReason = reasonsData?.nodes?.find(
+      reason => reason.id === draft.reasonId
+    );
+
+    if (selectedReason?.commentsRequired && !draft.comment?.trim()) {
+      return true;
+    }
+
+    return false;
+  };
 
   const onUpdateStatus = () => {
     if (
@@ -103,7 +138,11 @@ export const UpdateStatusButtonComponent = ({
           />
         }
         okButton={
-          <DialogButton variant="ok" onClick={onOk} disabled={!draft.status} />
+          <DialogButton
+            variant="ok"
+            onClick={onOk}
+            disabled={isSubmitDisabled()}
+          />
         }
       >
         <DetailContainer paddingTop={1}>
