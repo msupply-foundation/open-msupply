@@ -1,3 +1,5 @@
+use std::time::SystemTime;
+
 use super::{
     item_category_row::item_category_join, item_link_row::item_link, item_row::item,
     master_list_line_row::master_list_line, master_list_name_join::master_list_name_join,
@@ -9,6 +11,8 @@ use diesel::{
     dsl::{IntoBoxed, LeftJoin},
     prelude::*,
 };
+use serde::{Deserialize, Serialize};
+use ts_rs::TS;
 
 use crate::{
     category_row::category,
@@ -35,29 +39,48 @@ pub enum ItemSortField {
 
 pub type ItemSort = Sort<ItemSortField>;
 
-#[derive(Clone, Default)]
+#[derive(Clone, Default, Debug, TS, Serialize, PartialEq, Deserialize)]
 pub struct ItemFilter {
+    #[ts(optional)]
     pub id: Option<EqualFilter<String>>,
+    #[ts(optional)]
     pub name: Option<StringFilter>,
+    #[ts(optional)]
     pub code: Option<StringFilter>,
+    #[ts(optional)]
     pub r#type: Option<EqualFilter<ItemType>>,
+    #[ts(optional)]
     pub category_id: Option<String>,
+    #[ts(optional)]
     pub category_name: Option<String>,
     /// If true it only returns ItemAndMasterList that have a name join row (ignored if is_visible_or_on_hand is true!)
+    #[ts(optional)]
     pub is_visible: Option<bool>,
     /// If true it returns ItemAndMasterList that have a name join row (including items with no stock), or items with stock on hand
+    #[ts(optional)]
     pub is_visible_or_on_hand: Option<bool>,
     /// Return items with stock on hand, including non-visible items (ignored if is_visible_or_on_hand is true!)
+    #[ts(optional)]
     pub has_stock_on_hand: Option<bool>,
+    #[ts(optional)]
     pub code_or_name: Option<StringFilter>,
+    #[ts(optional)]
     pub is_active: Option<bool>,
+    #[ts(optional)]
     pub is_vaccine: Option<bool>,
+    #[ts(optional)]
     pub master_list_id: Option<EqualFilter<String>>,
+    #[ts(optional)]
     pub is_program_item: Option<bool>,
+    #[ts(optional)]
     pub ignore_for_orders: Option<bool>,
+    #[ts(optional)]
     pub min_months_of_stock: Option<f64>,
+    #[ts(optional)]
     pub max_months_of_stock: Option<f64>,
+    #[ts(optional)]
     pub with_recent_consumption: Option<bool>,
+    #[ts(optional)]
     pub products_at_risk_of_being_out_of_stock: Option<bool>,
 }
 
@@ -153,7 +176,7 @@ impl<'a> ItemRepository<'a> {
         store_id: String,
         filter: Option<ItemFilter>,
     ) -> Result<i64, RepositoryError> {
-        let query = create_filtered_query(store_id, filter);
+        let query = Self::create_filtered_query(store_id, filter);
 
         Ok(query
             .count()
@@ -183,7 +206,7 @@ impl<'a> ItemRepository<'a> {
         sort: Option<ItemSort>,
         store_id: Option<String>,
     ) -> Result<Vec<Item>, RepositoryError> {
-        let mut query = create_filtered_query(store_id.unwrap_or_default(), filter);
+        let mut query = Self::create_filtered_query(store_id.unwrap_or_default(), filter);
 
         if let Some(sort) = sort {
             match sort.key {
@@ -207,14 +230,220 @@ impl<'a> ItemRepository<'a> {
 
         // Debug diesel query
         //
-        // println!(
-        //    "{}",
-        //     diesel::debug_query::<DBType, _>(&final_query).to_string()
-        // );
+        log::info!(
+            "{}",
+            diesel::debug_query::<DBType, _>(&final_query).to_string()
+        );
 
+        let now = SystemTime::now();
         let result = final_query.load::<ItemAndUnit>(self.connection.lock().connection())?;
+        log::info!(
+            "SPEED TEST ItemRepository::query executed in seconds: {}",
+            now.elapsed().unwrap().as_secs_f64()
+        );
 
         Ok(result.into_iter().map(to_domain).collect())
+    }
+
+    pub fn create_filtered_query(store_id: String, filter: Option<ItemFilter>) -> BoxedItemQuery {
+        let mut query = item::table.left_join(unit::table).into_boxed();
+
+        if let Some(f) = filter {
+            let ItemFilter {
+                id,
+                name,
+                code,
+                r#type,
+                category_id,
+                category_name,
+                is_visible,
+                code_or_name,
+                is_active,
+                is_vaccine,
+                has_stock_on_hand,
+                is_visible_or_on_hand,
+                master_list_id,
+                is_program_item,
+                ignore_for_orders,
+                // Implementing these MOS filters requires consumption data, so they are handled in the service layer.
+                max_months_of_stock: _,
+                min_months_of_stock: _,
+                with_recent_consumption: _,
+                products_at_risk_of_being_out_of_stock: _,
+            } = f;
+
+            // or filter need to be applied before and filters
+            if code_or_name.is_some() {
+                apply_string_filter!(query, code_or_name.clone(), item::code);
+                apply_string_or_filter!(query, code_or_name, item::name);
+            }
+
+            apply_equal_filter!(query, id, item::id);
+            apply_string_filter!(query, code, item::code);
+            apply_string_filter!(query, name, item::name);
+            apply_equal_filter!(query, r#type, item::type_);
+
+            if let Some(is_active) = is_active {
+                query = query.filter(item::is_active.eq(is_active));
+            }
+
+            if let Some(is_vaccine) = is_vaccine {
+                query = query.filter(item::is_vaccine.eq(is_vaccine));
+            }
+
+            if let Some(category_id) = category_id {
+                // Don't need to consider merged items (item_link) here - if item
+                // has been merged, we only need to find by the category of the
+                // kept item, not the one that was "deleted"
+                let item_ids_for_category_id = item_category_join::table
+                    .select(item_category_join::item_id)
+                    .filter(item_category_join::category_id.eq(category_id.clone()))
+                    .into_boxed();
+
+                query = query.filter(item::id.eq_any(item_ids_for_category_id));
+            }
+
+            if let Some(category_name) = category_name {
+                let item_ids_for_category_name = item_category_join::table
+                    .select(item_category_join::item_id)
+                    .inner_join(
+                        category::table.on(category::id.eq(item_category_join::category_id)),
+                    )
+                    .filter(category::name.eq(category_name.clone()))
+                    .into_boxed();
+
+                query = query.filter(item::id.eq_any(item_ids_for_category_name));
+            }
+
+            let visible_item_ids = item_link::table
+                .select(item_link::item_id)
+                .inner_join(
+                    master_list_line::table.on(master_list_line::item_link_id.eq(item_link::id)),
+                )
+                .inner_join(
+                    master_list::table.on(master_list::id.eq(master_list_line::master_list_id)),
+                )
+                .inner_join(
+                    master_list_name_join::table
+                        .on(master_list_name_join::master_list_id.eq(master_list::id)),
+                )
+                .inner_join(
+                    store::table.on(store::name_link_id
+                        .eq(master_list_name_join::name_link_id)
+                        .and(store::id.eq(store_id.clone()))),
+                )
+                .filter(store::id.eq(store_id.clone()));
+
+            let item_ids_with_stock_on_hand = item_link::table
+                .select(item_link::item_id)
+                .inner_join(stock_on_hand::table)
+                .filter(
+                    stock_on_hand::available_stock_on_hand
+                        .gt(0.0)
+                        .and(stock_on_hand::store_id.eq(store_id.clone())),
+                )
+                .group_by(item_link::item_id);
+
+            query =
+                match (is_visible_or_on_hand, has_stock_on_hand) {
+                    // visible items AND non-visible items with stock on hand
+                    (Some(true), _) => query.filter(
+                        item::id
+                            .eq_any(visible_item_ids.clone().into_boxed())
+                            .or(item::id.eq_any(item_ids_with_stock_on_hand.clone().into_boxed())),
+                    ),
+                    // Not handling Some(false) of is_visible_or_on_hand here - no use case for returning non-visible items
+                    // Items with stock on hand
+                    (_, Some(true)) => query
+                        .filter(item::id.eq_any(item_ids_with_stock_on_hand.clone().into_boxed())),
+
+                    // Items with no stock on hand
+                    (_, Some(false)) => query
+                        .filter(item::id.ne_all(item_ids_with_stock_on_hand.clone().into_boxed())),
+
+                    // no stock_on_hand filters
+                    (_, _) => query,
+                };
+
+            query = match (is_visible_or_on_hand, is_visible) {
+                // visible items AND non-visible items with stock on hand
+                (Some(true), _) => query.filter(
+                    item::id
+                        .eq_any(visible_item_ids.into_boxed())
+                        .or(item::id.eq_any(item_ids_with_stock_on_hand.into_boxed())),
+                ),
+                // visible items
+                (_, Some(true)) => query.filter(item::id.eq_any(visible_item_ids.into_boxed())),
+
+                // invisible items
+                (_, Some(false)) => query.filter(item::id.ne_all(visible_item_ids.into_boxed())),
+
+                // no visibility filters
+                (_, _) => query,
+            };
+
+            if let Some(is_program_item_filter) = is_program_item {
+                let program_master_list_ids = program::table
+                    .select(program::master_list_id)
+                    .filter(
+                        program::master_list_id
+                            .is_not_null()
+                            .and(program::deleted_datetime.is_null()),
+                    )
+                    .distinct()
+                    .into_boxed();
+
+                let program_item_ids = item_link::table
+                    .select(item_link::item_id)
+                    .inner_join(
+                        master_list_line::table
+                            .on(master_list_line::item_link_id.eq(item_link::id)),
+                    )
+                    .filter(
+                        master_list_line::master_list_id
+                            .nullable()
+                            .eq_any(program_master_list_ids),
+                    )
+                    .distinct()
+                    .into_boxed();
+
+                if is_program_item_filter {
+                    query = query.filter(item::id.eq_any(program_item_ids));
+                } else {
+                    query = query.filter(item::id.ne_all(program_item_ids));
+                }
+            }
+
+            if let Some(master_list_id_filter) = master_list_id {
+                let mut sub_query = item_link::table
+                    .select(item_link::item_id)
+                    .inner_join(
+                        master_list_line::table
+                            .on(master_list_line::item_link_id.eq(item_link::id)),
+                    )
+                    .into_boxed();
+                apply_equal_filter!(
+                    sub_query,
+                    Some(master_list_id_filter),
+                    master_list_line::master_list_id
+                );
+                query = query.filter(item::id.eq_any(sub_query));
+            };
+
+            if let Some(ignore_for_orders) = ignore_for_orders {
+                let item_ids_for_ignore_for_orders = item_link::table
+                    .select(item_link::item_id)
+                    .inner_join(
+                        item_store_join::table.on(item_store_join::item_link_id.eq(item_link::id)),
+                    )
+                    .filter(item_store_join::store_id.eq(store_id.clone()))
+                    .filter(item_store_join::ignore_for_orders.eq(ignore_for_orders))
+                    .into_boxed();
+
+                query = query.filter(item::id.eq_any(item_ids_for_ignore_for_orders));
+            }
+        }
+        query
     }
 }
 
@@ -223,202 +452,6 @@ fn to_domain((item_row, unit_row): ItemAndUnit) -> Item {
 }
 
 type BoxedItemQuery = IntoBoxed<'static, LeftJoin<item::table, unit::table>, DBType>;
-
-fn create_filtered_query(store_id: String, filter: Option<ItemFilter>) -> BoxedItemQuery {
-    let mut query = item::table.left_join(unit::table).into_boxed();
-
-    if let Some(f) = filter {
-        let ItemFilter {
-            id,
-            name,
-            code,
-            r#type,
-            category_id,
-            category_name,
-            is_visible,
-            code_or_name,
-            is_active,
-            is_vaccine,
-            has_stock_on_hand,
-            is_visible_or_on_hand,
-            master_list_id,
-            is_program_item,
-            ignore_for_orders,
-            // Implementing these MOS filters requires consumption data, so they are handled in the service layer.
-            max_months_of_stock: _,
-            min_months_of_stock: _,
-            with_recent_consumption: _,
-            products_at_risk_of_being_out_of_stock: _,
-        } = f;
-
-        // or filter need to be applied before and filters
-        if code_or_name.is_some() {
-            apply_string_filter!(query, code_or_name.clone(), item::code);
-            apply_string_or_filter!(query, code_or_name, item::name);
-        }
-
-        apply_equal_filter!(query, id, item::id);
-        apply_string_filter!(query, code, item::code);
-        apply_string_filter!(query, name, item::name);
-        apply_equal_filter!(query, r#type, item::type_);
-
-        if let Some(is_active) = is_active {
-            query = query.filter(item::is_active.eq(is_active));
-        }
-
-        if let Some(is_vaccine) = is_vaccine {
-            query = query.filter(item::is_vaccine.eq(is_vaccine));
-        }
-
-        if let Some(category_id) = category_id {
-            // Don't need to consider merged items (item_link) here - if item
-            // has been merged, we only need to find by the category of the
-            // kept item, not the one that was "deleted"
-            let item_ids_for_category_id = item_category_join::table
-                .select(item_category_join::item_id)
-                .filter(item_category_join::category_id.eq(category_id.clone()))
-                .into_boxed();
-
-            query = query.filter(item::id.eq_any(item_ids_for_category_id));
-        }
-
-        if let Some(category_name) = category_name {
-            let item_ids_for_category_name = item_category_join::table
-                .select(item_category_join::item_id)
-                .inner_join(category::table.on(category::id.eq(item_category_join::category_id)))
-                .filter(category::name.eq(category_name.clone()))
-                .into_boxed();
-
-            query = query.filter(item::id.eq_any(item_ids_for_category_name));
-        }
-
-        let visible_item_ids = item_link::table
-            .select(item_link::item_id)
-            .inner_join(
-                master_list_line::table.on(master_list_line::item_link_id.eq(item_link::id)),
-            )
-            .inner_join(master_list::table.on(master_list::id.eq(master_list_line::master_list_id)))
-            .inner_join(
-                master_list_name_join::table
-                    .on(master_list_name_join::master_list_id.eq(master_list::id)),
-            )
-            .inner_join(
-                store::table.on(store::name_link_id
-                    .eq(master_list_name_join::name_link_id)
-                    .and(store::id.eq(store_id.clone()))),
-            )
-            .filter(store::id.eq(store_id.clone()));
-
-        let item_ids_with_stock_on_hand = item_link::table
-            .select(item_link::item_id)
-            .inner_join(stock_on_hand::table)
-            .filter(
-                stock_on_hand::available_stock_on_hand
-                    .gt(0.0)
-                    .and(stock_on_hand::store_id.eq(store_id.clone())),
-            )
-            .group_by(item_link::item_id);
-
-        query = match (is_visible_or_on_hand, has_stock_on_hand) {
-            // visible items AND non-visible items with stock on hand
-            (Some(true), _) => query.filter(
-                item::id
-                    .eq_any(visible_item_ids.clone().into_boxed())
-                    .or(item::id.eq_any(item_ids_with_stock_on_hand.clone().into_boxed())),
-            ),
-            // Not handling Some(false) of is_visible_or_on_hand here - no use case for returning non-visible items
-            // Items with stock on hand
-            (_, Some(true)) => {
-                query.filter(item::id.eq_any(item_ids_with_stock_on_hand.clone().into_boxed()))
-            }
-
-            // Items with no stock on hand
-            (_, Some(false)) => {
-                query.filter(item::id.ne_all(item_ids_with_stock_on_hand.clone().into_boxed()))
-            }
-
-            // no stock_on_hand filters
-            (_, _) => query,
-        };
-
-        query = match (is_visible_or_on_hand, is_visible) {
-            // visible items AND non-visible items with stock on hand
-            (Some(true), _) => query.filter(
-                item::id
-                    .eq_any(visible_item_ids.into_boxed())
-                    .or(item::id.eq_any(item_ids_with_stock_on_hand.into_boxed())),
-            ),
-            // visible items
-            (_, Some(true)) => query.filter(item::id.eq_any(visible_item_ids.into_boxed())),
-
-            // invisible items
-            (_, Some(false)) => query.filter(item::id.ne_all(visible_item_ids.into_boxed())),
-
-            // no visibility filters
-            (_, _) => query,
-        };
-
-        if let Some(is_program_item_filter) = is_program_item {
-            let program_master_list_ids = program::table
-                .select(program::master_list_id)
-                .filter(
-                    program::master_list_id
-                        .is_not_null()
-                        .and(program::deleted_datetime.is_null()),
-                )
-                .distinct()
-                .into_boxed();
-
-            let program_item_ids = item_link::table
-                .select(item_link::item_id)
-                .inner_join(
-                    master_list_line::table.on(master_list_line::item_link_id.eq(item_link::id)),
-                )
-                .filter(
-                    master_list_line::master_list_id
-                        .nullable()
-                        .eq_any(program_master_list_ids),
-                )
-                .distinct()
-                .into_boxed();
-
-            if is_program_item_filter {
-                query = query.filter(item::id.eq_any(program_item_ids));
-            } else {
-                query = query.filter(item::id.ne_all(program_item_ids));
-            }
-        }
-
-        if let Some(master_list_id_filter) = master_list_id {
-            let mut sub_query = item_link::table
-                .select(item_link::item_id)
-                .inner_join(
-                    master_list_line::table.on(master_list_line::item_link_id.eq(item_link::id)),
-                )
-                .into_boxed();
-            apply_equal_filter!(
-                sub_query,
-                Some(master_list_id_filter),
-                master_list_line::master_list_id
-            );
-            query = query.filter(item::id.eq_any(sub_query));
-        };
-
-        if let Some(ignore_for_orders) = ignore_for_orders {
-            let item_ids_for_ignore_for_orders = item_link::table
-                .select(item_link::item_id)
-                .inner_join(
-                    item_store_join::table.on(item_store_join::item_link_id.eq(item_link::id)),
-                )
-                .filter(item_store_join::store_id.eq(store_id.clone()))
-                .filter(item_store_join::ignore_for_orders.eq(ignore_for_orders))
-                .into_boxed();
-
-            query = query.filter(item::id.eq_any(item_ids_for_ignore_for_orders));
-        }
-    }
-    query
-}
 
 impl Item {
     pub fn unit_name(&self) -> Option<&str> {
