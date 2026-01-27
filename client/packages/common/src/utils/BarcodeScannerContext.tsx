@@ -19,12 +19,15 @@ const SCAN_TIMEOUT_IN_MS = 50000;
 const INSTALL_TIMEOUT_IN_MS = 30000;
 
 export interface ScanResult {
-  gs1?: Gs1Barcode;
-  batch?: string;
-  content?: string;
-  expiryDate?: string | null;
-  gtin?: string;
+  content?: string; // Raw barcode content
+  gs1?: Gs1Barcode; // Full GS1 barcode object
   gs1string?: string;
+  gtin?: string;
+  batch?: string;
+  expiryDate?: string | null;
+  manufactureDate?: string | null;
+  packsize?: string;
+  quantity?: string;
 }
 
 export type ScanCallback = (result: ScanResult) => void;
@@ -74,15 +77,30 @@ export const parseResult = (content?: string): ScanResult => {
       ?.data as string;
     const batch = gs1?.parsedCodeItems?.find(item => item.ai === '10')
       ?.data as string;
-    const expiry = gs1?.parsedCodeItems?.find(item => item.ai === '17')
+    const expiryString = gs1?.parsedCodeItems?.find(item => item.ai === '17')
       ?.data as Date;
+    const manufactureDateString = gs1?.parsedCodeItems?.find(
+      (item: { ai: string }) => item.ai === '11'
+    )?.data as Date;
+    const quantity = gs1?.parsedCodeItems?.find(
+      (item: { ai: string }) => item.ai === '30'
+    )?.data as string;
+    const packsize = gs1?.parsedCodeItems?.find(
+      (item: { ai: string }) => item.ai === '37'
+    )?.data as string;
 
     return {
-      batch,
-      gs1,
       content,
-      expiryDate: expiry ? Formatter.naiveDate(expiry) : undefined,
+      gs1,
+      gs1string: gs1?.toString(),
       gtin,
+      batch,
+      expiryDate: expiryString ? Formatter.naiveDate(expiryString) : undefined,
+      manufactureDate: manufactureDateString
+        ? Formatter.naiveDate(manufactureDateString)
+        : undefined,
+      quantity,
+      packsize,
     };
   } catch (e) {
     console.error(`Error parsing barcode ${content}:`, e);
