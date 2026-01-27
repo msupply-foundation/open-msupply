@@ -156,7 +156,7 @@ fn transact_1_pull_row() -> InvoiceRow {
         is_cancellation: false,
         expected_delivery_date: None,
         default_donor_link_id: Some("donor_a".to_string()),
-        goods_received_id: Some("some goods id".to_string()),
+        purchase_order_id: None,
         shipping_method_id: Some("SHIPPING_METHOD_1_ID".to_string()),
     }
 }
@@ -370,7 +370,7 @@ fn transact_2_pull_record() -> TestSyncIncomingRecord {
             is_cancellation: false,
             expected_delivery_date: None,
             default_donor_link_id: None,
-            goods_received_id: None,
+            purchase_order_id: None,
             shipping_method_id: None,
         },
     )
@@ -604,7 +604,7 @@ fn transact_om_fields_pull_record() -> TestSyncIncomingRecord {
             is_cancellation: false,
             expected_delivery_date: None,
             default_donor_link_id: None,
-            goods_received_id: None,
+            purchase_order_id: None,
             shipping_method_id: None,
         },
     )
@@ -842,7 +842,7 @@ fn inventory_addition_pull_record() -> TestSyncIncomingRecord {
             is_cancellation: false,
             expected_delivery_date: None,
             default_donor_link_id: None,
-            goods_received_id: None,
+            purchase_order_id: None,
             shipping_method_id: None,
         },
     )
@@ -1057,7 +1057,7 @@ fn inventory_reduction_pull_record() -> TestSyncIncomingRecord {
             is_cancellation: false,
             expected_delivery_date: None,
             default_donor_link_id: None,
-            goods_received_id: None,
+            purchase_order_id: None,
             shipping_method_id: None,
         },
     )
@@ -1268,7 +1268,7 @@ fn prescription_1_pull_record() -> TestSyncIncomingRecord {
             is_cancellation: false,
             expected_delivery_date: None,
             default_donor_link_id: None,
-            goods_received_id: None,
+            purchase_order_id: None,
             shipping_method_id: None,
         },
     )
@@ -1485,7 +1485,7 @@ fn cancelled_prescription_pull_record() -> TestSyncIncomingRecord {
             is_cancellation: false,
             expected_delivery_date: NaiveDate::from_ymd_opt(2021, 7, 30),
             default_donor_link_id: None,
-            goods_received_id: None,
+            purchase_order_id: None,
             shipping_method_id: None,
         },
     )
