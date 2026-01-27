@@ -3379,6 +3379,11 @@ urlpattern-polyfill@^10.0.0:
   resolved "https://registry.yarnpkg.com/urlpattern-polyfill/-/urlpattern-polyfill-10.1.0.tgz#1b2517e614136c73ba32948d5e7a3a063cba8e74"
   integrity sha512-IGjKp/o0NL3Bso1PymYURCJxMPNAf/ILOpendP9f5B6e1rTJgdgiOvgfoT8VxCAdY+Wisb9uhGaJJf3yZ2V9nw==
 
+uuidv7@^1.0.0:
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/uuidv7/-/uuidv7-1.1.0.tgz#6ef58df2dd7377083de1f70eec29cb66a0baf30c"
+  integrity sha512-2VNnOC0+XQlwogChUDzy6pe8GQEys9QFZBGOh54l6qVfwoCUwwRvk7rDTgaIsRgsF5GFa5oiNg8LqXE3jofBBg==
+
 watchpack@^2.4.4:
   version "2.5.1"
   resolved "https://registry.yarnpkg.com/watchpack/-/watchpack-2.5.1.tgz#dd38b601f669e0cbf567cb802e75cead82cde102"

@@ -1,0 +1,34 @@
+mutation AllocateBatchOutboundShipment(
+  $storeId: String!
+  $input: BatchOutboundShipmentInput!
+) {
+  batchOutboundShipment(storeId: $storeId, input: $input) {
+    allocateOutboundShipmentUnallocatedLines {
+      id
+      response {
+        __typename
+        ... on AllocateOutboundShipmentUnallocatedLineNode {
+          inserts {
+            nodes {
+              id
+              numberOfPacks
+              stockLine {
+                batch
+              }
+            }
+          }
+          updates {
+            nodes {
+              id
+            }
+          }
+        }
+        ... on AllocateOutboundShipmentUnallocatedLineError {
+          error {
+            description
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,36 @@
+mutation BatchOutboundShipment(
+  $storeId: String!
+  $input: BatchOutboundShipmentInput!
+) {
+  batchOutboundShipment(storeId: $storeId, input: $input) {
+    insertOutboundShipments {
+      id
+      response {
+        __typename
+        ... on InvoiceNode {
+          id
+          invoiceNumber
+        }
+        ... on InsertOutboundShipmentError {
+          error {
+            description
+          }
+        }
+      }
+    }
+    insertOutboundShipmentUnallocatedLines {
+      id
+      response {
+        __typename
+        ... on InvoiceLineNode {
+          id
+        }
+        ... on InsertOutboundShipmentUnallocatedLineError {
+          error {
+            description
+          }
+        }
+      }
+    }
+  }
+}
