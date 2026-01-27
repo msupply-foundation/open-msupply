@@ -49,7 +49,6 @@ interface RequestLineEditProps {
   showExtraFields?: boolean;
   isReasonsError: boolean;
   setIsEditingRequested: (isEditingRequested: boolean) => void;
-  roundUp?: boolean;
 }
 
 export const RequestLineEdit = ({
@@ -67,7 +66,6 @@ export const RequestLineEdit = ({
   showExtraFields,
   isReasonsError,
   setIsEditingRequested,
-  roundUp,
 }: RequestLineEditProps) => {
   const t = useTranslation();
   const { plugins } = usePluginProvider();
