@@ -1,9 +1,9 @@
 use super::{PullTranslateResult, PushTranslateResult, SyncTranslation};
-use crate::sync::translations::shipping_method::ShippingMethodTranslation;
 use crate::sync::translations::{
     clinician::ClinicianTranslation, currency::CurrencyTranslation,
     diagnosis::DiagnosisTranslation, name::NameTranslation,
-    name_insurance_join::NameInsuranceJoinTranslation, store::StoreTranslation, to_legacy_time,
+    name_insurance_join::NameInsuranceJoinTranslation, purchase_order::PurchaseOrderTranslation,
+    shipping_method::ShippingMethodTranslation, store::StoreTranslation, to_legacy_time,
 };
 use anyhow::Context;
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
@@ -151,6 +151,9 @@ pub struct LegacyTransactRow {
     pub transport_reference: Option<String>,
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub goods_received_ID: Option<String>,
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    #[serde(rename = "original_PO_ID")]
+    pub purchase_order_id: Option<String>,
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub requisition_ID: Option<String>,
     #[serde(deserialize_with = "empty_str_as_option_string")]
@@ -335,6 +338,7 @@ impl SyncTranslation for InvoiceTranslation {
             DiagnosisTranslation.table_name(),
             NameInsuranceJoinTranslation.table_name(),
             ShippingMethodTranslation.table_name(),
+            PurchaseOrderTranslation.table_name(),
         ]
     }
 
@@ -451,7 +455,7 @@ impl SyncTranslation for InvoiceTranslation {
             insurance_discount_amount: data.insurance_discount_amount,
             insurance_discount_percentage: data.insurance_discount_percentage,
             expected_delivery_date: data.expected_delivery_date,
-            purchase_order_id: None, // TODO: Sync
+            purchase_order_id: data.purchase_order_id,
             shipping_method_id: data.shipping_method_id,
         };
 
@@ -616,7 +620,8 @@ impl SyncTranslation for InvoiceTranslation {
             is_cancellation,
             expected_delivery_date,
             default_donor_id,
-            goods_received_ID: None, // TODO: sync
+            goods_received_ID: None,
+            purchase_order_id,
             shipping_method_id,
         };
 
