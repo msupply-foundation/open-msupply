@@ -86,10 +86,6 @@ pub fn get_available_volume_by_location_type(
         Some(store_id.to_string()),
     )?;
 
-    if lines.is_empty() {
-        return Ok((None, None));
-    }
-
     let location_repo = LocationRepository::new(connection);
     let locations = location_repo.query_by_filter(
         LocationFilter::new()
