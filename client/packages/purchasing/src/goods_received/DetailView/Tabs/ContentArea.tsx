@@ -3,8 +3,10 @@ import {
   ColumnDef,
   ColumnType,
   MaterialTable,
+  MobileCardList,
   NothingHere,
   TextWithTooltipCell,
+  useIsGapsStoreOnly,
   useNonPaginatedMaterialTable,
   useTranslation,
 } from '@openmsupply-client/common';
@@ -22,6 +24,8 @@ export const ContentArea = ({
   onRowClick,
 }: ContentAreaProps) => {
   const t = useTranslation();
+
+  const isMobile = useIsGapsStoreOnly();
 
   const columns = useMemo(
     (): ColumnDef<GoodsReceivedLineFragment>[] => [
@@ -69,8 +73,9 @@ export const ContentArea = ({
         accessorFn: row =>
           Math.ceil(
             (row.numberOfPacksReceived ?? 0) /
-            (row.receivedPackSize &&
-              row.receivedPackSize !== 0 ? row.receivedPackSize : 1)
+              (row.receivedPackSize && row.receivedPackSize !== 0
+                ? row.receivedPackSize
+                : 1)
           ),
         header: t('label.num-packs'),
         columnType: ColumnType.Number,
@@ -97,5 +102,9 @@ export const ContentArea = ({
     ),
   });
 
-  return <MaterialTable table={table} />;
+  return isMobile ? (
+    <MobileCardList table={table} />
+  ) : (
+    <MaterialTable table={table} />
+  );
 };
