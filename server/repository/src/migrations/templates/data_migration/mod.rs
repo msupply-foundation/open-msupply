@@ -90,10 +90,21 @@ async fn migration_2_15_01() {
     sql!(
         &connection,
         r#"
-        INSERT INTO store 
-        (id, name_id, site_id, code)
+        INSERT INTO name_link
+        (id, name_id)
         VALUES 
-        ('store_id', 'name_id', 1, '');
+        ('name_link_id', 'name_id');
+    "#
+    )
+    .unwrap();
+
+    sql!(
+        &connection,
+        r#"
+        INSERT INTO store 
+        (id, name_link_id, site_id, code)
+        VALUES 
+        ('store_id', 'name_link_id', 1, '');
     "#
     )
     .unwrap();
@@ -103,9 +114,9 @@ async fn migration_2_15_01() {
         sql_query(
             (r#"
             INSERT INTO invoice 
-            (id, store_id, name_id, invoice_number, type, status, on_hold, created_datetime) 
+            (id, store_id, name_link_id, invoice_number, type, status, on_hold, created_datetime) 
             VALUES 
-            ('invoice1_id', 'store_id', 'name_id', 1, 'INBOUND_SHIPMENT', 'NEW', false, $1);
+            ('invoice1_id', 'store_id', 'name_link_id', 1, 'INBOUND_SHIPMENT', 'NEW', false, $1);
         "#)
             .to_string(),
         )
@@ -123,9 +134,9 @@ async fn migration_2_15_01() {
         sql_query(
             (r#"
             INSERT INTO invoice 
-            (id, store_id, name_id, invoice_number, type, status, on_hold, created_datetime) 
+            (id, store_id, name_link_id, invoice_number, type, status, on_hold, created_datetime) 
             VALUES 
-            ('invoice2_id', 'store_id', 'name_id', 2, 'INBOUND_SHIPMENT', 'NEW', false, $1);
+            ('invoice2_id', 'store_id', 'name_link_id', 2, 'INBOUND_SHIPMENT', 'NEW', false, $1);
         "#)
             .to_string(),
         )
