@@ -35,9 +35,9 @@ request structure
 ```json
 {
   "input": {
-    "customerFilter": { "isStore": true, "isVisible": true }, // NameFilterInput type of 'names' graphql endpoint
-    "itemFilter": { "code": { "equalTo": "AR33197" } }, // ItemFilterInput type of 'items' graphql endpoint
-    "quantity": 60 // Quantity of units
+    "customerFilter": { "isStore": true, "isVisible": true }, // NameFilterInput type of 'names' graphql endpoint. First match is used for order.
+    "itemFilter": { "code": { "equalTo": "AR33197" } }, // ItemFilterInput type of 'items' graphql endpoint. First match is used for order.
+    "quantity": 60 // Quantity of units.  Currently if packsize > 'quantity', 1 pack will be shipped if there is enough stock.
   }
 }
 ```
