@@ -2,21 +2,14 @@ import React, { useState } from 'react';
 import {
   Box,
   Breakpoints,
-  Tab,
-  TableContainer,
   PlusCircleIcon,
   useTranslation,
-  TabContext,
-  TabKeybindings,
-  TabList,
   ButtonWithIcon,
   useAppTheme,
   useMediaQuery,
   Alert,
 } from '@openmsupply-client/common';
 import { DraftInboundLine } from '../../../../types';
-import { InboundLineEditPanel } from './InboundLineEditPanel';
-import { QuantityTable, PricingTable, LocationTable } from './TabTables';
 import {
   CurrencyRowFragment,
   ItemRowFragment,
@@ -58,7 +51,7 @@ export const AccordionLayout = ({
 
   if (!item) return null;
   return (
-    <Box>
+    <Box sx={{ mt: 10 }}>
       <Box flex={1} display="flex" justifyContent="space-between">
         <Box flex={1} />
         <Box flex={1} justifyContent="flex-end" display="flex">

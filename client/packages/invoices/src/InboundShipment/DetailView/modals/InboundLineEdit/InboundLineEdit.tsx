@@ -93,7 +93,7 @@ export const InboundLineEdit = ({
         hasItemVariantsEnabled={hasItemVariantsEnabled}
         hasVvmStatusesEnabled={hasVvmStatusesEnabled}
       />
-      <Box flex={1} justifyContent="flex-start" display="flex" margin={3}>
+      <Box flex={1} justifyContent="flex-start" display="flex" margin={10}>
         <ButtonWithIcon
           disabled={isDisabled}
           color="primary"
@@ -105,6 +105,7 @@ export const InboundLineEdit = ({
       </Box>
     </>
   ) : (
+    // replace tablayout with accordion layout
     // <TabLayout
     //   draftLines={draftLines}
     //   addDraftLine={addDraftLine}
@@ -117,18 +118,20 @@ export const InboundLineEdit = ({
     //   hasItemVariantsEnabled={hasItemVariantsEnabled}
     //   hasVvmStatusesEnabled={!!hasVvmStatusesEnabled}
     // />
-    <AccordionLayout
-      draftLines={draftLines}
-      addDraftLine={addDraftLine}
-      updateDraftLine={updateDraftLine}
-      removeDraftLine={removeDraftLine}
-      isDisabled={isDisabled}
-      currency={currency}
-      isExternalSupplier={isExternalSupplier}
-      item={currentItem}
-      hasItemVariantsEnabled={hasItemVariantsEnabled}
-      hasVvmStatusesEnabled={!!hasVvmStatusesEnabled}
-    />
+    <Box sx={{ mt: 10 }}>
+      <AccordionLayout
+        draftLines={draftLines}
+        addDraftLine={addDraftLine}
+        updateDraftLine={updateDraftLine}
+        removeDraftLine={removeDraftLine}
+        isDisabled={isDisabled}
+        currency={currency}
+        isExternalSupplier={isExternalSupplier}
+        item={currentItem}
+        hasItemVariantsEnabled={hasItemVariantsEnabled}
+        hasVvmStatusesEnabled={!!hasVvmStatusesEnabled}
+      />
+    </Box>
   );
 
   return (

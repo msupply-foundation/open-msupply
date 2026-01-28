@@ -21,6 +21,10 @@ import {
   BasicTextInput,
   NumericTextInput,
   CurrencyInput,
+  InfoIcon,
+  TruckIcon,
+  InvoiceIcon,
+  
 } from '@openmsupply-client/common';
 import { ChevronDownIcon } from '@common/icons';
 import { DraftInboundLine } from '../../../../types';
@@ -83,20 +87,28 @@ export const InboundItems = ({
       {lines.map((line, index) => (
     <Accordion key={line.id} defaultExpanded={index === 0}>
       <AccordionSummary expandIcon={<ChevronDownIcon />}>
-        <Typography variant="h6">
-          <IconButton
-            label={t('button.delete')}
-            onClick={() => removeDraftLine(line.id)}
-            icon={<DeleteIcon fontSize="small" />}
-          />
-          {`${t('label.batch')}: ${line.batch}`} {t('label.units-received', { unit: pluralisedUnitName })}: {line.numberOfPacks * line.packSize}
-        </Typography>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+          <Typography variant="h6">
+            <IconButton
+              label={t('button.delete')}
+              onClick={() => removeDraftLine(line.id)}
+              icon={<DeleteIcon fontSize="small" />}
+            />
+            {`${t('label.batch')}: ${line.batch}`}
+          </Typography>
+          <Typography variant="h6">
+            {t('label.units-received', { unit: pluralisedUnitName })}: {line.numberOfPacks * line.packSize}
+          </Typography>
+        </Box>
       </AccordionSummary>
       <AccordionDetails>
-        <Paper elevation={1} sx={{ p: 2 }}>
-          <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
-            {t('label.quantities')}
-          </Typography>
+        <Paper elevation={1} sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <InfoIcon color="action" fontSize="small" />
+            <Typography variant="body2" color="textSecondary">
+              {t('label.quantities')}
+            </Typography>
+          </Box>
           <Grid container spacing={2}>
             <Grid item xs={12} md={6}>
                 <Box>
@@ -316,10 +328,13 @@ export const InboundItems = ({
             </Grid>          
           </Grid>
         </Paper>
-        <Paper elevation={1} sx={{ p: 2 }}>
-          <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
-            {t('label.pricing')}
-          </Typography>
+        <Paper elevation={1} sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <TruckIcon color="action" fontSize="small" />
+            <Typography variant="body2" color="textSecondary">
+              {t('label.pricing')}
+            </Typography>
+          </Box>
           <Grid container spacing={2}>
             <Grid item xs={12} md={showForeignCurrency ? 6 : 12}>
               <Box>
@@ -374,12 +389,14 @@ export const InboundItems = ({
               </Grid>
             )}   
             <Grid item xs={12} md={showForeignCurrency ? 6 : 12}>
-              <Typography variant="h6" color="primary">
-                <Typography component="span" fontWeight="bold">
-                  {t('label.line-total', { currency: currency?.code })}
-                </Typography>{' '}
-                {format(line.costPricePerPack * line.numberOfPacks)}
-              </Typography>
+              <Box>
+                <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
+                  {t('label.line-total')}
+                </Typography>
+                <Typography variant="h6" color="textSecondary">
+                  {format(line.costPricePerPack * line.numberOfPacks)}
+                </Typography>
+              </Box>
             </Grid> 
             {showForeignCurrency && currency && (
               <Grid item xs={12} md={6}>
@@ -393,10 +410,13 @@ export const InboundItems = ({
             )}             
           </Grid>
         </Paper>
-        <Paper elevation={1} sx={{ p: 2 }}>
-          <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
-            {t('heading.other')}
-          </Typography>
+        <Paper elevation={1} sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <InvoiceIcon color="action" fontSize="small" />
+            <Typography variant="body2" color="textSecondary">
+              {t('heading.other')}
+            </Typography>
+          </Box>
           <Grid container spacing={2}>
             <Grid item xs={12} md={showForeignCurrency ? 6 : 12}>
               <Box>
