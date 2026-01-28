@@ -21,6 +21,8 @@ export const useInbound = {
     listInternalOrders: Document.useListInternalOrders,
     listInternalOrdersPromise: Document.useListInternalOrdersPromise,
     listInternalOrderLines: Document.useListInternalOrderLines,
+
+    listSentPurchaseOrders: Document.useListSentPurchaseOrders,
   },
   lines: {
     list: Lines.useInboundLines,
