@@ -4,7 +4,6 @@ import { IssueStockEndpointInput, IssueStockEndpointResponse } from './types';
 import namesQueryText from './graphql/customer.graphql';
 import itemsQueryText from './graphql/items.graphql';
 import outboundShipmentMutationText from './graphql/batchOutboundShipment.graphql';
-import allocateOutboundShipmentMutationText from './graphql/allocateOutboundShipment.graphql';
 import {
   BatchOutboundShipmentMutation,
   BatchOutboundShipmentMutationVariables,
@@ -50,7 +49,7 @@ const itemsQuery = (variables: ItemsQueryVariables): { result?: ItemsQuery; item
       return {
         itemsError: {
           success: false,
-          message: `No items found for items filter: ${variables.filter}`,
+          message: `No items found for items filter: ${JSON.stringify(variables.filter)}`,
         },
       };
     }
@@ -74,14 +73,14 @@ const batchOutboundShipmentQuery = (
   }) as BatchOutboundShipmentMutation;
 };
 
-const batchAllocateOutboundShipmentQuery = (
-  variables: BatchOutboundShipmentMutationVariables
-): BatchOutboundShipmentMutation => {
-  return use_graphql({
-    query: allocateOutboundShipmentMutationText,
-    variables,
-  }) as BatchOutboundShipmentMutation;
-};
+// const batchAllocateOutboundShipmentQuery = (
+//   variables: BatchOutboundShipmentMutationVariables
+// ): BatchOutboundShipmentMutation => {
+//   return use_graphql({
+//     query: allocateOutboundShipmentMutationText,
+//     variables,
+//   }) as BatchOutboundShipmentMutation;
+// };
 
 const plugins: BackendPlugins = {
   graphql_query: ({ store_id, input }): Graphql['output'] => {
@@ -138,7 +137,7 @@ const plugins: BackendPlugins = {
     if (foundItem.availableStockOnHand < inp.quantity) {
       return {
         success: false,
-        message: `Not enough stock to fullfil order. Available stock for code ${foundItem.code}: ${foundItem.availableStockOnHand}.  Qty requested: ${inp.quantity}`,
+        message: `Not enough stock to fullfil order. Available stock for code ${foundItem.code}: ${foundItem.availableStockOnHand}  Qty requested: ${inp.quantity}`,
       };
     }
 
@@ -193,8 +192,7 @@ const plugins: BackendPlugins = {
         },
       };
 
-      const allocateOutboundShipmentUnallocatedResult =
-        batchAllocateOutboundShipmentQuery(allocateOutboundShipmentInput);
+      const allocateOutboundShipmentUnallocatedResult = batchOutboundShipmentQuery(allocateOutboundShipmentInput);
 
       log({ t: 'allocateResult', allocateOutboundShipmentUnallocatedResult });
 

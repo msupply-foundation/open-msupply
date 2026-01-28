@@ -1,7 +1,4 @@
-mutation BatchOutboundShipment(
-  $storeId: String!
-  $input: BatchOutboundShipmentInput!
-) {
+mutation BatchOutboundShipment($storeId: String!, $input: BatchOutboundShipmentInput!) {
   batchOutboundShipment(storeId: $storeId, input: $input) {
     insertOutboundShipments {
       id
@@ -29,6 +26,62 @@ mutation BatchOutboundShipment(
           error {
             description
           }
+        }
+      }
+    }
+    allocateOutboundShipmentUnallocatedLines {
+      id
+      response {
+        __typename
+        ... on AllocateOutboundShipmentUnallocatedLineNode {
+          __typename
+          inserts {
+            nodes {
+              id
+              numberOfPacks
+              stockLine {
+                batch
+              }
+            }
+          }
+          updates {
+            nodes {
+              id
+            }
+          }
+        }
+        ... on AllocateOutboundShipmentUnallocatedLineError {
+          __typename
+          error {
+            description
+          }
+        }
+      }
+    }
+    updateOutboundShipments {
+      id
+      response {
+        __typename
+        ... on UpdateOutboundShipmentError {
+          __typename
+          error {
+            description
+          }
+        }
+      }
+    }
+    deleteOutboundShipments {
+      id
+      response {
+        ... on DeleteOutboundShipmentError {
+          __typename
+          error {
+            description
+          }
+        }
+        ... on DeleteResponse {
+          __typename
+          id
         }
       }
     }
