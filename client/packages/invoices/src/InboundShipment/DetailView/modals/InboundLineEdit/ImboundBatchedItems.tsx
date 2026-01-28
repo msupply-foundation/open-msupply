@@ -405,12 +405,17 @@ export const InboundItems = ({
             </Grid> 
             {showForeignCurrency && currency && (
               <Grid item xs={12} md={6}>
-                <Typography variant="body2" color="primary">
-                  <Typography component="span" fontWeight="bold">
+                <Box>
+                  <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
                     {t('label.fc-line-total', { currency: currency.code })}
-                  </Typography>{' '}
-                  {format((line.costPricePerPack * line.numberOfPacks) / currency.rate)}
-                </Typography>
+                  </Typography>
+                  <Typography variant="h6" color="primary">
+                    <Typography component="span" fontWeight="bold">
+                      {t('label.fc-line-total', { currency: currency.code })}
+                    </Typography>{' '}
+                    {format((line.costPricePerPack * line.numberOfPacks) / currency.rate)}
+                  </Typography>
+                </Box>
               </Grid>
             )}             
               </Grid>
