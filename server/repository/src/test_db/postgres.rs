@@ -27,6 +27,7 @@ pub fn get_test_db_settings(db_name: &str) -> DatabaseSettings {
         database_path: None,
         connection_pool_max_connections: None,
         connection_pool_timeout_seconds: None,
+        connection_retry_seconds: None,
     }
 }
 

@@ -295,10 +295,13 @@ async fn download_sync_file_inner(
         return Err(DownloadFileError::NotFoundLocallyAndThisIsCentralServer);
     };
 
+    let sync_settings = get_sync_settings(&service_provider)
+        .ok_or_else(|| DownloadFileError::Other(anyhow::anyhow!("Sync settings unavailable")))?;
+
     // File not found locally, download from central
     let file_synchroniser = FileSynchroniser::new(
         &url,
-        get_sync_settings(&service_provider),
+        sync_settings,
         service_provider.into_inner(),
         Arc::new(file_service),
     )?;

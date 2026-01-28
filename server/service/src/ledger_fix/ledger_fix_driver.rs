@@ -1,7 +1,9 @@
 use std::sync::Arc;
 
 use crate::activity_log::system_log;
+use crate::ledger_fix::find_ledger_discrepancies::FindStockLineLedgerDiscrepanciesError;
 use crate::ledger_fix::find_ledger_discrepancies::find_stock_line_ledger_discrepancies;
+use crate::ledger_fix::stock_line_ledger_fix::StockLineLedgerFixError;
 use crate::ledger_fix::stock_line_ledger_fix::stock_line_ledger_fix;
 use crate::{activity_log::system_error_log, service_provider::ServiceProvider};
 
@@ -12,6 +14,7 @@ use tokio::{
     sync::mpsc::{self, Receiver, Sender},
     time::Duration,
 };
+use util::format_error;
 
 pub struct LedgerFixDriver {
     receiver: Receiver<Option<String>>,
@@ -55,26 +58,38 @@ impl LedgerFixDriver {
                 continue;
             }
 
-            ledger_fix(service_provider.clone()).await;
-            set_last_ledger_fix_run(&service_provider);
+            match ledger_fix(service_provider.clone()).await {
+                Ok(()) => set_last_ledger_fix_run(&service_provider),
+                Err(error) => {
+                    log::error!("Ledger fix skipped (will retry later): {}", format_error(&error))
+                }
+            };
         }
     }
 }
 
-async fn ledger_fix(service_provider: Arc<ServiceProvider>) {
-    let ctx = service_provider.basic_context().unwrap();
+async fn ledger_fix(service_provider: Arc<ServiceProvider>) -> Result<(), RepositoryError> {
+    let ctx = service_provider.basic_context()?;
 
     let stock_line_ids = match find_stock_line_ledger_discrepancies(&ctx.connection, None) {
         Ok(stock_line_ids) => stock_line_ids,
-        Err(e) => {
-            system_error_log(
+        Err(error) => {
+            // Best-effort system logging (may also fail if DB is down).
+            if let Err(log_error) = system_error_log(
                 &ctx.connection,
                 SystemLogType::LedgerFixError,
-                &e,
+                &error,
                 "Error while finding stock line ledger discrepancies",
-            )
-            .unwrap();
-            return;
+            ) {
+                    log::error!("Failed to write system error log: {}", format_error(&log_error));
+                }
+
+            return Err(match error {
+                FindStockLineLedgerDiscrepanciesError::DatabaseError(repository_error) => {
+                    repository_error
+                }
+                other => RepositoryError::as_db_error("Ledger fix preflight failed", other),
+            });
         }
     };
 
@@ -96,24 +111,59 @@ async fn ledger_fix(service_provider: Arc<ServiceProvider>) {
                     Utc::now().naive_utc()
                 ));
                 let status = if is_fixed { "Fully" } else { "Partially" };
-                system_log(&ctx.connection, SystemLogType::LedgerFix,
-                        &format!("{status} fixed ledger discrepancy for stock_line {stock_line_id} - Details: {operation_log}\n"
-                    )).unwrap();
-            }
-            Err(e) => {
-                system_error_log(
+                system_log(
                     &ctx.connection,
-                    SystemLogType::LedgerFixError,
-                    &e,
+                    SystemLogType::LedgerFix,
                     &format!(
-                        "Error fixing stock line {}, {}",
-                        stock_line_id, operation_log
+                        "{status} fixed ledger discrepancy for stock_line {stock_line_id} - Details: {operation_log}\n"
                     ),
-                )
-                .unwrap();
+                )?;
+            }
+            Err(error) => {
+                match error {
+                    StockLineLedgerFixError::DatabaseError(repository_error)
+                        if matches!(repository_error, RepositoryError::DBError { .. }) =>
+                    {
+                        // If DB becomes unavailable mid-run, bail out so we don't record last-run.
+                        if let Err(log_error) = system_error_log(
+                            &ctx.connection,
+                            SystemLogType::LedgerFixError,
+                            &repository_error,
+                            &format!(
+                                "Ledger fix aborted due to database error, {}",
+                                operation_log
+                            ),
+                        ) {
+                            log::error!(
+                                "Failed to write system error log: {}",
+                                format_error(&log_error)
+                            );
+                        }
+
+                        return Err(repository_error);
+                    }
+                    other_error => {
+                        if let Err(log_error) = system_error_log(
+                            &ctx.connection,
+                            SystemLogType::LedgerFixError,
+                            &other_error,
+                            &format!(
+                                "Error fixing stock line {}, {}",
+                                stock_line_id, operation_log
+                            ),
+                        ) {
+                            log::error!(
+                                "Failed to write system error log: {}",
+                                format_error(&log_error)
+                            );
+                        }
+                    }
+                };
             }
         }
     }
+
+    Ok(())
 }
 
 impl LedgerFixTrigger {
@@ -135,8 +185,16 @@ impl LedgerFixTrigger {
 async fn delay(service_provider: Arc<ServiceProvider>, duration: Duration) -> bool {
     tokio::time::sleep(duration).await;
 
-    let last_ledger_fix_run = get_last_ledger_fix_run(&service_provider)
-        .expect("Repository error while getting last ledger fix run");
+    let last_ledger_fix_run = match get_last_ledger_fix_run(&service_provider) {
+        Ok(last_ledger_fix_run) => last_ledger_fix_run,
+        Err(error) => {
+            log::error!(
+                "Problem reading last ledger fix run timestamp: {}",
+                format_error(&error)
+            );
+            return false;
+        }
+    };
 
     // Do ledger fix if date is not set yet
     let Some(last_ledger_fix_run) = last_ledger_fix_run else {
@@ -152,7 +210,7 @@ async fn delay(service_provider: Arc<ServiceProvider>, duration: Duration) -> bo
 fn get_last_ledger_fix_run(
     service_provider: &ServiceProvider,
 ) -> Result<Option<NaiveDateTime>, RepositoryError> {
-    let ctx = service_provider.basic_context().unwrap();
+    let ctx = service_provider.basic_context()?;
     let key_value_store = KeyValueStoreRepository::new(&ctx.connection);
 
     // Get and parse last ledger fix run, if not set or filed to parse return epoch
@@ -175,16 +233,33 @@ fn get_last_ledger_fix_run(
 }
 
 fn set_last_ledger_fix_run(service_provider: &ServiceProvider) {
-    let ctx = service_provider.basic_context().unwrap();
+    let ctx = match service_provider.basic_context() {
+        Ok(ctx) => ctx,
+        Err(error) => {
+            log::error!(
+                "Problem creating service context while setting last ledger fix run: {}",
+                format_error(&error)
+            );
+            return;
+        }
+    };
     let key_value_store = KeyValueStoreRepository::new(&ctx.connection);
 
     let now = Utc::now().naive_utc();
-    let now_string =
-        serde_json::to_string(&now).expect("Failed to serialize last ledger fix run datetime");
+    let now_string = match serde_json::to_string(&now) {
+        Ok(now_string) => now_string,
+        Err(error) => {
+            log::error!(
+                "Failed to serialize last ledger fix run datetime: {}",
+                format_error(&error)
+            );
+            return;
+        }
+    };
 
-    key_value_store
-        .set_string(KeyType::LastLedgerFixRun, Some(now_string))
-        .expect("Database error while setting last ledger fix run");
+    if let Err(error) = key_value_store.set_string(KeyType::LastLedgerFixRun, Some(now_string)) {
+        log::error!("Database error while setting last ledger fix run: {error:?}");
+    }
 }
 
 #[cfg(test)]
@@ -245,7 +320,7 @@ mod test {
             );
         }
 
-        ledger_fix(service_provider.clone()).await;
+        ledger_fix(service_provider.clone()).await.unwrap();
 
         for stock_line_id in all_stock_lines {
             assert_eq!(
