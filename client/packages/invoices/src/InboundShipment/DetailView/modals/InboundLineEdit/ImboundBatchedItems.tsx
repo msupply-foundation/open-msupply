@@ -244,10 +244,10 @@ export const InboundItems = ({
                 </Typography>
                 <NumericTextInput
                   fullWidth
-                  value={line.numberOfPacks || 0}
+                  value={line.numberOfPacks}
                   onChange={(value: number | undefined) => {
                     const { packSize } = line;
-                    if (packSize !== undefined) {
+                    if (packSize !== undefined && value !== undefined) {
                       const packToUnits = packSize * value;
                       setPackRoundingMessage?.('');
                       updateDraftLine({
@@ -287,7 +287,7 @@ export const InboundItems = ({
                   value={line.numberOfPacks * line.packSize}
                   onChange={(value: number | undefined) => {
                     const { packSize, unitsPerPack } = line;
-                    if (packSize !== undefined && unitsPerPack !== undefined) {
+                    if (packSize !== undefined && unitsPerPack !== undefined && value !== undefined) {
                       const unitToPacks = value / packSize;
                       const roundedPacks = Math.ceil(unitToPacks);
                       const actualUnits = roundedPacks * packSize;
