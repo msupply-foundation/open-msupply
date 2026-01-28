@@ -16,7 +16,7 @@ jobs:
           fetch-depth: 0
 
       - name: Read .nvmrc
-        run: echo "##[set-output name=NVMRC;]$(cat ./client/.nvmrc)"
+       run: echo "NVMRC=$(cat ./client/.nvmrc)" >> "$GITHUB_OUTPUT"
         id: nvm
 
       - name: Use Node.js (.nvmrc)
