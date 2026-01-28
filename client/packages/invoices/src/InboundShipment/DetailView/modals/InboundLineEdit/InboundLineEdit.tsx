@@ -14,7 +14,7 @@ import {
 } from '@openmsupply-client/common';
 import { InboundLineEditForm } from './InboundLineEditForm';
 import { InboundLineFragment, useDraftInboundLines } from '../../../api';
-import { TabLayout } from './TabLayout';
+// import { TabLayout } from './TabLayout';
 import {
   CurrencyRowFragment,
   ItemRowFragment,

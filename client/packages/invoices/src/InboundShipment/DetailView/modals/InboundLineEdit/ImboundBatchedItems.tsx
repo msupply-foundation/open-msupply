@@ -51,6 +51,7 @@ interface InboundBatchedItemsProps {
   item?: ItemRowFragment | null;
   setPackRoundingMessage?: (value: React.SetStateAction<string>) => void;
   restrictedToLocationTypeId?: string | null;
+  isSmallScreen?: boolean;
 }
 interface InboundItemsProps extends InboundBatchedItemsProps {
   removeDraftLine: (id: string) => void;
@@ -67,7 +68,8 @@ export const InboundItems = ({
   setPackRoundingMessage,
   currency,
   isExternalSupplier,
-  restrictedToLocationTypeId
+  restrictedToLocationTypeId,
+  isSmallScreen = false,
 }: InboundItemsProps) => {
   const t = useTranslation();
   const { store } = useAuthContext();
@@ -102,8 +104,8 @@ export const InboundItems = ({
       </AccordionSummary>
       <AccordionDetails>
         <Paper elevation={1} sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>
-          <Box sx={{ display: 'flex', gap: 2 }}>
-            <Box sx={{ minWidth: '150px', display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Box sx={{ display: 'flex', gap: 2, flexDirection: isSmallScreen ? 'column' : 'row' }}>
+            <Box sx={{ minWidth: isSmallScreen ? 'auto' : '150px', display: 'flex', alignItems: 'center', gap: 1 }}>
               <InfoIcon color="action" fontSize="small" />
               <Typography variant="body2" color="textSecondary">
                 {t('label.quantities')}
@@ -332,8 +334,8 @@ export const InboundItems = ({
           </Box>
         </Paper>
         <Paper elevation={1} sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>
-          <Box sx={{ display: 'flex', gap: 2 }}>
-            <Box sx={{ minWidth: '150px', display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Box sx={{ display: 'flex', gap: 2, flexDirection: isSmallScreen ? 'column' : 'row' }}>
+            <Box sx={{ minWidth: isSmallScreen ? 'auto' : '150px', display: 'flex', alignItems: 'center', gap: 1 }}>
               <TruckIcon color="action" fontSize="small" />
               <Typography variant="body2" color="textSecondary">
                 {t('label.pricing')}
@@ -423,8 +425,8 @@ export const InboundItems = ({
           </Box>
         </Paper>
         <Paper elevation={1} sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>
-          <Box sx={{ display: 'flex', gap: 2 }}>
-            <Box sx={{ minWidth: '150px', display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Box sx={{ display: 'flex', gap: 2, flexDirection: isSmallScreen ? 'column' : 'row' }}>
+            <Box sx={{ minWidth: isSmallScreen ? 'auto' : '150px', display: 'flex', alignItems: 'center', gap: 1 }}>
               <InvoiceIcon color="action" fontSize="small" />
               <Typography variant="body2" color="textSecondary">
                 {t('heading.other')}

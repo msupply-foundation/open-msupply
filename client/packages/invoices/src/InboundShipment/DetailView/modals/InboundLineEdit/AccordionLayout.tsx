@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import {
   Box,
-  Breakpoints,
   PlusCircleIcon,
   useTranslation,
   ButtonWithIcon,
   useAppTheme,
   useMediaQuery,
   Alert,
+  Breakpoints,
 } from '@openmsupply-client/common';
 import { DraftInboundLine } from '../../../../types';
 import {
@@ -44,7 +44,7 @@ export const AccordionLayout = ({
 }:AccordionLayoutProps) => {
  const t = useTranslation();
   const theme = useAppTheme();
-  const isMediumScreen = useMediaQuery(theme.breakpoints.down(Breakpoints.lg));
+  const isSmallScreen = useMediaQuery(theme.breakpoints.down(Breakpoints.md));
   const [packRoundingMessage, setPackRoundingMessage] = useState<string>(
     () => ''
   );
@@ -87,6 +87,7 @@ export const AccordionLayout = ({
         currency={currency}
         isExternalSupplier={isExternalSupplier}
         restrictedToLocationTypeId={item?.restrictedLocationTypeId}
+        isSmallScreen={isSmallScreen}
       />
     </Box>
   );
