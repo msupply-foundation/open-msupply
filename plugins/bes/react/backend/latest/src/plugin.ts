@@ -8,12 +8,12 @@ import allocateOutboundShipmentMutationText from './graphql/allocateOutboundShip
 import {
   BatchOutboundShipmentMutation,
   BatchOutboundShipmentMutationVariables,
-  UpdateOutboundShipmentStatusInput,
   ItemsQuery,
   ItemsQueryVariables,
   NamesQuery,
   NamesQueryVariables,
 } from './generated-types/graphql';
+import { UpdateOutboundShipmentStatusInput } from '../codegenTypes';
 import { uuidv7 } from 'uuidv7';
 
 type Graphql = {
@@ -87,7 +87,7 @@ const plugins: BackendPlugins = {
   graphql_query: ({ store_id, input }): Graphql['output'] => {
     const inp = input as Graphql['input'];
 
-    // --- if the following lines are left as they are, the first store in my data set
+    // --- if the following lines are uncommented, the first store in my data set
     // --- has no stock, and will never issue stock. Also, isVisible = false for most stores
 
     // const { stores: activeStores } = get_active_stores_on_site();
@@ -151,6 +151,7 @@ const plugins: BackendPlugins = {
     const outboundShipmentInput: BatchOutboundShipmentMutationVariables = {
       storeId: issuingStoreId,
       input: {
+        continueOnError: false,
         insertOutboundShipments: [
           {
             id: shipmentId,
