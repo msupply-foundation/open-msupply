@@ -1,6 +1,6 @@
 # Database Migrations
 
-Rust (manual) migrations were introduced in version 1.1.0 of omSupply, as per [this KDD](../../../../decisions/migrations.md). Diesel migrations in /server/repository/migrations directory were kept, but any further migrations should follow pattern described in this readme.
+Rust (manual) migrations were introduced in version 1.1.0 of omSupply, as per [this KDD](../../../../decisions/migrations.md). Diesel migrations in /server/repository/migrations directory were kept, but any further migrations should follow pattern described in this readme. As of v2.16.0 the diesel migrations have been removed and the database is initialised from a database dump.
 
 ## Migration Examples and Templates
 
@@ -10,7 +10,7 @@ If you are exploring `./templates` folder it's best to look at them in this orde
 
 ## Manual migrations overview
 
-`Database version` is stored in [key_value_store] table under `DATABASE_VERSION` key, current `app version` is specified in [root package.json](../../../../package.json). 
+`Database version` is stored in [key_value_store] table under `DATABASE_VERSION` key, current `app version` is specified in [root package.json](../../../../package.json).
 
 During startup server will run [these steps sequentially](mod.rs):
 
@@ -26,14 +26,13 @@ Each migration implements three methods in migration visitor trait, version(), m
 
 `migrate_fragments()` will re-run any migration fragments that have not been run yet in current migration (*NOTE*: this is the preferred way to add migrations from version 2.2)
 
-
-Diesel dsl can be used in data migrations, however, for some operations sql statement are prefered, see `Raw SQL vs Diesel` below.
+Diesel dsl can be used in data migrations, however, for some operations sql statement are preferred, see `Raw SQL vs Diesel` below.
 
 ## How to add migration
 
 Identify next version, see [package.json](../../../../package.json) for current version, then increment `patch` by one (we use semantic versioning syntax for our version number, but our app versioning wouldn't necessarily follow SemVer guidelines which are aimed at publicly consumed packages and libraries, see [version.rs](./version.rs) for more details).
 
-Increment [package.json](../../../../package.json) version to the new version and create new migration folder with the version number. Copy template or existing migration, and rename to new version appropriately. 
+Increment [package.json](../../../../package.json) version to the new version and create new migration folder with the version number. Copy template or existing migration, and rename to new version appropriately.
 
 Add new version mod to [root migrations mode](mod.rs) and add new version to `vec!` of visitors. Add actual migration code and tests, through tests you should be able to check sql syntax and data migration logic without starting server.
 
@@ -68,10 +67,10 @@ Looking at 3 we may think it could be simplified by changing the identifier and 
 
 Please be very mindful and vigilant when working with migration fragments, especially when doing major schema changes. And be aware of logic error that won't be caught at compile time.
 
-
 ## Raw SQL vs Diesel
 
 Ideally we would be using existing repositories for data migrations, but this will break as soon as new migrations change schema and repositories are updated. We can achieve almost any type of migration with raw sql statement, both data and schema, but some raw sql logic is hard to either read/write or keep consistent between sqlite and postgres. On the other hard, using diesel definitions comes with a lot of boilerplate, and can also be hard to read/write but it can help with serialisation and difference in sqlite and postgres syntax. Although at the time of writing this README.md there is no defined standard or guideline of when to use raw sql vs diesel dsl, some effort was made to show when one is better then the other in `./templates`. A quick summary:
+
 * In most cases, for schema migrations its easier to use raw sql statements, there is small variation in syntax, mainly types, but with a help of simple `sql!` macro and common [types](types.rs) it looks clean and trivial, see [adding table](templates/adding_table/mod.rs)
 * Inserting mock data sql looks the same, and we can use use diesel `.bind` to serialise more complex types like `NaiveDateTime`, as demonstrated in [data migration template](templates/data_migration/mod.rs)
 * Since raw sql query still requires a struct to save a result in, I found that adding diesel `table!` with minimum fields has about the same amount of code and allows for a way to select a result into a tuple and opens a way to use diesel dsl for queries and updates, [again in data migration template, query/update in migration and query in test](templates/data_migration/mod.rs)

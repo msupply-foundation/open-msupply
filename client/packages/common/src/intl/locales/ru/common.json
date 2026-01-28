@@ -513,7 +513,6 @@
   "error.unable-to-scan-barcode": "Не удалось отсканировать штрихкод: {{error}}",
   "error.unable-to-start-scanning": "Невозможно начать сканирование: {{error}}",
   "error.unable-to-update-immunisation-program": "Не удалось обновить Программу Иммунизации",
-  "error.unable-to-update-vaccine-course": "Не удалось обновить курс вакцинации",
   "error.unable-to-upload-reports": "Невозможно загрузить отчеты",
   "error.unique-value-violation": "Запись с таким {{ field }} уже существует",
   "error.unknown-geolocation-error": "При определении вашего местоположения произошла неизвестная ошибка.",
