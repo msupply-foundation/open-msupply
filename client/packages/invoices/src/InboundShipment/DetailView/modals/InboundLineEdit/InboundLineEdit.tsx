@@ -17,7 +17,6 @@ import { InboundLineFragment, useDraftInboundLines } from '../../../api';
 // import { TabLayout } from './TabLayout';
 import {
   CurrencyRowFragment,
-  ItemRowFragment,
 } from '@openmsupply-client/system';
 import { QuantityTable } from './TabTables';
 import { isInboundPlaceholderRow } from '../../../../utils';
@@ -37,7 +36,7 @@ interface InboundLineEditProps {
   hasVvmStatusesEnabled?: boolean;
   hasItemVariantsEnabled?: boolean;
   scannedBatchData?: ScannedBatchData;
-  getSortedItems: () => ItemRowFragment[];
+  getSortedItems: () => InboundLineItem[];
 }
 
 export const InboundLineEdit = ({
@@ -55,7 +54,7 @@ export const InboundLineEdit = ({
 }: InboundLineEditProps) => {
   const t = useTranslation();
   const { error } = useNotification();
-  const [currentItem, setCurrentItem] = useState<ItemRowFragment | null>(item);
+  const [currentItem, setCurrentItem] = useState<InboundLineItem | null>(item);
   const { next: nextItem, disabled: nextDisabled } = useNextItem(
     getSortedItems,
     currentItem?.id ?? ''

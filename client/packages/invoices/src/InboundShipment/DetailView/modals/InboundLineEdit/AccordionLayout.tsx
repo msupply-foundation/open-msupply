@@ -12,7 +12,6 @@ import {
 import { DraftInboundLine } from '../../../../types';
 import {
   CurrencyRowFragment,
-  ItemRowFragment,
 } from '@openmsupply-client/system';
 import { PatchDraftLineInput } from '../../../api';
 import { InboundItems } from './ImboundBatchedItems';
@@ -25,7 +24,7 @@ interface AccordionLayoutProps {
   removeDraftLine: (id: string) => void;
   currency?: CurrencyRowFragment | null;
   isExternalSupplier?: boolean;
-  item: ItemRowFragment | null;
+  item: DraftInboundLine['item'] | null;
   hasItemVariantsEnabled?: boolean;
   hasVvmStatusesEnabled?: boolean;
 }

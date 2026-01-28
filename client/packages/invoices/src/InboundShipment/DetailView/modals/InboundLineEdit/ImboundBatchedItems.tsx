@@ -32,7 +32,6 @@ import {
   CurrencyRowFragment,
   DonorSearchInput,
   getVolumePerPackFromVariant,
-  ItemRowFragment,
   ItemVariantInput,
   LocationRowFragment,
   LocationSearchInput,
@@ -48,7 +47,7 @@ interface InboundBatchedItemsProps {
   isExternalSupplier?: boolean;
   hasItemVariantsEnabled?: boolean;
   hasVvmStatusesEnabled?: boolean;
-  item?: ItemRowFragment | null;
+  item?: DraftInboundLine['item'] | null;
   setPackRoundingMessage?: (value: React.SetStateAction<string>) => void;
   restrictedToLocationTypeId?: string | null;
   isSmallScreen?: boolean;
@@ -113,7 +112,7 @@ export const InboundItems = ({
             </Box>
             <Box sx={{ flex: 1 }}>
               <Grid container spacing={2}>
-            <Grid item xs={12} md={6}>
+            <Box sx={{ flex: isSmallScreen ? 1 : 0.5, minWidth: 150 }}>
                 <Box>
               <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
                 {t('label.batch')}
@@ -127,8 +126,8 @@ export const InboundItems = ({
                 disabled={isDisabled}
                 autoFocus={index === 0}
               /></Box>
-            </Grid>
-            <Grid item xs={12} md={6}>
+            </Box>
+            <Box sx={{ flex: isSmallScreen ? 1 : 0.5, minWidth: 150 }}>
               <Box>
                 <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
                   {t('label.expiry-date')}
@@ -140,9 +139,9 @@ export const InboundItems = ({
                 }}
                 disabled={isDisabled}
               /></Box>
-            </Grid>
+            </Box>
             {hasItemVariantsEnabled && (
-            <Grid item xs={12} md={6}>
+            <Box sx={{ flex: isSmallScreen ? 1 : 0.5, minWidth: 150 }}>
               <Box>
                 <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
                   {t('label.item-variant')}
@@ -162,10 +161,10 @@ export const InboundItems = ({
                   }}
                 />
               </Box>
-            </Grid>
+            </Box>
             )}   
             {hasVvmStatusesEnabled && item?.isVaccine && (
-              <Grid item xs={12} md={6}>
+              <Box sx={{ flex: isSmallScreen ? 1 : 0.5, minWidth: 150 }}>
                 <Box>
                   <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
                     {t('label.vvm-status')}
@@ -179,9 +178,9 @@ export const InboundItems = ({
                     useDefault={!line.stockLine}
                   />
                 </Box>
-              </Grid>
+              </Box>
             )}  
-            <Grid item xs={12} md={6}>
+            <Box sx={{ flex: isSmallScreen ? 1 : 0.5, minWidth: 150 }}>
               <Box>
                 <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
                   {t('label.shipped-pack-size')}
@@ -195,8 +194,8 @@ export const InboundItems = ({
                   disabled={isDisabled}
                 />
               </Box>
-            </Grid>    
-            <Grid item xs={12} md={6}>
+            </Box>    
+            <Box sx={{ flex: isSmallScreen ? 1 : 0.5, minWidth: 150 }}>
               <Box>
                 <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
                   {t('label.shipped-number-of-packs')}
@@ -210,8 +209,8 @@ export const InboundItems = ({
                   disabled={isDisabled}
                 />
               </Box>
-            </Grid>   
-            <Grid item xs={12} md={4}>
+            </Box>   
+            <Box sx={{ flex: isSmallScreen ? 1 : 0.5, minWidth: 150 }}>
               <Box>
                 <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
                   {t('label.received-pack-size')}
@@ -220,22 +219,25 @@ export const InboundItems = ({
                   fullWidth
                   value={line.packSize || 0}
                   onChange={(value: number | undefined) => {
-                    const shouldClearSellPrice =
-                      item?.defaultPackSize !== line.packSize &&
-                      item?.itemStoreProperties?.defaultSellPricePerPack === line.sellPricePerPack;
-                    updateDraftLine({
-                      volumePerPack: getVolumePerPackFromVariant(line) ?? 0,
-                      sellPricePerPack: shouldClearSellPrice ? 0 : line.sellPricePerPack,
-                      packSize: value,
-                      id: line.id,
-                    });
+                    if (value !== undefined) {
+                      const shouldClearSellPrice =
+                        item?.defaultPackSize !== line.packSize &&
+                        item?.itemStoreProperties?.defaultSellPricePerPack ===
+                          line.sellPricePerPack;
+                      updateDraftLine({
+                        volumePerPack: getVolumePerPackFromVariant(line) ?? 0,
+                        sellPricePerPack: shouldClearSellPrice ? 0 : line.sellPricePerPack,
+                        packSize: value,
+                        id: line.id,
+                      });
+                    }
                   }}
                   disabled={isDisabled}
                   min={1}
                 />
               </Box>
-            </Grid> 
-            <Grid item xs={12} md={4}>
+            </Box> 
+            <Box sx={{ flex: isSmallScreen ? 1 : 0.5, minWidth: 150 }}>
               <Box>
                 <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
                   {t('label.packs-received')}
@@ -259,26 +261,23 @@ export const InboundItems = ({
                   min={1}
                 />
               </Box>
-            </Grid>   
+            </Box>   
       
             {!displayInDoses && (
-              <Grid item xs={12} md={6}>
+              <Box sx={{ flex: isSmallScreen ? 1 : 0.5, minWidth: 150 }}>
                 <Box>
                   <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
                     {t('label.doses-received')}
                   </Typography>
-                  <NumericTextInput
+                  <BasicTextInput
                     fullWidth
                     value={format((line.numberOfPacks * line.packSize) * line.item.doses)}
-                    onChange={(value: number | undefined) => {
-                      updateDraftLine({ volumePerPack: value, id: line.id });
-                    }}
-                    disabled={isDisabled}
+                    disabled
                   />
                 </Box>
-              </Grid>
+              </Box>
             )}  
-            <Grid item xs={12} md={4}>
+            <Box sx={{ flex: isSmallScreen ? 1 : 0.5, minWidth: 150 }}>
               <Box>
                 <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
                   {t('label.units-received', { unit: pluralisedUnitName })}
@@ -313,8 +312,8 @@ export const InboundItems = ({
                   min={0}
                 />
               </Box>
-            </Grid>   
-            <Grid item xs={12} md={6}>
+            </Box>   
+            <Box sx={{ flex: isSmallScreen ? 1 : 0.5, minWidth: 150 }}>
               <Box>
                 <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
                   {t('label.volume-per-pack')}
@@ -328,7 +327,7 @@ export const InboundItems = ({
                   disabled={isDisabled}
                 />
               </Box>
-            </Grid>          
+            </Box>          
               </Grid>
             </Box>
           </Box>
@@ -343,7 +342,7 @@ export const InboundItems = ({
             </Box>
             <Box sx={{ flex: 1 }}>
               <Grid container spacing={2}>
-            <Grid item xs={12} md={showForeignCurrency ? 6 : 12}>
+            <Box sx={{ flex: isSmallScreen ? 1 : 0.5, minWidth: 150 }}>
               <Box>
                 <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
                   {t('label.pack-cost-price')}
@@ -358,19 +357,19 @@ export const InboundItems = ({
                   width="100%"
                 />
               </Box>
-            </Grid>
+            </Box>
  
             {showForeignCurrency && currency && (
-              <Grid item xs={12} md={6}>
+              <Box sx={{ flex: isSmallScreen ? 1 : 0.5, minWidth: 150 }}>
                 <Typography variant="body2" color="textSecondary">
                   <Typography component="span" fontWeight="bold">
                     {t('label.fc-cost-price', { currency: currency.code })}
                   </Typography>{' '}
                   {format(line.costPricePerPack / currency.rate)}
                 </Typography>
-              </Grid>
+              </Box>
             )}  
-            <Grid item xs={12} md={showForeignCurrency ? 6 : 12}>
+            <Box sx={{ flex: isSmallScreen ? 1 : 0.5, minWidth: 150 }}>
               <Box>
                 <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
                   {t('label.pack-sell-price')}
@@ -384,18 +383,18 @@ export const InboundItems = ({
                   width="100%"
                 />
               </Box>
-            </Grid>   
+            </Box>   
             {showForeignCurrency && currency && (
-              <Grid item xs={12} md={6}>
+              <Box sx={{ flex: isSmallScreen ? 1 : 0.5, minWidth: 150 }}>
                 <Typography variant="body2" color="textSecondary">
                   <Typography component="span" fontWeight="bold">
                     {t('label.fc-sell-price', { currency: currency.code })}
                   </Typography>{' '}
                   {format(line.sellPricePerPack / currency.rate)}
                 </Typography>
-              </Grid>
+              </Box>
             )}   
-            <Grid item xs={12} md={showForeignCurrency ? 6 : 12}>
+            <Box sx={{ flex: isSmallScreen ? 1 : 0.5, minWidth: 150 }}>
               <Box>
                 <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
                   {t('label.line-total')}
@@ -404,9 +403,9 @@ export const InboundItems = ({
                   {format(line.costPricePerPack * line.numberOfPacks)}
                 </Typography>
               </Box>
-            </Grid> 
+            </Box> 
             {showForeignCurrency && currency && (
-              <Grid item xs={12} md={6}>
+              <Box sx={{ flex: isSmallScreen ? 1 : 0.5, minWidth: 150 }}>
                 <Box>
                   <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
                     {t('label.fc-line-total', { currency: currency.code })}
@@ -418,7 +417,7 @@ export const InboundItems = ({
                     {format((line.costPricePerPack * line.numberOfPacks) / currency.rate)}
                   </Typography>
                 </Box>
-              </Grid>
+              </Box>
             )}             
               </Grid>
             </Box>
@@ -434,7 +433,7 @@ export const InboundItems = ({
             </Box>
             <Box sx={{ flex: 1 }}>
               <Grid container spacing={2}>
-            <Grid item xs={12} md={showForeignCurrency ? 6 : 12}>
+            <Box sx={{ flex: isSmallScreen ? 1 : 0.5, minWidth: 150 }}>
               <Box>
                 <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
                   {t('label.location')}
@@ -450,8 +449,8 @@ export const InboundItems = ({
                   fullWidth
                 />
               </Box>
-            </Grid>
-            <Grid item xs={12}>
+            </Box>
+            <Box sx={{ flex: isSmallScreen ? 1 : 0.5, minWidth: 150 }}>
               <Box>
                 <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
                   {t('label.stocktake-comment')}
@@ -466,9 +465,9 @@ export const InboundItems = ({
                   multiline
                 />
               </Box>
-            </Grid> 
+            </Box> 
             {allowTrackingOfStockByDonor && (
-              <Grid item xs={12} md={6}>
+              <Box sx={{ flex: isSmallScreen ? 1 : 0.5, minWidth: 150 }}>
                 <Box>
                   <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
                     {t('label.donor')}
@@ -486,9 +485,9 @@ export const InboundItems = ({
                     clearable
                   />
                 </Box>
-              </Grid>
+              </Box>
             )}   
-            <Grid item xs={12} md={allowTrackingOfStockByDonor ? 6 : 12}>
+            <Box sx={{ flex: isSmallScreen ? 1 : 0.5, minWidth: 150 }}>
               <Box>
                 <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
                   {t('label.campaign')}
@@ -504,7 +503,7 @@ export const InboundItems = ({
                   disabled={isDisabled ?? false}
                 />
               </Box>
-            </Grid>
+            </Box>
               </Grid>
             </Box>
           </Box>
