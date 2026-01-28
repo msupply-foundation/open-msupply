@@ -29,7 +29,7 @@ import { useDashboard } from '../api';
 import { useInbound } from '@openmsupply-client/invoices';
 import { SupplierSearchModal } from '@openmsupply-client/system';
 import { AppRoute } from '@openmsupply-client/config';
-import { useDashboardPanels } from '../utils';
+import { useDashboardPanels } from '../hooks';
 
 export const ReplenishmentWidget = ({
   widgetContext,
