@@ -1,4 +1,5 @@
 use crate::activity_log::activity_log_entry;
+use crate::invoice::inbound_shipment::add_from_purchase_order;
 use crate::invoice::query::get_invoice;
 use crate::service_provider::ServiceContext;
 use crate::WithDBError;
@@ -21,6 +22,7 @@ pub struct InsertInboundShipment {
     pub colour: Option<String>,
     pub requisition_id: Option<String>,
     pub purchase_order_id: Option<String>,
+    pub insert_lines_from_purchase_order: bool,
 }
 
 type OutError = InsertInboundShipmentError;
@@ -33,14 +35,27 @@ pub fn insert_inbound_shipment(
         .connection
         .transaction_sync(|connection| {
             let other_party = validate(connection, &ctx.store_id, &input)?;
-            let new_invoice =
-                generate(connection, &ctx.store_id, &ctx.user_id, input, other_party)?;
+            let new_invoice = generate(
+                connection,
+                &ctx.store_id,
+                &ctx.user_id,
+                input.clone(),
+                other_party,
+            )?;
             InvoiceRowRepository::new(connection).upsert_one(&new_invoice)?;
+
+            if input.insert_lines_from_purchase_order {
+                add_from_purchase_order(
+                    connection,
+                    new_invoice.id.clone(),
+                    input.purchase_order_id,
+                )?;
+            }
 
             activity_log_entry(
                 ctx,
                 ActivityLogType::InvoiceCreated,
-                Some(new_invoice.id.to_string()),
+                Some(new_invoice.id.clone()),
                 None,
                 None,
             )?;
@@ -57,6 +72,7 @@ pub fn insert_inbound_shipment(
 #[derive(Debug, PartialEq)]
 pub enum InsertInboundShipmentError {
     InvoiceAlreadyExists,
+    AddLinesFromPurchaseOrderWithoutPurchaseOrder,
     // Name validation
     OtherPartyDoesNotExist,
     OtherPartyNotVisible,

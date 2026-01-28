@@ -51,15 +51,14 @@ export const AppBarButtons = ({
   const manuallyLinkInternalOrder =
     store?.preferences.manuallyLinkInternalOrderToInboundShipment;
 
-  const createInvoice = async (nameId: string, requisitionId?: string, purchaseOrderId?: string, _addLinesFromPurchaseOrder?: boolean) => {
+  const createInvoice = async (nameId: string, requisitionId?: string, purchaseOrderId?: string, insertLinesFromPurchaseOrder?: boolean) => {
     const invoiceId = await onCreate({
       id: FnUtils.generateUUID(),
       otherPartyId: nameId,
       requisitionId,
       purchaseOrderId,
+      insertLinesFromPurchaseOrder,
     });
-
-    // TODO: add lines from purchase order
 
     navigate(
       RouteBuilder.create(AppRoute.Replenishment)
