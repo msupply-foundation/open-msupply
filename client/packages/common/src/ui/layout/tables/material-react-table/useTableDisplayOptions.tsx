@@ -189,7 +189,13 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
         ? {
             sx: { height: '100%' },
           }
-        : {},
+        : {
+            sx: () => ({
+              '& tr:nth-of-type(odd)': {
+                backgroundColor: 'background.row',
+              },
+            }),
+          },
 
     muiTableBodyRowProps: params => {
       const { row } = params;
