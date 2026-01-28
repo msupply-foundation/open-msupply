@@ -65,6 +65,7 @@ const toSortField = (
   const sortFieldMap: Record<string, StockLineSortFieldInput> = {
     batch: StockLineSortFieldInput.Batch,
     itemCode: StockLineSortFieldInput.ItemCode,
+    name: StockLineSortFieldInput.ItemName,
     itemName: StockLineSortFieldInput.ItemName,
     packSize: StockLineSortFieldInput.PackSize,
     supplierName: StockLineSortFieldInput.SupplierName,
