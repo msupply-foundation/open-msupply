@@ -29,6 +29,69 @@ interface ForecastQuantityData {
   forecastUnits: number;
 }
 
+interface CalculationStepProps {
+  title: string;
+  formula: string;
+  substitution: string;
+  result: string;
+}
+
+interface TextProps {
+  children: React.ReactNode;
+}
+
+const FormulaDisplay = ({ children }: TextProps) => (
+  <Typography
+    variant="body2"
+    sx={{
+      mb: 1,
+      backgroundColor: 'grey.100',
+      p: 1,
+      borderRadius: 2,
+    }}
+  >
+    {children}
+  </Typography>
+);
+
+const SubstitutionDisplay = ({ children }: TextProps) => (
+  <Typography
+    variant="body2"
+    sx={{
+      color: 'text.secondary',
+      mb: 0.5,
+    }}
+  >
+    {children}
+  </Typography>
+);
+
+const ResultDisplay = ({ children }: TextProps) => (
+  <Typography
+    variant="body2"
+    sx={{
+      fontWeight: 'bold',
+      color: 'success.main',
+    }}
+  >
+    {children}
+  </Typography>
+);
+
+const CalculationStep = ({
+  title,
+  formula,
+  substitution,
+  result,
+}: CalculationStepProps) => (
+  <Box>
+    <Typography fontWeight="bold">{title}</Typography>
+    <FormulaDisplay>{formula}</FormulaDisplay>
+    <SubstitutionDisplay>{substitution}</SubstitutionDisplay>
+    <ResultDisplay>{result}</ResultDisplay>
+  </Box>
+);
+
 export type ForecastCalculationDisplayPlugin = ArrayElement<
   NonNullable<Plugins['requestRequisitionLine']>['editViewInfo']
 >;
@@ -70,128 +133,27 @@ const ForecastCalculationDisplayInner: ForecastCalculationDisplayPlugin = ({
             <Typography variant="body1">{course.courseTitle}</Typography>
           </AccordionSummary>
           <AccordionDetails>
-            <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-              <Box>
-                <Typography variant="subtitle2" fontWeight="bold">
-                  {t('label.annual-target-doses-calculation')}
-                </Typography>
-                <Typography
-                  variant="body2"
-                  sx={{
-                    fontFamily: 'monospace',
-                    mb: 1,
-                    backgroundColor: 'grey.100',
-                    p: 1,
-                    borderRadius: 1,
-                  }}
-                >
-                  {t('description.annual-target-doses-calculation')}
-                </Typography>
-                <Typography
-                  variant="body2"
-                  sx={{
-                    fontFamily: 'monospace',
-                    color: 'text.secondary',
-                    mb: 0.5,
-                  }}
-                >
-                  {format(course.targetPopulation)} ×{' '}
-                  {format(course.numberOfDoses)} × (
-                  {format(course.coverageRate)} / 100) ×{' '}
-                  {round(course.lossFactor, 3)}
-                </Typography>
-                <Typography
-                  variant="body2"
-                  sx={{
-                    fontFamily: 'monospace',
-                    fontWeight: 'bold',
-                    color: 'success.main',
-                  }}
-                >
-                  = {round(course.annualTargetDoses, 2)}{' '}
-                  {t('label.doses-per-year')}
-                </Typography>
-              </Box>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <CalculationStep
+                title={t('label.annual-target-doses-calculation')}
+                formula={t('description.annual-target-doses-calculation')}
+                substitution={`${format(course.targetPopulation)} × ${format(course.numberOfDoses)} × (${format(course.coverageRate)} / 100) × ${round(course.lossFactor, 3)}`}
+                result={`= ${round(course.annualTargetDoses, 2)} ${t('label.doses-per-year')}`}
+              />
 
-              {/* Forecast Doses Calculation */}
-              <Box>
-                <Typography variant="subtitle2" fontWeight="bold">
-                  {t('label.forecast-doses-calculation')}
-                </Typography>
-                <Typography
-                  variant="body2"
-                  sx={{
-                    fontFamily: 'monospace',
-                    mb: 1,
-                    backgroundColor: 'grey.100',
-                    p: 1,
-                    borderRadius: 1,
-                  }}
-                >
-                  {t('description.forecast-doses-calculation')}
-                </Typography>
-                <Typography
-                  variant="body2"
-                  sx={{
-                    fontFamily: 'monospace',
-                    color: 'text.secondary',
-                    mb: 0.5,
-                  }}
-                >
-                  ({round(course.annualTargetDoses, 2)} / 12) × (
-                  {format(course.supplyPeriodMonths)} +{' '}
-                  {format(course.bufferStockMonths)})
-                </Typography>
-                <Typography
-                  variant="body2"
-                  sx={{
-                    fontFamily: 'monospace',
-                    fontWeight: 'bold',
-                    color: 'success.main',
-                  }}
-                >
-                  = {round(course.forecastDoses, 2)} {t('label.doses')}
-                </Typography>
-              </Box>
+              <CalculationStep
+                title={t('label.forecast-doses-calculation')}
+                formula={t('description.forecast-doses-calculation')}
+                substitution={`(${round(course.annualTargetDoses, 2)} / 12) × (${format(course.supplyPeriodMonths)} + ${format(course.bufferStockMonths)})`}
+                result={`= ${round(course.forecastDoses, 2)} ${t('label.doses').toLowerCase()}`}
+              />
 
-              <Box>
-                <Typography variant="subtitle2" fontWeight="bold">
-                  {t('label.forecast-units-calculation')}
-                </Typography>
-                <Typography
-                  variant="body2"
-                  sx={{
-                    fontFamily: 'monospace',
-                    mb: 1,
-                    backgroundColor: 'grey.100',
-                    p: 1,
-                    borderRadius: 1,
-                  }}
-                >
-                  {t('description.forecast-units-calculation')}
-                </Typography>
-                <Typography
-                  variant="body2"
-                  sx={{
-                    fontFamily: 'monospace',
-                    color: 'text.secondary',
-                    mb: 0.5,
-                  }}
-                >
-                  {round(course.forecastDoses, 2)} /{' '}
-                  {format(course.dosesPerUnit)}
-                </Typography>
-                <Typography
-                  variant="body2"
-                  sx={{
-                    fontFamily: 'monospace',
-                    fontWeight: 'bold',
-                    color: 'success.main',
-                  }}
-                >
-                  = {format(Math.ceil(course.forecastUnits))} {t('label.units')}
-                </Typography>
-              </Box>
+              <CalculationStep
+                title={t('label.forecast-units-calculation')}
+                formula={t('description.forecast-units-calculation')}
+                substitution={`${round(course.forecastDoses, 2)} / ${format(course.dosesPerUnit)}`}
+                result={`= ${format(Math.ceil(course.forecastUnits))} ${t('label.units').toLowerCase()}`}
+              />
             </Box>
           </AccordionDetails>
         </Accordion>
