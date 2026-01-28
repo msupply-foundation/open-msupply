@@ -167,7 +167,11 @@ export const EditPreference = ({
           label={preferenceLabel}
           Input={
             // Pass API value/update directly - called on modal save rather than on each key stroke/click
-            <EditCustomTranslations value={preference.value} update={update} />
+            <EditCustomTranslations
+              value={preference.value}
+              update={update}
+              disabled={disabled}
+            />
           }
           isLast={isLast}
         />

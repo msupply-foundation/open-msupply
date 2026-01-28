@@ -256,7 +256,7 @@ mod test {
     #[actix_rt::test]
     async fn purchase_order_status() {
         let (_, connection, _, _) =
-            setup_all("purchase order status", MockDataInserts::all()).await;
+            setup_all("purchase_order_status", MockDataInserts::all()).await;
 
         let repo = PurchaseOrderRowRepository::new(&connection);
         // Try upsert all variants of PurchaseOrderStatus, confirm that diesel enums match postgres
