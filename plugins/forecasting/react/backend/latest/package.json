@@ -12,14 +12,10 @@
   "version": "1.0.1",
   "main": "plugin.js",
   "scripts": {
-    "build-plugin": "webpack"
+    "build-plugin": "npx webpack"
   },
   "license": "MIT",
   "devDependencies": {
-    "@types/lodash": "^4.17.15",
-    "ts-loader": "^9.4.4",
-    "typescript": "^5.0.2",
-    "webpack": "^5.88.1",
-    "webpack-cli": "^5.0.1"
+    "@types/lodash": "^4.17.15"
   }
 }
