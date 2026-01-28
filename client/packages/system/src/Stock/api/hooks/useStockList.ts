@@ -20,7 +20,7 @@ export const useStockList = (queryParams: StockListParams) => {
 
   const {
     sortBy = {
-      key: 'itemName',
+      key: 'name',
       direction: 'asc',
       isDesc: false,
     },
@@ -66,7 +66,6 @@ const toSortField = (
     batch: StockLineSortFieldInput.Batch,
     itemCode: StockLineSortFieldInput.ItemCode,
     name: StockLineSortFieldInput.ItemName,
-    itemName: StockLineSortFieldInput.ItemName,
     packSize: StockLineSortFieldInput.PackSize,
     supplierName: StockLineSortFieldInput.SupplierName,
     numberOfPacks: StockLineSortFieldInput.NumberOfPacks,
