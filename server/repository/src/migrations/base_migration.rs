@@ -8,8 +8,8 @@ use crate::{RepositoryError, StorageConnection};
 // I've used the test db templating feature to get a `base` database to use for tests and initialisation of a new db.
 // Note: It's probably best to dump the database from the earliest version of postgres we support, but have tried to create clean up commands for dumping from v18
 
-// To refresh run tests to create template databases, then run...
-//  pg_dump -h localhost -U postgres -d ___template_1.0.4 --inserts  --no-owner --no-privileges --schema=public | sed -E '/^\\(un)?restrict [A-Za-z0-9]+$/d' | sed '/^CREATE SCHEMA public;$/d' | sed "s/SELECT pg_catalog.set_config('search_path', '', false);/SET search_path = public;/" > repository/src/base_migrations/postgres_earliest.sql
+// To refresh run tests to create template databases, then run:
+// pg_dump -h localhost -U postgres -d ___template_1.3.0 --inserts  --no-owner --no-privileges --schema=public | sed -E '/^\\(un)?restrict [A-Za-z0-9]+$/d' | sed '/^CREATE SCHEMA public;$/d' | sed "s/SELECT pg_catalog.set_config('search_path', '', false);/SET search_path = public;/" | sed '/^SET transaction_timeout = 0;$/d' > repository/src/migrations/base_migrations/postgres_earliest.sql
 #[cfg(feature = "postgres")]
 pub const BASE_SCHEMA_EARLIEST: &str = include_str!("base_migrations/postgres_earliest.sql");
 
@@ -17,7 +17,7 @@ pub const BASE_SCHEMA_EARLIEST: &str = include_str!("base_migrations/postgres_ea
 #[cfg(feature = "postgres")]
 pub const BASE_SCHEMA_LATEST: &str = include_str!("base_migrations/postgres_latest.sql");
 
-// sqlite3 repository/test_output/___template_1.0.4.sqlite .dump > repository/src/migrations/base_migrations/sqlite_earliest.sql
+// sqlite3 repository/test_output/___template_1.3.0.sqlite .dump > repository/src/migrations/base_migrations/sqlite_earliest.sql
 #[cfg(not(feature = "postgres"))]
 pub const BASE_SCHEMA_EARLIEST: &str = include_str!("base_migrations/sqlite_earliest.sql");
 
