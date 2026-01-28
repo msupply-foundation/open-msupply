@@ -20,9 +20,9 @@ export const Statistics = () => {
   const { stats, isVaccine, doses } = data || {};
 
   const widgetContext = 'item-details';
-  const stockOnHandPanelContext = 'stock-on-hand';
-  const AMCPanelContext = 'amc';
-  const monthsOfStockPanelContext = 'months-of-stock';
+  const stockOnHandPanelContext = `${widgetContext}-stock-on-hand}`;
+  const AMCPanelContext = `${widgetContext}-amc`;
+  const monthsOfStockPanelContext = `${widgetContext}-months-of-stock`;
 
   if (!stats) return null;
 
@@ -43,14 +43,14 @@ export const Statistics = () => {
     >
       <StatsPanel
         title={t('title.stock-on-hand')}
-        panelContext={`${widgetContext}-${stockOnHandPanelContext}`}
+        panelContext={stockOnHandPanelContext}
         isLoading={false}
         stats={[
           {
             label: t('label.units'),
             value: formatNumber.round(stats.stockOnHand),
             extraMessage: getDosesMessage(stats.stockOnHand),
-            statContext: `${widgetContext}-${stockOnHandPanelContext}-units`,
+            statContext: `${stockOnHandPanelContext}-units`,
           },
         ]}
         link={
@@ -67,13 +67,13 @@ export const Statistics = () => {
       <StatsPanel
         isLoading={false}
         title={t('title.average-monthly-consumption')}
-        panelContext={`${widgetContext}-${AMCPanelContext}`}
+        panelContext={AMCPanelContext}
         stats={[
           {
             label: t('label.units'),
             value: formatNumber.round(stats.averageMonthlyConsumption, 2),
             extraMessage: getDosesMessage(stats.averageMonthlyConsumption),
-            statContext: `${widgetContext}-${AMCPanelContext}-units`,
+            statContext: `${AMCPanelContext}-units`,
           },
         ]}
         width={300}
@@ -81,12 +81,12 @@ export const Statistics = () => {
       <StatsPanel
         isLoading={false}
         title={t('title.months-of-stock')}
-        panelContext={`${widgetContext}-${monthsOfStockPanelContext}`}
+        panelContext={monthsOfStockPanelContext}
         stats={[
           {
             label: t('text.months'),
             value: formatNumber.round(stats?.monthsOfStockOnHand ?? 0, 2),
-            statContext: `${widgetContext}-${monthsOfStockPanelContext}-months`,
+            statContext: `${monthsOfStockPanelContext}-months`,
           },
         ]}
         width={300}
