@@ -20,6 +20,7 @@ import {
   InsertInboundShipmentLineFromInternalOrderLineInput,
   RequisitionNodeStatus,
   UpdateDonorInput,
+  PurchaseOrderNodeStatus,
 } from '@openmsupply-client/common';
 import { DraftInboundLine } from './../../types';
 import { isA, isInboundPlaceholderRow } from '../../utils';
@@ -81,9 +82,9 @@ const inboundParsers = {
       | RecordPatch<InboundFragment>
       | RecordPatch<InboundRowFragment>
       | {
-          id: string;
-          defaultDonorUpdate: UpdateDonorInput;
-        }
+        id: string;
+        defaultDonorUpdate: UpdateDonorInput;
+      }
   ): UpdateInboundShipmentInput => {
     return {
       id: patch.id,
@@ -272,6 +273,17 @@ export const getInboundQueries = (sdk: Sdk, storeId: string) => ({
         return result.requisition;
       }
     },
+    listSentPurchaseOrders: async (filterBy: FilterBy | null) => {
+      const filter = {
+        ...filterBy,
+        status: { equalTo: PurchaseOrderNodeStatus.Sent },
+      };
+      const result = await sdk.purchaseOrders({
+        storeId,
+        filter,
+      });
+      return result?.purchaseOrders;
+    },
   },
   delete: async (invoices: InboundRowFragment[]): Promise<string[]> => {
     const result =
@@ -297,6 +309,7 @@ export const getInboundQueries = (sdk: Sdk, storeId: string) => ({
         otherPartyId: patch.otherPartyId,
         storeId,
         requisitionId: patch.requisitionId,
+        purchaseOrderId: patch.purchaseOrderId,
       })) || {};
 
     const { insertInboundShipment } = result;

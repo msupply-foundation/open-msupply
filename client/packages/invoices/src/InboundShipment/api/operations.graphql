@@ -391,6 +391,7 @@ mutation insertInboundShipment(
   $otherPartyId: String!
   $requisitionId: String
   $storeId: String!
+  $purchaseOrderId: String
 ) {
   insertInboundShipment(
     storeId: $storeId
@@ -398,6 +399,7 @@ mutation insertInboundShipment(
       id: $id
       otherPartyId: $otherPartyId
       requisitionId: $requisitionId
+      purchaseOrderId: $purchaseOrderId
     }
   ) {
     ... on InsertInboundShipmentError {
@@ -834,6 +836,31 @@ mutation insertLinesFromInternalOrder(
           __typename
           id
         }
+      }
+    }
+  }
+}
+
+fragment InboundShipmentPurchaseOrderLine on PurchaseOrderNode {
+  comment
+  id
+  number
+  reference
+  supplier {
+    id
+    name
+  }
+}
+
+query purchaseOrders(
+  $storeId: String!
+  $filter: PurchaseOrderFilterInput
+) {
+  purchaseOrders(storeId: $storeId, filter: $filter) {
+    ... on PurchaseOrderConnector {
+      totalCount
+      nodes {
+        ...InboundShipmentPurchaseOrderLine
       }
     }
   }

@@ -12,6 +12,7 @@ import {
   NameAndColorSetterCell,
   usePreferences,
   DetailTabs,
+  ToggleState,
 } from '@openmsupply-client/common';
 import { AppBarButtons } from './AppBarButtons';
 import {
@@ -25,16 +26,17 @@ import { Footer } from './Footer';
 
 export const InboundListView = () => {
   const t = useTranslation();
-  const invoiceModalController = useToggle();
+  const internalModalController = useToggle();
+  const externalModalController = useToggle();
   const linkRequestModalController = useToggle();
 
   const tabs = [
     {
-      Component: <InboundShipments />,
+      Component: <InboundShipments internalModalController={internalModalController} />,
       value: t('label.internal'),
     },
     {
-      Component: <InboundShipments external />,
+      Component: <InboundShipments internalModalController={internalModalController} external />,
       value: t('label.external'),
     },
   ];
@@ -42,7 +44,8 @@ export const InboundListView = () => {
   return (
     <>
       <AppBarButtons
-        invoiceModalController={invoiceModalController}
+        internalModalController={internalModalController}
+        externalModalController={externalModalController}
         linkRequestModalController={linkRequestModalController}
       />
       <DetailTabs tabs={tabs} overwriteQuery={false} restoreTabQuery={false} />
@@ -50,18 +53,19 @@ export const InboundListView = () => {
   );
 };
 
-const InboundShipments: React.FC<{ external?: boolean }> = ({ external = false }) => {
+const InboundShipments: React.FC<{ internalModalController: ToggleState, external?: boolean }> = ({
+  internalModalController,
+  external = false,
+}) => {
   const t = useTranslation();
   const navigate = useNavigate();
   const { invoiceStatusOptions } = usePreferences();
-  const invoiceModalController = useToggle();
-  const linkRequestModalController = useToggle();
   const { mutate: onUpdate } = useInbound.document.update();
 
   const {
     queryParams: { first, offset, sortBy, filterBy },
   } = useUrlQueryParams({
-    // initialSort: { key: 'invoiceNumber', dir: 'desc' },
+    initialSort: { key: 'invoiceNumber', dir: 'desc' },
     filters: [
       { key: 'invoiceNumber', condition: 'equalTo', isNumber: true },
       { key: 'otherPartyName' },
@@ -184,7 +188,7 @@ const InboundShipments: React.FC<{ external?: boolean }> = ({ external = false }
       noDataElement: (
         <NothingHere
           body={t('error.no-inbound-shipments')}
-          onCreate={invoiceModalController.toggleOn}
+          onCreate={internalModalController.toggleOn}
         />
       ),
     }
@@ -192,10 +196,6 @@ const InboundShipments: React.FC<{ external?: boolean }> = ({ external = false }
 
   return (
     <>
-      <AppBarButtons
-        invoiceModalController={invoiceModalController}
-        linkRequestModalController={linkRequestModalController}
-      />
       <MaterialTable table={table} />
       <Footer
         selectedRows={selectedRows}
