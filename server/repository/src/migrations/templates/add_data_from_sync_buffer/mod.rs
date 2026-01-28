@@ -39,11 +39,11 @@ pub struct LegacyStoreRow {
 }
 
 #[allow(dead_code)]
-pub(crate) struct V1_00_08;
+pub(crate) struct V2_15_01;
 
-impl Migration for V1_00_08 {
+impl Migration for V2_15_01 {
     fn version(&self) -> Version {
-        Version::from_str("1.0.8")
+        Version::from_str("2.15.1")
     }
 
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
@@ -80,20 +80,20 @@ impl Migration for V1_00_08 {
 
 #[cfg(test)]
 #[actix_rt::test]
-async fn migration_1_00_08() {
-    use crate::migrations::*;
+async fn migration_2_15_01() {
+    use crate::migrations::{v2_15_00::V2_15_00, *};
     use crate::test_db::*;
     use diesel::{sql_query, sql_types::Timestamp, RunQueryDsl};
 
     // For data migrations we want to insert data then do the migration, thus setup with version - 1
     // Then insert data and upgrade to this version
 
-    let previous_version = V1_00_04.version();
-    let version = V1_00_08.version();
+    let previous_version = V2_15_00.version();
+    let version = V2_15_01.version();
 
     // Migrate to version - 1
     let SetupResult { connection, .. } = setup_test(SetupOption {
-        db_name: &format!("migration_{version}"),
+        db_name: &format!("migration_{version}_add_data_from_sync_buffer"),
         version: Some(previous_version.clone()),
         ..Default::default()
     })
@@ -113,10 +113,10 @@ async fn migration_1_00_08() {
     sql!(
         &connection,
         r#"
-        INSERT INTO store 
-        (id, name_id, site_id, code)
+        INSERT INTO name_link
+        (id, name_id)
         VALUES 
-        ('store1_id', 'name_id', 1, '');
+        ('name_link_id', 'name_id');
     "#
     )
     .unwrap();
@@ -125,9 +125,9 @@ async fn migration_1_00_08() {
         &connection,
         r#"
         INSERT INTO store 
-        (id, name_id, site_id, code)
+        (id, name_link_id, site_id, code)
         VALUES 
-        ('store2_id', 'name_id', 1, '');
+        ('store1_id', 'name_link_id', 1, '');
     "#
     )
     .unwrap();
@@ -136,9 +136,20 @@ async fn migration_1_00_08() {
         &connection,
         r#"
         INSERT INTO store 
-        (id, name_id, site_id, code) 
+        (id, name_link_id, site_id, code)
         VALUES 
-        ('store3_id', 'name_id', 1, '');
+        ('store2_id', 'name_link_id', 1, '');
+    "#
+    )
+    .unwrap();
+
+    sql!(
+        &connection,
+        r#"
+        INSERT INTO store 
+        (id, name_link_id, site_id, code) 
+        VALUES 
+        ('store3_id', 'name_link_id', 1, '');
     "#
     )
     .unwrap();
@@ -220,7 +231,7 @@ async fn migration_1_00_08() {
     // Since this test refers to a migration we don't want it production, we can't use the main migration to this version.
     // So manually run just this test migration...
     // In a real example you'd use `migrate(&connection, Some(version.clone())).unwrap();` instead
-    V1_00_08.migrate(&connection).unwrap();
+    V2_15_01.migrate(&connection).unwrap();
     // In a real test, you'd check the version was updated correctly
     // e.g. assert_eq!(get_database_version(&connection), version);
     let _ = connection.lock();
