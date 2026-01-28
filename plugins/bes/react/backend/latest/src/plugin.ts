@@ -91,24 +91,22 @@ const batchDeleteOutboundShipmentQuery = (storeId: string, shipmentId: string): 
 };
 
 const plugins: BackendPlugins = {
-  graphql_query: ({ store_id, input }): Graphql['output'] => {
+  graphql_query: ({ input }): Graphql['output'] => {
     const inp = input as Graphql['input'];
 
-    // --- if the following lines are uncommented, the first store in my data set
+    // --- the first store in my data set
     // --- has no stock, and will never issue stock. Also, isVisible = false for most stores
+    // const issueingStoreId = store_id;
 
-    // const { stores: activeStores } = get_active_stores_on_site();
-    // if (!activeStores || activeStores.length < 1) {
-    //   return { success: false, message: 'No active stores found' };
-    // }
-    // const issueingStore = activeStores[0];
+    const { stores: activeStores } = get_active_stores_on_site();
+    if (!activeStores || activeStores.length < 1) {
+      return { success: false, message: 'No active stores found' };
+    }
 
-    // log({ t: 'Issueing Store', issueingStore });
-
-    const issuingStoreId = store_id;
+    const issueingStoreId = activeStores[0].store_row.id;
 
     const { result: customerQueryResult, customerError } = customerQuery({
-      storeId: issuingStoreId,
+      storeId: issueingStoreId,
       filter: inp.customerFilter,
     });
 
@@ -123,10 +121,8 @@ const plugins: BackendPlugins = {
     const customer = customerQueryResult.names.nodes[0];
     const customerId = customerQueryResult.names.nodes[0].id;
 
-    // log({ t: 'Customer Store', customer });
-
     const { result: itemsQueryResult, itemsError } = itemsQuery({
-      storeId: issuingStoreId,
+      storeId: issueingStoreId,
       filter: inp.itemFilter,
     });
 
@@ -140,8 +136,6 @@ const plugins: BackendPlugins = {
 
     const foundItem = itemsQueryResult.items.nodes[0];
 
-    log({ t: 'item', foundItem });
-
     if (foundItem.availableStockOnHand < inp.quantity) {
       return {
         success: false,
@@ -149,14 +143,12 @@ const plugins: BackendPlugins = {
       };
     }
 
-    log({ t: 'item id', id: foundItem.id });
-
     const shipmentId = uuidv7();
     const shipmentLineId = uuidv7();
 
     // Create outbound shipment
     const outboundShipmentInput: BatchOutboundShipmentMutationVariables = {
-      storeId: issuingStoreId,
+      storeId: issueingStoreId,
       input: {
         continueOnError: false,
         insertOutboundShipments: [
@@ -180,7 +172,7 @@ const plugins: BackendPlugins = {
       const insertOutboundShipmentUnallocatedResult = batchOutboundShipmentQuery(outboundShipmentInput);
 
       if (!insertOutboundShipmentUnallocatedResult) {
-        batchDeleteOutboundShipmentQuery(issuingStoreId, shipmentId);
+        batchDeleteOutboundShipmentQuery(issueingStoreId, shipmentId);
         throw Error(`Failed to issue the stock for item code: ${foundItem.code}, quantity: ${inp.quantity}`);
       }
     } catch (error) {
@@ -194,7 +186,7 @@ const plugins: BackendPlugins = {
 
     try {
       const allocateOutboundShipmentInput: BatchOutboundShipmentMutationVariables = {
-        storeId: issuingStoreId,
+        storeId: issueingStoreId,
         input: {
           allocatedOutboundShipmentUnallocatedLines: [shipmentLineId],
         },
@@ -205,7 +197,7 @@ const plugins: BackendPlugins = {
       log({ t: 'allocateResult', allocateOutboundShipmentUnallocatedResult });
 
       if (!allocateOutboundShipmentUnallocatedResult) {
-        batchDeleteOutboundShipmentQuery(issuingStoreId, shipmentId);
+        batchDeleteOutboundShipmentQuery(issueingStoreId, shipmentId);
         throw Error(
           `Failed allocate lines to issue the stock for item code: ${foundItem.code}, quantity: ${inp.quantity}`
         );
@@ -220,7 +212,7 @@ const plugins: BackendPlugins = {
     // Update to 'shipped'
     try {
       const updateOutboundShipmentInput: BatchOutboundShipmentMutationVariables = {
-        storeId: issuingStoreId,
+        storeId: issueingStoreId,
         input: {
           updateOutboundShipments: [
             {
@@ -233,10 +225,8 @@ const plugins: BackendPlugins = {
 
       const updateOutboundShipmentResult = batchOutboundShipmentQuery(updateOutboundShipmentInput);
 
-      log({ t: 'updateResult', updateOutboundShipmentResult });
-
       if (!updateOutboundShipmentResult) {
-        batchDeleteOutboundShipmentQuery(issuingStoreId, shipmentId);
+        batchDeleteOutboundShipmentQuery(issueingStoreId, shipmentId);
         throw Error(
           `Failed to update order to issue the stock for item code: ${foundItem.code}, quantity: ${inp.quantity}`
         );
