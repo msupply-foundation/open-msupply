@@ -201,7 +201,7 @@ const UIComponent: FC<LayoutProps & AjvProps> = ({
 
   const categories = categorization.elements.filter(
     (category: Category | Categorization): category is Category =>
-      isVisible(category, data, '', ajv) && category.type === 'Category'
+      isVisible(category, data, '', ajv, undefined) && category.type === 'Category'
   );
 
   const { core } = useJsonForms();
