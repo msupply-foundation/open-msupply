@@ -5,7 +5,7 @@ import {
   ReplenishmentWidget,
   StockWidget,
 } from './widgets';
-import { useDashboardWidgets } from './utils';
+import { useDashboardWidgets } from './hooks';
 
 const Dashboard: React.FC = () => {
   const coreWidgets = [

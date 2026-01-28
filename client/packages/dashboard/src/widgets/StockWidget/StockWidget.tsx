@@ -23,7 +23,7 @@ import {
 import { AppRoute } from '@openmsupply-client/config';
 import { ExpiringStockSummary } from './ExpiringStockSummary';
 import { StockLevelsSummary } from './StockLevelsSummary';
-import { useDashboardPanels } from '../../utils';
+import { useDashboardPanels } from '../../hooks';
 
 export const StockWidget = ({ widgetContext }: { widgetContext: string }) => {
   const t = useTranslation();

@@ -21,7 +21,7 @@ import { useFormatNumber, useTranslation } from '@common/intl';
 import { useDashboard } from '../api';
 import { useOutbound } from '@openmsupply-client/invoices';
 import { AppRoute } from '@openmsupply-client/config';
-import { useDashboardPanels } from '../utils';
+import { useDashboardPanels } from '../hooks';
 
 export const DistributionWidget = ({
   widgetContext,
