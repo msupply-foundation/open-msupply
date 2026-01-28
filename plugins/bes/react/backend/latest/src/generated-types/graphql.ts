@@ -1,25 +1,5 @@
 import * as Types from '../../codegenTypes';
 
-export type Maybe<T> = T | null;
-export type InputMaybe<T> = Maybe<T>;
-export type Exact<T extends { [key: string]: unknown }> = {
-  [K in keyof T]: T[K];
-};
-export type MakeOptional<T, K extends keyof T> = Omit<T, K> & {
-  [SubKey in K]?: Maybe<T[SubKey]>;
-};
-export type MakeMaybe<T, K extends keyof T> = Omit<T, K> & {
-  [SubKey in K]: Maybe<T[SubKey]>;
-};
-export type MakeEmpty<
-  T extends { [key: string]: unknown },
-  K extends keyof T,
-> = { [_ in K]?: never };
-export type Incremental<T> =
-  | T
-  | {
-      [P in keyof T]?: P extends ' $fragmentName' | '__typename' ? T[P] : never;
-    };
 export type AllocateBatchOutboundShipmentMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
   input: BatchOutboundShipmentInput;
@@ -162,27 +142,27 @@ export type Scalars = {
 };
 
 export type AbbreviationFilterInput = {
-  id?: InputMaybe<EqualFilterStringInput>;
-  text?: InputMaybe<StringFilterInput>;
+  id?: Types.InputMaybe<EqualFilterStringInput>;
+  text?: Types.InputMaybe<StringFilterInput>;
 };
 
 export type ActiveEncounterEventFilterInput = {
-  data?: InputMaybe<StringFilterInput>;
+  data?: Types.InputMaybe<StringFilterInput>;
   /**
    * Only include events that are for the current encounter, i.e. have matching encounter type
    * and matching encounter name of the current encounter. If not set all events with matching
    * encounter type are returned.
    */
-  isCurrentEncounter?: InputMaybe<Scalars['Boolean']['input']>;
-  type?: InputMaybe<EqualFilterStringInput>;
+  isCurrentEncounter?: Types.InputMaybe<Scalars['Boolean']['input']>;
+  type?: Types.InputMaybe<EqualFilterStringInput>;
 };
 
 export type ActivityLogFilterInput = {
-  id?: InputMaybe<EqualFilterStringInput>;
-  recordId?: InputMaybe<EqualFilterStringInput>;
-  storeId?: InputMaybe<EqualFilterStringInput>;
-  type?: InputMaybe<EqualFilterActivityLogTypeInput>;
-  userId?: InputMaybe<EqualFilterStringInput>;
+  id?: Types.InputMaybe<EqualFilterStringInput>;
+  recordId?: Types.InputMaybe<EqualFilterStringInput>;
+  storeId?: Types.InputMaybe<EqualFilterStringInput>;
+  type?: Types.InputMaybe<EqualFilterActivityLogTypeInput>;
+  userId?: Types.InputMaybe<EqualFilterStringInput>;
 };
 
 export enum ActivityLogNodeType {
@@ -287,7 +267,7 @@ export type ActivityLogSortInput = {
    * Sort query result is sorted descending or ascending (if not provided the default is
    * ascending)
    */
-  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  desc?: Types.InputMaybe<Scalars['Boolean']['input']>;
   /** Sort query result by `key` */
   key: ActivityLogSortFieldInput;
 };
@@ -324,18 +304,18 @@ export enum ApplyToLinesInput {
 }
 
 export type AssetCatalogueItemFilterInput = {
-  category?: InputMaybe<StringFilterInput>;
-  categoryId?: InputMaybe<EqualFilterStringInput>;
-  class?: InputMaybe<StringFilterInput>;
-  classId?: InputMaybe<EqualFilterStringInput>;
-  code?: InputMaybe<StringFilterInput>;
-  id?: InputMaybe<EqualFilterStringInput>;
-  manufacturer?: InputMaybe<StringFilterInput>;
-  model?: InputMaybe<StringFilterInput>;
-  search?: InputMaybe<StringFilterInput>;
-  subCatalogue?: InputMaybe<StringFilterInput>;
-  type?: InputMaybe<StringFilterInput>;
-  typeId?: InputMaybe<EqualFilterStringInput>;
+  category?: Types.InputMaybe<StringFilterInput>;
+  categoryId?: Types.InputMaybe<EqualFilterStringInput>;
+  class?: Types.InputMaybe<StringFilterInput>;
+  classId?: Types.InputMaybe<EqualFilterStringInput>;
+  code?: Types.InputMaybe<StringFilterInput>;
+  id?: Types.InputMaybe<EqualFilterStringInput>;
+  manufacturer?: Types.InputMaybe<StringFilterInput>;
+  model?: Types.InputMaybe<StringFilterInput>;
+  search?: Types.InputMaybe<StringFilterInput>;
+  subCatalogue?: Types.InputMaybe<StringFilterInput>;
+  type?: Types.InputMaybe<StringFilterInput>;
+  typeId?: Types.InputMaybe<EqualFilterStringInput>;
 };
 
 export enum AssetCatalogueItemSortFieldInput {
@@ -346,14 +326,14 @@ export enum AssetCatalogueItemSortFieldInput {
 }
 
 export type AssetCatalogueItemSortInput = {
-  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  desc?: Types.InputMaybe<Scalars['Boolean']['input']>;
   key: AssetCatalogueItemSortFieldInput;
 };
 
 export type AssetCategoryFilterInput = {
-  classId?: InputMaybe<EqualFilterStringInput>;
-  id?: InputMaybe<EqualFilterStringInput>;
-  name?: InputMaybe<StringFilterInput>;
+  classId?: Types.InputMaybe<EqualFilterStringInput>;
+  id?: Types.InputMaybe<EqualFilterStringInput>;
+  name?: Types.InputMaybe<StringFilterInput>;
 };
 
 export enum AssetCategorySortFieldInput {
@@ -361,13 +341,13 @@ export enum AssetCategorySortFieldInput {
 }
 
 export type AssetCategorySortInput = {
-  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  desc?: Types.InputMaybe<Scalars['Boolean']['input']>;
   key: AssetCategorySortFieldInput;
 };
 
 export type AssetClassFilterInput = {
-  id?: InputMaybe<EqualFilterStringInput>;
-  name?: InputMaybe<StringFilterInput>;
+  id?: Types.InputMaybe<EqualFilterStringInput>;
+  name?: Types.InputMaybe<StringFilterInput>;
 };
 
 export enum AssetClassSortFieldInput {
@@ -375,40 +355,40 @@ export enum AssetClassSortFieldInput {
 }
 
 export type AssetClassSortInput = {
-  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  desc?: Types.InputMaybe<Scalars['Boolean']['input']>;
   key: AssetClassSortFieldInput;
 };
 
 export type AssetFilterInput = {
-  assetNumber?: InputMaybe<StringFilterInput>;
-  catalogueItemId?: InputMaybe<EqualFilterStringInput>;
-  categoryId?: InputMaybe<EqualFilterStringInput>;
-  classId?: InputMaybe<EqualFilterStringInput>;
-  functionalStatus?: InputMaybe<EqualFilterStatusInput>;
-  id?: InputMaybe<EqualFilterStringInput>;
-  installationDate?: InputMaybe<DateFilterInput>;
-  isNonCatalogue?: InputMaybe<Scalars['Boolean']['input']>;
-  notes?: InputMaybe<StringFilterInput>;
-  replacementDate?: InputMaybe<DateFilterInput>;
-  serialNumber?: InputMaybe<StringFilterInput>;
-  storeCodeOrName?: InputMaybe<StringFilterInput>;
-  storeId?: InputMaybe<StringFilterInput>;
-  typeId?: InputMaybe<EqualFilterStringInput>;
+  assetNumber?: Types.InputMaybe<StringFilterInput>;
+  catalogueItemId?: Types.InputMaybe<EqualFilterStringInput>;
+  categoryId?: Types.InputMaybe<EqualFilterStringInput>;
+  classId?: Types.InputMaybe<EqualFilterStringInput>;
+  functionalStatus?: Types.InputMaybe<EqualFilterStatusInput>;
+  id?: Types.InputMaybe<EqualFilterStringInput>;
+  installationDate?: Types.InputMaybe<DateFilterInput>;
+  isNonCatalogue?: Types.InputMaybe<Scalars['Boolean']['input']>;
+  notes?: Types.InputMaybe<StringFilterInput>;
+  replacementDate?: Types.InputMaybe<DateFilterInput>;
+  serialNumber?: Types.InputMaybe<StringFilterInput>;
+  storeCodeOrName?: Types.InputMaybe<StringFilterInput>;
+  storeId?: Types.InputMaybe<StringFilterInput>;
+  typeId?: Types.InputMaybe<EqualFilterStringInput>;
 };
 
 export type AssetLogFilterInput = {
-  assetId?: InputMaybe<EqualFilterStringInput>;
-  id?: InputMaybe<EqualFilterStringInput>;
-  logDatetime?: InputMaybe<DatetimeFilterInput>;
-  reasonId?: InputMaybe<EqualFilterStringInput>;
-  status?: InputMaybe<EqualFilterStatusInput>;
-  user?: InputMaybe<StringFilterInput>;
+  assetId?: Types.InputMaybe<EqualFilterStringInput>;
+  id?: Types.InputMaybe<EqualFilterStringInput>;
+  logDatetime?: Types.InputMaybe<DatetimeFilterInput>;
+  reasonId?: Types.InputMaybe<EqualFilterStringInput>;
+  status?: Types.InputMaybe<EqualFilterStatusInput>;
+  user?: Types.InputMaybe<StringFilterInput>;
 };
 
 export type AssetLogReasonFilterInput = {
-  assetLogStatus?: InputMaybe<EqualFilterStatusInput>;
-  id?: InputMaybe<EqualFilterStringInput>;
-  reason?: InputMaybe<StringFilterInput>;
+  assetLogStatus?: Types.InputMaybe<EqualFilterStatusInput>;
+  id?: Types.InputMaybe<EqualFilterStringInput>;
+  reason?: Types.InputMaybe<StringFilterInput>;
 };
 
 export enum AssetLogReasonSortFieldInput {
@@ -420,7 +400,7 @@ export type AssetLogReasonSortInput = {
    * Sort query result is sorted descending or ascending (if not provided the default is
    * ascending)
    */
-  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  desc?: Types.InputMaybe<Scalars['Boolean']['input']>;
   /** Sort query result by `key` */
   key: AssetLogReasonSortFieldInput;
 };
@@ -435,7 +415,7 @@ export type AssetLogSortInput = {
    * Sort query result is sorted descending or ascending (if not provided the default is
    * ascending)
    */
-  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  desc?: Types.InputMaybe<Scalars['Boolean']['input']>;
   /** Sort query result by `key` */
   key: AssetLogSortFieldInput;
 };
@@ -450,12 +430,12 @@ export enum AssetLogStatusNodeType {
 }
 
 export type AssetPropertyFilterInput = {
-  assetCategoryId?: InputMaybe<EqualFilterStringInput>;
-  assetClassId?: InputMaybe<EqualFilterStringInput>;
-  assetTypeId?: InputMaybe<EqualFilterStringInput>;
-  id?: InputMaybe<EqualFilterStringInput>;
-  key?: InputMaybe<EqualFilterStringInput>;
-  name?: InputMaybe<StringFilterInput>;
+  assetCategoryId?: Types.InputMaybe<EqualFilterStringInput>;
+  assetClassId?: Types.InputMaybe<EqualFilterStringInput>;
+  assetTypeId?: Types.InputMaybe<EqualFilterStringInput>;
+  id?: Types.InputMaybe<EqualFilterStringInput>;
+  key?: Types.InputMaybe<EqualFilterStringInput>;
+  name?: Types.InputMaybe<StringFilterInput>;
 };
 
 export enum AssetSortFieldInput {
@@ -473,15 +453,15 @@ export type AssetSortInput = {
    * Sort query result is sorted descending or ascending (if not provided the default is
    * ascending)
    */
-  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  desc?: Types.InputMaybe<Scalars['Boolean']['input']>;
   /** Sort query result by `key` */
   key: AssetSortFieldInput;
 };
 
 export type AssetTypeFilterInput = {
-  categoryId?: InputMaybe<EqualFilterStringInput>;
-  id?: InputMaybe<EqualFilterStringInput>;
-  name?: InputMaybe<StringFilterInput>;
+  categoryId?: Types.InputMaybe<EqualFilterStringInput>;
+  id?: Types.InputMaybe<EqualFilterStringInput>;
+  name?: Types.InputMaybe<StringFilterInput>;
 };
 
 export enum AssetTypeSortFieldInput {
@@ -489,120 +469,76 @@ export enum AssetTypeSortFieldInput {
 }
 
 export type AssetTypeSortInput = {
-  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  desc?: Types.InputMaybe<Scalars['Boolean']['input']>;
   key: AssetTypeSortFieldInput;
 };
 
 export type BatchInboundShipmentInput = {
-  continueOnError?: InputMaybe<Scalars['Boolean']['input']>;
-  deleteInboundShipmentLines?: InputMaybe<
-    Array<DeleteInboundShipmentLineInput>
-  >;
-  deleteInboundShipmentServiceLines?: InputMaybe<
-    Array<DeleteInboundShipmentServiceLineInput>
-  >;
-  deleteInboundShipments?: InputMaybe<Array<DeleteInboundShipmentInput>>;
-  insertFromInternalOrderLines?: InputMaybe<
-    Array<InsertInboundShipmentLineFromInternalOrderLineInput>
-  >;
-  insertInboundShipmentLines?: InputMaybe<
-    Array<InsertInboundShipmentLineInput>
-  >;
-  insertInboundShipmentServiceLines?: InputMaybe<
-    Array<InsertInboundShipmentServiceLineInput>
-  >;
-  insertInboundShipments?: InputMaybe<Array<InsertInboundShipmentInput>>;
-  updateInboundShipmentLines?: InputMaybe<
-    Array<UpdateInboundShipmentLineInput>
-  >;
-  updateInboundShipmentServiceLines?: InputMaybe<
-    Array<UpdateInboundShipmentServiceLineInput>
-  >;
-  updateInboundShipments?: InputMaybe<Array<UpdateInboundShipmentInput>>;
+  continueOnError?: Types.InputMaybe<Scalars['Boolean']['input']>;
+  deleteInboundShipmentLines?: Types.InputMaybe<Array<DeleteInboundShipmentLineInput>>;
+  deleteInboundShipmentServiceLines?: Types.InputMaybe<Array<DeleteInboundShipmentServiceLineInput>>;
+  deleteInboundShipments?: Types.InputMaybe<Array<DeleteInboundShipmentInput>>;
+  insertFromInternalOrderLines?: Types.InputMaybe<Array<InsertInboundShipmentLineFromInternalOrderLineInput>>;
+  insertInboundShipmentLines?: Types.InputMaybe<Array<InsertInboundShipmentLineInput>>;
+  insertInboundShipmentServiceLines?: Types.InputMaybe<Array<InsertInboundShipmentServiceLineInput>>;
+  insertInboundShipments?: Types.InputMaybe<Array<InsertInboundShipmentInput>>;
+  updateInboundShipmentLines?: Types.InputMaybe<Array<UpdateInboundShipmentLineInput>>;
+  updateInboundShipmentServiceLines?: Types.InputMaybe<Array<UpdateInboundShipmentServiceLineInput>>;
+  updateInboundShipments?: Types.InputMaybe<Array<UpdateInboundShipmentInput>>;
 };
 
 export type BatchOutboundShipmentInput = {
-  allocatedOutboundShipmentUnallocatedLines?: InputMaybe<
-    Array<Scalars['String']['input']>
-  >;
-  continueOnError?: InputMaybe<Scalars['Boolean']['input']>;
-  deleteOutboundShipmentLines?: InputMaybe<
-    Array<DeleteOutboundShipmentLineInput>
-  >;
-  deleteOutboundShipmentServiceLines?: InputMaybe<
-    Array<DeleteOutboundShipmentServiceLineInput>
-  >;
-  deleteOutboundShipmentUnallocatedLines?: InputMaybe<
-    Array<DeleteOutboundShipmentUnallocatedLineInput>
-  >;
-  deleteOutboundShipments?: InputMaybe<Array<Scalars['String']['input']>>;
-  insertOutboundShipmentLines?: InputMaybe<
-    Array<InsertOutboundShipmentLineInput>
-  >;
-  insertOutboundShipmentServiceLines?: InputMaybe<
-    Array<InsertOutboundShipmentServiceLineInput>
-  >;
-  insertOutboundShipmentUnallocatedLines?: InputMaybe<
-    Array<InsertOutboundShipmentUnallocatedLineInput>
-  >;
-  insertOutboundShipments?: InputMaybe<Array<InsertOutboundShipmentInput>>;
-  updateOutboundShipmentLines?: InputMaybe<
-    Array<UpdateOutboundShipmentLineInput>
-  >;
-  updateOutboundShipmentServiceLines?: InputMaybe<
-    Array<UpdateOutboundShipmentServiceLineInput>
-  >;
-  updateOutboundShipmentUnallocatedLines?: InputMaybe<
-    Array<UpdateOutboundShipmentUnallocatedLineInput>
-  >;
-  updateOutboundShipments?: InputMaybe<Array<UpdateOutboundShipmentInput>>;
+  allocatedOutboundShipmentUnallocatedLines?: Types.InputMaybe<Array<Scalars['String']['input']>>;
+  continueOnError?: Types.InputMaybe<Scalars['Boolean']['input']>;
+  deleteOutboundShipmentLines?: Types.InputMaybe<Array<DeleteOutboundShipmentLineInput>>;
+  deleteOutboundShipmentServiceLines?: Types.InputMaybe<Array<DeleteOutboundShipmentServiceLineInput>>;
+  deleteOutboundShipmentUnallocatedLines?: Types.InputMaybe<Array<DeleteOutboundShipmentUnallocatedLineInput>>;
+  deleteOutboundShipments?: Types.InputMaybe<Array<Scalars['String']['input']>>;
+  insertOutboundShipmentLines?: Types.InputMaybe<Array<InsertOutboundShipmentLineInput>>;
+  insertOutboundShipmentServiceLines?: Types.InputMaybe<Array<InsertOutboundShipmentServiceLineInput>>;
+  insertOutboundShipmentUnallocatedLines?: Types.InputMaybe<Array<InsertOutboundShipmentUnallocatedLineInput>>;
+  insertOutboundShipments?: Types.InputMaybe<Array<InsertOutboundShipmentInput>>;
+  updateOutboundShipmentLines?: Types.InputMaybe<Array<UpdateOutboundShipmentLineInput>>;
+  updateOutboundShipmentServiceLines?: Types.InputMaybe<Array<UpdateOutboundShipmentServiceLineInput>>;
+  updateOutboundShipmentUnallocatedLines?: Types.InputMaybe<Array<UpdateOutboundShipmentUnallocatedLineInput>>;
+  updateOutboundShipments?: Types.InputMaybe<Array<UpdateOutboundShipmentInput>>;
 };
 
 export type BatchPrescriptionInput = {
-  continueOnError?: InputMaybe<Scalars['Boolean']['input']>;
-  deletePrescriptionLines?: InputMaybe<Array<DeletePrescriptionLineInput>>;
-  deletePrescriptions?: InputMaybe<Array<Scalars['String']['input']>>;
-  insertPrescriptionLines?: InputMaybe<Array<InsertPrescriptionLineInput>>;
-  insertPrescriptions?: InputMaybe<Array<InsertPrescriptionInput>>;
-  setPrescribedQuantity?: InputMaybe<Array<SetPrescribedQuantityInput>>;
-  updatePrescriptionLines?: InputMaybe<Array<UpdatePrescriptionLineInput>>;
-  updatePrescriptions?: InputMaybe<Array<UpdatePrescriptionInput>>;
+  continueOnError?: Types.InputMaybe<Scalars['Boolean']['input']>;
+  deletePrescriptionLines?: Types.InputMaybe<Array<DeletePrescriptionLineInput>>;
+  deletePrescriptions?: Types.InputMaybe<Array<Scalars['String']['input']>>;
+  insertPrescriptionLines?: Types.InputMaybe<Array<InsertPrescriptionLineInput>>;
+  insertPrescriptions?: Types.InputMaybe<Array<InsertPrescriptionInput>>;
+  setPrescribedQuantity?: Types.InputMaybe<Array<SetPrescribedQuantityInput>>;
+  updatePrescriptionLines?: Types.InputMaybe<Array<UpdatePrescriptionLineInput>>;
+  updatePrescriptions?: Types.InputMaybe<Array<UpdatePrescriptionInput>>;
 };
 
 export type BatchRequestRequisitionInput = {
-  continueOnError?: InputMaybe<Scalars['Boolean']['input']>;
-  deleteRequestRequisitionLines?: InputMaybe<
-    Array<DeleteRequestRequisitionLineInput>
-  >;
-  deleteRequestRequisitions?: InputMaybe<Array<DeleteRequestRequisitionInput>>;
-  insertRequestRequisitionLines?: InputMaybe<
-    Array<InsertRequestRequisitionLineInput>
-  >;
-  insertRequestRequisitions?: InputMaybe<Array<InsertRequestRequisitionInput>>;
-  updateRequestRequisitionLines?: InputMaybe<
-    Array<UpdateRequestRequisitionLineInput>
-  >;
-  updateRequestRequisitions?: InputMaybe<Array<UpdateRequestRequisitionInput>>;
+  continueOnError?: Types.InputMaybe<Scalars['Boolean']['input']>;
+  deleteRequestRequisitionLines?: Types.InputMaybe<Array<DeleteRequestRequisitionLineInput>>;
+  deleteRequestRequisitions?: Types.InputMaybe<Array<DeleteRequestRequisitionInput>>;
+  insertRequestRequisitionLines?: Types.InputMaybe<Array<InsertRequestRequisitionLineInput>>;
+  insertRequestRequisitions?: Types.InputMaybe<Array<InsertRequestRequisitionInput>>;
+  updateRequestRequisitionLines?: Types.InputMaybe<Array<UpdateRequestRequisitionLineInput>>;
+  updateRequestRequisitions?: Types.InputMaybe<Array<UpdateRequestRequisitionInput>>;
 };
 
 export type BatchResponseRequisitionInput = {
-  continueOnError?: InputMaybe<Scalars['Boolean']['input']>;
-  deleteResponseRequisitionLines?: InputMaybe<
-    Array<DeleteResponseRequisitionLineInput>
-  >;
-  deleteResponseRequisitions?: InputMaybe<
-    Array<DeleteResponseRequisitionInput>
-  >;
+  continueOnError?: Types.InputMaybe<Scalars['Boolean']['input']>;
+  deleteResponseRequisitionLines?: Types.InputMaybe<Array<DeleteResponseRequisitionLineInput>>;
+  deleteResponseRequisitions?: Types.InputMaybe<Array<DeleteResponseRequisitionInput>>;
 };
 
 export type BatchStocktakeInput = {
-  continueOnError?: InputMaybe<Scalars['Boolean']['input']>;
-  deleteStocktakeLines?: InputMaybe<Array<DeleteStocktakeLineInput>>;
-  deleteStocktakes?: InputMaybe<Array<DeleteStocktakeInput>>;
-  insertStocktakeLines?: InputMaybe<Array<InsertStocktakeLineInput>>;
-  insertStocktakes?: InputMaybe<Array<InsertStocktakeInput>>;
-  updateStocktakeLines?: InputMaybe<Array<UpdateStocktakeLineInput>>;
-  updateStocktakes?: InputMaybe<Array<UpdateStocktakeInput>>;
+  continueOnError?: Types.InputMaybe<Scalars['Boolean']['input']>;
+  deleteStocktakeLines?: Types.InputMaybe<Array<DeleteStocktakeLineInput>>;
+  deleteStocktakes?: Types.InputMaybe<Array<DeleteStocktakeInput>>;
+  insertStocktakeLines?: Types.InputMaybe<Array<InsertStocktakeLineInput>>;
+  insertStocktakes?: Types.InputMaybe<Array<InsertStocktakeInput>>;
+  updateStocktakeLines?: Types.InputMaybe<Array<UpdateStocktakeLineInput>>;
+  updateStocktakes?: Types.InputMaybe<Array<UpdateStocktakeInput>>;
 };
 
 export type BoolStorePrefInput = {
@@ -611,8 +547,8 @@ export type BoolStorePrefInput = {
 };
 
 export type CampaignFilterInput = {
-  id?: InputMaybe<EqualFilterStringInput>;
-  name?: InputMaybe<StringFilterInput>;
+  id?: Types.InputMaybe<EqualFilterStringInput>;
+  name?: Types.InputMaybe<StringFilterInput>;
 };
 
 export enum CampaignSortFieldInput {
@@ -621,31 +557,31 @@ export enum CampaignSortFieldInput {
 
 export type CampaignSortInput = {
   /** Sort query result is sorted descending or ascending (if not provided the default is ascending) */
-  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  desc?: Types.InputMaybe<Scalars['Boolean']['input']>;
   /** Sort query result by `key` */
   key: CampaignSortFieldInput;
 };
 
 export type CentralPatientSearchInput = {
   /** Patient code */
-  code?: InputMaybe<Scalars['String']['input']>;
-  dateOfBirth?: InputMaybe<Scalars['NaiveDate']['input']>;
-  firstName?: InputMaybe<Scalars['String']['input']>;
-  lastName?: InputMaybe<Scalars['String']['input']>;
+  code?: Types.InputMaybe<Scalars['String']['input']>;
+  dateOfBirth?: Types.InputMaybe<Scalars['NaiveDate']['input']>;
+  firstName?: Types.InputMaybe<Scalars['String']['input']>;
+  lastName?: Types.InputMaybe<Scalars['String']['input']>;
 };
 
 export type ClinicianFilterInput = {
-  address1?: InputMaybe<StringFilterInput>;
-  address2?: InputMaybe<StringFilterInput>;
-  code?: InputMaybe<StringFilterInput>;
-  email?: InputMaybe<StringFilterInput>;
-  firstName?: InputMaybe<StringFilterInput>;
-  id?: InputMaybe<EqualFilterStringInput>;
-  initials?: InputMaybe<StringFilterInput>;
-  isActive?: InputMaybe<Scalars['Boolean']['input']>;
-  lastName?: InputMaybe<StringFilterInput>;
-  mobile?: InputMaybe<StringFilterInput>;
-  phone?: InputMaybe<StringFilterInput>;
+  address1?: Types.InputMaybe<StringFilterInput>;
+  address2?: Types.InputMaybe<StringFilterInput>;
+  code?: Types.InputMaybe<StringFilterInput>;
+  email?: Types.InputMaybe<StringFilterInput>;
+  firstName?: Types.InputMaybe<StringFilterInput>;
+  id?: Types.InputMaybe<EqualFilterStringInput>;
+  initials?: Types.InputMaybe<StringFilterInput>;
+  isActive?: Types.InputMaybe<Scalars['Boolean']['input']>;
+  lastName?: Types.InputMaybe<StringFilterInput>;
+  mobile?: Types.InputMaybe<StringFilterInput>;
+  phone?: Types.InputMaybe<StringFilterInput>;
 };
 
 export enum ClinicianSortFieldInput {
@@ -665,13 +601,13 @@ export type ClinicianSortInput = {
    * Sort query result is sorted descending or ascending (if not provided the default is
    * ascending)
    */
-  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  desc?: Types.InputMaybe<Scalars['Boolean']['input']>;
   /** Sort query result by `key` */
   key: ClinicianSortFieldInput;
 };
 
 export type ConfigureNamePropertyInput = {
-  allowedValues?: InputMaybe<Scalars['String']['input']>;
+  allowedValues?: Types.InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
   key: Scalars['String']['input'];
   name: Scalars['String']['input'];
@@ -682,9 +618,9 @@ export type ConfigureNamePropertyInput = {
 
 export type ConsumptionOptionsInput = {
   /** Defaults to store preference amc_lookback_months */
-  amcLookbackMonths?: InputMaybe<Scalars['Float']['input']>;
+  amcLookbackMonths?: Types.InputMaybe<Scalars['Float']['input']>;
   /** Defaults to 12 */
-  numberOfDataPoints?: InputMaybe<Scalars['Int']['input']>;
+  numberOfDataPoints?: Types.InputMaybe<Scalars['Int']['input']>;
 };
 
 export enum ContactFormNodeType {
@@ -693,18 +629,18 @@ export enum ContactFormNodeType {
 }
 
 export type ContactTraceFilterInput = {
-  contactPatientId?: InputMaybe<EqualFilterStringInput>;
-  contactTraceId?: InputMaybe<StringFilterInput>;
-  dateOfBirth?: InputMaybe<DateFilterInput>;
-  datetime?: InputMaybe<DatetimeFilterInput>;
-  documentName?: InputMaybe<StringFilterInput>;
-  firstName?: InputMaybe<StringFilterInput>;
-  gender?: InputMaybe<EqualFilterGenderType>;
-  id?: InputMaybe<EqualFilterStringInput>;
-  lastName?: InputMaybe<StringFilterInput>;
-  patientId?: InputMaybe<EqualFilterStringInput>;
-  programId?: InputMaybe<EqualFilterStringInput>;
-  type?: InputMaybe<StringFilterInput>;
+  contactPatientId?: Types.InputMaybe<EqualFilterStringInput>;
+  contactTraceId?: Types.InputMaybe<StringFilterInput>;
+  dateOfBirth?: Types.InputMaybe<DateFilterInput>;
+  datetime?: Types.InputMaybe<DatetimeFilterInput>;
+  documentName?: Types.InputMaybe<StringFilterInput>;
+  firstName?: Types.InputMaybe<StringFilterInput>;
+  gender?: Types.InputMaybe<EqualFilterGenderType>;
+  id?: Types.InputMaybe<EqualFilterStringInput>;
+  lastName?: Types.InputMaybe<StringFilterInput>;
+  patientId?: Types.InputMaybe<EqualFilterStringInput>;
+  programId?: Types.InputMaybe<EqualFilterStringInput>;
+  type?: Types.InputMaybe<StringFilterInput>;
 };
 
 export enum ContactTraceSortFieldInput {
@@ -723,7 +659,7 @@ export type ContactTraceSortInput = {
    * Sort query result is sorted descending or ascending (if not provided the default is
    * ascending)
    */
-  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  desc?: Types.InputMaybe<Scalars['Boolean']['input']>;
   /** Sort query result by `key` */
   key: ContactTraceSortFieldInput;
 };
@@ -731,7 +667,7 @@ export type ContactTraceSortInput = {
 export type CreateInventoryAdjustmentInput = {
   adjustment: Scalars['Float']['input'];
   adjustmentType: AdjustmentTypeInput;
-  reasonOptionId?: InputMaybe<Scalars['String']['input']>;
+  reasonOptionId?: Types.InputMaybe<Scalars['String']['input']>;
   stockLineId: Scalars['String']['input'];
 };
 
@@ -740,9 +676,9 @@ export type CreateRequisitionShipmentInput = {
 };
 
 export type CurrencyFilterInput = {
-  id?: InputMaybe<EqualFilterStringInput>;
-  isActive?: InputMaybe<Scalars['Boolean']['input']>;
-  isHomeCurrency?: InputMaybe<Scalars['Boolean']['input']>;
+  id?: Types.InputMaybe<EqualFilterStringInput>;
+  isActive?: Types.InputMaybe<Scalars['Boolean']['input']>;
+  isHomeCurrency?: Types.InputMaybe<Scalars['Boolean']['input']>;
 };
 
 export enum CurrencySortFieldInput {
@@ -756,7 +692,7 @@ export type CurrencySortInput = {
    * Sort query result is sorted descending or ascending (if not provided the default is
    * ascending)
    */
-  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  desc?: Types.InputMaybe<Scalars['Boolean']['input']>;
   /** Sort query result by `key` */
   key: CurrencySortFieldInput;
 };
@@ -765,21 +701,21 @@ export type CustomerReturnInput = {
   customerId: Scalars['String']['input'];
   customerReturnLines: Array<CustomerReturnLineInput>;
   id: Scalars['String']['input'];
-  outboundShipmentId?: InputMaybe<Scalars['String']['input']>;
+  outboundShipmentId?: Types.InputMaybe<Scalars['String']['input']>;
 };
 
 export type CustomerReturnLineInput = {
-  batch?: InputMaybe<Scalars['String']['input']>;
-  expiryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
+  batch?: Types.InputMaybe<Scalars['String']['input']>;
+  expiryDate?: Types.InputMaybe<Scalars['NaiveDate']['input']>;
   id: Scalars['String']['input'];
   itemId: Scalars['String']['input'];
-  itemVariantId?: InputMaybe<Scalars['String']['input']>;
-  note?: InputMaybe<Scalars['String']['input']>;
+  itemVariantId?: Types.InputMaybe<Scalars['String']['input']>;
+  note?: Types.InputMaybe<Scalars['String']['input']>;
   numberOfPacksReturned: Scalars['Float']['input'];
   packSize: Scalars['Float']['input'];
-  reasonId?: InputMaybe<Scalars['String']['input']>;
-  volumePerPack?: InputMaybe<Scalars['Float']['input']>;
-  vvmStatusId?: InputMaybe<Scalars['String']['input']>;
+  reasonId?: Types.InputMaybe<Scalars['String']['input']>;
+  volumePerPack?: Types.InputMaybe<Scalars['Float']['input']>;
+  vvmStatusId?: Types.InputMaybe<Scalars['String']['input']>;
 };
 
 export enum DatabaseType {
@@ -788,15 +724,15 @@ export enum DatabaseType {
 }
 
 export type DateFilterInput = {
-  afterOrEqualTo?: InputMaybe<Scalars['NaiveDate']['input']>;
-  beforeOrEqualTo?: InputMaybe<Scalars['NaiveDate']['input']>;
-  equalTo?: InputMaybe<Scalars['NaiveDate']['input']>;
+  afterOrEqualTo?: Types.InputMaybe<Scalars['NaiveDate']['input']>;
+  beforeOrEqualTo?: Types.InputMaybe<Scalars['NaiveDate']['input']>;
+  equalTo?: Types.InputMaybe<Scalars['NaiveDate']['input']>;
 };
 
 export type DatetimeFilterInput = {
-  afterOrEqualTo?: InputMaybe<Scalars['DateTime']['input']>;
-  beforeOrEqualTo?: InputMaybe<Scalars['DateTime']['input']>;
-  equalTo?: InputMaybe<Scalars['DateTime']['input']>;
+  afterOrEqualTo?: Types.InputMaybe<Scalars['DateTime']['input']>;
+  beforeOrEqualTo?: Types.InputMaybe<Scalars['DateTime']['input']>;
+  equalTo?: Types.InputMaybe<Scalars['DateTime']['input']>;
 };
 
 export type DeleteBundledItemInput = {
@@ -872,14 +808,14 @@ export type DeleteStocktakeLineInput = {
 };
 
 export type DemographicFilterInput = {
-  id?: InputMaybe<EqualFilterStringInput>;
-  name?: InputMaybe<StringFilterInput>;
+  id?: Types.InputMaybe<EqualFilterStringInput>;
+  name?: Types.InputMaybe<StringFilterInput>;
 };
 
 export type DemographicIndicatorFilterInput = {
-  baseYear?: InputMaybe<EqualFilterNumberInput>;
-  id?: InputMaybe<EqualFilterStringInput>;
-  name?: InputMaybe<StringFilterInput>;
+  baseYear?: Types.InputMaybe<EqualFilterNumberInput>;
+  id?: Types.InputMaybe<EqualFilterStringInput>;
+  name?: Types.InputMaybe<StringFilterInput>;
 };
 
 export enum DemographicIndicatorSortFieldInput {
@@ -888,13 +824,13 @@ export enum DemographicIndicatorSortFieldInput {
 }
 
 export type DemographicIndicatorSortInput = {
-  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  desc?: Types.InputMaybe<Scalars['Boolean']['input']>;
   key: DemographicIndicatorSortFieldInput;
 };
 
 export type DemographicProjectionFilterInput = {
-  baseYear?: InputMaybe<EqualFilterNumberInput>;
-  id?: InputMaybe<EqualFilterStringInput>;
+  baseYear?: Types.InputMaybe<EqualFilterNumberInput>;
+  id?: Types.InputMaybe<EqualFilterStringInput>;
 };
 
 export enum DemographicProjectionSortFieldInput {
@@ -902,7 +838,7 @@ export enum DemographicProjectionSortFieldInput {
 }
 
 export type DemographicProjectionSortInput = {
-  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  desc?: Types.InputMaybe<Scalars['Boolean']['input']>;
   key: DemographicProjectionSortFieldInput;
 };
 
@@ -912,7 +848,7 @@ export enum DemographicSortFieldInput {
 }
 
 export type DemographicSortInput = {
-  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  desc?: Types.InputMaybe<Scalars['Boolean']['input']>;
   key: DemographicSortFieldInput;
 };
 
@@ -922,21 +858,21 @@ export type DisplaySettingsHash = {
 };
 
 export type DisplaySettingsInput = {
-  customLogo?: InputMaybe<Scalars['String']['input']>;
-  customTheme?: InputMaybe<Scalars['String']['input']>;
+  customLogo?: Types.InputMaybe<Scalars['String']['input']>;
+  customTheme?: Types.InputMaybe<Scalars['String']['input']>;
 };
 
 export type DocumentFilterInput = {
-  contextId?: InputMaybe<EqualFilterStringInput>;
+  contextId?: Types.InputMaybe<EqualFilterStringInput>;
   /**
    * This filter makes it possible to search the raw text json data.
    * Be beware of potential performance issues.
    */
-  data?: InputMaybe<StringFilterInput>;
-  datetime?: InputMaybe<DatetimeFilterInput>;
-  name?: InputMaybe<StringFilterInput>;
-  owner?: InputMaybe<EqualFilterStringInput>;
-  type?: InputMaybe<EqualFilterStringInput>;
+  data?: Types.InputMaybe<StringFilterInput>;
+  datetime?: Types.InputMaybe<DatetimeFilterInput>;
+  name?: Types.InputMaybe<StringFilterInput>;
+  owner?: Types.InputMaybe<EqualFilterStringInput>;
+  type?: Types.InputMaybe<EqualFilterStringInput>;
 };
 
 export enum DocumentRegistryCategoryNode {
@@ -948,10 +884,10 @@ export enum DocumentRegistryCategoryNode {
 }
 
 export type DocumentRegistryFilterInput = {
-  category?: InputMaybe<EqualFilterDocumentRegistryCategoryInput>;
-  contextId?: InputMaybe<EqualFilterStringInput>;
-  documentType?: InputMaybe<EqualFilterStringInput>;
-  id?: InputMaybe<EqualFilterStringInput>;
+  category?: Types.InputMaybe<EqualFilterDocumentRegistryCategoryInput>;
+  contextId?: Types.InputMaybe<EqualFilterStringInput>;
+  documentType?: Types.InputMaybe<EqualFilterStringInput>;
+  id?: Types.InputMaybe<EqualFilterStringInput>;
 };
 
 export enum DocumentRegistrySortFieldInput {
@@ -964,7 +900,7 @@ export type DocumentRegistrySortInput = {
    * Sort query result is sorted descending or ascending (if not provided the default is
    * ascending)
    */
-  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  desc?: Types.InputMaybe<Scalars['Boolean']['input']>;
   /** Sort query result by `key` */
   key: DocumentRegistrySortFieldInput;
 };
@@ -982,23 +918,23 @@ export type DocumentSortInput = {
    * Sort query result is sorted descending or ascending (if not provided the default is
    * ascending)
    */
-  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  desc?: Types.InputMaybe<Scalars['Boolean']['input']>;
   /** Sort query result by `key` */
   key: DocumentSortFieldInput;
 };
 
 export type EncounterEventFilterInput = {
-  activeEndDatetime?: InputMaybe<DatetimeFilterInput>;
-  activeStartDatetime?: InputMaybe<DatetimeFilterInput>;
-  data?: InputMaybe<StringFilterInput>;
-  datetime?: InputMaybe<DatetimeFilterInput>;
+  activeEndDatetime?: Types.InputMaybe<DatetimeFilterInput>;
+  activeStartDatetime?: Types.InputMaybe<DatetimeFilterInput>;
+  data?: Types.InputMaybe<StringFilterInput>;
+  datetime?: Types.InputMaybe<DatetimeFilterInput>;
   /**
    * Only include events that are for the current encounter, i.e. have matching encounter type
    * and matching encounter name of the current encounter. If not set all events with matching
    * encounter type are returned.
    */
-  isCurrentEncounter?: InputMaybe<Scalars['Boolean']['input']>;
-  type?: InputMaybe<EqualFilterStringInput>;
+  isCurrentEncounter?: Types.InputMaybe<Scalars['Boolean']['input']>;
+  type?: Types.InputMaybe<EqualFilterStringInput>;
 };
 
 export type EncounterFieldsInput = {
@@ -1006,21 +942,21 @@ export type EncounterFieldsInput = {
 };
 
 export type EncounterFilterInput = {
-  clinicianId?: InputMaybe<EqualFilterStringInput>;
-  createdDatetime?: InputMaybe<DatetimeFilterInput>;
-  documentData?: InputMaybe<StringFilterInput>;
-  documentName?: InputMaybe<EqualFilterStringInput>;
-  endDatetime?: InputMaybe<DatetimeFilterInput>;
-  id?: InputMaybe<EqualFilterStringInput>;
+  clinicianId?: Types.InputMaybe<EqualFilterStringInput>;
+  createdDatetime?: Types.InputMaybe<DatetimeFilterInput>;
+  documentData?: Types.InputMaybe<StringFilterInput>;
+  documentName?: Types.InputMaybe<EqualFilterStringInput>;
+  endDatetime?: Types.InputMaybe<DatetimeFilterInput>;
+  id?: Types.InputMaybe<EqualFilterStringInput>;
   /** Only if this filter is set encounters with status DELETED are returned */
-  includeDeleted?: InputMaybe<Scalars['Boolean']['input']>;
-  patient?: InputMaybe<PatientFilterInput>;
-  patientId?: InputMaybe<EqualFilterStringInput>;
-  programEnrolment?: InputMaybe<ProgramEnrolmentFilterInput>;
-  programId?: InputMaybe<EqualFilterStringInput>;
-  startDatetime?: InputMaybe<DatetimeFilterInput>;
-  status?: InputMaybe<EqualFilterEncounterStatusInput>;
-  type?: InputMaybe<EqualFilterStringInput>;
+  includeDeleted?: Types.InputMaybe<Scalars['Boolean']['input']>;
+  patient?: Types.InputMaybe<PatientFilterInput>;
+  patientId?: Types.InputMaybe<EqualFilterStringInput>;
+  programEnrolment?: Types.InputMaybe<ProgramEnrolmentFilterInput>;
+  programId?: Types.InputMaybe<EqualFilterStringInput>;
+  startDatetime?: Types.InputMaybe<DatetimeFilterInput>;
+  status?: Types.InputMaybe<EqualFilterEncounterStatusInput>;
+  type?: Types.InputMaybe<EqualFilterStringInput>;
 };
 
 export enum EncounterNodeStatus {
@@ -1045,181 +981,181 @@ export type EncounterSortInput = {
    * Sort query result is sorted descending or ascending (if not provided the default is
    * ascending)
    */
-  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  desc?: Types.InputMaybe<Scalars['Boolean']['input']>;
   /** Sort query result by `key` */
   key: EncounterSortFieldInput;
 };
 
 export type EqualFilterActivityLogTypeInput = {
-  equalAny?: InputMaybe<Array<ActivityLogNodeType>>;
-  equalTo?: InputMaybe<ActivityLogNodeType>;
-  notEqualAll?: InputMaybe<Array<ActivityLogNodeType>>;
-  notEqualTo?: InputMaybe<ActivityLogNodeType>;
+  equalAny?: Types.InputMaybe<Array<ActivityLogNodeType>>;
+  equalTo?: Types.InputMaybe<ActivityLogNodeType>;
+  notEqualAll?: Types.InputMaybe<Array<ActivityLogNodeType>>;
+  notEqualTo?: Types.InputMaybe<ActivityLogNodeType>;
 };
 
 export type EqualFilterBigFloatingNumberInput = {
-  equalAny?: InputMaybe<Array<Scalars['Float']['input']>>;
-  equalAnyOrNull?: InputMaybe<Array<Scalars['Float']['input']>>;
-  equalTo?: InputMaybe<Scalars['Float']['input']>;
-  notEqualAll?: InputMaybe<Array<Scalars['Float']['input']>>;
-  notEqualTo?: InputMaybe<Scalars['Float']['input']>;
+  equalAny?: Types.InputMaybe<Array<Scalars['Float']['input']>>;
+  equalAnyOrNull?: Types.InputMaybe<Array<Scalars['Float']['input']>>;
+  equalTo?: Types.InputMaybe<Scalars['Float']['input']>;
+  notEqualAll?: Types.InputMaybe<Array<Scalars['Float']['input']>>;
+  notEqualTo?: Types.InputMaybe<Scalars['Float']['input']>;
 };
 
 export type EqualFilterBigNumberInput = {
-  equalAny?: InputMaybe<Array<Scalars['Int']['input']>>;
-  equalAnyOrNull?: InputMaybe<Array<Scalars['Int']['input']>>;
-  equalTo?: InputMaybe<Scalars['Int']['input']>;
-  notEqualAll?: InputMaybe<Array<Scalars['Int']['input']>>;
-  notEqualTo?: InputMaybe<Scalars['Int']['input']>;
+  equalAny?: Types.InputMaybe<Array<Scalars['Int']['input']>>;
+  equalAnyOrNull?: Types.InputMaybe<Array<Scalars['Int']['input']>>;
+  equalTo?: Types.InputMaybe<Scalars['Int']['input']>;
+  notEqualAll?: Types.InputMaybe<Array<Scalars['Int']['input']>>;
+  notEqualTo?: Types.InputMaybe<Scalars['Int']['input']>;
 };
 
 export type EqualFilterDocumentRegistryCategoryInput = {
-  equalAny?: InputMaybe<Array<DocumentRegistryCategoryNode>>;
-  equalTo?: InputMaybe<DocumentRegistryCategoryNode>;
-  notEqualAll?: InputMaybe<Array<DocumentRegistryCategoryNode>>;
-  notEqualTo?: InputMaybe<DocumentRegistryCategoryNode>;
+  equalAny?: Types.InputMaybe<Array<DocumentRegistryCategoryNode>>;
+  equalTo?: Types.InputMaybe<DocumentRegistryCategoryNode>;
+  notEqualAll?: Types.InputMaybe<Array<DocumentRegistryCategoryNode>>;
+  notEqualTo?: Types.InputMaybe<DocumentRegistryCategoryNode>;
 };
 
 export type EqualFilterEncounterStatusInput = {
-  equalAny?: InputMaybe<Array<EncounterNodeStatus>>;
-  equalTo?: InputMaybe<EncounterNodeStatus>;
-  notEqualAll?: InputMaybe<Array<EncounterNodeStatus>>;
-  notEqualTo?: InputMaybe<EncounterNodeStatus>;
+  equalAny?: Types.InputMaybe<Array<EncounterNodeStatus>>;
+  equalTo?: Types.InputMaybe<EncounterNodeStatus>;
+  notEqualAll?: Types.InputMaybe<Array<EncounterNodeStatus>>;
+  notEqualTo?: Types.InputMaybe<EncounterNodeStatus>;
 };
 
 export type EqualFilterGenderType = {
-  equalAny?: InputMaybe<Array<GenderTypeNode>>;
-  equalTo?: InputMaybe<GenderTypeNode>;
-  notEqualAll?: InputMaybe<Array<GenderTypeNode>>;
-  notEqualTo?: InputMaybe<GenderTypeNode>;
+  equalAny?: Types.InputMaybe<Array<GenderTypeNode>>;
+  equalTo?: Types.InputMaybe<GenderTypeNode>;
+  notEqualAll?: Types.InputMaybe<Array<GenderTypeNode>>;
+  notEqualTo?: Types.InputMaybe<GenderTypeNode>;
 };
 
 export type EqualFilterGoodsReceivedStatusInput = {
-  equalAny?: InputMaybe<Array<GoodsReceivedNodeStatus>>;
-  equalTo?: InputMaybe<GoodsReceivedNodeStatus>;
-  notEqualAll?: InputMaybe<Array<GoodsReceivedNodeStatus>>;
-  notEqualTo?: InputMaybe<GoodsReceivedNodeStatus>;
+  equalAny?: Types.InputMaybe<Array<GoodsReceivedNodeStatus>>;
+  equalTo?: Types.InputMaybe<GoodsReceivedNodeStatus>;
+  notEqualAll?: Types.InputMaybe<Array<GoodsReceivedNodeStatus>>;
+  notEqualTo?: Types.InputMaybe<GoodsReceivedNodeStatus>;
 };
 
 export type EqualFilterInventoryAdjustmentReasonTypeInput = {
-  equalAny?: InputMaybe<Array<InventoryAdjustmentReasonNodeType>>;
-  equalTo?: InputMaybe<InventoryAdjustmentReasonNodeType>;
-  notEqualAll?: InputMaybe<Array<InventoryAdjustmentReasonNodeType>>;
-  notEqualTo?: InputMaybe<InventoryAdjustmentReasonNodeType>;
+  equalAny?: Types.InputMaybe<Array<InventoryAdjustmentReasonNodeType>>;
+  equalTo?: Types.InputMaybe<InventoryAdjustmentReasonNodeType>;
+  notEqualAll?: Types.InputMaybe<Array<InventoryAdjustmentReasonNodeType>>;
+  notEqualTo?: Types.InputMaybe<InventoryAdjustmentReasonNodeType>;
 };
 
 export type EqualFilterInvoiceLineTypeInput = {
-  equalAny?: InputMaybe<Array<InvoiceLineNodeType>>;
-  equalTo?: InputMaybe<InvoiceLineNodeType>;
-  notEqualAll?: InputMaybe<Array<InvoiceLineNodeType>>;
-  notEqualTo?: InputMaybe<InvoiceLineNodeType>;
+  equalAny?: Types.InputMaybe<Array<InvoiceLineNodeType>>;
+  equalTo?: Types.InputMaybe<InvoiceLineNodeType>;
+  notEqualAll?: Types.InputMaybe<Array<InvoiceLineNodeType>>;
+  notEqualTo?: Types.InputMaybe<InvoiceLineNodeType>;
 };
 
 export type EqualFilterInvoiceStatusInput = {
-  equalAny?: InputMaybe<Array<InvoiceNodeStatus>>;
-  equalTo?: InputMaybe<InvoiceNodeStatus>;
-  notEqualAll?: InputMaybe<Array<InvoiceNodeStatus>>;
-  notEqualTo?: InputMaybe<InvoiceNodeStatus>;
+  equalAny?: Types.InputMaybe<Array<InvoiceNodeStatus>>;
+  equalTo?: Types.InputMaybe<InvoiceNodeStatus>;
+  notEqualAll?: Types.InputMaybe<Array<InvoiceNodeStatus>>;
+  notEqualTo?: Types.InputMaybe<InvoiceNodeStatus>;
 };
 
 export type EqualFilterInvoiceTypeInput = {
-  equalAny?: InputMaybe<Array<InvoiceNodeType>>;
-  equalTo?: InputMaybe<InvoiceNodeType>;
-  notEqualAll?: InputMaybe<Array<InvoiceNodeType>>;
-  notEqualTo?: InputMaybe<InvoiceNodeType>;
+  equalAny?: Types.InputMaybe<Array<InvoiceNodeType>>;
+  equalTo?: Types.InputMaybe<InvoiceNodeType>;
+  notEqualAll?: Types.InputMaybe<Array<InvoiceNodeType>>;
+  notEqualTo?: Types.InputMaybe<InvoiceNodeType>;
 };
 
 export type EqualFilterItemTypeInput = {
-  equalAny?: InputMaybe<Array<ItemNodeType>>;
-  equalTo?: InputMaybe<ItemNodeType>;
-  notEqualAll?: InputMaybe<Array<ItemNodeType>>;
-  notEqualTo?: InputMaybe<ItemNodeType>;
+  equalAny?: Types.InputMaybe<Array<ItemNodeType>>;
+  equalTo?: Types.InputMaybe<ItemNodeType>;
+  notEqualAll?: Types.InputMaybe<Array<ItemNodeType>>;
+  notEqualTo?: Types.InputMaybe<ItemNodeType>;
 };
 
 export type EqualFilterNumberInput = {
-  equalAny?: InputMaybe<Array<Scalars['Int']['input']>>;
-  equalAnyOrNull?: InputMaybe<Array<Scalars['Int']['input']>>;
-  equalTo?: InputMaybe<Scalars['Int']['input']>;
-  notEqualAll?: InputMaybe<Array<Scalars['Int']['input']>>;
-  notEqualTo?: InputMaybe<Scalars['Int']['input']>;
+  equalAny?: Types.InputMaybe<Array<Scalars['Int']['input']>>;
+  equalAnyOrNull?: Types.InputMaybe<Array<Scalars['Int']['input']>>;
+  equalTo?: Types.InputMaybe<Scalars['Int']['input']>;
+  notEqualAll?: Types.InputMaybe<Array<Scalars['Int']['input']>>;
+  notEqualTo?: Types.InputMaybe<Scalars['Int']['input']>;
 };
 
 export type EqualFilterPurchaseOrderLineStatusInput = {
-  equalAny?: InputMaybe<Array<PurchaseOrderLineStatusNode>>;
-  equalTo?: InputMaybe<PurchaseOrderLineStatusNode>;
-  notEqualAll?: InputMaybe<Array<PurchaseOrderLineStatusNode>>;
-  notEqualTo?: InputMaybe<PurchaseOrderLineStatusNode>;
+  equalAny?: Types.InputMaybe<Array<PurchaseOrderLineStatusNode>>;
+  equalTo?: Types.InputMaybe<PurchaseOrderLineStatusNode>;
+  notEqualAll?: Types.InputMaybe<Array<PurchaseOrderLineStatusNode>>;
+  notEqualTo?: Types.InputMaybe<PurchaseOrderLineStatusNode>;
 };
 
 export type EqualFilterPurchaseOrderStatusInput = {
-  equalAny?: InputMaybe<Array<PurchaseOrderNodeStatus>>;
-  equalTo?: InputMaybe<PurchaseOrderNodeStatus>;
-  notEqualAll?: InputMaybe<Array<PurchaseOrderNodeStatus>>;
-  notEqualTo?: InputMaybe<PurchaseOrderNodeStatus>;
+  equalAny?: Types.InputMaybe<Array<PurchaseOrderNodeStatus>>;
+  equalTo?: Types.InputMaybe<PurchaseOrderNodeStatus>;
+  notEqualAll?: Types.InputMaybe<Array<PurchaseOrderNodeStatus>>;
+  notEqualTo?: Types.InputMaybe<PurchaseOrderNodeStatus>;
 };
 
 export type EqualFilterReasonOptionTypeInput = {
-  equalAny?: InputMaybe<Array<ReasonOptionNodeType>>;
-  equalTo?: InputMaybe<ReasonOptionNodeType>;
-  notEqualAll?: InputMaybe<Array<ReasonOptionNodeType>>;
-  notEqualTo?: InputMaybe<ReasonOptionNodeType>;
+  equalAny?: Types.InputMaybe<Array<ReasonOptionNodeType>>;
+  equalTo?: Types.InputMaybe<ReasonOptionNodeType>;
+  notEqualAll?: Types.InputMaybe<Array<ReasonOptionNodeType>>;
+  notEqualTo?: Types.InputMaybe<ReasonOptionNodeType>;
 };
 
 export type EqualFilterReportContextInput = {
-  equalAny?: InputMaybe<Array<ReportContext>>;
-  equalTo?: InputMaybe<ReportContext>;
-  notEqualAll?: InputMaybe<Array<ReportContext>>;
-  notEqualTo?: InputMaybe<ReportContext>;
+  equalAny?: Types.InputMaybe<Array<ReportContext>>;
+  equalTo?: Types.InputMaybe<ReportContext>;
+  notEqualAll?: Types.InputMaybe<Array<ReportContext>>;
+  notEqualTo?: Types.InputMaybe<ReportContext>;
 };
 
 export type EqualFilterRequisitionStatusInput = {
-  equalAny?: InputMaybe<Array<RequisitionNodeStatus>>;
-  equalTo?: InputMaybe<RequisitionNodeStatus>;
-  notEqualAll?: InputMaybe<Array<RequisitionNodeStatus>>;
-  notEqualTo?: InputMaybe<RequisitionNodeStatus>;
+  equalAny?: Types.InputMaybe<Array<RequisitionNodeStatus>>;
+  equalTo?: Types.InputMaybe<RequisitionNodeStatus>;
+  notEqualAll?: Types.InputMaybe<Array<RequisitionNodeStatus>>;
+  notEqualTo?: Types.InputMaybe<RequisitionNodeStatus>;
 };
 
 export type EqualFilterRequisitionTypeInput = {
-  equalAny?: InputMaybe<Array<RequisitionNodeType>>;
-  equalTo?: InputMaybe<RequisitionNodeType>;
-  notEqualAll?: InputMaybe<Array<RequisitionNodeType>>;
-  notEqualTo?: InputMaybe<RequisitionNodeType>;
+  equalAny?: Types.InputMaybe<Array<RequisitionNodeType>>;
+  equalTo?: Types.InputMaybe<RequisitionNodeType>;
+  notEqualAll?: Types.InputMaybe<Array<RequisitionNodeType>>;
+  notEqualTo?: Types.InputMaybe<RequisitionNodeType>;
 };
 
 export type EqualFilterStatusInput = {
-  equalAny?: InputMaybe<Array<AssetLogStatusNodeType>>;
-  equalTo?: InputMaybe<AssetLogStatusNodeType>;
-  notEqualAll?: InputMaybe<Array<AssetLogStatusNodeType>>;
-  notEqualTo?: InputMaybe<AssetLogStatusNodeType>;
+  equalAny?: Types.InputMaybe<Array<AssetLogStatusNodeType>>;
+  equalTo?: Types.InputMaybe<AssetLogStatusNodeType>;
+  notEqualAll?: Types.InputMaybe<Array<AssetLogStatusNodeType>>;
+  notEqualTo?: Types.InputMaybe<AssetLogStatusNodeType>;
 };
 
 export type EqualFilterStocktakeStatusInput = {
-  equalAny?: InputMaybe<Array<StocktakeNodeStatus>>;
-  equalTo?: InputMaybe<StocktakeNodeStatus>;
-  notEqualAll?: InputMaybe<Array<StocktakeNodeStatus>>;
-  notEqualTo?: InputMaybe<StocktakeNodeStatus>;
+  equalAny?: Types.InputMaybe<Array<StocktakeNodeStatus>>;
+  equalTo?: Types.InputMaybe<StocktakeNodeStatus>;
+  notEqualAll?: Types.InputMaybe<Array<StocktakeNodeStatus>>;
+  notEqualTo?: Types.InputMaybe<StocktakeNodeStatus>;
 };
 
 export type EqualFilterStringInput = {
-  equalAny?: InputMaybe<Array<Scalars['String']['input']>>;
-  equalAnyOrNull?: InputMaybe<Array<Scalars['String']['input']>>;
-  equalTo?: InputMaybe<Scalars['String']['input']>;
-  notEqualAll?: InputMaybe<Array<Scalars['String']['input']>>;
-  notEqualTo?: InputMaybe<Scalars['String']['input']>;
+  equalAny?: Types.InputMaybe<Array<Scalars['String']['input']>>;
+  equalAnyOrNull?: Types.InputMaybe<Array<Scalars['String']['input']>>;
+  equalTo?: Types.InputMaybe<Scalars['String']['input']>;
+  notEqualAll?: Types.InputMaybe<Array<Scalars['String']['input']>>;
+  notEqualTo?: Types.InputMaybe<Scalars['String']['input']>;
 };
 
 export type EqualFilterTemperatureBreachRowTypeInput = {
-  equalAny?: InputMaybe<Array<TemperatureBreachNodeType>>;
-  equalTo?: InputMaybe<TemperatureBreachNodeType>;
-  notEqualAll?: InputMaybe<Array<TemperatureBreachNodeType>>;
-  notEqualTo?: InputMaybe<TemperatureBreachNodeType>;
+  equalAny?: Types.InputMaybe<Array<TemperatureBreachNodeType>>;
+  equalTo?: Types.InputMaybe<TemperatureBreachNodeType>;
+  notEqualAll?: Types.InputMaybe<Array<TemperatureBreachNodeType>>;
+  notEqualTo?: Types.InputMaybe<TemperatureBreachNodeType>;
 };
 
 export type EqualFilterTypeInput = {
-  equalAny?: InputMaybe<Array<NameNodeType>>;
-  equalTo?: InputMaybe<NameNodeType>;
-  notEqualAll?: InputMaybe<Array<NameNodeType>>;
-  notEqualTo?: InputMaybe<NameNodeType>;
+  equalAny?: Types.InputMaybe<Array<NameNodeType>>;
+  equalTo?: Types.InputMaybe<NameNodeType>;
+  notEqualAll?: Types.InputMaybe<Array<NameNodeType>>;
+  notEqualTo?: Types.InputMaybe<NameNodeType>;
 };
 
 export type ExistingLinesInput = {
@@ -1243,8 +1179,8 @@ export enum ForeignKey {
 }
 
 export type FormSchemaFilterInput = {
-  id?: InputMaybe<EqualFilterStringInput>;
-  type?: InputMaybe<EqualFilterStringInput>;
+  id?: Types.InputMaybe<EqualFilterStringInput>;
+  type?: Types.InputMaybe<EqualFilterStringInput>;
 };
 
 export enum FormSchemaSortFieldInput {
@@ -1256,7 +1192,7 @@ export type FormSchemaSortInput = {
    * Sort query result is sorted descending or ascending (if not provided the default is
    * ascending)
    */
-  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  desc?: Types.InputMaybe<Scalars['Boolean']['input']>;
   /** Sort query result by `key` */
   key: FormSchemaSortFieldInput;
 };
@@ -1276,7 +1212,7 @@ export enum GenderTypeNode {
 }
 
 export type GenerateCustomerReturnLinesInput = {
-  existingLinesInput?: InputMaybe<ExistingLinesInput>;
+  existingLinesInput?: Types.InputMaybe<ExistingLinesInput>;
   /** The ids of the outbound shipment lines to generate new return lines for */
   outboundShipmentLineIds: Array<Scalars['String']['input']>;
 };
@@ -1284,23 +1220,23 @@ export type GenerateCustomerReturnLinesInput = {
 /** At least one input is required. */
 export type GenerateSupplierReturnLinesInput = {
   /** Generate new return lines for all the available stock lines of a specific item */
-  itemId?: InputMaybe<Scalars['String']['input']>;
+  itemId?: Types.InputMaybe<Scalars['String']['input']>;
   /** Include existing return lines in the response. Only has an effect when either `stock_line_ids` or `item_id` is set. */
-  returnId?: InputMaybe<Scalars['String']['input']>;
+  returnId?: Types.InputMaybe<Scalars['String']['input']>;
   /** The stock line ids to generate new return lines for */
   stockLineIds: Array<Scalars['String']['input']>;
 };
 
 export type GoodsReceivedFilterInput = {
-  createdDatetime?: InputMaybe<DatetimeFilterInput>;
-  id?: InputMaybe<EqualFilterStringInput>;
-  purchaseOrderId?: InputMaybe<EqualFilterStringInput>;
-  status?: InputMaybe<EqualFilterGoodsReceivedStatusInput>;
+  createdDatetime?: Types.InputMaybe<DatetimeFilterInput>;
+  id?: Types.InputMaybe<EqualFilterStringInput>;
+  purchaseOrderId?: Types.InputMaybe<EqualFilterStringInput>;
+  status?: Types.InputMaybe<EqualFilterGoodsReceivedStatusInput>;
 };
 
 export type GoodsReceivedLineFilterInput = {
-  goodsReceivedId?: InputMaybe<EqualFilterStringInput>;
-  id?: InputMaybe<EqualFilterStringInput>;
+  goodsReceivedId?: Types.InputMaybe<EqualFilterStringInput>;
+  id?: Types.InputMaybe<EqualFilterStringInput>;
 };
 
 export enum GoodsReceivedLineNodeStatus {
@@ -1315,7 +1251,7 @@ export enum GoodsReceivedLineSortFieldInput {
 }
 
 export type GoodsReceivedLineSortInput = {
-  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  desc?: Types.InputMaybe<Scalars['Boolean']['input']>;
   /** Sort query result by `key` */
   key: GoodsReceivedLineSortFieldInput;
 };
@@ -1338,7 +1274,7 @@ export enum GoodsReceivedSortFieldInput {
 }
 
 export type GoodsReceivedSortInput = {
-  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  desc?: Types.InputMaybe<Scalars['Boolean']['input']>;
   /** Sort query result by `key` */
   key: GoodsReceivedSortFieldInput;
 };
@@ -1367,40 +1303,40 @@ export type InsertAssetCatalogueItemInput = {
   classId: Scalars['String']['input'];
   code: Scalars['String']['input'];
   id: Scalars['String']['input'];
-  manufacturer?: InputMaybe<Scalars['String']['input']>;
+  manufacturer?: Types.InputMaybe<Scalars['String']['input']>;
   model: Scalars['String']['input'];
-  properties?: InputMaybe<Scalars['String']['input']>;
+  properties?: Types.InputMaybe<Scalars['String']['input']>;
   subCatalogue: Scalars['String']['input'];
   typeId: Scalars['String']['input'];
 };
 
 export type InsertAssetInput = {
-  assetNumber?: InputMaybe<Scalars['String']['input']>;
-  catalogueItemId?: InputMaybe<Scalars['String']['input']>;
-  categoryId?: InputMaybe<Scalars['String']['input']>;
-  classId?: InputMaybe<Scalars['String']['input']>;
-  donorNameId?: InputMaybe<Scalars['String']['input']>;
+  assetNumber?: Types.InputMaybe<Scalars['String']['input']>;
+  catalogueItemId?: Types.InputMaybe<Scalars['String']['input']>;
+  categoryId?: Types.InputMaybe<Scalars['String']['input']>;
+  classId?: Types.InputMaybe<Scalars['String']['input']>;
+  donorNameId?: Types.InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
-  installationDate?: InputMaybe<Scalars['NaiveDate']['input']>;
-  lockedFieldsJson?: InputMaybe<Scalars['String']['input']>;
-  needsReplacement?: InputMaybe<Scalars['Boolean']['input']>;
-  notes?: InputMaybe<Scalars['String']['input']>;
-  properties?: InputMaybe<Scalars['String']['input']>;
-  replacementDate?: InputMaybe<Scalars['NaiveDate']['input']>;
-  serialNumber?: InputMaybe<Scalars['String']['input']>;
-  storeId?: InputMaybe<Scalars['String']['input']>;
-  typeId?: InputMaybe<Scalars['String']['input']>;
-  warrantyEnd?: InputMaybe<Scalars['NaiveDate']['input']>;
-  warrantyStart?: InputMaybe<Scalars['NaiveDate']['input']>;
+  installationDate?: Types.InputMaybe<Scalars['NaiveDate']['input']>;
+  lockedFieldsJson?: Types.InputMaybe<Scalars['String']['input']>;
+  needsReplacement?: Types.InputMaybe<Scalars['Boolean']['input']>;
+  notes?: Types.InputMaybe<Scalars['String']['input']>;
+  properties?: Types.InputMaybe<Scalars['String']['input']>;
+  replacementDate?: Types.InputMaybe<Scalars['NaiveDate']['input']>;
+  serialNumber?: Types.InputMaybe<Scalars['String']['input']>;
+  storeId?: Types.InputMaybe<Scalars['String']['input']>;
+  typeId?: Types.InputMaybe<Scalars['String']['input']>;
+  warrantyEnd?: Types.InputMaybe<Scalars['NaiveDate']['input']>;
+  warrantyStart?: Types.InputMaybe<Scalars['NaiveDate']['input']>;
 };
 
 export type InsertAssetLogInput = {
   assetId: Scalars['String']['input'];
-  comment?: InputMaybe<Scalars['String']['input']>;
+  comment?: Types.InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
-  reasonId?: InputMaybe<Scalars['String']['input']>;
-  status?: InputMaybe<AssetLogStatusNodeType>;
-  type?: InputMaybe<Scalars['String']['input']>;
+  reasonId?: Types.InputMaybe<Scalars['String']['input']>;
+  status?: Types.InputMaybe<AssetLogStatusNodeType>;
+  type?: Types.InputMaybe<Scalars['String']['input']>;
 };
 
 export type InsertAssetLogReasonInput = {
@@ -1412,17 +1348,17 @@ export type InsertAssetLogReasonInput = {
 export type InsertBarcodeInput = {
   gtin: Scalars['String']['input'];
   itemId: Scalars['String']['input'];
-  packSize?: InputMaybe<Scalars['Float']['input']>;
+  packSize?: Types.InputMaybe<Scalars['Float']['input']>;
 };
 
 export type InsertClinicianInput = {
   code: Scalars['String']['input'];
-  firstName?: InputMaybe<Scalars['String']['input']>;
-  gender?: InputMaybe<GenderTypeNode>;
+  firstName?: Types.InputMaybe<Scalars['String']['input']>;
+  gender?: Types.InputMaybe<GenderTypeNode>;
   id: Scalars['String']['input'];
   initials: Scalars['String']['input'];
   lastName: Scalars['String']['input'];
-  mobile?: InputMaybe<Scalars['String']['input']>;
+  mobile?: Types.InputMaybe<Scalars['String']['input']>;
 };
 
 export type InsertContactFormInput = {
@@ -1444,26 +1380,26 @@ export type InsertContactTraceInput = {
 };
 
 export type InsertDemographicIndicatorInput = {
-  basePopulation?: InputMaybe<Scalars['Int']['input']>;
+  basePopulation?: Types.InputMaybe<Scalars['Int']['input']>;
   baseYear: Scalars['Int']['input'];
   id: Scalars['String']['input'];
-  name?: InputMaybe<Scalars['String']['input']>;
-  populationPercentage?: InputMaybe<Scalars['Float']['input']>;
-  year1Projection?: InputMaybe<Scalars['Int']['input']>;
-  year2Projection?: InputMaybe<Scalars['Int']['input']>;
-  year3Projection?: InputMaybe<Scalars['Int']['input']>;
-  year4Projection?: InputMaybe<Scalars['Int']['input']>;
-  year5Projection?: InputMaybe<Scalars['Int']['input']>;
+  name?: Types.InputMaybe<Scalars['String']['input']>;
+  populationPercentage?: Types.InputMaybe<Scalars['Float']['input']>;
+  year1Projection?: Types.InputMaybe<Scalars['Int']['input']>;
+  year2Projection?: Types.InputMaybe<Scalars['Int']['input']>;
+  year3Projection?: Types.InputMaybe<Scalars['Int']['input']>;
+  year4Projection?: Types.InputMaybe<Scalars['Int']['input']>;
+  year5Projection?: Types.InputMaybe<Scalars['Int']['input']>;
 };
 
 export type InsertDemographicProjectionInput = {
   baseYear: Scalars['Int']['input'];
   id: Scalars['String']['input'];
-  year1?: InputMaybe<Scalars['Float']['input']>;
-  year2?: InputMaybe<Scalars['Float']['input']>;
-  year3?: InputMaybe<Scalars['Float']['input']>;
-  year4?: InputMaybe<Scalars['Float']['input']>;
-  year5?: InputMaybe<Scalars['Float']['input']>;
+  year1?: Types.InputMaybe<Scalars['Float']['input']>;
+  year2?: Types.InputMaybe<Scalars['Float']['input']>;
+  year3?: Types.InputMaybe<Scalars['Float']['input']>;
+  year4?: Types.InputMaybe<Scalars['Float']['input']>;
+  year5?: Types.InputMaybe<Scalars['Float']['input']>;
 };
 
 export type InsertDocumentRegistryInput = {
@@ -1472,7 +1408,7 @@ export type InsertDocumentRegistryInput = {
   documentType: Scalars['String']['input'];
   formSchemaId: Scalars['String']['input'];
   id: Scalars['String']['input'];
-  name?: InputMaybe<Scalars['String']['input']>;
+  name?: Types.InputMaybe<Scalars['String']['input']>;
 };
 
 export type InsertEncounterInput = {
@@ -1493,7 +1429,7 @@ export type InsertFormSchemaInput = {
 };
 
 export type InsertFromResponseRequisitionInput = {
-  comment?: InputMaybe<Scalars['String']['input']>;
+  comment?: Types.InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
   otherPartyId: Scalars['String']['input'];
   responseRequisitionId: Scalars['String']['input'];
@@ -1505,15 +1441,15 @@ export type InsertGoodsReceivedInput = {
 };
 
 export type InsertGoodsReceivedLineInput = {
-  batch?: InputMaybe<Scalars['String']['input']>;
-  comment?: InputMaybe<Scalars['String']['input']>;
-  expiryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
+  batch?: Types.InputMaybe<Scalars['String']['input']>;
+  comment?: Types.InputMaybe<Scalars['String']['input']>;
+  expiryDate?: Types.InputMaybe<Scalars['NaiveDate']['input']>;
   goodsReceivedId: Scalars['String']['input'];
   id: Scalars['String']['input'];
-  manufacturerId?: InputMaybe<Scalars['String']['input']>;
-  numberOfPacksReceived?: InputMaybe<Scalars['Float']['input']>;
+  manufacturerId?: Types.InputMaybe<Scalars['String']['input']>;
+  numberOfPacksReceived?: Types.InputMaybe<Scalars['Float']['input']>;
   purchaseOrderLineId: Scalars['String']['input'];
-  receivedPackSize?: InputMaybe<Scalars['Float']['input']>;
+  receivedPackSize?: Types.InputMaybe<Scalars['Float']['input']>;
 };
 
 export type InsertGoodsReceivedLinesFromPurchaseOrderInput = {
@@ -1522,13 +1458,13 @@ export type InsertGoodsReceivedLinesFromPurchaseOrderInput = {
 };
 
 export type InsertInboundShipmentInput = {
-  colour?: InputMaybe<Scalars['String']['input']>;
-  comment?: InputMaybe<Scalars['String']['input']>;
+  colour?: Types.InputMaybe<Scalars['String']['input']>;
+  comment?: Types.InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
-  onHold?: InputMaybe<Scalars['Boolean']['input']>;
+  onHold?: Types.InputMaybe<Scalars['Boolean']['input']>;
   otherPartyId: Scalars['String']['input'];
-  requisitionId?: InputMaybe<Scalars['String']['input']>;
-  theirReference?: InputMaybe<Scalars['String']['input']>;
+  requisitionId?: Types.InputMaybe<Scalars['String']['input']>;
+  theirReference?: Types.InputMaybe<Scalars['String']['input']>;
 };
 
 export type InsertInboundShipmentLineFromInternalOrderLineInput = {
@@ -1537,36 +1473,36 @@ export type InsertInboundShipmentLineFromInternalOrderLineInput = {
 };
 
 export type InsertInboundShipmentLineInput = {
-  batch?: InputMaybe<Scalars['String']['input']>;
-  campaignId?: InputMaybe<Scalars['String']['input']>;
+  batch?: Types.InputMaybe<Scalars['String']['input']>;
+  campaignId?: Types.InputMaybe<Scalars['String']['input']>;
   costPricePerPack: Scalars['Float']['input'];
-  donorId?: InputMaybe<Scalars['String']['input']>;
-  expiryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
+  donorId?: Types.InputMaybe<Scalars['String']['input']>;
+  expiryDate?: Types.InputMaybe<Scalars['NaiveDate']['input']>;
   id: Scalars['String']['input'];
   invoiceId: Scalars['String']['input'];
   itemId: Scalars['String']['input'];
-  itemVariantId?: InputMaybe<Scalars['String']['input']>;
-  location?: InputMaybe<NullableStringUpdate>;
-  note?: InputMaybe<Scalars['String']['input']>;
+  itemVariantId?: Types.InputMaybe<Scalars['String']['input']>;
+  location?: Types.InputMaybe<NullableStringUpdate>;
+  note?: Types.InputMaybe<Scalars['String']['input']>;
   numberOfPacks: Scalars['Float']['input'];
   packSize: Scalars['Float']['input'];
-  programId?: InputMaybe<Scalars['String']['input']>;
+  programId?: Types.InputMaybe<Scalars['String']['input']>;
   sellPricePerPack: Scalars['Float']['input'];
-  shippedNumberOfPacks?: InputMaybe<Scalars['Float']['input']>;
-  shippedPackSize?: InputMaybe<Scalars['Float']['input']>;
-  taxPercentage?: InputMaybe<Scalars['Float']['input']>;
-  totalBeforeTax?: InputMaybe<Scalars['Float']['input']>;
-  volumePerPack?: InputMaybe<Scalars['Float']['input']>;
-  vvmStatusId?: InputMaybe<Scalars['String']['input']>;
+  shippedNumberOfPacks?: Types.InputMaybe<Scalars['Float']['input']>;
+  shippedPackSize?: Types.InputMaybe<Scalars['Float']['input']>;
+  taxPercentage?: Types.InputMaybe<Scalars['Float']['input']>;
+  totalBeforeTax?: Types.InputMaybe<Scalars['Float']['input']>;
+  volumePerPack?: Types.InputMaybe<Scalars['Float']['input']>;
+  vvmStatusId?: Types.InputMaybe<Scalars['String']['input']>;
 };
 
 export type InsertInboundShipmentServiceLineInput = {
   id: Scalars['String']['input'];
   invoiceId: Scalars['String']['input'];
-  itemId?: InputMaybe<Scalars['String']['input']>;
-  name?: InputMaybe<Scalars['String']['input']>;
-  note?: InputMaybe<Scalars['String']['input']>;
-  taxPercentage?: InputMaybe<Scalars['Float']['input']>;
+  itemId?: Types.InputMaybe<Scalars['String']['input']>;
+  name?: Types.InputMaybe<Scalars['String']['input']>;
+  note?: Types.InputMaybe<Scalars['String']['input']>;
+  taxPercentage?: Types.InputMaybe<Scalars['Float']['input']>;
   totalBeforeTax: Scalars['Float']['input'];
 };
 
@@ -1577,7 +1513,7 @@ export type InsertInsuranceInput = {
   insuranceProviderId: Scalars['String']['input'];
   isActive: Scalars['Boolean']['input'];
   nameId: Scalars['String']['input'];
-  nameOfInsured?: InputMaybe<Scalars['String']['input']>;
+  nameOfInsured?: Types.InputMaybe<Scalars['String']['input']>;
   policyNumberFamily: Scalars['String']['input'];
   policyNumberPerson: Scalars['String']['input'];
   policyType: InsurancePolicyNodeType;
@@ -1586,21 +1522,21 @@ export type InsertInsuranceInput = {
 export type InsertLocationInput = {
   code: Scalars['String']['input'];
   id: Scalars['String']['input'];
-  locationTypeId?: InputMaybe<Scalars['String']['input']>;
-  name?: InputMaybe<Scalars['String']['input']>;
-  onHold?: InputMaybe<Scalars['Boolean']['input']>;
-  volume?: InputMaybe<Scalars['Float']['input']>;
+  locationTypeId?: Types.InputMaybe<Scalars['String']['input']>;
+  name?: Types.InputMaybe<Scalars['String']['input']>;
+  onHold?: Types.InputMaybe<Scalars['Boolean']['input']>;
+  volume?: Types.InputMaybe<Scalars['Float']['input']>;
 };
 
 export type InsertOutboundShipmentInput = {
-  colour?: InputMaybe<Scalars['String']['input']>;
-  comment?: InputMaybe<Scalars['String']['input']>;
+  colour?: Types.InputMaybe<Scalars['String']['input']>;
+  comment?: Types.InputMaybe<Scalars['String']['input']>;
   /** The new invoice id provided by the client */
   id: Scalars['String']['input'];
-  onHold?: InputMaybe<Scalars['Boolean']['input']>;
+  onHold?: Types.InputMaybe<Scalars['Boolean']['input']>;
   /** The other party must be a customer of the current store */
   otherPartyId: Scalars['String']['input'];
-  theirReference?: InputMaybe<Scalars['String']['input']>;
+  theirReference?: Types.InputMaybe<Scalars['String']['input']>;
 };
 
 export type InsertOutboundShipmentLineInput = {
@@ -1608,17 +1544,17 @@ export type InsertOutboundShipmentLineInput = {
   invoiceId: Scalars['String']['input'];
   numberOfPacks: Scalars['Float']['input'];
   stockLineId: Scalars['String']['input'];
-  taxPercentage?: InputMaybe<Scalars['Float']['input']>;
-  vvmStatusId?: InputMaybe<Scalars['String']['input']>;
+  taxPercentage?: Types.InputMaybe<Scalars['Float']['input']>;
+  vvmStatusId?: Types.InputMaybe<Scalars['String']['input']>;
 };
 
 export type InsertOutboundShipmentServiceLineInput = {
   id: Scalars['String']['input'];
   invoiceId: Scalars['String']['input'];
-  itemId?: InputMaybe<Scalars['String']['input']>;
-  name?: InputMaybe<Scalars['String']['input']>;
-  note?: InputMaybe<Scalars['String']['input']>;
-  taxPercentage?: InputMaybe<Scalars['Float']['input']>;
+  itemId?: Types.InputMaybe<Scalars['String']['input']>;
+  name?: Types.InputMaybe<Scalars['String']['input']>;
+  note?: Types.InputMaybe<Scalars['String']['input']>;
+  taxPercentage?: Types.InputMaybe<Scalars['Float']['input']>;
   totalBeforeTax: Scalars['Float']['input'];
 };
 
@@ -1630,19 +1566,19 @@ export type InsertOutboundShipmentUnallocatedLineInput = {
 };
 
 export type InsertPatientInput = {
-  address1?: InputMaybe<Scalars['String']['input']>;
+  address1?: Types.InputMaybe<Scalars['String']['input']>;
   code: Scalars['String']['input'];
-  code2?: InputMaybe<Scalars['String']['input']>;
-  dateOfBirth?: InputMaybe<Scalars['NaiveDate']['input']>;
-  dateOfDeath?: InputMaybe<Scalars['NaiveDate']['input']>;
-  firstName?: InputMaybe<Scalars['String']['input']>;
-  gender?: InputMaybe<GenderTypeNode>;
+  code2?: Types.InputMaybe<Scalars['String']['input']>;
+  dateOfBirth?: Types.InputMaybe<Scalars['NaiveDate']['input']>;
+  dateOfDeath?: Types.InputMaybe<Scalars['NaiveDate']['input']>;
+  firstName?: Types.InputMaybe<Scalars['String']['input']>;
+  gender?: Types.InputMaybe<GenderTypeNode>;
   id: Scalars['String']['input'];
-  isDeceased?: InputMaybe<Scalars['Boolean']['input']>;
-  lastName?: InputMaybe<Scalars['String']['input']>;
-  nextOfKinId?: InputMaybe<Scalars['String']['input']>;
-  nextOfKinName?: InputMaybe<Scalars['String']['input']>;
-  phone?: InputMaybe<Scalars['String']['input']>;
+  isDeceased?: Types.InputMaybe<Scalars['Boolean']['input']>;
+  lastName?: Types.InputMaybe<Scalars['String']['input']>;
+  nextOfKinId?: Types.InputMaybe<Scalars['String']['input']>;
+  nextOfKinName?: Types.InputMaybe<Scalars['String']['input']>;
+  phone?: Types.InputMaybe<Scalars['String']['input']>;
 };
 
 export type InsertPluginDataInput = {
@@ -1650,24 +1586,24 @@ export type InsertPluginDataInput = {
   dataIdentifier: Scalars['String']['input'];
   id: Scalars['String']['input'];
   pluginCode: Scalars['String']['input'];
-  relatedRecordId?: InputMaybe<Scalars['String']['input']>;
-  storeId?: InputMaybe<Scalars['String']['input']>;
+  relatedRecordId?: Types.InputMaybe<Scalars['String']['input']>;
+  storeId?: Types.InputMaybe<Scalars['String']['input']>;
 };
 
 export type InsertPrescriptionInput = {
-  clinicianId?: InputMaybe<Scalars['String']['input']>;
-  diagnosisId?: InputMaybe<Scalars['String']['input']>;
+  clinicianId?: Types.InputMaybe<Scalars['String']['input']>;
+  diagnosisId?: Types.InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
   patientId: Scalars['String']['input'];
-  prescriptionDate?: InputMaybe<Scalars['DateTime']['input']>;
-  programId?: InputMaybe<Scalars['String']['input']>;
-  theirReference?: InputMaybe<Scalars['String']['input']>;
+  prescriptionDate?: Types.InputMaybe<Scalars['DateTime']['input']>;
+  programId?: Types.InputMaybe<Scalars['String']['input']>;
+  theirReference?: Types.InputMaybe<Scalars['String']['input']>;
 };
 
 export type InsertPrescriptionLineInput = {
   id: Scalars['String']['input'];
   invoiceId: Scalars['String']['input'];
-  note?: InputMaybe<Scalars['String']['input']>;
+  note?: Types.InputMaybe<Scalars['String']['input']>;
   numberOfPacks: Scalars['Float']['input'];
   stockLineId: Scalars['String']['input'];
 };
@@ -1699,15 +1635,15 @@ export type InsertProgramPatientInput = {
 };
 
 export type InsertProgramRequestRequisitionInput = {
-  colour?: InputMaybe<Scalars['String']['input']>;
-  comment?: InputMaybe<Scalars['String']['input']>;
+  colour?: Types.InputMaybe<Scalars['String']['input']>;
+  comment?: Types.InputMaybe<Scalars['String']['input']>;
   /** Defaults to 2 weeks from now */
-  expectedDeliveryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
+  expectedDeliveryDate?: Types.InputMaybe<Scalars['NaiveDate']['input']>;
   id: Scalars['String']['input'];
   otherPartyId: Scalars['String']['input'];
   periodId: Scalars['String']['input'];
   programOrderTypeId: Scalars['String']['input'];
-  theirReference?: InputMaybe<Scalars['String']['input']>;
+  theirReference?: Types.InputMaybe<Scalars['String']['input']>;
 };
 
 export type InsertProgramResponseRequisitionInput = {
@@ -1723,39 +1659,39 @@ export type InsertPurchaseOrderInput = {
 };
 
 export type InsertPurchaseOrderLineInput = {
-  comment?: InputMaybe<Scalars['String']['input']>;
-  expectedDeliveryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
+  comment?: Types.InputMaybe<Scalars['String']['input']>;
+  expectedDeliveryDate?: Types.InputMaybe<Scalars['NaiveDate']['input']>;
   id: Scalars['String']['input'];
   itemIdOrCode: Scalars['String']['input'];
-  manufacturerId?: InputMaybe<Scalars['String']['input']>;
-  note?: InputMaybe<Scalars['String']['input']>;
-  pricePerPackAfterDiscount?: InputMaybe<Scalars['Float']['input']>;
-  pricePerPackBeforeDiscount?: InputMaybe<Scalars['Float']['input']>;
+  manufacturerId?: Types.InputMaybe<Scalars['String']['input']>;
+  note?: Types.InputMaybe<Scalars['String']['input']>;
+  pricePerPackAfterDiscount?: Types.InputMaybe<Scalars['Float']['input']>;
+  pricePerPackBeforeDiscount?: Types.InputMaybe<Scalars['Float']['input']>;
   purchaseOrderId: Scalars['String']['input'];
-  requestedDeliveryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
-  requestedNumberOfUnits?: InputMaybe<Scalars['Float']['input']>;
-  requestedPackSize?: InputMaybe<Scalars['Float']['input']>;
-  supplierItemCode?: InputMaybe<Scalars['String']['input']>;
-  unit?: InputMaybe<Scalars['String']['input']>;
+  requestedDeliveryDate?: Types.InputMaybe<Scalars['NaiveDate']['input']>;
+  requestedNumberOfUnits?: Types.InputMaybe<Scalars['Float']['input']>;
+  requestedPackSize?: Types.InputMaybe<Scalars['Float']['input']>;
+  supplierItemCode?: Types.InputMaybe<Scalars['String']['input']>;
+  unit?: Types.InputMaybe<Scalars['String']['input']>;
 };
 
 export type InsertRepackInput = {
-  newLocationId?: InputMaybe<Scalars['String']['input']>;
+  newLocationId?: Types.InputMaybe<Scalars['String']['input']>;
   newPackSize: Scalars['Float']['input'];
   numberOfPacks: Scalars['Float']['input'];
   stockLineId: Scalars['String']['input'];
 };
 
 export type InsertRequestRequisitionInput = {
-  colour?: InputMaybe<Scalars['String']['input']>;
-  comment?: InputMaybe<Scalars['String']['input']>;
+  colour?: Types.InputMaybe<Scalars['String']['input']>;
+  comment?: Types.InputMaybe<Scalars['String']['input']>;
   /** Defaults to 2 weeks from now */
-  expectedDeliveryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
+  expectedDeliveryDate?: Types.InputMaybe<Scalars['NaiveDate']['input']>;
   id: Scalars['String']['input'];
   maxMonthsOfStock: Scalars['Float']['input'];
   minMonthsOfStock: Scalars['Float']['input'];
   otherPartyId: Scalars['String']['input'];
-  theirReference?: InputMaybe<Scalars['String']['input']>;
+  theirReference?: Types.InputMaybe<Scalars['String']['input']>;
 };
 
 export type InsertRequestRequisitionLineInput = {
@@ -1786,89 +1722,89 @@ export type InsertRnRFormInput = {
 
 export type InsertStockLineInput = {
   /** Empty barcode will unlink barcode from StockLine */
-  barcode?: InputMaybe<Scalars['String']['input']>;
-  batch?: InputMaybe<Scalars['String']['input']>;
-  campaignId?: InputMaybe<Scalars['String']['input']>;
+  barcode?: Types.InputMaybe<Scalars['String']['input']>;
+  batch?: Types.InputMaybe<Scalars['String']['input']>;
+  campaignId?: Types.InputMaybe<Scalars['String']['input']>;
   costPricePerPack: Scalars['Float']['input'];
-  donorId?: InputMaybe<Scalars['String']['input']>;
-  expiryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
+  donorId?: Types.InputMaybe<Scalars['String']['input']>;
+  expiryDate?: Types.InputMaybe<Scalars['NaiveDate']['input']>;
   id: Scalars['String']['input'];
   itemId: Scalars['String']['input'];
-  itemVariantId?: InputMaybe<Scalars['String']['input']>;
-  location?: InputMaybe<NullableStringUpdate>;
+  itemVariantId?: Types.InputMaybe<Scalars['String']['input']>;
+  location?: Types.InputMaybe<NullableStringUpdate>;
   numberOfPacks: Scalars['Float']['input'];
   onHold: Scalars['Boolean']['input'];
   packSize: Scalars['Float']['input'];
-  programId?: InputMaybe<Scalars['String']['input']>;
-  reasonOptionId?: InputMaybe<Scalars['String']['input']>;
+  programId?: Types.InputMaybe<Scalars['String']['input']>;
+  reasonOptionId?: Types.InputMaybe<Scalars['String']['input']>;
   sellPricePerPack: Scalars['Float']['input'];
-  volumePerPack?: InputMaybe<Scalars['Float']['input']>;
-  vvmStatusId?: InputMaybe<Scalars['String']['input']>;
+  volumePerPack?: Types.InputMaybe<Scalars['Float']['input']>;
+  vvmStatusId?: Types.InputMaybe<Scalars['String']['input']>;
 };
 
 export type InsertStocktakeInput = {
-  comment?: InputMaybe<Scalars['String']['input']>;
-  createBlankStocktake?: InputMaybe<Scalars['Boolean']['input']>;
-  description?: InputMaybe<Scalars['String']['input']>;
-  expiresBefore?: InputMaybe<Scalars['NaiveDate']['input']>;
+  comment?: Types.InputMaybe<Scalars['String']['input']>;
+  createBlankStocktake?: Types.InputMaybe<Scalars['Boolean']['input']>;
+  description?: Types.InputMaybe<Scalars['String']['input']>;
+  expiresBefore?: Types.InputMaybe<Scalars['NaiveDate']['input']>;
   id: Scalars['String']['input'];
-  includeAllMasterListItems?: InputMaybe<Scalars['Boolean']['input']>;
-  isAllItemsStocktake?: InputMaybe<Scalars['Boolean']['input']>;
-  isInitialStocktake?: InputMaybe<Scalars['Boolean']['input']>;
-  locationId?: InputMaybe<Scalars['String']['input']>;
-  masterListId?: InputMaybe<Scalars['String']['input']>;
-  vvmStatusId?: InputMaybe<Scalars['String']['input']>;
+  includeAllMasterListItems?: Types.InputMaybe<Scalars['Boolean']['input']>;
+  isAllItemsStocktake?: Types.InputMaybe<Scalars['Boolean']['input']>;
+  isInitialStocktake?: Types.InputMaybe<Scalars['Boolean']['input']>;
+  locationId?: Types.InputMaybe<Scalars['String']['input']>;
+  masterListId?: Types.InputMaybe<Scalars['String']['input']>;
+  vvmStatusId?: Types.InputMaybe<Scalars['String']['input']>;
 };
 
 export type InsertStocktakeLineInput = {
-  batch?: InputMaybe<Scalars['String']['input']>;
-  campaignId?: InputMaybe<Scalars['String']['input']>;
-  comment?: InputMaybe<Scalars['String']['input']>;
-  costPricePerPack?: InputMaybe<Scalars['Float']['input']>;
-  countedNumberOfPacks?: InputMaybe<Scalars['Float']['input']>;
-  donorId?: InputMaybe<Scalars['String']['input']>;
-  expiryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
+  batch?: Types.InputMaybe<Scalars['String']['input']>;
+  campaignId?: Types.InputMaybe<Scalars['String']['input']>;
+  comment?: Types.InputMaybe<Scalars['String']['input']>;
+  costPricePerPack?: Types.InputMaybe<Scalars['Float']['input']>;
+  countedNumberOfPacks?: Types.InputMaybe<Scalars['Float']['input']>;
+  donorId?: Types.InputMaybe<Scalars['String']['input']>;
+  expiryDate?: Types.InputMaybe<Scalars['NaiveDate']['input']>;
   id: Scalars['String']['input'];
-  itemId?: InputMaybe<Scalars['String']['input']>;
-  itemVariantId?: InputMaybe<Scalars['String']['input']>;
-  location?: InputMaybe<NullableStringUpdate>;
-  note?: InputMaybe<Scalars['String']['input']>;
-  packSize?: InputMaybe<Scalars['Float']['input']>;
-  programId?: InputMaybe<Scalars['String']['input']>;
-  reasonOptionId?: InputMaybe<Scalars['String']['input']>;
-  sellPricePerPack?: InputMaybe<Scalars['Float']['input']>;
-  stockLineId?: InputMaybe<Scalars['String']['input']>;
+  itemId?: Types.InputMaybe<Scalars['String']['input']>;
+  itemVariantId?: Types.InputMaybe<Scalars['String']['input']>;
+  location?: Types.InputMaybe<NullableStringUpdate>;
+  note?: Types.InputMaybe<Scalars['String']['input']>;
+  packSize?: Types.InputMaybe<Scalars['Float']['input']>;
+  programId?: Types.InputMaybe<Scalars['String']['input']>;
+  reasonOptionId?: Types.InputMaybe<Scalars['String']['input']>;
+  sellPricePerPack?: Types.InputMaybe<Scalars['Float']['input']>;
+  stockLineId?: Types.InputMaybe<Scalars['String']['input']>;
   stocktakeId: Scalars['String']['input'];
-  volumePerPack?: InputMaybe<Scalars['Float']['input']>;
-  vvmStatusId?: InputMaybe<Scalars['String']['input']>;
+  volumePerPack?: Types.InputMaybe<Scalars['Float']['input']>;
+  vvmStatusId?: Types.InputMaybe<Scalars['String']['input']>;
 };
 
 export type InsertVvmStatusLogInput = {
-  comment?: InputMaybe<Scalars['String']['input']>;
+  comment?: Types.InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
   statusId: Scalars['String']['input'];
   stockLineId: Scalars['String']['input'];
 };
 
 export type InsertVaccinationInput = {
-  clinicianId?: InputMaybe<Scalars['String']['input']>;
-  comment?: InputMaybe<Scalars['String']['input']>;
+  clinicianId?: Types.InputMaybe<Scalars['String']['input']>;
+  comment?: Types.InputMaybe<Scalars['String']['input']>;
   encounterId: Scalars['String']['input'];
-  facilityFreeText?: InputMaybe<Scalars['String']['input']>;
-  facilityNameId?: InputMaybe<Scalars['String']['input']>;
+  facilityFreeText?: Types.InputMaybe<Scalars['String']['input']>;
+  facilityNameId?: Types.InputMaybe<Scalars['String']['input']>;
   given: Scalars['Boolean']['input'];
   id: Scalars['String']['input'];
-  itemId?: InputMaybe<Scalars['String']['input']>;
-  notGivenReason?: InputMaybe<Scalars['String']['input']>;
-  stockLineId?: InputMaybe<Scalars['String']['input']>;
-  vaccinationDate?: InputMaybe<Scalars['NaiveDate']['input']>;
+  itemId?: Types.InputMaybe<Scalars['String']['input']>;
+  notGivenReason?: Types.InputMaybe<Scalars['String']['input']>;
+  stockLineId?: Types.InputMaybe<Scalars['String']['input']>;
+  vaccinationDate?: Types.InputMaybe<Scalars['NaiveDate']['input']>;
   vaccineCourseDoseId: Scalars['String']['input'];
 };
 
 export type InsertVaccineCourseInput = {
   canSkipDose: Scalars['Boolean']['input'];
   coverageRate: Scalars['Float']['input'];
-  demographicId?: InputMaybe<Scalars['String']['input']>;
+  demographicId?: Types.InputMaybe<Scalars['String']['input']>;
   doses: Array<UpsertVaccineCourseDoseInput>;
   id: Scalars['String']['input'];
   name: Scalars['String']['input'];
@@ -1893,7 +1829,7 @@ export type InsuranceSortInput = {
    * Sort query result is sorted descending or ascending (if not provided the default is
    * ascending)
    */
-  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  desc?: Types.InputMaybe<Scalars['Boolean']['input']>;
   /** Sort query result by `key` */
   key: InsuranceSortFieldInput;
 };
@@ -1904,9 +1840,9 @@ export type IntegerStorePrefInput = {
 };
 
 export type InventoryAdjustmentReasonFilterInput = {
-  id?: InputMaybe<EqualFilterStringInput>;
-  isActive?: InputMaybe<Scalars['Boolean']['input']>;
-  type?: InputMaybe<EqualFilterInventoryAdjustmentReasonTypeInput>;
+  id?: Types.InputMaybe<EqualFilterStringInput>;
+  isActive?: Types.InputMaybe<Scalars['Boolean']['input']>;
+  type?: Types.InputMaybe<EqualFilterInventoryAdjustmentReasonTypeInput>;
 };
 
 export enum InventoryAdjustmentReasonNodeType {
@@ -1925,56 +1861,56 @@ export type InventoryAdjustmentReasonSortInput = {
    * Sort query result is sorted descending or ascending (if not provided the default is
    * ascending)
    */
-  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  desc?: Types.InputMaybe<Scalars['Boolean']['input']>;
   /** Sort query result by `key` */
   key: InventoryAdjustmentReasonSortFieldInput;
 };
 
 export type InvoiceFilterInput = {
-  allocatedDatetime?: InputMaybe<DatetimeFilterInput>;
-  colour?: InputMaybe<EqualFilterStringInput>;
-  comment?: InputMaybe<StringFilterInput>;
-  createdDatetime?: InputMaybe<DatetimeFilterInput>;
-  createdOrBackdatedDatetime?: InputMaybe<DatetimeFilterInput>;
-  deliveredDatetime?: InputMaybe<DatetimeFilterInput>;
-  id?: InputMaybe<EqualFilterStringInput>;
-  invoiceNumber?: InputMaybe<EqualFilterBigNumberInput>;
-  isProgramInvoice?: InputMaybe<Scalars['Boolean']['input']>;
-  linkedInvoiceId?: InputMaybe<EqualFilterStringInput>;
-  nameId?: InputMaybe<EqualFilterStringInput>;
-  onHold?: InputMaybe<Scalars['Boolean']['input']>;
-  otherPartyId?: InputMaybe<EqualFilterStringInput>;
-  otherPartyName?: InputMaybe<StringFilterInput>;
-  pickedDatetime?: InputMaybe<DatetimeFilterInput>;
-  programId?: InputMaybe<EqualFilterStringInput>;
-  receivedDatetime?: InputMaybe<DatetimeFilterInput>;
-  requisitionId?: InputMaybe<EqualFilterStringInput>;
-  shippedDatetime?: InputMaybe<DatetimeFilterInput>;
-  status?: InputMaybe<EqualFilterInvoiceStatusInput>;
-  storeId?: InputMaybe<EqualFilterStringInput>;
-  theirReference?: InputMaybe<StringFilterInput>;
-  transportReference?: InputMaybe<EqualFilterStringInput>;
-  type?: InputMaybe<EqualFilterInvoiceTypeInput>;
-  userId?: InputMaybe<EqualFilterStringInput>;
-  verifiedDatetime?: InputMaybe<DatetimeFilterInput>;
+  allocatedDatetime?: Types.InputMaybe<DatetimeFilterInput>;
+  colour?: Types.InputMaybe<EqualFilterStringInput>;
+  comment?: Types.InputMaybe<StringFilterInput>;
+  createdDatetime?: Types.InputMaybe<DatetimeFilterInput>;
+  createdOrBackdatedDatetime?: Types.InputMaybe<DatetimeFilterInput>;
+  deliveredDatetime?: Types.InputMaybe<DatetimeFilterInput>;
+  id?: Types.InputMaybe<EqualFilterStringInput>;
+  invoiceNumber?: Types.InputMaybe<EqualFilterBigNumberInput>;
+  isProgramInvoice?: Types.InputMaybe<Scalars['Boolean']['input']>;
+  linkedInvoiceId?: Types.InputMaybe<EqualFilterStringInput>;
+  nameId?: Types.InputMaybe<EqualFilterStringInput>;
+  onHold?: Types.InputMaybe<Scalars['Boolean']['input']>;
+  otherPartyId?: Types.InputMaybe<EqualFilterStringInput>;
+  otherPartyName?: Types.InputMaybe<StringFilterInput>;
+  pickedDatetime?: Types.InputMaybe<DatetimeFilterInput>;
+  programId?: Types.InputMaybe<EqualFilterStringInput>;
+  receivedDatetime?: Types.InputMaybe<DatetimeFilterInput>;
+  requisitionId?: Types.InputMaybe<EqualFilterStringInput>;
+  shippedDatetime?: Types.InputMaybe<DatetimeFilterInput>;
+  status?: Types.InputMaybe<EqualFilterInvoiceStatusInput>;
+  storeId?: Types.InputMaybe<EqualFilterStringInput>;
+  theirReference?: Types.InputMaybe<StringFilterInput>;
+  transportReference?: Types.InputMaybe<EqualFilterStringInput>;
+  type?: Types.InputMaybe<EqualFilterInvoiceTypeInput>;
+  userId?: Types.InputMaybe<EqualFilterStringInput>;
+  verifiedDatetime?: Types.InputMaybe<DatetimeFilterInput>;
 };
 
 export type InvoiceLineFilterInput = {
-  id?: InputMaybe<EqualFilterStringInput>;
-  invoiceId?: InputMaybe<EqualFilterStringInput>;
-  invoiceStatus?: InputMaybe<EqualFilterInvoiceStatusInput>;
-  invoiceType?: InputMaybe<EqualFilterInvoiceTypeInput>;
-  isProgramInvoice?: InputMaybe<Scalars['Boolean']['input']>;
-  itemId?: InputMaybe<EqualFilterStringInput>;
-  locationId?: InputMaybe<EqualFilterStringInput>;
-  numberOfPacks?: InputMaybe<EqualFilterBigFloatingNumberInput>;
-  programId?: InputMaybe<EqualFilterStringInput>;
-  reasonOption?: InputMaybe<EqualFilterStringInput>;
-  requisitionId?: InputMaybe<EqualFilterStringInput>;
-  stockLineId?: InputMaybe<EqualFilterStringInput>;
-  storeId?: InputMaybe<EqualFilterStringInput>;
-  type?: InputMaybe<EqualFilterInvoiceLineTypeInput>;
-  verifiedDatetime?: InputMaybe<DatetimeFilterInput>;
+  id?: Types.InputMaybe<EqualFilterStringInput>;
+  invoiceId?: Types.InputMaybe<EqualFilterStringInput>;
+  invoiceStatus?: Types.InputMaybe<EqualFilterInvoiceStatusInput>;
+  invoiceType?: Types.InputMaybe<EqualFilterInvoiceTypeInput>;
+  isProgramInvoice?: Types.InputMaybe<Scalars['Boolean']['input']>;
+  itemId?: Types.InputMaybe<EqualFilterStringInput>;
+  locationId?: Types.InputMaybe<EqualFilterStringInput>;
+  numberOfPacks?: Types.InputMaybe<EqualFilterBigFloatingNumberInput>;
+  programId?: Types.InputMaybe<EqualFilterStringInput>;
+  reasonOption?: Types.InputMaybe<EqualFilterStringInput>;
+  requisitionId?: Types.InputMaybe<EqualFilterStringInput>;
+  stockLineId?: Types.InputMaybe<EqualFilterStringInput>;
+  storeId?: Types.InputMaybe<EqualFilterStringInput>;
+  type?: Types.InputMaybe<EqualFilterInvoiceLineTypeInput>;
+  verifiedDatetime?: Types.InputMaybe<DatetimeFilterInput>;
 };
 
 export enum InvoiceLineNodeType {
@@ -2002,7 +1938,7 @@ export type InvoiceLineSortInput = {
    * Sort query result is sorted descending or ascending (if not provided the default is
    * ascending)
    */
-  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  desc?: Types.InputMaybe<Scalars['Boolean']['input']>;
   /** Sort query result by `key` */
   key: InvoiceLineSortFieldInput;
 };
@@ -2093,7 +2029,7 @@ export type InvoiceSortInput = {
    * Sort query result is sorted descending or ascending (if not provided the default is
    * ascending)
    */
-  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  desc?: Types.InputMaybe<Scalars['Boolean']['input']>;
   /** Sort query result by `key` */
   key: InvoiceSortFieldInput;
 };
@@ -2104,35 +2040,35 @@ export type InvoiceStatusOptionsInput = {
 };
 
 export type ItemFilterInput = {
-  categoryId?: InputMaybe<Scalars['String']['input']>;
-  categoryName?: InputMaybe<Scalars['String']['input']>;
-  code?: InputMaybe<StringFilterInput>;
-  codeOrName?: InputMaybe<StringFilterInput>;
+  categoryId?: Types.InputMaybe<Scalars['String']['input']>;
+  categoryName?: Types.InputMaybe<Scalars['String']['input']>;
+  code?: Types.InputMaybe<StringFilterInput>;
+  codeOrName?: Types.InputMaybe<StringFilterInput>;
   /** Items with available stock on hand, regardless of item visibility. This filter is ignored if `is_visible_or_on_hand` is true */
-  hasStockOnHand?: InputMaybe<Scalars['Boolean']['input']>;
-  id?: InputMaybe<EqualFilterStringInput>;
-  ignoreForOrders?: InputMaybe<Scalars['Boolean']['input']>;
-  isActive?: InputMaybe<Scalars['Boolean']['input']>;
-  isProgramItem?: InputMaybe<Scalars['Boolean']['input']>;
-  isVaccine?: InputMaybe<Scalars['Boolean']['input']>;
+  hasStockOnHand?: Types.InputMaybe<Scalars['Boolean']['input']>;
+  id?: Types.InputMaybe<EqualFilterStringInput>;
+  ignoreForOrders?: Types.InputMaybe<Scalars['Boolean']['input']>;
+  isActive?: Types.InputMaybe<Scalars['Boolean']['input']>;
+  isProgramItem?: Types.InputMaybe<Scalars['Boolean']['input']>;
+  isVaccine?: Types.InputMaybe<Scalars['Boolean']['input']>;
   /** Items that are part of a masterlist which is visible in this store. This filter is ignored if `is_visible_or_on_hand` is true */
-  isVisible?: InputMaybe<Scalars['Boolean']['input']>;
+  isVisible?: Types.InputMaybe<Scalars['Boolean']['input']>;
   /** Items that are part of a masterlist which is visible in this store OR there is available stock of that item in this store */
-  isVisibleOrOnHand?: InputMaybe<Scalars['Boolean']['input']>;
-  masterListId?: InputMaybe<EqualFilterStringInput>;
-  maxMonthsOfStock?: InputMaybe<Scalars['Float']['input']>;
-  minMonthsOfStock?: InputMaybe<Scalars['Float']['input']>;
-  name?: InputMaybe<StringFilterInput>;
-  productsAtRiskOfBeingOutOfStock?: InputMaybe<Scalars['Boolean']['input']>;
-  type?: InputMaybe<EqualFilterItemTypeInput>;
-  withRecentConsumption?: InputMaybe<Scalars['Boolean']['input']>;
+  isVisibleOrOnHand?: Types.InputMaybe<Scalars['Boolean']['input']>;
+  masterListId?: Types.InputMaybe<EqualFilterStringInput>;
+  maxMonthsOfStock?: Types.InputMaybe<Scalars['Float']['input']>;
+  minMonthsOfStock?: Types.InputMaybe<Scalars['Float']['input']>;
+  name?: Types.InputMaybe<StringFilterInput>;
+  productsAtRiskOfBeingOutOfStock?: Types.InputMaybe<Scalars['Boolean']['input']>;
+  type?: Types.InputMaybe<EqualFilterItemTypeInput>;
+  withRecentConsumption?: Types.InputMaybe<Scalars['Boolean']['input']>;
 };
 
 export type ItemLedgerFilterInput = {
-  datetime?: InputMaybe<DatetimeFilterInput>;
-  invoiceStatus?: InputMaybe<EqualFilterInvoiceStatusInput>;
-  invoiceType?: InputMaybe<EqualFilterInvoiceTypeInput>;
-  itemId?: InputMaybe<EqualFilterStringInput>;
+  datetime?: Types.InputMaybe<DatetimeFilterInput>;
+  invoiceStatus?: Types.InputMaybe<EqualFilterInvoiceStatusInput>;
+  invoiceType?: Types.InputMaybe<EqualFilterInvoiceTypeInput>;
+  itemId?: Types.InputMaybe<EqualFilterStringInput>;
 };
 
 export enum ItemNodeType {
@@ -2143,7 +2079,7 @@ export enum ItemNodeType {
 
 export type ItemPriceInput = {
   itemId: Scalars['String']['input'];
-  nameId?: InputMaybe<Scalars['String']['input']>;
+  nameId?: Types.InputMaybe<Scalars['String']['input']>;
 };
 
 export enum ItemSortFieldInput {
@@ -2157,7 +2093,7 @@ export type ItemSortInput = {
    * Sort query result is sorted descending or ascending (if not provided the default is
    * ascending)
    */
-  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  desc?: Types.InputMaybe<Scalars['Boolean']['input']>;
   /** Sort query result by `key` */
   key: ItemSortFieldInput;
 };
@@ -2181,10 +2117,10 @@ export enum LanguageTypeNode {
 }
 
 export type LedgerFilterInput = {
-  datetime?: InputMaybe<DatetimeFilterInput>;
-  itemId?: InputMaybe<EqualFilterStringInput>;
-  masterListId?: InputMaybe<EqualFilterStringInput>;
-  stockLineId?: InputMaybe<EqualFilterStringInput>;
+  datetime?: Types.InputMaybe<DatetimeFilterInput>;
+  itemId?: Types.InputMaybe<EqualFilterStringInput>;
+  masterListId?: Types.InputMaybe<EqualFilterStringInput>;
+  stockLineId?: Types.InputMaybe<EqualFilterStringInput>;
 };
 
 export enum LedgerSortFieldInput {
@@ -2201,19 +2137,19 @@ export type LedgerSortInput = {
    * Sort query result is sorted descending or ascending (if not provided the
    * default is ascending)
    */
-  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  desc?: Types.InputMaybe<Scalars['Boolean']['input']>;
   /** Sort query result by `key` */
   key: LedgerSortFieldInput;
 };
 
 export type LocationFilterInput = {
-  assignedToAsset?: InputMaybe<Scalars['Boolean']['input']>;
-  code?: InputMaybe<StringFilterInput>;
-  id?: InputMaybe<EqualFilterStringInput>;
-  locationTypeId?: InputMaybe<EqualFilterStringInput>;
-  name?: InputMaybe<StringFilterInput>;
-  onHold?: InputMaybe<Scalars['Boolean']['input']>;
-  storeId?: InputMaybe<EqualFilterStringInput>;
+  assignedToAsset?: Types.InputMaybe<Scalars['Boolean']['input']>;
+  code?: Types.InputMaybe<StringFilterInput>;
+  id?: Types.InputMaybe<EqualFilterStringInput>;
+  locationTypeId?: Types.InputMaybe<EqualFilterStringInput>;
+  name?: Types.InputMaybe<StringFilterInput>;
+  onHold?: Types.InputMaybe<Scalars['Boolean']['input']>;
+  storeId?: Types.InputMaybe<EqualFilterStringInput>;
 };
 
 export enum LocationSortFieldInput {
@@ -2226,14 +2162,14 @@ export type LocationSortInput = {
    * Sort query result is sorted descending or ascending (if not provided the default is
    * ascending)
    */
-  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  desc?: Types.InputMaybe<Scalars['Boolean']['input']>;
   /** Sort query result by `key` */
   key: LocationSortFieldInput;
 };
 
 export type LocationTypeFilterInput = {
-  id?: InputMaybe<EqualFilterStringInput>;
-  name?: InputMaybe<EqualFilterStringInput>;
+  id?: Types.InputMaybe<EqualFilterStringInput>;
+  name?: Types.InputMaybe<EqualFilterStringInput>;
 };
 
 export enum LocationTypeSortFieldInput {
@@ -2247,7 +2183,7 @@ export type LocationTypeSortInput = {
    * Sort query result is sorted descending or ascending (if not provided the default is
    * ascending)
    */
-  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  desc?: Types.InputMaybe<Scalars['Boolean']['input']>;
   /** Sort query result by `key` */
   key: LocationTypeSortFieldInput;
 };
@@ -2267,23 +2203,23 @@ export enum LowStockStatus {
 }
 
 export type MasterListFilterInput = {
-  code?: InputMaybe<StringFilterInput>;
-  description?: InputMaybe<StringFilterInput>;
-  existsForName?: InputMaybe<StringFilterInput>;
-  existsForNameId?: InputMaybe<EqualFilterStringInput>;
-  existsForStoreId?: InputMaybe<EqualFilterStringInput>;
-  id?: InputMaybe<EqualFilterStringInput>;
-  isProgram?: InputMaybe<Scalars['Boolean']['input']>;
-  itemId?: InputMaybe<EqualFilterStringInput>;
-  name?: InputMaybe<StringFilterInput>;
+  code?: Types.InputMaybe<StringFilterInput>;
+  description?: Types.InputMaybe<StringFilterInput>;
+  existsForName?: Types.InputMaybe<StringFilterInput>;
+  existsForNameId?: Types.InputMaybe<EqualFilterStringInput>;
+  existsForStoreId?: Types.InputMaybe<EqualFilterStringInput>;
+  id?: Types.InputMaybe<EqualFilterStringInput>;
+  isProgram?: Types.InputMaybe<Scalars['Boolean']['input']>;
+  itemId?: Types.InputMaybe<EqualFilterStringInput>;
+  name?: Types.InputMaybe<StringFilterInput>;
 };
 
 export type MasterListLineFilterInput = {
-  id?: InputMaybe<EqualFilterStringInput>;
-  ignoreForOrders?: InputMaybe<Scalars['Boolean']['input']>;
-  itemId?: InputMaybe<EqualFilterStringInput>;
-  masterList?: InputMaybe<MasterListFilterInput>;
-  masterListId?: InputMaybe<EqualFilterStringInput>;
+  id?: Types.InputMaybe<EqualFilterStringInput>;
+  ignoreForOrders?: Types.InputMaybe<Scalars['Boolean']['input']>;
+  itemId?: Types.InputMaybe<EqualFilterStringInput>;
+  masterList?: Types.InputMaybe<MasterListFilterInput>;
+  masterListId?: Types.InputMaybe<EqualFilterStringInput>;
 };
 
 export enum MasterListLineSortFieldInput {
@@ -2296,7 +2232,7 @@ export type MasterListLineSortInput = {
    * Sort query result is sorted descending or ascending (if not provided the default is
    * ascending)
    */
-  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  desc?: Types.InputMaybe<Scalars['Boolean']['input']>;
   /** Sort query result by `key` */
   key: MasterListLineSortFieldInput;
 };
@@ -2313,47 +2249,47 @@ export type MasterListSortInput = {
    * Sort query result is sorted descending or ascending (if not provided the default is
    * ascending)
    */
-  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  desc?: Types.InputMaybe<Scalars['Boolean']['input']>;
   /** Sort query result by `key` */
   key: MasterListSortFieldInput;
 };
 
 export type NameFilterInput = {
-  address1?: InputMaybe<StringFilterInput>;
-  address2?: InputMaybe<StringFilterInput>;
+  address1?: Types.InputMaybe<StringFilterInput>;
+  address2?: Types.InputMaybe<StringFilterInput>;
   /** Filter by code */
-  code?: InputMaybe<StringFilterInput>;
+  code?: Types.InputMaybe<StringFilterInput>;
   /** Search filter across name or code */
-  codeOrName?: InputMaybe<StringFilterInput>;
-  country?: InputMaybe<StringFilterInput>;
-  email?: InputMaybe<StringFilterInput>;
-  id?: InputMaybe<EqualFilterStringInput>;
+  codeOrName?: Types.InputMaybe<StringFilterInput>;
+  country?: Types.InputMaybe<StringFilterInput>;
+  email?: Types.InputMaybe<StringFilterInput>;
+  id?: Types.InputMaybe<EqualFilterStringInput>;
   /** Filter by customer property */
-  isCustomer?: InputMaybe<Scalars['Boolean']['input']>;
+  isCustomer?: Types.InputMaybe<Scalars['Boolean']['input']>;
   /** Filter by donor property */
-  isDonor?: InputMaybe<Scalars['Boolean']['input']>;
+  isDonor?: Types.InputMaybe<Scalars['Boolean']['input']>;
   /** Filter by manufacturer property */
-  isManufacturer?: InputMaybe<Scalars['Boolean']['input']>;
+  isManufacturer?: Types.InputMaybe<Scalars['Boolean']['input']>;
   /** Is this name a store */
-  isStore?: InputMaybe<Scalars['Boolean']['input']>;
+  isStore?: Types.InputMaybe<Scalars['Boolean']['input']>;
   /** Filter by supplier property */
-  isSupplier?: InputMaybe<Scalars['Boolean']['input']>;
+  isSupplier?: Types.InputMaybe<Scalars['Boolean']['input']>;
   /**
    * Show system names (defaults to false)
    * System names don't have name_store_join thus if queried with true filter, is_visible filter should also be true or null
    * if is_visible is set to true and is_system_name is also true no system names will be returned
    */
-  isSystemName?: InputMaybe<Scalars['Boolean']['input']>;
+  isSystemName?: Types.InputMaybe<Scalars['Boolean']['input']>;
   /** Visibility in current store (based on store_id parameter and existence of name_store_join record) */
-  isVisible?: InputMaybe<Scalars['Boolean']['input']>;
+  isVisible?: Types.InputMaybe<Scalars['Boolean']['input']>;
   /** Filter by name */
-  name?: InputMaybe<StringFilterInput>;
-  phone?: InputMaybe<StringFilterInput>;
+  name?: Types.InputMaybe<StringFilterInput>;
+  phone?: Types.InputMaybe<StringFilterInput>;
   /** Code of the store if store is linked to name */
-  storeCode?: InputMaybe<StringFilterInput>;
-  supplyingStoreId?: InputMaybe<EqualFilterStringInput>;
+  storeCode?: Types.InputMaybe<StringFilterInput>;
+  supplyingStoreId?: Types.InputMaybe<EqualFilterStringInput>;
   /** Filter by the name type */
-  type?: InputMaybe<EqualFilterTypeInput>;
+  type?: Types.InputMaybe<EqualFilterTypeInput>;
 };
 
 export enum NameNodeType {
@@ -2373,7 +2309,7 @@ export type NameSortInput = {
    * Sort query result is sorted descending or ascending (if not provided the default is
    * ascending)
    */
-  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  desc?: Types.InputMaybe<Scalars['Boolean']['input']>;
   /** Sort query result by `key` */
   key: NameSortFieldInput;
 };
@@ -2390,7 +2326,7 @@ export type NameSortInput = {
  * b) if `NullableUpdate.value` is set, the `mutableValue` is set to the provided `NullableUpdate.value`
  */
 export type NullableDateUpdate = {
-  value?: InputMaybe<Scalars['NaiveDate']['input']>;
+  value?: Types.InputMaybe<Scalars['NaiveDate']['input']>;
 };
 
 /**
@@ -2405,7 +2341,7 @@ export type NullableDateUpdate = {
  * b) if `NullableUpdate.value` is set, the `mutableValue` is set to the provided `NullableUpdate.value`
  */
 export type NullableDatetimeUpdate = {
-  value?: InputMaybe<Scalars['NaiveDateTime']['input']>;
+  value?: Types.InputMaybe<Scalars['NaiveDateTime']['input']>;
 };
 
 /**
@@ -2420,24 +2356,24 @@ export type NullableDatetimeUpdate = {
  * b) if `NullableUpdate.value` is set, the `mutableValue` is set to the provided `NullableUpdate.value`
  */
 export type NullableStringUpdate = {
-  value?: InputMaybe<Scalars['String']['input']>;
+  value?: Types.InputMaybe<Scalars['String']['input']>;
 };
 
 export type OutboundShipmentLineInput = {
-  campaignId?: InputMaybe<Scalars['String']['input']>;
+  campaignId?: Types.InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
   numberOfPacks: Scalars['Float']['input'];
-  programId?: InputMaybe<Scalars['String']['input']>;
+  programId?: Types.InputMaybe<Scalars['String']['input']>;
   stockLineId: Scalars['String']['input'];
-  vvmStatusId?: InputMaybe<Scalars['String']['input']>;
+  vvmStatusId?: Types.InputMaybe<Scalars['String']['input']>;
 };
 
 export type PackagingVariantInput = {
   id: Scalars['String']['input'];
   name: Scalars['String']['input'];
-  packSize?: InputMaybe<Scalars['Float']['input']>;
+  packSize?: Types.InputMaybe<Scalars['Float']['input']>;
   packagingLevel: Scalars['Int']['input'];
-  volumePerUnit?: InputMaybe<Scalars['Float']['input']>;
+  volumePerUnit?: Types.InputMaybe<Scalars['Float']['input']>;
 };
 
 /**
@@ -2447,42 +2383,42 @@ export type PackagingVariantInput = {
  */
 export type PaginationInput = {
   /** Max number of returned items */
-  first?: InputMaybe<Scalars['Int']['input']>;
+  first?: Types.InputMaybe<Scalars['Int']['input']>;
   /** First returned item is at the `offset` position in the full list */
-  offset?: InputMaybe<Scalars['Int']['input']>;
+  offset?: Types.InputMaybe<Scalars['Int']['input']>;
 };
 
 export type PatientFilterInput = {
-  address1?: InputMaybe<StringFilterInput>;
-  address2?: InputMaybe<StringFilterInput>;
-  code?: InputMaybe<StringFilterInput>;
-  code2?: InputMaybe<StringFilterInput>;
-  country?: InputMaybe<StringFilterInput>;
-  dateOfBirth?: InputMaybe<DateFilterInput>;
-  dateOfDeath?: InputMaybe<DateFilterInput>;
-  email?: InputMaybe<StringFilterInput>;
-  firstName?: InputMaybe<StringFilterInput>;
-  gender?: InputMaybe<EqualFilterGenderType>;
-  id?: InputMaybe<EqualFilterStringInput>;
-  identifier?: InputMaybe<StringFilterInput>;
-  lastName?: InputMaybe<StringFilterInput>;
-  name?: InputMaybe<StringFilterInput>;
-  nextOfKinName?: InputMaybe<StringFilterInput>;
-  phone?: InputMaybe<StringFilterInput>;
-  programEnrolmentName?: InputMaybe<StringFilterInput>;
+  address1?: Types.InputMaybe<StringFilterInput>;
+  address2?: Types.InputMaybe<StringFilterInput>;
+  code?: Types.InputMaybe<StringFilterInput>;
+  code2?: Types.InputMaybe<StringFilterInput>;
+  country?: Types.InputMaybe<StringFilterInput>;
+  dateOfBirth?: Types.InputMaybe<DateFilterInput>;
+  dateOfDeath?: Types.InputMaybe<DateFilterInput>;
+  email?: Types.InputMaybe<StringFilterInput>;
+  firstName?: Types.InputMaybe<StringFilterInput>;
+  gender?: Types.InputMaybe<EqualFilterGenderType>;
+  id?: Types.InputMaybe<EqualFilterStringInput>;
+  identifier?: Types.InputMaybe<StringFilterInput>;
+  lastName?: Types.InputMaybe<StringFilterInput>;
+  name?: Types.InputMaybe<StringFilterInput>;
+  nextOfKinName?: Types.InputMaybe<StringFilterInput>;
+  phone?: Types.InputMaybe<StringFilterInput>;
+  programEnrolmentName?: Types.InputMaybe<StringFilterInput>;
 };
 
 export type PatientSearchInput = {
   /** Patient code */
-  code?: InputMaybe<Scalars['String']['input']>;
+  code?: Types.InputMaybe<Scalars['String']['input']>;
   /** Secondary patient code */
-  code2?: InputMaybe<Scalars['String']['input']>;
-  dateOfBirth?: InputMaybe<Scalars['NaiveDate']['input']>;
-  firstName?: InputMaybe<Scalars['String']['input']>;
-  gender?: InputMaybe<GenderTypeNode>;
-  identifier?: InputMaybe<Scalars['String']['input']>;
-  lastName?: InputMaybe<Scalars['String']['input']>;
-  name?: InputMaybe<Scalars['String']['input']>;
+  code2?: Types.InputMaybe<Scalars['String']['input']>;
+  dateOfBirth?: Types.InputMaybe<Scalars['NaiveDate']['input']>;
+  firstName?: Types.InputMaybe<Scalars['String']['input']>;
+  gender?: Types.InputMaybe<GenderTypeNode>;
+  identifier?: Types.InputMaybe<Scalars['String']['input']>;
+  lastName?: Types.InputMaybe<Scalars['String']['input']>;
+  name?: Types.InputMaybe<Scalars['String']['input']>;
 };
 
 export enum PatientSortFieldInput {
@@ -2507,21 +2443,21 @@ export type PatientSortInput = {
    * Sort query result is sorted descending or ascending (if not provided the default is
    * ascending)
    */
-  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  desc?: Types.InputMaybe<Scalars['Boolean']['input']>;
   /** Sort query result by `key` */
   key: PatientSortFieldInput;
 };
 
 export type PeriodFilterInput = {
-  endDate?: InputMaybe<DateFilterInput>;
-  startDate?: InputMaybe<DateFilterInput>;
+  endDate?: Types.InputMaybe<DateFilterInput>;
+  startDate?: Types.InputMaybe<DateFilterInput>;
 };
 
 export type PluginDataFilterInput = {
-  dataIdentifier?: InputMaybe<EqualFilterStringInput>;
-  id?: InputMaybe<EqualFilterStringInput>;
-  relatedRecordId?: InputMaybe<EqualFilterStringInput>;
-  storeId?: InputMaybe<EqualFilterStringInput>;
+  dataIdentifier?: Types.InputMaybe<EqualFilterStringInput>;
+  id?: Types.InputMaybe<EqualFilterStringInput>;
+  relatedRecordId?: Types.InputMaybe<EqualFilterStringInput>;
+  storeId?: Types.InputMaybe<EqualFilterStringInput>;
 };
 
 export enum PluginDataSortFieldInput {
@@ -2534,14 +2470,14 @@ export type PluginDataSortInput = {
    * Sort query result is sorted descending or ascending (if not provided the default is
    * ascending)
    */
-  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  desc?: Types.InputMaybe<Scalars['Boolean']['input']>;
   /** Sort query result by `key` */
   key: PluginDataSortFieldInput;
 };
 
 /** The context we are editing pref within (e.g. prefs for given store, user, etc.) */
 export type PreferenceDescriptionContext = {
-  storeId?: InputMaybe<Scalars['String']['input']>;
+  storeId?: Types.InputMaybe<Scalars['String']['input']>;
 };
 
 export enum PreferenceKey {
@@ -2615,29 +2551,29 @@ export type PrintReportSortInput = {
    * Sort query result is sorted descending or ascending (if not provided the default is
    * ascending)
    */
-  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  desc?: Types.InputMaybe<Scalars['Boolean']['input']>;
   /** Sort query result by `key` */
   key: Scalars['String']['input'];
 };
 
 export type PrinterFilterInput = {
-  address?: InputMaybe<EqualFilterStringInput>;
-  description?: InputMaybe<StringFilterInput>;
-  id?: InputMaybe<EqualFilterStringInput>;
+  address?: Types.InputMaybe<EqualFilterStringInput>;
+  description?: Types.InputMaybe<StringFilterInput>;
+  id?: Types.InputMaybe<EqualFilterStringInput>;
 };
 
 export type ProgramEnrolmentFilterInput = {
-  documentName?: InputMaybe<EqualFilterStringInput>;
-  enrolmentDatetime?: InputMaybe<DatetimeFilterInput>;
-  isImmunisationProgram?: InputMaybe<Scalars['Boolean']['input']>;
-  patientId?: InputMaybe<EqualFilterStringInput>;
-  programEnrolmentId?: InputMaybe<StringFilterInput>;
+  documentName?: Types.InputMaybe<EqualFilterStringInput>;
+  enrolmentDatetime?: Types.InputMaybe<DatetimeFilterInput>;
+  isImmunisationProgram?: Types.InputMaybe<Scalars['Boolean']['input']>;
+  patientId?: Types.InputMaybe<EqualFilterStringInput>;
+  programEnrolmentId?: Types.InputMaybe<StringFilterInput>;
   /** The program id */
-  programId?: InputMaybe<EqualFilterStringInput>;
-  programName?: InputMaybe<StringFilterInput>;
-  status?: InputMaybe<StringFilterInput>;
+  programId?: Types.InputMaybe<EqualFilterStringInput>;
+  programName?: Types.InputMaybe<StringFilterInput>;
+  status?: Types.InputMaybe<StringFilterInput>;
   /** Same as program enrolment document type */
-  type?: InputMaybe<EqualFilterStringInput>;
+  type?: Types.InputMaybe<EqualFilterStringInput>;
 };
 
 export enum ProgramEnrolmentSortFieldInput {
@@ -2653,20 +2589,20 @@ export type ProgramEnrolmentSortInput = {
    * Sort query result is sorted descending or ascending (if not provided the default is
    * ascending)
    */
-  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  desc?: Types.InputMaybe<Scalars['Boolean']['input']>;
   /** Sort query result by `key` */
   key: ProgramEnrolmentSortFieldInput;
 };
 
 export type ProgramEventFilterInput = {
-  activeEndDatetime?: InputMaybe<DatetimeFilterInput>;
-  activeStartDatetime?: InputMaybe<DatetimeFilterInput>;
-  data?: InputMaybe<StringFilterInput>;
-  documentName?: InputMaybe<EqualFilterStringInput>;
-  documentType?: InputMaybe<EqualFilterStringInput>;
-  patientId?: InputMaybe<EqualFilterStringInput>;
+  activeEndDatetime?: Types.InputMaybe<DatetimeFilterInput>;
+  activeStartDatetime?: Types.InputMaybe<DatetimeFilterInput>;
+  data?: Types.InputMaybe<StringFilterInput>;
+  documentName?: Types.InputMaybe<EqualFilterStringInput>;
+  documentType?: Types.InputMaybe<EqualFilterStringInput>;
+  patientId?: Types.InputMaybe<EqualFilterStringInput>;
   /** The event type */
-  type?: InputMaybe<EqualFilterStringInput>;
+  type?: Types.InputMaybe<EqualFilterStringInput>;
 };
 
 export enum ProgramEventSortFieldInput {
@@ -2683,24 +2619,24 @@ export type ProgramEventSortInput = {
    * Sort query result is sorted descending or ascending (if not provided the default is
    * ascending)
    */
-  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  desc?: Types.InputMaybe<Scalars['Boolean']['input']>;
   /** Sort query result by `key` */
   key: ProgramEventSortFieldInput;
 };
 
 export type ProgramFilterInput = {
-  contextId?: InputMaybe<EqualFilterStringInput>;
-  elmisCode?: InputMaybe<EqualFilterStringInput>;
-  existsForStoreId?: InputMaybe<EqualFilterStringInput>;
-  id?: InputMaybe<EqualFilterStringInput>;
-  isImmunisation?: InputMaybe<Scalars['Boolean']['input']>;
-  itemId?: InputMaybe<EqualFilterStringInput>;
-  name?: InputMaybe<StringFilterInput>;
+  contextId?: Types.InputMaybe<EqualFilterStringInput>;
+  elmisCode?: Types.InputMaybe<EqualFilterStringInput>;
+  existsForStoreId?: Types.InputMaybe<EqualFilterStringInput>;
+  id?: Types.InputMaybe<EqualFilterStringInput>;
+  isImmunisation?: Types.InputMaybe<Scalars['Boolean']['input']>;
+  itemId?: Types.InputMaybe<EqualFilterStringInput>;
+  name?: Types.InputMaybe<StringFilterInput>;
 };
 
 export type ProgramIndicatorFilterInput = {
-  id?: InputMaybe<EqualFilterStringInput>;
-  programId?: InputMaybe<EqualFilterStringInput>;
+  id?: Types.InputMaybe<EqualFilterStringInput>;
+  programId?: Types.InputMaybe<EqualFilterStringInput>;
 };
 
 export enum ProgramIndicatorSortFieldInput {
@@ -2709,7 +2645,7 @@ export enum ProgramIndicatorSortFieldInput {
 }
 
 export type ProgramIndicatorSortInput = {
-  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  desc?: Types.InputMaybe<Scalars['Boolean']['input']>;
   key: ProgramIndicatorSortFieldInput;
 };
 
@@ -2722,7 +2658,7 @@ export type ProgramSortInput = {
    * Sort query result is sorted descending or ascending (if not provided the default is
    * ascending)
    */
-  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  desc?: Types.InputMaybe<Scalars['Boolean']['input']>;
   /** Sort query result by `key` */
   key: ProgramSortFieldInput;
 };
@@ -2735,21 +2671,21 @@ export enum PropertyNodeValueType {
 }
 
 export type PurchaseOrderFilterInput = {
-  confirmedDatetime?: InputMaybe<DatetimeFilterInput>;
-  createdDatetime?: InputMaybe<DatetimeFilterInput>;
-  id?: InputMaybe<EqualFilterStringInput>;
-  requestedDeliveryDate?: InputMaybe<DateFilterInput>;
-  sentDatetime?: InputMaybe<DatetimeFilterInput>;
-  status?: InputMaybe<EqualFilterPurchaseOrderStatusInput>;
-  storeId?: InputMaybe<EqualFilterStringInput>;
-  supplier?: InputMaybe<StringFilterInput>;
+  confirmedDatetime?: Types.InputMaybe<DatetimeFilterInput>;
+  createdDatetime?: Types.InputMaybe<DatetimeFilterInput>;
+  id?: Types.InputMaybe<EqualFilterStringInput>;
+  requestedDeliveryDate?: Types.InputMaybe<DateFilterInput>;
+  sentDatetime?: Types.InputMaybe<DatetimeFilterInput>;
+  status?: Types.InputMaybe<EqualFilterPurchaseOrderStatusInput>;
+  storeId?: Types.InputMaybe<EqualFilterStringInput>;
+  supplier?: Types.InputMaybe<StringFilterInput>;
 };
 
 export type PurchaseOrderLineFilterInput = {
-  id?: InputMaybe<EqualFilterStringInput>;
-  purchaseOrderId?: InputMaybe<EqualFilterStringInput>;
-  receivedLessThanAdjusted?: InputMaybe<Scalars['Boolean']['input']>;
-  status?: InputMaybe<EqualFilterPurchaseOrderLineStatusInput>;
+  id?: Types.InputMaybe<EqualFilterStringInput>;
+  purchaseOrderId?: Types.InputMaybe<EqualFilterStringInput>;
+  receivedLessThanAdjusted?: Types.InputMaybe<Scalars['Boolean']['input']>;
+  status?: Types.InputMaybe<EqualFilterPurchaseOrderLineStatusInput>;
 };
 
 export enum PurchaseOrderLineSortFieldInput {
@@ -2761,7 +2697,7 @@ export enum PurchaseOrderLineSortFieldInput {
 }
 
 export type PurchaseOrderLineSortInput = {
-  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  desc?: Types.InputMaybe<Scalars['Boolean']['input']>;
   /** Sort query result by `key` */
   key: PurchaseOrderLineSortFieldInput;
 };
@@ -2788,15 +2724,15 @@ export enum PurchaseOrderSortFieldInput {
 }
 
 export type PurchaseOrderSortInput = {
-  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  desc?: Types.InputMaybe<Scalars['Boolean']['input']>;
   /** Sort query result by `key` */
   key: PurchaseOrderSortFieldInput;
 };
 
 export type ReasonOptionFilterInput = {
-  id?: InputMaybe<EqualFilterStringInput>;
-  isActive?: InputMaybe<Scalars['Boolean']['input']>;
-  type?: InputMaybe<EqualFilterReasonOptionTypeInput>;
+  id?: Types.InputMaybe<EqualFilterStringInput>;
+  isActive?: Types.InputMaybe<Scalars['Boolean']['input']>;
+  type?: Types.InputMaybe<EqualFilterReasonOptionTypeInput>;
 };
 
 export enum ReasonOptionNodeType {
@@ -2818,7 +2754,7 @@ export type ReasonOptionSortInput = {
    * Sort query result is sorted descending or ascending (if not provided the default is
    * ascending)
    */
-  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  desc?: Types.InputMaybe<Scalars['Boolean']['input']>;
   /** Sort query result by `key` */
   key: ReasonOptionSortFieldInput;
 };
@@ -2845,11 +2781,11 @@ export enum ReportContext {
 }
 
 export type ReportFilterInput = {
-  context?: InputMaybe<EqualFilterReportContextInput>;
-  id?: InputMaybe<EqualFilterStringInput>;
-  isActive?: InputMaybe<Scalars['Boolean']['input']>;
-  name?: InputMaybe<StringFilterInput>;
-  subContext?: InputMaybe<EqualFilterStringInput>;
+  context?: Types.InputMaybe<EqualFilterReportContextInput>;
+  id?: Types.InputMaybe<EqualFilterStringInput>;
+  isActive?: Types.InputMaybe<Scalars['Boolean']['input']>;
+  name?: Types.InputMaybe<StringFilterInput>;
+  subContext?: Types.InputMaybe<EqualFilterStringInput>;
 };
 
 export enum ReportSortFieldInput {
@@ -2864,35 +2800,35 @@ export type ReportSortInput = {
    * Sort query result is sorted descending or ascending (if not provided the default is
    * ascending)
    */
-  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  desc?: Types.InputMaybe<Scalars['Boolean']['input']>;
   /** Sort query result by `key` */
   key: ReportSortFieldInput;
 };
 
 export type RequisitionFilterInput = {
-  aShipmentHasBeenCreated?: InputMaybe<Scalars['Boolean']['input']>;
-  automaticallyCreated?: InputMaybe<Scalars['Boolean']['input']>;
-  colour?: InputMaybe<EqualFilterStringInput>;
-  comment?: InputMaybe<StringFilterInput>;
-  createdDatetime?: InputMaybe<DatetimeFilterInput>;
-  elmisCode?: InputMaybe<EqualFilterStringInput>;
-  expectedDeliveryDate?: InputMaybe<DateFilterInput>;
-  finalisedDatetime?: InputMaybe<DatetimeFilterInput>;
-  hasOutstandingLines?: InputMaybe<Scalars['Boolean']['input']>;
-  id?: InputMaybe<EqualFilterStringInput>;
-  isEmergency?: InputMaybe<Scalars['Boolean']['input']>;
-  isProgramRequisition?: InputMaybe<Scalars['Boolean']['input']>;
-  orderType?: InputMaybe<EqualFilterStringInput>;
-  otherPartyId?: InputMaybe<EqualFilterStringInput>;
-  otherPartyName?: InputMaybe<StringFilterInput>;
-  periodId?: InputMaybe<EqualFilterStringInput>;
-  programId?: InputMaybe<EqualFilterStringInput>;
-  requisitionNumber?: InputMaybe<EqualFilterBigNumberInput>;
-  sentDatetime?: InputMaybe<DatetimeFilterInput>;
-  status?: InputMaybe<EqualFilterRequisitionStatusInput>;
-  theirReference?: InputMaybe<StringFilterInput>;
-  type?: InputMaybe<EqualFilterRequisitionTypeInput>;
-  userId?: InputMaybe<EqualFilterStringInput>;
+  aShipmentHasBeenCreated?: Types.InputMaybe<Scalars['Boolean']['input']>;
+  automaticallyCreated?: Types.InputMaybe<Scalars['Boolean']['input']>;
+  colour?: Types.InputMaybe<EqualFilterStringInput>;
+  comment?: Types.InputMaybe<StringFilterInput>;
+  createdDatetime?: Types.InputMaybe<DatetimeFilterInput>;
+  elmisCode?: Types.InputMaybe<EqualFilterStringInput>;
+  expectedDeliveryDate?: Types.InputMaybe<DateFilterInput>;
+  finalisedDatetime?: Types.InputMaybe<DatetimeFilterInput>;
+  hasOutstandingLines?: Types.InputMaybe<Scalars['Boolean']['input']>;
+  id?: Types.InputMaybe<EqualFilterStringInput>;
+  isEmergency?: Types.InputMaybe<Scalars['Boolean']['input']>;
+  isProgramRequisition?: Types.InputMaybe<Scalars['Boolean']['input']>;
+  orderType?: Types.InputMaybe<EqualFilterStringInput>;
+  otherPartyId?: Types.InputMaybe<EqualFilterStringInput>;
+  otherPartyName?: Types.InputMaybe<StringFilterInput>;
+  periodId?: Types.InputMaybe<EqualFilterStringInput>;
+  programId?: Types.InputMaybe<EqualFilterStringInput>;
+  requisitionNumber?: Types.InputMaybe<EqualFilterBigNumberInput>;
+  sentDatetime?: Types.InputMaybe<DatetimeFilterInput>;
+  status?: Types.InputMaybe<EqualFilterRequisitionStatusInput>;
+  theirReference?: Types.InputMaybe<StringFilterInput>;
+  type?: Types.InputMaybe<EqualFilterRequisitionTypeInput>;
+  userId?: Types.InputMaybe<EqualFilterStringInput>;
 };
 
 /** Approval status is applicable to response requisition only */
@@ -2951,7 +2887,7 @@ export type RequisitionSortInput = {
    * Sort query result is sorted descending or ascending (if not provided the default is
    * ascending)
    */
-  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  desc?: Types.InputMaybe<Scalars['Boolean']['input']>;
   /** Sort query result by `key` */
   key: RequisitionSortFieldInput;
 };
@@ -2962,8 +2898,8 @@ export type ResponseAddFromMasterListInput = {
 };
 
 export type ReturnReasonFilterInput = {
-  id?: InputMaybe<EqualFilterStringInput>;
-  isActive?: InputMaybe<Scalars['Boolean']['input']>;
+  id?: Types.InputMaybe<EqualFilterStringInput>;
+  isActive?: Types.InputMaybe<Scalars['Boolean']['input']>;
 };
 
 export enum ReturnReasonSortFieldInput {
@@ -2976,17 +2912,17 @@ export type ReturnReasonSortInput = {
    * Sort query result is sorted descending or ascending (if not provided the default is
    * ascending)
    */
-  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  desc?: Types.InputMaybe<Scalars['Boolean']['input']>;
   /** Sort query result by `key` */
   key: ReturnReasonSortFieldInput;
 };
 
 export type RnRFormFilterInput = {
-  createdDatetime?: InputMaybe<DatetimeFilterInput>;
-  id?: InputMaybe<EqualFilterStringInput>;
-  periodScheduleId?: InputMaybe<EqualFilterStringInput>;
-  programId?: InputMaybe<EqualFilterStringInput>;
-  storeId?: InputMaybe<EqualFilterStringInput>;
+  createdDatetime?: Types.InputMaybe<DatetimeFilterInput>;
+  id?: Types.InputMaybe<EqualFilterStringInput>;
+  periodScheduleId?: Types.InputMaybe<EqualFilterStringInput>;
+  programId?: Types.InputMaybe<EqualFilterStringInput>;
+  storeId?: Types.InputMaybe<EqualFilterStringInput>;
 };
 
 export enum RnRFormNodeStatus {
@@ -3007,19 +2943,19 @@ export type RnRFormSortInput = {
    * Sort query result is sorted descending or ascending (if not provided the default is
    * ascending)
    */
-  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  desc?: Types.InputMaybe<Scalars['Boolean']['input']>;
   /** Sort query result by `key` */
   key: RnRFormSortFieldInput;
 };
 
 export type SaveGoodsReceivedLine = {
-  batch?: InputMaybe<Scalars['String']['input']>;
-  comment?: InputMaybe<Scalars['String']['input']>;
-  expiryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
+  batch?: Types.InputMaybe<Scalars['String']['input']>;
+  comment?: Types.InputMaybe<Scalars['String']['input']>;
+  expiryDate?: Types.InputMaybe<Scalars['NaiveDate']['input']>;
   id: Scalars['String']['input'];
-  manufacturerId?: InputMaybe<Scalars['String']['input']>;
-  numberOfPacksReceived?: InputMaybe<Scalars['Float']['input']>;
-  receivedPackSize?: InputMaybe<Scalars['Float']['input']>;
+  manufacturerId?: Types.InputMaybe<Scalars['String']['input']>;
+  numberOfPacksReceived?: Types.InputMaybe<Scalars['Float']['input']>;
+  receivedPackSize?: Types.InputMaybe<Scalars['Float']['input']>;
 };
 
 export type SaveGoodsReceivedLinesInput = {
@@ -3032,22 +2968,22 @@ export type SaveOutboundShipmentLinesInput = {
   invoiceId: Scalars['String']['input'];
   itemId: Scalars['String']['input'];
   lines: Array<OutboundShipmentLineInput>;
-  placeholderQuantity?: InputMaybe<Scalars['Float']['input']>;
+  placeholderQuantity?: Types.InputMaybe<Scalars['Float']['input']>;
 };
 
 export type SavePrescriptionLinesInput = {
   invoiceId: Scalars['String']['input'];
   itemId: Scalars['String']['input'];
   lines: Array<PrescriptionLineInput>;
-  note?: InputMaybe<Scalars['String']['input']>;
-  prescribedQuantity?: InputMaybe<Scalars['Float']['input']>;
+  note?: Types.InputMaybe<Scalars['String']['input']>;
+  prescribedQuantity?: Types.InputMaybe<Scalars['Float']['input']>;
 };
 
 export type SensorFilterInput = {
-  id?: InputMaybe<EqualFilterStringInput>;
-  isActive?: InputMaybe<Scalars['Boolean']['input']>;
-  name?: InputMaybe<StringFilterInput>;
-  serial?: InputMaybe<EqualFilterStringInput>;
+  id?: Types.InputMaybe<EqualFilterStringInput>;
+  isActive?: Types.InputMaybe<Scalars['Boolean']['input']>;
+  name?: Types.InputMaybe<StringFilterInput>;
+  serial?: Types.InputMaybe<EqualFilterStringInput>;
 };
 
 export enum SensorNodeType {
@@ -3067,7 +3003,7 @@ export type SensorSortInput = {
    * Sort query result is sorted descending or ascending (if not provided the default is
    * ascending)
    */
-  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  desc?: Types.InputMaybe<Scalars['Boolean']['input']>;
   /** Sort query result by `key` */
   key: SensorSortFieldInput;
 };
@@ -3079,34 +3015,34 @@ export type SetPrescribedQuantityInput = {
 };
 
 export type ShippingMethodFilterInput = {
-  id?: InputMaybe<EqualFilterStringInput>;
-  method?: InputMaybe<StringFilterInput>;
+  id?: Types.InputMaybe<EqualFilterStringInput>;
+  method?: Types.InputMaybe<StringFilterInput>;
 };
 
 export type StockEvolutionOptionsInput = {
   /** Defaults to 30, number of data points for historic stock on hand in stock evolution chart */
-  numberOfHistoricDataPoints?: InputMaybe<Scalars['Int']['input']>;
+  numberOfHistoricDataPoints?: Types.InputMaybe<Scalars['Int']['input']>;
   /** Defaults to 20, number of data points for projected stock on hand in stock evolution chart */
-  numberOfProjectedDataPoints?: InputMaybe<Scalars['Int']['input']>;
+  numberOfProjectedDataPoints?: Types.InputMaybe<Scalars['Int']['input']>;
 };
 
 export type StockLineFilterInput = {
-  code?: InputMaybe<StringFilterInput>;
-  expiryDate?: InputMaybe<DateFilterInput>;
-  hasPacksInStore?: InputMaybe<Scalars['Boolean']['input']>;
-  id?: InputMaybe<EqualFilterStringInput>;
-  isActive?: InputMaybe<Scalars['Boolean']['input']>;
-  isAvailable?: InputMaybe<Scalars['Boolean']['input']>;
-  isProgramStockLine?: InputMaybe<Scalars['Boolean']['input']>;
-  itemCodeOrName?: InputMaybe<StringFilterInput>;
-  itemId?: InputMaybe<EqualFilterStringInput>;
-  location?: InputMaybe<LocationFilterInput>;
-  locationId?: InputMaybe<EqualFilterStringInput>;
-  masterList?: InputMaybe<MasterListFilterInput>;
-  name?: InputMaybe<StringFilterInput>;
-  search?: InputMaybe<StringFilterInput>;
-  storeId?: InputMaybe<EqualFilterStringInput>;
-  vvmStatusId?: InputMaybe<EqualFilterStringInput>;
+  code?: Types.InputMaybe<StringFilterInput>;
+  expiryDate?: Types.InputMaybe<DateFilterInput>;
+  hasPacksInStore?: Types.InputMaybe<Scalars['Boolean']['input']>;
+  id?: Types.InputMaybe<EqualFilterStringInput>;
+  isActive?: Types.InputMaybe<Scalars['Boolean']['input']>;
+  isAvailable?: Types.InputMaybe<Scalars['Boolean']['input']>;
+  isProgramStockLine?: Types.InputMaybe<Scalars['Boolean']['input']>;
+  itemCodeOrName?: Types.InputMaybe<StringFilterInput>;
+  itemId?: Types.InputMaybe<EqualFilterStringInput>;
+  location?: Types.InputMaybe<LocationFilterInput>;
+  locationId?: Types.InputMaybe<EqualFilterStringInput>;
+  masterList?: Types.InputMaybe<MasterListFilterInput>;
+  name?: Types.InputMaybe<StringFilterInput>;
+  search?: Types.InputMaybe<StringFilterInput>;
+  storeId?: Types.InputMaybe<EqualFilterStringInput>;
+  vvmStatusId?: Types.InputMaybe<EqualFilterStringInput>;
 };
 
 export enum StockLineSortFieldInput {
@@ -3127,33 +3063,33 @@ export type StockLineSortInput = {
    * Sort query result is sorted descending or ascending (if not provided the default is
    * ascending)
    */
-  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  desc?: Types.InputMaybe<Scalars['Boolean']['input']>;
   /** Sort query result by `key` */
   key: StockLineSortFieldInput;
 };
 
 export type StocktakeFilterInput = {
-  comment?: InputMaybe<StringFilterInput>;
-  createdDatetime?: InputMaybe<DatetimeFilterInput>;
-  description?: InputMaybe<StringFilterInput>;
-  finalisedDatetime?: InputMaybe<DatetimeFilterInput>;
-  id?: InputMaybe<EqualFilterStringInput>;
-  isLocked?: InputMaybe<Scalars['Boolean']['input']>;
-  isProgramStocktake?: InputMaybe<Scalars['Boolean']['input']>;
-  programId?: InputMaybe<EqualFilterStringInput>;
-  status?: InputMaybe<EqualFilterStocktakeStatusInput>;
-  stocktakeDate?: InputMaybe<DateFilterInput>;
-  stocktakeNumber?: InputMaybe<EqualFilterBigNumberInput>;
-  userId?: InputMaybe<EqualFilterStringInput>;
+  comment?: Types.InputMaybe<StringFilterInput>;
+  createdDatetime?: Types.InputMaybe<DatetimeFilterInput>;
+  description?: Types.InputMaybe<StringFilterInput>;
+  finalisedDatetime?: Types.InputMaybe<DatetimeFilterInput>;
+  id?: Types.InputMaybe<EqualFilterStringInput>;
+  isLocked?: Types.InputMaybe<Scalars['Boolean']['input']>;
+  isProgramStocktake?: Types.InputMaybe<Scalars['Boolean']['input']>;
+  programId?: Types.InputMaybe<EqualFilterStringInput>;
+  status?: Types.InputMaybe<EqualFilterStocktakeStatusInput>;
+  stocktakeDate?: Types.InputMaybe<DateFilterInput>;
+  stocktakeNumber?: Types.InputMaybe<EqualFilterBigNumberInput>;
+  userId?: Types.InputMaybe<EqualFilterStringInput>;
 };
 
 export type StocktakeLineFilterInput = {
-  id?: InputMaybe<EqualFilterStringInput>;
-  itemCodeOrName?: InputMaybe<StringFilterInput>;
-  itemId?: InputMaybe<EqualFilterStringInput>;
-  locationId?: InputMaybe<EqualFilterStringInput>;
-  stockLineId?: InputMaybe<EqualFilterStringInput>;
-  stocktakeId?: InputMaybe<EqualFilterStringInput>;
+  id?: Types.InputMaybe<EqualFilterStringInput>;
+  itemCodeOrName?: Types.InputMaybe<StringFilterInput>;
+  itemId?: Types.InputMaybe<EqualFilterStringInput>;
+  locationId?: Types.InputMaybe<EqualFilterStringInput>;
+  stockLineId?: Types.InputMaybe<EqualFilterStringInput>;
+  stocktakeId?: Types.InputMaybe<EqualFilterStringInput>;
 };
 
 export enum StocktakeLineSortFieldInput {
@@ -3173,7 +3109,7 @@ export type StocktakeLineSortInput = {
    * Sort query result is sorted descending or ascending (if not provided the default is
    * ascending)
    */
-  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  desc?: Types.InputMaybe<Scalars['Boolean']['input']>;
   /** Sort query result by `key` */
   key: StocktakeLineSortFieldInput;
 };
@@ -3198,18 +3134,18 @@ export type StocktakeSortInput = {
    * Sort query result is sorted descending or ascending (if not provided the default is
    * ascending)
    */
-  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  desc?: Types.InputMaybe<Scalars['Boolean']['input']>;
   /** Sort query result by `key` */
   key: StocktakeSortFieldInput;
 };
 
 export type StoreFilterInput = {
-  code?: InputMaybe<StringFilterInput>;
-  codeOrName?: InputMaybe<StringFilterInput>;
-  id?: InputMaybe<EqualFilterStringInput>;
-  name?: InputMaybe<StringFilterInput>;
-  nameCode?: InputMaybe<StringFilterInput>;
-  siteId?: InputMaybe<EqualFilterNumberInput>;
+  code?: Types.InputMaybe<StringFilterInput>;
+  codeOrName?: Types.InputMaybe<StringFilterInput>;
+  id?: Types.InputMaybe<EqualFilterStringInput>;
+  name?: Types.InputMaybe<StringFilterInput>;
+  nameCode?: Types.InputMaybe<StringFilterInput>;
+  siteId?: Types.InputMaybe<EqualFilterNumberInput>;
 };
 
 export enum StoreModeNodeType {
@@ -3228,16 +3164,16 @@ export type StoreSortInput = {
    * Sort query result is sorted descending or ascending (if not provided the default is
    * ascending)
    */
-  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  desc?: Types.InputMaybe<Scalars['Boolean']['input']>;
   /** Sort query result by `key` */
   key: StoreSortFieldInput;
 };
 
 export type StringFilterInput = {
   /** Search term must be an exact match (case sensitive) */
-  equalTo?: InputMaybe<Scalars['String']['input']>;
+  equalTo?: Types.InputMaybe<Scalars['String']['input']>;
   /** Search term must be included in search candidate (case insensitive) */
-  like?: InputMaybe<Scalars['String']['input']>;
+  like?: Types.InputMaybe<Scalars['String']['input']>;
 };
 
 export type StringStorePrefInput = {
@@ -3247,16 +3183,16 @@ export type StringStorePrefInput = {
 
 export type SupplierReturnInput = {
   id: Scalars['String']['input'];
-  inboundShipmentId?: InputMaybe<Scalars['String']['input']>;
+  inboundShipmentId?: Types.InputMaybe<Scalars['String']['input']>;
   supplierId: Scalars['String']['input'];
   supplierReturnLines: Array<SupplierReturnLineInput>;
 };
 
 export type SupplierReturnLineInput = {
   id: Scalars['String']['input'];
-  note?: InputMaybe<Scalars['String']['input']>;
+  note?: Types.InputMaybe<Scalars['String']['input']>;
   numberOfPacksToReturn: Scalars['Float']['input'];
-  reasonId?: InputMaybe<Scalars['String']['input']>;
+  reasonId?: Types.InputMaybe<Scalars['String']['input']>;
   stockLineId: Scalars['String']['input'];
 };
 
@@ -3292,17 +3228,17 @@ export type SyncSettingsInput = {
 
 export type TaxInput = {
   /** Set or unset the tax value (in percentage) */
-  percentage?: InputMaybe<Scalars['Float']['input']>;
+  percentage?: Types.InputMaybe<Scalars['Float']['input']>;
 };
 
 export type TemperatureBreachFilterInput = {
-  endDatetime?: InputMaybe<DatetimeFilterInput>;
-  id?: InputMaybe<EqualFilterStringInput>;
-  location?: InputMaybe<LocationFilterInput>;
-  sensor?: InputMaybe<SensorFilterInput>;
-  startDatetime?: InputMaybe<DatetimeFilterInput>;
-  type?: InputMaybe<EqualFilterTemperatureBreachRowTypeInput>;
-  unacknowledged?: InputMaybe<Scalars['Boolean']['input']>;
+  endDatetime?: Types.InputMaybe<DatetimeFilterInput>;
+  id?: Types.InputMaybe<EqualFilterStringInput>;
+  location?: Types.InputMaybe<LocationFilterInput>;
+  sensor?: Types.InputMaybe<SensorFilterInput>;
+  startDatetime?: Types.InputMaybe<DatetimeFilterInput>;
+  type?: Types.InputMaybe<EqualFilterTemperatureBreachRowTypeInput>;
+  unacknowledged?: Types.InputMaybe<Scalars['Boolean']['input']>;
 };
 
 export enum TemperatureBreachNodeType {
@@ -3323,17 +3259,17 @@ export type TemperatureBreachSortInput = {
    * Sort query result is sorted descending or ascending (if not provided the default is
    * ascending)
    */
-  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  desc?: Types.InputMaybe<Scalars['Boolean']['input']>;
   /** Sort query result by `key` */
   key: TemperatureBreachSortFieldInput;
 };
 
 export type TemperatureLogFilterInput = {
-  datetime?: InputMaybe<DatetimeFilterInput>;
-  id?: InputMaybe<EqualFilterStringInput>;
-  location?: InputMaybe<LocationFilterInput>;
-  sensor?: InputMaybe<SensorFilterInput>;
-  temperatureBreach?: InputMaybe<TemperatureBreachFilterInput>;
+  datetime?: Types.InputMaybe<DatetimeFilterInput>;
+  id?: Types.InputMaybe<EqualFilterStringInput>;
+  location?: Types.InputMaybe<LocationFilterInput>;
+  sensor?: Types.InputMaybe<SensorFilterInput>;
+  temperatureBreach?: Types.InputMaybe<TemperatureBreachFilterInput>;
 };
 
 export enum TemperatureLogSortFieldInput {
@@ -3346,7 +3282,7 @@ export type TemperatureLogSortInput = {
    * Sort query result is sorted descending or ascending (if not provided the default is
    * ascending)
    */
-  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  desc?: Types.InputMaybe<Scalars['Boolean']['input']>;
   /** Sort query result by `key` */
   key: TemperatureLogSortFieldInput;
 };
@@ -3363,20 +3299,20 @@ export enum UniqueValueKey {
 }
 
 export type UpdateAssetInput = {
-  assetNumber?: InputMaybe<Scalars['String']['input']>;
-  catalogueItemId?: InputMaybe<NullableStringUpdate>;
-  donorNameId?: InputMaybe<NullableStringUpdate>;
+  assetNumber?: Types.InputMaybe<Scalars['String']['input']>;
+  catalogueItemId?: Types.InputMaybe<NullableStringUpdate>;
+  donorNameId?: Types.InputMaybe<NullableStringUpdate>;
   id: Scalars['String']['input'];
-  installationDate?: InputMaybe<NullableDateUpdate>;
-  locationIds?: InputMaybe<Array<Scalars['String']['input']>>;
-  needsReplacement?: InputMaybe<Scalars['Boolean']['input']>;
-  notes?: InputMaybe<Scalars['String']['input']>;
-  properties?: InputMaybe<Scalars['String']['input']>;
-  replacementDate?: InputMaybe<NullableDateUpdate>;
-  serialNumber?: InputMaybe<NullableStringUpdate>;
-  storeId?: InputMaybe<NullableStringUpdate>;
-  warrantyEnd?: InputMaybe<NullableDateUpdate>;
-  warrantyStart?: InputMaybe<NullableDateUpdate>;
+  installationDate?: Types.InputMaybe<NullableDateUpdate>;
+  locationIds?: Types.InputMaybe<Array<Scalars['String']['input']>>;
+  needsReplacement?: Types.InputMaybe<Scalars['Boolean']['input']>;
+  notes?: Types.InputMaybe<Scalars['String']['input']>;
+  properties?: Types.InputMaybe<Scalars['String']['input']>;
+  replacementDate?: Types.InputMaybe<NullableDateUpdate>;
+  serialNumber?: Types.InputMaybe<NullableStringUpdate>;
+  storeId?: Types.InputMaybe<NullableStringUpdate>;
+  warrantyEnd?: Types.InputMaybe<NullableDateUpdate>;
+  warrantyStart?: Types.InputMaybe<NullableDateUpdate>;
 };
 
 export type UpdateContactTraceInput = {
@@ -3393,13 +3329,13 @@ export type UpdateContactTraceInput = {
 };
 
 export type UpdateCustomerReturnInput = {
-  colour?: InputMaybe<Scalars['String']['input']>;
-  comment?: InputMaybe<Scalars['String']['input']>;
+  colour?: Types.InputMaybe<Scalars['String']['input']>;
+  comment?: Types.InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
-  onHold?: InputMaybe<Scalars['Boolean']['input']>;
-  otherPartyId?: InputMaybe<Scalars['String']['input']>;
-  status?: InputMaybe<UpdateCustomerReturnStatusInput>;
-  theirReference?: InputMaybe<Scalars['String']['input']>;
+  onHold?: Types.InputMaybe<Scalars['Boolean']['input']>;
+  otherPartyId?: Types.InputMaybe<Scalars['String']['input']>;
+  status?: Types.InputMaybe<UpdateCustomerReturnStatusInput>;
+  theirReference?: Types.InputMaybe<Scalars['String']['input']>;
 };
 
 export type UpdateCustomerReturnLinesInput = {
@@ -3413,31 +3349,31 @@ export enum UpdateCustomerReturnStatusInput {
 }
 
 export type UpdateDemographicIndicatorInput = {
-  basePopulation?: InputMaybe<Scalars['Int']['input']>;
-  baseYear?: InputMaybe<Scalars['Int']['input']>;
+  basePopulation?: Types.InputMaybe<Scalars['Int']['input']>;
+  baseYear?: Types.InputMaybe<Scalars['Int']['input']>;
   id: Scalars['String']['input'];
-  name?: InputMaybe<Scalars['String']['input']>;
-  populationPercentage?: InputMaybe<Scalars['Float']['input']>;
-  year1Projection?: InputMaybe<Scalars['Int']['input']>;
-  year2Projection?: InputMaybe<Scalars['Int']['input']>;
-  year3Projection?: InputMaybe<Scalars['Int']['input']>;
-  year4Projection?: InputMaybe<Scalars['Int']['input']>;
-  year5Projection?: InputMaybe<Scalars['Int']['input']>;
+  name?: Types.InputMaybe<Scalars['String']['input']>;
+  populationPercentage?: Types.InputMaybe<Scalars['Float']['input']>;
+  year1Projection?: Types.InputMaybe<Scalars['Int']['input']>;
+  year2Projection?: Types.InputMaybe<Scalars['Int']['input']>;
+  year3Projection?: Types.InputMaybe<Scalars['Int']['input']>;
+  year4Projection?: Types.InputMaybe<Scalars['Int']['input']>;
+  year5Projection?: Types.InputMaybe<Scalars['Int']['input']>;
 };
 
 export type UpdateDemographicProjectionInput = {
-  baseYear?: InputMaybe<Scalars['Int']['input']>;
+  baseYear?: Types.InputMaybe<Scalars['Int']['input']>;
   id: Scalars['String']['input'];
-  year1?: InputMaybe<Scalars['Float']['input']>;
-  year2?: InputMaybe<Scalars['Float']['input']>;
-  year3?: InputMaybe<Scalars['Float']['input']>;
-  year4?: InputMaybe<Scalars['Float']['input']>;
-  year5?: InputMaybe<Scalars['Float']['input']>;
+  year1?: Types.InputMaybe<Scalars['Float']['input']>;
+  year2?: Types.InputMaybe<Scalars['Float']['input']>;
+  year3?: Types.InputMaybe<Scalars['Float']['input']>;
+  year4?: Types.InputMaybe<Scalars['Float']['input']>;
+  year5?: Types.InputMaybe<Scalars['Float']['input']>;
 };
 
 export type UpdateDonorInput = {
   applyToLines: ApplyToLinesInput;
-  donorId?: InputMaybe<Scalars['String']['input']>;
+  donorId?: Types.InputMaybe<Scalars['String']['input']>;
 };
 
 export type UpdateEncounterInput = {
@@ -3452,68 +3388,68 @@ export type UpdateEncounterInput = {
 };
 
 export type UpdateGoodsReceivedInput = {
-  comment?: InputMaybe<Scalars['String']['input']>;
-  donorId?: InputMaybe<NullableStringUpdate>;
+  comment?: Types.InputMaybe<Scalars['String']['input']>;
+  donorId?: Types.InputMaybe<NullableStringUpdate>;
   id: Scalars['String']['input'];
-  receivedDate?: InputMaybe<NullableDateUpdate>;
-  status?: InputMaybe<GoodsReceivedNodeType>;
-  supplierReference?: InputMaybe<Scalars['String']['input']>;
+  receivedDate?: Types.InputMaybe<NullableDateUpdate>;
+  status?: Types.InputMaybe<GoodsReceivedNodeType>;
+  supplierReference?: Types.InputMaybe<Scalars['String']['input']>;
 };
 
 export type UpdateGoodsReceivedLineInput = {
-  batch?: InputMaybe<Scalars['String']['input']>;
-  comment?: InputMaybe<Scalars['String']['input']>;
-  expiryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
+  batch?: Types.InputMaybe<Scalars['String']['input']>;
+  comment?: Types.InputMaybe<Scalars['String']['input']>;
+  expiryDate?: Types.InputMaybe<Scalars['NaiveDate']['input']>;
   id: Scalars['String']['input'];
-  manufacturerId?: InputMaybe<Scalars['String']['input']>;
-  numberOfPacksReceived?: InputMaybe<Scalars['Float']['input']>;
-  receivedPackSize?: InputMaybe<Scalars['Float']['input']>;
+  manufacturerId?: Types.InputMaybe<Scalars['String']['input']>;
+  numberOfPacksReceived?: Types.InputMaybe<Scalars['Float']['input']>;
+  receivedPackSize?: Types.InputMaybe<Scalars['Float']['input']>;
 };
 
 export type UpdateInboundShipmentInput = {
-  colour?: InputMaybe<Scalars['String']['input']>;
-  comment?: InputMaybe<Scalars['String']['input']>;
-  currencyId?: InputMaybe<Scalars['String']['input']>;
-  currencyRate?: InputMaybe<Scalars['Float']['input']>;
-  defaultDonor?: InputMaybe<UpdateDonorInput>;
+  colour?: Types.InputMaybe<Scalars['String']['input']>;
+  comment?: Types.InputMaybe<Scalars['String']['input']>;
+  currencyId?: Types.InputMaybe<Scalars['String']['input']>;
+  currencyRate?: Types.InputMaybe<Scalars['Float']['input']>;
+  defaultDonor?: Types.InputMaybe<UpdateDonorInput>;
   id: Scalars['String']['input'];
-  onHold?: InputMaybe<Scalars['Boolean']['input']>;
-  otherPartyId?: InputMaybe<Scalars['String']['input']>;
-  status?: InputMaybe<UpdateInboundShipmentStatusInput>;
-  tax?: InputMaybe<TaxInput>;
-  theirReference?: InputMaybe<Scalars['String']['input']>;
+  onHold?: Types.InputMaybe<Scalars['Boolean']['input']>;
+  otherPartyId?: Types.InputMaybe<Scalars['String']['input']>;
+  status?: Types.InputMaybe<UpdateInboundShipmentStatusInput>;
+  tax?: Types.InputMaybe<TaxInput>;
+  theirReference?: Types.InputMaybe<Scalars['String']['input']>;
 };
 
 export type UpdateInboundShipmentLineInput = {
-  batch?: InputMaybe<Scalars['String']['input']>;
-  campaignId?: InputMaybe<NullableStringUpdate>;
-  costPricePerPack?: InputMaybe<Scalars['Float']['input']>;
-  donorId?: InputMaybe<NullableStringUpdate>;
-  expiryDate?: InputMaybe<NullableDateUpdate>;
+  batch?: Types.InputMaybe<Scalars['String']['input']>;
+  campaignId?: Types.InputMaybe<NullableStringUpdate>;
+  costPricePerPack?: Types.InputMaybe<Scalars['Float']['input']>;
+  donorId?: Types.InputMaybe<NullableStringUpdate>;
+  expiryDate?: Types.InputMaybe<NullableDateUpdate>;
   id: Scalars['String']['input'];
-  itemId?: InputMaybe<Scalars['String']['input']>;
-  itemVariantId?: InputMaybe<NullableStringUpdate>;
-  location?: InputMaybe<NullableStringUpdate>;
-  note?: InputMaybe<NullableStringUpdate>;
-  numberOfPacks?: InputMaybe<Scalars['Float']['input']>;
-  packSize?: InputMaybe<Scalars['Float']['input']>;
-  programId?: InputMaybe<NullableStringUpdate>;
-  sellPricePerPack?: InputMaybe<Scalars['Float']['input']>;
-  shippedNumberOfPacks?: InputMaybe<Scalars['Float']['input']>;
-  shippedPackSize?: InputMaybe<Scalars['Float']['input']>;
-  tax?: InputMaybe<TaxInput>;
-  totalBeforeTax?: InputMaybe<Scalars['Float']['input']>;
-  volumePerPack?: InputMaybe<Scalars['Float']['input']>;
-  vvmStatusId?: InputMaybe<Scalars['String']['input']>;
+  itemId?: Types.InputMaybe<Scalars['String']['input']>;
+  itemVariantId?: Types.InputMaybe<NullableStringUpdate>;
+  location?: Types.InputMaybe<NullableStringUpdate>;
+  note?: Types.InputMaybe<NullableStringUpdate>;
+  numberOfPacks?: Types.InputMaybe<Scalars['Float']['input']>;
+  packSize?: Types.InputMaybe<Scalars['Float']['input']>;
+  programId?: Types.InputMaybe<NullableStringUpdate>;
+  sellPricePerPack?: Types.InputMaybe<Scalars['Float']['input']>;
+  shippedNumberOfPacks?: Types.InputMaybe<Scalars['Float']['input']>;
+  shippedPackSize?: Types.InputMaybe<Scalars['Float']['input']>;
+  tax?: Types.InputMaybe<TaxInput>;
+  totalBeforeTax?: Types.InputMaybe<Scalars['Float']['input']>;
+  volumePerPack?: Types.InputMaybe<Scalars['Float']['input']>;
+  vvmStatusId?: Types.InputMaybe<Scalars['String']['input']>;
 };
 
 export type UpdateInboundShipmentServiceLineInput = {
   id: Scalars['String']['input'];
-  itemId?: InputMaybe<Scalars['String']['input']>;
-  name?: InputMaybe<Scalars['String']['input']>;
-  note?: InputMaybe<Scalars['String']['input']>;
-  tax?: InputMaybe<TaxInput>;
-  totalBeforeTax?: InputMaybe<Scalars['Float']['input']>;
+  itemId?: Types.InputMaybe<Scalars['String']['input']>;
+  name?: Types.InputMaybe<Scalars['String']['input']>;
+  note?: Types.InputMaybe<Scalars['String']['input']>;
+  tax?: Types.InputMaybe<TaxInput>;
+  totalBeforeTax?: Types.InputMaybe<Scalars['Float']['input']>;
 };
 
 export enum UpdateInboundShipmentStatusInput {
@@ -3528,71 +3464,71 @@ export type UpdateIndicatorValueInput = {
 };
 
 export type UpdateInsuranceInput = {
-  discountPercentage?: InputMaybe<Scalars['Float']['input']>;
-  expiryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
+  discountPercentage?: Types.InputMaybe<Scalars['Float']['input']>;
+  expiryDate?: Types.InputMaybe<Scalars['NaiveDate']['input']>;
   id: Scalars['String']['input'];
-  insuranceProviderId?: InputMaybe<Scalars['String']['input']>;
-  isActive?: InputMaybe<Scalars['Boolean']['input']>;
-  nameOfInsured?: InputMaybe<Scalars['String']['input']>;
-  policyType?: InputMaybe<InsurancePolicyNodeType>;
+  insuranceProviderId?: Types.InputMaybe<Scalars['String']['input']>;
+  isActive?: Types.InputMaybe<Scalars['Boolean']['input']>;
+  nameOfInsured?: Types.InputMaybe<Scalars['String']['input']>;
+  policyType?: Types.InputMaybe<InsurancePolicyNodeType>;
 };
 
 export type UpdateLocationInput = {
-  code?: InputMaybe<Scalars['String']['input']>;
+  code?: Types.InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
-  locationTypeId?: InputMaybe<Scalars['String']['input']>;
-  name?: InputMaybe<Scalars['String']['input']>;
-  onHold?: InputMaybe<Scalars['Boolean']['input']>;
-  volume?: InputMaybe<Scalars['Float']['input']>;
+  locationTypeId?: Types.InputMaybe<Scalars['String']['input']>;
+  name?: Types.InputMaybe<Scalars['String']['input']>;
+  onHold?: Types.InputMaybe<Scalars['Boolean']['input']>;
+  volume?: Types.InputMaybe<Scalars['Float']['input']>;
 };
 
 export type UpdateNamePropertiesInput = {
   id: Scalars['String']['input'];
-  properties?: InputMaybe<Scalars['String']['input']>;
+  properties?: Types.InputMaybe<Scalars['String']['input']>;
 };
 
 export type UpdateOutboundShipmentInput = {
-  colour?: InputMaybe<Scalars['String']['input']>;
-  comment?: InputMaybe<Scalars['String']['input']>;
-  currencyId?: InputMaybe<Scalars['String']['input']>;
-  currencyRate?: InputMaybe<Scalars['Float']['input']>;
-  expectedDeliveryDate?: InputMaybe<NullableDateUpdate>;
+  colour?: Types.InputMaybe<Scalars['String']['input']>;
+  comment?: Types.InputMaybe<Scalars['String']['input']>;
+  currencyId?: Types.InputMaybe<Scalars['String']['input']>;
+  currencyRate?: Types.InputMaybe<Scalars['Float']['input']>;
+  expectedDeliveryDate?: Types.InputMaybe<NullableDateUpdate>;
   /** The new invoice id provided by the client */
   id: Scalars['String']['input'];
-  onHold?: InputMaybe<Scalars['Boolean']['input']>;
-  shippingMethodId?: InputMaybe<NullableStringUpdate>;
+  onHold?: Types.InputMaybe<Scalars['Boolean']['input']>;
+  shippingMethodId?: Types.InputMaybe<NullableStringUpdate>;
   /**
    * When changing the status from DRAFT to CONFIRMED or FINALISED the total_number_of_packs for
    * existing invoice items gets updated.
    */
-  status?: InputMaybe<UpdateOutboundShipmentStatusInput>;
-  tax?: InputMaybe<TaxInput>;
+  status?: Types.InputMaybe<UpdateOutboundShipmentStatusInput>;
+  tax?: Types.InputMaybe<TaxInput>;
   /** External invoice reference, e.g. purchase or shipment number */
-  theirReference?: InputMaybe<Scalars['String']['input']>;
-  transportReference?: InputMaybe<Scalars['String']['input']>;
+  theirReference?: Types.InputMaybe<Scalars['String']['input']>;
+  transportReference?: Types.InputMaybe<Scalars['String']['input']>;
 };
 
 export type UpdateOutboundShipmentLineInput = {
   id: Scalars['String']['input'];
-  numberOfPacks?: InputMaybe<Scalars['Float']['input']>;
-  prescribedQuantity?: InputMaybe<Scalars['Float']['input']>;
-  stockLineId?: InputMaybe<Scalars['String']['input']>;
-  tax?: InputMaybe<TaxInput>;
-  vvmStatusId?: InputMaybe<Scalars['String']['input']>;
+  numberOfPacks?: Types.InputMaybe<Scalars['Float']['input']>;
+  prescribedQuantity?: Types.InputMaybe<Scalars['Float']['input']>;
+  stockLineId?: Types.InputMaybe<Scalars['String']['input']>;
+  tax?: Types.InputMaybe<TaxInput>;
+  vvmStatusId?: Types.InputMaybe<Scalars['String']['input']>;
 };
 
 export type UpdateOutboundShipmentNameInput = {
   id: Scalars['String']['input'];
-  otherPartyId?: InputMaybe<Scalars['String']['input']>;
+  otherPartyId?: Types.InputMaybe<Scalars['String']['input']>;
 };
 
 export type UpdateOutboundShipmentServiceLineInput = {
   id: Scalars['String']['input'];
-  itemId?: InputMaybe<Scalars['String']['input']>;
-  name?: InputMaybe<Scalars['String']['input']>;
-  note?: InputMaybe<Scalars['String']['input']>;
-  tax?: InputMaybe<TaxInput>;
-  totalBeforeTax?: InputMaybe<Scalars['Float']['input']>;
+  itemId?: Types.InputMaybe<Scalars['String']['input']>;
+  name?: Types.InputMaybe<Scalars['String']['input']>;
+  note?: Types.InputMaybe<Scalars['String']['input']>;
+  tax?: Types.InputMaybe<TaxInput>;
+  totalBeforeTax?: Types.InputMaybe<Scalars['Float']['input']>;
 };
 
 export enum UpdateOutboundShipmentStatusInput {
@@ -3612,19 +3548,19 @@ export type UpdateOutboundShipmentUnallocatedLineInput = {
  * For example, if the last_name is not provided, the last_name in the patient record will be cleared.
  */
 export type UpdatePatientInput = {
-  address1?: InputMaybe<Scalars['String']['input']>;
+  address1?: Types.InputMaybe<Scalars['String']['input']>;
   code: Scalars['String']['input'];
-  code2?: InputMaybe<Scalars['String']['input']>;
-  dateOfBirth?: InputMaybe<Scalars['NaiveDate']['input']>;
-  dateOfDeath?: InputMaybe<Scalars['NaiveDate']['input']>;
-  firstName?: InputMaybe<Scalars['String']['input']>;
-  gender?: InputMaybe<GenderTypeNode>;
+  code2?: Types.InputMaybe<Scalars['String']['input']>;
+  dateOfBirth?: Types.InputMaybe<Scalars['NaiveDate']['input']>;
+  dateOfDeath?: Types.InputMaybe<Scalars['NaiveDate']['input']>;
+  firstName?: Types.InputMaybe<Scalars['String']['input']>;
+  gender?: Types.InputMaybe<GenderTypeNode>;
   id: Scalars['String']['input'];
-  isDeceased?: InputMaybe<Scalars['Boolean']['input']>;
-  lastName?: InputMaybe<Scalars['String']['input']>;
-  nextOfKinId?: InputMaybe<Scalars['String']['input']>;
-  nextOfKinName?: InputMaybe<Scalars['String']['input']>;
-  phone?: InputMaybe<Scalars['String']['input']>;
+  isDeceased?: Types.InputMaybe<Scalars['Boolean']['input']>;
+  lastName?: Types.InputMaybe<Scalars['String']['input']>;
+  nextOfKinId?: Types.InputMaybe<Scalars['String']['input']>;
+  nextOfKinName?: Types.InputMaybe<Scalars['String']['input']>;
+  phone?: Types.InputMaybe<Scalars['String']['input']>;
 };
 
 export type UpdatePluginDataInput = {
@@ -3632,31 +3568,31 @@ export type UpdatePluginDataInput = {
   dataIdentifier: Scalars['String']['input'];
   id: Scalars['String']['input'];
   pluginCode: Scalars['String']['input'];
-  relatedRecordId?: InputMaybe<Scalars['String']['input']>;
-  storeId?: InputMaybe<Scalars['String']['input']>;
+  relatedRecordId?: Types.InputMaybe<Scalars['String']['input']>;
+  storeId?: Types.InputMaybe<Scalars['String']['input']>;
 };
 
 export type UpdatePrescriptionInput = {
-  clinicianId?: InputMaybe<NullableStringUpdate>;
-  colour?: InputMaybe<Scalars['String']['input']>;
-  comment?: InputMaybe<Scalars['String']['input']>;
-  diagnosisId?: InputMaybe<NullableStringUpdate>;
+  clinicianId?: Types.InputMaybe<NullableStringUpdate>;
+  colour?: Types.InputMaybe<Scalars['String']['input']>;
+  comment?: Types.InputMaybe<Scalars['String']['input']>;
+  diagnosisId?: Types.InputMaybe<NullableStringUpdate>;
   id: Scalars['String']['input'];
-  insuranceDiscountAmount?: InputMaybe<Scalars['Float']['input']>;
-  insuranceDiscountPercentage?: InputMaybe<Scalars['Float']['input']>;
-  nameInsuranceJoinId?: InputMaybe<NullableStringUpdate>;
-  patientId?: InputMaybe<Scalars['String']['input']>;
-  prescriptionDate?: InputMaybe<Scalars['DateTime']['input']>;
-  programId?: InputMaybe<NullableStringUpdate>;
-  status?: InputMaybe<UpdatePrescriptionStatusInput>;
-  theirReference?: InputMaybe<NullableStringUpdate>;
+  insuranceDiscountAmount?: Types.InputMaybe<Scalars['Float']['input']>;
+  insuranceDiscountPercentage?: Types.InputMaybe<Scalars['Float']['input']>;
+  nameInsuranceJoinId?: Types.InputMaybe<NullableStringUpdate>;
+  patientId?: Types.InputMaybe<Scalars['String']['input']>;
+  prescriptionDate?: Types.InputMaybe<Scalars['DateTime']['input']>;
+  programId?: Types.InputMaybe<NullableStringUpdate>;
+  status?: Types.InputMaybe<UpdatePrescriptionStatusInput>;
+  theirReference?: Types.InputMaybe<NullableStringUpdate>;
 };
 
 export type UpdatePrescriptionLineInput = {
   id: Scalars['String']['input'];
-  note?: InputMaybe<Scalars['String']['input']>;
-  numberOfPacks?: InputMaybe<Scalars['Float']['input']>;
-  stockLineId?: InputMaybe<Scalars['String']['input']>;
+  note?: Types.InputMaybe<Scalars['String']['input']>;
+  numberOfPacks?: Types.InputMaybe<Scalars['Float']['input']>;
+  stockLineId?: Types.InputMaybe<Scalars['String']['input']>;
 };
 
 export enum UpdatePrescriptionStatusInput {
@@ -3694,72 +3630,72 @@ export type UpdateProgramPatientInput = {
 };
 
 export type UpdatePurchaseOrderInput = {
-  additionalInstructions?: InputMaybe<Scalars['String']['input']>;
-  advancePaidDate?: InputMaybe<NullableDateUpdate>;
-  agentCommission?: InputMaybe<Scalars['Float']['input']>;
-  authorisingOfficer1?: InputMaybe<Scalars['String']['input']>;
-  authorisingOfficer2?: InputMaybe<Scalars['String']['input']>;
-  comment?: InputMaybe<Scalars['String']['input']>;
-  communicationsCharge?: InputMaybe<Scalars['Float']['input']>;
-  confirmedDatetime?: InputMaybe<NullableDatetimeUpdate>;
-  contractSignedDate?: InputMaybe<NullableDateUpdate>;
-  currencyId?: InputMaybe<Scalars['String']['input']>;
-  documentCharge?: InputMaybe<Scalars['Float']['input']>;
-  donorId?: InputMaybe<NullableStringUpdate>;
-  foreignExchangeRate?: InputMaybe<Scalars['Float']['input']>;
-  freightCharge?: InputMaybe<Scalars['Float']['input']>;
-  freightConditions?: InputMaybe<Scalars['String']['input']>;
-  headingMessage?: InputMaybe<Scalars['String']['input']>;
+  additionalInstructions?: Types.InputMaybe<Scalars['String']['input']>;
+  advancePaidDate?: Types.InputMaybe<NullableDateUpdate>;
+  agentCommission?: Types.InputMaybe<Scalars['Float']['input']>;
+  authorisingOfficer1?: Types.InputMaybe<Scalars['String']['input']>;
+  authorisingOfficer2?: Types.InputMaybe<Scalars['String']['input']>;
+  comment?: Types.InputMaybe<Scalars['String']['input']>;
+  communicationsCharge?: Types.InputMaybe<Scalars['Float']['input']>;
+  confirmedDatetime?: Types.InputMaybe<NullableDatetimeUpdate>;
+  contractSignedDate?: Types.InputMaybe<NullableDateUpdate>;
+  currencyId?: Types.InputMaybe<Scalars['String']['input']>;
+  documentCharge?: Types.InputMaybe<Scalars['Float']['input']>;
+  donorId?: Types.InputMaybe<NullableStringUpdate>;
+  foreignExchangeRate?: Types.InputMaybe<Scalars['Float']['input']>;
+  freightCharge?: Types.InputMaybe<Scalars['Float']['input']>;
+  freightConditions?: Types.InputMaybe<Scalars['String']['input']>;
+  headingMessage?: Types.InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
-  insuranceCharge?: InputMaybe<Scalars['Float']['input']>;
-  receivedAtPortDate?: InputMaybe<NullableDateUpdate>;
-  reference?: InputMaybe<Scalars['String']['input']>;
-  requestedDeliveryDate?: InputMaybe<NullableDateUpdate>;
-  sentDatetime?: InputMaybe<NullableDatetimeUpdate>;
-  shippingMethod?: InputMaybe<Scalars['String']['input']>;
-  status?: InputMaybe<PurchaseOrderNodeStatus>;
-  supplierAgent?: InputMaybe<Scalars['String']['input']>;
-  supplierDiscountAmount?: InputMaybe<Scalars['Float']['input']>;
-  supplierDiscountPercentage?: InputMaybe<Scalars['Float']['input']>;
-  supplierId?: InputMaybe<Scalars['String']['input']>;
+  insuranceCharge?: Types.InputMaybe<Scalars['Float']['input']>;
+  receivedAtPortDate?: Types.InputMaybe<NullableDateUpdate>;
+  reference?: Types.InputMaybe<Scalars['String']['input']>;
+  requestedDeliveryDate?: Types.InputMaybe<NullableDateUpdate>;
+  sentDatetime?: Types.InputMaybe<NullableDatetimeUpdate>;
+  shippingMethod?: Types.InputMaybe<Scalars['String']['input']>;
+  status?: Types.InputMaybe<PurchaseOrderNodeStatus>;
+  supplierAgent?: Types.InputMaybe<Scalars['String']['input']>;
+  supplierDiscountAmount?: Types.InputMaybe<Scalars['Float']['input']>;
+  supplierDiscountPercentage?: Types.InputMaybe<Scalars['Float']['input']>;
+  supplierId?: Types.InputMaybe<Scalars['String']['input']>;
 };
 
 export type UpdatePurchaseOrderLineInput = {
-  adjustedNumberOfUnits?: InputMaybe<Scalars['Float']['input']>;
-  comment?: InputMaybe<NullableStringUpdate>;
-  expectedDeliveryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
+  adjustedNumberOfUnits?: Types.InputMaybe<Scalars['Float']['input']>;
+  comment?: Types.InputMaybe<NullableStringUpdate>;
+  expectedDeliveryDate?: Types.InputMaybe<Scalars['NaiveDate']['input']>;
   id: Scalars['String']['input'];
-  itemId?: InputMaybe<Scalars['String']['input']>;
-  manufacturerId?: InputMaybe<NullableStringUpdate>;
-  note?: InputMaybe<NullableStringUpdate>;
-  pricePerPackAfterDiscount?: InputMaybe<Scalars['Float']['input']>;
-  pricePerPackBeforeDiscount?: InputMaybe<Scalars['Float']['input']>;
-  requestedDeliveryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
-  requestedNumberOfUnits?: InputMaybe<Scalars['Float']['input']>;
-  requestedPackSize?: InputMaybe<Scalars['Float']['input']>;
-  status?: InputMaybe<PurchaseOrderLineStatusNode>;
-  supplierItemCode?: InputMaybe<NullableStringUpdate>;
-  unit?: InputMaybe<Scalars['String']['input']>;
+  itemId?: Types.InputMaybe<Scalars['String']['input']>;
+  manufacturerId?: Types.InputMaybe<NullableStringUpdate>;
+  note?: Types.InputMaybe<NullableStringUpdate>;
+  pricePerPackAfterDiscount?: Types.InputMaybe<Scalars['Float']['input']>;
+  pricePerPackBeforeDiscount?: Types.InputMaybe<Scalars['Float']['input']>;
+  requestedDeliveryDate?: Types.InputMaybe<Scalars['NaiveDate']['input']>;
+  requestedNumberOfUnits?: Types.InputMaybe<Scalars['Float']['input']>;
+  requestedPackSize?: Types.InputMaybe<Scalars['Float']['input']>;
+  status?: Types.InputMaybe<PurchaseOrderLineStatusNode>;
+  supplierItemCode?: Types.InputMaybe<NullableStringUpdate>;
+  unit?: Types.InputMaybe<Scalars['String']['input']>;
 };
 
 export type UpdateRequestRequisitionInput = {
-  colour?: InputMaybe<Scalars['String']['input']>;
-  comment?: InputMaybe<Scalars['String']['input']>;
-  expectedDeliveryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
+  colour?: Types.InputMaybe<Scalars['String']['input']>;
+  comment?: Types.InputMaybe<Scalars['String']['input']>;
+  expectedDeliveryDate?: Types.InputMaybe<Scalars['NaiveDate']['input']>;
   id: Scalars['String']['input'];
-  maxMonthsOfStock?: InputMaybe<Scalars['Float']['input']>;
-  minMonthsOfStock?: InputMaybe<Scalars['Float']['input']>;
-  originalCustomerId?: InputMaybe<NullableStringUpdate>;
-  otherPartyId?: InputMaybe<Scalars['String']['input']>;
-  status?: InputMaybe<UpdateRequestRequisitionStatusInput>;
-  theirReference?: InputMaybe<Scalars['String']['input']>;
+  maxMonthsOfStock?: Types.InputMaybe<Scalars['Float']['input']>;
+  minMonthsOfStock?: Types.InputMaybe<Scalars['Float']['input']>;
+  originalCustomerId?: Types.InputMaybe<NullableStringUpdate>;
+  otherPartyId?: Types.InputMaybe<Scalars['String']['input']>;
+  status?: Types.InputMaybe<UpdateRequestRequisitionStatusInput>;
+  theirReference?: Types.InputMaybe<Scalars['String']['input']>;
 };
 
 export type UpdateRequestRequisitionLineInput = {
-  comment?: InputMaybe<Scalars['String']['input']>;
+  comment?: Types.InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
-  optionId?: InputMaybe<Scalars['String']['input']>;
-  requestedQuantity?: InputMaybe<Scalars['Float']['input']>;
+  optionId?: Types.InputMaybe<Scalars['String']['input']>;
+  requestedQuantity?: Types.InputMaybe<Scalars['Float']['input']>;
 };
 
 export enum UpdateRequestRequisitionStatusInput {
@@ -3767,28 +3703,28 @@ export enum UpdateRequestRequisitionStatusInput {
 }
 
 export type UpdateResponseRequisitionInput = {
-  colour?: InputMaybe<Scalars['String']['input']>;
-  comment?: InputMaybe<Scalars['String']['input']>;
+  colour?: Types.InputMaybe<Scalars['String']['input']>;
+  comment?: Types.InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
-  status?: InputMaybe<UpdateResponseRequisitionStatusInput>;
-  theirReference?: InputMaybe<Scalars['String']['input']>;
+  status?: Types.InputMaybe<UpdateResponseRequisitionStatusInput>;
+  theirReference?: Types.InputMaybe<Scalars['String']['input']>;
 };
 
 export type UpdateResponseRequisitionLineInput = {
-  additionInUnits?: InputMaybe<Scalars['Float']['input']>;
-  averageMonthlyConsumption?: InputMaybe<Scalars['Float']['input']>;
-  comment?: InputMaybe<Scalars['String']['input']>;
-  daysOutOfStock?: InputMaybe<Scalars['Float']['input']>;
-  expiringUnits?: InputMaybe<Scalars['Float']['input']>;
+  additionInUnits?: Types.InputMaybe<Scalars['Float']['input']>;
+  averageMonthlyConsumption?: Types.InputMaybe<Scalars['Float']['input']>;
+  comment?: Types.InputMaybe<Scalars['String']['input']>;
+  daysOutOfStock?: Types.InputMaybe<Scalars['Float']['input']>;
+  expiringUnits?: Types.InputMaybe<Scalars['Float']['input']>;
   id: Scalars['String']['input'];
-  incomingUnits?: InputMaybe<Scalars['Float']['input']>;
-  initialStockOnHand?: InputMaybe<Scalars['Float']['input']>;
-  lossInUnits?: InputMaybe<Scalars['Float']['input']>;
-  optionId?: InputMaybe<Scalars['String']['input']>;
-  outgoingUnits?: InputMaybe<Scalars['Float']['input']>;
-  requestedQuantity?: InputMaybe<Scalars['Float']['input']>;
-  stockOnHand?: InputMaybe<Scalars['Float']['input']>;
-  supplyQuantity?: InputMaybe<Scalars['Float']['input']>;
+  incomingUnits?: Types.InputMaybe<Scalars['Float']['input']>;
+  initialStockOnHand?: Types.InputMaybe<Scalars['Float']['input']>;
+  lossInUnits?: Types.InputMaybe<Scalars['Float']['input']>;
+  optionId?: Types.InputMaybe<Scalars['String']['input']>;
+  outgoingUnits?: Types.InputMaybe<Scalars['Float']['input']>;
+  requestedQuantity?: Types.InputMaybe<Scalars['Float']['input']>;
+  stockOnHand?: Types.InputMaybe<Scalars['Float']['input']>;
+  supplyQuantity?: Types.InputMaybe<Scalars['Float']['input']>;
 };
 
 export enum UpdateResponseRequisitionStatusInput {
@@ -3796,88 +3732,88 @@ export enum UpdateResponseRequisitionStatusInput {
 }
 
 export type UpdateRnRFormInput = {
-  comment?: InputMaybe<Scalars['String']['input']>;
+  comment?: Types.InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
   lines: Array<UpdateRnRFormLineInput>;
-  theirReference?: InputMaybe<Scalars['String']['input']>;
+  theirReference?: Types.InputMaybe<Scalars['String']['input']>;
 };
 
 export type UpdateRnRFormLineInput = {
   adjustedQuantityConsumed: Scalars['Float']['input'];
-  adjustments?: InputMaybe<Scalars['Float']['input']>;
+  adjustments?: Types.InputMaybe<Scalars['Float']['input']>;
   averageMonthlyConsumption: Scalars['Float']['input'];
   calculatedRequestedQuantity: Scalars['Float']['input'];
-  comment?: InputMaybe<Scalars['String']['input']>;
+  comment?: Types.InputMaybe<Scalars['String']['input']>;
   confirmed: Scalars['Boolean']['input'];
-  enteredRequestedQuantity?: InputMaybe<Scalars['Float']['input']>;
-  expiryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
+  enteredRequestedQuantity?: Types.InputMaybe<Scalars['Float']['input']>;
+  expiryDate?: Types.InputMaybe<Scalars['NaiveDate']['input']>;
   finalBalance: Scalars['Float']['input'];
   id: Scalars['String']['input'];
   initialBalance: Scalars['Float']['input'];
-  losses?: InputMaybe<Scalars['Float']['input']>;
+  losses?: Types.InputMaybe<Scalars['Float']['input']>;
   lowStock: LowStockStatus;
   maximumQuantity: Scalars['Float']['input'];
   minimumQuantity: Scalars['Float']['input'];
-  quantityConsumed?: InputMaybe<Scalars['Float']['input']>;
-  quantityReceived?: InputMaybe<Scalars['Float']['input']>;
+  quantityConsumed?: Types.InputMaybe<Scalars['Float']['input']>;
+  quantityReceived?: Types.InputMaybe<Scalars['Float']['input']>;
   stockOutDuration: Scalars['Int']['input'];
 };
 
 export type UpdateSensorInput = {
   id: Scalars['String']['input'];
-  isActive?: InputMaybe<Scalars['Boolean']['input']>;
-  locationId?: InputMaybe<NullableStringUpdate>;
-  name?: InputMaybe<Scalars['String']['input']>;
+  isActive?: Types.InputMaybe<Scalars['Boolean']['input']>;
+  locationId?: Types.InputMaybe<NullableStringUpdate>;
+  name?: Types.InputMaybe<Scalars['String']['input']>;
 };
 
 export type UpdateStockLineInput = {
   /** Empty barcode will unlink barcode from StockLine */
-  barcode?: InputMaybe<Scalars['String']['input']>;
-  batch?: InputMaybe<Scalars['String']['input']>;
-  campaignId?: InputMaybe<NullableStringUpdate>;
-  costPricePerPack?: InputMaybe<Scalars['Float']['input']>;
-  donorId?: InputMaybe<NullableStringUpdate>;
-  expiryDate?: InputMaybe<NullableDateUpdate>;
+  barcode?: Types.InputMaybe<Scalars['String']['input']>;
+  batch?: Types.InputMaybe<Scalars['String']['input']>;
+  campaignId?: Types.InputMaybe<NullableStringUpdate>;
+  costPricePerPack?: Types.InputMaybe<Scalars['Float']['input']>;
+  donorId?: Types.InputMaybe<NullableStringUpdate>;
+  expiryDate?: Types.InputMaybe<NullableDateUpdate>;
   id: Scalars['String']['input'];
-  itemVariantId?: InputMaybe<NullableStringUpdate>;
-  location?: InputMaybe<NullableStringUpdate>;
-  onHold?: InputMaybe<Scalars['Boolean']['input']>;
-  programId?: InputMaybe<NullableStringUpdate>;
-  sellPricePerPack?: InputMaybe<Scalars['Float']['input']>;
-  volumePerPack?: InputMaybe<Scalars['Float']['input']>;
-  vvmStatusId?: InputMaybe<Scalars['String']['input']>;
+  itemVariantId?: Types.InputMaybe<NullableStringUpdate>;
+  location?: Types.InputMaybe<NullableStringUpdate>;
+  onHold?: Types.InputMaybe<Scalars['Boolean']['input']>;
+  programId?: Types.InputMaybe<NullableStringUpdate>;
+  sellPricePerPack?: Types.InputMaybe<Scalars['Float']['input']>;
+  volumePerPack?: Types.InputMaybe<Scalars['Float']['input']>;
+  vvmStatusId?: Types.InputMaybe<Scalars['String']['input']>;
 };
 
 export type UpdateStocktakeInput = {
-  comment?: InputMaybe<Scalars['String']['input']>;
-  countedBy?: InputMaybe<Scalars['String']['input']>;
-  description?: InputMaybe<Scalars['String']['input']>;
+  comment?: Types.InputMaybe<Scalars['String']['input']>;
+  countedBy?: Types.InputMaybe<Scalars['String']['input']>;
+  description?: Types.InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
-  isLocked?: InputMaybe<Scalars['Boolean']['input']>;
-  status?: InputMaybe<UpdateStocktakeStatusInput>;
-  stocktakeDate?: InputMaybe<Scalars['NaiveDate']['input']>;
-  verifiedBy?: InputMaybe<Scalars['String']['input']>;
+  isLocked?: Types.InputMaybe<Scalars['Boolean']['input']>;
+  status?: Types.InputMaybe<UpdateStocktakeStatusInput>;
+  stocktakeDate?: Types.InputMaybe<Scalars['NaiveDate']['input']>;
+  verifiedBy?: Types.InputMaybe<Scalars['String']['input']>;
 };
 
 export type UpdateStocktakeLineInput = {
-  batch?: InputMaybe<Scalars['String']['input']>;
-  campaignId?: InputMaybe<NullableStringUpdate>;
-  comment?: InputMaybe<Scalars['String']['input']>;
-  costPricePerPack?: InputMaybe<Scalars['Float']['input']>;
-  countedNumberOfPacks?: InputMaybe<Scalars['Float']['input']>;
-  donorId?: InputMaybe<NullableStringUpdate>;
-  expiryDate?: InputMaybe<NullableDateUpdate>;
+  batch?: Types.InputMaybe<Scalars['String']['input']>;
+  campaignId?: Types.InputMaybe<NullableStringUpdate>;
+  comment?: Types.InputMaybe<Scalars['String']['input']>;
+  costPricePerPack?: Types.InputMaybe<Scalars['Float']['input']>;
+  countedNumberOfPacks?: Types.InputMaybe<Scalars['Float']['input']>;
+  donorId?: Types.InputMaybe<NullableStringUpdate>;
+  expiryDate?: Types.InputMaybe<NullableDateUpdate>;
   id: Scalars['String']['input'];
-  itemVariantId?: InputMaybe<NullableStringUpdate>;
-  location?: InputMaybe<NullableStringUpdate>;
-  note?: InputMaybe<Scalars['String']['input']>;
-  packSize?: InputMaybe<Scalars['Float']['input']>;
-  programId?: InputMaybe<NullableStringUpdate>;
-  reasonOptionId?: InputMaybe<Scalars['String']['input']>;
-  sellPricePerPack?: InputMaybe<Scalars['Float']['input']>;
-  snapshotNumberOfPacks?: InputMaybe<Scalars['Float']['input']>;
-  volumePerPack?: InputMaybe<Scalars['Float']['input']>;
-  vvmStatusId?: InputMaybe<Scalars['String']['input']>;
+  itemVariantId?: Types.InputMaybe<NullableStringUpdate>;
+  location?: Types.InputMaybe<NullableStringUpdate>;
+  note?: Types.InputMaybe<Scalars['String']['input']>;
+  packSize?: Types.InputMaybe<Scalars['Float']['input']>;
+  programId?: Types.InputMaybe<NullableStringUpdate>;
+  reasonOptionId?: Types.InputMaybe<Scalars['String']['input']>;
+  sellPricePerPack?: Types.InputMaybe<Scalars['Float']['input']>;
+  snapshotNumberOfPacks?: Types.InputMaybe<Scalars['Float']['input']>;
+  volumePerPack?: Types.InputMaybe<Scalars['Float']['input']>;
+  vvmStatusId?: Types.InputMaybe<Scalars['String']['input']>;
 };
 
 export enum UpdateStocktakeStatusInput {
@@ -3885,13 +3821,13 @@ export enum UpdateStocktakeStatusInput {
 }
 
 export type UpdateSupplierReturnInput = {
-  colour?: InputMaybe<Scalars['String']['input']>;
-  comment?: InputMaybe<Scalars['String']['input']>;
+  colour?: Types.InputMaybe<Scalars['String']['input']>;
+  comment?: Types.InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
-  onHold?: InputMaybe<Scalars['Boolean']['input']>;
-  status?: InputMaybe<UpdateSupplierReturnStatusInput>;
-  theirReference?: InputMaybe<Scalars['String']['input']>;
-  transportReference?: InputMaybe<Scalars['String']['input']>;
+  onHold?: Types.InputMaybe<Scalars['Boolean']['input']>;
+  status?: Types.InputMaybe<UpdateSupplierReturnStatusInput>;
+  theirReference?: Types.InputMaybe<Scalars['String']['input']>;
+  transportReference?: Types.InputMaybe<Scalars['String']['input']>;
 };
 
 export type UpdateSupplierReturnLinesInput = {
@@ -3901,7 +3837,7 @@ export type UpdateSupplierReturnLinesInput = {
 
 export type UpdateSupplierReturnOtherPartyInput = {
   id: Scalars['String']['input'];
-  otherPartyId?: InputMaybe<Scalars['String']['input']>;
+  otherPartyId?: Types.InputMaybe<Scalars['String']['input']>;
 };
 
 export enum UpdateSupplierReturnStatusInput {
@@ -3910,37 +3846,37 @@ export enum UpdateSupplierReturnStatusInput {
 }
 
 export type UpdateTemperatureBreachInput = {
-  comment?: InputMaybe<Scalars['String']['input']>;
+  comment?: Types.InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
   unacknowledged: Scalars['Boolean']['input'];
 };
 
 export type UpdateVvmStatusLogInput = {
-  comment?: InputMaybe<Scalars['String']['input']>;
+  comment?: Types.InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
 };
 
 export type UpdateVaccinationInput = {
-  clinicianId?: InputMaybe<NullableStringUpdate>;
-  comment?: InputMaybe<Scalars['String']['input']>;
-  facilityFreeText?: InputMaybe<NullableStringUpdate>;
-  facilityNameId?: InputMaybe<NullableStringUpdate>;
-  given?: InputMaybe<Scalars['Boolean']['input']>;
+  clinicianId?: Types.InputMaybe<NullableStringUpdate>;
+  comment?: Types.InputMaybe<Scalars['String']['input']>;
+  facilityFreeText?: Types.InputMaybe<NullableStringUpdate>;
+  facilityNameId?: Types.InputMaybe<NullableStringUpdate>;
+  given?: Types.InputMaybe<Scalars['Boolean']['input']>;
   id: Scalars['String']['input'];
-  itemId?: InputMaybe<NullableStringUpdate>;
-  notGivenReason?: InputMaybe<Scalars['String']['input']>;
-  stockLineId?: InputMaybe<NullableStringUpdate>;
-  updateTransactions?: InputMaybe<Scalars['Boolean']['input']>;
-  vaccinationDate?: InputMaybe<Scalars['NaiveDate']['input']>;
+  itemId?: Types.InputMaybe<NullableStringUpdate>;
+  notGivenReason?: Types.InputMaybe<Scalars['String']['input']>;
+  stockLineId?: Types.InputMaybe<NullableStringUpdate>;
+  updateTransactions?: Types.InputMaybe<Scalars['Boolean']['input']>;
+  vaccinationDate?: Types.InputMaybe<Scalars['NaiveDate']['input']>;
 };
 
 export type UpdateVaccineCourseInput = {
-  canSkipDose?: InputMaybe<Scalars['Boolean']['input']>;
+  canSkipDose?: Types.InputMaybe<Scalars['Boolean']['input']>;
   coverageRate: Scalars['Float']['input'];
-  demographicId?: InputMaybe<Scalars['String']['input']>;
+  demographicId?: Types.InputMaybe<Scalars['String']['input']>;
   doses: Array<UpsertVaccineCourseDoseInput>;
   id: Scalars['String']['input'];
-  name?: InputMaybe<Scalars['String']['input']>;
+  name?: Types.InputMaybe<Scalars['String']['input']>;
   useInGapsCalculations: Scalars['Boolean']['input'];
   vaccineItems: Array<UpsertVaccineCourseItemInput>;
   wastageRate: Scalars['Float']['input'];
@@ -3958,20 +3894,20 @@ export type UpsertBundledItemInput = {
 };
 
 export type UpsertCampaignInput = {
-  endDate?: InputMaybe<Scalars['NaiveDate']['input']>;
+  endDate?: Types.InputMaybe<Scalars['NaiveDate']['input']>;
   id: Scalars['String']['input'];
   name: Scalars['String']['input'];
-  startDate?: InputMaybe<Scalars['NaiveDate']['input']>;
+  startDate?: Types.InputMaybe<Scalars['NaiveDate']['input']>;
 };
 
 export type UpsertItemVariantInput = {
   id: Scalars['String']['input'];
   itemId: Scalars['String']['input'];
-  locationTypeId?: InputMaybe<NullableStringUpdate>;
-  manufacturerId?: InputMaybe<NullableStringUpdate>;
+  locationTypeId?: Types.InputMaybe<NullableStringUpdate>;
+  manufacturerId?: Types.InputMaybe<NullableStringUpdate>;
   name: Scalars['String']['input'];
   packagingVariants: Array<PackagingVariantInput>;
-  vvmType?: InputMaybe<NullableStringUpdate>;
+  vvmType?: Types.InputMaybe<NullableStringUpdate>;
 };
 
 export type UpsertLogLevelInput = {
@@ -3979,59 +3915,45 @@ export type UpsertLogLevelInput = {
 };
 
 export type UpsertPreferencesInput = {
-  adjustForNumberOfDaysOutOfStock?: InputMaybe<Scalars['Boolean']['input']>;
-  allowTrackingOfStockByDonor?: InputMaybe<Scalars['Boolean']['input']>;
-  authoriseGoodsReceived?: InputMaybe<Scalars['Boolean']['input']>;
-  authorisePurchaseOrder?: InputMaybe<Scalars['Boolean']['input']>;
-  canCreateInternalOrderFromARequisition?: InputMaybe<
-    Array<BoolStorePrefInput>
-  >;
-  customTranslations?: InputMaybe<Scalars['JSONObject']['input']>;
-  daysInMonth?: InputMaybe<Scalars['Float']['input']>;
-  disableManualReturns?: InputMaybe<Array<BoolStorePrefInput>>;
-  expiredStockIssueThreshold?: InputMaybe<Scalars['Int']['input']>;
-  expiredStockPreventIssue?: InputMaybe<Scalars['Boolean']['input']>;
-  firstThresholdForExpiringItems?: InputMaybe<Array<IntegerStorePrefInput>>;
-  genderOptions?: InputMaybe<Array<GenderTypeNode>>;
-  inboundShipmentAutoVerify?: InputMaybe<Array<BoolStorePrefInput>>;
-  invoiceStatusOptions?: InputMaybe<Array<InvoiceStatusOptionsInput>>;
-  isGaps?: InputMaybe<Scalars['Boolean']['input']>;
-  itemMarginOverridesSupplierMargin?: InputMaybe<Scalars['Boolean']['input']>;
-  manageVaccinesInDoses?: InputMaybe<Array<BoolStorePrefInput>>;
-  manageVvmStatusForStock?: InputMaybe<Array<BoolStorePrefInput>>;
-  numberOfMonthsThresholdToShowLowStockAlertsForProducts?: InputMaybe<
-    Array<IntegerStorePrefInput>
-  >;
-  numberOfMonthsThresholdToShowOverStockAlertsForProducts?: InputMaybe<
-    Array<IntegerStorePrefInput>
-  >;
-  numberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts?: InputMaybe<
-    Array<IntegerStorePrefInput>
-  >;
-  orderInPacks?: InputMaybe<Array<BoolStorePrefInput>>;
-  preventTransfersMonthsBeforeInitialisation?: InputMaybe<
-    Scalars['Int']['input']
-  >;
-  requisitionAutoFinalise?: InputMaybe<Array<BoolStorePrefInput>>;
-  secondThresholdForExpiringItems?: InputMaybe<Array<IntegerStorePrefInput>>;
-  selectDestinationStoreForAnInternalOrder?: InputMaybe<
-    Array<BoolStorePrefInput>
-  >;
-  showContactTracing?: InputMaybe<Scalars['Boolean']['input']>;
-  showIndicativePriceInRequisitions?: InputMaybe<Scalars['Boolean']['input']>;
-  sortByVvmStatusThenExpiry?: InputMaybe<Array<BoolStorePrefInput>>;
-  storeCustomColour?: InputMaybe<Array<StringStorePrefInput>>;
-  syncRecordsDisplayThreshold?: InputMaybe<Scalars['Int']['input']>;
-  useProcurementFunctionality?: InputMaybe<Array<BoolStorePrefInput>>;
-  useSimplifiedMobileUi?: InputMaybe<Array<BoolStorePrefInput>>;
-  warnWhenMissingRecentStocktake?: InputMaybe<
-    Array<WarnWhenMissingRecentStocktakeInput>
-  >;
-  warningForExcessRequest?: InputMaybe<Scalars['Boolean']['input']>;
+  adjustForNumberOfDaysOutOfStock?: Types.InputMaybe<Scalars['Boolean']['input']>;
+  allowTrackingOfStockByDonor?: Types.InputMaybe<Scalars['Boolean']['input']>;
+  authoriseGoodsReceived?: Types.InputMaybe<Scalars['Boolean']['input']>;
+  authorisePurchaseOrder?: Types.InputMaybe<Scalars['Boolean']['input']>;
+  canCreateInternalOrderFromARequisition?: Types.InputMaybe<Array<BoolStorePrefInput>>;
+  customTranslations?: Types.InputMaybe<Scalars['JSONObject']['input']>;
+  daysInMonth?: Types.InputMaybe<Scalars['Float']['input']>;
+  disableManualReturns?: Types.InputMaybe<Array<BoolStorePrefInput>>;
+  expiredStockIssueThreshold?: Types.InputMaybe<Scalars['Int']['input']>;
+  expiredStockPreventIssue?: Types.InputMaybe<Scalars['Boolean']['input']>;
+  firstThresholdForExpiringItems?: Types.InputMaybe<Array<IntegerStorePrefInput>>;
+  genderOptions?: Types.InputMaybe<Array<GenderTypeNode>>;
+  inboundShipmentAutoVerify?: Types.InputMaybe<Array<BoolStorePrefInput>>;
+  invoiceStatusOptions?: Types.InputMaybe<Array<InvoiceStatusOptionsInput>>;
+  isGaps?: Types.InputMaybe<Scalars['Boolean']['input']>;
+  itemMarginOverridesSupplierMargin?: Types.InputMaybe<Scalars['Boolean']['input']>;
+  manageVaccinesInDoses?: Types.InputMaybe<Array<BoolStorePrefInput>>;
+  manageVvmStatusForStock?: Types.InputMaybe<Array<BoolStorePrefInput>>;
+  numberOfMonthsThresholdToShowLowStockAlertsForProducts?: Types.InputMaybe<Array<IntegerStorePrefInput>>;
+  numberOfMonthsThresholdToShowOverStockAlertsForProducts?: Types.InputMaybe<Array<IntegerStorePrefInput>>;
+  numberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts?: Types.InputMaybe<Array<IntegerStorePrefInput>>;
+  orderInPacks?: Types.InputMaybe<Array<BoolStorePrefInput>>;
+  preventTransfersMonthsBeforeInitialisation?: Types.InputMaybe<Scalars['Int']['input']>;
+  requisitionAutoFinalise?: Types.InputMaybe<Array<BoolStorePrefInput>>;
+  secondThresholdForExpiringItems?: Types.InputMaybe<Array<IntegerStorePrefInput>>;
+  selectDestinationStoreForAnInternalOrder?: Types.InputMaybe<Array<BoolStorePrefInput>>;
+  showContactTracing?: Types.InputMaybe<Scalars['Boolean']['input']>;
+  showIndicativePriceInRequisitions?: Types.InputMaybe<Scalars['Boolean']['input']>;
+  sortByVvmStatusThenExpiry?: Types.InputMaybe<Array<BoolStorePrefInput>>;
+  storeCustomColour?: Types.InputMaybe<Array<StringStorePrefInput>>;
+  syncRecordsDisplayThreshold?: Types.InputMaybe<Scalars['Int']['input']>;
+  useProcurementFunctionality?: Types.InputMaybe<Array<BoolStorePrefInput>>;
+  useSimplifiedMobileUi?: Types.InputMaybe<Array<BoolStorePrefInput>>;
+  warnWhenMissingRecentStocktake?: Types.InputMaybe<Array<WarnWhenMissingRecentStocktakeInput>>;
+  warningForExcessRequest?: Types.InputMaybe<Scalars['Boolean']['input']>;
 };
 
 export type UpsertVaccineCourseDoseInput = {
-  customAgeLabel?: InputMaybe<Scalars['String']['input']>;
+  customAgeLabel?: Types.InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
   label: Scalars['String']['input'];
   maxAge: Scalars['Float']['input'];
@@ -4114,9 +4036,9 @@ export enum VaccinationCardItemNodeStatus {
 }
 
 export type VaccineCourseFilterInput = {
-  id?: InputMaybe<EqualFilterStringInput>;
-  name?: InputMaybe<StringFilterInput>;
-  programId?: InputMaybe<EqualFilterStringInput>;
+  id?: Types.InputMaybe<EqualFilterStringInput>;
+  name?: Types.InputMaybe<StringFilterInput>;
+  programId?: Types.InputMaybe<EqualFilterStringInput>;
 };
 
 export enum VaccineCourseSortFieldInput {
@@ -4124,7 +4046,7 @@ export enum VaccineCourseSortFieldInput {
 }
 
 export type VaccineCourseSortInput = {
-  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  desc?: Types.InputMaybe<Scalars['Boolean']['input']>;
   key: VaccineCourseSortFieldInput;
 };
 

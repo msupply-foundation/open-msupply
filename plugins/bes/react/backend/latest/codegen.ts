@@ -6,7 +6,7 @@ const config: CodegenConfig = {
   generates: {
     './src/generated-types/graphql.ts': {
       preset: 'import-types',
-      plugins: ['typescript-operations', 'typescript'],
+      plugins: ['typescript-operations'], // 'typescript'],
       presetConfig: {
         typesPath: '../../codegenTypes.ts',
       },

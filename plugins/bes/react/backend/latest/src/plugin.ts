@@ -1,10 +1,10 @@
 /* eslint-disable camelcase */
 import { BackendPlugins } from '@common/types';
 import { IssueStockEndpointInput, IssueStockEndpointResponse } from './types';
-import namesQueryText from './graphql-texts/customer.graphql';
-import itemsQueryText from './graphql-texts/items.graphql';
-import outboundShipmentMutationText from './graphql-texts/batchOutboundShipment.graphql';
-import allocateOutboundShipmentMutationText from './graphql-texts/allocateOutboundShipment.graphql';
+import namesQueryText from './graphql/customer.graphql';
+import itemsQueryText from './graphql/items.graphql';
+import outboundShipmentMutationText from './graphql/batchOutboundShipment.graphql';
+import allocateOutboundShipmentMutationText from './graphql/allocateOutboundShipment.graphql';
 import {
   BatchOutboundShipmentMutation,
   BatchOutboundShipmentMutationVariables,
