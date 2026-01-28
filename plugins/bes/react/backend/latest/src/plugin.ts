@@ -73,14 +73,22 @@ const batchOutboundShipmentQuery = (
   }) as BatchOutboundShipmentMutation;
 };
 
-// const batchAllocateOutboundShipmentQuery = (
-//   variables: BatchOutboundShipmentMutationVariables
-// ): BatchOutboundShipmentMutation => {
-//   return use_graphql({
-//     query: allocateOutboundShipmentMutationText,
-//     variables,
-//   }) as BatchOutboundShipmentMutation;
-// };
+const batchDeleteOutboundShipmentQuery = (storeId: string, shipmentId: string): undefined => {
+  const variables: BatchOutboundShipmentMutationVariables = {
+    storeId: storeId,
+    input: {
+      deleteOutboundShipments: [shipmentId],
+    },
+  };
+  try {
+    use_graphql({
+      query: outboundShipmentMutationText,
+      variables,
+    }) as BatchOutboundShipmentMutation;
+  } catch (error) {
+    log({ t: 'deleteOutboundShipmentError', error });
+  }
+};
 
 const plugins: BackendPlugins = {
   graphql_query: ({ store_id, input }): Graphql['output'] => {
@@ -172,7 +180,7 @@ const plugins: BackendPlugins = {
       const insertOutboundShipmentUnallocatedResult = batchOutboundShipmentQuery(outboundShipmentInput);
 
       if (!insertOutboundShipmentUnallocatedResult) {
-        // TODO: rollback the outboundshipment if required
+        batchDeleteOutboundShipmentQuery(issuingStoreId, shipmentId);
         throw Error(`Failed to issue the stock for item code: ${foundItem.code}, quantity: ${inp.quantity}`);
       }
     } catch (error) {
@@ -197,7 +205,7 @@ const plugins: BackendPlugins = {
       log({ t: 'allocateResult', allocateOutboundShipmentUnallocatedResult });
 
       if (!allocateOutboundShipmentUnallocatedResult) {
-        // TODO: rollback the outboundshipment
+        batchDeleteOutboundShipmentQuery(issuingStoreId, shipmentId);
         throw Error(
           `Failed allocate lines to issue the stock for item code: ${foundItem.code}, quantity: ${inp.quantity}`
         );
@@ -228,7 +236,7 @@ const plugins: BackendPlugins = {
       log({ t: 'updateResult', updateOutboundShipmentResult });
 
       if (!updateOutboundShipmentResult) {
-        // TODO: rollback the outboundshipment
+        batchDeleteOutboundShipmentQuery(issuingStoreId, shipmentId);
         throw Error(
           `Failed to update order to issue the stock for item code: ${foundItem.code}, quantity: ${inp.quantity}`
         );
