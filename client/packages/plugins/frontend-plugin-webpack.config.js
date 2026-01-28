@@ -1,8 +1,9 @@
+const ModuleFederationPlugin = require('webpack/lib/container/ModuleFederationPlugin');
 const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
 
 const prod = process.env.NODE_ENV === 'production';
 
-module.exports = ({ distDir }) => ({
+module.exports = ({ pluginName, distDir }) => ({
   mode: prod ? 'production' : 'development',
   entry: './src/plugin.tsx',
   output: {
@@ -37,7 +38,35 @@ module.exports = ({ distDir }) => ({
     ],
   },
   devtool: prod ? undefined : 'source-map',
-  plugins: [],
+  plugins: [
+    new ModuleFederationPlugin({
+      name: pluginName,
+      exposes: { plugin: './src/plugin' },
+      shared: {
+        '@openmsupply-client/common': {
+          // Required version 'false' just means use whatever version is give by the host
+          requiredVersion: false,
+          singleton: true,
+          eager: true,
+        },
+        react: {
+          eager: true,
+          singleton: true,
+          requiredVersion: false,
+        },
+        'react-dom': {
+          eager: true,
+          singleton: true,
+          requiredVersion: false,
+        },
+        'react-singleton-context': {
+          singleton: true,
+          eager: true,
+          requiredVersion: false,
+        },
+      },
+    }),
+  ],
   devServer: {
     headers: {
       'Access-Control-Allow-Origin': '*',
