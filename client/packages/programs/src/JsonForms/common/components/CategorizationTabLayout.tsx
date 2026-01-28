@@ -195,13 +195,14 @@ const UIComponent: FC<LayoutProps & AjvProps> = ({
   uischema,
   visible,
   cells,
+  config,
 }) => {
   const [activeCategory, setActiveCategory] = useState<number | undefined>();
   const categorization = uischema as Categorization;
 
   const categories = categorization.elements.filter(
     (category: Category | Categorization): category is Category =>
-      isVisible(category, data, '', ajv, undefined) && category.type === 'Category'
+      isVisible(category, data, '', ajv, config) && category.type === 'Category'
   );
 
   const { core } = useJsonForms();
