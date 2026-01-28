@@ -20,5 +20,9 @@ module.exports = {
   transformIgnorePatterns: [
     '/node_modules/(?!uuid|@mui/x-date-pickers|@babel)',
   ],
+  modulePathIgnorePatterns: [
+    '[/\\\\]standard_reports[/\\\\].*[/\\\\]convert_data_js[/\\\\]',
+    '[/\\\\]standard_forms[/\\\\].*[/\\\\]convert_data_js[/\\\\]',
+  ],
   roots: ['../client', '../standard_reports', '../standard_forms'],
 };
