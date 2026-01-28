@@ -14,7 +14,8 @@ use crate::{
 };
 
 use super::constants::{
-    env_msupply_no_test_db_template, find_workspace_root, TEMPLATE_MARKER_FILE_SQLITE, TEST_OUTPUT_DIR,
+    env_msupply_no_test_db_template, find_workspace_root, TEMPLATE_MARKER_FILE_POSTGRES,
+    TEMPLATE_MARKER_FILE_SQLITE, TEST_OUTPUT_DIR,
 };
 
 pub fn get_test_db_settings(db_name: &str) -> DatabaseSettings {
@@ -102,16 +103,16 @@ pub(crate) async fn setup_with_version(
             // remove all DB templates
             for entry in fs::read_dir(&template_output_dir).unwrap() {
                 let entry = entry.unwrap();
-                if entry.file_name().to_string_lossy() == TEMPLATE_MARKER_FILE_SQLITE {
-                    // delete marker after all template DBs to ensure we deleted all DBs, e.g. if
-                    // this loop is interrupted
+                let file_name = entry.file_name().to_string_lossy().to_string();
+
+                // delete marker after all template DBs to ensure we deleted all DBs, e.g. if
+                // this loop is interrupted by user
+                if file_name == TEMPLATE_MARKER_FILE_SQLITE || file_name == TEMPLATE_MARKER_FILE_POSTGRES {
                     continue;
                 }
-                if entry
-                    .file_name()
-                    .to_string_lossy()
-                    .starts_with("___template_")
-                {
+
+                // Only delete sqlite template database files
+                if file_name.starts_with("___template_") && file_name.ends_with(".sqlite") {
                     fs::remove_file(entry.path()).unwrap();
                 }
             }
