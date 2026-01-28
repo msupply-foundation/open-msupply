@@ -50,6 +50,7 @@ export type AssetLogReasonFragment = {
   id: string;
   assetLogStatus: Types.AssetLogStatusNodeType;
   reason: string;
+  commentsRequired: boolean;
 };
 
 export type AssetCatalogueItemsQueryVariables = Types.Exact<{
@@ -204,6 +205,7 @@ export type AssetLogReasonsQuery = {
       id: string;
       assetLogStatus: Types.AssetLogStatusNodeType;
       reason: string;
+      commentsRequired: boolean;
     }>;
   };
 };
@@ -368,6 +370,7 @@ export const AssetLogReasonFragmentDoc = gql`
     id
     assetLogStatus
     reason
+    commentsRequired
   }
 `;
 export const AssetCatalogueItemsDocument = gql`
