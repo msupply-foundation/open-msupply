@@ -310,6 +310,7 @@ export const getInboundQueries = (sdk: Sdk, storeId: string) => ({
         storeId,
         requisitionId: patch.requisitionId,
         purchaseOrderId: patch.purchaseOrderId,
+        insertLinesFromPurchaseOrder: patch.insertLinesFromPurchaseOrder,
       })) || {};
 
     const { insertInboundShipment } = result;

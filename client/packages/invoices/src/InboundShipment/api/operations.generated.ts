@@ -825,6 +825,9 @@ export type InsertInboundShipmentMutationVariables = Types.Exact<{
   requisitionId?: Types.InputMaybe<Types.Scalars['String']['input']>;
   storeId: Types.Scalars['String']['input'];
   purchaseOrderId?: Types.InputMaybe<Types.Scalars['String']['input']>;
+  insertLinesFromPurchaseOrder?: Types.InputMaybe<
+    Types.Scalars['Boolean']['input']
+  >;
 }>;
 
 export type InsertInboundShipmentMutation = {
@@ -1195,7 +1198,7 @@ export type InboundShipmentPurchaseOrderLineFragment = {
   id: string;
   number: number;
   reference?: string | null;
-  supplier?: { __typename: 'NameNode'; name: string; id: string } | null;
+  supplier?: { __typename: 'NameNode'; id: string; name: string } | null;
 };
 
 export type PurchaseOrdersQueryVariables = Types.Exact<{
@@ -1214,7 +1217,7 @@ export type PurchaseOrdersQuery = {
       id: string;
       number: number;
       reference?: string | null;
-      supplier?: { __typename: 'NameNode'; name: string; id: string } | null;
+      supplier?: { __typename: 'NameNode'; id: string; name: string } | null;
     }>;
   };
 };
@@ -1664,6 +1667,7 @@ export const InsertInboundShipmentDocument = gql`
     $requisitionId: String
     $storeId: String!
     $purchaseOrderId: String
+    $insertLinesFromPurchaseOrder: Boolean
   ) {
     insertInboundShipment(
       storeId: $storeId
@@ -1672,6 +1676,7 @@ export const InsertInboundShipmentDocument = gql`
         otherPartyId: $otherPartyId
         requisitionId: $requisitionId
         purchaseOrderId: $purchaseOrderId
+        insertLinesFromPurchaseOrder: $insertLinesFromPurchaseOrder
       }
     ) {
       ... on InsertInboundShipmentError {
@@ -2334,20 +2339,22 @@ export function getSdk(
     },
     purchaseOrders(
       variables: PurchaseOrdersQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<PurchaseOrdersQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<PurchaseOrdersQuery>(
-            PurchaseOrdersDocument,
+          client.request<PurchaseOrdersQuery>({
+            document: PurchaseOrdersDocument,
             variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
         'purchaseOrders',
         'query',
         variables
       );
-    }
+    },
   };
 }
 export type Sdk = ReturnType<typeof getSdk>;

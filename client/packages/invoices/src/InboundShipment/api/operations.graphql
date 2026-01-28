@@ -392,6 +392,7 @@ mutation insertInboundShipment(
   $requisitionId: String
   $storeId: String!
   $purchaseOrderId: String
+  $insertLinesFromPurchaseOrder: Boolean
 ) {
   insertInboundShipment(
     storeId: $storeId
@@ -400,6 +401,7 @@ mutation insertInboundShipment(
       otherPartyId: $otherPartyId
       requisitionId: $requisitionId
       purchaseOrderId: $purchaseOrderId
+      insertLinesFromPurchaseOrder: $insertLinesFromPurchaseOrder
     }
   ) {
     ... on InsertInboundShipmentError {
