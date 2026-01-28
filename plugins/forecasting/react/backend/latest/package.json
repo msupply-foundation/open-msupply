@@ -9,7 +9,7 @@
     ],
     "variant_type": "BOA_JS"
   },
-  "version": "1.0.0",
+  "version": "1.0.1",
   "main": "plugin.js",
   "scripts": {
     "build-plugin": "webpack"
@@ -19,7 +19,7 @@
     "@types/lodash": "^4.17.15",
     "ts-loader": "^9.4.4",
     "typescript": "^5.0.2",
-    "webpack": "^5.76.2",
+    "webpack": "^5.88.1",
     "webpack-cli": "^5.0.1"
   }
 }

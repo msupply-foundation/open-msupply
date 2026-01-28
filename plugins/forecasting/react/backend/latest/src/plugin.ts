@@ -51,6 +51,7 @@ const plugins: BackendPlugins = {
         vaccineCourses.length > 0
           ? vaccineCourses.reduce((acc, curr) => acc + curr.forecastUnits, 0)
           : null;
+
       forecastedQuantities[line.id] = {
         forecastTotalDoses,
         forecastTotalUnits,
@@ -76,7 +77,10 @@ const plugins: BackendPlugins = {
 
         const suggested_quantity =
           forecastUnits !== null
-            ? Math.max(forecastUnits - line.available_stock_on_hand, 0)
+            ? Math.max(
+                Math.ceil(forecastUnits - line.available_stock_on_hand),
+                0
+              )
             : line.suggested_quantity;
 
         return { ...line, suggested_quantity };

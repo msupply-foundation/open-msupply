@@ -1,0 +1,24 @@
+{
+  "//": "This is also plugin code, and must snake case (since it's used as federation module name), and should be unique for all plugins",
+  "name": "forecasting_plugins",
+  "//": "When plugins are bundled in production, this field of package.json is used to identify this directory",
+  "//": "As a frontend plugins, unlike backend plugins 'types' here is just metadata, only used to tell user which area plugin affects",
+  "omSupplyPlugin": {
+    "target": "frontend",
+    "types": [
+      "forecastQuantites"
+    ]
+  },
+  "version": "1.0.0",
+  "main": "plugin.js",
+  "scripts": {
+    "build-plugin": "NODE_ENV=production webpack"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "webpack": "^5.88.1",
+    "webpack-cli": "^5.0.1",
+    "webpack-dev-server": "^4.12.0",
+    "ts-loader": "^9.4.4"
+  }
+}
