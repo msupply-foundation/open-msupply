@@ -39,7 +39,7 @@ pub fn generate(
     // Check if the stock line already exists, if it does we may need to update it rather than replacing it
     let old_stock_line = match &input.stock_line_id {
         Some(stock_line_id) => {
-            StockLineRowRepository::new(&connection).find_one_by_id(stock_line_id)?
+            StockLineRowRepository::new(connection).find_one_by_id(stock_line_id)?
         }
         None => None,
     };
