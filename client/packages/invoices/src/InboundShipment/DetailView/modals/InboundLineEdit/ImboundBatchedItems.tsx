@@ -24,7 +24,6 @@ import {
   InfoIcon,
   TruckIcon,
   InvoiceIcon,
-  
 } from '@openmsupply-client/common';
 import { ChevronDownIcon } from '@common/icons';
 import { DraftInboundLine } from '../../../../types';
@@ -103,13 +102,15 @@ export const InboundItems = ({
       </AccordionSummary>
       <AccordionDetails>
         <Paper elevation={1} sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <InfoIcon color="action" fontSize="small" />
-            <Typography variant="body2" color="textSecondary">
-              {t('label.quantities')}
-            </Typography>
-          </Box>
-          <Grid container spacing={2}>
+          <Box sx={{ display: 'flex', gap: 2 }}>
+            <Box sx={{ minWidth: '150px', display: 'flex', alignItems: 'center', gap: 1 }}>
+              <InfoIcon color="action" fontSize="small" />
+              <Typography variant="body2" color="textSecondary">
+                {t('label.quantities')}
+              </Typography>
+            </Box>
+            <Box sx={{ flex: 1 }}>
+              <Grid container spacing={2}>
             <Grid item xs={12} md={6}>
                 <Box>
               <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
@@ -326,16 +327,20 @@ export const InboundItems = ({
                 />
               </Box>
             </Grid>          
-          </Grid>
+              </Grid>
+            </Box>
+          </Box>
         </Paper>
         <Paper elevation={1} sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <TruckIcon color="action" fontSize="small" />
-            <Typography variant="body2" color="textSecondary">
-              {t('label.pricing')}
-            </Typography>
-          </Box>
-          <Grid container spacing={2}>
+          <Box sx={{ display: 'flex', gap: 2 }}>
+            <Box sx={{ minWidth: '150px', display: 'flex', alignItems: 'center', gap: 1 }}>
+              <TruckIcon color="action" fontSize="small" />
+              <Typography variant="body2" color="textSecondary">
+                {t('label.pricing')}
+              </Typography>
+            </Box>
+            <Box sx={{ flex: 1 }}>
+              <Grid container spacing={2}>
             <Grid item xs={12} md={showForeignCurrency ? 6 : 12}>
               <Box>
                 <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
@@ -408,16 +413,20 @@ export const InboundItems = ({
                 </Typography>
               </Grid>
             )}             
-          </Grid>
+              </Grid>
+            </Box>
+          </Box>
         </Paper>
         <Paper elevation={1} sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <InvoiceIcon color="action" fontSize="small" />
-            <Typography variant="body2" color="textSecondary">
-              {t('heading.other')}
-            </Typography>
-          </Box>
-          <Grid container spacing={2}>
+          <Box sx={{ display: 'flex', gap: 2 }}>
+            <Box sx={{ minWidth: '150px', display: 'flex', alignItems: 'center', gap: 1 }}>
+              <InvoiceIcon color="action" fontSize="small" />
+              <Typography variant="body2" color="textSecondary">
+                {t('heading.other')}
+              </Typography>
+            </Box>
+            <Box sx={{ flex: 1 }}>
+              <Grid container spacing={2}>
             <Grid item xs={12} md={showForeignCurrency ? 6 : 12}>
               <Box>
                 <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
@@ -489,7 +498,9 @@ export const InboundItems = ({
                 />
               </Box>
             </Grid>
-          </Grid>
+              </Grid>
+            </Box>
+          </Box>
         </Paper>
       </AccordionDetails>
     </Accordion>
