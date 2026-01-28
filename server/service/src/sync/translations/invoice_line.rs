@@ -48,7 +48,6 @@ pub struct TransLineRowOmsFields {
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub program_id: Option<String>,
     #[serde(default)]
-    #[serde(deserialize_with = "empty_str_as_option_string")]
     pub status: Option<String>,
 }
 
