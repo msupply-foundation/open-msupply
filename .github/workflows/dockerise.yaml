@@ -23,6 +23,9 @@ jobs:
         with:
           node-version: "${{ steps.nvm.outputs.NVMRC }}"
 
+      - name: Install libusb (needed for node-hid build)
+        run: sudo apt-get update && sudo apt-get install -y libusb-1.0-0-dev
+
       - name: Install dependencies
         run: cd ./client && rm -rf node_modules && yarn install --frozen-lockfile
 
