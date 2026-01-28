@@ -41,4 +41,34 @@ describe('NumUtils', () => {
     expect(NumUtils.hasMoreThanDp(0.1234, 3)).toBe(true);
     expect(NumUtils.hasMoreThanDp(0.123, 3)).toBe(false);
   });
+
+  it('handles very large numbers', () => {
+    const large = 123456789.12;
+    const largeWithNoise = large + 1e-8;
+
+    expect(NumUtils.hasMoreThanTwoDp(large)).toBe(false);
+    expect(NumUtils.hasMoreThanTwoDp(largeWithNoise)).toBe(false);
+    expect(NumUtils.hasMoreThanTwoDp(123456789.123)).toBe(true);
+
+    expect(NumUtils.hasMoreThanDp(large, 2)).toBe(false);
+    expect(NumUtils.hasMoreThanDp(largeWithNoise, 2)).toBe(false);
+    expect(NumUtils.hasMoreThanDp(123456789.123, 2)).toBe(true);
+  });
+
+  it('handles very small numbers', () => {
+    expect(NumUtils.hasMoreThanTwoDp(0.000001)).toBe(true);
+
+    expect(NumUtils.hasMoreThanDp(0.0001, 3)).toBe(true);
+    expect(NumUtils.hasMoreThanDp(0.00001, 4)).toBe(true);
+    expect(NumUtils.hasMoreThanDp(0.0001, 4)).toBe(false);
+  });
+
+  it('handles negative numbers', () => {
+    expect(NumUtils.hasMoreThanTwoDp(-4.4)).toBe(false);
+    expect(NumUtils.hasMoreThanTwoDp(-4.40000000000006)).toBe(false);
+    expect(NumUtils.hasMoreThanTwoDp(-4.401)).toBe(true);
+
+    expect(NumUtils.hasMoreThanDp(-0.1234, 3)).toBe(true);
+    expect(NumUtils.hasMoreThanDp(-0.123, 3)).toBe(false);
+  });
 });
