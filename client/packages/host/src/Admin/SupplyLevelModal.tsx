@@ -20,7 +20,7 @@ import { getPropertyTranslation } from '../api/hooks/settings/namePropertyData';
 import { SUPPLY_LEVEL_KEY } from '../api/hooks/settings/namePropertyKeys';
 
 const useSupplyLevelsInUse = () => {
-  const names = useName.document.stores();
+  const names = useName.document.storesAll();
 
   const supplyLevelsInUse: string[] = [];
 
