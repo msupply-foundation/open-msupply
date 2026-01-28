@@ -74,7 +74,7 @@ export const DistributionWidget = ({
       isError={isOutboundCountError}
       isLoading={isOutboundCountLoading}
       title={t('heading.shipments')}
-      panelContext={`${outboundShipmentsPanelContext}`}
+      panelContext={outboundShipmentsPanelContext}
       stats={[
         {
           label: t('label.have-not-shipped'),
@@ -102,7 +102,7 @@ export const DistributionWidget = ({
       isError={isRequisitionCountError}
       isLoading={isRequisitionCountLoading}
       title={t('customer-requisition')}
-      panelContext={`${customerRequisitionsPanelContext}`}
+      panelContext={customerRequisitionsPanelContext}
       stats={[
         {
           label: t('label.new'),

@@ -103,7 +103,7 @@ export const ReplenishmentWidget = ({
       isError={isError}
       isLoading={isLoading}
       title={t('inbound-shipment')}
-      panelContext={`${inboundShipmentsPanelContext}`}
+      panelContext={inboundShipmentsPanelContext}
       stats={[
         {
           label: t('label.today'),
@@ -147,7 +147,7 @@ export const ReplenishmentWidget = ({
       isError={isRequisitionCountError}
       isLoading={isRequisitionCountLoading}
       title={t('internal-order')}
-      panelContext={`${internalOrdersPanelContext}`}
+      panelContext={internalOrdersPanelContext}
       stats={[
         {
           label: t('label.new'),
