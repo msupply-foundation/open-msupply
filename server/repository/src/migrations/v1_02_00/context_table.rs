@@ -1,82 +1,73 @@
-use crate::{migrations::sql, StorageConnection};
+use crate::migrations::*;
 use diesel::prelude::*;
 use util::constants::PATIENT_CONTEXT_ID;
 
-table! {
-    context (id) {
-        id -> Text,
-        name -> Text,
+pub(crate) struct Migrate;
+impl MigrationFragment for Migrate {
+    fn identifier(&self) -> &'static str {
+        "context_table"
     }
-}
 
-table! {
-    program (id) {
-        id -> Text,
-        name -> Text,
-        context_id -> Text,
-        master_list_id -> Text,
-    }
-}
+    fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
+        sql!(
+            connection,
+            r#"
+                CREATE TABLE context (
+                id TEXT NOT NULL PRIMARY KEY,
+                name TEXT NOT NULL
+                );
 
-pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
-    sql!(
-        connection,
-        r#"
-        CREATE TABLE context (
-          id TEXT NOT NULL PRIMARY KEY,
-          name TEXT NOT NULL
-        );
-        ALTER TABLE document_registry DROP COLUMN parent_id;
-        "#
-    )?;
+                ALTER TABLE document_registry DROP COLUMN parent_id;
+            "#
+        )?;
 
-    #[cfg(not(feature = "postgres"))]
-    sql!(
-        connection,
-        r#"
-        PRAGMA foreign_keys = 0;
-        ALTER TABLE program ADD COLUMN context_id TEXT NOT NULL DEFAULT temp REFERENCES context(id);
-        PRAGMA foreign_keys = 1;
-        "#
-    )?;
-    #[cfg(feature = "postgres")]
-    sql!(
-        connection,
-        r#"
-        ALTER TABLE program ADD COLUMN context_id TEXT NOT NULL DEFAULT '';
-        "#
-    )?;
+        #[cfg(not(feature = "postgres"))]
+        sql!(
+            connection,
+            r#"
+                PRAGMA foreign_keys = 0;
+                ALTER TABLE program ADD COLUMN context_id TEXT NOT NULL DEFAULT temp REFERENCES context(id);
+                PRAGMA foreign_keys = 1;
+            "#
+        )?;
+        #[cfg(feature = "postgres")]
+        sql!(
+            connection,
+            r#"
+                ALTER TABLE program ADD COLUMN context_id TEXT NOT NULL DEFAULT '';
+            "#
+        )?;
 
-    // Create a context row for every existing program and update the program row
-    let programs = program::dsl::program
-        .select((program::dsl::id, program::dsl::name))
-        .load::<(String, String)>(connection.lock().connection())?;
+        // Create a context row for every existing program and update the program row
+        let programs = program::dsl::program
+            .select((program::dsl::id, program::dsl::name))
+            .load::<(String, String)>(connection.lock().connection())?;
 
-    for (program_id, program_name) in programs {
-        diesel::insert_into(context::dsl::context)
-            .values((
-                context::dsl::id.eq(program_id),
-                context::dsl::name.eq(program_name),
-            ))
+        for (program_id, program_name) in programs {
+            diesel::insert_into(context::dsl::context)
+                .values((
+                    context::dsl::id.eq(program_id),
+                    context::dsl::name.eq(program_name),
+                ))
+                .execute(connection.lock().connection())?;
+        }
+
+        diesel::update(program::dsl::program)
+            .set(program::dsl::context_id.eq(program::dsl::id))
             .execute(connection.lock().connection())?;
-    }
 
-    diesel::update(program::dsl::program)
-        .set(program::dsl::context_id.eq(program::dsl::id))
-        .execute(connection.lock().connection())?;
+        #[cfg(feature = "postgres")]
+        sql!(
+            connection,
+            r#"
+                ALTER TABLE program ADD CONSTRAINT program_context_id_fkey FOREIGN KEY (context_id) REFERENCES context(id);
+            "#
+        )?;
 
-    #[cfg(feature = "postgres")]
-    sql!(
-        connection,
-        r#"
-        ALTER TABLE program ADD CONSTRAINT program_context_id_fkey FOREIGN KEY (context_id) REFERENCES context(id);
-        "#
-    )?;
-
-    #[cfg(not(feature = "postgres"))]
-    sql!(
-        connection,
-        r#"
+        #[cfg(not(feature = "postgres"))]
+        sql!(
+            connection,
+            r#"
             ALTER TABLE document ADD COLUMN context_id TEXT REFERENCES context(id);
             ALTER TABLE document DROP COLUMN context;
 
@@ -96,53 +87,70 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
             ALTER TABLE encounter ADD COLUMN program_id TEXT REFERENCES program(id);
             ALTER TABLE encounter DROP COLUMN context;
             "#
-    )?;
+        )?;
 
-    #[cfg(feature = "postgres")]
-    sql!(
-        connection,
-        r#"
-        ALTER TABLE document RENAME COLUMN context TO context_id;
-        ALTER TABLE document ADD CONSTRAINT document_context_id_fkey FOREIGN KEY (context_id) REFERENCES context(id);
+        #[cfg(feature = "postgres")]
+        sql!(
+            connection,
+            r#"
+                ALTER TABLE document RENAME COLUMN context TO context_id;
+                ALTER TABLE document ADD CONSTRAINT document_context_id_fkey FOREIGN KEY (context_id) REFERENCES context(id);
 
-        ALTER TABLE program_event RENAME COLUMN context TO context_id;
-        ALTER TABLE program_event ADD CONSTRAINT program_event_context_id_fkey FOREIGN KEY (context_id) REFERENCES context(id);
+                ALTER TABLE program_event RENAME COLUMN context TO context_id;
+                ALTER TABLE program_event ADD CONSTRAINT program_event_context_id_fkey FOREIGN KEY (context_id) REFERENCES context(id);
 
-        -- Seems like that in postgres you need to recreate the view to make the new column visible...
-        DROP VIEW latest_document;
-        CREATE VIEW latest_document
-        AS
-            SELECT d.*
-            FROM (
-            SELECT name, MAX(datetime) AS datetime
-                FROM document
-                GROUP BY name
-        ) grouped
-                INNER JOIN document d
-                ON d.name = grouped.name AND d.datetime = grouped.datetime;
+                -- Seems like that in postgres you need to recreate the view to make the new column visible...
+                DROP VIEW latest_document;
+                CREATE VIEW latest_document
+                AS
+                    SELECT d.*
+                    FROM (
+                    SELECT name, MAX(datetime) AS datetime
+                        FROM document
+                        GROUP BY name
+                ) grouped
+                        INNER JOIN document d
+                        ON d.name = grouped.name AND d.datetime = grouped.datetime;
 
-        ALTER TABLE document_registry RENAME COLUMN document_context TO context_id;
-        ALTER TABLE document_registry ADD CONSTRAINT document_registry_context_id_fkey FOREIGN KEY (context_id) REFERENCES context(id);
-        ALTER TABLE document_registry RENAME COLUMN type TO category;
+                ALTER TABLE document_registry RENAME COLUMN document_context TO context_id;
+                ALTER TABLE document_registry ADD CONSTRAINT document_registry_context_id_fkey FOREIGN KEY (context_id) REFERENCES context(id);
+                ALTER TABLE document_registry RENAME COLUMN type TO category;
 
-        ALTER TABLE user_permission RENAME COLUMN context TO context_id;
-        ALTER TABLE user_permission ADD CONSTRAINT user_permission_context_id_fkey FOREIGN KEY (context_id) REFERENCES context(id);
+                ALTER TABLE user_permission RENAME COLUMN context TO context_id;
+                ALTER TABLE user_permission ADD CONSTRAINT user_permission_context_id_fkey FOREIGN KEY (context_id) REFERENCES context(id);
 
-        ALTER TABLE program_enrolment RENAME COLUMN context TO program_id;
-        ALTER TABLE program_enrolment ADD CONSTRAINT program_enrolment_program_id_fkey FOREIGN KEY (program_id) REFERENCES program(id);
+                ALTER TABLE program_enrolment RENAME COLUMN context TO program_id;
+                ALTER TABLE program_enrolment ADD CONSTRAINT program_enrolment_program_id_fkey FOREIGN KEY (program_id) REFERENCES program(id);
 
-        ALTER TABLE encounter RENAME COLUMN context TO program_id;
-        ALTER TABLE encounter ADD CONSTRAINT encounter_enrolment_program_id_fkey FOREIGN KEY (program_id) REFERENCES program(id);
-        "#
-    )?;
+                ALTER TABLE encounter RENAME COLUMN context TO program_id;
+                ALTER TABLE encounter ADD CONSTRAINT encounter_enrolment_program_id_fkey FOREIGN KEY (program_id) REFERENCES program(id);
+            "#
+        )?;
 
-    sql!(
-        connection,
-        "INSERT INTO context (id, name) VALUES('{}', 'Patient context');",
-        PATIENT_CONTEXT_ID
-    )?;
+        sql!(
+            connection,
+            "INSERT INTO context (id, name) VALUES('{}', 'Patient context');",
+            PATIENT_CONTEXT_ID
+        )?;
 
-    Ok(())
+        Ok(())
+    }
+}
+
+table! {
+    context (id) {
+        id -> Text,
+        name -> Text,
+    }
+}
+
+table! {
+    program (id) {
+        id -> Text,
+        name -> Text,
+        context_id -> Text,
+        master_list_id -> Text,
+    }
 }
 
 #[cfg(test)]
@@ -205,7 +213,7 @@ async fn migration_context_program_upgrade() {
         .execute(connection.lock().connection())
         .unwrap();
 
-    migrate(&connection).unwrap();
+    Migrate.migrate(&connection).unwrap();
 
     let programs = program::dsl::program
         .select((program::dsl::id, program::dsl::name))

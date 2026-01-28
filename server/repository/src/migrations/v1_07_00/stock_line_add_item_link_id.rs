@@ -1,10 +1,17 @@
-use crate::{migrations::sql, StorageConnection};
+use crate::{migrations::*, StorageConnection};
 
-pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
-    #[cfg(feature = "postgres")]
-    sql!(
-        connection,
-        r#"
+pub(crate) struct Migrate;
+
+impl MigrationFragment for Migrate {
+    fn identifier(&self) -> &'static str {
+        "stock_line_add_item_link_id"
+    }
+
+    fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
+        #[cfg(feature = "postgres")]
+        sql!(
+            connection,
+            r#"
         -- Adding stock_line.item_link_id
         ALTER TABLE stock_line
         ADD COLUMN item_link_id TEXT NOT NULL DEFAULT 'temp_for_migration';
@@ -14,12 +21,12 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
         
         ALTER TABLE stock_line ADD CONSTRAINT stock_line_item_link_id_fkey FOREIGN KEY (item_link_id) REFERENCES item_link(id);
        "#,
-    )?;
+        )?;
 
-    #[cfg(not(feature = "postgres"))]
-    sql!(
-        connection,
-        r#"
+        #[cfg(not(feature = "postgres"))]
+        sql!(
+            connection,
+            r#"
         -- Adding stock_line.item_link_id
         -- Disable foreign key checks to avoid firing constraints on adding new FK column
         PRAGMA foreign_keys = OFF;
@@ -32,17 +39,17 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
 
         PRAGMA foreign_keys = ON;
      "#,
-    )?;
+        )?;
 
-    let casting = if cfg!(feature = "postgres") {
-        "::BIGINT"
-    } else {
-        ""
-    };
+        let casting = if cfg!(feature = "postgres") {
+            "::BIGINT"
+        } else {
+            ""
+        };
 
-    sql!(
-        connection,
-        r#"
+        sql!(
+            connection,
+            r#"
         CREATE INDEX "index_stock_line_item_link_id_fkey" ON "stock_line" ("item_link_id");
 
         -- Dropping stock_line.item_id
@@ -91,8 +98,9 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
           ) AS stock ON stock.item_id = items_and_stores.item_id
           AND stock.store_id = items_and_stores.store_id
      "#,
-        casting
-    )?;
+            casting
+        )?;
 
-    Ok(())
+        Ok(())
+    }
 }

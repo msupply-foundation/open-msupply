@@ -1,10 +1,17 @@
-use crate::{migrations::sql, StorageConnection};
+use crate::{migrations::*, StorageConnection};
 
-pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
-    #[cfg(feature = "postgres")]
-    sql!(
-        connection,
-        r#"
+pub(crate) struct Migrate;
+
+impl MigrationFragment for Migrate {
+    fn identifier(&self) -> &'static str {
+        "program_event_patient_link_id"
+    }
+
+    fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
+        #[cfg(feature = "postgres")]
+        sql!(
+            connection,
+            r#"
         -- Adding program_event.patient_link_id
         ALTER TABLE program_event
         ADD COLUMN patient_link_id TEXT NOT NULL DEFAULT 'temp_for_migration';
@@ -17,12 +24,12 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
         DROP INDEX index_program_event_patient_id;
         ALTER TABLE program_event DROP COLUMN patient_id;
        "#,
-    )?;
+        )?;
 
-    #[cfg(not(feature = "postgres"))]
-    sql!(
-        connection,
-        r#"
+        #[cfg(not(feature = "postgres"))]
+        sql!(
+            connection,
+            r#"
         PRAGMA foreign_keys = OFF;
 
         DROP INDEX index_program_event_patient_id;
@@ -58,13 +65,14 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
 
         PRAGMA foreign_keys = ON;
      "#,
-    )?;
+        )?;
 
-    sql!(
-        connection,
-        r#"
+        sql!(
+            connection,
+            r#"
             CREATE INDEX "index_program_event_patient_link_id" ON "program_event" ("patient_link_id");
         "#
-    )?;
-    Ok(())
+        )?;
+        Ok(())
+    }
 }

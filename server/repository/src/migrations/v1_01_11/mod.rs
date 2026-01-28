@@ -1,4 +1,4 @@
-use super::{version::Version, Migration};
+use super::{version::Version, Migration, MigrationFragment};
 mod activity_log;
 mod barcode;
 mod is_sync_updated_for_requisition;
@@ -10,28 +10,29 @@ mod requisition;
 mod store_preference;
 
 use crate::StorageConnection;
-pub(crate) struct V1_01_11;
 
+pub(crate) struct V1_01_11;
 impl Migration for V1_01_11 {
     fn version(&self) -> Version {
         Version::from_str("1.1.11")
     }
 
-    fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
-        activity_log::migrate(connection)?;
-        store_preference::migrate(connection)?;
-        name_tags::migrate(connection)?;
-        period_and_period_schedule::migrate(connection)?;
-        program_requisition::migrate(connection)?;
-
-        // Remote authorisation
-        remote_authorisation::migrate(connection)?;
-        is_sync_updated_for_requisition::migrate(connection)?;
-        requisition::migrate(connection)?;
-
-        barcode::migrate(connection)?;
-
+    fn migrate(&self, _connection: &StorageConnection) -> anyhow::Result<()> {
         Ok(())
+    }
+
+    fn migrate_fragments(&self) -> Vec<Box<dyn MigrationFragment>> {
+        vec![
+            Box::new(activity_log::Migrate),
+            Box::new(store_preference::Migrate),
+            Box::new(name_tags::Migrate),
+            Box::new(period_and_period_schedule::Migrate),
+            Box::new(program_requisition::Migrate),
+            Box::new(remote_authorisation::Migrate),
+            Box::new(is_sync_updated_for_requisition::Migrate),
+            Box::new(requisition::Migrate),
+            Box::new(barcode::Migrate),
+        ]
     }
 }
 

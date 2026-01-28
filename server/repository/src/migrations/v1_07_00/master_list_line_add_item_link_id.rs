@@ -1,10 +1,17 @@
-use crate::{migrations::sql, StorageConnection};
+use crate::{migrations::*, StorageConnection};
 
-pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
-    #[cfg(feature = "postgres")]
-    sql!(
-        connection,
-        r#"
+pub(crate) struct Migrate;
+
+impl MigrationFragment for Migrate {
+    fn identifier(&self) -> &'static str {
+        "master_list_line_add_item_link_id"
+    }
+
+    fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
+        #[cfg(feature = "postgres")]
+        sql!(
+            connection,
+            r#"
             ALTER TABLE master_list_line 
             ADD COLUMN item_link_id TEXT NOT NULL DEFAULT 'temp for migration';
             
@@ -18,11 +25,11 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
 
             CREATE INDEX "index_master_list_line_item_link_id_fkey" on "master_list_line" (item_link_id);
         "#,
-    )?;
-    #[cfg(not(feature = "postgres"))]
-    sql!(
-        connection,
-        r#"
+        )?;
+        #[cfg(not(feature = "postgres"))]
+        sql!(
+            connection,
+            r#"
             DROP INDEX index_master_list_line_item_id_fkey;
             ALTER TABLE master_list_line RENAME TO master_list_line_old;
 
@@ -39,7 +46,8 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
             
             CREATE INDEX "index_master_list_line_item_link_id_fkey" on "master_list_line" (item_link_id);
         "#,
-    )?;
+        )?;
 
-    Ok(())
+        Ok(())
+    }
 }

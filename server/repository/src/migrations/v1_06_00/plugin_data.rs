@@ -1,23 +1,29 @@
 use crate::migrations::*;
 
-pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
-    #[cfg(not(feature = "postgres"))]
-    const RELATED_RECORD_TYPE: &str = "TEXT";
-    #[cfg(feature = "postgres")]
-    const RELATED_RECORD_TYPE: &str = "related_record_type";
-    #[cfg(feature = "postgres")]
-    sql!(
-        connection,
-        r#"
+pub(crate) struct Migrate;
+impl MigrationFragment for Migrate {
+    fn identifier(&self) -> &'static str {
+        "plugin_data"
+    }
+
+    fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
+        #[cfg(not(feature = "postgres"))]
+        const RELATED_RECORD_TYPE: &str = "TEXT";
+        #[cfg(feature = "postgres")]
+        const RELATED_RECORD_TYPE: &str = "related_record_type";
+        #[cfg(feature = "postgres")]
+        sql!(
+            connection,
+            r#"
             CREATE TYPE {RELATED_RECORD_TYPE} AS ENUM (
                 'STOCK_LINE'
             );
         "#
-    )?;
+        )?;
 
-    sql!(
-        connection,
-        r#"
+        sql!(
+            connection,
+            r#"
             CREATE TABLE plugin_data (
                 id TEXT NOT NULL PRIMARY KEY,
                 plugin_name TEXT NOT NULL,
@@ -27,7 +33,8 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
                 data TEXT NOT NULL
             );
         "#,
-    )?;
+        )?;
 
-    Ok(())
+        Ok(())
+    }
 }

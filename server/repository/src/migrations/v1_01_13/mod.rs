@@ -1,20 +1,24 @@
-use super::{version::Version, Migration};
+use super::{version::Version, Migration, MigrationFragment};
+use crate::StorageConnection;
 
 mod invoice_and_number_type;
 mod permission;
 
-use crate::StorageConnection;
 pub(crate) struct V1_01_13;
-
 impl Migration for V1_01_13 {
     fn version(&self) -> Version {
         Version::from_str("1.1.13")
     }
 
-    fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
-        permission::migrate(connection)?;
-        invoice_and_number_type::migrate(connection)?;
+    fn migrate(&self, _connection: &StorageConnection) -> anyhow::Result<()> {
         Ok(())
+    }
+
+    fn migrate_fragments(&self) -> Vec<Box<dyn MigrationFragment>> {
+        vec![
+            Box::new(permission::Migrate),
+            Box::new(invoice_and_number_type::Migrate),
+        ]
     }
 }
 

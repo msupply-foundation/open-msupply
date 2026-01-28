@@ -1,17 +1,14 @@
-use crate::{migrations::sql, StorageConnection};
+use crate::migrations::*;
 
 pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
     sql!(
         connection,
         r#"
-            ALTER TABLE invoice_line ADD COLUMN type_temp NOT NULL DEFAULT 'STOCK_IN';
-
-            UPDATE invoice_line SET type_temp = type;
-
-            ALTER TABLE invoice_line DROP COLUMN type;
-
-            ALTER TABLE invoice_line RENAME COLUMN type_temp TO type;
-        "#
+                ALTER TABLE invoice_line ADD COLUMN type_temp NOT NULL DEFAULT 'STOCK_IN';
+                UPDATE invoice_line SET type_temp = type;
+                ALTER TABLE invoice_line DROP COLUMN type;
+                ALTER TABLE invoice_line RENAME COLUMN type_temp TO type;
+            "#
     )?;
     Ok(())
 }

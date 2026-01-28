@@ -1,21 +1,21 @@
-use crate::{migrations::sql, StorageConnection};
+use crate::migrations::*;
 
 pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
     sql!(
         connection,
         r#"
-            ALTER TABLE name ADD COLUMN gender_temp;
-            ALTER TABLE name ADD COLUMN type_temp NOT NULL DEFAULT 'FACILITY';
+                ALTER TABLE name ADD COLUMN gender_temp;
+                ALTER TABLE name ADD COLUMN type_temp NOT NULL DEFAULT 'FACILITY';
 
-            UPDATE name SET gender_temp = gender;
-            UPDATE name SET type_temp = type;
+                UPDATE name SET gender_temp = gender;
+                UPDATE name SET type_temp = type;
 
-            ALTER TABLE name DROP COLUMN gender;
-            ALTER TABLE name DROP COLUMN type;
+                ALTER TABLE name DROP COLUMN gender;
+                ALTER TABLE name DROP COLUMN type;
 
-            ALTER TABLE name RENAME COLUMN gender_temp TO gender;
-            ALTER TABLE name RENAME COLUMN type_temp to type;
-        "#
+                ALTER TABLE name RENAME COLUMN gender_temp TO gender;
+                ALTER TABLE name RENAME COLUMN type_temp to type;
+            "#
     )?;
 
     Ok(())

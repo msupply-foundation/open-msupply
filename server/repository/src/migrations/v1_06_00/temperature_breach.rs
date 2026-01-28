@@ -1,14 +1,21 @@
-use crate::{migrations::sql, StorageConnection};
+use crate::{migrations::*, StorageConnection};
 
-pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
-    sql!(
-        connection,
-        r#"
-        UPDATE temperature_breach SET acknowledged = not acknowledged;
-        ALTER TABLE temperature_breach RENAME COLUMN acknowledged TO unacknowledged;
-        ALTER TABLE temperature_breach ADD COLUMN comment TEXT
-        "#,
-    )?;
+pub(crate) struct Migrate;
+impl MigrationFragment for Migrate {
+    fn identifier(&self) -> &'static str {
+        "temperature_breach"
+    }
 
-    Ok(())
+    fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
+        sql!(
+            connection,
+            r#"
+                UPDATE temperature_breach SET acknowledged = not acknowledged;
+                ALTER TABLE temperature_breach RENAME COLUMN acknowledged TO unacknowledged;
+                ALTER TABLE temperature_breach ADD COLUMN comment TEXT
+            "#,
+        )?;
+
+        Ok(())
+    }
 }

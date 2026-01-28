@@ -1,21 +1,21 @@
-use crate::{migrations::sql, StorageConnection};
+use crate::migrations::*;
 
 pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
     sql!(
         connection,
         r#"
-            ALTER TABLE report ADD COLUMN context_temp NOT NULL DEFAULT 'INBOUND_SHIPMENT';
-            ALTER TABLE report ADD COLUMN type_temp NOT NULL DEFAULT 'OM_SUPPLY';
+                ALTER TABLE report ADD COLUMN context_temp NOT NULL DEFAULT 'INBOUND_SHIPMENT';
+                ALTER TABLE report ADD COLUMN type_temp NOT NULL DEFAULT 'OM_SUPPLY';
 
-            UPDATE report SET context_temp = context;
-            UPDATE report SET type_temp = type;
+                UPDATE report SET context_temp = context;
+                UPDATE report SET type_temp = type;
 
-            ALTER TABLE report DROP COLUMN context;
-            ALTER TABLE report DROP COLUMN type;
+                ALTER TABLE report DROP COLUMN context;
+                ALTER TABLE report DROP COLUMN type;
 
-            ALTER TABLE report RENAME COLUMN context_temp TO context;
-            ALTER TABLE report RENAME COLUMN type_temp to type;
-        "#
+                ALTER TABLE report RENAME COLUMN context_temp TO context;
+                ALTER TABLE report RENAME COLUMN type_temp to type;
+            "#
     )?;
 
     Ok(())

@@ -1,4 +1,4 @@
-use super::{version::Version, Migration};
+use super::{version::Version, Migration, MigrationFragment};
 
 use crate::StorageConnection;
 pub(crate) struct V1_02_01;
@@ -12,13 +12,17 @@ impl Migration for V1_02_01 {
         Version::from_str("1.2.01")
     }
 
-    fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
-        activity_log::migrate(connection)?;
-        invoice::migrate(connection)?;
-        number_and_permission_type::migrate(connection)?;
-        store_preference::migrate(connection)?;
-
+    fn migrate(&self, _connection: &StorageConnection) -> anyhow::Result<()> {
         Ok(())
+    }
+
+    fn migrate_fragments(&self) -> Vec<Box<dyn MigrationFragment>> {
+        vec![
+            Box::new(activity_log::Migrate),
+            Box::new(invoice::Migrate),
+            Box::new(number_and_permission_type::Migrate),
+            Box::new(store_preference::Migrate),
+        ]
     }
 }
 

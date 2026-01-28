@@ -1,10 +1,39 @@
-use crate::StorageConnection;
+use crate::migrations::*;
 #[cfg(not(feature = "postgres"))]
 use diesel::prelude::*;
 
-#[cfg(feature = "postgres")]
-pub(crate) fn migrate(_connection: &StorageConnection) -> anyhow::Result<()> {
-    Ok(())
+pub(crate) struct Migrate;
+impl MigrationFragment for Migrate {
+    fn identifier(&self) -> &'static str {
+        "barcode_changelog"
+    }
+
+    #[cfg(feature = "postgres")]
+    fn migrate(&self, _connection: &StorageConnection) -> anyhow::Result<()> {
+        Ok(())
+    }
+
+    #[cfg(not(feature = "postgres"))]
+    fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
+        // Update changelogs for barcodes
+
+        let barcode_ids = barcode::table
+            .select(barcode::id)
+            .load::<String>(connection.lock().connection())?;
+
+        // Delete all changelogs for table barcode where record_id is not found
+        // in barcode table and changelog is of upsert type
+        diesel::delete(changelog::table)
+            .filter(
+                changelog::table_name
+                    .eq("barcode")
+                    .and(changelog::row_action.eq("UPSERT"))
+                    .and(changelog::record_id.ne_all(barcode_ids)),
+            )
+            .execute(connection.lock().connection())?;
+
+        Ok(())
+    }
 }
 
 table! {
@@ -22,28 +51,6 @@ table! {
         gtin -> Text,
         item_id -> Text,
     }
-}
-
-#[cfg(not(feature = "postgres"))]
-pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
-    // Update changelogs for barcodes
-
-    let barcode_ids = barcode::table
-        .select(barcode::id)
-        .load::<String>(connection.lock().connection())?;
-
-    // Delete all changelogs for table barcode where record_id is not found
-    // in barcode table and changelog is of upsert type
-    diesel::delete(changelog::table)
-        .filter(
-            changelog::table_name
-                .eq("barcode")
-                .and(changelog::row_action.eq("UPSERT"))
-                .and(changelog::record_id.ne_all(barcode_ids)),
-        )
-        .execute(connection.lock().connection())?;
-
-    Ok(())
 }
 
 #[cfg(test)]

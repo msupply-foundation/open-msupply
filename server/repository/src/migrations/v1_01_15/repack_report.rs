@@ -1,15 +1,22 @@
-use crate::StorageConnection;
+use crate::migrations::*;
 
-#[cfg(feature = "postgres")]
-pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
-    use crate::migrations::sql;
+pub(crate) struct Migrate;
+impl MigrationFragment for Migrate {
+    fn identifier(&self) -> &'static str {
+        "repack_report"
+    }
 
-    sql!(connection, r#"ALTER TYPE context_type ADD VALUE 'REPACK';"#)?;
+    #[cfg(feature = "postgres")]
+    fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
+        use crate::migrations::sql;
 
-    Ok(())
-}
+        sql!(connection, r#"ALTER TYPE context_type ADD VALUE 'REPACK';"#)?;
 
-#[cfg(not(feature = "postgres"))]
-pub(crate) fn migrate(_connection: &StorageConnection) -> anyhow::Result<()> {
-    Ok(())
+        Ok(())
+    }
+
+    #[cfg(not(feature = "postgres"))]
+    fn migrate(&self, _connection: &StorageConnection) -> anyhow::Result<()> {
+        Ok(())
+    }
 }

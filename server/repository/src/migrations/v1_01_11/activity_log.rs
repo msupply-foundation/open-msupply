@@ -1,21 +1,28 @@
-use crate::StorageConnection;
+use crate::migrations::*;
 
-#[cfg(feature = "postgres")]
-pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
-    use crate::migrations::sql;
-    sql!(
-        connection,
-        r#"ALTER TYPE activity_log_type ADD VALUE 'INVOICE_NUMBER_ALLOCATED';"#
-    )?;
-    sql!(
-        connection,
-        r#"ALTER TYPE activity_log_type ADD VALUE 'REQUISITION_NUMBER_ALLOCATED';"#
-    )?;
+pub(crate) struct Migrate;
+impl MigrationFragment for Migrate {
+    fn identifier(&self) -> &'static str {
+        "activity_log"
+    }
 
-    Ok(())
-}
+    #[cfg(feature = "postgres")]
+    fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
+        use crate::migrations::sql;
+        sql!(
+            connection,
+            r#"ALTER TYPE activity_log_type ADD VALUE 'INVOICE_NUMBER_ALLOCATED';"#
+        )?;
+        sql!(
+            connection,
+            r#"ALTER TYPE activity_log_type ADD VALUE 'REQUISITION_NUMBER_ALLOCATED';"#
+        )?;
 
-#[cfg(not(feature = "postgres"))]
-pub(crate) fn migrate(_connection: &StorageConnection) -> anyhow::Result<()> {
-    Ok(())
+        Ok(())
+    }
+
+    #[cfg(not(feature = "postgres"))]
+    fn migrate(&self, _connection: &StorageConnection) -> anyhow::Result<()> {
+        Ok(())
+    }
 }

@@ -1,9 +1,9 @@
-use crate::{migrations::*, StorageConnection};
+use crate::migrations::*;
 
 pub(crate) struct Migrate;
 impl MigrationFragment for Migrate {
     fn identifier(&self) -> &'static str {
-        "activity_log"
+        "add_api_verson_incompatible"
     }
 
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
@@ -11,11 +11,10 @@ impl MigrationFragment for Migrate {
             sql!(
                 connection,
                 r#"
-                    ALTER TYPE activity_log_type ADD VALUE 'SENSOR_LOCATION_CHANGED';
-                "#
+               ALTER TYPE sync_api_error_code ADD VALUE IF NOT EXISTS 'API_VERSION_INCOMPATIBLE';
+            "#
             )?;
         }
-
         Ok(())
     }
 }

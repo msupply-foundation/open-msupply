@@ -1,9 +1,15 @@
 use crate::migrations::*;
 
-pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
-    sql!(
-        connection,
-        r#"
+pub(crate) struct Migrate;
+impl MigrationFragment for Migrate {
+    fn identifier(&self) -> &'static str {
+        "changelog_deduped"
+    }
+
+    fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
+        sql!(
+            connection,
+            r#"
             DROP VIEW changelog_deduped;
 
             -- View of the changelog that only contains the most recent changes to a row, i.e. previous row
@@ -25,14 +31,15 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
                 INNER JOIN changelog c
                   ON c.record_id = grouped.record_id AND c.cursor = grouped.max_cursor
                 ORDER BY c.cursor;
-        "#
-    )?;
+              "#
+        )?;
 
-    sql!(
-        connection,
-        r#"
-        CREATE INDEX index_changelog_record_id ON changelog (record_id);
-        "#
-    )?;
-    Ok(())
+        sql!(
+            connection,
+            r#"
+              CREATE INDEX index_changelog_record_id ON changelog (record_id);
+            "#
+        )?;
+        Ok(())
+    }
 }

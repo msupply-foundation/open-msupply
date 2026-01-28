@@ -1,13 +1,17 @@
-use crate::{
-    migrations::{sql, DOUBLE},
-    StorageConnection,
-};
+use crate::migrations::*;
 
-pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
-    // Drop affected views
-    sql!(
-        connection,
-        r#"
+pub(crate) struct Migrate;
+
+impl MigrationFragment for Migrate {
+    fn identifier(&self) -> &'static str {
+        "invoice_line_add_item_link_id"
+    }
+
+    fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
+        // Drop affected views
+        sql!(
+            connection,
+            r#"
             DROP VIEW invoice_stats;
             DROP VIEW consumption;
             DROP VIEW stock_movement;
@@ -18,12 +22,12 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
 
             ALTER TABLE invoice_line ADD COLUMN foreign_currency_price_before_tax {DOUBLE};
         "#
-    )?;
+        )?;
 
-    #[cfg(feature = "postgres")]
-    sql!(
-        connection,
-        r#"
+        #[cfg(feature = "postgres")]
+        sql!(
+            connection,
+            r#"
         -- Adding invoice_line.item_link_id
         ALTER TABLE invoice_line
         ADD COLUMN item_link_id TEXT NOT NULL DEFAULT 'temp_for_migration';
@@ -55,12 +59,12 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
         GROUP BY
 	        invoice_line.invoice_id;
         "#,
-    )?;
+        )?;
 
-    #[cfg(not(feature = "postgres"))]
-    sql!(
-        connection,
-        r#"
+        #[cfg(not(feature = "postgres"))]
+        sql!(
+            connection,
+            r#"
         -- Adding invoice_line.item_link_id
         -- Disable foreign key checks to avoid firing constraints on adding new FK column (SQLite)
         PRAGMA foreign_keys = OFF;
@@ -96,18 +100,18 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
         GROUP BY
 	        invoice_line.invoice_id;
         "#,
-    )?;
+        )?;
 
-    let (casting, absolute) = if cfg!(feature = "postgres") {
-        ("::BIGINT", "@")
-    } else {
-        ("", "abs")
-    };
+        let (casting, absolute) = if cfg!(feature = "postgres") {
+            ("::BIGINT", "@")
+        } else {
+            ("", "abs")
+        };
 
-    // Recreate views
-    sql!(
-        connection,
-        r#"
+        // Recreate views
+        sql!(
+            connection,
+            r#"
             CREATE VIEW invoice_line_stock_movement AS 
             SELECT
                 invoice_line.*,
@@ -184,7 +188,8 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
                 ON stock_movement.item_id = items_and_stores.item_id
                     AND stock_movement.store_id = items_and_stores.store_id;
             "#
-    )?;
+        )?;
 
-    Ok(())
+        Ok(())
+    }
 }

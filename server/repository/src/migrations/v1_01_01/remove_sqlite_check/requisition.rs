@@ -1,21 +1,21 @@
-use crate::{migrations::sql, StorageConnection};
+use crate::migrations::*;
 
 pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
     sql!(
         connection,
         r#"
-            ALTER TABLE requisition ADD COLUMN status_temp NOT NULL DEFAULT 'DRAFT';
-            ALTER TABLE requisition ADD COLUMN type_temp NOT NULL DEFAULT 'REQUEST';
+                ALTER TABLE requisition ADD COLUMN status_temp NOT NULL DEFAULT 'DRAFT';
+                ALTER TABLE requisition ADD COLUMN type_temp NOT NULL DEFAULT 'REQUEST';
 
-            UPDATE requisition SET status_temp = status;
-            UPDATE requisition SET type_temp = type;
+                UPDATE requisition SET status_temp = status;
+                UPDATE requisition SET type_temp = type;
 
-            ALTER TABLE requisition DROP COLUMN status;
-            ALTER TABLE requisition DROP COLUMN type;
+                ALTER TABLE requisition DROP COLUMN status;
+                ALTER TABLE requisition DROP COLUMN type;
 
-            ALTER TABLE requisition RENAME COLUMN status_temp TO status;
-            ALTER TABLE requisition RENAME COLUMN type_temp to type;
-        "#
+                ALTER TABLE requisition RENAME COLUMN status_temp TO status;
+                ALTER TABLE requisition RENAME COLUMN type_temp to type;
+            "#
     )?;
 
     Ok(())

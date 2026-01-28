@@ -1,23 +1,29 @@
-use crate::{migrations::sql, StorageConnection};
+use crate::migrations::*;
 
-pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
-    // is_sync_update field, to make sure that records coming through sync don't trigger circular sync
-    // (sync integration operation is flagged as is_sync_update = true and is_sync_update = true records are filtered form push queue)
-    // this is edge case for remote data (requisition) due to authorisation logic, where ownership is changed to central server while
-    // record is being authorised
+pub(crate) struct Migrate;
+impl MigrationFragment for Migrate {
+    fn identifier(&self) -> &'static str {
+        "is_sync_updated_for_requisition"
+    }
 
-    sql!(
-        connection,
-        r#"
+    fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
+        // is_sync_update field, to make sure that records coming through sync don't trigger circular sync
+        // (sync integration operation is flagged as is_sync_update = true and is_sync_update = true records are filtered form push queue)
+        // this is edge case for remote data (requisition) due to authorisation logic, where ownership is changed to central server while
+        // record is being authorised
+
+        sql!(
+            connection,
+            r#"
             ALTER TABLE requisition ADD is_sync_update BOOLEAN NOT NULL DEFAULT FALSE;
             ALTER TABLE requisition_line ADD is_sync_update BOOLEAN NOT NULL DEFAULT FALSE;
             "#
-    )?;
+        )?;
 
-    // Adding is_sync_update to changelog table requires dropping and re-create changelog_deduped view (with new is_sync_update column)
-    sql!(
-        connection,
-        r#"
+        // Adding is_sync_update to changelog table requires dropping and re-create changelog_deduped view (with new is_sync_update column)
+        sql!(
+            connection,
+            r#"
             DROP VIEW changelog_deduped;
 
             ALTER TABLE changelog ADD is_sync_update BOOLEAN NOT NULL DEFAULT FALSE;
@@ -36,13 +42,13 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
                             where t2.record_id = t1.record_id)
             ORDER BY t1.cursor;
             "#
-    )?;
+        )?;
 
-    // Triggers for requisition insert and update
-    #[cfg(feature = "postgres")]
-    sql!(
-        connection,
-        r#"
+        // Triggers for requisition insert and update
+        #[cfg(feature = "postgres")]
+        sql!(
+            connection,
+            r#"
             CREATE OR REPLACE FUNCTION upsert_requisition_changelog()
             RETURNS trigger AS
             $$
@@ -54,20 +60,20 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
               END;
             $$ LANGUAGE 'plpgsql';
             "#
-    )?;
-    #[cfg(not(feature = "postgres"))]
-    {
-        sql!(
-            connection,
-            r#"
-                DROP TRIGGER requisition_insert_trigger;
-                DROP TRIGGER requisition_update_trigger;
-                "#
         )?;
-        for operation in ["insert", "update"] {
+        #[cfg(not(feature = "postgres"))]
+        {
             sql!(
                 connection,
                 r#"
+                DROP TRIGGER requisition_insert_trigger;
+                DROP TRIGGER requisition_update_trigger;
+                "#
+            )?;
+            for operation in ["insert", "update"] {
+                sql!(
+                    connection,
+                    r#"
                     CREATE TRIGGER requisition_{operation}_trigger
                     AFTER {operation} ON requisition
                     BEGIN
@@ -75,15 +81,15 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
                         VALUES ("requisition", NEW.id, "UPSERT", NEW.name_id, NEW.store_id, NEW.is_sync_update);
                     END;
                     "#
-            )?;
+                )?;
+            }
         }
-    }
 
-    // Triggers for requisition_line insert and update
-    #[cfg(feature = "postgres")]
-    sql!(
-        connection,
-        r#"
+        // Triggers for requisition_line insert and update
+        #[cfg(feature = "postgres")]
+        sql!(
+            connection,
+            r#"
             CREATE OR REPLACE FUNCTION upsert_requisition_line_changelog()
             RETURNS trigger AS
             $$
@@ -95,20 +101,20 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
               END;
             $$ LANGUAGE 'plpgsql';
             "#
-    )?;
-    #[cfg(not(feature = "postgres"))]
-    {
-        sql!(
-            connection,
-            r#"
-                DROP TRIGGER requisition_line_insert_trigger;
-                DROP TRIGGER requisition_line_update_trigger;
-                "#
         )?;
-        for operation in ["insert", "update"] {
+        #[cfg(not(feature = "postgres"))]
+        {
             sql!(
                 connection,
                 r#"
+                DROP TRIGGER requisition_line_insert_trigger;
+                DROP TRIGGER requisition_line_update_trigger;
+                "#
+            )?;
+            for operation in ["insert", "update"] {
+                sql!(
+                    connection,
+                    r#"
                     CREATE TRIGGER requisition_line_{operation}_trigger
                     AFTER {operation} ON requisition_line
                     BEGIN
@@ -116,9 +122,10 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
                             SELECT "requisition_line", NEW.id, NEW.is_sync_update, 'UPSERT', name_id, store_id FROM requisition WHERE id = NEW.requisition_id;
                     END;
                     "#
-            )?;
+                )?;
+            }
         }
-    }
 
-    Ok(())
+        Ok(())
+    }
 }

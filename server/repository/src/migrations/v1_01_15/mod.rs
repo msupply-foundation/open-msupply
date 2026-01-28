@@ -1,19 +1,24 @@
-use super::{version::Version, Migration};
-
+use super::{version::Version, Migration, MigrationFragment};
 use crate::StorageConnection;
+
 mod repack_activity_log;
 mod repack_report;
-pub(crate) struct V1_01_15;
 
+pub(crate) struct V1_01_15;
 impl Migration for V1_01_15 {
     fn version(&self) -> Version {
         Version::from_str("1.1.15")
     }
 
-    fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
-        repack_report::migrate(connection)?;
-        repack_activity_log::migrate(connection)?;
+    fn migrate(&self, _connection: &StorageConnection) -> anyhow::Result<()> {
         Ok(())
+    }
+
+    fn migrate_fragments(&self) -> Vec<Box<dyn MigrationFragment>> {
+        vec![
+            Box::new(repack_report::Migrate),
+            Box::new(repack_activity_log::Migrate),
+        ]
     }
 }
 

@@ -1,10 +1,16 @@
-use crate::{migrations::sql, StorageConnection};
+use crate::{migrations::*, StorageConnection};
 
-pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
-    #[cfg(feature = "postgres")]
-    sql!(
-        connection,
-        r#"
+pub(crate) struct Migrate;
+impl MigrationFragment for Migrate {
+    fn identifier(&self) -> &'static str {
+        "document_owner_name_link_id"
+    }
+
+    fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
+        #[cfg(feature = "postgres")]
+        sql!(
+            connection,
+            r#"
             -- Adding document.owner_name_link_id
             ALTER TABLE document
             ADD COLUMN owner_name_link_id TEXT;
@@ -14,11 +20,11 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
 
             ALTER TABLE document ADD CONSTRAINT document_owner_name_link_id_fkey FOREIGN KEY (owner_name_link_id) REFERENCES name_link(id);
        "#,
-    )?;
-    #[cfg(not(feature = "postgres"))]
-    sql!(
-        connection,
-        r#"
+        )?;
+        #[cfg(not(feature = "postgres"))]
+        sql!(
+            connection,
+            r#"
             -- Adding document.owner_name_link_id
             PRAGMA foreign_keys = OFF;
 
@@ -29,11 +35,11 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
 
             PRAGMA foreign_keys = ON;
             "#,
-    )?;
+        )?;
 
-    sql!(
-        connection,
-        r#"
+        sql!(
+            connection,
+            r#"
             DROP VIEW latest_document;
 
             -- Unrelated: rename existing name index:
@@ -54,7 +60,8 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
               INNER JOIN document d
               ON d.name = grouped.name AND d.datetime = grouped.datetime;
         "#
-    )?;
+        )?;
 
-    Ok(())
+        Ok(())
+    }
 }
