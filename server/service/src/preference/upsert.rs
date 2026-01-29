@@ -82,7 +82,7 @@ pub fn upsert_preferences(
         manage_vaccines_in_doses: manage_vaccines_in_doses_input,
         manage_vvm_status_for_stock: manage_vvm_status_for_stock_input,
         order_in_packs: order_in_packs_input,
-        use_procurement_functionality: show_purchase_orders_and_goods_received_input,
+        use_procurement_functionality: show_purchase_orders_input,
         sort_by_vvm_status_then_expiry: sort_by_vvm_status_then_expiry_input,
         use_simplified_mobile_ui: use_simplified_mobile_ui_input,
         disable_manual_returns: disable_manual_returns_input,
@@ -110,7 +110,6 @@ pub fn upsert_preferences(
     let PreferenceProvider {
         // Global preferences
         allow_tracking_of_stock_by_donor,
-        authorise_goods_received,
         authorise_purchase_order,
         custom_translations,
         gender_options,
@@ -154,10 +153,6 @@ pub fn upsert_preferences(
             // Global preferences
             if let Some(input) = allow_tracking_of_stock_by_donor_input {
                 allow_tracking_of_stock_by_donor.upsert(connection, input, None)?;
-            }
-
-            if let Some(input) = authorise_goods_received_input {
-                authorise_goods_received.upsert(connection, input, None)?;
             }
 
             if let Some(input) = authorise_purchase_order_input {
@@ -228,7 +223,7 @@ pub fn upsert_preferences(
                 upsert_store_input(connection, order_in_packs, inputs)?;
             }
 
-            if let Some(inputs) = show_purchase_orders_and_goods_received_input {
+            if let Some(inputs) = show_purchase_orders_input {
                 upsert_store_input(connection, use_procurement_functionality, inputs)?;
             }
 

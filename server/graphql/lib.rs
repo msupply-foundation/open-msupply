@@ -40,8 +40,6 @@ use graphql_general::{
     CentralGeneralMutations, DiscoveryQueries, GeneralMutations, GeneralQueries,
     InitialisationMutations, InitialisationQueries,
 };
-use graphql_goods_received::{GoodsReceivedMutations, GoodsReceivedQueries};
-use graphql_goods_received_line::{GoodsReceivedLineMutations, GoodsReceivedLineQueries};
 use graphql_inventory_adjustment::InventoryAdjustmentMutations;
 use graphql_invoice::{InvoiceMutations, InvoiceQueries};
 use graphql_invoice_line::{InvoiceLineMutations, InvoiceLineQueries};
@@ -193,8 +191,6 @@ pub struct Queries(
     pub CampaignQueries,
     pub PurchaseOrderQueries,
     pub PurchaseOrderLineQueries,
-    pub GoodsReceivedQueries,
-    pub GoodsReceivedLineQueries,
 );
 
 impl Queries {
@@ -231,8 +227,6 @@ impl Queries {
             CampaignQueries,
             PurchaseOrderQueries,
             PurchaseOrderLineQueries,
-            GoodsReceivedQueries,
-            GoodsReceivedLineQueries,
         )
     }
 }
@@ -264,8 +258,6 @@ pub struct Mutations(
     pub ClinicianMutations,
     pub PurchaseOrderMutations,
     pub PurchaseOrderLineMutations,
-    pub GoodsReceivedMutations,
-    pub GoodsReceivedLineMutations,
 );
 
 impl Mutations {
@@ -296,8 +288,6 @@ impl Mutations {
             ClinicianMutations,
             PurchaseOrderMutations,
             PurchaseOrderLineMutations,
-            GoodsReceivedMutations,
-            GoodsReceivedLineMutations,
         )
     }
 }

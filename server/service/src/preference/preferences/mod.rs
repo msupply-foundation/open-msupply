@@ -24,8 +24,6 @@ pub mod show_indicative_price_in_requisitions;
 pub use show_indicative_price_in_requisitions::*;
 pub mod prevent_transfers_months_before_initialisation;
 pub use prevent_transfers_months_before_initialisation::*;
-pub mod authorise_goods_received;
-pub use authorise_goods_received::*;
 pub mod use_procurement_functionality;
 pub use use_procurement_functionality::*;
 pub mod disable_manual_returns;
@@ -72,7 +70,6 @@ pub use is_gaps::*;
 pub struct PreferenceProvider {
     // Global preferences
     pub allow_tracking_of_stock_by_donor: AllowTrackingOfStockByDonor,
-    pub authorise_goods_received: AuthoriseGoodsReceived,
     pub authorise_purchase_order: AuthorisePurchaseOrder,
     pub show_indicative_price_in_requisitions: ShowIndicativePriceInRequisitions,
     pub custom_translations: CustomTranslations,
@@ -119,7 +116,6 @@ pub fn get_preference_provider() -> PreferenceProvider {
     PreferenceProvider {
         // Global preferences
         allow_tracking_of_stock_by_donor: AllowTrackingOfStockByDonor,
-        authorise_goods_received: AuthoriseGoodsReceived,
         authorise_purchase_order: AuthorisePurchaseOrder,
         show_indicative_price_in_requisitions: ShowIndicativePriceInRequisitions,
         custom_translations: CustomTranslations,
