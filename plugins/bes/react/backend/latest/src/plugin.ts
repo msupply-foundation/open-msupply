@@ -92,19 +92,28 @@ const batchDeleteOutboundShipmentQuery = (storeId: string, shipmentId: string): 
 };
 
 const plugins: BackendPlugins = {
-  graphql_query: ({ store_id, input }): Graphql['output'] => {
+  graphql_query: ({ input }): Graphql['output'] => {
     const inp = input as Graphql['input'];
 
     // --- the first store in my data set
     // --- has no stock, and will never issue stock. Also, isVisible = false for most stores
-    const issueingStoreId = store_id;
+    // const issueingStoreId = store_id;
 
-    // const { stores: activeStores } = get_active_stores_on_site();
-    // if (!activeStores || activeStores.length < 1) {
-    //   return { success: false, message: 'No active stores found' };
-    // }
+    const { stores: activeStores } = get_active_stores_on_site();
+    if (!activeStores || activeStores.length < 1) {
+      return { success: false, message: 'No active stores found' };
+    }
 
-    // const issueingStoreId = activeStores[0].store_row.id;
+    // Make sure it's a store
+    const issueingStore = activeStores.find(store => {
+      return store.name_row.type === 'STORE';
+    });
+
+    if (!issueingStore) {
+      return { success: false, message: 'No store found' };
+    }
+
+    const issueingStoreId = issueingStore.store_row.id;
 
     const { result: customerQueryResult, customerError } = customerQuery({
       storeId: issueingStoreId,
@@ -138,9 +147,11 @@ const plugins: BackendPlugins = {
     const foundItem = itemsQueryResult.items.nodes[0];
 
     if (foundItem.availableStockOnHand < inp.quantity) {
+      let message = `Not enough stock to fullfil order. Store: ${issueingStore.name_row.name}. `;
+      message += `Available stock for code ${foundItem.code}: ${foundItem.availableStockOnHand}, Qty requested: ${inp.quantity},`;
       return {
         success: false,
-        message: `Not enough stock to fullfil order. Available stock for code ${foundItem.code}: ${foundItem.availableStockOnHand}  Qty requested: ${inp.quantity}`,
+        message,
       };
     }
 
