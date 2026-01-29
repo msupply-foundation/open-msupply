@@ -1,3 +1,5 @@
+use std::time::SystemTime;
+
 use crate::{
     item::get_items_with_consumption,
     item_stats::{get_item_stats, ItemStats},
@@ -9,7 +11,7 @@ use crate::{
     PluginOrRepositoryError,
 };
 
-use repository::{EqualFilter, ItemFilter, ItemRepository, RepositoryError};
+use repository::{ItemFilter, ItemRepository, RepositoryError};
 
 pub struct ItemCounts {
     pub total: i64,
@@ -63,13 +65,11 @@ pub trait ItemCountServiceTrait: Send + Sync {
         &self,
         ctx: &ServiceContext,
         store_id: &str,
-        item_ids: Vec<String>,
+        item_filter: ItemFilter,
     ) -> Result<i64, PluginOrRepositoryError> {
         let items_with_consumption_set = get_items_with_consumption(
             &ctx.connection,
-            ItemFilter::new()
-                .id(EqualFilter::equal_any(item_ids))
-                .has_stock_on_hand(false),
+            item_filter.has_stock_on_hand(false),
             store_id,
         )?;
 
@@ -117,10 +117,9 @@ impl ItemCountServiceTrait for ItemServiceCount {
         store_id: &str,
         low_stock_threshold: i32,
     ) -> Result<ItemCounts, PluginOrRepositoryError> {
-        let visible_or_on_hand_items = ItemRepository::new(&ctx.connection).query_by_filter(
-            ItemFilter::new().visible_or_on_hand(true).is_active(true),
-            Some(store_id.to_string()),
-        )?;
+        let item_filter = ItemFilter::new().is_active(true).visible_or_on_hand(true);
+        let visible_or_on_hand_items = ItemRepository::new(&ctx.connection)
+            .query_by_filter(item_filter.clone(), Some(store_id.to_string()))?;
 
         let total_count = visible_or_on_hand_items.len() as i64;
 
@@ -139,7 +138,7 @@ impl ItemCountServiceTrait for ItemServiceCount {
             Self::get_more_than_six_months_stock_count(self, &item_stats);
 
         let out_of_stock_products =
-            self.get_out_of_stock_products_count(ctx, store_id, item_ids.clone())?;
+            self.get_out_of_stock_products_count(ctx, store_id, item_filter)?;
 
         let show_low_stock_alerts = NumberOfMonthsThresholdToShowLowStockAlertsForProducts
             .load(&ctx.connection, Some(store_id.to_string()))
@@ -182,7 +181,8 @@ mod item_count_service_test {
 
     use repository::{
         mock::{common::FullMockMasterList, mock_store_b, MockData, MockDataInserts},
-        ItemRow, ItemType, MasterListLineRow, MasterListNameJoinRow, MasterListRow, StockLineRow,
+        EqualFilter, ItemFilter, ItemRow, ItemType, MasterListLineRow, MasterListNameJoinRow,
+        MasterListRow, StockLineRow,
     };
 
     use crate::{
@@ -393,7 +393,11 @@ mod item_count_service_test {
         ];
 
         let result = ItemServiceCount {}
-            .get_out_of_stock_products_count(&service_context, &mock_store_b().id, item_ids)
+            .get_out_of_stock_products_count(
+                &service_context,
+                &mock_store_b().id,
+                ItemFilter::new().id(EqualFilter::equal_any(item_ids)),
+            )
             .unwrap();
 
         println!("result {:?}", result);
