@@ -31,6 +31,7 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
   getIsPlaceholderRow = () => false,
   getIsRestrictedRow = () => false,
   muiTableBodyRowProps = {},
+  isMobile = false,
 }: {
   resetTableState: () => void;
   hasSavedState: boolean;
@@ -40,6 +41,7 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
   toggleGrouped?: () => void;
   getIsPlaceholderRow?: (row: T) => boolean;
   getIsRestrictedRow?: (row: T) => boolean;
+  isMobile?: boolean;
 
   // This object is merged with the default row props in muiTableBodyRowProps
   // below. We can do the same for other muiTable props if needed in future.
@@ -74,7 +76,7 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
     // Add reset state button to toolbar
     renderToolbarInternalActions: ({ table }) => (
       <>
-        {toggleGrouped && (
+        {toggleGrouped && !isMobile && (
           <IconButton
             icon={isGrouped ? <ExpandIcon /> : <CollapseIcon />}
             onClick={toggleGrouped}
@@ -82,8 +84,10 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
             sx={iconButtonProps}
           />
         )}
-        {hasColumnFilters && <MRT_ToggleFiltersButton table={table} />}
-        <MRT_ToggleDensePaddingButton table={table} />
+        {hasColumnFilters && !isMobile && (
+          <MRT_ToggleFiltersButton table={table} />
+        )}
+        {!isMobile && <MRT_ToggleDensePaddingButton table={table} />}
         <MRT_ShowHideColumnsButton table={table} />
         <IconButton
           icon={<RefreshIcon />}
@@ -92,7 +96,7 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
           disabled={!hasSavedState}
           sx={iconButtonProps}
         />
-        <MRT_ToggleFullScreenButton table={table} />
+        {!isMobile && <MRT_ToggleFullScreenButton table={table} />}
       </>
     ),
 

@@ -10,7 +10,6 @@ import { SensorListView } from './Sensor';
 import { ListView as MonitoringListView } from './Monitoring/ListView';
 import { EquipmentListView } from './Equipment/ListView';
 import { EquipmentDetailView } from './Equipment/DetailView';
-import { CardListView } from './Mobile/Equipment/CardListView';
 import { EquipmentDetailView as MobileEquipmentDetailView } from './Mobile/Equipment/DetailView/DetailView';
 import { MobileTemperatureChart } from './Mobile/Monitoring/MobileTemperatureChart';
 
@@ -30,10 +29,7 @@ export const ColdchainService: FC = () => {
         element={!isGaps ? <MonitoringListView /> : <MobileTemperatureChart />}
       />
       <Route path={sensorRoute} element={<SensorListView />} />
-      <Route
-        path={equipmentListRoute}
-        element={!isGaps ? <EquipmentListView /> : <CardListView />}
-      />
+      <Route path={equipmentListRoute} element={<EquipmentListView />} />
       <Route
         path={equipmentRoute}
         element={
