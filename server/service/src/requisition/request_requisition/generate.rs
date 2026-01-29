@@ -97,6 +97,7 @@ pub fn generate_requisition_lines(
                     None
                 },
                 // Default
+                available_volume: None,
                 comment: None,
                 supply_quantity: 0.0,
                 requested_quantity: 0.0,
@@ -110,6 +111,7 @@ pub fn generate_requisition_lines(
                 expiring_units: 0.0,
                 days_out_of_stock: 0.0,
                 option_id: None,
+                location_type_id: None,
             }
         })
         .collect();
