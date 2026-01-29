@@ -76,7 +76,7 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
     // Add reset state button to toolbar
     renderToolbarInternalActions: ({ table }) => (
       <>
-        {toggleGrouped && (
+        {toggleGrouped && !isMobile && (
           <IconButton
             icon={isGrouped ? <ExpandIcon /> : <CollapseIcon />}
             onClick={toggleGrouped}
@@ -87,9 +87,7 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
         {hasColumnFilters && !isMobile && (
           <MRT_ToggleFiltersButton table={table} />
         )}
-        {table.options.enableDensityToggle && (
-          <MRT_ToggleDensePaddingButton table={table} />
-        )}
+        {!isMobile && <MRT_ToggleDensePaddingButton table={table} />}
         <MRT_ShowHideColumnsButton table={table} />
         <IconButton
           icon={<RefreshIcon />}
@@ -98,9 +96,7 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
           disabled={!hasSavedState}
           sx={iconButtonProps}
         />
-        {table.options.enableFullScreenToggle && (
-          <MRT_ToggleFullScreenButton table={table} />
-        )}
+        {!isMobile && <MRT_ToggleFullScreenButton table={table} />}
       </>
     ),
 
