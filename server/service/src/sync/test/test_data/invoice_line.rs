@@ -105,6 +105,7 @@ fn trans_line_1_pull_record() -> TestSyncIncomingRecord {
             shipped_number_of_packs: Some(0.0),
             volume_per_pack: 10.0,
             shipped_pack_size: Some(1.0),
+            status: None,
         },
     )
 }
@@ -142,6 +143,7 @@ fn trans_line_1_push_record() -> TestSyncOutgoingRecord {
             oms_fields: Some(TransLineRowOmsFields {
                 campaign_id: None,
                 program_id: None,
+                status: None,
             }),
             volume_per_pack: 10.0,
             shipped_pack_size: Some(1.0),
@@ -243,6 +245,7 @@ fn trans_line_2_pull_record() -> TestSyncIncomingRecord {
             shipped_number_of_packs: Some(10.0),
             volume_per_pack: 0.0,
             shipped_pack_size: Some(100.0),
+            status: None,
         },
     )
 }
@@ -280,6 +283,7 @@ fn trans_line_2_push_record() -> TestSyncOutgoingRecord {
             oms_fields: Some(TransLineRowOmsFields {
                 campaign_id: None,
                 program_id: None,
+                status: None,
             }),
             volume_per_pack: 0.0,
             shipped_pack_size: Some(100.0),
@@ -348,7 +352,8 @@ const TRANS_LINE_OM_FIELDS: (&str, &str) = (
         "donor_id": "",
         "oms_fields": {
             "campaign_id": "campaign_a",
-            "program_id": "program_a"
+            "program_id": "program_a",
+            "status": "PENDING"
         }
     }"#,
 );
@@ -387,6 +392,7 @@ fn trans_line_om_fields_pull_record() -> TestSyncIncomingRecord {
             shipped_number_of_packs: Some(0.0),
             volume_per_pack: 0.0,
             shipped_pack_size: Some(100.0),
+            status: Some(repository::InvoiceLineStatus::Pending),
         },
     )
 }
@@ -423,6 +429,7 @@ fn trans_line_om_fields_push_record() -> TestSyncOutgoingRecord {
             oms_fields: Some(TransLineRowOmsFields {
                 campaign_id: Some("campaign_a".to_string()),
                 program_id: Some("program_a".to_string()),
+                status: Some("PENDING".to_string()),
             }),
             shipped_number_of_packs: Some(0.0),
             volume_per_pack: 0.0,
@@ -528,6 +535,7 @@ fn trans_line_om_fields_unset_tax_pull_record() -> TestSyncIncomingRecord {
             shipped_number_of_packs: Some(0.0),
             volume_per_pack: 0.0,
             shipped_pack_size: Some(100.0),
+            status: None,
         },
     )
 }
@@ -565,6 +573,7 @@ fn trans_line_om_fields_unset_tax_push_record() -> TestSyncOutgoingRecord {
             oms_fields: Some(TransLineRowOmsFields {
                 campaign_id: None,
                 program_id: None,
+                status: None,
             }),
             volume_per_pack: 0.0,
             shipped_pack_size: Some(100.0),
@@ -669,6 +678,7 @@ fn trans_line_negative_pull_record() -> TestSyncIncomingRecord {
             shipped_number_of_packs: Some(0.0),
             volume_per_pack: 0.0,
             shipped_pack_size: Some(0.0),
+            status: None,
         },
     )
 }
@@ -706,6 +716,7 @@ fn trans_line_negative_push_record() -> TestSyncOutgoingRecord {
             oms_fields: Some(TransLineRowOmsFields {
                 campaign_id: None,
                 program_id: None,
+                status: None,
             }),
             volume_per_pack: 0.0,
             shipped_pack_size: Some(0.0),
@@ -811,6 +822,7 @@ fn trans_line_prescribed_quantity_pull_record() -> TestSyncIncomingRecord {
             shipped_number_of_packs: Some(0.0),
             volume_per_pack: 0.0,
             shipped_pack_size: Some(0.0),
+            status: None,
         },
     )
 }
@@ -849,6 +861,7 @@ fn trans_line_prescribed_quantity_push_record() -> TestSyncOutgoingRecord {
             oms_fields: Some(TransLineRowOmsFields {
                 campaign_id: None,
                 program_id: None,
+                status: None,
             }),
             volume_per_pack: 0.0,
             shipped_pack_size: Some(0.0),
@@ -952,6 +965,7 @@ fn trans_line_invalid_stockline_pull_record() -> TestSyncIncomingRecord {
             shipped_number_of_packs: Some(0.0),
             volume_per_pack: 0.0,
             shipped_pack_size: Some(0.0),
+            status: None,
         },
     )
 }
@@ -989,6 +1003,7 @@ fn trans_line_invalid_stockline_push_record() -> TestSyncOutgoingRecord {
             oms_fields: Some(TransLineRowOmsFields {
                 campaign_id: None,
                 program_id: None,
+                status: None,
             }),
             volume_per_pack: 0.0,
             shipped_pack_size: Some(0.0),
@@ -1092,6 +1107,7 @@ fn trans_line_empty_stockline_pull_record() -> TestSyncIncomingRecord {
             shipped_number_of_packs: Some(0.0),
             volume_per_pack: 0.0,
             shipped_pack_size: Some(0.0),
+            status: None,
         },
     )
 }
@@ -1130,6 +1146,7 @@ fn trans_line_empty_stockline_push_record() -> TestSyncOutgoingRecord {
             oms_fields: Some(TransLineRowOmsFields {
                 campaign_id: None,
                 program_id: None,
+                status: None,
             }),
             volume_per_pack: 0.0,
             shipped_pack_size: Some(0.0),
