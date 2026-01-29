@@ -14,15 +14,15 @@ import {
 } from '@openmsupply-client/common';
 import { InboundLineEditForm } from './InboundLineEditForm';
 import { InboundLineFragment, useDraftInboundLines } from '../../../api';
-import { TabLayout } from './TabLayout';
+// import { TabLayout } from './TabLayout';
 import {
   CurrencyRowFragment,
-  ItemRowFragment,
 } from '@openmsupply-client/system';
 import { QuantityTable } from './TabTables';
 import { isInboundPlaceholderRow } from '../../../../utils';
 import { ScannedBatchData } from '../../DetailView';
 import { useNextItem } from '../../../../useNextItem';
+import { AccordionLayout } from './AccordionLayout';
 
 type InboundLineItem = InboundLineFragment['item'];
 interface InboundLineEditProps {
@@ -36,7 +36,7 @@ interface InboundLineEditProps {
   hasVvmStatusesEnabled?: boolean;
   hasItemVariantsEnabled?: boolean;
   scannedBatchData?: ScannedBatchData;
-  getSortedItems: () => ItemRowFragment[];
+  getSortedItems: () => InboundLineItem[];
 }
 
 export const InboundLineEdit = ({
@@ -54,7 +54,7 @@ export const InboundLineEdit = ({
 }: InboundLineEditProps) => {
   const t = useTranslation();
   const { error } = useNotification();
-  const [currentItem, setCurrentItem] = useState<ItemRowFragment | null>(item);
+  const [currentItem, setCurrentItem] = useState<InboundLineItem | null>(item);
   const { next: nextItem, disabled: nextDisabled } = useNextItem(
     getSortedItems,
     currentItem?.id ?? ''
@@ -92,7 +92,7 @@ export const InboundLineEdit = ({
         hasItemVariantsEnabled={hasItemVariantsEnabled}
         hasVvmStatusesEnabled={hasVvmStatusesEnabled}
       />
-      <Box flex={1} justifyContent="flex-start" display="flex" margin={3}>
+      <Box flex={1} justifyContent="flex-start" display="flex" margin={10}>
         <ButtonWithIcon
           disabled={isDisabled}
           color="primary"
@@ -104,18 +104,33 @@ export const InboundLineEdit = ({
       </Box>
     </>
   ) : (
-    <TabLayout
-      draftLines={draftLines}
-      addDraftLine={addDraftLine}
-      updateDraftLine={updateDraftLine}
-      removeDraftLine={removeDraftLine}
-      isDisabled={isDisabled}
-      currency={currency}
-      isExternalSupplier={isExternalSupplier}
-      item={currentItem}
-      hasItemVariantsEnabled={hasItemVariantsEnabled}
-      hasVvmStatusesEnabled={!!hasVvmStatusesEnabled}
-    />
+    // replace tablayout with accordion layout
+    // <TabLayout
+    //   draftLines={draftLines}
+    //   addDraftLine={addDraftLine}
+    //   updateDraftLine={updateDraftLine}
+    //   removeDraftLine={removeDraftLine}
+    //   isDisabled={isDisabled}
+    //   currency={currency}
+    //   isExternalSupplier={isExternalSupplier}
+    //   item={currentItem}
+    //   hasItemVariantsEnabled={hasItemVariantsEnabled}
+    //   hasVvmStatusesEnabled={!!hasVvmStatusesEnabled}
+    // />
+    <Box sx={{ mt: 10 }}>
+      <AccordionLayout
+        draftLines={draftLines}
+        addDraftLine={addDraftLine}
+        updateDraftLine={updateDraftLine}
+        removeDraftLine={removeDraftLine}
+        isDisabled={isDisabled}
+        currency={currency}
+        isExternalSupplier={isExternalSupplier}
+        item={currentItem}
+        hasItemVariantsEnabled={hasItemVariantsEnabled}
+        hasVvmStatusesEnabled={!!hasVvmStatusesEnabled}
+      />
+    </Box>
   );
 
   return (
