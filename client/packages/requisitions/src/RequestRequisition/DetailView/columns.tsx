@@ -57,28 +57,6 @@ export const useRequestColumns = () => {
         enableColumnFilter: true,
       },
       {
-        id: 'packUnit',
-        header: t('label.unit'),
-        accessorFn: row => row.item.unitName,
-        size: 120,
-        defaultHideOnMobile: true,
-      },
-      {
-        id: 'dosesPerUnit',
-        header: t('label.doses-per-unit'),
-        accessorFn: row =>
-          row.item?.isVaccine ? row.item.doses : UNDEFINED_STRING_VALUE,
-        columnType: ColumnType.Number,
-        includeColumn: manageVaccinesInDoses,
-      },
-      {
-        accessorKey: 'item.defaultPackSize',
-        header: t('label.dps'),
-        enableSorting: true,
-        columnType: ColumnType.Number,
-        defaultHideOnMobile: true,
-      },
-      {
         accessorKey: 'itemStats.availableStockOnHand',
         header: t('label.available-soh'),
         description: t('description.available-soh'),
@@ -135,6 +113,28 @@ export const useRequestColumns = () => {
           );
         },
         enableSorting: true,
+      },
+      {
+        id: 'packUnit',
+        header: t('label.unit'),
+        accessorFn: row => row.item.unitName,
+        size: 120,
+        defaultHideOnMobile: true,
+      },
+      {
+        id: 'dosesPerUnit',
+        header: t('label.doses-per-unit'),
+        accessorFn: row =>
+          row.item?.isVaccine ? row.item.doses : UNDEFINED_STRING_VALUE,
+        columnType: ColumnType.Number,
+        includeColumn: manageVaccinesInDoses,
+      },
+      {
+        accessorKey: 'item.defaultPackSize',
+        header: t('label.dps'),
+        enableSorting: true,
+        columnType: ColumnType.Number,
+        defaultHideOnMobile: true,
       },
       {
         header: t('label.indicative-price-per-unit'),
@@ -230,6 +230,7 @@ export const useRequestColumns = () => {
       ...(plugins.requestRequisitionLine?.tableColumn || []),
     ],
     [
+      t,
       manageVaccinesInDoses,
       warningForExcessRequest,
       showExtraColumns,
