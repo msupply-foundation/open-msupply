@@ -138,6 +138,7 @@ const DetailViewInner = () => {
         buttonText={t('button.add-item')}
       />
     ),
+    isMobile,
   });
 
   const onReturn = async () => {

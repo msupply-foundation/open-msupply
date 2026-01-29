@@ -152,6 +152,7 @@ export const InboundListView = () => {
           onCreate={invoiceModalController.toggleOn}
         />
       ),
+      isMobile,
     }
   );
 
