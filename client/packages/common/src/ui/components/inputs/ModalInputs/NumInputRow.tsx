@@ -22,6 +22,7 @@ export interface NumInputRowProps extends NumericTextInputProps {
   disabledOverride?: boolean;
   value: number | undefined;
   dosesCaption?: React.ReactNode;
+  roundUp?: boolean;
 }
 
 export const NumInputRow = ({
@@ -36,11 +37,15 @@ export const NumInputRow = ({
   showExtraFields = false,
   disabledOverride,
   dosesCaption,
+  roundUp = false,
   ...rest
 }: NumInputRowProps) => {
   const isVerticalScreen = useMediaQuery('(max-width:800px)');
+  const v = value ?? 0;
 
-  const roundedValue = value ? NumUtils.round(value) : 0;
+  const roundedValue = roundUp
+    ? Math.ceil(v ?? 0)
+    : NumUtils.round(v ?? 0, decimalLimit ?? 0);
 
   const handleChange = (newValue?: number) => {
     if (!onChange || newValue === roundedValue) return;
