@@ -26,6 +26,7 @@ interface ResponseNumInputRowProps {
   disabledOverride?: boolean;
   sx?: SxProps<Theme>;
   overrideDoseDisplay?: boolean;
+  roundUp?: boolean;
 }
 
 export const ResponseNumInputRow = ({
@@ -42,6 +43,7 @@ export const ResponseNumInputRow = ({
   overrideDoseDisplay,
   unitName,
   sx,
+  roundUp,
 }: ResponseNumInputRowProps) => {
   const t = useTranslation();
   const { getPlural } = useIntlUtils();
@@ -80,10 +82,8 @@ export const ResponseNumInputRow = ({
     displayVaccinesInDoses && !!value && !overrideDoseDisplay ? (
       <DosesCaption
         value={value}
-        representation={representation}
         dosesPerUnit={dosesPerUnit}
         displayVaccinesInDoses={displayVaccinesInDoses}
-        defaultPackSize={defaultPackSize}
       />
     ) : null;
 
@@ -97,6 +97,7 @@ export const ResponseNumInputRow = ({
       disabledOverride={disabledOverride}
       sx={sx}
       dosesCaption={dosesCaption}
+      roundUp={roundUp}
     />
   );
 };

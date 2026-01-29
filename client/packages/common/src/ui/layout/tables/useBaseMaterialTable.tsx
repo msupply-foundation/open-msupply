@@ -44,6 +44,7 @@ export interface BaseTableConfig<T extends MRT_RowData>
   noUrlFiltering?: boolean;
   initialSort?: { key: string; dir: 'asc' | 'desc' };
   noDataElement?: React.ReactNode;
+  isMobile?: boolean;
 }
 
 export const useBaseMaterialTable = <T extends MRT_RowData>({
@@ -57,13 +58,14 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
   columns: omsColumns,
   data,
   grouping,
-  enableRowSelection = true,
   enableColumnResizing = true,
   manualFiltering = false,
   noUrlFiltering = false,
   initialSort,
   noDataElement,
   muiTableBodyRowProps,
+  isMobile,
+  enableRowSelection,
   ...tableOptions
 }: BaseTableConfig<T>) => {
   const t = useTranslation();
@@ -155,6 +157,7 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
     getIsPlaceholderRow,
     getIsRestrictedRow,
     muiTableBodyRowProps,
+    isMobile,
   });
 
   const table = useMaterialReactTable<T>({
