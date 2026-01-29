@@ -91,19 +91,19 @@ const batchDeleteOutboundShipmentQuery = (storeId: string, shipmentId: string): 
 };
 
 const plugins: BackendPlugins = {
-  graphql_query: ({ input }): Graphql['output'] => {
+  graphql_query: ({ store_id, input }): Graphql['output'] => {
     const inp = input as Graphql['input'];
 
     // --- the first store in my data set
     // --- has no stock, and will never issue stock. Also, isVisible = false for most stores
-    // const issueingStoreId = store_id;
+    const issueingStoreId = store_id;
 
-    const { stores: activeStores } = get_active_stores_on_site();
-    if (!activeStores || activeStores.length < 1) {
-      return { success: false, message: 'No active stores found' };
-    }
+    // const { stores: activeStores } = get_active_stores_on_site();
+    // if (!activeStores || activeStores.length < 1) {
+    //   return { success: false, message: 'No active stores found' };
+    // }
 
-    const issueingStoreId = activeStores[0].store_row.id;
+    // const issueingStoreId = activeStores[0].store_row.id;
 
     const { result: customerQueryResult, customerError } = customerQuery({
       storeId: issueingStoreId,
@@ -146,17 +146,45 @@ const plugins: BackendPlugins = {
     const shipmentId = uuidv7();
     const shipmentLineId = uuidv7();
 
-    // Create outbound shipment
-    const outboundShipmentInput: BatchOutboundShipmentMutationVariables = {
+    // Insert outbound shipment
+    const insertInput: BatchOutboundShipmentMutationVariables = {
       storeId: issueingStoreId,
       input: {
-        continueOnError: false,
         insertOutboundShipments: [
           {
             id: shipmentId,
             otherPartyId: customerId,
           },
         ],
+      },
+    };
+
+    try {
+      const insertShipmentResult = batchOutboundShipmentQuery(insertInput);
+
+      if (
+        !insertShipmentResult.batchOutboundShipment.insertOutboundShipments ||
+        insertShipmentResult.batchOutboundShipment.insertOutboundShipments.length < 1 ||
+        insertShipmentResult.batchOutboundShipment.insertOutboundShipments[0].response.__typename ===
+          'InsertOutboundShipmentError' ||
+        insertShipmentResult.batchOutboundShipment.insertOutboundShipments[0].response.__typename === 'NodeError'
+      ) {
+        batchDeleteOutboundShipmentQuery(issueingStoreId, shipmentId);
+        throw Error(
+          `Insert order failed. Failed to issue the stock for item code: ${foundItem.code}, quantity: ${inp.quantity}`
+        );
+      }
+    } catch (error) {
+      return {
+        success: true,
+        message: `${error}`,
+      };
+    }
+
+    // Insert line
+    const insertLineInput: BatchOutboundShipmentMutationVariables = {
+      storeId: issueingStoreId,
+      input: {
         insertOutboundShipmentUnallocatedLines: [
           {
             id: shipmentLineId,
@@ -169,11 +197,20 @@ const plugins: BackendPlugins = {
     };
 
     try {
-      const insertOutboundShipmentUnallocatedResult = batchOutboundShipmentQuery(outboundShipmentInput);
+      const insertLineResult = batchOutboundShipmentQuery(insertLineInput);
 
-      if (!insertOutboundShipmentUnallocatedResult) {
+      log({ t: 'insertResult', insertLineResult });
+
+      if (
+        !insertLineResult.batchOutboundShipment.insertOutboundShipmentUnallocatedLines ||
+        insertLineResult.batchOutboundShipment.insertOutboundShipmentUnallocatedLines.length < 1 ||
+        insertLineResult.batchOutboundShipment.insertOutboundShipmentUnallocatedLines[0].response.__typename ===
+          'InsertOutboundShipmentUnallocatedLineError'
+      ) {
         batchDeleteOutboundShipmentQuery(issueingStoreId, shipmentId);
-        throw Error(`Failed to issue the stock for item code: ${foundItem.code}, quantity: ${inp.quantity}`);
+        throw Error(
+          `Insert failed. Unable to issue the stock for item code: ${foundItem.code}, quantity: ${inp.quantity}`
+        );
       }
     } catch (error) {
       return {
@@ -192,14 +229,17 @@ const plugins: BackendPlugins = {
         },
       };
 
-      const allocateOutboundShipmentUnallocatedResult = batchOutboundShipmentQuery(allocateOutboundShipmentInput);
+      const allocateLineResult = batchOutboundShipmentQuery(allocateOutboundShipmentInput);
 
-      log({ t: 'allocateResult', allocateOutboundShipmentUnallocatedResult });
-
-      if (!allocateOutboundShipmentUnallocatedResult) {
+      if (
+        !allocateLineResult.batchOutboundShipment.allocateOutboundShipmentUnallocatedLines ||
+        allocateLineResult.batchOutboundShipment.allocateOutboundShipmentUnallocatedLines.length < 0 ||
+        allocateLineResult.batchOutboundShipment.allocateOutboundShipmentUnallocatedLines[0].response.__typename ===
+          'AllocateOutboundShipmentUnallocatedLineError'
+      ) {
         batchDeleteOutboundShipmentQuery(issueingStoreId, shipmentId);
         throw Error(
-          `Failed allocate lines to issue the stock for item code: ${foundItem.code}, quantity: ${inp.quantity}`
+          `Failed to allocate line to issue the stock for item code: ${foundItem.code}, quantity: ${inp.quantity}`
         );
       }
     } catch (error) {
@@ -223,9 +263,15 @@ const plugins: BackendPlugins = {
         },
       };
 
-      const updateOutboundShipmentResult = batchOutboundShipmentQuery(updateOutboundShipmentInput);
+      const updateShipmentResult = batchOutboundShipmentQuery(updateOutboundShipmentInput);
 
-      if (!updateOutboundShipmentResult) {
+      if (
+        !updateShipmentResult.batchOutboundShipment.updateOutboundShipments ||
+        updateShipmentResult.batchOutboundShipment.updateOutboundShipments.length < 1 ||
+        updateShipmentResult.batchOutboundShipment.updateOutboundShipments[0].response.__typename === 'NodeError' ||
+        updateShipmentResult.batchOutboundShipment.updateOutboundShipments[0].response.__typename ===
+          'UpdateOutboundShipmentError'
+      ) {
         batchDeleteOutboundShipmentQuery(issueingStoreId, shipmentId);
         throw Error(
           `Failed to update order to issue the stock for item code: ${foundItem.code}, quantity: ${inp.quantity}`
