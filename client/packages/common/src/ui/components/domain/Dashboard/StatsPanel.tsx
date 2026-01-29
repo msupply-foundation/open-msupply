@@ -1,5 +1,5 @@
 import React from 'react';
-import { Paper, Tooltip, Typography } from '@mui/material';
+import { Paper, SxProps, Theme, Tooltip, Typography } from '@mui/material';
 import { InlineSpinner, StockIcon } from '../../../';
 import { useTranslation } from '@common/intl';
 import { ApiException, isPermissionDeniedException } from '@common/types';
@@ -15,6 +15,7 @@ export type Stat = {
   link?: string;
   extraMessage?: string;
   alertFlag?: boolean;
+  labelSx?: SxProps<Theme>;
 };
 export interface StatsPanelProps {
   error?: ApiException;
@@ -34,6 +35,7 @@ export const Statistic = ({
   link,
   alertFlag = false,
   extraMessage,
+  labelSx,
 }: Stat) => {
   const t = useTranslation();
   return (
@@ -44,7 +46,7 @@ export const Statistic = ({
         >
           {value ? (
             <Typography
-              style={{
+              sx={{
                 fontSize: 24,
                 fontWeight: 'bold',
                 lineHeight: 1.2,
@@ -75,6 +77,7 @@ export const Statistic = ({
             fontSize: '12px',
             fontWeight: 500,
             marginInlineStart: '8px',
+            ...labelSx,
           }}
         >
           {link ? <SimpleLink to={link}>{label}</SimpleLink> : label}
