@@ -63,7 +63,7 @@ const TRANSACT_1: (&str, &str) = (
       "name_ID": "name_store_a",
       "number_of_cartons": 0,
       "optionID": "",
-      "original_PO_ID": "purchase_order_a",
+      "original_PO_ID": "test_purchase_order_a",
       "paymentTypeID": "",
       "pickslip_printed_date": "0000-00-00",
       "prescriber_ID": "",
@@ -156,7 +156,7 @@ fn transact_1_pull_row() -> InvoiceRow {
         is_cancellation: false,
         expected_delivery_date: None,
         default_donor_link_id: Some("donor_a".to_string()),
-        purchase_order_id: Some("purchase_order_a".to_string()),
+        purchase_order_id: Some("test_purchase_order_a".to_string()),
         shipping_method_id: Some("SHIPPING_METHOD_1_ID".to_string()),
     }
 }
@@ -229,8 +229,8 @@ fn transact_1_push_legacy_row() -> LegacyTransactRow {
         is_cancellation: false,
         expected_delivery_date: None,
         default_donor_id: Some("donor_a".to_string()),
-        goods_received_ID: Some("some goods id".to_string()),
-        purchase_order_id: Some("purchase_order_a".to_string()),
+        goods_received_ID: None,
+        purchase_order_id: Some("test_purchase_order_a".to_string()),
         shipping_method_id: Some("SHIPPING_METHOD_1_ID".to_string()),
     }
 }
