@@ -83,14 +83,6 @@ export const StockListView = () => {
         enableColumnFilter: true,
       },
       {
-        id: 'masterList.name',
-        header: t('label.master-lists'),
-        accessorFn: row => row.item?.masterLists?.map(m => m.name) ?? [],
-        Cell: ChipTableCell,
-        size: 150,
-        enableColumnFilter: true,
-      },
-      {
         accessorKey: 'batch',
         header: t('label.batch'),
         Cell: TextWithTooltipCell,
@@ -104,24 +96,12 @@ export const StockListView = () => {
         accessorFn: row => (row.expiryDate ? new Date(row.expiryDate) : null),
         columnType: ColumnType.Date,
         Cell: ExpiryDateCell,
-        size: 120,
+        size: 100,
         defaultHideOnMobile: true,
         enableColumnFilter: true,
         dateFilterFormat: 'date',
         enableSorting: true,
       },
-
-      {
-        id: 'vvmStatus',
-        header: t('label.vvm-status'),
-        accessorFn: row => row.vvmStatus?.description ?? '',
-        Cell: TextWithTooltipCell,
-        size: 150,
-        defaultHideOnMobile: true,
-        includeColumn: manageVvmStatusForStock,
-        enableSorting: true,
-      },
-
       {
         id: 'location.code',
         accessorFn: row => row.location?.code || '',
@@ -146,7 +126,7 @@ export const StockListView = () => {
         accessorKey: 'packSize',
         Cell: TextWithTooltipCell,
         align: 'right',
-        size: 125,
+        size: 90,
         defaultHideOnMobile: true,
         enableSorting: true,
       },
@@ -164,6 +144,7 @@ export const StockListView = () => {
         accessorFn: row => row.totalNumberOfPacks * row.packSize,
         Cell: UnitsAndDosesCell,
         align: 'right',
+        size: 125,
         enableSorting: false,
         defaultHideOnMobile: true,
       },
@@ -174,6 +155,7 @@ export const StockListView = () => {
         accessorFn: row => row.availableNumberOfPacks * row.packSize,
         Cell: UnitsAndDosesCell,
         align: 'right',
+        size: 125,
         enableSorting: false,
         defaultHideOnMobile: true,
       },
@@ -197,6 +179,24 @@ export const StockListView = () => {
         defaultHideOnMobile: true,
       },
       {
+        id: 'masterList.name',
+        header: t('label.master-lists'),
+        accessorFn: row => row.item?.masterLists?.map(m => m.name) ?? [],
+        Cell: ChipTableCell,
+        size: 150,
+        enableColumnFilter: true,
+      },
+      {
+        id: 'vvmStatus',
+        header: t('label.vvm-status'),
+        accessorFn: row => row.vvmStatus?.description ?? '',
+        Cell: TextWithTooltipCell,
+        size: 150,
+        defaultHideOnMobile: true,
+        includeColumn: manageVvmStatusForStock,
+        enableSorting: true,
+      },
+      {
         id: 'supplierName',
         header: t('label.supplier'),
         accessorFn: row =>
@@ -208,7 +208,7 @@ export const StockListView = () => {
       },
       ...(plugins.stockLine?.tableColumn || []),
     ],
-    [manageVvmStatusForStock, plugins.stockLine?.tableColumn]
+    [manageVvmStatusForStock, plugins.stockLine?.tableColumn, t]
   );
 
   const { table } = usePaginatedMaterialTable<StockLineRowFragment>({
