@@ -231,10 +231,6 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
         (noDataElement ?? <NothingHere />)
       ),
 
-    // Mobile-related
-    enableFullScreenToggle: !isMobile,
-    enableDensityToggle: !isMobile,
-
     ...displayOptions,
     ...tableOptions,
   });
