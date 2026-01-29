@@ -1,13 +1,20 @@
 import React from 'react';
-import { Grid, usePluginProvider } from '@openmsupply-client/common';
+import { Grid } from '@openmsupply-client/common';
 import {
   DistributionWidget,
   ReplenishmentWidget,
   StockWidget,
 } from './widgets';
+import { useDashboardWidgets } from './hooks';
 
 const Dashboard: React.FC = () => {
-  const { plugins } = usePluginProvider();
+  const coreWidgets = [
+    <ReplenishmentWidget key="replenishment" widgetContext={'replenishment'} />,
+    <DistributionWidget key="distribution" widgetContext={'distribution'} />,
+    <StockWidget key="stock" widgetContext={'stock'} />,
+  ];
+
+  const widgets = useDashboardWidgets(coreWidgets);
 
   return (
     <Grid
@@ -19,12 +26,7 @@ const Dashboard: React.FC = () => {
       }}
       justifyContent="space-evenly"
     >
-      <ReplenishmentWidget />
-      <DistributionWidget />
-      <StockWidget />
-      {plugins.dashboard?.widget?.map((Plugin, index) => (
-        <Plugin key={index} />
-      ))}
+      {widgets}
     </Grid>
   );
 };

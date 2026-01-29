@@ -8,7 +8,6 @@ import {
   useAuthContext,
   useNavigate,
   useNotification,
-  usePluginProvider,
   UserPermission,
   useToggle,
   useTranslation,
@@ -24,18 +23,16 @@ import {
 import { AppRoute } from '@openmsupply-client/config';
 import { ExpiringStockSummary } from './ExpiringStockSummary';
 import { StockLevelsSummary } from './StockLevelsSummary';
+import { useDashboardPanels } from '../../hooks';
 
-export const StockWidget = () => {
+export const StockWidget = ({ widgetContext }: { widgetContext: string }) => {
   const t = useTranslation();
   const navigate = useNavigate();
-  const { plugins } = usePluginProvider();
   const modalControl = useToggle(false);
   const { userHasPermission } = useAuthContext();
   const { error: errorNotification } = useNotification();
   const { mutateAsync: onCreate } = useRequest.document.insert();
   const { insert: onProgramCreate } = useRequest.document.insertProgram();
-
-  const widgetContext = 'stock';
 
   const handleClick = useCallback(() => {
     if (!userHasPermission(UserPermission.RequisitionMutate)) {
@@ -100,9 +97,18 @@ export const StockWidget = () => {
     ]
   );
 
-  const pluginPanels = plugins.dashboard?.panel?.map((Plugin, index) => (
-    <Plugin key={index} widgetContext={widgetContext} />
-  ));
+  const corePanels = [
+    <ExpiringStockSummary
+      key={`${widgetContext}-expiring-stock`}
+      panelContext={`${widgetContext}-expiring-stock`}
+    />,
+    <StockLevelsSummary
+      key={`${widgetContext}-'stock-levels'`}
+      panelContext={`${widgetContext}-'stock-levels'`}
+    />,
+  ];
+
+  const panels = useDashboardPanels(corePanels, widgetContext);
 
   return (
     <Widget title={t('inventory-management')}>
@@ -112,11 +118,7 @@ export const StockWidget = () => {
         flex={1}
         flexDirection="column"
       >
-        <Grid>
-          <ExpiringStockSummary widgetContext={widgetContext} />
-          <StockLevelsSummary widgetContext={widgetContext} />
-          {pluginPanels}
-        </Grid>
+        {panels}
         <Grid
           flex={1}
           container

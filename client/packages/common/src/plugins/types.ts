@@ -17,11 +17,17 @@ export type Plugins = {
     detailViewField: React.ComponentType<{ item: ItemFragment }>[];
   };
   dashboard?: {
-    widget?: React.ComponentType[];
-    panel?: React.ComponentType<{ widgetContext: string }>[];
-    statistic?: React.ComponentType<{
-      panelContext: string;
-    }>[];
+    widget?: { Component: React.ComponentType; hiddenWidgets?: string[] }[];
+    panel?: {
+      Component: React.ComponentType<{ widgetContext: string }>;
+      hiddenPanels?: string[];
+    }[];
+    statistic?: {
+      Component: React.ComponentType<{
+        panelContext: string;
+      }>;
+      hiddenStats?: string[];
+    }[];
   };
   stockLine?: {
     tableStateLoader: React.ComponentType<{
