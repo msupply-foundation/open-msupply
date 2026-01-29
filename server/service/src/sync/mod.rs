@@ -183,11 +183,20 @@ pub(crate) fn is_initialised(service_provider: &ServiceProvider) -> bool {
     if IS_INITIALISED.read().unwrap().clone() {
         return true;
     } else {
-        let ctx = service_provider.basic_context().unwrap();
-        let is_initialised = service_provider
-            .sync_status_service
-            .is_initialised(&ctx)
-            .unwrap();
+        let ctx = match service_provider.basic_context() {
+            Ok(ctx) => ctx,
+            Err(error) => {
+                log::error!("Failed to create DB context while checking is_initialised: {error:?}");
+                return false;
+            }
+        };
+        let is_initialised = match service_provider.sync_status_service.is_initialised(&ctx) {
+            Ok(is_initialised) => is_initialised,
+            Err(error) => {
+                log::error!("Failed to check is_initialised: {error:?}");
+                return false;
+            }
+        };
 
         if is_initialised {
             *IS_INITIALISED.write().unwrap() = true;
