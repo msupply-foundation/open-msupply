@@ -48,7 +48,6 @@ export const BarcodeScannerSettings = () => {
   return (
     <>
       <SettingsSubHeading title={t('settings.barcode-scanner')} />
-
       <Setting
         component={
           <Box display="flex" alignItems="center" gap={1}>
@@ -73,7 +72,6 @@ export const BarcodeScannerSettings = () => {
         }
         title="Honeywell Barcode Scanner"
       />
-
       {scannerInfo.honeywellAvailable && (
         <>
           <Setting
