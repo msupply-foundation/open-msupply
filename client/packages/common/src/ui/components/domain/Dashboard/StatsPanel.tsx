@@ -1,18 +1,21 @@
-import React, { FC } from 'react';
-import { Paper, Tooltip, Typography } from '@mui/material';
+import React from 'react';
+import { Paper, SxProps, Theme, Tooltip, Typography } from '@mui/material';
 import { InlineSpinner, StockIcon } from '../../../';
 import { useTranslation } from '@common/intl';
 import { ApiException, isPermissionDeniedException } from '@common/types';
 import { SimpleLink } from '../../navigation/AppNavLink/SimpleLink';
 import { Grid } from '@openmsupply-client/common';
 import { StatusChip } from '../../panels/StatusChip';
+import { useDashboardStats } from '@openmsupply-client/dashboard/src/utils';
 
 export type Stat = {
   label: string;
+  statContext: string;
   value?: string;
   link?: string;
   extraMessage?: string;
   alertFlag?: boolean;
+  labelSx?: SxProps<Theme>;
 };
 export interface StatsPanelProps {
   error?: ApiException;
@@ -20,17 +23,19 @@ export interface StatsPanelProps {
   isLoading: boolean;
   stats: Stat[];
   title: string;
+  panelContext: string;
   width?: number;
   link?: string;
   alertFlag?: boolean;
 }
 
-const Statistic = ({
+export const Statistic = ({
   label,
   value,
   link,
   alertFlag = false,
   extraMessage,
+  labelSx,
 }: Stat) => {
   const t = useTranslation();
   return (
@@ -41,7 +46,7 @@ const Statistic = ({
         >
           {value ? (
             <Typography
-              style={{
+              sx={{
                 fontSize: 24,
                 fontWeight: 'bold',
                 lineHeight: 1.2,
@@ -72,6 +77,7 @@ const Statistic = ({
             fontSize: '12px',
             fontWeight: 500,
             marginInlineStart: '8px',
+            ...labelSx,
           }}
         >
           {link ? <SimpleLink to={link}>{label}</SimpleLink> : label}
@@ -118,14 +124,18 @@ const Content = ({
   isError,
   isLoading,
   stats,
+  panelContext,
 }: {
   error?: ApiException;
   isError: boolean;
   isLoading: boolean;
   stats: Stat[];
+  panelContext: string;
 }) => {
   const t = useTranslation();
   const isPermissionDenied = isPermissionDeniedException(error);
+
+  const statistics = useDashboardStats(stats, panelContext);
 
   switch (true) {
     case isError:
@@ -137,17 +147,11 @@ const Content = ({
     case isLoading:
       return <InlineSpinner color="secondary" />;
     default:
-      return (
-        <Grid>
-          {stats.map(stat => (
-            <Statistic key={stat.label} {...stat} />
-          ))}
-        </Grid>
-      );
+      return <Grid>{statistics}</Grid>;
   }
 };
 
-export const StatsPanel: FC<StatsPanelProps> = ({
+export const StatsPanel = ({
   error,
   isError = false,
   isLoading,
@@ -155,7 +159,8 @@ export const StatsPanel: FC<StatsPanelProps> = ({
   title,
   width,
   link,
-}) => (
+  panelContext,
+}: StatsPanelProps) => (
   <Paper
     sx={{
       borderRadius: '16px',
@@ -192,6 +197,7 @@ export const StatsPanel: FC<StatsPanelProps> = ({
           isLoading={isLoading}
           stats={stats}
           error={error}
+          panelContext={panelContext}
         />
       </Grid>
     </Grid>

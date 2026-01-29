@@ -2,9 +2,8 @@
 -- PostgreSQL database dump
 --
 
-
--- Dumped from database version 18.1 (Postgres.app)
--- Dumped by pg_dump version 18.1 (Postgres.app)
+-- Dumped from database version 12.22 (Postgres.app)
+-- Dumped by pg_dump version 12.22 (Postgres.app)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -29,11 +28,13 @@ SET row_security = off;
 
 COMMENT ON SCHEMA public IS 'standard public schema';
 
+
 --
 -- Name: nocase; Type: COLLATION; Schema: public; Owner: -
 --
 
-CREATE COLLATION public.nocase (provider = icu, deterministic = false, locale = pg_catalog."default");
+CREATE COLLATION public.nocase (provider = icu, deterministic = false, locale = 'pg_catalog.default');
+
 
 --
 -- Name: activity_log_type; Type: TYPE; Schema: public; Owner: -
@@ -61,7 +62,29 @@ CREATE TYPE public.activity_log_type AS ENUM (
     'STOCK_EXPIRY_DATE_CHANGE',
     'STOCK_BATCH_CHANGE',
     'STOCK_ON_HOLD',
-    'STOCK_OFF_HOLD'
+    'STOCK_OFF_HOLD',
+    'INVOICE_NUMBER_ALLOCATED',
+    'REQUISITION_NUMBER_ALLOCATED',
+    'REPACK',
+    'PRESCRIPTION_CREATED',
+    'PRESCRIPTION_DELETED',
+    'PRESCRIPTION_STATUS_PICKED',
+    'PRESCRIPTION_STATUS_VERIFIED'
+);
+
+
+--
+-- Name: approval_status_type; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.approval_status_type AS ENUM (
+    'NONE',
+    'APPROVED',
+    'PENDING',
+    'DENIED',
+    'AUTO_APPROVED',
+    'APPROVED_BY_ANOTHER',
+    'DENIED_BY_ANOTHER'
 );
 
 
@@ -81,7 +104,12 @@ CREATE TYPE public.changelog_table_name AS ENUM (
     'stocktake_line',
     'requisition',
     'requisition_line',
-    'activity_log'
+    'activity_log',
+    'clinician',
+    'clinician_store_join',
+    'document',
+    'barcode',
+    'location_movement'
 );
 
 
@@ -96,7 +124,8 @@ CREATE TYPE public.context_type AS ENUM (
     'STOCKTAKE',
     'RESOURCE',
     'PATIENT',
-    'DISPENSARY'
+    'DISPENSARY',
+    'REPACK'
 );
 
 
@@ -153,6 +182,16 @@ CREATE TYPE public.gender_type AS ENUM (
 
 
 --
+-- Name: inventory_adjustment_type; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.inventory_adjustment_type AS ENUM (
+    'POSITIVE',
+    'NEGATIVE'
+);
+
+
+--
 -- Name: invoice_line_type; Type: TYPE; Schema: public; Owner: -
 --
 
@@ -185,7 +224,10 @@ CREATE TYPE public.invoice_status AS ENUM (
 CREATE TYPE public.invoice_type AS ENUM (
     'OUTBOUND_SHIPMENT',
     'INBOUND_SHIPMENT',
-    'INVENTORY_ADJUSTMENT'
+    'INVENTORY_ADDITION',
+    'INVENTORY_REDUCTION',
+    'REPACK',
+    'PRESCRIPTION'
 );
 
 
@@ -213,7 +255,10 @@ CREATE TYPE public.key_type AS ENUM (
     'SETTINGS_DISPLAY_CUSTOM_LOGO_HASH',
     'SETTINGS_DISPLAY_DEFAULT_LANGUAGE',
     'SETTINGS_DISPLAY_DEFAULT_LANGUAGE_HASH',
-    'DATABASE_VERSION'
+    'DATABASE_VERSION',
+    'LOG_LEVEL',
+    'LOG_DIRECTORY',
+    'LOG_FILE_NAME'
 );
 
 
@@ -258,7 +303,9 @@ CREATE TYPE public.number_type AS ENUM (
     'INVENTORY_ADJUSTMENT',
     'STOCKTAKE',
     'REQUEST_REQUISITION',
-    'RESPONSE_REQUISITION'
+    'RESPONSE_REQUISITION',
+    'REPACK',
+    'PRESCRIPTION'
 );
 
 
@@ -285,7 +332,12 @@ CREATE TYPE public.permission_type AS ENUM (
     'PATIENT_QUERY',
     'PATIENT_MUTATE',
     'DOCUMENT_QUERY',
-    'DOCUMENT_MUTATE'
+    'DOCUMENT_MUTATE',
+    'ITEM_MUTATE',
+    'REQUISITION_SEND',
+    'CREATE_REPACK',
+    'PRESCRIPTION_QUERY',
+    'PRESCRIPTION_MUTATE'
 );
 
 
@@ -363,6 +415,15 @@ CREATE TYPE public.store_mode AS ENUM (
 
 
 --
+-- Name: store_preference_type; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.store_preference_type AS ENUM (
+    'STORE_PREFERENCES'
+);
+
+
+--
 -- Name: sync_action; Type: TYPE; Schema: public; Owner: -
 --
 
@@ -385,8 +446,25 @@ CREATE TYPE public.sync_api_error_code AS ENUM (
     'HARDWARE_ID_MISMATCH',
     'SITE_HAS_NO_STORE',
     'SITE_AUTH_TIMEOUT',
-    'INTEGRATION_TIMEOUT_REACHED'
+    'INTEGRATION_TIMEOUT_REACHED',
+    'API_VERSION_INCOMPATIBLE'
 );
+
+
+--
+-- Name: delete_barcode_changelog(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.delete_barcode_changelog() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+         BEGIN
+           INSERT INTO changelog (table_name, record_id, row_action)
+                 VALUES ('barcode', OLD.id, 'DELETE');
+           -- The return value is required, even though it is ignored for a row-level AFTER trigger
+           RETURN NULL;
+         END;
+       $$;
 
 
 --
@@ -513,6 +591,21 @@ $$;
 
 
 --
+-- Name: update_changelog_upsert_with_sync(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.update_changelog_upsert_with_sync() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+          BEGIN
+            INSERT INTO changelog (table_name, record_id, row_action, is_sync_update)
+                  VALUES (TG_TABLE_NAME::changelog_table_name, NEW.id, 'UPSERT', NEW.is_sync_update);
+            RETURN NULL;
+          END;
+        $$;
+
+
+--
 -- Name: upsert_activity_log_changelog(); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -526,6 +619,37 @@ CREATE FUNCTION public.upsert_activity_log_changelog() RETURNS trigger
     RETURN NULL;
   END;
 $$;
+
+
+--
+-- Name: upsert_barcode_changelog(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.upsert_barcode_changelog() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+         BEGIN
+           INSERT INTO changelog (table_name, record_id, row_action, is_sync_update)
+                 VALUES ('barcode', NEW.id, 'UPSERT', NEW.is_sync_update);
+           -- The return value is required, even though it is ignored for a row-level AFTER trigger
+           RETURN NULL;
+         END;
+       $$;
+
+
+--
+-- Name: upsert_clinician_store_join_changelog(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.upsert_clinician_store_join_changelog() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+          BEGIN
+            INSERT INTO changelog (table_name, record_id, row_action, store_id, is_sync_update)
+                  VALUES ('clinician_store_join', NEW.id, 'UPSERT', NEW.store_id, NEW.is_sync_update);
+            RETURN NULL;
+          END;
+        $$;
 
 
 --
@@ -561,19 +685,34 @@ $$;
 
 
 --
+-- Name: upsert_name_store_join_changelog(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.upsert_name_store_join_changelog() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+          BEGIN
+            INSERT INTO changelog (table_name, record_id, row_action, store_id, name_id, is_sync_update)
+                  VALUES ('name_store_join', NEW.id, 'UPSERT', NEW.store_id, NEW.name_id, NEW.is_sync_update);
+            RETURN NULL;
+          END;
+        $$;
+
+
+--
 -- Name: upsert_requisition_changelog(); Type: FUNCTION; Schema: public; Owner: -
 --
 
 CREATE FUNCTION public.upsert_requisition_changelog() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
-  BEGIN
-    INSERT INTO changelog (table_name, record_id, row_action, name_id, store_id)
-      VALUES ('requisition', NEW.id, 'UPSERT', NEW.name_id, NEW.store_id);
-    -- The return value is required, even though it is ignored for a row-level AFTER trigger
-    RETURN NULL;
-  END;
-$$;
+              BEGIN
+                INSERT INTO changelog (table_name, record_id, row_action, name_id, store_id, is_sync_update)
+                  VALUES ('requisition', NEW.id, 'UPSERT', NEW.name_id, NEW.store_id, NEW.is_sync_update);
+                -- The return value is required, even though it is ignored for a row-level AFTER trigger
+                RETURN NULL;
+              END;
+            $$;
 
 
 --
@@ -583,27 +722,18 @@ $$;
 CREATE FUNCTION public.upsert_requisition_line_changelog() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
-  BEGIN
-    INSERT INTO changelog (table_name, record_id, row_action, name_id, store_id)
-      SELECT 'requisition_line', NEW.id, 'UPSERT', name_id, store_id FROM requisition WHERE id = NEW.requisition_id;
-    -- The return value is required, even though it is ignored for a row-level AFTER trigger
-    RETURN NULL;
-  END;
-$$;
+              BEGIN
+                INSERT INTO changelog (table_name, record_id, is_sync_update, row_action,name_id, store_id)
+                  SELECT 'requisition_line', NEW.id, NEW.is_sync_update, 'UPSERT', name_id, store_id FROM requisition WHERE id = NEW.requisition_id;
+                -- The return value is required, even though it is ignored for a row-level AFTER trigger
+                RETURN NULL;
+              END;
+            $$;
 
 
 SET default_tablespace = '';
 
 SET default_table_access_method = heap;
-
---
--- Name: __diesel_schema_migrations; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.__diesel_schema_migrations (
-    version character varying(50) NOT NULL,
-    run_on timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL
-);
 
 
 --
@@ -622,6 +752,21 @@ CREATE TABLE public.activity_log (
 
 
 --
+-- Name: barcode; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.barcode (
+    id text NOT NULL,
+    gtin text NOT NULL,
+    item_id text NOT NULL,
+    manufacturer_id text,
+    pack_size integer,
+    parent_id text,
+    is_sync_update boolean DEFAULT false NOT NULL
+);
+
+
+--
 -- Name: changelog; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -631,7 +776,8 @@ CREATE TABLE public.changelog (
     record_id text NOT NULL,
     row_action public.row_action_type NOT NULL,
     name_id text,
-    store_id text
+    store_id text,
+    is_sync_update boolean DEFAULT false NOT NULL
 );
 
 
@@ -659,17 +805,18 @@ ALTER SEQUENCE public.changelog_cursor_seq OWNED BY public.changelog.cursor;
 --
 
 CREATE VIEW public.changelog_deduped AS
- SELECT cursor,
-    table_name,
-    record_id,
-    row_action,
-    name_id,
-    store_id
+ SELECT t1.cursor,
+    t1.table_name,
+    t1.record_id,
+    t1.row_action,
+    t1.name_id,
+    t1.store_id,
+    t1.is_sync_update
    FROM public.changelog t1
-  WHERE (cursor = ( SELECT max(t2.cursor) AS max
+  WHERE (t1.cursor = ( SELECT max(t2.cursor) AS max
            FROM public.changelog t2
           WHERE (t2.record_id = t1.record_id)))
-  ORDER BY cursor;
+  ORDER BY t1.cursor;
 
 
 --
@@ -688,7 +835,8 @@ CREATE TABLE public.clinician (
     mobile text,
     email text,
     gender public.gender_type,
-    is_active boolean NOT NULL
+    is_active boolean NOT NULL,
+    is_sync_update boolean DEFAULT false NOT NULL
 );
 
 
@@ -699,7 +847,8 @@ CREATE TABLE public.clinician (
 CREATE TABLE public.clinician_store_join (
     id text NOT NULL,
     clinician_id text NOT NULL,
-    store_id text NOT NULL
+    store_id text NOT NULL,
+    is_sync_update boolean DEFAULT false NOT NULL
 );
 
 
@@ -729,7 +878,8 @@ CREATE TABLE public.invoice (
     colour text,
     requisition_id text,
     linked_invoice_id text,
-    tax double precision
+    tax double precision,
+    clinician_id text
 );
 
 
@@ -755,7 +905,8 @@ CREATE TABLE public.invoice_line (
     type public.invoice_line_type NOT NULL,
     number_of_packs double precision NOT NULL,
     pack_size integer NOT NULL,
-    note text
+    note text,
+    inventory_adjustment_reason_id text
 );
 
 
@@ -764,31 +915,31 @@ CREATE TABLE public.invoice_line (
 --
 
 CREATE VIEW public.invoice_line_stock_movement AS
- SELECT id,
-    invoice_id,
-    item_id,
-    item_name,
-    item_code,
-    stock_line_id,
-    location_id,
-    batch,
-    expiry_date,
-    cost_price_per_pack,
-    sell_price_per_pack,
-    total_before_tax,
-    total_after_tax,
-    tax,
-    type,
-    number_of_packs,
-    pack_size,
-    note,
+ SELECT invoice_line.id,
+    invoice_line.invoice_id,
+    invoice_line.item_id,
+    invoice_line.item_name,
+    invoice_line.item_code,
+    invoice_line.stock_line_id,
+    invoice_line.location_id,
+    invoice_line.batch,
+    invoice_line.expiry_date,
+    invoice_line.cost_price_per_pack,
+    invoice_line.sell_price_per_pack,
+    invoice_line.total_before_tax,
+    invoice_line.total_after_tax,
+    invoice_line.tax,
+    invoice_line.type,
+    invoice_line.number_of_packs,
+    invoice_line.pack_size,
+    invoice_line.note,
         CASE
-            WHEN (type = 'STOCK_IN'::public.invoice_line_type) THEN ((number_of_packs * (pack_size)::double precision))::bigint
-            WHEN (type = 'STOCK_OUT'::public.invoice_line_type) THEN (((number_of_packs * (pack_size)::double precision))::bigint * '-1'::integer)
+            WHEN (invoice_line.type = 'STOCK_IN'::public.invoice_line_type) THEN ((invoice_line.number_of_packs * (invoice_line.pack_size)::double precision))::bigint
+            WHEN (invoice_line.type = 'STOCK_OUT'::public.invoice_line_type) THEN (((invoice_line.number_of_packs * (invoice_line.pack_size)::double precision))::bigint * '-1'::integer)
             ELSE NULL::bigint
         END AS quantity_movement
    FROM public.invoice_line
-  WHERE ((number_of_packs > (0)::double precision) AND (type = ANY (ARRAY['STOCK_IN'::public.invoice_line_type, 'STOCK_OUT'::public.invoice_line_type])));
+  WHERE ((invoice_line.number_of_packs > (0)::double precision) AND (invoice_line.type = ANY (ARRAY['STOCK_IN'::public.invoice_line_type, 'STOCK_OUT'::public.invoice_line_type])));
 
 
 --
@@ -830,7 +981,8 @@ CREATE TABLE public.store (
     name_id text NOT NULL,
     code text NOT NULL,
     site_id integer NOT NULL,
-    store_mode public.store_mode DEFAULT 'STORE'::public.store_mode NOT NULL
+    store_mode public.store_mode DEFAULT 'STORE'::public.store_mode NOT NULL,
+    logo text
 );
 
 
@@ -852,6 +1004,16 @@ CREATE VIEW public.consumption AS
 
 
 --
+-- Name: context; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.context (
+    id text NOT NULL,
+    name text NOT NULL
+);
+
+
+--
 -- Name: document; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -867,7 +1029,7 @@ CREATE TABLE public.document (
     status public.document_status NOT NULL,
     owner_name_id text,
     is_sync_update boolean DEFAULT false NOT NULL,
-    context text NOT NULL
+    context_id text NOT NULL
 );
 
 
@@ -877,11 +1039,10 @@ CREATE TABLE public.document (
 
 CREATE TABLE public.document_registry (
     id text NOT NULL,
-    type public.document_registry_type NOT NULL,
+    category public.document_registry_type NOT NULL,
     document_type text NOT NULL,
-    document_context text NOT NULL,
+    context_id text NOT NULL,
     name text,
-    parent_id text,
     form_schema_id text,
     config text
 );
@@ -902,7 +1063,7 @@ CREATE TABLE public.encounter (
     clinician_id text,
     store_id text,
     document_type text NOT NULL,
-    context text NOT NULL
+    program_id text NOT NULL
 );
 
 
@@ -934,6 +1095,18 @@ CREATE VIEW public.inbound_shipment_stock_movement AS
 
 
 --
+-- Name: inventory_adjustment_reason; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.inventory_adjustment_reason (
+    id text NOT NULL,
+    type public.inventory_adjustment_type,
+    is_active boolean,
+    reason text NOT NULL
+);
+
+
+--
 -- Name: inventory_adjustment_stock_movement; Type: VIEW; Schema: public; Owner: -
 --
 
@@ -945,7 +1118,7 @@ CREATE VIEW public.inventory_adjustment_stock_movement AS
     invoice.verified_datetime AS datetime
    FROM (public.invoice_line_stock_movement
      JOIN public.invoice ON ((invoice_line_stock_movement.invoice_id = invoice.id)))
-  WHERE ((invoice.type = 'INVENTORY_ADJUSTMENT'::public.invoice_type) AND (invoice.verified_datetime IS NOT NULL));
+  WHERE ((invoice.type = ANY (ARRAY['INVENTORY_REDUCTION'::public.invoice_type, 'INVENTORY_ADDITION'::public.invoice_type])) AND (invoice.verified_datetime IS NOT NULL));
 
 
 --
@@ -953,16 +1126,16 @@ CREATE VIEW public.inventory_adjustment_stock_movement AS
 --
 
 CREATE VIEW public.invoice_stats AS
- SELECT invoice_id,
-    sum(total_before_tax) AS total_before_tax,
-    sum(total_after_tax) AS total_after_tax,
-    (COALESCE(((sum(total_after_tax) / NULLIF(sum(total_before_tax), (0)::double precision)) - (1)::double precision), (0)::double precision) * (100)::double precision) AS tax_percentage,
-    COALESCE(sum(total_before_tax) FILTER (WHERE (type = 'SERVICE'::public.invoice_line_type)), (0)::double precision) AS service_total_before_tax,
-    COALESCE(sum(total_after_tax) FILTER (WHERE (type = 'SERVICE'::public.invoice_line_type)), (0)::double precision) AS service_total_after_tax,
-    COALESCE(sum(total_before_tax) FILTER (WHERE (type = ANY (ARRAY['STOCK_IN'::public.invoice_line_type, 'STOCK_OUT'::public.invoice_line_type]))), (0)::double precision) AS stock_total_before_tax,
-    COALESCE(sum(total_after_tax) FILTER (WHERE (type = ANY (ARRAY['STOCK_IN'::public.invoice_line_type, 'STOCK_OUT'::public.invoice_line_type]))), (0)::double precision) AS stock_total_after_tax
+ SELECT invoice_line.invoice_id,
+    sum(invoice_line.total_before_tax) AS total_before_tax,
+    sum(invoice_line.total_after_tax) AS total_after_tax,
+    (COALESCE(((sum(invoice_line.total_after_tax) / NULLIF(sum(invoice_line.total_before_tax), (0)::double precision)) - (1)::double precision), (0)::double precision) * (100)::double precision) AS tax_percentage,
+    COALESCE(sum(invoice_line.total_before_tax) FILTER (WHERE (invoice_line.type = 'SERVICE'::public.invoice_line_type)), (0)::double precision) AS service_total_before_tax,
+    COALESCE(sum(invoice_line.total_after_tax) FILTER (WHERE (invoice_line.type = 'SERVICE'::public.invoice_line_type)), (0)::double precision) AS service_total_after_tax,
+    COALESCE(sum(invoice_line.total_before_tax) FILTER (WHERE (invoice_line.type = ANY (ARRAY['STOCK_IN'::public.invoice_line_type, 'STOCK_OUT'::public.invoice_line_type]))), (0)::double precision) AS stock_total_before_tax,
+    COALESCE(sum(invoice_line.total_after_tax) FILTER (WHERE (invoice_line.type = ANY (ARRAY['STOCK_IN'::public.invoice_line_type, 'STOCK_OUT'::public.invoice_line_type]))), (0)::double precision) AS stock_total_after_tax
    FROM public.invoice_line
-  GROUP BY invoice_id;
+  GROUP BY invoice_line.invoice_id;
 
 
 --
@@ -995,7 +1168,7 @@ CREATE VIEW public.latest_document AS
     d.status,
     d.owner_name_id,
     d.is_sync_update,
-    d.context
+    d.context_id
    FROM (( SELECT document.name,
             max(document.datetime) AS datetime
            FROM public.document
@@ -1065,16 +1238,6 @@ CREATE TABLE public.master_list_name_join (
 
 
 --
--- Name: migration_fragment_log; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.migration_fragment_log (
-    version_and_identifier text NOT NULL,
-    datetime timestamp without time zone
-);
-
-
---
 -- Name: name; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -1102,8 +1265,9 @@ CREATE TABLE public.name (
     is_donor boolean,
     on_hold boolean,
     created_datetime timestamp without time zone,
-    is_deceased boolean DEFAULT false NOT NULL,
-    national_health_number text
+    is_deceased boolean,
+    national_health_number text,
+    is_sync_update boolean DEFAULT false NOT NULL
 );
 
 
@@ -1116,7 +1280,29 @@ CREATE TABLE public.name_store_join (
     name_id text NOT NULL,
     store_id text NOT NULL,
     name_is_customer boolean NOT NULL,
-    name_is_supplier boolean NOT NULL
+    name_is_supplier boolean NOT NULL,
+    is_sync_update boolean DEFAULT false NOT NULL
+);
+
+
+--
+-- Name: name_tag; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.name_tag (
+    id text NOT NULL,
+    name text NOT NULL
+);
+
+
+--
+-- Name: name_tag_join; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.name_tag_join (
+    id text NOT NULL,
+    name_id text NOT NULL,
+    name_tag_id text NOT NULL
 );
 
 
@@ -1133,6 +1319,41 @@ CREATE TABLE public.number (
 
 
 --
+-- Name: period; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.period (
+    id text NOT NULL,
+    period_schedule_id text NOT NULL,
+    name text NOT NULL,
+    start_date date NOT NULL,
+    end_date date NOT NULL
+);
+
+
+--
+-- Name: period_schedule; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.period_schedule (
+    id text NOT NULL,
+    name text NOT NULL
+);
+
+
+--
+-- Name: program; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.program (
+    id text NOT NULL,
+    master_list_id text NOT NULL,
+    name text NOT NULL,
+    context_id text DEFAULT ''::text NOT NULL
+);
+
+
+--
 -- Name: program_enrolment; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -1143,7 +1364,7 @@ CREATE TABLE public.program_enrolment (
     enrolment_datetime timestamp without time zone NOT NULL,
     program_enrolment_id text,
     status public.program_enrolment_status NOT NULL,
-    context text NOT NULL,
+    program_id text NOT NULL,
     document_type text NOT NULL
 );
 
@@ -1162,9 +1383,35 @@ CREATE TABLE public.program_event (
     document_name text,
     type text NOT NULL,
     data text,
-    context text NOT NULL,
+    context_id text NOT NULL,
     CONSTRAINT program_event_check CHECK ((datetime <= active_start_datetime)),
     CONSTRAINT program_event_check1 CHECK ((datetime <= active_end_datetime))
+);
+
+
+--
+-- Name: program_requisition_order_type; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.program_requisition_order_type (
+    id text NOT NULL,
+    program_requisition_settings_id text NOT NULL,
+    name text NOT NULL,
+    threshold_mos double precision NOT NULL,
+    max_mos double precision NOT NULL,
+    max_order_per_period integer NOT NULL
+);
+
+
+--
+-- Name: program_requisition_settings; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.program_requisition_settings (
+    id text NOT NULL,
+    name_tag_id text NOT NULL,
+    program_id text NOT NULL,
+    period_schedule_id text NOT NULL
 );
 
 
@@ -1205,7 +1452,12 @@ CREATE TABLE public.requisition (
     their_reference text,
     max_months_of_stock double precision NOT NULL,
     min_months_of_stock double precision NOT NULL,
-    linked_requisition_id text
+    linked_requisition_id text,
+    approval_status public.approval_status_type,
+    is_sync_update boolean DEFAULT false NOT NULL,
+    program_id text,
+    period_id text,
+    order_type text
 );
 
 
@@ -1223,8 +1475,27 @@ CREATE TABLE public.requisition_line (
     available_stock_on_hand integer NOT NULL,
     average_monthly_consumption integer NOT NULL,
     snapshot_datetime timestamp without time zone,
-    comment text
+    comment text,
+    approved_quantity integer DEFAULT 0 NOT NULL,
+    approval_comment text,
+    is_sync_update boolean DEFAULT false NOT NULL
 );
+
+
+--
+-- Name: requisitions_in_period; Type: VIEW; Schema: public; Owner: -
+--
+
+CREATE VIEW public.requisitions_in_period AS
+ SELECT 'n/a'::text AS id,
+    requisition.program_id,
+    requisition.period_id,
+    requisition.store_id,
+    requisition.order_type,
+    requisition.type,
+    count(*) AS count
+   FROM public.requisition
+  GROUP BY 'n/a'::text, requisition.program_id, requisition.period_id, requisition.store_id, requisition.order_type, requisition.type;
 
 
 --
@@ -1244,7 +1515,9 @@ CREATE TABLE public.stock_line (
     total_number_of_packs double precision NOT NULL,
     pack_size integer NOT NULL,
     on_hold boolean NOT NULL,
-    note text
+    note text,
+    supplier_id text,
+    barcode_id text
 );
 
 
@@ -1312,7 +1585,8 @@ CREATE TABLE public.stocktake (
     stocktake_date date,
     finalised_datetime timestamp without time zone,
     is_locked boolean,
-    inventory_adjustment_id text
+    inventory_addition_id text,
+    inventory_reduction_id text
 );
 
 
@@ -1334,7 +1608,22 @@ CREATE TABLE public.stocktake_line (
     pack_size integer,
     cost_price_per_pack double precision,
     sell_price_per_pack double precision,
-    note text
+    note text,
+    inventory_adjustment_reason_id text
+);
+
+
+--
+-- Name: store_preference; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.store_preference (
+    id text NOT NULL,
+    type public.store_preference_type DEFAULT 'STORE_PREFERENCES'::public.store_preference_type,
+    pack_to_one boolean DEFAULT false NOT NULL,
+    response_requisition_requires_authorisation boolean DEFAULT false NOT NULL,
+    request_requisition_requires_authorisation boolean DEFAULT false NOT NULL,
+    om_program_module boolean DEFAULT false NOT NULL
 );
 
 
@@ -1403,7 +1692,12 @@ CREATE TABLE public.user_account (
     username text NOT NULL,
     hashed_password text NOT NULL,
     email text,
-    language public.language_type DEFAULT 'ENGLISH'::public.language_type NOT NULL
+    language public.language_type DEFAULT 'ENGLISH'::public.language_type NOT NULL,
+    first_name text,
+    last_name text,
+    phone_number text,
+    job_title text,
+    last_successful_sync timestamp without time zone DEFAULT '1970-01-01 00:00:00'::timestamp without time zone NOT NULL
 );
 
 
@@ -1416,7 +1710,7 @@ CREATE TABLE public.user_permission (
     user_id text NOT NULL,
     store_id text NOT NULL,
     permission public.permission_type NOT NULL,
-    context text
+    context_id text
 );
 
 
@@ -1440,73 +1734,13 @@ ALTER TABLE ONLY public.changelog ALTER COLUMN cursor SET DEFAULT nextval('publi
 
 
 --
--- Data for Name: __diesel_schema_migrations; Type: TABLE DATA; Schema: public; Owner: -
---
-
-INSERT INTO public.__diesel_schema_migrations VALUES ('20210705T1000', '2026-01-06 02:58:01.026932');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20210710T1000', '2026-01-06 02:58:01.040882');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20210805T1000', '2026-01-06 02:58:01.042873');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20210810T1000', '2026-01-06 02:58:01.045125');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20210815T1000', '2026-01-06 02:58:01.04789');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20210825T1000', '2026-01-06 02:58:01.050995');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20210905T1000', '2026-01-06 02:58:01.052982');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20210910T1000', '2026-01-06 02:58:01.056115');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20210915T1000', '2026-01-06 02:58:01.057596');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20210917T1000', '2026-01-06 02:58:01.060982');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20210918T1000', '2026-01-06 02:58:01.064613');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20210920T1000', '2026-01-06 02:58:01.06648');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20210925T1000', '2026-01-06 02:58:01.069796');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20211005T1000', '2026-01-06 02:58:01.073877');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20211105T1000', '2026-01-06 02:58:01.075272');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20211110T1000', '2026-01-06 02:58:01.077174');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20211115T1000', '2026-01-06 02:58:01.079646');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20211120T1000', '2026-01-06 02:58:01.084641');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20211125T1000', '2026-01-06 02:58:01.108471');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20211210T1000', '2026-01-06 02:58:01.122816');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20211215T1000', '2026-01-06 02:58:01.125497');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20211220T1000', '2026-01-06 02:58:01.128167');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20211225T1000', '2026-01-06 02:58:01.132342');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20220127T0800', '2026-01-06 02:58:01.138149');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20220211T1500', '2026-01-06 02:58:01.143484');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20220223T1015', '2026-01-06 02:58:01.145843');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20220223T1030', '2026-01-06 02:58:01.146509');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20220223T1130', '2026-01-06 02:58:01.147023');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20220223T1200', '2026-01-06 02:58:01.1475');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20220223T1230', '2026-01-06 02:58:01.147985');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20220223T1300', '2026-01-06 02:58:01.14827');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20220223T1330', '2026-01-06 02:58:01.148517');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20220223T1400', '2026-01-06 02:58:01.149165');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20220315T1000', '2026-01-06 02:58:01.150092');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20220325T1400', '2026-01-06 02:58:01.153777');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20220325T1430', '2026-01-06 02:58:01.156021');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20220401T1000', '2026-01-06 02:58:01.159492');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20220401T1100', '2026-01-06 02:58:01.162704');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20220427T1000', '2026-01-06 02:58:01.164791');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20220427T1300', '2026-01-06 02:58:01.167591');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20220607T1500', '2026-01-06 02:58:01.171685');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20220607T1600', '2026-01-06 02:58:01.174503');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20220607T1700', '2026-01-06 02:58:01.176646');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20220607T1800', '2026-01-06 02:58:01.181346');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20220621013225', '2026-01-06 02:58:01.184538');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20220831235556', '2026-01-06 02:58:01.187816');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20221010220020', '2026-01-06 02:58:01.192067');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20221011T1022', '2026-01-06 02:58:01.192499');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20221027T0915', '2026-01-06 02:58:01.19301');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20221106232001', '2026-01-06 02:58:01.194269');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20221114012026', '2026-01-06 02:58:01.196484');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20221116021440', '2026-01-06 02:58:01.196928');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20221117221434', '2026-01-06 02:58:01.19727');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20221201194340', '2026-01-06 02:58:01.197592');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20230116T1000', '2026-01-06 02:58:01.197944');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20230327T1000', '2026-01-06 02:58:01.198423');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20230330220342', '2026-01-06 02:58:01.199178');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20230421T1000', '2026-01-06 02:58:01.20054');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20230421T1100', '2026-01-06 02:58:01.20262');
-INSERT INTO public.__diesel_schema_migrations VALUES ('20230620T1000', '2026-01-06 02:58:01.205463');
-
-
---
 -- Data for Name: activity_log; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
+-- Data for Name: barcode; Type: TABLE DATA; Schema: public; Owner: -
 --
 
 
@@ -1527,6 +1761,14 @@ INSERT INTO public.__diesel_schema_migrations VALUES ('20230620T1000', '2026-01-
 -- Data for Name: clinician_store_join; Type: TABLE DATA; Schema: public; Owner: -
 --
 
+
+
+--
+-- Data for Name: context; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+INSERT INTO public.context VALUES ('Patient', 'Patient context');
+INSERT INTO public.context VALUES ('missing_program', 'missing_program');
 
 
 --
@@ -1554,6 +1796,12 @@ INSERT INTO public.__diesel_schema_migrations VALUES ('20230620T1000', '2026-01-
 
 
 --
+-- Data for Name: inventory_adjustment_reason; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
 -- Data for Name: invoice; Type: TABLE DATA; Schema: public; Owner: -
 --
 
@@ -1575,7 +1823,7 @@ INSERT INTO public.__diesel_schema_migrations VALUES ('20230620T1000', '2026-01-
 -- Data for Name: key_value_store; Type: TABLE DATA; Schema: public; Owner: -
 --
 
-INSERT INTO public.key_value_store VALUES ('DATABASE_VERSION', '1.0.4', NULL, NULL, NULL, NULL);
+INSERT INTO public.key_value_store VALUES ('DATABASE_VERSION', '1.3.0', NULL, NULL, NULL, NULL);
 
 
 --
@@ -1594,6 +1842,7 @@ INSERT INTO public.key_value_store VALUES ('DATABASE_VERSION', '1.0.4', NULL, NU
 -- Data for Name: master_list; Type: TABLE DATA; Schema: public; Owner: -
 --
 
+INSERT INTO public.master_list VALUES ('missing_program', 'missing_program', 'missing_program', 'missing_program');
 
 
 --
@@ -1604,12 +1853,6 @@ INSERT INTO public.key_value_store VALUES ('DATABASE_VERSION', '1.0.4', NULL, NU
 
 --
 -- Data for Name: master_list_name_join; Type: TABLE DATA; Schema: public; Owner: -
---
-
-
-
---
--- Data for Name: migration_fragment_log; Type: TABLE DATA; Schema: public; Owner: -
 --
 
 
@@ -1627,9 +1870,40 @@ INSERT INTO public.key_value_store VALUES ('DATABASE_VERSION', '1.0.4', NULL, NU
 
 
 --
+-- Data for Name: name_tag; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
+-- Data for Name: name_tag_join; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
 -- Data for Name: number; Type: TABLE DATA; Schema: public; Owner: -
 --
 
+
+
+--
+-- Data for Name: period; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
+-- Data for Name: period_schedule; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
+-- Data for Name: program; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+INSERT INTO public.program VALUES ('missing_program', 'missing_program', 'missing_program', 'missing_program');
 
 
 --
@@ -1640,6 +1914,18 @@ INSERT INTO public.key_value_store VALUES ('DATABASE_VERSION', '1.0.4', NULL, NU
 
 --
 -- Data for Name: program_event; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
+-- Data for Name: program_requisition_order_type; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
+-- Data for Name: program_requisition_settings; Type: TABLE DATA; Schema: public; Owner: -
 --
 
 
@@ -1687,6 +1973,12 @@ INSERT INTO public.key_value_store VALUES ('DATABASE_VERSION', '1.0.4', NULL, NU
 
 
 --
+-- Data for Name: store_preference; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
 -- Data for Name: sync_buffer; Type: TABLE DATA; Schema: public; Owner: -
 --
 
@@ -1708,6 +2000,7 @@ INSERT INTO public.key_value_store VALUES ('DATABASE_VERSION', '1.0.4', NULL, NU
 -- Data for Name: user_account; Type: TABLE DATA; Schema: public; Owner: -
 --
 
+INSERT INTO public.user_account VALUES ('omsupply_system', 'omsupply_system', '', NULL, 'ENGLISH', NULL, NULL, NULL, NULL, '2020-01-22 15:16:00');
 
 
 --
@@ -1730,19 +2023,27 @@ SELECT pg_catalog.setval('public.changelog_cursor_seq', 1, false);
 
 
 --
--- Name: __diesel_schema_migrations __diesel_schema_migrations_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.__diesel_schema_migrations
-    ADD CONSTRAINT __diesel_schema_migrations_pkey PRIMARY KEY (version);
-
-
---
 -- Name: activity_log activity_log_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.activity_log
     ADD CONSTRAINT activity_log_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: barcode barcode_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.barcode
+    ADD CONSTRAINT barcode_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: barcode barcode_value_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.barcode
+    ADD CONSTRAINT barcode_value_key UNIQUE (gtin);
 
 
 --
@@ -1767,6 +2068,14 @@ ALTER TABLE ONLY public.clinician
 
 ALTER TABLE ONLY public.clinician_store_join
     ADD CONSTRAINT clinician_store_join_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: context context_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.context
+    ADD CONSTRAINT context_pkey PRIMARY KEY (id);
 
 
 --
@@ -1799,6 +2108,14 @@ ALTER TABLE ONLY public.encounter
 
 ALTER TABLE ONLY public.form_schema
     ADD CONSTRAINT form_schema_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: inventory_adjustment_reason inventory_adjustment_reason_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.inventory_adjustment_reason
+    ADD CONSTRAINT inventory_adjustment_reason_pkey PRIMARY KEY (id);
 
 
 --
@@ -1874,14 +2191,6 @@ ALTER TABLE ONLY public.master_list
 
 
 --
--- Name: migration_fragment_log migration_fragment_log_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.migration_fragment_log
-    ADD CONSTRAINT migration_fragment_log_pkey PRIMARY KEY (version_and_identifier);
-
-
---
 -- Name: name name_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1898,11 +2207,43 @@ ALTER TABLE ONLY public.name_store_join
 
 
 --
+-- Name: name_tag_join name_tag_join_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.name_tag_join
+    ADD CONSTRAINT name_tag_join_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: name_tag name_tag_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.name_tag
+    ADD CONSTRAINT name_tag_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: number number_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.number
     ADD CONSTRAINT number_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: period period_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.period
+    ADD CONSTRAINT period_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: period_schedule period_schedule_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.period_schedule
+    ADD CONSTRAINT period_schedule_pkey PRIMARY KEY (id);
 
 
 --
@@ -1919,6 +2260,30 @@ ALTER TABLE ONLY public.program_enrolment
 
 ALTER TABLE ONLY public.program_event
     ADD CONSTRAINT program_event_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: program program_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.program
+    ADD CONSTRAINT program_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: program_requisition_order_type program_requisition_order_type_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.program_requisition_order_type
+    ADD CONSTRAINT program_requisition_order_type_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: program_requisition_settings program_requisition_settings_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.program_requisition_settings
+    ADD CONSTRAINT program_requisition_settings_pkey PRIMARY KEY (id);
 
 
 --
@@ -1978,6 +2343,14 @@ ALTER TABLE ONLY public.store
 
 
 --
+-- Name: store_preference store_preference_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.store_preference
+    ADD CONSTRAINT store_preference_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: sync_buffer sync_buffer_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2026,6 +2399,216 @@ ALTER TABLE ONLY public.user_store_join
 
 
 --
+-- Name: index_activity_log_record_id_fkey; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_activity_log_record_id_fkey ON public.activity_log USING btree (record_id);
+
+
+--
+-- Name: index_activity_log_store_id_fkey; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_activity_log_store_id_fkey ON public.activity_log USING btree (store_id);
+
+
+--
+-- Name: index_changelog_name_id_fkey; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_changelog_name_id_fkey ON public.changelog USING btree (name_id);
+
+
+--
+-- Name: index_changelog_row_action; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_changelog_row_action ON public.changelog USING btree (row_action);
+
+
+--
+-- Name: index_changelog_store_id_fkey; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_changelog_store_id_fkey ON public.changelog USING btree (store_id);
+
+
+--
+-- Name: index_changelog_table_name; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_changelog_table_name ON public.changelog USING btree (table_name);
+
+
+--
+-- Name: index_invoice_created_datetime; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_invoice_created_datetime ON public.invoice USING btree (created_datetime);
+
+
+--
+-- Name: index_invoice_invoice_number; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_invoice_invoice_number ON public.invoice USING btree (invoice_number);
+
+
+--
+-- Name: index_invoice_line_invoice_id_fkey; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_invoice_line_invoice_id_fkey ON public.invoice_line USING btree (invoice_id);
+
+
+--
+-- Name: index_invoice_line_item_id_fkey; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_invoice_line_item_id_fkey ON public.invoice_line USING btree (item_id);
+
+
+--
+-- Name: index_invoice_line_location_id_fkey; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_invoice_line_location_id_fkey ON public.invoice_line USING btree (location_id);
+
+
+--
+-- Name: index_invoice_line_number_of_packs; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_invoice_line_number_of_packs ON public.invoice_line USING btree (number_of_packs);
+
+
+--
+-- Name: index_invoice_line_stock_line_id_fkey; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_invoice_line_stock_line_id_fkey ON public.invoice_line USING btree (stock_line_id);
+
+
+--
+-- Name: index_invoice_line_type; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_invoice_line_type ON public.invoice_line USING btree (type);
+
+
+--
+-- Name: index_invoice_linked_invoice_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_invoice_linked_invoice_id ON public.invoice USING btree (linked_invoice_id);
+
+
+--
+-- Name: index_invoice_name_id_fkey; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_invoice_name_id_fkey ON public.invoice USING btree (name_id);
+
+
+--
+-- Name: index_invoice_name_store_id_fkey; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_invoice_name_store_id_fkey ON public.invoice USING btree (name_store_id);
+
+
+--
+-- Name: index_invoice_requisition_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_invoice_requisition_id ON public.invoice USING btree (requisition_id);
+
+
+--
+-- Name: index_invoice_status; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_invoice_status ON public.invoice USING btree (status);
+
+
+--
+-- Name: index_invoice_store_id_fkey; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_invoice_store_id_fkey ON public.invoice USING btree (store_id);
+
+
+--
+-- Name: index_invoice_type; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_invoice_type ON public.invoice USING btree (type);
+
+
+--
+-- Name: index_item_unit_id_fkey; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_item_unit_id_fkey ON public.item USING btree (unit_id);
+
+
+--
+-- Name: index_location_movement_location_id_fkey; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_location_movement_location_id_fkey ON public.location_movement USING btree (location_id);
+
+
+--
+-- Name: index_location_movement_stock_line_id_fkey; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_location_movement_stock_line_id_fkey ON public.location_movement USING btree (stock_line_id);
+
+
+--
+-- Name: index_location_movement_store_id_fkey; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_location_movement_store_id_fkey ON public.location_movement USING btree (store_id);
+
+
+--
+-- Name: index_location_store_id_fkey; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_location_store_id_fkey ON public.location USING btree (store_id);
+
+
+--
+-- Name: index_master_list_line_item_id_fkey; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_master_list_line_item_id_fkey ON public.master_list_line USING btree (item_id);
+
+
+--
+-- Name: index_master_list_line_master_list_id_fkey; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_master_list_line_master_list_id_fkey ON public.master_list_line USING btree (master_list_id);
+
+
+--
+-- Name: index_master_list_name_join_master_list_id_fkey; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_master_list_name_join_master_list_id_fkey ON public.master_list_name_join USING btree (master_list_id);
+
+
+--
+-- Name: index_master_list_name_join_name_id_fkey; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_master_list_name_join_name_id_fkey ON public.master_list_name_join USING btree (name_id);
+
+
+--
 -- Name: index_name_code; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -2054,6 +2637,258 @@ CREATE INDEX index_name_national_health_number ON public.name USING btree (natio
 
 
 --
+-- Name: index_name_store_join_name_id_fkey; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_name_store_join_name_id_fkey ON public.name_store_join USING btree (name_id);
+
+
+--
+-- Name: index_name_store_join_store_id_fkey; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_name_store_join_store_id_fkey ON public.name_store_join USING btree (store_id);
+
+
+--
+-- Name: index_report_type; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_report_type ON public.report USING btree (type);
+
+
+--
+-- Name: index_requisition_created_datetime; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_requisition_created_datetime ON public.requisition USING btree (created_datetime);
+
+
+--
+-- Name: index_requisition_line_item_id_fkey; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_requisition_line_item_id_fkey ON public.requisition_line USING btree (item_id);
+
+
+--
+-- Name: index_requisition_line_requisition_id_fkey; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_requisition_line_requisition_id_fkey ON public.requisition_line USING btree (requisition_id);
+
+
+--
+-- Name: index_requisition_linked_requisition_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_requisition_linked_requisition_id ON public.requisition USING btree (linked_requisition_id);
+
+
+--
+-- Name: index_requisition_name_id_fkey; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_requisition_name_id_fkey ON public.requisition USING btree (name_id);
+
+
+--
+-- Name: index_requisition_requisition_number; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_requisition_requisition_number ON public.requisition USING btree (requisition_number);
+
+
+--
+-- Name: index_requisition_status; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_requisition_status ON public.requisition USING btree (status);
+
+
+--
+-- Name: index_requisition_store_id_fkey; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_requisition_store_id_fkey ON public.requisition USING btree (store_id);
+
+
+--
+-- Name: index_requisition_type; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_requisition_type ON public.requisition USING btree (type);
+
+
+--
+-- Name: index_stock_line_available_number_of_packs; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_stock_line_available_number_of_packs ON public.stock_line USING btree (available_number_of_packs);
+
+
+--
+-- Name: index_stock_line_expiry_date; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_stock_line_expiry_date ON public.stock_line USING btree (expiry_date);
+
+
+--
+-- Name: index_stock_line_item_id_fkey; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_stock_line_item_id_fkey ON public.stock_line USING btree (item_id);
+
+
+--
+-- Name: index_stock_line_location_id_fkey; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_stock_line_location_id_fkey ON public.stock_line USING btree (location_id);
+
+
+--
+-- Name: index_stock_line_store_id_fkey; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_stock_line_store_id_fkey ON public.stock_line USING btree (store_id);
+
+
+--
+-- Name: index_stock_line_total_number_of_packs; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_stock_line_total_number_of_packs ON public.stock_line USING btree (total_number_of_packs);
+
+
+--
+-- Name: index_stocktake_created_datetime; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_stocktake_created_datetime ON public.stocktake USING btree (created_datetime);
+
+
+--
+-- Name: index_stocktake_inventory_addition_id_fkey; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_stocktake_inventory_addition_id_fkey ON public.stocktake USING btree (inventory_addition_id);
+
+
+--
+-- Name: index_stocktake_inventory_reduction_id_fkey; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_stocktake_inventory_reduction_id_fkey ON public.stocktake USING btree (inventory_reduction_id);
+
+
+--
+-- Name: index_stocktake_line_item_id_fkey; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_stocktake_line_item_id_fkey ON public.stocktake_line USING btree (item_id);
+
+
+--
+-- Name: index_stocktake_line_location_id_fkey; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_stocktake_line_location_id_fkey ON public.stocktake_line USING btree (location_id);
+
+
+--
+-- Name: index_stocktake_line_stock_line_id_fkey; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_stocktake_line_stock_line_id_fkey ON public.stocktake_line USING btree (stock_line_id);
+
+
+--
+-- Name: index_stocktake_line_stocktake_id_fkey; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_stocktake_line_stocktake_id_fkey ON public.stocktake_line USING btree (stocktake_id);
+
+
+--
+-- Name: index_stocktake_stocktake_number; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_stocktake_stocktake_number ON public.stocktake USING btree (stocktake_number);
+
+
+--
+-- Name: index_stocktake_store_id_fkey; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_stocktake_store_id_fkey ON public.stocktake USING btree (store_id);
+
+
+--
+-- Name: index_store_name_id_fkey; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_store_name_id_fkey ON public.store USING btree (name_id);
+
+
+--
+-- Name: index_store_site_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_store_site_id ON public.store USING btree (site_id);
+
+
+--
+-- Name: index_sync_buffer_action; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_sync_buffer_action ON public.sync_buffer USING btree (action);
+
+
+--
+-- Name: index_sync_buffer_integration_datetime; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_sync_buffer_integration_datetime ON public.sync_buffer USING btree (integration_datetime);
+
+
+--
+-- Name: index_sync_buffer_integration_error; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_sync_buffer_integration_error ON public.sync_buffer USING btree (integration_error);
+
+
+--
+-- Name: index_user_permission_store_id_fkey; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_user_permission_store_id_fkey ON public.user_permission USING btree (store_id);
+
+
+--
+-- Name: index_user_permission_user_id_fkey; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_user_permission_user_id_fkey ON public.user_permission USING btree (user_id);
+
+
+--
+-- Name: index_user_store_join_store_id_fkey; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_user_store_join_store_id_fkey ON public.user_store_join USING btree (store_id);
+
+
+--
+-- Name: index_user_store_join_user_id_fkey; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_user_store_join_user_id_fkey ON public.user_store_join USING btree (user_id);
+
+
+--
 -- Name: ix_document_name_unique; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -2072,6 +2907,41 @@ CREATE UNIQUE INDEX ix_number_store_type_unique ON public.number USING btree (st
 --
 
 CREATE TRIGGER activity_log_upsert_trigger AFTER INSERT OR UPDATE ON public.activity_log FOR EACH ROW EXECUTE FUNCTION public.upsert_activity_log_changelog();
+
+
+--
+-- Name: barcode barcode_delete_trigger; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER barcode_delete_trigger AFTER DELETE ON public.barcode FOR EACH ROW EXECUTE FUNCTION public.delete_barcode_changelog();
+
+
+--
+-- Name: barcode barcode_upsert_trigger; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER barcode_upsert_trigger AFTER INSERT OR UPDATE ON public.barcode FOR EACH ROW EXECUTE FUNCTION public.upsert_barcode_changelog();
+
+
+--
+-- Name: clinician_store_join clinician_store_join_trigger; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER clinician_store_join_trigger AFTER INSERT OR UPDATE ON public.clinician_store_join FOR EACH ROW EXECUTE FUNCTION public.upsert_clinician_store_join_changelog();
+
+
+--
+-- Name: clinician clinician_trigger; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER clinician_trigger AFTER INSERT OR UPDATE ON public.clinician FOR EACH ROW EXECUTE FUNCTION public.update_changelog_upsert_with_sync();
+
+
+--
+-- Name: document document_trigger; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER document_trigger AFTER INSERT OR DELETE OR UPDATE ON public.document FOR EACH ROW EXECUTE FUNCTION public.update_changelog_upsert_with_sync();
 
 
 --
@@ -2103,10 +2973,31 @@ CREATE TRIGGER invoice_upsert_trigger AFTER INSERT OR UPDATE ON public.invoice F
 
 
 --
+-- Name: location_movement location_movement_trigger; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER location_movement_trigger AFTER INSERT OR DELETE OR UPDATE ON public.location_movement FOR EACH ROW EXECUTE FUNCTION public.update_changelog();
+
+
+--
 -- Name: location location_trigger; Type: TRIGGER; Schema: public; Owner: -
 --
 
 CREATE TRIGGER location_trigger AFTER INSERT OR DELETE OR UPDATE ON public.location FOR EACH ROW EXECUTE FUNCTION public.update_changelog();
+
+
+--
+-- Name: name_store_join name_store_join_upsert_trigger; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER name_store_join_upsert_trigger AFTER INSERT OR UPDATE ON public.name_store_join FOR EACH ROW EXECUTE FUNCTION public.upsert_name_store_join_changelog();
+
+
+--
+-- Name: name name_upsert_trigger; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER name_upsert_trigger AFTER INSERT OR UPDATE ON public.name FOR EACH ROW EXECUTE FUNCTION public.update_changelog_upsert_with_sync();
 
 
 --
@@ -2167,6 +3058,14 @@ ALTER TABLE ONLY public.activity_log
 
 
 --
+-- Name: barcode barcode_item_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.barcode
+    ADD CONSTRAINT barcode_item_id_fkey FOREIGN KEY (item_id) REFERENCES public.item(id);
+
+
+--
 -- Name: clinician_store_join clinician_store_join_clinician_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2180,6 +3079,14 @@ ALTER TABLE ONLY public.clinician_store_join
 
 ALTER TABLE ONLY public.clinician_store_join
     ADD CONSTRAINT clinician_store_join_store_id_fkey FOREIGN KEY (store_id) REFERENCES public.store(id);
+
+
+--
+-- Name: document document_context_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.document
+    ADD CONSTRAINT document_context_id_fkey FOREIGN KEY (context_id) REFERENCES public.context(id);
 
 
 --
@@ -2199,6 +3106,14 @@ ALTER TABLE ONLY public.document
 
 
 --
+-- Name: document_registry document_registry_context_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.document_registry
+    ADD CONSTRAINT document_registry_context_id_fkey FOREIGN KEY (context_id) REFERENCES public.context(id);
+
+
+--
 -- Name: document_registry document_registry_form_schema_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2207,19 +3122,35 @@ ALTER TABLE ONLY public.document_registry
 
 
 --
--- Name: document_registry document_registry_parent_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.document_registry
-    ADD CONSTRAINT document_registry_parent_id_fkey FOREIGN KEY (parent_id) REFERENCES public.document_registry(id);
-
-
---
 -- Name: encounter encounter_clinician_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.encounter
     ADD CONSTRAINT encounter_clinician_id_fkey FOREIGN KEY (clinician_id) REFERENCES public.clinician(id);
+
+
+--
+-- Name: encounter encounter_enrolment_program_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.encounter
+    ADD CONSTRAINT encounter_enrolment_program_id_fkey FOREIGN KEY (program_id) REFERENCES public.program(id);
+
+
+--
+-- Name: invoice invoice_clinician_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.invoice
+    ADD CONSTRAINT invoice_clinician_id_fkey FOREIGN KEY (clinician_id) REFERENCES public.clinician(id);
+
+
+--
+-- Name: invoice_line invoice_line_inventory_adjustment_reason_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.invoice_line
+    ADD CONSTRAINT invoice_line_inventory_adjustment_reason_id_fkey FOREIGN KEY (inventory_adjustment_reason_id) REFERENCES public.inventory_adjustment_reason(id);
 
 
 --
@@ -2367,6 +3298,22 @@ ALTER TABLE ONLY public.name_store_join
 
 
 --
+-- Name: name_tag_join name_tag_join_name_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.name_tag_join
+    ADD CONSTRAINT name_tag_join_name_id_fkey FOREIGN KEY (name_id) REFERENCES public.name(id);
+
+
+--
+-- Name: name_tag_join name_tag_join_name_tag_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.name_tag_join
+    ADD CONSTRAINT name_tag_join_name_tag_id_fkey FOREIGN KEY (name_tag_id) REFERENCES public.name_tag(id);
+
+
+--
 -- Name: number number_store_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2375,11 +3322,83 @@ ALTER TABLE ONLY public.number
 
 
 --
+-- Name: period period_period_schedule_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.period
+    ADD CONSTRAINT period_period_schedule_id_fkey FOREIGN KEY (period_schedule_id) REFERENCES public.period_schedule(id);
+
+
+--
+-- Name: program program_context_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.program
+    ADD CONSTRAINT program_context_id_fkey FOREIGN KEY (context_id) REFERENCES public.context(id);
+
+
+--
+-- Name: program_enrolment program_enrolment_program_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.program_enrolment
+    ADD CONSTRAINT program_enrolment_program_id_fkey FOREIGN KEY (program_id) REFERENCES public.program(id);
+
+
+--
+-- Name: program_event program_event_context_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.program_event
+    ADD CONSTRAINT program_event_context_id_fkey FOREIGN KEY (context_id) REFERENCES public.context(id);
+
+
+--
 -- Name: program_event program_event_patient_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.program_event
     ADD CONSTRAINT program_event_patient_id_fkey FOREIGN KEY (patient_id) REFERENCES public.name(id);
+
+
+--
+-- Name: program program_master_list_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.program
+    ADD CONSTRAINT program_master_list_id_fkey FOREIGN KEY (master_list_id) REFERENCES public.master_list(id);
+
+
+--
+-- Name: program_requisition_order_type program_requisition_order_typ_program_requisition_settings_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.program_requisition_order_type
+    ADD CONSTRAINT program_requisition_order_typ_program_requisition_settings_fkey FOREIGN KEY (program_requisition_settings_id) REFERENCES public.program_requisition_settings(id);
+
+
+--
+-- Name: program_requisition_settings program_requisition_settings_name_tag_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.program_requisition_settings
+    ADD CONSTRAINT program_requisition_settings_name_tag_id_fkey FOREIGN KEY (name_tag_id) REFERENCES public.name_tag(id);
+
+
+--
+-- Name: program_requisition_settings program_requisition_settings_period_schedule_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.program_requisition_settings
+    ADD CONSTRAINT program_requisition_settings_period_schedule_id_fkey FOREIGN KEY (period_schedule_id) REFERENCES public.period_schedule(id);
+
+
+--
+-- Name: program_requisition_settings program_requisition_settings_program_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.program_requisition_settings
+    ADD CONSTRAINT program_requisition_settings_program_id_fkey FOREIGN KEY (program_id) REFERENCES public.program(id);
 
 
 --
@@ -2415,11 +3434,27 @@ ALTER TABLE ONLY public.requisition
 
 
 --
+-- Name: requisition requisition_period_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.requisition
+    ADD CONSTRAINT requisition_period_id_fkey FOREIGN KEY (period_id) REFERENCES public.period(id);
+
+
+--
 -- Name: requisition requisition_store_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.requisition
     ADD CONSTRAINT requisition_store_id_fkey FOREIGN KEY (store_id) REFERENCES public.store(id);
+
+
+--
+-- Name: stock_line stock_line_barcode_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.stock_line
+    ADD CONSTRAINT stock_line_barcode_id_fkey FOREIGN KEY (barcode_id) REFERENCES public.barcode(id);
 
 
 --
@@ -2447,11 +3482,35 @@ ALTER TABLE ONLY public.stock_line
 
 
 --
+-- Name: stock_line stock_line_supplier_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.stock_line
+    ADD CONSTRAINT stock_line_supplier_id_fkey FOREIGN KEY (supplier_id) REFERENCES public.name(id);
+
+
+--
 -- Name: stocktake stocktake_inventory_adjustment_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.stocktake
-    ADD CONSTRAINT stocktake_inventory_adjustment_id_fkey FOREIGN KEY (inventory_adjustment_id) REFERENCES public.invoice(id);
+    ADD CONSTRAINT stocktake_inventory_adjustment_id_fkey FOREIGN KEY (inventory_addition_id) REFERENCES public.invoice(id);
+
+
+--
+-- Name: stocktake stocktake_inventory_reduction_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.stocktake
+    ADD CONSTRAINT stocktake_inventory_reduction_id_fkey FOREIGN KEY (inventory_reduction_id) REFERENCES public.invoice(id);
+
+
+--
+-- Name: stocktake_line stocktake_line_inventory_adjustment_reason_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.stocktake_line
+    ADD CONSTRAINT stocktake_line_inventory_adjustment_reason_id_fkey FOREIGN KEY (inventory_adjustment_reason_id) REFERENCES public.inventory_adjustment_reason(id);
 
 
 --
@@ -2503,6 +3562,14 @@ ALTER TABLE ONLY public.store
 
 
 --
+-- Name: user_permission user_permission_context_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.user_permission
+    ADD CONSTRAINT user_permission_context_id_fkey FOREIGN KEY (context_id) REFERENCES public.context(id);
+
+
+--
 -- Name: user_permission user_permission_store_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2529,5 +3596,4 @@ ALTER TABLE ONLY public.user_store_join
 --
 -- PostgreSQL database dump complete
 --
-
 
