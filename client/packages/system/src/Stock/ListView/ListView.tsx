@@ -31,6 +31,7 @@ export const StockListView = () => {
   const {
     queryParams: { sortBy, first, offset, filterBy },
   } = useUrlQueryParams({
+    initialSort: { key: 'name', dir: 'asc' },
     filters: [
       { key: 'vvmStatusId', condition: 'equalTo' },
       { key: 'search' },

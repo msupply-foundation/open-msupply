@@ -17,6 +17,8 @@ import {
   Groupable,
   NothingHere,
   MaterialTable,
+  useIsGapsStoreOnly,
+  MobileCardList,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import {
@@ -82,6 +84,8 @@ const DetailViewInner = () => {
   const hasItemVariantsEnabled = useIsItemVariantsEnabled();
   const simplifiedTabletView = useSimplifiedTabletUI();
 
+  const isMobile = useIsGapsStoreOnly();
+
   const onRowClick = React.useCallback(
     (line: InboundItem | InboundLineFragment) => {
       const item = 'lines' in line ? line.lines[0]?.item : line.item;
@@ -134,6 +138,7 @@ const DetailViewInner = () => {
         buttonText={t('button.add-item')}
       />
     ),
+    isMobile,
   });
 
   const onReturn = async () => {
@@ -188,7 +193,11 @@ const DetailViewInner = () => {
 
   const tabs = [
     {
-      Component: <MaterialTable table={table} />,
+      Component: isMobile ? (
+        <MobileCardList table={table} />
+      ) : (
+        <MaterialTable table={table} />
+      ),
       value: InboundShipmentDetailTabs.Details,
     },
     {

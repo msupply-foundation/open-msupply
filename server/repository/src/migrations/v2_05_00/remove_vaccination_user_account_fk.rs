@@ -44,10 +44,10 @@ impl MigrationFragment for Migrate {
                 );
                 INSERT INTO tmp_vaccination SELECT * FROM vaccination;
 
-                PRAGMA foreign_keys = OFF;              
+                -- PRAGMA foreign_keys = OFF; -- No longer effective now that we're using transactions
                 DROP TABLE vaccination;
                 ALTER TABLE tmp_vaccination RENAME TO vaccination;              
-                PRAGMA foreign_keys = ON;
+                -- PRAGMA foreign_keys = ON;
                 "#
             )?;
         }
