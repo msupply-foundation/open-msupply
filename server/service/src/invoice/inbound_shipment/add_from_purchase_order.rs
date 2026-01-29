@@ -48,8 +48,8 @@ pub fn add_from_purchase_order(
                 .invoice_id(EqualFilter::equal_any(
                     sent_invoices_with_same_purchase_order.clone(),
                 ))
-                .item_id(EqualFilter::equal_to(purchase_order_line.item_link_id)) // how to handle merging?
-                .r#type(EqualFilter::equal_to(InvoiceLineType::StockIn)), // TODO: filter for authorised lines
+                .item_id(EqualFilter::equal_to(item.id.clone())) // Shouldn't need to worry about item merging here as both queries join on name_id in the repository layer
+                .r#type(EqualFilter::equal_to(InvoiceLineType::StockIn)), // Unauthorised Lines will have InvoiceLineType::NonStock
         )?;
 
         let pack_size = purchase_order_line.requested_pack_size;

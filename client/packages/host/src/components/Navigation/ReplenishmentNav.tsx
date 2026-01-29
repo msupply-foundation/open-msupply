@@ -9,7 +9,6 @@ import {
   AppNavLink,
   AppNavSection,
   UserStoreNodeFragment,
-  useIsCentralServerApi,
   usePreferences,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
