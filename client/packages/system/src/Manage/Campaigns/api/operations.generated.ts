@@ -221,16 +221,13 @@ export function getSdk(
   return {
     campaigns(
       variables: CampaignsQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<CampaignsQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<CampaignsQuery>({
-            document: CampaignsDocument,
-            variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
+          client.request<CampaignsQuery>(CampaignsDocument, variables, {
+            ...requestHeaders,
+            ...wrappedRequestHeaders,
           }),
         'campaigns',
         'query',
@@ -239,17 +236,15 @@ export function getSdk(
     },
     upsertCampaign(
       variables: UpsertCampaignMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<UpsertCampaignMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<UpsertCampaignMutation>({
-            document: UpsertCampaignDocument,
+          client.request<UpsertCampaignMutation>(
+            UpsertCampaignDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'upsertCampaign',
         'mutation',
         variables
@@ -257,17 +252,15 @@ export function getSdk(
     },
     deleteCampaign(
       variables: DeleteCampaignMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<DeleteCampaignMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<DeleteCampaignMutation>({
-            document: DeleteCampaignDocument,
+          client.request<DeleteCampaignMutation>(
+            DeleteCampaignDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'deleteCampaign',
         'mutation',
         variables

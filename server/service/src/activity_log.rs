@@ -299,7 +299,7 @@ mod test {
             MockData {
                 invoices: vec![InvoiceRow {
                     id: "test".to_string(),
-                    name_link_id: mock_name_a().id,
+                    name_id: mock_name_a().id,
                     store_id: mock_store_a().id,
                     r#type: InvoiceType::OutboundShipment,
                     status: InvoiceStatus::Allocated,

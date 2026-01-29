@@ -1,8 +1,7 @@
 use super::{
     clinician_link_row::clinician_link, clinician_row::clinician, invoice_line_row::invoice_line,
-    invoice_row::invoice, name_link_row::name_link, name_row::name, store_row::store, ClinicianRow,
-    DBType, InvoiceRow, InvoiceStatus, InvoiceType, NameRow, RepositoryError, StorageConnection,
-    StoreRow,
+    invoice_row::invoice, name_row::name, store_row::store, ClinicianRow, DBType, InvoiceRow,
+    InvoiceStatus, InvoiceType, NameRow, RepositoryError, StorageConnection, StoreRow,
 };
 
 use crate::{
@@ -11,7 +10,7 @@ use crate::{
         apply_date_time_filter, apply_equal_filter, apply_sort, apply_sort_no_case,
         apply_string_filter,
     },
-    ClinicianLinkRow, NameLinkRow,
+    ClinicianLinkRow,
 };
 
 use crate::{DatetimeFilter, EqualFilter, Pagination, Sort, StringFilter};
@@ -85,7 +84,7 @@ pub struct InvoiceRepository<'a> {
 
 type InvoiceJoin = (
     InvoiceRow,
-    (NameLinkRow, NameRow),
+    NameRow,
     StoreRow,
     Option<(ClinicianLinkRow, ClinicianRow)>,
 );
@@ -191,14 +190,14 @@ impl<'a> InvoiceRepository<'a> {
     pub fn find_one_by_id(&self, record_id: &str) -> Result<InvoiceJoin, RepositoryError> {
         Ok(invoice::table
             .filter(invoice::id.eq(record_id))
-            .inner_join(name_link::table.inner_join(name::table))
+            .inner_join(name::table)
             .inner_join(store::table)
             .left_join(clinician_link::table.inner_join(clinician::table))
             .first::<InvoiceJoin>(self.connection.lock().connection())?)
     }
 }
 
-fn to_domain((invoice_row, (_, name_row), store_row, clinician_link_join): InvoiceJoin) -> Invoice {
+fn to_domain((invoice_row, name_row, store_row, clinician_link_join): InvoiceJoin) -> Invoice {
     Invoice {
         invoice_row,
         name_row,
@@ -210,10 +209,7 @@ fn to_domain((invoice_row, (_, name_row), store_row, clinician_link_join): Invoi
 type BoxedInvoiceQuery = IntoBoxed<
     'static,
     LeftJoin<
-        InnerJoin<
-            InnerJoin<invoice::table, InnerJoin<name_link::table, name::table>>,
-            store::table,
-        >,
+        InnerJoin<InnerJoin<invoice::table, name::table>, store::table>,
         InnerJoin<clinician_link::table, clinician::table>,
     >,
     DBType,
@@ -221,7 +217,7 @@ type BoxedInvoiceQuery = IntoBoxed<
 
 fn create_filtered_query(filter: Option<InvoiceFilter>) -> BoxedInvoiceQuery {
     let mut query = invoice::table
-        .inner_join(name_link::table.inner_join(name::table))
+        .inner_join(name::table)
         .inner_join(store::table)
         .left_join(clinician_link::table.inner_join(clinician::table))
         .into_boxed();

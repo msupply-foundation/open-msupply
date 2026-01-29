@@ -23,7 +23,7 @@ pub fn validate(
 
     let invoice = check_invoice_exists(&patch.id, connection)?.ok_or(InvoiceDoesNotExist)?;
     let other_party_id = NameLinkRowRepository::new(connection)
-        .find_one_by_id(&invoice.name_link_id)?
+        .find_one_by_id(&invoice.name_id)?
         .ok_or(OtherPartyDoesNotExist)?
         .name_id;
     let other_party =

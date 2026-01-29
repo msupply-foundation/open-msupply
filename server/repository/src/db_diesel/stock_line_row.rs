@@ -5,7 +5,7 @@ use super::{
 
 use crate::{
     db_diesel::barcode_row::barcode, db_diesel::vvm_status::vvm_status_row::vvm_status,
-    repository_error::RepositoryError, Delete, Upsert,
+    diesel_macros::define_linked_tables, repository_error::RepositoryError, Delete, Upsert,
 };
 use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
 
@@ -14,9 +14,12 @@ use diesel::prelude::*;
 use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
 
-table! {
-    stock_line (id) {
-        id -> Text,
+define_linked_tables! {
+    view: stock_line = "stock_line_view",
+    core: stock_line_with_links = "stock_line",
+    struct: StockLineRow,
+    repo: StockLineRowRepository,
+    shared: {
         item_link_id -> Text,
         store_id -> Text,
         location_id -> Nullable<Text>,
@@ -29,15 +32,19 @@ table! {
         expiry_date -> Nullable<Date>,
         on_hold -> Bool,
         note -> Nullable<Text>,
-        supplier_link_id -> Nullable<Text>,
         barcode_id -> Nullable<Text>,
         item_variant_id -> Nullable<Text>,
-        donor_link_id -> Nullable<Text>,
         vvm_status_id -> Nullable<Text>,
         campaign_id -> Nullable<Text>,
         program_id -> Nullable<Text>,
         total_volume -> Double,
         volume_per_pack -> Double,
+    },
+    links: {
+    },
+    optional_links: {
+        supplier_link_id -> supplier_id,
+        donor_link_id -> donor_id,
     }
 }
 
@@ -49,15 +56,10 @@ joinable!(stock_line -> barcode (barcode_id));
 joinable!(stock_line -> vvm_status (vvm_status_id));
 joinable!(stock_line -> campaign (campaign_id));
 allow_tables_to_appear_in_same_query!(stock_line, item_link);
-// NOTE: both supplier_link_id and donor_link_id are foreign keys to name_link
-// so not defining a default joinable here, so as not to accidentally join on the wrong one
-allow_tables_to_appear_in_same_query!(stock_line, name_link);
 allow_tables_to_appear_in_same_query!(stock_line, item_variant);
+allow_tables_to_appear_in_same_query!(stock_line, name_link);
 
-#[derive(
-    Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default, Serialize, Deserialize,
-)]
-#[diesel(treat_none_as_null = true)]
+#[derive(Clone, Queryable, Debug, PartialEq, Default, Serialize, Deserialize)]
 #[diesel(table_name = stock_line)]
 pub struct StockLineRow {
     pub id: String,
@@ -73,15 +75,16 @@ pub struct StockLineRow {
     pub expiry_date: Option<NaiveDate>,
     pub on_hold: bool,
     pub note: Option<String>,
-    pub supplier_link_id: Option<String>,
     pub barcode_id: Option<String>,
     pub item_variant_id: Option<String>,
-    pub donor_link_id: Option<String>,
     pub vvm_status_id: Option<String>,
     pub campaign_id: Option<String>,
     pub program_id: Option<String>,
     pub total_volume: f64,
     pub volume_per_pack: f64,
+    // Resolved from name_link - must be last to match view column order
+    pub supplier_id: Option<String>,
+    pub donor_id: Option<String>,
 }
 
 pub struct StockLineRowRepository<'a> {
@@ -94,12 +97,7 @@ impl<'a> StockLineRowRepository<'a> {
     }
 
     pub fn upsert_one(&self, row: &StockLineRow) -> Result<i64, RepositoryError> {
-        diesel::insert_into(stock_line::table)
-            .values(row)
-            .on_conflict(stock_line::id)
-            .do_update()
-            .set(row)
-            .execute(self.connection.lock().connection())?;
+        self._upsert(row)?;
         self.insert_changelog(row, RowActionType::Upsert)
     }
 
@@ -128,7 +126,7 @@ impl<'a> StockLineRowRepository<'a> {
             }
         };
 
-        diesel::delete(stock_line::table.filter(stock_line::id.eq(id)))
+        diesel::delete(stock_line_with_links::table.filter(stock_line_with_links::id.eq(id)))
             .execute(self.connection.lock().connection())?;
         Ok(Some(change_log_id))
     }

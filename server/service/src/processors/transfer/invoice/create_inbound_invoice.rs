@@ -266,7 +266,7 @@ fn generate_inbound_invoice(
             InboundInvoiceType::CustomerReturn => InvoiceType::CustomerReturn,
             InboundInvoiceType::InboundShipment => InvoiceType::InboundShipment,
         },
-        name_link_id: name_id,
+        name_id: name_id,
         store_id,
         status,
         requisition_id: request_requisition_id,
@@ -302,7 +302,7 @@ fn generate_inbound_invoice(
         insurance_discount_amount: None,
         insurance_discount_percentage: None,
         is_cancellation: false,
-        default_donor_link_id: None,
+        default_donor_id: None,
         goods_received_id: None,
     };
 

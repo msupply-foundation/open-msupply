@@ -2146,17 +2146,15 @@ export function getSdk(
   return {
     itemsWithStockLines(
       variables: ItemsWithStockLinesQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<ItemsWithStockLinesQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<ItemsWithStockLinesQuery>({
-            document: ItemsWithStockLinesDocument,
+          client.request<ItemsWithStockLinesQuery>(
+            ItemsWithStockLinesDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'itemsWithStockLines',
         'query',
         variables
@@ -2164,16 +2162,13 @@ export function getSdk(
     },
     items(
       variables: ItemsQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<ItemsQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<ItemsQuery>({
-            document: ItemsDocument,
-            variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
+          client.request<ItemsQuery>(ItemsDocument, variables, {
+            ...requestHeaders,
+            ...wrappedRequestHeaders,
           }),
         'items',
         'query',
@@ -2182,17 +2177,15 @@ export function getSdk(
     },
     itemStockOnHand(
       variables: ItemStockOnHandQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<ItemStockOnHandQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<ItemStockOnHandQuery>({
-            document: ItemStockOnHandDocument,
+          client.request<ItemStockOnHandQuery>(
+            ItemStockOnHandDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'itemStockOnHand',
         'query',
         variables
@@ -2200,17 +2193,15 @@ export function getSdk(
     },
     itemsWithStats(
       variables: ItemsWithStatsQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<ItemsWithStatsQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<ItemsWithStatsQuery>({
-            document: ItemsWithStatsDocument,
+          client.request<ItemsWithStatsQuery>(
+            ItemsWithStatsDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'itemsWithStats',
         'query',
         variables
@@ -2218,16 +2209,13 @@ export function getSdk(
     },
     itemById(
       variables: ItemByIdQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<ItemByIdQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<ItemByIdQuery>({
-            document: ItemByIdDocument,
-            variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
+          client.request<ItemByIdQuery>(ItemByIdDocument, variables, {
+            ...requestHeaders,
+            ...wrappedRequestHeaders,
           }),
         'itemById',
         'query',
@@ -2236,17 +2224,15 @@ export function getSdk(
     },
     itemVariantsConfigured(
       variables: ItemVariantsConfiguredQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<ItemVariantsConfiguredQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<ItemVariantsConfiguredQuery>({
-            document: ItemVariantsConfiguredDocument,
+          client.request<ItemVariantsConfiguredQuery>(
+            ItemVariantsConfiguredDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'itemVariantsConfigured',
         'query',
         variables
@@ -2254,16 +2240,13 @@ export function getSdk(
     },
     itemVariants(
       variables: ItemVariantsQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<ItemVariantsQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<ItemVariantsQuery>({
-            document: ItemVariantsDocument,
-            variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
+          client.request<ItemVariantsQuery>(ItemVariantsDocument, variables, {
+            ...requestHeaders,
+            ...wrappedRequestHeaders,
           }),
         'itemVariants',
         'query',
@@ -2272,17 +2255,15 @@ export function getSdk(
     },
     getHistoricalStockLines(
       variables: GetHistoricalStockLinesQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<GetHistoricalStockLinesQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<GetHistoricalStockLinesQuery>({
-            document: GetHistoricalStockLinesDocument,
+          client.request<GetHistoricalStockLinesQuery>(
+            GetHistoricalStockLinesDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'getHistoricalStockLines',
         'query',
         variables
@@ -2290,17 +2271,15 @@ export function getSdk(
     },
     upsertItemVariant(
       variables: UpsertItemVariantMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<UpsertItemVariantMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<UpsertItemVariantMutation>({
-            document: UpsertItemVariantDocument,
+          client.request<UpsertItemVariantMutation>(
+            UpsertItemVariantDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'upsertItemVariant',
         'mutation',
         variables
@@ -2308,17 +2287,15 @@ export function getSdk(
     },
     deleteItemVariant(
       variables: DeleteItemVariantMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<DeleteItemVariantMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<DeleteItemVariantMutation>({
-            document: DeleteItemVariantDocument,
+          client.request<DeleteItemVariantMutation>(
+            DeleteItemVariantDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'deleteItemVariant',
         'mutation',
         variables
@@ -2326,16 +2303,13 @@ export function getSdk(
     },
     locationTypes(
       variables: LocationTypesQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<LocationTypesQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<LocationTypesQuery>({
-            document: LocationTypesDocument,
-            variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
+          client.request<LocationTypesQuery>(LocationTypesDocument, variables, {
+            ...requestHeaders,
+            ...wrappedRequestHeaders,
           }),
         'locationTypes',
         'query',
@@ -2344,17 +2318,15 @@ export function getSdk(
     },
     upsertBundledItem(
       variables: UpsertBundledItemMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<UpsertBundledItemMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<UpsertBundledItemMutation>({
-            document: UpsertBundledItemDocument,
+          client.request<UpsertBundledItemMutation>(
+            UpsertBundledItemDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'upsertBundledItem',
         'mutation',
         variables
@@ -2362,17 +2334,15 @@ export function getSdk(
     },
     deleteBundledItem(
       variables: DeleteBundledItemMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<DeleteBundledItemMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<DeleteBundledItemMutation>({
-            document: DeleteBundledItemDocument,
+          client.request<DeleteBundledItemMutation>(
+            DeleteBundledItemDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'deleteBundledItem',
         'mutation',
         variables
@@ -2380,16 +2350,13 @@ export function getSdk(
     },
     itemLedger(
       variables: ItemLedgerQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<ItemLedgerQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<ItemLedgerQuery>({
-            document: ItemLedgerDocument,
-            variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
+          client.request<ItemLedgerQuery>(ItemLedgerDocument, variables, {
+            ...requestHeaders,
+            ...wrappedRequestHeaders,
           }),
         'itemLedger',
         'query',

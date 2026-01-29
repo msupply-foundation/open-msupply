@@ -39,7 +39,7 @@ pub fn make_movements_extended(
                 InvoiceRow {
                     id: invoice_id.clone(),
                     store_id: stock_line.store_id.clone(),
-                    name_link_id: mock_name_a().id.clone(),
+                    name_id: mock_name_a().id.clone(),
                     r#type: if quantity > 0 {
                         InvoiceType::InboundShipment
                     } else {

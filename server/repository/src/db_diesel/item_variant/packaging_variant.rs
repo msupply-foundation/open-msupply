@@ -159,7 +159,6 @@ mod tests {
                 name: name.clone(),
                 item_link_id: mock_item_a().id,
                 location_type_id: None,
-                manufacturer_link_id: None,
                 deleted_datetime: None,
                 vvm_type: None,
                 created_datetime: NaiveDate::from_ymd_opt(2024, 2, 1)
@@ -167,6 +166,7 @@ mod tests {
                     .and_hms_opt(0, 0, 0)
                     .unwrap(),
                 created_by: None,
+                manufacturer_id: None,
             })
             .unwrap();
 

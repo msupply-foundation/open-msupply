@@ -36,10 +36,10 @@ pub fn generate(
     let new_invoice = InvoiceRow {
         id: uuid(),
         user_id: Some(user_id.to_string()),
-        name_link_id: original_customer
+        name_id: original_customer
             .as_ref()
-            .map(|customer| customer.name_link_row.id.clone())
-            .unwrap_or_else(|| other_party.name_link_row.id.clone()),
+            .map(|customer| customer.name_row.id.clone())
+            .unwrap_or_else(|| other_party.name_row.id.clone()),
         name_store_id: original_customer
             .as_ref()
             .and_then(|customer| customer.store_id().map(|id| id.to_string()))
@@ -78,7 +78,7 @@ pub fn generate(
         insurance_discount_percentage: None,
         is_cancellation: false,
         expected_delivery_date: None,
-        default_donor_link_id: None,
+        default_donor_id: None,
         goods_received_id: None,
         shipping_method_id: None,
     };
@@ -124,7 +124,7 @@ pub fn generate_invoice_lines(
             item_variant_id: None,
             prescribed_quantity: None,
             linked_invoice_id: None,
-            donor_link_id: None,
+            donor_id: None,
             vvm_status_id: None,
             reason_option_id: None,
             campaign_id: None,

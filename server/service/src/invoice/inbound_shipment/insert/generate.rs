@@ -34,7 +34,7 @@ pub fn generate(
     let result = InvoiceRow {
         id,
         user_id: Some(user_id.to_string()),
-        name_link_id: other_party_id,
+        name_id: other_party_id,
         name_store_id: other_party.store_id().map(|id| id.to_string()),
         r#type: InvoiceType::InboundShipment,
         comment,
@@ -70,7 +70,7 @@ pub fn generate(
         insurance_discount_percentage: None,
         is_cancellation: false,
         expected_delivery_date: None,
-        default_donor_link_id: None,
+        default_donor_id: None,
         shipping_method_id: None,
     };
 

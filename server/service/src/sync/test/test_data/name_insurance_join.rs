@@ -34,7 +34,7 @@ fn name_insurance_join_1() -> TestSyncIncomingRecord {
         NAME_INSURANCE_JOIN_1,
         NameInsuranceJoinRow {
             id: NAME_INSURANCE_JOIN_1.0.to_owned(),
-            name_link_id: "1FB32324AF8049248D929CFB35F255BA".to_string(),
+            name_id: "1FB32324AF8049248D929CFB35F255BA".to_string(),
             insurance_provider_id: "INSURANCE_PROVIDER_1_ID".to_string(),
             policy_number_person: None,
             policy_number_family: Some("888".to_string()),
@@ -73,7 +73,7 @@ fn name_insurance_join_2() -> TestSyncIncomingRecord {
         NAME_INSURANCE_JOIN_2,
         NameInsuranceJoinRow {
             id: NAME_INSURANCE_JOIN_2.0.to_owned(),
-            name_link_id: "1FB32324AF8049248D929CFB35F255BA".to_string(),
+            name_id: "1FB32324AF8049248D929CFB35F255BA".to_string(),
             insurance_provider_id: "INSURANCE_PROVIDER_1_ID".to_string(),
             policy_number_person: Some("777".to_string()),
             policy_number_family: None,

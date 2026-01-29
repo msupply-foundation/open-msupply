@@ -56,7 +56,7 @@ pub fn generate(
     let invoice = InvoiceRow {
         id: uuid(),
         user_id: Some(user_id.to_string()),
-        name_link_id: inventory_adjustment_name.id,
+        name_id: inventory_adjustment_name.id,
         r#type: match adjustment_type {
             AdjustmentType::Addition => InvoiceType::InventoryAddition,
             AdjustmentType::Reduction => InvoiceType::InventoryReduction,
@@ -94,7 +94,7 @@ pub fn generate(
         insurance_discount_percentage: None,
         is_cancellation: false,
         expected_delivery_date: None,
-        default_donor_link_id: None,
+        default_donor_id: None,
         goods_received_id: None,
         shipping_method_id: None,
     };
@@ -109,7 +109,7 @@ pub fn generate(
         note,
         on_hold,
         item_variant_id,
-        donor_link_id,
+        donor_id: donor_link_id,
         vvm_status_id,
         campaign_id,
         program_id,

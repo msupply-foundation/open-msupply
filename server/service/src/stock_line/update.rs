@@ -227,7 +227,7 @@ fn generate(
     existing.item_variant_id = item_variant_id
         .map(|v| v.value)
         .unwrap_or(existing.item_variant_id);
-    existing.donor_link_id = donor_id.map(|v| v.value).unwrap_or(existing.donor_link_id);
+    existing.donor_id = donor_id.map(|v| v.value).unwrap_or(existing.donor_id);
     existing.campaign_id = campaign_id.map(|v| v.value).unwrap_or(existing.campaign_id);
     existing.program_id = program_id.map(|v| v.value).unwrap_or(existing.program_id);
 

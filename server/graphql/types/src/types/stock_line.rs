@@ -9,7 +9,7 @@ use async_graphql::*;
 use chrono::NaiveDate;
 use graphql_core::{
     loader::{
-        CampaignByIdLoader, ItemLoader, NameByNameLinkIdLoader, NameByNameLinkIdLoaderInput,
+        CampaignByIdLoader, ItemLoader, NameByIdLoader, NameByIdLoaderInput,
         OrderTypesByProgramIdInput, OrderTypesByProgramIdLoader, ProgramByIdLoader,
         VVMStatusLogByStockLineIdLoader,
     },
@@ -152,13 +152,13 @@ impl StockLineNode {
     }
 
     pub async fn donor(&self, ctx: &Context<'_>, store_id: String) -> Result<Option<NameNode>> {
-        let donor_link_id = match &self.row().donor_link_id {
+        let donor_id = match &self.row().donor_id {
             None => return Ok(None),
-            Some(donor_link_id) => donor_link_id,
+            Some(donor_id) => donor_id,
         };
-        let loader = ctx.get_loader::<DataLoader<NameByNameLinkIdLoader>>();
+        let loader = ctx.get_loader::<DataLoader<NameByIdLoader>>();
         let result = loader
-            .load_one(NameByNameLinkIdLoaderInput::new(&store_id, donor_link_id))
+            .load_one(NameByIdLoaderInput::new(&store_id, donor_id))
             .await?;
 
         Ok(result.map(NameNode::from_domain))

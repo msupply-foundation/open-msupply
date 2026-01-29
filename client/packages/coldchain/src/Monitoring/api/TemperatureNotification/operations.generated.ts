@@ -131,17 +131,15 @@ export function getSdk(
   return {
     temperatureNotifications(
       variables: TemperatureNotificationsQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<TemperatureNotificationsQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<TemperatureNotificationsQuery>({
-            document: TemperatureNotificationsDocument,
+          client.request<TemperatureNotificationsQuery>(
+            TemperatureNotificationsDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'temperatureNotifications',
         'query',
         variables

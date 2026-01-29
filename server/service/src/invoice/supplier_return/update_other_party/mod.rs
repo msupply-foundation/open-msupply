@@ -123,7 +123,7 @@ mod test {
         fn not_a_supplier_join() -> NameStoreJoinRow {
             NameStoreJoinRow {
                 id: "not_a_supplier_join".to_string(),
-                name_link_id: not_a_supplier().id,
+                name_id: not_a_supplier().id,
                 store_id: mock_store_b().id,
                 name_is_supplier: false,
                 ..Default::default()
@@ -243,7 +243,7 @@ mod test {
         fn invoice() -> InvoiceRow {
             InvoiceRow {
                 id: "test_other_party_change".to_string(),
-                name_link_id: mock_name_a().id,
+                name_id: mock_name_a().id,
                 store_id: mock_store_c().id,
                 r#type: InvoiceType::SupplierReturn,
                 status: InvoiceStatus::Picked,
@@ -285,7 +285,7 @@ mod test {
         fn supplier_join() -> NameStoreJoinRow {
             NameStoreJoinRow {
                 id: "supplier_join".to_string(),
-                name_link_id: supplier().id,
+                name_id: supplier().id,
                 store_id: mock_store_c().id,
                 name_is_supplier: true,
                 ..Default::default()
@@ -344,8 +344,8 @@ mod test {
             updated_invoice.invoice_row
         );
         assert_ne!(
-            updated_invoice.invoice_row.name_link_id,
-            invoice().name_link_id
+            updated_invoice.invoice_row.name_id,
+            invoice().name_id
         );
         assert_eq!(
             updated_lines,

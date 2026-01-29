@@ -126,7 +126,7 @@ mod test {
         fn not_a_customer_join() -> NameStoreJoinRow {
             NameStoreJoinRow {
                 id: "not_a_customer_join".to_string(),
-                name_link_id: not_a_customer().id,
+                name_id: not_a_customer().id,
                 store_id: mock_store_a().id,
                 name_is_customer: false,
                 ..Default::default()
@@ -213,7 +213,7 @@ mod test {
         fn customer_join() -> NameStoreJoinRow {
             NameStoreJoinRow {
                 id: "customer_join".to_string(),
-                name_link_id: customer().id,
+                name_id: customer().id,
                 store_id: mock_store_a().id,
                 name_is_customer: true,
                 ..Default::default()
@@ -257,7 +257,7 @@ mod test {
         assert_eq!(
             invoice,
             InvoiceRow {
-                name_link_id: customer().id,
+                name_id: customer().id,
                 user_id: Some(mock_user_account_a().id),
                 currency_id: Some(currency_a().id),
                 ..invoice.clone()
@@ -285,7 +285,7 @@ mod test {
         assert_eq!(
             invoice,
             InvoiceRow {
-                name_link_id: customer().id,
+                name_id: customer().id,
                 on_hold: true,
                 ..invoice.clone()
             }
@@ -297,7 +297,7 @@ mod test {
                 &context,
                 InsertOutboundShipment {
                     id: "test_name_store_id_linked".to_string(),
-                    other_party_id: mock_name_linked_to_store_join().name_link_id.clone(),
+                    other_party_id: mock_name_linked_to_store_join().name_id.clone(),
                     ..Default::default()
                 },
             )

@@ -53,7 +53,7 @@ pub(crate) fn generate(
 
     let input_donor_id = match patch.default_donor.clone() {
         Some(update) => update.donor_id,
-        None => update_invoice.default_donor_link_id.clone(),
+        None => update_invoice.default_donor_id.clone(),
     };
 
     update_invoice.user_id = Some(ctx.user_id.clone());
@@ -65,7 +65,7 @@ pub(crate) fn generate(
         .tax
         .map(|tax| tax.percentage)
         .unwrap_or(update_invoice.tax_percentage);
-    update_invoice.default_donor_link_id = input_donor_id.clone();
+    update_invoice.default_donor_id = input_donor_id.clone();
 
     if let Some(status) = patch.status.clone() {
         update_invoice.status = status.full_status()
@@ -75,7 +75,7 @@ pub(crate) fn generate(
         update_invoice.name_store_id = other_party.store_id().map(|id| id.to_string());
         // Assigning name_row id as name_link is ok, input name_row should always an active name
         // - only querying needs to go via link table
-        update_invoice.name_link_id = other_party.name_row.id;
+        update_invoice.name_id = other_party.name_row.id;
     }
 
     update_invoice.currency_id = patch.currency_id.or(update_invoice.currency_id);
@@ -88,7 +88,7 @@ pub(crate) fn generate(
                 store_id: &update_invoice.store_id,
                 id: &update_invoice.id,
                 tax_percentage: update_invoice.tax_percentage,
-                supplier_id: &update_invoice.name_link_id,
+                supplier_id: &update_invoice.name_id,
                 currency_id: update_invoice.currency_id.clone(),
                 currency_rate: &update_invoice.currency_rate,
             },
@@ -378,7 +378,7 @@ pub fn generate_lines_and_stock_lines(
             batch,
             expiry_date,
             pack_size,
-            donor_link_id,
+            donor_id: donor_link_id,
             note,
             vvm_status_id,
             campaign_id,
@@ -401,9 +401,9 @@ pub fn generate_lines_and_stock_lines(
             total_number_of_packs: number_of_packs,
             expiry_date,
             note,
-            supplier_link_id: Some(supplier_id.to_string()),
+            supplier_id: Some(supplier_id.to_string()),
             item_variant_id,
-            donor_link_id,
+            donor_id: donor_link_id,
             vvm_status_id,
             campaign_id,
             program_id,
@@ -460,21 +460,21 @@ fn update_donor_on_lines_and_stock(
         let mut stock_line = invoice_line.stock_line_option;
 
         let new_donor_id = match donor_update_method.clone() {
-            ApplyDonorToInvoiceLines::None => line.donor_link_id.clone(),
-            ApplyDonorToInvoiceLines::UpdateExistingDonor => match line.donor_link_id {
+            ApplyDonorToInvoiceLines::None => line.donor_id.clone(),
+            ApplyDonorToInvoiceLines::UpdateExistingDonor => match line.donor_id {
                 Some(_) => updated_default_donor_id.clone(),
                 None => None,
             },
             ApplyDonorToInvoiceLines::AssignIfNone => line
-                .donor_link_id
+                .donor_id
                 .clone()
                 .or(updated_default_donor_id.clone()),
             ApplyDonorToInvoiceLines::AssignToAll => updated_default_donor_id.clone(),
         };
 
-        line.donor_link_id = new_donor_id.clone();
+        line.donor_id = new_donor_id.clone();
         if let Some(ref mut stock_line) = stock_line {
-            stock_line.donor_link_id = new_donor_id;
+            stock_line.donor_id = new_donor_id;
         }
 
         result.push(LineAndStockLine { line, stock_line });

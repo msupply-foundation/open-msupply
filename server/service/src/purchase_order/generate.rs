@@ -51,7 +51,7 @@ pub fn generate_empty_purchase_order_lines(
                     price_per_pack_before_discount: 0.0,
                     price_per_pack_after_discount: 0.0,
                     comment: None,
-                    manufacturer_link_id: None,
+                    manufacturer_id: None,
                     note: None,
                     unit: None,
                 });

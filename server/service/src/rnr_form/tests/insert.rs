@@ -247,7 +247,7 @@ mod insert {
                 // make supplier store C visible in store B
                 name_store_joins: vec![NameStoreJoinRow {
                     id: String::from("name_store_b_join_c"),
-                    name_link_id: String::from("name_store_c"),
+                    name_id: String::from("name_store_c"),
                     store_id: String::from("store_b"),
                     name_is_customer: false,
                     name_is_supplier: true,
@@ -344,7 +344,7 @@ mod insert {
                 // make supplier store C visible in store A
                 name_store_joins: vec![NameStoreJoinRow {
                     id: String::from("name_store_a_join_c"),
-                    name_link_id: String::from("name_store_c"),
+                    name_id: String::from("name_store_c"),
                     store_id: String::from("store_a"),
                     name_is_customer: false,
                     name_is_supplier: true,
@@ -466,7 +466,7 @@ mod insert {
             let rnr_form = RnRFormRow {
                 id: form_id.clone(),
                 store_id: mock_store_a().id.clone(),
-                name_link_id: "name_store_c".to_string(),
+                name_id: "name_store_c".to_string(),
                 period_id: period_id.clone(),
                 program_id: mock_program_b().id.clone(),
                 status: RnRFormStatus::Finalised,
@@ -479,7 +479,7 @@ mod insert {
             let invoice_id = format!("{period_idx}");
             let invoice = InvoiceRow {
                 id: invoice_id.clone(),
-                name_link_id: "name_store_c".to_string(),
+                name_id: "name_store_c".to_string(),
                 store_id: mock_store_a().id.clone(),
                 r#type: InvoiceType::OutboundShipment,
                 status: InvoiceStatus::Verified,
@@ -552,7 +552,7 @@ mod insert {
         let test_invoice_id = "consumption_invoice".to_string();
         let test_invoice = InvoiceRow {
             id: test_invoice_id.clone(),
-            name_link_id: "name_store_c".to_string(),
+            name_id: "name_store_c".to_string(),
             store_id: mock_store_a().id.clone(),
             r#type: InvoiceType::OutboundShipment,
             status: InvoiceStatus::Picked,
@@ -588,12 +588,12 @@ mod insert {
                 MasterListNameJoinRow {
                     id: "perf_master_list_join_store_a".to_string(),
                     master_list_id: "perf_master_list".to_string(),
-                    name_link_id: "name_store_a".to_string(),
+                    name_id: "name_store_a".to_string(),
                 },
                 MasterListNameJoinRow {
                     id: "perf_master_list_join_store_c".to_string(),
                     master_list_id: "perf_master_list".to_string(),
-                    name_link_id: "name_store_c".to_string(),
+                    name_id: "name_store_c".to_string(),
                 },
             ],
             lines: master_list_lines.clone(),

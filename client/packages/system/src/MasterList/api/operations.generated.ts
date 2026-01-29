@@ -247,16 +247,13 @@ export function getSdk(
   return {
     masterLists(
       variables: MasterListsQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<MasterListsQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<MasterListsQuery>({
-            document: MasterListsDocument,
-            variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
+          client.request<MasterListsQuery>(MasterListsDocument, variables, {
+            ...requestHeaders,
+            ...wrappedRequestHeaders,
           }),
         'masterLists',
         'query',
@@ -265,16 +262,13 @@ export function getSdk(
     },
     masterList(
       variables: MasterListQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<MasterListQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<MasterListQuery>({
-            document: MasterListDocument,
-            variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
+          client.request<MasterListQuery>(MasterListDocument, variables, {
+            ...requestHeaders,
+            ...wrappedRequestHeaders,
           }),
         'masterList',
         'query',
@@ -283,17 +277,15 @@ export function getSdk(
     },
     masterListLines(
       variables: MasterListLinesQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<MasterListLinesQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<MasterListLinesQuery>({
-            document: MasterListLinesDocument,
+          client.request<MasterListLinesQuery>(
+            MasterListLinesDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'masterListLines',
         'query',
         variables
@@ -301,17 +293,15 @@ export function getSdk(
     },
     masterListLineCount(
       variables: MasterListLineCountQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<MasterListLineCountQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<MasterListLineCountQuery>({
-            document: MasterListLineCountDocument,
+          client.request<MasterListLineCountQuery>(
+            MasterListLineCountDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'masterListLineCount',
         'query',
         variables

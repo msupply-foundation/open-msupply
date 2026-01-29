@@ -23,7 +23,7 @@ pub struct StockLineInput {
     pub store_id: String,
     pub on_hold: bool,
     pub barcode_id: Option<String>,
-    pub supplier_link_id: String,
+    pub supplier_id: String,
     pub overwrite_stock_levels: bool,
 }
 
@@ -45,7 +45,7 @@ pub fn generate_batch(
         location_id,
         note,
         item_variant_id,
-        donor_link_id,
+        donor_id: donor_link_id,
         vvm_status_id,
         campaign_id,
         program_id,
@@ -58,7 +58,7 @@ pub fn generate_batch(
         store_id,
         on_hold,
         barcode_id,
-        supplier_link_id,
+        supplier_id: supplier_link_id,
         overwrite_stock_levels,
     }: StockLineInput,
 ) -> Result<StockLineRow, RepositoryError> {
@@ -86,7 +86,7 @@ pub fn generate_batch(
             // if no new barcode, use the existing one if exists
             barcode_id.or(stock_line.barcode_id),
             // if stock_line already has supplier, use that
-            stock_line.supplier_link_id.or(Some(supplier_link_id)),
+            stock_line.supplier_id.or(Some(supplier_link_id)),
         ),
         None => (barcode_id, Some(supplier_link_id)),
     };
@@ -104,11 +104,11 @@ pub fn generate_batch(
         total_number_of_packs,
         expiry_date,
         note,
-        supplier_link_id,
+        supplier_id: supplier_link_id,
         on_hold,
         barcode_id,
         item_variant_id,
-        donor_link_id,
+        donor_id: donor_link_id,
         vvm_status_id,
         campaign_id,
         program_id,

@@ -1,18 +1,14 @@
 use super::{
     indicator_value_row::{indicator_value, IndicatorValueRow},
-    name_link_row::name_link,
     name_row::name,
-    DBType, NameLinkRow, NameRow, StorageConnection,
+    DBType, NameRow, StorageConnection,
 };
 
 use crate::{diesel_macros::apply_equal_filter, repository_error::RepositoryError};
 
 use crate::{EqualFilter, Pagination};
 
-use diesel::{
-    dsl::{InnerJoin, IntoBoxed},
-    prelude::*,
-};
+use diesel::{dsl::IntoBoxed, prelude::*};
 
 pub struct IndicatorValueRepository<'a> {
     connection: &'a StorageConnection,
@@ -34,7 +30,7 @@ pub struct IndicatorValue {
     pub name_row: NameRow,
 }
 
-type IndicatorValueJoin = (IndicatorValueRow, (NameLinkRow, NameRow));
+type IndicatorValueJoin = (IndicatorValueRow, NameRow);
 
 impl IndicatorValueFilter {
     pub fn new() -> IndicatorValueFilter {
@@ -94,13 +90,11 @@ impl<'a> IndicatorValueRepository<'a> {
     }
 
     pub fn create_filtered_query(filter: Option<IndicatorValueFilter>) -> BoxedIndicatorQuery {
-        let mut query = indicator_value::table
-            .inner_join(name_link::table.inner_join(name::table))
-            .into_boxed();
+        let mut query = query().into_boxed();
 
         if let Some(f) = filter {
             apply_equal_filter!(query, f.id, indicator_value::id);
-            apply_equal_filter!(query, f.customer_name_id, name::id);
+            apply_equal_filter!(query, f.customer_name_id, indicator_value::customer_name_id);
             apply_equal_filter!(query, f.store_id, indicator_value::store_id);
             apply_equal_filter!(query, f.period_id, indicator_value::period_id);
             apply_equal_filter!(
@@ -137,15 +131,16 @@ impl<'a> IndicatorValueRepository<'a> {
     }
 }
 
-fn to_domain((indicator_value_row, (_, name_row)): IndicatorValueJoin) -> IndicatorValue {
+fn to_domain((indicator_value_row, name_row): IndicatorValueJoin) -> IndicatorValue {
     IndicatorValue {
         indicator_value_row,
         name_row,
     }
 }
 
-type BoxedIndicatorQuery = IntoBoxed<
-    'static,
-    InnerJoin<indicator_value::table, InnerJoin<name_link::table, name::table>>,
-    DBType,
->;
+#[diesel::dsl::auto_type]
+fn query() -> _ {
+    indicator_value::table.inner_join(name::table.on(indicator_value::customer_name_id.eq(name::id)))
+}
+
+type BoxedIndicatorQuery = IntoBoxed<'static, query, DBType>;

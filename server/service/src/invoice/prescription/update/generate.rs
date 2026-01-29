@@ -52,7 +52,7 @@ pub(crate) fn generate(
 
     set_new_status_datetime(&mut update_invoice, &input_status);
 
-    update_invoice.name_link_id = input_patient_id.unwrap_or(update_invoice.name_link_id);
+    update_invoice.name_id = input_patient_id.unwrap_or(update_invoice.name_id);
     if let Some(clinician_link_id) = input_clinician_id {
         update_invoice.clinician_link_id = clinician_link_id.value;
     }

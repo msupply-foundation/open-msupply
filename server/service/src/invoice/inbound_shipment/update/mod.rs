@@ -269,7 +269,7 @@ mod test {
         fn not_a_supplier_join() -> NameStoreJoinRow {
             NameStoreJoinRow {
                 id: "not_a_supplier_join".to_string(),
-                name_link_id: not_a_supplier().id,
+                name_id: not_a_supplier().id,
                 store_id: mock_store_a().id,
                 name_is_supplier: false,
                 ..Default::default()
@@ -404,7 +404,7 @@ mod test {
         fn supplier_join() -> NameStoreJoinRow {
             NameStoreJoinRow {
                 id: "supplier_join".to_string(),
-                name_link_id: supplier().id,
+                name_id: supplier().id,
                 store_id: mock_store_a().id,
                 name_is_supplier: true,
                 ..Default::default()
@@ -414,7 +414,7 @@ mod test {
         fn invoice_test() -> InvoiceRow {
             InvoiceRow {
                 id: "invoice_test".to_string(),
-                name_link_id: "supplier".to_string(),
+                name_id: "supplier".to_string(),
                 store_id: "store_a".to_string(),
                 ..Default::default()
             }
@@ -500,7 +500,7 @@ mod test {
         assert_eq!(
             invoice,
             InvoiceRow {
-                name_link_id: supplier().id,
+                name_id: supplier().id,
                 user_id: Some(mock_user_account_a().id),
                 ..invoice.clone()
             }
@@ -984,7 +984,7 @@ mod test {
                 &context,
                 UpdateInboundShipment {
                     id: mock_inbound_shipment_a().id,
-                    other_party_id: Some(mock_name_linked_to_store_join().name_link_id.clone()),
+                    other_party_id: Some(mock_name_linked_to_store_join().name_id.clone()),
                     ..Default::default()
                 },
             )
@@ -1009,7 +1009,7 @@ mod test {
                 &context,
                 UpdateInboundShipment {
                     id: mock_inbound_shipment_a().id,
-                    other_party_id: Some(mock_name_not_linked_to_store_join().name_link_id.clone()),
+                    other_party_id: Some(mock_name_not_linked_to_store_join().name_id.clone()),
                     ..Default::default()
                 },
             )
@@ -1072,7 +1072,7 @@ mod test {
             }
         );
         assert_eq!(log.r#type, ActivityLogType::InvoiceStatusVerified);
-        assert_eq!(Some(invoice.name_link_id), stock_line.supplier_link_id);
+        assert_eq!(Some(invoice.name_id), stock_line.supplier_id);
     }
 
     #[actix_rt::test]
@@ -1146,13 +1146,13 @@ mod test {
         result.sort_by(|a, b| a.id.cmp(&b.id));
 
         assert_eq!(
-            invoice.invoice_row.default_donor_link_id,
+            invoice.invoice_row.default_donor_id,
             Some(mock_donor_b().id)
         );
         assert_eq!(result.len(), 2);
         assert_eq!(result[0].id, "new_invoice_line_id_a".to_string());
-        assert_eq!(result[0].donor_link_id, Some(mock_donor_a().id));
-        assert_eq!(result[1].donor_link_id, None);
+        assert_eq!(result[0].donor_id, Some(mock_donor_a().id));
+        assert_eq!(result[1].donor_id, None);
 
         // UpdateExistingDonor: updates donor_id on invoice lines that already have a donor,
         // and leaves invoice lines without a donor_id unchanged
@@ -1176,11 +1176,11 @@ mod test {
         result.sort_by(|a, b| a.id.cmp(&b.id));
 
         assert_eq!(
-            invoice.invoice_row.default_donor_link_id,
+            invoice.invoice_row.default_donor_id,
             Some(mock_donor_b().id)
         );
-        assert_eq!(result[0].donor_link_id, Some(mock_donor_b().id));
-        assert_eq!(result[1].donor_link_id, None);
+        assert_eq!(result[0].donor_id, Some(mock_donor_b().id));
+        assert_eq!(result[1].donor_id, None);
 
         // AssignIfNone: assigns the default_donor_id to invoice lines that don't have a donor_id
         invoice_service
@@ -1202,8 +1202,8 @@ mod test {
             .unwrap();
         result.sort_by(|a, b| a.id.cmp(&b.id));
 
-        assert_eq!(result[0].donor_link_id, Some(mock_donor_b().id));
-        assert_eq!(result[1].donor_link_id, Some(mock_donor_a().id));
+        assert_eq!(result[0].donor_id, Some(mock_donor_b().id));
+        assert_eq!(result[1].donor_id, Some(mock_donor_a().id));
 
         // AssignToAll: assigns the default_donor_id to all invoice lines
         invoice_service
@@ -1225,6 +1225,6 @@ mod test {
             .unwrap();
         result.sort_by(|a, b| a.id.cmp(&b.id));
 
-        assert!(result.iter().all(|line| line.donor_link_id == None));
+        assert!(result.iter().all(|line| line.donor_id == None));
     }
 }

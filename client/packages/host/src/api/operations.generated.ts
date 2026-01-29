@@ -215,17 +215,15 @@ export function getSdk(
   return {
     databaseSettings(
       variables?: DatabaseSettingsQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<DatabaseSettingsQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<DatabaseSettingsQuery>({
-            document: DatabaseSettingsDocument,
+          client.request<DatabaseSettingsQuery>(
+            DatabaseSettingsDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'databaseSettings',
         'query',
         variables
@@ -233,17 +231,15 @@ export function getSdk(
     },
     displaySettings(
       variables: DisplaySettingsQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<DisplaySettingsQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<DisplaySettingsQuery>({
-            document: DisplaySettingsDocument,
+          client.request<DisplaySettingsQuery>(
+            DisplaySettingsDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'displaySettings',
         'query',
         variables
@@ -251,17 +247,15 @@ export function getSdk(
     },
     labelPrinterSettings(
       variables?: LabelPrinterSettingsQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<LabelPrinterSettingsQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<LabelPrinterSettingsQuery>({
-            document: LabelPrinterSettingsDocument,
+          client.request<LabelPrinterSettingsQuery>(
+            LabelPrinterSettingsDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'labelPrinterSettings',
         'query',
         variables
@@ -269,17 +263,15 @@ export function getSdk(
     },
     updateDisplaySettings(
       variables: UpdateDisplaySettingsMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<UpdateDisplaySettingsMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<UpdateDisplaySettingsMutation>({
-            document: UpdateDisplaySettingsDocument,
+          client.request<UpdateDisplaySettingsMutation>(
+            UpdateDisplaySettingsDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'updateDisplaySettings',
         'mutation',
         variables
@@ -287,17 +279,15 @@ export function getSdk(
     },
     updateLabelPrinterSettings(
       variables: UpdateLabelPrinterSettingsMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<UpdateLabelPrinterSettingsMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<UpdateLabelPrinterSettingsMutation>({
-            document: UpdateLabelPrinterSettingsDocument,
+          client.request<UpdateLabelPrinterSettingsMutation>(
+            UpdateLabelPrinterSettingsDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'updateLabelPrinterSettings',
         'mutation',
         variables
@@ -305,17 +295,15 @@ export function getSdk(
     },
     configureNameProperties(
       variables: ConfigureNamePropertiesMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<ConfigureNamePropertiesMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<ConfigureNamePropertiesMutation>({
-            document: ConfigureNamePropertiesDocument,
+          client.request<ConfigureNamePropertiesMutation>(
+            ConfigureNamePropertiesDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'configureNameProperties',
         'mutation',
         variables
@@ -323,17 +311,15 @@ export function getSdk(
     },
     insertContactForm(
       variables: InsertContactFormMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<InsertContactFormMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<InsertContactFormMutation>({
-            document: InsertContactFormDocument,
+          client.request<InsertContactFormMutation>(
+            InsertContactFormDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'insertContactForm',
         'mutation',
         variables

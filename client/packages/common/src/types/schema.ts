@@ -7422,7 +7422,7 @@ export type PurchaseOrderNode = {
   documents: SyncFileReferenceConnector;
   donor?: Maybe<NameNode>;
   finalisedDatetime?: Maybe<Scalars['DateTime']['output']>;
-  foreignExchangeRate?: Maybe<Scalars['Float']['output']>;
+  foreignExchangeRate: Scalars['Float']['output'];
   freightCharge?: Maybe<Scalars['Float']['output']>;
   freightConditions?: Maybe<Scalars['String']['output']>;
   headingMessage?: Maybe<Scalars['String']['output']>;

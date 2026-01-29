@@ -41,7 +41,7 @@ pub(crate) fn generate(
 
     if let Some(other_party) = other_party_option {
         updated_return.name_store_id = other_party.store_id().map(|id| id.to_string());
-        updated_return.name_link_id = other_party.name_row.id;
+        updated_return.name_id = other_party.name_row.id;
     }
 
     if let Some(status) = patch.status.clone() {
@@ -55,7 +55,7 @@ pub(crate) fn generate(
             connection,
             &updated_return.store_id,
             &updated_return.id,
-            &updated_return.name_link_id,
+            &updated_return.name_id,
         )?)
     } else {
         None
@@ -174,7 +174,7 @@ pub fn generate_lines_and_stock_lines(
                     store_id: store_id.to_string(),
                     on_hold: existing_stock_line.map_or(false, |stock_line| stock_line.on_hold),
                     barcode_id: None,
-                    supplier_link_id: supplier_id.to_string(),
+                    supplier_id: supplier_id.to_string(),
                     // Update existing stock levels if the stock line already exists
                     overwrite_stock_levels: false,
                 },

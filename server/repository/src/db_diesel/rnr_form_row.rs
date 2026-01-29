@@ -1,11 +1,12 @@
 use super::{
-    name_link_row::name_link, name_row::name, period_row::period,
-    period_schedule_row::period_schedule, program_row::program, rnr_form_row::rnr_form::dsl::*,
-    store_row::store,
+    name_row::name, period_row::period,
+    period_schedule_row::period_schedule, program_row::program,
+    store_row::store, StorageConnection,
 };
 use crate::{
+    diesel_macros::define_linked_tables,
     ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, Delete, RepositoryError,
-    RowActionType, StorageConnection, Upsert,
+    RowActionType, Upsert,
 };
 
 use chrono::NaiveDateTime;
@@ -13,11 +14,13 @@ use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
 
-table! {
-    rnr_form (id) {
-        id -> Text,
+define_linked_tables! {
+    view: rnr_form = "rnr_form_view",
+    core: rnr_form_with_links = "rnr_form",
+    struct: RnRFormRow,
+    repo: RnRFormRowRepository,
+    shared: {
         store_id -> Text,
-        name_link_id -> Text,
         period_id -> Text,
         program_id -> Text,
         created_datetime -> Timestamp,
@@ -26,16 +29,20 @@ table! {
         linked_requisition_id -> Nullable<Text>,
         their_reference -> Nullable<Text>,
         comment -> Nullable<Text>,
+    },
+    links: {
+        name_link_id -> name_id,
+    },
+    optional_links: {
     }
 }
 
 joinable!(rnr_form -> store (store_id));
-joinable!(rnr_form -> name_link (name_link_id));
+joinable!(rnr_form -> name (name_id));
 joinable!(rnr_form -> period (period_id));
 joinable!(rnr_form -> program (program_id));
 
 allow_tables_to_appear_in_same_query!(rnr_form, store);
-allow_tables_to_appear_in_same_query!(rnr_form, name_link);
 allow_tables_to_appear_in_same_query!(rnr_form, name);
 allow_tables_to_appear_in_same_query!(rnr_form, period);
 allow_tables_to_appear_in_same_query!(rnr_form, program);
@@ -49,7 +56,6 @@ allow_tables_to_appear_in_same_query!(rnr_form, period_schedule);
 pub struct RnRFormRow {
     pub id: String,
     pub store_id: String,
-    pub name_link_id: String,
     pub period_id: String,
     pub program_id: String,
     pub created_datetime: NaiveDateTime,
@@ -58,6 +64,8 @@ pub struct RnRFormRow {
     pub linked_requisition_id: Option<String>,
     pub their_reference: Option<String>,
     pub comment: Option<String>,
+    // Resolved from name_link - must be last to match view column order
+    pub name_id: String,
 }
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
@@ -78,18 +86,8 @@ impl<'a> RnRFormRowRepository<'a> {
         RnRFormRowRepository { connection }
     }
 
-    pub fn _upsert_one(&self, rnr_form_row: &RnRFormRow) -> Result<(), RepositoryError> {
-        diesel::insert_into(rnr_form)
-            .values(rnr_form_row)
-            .on_conflict(id)
-            .do_update()
-            .set(rnr_form_row)
-            .execute(self.connection.lock().connection())?;
-        Ok(())
-    }
-
     pub fn upsert_one(&self, rnr_form_row: &RnRFormRow) -> Result<i64, RepositoryError> {
-        self._upsert_one(rnr_form_row)?;
+        self._upsert(rnr_form_row)?;
         self.insert_changelog(rnr_form_row.to_owned(), RowActionType::Upsert)
     }
 
@@ -103,20 +101,20 @@ impl<'a> RnRFormRowRepository<'a> {
             record_id: row.id,
             row_action: action,
             store_id: Some(row.store_id),
-            name_link_id: None,
+            name_link_id: Some(row.name_id),
         };
 
         ChangelogRepository::new(self.connection).insert(&row)
     }
 
     pub fn find_all(&self) -> Result<Vec<RnRFormRow>, RepositoryError> {
-        let result = rnr_form.load(self.connection.lock().connection())?;
+        let result = rnr_form::table.load(self.connection.lock().connection())?;
         Ok(result)
     }
 
     pub fn find_one_by_id(&self, rnr_form_id: &str) -> Result<Option<RnRFormRow>, RepositoryError> {
-        let result = rnr_form
-            .filter(id.eq(rnr_form_id))
+        let result = rnr_form::table
+            .filter(rnr_form::id.eq(rnr_form_id))
             .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
@@ -131,7 +129,7 @@ impl<'a> RnRFormRowRepository<'a> {
             }
         };
 
-        diesel::delete(rnr_form.filter(id.eq(rnr_form_id)))
+        diesel::delete(rnr_form_with_links::table.filter(rnr_form_with_links::id.eq(rnr_form_id)))
             .execute(self.connection.lock().connection())?;
         Ok(Some(change_log_id))
     }

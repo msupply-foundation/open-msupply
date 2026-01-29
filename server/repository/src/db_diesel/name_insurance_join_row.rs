@@ -1,9 +1,12 @@
 use super::{
-    name_link, name_row::name, ChangeLogInsertRow, ChangelogRepository, ChangelogTableName,
+    name_row::name, ChangeLogInsertRow, ChangelogRepository, ChangelogTableName,
     RowActionType, StorageConnection,
 };
 
-use crate::{diesel_macros::apply_sort, repository_error::RepositoryError, Sort, Upsert};
+use crate::{
+    diesel_macros::{apply_sort, define_linked_tables},
+    repository_error::RepositoryError, Sort, Upsert
+};
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
@@ -24,25 +27,31 @@ pub enum InsurancePolicyType {
     Business,
 }
 
-table! {
-  name_insurance_join (id) {
-    id -> Text,
-    name_link_id -> Text,
-    insurance_provider_id -> Text,
-    policy_number_person -> Nullable<Text>,
-    policy_number_family -> Nullable<Text>,
-    policy_number -> Text,
-    policy_type -> crate::db_diesel::name_insurance_join_row::InsurancePolicyTypeMapping,
-    discount_percentage -> Double,
-    expiry_date -> Date,
-    is_active -> Bool,
-    entered_by_id -> Nullable<Text>,
-    name_of_insured -> Nullable<Text>,
-  }
+define_linked_tables! {
+    view: name_insurance_join = "name_insurance_join_view",
+    core: name_insurance_join_with_links = "name_insurance_join",
+    struct: NameInsuranceJoinRow,
+    repo: NameInsuranceJoinRowRepository,
+    shared: {
+        insurance_provider_id -> Text,
+        policy_number_person -> Nullable<Text>,
+        policy_number_family -> Nullable<Text>,
+        policy_number -> Text,
+        policy_type -> crate::db_diesel::name_insurance_join_row::InsurancePolicyTypeMapping,
+        discount_percentage -> Double,
+        expiry_date -> Date,
+        is_active -> Bool,
+        entered_by_id -> Nullable<Text>,
+        name_of_insured -> Nullable<Text>,
+    },
+    links: {
+        name_link_id -> name_id,
+    },
+    optional_links: {
+    }
 }
 
-joinable!(name_insurance_join -> name_link (name_link_id));
-allow_tables_to_appear_in_same_query!(name_insurance_join, name_link);
+joinable!(name_insurance_join -> name (name_id));
 allow_tables_to_appear_in_same_query!(name_insurance_join, name);
 
 #[derive(
@@ -51,7 +60,6 @@ allow_tables_to_appear_in_same_query!(name_insurance_join, name);
 #[diesel(table_name = name_insurance_join)]
 pub struct NameInsuranceJoinRow {
     pub id: String,
-    pub name_link_id: String,
     pub insurance_provider_id: String,
     pub policy_number_person: Option<String>,
     pub policy_number_family: Option<String>,
@@ -62,6 +70,8 @@ pub struct NameInsuranceJoinRow {
     pub is_active: bool,
     pub entered_by_id: Option<String>,
     pub name_of_insured: Option<String>,
+    // Resolved from name_link - must be last to match view column order
+    pub name_id: String,
 }
 
 pub struct NameInsuranceJoinRowRepository<'a> {
@@ -100,9 +110,7 @@ impl<'a> NameInsuranceJoinRowRepository<'a> {
         sort: Option<NameInsuranceJoinSort>,
     ) -> Result<Vec<NameInsuranceJoinRow>, RepositoryError> {
         let mut query = name_insurance_join::table
-            .inner_join(name_link::table.inner_join(name::table))
-            .filter(name::id.eq(name_id))
-            .select(name_insurance_join::all_columns)
+            .filter(name_insurance_join::name_id.eq(name_id))
             .into_boxed();
 
         if let Some(sort) = sort {
@@ -123,12 +131,7 @@ impl<'a> NameInsuranceJoinRowRepository<'a> {
     }
 
     pub fn upsert_one(&self, row: &NameInsuranceJoinRow) -> Result<i64, RepositoryError> {
-        diesel::insert_into(name_insurance_join::table)
-            .values(row)
-            .on_conflict(name_insurance_join::id)
-            .do_update()
-            .set(row)
-            .execute(self.connection.lock().connection())?;
+        self._upsert(row)?;
         self.insert_changelog(&row.id, RowActionType::Upsert)
     }
 

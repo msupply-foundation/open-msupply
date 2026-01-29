@@ -2,13 +2,14 @@ use super::item_variant_row::{item_variant, ItemVariantRow};
 use crate::{
     db_diesel::{item_row::item, location_type_row::location_type, name_row::name},
     diesel_macros::{apply_equal_filter, apply_sort_no_case, apply_string_filter},
-    item_link, name_link,
+    item_link,
     repository_error::RepositoryError,
-    DBType, EqualFilter, ItemLinkRow, ItemRow, LocationTypeRow, NameLinkRow, NameRow, Pagination,
-    Sort, StorageConnection, StringFilter,
+    DBType, EqualFilter, ItemLinkRow, ItemRow, LocationTypeRow, NameRow, Pagination, Sort,
+    StorageConnection, StringFilter,
 };
 use diesel::{
-    dsl::{InnerJoin, IntoBoxed, LeftJoin},
+    dsl::{IntoBoxed, LeftJoin},
+    helper_types::InnerJoin,
     prelude::*,
 };
 
@@ -28,10 +29,22 @@ pub type ItemVariantSort = Sort<ItemVariantSortField>;
 
 type ItemVariantJoin = (
     ItemVariantRow,
-    Option<(NameLinkRow, NameRow)>,
+    Option<NameRow>,
     (ItemLinkRow, ItemRow),
     Option<LocationTypeRow>,
 );
+
+type BoxedItemVariantQuery = IntoBoxed<
+    'static,
+    LeftJoin<
+        InnerJoin<
+            LeftJoin<item_variant::table, name::table>,
+            InnerJoin<item_link::table, item::table>,
+        >,
+        location_type::table,
+    >,
+    DBType,
+>;
 
 #[derive(Clone, Default)]
 pub struct ItemVariantFilter {
@@ -127,31 +140,21 @@ impl<'a> ItemVariantRepository<'a> {
 }
 
 fn to_domain(
-    (item_variant_row, name_link, (_, item_row), location_type_row): ItemVariantJoin,
+    (item_variant_row, manufacturer_row, (_, item_row), location_type_row): ItemVariantJoin,
 ) -> ItemVariant {
     ItemVariant {
         item_variant_row,
-        manufacturer_row: name_link.map(|(_, name)| name),
+        manufacturer_row,
         item_row,
         location_type_row,
     }
 }
 
-type BoxedItemVariantQuery = IntoBoxed<
-    'static,
-    LeftJoin<
-        InnerJoin<
-            LeftJoin<item_variant::table, InnerJoin<name_link::table, name::table>>,
-            InnerJoin<item_link::table, item::table>,
-        >,
-        location_type::table,
-    >,
-    DBType,
->;
-
-fn create_filtered_query(filter: Option<ItemVariantFilter>) -> BoxedItemVariantQuery {
+fn create_filtered_query(
+    filter: Option<ItemVariantFilter>,
+) -> BoxedItemVariantQuery {
     let mut query = item_variant::table
-        .left_join(name_link::table.inner_join(name::table))
+        .left_join(name::table)
         .inner_join(item_link::table.inner_join(item::table))
         .left_join(location_type::table)
         .into_boxed();
@@ -202,7 +205,6 @@ mod tests {
                 name: name.clone(),
                 item_link_id: mock_item_a().id,
                 location_type_id: None,
-                manufacturer_link_id: None,
                 deleted_datetime: None,
                 vvm_type: None,
                 created_datetime: NaiveDate::from_ymd_opt(2024, 2, 1)
@@ -210,6 +212,7 @@ mod tests {
                     .and_hms_opt(0, 0, 0)
                     .unwrap(),
                 created_by: None,
+                manufacturer_id: None,
             })
             .unwrap();
 

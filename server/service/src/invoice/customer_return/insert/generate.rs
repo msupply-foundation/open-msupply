@@ -41,7 +41,7 @@ pub fn generate(
     let customer_return = InvoiceRow {
         id: invoice_id.clone(),
         user_id: Some(user_id.to_string()),
-        name_link_id: other_party_id,
+        name_id: other_party_id,
         r#type: InvoiceType::CustomerReturn,
         invoice_number: next_number(connection, &NumberRowType::CustomerReturn, store_id)?,
         name_store_id: other_party.store_id().map(|id| id.to_string()),
@@ -76,7 +76,7 @@ pub fn generate(
         insurance_discount_percentage: None,
         is_cancellation: false,
         expected_delivery_date: None,
-        default_donor_link_id: None,
+        default_donor_id: None,
         goods_received_id: None,
         shipping_method_id: None,
     };
