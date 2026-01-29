@@ -9,9 +9,10 @@ import {
   Divider,
   Alert,
   ButtonWithIcon,
+  parseResult,
+  ScanResult as ParsedScanResult,
 } from '@openmsupply-client/common';
 import { XCircleIcon, DeleteIcon, CheckIcon, RefreshIcon } from '@common/icons';
-import { useTranslation } from '@common/intl';
 
 // Extend window type to include honeywell plugin
 declare global {
@@ -33,6 +34,7 @@ declare global {
 interface ScanResult {
   text: string;
   timestamp: Date;
+  parsed?: ParsedScanResult;
 }
 
 export const BarcodeScannerTest = () => {
@@ -42,7 +44,6 @@ export const BarcodeScannerTest = () => {
   const [initLog, setInitLog] = useState<string[]>([]);
 
   const addLog = (message: string) => {
-    console.log(message);
     setInitLog(prev => [
       ...prev,
       `${new Date().toLocaleTimeString()}: ${message}`,
@@ -85,13 +86,17 @@ export const BarcodeScannerTest = () => {
 
     addLog('Starting scanner...');
 
-    honeywell.listen(
+    honeywell.listen!(
       (data: string) => {
         addLog(`Barcode scanned: ${data}`);
+        const parsed = parseResult(data);
+        addLog(`Parsed GTIN: ${parsed.gtin || 'N/A'}`);
+        addLog(`Parsed Batch: ${parsed.batch || 'N/A'}`);
         setScanResults(prev => [
           {
             text: data,
             timestamp: new Date(),
+            parsed,
           },
           ...prev,
         ]);
@@ -116,7 +121,7 @@ export const BarcodeScannerTest = () => {
     }
 
     addLog('Stopping scanner...');
-    honeywell.release();
+    honeywell.release!();
     setIsScanning(false);
     addLog('Scanner stopped');
   };
@@ -131,7 +136,7 @@ export const BarcodeScannerTest = () => {
 
     addLog('Restarting scanner (claim + listen)...');
 
-    honeywell.claim(() => {
+    honeywell.claim!(() => {
       addLog('Scanner claimed successfully');
 
       if (!window.plugins?.honeywell) {
@@ -139,13 +144,17 @@ export const BarcodeScannerTest = () => {
         return;
       }
 
-      window.plugins.honeywell.listen(
+      window.plugins!.honeywell!.listen!(
         (data: string) => {
           addLog(`Barcode scanned: ${data}`);
+          const parsed = parseResult(data);
+          addLog(`Parsed GTIN: ${parsed.gtin || 'N/A'}`);
+          addLog(`Parsed Batch: ${parsed.batch || 'N/A'}`);
           setScanResults(prev => [
             {
               text: data,
               timestamp: new Date(),
+              parsed,
             },
             ...prev,
           ]);
@@ -276,15 +285,69 @@ export const BarcodeScannerTest = () => {
                 <ListItem>
                   <ListItemText
                     primary={
-                      <Typography
-                        sx={{
-                          fontFamily: 'monospace',
-                          fontSize: '1.1rem',
-                          fontWeight: 'bold',
-                        }}
-                      >
-                        {result.text}
-                      </Typography>
+                      <Box>
+                        <Typography
+                          sx={{
+                            fontFamily: 'monospace',
+                            fontSize: '1.1rem',
+                            fontWeight: 'bold',
+                            mb: 1,
+                          }}
+                        >
+                          {result.text}
+                        </Typography>
+                        {result.parsed && (
+                          <Box sx={{ mt: 1 }}>
+                            {result.parsed.gtin && (
+                              <Typography variant="body2" sx={{ mb: 0.5 }}>
+                                <strong>GTIN:</strong> {result.parsed.gtin}
+                              </Typography>
+                            )}
+                            {result.parsed.batch && (
+                              <Typography variant="body2" sx={{ mb: 0.5 }}>
+                                <strong>Batch:</strong> {result.parsed.batch}
+                              </Typography>
+                            )}
+                            {result.parsed.expiryDate && (
+                              <Typography variant="body2" sx={{ mb: 0.5 }}>
+                                <strong>Expiry Date:</strong>{' '}
+                                {result.parsed.expiryDate}
+                              </Typography>
+                            )}
+                            {result.parsed.manufactureDate && (
+                              <Typography variant="body2" sx={{ mb: 0.5 }}>
+                                <strong>Manufacture Date:</strong>{' '}
+                                {result.parsed.manufactureDate}
+                              </Typography>
+                            )}
+                            {result.parsed.quantity && (
+                              <Typography variant="body2" sx={{ mb: 0.5 }}>
+                                <strong>Quantity:</strong>{' '}
+                                {result.parsed.quantity}
+                              </Typography>
+                            )}
+                            {result.parsed.packsize && (
+                              <Typography variant="body2" sx={{ mb: 0.5 }}>
+                                <strong>Pack Size:</strong>{' '}
+                                {result.parsed.packsize}
+                              </Typography>
+                            )}
+                            {result.parsed.gs1string && (
+                              <Typography
+                                variant="body2"
+                                sx={{
+                                  mt: 1,
+                                  fontFamily: 'monospace',
+                                  fontSize: '0.85rem',
+                                  color: 'text.secondary',
+                                }}
+                              >
+                                <strong>GS1:</strong> {result.parsed.gs1string}
+                              </Typography>
+                            )}
+                          </Box>
+                        )}
+                      </Box>
                     }
                     secondary={
                       <Typography component="span" variant="body2">
