@@ -21,8 +21,7 @@ pub struct InsertInput {
     pub colour: Option<String>,
     pub requisition_id: Option<String>,
     pub purchase_order_id: Option<String>,
-    #[graphql(default)]
-    pub insert_lines_from_purchase_order: bool,
+    pub insert_lines_from_purchase_order: Option<bool>,
 }
 
 #[derive(SimpleObject)]
@@ -88,7 +87,7 @@ impl InsertInput {
             colour,
             requisition_id,
             purchase_order_id,
-            insert_lines_from_purchase_order,
+            insert_lines_from_purchase_order: insert_lines_from_purchase_order.unwrap_or(false),
         }
     }
 }
