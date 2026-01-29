@@ -77,10 +77,7 @@ const plugins: BackendPlugins = {
 
         const suggested_quantity =
           forecastUnits !== null
-            ? Math.max(
-                Math.ceil(forecastUnits - line.available_stock_on_hand),
-                0
-              )
+            ? Math.max(forecastUnits - line.available_stock_on_hand, 0)
             : line.suggested_quantity;
 
         return { ...line, suggested_quantity };
