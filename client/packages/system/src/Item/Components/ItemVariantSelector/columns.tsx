@@ -52,8 +52,8 @@ export const useItemVariantSelectorColumns = ({
         Cell: TextWithTooltipCell,
       },
       {
-        accessorKey: 'vvmStatus',
-        header: t('label.vvm-status'),
+        accessorKey: 'vvmType',
+        header: t('label.vvm-type'),
         Cell: TextWithTooltipCell,
         includeColumn: isVaccine,
       },

@@ -11,7 +11,6 @@ import { UserStoreNodeFragment } from './api/operations.generated';
 import { PropsWithChildrenOnly, UserPermission } from '@common/types';
 import { RouteBuilder } from '../utils/navigation';
 import { matchPath } from 'react-router-dom';
-import { useGql } from '../api';
 import { createRegisteredContext } from 'react-singleton-context';
 import { useUpdateUserInfo } from './hooks/useUpdateUserInfo';
 
@@ -124,10 +123,9 @@ export const AuthProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
     setCookie(undefined);
     setError(AuthError.Timeout);
   });
-  const { client } = useGql();
+
   const mostRecentUsername = mostRecentCredentials[0]?.username ?? undefined;
-  // initialise the auth header with the cookie value i.e. on page refresh
-  client.setHeader('Authorization', `Bearer ${authCookie?.token}`);
+
   const setStore = async (store: UserStoreNodeFragment) => {
     if (!cookie?.token) return;
 
@@ -138,6 +136,8 @@ export const AuthProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
       id: cookie.user?.id ?? '',
       name: cookie.user?.name ?? '',
       permissions,
+      email: cookie.user?.email,
+      jobTitle: cookie.user?.jobTitle,
     };
     const newCookie = { ...cookie, store, user };
     setAuthCookie(newCookie);
