@@ -1,9 +1,10 @@
 use async_graphql::*;
 use graphql_core::{
-    simple_generic_errors::{DatabaseError, RecordProgramCombinationAlreadyExists},
+    simple_generic_errors::RecordProgramCombinationAlreadyExists,
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
+use graphql_types::types::vaccine_course::VaccineCourseNode;
 use service::{
     auth::{Resource, ResourceAccessRequest},
     vaccine_course::update::{
@@ -11,8 +12,6 @@ use service::{
         VaccineCourseItemInput,
     },
 };
-
-use graphql_types::types::vaccine_course::VaccineCourseNode;
 
 pub fn update_vaccine_course(
     ctx: &Context<'_>,
@@ -132,13 +131,13 @@ pub enum UpdateVaccineCourseResponse {
 #[derive(Interface)]
 #[graphql(field(name = "description", ty = "String"))]
 pub enum UpdateVaccineCourseErrorInterface {
-    DatabaseError(DatabaseError),
     VaccineCourseNameExistsForThisProgram(RecordProgramCombinationAlreadyExists),
+    VaccineDosesInUse(VaccineDosesInUse),
 }
 
 fn map_error(error: ServiceError) -> Result<UpdateVaccineCourseErrorInterface> {
     use StandardGraphqlError::*;
-    let formatted_error = format!("{:#?}", error);
+    let formatted_error = format!("{error:#?}");
 
     let graphql_error = match error {
         // Structured Errors
@@ -148,6 +147,11 @@ fn map_error(error: ServiceError) -> Result<UpdateVaccineCourseErrorInterface> {
                     RecordProgramCombinationAlreadyExists {},
                 ),
             )
+        }
+        ServiceError::VaccineDosesInUse => {
+            return Ok(UpdateVaccineCourseErrorInterface::VaccineDosesInUse(
+                VaccineDosesInUse,
+            ))
         }
         // Standard Graphql Errors
         ServiceError::VaccineCourseDoesNotExist
@@ -159,4 +163,12 @@ fn map_error(error: ServiceError) -> Result<UpdateVaccineCourseErrorInterface> {
     };
 
     Err(graphql_error.extend())
+}
+
+pub struct VaccineDosesInUse;
+#[Object]
+impl VaccineDosesInUse {
+    pub async fn description(&self) -> &str {
+        "One or more vaccine doses are in use and cannot be modified or deleted."
+    }
 }
