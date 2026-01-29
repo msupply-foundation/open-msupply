@@ -98,18 +98,28 @@ export const AppBarButtons: FC<{
         })}
         buttonLabel={t('button.continue-without-stocktake')}
         width={700}
-        onConfirm={() => { setConfirmationState(false); modalController.toggleOn(); }}
-        onCancel={() => { setConfirmationState(false); }}
-        otherButtons={[<DialogButton
-          key='go-to-stocktakes'
-          variant='back'
-          customLabel={t('button.go-to-stocktakes')}
-          onClick={() => navigate(
-            RouteBuilder.create(AppRoute.Inventory)
-              .addPart(AppRoute.Stocktakes)
-              .build()
-          )}
-        />]}
+        onConfirm={() => {
+          setConfirmationState(false);
+          modalController.toggleOn();
+        }}
+        onCancel={() => {
+          setConfirmationState(false);
+        }}
+        placeCancelButtonLast={true}
+        otherButtons={[
+          <DialogButton
+            key="go-to-stocktakes"
+            variant="back"
+            customLabel={t('button.go-to-stocktakes')}
+            onClick={() =>
+              navigate(
+                RouteBuilder.create(AppRoute.Inventory)
+                  .addPart(AppRoute.Stocktakes)
+                  .build()
+              )
+            }
+          />,
+        ]}
       />
       <CreateRequisitionModal
         isOpen={modalController.isOn}
