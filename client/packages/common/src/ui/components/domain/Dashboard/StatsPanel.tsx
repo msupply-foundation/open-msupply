@@ -6,7 +6,7 @@ import { ApiException, isPermissionDeniedException } from '@common/types';
 import { SimpleLink } from '../../navigation/AppNavLink/SimpleLink';
 import { Grid } from '@openmsupply-client/common';
 import { StatusChip } from '../../panels/StatusChip';
-import { useDashboardStats } from '@openmsupply-client/dashboard/src/utils';
+import { useDashboardStats } from '@openmsupply-client/dashboard/src/hooks';
 
 export type Stat = {
   label: string;
