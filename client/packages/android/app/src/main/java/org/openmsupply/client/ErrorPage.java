@@ -253,6 +253,7 @@ public class ErrorPage {
             "            <path\n" +
             "              d=\"M144.479 126.205c.321-1.146.321-3.672.964-3.755.643-.082 1.928.396 3.213-.532.643-.51.964-.573.964-.83 3.213.61 1.292 2.45 2.892 4.477.111.141.326.141.643 0 0-3.327-.107-5.139-.322-5.436-.321-.445-1.606-2.238-2.249-.959 0-.64-1.285-1.3-2.57-.81-1.286.49-3.214 1.45-3.535 2.729-.321 1.279-.643 3.837 0 5.116z\"\n" +
             "              fill=\"#513450\"\n" +
+            "              fill-rule=\"nonzero\"\n" +
             "            ></path>\n" +
             "          </g>\n" +
             "        </g>\n" +
@@ -260,7 +261,7 @@ public class ErrorPage {
             "    </div>\n" +
             "  </div>\n" +
             "  <div>\n" +
-            "    <h5>Oops! Something's gone wrong.</h5>\n" +
+            "    <h5 style=\"text-align: center\">Oops! Something's gone wrong.</h5>\n" +
             "     <button\n" +
             "       style=\"\n" +
             "         display:block;\n" +
@@ -281,10 +282,23 @@ public class ErrorPage {
             "</div>\n";
     public static String encodedHtml = Base64.encodeToString(html.getBytes(), Base64.NO_PADDING);
 
+    public static String getEncodedHtml(String url) {
+        String body = html;
+        if (url != null) {
+            String urlDisplay = "<div style=\"text-align:center; margin-bottom: 16px; font-size: 0.875rem; color: #677285;\">" + url + "</div>";
+            body = body.replace("</h5>", "</h5><h6> URL:" + urlDisplay +"</h6>");
+        }
+        return Base64.encodeToString(body.getBytes(), Base64.NO_PADDING);
+    }
+
     @JavascriptInterface
     public void showLogs() {
         try {
             File file = new File(mContext.getFilesDir(), LOG_FILE_NAME);
+            if (!file.exists()) {
+                Toast.makeText(mContext, "Log file does not exist yet", Toast.LENGTH_SHORT).show();
+                return;
+            }
             BufferedReader br = new BufferedReader(new FileReader(file));
             StringBuilder sb = new StringBuilder();
             String line;

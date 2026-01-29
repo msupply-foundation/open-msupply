@@ -181,7 +181,7 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
                 } else {
                     Log.e(OM_SUPPLY, "Server not running, displaying error page");
                     webView.post(() -> webView.addJavascriptInterface(new ErrorPage(getContext()), "ErrorPageInject"));
-                    webView.post(() -> webView.loadData(ErrorPage.encodedHtml, "text/html", "base64"));
+                    webView.post(() -> webView.loadData(ErrorPage.getEncodedHtml(localUrl), "text/html", "base64"));
                 }
             }
         });
