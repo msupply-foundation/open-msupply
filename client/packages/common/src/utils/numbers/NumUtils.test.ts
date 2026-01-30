@@ -41,8 +41,12 @@ describe('NumUtils', () => {
     });
 
     it('handles very large numbers', () => {
-      const veryLarge = 1e15 + 0.12;
-      expect(NumUtils.hasMoreThanDp(veryLarge, 2)).toBe(false);
+      // At this magnitude, doubles can only represent fractional steps of 0.125.
+      const veryLargeWithTwoDp = 1e15 + 0.25;
+      const veryLargeWithMoreThanTwoDp = 1e15 + 0.375;
+
+      expect(NumUtils.hasMoreThanDp(veryLargeWithTwoDp, 2)).toBe(false);
+      expect(NumUtils.hasMoreThanDp(veryLargeWithMoreThanTwoDp, 2)).toBe(true);
     });
 
     it('handles very small numbers', () => {
