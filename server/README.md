@@ -89,7 +89,9 @@ Where `[export name]` is name of exported data in `data/` folder
 cargo run --bin remote_server_cli -- initialise-from-export -n reference1
 ```
 
-Above will create sqlite database in root folder with the name specified in `configuration/*.yaml` and will populate it with data. Towards the end of console output of the cli command user:password list is presented (those users can be used to log in vi client/api)
+Above will create a SQLite database file in your current working directory (typically `server/`), using the name from `configuration/*.yaml` (by default `omsupply-database.sqlite`), and populate it with data. Towards the end of the CLI output a `user:password` list is printed (those users can be used to log in via the client/API).
+
+> NOTE: `initialise-from-export` currently emits a large number of warnings (see https://github.com/msupply-foundation/open-msupply/issues/10241). The command should still complete and print a list of username/passwords. Those credentials are also listed in `data/reference1/users.txt`.
 
 ## Start the server
 
