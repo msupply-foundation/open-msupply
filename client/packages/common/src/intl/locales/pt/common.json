@@ -528,7 +528,6 @@
   "error.unable-to-scan-barcode": "Não foi possível escanear o código de barras: {{error}}",
   "error.unable-to-start-scanning": "Não foi possível começar a escanear: {{error}}",
   "error.unable-to-update-immunisation-program": "Não foi possível atualizar o Programa de Imunização",
-  "error.unable-to-update-vaccine-course": "Não foi possível atualizar o curso de vacinação",
   "error.unable-to-upload-reports": "Não foi possível fazer o carregamento dos relatórios",
   "error.unique-value-violation": "Já existe um registro com este {{ field }}",
   "error.unknown-geolocation-error": "Ocorreu um erro desconhecido ao obter sua local.",

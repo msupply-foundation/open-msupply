@@ -197,13 +197,16 @@ export function getSdk(
   return {
     stockCounts(
       variables: StockCountsQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<StockCountsQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<StockCountsQuery>(StockCountsDocument, variables, {
-            ...requestHeaders,
-            ...wrappedRequestHeaders,
+          client.request<StockCountsQuery>({
+            document: StockCountsDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
           }),
         'stockCounts',
         'query',
@@ -212,13 +215,16 @@ export function getSdk(
     },
     itemCounts(
       variables: ItemCountsQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<ItemCountsQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<ItemCountsQuery>(ItemCountsDocument, variables, {
-            ...requestHeaders,
-            ...wrappedRequestHeaders,
+          client.request<ItemCountsQuery>({
+            document: ItemCountsDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
           }),
         'itemCounts',
         'query',
@@ -227,15 +233,17 @@ export function getSdk(
     },
     requisitionCounts(
       variables: RequisitionCountsQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<RequisitionCountsQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<RequisitionCountsQuery>(
-            RequisitionCountsDocument,
+          client.request<RequisitionCountsQuery>({
+            document: RequisitionCountsDocument,
             variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
         'requisitionCounts',
         'query',
         variables
@@ -243,15 +251,17 @@ export function getSdk(
     },
     outboundShipmentCounts(
       variables: OutboundShipmentCountsQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<OutboundShipmentCountsQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<OutboundShipmentCountsQuery>(
-            OutboundShipmentCountsDocument,
+          client.request<OutboundShipmentCountsQuery>({
+            document: OutboundShipmentCountsDocument,
             variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
         'outboundShipmentCounts',
         'query',
         variables
@@ -259,15 +269,17 @@ export function getSdk(
     },
     inboundShipmentCounts(
       variables: InboundShipmentCountsQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<InboundShipmentCountsQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<InboundShipmentCountsQuery>(
-            InboundShipmentCountsDocument,
+          client.request<InboundShipmentCountsQuery>({
+            document: InboundShipmentCountsDocument,
             variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
         'inboundShipmentCounts',
         'query',
         variables

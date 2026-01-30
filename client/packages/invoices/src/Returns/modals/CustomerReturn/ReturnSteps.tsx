@@ -27,7 +27,6 @@ interface ReturnStepsProps {
   setZeroQuantityAlert: React.Dispatch<
     React.SetStateAction<AlertColor | undefined>
   >;
-  returnId?: string;
 }
 
 export const ReturnSteps = ({
@@ -37,10 +36,11 @@ export const ReturnSteps = ({
   addDraftLine,
   zeroQuantityAlert,
   setZeroQuantityAlert,
-  returnId,
 }: ReturnStepsProps) => {
   const t = useTranslation();
   const isDisabled = useReturns.utils.customerIsDisabled();
+  const { data } = useReturns.document.customerReturn();
+  const disabledLinked = !!data?.linkedShipment || isDisabled;
 
   useAddBatchKeyBinding(addDraftLine);
 
@@ -59,15 +59,13 @@ export const ReturnSteps = ({
       ? t('messages.zero-return-quantity-will-delete-lines')
       : t('messages.alert-zero-return-quantity');
 
-  const inputsDisabled = !!returnId && isDisabled;
-
   return (
     <TabContext value={currentTab}>
       <WizardStepper activeStep={getActiveStep()} steps={returnsSteps} />
       {addDraftLine && (
         <AddBatchButton
           addDraftLine={addDraftLine}
-          disabled={currentTab !== Tabs.Quantity}
+          disabled={currentTab !== Tabs.Quantity || disabledLinked}
         />
       )}
       <TabPanel value={Tabs.Quantity}>
@@ -76,7 +74,7 @@ export const ReturnSteps = ({
         )}
         <QuantityReturnedTable
           lines={lines}
-          isDisabled={inputsDisabled}
+          isDisabled={disabledLinked}
           updateLine={line => {
             if (zeroQuantityAlert) setZeroQuantityAlert(undefined);
             update(line);
@@ -85,7 +83,8 @@ export const ReturnSteps = ({
       </TabPanel>
       <TabPanel value={Tabs.Reason}>
         <ReturnReasonsTable
-          isDisabled={inputsDisabled}
+          isDisabled={isDisabled}
+          disabledLinked={disabledLinked}
           lines={lines.filter(line => line.numberOfPacksReturned > 0)}
           updateLine={line => update(line)}
         />

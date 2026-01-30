@@ -27,7 +27,6 @@ import {
   Alert,
   RouteBuilder,
   Link,
-  FormLabel,
 } from '@openmsupply-client/common';
 import { DraftStockLine, StockLineRowFragment } from '../api';
 import { LocationSearchInput } from '../../Location/Components/LocationSearchInput';
@@ -161,47 +160,40 @@ export const StockLineForm = ({
         >
           {!isNewModal && (
             <Box paddingBottom={1}>
-              <Box display="flex" alignItems="center">
-                <Box style={{ textAlign: 'end', whiteSpace: 'nowrap' }}>
-                  <FormLabel
-                    sx={{
-                      fontWeight: 'bold',
-                      display: 'inline-block',
-                      width: '100px',
-                    }}
-                  >
-                    {t('label.item')}:
-                  </FormLabel>
-                </Box>
-                <Box paddingLeft={1} paddingRight={1.5}>
-                  <Box>
-                    <Link
-                      to={RouteBuilder.create(AppRoute.Catalogue)
-                        .addPart(AppRoute.Items)
-                        .addPart(draft.itemId)
-                        .build()}
-                    >
-                      {draft.item.name}
-                    </Link>
-                  </Box>
-                </Box>
+              <TextWithLabelRow
+                label={`${t('label.item')}`}
+                text={''}
+                labelProps={{ sx: { fontWeight: 'bold', width: '100px' } }}
+                textProps={{ sx: { pl: 1 } }}
+              />
+              <Box
+                sx={{
+                  paddingLeft: '110px',
+                  marginTop: '-24px',
+                  marginBottom: '8px',
+                }}
+              >
+                <Link
+                  to={RouteBuilder.create(AppRoute.Catalogue)
+                    .addPart(AppRoute.Items)
+                    .addPart(draft.itemId)
+                    .build()}
+                >
+                  {draft.item.name}
+                </Link>
               </Box>
-              <Box display="flex" alignItems="center">
-                <Box style={{ textAlign: 'end', whiteSpace: 'nowrap' }}>
-                  <FormLabel
-                    sx={{
-                      fontWeight: 'bold',
-                      display: 'inline-block',
-                      width: '100px',
-                    }}
-                  >
-                    {t('label.unit')}:
-                  </FormLabel>
-                </Box>
-                <Box paddingLeft={1} paddingRight={1.5}>
-                  <Box>{draft.item.unitName}</Box>
-                </Box>
-              </Box>
+              <TextWithLabelRow
+                label={`${t('label.code')}`}
+                text={draft.item.code}
+                labelProps={{ sx: { fontWeight: 'bold', width: '100px' } }}
+                textProps={{ sx: { pl: 1 } }}
+              />
+              <TextWithLabelRow
+                label={`${t('label.unit')}`}
+                text={draft.item.unitName ?? ''}
+                labelProps={{ sx: { fontWeight: 'bold', width: '100px' } }}
+                textProps={{ sx: { pl: 1 } }}
+              />
             </Box>
           )}
           <Box>

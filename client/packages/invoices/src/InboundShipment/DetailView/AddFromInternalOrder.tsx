@@ -27,7 +27,9 @@ export const AddFromInternalOrder = ({
   const { width, height } = useWindowDimensions();
   const { Modal } = useDialog({ isOpen, onClose });
   const { mutateAsync } = useInbound.lines.insertFromInternalOrder();
-  const { data, isLoading } = useInbound.document.listInternalOrderLines(requisitionId ?? '');
+  const { data, isLoading } = useInbound.document.listInternalOrderLines(
+    requisitionId ?? ''
+  );
 
   const columns = useMemo(
     (): ColumnDef<LinkedRequestLineFragment>[] => [
@@ -53,12 +55,13 @@ export const AddFromInternalOrder = ({
     []
   );
 
-  const { table, selectedRows } = useNonPaginatedMaterialTable<LinkedRequestLineFragment>({
-    tableId: 'link-internal-order-to-inbound',
-    columns,
-    data: data?.lines.nodes,
-    isLoading,
-  });
+  const { table, selectedRows } =
+    useNonPaginatedMaterialTable<LinkedRequestLineFragment>({
+      tableId: 'link-internal-order-to-inbound',
+      columns,
+      data: data?.lines.nodes,
+      isLoading,
+    });
 
   const onSelect = async () => {
     const rowsToInsert = selectedRows.map(row => ({

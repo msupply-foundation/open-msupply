@@ -298,6 +298,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
                     restricted_location_type_id: Some(
                         "84AA2B7A18694A2AB1E84DCABAD19617".to_string(),
                     ),
+                    universal_code: Some("3fd9b240c".to_string()),
                     ..Default::default()
                 }),
                 IntegrationOperation::upsert(ItemCategoryJoinRow {

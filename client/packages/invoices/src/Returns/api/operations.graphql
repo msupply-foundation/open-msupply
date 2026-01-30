@@ -171,6 +171,7 @@ fragment CustomerReturnLine on InvoiceLineNode {
   expiryDate
   numberOfPacks
   packSize
+  sellPricePerPack
   item {
     __typename
     id
