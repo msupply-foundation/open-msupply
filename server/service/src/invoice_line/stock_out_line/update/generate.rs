@@ -197,6 +197,7 @@ fn generate_line(
         shipped_pack_size,
         reason_option_id: None,
         linked_invoice_id: None,
+        status: None,
     };
 
     if let Some(number_of_packs) = input.number_of_packs {

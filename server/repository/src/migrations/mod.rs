@@ -254,13 +254,13 @@ pub fn migrate(
                     fragment.identifier()
                 );
 
-                fragment.migrate(connection).map_err(|source| {
-                    MigrationError::FragmentMigrationError {
-                        source,
+                connection
+                    .transaction_sync(|connection| fragment.migrate(connection))
+                    .map_err(|source| MigrationError::FragmentMigrationError {
+                        source: source.to_inner_error(),
                         version: migration_version.clone(),
                         identifier: fragment.identifier(),
-                    }
-                })?;
+                    })?;
 
                 migration_fragment_log_repo.insert(migration, &fragment)?;
             }

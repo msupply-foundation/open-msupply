@@ -250,6 +250,7 @@ fn generate_line(
         shipped_pack_size: (r#type == StockOutType::OutboundShipment).then_some(pack_size),
         linked_invoice_id: None,
         reason_option_id: None,
+        status: None,
     })
 }
 
