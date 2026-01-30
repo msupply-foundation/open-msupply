@@ -297,6 +297,11 @@ export type InboundRowFragment = {
     rate: number;
     isHomeCurrency: boolean;
   } | null;
+  purchaseOrder?: {
+    __typename: 'PurchaseOrderNode';
+    id: string;
+    number: number;
+  } | null;
 };
 
 export type InvoicesQueryVariables = Types.Exact<{
@@ -341,6 +346,11 @@ export type InvoicesQuery = {
         code: string;
         rate: number;
         isHomeCurrency: boolean;
+      } | null;
+      purchaseOrder?: {
+        __typename: 'PurchaseOrderNode';
+        id: string;
+        number: number;
       } | null;
     }>;
   };
@@ -814,6 +824,10 @@ export type InsertInboundShipmentMutationVariables = Types.Exact<{
   otherPartyId: Types.Scalars['String']['input'];
   requisitionId?: Types.InputMaybe<Types.Scalars['String']['input']>;
   storeId: Types.Scalars['String']['input'];
+  purchaseOrderId?: Types.InputMaybe<Types.Scalars['String']['input']>;
+  insertLinesFromPurchaseOrder?: Types.InputMaybe<
+    Types.Scalars['Boolean']['input']
+  >;
 }>;
 
 export type InsertInboundShipmentMutation = {
@@ -1178,6 +1192,36 @@ export type InsertLinesFromInternalOrderMutation = {
   };
 };
 
+export type InboundShipmentPurchaseOrderLineFragment = {
+  __typename: 'PurchaseOrderNode';
+  comment?: string | null;
+  id: string;
+  number: number;
+  reference?: string | null;
+  supplier?: { __typename: 'NameNode'; id: string; name: string } | null;
+};
+
+export type PurchaseOrdersQueryVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  filter?: Types.InputMaybe<Types.PurchaseOrderFilterInput>;
+}>;
+
+export type PurchaseOrdersQuery = {
+  __typename: 'Queries';
+  purchaseOrders: {
+    __typename: 'PurchaseOrderConnector';
+    totalCount: number;
+    nodes: Array<{
+      __typename: 'PurchaseOrderNode';
+      comment?: string | null;
+      id: string;
+      number: number;
+      reference?: string | null;
+      supplier?: { __typename: 'NameNode'; id: string; name: string } | null;
+    }>;
+  };
+};
+
 export const InboundLineFragmentDoc = gql`
   fragment InboundLine on InvoiceLineNode {
     __typename
@@ -1404,6 +1448,10 @@ export const InboundRowFragmentDoc = gql`
       isHomeCurrency
     }
     currencyRate
+    purchaseOrder {
+      id
+      number
+    }
   }
 `;
 export const LineLinkedToTransferredInvoiceErrorFragmentDoc = gql`
@@ -1451,6 +1499,18 @@ export const LinkedRequestWithLinesFragmentDoc = gql`
   }
   ${LinkedRequestRowFragmentDoc}
   ${LinkedRequestLineFragmentDoc}
+`;
+export const InboundShipmentPurchaseOrderLineFragmentDoc = gql`
+  fragment InboundShipmentPurchaseOrderLine on PurchaseOrderNode {
+    comment
+    id
+    number
+    reference
+    supplier {
+      id
+      name
+    }
+  }
 `;
 export const InvoicesDocument = gql`
   query invoices(
@@ -1606,6 +1666,8 @@ export const InsertInboundShipmentDocument = gql`
     $otherPartyId: String!
     $requisitionId: String
     $storeId: String!
+    $purchaseOrderId: String
+    $insertLinesFromPurchaseOrder: Boolean
   ) {
     insertInboundShipment(
       storeId: $storeId
@@ -1613,6 +1675,8 @@ export const InsertInboundShipmentDocument = gql`
         id: $id
         otherPartyId: $otherPartyId
         requisitionId: $requisitionId
+        purchaseOrderId: $purchaseOrderId
+        insertLinesFromPurchaseOrder: $insertLinesFromPurchaseOrder
       }
     ) {
       ... on InsertInboundShipmentError {
@@ -2024,6 +2088,19 @@ export const InsertLinesFromInternalOrderDocument = gql`
     }
   }
 `;
+export const PurchaseOrdersDocument = gql`
+  query purchaseOrders($storeId: String!, $filter: PurchaseOrderFilterInput) {
+    purchaseOrders(storeId: $storeId, filter: $filter) {
+      ... on PurchaseOrderConnector {
+        totalCount
+        nodes {
+          ...InboundShipmentPurchaseOrderLine
+        }
+      }
+    }
+  }
+  ${InboundShipmentPurchaseOrderLineFragmentDoc}
+`;
 
 export type SdkFunctionWrapper = <T>(
   action: (requestHeaders?: Record<string, string>) => Promise<T>,
@@ -2257,6 +2334,24 @@ export function getSdk(
           }),
         'insertLinesFromInternalOrder',
         'mutation',
+        variables
+      );
+    },
+    purchaseOrders(
+      variables: PurchaseOrdersQueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<PurchaseOrdersQuery> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<PurchaseOrdersQuery>({
+            document: PurchaseOrdersDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'purchaseOrders',
+        'query',
         variables
       );
     },

@@ -15,3 +15,6 @@ pub use self::batch::*;
 
 mod add_from_master_list;
 pub use self::add_from_master_list::*;
+
+mod add_from_purchase_order;
+pub use self::add_from_purchase_order::*;

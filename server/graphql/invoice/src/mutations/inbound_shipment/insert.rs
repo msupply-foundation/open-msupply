@@ -20,6 +20,8 @@ pub struct InsertInput {
     pub their_reference: Option<String>,
     pub colour: Option<String>,
     pub requisition_id: Option<String>,
+    pub purchase_order_id: Option<String>,
+    pub insert_lines_from_purchase_order: Option<bool>,
 }
 
 #[derive(SimpleObject)]
@@ -72,6 +74,8 @@ impl InsertInput {
             their_reference,
             colour,
             requisition_id,
+            purchase_order_id,
+            insert_lines_from_purchase_order,
         } = self;
 
         ServiceInput {
@@ -82,7 +86,8 @@ impl InsertInput {
             their_reference,
             colour,
             requisition_id,
-            goods_received_id: None,
+            purchase_order_id,
+            insert_lines_from_purchase_order: insert_lines_from_purchase_order.unwrap_or(false),
         }
     }
 }
@@ -120,7 +125,10 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
         | ServiceError::RequisitionDoesNotExist
         | ServiceError::NotAnInternalOrder
         | ServiceError::InternalOrderDoesNotBelongToStore
-        | ServiceError::OtherPartyDoesNotExist => BadUserInput(formatted_error),
+        | ServiceError::OtherPartyDoesNotExist
+        | ServiceError::AddLinesFromPurchaseOrderWithoutPurchaseOrder => {
+            BadUserInput(formatted_error)
+        }
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
         ServiceError::NewlyCreatedInvoiceDoesNotExist => InternalError(formatted_error),
     };
@@ -331,7 +339,8 @@ mod test {
                     their_reference: Some("reference input".to_string()),
                     colour: Some("colour input".to_string()),
                     requisition_id: None,
-                    goods_received_id: None,
+                    purchase_order_id: None,
+                    insert_lines_from_purchase_order: false,
                 }
             );
             Ok(Invoice {
