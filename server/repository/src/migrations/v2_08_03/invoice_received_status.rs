@@ -31,14 +31,9 @@ impl MigrationFragment for Migrate {
                 ALTER TABLE invoice ADD COLUMN received_datetime {DATETIME};
 
                 -- Set a received_datetime for all existing invoices that were Delivered before (have a delivered_datetime)
-                UPDATE invoice 
+                UPDATE invoice
                 SET received_datetime = delivered_datetime
                 WHERE delivered_datetime is not null;
-
-                -- Set all existing invoices for this site that were Delivered to Received
-                UPDATE invoice
-                SET status = 'RECEIVED'
-                WHERE status = 'DELIVERED';
 
                 -- We don't need to create changelogs for these changes as we're mapping these to legacy statuses in translations
             "#

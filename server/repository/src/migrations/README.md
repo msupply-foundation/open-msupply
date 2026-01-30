@@ -67,6 +67,13 @@ Looking at 3 we may think it could be simplified by changing the identifier and 
 
 Please be very mindful and vigilant when working with migration fragments, especially when doing major schema changes. And be aware of logic error that won't be caught at compile time.
 
+### Migration fragments in transactions
+
+All migration fragments were wrapped in a database transaction in v2.16. This allows changes made in the fragment to be rolled back in case of an error stopping the database from being left in an unknown state mid migration. However, this does add some constraints to what can be done in a migration. The problems we've run into so far and how to work around them:
+
+- `PRAGMA foreign_keys = OFF;` does nothing in a transaction. Depending on your use case you can use `PRAGMA defer_foreign_keys` to defer checking till the end of the migration/transaction. This is good when adding or modifying rows but doesn't work for deleting rows or tables. However, going through old migrations the times rows and tables are deleted was to rename delete or modify a column as this was the only way to do it in older versions of SQLite. It is now possible to do many modifications on columns so there shouldn't be a need to delete tables without removing the references to it. If this is needed in the future it's possible to add an option for fragments to turn of foreign key validation outside the transaction but this shouldn't be needed for the kinds of migrations we currently do.
+- When modifying types in postgres, changes to these types wont be applied till the end of the transaction. This means you can't add a new enum variant and populate a table with it. To work around this you can use two migration fragments, one to modify the types and another to populate tables with the new types.
+
 ## Raw SQL vs Diesel
 
 Ideally we would be using existing repositories for data migrations, but this will break as soon as new migrations change schema and repositories are updated. We can achieve almost any type of migration with raw sql statement, both data and schema, but some raw sql logic is hard to either read/write or keep consistent between sqlite and postgres. On the other hard, using diesel definitions comes with a lot of boilerplate, and can also be hard to read/write but it can help with serialisation and difference in sqlite and postgres syntax. Although at the time of writing this README.md there is no defined standard or guideline of when to use raw sql vs diesel dsl, some effort was made to show when one is better then the other in `./templates`. A quick summary:
