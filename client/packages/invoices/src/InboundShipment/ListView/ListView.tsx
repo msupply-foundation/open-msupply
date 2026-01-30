@@ -73,6 +73,19 @@ export const InboundListView = () => {
         enableSorting: true,
       },
       {
+        header: t('label.status'),
+        accessorFn: row => getStatusTranslator(t)(row.status),
+        id: 'status',
+        size: 140,
+        filterVariant: 'select',
+        filterSelectOptions: statuses.map(status => ({
+          value: status,
+          label: getStatusTranslator(t)(status),
+        })),
+        enableColumnFilter: true,
+        enableSorting: true,
+      },
+      {
         header: t('label.number'),
         accessorKey: 'invoiceNumber',
         columnType: ColumnType.Number,
@@ -98,17 +111,9 @@ export const InboundListView = () => {
         size: 100,
       },
       {
-        header: t('label.status'),
-        accessorFn: row => getStatusTranslator(t)(row.status),
-        id: 'status',
-        size: 140,
-        filterVariant: 'select',
-        filterSelectOptions: statuses.map(status => ({
-          value: status,
-          label: getStatusTranslator(t)(status),
-        })),
-        enableColumnFilter: true,
-        enableSorting: true,
+        header: t('label.comment'),
+        accessorKey: 'comment',
+        columnType: ColumnType.Comment,
       },
       {
         header: t('label.reference'),
@@ -123,13 +128,8 @@ export const InboundListView = () => {
         columnType: ColumnType.Currency,
         defaultHideOnMobile: true,
       },
-      {
-        header: t('label.comment'),
-        accessorKey: 'comment',
-        columnType: ColumnType.Comment,
-      },
     ],
-    []
+    [onUpdate, statuses, t]
   );
 
   const { table, selectedRows } = usePaginatedMaterialTable<InboundRowFragment>(

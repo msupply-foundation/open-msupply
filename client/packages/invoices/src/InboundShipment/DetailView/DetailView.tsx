@@ -181,7 +181,7 @@ const DetailViewInner = () => {
         if (!acc.find(i => i.id === item.id)) acc.push(item);
         return acc;
       }, []),
-    []
+    [table]
   );
 
   if (isLoading) return <DetailViewSkeleton hasGroupBy={true} hasHold={true} />;

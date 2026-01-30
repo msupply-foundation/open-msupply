@@ -135,7 +135,7 @@ export const StockListView = () => {
         accessorKey: 'totalNumberOfPacks',
         columnType: ColumnType.Number,
         align: 'right',
-        size: 125,
+        size: 100,
         enableSorting: true,
       },
       {
@@ -144,7 +144,7 @@ export const StockListView = () => {
         accessorFn: row => row.totalNumberOfPacks * row.packSize,
         Cell: UnitsAndDosesCell,
         align: 'right',
-        size: 125,
+        size: 100,
         enableSorting: false,
         defaultHideOnMobile: true,
       },
@@ -219,7 +219,7 @@ export const StockListView = () => {
     columns: mrtColumns,
     data: data?.nodes,
     totalCount: data?.totalCount ?? 0,
-    initialSort: { key: 'name', dir: 'desc' },
+    initialSort: { key: 'expiryDate', dir: 'asc' },
     enableRowSelection: false,
     noDataElement: (
       <NothingHere
