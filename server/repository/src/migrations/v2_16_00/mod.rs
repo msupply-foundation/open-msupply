@@ -8,6 +8,7 @@ mod add_purchase_order_id_to_invoice;
 mod add_shipping_method_id_to_invoice;
 mod add_version_to_plugins;
 mod add_universal_code_to_item;
+mod invoice_line_add_status;
 
 pub(crate) struct V2_16_00;
 impl Migration for V2_16_00 {
@@ -28,6 +29,7 @@ impl Migration for V2_16_00 {
             Box::new(add_version_to_plugins::Migrate),
             Box::new(add_universal_code_to_item::Migrate),
             Box::new(add_comments_required_to_asset_log_reason::Migrate),
+            Box::new(invoice_line_add_status::Migrate),
         ]
     }
 }

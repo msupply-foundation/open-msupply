@@ -13,7 +13,13 @@ import {
 import { useDashboard } from '../../api';
 import { AppRoute } from '@openmsupply-client/config';
 
-export const ExpiringStockSummary = () => {
+interface ExpiringStockSummaryProps {
+  panelContext: string;
+}
+
+export const ExpiringStockSummary = ({
+  panelContext,
+}: ExpiringStockSummaryProps) => {
   const t = useTranslation();
   const formatNumber = useFormatNumber();
 
@@ -51,10 +57,12 @@ export const ExpiringStockSummary = () => {
 
   return (
     <StatsPanel
+      key={panelContext}
       error={expiryError as ApiException}
       isError={hasExpiryError}
       isLoading={isExpiryLoading}
       title={t('heading.expiring-stock')}
+      panelContext={panelContext}
       stats={[
         {
           label: t('label.expired', {
@@ -67,6 +75,7 @@ export const ExpiringStockSummary = () => {
               expiryDate: getExpiredUrlQuery,
             })
             .build(),
+          statContext: `${panelContext}-expired`,
         },
         {
           label: t('label.expiring-soon', {
@@ -79,6 +88,7 @@ export const ExpiringStockSummary = () => {
               expiryDate: getExpiredInAMonthUrlQuery,
             })
             .build(),
+          statContext: `${panelContext}-expiring-soon`,
         },
         {
           label: t('label.batches-expiring-between-days'),
@@ -89,6 +99,7 @@ export const ExpiringStockSummary = () => {
               expiryDate: getBatchesExpiryDateRange(30, 90),
             })
             .build(),
+          statContext: `${panelContext}-batches-expiring-between-days`,
         },
         ...(haveThreshold
           ? [
@@ -109,6 +120,7 @@ export const ExpiringStockSummary = () => {
                     ),
                   })
                   .build(),
+                statContext: `${panelContext}-batches-expiring-in-days`,
               },
             ]
           : []),
