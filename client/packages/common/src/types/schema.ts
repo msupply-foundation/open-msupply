@@ -3538,7 +3538,7 @@ export type InsertInboundShipmentInput = {
   colour?: InputMaybe<Scalars['String']['input']>;
   comment?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
-  insertLinesFromPurchaseOrder?: Scalars['Boolean']['input'];
+  insertLinesFromPurchaseOrder?: InputMaybe<Scalars['Boolean']['input']>;
   onHold?: InputMaybe<Scalars['Boolean']['input']>;
   otherPartyId: Scalars['String']['input'];
   purchaseOrderId?: InputMaybe<Scalars['String']['input']>;

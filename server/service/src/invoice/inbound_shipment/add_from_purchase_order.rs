@@ -96,6 +96,7 @@ pub fn add_from_purchase_order(
             shipped_number_of_packs: Some(quantity / pack_size),
             volume_per_pack: 0.0,
             shipped_pack_size: Some(pack_size),
+            status: None, // TODO: Set status based on authorisation config
         })?;
     }
 

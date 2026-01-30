@@ -51,7 +51,7 @@ pub fn generate_empty_invoice_lines(
                     shipped_number_of_packs: None,
                     volume_per_pack: 0.0,
                     shipped_pack_size: None,
-                    status: None,
+                    status: None, // TODO: Set status based on authorisation config
                 });
             }
             Ok(None) => {}
