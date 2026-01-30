@@ -21,9 +21,12 @@ import {
 } from './tableState';
 import { clearSavedState } from './tableState/utils';
 import { NothingHere } from '@common/components';
+import { DataError } from '../../../components/errors/DataError';
 
-export interface BaseTableConfig<T extends MRT_RowData>
-  extends Omit<MRT_TableOptions<T>, 'data'> {
+export interface BaseTableConfig<T extends MRT_RowData> extends Omit<
+  MRT_TableOptions<T>,
+  'data'
+> {
   tableId: string; // key for local storage
   data: T[] | undefined;
   onRowClick?: (row: T, isCtrlClick: boolean) => void;
@@ -217,7 +220,7 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
       isLoading ? (
         <></>
       ) : isError ? (
-        <ErrorState />
+        <DataError error={t('error.unable-to-load-data')} />
       ) : (
         (noDataElement ?? <NothingHere />)
       ),
@@ -227,9 +230,4 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
   });
 
   return table;
-};
-
-const ErrorState = () => {
-  const t = useTranslation();
-  return <NothingHere body={t('error.unable-to-load-data')} isError />;
 };
