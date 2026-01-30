@@ -55,7 +55,11 @@ export const NumUtils = {
     if (!Number.isFinite(value)) return false;
 
     const multiplier = 10 ** dp;
-    return !isNearlyInteger(value * multiplier);
+    // For very large values, `value * multiplier` can lose the fractional part due to IEEE-754
+    // precision limits (e.g. `1e15 + 0.12` becomes `1e15 + 0.125`). Only inspect the fraction.
+    const abs = Math.abs(value);
+    const fraction = abs - Math.trunc(abs);
+    return !isNearlyInteger(fraction * multiplier);
   },
   /**
    * This constant should be used for values that are potentially send to a backend API that expects
