@@ -1,4 +1,4 @@
-use crate::types::{ShippingMethodNode, SyncFileReferenceConnector};
+use crate::types::{PurchaseOrderNode, ShippingMethodNode, SyncFileReferenceConnector};
 
 use super::patient::PatientNode;
 use super::program_node::ProgramNode;
@@ -13,8 +13,8 @@ use dataloader::DataLoader;
 use graphql_core::loader::{
     CurrencyByIdLoader, DiagnosisLoader, InvoiceByIdLoader, InvoiceLineByInvoiceIdLoader,
     NameByIdLoaderInput, NameByNameLinkIdLoader, NameByNameLinkIdLoaderInput,
-    NameInsuranceJoinLoader, PatientLoader, ProgramByIdLoader, ShippingMethodByIdLoader,
-    SyncFileReferenceLoader, UserLoader,
+    NameInsuranceJoinLoader, PatientLoader, ProgramByIdLoader, PurchaseOrderByIdLoader,
+    ShippingMethodByIdLoader, SyncFileReferenceLoader, UserLoader,
 };
 use graphql_core::{
     loader::{InvoiceStatsLoader, NameByIdLoader, RequisitionsByIdLoader},
@@ -518,6 +518,19 @@ impl InvoiceNode {
             .map(ShippingMethodNode::from_domain);
 
         Ok(result)
+    }
+
+    pub async fn purchase_order(&self, ctx: &Context<'_>) -> Result<Option<PurchaseOrderNode>> {
+        // &self.row().purchase_order_id
+        let Some(purchase_order_id) = &self.row().purchase_order_id else {
+            return Ok(None);
+        };
+
+        let loader = ctx.get_loader::<DataLoader<PurchaseOrderByIdLoader>>();
+        Ok(loader
+            .load_one(purchase_order_id.to_string())
+            .await?
+            .map(PurchaseOrderNode::from_domain))
     }
 }
 

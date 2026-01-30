@@ -9,7 +9,6 @@ import {
   AppNavLink,
   AppNavSection,
   UserStoreNodeFragment,
-  useIsCentralServerApi,
   usePreferences,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
@@ -25,9 +24,8 @@ export const ReplenishmentNav = ({
   );
   const t = useTranslation();
   const rnrVisible = store?.preferences.omProgramModule;
-  const isCentralServer = useIsCentralServerApi();
   const { useProcurementFunctionality } = usePreferences();
-  const useProcurement = isCentralServer && useProcurementFunctionality;
+  const useProcurement = useProcurementFunctionality;
 
   return (
     <AppNavSection isActive={isActive} to={AppRoute.Replenishment}>

@@ -20,11 +20,12 @@ pub fn generate(
         id: uuid(),
         other_party_id: supplier_name_link,
         their_reference: goods_received.supplier_reference.clone(),
-        goods_received_id: Some(goods_received.id),
+        purchase_order_id: goods_received.purchase_order_id,
         requisition_id: None,
         on_hold: None,
         comment: None,
         colour: None,
+        insert_lines_from_purchase_order: false,
     };
 
     let invoice_line_rows = generate_invoice_lines(connection, &shipment_input.id, line_map)?;
