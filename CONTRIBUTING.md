@@ -34,9 +34,8 @@ We're using the ticket number to start the branch name, and dropping the `#` bec
 
 Toolchains:
 
-- Rust is pinned via `server/rust-toolchain.toml` (currently `1.88`). If you're using rustup, it will prompt you to install the right version when you run `cargo`.
-- Client requires Node.js `v20+` and Yarn (see `client/README.md`).
-- For platform-specific system dependencies (e.g. `libpq` on Apple Silicon), see `server/README.md#dependencies`.
+- Rust toolchain is pinned via `server/rust-toolchain.toml` (see `server/README.md#dependencies` for system dependencies and setup).
+- Client Node version is pinned via `client/.nvmrc` (`nvm use` from `client/`; see `client/README.md`).
 
 To get started, have a look at the [readme](README.md)
 
