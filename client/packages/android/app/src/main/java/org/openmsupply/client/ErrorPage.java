@@ -2,7 +2,6 @@ package org.openmsupply.client;
 
 import android.app.AlertDialog;
 import android.content.Context;
-import android.content.Intent;
 import android.graphics.Typeface;
 import android.util.Base64;
 import android.webkit.JavascriptInterface;
@@ -16,14 +15,14 @@ import java.io.IOException;
 
 public class ErrorPage {
     Context mContext;
+    NativeApi mNativeApi;
 
-    ErrorPage(Context c) {
+    ErrorPage(Context c, NativeApi nativeApi) {
         mContext = c;
+        mNativeApi = nativeApi;
     }
 
     private static final String LOG_FILE_NAME = "remote_server.log";
-    // the unhappy man svg and the text "Oops! Something's gone wrong"
-    // Simple HTML to show the SVG and some text, centred on the page
 
     static String html = "<div\n" +
             "  style=\"\n" +
@@ -33,13 +32,13 @@ public class ErrorPage {
             "    height: 100%;\n" +
             "    justify-content: center;\n" +
             "    width: 100%;\n" +
+            "    font-family: sans-serif;\n" +
             "  \"\n" +
             ">\n" +
-            "  <div>\n" +
-            "    <div>\n" +
+            "  <div style=\"margin-bottom: 20px;\">\n" +
             "      <svg\n" +
-            "        width=\"301\"\n" +
-            "        height=\"300\"\n" +
+            "        width=\"200\"\n" +
+            "        height=\"200\"\n" +
             "        viewBox=\"0 0 301 300\"\n" +
             "        xmlns=\"http://www.w3.org/2000/svg\"\n" +
             "        xmlns:xlink=\"http://www.w3.org/1999/xlink\"\n" +
@@ -236,7 +235,7 @@ public class ErrorPage {
             "              transform=\"matrix(-1 0 0 1 168.707 117.757)\"\n" +
             "            ></path>\n" +
             "            <path\n" +
-            "              d=\"M161.75 144.87l-.184 5.477-.617 2.741-4.247 17.608.677 1.469.438 1.907-.438 1.214-1.15-.431-2.3-1.88-.352-1.059a1.615 1.615 0 01.124-1.297l1.03-1.84 3.086-16.438-.31-7.265 4.242-.207zM137.569 145.076l.496 5.27.618 2.742 4.247 17.608-.677 1.469-.438 1.907.438 1.214 1.15-.431 2.3-1.88.351-1.059c.143-.43.098-.901-.123-1.297l-1.03-1.84-3.086-16.438.24-7.265h-4.486z\"\n" +
+            "              d=\"M161.75 144.87l-.184 5.477-.617 2.741-4.247 17.608.677 1.469.438 1.907-.438 1.214-1.15-.431-2.3-1.88-.352-1.059a1.615 1.615 0 01.124-1.297l1.03-1.84 3.086-16.438-.31-7.265 4.242-.207zM137.569 145.076l.496 5.27.618 2.742 4.247 17.608-.677 1.469-.438 1.907.438 1.214 1.15-.431-2.3-1.88.351-1.059c.143-.43.098-.901-.123-1.297l-1.03-1.84-3.086-16.438.24-7.265h-4.486z\"\n" +
             "              fill=\"#FDE7E6\"\n" +
             "              fill-rule=\"nonzero\"\n" +
             "            ></path>\n" +
@@ -258,37 +257,53 @@ public class ErrorPage {
             "          </g>\n" +
             "        </g>\n" +
             "      </svg>\n" +
-            "    </div>\n" +
             "  </div>\n" +
             "  <div>\n" +
-            "    <h5 style=\"text-align: center\">Oops! Something's gone wrong.</h5>\n" +
-            "     <button\n" +
-            "       style=\"\n" +
-            "         display:block;\n" +
-            "         margin: 0 auto;\n" +
-            "         background:#e95c30;\n" +
-            "         color:#fff;\n" +
-            "         border:none;\n" +
-            "         border-radius:24px;\n" +
-            "         font-size:0.875rem;\n" +
-            "         font-weight:600;\n" +
-            "         height:40px;\n" +
-            "         min-width:115px;\n" +
-            "         padding:0 24px;\n" +
-            "       \"\n" +
-            "       onClick=\"ErrorPageInject.showLogs()\"\n" +
-            "     >Show Log File</button>\n" +
+            "    <h5 style=\"text-align: center; margin-top: 0; color: #444F77;\">Oops! Something's gone wrong.</h5>\n" +
+            "    <div id=\"url-display\" style=\"text-align:center; margin-bottom: 24px; font-size: 0.875rem; color: #677285;\"></div>\n" +
+            "    <div style=\"display: flex; gap: 12px; justify-content: center;\">\n" +
+            "       <button\n" +
+            "         style=\"\n" +
+            "           background:#e95c30;\n" +
+            "           color:#fff;\n" +
+            "           border:none;\n" +
+            "           border-radius:24px;\n" +
+            "           font-size:0.875rem;\n" +
+            "           font-weight:600;\n" +
+            "           height:40px;\n" +
+            "           padding:0 24px;\n" +
+            "         \"\n" +
+            "         onClick=\"ErrorPageInject.retry()\"\n" +
+            "       >Retry Connection</button>\n" +
+            "       <button\n" +
+            "         style=\"\n" +
+            "           background:#677285;\n" +
+            "           color:#fff;\n" +
+            "           border:none;\n" +
+            "           border-radius:24px;\n" +
+            "           font-size:0.875rem;\n" +
+            "           font-weight:600;\n" +
+            "           height:40px;\n" +
+            "           padding:0 24px;\n" +
+            "         \"\n" +
+            "         onClick=\"ErrorPageInject.showLogs()\"\n" +
+            "       >Show Logs</button>\n" +
+            "    </div>\n" +
             "  </div>\n" +
             "</div>\n";
-    public static String encodedHtml = Base64.encodeToString(html.getBytes(), Base64.NO_PADDING);
 
     public static String getEncodedHtml(String url) {
         String body = html;
-        if (url != null) {
-            String urlDisplay = "<div style=\"text-align:center; margin-bottom: 16px; font-size: 0.875rem; color: #677285;\">" + url + "</div>";
-            body = body.replace("</h5>", "</h5><h6> URL:" + urlDisplay +"</h6>");
+        if (url != null && !url.contains("localhost")) {
+            body = body.replace("<div id=\"url-display\" style=\"text-align:center; margin-bottom: 24px; font-size: 0.875rem; color: #677285;\"></div>",
+                                "<div id=\"url-display\" style=\"text-align:center; margin-bottom: 24px; font-size: 0.875rem; color: #677285;\">" + url + "</div>");
         }
         return Base64.encodeToString(body.getBytes(), Base64.NO_PADDING);
+    }
+
+    @JavascriptInterface
+    public void retry() {
+        mNativeApi.checkServerAndLoad();
     }
 
     @JavascriptInterface
@@ -310,7 +325,6 @@ public class ErrorPage {
             br.close();
             AlertDialog.Builder builder = new AlertDialog.Builder(mContext);
 
-            // Create ScrollView with TextView
             ScrollView scrollView = new ScrollView(mContext);
             TextView textView = new TextView(mContext);
             textView.setText(sb);

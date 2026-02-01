@@ -136,8 +136,14 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
         // the webView url will be DEFAULT_URL only on the initial load
         // so this test is a quick check to see if we should be redirecting to the
         // /android loader or not
-        if (!webView.getUrl().matches(DEFAULT_URL))
+        if (webView.getUrl() != null && !webView.getUrl().matches(DEFAULT_URL))
             return;
+
+        checkServerAndLoad();
+    }
+
+    public void checkServerAndLoad() {
+        WebView webView = this.getBridge().getWebView();
         Thread thread = new Thread(new Runnable() {
             @Override
             public void run() {
@@ -147,42 +153,41 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
                     try {
                         URL url = new URL(localUrl);
                         HttpURLConnection urlc = (HttpURLConnection) url.openConnection();
-                        // actually no point - the timeout only applies when trying to find a server
-                        // when using localhost it returns immediately even if the server isn't
-                        // responding
                         urlc.setConnectTimeout(1000);
                         urlc.connect();
                         if (urlc.getResponseCode() == 200) {
                             isServerRunning = true;
                         }
                     } catch (SSLHandshakeException e) {
-                        // server is running and responding with an SSL error
-                        // which we will ignore, so ok to proceed
                         isServerRunning = true;
                     } catch (Exception e) {
-                        Log.e(OM_SUPPLY, e.getMessage());
+                        Log.e(OM_SUPPLY, "Server check failed: " + e.getMessage());
                         isServerRunning = false;
                     }
-                    retryCount--;
-                    sleep(1000);
+                    if (!isServerRunning) {
+                        retryCount--;
+                        sleep(1000);
+                    }
                 }
+
+                final boolean finalIsServerRunning = isServerRunning;
+                webView.post(() -> {
+                    if (finalIsServerRunning) {
+                        webView.loadUrl(localUrl + "/android");
+                    } else {
+                        Log.e(OM_SUPPLY, "Server not running, displaying error page");
+                        webView.addJavascriptInterface(new ErrorPage(getContext(), NativeApi.this), "ErrorPageInject");
+                        webView.loadData(ErrorPage.getEncodedHtml(localUrl), "text/html", "base64");
+                    }
+                });
 
                 final Handler handler = new Handler(Looper.getMainLooper());
                 handler.postDelayed(new Runnable() {
                     @Override
                     public void run() {
-                        AppState.getInstance().setServerReady(true);
+                        AppState.getInstance().setServerReady(finalIsServerRunning);
                     }
                 }, 250);
-
-                // .post to run on UI thread in the two calls below
-                if (isServerRunning) {
-                    webView.post(() -> webView.loadUrl(localUrl + "/android"));
-                } else {
-                    Log.e(OM_SUPPLY, "Server not running, displaying error page");
-                    webView.post(() -> webView.addJavascriptInterface(new ErrorPage(getContext()), "ErrorPageInject"));
-                    webView.post(() -> webView.loadData(ErrorPage.getEncodedHtml(localUrl), "text/html", "base64"));
-                }
             }
         });
         thread.start();
