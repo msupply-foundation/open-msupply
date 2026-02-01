@@ -53,7 +53,7 @@ pub fn validate(
             && adjusted_units
                 < purchase_order_line
                     .purchase_order_line_stats_row
-                    .shipped_quantity
+                    .shipped_number_of_units
         {
             return Err(UpdatePurchaseOrderLineInputError::CannotEditQuantityBelowReceived);
         }
