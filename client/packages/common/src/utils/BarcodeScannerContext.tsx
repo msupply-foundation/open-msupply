@@ -14,9 +14,12 @@ import { useTranslation } from '@common/intl';
 import { Gs1Barcode, parseBarcode } from 'gs1-barcode-parser-mod';
 import { Formatter } from './formatters';
 import { BarcodeScanner, ScannerType } from '@openmsupply-client/common';
+import { useMockScanner } from './MockBarcodeScanner';
 
 const SCAN_TIMEOUT_IN_MS = 50000;
 const INSTALL_TIMEOUT_IN_MS = 30000;
+
+const ENABLE_MOCK_SCANNER = true;
 
 export interface ScanResult {
   gs1?: Gs1Barcode;
@@ -101,11 +104,14 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
   const [localScannerType, setLocalScannerType] =
     useState<ScannerType>('usb_serial');
 
+  const { mockScan, mockScannerInput } = useMockScanner(isScanning);
+
   const hasNativeBarcodeScanner =
     Capacitor.isPluginAvailable('BarcodeScanner') &&
     Capacitor.isNativePlatform();
   const hasElectronApi = !!electronNativeAPI;
-  const isEnabled = hasNativeBarcodeScanner || hasElectronApi;
+  const isEnabled =
+    hasNativeBarcodeScanner || hasElectronApi || ENABLE_MOCK_SCANNER;
 
   const googleBarcodeScannerAvailable = () =>
     new Promise<boolean>(async resolve => {
@@ -144,6 +150,10 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
 
   const scanBarcode = async (formats?: BarcodeFormat[]) => {
     switch (true) {
+      case ENABLE_MOCK_SCANNER:
+        const mockBarcode = await mockScan();
+        return mockBarcode;
+
       case hasElectronApi:
         const timeoutPromise = new Promise<undefined>((_, reject) =>
           setTimeout(reject, SCAN_TIMEOUT_IN_MS, 'Scan timed out')
@@ -214,6 +224,14 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
   const startScanning = async (callback: ScanCallback) => {
     setIsScanning(true);
 
+    if (ENABLE_MOCK_SCANNER) {
+      const mockBarcode = await mockScan();
+      const result = parseResult(mockBarcode);
+      callback(result);
+      setIsScanning(false);
+      return;
+    }
+
     if (hasElectronApi) {
       try {
         const { startBarcodeScan } = electronNativeAPI;
@@ -274,7 +292,10 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
       // Capacitor.isNativePlatform returns true if running on android or ios
       // and we use the camera for scanning currently, no need to check for
       // a physical device to be connected
-      isConnected: !!scanner?.connected || Capacitor.isNativePlatform(),
+      isConnected:
+        ENABLE_MOCK_SCANNER ||
+        !!scanner?.connected ||
+        Capacitor.isNativePlatform(),
       isScanning,
       setScanner,
       scan,
@@ -289,6 +310,7 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
   return (
     <Provider value={val}>
       <>
+        {mockScannerInput}
         <GlobalStyles
           styles={
             isScanning && hasNativeBarcodeScanner

@@ -11,7 +11,6 @@ import {
   ButtonWithIcon,
 } from '@openmsupply-client/common';
 import { XCircleIcon, DeleteIcon, CheckIcon, RefreshIcon } from '@common/icons';
-import { useTranslation } from '@common/intl';
 
 // Extend window type to include honeywell plugin
 declare global {
