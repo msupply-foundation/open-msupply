@@ -17,7 +17,7 @@ import {
   NothingHere,
   MaterialTable,
 } from '@openmsupply-client/common';
-import { toItemRow, ActivityLogList } from '@openmsupply-client/system';
+import { ActivityLogList } from '@openmsupply-client/system';
 import { AppRoute } from '@openmsupply-client/config';
 import { PrescriptionLineFragment, usePrescription } from '../api';
 import { AppBarButtons } from './AppBarButton';
@@ -60,7 +60,7 @@ export const PrescriptionDetailView = () => {
           .build()
       );
     },
-    [toItemRow, data]
+    [navigate, data?.id]
   );
   const onAddItem = () => {
     navigate(
@@ -84,7 +84,6 @@ export const PrescriptionDetailView = () => {
     data: rows,
     grouping: { enabled: true },
     isLoading: false,
-    initialSort: { key: 'itemName', dir: 'asc' },
     isError: false,
     onRowClick: onRowClick ? row => onRowClick(row) : undefined,
     getIsPlaceholderRow: isPrescriptionPlaceholderRow,

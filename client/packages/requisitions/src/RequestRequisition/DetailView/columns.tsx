@@ -36,12 +36,6 @@ export const useRequestColumns = () => {
   const columns = useMemo(
     (): ColumnDef<RequestLineFragment>[] => [
       {
-        accessorKey: 'comment',
-        header: t('label.comment'),
-        columnType: ColumnType.Comment,
-        pin: 'left',
-      },
-      {
         accessorKey: 'item.code',
         header: t('label.code'),
         pin: 'left',
@@ -55,6 +49,28 @@ export const useRequestColumns = () => {
         size: 250,
         enableSorting: true,
         enableColumnFilter: true,
+      },
+      {
+        id: 'packUnit',
+        header: t('label.unit'),
+        accessorFn: row => row.item.unitName,
+        size: 120,
+        defaultHideOnMobile: true,
+      },
+      {
+        id: 'dosesPerUnit',
+        header: t('label.doses-per-unit'),
+        accessorFn: row =>
+          row.item?.isVaccine ? row.item.doses : UNDEFINED_STRING_VALUE,
+        columnType: ColumnType.Number,
+        includeColumn: manageVaccinesInDoses,
+      },
+      {
+        accessorKey: 'item.defaultPackSize',
+        header: t('label.dps'),
+        enableSorting: true,
+        columnType: ColumnType.Number,
+        defaultHideOnMobile: true,
       },
       {
         accessorKey: 'itemStats.availableStockOnHand',
@@ -115,28 +131,6 @@ export const useRequestColumns = () => {
         enableSorting: true,
       },
       {
-        id: 'packUnit',
-        header: t('label.unit'),
-        accessorFn: row => row.item.unitName,
-        size: 120,
-        defaultHideOnMobile: true,
-      },
-      {
-        id: 'dosesPerUnit',
-        header: t('label.doses-per-unit'),
-        accessorFn: row =>
-          row.item?.isVaccine ? row.item.doses : UNDEFINED_STRING_VALUE,
-        columnType: ColumnType.Number,
-        includeColumn: manageVaccinesInDoses,
-      },
-      {
-        accessorKey: 'item.defaultPackSize',
-        header: t('label.dps'),
-        enableSorting: true,
-        columnType: ColumnType.Number,
-        defaultHideOnMobile: true,
-      },
-      {
         header: t('label.indicative-price-per-unit'),
         description: t('description.indicative-price-per-unit'),
         accessorKey: 'pricePerUnit',
@@ -149,6 +143,11 @@ export const useRequestColumns = () => {
         accessorFn: row => row.requestedQuantity * (row?.pricePerUnit || 0),
         columnType: ColumnType.Currency,
         includeColumn: showIndicativePriceInRequisitions,
+      },
+      {
+        accessorKey: 'comment',
+        header: t('label.comment'),
+        columnType: ColumnType.Comment,
       },
 
       // --- Extra consumption columns on program orders

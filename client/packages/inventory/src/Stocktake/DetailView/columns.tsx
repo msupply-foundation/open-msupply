@@ -44,13 +44,14 @@ export const useStocktakeColumns = () => {
       {
         accessorKey: 'itemName',
         header: t('label.name'),
-        size: 400,
+        size: 300,
         enableColumnFilter: true,
         enableSorting: true,
       },
       {
         accessorKey: 'batch',
         header: t('label.batch'),
+        size: 110,
         enableSorting: true,
         defaultHideOnMobile: true,
       },
@@ -59,6 +60,7 @@ export const useStocktakeColumns = () => {
         // expiryDate from backend is a string - use accessorFn to convert to Date object for sort and filtering
         accessorFn: row => (row.expiryDate ? new Date(row.expiryDate) : null),
         header: t('label.expiry-date'),
+        size: 110,
         columnType: ColumnType.Date,
         defaultHideOnMobile: true,
         enableColumnFilter: true,
@@ -75,6 +77,7 @@ export const useStocktakeColumns = () => {
         id: 'itemUnit',
         accessorKey: 'item.unitName',
         header: t('label.unit-name'),
+        size: 100,
         enableSorting: true,
         defaultHideOnMobile: true,
       },
@@ -170,7 +173,7 @@ export const useStocktakeColumns = () => {
       },
     ];
     return cols;
-  }, [getIsError, manageVaccinesInDoses, allowTrackingOfStockByDonor]);
+  }, [t, manageVaccinesInDoses, allowTrackingOfStockByDonor, getIsError]);
 
   return columns;
 };
