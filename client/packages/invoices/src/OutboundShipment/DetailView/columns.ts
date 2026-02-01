@@ -177,7 +177,7 @@ export const useOutboundColumns = () => {
     ];
 
     return cols;
-  }, [manageVvmStatusForStock, manageVaccinesInDoses]);
+  }, [t, manageVvmStatusForStock, manageVaccinesInDoses]);
 
   return columns;
 };
