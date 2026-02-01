@@ -14,7 +14,6 @@ pub struct StorePrefUpdate<T> {
 pub struct UpsertPreferences {
     // Global preferences
     pub allow_tracking_of_stock_by_donor: Option<bool>,
-    pub authorise_goods_received: Option<bool>,
     pub authorise_purchase_order: Option<bool>,
     pub custom_translations: Option<BTreeMap<String, String>>,
     pub gender_options: Option<Vec<GenderType>>,
@@ -62,7 +61,6 @@ pub fn upsert_preferences(
     UpsertPreferences {
         // Global preferences
         allow_tracking_of_stock_by_donor: allow_tracking_of_stock_by_donor_input,
-        authorise_goods_received: authorise_goods_received_input,
         authorise_purchase_order: authorise_purchase_order_input,
         custom_translations: custom_translations_input,
         gender_options: gender_options_input,
