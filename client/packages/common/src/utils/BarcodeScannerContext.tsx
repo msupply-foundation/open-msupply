@@ -1,4 +1,12 @@
-import React, { createContext, useMemo, FC, useState, useEffect } from 'react';
+import React, {
+  createContext,
+  useMemo,
+  FC,
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+} from 'react';
 import { PropsWithChildrenOnly } from '@common/types';
 import {
   BarcodeFormat,
@@ -14,6 +22,30 @@ import { useTranslation } from '@common/intl';
 import { Gs1Barcode, parseBarcode } from 'gs1-barcode-parser-mod';
 import { Formatter } from './formatters';
 import { BarcodeScanner, ScannerType } from '@openmsupply-client/common';
+
+export enum AvailableScannerType {
+  Manual = 'manual',
+  Honeywell = 'honeywell',
+  Camera = 'camera',
+  ElectronUSB = 'electron-usb',
+}
+
+// Extend window type to include honeywell plugin
+declare global {
+  interface Window {
+    plugins?: {
+      honeywell?: {
+        claim?: (callback: () => void) => void;
+        release?: () => void;
+        listen?: (
+          success: (data: string) => void,
+          error: (err: string) => void
+        ) => void;
+        scan?: () => void;
+      };
+    };
+  }
+}
 
 const SCAN_TIMEOUT_IN_MS = 50000;
 const INSTALL_TIMEOUT_IN_MS = 30000;
@@ -44,6 +76,10 @@ interface BarcodeScannerControl {
   setScanner: (scanner: BarcodeScanner) => void;
   setScannerType: (scanner: ScannerType) => void;
   scannerType: ScannerType;
+  availableScanners: AvailableScannerType[];
+  activeScanner: AvailableScannerType;
+  setActiveScanner: (scanner: AvailableScannerType) => void;
+  triggerManualScan: (barcode: string) => void;
 }
 
 const BarcodeScannerContext = createContext<BarcodeScannerControl>({} as any);
@@ -119,11 +155,36 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
   const [localScannerType, setLocalScannerType] =
     useState<ScannerType>('usb_serial');
 
+  // Store the Honeywell callback in a ref so it's always up-to-date for the scanner
+  const honeywellCallbackRef = useRef<ScanCallback>(() => {});
+  const manualScanCallbackRef = useRef<ScanCallback>(() => {});
+
   const hasNativeBarcodeScanner =
     Capacitor.isPluginAvailable('BarcodeScanner') &&
     Capacitor.isNativePlatform();
   const hasElectronApi = !!electronNativeAPI;
-  const isEnabled = hasNativeBarcodeScanner || hasElectronApi;
+  const hasHoneywellScanner = typeof window.plugins?.honeywell !== 'undefined';
+
+  // Determine available scanners
+  const availableScanners = useMemo(() => {
+    const scanners: AvailableScannerType[] = [AvailableScannerType.Manual];
+    if (hasHoneywellScanner) scanners.push(AvailableScannerType.Honeywell);
+    if (hasNativeBarcodeScanner) scanners.push(AvailableScannerType.Camera);
+    if (hasElectronApi) scanners.push(AvailableScannerType.ElectronUSB);
+    return scanners;
+  }, [hasHoneywellScanner, hasNativeBarcodeScanner, hasElectronApi]);
+
+  // Active scanner state (prefer hardware scanners over manual)
+  const [activeScanner, setActiveScanner] = useState<AvailableScannerType>(
+    () => {
+      if (hasHoneywellScanner) return AvailableScannerType.Honeywell;
+      if (hasNativeBarcodeScanner) return AvailableScannerType.Camera;
+      if (hasElectronApi) return AvailableScannerType.ElectronUSB;
+      return AvailableScannerType.Manual;
+    }
+  );
+
+  const isEnabled = availableScanners.length > 0;
 
   const googleBarcodeScannerAvailable = () =>
     new Promise<boolean>(async resolve => {
@@ -161,8 +222,18 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
     });
 
   const scanBarcode = async (formats?: BarcodeFormat[]) => {
-    switch (true) {
-      case hasElectronApi:
+    switch (activeScanner) {
+      case AvailableScannerType.Manual:
+        // Manual scanner doesn't use this function, returns empty
+        return '';
+
+      case AvailableScannerType.Honeywell:
+        // For Honeywell, we use continuous scanning mode
+        // This just returns empty as scanning is continuous
+        return '';
+
+      case AvailableScannerType.ElectronUSB:
+        if (!electronNativeAPI) return '';
         const timeoutPromise = new Promise<undefined>((_, reject) =>
           setTimeout(reject, SCAN_TIMEOUT_IN_MS, 'Scan timed out')
         );
@@ -179,7 +250,7 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
         const barcode = await Promise.race([timeoutPromise, barcodePromise]);
         return barcode;
 
-      case hasNativeBarcodeScanner:
+      case AvailableScannerType.Camera:
         const installTimeoutPromise = new Promise<undefined>((_, reject) =>
           setTimeout(reject, INSTALL_TIMEOUT_IN_MS, 'Install timed out')
         );
@@ -232,7 +303,44 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
   const startScanning = async (callback: ScanCallback) => {
     setIsScanning(true);
 
-    if (hasElectronApi) {
+    if (activeScanner === AvailableScannerType.Manual) {
+      // Store callback for manual scanning
+      manualScanCallbackRef.current = callback;
+      return;
+    }
+
+    if (activeScanner === AvailableScannerType.Honeywell) {
+      try {
+        const honeywell = window.plugins?.honeywell;
+        if (!honeywell) {
+          throw new Error('Honeywell plugin not available');
+        }
+
+        // Update the ref with the latest callback
+        honeywellCallbackRef.current = callback;
+
+        // Register a stable callback that uses the ref
+        honeywell.listen!(
+          (data: string) => {
+            // Always call the latest callback via the ref
+            honeywellCallbackRef.current(parseResult(data));
+          },
+          (err: string) => {
+            console.error('Honeywell scanning error:', err);
+            error(t('error.unable-to-read-barcode'))();
+            setIsScanning(false);
+          }
+        );
+      } catch (e) {
+        setIsScanning(false);
+        throw e;
+      }
+    }
+
+    if (
+      activeScanner === AvailableScannerType.ElectronUSB &&
+      electronNativeAPI
+    ) {
       try {
         const { startBarcodeScan } = electronNativeAPI;
         await startBarcodeScan();
@@ -246,7 +354,7 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
       }
     }
 
-    if (hasNativeBarcodeScanner) {
+    if (activeScanner === AvailableScannerType.Camera) {
       setIsScanning(true);
 
       await BarcodeScannerPlugin.addListener(
@@ -262,13 +370,29 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
 
   const stopScan = async () => {
     setIsScanning(false);
-    if (hasElectronApi) {
+
+    if (activeScanner === AvailableScannerType.Honeywell) {
+      const honeywell = window.plugins?.honeywell;
+      if (honeywell?.release) {
+        honeywell.release();
+      }
+    }
+
+    if (
+      electronNativeAPI &&
+      activeScanner === AvailableScannerType.ElectronUSB
+    ) {
       await electronNativeAPI.stopBarcodeScan();
     }
 
-    if (hasNativeBarcodeScanner) {
+    if (activeScanner === AvailableScannerType.Camera) {
       await BarcodeScannerPlugin.removeAllListeners();
       await BarcodeScannerPlugin.stopScan();
+    }
+
+    if (activeScanner === AvailableScannerType.Manual) {
+      // Clear manual callback
+      manualScanCallbackRef.current = () => {};
     }
   };
 
@@ -280,6 +404,14 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
     electronNativeAPI.setScannerType(type);
     electronNativeAPI.linkedBarcodeScannerDevice().then(setScanner);
   };
+
+  // Trigger a manual scan with keyboard input
+  const triggerManualScan = useCallback((barcode: string) => {
+    if (barcode) {
+      manualScanCallbackRef.current(parseResult(barcode));
+    }
+  }, []);
+
   // calling this outside of a useEffect so that it will detect when a new scanner is added
   useEffect(() => {
     electronNativeAPI?.linkedBarcodeScannerDevice().then(setScanner);
@@ -292,7 +424,12 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
       // Capacitor.isNativePlatform returns true if running on android or ios
       // and we use the camera for scanning currently, no need to check for
       // a physical device to be connected
-      isConnected: !!scanner?.connected || Capacitor.isNativePlatform(),
+      // Honeywell is considered always connected if available
+      isConnected:
+        activeScanner === AvailableScannerType.Manual ||
+        activeScanner === AvailableScannerType.Honeywell ||
+        activeScanner === AvailableScannerType.Camera ||
+        !!scanner?.connected,
       isScanning,
       setScanner,
       scan,
@@ -300,8 +437,24 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
       setScannerType,
       stopScan,
       scannerType: localScannerType,
+      availableScanners,
+      activeScanner,
+      setActiveScanner,
+      triggerManualScan,
     }),
-    [isEnabled, scan, stopScan, startScanning]
+    [
+      isEnabled,
+      scan,
+      stopScan,
+      startScanning,
+      scanner,
+      localScannerType,
+      isScanning,
+      setScannerType,
+      availableScanners,
+      activeScanner,
+      triggerManualScan,
+    ]
   );
 
   return (
