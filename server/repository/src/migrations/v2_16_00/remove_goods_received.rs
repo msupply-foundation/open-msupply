@@ -8,20 +8,66 @@ impl MigrationFragment for Migrate {
     }
 
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
+        // Update tables
         sql!(
             connection,
             r#"
                 DROP TABLE goods_received_line;
                 DROP TABLE goods_received;
-                DROP TYPE goods_received_status;
-                DROP TYPE goods_received_line_status;
                 ALTER TABLE purchase_order_line DROP COLUMN received_number_of_units;
                 ALTER TABLE invoice DROP COLUMN goods_received_id;
             "#
         )?;
 
+        // Rename preferences
+        if cfg!(feature = "postgres") {
+            sql!(
+                connection,
+                r#"
+                    ALTER TYPE permission_type RENAME VALUE 'GOODS_RECEIVED_QUERY' TO 'INBOUND_SHIPMENT_EXTERNAL_QUERY';
+                    ALTER TYPE permission_type RENAME VALUE 'GOODS_RECEIVED_MUTATE' TO 'INBOUND_SHIPMENT_EXTERNAL_MUTATE';
+                    ALTER TYPE permission_type RENAME VALUE 'GOODS_RECEIVED_AUTHORISE' TO 'INBOUND_SHIPMENT_EXTERNAL_AUTHORISE';
+                "#
+            )?;
+        } else {
+            sql!(
+                connection,
+                r#"
+                    UPDATE user_permission SET permission = 'INBOUND_SHIPMENT_EXTERNAL_QUERY' WHERE permission = 'GOODS_RECEIVED_QUERY';
+                    UPDATE user_permission SET permission = 'INBOUND_SHIPMENT_EXTERNAL_MUTATE' WHERE permission = 'GOODS_RECEIVED_MUTATE';
+                    UPDATE user_permission SET permission = 'INBOUND_SHIPMENT_EXTERNAL_AUTHORISE' WHERE permission = 'GOODS_RECEIVED_AUTHORISE';
+                "#
+            )?;
+        }
+
+        // Delete related entries
+        sql!(
+            connection,
+            r#"
+                DELETE FROM activity_log WHERE type IN (
+                    'GOODS_RECEIVED_CREATED',
+                    'GOODS_RECEIVED_DELETED',
+                    'GOODS_RECEIVED_STATUS_FINALISED'
+                );
+                DELETE FROM number WHERE type = 'GOODS_RECEIVED' or type like 'GOODSRECEIVEDLINE_%';
+                DELETE FROM changelog WHERE table_name IN (
+                    'goods_received_line',
+                    'goods_received'
+                );
+                DELETE FROM report WHERE context = 'GOODS_RECEIVED';
+            "#
+        )?;
+
         // Remove now unused enum variants
         if cfg!(feature = "postgres") {
+            sql!(
+                connection,
+                r#"
+                    DROP TYPE goods_received_status;
+                    DROP TYPE goods_received_line_status;
+                "#
+            )?;
+
             // Can't drop enum values directly, so recreate the enum without the unwanted values
             // sql!(
             //     connection,
@@ -33,9 +79,6 @@ impl MigrationFragment for Migrate {
             //         ALTER TYPE number_type DROP VALUE 'GOODS_RECEIVED';
             //         ALTER TYPE changelog_table_name DROP VALUE 'goods_received_line';
             //         ALTER TYPE changelog_table_name DROP VALUE 'goods_received';
-            //         ALTER TYPE permission_type DROP VALUE 'GOODS_RECEIVED_QUERY';
-            //         ALTER TYPE permission_type DROP VALUE 'GOODS_RECEIVED_MUTATE';
-            //         ALTER TYPE permission_type DROP VALUE 'GOODS_RECEIVED_AUTHORISE';
             //         ALTER TYPE context_type DROP VALUE 'GOODS_RECEIVED';
             //     "#
             // )?;
@@ -128,11 +171,6 @@ impl MigrationFragment for Migrate {
                         'PURCHASE_ORDER_STATUS_CHANGED_FROM_SENT_TO_CONFIRMED',
                         'PURCHASE_ORDER_LINE_STATUS_CHANGED_FROM_SENT_TO_NEW',
                         'PURCHASE_ORDER_LINE_STATUS_CLOSED');
-                    DELETE FROM activity_log WHERE type IN (
-                        'GOODS_RECEIVED_CREATED',
-                        'GOODS_RECEIVED_DELETED',
-                        'GOODS_RECEIVED_STATUS_FINALISED'
-                    );
                     ALTER TABLE activity_log
                         ALTER COLUMN type TYPE activity_log_type_new
                         USING type::text::activity_log_type_new;
@@ -218,83 +256,11 @@ impl MigrationFragment for Migrate {
                         'purchase_order_line',
                         'master_list',
                         'encounter');
-                    DELETE FROM changelog WHERE table_name IN (
-                        'goods_received_line',
-                        'goods_received'
-                    );
                     ALTER TABLE changelog
                         ALTER COLUMN table_name TYPE changelog_table_name_new
                         USING table_name::text::changelog_table_name_new;
                     DROP TYPE changelog_table_name;
                     ALTER TYPE changelog_table_name_new RENAME TO changelog_table_name;
-                "#
-            )?;
-            sql!(
-                connection,
-                r#"
-                    CREATE TYPE permission_type_new AS ENUM (
-                        'STORE_ACCESS',
-                        'LOCATION_MUTATE',
-                        'STOCK_LINE_QUERY',
-                        'STOCKTAKE_QUERY',
-                        'STOCKTAKE_MUTATE',
-                        'REQUISITION_QUERY',
-                        'REQUISITION_MUTATE',
-                        'OUTBOUND_SHIPMENT_QUERY',
-                        'OUTBOUND_SHIPMENT_MUTATE',
-                        'INBOUND_SHIPMENT_QUERY',
-                        'INBOUND_SHIPMENT_MUTATE',
-                        'REPORT',
-                        'LOG_QUERY',
-                        'SERVER_ADMIN',
-                        'STOCK_LINE_MUTATE',
-                        'PATIENT_QUERY',
-                        'PATIENT_MUTATE',
-                        'DOCUMENT_QUERY',
-                        'DOCUMENT_MUTATE',
-                        'ITEM_MUTATE',
-                        'REQUISITION_SEND',
-                        'CREATE_REPACK',
-                        'PRESCRIPTION_QUERY',
-                        'PRESCRIPTION_MUTATE',
-                        'SENSOR_QUERY',
-                        'SENSOR_MUTATE',
-                        'TEMPERATURE_BREACH_QUERY',
-                        'TEMPERATURE_LOG_QUERY',
-                        'COLD_CHAIN_API',
-                        'ITEM_NAMES_CODES_AND_UNITS_MUTATE',
-                        'ASSET_MUTATE',
-                        'ASSET_CATALOGUE_ITEM_MUTATE',
-                        'ASSET_QUERY',
-                        'SUPPLIER_RETURN_QUERY',
-                        'SUPPLIER_RETURN_MUTATE',
-                        'CUSTOMER_RETURN_QUERY',
-                        'CUSTOMER_RETURN_MUTATE',
-                        'INVENTORY_ADJUSTMENT_MUTATE',
-                        'EDIT_CENTRAL_DATA',
-                        'NAME_PROPERTIES_MUTATE',
-                        'RNR_FORM_QUERY',
-                        'RNR_FORM_MUTATE',
-                        'REQUISITION_CREATE_OUTBOUND_SHIPMENT',
-                        'ASSET_MUTATE_VIA_DATA_MATRIX',
-                        'VIEW_AND_EDIT_VVM_STATUS',
-                        'MUTATE_CLINICIAN',
-                        'CANCEL_FINALISED_INVOICES',
-                        'PURCHASE_ORDER_QUERY',
-                        'PURCHASE_ORDER_MUTATE',
-                        'PURCHASE_ORDER_AUTHORISE',
-                        'INBOUND_SHIPMENT_VERIFY',
-                        'ASSET_STATUS_MUTATE');
-                    DELETE FROM user_permission WHERE permission IN (
-                        'GOODS_RECEIVED_QUERY',
-                        'GOODS_RECEIVED_MUTATE',
-                        'GOODS_RECEIVED_AUTHORISE'
-                    );
-                    ALTER TABLE user_permission
-                        ALTER COLUMN permission TYPE permission_type_new
-                        USING permission::text::permission_type_new;
-                    DROP TYPE permission_type;
-                    ALTER TYPE permission_type_new RENAME TO permission_type;
                 "#
             )?;
             sql!(
@@ -318,7 +284,6 @@ impl MigrationFragment for Migrate {
                         'INBOUND_RETURN',
                         'INTERNAL_ORDER',
                         'PURCHASE_ORDER');
-                    DELETE FROM report WHERE context = 'GOODS_RECEIVED';
                     ALTER TABLE report
                         ALTER COLUMN context TYPE context_type_new
                         USING context::text::context_type_new;
