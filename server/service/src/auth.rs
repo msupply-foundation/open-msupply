@@ -161,6 +161,10 @@ pub enum Resource {
     QueryPurchaseOrder,
     MutatePurchaseOrder,
     AuthorisePurchaseOrder,
+    // Inbound Shipment External
+    MutateInboundShipmentExternal,
+    QueryInboundShipmentExternal,
+    AuthoriseInboundShipmentExternal,
 }
 
 fn all_permissions() -> HashMap<Resource, PermissionDSL> {
