@@ -12,6 +12,7 @@ mod item_ledger;
 mod latest_asset_log;
 mod latest_document;
 mod outbound_shipment_stock_movement;
+mod purchase_order_line_stats;
 mod purchase_order_stats;
 mod replenishment;
 mod report_document;
@@ -64,6 +65,7 @@ fn all_views() -> Vec<Box<dyn ViewMigrationFragment>> {
         Box::new(requisitions_in_period::ViewMigration),
         Box::new(vaccination_card::ViewMigration),
         Box::new(vaccination_course::ViewMigration),
+        Box::new(purchase_order_line_stats::ViewMigration),
         Box::new(purchase_order_stats::ViewMigration),
         Box::new(invoice_stats::ViewMigration),
         Box::new(contact_trace_name_link_view::ViewMigration),

@@ -161,10 +161,6 @@ pub enum Resource {
     QueryPurchaseOrder,
     MutatePurchaseOrder,
     AuthorisePurchaseOrder,
-    // Goods Received
-    MutateGoodsReceived,
-    QueryGoodsReceived,
-    AuthoriseGoodsReceived,
 }
 
 fn all_permissions() -> HashMap<Resource, PermissionDSL> {

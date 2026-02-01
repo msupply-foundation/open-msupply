@@ -193,7 +193,6 @@ mod update {
             requested_pack_size: 2.0,
             requested_number_of_units: 10.0,
             adjusted_number_of_units: Some(20.0),
-            received_number_of_units: 15.0,
             ..Default::default()
         };
 

@@ -45,7 +45,6 @@ pub fn generate_empty_purchase_order_lines(
                     requested_pack_size: item.default_pack_size,
                     requested_number_of_units: 0.0,
                     adjusted_number_of_units: None,
-                    received_number_of_units: 0.0,
                     stock_on_hand_in_units: stock_on_hand,
                     supplier_item_code: None,
                     price_per_pack_before_discount: 0.0,

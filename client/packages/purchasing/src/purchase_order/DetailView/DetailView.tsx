@@ -18,7 +18,7 @@ import { AppRoute } from '@openmsupply-client/config';
 import { ActivityLogList } from '@openmsupply-client/system';
 import { canAddNewLines, isPurchaseOrderDisabled } from '../../utils';
 import { PurchaseOrderLineFragment, usePurchaseOrder } from '../api';
-import { Details, GoodsReceived, Documents } from './Tabs';
+import { Details, Documents } from './Tabs';
 import { AppBarButtons } from './AppBarButtons';
 import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
@@ -109,10 +109,6 @@ const DetailViewInner = () => {
     {
       Component: <MaterialTable table={table} />,
       value: t('label.general'),
-    },
-    {
-      Component: <GoodsReceived />,
-      value: t('label.goods-received'),
     },
     {
       Component: <Details draft={draft} onChange={handleChange} />,
