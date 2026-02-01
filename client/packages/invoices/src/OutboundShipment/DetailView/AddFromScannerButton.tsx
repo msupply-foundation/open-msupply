@@ -23,7 +23,7 @@ export const AddFromScannerButtonComponent = ({
 }) => {
   const t = useTranslation();
   const { mutateAsync: getBarcode } = useOutbound.utils.barcode();
-  const { isConnected, isEnabled, isScanning, startScanning, stopScan } =
+  const { isConnected, isEnabled, isScanning, scan, stopScan } =
     useBarcodeScannerContext();
   const { error, warning } = useNotification();
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -51,7 +51,8 @@ export const AddFromScannerButtonComponent = ({
       stopScan();
     } else {
       try {
-        await startScanning(handleScanResult);
+        const result = await scan();
+        handleScanResult(result);
       } catch (e) {
         error(t('error.unable-to-start-scanning', { error: e }))();
       }
