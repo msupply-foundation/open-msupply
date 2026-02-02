@@ -97,7 +97,7 @@ const plugins: BackendPlugins = {
 
     // --- the first store in my data set
     // --- has no stock, and will never issue stock. Also, isVisible = false for most stores
-    // const issueingStoreId = store_id;
+    // const issuingStoreId = store_id;
 
     const { stores: activeStores } = get_active_stores_on_site();
     if (!activeStores || activeStores.length < 1) {
@@ -105,18 +105,18 @@ const plugins: BackendPlugins = {
     }
 
     // Make sure it's a store
-    const issueingStore = activeStores.find(store => {
+    const issuingStore = activeStores.find(store => {
       return store.name_row.type === 'STORE';
     });
 
-    if (!issueingStore) {
+    if (!issuingStore) {
       return { success: false, message: 'No store found' };
     }
 
-    const issueingStoreId = issueingStore.store_row.id;
+    const issuingStoreId = issuingStore.store_row.id;
 
     const { result: customerQueryResult, customerError } = customerQuery({
-      storeId: issueingStoreId,
+      storeId: issuingStoreId,
       filter: inp.customerFilter,
     });
 
@@ -132,7 +132,7 @@ const plugins: BackendPlugins = {
     const customerId = customerQueryResult.names.nodes[0].id;
 
     const { result: itemsQueryResult, itemsError } = itemsQuery({
-      storeId: issueingStoreId,
+      storeId: issuingStoreId,
       filter: inp.itemFilter,
     });
 
@@ -147,7 +147,7 @@ const plugins: BackendPlugins = {
     const foundItem = itemsQueryResult.items.nodes[0];
 
     if (foundItem.availableStockOnHand < inp.quantity) {
-      let message = `Not enough stock to fullfil order. Store: ${issueingStore.name_row.name}. `;
+      let message = `Not enough stock to fullfil order. Store: ${issuingStore.name_row.name}. `;
       message += `Available stock for code ${foundItem.code}: ${foundItem.availableStockOnHand}, Qty requested: ${inp.quantity},`;
       return {
         success: false,
@@ -160,7 +160,7 @@ const plugins: BackendPlugins = {
 
     // Insert outbound shipment
     const insertInput: BatchOutboundShipmentMutationVariables = {
-      storeId: issueingStoreId,
+      storeId: issuingStoreId,
       input: {
         insertOutboundShipments: [
           {
@@ -181,7 +181,7 @@ const plugins: BackendPlugins = {
           'InsertOutboundShipmentError' ||
         insertShipmentResult.batchOutboundShipment.insertOutboundShipments[0].response.__typename === 'NodeError'
       ) {
-        batchDeleteOutboundShipmentQuery(issueingStoreId, shipmentId);
+        batchDeleteOutboundShipmentQuery(issuingStoreId, shipmentId);
         throw Error(
           `Insert order failed. Failed to issue the stock for item code: ${foundItem.code}, quantity: ${inp.quantity}, customer: ${customer.name}`
         );
@@ -195,7 +195,7 @@ const plugins: BackendPlugins = {
 
     // Insert line
     const insertLineInput: BatchOutboundShipmentMutationVariables = {
-      storeId: issueingStoreId,
+      storeId: issuingStoreId,
       input: {
         insertOutboundShipmentUnallocatedLines: [
           {
@@ -217,7 +217,7 @@ const plugins: BackendPlugins = {
         insertLineResult.batchOutboundShipment.insertOutboundShipmentUnallocatedLines[0].response.__typename ===
           'InsertOutboundShipmentUnallocatedLineError'
       ) {
-        batchDeleteOutboundShipmentQuery(issueingStoreId, shipmentId);
+        batchDeleteOutboundShipmentQuery(issuingStoreId, shipmentId);
         throw Error(
           `Insert failed. Unable to issue the stock for item code: ${foundItem.code}, quantity: ${inp.quantity}, customer: ${customer.name}`
         );
@@ -233,7 +233,7 @@ const plugins: BackendPlugins = {
 
     try {
       const allocateOutboundShipmentInput: BatchOutboundShipmentMutationVariables = {
-        storeId: issueingStoreId,
+        storeId: issuingStoreId,
         input: {
           allocatedOutboundShipmentUnallocatedLines: [shipmentLineId],
         },
@@ -247,7 +247,7 @@ const plugins: BackendPlugins = {
         allocateLineResult.batchOutboundShipment.allocateOutboundShipmentUnallocatedLines[0].response.__typename ===
           'AllocateOutboundShipmentUnallocatedLineError'
       ) {
-        batchDeleteOutboundShipmentQuery(issueingStoreId, shipmentId);
+        batchDeleteOutboundShipmentQuery(issuingStoreId, shipmentId);
         throw Error(
           `Failed to allocate line to issue the stock for item code: ${foundItem.code}, quantity: ${inp.quantity}, customer: ${customer.name}`
         );
@@ -262,7 +262,7 @@ const plugins: BackendPlugins = {
     // Update to 'shipped'
     try {
       const updateOutboundShipmentInput: BatchOutboundShipmentMutationVariables = {
-        storeId: issueingStoreId,
+        storeId: issuingStoreId,
         input: {
           updateOutboundShipments: [
             {
@@ -282,7 +282,7 @@ const plugins: BackendPlugins = {
         updateShipmentResult.batchOutboundShipment.updateOutboundShipments[0].response.__typename ===
           'UpdateOutboundShipmentError'
       ) {
-        batchDeleteOutboundShipmentQuery(issueingStoreId, shipmentId);
+        batchDeleteOutboundShipmentQuery(issuingStoreId, shipmentId);
         throw Error(
           `Failed to update order to issue the stock for item code: ${foundItem.code}, quantity: ${inp.quantity}, customer: ${customer.name}`
         );
