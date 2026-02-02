@@ -11,7 +11,7 @@ import {
   BasicTextInput,
   InputWithLabelRow,
   Typography,
-  useIsGapsStoreOnly,
+  useIsExtraSmallScreen,
   UploadFile,
 } from '@openmsupply-client/common';
 import { FileList } from '../Components';
@@ -74,7 +74,7 @@ const Row = ({
 
 export const StatusForm = ({ draft, onChange }: StatusForm) => {
   const t = useTranslation();
-  const isGaps = useIsGapsStoreOnly();
+  const isGaps = useIsExtraSmallScreen();
   const isNative = Capacitor.isNativePlatform();
   const debouncedOnChange = useDebounceCallback(
     (patch: Partial<InsertAssetLogInput>) => onChange(patch),

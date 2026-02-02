@@ -18,7 +18,7 @@ import {
   SnackbarProvider,
   BarcodeScannerProvider,
   DetailLoadingSkeleton,
-  useIsGapsStoreOnly,
+  useIsExtraSmallScreen,
   useBlockNavigation,
   useTheme,
   usePreferences,
@@ -76,7 +76,7 @@ export const Site: FC = () => {
   const getPageTitle = useGetPageTitle();
   const { setPageTitle } = useHostContext();
   const pageTitle = getPageTitle(location.pathname);
-  const isGapsStore = useIsGapsStoreOnly();
+  const isGapsStore = useIsExtraSmallScreen();
   const { isGaps } = usePreferences();
   const isCentralServer = useIsCentralServerApi();
   const { storeCustomColour } = usePreferences();

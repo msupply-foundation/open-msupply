@@ -3,7 +3,7 @@ import {
   ArrayUtils,
   Box,
   PropertyInput,
-  useIsGapsStoreOnly,
+  useIsExtraSmallScreen,
   InfoTooltipIcon,
   InputWithLabelRow,
   Typography,
@@ -138,7 +138,7 @@ const Row = ({
 
 export const Details = ({ draft, onChange }: DetailsProps) => {
   const t = useTranslation();
-  const isGaps = useIsGapsStoreOnly();
+  const isGaps = useIsExtraSmallScreen();
 
   const { data: assetProperties, isLoading } = useAssetProperties({
     assetCategoryId: { equalAnyOrNull: [draft?.assetCategory?.id ?? ''] },

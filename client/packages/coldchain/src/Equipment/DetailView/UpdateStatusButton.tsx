@@ -12,7 +12,7 @@ import {
   FnUtils,
   UserPermission,
   useAuthContext,
-  useIsGapsStoreOnly,
+  useIsExtraSmallScreen,
   AssetLogStatusNodeType,
 } from '@openmsupply-client/common';
 import { StatusForm, Draft } from './StatusForm';
@@ -39,7 +39,7 @@ export const UpdateStatusButtonComponent = ({
   const { Modal, hideDialog, showDialog } = useDialog({ onClose });
   const { insertLog, invalidateQueries } = useAssets.log.insert();
   const [draft, setDraft] = useState<Partial<Draft>>(getEmptyAssetLog(''));
-  const isGaps = useIsGapsStoreOnly();
+  const isGaps = useIsExtraSmallScreen();
 
   const { data: reasonsData } = useAssetLogReasonList(
     draft.status

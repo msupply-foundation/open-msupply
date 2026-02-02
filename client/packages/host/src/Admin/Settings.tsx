@@ -23,7 +23,7 @@ import { SettingsSection } from './SettingsSection';
 import { LabelPrinterSettings } from './LabelPrinterSettings';
 import { ConfigurationSettings } from './ConfigurationSettings';
 import { ServerInfo } from './ServerInfo';
-import { useIsGapsStoreOnly } from '@openmsupply-client/common';
+import { useIsExtraSmallScreen } from '@openmsupply-client/common';
 
 export const Settings: React.FC = () => {
   const { data: initStatus } = useInitialisationStatus();
@@ -31,7 +31,7 @@ export const Settings: React.FC = () => {
 
   const isCentralServer = useIsCentralServerApi();
   const { userHasPermission } = useAuthContext();
-  const isGapsStoreOnly = useIsGapsStoreOnly();
+  const isGapsStoreOnly = useIsExtraSmallScreen();
 
   const toggleSection = (index: number) => () =>
     setActiveSection(activeSection === index ? null : index);
