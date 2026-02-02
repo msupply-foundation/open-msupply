@@ -43,7 +43,7 @@ impl ViewMigrationFragment for ViewMigration {
             r#"
                 CREATE VIEW name_store_join_view AS
                 SELECT
-                    *,
+                    name_store_join.*,
                     name_link.name_id as name_id
                 FROM
                     name_store_join
@@ -52,7 +52,7 @@ impl ViewMigrationFragment for ViewMigration {
 
                 CREATE VIEW store_view AS
                 SELECT
-                    *,
+                    store.*,
                     name_link.name_id as name_id
                 FROM
                     store
@@ -62,7 +62,7 @@ impl ViewMigrationFragment for ViewMigration {
 
                 CREATE VIEW name_tag_join_view AS
                 SELECT
-                    *,
+                    name_tag_join.*,
                     name_link.name_id as name_id
                 FROM
                     name_tag_join
@@ -71,7 +71,7 @@ impl ViewMigrationFragment for ViewMigration {
 
                 CREATE VIEW master_list_name_join_view AS
                 SELECT
-                    *,
+                    master_list_name_join.*,
                     name_link.name_id as name_id
                 FROM
                     master_list_name_join
@@ -80,7 +80,7 @@ impl ViewMigrationFragment for ViewMigration {
 
                 CREATE VIEW invoice_view AS
                 SELECT
-                    *,
+                    invoice.*,
                     name_link.name_id as name_id,
                     default_donor_link.name_id as default_donor_id
                 FROM
@@ -92,7 +92,7 @@ impl ViewMigrationFragment for ViewMigration {
 
                 CREATE VIEW requisition_view AS
                 SELECT
-                    *,
+                    requisition.*,
                     name_link.name_id as name_id
                 FROM
                     requisition
@@ -101,7 +101,7 @@ impl ViewMigrationFragment for ViewMigration {
 
                 CREATE VIEW rnr_form_view AS
                 SELECT
-                    *,
+                    rnr_form.*,
                     name_link.name_id as name_id
                 FROM
                     rnr_form
@@ -110,7 +110,7 @@ impl ViewMigrationFragment for ViewMigration {
 
                 CREATE VIEW name_insurance_join_view AS
                 SELECT
-                    *,
+                    name_insurance_join.*,
                     name_link.name_id as name_id
                 FROM
                     name_insurance_join
@@ -119,7 +119,7 @@ impl ViewMigrationFragment for ViewMigration {
 
                 CREATE VIEW contact_view AS
                 SELECT
-                    *,
+                    contact.*,
                     name_link.name_id as name_id
                 FROM
                     contact
@@ -128,7 +128,7 @@ impl ViewMigrationFragment for ViewMigration {
 
                 CREATE VIEW indicator_value_view AS
                 SELECT
-                    *,
+                    indicator_value.*,
                     name_link.name_id as customer_name_id
                 FROM
                     indicator_value
@@ -137,7 +137,7 @@ impl ViewMigrationFragment for ViewMigration {
 
                 CREATE VIEW stock_line_view AS
                 SELECT
-                    *,
+                    stock_line.*,
                     supplier_link.name_id as supplier_id,
                     donor_link.name_id as donor_id
                 FROM
@@ -149,7 +149,7 @@ impl ViewMigrationFragment for ViewMigration {
 
                 CREATE VIEW purchase_order_view AS
                 SELECT
-                    *,
+                    purchase_order.*,
                     supplier_link.name_id as supplier_name_id,
                     donor_link.name_id as donor_id
                 FROM
@@ -161,7 +161,7 @@ impl ViewMigrationFragment for ViewMigration {
 
                 CREATE VIEW invoice_line_view AS
                 SELECT
-                    *,
+                    invoice_line.*,
                     donor_link.name_id as donor_id
                 FROM
                     invoice_line
@@ -170,7 +170,7 @@ impl ViewMigrationFragment for ViewMigration {
 
                 CREATE VIEW purchase_order_line_view AS
                 SELECT
-                    *,
+                    purchase_order_line.*,
                     manufacturer_link.name_id as manufacturer_id
                 FROM
                     purchase_order_line
@@ -179,7 +179,7 @@ impl ViewMigrationFragment for ViewMigration {
 
                 CREATE VIEW stocktake_line_view AS
                 SELECT
-                    *,
+                    stocktake_line.*,
                     donor_link.name_id as donor_id
                 FROM
                     stocktake_line
@@ -188,7 +188,7 @@ impl ViewMigrationFragment for ViewMigration {
 
                 CREATE VIEW encounter_view AS
                 SELECT
-                    *,
+                    encounter.*,
                     patient_link.name_id as patient_id
                 FROM
                     encounter
@@ -197,7 +197,7 @@ impl ViewMigrationFragment for ViewMigration {
 
                 CREATE VIEW program_enrolment_view AS
                 SELECT
-                    *,
+                    program_enrolment.*,
                     patient_link.name_id as patient_id
                 FROM
                     program_enrolment
@@ -206,7 +206,7 @@ impl ViewMigrationFragment for ViewMigration {
 
                 CREATE VIEW vaccination_view AS
                 SELECT
-                    *,
+                    vaccination.*,
                     patient_link.name_id as patient_id,
                     facility_link.name_id as facility_name_id
                 FROM
@@ -236,7 +236,7 @@ impl ViewMigrationFragment for ViewMigration {
 
                 CREATE VIEW goods_received_line_view AS
                 SELECT
-                    *,
+                    goods_received_line.*,
                     manufacturer_link.name_id as manufacturer_id
                 FROM
                     goods_received_line
@@ -245,7 +245,7 @@ impl ViewMigrationFragment for ViewMigration {
 
                 CREATE VIEW item_variant_view AS
                 SELECT
-                    *,
+                    item_variant.*,
                     manufacturer_link.name_id as manufacturer_id
                 FROM
                     item_variant
@@ -254,7 +254,7 @@ impl ViewMigrationFragment for ViewMigration {
 
                 CREATE VIEW program_event_view AS
                 SELECT
-                    *,
+                    program_event.*,
                     patient_link.name_id as patient_id
                 FROM
                     program_event
