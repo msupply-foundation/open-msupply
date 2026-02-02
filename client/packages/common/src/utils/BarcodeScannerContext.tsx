@@ -104,7 +104,9 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
   const [localScannerType, setLocalScannerType] =
     useState<ScannerType>('usb_serial');
 
-  const { mockScan, mockScannerInput } = useMockScanner(isScanning);
+  const MockScanner = useMockScanner(isScanning);
+
+  console.log('MockScanner', MockScanner);
 
   const hasNativeBarcodeScanner =
     Capacitor.isPluginAvailable('BarcodeScanner') &&
@@ -151,7 +153,7 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
   const scanBarcode = async (formats?: BarcodeFormat[]) => {
     switch (true) {
       case ENABLE_MOCK_SCANNER:
-        const mockBarcode = await mockScan();
+        const mockBarcode = await MockScanner.scan();
         return mockBarcode;
 
       case hasElectronApi:
@@ -225,10 +227,11 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
     setIsScanning(true);
 
     if (ENABLE_MOCK_SCANNER) {
-      const mockBarcode = await mockScan();
-      const result = parseResult(mockBarcode);
-      callback(result);
-      setIsScanning(false);
+      const scanHandler = async (barcode: string) => {
+        const result = parseResult(barcode);
+        callback(result);
+      };
+      await MockScanner.startListening(scanHandler);
       return;
     }
 
@@ -262,6 +265,11 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
 
   const stopScan = async () => {
     setIsScanning(false);
+
+    if (ENABLE_MOCK_SCANNER) {
+      await MockScanner.stopListening();
+    }
+
     if (hasElectronApi) {
       await electronNativeAPI.stopBarcodeScan();
     }
@@ -310,7 +318,7 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
   return (
     <Provider value={val}>
       <>
-        {mockScannerInput}
+        {MockScanner.scannerInput}
         <GlobalStyles
           styles={
             isScanning && hasNativeBarcodeScanner
