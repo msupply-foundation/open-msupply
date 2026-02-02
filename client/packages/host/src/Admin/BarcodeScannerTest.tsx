@@ -33,10 +33,8 @@ export const BarcodeScannerTest = () => {
     // Auto-start scanning for Honeywell and Manual when page loads
     if (!isScanning) {
       if (
-        availableScanners.includes(
-          AvailableScannerType.Honeywell ||
-            availableScanners.includes(AvailableScannerType.Mock)
-        )
+        availableScanners.includes(AvailableScannerType.Honeywell) ||
+        availableScanners.includes(AvailableScannerType.Mock)
       ) {
         handleStartScanning();
       }
