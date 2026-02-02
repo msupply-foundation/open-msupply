@@ -21,6 +21,7 @@ import { AppBarButtons } from './AppBarButtons';
 import { usePatientStore } from '@openmsupply-client/programs';
 import { CreatePatientModal } from '../CreatePatientModal';
 import { PatientColumnData } from '../CreatePatientModal/PatientResultsTab';
+import { Toolbar } from './Toolbar';
 
 // TODO: REMOVE. KEEPING FOR LINK PATIENT MODAL USAGE
 export const programEnrolmentLabelAccessor: ColumnDataAccessor<
@@ -196,6 +197,7 @@ export const PatientListView = () => {
 
   return (
     <>
+      <Toolbar />
       <AppBarButtons
         sortBy={sortBy}
         onCreatePatient={onCreatePatient}
