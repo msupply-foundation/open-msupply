@@ -330,6 +330,7 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
         setIsScanning(false);
         throw e;
       }
+      return;
     }
 
     if (hasNativeBarcodeScanner) {
@@ -343,6 +344,7 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
       );
 
       await BarcodeScannerPlugin.startScan();
+      return;
     }
 
     if (mockScannerEnabled) {
