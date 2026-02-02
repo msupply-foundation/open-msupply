@@ -218,25 +218,6 @@ export const BarcodeScannerSettings = () => {
         title={t('label.barcode-scanner-available')}
       />
 
-      {/* Mock Scanner Toggle */}
-      <Setting
-        title="Mock Scanner"
-        component={
-          <Box display="flex" justifyContent="flex-end" alignItems="center">
-            <Switch
-              checked={mockScannerEnabled}
-              onChange={(_event, checked) => {
-                setMockScannerEnabled(checked);
-              }}
-              size="small"
-            />
-            <Box paddingLeft={2}>
-              {mockScannerEnabled ? 'Enabled' : 'Disabled'}
-            </Box>
-          </Box>
-        }
-      />
-
       {/* USB Scanner Type Selection (Electron only) */}
       {availableScanners.includes(AvailableScannerType.ElectronUSB) &&
         electronNativeAPI && (
@@ -296,6 +277,25 @@ export const BarcodeScannerSettings = () => {
             )}
           </>
         )}
+
+      {/* Mock Scanner Toggle */}
+      <Setting
+        title={t('settings.enable-mock-barcode-scanner')}
+        component={
+          <Box display="flex" justifyContent="flex-end" alignItems="center">
+            <Switch
+              checked={mockScannerEnabled}
+              onChange={(_event, checked) => {
+                setMockScannerEnabled(checked);
+              }}
+              size="small"
+            />
+            <Box paddingLeft={2}>
+              {mockScannerEnabled ? 'Enabled' : 'Disabled'}
+            </Box>
+          </Box>
+        }
+      />
       <Setting
         component={
           <Box display="flex" justifyContent="flex-end">

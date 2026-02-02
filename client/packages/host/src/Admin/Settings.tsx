@@ -18,7 +18,6 @@ import {
 } from '@common/icons';
 import { SyncSettings } from './SyncSettings';
 import { ServerSettings } from './ServerSettings';
-import { ElectronSettings } from './ElectronSettings';
 import { DisplaySettings } from './DisplaySettings';
 import { SettingsSection } from './SettingsSection';
 import { LabelPrinterSettings } from './LabelPrinterSettings';
@@ -75,7 +74,6 @@ export const Settings: React.FC = () => {
         visible={userHasPermission(UserPermission.ServerAdmin)}
       >
         <LabelPrinterSettings />
-        <ElectronSettings />
         <BarcodeScannerSettings />
       </SettingsSection>
 
