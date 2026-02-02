@@ -1,4 +1,4 @@
-name: Bundle size diff
+name: Bundle size diff - Build
 
 on:
   pull_request:
@@ -71,43 +71,3 @@ jobs:
           name: pr
           path: ./client/packages/host/dist/stats.json
           retention-days: 3
-
-  report:
-    name: Generate report
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    needs: [build-base, build-pr]
-
-    steps:
-      - name: Checkout PR
-        uses: actions/checkout@v4
-
-      - name: Download base stats
-        uses: actions/download-artifact@v4
-        with:
-          name: base
-          path: base
-
-      - name: Download PR stats
-        uses: actions/download-artifact@v4
-        with:
-          name: pr
-          path: pr
-
-      - name: Get diff
-        id: get-diff
-        uses: NejcZdovc/bundle-size-diff@v1
-        with:
-          base_path: "./base/stats.json"
-          pr_path: "./pr/stats.json"
-
-      - name: Comment
-        uses: NejcZdovc/comment-pr@v1
-        with:
-          file: "comment.md"
-        env:
-          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
-          OLD: ${{steps.get-diff.outputs.base_file_string}}
-          NEW: ${{steps.get-diff.outputs.pr_file_string}}
-          DIFF: ${{steps.get-diff.outputs.diff_file_string}}
-          DIFF_PERCENT: ${{steps.get-diff.outputs.percent}}
