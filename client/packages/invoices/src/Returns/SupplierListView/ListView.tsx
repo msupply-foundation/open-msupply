@@ -21,6 +21,7 @@ import {
 import { getStatusTranslator, isOutboundDisabled } from '../../utils';
 import { AppBarButtons } from './AppBarButtons';
 import { SupplierReturnRowFragment, useReturns } from '../api';
+import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
 
 export const SupplierReturnListView = () => {
@@ -150,6 +151,7 @@ export const SupplierReturnListView = () => {
 
   return (
     <>
+      <Toolbar />
       <AppBarButtons modalController={modalController} onNew={handleClick} />
       <MaterialTable table={table} />
       <Footer
