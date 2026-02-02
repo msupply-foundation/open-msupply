@@ -22,8 +22,10 @@ import {
 import { clearSavedState } from './tableState/utils';
 import { NothingHere } from '@common/components';
 
-export interface BaseTableConfig<T extends MRT_RowData>
-  extends Omit<MRT_TableOptions<T>, 'data'> {
+export interface BaseTableConfig<T extends MRT_RowData> extends Omit<
+  MRT_TableOptions<T>,
+  'data'
+> {
   tableId: string; // key for local storage
   data: T[] | undefined;
   onRowClick?: (row: T, isCtrlClick: boolean) => void;
@@ -138,7 +140,8 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
     columnOrder.resetHasSavedState();
   };
 
-  const hasColumnFilters = columns.some(col => col.enableColumnFilter);
+  // hiding all table filter related options for now
+  const hasColumnFilters = false;
 
   const displayOptions = useTableDisplayOptions({
     isGrouped,

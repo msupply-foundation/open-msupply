@@ -20,6 +20,7 @@ import {
   isInboundListItemDisabled,
 } from '../../utils';
 import { useInbound, InboundRowFragment } from '../api';
+import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
 
 export const InboundListView = () => {
@@ -31,6 +32,7 @@ export const InboundListView = () => {
   const { mutate: onUpdate } = useInbound.document.update();
 
   const {
+    filter,
     queryParams: { first, offset, sortBy, filterBy },
   } = useUrlQueryParams({
     initialSort: { key: 'invoiceNumber', dir: 'desc' },
@@ -153,6 +155,7 @@ export const InboundListView = () => {
 
   return (
     <>
+      <Toolbar filter={filter} />
       <AppBarButtons
         invoiceModalController={invoiceModalController}
         linkRequestModalController={linkRequestModalController}
