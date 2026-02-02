@@ -286,7 +286,7 @@ public class ErrorPage {
         String body = html;
         if (url != null) {
             String urlDisplay = "<div style=\"text-align:center; margin-bottom: 16px; font-size: 0.875rem; color: #677285;\">" + url + "</div>";
-            body = body.replace("</h5>", "</h5><h6> URL:" + urlDisplay +"</h6>");
+            body = body.replace("</h5>", "</h5>" + urlDisplay);
         }
         return Base64.encodeToString(body.getBytes(), Base64.NO_PADDING);
     }
