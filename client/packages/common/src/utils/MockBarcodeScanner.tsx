@@ -49,8 +49,8 @@ export const useMockScanner = (isScanning: boolean) => {
         <div
           style={{
             position: 'fixed',
-            bottom: '20px',
-            right: '20px',
+            top: '20px',
+            left: '20px',
             zIndex: 9999,
             width: '300px',
             backgroundColor: 'white',
