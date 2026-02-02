@@ -21,6 +21,7 @@ import {
 import { getStatusTranslator, isInboundListItemDisabled } from '../../utils';
 import { AppBarButtons } from './AppBarButtons';
 import { CustomerReturnRowFragment, useReturns } from '../api';
+import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
 
 export const CustomerReturnListView = () => {
@@ -148,6 +149,7 @@ export const CustomerReturnListView = () => {
 
   return (
     <>
+      <Toolbar />
       <AppBarButtons modalController={modalController} onNew={handleClick} />
 
       <MaterialTable table={table} />
