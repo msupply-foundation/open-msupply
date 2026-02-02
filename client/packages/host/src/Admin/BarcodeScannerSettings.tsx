@@ -8,7 +8,6 @@ import {
   ButtonWithIcon,
   useBarcodeScannerContext,
   AvailableScannerType,
-  Select,
   Switch,
   LoadingButton,
   useNotification,
@@ -77,8 +76,8 @@ const getScannerLabel = (
   t: ReturnType<typeof useTranslation>
 ): string => {
   switch (scanner) {
-    case AvailableScannerType.Manual:
-      return t('label.barcode-scanner-manual');
+    case AvailableScannerType.Mock:
+      return 'Mock Scanner';
     case AvailableScannerType.Honeywell:
       return t('label.barcode-scanner-honeywell');
     case AvailableScannerType.Camera:
@@ -103,11 +102,11 @@ export const BarcodeScannerSettings = () => {
     isConnected,
     isEnabled,
     availableScanners,
-    activeScanner,
-    setActiveScanner,
     scannerType,
     setScannerType,
     setScanner: setBarcodeScanner,
+    mockScannerEnabled,
+    setMockScannerEnabled,
   } = useBarcodeScannerContext();
 
   const startDeviceScan = async () => {
@@ -219,39 +218,27 @@ export const BarcodeScannerSettings = () => {
         title={t('label.barcode-scanner-available')}
       />
 
+      {/* Mock Scanner Toggle */}
       <Setting
+        title="Mock Scanner"
         component={
-          <Box display="flex" alignItems="center" gap={2}>
-            <Select
-              value={activeScanner}
-              onChange={e =>
-                setActiveScanner(e.target.value as AvailableScannerType)
-              }
-              sx={{ minWidth: 200 }}
-              options={availableScanners.map(scanner => ({
-                label: getScannerLabel(scanner, t),
-                value: scanner,
-              }))}
+          <Box display="flex" justifyContent="flex-end" alignItems="center">
+            <Switch
+              checked={mockScannerEnabled}
+              onChange={(_event, checked) => {
+                setMockScannerEnabled(checked);
+              }}
+              size="small"
             />
-
-            <ButtonWithIcon
-              Icon={<ScanIcon />}
-              label={t('label.barcode-scanner-test')}
-              onClick={() =>
-                navigate(
-                  RouteBuilder.create(AppRoute.Settings)
-                    .addPart('barcode-scanner-test')
-                    .build()
-                )
-              }
-            />
+            <Box paddingLeft={2}>
+              {mockScannerEnabled ? 'Enabled' : 'Disabled'}
+            </Box>
           </Box>
         }
-        title={t('label.barcode-scanner-active')}
       />
 
       {/* USB Scanner Type Selection (Electron only) */}
-      {activeScanner === AvailableScannerType.ElectronUSB &&
+      {availableScanners.includes(AvailableScannerType.ElectronUSB) &&
         electronNativeAPI && (
           <>
             <Setting
@@ -309,6 +296,24 @@ export const BarcodeScannerSettings = () => {
             )}
           </>
         )}
+      <Setting
+        component={
+          <Box display="flex" justifyContent="flex-end">
+            <ButtonWithIcon
+              Icon={<ScanIcon />}
+              label={t('label.barcode-scanner-test')}
+              onClick={() =>
+                navigate(
+                  RouteBuilder.create(AppRoute.Settings)
+                    .addPart('barcode-scanner-test')
+                    .build()
+                )
+              }
+            />
+          </Box>
+        }
+        title={''}
+      />
     </>
   );
 };
