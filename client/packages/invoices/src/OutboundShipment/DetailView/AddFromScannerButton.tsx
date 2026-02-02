@@ -23,7 +23,7 @@ export const AddFromScannerButtonComponent = ({
 }) => {
   const t = useTranslation();
   const { mutateAsync: getBarcode } = useOutbound.utils.barcode();
-  const { isConnected, isEnabled, isScanning, scan, stopScan, startScanning } =
+  const { isConnected, isEnabled, isScanning, scan, stopScan } =
     useBarcodeScannerContext();
   const { error, warning } = useNotification();
   const buttonRef = useRef<HTMLButtonElement>(null);
