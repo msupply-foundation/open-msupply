@@ -11,7 +11,7 @@ import {
   BasicTextInput,
   PersistentPaperPopover,
   usePopover,
-  useIsGapsStoreOnly,
+  useIsExtraSmallScreen,
   EnvUtils,
   Platform,
   RouteBuilder,
@@ -25,7 +25,7 @@ export const StoreSelector: FC<PropsWithChildrenOnly> = ({ children }) => {
   const { store, setStore, token } = useAuthContext();
   const { data, isLoading } = useUserDetails(token);
   const popoverControls = usePopover();
-  const isGaps = useIsGapsStoreOnly();
+  const isGaps = useIsExtraSmallScreen();
   const isAndroid = EnvUtils.platform === Platform.Android;
 
   const storeSorter = (a: UserStoreNodeFragment, b: UserStoreNodeFragment) => {

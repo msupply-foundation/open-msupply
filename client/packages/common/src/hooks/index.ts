@@ -29,7 +29,7 @@ export * from './usePagination';
 export * from './usePathnameIncludes';
 export * from './useUserPreferencePagination';
 export * from './useStringFilter';
-export * from './useIsGapsStoreOnly';
+export * from './useIsExtraSmallScreen';
 export * from './useKeyboardShortcut';
 export * from './useSimplifiedTabletUI';
 export * from './useFeatureFlags';

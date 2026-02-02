@@ -32,7 +32,7 @@ import {
 } from '@openmsupply-client/system';
 import { DraftAsset } from '../../types';
 import { formatLocationLabel } from '../DetailView';
-import { useIsGapsStoreOnly } from '@openmsupply-client/common';
+import { useIsExtraSmallScreen } from '@openmsupply-client/common';
 import { statusColourMap } from '../../utils';
 
 interface SummaryProps {
@@ -168,7 +168,7 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
   const { localisedDate } = useFormatDateTime();
   const { storeId, userHasPermission } = useAuthContext();
   const isCentralServer = useIsCentralServerApi();
-  const isGaps = useIsGapsStoreOnly();
+  const isGaps = useIsExtraSmallScreen();
   const isServerAdmin = userHasPermission(UserPermission.ServerAdmin);
 
   if (!draft) return null;

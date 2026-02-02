@@ -8,7 +8,7 @@ import {
   AppNavSection,
   ThermometerIcon,
   UserStoreNodeFragment,
-  useIsGapsStoreOnly,
+  useIsExtraSmallScreen,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { useNestedNav } from './useNestedNav';
@@ -23,7 +23,7 @@ export const ColdChainNav: FC<ColdChainNavProps> = ({ store }) => {
   );
   const t = useTranslation();
   const visible = store?.preferences.vaccineModule ?? false;
-  const isGapsStore = useIsGapsStoreOnly();
+  const isGapsStore = useIsExtraSmallScreen();
 
   return (
     <AppNavSection
