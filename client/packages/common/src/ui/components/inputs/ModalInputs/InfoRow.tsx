@@ -20,6 +20,7 @@ interface InfoRowProps {
   sx?: SxProps<Theme>;
   decimalLimit?: number;
   dosesCaption?: React.ReactNode;
+  roundUp?: boolean;
 }
 
 export const InfoRow = ({
@@ -29,6 +30,7 @@ export const InfoRow = ({
   sx,
   decimalLimit,
   dosesCaption,
+  roundUp = false,
 }: InfoRowProps) => {
   return (
     <Grid
@@ -57,6 +59,7 @@ export const InfoRow = ({
               value={value}
               packagingDisplay={packagingDisplay}
               decimalLimit={decimalLimit}
+              roundUp={roundUp}
             />
             {dosesCaption}
           </>
@@ -79,6 +82,7 @@ interface ValueInfoRowProps extends Omit<InfoRowProps, 'value'> {
   endAdornmentOverride?: string;
   displayVaccinesInDoses?: boolean;
   dosesPerUnit?: number;
+  roundUp?: boolean;
 }
 
 export type ValueInfo = {
@@ -88,6 +92,7 @@ export type ValueInfo = {
   sx?: SxProps<Theme>;
   displayVaccinesInDoses?: boolean;
   dosesPerUnit?: number;
+  roundUp?: boolean;
 };
 
 export const ValueInfoRow = ({
@@ -102,6 +107,7 @@ export const ValueInfoRow = ({
   dosesPerUnit = 1,
   nullDisplay,
   decimalLimit,
+  roundUp,
 }: ValueInfoRowProps) => {
   const t = useTranslation();
   const { getPlural } = useIntlUtils();
@@ -129,10 +135,8 @@ export const ValueInfoRow = ({
     displayVaccinesInDoses && !!value ? (
       <DosesCaption
         value={value}
-        representation={representation}
         dosesPerUnit={dosesPerUnit}
         displayVaccinesInDoses={displayVaccinesInDoses}
-        defaultPackSize={defaultPackSize}
         sx={{ pr: 0 }}
       />
     ) : null;
@@ -146,6 +150,7 @@ export const ValueInfoRow = ({
         sx={sx}
         decimalLimit={decimalLimit}
         dosesCaption={dosesCaption}
+        roundUp={roundUp}
       />
     </>
   );

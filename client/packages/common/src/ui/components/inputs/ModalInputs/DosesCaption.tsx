@@ -5,14 +5,11 @@ import {
   useFormatNumber,
   SxProps,
   Theme,
-  RepresentationValue,
   QuantityUtils,
 } from '@openmsupply-client/common';
 
 interface DosesCaptionProps {
   value: number;
-  representation: RepresentationValue;
-  defaultPackSize?: number;
   dosesPerUnit: number;
   displayVaccinesInDoses: boolean;
   sx?: SxProps<Theme>;
@@ -21,8 +18,6 @@ interface DosesCaptionProps {
 export const DosesCaption = ({
   value,
   displayVaccinesInDoses,
-  representation,
-  defaultPackSize,
   dosesPerUnit,
   sx,
 }: DosesCaptionProps) => {
@@ -32,8 +27,6 @@ export const DosesCaption = ({
   // doses always rounded to display in whole numbers
   const valueInDoses = QuantityUtils.useValueInDoses(
     displayVaccinesInDoses,
-    representation,
-    defaultPackSize || 1,
     dosesPerUnit,
     value
   );

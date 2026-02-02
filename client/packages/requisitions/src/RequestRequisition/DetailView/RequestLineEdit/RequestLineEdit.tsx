@@ -111,6 +111,7 @@ export const RequestLineEdit = ({
             sx,
             endAdornmentOverride,
             displayVaccinesInDoses: showDoses,
+            roundUp,
           }) => (
             <ValueInfoRow
               key={label}
@@ -124,6 +125,7 @@ export const RequestLineEdit = ({
               displayVaccinesInDoses={showDoses ?? displayVaccinesInDoses}
               dosesPerUnit={currentItem?.doses}
               decimalLimit={0}
+              roundUp={roundUp}
             />
           )
         )}
