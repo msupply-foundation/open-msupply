@@ -241,7 +241,7 @@ const plugins: BackendPlugins = {
 
       if (
         !allocateLineResult.batchOutboundShipment.allocateOutboundShipmentUnallocatedLines ||
-        allocateLineResult.batchOutboundShipment.allocateOutboundShipmentUnallocatedLines.length < 0 ||
+        allocateLineResult.batchOutboundShipment.allocateOutboundShipmentUnallocatedLines.length < 1 ||
         allocateLineResult.batchOutboundShipment.allocateOutboundShipmentUnallocatedLines[0].response.__typename ===
           'AllocateOutboundShipmentUnallocatedLineError'
       ) {
