@@ -6,6 +6,7 @@ query Items($storeId: String!, $filter: ItemFilterInput) {
       nodes {
         id
         code
+        msupplyUniversalCode
         name
         availableStockOnHand(storeId: $storeId)
         stats(storeId: $storeId) {

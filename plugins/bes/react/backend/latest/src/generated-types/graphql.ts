@@ -59,4 +59,4 @@ export type ItemsQueryVariables = Types.Exact<{
 }>;
 
 
-export type ItemsQuery = { __typename?: 'Queries', items: { __typename: 'ItemConnector', totalCount: number, nodes: Array<{ __typename?: 'ItemNode', id: string, code: string, name: string, availableStockOnHand: number, stats: { __typename?: 'ItemStatsNode', availableStockOnHand: number, averageMonthlyConsumption: number } }> } };
+export type ItemsQuery = { __typename?: 'Queries', items: { __typename: 'ItemConnector', totalCount: number, nodes: Array<{ __typename?: 'ItemNode', id: string, code: string, msupplyUniversalCode: string, name: string, availableStockOnHand: number, stats: { __typename?: 'ItemStatsNode', availableStockOnHand: number, averageMonthlyConsumption: number } }> } };
