@@ -16,6 +16,7 @@ import {
   useEncounterFragmentWithStatus,
 } from '../utils';
 import { useEncounter } from '@openmsupply-client/programs';
+import { Toolbar } from './Toolbar';
 
 export const EncounterListView = () => {
   const t = useTranslation();
@@ -74,5 +75,10 @@ export const EncounterListView = () => {
     noDataElement: <NothingHere body={t('error.no-encounters')} />,
   });
 
-  return <MaterialTable table={table} />;
+  return (
+    <>
+      <Toolbar />
+      <MaterialTable table={table} />
+    </>
+  );
 };
