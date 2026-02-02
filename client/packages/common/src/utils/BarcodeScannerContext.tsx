@@ -362,6 +362,7 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
     if (mockScannerEnabled) {
       await MockScanner.stopListening();
     }
+
     if (hasElectronApi) {
       await electronNativeAPI.stopBarcodeScan();
     }
@@ -376,10 +377,6 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
       if (honeywell?.release) {
         honeywell.release();
       }
-    }
-
-    if (electronNativeAPI) {
-      await electronNativeAPI.stopBarcodeScan();
     }
   };
 
