@@ -2627,5 +2627,6 @@
   "warning.manual-store-requisition": "Entering a requisition for this store may result in duplicates if the store also submits an Internal Order.",
   "warning.nothing-to-supply": "Nothing left to supply!",
   "warning.requested-exceeds-suggested": "Your requested quantity is higher than the suggested",
-  "settings.enable-mock-barcode-scanner": "Enable manual barcode input (for testing purposes only)"
+  "settings.enable-mock-barcode-scanner": "Enable manual barcode input (for testing purposes only)",
+  "button.scan-once": "Scan once"
 }
