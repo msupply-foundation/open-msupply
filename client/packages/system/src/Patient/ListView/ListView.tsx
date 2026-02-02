@@ -46,7 +46,7 @@ export const PatientListView = () => {
     filters: [
       {
         key: 'dateOfBirth',
-        condition: 'between',
+        condition: 'equalTo',
       },
       {
         key: 'gender',
