@@ -104,10 +104,8 @@ const plugins: BackendPlugins = {
       return { success: false, message: 'No active stores found' };
     }
 
-    // Make sure it's a store
-    const issuingStore = activeStores.find(store => {
-      return store.name_row.type === 'STORE';
-    });
+    // Take first store
+    const issuingStore = activeStores[0];
 
     if (!issuingStore) {
       return { success: false, message: 'No store found' };
