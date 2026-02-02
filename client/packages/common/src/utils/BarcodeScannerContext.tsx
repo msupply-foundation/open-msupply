@@ -35,8 +35,14 @@ declare global {
 
 const SCAN_TIMEOUT_IN_MS = 50000;
 const INSTALL_TIMEOUT_IN_MS = 30000;
+const MOCK_SCANNER_STORAGE_KEY = 'barcode_scanner_mock_enabled';
 
-const ENABLE_MOCK_SCANNER = true;
+export enum AvailableScannerType {
+  Mock = 'mock',
+  Camera = 'camera',
+  ElectronUSB = 'electron_usb',
+  Honeywell = 'honeywell',
+}
 
 export interface ScanResult {
   content?: string; // Raw barcode content
@@ -64,6 +70,9 @@ interface BarcodeScannerControl {
   setScanner: (scanner: BarcodeScanner) => void;
   setScannerType: (scanner: ScannerType) => void;
   scannerType: ScannerType;
+  availableScanners: AvailableScannerType[];
+  mockScannerEnabled: boolean;
+  setMockScannerEnabled: (enabled: boolean) => void;
 }
 
 const BarcodeScannerContext = createContext<BarcodeScannerControl>({} as any);
@@ -138,6 +147,17 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
   const [scanner, setScanner] = useState<BarcodeScanner | null>(null);
   const [localScannerType, setLocalScannerType] =
     useState<ScannerType>('usb_serial');
+  const [mockScannerEnabled, setMockScannerEnabledState] = useState<boolean>(
+    () => {
+      const stored = localStorage.getItem(MOCK_SCANNER_STORAGE_KEY);
+      return stored ? JSON.parse(stored) : false;
+    }
+  );
+
+  const setMockScannerEnabled = (enabled: boolean) => {
+    setMockScannerEnabledState(enabled);
+    localStorage.setItem(MOCK_SCANNER_STORAGE_KEY, JSON.stringify(enabled));
+  };
 
   const MockScanner = useMockScanner(isScanning);
 
@@ -147,11 +167,21 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
   const hasElectronApi = !!electronNativeAPI;
   const hasHoneywellScanner = typeof window.plugins?.honeywell !== 'undefined';
 
-  const isEnabled =
-    hasNativeBarcodeScanner ||
-    hasElectronApi ||
-    hasHoneywellScanner ||
-    ENABLE_MOCK_SCANNER;
+  const availableScanners: AvailableScannerType[] = useMemo(() => {
+    const scanners: AvailableScannerType[] = [];
+    if (mockScannerEnabled) scanners.push(AvailableScannerType.Mock);
+    if (hasNativeBarcodeScanner) scanners.push(AvailableScannerType.Camera);
+    if (hasElectronApi) scanners.push(AvailableScannerType.ElectronUSB);
+    if (hasHoneywellScanner) scanners.push(AvailableScannerType.Honeywell);
+    return scanners;
+  }, [
+    mockScannerEnabled,
+    hasNativeBarcodeScanner,
+    hasElectronApi,
+    hasHoneywellScanner,
+  ]);
+
+  const isEnabled = availableScanners.length > 0;
 
   const googleBarcodeScannerAvailable = () =>
     new Promise<boolean>(async resolve => {
@@ -190,7 +220,7 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
 
   const scanBarcode = async (formats?: BarcodeFormat[]) => {
     switch (true) {
-      case ENABLE_MOCK_SCANNER:
+      case mockScannerEnabled:
         const mockBarcode = await MockScanner.scan();
         return mockBarcode;
 
@@ -287,7 +317,7 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
       }
     }
 
-    if (ENABLE_MOCK_SCANNER) {
+    if (mockScannerEnabled) {
       const scanHandler = async (barcode: string) => {
         const result = parseResult(barcode);
         callback(result);
@@ -326,7 +356,7 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
 
   const stopScan = async () => {
     setIsScanning(false);
-    if (ENABLE_MOCK_SCANNER) {
+    if (mockScannerEnabled) {
       await MockScanner.stopListening();
     }
     if (hasElectronApi) {
@@ -362,7 +392,7 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
   useEffect(() => {
     electronNativeAPI?.linkedBarcodeScannerDevice().then(setScanner);
     electronNativeAPI?.getScannerType().then(setLocalScannerType);
-  }, []);
+  }, [electronNativeAPI]);
 
   const val = useMemo(
     () => ({
@@ -371,7 +401,7 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
       // and we use the camera for scanning currently, no need to check for
       // a physical device to be connected
       isConnected:
-        ENABLE_MOCK_SCANNER ||
+        mockScannerEnabled ||
         !!scanner?.connected ||
         Capacitor.isNativePlatform(),
       isScanning,
@@ -381,8 +411,22 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
       setScannerType,
       stopScan,
       scannerType: localScannerType,
+      availableScanners,
+      mockScannerEnabled,
+      setMockScannerEnabled,
     }),
-    [isEnabled, scan, stopScan, startScanning]
+    [
+      isEnabled,
+      scan,
+      stopScan,
+      startScanning,
+      setScannerType,
+      availableScanners,
+      mockScannerEnabled,
+      localScannerType,
+      scanner,
+      isScanning,
+    ]
   );
 
   return (

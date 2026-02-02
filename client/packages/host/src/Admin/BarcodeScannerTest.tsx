@@ -12,10 +12,9 @@ import {
   ScanResult as ParsedScanResult,
   useBarcodeScannerContext,
   AvailableScannerType,
-  TextField,
-  InputAdornment,
 } from '@openmsupply-client/common';
-import { XCircleIcon, DeleteIcon, CheckIcon, ScanIcon } from '@common/icons';
+import { useTranslation } from '@common/intl';
+import { XCircleIcon, DeleteIcon, CheckIcon } from '@common/icons';
 
 interface ScanResult {
   text: string;
@@ -24,64 +23,42 @@ interface ScanResult {
 }
 
 export const BarcodeScannerTest = () => {
+  const t = useTranslation();
   const [scanResults, setScanResults] = useState<ScanResult[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [initLog, setInitLog] = useState<string[]>([]);
-  const [manualInput, setManualInput] = useState('');
-  const {
-    isScanning,
-    isEnabled,
-    activeScanner,
-    startScanning,
-    stopScan,
-    scan: scanOnce,
-    triggerManualScan,
-  } = useBarcodeScannerContext();
-
-  const addLog = (message: string) => {
-    setInitLog(prev => [
-      ...prev,
-      `${new Date().toLocaleTimeString()}: ${message}`,
-    ]);
-  };
+  const { isScanning, isEnabled, startScanning, stopScan, availableScanners } =
+    useBarcodeScannerContext();
 
   useEffect(() => {
-    addLog('Barcode Scanner Test initialized');
-    addLog(`Scanner enabled: ${isEnabled}`);
-    addLog(`Active scanner: ${activeScanner}`);
-
     // Auto-start scanning for Honeywell and Manual when page loads
-    if (
-      (activeScanner === AvailableScannerType.Honeywell ||
-        activeScanner === AvailableScannerType.Manual) &&
-      !isScanning
-    ) {
-      addLog(`Auto-starting ${activeScanner} scanner...`);
-      handleStartScanning();
+    if (!isScanning) {
+      if (
+        availableScanners.includes(
+          AvailableScannerType.Honeywell ||
+            availableScanners.includes(AvailableScannerType.Mock)
+        )
+      ) {
+        handleStartScanning();
+      }
     }
 
     // Cleanup on unmount
     return () => {
       if (isScanning) {
-        addLog('Component unmounting - stopping scanner...');
         stopScan();
       }
     };
-  }, [activeScanner]);
+    // only need to respond to changes in available scanners
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [availableScanners]);
 
   const handleStartScanning = async () => {
     try {
-      addLog('Starting continuous scanning...');
       await startScanning((result, err) => {
         if (err) {
-          addLog(`Scanning error: ${err}`);
-          setError(`Scanning error: ${err}`);
+          setError(`${t('messages.scanning-error')}: ${err}`);
           return;
         }
-
-        addLog(`Barcode scanned: ${result.content}`);
-        if (result.gtin) addLog(`Parsed GTIN: ${result.gtin}`);
-        if (result.batch) addLog(`Parsed Batch: ${result.batch}`);
 
         setScanResults(prev => [
           {
@@ -92,78 +69,30 @@ export const BarcodeScannerTest = () => {
           ...prev,
         ]);
       });
-      addLog('Continuous scanning active');
     } catch (e) {
-      const errorMsg = (e as Error)?.message || 'Unknown error';
-      addLog(`Error starting scanner: ${errorMsg}`);
-      setError(`Error: ${errorMsg}`);
+      const errorMsg = (e as Error)?.message || t('messages.unknown-error');
+      setError(`${t('messages.unknown-error')}: ${errorMsg}`);
     }
   };
 
   const handleStopScanning = async () => {
     try {
-      addLog('Stopping scanner...');
       await stopScan();
-      addLog('Scanner stopped');
     } catch (e) {
-      const errorMsg = (e as Error)?.message || 'Unknown error';
-      addLog(`Error stopping scanner: ${errorMsg}`);
-      setError(`Error: ${errorMsg}`);
-    }
-  };
-
-  const handleScanOnce = async () => {
-    try {
-      addLog('Initiating single scan...');
-      const result = await scanOnce();
-
-      if (result.content) {
-        addLog(`Barcode scanned: ${result.content}`);
-        if (result.gtin) addLog(`Parsed GTIN: ${result.gtin}`);
-        if (result.batch) addLog(`Parsed Batch: ${result.batch}`);
-
-        setScanResults(prev => [
-          {
-            text: result.content || '',
-            timestamp: new Date(),
-            parsed: result,
-          },
-          ...prev,
-        ]);
-      } else {
-        addLog('Scan canceled or no result');
-      }
-    } catch (e) {
-      const errorMsg = (e as Error)?.message || 'Unknown error';
-      addLog(`Error during scan: ${errorMsg}`);
-      setError(`Error: ${errorMsg}`);
-    }
-  };
-
-  const handleManualScan = () => {
-    if (!manualInput.trim()) return;
-
-    addLog(`Manual scan: ${manualInput}`);
-    triggerManualScan(manualInput);
-    setManualInput('');
-  };
-
-  const handleManualKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      handleManualScan();
+      const errorMsg = (e as Error)?.message || t('messages.unknown-error');
+      setError(`${t('messages.unknown-error')}: ${errorMsg}`);
     }
   };
 
   const clearResults = () => {
     setScanResults([]);
     setError(null);
-    addLog('Results cleared');
   };
 
   return (
     <Box sx={{ padding: 3 }}>
       <Typography variant="h4" gutterBottom>
-        Barcode Scanner Test
+        {t('label.barcode-scanner-test')}
       </Typography>
 
       {error && (
@@ -174,105 +103,41 @@ export const BarcodeScannerTest = () => {
 
       {!isEnabled && (
         <Alert severity="warning" sx={{ mb: 2 }}>
-          No barcode scanner available on this device
+          {t('messages.no-barcode-scanner-available')}
         </Alert>
       )}
 
       {/* Scanner Controls */}
       <Paper sx={{ p: 2, mb: 2 }}>
         <Typography variant="h6" gutterBottom>
-          Scanner Controls
+          {t('heading.scanner-controls')}
         </Typography>
 
-        {/* Manual Scanner Input */}
-        {activeScanner === AvailableScannerType.Manual && (
-          <Box sx={{ mb: 2 }}>
-            <TextField
-              fullWidth
-              label="Enter Barcode Manually"
-              value={manualInput}
-              onChange={e => setManualInput(e.target.value)}
-              onKeyPress={handleManualKeyPress}
-              placeholder="Type or scan barcode and press Enter"
-              InputProps={{
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <ButtonWithIcon
-                      Icon={<ScanIcon />}
-                      label="Scan"
-                      onClick={handleManualScan}
-                      disabled={!manualInput.trim()}
-                    />
-                  </InputAdornment>
-                ),
-              }}
-              helperText="Type barcode manually or use a scanner that types like a keyboard"
-            />
-          </Box>
-        )}
-
         <Box display="flex" gap={2} flexWrap="wrap">
-          {activeScanner !== AvailableScannerType.Honeywell &&
-            activeScanner !== AvailableScannerType.Manual && (
+          <>
+            {!isScanning ? (
               <ButtonWithIcon
-                Icon={<ScanIcon />}
-                label="Scan Barcode"
+                Icon={<CheckIcon />}
+                label={t('button.enable-scanning')}
                 variant="contained"
                 color="primary"
-                onClick={handleScanOnce}
-                disabled={!isEnabled || isScanning}
+                onClick={handleStartScanning}
+                disabled={!isEnabled}
+              />
+            ) : (
+              <ButtonWithIcon
+                Icon={<XCircleIcon />}
+                label={t('button.disable-scanning')}
+                variant="contained"
+                color="error"
+                onClick={handleStopScanning}
               />
             )}
-
-          {activeScanner !== AvailableScannerType.Manual && (
-            <>
-              {!isScanning ? (
-                <ButtonWithIcon
-                  Icon={<CheckIcon />}
-                  label="Start Continuous Scanning"
-                  variant="contained"
-                  color="primary"
-                  onClick={handleStartScanning}
-                  disabled={!isEnabled}
-                />
-              ) : (
-                <ButtonWithIcon
-                  Icon={<XCircleIcon />}
-                  label="Stop Scanning"
-                  variant="contained"
-                  color="error"
-                  onClick={handleStopScanning}
-                />
-              )}
-            </>
-          )}
-
-          {activeScanner === AvailableScannerType.Manual && (
-            <>
-              {!isScanning ? (
-                <ButtonWithIcon
-                  Icon={<CheckIcon />}
-                  label="Enable Manual Scanning"
-                  variant="contained"
-                  color="primary"
-                  onClick={handleStartScanning}
-                  disabled={!isEnabled}
-                />
-              ) : (
-                <ButtonWithIcon
-                  Icon={<XCircleIcon />}
-                  label="Disable Manual Scanning"
-                  variant="contained"
-                  color="error"
-                  onClick={handleStopScanning}
-                />
-              )}
-            </>
-          )}
+          </>
 
           <ButtonWithIcon
             Icon={<DeleteIcon />}
-            label="Clear Results"
+            label={t('button.clear-results')}
             variant="outlined"
             onClick={clearResults}
             disabled={scanResults.length === 0}
@@ -282,32 +147,23 @@ export const BarcodeScannerTest = () => {
 
       <Paper sx={{ p: 2, mb: 2 }}>
         <Typography variant="h6" gutterBottom>
-          Scanner Status
-        </Typography>
-        <Typography>
-          <strong>Scanner Type:</strong> {activeScanner}
+          {t('heading.scanner-status')}
         </Typography>
         <Typography sx={{ mt: 1 }}>
-          <strong>Status:</strong>{' '}
-          {isScanning ? '🟢 Scanning Active' : '🔴 Not Scanning'}
-        </Typography>
-        <Typography sx={{ mt: 1 }}>
-          <strong>Total Scans:</strong> {scanResults.length}
+          <strong>{t('label.status')}:</strong>{' '}
+          {isScanning
+            ? `🟢 ${t('label.scanning-active')}`
+            : `🔴 ${t('label.not-scanning')}`}
         </Typography>
       </Paper>
 
       <Paper sx={{ p: 2 }}>
         <Typography variant="h6" gutterBottom>
-          Scan Results
+          {t('heading.scan-results')}
         </Typography>
         {scanResults.length === 0 ? (
           <Typography color="text.secondary" sx={{ fontStyle: 'italic' }}>
-            No scans yet.{' '}
-            {activeScanner === AvailableScannerType.Honeywell
-              ? 'Use the scanner trigger to scan a barcode.'
-              : activeScanner === AvailableScannerType.Manual
-                ? 'Enter a barcode in the input field above.'
-                : 'Click "Scan Barcode" to start scanning.'}
+            {t('messages.no-scans-yet')}
           </Typography>
         ) : (
           <List>
@@ -332,35 +188,37 @@ export const BarcodeScannerTest = () => {
                           <Box sx={{ mt: 1 }}>
                             {result.parsed.gtin && (
                               <Typography variant="body2" sx={{ mb: 0.5 }}>
-                                <strong>GTIN:</strong> {result.parsed.gtin}
+                                <strong>{t('label.gtin')}:</strong>{' '}
+                                {result.parsed.gtin}
                               </Typography>
                             )}
                             {result.parsed.batch && (
                               <Typography variant="body2" sx={{ mb: 0.5 }}>
-                                <strong>Batch:</strong> {result.parsed.batch}
+                                <strong>{t('label.batch')}:</strong>{' '}
+                                {result.parsed.batch}
                               </Typography>
                             )}
                             {result.parsed.expiryDate && (
                               <Typography variant="body2" sx={{ mb: 0.5 }}>
-                                <strong>Expiry Date:</strong>{' '}
+                                <strong>{t('label.expiry')}:</strong>{' '}
                                 {result.parsed.expiryDate}
                               </Typography>
                             )}
                             {result.parsed.manufactureDate && (
                               <Typography variant="body2" sx={{ mb: 0.5 }}>
-                                <strong>Manufacture Date:</strong>{' '}
+                                <strong>{t('label.manufacture-date')}:</strong>{' '}
                                 {result.parsed.manufactureDate}
                               </Typography>
                             )}
                             {result.parsed.quantity && (
                               <Typography variant="body2" sx={{ mb: 0.5 }}>
-                                <strong>Quantity:</strong>{' '}
+                                <strong>{t('label.quantity')}:</strong>{' '}
                                 {result.parsed.quantity}
                               </Typography>
                             )}
                             {result.parsed.packsize && (
                               <Typography variant="body2" sx={{ mb: 0.5 }}>
-                                <strong>Pack Size:</strong>{' '}
+                                <strong>{t('label.pack-size')}:</strong>{' '}
                                 {result.parsed.packsize}
                               </Typography>
                             )}
@@ -370,7 +228,8 @@ export const BarcodeScannerTest = () => {
                     }
                     secondary={
                       <Typography component="span" variant="body2">
-                        Time: {result.timestamp.toLocaleTimeString()}
+                        {t('label.time')}:{' '}
+                        {result.timestamp.toLocaleTimeString()}
                       </Typography>
                     }
                   />
@@ -378,31 +237,6 @@ export const BarcodeScannerTest = () => {
               </React.Fragment>
             ))}
           </List>
-        )}
-      </Paper>
-      <Paper sx={{ p: 2, mb: 2 }}>
-        <Typography variant="h6" gutterBottom>
-          Log
-        </Typography>
-        {initLog.length === 0 ? (
-          <Typography color="text.secondary" sx={{ fontStyle: 'italic' }}>
-            No logs yet...
-          </Typography>
-        ) : (
-          <Box sx={{ maxHeight: 200, overflow: 'auto' }}>
-            {initLog.map((log, index) => (
-              <Typography
-                key={index}
-                sx={{
-                  fontFamily: 'monospace',
-                  fontSize: '0.85rem',
-                  mb: 0.5,
-                }}
-              >
-                {log}
-              </Typography>
-            ))}
-          </Box>
         )}
       </Paper>
     </Box>
