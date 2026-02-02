@@ -14,7 +14,7 @@ import {
   AvailableScannerType,
 } from '@openmsupply-client/common';
 import { useTranslation } from '@common/intl';
-import { XCircleIcon, DeleteIcon, CheckIcon } from '@common/icons';
+import { XCircleIcon, DeleteIcon, CheckIcon, CameraIcon } from '@common/icons';
 
 interface ScanResult {
   text: string;
@@ -26,8 +26,14 @@ export const BarcodeScannerTest = () => {
   const t = useTranslation();
   const [scanResults, setScanResults] = useState<ScanResult[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const { isScanning, isEnabled, startScanning, stopScan, availableScanners } =
-    useBarcodeScannerContext();
+  const {
+    isScanning,
+    isEnabled,
+    startScanning,
+    stopScan,
+    scan,
+    availableScanners,
+  } = useBarcodeScannerContext();
 
   useEffect(() => {
     // Auto-start scanning for Honeywell and Manual when page loads
@@ -82,6 +88,25 @@ export const BarcodeScannerTest = () => {
     }
   };
 
+  const handleScan = async () => {
+    try {
+      const result = await scan();
+      if (result.content) {
+        setScanResults(prev => [
+          {
+            text: result.content || '',
+            timestamp: new Date(),
+            parsed: result,
+          },
+          ...prev,
+        ]);
+      }
+    } catch (e) {
+      const errorMsg = (e as Error)?.message || t('messages.unknown-error');
+      setError(`${t('messages.scanning-error')}: ${errorMsg}`);
+    }
+  };
+
   const clearResults = () => {
     setScanResults([]);
     setError(null);
@@ -132,6 +157,14 @@ export const BarcodeScannerTest = () => {
               />
             )}
           </>
+
+          <ButtonWithIcon
+            Icon={<CameraIcon />}
+            label={t('button.scan-once')}
+            variant="contained"
+            onClick={handleScan}
+            disabled={!isEnabled}
+          />
 
           <ButtonWithIcon
             Icon={<DeleteIcon />}
