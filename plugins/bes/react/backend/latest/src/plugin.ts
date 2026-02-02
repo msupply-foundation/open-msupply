@@ -148,7 +148,7 @@ const plugins: BackendPlugins = {
 
     if (foundItem.availableStockOnHand < inp.quantity) {
       let message = `Not enough stock to fullfil order. Store: ${issuingStore.name_row.name}. `;
-      message += `Available stock for code ${foundItem.code}: ${foundItem.availableStockOnHand}, Qty requested: ${inp.quantity},`;
+      message += `Available stock for item code ${foundItem.msupplyUniversalCode}: ${foundItem.availableStockOnHand}, Qty requested: ${inp.quantity},`;
       return {
         success: false,
         message,
@@ -183,7 +183,7 @@ const plugins: BackendPlugins = {
       ) {
         batchDeleteOutboundShipmentQuery(issuingStoreId, shipmentId);
         throw Error(
-          `Insert order failed. Failed to issue the stock for item code: ${foundItem.code}, quantity: ${inp.quantity}, customer: ${customer.name}`
+          `Insert order failed. Failed to issue the stock for item code: ${foundItem.msupplyUniversalCode}, quantity: ${inp.quantity}, customer: ${customer.name}`
         );
       }
     } catch (error) {
@@ -219,7 +219,7 @@ const plugins: BackendPlugins = {
       ) {
         batchDeleteOutboundShipmentQuery(issuingStoreId, shipmentId);
         throw Error(
-          `Insert failed. Unable to issue the stock for item code: ${foundItem.code}, quantity: ${inp.quantity}, customer: ${customer.name}`
+          `Insert failed. Unable to issue the stock for item code: ${foundItem.msupplyUniversalCode}, quantity: ${inp.quantity}, customer: ${customer.name}`
         );
       }
     } catch (error) {
@@ -249,7 +249,7 @@ const plugins: BackendPlugins = {
       ) {
         batchDeleteOutboundShipmentQuery(issuingStoreId, shipmentId);
         throw Error(
-          `Failed to allocate line to issue the stock for item code: ${foundItem.code}, quantity: ${inp.quantity}, customer: ${customer.name}`
+          `Failed to allocate line to issue the stock for item code: ${foundItem.msupplyUniversalCode}, quantity: ${inp.quantity}, customer: ${customer.name}`
         );
       }
     } catch (error) {
@@ -284,7 +284,7 @@ const plugins: BackendPlugins = {
       ) {
         batchDeleteOutboundShipmentQuery(issuingStoreId, shipmentId);
         throw Error(
-          `Failed to update order to issue the stock for item code: ${foundItem.code}, quantity: ${inp.quantity}, customer: ${customer.name}`
+          `Failed to update order to issue the stock for item code: ${foundItem.msupplyUniversalCode}, quantity: ${inp.quantity}, customer: ${customer.name}`
         );
       }
     } catch (error) {
@@ -296,7 +296,7 @@ const plugins: BackendPlugins = {
 
     return {
       success: true,
-      message: `Issued stock for store: ${customer.name}, item: ${foundItem.code}, quantity: ${inp.quantity}`,
+      message: `Issued stock for store: ${customer.name}, item: ${foundItem.msupplyUniversalCode}, quantity: ${inp.quantity}`,
     };
   },
 };
