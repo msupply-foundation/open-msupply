@@ -1731,7 +1731,7 @@
   "messages.allocated-lines_many": "Allocated {{count}} lines",
   "messages.allocated-lines_one": "Allocated {{count}} line",
   "messages.allocated-lines_other": "Allocated {{count}} lines",
-  "messages.amc-calculation": "Consumption / Lookback months * Days out of stock adjustment",
+  "messages.amc-calculation": "(Consumption / Lookback months) * Days out of stock adjustment",
   "messages.amc-consumption": "Consumption: Sum of all consumption within the lookback days.",
   "messages.amc-days-out-of-stock": "Days out of stock: Days out of stock within lookback days.",
   "messages.amc-days-out-of-stock-adjustment": "Days out of stock adjustment: Lookback days / (Lookback days - Days out of stock)",
