@@ -54,6 +54,7 @@ export type Plugins = {
       line: RequestLineFragment;
       requisition: RequestFragment;
     }>[];
+    hideInfo?: string[];
   };
   requestRequisition?: {
     sidePanelSection: React.ComponentType<{
