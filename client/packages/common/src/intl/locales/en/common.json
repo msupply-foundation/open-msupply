@@ -394,6 +394,7 @@
   "error.no-immunisation-programs": "No Immunization programs found",
   "error.no-inbound-items": "No items have been added to this shipment.",
   "error.no-inbound-shipments": "There are no Inbound Shipments to display.",
+  "error.no-inbound-shipments-linked": "There are no Inbound Shipments linked to this Purchase Order.",
   "error.no-indicators": "There are no indicators for this requisition",
   "error.no-internal-order-items": "No items have been added to this Internal Order.",
   "error.no-internal-orders": "No internal orders to display.",
