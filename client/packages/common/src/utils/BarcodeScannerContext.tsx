@@ -159,7 +159,7 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
     localStorage.setItem(MOCK_SCANNER_STORAGE_KEY, JSON.stringify(enabled));
   };
 
-  const MockScanner = useMockScanner(isScanning);
+  const MockScanner = useMockScanner(isScanning && mockScannerEnabled);
 
   const hasNativeBarcodeScanner =
     Capacitor.isPluginAvailable('BarcodeScanner') &&
@@ -315,14 +315,6 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
         setIsScanning(false);
         throw e;
       }
-    }
-
-    if (mockScannerEnabled) {
-      const scanHandler = async (barcode: string) => {
-        const result = parseResult(barcode);
-        callback(result);
-      };
-      await MockScanner.startListening(scanHandler);
       return;
     }
 
@@ -351,6 +343,15 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
       );
 
       await BarcodeScannerPlugin.startScan();
+    }
+
+    if (mockScannerEnabled) {
+      const scanHandler = async (barcode: string) => {
+        const result = parseResult(barcode);
+        callback(result);
+      };
+      await MockScanner.startListening(scanHandler);
+      return;
     }
   };
 
@@ -417,7 +418,7 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
     }),
     [
       isEnabled,
-      scan,
+      // scan,
       stopScan,
       startScanning,
       setScannerType,
