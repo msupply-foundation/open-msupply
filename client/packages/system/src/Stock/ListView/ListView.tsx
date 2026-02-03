@@ -12,7 +12,6 @@ import {
   usePaginatedMaterialTable,
   ColumnDef,
   ColumnType,
-  UnitsAndDosesCell,
   ChipTableCell,
 } from '@openmsupply-client/common';
 import { StockLineRowFragment } from '../api';
@@ -20,6 +19,7 @@ import { AppBarButtons } from './AppBarButtons';
 import { useStockList } from '../api/hooks/useStockList';
 import { NewStockLineModal } from '../Components/NewStockLineModal';
 import { ExpiryDateCell } from '@openmsupply-client/common/src/ui/layout/tables/material-react-table/components/ExpiryDateCell';
+import { UnitsAndDosesCell } from '@openmsupply-client/common/src/ui/layout/tables/material-react-table/components/UnitsAndDosesCell';
 
 export const StockListView = () => {
   const {
