@@ -3,6 +3,7 @@ use crate::mutations::outbound_shipment::error::{
 };
 use async_graphql::*;
 
+use chrono::NaiveDate;
 use graphql_core::generic_inputs::TaxInput;
 use graphql_core::simple_generic_errors::{
     CannotEditInvoice, OtherPartyNotASupplier, OtherPartyNotVisible,
@@ -47,6 +48,7 @@ pub struct UpdateInput {
     pub currency_id: Option<String>,
     pub currency_rate: Option<f64>,
     pub default_donor: Option<UpdateDonorInput>,
+    pub created_datetime: Option<NaiveDate>,
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
@@ -115,6 +117,7 @@ impl UpdateInput {
             currency_id,
             currency_rate,
             default_donor,
+            created_datetime,
         } = self;
 
         ServiceInput {
@@ -134,6 +137,7 @@ impl UpdateInput {
                 donor_id: donor.donor_id,
                 apply_to_lines: donor.apply_to_lines.to_domain(),
             }),
+            created_datetime,
         }
     }
 }
@@ -194,7 +198,10 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         ServiceError::CannotUpdateStatusAndDonorAtTheSameTime
         | ServiceError::NotThisStoreInvoice
         | ServiceError::NotAnInboundShipment
-        | ServiceError::OtherPartyDoesNotExist => BadUserInput(formatted_error),
+        | ServiceError::OtherPartyDoesNotExist
+        | ServiceError::CanOnlyChangeDateOfExternalInboundShipments => {
+            BadUserInput(formatted_error)
+        }
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
         ServiceError::UpdatedInvoiceDoesNotExist => InternalError(formatted_error),
     };
@@ -534,6 +541,7 @@ mod test {
                     currency_id: None,
                     currency_rate: None,
                     default_donor: None,
+                    created_datetime: None,
                 }
             );
             Ok(Invoice {

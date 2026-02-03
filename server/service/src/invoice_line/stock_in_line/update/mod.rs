@@ -5,8 +5,7 @@ use crate::{
 };
 use chrono::NaiveDate;
 use repository::{
-    vvm_status::vvm_status_log_row::VVMStatusLogRowRepository, InvoiceLine,
-    InvoiceLineRowRepository, InvoiceRowRepository, RepositoryError, StockLineRowRepository,
+    InvoiceLine, InvoiceLineRowRepository, InvoiceLineStatus, InvoiceRowRepository, RepositoryError, StockLineRowRepository, vvm_status::vvm_status_log_row::VVMStatusLogRowRepository
 };
 
 mod generate;
@@ -40,6 +39,7 @@ pub struct UpdateStockInLine {
     pub shipped_number_of_packs: Option<f64>,
     pub volume_per_pack: Option<f64>,
     pub shipped_pack_size: Option<f64>,
+    pub status: Option<NullableUpdate<InvoiceLineStatus>>,
 }
 
 type OutError = UpdateStockInLineError;

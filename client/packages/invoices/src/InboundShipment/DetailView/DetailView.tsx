@@ -95,7 +95,7 @@ const DetailViewInner = () => {
     // with no pre-filled line data
     if (
       (openWith as ScannedBarcode & { __typename: string })?.__typename !==
-        'BarcodeNode' ||
+      'BarcodeNode' ||
       !openWith?.itemId
     ) {
       onOpen();
@@ -114,7 +114,9 @@ const DetailViewInner = () => {
     setMode(ModalMode.Update);
   };
 
-  const columns = useInboundShipmentColumns();
+  const external = data?.purchaseOrder !== null;
+  const showLineStatus = data?.lines.nodes.some(line => line.status != null) ?? false;
+  const columns = useInboundShipmentColumns(external, showLineStatus);
 
   const { table, selectedRows } = useNonPaginatedMaterialTable<
     Groupable<InboundLineFragment>
@@ -234,6 +236,7 @@ const DetailViewInner = () => {
               onReturnLines={onReturn}
               selectedRows={selectedRows}
               resetRowSelection={table.resetRowSelection}
+              showLineStatus={showLineStatus}
             />
           )}
           <SidePanel />

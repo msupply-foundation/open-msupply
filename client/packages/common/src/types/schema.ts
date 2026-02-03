@@ -4551,6 +4551,7 @@ export type InvoiceLineNode = {
   sellPricePerPack: Scalars['Float']['output'];
   shippedNumberOfPacks?: Maybe<Scalars['Float']['output']>;
   shippedPackSize?: Maybe<Scalars['Float']['output']>;
+  status?: Maybe<InvoiceLineStatusType>;
   stockLine?: Maybe<StockLineNode>;
   taxPercentage?: Maybe<Scalars['Float']['output']>;
   totalAfterTax: Scalars['Float']['output'];
@@ -4594,6 +4595,12 @@ export type InvoiceLineSortInput = {
   /** Sort query result by `key` */
   key: InvoiceLineSortFieldInput;
 };
+
+export enum InvoiceLineStatusType {
+  Passed = 'PASSED',
+  Pending = 'PENDING',
+  Rejected = 'REJECTED',
+}
 
 export type InvoiceLinesResponse = InvoiceLineConnector;
 
@@ -10272,6 +10279,7 @@ export type UpdateInboundShipmentErrorInterface = {
 export type UpdateInboundShipmentInput = {
   colour?: InputMaybe<Scalars['String']['input']>;
   comment?: InputMaybe<Scalars['String']['input']>;
+  createdDatetime?: InputMaybe<Scalars['NaiveDate']['input']>;
   currencyId?: InputMaybe<Scalars['String']['input']>;
   currencyRate?: InputMaybe<Scalars['Float']['input']>;
   defaultDonor?: InputMaybe<UpdateDonorInput>;
@@ -10309,6 +10317,7 @@ export type UpdateInboundShipmentLineInput = {
   sellPricePerPack?: InputMaybe<Scalars['Float']['input']>;
   shippedNumberOfPacks?: InputMaybe<Scalars['Float']['input']>;
   shippedPackSize?: InputMaybe<Scalars['Float']['input']>;
+  status?: InputMaybe<InvoiceLineStatusType>;
   tax?: InputMaybe<TaxInput>;
   totalBeforeTax?: InputMaybe<Scalars['Float']['input']>;
   volumePerPack?: InputMaybe<Scalars['Float']['input']>;
