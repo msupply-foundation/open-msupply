@@ -25,7 +25,7 @@ export const StoreSelector: FC<PropsWithChildrenOnly> = ({ children }) => {
   const { store, setStore, token } = useAuthContext();
   const { data, isLoading } = useUserDetails(token);
   const popoverControls = usePopover();
-  const isGaps = useIsExtraSmallScreen();
+  const isExtraSmallScreen = useIsExtraSmallScreen();
   const isAndroid = EnvUtils.platform === Platform.Android;
 
   const storeSorter = (a: UserStoreNodeFragment, b: UserStoreNodeFragment) => {
@@ -66,7 +66,7 @@ export const StoreSelector: FC<PropsWithChildrenOnly> = ({ children }) => {
         await setStore(s);
         popoverControls.hide();
         const route =
-          isGaps && isAndroid
+          isExtraSmallScreen && isAndroid
             ? RouteBuilder.create(AppRoute.Coldchain)
                 .addPart(AppRoute.Equipment)
                 .build()

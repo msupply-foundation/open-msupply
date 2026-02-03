@@ -108,15 +108,15 @@ const Heading = ({ children }: { children: React.ReactNode }) => (
 const Row = ({
   children,
   label,
-  isGaps,
+  isExtraSmallScreen,
   tooltip,
 }: {
   children: React.ReactNode;
   label: string;
-  isGaps: boolean;
+  isExtraSmallScreen: boolean;
   tooltip?: string;
 }) => {
-  if (!isGaps)
+  if (!isExtraSmallScreen)
     return (
       <Box paddingTop={1.5}>
         <InputWithLabelRow
@@ -168,7 +168,7 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
   const { localisedDate } = useFormatDateTime();
   const { storeId, userHasPermission } = useAuthContext();
   const isCentralServer = useIsCentralServerApi();
-  const isGaps = useIsExtraSmallScreen();
+  const isExtraSmallScreen = useIsExtraSmallScreen();
   const isServerAdmin = userHasPermission(UserPermission.ServerAdmin);
 
   if (!draft) return null;
@@ -214,7 +214,7 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
       <Container>
         <Section heading={t('heading.asset-identification')}>
           {isCentralServer && (
-            <Row isGaps={isGaps} label={t('label.store')}>
+            <Row isExtraSmallScreen={isExtraSmallScreen} label={t('label.store')}>
               <StoreSearchInput
                 clearable
                 fullWidth
@@ -224,14 +224,14 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
               />
             </Row>
           )}
-          <Row isGaps={isGaps} label={t('label.category')}>
+          <Row isExtraSmallScreen={isExtraSmallScreen} label={t('label.category')}>
             <BasicTextInput
               value={draft.assetCategory?.name ?? ''}
               disabled
               fullWidth
             />
           </Row>
-          <Row isGaps={isGaps} label={t('label.type')}>
+          <Row isExtraSmallScreen={isExtraSmallScreen} label={t('label.type')}>
             <BasicTextInput
               value={draft.assetType?.name ?? ''}
               disabled
@@ -239,7 +239,7 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
             />
           </Row>
           <Row
-            isGaps={isGaps}
+            isExtraSmallScreen={isExtraSmallScreen}
             label={t('label.serial')}
             tooltip={
               draft.lockedFields.serialNumber
@@ -254,14 +254,14 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
               onChange={e => onChange({ serialNumber: e.target.value })}
             />
           </Row>
-          <Row isGaps={isGaps} label={t('label.asset-number')}>
+          <Row isExtraSmallScreen={isExtraSmallScreen} label={t('label.asset-number')}>
             <BasicTextInput
               value={draft.assetNumber ?? ''}
               fullWidth
               onChange={e => onChange({ assetNumber: e.target.value })}
             />
           </Row>
-          <Row isGaps={isGaps} label={t('label.installation-date')}>
+          <Row isExtraSmallScreen={isExtraSmallScreen} label={t('label.installation-date')}>
             <DateTimePickerInput
               value={DateUtils.getDateOrNull(draft.installationDate)}
               format="P"
@@ -271,7 +271,7 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
               width={'100%'}
             />
           </Row>
-          <Row isGaps={isGaps} label={t('label.replacement-date')}>
+          <Row isExtraSmallScreen={isExtraSmallScreen} label={t('label.replacement-date')}>
             <DateTimePickerInput
               value={DateUtils.getDateOrNull(draft.replacementDate)}
               format="P"
@@ -282,7 +282,7 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
             />
           </Row>
           <Row
-            isGaps={isGaps}
+            isExtraSmallScreen={isExtraSmallScreen}
             label={t('label.warranty-start-date')}
             tooltip={
               draft.lockedFields.warrantyStart
@@ -301,7 +301,7 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
             />
           </Row>
           <Row
-            isGaps={isGaps}
+            isExtraSmallScreen={isExtraSmallScreen}
             label={t('label.warranty-end-date')}
             tooltip={
               draft.lockedFields.warrantyEnd
@@ -322,7 +322,7 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
         </Section>
         {(!isCentralServer || draft.storeId == storeId) && (
           <Section heading={t('heading.cold-chain')}>
-            <Row isGaps={isGaps} label={t('label.location')}>
+            <Row isExtraSmallScreen={isExtraSmallScreen} label={t('label.location')}>
               {locations ? (
                 <AutocompleteMulti
                   isOptionEqualToValue={(option, value) =>
@@ -367,7 +367,7 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
       ></Box>
       <Container>
         <Section heading={t('heading.functional-status')}>
-          <Row isGaps={isGaps} label={t('label.current-status')}>
+          <Row isExtraSmallScreen={isExtraSmallScreen} label={t('label.current-status')}>
             <Box display="flex">
               <StatusChip
                 label={t(status?.label as LocaleKey)}
@@ -375,7 +375,7 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
               />
             </Box>
           </Row>
-          <Row isGaps={isGaps} label={t('label.last-updated')}>
+          <Row isExtraSmallScreen={isExtraSmallScreen} label={t('label.last-updated')}>
             <BasicTextInput
               value={
                 draft.statusLog?.logDatetime &&
@@ -385,14 +385,14 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
               fullWidth
             />
           </Row>
-          <Row isGaps={isGaps} label={t('label.reason')}>
+          <Row isExtraSmallScreen={isExtraSmallScreen} label={t('label.reason')}>
             <BasicTextInput
               value={draft.statusLog?.reason?.reason ?? UNDEFINED_STRING_VALUE}
               disabled
               fullWidth
             />
           </Row>
-          <Row isGaps={isGaps} label={t('label.needs-replacement')}>
+          <Row isExtraSmallScreen={isExtraSmallScreen} label={t('label.needs-replacement')}>
             <Checkbox
               checked={Boolean(draft.needsReplacement)}
               onChange={e => onChange({ needsReplacement: e.target.checked })}
@@ -400,7 +400,7 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
           </Row>
         </Section>
         <Section heading={t('label.additional-info')}>
-          <Row isGaps={isGaps} label={t('label.notes')}>
+          <Row isExtraSmallScreen={isExtraSmallScreen} label={t('label.notes')}>
             <BasicTextInput
               value={draft.notes ?? ''}
               onChange={e => onChange({ notes: e.target.value })}
@@ -411,7 +411,7 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
           </Row>
         </Section>
         <Section heading={t('label.donor')}>
-          <Row isGaps={isGaps} label={t('label.donor')}>
+          <Row isExtraSmallScreen={isExtraSmallScreen} label={t('label.donor')}>
             <DonorSearchInput
               donorId={draft.donor?.id ?? null}
               onChange={e => onChange({ donor: e, donorNameId: e?.id ?? null })}

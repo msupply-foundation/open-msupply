@@ -76,7 +76,7 @@ export const Site: FC = () => {
   const getPageTitle = useGetPageTitle();
   const { setPageTitle } = useHostContext();
   const pageTitle = getPageTitle(location.pathname);
-  const isGapsStore = useIsExtraSmallScreen();
+  const isExtraSmallScreen = useIsExtraSmallScreen();
   const { isGaps } = usePreferences();
   const isCentralServer = useIsCentralServerApi();
   const { storeCustomColour } = usePreferences();
@@ -110,16 +110,13 @@ export const Site: FC = () => {
   }
 
   const getRootNavigationPath = () => {
-    // isGapsStore is going to be refactored to support isGaps
-    // This is a temporary fix until the refactor
-    // isGapsStore is just a CSS breakpoint check atm
-    // but is required on small devices
-    if ((isGaps || isGapsStore) && isCentralServer) {
+    // This is a temporary solution until we consider preferences further for small devices
+    if ((isGaps || isExtraSmallScreen) && isCentralServer) {
       return RouteBuilder.create(AppRoute.Manage)
         .addPart(AppRoute.Equipment)
         .build();
     }
-    if (isGaps || isGapsStore) {
+    if (isGaps || isExtraSmallScreen) {
       return RouteBuilder.create(AppRoute.Coldchain)
         .addPart(AppRoute.Equipment)
         .build();
@@ -135,15 +132,15 @@ export const Site: FC = () => {
           <CommandK>
             <SnackbarProvider maxSnack={3}>
               <BarcodeScannerProvider>
-                {!isGapsStore && <AppDrawer />}
+                {!isExtraSmallScreen && <AppDrawer />}
                 <Box
                   flex={1}
                   display="flex"
                   flexDirection="column"
                   overflow="hidden"
                 >
-                  {isGapsStore && <MobileNavBar />}
-                  {!isGapsStore && <AppBar />}
+                  {isExtraSmallScreen && <MobileNavBar />}
+                  {!isExtraSmallScreen && <AppBar />}
                   <NotifyOnLogin />
                   <Box display="flex" flex={1} overflow="auto">
                     <Routes>

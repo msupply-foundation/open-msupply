@@ -27,7 +27,7 @@ export const StoreProperties = ({
 }: StorePropertiesProps) => {
   const t = useTranslation();
   const isCentralServer = useIsCentralServerApi();
-  const isGapsStore = useIsExtraSmallScreen();
+  const isExtraSmallScreen = useIsExtraSmallScreen();
   const { userHasPermission } = useAuthContext();
 
   return !propertyConfigs?.length ? (
@@ -55,7 +55,7 @@ export const StoreProperties = ({
           <Row
             key={p.id}
             label={p.property.name}
-            isGapsStore={isGapsStore}
+            isExtraSmallScreen={isExtraSmallScreen}
             inputProperties={{
               disabled:
                 (!isCentralServer && !p.remoteEditable) ||
@@ -86,15 +86,15 @@ type PropertyInput = {
 const Row = ({
   key,
   label,
-  isGapsStore,
+  isExtraSmallScreen,
   inputProperties,
 }: {
   key: string;
   label: string;
-  isGapsStore: boolean;
+  isExtraSmallScreen: boolean;
   inputProperties: PropertyInput;
 }) => {
-  if (!isGapsStore)
+  if (!isExtraSmallScreen)
     return (
       <InputWithLabelRow
         key={key}
