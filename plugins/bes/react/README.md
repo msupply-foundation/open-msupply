@@ -67,6 +67,24 @@ query GraphqlPlugin($input: JSON!) {
 }
 ```
 
+### error responses
+
+Currently api will return "success" : false, and a message in the following scenarios :
+
+- No active stores are found to dispatch items from
+- Dispatching store has no stock available for item requested
+- No customer retrieved from "customerFilter" input params
+- No item retrieved from "itemFilter" input params
+
+If api should fail during the attempt of inserting and confirming the Outbound Shipment, api will return "success": true, with a "message": "error message text" attempting to describe error that has occurred. example:
+
+```json
+{
+  "message": "Insert order failed. Failed to issue the stock for item code: 12345, quantity: 10, customer: Customer Name, error: no insert lines returned",
+  "success": true
+}
+```
+
 ## Frontend Plugin Functionality
 
     * None at present
