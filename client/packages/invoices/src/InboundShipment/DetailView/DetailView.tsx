@@ -94,9 +94,8 @@ const DetailViewInner = () => {
     // Unless we're acquiring a scanned barcode, just open the modal as normal,
     // with no pre-filled line data
     if (
-      (openWith as ScannedBarcode & { __typename: string })?.__typename !==
-      'BarcodeNode' ||
-      !openWith?.itemId
+      (openWith as ScannedBarcode & { __typename: string })?.__typename !== 'BarcodeNode'
+      || !openWith?.itemId
     ) {
       onOpen();
       setMode(ModalMode.Create);

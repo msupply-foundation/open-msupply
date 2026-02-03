@@ -114,11 +114,14 @@ export const FooterComponent = ({
   };
 
   const changeLineStatus = (approve: 'approve' | 'reject') => {
-    if (!data) return;
-
     if (!selectedRows.length) {
       const selectLinesSnack = info(t(`messages.select-rows-to-${approve}`));
       selectLinesSnack();
+      return;
+    }
+
+    if (isDisabled) {
+      info(t('messages.cant-change-line-status-on-received-invoice'))();
       return;
     }
 
