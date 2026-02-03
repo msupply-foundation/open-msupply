@@ -12,7 +12,10 @@ export type BatchOutboundShipmentMutation = { __typename?: 'Mutations', batchOut
             | { __typename?: 'OtherPartyNotVisible', description: string }
            }
         | { __typename: 'InvoiceNode', id: string, invoiceNumber: number }
-        | { __typename: 'NodeError' }
+        | { __typename: 'NodeError', error:
+            | { __typename?: 'DatabaseError', description: string }
+            | { __typename?: 'RecordNotFound', description: string }
+           }
        }> | null, insertOutboundShipmentUnallocatedLines?: Array<{ __typename?: 'InsertOutboundShipmentUnallocatedLineResponseWithId', id: string, response:
         | { __typename: 'InsertOutboundShipmentUnallocatedLineError', error:
             | { __typename?: 'ForeignKeyError', description: string }
@@ -25,7 +28,10 @@ export type BatchOutboundShipmentMutation = { __typename?: 'Mutations', batchOut
         | { __typename: 'AllocateOutboundShipmentUnallocatedLineNode', inserts: { __typename?: 'InvoiceLineConnector', nodes: Array<{ __typename?: 'InvoiceLineNode', id: string, numberOfPacks: number, stockLine?: { __typename?: 'StockLineNode', batch?: string | null } | null }> }, updates: { __typename?: 'InvoiceLineConnector', nodes: Array<{ __typename?: 'InvoiceLineNode', id: string }> } }
        }> | null, updateOutboundShipments?: Array<{ __typename?: 'UpdateOutboundShipmentResponseWithId', id: string, response:
         | { __typename: 'InvoiceNode' }
-        | { __typename: 'NodeError' }
+        | { __typename: 'NodeError', error:
+            | { __typename?: 'DatabaseError', description: string }
+            | { __typename?: 'RecordNotFound', description: string }
+           }
         | { __typename: 'UpdateOutboundShipmentError', error:
             | { __typename?: 'CanOnlyChangeToAllocatedWhenNoUnallocatedLines', description: string }
             | { __typename?: 'CannotChangeStatusOfInvoiceOnHold', description: string }

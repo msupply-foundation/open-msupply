@@ -8,6 +8,12 @@ mutation BatchOutboundShipment($storeId: String!, $input: BatchOutboundShipmentI
           id
           invoiceNumber
         }
+        ... on NodeError {
+          __typename
+          error {
+            description
+          }
+        }
         ... on InsertOutboundShipmentError {
           error {
             description
@@ -63,6 +69,12 @@ mutation BatchOutboundShipment($storeId: String!, $input: BatchOutboundShipmentI
       response {
         __typename
         ... on UpdateOutboundShipmentError {
+          __typename
+          error {
+            description
+          }
+        }
+        ... on NodeError {
           __typename
           error {
             description
