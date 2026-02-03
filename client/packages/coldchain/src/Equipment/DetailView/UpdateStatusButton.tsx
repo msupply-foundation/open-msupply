@@ -39,7 +39,7 @@ export const UpdateStatusButtonComponent = ({
   const { Modal, hideDialog, showDialog } = useDialog({ onClose });
   const { insertLog, invalidateQueries } = useAssets.log.insert();
   const [draft, setDraft] = useState<Partial<Draft>>(getEmptyAssetLog(''));
-  const isGaps = useIsExtraSmallScreen();
+  const isExtraSmallScreen = useIsExtraSmallScreen();
 
   const { data: reasonsData } = useAssetLogReasonList(
     draft.status
@@ -163,7 +163,7 @@ export const UpdateStatusButtonComponent = ({
         </DetailContainer>
       </Modal>
       <ButtonWithIcon
-        shouldShrink={!isGaps}
+        shouldShrink={!isExtraSmallScreen}
         Icon={<PlusCircleIcon />}
         label={t('button.update-status')}
         onClick={onUpdateStatus}

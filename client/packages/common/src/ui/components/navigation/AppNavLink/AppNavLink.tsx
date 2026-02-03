@@ -90,14 +90,14 @@ export const AppNavLink: FC<AppNavLinkProps> = props => {
 
   const selected = useSelectedNavMenuItem(to, !!end, drawer.isOpen);
   const match = useMatch({ path: `${to}/*` });
-  const isGapsStore = useIsExtraSmallScreen();
+  const isExtraSmallScreen = useIsExtraSmallScreen();
   const isSelectedParentItem = inactive && !!match;
   const showMenuSectionIcon = inactive && drawer.isOpen;
   const handleClick = (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
     // reset the clicked nav path when navigating
     // otherwise the child menu remains open
     drawer.setClickedNavPath(undefined);
-    if (isGapsStore) drawer.close();
+    if (isExtraSmallScreen) drawer.close();
     if (onClick) onClick(e);
     drawer.onClick();
   };

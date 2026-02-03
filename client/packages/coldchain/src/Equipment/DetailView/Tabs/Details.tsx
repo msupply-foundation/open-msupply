@@ -82,14 +82,14 @@ const Row = ({
   children,
   tooltip,
   label,
-  isGaps,
+  isExtraSmallScreen,
 }: {
   children: React.ReactNode;
   tooltip?: string;
   label: string;
-  isGaps: boolean;
+  isExtraSmallScreen: boolean;
 }) => {
-  if (!isGaps)
+  if (!isExtraSmallScreen)
     return (
       <Box paddingTop={1.5}>
         <InputWithLabelRow
@@ -138,7 +138,7 @@ const Row = ({
 
 export const Details = ({ draft, onChange }: DetailsProps) => {
   const t = useTranslation();
-  const isGaps = useIsExtraSmallScreen();
+  const isExtraSmallScreen = useIsExtraSmallScreen();
 
   const { data: assetProperties, isLoading } = useAssetProperties({
     assetCategoryId: { equalAnyOrNull: [draft?.assetCategory?.id ?? ''] },
@@ -184,7 +184,7 @@ export const Details = ({ draft, onChange }: DetailsProps) => {
                           ? t('messages.catalogue-property')
                           : undefined
                       }
-                      isGaps={isGaps}
+                      isExtraSmallScreen={isExtraSmallScreen}
                     >
                       <PropertyInput
                         valueType={property.valueType}
@@ -200,7 +200,7 @@ export const Details = ({ draft, onChange }: DetailsProps) => {
                         }
                         disabled={isCatalogue}
                         textSx={
-                          isGaps
+                          isExtraSmallScreen
                             ? {
                                 backgroundColor: theme =>
                                   isCatalogue
