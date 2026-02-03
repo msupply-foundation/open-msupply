@@ -166,6 +166,7 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
     layoutMode: 'grid',
     enableColumnResizing,
 
+    enableColumnFilters: false, // hide all column filters in the column menu
     enableColumnPinning: true,
     enableColumnOrdering: true,
     enableColumnDragging: false,
