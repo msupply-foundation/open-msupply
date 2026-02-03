@@ -804,6 +804,7 @@ export type UpdateInboundShipmentMutation = {
             }
           | { __typename: 'CannotEditInvoice'; description: string }
           | { __typename: 'CannotIssueInForeignCurrency'; description: string }
+          | { __typename: 'CannotReceiveWithPendingLines'; description: string }
           | { __typename: 'CannotReverseInvoiceStatus'; description: string }
           | { __typename: 'OtherPartyNotASupplier'; description: string }
           | { __typename: 'OtherPartyNotVisible'; description: string }
@@ -927,6 +928,10 @@ export type UpsertInboundShipmentMutation = {
               | { __typename: 'CannotEditInvoice'; description: string }
               | {
                   __typename: 'CannotIssueInForeignCurrency';
+                  description: string;
+                }
+              | {
+                  __typename: 'CannotReceiveWithPendingLines';
                   description: string;
                 }
               | {
@@ -1638,6 +1643,10 @@ export const UpdateInboundShipmentDocument = gql`
             __typename
             description
           }
+          ... on CannotReceiveWithPendingLines {
+            __typename
+            description
+          }
           ... on CannotEditInvoice {
             __typename
             description
@@ -1789,6 +1798,10 @@ export const UpsertInboundShipmentDocument = gql`
                 description
               }
               ... on CannotChangeStatusOfInvoiceOnHold {
+                __typename
+                description
+              }
+              ... on CannotReceiveWithPendingLines {
                 __typename
                 description
               }

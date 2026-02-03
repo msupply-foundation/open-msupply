@@ -13,8 +13,8 @@ use crate::{
     store_preference::get_store_preferences,
 };
 use repository::{
-    vvm_status::vvm_status_log_row::VVMStatusLogRow, InvoiceLine, InvoiceLineRow, InvoiceRow,
-    ItemRow, RepositoryError, StockLineRow, StorageConnection,
+    vvm_status::vvm_status_log_row::VVMStatusLogRow, InvoiceLine, InvoiceLineRow,
+    InvoiceLineStatus, InvoiceRow, ItemRow, RepositoryError, StockLineRow, StorageConnection,
 };
 
 use super::UpdateStockInLine;
@@ -53,6 +53,7 @@ pub fn generate(
     }
 
     let (upsert_batch_option, vvm_status_log_option) = if should_update_stock(&existing_invoice_row)
+        && matches!(update_line.status, None | Some(InvoiceLineStatus::Passed))
     {
         // There will be a batch_to_delete_id if the item has changed
         // If item has changed, we want a new stock line, otherwise keep existing

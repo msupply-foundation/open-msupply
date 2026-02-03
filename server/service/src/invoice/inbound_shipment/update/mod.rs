@@ -174,6 +174,7 @@ pub enum UpdateInboundShipmentError {
     CannotIssueForeignCurrencyForInternalSuppliers,
     CannotUpdateStatusAndDonorAtTheSameTime,
     CanOnlyChangeDateOfExternalInboundShipments,
+    CannotReceiveWithPendingLines,
     // Name validation
     OtherPartyDoesNotExist,
     OtherPartyNotVisible,

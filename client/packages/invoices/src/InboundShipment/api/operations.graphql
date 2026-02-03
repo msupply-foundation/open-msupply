@@ -344,6 +344,10 @@ mutation updateInboundShipment(
           __typename
           description
         }
+        ... on CannotReceiveWithPendingLines {
+          __typename
+          description
+        }
         ... on CannotEditInvoice {
           __typename
           description
@@ -495,6 +499,10 @@ mutation upsertInboundShipment(
               description
             }
             ... on CannotChangeStatusOfInvoiceOnHold {
+              __typename
+              description
+            }
+            ... on CannotReceiveWithPendingLines {
               __typename
               description
             }

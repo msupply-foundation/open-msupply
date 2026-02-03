@@ -167,6 +167,15 @@ export const validateEmptyInvoice = (lines: {
   return true;
 };
 
+const validateNoPendingLines = (lines: {
+  totalCount: number;
+  nodes: InboundLineFragment[];
+}): boolean => {
+  // Should only proceed if there are no pending lines
+  if (lines.nodes.some(line => line.status === 'PENDING')) return false;
+  return true;
+};
+
 export const StatusChangeButton = () => {
   const {
     options,
@@ -200,12 +209,21 @@ export const StatusChangeButton = () => {
     t('auth.permission-denied')
   );
 
+  const pendingLinesNotification = useDisabledNotificationToast(
+    t('messages.pending-lines')
+  );
+
   if (!selectedOption) return null;
   if (isStatusChangeDisabled) return null;
 
   const onStatusClick = () => {
     if (!validateEmptyInvoice(lines)) return noLinesNotification();
     if (onHold) return onHoldNotification();
+    if (selectedOption?.value === InvoiceNodeStatus.Received || selectedOption?.value === InvoiceNodeStatus.Verified) {
+      if (!validateNoPendingLines(lines)) {
+        return pendingLinesNotification();
+      }
+    }
     if (selectedOption?.value === InvoiceNodeStatus.Verified) return onVerify();
     return getConfirmation();
   };
