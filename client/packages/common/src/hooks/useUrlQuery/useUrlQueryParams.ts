@@ -71,6 +71,7 @@ export const useUrlQueryParams = ({
     if (urlQuery['sort']) return;
 
     updateQuery(initialUrlSort);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialUrlSort?.sort, initialUrlSort?.dir]);
 
   const updateSortQuery = useCallback(
