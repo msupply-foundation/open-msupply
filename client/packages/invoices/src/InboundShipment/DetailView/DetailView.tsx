@@ -40,6 +40,7 @@ import { InboundShipmentLineErrorProvider } from '../context/inboundShipmentLine
 import { InboundShipmentDetailTabs } from './types';
 import { useInboundLines } from '../api/hooks/line/useInboundLines';
 import { useInboundShipmentColumns } from './columns';
+import { ScanInputModal } from './ScanInputModal';
 
 type InboundLineItem = InboundLineFragment['item'];
 
@@ -237,6 +238,8 @@ const DetailViewInner = () => {
             />
           )}
           <SidePanel />
+
+          <ScanInputModal lines={lines} />
 
           {isOpen && (
             <InboundLineEdit

@@ -11,7 +11,7 @@ import {
 import { useInbound } from '../api';
 import { ReportSelector } from '@openmsupply-client/system';
 import { AddButton } from './AddButton';
-import { AddFromScannerButton } from '../../OutboundShipment/DetailView/AddFromScannerButton';
+import { AddFromScannerButton } from './AddFromScannerButton';
 import { ScannedBarcode } from '../../types';
 
 interface AppBarButtonProps {

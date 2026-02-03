@@ -106,8 +106,6 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
 
   const MockScanner = useMockScanner(isScanning);
 
-  console.log('MockScanner', MockScanner);
-
   const hasNativeBarcodeScanner =
     Capacitor.isPluginAvailable('BarcodeScanner') &&
     Capacitor.isNativePlatform();
