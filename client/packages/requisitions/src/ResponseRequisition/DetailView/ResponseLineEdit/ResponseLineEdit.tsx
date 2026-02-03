@@ -80,6 +80,11 @@ export const ResponseLineEdit = ({
   );
 
   const { available, mos } = useStockCalculations(draft);
+  const itemVolume =
+    (draft?.availableVolumeByLocationType?.itemVolumePerUnit ?? 0) *
+    (draft?.supplyQuantity ?? 0);
+  const availableVolume = draft?.availableVolumeByLocationType?.availableVolume;
+  const volumeFull = availableVolume! - itemVolume <= 0;
 
   const commonProps = {
     defaultPackSize,
@@ -379,6 +384,14 @@ export const ResponseLineEdit = ({
                 isVisibleOrOnHand: true,
               }}
             />
+          )}
+          {!!volumeFull && (
+            <Alert sx={{ mt: 1 }} severity="warning">
+              {t('label.location-type-full-warning', {
+                locationType:
+                  draft?.availableVolumeByLocationType?.locationType.name,
+              })}
+            </Alert>
           )}
         </>
       }
