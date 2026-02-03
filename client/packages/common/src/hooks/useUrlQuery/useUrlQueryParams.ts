@@ -41,7 +41,7 @@ export type ListParams<T> = {
 };
 
 export const useUrlQueryParams = ({
-  initialSort,
+  initialSort = { key: '', dir: 'asc' },
   filters = [],
 }: UrlQueryParams = {}) => {
   // Do not coerce the filter parameter if the user enters a numeric value
@@ -60,20 +60,22 @@ export const useUrlQueryParams = ({
     skipParse,
   });
 
+  const initialUrlSort = { sort: initialSort.key, dir: initialSort?.dir };
+
   // Set initial sort on mount
   useEffect(() => {
-    if (!initialSort) return;
+    // Only try updating query if sort key is set
+    if (!initialUrlSort?.sort) return;
 
     // Don't want to override existing sort
     if (urlQuery['sort']) return;
 
-    const { key: sort, dir } = initialSort;
-    updateQuery({ sort, dir: dir === 'desc' ? 'desc' : '' });
-  }, [initialSort?.key, initialSort?.dir]);
+    updateQuery(initialUrlSort);
+  }, [initialUrlSort?.sort, initialUrlSort?.dir]);
 
   const updateSortQuery = useCallback(
     (sort: string, dir: 'desc' | 'asc') => {
-      updateQuery({ sort, dir: dir === 'asc' ? '' : 'desc' });
+      updateQuery({ sort, dir });
     },
     [updateQuery]
   );
@@ -152,20 +154,16 @@ export const useUrlQueryParams = ({
       ? urlQuery['page'] - 1
       : 0;
 
-  const defaultSort = initialSort
-    ? { key: initialSort.key, dir: initialSort.dir === 'desc' ? 'desc' : '' }
-    : { key: '', dir: 'asc' };
-
-  const direction = urlQuery['dir'] ?? defaultSort.dir;
+  const urlSort = urlQuery['sort'] ? urlQuery : initialUrlSort;
 
   const queryParams = {
     page,
     offset: page * pageSize,
     first: pageSize,
     sortBy: {
-      key: urlQuery['sort'] ?? defaultSort.key,
-      direction,
-      isDesc: direction === 'desc',
+      key: urlSort.sort,
+      direction: urlSort.dir,
+      isDesc: urlSort.dir === 'desc',
     } as SortBy<unknown>,
     filterBy: filter.filterBy,
     reportArgs: urlQuery['reportArgs'],
