@@ -23,24 +23,7 @@ import { Gs1Barcode, parseBarcode } from 'gs1-barcode-parser-mod';
 import { Formatter } from './formatters';
 import { BarcodeScanner, ScannerType } from '@openmsupply-client/common';
 import { useMockScanner } from './MockBarcodeScanner';
-
-// Extend window type to include honeywell plugin
-declare global {
-  interface Window {
-    plugins?: {
-      honeywell?: {
-        claim?: (callback: () => void) => void;
-        release?: () => void;
-        listen?: (
-          success: (data: string) => void,
-          error: (err: string) => void
-        ) => void;
-        scan?: () => void;
-        available?: (callback: (available: boolean) => void) => void;
-      };
-    };
-  }
-}
+import { HoneywellScanner } from '@common/hooks';
 
 const SCAN_TIMEOUT_IN_MS = 50000;
 const INSTALL_TIMEOUT_IN_MS = 30000;
@@ -182,26 +165,29 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
     Capacitor.isPluginAvailable('BarcodeScanner') &&
     Capacitor.isNativePlatform();
   const hasElectronApi = !!electronNativeAPI;
-  const hasHoneywellScannerWindow =
-    typeof window.plugins?.honeywell !== 'undefined';
 
-  console.log('honeywell', window.plugins?.honeywell);
+  console.log(
+    'HoneyWellScanner:',
+    Capacitor.isPluginAvailable('HoneywellScanner')
+  );
+
+  const hasHoneywellScannerPlugin =
+    Capacitor.isPluginAvailable('HoneywellScanner') &&
+    Capacitor.isNativePlatform();
 
   useEffect(() => {
-    console.log(
-      'honeywell scanner window available:',
-      hasHoneywellScannerWindow
-    );
-    if (hasHoneywellScannerWindow) {
-      const honeywell = window.plugins?.honeywell;
-      if (honeywell?.available) {
-        honeywell.available!((available: boolean) => {
+    if (hasHoneywellScannerPlugin) {
+      HoneywellScanner.available()
+        .then(({ available }) => {
           console.log('Honeywell scanner available:', available);
           setHasHoneywellScanner(available);
+        })
+        .catch(err => {
+          console.error('Error checking Honeywell availability:', err);
+          setHasHoneywellScanner(false);
         });
-      }
     }
-  }, [hasHoneywellScannerWindow]);
+  }, [hasHoneywellScannerPlugin]);
 
   const availableScanners: AvailableScannerType[] = useMemo(() => {
     const scanners: AvailableScannerType[] = [];
@@ -334,9 +320,10 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
     }
 
     if (hasHoneywellScanner) {
-      const honeywell = window.plugins?.honeywell;
-      if (honeywell?.release) {
-        honeywell.release();
+      try {
+        await HoneywellScanner.release();
+      } catch (error) {
+        console.error('Error releasing Honeywell scanner:', error);
       }
     }
   }, [
@@ -383,56 +370,29 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
       // Store callback in ref for stable reference
       callbackRef.current = callback;
 
-      console.log('startListening called in BarcodeScannerProvider');
       if (hasHoneywellScanner) {
-        console.log('Starting Honeywell scanner listening');
-        const honeywell = window.plugins?.honeywell;
-        if (!!honeywell && !!honeywell.listen && !!honeywell.claim) {
-          try {
-            console.log('Claiming Honeywell scanner');
+        try {
+          setIsListening(true);
 
-            let claimSuccessful = false;
-            const claimTimeout = setTimeout(() => {
-              if (!claimSuccessful) {
-                console.error(
-                  'Honeywell claim timeout - scanner not available'
-                );
-                setIsListening(false);
-                error('Unable to claim scanner (timed out)')();
+          // Claim the scanner first
+          await HoneywellScanner.claim();
+
+          // Set up listener
+          await HoneywellScanner.listen(data => {
+            if ('barcode' in data) {
+              if (callbackRef.current) {
+                callbackRef.current(parseResult(data.barcode));
               }
-            }, 6000); // 3 second timeout for claim
-
-            setIsListening(true);
-            honeywell.claim!(() => {
-              claimSuccessful = true;
-              clearTimeout(claimTimeout);
-              console.log('Honeywell scanner claimed, setting up listener');
-
-              honeywell.listen!(
-                (data: string) => {
-                  console.log('Honeywell scan data:', data);
-                  if (callbackRef.current) {
-                    callbackRef.current(parseResult(data));
-                  }
-                },
-                (err: string) => {
-                  console.error('Honeywell scanning error:', err);
-                  setIsListening(false);
-                  error(t('error.unable-to-read-barcode'))();
-                }
-              );
-
-              console.log('Started Honeywell listening');
-            });
-          } catch (e) {
-            console.error('Error starting Honeywell listening:', e);
-            setIsListening(false);
-            error(t('error.unable-to-read-barcode'))();
-          }
-        } else {
-          console.log('Honeywell plugin methods not available');
+            } else if ('error' in data) {
+              console.error('Honeywell scanning error:', data.error);
+              setIsListening(false);
+              error(t('error.unable-to-read-barcode'))();
+            }
+          });
+        } catch (e) {
+          console.error('Error starting Honeywell listening:', e);
           setIsListening(false);
-          error("No methods availble, this shouldn't happen!")();
+          error(t('error.unable-to-read-barcode'))();
         }
       }
 

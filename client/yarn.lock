@@ -7982,13 +7982,6 @@ copy-webpack-plugin@^12.0.2:
     schema-utils "^4.2.0"
     serialize-javascript "^6.0.2"
 
-cordova-honeywell-plugin@^1.0.5:
-  version "1.0.5"
-  resolved "https://registry.yarnpkg.com/cordova-honeywell-plugin/-/cordova-honeywell-plugin-1.0.5.tgz#49046ee2678f5c46460f220f7daa622d8470b51c"
-  integrity sha512-FU8sqsX05F7jgXQdQ/PlvFGxiW3KzCHu85CLwFWP5qhW0YpGZiBRyaXvaQjGKeb3u8dq7YlDJE0u7ktwyFD7lg==
-  dependencies:
-    user "0.0.0"
-
 core-js-compat@^3.43.0:
   version "3.48.0"
   resolved "https://registry.yarnpkg.com/core-js-compat/-/core-js-compat-3.48.0.tgz#7efbe1fc1cbad44008190462217cc5558adaeaa6"
@@ -17212,11 +17205,6 @@ use-sync-external-store@^1.2.2, use-sync-external-store@^1.6.0:
   version "1.6.0"
   resolved "https://registry.yarnpkg.com/use-sync-external-store/-/use-sync-external-store-1.6.0.tgz#b174bfa65cb2b526732d9f2ac0a408027876f32d"
   integrity sha512-Pp6GSwGP/NrPIrxVFAIkOQeyw8lFenOHijQWkUTrDvrF4ALqylP2C/KCkeS9dpUM3KvYRQhna5vt7IL95+ZQ9w==
-
-user@0.0.0:
-  version "0.0.0"
-  resolved "https://registry.yarnpkg.com/user/-/user-0.0.0.tgz#f27f1b23fc511f2a8efa40db55cfba123824e02a"
-  integrity sha512-eRNM5isOvr6aEFAGi1CqAkmLkYxW2NJ5ThhbD+6IJXYKM1mo7Gtxx4mQIveHz/5K3p/SVnlW9k17ETn+QAu8IQ==
 
 username@^5.1.0:
   version "5.1.0"
