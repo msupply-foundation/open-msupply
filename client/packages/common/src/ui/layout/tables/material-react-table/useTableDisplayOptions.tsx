@@ -52,17 +52,6 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
     renderColumnActionsMenuItems: ({ internalColumnMenuItems, column }) => {
       const { description, header } = column.columnDef as ColumnDef<T>; // MRT doesn't support typing custom column props, but we know it will be here
 
-      // Hiding filter options within the table
-      const filteredMenuItems = internalColumnMenuItems.filter(item => {
-        if (React.isValidElement(item)) {
-          const label = item.props?.label;
-          if (label.toLowerCase().includes('filter')) {
-            return false;
-          }
-        }
-        return true;
-      });
-
       return [
         <MenuItem
           key="column-description"
@@ -78,7 +67,7 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
           {description}
         </MenuItem>,
 
-        ...filteredMenuItems,
+        ...internalColumnMenuItems,
       ];
     },
 
