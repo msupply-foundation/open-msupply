@@ -1,5 +1,3 @@
-use std::time::SystemTime;
-
 use super::StorageConnection;
 use crate::{
     diesel_macros::{apply_date_filter, apply_equal_filter},
