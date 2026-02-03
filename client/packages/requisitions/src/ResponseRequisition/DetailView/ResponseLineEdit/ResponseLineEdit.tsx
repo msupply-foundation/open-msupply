@@ -206,6 +206,7 @@ export const ResponseLineEdit = ({
             label={t('label.suggested')}
             value={draft?.suggestedQuantity}
             disabledOverride={true}
+            roundUp={true}
             {...commonProps}
           />
           {showExtraFields && (

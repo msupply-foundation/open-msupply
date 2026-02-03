@@ -50,6 +50,7 @@ export const getExtraMiddlePanels = (
         pt: 0.5,
         pb: 0.5,
       },
+      roundUp: true,
     },
     {
       label: t('label.incoming-stock'),
@@ -90,6 +91,7 @@ export const getSuggestedRow = (
         pl: 0,
         pt: 0.5,
       },
+      roundUp: true,
     },
   ];
 };
