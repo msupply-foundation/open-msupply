@@ -1143,6 +1143,7 @@
   "label.location-temperature-range": " {{locationName}} ({{minTemperature}}°C to {{maxTemperature}}°C)",
   "label.location-type": "Location type",
   "label.location-type-full": "{{locationType}} has no capacity for more items",
+  "label.location-type-full-warning": "Warning: Location type {{locationType}} has no space available for more items",
   "label.locked": "Locked",
   "label.log": "Log",
   "label.longitude": "Longitude",
