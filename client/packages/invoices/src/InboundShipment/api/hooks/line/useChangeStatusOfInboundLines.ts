@@ -42,7 +42,5 @@ export const useChangeStatusOfInboundLines = (
     onConfirm: () => onStatusUpdate('reject'),
   });
 
-  return (status) => status === 'approve'
-      ? confirmAndApprove()
-      : confirmAndReject();
+  return (status) => status === 'approve' ? confirmAndApprove() : confirmAndReject();
 };

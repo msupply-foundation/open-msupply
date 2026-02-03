@@ -41,28 +41,32 @@ export const RelatedDocumentsSectionComponent = () => {
         ) : (
           <Tooltip title={tooltip}>
             <Grid>
-              {showRequisition && <PanelRow>
-                <PanelLabel>{t('label.requisition')}</PanelLabel>
-                <PanelField>
-                  <Link
-                    to={RouteBuilder.create(AppRoute.Replenishment)
-                      .addPart(AppRoute.InternalOrder)
-                      .addPart(requisition?.id ?? '')
-                      .build()}
-                  >{`#${requisition?.requisitionNumber}`}</Link>
-                </PanelField>
-              </PanelRow>}
-              {purchaseOrder && <PanelRow>
-                <PanelLabel>{t('label.purchase-order')}</PanelLabel>
-                <PanelField>
-                  <Link
-                    to={RouteBuilder.create(AppRoute.Replenishment)
-                      .addPart(AppRoute.PurchaseOrder)
-                      .addPart(purchaseOrder?.id ?? '')
-                      .build()}
-                  >{`#${purchaseOrder?.number}`}</Link>
-                </PanelField>
-              </PanelRow>}
+              {showRequisition &&
+                <PanelRow>
+                  <PanelLabel>{t('label.requisition')}</PanelLabel>
+                  <PanelField>
+                    <Link
+                      to={RouteBuilder.create(AppRoute.Replenishment)
+                        .addPart(AppRoute.InternalOrder)
+                        .addPart(requisition?.id ?? '')
+                        .build()}
+                    >{`#${requisition?.requisitionNumber}`}</Link>
+                  </PanelField>
+                </PanelRow>
+              }
+              {purchaseOrder &&
+                <PanelRow>
+                  <PanelLabel>{t('label.purchase-order')}</PanelLabel>
+                  <PanelField>
+                    <Link
+                      to={RouteBuilder.create(AppRoute.Replenishment)
+                        .addPart(AppRoute.PurchaseOrder)
+                        .addPart(purchaseOrder?.id ?? '')
+                        .build()}
+                    >{`#${purchaseOrder?.number}`}</Link>
+                  </PanelField>
+                </PanelRow>
+              }
             </Grid>
           </Tooltip>
         )}

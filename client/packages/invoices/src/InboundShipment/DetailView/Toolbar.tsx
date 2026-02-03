@@ -114,24 +114,24 @@ export const Toolbar = () => {
               <Box display="flex" flex={1} flexDirection="column" gap={1}>
                 <InputWithLabelRow
                   label={t('label.purchase-order-number')}
-                  Input={
-                    <Box height={35} width={150} alignContent={'center'}>
-                      <Link
-                        to={RouteBuilder.create(AppRoute.Replenishment)
-                          .addPart(AppRoute.PurchaseOrder)
-                          .addPart(purchaseOrder?.id ?? '')
-                          .build()}
-                      >{`#${purchaseOrder?.number}`}</Link>
-                    </Box>
-                  }
+                  Input={<Link
+                    to={RouteBuilder.create(AppRoute.Replenishment)
+                      .addPart(AppRoute.PurchaseOrder)
+                      .addPart(purchaseOrder?.id ?? '')
+                      .build()}
+                  >{`#${purchaseOrder?.number}`}</Link>}
+                  sx={{
+                    width: 200,
+                    height: 35,
+                  }}
                 />
                 <InputWithLabelRow
                   label={t('label.purchase-order-reference')}
-                  Input={
-                    <Box height={35} alignContent={'center'}>
-                      {`${purchaseOrder?.reference ?? ''}`}
-                    </Box>
-                  }
+                  Input={`${purchaseOrder?.reference ?? ''}`}
+                  sx={{
+                    width: 200,
+                    height: 35,
+                  }}
                 />
               </Box>
             </Grid>

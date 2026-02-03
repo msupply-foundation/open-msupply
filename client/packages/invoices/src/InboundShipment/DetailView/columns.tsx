@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
 import {
   ArrayUtils,
   getLinesFromRow,
@@ -154,11 +154,11 @@ export const useInboundShipmentColumns = (external: boolean, showLineStatus: boo
       },
       {
         accessorKey: 'status',
-        header: t('label.status'),
+        header: t('label.auth-status'),
         enableColumnFilter: true,
         filterVariant: 'select',
         includeColumn: showLineStatus,
-        Cell: props => StatusCell({ ...props, statusMap }),
+        Cell: ({ cell }) => <StatusCell cell={cell} statusMap={statusMap} />,
       },
       {
         id: 'doseQuantity',
