@@ -1,5 +1,4 @@
-name: Bundle size diff - Comment
-
+name: Comment on PR
 on:
   workflow_run:
     workflows: ["Bundle size diff - Build"]
@@ -7,88 +6,35 @@ on:
       - completed
 
 jobs:
-  report:
-    name: Generate report and comment
+  comment:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
-    if: >
-      github.event.workflow_run.event == 'pull_request' &&
-      github.event.workflow_run.conclusion == 'success'
-
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    permissions:
+      pull-requests: write
+      actions: read
     steps:
-      - name: Download artifacts
-        uses: actions/github-script@v7
+      - name: Download artifact
+        uses: actions/download-artifact@v4
         with:
-          script: |
-            const artifacts = await github.rest.actions.listWorkflowRunArtifacts({
-               owner: context.repo.owner,
-               repo: context.repo.repo,
-               run_id: ${{github.event.workflow_run.id }},
-            });
-            const baseArtifact = artifacts.data.artifacts.find(a => a.name === 'base');
-            const prArtifact = artifacts.data.artifacts.find(a => a.name === 'pr');
-            
-            if (!baseArtifact || !prArtifact) {
-              core.setFailed('Could not find required artifacts');
-              return;
-            }
-            
-            const fs = require('fs');
-            
-            for (const [artifact, name] of [[baseArtifact, 'base'], [prArtifact, 'pr']]) {
-              const download = await github.rest.actions.downloadArtifact({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                artifact_id: artifact.id,
-                archive_format: 'zip',
-              });
-              fs.mkdirSync(name, { recursive: true });
-              fs.writeFileSync(`${name}.zip`, Buffer.from(download.data));
-            }
-
-      - name: Unzip artifacts
+          name: pr-artifact
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ github.event.workflow_run.id }}
+      
+      - name: Read PR number
+        id: pr-data
         run: |
-          unzip base.zip -d base
-          unzip pr.zip -d pr
-
-      - name: Get diff
-        id: get-diff
-        uses: NejcZdovc/bundle-size-diff@v1
-        with:
-          base_path: "./base/stats.json"
-          pr_path: "./pr/stats.json"
-
-      - name: Find PR number
-        id: pr-number
-        uses: actions/github-script@v7
-        with:
-          result-encoding: string
-          script: |
-            const response = await github.rest.repos.listPullRequestsAssociatedWithCommit({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              commit_sha: '${{ github.event.workflow_run.head_sha }}',
-            });
-            return response.data[0].number;
-
+          echo "pr_number=$(cat pr_number)" >> $GITHUB_OUTPUT
+      
       - name: Comment on PR
         uses: actions/github-script@v7
-        env:
-          OLD: ${{steps.get-diff.outputs.base_file_string}}
-          NEW: ${{steps.get-diff.outputs.pr_file_string}}
-          DIFF: ${{steps.get-diff.outputs.diff_file_string}}
-          DIFF_PERCENT: ${{steps.get-diff.outputs.percent}}
         with:
           script: |
-            const comment = `## Bundle Size Diff
+            const fs = require('fs');
+            const result = fs.readFileSync('result.txt', 'utf8');
             
-            **Base:** ${process.env.OLD}
-            **PR:** ${process.env.NEW}
-            **Diff:** ${process.env.DIFF} (${process.env.DIFF_PERCENT}%)`;
-            
-            await github.rest.issues.createComment({
+            github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              issue_number: ${{ steps.pr-number.outputs.result }},
-              body: comment
+              issue_number: ${{ steps.pr-data.outputs.pr_number }},
+              body: result
             });
