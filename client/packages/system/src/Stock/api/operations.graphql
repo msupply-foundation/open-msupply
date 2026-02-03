@@ -27,7 +27,7 @@ fragment StockLineRow on StockLineNode {
       name
     }
     isVaccine
-    dosesPerUnit: doses
+    doses
     restrictedLocationTypeId
     defaultPackSize
     itemStoreProperties(storeId: $storeId) {

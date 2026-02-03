@@ -122,7 +122,7 @@ export const StockLineForm = ({
 
     const doses = QuantityUtils.packsToDoses(numPacks, {
       packSize: draft.packSize,
-      dosesPerUnit: draft.item.dosesPerUnit,
+      dosesPerUnit: draft.item.doses,
     });
 
     return {
