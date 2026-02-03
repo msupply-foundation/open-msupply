@@ -8,9 +8,10 @@ TODO:
 
 1. Refactor code (better naming of things, trim generated graphql, move things to their own space )
 2. ~~Figure out codegen work flow to work better.~~
-3. Better error handling and error messages. Handle edge cases.
+3. ~~Better error handling and error messages. Handle edge cases.~~
 4. Testing
-5. Improve Readme
+5. ~~Improve Readme~~
+6. Exchange BatchOutboundShipment with UpdateOutboundShipment (for readability)
 
 ### Installation
 
