@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
   FnUtils,
   InsertPurchaseOrderInput,
@@ -12,6 +12,7 @@ import {
   RecordPatch,
   useDebounceCallback,
   LIST_KEY,
+  useUrlQuery,
 } from '@openmsupply-client/common';
 
 import { isPurchaseOrderDisabled } from '../../../utils';
@@ -34,6 +35,8 @@ export const usePurchaseOrder = (id?: string) => {
   const { data, isFetching, isError, isLoading } = useGetById(purchaseOrderId);
 
   const isDisabled = data ? isPurchaseOrderDisabled(data) : false;
+
+  const { filteredLines, itemFilter, setItemFilter } = useFilteredLines(data);
 
   // DRAFT STATE
   const [draft, setDraft] = useState<PurchaseOrderFragment | undefined>();
@@ -87,6 +90,7 @@ export const usePurchaseOrder = (id?: string) => {
 
   return {
     query: { data, isFetching, isError, isLoading },
+    lines: { filteredLines, itemFilter, setItemFilter },
     create: { create, isCreating, createError },
     update: { update, isUpdating, updateError },
     masterList: { addFromMasterList, isAdding },
@@ -214,4 +218,38 @@ const useAddFromMasterList = () => {
   };
 
   return { ...mutationState, addFromMasterList };
+};
+
+// Filters by item code or name
+const useFilteredLines = (data: PurchaseOrderFragment | undefined | void) => {
+  const { urlQuery, updateQuery } = useUrlQuery({
+    skipParse: ['codeOrName'],
+  });
+
+  const itemFilter = urlQuery?.['codeOrName'] as string;
+
+  const setItemFilter = (filterValue: string) => {
+    updateQuery({
+      codeOrName: filterValue,
+    });
+  };
+
+  const filteredLines = useMemo(() => {
+    if (!data) return [];
+
+    const lines = data.lines.nodes || [];
+
+    return [...lines].filter(line => {
+      if (!itemFilter) return true;
+      const {
+        item: { code, name },
+      } = line;
+      return (
+        code?.toLowerCase().includes(itemFilter.toLowerCase()) ||
+        name?.toLowerCase().includes(itemFilter.toLowerCase())
+      );
+    });
+  }, [data, itemFilter]);
+
+  return { filteredLines, itemFilter, setItemFilter };
 };
