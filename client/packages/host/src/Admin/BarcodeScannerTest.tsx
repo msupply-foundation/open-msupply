@@ -11,7 +11,6 @@ import {
   ButtonWithIcon,
   ScanResult as ParsedScanResult,
   useBarcodeScannerContext,
-  AvailableScannerType,
 } from '@openmsupply-client/common';
 import { useTranslation } from '@common/intl';
 import { XCircleIcon, DeleteIcon, CheckIcon, CameraIcon } from '@common/icons';
@@ -28,37 +27,35 @@ export const BarcodeScannerTest = () => {
   const [error, setError] = useState<string | null>(null);
   const {
     isScanning,
+    isListening,
     isEnabled,
-    startScanning,
+    startListening,
     stopScan,
     scan,
-    availableScanners,
+    supportsContinuousScanning,
   } = useBarcodeScannerContext();
 
   useEffect(() => {
     // Auto-start scanning for Honeywell and Manual when page loads
-    if (!isScanning) {
-      if (
-        availableScanners.includes(AvailableScannerType.Honeywell) ||
-        availableScanners.includes(AvailableScannerType.Mock)
-      ) {
-        handleStartScanning();
-      }
+    if (!isListening && supportsContinuousScanning) {
+      console.log('Auto-starting scanner listening for test page');
+      // handleStartScanning();
     }
 
     // Cleanup on unmount
     return () => {
-      if (isScanning) {
+      if (isListening) {
         stopScan();
       }
     };
     // only need to respond to changes in available scanners
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [availableScanners]);
+  }, [supportsContinuousScanning]);
 
   const handleStartScanning = async () => {
     try {
-      await startScanning((result, err) => {
+      console.log('Starting scanner listening for test page');
+      await startListening((result, err) => {
         if (err) {
           setError(`${t('messages.scanning-error')}: ${err}`);
           return;
@@ -73,7 +70,9 @@ export const BarcodeScannerTest = () => {
           ...prev,
         ]);
       });
+      console.log('Started listening for scans');
     } catch (e) {
+      console.error('Error starting scanner listening:', e);
       const errorMsg = (e as Error)?.message || t('messages.unknown-error');
       setError(`${t('messages.unknown-error')}: ${errorMsg}`);
     }
@@ -138,10 +137,10 @@ export const BarcodeScannerTest = () => {
 
         <Box display="flex" gap={2} flexWrap="wrap">
           <>
-            {!isScanning ? (
+            {!isListening ? (
               <ButtonWithIcon
                 Icon={<CheckIcon />}
-                label={t('button.enable-scanning')}
+                label={t('button.start-listening')}
                 variant="contained"
                 color="primary"
                 onClick={handleStartScanning}
@@ -150,7 +149,7 @@ export const BarcodeScannerTest = () => {
             ) : (
               <ButtonWithIcon
                 Icon={<XCircleIcon />}
-                label={t('button.disable-scanning')}
+                label={t('button.stop-listening')}
                 variant="contained"
                 color="error"
                 onClick={handleStopScanning}
@@ -181,10 +180,14 @@ export const BarcodeScannerTest = () => {
           {t('heading.scanner-status')}
         </Typography>
         <Typography sx={{ mt: 1 }}>
-          <strong>{t('label.status')}:</strong>{' '}
-          {isScanning
-            ? `🟢 ${t('label.scanning-active')}`
-            : `🔴 ${t('label.not-scanning')}`}
+          <strong>{t('label.listening')}:</strong>{' '}
+          {isListening
+            ? `🟢 ${t('label.active')}`
+            : `🔴 ${t('label.inactive')}`}
+        </Typography>
+        <Typography sx={{ mt: 1 }}>
+          <strong>{t('button.scanning')}:</strong>{' '}
+          {isScanning ? `🟢 ${t('label.active')}` : `🔴 ${t('label.inactive')}`}
         </Typography>
       </Paper>
 
