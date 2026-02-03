@@ -2,9 +2,10 @@ import { DialogButton, TextField } from '@common/components';
 import { Portal, Box } from '@mui/material';
 import React, { useState, useRef, useEffect } from 'react';
 
-export const useMockScanner = (isScanning: boolean) => {
+export const useMockScanner = (enabled: boolean) => {
   const [inputValue, setInputValue] = useState('');
-  const [open, setOpen] = useState(false);
+  const [isScanning, setIsScanning] = useState(false);
+  const [isListening, setIsListening] = useState(false);
   const resolveRef = useRef<((value: string) => void) | null>(null);
   const scanHandler = useRef<((barcode: string) => void) | null>(null);
 
@@ -13,7 +14,6 @@ export const useMockScanner = (isScanning: boolean) => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.ctrlKey && event.shiftKey && event.key === 'S') {
         event.preventDefault();
-        setOpen(prev => !prev);
       }
     };
 
@@ -25,26 +25,28 @@ export const useMockScanner = (isScanning: boolean) => {
     if (resolveRef.current) {
       resolveRef.current(inputValue);
       resolveRef.current = null;
-
       setInputValue('');
     }
     if (scanHandler.current) {
       scanHandler.current(inputValue);
     }
+    setIsScanning(false);
   };
 
   const startListening = async (handler: (barcode: string) => void) => {
     scanHandler.current = handler;
-    setOpen(true);
+    setIsListening(true);
+    setIsScanning(true);
   };
 
   const stopListening = async () => {
     scanHandler.current = null;
-    setOpen(false);
+    setIsListening(false);
+    setIsScanning(false);
   };
 
   const scannerInput =
-    isScanning || open ? (
+    enabled && (isScanning || isListening) ? (
       <Portal>
         <div
           style={{
@@ -87,6 +89,7 @@ export const useMockScanner = (isScanning: boolean) => {
     ) : null;
 
   const scan = async (): Promise<string> => {
+    setIsScanning(true);
     return new Promise(resolve => {
       resolveRef.current = resolve;
     });
@@ -97,6 +100,6 @@ export const useMockScanner = (isScanning: boolean) => {
     scannerInput,
     startListening,
     stopListening,
-    isOpen: open,
+    isOpen: isScanning,
   };
 };

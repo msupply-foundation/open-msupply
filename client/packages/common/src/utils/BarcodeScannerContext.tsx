@@ -5,6 +5,7 @@ import React, {
   useState,
   useEffect,
   useCallback,
+  useRef,
 } from 'react';
 import { PropsWithChildrenOnly } from '@common/types';
 import {
@@ -35,6 +36,7 @@ declare global {
           error: (err: string) => void
         ) => void;
         scan?: () => void;
+        available?: (callback: (available: boolean) => void) => void;
       };
     };
   }
@@ -69,9 +71,10 @@ interface BarcodeScannerControl {
   isEnabled: boolean;
   isConnected: boolean;
   isScanning: boolean;
+  isListening?: boolean;
   scan: (formats?: BarcodeFormat[]) => Promise<ScanResult>;
-  startScanning: (
-    callback: (result: ScanResult, err?: any) => void
+  startListening: (
+    callback: (result: ScanResult, err?: unknown) => void
   ) => Promise<void>;
   stopScan: () => Promise<void>;
   setScanner: (scanner: BarcodeScanner) => void;
@@ -80,9 +83,12 @@ interface BarcodeScannerControl {
   availableScanners: AvailableScannerType[];
   mockScannerEnabled: boolean;
   setMockScannerEnabled: (enabled: boolean) => void;
+  supportsContinuousScanning: boolean;
 }
 
-const BarcodeScannerContext = createContext<BarcodeScannerControl>({} as any);
+const BarcodeScannerContext = createContext<BarcodeScannerControl>(
+  {} as BarcodeScannerControl
+);
 
 const { Provider } = BarcodeScannerContext;
 
@@ -149,7 +155,11 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
 }) => {
   const t = useTranslation();
   const [isScanning, setIsScanning] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const [hasHoneywellScanner, setHasHoneywellScanner] =
+    useState<boolean>(false);
   const { error } = useNotification();
+  const callbackRef = useRef<ScanCallback | null>(null);
   const { electronNativeAPI } = window;
   const [scanner, setScanner] = useState<BarcodeScanner | null>(null);
   const [localScannerType, setLocalScannerType] =
@@ -166,18 +176,38 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
     localStorage.setItem(MOCK_SCANNER_STORAGE_KEY, JSON.stringify(enabled));
   };
 
-  const MockScanner = useMockScanner(isScanning && mockScannerEnabled);
+  const MockScanner = useMockScanner(mockScannerEnabled);
 
   const hasNativeBarcodeScanner =
     Capacitor.isPluginAvailable('BarcodeScanner') &&
     Capacitor.isNativePlatform();
   const hasElectronApi = !!electronNativeAPI;
-  const hasHoneywellScanner = typeof window.plugins?.honeywell !== 'undefined';
+  const hasHoneywellScannerWindow =
+    typeof window.plugins?.honeywell !== 'undefined';
+
+  console.log('honeywell', window.plugins?.honeywell);
+
+  useEffect(() => {
+    console.log(
+      'honeywell scanner window available:',
+      hasHoneywellScannerWindow
+    );
+    if (hasHoneywellScannerWindow) {
+      const honeywell = window.plugins?.honeywell;
+      if (honeywell?.available) {
+        honeywell.available!((available: boolean) => {
+          console.log('Honeywell scanner available:', available);
+          setHasHoneywellScanner(available);
+        });
+      }
+    }
+  }, [hasHoneywellScannerWindow]);
 
   const availableScanners: AvailableScannerType[] = useMemo(() => {
     const scanners: AvailableScannerType[] = [];
     if (mockScannerEnabled) scanners.push(AvailableScannerType.Mock);
-    if (hasNativeBarcodeScanner) scanners.push(AvailableScannerType.Camera);
+    if (hasNativeBarcodeScanner && !hasHoneywellScanner)
+      scanners.push(AvailableScannerType.Camera); // Camera scanner not available if Honeywell is present
     if (hasElectronApi) scanners.push(AvailableScannerType.ElectronUSB);
     if (hasHoneywellScanner) scanners.push(AvailableScannerType.Honeywell);
     return scanners;
@@ -288,6 +318,8 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
 
   const stopScan = useCallback(async () => {
     setIsScanning(false);
+    setIsListening(false);
+    callbackRef.current = null;
     if (mockScannerEnabled) {
       await MockScanner.stopListening();
     }
@@ -319,7 +351,6 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
   const scan = useCallback(
     async (formats?: BarcodeFormat[]) => {
       setIsScanning(true);
-
       let result: ScanResult = {};
 
       try {
@@ -341,68 +372,98 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
     [scanBarcode, error, t, stopScan]
   );
 
-  const startScanning = useCallback(
+  const startListening = useCallback(
     async (callback: ScanCallback) => {
       /* Starts listening for barcode scans and calls the provided callback
        with the scan result each time a barcode is scanned.
-       For the camera scanner, this will also trigger a scan immediately.
+       For the camera scanner, this will NOT start scanning barcodes automatically, you'll need to call the scan() method separately.
        All available scanner types will be started if possible.
     */
-      setIsScanning(true);
 
+      // Store callback in ref for stable reference
+      callbackRef.current = callback;
+
+      console.log('startListening called in BarcodeScannerProvider');
       if (hasHoneywellScanner) {
-        try {
-          const honeywell = window.plugins?.honeywell;
-          if (!honeywell) {
-            throw new Error('Honeywell plugin not available');
-          }
+        console.log('Starting Honeywell scanner listening');
+        const honeywell = window.plugins?.honeywell;
+        if (!!honeywell && !!honeywell.listen && !!honeywell.claim) {
+          try {
+            console.log('Claiming Honeywell scanner');
 
-          honeywell.listen!(
-            (data: string) => {
-              callback(parseResult(data));
-            },
-            (err: string) => {
-              console.error('Honeywell scanning error:', err);
-              error(t('error.unable-to-read-barcode'))();
-              setIsScanning(false);
-            }
-          );
-        } catch (e) {
-          setIsScanning(false);
-          throw e;
+            let claimSuccessful = false;
+            const claimTimeout = setTimeout(() => {
+              if (!claimSuccessful) {
+                console.error(
+                  'Honeywell claim timeout - scanner not available'
+                );
+                setIsListening(false);
+                error('Unable to claim scanner (timed out)')();
+              }
+            }, 6000); // 3 second timeout for claim
+
+            setIsListening(true);
+            honeywell.claim!(() => {
+              claimSuccessful = true;
+              clearTimeout(claimTimeout);
+              console.log('Honeywell scanner claimed, setting up listener');
+
+              honeywell.listen!(
+                (data: string) => {
+                  console.log('Honeywell scan data:', data);
+                  if (callbackRef.current) {
+                    callbackRef.current(parseResult(data));
+                  }
+                },
+                (err: string) => {
+                  console.error('Honeywell scanning error:', err);
+                  setIsListening(false);
+                  error(t('error.unable-to-read-barcode'))();
+                }
+              );
+
+              console.log('Started Honeywell listening');
+            });
+          } catch (e) {
+            console.error('Error starting Honeywell listening:', e);
+            setIsListening(false);
+            error(t('error.unable-to-read-barcode'))();
+          }
+        } else {
+          console.log('Honeywell plugin methods not available');
+          setIsListening(false);
+          error("No methods availble, this shouldn't happen!")();
         }
       }
 
       if (hasElectronApi) {
+        setIsListening(true);
         try {
           const { startBarcodeScan } = electronNativeAPI;
           await startBarcodeScan();
           electronNativeAPI.onBarcodeScan((_event, data) => {
             const barcode = parseBarcodeData(data);
-            callback(parseResult(barcode));
+            if (callbackRef.current) {
+              callbackRef.current(parseResult(barcode));
+            }
           });
         } catch (e) {
-          setIsScanning(false);
+          setIsListening(false);
           throw e;
         }
       }
 
-      if (hasNativeBarcodeScanner && !hasHoneywellScanner) {
-        // Don't start camera scanning if honeywell is being used
-        await BarcodeScannerPlugin.addListener(
-          'barcodesScanned',
-          async result => {
-            callback(parseResult(result.barcodes[0]?.rawValue));
-          }
-        );
-
-        await BarcodeScannerPlugin.startScan();
+      if (hasNativeBarcodeScanner) {
+        // Don't start camera scanning on listening, wait for explicit scan() call
       }
 
       if (mockScannerEnabled) {
+        setIsListening(true);
         const scanHandler = async (barcode: string) => {
           const result = parseResult(barcode);
-          callback(result);
+          if (callbackRef.current) {
+            callbackRef.current(result);
+          }
         };
         await MockScanner.startListening(scanHandler);
       }
@@ -447,27 +508,37 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
         !!scanner?.connected ||
         Capacitor.isNativePlatform(),
       isScanning,
+      isListening,
       setScanner,
       scan,
-      startScanning,
+      startListening,
       setScannerType,
       stopScan,
       scannerType: localScannerType,
       availableScanners,
       mockScannerEnabled,
       setMockScannerEnabled,
+      supportsContinuousScanning:
+        hasHoneywellScanner ||
+        hasElectronApi ||
+        hasNativeBarcodeScanner ||
+        mockScannerEnabled,
     }),
     [
       isEnabled,
       scan,
       stopScan,
-      startScanning,
+      startListening,
       setScannerType,
       availableScanners,
       mockScannerEnabled,
       localScannerType,
       scanner,
+      isListening,
       isScanning,
+      hasHoneywellScanner,
+      hasElectronApi,
+      hasNativeBarcodeScanner,
     ]
   );
 
@@ -477,7 +548,7 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
         {MockScanner.scannerInput}
         <GlobalStyles
           styles={
-            isScanning && hasNativeBarcodeScanner
+            isListening && hasNativeBarcodeScanner
               ? {
                   body: {
                     backgroundColor: 'transparent!important',

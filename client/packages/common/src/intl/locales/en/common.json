@@ -68,12 +68,12 @@
   "button.delete": "Delete",
   "button.delete-document": "Delete Document",
   "button.delete-lines": "Delete",
-  "button.disable-scanning": "Disable Scanning",
   "button.download": "Download",
   "button.download-pdf": "Download PDF",
   "button.edit": "Edit",
   "button.edit-linked-patient": "Edit Linked Patient",
-  "button.enable-scanning": "Enable Scanning",
+  "button.start-listening": "Start Listening",
+  "button.stop-listening": "Stop Listening",
   "button.enrolment-info": "Medical File Info",
   "button.export": "Export",
   "button.export-csv": "Export CSV",
@@ -2628,5 +2628,8 @@
   "warning.nothing-to-supply": "Nothing left to supply!",
   "warning.requested-exceeds-suggested": "Your requested quantity is higher than the suggested",
   "settings.enable-mock-barcode-scanner": "Enable manual barcode input (for testing purposes only)",
-  "button.scan-once": "Scan once"
+  "button.scan-once": "Scan once",
+  "button.scanning": "Scanning…",
+  "button.listening-for-scans": "Ready to scan…",
+  "label.listening": "Listening for scans"
 }
