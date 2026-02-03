@@ -77,7 +77,7 @@ Currently api will return "success" : false, and a message in the following scen
 - No customer retrieved from "customerFilter" input params
 - No item retrieved from "itemFilter" input params
 
-If api should fail during the attempt of inserting and confirming the Outbound Shipment, api will return "success": true, with a "message": "error message text" attempting to describe error that has occurred. example:
+If api should fail during the attempt of inserting and confirming the Outbound Shipment, api will return "success": true, with a "message": "error message text" attempting to describe error that has occurred. <b>If an error occurs at this stage, entire Outbound Shipment is rolled back.</b> example:
 
 ```json
 {
