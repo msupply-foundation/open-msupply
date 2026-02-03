@@ -12,6 +12,7 @@ import {
   StockItemSearchInput,
 } from '@openmsupply-client/system';
 import { useInbound } from '../../../api';
+import { usePurchaseOrder } from '@openmsupply-client/purchasing/src/purchase_order/api'
 
 interface InboundLineEditProps {
   item: ItemRowFragment | null;
@@ -26,8 +27,19 @@ export const InboundLineEditForm = ({
 }: InboundLineEditProps) => {
   const t = useTranslation();
   const { data: items } = useInbound.lines.items();
+  const { purchaseOrder } = useInbound.document.fields('purchaseOrder');
 
   const existingItemIds = items?.map(line => line.itemId);
+
+  const { query } = usePurchaseOrder(purchaseOrder?.id);
+  let filter = {
+    id: {
+      notEqualAll: existingItemIds,
+      ...purchaseOrder && {
+        equalAny: query.data?.lines.nodes.map(line => line.item.id) || []
+      },
+    }
+  };
 
   return (
     <>
@@ -43,7 +55,7 @@ export const InboundLineEditForm = ({
             disabled={disabled}
             currentItemId={item?.id}
             onChange={newItem => onChangeItem(newItem)}
-            filter={{ id: { notEqualAll: existingItemIds } }}
+            filter={filter}
             // A scanned-in item will only have an ID, not a full item object,
             // so this flag makes the StockItemSearchInput component update the
             // current item on initial load from the API
