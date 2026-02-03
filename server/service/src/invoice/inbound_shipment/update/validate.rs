@@ -1,10 +1,12 @@
-use crate::invoice::common::check_can_issue_in_foreign_currency;
 use crate::invoice::{
     check_invoice_exists, check_invoice_is_editable, check_invoice_status, check_invoice_type,
-    check_status_change, check_store, InvoiceRowStatusError,
+    check_status_change, check_store, common::check_can_issue_in_foreign_currency,
+    inbound_shipment::UpdateInboundShipmentStatus, InvoiceRowStatusError,
 };
 use crate::validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors};
-use repository::{InvoiceRow, InvoiceType, Name, StorageConnection};
+use repository::{
+    InvoiceLineRowRepository, InvoiceLineStatus, InvoiceRow, InvoiceType, Name, StorageConnection,
+};
 
 use super::{UpdateInboundShipment, UpdateInboundShipmentError};
 
@@ -37,6 +39,13 @@ pub fn validate(
                 InvoiceRowStatusError::CannotReverseInvoiceStatus => CannotReverseInvoiceStatus,
             },
         )?;
+
+        // If changing to Received, verify no pending lines
+        use UpdateInboundShipmentStatus::*;
+        // Do I need to worry about skipping over Received here?
+        if matches!(patch.status, Some(Received | Verified)) {
+            check_no_pending_lines(&invoice.id, connection)?;
+        }
     }
 
     // Other party check
@@ -73,4 +82,20 @@ pub fn validate(
     }
 
     Ok((invoice, Some(other_party), status_changed))
+}
+
+fn check_no_pending_lines(
+    invoice_id: &str,
+    connection: &StorageConnection,
+) -> Result<(), UpdateInboundShipmentError> {
+    let invoice_lines =
+        InvoiceLineRowRepository::new(connection).find_many_by_invoice_id(invoice_id)?;
+
+    for invoice_line in invoice_lines {
+        if invoice_line.status == Some(InvoiceLineStatus::Pending) {
+            return Err(UpdateInboundShipmentError::CannotReceiveWithPendingLines);
+        }
+    }
+
+    Ok(())
 }

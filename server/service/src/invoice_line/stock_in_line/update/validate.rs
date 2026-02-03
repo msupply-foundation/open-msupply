@@ -100,6 +100,13 @@ pub fn validate(
         }
     }
 
+    if input.status.as_ref().is_some_and(|s| s.value != line_row.status) {
+        use repository::InvoiceStatus::*;
+        if invoice.status == Received {
+            return Err(CannotChangeLineStatusOfReceivedInvoice);
+        }
+    }
+
     Ok((line, item, invoice))
 }
 

@@ -1224,6 +1224,12 @@ export type CannotIssueInForeignCurrency = UpdateErrorInterface &
     description: Scalars['String']['output'];
   };
 
+export type CannotReceiveWithPendingLines =
+  UpdateInboundShipmentErrorInterface & {
+    __typename: 'CannotReceiveWithPendingLines';
+    description: Scalars['String']['output'];
+  };
+
 export type CannotReverseInvoiceStatus = UpdateErrorInterface &
   UpdateInboundShipmentErrorInterface &
   UpdatePrescriptionErrorInterface & {

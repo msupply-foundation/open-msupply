@@ -1,5 +1,6 @@
-use crate::mutations::outbound_shipment::error::{
-    CannotChangeStatusOfInvoiceOnHold, CannotIssueInForeignCurrency,
+use crate::mutations::{
+    inbound_shipment::CannotReceiveWithPendingLines,
+    outbound_shipment::error::{CannotChangeStatusOfInvoiceOnHold, CannotIssueInForeignCurrency},
 };
 use async_graphql::*;
 
@@ -100,6 +101,7 @@ pub enum UpdateErrorInterface {
     CannotEditInvoice(CannotEditInvoice),
     CannotReverseInvoiceStatus(CannotReverseInvoiceStatus),
     CannotChangeStatusOfInvoiceOnHold(CannotChangeStatusOfInvoiceOnHold),
+    CannotReceiveWithPendingLines(CannotReceiveWithPendingLines),
     CannotIssueForeignCurrencyForInternalSuppliers(CannotIssueInForeignCurrency),
 }
 
@@ -170,6 +172,11 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         }
         ServiceError::CannotEditFinalised => {
             return Ok(UpdateErrorInterface::CannotEditInvoice(CannotEditInvoice))
+        }
+        ServiceError::CannotReceiveWithPendingLines => {
+            return Ok(UpdateErrorInterface::CannotReceiveWithPendingLines(
+                CannotReceiveWithPendingLines,
+            ))
         }
 
         ServiceError::CannotChangeStatusOfInvoiceOnHold => {

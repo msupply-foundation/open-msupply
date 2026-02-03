@@ -32,7 +32,7 @@ export const InboundLineEditForm = ({
   const existingItemIds = items?.map(line => line.itemId);
 
   const { query } = usePurchaseOrder(purchaseOrder?.id);
-  let filter = {
+  const filter = {
     id: {
       notEqualAll: existingItemIds,
       ...purchaseOrder && {

@@ -97,6 +97,7 @@ pub enum UpdateStockInLineError {
     NotAStockIn,
     NotThisStoreInvoice,
     CannotEditFinalised,
+    CannotChangeLineStatusOfReceivedInvoice,
     LocationDoesNotExist,
     ItemVariantDoesNotExist,
     ItemNotFound,

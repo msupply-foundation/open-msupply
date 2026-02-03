@@ -192,6 +192,11 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
                 CannotEditInvoice {},
             ))
         }
+        ServiceError::CannotChangeLineStatusOfReceivedInvoice => {
+            return Ok(UpdateErrorInterface::CannotEditInvoice(
+                CannotEditInvoice {},
+            ))
+        }
         ServiceError::BatchIsReserved => {
             return Ok(UpdateErrorInterface::BatchIsReserved(BatchIsReserved {}))
         }

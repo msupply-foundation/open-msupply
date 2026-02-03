@@ -120,7 +120,7 @@ export const FooterComponent = ({
       return;
     }
 
-    if (isDisabled) {
+    if (data?.status === InvoiceNodeStatus.Received || isDisabled) {
       info(t('messages.cant-change-line-status-on-received-invoice'))();
       return;
     }
