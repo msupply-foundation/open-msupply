@@ -36,6 +36,7 @@ export const useInbound = {
     save: Lines.useSaveInboundLines,
 
     zeroQuantities: Lines.useZeroInboundLinesQuantity,
+    changeStatus: Lines.useChangeStatusOfInboundLines,
   },
   utils: {
     addFromMasterList: Utils.useAddFromMasterList,

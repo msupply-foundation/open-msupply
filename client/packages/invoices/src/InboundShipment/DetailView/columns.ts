@@ -12,7 +12,7 @@ import { useMemo } from 'react';
 import { isInboundPlaceholderRow } from '../../utils';
 import { InboundLineFragment } from '../api';
 
-export const useInboundShipmentColumns = () => {
+export const useInboundShipmentColumns = (external: boolean, showLineStatus: boolean) => {
   const t = useTranslation();
   const {
     manageVaccinesInDoses,
@@ -36,7 +36,7 @@ export const useInboundShipmentColumns = () => {
           ),
       },
       {
-        accessorKey: 'comment',
+        accessorKey: 'note',
         header: t('label.comment'),
         columnType: ColumnType.Comment,
       },
@@ -79,14 +79,7 @@ export const useInboundShipmentColumns = () => {
         enableColumnFilter: true,
         enableSorting: true,
         defaultHideOnMobile: true,
-      },
-      {
-        id: 'itemUnit',
-        accessorKey: 'item.unitName',
-        header: t('label.unit-name'),
-        enableColumnFilter: true,
-        filterVariant: 'select',
-        defaultHideOnMobile: true,
+        includeColumn: !external,
       },
       {
         accessorKey: 'packSize',
@@ -129,6 +122,22 @@ export const useInboundShipmentColumns = () => {
           return row.packSize * row.numberOfPacks;
         },
         size: 120,
+        includeColumn: !external,
+      },
+      {
+        id: 'itemUnit',
+        accessorKey: 'item.unitName',
+        header: t('label.unit-name'),
+        enableColumnFilter: true,
+        filterVariant: 'select',
+        defaultHideOnMobile: true,
+      },
+      {
+        accessorKey: 'status',
+        header: t('label.status'),
+        enableColumnFilter: true,
+        filterVariant: 'select',
+        includeColumn: showLineStatus,
       },
       {
         id: 'doseQuantity',
@@ -165,6 +174,7 @@ export const useInboundShipmentColumns = () => {
           }
         },
         size: 100,
+        includeColumn: !external,
       },
       {
         id: 'total',
@@ -186,12 +196,13 @@ export const useInboundShipmentColumns = () => {
           }
         },
         size: 120,
+        includeColumn: !external,
       },
       {
         id: 'donorName',
         header: t('label.donor'),
         defaultHideOnMobile: true,
-        includeColumn: allowTrackingOfStockByDonor,
+        includeColumn: allowTrackingOfStockByDonor && !external,
         accessorFn: row => (row.donor ? row.donor.name : ''),
       },
       {
@@ -199,9 +210,11 @@ export const useInboundShipmentColumns = () => {
         header: t('label.campaign'),
         defaultHideOnMobile: true,
         accessorFn: row => row.campaign?.name ?? row.program?.name ?? '',
+        includeColumn: !external,
       },
     ];
   }, [
+    external,
     getError,
     manageVaccinesInDoses,
     manageVvmStatusForStock,

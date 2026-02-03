@@ -145,6 +145,7 @@ fn generate_line(
         id: _,
         item_id: _,
         r#type: _,
+        status,
     }: UpdateStockInLine,
     current_line: InvoiceLineRow,
     new_item_option: Option<ItemRow>,
@@ -183,6 +184,8 @@ fn generate_line(
         .unwrap_or(update_line.donor_link_id);
 
     update_line.vvm_status_id = vvm_status_id.or(update_line.vvm_status_id);
+
+    update_line.status = status.map(|s| s.value).unwrap_or(update_line.status);
 
     if let Some(item) = new_item_option {
         update_line.item_link_id = item.id;

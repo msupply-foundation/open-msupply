@@ -6,6 +6,7 @@ import { useInboundServiceLines } from './useInboundServiceLines';
 import { useLinesFromInternalOrder } from './useLinesFromInternalOrder';
 import { useSaveInboundLines } from './useSaveInboundLines';
 import { useZeroInboundLinesQuantity } from './useZeroInboundLinesQuantity';
+import { useChangeStatusOfInboundLines } from './useChangeStatusOfInboundLines';
 
 export const Lines = {
   useDeleteInboundLines,
@@ -16,4 +17,5 @@ export const Lines = {
   useSaveInboundLines,
   useZeroInboundLinesQuantity,
   useLinesFromInternalOrder,
+  useChangeStatusOfInboundLines,
 };

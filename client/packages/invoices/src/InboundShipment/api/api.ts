@@ -90,6 +90,8 @@ const inboundParsers = {
       id: patch.id,
       colour: 'colour' in patch ? patch.colour : undefined,
       comment: 'comment' in patch ? patch.comment : undefined,
+      createdDatetime:
+        'createdDatetime' in patch ? patch.createdDatetime : undefined,
       status: inboundParsers.toStatus(patch),
       onHold: 'onHold' in patch ? patch.onHold : undefined,
       otherPartyId: 'otherParty' in patch ? patch.otherParty?.id : undefined,
@@ -162,6 +164,7 @@ const inboundParsers = {
     shippedNumberOfPacks: line.shippedNumberOfPacks ?? null,
     volumePerPack: line.volumePerPack ?? null,
     shippedPackSize: line.shippedPackSize ?? null,
+    status: line.status ?? null,
   }),
   toDeleteLine: (line: { id: string }): DeleteInboundShipmentLineInput => {
     return { id: line.id };

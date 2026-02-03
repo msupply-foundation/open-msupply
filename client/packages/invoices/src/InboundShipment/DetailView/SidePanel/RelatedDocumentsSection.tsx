@@ -18,7 +18,7 @@ import { useInbound } from '../../api';
 export const RelatedDocumentsSectionComponent = () => {
   const t = useTranslation();
   const { localisedDate: d } = useFormatDateTime();
-  const { requisition } = useInbound.document.fields('requisition');
+  const { requisition, purchaseOrder } = useInbound.document.fields(['requisition', 'purchaseOrder']);
 
   const orderedFromDifferentStore = !!requisition?.createdFromRequisitionId;
   let tooltip = '';
@@ -31,16 +31,17 @@ export const RelatedDocumentsSectionComponent = () => {
       username: user?.username ?? UNDEFINED_STRING_VALUE,
     })}`;
   }
+  const showRequisition = requisition && !orderedFromDifferentStore;
 
   return (
     <DetailPanelSection title={t('heading.related-documents')}>
       <Grid flexDirection="column" gap={0.5}>
-        {!requisition || orderedFromDifferentStore ? (
+        {!showRequisition && !purchaseOrder ? (
           <PanelLabel>{t('messages.no-related-documents')}</PanelLabel>
         ) : (
           <Tooltip title={tooltip}>
             <Grid>
-              <PanelRow>
+              {showRequisition && <PanelRow>
                 <PanelLabel>{t('label.requisition')}</PanelLabel>
                 <PanelField>
                   <Link
@@ -50,7 +51,18 @@ export const RelatedDocumentsSectionComponent = () => {
                       .build()}
                   >{`#${requisition?.requisitionNumber}`}</Link>
                 </PanelField>
-              </PanelRow>
+              </PanelRow>}
+              {purchaseOrder && <PanelRow>
+                <PanelLabel>{t('label.purchase-order')}</PanelLabel>
+                <PanelField>
+                  <Link
+                    to={RouteBuilder.create(AppRoute.Replenishment)
+                      .addPart(AppRoute.PurchaseOrder)
+                      .addPart(purchaseOrder?.id ?? '')
+                      .build()}
+                  >{`#${purchaseOrder?.number}`}</Link>
+                </PanelField>
+              </PanelRow>}
             </Grid>
           </Tooltip>
         )}

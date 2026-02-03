@@ -1,13 +1,16 @@
 use crate::invoice::inbound_shipment::InsertInboundShipmentError;
+use crate::preference::{ExternalInboundShipmentLinesMustBeAuthorised, Preference};
 use repository::{
-    EqualFilter, InvoiceFilter, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineType,
-    InvoiceRepository, InvoiceStatus, PurchaseOrderLineFilter, PurchaseOrderLineRepository,
+    EqualFilter, InvoiceFilter, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineStatus,
+    InvoiceLineType, InvoiceRepository, InvoiceStatus, PurchaseOrderLineFilter,
+    PurchaseOrderLineRepository,
 };
 use repository::{InvoiceLineRow, InvoiceLineRowRepository, StorageConnection};
 use util::uuid::uuid;
 
 pub fn add_from_purchase_order(
     connection: &StorageConnection,
+    store_id: &str,
     invoice_id: String,
     purchase_order_id: Option<String>,
 ) -> Result<(), InsertInboundShipmentError> {
@@ -38,11 +41,23 @@ pub fn add_from_purchase_order(
     let invoice_line_row_repository = InvoiceLineRowRepository::new(connection);
     let invoice_line_repository = InvoiceLineRepository::new(connection);
 
+    // Set status based on authorisation config
+    let external_inbound_shipment_lines_must_be_authorised =
+        ExternalInboundShipmentLinesMustBeAuthorised
+            .load(connection, Some(store_id.to_string()))
+            .unwrap_or(false);
+
+    let status = match external_inbound_shipment_lines_must_be_authorised {
+        true => Some(InvoiceLineStatus::Pending),
+        false => None,
+    };
+
     // Create invoice lines for each purchase order line
     for purchase_order_line in purchase_order_lines {
         let item = purchase_order_line.item_row;
         let purchase_order_line = purchase_order_line.purchase_order_line_row;
 
+        // TODO: use the new view added in #10349 instead of querying invoice lines directly
         let already_shipped_lines = invoice_line_repository.query_by_filter(
             InvoiceLineFilter::new()
                 .invoice_id(EqualFilter::equal_any(
@@ -96,7 +111,7 @@ pub fn add_from_purchase_order(
             shipped_number_of_packs: Some(quantity / pack_size),
             volume_per_pack: 0.0,
             shipped_pack_size: Some(pack_size),
-            status: None, // TODO: Set status based on authorisation config
+            status: status.clone(),
         })?;
     }
 

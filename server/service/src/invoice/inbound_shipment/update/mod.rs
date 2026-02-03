@@ -1,6 +1,7 @@
 use crate::activity_log::{activity_log_entry_with_store, log_type_from_invoice_status};
 use crate::invoice_line::ShipmentTaxUpdate;
 use crate::{invoice::query::get_invoice, service_provider::ServiceContext, WithDBError};
+use chrono::NaiveDate;
 use repository::vvm_status::vvm_status_log_row::VVMStatusLogRowRepository;
 use repository::{Invoice, LocationMovementRowRepository};
 use repository::{
@@ -51,6 +52,7 @@ pub struct UpdateInboundShipment {
     pub currency_id: Option<String>,
     pub currency_rate: Option<f64>,
     pub default_donor: Option<UpdateDefaultDonor>,
+    pub created_datetime: Option<NaiveDate>,
 }
 
 type OutError = UpdateInboundShipmentError;
@@ -171,6 +173,7 @@ pub enum UpdateInboundShipmentError {
     CannotChangeStatusOfInvoiceOnHold,
     CannotIssueForeignCurrencyForInternalSuppliers,
     CannotUpdateStatusAndDonorAtTheSameTime,
+    CanOnlyChangeDateOfExternalInboundShipments,
     // Name validation
     OtherPartyDoesNotExist,
     OtherPartyNotVisible,

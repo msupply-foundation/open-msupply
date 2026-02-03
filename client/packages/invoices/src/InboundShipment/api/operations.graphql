@@ -21,6 +21,7 @@ fragment InboundLine on InvoiceLineNode {
   itemVariantId
   linkedInvoiceId
   volumePerPack
+  status
 
   donor(storeId: $storeId) {
     id
@@ -205,6 +206,12 @@ fragment Inbound on InvoiceNode {
   shippingMethod {
     id
     method
+  }
+
+  purchaseOrder {
+    id
+    number
+    reference
   }
 }
 

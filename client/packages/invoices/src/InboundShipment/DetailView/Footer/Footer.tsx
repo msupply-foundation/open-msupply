@@ -17,6 +17,8 @@ import {
   useEditModal,
   useNotification,
   usePreferences,
+  CheckIcon,
+  CloseIcon,
 } from '@openmsupply-client/common';
 import { ChangeCampaignOrProgramConfirmationModal } from '@openmsupply-client/system';
 import {
@@ -69,12 +71,14 @@ interface FooterComponentProps {
   onReturnLines: () => void;
   selectedRows: InboundLineFragment[];
   resetRowSelection: () => void;
+  showLineStatus: boolean;
 }
 
 export const FooterComponent = ({
   onReturnLines,
   selectedRows,
   resetRowSelection,
+  showLineStatus,
 }: FooterComponentProps) => {
   const t = useTranslation();
   const { navigateUpOne } = useBreadcrumbs();
@@ -92,6 +96,10 @@ export const FooterComponent = ({
     resetRowSelection
   );
   const { mutateAsync } = useInbound.lines.save();
+  const onChangeLineStatus = useInbound.lines.changeStatus(
+    selectedRows,
+    resetRowSelection,
+  );
   const isDisabled = useIsInboundDisabled();
   const isManuallyCreated = !data?.linkedShipment?.id;
 
@@ -105,7 +113,19 @@ export const FooterComponent = ({
     }
   };
 
-  const actions: Action[] = [
+  const changeLineStatus = (approve: 'approve' | 'reject') => {
+    if (!data) return;
+
+    if (!selectedRows.length) {
+      const selectLinesSnack = info(t(`messages.select-rows-to-${approve}`));
+      selectLinesSnack();
+      return;
+    }
+
+    onChangeLineStatus(approve);
+  };
+
+  let actions: Action[] = [
     {
       label: t('button.delete-lines'),
       icon: <DeleteIcon />,
@@ -130,10 +150,24 @@ export const FooterComponent = ({
       shouldShrink: false,
     },
   ];
+  if (showLineStatus) {
+    actions = actions.concat([
+      {
+        label: t('button.approve'),
+        icon: <CheckIcon />,
+        onClick: () => changeLineStatus('approve'),
+      },
+      {
+        label: t('button.reject'),
+        icon: <CloseIcon />,
+        onClick: () => changeLineStatus('reject'),
+      },
+    ]);
+  }
   const statuses = isManuallyCreated
     ? manualInboundStatuses.filter(status =>
-        invoiceStatusOptions?.includes(status)
-      )
+      invoiceStatusOptions?.includes(status)
+    )
     : inboundStatuses.filter(status => invoiceStatusOptions?.includes(status));
 
   return (
