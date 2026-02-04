@@ -5,10 +5,10 @@ use chrono::NaiveDate;
 use dataloader::DataLoader;
 use graphql_core::{
     loader::{
-        AvailableVolumeOnRequisitionLineByTypeLoader,
-        AvailableVolumeOnRequisitionLineByTypeLoaderInput, InvoiceLineForRequisitionLine,
-        ItemLoader, ItemStatsLoaderInput, ItemsStatsForItemLoader, LinkedRequisitionLineLoader,
-        ReasonOptionLoader, RequisitionAndItemId, RequisitionLineSupplyStatusLoader,
+        AvailableVolumeOnRequisitionLoader, AvailableVolumeOnRequisitionLoaderInput,
+        InvoiceLineForRequisitionLine, ItemLoader, ItemStatsLoaderInput, ItemsStatsForItemLoader,
+        LinkedRequisitionLineLoader, ReasonOptionLoader, RequisitionAndItemId,
+        RequisitionLineSupplyStatusLoader,
     },
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
@@ -310,10 +310,10 @@ impl RequisitionLineNode {
         &self,
         ctx: &Context<'_>,
     ) -> Option<AvailableVolumeAtLocationType> {
-        let loader = ctx.get_loader::<DataLoader<AvailableVolumeOnRequisitionLineByTypeLoader>>();
+        let loader = ctx.get_loader::<DataLoader<AvailableVolumeOnRequisitionLoader>>();
 
         let result_option = loader
-            .load_one(AvailableVolumeOnRequisitionLineByTypeLoaderInput::new(
+            .load_one(AvailableVolumeOnRequisitionLoaderInput::new(
                 &self.row().requisition_id,
                 &self.item_row().id,
             ))

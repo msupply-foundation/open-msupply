@@ -11,31 +11,28 @@ use std::collections::HashMap;
 
 #[derive(Clone, Debug)]
 pub struct EmptyPayload;
-pub type AvailableVolumeOnRequisitionLineByTypeLoaderInput = IdPair<EmptyPayload>;
-impl AvailableVolumeOnRequisitionLineByTypeLoaderInput {
+pub type AvailableVolumeOnRequisitionLoaderInput = IdPair<EmptyPayload>;
+impl AvailableVolumeOnRequisitionLoaderInput {
     pub fn new(requisition_id: &str, item_id: &str) -> Self {
-        AvailableVolumeOnRequisitionLineByTypeLoaderInput {
+        AvailableVolumeOnRequisitionLoaderInput {
             primary_id: requisition_id.to_string(),
             secondary_id: item_id.to_string(),
             payload: EmptyPayload {},
         }
     }
 }
-pub struct AvailableVolumeOnRequisitionLineByTypeLoader {
+pub struct AvailableVolumeOnRequisitionLoader {
     pub service_provider: Data<ServiceProvider>,
 }
 
-impl Loader<AvailableVolumeOnRequisitionLineByTypeLoaderInput>
-    for AvailableVolumeOnRequisitionLineByTypeLoader
-{
+impl Loader<AvailableVolumeOnRequisitionLoaderInput> for AvailableVolumeOnRequisitionLoader {
     type Value = (Option<LocationTypeRow>, f64, f64); // (LocationTypeRow, available_volume, item_volume_per_unit)
     type Error = async_graphql::Error;
 
     async fn load(
         &self,
-        requisition_and_item_ids: &[AvailableVolumeOnRequisitionLineByTypeLoaderInput],
-    ) -> Result<HashMap<AvailableVolumeOnRequisitionLineByTypeLoaderInput, Self::Value>, Self::Error>
-    {
+        requisition_and_item_ids: &[AvailableVolumeOnRequisitionLoaderInput],
+    ) -> Result<HashMap<AvailableVolumeOnRequisitionLoaderInput, Self::Value>, Self::Error> {
         let service_context = self.service_provider.basic_context()?;
         let connection = &service_context.connection;
 
@@ -55,7 +52,7 @@ impl Loader<AvailableVolumeOnRequisitionLineByTypeLoaderInput>
             get_requisition_available_volume_for_items(connection, requisition_id, &item_ids)?;
 
         let mut output = HashMap::<
-            AvailableVolumeOnRequisitionLineByTypeLoaderInput,
+            AvailableVolumeOnRequisitionLoaderInput,
             (Option<LocationTypeRow>, f64, f64),
         >::new();
 
@@ -64,7 +61,7 @@ impl Loader<AvailableVolumeOnRequisitionLineByTypeLoaderInput>
 
             if let Some(volume_info) = available_volumes.get(item_id) {
                 output.insert(
-                    AvailableVolumeOnRequisitionLineByTypeLoaderInput::new(requisition_id, item_id),
+                    AvailableVolumeOnRequisitionLoaderInput::new(requisition_id, item_id),
                     (
                         volume_info.location_type.clone(),
                         volume_info.available_volume,
@@ -73,7 +70,7 @@ impl Loader<AvailableVolumeOnRequisitionLineByTypeLoaderInput>
                 );
             } else {
                 output.insert(
-                    AvailableVolumeOnRequisitionLineByTypeLoaderInput::new(requisition_id, item_id),
+                    AvailableVolumeOnRequisitionLoaderInput::new(requisition_id, item_id),
                     (None, 0.0, 0.0),
                 );
             }
