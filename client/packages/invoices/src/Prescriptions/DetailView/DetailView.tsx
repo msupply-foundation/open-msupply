@@ -60,7 +60,7 @@ export const PrescriptionDetailView = () => {
           .build()
       );
     },
-    [navigate, data?.id]
+    [data]
   );
   const onAddItem = () => {
     navigate(
