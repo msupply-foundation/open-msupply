@@ -25,7 +25,6 @@ export const AddFromScannerButtonComponent = ({
   const {
     isConnected,
     isEnabled,
-    isScanning,
     isListening,
     scan,
     stopScan,
@@ -61,7 +60,7 @@ export const AddFromScannerButtonComponent = ({
 
   const handleClick = async () => {
     buttonRef.current?.blur();
-    if (isScanning || isListening) {
+    if (isListening) {
       stopScan();
     } else {
       if (supportsContinuousScanning && !isListening) {
@@ -108,11 +107,9 @@ export const AddFromScannerButtonComponent = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [supportsContinuousScanning]);
 
-  const label = isScanning
-    ? `${t('button.scanning')}  🟢`
-    : isListening
-      ? `${t('button.listening-for-scans')}  🟢`
-      : `${t('button.scan')}`;
+  const label = isListening
+    ? `${t('button.listening-for-scans')}  🟢`
+    : `${t('button.scan')}`;
   useRegisterActions(
     [
       {
