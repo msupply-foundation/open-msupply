@@ -53,8 +53,7 @@ export type ScanCallback = (result: ScanResult) => void;
 interface BarcodeScannerControl {
   isEnabled: boolean;
   isConnected: boolean;
-  isScanning: boolean;
-  isListening?: boolean;
+  isListening: boolean;
   scan: (formats?: BarcodeFormat[]) => Promise<ScanResult>;
   startListening: (
     callback: (result: ScanResult, err?: unknown) => void
@@ -137,7 +136,8 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
   children,
 }) => {
   const t = useTranslation();
-  const [isScanning, setIsScanning] = useState(false);
+  // When we use the camera barcode scanner, we need to hide the app in the background
+  const [hideApp, setHideApp] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [hasHoneywellScanner, setHasHoneywellScanner] =
     useState<boolean>(false);
@@ -161,15 +161,10 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
 
   const MockScanner = useMockScanner(mockScannerEnabled);
 
-  const hasNativeBarcodeScanner =
+  const hasCameraBarcodeScanner =
     Capacitor.isPluginAvailable('BarcodeScanner') &&
     Capacitor.isNativePlatform();
   const hasElectronApi = !!electronNativeAPI;
-
-  console.log(
-    'HoneyWellScanner:',
-    Capacitor.isPluginAvailable('HoneywellScanner')
-  );
 
   const hasHoneywellScannerPlugin =
     Capacitor.isPluginAvailable('HoneywellScanner') &&
@@ -179,7 +174,6 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
     if (hasHoneywellScannerPlugin) {
       HoneywellScanner.available()
         .then(({ available }) => {
-          console.log('Honeywell scanner available:', available);
           setHasHoneywellScanner(available);
         })
         .catch(err => {
@@ -192,14 +186,14 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
   const availableScanners: AvailableScannerType[] = useMemo(() => {
     const scanners: AvailableScannerType[] = [];
     if (mockScannerEnabled) scanners.push(AvailableScannerType.Mock);
-    if (hasNativeBarcodeScanner && !hasHoneywellScanner)
+    if (hasCameraBarcodeScanner && !hasHoneywellScanner)
       scanners.push(AvailableScannerType.Camera); // Camera scanner not available if Honeywell is present
     if (hasElectronApi) scanners.push(AvailableScannerType.ElectronUSB);
     if (hasHoneywellScanner) scanners.push(AvailableScannerType.Honeywell);
     return scanners;
   }, [
     mockScannerEnabled,
-    hasNativeBarcodeScanner,
+    hasCameraBarcodeScanner,
     hasElectronApi,
     hasHoneywellScanner,
   ]);
@@ -265,7 +259,7 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
           const barcode = await Promise.race([timeoutPromise, barcodePromise]);
           return barcode;
 
-        case hasNativeBarcodeScanner:
+        case hasCameraBarcodeScanner:
           const installTimeoutPromise = new Promise<undefined>((_, reject) =>
             setTimeout(reject, INSTALL_TIMEOUT_IN_MS, 'Install timed out')
           );
@@ -280,10 +274,13 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
             );
           }
 
+          // Hide the app to show camera view
+          setHideApp(true);
           const { barcodes } = await BarcodeScannerPlugin.scan({
             autoZoom: true,
             formats,
           });
+          setHideApp(false);
 
           if (barcodes && barcodes.length > 0 && barcodes[0]) {
             return barcodes[0].rawValue;
@@ -297,13 +294,13 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
       MockScanner,
       hasElectronApi,
       electronNativeAPI,
-      hasNativeBarcodeScanner,
+      hasCameraBarcodeScanner,
       t,
     ]
   );
 
   const stopScan = useCallback(async () => {
-    setIsScanning(false);
+    setHideApp(false);
     setIsListening(false);
     callbackRef.current = null;
     if (mockScannerEnabled) {
@@ -314,7 +311,7 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
       await electronNativeAPI.stopBarcodeScan();
     }
 
-    if (hasNativeBarcodeScanner) {
+    if (hasCameraBarcodeScanner) {
       await BarcodeScannerPlugin.removeAllListeners();
       await BarcodeScannerPlugin.stopScan();
     }
@@ -331,13 +328,12 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
     MockScanner,
     hasElectronApi,
     electronNativeAPI,
-    hasNativeBarcodeScanner,
+    hasCameraBarcodeScanner,
     hasHoneywellScanner,
   ]);
 
   const scan = useCallback(
     async (formats?: BarcodeFormat[]) => {
-      setIsScanning(true);
       let result: ScanResult = {};
 
       try {
@@ -351,7 +347,7 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
         }
       } finally {
         await stopScan();
-        setIsScanning(false);
+        setHideApp(false);
       }
 
       return result;
@@ -374,16 +370,19 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
         try {
           setIsListening(true);
 
-          // Claim the scanner first
-          await HoneywellScanner.claim();
-
-          // Set up listener
-          await HoneywellScanner.listen(data => {
-            if ('barcode' in data) {
+          // Set up listener (automatically claims the scanner)
+          await HoneywellScanner.listen({}, (data, err) => {
+            if (err) {
+              console.error('Honeywell scanning error:', err);
+              // I think we can ignore errors here for now as they seem to happen regularly
+              //              error(t('error.unable-to-read-barcode'))();
+              return;
+            }
+            if (data && 'barcode' in data) {
               if (callbackRef.current) {
                 callbackRef.current(parseResult(data.barcode));
               }
-            } else if ('error' in data) {
+            } else if (data && 'error' in data) {
               console.error('Honeywell scanning error:', data.error);
               setIsListening(false);
               error(t('error.unable-to-read-barcode'))();
@@ -409,11 +408,12 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
           });
         } catch (e) {
           setIsListening(false);
+          console.error('Error starting Electron scanner listening:', e);
           throw e;
         }
       }
 
-      if (hasNativeBarcodeScanner) {
+      if (hasCameraBarcodeScanner) {
         // Don't start camera scanning on listening, wait for explicit scan() call
       }
 
@@ -434,7 +434,7 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
       t,
       hasElectronApi,
       electronNativeAPI,
-      hasNativeBarcodeScanner,
+      hasCameraBarcodeScanner,
       mockScannerEnabled,
       MockScanner,
     ]
@@ -467,7 +467,6 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
         mockScannerEnabled ||
         !!scanner?.connected ||
         Capacitor.isNativePlatform(),
-      isScanning,
       isListening,
       setScanner,
       scan,
@@ -481,7 +480,7 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
       supportsContinuousScanning:
         hasHoneywellScanner ||
         hasElectronApi ||
-        hasNativeBarcodeScanner ||
+        hasCameraBarcodeScanner ||
         mockScannerEnabled,
     }),
     [
@@ -495,10 +494,9 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
       localScannerType,
       scanner,
       isListening,
-      isScanning,
       hasHoneywellScanner,
       hasElectronApi,
-      hasNativeBarcodeScanner,
+      hasCameraBarcodeScanner,
     ]
   );
 
@@ -508,7 +506,7 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
         {MockScanner.scannerInput}
         <GlobalStyles
           styles={
-            isListening && hasNativeBarcodeScanner
+            hideApp
               ? {
                   body: {
                     backgroundColor: 'transparent!important',
