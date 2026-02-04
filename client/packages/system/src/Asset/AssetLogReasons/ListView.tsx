@@ -8,6 +8,7 @@ import {
   MaterialTable,
   ColumnDef,
   useNonPaginatedMaterialTable,
+  CheckCell,
 } from '@openmsupply-client/common';
 import { AssetLogReasonFragment, useAssetLogReasonList } from '../api';
 import { getStatusOptions, parseStatus } from '../utils';
@@ -17,7 +18,9 @@ import { Footer } from './Footer';
 
 export const AssetLogReasonsListView: FC = () => {
   const t = useTranslation();
-  const { queryParams: { filterBy } } = useUrlQueryParams({
+  const {
+    queryParams: { filterBy },
+  } = useUrlQueryParams({
     initialSort: { key: 'reason', dir: 'asc' },
     filters: [
       { key: 'reason' },
@@ -44,24 +47,32 @@ export const AssetLogReasonsListView: FC = () => {
         accessorKey: 'reason',
         header: t('label.reason'),
       },
+      {
+        accessorKey: 'commentsRequired',
+        description: t('description.comments-required'),
+        header: t('label.comments-required'),
+        Cell: CheckCell,
+        pin: 'right',
+      },
     ],
     []
   );
 
-  const { table, selectedRows } = useNonPaginatedMaterialTable<AssetLogReasonFragment>({
-    tableId: 'asset-log-reasons-list',
-    data: data?.nodes,
-    manualFiltering: true,
-    columns,
-    isLoading,
-    isError,
-    noDataElement: (
-      <NothingHere
-        body={t('error.no-asset-log-reasons')}
-        onCreate={() => onOpen()}
-      />
-    ),
-  });
+  const { table, selectedRows } =
+    useNonPaginatedMaterialTable<AssetLogReasonFragment>({
+      tableId: 'asset-log-reasons-list',
+      data: data?.nodes,
+      manualFiltering: true,
+      columns,
+      isLoading,
+      isError,
+      noDataElement: (
+        <NothingHere
+          body={t('error.no-asset-log-reasons')}
+          onCreate={() => onOpen()}
+        />
+      ),
+    });
 
   const { isOpen, entity, onClose, onOpen } =
     useEditModal<InsertAssetLogReasonInput>();
@@ -77,7 +88,10 @@ export const AssetLogReasonsListView: FC = () => {
       )}
       <AppBarButtons onCreate={() => onOpen()} />
       <MaterialTable table={table} />
-      <Footer selectedRows={selectedRows} resetRowSelection={table.resetRowSelection} />
+      <Footer
+        selectedRows={selectedRows}
+        resetRowSelection={table.resetRowSelection}
+      />
     </>
   );
 };

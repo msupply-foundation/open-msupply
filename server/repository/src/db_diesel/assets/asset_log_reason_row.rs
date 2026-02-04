@@ -19,6 +19,7 @@ table! {
         asset_log_status -> crate::db_diesel::assets::asset_log_row::AssetLogStatusMapping,
         reason -> Text,
         deleted_datetime -> Nullable<Timestamp>,
+        comments_required -> Bool,
     }
 }
 
@@ -31,6 +32,7 @@ pub struct AssetLogReasonRow {
     pub asset_log_status: AssetLogStatus,
     pub reason: String,
     pub deleted_datetime: Option<NaiveDateTime>,
+    pub comments_required: bool,
 }
 
 pub struct AssetLogReasonRowRepository<'a> {

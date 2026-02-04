@@ -62,6 +62,16 @@ export const useFormatNumber = () => {
       });
       return intl.format(newVal ?? 0);
     },
+    roundUpToWholeNumber: (value?: number): string => {
+      if (value === undefined || value === null || typeof value !== 'number')
+        return '';
+
+      const newVal = Math.ceil(value);
+      const intl = intlNumberFormat(currentLanguage, {
+        maximumFractionDigits: 0,
+      });
+      return intl.format(newVal ?? 0);
+    },
     parse: (numberString: string, decimalChar: string = decimal) => {
       const negative = numberString.startsWith('-') ? -1 : 1;
 

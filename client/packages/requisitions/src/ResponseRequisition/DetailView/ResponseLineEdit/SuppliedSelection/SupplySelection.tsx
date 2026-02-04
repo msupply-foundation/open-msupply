@@ -136,11 +136,13 @@ export const SupplySelection = ({
           />
           {displayVaccinesInDoses && !!value && (
             <DosesCaption
-              value={value}
-              representation={representation}
+              value={
+                representation === Representation.PACKS
+                  ? value * (defaultPackSize ?? 1)
+                  : value
+              }
               dosesPerUnit={dosesPerUnit}
               displayVaccinesInDoses={displayVaccinesInDoses}
-              defaultPackSize={defaultPackSize}
             />
           )}
         </Box>
