@@ -20,9 +20,14 @@ type Graphql = {
   output: IssueStockEndpointResponse;
 };
 
-const customerQuery = (variables: NamesQueryVariables): { result?: NamesQuery; customerError?: Graphql['output'] } => {
+const customerQuery = (
+  variables: NamesQueryVariables
+): { result?: NamesQuery; customerError?: Graphql['output'] } => {
   try {
-    const result = use_graphql({ query: namesQueryText, variables }) as NamesQuery;
+    const result = use_graphql({
+      query: namesQueryText,
+      variables,
+    }) as NamesQuery;
     if (!result || result.names.nodes.length < 1) {
       return {
         customerError: {
@@ -42,9 +47,14 @@ const customerQuery = (variables: NamesQueryVariables): { result?: NamesQuery; c
   }
 };
 
-const itemsQuery = (variables: ItemsQueryVariables): { result?: ItemsQuery; itemsError?: Graphql['output'] } => {
+const itemsQuery = (
+  variables: ItemsQueryVariables
+): { result?: ItemsQuery; itemsError?: Graphql['output'] } => {
   try {
-    const result = use_graphql({ query: itemsQueryText, variables }) as ItemsQuery;
+    const result = use_graphql({
+      query: itemsQueryText,
+      variables,
+    }) as ItemsQuery;
     if (!result || result.items.totalCount < 1) {
       return {
         itemsError: {
@@ -73,7 +83,10 @@ const batchOutboundShipmentQuery = (
   }) as BatchOutboundShipmentMutation;
 };
 
-const batchDeleteOutboundShipmentQuery = (storeId: string, shipmentId: string): undefined => {
+const batchDeleteOutboundShipmentQuery = (
+  storeId: string,
+  shipmentId: string
+): undefined => {
   const variables: BatchOutboundShipmentMutationVariables = {
     storeId: storeId,
     input: {
@@ -93,7 +106,8 @@ const batchDeleteOutboundShipmentQuery = (storeId: string, shipmentId: string): 
 
 const plugins: BackendPlugins = {
   graphql_query: ({ input }): Graphql['output'] => {
-    const inp = input as Graphql['input'];
+    log(input);
+    const inp = JSON.parse(input as string) as Graphql['input'];
 
     const { stores: activeStores } = get_active_stores_on_site();
     if (!activeStores || activeStores.length < 1) {
@@ -113,6 +127,8 @@ const plugins: BackendPlugins = {
       storeId: issuingStoreId,
       filter: inp.customerFilter,
     });
+    log(inp);
+    log(customerQueryResult);
 
     if (customerError) return customerError;
     if (!customerQueryResult) {
@@ -123,7 +139,6 @@ const plugins: BackendPlugins = {
     }
 
     const customer = customerQueryResult.names.nodes[0];
-    const customerId = customerQueryResult.names.nodes[0].id;
 
     const { result: itemsQueryResult, itemsError } = itemsQuery({
       storeId: issuingStoreId,
@@ -159,7 +174,7 @@ const plugins: BackendPlugins = {
         insertOutboundShipments: [
           {
             id: shipmentId,
-            otherPartyId: customerId,
+            otherPartyId: customer.id,
           },
         ],
       },
@@ -172,21 +187,28 @@ const plugins: BackendPlugins = {
 
       if (
         !insertShipmentResult.batchOutboundShipment.insertOutboundShipments ||
-        insertShipmentResult.batchOutboundShipment.insertOutboundShipments.length < 1
+        insertShipmentResult.batchOutboundShipment.insertOutboundShipments
+          .length < 1
       ) {
-        errText += 'Insert order failed. ' + errText + ' error: no insert lines returned';
+        errText +=
+          'Insert order failed. ' +
+          errText +
+          ' error: no insert lines returned';
         throw Error(errText);
       }
 
       if (
-        insertShipmentResult.batchOutboundShipment.insertOutboundShipments[0].response.__typename ===
-        'InsertOutboundShipmentError'
+        insertShipmentResult.batchOutboundShipment.insertOutboundShipments[0]
+          .response.__typename === 'InsertOutboundShipmentError'
       ) {
         errText += ` error: ${insertShipmentResult.batchOutboundShipment.insertOutboundShipments[0].response.error.description}`;
         throw Error(errText);
       }
 
-      if (insertShipmentResult.batchOutboundShipment.insertOutboundShipments[0].response.__typename === 'NodeError') {
+      if (
+        insertShipmentResult.batchOutboundShipment.insertOutboundShipments[0]
+          .response.__typename === 'NodeError'
+      ) {
         errText += ` error: ${insertShipmentResult.batchOutboundShipment.insertOutboundShipments[0].response.error.description}`;
         throw Error(errText);
       }
@@ -219,15 +241,18 @@ const plugins: BackendPlugins = {
       errText = 'Insert line failed. ' + errText;
 
       if (
-        !insertLineResult.batchOutboundShipment.insertOutboundShipmentUnallocatedLines ||
-        insertLineResult.batchOutboundShipment.insertOutboundShipmentUnallocatedLines.length < 1
+        !insertLineResult.batchOutboundShipment
+          .insertOutboundShipmentUnallocatedLines ||
+        insertLineResult.batchOutboundShipment
+          .insertOutboundShipmentUnallocatedLines.length < 1
       ) {
         errText += ` error: no lines returned in response`;
         throw Error(errText);
       }
 
       if (
-        insertLineResult.batchOutboundShipment.insertOutboundShipmentUnallocatedLines[0].response.__typename ===
+        insertLineResult.batchOutboundShipment
+          .insertOutboundShipmentUnallocatedLines[0].response.__typename ===
         'InsertOutboundShipmentUnallocatedLineError'
       ) {
         errText += ` error: ${insertLineResult.batchOutboundShipment.insertOutboundShipmentUnallocatedLines[0].response.error.description}`;
@@ -244,27 +269,33 @@ const plugins: BackendPlugins = {
     // Allocate the outbound shipment lines
 
     try {
-      const allocateOutboundShipmentInput: BatchOutboundShipmentMutationVariables = {
-        storeId: issuingStoreId,
-        input: {
-          allocatedOutboundShipmentUnallocatedLines: [shipmentLineId],
-        },
-      };
+      const allocateOutboundShipmentInput: BatchOutboundShipmentMutationVariables =
+        {
+          storeId: issuingStoreId,
+          input: {
+            allocatedOutboundShipmentUnallocatedLines: [shipmentLineId],
+          },
+        };
 
-      const allocateLineResult = batchOutboundShipmentQuery(allocateOutboundShipmentInput);
+      const allocateLineResult = batchOutboundShipmentQuery(
+        allocateOutboundShipmentInput
+      );
 
       errText = 'Failed to allocate line. ' + errText;
 
       if (
-        !allocateLineResult.batchOutboundShipment.allocateOutboundShipmentUnallocatedLines ||
-        allocateLineResult.batchOutboundShipment.allocateOutboundShipmentUnallocatedLines.length < 1
+        !allocateLineResult.batchOutboundShipment
+          .allocateOutboundShipmentUnallocatedLines ||
+        allocateLineResult.batchOutboundShipment
+          .allocateOutboundShipmentUnallocatedLines.length < 1
       ) {
         errText += ` error: no lines returned in response`;
         throw Error(errText);
       }
 
       if (
-        allocateLineResult.batchOutboundShipment.allocateOutboundShipmentUnallocatedLines[0].response.__typename ===
+        allocateLineResult.batchOutboundShipment
+          .allocateOutboundShipmentUnallocatedLines[0].response.__typename ===
         'AllocateOutboundShipmentUnallocatedLineError'
       ) {
         errText += ` error: ${allocateLineResult.batchOutboundShipment.allocateOutboundShipmentUnallocatedLines[0].response.error.description}`;
@@ -280,40 +311,47 @@ const plugins: BackendPlugins = {
 
     // Update to 'shipped'
     try {
-      const updateOutboundShipmentInput: BatchOutboundShipmentMutationVariables = {
-        storeId: issuingStoreId,
-        input: {
-          updateOutboundShipments: [
-            {
-              id: shipmentId,
-              status: UpdateOutboundShipmentStatusInput.Shipped,
-            },
-          ],
-        },
-      };
+      const updateOutboundShipmentInput: BatchOutboundShipmentMutationVariables =
+        {
+          storeId: issuingStoreId,
+          input: {
+            updateOutboundShipments: [
+              {
+                id: shipmentId,
+                status: UpdateOutboundShipmentStatusInput.Shipped,
+              },
+            ],
+          },
+        };
 
-      const updateShipmentResult = batchOutboundShipmentQuery(updateOutboundShipmentInput);
+      const updateShipmentResult = batchOutboundShipmentQuery(
+        updateOutboundShipmentInput
+      );
 
       errText = 'Failed to update order status. ' + errText;
 
       if (
         !updateShipmentResult.batchOutboundShipment.updateOutboundShipments ||
-        updateShipmentResult.batchOutboundShipment.updateOutboundShipments.length < 1
+        updateShipmentResult.batchOutboundShipment.updateOutboundShipments
+          .length < 1
       ) {
         errText += ' error: no lines returned in response';
         throw Error(errText);
       }
 
       if (
-        updateShipmentResult.batchOutboundShipment.updateOutboundShipments[0].response.__typename ===
-        'UpdateOutboundShipmentError'
+        updateShipmentResult.batchOutboundShipment.updateOutboundShipments[0]
+          .response.__typename === 'UpdateOutboundShipmentError'
       ) {
         batchDeleteOutboundShipmentQuery(issuingStoreId, shipmentId);
         errText += ` error: ${updateShipmentResult.batchOutboundShipment.updateOutboundShipments[0].response.error.description}`;
         throw Error(errText);
       }
 
-      if (updateShipmentResult.batchOutboundShipment.updateOutboundShipments[0].response.__typename === 'NodeError') {
+      if (
+        updateShipmentResult.batchOutboundShipment.updateOutboundShipments[0]
+          .response.__typename === 'NodeError'
+      ) {
         batchDeleteOutboundShipmentQuery(issuingStoreId, shipmentId);
         errText += ` error: ${updateShipmentResult.batchOutboundShipment.updateOutboundShipments[0].response.error.description}`;
         throw Error(errText);

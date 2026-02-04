@@ -513,6 +513,7 @@ export type AssetLogReasonMutationsInsertAssetLogReasonArgs = {
 export type AssetLogReasonNode = {
   __typename?: 'AssetLogReasonNode';
   assetLogStatus: AssetLogStatusNodeType;
+  commentsRequired: Scalars['Boolean']['output'];
   id: Scalars['String']['output'];
   reason: Scalars['String']['output'];
 };
@@ -3011,6 +3012,7 @@ export type InsertAssetLogReasonErrorInterface = {
 
 export type InsertAssetLogReasonInput = {
   assetLogStatus: AssetLogStatusNodeType;
+  commentsRequired: Scalars['Boolean']['input'];
   id: Scalars['String']['input'];
   reason: Scalars['String']['input'];
 };
@@ -4462,6 +4464,7 @@ export type ItemFilterInput = {
   name?: InputMaybe<StringFilterInput>;
   productsAtRiskOfBeingOutOfStock?: InputMaybe<Scalars['Boolean']['input']>;
   type?: InputMaybe<EqualFilterItemTypeInput>;
+  universalCode?: InputMaybe<StringFilterInput>;
   withRecentConsumption?: InputMaybe<Scalars['Boolean']['input']>;
 };
 
@@ -4529,6 +4532,7 @@ export type ItemNode = {
   strength?: Maybe<Scalars['String']['output']>;
   type: ItemNodeType;
   unitName?: Maybe<Scalars['String']['output']>;
+  universalCode: Scalars['String']['output'];
   userField4: Scalars['Boolean']['output'];
   variants: Array<ItemVariantNode>;
   venCategory: VenCategoryType;
