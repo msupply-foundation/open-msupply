@@ -65,7 +65,6 @@ export const AddFromScannerButtonComponent = ({
       stopScan();
     } else {
       if (supportsContinuousScanning && !isListening) {
-        console.log('Starting continuous scan listening');
         // Auto-start continuous scanning is available, start listening and wait for a scan
         startListening(async (result, err) => {
           if (err) {
@@ -95,21 +94,16 @@ export const AddFromScannerButtonComponent = ({
 
   // Auto-start scanning for continuous scanning when component loads
   useEffect(() => {
-    console.log(
-      'useEffect supportsContinuousScanning',
-      supportsContinuousScanning
-    );
-    // if (!isListening && supportsContinuousScanning) {
-    //   console.log('Starting continuous scan listening');
-    //   startListening(async (result, err) => {
-    //     if (err) {
-    //       error(t('messages.scanning-error', { error: err }))();
-    //       return;
-    //     }
+    if (!isListening && supportsContinuousScanning) {
+      startListening(async (result, err) => {
+        if (err) {
+          error(t('messages.scanning-error', { error: err }))();
+          return;
+        }
 
-    //     await handleScanResult(result);
-    //   });
-    // }
+        await handleScanResult(result);
+      });
+    }
     // only need to respond to changes in supportsContinuousScanning
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [supportsContinuousScanning]);
