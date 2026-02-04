@@ -221,7 +221,7 @@ const useAddFromMasterList = () => {
 };
 
 // Filters by item code or name
-const useFilteredLines = (data: PurchaseOrderFragment | undefined | void) => {
+const useFilteredLines = (data: PurchaseOrderFragment | undefined) => {
   const { urlQuery, updateQuery } = useUrlQuery({
     skipParse: ['codeOrName'],
   });
@@ -239,7 +239,7 @@ const useFilteredLines = (data: PurchaseOrderFragment | undefined | void) => {
 
     const lines = data.lines.nodes || [];
 
-    return [...lines].filter(line => {
+    return lines.filter(line => {
       if (!itemFilter) return true;
       const {
         item: { code, name },
