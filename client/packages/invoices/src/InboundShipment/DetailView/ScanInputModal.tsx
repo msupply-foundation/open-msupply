@@ -1,11 +1,7 @@
 import {
-  BasicModal,
   DialogButton,
   InputWithLabelRow,
-  TextField,
-  TextInput,
   Typography,
-  TextWithLabelRow,
   useTranslation,
   BasicTextInput,
   NumericTextInput,
@@ -17,7 +13,7 @@ import {
   LocaleKey,
 } from '@openmsupply-client/common';
 import { FnUtils, ScanResult, useBarcodeScannerContext } from '@common/utils';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useOutbound } from '../../OutboundShipment/api';
 import {
   BarcodeNode,
@@ -30,7 +26,6 @@ import {
 } from '@openmsupply-client/system';
 import { useDraftInboundLines } from '../api';
 import { DraftInboundLine } from '../../types';
-import { set } from 'lodash';
 
 interface Message {
   type: 'error' | 'warning' | 'info';
@@ -52,6 +47,7 @@ interface FormDraftState {
   isNewLine: boolean;
   newGtin?: string;
 
+  // The raw barcode string
   barcodeContent: string;
 }
 
@@ -177,7 +173,10 @@ export const ScanInputModal = ({ lines, invoiceId }: ScanInputModalProps) => {
               }
               if (draftState.item) {
                 updatedLine.item = draftState.item;
-              } else updatedLine.item = { id: barcodeData?.itemId || '' };
+              } else
+                updatedLine.item = {
+                  id: barcodeData?.itemId || '',
+                } as ItemStockOnHandFragment;
               console.log('Existing line:', existingLine);
 
               await saveSingleLine(updatedLine);
