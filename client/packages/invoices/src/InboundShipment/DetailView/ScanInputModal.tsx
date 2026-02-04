@@ -146,7 +146,7 @@ export const ScanInputModal = ({ lines, invoiceId }: ScanInputModalProps) => {
 
   return (
     <Modal
-      title="Scan product"
+      title={t('heading.scan-product')}
       width={500}
       disableEnforceFocus // Prevents input block in Mock barcode scanner element
       okButton={
@@ -220,11 +220,11 @@ export const ScanInputModal = ({ lines, invoiceId }: ScanInputModalProps) => {
         gap={1}
       >
         <Typography>
-          <strong>Barcode:</strong> {draftState.barcodeContent}
+          <strong>{t('label.barcode')}:</strong> {draftState.barcodeContent}
         </Typography>
         <Alert severity={message.type}>{message.text}</Alert>
         <InputWithLabelRow
-          label="Item"
+          label={t('label.item')}
           Input={
             <StockItemSearchInput
               autoFocus={!barcodeData}
@@ -313,23 +313,25 @@ const getMessage = (
   if (!barcodeData && !draftState.newGtin && !draftState.item)
     return {
       type: 'error',
-      text: 'Unknown barcode, and does not contain a valid GTIN. This barcode will not be used for future scans. You must manually select an item.',
+      text: t('messages.unknown-barcode-no-gtin'),
     };
 
   if (!barcodeData && !!draftState.newGtin && !draftState.item)
     return {
       type: 'warning',
-      text: 'Unknown GTIN or barcode. Select an item to associate with this GTIN, which will be saved for future scans.',
+      text: t('messages.unknown-gtin'),
     };
 
   if (!existingLine)
     return {
       type: 'warning',
-      text: 'Batch not found in existing lines. A new line will be created.',
+      text: t('messages.batch-not-found'),
     };
 
   return {
     type: 'info',
-    text: `Batch already exists with a quantity of ${existingLine.numberOfPacks} units. The new quantity will be added to this line.`,
+    text: t('messages.batch-already-exists', {
+      numberOfPacks: existingLine.numberOfPacks,
+    }),
   };
 };
