@@ -221,7 +221,7 @@ export const StockListView = () => {
     columns: mrtColumns,
     data: data?.nodes,
     totalCount: data?.totalCount ?? 0,
-    initialSort: { key: 'expiryDate', dir: 'asc' },
+    initialSort: { key: 'name', dir: 'desc' },
     enableRowSelection: false,
     noDataElement: (
       <NothingHere

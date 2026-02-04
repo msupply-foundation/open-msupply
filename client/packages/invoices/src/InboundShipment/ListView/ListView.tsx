@@ -130,7 +130,7 @@ export const InboundListView = () => {
         defaultHideOnMobile: true,
       },
     ],
-    [onUpdate, statuses, t]
+    [t]
   );
 
   const { table, selectedRows } = usePaginatedMaterialTable<InboundRowFragment>(

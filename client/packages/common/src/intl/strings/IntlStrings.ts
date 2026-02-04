@@ -32,7 +32,7 @@ export const useTranslation = (
         ? t(key, options)
         : String(defaultValue || options?.defaultValue || key || '');
     },
-    [i18n, t]
+    [t]
   );
 };
 
