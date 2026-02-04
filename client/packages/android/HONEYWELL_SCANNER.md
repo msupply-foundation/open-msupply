@@ -18,9 +18,9 @@ This is a Capacitor plugin that interfaces directly with the Honeywell AIDC SDK 
 
 - Automatic initialization and configuration on plugin load
 - Support for multiple barcode symbologies (Code 128, GS1-128, QR Code, Data Matrix, etc.)
-- Software trigger control (start/stop scanning)
-- Scanner lifecycle management (claim/release)
 - Event-based barcode scanning with callbacks
+- Automatic scanner claiming when listener is set up
+- Scanner lifecycle management (claim/release)
 - Automatic scanner cleanup on app pause/resume/destroy
 
 ### JAR Library
@@ -53,7 +53,7 @@ This makes it available to the Capacitor bridge under the name `HoneywellScanner
 import { useHoneywellScanner } from '@common/hooks';
 
 function MyComponent() {
-  const { startScan, stopScan, isAvailable } = useHoneywellScanner({
+  const { release, checkAvailable, isAvailable } = useHoneywellScanner({
     onScan: (barcode) => {
       console.log('Scanned:', barcode);
     },
@@ -67,10 +67,15 @@ function MyComponent() {
     return <div>Scanner not available on this device</div>;
   }
 
+  const handleCheckAvailable = async () => {
+    const available = await checkAvailable();
+    console.log('Scanner available:', available);
+  };
+
   return (
     <div>
-      <button onClick={startScan}>Start Scan</button>
-      <button onClick={stopScan}>Stop Scan</button>
+      <button onClick={handleCheckAvailable}>Check Available</button>
+      <button onClick={release}>Release Scanner</button>
     </div>
   );
 }
@@ -81,23 +86,19 @@ function MyComponent() {
 ```typescript
 import { HoneywellScanner } from '@common/hooks';
 
-// Start scanning
-await HoneywellScanner.softwareTriggerStart();
-
-// Stop scanning
-await HoneywellScanner.softwareTriggerStop();
-
-// Listen for scan events
-await HoneywellScanner.listen(data => {
-  if ('barcode' in data) {
+// Listen for scan events (automatically claims the scanner)
+await HoneywellScanner.listen({}, (data, error) => {
+  if (error) {
+    console.error('Error:', error);
+    return;
+  }
+  
+  if (data && 'barcode' in data) {
     console.log('Scanned:', data.barcode);
-  } else if ('error' in data) {
+  } else if (data && 'error' in data) {
     console.error('Error:', data.error);
   }
 });
-
-// Claim the scanner (useful after resume)
-await HoneywellScanner.claim();
 
 // Release the scanner (useful before pause)
 await HoneywellScanner.release();
@@ -110,28 +111,18 @@ const { available } = await HoneywellScanner.available();
 
 ### Plugin Methods
 
-#### `softwareTriggerStart(): Promise<void>`
+#### `listen(options, callback): Promise<string>`
 
-Activates the scanner to begin reading barcodes.
+Sets up a callback to receive scan events and automatically claims exclusive access to the scanner. The callback receives:
 
-#### `softwareTriggerStop(): Promise<void>`
+- First parameter: `{ barcode: string }` on successful scan, `{ error: string }` on scan failure, or `null`
+- Second parameter: error object if an error occurred
 
-Deactivates the scanner.
-
-#### `listen(callback): Promise<void>`
-
-Sets up a callback to receive scan events. The callback receives either:
-
-- `{ barcode: string }` on successful scan
-- `{ error: string }` on scan failure
-
-#### `claim(): Promise<void>`
-
-Claims exclusive access to the scanner. Called automatically on plugin load and app resume.
+Called automatically when using the `useHoneywellScanner` hook with `enabled: true`.
 
 #### `release(): Promise<void>`
 
-Releases the scanner. Called automatically on app pause.
+Releases the scanner. Called automatically on app pause. Can be called manually if you need to release the scanner temporarily.
 
 #### `available(): Promise<{ available: boolean }>`
 
@@ -143,14 +134,13 @@ The `useHoneywellScanner` hook returns:
 
 ```typescript
 {
-  startScan: () => Promise<void>; // Start scanning
-  stopScan: () => Promise<void>; // Stop scanning
-  claim: () => Promise<void>; // Claim scanner
   release: () => Promise<void>; // Release scanner
   checkAvailable: () => Promise<boolean>; // Check availability
   isAvailable: boolean; // True if on Android native platform
 }
 ```
+
+**Note**: The hook automatically sets up the listener when `enabled: true` (default). The scanner is automatically claimed when the listener is set up, so there's no need for manual `claim()` or `startScan()` calls.
 
 ## Barcode Symbologies Supported
 
@@ -184,7 +174,8 @@ properties.put(BarcodeReader.PROPERTY_CODE_39_MAXIMUM_LENGTH, 10);
 
 The plugin automatically handles scanner lifecycle:
 
-- **On Load**: Scanner is initialized, configured, and claimed
+- **On Load**: Scanner is initialized and configured
+- **On Listen**: Scanner is claimed when the listener is set up
 - **On Resume**: Scanner is reclaimed
 - **On Pause**: Scanner is released
 - **On Destroy**: Scanner resources are cleaned up
@@ -206,7 +197,7 @@ window.cordova.plugins.honeywell.nativeListen(
 ```typescript
 import { useHoneywellScanner } from '@common/hooks';
 
-const { startScan } = useHoneywellScanner({
+const { isAvailable } = useHoneywellScanner({
   onScan: barcode => console.log(barcode),
   onError: error => console.error(error),
 });
@@ -222,7 +213,7 @@ const { startScan } = useHoneywellScanner({
 
 ### Scanner Not Responding
 
-- Try calling `claim()` to ensure exclusive access
+- The scanner is automatically claimed when you set up the listener with the hook or call `listen()` directly
 - Check Android logs for error messages
 - Ensure no other app is using the scanner
 
