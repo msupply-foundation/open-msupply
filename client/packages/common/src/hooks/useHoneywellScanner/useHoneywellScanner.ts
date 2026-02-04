@@ -15,11 +15,4 @@ export interface HoneywellScannerPlugin {
 const HoneywellScanner =
   registerPlugin<HoneywellScannerPlugin>('HoneywellScanner');
 
-export interface UseHoneywellScannerProps {
-  onScan?: (barcode: string) => void;
-  onError?: (error: string) => void;
-  enabled?: boolean;
-}
-
-// Export the plugin directly for advanced usage
 export { HoneywellScanner };
