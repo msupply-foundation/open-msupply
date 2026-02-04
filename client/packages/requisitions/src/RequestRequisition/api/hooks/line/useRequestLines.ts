@@ -12,14 +12,13 @@ export const useRequestLines = (draftItemId?: string) => {
   const threshold = minMonthsOfStock ?? maxMonthsOfStock;
 
   const filteredLines = useMemo(() => {
-    const threshold = minMonthsOfStock ?? maxMonthsOfStock;
-
-    const filteredLines = lines?.nodes?.filter(item =>
+    const matchingLines = lines?.nodes?.filter(item =>
       matchItem(itemFilter, item.item)
     );
-    if (!on) return filteredLines;
 
-    return filteredLines.filter(({ item, itemStats }) => {
+    if (!on) return matchingLines;
+
+    return matchingLines.filter(({ item, itemStats }) => {
       const passesFilter =
         (itemStats.availableStockOnHand === 0 &&
           itemStats.averageMonthlyConsumption === 0) ||
