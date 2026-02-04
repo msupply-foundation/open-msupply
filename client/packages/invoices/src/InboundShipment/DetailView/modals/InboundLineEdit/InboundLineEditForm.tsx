@@ -11,7 +11,7 @@ import {
   ItemStockOnHandFragment,
   StockItemSearchInput,
 } from '@openmsupply-client/system';
-import { useInbound } from '../../../api';
+import { useInboundItems } from '../../../api/hooks/utils';
 
 interface InboundLineEditProps {
   item: ItemRowFragment | null;
@@ -25,7 +25,7 @@ export const InboundLineEditForm = ({
   onChangeItem,
 }: InboundLineEditProps) => {
   const t = useTranslation();
-  const { data: items } = useInbound.lines.items();
+  const { data: items } = useInboundItems();
 
   const existingItemIds = items?.map(line => line.itemId);
 

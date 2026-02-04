@@ -17,7 +17,11 @@ import {
   NameRowFragment,
   SupplierSearchModal,
 } from '@openmsupply-client/system';
-import { useInbound } from '../api';
+import {
+  useInsertInbound,
+  useInboundsAll,
+  useListInternalOrdersPromise,
+} from '../api/hooks/utils';
 import { inboundsToCsv } from '../../utils';
 import { LinkInternalOrderModal } from './LinkInternalOrderModal';
 
@@ -35,14 +39,14 @@ export const AppBarButtons = ({
   const { store } = useAuthContext();
   const [name, setName] = useState<NameRowFragment | null>(null);
 
-  const { mutateAsync: onCreate } = useInbound.document.insert();
-  const { isLoading, fetchAsync } = useInbound.document.listAll({
+  const { mutateAsync: onCreate } = useInsertInbound();
+  const { isLoading, fetchAsync } = useInboundsAll({
     key: 'createdDateTime',
     direction: 'desc',
     isDesc: true,
   });
   const { mutateAsync: fetchInternalOrders } =
-    useInbound.document.listInternalOrdersPromise();
+    useListInternalOrdersPromise();
   const manuallyLinkInternalOrder =
     store?.preferences.manuallyLinkInternalOrderToInboundShipment;
 

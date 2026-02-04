@@ -8,13 +8,13 @@ import {
   PanelRow,
   useFormatDateTime,
 } from '@openmsupply-client/common';
-import { useInbound } from '../../api';
+import { useInboundFields } from '../../api/hooks/utils';
 import { ShippingMethodSearchInput } from '@openmsupply-client/system';
 
 export const TransportSectionComponent: FC = () => {
   const t = useTranslation();
   const { transportReference, expectedDeliveryDate, shippingMethod } =
-    useInbound.document.fields([
+    useInboundFields([
       'transportReference',
       'expectedDeliveryDate',
       'shippingMethod',

@@ -17,7 +17,8 @@ import {
   EditIcon,
   usePreferences,
 } from '@openmsupply-client/common';
-import { useInbound } from '../../api';
+import { useInboundShipment } from '../../api';
+import { useInboundFields } from '../../api/hooks/utils';
 import { DonorEditModal } from '../modals';
 
 export const AdditionalInfoSectionComponent = () => {
@@ -25,12 +26,12 @@ export const AdditionalInfoSectionComponent = () => {
   const { localisedDate } = useFormatDateTime();
   const { isOn: donorModalOn, toggleOff, toggleOn } = useToggle();
 
-  const isDisabled = useInbound.utils.isDisabled();
+  const { isDisabled } = useInboundShipment();
 
   const { allowTrackingOfStockByDonor } = usePreferences();
 
   const { id, user, comment, colour, createdDatetime, defaultDonor, update } =
-    useInbound.document.fields([
+    useInboundFields([
       'id',
       'comment',
       'colour',

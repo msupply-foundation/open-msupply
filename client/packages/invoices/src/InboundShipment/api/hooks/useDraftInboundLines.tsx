@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useInbound } from '.';
 import {
   useConfirmOnLeaving,
   useNotification,
@@ -11,6 +10,8 @@ import { CreateDraft } from '../../DetailView/modals/utils';
 import { useDeleteInboundLines } from './line/useDeleteInboundLines';
 import { mapErrorToMessageAndSetContext } from './mapErrorToMessageAndSetContext';
 import { ScannedBatchData } from '../../DetailView';
+import { useInboundFields, useSaveInboundLines } from './utils';
+import { useInboundLines } from '.';
 
 export type PatchDraftLineInput = Partial<DraftInboundLine> & { id: string };
 
@@ -23,9 +24,9 @@ export const useDraftInboundLines = (
 
   const [draftLines, setDraftLines] = useState<DraftInboundLine[]>([]);
 
-  const { id } = useInbound.document.fields('id');
-  const { data: lines } = useInbound.lines.list(itemId ?? '');
-  const { mutateAsync, isLoading } = useInbound.lines.save();
+  const { id } = useInboundFields('id');
+  const { data: lines } = useInboundLines(itemId ?? '');
+  const { mutateAsync, isLoading } = useSaveInboundLines();
   const { mutateAsync: deleteMutation } = useDeleteInboundLines();
 
   const { isDirty, setIsDirty } = useConfirmOnLeaving(

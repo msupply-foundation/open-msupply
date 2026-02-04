@@ -20,7 +20,11 @@ import {
   getPreviousStatus,
   getStatusTranslator,
 } from '../../../utils';
-import { InboundLineFragment, useInbound } from '../../api';
+import { InboundLineFragment } from '../../api';
+import {
+  useInboundFields,
+  useIsStatusChangeDisabled,
+} from '../../api/hooks/utils';
 
 const getStatusOptions = (
   currentStatus: InvoiceNodeStatus,
@@ -85,7 +89,7 @@ const useStatusChangeButton = () => {
   const t = useTranslation();
   const { invoiceStatusOptions } = usePreferences();
   const { status, onHold, linkedShipment, update, lines } =
-    useInbound.document.fields(['status', 'onHold', 'linkedShipment', 'lines']);
+    useInboundFields(['status', 'onHold', 'linkedShipment', 'lines']);
   const { success, error } = useNotification();
   const isManuallyCreated = !linkedShipment?.id;
 
@@ -178,7 +182,7 @@ export const StatusChangeButton = () => {
   } = useStatusChangeButton();
   const t = useTranslation();
   const { userHasPermission } = useAuthContext();
-  const isStatusChangeDisabled = useInbound.utils.isStatusChangeDisabled();
+  const isStatusChangeDisabled = useIsStatusChangeDisabled();
 
   const onVerify = () => {
     if (userHasPermission(UserPermission.InboundShipmentVerify)) {

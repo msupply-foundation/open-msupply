@@ -35,7 +35,7 @@ import { AppBarButtons } from './AppBarButtons';
 import { SidePanel } from './SidePanel';
 import { InboundLineEdit } from './modals/InboundLineEdit';
 import { InboundItem, ScannedBarcode } from '../../types';
-import { useInbound, InboundLineFragment } from '../api';
+import { InboundLineFragment, useInboundShipment } from '../api';
 import { SupplierReturnEditModal } from '../../Returns';
 import { canReturnInboundLines, isInboundPlaceholderRow } from '../../utils';
 import { InboundShipmentLineErrorProvider } from '../context/inboundShipmentLineError';
@@ -79,9 +79,12 @@ const DetailViewInner = () => {
     setMode,
   } = useEditModal<string[]>();
 
-  const { data, isLoading, invalidateQuery } = useInbound.document.get();
+  const {
+    query: { data, loading: isLoading },
+    isDisabled,
+    invalidateQuery,
+  } = useInboundShipment();
   const { data: vvmStatuses } = useVvmStatusesEnabled();
-  const isDisabled = useInbound.utils.isDisabled();
   const hasItemVariantsEnabled = useIsItemVariantsEnabled();
   const simplifiedTabletView = useSimplifiedTabletUI();
 

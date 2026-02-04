@@ -11,7 +11,8 @@ import {
   RouteBuilder,
   useNavigate,
 } from '@openmsupply-client/common';
-import { useInbound } from '../../api';
+import { useInboundShipment } from '../../api';
+import { useInboundDelete } from '../../api/hooks/utils';
 import { AdditionalInfoSection } from './AdditionalInfoSection';
 import { PricingSection } from './PricingSection';
 import { RelatedDocumentsSection } from './RelatedDocumentsSection';
@@ -23,8 +24,10 @@ export const SidePanel = () => {
   const navigate = useNavigate();
   const { success } = useNotification();
 
-  const { data } = useInbound.document.get();
-  const { mutateAsync } = useInbound.document.delete();
+  const {
+    query: { data },
+  } = useInboundShipment();
+  const { mutateAsync } = useInboundDelete();
 
   const isTransfer = !!data?.linkedShipment?.id;
   const canDelete = data?.status === InvoiceNodeStatus.New;
