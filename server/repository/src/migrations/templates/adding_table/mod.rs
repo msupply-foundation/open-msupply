@@ -1,11 +1,11 @@
 use crate::migrations::*;
 
 #[allow(dead_code)]
-pub(crate) struct V1_00_05;
+pub(crate) struct V2_15_01;
 
-impl Migration for V1_00_05 {
+impl Migration for V2_15_01 {
     fn version(&self) -> Version {
-        Version::from_str("1.0.5")
+        Version::from_str("2.15.1")
     }
 
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
@@ -89,15 +89,15 @@ impl Migration for V1_00_05 {
 
 #[cfg(test)]
 #[actix_rt::test]
-async fn migration_1_00_05() {
+async fn migration_2_15_01() {
     use crate::migrations::*;
     use crate::test_db::*;
 
-    let version = V1_00_05.version();
+    let version = V2_15_01.version();
 
     // This test allows checking sql syntax
     let SetupResult { connection, .. } = setup_test(SetupOption {
-        db_name: &format!("migration_{version}"),
+        db_name: &format!("migration_{version}_adding_table"),
         version: Some(version.clone()),
         ..Default::default()
     })

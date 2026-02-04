@@ -9,209 +9,160 @@ import {
   Divider,
   Alert,
   ButtonWithIcon,
+  ScanResult as ParsedScanResult,
+  useBarcodeScannerContext,
 } from '@openmsupply-client/common';
-import { XCircleIcon, DeleteIcon, CheckIcon, RefreshIcon } from '@common/icons';
-
-// Extend window type to include honeywell plugin
-declare global {
-  interface Window {
-    plugins?: {
-      honeywell?: {
-        claim?: (callback: () => void) => void;
-        release?: () => void;
-        listen?: (
-          success: (data: string) => void,
-          error: (err: string) => void
-        ) => void;
-        scan?: () => void;
-      };
-    };
-  }
-}
+import { useTranslation } from '@common/intl';
+import { XCircleIcon, DeleteIcon, CheckIcon, CameraIcon } from '@common/icons';
 
 interface ScanResult {
   text: string;
   timestamp: Date;
+  parsed?: ParsedScanResult;
 }
 
 export const BarcodeScannerTest = () => {
+  const t = useTranslation();
   const [scanResults, setScanResults] = useState<ScanResult[]>([]);
-  const [isScanning, setIsScanning] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [initLog, setInitLog] = useState<string[]>([]);
-
-  const addLog = (message: string) => {
-    console.log(message);
-    setInitLog(prev => [
-      ...prev,
-      `${new Date().toLocaleTimeString()}: ${message}`,
-    ]);
-  };
+  const {
+    isListening,
+    isEnabled,
+    startListening,
+    stopScan,
+    scan,
+    supportsContinuousScanning,
+  } = useBarcodeScannerContext();
 
   useEffect(() => {
-    // Check if the plugin is available
-    const honeywell = window.plugins?.honeywell;
-
-    addLog('Checking for Honeywell plugin...');
-
-    if (!honeywell) {
-      const errorMsg = 'Honeywell barcode scanner plugin is not available';
-      setError(errorMsg);
-      addLog(`ERROR: ${errorMsg}`);
-      return;
+    // Auto-start scanning for Honeywell and Manual when page loads
+    if (!isListening && supportsContinuousScanning) {
+      handleStartScanning();
     }
-
-    addLog('Honeywell plugin found');
-    addLog(`Available methods: ${Object.keys(honeywell).join(', ')}`);
 
     // Cleanup on unmount
     return () => {
-      addLog('Component unmounting - releasing scanner...');
-      if (window.plugins?.honeywell?.release) {
-        window.plugins.honeywell.release();
-        addLog('Scanner released');
+      if (isListening) {
+        stopScan();
       }
     };
-  }, []);
+    // only need to respond to changes in available scanners
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [supportsContinuousScanning]);
 
-  const startScanning = () => {
-    const honeywell = window.plugins?.honeywell;
-
-    if (!honeywell) {
-      addLog('ERROR: Honeywell plugin not available');
-      return;
-    }
-
-    addLog('Starting scanner...');
-
-    honeywell.listen(
-      (data: string) => {
-        addLog(`Barcode scanned: ${data}`);
+  const handleStartScanning = async () => {
+    try {
+      await startListening((result, err) => {
+        if (err) {
+          setError(`${t('messages.scanning-error')}: ${err}`);
+          return;
+        }
         setScanResults(prev => [
           {
-            text: data,
+            text: result.content || '',
             timestamp: new Date(),
+            parsed: result,
           },
           ...prev,
         ]);
-      },
-      (err: string) => {
-        addLog(`Scanning error: ${err}`);
-        setError(`Scanning error: ${err}`);
-        setIsScanning(false);
-      }
-    );
-
-    setIsScanning(true);
-    addLog('Listener active - scanner is now listening');
+      });
+    } catch (e) {
+      console.error('Error starting scanner listening:', e);
+      const errorMsg = (e as Error)?.message || t('messages.unknown-error');
+      setError(`${t('messages.unknown-error')}: ${errorMsg}`);
+    }
   };
 
-  const stopScanning = () => {
-    const honeywell = window.plugins?.honeywell;
-
-    if (!honeywell) {
-      addLog('ERROR: Honeywell plugin not available');
-      return;
+  const handleStopScanning = async () => {
+    try {
+      await stopScan();
+    } catch (e) {
+      const errorMsg = (e as Error)?.message || t('messages.unknown-error');
+      setError(`${t('messages.unknown-error')}: ${errorMsg}`);
     }
-
-    addLog('Stopping scanner...');
-    honeywell.release();
-    setIsScanning(false);
-    addLog('Scanner stopped');
   };
 
-  const restartScanning = () => {
-    const honeywell = window.plugins?.honeywell;
-
-    if (!honeywell) {
-      addLog('ERROR: Honeywell plugin not available');
-      return;
-    }
-
-    addLog('Restarting scanner (claim + listen)...');
-
-    honeywell.claim(() => {
-      addLog('Scanner claimed successfully');
-
-      if (!window.plugins?.honeywell) {
-        addLog('ERROR: Honeywell plugin lost after claim');
-        return;
+  const handleScan = async () => {
+    try {
+      const result = await scan();
+      if (result.content) {
+        setScanResults(prev => [
+          {
+            text: result.content || '',
+            timestamp: new Date(),
+            parsed: result,
+          },
+          ...prev,
+        ]);
       }
-
-      window.plugins.honeywell.listen(
-        (data: string) => {
-          addLog(`Barcode scanned: ${data}`);
-          setScanResults(prev => [
-            {
-              text: data,
-              timestamp: new Date(),
-            },
-            ...prev,
-          ]);
-        },
-        (err: string) => {
-          addLog(`Scanning error: ${err}`);
-          setError(`Scanning error: ${err}`);
-          setIsScanning(false);
-        }
-      );
-
-      setIsScanning(true);
-      addLog('Listener active after restart');
-    });
+    } catch (e) {
+      const errorMsg = (e as Error)?.message || t('messages.unknown-error');
+      setError(`${t('messages.scanning-error')}: ${errorMsg}`);
+    }
   };
 
   const clearResults = () => {
     setScanResults([]);
-    addLog('Results cleared');
+    setError(null);
   };
 
   return (
     <Box sx={{ padding: 3 }}>
       <Typography variant="h4" gutterBottom>
-        Barcode Scanner Test
+        {t('label.barcode-scanner-test')}
       </Typography>
 
       {error && (
-        <Alert severity="error" sx={{ mb: 2 }}>
+        <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
           {error}
+        </Alert>
+      )}
+
+      {!isEnabled && (
+        <Alert severity="warning" sx={{ mb: 2 }}>
+          {t('messages.no-barcode-scanner-available')}
         </Alert>
       )}
 
       {/* Scanner Controls */}
       <Paper sx={{ p: 2, mb: 2 }}>
         <Typography variant="h6" gutterBottom>
-          Scanner Controls
+          {t('heading.scanner-controls')}
         </Typography>
+
         <Box display="flex" gap={2} flexWrap="wrap">
-          {!isScanning ? (
-            <>
+          <>
+            {!isListening ? (
               <ButtonWithIcon
                 Icon={<CheckIcon />}
-                label="Start Scanning"
+                label={t('button.start-listening')}
                 variant="contained"
                 color="primary"
-                onClick={startScanning}
+                onClick={handleStartScanning}
+                disabled={!isEnabled}
               />
+            ) : (
               <ButtonWithIcon
-                Icon={<RefreshIcon />}
-                label="Restart Scanning"
-                variant="outlined"
-                onClick={restartScanning}
+                Icon={<XCircleIcon />}
+                label={t('button.stop-listening')}
+                variant="contained"
+                color="error"
+                onClick={handleStopScanning}
               />
-            </>
-          ) : (
-            <ButtonWithIcon
-              Icon={<XCircleIcon />}
-              label="Stop Scanning"
-              variant="contained"
-              color="error"
-              onClick={stopScanning}
-            />
-          )}
+            )}
+          </>
+
+          <ButtonWithIcon
+            Icon={<CameraIcon />}
+            label={t('button.scan-once')}
+            variant="contained"
+            onClick={handleScan}
+            disabled={!isEnabled}
+          />
+
           <ButtonWithIcon
             Icon={<DeleteIcon />}
-            label="Clear Results"
+            label={t('button.clear-results')}
             variant="outlined"
             onClick={clearResults}
             disabled={scanResults.length === 0}
@@ -221,51 +172,23 @@ export const BarcodeScannerTest = () => {
 
       <Paper sx={{ p: 2, mb: 2 }}>
         <Typography variant="h6" gutterBottom>
-          Initialization Log
-        </Typography>
-        {initLog.length === 0 ? (
-          <Typography color="text.secondary" sx={{ fontStyle: 'italic' }}>
-            No logs yet...
-          </Typography>
-        ) : (
-          <Box sx={{ maxHeight: 200, overflow: 'auto' }}>
-            {initLog.map((log, index) => (
-              <Typography
-                key={index}
-                sx={{
-                  fontFamily: 'monospace',
-                  fontSize: '0.85rem',
-                  mb: 0.5,
-                }}
-              >
-                {log}
-              </Typography>
-            ))}
-          </Box>
-        )}
-      </Paper>
-
-      <Paper sx={{ p: 2, mb: 2 }}>
-        <Typography variant="h6" gutterBottom>
-          Scanner Status
-        </Typography>
-        <Typography>
-          <strong>Status:</strong>{' '}
-          {isScanning ? '🟢 Scanning Active' : '🔴 Not Scanning'}
+          {t('heading.scanner-status')}
         </Typography>
         <Typography sx={{ mt: 1 }}>
-          <strong>Total Scans:</strong> {scanResults.length}
+          <strong>{t('label.listening')}:</strong>{' '}
+          {isListening
+            ? `🟢 ${t('label.active')}`
+            : `🔴 ${t('label.inactive')}`}
         </Typography>
       </Paper>
 
       <Paper sx={{ p: 2 }}>
         <Typography variant="h6" gutterBottom>
-          Scan Results
+          {t('heading.scan-results')}
         </Typography>
         {scanResults.length === 0 ? (
           <Typography color="text.secondary" sx={{ fontStyle: 'italic' }}>
-            No scans yet. Start scanning and use the scanner trigger to scan a
-            barcode.
+            {t('messages.no-scans-yet')}
           </Typography>
         ) : (
           <List>
@@ -275,19 +198,63 @@ export const BarcodeScannerTest = () => {
                 <ListItem>
                   <ListItemText
                     primary={
-                      <Typography
-                        sx={{
-                          fontFamily: 'monospace',
-                          fontSize: '1.1rem',
-                          fontWeight: 'bold',
-                        }}
-                      >
-                        {result.text}
-                      </Typography>
+                      <Box>
+                        <Typography
+                          sx={{
+                            fontFamily: 'monospace',
+                            fontSize: '1.1rem',
+                            fontWeight: 'bold',
+                            mb: 1,
+                          }}
+                        >
+                          {result.text}
+                        </Typography>
+                        {result.parsed && (
+                          <Box sx={{ mt: 1 }}>
+                            {result.parsed.gtin && (
+                              <Typography variant="body2" sx={{ mb: 0.5 }}>
+                                <strong>{t('label.gtin')}:</strong>{' '}
+                                {result.parsed.gtin}
+                              </Typography>
+                            )}
+                            {result.parsed.batch && (
+                              <Typography variant="body2" sx={{ mb: 0.5 }}>
+                                <strong>{t('label.batch')}:</strong>{' '}
+                                {result.parsed.batch}
+                              </Typography>
+                            )}
+                            {result.parsed.expiryDate && (
+                              <Typography variant="body2" sx={{ mb: 0.5 }}>
+                                <strong>{t('label.expiry')}:</strong>{' '}
+                                {result.parsed.expiryDate}
+                              </Typography>
+                            )}
+                            {result.parsed.manufactureDate && (
+                              <Typography variant="body2" sx={{ mb: 0.5 }}>
+                                <strong>{t('label.manufacture-date')}:</strong>{' '}
+                                {result.parsed.manufactureDate}
+                              </Typography>
+                            )}
+                            {result.parsed.quantity && (
+                              <Typography variant="body2" sx={{ mb: 0.5 }}>
+                                <strong>{t('label.quantity')}:</strong>{' '}
+                                {result.parsed.quantity}
+                              </Typography>
+                            )}
+                            {result.parsed.packsize && (
+                              <Typography variant="body2" sx={{ mb: 0.5 }}>
+                                <strong>{t('label.pack-size')}:</strong>{' '}
+                                {result.parsed.packsize}
+                              </Typography>
+                            )}
+                          </Box>
+                        )}
+                      </Box>
                     }
                     secondary={
                       <Typography component="span" variant="body2">
-                        Time: {result.timestamp.toLocaleTimeString()}
+                        {t('label.time')}:{' '}
+                        {result.timestamp.toLocaleTimeString()}
                       </Typography>
                     }
                   />
