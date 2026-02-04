@@ -1,11 +1,24 @@
 # Honeywell Scanner Integration
 
-This document describes the native Capacitor plugin integration for Honeywell barcode scanners.
+Open-mSupply has an android integration for the Honeywell CK65 device with built in laser barcode scanner. This might work for other honeywell devices with the similar hardware, but has only been tested on the CK65. The integration is done via a Capacitor plugin that interfaces with the Honeywell AIDC SDK.
 
-## Overview
+## References
 
 The Honeywell Scanner functionality has been migrated from a Cordova plugin based on https://github.com/kulkarniswapnil/cordova-honeywell-plugin to a native Capacitor plugin.
-We needed to add a method to detect if the scanner device actually exists (the available method) and since the dependancy seems to be based on example code and not actively maintained, managing the code internally seemed like the best option.
+This intern is based on sample code from the Honeywell Mobility Edge SDK for Android (which is included in this codebase).
+
+We've choosed to create our own plugin instead of using one of the existing Cordova/Capcitor plugins for several reasons:
+
+1. There doesn't seem to be any heavily used and well-maintained Capacitor plugins for Honeywell scanners.
+2. The existing plugin didn't have a mechanism to detect if the scanner is actually available, which is important for our use case.
+3. By creating our own plugin, we have better software supply chain confidence, relying directly on Honeywell's download rather than a jar provided by a third party npm package.
+
+To download the last SDK you need a to create a honeywll account and visit.
+https://hsmftp.honeywell.com/ - The honeywell download server.
+Navigate to: Software > Software and Tools > Developer Library > SDKs for Android
+Note: to download you need to install the honeywell download manager, which is only available for windows.
+
+Current version of the sdk: V1.97.00.0084
 
 ## Architecture
 
@@ -26,9 +39,9 @@ This is a Capacitor plugin that interfaces directly with the Honeywell AIDC SDK 
 
 ### JAR Library
 
-**Location**: `/packages/android/app/libs/DataCollection.jar`
+**Location**: `/packages/android/app/libs/DataCollection.aar`
 
-This is the Honeywell AIDC SDK library that provides the barcode scanning functionality. It's automatically included in the build via the `fileTree` dependency in `app/build.gradle`.
+This is the Honeywell AIDC SDK library that provides the barcode scanning functionality. It's automatically included in the build via the `implementation(name: 'DataCollection', ext: 'aar')` dependency in `app/build.gradle`.
 
 ### TypeScript Wrapper
 
@@ -65,9 +78,6 @@ await HoneywellScanner.listen({}, (data, error) => {
   }
 });
 
-// Release the scanner (useful before pause)
-await HoneywellScanner.release();
-
 // Check if scanner is available
 const { available } = await HoneywellScanner.available();
 ```
@@ -87,44 +97,9 @@ The callback receives two parameters:
 
 Called automatically when using the `useHoneywellScanner` hook with `enabled: true`.
 
-#### `release(): Promise<void>`
-
-Releases the scanner. Called automatically on app pause. Can be called manually if you need to release the scanner temporarily.
-
 #### `available(): Promise<{ available: boolean }>`
 
 Checks if the scanner hardware is available.
-
-### Hook API
-
-The `useHoneywellScanner` hook returns:
-
-```typescript
-{
-  release: () => Promise<void>; // Release scanner
-  checkAvailable: () => Promise<boolean>; // Check availability
-  isAvailable: boolean; // True if on Android native platform
-}
-```
-
-**Note**: The hook automatically sets up the listener when `enabled: true` (default). The scanner is automatically claimed when the listener is set up, so there's no need for manual `claim()` or `startScan()` calls.
-
-## Barcode Symbologies Supported
-
-The following barcode types are enabled by default:
-
-- Code 128
-- GS1-128
-- QR Code
-- Code 39 (max length: 10)
-- Data Matrix
-- UPC-A
-- EAN-13
-- EAN-8
-- Aztec
-- Codabar
-- Interleaved 2 of 5
-- PDF 417
 
 ## Configuration
 
@@ -134,7 +109,7 @@ Scanner properties are configured in the `configureBarcodeReader()` method in `H
 properties.put(BarcodeReader.PROPERTY_CODE_128_ENABLED, true);
 properties.put(BarcodeReader.PROPERTY_CENTER_DECODE, false);
 properties.put(BarcodeReader.PROPERTY_CODE_39_MAXIMUM_LENGTH, 10);
-// ... and many more
+// See the docs for all available properties in BarcodeReader.html
 ```
 
 ## Lifecycle Management
@@ -147,48 +122,7 @@ The plugin automatically handles scanner lifecycle:
 - **On Pause**: Scanner is released
 - **On Destroy**: Scanner resources are cleaned up
 
-## Migration from Cordova Plugin
-
-### Before (Cordova)
-
-```javascript
-// Using cordova plugin
-window.cordova.plugins.honeywell.nativeListen(
-  barcode => console.log(barcode),
-  error => console.error(error)
-);
-```
-
-### After (Capacitor)
-
-```typescript
-import { useHoneywellScanner } from '@common/hooks';
-
-const { isAvailable } = useHoneywellScanner({
-  onScan: barcode => console.log(barcode),
-  onError: error => console.error(error),
-});
-```
-
 ## Troubleshooting
-
-### Scanner Not Available
-
-- Ensure you're running on a physical Honeywell device with scanner hardware
-- Check that DataCollection.jar is in `/packages/android/app/libs/`
-- Verify the plugin is registered in `MainActivity.java`
-
-### Scanner Not Responding
-
-- The scanner is automatically claimed when you set up the listener with the hook or call `listen()` directly
-- Check Android logs for error messages
-- Ensure no other app is using the scanner
-
-### Build Errors
-
-- Verify DataCollection.jar exists in the correct location
-- Check that `build.gradle` includes `implementation fileTree(include: ['*.jar'], dir: 'libs')`
-- Clean and rebuild the project
 
 ## Development and Debugging
 
@@ -197,23 +131,3 @@ Since this is now native code, you can:
 1. Set breakpoints in `HoneywellScannerPlugin.java`
 2. Use Android Studio's debugger
 3. View logs with `adb logcat | grep HoneywellScanner`
-4. Modify scanner properties without rebuilding the Cordova plugin
-
-## Files Modified/Created
-
-### Created
-
-- `/packages/android/app/src/main/java/org/openmsupply/client/HoneywellScannerPlugin.java`
-- `/packages/android/app/libs/DataCollection.jar`
-- `/packages/common/src/hooks/useHoneywellScanner/useHoneywellScanner.ts`
-- `/packages/common/src/hooks/useHoneywellScanner/index.ts`
-
-### Modified
-
-- `/packages/android/app/src/main/java/org/openmsupply/client/MainActivity.java`
-- `/packages/common/src/hooks/index.ts`
-
-### Can Be Removed (Optional)
-
-- `/packages/android/capacitor-cordova-android-plugins/` (if no other Cordova plugins)
-- `cordova-honeywell-plugin` npm dependency
