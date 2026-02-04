@@ -116,18 +116,21 @@ fn generate(
         option_id,
     }: UpdateRequestRequisitionLine,
 ) -> Result<RequisitionLineRow, RepositoryError> {
-    let (location_type_id, available_volume) = get_available_volume_by_location_type(
+    let available_volume_by_type = get_available_volume_by_location_type(
         &ctx.connection,
         &ctx.store_id,
-        &existing.item_link_id,
-    )?;
+        &[existing.item_link_id.clone()],
+    )?
+    .get(&existing.item_link_id)
+    .cloned()
+    .unwrap_or_default();
 
     Ok(RequisitionLineRow {
         requested_quantity: updated_requested_quantity.unwrap_or(existing.requested_quantity),
         comment: updated_comment.or(existing.comment),
         option_id: option_id.or(existing.option_id),
-        available_volume,
-        location_type_id,
+        available_volume: available_volume_by_type.available_volume,
+        location_type_id: available_volume_by_type.restricted_location_type_id.clone(),
         ..existing
     })
 }

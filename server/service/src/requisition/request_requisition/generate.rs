@@ -52,20 +52,23 @@ pub fn generate_requisition_lines(
 ) -> Result<Vec<RequisitionLineRow>, PluginOrRepositoryError> {
     let item_stats_rows = get_item_stats(&ctx.connection, store_id, None, item_ids, period_end)?;
     let populate_price_per_unit = get_indicative_price_pref(&ctx.connection)?;
+    let item_ids = item_stats_rows
+        .iter()
+        .map(|i| i.item_id.to_string())
+        .collect::<Vec<String>>();
     let price_list = if populate_price_per_unit {
         Some(get_pricing_for_items(
             &ctx.connection,
             ItemPriceLookup {
-                item_ids: item_stats_rows
-                    .iter()
-                    .map(|i| i.item_id.to_string())
-                    .collect(),
+                item_ids: item_ids.clone(),
                 customer_name_id: None,
             },
         )?)
     } else {
         None
     };
+    let available_volumes =
+        get_available_volume_by_location_type(&ctx.connection, store_id, &item_ids)?;
 
     let lines = item_stats_rows
         .into_iter()
@@ -79,12 +82,10 @@ pub fn generate_requisition_lines(
                     min_months_of_stock: requisition_row.min_months_of_stock,
                     max_months_of_stock: requisition_row.max_months_of_stock,
                 });
-
-                let (location_type_id, available_volume) = get_available_volume_by_location_type(
-                    &ctx.connection,
-                    store_id,
-                    &item_stats.item_id,
-                )?;
+                let available_volume_by_type = available_volumes
+                    .get(&item_stats.item_id)
+                    .cloned()
+                    .unwrap_or_default();
 
                 Ok(RequisitionLineRow {
                     id: uuid(),
@@ -104,8 +105,8 @@ pub fn generate_requisition_lines(
                     } else {
                         None
                     },
-                    available_volume,
-                    location_type_id,
+                    available_volume: available_volume_by_type.available_volume,
+                    location_type_id: available_volume_by_type.restricted_location_type_id,
                     // Default
                     comment: None,
                     supply_quantity: 0.0,
