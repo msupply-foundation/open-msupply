@@ -212,9 +212,7 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
           if (onRowClick) onRowClick(row.original, isCtrlClick);
         },
         sx: {
-          backgroundColor: row.original['isSubRow']
-            ? 'background.secondary'
-            : 'inherit',
+          backgroundColor: 'inherit',
           // these two selectors are to change the background color of a selected
           // row from the default which is to use primary.main of the theme
           // with an opacity of 0.2 and 0.4 on hover
