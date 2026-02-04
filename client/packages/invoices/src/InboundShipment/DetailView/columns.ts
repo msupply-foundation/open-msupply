@@ -24,6 +24,12 @@ export const useInboundShipmentColumns = () => {
   return useMemo((): ColumnDef<Groupable<InboundLineFragment>>[] => {
     return [
       {
+        accessorKey: 'comment',
+        pin: 'left',
+        header: t('label.comment'),
+        columnType: ColumnType.Comment,
+      },
+      {
         accessorKey: 'item.code',
         header: t('label.code'),
         size: 90,
@@ -34,11 +40,6 @@ export const useInboundShipmentColumns = () => {
           getLinesFromRow(row).some(
             r => getError(r)?.__typename === 'LineLinkedToTransferredInvoice'
           ),
-      },
-      {
-        accessorKey: 'comment',
-        header: t('label.comment'),
-        columnType: ColumnType.Comment,
       },
       {
         accessorKey: 'itemName',
@@ -204,5 +205,11 @@ export const useInboundShipmentColumns = () => {
         accessorFn: row => row.campaign?.name ?? row.program?.name ?? '',
       },
     ];
-  }, [t, manageVvmStatusForStock, manageVaccinesInDoses, allowTrackingOfStockByDonor, getError]);
+  }, [
+    t,
+    manageVvmStatusForStock,
+    manageVaccinesInDoses,
+    allowTrackingOfStockByDonor,
+    getError,
+  ]);
 };

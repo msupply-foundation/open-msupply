@@ -44,7 +44,7 @@ export const useStocktakeColumns = () => {
       {
         accessorKey: 'itemName',
         header: t('label.name'),
-        size: 300,
+        size: 350,
         enableColumnFilter: true,
         enableSorting: true,
       },

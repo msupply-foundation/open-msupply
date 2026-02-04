@@ -36,6 +36,12 @@ export const useRequestColumns = () => {
   const columns = useMemo(
     (): ColumnDef<RequestLineFragment>[] => [
       {
+        accessorKey: 'comment',
+        header: t('label.comment'),
+        pin: 'left',
+        columnType: ColumnType.Comment,
+      },
+      {
         accessorKey: 'item.code',
         header: t('label.code'),
         pin: 'left',
@@ -46,7 +52,7 @@ export const useRequestColumns = () => {
       {
         accessorKey: 'itemName',
         header: t('label.name'),
-        size: 250,
+        size: 300,
         enableSorting: true,
         enableColumnFilter: true,
       },
@@ -143,11 +149,6 @@ export const useRequestColumns = () => {
         accessorFn: row => row.requestedQuantity * (row?.pricePerUnit || 0),
         columnType: ColumnType.Currency,
         includeColumn: showIndicativePriceInRequisitions,
-      },
-      {
-        accessorKey: 'comment',
-        header: t('label.comment'),
-        columnType: ColumnType.Comment,
       },
 
       // --- Extra consumption columns on program orders

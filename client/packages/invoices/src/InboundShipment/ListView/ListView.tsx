@@ -62,6 +62,7 @@ export const InboundListView = () => {
       {
         header: t('label.supplier'),
         accessorKey: 'otherPartyName',
+        size: 400,
         enableColumnFilter: true,
         Cell: ({ row }) => (
           <NameAndColorSetterCell
