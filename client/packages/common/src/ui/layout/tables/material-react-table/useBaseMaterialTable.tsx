@@ -141,7 +141,8 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
     columnOrder.resetHasSavedState();
   };
 
-  const hasColumnFilters = columns.some(col => col.enableColumnFilter);
+  // hiding all table filter related options for now
+  const hasColumnFilters = false;
 
   const displayOptions = useTableDisplayOptions({
     isGrouped,
@@ -166,6 +167,7 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
     layoutMode: 'grid',
     enableColumnResizing,
 
+    enableColumnFilters: false, // hide all column filters in the column menu
     enableColumnPinning: true,
     enableColumnOrdering: true,
     enableColumnDragging: false,

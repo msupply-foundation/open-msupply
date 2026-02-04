@@ -8,6 +8,8 @@ use super::{
 
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
+use serde::{Deserialize, Serialize};
+use ts_rs::TS;
 
 table! {
     item (id) {
@@ -42,7 +44,7 @@ allow_tables_to_appear_in_same_query!(item, name_link);
 allow_tables_to_appear_in_same_query!(item, clinician_link);
 allow_tables_to_appear_in_same_query!(item, location_type);
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, TS, Deserialize, Serialize)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum ItemType {
     Stock,
