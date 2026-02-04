@@ -13,7 +13,7 @@ import {
   LocaleKey,
 } from '@openmsupply-client/common';
 import { FnUtils, ScanResult, useBarcodeScannerContext } from '@common/utils';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { useOutbound } from '../../OutboundShipment/api';
 import { BarcodeNode, InvoiceLineNodeType } from '@common/types';
 import {
@@ -92,13 +92,7 @@ export const ScanInputModal = ({ lines, invoiceId }: ScanInputModalProps) => {
       setIsOpen(true);
     }
 
-    const {
-      content,
-      gtin,
-      batch,
-      expiryDate,
-      // packSize, quantity -- TO-DO
-    } = barcode;
+    const { content, gtin, batch, expiryDate, packSize, quantity } = barcode;
 
     if (gtin) newState.gtin = gtin;
 
@@ -116,8 +110,8 @@ export const ScanInputModal = ({ lines, invoiceId }: ScanInputModalProps) => {
 
       if (batch) newState.batch = batch;
       if (expiryDate) newState.expiryDate = new Date(expiryDate);
-      //   if (packSize) newState.packSize = packSize;
-      //   if (quantity) newState.quantity = quantity;
+      if (packSize) newState.packSize = packSize;
+      if (quantity) newState.quantity = quantity;
     }
     setDraftState(newState);
   }, []);
