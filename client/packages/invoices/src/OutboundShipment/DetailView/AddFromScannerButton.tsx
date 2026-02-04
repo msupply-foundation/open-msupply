@@ -3,7 +3,6 @@ import {
   useTranslation,
   useBarcodeScannerContext,
   ScanIcon,
-  ScanResult,
   ButtonWithIcon,
   useNotification,
   useRegisterActions,
@@ -12,12 +11,12 @@ import {
 } from '@openmsupply-client/common';
 
 interface AddFromScannerButtonProps {
-  handleScanResult: (result: ScanResult) => Promise<void>;
+  // handleScanResult: (result: ScanResult) => Promise<void>;
   disabled: boolean;
 }
 
 export const AddFromScannerButton = ({
-  handleScanResult,
+  // handleScanResult,
   disabled,
 }: AddFromScannerButtonProps) => {
   const t = useTranslation();
@@ -29,6 +28,7 @@ export const AddFromScannerButton = ({
     stopScan,
     startListening,
     supportsContinuousScanning,
+    handleScanResult,
   } = useBarcodeScannerContext();
   const { error } = useNotification();
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -40,13 +40,7 @@ export const AddFromScannerButton = ({
     } else {
       if (supportsContinuousScanning && !isListening) {
         // Auto-start continuous scanning is available, start listening and wait for a scan
-        startListening(async (result, err) => {
-          if (err) {
-            error(t('messages.scanning-error', { error: err }))();
-            return;
-          }
-          await handleScanResult(result);
-        });
+        startListening();
       } else {
         // One-off scan
         try {
@@ -59,25 +53,15 @@ export const AddFromScannerButton = ({
     }
   };
 
-  // stop scanning when the component unloads
-  useEffect(() => {
-    return () => {
-      stopScan();
-    };
-  }, []);
-
   // Auto-start scanning for continuous scanning when component loads
   useEffect(() => {
     if (!isListening && !disabled && supportsContinuousScanning) {
-      startListening(async (result, err) => {
-        if (err) {
-          error(t('messages.scanning-error', { error: err }))();
-          return;
-        }
-
-        await handleScanResult(result);
-      });
+      startListening();
     }
+
+    return () => {
+      stopScan();
+    };
     // only need to respond to changes in supportsContinuousScanning
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [supportsContinuousScanning]);
