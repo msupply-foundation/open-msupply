@@ -20,6 +20,7 @@ import {
 import { usePrescriptionList, usePrescription } from '../api';
 import { PrescriptionRowFragment } from '../api/operations.generated';
 import { AppBarButtons } from './AppBarButtons';
+import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
 
 export const PrescriptionListView = () => {
@@ -143,6 +144,7 @@ export const PrescriptionListView = () => {
 
   return (
     <>
+      <Toolbar />
       <AppBarButtons
         modalController={modalController}
         listParams={listParams}

@@ -167,7 +167,7 @@ export const ListView = () => {
 
   return (
     <>
-      <Toolbar filter={filter} />
+      <Toolbar />
       <AppBarButtons
         requisitionModalController={requisitionModalController}
         createOrderModalController={createOrderModalController}

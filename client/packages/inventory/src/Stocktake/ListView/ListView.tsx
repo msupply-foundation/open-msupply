@@ -15,6 +15,7 @@ import {
 import { AppBarButtons } from './AppBarButtons';
 import { getStocktakeTranslator, isStocktakeDisabled } from '../../utils';
 import { StocktakeRowFragment } from '../api/operations.generated';
+import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
 import { useStocktake } from '../api/hooks/useStocktake';
 import { useStocktakeList } from '../api/hooks/useStocktakeList';
@@ -137,6 +138,7 @@ export const ListView = () => {
 
   return (
     <>
+      <Toolbar />
       <AppBarButtons
         description={description}
         onCreate={create}
