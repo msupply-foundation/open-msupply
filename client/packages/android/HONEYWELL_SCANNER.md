@@ -5,7 +5,6 @@ Open-mSupply has an android integration for the Honeywell CK65 device with built
 ## References
 
 The Honeywell Scanner functionality has been migrated from a Cordova plugin based on https://github.com/kulkarniswapnil/cordova-honeywell-plugin to a native Capacitor plugin.
-This intern is based on sample code from the Honeywell Mobility Edge SDK for Android (which is included in this codebase).
 
 We've choosed to create our own plugin instead of using one of the existing Cordova/Capcitor plugins for several reasons:
 
