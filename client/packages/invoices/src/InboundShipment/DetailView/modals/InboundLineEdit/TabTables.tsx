@@ -255,16 +255,6 @@ export const QuantityTable = ({
         ),
       },
       {
-        accessorKey: 'doseQuantity',
-        header: t('label.doses-received'),
-        size: 100,
-        includeColumn: displayInDoses,
-        accessorFn: row => {
-          const total = row.numberOfPacks * row.packSize;
-          return format(total * row.item.doses);
-        },
-      },
-      {
         accessorKey: 'unitsPerPack',
         header: t('label.units-received', {
           unit: pluralisedUnitName,
@@ -305,6 +295,16 @@ export const QuantityTable = ({
             min={0}
           />
         ),
+      },
+      {
+        accessorKey: 'doseQuantity',
+        header: t('label.doses-received'),
+        size: 100,
+        includeColumn: displayInDoses,
+        accessorFn: row => {
+          const total = row.numberOfPacks * row.packSize;
+          return format(total * row.item.doses);
+        },
       },
       {
         accessorKey: 'volumePerPack',
