@@ -137,7 +137,7 @@ const plugins: BackendPlugins = {
         return { t: 'SkipOnError', v: true };
       }
       case 'Process': {
-        log({ message: 'Processing', changeLog: input.v });
+        log({ message: 'Example Plugins - Processing', changeLog: input.v });
         return { t: 'Process', v: 'success' };
       }
       default:
