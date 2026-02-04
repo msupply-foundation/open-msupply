@@ -17,6 +17,7 @@ export const useSaveInboundLines = () => {
   return useMutation(
     async (lines: DraftInboundLine[]): Promise<{ errorMessage?: string }> => {
       const result = await api.updateLines(lines);
+      console.log('lines', lines);
 
       const allResults = [
         ...(result.batchInboundShipment.insertInboundShipmentLines || []),

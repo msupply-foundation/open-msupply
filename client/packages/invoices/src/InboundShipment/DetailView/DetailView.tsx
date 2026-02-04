@@ -239,7 +239,7 @@ const DetailViewInner = () => {
           )}
           <SidePanel />
 
-          <ScanInputModal lines={lines} />
+          <ScanInputModal lines={lines} invoiceId={data?.id ?? ''} />
 
           {isOpen && (
             <InboundLineEdit
