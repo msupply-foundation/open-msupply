@@ -11,9 +11,10 @@ import {
   Representation,
   RepresentationValue,
   QuantityUtils,
-  NumUtils,
 } from '@openmsupply-client/common';
 import { calculatePercentage } from './utils';
+import { AvailableVolumeAtLocationTypeFragment } from '../../api';
+import { VolumeInformation } from './VolumeInfo';
 
 export interface RequestStoreStatsProps {
   representation: RepresentationValue;
@@ -23,9 +24,8 @@ export interface RequestStoreStatsProps {
   suggestedQuantity: number;
   availableStockOnHand: number;
   averageMonthlyConsumption: number;
-  volumeTypeName?: string | null;
-  availableVolume?: number | null;
-  itemVolume?: number | null;
+  availableVolumeAtLocationType?: AvailableVolumeAtLocationTypeFragment | null;
+  itemVolume: number;
 }
 
 const MIN_MC_WIDTH_TO_SHOW_TEXT = 5;
@@ -124,8 +124,7 @@ export const RequestStoreStats = ({
   suggestedQuantity,
   availableStockOnHand,
   averageMonthlyConsumption,
-  volumeTypeName,
-  availableVolume,
+  availableVolumeAtLocationType,
   itemVolume,
 }: RequestStoreStatsProps) => {
   const t = useTranslation();
@@ -151,7 +150,6 @@ export const RequestStoreStats = ({
   );
 
   const targetQuantity = maxMonthsOfStock * formattedAmc;
-  const availableVolumeDisplay = availableVolume! - itemVolume!;
 
   const monthlyConsumptionPercent = calculatePercentage(
     targetQuantity,
@@ -220,34 +218,11 @@ export const RequestStoreStats = ({
         />
       </Box>
 
-      {volumeTypeName && availableVolume !== null && itemVolume !== null && (
-        <Box marginTop={2}>
-          <Box>
-            <Typography variant="h6" style={{ textAlign: 'start' }}>
-              {t('label.volume')}
-            </Typography>
-          </Box>
-          <Typography variant="body1">
-            {t('label.volume-for-item', {
-              itemVolume: NumUtils.round(itemVolume ?? 0, 5),
-            })}
-          </Typography>
-          {availableVolumeDisplay <= 0 ? (
-            <Typography variant="body2" fontWeight={700} color="error.main">
-              {t('label.location-type-full', {
-                locationType: volumeTypeName,
-              })}
-            </Typography>
-          ) : (
-            <Typography variant="body1">
-              {t('label.available-volume-for-location-type', {
-                locationType: volumeTypeName,
-                availableVolume: NumUtils.round(availableVolumeDisplay, 5),
-              })}
-            </Typography>
-          )}
-          <Typography variant="body2" fontWeight={700}></Typography>
-        </Box>
+      {!!availableVolumeAtLocationType && (
+        <VolumeInformation
+          availableVolumeAtLocationType={availableVolumeAtLocationType}
+          itemVolume={itemVolume}
+        />
       )}
     </Box>
   );
