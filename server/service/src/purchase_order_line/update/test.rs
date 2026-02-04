@@ -1,13 +1,9 @@
 #[cfg(test)]
 mod update {
     use repository::{
-        mock::{
-            mock_item_a, mock_item_b, mock_item_d, mock_purchase_order_a, mock_store_a,
-            MockDataInserts,
-        },
-        test_db::setup_all,
-        ActivityLogRowRepository, ActivityLogType, PurchaseOrderLineRow,
-        PurchaseOrderLineRowRepository, PurchaseOrderLineStatus,
+        ActivityLogRowRepository, ActivityLogType, InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow, InvoiceRowRepository, InvoiceStatus, PurchaseOrderLineRow, PurchaseOrderLineRowRepository, PurchaseOrderLineStatus, mock::{
+            MockDataInserts, mock_item_a, mock_item_b, mock_item_d, mock_purchase_order_a, mock_store_a
+        }, test_db::setup_all
     };
 
     use crate::{
@@ -200,13 +196,39 @@ mod update {
             .upsert_one(&line)
             .unwrap();
 
+        let invoice = InvoiceRow {
+            id: "invoice_for_received".to_string(),
+            store_id: mock_store_a().id.clone(),
+            name_link_id: mock_store_a().name_link_id.clone(),
+            purchase_order_id: Some(mock_purchase_order_a().id.clone()),
+            status: InvoiceStatus::Shipped,
+            ..Default::default()
+        };
+
+        InvoiceRowRepository::new(&context.connection)
+            .upsert_one(&invoice)
+            .unwrap();
+
+        let invoice_line = InvoiceLineRow {
+            id: "invoice_line_for_received".to_string(),
+            invoice_id: invoice.id.clone(),
+            item_link_id: mock_item_b().id,
+            number_of_packs: 8.0,
+            pack_size: 2.0,
+            ..Default::default()
+        };
+
+        InvoiceLineRowRepository::new(&context.connection)
+            .upsert_one(&invoice_line)
+            .unwrap();
+
         assert_eq!(
             service.update_purchase_order_line(
                 &context,
                 &mock_store_a().id.clone(),
                 UpdatePurchaseOrderLineInput {
                     id: "purchase_order_line_received".to_string(),
-                    item_id: Some(mock_item_b().id.to_string()),
+                    item_id: Some(mock_item_b().id),
                     adjusted_number_of_units: Some(14.0),
                     ..Default::default()
                 },
