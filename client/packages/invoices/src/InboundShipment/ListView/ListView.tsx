@@ -22,7 +22,8 @@ import {
   isInboundListItemDisabled,
 } from '../../utils';
 import { Toolbar } from './Toolbar';
-import { useInbound, InboundRowFragment, useInboundList } from '../api';
+import { InboundRowFragment, useInboundList } from '../api';
+import { useUpdateInbound } from '../api/hooks/utils';
 import { Footer } from './Footer';
 
 export const InboundListView = () => {
@@ -31,7 +32,7 @@ export const InboundListView = () => {
   const { invoiceStatusOptions } = usePreferences();
   const invoiceModalController = useToggle();
   const linkRequestModalController = useToggle();
-  const { mutate: onUpdate } = useInbound.document.update();
+  const { mutate: onUpdate } = useUpdateInbound();
 
   const isExtraSmallScreen = useIsExtraSmallScreen();
 

@@ -25,7 +25,12 @@ import {
   RequisitionNodeStatus,
   UserPermission,
 } from '@common/types';
+<<<<<<< HEAD
 import { useInbound } from '@openmsupply-client/invoices';
+=======
+import { useDashboard } from '../api';
+import { useInsertInbound } from '@openmsupply-client/invoices';
+>>>>>>> 043f01ed1a (expanding use of new inbound shipment hooks)
 import { SupplierSearchModal } from '@openmsupply-client/system';
 import { AppRoute } from '@openmsupply-client/config';
 import { useDashboardPanels } from '../hooks';
@@ -74,7 +79,7 @@ export const ReplenishmentWidget = ({
     )}${RANGE_SPLIT_CHAR}${customDate(endOfWeek, urlQueryDateTime)}`;
   };
 
-  const { mutateAsync: onCreate } = useInbound.document.insert();
+  const { mutateAsync: onCreate } = useInsertInbound();
   const onError = (e: unknown) => {
     const message = (e as Error).message ?? '';
     const errorSnack = errorNotification(

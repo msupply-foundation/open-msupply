@@ -11,7 +11,8 @@ import {
   BufferedTextArea,
 } from '@openmsupply-client/common';
 import { SupplierSearchInput } from '@openmsupply-client/system';
-import { InboundRowFragment, useInbound } from '../api';
+import { InboundRowFragment, useInboundShipment } from '../api';
+import { useInboundFields } from '../api/hooks/utils';
 
 const InboundInfoPanel = ({
   shipment,
@@ -37,10 +38,12 @@ const InboundInfoPanel = ({
 export const Toolbar = () => {
   const t = useTranslation();
 
-  const isDisabled = useInbound.utils.isDisabled();
-  const { data: shipment } = useInbound.document.get();
+  const {
+    query: { data: shipment },
+    isDisabled,
+  } = useInboundShipment();
 
-  const { otherParty, theirReference, update } = useInbound.document.fields([
+  const { otherParty, theirReference, update } = useInboundFields([
     'otherParty',
     'theirReference',
   ]);

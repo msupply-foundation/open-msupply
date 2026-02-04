@@ -24,10 +24,19 @@ import {
   inboundStatuses,
   manualInboundStatuses,
 } from '../../../utils';
-import { InboundFragment, InboundLineFragment, useInbound } from '../../api';
-import { StatusChangeButton } from './StatusChangeButton';
+import {
+  InboundFragment,
+  InboundLineFragment,
+  useInboundShipment,
+} from '../../api';
+import {
+  useInboundDeleteSelectedLines,
+  useZeroInboundLinesQuantity,
+  useSaveInboundLines,
+  useIsInboundDisabled,
+} from '../../api/hooks/utils';
 import { OnHoldButton } from './OnHoldButton';
-import { useIsInboundDisabled } from '../../api/hooks/utils/useIsInboundDisabled';
+import { StatusChangeButton } from './StatusChangeButton';
 
 const createStatusLog = (invoice: InboundFragment) => {
   const statusIdx = inboundStatuses.findIndex(s => invoice.status === s);
@@ -82,16 +91,18 @@ export const FooterComponent = ({
   const changeCampaignOrProgramModal = useEditModal();
   const { invoiceStatusOptions } = usePreferences();
 
-  const { data } = useInbound.document.get();
-  const onDelete = useInbound.lines.deleteSelected(
+  const {
+    query: { data },
+  } = useInboundShipment();
+  const onDelete = useInboundDeleteSelectedLines(
     selectedRows,
     resetRowSelection
   );
-  const onZeroQuantities = useInbound.lines.zeroQuantities(
+  const onZeroQuantities = useZeroInboundLinesQuantity(
     selectedRows,
     resetRowSelection
   );
-  const { mutateAsync } = useInbound.lines.save();
+  const { mutateAsync } = useSaveInboundLines();
   const isDisabled = useIsInboundDisabled();
   const isManuallyCreated = !data?.linkedShipment?.id;
 

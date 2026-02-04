@@ -9,7 +9,7 @@ import {
   ReportContext,
   useNotification,
 } from '@openmsupply-client/common';
-import { useInbound } from '../api';
+import { useInboundShipment } from '../api';
 import { ReportSelector } from '@openmsupply-client/system';
 import { AddButton } from './AddButton';
 import { ScannedBarcode } from '../../types';
@@ -27,8 +27,10 @@ export const AppBarButtonsComponent = ({
   simplifiedTabletView,
 }: AppBarButtonProps) => {
   const { store } = useAuthContext();
-  const isDisabled = useInbound.utils.isDisabled();
-  const { data } = useInbound.document.get();
+  const {
+    query: { data },
+    isDisabled,
+  } = useInboundShipment();
   const { OpenButton } = useDetailPanel();
   const {
     queryParams: { sortBy },

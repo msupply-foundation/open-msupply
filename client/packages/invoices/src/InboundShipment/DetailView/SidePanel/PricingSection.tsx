@@ -19,13 +19,18 @@ import {
   TaxEdit,
   Divider,
 } from '@openmsupply-client/common';
-import { useInbound } from '../../api';
+import { useInboundShipment } from '../../api';
+import {
+  useInboundFields,
+  useInboundServiceLines,
+  useUpdateInboundServiceTax,
+} from '../../api/hooks/utils';
 import { InboundServiceLineEdit } from '../modals';
 import { CurrencyModal, CurrencyRowFragment } from '@openmsupply-client/system';
 
 export const PricingSectionComponent = () => {
   const t = useTranslation();
-  const isDisabled = useInbound.utils.isDisabled();
+  const { isDisabled } = useInboundShipment();
   const serviceLineModal = useToggle(false);
   const { c } = useCurrency();
 
@@ -37,7 +42,7 @@ export const PricingSectionComponent = () => {
     update,
     otherParty,
     currencyRate,
-  } = useInbound.document.fields([
+  } = useInboundFields([
     'pricing',
     'lines',
     'taxPercentage',
@@ -45,8 +50,8 @@ export const PricingSectionComponent = () => {
     'otherParty',
     'currencyRate',
   ]);
-  const { data: serviceLines } = useInbound.lines.serviceLines();
-  const { mutateAsync: updateTax } = useInbound.document.updateTax();
+  const { data: serviceLines } = useInboundServiceLines();
+  const { mutateAsync: updateTax } = useUpdateInboundServiceTax();
   const { c: foreignCurrency } = useCurrency(currency?.code as Currencies);
   const { store } = useAuthContext();
   const isHomeCurrency = store?.homeCurrencyCode === currency?.code;

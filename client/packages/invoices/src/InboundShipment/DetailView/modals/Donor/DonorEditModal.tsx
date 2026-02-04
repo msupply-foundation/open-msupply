@@ -10,7 +10,7 @@ import {
   ApplyToLinesInput,
 } from '@openmsupply-client/common';
 import { useName } from '@openmsupply-client/system';
-import { useInbound } from '../../../api';
+import { useUpdateInbound } from '../../../api/hooks/utils';
 
 interface DonorEditModalProps {
   invoiceId: string;
@@ -38,7 +38,7 @@ export const DonorEditModal = ({
     onClose,
     disableMobileFullScreen: true,
   });
-  const { mutateAsync } = useInbound.document.update();
+  const { mutateAsync } = useUpdateInbound();
 
   const [donor, setDonor] = useState<DonorOption | null>(null);
   const [isDirty, setIsDirty] = useState(false);
