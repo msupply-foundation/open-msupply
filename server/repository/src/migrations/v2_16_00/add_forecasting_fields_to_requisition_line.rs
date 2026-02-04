@@ -74,6 +74,14 @@ impl MigrationFragment for Migrate {
             "#
         )?;
 
+        sql!(
+            connection,
+            r#"
+                DELETE FROM plugin_data 
+                WHERE plugin_code IN ('forecasting_plugins');
+            "#
+        )?;
+
         Ok(())
     }
 }
@@ -81,6 +89,7 @@ impl MigrationFragment for Migrate {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::db_diesel::plugin_data_row::plugin_data;
     use crate::db_diesel::requisition_line_row::requisition_line;
     use crate::{
         migrations::{v2_15_00::V2_15_00, v2_16_00::V2_16_00},
@@ -232,5 +241,13 @@ mod tests {
         ];
 
         assert_eq!(results, expected);
+
+        let remaining_plugin_data_count: i64 = plugin_data::table
+            .filter(plugin_data::plugin_code.eq("forecasting_plugins"))
+            .count()
+            .get_result(connection.lock().connection())
+            .unwrap();
+
+        assert_eq!(remaining_plugin_data_count, 0);
     }
 }
