@@ -25,7 +25,7 @@ import { BarcodeFormat } from '@capacitor-mlkit/barcode-scanning';
 
 export const AddFromScannerButtonComponent = () => {
   const t = useTranslation();
-  const { isConnected, isEnabled, isScanning, scan } =
+  const { isConnected, isEnabled, isListening, scan } =
     useBarcodeScannerContext();
   const { error, info } = useNotification();
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -125,7 +125,7 @@ export const AddFromScannerButtonComponent = () => {
     }
     buttonRef.current?.blur();
 
-    if (isScanning) {
+    if (isListening) {
       return;
     }
 
@@ -137,7 +137,7 @@ export const AddFromScannerButtonComponent = () => {
     }
   };
 
-  const label = isScanning ? t('button.stop') : t('button.scan');
+  const label = isListening ? t('button.stop') : t('button.scan');
   useRegisterActions(
     [
       {
@@ -148,7 +148,7 @@ export const AddFromScannerButtonComponent = () => {
         perform: () => buttonRef.current?.click(),
       },
     ],
-    [isScanning]
+    [isListening]
   );
 
   if (!isEnabled) return null;
@@ -162,7 +162,7 @@ export const AddFromScannerButtonComponent = () => {
           handleClick(e);
         }}
         Icon={
-          isScanning ? (
+          isListening ? (
             <CircularProgress size={20} color="primary" />
           ) : (
             <ScanIcon />
