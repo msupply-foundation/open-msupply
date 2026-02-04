@@ -4,12 +4,14 @@ import { Utils } from './utils';
 
 export * from './useDraftInboundLines';
 export type { PatchDraftLineInput } from './useDraftInboundLines';
+export { useInboundList } from './document/useInboundList';
 
 export const useInbound = {
   document: {
     get: Document.useInbound,
     list: Document.useInbounds,
     listAll: Document.useInboundsAll,
+    listWithDelete: Document.useInboundList,
 
     delete: Document.useInboundDelete,
     insert: Document.useInsertInbound,
