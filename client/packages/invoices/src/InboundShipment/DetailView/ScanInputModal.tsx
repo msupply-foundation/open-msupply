@@ -146,6 +146,53 @@ export const ScanInputModal = ({ lines, invoiceId }: ScanInputModalProps) => {
   const canSubmit =
     (!!draftState.itemId || !!barcodeData) && draftState.quantity > 0;
 
+  const handleSubmit = async () => {
+    const updatedLine: Partial<DraftInboundLine> = {
+      type: InvoiceLineNodeType.StockIn,
+      batch: draftState.batch.trim(),
+      expiryDate: draftState.expiryDate
+        ? draftState.expiryDate.toISOString().substring(0, 10)
+        : null,
+      packSize: draftState.packSize,
+      numberOfPacks: (existingLine?.numberOfPacks || 0) + draftState.quantity,
+      item: {
+        // Only the Item ID is actually required for the mutation, but it's
+        // expecting the full ItemStockOnHandFragment type anyway, hence the
+        // `as` cast
+        id: draftState.itemId || '',
+      } as ItemStockOnHandFragment,
+    };
+
+    if (existingLine) {
+      updatedLine.id = existingLine.id;
+      updatedLine.isUpdated = true;
+    } else {
+      // New line
+      updatedLine.id = FnUtils.generateUUID();
+      updatedLine.isCreated = true;
+      updatedLine.invoiceId = invoiceId;
+      updatedLine.sellPricePerPack = 0;
+      updatedLine.costPricePerPack = 0;
+    }
+
+    await saveSingleLine(updatedLine);
+
+    if (draftState.newGtin) {
+      // Save new barcode to database
+      await saveBarcode({
+        input: {
+          gtin: draftState.newGtin,
+          itemId: draftState.itemId!,
+          packSize: draftState.packSize,
+        },
+      });
+    }
+
+    setDraftState(defaultDraftState);
+    setBarcodeData(null);
+    setIsOpen(false);
+  };
+
   return (
     <Modal
       title={t('heading.scan-product')}
@@ -155,59 +202,7 @@ export const ScanInputModal = ({ lines, invoiceId }: ScanInputModalProps) => {
         <DialogButton
           variant="ok"
           disabled={!canSubmit}
-          onClick={async () => {
-            try {
-              const updatedLine: Partial<DraftInboundLine> = {
-                type: InvoiceLineNodeType.StockIn,
-                batch: draftState.batch.trim(),
-                expiryDate: draftState.expiryDate
-                  ? draftState.expiryDate.toISOString().substring(0, 10)
-                  : null,
-                packSize: draftState.packSize,
-                numberOfPacks:
-                  (existingLine?.numberOfPacks || 0) + draftState.quantity,
-              };
-              if (existingLine) {
-                updatedLine.id = existingLine.id;
-                updatedLine.isUpdated = true;
-              } else {
-                updatedLine.id = FnUtils.generateUUID();
-                updatedLine.isCreated = true;
-                updatedLine.invoiceId = invoiceId;
-                updatedLine.sellPricePerPack = 0;
-                updatedLine.costPricePerPack = 0;
-              }
-              // Only the ID is actually required for the mutation, but it's
-              // expecting the full ItemStockOnHandFragment type anyway, hence
-              // the `as` cast
-              if (draftState.itemId) {
-                updatedLine.item = {
-                  id: draftState.itemId,
-                } as ItemStockOnHandFragment;
-              } else
-                updatedLine.item = {
-                  id: barcodeData?.itemId || '',
-                } as ItemStockOnHandFragment;
-
-              await saveSingleLine(updatedLine);
-
-              if (draftState.newGtin) {
-                // Save new barcode to database
-                await saveBarcode({
-                  input: {
-                    gtin: draftState.newGtin,
-                    itemId: draftState.itemId!,
-                    packSize: draftState.packSize,
-                  },
-                });
-              }
-              setDraftState(defaultDraftState);
-              setBarcodeData(null);
-              setIsOpen(false);
-            } catch (e) {
-              //   error((e as Error).message)();
-            }
-          }}
+          onClick={handleSubmit}
         />
       }
       cancelButton={
