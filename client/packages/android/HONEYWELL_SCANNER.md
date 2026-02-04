@@ -113,10 +113,11 @@ const { available } = await HoneywellScanner.available();
 
 #### `listen(options, callback): Promise<string>`
 
-Sets up a callback to receive scan events and automatically claims exclusive access to the scanner. The callback receives:
+Sets up a callback to receive scan events and automatically claims exclusive access to the scanner. Returns a Promise that resolves with a callback ID.
 
-- First parameter: `{ barcode: string }` on successful scan, `{ error: string }` on scan failure, or `null`
-- Second parameter: error object if an error occurred
+The callback receives two parameters:
+- **data**: `{ barcode: string }` on successful scan, `{ error: string }` on scan failure, or `null` if an error occurred
+- **error**: Error object if the callback itself failed (e.g., scanner unavailable)
 
 Called automatically when using the `useHoneywellScanner` hook with `enabled: true`.
 
