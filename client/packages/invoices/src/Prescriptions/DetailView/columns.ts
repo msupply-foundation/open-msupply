@@ -20,6 +20,12 @@ export const usePrescriptionColumn = () => {
   return useMemo((): ColumnDef<Groupable<PrescriptionLineFragment>>[] => {
     return [
       {
+        accessorKey: 'note',
+        header: t('label.comment'),
+        pin: 'left',
+        columnType: ColumnType.Comment,
+      },
+      {
         accessorKey: 'item.code',
         header: t('label.code'),
         size: 120,
@@ -28,14 +34,9 @@ export const usePrescriptionColumn = () => {
         enableSorting: true,
       },
       {
-        accessorKey: 'note',
-        header: t('label.comment'),
-        columnType: ColumnType.Comment,
-      },
-      {
         accessorKey: 'itemName',
         header: t('label.name'),
-        size: 250,
+        size: 300,
         enableColumnFilter: true,
         enableSorting: true,
       },

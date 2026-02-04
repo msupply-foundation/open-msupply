@@ -105,17 +105,16 @@ export const OutboundShipmentListView = () => {
         defaultHideOnMobile: true,
         Cell: TextWithTooltipCell,
       },
-
+      {
+        accessorKey: 'comment',
+        header: t('label.comment'),
+        columnType: ColumnType.Comment,
+      },
       {
         accessorKey: 'pricing.totalAfterTax',
         header: t('label.total'),
         columnType: ColumnType.Currency,
         defaultHideOnMobile: true,
-      },
-      {
-        accessorKey: 'comment',
-        header: t('label.comment'),
-        columnType: ColumnType.Comment,
       },
     ],
     []

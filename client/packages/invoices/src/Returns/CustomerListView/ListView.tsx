@@ -116,14 +116,14 @@ export const CustomerReturnListView = () => {
         columnType: ColumnType.Date,
       },
       {
-        accessorKey: 'theirReference',
-        header: t('label.reference'),
-        Cell: TextWithTooltipCell,
-      },
-      {
         accessorKey: 'comment',
         header: t('label.comment'),
         columnType: ColumnType.Comment,
+      },
+      {
+        accessorKey: 'theirReference',
+        header: t('label.reference'),
+        Cell: TextWithTooltipCell,
       },
     ],
     []
