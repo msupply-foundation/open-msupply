@@ -64,7 +64,7 @@ const defaultDraftState: FormDraftState = {
 export const ScanInputModal = ({ lines, invoiceId }: ScanInputModalProps) => {
   const t = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
-  const { isConnected, isEnabled, stopScan, startScanning } =
+  const { isConnected, isEnabled, stopScan, startListening } =
     useBarcodeScannerContext();
   const [barcodeData, setBarcodeData] = useState<BarcodeNode | null>(null);
   const [draftState, setDraftState] =
@@ -125,7 +125,7 @@ export const ScanInputModal = ({ lines, invoiceId }: ScanInputModalProps) => {
 
   useEffect(() => {
     if (isEnabled && isConnected) {
-      startScanning(handleScan);
+      startListening(handleScan);
     }
 
     return () => {

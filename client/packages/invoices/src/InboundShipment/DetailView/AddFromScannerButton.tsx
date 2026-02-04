@@ -23,7 +23,7 @@ export const AddFromScannerButtonComponent = ({
 }) => {
   const t = useTranslation();
   const { mutateAsync: getBarcode } = useOutbound.utils.barcode();
-  const { isConnected, isEnabled, isScanning, scan, stopScan } =
+  const { isConnected, isEnabled, isListening, scan, stopScan } =
     useBarcodeScannerContext();
   const { error, warning } = useNotification();
 
@@ -48,7 +48,7 @@ export const AddFromScannerButtonComponent = ({
 
   const handleClick = async () => {
     buttonRef.current?.blur();
-    if (isScanning) {
+    if (isListening) {
       stopScan();
     } else {
       try {
@@ -67,7 +67,7 @@ export const AddFromScannerButtonComponent = ({
     };
   }, []);
 
-  const label = isScanning ? t('button.stop') : t('button.scan');
+  const label = isListening ? t('button.stop') : t('button.scan');
   useRegisterActions(
     [
       {
@@ -78,7 +78,7 @@ export const AddFromScannerButtonComponent = ({
         perform: handleClick,
       },
     ],
-    [isScanning]
+    [isListening]
   );
 
   if (!isEnabled) return null;
@@ -91,7 +91,7 @@ export const AddFromScannerButtonComponent = ({
           disabled={disabled || !isConnected}
           onClick={handleClick}
           Icon={
-            isScanning ? (
+            isListening ? (
               <CircularProgress size={20} color="primary" />
             ) : (
               <ScanIcon />

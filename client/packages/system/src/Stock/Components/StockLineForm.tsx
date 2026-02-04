@@ -68,7 +68,7 @@ export const StockLineForm = ({
 
   const preferences = usePreferences();
 
-  const { isConnected, isEnabled, isScanning, scan } =
+  const { isConnected, isEnabled, isListening, scan } =
     useBarcodeScannerContext();
   const showItemVariantsInput = useIsItemVariantsEnabled();
   const { plugins } = usePluginProvider();
@@ -327,10 +327,10 @@ export const StockLineForm = ({
                         >
                           <Box>
                             <IconButton
-                              disabled={isScanning || !isConnected}
+                              disabled={isListening || !isConnected}
                               onClick={scanBarcode}
                               icon={
-                                isScanning ? (
+                                isListening ? (
                                   <CircularProgress
                                     size={20}
                                     color="secondary"
