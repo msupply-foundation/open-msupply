@@ -26,7 +26,6 @@ export const BarcodeScannerTest = () => {
   const [scanResults, setScanResults] = useState<ScanResult[]>([]);
   const [error, setError] = useState<string | null>(null);
   const {
-    isScanning,
     isListening,
     isEnabled,
     startListening,
@@ -38,8 +37,7 @@ export const BarcodeScannerTest = () => {
   useEffect(() => {
     // Auto-start scanning for Honeywell and Manual when page loads
     if (!isListening && supportsContinuousScanning) {
-      console.log('Auto-starting scanner listening for test page');
-      // handleStartScanning();
+      handleStartScanning();
     }
 
     // Cleanup on unmount
@@ -54,13 +52,11 @@ export const BarcodeScannerTest = () => {
 
   const handleStartScanning = async () => {
     try {
-      console.log('Starting scanner listening for test page');
       await startListening((result, err) => {
         if (err) {
           setError(`${t('messages.scanning-error')}: ${err}`);
           return;
         }
-
         setScanResults(prev => [
           {
             text: result.content || '',
@@ -70,7 +66,6 @@ export const BarcodeScannerTest = () => {
           ...prev,
         ]);
       });
-      console.log('Started listening for scans');
     } catch (e) {
       console.error('Error starting scanner listening:', e);
       const errorMsg = (e as Error)?.message || t('messages.unknown-error');
@@ -184,10 +179,6 @@ export const BarcodeScannerTest = () => {
           {isListening
             ? `🟢 ${t('label.active')}`
             : `🔴 ${t('label.inactive')}`}
-        </Typography>
-        <Typography sx={{ mt: 1 }}>
-          <strong>{t('button.scanning')}:</strong>{' '}
-          {isScanning ? `🟢 ${t('label.active')}` : `🔴 ${t('label.inactive')}`}
         </Typography>
       </Paper>
 

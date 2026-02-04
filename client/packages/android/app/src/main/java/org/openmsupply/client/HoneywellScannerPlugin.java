@@ -92,76 +92,30 @@ public class HoneywellScannerPlugin extends Plugin implements BarcodeReader.Barc
         barcodeReader.setProperties(properties);
     }
 
-    @PluginMethod
-    public void softwareTriggerStart(PluginCall call) {
-        if (barcodeReader != null) {
-            try {
-                barcodeReader.softwareTrigger(true);
-                call.resolve();
-            } catch (ScannerNotClaimedException e) {
-                Log.e(TAG, "Scanner not claimed", e);
-                call.reject("Scanner not claimed", e);
-            } catch (ScannerUnavailableException e) {
-                Log.e(TAG, "Scanner unavailable", e);
-                call.reject("Scanner unavailable", e);
-            }
-        } else {
-            call.reject("Barcode reader not initialized");
-        }
-    }
 
-    @PluginMethod
-    public void softwareTriggerStop(PluginCall call) {
-        if (barcodeReader != null) {
-            try {
-                barcodeReader.softwareTrigger(false);
-                call.resolve();
-            } catch (ScannerNotClaimedException e) {
-                Log.e(TAG, "Scanner not claimed", e);
-                call.reject("Scanner not claimed", e);
-            } catch (ScannerUnavailableException e) {
-                Log.e(TAG, "Scanner unavailable", e);
-                call.reject("Scanner unavailable", e);
-            }
-        } else {
-            call.reject("Barcode reader not initialized");
-        }
-    }
 
     @PluginMethod(returnType = PluginMethod.RETURN_CALLBACK)
     public void listen(PluginCall call) {
+        if (barcodeReader == null) {
+            call.reject("Barcode reader not initialized");
+            return;
+        }
+        
+        // Claim the scanner
+        try {
+            barcodeReader.claim();
+            Log.i(TAG, "Scanner claimed");
+        } catch (ScannerUnavailableException e) {
+            Log.e(TAG, "Scanner unavailable", e);
+            call.reject("Scanner unavailable", e);
+            return;
+        }
+        
         // Save the call to send events back
         listenerCall = call;
         call.setKeepAlive(true);
         
-        // Stop any ongoing scan
-        if (barcodeReader != null) {
-            try {
-                barcodeReader.softwareTrigger(false);
-            } catch (Exception e) {
-                Log.e(TAG, "Error stopping trigger in listen", e);
-            }
-        }
-    }
-
-    @PluginMethod
-    public void claim(PluginCall call) {
-        if (barcodeReader != null) {
-            try {
-                barcodeReader.claim();
-                // Stop any ongoing scan
-                barcodeReader.softwareTrigger(false);
-                call.resolve();
-            } catch (ScannerUnavailableException e) {
-                Log.e(TAG, "Scanner unavailable", e);
-                call.reject("Scanner unavailable", e);
-            } catch (Exception e) {
-                Log.e(TAG, "Error in claim", e);
-                call.reject("Error claiming scanner", e);
-            }
-        } else {
-            call.reject("Barcode reader not initialized");
-        }
+        Log.i(TAG, "Listening for scans");
     }
 
     @PluginMethod
@@ -190,49 +144,37 @@ public class HoneywellScannerPlugin extends Plugin implements BarcodeReader.Barc
 
     @Override
     public void onBarcodeEvent(BarcodeReadEvent barcodeReadEvent) {
+        Log.i(TAG, "Barcode read event received");
         if (listenerCall != null) {
             JSObject data = new JSObject();
             data.put("barcode", barcodeReadEvent.getBarcodeData());
             data.put("type", "scan");
+            
+            // Resolve with data and keep callback alive
             listenerCall.resolve(data);
-        }
-        
-        // Stop the trigger after a successful scan
-        if (barcodeReader != null) {
-            try {
-                barcodeReader.softwareTrigger(false);
-            } catch (Exception e) {
-                Log.e(TAG, "Error stopping trigger after scan", e);
-            }
         }
     }
 
     @Override
     public void onFailureEvent(BarcodeFailureEvent barcodeFailureEvent) {
+        Log.i(TAG, "Barcode read failure received");
         if (listenerCall != null) {
             JSObject data = new JSObject();
             data.put("error", "Scan has failed");
             data.put("type", "error");
+            
+            // Reject with error message and keep callback alive
             listenerCall.reject("Scan has failed");
-        }
-        
-        // Stop the trigger after a failed scan
-        if (barcodeReader != null) {
-            try {
-                barcodeReader.softwareTrigger(false);
-            } catch (Exception e) {
-                Log.e(TAG, "Error stopping trigger after failure", e);
-            }
         }
     }
 
     @Override
     protected void handleOnResume() {
+        Log.i(TAG, "Barcode handleOnResume");
         super.handleOnResume();
         if (barcodeReader != null) {
             try {
                 barcodeReader.claim();
-                barcodeReader.softwareTrigger(false);
             } catch (ScannerUnavailableException e) {
                 Log.e(TAG, "Scanner unavailable on resume", e);
             } catch (Exception e) {
@@ -243,11 +185,11 @@ public class HoneywellScannerPlugin extends Plugin implements BarcodeReader.Barc
 
     @Override
     protected void handleOnPause() {
+        Log.i(TAG, "Barcode handleOnPause");
         super.handleOnPause();
         if (barcodeReader != null) {
             try {
                 barcodeReader.release();
-                barcodeReader.softwareTrigger(false);
             } catch (Exception e) {
                 Log.e(TAG, "Error on pause", e);
             }
@@ -256,6 +198,7 @@ public class HoneywellScannerPlugin extends Plugin implements BarcodeReader.Barc
 
     @Override
     protected void handleOnDestroy() {
+        Log.i(TAG, "Barcode handleOnDestroy");
         super.handleOnDestroy();
         
         if (barcodeReader != null) {

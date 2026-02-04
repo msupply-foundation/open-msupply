@@ -2,12 +2,13 @@ import { Capacitor, registerPlugin } from '@capacitor/core';
 import { useEffect, useCallback } from 'react';
 
 export interface HoneywellScannerPlugin {
-  softwareTriggerStart(): Promise<void>;
-  softwareTriggerStop(): Promise<void>;
   listen(
-    callback: (data: { barcode: string } | { error: string }) => void
-  ): Promise<void>;
-  claim(): Promise<void>;
+    options: object,
+    callback: (
+      data: { barcode: string } | { error: string } | null,
+      error?: any
+    ) => void
+  ): Promise<string>;
   release(): Promise<void>;
   available(): Promise<{ available: boolean }>;
 }
@@ -36,12 +37,17 @@ export const useHoneywellScanner = ({
 
     const setupListener = async () => {
       try {
-        await HoneywellScanner.listen(data => {
+        await HoneywellScanner.listen({}, (data, error) => {
           if (!isMounted) return;
 
-          if ('barcode' in data) {
+          if (error) {
+            onError?.(error);
+            return;
+          }
+
+          if (data && 'barcode' in data) {
             onScan?.(data.barcode);
-          } else if ('error' in data) {
+          } else if (data && 'error' in data) {
             onError?.(data.error);
           }
         });
@@ -57,38 +63,6 @@ export const useHoneywellScanner = ({
       isMounted = false;
     };
   }, [isAvailable, enabled, onScan, onError]);
-
-  const startScan = useCallback(async () => {
-    if (!isAvailable) {
-      throw new Error('Honeywell scanner is not available on this device');
-    }
-    try {
-      await HoneywellScanner.softwareTriggerStart();
-    } catch (error) {
-      console.error('Failed to start Honeywell scanner:', error);
-      throw error;
-    }
-  }, [isAvailable]);
-
-  const stopScan = useCallback(async () => {
-    if (!isAvailable) return;
-    try {
-      await HoneywellScanner.softwareTriggerStop();
-    } catch (error) {
-      console.error('Failed to stop Honeywell scanner:', error);
-      throw error;
-    }
-  }, [isAvailable]);
-
-  const claim = useCallback(async () => {
-    if (!isAvailable) return;
-    try {
-      await HoneywellScanner.claim();
-    } catch (error) {
-      console.error('Failed to claim Honeywell scanner:', error);
-      throw error;
-    }
-  }, [isAvailable]);
 
   const release = useCallback(async () => {
     if (!isAvailable) return;
@@ -112,9 +86,6 @@ export const useHoneywellScanner = ({
   }, [isAvailable]);
 
   return {
-    startScan,
-    stopScan,
-    claim,
     release,
     checkAvailable,
     isAvailable,
