@@ -22,6 +22,7 @@ import {
 import { AppBarButtons } from './AppBarButtons';
 import { useOutbound } from '../api';
 import { OutboundRowFragment } from '../api/operations.generated';
+import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
 
 export const OutboundShipmentListView = () => {
@@ -142,6 +143,7 @@ export const OutboundShipmentListView = () => {
 
   return (
     <>
+      <Toolbar filter={filter} />
       <AppBarButtons
         modalController={modalController}
         simplifiedTabletView={simplifiedTabletView}

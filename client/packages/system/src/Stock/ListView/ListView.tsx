@@ -20,6 +20,7 @@ import { AppBarButtons } from './AppBarButtons';
 import { useStockList } from '../api/hooks/useStockList';
 import { NewStockLineModal } from '../Components/NewStockLineModal';
 import { ExpiryDateCell } from '@openmsupply-client/common/src/ui/layout/tables/material-react-table/components/ExpiryDateCell';
+import { Toolbar } from './Toolbar';
 
 export const StockListView = () => {
   const {
@@ -232,6 +233,7 @@ export const StockListView = () => {
 
   return (
     <>
+      <Toolbar />
       <AppBarButtons exportFilter={filterBy} />
       {plugins.stockLine?.tableStateLoader?.map((StateLoader, index) => (
         <StateLoader key={index} stockLines={data?.nodes ?? []} />
