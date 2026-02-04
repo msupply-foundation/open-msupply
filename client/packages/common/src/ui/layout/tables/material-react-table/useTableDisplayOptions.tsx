@@ -17,7 +17,7 @@ import {
 } from '@common/icons';
 import { MenuItem, Typography, alpha } from '@mui/material';
 import { ColumnDef } from './types';
-import { IconButton } from '@common/components';
+import { IconButton, useConfirmationModal } from '@common/components';
 import { useTranslation } from '@common/intl';
 import { EnvUtils } from '@common/utils';
 
@@ -46,6 +46,12 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
   muiTableBodyRowProps?: MRT_TableOptions<T>['muiTableBodyRowProps'];
 }): Partial<MRT_TableOptions<T>> => {
   const t = useTranslation();
+
+  const getConfirmation = useConfirmationModal({
+    title: t('heading.are-you-sure'),
+    message: t('messages.reset-table-defaults'),
+    onConfirm: resetTableState,
+  });
 
   return {
     // Add description to column menu
@@ -88,7 +94,7 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
         <MRT_ShowHideColumnsButton table={table} />
         <IconButton
           icon={<RefreshIcon />}
-          onClick={resetTableState}
+          onClick={() => getConfirmation()}
           label={t('label.reset-table-defaults')}
           disabled={!hasSavedState}
           sx={iconButtonProps}
