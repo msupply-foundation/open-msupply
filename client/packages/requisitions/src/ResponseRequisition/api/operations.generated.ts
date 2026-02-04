@@ -139,12 +139,19 @@ export type ResponseLineFragment = {
     reason: string;
     isActive: boolean;
   } | null;
-  availableVolumeByLocationType?: {
-    __typename: 'AvailableVolumeAtLocationType';
+  availableVolumeAtLocationType?: {
+    __typename: 'AvailableVolumeAtLocationTypeNode';
     availableVolume: number;
     itemVolumePerUnit: number;
     locationType: { __typename: 'LocationTypeNode'; name: string };
   } | null;
+};
+
+export type AvailableVolumeAtLocationTypeFragment = {
+  __typename: 'AvailableVolumeAtLocationTypeNode';
+  availableVolume: number;
+  itemVolumePerUnit: number;
+  locationType: { __typename: 'LocationTypeNode'; name: string };
 };
 
 export type ResponseFragment = {
@@ -268,8 +275,8 @@ export type ResponseFragment = {
         reason: string;
         isActive: boolean;
       } | null;
-      availableVolumeByLocationType?: {
-        __typename: 'AvailableVolumeAtLocationType';
+      availableVolumeAtLocationType?: {
+        __typename: 'AvailableVolumeAtLocationTypeNode';
         availableVolume: number;
         itemVolumePerUnit: number;
         locationType: { __typename: 'LocationTypeNode'; name: string };
@@ -437,8 +444,8 @@ export type ResponseByNumberQuery = {
               reason: string;
               isActive: boolean;
             } | null;
-            availableVolumeByLocationType?: {
-              __typename: 'AvailableVolumeAtLocationType';
+            availableVolumeAtLocationType?: {
+              __typename: 'AvailableVolumeAtLocationTypeNode';
               availableVolume: number;
               itemVolumePerUnit: number;
               locationType: { __typename: 'LocationTypeNode'; name: string };
@@ -614,8 +621,8 @@ export type ResponseByIdQuery = {
               reason: string;
               isActive: boolean;
             } | null;
-            availableVolumeByLocationType?: {
-              __typename: 'AvailableVolumeAtLocationType';
+            availableVolumeAtLocationType?: {
+              __typename: 'AvailableVolumeAtLocationTypeNode';
               availableVolume: number;
               itemVolumePerUnit: number;
               locationType: { __typename: 'LocationTypeNode'; name: string };
@@ -1163,6 +1170,15 @@ export type HasCustomerProgramRequisitionSettingsQuery = {
   hasCustomerProgramRequisitionSettings: boolean;
 };
 
+export const AvailableVolumeAtLocationTypeFragmentDoc = gql`
+  fragment AvailableVolumeAtLocationType on AvailableVolumeAtLocationTypeNode {
+    locationType {
+      name
+    }
+    availableVolume
+    itemVolumePerUnit
+  }
+`;
 export const ResponseLineFragmentDoc = gql`
   fragment ResponseLine on RequisitionLineNode {
     id
@@ -1209,16 +1225,13 @@ export const ResponseLineFragmentDoc = gql`
     reason {
       ...ReasonOptionRow
     }
-    availableVolumeByLocationType {
-      locationType {
-        name
-      }
-      availableVolume
-      itemVolumePerUnit
+    availableVolumeAtLocationType {
+      ...AvailableVolumeAtLocationType
     }
   }
   ${ItemWithStatsFragmentDoc}
   ${ReasonOptionRowFragmentDoc}
+  ${AvailableVolumeAtLocationTypeFragmentDoc}
 `;
 export const ResponseFragmentDoc = gql`
   fragment Response on RequisitionNode {

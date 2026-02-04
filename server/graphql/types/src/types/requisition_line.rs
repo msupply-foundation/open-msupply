@@ -31,7 +31,7 @@ pub struct RequisitionLineConnector {
 }
 
 #[derive(PartialEq, Debug, SimpleObject)]
-pub struct AvailableVolumeAtLocationType {
+pub struct AvailableVolumeAtLocationTypeNode {
     location_type: LocationTypeNode,
     available_volume: f64,
     item_volume_per_unit: f64,
@@ -306,10 +306,10 @@ impl RequisitionLineNode {
         &self.requisition_row().id
     }
 
-    pub async fn available_volume_by_location_type(
+    pub async fn available_volume_at_location_type(
         &self,
         ctx: &Context<'_>,
-    ) -> Option<AvailableVolumeAtLocationType> {
+    ) -> Option<AvailableVolumeAtLocationTypeNode> {
         let loader = ctx.get_loader::<DataLoader<AvailableVolumeOnRequisitionLoader>>();
 
         let result_option = loader
@@ -325,7 +325,7 @@ impl RequisitionLineNode {
             result_option
         {
             let location_type = LocationTypeNode::from_domain(location_type_row);
-            return Some(AvailableVolumeAtLocationType::new(
+            return Some(AvailableVolumeAtLocationTypeNode::new(
                 location_type,
                 available_volume,
                 item_volume_per_unit,
@@ -366,13 +366,13 @@ impl RequisitionLineNode {
     }
 }
 
-impl AvailableVolumeAtLocationType {
+impl AvailableVolumeAtLocationTypeNode {
     pub fn new(
         location_type: LocationTypeNode,
         available_volume: f64,
         item_volume_per_unit: f64,
     ) -> Self {
-        AvailableVolumeAtLocationType {
+        AvailableVolumeAtLocationTypeNode {
             location_type,
             available_volume,
             item_volume_per_unit,
@@ -415,7 +415,6 @@ mod test {
                         requisition_line_row: TestData::line_to_supply_q5(),
                         requisition_row: TestData::requisition(),
                         item_row: mock_item_a(),
-                        ..Default::default()
                     },
                 }
             }
@@ -426,7 +425,6 @@ mod test {
                         requisition_line_row: TestData::line_to_supply_q2(),
                         requisition_row: TestData::requisition(),
                         item_row: mock_item_b(),
-                        ..Default::default()
                     },
                 }
             }
@@ -437,7 +435,6 @@ mod test {
                         requisition_line_row: TestData::line_to_supply_q1(),
                         requisition_row: TestData::requisition(),
                         item_row: mock_item_c(),
-                        ..Default::default()
                     },
                 }
             }
@@ -448,7 +445,6 @@ mod test {
                         requisition_line_row: TestData::line_to_supply_q0(),
                         requisition_row: TestData::requisition(),
                         item_row: mock_item_d(),
-                        ..Default::default()
                     },
                 }
             }

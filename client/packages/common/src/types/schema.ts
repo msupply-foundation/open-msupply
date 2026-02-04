@@ -745,8 +745,8 @@ export type AuthTokenErrorInterface = {
 
 export type AuthTokenResponse = AuthToken | AuthTokenError;
 
-export type AvailableVolumeAtLocationType = {
-  __typename: 'AvailableVolumeAtLocationType';
+export type AvailableVolumeAtLocationTypeNode = {
+  __typename: 'AvailableVolumeAtLocationTypeNode';
   availableVolume: Scalars['Float']['output'];
   itemVolumePerUnit: Scalars['Float']['output'];
   locationType: LocationTypeNode;
@@ -4897,6 +4897,7 @@ export type ItemNode = {
   itemStoreProperties?: Maybe<ItemStorePropertiesNode>;
   margin: Scalars['Float']['output'];
   masterLists?: Maybe<Array<MasterListNode>>;
+  /** @deprecated Since 2.16.0. Use universalCode instead */
   msupplyUniversalCode: Scalars['String']['output'];
   msupplyUniversalName: Scalars['String']['output'];
   name: Scalars['String']['output'];
@@ -8775,7 +8776,7 @@ export type RequisitionLineNode = {
   approvalComment?: Maybe<Scalars['String']['output']>;
   approvedQuantity: Scalars['Float']['output'];
   availableStockOnHand: Scalars['Float']['output'];
-  availableVolumeByLocationType?: Maybe<AvailableVolumeAtLocationType>;
+  availableVolumeAtLocationType?: Maybe<AvailableVolumeAtLocationTypeNode>;
   averageMonthlyConsumption: Scalars['Float']['output'];
   comment?: Maybe<Scalars['String']['output']>;
   daysOutOfStock: Scalars['Float']['output'];

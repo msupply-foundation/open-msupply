@@ -109,13 +109,17 @@ fragment ResponseLine on RequisitionLineNode {
     ...ReasonOptionRow
   }
 
-  availableVolumeByLocationType {
-    locationType {
-      name
-    }
-    availableVolume
-    itemVolumePerUnit
+  availableVolumeAtLocationType {
+    ...AvailableVolumeAtLocationType
   }
+}
+
+fragment AvailableVolumeAtLocationType on AvailableVolumeAtLocationTypeNode {
+  locationType {
+    name
+  }
+  availableVolume
+  itemVolumePerUnit
 }
 
 fragment Response on RequisitionNode {
