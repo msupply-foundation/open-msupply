@@ -102,7 +102,7 @@ mod number_row;
 pub mod patient;
 pub mod period;
 pub mod plugin_data;
-mod plugin_data_row;
+pub mod plugin_data_row;
 pub mod preference;
 mod preference_row;
 pub mod printer;
