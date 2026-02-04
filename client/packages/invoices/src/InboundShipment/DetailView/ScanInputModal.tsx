@@ -15,16 +15,12 @@ import {
 import { FnUtils, ScanResult, useBarcodeScannerContext } from '@common/utils';
 import React, { useEffect, useState } from 'react';
 import { useOutbound } from '../../OutboundShipment/api';
-import {
-  BarcodeNode,
-  InvoiceLineNode,
-  InvoiceLineNodeType,
-} from '@common/types';
+import { BarcodeNode, InvoiceLineNodeType } from '@common/types';
 import {
   ItemStockOnHandFragment,
   StockItemSearchInput,
 } from '@openmsupply-client/system';
-import { useDraftInboundLines } from '../api';
+import { InboundLineFragment, useDraftInboundLines } from '../api';
 import { DraftInboundLine } from '../../types';
 
 interface Message {
@@ -33,7 +29,7 @@ interface Message {
 }
 
 interface ScanInputModalProps {
-  lines: InvoiceLineNode[];
+  lines: InboundLineFragment[];
   invoiceId: string;
 }
 
@@ -215,13 +211,7 @@ export const ScanInputModal = ({ lines, invoiceId }: ScanInputModalProps) => {
         />
       }
     >
-      <Box
-        display="flex"
-        // justifyContent="space-between"
-        // alignItems="center"
-        flexDirection="column"
-        gap={1}
-      >
+      <Box display="flex" flexDirection="column" gap={1}>
         <Typography>
           <strong>{t('label.barcode')}:</strong> {draftState.barcodeContent}
         </Typography>
@@ -310,16 +300,16 @@ export const ScanInputModal = ({ lines, invoiceId }: ScanInputModalProps) => {
 const getMessage = (
   barcodeData: BarcodeNode | null,
   draftState: FormDraftState,
-  existingLine: InvoiceLineNode | undefined,
+  existingLine: InboundLineFragment | undefined,
   t: TypedTFunction<LocaleKey>
 ): Message => {
-  if (!barcodeData && !draftState.newGtin && !draftState.item)
+  if (!barcodeData && !draftState.newGtin && !draftState.itemId)
     return {
       type: 'error',
       text: t('messages.unknown-barcode-no-gtin'),
     };
 
-  if (!barcodeData && !!draftState.newGtin && !draftState.item)
+  if (!barcodeData && !!draftState.newGtin && !draftState.itemId)
     return {
       type: 'warning',
       text: t('messages.unknown-gtin'),
