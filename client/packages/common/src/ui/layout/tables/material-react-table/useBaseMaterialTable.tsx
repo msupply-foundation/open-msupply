@@ -110,7 +110,6 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
     columnVisibility.hasSavedState ||
     columnOrder.hasSavedState;
 
-  /// confirm before this here
   const resetTableState = () => {
     clearSavedState(tableId);
 
