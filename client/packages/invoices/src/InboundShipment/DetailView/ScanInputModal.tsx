@@ -38,7 +38,7 @@ interface ScanInputModalProps {
 }
 
 interface FormDraftState {
-  item: ItemStockOnHandFragment | null;
+  itemId: string | null;
   batch: string;
   expiryDate: Date | null;
   packSize: number;
@@ -52,7 +52,7 @@ interface FormDraftState {
 }
 
 const defaultDraftState: FormDraftState = {
-  item: null,
+  itemId: null,
   batch: '',
   expiryDate: null,
   packSize: 1,
@@ -137,8 +137,8 @@ export const ScanInputModal = ({ lines, invoiceId }: ScanInputModalProps) => {
 
   const message: Message = getMessage(barcodeData, draftState, existingLine, t);
 
-  const isFormValid =
-    (!!draftState.item || !!barcodeData) && draftState.quantity > 0;
+  const canSubmit =
+    (!!draftState.itemId || !!barcodeData) && draftState.quantity > 0;
 
   return (
     <Modal
@@ -148,7 +148,7 @@ export const ScanInputModal = ({ lines, invoiceId }: ScanInputModalProps) => {
       okButton={
         <DialogButton
           variant="ok"
-          disabled={!isFormValid}
+          disabled={!canSubmit}
           onClick={async () => {
             try {
               const updatedLine: Partial<DraftInboundLine> = {
@@ -171,13 +171,17 @@ export const ScanInputModal = ({ lines, invoiceId }: ScanInputModalProps) => {
                 updatedLine.sellPricePerPack = 0;
                 updatedLine.costPricePerPack = 0;
               }
-              if (draftState.item) {
-                updatedLine.item = draftState.item;
+              // Only the ID is actually required for the mutation, but it's
+              // expecting the full ItemStockOnHandFragment type anyway, hence
+              // the `as` cast
+              if (draftState.itemId) {
+                updatedLine.item = {
+                  id: draftState.itemId,
+                } as ItemStockOnHandFragment;
               } else
                 updatedLine.item = {
                   id: barcodeData?.itemId || '',
                 } as ItemStockOnHandFragment;
-              console.log('Existing line:', existingLine);
 
               await saveSingleLine(updatedLine);
 
@@ -186,7 +190,7 @@ export const ScanInputModal = ({ lines, invoiceId }: ScanInputModalProps) => {
                 await saveBarcode({
                   input: {
                     gtin: draftState.newGtin,
-                    itemId: draftState.item?.id!,
+                    itemId: draftState.itemId!,
                     packSize: draftState.packSize,
                   },
                 });
@@ -229,7 +233,7 @@ export const ScanInputModal = ({ lines, invoiceId }: ScanInputModalProps) => {
               autoFocus={!barcodeData}
               // openOnFocus={!barcodeItem}
               disabled={!!barcodeData}
-              currentItemId={draftState.item?.id || barcodeData?.itemId || null}
+              currentItemId={draftState.itemId || barcodeData?.itemId || null}
               onChange={newItem => onChangeItem(newItem)}
               // filter={{ id: { notEqualAll: existingItemIds } }}
               // A scanned-in item will only have an ID, not a full item object,
