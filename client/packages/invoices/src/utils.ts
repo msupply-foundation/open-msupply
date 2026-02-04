@@ -120,20 +120,20 @@ export const getNextStatusOption = (
 
 export const getButtonLabel =
   (t: ReturnType<typeof useTranslation>) =>
-  (invoiceStatus: InvoiceNodeStatus): string => {
-    return t('button.save-and-confirm-status', {
-      status: getStatusTranslator(t)(invoiceStatus),
-    });
-  };
+    (invoiceStatus: InvoiceNodeStatus): string => {
+      return t('button.save-and-confirm-status', {
+        status: getStatusTranslator(t)(invoiceStatus),
+      });
+    };
 
 export const getStatusTranslator =
   (t: ReturnType<typeof useTranslation>) =>
-  (currentStatus: InvoiceNodeStatus): string => {
-    return t(
-      statusTranslation[currentStatus] ??
+    (currentStatus: InvoiceNodeStatus): string => {
+      return t(
+        statusTranslation[currentStatus] ??
         statusTranslation[InvoiceNodeStatus.New]
-    );
-  };
+      );
+    };
 
 export const isOutboundDisabled = (
   outbound: OutboundRowFragment | SupplierReturnRowFragment
@@ -188,8 +188,8 @@ export const isCustomerReturnDisabled = (
   return isManuallyCreated
     ? customerReturn.status === InvoiceNodeStatus.Verified
     : customerReturn.status === InvoiceNodeStatus.Picked ||
-        customerReturn.status === InvoiceNodeStatus.Shipped ||
-        customerReturn.status === InvoiceNodeStatus.Verified;
+    customerReturn.status === InvoiceNodeStatus.Shipped ||
+    customerReturn.status === InvoiceNodeStatus.Verified;
 };
 
 export const isPrescriptionDisabled = (
@@ -211,7 +211,7 @@ export const isInboundListItemDisabled = (
   return isManuallyCreated
     ? inbound.status === InvoiceNodeStatus.Verified
     : inbound.status === InvoiceNodeStatus.Picked ||
-        inbound.status === InvoiceNodeStatus.Verified;
+    inbound.status === InvoiceNodeStatus.Verified;
 };
 
 export const isInboundPlaceholderRow = (row: InboundLineFragment): boolean =>
@@ -228,7 +228,7 @@ export const isInboundStatusChangeDisabled = (
   return isManuallyCreated
     ? inbound.status === InvoiceNodeStatus.Verified
     : inbound.status === InvoiceNodeStatus.Picked ||
-        inbound.status === InvoiceNodeStatus.Verified;
+    inbound.status === InvoiceNodeStatus.Verified;
 };
 
 export const createSummaryItem = (
@@ -281,6 +281,9 @@ export const canDeletePrescription = (
 ): boolean =>
   invoice.status === InvoiceNodeStatus.New ||
   invoice.status === InvoiceNodeStatus.Picked;
+
+export const canDeleteInbound = (inbound: InboundRowFragment): boolean =>
+  inbound.status === InvoiceNodeStatus.New;
 
 export const canReturnInboundLines = (inbound: InboundFragment): boolean =>
   inbound.status === InvoiceNodeStatus.Delivered ||

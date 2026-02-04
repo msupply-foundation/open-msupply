@@ -11,6 +11,7 @@ import {
   useListInternalOrdersPromise,
 } from './useListInternalOrders';
 import { useListInternalOrderLines } from './useListInternalOrderLines';
+import { useInboundList } from './useInboundList';
 
 export const Document = {
   useInboundDelete,
@@ -24,4 +25,5 @@ export const Document = {
   useListInternalOrders,
   useListInternalOrdersPromise,
   useListInternalOrderLines,
+  useInboundList,
 };

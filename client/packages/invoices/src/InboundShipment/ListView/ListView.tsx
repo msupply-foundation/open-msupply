@@ -21,8 +21,8 @@ import {
   isInboundDisabled,
   isInboundListItemDisabled,
 } from '../../utils';
-import { useInbound, InboundRowFragment } from '../api';
 import { Toolbar } from './Toolbar';
+import { useInbound, InboundRowFragment, useInboundList } from '../api';
 import { Footer } from './Footer';
 
 export const InboundListView = () => {
@@ -40,7 +40,9 @@ export const InboundListView = () => {
     queryParams: { first, offset, sortBy, filterBy },
   } = useUrlQueryParams({
     initialSort: { key: 'invoiceNumber', dir: 'desc' },
-    ...isExtraSmallScreen && { initialFilter: [{ id: 'status', value: 'NEW,DELIVERED,RECEIVED' }] },
+    ...(isExtraSmallScreen && {
+      initialFilter: [{ id: 'status', value: 'NEW,DELIVERED,RECEIVED' }],
+    }),
     filters: [
       { key: 'invoiceNumber', condition: 'equalTo', isNumber: true },
       { key: 'otherPartyName' },
@@ -59,7 +61,9 @@ export const InboundListView = () => {
     filterBy,
   };
 
-  const { data, isFetching } = useInbound.document.list(listParams);
+  const {
+    query: { data, isFetching },
+  } = useInboundList(listParams);
   const statuses = inboundStatuses.filter(status =>
     invoiceStatusOptions?.includes(status)
   );
