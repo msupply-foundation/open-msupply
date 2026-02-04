@@ -26,10 +26,10 @@ import {
   RequisitionNodeStatus,
   UserPermission,
 } from '@common/types';
-import { useDashboard } from '../api';
 import { useInbound } from '@openmsupply-client/invoices';
 import { SupplierSearchModal } from '@openmsupply-client/system';
 import { AppRoute } from '@openmsupply-client/config';
+import { useInboundCounts, useInternalOrderCounts } from '../api';
 
 export const ReplenishmentWidget: React.FC<PropsWithChildrenOnly> = () => {
   const t = useTranslation();
@@ -38,13 +38,8 @@ export const ReplenishmentWidget: React.FC<PropsWithChildrenOnly> = () => {
   const formatNumber = useFormatNumber();
   const { userHasPermission } = useAuthContext();
   const navigate = useNavigate();
-  const { data, isLoading, isError, error } = useDashboard.statistics.inbound();
-  const {
-    data: requisitionCount,
-    isLoading: isRequisitionCountLoading,
-    isError: isRequisitionCountError,
-    error: requisitionCountError,
-  } = useDashboard.statistics.requisitions();
+  const inbound = useInboundCounts();
+  const internalOrder = useInternalOrderCounts();
 
   const { customDate, urlQueryDateTime } = useFormatDateTime();
 
@@ -123,14 +118,14 @@ export const ReplenishmentWidget: React.FC<PropsWithChildrenOnly> = () => {
         >
           <Grid>
             <StatsPanel
-              error={error as ApiException}
-              isError={isError}
-              isLoading={isLoading}
+              error={inbound.error as ApiException}
+              isError={inbound.isError}
+              isLoading={inbound.isLoading}
               title={t('inbound-shipment')}
               stats={[
                 {
                   label: t('label.today'),
-                  value: formatNumber.round(data?.today),
+                  value: formatNumber.round(inbound.stats?.today),
                   link: RouteBuilder.create(AppRoute.Replenishment)
                     .addPart(AppRoute.InboundShipment)
                     .addQuery({
@@ -140,7 +135,7 @@ export const ReplenishmentWidget: React.FC<PropsWithChildrenOnly> = () => {
                 },
                 {
                   label: t('label.this-week'),
-                  value: formatNumber.round(data?.thisWeek),
+                  value: formatNumber.round(inbound.stats?.thisWeek),
                   link: RouteBuilder.create(AppRoute.Replenishment)
                     .addPart(AppRoute.InboundShipment)
                     .addQuery({
@@ -150,7 +145,7 @@ export const ReplenishmentWidget: React.FC<PropsWithChildrenOnly> = () => {
                 },
                 {
                   label: t('label.inbound-not-delivered'),
-                  value: formatNumber.round(data?.notDelivered),
+                  value: formatNumber.round(inbound.stats?.notDelivered),
                   link: RouteBuilder.create(AppRoute.Replenishment)
                     .addPart(AppRoute.InboundShipment)
                     .addQuery({ status: InvoiceNodeStatus.Shipped })
@@ -164,14 +159,14 @@ export const ReplenishmentWidget: React.FC<PropsWithChildrenOnly> = () => {
           </Grid>
           <Grid>
             <StatsPanel
-              error={requisitionCountError as ApiException}
-              isError={isRequisitionCountError}
-              isLoading={isRequisitionCountLoading}
+              error={internalOrder.error as ApiException}
+              isError={internalOrder.isError}
+              isLoading={internalOrder.isLoading}
               title={t('internal-order')}
               stats={[
                 {
                   label: t('label.new'),
-                  value: formatNumber.round(requisitionCount?.request?.draft),
+                  value: formatNumber.round(internalOrder.stats?.count),
                   link: RouteBuilder.create(AppRoute.Replenishment)
                     .addPart(AppRoute.InternalOrder)
                     .addQuery({ status: RequisitionNodeStatus.Draft })
