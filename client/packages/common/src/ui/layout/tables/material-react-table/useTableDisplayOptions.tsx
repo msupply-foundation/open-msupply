@@ -13,17 +13,18 @@ import {
   CheckboxIndeterminateIcon,
   CollapseIcon,
   ExpandIcon,
-  RefreshIcon,
+  SettingsIcon,
 } from '@common/icons';
 import { MenuItem, Typography, alpha } from '@mui/material';
 import { ColumnDef } from './types';
-import { IconButton, useConfirmationModal } from '@common/components';
+import { IconButton } from '@common/components';
 import { useTranslation } from '@common/intl';
 import { EnvUtils } from '@common/utils';
+import { SettingsMenu } from './components/SettingsMenu';
 
 export const useTableDisplayOptions = <T extends MRT_RowData>({
-  resetTableState,
-  hasSavedState,
+  // resetTableState,
+  // hasSavedState,
   onRowClick,
   isGrouped,
   toggleGrouped,
@@ -47,11 +48,11 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
 }): Partial<MRT_TableOptions<T>> => {
   const t = useTranslation();
 
-  const getConfirmation = useConfirmationModal({
-    title: t('heading.are-you-sure'),
-    message: t('messages.reset-table-defaults'),
-    onConfirm: resetTableState,
-  });
+  // const getConfirmation = useConfirmationModal({
+  //   title: t('heading.are-you-sure'),
+  //   message: t('messages.reset-table-defaults'),
+  //   onConfirm: resetTableState,
+  // });
 
   return {
     // Add description to column menu
@@ -91,14 +92,19 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
         {hasColumnFilters && <MRT_ToggleFiltersButton table={table} />}
         <MRT_ToggleDensePaddingButton table={table} />
         <MRT_ShowHideColumnsButton table={table} />
-        <IconButton
+        {/* <IconButton
           icon={<RefreshIcon />}
           onClick={() => getConfirmation()}
           label={t('label.reset-table-defaults')}
           disabled={!hasSavedState}
           sx={iconButtonProps}
-        />
+        /> */}
         <MRT_ToggleFullScreenButton table={table} />
+        <SettingsMenu
+          icon={<SettingsIcon />}
+          label={t('settings')}
+          sx={iconButtonProps}
+        />
       </>
     ),
 
