@@ -7,11 +7,19 @@ import { useTranslation } from '@common/intl';
 const Template: StoryFn<typeof StatsPanel> = () => {
   const [isLoading, setIsLoading] = React.useState(true);
   const t = useTranslation();
+  const widgetContext = 'stock';
+  const panelContext = 'expiring-stock';
+
   const stats: Stat[] = [
-    { label: t('label.expired'), value: '8' },
+    {
+      label: t('label.expired'),
+      value: '8',
+      statContext: `${widgetContext}-${panelContext}-expired`,
+    },
     {
       label: t('label.expiring-soon'),
       value: '88',
+      statContext: `${widgetContext}-${panelContext}-expiring-soon`,
     },
   ];
 
@@ -39,6 +47,7 @@ const Template: StoryFn<typeof StatsPanel> = () => {
           isLoading={isLoading}
           stats={stats}
           title={t('heading.expiring-stock')}
+          panelContext={`${widgetContext}-expiring-stock`}
         />
       </Box>
     </Box>
