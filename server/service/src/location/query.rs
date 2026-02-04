@@ -72,7 +72,7 @@ pub fn get_available_volume_by_location_type(
     // TODO: Use store location restrictions when they are implemented
     let restricted_location_type_id = match item.restricted_location_type_id {
         Some(ref id) => id.clone(),
-        None => String::new(),
+        None => return Ok((None, None)),
     };
 
     let stock_line_repo = StockLineRepository::new(connection);
