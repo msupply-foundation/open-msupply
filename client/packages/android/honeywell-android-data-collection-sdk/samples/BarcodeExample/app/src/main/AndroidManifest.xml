@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" android:versionCode="197000084" android:versionName="1.97.00.0084" package="com.honeywell.barcodeexample">
+
+    <uses-sdk android:minSdkVersion="16" android:targetSdkVersion="31"/>
+
+    <application android:allowBackup="true" android:icon="@drawable/barcode_example_icon" android:label="@string/app_name" android:theme="@style/AppTheme">
+        <activity android:exported="true" android:label="@string/app_name" android:name="com.honeywell.barcodeexample.MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity>
+        <activity android:exported="true" android:label="@string/barcode" android:name="com.honeywell.barcodeexample.AutomaticBarcodeActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.AUTOMATICBARCODEACTIVITY"/>
+
+                <category android:name="android.intent.category.DEFAULT"/>
+            </intent-filter>
+        </activity>
+        <activity android:exported="true" android:label="@string/barcode" android:name="com.honeywell.barcodeexample.ClientBarcodeActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.CLIENTBARCODEACTIVITY"/>
+
+                <category android:name="android.intent.category.DEFAULT"/>
+            </intent-filter>
+        </activity>
+        <activity android:exported="true" android:label="@string/barcode" android:name="com.honeywell.barcodeexample.ScannerSelectionBarcodeActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.SCANNERSELECTBARCODEACTIVITY"/>
+
+                <category android:name="android.intent.category.DEFAULT"/>
+            </intent-filter>
+        </activity>
+    </application>
+
+</manifest>
