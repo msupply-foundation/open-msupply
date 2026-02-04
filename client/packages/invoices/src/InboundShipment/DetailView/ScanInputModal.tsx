@@ -13,7 +13,7 @@ import {
   LocaleKey,
 } from '@openmsupply-client/common';
 import { FnUtils, ScanResult, useBarcodeScannerContext } from '@common/utils';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useOutbound } from '../../OutboundShipment/api';
 import { BarcodeNode, InvoiceLineNodeType } from '@common/types';
 import {
@@ -64,8 +64,7 @@ const defaultDraftState: FormDraftState = {
 export const ScanInputModal = ({ lines, invoiceId }: ScanInputModalProps) => {
   const t = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
-  const { isConnected, isEnabled, stopScan, startListening } =
-    useBarcodeScannerContext();
+
   const [barcodeData, setBarcodeData] = useState<BarcodeNode | null>(null);
   const [draftState, setDraftState] =
     useState<FormDraftState>(defaultDraftState);
@@ -84,7 +83,7 @@ export const ScanInputModal = ({ lines, invoiceId }: ScanInputModalProps) => {
       line.packSize === draftState.packSize
   );
 
-  const handleScan = async (barcode: ScanResult) => {
+  const handleScan = useCallback(async (barcode: ScanResult) => {
     const newState = { ...draftState };
 
     newState.barcodeContent = barcode.content ?? '';
@@ -121,20 +120,11 @@ export const ScanInputModal = ({ lines, invoiceId }: ScanInputModalProps) => {
       //   if (quantity) newState.quantity = quantity;
     }
     setDraftState(newState);
-  };
-
-  useEffect(() => {
-    if (isEnabled && isConnected) {
-      // Temp solution, will update context
-      setTimeout(() => {
-        startListening(handleScan);
-      }, 1000);
-    }
-
-    return () => {
-      stopScan();
-    };
   }, []);
+
+  // Register the scan handler so it runs on scan events when context is
+  // listening
+  useBarcodeScannerContext(handleScan);
 
   const onChangeItem = (item: ItemStockOnHandFragment | null) => {
     setDraftState(current => ({

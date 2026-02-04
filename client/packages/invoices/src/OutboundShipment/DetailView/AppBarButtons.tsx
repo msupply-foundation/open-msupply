@@ -10,6 +10,7 @@ import {
   useUrlQueryParams,
   ScanResult,
   useNotification,
+  useBarcodeScannerContext,
 } from '@openmsupply-client/common';
 import { useOutbound } from '../api';
 import { ReportSelector } from '@openmsupply-client/system';
@@ -57,6 +58,8 @@ export const AppBarButtonsComponent = ({ onAddItem }: AppBarButtonProps) => {
     [getBarcode, onAddItem, warning, t]
   );
 
+  useBarcodeScannerContext(handleScanResult);
+
   return (
     <AppBarButtonsPortal>
       <Grid container gap={1}>
@@ -67,10 +70,7 @@ export const AppBarButtonsComponent = ({ onAddItem }: AppBarButtonProps) => {
           onClick={() => onAddItem()}
         />
         <AddFromMasterListButton />
-        <AddFromScannerButton
-          handleScanResult={handleScanResult}
-          disabled={isDisabled}
-        />
+        <AddFromScannerButton disabled={isDisabled} />
         <ReportSelector
           context={ReportContext.OutboundShipment}
           dataId={data?.id ?? ''}
