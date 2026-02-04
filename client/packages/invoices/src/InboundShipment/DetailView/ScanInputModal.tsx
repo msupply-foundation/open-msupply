@@ -125,7 +125,10 @@ export const ScanInputModal = ({ lines, invoiceId }: ScanInputModalProps) => {
 
   useEffect(() => {
     if (isEnabled && isConnected) {
-      startListening(handleScan);
+      // Temp solution, will update context
+      setTimeout(() => {
+        startListening(handleScan);
+      }, 1000);
     }
 
     return () => {
