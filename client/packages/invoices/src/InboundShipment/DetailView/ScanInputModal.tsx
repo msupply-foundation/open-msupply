@@ -218,14 +218,12 @@ export const ScanInputModal = ({ lines, invoiceId }: ScanInputModalProps) => {
           Input={
             <StockItemSearchInput
               autoFocus={!barcodeData}
-              // openOnFocus={!barcodeItem}
               disabled={!!barcodeData}
-              currentItemId={draftState.itemId || barcodeData?.itemId || null}
+              currentItemId={barcodeData?.itemId || draftState.itemId || null}
               onChange={newItem => onChangeItem(newItem)}
-              // filter={{ id: { notEqualAll: existingItemIds } }}
               // A scanned-in item will only have an ID, not a full item object,
-              // so this flag makes the StockItemSearchInput component update the
-              // current item on initial load from the API
+              // so this flag makes the StockItemSearchInput component update
+              // the current item on initial load from the API
               initialUpdate
             />
           }
