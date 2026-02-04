@@ -4,7 +4,8 @@ This document describes the native Capacitor plugin integration for Honeywell ba
 
 ## Overview
 
-The Honeywell Scanner functionality has been migrated from a Cordova plugin to a native Capacitor plugin for better integration, easier debugging, and improved maintainability.
+The Honeywell Scanner functionality has been migrated from a Cordova plugin based on https://github.com/kulkarniswapnil/cordova-honeywell-plugin to a native Capacitor plugin.
+We needed to add a method to detect if the scanner device actually exists (the available method) and since the dependancy seems to be based on example code and not actively maintained, managing the code internally seemed like the best option.
 
 ## Architecture
 
@@ -47,42 +48,6 @@ This makes it available to the Capacitor bridge under the name `HoneywellScanner
 
 ## Usage
 
-### Basic Hook Usage
-
-```typescript
-import { useHoneywellScanner } from '@common/hooks';
-
-function MyComponent() {
-  const { release, checkAvailable, isAvailable } = useHoneywellScanner({
-    onScan: (barcode) => {
-      console.log('Scanned:', barcode);
-    },
-    onError: (error) => {
-      console.error('Scan error:', error);
-    },
-    enabled: true, // Optional, defaults to true
-  });
-
-  if (!isAvailable) {
-    return <div>Scanner not available on this device</div>;
-  }
-
-  const handleCheckAvailable = async () => {
-    const available = await checkAvailable();
-    console.log('Scanner available:', available);
-  };
-
-  return (
-    <div>
-      <button onClick={handleCheckAvailable}>Check Available</button>
-      <button onClick={release}>Release Scanner</button>
-    </div>
-  );
-}
-```
-
-### Manual Control
-
 ```typescript
 import { HoneywellScanner } from '@common/hooks';
 
@@ -92,7 +57,7 @@ await HoneywellScanner.listen({}, (data, error) => {
     console.error('Error:', error);
     return;
   }
-  
+
   if (data && 'barcode' in data) {
     console.log('Scanned:', data.barcode);
   } else if (data && 'error' in data) {
@@ -116,6 +81,7 @@ const { available } = await HoneywellScanner.available();
 Sets up a callback to receive scan events and automatically claims exclusive access to the scanner. Returns a Promise that resolves with a callback ID.
 
 The callback receives two parameters:
+
 - **data**: `{ barcode: string }` on successful scan, `{ error: string }` on scan failure, or `null` if an error occurred
 - **error**: Error object if the callback itself failed (e.g., scanner unavailable)
 
