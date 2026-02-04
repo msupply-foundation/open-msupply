@@ -45,6 +45,7 @@ interface FormDraftState {
 
   // The raw barcode string
   barcodeContent: string;
+  gtin: string | null;
 }
 
 const defaultDraftState: FormDraftState = {
@@ -57,6 +58,7 @@ const defaultDraftState: FormDraftState = {
   //
   isNewLine: true,
   barcodeContent: '',
+  gtin: null,
 };
 
 export const ScanInputModal = ({ lines, invoiceId }: ScanInputModalProps) => {
@@ -75,12 +77,18 @@ export const ScanInputModal = ({ lines, invoiceId }: ScanInputModalProps) => {
   const { mutateAsync: getBarcode } = useOutbound.utils.barcode();
   const { mutateAsync: saveBarcode } = useOutbound.utils.barcodeInsert();
 
-  const existingLine = lines.find(line => line.batch === draftState.batch);
+  const existingLine = lines.find(
+    line =>
+      line.batch === draftState.batch &&
+      line.item.id === draftState.itemId &&
+      line.packSize === draftState.packSize
+  );
 
   const handleScan = async (barcode: ScanResult) => {
     const newState = { ...draftState };
 
     newState.barcodeContent = barcode.content ?? '';
+
     if (!isOpen) {
       setIsOpen(true);
     }
@@ -92,6 +100,8 @@ export const ScanInputModal = ({ lines, invoiceId }: ScanInputModalProps) => {
       expiryDate,
       // packSize, quantity -- TO-DO
     } = barcode;
+
+    if (gtin) newState.gtin = gtin;
 
     const barcodeOrGtin = gtin ?? content;
 
@@ -126,7 +136,7 @@ export const ScanInputModal = ({ lines, invoiceId }: ScanInputModalProps) => {
   const onChangeItem = (item: ItemStockOnHandFragment | null) => {
     setDraftState(current => ({
       ...current,
-      item,
+      itemId: item?.id || null,
       packSize: barcodeData?.packSize || item?.defaultPackSize || 1,
     }));
   };
@@ -215,6 +225,11 @@ export const ScanInputModal = ({ lines, invoiceId }: ScanInputModalProps) => {
         <Typography>
           <strong>{t('label.barcode')}:</strong> {draftState.barcodeContent}
         </Typography>
+        {draftState.gtin && (
+          <Typography>
+            <strong>{t('label.gtin')}:</strong> {draftState.gtin}
+          </Typography>
+        )}
         <Alert severity={message.type}>{message.text}</Alert>
         <InputWithLabelRow
           label={t('label.item')}
