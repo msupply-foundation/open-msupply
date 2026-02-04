@@ -81,9 +81,9 @@ export const ResponseLineEdit = ({
 
   const { available, mos } = useStockCalculations(draft);
   const itemVolume =
-    (draft?.availableVolumeByLocationType?.itemVolumePerUnit ?? 0) *
+    (draft?.availableVolumeAtLocationType?.itemVolumePerUnit ?? 0) *
     (draft?.supplyQuantity ?? 0);
-  const availableVolume = draft?.availableVolumeByLocationType?.availableVolume;
+  const availableVolume = draft?.availableVolumeAtLocationType?.availableVolume;
   const volumeFull = availableVolume! - itemVolume <= 0;
 
   const commonProps = {
@@ -389,7 +389,7 @@ export const ResponseLineEdit = ({
             <Alert sx={{ mt: 1 }} severity="warning">
               {t('label.location-type-full-warning', {
                 locationType:
-                  draft?.availableVolumeByLocationType?.locationType.name,
+                  draft?.availableVolumeAtLocationType?.locationType.name,
               })}
             </Alert>
           )}
