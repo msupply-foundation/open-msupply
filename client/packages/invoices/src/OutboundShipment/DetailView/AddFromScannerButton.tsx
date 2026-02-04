@@ -11,13 +11,15 @@ import {
 } from '@openmsupply-client/common';
 
 interface AddFromScannerButtonProps {
-  // handleScanResult: (result: ScanResult) => Promise<void>;
-  disabled: boolean;
+  disabled?: boolean;
+  initialListening?: boolean;
+  handleClickCheck?: () => boolean;
 }
 
 export const AddFromScannerButton = ({
-  // handleScanResult,
-  disabled,
+  disabled = false,
+  initialListening = true,
+  handleClickCheck,
 }: AddFromScannerButtonProps) => {
   const t = useTranslation();
   const {
@@ -35,6 +37,11 @@ export const AddFromScannerButton = ({
 
   const handleClick = async () => {
     buttonRef.current?.blur();
+
+    if (handleClickCheck && !handleClickCheck()) {
+      return;
+    }
+
     if (isListening) {
       stopScan();
     } else {
@@ -55,7 +62,12 @@ export const AddFromScannerButton = ({
 
   // Auto-start scanning for continuous scanning when component loads
   useEffect(() => {
-    if (!isListening && !disabled && supportsContinuousScanning) {
+    if (
+      !isListening &&
+      !disabled &&
+      initialListening &&
+      supportsContinuousScanning
+    ) {
       startListening();
     }
 

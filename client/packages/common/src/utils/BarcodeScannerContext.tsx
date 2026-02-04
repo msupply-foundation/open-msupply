@@ -45,11 +45,11 @@ export interface ScanResult {
   batch?: string;
   expiryDate?: string | null;
   manufactureDate?: string | null;
-  packsize?: string;
-  quantity?: string;
+  packSize?: number;
+  quantity?: number;
 }
 
-export type ScanCallback = (result: ScanResult) => void;
+export type ScanCallback = (result: ScanResult, err?: unknown) => void;
 
 interface BarcodeScannerControl {
   isEnabled: boolean;
@@ -107,12 +107,16 @@ export const parseResult = (content?: string): ScanResult => {
     const manufactureDateString = gs1?.parsedCodeItems?.find(
       (item: { ai: string }) => item.ai === '11'
     )?.data as Date;
-    const quantity = gs1?.parsedCodeItems?.find(
-      (item: { ai: string }) => item.ai === '30'
-    )?.data as string;
-    const packsize = gs1?.parsedCodeItems?.find(
-      (item: { ai: string }) => item.ai === '37'
-    )?.data as string;
+    const quantity =
+      Number(
+        gs1?.parsedCodeItems?.find((item: { ai: string }) => item.ai === '30')
+          ?.data
+      ) || undefined;
+    const packSize =
+      Number(
+        gs1?.parsedCodeItems?.find((item: { ai: string }) => item.ai === '37')
+          ?.data
+      ) || undefined;
 
     return {
       content,
@@ -125,7 +129,7 @@ export const parseResult = (content?: string): ScanResult => {
         ? Formatter.naiveDate(manufactureDateString)
         : undefined,
       quantity,
-      packsize,
+      packSize,
     };
   } catch (e) {
     console.error(`Error parsing barcode ${content}:`, e);
@@ -533,7 +537,7 @@ export const useBarcodeScannerContext = (
 
   useEffect(() => {
     if (callback) {
-      console.log('Registering barcode scan callback');
+      // console.log('Registering barcode scan callback');
       barcodeScannerControl.registerCallback(callback);
     }
   }, [callback]);
