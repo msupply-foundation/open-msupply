@@ -106,8 +106,7 @@ const batchDeleteOutboundShipmentQuery = (
 
 const plugins: BackendPlugins = {
   graphql_query: ({ input }): Graphql['output'] => {
-    log(input);
-    const inp = JSON.parse(input as string) as Graphql['input'];
+    const inp = input as Graphql['input'];
 
     const { stores: activeStores } = get_active_stores_on_site();
     if (!activeStores || activeStores.length < 1) {
