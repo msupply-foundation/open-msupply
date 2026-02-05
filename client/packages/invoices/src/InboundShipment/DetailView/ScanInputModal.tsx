@@ -113,12 +113,16 @@ export const ScanInputModal = ({ lines, invoiceId }: ScanInputModalProps) => {
         if (barcodeToLookup) {
           if (!dbBarcodeData?.id) {
             // We didn't find the barcode in the database.
-            // If we do have a gtin in the scan, save the association for next time we scan.
-            // We only do this for real GTIN scans otherwise expriy date data might be saved as a barcode and associted with the item accidentally.
+            // If we do have a gtin in the scan, save the association for next
+            // time we scan.
+            // We only do this for real GTIN scans otherwise expiry date data
+            // might be saved as a barcode and associated with the item
+            // accidentally.
             if (newState.gtin && !currentState.itemId)
               newState.saveNewBarcode = true;
           } else {
-            // We found a matching barcode in the database, so populate item and pack size from that
+            // We found a matching barcode in the database, so populate item and
+            // pack size from that
             setBarcodeData(dbBarcodeData);
 
             newState.itemId = dbBarcodeData.itemId;
