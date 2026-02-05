@@ -47,14 +47,6 @@ export const ReplenishmentNav = ({
             text={t('purchase-order')}
           />
           <AppNavLink
-            visible={useProcurement}
-            end
-            to={RouteBuilder.create(AppRoute.Replenishment)
-              .addPart(AppRoute.GoodsReceived)
-              .build()}
-            text={t('goods-received')}
-          />
-          <AppNavLink
             end
             to={RouteBuilder.create(AppRoute.Replenishment)
               .addPart(AppRoute.InternalOrder)

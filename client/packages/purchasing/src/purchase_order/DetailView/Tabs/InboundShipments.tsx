@@ -7,33 +7,32 @@ import {
   RouteBuilder,
   ColumnDef,
   ColumnType,
-  GoodsReceivedNodeStatus,
   useNonPaginatedMaterialTable,
   MaterialTable,
+  InvoiceNodeStatus,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
-import {
-  useGoodsReceivedList,
-  GoodsReceivedRowFragment,
-} from '../../../goods_received/api';
-import { getGoodsReceivedStatusTranslator } from '../../../utils';
+import { getInvoiceStatusTranslator, useInbound } from '@openmsupply-client/invoices/src';
+import { InboundRowFragment } from '@openmsupply-client/invoices/src/InboundShipment/api';
 
-export const GoodsReceived = () => {
+export const InboundShipments = () => {
   const t = useTranslation();
   const { purchaseOrderId } = useParams();
   const navigate = useNavigate();
 
-  const {
-    query: { data, isFetching },
-  } = useGoodsReceivedList({
-    filterBy: { purchaseOrderId: { equalTo: purchaseOrderId } },
-  });
+  const queryParams = {
+    first: 100,
+    offset: 0,
+    filterBy: { purchaseOrderId: { equalTo: purchaseOrderId || '' }, type: { equalTo: 'INBOUND' } },
+    sortBy: { key: 'number', direction: 'desc' as 'asc' | 'desc' },
+  }
+  const { data, isFetching } = useInbound.document.list(queryParams);
 
   const columns = useMemo(
-    (): ColumnDef<GoodsReceivedRowFragment>[] => [
+    (): ColumnDef<InboundRowFragment>[] => [
       {
         header: t('label.number'),
-        accessorKey: 'number',
+        accessorKey: 'invoiceNumber',
         columnType: ColumnType.Number,
         size: 60,
         enableSorting: true,
@@ -41,18 +40,18 @@ export const GoodsReceived = () => {
       },
       {
         header: t('label.supplier'),
-        accessorKey: 'supplier.name',
+        accessorKey: 'otherPartyName',
       },
       {
         header: t('label.status'),
         id: 'status',
         size: 120,
-        accessorFn: row => getGoodsReceivedStatusTranslator(t)(row.status),
+        accessorFn: row => getInvoiceStatusTranslator(t)(row.status),
         filterVariant: 'select',
-        filterSelectOptions: Object.values(GoodsReceivedNodeStatus).map(
+        filterSelectOptions: Object.values(InvoiceNodeStatus).map(
           status => ({
             value: status,
-            label: getGoodsReceivedStatusTranslator(t)(status),
+            label: getInvoiceStatusTranslator(t)(status),
           })
         ),
         enableSorting: true,
@@ -60,7 +59,7 @@ export const GoodsReceived = () => {
       },
       {
         header: t('label.supplier-reference'),
-        accessorKey: 'supplierReference',
+        accessorKey: 'theirReference',
       },
       {
         header: t('label.created'),
@@ -80,23 +79,23 @@ export const GoodsReceived = () => {
     []
   );
 
-  const handleRowClick = (row: GoodsReceivedRowFragment) => {
+  const handleRowClick = (row: InboundRowFragment) => {
     const path = RouteBuilder.create(AppRoute.Replenishment)
-      .addPart(AppRoute.GoodsReceived)
+      .addPart(AppRoute.InboundShipment)
       .addPart(row.id)
       .build();
     navigate(path);
   };
 
-  const { table } = useNonPaginatedMaterialTable<GoodsReceivedRowFragment>({
-    tableId: 'goods-received-list-in-purchase-order',
+  const { table } = useNonPaginatedMaterialTable<InboundRowFragment>({
+    tableId: 'inbound-shipments-list-in-purchase-order',
     isLoading: isFetching,
     onRowClick: handleRowClick,
     columns,
     data: data?.nodes,
     initialSort: { key: 'createdDatetime', dir: 'desc' },
     enableRowSelection: false,
-    noDataElement: <NothingHere body={t('error.no-goods-received-linked')} />,
+    noDataElement: <NothingHere body={t('error.no-inbound-shipments-linked')} />,
   });
 
   return <MaterialTable table={table} />;
