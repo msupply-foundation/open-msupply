@@ -11,7 +11,7 @@ import {
   MaterialTable,
   useSimpleMaterialTable,
 } from '@openmsupply-client/common';
-import { useInbound, useInboundShipment } from '../../../api';
+import { useInboundShipment } from '../../../api';
 import { useDraftServiceLines } from './useDraftServiceLines';
 import { useItem } from '@openmsupply-client/system';
 import { useServiceLineColumns } from '@openmsupply-client/invoices/src/OutboundShipment/DetailView/OutboundServiceLineEdit/useServiceLineColumns';
