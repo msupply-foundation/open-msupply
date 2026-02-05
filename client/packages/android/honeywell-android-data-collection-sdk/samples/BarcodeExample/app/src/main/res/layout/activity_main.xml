@@ -1,0 +1,51 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity" >
+
+     <TextView
+         android:id="@+id/btnBarcode"
+         android:layout_width="fill_parent"
+         android:layout_height="wrap_content"
+         android:background="#5C8A8A"
+         android:gravity="left"
+         android:padding="6dp"
+         android:text="@string/txtMainTitle"
+         android:textColor="#FFFFFF"
+         android:textSize="13sp" >
+
+    </TextView>
+
+      <LinearLayout
+          android:layout_width="match_parent"
+          android:layout_height="match_parent"
+          android:layout_alignParentLeft="true"
+          android:layout_alignParentTop="true"
+          android:layout_marginTop="40dp"
+          android:orientation="vertical" >
+
+          <Button
+              android:id="@+id/buttonAutomaticBarcode"
+              android:layout_width="match_parent"
+              android:layout_height="wrap_content"
+              android:layout_marginTop="22dp"
+              android:text="@string/btnAutomaticBarcode" />
+
+          <Button
+              android:id="@+id/buttonClientBarcode"
+              android:layout_width="match_parent"
+              android:layout_height="wrap_content"
+              android:layout_marginTop="22dp"
+              android:text="@string/btnClientBarcode" />
+
+          <Button
+              android:id="@+id/buttonScannerSelectBarcode"
+              android:layout_width="match_parent"
+              android:layout_height="wrap_content"
+              android:layout_marginTop="22dp"
+              android:text="@string/btnScannerSelectBarcode" />
+
+      </LinearLayout>
+
+</RelativeLayout>

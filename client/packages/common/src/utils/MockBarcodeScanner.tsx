@@ -1,6 +1,7 @@
 import { DialogButton, TextField } from '@common/components';
+import { useTranslation } from '@common/intl';
 import { Portal, Box } from '@mui/material';
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 
 export const useMockScanner = (enabled: boolean) => {
   const [inputValue, setInputValue] = useState('');
@@ -8,18 +9,7 @@ export const useMockScanner = (enabled: boolean) => {
   const [isListening, setIsListening] = useState(false);
   const resolveRef = useRef<((value: string) => void) | null>(null);
   const scanHandler = useRef<((barcode: string) => void) | null>(null);
-
-  // Ctrl-Shift-S to start mock scanner listening (will open input overlay)
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.ctrlKey && event.shiftKey && event.key === 'S') {
-        event.preventDefault();
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  const t = useTranslation();
 
   const handleSubmit = () => {
     if (resolveRef.current) {
@@ -65,7 +55,7 @@ export const useMockScanner = (enabled: boolean) => {
           }}
         >
           <TextField
-            label="Enter Barcode"
+            label={t('label.enter-barcode')}
             value={inputValue}
             autoFocus
             onChange={e => setInputValue(e.target.value)}

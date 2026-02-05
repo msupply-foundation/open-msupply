@@ -15,7 +15,7 @@ import com.honeywell.aidc.BarcodeFailureEvent;
 import com.honeywell.aidc.BarcodeReadEvent;
 import com.honeywell.aidc.BarcodeReader;
 import com.honeywell.aidc.ScannerUnavailableException;
-import com.honeywell.aidc.ScannerNotClaimedException;
+import com.honeywell.aidc.InvalidScannerNameException;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -36,15 +36,19 @@ public class HoneywellScannerPlugin extends Plugin implements BarcodeReader.Barc
             @Override
             public void onCreated(AidcManager aidcManager) {
                 manager = aidcManager;
-                barcodeReader = manager.createBarcodeReader();
-                if (barcodeReader != null) {
-                    configureBarcodeReader();
-                    barcodeReader.addBarcodeListener(HoneywellScannerPlugin.this);
-                    try {
-                        barcodeReader.claim();
-                    } catch (ScannerUnavailableException e) {
-                        Log.e(TAG, "Scanner unavailable during initialization", e);
+                try {
+                    barcodeReader = manager.createBarcodeReader();
+                    if (barcodeReader != null) {
+                        configureBarcodeReader();
+                        barcodeReader.addBarcodeListener(HoneywellScannerPlugin.this);
+                        try {
+                            barcodeReader.claim();
+                        } catch (ScannerUnavailableException e) {
+                            Log.e(TAG, "Scanner unavailable during initialization", e);
+                        }
                     }
+                } catch (InvalidScannerNameException e) {
+                    Log.e(TAG, "Invalid scanner name", e);
                 }
             }
         });
