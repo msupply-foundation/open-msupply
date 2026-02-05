@@ -16,6 +16,12 @@ interface AddFromScannerButtonProps {
   handleClickCheck?: () => boolean;
 }
 
+/**
+ *
+ * TO-DO: Move this component to the common package, since it's now generalised
+ * and used in several places
+ */
+
 export const AddFromScannerButton = ({
   disabled = false,
   initialListening = true,
