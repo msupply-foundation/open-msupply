@@ -30,6 +30,7 @@ interface Filter {
 }
 interface UrlQueryParams {
   initialSort?: UrlQuerySort;
+  initialFilter?: { id: string; value: string }[];
   filters?: Filter[];
 }
 
@@ -42,6 +43,7 @@ export type ListParams<T> = {
 
 export const useUrlQueryParams = ({
   initialSort,
+  initialFilter,
   filters = [],
 }: UrlQueryParams = {}) => {
   const initialMount = useRef(true);
@@ -62,16 +64,26 @@ export const useUrlQueryParams = ({
     skipParse,
   });
 
-  // Set initial sort on mount
+  // Set initial sort and filter on mount
   useEffect(() => {
     initialMount.current = false;
-    if (!initialSort) return;
 
-    // Don't want to override existing sort
-    if (urlQuery['sort']) return;
+    if (initialSort) {
+      // Don't want to override existing sort
+      if (urlQuery['sort']) return;
 
-    const { key: sort, dir } = initialSort;
-    updateQuery({ sort, dir: dir === 'desc' ? 'desc' : '' });
+      const { key: sort, dir } = initialSort;
+      updateQuery({ sort, dir: dir === 'desc' ? 'desc' : '' });
+    }
+
+    if (initialFilter) {
+      initialFilter.forEach(({ id, value }) => {
+        // Don't want to override existing filter
+        if (urlQuery[id]) return;
+
+        updateQuery({ [id]: value });
+      });
+    }
   }, []);
 
   const updateSortQuery = useCallback(
