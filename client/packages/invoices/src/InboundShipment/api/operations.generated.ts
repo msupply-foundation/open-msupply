@@ -90,6 +90,10 @@ export type InboundLineFragment = {
       volumePerUnit?: number | null;
     }>;
   } | null;
+  purchaseOrderLine?: {
+    __typename: 'PurchaseOrderLineNode';
+    pricePerPackAfterDiscount: number;
+  } | null;
 };
 
 export type InboundFragment = {
@@ -223,6 +227,10 @@ export type InboundFragment = {
           volumePerUnit?: number | null;
         }>;
       } | null;
+      purchaseOrderLine?: {
+        __typename: 'PurchaseOrderLineNode';
+        pricePerPackAfterDiscount: number;
+      } | null;
     }>;
   };
   otherParty: {
@@ -273,6 +281,13 @@ export type InboundFragment = {
     id: string;
     number: number;
     reference?: string | null;
+    currency?: {
+      __typename: 'CurrencyNode';
+      id: string;
+      code: string;
+      rate: number;
+      isHomeCurrency: boolean;
+    } | null;
   } | null;
 };
 
@@ -511,6 +526,10 @@ export type InvoiceQuery = {
                 volumePerUnit?: number | null;
               }>;
             } | null;
+            purchaseOrderLine?: {
+              __typename: 'PurchaseOrderLineNode';
+              pricePerPackAfterDiscount: number;
+            } | null;
           }>;
         };
         otherParty: {
@@ -561,6 +580,13 @@ export type InvoiceQuery = {
           id: string;
           number: number;
           reference?: string | null;
+          currency?: {
+            __typename: 'CurrencyNode';
+            id: string;
+            code: string;
+            rate: number;
+            isHomeCurrency: boolean;
+          } | null;
         } | null;
       }
     | {
@@ -722,6 +748,10 @@ export type InboundByNumberQuery = {
                 volumePerUnit?: number | null;
               }>;
             } | null;
+            purchaseOrderLine?: {
+              __typename: 'PurchaseOrderLineNode';
+              pricePerPackAfterDiscount: number;
+            } | null;
           }>;
         };
         otherParty: {
@@ -772,6 +802,13 @@ export type InboundByNumberQuery = {
           id: string;
           number: number;
           reference?: string | null;
+          currency?: {
+            __typename: 'CurrencyNode';
+            id: string;
+            code: string;
+            rate: number;
+            isHomeCurrency: boolean;
+          } | null;
         } | null;
       }
     | {
@@ -1344,6 +1381,10 @@ export const InboundLineFragmentDoc = gql`
         volumePerUnit
       }
     }
+    purchaseOrderLine {
+      __typename
+      pricePerPackAfterDiscount
+    }
   }
 `;
 export const InboundFragmentDoc = gql`
@@ -1445,6 +1486,12 @@ export const InboundFragmentDoc = gql`
       id
       number
       reference
+      currency {
+        id
+        code
+        rate
+        isHomeCurrency
+      }
     }
   }
   ${InboundLineFragmentDoc}

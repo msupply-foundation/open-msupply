@@ -145,7 +145,6 @@ export const useInboundShipmentColumns = (external: boolean, showLineStatus: boo
         includeColumn: !external,
       },
       {
-        id: 'itemUnit',
         accessorKey: 'item.unitName',
         header: t('label.unit-name'),
         enableColumnFilter: true,
@@ -236,6 +235,7 @@ export const useInboundShipmentColumns = (external: boolean, showLineStatus: boo
     ];
   }, [
     external,
+    showLineStatus,
     getError,
     manageVaccinesInDoses,
     manageVvmStatusForStock,

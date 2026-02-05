@@ -40,6 +40,8 @@ import { InboundShipmentLineErrorProvider } from '../context/inboundShipmentLine
 import { InboundShipmentDetailTabs } from './types';
 import { useInboundLines } from '../api/hooks/line/useInboundLines';
 import { useInboundShipmentColumns } from './columns';
+import { FinancialTab } from './Tabs/Financial';
+import { CurrencyTab } from './Tabs/Currency';
 
 type InboundLineItem = InboundLineFragment['item'];
 
@@ -191,6 +193,14 @@ const DetailViewInner = () => {
     {
       Component: <MaterialTable table={table} />,
       value: InboundShipmentDetailTabs.Details,
+    },
+    {
+      Component: <FinancialTab />,
+      value: InboundShipmentDetailTabs.Financial,
+    },
+    {
+      Component: <CurrencyTab />,
+      value: InboundShipmentDetailTabs.Currency,
     },
     {
       Component: (
