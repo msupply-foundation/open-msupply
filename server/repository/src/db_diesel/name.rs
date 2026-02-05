@@ -10,7 +10,7 @@ use crate::{
     name_oms_fields_alias,
     repository_error::RepositoryError,
     EqualFilter, NameLinkRow, NameOmsFields, NameOmsFieldsRow, NameRowType, Pagination, Sort,
-    StringFilter,
+    StoreFilter, StoreRepository, StringFilter,
 };
 
 use diesel::{
@@ -62,6 +62,7 @@ pub struct NameFilter {
 
     pub code_or_name: Option<StringFilter>,
     pub name_link_id: Option<StringFilter>,
+    pub store: Option<StoreFilter>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -203,6 +204,7 @@ impl<'a> NameRepository<'a> {
                 code_or_name,
                 supplying_store_id,
                 name_link_id,
+                store,
             } = f;
 
             // or filter need to be applied before and filters
@@ -260,6 +262,11 @@ impl<'a> NameRepository<'a> {
                 Some(false) => query.filter(store::id.is_null()),
                 None => query,
             };
+
+            if store.is_some() {
+                let store_ids = StoreRepository::create_filtered_query(store).select(store::id);
+                query = query.filter(store::id.eq_any(store_ids));
+            }
         };
 
         // Only return active (not deleted) names
@@ -376,6 +383,11 @@ impl NameFilter {
 
     pub fn name_link_id(mut self, filter: StringFilter) -> Self {
         self.name_link_id = Some(filter);
+        self
+    }
+
+    pub fn store(mut self, filter: StoreFilter) -> Self {
+        self.store = Some(filter);
         self
     }
 }

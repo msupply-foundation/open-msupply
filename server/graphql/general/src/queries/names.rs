@@ -169,7 +169,7 @@ impl NameFilterInput {
             is_store,
             is_visible,
             is_system_name: is_system_name.or(Some(false)),
-            r#type: r#type.map(|t| map_filter!(t, |r| NameType::from(r))),
+            r#type: r#type.map(|t| map_filter!(t, NameType::from)),
             phone: phone.map(StringFilter::from),
             address1: address1.map(StringFilter::from),
             address2: address2.map(StringFilter::from),
@@ -177,6 +177,7 @@ impl NameFilterInput {
             email: email.map(StringFilter::from),
             supplying_store_id: supplying_store_id.map(EqualFilter::from),
             name_link_id: None,
+            store: None,
         }
     }
 }
