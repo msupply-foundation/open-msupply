@@ -41,11 +41,11 @@ interface FormDraftState {
   quantity: number;
   //   manufacturerDate: Date | null;
   isNewLine: boolean;
-  newGtin?: string;
+  gtin: string | null;
+  saveNewBarcode: boolean;
 
   // The raw barcode string
   barcodeContent: string;
-  gtin: string | null;
 }
 
 const defaultDraftState: FormDraftState = {
@@ -54,11 +54,10 @@ const defaultDraftState: FormDraftState = {
   expiryDate: null,
   packSize: 1,
   quantity: 0,
-
-  //
+  gtin: null,
+  saveNewBarcode: false,
   isNewLine: true,
   barcodeContent: '',
-  gtin: null,
 };
 
 export const ScanInputModal = ({ lines, invoiceId }: ScanInputModalProps) => {
@@ -83,38 +82,64 @@ export const ScanInputModal = ({ lines, invoiceId }: ScanInputModalProps) => {
       line.packSize === draftState.packSize
   );
 
-  const handleScan = useCallback(async (barcode: ScanResult) => {
-    const newState = { ...draftState };
-
-    newState.barcodeContent = barcode.content ?? '';
-
-    if (!isOpen) {
-      setIsOpen(true);
-    }
-
-    const { content, gtin, batch, expiryDate, packSize, quantity } = barcode;
-
-    if (gtin) newState.gtin = gtin;
-
-    const barcodeOrGtin = gtin ?? content;
-
-    if (barcodeOrGtin) {
-      const dbBarcodeData = (await getBarcode(barcodeOrGtin)) as BarcodeNode;
-      if (!dbBarcodeData?.id) {
-        // Only save as new GTIN if barcode has one, otherwise ignore (for now)
-        if (gtin) newState.newGtin = barcodeOrGtin;
-        newState.isNewLine = true;
-      } else {
-        setBarcodeData(dbBarcodeData);
+  const handleScan = useCallback(
+    async (barcode: ScanResult) => {
+      if (!isOpen) {
+        setIsOpen(true);
       }
 
-      if (batch) newState.batch = batch;
-      if (expiryDate) newState.expiryDate = new Date(expiryDate);
-      if (packSize) newState.packSize = packSize;
-      if (quantity) newState.quantity = quantity;
-    }
-    setDraftState(newState);
-  }, []);
+      const { content, gtin, batch, expiryDate, packSize, quantity } = barcode;
+
+      // Perform async lookup first if needed
+      const barcodeToLookup = gtin ?? content;
+      let dbBarcodeData: BarcodeNode | null = null;
+
+      // Lookup barcode in the database to get associated item and pack size
+      if (barcodeToLookup) {
+        // Ideally we only look up the barcode if we haven't already associated it with an item.
+        // Note if/when we want to support automatically saving new barcodes when a GTIN is scanned, this logic will need to change to allow the lookup to happen even if we have an item ID from a previous scan.
+        // So maybe it's good to do it everytime?
+        dbBarcodeData = (await getBarcode(barcodeToLookup)) as BarcodeNode;
+      }
+
+      // Then update state
+      setDraftState(currentState => {
+        const newState = { ...currentState };
+
+        newState.barcodeContent = barcode.content ?? '';
+
+        if (gtin) newState.gtin = gtin;
+
+        if (barcodeToLookup) {
+          if (!dbBarcodeData?.id) {
+            // We didn't find the barcode in the database.
+            // If we do have a gtin in the scan, save the association for next time we scan.
+            // We only do this for real GTIN scans otherwise expriy date data might be saved as a barcode and associted with the item accidentally.
+            if (newState.gtin && !currentState.itemId)
+              newState.saveNewBarcode = true;
+          } else {
+            // We found a matching barcode in the database, so populate item and pack size from that
+            setBarcodeData(dbBarcodeData);
+
+            newState.itemId = dbBarcodeData.itemId;
+            if (dbBarcodeData.packSize)
+              newState.packSize = dbBarcodeData.packSize;
+            newState.gtin = dbBarcodeData.gtin;
+          }
+        }
+        if (batch) newState.batch = batch;
+        if (expiryDate) {
+          newState.expiryDate = new Date(expiryDate);
+        }
+
+        if (packSize) newState.packSize = packSize;
+        if (quantity) newState.quantity = quantity;
+
+        return newState;
+      });
+    },
+    [isOpen, getBarcode]
+  );
 
   // Register the scan handler so it runs on scan events when context is
   // listening
@@ -164,12 +189,12 @@ export const ScanInputModal = ({ lines, invoiceId }: ScanInputModalProps) => {
 
     await saveSingleLine(updatedLine);
 
-    if (draftState.newGtin) {
+    if (draftState.saveNewBarcode && draftState.gtin && draftState.itemId) {
       // Save new barcode to database
       await saveBarcode({
         input: {
-          gtin: draftState.newGtin,
-          itemId: draftState.itemId!,
+          gtin: draftState.gtin,
+          itemId: draftState.itemId,
           packSize: draftState.packSize,
         },
       });
@@ -298,16 +323,17 @@ const getMessage = (
   existingLine: InboundLineFragment | undefined,
   t: TypedTFunction<LocaleKey>
 ): Message => {
-  if (!barcodeData && !draftState.newGtin && !draftState.itemId)
+  //
+  if (!barcodeData && !draftState.gtin && !draftState.itemId)
     return {
       type: 'error',
-      text: t('messages.unknown-barcode-no-gtin'),
+      text: t('messages.no-matching-barcode-and-no-gtin'),
     };
 
-  if (!barcodeData && !!draftState.newGtin && !draftState.itemId)
+  if (!barcodeData && !!draftState.gtin && !draftState.itemId)
     return {
       type: 'warning',
-      text: t('messages.unknown-gtin'),
+      text: t('messages.no-matching-barcode-but-gtin-found'),
     };
 
   if (!existingLine)
