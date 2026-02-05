@@ -46,6 +46,7 @@ pub struct LegacyItemRow {
     category_ID: Option<String>,
     #[serde(deserialize_with = "empty_str_as_option_string")]
     restricted_location_type_ID: Option<String>,
+    volume_per_pack: f64,
     #[serde(deserialize_with = "empty_str_as_option_string")]
     #[serde(rename = "universalcodes_code")]
     universal_code: Option<String>,
@@ -141,6 +142,7 @@ impl SyncTranslation for ItemTranslation {
             ven_category: to_ven_category(data.VEN_category),
             vaccine_doses: data.doses,
             restricted_location_type_id: data.restricted_location_type_ID,
+            volume_per_pack: data.volume_per_pack,
             universal_code: data.universal_code,
         };
 
@@ -199,6 +201,7 @@ impl SyncTranslation for ItemTranslation {
             ven_category,
             vaccine_doses,
             restricted_location_type_id,
+            volume_per_pack,
             universal_code,
         } = item;
 
@@ -218,6 +221,7 @@ impl SyncTranslation for ItemTranslation {
             // build out the syncing back and forth of categories to OG!
             category_ID: None,
             restricted_location_type_ID: restricted_location_type_id,
+            volume_per_pack,
             universal_code,
         };
 
