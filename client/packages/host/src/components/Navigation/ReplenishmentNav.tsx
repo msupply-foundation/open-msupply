@@ -11,7 +11,7 @@ import {
   UserStoreNodeFragment,
   useIsCentralServerApi,
   usePreferences,
-  useIsGapsStoreOnly,
+  useIsExtraSmallScreen,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { useNestedNav } from './useNestedNav';
@@ -29,7 +29,7 @@ export const ReplenishmentNav = ({
   const isCentralServer = useIsCentralServerApi();
   const { useProcurementFunctionality } = usePreferences();
   const useProcurement = isCentralServer && useProcurementFunctionality;
-  const isGaps = useIsGapsStoreOnly();
+  const isExtraSmallScreen = useIsExtraSmallScreen();
 
   return (
     <AppNavSection isActive={isActive} to={AppRoute.Replenishment}>
@@ -43,7 +43,7 @@ export const ReplenishmentNav = ({
       <Collapse in={isActive}>
         <List>
           <AppNavLink
-            visible={useProcurement && !isGaps}
+            visible={useProcurement && !isExtraSmallScreen}
             end
             to={RouteBuilder.create(AppRoute.Replenishment)
               .addPart(AppRoute.PurchaseOrder)
@@ -59,7 +59,7 @@ export const ReplenishmentNav = ({
             text={t('goods-received')}
           />
           <AppNavLink
-            visible={!isGaps}
+            visible={!isExtraSmallScreen}
             end
             to={RouteBuilder.create(AppRoute.Replenishment)
               .addPart(AppRoute.InternalOrder)
@@ -73,7 +73,7 @@ export const ReplenishmentNav = ({
             text={t('inbound-shipment')}
           />
           <AppNavLink
-            visible={!isGaps}
+            visible={!isExtraSmallScreen}
             end
             to={RouteBuilder.create(AppRoute.Replenishment)
               .addPart(AppRoute.SupplierReturn)
@@ -81,7 +81,7 @@ export const ReplenishmentNav = ({
             text={t('supplier-returns')}
           />
           <AppNavLink
-            visible={rnrVisible && !isGaps}
+            visible={rnrVisible && !isExtraSmallScreen}
             end
             to={RouteBuilder.create(AppRoute.Replenishment)
               .addPart(AppRoute.RnRForms)
@@ -89,7 +89,7 @@ export const ReplenishmentNav = ({
             text={t('r-and-r-forms')}
           />
           <AppNavLink
-            visible={!isGaps}
+            visible={!isExtraSmallScreen}
             to={RouteBuilder.create(AppRoute.Replenishment)
               .addPart(AppRoute.Suppliers)
               .build()}
