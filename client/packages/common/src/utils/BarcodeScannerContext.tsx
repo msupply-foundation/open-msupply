@@ -385,7 +385,6 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
             }
           } else if (data && 'error' in data) {
             console.error('Honeywell scanning error:', data.error);
-            setIsListening(false);
             error(t('error.unable-to-read-barcode'))();
           }
         });
