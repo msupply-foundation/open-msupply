@@ -6,6 +6,7 @@ mod consumption;
 mod contact_trace_name_link_view;
 mod inbound_shipment_stock_movement;
 mod inventory_adjustment_stock_movement;
+mod invoice_line_stats;
 mod invoice_line_stock_movement;
 mod invoice_stats;
 mod item_ledger;
@@ -66,6 +67,7 @@ fn all_views() -> Vec<Box<dyn ViewMigrationFragment>> {
         Box::new(vaccination_course::ViewMigration),
         Box::new(purchase_order_stats::ViewMigration),
         Box::new(invoice_stats::ViewMigration),
+        Box::new(invoice_line_stats::ViewMigration),
         Box::new(contact_trace_name_link_view::ViewMigration),
     ]
 }

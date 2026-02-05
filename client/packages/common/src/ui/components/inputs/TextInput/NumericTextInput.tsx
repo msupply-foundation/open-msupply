@@ -395,3 +395,18 @@ export const constrain = (
   min: number,
   max: number
 ) => NumUtils.constrain(NumUtils.round(value, decimals), min, max);
+
+export const BufferedNumericTextInput = (props: NumericTextInputProps) => {
+  const [buffer, setBuffer] = useState<number | undefined>(undefined);
+
+  return (
+    <NumericTextInput
+      {...props}
+      value={buffer !== undefined ? buffer : props.value}
+      onChange={value => {
+        setBuffer(value);
+        props.onChange?.(value);
+      }}
+    />
+  );
+};

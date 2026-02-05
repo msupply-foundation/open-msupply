@@ -4549,6 +4549,7 @@ export type InvoiceLineNode = {
   prescribedQuantity?: Maybe<Scalars['Float']['output']>;
   pricing: PricingNode;
   program?: Maybe<ProgramNode>;
+  purchaseOrderLine?: Maybe<PurchaseOrderLineNode>;
   reasonOption?: Maybe<ReasonOptionNode>;
   /** @deprecated Since 2.8.0. Use reason_option instead */
   returnReason?: Maybe<ReturnReasonNode>;
