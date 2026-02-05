@@ -139,8 +139,7 @@ export const Site: FC = () => {
                   flexDirection="column"
                   overflow="hidden"
                 >
-                  {isExtraSmallScreen && <MobileNavBar />}
-                  {!isExtraSmallScreen && <AppBar />}
+                  {isExtraSmallScreen ? <MobileNavBar /> : <AppBar />}
                   <NotifyOnLogin />
                   <Box display="flex" flex={1} overflow="auto">
                     <Routes>
