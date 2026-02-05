@@ -38,9 +38,9 @@ This is a Capacitor plugin that interfaces directly with the Honeywell AIDC SDK 
 
 ### JAR Library
 
-**Location**: `/packages/android/app/libs/DataCollection.aar`
+**Location**: `/packages/android/app/libs/HoneywellScanner.aar`
 
-This is the Honeywell AIDC SDK library that provides the barcode scanning functionality. It's automatically included in the build via the `implementation(name: 'DataCollection', ext: 'aar')` dependency in `app/build.gradle`.
+This is the Honeywell AIDC SDK library that provides the barcode scanning functionality. It's automatically included in the build via the `implementation(name: 'HoneywellScanner', ext: 'aar')` dependency in `app/build.gradle`.
 
 ### TypeScript Wrapper
 
