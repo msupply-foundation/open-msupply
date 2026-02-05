@@ -33,6 +33,11 @@ import {
   getExtraMiddlePanels,
   getSuggestedRow,
 } from './ModalContentPanels';
+import {
+  CONSUMPTION_HISTORY_INFO,
+  STOCK_DISTRIBUTION_INFO,
+  STOCK_EVOLUTION_INFO,
+} from '../utils';
 
 interface RequestLineEditProps {
   requisition: RequestFragment;
@@ -70,6 +75,12 @@ export const RequestLineEdit = ({
   const t = useTranslation();
   const { plugins } = usePluginProvider();
   const { manageVaccinesInDoses, warningForExcessRequest } = usePreferences();
+
+  const isInfoVisible = useCallback(
+    (infoType: string) =>
+      !plugins.requestRequisitionLine?.hideInfo?.includes(infoType),
+    [plugins.requestRequisitionLine?.hideInfo]
+  );
 
   const unitName = currentItem?.unitName || t('label.unit');
   const defaultPackSize = currentItem?.defaultPackSize || 1;
@@ -284,22 +295,24 @@ export const RequestLineEdit = ({
             gap: 2,
           }}
         >
-          <Box
-            sx={{
-              width: '100%',
-              maxWidth: 900,
-              mx: 'auto',
-              p: '8px 16px',
-            }}
-          >
-            <StockDistribution
-              availableStockOnHand={line.itemStats?.availableStockOnHand}
-              averageMonthlyConsumption={
-                line.itemStats?.averageMonthlyConsumption
-              }
-              suggestedQuantity={line.suggestedQuantity}
-            />
-          </Box>
+          {isInfoVisible(STOCK_DISTRIBUTION_INFO) && (
+            <Box
+              sx={{
+                width: '100%',
+                maxWidth: 900,
+                mx: 'auto',
+                p: '8px 16px',
+              }}
+            >
+              <StockDistribution
+                availableStockOnHand={line.itemStats?.availableStockOnHand}
+                averageMonthlyConsumption={
+                  line.itemStats?.averageMonthlyConsumption
+                }
+                suggestedQuantity={line.suggestedQuantity}
+              />
+            </Box>
+          )}
           <Box
             display="flex"
             justifyContent="center"
@@ -313,8 +326,12 @@ export const RequestLineEdit = ({
               alignItems: 'center',
             }}
           >
-            <ConsumptionHistory id={line.id} />
-            <StockEvolution id={line.id} />
+            {isInfoVisible(CONSUMPTION_HISTORY_INFO) && (
+              <ConsumptionHistory id={line.id} />
+            )}
+            {isInfoVisible(STOCK_EVOLUTION_INFO) && (
+              <StockEvolution id={line.id} />
+            )}
           </Box>
         </Box>
       )}

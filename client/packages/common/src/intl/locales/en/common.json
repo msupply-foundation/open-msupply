@@ -792,7 +792,6 @@
   "label.balance": "Balance",
   "label.barcode": "Barcode",
   "label.barcode-scanner-id": "Vendor ID: {{vid}}, Product ID: {{pid}}",
-  "label.barcode-scanner-active": "Active Scanner",
   "label.barcode-scanner-available": "Available Scanners",
   "label.barcode-scanner-camera": "Camera Scanner",
   "label.barcode-scanner-connection-status": "Connection Status",
@@ -801,7 +800,6 @@
   "label.barcode-scanner-electron-usb": "USB Barcode Scanner",
   "label.barcode-scanner-enabled": "Enabled",
   "label.barcode-scanner-honeywell": "Honeywell Barcode Scanner",
-  "label.barcode-scanner-manual": "Manual/Keyboard Input",
   "label.barcode-scanner-not-connected": "Not Connected",
   "label.barcode-scanner-status": "Scanner Status",
   "label.barcode-scanner-test": "Test Scanner",
@@ -1253,7 +1251,6 @@
   "label.not-delivered": "Not delivered",
   "label.not-insured": "Not insured",
   "label.not-on-hold": "Not on hold",
-  "label.not-scanning": "Not Scanning",
   "label.not-sent": "Not sent",
   "label.not-set": "Not set",
   "label.note": "Note",
@@ -1425,7 +1422,6 @@
   "label.rows-per-page": "Rows per page:",
   "label.rtmd": "mSupply",
   "label.save-log": "Save log to file",
-  "label.scanning-active": "Scanning Active",
   "label.schedule": "Schedule",
   "label.schedule-next-encounter": "Schedule next encounter",
   "label.search-results": "Search results",
@@ -1757,7 +1753,7 @@
   "messages.allocated-lines_many": "Allocated {{count}} lines",
   "messages.allocated-lines_one": "Allocated {{count}} line",
   "messages.allocated-lines_other": "Allocated {{count}} lines",
-  "messages.amc-calculation": "Consumption / Lookback months * Days out of stock adjustment",
+  "messages.amc-calculation": "(Consumption / Lookback months) * Days out of stock adjustment",
   "messages.amc-consumption": "Consumption: Sum of all consumption within the lookback days.",
   "messages.amc-days-out-of-stock": "Days out of stock: Days out of stock within lookback days.",
   "messages.amc-days-out-of-stock-adjustment": "Days out of stock adjustment: Lookback days / (Lookback days - Days out of stock)",
@@ -2637,5 +2633,6 @@
   "button.scan-once": "Scan once",
   "button.scanning": "Scanning…",
   "button.listening-for-scans": "Ready to scan…",
-  "label.listening": "Listening for scans"
+  "label.listening": "Listening for scans",
+  "label.enter-barcode": "Enter barcode"
 }

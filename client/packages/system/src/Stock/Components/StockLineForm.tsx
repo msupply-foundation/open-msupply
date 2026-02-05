@@ -12,7 +12,6 @@ import {
   IconButton,
   ScanIcon,
   useBarcodeScannerContext,
-  CircularProgress,
   useNotification,
   Tooltip,
   NumericTextInput,
@@ -329,17 +328,12 @@ export const StockLineForm = ({
                             <IconButton
                               disabled={isListening || !isConnected}
                               onClick={scanBarcode}
-                              icon={
-                                isListening ? (
-                                  <CircularProgress
-                                    size={20}
-                                    color="secondary"
-                                  />
-                                ) : (
-                                  <ScanIcon />
-                                )
+                              icon={<ScanIcon />}
+                              label={
+                                isListening
+                                  ? `${t('button.listening-for-scans')}  🟢`
+                                  : `${t('button.scan')}`
                               }
-                              label={t('button.scan')}
                             />
                           </Box>
                         </Tooltip>

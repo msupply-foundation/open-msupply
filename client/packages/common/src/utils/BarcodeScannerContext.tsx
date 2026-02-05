@@ -192,7 +192,7 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
     const scanners: AvailableScannerType[] = [];
     if (mockScannerEnabled) scanners.push(AvailableScannerType.Mock);
     if (hasCameraBarcodeScanner && !hasHoneywellScanner)
-      scanners.push(AvailableScannerType.Camera); // Camera scanner not available if Honeywell is present
+      scanners.push(AvailableScannerType.Camera); // Camera scanner is not available on Honeywell devices. Disabled camera scanner if honeywell is available.
     if (hasElectronApi) scanners.push(AvailableScannerType.ElectronUSB);
     if (hasHoneywellScanner) scanners.push(AvailableScannerType.Honeywell);
     return scanners;
