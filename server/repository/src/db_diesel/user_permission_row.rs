@@ -71,10 +71,10 @@ pub enum PermissionType {
     PurchaseOrderQuery,
     PurchaseOrderMutate,
     PurchaseOrderAuthorise,
-    // goods received
-    GoodsReceivedQuery,
-    GoodsReceivedMutate,
-    GoodsReceivedAuthorise,
+    // inbound shipment external
+    InboundShipmentExternalQuery,
+    InboundShipmentExternalMutate,
+    InboundShipmentExternalAuthorise,
     // reporting
     Report,
     // log

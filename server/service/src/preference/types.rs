@@ -15,7 +15,6 @@ pub enum PrefKey {
     // Global preferences
     AllowTrackingOfStockByDonor,
     AuthorisePurchaseOrder,
-    AuthoriseGoodsReceived,
     CustomTranslations,
     GenderOptions,
     PreventTransfersMonthsBeforeInitialisation,

@@ -26,7 +26,6 @@ pub trait PreferenceServiceTrait: Sync + Send {
         let PreferenceProvider {
             // Global preferences
             allow_tracking_of_stock_by_donor,
-            authorise_goods_received,
             authorise_purchase_order,
             custom_translations,
             gender_options,
@@ -75,7 +74,6 @@ pub trait PreferenceServiceTrait: Sync + Send {
 
         // Global preferences
         append_if_type(allow_tracking_of_stock_by_donor, &mut prefs, &input)?;
-        append_if_type(authorise_goods_received, &mut prefs, &input)?;
         append_if_type(authorise_purchase_order, &mut prefs, &input)?;
         append_if_type(custom_translations, &mut prefs, &input)?;
         append_if_type(gender_options, &mut prefs, &input)?;

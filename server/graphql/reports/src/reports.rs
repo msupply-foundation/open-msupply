@@ -55,7 +55,6 @@ pub enum ReportContext {
     Prescription,
     InternalOrder,
     PurchaseOrder,
-    GoodsReceived,
     SupplierReturn,
     CustomerReturn,
 }
