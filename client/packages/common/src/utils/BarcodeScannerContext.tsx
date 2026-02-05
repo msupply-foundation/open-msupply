@@ -367,9 +367,6 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
        All available scanner types will be started if possible.
     */
 
-    // Store callback in ref for stable reference
-    // callbackRef.current = callback;
-
     if (hasHoneywellScanner) {
       try {
         setIsListening(true);
