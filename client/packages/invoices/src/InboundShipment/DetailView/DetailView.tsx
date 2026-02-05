@@ -80,7 +80,7 @@ const DetailViewInner = () => {
   } = useEditModal<string[]>();
 
   const {
-    query: { data, loading: isLoading },
+    query: { data, loading },
     isDisabled,
     invalidateQuery,
   } = useInboundShipment();
@@ -193,7 +193,7 @@ const DetailViewInner = () => {
     []
   );
 
-  if (isLoading) return <DetailViewSkeleton hasGroupBy={true} hasHold={true} />;
+  if (loading) return <DetailViewSkeleton hasGroupBy={true} hasHold={true} />;
 
   const tabs = [
     {

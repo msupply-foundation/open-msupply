@@ -60,7 +60,7 @@ export const AppBarButtonsComponent = ({
           <>
             {plugins.inboundShipmentAppBar?.map((Plugin, index) => (
               <Plugin key={index} shipment={data} />
-            ))}
+            )) ?? null}
             <ReportSelector
               context={ReportContext.InboundShipment}
               dataId={data.id}

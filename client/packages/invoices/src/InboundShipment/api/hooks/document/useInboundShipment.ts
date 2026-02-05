@@ -30,6 +30,7 @@ export const useInboundShipment = (id?: string) => {
     const invoiceId = !id ? paramInvoiceId : id;
 
     const { data, isLoading: loading, error } = useGetById(invoiceId);
+    const { queryClient } = useInboundGraphQL();
 
     const isDisabled = data ? isInboundDisabled(data) : false;
 
@@ -46,7 +47,7 @@ export const useInboundShipment = (id?: string) => {
         mutateAsync: updateMutation,
         isLoading: isUpdating,
         error: updateError,
-    } = useUpdate(data?.id ?? '');
+    } = useUpdate();
 
     const update = async (newData?: Partial<InboundFragment | InboundRowFragment>) => {
         if (!data?.id) return;
@@ -85,7 +86,6 @@ export const useInboundShipment = (id?: string) => {
     };
 
     const invalidateQuery = () => {
-        const { queryClient } = useInboundGraphQL();
         queryClient.invalidateQueries([INBOUND, INBOUND_LINE, invoiceId]);
     };
 
@@ -105,7 +105,7 @@ export const useInboundShipment = (id?: string) => {
 const useGetById = (invoiceId: string | undefined) => {
     const { inboundApi, storeId } = useInboundGraphQL();
 
-    const queryFn = async (): Promise<InboundFragment | void> => {
+    const queryFn = async (): Promise<InboundFragment> => {
         const result = await inboundApi.invoice({
             id: invoiceId ?? '',
             storeId,
@@ -134,7 +134,7 @@ const useGetById = (invoiceId: string | undefined) => {
     return query;
 };
 
-const useUpdate = (id: string) => {
+const useUpdate = () => {
     const { inboundApi, storeId, queryClient } = useInboundGraphQL();
 
     const mutationFn = async (
