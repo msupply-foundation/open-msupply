@@ -73,6 +73,6 @@
     "ts-jest": "^29.1.0",
     "tsconfig-paths-webpack-plugin": "^4.0.1",
     "typescript": "^5.0.2",
-    "webpack": "^5.76.2"
+    "webpack": "^5.88.1"
   }
 }
