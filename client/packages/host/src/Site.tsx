@@ -23,6 +23,7 @@ import {
   useTheme,
   usePreferences,
   useIsCentralServerApi,
+  useRootNavigationPath,
 } from '@openmsupply-client/common';
 import { AppDrawer, AppBar, Footer, NotFound } from './components';
 import { CommandK } from './CommandK';
@@ -77,7 +78,7 @@ export const Site: FC = () => {
   const { setPageTitle } = useHostContext();
   const pageTitle = getPageTitle(location.pathname);
   const isExtraSmallScreen = useIsExtraSmallScreen();
-  const { isGaps } = usePreferences();
+  const rootNavigationPath = useRootNavigationPath();
   const isCentralServer = useIsCentralServerApi();
   const { storeCustomColour } = usePreferences();
   const theme = useTheme();
@@ -108,21 +109,6 @@ export const Site: FC = () => {
       console.error('Error parsing footer colours from Store properties', e);
     }
   }
-
-  const getRootNavigationPath = () => {
-    // This is a temporary solution until we consider preferences further for small devices
-    if ((isGaps || isExtraSmallScreen) && isCentralServer) {
-      return RouteBuilder.create(AppRoute.Manage)
-        .addPart(AppRoute.Equipment)
-        .build();
-    }
-    if (isGaps || isExtraSmallScreen) {
-      return RouteBuilder.create(AppRoute.Coldchain)
-        .addPart(AppRoute.Equipment)
-        .build();
-    }
-    return RouteBuilder.create(AppRoute.Dashboard).build();
-  };
 
   return (
     <RequireAuthentication>
@@ -258,7 +244,7 @@ export const Site: FC = () => {
                       <Route
                         path="/"
                         element={
-                          <Navigate replace to={getRootNavigationPath()} />
+                          <Navigate replace to={rootNavigationPath} />
                         }
                       />
                       <Route path="*" element={<NotFound />} />

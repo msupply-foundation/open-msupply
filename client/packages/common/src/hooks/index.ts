@@ -34,3 +34,4 @@ export * from './useKeyboardShortcut';
 export * from './useSimplifiedTabletUI';
 export * from './useFeatureFlags';
 export * from './usePrinter';
+export * from './useRootNavigationPath';
