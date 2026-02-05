@@ -98,7 +98,7 @@ export const FilterMenu = ({ filters }: FilterDefinitions) => {
   return (
     <Box
       display="flex"
-      gap={2}
+      gap={3}
       sx={theme => ({
         [theme.breakpoints.down('sm')]: {
           flexDirection: 'column',
