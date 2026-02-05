@@ -2627,5 +2627,6 @@
   "button.scan-once": "Scan once",
   "button.scanning": "Scanning…",
   "button.listening-for-scans": "Ready to scan…",
-  "label.listening": "Listening for scans"
+  "label.listening": "Listening for scans",
+  "label.enter-barcode": "Enter barcode"
 }
