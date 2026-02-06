@@ -79,6 +79,7 @@ impl MigrationFragment for Migrate {
             r#"
                 DELETE FROM plugin_data 
                 WHERE plugin_code IN ('forecasting_plugins');
+                DELETE FROM backend_plugin WHERE code IN ('forecasting_plugins');
             "#
         )?;
 
@@ -89,6 +90,7 @@ impl MigrationFragment for Migrate {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::db_diesel::backend_plugin_row::backend_plugin;
     use crate::db_diesel::plugin_data_row::plugin_data;
     use crate::db_diesel::requisition_line_row::requisition_line;
     use crate::{
@@ -172,11 +174,16 @@ mod tests {
 
         setup_test_dependencies(&connection);
 
-        // Create requisition lines
         create_requisition_line_without_forecasting(&connection, "req_line_1");
         create_requisition_line_without_forecasting(&connection, "req_line_2");
         create_requisition_line_without_forecasting(&connection, "req_line_3");
         create_requisition_line_without_forecasting(&connection, "req_line_4");
+
+        sql_query(
+            "INSERT INTO backend_plugin (id, code, bundle_base64, types, variant_type) VALUES ('forecasting_plugin_id', 'forecasting_plugins', '', '[]', 'BOA_JS')"
+        )
+        .execute(connection.lock().connection())
+        .unwrap();
 
         create_plugin_data(
             &connection,
@@ -249,5 +256,13 @@ mod tests {
             .unwrap();
 
         assert_eq!(remaining_plugin_data_count, 0);
+
+        let remaining_backend_plugin_count: i64 = backend_plugin::table
+            .filter(backend_plugin::code.eq("forecasting_plugins"))
+            .count()
+            .get_result(connection.lock().connection())
+            .unwrap();
+
+        assert_eq!(remaining_backend_plugin_count, 0);
     }
 }
