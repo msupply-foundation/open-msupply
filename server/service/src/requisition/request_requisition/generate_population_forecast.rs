@@ -1,3 +1,4 @@
+use crate::service_provider::ServiceContext;
 use repository::{
     EqualFilter, NameFilter, NameRepository, RepositoryError, StorageConnection, StoreFilter,
     VaccinationCourseRepository, VaccinationCourseRow,
@@ -8,9 +9,9 @@ use std::collections::{HashMap, HashSet};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct ForecastQuantityData {
-    pub total_forecast_units: f64,
-    pub total_forecast_doses: f64,
-    pub course_data: Vec<CourseData>,
+    pub forecast_total_units: f64,
+    pub forecast_total_doses: f64,
+    pub vaccine_courses: Vec<CourseData>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -26,6 +27,19 @@ pub struct CourseData {
     pub doses_per_unit: i32,
     pub forecast_doses: f64,
     pub forecast_units: f64,
+}
+
+pub fn calculate_forecasting_fields(
+    ctx: &ServiceContext,
+    item_ids: Vec<String>,
+) -> Result<HashMap<String, Option<ForecastQuantityData>>, RepositoryError> {
+    let store_properties = match get_store_properties_and_validate(&ctx.connection, &ctx.store_id)?
+    {
+        Some(props) => props,
+        None => return Ok(HashMap::new()),
+    };
+
+    calculate_forecast_quantities(&ctx.connection, &store_properties, item_ids)
 }
 
 struct StoreProperties {
@@ -109,7 +123,6 @@ fn calculate_forecast_quantities(
 
         if item_vaccination_courses.is_empty() {
             log::debug!("Forecasting: No vaccine courses for item {item_id}");
-            results.insert(item_id, None);
             continue;
         }
 
@@ -141,8 +154,8 @@ fn calculate_forecast_quantities(
         }
 
         let mut forecast_values = Vec::new();
-        let mut total_forecast_doses = 0.0;
-        let mut total_forecast_units = 0.0;
+        let mut forecast_total_doses = 0.0;
+        let mut forecast_total_units = 0.0;
 
         for (_, group) in course_groups {
             let coverage_rate = group.coverage_rate;
@@ -185,17 +198,17 @@ fn calculate_forecast_quantities(
                 forecast_units,
             });
 
-            total_forecast_doses += forecast_doses;
-            total_forecast_units += forecast_units;
+            forecast_total_doses += forecast_doses;
+            forecast_total_units += forecast_units;
         }
 
         let forecast_data = if forecast_values.is_empty() {
             None
         } else {
             Some(ForecastQuantityData {
-                total_forecast_units,
-                total_forecast_doses,
-                course_data: forecast_values,
+                forecast_total_units,
+                forecast_total_doses,
+                vaccine_courses: forecast_values,
             })
         };
 
@@ -234,9 +247,9 @@ mod tests {
     // Forecast units: 2777.777777777778 / 2 doses per unit
     fn forecast_result() -> ForecastQuantityData {
         ForecastQuantityData {
-            total_forecast_units: 1388.888888888889,
-            total_forecast_doses: 2777.777777777778,
-            course_data: vec![CourseData {
+            forecast_total_units: 1388.888888888889,
+            forecast_total_doses: 2777.777777777778,
+            vaccine_courses: vec![CourseData {
                 course_title: "Vaccine Course A (demographic_1)".to_string(),
                 number_of_doses: 3,
                 coverage_rate: 80.0,
