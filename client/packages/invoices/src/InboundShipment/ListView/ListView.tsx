@@ -11,6 +11,8 @@ import {
   MaterialTable,
   NameAndColorSetterCell,
   usePreferences,
+  useIsGapsStoreOnly,
+  MobileCardList,
 } from '@openmsupply-client/common';
 import { AppBarButtons } from './AppBarButtons';
 import {
@@ -30,10 +32,13 @@ export const InboundListView = () => {
   const linkRequestModalController = useToggle();
   const { mutate: onUpdate } = useInbound.document.update();
 
+  const isMobile = useIsGapsStoreOnly();
+
   const {
     queryParams: { first, offset, sortBy, filterBy },
   } = useUrlQueryParams({
     initialSort: { key: 'invoiceNumber', dir: 'desc' },
+    ...isMobile && { initialFilter: [{ id: 'status', value: 'NEW,DELIVERED,RECEIVED' }] },
     filters: [
       { key: 'invoiceNumber', condition: 'equalTo', isNumber: true },
       { key: 'otherPartyName' },
@@ -41,7 +46,7 @@ export const InboundListView = () => {
         key: 'createdDatetime',
         condition: 'between',
       },
-      { key: 'status', condition: 'equalTo' },
+      { key: 'status', condition: 'equalAny' },
     ],
   });
 
@@ -148,6 +153,7 @@ export const InboundListView = () => {
           onCreate={invoiceModalController.toggleOn}
         />
       ),
+      isMobile,
     }
   );
 
@@ -157,7 +163,11 @@ export const InboundListView = () => {
         invoiceModalController={invoiceModalController}
         linkRequestModalController={linkRequestModalController}
       />
-      <MaterialTable table={table} />
+      {isMobile ? (
+        <MobileCardList table={table} />
+      ) : (
+        <MaterialTable table={table} />
+      )}
       <Footer
         selectedRows={selectedRows}
         resetRowSelection={table.resetRowSelection}
