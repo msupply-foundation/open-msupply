@@ -6,7 +6,7 @@ import {
   MobileCardList,
   NothingHere,
   TextWithTooltipCell,
-  useIsGapsStoreOnly,
+  useIsExtraSmallScreen,
   useNonPaginatedMaterialTable,
   useTranslation,
 } from '@openmsupply-client/common';
@@ -25,7 +25,7 @@ export const ContentArea = ({
 }: ContentAreaProps) => {
   const t = useTranslation();
 
-  const isMobile = useIsGapsStoreOnly();
+  const isExtraSmallScreen = useIsExtraSmallScreen();
 
   const columns = useMemo(
     (): ColumnDef<GoodsReceivedLineFragment>[] => [
@@ -102,7 +102,7 @@ export const ContentArea = ({
     ),
   });
 
-  return isMobile ? (
+  return isExtraSmallScreen ? (
     <MobileCardList table={table} />
   ) : (
     <MaterialTable table={table} />
