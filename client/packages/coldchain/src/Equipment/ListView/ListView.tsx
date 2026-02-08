@@ -9,7 +9,7 @@ import {
   MaterialTable,
   usePaginatedMaterialTable,
   MobileCardList,
-  useIsGapsStoreOnly,
+  useIsExtraSmallScreen
 } from '@openmsupply-client/common';
 import { useAssets } from '../api';
 import { AppBarButtons } from './AppBarButtons';
@@ -41,7 +41,7 @@ export const EquipmentListView = () => {
 
   const columns = useAssetColumns();
 
-  const isMobile = useIsGapsStoreOnly();
+  const isExtraSmallScreen = useIsExtraSmallScreen();
 
   const { table, selectedRows } = usePaginatedMaterialTable({
     tableId: 'equipment-list',
@@ -52,7 +52,7 @@ export const EquipmentListView = () => {
     isLoading: isFetching,
     onRowClick: handleRowClick,
     noDataElement: <NothingHere body={t('error.no-items-to-display')} />,
-    isMobile,
+    isMobile: isExtraSmallScreen,
   });
 
   return (
@@ -61,7 +61,7 @@ export const EquipmentListView = () => {
         importModalController={importModalController}
         modalController={modalController}
       />
-      {isMobile ? (
+      {isExtraSmallScreen ? (
         <MobileCardList table={table} />
       ) : (
         <MaterialTable table={table} />

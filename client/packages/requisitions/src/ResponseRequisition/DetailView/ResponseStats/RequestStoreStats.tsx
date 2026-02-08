@@ -13,6 +13,8 @@ import {
   QuantityUtils,
 } from '@openmsupply-client/common';
 import { calculatePercentage } from './utils';
+import { AvailableVolumeAtLocationTypeFragment } from '../../api';
+import { VolumeInformation } from './VolumeInfo';
 
 export interface RequestStoreStatsProps {
   representation: RepresentationValue;
@@ -22,6 +24,8 @@ export interface RequestStoreStatsProps {
   suggestedQuantity: number;
   availableStockOnHand: number;
   averageMonthlyConsumption: number;
+  availableVolumeAtLocationType?: AvailableVolumeAtLocationTypeFragment | null;
+  itemVolume: number;
 }
 
 const MIN_MC_WIDTH_TO_SHOW_TEXT = 5;
@@ -120,6 +124,8 @@ export const RequestStoreStats = ({
   suggestedQuantity,
   availableStockOnHand,
   averageMonthlyConsumption,
+  availableVolumeAtLocationType,
+  itemVolume,
 }: RequestStoreStatsProps) => {
   const t = useTranslation();
   const { getPlural } = useIntlUtils();
@@ -143,12 +149,7 @@ export const RequestStoreStats = ({
     averageMonthlyConsumption
   );
 
-  if (formattedAmc === 0) return <CalculationError isAmcZero />;
-
   const targetQuantity = maxMonthsOfStock * formattedAmc;
-
-  if (formattedSuggested === 0 && formattedSoh === 0)
-    return <CalculationError isSohAndQtyZero />;
 
   const monthlyConsumptionPercent = calculatePercentage(
     targetQuantity,
@@ -169,6 +170,10 @@ export const RequestStoreStats = ({
         p: '16px 16px',
       }}
     >
+      {formattedAmc === 0 && <CalculationError isAmcZero />}
+      {formattedSuggested === 0 && formattedSoh === 0 && (
+        <CalculationError isSohAndQtyZero />
+      )}
       <Typography variant="body1" fontWeight={700} fontSize={12}>
         {t('heading.target-quantity')} ({display})
       </Typography>
@@ -212,6 +217,13 @@ export const RequestStoreStats = ({
           colour="primary.light"
         />
       </Box>
+
+      {!!availableVolumeAtLocationType && (
+        <VolumeInformation
+          availableVolumeAtLocationType={availableVolumeAtLocationType}
+          itemVolume={itemVolume}
+        />
+      )}
     </Box>
   );
 };
