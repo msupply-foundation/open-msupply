@@ -11,7 +11,7 @@ import {
   MaterialTable,
   NameAndColorSetterCell,
   usePreferences,
-  useIsGapsStoreOnly,
+  useIsExtraSmallScreen,
   MobileCardList,
 } from '@openmsupply-client/common';
 import { AppBarButtons } from './AppBarButtons';
@@ -32,12 +32,13 @@ export const InboundListView = () => {
   const linkRequestModalController = useToggle();
   const { mutate: onUpdate } = useInbound.document.update();
 
-  const isMobile = useIsGapsStoreOnly();
+  const isExtraSmallScreen = useIsExtraSmallScreen();
 
   const {
     queryParams: { first, offset, sortBy, filterBy },
   } = useUrlQueryParams({
     initialSort: { key: 'invoiceNumber', dir: 'desc' },
+    ...isExtraSmallScreen && { initialFilter: [{ id: 'status', value: 'NEW,DELIVERED,RECEIVED' }] },
     filters: [
       { key: 'invoiceNumber', condition: 'equalTo', isNumber: true },
       { key: 'otherPartyName' },
@@ -45,7 +46,7 @@ export const InboundListView = () => {
         key: 'createdDatetime',
         condition: 'between',
       },
-      { key: 'status', condition: 'equalTo' },
+      { key: 'status', condition: 'equalAny' },
     ],
   });
 
@@ -152,7 +153,7 @@ export const InboundListView = () => {
           onCreate={invoiceModalController.toggleOn}
         />
       ),
-      isMobile,
+      isMobile: isExtraSmallScreen,
     }
   );
 
@@ -162,7 +163,7 @@ export const InboundListView = () => {
         invoiceModalController={invoiceModalController}
         linkRequestModalController={linkRequestModalController}
       />
-      {isMobile ? (
+      {isExtraSmallScreen ? (
         <MobileCardList table={table} />
       ) : (
         <MaterialTable table={table} />

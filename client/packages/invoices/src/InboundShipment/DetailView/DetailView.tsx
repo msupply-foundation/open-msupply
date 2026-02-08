@@ -17,7 +17,7 @@ import {
   Groupable,
   NothingHere,
   MaterialTable,
-  useIsGapsStoreOnly,
+  useIsExtraSmallScreen,
   MobileCardList,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
@@ -85,7 +85,7 @@ const DetailViewInner = () => {
   const hasItemVariantsEnabled = useIsItemVariantsEnabled();
   const simplifiedTabletView = useSimplifiedTabletUI();
 
-  const isMobile = useIsGapsStoreOnly();
+  const isExtraSmallScreen = useIsExtraSmallScreen();
 
   const onRowClick = React.useCallback(
     (line: InboundItem | InboundLineFragment) => {
@@ -139,7 +139,7 @@ const DetailViewInner = () => {
         buttonText={t('button.add-item')}
       />
     ),
-    isMobile,
+    isMobile: isExtraSmallScreen,
   });
 
   const onReturn = async () => {
@@ -194,7 +194,7 @@ const DetailViewInner = () => {
 
   const tabs = [
     {
-      Component: isMobile ? (
+      Component: isExtraSmallScreen ? (
         <MobileCardList table={table} />
       ) : (
         <MaterialTable table={table} />
