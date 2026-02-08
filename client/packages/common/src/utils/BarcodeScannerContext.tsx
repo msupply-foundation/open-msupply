@@ -381,6 +381,11 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
           if (data && 'barcode' in data) {
             if (callbackRef.current) {
               callbackRef.current(parseResult(data.barcode));
+            } else {
+              console.error(
+                'No scan callback registered to handle barcode:',
+                data.barcode
+              );
             }
           } else if (data && 'error' in data) {
             console.error('Honeywell scanning error:', data.error);
@@ -403,6 +408,11 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
           const barcode = parseBarcodeData(data);
           if (callbackRef.current) {
             callbackRef.current(parseResult(barcode));
+          } else {
+            console.error(
+              'No scan callback registered to handle barcode:',
+              barcode
+            );
           }
         });
       } catch (e) {
@@ -422,6 +432,11 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
         const result = parseResult(barcode);
         if (callbackRef.current) {
           callbackRef.current(result);
+        } else {
+          console.error(
+            'No scan callback registered to handle barcode:',
+            result
+          );
         }
       };
       await MockScanner.startListening(scanHandler);
@@ -479,7 +494,14 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
       registerCallback: (callback: ScanCallback) =>
         (callbackRef.current = callback),
       handleScanResult: (barcode: ScanResult) => {
-        return callbackRef.current && callbackRef.current(barcode);
+        if (callbackRef.current) {
+          return callbackRef.current(barcode);
+        } else {
+          console.error(
+            'No scan callback registered to handle barcode:',
+            barcode
+          );
+        }
       },
     }),
     [
