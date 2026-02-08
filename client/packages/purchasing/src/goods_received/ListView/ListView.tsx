@@ -8,7 +8,7 @@ import {
   usePaginatedMaterialTable,
   ColumnDef,
   ColumnType,
-  useIsGapsStoreOnly,
+  useIsExtraSmallScreen,
   MobileCardList,
 } from '@openmsupply-client/common';
 import { useGoodsReceivedList } from '../api';
@@ -36,7 +36,7 @@ export const GoodsReceivedListView = () => {
     query: { data, isError, isLoading },
   } = useGoodsReceivedList(queryParams);
 
-  const isMobile = useIsGapsStoreOnly();
+  const isExtraSmallScreen = useIsExtraSmallScreen();
 
   const columns = useMemo(
     (): ColumnDef<GoodsReceivedRowFragment>[] => [
@@ -104,7 +104,7 @@ export const GoodsReceivedListView = () => {
     <>
       <Toolbar />
       <AppBarButtons />
-      {isMobile ? (
+      {isExtraSmallScreen ? (
         <MobileCardList table={table} />
       ) : (
         <MaterialTable table={table} />
