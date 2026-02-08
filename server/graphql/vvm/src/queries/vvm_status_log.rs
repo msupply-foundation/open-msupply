@@ -14,7 +14,7 @@ pub fn get_vvm_status_log_by_stock_line(
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::QueryAndMutateVvmStatus,
+            resource: Resource::QueryVvmStatus,
             store_id: Some(store_id.clone()),
         },
     )?;
