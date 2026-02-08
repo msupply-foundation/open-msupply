@@ -478,10 +478,7 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
       mockScannerEnabled,
       setMockScannerEnabled,
       supportsContinuousScanning:
-        hasHoneywellScanner ||
-        hasElectronApi ||
-        hasCameraBarcodeScanner ||
-        mockScannerEnabled,
+        hasHoneywellScanner || hasElectronApi || mockScannerEnabled,
     }),
     [
       isEnabled,
@@ -496,7 +493,6 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
       isListening,
       hasHoneywellScanner,
       hasElectronApi,
-      hasCameraBarcodeScanner,
     ]
   );
 
