@@ -87,14 +87,15 @@ const ColumnHeaderWithTooltip = <T extends MRT_RowData>({
   column: MRT_Column<T>;
 }) => (
   <Tooltip title={column.columnDef.header} placement="top">
-    <div
+    <span
       style={{
         whiteSpace: 'nowrap',
         overflow: 'hidden',
         textOverflow: 'ellipsis',
+        display: 'inline-block',
       }}
     >
       {column.columnDef.header}
-    </div>
+    </span>
   </Tooltip>
 );
