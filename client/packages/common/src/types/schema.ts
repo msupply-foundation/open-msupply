@@ -7068,6 +7068,7 @@ export type PurchaseOrderLineNode = {
   comment?: Maybe<Scalars['String']['output']>;
   expectedDeliveryDate?: Maybe<Scalars['NaiveDate']['output']>;
   id: Scalars['String']['output'];
+  inTransitNumberOfUnits: Scalars['Float']['output'];
   item: ItemNode;
   lineNumber: Scalars['Int']['output'];
   manufacturer?: Maybe<NameNode>;
@@ -7076,6 +7077,7 @@ export type PurchaseOrderLineNode = {
   pricePerPackBeforeDiscount: Scalars['Float']['output'];
   purchaseOrder?: Maybe<PurchaseOrderNode>;
   purchaseOrderId: Scalars['String']['output'];
+  receivedNumberOfUnits: Scalars['Float']['output'];
   requestedDeliveryDate?: Maybe<Scalars['NaiveDate']['output']>;
   requestedNumberOfUnits: Scalars['Float']['output'];
   requestedPackSize: Scalars['Float']['output'];
@@ -9988,6 +9990,7 @@ export type UpdateInboundShipmentServiceLineResponseWithId = {
 export enum UpdateInboundShipmentStatusInput {
   Delivered = 'DELIVERED',
   Received = 'RECEIVED',
+  Shipped = 'SHIPPED',
   Verified = 'VERIFIED',
 }
 
@@ -11019,6 +11022,9 @@ export enum UserPermission {
   DocumentMutate = 'DOCUMENT_MUTATE',
   DocumentQuery = 'DOCUMENT_QUERY',
   EditCentralData = 'EDIT_CENTRAL_DATA',
+  InboundShipmentExternalAuthorise = 'INBOUND_SHIPMENT_EXTERNAL_AUTHORISE',
+  InboundShipmentExternalMutate = 'INBOUND_SHIPMENT_EXTERNAL_MUTATE',
+  InboundShipmentExternalQuery = 'INBOUND_SHIPMENT_EXTERNAL_QUERY',
   InboundShipmentMutate = 'INBOUND_SHIPMENT_MUTATE',
   InboundShipmentQuery = 'INBOUND_SHIPMENT_QUERY',
   InboundShipmentVerify = 'INBOUND_SHIPMENT_VERIFY',

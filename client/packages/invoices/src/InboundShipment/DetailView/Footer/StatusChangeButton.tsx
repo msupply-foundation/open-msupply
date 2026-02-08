@@ -30,19 +30,20 @@ const getStatusOptions = (
   // Manual workflows skip Picked and Shipped statuses
   const statuses = isManuallyCreated
     ? [
-        InvoiceNodeStatus.New,
-        InvoiceNodeStatus.Delivered,
-        InvoiceNodeStatus.Received,
-        InvoiceNodeStatus.Verified,
-      ]
+      InvoiceNodeStatus.New,
+      InvoiceNodeStatus.Shipped,
+      InvoiceNodeStatus.Delivered,
+      InvoiceNodeStatus.Received,
+      InvoiceNodeStatus.Verified,
+    ]
     : [
-        InvoiceNodeStatus.New,
-        InvoiceNodeStatus.Picked,
-        InvoiceNodeStatus.Shipped,
-        InvoiceNodeStatus.Delivered,
-        InvoiceNodeStatus.Received,
-        InvoiceNodeStatus.Verified,
-      ];
+      InvoiceNodeStatus.New,
+      InvoiceNodeStatus.Picked,
+      InvoiceNodeStatus.Shipped,
+      InvoiceNodeStatus.Delivered,
+      InvoiceNodeStatus.Received,
+      InvoiceNodeStatus.Verified,
+    ];
 
   const options = statuses.map(status => ({
     value: status,
@@ -55,13 +56,19 @@ const getStatusOptions = (
       if (options[1]) options[1].isDisabled = false;
       if (options[2]) options[2].isDisabled = false;
       if (options[3]) options[3].isDisabled = false;
+      if (options[4]) options[4].isDisabled = false;
     }
-    if (currentStatus === InvoiceNodeStatus.Delivered) {
+    if (currentStatus === InvoiceNodeStatus.Shipped) {
       if (options[2]) options[2].isDisabled = false;
       if (options[3]) options[3].isDisabled = false;
+      if (options[4]) options[4].isDisabled = false;
+    }
+    if (currentStatus === InvoiceNodeStatus.Delivered) {
+      if (options[3]) options[3].isDisabled = false;
+      if (options[4]) options[4].isDisabled = false;
     }
     if (currentStatus === InvoiceNodeStatus.Received) {
-      if (options[3]) options[3].isDisabled = false;
+      if (options[4]) options[4].isDisabled = false;
     }
   } else {
     if (currentStatus === InvoiceNodeStatus.Shipped) {

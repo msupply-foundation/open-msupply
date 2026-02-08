@@ -17,7 +17,7 @@ use graphql_core::{
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
-use repository::{location::Location, InvoiceLine, InvoiceLineRow, ItemRow};
+use repository::{location::Location, InvoiceLine, InvoiceLineRow, InvoiceLineStatsRow, ItemRow};
 use serde::Serialize;
 use service::{usize_to_u32, ListResult};
 
@@ -312,11 +312,7 @@ impl InvoiceLineNode {
     ) -> Result<Option<PurchaseOrderLineNode>> {
         let loader = ctx.get_loader::<DataLoader<PurchaseOrderLineByIdLoader>>();
 
-        let Some(purchase_order_line_id) = &self
-            .invoice_line
-            .invoice_line_stats_row
-            .purchase_order_line_id
-        else {
+        let Some(purchase_order_line_id) = &self.stats().purchase_order_line_id else {
             return Ok(None);
         };
 
@@ -380,6 +376,10 @@ impl InvoiceLineNode {
 
     pub fn item_row(&self) -> &ItemRow {
         &self.invoice_line.item_row
+    }
+
+    pub fn stats(&self) -> &InvoiceLineStatsRow {
+        &self.invoice_line.invoice_line_stats_row
     }
 }
 

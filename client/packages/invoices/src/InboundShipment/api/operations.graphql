@@ -102,6 +102,11 @@ fragment InboundLine on InvoiceLineNode {
 
   purchaseOrderLine {
     __typename
+    adjustedNumberOfUnits
+    shippedNumberOfUnits
+    inTransitNumberOfUnits
+    receivedNumberOfUnits
+    requestedNumberOfUnits
     pricePerPackAfterDiscount
   }
 }
