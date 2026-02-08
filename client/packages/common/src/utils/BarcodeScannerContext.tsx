@@ -476,10 +476,7 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
       mockScannerEnabled,
       setMockScannerEnabled,
       supportsContinuousScanning:
-        hasHoneywellScanner ||
-        hasElectronApi ||
-        hasCameraBarcodeScanner ||
-        mockScannerEnabled,
+        hasHoneywellScanner || hasElectronApi || mockScannerEnabled,
       registerCallback: (callback: ScanCallback) =>
         (callbackRef.current = callback),
       handleScanResult: (barcode: ScanResult) =>
