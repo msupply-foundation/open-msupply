@@ -43,7 +43,7 @@ pub fn update_vvm_status_log(
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::QueryAndMutateVvmStatus,
+            resource: Resource::MutateVvmStatus,
             store_id: Some(store_id.to_string()),
         },
     )?;
