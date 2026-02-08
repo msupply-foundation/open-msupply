@@ -18,11 +18,12 @@ import {
   SnackbarProvider,
   BarcodeScannerProvider,
   DetailLoadingSkeleton,
-  useIsGapsStoreOnly,
+  useIsExtraSmallScreen,
   useBlockNavigation,
   useTheme,
   usePreferences,
   useIsCentralServerApi,
+  useRootNavigationPath,
 } from '@openmsupply-client/common';
 import { AppDrawer, AppBar, Footer, NotFound } from './components';
 import { CommandK } from './CommandK';
@@ -76,8 +77,8 @@ export const Site: FC = () => {
   const getPageTitle = useGetPageTitle();
   const { setPageTitle } = useHostContext();
   const pageTitle = getPageTitle(location.pathname);
-  const isGapsStore = useIsGapsStoreOnly();
-  const { isGaps } = usePreferences();
+  const isExtraSmallScreen = useIsExtraSmallScreen();
+  const rootNavigationPath = useRootNavigationPath();
   const isCentralServer = useIsCentralServerApi();
   const { storeCustomColour } = usePreferences();
   const theme = useTheme();
@@ -109,24 +110,6 @@ export const Site: FC = () => {
     }
   }
 
-  const getRootNavigationPath = () => {
-    // isGapsStore is going to be refactored to support isGaps
-    // This is a temporary fix until the refactor
-    // isGapsStore is just a CSS breakpoint check atm
-    // but is required on small devices
-    if ((isGaps || isGapsStore) && isCentralServer) {
-      return RouteBuilder.create(AppRoute.Manage)
-        .addPart(AppRoute.Equipment)
-        .build();
-    }
-    if (isGaps || isGapsStore) {
-      return RouteBuilder.create(AppRoute.Coldchain)
-        .addPart(AppRoute.Equipment)
-        .build();
-    }
-    return RouteBuilder.create(AppRoute.Dashboard).build();
-  };
-
   return (
     <RequireAuthentication>
       <Blocker />
@@ -135,15 +118,14 @@ export const Site: FC = () => {
           <CommandK>
             <SnackbarProvider maxSnack={3}>
               <BarcodeScannerProvider>
-                {!isGapsStore && <AppDrawer />}
+                {!isExtraSmallScreen && <AppDrawer />}
                 <Box
                   flex={1}
                   display="flex"
                   flexDirection="column"
                   overflow="hidden"
                 >
-                  {isGapsStore && <MobileNavBar />}
-                  {!isGapsStore && <AppBar />}
+                  {isExtraSmallScreen ? <MobileNavBar /> : <AppBar />}
                   <NotifyOnLogin />
                   <Box display="flex" flex={1} overflow="auto">
                     <Routes>
@@ -262,7 +244,7 @@ export const Site: FC = () => {
                       <Route
                         path="/"
                         element={
-                          <Navigate replace to={getRootNavigationPath()} />
+                          <Navigate replace to={rootNavigationPath} />
                         }
                       />
                       <Route path="*" element={<NotFound />} />
