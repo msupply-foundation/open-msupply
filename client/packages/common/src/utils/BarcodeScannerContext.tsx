@@ -495,7 +495,7 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
         (callbackRef.current = callback),
       handleScanResult: (barcode: ScanResult) => {
         if (callbackRef.current) {
-          return callbackRef.current(barcode);
+          callbackRef.current(barcode);
         } else {
           console.error(
             'No scan callback registered to handle barcode:',
