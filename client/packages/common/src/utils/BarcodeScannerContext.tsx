@@ -307,7 +307,6 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
   const stopScan = useCallback(async () => {
     setHideApp(false);
     setIsListening(false);
-    callbackRef.current = null;
     if (mockScannerEnabled) {
       await MockScanner.stopListening();
     }
@@ -479,8 +478,9 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
         hasHoneywellScanner || hasElectronApi || mockScannerEnabled,
       registerCallback: (callback: ScanCallback) =>
         (callbackRef.current = callback),
-      handleScanResult: (barcode: ScanResult) =>
-        callbackRef.current && callbackRef.current(barcode),
+      handleScanResult: (barcode: ScanResult) => {
+        return callbackRef.current && callbackRef.current(barcode);
+      },
     }),
     [
       isEnabled,
@@ -495,7 +495,6 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
       isListening,
       hasHoneywellScanner,
       hasElectronApi,
-      hasCameraBarcodeScanner,
     ]
   );
 
