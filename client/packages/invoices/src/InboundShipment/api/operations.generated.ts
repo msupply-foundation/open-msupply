@@ -92,6 +92,11 @@ export type InboundLineFragment = {
   } | null;
   purchaseOrderLine?: {
     __typename: 'PurchaseOrderLineNode';
+    adjustedNumberOfUnits?: number | null;
+    shippedNumberOfUnits: number;
+    inTransitNumberOfUnits: number;
+    receivedNumberOfUnits: number;
+    requestedNumberOfUnits: number;
     pricePerPackAfterDiscount: number;
   } | null;
 };
@@ -229,6 +234,11 @@ export type InboundFragment = {
       } | null;
       purchaseOrderLine?: {
         __typename: 'PurchaseOrderLineNode';
+        adjustedNumberOfUnits?: number | null;
+        shippedNumberOfUnits: number;
+        inTransitNumberOfUnits: number;
+        receivedNumberOfUnits: number;
+        requestedNumberOfUnits: number;
         pricePerPackAfterDiscount: number;
       } | null;
     }>;
@@ -528,6 +538,11 @@ export type InvoiceQuery = {
             } | null;
             purchaseOrderLine?: {
               __typename: 'PurchaseOrderLineNode';
+              adjustedNumberOfUnits?: number | null;
+              shippedNumberOfUnits: number;
+              inTransitNumberOfUnits: number;
+              receivedNumberOfUnits: number;
+              requestedNumberOfUnits: number;
               pricePerPackAfterDiscount: number;
             } | null;
           }>;
@@ -750,6 +765,11 @@ export type InboundByNumberQuery = {
             } | null;
             purchaseOrderLine?: {
               __typename: 'PurchaseOrderLineNode';
+              adjustedNumberOfUnits?: number | null;
+              shippedNumberOfUnits: number;
+              inTransitNumberOfUnits: number;
+              receivedNumberOfUnits: number;
+              requestedNumberOfUnits: number;
               pricePerPackAfterDiscount: number;
             } | null;
           }>;
@@ -1383,6 +1403,11 @@ export const InboundLineFragmentDoc = gql`
     }
     purchaseOrderLine {
       __typename
+      adjustedNumberOfUnits
+      shippedNumberOfUnits
+      inTransitNumberOfUnits
+      receivedNumberOfUnits
+      requestedNumberOfUnits
       pricePerPackAfterDiscount
     }
   }

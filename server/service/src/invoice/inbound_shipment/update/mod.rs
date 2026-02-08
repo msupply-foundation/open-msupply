@@ -20,6 +20,7 @@ use self::generate::LineAndStockLine;
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum UpdateInboundShipmentStatus {
+    Shipped,
     Delivered,
     Received,
     Verified,
@@ -205,6 +206,7 @@ where
 impl UpdateInboundShipmentStatus {
     pub fn full_status(&self) -> InvoiceStatus {
         match self {
+            UpdateInboundShipmentStatus::Shipped => InvoiceStatus::Shipped,
             UpdateInboundShipmentStatus::Delivered => InvoiceStatus::Delivered,
             UpdateInboundShipmentStatus::Received => InvoiceStatus::Received,
             UpdateInboundShipmentStatus::Verified => InvoiceStatus::Verified,
