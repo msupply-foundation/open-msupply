@@ -88,12 +88,23 @@ pub fn generate_requisition_lines(
             |item_stats| -> Result<RequisitionLineRow, PluginOrRepositoryError> {
                 let average_monthly_consumption = item_stats.average_monthly_consumption;
                 let available_stock_on_hand = item_stats.available_stock_on_hand;
-                let suggested_quantity = generate_suggested_quantity(GenerateSuggestedQuantity {
-                    average_monthly_consumption,
-                    available_stock_on_hand,
-                    min_months_of_stock: requisition_row.min_months_of_stock,
-                    max_months_of_stock: requisition_row.max_months_of_stock,
-                });
+                let forecast_total_units = population_forecast
+                    .get(&item_stats.item_id)
+                    .and_then(|opt| opt.as_ref())
+                    .map(|f| f.forecast_total_units);
+
+                let suggested_quantity = match (display_forecasting, forecast_total_units) {
+                    (true, Some(forecast_units)) if forecast_units > available_stock_on_hand => {
+                        (forecast_units - available_stock_on_hand).ceil()
+                    }
+                    (true, Some(_)) => 0.0,
+                    _ => generate_suggested_quantity(GenerateSuggestedQuantity {
+                        average_monthly_consumption,
+                        available_stock_on_hand,
+                        min_months_of_stock: requisition_row.min_months_of_stock,
+                        max_months_of_stock: requisition_row.max_months_of_stock,
+                    }),
+                };
                 let available_volume_by_type = available_volumes
                     .get(&item_stats.item_id)
                     .cloned()
@@ -122,8 +133,7 @@ pub fn generate_requisition_lines(
                     },
                     available_volume: available_volume_by_type.available_volume,
                     location_type_id: available_volume_by_type.restricted_location_type_id,
-                    forecast_total_units: population_forecast_for_item
-                        .map(|f| f.forecast_total_units),
+                    forecast_total_units,
                     forecast_total_doses: population_forecast_for_item
                         .map(|f| f.forecast_total_doses),
                     vaccine_courses: population_forecast_for_item
