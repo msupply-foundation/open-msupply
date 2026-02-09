@@ -74,7 +74,11 @@ export const RequestLineEdit = ({
 }: RequestLineEditProps) => {
   const t = useTranslation();
   const { plugins } = usePluginProvider();
-  const { manageVaccinesInDoses, warningForExcessRequest } = usePreferences();
+  const {
+    manageVaccinesInDoses,
+    warningForExcessRequest,
+    displayPopulationBasedForecasting,
+  } = usePreferences();
 
   const isInfoVisible = useCallback(
     (infoType: string) =>
@@ -91,6 +95,8 @@ export const RequestLineEdit = ({
   const disableItemSelection = disabled || isUpdateMode;
   const disableReasons =
     draft?.requestedQuantity === draft?.suggestedQuantity || disabled;
+  const displayForecasting =
+    displayPopulationBasedForecasting && !!draft?.forecastTotalUnits;
 
   const line = useMemo(
     () => lines.find(line => line.id === draft?.id),
@@ -261,6 +267,15 @@ export const RequestLineEdit = ({
                 />
               ) : null}
               {renderValueInfoRows(getLeftPanel(t, draft, showExtraFields))}
+              {displayForecasting &&
+                renderValueInfoRows([
+                  {
+                    label: t('label.target-stock-population'),
+                    value: line?.forecastTotalUnits
+                      ? Math.ceil(line.forecastTotalUnits)
+                      : undefined,
+                  },
+                ])}
               {line &&
                 plugins.requestRequisitionLine?.editViewField?.map(
                   (Field, index) => (
