@@ -1,6 +1,7 @@
 import React from 'react';
 import {
   Divider,
+  ListItemIcon,
   ListItemText,
   Menu,
   MenuItem,
@@ -9,11 +10,7 @@ import {
 import ViewColumnIcon from '@mui/icons-material/ViewColumn';
 import { IconButton, useConfirmationModal } from '@common/components';
 import { useTranslation } from '@common/intl';
-import {
-  MRT_DensityState,
-  MRT_TableInstance,
-  MRT_ToggleDensePaddingButton,
-} from 'material-react-table';
+import { MRT_DensityState, MRT_TableInstance } from 'material-react-table';
 import { RefreshIcon, SettingsIcon } from '@common/icons';
 import {
   useColumnDensity,
@@ -22,6 +19,13 @@ import {
   useColumnSizing,
   useColumnVisibility,
 } from '../tableState';
+// MRT uses these icons - match the column menu items/table default icons until icon library + table icons are updated
+import PushPinIcon from '@mui/icons-material/PushPin';
+import RestartAltIcon from '@mui/icons-material/RestartAlt';
+import DensityLargeIcon from '@mui/icons-material/DensityLarge';
+import DensityMediumIcon from '@mui/icons-material/DensityMedium';
+import DensitySmallIcon from '@mui/icons-material/DensitySmall';
+import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
 
 export const SettingsMenu = ({
   table,
@@ -56,6 +60,21 @@ export const SettingsMenu = ({
     message: t('messages.reset-table-defaults'),
     onConfirm: resetTableState,
   });
+
+  const densities: MRT_DensityState[] = ['compact', 'spacious', 'comfortable'];
+  const currentIndex = densities.indexOf(density.state);
+  const nextIndex = (currentIndex + 1) % densities.length;
+  const nextDensity = densities[nextIndex] ?? 'comfortable';
+
+  const densityIcon = () => {
+    if (density.state === 'compact') {
+      return <DensitySmallIcon fontSize="small" />;
+    } else if (density.state === 'spacious') {
+      return <DensityLargeIcon fontSize="small" />;
+    } else {
+      return <DensityMediumIcon fontSize="small" />;
+    }
+  };
 
   return (
     <>
@@ -103,7 +122,9 @@ export const SettingsMenu = ({
               setAnchorEl(null);
             }}
           >
-            <ViewColumnIcon />
+            <ListItemIcon>
+              <SwapHorizIcon />
+            </ListItemIcon>
             <ListItemText>{'Reset column order'}</ListItemText>
           </MenuItem>
           <MenuItem
@@ -115,7 +136,9 @@ export const SettingsMenu = ({
               setAnchorEl(null);
             }}
           >
-            <ViewColumnIcon />
+            <ListItemIcon>
+              <ViewColumnIcon />
+            </ListItemIcon>
             <ListItemText>{'Reset column visibility'}</ListItemText>
           </MenuItem>
           <MenuItem
@@ -127,7 +150,9 @@ export const SettingsMenu = ({
               setAnchorEl(null);
             }}
           >
-            <ViewColumnIcon />
+            <ListItemIcon>
+              <RestartAltIcon />
+            </ListItemIcon>
             <ListItemText>{'Reset column width'}</ListItemText>
           </MenuItem>
           <MenuItem
@@ -141,43 +166,42 @@ export const SettingsMenu = ({
               setAnchorEl(null);
             }}
           >
-            <ViewColumnIcon />
+            <ListItemIcon>
+              <PushPinIcon />
+            </ListItemIcon>
+
             <ListItemText>{'Unpin all columns'}</ListItemText>
           </MenuItem>
           <MenuItem
             key={'Table density'}
-            onClick={() => {
-              density.update(prev => {
-                const densities: MRT_DensityState[] = [
-                  'compact',
-                  'spacious',
-                  'comfortable',
-                ];
-                const currentIndex = densities.indexOf(prev);
-                const nextIndex = (currentIndex + 1) % densities.length;
-                // always default to comfortable on reset, so cycle goes compact > spacious > comfortable > compact etc
-                // matches default button behaviour
-                return densities[nextIndex] ?? 'comfortable';
-              });
-              //   setAnchorEl(null);
-            }}
+            onClick={() => density.update(nextDensity)}
           >
-            <ViewColumnIcon />
+            <ListItemIcon>{densityIcon()}</ListItemIcon>
             <ListItemText>{'Table density'}</ListItemText>
           </MenuItem>
-          <MRT_ToggleDensePaddingButton table={table} />
           <Divider />
           <MenuItem
             key={'Reset to defaults'}
             disabled={!hasSavedState}
+            sx={{ color: 'error.main' }}
             onClick={() => {
               table.resetColumnOrder();
               getConfirmation();
               setAnchorEl(null);
             }}
           >
-            <RefreshIcon />
-            <ListItemText>{'Reset to defaults'}</ListItemText>
+            <ListItemIcon>
+              <RefreshIcon />
+            </ListItemIcon>
+            <ListItemText
+              sx={{
+                '& .MuiTypography-root': {
+                  color: 'error.main',
+                },
+              }}
+            >
+              {'Reset to defaults'}
+            </ListItemText>
           </MenuItem>
           <Divider />
         </>
