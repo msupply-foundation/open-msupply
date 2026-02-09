@@ -17,7 +17,7 @@ export const useStockCounts = (daysTillExpired: number) => {
     }
   );
 
-  if (!data) {
+  if (!data?.stockCounts) {
     return { stats: undefined, ...rest };
   }
 

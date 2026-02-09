@@ -16,7 +16,7 @@ export const useInternalOrderCounts = () => {
     }
   );
 
-  if (!data) {
+  if (!data?.requisitionCounts) {
     return { stats: undefined, ...rest };
   }
 
