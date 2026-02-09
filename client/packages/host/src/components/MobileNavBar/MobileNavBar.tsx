@@ -26,6 +26,7 @@ import {
   EnvUtils,
   useDrawer,
   Breadcrumbs,
+  AppBarButtons,
 } from '@openmsupply-client/common';
 import {
   AppRoute,
@@ -106,68 +107,71 @@ export const MobileNavBar = () => {
   });
 
   return (
-    <Box>
-      <AppBar
-        component="nav"
-        position="static"
-        sx={{
-          flexDirection: 'row-reverse',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          background: theme.palette.background.drawer,
-          boxShadow: '0',
-        }}
-      >
-        <Toolbar>
-          <IconButton
-            color="inherit"
-            aria-label="open drawer"
-            edge="start"
-            onClick={drawer.toggle}
-            sx={{ mr: 1, color: 'black' }}
-          >
-            {drawer.isOpen ? <CloseIcon /> : <MenuIcon />}
-          </IconButton>
-        </Toolbar>
-        <Breadcrumbs />
-        <Box sx={{ p: '10', pl: '25' }}>
-          <AppDrawerIcon />
-        </Box>
-      </AppBar>
-      <StyledDrawer isOpen={drawer.isOpen}>
-        <UpperListContainer>
-          <List>
-            <ReplenishmentNav store={store} />
-            <ColdChainNav store={store} />
-          </List>
-        </UpperListContainer>
-        <Divider />
-        <LowerListContainer>
-          <List>
-            <ExternalNavLink
-              to={docsUrl}
-              icon={<BookIcon fontSize="small" color="primary" />}
-              text={t('docs')}
-              trustedSite={true}
-            />
-            <SyncNavLink />
-            <AppNavLink
-              to={AppRoute.Settings}
-              icon={<SettingsIcon fontSize="small" color="primary" />}
-              text={t('settings')}
-              visible={userHasPermission(UserPermission.ServerAdmin)}
-            />
-            <AppNavLink
-              to={'#'}
-              icon={<PowerIcon fontSize="small" color="primary" />}
-              text={t('logout')}
-              onClick={() => {
-                showConfirmation({});
-              }}
-            />
-          </List>
-        </LowerListContainer>
-      </StyledDrawer>
-    </Box>
+    <>
+      <Box>
+        <AppBar
+          component="nav"
+          position="static"
+          sx={{
+            flexDirection: 'row-reverse',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            background: theme.palette.background.drawer,
+            boxShadow: '0',
+          }}
+        >
+          <Toolbar>
+            <IconButton
+              color="inherit"
+              aria-label="open drawer"
+              edge="start"
+              onClick={drawer.toggle}
+              sx={{ mr: 1, color: 'black' }}
+            >
+              {drawer.isOpen ? <CloseIcon /> : <MenuIcon />}
+            </IconButton>
+          </Toolbar>
+          <Breadcrumbs />
+          <Box sx={{ p: '10', pl: '25' }}>
+            <AppDrawerIcon />
+          </Box>
+        </AppBar>
+        <StyledDrawer isOpen={drawer.isOpen}>
+          <UpperListContainer>
+            <List>
+              <ReplenishmentNav store={store} />
+              <ColdChainNav store={store} />
+            </List>
+          </UpperListContainer>
+          <Divider />
+          <LowerListContainer>
+            <List>
+              <ExternalNavLink
+                to={docsUrl}
+                icon={<BookIcon fontSize="small" color="primary" />}
+                text={t('docs')}
+                trustedSite={true}
+              />
+              <SyncNavLink />
+              <AppNavLink
+                to={AppRoute.Settings}
+                icon={<SettingsIcon fontSize="small" color="primary" />}
+                text={t('settings')}
+                visible={userHasPermission(UserPermission.ServerAdmin)}
+              />
+              <AppNavLink
+                to={'#'}
+                icon={<PowerIcon fontSize="small" color="primary" />}
+                text={t('logout')}
+                onClick={() => {
+                  showConfirmation({});
+                }}
+              />
+            </List>
+          </LowerListContainer>
+        </StyledDrawer>
+      </Box>
+      <AppBarButtons />
+    </>
   );
 };
