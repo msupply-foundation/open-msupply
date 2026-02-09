@@ -295,7 +295,8 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
                 borderRadius: '8px',
               }
             : {
-                borderBottom: '1px solid rgba(224, 224, 224, 1)',
+                borderBottom: '1px solid',
+                borderColor: 'border',
               }),
         },
       };
