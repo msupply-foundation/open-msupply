@@ -25,7 +25,7 @@ export const ReplenishmentNav = ({
     RouteBuilder.create(AppRoute.Replenishment).addWildCard().build()
   );
   const t = useTranslation();
-  const rnrVisible = store?.preferences.omProgramModule;
+  const rnrVisible = false && store?.preferences.omProgramModule;
   const isCentralServer = useIsCentralServerApi();
   const { useProcurementFunctionality } = usePreferences();
   const useProcurement = isCentralServer && useProcurementFunctionality;
