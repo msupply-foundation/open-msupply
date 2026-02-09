@@ -20,8 +20,7 @@ import {
   useIsGrouped,
 } from './tableState';
 import { clearSavedState } from './tableState/utils';
-import { NothingHere } from '@common/components';
-import { DataError } from '../../../components/errors/DataError';
+import { DataError, NothingHere } from '@common/components';
 
 export interface BaseTableConfig<T extends MRT_RowData> extends Omit<
   MRT_TableOptions<T>,
