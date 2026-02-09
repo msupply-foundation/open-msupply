@@ -113,6 +113,16 @@ export const useRequestColumns = () => {
         defaultHideOnMobile: true,
       },
       {
+        id: 'forecastQuantity',
+        header: t('label.target-stock-population'),
+        description: t('description.target-stock-population'),
+        Cell: UnitsAndDosesCell,
+        columnType: ColumnType.Number,
+        accessorFn: row =>
+          row.forecastTotalUnits ? Math.ceil(row.forecastTotalUnits) : 0,
+        defaultHideOnMobile: true,
+      },
+      {
         accessorKey: 'suggestedQuantity',
         header: t('label.forecast-quantity'),
         description: t('description.forecast-quantity'),
