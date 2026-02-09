@@ -7616,7 +7616,7 @@ export type Queries = {
   /** Query omSupply "master_lists" entries */
   masterLists: MasterListsResponse;
   me: UserResponse;
-  /** Query the migration status */
+  /** Available without authorisation in all states (Operational, Initialisation and MigratingDatabase) */
   migrationStatus: MigrationStatusNode;
   nameProperties: NamePropertyResponse;
   /** Query omSupply "name" entries */
