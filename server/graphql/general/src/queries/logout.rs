@@ -19,46 +19,6 @@ impl Logout {
     }
 }
 
-pub struct MissingAuthToken;
-#[Object]
-impl MissingAuthToken {
-    pub async fn description(&self) -> &str {
-        "Auth token was not provided"
-    }
-}
-
-pub struct ExpiredSignature;
-#[Object]
-impl ExpiredSignature {
-    pub async fn description(&self) -> &str {
-        "Provided token is expired"
-    }
-}
-
-pub struct InvalidToken;
-#[Object]
-impl InvalidToken {
-    pub async fn description(&self) -> &str {
-        "Provided token is invalid"
-    }
-}
-
-pub struct TokenInvalided;
-#[Object]
-impl TokenInvalided {
-    pub async fn description(&self) -> &str {
-        "Token has been invalidated by the server"
-    }
-}
-
-pub struct NotAnApiToken;
-#[Object]
-impl NotAnApiToken {
-    pub async fn description(&self) -> &str {
-        "Not an api token"
-    }
-}
-
 #[derive(Union)]
 pub enum LogoutResponse {
     Response(Logout),

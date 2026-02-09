@@ -17,6 +17,7 @@ import { CreateAssetModal } from './CreateAssetModal';
 import { EquipmentImportModal } from '../ImportAsset';
 import { AssetRowFragment } from '../api/operations.generated';
 import { AppRoute } from '@openmsupply-client/config';
+import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
 import { useAssetColumns } from './columns';
 
@@ -57,6 +58,7 @@ export const EquipmentListView = () => {
 
   return (
     <>
+      <Toolbar />
       <AppBarButtons
         importModalController={importModalController}
         modalController={modalController}
