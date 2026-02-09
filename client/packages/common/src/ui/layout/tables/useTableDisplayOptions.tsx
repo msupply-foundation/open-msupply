@@ -196,7 +196,7 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
         : {},
 
     muiTableBodyRowProps: params => {
-      const { row } = params;
+      const { row, table } = params;
       const customProps =
         typeof muiTableBodyRowProps === 'function'
           ? muiTableBodyRowProps(params)
@@ -210,9 +210,9 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
           if (onRowClick) onRowClick(row.original, isCtrlClick);
         },
         sx: {
-          backgroundColor: row.original['isSubRow']
-            ? 'background.secondary'
-            : 'inherit',
+          backgroundColor: row.getIsGrouped() || !table.getState().grouping?.length
+            ? 'inherit'
+            : 'background.secondary',
           // these two selectors are to change the background color of a selected
           // row from the default which is to use primary.main of the theme
           // with an opacity of 0.2 and 0.4 on hover

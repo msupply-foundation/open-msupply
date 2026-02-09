@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useState } from 'react';
 import {
   MRT_RowData,
   MRT_TableOptions,
@@ -7,7 +7,6 @@ import {
 import { useIntlUtils, useTranslation } from '@common/intl';
 import { ColumnDef } from './types';
 import { useMaterialTableColumns } from './useMaterialTableColumns';
-import { getGroupedRows } from './utils';
 import { useTableFiltering } from './useTableFiltering';
 import { useTableDisplayOptions } from './useTableDisplayOptions';
 import { useUrlSortManagement } from './useUrlSortManagement';
@@ -17,9 +16,9 @@ import {
   useColumnSizing,
   useColumnVisibility,
   useColumnPinning,
-  useIsGrouped,
+  useColumnGrouping,
 } from './tableState';
-import { clearSavedState } from './tableState/utils';
+import { clearSavedState, getSavedState } from './tableState/utils';
 import { NothingHere } from '@common/components';
 
 export interface BaseTableConfig<T extends MRT_RowData>
@@ -33,11 +32,7 @@ export interface BaseTableConfig<T extends MRT_RowData>
   /** Whether row should be greyed out - still potentially clickable */
   getIsRestrictedRow?: (row: T) => boolean;
   grouping?: {
-    /** Defaults to false */
-    enabled: boolean;
-    /** Defaults to 'itemName' */
-    field?: string;
-    /** Defaults to false */
+    field: string;
     groupedByDefault?: boolean;
   };
   columns: ColumnDef<T>[];
@@ -57,7 +52,7 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
   getIsRestrictedRow,
   columns: omsColumns,
   data,
-  grouping,
+  grouping: groupingInput,
   enableColumnResizing = true,
   manualFiltering = false,
   noUrlFiltering = false,
@@ -68,7 +63,6 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
   enableRowSelection,
   ...tableOptions
 }: BaseTableConfig<T>) => {
-  const t = useTranslation();
   const { getTableLocalisations } = useIntlUtils();
   const localization = getTableLocalisations();
 
@@ -81,38 +75,24 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
   );
   const { sorting, onSortingChange } = useUrlSortManagement(initialSort);
 
-  const { isGrouped, toggleGrouped, resetGrouped } = useIsGrouped(
-    tableId,
-    grouping?.groupedByDefault
-  );
-
-  const processedData = useMemo(
-    () =>
-      getGroupedRows(isGrouped, data ?? [], grouping?.field ?? 'itemName', t),
-    [data, isGrouped, t]
-  );
-
-  const density = useColumnDensity(tableId);
-  const columnSizing = useColumnSizing(tableId);
-  const columnVisibility = useColumnVisibility(tableId, columns);
+  const [hasSavedState, setHasSavedState] = useState<boolean>(getSavedState(tableId) !== undefined);
+  const density = useColumnDensity(tableId, setHasSavedState);
+  const columnSizing = useColumnSizing(tableId, setHasSavedState);
+  const columnVisibility = useColumnVisibility(tableId, setHasSavedState, columns);
   const columnPinning = useColumnPinning(
     tableId,
+    setHasSavedState,
     columns,
     !!enableRowSelection
   );
+  const grouping = useColumnGrouping(tableId, setHasSavedState, groupingInput);
   const columnOrder = useColumnOrder(
     tableId,
+    setHasSavedState,
     columns,
     enableRowSelection,
-    isGrouped
+    !!grouping.state.length
   );
-
-  const hasSavedState =
-    density.hasSavedState ||
-    columnSizing.hasSavedState ||
-    columnPinning.hasSavedState ||
-    columnVisibility.hasSavedState ||
-    columnOrder.hasSavedState;
 
   const resetTableState = () => {
     clearSavedState(tableId);
@@ -124,7 +104,7 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
     // these shouldn't trigger additional local storage updates
     table.resetColumnPinning();
     table.resetColumnSizing();
-    resetGrouped();
+    table.resetGrouping();
 
     // column order doesn't need resetting - state reset directly from clearing
     // local storage
@@ -137,20 +117,16 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
     // Density doesn't have a `reset` function
     table.setDensity(density.initial);
 
-    // Reset the flags for each state slice too
-    density.resetHasSavedState();
-    columnSizing.resetHasSavedState();
-    columnPinning.resetHasSavedState();
-    columnVisibility.resetHasSavedState();
-    columnOrder.resetHasSavedState();
+    // Reset saved state flag
+    setHasSavedState(false);
   };
 
   const hasColumnFilters = columns.some(col => col.enableColumnFilter);
 
   const displayOptions = useTableDisplayOptions({
-    isGrouped,
+    isGrouped: !!grouping.state.length,
     hasColumnFilters,
-    toggleGrouped: grouping?.enabled ? toggleGrouped : undefined,
+    toggleGrouped: grouping.enabled ? grouping.toggle : undefined,
     resetTableState,
     hasSavedState,
     onRowClick,
@@ -165,7 +141,7 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
 
     localization,
 
-    data: processedData,
+    data: data ?? [],
     enablePagination: false,
 
     layoutMode: 'grid',
@@ -187,7 +163,11 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
 
     // Disable bottom footer - use OMS custom action footer instead
     enableBottomToolbar: false,
-    enableExpanding: isGrouped,
+
+    // Grouping options
+    enableGrouping: true,
+    groupedColumnMode: false,
+    getRowCanExpand: row => row.getLeafRows().length > 1,
 
     // Disable selection Toolbar, we use our own custom footer for this
     positionToolbarAlertBanner: 'none',
@@ -204,6 +184,7 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
       columnVisibility: columnVisibility.initial,
       columnPinning: columnPinning.initial,
       columnOrder: columnOrder.initial,
+      grouping: grouping.initial,
     },
     state: {
       showLoadingOverlay: isLoading,
@@ -214,6 +195,7 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
       columnVisibility: columnVisibility.state,
       columnPinning: columnPinning.state,
       columnOrder: columnOrder.state,
+      grouping: grouping.state,
       ...state,
     },
     onDensityChange: density.update,
@@ -221,6 +203,7 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
     onColumnVisibilityChange: columnVisibility.update,
     onColumnPinningChange: columnPinning.update,
     onColumnOrderChange: columnOrder.update,
+    onGroupingChange: grouping.update,
 
     renderEmptyRowsFallback: () =>
       isLoading ? (
