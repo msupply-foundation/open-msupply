@@ -78,13 +78,11 @@ export const SettingsMenu = ({
 
   return (
     <>
-      {/* Toolbar button */}
       <IconButton
         icon={<SettingsIcon />}
         onClick={e => setAnchorEl(e.currentTarget)}
         label={t('settings')}
       />
-      {/* Menu popover */}
       <Menu
         anchorEl={anchorEl}
         open={open}
@@ -98,7 +96,6 @@ export const SettingsMenu = ({
           horizontal: 'right',
         }}
       >
-        {/* Menu header */}
         <MenuItem
           disabled // just for display, not clickable
           sx={{
@@ -110,11 +107,8 @@ export const SettingsMenu = ({
         >
           <Typography fontWeight="bold">Settings</Typography>
         </MenuItem>
-
-        {/* Menu items */}
         <>
           <MenuItem
-            key={'Reset column order'}
             disabled={!columnOrder.hasSavedState}
             onClick={() => {
               table.resetColumnOrder();
@@ -125,10 +119,9 @@ export const SettingsMenu = ({
             <ListItemIcon>
               <SwapHorizIcon />
             </ListItemIcon>
-            <ListItemText>{'Reset column order'}</ListItemText>
+            <ListItemText>{t('label.reset-column-order')}</ListItemText>
           </MenuItem>
           <MenuItem
-            key={'Reset column visibility'}
             disabled={!columnVisibility.hasSavedState}
             onClick={() => {
               table.resetColumnVisibility();
@@ -139,10 +132,9 @@ export const SettingsMenu = ({
             <ListItemIcon>
               <ViewColumnIcon />
             </ListItemIcon>
-            <ListItemText>{'Reset column visibility'}</ListItemText>
+            <ListItemText>{t('label.show-all-columns')}</ListItemText>
           </MenuItem>
           <MenuItem
-            key={'Reset column width'}
             disabled={!columnSizing.hasSavedState}
             onClick={() => {
               table.resetColumnSizing();
@@ -153,35 +145,27 @@ export const SettingsMenu = ({
             <ListItemIcon>
               <RestartAltIcon />
             </ListItemIcon>
-            <ListItemText>{'Reset column width'}</ListItemText>
+            <ListItemText>{t('label.reset-column-sizes')}</ListItemText>
           </MenuItem>
           <MenuItem
-            key={'Unpin all columns'}
             disabled={!columnPinning.hasSavedState}
             onClick={() => {
               table.resetColumnPinning();
               columnPinning.resetHasSavedState();
-              // resets pinning to default, including pinned by default columns
-              // unpin all on the columns menu actually unpins all, including pinned by default (cant unpin default columns manually though)
               setAnchorEl(null);
             }}
           >
             <ListItemIcon>
               <PushPinIcon />
             </ListItemIcon>
-
-            <ListItemText>{'Unpin all columns'}</ListItemText>
+            <ListItemText>{t('label.unpin-columns')}</ListItemText>
           </MenuItem>
-          <MenuItem
-            key={'Table density'}
-            onClick={() => density.update(nextDensity)}
-          >
+          <MenuItem onClick={() => density.update(nextDensity)}>
             <ListItemIcon>{densityIcon()}</ListItemIcon>
-            <ListItemText>{'Table density'}</ListItemText>
+            <ListItemText> {t('label.toggle-density')}</ListItemText>
           </MenuItem>
           <Divider />
           <MenuItem
-            key={'Reset to defaults'}
             disabled={!hasSavedState}
             sx={{ color: 'error.main' }}
             onClick={() => {
@@ -200,7 +184,7 @@ export const SettingsMenu = ({
                 },
               }}
             >
-              {'Reset to defaults'}
+              {t('label.reset-table-defaults')}
             </ListItemText>
           </MenuItem>
           <Divider />
