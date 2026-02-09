@@ -91,7 +91,11 @@ pub trait LogServiceTrait: Send + Sync {
             Level::Trace => "trace",
         };
 
-        key_value_store.set_string(KeyType::LogLevel, Some(log_level.to_string()))?;
+        if let Err(e) = key_value_store.set_string(KeyType::LogLevel, Some(log_level.to_string())) {
+            log::warn!(
+                "Failed to persist log level setting — storing in-memory — will be persisted on next run: {e:?}"
+            );
+        }
         simple_log::update_log_level(log_level).expect("Couldn't update log level");
 
         Ok(())
@@ -112,7 +116,11 @@ pub trait LogServiceTrait: Send + Sync {
     ) -> Result<(), RepositoryError> {
         let key_value_store = KeyValueStoreRepository::new(&ctx.connection);
 
-        key_value_store.set_string(KeyType::LogDirectory, log_directory)?;
+        if let Err(e) = key_value_store.set_string(KeyType::LogDirectory, log_directory) {
+            log::warn!(
+                "Failed to persist log directory setting — storing in-memory — will be persisted on next run: {e:?}"
+            );
+        }
 
         Ok(())
     }
@@ -132,7 +140,11 @@ pub trait LogServiceTrait: Send + Sync {
     ) -> Result<(), RepositoryError> {
         let key_value_store = KeyValueStoreRepository::new(&ctx.connection);
 
-        key_value_store.set_string(KeyType::LogFileName, log_file_name)?;
+        if let Err(e) = key_value_store.set_string(KeyType::LogFileName, log_file_name) {
+            log::warn!(
+                "Failed to persist log file name setting — storing in-memory — will be persisted on next run: {e:?}"
+            );
+        }
 
         Ok(())
     }

@@ -197,6 +197,7 @@
   "customers": "Customers",
   "dashboard": "Dashboard",
   "description.already-issued": "The number of units already issued in shipments.",
+  "migration-info.migrations-in-progress": "Database migrations in progress",
   "description.annual-target-doses-calculation": "Target Population × Number of Doses × (Coverage Rate / 100) × Loss Factor",
   "description.available-months-of-stock": "Available months of stock",
   "description.available-soh": "Available stock. $t(description.doses-quantity)",

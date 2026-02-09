@@ -158,7 +158,7 @@ fn derive_file_paths(config_file: Option<PathBuf>) -> Result<ConfigFilePaths, Se
         None => ConfigFilePaths {
             base: get_configuration_base_file()?,
             app: get_configuration_app_file()?,
-        }
+        },
     };
 
     Ok(file_paths)
@@ -205,8 +205,8 @@ impl From<VarError> for SettingsError {
 pub fn get_or_create_token_secret(connection: &StorageConnection) -> String {
     //Get Token Secret from DB if available
     let kv_repo = KeyValueStoreRepository::new(connection);
-    let token_secret_option = kv_repo.get_string(KeyType::SettingsTokenSecret).unwrap();
-    if let Some(token_secret) = token_secret_option {
+    let token_secret_option = kv_repo.get_string(KeyType::SettingsTokenSecret);
+    if let Ok(Some(token_secret)) = token_secret_option {
         log::debug!("Using token_secret from DB");
         return token_secret;
     }
