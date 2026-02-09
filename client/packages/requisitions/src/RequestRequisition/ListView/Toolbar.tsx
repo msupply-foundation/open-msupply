@@ -1,15 +1,14 @@
 import React from 'react';
 import {
+  useTranslation,
   AppBarContentPortal,
   FilterMenu,
   Box,
-  useTranslation,
   RequisitionNodeStatus,
 } from '@openmsupply-client/common';
 
 export const Toolbar = () => {
   const t = useTranslation();
-
   return (
     <AppBarContentPortal
       sx={{
@@ -33,22 +32,13 @@ export const Toolbar = () => {
               name: t('label.status'),
               urlParameter: 'status',
               options: [
-                { label: t('label.new'), value: RequisitionNodeStatus.New },
+                { label: t('label.draft'), value: RequisitionNodeStatus.Draft },
+                { label: t('label.sent'), value: RequisitionNodeStatus.Sent },
                 {
                   label: t('label.finalised'),
                   value: RequisitionNodeStatus.Finalised,
                 },
               ],
-            },
-            {
-              type: 'boolean',
-              name: t('label.shipment-created'),
-              urlParameter: 'aShipmentHasBeenCreated',
-            },
-            {
-              type: 'boolean',
-              name: t('label.emergency'),
-              urlParameter: 'isEmergency',
             },
           ]}
         />
