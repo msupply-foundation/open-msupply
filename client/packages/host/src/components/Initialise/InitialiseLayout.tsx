@@ -1,12 +1,10 @@
 import React, { ReactNode } from 'react';
 import {
   Box,
-  Breakpoints,
   Stack,
   Typography,
   useTranslation,
-  useAppTheme,
-  useMediaQuery,
+  useIsExtraSmallScreen,
 } from '@openmsupply-client/common';
 import { LoginIcon } from '../Login/LoginIcon';
 import { Theme } from '@common/styles';
@@ -37,10 +35,7 @@ export const InitialiseLayout = ({
   onInitialise,
 }: LoginLayoutProps) => {
   const t = useTranslation();
-  const theme = useAppTheme();
-  const isExtraSmallScreen = useMediaQuery(
-    theme.breakpoints.down(Breakpoints.sm)
-  );
+  const isExtraSmallScreen = useIsExtraSmallScreen();
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLFormElement>) => {
     if (e.key === 'Enter') {
