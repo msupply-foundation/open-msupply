@@ -17,7 +17,6 @@ impl MigrationFragment for Migrate {
             "#
         )?;
 
-        // Migrate existing forecasting plugin data to the new columns
         #[cfg(not(feature = "postgres"))]
         sql!(
             connection,
