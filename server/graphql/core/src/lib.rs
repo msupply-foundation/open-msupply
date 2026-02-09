@@ -1,12 +1,15 @@
 pub mod generic_filters;
 pub mod generic_inputs;
 pub mod loader;
+pub mod operational_status;
 pub mod pagination;
 pub mod simple_generic_errors;
 pub mod standard_graphql_error;
 pub mod test_helpers;
 
 use std::sync::Mutex;
+
+pub use operational_status::OperationalStatus;
 
 use actix_web::cookie::Cookie;
 use actix_web::web::Data;
