@@ -77,9 +77,9 @@ impl MigrationFragment for Migrate {
         sql!(
             connection,
             r#"
-                DELETE FROM plugin_data 
-                WHERE plugin_code IN ('forecasting_plugins');
+                DELETE FROM plugin_data WHERE plugin_code IN ('forecasting_plugins');
                 DELETE FROM backend_plugin WHERE code IN ('forecasting_plugins');
+                DELETE FROM frontend_plugin WHERE code IN ('forecasting_plugins');
             "#
         )?;
 
@@ -93,6 +93,7 @@ mod tests {
     use crate::db_diesel::backend_plugin_row::backend_plugin;
     use crate::db_diesel::plugin_data_row::plugin_data;
     use crate::db_diesel::requisition_line_row::requisition_line;
+    use crate::frontend_plugin_row;
     use crate::{
         migrations::{v2_15_00::V2_15_00, v2_16_00::V2_16_00},
         test_db::*,
@@ -184,6 +185,11 @@ mod tests {
         )
         .execute(connection.lock().connection())
         .unwrap();
+        sql_query(
+            "INSERT INTO frontend_plugin (id, code, entry_point, files, types) VALUES ('forecasting_frontend_plugin_id', 'forecasting_plugins', 'index.js', '[]', '[]')"
+        )
+        .execute(connection.lock().connection())
+        .unwrap();
 
         create_plugin_data(
             &connection,
@@ -254,7 +260,6 @@ mod tests {
             .count()
             .get_result(connection.lock().connection())
             .unwrap();
-
         assert_eq!(remaining_plugin_data_count, 0);
 
         let remaining_backend_plugin_count: i64 = backend_plugin::table
@@ -262,7 +267,13 @@ mod tests {
             .count()
             .get_result(connection.lock().connection())
             .unwrap();
-
         assert_eq!(remaining_backend_plugin_count, 0);
+
+        let remaining_frontend_plugin_count: i64 = frontend_plugin_row::frontend_plugin::table
+            .filter(frontend_plugin_row::frontend_plugin::code.eq("forecasting_plugins"))
+            .count()
+            .get_result(connection.lock().connection())
+            .unwrap();
+        assert_eq!(remaining_frontend_plugin_count, 0);
     }
 }

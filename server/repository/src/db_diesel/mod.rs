@@ -49,7 +49,7 @@ mod filter_restriction;
 mod filter_sort_pagination;
 pub mod form_schema;
 mod form_schema_row;
-mod frontend_plugin_row;
+pub mod frontend_plugin_row;
 pub mod goods_received_line;
 pub mod goods_received_line_row;
 pub mod indicator_column;
