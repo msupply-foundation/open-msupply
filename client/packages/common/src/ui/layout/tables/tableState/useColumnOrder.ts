@@ -11,9 +11,10 @@ import { ColumnDef } from '../types';
 
 export const useColumnOrder = <T extends MRT_RowData>(
   tableId: string,
+  setHasSavedState: (hasSavedState: boolean) => void,
   columns: ColumnDef<T>[],
   enableRowSelection: MRT_TableOptions<T>['enableRowSelection'],
-  isGrouped: boolean
+  enableExpanding: MRT_TableOptions<T>['enableExpanding'],
 ) => {
   const initial = useMemo(() => {
     for (const col of columns) {
@@ -32,23 +33,20 @@ export const useColumnOrder = <T extends MRT_RowData>(
       columns,
       state: {},
       enableRowSelection, // adds `mrt-row-select`
-      enableExpanding: !!isGrouped, // adds `mrt-row-expand`
+      enableExpanding, // adds `mrt-row-expand`
       positionExpandColumn: 'first', // this is the default, but needs to be explicitly set here
     } as MRT_StatefulTableOptions<MRT_RowData>);
-  }, [isGrouped, columns]);
+  }, [columns, enableRowSelection, enableExpanding]);
 
   const [state, setState] = useState<MRT_ColumnOrderState>(
-    getSavedState(tableId).columnOrder ?? initial
-  );
-  const [hasSavedState, setHasSavedState] = useState(
-    !!getSavedState(tableId).columnOrder
+    getSavedState(tableId)?.columnOrder ?? initial
   );
 
   // If initial state changes (due to plugin column loading, for example) and no
   // custom column order has been saved, update the column order to the new
   // default
   useEffect(() => {
-    if (!getSavedState(tableId).columnOrder) setState(initial);
+    if (!getSavedState(tableId)?.columnOrder) setState(initial);
   }, [initial]);
 
   const update = useCallback<
@@ -78,7 +76,5 @@ export const useColumnOrder = <T extends MRT_RowData>(
     initial,
     state: state ?? initial,
     update,
-    hasSavedState,
-    resetHasSavedState: () => setHasSavedState(false),
   };
 };

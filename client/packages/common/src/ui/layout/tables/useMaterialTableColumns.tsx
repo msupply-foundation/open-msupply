@@ -4,8 +4,9 @@
  */
 
 import React, { useMemo } from 'react';
-import { MRT_Column, MRT_RowData } from 'material-react-table';
+import { MRT_Column, MRT_RowData, MRT_AggregationFn, MRT_Cell, MRT_Row, MRT_TableInstance } from 'material-react-table';
 import {
+  Box,
   mergeCellProps,
   Tooltip,
   useGetColumnTypeDefaults,
@@ -63,9 +64,55 @@ export const useMaterialTableColumns = <T extends MRT_RowData>(
           };
         }
 
+        const defaultAggregationFn: MRT_AggregationFn<T> = (columnId, _leafRows, childRows) => {
+          // if all child rows have the same value, return that value, otherwise return '[multiple]'
+          const firstValue = childRows[0]?.getValue(columnId);
+          if (childRows.every(row => row.getValue(columnId) === firstValue)) {
+            return firstValue;
+          }
+          return '[multiple]';
+        };
+
+        const DefaultAggregationCell = (
+          props: {
+            cell: MRT_Cell<T, unknown>;
+            column: MRT_Column<T, unknown>;
+            row: MRT_Row<T>;
+            table: MRT_TableInstance<T>;
+            staticColumnIndex?: number;
+            staticRowIndex?: number;
+          },
+          spacer = false
+        ) => {
+          const cellProps = {
+            renderedCellValue: props.cell.renderValue()?.toString(),
+            ...props
+          };
+          return (
+            <>
+              {spacer && <Box sx={{ width: '1rem' }} />}
+              {props.cell.getValue() === '[multiple]'
+                // show '[multiple]' if the aggregation function returned
+                ? '[multiple]'
+                : (
+                  // otherwise render the cell using the column's Cell renderer
+                  col.Cell
+                  // fallback to column type default Cell renderer
+                  ?? columnDefaults.Cell
+                  // fallback to rendering the cell value as a string
+                  ?? (({ cell }) => cell.renderValue()?.toString() ?? '')
+                )(cellProps)}
+            </>
+          );
+        }
+
         return {
           grow: true,
           Header: ColumnHeaderWithTooltip, // can't define this globally for the table unfortunately
+          aggregationFn: defaultAggregationFn,
+          GroupedCell: DefaultAggregationCell,
+          AggregatedCell: DefaultAggregationCell,
+          PlaceholderCell: (props) => DefaultAggregationCell(props, true),
           ...columnDefaults,
           enableSorting: col.enableSorting ?? false,
           enableColumnFilter: col.enableColumnFilter ?? false,

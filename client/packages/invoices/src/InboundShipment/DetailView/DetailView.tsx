@@ -14,7 +14,6 @@ import {
   useUrlQuery,
   useToggle,
   useNonPaginatedMaterialTable,
-  Groupable,
   NothingHere,
   MaterialTable,
   useIsGapsStoreOnly,
@@ -120,13 +119,11 @@ const DetailViewInner = () => {
 
   const columns = useInboundShipmentColumns();
 
-  const { table, selectedRows } = useNonPaginatedMaterialTable<
-    Groupable<InboundLineFragment>
-  >({
+  const { table, selectedRows } = useNonPaginatedMaterialTable<InboundLineFragment>({
     tableId: 'inbound-shipment-detail-view',
     columns,
     data: lines,
-    grouping: { enabled: true },
+    grouping: { field: 'item.code' },
     isLoading: false,
     initialSort: { key: 'itemName', dir: 'asc' },
     onRowClick: !isDisabled ? onRowClick : undefined,
