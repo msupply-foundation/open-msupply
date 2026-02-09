@@ -144,12 +144,17 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
   const hasColumnFilters = columns.some(col => col.enableColumnFilter);
 
   const displayOptions = useTableDisplayOptions({
-    isGrouped,
-    hasColumnFilters,
-    toggleGrouped: grouping?.enabled ? toggleGrouped : undefined,
+    density,
+    columnSizing,
+    columnVisibility,
+    columnPinning,
+    columnOrder,
     resetTableState,
     hasSavedState,
+    hasColumnFilters,
     onRowClick,
+    isGrouped,
+    toggleGrouped: grouping?.enabled ? toggleGrouped : undefined,
     getIsPlaceholderRow,
     getIsRestrictedRow,
     muiTableBodyRowProps,

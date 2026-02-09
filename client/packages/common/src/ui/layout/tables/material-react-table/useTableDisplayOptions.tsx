@@ -3,7 +3,6 @@ import {
   MRT_RowData,
   MRT_ShowHideColumnsButton,
   MRT_TableOptions,
-  MRT_ToggleDensePaddingButton,
   MRT_ToggleFiltersButton,
   MRT_ToggleFullScreenButton,
 } from 'material-react-table';
@@ -13,7 +12,6 @@ import {
   CheckboxIndeterminateIcon,
   CollapseIcon,
   ExpandIcon,
-  SettingsIcon,
 } from '@common/icons';
 import { MenuItem, Typography, alpha } from '@mui/material';
 import { ColumnDef } from './types';
@@ -21,10 +19,22 @@ import { IconButton } from '@common/components';
 import { useTranslation } from '@common/intl';
 import { EnvUtils } from '@common/utils';
 import { SettingsMenu } from './components/SettingsMenu';
+import {
+  useColumnDensity,
+  useColumnOrder,
+  useColumnPinning,
+  useColumnSizing,
+  useColumnVisibility,
+} from './tableState';
 
 export const useTableDisplayOptions = <T extends MRT_RowData>({
-  // resetTableState,
-  // hasSavedState,
+  density,
+  columnSizing,
+  columnVisibility,
+  columnPinning,
+  columnOrder,
+  resetTableState,
+  hasSavedState
   onRowClick,
   isGrouped,
   toggleGrouped,
@@ -33,6 +43,11 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
   getIsRestrictedRow = () => false,
   muiTableBodyRowProps = {},
 }: {
+  density: ReturnType<typeof useColumnDensity>;
+  columnSizing: ReturnType<typeof useColumnSizing>;
+  columnVisibility: ReturnType<typeof useColumnVisibility>;
+  columnPinning: ReturnType<typeof useColumnPinning>;
+  columnOrder: ReturnType<typeof useColumnOrder>;
   resetTableState: () => void;
   hasSavedState: boolean;
   onRowClick?: (row: T, isCtrlClick: boolean) => void;
@@ -47,12 +62,6 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
   muiTableBodyRowProps?: MRT_TableOptions<T>['muiTableBodyRowProps'];
 }): Partial<MRT_TableOptions<T>> => {
   const t = useTranslation();
-
-  // const getConfirmation = useConfirmationModal({
-  //   title: t('heading.are-you-sure'),
-  //   message: t('messages.reset-table-defaults'),
-  //   onConfirm: resetTableState,
-  // });
 
   return {
     // Add description to column menu
@@ -90,20 +99,16 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
           />
         )}
         {hasColumnFilters && <MRT_ToggleFiltersButton table={table} />}
-        <MRT_ToggleDensePaddingButton table={table} />
         <MRT_ShowHideColumnsButton table={table} />
-        {/* <IconButton
-          icon={<RefreshIcon />}
-          onClick={() => getConfirmation()}
-          label={t('label.reset-table-defaults')}
-          disabled={!hasSavedState}
-          sx={iconButtonProps}
-        /> */}
         <MRT_ToggleFullScreenButton table={table} />
         <SettingsMenu
-          icon={<SettingsIcon />}
-          label={t('settings')}
-          sx={iconButtonProps}
+          table={table}
+          density={density}
+          columnSizing={columnSizing}
+          columnVisibility={columnVisibility}
+          columnPinning={columnPinning}
+          columnOrder={columnOrder}
+          resetTableState={resetTableState}
         />
       </>
     ),

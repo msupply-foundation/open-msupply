@@ -1,86 +1,62 @@
 import React from 'react';
 import {
   Divider,
-  ListItemIcon,
   ListItemText,
   Menu,
   MenuItem,
-  SxProps,
-  Theme,
   Typography,
 } from '@mui/material';
+import ViewColumnIcon from '@mui/icons-material/ViewColumn';
+import { IconButton, useConfirmationModal } from '@common/components';
+import { useTranslation } from '@common/intl';
 import {
-  CameraIcon,
-  CartIcon,
-  EyeIcon,
-  RefreshIcon,
-  SunIcon,
-  XCircleIcon,
-} from '@common/icons';
-import { IconButton } from '@common/components';
+  MRT_DensityState,
+  MRT_TableInstance,
+  MRT_ToggleDensePaddingButton,
+} from 'material-react-table';
+import { RefreshIcon, SettingsIcon } from '@common/icons';
+import {
+  useColumnDensity,
+  useColumnOrder,
+  useColumnPinning,
+  useColumnSizing,
+  useColumnVisibility,
+} from '../tableState';
 
-export interface SettingsMenuOption {
-  label: string;
-  Icon?: React.ReactElement;
-  onClick: () => void;
-  isDisabled?: boolean;
-  divider?: boolean;
-  // sx?: SxProps<Theme>;
-  labelColor?: string;
-  iconColor?: string;
-}
-
-interface SettingsMenuProps {
-  icon: React.ReactElement;
-  label: string;
-  sx?: SxProps<Theme>;
-}
-
-export const SettingsMenu = ({ icon, label }: SettingsMenuProps) => {
+export const SettingsMenu = ({
+  table,
+  density,
+  columnSizing,
+  columnVisibility,
+  columnPinning,
+  columnOrder,
+  resetTableState,
+}: {
+  table: MRT_TableInstance<any>;
+  density: ReturnType<typeof useColumnDensity>;
+  columnSizing: ReturnType<typeof useColumnSizing>;
+  columnVisibility: ReturnType<typeof useColumnVisibility>;
+  columnPinning: ReturnType<typeof useColumnPinning>;
+  columnOrder: ReturnType<typeof useColumnOrder>;
+  resetTableState: () => void;
+}) => {
+  const t = useTranslation();
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const open = !!anchorEl;
 
-  const settingsMenuOptions: SettingsMenuOption[] = [
-    {
-      label: 'Reset column order',
-      Icon: <XCircleIcon />,
-      onClick: () => {},
-    },
-    {
-      label: 'Reset column visibility',
-      Icon: <EyeIcon />,
-      onClick: () => {},
-    },
-    {
-      label: 'Reset column width',
-      Icon: <SunIcon />,
-      onClick: () => {},
-    },
-    {
-      label: 'Unpin all columns',
-      Icon: <CameraIcon />,
-      onClick: () => {},
-    },
-    {
-      label: 'Table density', // ternary for more/less density?
-      Icon: <CartIcon />,
-      onClick: () => {},
-      divider: true,
-    },
-    {
-      label: 'Reset table state',
-      Icon: <RefreshIcon />,
-      onClick: () => {},
-    },
-  ];
+  const getConfirmation = useConfirmationModal({
+    title: t('heading.are-you-sure'),
+    message: t('messages.reset-table-defaults'),
+    onConfirm: resetTableState,
+  });
 
   return (
     <>
       {/* Toolbar button */}
       <IconButton
-        icon={icon}
+        icon={<SettingsIcon />}
         onClick={e => setAnchorEl(e.currentTarget)}
-        label={label}
+        label={t('settings')}
       />
       {/* Menu popover */}
       <Menu
@@ -110,24 +86,89 @@ export const SettingsMenu = ({ icon, label }: SettingsMenuProps) => {
         </MenuItem>
 
         {/* Menu items */}
-        {settingsMenuOptions.map((option, index) => (
-          <>
-            <MenuItem
-              key={option.label}
-              disabled={option.isDisabled}
-              onClick={() => {
-                option.onClick();
-                setAnchorEl(null);
-              }}
-            >
-              <ListItemIcon>{option.Icon}</ListItemIcon>
-              <ListItemText>{option.label}</ListItemText>
-            </MenuItem>
-            {option.divider && index < settingsMenuOptions.length - 1 && (
-              <Divider />
-            )}
-          </>
-        ))}
+        <>
+          <MenuItem
+            key={'Reset column order'}
+            onClick={() => {
+              table.resetColumnOrder();
+              columnOrder.resetHasSavedState();
+              setAnchorEl(null);
+            }}
+          >
+            <ViewColumnIcon />
+            <ListItemText>{'Reset column order'}</ListItemText>
+          </MenuItem>
+          <MenuItem
+            key={'Reset column visibility'}
+            onClick={() => {
+              table.resetColumnVisibility();
+              columnVisibility.resetHasSavedState();
+              setAnchorEl(null);
+            }}
+          >
+            <ViewColumnIcon />
+            <ListItemText>{'Reset column visibility'}</ListItemText>
+          </MenuItem>
+          <MenuItem
+            key={'Reset column width'}
+            onClick={() => {
+              table.resetColumnSizing();
+              columnSizing.resetHasSavedState();
+              setAnchorEl(null);
+            }}
+          >
+            <ViewColumnIcon />
+            <ListItemText>{'Reset column width'}</ListItemText>
+          </MenuItem>
+          <MenuItem
+            key={'Unpin all columns'}
+            onClick={() => {
+              table.resetColumnPinning();
+              columnPinning.resetHasSavedState();
+              // resets pinning to default, including pinned by default columns
+              // unpin all on the columns menu actually unpins all, including pinned by default (cant unpin default columns manually though)
+              setAnchorEl(null);
+            }}
+          >
+            <ViewColumnIcon />
+            <ListItemText>{'Unpin all columns'}</ListItemText>
+          </MenuItem>
+          <MenuItem
+            key={'Table density'}
+            onClick={() => {
+              density.update(prev => {
+                const densities: MRT_DensityState[] = [
+                  'compact',
+                  'spacious',
+                  'comfortable',
+                ];
+                const currentIndex = densities.indexOf(prev);
+                const nextIndex = (currentIndex + 1) % densities.length;
+                // always default to comfortable on reset, so cycle goes compact > spacious > comfortable > compact etc
+                // matches default button behaviour
+                return densities[nextIndex] ?? 'comfortable';
+              });
+              //   setAnchorEl(null);
+            }}
+          >
+            <ViewColumnIcon />
+            <ListItemText>{'Table density'}</ListItemText>
+          </MenuItem>
+          <MRT_ToggleDensePaddingButton table={table} />
+          <Divider />
+          <MenuItem
+            key={'Reset to defaults'}
+            onClick={() => {
+              table.resetColumnOrder();
+              getConfirmation();
+              setAnchorEl(null);
+            }}
+          >
+            <RefreshIcon />
+            <ListItemText>{'Reset to defaults'}</ListItemText>
+          </MenuItem>
+          <Divider />
+        </>
       </Menu>
     </>
   );
