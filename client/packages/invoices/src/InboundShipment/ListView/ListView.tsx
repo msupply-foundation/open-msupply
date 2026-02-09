@@ -20,6 +20,7 @@ import {
   isInboundListItemDisabled,
 } from '../../utils';
 import { useInbound, InboundRowFragment } from '../api';
+import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
 
 export const InboundListView = () => {
@@ -31,6 +32,7 @@ export const InboundListView = () => {
   const { mutate: onUpdate } = useInbound.document.update();
 
   const {
+    filter,
     queryParams: { first, offset, sortBy, filterBy },
   } = useUrlQueryParams({
     initialSort: { key: 'invoiceNumber', dir: 'desc' },
@@ -62,6 +64,7 @@ export const InboundListView = () => {
       {
         header: t('label.supplier'),
         accessorKey: 'otherPartyName',
+        size: 400,
         enableColumnFilter: true,
         Cell: ({ row }) => (
           <NameAndColorSetterCell
@@ -70,6 +73,19 @@ export const InboundListView = () => {
             row={row.original}
           />
         ),
+        enableSorting: true,
+      },
+      {
+        header: t('label.status'),
+        accessorFn: row => getStatusTranslator(t)(row.status),
+        id: 'status',
+        size: 140,
+        filterVariant: 'select',
+        filterSelectOptions: statuses.map(status => ({
+          value: status,
+          label: getStatusTranslator(t)(status),
+        })),
+        enableColumnFilter: true,
         enableSorting: true,
       },
       {
@@ -98,17 +114,9 @@ export const InboundListView = () => {
         size: 100,
       },
       {
-        header: t('label.status'),
-        accessorFn: row => getStatusTranslator(t)(row.status),
-        id: 'status',
-        size: 140,
-        filterVariant: 'select',
-        filterSelectOptions: statuses.map(status => ({
-          value: status,
-          label: getStatusTranslator(t)(status),
-        })),
-        enableColumnFilter: true,
-        enableSorting: true,
+        header: t('label.comment'),
+        accessorKey: 'comment',
+        columnType: ColumnType.Comment,
       },
       {
         header: t('label.reference'),
@@ -123,13 +131,8 @@ export const InboundListView = () => {
         columnType: ColumnType.Currency,
         defaultHideOnMobile: true,
       },
-      {
-        header: t('label.comment'),
-        accessorKey: 'comment',
-        columnType: ColumnType.Comment,
-      },
     ],
-    []
+    [t]
   );
 
   const { table, selectedRows } = usePaginatedMaterialTable<InboundRowFragment>(
@@ -153,6 +156,7 @@ export const InboundListView = () => {
 
   return (
     <>
+      <Toolbar filter={filter} />
       <AppBarButtons
         invoiceModalController={invoiceModalController}
         linkRequestModalController={linkRequestModalController}

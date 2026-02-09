@@ -25,6 +25,7 @@ const ItemListComponent = () => {
     updateSortQuery,
     queryParams: { sortBy, page, first, offset, filterBy },
   } = useUrlQueryParams({
+    initialSort: { key: 'name', dir: 'asc' },
     filters: [
       { key: 'codeOrName' },
       { key: 'hasStockOnHand', condition: '=' },

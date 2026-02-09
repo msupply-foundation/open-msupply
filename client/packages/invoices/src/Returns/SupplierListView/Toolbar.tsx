@@ -1,10 +1,10 @@
 import React from 'react';
 import {
   AppBarContentPortal,
-  FilterMenu,
-  Box,
   useTranslation,
-  RequisitionNodeStatus,
+  Box,
+  FilterMenu,
+  InvoiceNodeStatus,
 } from '@openmsupply-client/common';
 
 export const Toolbar = () => {
@@ -33,22 +33,18 @@ export const Toolbar = () => {
               name: t('label.status'),
               urlParameter: 'status',
               options: [
-                { label: t('label.new'), value: RequisitionNodeStatus.New },
+                { label: t('label.new'), value: InvoiceNodeStatus.New },
+                { label: t('label.picked'), value: InvoiceNodeStatus.Picked },
+                { label: t('label.shipped'), value: InvoiceNodeStatus.Shipped },
                 {
-                  label: t('label.finalised'),
-                  value: RequisitionNodeStatus.Finalised,
+                  label: t('label.received'),
+                  value: InvoiceNodeStatus.Received,
+                },
+                {
+                  label: t('label.verified'),
+                  value: InvoiceNodeStatus.Verified,
                 },
               ],
-            },
-            {
-              type: 'boolean',
-              name: t('label.shipment-created'),
-              urlParameter: 'aShipmentHasBeenCreated',
-            },
-            {
-              type: 'boolean',
-              name: t('label.emergency'),
-              urlParameter: 'isEmergency',
             },
           ]}
         />
