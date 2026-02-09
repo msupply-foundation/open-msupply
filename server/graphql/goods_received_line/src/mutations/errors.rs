@@ -8,14 +8,6 @@ impl GoodsReceivedLineNotFound {
     }
 }
 
-pub struct UpdatedLineDoesNotExist;
-#[Object]
-impl UpdatedLineDoesNotExist {
-    pub async fn description(&self) -> &str {
-        "Updated line does not exist"
-    }
-}
-
 pub struct GoodsReceivedDoesNotExist;
 #[Object]
 impl GoodsReceivedDoesNotExist {
@@ -45,13 +37,5 @@ pub struct PurchaseOrderLineDoesNotExist;
 impl PurchaseOrderLineDoesNotExist {
     pub async fn description(&self) -> &str {
         "Purchase order line does not exist"
-    }
-}
-
-pub struct CannnotFindItemByCode;
-#[Object]
-impl CannnotFindItemByCode {
-    pub async fn description(&self) -> &str {
-        "Cannot find item by code"
     }
 }

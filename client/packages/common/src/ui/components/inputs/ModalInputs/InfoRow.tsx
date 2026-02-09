@@ -15,7 +15,7 @@ import {
 
 interface InfoRowProps {
   label: string;
-  value?: number | string;
+  value?: number | string | null;
   packagingDisplay?: string;
   sx?: SxProps<Theme>;
   decimalLimit?: number;

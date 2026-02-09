@@ -303,6 +303,7 @@ pub fn get_usage_map(
             item_id: item_id_filter.clone(),
             store_id: store_id_filter.clone(),
             date: date_filter.clone(),
+            ..Default::default()
         }))?;
     let replenishment_rows =
         ReplenishmentRepository::new(connection).query(Some(ReplenishmentFilter {

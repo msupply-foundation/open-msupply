@@ -47,9 +47,9 @@ export type StockLineRowFragment = {
     name: string;
     unitName?: string | null;
     isVaccine: boolean;
+    doses: number;
     restrictedLocationTypeId?: string | null;
     defaultPackSize: number;
-    dosesPerUnit: number;
     masterLists?: Array<{ __typename: 'MasterListNode'; name: string }> | null;
     itemStoreProperties?: {
       __typename: 'ItemStorePropertiesNode';
@@ -282,9 +282,9 @@ export type StockLinesQuery = {
         name: string;
         unitName?: string | null;
         isVaccine: boolean;
+        doses: number;
         restrictedLocationTypeId?: string | null;
         defaultPackSize: number;
-        dosesPerUnit: number;
         masterLists?: Array<{
           __typename: 'MasterListNode';
           name: string;
@@ -397,9 +397,9 @@ export type StockLineQuery = {
         name: string;
         unitName?: string | null;
         isVaccine: boolean;
+        doses: number;
         restrictedLocationTypeId?: string | null;
         defaultPackSize: number;
-        dosesPerUnit: number;
         masterLists?: Array<{
           __typename: 'MasterListNode';
           name: string;
@@ -549,9 +549,9 @@ export type UpdateStockLineMutation = {
           name: string;
           unitName?: string | null;
           isVaccine: boolean;
+          doses: number;
           restrictedLocationTypeId?: string | null;
           defaultPackSize: number;
-          dosesPerUnit: number;
           masterLists?: Array<{
             __typename: 'MasterListNode';
             name: string;
@@ -875,9 +875,9 @@ export type InsertStockLineMutation = {
           name: string;
           unitName?: string | null;
           isVaccine: boolean;
+          doses: number;
           restrictedLocationTypeId?: string | null;
           defaultPackSize: number;
-          dosesPerUnit: number;
           masterLists?: Array<{
             __typename: 'MasterListNode';
             name: string;
@@ -1041,7 +1041,7 @@ export const StockLineRowFragmentDoc = gql`
         name
       }
       isVaccine
-      dosesPerUnit: doses
+      doses
       restrictedLocationTypeId
       defaultPackSize
       itemStoreProperties(storeId: $storeId) {
