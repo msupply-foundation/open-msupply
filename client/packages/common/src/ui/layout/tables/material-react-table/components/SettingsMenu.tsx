@@ -44,6 +44,13 @@ export const SettingsMenu = ({
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const open = !!anchorEl;
 
+  const hasSavedState =
+    density.hasSavedState ||
+    columnSizing.hasSavedState ||
+    columnPinning.hasSavedState ||
+    columnVisibility.hasSavedState ||
+    columnOrder.hasSavedState;
+
   const getConfirmation = useConfirmationModal({
     title: t('heading.are-you-sure'),
     message: t('messages.reset-table-defaults'),
@@ -89,6 +96,7 @@ export const SettingsMenu = ({
         <>
           <MenuItem
             key={'Reset column order'}
+            disabled={!columnOrder.hasSavedState}
             onClick={() => {
               table.resetColumnOrder();
               columnOrder.resetHasSavedState();
@@ -100,6 +108,7 @@ export const SettingsMenu = ({
           </MenuItem>
           <MenuItem
             key={'Reset column visibility'}
+            disabled={!columnVisibility.hasSavedState}
             onClick={() => {
               table.resetColumnVisibility();
               columnVisibility.resetHasSavedState();
@@ -111,6 +120,7 @@ export const SettingsMenu = ({
           </MenuItem>
           <MenuItem
             key={'Reset column width'}
+            disabled={!columnSizing.hasSavedState}
             onClick={() => {
               table.resetColumnSizing();
               columnSizing.resetHasSavedState();
@@ -122,6 +132,7 @@ export const SettingsMenu = ({
           </MenuItem>
           <MenuItem
             key={'Unpin all columns'}
+            disabled={!columnPinning.hasSavedState}
             onClick={() => {
               table.resetColumnPinning();
               columnPinning.resetHasSavedState();
@@ -158,6 +169,7 @@ export const SettingsMenu = ({
           <Divider />
           <MenuItem
             key={'Reset to defaults'}
+            disabled={!hasSavedState}
             onClick={() => {
               table.resetColumnOrder();
               getConfirmation();

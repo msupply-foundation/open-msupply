@@ -103,13 +103,6 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
     isGrouped
   );
 
-  const hasSavedState =
-    density.hasSavedState ||
-    columnSizing.hasSavedState ||
-    columnPinning.hasSavedState ||
-    columnVisibility.hasSavedState ||
-    columnOrder.hasSavedState;
-
   const resetTableState = () => {
     clearSavedState(tableId);
 
@@ -150,7 +143,6 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
     columnPinning,
     columnOrder,
     resetTableState,
-    hasSavedState,
     hasColumnFilters,
     onRowClick,
     isGrouped,

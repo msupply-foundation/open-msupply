@@ -34,7 +34,6 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
   columnPinning,
   columnOrder,
   resetTableState,
-  hasSavedState
   onRowClick,
   isGrouped,
   toggleGrouped,
@@ -49,7 +48,6 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
   columnPinning: ReturnType<typeof useColumnPinning>;
   columnOrder: ReturnType<typeof useColumnOrder>;
   resetTableState: () => void;
-  hasSavedState: boolean;
   onRowClick?: (row: T, isCtrlClick: boolean) => void;
   isGrouped: boolean;
   hasColumnFilters: boolean;
