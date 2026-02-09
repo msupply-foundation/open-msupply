@@ -14,8 +14,9 @@ import {
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { BaseTableConfig, useBaseMaterialTable } from './useBaseMaterialTable';
 
-interface PaginatedTableConfig<T extends MRT_RowData>
-  extends BaseTableConfig<T> {
+interface PaginatedTableConfig<
+  T extends MRT_RowData,
+> extends BaseTableConfig<T> {
   totalCount: number;
 }
 
@@ -61,7 +62,6 @@ export const usePaginatedMaterialTable = <T extends MRT_RowData>({
 
     autoResetPageIndex: false,
     onPaginationChange: handlePaginationChange,
-    enableRowSelection: true,
     onRowSelectionChange: setRowSelection,
     rowCount: totalCount,
     state: {
