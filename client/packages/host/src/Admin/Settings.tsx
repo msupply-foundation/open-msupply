@@ -8,6 +8,7 @@ import {
   UserPermission,
   useAuthContext,
 } from '@openmsupply-client/common';
+
 import {
   RadioIcon,
   CustomersIcon,
@@ -17,13 +18,13 @@ import {
 } from '@common/icons';
 import { SyncSettings } from './SyncSettings';
 import { ServerSettings } from './ServerSettings';
-import { ElectronSettings } from './ElectronSettings';
 import { DisplaySettings } from './DisplaySettings';
 import { SettingsSection } from './SettingsSection';
 import { LabelPrinterSettings } from './LabelPrinterSettings';
 import { ConfigurationSettings } from './ConfigurationSettings';
 import { ServerInfo } from './ServerInfo';
 import { useIsExtraSmallScreen } from '@openmsupply-client/common';
+import { BarcodeScannerSettings } from './BarcodeScannerSettings';
 
 export const Settings: React.FC = () => {
   const { data: initStatus } = useInitialisationStatus();
@@ -73,7 +74,7 @@ export const Settings: React.FC = () => {
         visible={userHasPermission(UserPermission.ServerAdmin)}
       >
         <LabelPrinterSettings />
-        <ElectronSettings />
+        <BarcodeScannerSettings />
       </SettingsSection>
 
       {isCentralServer && (

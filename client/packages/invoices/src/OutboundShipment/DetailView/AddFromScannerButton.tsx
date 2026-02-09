@@ -1,8 +1,7 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useCallback } from 'react';
 import {
   useTranslation,
   useBarcodeScannerContext,
-  CircularProgress,
   ScanIcon,
   ScanResult,
   ButtonWithIcon,
@@ -23,49 +22,94 @@ export const AddFromScannerButtonComponent = ({
 }) => {
   const t = useTranslation();
   const { mutateAsync: getBarcode } = useOutbound.utils.barcode();
-  const { isConnected, isEnabled, isScanning, startScanning, stopScan } =
-    useBarcodeScannerContext();
+  const {
+    isConnected,
+    isEnabled,
+    isListening,
+    scan,
+    stopScan,
+    startListening,
+    supportsContinuousScanning,
+  } = useBarcodeScannerContext();
   const { error, warning } = useNotification();
   const buttonRef = useRef<HTMLButtonElement>(null);
 
-  const handleScanResult = async (result: ScanResult) => {
-    if (!!result.content) {
-      const { content, gtin, batch, expiryDate } = result;
-      const value = gtin ?? content;
-      const barcode = await getBarcode(value);
+  const handleScanResult = useCallback(
+    async (result: ScanResult) => {
+      if (!!result.content) {
+        const { content, gtin, batch, expiryDate } = result;
+        const value = gtin ?? content;
+        const barcode = await getBarcode(value);
 
-      // Barcode exists
-      if (barcode?.__typename === 'BarcodeNode') {
-        onAddItem({ ...barcode, batch, expiryDate: expiryDate ?? undefined });
-      } else {
-        warning(t('error.no-matching-item'))();
+        // Barcode exists
+        if (barcode?.__typename === 'BarcodeNode') {
+          onAddItem({ ...barcode, batch, expiryDate: expiryDate ?? undefined });
+        } else {
+          warning(t('error.no-matching-item'))();
 
-        onAddItem({ gtin: value, batch, expiryDate: expiryDate ?? undefined });
+          onAddItem({
+            gtin: value,
+            batch,
+            expiryDate: expiryDate ?? undefined,
+          });
+        }
       }
-    }
-  };
+    },
+    [getBarcode, onAddItem, warning, t]
+  );
 
   const handleClick = async () => {
     buttonRef.current?.blur();
-    if (isScanning) {
+    if (isListening) {
       stopScan();
     } else {
-      try {
-        await startScanning(handleScanResult);
-      } catch (e) {
-        error(t('error.unable-to-start-scanning', { error: e }))();
+      if (supportsContinuousScanning && !isListening) {
+        // Auto-start continuous scanning is available, start listening and wait for a scan
+        startListening(async (result, err) => {
+          if (err) {
+            error(t('messages.scanning-error', { error: err }))();
+            return;
+          }
+          await handleScanResult(result);
+        });
+      } else {
+        // One-off scan
+        try {
+          const result = await scan();
+          handleScanResult(result);
+        } catch (e) {
+          error(t('error.unable-to-start-scanning', { error: e }))();
+        }
       }
     }
   };
 
-  //   stop scanning when the component unloads
+  // stop scanning when the component unloads
   useEffect(() => {
     return () => {
       stopScan();
     };
   }, []);
 
-  const label = isScanning ? t('button.stop') : t('button.scan');
+  // Auto-start scanning for continuous scanning when component loads
+  useEffect(() => {
+    if (!isListening && supportsContinuousScanning) {
+      startListening(async (result, err) => {
+        if (err) {
+          error(t('messages.scanning-error', { error: err }))();
+          return;
+        }
+
+        await handleScanResult(result);
+      });
+    }
+    // only need to respond to changes in supportsContinuousScanning
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [supportsContinuousScanning]);
+
+  const label = isListening
+    ? `${t('button.listening-for-scans')}  🟢`
+    : `${t('button.scan')}`;
   useRegisterActions(
     [
       {
@@ -76,7 +120,7 @@ export const AddFromScannerButtonComponent = ({
         perform: handleClick,
       },
     ],
-    [isScanning]
+    [isListening]
   );
 
   if (!isEnabled) return null;
@@ -88,13 +132,7 @@ export const AddFromScannerButtonComponent = ({
           ref={buttonRef}
           disabled={disabled || !isConnected}
           onClick={handleClick}
-          Icon={
-            isScanning ? (
-              <CircularProgress size={20} color="primary" />
-            ) : (
-              <ScanIcon />
-            )
-          }
+          Icon={<ScanIcon />}
           label={label}
         />
       </Box>
