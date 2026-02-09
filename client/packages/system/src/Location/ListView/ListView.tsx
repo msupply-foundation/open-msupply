@@ -15,6 +15,7 @@ import {
 import { LocationRowFragment, useLocationList } from '../api';
 import { AppBarButtons } from './AppBarButtons';
 import { LocationEditModal } from './LocationEditModal';
+import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
 
 export const LocationListView = () => {
@@ -129,6 +130,7 @@ export const LocationListView = () => {
 
   return (
     <>
+      <Toolbar />
       {isOpen && (
         <LocationEditModal
           mode={mode}

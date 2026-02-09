@@ -4,7 +4,6 @@ use dataloader::DataLoader;
 use graphql_core::{
     generic_filters::{DatetimeFilterInput, EqualFilterStringInput},
     loader::{LocationByIdLoader, SensorByIdLoader, TemperatureBreachByIdLoader},
-    simple_generic_errors::NodeError,
     ContextExt,
 };
 
@@ -135,12 +134,6 @@ impl TemperatureLogNode {
 #[derive(Union)]
 pub enum TemperatureLogsResponse {
     Response(TemperatureLogConnector),
-}
-
-#[derive(Union)]
-pub enum TemperatureLogResponse {
-    Error(NodeError),
-    Response(TemperatureLogNode),
 }
 
 impl TemperatureLogNode {

@@ -23,6 +23,7 @@ export * from './useToggle';
 export * from './useWindowDimensions';
 export * from './useKeyboard';
 export * from './useNativeClient';
+export * from './useHoneywellScanner';
 export * from './useWebClient';
 export * from './useInterval';
 export * from './usePagination';
