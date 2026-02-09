@@ -10,15 +10,17 @@ import {
   Tooltip,
   BasicTextInput,
   usePreferences,
+  SearchBar,
 } from '@openmsupply-client/common';
 import { CustomerSearchInput } from '@openmsupply-client/system';
-
 import { useResponse } from '../../api';
 import { getApprovalStatusKey } from '../../../utils';
+import { useResponseLines } from '../../api/hooks/line/useResponseLines';
 
 export const Toolbar = () => {
   const t = useTranslation();
   const isDisabled = useResponse.utils.isDisabled();
+  const { itemFilter, setItemFilter } = useResponseLines();
 
   const {
     approvalStatus,
@@ -110,6 +112,14 @@ export const Toolbar = () => {
             </Box>
           </Box>
         </Grid>
+        <SearchBar
+          placeholder={t('placeholder.filter-items')}
+          value={itemFilter}
+          onChange={newValue => {
+            setItemFilter(newValue);
+          }}
+          debounceTime={0}
+        />
       </Grid>
     </AppBarContentPortal>
   );
