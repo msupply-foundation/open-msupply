@@ -160,6 +160,7 @@ export const SettingsMenu = ({
             </ListItemIcon>
             <ListItemText>{t('label.unpin-columns')}</ListItemText>
           </MenuItem>
+          <Divider />
           <MenuItem onClick={() => density.update(nextDensity)}>
             <ListItemIcon>{densityIcon()}</ListItemIcon>
             <ListItemText> {t('label.toggle-density')}</ListItemText>
@@ -167,7 +168,6 @@ export const SettingsMenu = ({
           <Divider />
           <MenuItem
             disabled={!hasSavedState}
-            sx={{ color: 'error.main' }}
             onClick={() => {
               table.resetColumnOrder();
               getConfirmation();
@@ -175,7 +175,7 @@ export const SettingsMenu = ({
             }}
           >
             <ListItemIcon>
-              <RefreshIcon />
+              <RefreshIcon color={'error'} />
             </ListItemIcon>
             <ListItemText
               sx={{
@@ -187,7 +187,6 @@ export const SettingsMenu = ({
               {t('label.reset-table-defaults')}
             </ListItemText>
           </MenuItem>
-          <Divider />
         </>
       </Menu>
     </>
