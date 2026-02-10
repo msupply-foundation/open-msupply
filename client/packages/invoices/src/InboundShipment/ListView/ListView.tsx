@@ -162,7 +162,7 @@ export const InboundListView = () => {
   return (
     <>
       {isExtraSmallScreen ? (
-        // Hide app bar buttons on mobile view
+        // We don't want to show any app bar button on mobile list view
         <MobileCardList table={table} />
       ) : (
         <>
