@@ -61,7 +61,6 @@ export const usePaginatedMaterialTable = <T extends MRT_RowData>({
 
     autoResetPageIndex: false,
     onPaginationChange: handlePaginationChange,
-    enableRowSelection: true,
     onRowSelectionChange: setRowSelection,
     rowCount: totalCount,
     state: {
