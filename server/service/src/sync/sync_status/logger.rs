@@ -134,30 +134,30 @@ impl<'a> SyncLogger<'a> {
                 ..self.row.clone()
             },
             SyncStep::Push => {
-                info!(
-                    "Pushed ({}) records",
-                    self.row.push_progress_done.as_ref().unwrap_or(&0)
-                );
+                let count = *self.row.push_progress_done.as_ref().unwrap_or(&0);
+                if count > 0 {
+                    info!("Pushed ({count}) records");
+                }
                 SyncLogRow {
                     push_finished_datetime: Some(chrono::Utc::now().naive_utc()),
                     ..self.row.clone()
                 }
             }
             SyncStep::PullCentral => {
-                info!(
-                    "Pulled ({}) central records",
-                    self.row.pull_central_progress_done.as_ref().unwrap_or(&0)
-                );
+                let count = *self.row.pull_central_progress_done.as_ref().unwrap_or(&0);
+                if count > 0 {
+                    info!("Pulled ({count}) central records");
+                }
                 SyncLogRow {
                     pull_central_finished_datetime: Some(chrono::Utc::now().naive_utc()),
                     ..self.row.clone()
                 }
             }
             SyncStep::PullRemote => {
-                info!(
-                    "Pulled ({}) remote records",
-                    self.row.pull_remote_progress_done.as_ref().unwrap_or(&0)
-                );
+                let count = *self.row.pull_remote_progress_done.as_ref().unwrap_or(&0);
+                if count > 0 {
+                    info!("Pulled ({count}) remote records");
+                }
                 SyncLogRow {
                     pull_remote_finished_datetime: Some(chrono::Utc::now().naive_utc()),
                     ..self.row.clone()
@@ -168,20 +168,20 @@ impl<'a> SyncLogger<'a> {
                 ..self.row.clone()
             },
             SyncStep::PullCentralV6 => {
-                info!(
-                    "Pulled ({}) central v6 records",
-                    self.row.pull_v6_progress_done.as_ref().unwrap_or(&0)
-                );
+                let count = *self.row.pull_v6_progress_done.as_ref().unwrap_or(&0);
+                if count > 0 {
+                    info!("Pulled ({count}) central v6 records");
+                }
                 SyncLogRow {
                     pull_v6_finished_datetime: Some(chrono::Utc::now().naive_utc()),
                     ..self.row.clone()
                 }
             }
             SyncStep::PushCentralV6 => {
-                info!(
-                    "Pushed ({}) central v6 records",
-                    self.row.push_v6_progress_done.as_ref().unwrap_or(&0)
-                );
+                let count = *self.row.push_v6_progress_done.as_ref().unwrap_or(&0);
+                if count > 0 {
+                    info!("Pushed ({count}) central v6 records");
+                }
                 SyncLogRow {
                     push_v6_finished_datetime: Some(chrono::Utc::now().naive_utc()),
                     ..self.row.clone()
@@ -328,12 +328,7 @@ impl SyncLogError {
                 PostInitialisationError::WaitForInitialisationError(
                     WaitForSyncOperationError::SyncApiError(error),
                 ),
-            ) => {
-                Self::from_sync_api_error(
-                    SyncApiErrorVariant::V5(&error.source),
-                    sync_error,
-                )
-            }
+            ) => Self::from_sync_api_error(SyncApiErrorVariant::V5(&error.source), sync_error),
 
             // SyncApiErrorV6
             SyncError::CentralPullErrorV6(CentralPullErrorV6::SyncApiError(error))
