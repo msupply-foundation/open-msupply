@@ -147,6 +147,12 @@ export const useDraftInboundLines = (
     }
   };
 
+  // Used by scanning modal for updating one line at a time. Modal manages own
+  // draft state, so we pass that in here
+  const saveSingleLine = async (line: Partial<DraftInboundLine>) => {
+    await mutateAsync([line as DraftInboundLine]);
+  };
+
   return {
     draftLines: draftLines.filter(line => !line.isDeleted),
     addDraftLine,
@@ -154,5 +160,6 @@ export const useDraftInboundLines = (
     removeDraftLine,
     isLoading,
     saveLines,
+    saveSingleLine,
   };
 };

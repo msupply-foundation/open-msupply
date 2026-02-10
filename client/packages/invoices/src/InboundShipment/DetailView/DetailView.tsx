@@ -17,7 +17,7 @@ import {
   Groupable,
   NothingHere,
   MaterialTable,
-  useIsGapsStoreOnly,
+  useIsExtraSmallScreen,
   MobileCardList,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
@@ -42,6 +42,7 @@ import { InboundShipmentLineErrorProvider } from '../context/inboundShipmentLine
 import { InboundShipmentDetailTabs } from './types';
 import { useInboundLines } from '../api/hooks/line/useInboundLines';
 import { useInboundShipmentColumns } from './columns';
+import { ScanInputModal } from './ScanInputModal';
 
 type InboundLineItem = InboundLineFragment['item'];
 
@@ -84,7 +85,7 @@ const DetailViewInner = () => {
   const hasItemVariantsEnabled = useIsItemVariantsEnabled();
   const simplifiedTabletView = useSimplifiedTabletUI();
 
-  const isMobile = useIsGapsStoreOnly();
+  const isExtraSmallScreen = useIsExtraSmallScreen();
 
   const onRowClick = React.useCallback(
     (line: InboundItem | InboundLineFragment) => {
@@ -138,7 +139,7 @@ const DetailViewInner = () => {
         buttonText={t('button.add-item')}
       />
     ),
-    isMobile,
+    isMobile: isExtraSmallScreen,
   });
 
   const onReturn = async () => {
@@ -193,7 +194,7 @@ const DetailViewInner = () => {
 
   const tabs = [
     {
-      Component: isMobile ? (
+      Component: isExtraSmallScreen ? (
         <MobileCardList table={table} />
       ) : (
         <MaterialTable table={table} />
@@ -246,6 +247,8 @@ const DetailViewInner = () => {
             />
           )}
           <SidePanel />
+
+          <ScanInputModal lines={lines ?? []} invoiceId={data?.id ?? ''} />
 
           {isOpen && (
             <InboundLineEdit

@@ -10,7 +10,7 @@ pub fn active_vvm_statuses(ctx: &Context<'_>, store_id: String) -> Result<VVMSta
     validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::QueryAndMutateVvmStatus,
+            resource: Resource::QueryVvmStatus,
             store_id: Some(store_id.clone()),
         },
     )?;

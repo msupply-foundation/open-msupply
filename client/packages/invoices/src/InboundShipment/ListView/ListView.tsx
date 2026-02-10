@@ -11,7 +11,7 @@ import {
   MaterialTable,
   NameAndColorSetterCell,
   usePreferences,
-  useIsGapsStoreOnly,
+  useIsExtraSmallScreen,
   MobileCardList,
 } from '@openmsupply-client/common';
 import { AppBarButtons } from './AppBarButtons';
@@ -22,6 +22,7 @@ import {
   isInboundListItemDisabled,
 } from '../../utils';
 import { useInbound, InboundRowFragment } from '../api';
+import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
 
 export const InboundListView = () => {
@@ -32,13 +33,14 @@ export const InboundListView = () => {
   const linkRequestModalController = useToggle();
   const { mutate: onUpdate } = useInbound.document.update();
 
-  const isMobile = useIsGapsStoreOnly();
+  const isExtraSmallScreen = useIsExtraSmallScreen();
 
   const {
+    filter,
     queryParams: { first, offset, sortBy, filterBy },
   } = useUrlQueryParams({
     initialSort: { key: 'invoiceNumber', dir: 'desc' },
-    ...isMobile && { initialFilter: [{ id: 'status', value: 'NEW,DELIVERED,RECEIVED' }] },
+    ...isExtraSmallScreen && { initialFilter: [{ id: 'status', value: 'NEW,DELIVERED,RECEIVED' }] },
     filters: [
       { key: 'invoiceNumber', condition: 'equalTo', isNumber: true },
       { key: 'otherPartyName' },
@@ -67,6 +69,7 @@ export const InboundListView = () => {
       {
         header: t('label.supplier'),
         accessorKey: 'otherPartyName',
+        size: 400,
         enableColumnFilter: true,
         Cell: ({ row }) => (
           <NameAndColorSetterCell
@@ -75,6 +78,19 @@ export const InboundListView = () => {
             row={row.original}
           />
         ),
+        enableSorting: true,
+      },
+      {
+        header: t('label.status'),
+        accessorFn: row => getStatusTranslator(t)(row.status),
+        id: 'status',
+        size: 140,
+        filterVariant: 'select',
+        filterSelectOptions: statuses.map(status => ({
+          value: status,
+          label: getStatusTranslator(t)(status),
+        })),
+        enableColumnFilter: true,
         enableSorting: true,
       },
       {
@@ -103,17 +119,9 @@ export const InboundListView = () => {
         size: 100,
       },
       {
-        header: t('label.status'),
-        accessorFn: row => getStatusTranslator(t)(row.status),
-        id: 'status',
-        size: 140,
-        filterVariant: 'select',
-        filterSelectOptions: statuses.map(status => ({
-          value: status,
-          label: getStatusTranslator(t)(status),
-        })),
-        enableColumnFilter: true,
-        enableSorting: true,
+        header: t('label.comment'),
+        accessorKey: 'comment',
+        columnType: ColumnType.Comment,
       },
       {
         header: t('label.reference'),
@@ -128,13 +136,8 @@ export const InboundListView = () => {
         columnType: ColumnType.Currency,
         defaultHideOnMobile: true,
       },
-      {
-        header: t('label.comment'),
-        accessorKey: 'comment',
-        columnType: ColumnType.Comment,
-      },
     ],
-    []
+    [t]
   );
 
   const { table, selectedRows } = usePaginatedMaterialTable<InboundRowFragment>(
@@ -153,17 +156,18 @@ export const InboundListView = () => {
           onCreate={invoiceModalController.toggleOn}
         />
       ),
-      isMobile,
+      isMobile: isExtraSmallScreen,
     }
   );
 
   return (
     <>
+      <Toolbar filter={filter} />
       <AppBarButtons
         invoiceModalController={invoiceModalController}
         linkRequestModalController={linkRequestModalController}
       />
-      {isMobile ? (
+      {isExtraSmallScreen ? (
         <MobileCardList table={table} />
       ) : (
         <MaterialTable table={table} />

@@ -6,11 +6,9 @@ import { AppRoute, Environment } from '@openmsupply-client/config';
 import { useConfirmOnLeaving, useNotification } from '@common/hooks';
 
 import {
-  Breakpoints,
   RouteBuilder,
-  useAppTheme,
   useAuthContext,
-  useMediaQuery,
+  useIsExtraSmallScreen,
   useNavigate,
   useQueryClient,
 } from '@openmsupply-client/common';
@@ -37,10 +35,7 @@ export const ImportFridgeTag = ({
   const t = useTranslation();
   const navigate = useNavigate();
   const { success, error } = useNotification();
-  const theme = useAppTheme();
-  const isExtraSmallScreen = useMediaQuery(
-    theme.breakpoints.down(Breakpoints.sm)
-  );
+  const isExtraSmallScreen = useIsExtraSmallScreen();
 
   const hiddenFileInput = useRef<HTMLInputElement>(null);
   const { storeId } = useAuthContext();

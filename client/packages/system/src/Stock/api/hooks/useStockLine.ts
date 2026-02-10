@@ -33,7 +33,7 @@ const defaultDraftStockLine: DraftStockLine = {
     code: '',
     name: '',
     isVaccine: false,
-    dosesPerUnit: 0,
+    doses: 0,
     defaultPackSize: 0,
     itemStoreProperties: {
       __typename: 'ItemStorePropertiesNode',

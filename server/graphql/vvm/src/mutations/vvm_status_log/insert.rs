@@ -48,7 +48,7 @@ pub fn insert(ctx: &Context<'_>, store_id: &str, input: InsertInput) -> Result<I
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::QueryAndMutateVvmStatus,
+            resource: Resource::MutateVvmStatus,
             store_id: Some(store_id.to_string()),
         },
     );
