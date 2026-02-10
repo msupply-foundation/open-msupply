@@ -105,7 +105,7 @@ const batchDeleteOutboundShipmentQuery = (
 };
 
 const plugins: BackendPlugins = {
-  graphql_query: ({ input }): Graphql['output'] => {
+  graphql_query: ({ store_id, input }): Graphql['output'] => {
     const inp = input as Graphql['input'];
 
     const { stores: activeStores } = get_active_stores_on_site();
@@ -114,7 +114,9 @@ const plugins: BackendPlugins = {
     }
 
     // Take first store
-    const issuingStore = activeStores[0];
+    // const issuingStore = activeStores[0];
+    // For testing only, TODO: remove on last commit
+    const issuingStore = activeStores.find(s => s.store_row.id === store_id);
 
     if (!issuingStore) {
       return { success: false, message: 'No store found' };
@@ -200,6 +202,7 @@ const plugins: BackendPlugins = {
         insertShipmentResult.batchOutboundShipment.insertOutboundShipments[0]
           .response.__typename === 'InsertOutboundShipmentError'
       ) {
+        errText = 'Insert order failed. ' + errText;
         errText += ` error: ${insertShipmentResult.batchOutboundShipment.insertOutboundShipments[0].response.error.description}`;
         throw Error(errText);
       }
@@ -208,6 +211,7 @@ const plugins: BackendPlugins = {
         insertShipmentResult.batchOutboundShipment.insertOutboundShipments[0]
           .response.__typename === 'NodeError'
       ) {
+        errText = 'Insert order failed. ' + errText;
         errText += ` error: ${insertShipmentResult.batchOutboundShipment.insertOutboundShipments[0].response.error.description}`;
         throw Error(errText);
       }
@@ -237,14 +241,13 @@ const plugins: BackendPlugins = {
     try {
       const insertLineResult = batchOutboundShipmentQuery(insertLineInput);
 
-      errText = 'Insert line failed. ' + errText;
-
       if (
         !insertLineResult.batchOutboundShipment
           .insertOutboundShipmentUnallocatedLines ||
         insertLineResult.batchOutboundShipment
           .insertOutboundShipmentUnallocatedLines.length < 1
       ) {
+        errText = 'Insert line failed. ' + errText;
         errText += ` error: no lines returned in response`;
         throw Error(errText);
       }
@@ -254,6 +257,7 @@ const plugins: BackendPlugins = {
           .insertOutboundShipmentUnallocatedLines[0].response.__typename ===
         'InsertOutboundShipmentUnallocatedLineError'
       ) {
+        errText = 'Insert line failed. ' + errText;
         errText += ` error: ${insertLineResult.batchOutboundShipment.insertOutboundShipmentUnallocatedLines[0].response.error.description}`;
         throw Error(errText);
       }
@@ -280,14 +284,13 @@ const plugins: BackendPlugins = {
         allocateOutboundShipmentInput
       );
 
-      errText = 'Failed to allocate line. ' + errText;
-
       if (
         !allocateLineResult.batchOutboundShipment
           .allocateOutboundShipmentUnallocatedLines ||
         allocateLineResult.batchOutboundShipment
           .allocateOutboundShipmentUnallocatedLines.length < 1
       ) {
+        errText = 'Failed to allocate line. ' + errText;
         errText += ` error: no lines returned in response`;
         throw Error(errText);
       }
@@ -297,6 +300,7 @@ const plugins: BackendPlugins = {
           .allocateOutboundShipmentUnallocatedLines[0].response.__typename ===
         'AllocateOutboundShipmentUnallocatedLineError'
       ) {
+        errText = 'Failed to allocate line. ' + errText;
         errText += ` error: ${allocateLineResult.batchOutboundShipment.allocateOutboundShipmentUnallocatedLines[0].response.error.description}`;
         throw Error(errText);
       }
@@ -327,13 +331,12 @@ const plugins: BackendPlugins = {
         updateOutboundShipmentInput
       );
 
-      errText = 'Failed to update order status. ' + errText;
-
       if (
         !updateShipmentResult.batchOutboundShipment.updateOutboundShipments ||
         updateShipmentResult.batchOutboundShipment.updateOutboundShipments
           .length < 1
       ) {
+        errText = 'Failed to update order status. ' + errText;
         errText += ' error: no lines returned in response';
         throw Error(errText);
       }
@@ -343,6 +346,7 @@ const plugins: BackendPlugins = {
           .response.__typename === 'UpdateOutboundShipmentError'
       ) {
         batchDeleteOutboundShipmentQuery(issuingStoreId, shipmentId);
+        errText = 'Failed to update order status. ' + errText;
         errText += ` error: ${updateShipmentResult.batchOutboundShipment.updateOutboundShipments[0].response.error.description}`;
         throw Error(errText);
       }
@@ -352,6 +356,7 @@ const plugins: BackendPlugins = {
           .response.__typename === 'NodeError'
       ) {
         batchDeleteOutboundShipmentQuery(issuingStoreId, shipmentId);
+        errText = 'Failed to update order status. ' + errText;
         errText += ` error: ${updateShipmentResult.batchOutboundShipment.updateOutboundShipments[0].response.error.description}`;
         throw Error(errText);
       }
