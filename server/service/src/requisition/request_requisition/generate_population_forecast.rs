@@ -15,6 +15,7 @@ pub struct ForecastQuantityData {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
 pub struct CourseData {
     pub course_title: String,
     pub number_of_doses: i32,
