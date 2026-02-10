@@ -41,7 +41,7 @@ cargo run --bin remote_server_cli install-plugin-bundle --path ../path/to/plugin
 
 request structure
 
-```json
+```jsonc
 {
   "input": {
     "customerFilter": { "isStore": true, "isVisible": true }, // NameFilterInput type of 'names' graphql endpoint. First match is used for order.
