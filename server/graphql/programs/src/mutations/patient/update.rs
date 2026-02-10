@@ -95,7 +95,7 @@ pub fn update_patient(
             allowed_ctx: allowed_ctx.clone(),
         })),
         Err(error) => {
-            let formatted_error = format!("{:#?}", error);
+            let formatted_error = format!("{error:#?}");
             let std_err = match error {
                 UpdatePatientError::PatientDoesNotExists => {
                     StandardGraphqlError::BadUserInput(formatted_error)

@@ -110,8 +110,7 @@ impl SyncTranslation for VaccinationLegacyTranslation {
         let patient_name_id = name_link_repo
             .find_one_by_id(&patient_link_id)?
             .ok_or(anyhow::Error::msg(format!(
-                "Patient name link ({}) not found",
-                patient_link_id
+                "Patient name link ({patient_link_id}) not found"
             )))?
             .id;
 

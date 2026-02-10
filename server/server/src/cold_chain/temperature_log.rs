@@ -42,7 +42,7 @@ pub async fn put_logs(
     let store_id = match validate_request(request, &service_provider, &auth_data) {
         Ok((_user, store_id)) => store_id,
         Err(error) => {
-            let formatted_error = format!("{:#?}", error);
+            let formatted_error = format!("{error:#?}");
             return HttpResponse::Unauthorized().body(formatted_error);
         }
     };
@@ -55,15 +55,15 @@ pub async fn put_logs(
     let results = match upsert_temperature_logs(service_provider, store_id, logs).await {
         Ok(response) => response,
         Err(error) => {
-            error!("Error inserting temperature logs {:#?}", error);
-            return HttpResponse::InternalServerError().body(format!("{:#?}", error));
+            error!("Error inserting temperature logs {error:#?}");
+            return HttpResponse::InternalServerError().body(format!("{error:#?}"));
         }
     };
 
     for result in &results {
         if let Err(e) = result {
-            error!("Error inserting temperature log {:#?}", e);
-            return HttpResponse::InternalServerError().body(format!("{:#?}", e));
+            error!("Error inserting temperature log {e:#?}");
+            return HttpResponse::InternalServerError().body(format!("{e:#?}"));
         }
     }
 
@@ -93,7 +93,7 @@ async fn upsert_temperature_logs(
         .into_iter()
         .map(|log| {
             upsert_temperature_log(&service_provider, &ctx, log.clone()).map_err(|e| {
-                error!("{:#?} {:?}", e, log);
+                error!("{e:#?} {log:?}");
                 e.to_string()
             })
         })
@@ -112,7 +112,7 @@ fn upsert_temperature_log(
     let sensor_service = &service_provider.sensor_service;
     let sensor = sensor_service
         .get_sensor(ctx, log.sensor_id.clone())
-        .map_err(|e| anyhow::anyhow!("Unable to get sensor {:?}", e))?;
+        .map_err(|e| anyhow::anyhow!("Unable to get sensor {e:?}"))?;
     let datetime = DateTime::from_timestamp(log.unix_timestamp, 0)
         .context(format!("Unable to parse timestamp {}", log.unix_timestamp))?
         .naive_utc();
@@ -148,7 +148,7 @@ fn upsert_temperature_log(
                         .cold_chain_service
                         .insert_temperature_breach(ctx, breach)
                         .map_err(|e| {
-                            anyhow::anyhow!("Unable to insert temperature breach {:?}", e)
+                            anyhow::anyhow!("Unable to insert temperature breach {e:?}")
                         })?;
                 }
                 Err(e) => {
@@ -175,7 +175,7 @@ fn upsert_temperature_log(
             };
             service
                 .update_temperature_log(ctx, log)
-                .map_err(|e| anyhow::anyhow!("Unable to update temperature log {:?}", e))?
+                .map_err(|e| anyhow::anyhow!("Unable to update temperature log {e:?}"))?
         }
         Err(SingleRecordError::NotFound(_)) => {
             let log = InsertTemperatureLog {
@@ -188,7 +188,7 @@ fn upsert_temperature_log(
             };
             service
                 .insert_temperature_log(ctx, log)
-                .map_err(|e| anyhow::anyhow!("Unable to insert temperature log {:?}", e))?
+                .map_err(|e| anyhow::anyhow!("Unable to insert temperature log {e:?}"))?
         }
         Err(e) => {
             return Err(anyhow::anyhow!(

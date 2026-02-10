@@ -164,7 +164,7 @@ pub fn invoice_lines(
         ))
     } else {
         let err = invoice_lines.unwrap_err();
-        let formatted_error = format!("{:#?}", err);
+        let formatted_error = format!("{err:#?}");
         let graphql_error = match err {
             GetInvoiceLinesError::DatabaseError(err) => err.into(),
             GetInvoiceLinesError::InvalidStore => {
@@ -208,8 +208,8 @@ pub fn draft_outbound_lines(
         })
     } else {
         let err = result.unwrap_err();
-        let formatted_error = format!("{:#?}", err);
-        log::error!("Draft outbound lines generation error: {}", formatted_error);
+        let formatted_error = format!("{err:#?}");
+        log::error!("Draft outbound lines generation error: {formatted_error}");
         Err(list_error_to_gql_err(err))
     }
 }

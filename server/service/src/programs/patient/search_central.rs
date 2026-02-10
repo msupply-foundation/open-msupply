@@ -37,8 +37,7 @@ pub async fn patient_search_central(
 ) -> Result<Vec<PatientV4>, CentralPatientRequestError> {
     let central_server_url = Url::parse(&sync_settings.url).map_err(|err| {
         CentralPatientRequestError::InternalError(format!(
-            "Failed to parse central server url: {}",
-            err
+            "Failed to parse central server url: {err}"
         ))
     })?;
 
@@ -71,7 +70,7 @@ pub async fn patient_search_central(
             code,
         })
         .await
-        .map_err(|err| CentralPatientRequestError::ConnectionError(format!("{:?}", err)))?;
+        .map_err(|err| CentralPatientRequestError::ConnectionError(format!("{err:?}")))?;
     Ok(patients)
 }
 
@@ -95,8 +94,7 @@ pub async fn link_patient_to_store(
 
     let central_server_url = Url::parse(&sync_settings.url).map_err(|err| {
         CentralPatientRequestError::InternalError(format!(
-            "Failed to parse central server url: {}",
-            err
+            "Failed to parse central server url: {err}"
         ))
     })?;
 
@@ -117,7 +115,7 @@ pub async fn link_patient_to_store(
             store_id: store_id.to_string(),
         })
         .await
-        .map_err(|err| CentralPatientRequestError::ConnectionError(format!("{:?}", err)))?;
+        .map_err(|err| CentralPatientRequestError::ConnectionError(format!("{err:?}")))?;
 
     let result = NameStoreJoin {
         id,
@@ -162,7 +160,7 @@ async fn link_patient_to_store_v6(
 
     let sync_v5_settings =
         SyncApiV5::new_settings(sync_settings, service_provider, SYNC_V5_VERSION)
-            .map_err(|err| CentralPatientRequestError::InternalError(format!("{:?}", err)))?;
+            .map_err(|err| CentralPatientRequestError::InternalError(format!("{err:?}")))?;
 
     om_central_api
         .name_store_join(NameStoreJoinParams {
@@ -172,7 +170,7 @@ async fn link_patient_to_store_v6(
             sync_v5_settings,
         })
         .await
-        .map_err(|err| CentralPatientRequestError::ConnectionError(format!("{:?}", err)))?;
+        .map_err(|err| CentralPatientRequestError::ConnectionError(format!("{err:?}")))?;
 
     Ok(())
 }
@@ -205,7 +203,7 @@ pub async fn add_patient_to_oms_central(
     }
 
     let central_stores = ActiveStoresOnSite::get(&ctx.connection).map_err(|err| {
-        error!("Failed to get active stores on site: {}", err);
+        error!("Failed to get active stores on site: {err}");
         AddPatientToCentralError::ActiveStoresOnSiteError(err)
     })?;
 
@@ -224,8 +222,7 @@ pub async fn add_patient_to_oms_central(
         .map_err(AddPatientToCentralError::CentralPatientRequestError)?;
 
     info!(
-        "Created name_store_join for patient {} and central store {}",
-        name_id, central_store_id
+        "Created name_store_join for patient {name_id} and central store {central_store_id}"
     );
 
     // TODO: possibly should check is not pre-initialisation here?

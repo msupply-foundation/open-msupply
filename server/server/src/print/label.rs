@@ -26,7 +26,7 @@ pub async fn print_label_asset(
     match auth_result {
         Ok(_) => (),
         Err(error) => {
-            let formatted_error = format!("{:#?}", error);
+            let formatted_error = format!("{error:#?}");
             return HttpResponse::Unauthorized().body(formatted_error);
         }
     }
@@ -35,7 +35,7 @@ pub async fn print_label_asset(
         Ok(settings) => settings,
         Err(error) => {
             return HttpResponse::InternalServerError()
-                .body(format!("Error getting printer settings: {}", error));
+                .body(format!("Error getting printer settings: {error}"));
         }
     };
     match print_asset_label(settings, data.into_inner()) {
@@ -59,7 +59,7 @@ pub async fn get_label_asset(
     match auth_result {
         Ok(_) => (),
         Err(error) => {
-            let formatted_error = format!("{:#?}", error);
+            let formatted_error = format!("{error:#?}");
             return HttpResponse::Unauthorized().body(formatted_error);
         }
     }
@@ -68,7 +68,7 @@ pub async fn get_label_asset(
         Ok(parsed_data) => parsed_data,
         Err(err) => {
             return HttpResponse::BadRequest()
-                .body(format!("Failed to parse data header as JSON: {}", err));
+                .body(format!("Failed to parse data header as JSON: {err}"));
         }
     };
     let zpl = service::print::label::get_asset_label(data);
@@ -87,8 +87,8 @@ pub async fn print_label_prescription(
     match auth_result {
         Ok(_) => (),
         Err(error) => {
-            log::error!("Authentication error printing prescription: {:?}", error);
-            let formatted_error = format!("{:#?}", error);
+            log::error!("Authentication error printing prescription: {error:?}");
+            let formatted_error = format!("{error:#?}");
             return HttpResponse::Unauthorized().body(formatted_error);
         }
     }
@@ -96,9 +96,9 @@ pub async fn print_label_prescription(
     let settings = match get_printer_settings(service_provider) {
         Ok(settings) => settings,
         Err(error) => {
-            log::error!("Error getting printer settings: {}", error);
+            log::error!("Error getting printer settings: {error}");
             return HttpResponse::InternalServerError()
-                .body(format!("Error getting printer settings: {}", error));
+                .body(format!("Error getting printer settings: {error}"));
         }
     };
 
@@ -108,7 +108,7 @@ pub async fn print_label_prescription(
             HttpResponse::Ok().body("Label printed")
         }
         Err(err) => {
-            log::error!("Error printing label: {}", err);
+            log::error!("Error printing label: {err}");
             HttpResponse::InternalServerError().body(err.to_string())
         }
     }
@@ -124,7 +124,7 @@ pub async fn get_label_prescription(
     match auth_result {
         Ok(_) => (),
         Err(error) => {
-            let formatted_error = format!("{:#?}", error);
+            let formatted_error = format!("{error:#?}");
             return HttpResponse::Unauthorized().body(formatted_error);
         }
     }
@@ -134,7 +134,7 @@ pub async fn get_label_prescription(
             Ok(parsed_data) => parsed_data,
             Err(err) => {
                 return HttpResponse::BadRequest()
-                    .body(format!("Failed to parse data header as JSON: {}", err));
+                    .body(format!("Failed to parse data header as JSON: {err}"));
             }
         };
     let zpl = service::print::label::get_prescription_label(data);
@@ -148,7 +148,7 @@ pub async fn test_printer(service_provider: Data<ServiceProvider>) -> HttpRespon
         Ok(settings) => settings,
         Err(error) => {
             return HttpResponse::InternalServerError()
-                .body(format!("Error getting printer settings: {}", error));
+                .body(format!("Error getting printer settings: {error}"));
         }
     };
 
@@ -158,7 +158,7 @@ pub async fn test_printer(service_provider: Data<ServiceProvider>) -> HttpRespon
                 .unwrap_or("Failed to parse response".to_string()),
         ),
         Err(error) => HttpResponse::InternalServerError()
-            .body(format!("Error getting printer status: {}", error)),
+            .body(format!("Error getting printer status: {error}")),
     }
 }
 

@@ -68,9 +68,7 @@ impl Localisations {
                 let translations: HashMap<String, String> = serde_json::from_slice(&json_data)
                     .unwrap_or_else(|e| {
                         log::error!(
-                            "Failed to parse JSON localisations file {:?}. Backend/report translations will be unavailable due to: {:?}",
-                            file,
-                            e
+                            "Failed to parse JSON localisations file {file:?}. Backend/report translations will be unavailable due to: {e:?}"
                         );
                         HashMap::new()
                     });

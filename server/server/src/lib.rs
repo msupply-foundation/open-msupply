@@ -99,7 +99,7 @@ pub async fn start_server(
     // Run info log here. The system log for server starting is after the migrations
     // because it can't upsert until the database is running. If there is an error in
     // migrations the system log won't run.
-    info!("{}", server_start_message);
+    info!("{server_start_message}");
 
     // ON STARTUP OVERRIDE IS CENTRAL SERVER
     if settings.server.override_is_central_server {

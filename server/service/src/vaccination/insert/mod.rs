@@ -147,20 +147,19 @@ impl From<RepositoryError> for InsertVaccinationError {
 
 impl From<InsertPrescriptionError> for InsertVaccinationError {
     fn from(error: InsertPrescriptionError) -> Self {
-        InsertVaccinationError::InternalError(format!("Could not create prescription: {:?}", error))
+        InsertVaccinationError::InternalError(format!("Could not create prescription: {error:?}"))
     }
 }
 impl From<InsertStockOutLineError> for InsertVaccinationError {
     fn from(error: InsertStockOutLineError) -> Self {
         InsertVaccinationError::InternalError(format!(
-            "Could not create prescription line: {:?}",
-            error
+            "Could not create prescription line: {error:?}"
         ))
     }
 }
 impl From<UpdatePrescriptionError> for InsertVaccinationError {
     fn from(error: UpdatePrescriptionError) -> Self {
-        InsertVaccinationError::InternalError(format!("Could not update prescription: {:?}", error))
+        InsertVaccinationError::InternalError(format!("Could not update prescription: {error:?}"))
     }
 }
 

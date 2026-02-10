@@ -23,7 +23,7 @@ fn consumption_points() -> MockData {
                 ..Default::default()
             },
             InvoiceRow {
-                id: format!("{}-invoice-2", invoice_id),
+                id: format!("{invoice_id}-invoice-2"),
                 store_id: mock_store_a().id,
                 name_link_id: mock_name_a().id,
                 r#type: InvoiceType::OutboundShipment,
@@ -33,7 +33,7 @@ fn consumption_points() -> MockData {
         ],
         invoice_lines: vec![
             InvoiceLineRow {
-                id: format!("{}-line-item1", invoice_id),
+                id: format!("{invoice_id}-line-item1"),
                 invoice_id: invoice_id.clone(),
                 item_link_id: item().id,
                 r#type: InvoiceLineType::StockOut,
@@ -41,7 +41,7 @@ fn consumption_points() -> MockData {
                 ..Default::default()
             },
             InvoiceLineRow {
-                id: format!("{}-line-item2", invoice_id),
+                id: format!("{invoice_id}-line-item2"),
                 invoice_id: invoice_id.clone(),
                 item_link_id: item2().id,
                 r#type: InvoiceLineType::StockOut,
@@ -49,9 +49,9 @@ fn consumption_points() -> MockData {
                 ..Default::default()
             },
             InvoiceLineRow {
-                id: format!("{}-invoice-2-line-item3", invoice_id),
+                id: format!("{invoice_id}-invoice-2-line-item3"),
                 // Invoice 2 = transfer
-                invoice_id: format!("{}-invoice-2", invoice_id),
+                invoice_id: format!("{invoice_id}-invoice-2"),
                 item_link_id: item2().id,
                 r#type: InvoiceLineType::StockOut,
                 pack_size: 1.0,
