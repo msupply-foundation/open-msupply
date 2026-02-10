@@ -153,7 +153,7 @@ async fn link_patient_to_store_v6(
     };
 
     let server_url = Url::parse(&om_central_url).map_err(|_| {
-        CentralPatientRequestError::InternalError(format!("Cannot parse central server URL: "))
+        CentralPatientRequestError::InternalError("Cannot parse central server URL: ".to_string())
     })?;
 
     let om_central_api = OmsCentralApi::new(server_url);

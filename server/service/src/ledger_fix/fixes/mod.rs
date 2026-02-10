@@ -119,7 +119,7 @@ fn create_inventory_adjustment(
     let store_id = stock_line.store_id;
 
     let datetime = match stock_line_ledger_row {
-        Some(r) => r.datetime.clone(),
+        Some(r) => r.datetime,
         None => {
             find_latest_finalised_stocktake_for_stock_line(connection, stock_line_id, &store_id)?
         }

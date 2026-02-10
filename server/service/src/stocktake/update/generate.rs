@@ -538,7 +538,7 @@ pub fn generate(
         description: input_description.or(existing.description.clone()),
         comment: input_comment.or(existing.comment.clone()),
         is_locked: input_is_locked.unwrap_or(false),
-        stocktake_date: input_stocktake_date.or(existing.stocktake_date.clone()),
+        stocktake_date: input_stocktake_date.or(existing.stocktake_date),
         counted_by: counted_by.or(existing.counted_by.clone()),
         verified_by: verified_by.or(existing.verified_by.clone()),
         ..existing.clone()

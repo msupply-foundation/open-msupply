@@ -12,5 +12,5 @@ pub fn qr_code_svg(data: &str) -> String {
         .light_color(svg::Color("#ffffff"))
         .build();
 
-    format!("{image}")
+    image.to_string()
 }

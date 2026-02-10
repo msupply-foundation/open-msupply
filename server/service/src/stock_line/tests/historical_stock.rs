@@ -80,10 +80,10 @@ mod query {
             name_link_id: name.to_string(),
             r#type: invoice_type,
             store_id: STORE_ID.to_string(),
-            created_datetime: datetime.clone(),
-            picked_datetime: Some(datetime.clone()),
-            received_datetime: Some(datetime.clone()),
-            verified_datetime: Some(datetime.clone()),
+            created_datetime: datetime,
+            picked_datetime: Some(datetime),
+            received_datetime: Some(datetime),
+            verified_datetime: Some(datetime),
             status: InvoiceStatus::Verified,
             ..Default::default()
         };
