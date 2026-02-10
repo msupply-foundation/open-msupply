@@ -191,13 +191,16 @@ export function getSdk(
   return {
     itemCounts(
       variables: ItemCountsQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<ItemCountsQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<ItemCountsQuery>(ItemCountsDocument, variables, {
-            ...requestHeaders,
-            ...wrappedRequestHeaders,
+          client.request<ItemCountsQuery>({
+            document: ItemCountsDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
           }),
         'itemCounts',
         'query',
@@ -206,13 +209,16 @@ export function getSdk(
     },
     inboundCounts(
       variables: InboundCountsQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<InboundCountsQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<InboundCountsQuery>(InboundCountsDocument, variables, {
-            ...requestHeaders,
-            ...wrappedRequestHeaders,
+          client.request<InboundCountsQuery>({
+            document: InboundCountsDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
           }),
         'inboundCounts',
         'query',
@@ -221,15 +227,17 @@ export function getSdk(
     },
     outboundCounts(
       variables: OutboundCountsQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<OutboundCountsQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<OutboundCountsQuery>(
-            OutboundCountsDocument,
+          client.request<OutboundCountsQuery>({
+            document: OutboundCountsDocument,
             variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
         'outboundCounts',
         'query',
         variables
@@ -237,15 +245,17 @@ export function getSdk(
     },
     internalOrderCounts(
       variables: InternalOrderCountsQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<InternalOrderCountsQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<InternalOrderCountsQuery>(
-            InternalOrderCountsDocument,
+          client.request<InternalOrderCountsQuery>({
+            document: InternalOrderCountsDocument,
             variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
         'internalOrderCounts',
         'query',
         variables
@@ -253,15 +263,17 @@ export function getSdk(
     },
     requisitionCounts(
       variables: RequisitionCountsQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<RequisitionCountsQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<RequisitionCountsQuery>(
-            RequisitionCountsDocument,
+          client.request<RequisitionCountsQuery>({
+            document: RequisitionCountsDocument,
             variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
         'requisitionCounts',
         'query',
         variables
@@ -269,13 +281,16 @@ export function getSdk(
     },
     stockCounts(
       variables: StockCountsQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<StockCountsQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<StockCountsQuery>(StockCountsDocument, variables, {
-            ...requestHeaders,
-            ...wrappedRequestHeaders,
+          client.request<StockCountsQuery>({
+            document: StockCountsDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
           }),
         'stockCounts',
         'query',
