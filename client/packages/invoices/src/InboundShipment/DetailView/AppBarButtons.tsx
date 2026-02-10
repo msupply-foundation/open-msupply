@@ -1,6 +1,7 @@
 import React from 'react';
 import {
   AppBarButtonsPortal,
+  AddFromScannerButton,
   Grid,
   useDetailPanel,
   useUrlQueryParams,
@@ -14,7 +15,6 @@ import { useInbound } from '../api';
 import { ReportSelector } from '@openmsupply-client/system';
 import { AddButton } from './AddButton';
 import { ScannedBarcode } from '../../types';
-import { AddFromScannerButton } from '../../OutboundShipment/DetailView/AddFromScannerButton';
 
 interface AppBarButtonProps {
   onAddItem: (scannedBarcode?: ScannedBarcode) => void;
