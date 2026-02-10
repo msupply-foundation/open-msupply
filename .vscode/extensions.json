@@ -15,6 +15,7 @@
     // General
     "eamodio.gitlens",
     "streetsidesoftware.code-spell-checker",
+    "github.vscode-pull-request-github",
     
     // Testing
     "orta.vscode-jest"
