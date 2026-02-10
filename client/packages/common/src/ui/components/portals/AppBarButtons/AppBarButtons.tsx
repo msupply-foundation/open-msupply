@@ -1,13 +1,6 @@
 import { Box, BoxProps, Portal } from '@mui/material';
-import { styled } from '@mui/material/styles';
 import React, { FC, useEffect, useRef } from 'react';
 import { useHostContext } from '@common/hooks';
-
-const Container = styled('div')({
-  display: 'flex',
-  flex: 1,
-  justifyContent: 'flex-end',
-});
 
 export const AppBarButtons: FC = () => {
   const { setAppBarButtonsRef } = useHostContext();
@@ -17,7 +10,7 @@ export const AppBarButtons: FC = () => {
     setAppBarButtonsRef(ref);
   }, []);
 
-  return <Container ref={ref} />;
+  return <Box ref={ref} />;
 };
 
 export const AppBarButtonsPortal: FC<BoxProps> = props => {
