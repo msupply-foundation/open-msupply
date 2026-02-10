@@ -16,6 +16,7 @@ import { CreateAssetModal } from './CreateAssetModal';
 import { EquipmentImportModal } from '../ImportAsset';
 import { AssetRowFragment } from '../api/operations.generated';
 import { AppRoute } from '@openmsupply-client/config';
+import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
 import { useAssetColumns } from './columns';
 import { CardListView } from '../../Mobile/Equipment/CardListView';
@@ -58,10 +59,13 @@ export const EquipmentListView = () => {
   return (
     <>
       {!isExtraSmallScreen && (
-        <AppBarButtons
-          importModalController={importModalController}
-          modalController={modalController}
-        />
+        <>
+          <Toolbar />
+          <AppBarButtons
+            importModalController={importModalController}
+            modalController={modalController}
+          />
+        </>
       )}
       {isExtraSmallScreen ? <CardListView /> : <MaterialTable table={table} />}
 
