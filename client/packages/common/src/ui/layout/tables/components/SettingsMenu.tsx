@@ -158,7 +158,7 @@ export const SettingsMenu = ({
             <ListItemIcon>
               <PushPinIcon />
             </ListItemIcon>
-            <ListItemText>{t('label.unpin-columns')}</ListItemText>
+            <ListItemText>{t('label.reset-pinned-columns')}</ListItemText>
           </MenuItem>
           <Divider />
           <MenuItem onClick={() => density.update(nextDensity)}>
