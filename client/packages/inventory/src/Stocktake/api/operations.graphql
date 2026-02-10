@@ -58,7 +58,10 @@ fragment StocktakeLine on StocktakeLineNode {
     defaultPackSize
     restrictedLocationTypeId
     itemStoreProperties(storeId: $storeId) {
+      id
       defaultSellPricePerPack
+      ignoreForOrders
+      margin
     }
   }
 
