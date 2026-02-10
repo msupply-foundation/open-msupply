@@ -360,7 +360,7 @@ pub fn mock_new_response_requisition_test() -> FullMockRequisition {
             },
             RequisitionLineRow {
                 id: line2_id,
-                requisition_id: requisition_id,
+                requisition_id,
                 item_link_id: mock_item_b().id,
                 requested_quantity: 11.0,
                 suggested_quantity: 5.0,
@@ -477,7 +477,7 @@ pub fn mock_response_program_requisition() -> FullMockRequisition {
         },
         lines: vec![RequisitionLineRow {
             id: line1_id,
-            requisition_id: requisition_id,
+            requisition_id,
             item_link_id: mock_item_a().id,
             requested_quantity: 10.0,
             suggested_quantity: 10.0,
@@ -526,7 +526,7 @@ pub fn mock_new_response_program_requisition() -> FullMockRequisition {
             },
             RequisitionLineRow {
                 id: line2_id,
-                requisition_id: requisition_id,
+                requisition_id,
                 item_link_id: mock_item_b().id,
                 requested_quantity: 10.0,
                 suggested_quantity: 10.0,

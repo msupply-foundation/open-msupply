@@ -63,7 +63,7 @@ pub fn get_historical_stock_lines_available_quantity(
         min_available_and_pack_size
             .entry(stock_line_id)
             .and_modify(|m| {
-                m.total = m.total - quantity;
+                m.total -= quantity;
                 if m.total < m.min {
                     m.min = m.total
                 };

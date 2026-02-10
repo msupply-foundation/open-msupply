@@ -120,7 +120,7 @@ mod tests {
     ) {
         execute_sql_with_error(
             connection,
-            sql_query(&format!(
+            sql_query(format!(
                 r#"
                     INSERT INTO invoice_line (
                         id, invoice_id, item_link_id, item_name, item_code, pack_size, number_of_packs, cost_price_per_pack, sell_price_per_pack, total_before_tax, total_after_tax, type

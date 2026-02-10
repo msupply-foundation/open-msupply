@@ -118,49 +118,46 @@ fn upsert_temperature_log(
         .naive_utc();
 
     // If we have a temperature log with a breachid, we need to make sure the breach exists first, if it doesn't we create a temporary record so we don't loose data.
-    match &log.temperature_breach_id {
-        Some(breach_id) => {
-            let breach = service_provider
-                .cold_chain_service
-                .get_temperature_breach(ctx, breach_id.clone());
+    if let Some(breach_id) = &log.temperature_breach_id {
+        let breach = service_provider
+            .cold_chain_service
+            .get_temperature_breach(ctx, breach_id.clone());
 
-            match breach {
-                Ok(_) => {}
-                Err(SingleRecordError::NotFound(_)) => {
-                    // Create a temperature breach record as it doesn't exist yet
-                    let breach = InsertTemperatureBreach {
-                        id: breach_id.clone(),
-                        sensor_id: log.sensor_id.clone(),
-                        threshold_duration_milliseconds: 0,
-                        duration_milliseconds: 0,
-                        r#type: repository::TemperatureBreachType::HotConsecutive,
-                        start_datetime: DateTime::from_timestamp_millis(log.unix_timestamp)
-                            .unwrap_or_default()
-                            .naive_utc(),
-                        end_datetime: None,
-                        unacknowledged: true,
-                        threshold_minimum: 0.0,
-                        threshold_maximum: 0.0,
-                        comment: None,
-                        location_id: None,
-                    };
-                    service_provider
-                        .cold_chain_service
-                        .insert_temperature_breach(ctx, breach)
-                        .map_err(|e| {
-                            anyhow::anyhow!("Unable to insert temperature breach {e:?}")
-                        })?;
-                }
-                Err(e) => {
-                    return Err(anyhow::anyhow!(
-                        "Unable to get temperature breach for id '{}'. {:#?}",
-                        breach_id.clone(),
-                        e
-                    ));
-                }
+        match breach {
+            Ok(_) => {}
+            Err(SingleRecordError::NotFound(_)) => {
+                // Create a temperature breach record as it doesn't exist yet
+                let breach = InsertTemperatureBreach {
+                    id: breach_id.clone(),
+                    sensor_id: log.sensor_id.clone(),
+                    threshold_duration_milliseconds: 0,
+                    duration_milliseconds: 0,
+                    r#type: repository::TemperatureBreachType::HotConsecutive,
+                    start_datetime: DateTime::from_timestamp_millis(log.unix_timestamp)
+                        .unwrap_or_default()
+                        .naive_utc(),
+                    end_datetime: None,
+                    unacknowledged: true,
+                    threshold_minimum: 0.0,
+                    threshold_maximum: 0.0,
+                    comment: None,
+                    location_id: None,
+                };
+                service_provider
+                    .cold_chain_service
+                    .insert_temperature_breach(ctx, breach)
+                    .map_err(|e| {
+                        anyhow::anyhow!("Unable to insert temperature breach {e:?}")
+                    })?;
+            }
+            Err(e) => {
+                return Err(anyhow::anyhow!(
+                    "Unable to get temperature breach for id '{}'. {:#?}",
+                    breach_id.clone(),
+                    e
+                ));
             }
         }
-        None => {}
     };
 
     let result = match service.get_temperature_log(ctx, id.clone()) {

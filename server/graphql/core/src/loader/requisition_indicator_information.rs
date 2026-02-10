@@ -51,7 +51,7 @@ impl Loader<RequisitionIndicatorInfoLoaderInput> for RequisitionIndicatorInfoLoa
         let indicator_info_rows = self
             .service_provider
             .requisition_service
-            .get_indicator_information(&service_context, line_ids, &store_id, &period_id)?;
+            .get_indicator_information(&service_context, line_ids, store_id, period_id)?;
 
         let mut result: HashMap<_, Self::Value> = HashMap::new();
 

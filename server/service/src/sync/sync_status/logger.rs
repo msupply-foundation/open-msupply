@@ -329,10 +329,10 @@ impl SyncLogError {
                     WaitForSyncOperationError::SyncApiError(error),
                 ),
             ) => {
-                return Self::from_sync_api_error(
+                Self::from_sync_api_error(
                     SyncApiErrorVariant::V5(&error.source),
                     sync_error,
-                );
+                )
             }
 
             // SyncApiErrorV6

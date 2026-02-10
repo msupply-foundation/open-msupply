@@ -149,7 +149,7 @@ fn parse_or_integration_error<T: DeserializeOwned>(
     id: &str,
     data: &str,
 ) -> Result<Option<T>, RepositoryError> {
-    let result = match serde_json::from_str::<T>(&data) {
+    let result = match serde_json::from_str::<T>(data) {
         Ok(legacy_row) => Some(legacy_row),
         Err(e) => {
             diesel::update(sync_buffer::table)

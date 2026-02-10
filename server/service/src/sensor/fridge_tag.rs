@@ -309,10 +309,7 @@ fn convert_from_localtime(
     sensor: &temperature_sensor::Sensor,
 ) -> Result<temperature_sensor::Sensor, ReadSensorError> {
     // map logs
-    let logs_mapped: Option<Vec<temperature_sensor::TemperatureLog>> = match sensor.clone().logs {
-        None => None,
-        Some(logs) => Some(
-            logs.into_iter()
+    let logs_mapped: Option<Vec<temperature_sensor::TemperatureLog>> = sensor.clone().logs.map(|logs| logs.into_iter()
                 .filter(|log| resolve_localtime(&log.timestamp, "Temperature log").is_some())
                 .map(
                     |temperature_sensor::TemperatureLog {
@@ -327,15 +324,10 @@ fn convert_from_localtime(
                         }
                     },
                 )
-                .collect::<Vec<_>>(),
-        ),
-    };
+                .collect::<Vec<_>>());
     // map temperature breaches
     let breaches_mapped: Option<Vec<temperature_sensor::TemperatureBreach>> =
-        match sensor.clone().breaches {
-            None => None,
-            Some(breaches) => Some(
-                breaches
+        sensor.clone().breaches.map(|breaches| breaches
                     .into_iter()
                     .map(
                         |temperature_sensor::TemperatureBreach {
@@ -358,9 +350,7 @@ fn convert_from_localtime(
                             }
                         },
                     )
-                    .collect::<Vec<_>>(),
-            ),
-        };
+                    .collect::<Vec<_>>());
     // convert last connected timestamp
     let last_connected_timestamp_converted = match sensor.last_connected_timestamp {
         None => None,

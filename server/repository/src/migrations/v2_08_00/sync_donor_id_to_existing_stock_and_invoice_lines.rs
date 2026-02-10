@@ -175,7 +175,7 @@ mod tests {
     fn create_stock_line_without_donor(connection: &StorageConnection, id: &str, batch: &str) {
         execute_sql_with_error(
             connection,
-            sql_query(&format!(
+            sql_query(format!(
                 r#"
                     INSERT INTO stock_line (id, item_link_id, store_id, batch, pack_size, cost_price_per_pack, sell_price_per_pack, available_number_of_packs, total_number_of_packs, on_hold)
                     VALUES ('{id}', 'item_id', 'store_id', '{batch}', 1.0, 10.0, 15.0, 100.0, 100.0, false);
@@ -210,7 +210,7 @@ mod tests {
     fn create_invoice_line_without_donor(connection: &StorageConnection, id: &str) {
         execute_sql_with_error(
             connection,
-            sql_query(&format!(
+            sql_query(format!(
                 r#"
                     INSERT INTO invoice_line (
                         id, invoice_id, item_link_id, item_name, item_code, pack_size, number_of_packs, cost_price_per_pack, sell_price_per_pack, total_before_tax, total_after_tax, type
