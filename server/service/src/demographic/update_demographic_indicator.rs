@@ -52,8 +52,7 @@ pub fn update_demographic_indicator(
                 id: updated_demographic_indicator_row.demographic_id.clone(),
                 name: updated_demographic_indicator_row.name.clone(),
                 population_percentage: updated_demographic_indicator_row
-                    .population_percentage
-                    .clone(),
+                    .population_percentage,
             })?;
 
             activity_log_entry(

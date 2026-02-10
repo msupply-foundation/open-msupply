@@ -22,14 +22,14 @@ const URL_PATH: &str = "/coldchain/v1";
 const COOKIE_NAME: &str = "coldchain";
 
 pub fn config_cold_chain(cfg: &mut web::ServiceConfig) {
-    cfg.route(&format!("{}/login", URL_PATH), web::post().to(post_login));
-    cfg.route(&format!("{}/sensor", URL_PATH), web::put().to(put_sensors));
+    cfg.route(&format!("{URL_PATH}/login"), web::post().to(post_login));
+    cfg.route(&format!("{URL_PATH}/sensor"), web::put().to(put_sensors));
     cfg.route(
-        &format!("{}/temperature-log", URL_PATH),
+        &format!("{URL_PATH}/temperature-log"),
         web::put().to(put_logs),
     );
     cfg.route(
-        &format!("{}/temperature-breach", URL_PATH),
+        &format!("{URL_PATH}/temperature-breach"),
         web::put().to(put_breaches),
     );
 }

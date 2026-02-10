@@ -352,7 +352,7 @@ async fn run_processor(ctx: &ServiceContext) {
 }
 
 fn requisition_get(conn: &StorageConnection, id: &str) -> RequisitionRow {
-    RequisitionRowRepository::new(&conn)
+    RequisitionRowRepository::new(conn)
         .find_one_by_id(id)
         .unwrap()
         .unwrap()

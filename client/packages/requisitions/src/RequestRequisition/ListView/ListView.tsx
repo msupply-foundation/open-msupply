@@ -24,6 +24,7 @@ import {
 } from '../../utils';
 import { Footer } from './Footer';
 import { AppRoute } from '@openmsupply-client/config';
+import { Toolbar } from './Toolbar';
 
 export const ListView = () => {
   const t = useTranslation();
@@ -175,6 +176,7 @@ export const ListView = () => {
 
   return (
     <>
+      {simplifiedTabletView ? null : <Toolbar />}
       <AppBarButtons modalController={modalController} />
 
       <MaterialTable table={table} />

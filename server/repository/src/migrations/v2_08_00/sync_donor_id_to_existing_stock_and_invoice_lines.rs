@@ -56,8 +56,7 @@ impl MigrationFragment for Migrate {
                 Ok(value) => value,
                 Err(err) => {
                     println!(
-                        "Error parsing sync data for stock line {}: {}",
-                        stock_line_id, err
+                        "Error parsing sync data for stock line {stock_line_id}: {err}"
                     );
                     continue;
                 }
@@ -102,8 +101,7 @@ impl MigrationFragment for Migrate {
                 Ok(value) => value,
                 Err(err) => {
                     println!(
-                        "Error parsing sync data for invoice line {}: {}",
-                        invoice_line_id, err
+                        "Error parsing sync data for invoice line {invoice_line_id}: {err}"
                     );
                     continue;
                 }
@@ -177,12 +175,11 @@ mod tests {
     fn create_stock_line_without_donor(connection: &StorageConnection, id: &str, batch: &str) {
         execute_sql_with_error(
             connection,
-            sql_query(&format!(
+            sql_query(format!(
                 r#"
                     INSERT INTO stock_line (id, item_link_id, store_id, batch, pack_size, cost_price_per_pack, sell_price_per_pack, available_number_of_packs, total_number_of_packs, on_hold)
-                    VALUES ('{}', 'item_id', 'store_id', '{}', 1.0, 10.0, 15.0, 100.0, 100.0, false);
-                "#,
-                id, batch
+                    VALUES ('{id}', 'item_id', 'store_id', '{batch}', 1.0, 10.0, 15.0, 100.0, 100.0, false);
+                "#
             ))
         ).unwrap();
     }
@@ -194,17 +191,15 @@ mod tests {
         batch: &str,
     ) {
         let sync_data = format!(
-            r#"{{"id": "{}", "donor_id": "{}", "batch": "{}"}}"#,
-            stock_line_id, donor_id, batch
+            r#"{{"id": "{stock_line_id}", "donor_id": "{donor_id}", "batch": "{batch}"}}"#
         );
         execute_sql_with_error(
             connection,
             sql_query(format!(
                 r#"
                     INSERT INTO sync_buffer (record_id, received_datetime, table_name, action, data) 
-                    VALUES ('{}', $1, 'item_line', 'UPSERT', '{}');
-                "#,
-                stock_line_id, sync_data
+                    VALUES ('{stock_line_id}', $1, 'item_line', 'UPSERT', '{sync_data}');
+                "#
             ))
             .bind::<Timestamp, _>(chrono::Utc::now().naive_utc()),
         )
@@ -215,16 +210,15 @@ mod tests {
     fn create_invoice_line_without_donor(connection: &StorageConnection, id: &str) {
         execute_sql_with_error(
             connection,
-            sql_query(&format!(
+            sql_query(format!(
                 r#"
                     INSERT INTO invoice_line (
                         id, invoice_id, item_link_id, item_name, item_code, pack_size, number_of_packs, cost_price_per_pack, sell_price_per_pack, total_before_tax, total_after_tax, type
                     )
                     VALUES (
-                        '{}', 'invoice_id', 'item_id', 'Test Item', 'ITEM1', 1.0, 10.0, 10.0, 15.0, 100.0, 100.0, 'STOCK_OUT'
+                        '{id}', 'invoice_id', 'item_id', 'Test Item', 'ITEM1', 1.0, 10.0, 10.0, 15.0, 100.0, 100.0, 'STOCK_OUT'
                     );
-                "#,
-                id
+                "#
             ))
         ).unwrap();
     }
@@ -235,17 +229,15 @@ mod tests {
         donor_id: &str,
     ) {
         let sync_data = format!(
-            r#"{{"id": "{}", "donor_id": "{}"}}"#,
-            invoice_line_id, donor_id
+            r#"{{"id": "{invoice_line_id}", "donor_id": "{donor_id}"}}"#
         );
         execute_sql_with_error(
             connection,
             sql_query(format!(
                 r#"
                     INSERT INTO sync_buffer (record_id, received_datetime, table_name, action, data) 
-                    VALUES ('{}', $1, 'trans_line', 'UPSERT', '{}');
-                "#,
-                invoice_line_id, sync_data
+                    VALUES ('{invoice_line_id}', $1, 'trans_line', 'UPSERT', '{sync_data}');
+                "#
             ))
             .bind::<Timestamp, _>(chrono::Utc::now().naive_utc()),
         )
@@ -259,7 +251,7 @@ mod tests {
         let version = V2_08_00.version();
 
         let SetupResult { connection, .. } = setup_test(SetupOption {
-            db_name: &format!("migration_stock_lines_{}", version),
+            db_name: &format!("migration_stock_lines_{version}"),
             version: Some(previous_version.clone()),
             ..Default::default()
         })

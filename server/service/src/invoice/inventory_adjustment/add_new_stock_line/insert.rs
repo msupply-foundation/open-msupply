@@ -272,7 +272,7 @@ mod test {
         assert_eq!(stock_line_row.available_number_of_packs, 2.0);
         assert_eq!(stock_line_row.total_number_of_packs, 2.0);
         assert_eq!(stock_line_row.location_id, Some(mock_location_1().id));
-        assert_eq!(stock_line_row.on_hold, true);
+        assert!(stock_line_row.on_hold);
         let mut invoices = InvoiceRepository::new(&connection)
             .query_by_filter(InvoiceFilter::new().stock_line_id(stock_line_row.id))
             .unwrap();

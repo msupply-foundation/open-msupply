@@ -78,7 +78,7 @@ pub fn get_purchase_order_line(
 
     match service_provider
         .purchase_order_line_service
-        .get_purchase_order_line(&service_context, Some(&store_id), id)
+        .get_purchase_order_line(&service_context, Some(store_id), id)
         .map_err(StandardGraphqlError::from_repository_error)
     {
         Ok(line) => {
@@ -115,7 +115,7 @@ pub fn get_purchase_order_lines(
         .purchase_order_line_service
         .get_purchase_order_lines(
             &service_context,
-            Some(&store_id),
+            Some(store_id),
             page.map(PaginationOption::from),
             filter.map(|filter| filter.to_domain()),
             sort.and_then(|mut sort_list| sort_list.pop())
@@ -135,7 +135,7 @@ impl PurchaseOrderLineFilterInput {
             purchase_order_id: self.purchase_order_id.map(EqualFilter::from),
             status: self
                 .status
-                .map(|s| map_filter!(s, |t| PurchaseOrderLineStatus::from(t))),
+                .map(|s| map_filter!(s, PurchaseOrderLineStatus::from)),
 
             received_less_than_adjusted: self.received_less_than_adjusted,
             store_id: None,

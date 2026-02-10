@@ -19,6 +19,12 @@ export const usePrescriptionColumn = () => {
   return useMemo((): ColumnDef<PrescriptionLineFragment>[] => {
     return [
       {
+        accessorKey: 'note',
+        header: t('label.comment'),
+        pin: 'left',
+        columnType: ColumnType.Comment,
+      },
+      {
         accessorKey: 'item.code',
         header: t('label.code'),
         size: 120,
@@ -27,20 +33,16 @@ export const usePrescriptionColumn = () => {
         enableSorting: true,
       },
       {
-        accessorKey: 'note',
-        header: t('label.comment'),
-        columnType: ColumnType.Comment,
-      },
-      {
         accessorKey: 'itemName',
         header: t('label.name'),
-        size: 400,
+        size: 300,
         enableColumnFilter: true,
         enableSorting: true,
       },
       {
         accessorKey: 'batch',
         header: t('label.batch'),
+        size: 110,
         enableSorting: true,
         enableColumnFilter: true,
         defaultHideOnMobile: true,
@@ -49,6 +51,7 @@ export const usePrescriptionColumn = () => {
         id: 'expiryDate',
         accessorFn: row => (row.expiryDate ? new Date(row.expiryDate) : null),
         header: t('label.expiry-date'),
+        size: 110,
         columnType: ColumnType.Date,
         defaultHideOnMobile: true,
         enableColumnFilter: true,
@@ -67,6 +70,7 @@ export const usePrescriptionColumn = () => {
         id: 'itemUnit',
         accessorKey: 'item.unitName',
         header: t('label.unit-name'),
+        size: 100,
         enableColumnFilter: true,
         filterVariant: 'select',
         defaultHideOnMobile: true,

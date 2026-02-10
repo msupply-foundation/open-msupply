@@ -37,13 +37,13 @@ pub fn format_error(error: &impl StandardError) -> String {
     let mut sources = Vec::new();
     let mut current: &dyn StandardError = error;
     while let Some(next) = current.source() {
-        sources.push(format!("{}", next));
+        sources.push(format!("{next}"));
         current = next;
     }
 
     if sources.is_empty() {
-        format!("{}", error)
+        format!("{error}")
     } else {
-        format!("{} -> {:#?}", error, sources)
+        format!("{error} -> {sources:#?}")
     }
 }

@@ -102,7 +102,7 @@ impl Display for Level {
             Level::Debug => "debug",
             Level::Trace => "trace",
         };
-        write!(f, "{}", level)
+        write!(f, "{level}")
     }
 }
 

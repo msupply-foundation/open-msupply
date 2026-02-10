@@ -60,7 +60,7 @@ const DetailViewInner = () => {
       isLoading: rowsLoading,
       data: lines,
       onRowClick: row => onOpen(row.item),
-      grouping: { field: 'item.code', groupedByDefault: true },
+      grouping: { field: 'item.code' },
       initialSort: { key: 'itemName', dir: 'asc' },
       getIsPlaceholderRow: row =>
         isUncounted(row.original) ||

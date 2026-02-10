@@ -14,6 +14,7 @@ import {
 import { usePurchaseOrderList } from '../api';
 import { PurchaseOrderRowFragment } from '../api/operations.generated';
 import { AppBarButtons } from './AppBarButtons';
+import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
 import {
   getPurchaseOrderStatusTranslator,
@@ -158,6 +159,7 @@ export const PurchaseOrderListView = () => {
 
   return (
     <>
+      <Toolbar />
       <AppBarButtons
         data={data?.nodes}
         isLoading={isFetching}
