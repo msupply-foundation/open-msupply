@@ -12,7 +12,6 @@ import {
   useNavigate,
 } from '@openmsupply-client/common';
 import { useInboundShipment } from '../../api';
-import { useInboundDelete } from '../../api/hooks/utils';
 import { AdditionalInfoSection } from './AdditionalInfoSection';
 import { PricingSection } from './PricingSection';
 import { RelatedDocumentsSection } from './RelatedDocumentsSection';
@@ -26,8 +25,8 @@ export const SidePanel = () => {
 
   const {
     query: { data },
+    delete: { deleteInbound },
   } = useInboundShipment();
-  const { mutateAsync } = useInboundDelete();
 
   const isTransfer = !!data?.linkedShipment?.id;
   const canDelete = data?.status === InvoiceNodeStatus.New;
@@ -40,7 +39,7 @@ export const SidePanel = () => {
 
   const deleteAction = async () => {
     if (!data) return;
-    await mutateAsync([data]);
+    await deleteInbound();
     navigate(
       RouteBuilder.create(AppRoute.Replenishment)
         .addPart(AppRoute.InboundShipment)

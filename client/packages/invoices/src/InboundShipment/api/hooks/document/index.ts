@@ -5,7 +5,6 @@ import { useInboundsAll } from './useInboundsAll';
 import { useInsertInbound } from './useInsertInbound';
 import { useUpdateInbound } from './useUpdateInbound';
 import { useUpdateInboundServiceTax } from './useInboundUpdateServiceTax';
-import { useInboundDelete } from './useInboundDelete';
 import {
   useListInternalOrders,
   useListInternalOrdersPromise,
@@ -15,7 +14,6 @@ import { useInboundList } from './useInboundList';
 import { useInboundShipment } from './useInboundShipment';
 
 export const Document = {
-  useInboundDelete,
   useInbound,
   useInboundFields,
   useInbounds,
