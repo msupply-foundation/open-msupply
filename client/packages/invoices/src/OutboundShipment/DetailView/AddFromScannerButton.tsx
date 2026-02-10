@@ -1,27 +1,33 @@
-import React, { useEffect, useRef, useCallback } from 'react';
+import React, { useEffect, useRef } from 'react';
 import {
   useTranslation,
   useBarcodeScannerContext,
   ScanIcon,
-  ScanResult,
   ButtonWithIcon,
   useNotification,
   useRegisterActions,
   Tooltip,
   Box,
 } from '@openmsupply-client/common';
-import { useOutbound } from '../api';
-import { ScannedBarcode } from '../../types';
 
-export const AddFromScannerButtonComponent = ({
-  onAddItem,
-  disabled,
-}: {
-  onAddItem: (scannedBarcode?: ScannedBarcode) => void;
-  disabled: boolean;
-}) => {
+interface AddFromScannerButtonProps {
+  disabled?: boolean;
+  initialListening?: boolean;
+  handleClickCheck?: () => boolean;
+}
+
+/**
+ *
+ * TO-DO: Move this component to the common package, since it's now generalised
+ * and used in several places
+ */
+
+export const AddFromScannerButton = ({
+  disabled = false,
+  initialListening = true,
+  handleClickCheck,
+}: AddFromScannerButtonProps) => {
   const t = useTranslation();
-  const { mutateAsync: getBarcode } = useOutbound.utils.barcode();
   const {
     isConnected,
     isEnabled,
@@ -30,48 +36,24 @@ export const AddFromScannerButtonComponent = ({
     stopScan,
     startListening,
     supportsContinuousScanning,
+    handleScanResult,
   } = useBarcodeScannerContext();
-  const { error, warning } = useNotification();
+  const { error } = useNotification();
   const buttonRef = useRef<HTMLButtonElement>(null);
-
-  const handleScanResult = useCallback(
-    async (result: ScanResult) => {
-      if (!!result.content) {
-        const { content, gtin, batch, expiryDate } = result;
-        const value = gtin ?? content;
-        const barcode = await getBarcode(value);
-
-        // Barcode exists
-        if (barcode?.__typename === 'BarcodeNode') {
-          onAddItem({ ...barcode, batch, expiryDate: expiryDate ?? undefined });
-        } else {
-          warning(t('error.no-matching-item'))();
-
-          onAddItem({
-            gtin: value,
-            batch,
-            expiryDate: expiryDate ?? undefined,
-          });
-        }
-      }
-    },
-    [getBarcode, onAddItem, warning, t]
-  );
 
   const handleClick = async () => {
     buttonRef.current?.blur();
+
+    if (handleClickCheck && !handleClickCheck()) {
+      return;
+    }
+
     if (isListening) {
       stopScan();
     } else {
       if (supportsContinuousScanning && !isListening) {
         // Auto-start continuous scanning is available, start listening and wait for a scan
-        startListening(async (result, err) => {
-          if (err) {
-            error(t('messages.scanning-error', { error: err }))();
-            return;
-          }
-          await handleScanResult(result);
-        });
+        startListening();
       } else {
         // One-off scan
         try {
@@ -84,25 +66,20 @@ export const AddFromScannerButtonComponent = ({
     }
   };
 
-  // stop scanning when the component unloads
+  // Auto-start scanning for continuous scanning when component loads
   useEffect(() => {
+    if (
+      !isListening &&
+      !disabled &&
+      initialListening &&
+      supportsContinuousScanning
+    ) {
+      startListening();
+    }
+
     return () => {
       stopScan();
     };
-  }, []);
-
-  // Auto-start scanning for continuous scanning when component loads
-  useEffect(() => {
-    if (!isListening && supportsContinuousScanning) {
-      startListening(async (result, err) => {
-        if (err) {
-          error(t('messages.scanning-error', { error: err }))();
-          return;
-        }
-
-        await handleScanResult(result);
-      });
-    }
     // only need to respond to changes in supportsContinuousScanning
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [supportsContinuousScanning]);
@@ -139,5 +116,3 @@ export const AddFromScannerButtonComponent = ({
     </Tooltip>
   );
 };
-
-export const AddFromScannerButton = React.memo(AddFromScannerButtonComponent);
