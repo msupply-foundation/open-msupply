@@ -181,7 +181,7 @@ fn create_missing_not_given_vaccinations(
     // Find the current dose index
     let current_dose_index = all_course_doses
         .iter()
-        .position(|v| &v.vaccine_course_dose_row.id == current_vaccine_course_dose_id)
+        .position(|v| v.vaccine_course_dose_row.id == current_vaccine_course_dose_id)
         .unwrap_or(0);
 
     // Create "Not given" vaccinations for all previous doses that don't have vaccinations

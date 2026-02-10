@@ -74,7 +74,7 @@ pub fn update_patient(
         code_2,
         first_name,
         last_name,
-        gender: gender.map(|g| GenderType::from(g)),
+        gender: gender.map(GenderType::from),
         date_of_birth,
         address1,
         phone,

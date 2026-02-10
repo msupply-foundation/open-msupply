@@ -529,7 +529,7 @@ fn translate_changelog(
     for translator in translators.iter() {
         if !r#type
             .iter()
-            .any(|r| translator.should_translate_to_sync_record(changelog, &r))
+            .any(|r| translator.should_translate_to_sync_record(changelog, r))
         {
             continue;
         }

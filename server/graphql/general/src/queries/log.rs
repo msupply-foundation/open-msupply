@@ -82,7 +82,7 @@ pub fn log_level(ctx: &Context<'_>) -> Result<LogLevelNode> {
 
     Ok(LogLevelNode {
         level: level
-            .map(|l| LogLevelEnum::from(l))
+            .map(LogLevelEnum::from)
             .unwrap_or(LogLevelEnum::Info),
     })
 }
