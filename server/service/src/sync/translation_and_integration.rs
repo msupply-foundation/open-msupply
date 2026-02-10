@@ -247,6 +247,23 @@ impl TranslationAndIntegrationResults {
         Default::default()
     }
 
+    pub(crate) fn log_if_has_results(&self, operation_name: &str) {
+        let has_results = !self.0.is_empty()
+            && self
+                .0
+                .values()
+                .any(|result| result.integrated_count > 0 || result.errors_count > 0);
+        if has_results {
+            for (table_name, result) in &self.0 {
+                if result.errors_count > 0 {
+                    log::warn!("{operation_name} Integration result for {table_name}: {result:?}");
+                } else {
+                    log::info!("{operation_name} Integration result for {table_name}: {result:?}");
+                }
+            }
+        }
+    }
+
     fn insert_error(&mut self, table_name: &str) {
         let entry = self.0.entry(table_name.to_owned()).or_default();
         entry.errors_count += 1;
