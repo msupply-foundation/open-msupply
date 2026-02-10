@@ -22,7 +22,7 @@ import { SimpleLabelDisplay } from '../Components/SimpleLabelDisplay';
 import { CreateAssetModal } from '../../Equipment/ListView/CreateAssetModal';
 import { ImportFridgeTag } from '../../common/ImportFridgeTag';
 import { statusColourMap } from '../../Equipment/utils';
-import { AddFromScannerButton } from 'packages/invoices/src/OutboundShipment/DetailView/AddFromScannerButton';
+import { AddFromScannerButton } from '@openmsupply-client/invoices';
 
 export const CardListView = () => {
   const t = useTranslation();
