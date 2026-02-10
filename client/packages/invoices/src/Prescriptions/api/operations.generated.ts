@@ -1881,13 +1881,16 @@ export function getSdk(
   return {
     prescriptions(
       variables: PrescriptionsQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<PrescriptionsQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<PrescriptionsQuery>(PrescriptionsDocument, variables, {
-            ...requestHeaders,
-            ...wrappedRequestHeaders,
+          client.request<PrescriptionsQuery>({
+            document: PrescriptionsDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
           }),
         'prescriptions',
         'query',
@@ -1896,15 +1899,17 @@ export function getSdk(
     },
     prescriptionByNumber(
       variables: PrescriptionByNumberQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<PrescriptionByNumberQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<PrescriptionByNumberQuery>(
-            PrescriptionByNumberDocument,
+          client.request<PrescriptionByNumberQuery>({
+            document: PrescriptionByNumberDocument,
             variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
         'prescriptionByNumber',
         'query',
         variables
@@ -1912,15 +1917,17 @@ export function getSdk(
     },
     prescriptionById(
       variables: PrescriptionByIdQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<PrescriptionByIdQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<PrescriptionByIdQuery>(
-            PrescriptionByIdDocument,
+          client.request<PrescriptionByIdQuery>({
+            document: PrescriptionByIdDocument,
             variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
         'prescriptionById',
         'query',
         variables
@@ -1928,15 +1935,17 @@ export function getSdk(
     },
     insertPrescription(
       variables: InsertPrescriptionMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<InsertPrescriptionMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<InsertPrescriptionMutation>(
-            InsertPrescriptionDocument,
+          client.request<InsertPrescriptionMutation>({
+            document: InsertPrescriptionDocument,
             variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
         'insertPrescription',
         'mutation',
         variables
@@ -1944,15 +1953,17 @@ export function getSdk(
     },
     upsertPrescription(
       variables: UpsertPrescriptionMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<UpsertPrescriptionMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<UpsertPrescriptionMutation>(
-            UpsertPrescriptionDocument,
+          client.request<UpsertPrescriptionMutation>({
+            document: UpsertPrescriptionDocument,
             variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
         'upsertPrescription',
         'mutation',
         variables
@@ -1960,15 +1971,17 @@ export function getSdk(
     },
     deletePrescriptions(
       variables: DeletePrescriptionsMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<DeletePrescriptionsMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<DeletePrescriptionsMutation>(
-            DeletePrescriptionsDocument,
+          client.request<DeletePrescriptionsMutation>({
+            document: DeletePrescriptionsDocument,
             variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
         'deletePrescriptions',
         'mutation',
         variables
@@ -1976,15 +1989,17 @@ export function getSdk(
     },
     deletePrescriptionLines(
       variables: DeletePrescriptionLinesMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<DeletePrescriptionLinesMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<DeletePrescriptionLinesMutation>(
-            DeletePrescriptionLinesDocument,
+          client.request<DeletePrescriptionLinesMutation>({
+            document: DeletePrescriptionLinesDocument,
             variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
         'deletePrescriptionLines',
         'mutation',
         variables
@@ -1992,15 +2007,17 @@ export function getSdk(
     },
     diagnosesActive(
       variables?: DiagnosesActiveQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<DiagnosesActiveQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<DiagnosesActiveQuery>(
-            DiagnosesActiveDocument,
+          client.request<DiagnosesActiveQuery>({
+            document: DiagnosesActiveDocument,
             variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
         'diagnosesActive',
         'query',
         variables
@@ -2008,13 +2025,16 @@ export function getSdk(
     },
     abbreviations(
       variables?: AbbreviationsQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<AbbreviationsQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<AbbreviationsQuery>(AbbreviationsDocument, variables, {
-            ...requestHeaders,
-            ...wrappedRequestHeaders,
+          client.request<AbbreviationsQuery>({
+            document: AbbreviationsDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
           }),
         'abbreviations',
         'query',
@@ -2023,15 +2043,17 @@ export function getSdk(
     },
     labelPrinterSettings(
       variables?: LabelPrinterSettingsQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<LabelPrinterSettingsQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<LabelPrinterSettingsQuery>(
-            LabelPrinterSettingsDocument,
+          client.request<LabelPrinterSettingsQuery>({
+            document: LabelPrinterSettingsDocument,
             variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
         'labelPrinterSettings',
         'query',
         variables
@@ -2039,15 +2061,17 @@ export function getSdk(
     },
     savePrescriptionItemLines(
       variables: SavePrescriptionItemLinesMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<SavePrescriptionItemLinesMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<SavePrescriptionItemLinesMutation>(
-            SavePrescriptionItemLinesDocument,
+          client.request<SavePrescriptionItemLinesMutation>({
+            document: SavePrescriptionItemLinesDocument,
             variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
         'savePrescriptionItemLines',
         'mutation',
         variables
