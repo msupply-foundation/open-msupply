@@ -113,7 +113,7 @@ mod test {
     #[actix_rt::test]
     async fn dynamic_cursor_test() {
         let SetupResult { connection, .. } = setup_test(SetupOption {
-            db_name: &"dynamic_cursor_test".to_string(),
+            db_name: "dynamic_cursor_test",
             ..Default::default()
         })
         .await;
