@@ -35,9 +35,11 @@ import {
 } from './ModalContentPanels';
 import {
   CONSUMPTION_HISTORY_INFO,
+  FORECAST_QUANTITY_INFO,
   STOCK_DISTRIBUTION_INFO,
   STOCK_EVOLUTION_INFO,
 } from '../utils';
+import ForecastCalculationDisplay from './ItemCharts/ForecastCalculationDisplay';
 
 interface RequestLineEditProps {
   requisition: RequestFragment;
@@ -310,44 +312,50 @@ export const RequestLineEdit = ({
             gap: 2,
           }}
         >
-          {isInfoVisible(STOCK_DISTRIBUTION_INFO) && (
-            <Box
-              sx={{
-                width: '100%',
-                maxWidth: 900,
-                mx: 'auto',
-                p: '8px 16px',
-              }}
-            >
-              <StockDistribution
-                availableStockOnHand={line.itemStats?.availableStockOnHand}
-                averageMonthlyConsumption={
-                  line.itemStats?.averageMonthlyConsumption
-                }
-                suggestedQuantity={line.suggestedQuantity}
-              />
-            </Box>
+          {displayForecasting && isInfoVisible(FORECAST_QUANTITY_INFO) ? (
+            <ForecastCalculationDisplay vaccineCourses={line.vaccineCourses} />
+          ) : (
+            <>
+              {isInfoVisible(STOCK_DISTRIBUTION_INFO) && (
+                <Box
+                  sx={{
+                    width: '100%',
+                    maxWidth: 900,
+                    mx: 'auto',
+                    p: '8px 16px',
+                  }}
+                >
+                  <StockDistribution
+                    availableStockOnHand={line.itemStats?.availableStockOnHand}
+                    averageMonthlyConsumption={
+                      line.itemStats?.averageMonthlyConsumption
+                    }
+                    suggestedQuantity={line.suggestedQuantity}
+                  />
+                </Box>
+              )}
+              <Box
+                display="flex"
+                justifyContent="center"
+                gap={2}
+                sx={{
+                  padding: 2,
+                  flexDirection: {
+                    xs: 'column',
+                    md: 'row',
+                  },
+                  alignItems: 'center',
+                }}
+              >
+                {isInfoVisible(CONSUMPTION_HISTORY_INFO) && (
+                  <ConsumptionHistory id={line.id} />
+                )}
+                {isInfoVisible(STOCK_EVOLUTION_INFO) && (
+                  <StockEvolution id={line.id} />
+                )}
+              </Box>
+            </>
           )}
-          <Box
-            display="flex"
-            justifyContent="center"
-            gap={2}
-            sx={{
-              padding: 2,
-              flexDirection: {
-                xs: 'column',
-                md: 'row',
-              },
-              alignItems: 'center',
-            }}
-          >
-            {isInfoVisible(CONSUMPTION_HISTORY_INFO) && (
-              <ConsumptionHistory id={line.id} />
-            )}
-            {isInfoVisible(STOCK_EVOLUTION_INFO) && (
-              <StockEvolution id={line.id} />
-            )}
-          </Box>
         </Box>
       )}
     </>
