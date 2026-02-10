@@ -115,7 +115,6 @@ impl ConsumptionOptionsInput {
         default_amc_lookback_months: f64,
         from: Option<Self>,
     ) -> ConsumptionHistoryOptions {
-        let default_amc_lookback_months = default_amc_lookback_months;
         let default_number_of_datapoints = 3;
 
         from.map(
