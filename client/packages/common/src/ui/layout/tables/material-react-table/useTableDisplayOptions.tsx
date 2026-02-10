@@ -17,7 +17,7 @@ import {
 } from '@common/icons';
 import { MenuItem, Typography, alpha } from '@mui/material';
 import { ColumnDef } from './types';
-import { IconButton } from '@common/components';
+import { IconButton, useConfirmationModal } from '@common/components';
 import { useTranslation } from '@common/intl';
 import { EnvUtils } from '@common/utils';
 
@@ -46,6 +46,12 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
   muiTableBodyRowProps?: MRT_TableOptions<T>['muiTableBodyRowProps'];
 }): Partial<MRT_TableOptions<T>> => {
   const t = useTranslation();
+
+  const getConfirmation = useConfirmationModal({
+    title: t('heading.are-you-sure'),
+    message: t('messages.reset-table-defaults'),
+    onConfirm: resetTableState,
+  });
 
   return {
     // Add description to column menu
@@ -82,12 +88,13 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
             sx={iconButtonProps}
           />
         )}
+        {/* Hiding filter options within the table, hasColumnFilters is hardcoded to false for now */}
         {hasColumnFilters && <MRT_ToggleFiltersButton table={table} />}
         <MRT_ToggleDensePaddingButton table={table} />
         <MRT_ShowHideColumnsButton table={table} />
         <IconButton
           icon={<RefreshIcon />}
-          onClick={resetTableState}
+          onClick={() => getConfirmation()}
           label={t('label.reset-table-defaults')}
           disabled={!hasSavedState}
           sx={iconButtonProps}
@@ -189,7 +196,13 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
         ? {
             sx: { height: '100%' },
           }
-        : {},
+        : {
+            sx: () => ({
+              '& tr:nth-of-type(odd)': {
+                backgroundColor: 'background.row',
+              },
+            }),
+          },
 
     muiTableBodyRowProps: params => {
       const { row } = params;
@@ -206,9 +219,7 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
           if (onRowClick) onRowClick(row.original, isCtrlClick);
         },
         sx: {
-          backgroundColor: row.original['isSubRow']
-            ? 'background.secondary'
-            : 'inherit',
+          backgroundColor: 'inherit',
           // these two selectors are to change the background color of a selected
           // row from the default which is to use primary.main of the theme
           // with an opacity of 0.2 and 0.4 on hover

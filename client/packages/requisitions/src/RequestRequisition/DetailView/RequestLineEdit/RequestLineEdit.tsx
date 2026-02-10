@@ -100,6 +100,7 @@ export const RequestLineEdit = ({
             sx,
             endAdornmentOverride,
             displayVaccinesInDoses: showDoses,
+            roundUp,
           }) => (
             <ValueInfoRow
               key={label}
@@ -113,6 +114,7 @@ export const RequestLineEdit = ({
               displayVaccinesInDoses={showDoses ?? displayVaccinesInDoses}
               dosesPerUnit={currentItem?.doses}
               decimalLimit={0}
+              roundUp={roundUp}
             />
           )
         )}
@@ -247,7 +249,19 @@ export const RequestLineEdit = ({
                   value={currentItem?.doses}
                 />
               ) : null}
-              {renderValueInfoRows(getLeftPanel(t, draft, showExtraFields))}
+              {renderValueInfoRows(getLeftPanel(t, draft))}
+              <InfoRow
+                label={t('label.months-of-stock')}
+                value={draft?.itemStats?.availableMonthsOfStockOnHand}
+                packagingDisplay={t('label.months')}
+              />
+              {showExtraFields &&
+                renderValueInfoRows([
+                  {
+                    label: t('label.short-expiry'),
+                    value: draft?.expiringUnits,
+                  } as ValueInfo,
+                ])}
               {line &&
                 plugins.requestRequisitionLine?.editViewField?.map(
                   (Field, index) => (
