@@ -16,7 +16,7 @@ export const useOutboundCounts = () => {
     }
   );
 
-  if (!data) {
+  if (!data?.invoiceCounts) {
     return { stats: undefined, ...rest };
   }
 
