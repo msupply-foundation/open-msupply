@@ -2,9 +2,9 @@ import React, { useState } from 'react';
 import {
   ColorMenu,
   Color,
-  IconButton,
   Box,
 } from '@openmsupply-client/common';
+import { IconButton } from '@mui/material';
 import { CircleIcon } from '@common/icons';
 
 interface ColorPickerPreferenceProps {
