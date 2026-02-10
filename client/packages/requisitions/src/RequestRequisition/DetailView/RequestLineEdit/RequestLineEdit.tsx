@@ -268,16 +268,9 @@ export const RequestLineEdit = ({
                   value={currentItem?.doses}
                 />
               ) : null}
-              {renderValueInfoRows(getLeftPanel(t, draft, showExtraFields))}
-              {displayForecasting &&
-                renderValueInfoRows([
-                  {
-                    label: t('label.target-stock-population'),
-                    value: line?.forecastTotalUnits
-                      ? Math.ceil(line.forecastTotalUnits)
-                      : undefined,
-                  },
-                ])}
+              {renderValueInfoRows(
+                getLeftPanel(t, draft, showExtraFields, displayForecasting)
+              )}
               {line &&
                 plugins.requestRequisitionLine?.editViewField?.map(
                   (Field, index) => (

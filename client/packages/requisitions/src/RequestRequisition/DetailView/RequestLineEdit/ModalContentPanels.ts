@@ -8,33 +8,46 @@ import { DraftRequestLine } from '.';
 export const getLeftPanel = (
   t: TypedTFunction<LocaleKey>,
   draft?: DraftRequestLine | null,
-  showExtraFields: boolean = false
+  showExtraFields: boolean = false,
+  displayForecasting: boolean = false
 ): ValueInfo[] => {
-  const base: ValueInfo[] = [
+  const rows: ValueInfo[] = [
     {
       label: t('label.our-soh'),
       value: draft?.itemStats.availableStockOnHand,
     },
-    {
-      label: t('label.amc/amd'),
-      value: draft?.itemStats.averageMonthlyConsumption,
-    },
+    ...(displayForecasting
+      ? [
+          {
+            label: t('label.target-stock-population'),
+            value: draft?.forecastTotalUnits
+              ? Math.ceil(draft.forecastTotalUnits)
+              : undefined,
+          },
+        ]
+      : [
+          {
+            label: t('label.amc/amd'),
+            value: draft?.itemStats.averageMonthlyConsumption,
+          },
+        ]),
     {
       label: t('label.months-of-stock'),
       value: draft?.itemStats.availableMonthsOfStockOnHand,
       endAdornmentOverride: t('label.months'),
       displayVaccinesInDoses: false,
     },
+    ...(showExtraFields
+      ? [
+          {
+            label: t('label.short-expiry'),
+            value: draft?.expiringUnits,
+          },
+        ]
+      : []),
   ];
 
-  const extraPanel: ValueInfo[] = [
-    {
-      label: t('label.short-expiry'),
-      value: draft?.expiringUnits,
-    },
-  ];
-
-  return showExtraFields ? [...base, ...extraPanel] : base;
+  return rows;
 };
 
 export const getExtraMiddlePanels = (

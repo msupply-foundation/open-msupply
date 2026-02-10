@@ -330,15 +330,24 @@ export const ResponseLineEdit = ({
         </ModalPanelArea>
         {!!requisition.linkedRequisition || showExtraFields ? (
           <>
-            <ResponseNumInputRow
-              label={t('label.amc/amd')}
-              value={draft?.averageMonthlyConsumption}
-              onChange={value => update({ averageMonthlyConsumption: value })}
-              sx={{
-                pt: 1,
-              }}
-              {...commonProps}
-            />
+            {displayForecasting ? (
+              <ResponseNumInputRow
+                label={t('label.target-stock-population')}
+                value={draft?.forecastTotalUnits ?? 0}
+                disabledOverride={true}
+                {...commonProps}
+              />
+            ) : (
+              <ResponseNumInputRow
+                label={t('label.amc/amd')}
+                value={draft?.averageMonthlyConsumption}
+                onChange={value => update({ averageMonthlyConsumption: value })}
+                sx={{
+                  pt: 1,
+                }}
+                {...commonProps}
+              />
+            )}
             <ResponseNumInputRow
               label={t('label.months-of-stock')}
               value={mos() ?? 0}
@@ -349,14 +358,6 @@ export const ResponseLineEdit = ({
               }}
               {...commonProps}
             />
-            {displayForecasting && (
-              <ResponseNumInputRow
-                label={t('label.target-stock-population')}
-                value={draft?.forecastTotalUnits ?? 0}
-                disabledOverride={true}
-                {...commonProps}
-              />
-            )}
           </>
         ) : null}
 
