@@ -126,7 +126,6 @@ fn get_sqlite_files_paths(settings: &Settings) -> Result<Vec<PathBuf>, BackupErr
         .map_err(|_| BackupError::InvalidPath(settings.database.database_name.to_string()))?;
 
     let paths = fs::read_dir("./")?
-        .into_iter()
         .filter_map(Result::ok)
         .map(|e| e.path())
         .filter(|f| f.is_file() && f.file_stem() == backup_name.file_stem())

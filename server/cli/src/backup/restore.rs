@@ -187,8 +187,7 @@ fn copy_sqlite_files(
         let from_file = sqlite_filename?.path();
         let extension = from_file
             .extension()
-            .map(|e| e.to_str())
-            .flatten()
+            .and_then(|e| e.to_str())
             .ok_or(BackupError::InvalidSqliteFile(from_file.clone()))?;
         // Preserve database name
         fs::copy(&from_file, format!("{database_name}.{extension}"))?;

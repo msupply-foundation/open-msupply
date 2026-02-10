@@ -713,7 +713,7 @@ async fn main() -> anyhow::Result<()> {
             // spawn blocking used to prevent the following error: "Cannot drop a runtime in a context where blocking is not allowed"
             spawn_blocking(|| generate_report_inner(report_generate_data))
                 .await?
-                .map_err(|e| ReportError::FailedToGenerateReport(path, e.into()))?;
+                .map_err(|e| ReportError::FailedToGenerateReport(path, e))?;
 
             let generated_file_path = current_dir()?.join(&output_name);
 #[cfg(windows)]
@@ -726,7 +726,7 @@ async fn main() -> anyhow::Result<()> {
             Command::new("open")
                 .arg(generated_file_path.clone())
                 .status()
-                .expect(&format!("failed to open file {generated_file_path:?}"));
+                .unwrap_or_else(|_| panic!("{}", "failed to open file {generated_file_path:?}"));
         }
         Action::ToggleReport {
             code,

@@ -373,14 +373,14 @@ pub fn integrate_and_translate_sync_buffer(
         let upsert_sync_buffer_records = sync_buffer.get_ordered_sync_buffer_records(
             SyncAction::Upsert,
             &table_order,
-            record_type.clone(),
+            record_type,
         )?;
 
         // Translate and integrate delete (ordered by referential database constraints, in reverse)
         let delete_sync_buffer_records = sync_buffer.get_ordered_sync_buffer_records(
             SyncAction::Delete,
             &table_order,
-            record_type.clone(),
+            record_type,
         )?;
 
         let upsert_integration_result = translation_and_integration
@@ -401,7 +401,7 @@ pub fn integrate_and_translate_sync_buffer(
         let merge_sync_buffer_records = sync_buffer.get_ordered_sync_buffer_records(
             SyncAction::Merge,
             &table_order,
-            record_type.clone(),
+            record_type,
         )?;
 
         let merge_integration_result: TranslationAndIntegrationResults =
