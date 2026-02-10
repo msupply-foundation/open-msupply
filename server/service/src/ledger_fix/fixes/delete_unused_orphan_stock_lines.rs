@@ -35,8 +35,7 @@ pub(crate) fn fix(
 
     if !should_adjust {
         operation_log.push_str(&format!(
-            "Ledger does not match use case for delete_unused_orphan_stock_lines {:?}.\n",
-            balance_summary
+            "Ledger does not match use case for delete_unused_orphan_stock_lines {balance_summary:?}.\n"
         ));
         return Ok(());
     }
@@ -44,8 +43,7 @@ pub(crate) fn fix(
     let Some(stock_line) = StockLineRowRepository::new(connection).find_one_by_id(stock_line_id)?
     else {
         operation_log.push_str(&format!(
-            "Skipping delete_unused_orphan_stock_lines, stock_line doesn't exist {}.\n",
-            stock_line_id
+            "Skipping delete_unused_orphan_stock_lines, stock_line doesn't exist {stock_line_id}.\n"
         ));
         return Ok(());
     };
@@ -53,13 +51,13 @@ pub(crate) fn fix(
     match StockLineRowRepository::new(connection).delete(stock_line_id) {
         Ok(result) => result,
         Err(RepositoryError::ForeignKeyViolation(_)) => {
-            operation_log.push_str(&format!("Skipping delete_unused_orphan_stock_lines, stock_line referenced in another table.\n"));
+            operation_log.push_str("Skipping delete_unused_orphan_stock_lines, stock_line referenced in another table.\n");
             return Ok(());
         }
         Err(e) => return Err(e.into()),
     };
 
-    operation_log.push_str(&format!("Deleted stock_line: {:?}.\n", stock_line));
+    operation_log.push_str(&format!("Deleted stock_line: {stock_line:?}.\n"));
 
     Ok(())
 }
@@ -123,7 +121,9 @@ pub(crate) mod test {
             ..Default::default()
         };
 
-        let mock_data = MockData {
+        
+
+        MockData {
             stock_lines: vec![
                 oms_stock_line.clone(),
                 oms_orphan_stock_line,
@@ -139,9 +139,7 @@ pub(crate) mod test {
         .join(make_movements(
             legacy_stock_line_with_invoice_line,
             vec![(1, -1), (1, -1), (1, -1)],
-        ));
-
-        mock_data
+        ))
     }
 
     #[actix_rt::test]
@@ -157,7 +155,7 @@ pub(crate) mod test {
             connection: &StorageConnection,
             stock_line_id: &str,
         ) -> Option<StockLineRow> {
-            StockLineRowRepository::new(&connection)
+            StockLineRowRepository::new(connection)
                 .find_one_by_id(stock_line_id)
                 .unwrap()
         }

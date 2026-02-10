@@ -51,7 +51,7 @@ pub async fn add_patient_name_store_join(
         add_patient_to_oms_central(service_provider, &ctx, &name_id)
             .await
             .map_err(|err| {
-                error!("Failed to add patient to central: {}", err);
+                error!("Failed to add patient to central: {err}");
 
                 CentralApiError::InternalError("Error adding patient visibility".to_string())
             })?;
@@ -62,8 +62,7 @@ pub async fn add_patient_name_store_join(
     create_patient_name_store_join(&ctx.connection, &store_id, &name_id, Some(id))?;
 
     info!(
-        "Created name_store_join for patient {} and store {}",
-        name_id, store_id
+        "Created name_store_join for patient {name_id} and store {store_id}"
     );
 
     Ok(())
@@ -110,7 +109,7 @@ async fn wait_for_sync_of_patient_records(
         // More robust to check patient record has been received
         if !sync_status.is_syncing {
             // If sync finished but integration of patient failed, will break after timeout
-            if check_patient_exists(&ctx.connection, &name_id)?.is_some() {
+            if check_patient_exists(&ctx.connection, name_id)?.is_some() {
                 info!("Patient data received");
                 break;
             }

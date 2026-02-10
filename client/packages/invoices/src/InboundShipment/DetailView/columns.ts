@@ -23,9 +23,15 @@ export const useInboundShipmentColumns = () => {
   return useMemo((): ColumnDef<InboundLineFragment>[] => {
     return [
       {
+        accessorKey: 'comment',
+        pin: 'left',
+        header: t('label.comment'),
+        columnType: ColumnType.Comment,
+      },
+      {
         accessorKey: 'item.code',
         header: t('label.code'),
-        size: 120,
+        size: 90,
         pin: 'left',
         enableColumnFilter: true,
         enableSorting: true,
@@ -33,11 +39,6 @@ export const useInboundShipmentColumns = () => {
           getLinesFromRow(row).some(
             r => getError(r)?.__typename === 'LineLinkedToTransferredInvoice'
           ),
-      },
-      {
-        accessorKey: 'comment',
-        header: t('label.comment'),
-        columnType: ColumnType.Comment,
       },
       {
         accessorKey: 'itemName',
@@ -50,6 +51,7 @@ export const useInboundShipmentColumns = () => {
         accessorKey: 'batch',
         header: t('label.batch'),
         enableSorting: true,
+        size: 100,
         enableColumnFilter: true,
         defaultHideOnMobile: true,
       },
@@ -59,6 +61,7 @@ export const useInboundShipmentColumns = () => {
         header: t('label.expiry-date'),
         columnType: ColumnType.Date,
         defaultHideOnMobile: true,
+        size: 120,
         enableColumnFilter: true,
         enableSorting: true,
       },
@@ -83,6 +86,7 @@ export const useInboundShipmentColumns = () => {
         id: 'itemUnit',
         accessorKey: 'item.unitName',
         header: t('label.unit-name'),
+        size: 100,
         enableColumnFilter: true,
         filterVariant: 'select',
         defaultHideOnMobile: true,
@@ -93,7 +97,7 @@ export const useInboundShipmentColumns = () => {
         columnType: ColumnType.Number,
         defaultHideOnMobile: true,
         enableSorting: true,
-        size: 100,
+        size: 90,
       },
       {
         id: 'itemDoses',
@@ -171,9 +175,10 @@ export const useInboundShipmentColumns = () => {
       },
     ];
   }, [
-    getError,
-    manageVaccinesInDoses,
+    t,
     manageVvmStatusForStock,
+    manageVaccinesInDoses,
     allowTrackingOfStockByDonor,
+    getError,
   ]);
 };

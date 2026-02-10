@@ -58,7 +58,7 @@ impl SyncTranslation for CurrencyTranslation {
             code,
             is_home_currency,
             date_updated,
-            is_active: currency.map_or(true, |c| c.is_active),
+            is_active: currency.is_none_or(|c| c.is_active),
         };
 
         Ok(PullTranslateResult::upsert(result))

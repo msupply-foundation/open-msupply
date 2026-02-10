@@ -1,16 +1,6 @@
-import { Utils } from './utils';
-import { Statistics } from './statistics';
-
-export const useDashboard = {
-  utils: {
-    api: Utils.useDashboardApi,
-  },
-
-  statistics: {
-    item: Statistics.useItemCounts,
-    inbound: Statistics.useInboundCounts,
-    outbound: Statistics.useOutboundCounts,
-    requisitions: Statistics.useRequisitionCounts,
-    stock: Statistics.useStockCounts,
-  },
-};
+export { useInboundCounts } from './useInboundCounts';
+export { useOutboundCounts } from './useOutboundCounts';
+export { useInternalOrderCounts } from './useInternalOrderCounts';
+export { useRequisitionCounts } from './useRequisitionCounts';
+export { useStockCounts } from './useStockCounts';
+export { useItemCounts } from './useItemCounts';

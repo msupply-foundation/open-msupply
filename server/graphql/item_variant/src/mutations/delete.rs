@@ -54,7 +54,7 @@ fn map_response(from: Result<String, DeleteItemVariantError>) -> Result<DeleteIt
     match from {
         Ok(result) => Ok(DeleteItemVariantResponse::Response(DeleteResponse(result))),
         Err(error) => {
-            let formatted_error = format!("{:#?}", error);
+            let formatted_error = format!("{error:#?}");
 
             let graphql_error = match error {
                 DeleteItemVariantError::DatabaseError(_) => {

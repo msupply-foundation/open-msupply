@@ -3,7 +3,7 @@ import {
   RouteBuilder,
   Routes,
   Route,
-  useIsGapsStoreOnly,
+  useIsExtraSmallScreen,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { SensorListView } from './Sensor';
@@ -20,20 +20,20 @@ export const ColdchainService: FC = () => {
   const equipmentRoute = RouteBuilder.create(AppRoute.Equipment)
     .addPart(':id')
     .build();
-  const isGaps = useIsGapsStoreOnly();
+  const isExtraSmallScreen = useIsExtraSmallScreen();
 
   return (
     <Routes>
       <Route
         path={monitoringRoute}
-        element={!isGaps ? <MonitoringListView /> : <MobileTemperatureChart />}
+        element={!isExtraSmallScreen ? <MonitoringListView /> : <MobileTemperatureChart />}
       />
       <Route path={sensorRoute} element={<SensorListView />} />
       <Route path={equipmentListRoute} element={<EquipmentListView />} />
       <Route
         path={equipmentRoute}
         element={
-          !isGaps ? <EquipmentDetailView /> : <MobileEquipmentDetailView />
+          !isExtraSmallScreen ? <EquipmentDetailView /> : <MobileEquipmentDetailView />
         }
       />
     </Routes>

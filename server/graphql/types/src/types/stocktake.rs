@@ -101,8 +101,7 @@ impl StocktakeNode {
             let loader = ctx.get_loader::<DataLoader<InvoiceByIdLoader>>();
             let invoice = loader.load_one(addition_id.clone()).await?.ok_or(
                 StandardGraphqlError::InternalError(format!(
-                    "Cannot find inventory addition {}",
-                    addition_id
+                    "Cannot find inventory addition {addition_id}"
                 ))
                 .extend(),
             )?;
@@ -117,8 +116,7 @@ impl StocktakeNode {
             let loader = ctx.get_loader::<DataLoader<InvoiceByIdLoader>>();
             let invoice = loader.load_one(reduction_id.clone()).await?.ok_or(
                 StandardGraphqlError::InternalError(format!(
-                    "Cannot find inventory reduction {}",
-                    reduction_id
+                    "Cannot find inventory reduction {reduction_id}"
                 ))
                 .extend(),
             )?;

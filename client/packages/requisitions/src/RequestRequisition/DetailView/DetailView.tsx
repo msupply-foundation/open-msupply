@@ -123,6 +123,7 @@ export const DetailView = () => {
     getIsPlaceholderRow: row => isRequestLinePlaceholderRow(row.original),
     onRowClick,
     initialSort: { key: 'itemName', dir: 'asc' },
+    manualFiltering: true,
     noDataElement: (
       <NothingHere
         body={

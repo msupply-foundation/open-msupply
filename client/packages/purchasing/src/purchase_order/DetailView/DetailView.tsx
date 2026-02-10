@@ -50,6 +50,7 @@ const DetailViewInner = () => {
 
   const {
     query: { data, isFetching, isLoading },
+    lines: { filteredLines: lines },
     draft,
     handleChange,
     invalidateQueries,
@@ -62,8 +63,6 @@ const DetailViewInner = () => {
     entity: lineId,
     isOpen,
   } = useEditModal<string | null>();
-
-  const lines = React.useMemo(() => data?.lines.nodes ?? [], [data]);
 
   const onRowClick = useCallback(
     (line: PurchaseOrderLineFragment) => {
@@ -97,6 +96,7 @@ const DetailViewInner = () => {
       initialSort: { key: 'lineNumber', dir: 'asc' },
       getIsRestrictedRow: row => getClosedLine(row.original),
       getIsPlaceholderRow: row => getPlaceholderRow(row.original),
+      manualFiltering: true,
       noDataElement: (
         <NothingHere
           body={t('error.no-purchase-order-items')}

@@ -20,10 +20,12 @@ import {
   useColumnGrouping,
 } from './tableState';
 import { clearSavedState, getSavedState } from './tableState/utils';
-import { NothingHere } from '@common/components';
+import { DataError, NothingHere } from '@common/components';
 
-export interface BaseTableConfig<T extends MRT_RowData>
-  extends Omit<MRT_TableOptions<T>, 'data'> {
+export interface BaseTableConfig<T extends MRT_RowData> extends Omit<
+  MRT_TableOptions<T>,
+  'data'
+> {
   tableId: string; // key for local storage
   data: T[] | undefined;
   onRowClick?: (row: T, isCtrlClick: boolean) => void;
@@ -61,7 +63,7 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
   noDataElement,
   muiTableBodyRowProps,
   isMobile,
-  enableRowSelection,
+  enableRowSelection = true,
   ...tableOptions
 }: BaseTableConfig<T>) => {
   const { getTableLocalisations } = useIntlUtils();
@@ -122,7 +124,8 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
     setHasSavedState(false);
   };
 
-  const hasColumnFilters = columns.some(col => col.enableColumnFilter);
+  // hiding all table filter related options for now
+  const hasColumnFilters = false;
 
   const displayOptions = useTableDisplayOptions({
     isGrouped: !!grouping.state.length,
@@ -148,6 +151,7 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
     layoutMode: 'grid',
     enableColumnResizing,
 
+    enableColumnFilters: false, // hide all column filters in the column menu
     enableColumnPinning: true,
     enableColumnOrdering: true,
     enableColumnDragging: false,
@@ -210,7 +214,7 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
       isLoading ? (
         <></>
       ) : isError ? (
-        <ErrorState />
+        <DataError error={t('error.unable-to-load-data')} />
       ) : (
         (noDataElement ?? <NothingHere />)
       ),
@@ -220,9 +224,4 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
   });
 
   return table;
-};
-
-const ErrorState = () => {
-  const t = useTranslation();
-  return <NothingHere body={t('error.unable-to-load-data')} isError />;
 };

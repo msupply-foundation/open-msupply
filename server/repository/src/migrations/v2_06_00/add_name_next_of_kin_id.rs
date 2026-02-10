@@ -50,7 +50,7 @@ impl MigrationFragment for Migrate {
 
         for (name_id, data) in sync_buffer_rows {
             let legacy_row = serde_json::from_str::<LegacyNameRow>(&data).with_context(|| {
-                format!("Error parsing sync data for name: {} {}", name_id, data)
+                format!("Error parsing sync data for name: {name_id} {data}")
             })?;
             diesel::update(name::table)
                 .filter(name::id.eq(name_id))
@@ -95,9 +95,8 @@ mod tests {
             sql_query(format!(
                 r#"
                     INSERT INTO sync_buffer (record_id, received_datetime, table_name, action, data)
-                    VALUES ('{}', $1, 'name', 'UPSERT', '{}');
-                "#,
-                name_id, sync_data
+                    VALUES ('{name_id}', $1, 'name', 'UPSERT', '{sync_data}');
+                "#
             ))
             .bind::<Timestamp, _>(chrono::Utc::now().naive_utc()),
         )
@@ -109,7 +108,7 @@ mod tests {
         let previous_version = V2_05_00.version();
         let version = V2_06_00.version();
         let SetupResult { connection, .. } = setup_test(SetupOption {
-            db_name: &format!("migration_name_next_of_kin_{}", version),
+            db_name: &format!("migration_name_next_of_kin_{version}"),
             version: Some(previous_version.clone()),
             ..Default::default()
         })
