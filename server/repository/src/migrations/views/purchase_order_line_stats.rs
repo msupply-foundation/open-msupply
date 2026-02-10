@@ -35,6 +35,7 @@ impl ViewMigrationFragment for ViewMigration {
                             AND il_item_link.id = pol_item_link.id
                             AND il.type = 'STOCK_IN'
                             AND i.status in ('SHIPPED', 'DELIVERED', 'RECEIVED', 'VERIFIED') -- count all statuses after shipped
+                            AND not (i.status in ('RECEIVED', 'VERIFIED') AND il.status in ('PENDING', 'REJECTED')) -- don't count pending/rejected invoice lines on received/verified invoices
                 GROUP BY
                     pol.id;
             "#
