@@ -27,6 +27,7 @@ import {
   useDrawer,
   Breadcrumbs,
   AppBarButtons,
+  AppBarContent,
 } from '@openmsupply-client/common';
 import {
   AppRoute,
@@ -172,6 +173,7 @@ export const MobileNavBar = () => {
         </StyledDrawer>
       </Box>
       <AppBarButtons />
+      <AppBarContent />
     </>
   );
 };

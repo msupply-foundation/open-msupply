@@ -8,6 +8,7 @@ import {
   useAuthContext,
   ReportContext,
   useNotification,
+  useIsExtraSmallScreen,
 } from '@openmsupply-client/common';
 import { useInbound } from '../api';
 import { ReportSelector } from '@openmsupply-client/system';
@@ -35,6 +36,18 @@ export const AppBarButtonsComponent = ({
   } = useUrlQueryParams();
   const { plugins } = usePluginProvider();
   const {} = useNotification();
+
+  const isExtraSmallScreen = useIsExtraSmallScreen();
+
+  if (isExtraSmallScreen) {
+    // On mobile, we don't have mobile ui for line by line editing or reports
+    // We just want to show the scan button for mobile users to use the scanner approach.
+    return (
+      <AppBarButtonsPortal>
+        <AddFromScannerButton disabled={isDisabled} />
+      </AppBarButtonsPortal>
+    );
+  }
 
   const disableInternalOrderButton =
     !store?.preferences.manuallyLinkInternalOrderToInboundShipment ||
