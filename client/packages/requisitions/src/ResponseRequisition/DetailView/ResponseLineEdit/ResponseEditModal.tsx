@@ -39,7 +39,7 @@ export const ResponseLineEditModal = ({
   const { error } = useNotification();
   const deleteLine = useResponse.line.deleteLine();
   const isDisabled = useResponse.utils.isDisabled();
-  const { orderInPacks } = usePreferences();
+  const { orderInPacks, displayPopulationBasedForecasting } = usePreferences();
 
   const lines = useMemo(
     () =>
@@ -125,6 +125,8 @@ export const ResponseLineEditModal = ({
   const itemVolume =
     (draft?.availableVolumeAtLocationType?.itemVolumePerUnit ?? 0) *
     (draft?.supplyQuantity ?? 0);
+  const displayForecasting =
+    (displayPopulationBasedForecasting && !!draft?.forecastTotalUnits) || false;
 
   const tabs = [
     {
@@ -212,6 +214,7 @@ export const ResponseLineEditModal = ({
             isUpdateMode={mode === ModalMode.Update}
             isReasonsError={isReasonsError}
             setIsEditingSupply={setIsEditingSupply}
+            displayForecasting={displayForecasting}
           />
           {!!draft && (
             <ModalTabs
