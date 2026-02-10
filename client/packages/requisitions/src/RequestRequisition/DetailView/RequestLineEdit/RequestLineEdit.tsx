@@ -39,7 +39,7 @@ import {
   STOCK_DISTRIBUTION_INFO,
   STOCK_EVOLUTION_INFO,
 } from '../utils';
-import ForecastCalculationDisplay from './ItemCharts/ForecastCalculationDisplay';
+import ForecastCalculationDisplay from '../../../common/ForecastCalculationDisplay';
 
 interface RequestLineEditProps {
   requisition: RequestFragment;
