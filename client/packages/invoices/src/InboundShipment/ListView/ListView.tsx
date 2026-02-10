@@ -164,12 +164,10 @@ export const InboundListView = () => {
 
   return (
     <>
+      <Toolbar filter={filter} />
       {isExtraSmallScreen ? (
         // We don't want to show any app bar button on mobile list view
-        <>
-          <Toolbar filter={filter} />
-          <MobileCardList table={table} />
-        </>
+        <MobileCardList table={table} />
       ) : (
         <>
           <AppBarButtons
