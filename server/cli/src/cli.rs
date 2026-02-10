@@ -726,7 +726,7 @@ async fn main() -> anyhow::Result<()> {
             Command::new("open")
                 .arg(generated_file_path.clone())
                 .status()
-                .expect(&format!("failed to open file {generated_file_path:?}"));
+                .unwrap_or_else(|_| panic!("{}", "failed to open file {generated_file_path:?}"));
         }
         Action::ToggleReport {
             code,
