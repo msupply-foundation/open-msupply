@@ -17,7 +17,7 @@ export const useItemCounts = (lowStockThreshold: number) => {
     }
   );
 
-  if (!data) {
+  if (!data?.itemCounts) {
     return { stats: undefined, ...rest };
   }
 
