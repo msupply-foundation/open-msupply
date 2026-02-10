@@ -234,7 +234,7 @@ pub fn migrate(
             migration_result.push((
                 format!(
                     "Running one time database migration {}",
-                    migration_version.to_string()
+                    migration_version
                 ),
                 Utc::now().naive_utc(),
             ));
@@ -268,7 +268,7 @@ pub fn migrate(
     }
 
     migration_result.push((
-        format!("Migrations finished to version {}", to_version.to_string()),
+        format!("Migrations finished to version {}", to_version),
         Utc::now().naive_utc(),
     ));
 
@@ -291,7 +291,7 @@ pub fn migrate(
     set_database_version(connection, &to_version)?;
 
     migration_result.push((
-        format!("Views recreated for {}", to_version.to_string()),
+        format!("Views recreated for {}", to_version),
         Utc::now().naive_utc(),
     ));
 
