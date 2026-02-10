@@ -692,6 +692,7 @@ mod tests {
         );
     }
 
+    #[cfg(feature = "postgres")]
     #[derive(QueryableByName, Debug, PartialEq)]
     struct TableNameAndFieldRow {
         #[diesel(sql_type = Text)]

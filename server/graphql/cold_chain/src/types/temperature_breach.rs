@@ -4,9 +4,7 @@ use dataloader::DataLoader;
 use graphql_core::{
     generic_filters::{DatetimeFilterInput, EqualFilterStringInput},
     loader::{LocationByIdLoader, SensorByIdLoader},
-    map_filter,
-    simple_generic_errors::NodeError,
-    ContextExt,
+    map_filter, ContextExt,
 };
 
 use graphql_types::types::{LocationFilterInput, LocationNode};
@@ -168,12 +166,6 @@ impl TemperatureBreachNode {
 #[derive(Union)]
 pub enum TemperatureBreachesResponse {
     Response(TemperatureBreachConnector),
-}
-
-#[derive(Union)]
-pub enum TemperatureBreachResponse {
-    Error(NodeError),
-    Response(TemperatureBreachNode),
 }
 
 impl TemperatureBreachNode {

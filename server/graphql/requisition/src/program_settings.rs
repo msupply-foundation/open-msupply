@@ -47,12 +47,6 @@ pub struct CustomerProgramRequisitionSettingNode {
     pub program_settings: Vec<ProgramSettingNode>,
 }
 
-#[derive(SimpleObject)]
-pub struct CustomerAndOrderTypeNode {
-    pub customer_name: String,
-    pub order_types: Vec<ProgramRequisitionOrderTypeNode>,
-}
-
 pub fn get_supplier_program_requisition_settings(
     ctx: &Context<'_>,
     store_id: &str,
