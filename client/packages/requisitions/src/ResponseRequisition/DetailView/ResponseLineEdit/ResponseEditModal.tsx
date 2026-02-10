@@ -161,6 +161,8 @@ export const ResponseLineEditModal = ({
           }
           availableVolumeAtLocationType={draft?.availableVolumeAtLocationType}
           itemVolume={itemVolume}
+          displayForecasting={displayForecasting}
+          vaccineCourses={draft?.vaccineCourses}
         />
       ),
       value: 'label.customer',
