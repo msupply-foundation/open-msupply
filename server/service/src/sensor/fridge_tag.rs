@@ -111,7 +111,7 @@ fn sensor_add_log_if_new(
             temperature_breach_id: None,
         };
         TemperatureLogRowRepository::new(connection).upsert_one(&new_temperature_log)?;
-        log::info!("Added sensor log {:?} ", new_temperature_log);
+        log::info!("Added sensor log {new_temperature_log:?} ");
         Ok(())
     }
 }
@@ -141,7 +141,7 @@ fn sensor_add_breach_if_new(
                 duration_milliseconds: temperature_breach.duration.num_milliseconds() as i32,
                 ..existing_breach_row
             };
-            log::info!("Updating breach {:?} ", breach);
+            log::info!("Updating breach {breach:?} ");
             breach
         }
         None => {
@@ -160,7 +160,7 @@ fn sensor_add_breach_if_new(
                 threshold_maximum: breach_config.maximum_temperature,
                 comment: None,
             };
-            log::info!("Added breach {:?} ", breach);
+            log::info!("Added breach {breach:?} ");
             breach
         }
     };
@@ -233,8 +233,7 @@ fn sensor_add_breach_config_if_new(
     TemperatureBreachConfigRowRepository::new(connection)
         .upsert_one(&new_temperature_breach_config)?;
     log::info!(
-        "Added sensor breach config {:?} ",
-        new_temperature_breach_config
+        "Added sensor breach config {new_temperature_breach_config:?} "
     );
     Ok(())
 }
@@ -267,7 +266,7 @@ fn sensor_add_if_new(
         r#type: get_sensor_type(&temperature_sensor.sensor_type),
     };
     SensorRowRepository::new(connection).upsert_one(&new_sensor)?;
-    log::info!("Added sensor {:?} ", new_sensor);
+    log::info!("Added sensor {new_sensor:?} ");
     Ok(Some(new_sensor.id))
 }
 
@@ -297,9 +296,7 @@ fn resolve_localtime(timestamp: &NaiveDateTime, context: &str) -> Option<NaiveDa
     match Local.from_local_datetime(timestamp) {
         LocalResult::None => {
             log::error!(
-                "Cannot convert to local timestamp ({}) - {}",
-                context,
-                timestamp
+                "Cannot convert to local timestamp ({context}) - {timestamp}"
             );
             None
         }

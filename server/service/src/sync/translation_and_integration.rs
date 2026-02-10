@@ -119,7 +119,7 @@ impl<'a> TranslationAndIntegration<'a> {
                         ignored = true;
                         self.sync_buffer.record_integration_error(
                             sync_record,
-                            &anyhow::anyhow!("Ignored: {}", ignore_message),
+                            &anyhow::anyhow!("Ignored: {ignore_message}"),
                         )?;
                         result.insert_error(&sync_record.table_name);
 
@@ -161,7 +161,7 @@ impl<'a> TranslationAndIntegration<'a> {
                 }
                 // Record database_error in sync buffer and in result
                 Err(database_error) => {
-                    let error = anyhow::anyhow!("{:?}", database_error);
+                    let error = anyhow::anyhow!("{database_error:?}");
                     self.sync_buffer
                         .record_integration_error(sync_record, &error)?;
                     result.insert_error(&sync_record.table_name);

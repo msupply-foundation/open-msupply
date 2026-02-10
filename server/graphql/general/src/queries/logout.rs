@@ -72,7 +72,7 @@ pub fn logout(ctx: &Context<'_>) -> Result<LogoutResponse> {
     let user_auth = match validate_auth(auth_data, &ctx.get_auth_token()) {
         Ok(value) => value,
         Err(err) => {
-            let formatted_error = format!("{:#?}", err);
+            let formatted_error = format!("{err:#?}");
             let graphql_error = match err {
                 AuthError::Denied(_) => StandardGraphqlError::Forbidden(formatted_error),
                 AuthError::InternalError(_) => StandardGraphqlError::InternalError(formatted_error),
@@ -91,7 +91,7 @@ pub fn logout(ctx: &Context<'_>) -> Result<LogoutResponse> {
     match service.logout(&user_id) {
         Ok(_) => {}
         Err(e) => {
-            let formatted_error = format!("{:#?}", e);
+            let formatted_error = format!("{e:#?}");
             let graphql_error = match e {
                 service::token::JWTLogoutError::ConcurrencyLockError(_) => {
                     StandardGraphqlError::InternalError(formatted_error)

@@ -83,7 +83,7 @@ pub fn document_registries(
             allowed_ctx,
         )
         .map_err(|err| {
-            let formatted_err = format! {"{:?}", err};
+            let formatted_err = format! {"{err:?}"};
             StandardGraphqlError::InternalError(formatted_err).extend()
         })?;
     Ok(DocumentRegistryResponse::Response(

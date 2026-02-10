@@ -75,10 +75,9 @@ pub fn map_response(from: Result<ServiceResult, ServiceError>) -> Result<Allocat
 
 fn map_error(error: ServiceError) -> Result<AllocateErrorInterface> {
     use StandardGraphqlError::*;
-    let formatted_error = format!("{:#?}", error);
+    let formatted_error = format!("{error:#?}");
     log::error!(
-        "Error allocating outbound shipment unallocated line: {}",
-        formatted_error
+        "Error allocating outbound shipment unallocated line: {formatted_error}"
     );
 
     let graphql_error = match error {

@@ -35,14 +35,14 @@ pub(crate) fn start_discovery(protocol: Protocol, port: u16, hardware_id: String
         let registration_result = match result {
             Ok(r) => r,
             Err(e) => {
-                log::error!("Panic registering discovery: {:?}", e);
+                log::error!("Panic registering discovery: {e:?}");
                 return;
             }
         };
 
         match registration_result {
             Ok(_service_handle) => futures::future::pending::<()>().await,
-            Err(e) => log::error!("Error registering discovery: {:?}", e),
+            Err(e) => log::error!("Error registering discovery: {e:?}"),
         }
     });
 }

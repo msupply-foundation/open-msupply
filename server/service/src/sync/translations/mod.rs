@@ -546,7 +546,7 @@ fn translate_changelog(
         match translation_result {
             PushTranslateResult::PushRecord(records) => translation_results.push(records),
             PushTranslateResult::Ignored(ignore_message) => {
-                log::debug!("Ignored record in push translation: {}", ignore_message)
+                log::debug!("Ignored record in push translation: {ignore_message}")
             }
             PushTranslateResult::NotMatched => {}
         }

@@ -65,8 +65,7 @@ impl DocumentNode {
                 let loader = ctx.get_loader::<DataLoader<JsonSchemaLoader>>();
                 let schema = loader.load_one(schema_id.clone()).await?.ok_or(
                     StandardGraphqlError::InternalError(format!(
-                        "Cannot find schema {}",
-                        schema_id
+                        "Cannot find schema {schema_id}"
                     ))
                     .extend(),
                 )?;
@@ -130,7 +129,7 @@ impl RawDocumentNode {
 
     pub async fn data(&self) -> Result<String> {
         serde_json::to_string(&self.document.data).map_err(|e| {
-            StandardGraphqlError::InternalError(format!("Failed to stringify json value: {}", e))
+            StandardGraphqlError::InternalError(format!("Failed to stringify json value: {e}"))
                 .extend()
         })
     }

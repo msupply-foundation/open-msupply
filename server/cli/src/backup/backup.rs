@@ -175,7 +175,7 @@ fn cleanup_backups(
     };
 
     for path in paths.iter().take(number_of_backups_to_delete) {
-        println!("Deleting old backup: {:?}", path);
+        println!("Deleting old backup: {path:?}");
         let _ = fs::remove_dir_all(path);
     }
 
