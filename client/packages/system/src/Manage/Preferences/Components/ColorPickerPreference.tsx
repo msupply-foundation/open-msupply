@@ -7,6 +7,8 @@ import {
 import { IconButton } from '@mui/material';
 import { CircleIcon } from '@common/icons';
 
+const DEFAULT_COLOR = '#004fc4';
+
 interface ColorPickerPreferenceProps {
   value: string;
   onChange: (color: string) => void;
@@ -52,7 +54,7 @@ export const ColorPickerPreference: React.FC<ColorPickerPreferenceProps> = ({
         }}
       >
         <CircleIcon
-          htmlColor={value || '#004fc4'}
+          htmlColor={value || DEFAULT_COLOR}
           sx={{ width: 28, height: 28 }}
         />
       </IconButton>
