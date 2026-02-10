@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import {
+  MRT_Row,
   MRT_RowData,
   MRT_TableOptions,
   useMaterialReactTable,
@@ -28,9 +29,9 @@ export interface BaseTableConfig<T extends MRT_RowData>
   onRowClick?: (row: T, isCtrlClick: boolean) => void;
   isLoading?: boolean;
   isError?: boolean;
-  getIsPlaceholderRow?: (row: T) => boolean;
+  getIsPlaceholderRow?: (row: MRT_Row<T>) => boolean;
   /** Whether row should be greyed out - still potentially clickable */
-  getIsRestrictedRow?: (row: T) => boolean;
+  getIsRestrictedRow?: (row: MRT_Row<T>) => boolean;
   grouping?: {
     field: string;
     groupedByDefault?: boolean;

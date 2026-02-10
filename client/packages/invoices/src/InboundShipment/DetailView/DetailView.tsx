@@ -127,7 +127,7 @@ const DetailViewInner = () => {
     isLoading: false,
     initialSort: { key: 'itemName', dir: 'asc' },
     onRowClick: !isDisabled ? onRowClick : undefined,
-    getIsPlaceholderRow: row => !!isInboundPlaceholderRow(row),
+    getIsPlaceholderRow: row => isInboundPlaceholderRow(row.original),
     noDataElement: (
       <NothingHere
         body={t('error.no-inbound-items')}

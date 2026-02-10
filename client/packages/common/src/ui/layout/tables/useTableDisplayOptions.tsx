@@ -1,5 +1,6 @@
 import React from 'react';
 import {
+  MRT_Row,
   MRT_RowData,
   MRT_ShowHideColumnsButton,
   MRT_TableOptions,
@@ -39,8 +40,8 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
   isGrouped: boolean;
   hasColumnFilters: boolean;
   toggleGrouped?: () => void;
-  getIsPlaceholderRow?: (row: T) => boolean;
-  getIsRestrictedRow?: (row: T) => boolean;
+  getIsPlaceholderRow?: (row: MRT_Row<T>) => boolean;
+  getIsRestrictedRow?: (row: MRT_Row<T>) => boolean;
   isMobile?: boolean;
 
   // This object is merged with the default row props in muiTableBodyRowProps
@@ -210,9 +211,10 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
           if (onRowClick) onRowClick(row.original, isCtrlClick);
         },
         sx: {
-          backgroundColor: row.getIsGrouped() || !table.getState().grouping?.length
-            ? 'inherit'
-            : 'background.secondary',
+          backgroundColor:
+            row.getIsGrouped() || !table.getState().grouping?.length
+              ? 'inherit'
+              : 'background.secondary',
           // these two selectors are to change the background color of a selected
           // row from the default which is to use primary.main of the theme
           // with an opacity of 0.2 and 0.4 on hover
@@ -243,9 +245,9 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
           fontSize: table.getState().density === 'compact' ? '0.90em' : '1em',
           fontWeight: 400,
           opacity: 1,
-          color: getIsPlaceholderRow(row.original)
+          color: getIsPlaceholderRow(row)
             ? 'secondary.light'
-            : getIsRestrictedRow(row.original)
+            : getIsRestrictedRow(row)
               ? 'gray.main'
               : undefined,
 
@@ -276,7 +278,7 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
 
           // Indent "sub-rows" when expanded
           paddingLeft:
-            row.original?.['isSubRow'] && column.id !== 'mrt-row-select'
+            !row.getIsGrouped() && table.getState().grouping?.length
               ? '2em'
               : // Little bit of extra padding for first column, unless it's the "Select" checkbox column
                 column.getIndex() === 0 && column.id !== 'mrt-row-select'

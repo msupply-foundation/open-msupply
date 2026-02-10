@@ -94,7 +94,7 @@ const DetailViewInner = () => {
     data: data?.lines.nodes,
     isLoading: isFetching,
     isError,
-    getIsPlaceholderRow: isResponseLinePlaceholderRow,
+    getIsPlaceholderRow: row => isResponseLinePlaceholderRow(row.original),
     onRowClick,
     initialSort: { key: 'itemName', dir: 'asc' },
     noDataElement: (
