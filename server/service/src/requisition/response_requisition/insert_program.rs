@@ -272,7 +272,7 @@ fn generate_lines(
         Some(store_id.to_string()),
     )?;
 
-    let populate_price_per_unit = get_indicative_price_pref(&ctx.connection)?;
+    let populate_price_per_unit = get_indicative_price_pref(&ctx.connection, store_id)?;
     let price_list = if populate_price_per_unit {
         Some(get_pricing_for_items(
             &ctx.connection,

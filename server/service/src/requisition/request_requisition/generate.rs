@@ -50,7 +50,7 @@ pub fn generate_requisition_lines(
     period_end: Option<NaiveDate>,
 ) -> Result<Vec<RequisitionLineRow>, PluginOrRepositoryError> {
     let item_stats_rows = get_item_stats(&ctx.connection, store_id, None, item_ids, period_end)?;
-    let populate_price_per_unit = get_indicative_price_pref(&ctx.connection)?;
+    let populate_price_per_unit = get_indicative_price_pref(&ctx.connection, store_id)?;
     let price_list = if populate_price_per_unit {
         Some(get_pricing_for_items(
             &ctx.connection,
