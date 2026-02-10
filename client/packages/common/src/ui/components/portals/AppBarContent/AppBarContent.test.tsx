@@ -1,13 +1,14 @@
 import React, { FC } from 'react';
 import { fireEvent, render } from '@testing-library/react';
 import { AppBarContentPortal, AppBarContent } from './AppBarContent';
+import { TestingProvider, setScreenSize_ONLY_FOR_TESTING } from '@common/utils';
 
 describe('AppBarContent', () => {
   const TestAppBarContent: FC<{ initialShow: boolean }> = ({ initialShow }) => {
     const [show, setShow] = React.useState(initialShow);
 
     return (
-      <>
+      <TestingProvider>
         <button onClick={() => setShow(state => !state)} />
         {show && (
           <div id="source">
@@ -20,7 +21,7 @@ describe('AppBarContent', () => {
             <span>josh</span>
           </AppBarContentPortal>
         </div>
-      </>
+      </TestingProvider>
     );
   };
 
@@ -53,5 +54,46 @@ describe('AppBarContent', () => {
     const node = queryByText(/josh/);
 
     expect(node).not.toBeInTheDocument();
+  });
+
+  it('Renders mobile container when screen is extra small', () => {
+    setScreenSize_ONLY_FOR_TESTING(500); // Below sm breakpoint (601px)
+    
+    const { container } = render(
+      <TestingProvider>
+        <div data-testid="mobile-wrapper">
+          <AppBarContent />
+        </div>
+      </TestingProvider>
+    );
+
+    // Mobile container should be rendered
+    const mobileWrapper = container.querySelector('[data-testid="mobile-wrapper"]');
+    expect(mobileWrapper).toBeInTheDocument();
+    expect(mobileWrapper?.firstChild).toBeInTheDocument();
+  });
+
+  it('AppBarContentPortal mounts content into mobile container when screen is extra small', () => {
+    setScreenSize_ONLY_FOR_TESTING(500); // Below sm breakpoint (601px)
+    
+    const { getByText } = render(
+      <TestingProvider>
+        <div id="mobile-source">
+          <AppBarContent />
+        </div>
+        <div data-testid="portal-wrapper">
+          <AppBarContentPortal>
+            <span>mobile-content</span>
+          </AppBarContentPortal>
+        </div>
+      </TestingProvider>
+    );
+
+    const node = getByText(/mobile-content/);
+
+    // Ensure content is not in the portal-wrapper
+    expect(node.parentNode).not.toHaveAttribute('data-testid', 'portal-wrapper');
+    // Ensure content is mounted inside the mobile-source
+    expect(node.closest('#mobile-source')).toBeInTheDocument();
   });
 });
