@@ -66,6 +66,7 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
   enableRowSelection = true,
   ...tableOptions
 }: BaseTableConfig<T>) => {
+  const t = useTranslation();
   const { getTableLocalisations } = useIntlUtils();
   const localization = getTableLocalisations();
 
