@@ -181,7 +181,7 @@ pub(crate) fn is_initialised(service_provider: &ServiceProvider) -> bool {
     // unnecessary database queries and avoids having to unwrap the database connection. We still
     // unwrap on the first check as there's no point starting up without the database.
     if IS_INITIALISED.read().unwrap().clone() {
-        return true;
+        true
     } else {
         let ctx = service_provider.basic_context().unwrap();
         let is_initialised = service_provider

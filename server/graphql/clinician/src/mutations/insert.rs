@@ -64,7 +64,7 @@ impl InsertClinicianInput {
             initials,
             last_name,
             first_name,
-            gender: gender.map(|g| GenderType::from(g)),
+            gender: gender.map(GenderType::from),
             mobile,
         }
     }

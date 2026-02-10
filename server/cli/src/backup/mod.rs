@@ -14,12 +14,12 @@ use service::settings::Settings;
 use shellexpand::LookupError;
 use thiserror::Error;
 
-const BACKUP_FILE_DIR: &'static str = "files";
+const BACKUP_FILE_DIR: &str = "files";
 
 #[cfg(feature = "postgres")]
 const BACKUP_DATABASE_DIR: &'static str = "postgres";
 #[cfg(not(feature = "postgres"))]
-const BACKUP_DATABASE_DIR: &'static str = "sqlite";
+const BACKUP_DATABASE_DIR: &str = "sqlite";
 
 #[derive(Error, Debug)]
 pub(super) enum BackupError {

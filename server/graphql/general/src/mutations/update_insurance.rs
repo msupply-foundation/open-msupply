@@ -38,7 +38,7 @@ impl UpdateInsuranceInput {
         ServiceInput {
             id,
             insurance_provider_id,
-            policy_type: policy_type.map(|t| InsurancePolicyType::from(t)),
+            policy_type: policy_type.map(InsurancePolicyType::from),
             discount_percentage,
             expiry_date,
             is_active,

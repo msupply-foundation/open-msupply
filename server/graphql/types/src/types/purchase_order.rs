@@ -46,7 +46,7 @@ impl PurchaseOrderNode {
             return Ok(loader.load_one(user_id).await?.map(UserNode::from_domain));
         }
 
-        return Ok(None);
+        Ok(None)
     }
 
     pub async fn order_total_after_discount(&self) -> f64 {
@@ -72,7 +72,7 @@ impl PurchaseOrderNode {
             ))
             .await?
             .map(NameNode::from_domain);
-        return Ok(name);
+        Ok(name)
     }
     pub async fn created_datetime(&self) -> DateTime<Utc> {
         DateTime::<Utc>::from_naive_utc_and_offset(self.row().created_datetime, Utc)
@@ -99,7 +99,7 @@ impl PurchaseOrderNode {
                 .await?
                 .map(NameNode::from_domain));
         }
-        return Ok(None);
+        Ok(None)
     }
     pub async fn reference(&self) -> &Option<String> {
         &self.row().reference

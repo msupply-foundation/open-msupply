@@ -636,7 +636,7 @@ mod report_to_excel_test {
         assert_eq!(
             res.first()
                 .unwrap()
-                .into_iter()
+                .iter()
                 .map(|e| inner_text(*e))
                 .collect::<Vec<&str>>(),
             vec!["Row One Cell One", "Row One Cell Two"],

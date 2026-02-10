@@ -187,7 +187,7 @@ mod test {
                 variant_type: variant.clone(),
                 ..Default::default()
             });
-            let _ = assert_variant!(result, Ok(_) => {});
+            assert_variant!(result, Ok(_) => {});
 
             let result = repo.find_one_by_id(&id).unwrap().unwrap();
             assert_eq!(result.variant_type, variant);

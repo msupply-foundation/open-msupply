@@ -700,7 +700,7 @@ async fn main() -> anyhow::Result<()> {
 
             let report_generate_data = ReportGenerateData {
                 report: report_json,
-                config: config,
+                config,
                 store_id: Some(test_config.store_id),
                 store_name: None,
                 output_filename: Some(output_name.clone()),
@@ -738,11 +738,8 @@ async fn main() -> anyhow::Result<()> {
             let con = connection_manager.connection()?;
 
             let mut filter = ReportFilter::new().code(EqualFilter::equal_to(code.to_owned()));
-            match is_custom {
-                Some(value) => {
-                    filter = filter.is_custom(value);
-                }
-                None => {}
+            if let Some(value) = is_custom {
+                filter = filter.is_custom(value);
             }
 
             let report_list = ReportRepository::new(&con).query_by_filter(filter)?;

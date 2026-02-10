@@ -254,7 +254,7 @@ pub fn generate_report(
     let config: Config = serde_yaml::from_str(&config_data)
         .map_err(|err| anyhow::Error::msg(format!("Failed to parse config file: {err}")))?;
 
-    let excel_template_buffer = excel_template_file.map(|path| fs::read(path)).transpose()?;
+    let excel_template_buffer = excel_template_file.map(fs::read).transpose()?;
 
     let inner_data = ReportGenerateData {
         report,

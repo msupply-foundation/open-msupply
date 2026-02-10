@@ -201,10 +201,10 @@ impl InvoiceFilterInput {
             user_id: self.user_id.map(EqualFilter::from),
             r#type: self
                 .r#type
-                .map(|t| map_filter!(t, |r| InvoiceType::from(r))),
+                .map(|t| map_filter!(t, InvoiceType::from)),
             status: self
                 .status
-                .map(|t| map_filter!(t, |s| InvoiceStatus::from(s))),
+                .map(|t| map_filter!(t, InvoiceStatus::from)),
             on_hold: self.on_hold,
             comment: self.comment.map(StringFilter::from),
             their_reference: self.their_reference.map(StringFilter::from),

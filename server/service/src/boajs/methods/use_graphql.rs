@@ -17,8 +17,8 @@ pub(crate) fn bind_method(context: &mut Context) -> Result<(), JsError> {
     context.register_global_callable(
         JsString::from("use_graphql"),
         0,
-        NativeFunction::from_copy_closure(move |_, args, mut ctx| {
-            let UseGraphqlInput { query, variables } = get_serde_argument(&mut ctx, args, 0)?;
+        NativeFunction::from_copy_closure(move |_, args, ctx| {
+            let UseGraphqlInput { query, variables } = get_serde_argument(ctx, args, 0)?;
             let graphql = BoaJsContext::execute_graphql();
             let value = do_async_blocking(async move {
                 graphql

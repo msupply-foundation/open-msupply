@@ -60,7 +60,7 @@ pub fn insert_contact_form(
 
     map_response(service_provider.contact_form_service.insert_contact_form(
         &service_context,
-        &store_id,
+        store_id,
         input.to_domain(),
     ))
 }

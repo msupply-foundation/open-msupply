@@ -121,7 +121,9 @@ pub(crate) mod test {
             ..Default::default()
         };
 
-        let mock_data = MockData {
+        
+
+        MockData {
             stock_lines: vec![
                 oms_stock_line.clone(),
                 oms_orphan_stock_line,
@@ -137,9 +139,7 @@ pub(crate) mod test {
         .join(make_movements(
             legacy_stock_line_with_invoice_line,
             vec![(1, -1), (1, -1), (1, -1)],
-        ));
-
-        mock_data
+        ))
     }
 
     #[actix_rt::test]
@@ -155,7 +155,7 @@ pub(crate) mod test {
             connection: &StorageConnection,
             stock_line_id: &str,
         ) -> Option<StockLineRow> {
-            StockLineRowRepository::new(&connection)
+            StockLineRowRepository::new(connection)
                 .find_one_by_id(stock_line_id)
                 .unwrap()
         }

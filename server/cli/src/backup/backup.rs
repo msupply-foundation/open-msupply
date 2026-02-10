@@ -144,7 +144,7 @@ fn copy_sqlite_files(
         // Unwrap should be safe (would panic only if pathname terminates with '...')
         let sqlite_filename = sqlite_filename.file_name().unwrap();
 
-        fs::copy(&sqlite_filename, &backup_database_dir.join(sqlite_filename))?;
+        fs::copy(sqlite_filename, backup_database_dir.join(sqlite_filename))?;
     }
 
     Ok(())

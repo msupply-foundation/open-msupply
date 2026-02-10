@@ -459,7 +459,7 @@ mod update {
             )
             .unwrap();
 
-        assert_eq!(result.vaccination_row.given, true);
+        assert!(result.vaccination_row.given);
         assert!(result.vaccination_row.invoice_id.is_none());
 
         // Check invoice was NOT created
@@ -495,7 +495,7 @@ mod update {
             )
             .unwrap();
 
-        assert_eq!(result.vaccination_row.given, false);
+        assert!(!result.vaccination_row.given);
 
         // ----------------------------
         // Update: Not given -> given, from another store
@@ -521,7 +521,7 @@ mod update {
             )
             .unwrap();
 
-        assert_eq!(result.vaccination_row.given, true);
+        assert!(result.vaccination_row.given);
     }
 
     #[actix_rt::test]
@@ -564,7 +564,7 @@ mod update {
             )
             .unwrap();
 
-        assert_eq!(result.vaccination_row.given, true);
+        assert!(result.vaccination_row.given);
 
         // Check invoice was created, and linked to vaccination
         let created_invoices = InvoiceRepository::new(&context.connection)
@@ -606,7 +606,7 @@ mod update {
             .unwrap();
 
         // Still given
-        assert_eq!(result.vaccination_row.given, true);
+        assert!(result.vaccination_row.given);
 
         // New invoice has been created, inventory addition to reverse the original prescription
         let created_invoices = InvoiceRepository::new(&context.connection)
@@ -667,7 +667,7 @@ mod update {
             .unwrap();
 
         // Still given
-        assert_eq!(result.vaccination_row.given, true);
+        assert!(result.vaccination_row.given);
 
         // New invoice has been created, inventory addition to reverse the original prescription
         let created_invoices = InvoiceRepository::new(&context.connection)
@@ -708,7 +708,7 @@ mod update {
             )
             .unwrap();
 
-        assert_eq!(result.vaccination_row.given, false);
+        assert!(!result.vaccination_row.given);
         assert_eq!(
             result.vaccination_row.not_given_reason,
             Some("out of stock".to_string())

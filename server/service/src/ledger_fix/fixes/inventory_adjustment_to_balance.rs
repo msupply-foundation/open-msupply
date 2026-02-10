@@ -94,7 +94,9 @@ pub(crate) mod test {
             ..Default::default()
         };
 
-        let mock_data = MockData {
+        
+
+        MockData {
             stock_lines: vec![
                 positive_running_balance_fix.clone(),
                 negative_running_balance_fix.clone(),
@@ -118,9 +120,7 @@ pub(crate) mod test {
                 (28, -10),
                 (29, 3),
             ],
-        ));
-
-        mock_data
+        ))
     }
 
     #[actix_rt::test]

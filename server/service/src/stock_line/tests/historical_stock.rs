@@ -50,7 +50,7 @@ mod query {
         pack_size: f64,
         number_of_packs: f64,
         batch: String,
-    ) -> () {
+    ) {
         let invoice_type = if number_of_packs > 0.0 {
             InvoiceType::InboundShipment
         } else {

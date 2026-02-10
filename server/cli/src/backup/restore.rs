@@ -170,7 +170,7 @@ fn copy_sqlite_files(
         // Unwrap should be safe (would panic only if pathname terminates with '...')
         let sqlite_filename = sqlite_filename.file_name().unwrap();
 
-        fs::remove_file(&sqlite_filename)?;
+        fs::remove_file(sqlite_filename)?;
     }
 
     // omSupply database name can be specified with .sqlite extension, remove it here

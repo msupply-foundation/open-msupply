@@ -305,7 +305,9 @@ mod test {
         };
 
         // Use make_movements to create days where the item is out of stock
-        let mock_data = MockData {
+        
+
+        MockData {
             stock_lines: vec![test_stock_line.clone()],
             ..Default::default()
         }
@@ -330,9 +332,7 @@ mod test {
                 https://www.tablesgenerator.com/text_tables (file -> paste table data)
                 */
             ],
-        ));
-
-        mock_data
+        ))
     }
 
     #[actix_rt::test]

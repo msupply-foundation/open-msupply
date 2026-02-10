@@ -56,24 +56,6 @@ pub(crate) fn is_omsupply_uuid(stock_line_id: &str) -> bool {
     stock_line_id.contains("-")
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_is_omsupply_uuid() {
-        // mSupply
-        assert_eq!(is_omsupply_uuid("124E66C23F893C48A1B7EDB9501B9247"), false);
-        // mSupply mobile
-        assert_eq!(is_omsupply_uuid("8b050f904b1011f0ba48e743cf9b07a9"), false);
-        // omSupply
-        assert_eq!(
-            is_omsupply_uuid("0197bfbf-90ef-71e0-b929-589da7c29507"),
-            true
-        );
-    }
-}
-
 pub(crate) fn adjust_ledger_running_balance(
     connection: &StorageConnection,
     operation_log: &mut String,
@@ -129,7 +111,7 @@ fn create_inventory_adjustment(
     stock_line_id: &str,
 ) -> Result<(), LedgerFixError> {
     let Some(stock_line) =
-        StockLineRowRepository::new(connection).find_one_by_id(&stock_line_id)?
+        StockLineRowRepository::new(connection).find_one_by_id(stock_line_id)?
     else {
         return LedgerFixError::other("Stock line not found");
     };
@@ -256,4 +238,21 @@ fn find_latest_finalised_stocktake_for_stock_line(
         .first()
         .and_then(|s| s.finalised_datetime)
         .unwrap_or_else(|| Utc::now().naive_utc()))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_is_omsupply_uuid() {
+        // mSupply
+        assert!(!is_omsupply_uuid("124E66C23F893C48A1B7EDB9501B9247"));
+        // mSupply mobile
+        assert!(!is_omsupply_uuid("8b050f904b1011f0ba48e743cf9b07a9"));
+        // omSupply
+        assert!(
+            is_omsupply_uuid("0197bfbf-90ef-71e0-b929-589da7c29507")
+        );
+    }
 }
