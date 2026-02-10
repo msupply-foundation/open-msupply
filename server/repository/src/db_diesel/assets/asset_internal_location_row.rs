@@ -63,8 +63,7 @@ impl<'a> AssetInternalLocationRowRepository<'a> {
 
         let store_id_asset = AssetRowRepository::new(self.connection)
             .find_one_by_id(&row.asset_id)?
-            .map(|r| r.store_id)
-            .flatten();
+            .and_then(|r| r.store_id);
 
         let row = ChangeLogInsertRow {
             table_name: ChangelogTableName::AssetInternalLocation,

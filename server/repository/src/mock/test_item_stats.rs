@@ -93,7 +93,7 @@ pub fn mock_item_stats() -> MockData {
         u.invoice_lines[ITEM1_INDEX].number_of_packs = 1000.0;
         u.invoice_lines[ITEM2_INDEX].number_of_packs = 30.0;
         // 34 days ago - Transfer invoice - intended to fall outside of custom days test
-        u.invoices[1].picked_datetime = Some(Utc::now().naive_utc() - Duration::days(34 as i64));
+        u.invoices[1].picked_datetime = Some(Utc::now().naive_utc() - Duration::days(34_i64));
         u.invoice_lines[ITEM2_TRANSFER_INDEX].number_of_packs = 2.0;
         u.invoice_lines[ITEM2_TRANSFER_INDEX].pack_size = 10.0;
         u

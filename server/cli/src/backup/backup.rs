@@ -13,8 +13,7 @@ pub(crate) fn backup(settings: &Settings) -> Result<(), BackupError> {
     let max_number_of_backups = settings
         .backup
         .as_ref()
-        .map(|b| b.max_number_of_backups)
-        .flatten();
+        .and_then(|b| b.max_number_of_backups);
 
     let Dirs {
         backup_name,
@@ -159,7 +158,6 @@ fn cleanup_backups(
     };
 
     let mut paths: Vec<PathBuf> = fs::read_dir(backups_dir)?
-        .into_iter()
         .filter_map(Result::ok)
         .map(|e| e.path())
         .filter(|f| f.is_dir())

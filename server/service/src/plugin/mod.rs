@@ -203,7 +203,7 @@ pub trait PluginServiceTrait: Sync + Send {
     fn get_frontend_plugins_metadata(&self, ctx: &ServiceContext) -> Vec<FrontendPluginMetadata> {
         let plugins = ctx.frontend_plugins_cache.0.read().unwrap();
 
-        plugins.iter().map(|(_, p)| p.metadata.clone()).collect()
+        plugins.values().map(|p| p.metadata.clone()).collect()
     }
 
     fn install_uploaded_plugin(

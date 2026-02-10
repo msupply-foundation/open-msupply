@@ -713,7 +713,7 @@ async fn main() -> anyhow::Result<()> {
             // spawn blocking used to prevent the following error: "Cannot drop a runtime in a context where blocking is not allowed"
             spawn_blocking(|| generate_report_inner(report_generate_data))
                 .await?
-                .map_err(|e| ReportError::FailedToGenerateReport(path, e.into()))?;
+                .map_err(|e| ReportError::FailedToGenerateReport(path, e))?;
 
             let generated_file_path = current_dir()?.join(&output_name);
 #[cfg(windows)]
