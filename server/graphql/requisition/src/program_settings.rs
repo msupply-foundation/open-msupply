@@ -95,7 +95,7 @@ pub fn get_supplier_program_requisition_settings(
                             id: order_type.id,
                             available_periods: available_periods
                                 .into_iter()
-                                .map(|period| PeriodNode::from_domain(period))
+                                .map(PeriodNode::from_domain)
                                 .collect(),
                             is_emergency: order_type.is_emergency,
                         },
@@ -155,7 +155,7 @@ pub fn get_program_requisition_settings_by_customer(
                         available_periods: order_type
                             .available_periods
                             .into_iter()
-                            .map(|period| PeriodNode::from_domain(period))
+                            .map(PeriodNode::from_domain)
                             .collect(),
                         is_emergency: order_type.is_emergency,
                     })

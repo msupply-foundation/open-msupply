@@ -3,12 +3,12 @@ import {
   ArrayUtils,
   Box,
   PropertyInput,
-  useIsGapsStoreOnly,
-  BasicSpinner,
+  useIsExtraSmallScreen,
   InfoTooltipIcon,
   InputWithLabelRow,
   Typography,
   useTranslation,
+  InlineSpinner,
 } from '@openmsupply-client/common';
 import { DraftAsset } from '../../types';
 import { useAssetProperties } from '@openmsupply-client/system';
@@ -82,14 +82,14 @@ const Row = ({
   children,
   tooltip,
   label,
-  isGaps,
+  isExtraSmallScreen,
 }: {
   children: React.ReactNode;
   tooltip?: string;
   label: string;
-  isGaps: boolean;
+  isExtraSmallScreen: boolean;
 }) => {
-  if (!isGaps)
+  if (!isExtraSmallScreen)
     return (
       <Box paddingTop={1.5}>
         <InputWithLabelRow
@@ -138,7 +138,7 @@ const Row = ({
 
 export const Details = ({ draft, onChange }: DetailsProps) => {
   const t = useTranslation();
-  const isGaps = useIsGapsStoreOnly();
+  const isExtraSmallScreen = useIsExtraSmallScreen();
 
   const { data: assetProperties, isLoading } = useAssetProperties({
     assetCategoryId: { equalAnyOrNull: [draft?.assetCategory?.id ?? ''] },
@@ -147,11 +147,16 @@ export const Details = ({ draft, onChange }: DetailsProps) => {
   });
 
   if (!draft) return null;
+  if (isLoading)
+    return (
+      <Box marginBottom={2}>
+        <InlineSpinner />
+      </Box>
+    );
 
   return (
     <Box display="flex" flex={3} justifyContent={'center'}>
       <Container>
-        {isLoading ? <BasicSpinner /> : null}
         <Section heading={t('label.asset-properties')}>
           {!draft.parsedProperties ? (
             <Typography sx={{ textAlign: 'center' }}>
@@ -159,12 +164,6 @@ export const Details = ({ draft, onChange }: DetailsProps) => {
             </Typography>
           ) : (
             <>
-              {isGaps && (
-                <Typography>
-                  {/* Need to add to translate */}
-                  {'Non-editable properties are defined in the catalogue'}
-                </Typography>
-              )}
               {assetProperties &&
                 ArrayUtils.uniqBy(assetProperties, 'key').map(property => {
                   const isCatalogue =
@@ -185,7 +184,7 @@ export const Details = ({ draft, onChange }: DetailsProps) => {
                           ? t('messages.catalogue-property')
                           : undefined
                       }
-                      isGaps={isGaps}
+                      isExtraSmallScreen={isExtraSmallScreen}
                     >
                       <PropertyInput
                         valueType={property.valueType}
@@ -200,6 +199,16 @@ export const Details = ({ draft, onChange }: DetailsProps) => {
                           })
                         }
                         disabled={isCatalogue}
+                        textSx={
+                          isExtraSmallScreen
+                            ? {
+                                backgroundColor: theme =>
+                                  isCatalogue
+                                    ? theme.palette.background.input.disabled
+                                    : theme.palette.background.white,
+                              }
+                            : undefined
+                        }
                       />
                     </Row>
                   );

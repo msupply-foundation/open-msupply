@@ -12,7 +12,6 @@ import {
   IconButton,
   ScanIcon,
   useBarcodeScannerContext,
-  CircularProgress,
   useNotification,
   Tooltip,
   NumericTextInput,
@@ -27,7 +26,6 @@ import {
   Alert,
   RouteBuilder,
   Link,
-  FormLabel,
 } from '@openmsupply-client/common';
 import { DraftStockLine, StockLineRowFragment } from '../api';
 import { LocationSearchInput } from '../../Location/Components/LocationSearchInput';
@@ -69,7 +67,7 @@ export const StockLineForm = ({
 
   const preferences = usePreferences();
 
-  const { isConnected, isEnabled, isScanning, startScan } =
+  const { isConnected, isEnabled, isListening, scan } =
     useBarcodeScannerContext();
   const showItemVariantsInput = useIsItemVariantsEnabled();
   const { plugins } = usePluginProvider();
@@ -86,7 +84,7 @@ export const StockLineForm = ({
 
   const scanBarcode = async () => {
     try {
-      const result = await startScan();
+      const result = await scan();
       if (!!result.content) {
         const { batch, content, expiryDate, gtin } = result;
         const barcode = gtin ?? content;
@@ -161,31 +159,40 @@ export const StockLineForm = ({
         >
           {!isNewModal && (
             <Box paddingBottom={1}>
-              <Box display="flex" alignItems="center">
-                <Box style={{ textAlign: 'end', whiteSpace: 'nowrap' }}>
-                  <FormLabel
-                    sx={{
-                      fontWeight: 'bold',
-                      display: 'inline-block',
-                      width: '100px',
-                    }}
-                  >
-                    {t('label.item')}:
-                  </FormLabel>
-                </Box>
-                <Box paddingLeft={1} paddingRight={1.5}>
-                  <Box>
-                    <Link
-                      to={RouteBuilder.create(AppRoute.Catalogue)
-                        .addPart(AppRoute.Items)
-                        .addPart(draft.itemId)
-                        .build()}
-                    >
-                      {draft.item.name}
-                    </Link>
-                  </Box>
-                </Box>
+              <TextWithLabelRow
+                label={`${t('label.item')}`}
+                text={''}
+                labelProps={{ sx: { fontWeight: 'bold', width: '100px' } }}
+                textProps={{ sx: { pl: 1 } }}
+              />
+              <Box
+                sx={{
+                  paddingLeft: '110px',
+                  marginTop: '-24px',
+                  marginBottom: '8px',
+                }}
+              >
+                <Link
+                  to={RouteBuilder.create(AppRoute.Catalogue)
+                    .addPart(AppRoute.Items)
+                    .addPart(draft.itemId)
+                    .build()}
+                >
+                  {draft.item.name}
+                </Link>
               </Box>
+              <TextWithLabelRow
+                label={`${t('label.code')}`}
+                text={draft.item.code}
+                labelProps={{ sx: { fontWeight: 'bold', width: '100px' } }}
+                textProps={{ sx: { pl: 1 } }}
+              />
+              <TextWithLabelRow
+                label={`${t('label.unit')}`}
+                text={draft.item.unitName ?? ''}
+                labelProps={{ sx: { fontWeight: 'bold', width: '100px' } }}
+                textProps={{ sx: { pl: 1 } }}
+              />
             </Box>
           )}
           <Box>
@@ -229,6 +236,48 @@ export const StockLineForm = ({
                     />
                   </>
                 )}
+                {!isNewModal && (
+                  <>
+                    <StyledInputRow
+                      label={t('label.available-soh')}
+                      Input={
+                        <NumericTextInput
+                          autoFocus
+                          disabled={true}
+                          width={160}
+                          value={parseFloat(
+                            (
+                              draft.availableNumberOfPacks * draft.packSize
+                            ).toFixed(2)
+                          )}
+                          onChange={() => {}}
+                          {...getDosesProps(
+                            draft.availableNumberOfPacks * draft.packSize
+                          )}
+                        />
+                      }
+                    />
+                    <StyledInputRow
+                      label={t('label.soh')}
+                      Input={
+                        <NumericTextInput
+                          autoFocus
+                          disabled={true}
+                          width={160}
+                          value={parseFloat(
+                            (draft.totalNumberOfPacks * draft.packSize).toFixed(
+                              2
+                            )
+                          )}
+                          onChange={() => {}}
+                          {...getDosesProps(
+                            draft.totalNumberOfPacks * draft.packSize
+                          )}
+                        />
+                      }
+                    />
+                  </>
+                )}
                 <StyledInputRow
                   label={t('label.cost-price')}
                   Input={
@@ -249,18 +298,6 @@ export const StockLineForm = ({
                       onChangeNumber={sellPricePerPack =>
                         onUpdate({ sellPricePerPack })
                       }
-                    />
-                  }
-                />
-                <StyledInputRow
-                  label={t('label.expiry')}
-                  Input={
-                    <ExpiryDateInput
-                      value={DateUtils.getNaiveDate(draft.expiryDate)}
-                      onChange={date =>
-                        onUpdate({ expiryDate: Formatter.naiveDate(date) })
-                      }
-                      width={160}
                     />
                   }
                 />
@@ -289,19 +326,14 @@ export const StockLineForm = ({
                         >
                           <Box>
                             <IconButton
-                              disabled={isScanning || !isConnected}
+                              disabled={isListening || !isConnected}
                               onClick={scanBarcode}
-                              icon={
-                                isScanning ? (
-                                  <CircularProgress
-                                    size={20}
-                                    color="secondary"
-                                  />
-                                ) : (
-                                  <ScanIcon />
-                                )
+                              icon={<ScanIcon />}
+                              label={
+                                isListening
+                                  ? `${t('button.listening-for-scans')}  🟢`
+                                  : `${t('button.scan')}`
                               }
-                              label={t('button.scan')}
                             />
                           </Box>
                         </Tooltip>
@@ -349,6 +381,18 @@ export const StockLineForm = ({
                             : draft.sellPricePerPack,
                         });
                       }}
+                    />
+                  }
+                />
+                <StyledInputRow
+                  label={t('label.expiry')}
+                  Input={
+                    <ExpiryDateInput
+                      value={DateUtils.getNaiveDate(draft.expiryDate)}
+                      onChange={date =>
+                        onUpdate({ expiryDate: Formatter.naiveDate(date) })
+                      }
+                      width={160}
                     />
                   }
                 />

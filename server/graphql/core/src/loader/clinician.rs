@@ -53,7 +53,7 @@ impl Loader<ClinicianLoaderInput> for ClinicianLoader {
                     Some(ClinicianFilter::new().id(EqualFilter::equal_any(clinician_ids))),
                     None,
                 )
-                .map_err(|err| StandardGraphqlError::InternalError(format!("{:?}", err)))?;
+                .map_err(|err| StandardGraphqlError::InternalError(format!("{err:?}")))?;
             for clinician in clinicians.rows {
                 output.insert(
                     ClinicianLoaderInput::new(&store_id, &clinician.id),

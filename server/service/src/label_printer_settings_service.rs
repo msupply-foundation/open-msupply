@@ -12,10 +12,7 @@ pub trait LabelPrinterSettingsServiceTrait: Sync + Send {
 
         let label_printer_settings =
             match key_value_store.get_string(KeyType::SettingsLabelPrinter)? {
-                Some(value) => match serde_json::from_str::<LabelPrinterSettingNode>(&value) {
-                    Ok(settings) => Some(settings),
-                    Err(_) => None,
-                },
+                Some(value) => serde_json::from_str::<LabelPrinterSettingNode>(&value).ok(),
                 None => None,
             };
 

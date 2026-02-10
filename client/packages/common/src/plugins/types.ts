@@ -1,8 +1,4 @@
-import {
-  ColumnDef,
-  ColumnDefinition,
-  UsePluginEvents,
-} from '@openmsupply-client/common';
+import { ColumnDef, UsePluginEvents } from '@openmsupply-client/common';
 import {
   ItemFragment,
   MasterListRowFragment,
@@ -20,7 +16,19 @@ export type Plugins = {
   item?: {
     detailViewField: React.ComponentType<{ item: ItemFragment }>[];
   };
-  dashboard?: React.ComponentType[];
+  dashboard?: {
+    widget?: { Component: React.ComponentType; hiddenWidgets?: string[] }[];
+    panel?: {
+      Component: React.ComponentType<{ widgetContext: string }>;
+      hiddenPanels?: string[];
+    }[];
+    statistic?: {
+      Component: React.ComponentType<{
+        panelContext: string;
+      }>;
+      hiddenStats?: string[];
+    }[];
+  };
   stockLine?: {
     tableStateLoader: React.ComponentType<{
       stockLines: StockLineRowFragment[];
@@ -46,6 +54,7 @@ export type Plugins = {
       line: RequestLineFragment;
       requisition: RequestFragment;
     }>[];
+    hideInfo?: string[];
   };
   requestRequisition?: {
     sidePanelSection: React.ComponentType<{
@@ -56,7 +65,7 @@ export type Plugins = {
     tableStateLoader: React.ComponentType<{
       masterLists: MasterListRowFragment[];
     }>[];
-    tableColumn: ColumnDefinition<MasterListRowFragment>[];
+    tableColumn: ColumnDef<MasterListRowFragment>[];
   };
 };
 

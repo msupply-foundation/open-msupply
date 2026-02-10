@@ -1,6 +1,6 @@
 import { FilterBy, SortBy } from '@common/hooks';
 import { Sdk, TemperatureLogFragment } from './operations.generated';
-import { TemperatureLogSortFieldInput } from '@common/types';
+import { EqualFilterTemperatureBreachRowTypeInput, TemperatureLogSortFieldInput } from '@common/types';
 
 export type ListParams = {
   first: number;
@@ -15,9 +15,12 @@ export const getTemperatureLogQueries = (sdk: Sdk, storeId: string) => ({
       ({ first, offset, sortBy, filterBy }: ListParams) =>
       async () => {
         const key =
-          sortBy.key === 'endDatetime'
+          sortBy.key === 'endDatetime' || sortBy.key === ''
             ? TemperatureLogSortFieldInput.Datetime
             : (sortBy.key as TemperatureLogSortFieldInput);
+
+        // to make query compatible with breach tab filters we move the type filter into temperatureBreach.type
+        const { type: typeFilterBy, ...noTypeFilterBy } = filterBy || {};
 
         const result = await sdk.temperatureLogs({
           storeId,
@@ -26,7 +29,12 @@ export const getTemperatureLogQueries = (sdk: Sdk, storeId: string) => ({
             key,
             desc: !!sortBy.isDesc,
           },
-          filter: filterBy,
+          filter: {
+            ...noTypeFilterBy,
+            temperatureBreach: {
+              type: typeFilterBy as EqualFilterTemperatureBreachRowTypeInput ?? null,
+            },
+          },
         });
 
         return result?.temperatureLogs;

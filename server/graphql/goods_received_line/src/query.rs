@@ -66,7 +66,7 @@ pub fn get_goods_received_line(
 
     match service_provider
         .goods_received_line_service
-        .get_goods_received_line(&service_context, Some(&store_id), id)
+        .get_goods_received_line(&service_context, Some(store_id), id)
         .map_err(StandardGraphqlError::from_repository_error)
     {
         Ok(line) => {

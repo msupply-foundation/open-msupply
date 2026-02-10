@@ -81,8 +81,7 @@ impl SyncTranslation for ClinicianStoreJoinTranslation {
             .find_one_by_id(&clinician_link_id)?
             .ok_or_else(|| {
                 anyhow::anyhow!(format!(
-                    "Clinician link row ({}) not found",
-                    clinician_link_id
+                    "Clinician link row ({clinician_link_id}) not found"
                 ))
             })?;
 

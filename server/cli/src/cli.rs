@@ -293,7 +293,7 @@ async fn initialise_from_central(
         };
         LoginService::login(&service_provider, &auth_data, input.clone(), 0)
             .await
-            .map_err(|_| anyhow!("Cannot login with user {:?}", input))?;
+            .map_err(|_| anyhow!("Cannot login with user {input:?}"))?;
     }
     info!("Initialisation finished");
     Ok((service_provider, service_context))
@@ -337,7 +337,7 @@ async fn main() -> anyhow::Result<()> {
         Action::Migrate => {
             info!("Applying database migrations");
             let connection_manager = get_storage_connection_manager(&settings.database);
-            if let Some(init_sql) = &settings.database.full_init_sql() {
+            if let Some(init_sql) = &settings.database.startup_sql() {
                 connection_manager.execute(init_sql).unwrap();
             }
             migrate(&connection_manager.connection().unwrap(), None)
@@ -396,7 +396,7 @@ async fn main() -> anyhow::Result<()> {
             info!("Saving export");
             let (folder, export_file, users_file) = export_paths(&name);
             if fs::create_dir(&folder).is_err() {
-                info!("Export directory already exists, replacing {:#?}", folder)
+                info!("Export directory already exists, replacing {folder:#?}")
             };
             fs::write(export_file, data_string)?;
             fs::write(users_file, users)?;
@@ -447,7 +447,7 @@ async fn main() -> anyhow::Result<()> {
                 info!("Refreshing dates");
                 let result = RefreshDatesRepository::new(&ctx.connection)
                     .refresh_dates(Utc::now().naive_utc())?;
-                info!("Refresh data result: {:#?}", result);
+                info!("Refresh data result: {result:#?}");
             }
 
             info!("Disabling sync");
@@ -489,7 +489,7 @@ async fn main() -> anyhow::Result<()> {
                 service.disable_sync(&ctx)?;
             }
 
-            info!("Refresh data result: {:#?}", result);
+            info!("Refresh data result: {result:#?}");
         }
         Action::SignPlugin { path, key, cert } => sign_plugin(&path, &key, &cert)?,
         Action::BuildReports { path } => {
@@ -524,15 +524,13 @@ async fn main() -> anyhow::Result<()> {
                 let output_path = base_dir.join("generated").join(output_name);
 
                 fs::create_dir_all(output_path.parent().ok_or(anyhow::Error::msg(format!(
-                    "Invalid output path: {:?}",
-                    output_path
+                    "Invalid output path: {output_path:?}"
                 )))?)?;
 
                 fs::write(&output_path, serde_json::to_string_pretty(&reports_data)?).map_err(
                     |_| {
                         anyhow::Error::msg(format!(
-                            "Failed to write to {:?}. Does output dir exist?",
-                            output_path
+                            "Failed to write to {output_path:?}. Does output dir exist?"
                         ))
                     },
                 )?;
@@ -602,7 +600,7 @@ async fn main() -> anyhow::Result<()> {
                 }
                 (Some(arguments_path), Some(arguments_ui_path)) => {
                     Some(schema_from_row(FormSchemaRow {
-                        id: argument_schema_id.unwrap_or(format!("for_report_{}", id)),
+                        id: argument_schema_id.unwrap_or(format!("for_report_{id}")),
                         r#type: "reportArgument".to_string(),
                         json_schema: fs::read_to_string(arguments_path)?,
                         ui_schema: fs::read_to_string(arguments_ui_path)?,
@@ -702,7 +700,7 @@ async fn main() -> anyhow::Result<()> {
 
             let report_generate_data = ReportGenerateData {
                 report: report_json,
-                config: config,
+                config,
                 store_id: Some(test_config.store_id),
                 store_name: None,
                 output_filename: Some(output_name.clone()),
@@ -715,14 +713,20 @@ async fn main() -> anyhow::Result<()> {
             // spawn blocking used to prevent the following error: "Cannot drop a runtime in a context where blocking is not allowed"
             spawn_blocking(|| generate_report_inner(report_generate_data))
                 .await?
-                .map_err(|e| ReportError::FailedToGenerateReport(path, e.into()))?;
+                .map_err(|e| ReportError::FailedToGenerateReport(path, e))?;
 
             let generated_file_path = current_dir()?.join(&output_name);
-
-            Command::new("open")
+#[cfg(windows)]
+            Command::new("cmd")
+                .args(["/C","start"])
                 .arg(generated_file_path.clone())
                 .status()
                 .expect(&format!("failed to open file {:?}", generated_file_path));
+#[cfg(not(windows))]
+            Command::new("open")
+                .arg(generated_file_path.clone())
+                .status()
+                .unwrap_or_else(|_| panic!("{}", "failed to open file {generated_file_path:?}"));
         }
         Action::ToggleReport {
             code,
@@ -734,11 +738,8 @@ async fn main() -> anyhow::Result<()> {
             let con = connection_manager.connection()?;
 
             let mut filter = ReportFilter::new().code(EqualFilter::equal_to(code.to_owned()));
-            match is_custom {
-                Some(value) => {
-                    filter = filter.is_custom(value);
-                }
-                None => {}
+            if let Some(value) = is_custom {
+                filter = filter.is_custom(value);
             }
 
             let report_list = ReportRepository::new(&con).query_by_filter(filter)?;

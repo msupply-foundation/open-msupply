@@ -82,7 +82,7 @@ fn validate_request(
         Ok(pair) => pair,
         Err(err) => {
             return Err(AuthError::Denied(AuthDeniedKind::NotAuthenticated(
-                format!("Error refreshing token: {:?}", err),
+                format!("Error refreshing token: {err:?}"),
             )));
         }
     };

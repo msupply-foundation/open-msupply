@@ -80,6 +80,7 @@ pub struct ItemFilter {
     pub with_recent_consumption: Option<bool>,
     #[ts(optional)]
     pub products_at_risk_of_being_out_of_stock: Option<bool>,
+    pub universal_code: Option<StringFilter>,
 }
 
 impl ItemFilter {
@@ -154,6 +155,11 @@ impl ItemFilter {
 
     pub fn ignore_for_orders(mut self, value: bool) -> Self {
         self.ignore_for_orders = Some(value);
+        self
+    }
+
+    pub fn universal_code(mut self, filter: StringFilter) -> Self {
+        self.universal_code = Some(filter);
         self
     }
 }
@@ -257,6 +263,7 @@ impl<'a> ItemRepository<'a> {
                 master_list_id,
                 is_program_item,
                 ignore_for_orders,
+                universal_code,
                 // Implementing these MOS filters requires consumption data, so they are handled in the service layer.
                 max_months_of_stock: _,
                 min_months_of_stock: _,
@@ -274,6 +281,7 @@ impl<'a> ItemRepository<'a> {
             apply_string_filter!(query, code, item::code);
             apply_string_filter!(query, name, item::name);
             apply_equal_filter!(query, r#type, item::type_);
+            apply_string_filter!(query, universal_code, item::universal_code);
 
             if let Some(is_active) = is_active {
                 query = query.filter(item::is_active.eq(is_active));
@@ -474,7 +482,7 @@ mod tests {
     use std::convert::TryFrom;
 
     use crate::{
-        mock::{mock_item_b, mock_item_link_from_item, MockDataInserts},
+        mock::{mock_item_b, mock_item_link_from_item, mock_item_universal_code, MockDataInserts},
         test_db, EqualFilter, ItemFilter, ItemLinkRowRepository, ItemRepository, ItemRow,
         ItemRowRepository, ItemType, MasterListLineRow, MasterListLineRowRepository,
         MasterListNameJoinRepository, MasterListNameJoinRow, MasterListRow,
@@ -645,6 +653,34 @@ mod tests {
                         .code(StringFilter::equal_to("does not exist"))
                         .code_or_name(StringFilter::equal_to(&mock_item_b().name)),
                 ),
+                None,
+                Some("store_a".to_string()),
+            )
+            .unwrap();
+        assert_eq!(results.len(), 0);
+
+        // test universal code filter
+        let results = item_query_repository
+            .query(
+                Pagination::new(),
+                Some(
+                    ItemFilter::new().universal_code(StringFilter::equal_to(
+                        &mock_item_universal_code()
+                            .universal_code
+                            .unwrap_or_default(),
+                    )),
+                ),
+                None,
+                Some("store_a".to_string()),
+            )
+            .unwrap();
+        assert_eq!(results[0].item_row.id, mock_item_universal_code().id);
+
+        // no result when `AND universal code is "does not exist"` clause
+        let results = item_query_repository
+            .query(
+                Pagination::new(),
+                Some(ItemFilter::new().universal_code(StringFilter::equal_to("does not exist"))),
                 None,
                 Some("store_a".to_string()),
             )

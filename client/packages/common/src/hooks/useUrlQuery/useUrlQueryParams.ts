@@ -30,6 +30,7 @@ interface Filter {
 }
 interface UrlQueryParams {
   initialSort?: UrlQuerySort;
+  initialFilter?: { id: string; value: string }[];
   filters?: Filter[];
 }
 
@@ -41,6 +42,7 @@ export type ListParams<T> = {
 };
 
 export const useUrlQueryParams = ({
+  initialFilter,
   initialSort = { key: '', dir: 'asc' },
   filters = [],
 }: UrlQueryParams = {}) => {
@@ -67,12 +69,24 @@ export const useUrlQueryParams = ({
     // Only try updating query if sort key is set
     if (!initialUrlSort?.sort) return;
 
-    // Don't want to override existing sort
-    if (urlQuery['sort']) return;
+    if (initialSort) {
+      // Don't want to override existing sort
+      if (urlQuery['sort']) return;
 
-    updateQuery(initialUrlSort);
+      const { key: sort, dir } = initialSort;
+      updateQuery({ sort, dir });
+    }
+
+    if (initialFilter) {
+      initialFilter.forEach(({ id, value }) => {
+        // Don't want to override existing filter
+        if (urlQuery[id]) return;
+
+        updateQuery({ [id]: value });
+      });
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialUrlSort?.sort, initialUrlSort?.dir]);
+  }, [initialUrlSort?.sort, initialUrlSort?.dir, initialFilter]);
 
   const updateSortQuery = useCallback(
     (sort: string, dir: 'desc' | 'asc') => {
@@ -237,6 +251,24 @@ const getFilterEntry = (
   }
   if (condition === 'isNumber') {
     return Number(filterValue);
+  }
+
+  if (
+    (condition === 'equalAny' || condition === 'equalAnyOrNull') &&
+    typeof filterValue === 'string'
+  ) {
+    const arrayValue = filterValue.split(',');
+    if (nestedKey) {
+      return {
+        [nestedKey]: {
+          [condition]: arrayValue,
+        },
+      };
+    } else {
+      return {
+        [condition]: arrayValue,
+      };
+    }
   }
 
   if (nestedKey) {

@@ -2,7 +2,10 @@ use std::ops::Not;
 
 use super::{
     query_log::get_asset_log,
-    validate::{check_asset_exists, check_asset_log_exists, check_reason_matches_status},
+    validate::{
+        check_asset_exists, check_asset_log_exists, check_comment_required_for_reason,
+        check_reason_matches_status,
+    },
 };
 use crate::{
     activity_log::activity_log_entry, service_provider::ServiceContext, SingleRecordError,
@@ -18,11 +21,13 @@ use repository::{
 pub enum InsertAssetLogError {
     AssetLogAlreadyExists,
     AssetDoesNotExist,
+    StatusNotProvided,
     CreatedRecordNotFound,
     ReasonDoesNotExist,
     DatabaseError(RepositoryError),
     InsufficientPermission,
     ReasonInvalidForStatus,
+    CommentRequiredForReason,
 }
 
 pub struct InsertAssetLog {
@@ -59,6 +64,25 @@ pub fn insert_asset_log(
     Ok(asset_log)
 }
 
+/// Validates the input for inserting an asset log.
+///
+/// ### Arguments
+///
+/// * `input` - The asset log data to validate
+/// * `connection` - Database connection for checking constraints
+///
+/// ### Returns
+///
+/// * `Ok(())` if validation passes
+/// * `Err(InsertAssetLogError)` with specific error type if validation fails
+///
+/// ### Validation Rules
+///
+/// * Asset log ID must not already exist
+/// * Status must be provided
+/// * If reason is provided, it must match the status
+/// * Asset must exist
+/// * If reason has `comments_required` flag, comment must be non-empty
 pub fn validate(
     input: &InsertAssetLog,
     connection: &StorageConnection,
@@ -67,15 +91,25 @@ pub fn validate(
         return Err(InsertAssetLogError::AssetLogAlreadyExists);
     }
 
+    if input.status.is_none() {
+        return Err(InsertAssetLogError::StatusNotProvided);
+    }
+
     if !check_reason_matches_status(&input.status, &input.reason_id, connection) {
         return Err(InsertAssetLogError::ReasonInvalidForStatus);
     }
+
     if check_asset_exists(&input.asset_id, connection)?
         .is_some()
         .not()
     {
         return Err(InsertAssetLogError::AssetDoesNotExist);
     }
+
+    if !check_comment_required_for_reason(&input.reason_id, &input.comment, connection) {
+        return Err(InsertAssetLogError::CommentRequiredForReason);
+    }
+
     Ok(())
 }
 

@@ -74,7 +74,7 @@ pub fn update_patient(
         code_2,
         first_name,
         last_name,
-        gender: gender.map(|g| GenderType::from(g)),
+        gender: gender.map(GenderType::from),
         date_of_birth,
         address1,
         phone,
@@ -95,7 +95,7 @@ pub fn update_patient(
             allowed_ctx: allowed_ctx.clone(),
         })),
         Err(error) => {
-            let formatted_error = format!("{:#?}", error);
+            let formatted_error = format!("{error:#?}");
             let std_err = match error {
                 UpdatePatientError::PatientDoesNotExists => {
                     StandardGraphqlError::BadUserInput(formatted_error)

@@ -89,8 +89,7 @@ pub(crate) fn patient_to_name_row(
     let date_of_birth = match date_of_birth {
         Some(date_of_birth) => Some(NaiveDate::from_str(&date_of_birth).map_err(|err| {
             UpdateProgramPatientError::InternalError(format!(
-                "Invalid date of birth format: {}",
-                err
+                "Invalid date of birth format: {err}"
             ))
         })?),
         None => None,
@@ -98,8 +97,7 @@ pub(crate) fn patient_to_name_row(
     let date_of_death = match date_of_death {
         Some(date_of_death) => Some(NaiveDate::from_str(&date_of_death).map_err(|err| {
             UpdateProgramPatientError::InternalError(format!(
-                "Invalid date of death format: {}",
-                err
+                "Invalid date of death format: {err}"
             ))
         })?),
         None => None,

@@ -120,7 +120,7 @@ pub fn stocktake_lines(
         }))
     } else {
         let err = stocktake_lines.unwrap_err();
-        let formatted_error = format!("{:#?}", err);
+        let formatted_error = format!("{err:#?}");
         let graphql_error = match err {
             GetStocktakeLinesError::DatabaseError(err) => err.into(),
             GetStocktakeLinesError::InvalidStore => {

@@ -13,20 +13,26 @@ import {
   ColumnDef,
   ColumnType,
   ChipTableCell,
+  ExpiryDateCell,
+  UnitsAndDosesCell,
 } from '@openmsupply-client/common';
 import { StockLineRowFragment } from '../api';
 import { AppBarButtons } from './AppBarButtons';
 import { useStockList } from '../api/hooks/useStockList';
 import { NewStockLineModal } from '../Components/NewStockLineModal';
-import { ExpiryDateCell } from '@openmsupply-client/common/src/ui/layout/tables/material-react-table/components/ExpiryDateCell';
-import { UnitsAndDosesCell } from '@openmsupply-client/common/src/ui/layout/tables/material-react-table/components/UnitsAndDosesCell';
 import { Toolbar } from './Toolbar';
 
 export const StockListView = () => {
+  const t = useTranslation();
+  const navigate = useNavigate();
+  const { plugins } = usePluginProvider();
+  const { manageVvmStatusForStock } = usePreferences();
+  const { isOpen, onClose, onOpen } = useEditModal();
+
   const {
     queryParams: { sortBy, first, offset, filterBy },
   } = useUrlQueryParams({
-    initialSort: { key: 'itemName', dir: 'asc' },
+    initialSort: { key: 'name', dir: 'asc' },
     filters: [
       { key: 'vvmStatusId', condition: 'equalTo' },
       { key: 'search' },
@@ -48,7 +54,6 @@ export const StockListView = () => {
       },
     ],
   });
-  const navigate = useNavigate();
   const queryParams = {
     filterBy: { ...filterBy },
     offset,
@@ -56,12 +61,7 @@ export const StockListView = () => {
     first,
   };
 
-  const t = useTranslation();
   const { data, isFetching, isError } = useStockList(queryParams);
-  const { plugins } = usePluginProvider();
-  const { manageVvmStatusForStock } = usePreferences();
-
-  const { isOpen, onClose, onOpen } = useEditModal();
 
   const mrtColumns = useMemo(
     (): ColumnDef<StockLineRowFragment>[] => [
@@ -111,7 +111,6 @@ export const StockListView = () => {
         dateFilterFormat: 'date',
         enableSorting: true,
       },
-
       {
         id: 'vvmStatus',
         header: t('label.vvm-status'),
@@ -122,7 +121,6 @@ export const StockListView = () => {
         includeColumn: manageVvmStatusForStock,
         enableSorting: true,
       },
-
       {
         id: 'location.code',
         accessorFn: row => row.location?.code || '',
@@ -222,7 +220,6 @@ export const StockListView = () => {
     columns: mrtColumns,
     data: data?.nodes,
     totalCount: data?.totalCount ?? 0,
-    initialSort: { key: 'name', dir: 'desc' },
     enableRowSelection: false,
     noDataElement: (
       <NothingHere

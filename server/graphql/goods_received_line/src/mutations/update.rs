@@ -111,7 +111,7 @@ pub fn map_response(from: Result<GoodsReceivedLineRow, ServiceError>) -> Result<
 }
 
 pub fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
-    let formattted_error = format!("{:#?}", error);
+    let formattted_error = format!("{error:#?}");
 
     let graphql_error = match error {
         ServiceError::GoodsReceivedDoesNotExist => {

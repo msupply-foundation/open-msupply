@@ -6,6 +6,7 @@ import { useAssetUpdate } from './useAssetUpdate';
 import { useAssets } from './useAssets';
 import { useAssetsAll } from './useAssetsAll';
 import { useAssetsDelete } from './useAssetsDelete';
+import { useInfiniteAssets } from './useInfiniteAssets';
 
 export const Document = {
   useAsset,
@@ -18,4 +19,5 @@ export const Document = {
   useAssetUpdate,
   useFetchAssetById,
   useFetchAssetByGS1,
+  useInfiniteAssets,
 };

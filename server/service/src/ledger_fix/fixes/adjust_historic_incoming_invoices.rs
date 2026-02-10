@@ -32,15 +32,14 @@ pub(crate) fn fix(
 
     if !should_adjust {
         operation_log.push_str(&format!(
-            "Ledger does not match use case for adjust_historic_incoming_invoices {:?}.\n",
-            balance_summary
+            "Ledger does not match use case for adjust_historic_incoming_invoices {balance_summary:?}.\n"
         ));
         return Ok(());
     }
 
     let mut iteration = 0;
     loop {
-        iteration = iteration + 1;
+        iteration += 1;
         if iteration > MAX_ITERATIONS {
             return LedgerFixError::other(
                 "Too many iterations, breaking to avoid infinite loop.\n",
@@ -88,8 +87,7 @@ pub(crate) fn fix(
             (ledger_line_to_adjust, backdate_datetime)
         else {
             operation_log.push_str(&format!(
-                "No invoice to adjust found and backdate date is {:?}.\n",
-                backdate_datetime
+                "No invoice to adjust found and backdate date is {backdate_datetime:?}.\n"
             ));
             break;
         };
@@ -173,7 +171,9 @@ pub(crate) mod test {
             ..single_historic_negative_balance.clone()
         };
 
-        let mock_data = MockData {
+        
+
+        MockData {
             stock_lines: vec![
                 single_historic_negative_balance.clone(),
                 multiple_historic_negative_balances.clone(),
@@ -188,9 +188,7 @@ pub(crate) mod test {
         .join(make_movements(
             multiple_historic_negative_balances,
             vec![(3, -2), (5, -5), (7, 6), (25, -1), (30, 2)],
-        ));
-
-        mock_data
+        ))
     }
 
     #[actix_rt::test]

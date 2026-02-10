@@ -57,7 +57,7 @@ impl From<PatientFilterInput> for PatientFilter {
             code_2: f.code_2.map(StringFilter::from),
             first_name: f.first_name.map(StringFilter::from),
             last_name: f.last_name.map(StringFilter::from),
-            gender: f.gender.map(|t| map_filter!(t, |g| GenderRepo::from(g))),
+            gender: f.gender.map(|t| map_filter!(t, GenderRepo::from)),
             date_of_birth: f.date_of_birth.map(DateFilter::from),
             phone: f.phone.map(StringFilter::from),
             address1: f.address1.map(StringFilter::from),
@@ -255,7 +255,7 @@ impl PatientNode {
             .map_err(|e| StandardGraphqlError::from_error(&e))?;
         let draft = patient_draft_document(&self.patient, document_data);
         let draft = serde_json::to_value(draft)
-            .map_err(|e| StandardGraphqlError::InternalError(format!("{}", e)).extend())?;
+            .map_err(|e| StandardGraphqlError::InternalError(format!("{e}")).extend())?;
         Ok(Some(draft))
     }
 

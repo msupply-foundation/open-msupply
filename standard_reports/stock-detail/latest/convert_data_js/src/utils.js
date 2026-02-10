@@ -1,9 +1,7 @@
-import { cleanUpNodes, sortNodes } from '../../../../utils';
+import { sortNodes } from '../../../../utils';
 
 const processStockLines = (nodes, sort, dir) => {
-  let cleanNodes = cleanUpNodes(nodes);
-  let sortedNodes = sortNodes(cleanNodes, sort, dir);
-  return sortedNodes;
+  return sortNodes(nodes, sort, dir);
 };
 
 export { processStockLines };

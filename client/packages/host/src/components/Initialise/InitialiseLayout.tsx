@@ -1,16 +1,15 @@
 import React, { ReactNode } from 'react';
 import {
   Box,
-  Breakpoints,
   Stack,
   Typography,
   useTranslation,
-  useAppTheme,
-  useMediaQuery,
+  useIsExtraSmallScreen,
 } from '@openmsupply-client/common';
 import { LoginIcon } from '../Login/LoginIcon';
 import { Theme } from '@common/styles';
 import { AppVersion } from '../AppVersion';
+import { LanguageButton } from '../LanguageButton';
 
 type LoginLayoutProps = {
   UsernameInput: ReactNode;
@@ -36,10 +35,7 @@ export const InitialiseLayout = ({
   onInitialise,
 }: LoginLayoutProps) => {
   const t = useTranslation();
-  const theme = useAppTheme();
-  const isExtraSmallScreen = useMediaQuery(
-    theme.breakpoints.down(Breakpoints.sm)
-  );
+  const isExtraSmallScreen = useIsExtraSmallScreen();
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLFormElement>) => {
     if (e.key === 'Enter') {
@@ -163,7 +159,10 @@ export const InitialiseLayout = ({
             {SyncErrorMessage}
           </Box>
         </Box>
-        <AppVersion style={{ opacity: 0.4 }} SiteInfo={SiteInfo} />
+        <Box>
+          <AppVersion style={{ opacity: 0.4 }} SiteInfo={SiteInfo} />
+        </Box>
+        <LanguageButton />
       </Box>
     </Box>
   );

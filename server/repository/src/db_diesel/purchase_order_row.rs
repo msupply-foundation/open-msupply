@@ -40,7 +40,7 @@ table! {
         reference -> Nullable<Text>,
         currency_id -> Nullable<Text>,
         foreign_exchange_rate -> Nullable<Double>,
-        shipping_method->  Nullable<Text>,
+        shipping_method ->  Nullable<Text>,
         sent_datetime -> Nullable<Timestamp>,
         contract_signed_date -> Nullable<Date>,
         advance_paid_date ->  Nullable<Date>,
@@ -256,7 +256,7 @@ mod test {
     #[actix_rt::test]
     async fn purchase_order_status() {
         let (_, connection, _, _) =
-            setup_all("purchase order status", MockDataInserts::all()).await;
+            setup_all("purchase_order_status", MockDataInserts::all()).await;
 
         let repo = PurchaseOrderRowRepository::new(&connection);
         // Try upsert all variants of PurchaseOrderStatus, confirm that diesel enums match postgres

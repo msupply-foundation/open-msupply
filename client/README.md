@@ -2,6 +2,7 @@
 
 Welcome! This is the front end application for open mSupply.
 
+
 This is a multi-lingual, responsive web application making use of the open mSupply [remote-server API](https://github.com/open-msupply/server/README.md).
 
 It is built using React, with typescript, and a heavy reliance on hooks. The component framework is material-ui and we're using [storybook](https://storybook.js.org/) to demonstrate the usage and functionality of custom components.
@@ -163,7 +164,7 @@ There is typically no need though, as you can press escape to close the overlay 
 
 We're using [React Query](https://react-query.tanstack.com/overview) to query the server and manage a local cache of queries.
 
-Check out the existing implementation using `api.ts` files and integration with the `DataTable` component.
+Check out the existing implementation using `api.ts` files.
 
 React Query is a higher level package which manages caching and provides useful hooks for implementation. The API communication is using the package `graphql-request`. For this we've implemented a wrapper around `request` within the component `GqlContext` in order to catch gql errors and raise them up to React Query. The api is returning valid (200) responses with an error object when there is an error. React Query is expecting an error to be raised - so the implementation in `GqlContext` is interrogating responses and checking for errors.
 

@@ -4,7 +4,6 @@ pub(crate) mod update_request_requisition_approved_quantities;
 pub(crate) mod update_request_requisition_status;
 
 #[cfg(test)]
-#[cfg(not(feature = "memory"))]
 pub(crate) mod test;
 
 use repository::{
@@ -75,7 +74,7 @@ fn process_change_log(
     // Prepare record
     let (requisition, linked_requisition) = match &log.row_action {
         RowActionType::Upsert => {
-            get_requisition_and_linked_requisition(&connection, &log.record_id)
+            get_requisition_and_linked_requisition(connection, &log.record_id)
                 .map_err(Error::GetRequisitionAndLinkedRequisitionError)?
         }
         RowActionType::Delete => return Ok(()), // Nothing to do for deletes
@@ -92,7 +91,7 @@ fn process_change_log(
     // Try record against all of the processors
     for processor in processors.iter() {
         processor
-            .try_process_record_common(&connection, &record)
+            .try_process_record_common(connection, &record)
             .map_err(Error::ProcessorError)?;
     }
     Ok(())

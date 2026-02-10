@@ -31,9 +31,10 @@ import {
   AppRoute,
   ExternalURL,
   useExternalUrl,
-} from 'packages/config/src/routes';
+} from '@openmsupply-client/config';
 import { SyncNavLink } from '../AppDrawer/SyncNavLink';
 import { ColdChainNav } from '../Navigation/ColdChainNav';
+import { ReplenishmentNav } from '../Navigation';
 const commonListContainerStyles = {
   alignItems: 'flex-start',
   display: 'flex',
@@ -136,6 +137,7 @@ export const MobileNavBar = () => {
       <StyledDrawer isOpen={drawer.isOpen}>
         <UpperListContainer>
           <List>
+            <ReplenishmentNav store={store} />
             <ColdChainNav store={store} />
           </List>
         </UpperListContainer>
