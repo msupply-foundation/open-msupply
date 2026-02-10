@@ -4,6 +4,14 @@ import { AppBarContentPortal, AppBarContent } from './AppBarContent';
 import { TestingProvider, setScreenSize_ONLY_FOR_TESTING } from '@common/utils';
 
 describe('AppBarContent', () => {
+  const DESKTOP_WIDTH = 1024; // Above sm breakpoint (601px)
+  const MOBILE_WIDTH = 500; // Below sm breakpoint (601px)
+
+  afterEach(() => {
+    // Reset screen size to desktop after each test
+    setScreenSize_ONLY_FOR_TESTING(DESKTOP_WIDTH);
+  });
+
   const TestAppBarContent: FC<{ initialShow: boolean }> = ({ initialShow }) => {
     const [show, setShow] = React.useState(initialShow);
 
@@ -57,7 +65,7 @@ describe('AppBarContent', () => {
   });
 
   it('Renders mobile container when screen is extra small', () => {
-    setScreenSize_ONLY_FOR_TESTING(500); // Below sm breakpoint (601px)
+    setScreenSize_ONLY_FOR_TESTING(MOBILE_WIDTH);
     
     const { container } = render(
       <TestingProvider>
@@ -67,14 +75,18 @@ describe('AppBarContent', () => {
       </TestingProvider>
     );
 
-    // Mobile container should be rendered
+    // Verify that AppBarContent renders a container
     const mobileWrapper = container.querySelector('[data-testid="mobile-wrapper"]');
     expect(mobileWrapper).toBeInTheDocument();
-    expect(mobileWrapper?.firstChild).toBeInTheDocument();
+    
+    // Verify that the container has a child element (the styled MobileContainer)
+    const mobileContainer = mobileWrapper?.firstChild as HTMLElement;
+    expect(mobileContainer).toBeInTheDocument();
+    expect(mobileContainer.tagName).toBe('DIV');
   });
 
   it('AppBarContentPortal mounts content into mobile container when screen is extra small', () => {
-    setScreenSize_ONLY_FOR_TESTING(500); // Below sm breakpoint (601px)
+    setScreenSize_ONLY_FOR_TESTING(MOBILE_WIDTH);
     
     const { getByText } = render(
       <TestingProvider>
