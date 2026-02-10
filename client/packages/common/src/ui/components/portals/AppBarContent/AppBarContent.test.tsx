@@ -103,9 +103,9 @@ describe('AppBarContent', () => {
 
     const node = getByText(/mobile-content/);
 
-    // Ensure content is not in the portal-wrapper
-    expect(node.parentNode).not.toHaveAttribute('data-testid', 'portal-wrapper');
     // Ensure content is mounted inside the mobile-source
     expect(node.closest('#mobile-source')).toBeInTheDocument();
+    // Ensure content is not in the portal-wrapper
+    expect(node.parentNode).not.toHaveAttribute('data-testid', 'portal-wrapper');
   });
 });
