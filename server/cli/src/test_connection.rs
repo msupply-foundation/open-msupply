@@ -157,7 +157,7 @@ impl Test for PingTest {
 
         let url = get_url(config)?;
 
-        info!("Pinging server at: {}", url.to_string());
+        info!("Pinging server at: {}", url);
 
         let response = reqwest::get(url)
             .await
@@ -183,8 +183,8 @@ impl Test for DatabaseTest {
 
         info!(
             "Testing database {} on server: {}",
-            config.database.database_name.to_string(),
-            config.database.host.to_string()
+            config.database.database_name,
+            config.database.host
         );
 
         let connection_manager = get_storage_connection_manager(&config.database);

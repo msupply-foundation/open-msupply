@@ -51,7 +51,7 @@ pub(crate) fn fix(
     match StockLineRowRepository::new(connection).delete(stock_line_id) {
         Ok(result) => result,
         Err(RepositoryError::ForeignKeyViolation(_)) => {
-            operation_log.push_str(&"Skipping delete_unused_orphan_stock_lines, stock_line referenced in another table.\n".to_string());
+            operation_log.push_str("Skipping delete_unused_orphan_stock_lines, stock_line referenced in another table.\n");
             return Ok(());
         }
         Err(e) => return Err(e.into()),
