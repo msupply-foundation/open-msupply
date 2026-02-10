@@ -121,7 +121,7 @@ const UIComponent = (props: ControlProps) => {
           clearable={clearable}
           inputProps={{
             error: !!zErrors || !!errors,
-            helperText: zErrors ?? errors,
+            helperText: zErrors || errors,
             color: 'secondary',
           }}
           isOptionEqualToValue={(option, value) => {

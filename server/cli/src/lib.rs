@@ -19,3 +19,13 @@ pub use generate_plugin_typescript_types::*;
 mod load_test;
 #[cfg(feature = "integration_test")]
 pub use load_test::*;
+
+#[cfg(windows)]
+const YARN_COMMAND: &str = "yarn.cmd";
+#[cfg(not(windows))]
+const YARN_COMMAND: &str = "yarn";
+
+#[cfg(windows)]
+const NPX_COMMAND: &str = "npx.cmd";
+#[cfg(not(windows))]
+const NPX_COMMAND: &str = "npx";

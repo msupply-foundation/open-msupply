@@ -71,7 +71,7 @@ impl GoodsReceivedNode {
                 .map(NameNode::from_domain);
             return Ok(name);
         }
-        return Ok(None);
+        Ok(None)
     }
 
     pub async fn purchase_order_id(&self) -> &Option<String> {

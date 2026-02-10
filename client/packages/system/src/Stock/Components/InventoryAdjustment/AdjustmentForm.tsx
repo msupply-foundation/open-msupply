@@ -9,6 +9,7 @@ import {
   StoreModeNodeType,
   FormLabel,
   ReasonOptionNodeType,
+  Typography,
 } from '@openmsupply-client/common';
 import { DraftInventoryAdjustment } from '../../api';
 import { ReasonOptionsSearchInput } from '../../..';
@@ -41,7 +42,7 @@ export const AdjustmentForm = ({
     >
       <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
         <FormLabel sx={{ fontWeight: 'bold' }} htmlFor="by">
-          {t('label.adjust-by')}
+          {t('label.adjust-packs')}
         </FormLabel>
         <Box
           sx={{
@@ -61,6 +62,7 @@ export const AdjustmentForm = ({
               }));
             }}
           />
+          <Typography sx={{ alignSelf: 'center' }}>{t('label.by')}</Typography>
           <NumericTextInput
             id="by"
             width="unset"

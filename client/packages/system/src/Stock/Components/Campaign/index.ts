@@ -1,3 +1,3 @@
 export * from './CampaignOrProgramSelector';
-export * from './CampaignOrProgramSelectorColumn';
+export * from './CampaignOrProgramSelectorCell';
 export * from './MassChangeCampaignOrProgramModal';

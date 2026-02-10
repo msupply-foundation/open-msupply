@@ -15,11 +15,10 @@ import {
   ColumnType,
   DateUtils,
   ExpiryDateInput,
+  TextInputCell,
+  NumberInputCell,
+  CurrencyInputCell,
 } from '@openmsupply-client/common';
-// Need to be re-exported when Legacy cells are removed
-import { TextInputCell } from '@openmsupply-client/common/src/ui/layout/tables/material-react-table/components/TextInputCell';
-import { NumberInputCell } from '@openmsupply-client/common/src/ui/layout/tables/material-react-table/components/NumberInputCell';
-import { CurrencyInputCell } from '@openmsupply-client/common/src/ui/layout/tables/material-react-table/components/CurrencyInputCell';
 import { DraftInboundLine } from '../../../../types';
 import {
   CampaignOrProgramCell,

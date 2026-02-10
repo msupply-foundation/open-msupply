@@ -286,6 +286,8 @@ pub use rnr_form_line_row::*;
 pub use rnr_form_row::*;
 pub use sensor::*;
 pub use sensor_row::*;
+pub use shipping_method::*;
+pub use shipping_method_row::*;
 pub use stock_line::*;
 pub use stock_line_row::*;
 pub use stock_movement::*;
@@ -396,7 +398,7 @@ impl From<DieselError> for RepositoryError {
             }
             _ => {
                 // try to get a more detailed diesel msg:
-                let diesel_msg = format!("{}", err);
+                let diesel_msg = format!("{err}");
                 Error::as_db_error("DIESEL_UNKNOWN", diesel_msg)
             }
         }
@@ -408,7 +410,7 @@ fn get_connection(
 ) -> Result<DBConnection, RepositoryError> {
     pool.get().map_err(|error| RepositoryError::DBError {
         msg: "Failed to open Connection".to_string(),
-        extra: format!("{:?}", error),
+        extra: format!("{error:?}"),
     })
 }
 

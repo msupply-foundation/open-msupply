@@ -41,6 +41,7 @@ export const ListView = () => {
     filters: [
       { key: 'otherPartyName' },
       { key: 'status', condition: 'equalTo' },
+      { key: 'createdDatetime', condition: 'between' },
     ],
   });
   const queryParams = { ...filter, sortBy, first, offset };
@@ -78,6 +79,7 @@ export const ListView = () => {
       {
         accessorKey: 'createdDatetime',
         header: t('label.created'),
+        enableColumnFilter: true,
         enableSorting: true,
         columnType: ColumnType.Date,
       },

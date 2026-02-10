@@ -4,7 +4,6 @@ import {
   useTranslation,
   Typography,
   FlatButton,
-  useTableStore,
   MinusCircleIcon,
 } from '@openmsupply-client/common';
 
@@ -20,7 +19,7 @@ export interface Action {
 interface ActionsFooterProps {
   actions: Action[];
   selectedRowCount: number;
-  resetRowSelection?: () => void;
+  resetRowSelection: () => void;
 }
 
 export const ActionsFooter = ({
@@ -67,34 +66,13 @@ export const ActionsFooter = ({
           )
         )}
       </Stack>
-      {/* TODO: remove once all tables are ported to Material Table */}
-      {resetRowSelection ? (
-        <FlatButton
-          startIcon={<MinusCircleIcon />}
-          label={t('label.clear-selection')}
-          onClick={resetRowSelection}
-          shouldShrink={true}
-          color="secondary"
-        />
-      ) : (
-        <LegacyClearSelectionButton />
-      )}
+      <FlatButton
+        startIcon={<MinusCircleIcon />}
+        label={t('label.clear-selection')}
+        onClick={resetRowSelection}
+        shouldShrink={true}
+        color="secondary"
+      />
     </Stack>
-  );
-};
-
-// Move to own component to handle conditional use of useTableStore
-const LegacyClearSelectionButton = () => {
-  const t = useTranslation();
-  const { clearSelected } = useTableStore();
-
-  return (
-    <FlatButton
-      startIcon={<MinusCircleIcon />}
-      label={t('label.clear-selection')}
-      onClick={clearSelected}
-      shouldShrink={true}
-      color="secondary"
-    />
   );
 };

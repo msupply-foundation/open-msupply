@@ -11,6 +11,8 @@ import {
   locationSearchTester,
   ReasonOptionSearch,
   reasonOptionSearchTester,
+  ItemSearch,
+  itemSearchTester,
 } from '@openmsupply-client/programs';
 import { ReportRowFragment } from '../api';
 import { useDialog, useUrlQuery } from '@common/hooks';
@@ -85,6 +87,7 @@ export const ReportArgumentsModal = ({
           { tester: masterListSearchTester, renderer: MasterListSearch },
           { tester: locationSearchTester, renderer: LocationSearch },
           { tester: reasonOptionSearchTester, renderer: ReasonOptionSearch },
+          { tester: itemSearchTester, renderer: ItemSearch },
         ];
         setAdditionalRenderers(renderers);
       } catch (error) {

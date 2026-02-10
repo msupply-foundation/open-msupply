@@ -529,7 +529,7 @@ fn translate_changelog(
     for translator in translators.iter() {
         if !r#type
             .iter()
-            .any(|r| translator.should_translate_to_sync_record(changelog, &r))
+            .any(|r| translator.should_translate_to_sync_record(changelog, r))
         {
             continue;
         }
@@ -546,7 +546,7 @@ fn translate_changelog(
         match translation_result {
             PushTranslateResult::PushRecord(records) => translation_results.push(records),
             PushTranslateResult::Ignored(ignore_message) => {
-                log::debug!("Ignored record in push translation: {}", ignore_message)
+                log::debug!("Ignored record in push translation: {ignore_message}")
             }
             PushTranslateResult::NotMatched => {}
         }

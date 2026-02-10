@@ -398,7 +398,7 @@ mod item_count_service_test {
             )
             .unwrap();
 
-        println!("result {:?}", result);
+        println!("result {result:?}");
 
         assert_eq!(result, 1);
     }

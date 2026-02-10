@@ -9,7 +9,7 @@ export const useStores = () => {
   });
 
   return useQuery(
-    api.keys.paramList(queryParams),
+    api.keys.storesList(queryParams),
     () => api.get.stores(queryParams),
     {
       keepPreviousData: true,

@@ -29,7 +29,7 @@ impl MigrationFragment for Migrate {
             sql!(
                 connection,
                 r#"
-                    PRAGMA foreign_keys = OFF;
+                    -- PRAGMA foreign_keys = OFF; -- No longer effective now that we're using transactions
 
                     ALTER TABLE vaccination RENAME TO vaccination_old;
                     
@@ -94,7 +94,7 @@ impl MigrationFragment for Migrate {
 
                     DROP TABLE vaccination_old;
 
-                    PRAGMA foreign_keys = ON;
+                    -- PRAGMA foreign_keys = ON;
                 "#,
             )?;
         };

@@ -7,7 +7,7 @@ use repository::{
     RepositoryError,
 };
 use serde::{Deserialize, Serialize};
-use std::{cmp::Ordering, collections::HashMap, time::SystemTime};
+use std::{collections::HashMap, time::SystemTime};
 use thiserror::Error;
 use util::{format_error, uuid::uuid};
 
@@ -410,7 +410,7 @@ fn query_all_report_versions(
 fn report_filter_method(reports: Vec<ReportMetaData>, app_version: Version) -> Vec<String> {
     let reports_with_compatible_versions: Vec<ReportMetaData> = reports
         .into_iter()
-        .filter(|r| compare_major_minor(r.version.clone(), &app_version) != Ordering::Greater)
+        .filter(|r| r.version.is_compatible_by_major_and_minor(&app_version))
         .collect();
 
     let mut codes: Vec<String> = reports_with_compatible_versions
@@ -446,16 +446,6 @@ fn find_latest_report(reports: Vec<ReportMetaData>) -> Option<ReportMetaData> {
     reports
         .into_iter()
         .max_by(|a, b| a.version.partial_cmp(&b.version).unwrap())
-}
-
-fn compare_major_minor(first: Version, second: &Version) -> Ordering {
-    if first.major != second.major {
-        return first.major.cmp(&second.major);
-    }
-    if first.minor != second.minor {
-        return first.minor.cmp(&second.minor);
-    }
-    Ordering::Equal
 }
 
 fn resolve_report(
@@ -1065,9 +1055,7 @@ mod report_filter_test {
         assert_eq!(result.len(), 1);
         let mut report = reports
             .clone()
-            .into_iter()
-            .filter(|r| r.id == result.clone().into_iter().next().unwrap())
-            .next()
+            .into_iter().find(|r| r.id == result.clone().into_iter().next().unwrap())
             .unwrap();
         assert_eq!(report.version, Version::from_str("2.3.5"));
 
@@ -1076,9 +1064,7 @@ mod report_filter_test {
         assert_eq!(result.len(), 1);
         report = reports
             .clone()
-            .into_iter()
-            .filter(|r| r.id == result.clone().into_iter().next().unwrap())
-            .next()
+            .into_iter().find(|r| r.id == result.clone().into_iter().next().unwrap())
             .unwrap();
         assert_eq!(report.version, Version::from_str("2.3.5"));
 
@@ -1087,9 +1073,7 @@ mod report_filter_test {
         assert_eq!(result.len(), 1);
         report = reports
             .clone()
-            .into_iter()
-            .filter(|r| r.id == result.clone().into_iter().next().unwrap())
-            .next()
+            .into_iter().find(|r| r.id == result.clone().into_iter().next().unwrap())
             .unwrap();
         assert_eq!(report.version, Version::from_str("2.8.3"));
 
@@ -1098,9 +1082,7 @@ mod report_filter_test {
         assert_eq!(result.len(), 1);
         report = reports
             .clone()
-            .into_iter()
-            .filter(|r| r.id == result.clone().into_iter().next().unwrap())
-            .next()
+            .into_iter().find(|r| r.id == result.clone().into_iter().next().unwrap())
             .unwrap();
         assert_eq!(report.version, Version::from_str("3.0.1"));
 
@@ -1109,9 +1091,7 @@ mod report_filter_test {
         assert_eq!(result.len(), 1);
         report = reports
             .clone()
-            .into_iter()
-            .filter(|r| r.id == result.clone().into_iter().next().unwrap())
-            .next()
+            .into_iter().find(|r| r.id == result.clone().into_iter().next().unwrap())
             .unwrap();
         assert_eq!(report.version, Version::from_str("3.5.1"));
     }
@@ -1140,9 +1120,7 @@ mod report_filter_test {
         assert_eq!(result.len(), 1);
         let mut report = reports
             .clone()
-            .into_iter()
-            .filter(|r| r.id == result.clone().into_iter().next().unwrap())
-            .next()
+            .into_iter().find(|r| r.id == result.clone().into_iter().next().unwrap())
             .unwrap();
         assert_eq!(report.version, Version::from_str("2.3.0"));
 
@@ -1151,9 +1129,7 @@ mod report_filter_test {
         assert_eq!(result.len(), 1);
         report = reports
             .clone()
-            .into_iter()
-            .filter(|r| r.id == result.clone().into_iter().next().unwrap())
-            .next()
+            .into_iter().find(|r| r.id == result.clone().into_iter().next().unwrap())
             .unwrap();
         assert_eq!(report.version, Version::from_str("2.3.0"));
 
@@ -1162,9 +1138,7 @@ mod report_filter_test {
         assert_eq!(result.len(), 1);
         report = reports
             .clone()
-            .into_iter()
-            .filter(|r| r.id == result.clone().into_iter().next().unwrap())
-            .next()
+            .into_iter().find(|r| r.id == result.clone().into_iter().next().unwrap())
             .unwrap();
         assert_eq!(report.version, Version::from_str("2.8.2"));
 
@@ -1173,9 +1147,7 @@ mod report_filter_test {
         assert_eq!(result.len(), 1);
         report = reports
             .clone()
-            .into_iter()
-            .filter(|r| r.id == result.clone().into_iter().next().unwrap())
-            .next()
+            .into_iter().find(|r| r.id == result.clone().into_iter().next().unwrap())
             .unwrap();
         assert_eq!(report.version, Version::from_str("2.8.2"));
 
@@ -1184,9 +1156,7 @@ mod report_filter_test {
         assert_eq!(result.len(), 1);
         report = reports
             .clone()
-            .into_iter()
-            .filter(|r| r.id == result.clone().into_iter().next().unwrap())
-            .next()
+            .into_iter().find(|r| r.id == result.clone().into_iter().next().unwrap())
             .unwrap();
         assert_eq!(report.version, Version::from_str("2.8.2"));
     }
