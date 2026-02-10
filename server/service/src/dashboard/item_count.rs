@@ -396,7 +396,7 @@ mod item_count_service_test {
             .get_out_of_stock_products_count(&service_context, &mock_store_b().id, item_ids)
             .unwrap();
 
-        println!("result {:?}", result);
+        println!("result {result:?}");
 
         assert_eq!(result, 1);
     }

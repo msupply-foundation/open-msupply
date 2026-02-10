@@ -77,7 +77,7 @@ impl MigrationFragment for Migrate {
                 match parse_or_integration_error::<LegacyStockLineRow>(connection, &id, &data)? {
                     Some(row) => row,
                     None => {
-                        println!("Could not parse legacy stock line data for ID: {}", id);
+                        println!("Could not parse legacy stock line data for ID: {id}");
                         continue;
                     }
                 };
@@ -105,7 +105,7 @@ impl MigrationFragment for Migrate {
                 match parse_or_integration_error::<LegacyTransLineRow>(connection, &id, &data)? {
                     Some(row) => row,
                     None => {
-                        println!("Could not parse legacy invoice line data for ID: {}", id);
+                        println!("Could not parse legacy invoice line data for ID: {id}");
                         continue;
                     }
                 };
@@ -130,7 +130,7 @@ impl MigrationFragment for Migrate {
                 {
                     Some(row) => row,
                     None => {
-                        println!("Could not parse legacy stocktake line data for ID: {}", id);
+                        println!("Could not parse legacy stocktake line data for ID: {id}");
                         continue;
                     }
                 };

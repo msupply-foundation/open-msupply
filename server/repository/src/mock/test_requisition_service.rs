@@ -245,10 +245,10 @@ pub fn mock_full_new_response_requisition_for_update_test() -> FullMockRequisiti
 
 pub fn mock_request_draft_requisition_calculation_test() -> FullMockRequisition {
     let requisition_id = "mock_request_draft_requisition_calculation_test".to_string();
-    let line1_id = format!("{}1", requisition_id);
-    let line2_id = format!("{}2", requisition_id);
-    let line3_id = format!("{}3", requisition_id);
-    let line4_id = format!("{}4", requisition_id);
+    let line1_id = format!("{requisition_id}1");
+    let line2_id = format!("{requisition_id}2");
+    let line3_id = format!("{requisition_id}3");
+    let line4_id = format!("{requisition_id}4");
     FullMockRequisition {
         requisition: RequisitionRow {
             id: requisition_id.clone(),
@@ -328,8 +328,8 @@ pub fn mock_test_not_store_a_master_list() -> FullMockMasterList {
 
 pub fn mock_new_response_requisition_test() -> FullMockRequisition {
     let requisition_id = "mock_new_response_requisition_test".to_string();
-    let line1_id = format!("{}1", requisition_id);
-    let line2_id = format!("{}2", requisition_id);
+    let line1_id = format!("{requisition_id}1");
+    let line2_id = format!("{requisition_id}2");
     FullMockRequisition {
         requisition: RequisitionRow {
             id: requisition_id.clone(),
@@ -374,8 +374,8 @@ pub fn mock_new_response_requisition_test() -> FullMockRequisition {
 
 pub fn mock_new_response_requisition_test_invoice() -> FullMockInvoice {
     let invoice_id = "mock_new_response_requisition_test_invoice".to_string();
-    let line1_id = format!("{}1", invoice_id);
-    let line2_id = format!("{}2", invoice_id);
+    let line1_id = format!("{invoice_id}1");
+    let line2_id = format!("{invoice_id}2");
 
     FullMockInvoice {
         invoice: InvoiceRow {
@@ -456,7 +456,7 @@ pub fn mock_request_program_requisition() -> RequisitionRow {
 
 pub fn mock_response_program_requisition() -> FullMockRequisition {
     let requisition_id = "mock_response_program_requisition".to_string();
-    let line1_id = format!("{}1", requisition_id);
+    let line1_id = format!("{requisition_id}1");
     FullMockRequisition {
         requisition: RequisitionRow {
             id: requisition_id.clone(),
@@ -491,8 +491,8 @@ pub fn mock_response_program_requisition() -> FullMockRequisition {
 
 pub fn mock_new_response_program_requisition() -> FullMockRequisition {
     let requisition_id = "mock_new_response_program_requisition".to_string();
-    let line1_id = format!("{}1", requisition_id);
-    let line2_id = format!("{}2", requisition_id);
+    let line1_id = format!("{requisition_id}1");
+    let line2_id = format!("{requisition_id}2");
 
     FullMockRequisition {
         requisition: RequisitionRow {

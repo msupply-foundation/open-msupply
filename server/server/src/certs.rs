@@ -100,7 +100,7 @@ impl Certificates {
                     let cert_files = match Self::generate_certs(&cert_path) {
                         Ok(cert_files) => cert_files,
                         Err(e) => {
-                            warn!("Error generating self signed certificates: {}", e);
+                            warn!("Error generating self signed certificates: {e}");
                             error!("No certificates found");
                             return Err(std::io::Error::new(
                                 ErrorKind::Other,

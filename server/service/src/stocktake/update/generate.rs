@@ -158,7 +158,7 @@ fn generate_stock_in_out_or_update(
                 created_datetime: Utc::now().naive_utc(),
                 created_by: ctx.user_id.clone(),
                 store_id: store_id.to_string(),
-                comment: Some(format!("Updated from Stocktake {}", stocktake_number)),
+                comment: Some(format!("Updated from Stocktake {stocktake_number}")),
                 invoice_line_id: None,
             })
         });

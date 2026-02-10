@@ -79,7 +79,7 @@ pub fn map_response(from: Result<Requisition, ServiceError>) -> Result<InsertFro
 
 pub fn map_error(error: ServiceError) -> Result<InsertFromResponseErrorInterface> {
     use StandardGraphqlError::*;
-    let formatted_error = format!("{:#?}", error);
+    let formatted_error = format!("{error:#?}");
 
     let graphql_error = match error {
         // Structured Errors

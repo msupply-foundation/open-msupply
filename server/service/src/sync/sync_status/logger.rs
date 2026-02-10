@@ -89,7 +89,7 @@ impl<'a> SyncLogger<'a> {
     }
 
     pub(crate) fn start_step(&mut self, step: SyncStep) -> Result<(), SyncLoggerError> {
-        info!("Sync step started {:?}", step);
+        info!("Sync step started {step:?}");
         self.row = match step {
             SyncStep::PrepareInitial => SyncLogRow {
                 prepare_initial_started_datetime: Some(chrono::Utc::now().naive_utc()),
@@ -189,7 +189,7 @@ impl<'a> SyncLogger<'a> {
             }
         };
 
-        info!("Sync step finished {:?}", step);
+        info!("Sync step finished {step:?}");
         self.row.duration_in_seconds =
             (chrono::Utc::now().naive_utc() - self.row.started_datetime).num_seconds() as i32;
 

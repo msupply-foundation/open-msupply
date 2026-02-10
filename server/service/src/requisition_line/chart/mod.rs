@@ -293,16 +293,16 @@ mod test {
                     ..Default::default()
                 }],
                 invoice_lines: vec![InvoiceLineRow {
-                    id: format!("{}line", invoice_id),
+                    id: format!("{invoice_id}line"),
                     invoice_id: invoice_id.clone(),
                     item_link_id: mock_item_a().id,
                     r#type: InvoiceLineType::StockOut,
-                    stock_line_id: Some(format!("{}stock_line", invoice_id)),
+                    stock_line_id: Some(format!("{invoice_id}stock_line")),
                     pack_size: 1.0,
                     ..Default::default()
                 }],
                 stock_lines: vec![StockLineRow {
-                    id: format!("{}stock_line", invoice_id),
+                    id: format!("{invoice_id}stock_line"),
                     store_id: store().id,
                     item_link_id: mock_item_a().id,
                     pack_size: 1.0,
@@ -559,16 +559,16 @@ mod test {
                     ..Default::default()
                 }],
                 invoice_lines: vec![InvoiceLineRow {
-                    id: format!("{}line", invoice_id),
+                    id: format!("{invoice_id}line"),
                     invoice_id: invoice_id.clone(),
                     item_link_id: mock_item_a().id,
                     r#type: InvoiceLineType::StockOut,
-                    stock_line_id: Some(format!("{}stock_line", invoice_id)),
+                    stock_line_id: Some(format!("{invoice_id}stock_line")),
                     pack_size: 1.0,
                     ..Default::default()
                 }],
                 stock_lines: vec![StockLineRow {
-                    id: format!("{}stock_line", invoice_id),
+                    id: format!("{invoice_id}stock_line"),
                     store_id: store().id,
                     item_link_id: mock_item_a().id,
                     pack_size: 1.0,

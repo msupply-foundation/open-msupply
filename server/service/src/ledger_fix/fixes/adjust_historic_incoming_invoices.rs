@@ -32,8 +32,7 @@ pub(crate) fn fix(
 
     if !should_adjust {
         operation_log.push_str(&format!(
-            "Ledger does not match use case for adjust_historic_incoming_invoices {:?}.\n",
-            balance_summary
+            "Ledger does not match use case for adjust_historic_incoming_invoices {balance_summary:?}.\n"
         ));
         return Ok(());
     }
@@ -88,8 +87,7 @@ pub(crate) fn fix(
             (ledger_line_to_adjust, backdate_datetime)
         else {
             operation_log.push_str(&format!(
-                "No invoice to adjust found and backdate date is {:?}.\n",
-                backdate_datetime
+                "No invoice to adjust found and backdate date is {backdate_datetime:?}.\n"
             ));
             break;
         };

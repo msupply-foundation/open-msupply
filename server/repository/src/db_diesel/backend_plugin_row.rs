@@ -181,7 +181,7 @@ mod test {
         let repo = BackendPluginRowRepository::new(&connection);
         // Try upsert all plugin_variant types, confirm that diesel enums match postgres
         for variant in PluginVariantType::iter() {
-            let id = format!("{:?}", variant);
+            let id = format!("{variant:?}");
             let result = repo.upsert_one(BackendPluginRow {
                 id: id.clone(),
                 variant_type: variant.clone(),

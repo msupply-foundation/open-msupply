@@ -106,8 +106,7 @@ async fn ledger_fix(service_provider: Arc<ServiceProvider>) {
                     SystemLogType::LedgerFixError,
                     &e,
                     &format!(
-                        "Error fixing stock line {}, {}",
-                        stock_line_id, operation_log
+                        "Error fixing stock line {stock_line_id}, {operation_log}"
                     ),
                 )
                 .unwrap();
@@ -119,7 +118,7 @@ async fn ledger_fix(service_provider: Arc<ServiceProvider>) {
 impl LedgerFixTrigger {
     pub fn trigger(&self) {
         if let Err(error) = self.sender.try_send(None) {
-            log::error!("Problem triggering ledger fix {:#?}", error)
+            log::error!("Problem triggering ledger fix {error:#?}")
         }
     }
 

@@ -110,26 +110,26 @@ async fn requisition_transfer() {
                 thread_num,
             );
 
-            log::debug!("{}: insert", thread_num);
+            log::debug!("{thread_num}: insert");
             tester.insert_request_requisition(&ctx.connection);
             // manually trigger because inserting the requisition doesn't trigger the processor
             ctx.processors_trigger
                 .requisition_transfer
                 .try_send(())
                 .unwrap();
-            log::debug!("{}: await_events_processed", thread_num);
+            log::debug!("{thread_num}: await_events_processed");
             ctx.processors_trigger.await_events_processed().await;
-            log::debug!("{}: check_response_requisition_not_created", thread_num);
+            log::debug!("{thread_num}: check_response_requisition_not_created");
             tester.check_response_requisition_not_created(&ctx.connection);
-            log::debug!("{}: update_request_requisition_to_sent", thread_num);
+            log::debug!("{thread_num}: update_request_requisition_to_sent");
             tester.update_request_requisition_to_sent(&service_provider);
             ctx.processors_trigger.await_events_processed().await;
-            log::debug!("{}: check_response_requisition_created", thread_num);
+            log::debug!("{thread_num}: check_response_requisition_created");
             tester.check_response_requisition_created(&ctx.connection, thread_num);
             ctx.processors_trigger.await_events_processed().await;
-            log::debug!("{}: check_request_requisition_was_linked", thread_num);
+            log::debug!("{thread_num}: check_request_requisition_was_linked");
             tester.check_request_requisition_was_linked(&ctx.connection);
-            log::debug!("{}: update_response_requisition_to_approved", thread_num);
+            log::debug!("{thread_num}: update_response_requisition_to_approved");
             tester.update_response_requisition_to_approved(&service_provider, thread_num);
             // Response requisition approval is usually done by mSupply
             // Processor would be triggered after sync
@@ -138,14 +138,14 @@ async fn requisition_transfer() {
                 .requisition_transfer
                 .try_send(())
                 .unwrap();
-            log::debug!("{}: await_events_processed", thread_num);
+            log::debug!("{thread_num}: await_events_processed");
             ctx.processors_trigger.await_events_processed().await;
-            log::debug!("{}: check_request_requisition_approved", thread_num);
+            log::debug!("{thread_num}: check_request_requisition_approved");
             tester.check_request_requisition_approved(&ctx.connection, thread_num);
-            log::debug!("{}: update_response_requisition_to_finalised", thread_num);
+            log::debug!("{thread_num}: update_response_requisition_to_finalised");
             tester.update_response_requisition_to_finalised(&service_provider);
             ctx.processors_trigger.await_events_processed().await;
-            log::debug!("{}: check_request_requisition_status_updated", thread_num);
+            log::debug!("{thread_num}: check_request_requisition_status_updated");
             tester.check_request_requisition_status_updated(&ctx.connection);
         },
     );
