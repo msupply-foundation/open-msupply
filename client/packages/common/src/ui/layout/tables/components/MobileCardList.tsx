@@ -54,7 +54,7 @@ export const MobileCardList = <T extends MRT_RowData>({
 }) => {
   return (
     <>
-      <Stack spacing={2} sx={{ width: '100%', alignItems: 'center', m: 2 }}>
+      <Stack spacing={2} sx={{ width: '100%', alignItems: 'center', mx: 2 }}>
         <MRT_TopToolbar table={table} />
         {table.getRowModel().rows.map(row => {
           const rowProps =
