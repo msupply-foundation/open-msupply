@@ -20,6 +20,7 @@ import { AppBarButtons } from './AppBarButtons';
 import { usePatientStore } from '@openmsupply-client/programs';
 import { CreatePatientModal } from '../CreatePatientModal';
 import { PatientColumnData } from '../CreatePatientModal/PatientResultsTab';
+import { Toolbar } from './Toolbar';
 
 export const PatientListView = () => {
   const t = useTranslation();
@@ -32,7 +33,7 @@ export const PatientListView = () => {
     filters: [
       {
         key: 'dateOfBirth',
-        condition: 'between',
+        condition: 'equalTo',
       },
       {
         key: 'gender',
@@ -69,34 +70,34 @@ export const PatientListView = () => {
         accessorKey: 'code',
         header: t('label.patient-id'),
         enableSorting: true,
-        size: 120,
+        size: 100,
       },
       {
         accessorKey: 'code2',
         header: t('label.patient-nuic'),
         enableSorting: true,
-        size: 120,
+        size: 90,
       },
       {
         accessorKey: 'createdDatetime',
         header: t('label.created'),
         enableSorting: true,
         columnType: ColumnType.Date,
-        size: 150,
+        size: 115,
       },
       {
         accessorKey: 'firstName',
         header: t('label.first-name'),
         enableSorting: true,
         enableColumnFilter: true,
-        size: 150,
+        size: 125,
       },
       {
         accessorKey: 'lastName',
         header: t('label.last-name'),
         enableSorting: true,
         enableColumnFilter: true,
-        size: 150,
+        size: 125,
       },
       {
         id: 'gender',
@@ -105,7 +106,7 @@ export const PatientListView = () => {
           row.gender ? t(getGenderTranslationKey(row.gender)) : '',
         enableSorting: true,
         enableColumnFilter: true,
-        size: 120,
+        size: 100,
         filterVariant: 'select',
         filterSelectOptions: genderOptions?.map(gender => ({
           value: gender,
@@ -119,12 +120,12 @@ export const PatientListView = () => {
         enableSorting: true,
         enableColumnFilter: true,
         dateFilterFormat: 'date',
-        size: 150,
+        size: 110,
       },
       {
         accessorKey: 'nextOfKinName',
         header: t('label.next-of-kin'),
-        size: 150,
+        size: 110,
         enableColumnFilter: true,
       },
       {
@@ -139,7 +140,7 @@ export const PatientListView = () => {
           }),
         Cell: ChipTableCell,
         enableColumnFilter: true,
-        size: 250,
+        size: 135,
         includeColumn: store?.preferences.omProgramModule,
       },
       {
@@ -151,7 +152,7 @@ export const PatientListView = () => {
         align: 'center',
       },
     ],
-    [store?.preferences.omProgramModule]
+    [store?.preferences.omProgramModule, t]
   );
 
   const { table } = usePaginatedMaterialTable({
@@ -183,6 +184,7 @@ export const PatientListView = () => {
 
   return (
     <>
+      <Toolbar />
       <AppBarButtons
         sortBy={sortBy}
         onCreatePatient={onCreatePatient}
