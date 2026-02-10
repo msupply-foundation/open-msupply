@@ -137,7 +137,7 @@ export const PrescriptionListView = () => {
         onCreate={modalController.toggleOn}
       />
     ),
-    getIsRestrictedRow: isPrescriptionDisabled,
+    getIsRestrictedRow: row => isPrescriptionDisabled(row.original),
   });
 
   return (

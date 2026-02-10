@@ -74,7 +74,7 @@ export const PrescriptionLineEditTable = ({
     tableId: 'prescription-line-edit',
     columns,
     data: draftLines,
-    getIsRestrictedRow: getIsDisabled,
+    getIsRestrictedRow: row => getIsDisabled(row.original),
     enableRowSelection: false,
   });
 

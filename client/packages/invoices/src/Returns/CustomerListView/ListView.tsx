@@ -136,7 +136,7 @@ export const CustomerReturnListView = () => {
     totalCount: data?.totalCount ?? 0,
     isLoading: isFetching,
     isError,
-    getIsRestrictedRow: isInboundListItemDisabled,
+    getIsRestrictedRow: row => isInboundListItemDisabled(row.original),
     onRowClick: r => navigate(r.id),
     noDataElement: (
       <NothingHere

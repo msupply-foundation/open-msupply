@@ -6,7 +6,6 @@
 import React, { useMemo } from 'react';
 import { MRT_Column, MRT_RowData, MRT_AggregationFn, MRT_Cell, MRT_Row, MRT_TableInstance } from 'material-react-table';
 import {
-  Box,
   mergeCellProps,
   Tooltip,
   useGetColumnTypeDefaults,
@@ -82,7 +81,6 @@ export const useMaterialTableColumns = <T extends MRT_RowData>(
             staticColumnIndex?: number;
             staticRowIndex?: number;
           },
-          spacer = false
         ) => {
           const cellProps = {
             renderedCellValue: props.cell.renderValue()?.toString(),
@@ -90,7 +88,6 @@ export const useMaterialTableColumns = <T extends MRT_RowData>(
           };
           return (
             <>
-              {spacer && <Box sx={{ width: '1rem' }} />}
               {props.cell.getValue() === '[multiple]'
                 // show '[multiple]' if the aggregation function returned
                 ? '[multiple]'
@@ -112,7 +109,7 @@ export const useMaterialTableColumns = <T extends MRT_RowData>(
           aggregationFn: defaultAggregationFn,
           GroupedCell: DefaultAggregationCell,
           AggregatedCell: DefaultAggregationCell,
-          PlaceholderCell: (props) => DefaultAggregationCell(props, true),
+          PlaceholderCell: DefaultAggregationCell,
           ...columnDefaults,
           enableSorting: col.enableSorting ?? false,
           enableColumnFilter: col.enableColumnFilter ?? false,

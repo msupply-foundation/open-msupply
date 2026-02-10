@@ -164,7 +164,7 @@ export const ListView = () => {
     isError,
     isLoading: isFetching,
     onRowClick,
-    getIsRestrictedRow: isRequestDisabled,
+    getIsRestrictedRow: row => isRequestDisabled(row.original),
     noDataElement: (
       <NothingHere
         body={t('error.no-internal-orders')}

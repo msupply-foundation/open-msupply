@@ -10,7 +10,6 @@ import {
   useEditModal,
   useBreadcrumbs,
   useNonPaginatedMaterialTable,
-  Groupable,
   NothingHere,
   MaterialTable,
 } from '@openmsupply-client/common';
@@ -72,26 +71,25 @@ export const PrescriptionDetailView = () => {
     setHistoryMode(ModalMode.Create);
   };
 
-  const { table, selectedRows } = useNonPaginatedMaterialTable<
-    Groupable<PrescriptionLineFragment>
-  >({
-    tableId: 'prescription-detail',
-    columns,
-    data: rows,
-    grouping: { enabled: true },
-    isLoading: false,
-    initialSort: { key: 'itemName', dir: 'asc' },
-    isError: false,
-    onRowClick: onRowClick ? row => onRowClick(row) : undefined,
-    getIsPlaceholderRow: isPrescriptionPlaceholderRow,
-    noDataElement: (
-      <NothingHere
-        body={t('error.no-prescriptions')}
-        onCreate={isDisabled ? undefined : () => onAddItem()}
-        buttonText={t('button.add-item')}
-      />
-    ),
-  });
+  const { table, selectedRows } =
+    useNonPaginatedMaterialTable<PrescriptionLineFragment>({
+      tableId: 'prescription-detail',
+      columns,
+      data: rows,
+      grouping: { field: 'item.code' },
+      isLoading: false,
+      initialSort: { key: 'itemName', dir: 'asc' },
+      isError: false,
+      onRowClick: onRowClick ? row => onRowClick(row) : undefined,
+      getIsPlaceholderRow: row => isPrescriptionPlaceholderRow(row.original),
+      noDataElement: (
+        <NothingHere
+          body={t('error.no-prescriptions')}
+          onCreate={isDisabled ? undefined : () => onAddItem()}
+          buttonText={t('button.add-item')}
+        />
+      ),
+    });
 
   useEffect(() => {
     setCustomBreadcrumbs({ 1: data?.invoiceNumber.toString() ?? '' });
