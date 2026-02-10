@@ -1,0 +1,22 @@
+{
+  "recommendations": [
+    // Rust
+    "rust-lang.rust-analyzer",
+    "vadimcn.vscode-lldb",
+    
+    // TypeScript/React
+    "dbaeumer.vscode-eslint",
+    "esbenp.prettier-vscode",
+    
+    // GraphQL
+    "graphql.vscode-graphql",
+    "graphql.vscode-graphql-syntax",
+    
+    // General
+    "eamodio.gitlens",
+    "streetsidesoftware.code-spell-checker",
+    
+    // Testing
+    "orta.vscode-jest"
+  ]
+}
