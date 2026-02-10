@@ -12,7 +12,7 @@ import {
   InvoiceNodeStatus,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
-import { getInvoiceStatusTranslator, useInbound } from '@openmsupply-client/invoices/src';
+import { getInvoiceStatusTranslator, useInbound } from '@openmsupply-client/invoices';
 import { InboundRowFragment } from '@openmsupply-client/invoices/src/InboundShipment/api';
 
 export const InboundShipments = () => {
