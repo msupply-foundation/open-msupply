@@ -60,10 +60,7 @@ export type StocktakeLineFragment = {
     restrictedLocationTypeId?: string | null;
     itemStoreProperties?: {
       __typename: 'ItemStorePropertiesNode';
-      id: string;
       defaultSellPricePerPack: number;
-      ignoreForOrders: boolean;
-      margin: number;
     } | null;
   };
   vvmStatus?: {
@@ -159,10 +156,7 @@ export type StocktakeFragment = {
         restrictedLocationTypeId?: string | null;
         itemStoreProperties?: {
           __typename: 'ItemStorePropertiesNode';
-          id: string;
           defaultSellPricePerPack: number;
-          ignoreForOrders: boolean;
-          margin: number;
         } | null;
       };
       vvmStatus?: {
@@ -302,10 +296,7 @@ export type StocktakeQuery = {
               restrictedLocationTypeId?: string | null;
               itemStoreProperties?: {
                 __typename: 'ItemStorePropertiesNode';
-                id: string;
                 defaultSellPricePerPack: number;
-                ignoreForOrders: boolean;
-                margin: number;
               } | null;
             };
             vvmStatus?: {
@@ -421,10 +412,7 @@ export type StocktakeByNumberQuery = {
               restrictedLocationTypeId?: string | null;
               itemStoreProperties?: {
                 __typename: 'ItemStorePropertiesNode';
-                id: string;
                 defaultSellPricePerPack: number;
-                ignoreForOrders: boolean;
-                margin: number;
               } | null;
             };
             vvmStatus?: {
@@ -525,10 +513,7 @@ export type StocktakeLinesQuery = {
         restrictedLocationTypeId?: string | null;
         itemStoreProperties?: {
           __typename: 'ItemStorePropertiesNode';
-          id: string;
           defaultSellPricePerPack: number;
-          ignoreForOrders: boolean;
-          margin: number;
         } | null;
       };
       vvmStatus?: {
@@ -837,10 +822,7 @@ export const StocktakeLineFragmentDoc = gql`
       defaultPackSize
       restrictedLocationTypeId
       itemStoreProperties(storeId: $storeId) {
-        id
         defaultSellPricePerPack
-        ignoreForOrders
-        margin
       }
     }
     itemVariantId
