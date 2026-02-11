@@ -24,11 +24,6 @@ pub enum InsertResponse {
     Response(BarcodeNode),
 }
 
-#[derive(SimpleObject)]
-pub struct InsertBarcodeError {
-    pub error: String,
-}
-
 impl BarcodeInput {
     pub fn to_domain(&self) -> service::barcode::BarcodeInput {
         service::barcode::BarcodeInput {

@@ -3,6 +3,7 @@ import { fireEvent, render } from '@testing-library/react';
 import { AppBarContentPortal, AppBarContent } from './AppBarContent';
 import { TestingProvider, setScreenSize_ONLY_FOR_TESTING } from '@common/utils';
 
+
 describe('AppBarContent', () => {
   const DESKTOP_WIDTH = 1024; // Above sm breakpoint (601px)
   const MOBILE_WIDTH = 500; // Below sm breakpoint (601px)

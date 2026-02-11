@@ -7,8 +7,7 @@ import { DraftRequestLine } from '.';
 
 export const getLeftPanel = (
   t: TypedTFunction<LocaleKey>,
-  draft?: DraftRequestLine | null,
-  showExtraFields: boolean = false
+  draft?: DraftRequestLine | null
 ): ValueInfo[] => {
   const base: ValueInfo[] = [
     {
@@ -19,22 +18,9 @@ export const getLeftPanel = (
       label: t('label.amc/amd'),
       value: draft?.itemStats.averageMonthlyConsumption,
     },
-    {
-      label: t('label.months-of-stock'),
-      value: draft?.itemStats.availableMonthsOfStockOnHand,
-      endAdornmentOverride: t('label.months'),
-      displayVaccinesInDoses: false,
-    },
   ];
 
-  const extraPanel: ValueInfo[] = [
-    {
-      label: t('label.short-expiry'),
-      value: draft?.expiringUnits,
-    },
-  ];
-
-  return showExtraFields ? [...base, ...extraPanel] : base;
+  return base;
 };
 
 export const getExtraMiddlePanels = (
