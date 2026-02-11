@@ -41,7 +41,7 @@ export const InboundListView = () => {
   } = useUrlQueryParams({
     initialSort: { key: 'invoiceNumber', dir: 'desc' },
     ...(isExtraSmallScreen && {
-      initialFilter: [{ id: 'status', value: 'NEW,DELIVERED,RECEIVED' }],
+      initialFilter: [{ id: 'status', value: 'NEW,DELIVERED' }],
     }),
     filters: [
       { key: 'invoiceNumber', condition: 'equalTo', isNumber: true },
