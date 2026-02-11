@@ -4,9 +4,11 @@ export { useInbounds } from './document/useInbounds';
 export { useInboundsAll } from './document/useInboundsAll';
 export { useInbound } from './document/useInbound';
 export { useInsertInbound } from './document/useInsertInbound';
-export { useUpdateInbound } from './document/useUpdateInbound';
 export { useUpdateInboundServiceTax } from './document/useInboundUpdateServiceTax';
-export { useListInternalOrders, useListInternalOrdersPromise } from './document/useListInternalOrders';
+export {
+  useListInternalOrders,
+  useListInternalOrdersPromise,
+} from './document/useListInternalOrders';
 export { useListInternalOrderLines } from './document/useListInternalOrderLines';
 
 export { useInboundItems } from './line/useInboundItems';
