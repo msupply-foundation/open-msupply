@@ -660,7 +660,7 @@ mod test {
             id: "preference_on".to_string(),
             key: PrefKey::ShowIndicativePriceInRequisitions.to_string(),
             value: "true".to_string(),
-            store_id: None,
+            store_id: Some("store_a".to_string()),
         };
 
         let (_, connection, _, _) = setup_all_with_data(
