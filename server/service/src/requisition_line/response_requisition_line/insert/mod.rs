@@ -46,7 +46,7 @@ pub fn insert_response_requisition_line(
         .connection
         .transaction_sync(|connection| {
             let (requisition_row, item_row) = validate(connection, &ctx.store_id, &input)?;
-            let populate_price_per_unit = get_indicative_price_pref(connection)?;
+            let populate_price_per_unit = get_indicative_price_pref(connection, &ctx.store_id)?;
             let price_per_unit = if populate_price_per_unit {
                 get_pricing_for_items(
                     connection,
