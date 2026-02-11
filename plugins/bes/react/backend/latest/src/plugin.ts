@@ -1,108 +1,15 @@
 /* eslint-disable camelcase */
 import { BackendPlugins } from '@common/types';
-import { IssueStockEndpointInput, IssueStockEndpointResponse } from './types';
-import namesQueryText from './graphql/customer.graphql';
-import itemsQueryText from './graphql/items.graphql';
-import outboundShipmentMutationText from './graphql/batchOutboundShipment.graphql';
-import {
-  BatchOutboundShipmentMutation,
-  BatchOutboundShipmentMutationVariables,
-  ItemsQuery,
-  ItemsQueryVariables,
-  NamesQuery,
-  NamesQueryVariables,
-} from './generated-types/graphql';
+import { Graphql } from './types/index';
+import { BatchOutboundShipmentMutationVariables } from './generated-types/graphql';
 import { UpdateOutboundShipmentStatusInput } from '../codegenTypes';
 import { uuidv7 } from 'uuidv7';
-
-type Graphql = {
-  input: IssueStockEndpointInput;
-  output: IssueStockEndpointResponse;
-};
-
-const customerQuery = (
-  variables: NamesQueryVariables
-): { result?: NamesQuery; customerError?: Graphql['output'] } => {
-  try {
-    const result = use_graphql({
-      query: namesQueryText,
-      variables,
-    }) as NamesQuery;
-    if (!result || result.names.nodes.length < 1) {
-      return {
-        customerError: {
-          success: false,
-          message: `No customer found for filter: ${JSON.stringify(variables.filter)}`,
-        },
-      };
-    }
-    return { result };
-  } catch (error) {
-    return {
-      customerError: {
-        success: false,
-        message: `Error getting customer: ${error}`,
-      },
-    };
-  }
-};
-
-const itemsQuery = (
-  variables: ItemsQueryVariables
-): { result?: ItemsQuery; itemsError?: Graphql['output'] } => {
-  try {
-    const result = use_graphql({
-      query: itemsQueryText,
-      variables,
-    }) as ItemsQuery;
-    if (!result || result.items.totalCount < 1) {
-      return {
-        itemsError: {
-          success: false,
-          message: `No items found for items filter: ${JSON.stringify(variables.filter)}`,
-        },
-      };
-    }
-    return { result };
-  } catch (error) {
-    return {
-      itemsError: {
-        success: false,
-        message: `Error getting items: ${error}`,
-      },
-    };
-  }
-};
-
-const batchOutboundShipmentQuery = (
-  variables: BatchOutboundShipmentMutationVariables
-): BatchOutboundShipmentMutation => {
-  return use_graphql({
-    query: outboundShipmentMutationText,
-    variables,
-  }) as BatchOutboundShipmentMutation;
-};
-
-const batchDeleteOutboundShipmentQuery = (
-  storeId: string,
-  shipmentId: string
-): undefined => {
-  const variables: BatchOutboundShipmentMutationVariables = {
-    storeId: storeId,
-    input: {
-      deleteOutboundShipments: [shipmentId],
-    },
-  };
-  try {
-    use_graphql({
-      query: outboundShipmentMutationText,
-      variables,
-    }) as BatchOutboundShipmentMutation;
-  } catch (error) {
-    // just log if we fail to delete
-    log({ t: 'deleteOutboundShipmentError', error });
-  }
-};
+import {
+  customerQuery,
+  itemsQuery,
+  batchOutboundShipmentQuery,
+  batchDeleteOutboundShipmentQuery,
+} from './queries';
 
 const plugins: BackendPlugins = {
   graphql_query: ({ store_id, input }): Graphql['output'] => {

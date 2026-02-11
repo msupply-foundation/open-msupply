@@ -10,3 +10,8 @@ export type IssueStockEndpointResponse = {
   success: boolean;
   message: string;
 };
+
+export type Graphql = {
+  input: IssueStockEndpointInput;
+  output: IssueStockEndpointResponse;
+};
