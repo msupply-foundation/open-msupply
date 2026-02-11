@@ -135,8 +135,10 @@ export const ColorPickerPreference: React.FC<ColorPickerPreferenceProps> = ({
         >
           <Box>
             <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>
-              Preset Colors
+              Preset Colours
             </Typography>
+            {/* ColorMenu handles its own popover, but we're embedding it in our popover */}
+            {/* Pass empty onClose to prevent ColorMenu from closing our parent popover */}
             <ColorMenu
               anchorEl={anchorEl}
               onClose={() => {}}
@@ -146,14 +148,14 @@ export const ColorPickerPreference: React.FC<ColorPickerPreferenceProps> = ({
           
           <Box>
             <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>
-              Custom Color
+              Custom Colour
             </Typography>
             <BasicTextInput
               value={customColor}
               onChange={handleCustomColorChange}
               placeholder="#RRGGBB or #RGB"
               error={hexError}
-              helperText={hexError ? 'Invalid hex color format' : 'Enter hex color (e.g., #004fc4)'}
+              helperText={hexError ? 'Invalid hex colour format' : 'Enter hex colour (e.g., #004fc4)'}
               fullWidth
               disabled={disabled}
             />
