@@ -20,9 +20,9 @@ import { Capacitor } from '@capacitor/core';
 import { GlobalStyles } from '@mui/material';
 import { useNotification } from '../hooks/useNotification';
 import { useTranslation } from '@common/intl';
-import { Gs1Barcode, parseBarcode } from 'gs1-barcode-parser-mod';
 import { Formatter } from './formatters';
 import { BarcodeScanner, ScannerType } from '@openmsupply-client/common';
+import { Gs1Barcode, BarcodeUtils } from './barcode';
 import { useMockScanner } from './MockBarcodeScanner';
 import { HoneywellScanner } from '@common/hooks';
 
@@ -97,7 +97,13 @@ export const parseResult = (content?: string): ScanResult => {
   if (!content) return {};
 
   try {
-    const gs1 = parseBarcode(content);
+    const gs1 = BarcodeUtils.parseGS1Barcode(content);
+
+    // If no items were parsed, treat as raw barcode
+    if (!gs1.parsedCodeItems || gs1.parsedCodeItems.length === 0) {
+      return { content };
+    }
+
     const gtin = gs1?.parsedCodeItems?.find(item => item.ai === '01')
       ?.data as string;
     const batch = gs1?.parsedCodeItems?.find(item => item.ai === '10')
@@ -554,7 +560,7 @@ export const useBarcodeScannerContext = (
       // console.log('Registering barcode scan callback');
       barcodeScannerControl.registerCallback(callback);
     }
-  }, [callback]);
+  }, [barcodeScannerControl, callback]);
 
   return barcodeScannerControl;
 };
