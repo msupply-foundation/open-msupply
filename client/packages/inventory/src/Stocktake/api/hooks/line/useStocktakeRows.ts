@@ -30,7 +30,10 @@ export const useStocktakeRows = (itemId?: string) => {
     return lines?.filter(item => matchItem(itemFilter, item.item));
   }, [lines, itemFilter]);
 
-  const items = useMemo(() => getStocktakeItems(filteredLines ?? []), [lines]);
+  const items = useMemo(
+    () => getStocktakeItems(filteredLines ?? []),
+    [filteredLines]
+  );
 
   const totalLineCount = lineData?.totalCount ?? 0;
   const isDisabled = !stocktake || isStocktakeDisabled(stocktake);
