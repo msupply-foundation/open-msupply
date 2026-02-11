@@ -18,8 +18,14 @@ interface AddFromScannerButtonProps {
 
 /**
  *
- * TO-DO: Move this component to the common package, since it's now generalised
- * and used in several places
+ * `AddFromScannerButton` is a reusable component that provides a button to trigger barcode scanning and handles the scanning logic.
+ * It supports both one-off scanning and continuous scanning (if supported by the device).
+ * The button's label and state will update based on whether it is currently listening for scans,
+ * and it will handle scan results through the provided context.
+ * @param disabled - Whether the button should be disabled
+ * @param initialListening - Whether to start listening for scans immediately on mount (only applicable if continuous scanning is supported)
+ * @param handleClickCheck - Optional function to run before handling click, can be used to prevent scanning based on certain conditions
+ * @returns A button component that integrates with the barcode scanner context to handle scanning functionality
  */
 
 export const AddFromScannerButton = ({

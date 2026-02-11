@@ -172,8 +172,17 @@ export const MobileNavBar = () => {
           </LowerListContainer>
         </StyledDrawer>
       </Box>
-      <AppBarButtons />
-      <AppBarContent />
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 1,
+        }}
+      >
+        <AppBarButtons />
+        <AppBarContent />
+      </Box>
     </>
   );
 };
