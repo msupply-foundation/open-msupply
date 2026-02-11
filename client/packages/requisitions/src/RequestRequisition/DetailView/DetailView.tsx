@@ -52,6 +52,7 @@ export const DetailView = () => {
   const { data, isLoading, invalidateQueries } = useRequest.document.get();
   const isDisabled = useRequest.utils.isDisabled();
   const uploadDocumentController = useToggle();
+  const { toggleOn: toggleUploadModal } = uploadDocumentController;
   const { data: programIndicators, isLoading: isProgramIndicatorsLoading } =
     useRequest.document.indicators(
       store?.nameId ?? '',
@@ -60,7 +61,6 @@ export const DetailView = () => {
       !!data
     );
   const { urlQuery, updateQuery } = useUrlQuery();
-  const tab = urlQuery['tab'] ?? InternalOrderDetailTabs.Details;
 
   const deletableDocumentIds = useMemo(() => {
     if (data?.status === RequisitionNodeStatus.Finalised) {
@@ -99,13 +99,14 @@ export const DetailView = () => {
     setCustomBreadcrumbs({ 1: data?.requisitionNumber.toString() ?? '' });
   }, [setCustomBreadcrumbs, data?.requisitionNumber]);
 
-  const onAddItem = () => onOpen();
-  const onOpenUploadModal = () => {
-    uploadDocumentController.toggleOn();
-    if (tab !== InternalOrderDetailTabs.Documents) {
+  const onAddItem = useCallback(() => onOpen(), [onOpen]);
+  const onOpenUploadModal = useCallback(() => {
+    toggleUploadModal();
+    const currentTab = urlQuery['tab'] ?? InternalOrderDetailTabs.Details;
+    if (currentTab !== InternalOrderDetailTabs.Documents) {
       updateQuery({ tab: InternalOrderDetailTabs.Documents });
     }
-  };
+  }, [toggleUploadModal, urlQuery, updateQuery]);
 
   const { lines, itemFilter, isError, isFetching } = useRequest.line.list();
   const { on } = useHideOverStocked();
