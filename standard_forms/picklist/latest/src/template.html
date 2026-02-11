@@ -1,0 +1,42 @@
+<style>
+    {% include "style.css" %}
+</style>
+
+<table class="body_section">
+    <thead>
+        <tr class="body_column_label" style="text-align: left;">
+            <th style="text-align: left;">{{t(k="label.line-number", f="Line")}}</th>
+            <th style="text-align: left;">{{t(k="label.location", f="Location")}}</th>
+            <th style="text-align: left;">{{t(k="label.code", f="Code")}}</th>
+            <th style="text-align: left;">{{t(k="report.item-name", f="Item name")}}</th>
+            <th style="text-align: left;">{{t(k="label.unit", f="Units")}}</th>
+            <th style="text-align: left;">{{t(k="label.quantity", f="Quantity")}}</th>
+            <th style="text-align: left;">{{t(k="report.issued", f="Issued")}}</th>
+            <th style="text-align: left;">{{t(k="label.checked", f="Checked")}}</th>
+            <th style="text-align: left;">{{t(k="label.pack", f="Pack")}}</th>
+            <th style="text-align: left; width: 5%;">{{t(k="label.batch", f="Batch")}}</th>
+            <th style="text-align: left;">{{t(k="label.expiry", f="Expiry")}}</th>
+            <th style="text-align: left;">{{t(k="label.box", f="Box")}}</th>
+        </tr>
+    </thead>
+    {% for line in data.invoiceLines.nodes -%}
+    <tr class="body_value">
+        <td>{{ loop.index }}</td>
+        <td>{{ line.location.code | default(value='') }}</td>
+        <td>{{ line.itemCode }}</td>
+        <td>{{ line.itemName }}</td>
+        <td>{{ line.item.unitName }}</td>
+        <td>{{ line.numberOfPacks }}</td>
+        <td>___________</td>
+        <td>___________</td>
+        <td>{{ line.packSize }}</td>
+        <td>{{ line.batch }}</td>
+        <td>
+            {% if line.expiryDate %}
+            {{ line.expiryDate | date(format="%d/%m/%Y") }}
+            {% endif %}
+        </td>
+        <td>___________</td>
+    </tr>
+    {%- endfor %}
+</table>
