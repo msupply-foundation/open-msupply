@@ -3,7 +3,6 @@ export { useInboundFields } from './document/useInboundFields';
 export { useInbounds } from './document/useInbounds';
 export { useInboundsAll } from './document/useInboundsAll';
 export { useInbound } from './document/useInbound';
-export { useInsertInbound } from './document/useInsertInbound';
 export { useUpdateInboundServiceTax } from './document/useInboundUpdateServiceTax';
 export {
   useListInternalOrders,
