@@ -105,7 +105,7 @@ const batchDeleteOutboundShipmentQuery = (
 };
 
 const plugins: BackendPlugins = {
-  graphql_query: ({ input }): Graphql['output'] => {
+  graphql_query: ({ store_id, input }): Graphql['output'] => {
     const inp = input as Graphql['input'];
 
     const { stores: activeStores } = get_active_stores_on_site();
@@ -114,7 +114,9 @@ const plugins: BackendPlugins = {
     }
 
     // Take first store
-    const issuingStore = activeStores[0];
+    // const issuingStore = activeStores[0];
+    // For testing only, TODO: remove on last commit
+    const issuingStore = activeStores.find(s => s.store_row.id === store_id);
 
     if (!issuingStore) {
       return { success: false, message: 'No store found' };
