@@ -22,17 +22,18 @@ import {
   isInboundListItemDisabled,
 } from '../../utils';
 import { Toolbar } from './Toolbar';
-import { InboundRowFragment, useInboundList } from '../api';
-import { useUpdateInbound } from '../api/hooks/utils';
+import { InboundRowFragment, useInboundList, useInboundShipment } from '../api';
 import { Footer } from './Footer';
 
 export const InboundListView = () => {
+  const {
+    update: { update },
+  } = useInboundShipment();
   const t = useTranslation();
   const navigate = useNavigate();
   const { invoiceStatusOptions } = usePreferences();
   const invoiceModalController = useToggle();
   const linkRequestModalController = useToggle();
-  const { mutate: onUpdate } = useUpdateInbound();
 
   const isExtraSmallScreen = useIsExtraSmallScreen();
 
@@ -78,7 +79,7 @@ export const InboundListView = () => {
         enableColumnFilter: true,
         Cell: ({ row }) => (
           <NameAndColorSetterCell
-            onColorChange={onUpdate}
+            onColorChange={update}
             getIsDisabled={isInboundDisabled}
             row={row.original}
           />
