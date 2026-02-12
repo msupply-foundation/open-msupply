@@ -5,7 +5,7 @@ import { useInboundShipment } from '../../../api';
 import { useSaveInboundLines } from '../../../api/hooks/utils';
 import { DraftInboundLine } from './../../../../types';
 import { CreateDraft } from '../utils';
-import { isA } from 'packages/invoices/src/utils';
+import { isA } from '../../../../utils';
 
 export const useDraftServiceLines = () => {
   const {
