@@ -5,7 +5,7 @@ export const useStores = () => {
   const api = useNameApi();
   const { queryParams } = useUrlQueryParams({
     initialSort: { key: 'name', dir: 'asc' },
-    filters: [{ key: 'code' }, { key: 'name' }],
+    filters: [{ key: 'codeOrName' }],
   });
 
   return useQuery(

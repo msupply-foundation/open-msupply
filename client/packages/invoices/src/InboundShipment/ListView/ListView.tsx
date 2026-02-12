@@ -43,7 +43,7 @@ export const InboundListView = () => {
   } = useUrlQueryParams({
     initialSort: { key: 'invoiceNumber', dir: 'desc' },
     ...(isExtraSmallScreen && {
-      initialFilter: [{ id: 'status', value: 'NEW,DELIVERED,RECEIVED' }],
+      initialFilter: [{ id: 'status', value: 'NEW,DELIVERED' }],
     }),
     filters: [
       { key: 'invoiceNumber', condition: 'equalTo', isNumber: true },
@@ -169,14 +169,17 @@ export const InboundListView = () => {
   return (
     <>
       <Toolbar filter={filter} />
-      <AppBarButtons
-        invoiceModalController={invoiceModalController}
-        linkRequestModalController={linkRequestModalController}
-      />
       {isExtraSmallScreen ? (
+        // We don't want to show any app bar button on mobile list view
         <MobileCardList table={table} />
       ) : (
-        <MaterialTable table={table} />
+        <>
+          <AppBarButtons
+            invoiceModalController={invoiceModalController}
+            linkRequestModalController={linkRequestModalController}
+          />
+          <MaterialTable table={table} />
+        </>
       )}
       <Footer
         selectedRows={selectedRows}
