@@ -2362,6 +2362,7 @@
   "report-code.stock-take-variance": "Stocktake Variance",
   "report-code.stock-take-with-quantity": "Stocktake with Quantity",
   "report-code.stock-take-without-quantity": "Stocktake without Quantity",
+  "report-code.inventory_adjustments": "Inventory Adjustments",
   "report.actual": "Actual",
   "report.actual-stock": "Actual stock",
   "report.adjustment-down": "Wastage (adjustment -)",
