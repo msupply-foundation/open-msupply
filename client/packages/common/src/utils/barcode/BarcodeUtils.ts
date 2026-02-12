@@ -6,6 +6,10 @@ import {
 export type Gs1Barcode = LibGs1Barcode;
 
 export const BarcodeUtils = {
+  /**
+   * Parse GS1 barcode string into its components
+   * Returns empty result if parsing fails
+   */
   parseGS1Barcode: (barcode: string): Gs1Barcode => {
     const cleanedBarcode = cleanBarcodeString(barcode);
 
@@ -18,25 +22,55 @@ export const BarcodeUtils = {
       return { codeName: '', parsedCodeItems: [] };
     }
   },
+
+  /**
+   * Convert USB scanner byte array to string
+   * USB scanners (Electron) return barcode data as number[] with protocol framing
+   */
+  parseBarcodeFromBytes: (data: number[] | undefined): string | undefined => {
+    if (!data || data.length < 5) return undefined;
+
+    // USB scanner protocol:
+    // - First 4 bytes: header/metadata
+    // - 0x16 (22): Synchronous Idle character (end marker in continuous mode)
+    // - 0x00: NULL byte (terminator)
+
+    const synchronousIdleIndex = findByteIndex(22, data);
+    const payload = data.slice(4, synchronousIdleIndex);
+    const zeroIndex = findByteIndex(0, payload);
+    const trimmedPayload = payload.slice(0, zeroIndex);
+
+    const bytesString = trimmedPayload.reduce(
+      (barcode, curr) => barcode + String.fromCharCode(curr),
+      ''
+    );
+
+    return cleanBarcodeString(bytesString);
+  },
+};
+
+// Helper function to find byte in array
+const findByteIndex = (byte: number, data: number[]): number | undefined => {
+  const index = data.indexOf(byte);
+  return index === -1 ? undefined : index;
 };
 
 // Helper function to clean barcode strings
 const cleanBarcodeString = (barcode: string): string => {
-  // Remove control characters EXCEPT FNC1 (0x1D/ASCII 29)
-  // FNC1 is required as field separator for variable-length GS1 elements
+  if (!barcode) return '';
 
   const FNC1 = String.fromCharCode(29);
 
   let cleaned = barcode
-    // Remove NULL bytes and other control chars (but NOT 0x1D/ASCII 29 = FNC1)
-    .replace(/[\x00-\x08\x0B-\x0C\x0E-\x1C\x1E-\x1F\x7F-\x9F]/g, '')
-    // Remove zero-width characters
+    // Remove zero-width characters (invisible unicode characters)
     .replace(/[\u200B-\u200D\uFEFF]/g, '')
     // Trim whitespace from start/end only
     .trim();
 
   // Remove leading FNC1 character if present
-  // Camera scanners add FNC1 at start, but library expects raw AI or symbology identifier
+  // Honeywell scanners able to scan barcodes properly, no issue with leading FNC1
+  // Camera scanners add FNC1 at start, but GS1 library doesn't expects it there
+  // USB scanners typically don't have leading FNC1 after byte conversion
   if (cleaned.startsWith(FNC1)) {
     cleaned = cleaned.substring(1);
   }
