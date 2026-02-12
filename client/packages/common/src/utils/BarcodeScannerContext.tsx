@@ -75,24 +75,6 @@ const BarcodeScannerContext = createContext<BarcodeScannerControl>(
 
 const { Provider } = BarcodeScannerContext;
 
-const getIndex = (digit: number, data: number[]) => {
-  const index = data.indexOf(digit);
-  return index === -1 ? undefined : index;
-};
-
-export const parseBarcodeData = (data: number[] | undefined) => {
-  if (!data || data.length < 5) return undefined;
-  // the scanner is returning \x00 and \x22 characters when in continuous mode
-  // these need to be stripped out to prevent issues when parsing the barcode
-  const synchronousIdleIndex = getIndex(22, data);
-  const trimmedData = data.slice(4, synchronousIdleIndex);
-  const zeroIndex = getIndex(0, trimmedData);
-
-  return trimmedData
-    .slice(0, zeroIndex)
-    .reduce((barcode, curr) => barcode + String.fromCharCode(curr), '');
-};
-
 export const parseResult = (content?: string): ScanResult => {
   if (!content) return {};
 
@@ -263,7 +245,7 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
           const barcodePromise = new Promise<string | undefined>(
             async resolve => {
               electronNativeAPI.onBarcodeScan((_event, data) =>
-                resolve(parseBarcodeData(data))
+                resolve(BarcodeUtils.parseBarcodeFromBytes(data))
               );
             }
           );
@@ -411,7 +393,7 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
         const { startBarcodeScan } = electronNativeAPI;
         await startBarcodeScan();
         electronNativeAPI.onBarcodeScan((_event, data) => {
-          const barcode = parseBarcodeData(data);
+          const barcode = BarcodeUtils.parseBarcodeFromBytes(data);
           if (callbackRef.current) {
             callbackRef.current(parseResult(barcode));
           } else {
