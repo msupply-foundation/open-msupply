@@ -17,6 +17,7 @@ import {
   useEditModal,
   useNotification,
   usePreferences,
+  useIsExtraSmallScreen,
 } from '@openmsupply-client/common';
 import { ChangeCampaignOrProgramConfirmationModal } from '@openmsupply-client/system';
 import {
@@ -81,6 +82,7 @@ export const FooterComponent = ({
   const { info } = useNotification();
   const changeCampaignOrProgramModal = useEditModal();
   const { invoiceStatusOptions } = usePreferences();
+  const isExtraSmallScreen = useIsExtraSmallScreen();
 
   const { data } = useInbound.document.get();
   const onDelete = useInbound.lines.deleteSelected(
@@ -155,8 +157,7 @@ export const FooterComponent = ({
               alignItems="center"
               height={64}
             >
-              <OnHoldButton />
-
+              {!isExtraSmallScreen && <OnHoldButton />}
               <StatusCrumbs
                 statuses={statuses}
                 statusLog={createStatusLog(data)}
