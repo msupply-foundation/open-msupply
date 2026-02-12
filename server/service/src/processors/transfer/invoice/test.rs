@@ -952,7 +952,7 @@ impl InvoiceTransferTester {
         );
         assert_eq!(inbound_shipment.colour, None);
         assert_eq!(inbound_shipment.user_id, None);
-        assert_eq!(inbound_shipment.on_hold, false);
+        assert!(!inbound_shipment.on_hold);
         assert_eq!(inbound_shipment.allocated_datetime, None);
 
         if self.response_requisition.is_some() {
@@ -1293,7 +1293,7 @@ impl InvoiceTransferTester {
         );
         assert_eq!(customer_return.colour, None);
         assert_eq!(customer_return.user_id, None);
-        assert_eq!(customer_return.on_hold, false);
+        assert!(!customer_return.on_hold);
         assert_eq!(customer_return.allocated_datetime, None);
 
         assert_eq!(
@@ -1596,7 +1596,7 @@ fn check_line_pricing(
 
         assert_eq!(inbound_line.sell_price_per_pack, price_per_new_pack)
     } else if margin > 0.0 {
-        let supplier_id = outbound_name.map_or_else(|| String::new(), |n| n.id.clone());
+        let supplier_id = outbound_name.map_or_else(String::new, |n| n.id.clone());
         let margin_price = get_cost_plus_margin(
             connection,
             inbound_line.cost_price_per_pack,

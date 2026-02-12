@@ -74,6 +74,13 @@ export const VaccineCardTable = ({
     const index = data?.items.findIndex(item => item.id === row.id) ?? 0;
     return row.minAgeMonths === data?.items?.[index - 1]?.minAgeMonths;
   };
+  const isAgeSameAsNextRow = (row: VaccinationCardItemFragment) => {
+    const index = data?.items.findIndex(item => item.id === row.id) ?? 0;
+    return (
+      data?.items?.length === index ||
+      row.minAgeMonths === data?.items?.[index + 1]?.minAgeMonths
+    );
+  };
 
   const columns = useMemo(
     (): ColumnDef<VaccinationCardItemFragment>[] => [
@@ -88,7 +95,7 @@ export const VaccineCardTable = ({
           sx: {
             fontWeight: 'bold',
             paddingLeft: 2,
-            ...(isAgeSameAsPreviousRow(row.original)
+            ...(isAgeSameAsNextRow(row.original)
               ? { borderBottom: 'none' }
               : {}),
           },

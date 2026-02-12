@@ -1,5 +1,3 @@
-pub mod goods_received;
-pub mod goods_received_row;
 use crate::repository_error::RepositoryError;
 
 pub mod abbreviation;
@@ -50,8 +48,6 @@ mod filter_sort_pagination;
 pub mod form_schema;
 mod form_schema_row;
 mod frontend_plugin_row;
-pub mod goods_received_line;
-pub mod goods_received_line_row;
 pub mod indicator_column;
 mod indicator_column_row;
 pub mod indicator_line;
@@ -213,9 +209,6 @@ pub use filter_sort_pagination::*;
 pub use form_schema::*;
 pub use form_schema_row::*;
 pub use frontend_plugin_row::*;
-pub use goods_received::*;
-pub use goods_received_line::*;
-pub use goods_received_line_row::*;
 pub use indicator_column_row::*;
 pub use indicator_line_row::*;
 pub use indicator_value_row::*;
@@ -398,7 +391,7 @@ impl From<DieselError> for RepositoryError {
             }
             _ => {
                 // try to get a more detailed diesel msg:
-                let diesel_msg = format!("{}", err);
+                let diesel_msg = format!("{err}");
                 Error::as_db_error("DIESEL_UNKNOWN", diesel_msg)
             }
         }
@@ -410,7 +403,7 @@ fn get_connection(
 ) -> Result<DBConnection, RepositoryError> {
     pool.get().map_err(|error| RepositoryError::DBError {
         msg: "Failed to open Connection".to_string(),
-        extra: format!("{:?}", error),
+        extra: format!("{error:?}"),
     })
 }
 

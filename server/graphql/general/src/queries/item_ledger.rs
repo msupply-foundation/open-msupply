@@ -168,8 +168,8 @@ impl ItemLedgerFilterInput {
         ItemLedgerFilter {
             item_id: item_id.map(EqualFilter::from),
             datetime: datetime.map(DatetimeFilter::from),
-            invoice_type: invoice_type.map(|t| map_filter!(t, |i| InvoiceType::from(i))),
-            invoice_status: invoice_status.map(|s| map_filter!(s, |i| InvoiceStatus::from(i))),
+            invoice_type: invoice_type.map(|t| map_filter!(t, InvoiceType::from)),
+            invoice_status: invoice_status.map(|s| map_filter!(s, InvoiceStatus::from)),
             store_id: None,
         }
     }

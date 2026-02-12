@@ -139,6 +139,19 @@ export type ResponseLineFragment = {
     reason: string;
     isActive: boolean;
   } | null;
+  availableVolumeAtLocationType?: {
+    __typename: 'AvailableVolumeAtLocationTypeNode';
+    availableVolume: number;
+    itemVolumePerUnit: number;
+    locationType: { __typename: 'LocationTypeNode'; name: string };
+  } | null;
+};
+
+export type AvailableVolumeAtLocationTypeFragment = {
+  __typename: 'AvailableVolumeAtLocationTypeNode';
+  availableVolume: number;
+  itemVolumePerUnit: number;
+  locationType: { __typename: 'LocationTypeNode'; name: string };
 };
 
 export type ResponseFragment = {
@@ -261,6 +274,12 @@ export type ResponseFragment = {
         type: Types.ReasonOptionNodeType;
         reason: string;
         isActive: boolean;
+      } | null;
+      availableVolumeAtLocationType?: {
+        __typename: 'AvailableVolumeAtLocationTypeNode';
+        availableVolume: number;
+        itemVolumePerUnit: number;
+        locationType: { __typename: 'LocationTypeNode'; name: string };
       } | null;
     }>;
   };
@@ -424,6 +443,12 @@ export type ResponseByNumberQuery = {
               type: Types.ReasonOptionNodeType;
               reason: string;
               isActive: boolean;
+            } | null;
+            availableVolumeAtLocationType?: {
+              __typename: 'AvailableVolumeAtLocationTypeNode';
+              availableVolume: number;
+              itemVolumePerUnit: number;
+              locationType: { __typename: 'LocationTypeNode'; name: string };
             } | null;
           }>;
         };
@@ -595,6 +620,12 @@ export type ResponseByIdQuery = {
               type: Types.ReasonOptionNodeType;
               reason: string;
               isActive: boolean;
+            } | null;
+            availableVolumeAtLocationType?: {
+              __typename: 'AvailableVolumeAtLocationTypeNode';
+              availableVolume: number;
+              itemVolumePerUnit: number;
+              locationType: { __typename: 'LocationTypeNode'; name: string };
             } | null;
           }>;
         };
@@ -1139,6 +1170,15 @@ export type HasCustomerProgramRequisitionSettingsQuery = {
   hasCustomerProgramRequisitionSettings: boolean;
 };
 
+export const AvailableVolumeAtLocationTypeFragmentDoc = gql`
+  fragment AvailableVolumeAtLocationType on AvailableVolumeAtLocationTypeNode {
+    locationType {
+      name
+    }
+    availableVolume
+    itemVolumePerUnit
+  }
+`;
 export const ResponseLineFragmentDoc = gql`
   fragment ResponseLine on RequisitionLineNode {
     id
@@ -1185,9 +1225,13 @@ export const ResponseLineFragmentDoc = gql`
     reason {
       ...ReasonOptionRow
     }
+    availableVolumeAtLocationType {
+      ...AvailableVolumeAtLocationType
+    }
   }
   ${ItemWithStatsFragmentDoc}
   ${ReasonOptionRowFragmentDoc}
+  ${AvailableVolumeAtLocationTypeFragmentDoc}
 `;
 export const ResponseFragmentDoc = gql`
   fragment Response on RequisitionNode {

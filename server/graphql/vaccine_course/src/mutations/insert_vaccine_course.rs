@@ -125,7 +125,7 @@ pub enum InsertVaccineCourseErrorInterface {
 
 fn map_error(error: ServiceError) -> Result<InsertVaccineCourseErrorInterface> {
     use StandardGraphqlError::*;
-    let formatted_error = format!("{:#?}", error);
+    let formatted_error = format!("{error:#?}");
 
     let graphql_error = match error {
         // Structured Errors

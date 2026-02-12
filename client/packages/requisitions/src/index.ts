@@ -14,3 +14,8 @@ export { NewRequisitionType } from './types';
 export * from './RnRForms/api';
 
 export { RequisitionService } from './RequisitionService';
+export {
+  STOCK_DISTRIBUTION_INFO,
+  CONSUMPTION_HISTORY_INFO,
+  STOCK_EVOLUTION_INFO,
+} from './RequestRequisition/DetailView/utils';

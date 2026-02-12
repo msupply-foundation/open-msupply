@@ -317,10 +317,7 @@ fn changed_status(
     status: Option<UpdateInboundShipmentStatus>,
     existing_status: &InvoiceStatus,
 ) -> Option<UpdateInboundShipmentStatus> {
-    let new_status = match status {
-        Some(status) => status,
-        None => return None, // Status is not changing
-    };
+    let new_status = status?;
 
     if &new_status.full_status() == existing_status {
         // The invoice already has this status, there's nothing to do.
