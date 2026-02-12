@@ -3,7 +3,7 @@ import { BackendPlugins } from '@common/types';
 import { Graphql } from './types/index';
 import {
   BatchOutboundShipmentMutationVariables,
-  InsertOutbounndShipmentUnallocatedLineMutationVariables,
+  InsertOutboundShipmentUnallocatedLineMutationVariables,
 } from './generated-types/graphql';
 import {
   InsertOutboundShipmentUnallocatedLineInput,
@@ -136,6 +136,7 @@ const plugins: BackendPlugins = {
       const unitsInBatch = batch.availableNumberOfPacks / batch.packSize;
 
       if (totalUnitsSupplied >= inp.quantity) break;
+      if (batch.availableNumberOfPacks === 0) continue;
 
       if (batch.expiryDate < today) {
         log(batch);
@@ -153,6 +154,7 @@ const plugins: BackendPlugins = {
         } else {
           log({ t: 'here in expired and unitsInBatch < inp.q' });
           totalUnitsSupplied += batch.availableNumberOfPacks * batch.packSize;
+
           insertLines.push({
             id: shipmentLineId,
             invoiceId: shipmentId,
@@ -274,17 +276,21 @@ const plugins: BackendPlugins = {
     }
 
     // Insert unallocated line
-
+    log('here right?');
     if (insertUnallocatedLine) {
-      const insertLineInput: InsertOutbounndShipmentUnallocatedLineMutationVariables =
+      const insertLineInput: InsertOutboundShipmentUnallocatedLineMutationVariables =
         {
           storeId: issuingStoreId,
-          id: insertUnallocatedLine.id,
-          invoiceId: shipmentId,
-          itemId: insertUnallocatedLine.itemId,
-          quantity: insertUnallocatedLine.quantity,
+          input: {
+            id: insertUnallocatedLine.id,
+            invoiceId: shipmentId,
+            itemId: insertUnallocatedLine.itemId,
+            quantity: insertUnallocatedLine.quantity,
+          },
         };
-
+      log(insertLineInput.input.quantity.toString());
+      log(insertLineInput.input.quantity.toPrecision(21));
+      log(insertLineInput);
       try {
         const insertUnallocatedLineResult =
           insertOutboundShipmentLineQuery(insertLineInput);
@@ -308,7 +314,7 @@ const plugins: BackendPlugins = {
           throw Error(errText);
         }
       } catch (error) {
-        batchDeleteOutboundShipmentQuery(issuingStoreId, shipmentId);
+        // batchDeleteOutboundShipmentQuery(issuingStoreId, shipmentId);
         return {
           success: false,
           message: `${error}`,

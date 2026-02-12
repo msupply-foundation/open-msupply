@@ -9,8 +9,8 @@ import {
   ItemsQueryVariables,
   NamesQuery,
   NamesQueryVariables,
-  InsertOutbounndShipmentUnallocatedLineMutation,
-  InsertOutbounndShipmentUnallocatedLineMutationVariables,
+  InsertOutboundShipmentUnallocatedLineMutation,
+  InsertOutboundShipmentUnallocatedLineMutationVariables,
 } from './generated-types/graphql';
 import { Graphql } from './types';
 
@@ -78,12 +78,12 @@ export const batchOutboundShipmentQuery = (
 };
 
 export const insertOutboundShipmentLineQuery = (
-  variables: InsertOutbounndShipmentUnallocatedLineMutationVariables
-): InsertOutbounndShipmentUnallocatedLineMutation => {
+  variables: InsertOutboundShipmentUnallocatedLineMutationVariables
+): InsertOutboundShipmentUnallocatedLineMutation => {
   return use_graphql({
     query: insertOutboundShipmentLineText,
     variables,
-  }) as InsertOutbounndShipmentUnallocatedLineMutation;
+  }) as InsertOutboundShipmentUnallocatedLineMutation;
 };
 
 export const batchDeleteOutboundShipmentQuery = (
