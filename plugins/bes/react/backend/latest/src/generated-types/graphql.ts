@@ -72,7 +72,7 @@ export type NamesQuery = { __typename?: 'Queries', names: { __typename: 'NameCon
 
 export type InsertOutbounndShipmentUnallocatedLineMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
-  input: Types.InsertOutboundShipmentLineInput;
+  input: Types.InsertOutboundShipmentUnallocatedLineInput;
 }>;
 
 

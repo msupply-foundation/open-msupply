@@ -1,11 +1,8 @@
 mutation InsertOutbounndShipmentUnallocatedLine(
   $storeId: String!
-  $input: InsertOutboundShipmentLineInput!
+  $input: InsertOutboundShipmentUnallocatedLineInput!
 ) {
-  insertOutboundShipmentUnallocatedLine(
-    input: { id: "", invoiceId: "", itemId: "", quantity: 10 }
-    storeId: ""
-  ) {
+  insertOutboundShipmentUnallocatedLine(input: $input, storeId: $storeId) {
     ... on InsertOutboundShipmentUnallocatedLineError {
       __typename
       error {

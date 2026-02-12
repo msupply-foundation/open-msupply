@@ -1,11 +1,13 @@
 /* eslint-disable camelcase */
 import { BackendPlugins } from '@common/types';
 import { Graphql } from './types/index';
-import { BatchOutboundShipmentMutationVariables } from './generated-types/graphql';
+import {
+  BatchOutboundShipmentMutationVariables,
+  InsertOutbounndShipmentUnallocatedLineMutationVariables,
+} from './generated-types/graphql';
 import {
   InsertOutboundShipmentUnallocatedLineInput,
   InsertOutboundShipmentLineInput,
-  Scalars,
   // UpdateOutboundShipmentStatusInput,
 } from '../codegenTypes';
 import { uuidv7 } from 'uuidv7';
@@ -14,6 +16,7 @@ import {
   itemsQuery,
   batchOutboundShipmentQuery,
   batchDeleteOutboundShipmentQuery,
+  insertOutboundShipmentLineQuery,
 } from './queries';
 import { format } from 'date-fns/format';
 import { sortAndClassifyBatches } from './utils';
@@ -270,30 +273,28 @@ const plugins: BackendPlugins = {
       }
     }
 
-    // Insert unallocated lines
+    // Insert unallocated line
 
-    const newArray = insertUnallocatedLines.map(v => {
-      v.quantity = v.quantity as Scalars['Int']['input'];
-      return v;
-    });
     if (insertUnallocatedLines.length > 0) {
-      const insertLineInput: BatchOutboundShipmentMutationVariables = {
-        storeId: issuingStoreId,
-        input: {
-          insertOutboundShipmentUnallocatedLines: [...newArray],
-        },
-      };
+      const insertLineInput: InsertOutbounndShipmentUnallocatedLineMutationVariables =
+        {
+          storeId: issuingStoreId,
+          input: {
+            id: insertUnallocatedLines[0].id,
+            invoiceId: shipmentId,
+            itemId: insertUnallocatedLines[0].itemId,
+            quantity: insertUnallocatedLines[0].quantity,
+          },
+        };
 
       try {
-        const insertLineResult = batchOutboundShipmentQuery(insertLineInput);
+        const insertUnallocatedLineResult =
+          insertOutboundShipmentLineQuery(insertLineInput);
 
-        log({ t: 'insertResult', insertLineResult });
+        log({ t: 'insertResult', insertUnallocatedLineResult });
 
         if (
-          !insertLineResult.batchOutboundShipment
-            .insertOutboundShipmentUnallocatedLines ||
-          insertLineResult.batchOutboundShipment
-            .insertOutboundShipmentUnallocatedLines.length < 1
+          !insertUnallocatedLineResult.insertOutboundShipmentUnallocatedLine
         ) {
           errText = 'Unallocated line insert failed. ' + errText;
           errText += ` error: no lines returned in response`;
@@ -301,12 +302,11 @@ const plugins: BackendPlugins = {
         }
 
         if (
-          insertLineResult.batchOutboundShipment
-            .insertOutboundShipmentUnallocatedLines[0].response.__typename ===
-          'InsertOutboundShipmentUnallocatedLineError'
+          insertUnallocatedLineResult.insertOutboundShipmentUnallocatedLine
+            .__typename === 'InsertOutboundShipmentUnallocatedLineError'
         ) {
           errText = 'Unallocated line insert failed. ' + errText;
-          errText += ` error: ${insertLineResult.batchOutboundShipment.insertOutboundShipmentUnallocatedLines[0].response.error.description}`;
+          errText += ` error: ${insertUnallocatedLineResult.insertOutboundShipmentUnallocatedLine.error.description}`;
           throw Error(errText);
         }
       } catch (error) {
