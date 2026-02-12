@@ -1,4 +1,4 @@
-use log::{error, info};
+use log::{debug, error, info};
 use repository::{
     RepositoryError, StorageConnection, SyncApiErrorCode, SyncLogRow, SyncLogRowRepository,
 };
@@ -62,6 +62,14 @@ impl SyncLoggerError {
 }
 
 impl<'a> SyncLogger<'a> {
+    fn log(count: i32, action: &str) {
+        if count > 0 {
+            info!("{action} ({count}) records");
+        } else {
+            debug!("{action} step finished with no progress recorded")
+        }
+    }
+
     pub fn start(connection: &'a StorageConnection) -> Result<SyncLogger<'a>, SyncLoggerError> {
         info!("Sync started");
         let row = SyncLogRow {
@@ -134,30 +142,27 @@ impl<'a> SyncLogger<'a> {
                 ..self.row.clone()
             },
             SyncStep::Push => {
-                let count = *self.row.push_progress_done.as_ref().unwrap_or(&0);
-                if count > 0 {
-                    info!("Pushed ({count}) records");
-                }
+                Self::log(self.row.push_progress_done.unwrap_or(0), "Pushed");
                 SyncLogRow {
                     push_finished_datetime: Some(chrono::Utc::now().naive_utc()),
                     ..self.row.clone()
                 }
             }
             SyncStep::PullCentral => {
-                let count = *self.row.pull_central_progress_done.as_ref().unwrap_or(&0);
-                if count > 0 {
-                    info!("Pulled ({count}) central records");
-                }
+                Self::log(
+                    self.row.pull_central_progress_done.unwrap_or(0),
+                    "Pulled central",
+                );
                 SyncLogRow {
                     pull_central_finished_datetime: Some(chrono::Utc::now().naive_utc()),
                     ..self.row.clone()
                 }
             }
             SyncStep::PullRemote => {
-                let count = *self.row.pull_remote_progress_done.as_ref().unwrap_or(&0);
-                if count > 0 {
-                    info!("Pulled ({count}) remote records");
-                }
+                Self::log(
+                    self.row.pull_remote_progress_done.unwrap_or(0),
+                    "Pulled remote",
+                );
                 SyncLogRow {
                     pull_remote_finished_datetime: Some(chrono::Utc::now().naive_utc()),
                     ..self.row.clone()
@@ -168,20 +173,20 @@ impl<'a> SyncLogger<'a> {
                 ..self.row.clone()
             },
             SyncStep::PullCentralV6 => {
-                let count = *self.row.pull_v6_progress_done.as_ref().unwrap_or(&0);
-                if count > 0 {
-                    info!("Pulled ({count}) central v6 records");
-                }
+                Self::log(
+                    self.row.pull_v6_progress_done.unwrap_or(0),
+                    "Pulled central v6",
+                );
                 SyncLogRow {
                     pull_v6_finished_datetime: Some(chrono::Utc::now().naive_utc()),
                     ..self.row.clone()
                 }
             }
             SyncStep::PushCentralV6 => {
-                let count = *self.row.push_v6_progress_done.as_ref().unwrap_or(&0);
-                if count > 0 {
-                    info!("Pushed ({count}) central v6 records");
-                }
+                Self::log(
+                    self.row.push_v6_progress_done.unwrap_or(0),
+                    "Pushed central v6",
+                );
                 SyncLogRow {
                     push_v6_finished_datetime: Some(chrono::Utc::now().naive_utc()),
                     ..self.row.clone()
