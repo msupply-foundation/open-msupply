@@ -11,6 +11,8 @@ import {
   MaterialTable,
   NameAndColorSetterCell,
   usePreferences,
+  useIsExtraSmallScreen,
+  MobileCardList,
   DetailTabs,
   ToggleState,
 } from '@openmsupply-client/common';
@@ -22,6 +24,7 @@ import {
   isInboundListItemDisabled,
 } from '../../utils';
 import { useInbound, InboundRowFragment } from '../api';
+import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
 
 export const InboundListView = () => {
@@ -32,11 +35,18 @@ export const InboundListView = () => {
 
   const tabs = [
     {
-      Component: <InboundShipments internalModalController={internalModalController} />,
+      Component: (
+        <InboundShipments internalModalController={internalModalController} />
+      ),
       value: t('label.internal'),
     },
     {
-      Component: <InboundShipments internalModalController={internalModalController} external />,
+      Component: (
+        <InboundShipments
+          internalModalController={internalModalController}
+          external
+        />
+      ),
       value: t('label.external'),
     },
   ];
@@ -53,19 +63,25 @@ export const InboundListView = () => {
   );
 };
 
-const InboundShipments: React.FC<{ internalModalController: ToggleState, external?: boolean }> = ({
-  internalModalController,
-  external = false,
-}) => {
+const InboundShipments: React.FC<{
+  internalModalController: ToggleState;
+  external?: boolean;
+}> = ({ internalModalController, external = false }) => {
   const t = useTranslation();
   const navigate = useNavigate();
   const { invoiceStatusOptions } = usePreferences();
   const { mutate: onUpdate } = useInbound.document.update();
 
+  const isExtraSmallScreen = useIsExtraSmallScreen();
+
   const {
+    filter,
     queryParams: { first, offset, sortBy, filterBy },
   } = useUrlQueryParams({
     initialSort: { key: 'invoiceNumber', dir: 'desc' },
+    ...(isExtraSmallScreen && {
+      initialFilter: [{ id: 'status', value: 'NEW,DELIVERED,RECEIVED' }],
+    }),
     filters: [
       { key: 'invoiceNumber', condition: 'equalTo', isNumber: true },
       { key: 'otherPartyName' },
@@ -73,7 +89,7 @@ const InboundShipments: React.FC<{ internalModalController: ToggleState, externa
         key: 'createdDatetime',
         condition: 'between',
       },
-      { key: 'status', condition: 'equalTo' },
+      { key: 'status', condition: 'equalAny' },
     ],
   });
 
@@ -85,7 +101,7 @@ const InboundShipments: React.FC<{ internalModalController: ToggleState, externa
       ...filterBy,
       purchaseOrderId: external
         ? { notEqualTo: '' } // Removes results where purchaseOrderId is null
-        : { equalAnyOrNull: '' } // Only gives results where purchaseOrderId is null
+        : { equalAnyOrNull: '' }, // Only gives results where purchaseOrderId is null
     },
   };
 
@@ -99,6 +115,7 @@ const InboundShipments: React.FC<{ internalModalController: ToggleState, externa
       {
         header: t('label.supplier'),
         accessorKey: 'otherPartyName',
+        size: 400,
         enableColumnFilter: true,
         Cell: ({ row }) => (
           <NameAndColorSetterCell
@@ -107,6 +124,19 @@ const InboundShipments: React.FC<{ internalModalController: ToggleState, externa
             row={row.original}
           />
         ),
+        enableSorting: true,
+      },
+      {
+        header: t('label.status'),
+        accessorFn: row => getStatusTranslator(t)(row.status),
+        id: 'status',
+        size: 140,
+        filterVariant: 'select',
+        filterSelectOptions: statuses.map(status => ({
+          value: status,
+          label: getStatusTranslator(t)(status),
+        })),
+        enableColumnFilter: true,
         enableSorting: true,
       },
       {
@@ -141,17 +171,9 @@ const InboundShipments: React.FC<{ internalModalController: ToggleState, externa
         size: 100,
       },
       {
-        header: t('label.status'),
-        accessorFn: row => getStatusTranslator(t)(row.status),
-        id: 'status',
-        size: 140,
-        filterVariant: 'select',
-        filterSelectOptions: statuses.map(status => ({
-          value: status,
-          label: getStatusTranslator(t)(status),
-        })),
-        enableColumnFilter: true,
-        enableSorting: true,
+        header: t('label.comment'),
+        accessorKey: 'comment',
+        columnType: ColumnType.Comment,
       },
       {
         header: t('label.reference'),
@@ -166,13 +188,8 @@ const InboundShipments: React.FC<{ internalModalController: ToggleState, externa
         columnType: ColumnType.Currency,
         defaultHideOnMobile: true,
       },
-      {
-        header: t('label.comment'),
-        accessorKey: 'comment',
-        columnType: ColumnType.Comment,
-      },
     ],
-    []
+    [t]
   );
 
   const { table, selectedRows } = usePaginatedMaterialTable<InboundRowFragment>(
@@ -191,16 +208,22 @@ const InboundShipments: React.FC<{ internalModalController: ToggleState, externa
           onCreate={internalModalController.toggleOn}
         />
       ),
+      isMobile: isExtraSmallScreen,
     }
   );
 
   return (
     <>
-      <MaterialTable table={table} />
+      <Toolbar filter={filter} />
+      {isExtraSmallScreen ? (
+        <MobileCardList table={table} />
+      ) : (
+        <MaterialTable table={table} />
+      )}
       <Footer
         selectedRows={selectedRows}
         resetRowSelection={table.resetRowSelection}
       />
     </>
   );
-}
+};

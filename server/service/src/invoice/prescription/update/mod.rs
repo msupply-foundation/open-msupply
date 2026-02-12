@@ -587,7 +587,7 @@ mod test {
             .unwrap()
             .unwrap()
             .invoice_row;
-        assert_eq!(reverse_prescription.is_cancellation, true);
+        assert!(reverse_prescription.is_cancellation);
 
         let reverse_lines = InvoiceLineRowRepository::new(&connection)
             .find_many_by_invoice_id(&reverse_prescription.id)

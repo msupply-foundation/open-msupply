@@ -24,7 +24,7 @@
     "ts-jest": "^29.2.6",
     "ts-loader": "^9.4.4",
     "typescript": "^5.0.2",
-    "webpack": "^5.76.2",
+    "webpack": "^5.88.1",
     "webpack-cli": "^5.0.1",
     "@graphql-codegen/import-types-preset": "^3.0.0"
   },

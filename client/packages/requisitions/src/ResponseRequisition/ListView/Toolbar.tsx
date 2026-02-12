@@ -1,16 +1,13 @@
-import React, { FC } from 'react';
+import React from 'react';
 import {
   AppBarContentPortal,
-  FilterController,
   FilterMenu,
   Box,
   useTranslation,
   RequisitionNodeStatus,
 } from '@openmsupply-client/common';
 
-export const Toolbar: FC<{
-  filter: FilterController;
-}> = () => {
+export const Toolbar = () => {
   const t = useTranslation();
 
   return (

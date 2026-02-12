@@ -79,7 +79,7 @@ impl PluginFileService {
 
             files.push(PluginFile {
                 config,
-                path: format!("{}/{}", plugin_name, PLUGIN_FILE),
+                path: format!("{plugin_name}/{PLUGIN_FILE}"),
                 name: plugin_name,
             });
         }
@@ -105,17 +105,17 @@ fn read_plugin_file(
     let validated_plugin = match validated_plugins.validate_plugin(plugin_dir) {
         Ok(validated_plugin) => validated_plugin,
         Err(err) => {
-            log::warn!("{}", err);
+            log::warn!("{err}");
             if !is_develop() || !file_path.exists() {
                 return Ok(None);
             }
-            log::warn!("Continue serving plugin file in dev mode: {:?}", file_path);
+            log::warn!("Continue serving plugin file in dev mode: {file_path:?}");
             return Ok(Some(fs::read_to_string(file_path)?));
         }
     };
     let plugin_manifest = validated_plugin.manifest;
     let Some(content) = plugin_manifest.read_and_validate_file(filename, file_path)? else {
-        log::warn!("Plugin file not in manifest: {}", filename);
+        log::warn!("Plugin file not in manifest: {filename}");
         return Ok(None);
     };
     Ok(Some(content))

@@ -55,7 +55,7 @@ pub async fn vacuum_database(service_provider: Data<ServiceProvider>) -> HttpRes
     match result {
         Ok(_) => HttpResponse::Ok().body("Vacuumed database successfully"),
         Err(e) => {
-            HttpResponse::InternalServerError().body(format!("Error vacuuming database: {:#?}", e))
+            HttpResponse::InternalServerError().body(format!("Error vacuuming database: {e:#?}"))
         }
     }
 }

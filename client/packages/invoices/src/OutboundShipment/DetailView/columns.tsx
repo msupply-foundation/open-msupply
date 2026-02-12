@@ -39,6 +39,7 @@ export const useOutboundColumns = () => {
       {
         accessorKey: 'batch',
         header: t('label.batch'),
+        size: 110,
         enableSorting: true,
         defaultHideOnMobile: true,
       },
@@ -47,6 +48,7 @@ export const useOutboundColumns = () => {
         // expiryDate is a string - use accessorFn to convert to Date object for sort and filtering
         accessorFn: row => (row.expiryDate ? new Date(row.expiryDate) : null),
         header: t('label.expiry-date'),
+        size: 110,
         columnType: ColumnType.Date,
         defaultHideOnMobile: true,
         enableColumnFilter: true,
@@ -67,6 +69,7 @@ export const useOutboundColumns = () => {
         id: 'locationCode',
         accessorFn: row => row.location?.code ?? '',
         header: t('label.location'),
+        size: 120,
         enableColumnFilter: true,
         enableSorting: true,
         defaultHideOnMobile: true,
@@ -75,6 +78,7 @@ export const useOutboundColumns = () => {
         id: 'itemUnit',
         accessorKey: 'item.unitName',
         header: t('label.unit-name'),
+        size: 100,
         enableColumnFilter: true,
         filterVariant: 'select',
         defaultHideOnMobile: true,
@@ -222,7 +226,7 @@ export const useOutboundColumns = () => {
     ];
 
     return cols;
-  }, [manageVvmStatusForStock, manageVaccinesInDoses]);
+  }, [t, manageVvmStatusForStock, manageVaccinesInDoses]);
 
   return columns;
 };

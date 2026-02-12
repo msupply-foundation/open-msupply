@@ -206,7 +206,7 @@ fn map_response(from: Result<PurchaseOrderRow, ServiceError>) -> Result<UpdateRe
 }
 
 fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
-    let formatted_error = format!("{:#?}", error);
+    let formatted_error = format!("{error:#?}");
 
     let graphql_error = match error {
         ServiceError::ItemsCannotBeOrdered(lines) => {

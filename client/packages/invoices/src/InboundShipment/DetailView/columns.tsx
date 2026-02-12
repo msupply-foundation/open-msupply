@@ -16,7 +16,10 @@ import { useInboundShipmentLineErrorContext } from '../context/inboundShipmentLi
 import { isInboundPlaceholderRow } from '../../utils';
 import { InboundLineFragment } from '../api';
 
-export const useInboundShipmentColumns = (external: boolean, showLineStatus: boolean) => {
+export const useInboundShipmentColumns = (
+  external: boolean,
+  showLineStatus: boolean
+) => {
   const t = useTranslation();
   const theme = useAppTheme();
   const {
@@ -26,27 +29,36 @@ export const useInboundShipmentColumns = (external: boolean, showLineStatus: boo
   } = usePreferences();
   const { getError } = useInboundShipmentLineErrorContext();
 
-  const statusMap = useMemo(() => ({
-    [InvoiceLineStatusType.Passed]: {
-      label: Formatter.enumCase(InvoiceLineStatusType.Passed),
-      colour: theme.palette.invoiceLineStatus.passed,
-    },
-    [InvoiceLineStatusType.Pending]: {
-      label: Formatter.enumCase(InvoiceLineStatusType.Pending),
-      colour: theme.palette.invoiceLineStatus.pending,
-    },
-    [InvoiceLineStatusType.Rejected]: {
-      label: Formatter.enumCase(InvoiceLineStatusType.Rejected),
-      colour: theme.palette.invoiceLineStatus.rejected,
-    },
-  }), [theme]);
+  const statusMap = useMemo(
+    () => ({
+      [InvoiceLineStatusType.Passed]: {
+        label: Formatter.enumCase(InvoiceLineStatusType.Passed),
+        colour: theme.palette.invoiceLineStatus.passed,
+      },
+      [InvoiceLineStatusType.Pending]: {
+        label: Formatter.enumCase(InvoiceLineStatusType.Pending),
+        colour: theme.palette.invoiceLineStatus.pending,
+      },
+      [InvoiceLineStatusType.Rejected]: {
+        label: Formatter.enumCase(InvoiceLineStatusType.Rejected),
+        colour: theme.palette.invoiceLineStatus.rejected,
+      },
+    }),
+    [theme]
+  );
 
   return useMemo((): ColumnDef<Groupable<InboundLineFragment>>[] => {
     return [
       {
+        accessorKey: 'comment',
+        pin: 'left',
+        header: t('label.comment'),
+        columnType: ColumnType.Comment,
+      },
+      {
         accessorKey: 'item.code',
         header: t('label.code'),
-        size: 120,
+        size: 90,
         pin: 'left',
         enableColumnFilter: true,
         enableSorting: true,
@@ -71,6 +83,7 @@ export const useInboundShipmentColumns = (external: boolean, showLineStatus: boo
         accessorKey: 'batch',
         header: t('label.batch'),
         enableSorting: true,
+        size: 100,
         enableColumnFilter: true,
         defaultHideOnMobile: true,
       },
@@ -80,6 +93,7 @@ export const useInboundShipmentColumns = (external: boolean, showLineStatus: boo
         header: t('label.expiry-date'),
         columnType: ColumnType.Date,
         defaultHideOnMobile: true,
+        size: 120,
         enableColumnFilter: true,
         enableSorting: true,
       },
@@ -99,7 +113,15 @@ export const useInboundShipmentColumns = (external: boolean, showLineStatus: boo
         enableColumnFilter: true,
         enableSorting: true,
         defaultHideOnMobile: true,
-        includeColumn: !external,
+      },
+      {
+        id: 'itemUnit',
+        accessorKey: 'item.unitName',
+        header: t('label.unit-name'),
+        size: 100,
+        enableColumnFilter: true,
+        filterVariant: 'select',
+        defaultHideOnMobile: true,
       },
       {
         accessorKey: 'packSize',
@@ -107,7 +129,7 @@ export const useInboundShipmentColumns = (external: boolean, showLineStatus: boo
         columnType: ColumnType.Number,
         defaultHideOnMobile: true,
         enableSorting: true,
-        size: 100,
+        size: 90,
       },
       {
         id: 'itemDoses',
@@ -236,9 +258,10 @@ export const useInboundShipmentColumns = (external: boolean, showLineStatus: boo
     ];
   }, [
     external,
-    getError,
-    manageVaccinesInDoses,
+    t,
     manageVvmStatusForStock,
+    manageVaccinesInDoses,
     allowTrackingOfStockByDonor,
+    getError,
   ]);
 };

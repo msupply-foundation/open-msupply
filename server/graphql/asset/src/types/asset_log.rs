@@ -72,7 +72,7 @@ impl From<AssetLogFilterInput> for AssetLogFilter {
             asset_id: f.asset_id.map(EqualFilter::from),
             status: f
                 .status
-                .map(|s| map_filter!(s, |t| AssetLogStatus::from(t))),
+                .map(|s| map_filter!(s, AssetLogStatus::from)),
             log_datetime: f.log_datetime.map(DatetimeFilter::from),
             user: f.user.map(StringFilter::from),
             reason_id: f.reason_id.map(EqualFilter::from),
@@ -274,7 +274,7 @@ impl From<AssetLogReasonFilterInput> for AssetLogReasonFilter {
             id: f.id.map(EqualFilter::from),
             asset_log_status: f
                 .asset_log_status
-                .map(|s| map_filter!(s, |t| AssetLogStatus::from(t))),
+                .map(|s| map_filter!(s, AssetLogStatus::from)),
             reason: f.reason.map(StringFilter::from),
         }
     }
