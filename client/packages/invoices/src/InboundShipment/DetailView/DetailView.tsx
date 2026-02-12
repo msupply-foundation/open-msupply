@@ -39,8 +39,8 @@ import { InboundLineFragment, useInboundShipment } from '../api';
 import { SupplierReturnEditModal } from '../../Returns';
 import {
   canReturnInboundLines,
+  getInboundStockLines,
   isInboundPlaceholderRow,
-  isA,
 } from '../../utils';
 import { InboundShipmentLineErrorProvider } from '../context/inboundShipmentLineError';
 import { InboundShipmentDetailTabs } from './types';
@@ -89,9 +89,7 @@ const DetailViewInner = () => {
 
   const lines = React.useMemo(() => {
     if (!data) return [];
-    const forListView = (line: InboundLineFragment) =>
-      isA.stockInLine(line) || isInboundPlaceholderRow(line);
-    return data.lines.nodes.filter(forListView);
+    return getInboundStockLines(data.lines.nodes);
   }, [data]);
   const { data: vvmStatuses } = useVvmStatusesEnabled();
   const hasItemVariantsEnabled = useIsItemVariantsEnabled();

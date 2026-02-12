@@ -4,6 +4,7 @@ import {
   useQueryClient,
 } from '@openmsupply-client/common';
 import { useInboundApi } from '../utils/useInboundApi';
+import { INBOUND, INBOUND_LINE } from './keys';
 
 export const useInboundId = () => {
   const { invoiceId = '' } = useParams();
@@ -16,11 +17,11 @@ export const useInbound = () => {
   const queryClient = useQueryClient();
 
   const invalidateQuery = () => {
-    queryClient.invalidateQueries(api.keys.detail(invoiceId));
+    queryClient.invalidateQueries([INBOUND, INBOUND_LINE, invoiceId]);
   };
 
   const query = useQuery(
-    api.keys.detail(invoiceId),
+    [INBOUND, INBOUND_LINE, invoiceId],
     () => api.get.byId(invoiceId),
     // Don't refetch when the edit modal opens, for example. But, don't cache data when this query
     // is inactive. For example, when navigating away from the page and back again, refetch.

@@ -1,5 +1,4 @@
 // Re-export less commonly used hooks that were previously nested in useInbound
-export { useInbounds } from './document/useInbounds';
 export { useInboundsAll } from './document/useInboundsAll';
 export { useInbound } from './document/useInbound';
 export { useUpdateInboundServiceTax } from './document/useInboundUpdateServiceTax';
@@ -9,8 +8,6 @@ export {
 } from './document/useListInternalOrders';
 export { useListInternalOrderLines } from './document/useListInternalOrderLines';
 
-export { useInboundItems } from './line/useInboundItems';
-export { useInboundServiceLines } from './line/useInboundServiceLines';
 export { useLinesFromInternalOrder } from './line/useLinesFromInternalOrder';
 export { useDeleteInboundLines } from './line/useDeleteInboundLines';
 export { useInboundDeleteSelectedLines } from './line/useDeleteSelectedLines';

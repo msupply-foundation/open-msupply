@@ -219,6 +219,11 @@ export const isInboundPlaceholderRow = (row: InboundLineFragment): boolean =>
   row.numberOfPacks === 0 &&
   !row.shippedNumberOfPacks;
 
+export const getInboundStockLines = (
+  lines: InboundLineFragment[]
+): InboundLineFragment[] =>
+  lines.filter(line => isA.stockInLine(line) || isInboundPlaceholderRow(line));
+
 export const isInboundStatusChangeDisabled = (
   inbound: InboundFragment | CustomerReturnFragment
 ): boolean => {

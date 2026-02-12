@@ -3,7 +3,6 @@ export { useOutbound } from './OutboundShipment/api';
 export {
   useInboundList,
   useInboundShipment,
-  useInboundLines,
   useDraftInboundLines,
   InboundFragment,
 } from './InboundShipment/api';

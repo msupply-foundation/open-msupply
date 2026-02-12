@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, useMemo } from 'react';
 import {
   useConfirmOnLeaving,
   useNotification,
@@ -12,7 +12,7 @@ import { mapErrorToMessageAndSetContext } from './mapErrorToMessageAndSetContext
 import { ScannedBatchData } from '../../DetailView';
 import { useInboundShipment } from './document/useInboundShipment';
 import { useSaveInboundLines } from './utils';
-import { useInboundLines } from '.';
+import { getInboundStockLines } from '../../../utils';
 
 export type PatchDraftLineInput = Partial<DraftInboundLine> & { id: string };
 
@@ -29,7 +29,15 @@ export const useDraftInboundLines = (
     query: { data },
   } = useInboundShipment();
   const id = data?.id ?? '';
-  const { data: lines } = useInboundLines(itemId ?? '');
+
+  // Derive lines from the same data source, filtering by itemId if provided
+  const lines = useMemo(() => {
+    if (!data) return undefined;
+    return itemId
+      ? data.lines.nodes.filter(({ item }) => itemId === item.id)
+      : getInboundStockLines(data.lines.nodes);
+  }, [data, itemId]);
+
   const { mutateAsync, isLoading } = useSaveInboundLines();
   const { mutateAsync: deleteMutation } = useDeleteInboundLines();
 
