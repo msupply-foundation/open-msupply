@@ -192,8 +192,7 @@ impl SyncTranslation for InvoiceLineTranslation {
             Some(line_type) => line_type,
             None => {
                 return Ok(PullTranslateResult::Ignored(format!(
-                    "Unsupported line type {:?}",
-                    r#type
+                    "Unsupported line type {type:?}"
                 )))
             }
         };
@@ -202,8 +201,7 @@ impl SyncTranslation for InvoiceLineTranslation {
             Some(invoice) => invoice,
             None => {
                 return Err(anyhow::Error::msg(format!(
-                    "Failed to get invoice: {}",
-                    invoice_id
+                    "Failed to get invoice: {invoice_id}"
                 )))
             }
         };
@@ -226,8 +224,7 @@ impl SyncTranslation for InvoiceLineTranslation {
                     Some(item) => item,
                     None => {
                         return Err(anyhow::Error::msg(format!(
-                            "Failed to get item: {}",
-                            item_id
+                            "Failed to get item: {item_id}"
                         )))
                     }
                 };
@@ -270,9 +267,7 @@ impl SyncTranslation for InvoiceLineTranslation {
 
         if !is_stock_line_valid {
             log::warn!(
-                "Stock line is not valid, invoice_line_id: {}, stock_line_id: {:?}",
-                id,
-                stock_line_id
+                "Stock line is not valid, invoice_line_id: {id}, stock_line_id: {stock_line_id:?}"
             );
         }
 

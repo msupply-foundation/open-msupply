@@ -50,7 +50,7 @@ pub fn send_email(
 
     mailer
         .send(&message)
-        .map_err(|e| EmailSendError::SmtpError(e))?;
+        .map_err(EmailSendError::SmtpError)?;
 
     Ok(())
 }

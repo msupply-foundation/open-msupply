@@ -134,22 +134,9 @@ pub fn get_items_ids_for_months_of_stock(
 
 pub fn get_items_with_consumption(
     connection: &StorageConnection,
-    filter: ItemFilter,
+    item_filter: ItemFilter,
     store_id: &str,
 ) -> Result<Vec<String>, RepositoryError> {
-    let repository = ItemRepository::new(connection);
-
-    let item_ids: Vec<String> = repository
-        .query(
-            Pagination::all(),
-            Some(filter.clone()),
-            None,
-            Some(store_id.to_owned()),
-        )?
-        .iter()
-        .map(|item| item.item_row.id.clone())
-        .collect();
-
     let num_months_consumption =
         NumberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts
             .load(connection, Some(store_id.to_string()))
@@ -162,7 +149,7 @@ pub fn get_items_with_consumption(
 
     let consumption_filter = ConsumptionFilter::new()
         .store_id(EqualFilter::equal_to(store_id.to_string()))
-        .item_id(EqualFilter::equal_any(item_ids))
+        .item((store_id.to_string(), item_filter))
         .date(DateFilter::date_range(&start_date, &end_date));
 
     let out_of_stock_with_consumption = ConsumptionRepository::new(connection)

@@ -1157,7 +1157,7 @@ mod repository_test {
                     let sleep_duration = SystemTime::now()
                         .duration_since(start_dt)
                         .expect("Time went backwards");
-                    println!("A: Slept for {:?}", sleep_duration);
+                    println!("A: Slept for {sleep_duration:?}");
                     println!("A: writing");
                     repo.upsert_one(&ItemRow {
                         id: "tx_deadlock_id2".to_string(),
@@ -1196,7 +1196,7 @@ mod repository_test {
                     println!("B: write 2");
                     Ok(())
                 });
-            println!("B: Returning {:?}", result);
+            println!("B: Returning {result:?}");
             result
         });
 

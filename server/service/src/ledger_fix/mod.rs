@@ -24,7 +24,7 @@ pub(crate) fn is_ledger_fixed(
 
     let balance_summary = ledger_balance_summary(connection, &ledger_lines, stock_line_id)?;
 
-    return Ok(balance_summary.is_fixed);
+    Ok(balance_summary.is_fixed)
 }
 
 #[derive(Debug)]

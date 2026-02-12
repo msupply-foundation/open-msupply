@@ -245,7 +245,7 @@ mod test {
 
         let a = process_a.join().unwrap();
         let b = process_b.join().unwrap();
-        println!("next_number (INSERT) results : a={} b={}", a, b);
+        println!("next_number (INSERT) results : a={a} b={b}");
         assert!(a != b);
 
         let manager_a = connection_manager.clone();
@@ -271,7 +271,7 @@ mod test {
         let a = process_a.join().unwrap();
         let b = process_b.join().unwrap();
 
-        println!("next_number (UPDATE) results : a={} b={}", a, b);
+        println!("next_number (UPDATE) results : a={a} b={b}");
         assert!(a != b);
     }
 
@@ -323,7 +323,7 @@ mod test {
         let mut unique_numbers = HashSet::new();
         for handle in handles {
             let num = handle.join().unwrap();
-            println!("num: {}", num);
+            println!("num: {num}");
             let new_value = unique_numbers.insert(num);
             assert!(new_value);
         }

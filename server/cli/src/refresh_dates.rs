@@ -220,8 +220,7 @@ impl<'a> RefreshDatesRepository<'a> {
 
         if days_difference < 0 {
             println!(
-                "Reference date {} - 1 day is lower than the max date {} for record: {:#?}",
-                reference_date, max_timestamp, max_record
+                "Reference date {reference_date} - 1 day is lower than the max date {max_timestamp} for record: {max_record:#?}"
             );
             return None;
         }
@@ -277,8 +276,7 @@ impl<'a> RefreshDatesRepository<'a> {
         // the program_event table is using `9999-09-09 09:09:09` as a max timestamp value
         // we don't want to update this datetime value
         let query = format!(
-            "select id, {} as dt from {} where {0} is not null and {0} <> '9999-09-09 09:09:09'",
-            field_name, table_name
+            "select id, {field_name} as dt from {table_name} where {field_name} is not null and {field_name} <> '9999-09-09 09:09:09'"
         );
 
         Ok(sql_query(query).load::<IdAndTimestamp>(self.connection.lock().connection())?)
@@ -316,8 +314,7 @@ impl<'a> RefreshDatesRepository<'a> {
         field_name: &str,
     ) -> Result<Vec<IdAndDate>, RepositoryError> {
         let query = format!(
-            "select id, {} as d from {} where {0} is not null",
-            field_name, table_name
+            "select id, {field_name} as d from {table_name} where {field_name} is not null"
         );
 
         Ok(sql_query(query).load::<IdAndDate>(self.connection.lock().connection())?)
@@ -691,6 +688,7 @@ mod tests {
         );
     }
 
+    #[cfg(feature = "postgres")]
     #[derive(QueryableByName, Debug, PartialEq)]
     struct TableNameAndFieldRow {
         #[diesel(sql_type = Text)]

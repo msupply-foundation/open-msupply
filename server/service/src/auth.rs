@@ -153,7 +153,8 @@ pub enum Resource {
     PluginGraphql,
     // Preferences
     MutatePreferences,
-    QueryAndMutateVvmStatus,
+    QueryVvmStatus,
+    MutateVvmStatus,
     // Campaigns
     QueryCampaigns,
     MutateCampaigns,
@@ -725,9 +726,12 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
     // plugin graphql
     map.insert(Resource::PluginGraphql, PermissionDSL::HasStoreAccess);
 
-    // vvm status
+    // vvm status - queries only need authentication
+    map.insert(Resource::QueryVvmStatus, PermissionDSL::NoPermissionRequired);
+    
+    // vvm status - mutations need permission
     map.insert(
-        Resource::QueryAndMutateVvmStatus,
+        Resource::MutateVvmStatus,
         PermissionDSL::And(vec![
             PermissionDSL::HasStoreAccess,
             PermissionDSL::HasPermission(PermissionType::ViewAndEditVvmStatus),

@@ -184,7 +184,7 @@ pub fn number_of_records_in_push_queue(ctx: &Context<'_>) -> Result<u64> {
         .sync_status_service
         .number_of_records_in_push_queue(&ctx)
         .map_err(|error| {
-            let formatted_error = format!("{:#?}", error);
+            let formatted_error = format!("{error:#?}");
             StandardGraphqlError::InternalError(formatted_error).extend()
         })?;
 

@@ -122,6 +122,9 @@ export const ResponseLineEditModal = ({
   }, [draft?.isCreated]);
 
   const { data } = useResponse.line.stats(!draft?.isCreated, draft?.id);
+  const itemVolume =
+    (draft?.availableVolumeAtLocationType?.itemVolumePerUnit ?? 0) *
+    (draft?.supplyQuantity ?? 0);
 
   const tabs = [
     {
@@ -154,6 +157,8 @@ export const ResponseLineEditModal = ({
           averageMonthlyConsumption={
             data?.requestStoreStats.averageMonthlyConsumption ?? 0
           }
+          availableVolumeAtLocationType={draft?.availableVolumeAtLocationType}
+          itemVolume={itemVolume}
         />
       ),
       value: 'label.customer',

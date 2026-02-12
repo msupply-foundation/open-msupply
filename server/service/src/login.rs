@@ -135,10 +135,10 @@ impl LoginService {
                     )))
                 }
                 FetchUserError::ConnectionError(_) => {
-                    info!("{:?}", err);
+                    info!("{err:?}");
                     connection_failure = true;
                 }
-                FetchUserError::InternalError(_) => info!("{:?}", err),
+                FetchUserError::InternalError(_) => info!("{err:?}"),
             },
         };
         let mut service_ctx = service_provider.basic_context()?;
@@ -211,24 +211,24 @@ impl LoginService {
     ) -> Result<LoginUserInfoV4, FetchUserError> {
         // Prepare central login query
         let central_server_url = Url::parse(&input.central_server_url).map_err(|err| {
-            FetchUserError::InternalError(format!("Failed to parse central server url: {}", err))
+            FetchUserError::InternalError(format!("Failed to parse central server url: {err}"))
         })?;
         let client = ClientBuilder::new()
             .connect_timeout(Duration::from_secs(CONNECTION_TIMEOUT_SEC))
             .build()
-            .map_err(|err| FetchUserError::ConnectionError(format!("{:?}", err)))?;
+            .map_err(|err| FetchUserError::ConnectionError(format!("{err:?}")))?;
         let login_api = LoginApiV4::new(client, central_server_url.clone());
         let username = &input.username;
         let password = &input.password;
 
         let service_ctx = service_provider.basic_context().map_err(|err| {
-            FetchUserError::InternalError(format!("Failed to get service context: {}", err))
+            FetchUserError::InternalError(format!("Failed to get service context: {err}"))
         })?;
         let settings = service_provider
             .settings
             .sync_settings(&service_ctx)
             .map_err(|err| {
-                FetchUserError::InternalError(format!("Failed to get sync settings: {}", err))
+                FetchUserError::InternalError(format!("Failed to get sync settings: {err}"))
             })?;
 
         // Try login with central
@@ -252,14 +252,12 @@ impl LoginService {
                 }
                 LoginV4Error::ConnectionError(_) => {
                     return Err(FetchUserError::ConnectionError(format!(
-                        "Failed to reach the central server to fetch data for {}: {:?}",
-                        username, err
+                        "Failed to reach the central server to fetch data for {username}: {err:?}"
                     )))
                 }
                 LoginV4Error::ParseError(_) => {
                     return Err(FetchUserError::InternalError(format!(
-                        "Failed to parse central server response for {}: {:?}",
-                        username, err
+                        "Failed to parse central server response for {username}: {err:?}"
                     )))
                 }
             },
@@ -361,7 +359,7 @@ impl LoginService {
 
 impl From<RepositoryError> for LoginError {
     fn from(err: RepositoryError) -> Self {
-        LoginError::InternalError(format!("{:?}", err))
+        LoginError::InternalError(format!("{err:?}"))
     }
 }
 

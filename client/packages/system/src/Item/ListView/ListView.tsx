@@ -21,6 +21,7 @@ export const ItemListView = () => {
   const {
     queryParams,
   } = useUrlQueryParams({
+    initialSort: { key: 'name', dir: 'asc' },
     filters: [
       { key: 'code' },
       { key: 'name' },
