@@ -247,7 +247,7 @@ impl TranslationAndIntegrationResults {
         Default::default()
     }
 
-    pub(crate) fn log_if_has_results(&self, operation_name: &str) {
+    pub(crate) fn log(&self, operation_name: &str) {
         let has_results = !self.0.is_empty()
             && self
                 .0
@@ -261,6 +261,11 @@ impl TranslationAndIntegrationResults {
                     log::info!("{operation_name} Integration result for {table_name}: {result:?}");
                 }
             }
+        } else {
+            log::debug!(
+                "{operation_name} Integration result: No records integrated or errored {:?}",
+                self.0
+            );
         }
     }
 
