@@ -8,6 +8,7 @@ import {
 import { MasterListRowFragment } from '@openmsupply-client/system';
 import { useInboundShipment } from '../document/useInboundShipment';
 import { useInboundApi } from './useInboundApi';
+import { INBOUND, INBOUND_LINE } from '../document/keys';
 
 export const useAddFromMasterList = () => {
   const { error } = useNotification();
@@ -19,7 +20,7 @@ export const useAddFromMasterList = () => {
   const api = useInboundApi();
   const mutationState = useMutation(api.addFromMasterList, {
     onSettled: () =>
-      queryClient.invalidateQueries(api.keys.detail(String(shipmentId))),
+      queryClient.invalidateQueries([INBOUND, INBOUND_LINE, shipmentId]),
   });
 
   const t = useTranslation();

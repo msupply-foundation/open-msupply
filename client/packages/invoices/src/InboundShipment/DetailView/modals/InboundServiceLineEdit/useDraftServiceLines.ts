@@ -1,20 +1,21 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { RecordPatch } from '@openmsupply-client/common';
 import { toItemWithPackSize, useItem } from '@openmsupply-client/system';
 import { useInboundShipment } from '../../../api';
-import {
-  useInboundServiceLines,
-  useSaveInboundLines,
-} from '../../../api/hooks/utils';
+import { useSaveInboundLines } from '../../../api/hooks/utils';
 import { DraftInboundLine } from './../../../../types';
 import { CreateDraft } from '../utils';
+import { isA } from 'packages/invoices/src/utils';
 
 export const useDraftServiceLines = () => {
   const {
     query: { data },
   } = useInboundShipment();
   const id = data?.id ?? '';
-  const { data: lines } = useInboundServiceLines();
+  const lines = useMemo(
+    () => data?.lines.nodes.filter(isA.serviceLine) ?? [],
+    [data?.lines.nodes]
+  );
   const {
     serviceItem: { data: defaultServiceItem, isLoading },
   } = useItem();

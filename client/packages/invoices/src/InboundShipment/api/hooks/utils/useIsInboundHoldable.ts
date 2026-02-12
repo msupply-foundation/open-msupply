@@ -1,8 +1,10 @@
-import { useInbound } from '../document/useInbound';
+import { useInboundShipment } from '../document/useInboundShipment';
 import { isInboundHoldable } from './../../../../utils';
 
 export const useIsInboundHoldable = (): boolean => {
-  const { data } = useInbound();
+  const {
+    query: { data },
+  } = useInboundShipment();
   if (!data) return true;
   return isInboundHoldable(data);
 };
