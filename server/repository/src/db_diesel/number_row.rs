@@ -42,8 +42,6 @@ pub enum NumberRowType {
     Program(String),
     PurchaseOrder,
     PurchaseOrderLine(String),
-    GoodsReceived,
-    GoodsReceivedLine(String),
 }
 
 impl fmt::Display for NumberRowType {
@@ -60,14 +58,10 @@ impl fmt::Display for NumberRowType {
             NumberRowType::Prescription => write!(f, "PRESCRIPTION"),
             NumberRowType::SupplierReturn => write!(f, "SUPPLIER_RETURN"),
             NumberRowType::CustomerReturn => write!(f, "CUSTOMER_RETURN"),
-            NumberRowType::Program(custom_string) => write!(f, "PROGRAM_{}", custom_string),
+            NumberRowType::Program(custom_string) => write!(f, "PROGRAM_{custom_string}"),
             NumberRowType::PurchaseOrder => write!(f, "PURCHASE_ORDER"),
-            NumberRowType::GoodsReceived => write!(f, "GOODS_RECEIVED"),
             NumberRowType::PurchaseOrderLine(custom_string) => {
-                write!(f, "PURCHASEORDERLINE_{}", custom_string) // Since we split this on _ we can't use that in the main part of the name
-            }
-            NumberRowType::GoodsReceivedLine(custom_string) => {
-                write!(f, "GOODSRECEIVEDLINE_{}", custom_string) // Since we split this on _ we can't use that in the main part of the name
+                write!(f, "PURCHASEORDERLINE_{custom_string}") // Since we split this on _ we can't use that in the main part of the name
             }
         }
     }
@@ -89,15 +83,11 @@ impl TryFrom<String> for NumberRowType {
             "SUPPLIER_RETURN" => Ok(NumberRowType::SupplierReturn),
             "CUSTOMER_RETURN" => Ok(NumberRowType::CustomerReturn),
             "PURCHASE_ORDER" => Ok(NumberRowType::PurchaseOrder),
-            "GOODS_RECEIVED" => Ok(NumberRowType::GoodsReceived),
             _ => match s.split_once('_') {
                 Some((prefix, custom_string)) => match prefix {
                     "PROGRAM" => Ok(NumberRowType::Program(custom_string.to_string())),
                     "PURCHASEORDERLINE" => {
                         Ok(NumberRowType::PurchaseOrderLine(custom_string.to_string()))
-                    }
-                    "GOODSRECEIVEDLINE" => {
-                        Ok(NumberRowType::GoodsReceivedLine(custom_string.to_string()))
                     }
                     _ => Err(NumberRowTypeError::UnknownTypePrefix(prefix.to_string())),
                 },
@@ -347,12 +337,6 @@ mod number_row_mapping_test {
                             == NumberRowType::PurchaseOrder
                     )
                 }
-                NumberRowType::GoodsReceived => {
-                    assert!(
-                        NumberRowType::try_from(NumberRowType::GoodsReceived.to_string()).unwrap()
-                            == NumberRowType::GoodsReceived
-                    )
-                }
                 NumberRowType::PurchaseOrderLine(s) => {
                     assert!(
                         NumberRowType::try_from(
@@ -360,15 +344,6 @@ mod number_row_mapping_test {
                         )
                         .unwrap()
                             == NumberRowType::PurchaseOrderLine(s)
-                    )
-                }
-                NumberRowType::GoodsReceivedLine(s) => {
-                    assert!(
-                        NumberRowType::try_from(
-                            NumberRowType::GoodsReceivedLine(s.to_string()).to_string()
-                        )
-                        .unwrap()
-                            == NumberRowType::GoodsReceivedLine(s)
                     )
                 }
             }

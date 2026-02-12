@@ -19,6 +19,7 @@ interface ConfirmationModalProps {
   buttonLabel?: string | undefined;
   cancelButtonLabel?: string | undefined;
   otherButtons?: Array<React.ReactNode>;
+  placeCancelButtonLast?: boolean;
 }
 
 const iconLookup = {
@@ -40,10 +41,22 @@ export const ConfirmationModal = ({
   buttonLabel,
   cancelButtonLabel,
   otherButtons,
+  placeCancelButtonLast = false,
 }: ConfirmationModalProps) => {
   const [loading, setLoading] = useState(false);
   const Icon = iconLookup[iconType];
   const t = useTranslation();
+
+  const cancelButton = (
+    <Grid>
+      <DialogButton
+        variant="cancel"
+        customLabel={cancelButtonLabel}
+        disabled={loading}
+        onClick={onCancel}
+      />
+    </Grid>
+  );
 
   return (
     <BasicModal width={width} height={height} open={open} onClose={onCancel}>
@@ -75,17 +88,9 @@ export const ConfirmationModal = ({
           flex={1}
           display="flex"
         >
-          {otherButtons && otherButtons.map((button, idx) => (
-            <Grid key={idx}>{button}</Grid>
-          ))}
-          <Grid>
-            <DialogButton
-              variant="cancel"
-              customLabel={cancelButtonLabel}
-              disabled={loading}
-              onClick={onCancel}
-            />
-          </Grid>
+          {otherButtons &&
+            otherButtons.map((button, idx) => <Grid key={idx}>{button}</Grid>)}
+          {!placeCancelButtonLast && cancelButton}
           <Grid>
             <LoadingButton
               autoFocus
@@ -103,6 +108,7 @@ export const ConfirmationModal = ({
               label={buttonLabel ? buttonLabel : t('button.ok')}
             />
           </Grid>
+          {placeCancelButtonLast && cancelButton}
         </Grid>
       </Grid>
     </BasicModal>

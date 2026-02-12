@@ -16,10 +16,10 @@ pub fn json_diff(
 ) -> Result<Option<(Value, Value)>, JsonDiffError> {
     // Serialize both values to JSON
     let old_json = serde_json::to_value(old)
-        .map_err(|e| JsonDiffError::SerializationError(format!("{}", e)))?;
+        .map_err(|e| JsonDiffError::SerializationError(format!("{e}")))?;
 
     let new_json = serde_json::to_value(new)
-        .map_err(|e| JsonDiffError::SerializationError(format!("{}", e)))?;
+        .map_err(|e| JsonDiffError::SerializationError(format!("{e}")))?;
 
     let filtered_diff = match (old_json.clone(), new_json.clone()) {
         (Value::Object(old_map), Value::Object(new_map)) => {

@@ -9,7 +9,6 @@ import { usePrescriptionGraphQL } from '../usePrescriptionGraphQL';
 import { LIST, PRESCRIPTION } from './keys';
 import { PrescriptionRowFragment } from '../operations.generated';
 import { sortFieldMap } from './utils';
-import { useDelete } from './usePrescriptionDelete';
 
 export type ListParams = {
   first?: number;
@@ -71,20 +70,7 @@ export const usePrescriptionList = (queryParams?: ListParams) => {
     keepPreviousData: true,
   });
 
-  const {
-    mutateAsync: deleteMutation,
-    isLoading: isDeleting,
-    error: deleteError,
-  } = useDelete();
-
-  const deletePrescriptions = async (
-    selectedRows: PrescriptionRowFragment[]
-  ) => {
-    await deleteMutation(selectedRows);
-  };
-
   return {
     query: { data, isLoading, isFetching, isError },
-    delete: { deletePrescriptions, isDeleting, deleteError },
   };
 };

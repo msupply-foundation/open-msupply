@@ -104,7 +104,7 @@ fn generate_not_given(
         .clone()
         .or(existing_vaccination.not_given_reason.clone());
 
-    let update_transactions = update_input.update_transactions.clone().unwrap_or(false);
+    let update_transactions = update_input.update_transactions.unwrap_or(false);
 
     let vaccination = get_vaccination_with_updated_base_fields(existing_vaccination, update_input);
 

@@ -1205,7 +1205,7 @@ async fn test_graphql_permissions_resource_mapping() {
         .await;
 
         // we expect an error, but other errors need to be investigated separately
-        if !format!("{}", result).contains("Just abort the request") {
+        if !format!("{result}").contains("Just abort the request") {
             panic!("Unexpected error in: {} - {}", data.name, result);
         }
 

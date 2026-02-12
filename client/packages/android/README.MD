@@ -357,3 +357,7 @@ If you get AGP compatibility error in Android Studio during gradle sync, you wil
 ### Failed to find/build :capacitor
 
 Run `npx cap sync` from android directory
+
+### Honeywell Scanner
+
+This package contains support for Honeywell Scanners. See `HONEYWELL_SCANNER.md` for more details.

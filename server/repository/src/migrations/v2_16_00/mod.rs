@@ -6,9 +6,11 @@ mod add_log_tag_sensor_type;
 mod add_migration_and_server_status_to_system_log_type_enums;
 mod add_purchase_order_id_to_invoice;
 mod add_shipping_method_id_to_invoice;
-mod add_version_to_plugins;
 mod add_universal_code_to_item;
+mod add_version_to_plugins;
+mod available_volume_on_requisition_line_and_volume_per_pack_on_item;
 mod invoice_line_add_status;
+mod remove_goods_received;
 
 pub(crate) struct V2_16_00;
 impl Migration for V2_16_00 {
@@ -27,9 +29,11 @@ impl Migration for V2_16_00 {
             Box::new(add_purchase_order_id_to_invoice::Migrate),
             Box::new(add_shipping_method_id_to_invoice::Migrate),
             Box::new(add_version_to_plugins::Migrate),
+            Box::new(available_volume_on_requisition_line_and_volume_per_pack_on_item::Migrate),
             Box::new(add_universal_code_to_item::Migrate),
             Box::new(add_comments_required_to_asset_log_reason::Migrate),
             Box::new(invoice_line_add_status::Migrate),
+            Box::new(remove_goods_received::Migrate),
         ]
     }
 }

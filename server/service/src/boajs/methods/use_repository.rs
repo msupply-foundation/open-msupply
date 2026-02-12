@@ -30,8 +30,8 @@ pub(crate) fn bind_method(context: &mut Context) -> Result<(), JsError> {
     context.register_global_callable(
         JsString::from("use_repository"),
         0,
-        NativeFunction::from_copy_closure(move |_, args, mut ctx| {
-            let input: UseRepositoryInput = get_serde_argument(&mut ctx, args, 0)?;
+        NativeFunction::from_copy_closure(move |_, args, ctx| {
+            let input: UseRepositoryInput = get_serde_argument(ctx, args, 0)?;
 
             // When using BoaJsContext, it's best to use 'scope'
             let output: UseRepositoryOutput = {
@@ -70,7 +70,7 @@ pub(crate) fn bind_method(context: &mut Context) -> Result<(), JsError> {
             let value: serde_json::Value =
                 serde_json::to_value(&output).map_err(std_error_to_js_error)?;
             // We return the moved variable as a `JsValue`.
-            Ok(JsValue::from_json(&value, ctx)?)
+            JsValue::from_json(&value, ctx)
         }),
     )?;
     Ok(())

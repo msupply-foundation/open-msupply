@@ -50,7 +50,7 @@ mod query {
         pack_size: f64,
         number_of_packs: f64,
         batch: String,
-    ) -> () {
+    ) {
         let invoice_type = if number_of_packs > 0.0 {
             InvoiceType::InboundShipment
         } else {
@@ -75,15 +75,15 @@ mod query {
 
         let invoice_number = next_invoice_number();
         let invoice = InvoiceRow {
-            id: format!("invoice_{}", invoice_number),
+            id: format!("invoice_{invoice_number}"),
             invoice_number,
             name_link_id: name.to_string(),
             r#type: invoice_type,
             store_id: STORE_ID.to_string(),
-            created_datetime: datetime.clone(),
-            picked_datetime: Some(datetime.clone()),
-            received_datetime: Some(datetime.clone()),
-            verified_datetime: Some(datetime.clone()),
+            created_datetime: datetime,
+            picked_datetime: Some(datetime),
+            received_datetime: Some(datetime),
+            verified_datetime: Some(datetime),
             status: InvoiceStatus::Verified,
             ..Default::default()
         };
@@ -104,7 +104,7 @@ mod query {
         stock_line.upsert(&ctx.connection).unwrap();
 
         let invoice_line = InvoiceLineRow {
-            id: format!("invoice_line_{}", invoice_number),
+            id: format!("invoice_line_{invoice_number}"),
             invoice_id: invoice.id.clone(),
             item_link_id: ITEM_ID.to_string(),
             stock_line_id: Some(stock_line_id),
