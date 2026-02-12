@@ -19,7 +19,7 @@ use crate::{
         supplier_return::update::{UpdateSupplierReturn, UpdateSupplierReturnStatus},
     },
     invoice_line::stock_out_line::{StockOutType, UpdateStockOutLine},
-    processors::test_helpers::exec_concurrent,
+    processors::{test_helpers::exec_concurrent, transfer::invoice::common::get_cost_plus_margin},
     requisition::request_requisition::{UpdateRequestRequisition, UpdateRequestRequisitionStatus},
     service_provider::ServiceProvider,
     test_helpers::{setup_all_with_data_and_service_provider, ServiceTestContext},
@@ -594,6 +594,8 @@ pub(crate) struct InvoiceTransferTester {
     inbound_shipment: Option<InvoiceRow>,
     response_requisition: Option<RequisitionRow>,
     extra_mock_data: MockData,
+    // outbound_name: NameRow
+    outbound_name: Option<NameRow>,
 }
 
 impl InvoiceTransferTester {
@@ -807,6 +809,7 @@ impl InvoiceTransferTester {
             supplier_return_line,
             supplier_return,
             outbound_shipment,
+            outbound_name: outbound_name.cloned(),
             customer_return: None,
             inbound_shipment: None,
             response_requisition: None,
@@ -982,6 +985,7 @@ impl InvoiceTransferTester {
             &inbound_shipment.store_id,
             &self.outbound_shipment_line1,
             self.outbound_shipment_line1.item_link_id.clone(),
+            self.outbound_name.as_ref(),
         );
 
         check_line(
@@ -996,6 +1000,7 @@ impl InvoiceTransferTester {
             &inbound_shipment.store_id,
             &self.outbound_shipment_line2,
             self.outbound_shipment_line2.item_link_id.clone(),
+            self.outbound_name.as_ref(),
         );
 
         check_line(
@@ -1010,6 +1015,7 @@ impl InvoiceTransferTester {
             &inbound_shipment.store_id,
             &self.outbound_shipment_line3,
             self.outbound_shipment_line3.item_link_id.clone(),
+            self.outbound_name.as_ref(),
         );
         check_line(
             connection,
@@ -1523,6 +1529,7 @@ fn check_line_pricing(
     inbound_store: &str,
     outbound_line: &InvoiceLineRow,
     item_id: String,
+    outbound_name: Option<&NameRow>,
 ) {
     let inbound_line = InvoiceLineRepository::new(connection)
         .query_one(
@@ -1589,8 +1596,14 @@ fn check_line_pricing(
 
         assert_eq!(inbound_line.sell_price_per_pack, price_per_new_pack)
     } else if margin > 0.0 {
-        let margin_price =
-            inbound_line.cost_price_per_pack + (inbound_line.cost_price_per_pack * margin) / 100.0;
+        let supplier_id = outbound_name.map_or_else(|| String::new(), |n| n.id.clone());
+        let margin_price = get_cost_plus_margin(
+            connection,
+            inbound_line.cost_price_per_pack,
+            item_properties,
+            &supplier_id,
+        )
+        .unwrap();
 
         assert_eq!(inbound_line.sell_price_per_pack, margin_price)
     } else {

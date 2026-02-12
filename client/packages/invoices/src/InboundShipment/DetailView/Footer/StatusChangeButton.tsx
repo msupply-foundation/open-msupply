@@ -10,179 +10,106 @@ import {
   useDisabledNotificationToast,
   UserPermission,
   useAuthContext,
+  usePreferences,
 } from '@openmsupply-client/common';
 import {
-  getStatusTranslation,
-  getNextInboundStatus,
   isInboundPlaceholderRow,
+  getButtonLabel,
+  getNextStatusOption,
+  inboundStatuses,
+  getPreviousStatus,
+  getStatusTranslator,
 } from '../../../utils';
 import { InboundLineFragment, useInbound } from '../../api';
 
 const getStatusOptions = (
   currentStatus: InvoiceNodeStatus,
-  getButtonLabel: (status: InvoiceNodeStatus) => string
+  getButtonLabel: (status: InvoiceNodeStatus) => string,
+  isManuallyCreated: boolean
 ): SplitButtonOption<InvoiceNodeStatus>[] => {
-  const options: [
-    SplitButtonOption<InvoiceNodeStatus>,
-    SplitButtonOption<InvoiceNodeStatus>,
-    SplitButtonOption<InvoiceNodeStatus>,
-    SplitButtonOption<InvoiceNodeStatus>,
-    SplitButtonOption<InvoiceNodeStatus>,
-    SplitButtonOption<InvoiceNodeStatus>,
-  ] = [
-    {
-      value: InvoiceNodeStatus.New,
-      label: getButtonLabel(InvoiceNodeStatus.New),
-      isDisabled: true,
-    },
-    {
-      value: InvoiceNodeStatus.Picked,
-      label: getButtonLabel(InvoiceNodeStatus.Picked),
-      isDisabled: true,
-    },
-    {
-      value: InvoiceNodeStatus.Shipped,
-      label: getButtonLabel(InvoiceNodeStatus.Shipped),
-      isDisabled: true,
-    },
-    {
-      value: InvoiceNodeStatus.Delivered,
-      label: getButtonLabel(InvoiceNodeStatus.Delivered),
-      isDisabled: true,
-    },
-    {
-      value: InvoiceNodeStatus.Received,
-      label: getButtonLabel(InvoiceNodeStatus.Received),
-      isDisabled: true,
-    },
-    {
-      value: InvoiceNodeStatus.Verified,
-      label: getButtonLabel(InvoiceNodeStatus.Verified),
-      isDisabled: true,
-    },
-  ];
+  // Manual workflows skip Picked and Shipped statuses
+  const statuses = isManuallyCreated
+    ? [
+        InvoiceNodeStatus.New,
+        InvoiceNodeStatus.Delivered,
+        InvoiceNodeStatus.Received,
+        InvoiceNodeStatus.Verified,
+      ]
+    : [
+        InvoiceNodeStatus.New,
+        InvoiceNodeStatus.Picked,
+        InvoiceNodeStatus.Shipped,
+        InvoiceNodeStatus.Delivered,
+        InvoiceNodeStatus.Received,
+        InvoiceNodeStatus.Verified,
+      ];
 
-  // User can only go forward through the statuses, so we enable the ones that are later in the order
-  // Should be refactored to make this easier to maintain, for some examples the next available status might not be as simple as this...
+  const options = statuses.map(status => ({
+    value: status,
+    label: getButtonLabel(status),
+    isDisabled: true,
+  }));
 
-  if (currentStatus === InvoiceNodeStatus.Shipped) {
-    // When the status is shipped the user can select from delivered, received and verified options
-    options[3].isDisabled = false;
-    options[4].isDisabled = false;
-    options[5].isDisabled = false;
-  }
-
-  if (currentStatus === InvoiceNodeStatus.Delivered) {
-    // When the status is Delivered, the user can select from received and verified options
-    options[4].isDisabled = false;
-    options[5].isDisabled = false;
-  }
-
-  if (currentStatus === InvoiceNodeStatus.Received) {
-    // When the status is Received, the user can only select verified option
-    options[5].isDisabled = false;
+  if (isManuallyCreated) {
+    if (currentStatus === InvoiceNodeStatus.New) {
+      if (options[1]) options[1].isDisabled = false;
+      if (options[2]) options[2].isDisabled = false;
+      if (options[3]) options[3].isDisabled = false;
+    }
+    if (currentStatus === InvoiceNodeStatus.Delivered) {
+      if (options[2]) options[2].isDisabled = false;
+      if (options[3]) options[3].isDisabled = false;
+    }
+    if (currentStatus === InvoiceNodeStatus.Received) {
+      if (options[3]) options[3].isDisabled = false;
+    }
+  } else {
+    if (currentStatus === InvoiceNodeStatus.Shipped) {
+      if (options[3]) options[3].isDisabled = false;
+      if (options[4]) options[4].isDisabled = false;
+      if (options[5]) options[5].isDisabled = false;
+    }
+    if (currentStatus === InvoiceNodeStatus.Delivered) {
+      if (options[4]) options[4].isDisabled = false;
+      if (options[5]) options[5].isDisabled = false;
+    }
+    if (currentStatus === InvoiceNodeStatus.Received) {
+      if (options[5]) options[5].isDisabled = false;
+    }
   }
 
   return options;
 };
-
-const getManualStatusOptions = (
-  currentStatus: InvoiceNodeStatus,
-  getButtonLabel: (status: InvoiceNodeStatus) => string
-): SplitButtonOption<InvoiceNodeStatus>[] => {
-  const options: [
-    SplitButtonOption<InvoiceNodeStatus>,
-    SplitButtonOption<InvoiceNodeStatus>,
-    SplitButtonOption<InvoiceNodeStatus>,
-    SplitButtonOption<InvoiceNodeStatus>,
-  ] = [
-    {
-      value: InvoiceNodeStatus.New,
-      label: getButtonLabel(InvoiceNodeStatus.New),
-      isDisabled: true,
-    },
-    {
-      value: InvoiceNodeStatus.Delivered,
-      label: getButtonLabel(InvoiceNodeStatus.Delivered),
-      isDisabled: true,
-    },
-    {
-      value: InvoiceNodeStatus.Received,
-      label: getButtonLabel(InvoiceNodeStatus.Received),
-      isDisabled: true,
-    },
-    {
-      value: InvoiceNodeStatus.Verified,
-      label: getButtonLabel(InvoiceNodeStatus.Verified),
-      isDisabled: true,
-    },
-  ];
-
-  if (currentStatus === InvoiceNodeStatus.New) {
-    // When the status is new, delivered and verified are available to
-    // select.
-    options[1].isDisabled = false;
-    options[2].isDisabled = false;
-    options[3].isDisabled = false;
-  }
-
-  // When the status is delivered, only verified is available to select.
-  if (currentStatus === InvoiceNodeStatus.Delivered) {
-    options[2].isDisabled = false;
-    options[3].isDisabled = false;
-  }
-
-  // When the status is delivered, only verified is available to select.
-  if (currentStatus === InvoiceNodeStatus.Received) {
-    options[3].isDisabled = false;
-  }
-
-  return options;
-};
-
-const getNextStatusOption = (
-  status: InvoiceNodeStatus,
-  options: SplitButtonOption<InvoiceNodeStatus>[]
-): SplitButtonOption<InvoiceNodeStatus> | null => {
-  if (!status) return options[0] ?? null;
-
-  const nextStatus = getNextInboundStatus(status);
-  const nextStatusOption = options.find(o => o.value === nextStatus);
-
-  if (!nextStatusOption) {
-    console.warn(
-      `No status option found for status: ${nextStatus} for status: ${status}`
-    );
-  }
-  return nextStatusOption || null;
-};
-
-const getButtonLabel =
-  (t: ReturnType<typeof useTranslation>) =>
-  (invoiceStatus: InvoiceNodeStatus): string => {
-    return t('button.save-and-confirm-status', {
-      status: t(getStatusTranslation(invoiceStatus)),
-    });
-  };
 
 const useStatusChangeButton = () => {
+  const t = useTranslation();
+  const { invoiceStatusOptions } = usePreferences();
   const { status, onHold, linkedShipment, update, lines } =
     useInbound.document.fields(['status', 'onHold', 'linkedShipment', 'lines']);
   const { success, error } = useNotification();
-  const t = useTranslation();
   const isManuallyCreated = !linkedShipment?.id;
 
-  const options = useMemo(
-    () =>
+  const options = useMemo(() => {
+    let statusOptions = getStatusOptions(
+      status,
+      getButtonLabel(t),
       isManuallyCreated
-        ? getManualStatusOptions(status, getButtonLabel(t))
-        : getStatusOptions(status, getButtonLabel(t)),
-    [isManuallyCreated, status, t]
-  );
+    );
+    if (invoiceStatusOptions) {
+      statusOptions = statusOptions.filter(
+        option => !!option.value && invoiceStatusOptions.includes(option.value)
+      );
+    }
+    return statusOptions;
+  }, [status, isManuallyCreated, invoiceStatusOptions]);
+
+  const currentStatus = invoiceStatusOptions?.includes(status)
+    ? status
+    : getPreviousStatus(status, invoiceStatusOptions ?? [], inboundStatuses);
 
   const [selectedOption, setSelectedOption] =
     useState<SplitButtonOption<InvoiceNodeStatus> | null>(() =>
-      getNextStatusOption(status, options)
+      getNextStatusOption(currentStatus, options)
     );
 
   const onConfirmStatusChange = async () => {
@@ -199,7 +126,7 @@ const useStatusChangeButton = () => {
     title: t('heading.are-you-sure'),
     message: `${t('messages.confirm-inbound-status-as', {
       status: selectedOption?.value
-        ? getStatusTranslation(selectedOption?.value)
+        ? getStatusTranslator(t)(selectedOption?.value)
         : '',
     })}\n${
       status === InvoiceNodeStatus.New
@@ -212,7 +139,7 @@ const useStatusChangeButton = () => {
   // When the status of the invoice changes (after an update), set the selected option to the next status.
   // It would be set to the current status, which is now a disabled option.
   useEffect(() => {
-    setSelectedOption(() => getNextStatusOption(status, options));
+    setSelectedOption(() => getNextStatusOption(currentStatus, options));
   }, [status, options]);
 
   return {
@@ -249,10 +176,9 @@ export const StatusChangeButton = () => {
     onHold,
     lines,
   } = useStatusChangeButton();
-  const isStatusChangeDisabled = useInbound.utils.isStatusChangeDisabled();
   const t = useTranslation();
-
   const { userHasPermission } = useAuthContext();
+  const isStatusChangeDisabled = useInbound.utils.isStatusChangeDisabled();
 
   const onVerify = () => {
     if (userHasPermission(UserPermission.InboundShipmentVerify)) {

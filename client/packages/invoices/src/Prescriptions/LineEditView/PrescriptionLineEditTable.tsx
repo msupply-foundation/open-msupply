@@ -46,20 +46,21 @@ export const PrescriptionLineEditTable = ({
     (row: DraftStockOutLineFragment) => {
       if (disabled) return true;
       if (!!row.vvmStatus?.unusable) return true;
+      if (row.stockLineOnHold || row.location?.onHold) return true;
 
       // Prevent issuing expired stock if preference is set, up to threshold
       if (expiredStockPreventIssue && !!row.expiryDate) {
         const threshold = expiredStockIssueThreshold ?? 0;
-        const daysPastExpiry = DateUtils.differenceInDays(
-          Date.now(),
-          row.expiryDate
+        const daysBeforeExpiry = DateUtils.differenceInDays(
+          row.expiryDate,
+          Date.now()
         );
-        if (daysPastExpiry >= threshold) return true;
+        if (daysBeforeExpiry <= threshold) return true;
       }
 
       return false;
     },
-    [expiredStockPreventIssue, expiredStockIssueThreshold, item]
+    [disabled, expiredStockPreventIssue, expiredStockIssueThreshold]
   );
 
   const columns = usePrescriptionLineEditColumns({

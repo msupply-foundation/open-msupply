@@ -108,6 +108,18 @@ fragment ResponseLine on RequisitionLineNode {
   reason {
     ...ReasonOptionRow
   }
+
+  availableVolumeAtLocationType {
+    ...AvailableVolumeAtLocationType
+  }
+}
+
+fragment AvailableVolumeAtLocationType on AvailableVolumeAtLocationTypeNode {
+  locationType {
+    name
+  }
+  availableVolume
+  itemVolumePerUnit
 }
 
 fragment Response on RequisitionNode {
@@ -680,4 +692,14 @@ mutation insertRequestFromResponseRequisition(
       }
     }
   }
+}
+
+query hasCustomerProgramRequisitionSettings(
+  $storeId: String!
+  $customerNameIds: [String!]!
+) {
+  hasCustomerProgramRequisitionSettings(
+    storeId: $storeId
+    customerNameIds: $customerNameIds
+  )
 }

@@ -71,7 +71,9 @@ export const StoreEditModal = ({
         <DialogButton
           variant="ok"
           onClick={async () => {
-            await save();
+            if (draftProperties && Object.keys(draftProperties).length > 0) {
+              await save();
+            }
             onClose();
           }}
         />

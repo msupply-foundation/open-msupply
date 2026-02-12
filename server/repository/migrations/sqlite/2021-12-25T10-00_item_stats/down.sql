@@ -1,3 +1,0 @@
-DROP VIEW IF EXISTS consumption CASCADE;
-DROP VIEW IF EXISTS stock_on_hand CASCADE;
-

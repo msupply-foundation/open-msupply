@@ -1,5 +1,9 @@
 [
 	{
+		"pkg": "@capacitor-mlkit/barcode-scanning",
+		"classpath": "io.capawesome.capacitorjs.plugins.mlkit.barcodescanning.BarcodeScannerPlugin"
+	},
+	{
 		"pkg": "@capacitor/camera",
 		"classpath": "com.capacitorjs.plugins.camera.CameraPlugin"
 	},
@@ -10,10 +14,6 @@
 	{
 		"pkg": "@bcyesil/capacitor-plugin-printer",
 		"classpath": "com.bcyesil.capacitor.printer.PrinterPlugin"
-	},
-	{
-		"pkg": "@capacitor-community/barcode-scanner",
-		"classpath": "com.getcapacitor.community.barcodescanner.BarcodeScanner"
 	},
 	{
 		"pkg": "@capacitor-community/file-opener",

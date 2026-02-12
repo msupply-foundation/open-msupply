@@ -1,0 +1,13 @@
+{
+  "is_custom": false,
+  "version": "2.13.0",
+  "code": "supplier-return",
+  "context": "SUPPLIER_RETURN",
+  "name": "Supplier Return",
+  "queries": {
+    "gql": "query.graphql"
+  },
+  "arguments": {},
+  "header": "header.html",
+  "footer": "footer.html"
+}

@@ -24,14 +24,33 @@ jobs:
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
+      - name: Install cargo-nextest
+        run: command -v cargo-nextest || cargo install cargo-nextest --locked
       - uses: actions-rs/cargo@v1
         with:
           command: clean
           args: -p repository -p graphql_types -p graphql_plugin -p graphql_invoice --manifest-path server/Cargo.toml
-      - uses: actions-rs/cargo@v1
+      - name: Run tests and generate report
+        run: cargo nextest run --profile=ci-sqlite --features=sqlite --manifest-path server/Cargo.toml
+      - name: Upload JUnit test results
+        uses: actions/upload-artifact@v4
+        if: (!cancelled())
         with:
-          command: test
-          args: --features=sqlite --manifest-path server/Cargo.toml
+          name: test-results-sqlite
+          path: server/target/nextest/ci-sqlite/sqlite-test-results.xml
+          if-no-files-found: warn
+          retention-days: 7
+      - name: Publish test results
+        uses: EnricoMi/publish-unit-test-result-action/macos@v2
+        if: (!cancelled())
+        with:
+          files: server/target/nextest/ci-sqlite/sqlite-test-results.xml
+          check_name: "Test report (sqlite)"
+          comment_mode: always
+          report_individual_runs: true
+      - name: Clean up test results
+        if: always()
+        run: rm -f server/target/nextest/ci-sqlite/sqlite-test-results.xml
   build_and_test_pg:
     name: Remote Server Tests (postgres)
     runs-on: self-hosted
@@ -45,11 +64,30 @@ jobs:
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
+      - name: Install cargo-nextest
+        run: command -v cargo-nextest || cargo install cargo-nextest --locked
       - uses: actions-rs/cargo@v1
         with:
           command: clean
           args: -p repository -p graphql_types -p graphql_plugin -p graphql_invoice --manifest-path server/Cargo.toml
-      - uses: actions-rs/cargo@v1
+      - name: Run test and generate report
+        run: cargo nextest run --profile=ci-postgres --features=postgres --manifest-path server/Cargo.toml
+      - name: Upload JUnit test results
+        uses: actions/upload-artifact@v4
+        if: (!cancelled())
         with:
-          command: test
-          args: --features=postgres --manifest-path server/Cargo.toml
+          name: test-results-postgres
+          path: server/target/nextest/ci-postgres/postgres-test-results.xml
+          if-no-files-found: warn
+          retention-days: 7
+      - name: Publish test results
+        uses: EnricoMi/publish-unit-test-result-action/macos@v2
+        if: (!cancelled())
+        with:
+          files: server/target/nextest/ci-postgres/postgres-test-results.xml
+          check_name: "Test report (postgres)"
+          comment_mode: always
+          report_individual_runs: true
+      - name: Clean up test results
+        if: always()
+        run: rm -f server/target/nextest/ci-postgres/postgres-test-results.xml

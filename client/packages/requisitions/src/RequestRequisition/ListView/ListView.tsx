@@ -24,6 +24,7 @@ import {
 } from '../../utils';
 import { Footer } from './Footer';
 import { AppRoute } from '@openmsupply-client/config';
+import { Toolbar } from './Toolbar';
 
 export const ListView = () => {
   const t = useTranslation();
@@ -40,6 +41,7 @@ export const ListView = () => {
     filters: [
       { key: 'otherPartyName' },
       { key: 'status', condition: 'equalTo' },
+      { key: 'createdDatetime', condition: 'between' },
     ],
   });
   const queryParams = { ...filter, sortBy, first, offset };
@@ -77,6 +79,7 @@ export const ListView = () => {
       {
         accessorKey: 'createdDatetime',
         header: t('label.created'),
+        enableColumnFilter: true,
         enableSorting: true,
         columnType: ColumnType.Date,
       },
@@ -173,6 +176,7 @@ export const ListView = () => {
 
   return (
     <>
+      {simplifiedTabletView ? null : <Toolbar />}
       <AppBarButtons modalController={modalController} />
 
       <MaterialTable table={table} />

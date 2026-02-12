@@ -19,7 +19,8 @@ export const AllocateInSelector = ({
   const { format } = useFormatNumber();
   const { getPlural } = useIntlUtils();
 
-  const { manageVaccinesInDoses } = usePreferences();
+  const { manageVaccinesInDoses, expiredStockIssueThreshold } =
+    usePreferences();
 
   const { allocateIn, availablePackSizes, setAllocateIn, item } =
     useAllocationContext(({ allocateIn, draftLines, item, setAllocateIn }) => ({
@@ -29,7 +30,9 @@ export const AllocateInSelector = ({
       availablePackSizes: [
         ...new Set(
           draftLines
-            .filter(line => canAutoAllocate(line))
+            .filter(line =>
+              canAutoAllocate(line, expiredStockIssueThreshold ?? 0)
+            )
             .map(line => line.packSize)
         ),
       ].sort((a, b) => a - b),

@@ -4,8 +4,8 @@ use super::{
     StorageConnection,
 };
 use crate::{
-    repository_error::RepositoryError, ChangeLogInsertRow, ChangelogRepository, ChangelogTableName,
-    Delete, RowActionType, Upsert,
+    repository_error::RepositoryError, shipping_method_row::shipping_method, ChangeLogInsertRow,
+    ChangelogRepository, ChangelogTableName, Delete, RowActionType, Upsert,
 };
 use chrono::{NaiveDate, NaiveDateTime};
 use diesel::{dsl::max, prelude::*};
@@ -54,6 +54,7 @@ table! {
         expected_delivery_date -> Nullable<Date>,
         default_donor_link_id -> Nullable<Text>,
         goods_received_id -> Nullable<Text>,
+        shipping_method_id -> Nullable<Text>,
     }
 }
 
@@ -62,6 +63,7 @@ joinable!(invoice -> store (store_id));
 joinable!(invoice -> user_account (user_id));
 joinable!(invoice -> currency (currency_id));
 joinable!(invoice -> clinician_link (clinician_link_id));
+joinable!(invoice -> shipping_method (shipping_method_id));
 allow_tables_to_appear_in_same_query!(invoice, item_link);
 allow_tables_to_appear_in_same_query!(invoice, name_link);
 
@@ -145,6 +147,7 @@ pub struct InvoiceRow {
     pub expected_delivery_date: Option<NaiveDate>,
     pub default_donor_link_id: Option<String>,
     pub goods_received_id: Option<String>,
+    pub shipping_method_id: Option<String>,
 }
 
 pub struct InvoiceRowRepository<'a> {

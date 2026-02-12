@@ -26,7 +26,7 @@ impl MigrationFragment for Migrate {
             sql!(
                 connection,
                 r#"
-                PRAGMA foreign_keys = OFF;              
+                -- PRAGMA foreign_keys = OFF; -- No longer effective now that we're using transactions
                 ALTER TABLE encounter RENAME TO encounter_old;
 
                 CREATE TABLE encounter (
@@ -71,7 +71,7 @@ impl MigrationFragment for Migrate {
                  FROM encounter_old;
 
                 DROP TABLE encounter_old;
-                PRAGMA foreign_keys = ON;
+                -- PRAGMA foreign_keys = ON;
                 "#
             )?;
         }

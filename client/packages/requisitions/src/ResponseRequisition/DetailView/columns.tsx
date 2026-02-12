@@ -58,7 +58,7 @@ export const useResponseColumns = () => {
         accessorKey: 'item.unitName',
         header: t('label.unit'),
         enableColumnFilter: true,
-        size: 130,
+        size: 100,
       },
       {
         id: 'dosesPerUnit',
@@ -73,7 +73,7 @@ export const useResponseColumns = () => {
         accessorKey: 'itemStats.stockOnHand',
         header: t('label.our-soh'),
         description: t('description.our-soh'),
-        size: 150,
+        size: 135,
         columnType: ColumnType.Number,
         Cell: UnitsAndDosesCell,
         enableSorting: true,
@@ -82,7 +82,7 @@ export const useResponseColumns = () => {
         accessorKey: 'availableStockOnHand',
         header: t('label.customer-soh'),
         description: t('description.customer-soh'),
-        size: 150,
+        size: 135,
         columnType: ColumnType.Number,
         Cell: UnitsAndDosesCell,
         enableSorting: true,
@@ -214,6 +214,13 @@ export const useResponseColumns = () => {
           );
         },
         enableSorting: true,
+      },
+      {
+        header: t('label.indicative-price-per-unit'),
+        description: t('description.indicative-price-per-unit'),
+        accessorKey: 'pricePerUnit',
+        columnType: ColumnType.Currency,
+        includeColumn: showIndicativePriceInRequisitions,
       },
       {
         header: t('label.indicative-price'),

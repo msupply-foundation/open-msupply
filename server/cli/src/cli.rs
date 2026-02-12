@@ -337,7 +337,7 @@ async fn main() -> anyhow::Result<()> {
         Action::Migrate => {
             info!("Applying database migrations");
             let connection_manager = get_storage_connection_manager(&settings.database);
-            if let Some(init_sql) = &settings.database.full_init_sql() {
+            if let Some(init_sql) = &settings.database.startup_sql() {
                 connection_manager.execute(init_sql).unwrap();
             }
             migrate(&connection_manager.connection().unwrap(), None)
@@ -718,7 +718,13 @@ async fn main() -> anyhow::Result<()> {
                 .map_err(|e| ReportError::FailedToGenerateReport(path, e.into()))?;
 
             let generated_file_path = current_dir()?.join(&output_name);
-
+#[cfg(windows)]
+            Command::new("cmd")
+                .args(["/C","start"])
+                .arg(generated_file_path.clone())
+                .status()
+                .expect(&format!("failed to open file {:?}", generated_file_path));
+#[cfg(not(windows))]
             Command::new("open")
                 .arg(generated_file_path.clone())
                 .status()

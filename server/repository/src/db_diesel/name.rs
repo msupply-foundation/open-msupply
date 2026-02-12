@@ -179,11 +179,6 @@ impl<'a> NameRepository<'a> {
             )
             .inner_join(name_oms_fields_alias)
             .filter(name::type_.ne(NameRowType::Patient))
-            .filter(
-                store::is_disabled
-                    .is_null()
-                    .or(store::is_disabled.eq(false)),
-            ) // Filter out disabled stores, these are usually due to store merge, and should not be visible
             .into_boxed();
 
         if let Some(f) = filter {

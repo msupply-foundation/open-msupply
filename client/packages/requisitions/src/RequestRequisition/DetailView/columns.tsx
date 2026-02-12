@@ -38,8 +38,8 @@ export const useRequestColumns = () => {
       {
         accessorKey: 'comment',
         header: t('label.comment'),
-        columnType: ColumnType.Comment,
         pin: 'left',
+        columnType: ColumnType.Comment,
       },
       {
         accessorKey: 'item.code',
@@ -52,7 +52,7 @@ export const useRequestColumns = () => {
       {
         accessorKey: 'itemName',
         header: t('label.name'),
-        size: 250,
+        size: 300,
         enableSorting: true,
         enableColumnFilter: true,
       },
@@ -135,6 +135,13 @@ export const useRequestColumns = () => {
           );
         },
         enableSorting: true,
+      },
+      {
+        header: t('label.indicative-price-per-unit'),
+        description: t('description.indicative-price-per-unit'),
+        accessorKey: 'pricePerUnit',
+        columnType: ColumnType.Currency,
+        includeColumn: showIndicativePriceInRequisitions,
       },
       {
         header: t('label.indicative-price'),
@@ -223,6 +230,7 @@ export const useRequestColumns = () => {
       ...(plugins.requestRequisitionLine?.tableColumn || []),
     ],
     [
+      t,
       manageVaccinesInDoses,
       warningForExcessRequest,
       showExtraColumns,

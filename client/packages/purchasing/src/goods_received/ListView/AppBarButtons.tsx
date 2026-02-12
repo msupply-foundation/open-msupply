@@ -2,7 +2,6 @@ import React from 'react';
 import {
   AppBarButtonsPortal,
   ButtonWithIcon,
-  DownloadIcon,
   PlusCircleIcon,
   Grid,
   useTranslation,
@@ -11,11 +10,9 @@ import {
   RouteBuilder,
   UserPermission,
   useCallbackWithPermission,
-  useExportCSV,
-  useNotification,
-  LoadingButton,
   useSimplifiedTabletUI,
 } from '@openmsupply-client/common';
+import { ExportSelector } from '@openmsupply-client/system';
 import { AppRoute } from '@openmsupply-client/config';
 import { PurchaseOrderSearchModal } from '../../purchase_order/Components';
 import { PurchaseOrderRowFragment } from '../../purchase_order/api';
@@ -26,7 +23,6 @@ export const AppBarButtons = () => {
   const t = useTranslation();
   const modalController = useToggle();
   const navigate = useNavigate();
-  const { error } = useNotification();
   const simplifiedTabletView = useSimplifiedTabletUI();
 
   const {
@@ -35,18 +31,6 @@ export const AppBarButtons = () => {
   const {
     create: { create, isCreating },
   } = useGoodsReceived();
-  const exportCSV = useExportCSV();
-
-  const csvExport = async () => {
-    const { data } = await fetchAllGoodsReceived();
-    if (!data || !data?.nodes.length) {
-      error(t('error.no-data'))();
-      return;
-    }
-
-    const csv = goodsReceivedToCsv(data.nodes, t);
-    exportCSV(csv, t('filename.goods-received'));
-  };
 
   const openModal = useCallbackWithPermission(
     UserPermission.PurchaseOrderMutate,
@@ -74,6 +58,11 @@ export const AppBarButtons = () => {
     modalController.toggleOff();
   };
 
+  const getCsvData = async () => {
+    const { data } = await fetchAllGoodsReceived();
+    return data?.nodes?.length ? goodsReceivedToCsv(data.nodes, t) : null;
+  };
+
   return (
     <AppBarButtonsPortal>
       <Grid container gap={1}>
@@ -84,12 +73,10 @@ export const AppBarButtons = () => {
           loading={isCreating}
         />
         {!simplifiedTabletView && (
-          <LoadingButton
-            startIcon={<DownloadIcon />}
+          <ExportSelector
+            getCsvData={getCsvData}
+            filename={t('filename.goods-received')}
             isLoading={isLoading}
-            variant="outlined"
-            onClick={csvExport}
-            label={t('button.export')}
           />
         )}
         <PurchaseOrderSearchModal

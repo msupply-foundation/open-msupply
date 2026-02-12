@@ -1,29 +1,25 @@
-import React, { FC } from 'react';
+import React, { FC, useMemo } from 'react';
 import {
-  TableProvider,
-  DataTable,
-  useColumns,
-  createTableStore,
   NothingHere,
   useTranslation,
   useUrlQueryParams,
   useEditModal,
   InsertAssetLogReasonInput,
-  GenericColumnKey,
+  MaterialTable,
+  ColumnDef,
+  useNonPaginatedMaterialTable,
+  CheckCell,
 } from '@openmsupply-client/common';
 import { AssetLogReasonFragment, useAssetLogReasonList } from '../api';
-import { Toolbar } from './Toolbar';
-import { parseStatus } from '../utils';
+import { getStatusOptions, parseStatus } from '../utils';
 import { AppBarButtons } from './AppBarButtons';
 import { LogReasonCreateModal } from './LogReasonCreateModal';
 import { Footer } from './Footer';
 
-const AssetListComponent: FC = () => {
+export const AssetLogReasonsListView: FC = () => {
+  const t = useTranslation();
   const {
-    updateSortQuery,
-    updatePaginationQuery,
-    filter,
-    queryParams: { sortBy, page, first, offset, filterBy },
+    queryParams: { filterBy },
   } = useUrlQueryParams({
     initialSort: { key: 'reason', dir: 'asc' },
     filters: [
@@ -36,30 +32,47 @@ const AssetListComponent: FC = () => {
   });
 
   const { data, isError, isLoading } = useAssetLogReasonList(filterBy);
-  const pagination = { page, first, offset };
-  const t = useTranslation();
 
-  const columns = useColumns<AssetLogReasonFragment>(
-    [
-      GenericColumnKey.Selection,
+  const columns = useMemo(
+    (): ColumnDef<AssetLogReasonFragment>[] => [
       {
-        key: 'status',
-        label: 'label.status',
-        sortable: false,
-        accessor: ({ rowData }) => parseStatus(rowData.assetLogStatus, t),
+        id: 'assetLogStatus',
+        accessorFn: row => parseStatus(row.assetLogStatus, t),
+        header: t('label.status'),
+        enableColumnFilter: true,
+        filterVariant: 'select',
+        filterSelectOptions: getStatusOptions(t),
       },
       {
-        key: 'reason',
-        label: 'label.reason',
-        sortable: false,
+        accessorKey: 'reason',
+        header: t('label.reason'),
+      },
+      {
+        accessorKey: 'commentsRequired',
+        description: t('description.comments-required'),
+        header: t('label.comments-required'),
+        Cell: CheckCell,
+        pin: 'right',
       },
     ],
-    {
-      sortBy,
-      onChangeSortBy: updateSortQuery,
-    },
-    [sortBy]
+    []
   );
+
+  const { table, selectedRows } =
+    useNonPaginatedMaterialTable<AssetLogReasonFragment>({
+      tableId: 'asset-log-reasons-list',
+      data: data?.nodes,
+      manualFiltering: true,
+      columns,
+      isLoading,
+      isError,
+      noDataElement: (
+        <NothingHere
+          body={t('error.no-asset-log-reasons')}
+          onCreate={() => onOpen()}
+        />
+      ),
+    });
 
   const { isOpen, entity, onClose, onOpen } =
     useEditModal<InsertAssetLogReasonInput>();
@@ -74,29 +87,11 @@ const AssetListComponent: FC = () => {
         />
       )}
       <AppBarButtons onCreate={() => onOpen()} />
-      <Toolbar filter={filter} />
-      <DataTable
-        id="item-list"
-        pagination={{ ...pagination, total: data?.totalCount ?? 0 }}
-        onChangePage={updatePaginationQuery}
-        columns={columns}
-        data={data?.nodes}
-        isError={isError}
-        isLoading={isLoading}
-        noDataElement={
-          <NothingHere
-            body={t('error.no-asset-log-reasons')}
-            onCreate={() => onOpen()}
-          />
-        }
+      <MaterialTable table={table} />
+      <Footer
+        selectedRows={selectedRows}
+        resetRowSelection={table.resetRowSelection}
       />
-      <Footer data={data?.nodes ?? []} />
     </>
   );
 };
-
-export const AssetLogReasonsListView: FC = () => (
-  <TableProvider createStore={createTableStore}>
-    <AssetListComponent />
-  </TableProvider>
-);

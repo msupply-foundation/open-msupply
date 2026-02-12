@@ -1,7 +1,6 @@
 import React, { useMemo } from 'react';
 import {
   useNavigate,
-  InvoiceNodeStatus,
   useTranslation,
   NothingHere,
   useToggle,
@@ -11,27 +10,39 @@ import {
   usePaginatedMaterialTable,
   MaterialTable,
   NameAndColorSetterCell,
+  usePreferences,
+  useIsExtraSmallScreen,
+  MobileCardList,
 } from '@openmsupply-client/common';
 import { AppBarButtons } from './AppBarButtons';
 import {
   getStatusTranslator,
+  inboundStatuses,
   isInboundDisabled,
   isInboundListItemDisabled,
 } from '../../utils';
 import { useInbound, InboundRowFragment } from '../api';
+import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
 
 export const InboundListView = () => {
   const t = useTranslation();
   const navigate = useNavigate();
+  const { invoiceStatusOptions } = usePreferences();
   const invoiceModalController = useToggle();
   const linkRequestModalController = useToggle();
   const { mutate: onUpdate } = useInbound.document.update();
 
+  const isExtraSmallScreen = useIsExtraSmallScreen();
+
   const {
+    filter,
     queryParams: { first, offset, sortBy, filterBy },
   } = useUrlQueryParams({
     initialSort: { key: 'invoiceNumber', dir: 'desc' },
+    ...(isExtraSmallScreen && {
+      initialFilter: [{ id: 'status', value: 'NEW,DELIVERED' }],
+    }),
     filters: [
       { key: 'invoiceNumber', condition: 'equalTo', isNumber: true },
       { key: 'otherPartyName' },
@@ -39,7 +50,7 @@ export const InboundListView = () => {
         key: 'createdDatetime',
         condition: 'between',
       },
-      { key: 'status', condition: 'equalTo' },
+      { key: 'status', condition: 'equalAny' },
     ],
   });
 
@@ -51,12 +62,16 @@ export const InboundListView = () => {
   };
 
   const { data, isFetching } = useInbound.document.list(listParams);
+  const statuses = inboundStatuses.filter(status =>
+    invoiceStatusOptions?.includes(status)
+  );
 
   const columns = useMemo(
     (): ColumnDef<InboundRowFragment>[] => [
       {
         header: t('label.supplier'),
         accessorKey: 'otherPartyName',
+        size: 400,
         enableColumnFilter: true,
         Cell: ({ row }) => (
           <NameAndColorSetterCell
@@ -65,6 +80,19 @@ export const InboundListView = () => {
             row={row.original}
           />
         ),
+        enableSorting: true,
+      },
+      {
+        header: t('label.status'),
+        accessorFn: row => getStatusTranslator(t)(row.status),
+        id: 'status',
+        size: 140,
+        filterVariant: 'select',
+        filterSelectOptions: statuses.map(status => ({
+          value: status,
+          label: getStatusTranslator(t)(status),
+        })),
+        enableColumnFilter: true,
         enableSorting: true,
       },
       {
@@ -93,17 +121,9 @@ export const InboundListView = () => {
         size: 100,
       },
       {
-        header: t('label.status'),
-        accessorFn: row => getStatusTranslator(t)(row.status),
-        id: 'status',
-        size: 140,
-        filterVariant: 'select',
-        filterSelectOptions: Object.values(InvoiceNodeStatus).map(status => ({
-          value: status,
-          label: getStatusTranslator(t)(status),
-        })),
-        enableColumnFilter: true,
-        enableSorting: true,
+        header: t('label.comment'),
+        accessorKey: 'comment',
+        columnType: ColumnType.Comment,
       },
       {
         header: t('label.reference'),
@@ -118,13 +138,8 @@ export const InboundListView = () => {
         columnType: ColumnType.Currency,
         defaultHideOnMobile: true,
       },
-      {
-        header: t('label.comment'),
-        accessorKey: 'comment',
-        columnType: ColumnType.Comment,
-      },
     ],
-    []
+    [t]
   );
 
   const { table, selectedRows } = usePaginatedMaterialTable<InboundRowFragment>(
@@ -143,16 +158,25 @@ export const InboundListView = () => {
           onCreate={invoiceModalController.toggleOn}
         />
       ),
+      isMobile: isExtraSmallScreen,
     }
   );
 
   return (
     <>
-      <AppBarButtons
-        invoiceModalController={invoiceModalController}
-        linkRequestModalController={linkRequestModalController}
-      />
-      <MaterialTable table={table} />
+      <Toolbar filter={filter} />
+      {isExtraSmallScreen ? (
+        // We don't want to show any app bar button on mobile list view
+        <MobileCardList table={table} />
+      ) : (
+        <>
+          <AppBarButtons
+            invoiceModalController={invoiceModalController}
+            linkRequestModalController={linkRequestModalController}
+          />
+          <MaterialTable table={table} />
+        </>
+      )}
       <Footer
         selectedRows={selectedRows}
         resetRowSelection={table.resetRowSelection}

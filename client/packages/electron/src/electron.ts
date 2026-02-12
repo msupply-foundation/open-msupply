@@ -25,6 +25,7 @@ import { KeyboardScanner } from './keyboardScanner/keyboardScanner';
 import https from 'https';
 import http from 'http';
 import defaultTranslations from '../../common/src/intl/locales/en/desktop.json';
+import fs from 'fs-extra';
 
 // We'll lazy load, once we have the locale available
 const importDesktopTranslations = async (locale: string) =>
@@ -492,11 +493,10 @@ function configureMenus(
                 return;
               }
               store.clear();
-              const contents = webContents.getFocusedWebContents();
-              if (contents) {
-                contents.executeJavaScript(`localStorage.clear();`);
-              }
-              app.exit();
+              const userDataPath = app.getPath('userData');
+              fs.removeSync(userDataPath);
+
+              app.quit();
             });
         },
       },

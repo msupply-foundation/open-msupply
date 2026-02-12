@@ -11,8 +11,8 @@ import {
   BasicTextInput,
   PersistentPaperPopover,
   usePopover,
+  useRootNavigationPath,
 } from '@openmsupply-client/common';
-import { AppRoute } from '@openmsupply-client/config';
 import { PropsWithChildrenOnly, UserStoreNodeFragment } from '@common/types';
 
 export const StoreSelector: FC<PropsWithChildrenOnly> = ({ children }) => {
@@ -21,6 +21,7 @@ export const StoreSelector: FC<PropsWithChildrenOnly> = ({ children }) => {
   const { store, setStore, token } = useAuthContext();
   const { data, isLoading } = useUserDetails(token);
   const popoverControls = usePopover();
+  const rootNavigationPath = useRootNavigationPath();
 
   const storeSorter = (a: UserStoreNodeFragment, b: UserStoreNodeFragment) => {
     if (a.name < b.name) return -1;
@@ -59,7 +60,7 @@ export const StoreSelector: FC<PropsWithChildrenOnly> = ({ children }) => {
       onClick={async () => {
         await setStore(s);
         popoverControls.hide();
-        navigate(AppRoute.Dashboard);
+        navigate(rootNavigationPath);
       }}
       key={s.id}
       sx={buttonStyle}

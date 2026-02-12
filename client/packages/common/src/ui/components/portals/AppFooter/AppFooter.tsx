@@ -2,7 +2,6 @@ import { Box, BoxProps, Portal } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import React, { ReactNode, useEffect, useRef } from 'react';
 import { useHostContext, useKeyboard } from '@common/hooks';
-import { useIsCentralServerApi } from '@openmsupply-client/common';
 
 const Container = styled('div')(() => ({
   display: 'flex',
@@ -15,17 +14,21 @@ const Container = styled('div')(() => ({
 }));
 
 interface AppFooterProps {
+  isCentralServer?: boolean;
   backgroundColor?: string;
   textColor?: string;
 }
 
-export const AppFooter = ({ backgroundColor, textColor }: AppFooterProps) => {
+export const AppFooter = ({
+  isCentralServer,
+  backgroundColor,
+  textColor,
+}: AppFooterProps) => {
   const { setAppFooterRef, setAppSessionDetailsRef, fullScreen } =
     useHostContext();
   const { keyboardIsOpen } = useKeyboard();
   const appFooterRef = useRef(null);
   const appSessionDetailsRef = useRef(null);
-  const isCentralServer = useIsCentralServerApi();
 
   useEffect(() => {
     setAppFooterRef(appFooterRef);

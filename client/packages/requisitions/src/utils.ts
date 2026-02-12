@@ -27,10 +27,10 @@ export const responseStatuses = [
 ];
 
 const requisitionStatusToLocaleKey: Record<RequisitionNodeStatus, LocaleKey> = {
-  [RequisitionNodeStatus.Draft]: 'label.draft',
-  [RequisitionNodeStatus.New]: 'label.new',
-  [RequisitionNodeStatus.Sent]: 'label.sent',
-  [RequisitionNodeStatus.Finalised]: 'label.finalised',
+  [RequisitionNodeStatus.Draft]: 'status.draft',
+  [RequisitionNodeStatus.New]: 'status.new',
+  [RequisitionNodeStatus.Sent]: 'status.sent',
+  [RequisitionNodeStatus.Finalised]: 'status.finalised',
 };
 
 export const getStatusTranslation = (status: RequisitionNodeStatus) => {
@@ -42,24 +42,12 @@ export const getRequisitionTranslator =
   (currentStatus: RequisitionNodeStatus): string =>
     t(getStatusTranslation(currentStatus));
 
-export const getNextRequestStatus = (
-  currentStatus: RequisitionNodeStatus
+export const getNextRequisitionStatus = (
+  currentStatus: RequisitionNodeStatus,
+  statusSequence: RequisitionNodeStatus[] = requestStatuses
 ): RequisitionNodeStatus | null => {
-  const currentStatusIdx = requestStatuses.findIndex(
-    status => currentStatus === status
-  );
-  const nextStatus = requestStatuses[currentStatusIdx + 1];
-  return nextStatus ?? null;
-};
-
-export const getNextResponseStatus = (
-  currentStatus: RequisitionNodeStatus
-): RequisitionNodeStatus | null => {
-  const currentStatusIdx = responseStatuses.findIndex(
-    status => currentStatus === status
-  );
-  const nextStatus = responseStatuses[currentStatusIdx + 1];
-  return nextStatus ?? null;
+  const currentStatusIdx = statusSequence.indexOf(currentStatus);
+  return statusSequence[currentStatusIdx + 1] ?? null;
 };
 
 export const isRequestDisabled = (request: RequestRowFragment): boolean => {
@@ -79,23 +67,18 @@ export const requestsToCsv = (
   t: TypedTFunction<LocaleKey>
 ) => {
   const fields: string[] = [
-    'id',
     t('label.name'),
     t('label.number'),
+    t('label.created'),
     t('label.status'),
-    t('label.created'),
-    t('label.created'),
-    t('label.reference'),
     t('label.comment'),
   ];
 
   const data = invoices.map(node => [
-    node.id,
     node.otherPartyName,
     node.requisitionNumber,
-    node.status,
     Formatter.csvDateTimeString(node.createdDatetime),
-    node.theirReference,
+    node.status,
     node.comment,
   ]);
   return Formatter.csv({ fields, data });
@@ -106,22 +89,18 @@ export const responsesToCsv = (
   t: TypedTFunction<LocaleKey>
 ) => {
   const fields: string[] = [
-    'id',
     t('label.name'),
     t('label.number'),
     t('label.created'),
     t('label.status'),
-    t('label.reference'),
     t('label.comment'),
   ];
 
   const data = invoices.map(node => [
-    node.id,
     node.otherPartyName,
     node.requisitionNumber,
     Formatter.csvDateTimeString(node.createdDatetime),
     node.status,
-    node.theirReference,
     node.comment,
   ]);
   return Formatter.csv({ fields, data });
@@ -184,7 +163,6 @@ export const shouldDeleteLine = (
   draftId?: string,
   isDisabled?: boolean
 ): boolean => {
-  if (mode === ModalMode.Create) return true;
-  if (!draftId || isDisabled || mode === ModalMode.Update) return false;
-  return false;
+  // Only delete lines when creating new entries
+  return mode === ModalMode.Create && !!draftId && !isDisabled;
 };

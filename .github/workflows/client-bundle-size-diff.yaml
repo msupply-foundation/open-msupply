@@ -1,4 +1,4 @@
-name: Bundle size diff
+name: Bundle size diff - Build
 
 on:
   pull_request:
@@ -21,7 +21,7 @@ jobs:
           ref: ${{ github.base_ref }}
 
       - name: Read .nvmrc
-        run: echo "##[set-output name=NVMRC;]$(cat ./client/.nvmrc)"
+        run: echo "NVMRC=$(cat ./client/.nvmrc)" >> "$GITHUB_OUTPUT"
         id: nvm
 
       - name: Use Node.js (.nvmrc)
@@ -51,7 +51,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Read .nvmrc
-        run: echo "##[set-output name=NVMRC;]$(cat ./client/.nvmrc)"
+        run: echo "NVMRC=$(cat ./client/.nvmrc)" >> "$GITHUB_OUTPUT"
         id: nvm
 
       - name: Use Node.js (.nvmrc)
@@ -65,19 +65,17 @@ jobs:
       - name: Build
         run: cd ./client && yarn build-stats
 
-      - name: Upload base stats.json
+      - name: Upload PR stats.json
         uses: actions/upload-artifact@v4
         with:
-          name: pr
+          name: pr-stats
           path: ./client/packages/host/dist/stats.json
           retention-days: 3
 
-  report:
-    name: Generate report
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
+  compare:
+    name: Compare bundle sizes
     needs: [build-base, build-pr]
-
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout PR
         uses: actions/checkout@v4
@@ -91,23 +89,35 @@ jobs:
       - name: Download PR stats
         uses: actions/download-artifact@v4
         with:
-          name: pr
+          name: pr-stats
           path: pr
 
-      - name: Get diff
+      - name: Calculate diff
         id: get-diff
         uses: NejcZdovc/bundle-size-diff@v1
         with:
           base_path: "./base/stats.json"
           pr_path: "./pr/stats.json"
 
-      - name: Comment
-        uses: NejcZdovc/comment-pr@v1
+      - name: Save comparison data
+        run: |
+          echo "${{ github.event.pull_request.number }}" > pr_number
+          cat > result.txt << 'EOF'
+          📊 **Bundle Size Comparison**
+          
+          | Metric | Value |
+          |--------|-------|
+          | Base Size | ${{ steps.get-diff.outputs.base_file_string }} |
+          | PR Size | ${{ steps.get-diff.outputs.pr_file_string }} |
+          | Difference | ${{ steps.get-diff.outputs.diff_file_string }} |
+          | Change | ${{ steps.get-diff.outputs.percent }}% |
+          EOF
+
+      - name: Upload comparison artifact
+        uses: actions/upload-artifact@v4
         with:
-          file: "comment.md"
-        env:
-          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
-          OLD: ${{steps.get-diff.outputs.base_file_string}}
-          NEW: ${{steps.get-diff.outputs.pr_file_string}}
-          DIFF: ${{steps.get-diff.outputs.diff_file_string}}
-          DIFF_PERCENT: ${{steps.get-diff.outputs.percent}}
+          name: pr-artifact
+          path: |
+            pr_number
+            result.txt
+          retention-days: 3

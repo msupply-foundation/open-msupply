@@ -14,11 +14,11 @@ import {
   LocaleKey,
   BasicTextInput,
   isString,
+  useAuthContext,
+  UserPermission,
+  useIsCentralServerApi,
 } from '@openmsupply-client/common';
-import {
-  EnumOptions,
-  getEnumPreferenceOptions,
-} from '../Components/EnumOptions';
+import { MultiChoice, getMultiChoiceOptions } from '../Components/MultiChoice';
 import { EditCustomTranslations } from '../Components/CustomTranslations/CustomTranslationsModal';
 import { EditWarningWhenMissingRecentStocktakeData } from '../Components/EditWarningWhenMissingRecentStocktakeData';
 import { PreferenceLabelRow } from './PreferenceLabelRow';
@@ -28,7 +28,6 @@ interface EditPreferenceProps {
   update: (
     input: UpsertPreferencesInput[keyof UpsertPreferencesInput]
   ) => Promise<boolean>;
-  disabled?: boolean;
   label?: string;
   isLast?: boolean;
 }
@@ -36,12 +35,16 @@ interface EditPreferenceProps {
 export const EditPreference = ({
   preference,
   update,
-  disabled = false,
   label,
   isLast = false,
 }: EditPreferenceProps) => {
   const t = useTranslation();
   const { error } = useNotification();
+  const { userHasPermission } = useAuthContext();
+  const isCentralServer = useIsCentralServerApi();
+
+  const disabled =
+    !isCentralServer || !userHasPermission(UserPermission.EditCentralData);
 
   const preferenceLabel =
     label ?? t(`preference.${preference.key}` as LocaleKey);
@@ -141,13 +144,13 @@ export const EditPreference = ({
       if (!Array.isArray(value)) {
         return t('error.something-wrong');
       }
-      const options = getEnumPreferenceOptions(t, preference.key);
+      const options = getMultiChoiceOptions(t, preference.key);
 
       return (
         <PreferenceLabelRow
           label={preferenceLabel}
           Input={
-            <EnumOptions
+            <MultiChoice
               disabled={disabled}
               options={options}
               value={value}
@@ -164,7 +167,11 @@ export const EditPreference = ({
           label={preferenceLabel}
           Input={
             // Pass API value/update directly - called on modal save rather than on each key stroke/click
-            <EditCustomTranslations value={preference.value} update={update} />
+            <EditCustomTranslations
+              value={preference.value}
+              update={update}
+              disabled={disabled}
+            />
           }
           isLast={isLast}
         />

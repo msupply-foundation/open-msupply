@@ -21,6 +21,7 @@ import {
 import { getStatusTranslator, isOutboundDisabled } from '../../utils';
 import { AppBarButtons } from './AppBarButtons';
 import { SupplierReturnRowFragment, useReturns } from '../api';
+import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
 
 export const SupplierReturnListView = () => {
@@ -33,6 +34,7 @@ export const SupplierReturnListView = () => {
     filters: [
       { key: 'otherPartyName' },
       { key: 'status', condition: 'equalTo' },
+      { key: 'createdDatetime', condition: 'between' },
     ],
   });
   const navigate = useNavigate();
@@ -114,18 +116,19 @@ export const SupplierReturnListView = () => {
       {
         accessorKey: 'createdDatetime',
         header: t('label.created-datetime'),
+        enableColumnFilter: true,
         enableSorting: true,
         columnType: ColumnType.Date,
-      },
-      {
-        accessorKey: 'theirReference',
-        header: t('label.reference'),
-        Cell: TextWithTooltipCell,
       },
       {
         accessorKey: 'comment',
         header: t('label.comment'),
         columnType: ColumnType.Comment,
+      },
+      {
+        accessorKey: 'theirReference',
+        header: t('label.reference'),
+        Cell: TextWithTooltipCell,
       },
     ],
     []
@@ -150,6 +153,7 @@ export const SupplierReturnListView = () => {
 
   return (
     <>
+      <Toolbar />
       <AppBarButtons modalController={modalController} onNew={handleClick} />
       <MaterialTable table={table} />
       <Footer

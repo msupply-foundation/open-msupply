@@ -15,11 +15,10 @@ import {
   ColumnType,
   DateUtils,
   ExpiryDateInput,
+  TextInputCell,
+  NumberInputCell,
+  CurrencyInputCell,
 } from '@openmsupply-client/common';
-// Need to be re-exported when Legacy cells are removed
-import { TextInputCell } from '@openmsupply-client/common/src/ui/layout/tables/material-react-table/components/TextInputCell';
-import { NumberInputCell } from '@openmsupply-client/common/src/ui/layout/tables/material-react-table/components/NumberInputCell';
-import { CurrencyInputCell } from '@openmsupply-client/common/src/ui/layout/tables/material-react-table/components/CurrencyInputCell';
 import { DraftInboundLine } from '../../../../types';
 import {
   CampaignOrProgramCell,
@@ -255,16 +254,6 @@ export const QuantityTable = ({
         ),
       },
       {
-        accessorKey: 'doseQuantity',
-        header: t('label.doses-received'),
-        size: 100,
-        includeColumn: displayInDoses,
-        accessorFn: row => {
-          const total = row.numberOfPacks * row.packSize;
-          return format(total * row.item.doses);
-        },
-      },
-      {
         accessorKey: 'unitsPerPack',
         header: t('label.units-received', {
           unit: pluralisedUnitName,
@@ -305,6 +294,16 @@ export const QuantityTable = ({
             min={0}
           />
         ),
+      },
+      {
+        accessorKey: 'doseQuantity',
+        header: t('label.doses-received'),
+        size: 100,
+        includeColumn: displayInDoses,
+        accessorFn: row => {
+          const total = row.numberOfPacks * row.packSize;
+          return format(total * row.item.doses);
+        },
       },
       {
         accessorKey: 'volumePerPack',

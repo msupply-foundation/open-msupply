@@ -18,7 +18,7 @@ pub fn delete_log_reason(
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::MutateAsset,
+            resource: Resource::EditAsset,
             store_id: None,
         },
     )?;

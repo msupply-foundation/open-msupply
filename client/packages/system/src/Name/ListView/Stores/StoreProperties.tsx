@@ -6,9 +6,11 @@ import {
   PropertyInput,
   InputWithLabelRow,
   useIsCentralServerApi,
-  useIsGapsStoreOnly,
+  useIsExtraSmallScreen,
   PropertyNodeValueType,
   NamePropertyNode,
+  useAuthContext,
+  UserPermission,
 } from '@openmsupply-client/common';
 import { DraftProperties } from './useDraftStoreProperties';
 
@@ -25,8 +27,8 @@ export const StoreProperties = ({
 }: StorePropertiesProps) => {
   const t = useTranslation();
   const isCentralServer = useIsCentralServerApi();
-
-  const isGapsStore = useIsGapsStoreOnly();
+  const isExtraSmallScreen = useIsExtraSmallScreen();
+  const { userHasPermission } = useAuthContext();
 
   return !propertyConfigs?.length ? (
     <Typography sx={{ textAlign: 'center' }}>
@@ -53,9 +55,11 @@ export const StoreProperties = ({
           <Row
             key={p.id}
             label={p.property.name}
-            isGapsStore={isGapsStore}
+            isExtraSmallScreen={isExtraSmallScreen}
             inputProperties={{
-              disabled: !isCentralServer && !p.remoteEditable,
+              disabled:
+                (!isCentralServer && !p.remoteEditable) ||
+                !userHasPermission(UserPermission.NamePropertiesMutate),
               valueType: p.property.valueType,
               allowedValues: p.property.allowedValues?.split(','),
               value: draftProperties[p.property.key],
@@ -82,15 +86,15 @@ type PropertyInput = {
 const Row = ({
   key,
   label,
-  isGapsStore,
+  isExtraSmallScreen,
   inputProperties,
 }: {
   key: string;
   label: string;
-  isGapsStore: boolean;
+  isExtraSmallScreen: boolean;
   inputProperties: PropertyInput;
 }) => {
-  if (!isGapsStore)
+  if (!isExtraSmallScreen)
     return (
       <InputWithLabelRow
         key={key}

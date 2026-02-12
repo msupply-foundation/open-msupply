@@ -3320,9 +3320,6 @@ if ((queryResult == SERVICE_PAUSED) or (queryResult == SERVICE_STOPPED)) then
 	bServiceExists = true;
 end
 
-if (bServiceExists) then
-	Service.Delete("Open mSupply Server", "omsupply-server");
-end
 </Script>
 <BookMarks count="0">
 </BookMarks>
@@ -3392,7 +3389,16 @@ if (Registry.DoesKeyExist(HKEY_LOCAL_MACHINE, firewallRuleKey)) then
 	end
 end
 
-Service.Create(SessionVar.Expand("%AppFolder%\\server\\omSupply-sqlite.exe"), "Open mSupply Server", "omsupply-server", SERVICE_WIN32_OWN_PROCESS, false, SERVICE_AUTO_START, SERVICE_ERROR_NORMAL, "", nil, nil, "", "");
+queryResult = Service.Query("Open mSupply Server", "omsupply-server");
+if (queryResult == SERVICE_NOT_FOUND) then
+	Service.Create(SessionVar.Expand("%AppFolder%\\server\\omSupply-sqlite.exe"), "Open mSupply Server", "omsupply-server", SERVICE_WIN32_OWN_PROCESS, false, SERVICE_AUTO_START, SERVICE_ERROR_NORMAL, "", nil, nil, "", "");
+end
+
+-- set the startup to Automatic (Delayed Start) (not possible with a service startup type enum, it requires the flag to be set)
+local serviceKey = "SYSTEM\\CurrentControlSet\\Services\\omsupply-server";
+if (Registry.DoesKeyExist(HKEY_LOCAL_MACHINE, serviceKey)) then
+	Registry.SetValue(HKEY_LOCAL_MACHINE, serviceKey, "DelayedAutoStart", 1, REG_DWORD);
+end
 
 Service.Start("Open mSupply Server", "omsupply-server", nil);
 

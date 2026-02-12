@@ -1,22 +1,20 @@
-import React, { FC } from 'react';
+import React, { FC, useState } from 'react';
 import {
   FnUtils,
-  DownloadIcon,
   PlusCircleIcon,
-  useNotification,
   AppBarButtonsPortal,
   ButtonWithIcon,
   Grid,
   useTranslation,
-  LoadingButton,
   ToggleState,
   useNavigate,
   RouteBuilder,
   useSimplifiedTabletUI,
-  useExportCSV,
   usePreferences,
-  useConfirmationModal,
+  DialogButton,
+  ConfirmationModal,
 } from '@openmsupply-client/common';
+import { ExportSelector } from '@openmsupply-client/system';
 import { useRequest } from '../api';
 import { requestsToCsv } from '../../utils';
 import { CreateRequisitionModal } from './CreateRequisitionModal';
@@ -32,26 +30,13 @@ export const AppBarButtons: FC<{
   const navigate = useNavigate();
   const { mutateAsync: onCreate } = useRequest.document.insert();
   const { insert: onProgramCreate } = useRequest.document.insertProgram();
-  const { error } = useNotification();
 
-  const exportCSV = useExportCSV();
   const { isLoading, fetchAsync } = useRequest.document.listAll({
     key: 'createdDatetime',
     direction: 'desc',
     isDesc: true,
   });
   const simplifiedTabletView = useSimplifiedTabletUI();
-
-  const csvExport = async () => {
-    const data = await fetchAsync();
-    if (!data || !data?.nodes.length) {
-      error(t('error.no-data'))();
-      return;
-    }
-
-    const csv = requestsToCsv(data.nodes, t);
-    exportCSV(csv, t('filename.requests'));
-  };
 
   // Warning when you don't have a recent stocktake with enough items
   const prefs = usePreferences();
@@ -72,27 +57,19 @@ export const AppBarButtons: FC<{
     prefs.warnWhenMissingRecentStocktake?.minItems !== undefined &&
     uniqueStocktakeItemCount < prefs.warnWhenMissingRecentStocktake?.minItems;
 
-  const getConfirmation = useConfirmationModal({
-    message: t('warning.insufficient-recent-stocktake-items', {
-      minItems: prefs.warnWhenMissingRecentStocktake?.minItems,
-      maxAge: prefs.warnWhenMissingRecentStocktake?.maxAge,
-    }),
-    title: t('heading.are-you-sure'),
-    cancelButtonLabel: t('button.go-to-stocktakes'),
-  });
+  const [confirmationState, setConfirmationState] = useState<boolean>(false);
 
   const handleAddRequisitionClick = () => {
     if (showOldStocktakeWarning) {
-      const stocktakePath = RouteBuilder.create(AppRoute.Inventory)
-        .addPart(AppRoute.Stocktakes)
-        .build();
-      getConfirmation({
-        onConfirm: () => modalController.toggleOn(),
-        onCancel: () => setTimeout(() => navigate(stocktakePath), 50), // Delay to allow modal to close
-      });
+      setConfirmationState(true);
     } else {
       modalController.toggleOn();
     }
+  };
+
+  const getCsvData = async () => {
+    const data = await fetchAsync();
+    return data?.nodes?.length ? requestsToCsv(data.nodes, t) : null;
   };
 
   return (
@@ -105,15 +82,35 @@ export const AppBarButtons: FC<{
           onClick={handleAddRequisitionClick}
         />
         {!simplifiedTabletView && (
-          <LoadingButton
-            startIcon={<DownloadIcon />}
-            variant="outlined"
+          <ExportSelector
+            getCsvData={getCsvData}
+            filename={t('filename.requests')}
             isLoading={isLoading}
-            onClick={csvExport}
-            label={t('button.export')}
           />
         )}
       </Grid>
+      <ConfirmationModal
+        open={confirmationState}
+        title={t('heading.are-you-sure')}
+        message={t('warning.insufficient-recent-stocktake-items', {
+          minItems: prefs.warnWhenMissingRecentStocktake?.minItems,
+          maxAge: prefs.warnWhenMissingRecentStocktake?.maxAge,
+        })}
+        buttonLabel={t('button.continue-without-stocktake')}
+        width={700}
+        onConfirm={() => { setConfirmationState(false); modalController.toggleOn(); }}
+        onCancel={() => { setConfirmationState(false); }}
+        otherButtons={[<DialogButton
+          key='go-to-stocktakes'
+          variant='back'
+          customLabel={t('button.go-to-stocktakes')}
+          onClick={() => navigate(
+            RouteBuilder.create(AppRoute.Inventory)
+              .addPart(AppRoute.Stocktakes)
+              .build()
+          )}
+        />]}
+      />
       <CreateRequisitionModal
         isOpen={modalController.isOn}
         onClose={modalController.toggleOff}

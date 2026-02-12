@@ -1,16 +1,15 @@
 import React, { ReactNode } from 'react';
 import {
   Box,
-  Breakpoints,
   Stack,
   Typography,
   useTranslation,
-  useAppTheme,
-  useMediaQuery,
+  useIsExtraSmallScreen,
 } from '@openmsupply-client/common';
 import { LoginIcon } from '../Login/LoginIcon';
 import { Theme } from '@common/styles';
 import { AppVersion } from '../AppVersion';
+import { LanguageButton } from '../LanguageButton';
 
 type LoginLayoutProps = {
   UsernameInput: ReactNode;
@@ -19,6 +18,7 @@ type LoginLayoutProps = {
   Button: ReactNode;
   SyncProgress: ReactNode;
   ErrorMessage: ReactNode;
+  SyncErrorMessage: ReactNode;
   SiteInfo: React.ReactNode;
   onInitialise: () => Promise<void>;
 };
@@ -31,13 +31,11 @@ export const InitialiseLayout = ({
   ErrorMessage,
   SyncProgress,
   SiteInfo,
+  SyncErrorMessage,
   onInitialise,
 }: LoginLayoutProps) => {
   const t = useTranslation();
-  const theme = useAppTheme();
-  const isExtraSmallScreen = useMediaQuery(
-    theme.breakpoints.down(Breakpoints.sm)
-  );
+  const isExtraSmallScreen = useIsExtraSmallScreen();
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLFormElement>) => {
     if (e.key === 'Enter') {
@@ -149,11 +147,22 @@ export const InitialiseLayout = ({
               </Stack>
             </form>
           </Box>
-          <Box paddingTop={2} width="100%">
+          <Box pt={2} width="100%">
             {SyncProgress}
           </Box>
+          <Box
+            pt={4}
+            justifyItems="center"
+            width="auto"
+            px={isExtraSmallScreen ? 4 : 20}
+          >
+            {SyncErrorMessage}
+          </Box>
         </Box>
-        <AppVersion style={{ opacity: 0.4 }} SiteInfo={SiteInfo} />
+        <Box>
+          <AppVersion style={{ opacity: 0.4 }} SiteInfo={SiteInfo} />
+        </Box>
+        <LanguageButton />
       </Box>
     </Box>
   );

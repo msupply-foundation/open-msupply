@@ -35,7 +35,6 @@ pub(crate) mod update_inbound_invoice;
 pub(crate) mod update_outbound_invoice_status;
 
 #[cfg(test)]
-#[cfg(not(feature = "memory"))]
 pub(crate) mod test;
 
 const CHANGELOG_BATCH_SIZE: u32 = 20;

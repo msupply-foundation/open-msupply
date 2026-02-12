@@ -14,7 +14,7 @@ export const AllocationSection = ({
   disabled,
   hasLines,
 }: {
-  disabled?: boolean;
+  disabled: boolean;
   hasLines: boolean;
 }) => {
   const t = useTranslation();
@@ -31,6 +31,7 @@ export const AllocationSection = ({
           inputColor="white"
           allowPartialPacks
           autoFocus={!showPrescribedQuantity}
+          disabled={disabled}
         />
         <AllocateInSelector />
       </Grid>

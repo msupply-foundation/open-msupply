@@ -1,17 +1,46 @@
-use crate::{DBConnection, DBType};
-use chrono::NaiveDateTime;
+use crate::{DBConnection, DBType, RepositoryError};
+use chrono::{Days, NaiveDate, NaiveDateTime};
 
 use diesel::{prelude::*, query_builder::*, sql_types::*};
+use util::{end_of_the_day_for_date, sql_utc_datetime_as_local_date};
 
-pub struct Dos<FH, SQ> {
-    pub start: NaiveDateTime,
-    pub end: NaiveDateTime,
+pub struct Dos<FH> {
+    pub from: NaiveDate,
+    pub to: NaiveDate,
     pub filter_helper: FH,
-    pub dos_result: SQ,
 }
 
-impl<FH: 'static, SQ: 'static> QueryId for Dos<FH, SQ> {
-    type QueryId = Dos<FH, SQ>;
+impl<FH> Dos<FH> {
+    // Compute start and end of date range as datetime UTC for local date range
+    pub fn as_dos_query(self) -> Result<DosInner<FH, ()>, RepositoryError> {
+        let Self {
+            from,
+            to,
+            filter_helper,
+        } = self;
+
+        // Need to look back one day before, because we need to know full days out of stock
+        // and for that we add + 1 to a date where stock was 0
+        // Should be safe to unwrap as days is valid
+        let from = from.checked_sub_days(Days::new(1)).unwrap();
+
+        Ok(DosInner {
+            from_datetime: end_of_the_day_for_date(&from),
+            to_datetime: end_of_the_day_for_date(&to),
+            filter_helper,
+            _dos_result: (),
+        })
+    }
+}
+pub struct DosInner<FH, SQ> {
+    from_datetime: NaiveDateTime,
+    to_datetime: NaiveDateTime,
+    filter_helper: FH,
+    _dos_result: SQ,
+}
+
+impl<FH: 'static, SQ: 'static> QueryId for DosInner<FH, SQ> {
+    type QueryId = DosInner<FH, SQ>;
     const HAS_STATIC_QUERY_ID: bool = false;
 
     fn query_id() -> Option<std::any::TypeId> {
@@ -24,7 +53,7 @@ impl<FH: 'static, SQ: 'static> QueryId for Dos<FH, SQ> {
 }
 
 impl<FH: QueryFragment<DBType> + 'static, SQ: QueryFragment<DBType> + 'static> Query
-    for Dos<FH, SQ>
+    for DosInner<FH, SQ>
 // The SqlType for Dos is manually specified below due to Diesel macro expansion limitations.
 // It is defining the days_out_of_stock table structure.
 {
@@ -36,30 +65,61 @@ impl<FH: QueryFragment<DBType> + 'static, SQ: QueryFragment<DBType> + 'static> Q
 }
 
 impl<FH: QueryFragment<DBType> + 'static, SQ: QueryFragment<DBType> + 'static>
-    RunQueryDsl<DBConnection> for Dos<FH, SQ>
+    RunQueryDsl<DBConnection> for DosInner<FH, SQ>
 {
 }
 
-impl<FH: QueryFragment<DBType>, SQ: QueryFragment<DBType>> QueryFragment<DBType> for Dos<FH, SQ> {
+impl<FH: QueryFragment<DBType>, SQ: QueryFragment<DBType>> QueryFragment<DBType>
+    for DosInner<FH, SQ>
+{
     fn walk_ast<'b>(&'b self, mut out: AstPass<'_, 'b, DBType>) -> QueryResult<()> {
-        out.push_sql("WITH inner_query AS (SELECT * FROM (");
+        out.push_sql("WITH inner_query AS (");
         self.filter_helper.walk_ast(out.reborrow())?;
-        out.push_sql("))");
+        out.push_sql(")");
 
         // Variables
         // bind the timestamp directly for suitability with sqlite & postgres
         out.push_sql(", variables AS (SELECT ");
-        out.push_bind_param::<Timestamp, _>(&self.start)?;
+        out.push_bind_param::<Timestamp, _>(&self.from_datetime)?;
         out.push_sql(" AS start_datetime, ");
-        out.push_bind_param::<Timestamp, _>(&self.end)?;
+        out.push_bind_param::<Timestamp, _>(&self.to_datetime)?;
         out.push_sql(" AS end_datetime) ");
 
         // Query
-        use diesel::sqlite::Sqlite;
-        use std::any::TypeId;
+
+        // Backend-aware add one day to date
+        let add_one_day_to_date = if cfg!(feature = "postgres") {
+            "(date + INTERVAL '1 day')::date"
+        } else {
+            "date + 1"
+        };
+
+        // Backend-aware casting of datetime to local date
+        let utc_datetime_to_local_date =
+            sql_utc_datetime_as_local_date(cfg!(feature = "postgres"), "datetime");
+
+        // For sqlite it's much easier to group by number so convert to julian date
+        let date = if cfg!(feature = "postgres") {
+            utc_datetime_to_local_date
+        } else {
+            format!("julianday({utc_datetime_to_local_date})")
+        };
+
+        let cast_to_double = if cfg!(feature = "postgres") {
+            "::DOUBLE PRECISION"
+        } else {
+            ""
+        };
+
+        // Need alias for the subquery in daily_stock for PostgreSQL
+        let ranked_alias = if cfg!(feature = "postgres") {
+            " AS ranked"
+        } else {
+            ""
+        };
 
         out.push_sql(
-            r#"    
+           &format!(r#"    
           , starting_stock AS (
               SELECT
                 item_id,
@@ -91,13 +151,13 @@ impl<FH: QueryFragment<DBType>, SQ: QueryFragment<DBType>> QueryFragment<DBType>
             ledger AS (
               SELECT
                 *,
-                DATE(datetime) AS date
+                {date} AS date
               FROM
                 starting_stock
               UNION
               SELECT
                 *,
-                DATE(datetime) AS date
+                {date} AS date
               FROM
                 ending_stock
               UNION
@@ -106,111 +166,78 @@ impl<FH: QueryFragment<DBType>, SQ: QueryFragment<DBType>> QueryFragment<DBType>
                 store_id,
                 running_balance,
                 datetime,
-                DATE(datetime) AS date
+                {date} AS date
               FROM
                 item_ledger
               WHERE
-                datetime > (SELECT start_datetime FROM variables)
-                AND datetime < (SELECT end_datetime FROM variables) AND (item_id, store_id) IN (select item_id, store_id from inner_query)
+                datetime >= (SELECT start_datetime FROM variables)
+                AND datetime <= (SELECT end_datetime FROM variables) AND (item_id, store_id) IN (select item_id, store_id from inner_query)
             ),
             daily_stock AS (
-              SELECT DISTINCT
+              SELECT 
                 item_id,
                 store_id,
                 date,
-                MAX(running_balance) OVER (PARTITION BY store_id,
-                  item_id,
-                  date) AS max_stock,
-                FIRST_VALUE(running_balance) OVER (PARTITION BY store_id,
-                  item_id,
-                  date ORDER BY datetime DESC) AS running_balance
+                running_balance as end_of_day_stock
+                FROM (
+                    SELECT 
+                        item_id,
+                        store_id,
+                        date,
+                        datetime,
+                        running_balance,
+                        ROW_NUMBER() OVER (
+                            PARTITION BY item_id, store_id, date 
+                            ORDER BY datetime DESC
+                        ) as rn
+                    FROM ledger
+                    ){ranked_alias}
+                WHERE rn = 1
+            ),
+            days_with_no_stock AS (
+              SELECT
+                item_id,
+                store_id,
+                end_of_day_stock <= 0 as no_stock,
+                CASE 
+                  WHEN end_of_day_stock <= 0 THEN {add_one_day_to_date} 
+                  ELSE date
+                END AS date
               FROM
-                ledger
+                daily_stock
             ),
             with_lag AS (
               SELECT
                 *,
-                LAG(running_balance) OVER (PARTITION BY store_id,
-                  item_id ORDER BY date) AS pr,
+                LAG(no_stock) OVER (PARTITION BY store_id,
+                  item_id ORDER BY date) AS previous_no_stock,
                 LAG(date) OVER (PARTITION BY store_id,
-                  item_id ORDER BY date) AS pd
+                  item_id ORDER BY date) AS previous_date
               FROM
-                daily_stock
+                days_with_no_stock
               ORDER BY
                 store_id,
                 item_id
-            )
-            , dos_result as (SELECT
+            ), 
+            dos_result as (SELECT
               item_id,
               store_id,
-              sum("#,
-        );
-        // Backend-aware date difference
-        if TypeId::of::<DBType>() == TypeId::of::<Sqlite>() {
-            out.push_sql("julianday(date) - julianday(pd)");
-        } else {
-            // Postgres and others: EXTRACT(DAY FROM (date::timestamp - pd::timestamp))
-            out.push_sql("EXTRACT(DAY FROM (date::timestamp - pd::timestamp))::double precision");
-        }
-        out.push_sql(
-            r#") as dos
+              sum(date - previous_date){cast_to_double} as dos
             FROM
               with_lag
             WHERE
-              pr = 0
+              previous_no_stock is true
             GROUP BY
               1,
               2
             ORDER BY
               store_id,
               item_id)
-              "#,
+              "#),
         );
-        // Cast to the table name and column. Otherwise defaults to stock_movement
-        // DOS is the number of days where the item had a balance of 0 stock on hand on the previous day
+        // DOS is the number of days where the item had a balance of 0 stock on hand for the full days
         out.push_sql("SELECT item_id, store_id, dos as total_dos FROM dos_result");
 
         Ok(())
-    }
-}
-
-#[cfg(test)]
-
-pub(crate) mod test {
-
-    use super::*;
-
-    use crate::{
-        dos_filter_helper,
-        mock::MockDataInserts,
-        test_db::{setup_test, SetupOption, SetupResult},
-        Dos,
-    };
-
-    #[actix_rt::test]
-    async fn test() {
-        let SetupResult { .. } = setup_test(SetupOption {
-            db_name: "message_type",
-            inserts: MockDataInserts::none().names().stores(),
-            ..Default::default()
-        })
-        .await;
-
-        let mut query = dos_filter_helper::table.into_boxed();
-
-        query = query.filter(dos_filter_helper::item_id.eq("43FFC5A1A1714E03871C1FB65A27EA88"));
-
-        query = query.filter(dos_filter_helper::store_id.eq("B9AA2F86571D438EB9E53BB5BDA678A0"));
-
-        let fmt = "%Y-%m-%d %H:%M:%S";
-        let query = Dos {
-            start: NaiveDateTime::parse_from_str("2025-10-03 13:00:29", fmt).unwrap(),
-            end: NaiveDateTime::parse_from_str("2025-11-03 13:00:29", fmt).unwrap(),
-            filter_helper: query,
-            dos_result: (),
-        };
-
-        // Print the generated SQL for the full DOS query
-        println!("{}", diesel::debug_query::<crate::DBType, _>(&query));
     }
 }
