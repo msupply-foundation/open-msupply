@@ -1,5 +1,4 @@
 // Re-export less commonly used hooks that were previously nested in useInbound
-export { useInboundFields } from './document/useInboundFields';
 export { useInbounds } from './document/useInbounds';
 export { useInboundsAll } from './document/useInboundsAll';
 export { useInbound } from './document/useInbound';

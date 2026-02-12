@@ -18,7 +18,6 @@ import {
   usePreferences,
 } from '@openmsupply-client/common';
 import { useInboundShipment } from '../../api';
-import { useInboundFields } from '../../api/hooks/utils';
 import { DonorEditModal } from '../modals';
 
 export const AdditionalInfoSectionComponent = () => {
@@ -26,20 +25,19 @@ export const AdditionalInfoSectionComponent = () => {
   const { localisedDate } = useFormatDateTime();
   const { isOn: donorModalOn, toggleOff, toggleOn } = useToggle();
 
-  const { isDisabled } = useInboundShipment();
+  const {
+    isDisabled,
+    query: { data, loading },
+    update: { update },
+  } = useInboundShipment();
 
   const { allowTrackingOfStockByDonor } = usePreferences();
 
-  const { id, user, comment, colour, createdDatetime, defaultDonor, update } =
-    useInboundFields([
-      'id',
-      'comment',
-      'colour',
-      'user',
-      'createdDatetime',
-      'defaultDonor',
-    ]);
-  const [bufferedColor, setBufferedColor] = useBufferState(colour);
+  const [bufferedColor, setBufferedColor] = useBufferState(data?.colour);
+
+  if (loading || !data) return null;
+
+  const { id, user, comment, createdDatetime, defaultDonor } = data;
 
   return (
     <DetailPanelSection title={t('heading.additional-info')}>

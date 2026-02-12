@@ -7,6 +7,7 @@ import {
 import { useInboundId } from '../document/useInbound';
 import { useInboundApi } from '../utils/useInboundApi';
 import { DraftInboundLine } from '../../../../types';
+import { INBOUND, INBOUND_LINE } from '../document/keys';
 
 export const useSaveInboundLines = () => {
   const t = useTranslation();
@@ -55,7 +56,7 @@ export const useSaveInboundLines = () => {
 
     {
       onSettled: () =>
-        queryClient.invalidateQueries(api.keys.detail(invoiceId)),
+        queryClient.invalidateQueries([INBOUND, INBOUND_LINE, invoiceId]),
     }
   );
 };

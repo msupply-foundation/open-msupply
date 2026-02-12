@@ -12,7 +12,6 @@ import {
 } from '@openmsupply-client/common';
 import { SupplierSearchInput } from '@openmsupply-client/system';
 import { InboundRowFragment, useInboundShipment } from '../api';
-import { useInboundFields } from '../api/hooks/utils';
 
 const InboundInfoPanel = ({
   shipment,
@@ -41,12 +40,10 @@ export const Toolbar = () => {
   const {
     query: { data: shipment },
     isDisabled,
+    update: { update },
   } = useInboundShipment();
 
-  const { otherParty, theirReference, update } = useInboundFields([
-    'otherParty',
-    'theirReference',
-  ]);
+  const { otherParty, theirReference } = shipment || {};
 
   const isTransfer = !!shipment?.linkedShipment?.id;
 

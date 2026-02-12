@@ -1,8 +1,8 @@
 import React, { useEffect } from 'react';
 import { RecordPatch } from '@openmsupply-client/common';
 import { toItemWithPackSize, useItem } from '@openmsupply-client/system';
+import { useInboundShipment } from '../../../api';
 import {
-  useInboundFields,
   useInboundServiceLines,
   useSaveInboundLines,
 } from '../../../api/hooks/utils';
@@ -10,7 +10,10 @@ import { DraftInboundLine } from './../../../../types';
 import { CreateDraft } from '../utils';
 
 export const useDraftServiceLines = () => {
-  const { id } = useInboundFields('id');
+  const {
+    query: { data },
+  } = useInboundShipment();
+  const id = data?.id ?? '';
   const { data: lines } = useInboundServiceLines();
   const {
     serviceItem: { data: defaultServiceItem, isLoading },

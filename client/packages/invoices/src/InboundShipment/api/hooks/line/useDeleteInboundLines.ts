@@ -2,12 +2,13 @@ import { useQueryClient, useMutation } from '@openmsupply-client/common';
 import { useInboundId } from '../document/useInbound';
 import { useInboundApi } from '../utils/useInboundApi';
 import { InboundFragment } from '../../operations.generated';
+import { INBOUND, INBOUND_LINE } from '../document/keys';
 
 export const useDeleteInboundLines = () => {
   const inboundId = useInboundId();
   const queryClient = useQueryClient();
   const api = useInboundApi();
-  const queryKey = api.keys.detail(inboundId);
+  const queryKey = [INBOUND, INBOUND_LINE, inboundId];
 
   return useMutation(api.deleteLines, {
     onMutate: async lines => {
