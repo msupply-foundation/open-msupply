@@ -40,7 +40,14 @@ export const ItemVariantInput = ({
       disabled={disabled}
       {...props}
     >
-      <span>{selected?.name ?? ''}</span>
+      <span
+        style={{
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+        }}
+      >
+        {selected?.name ?? ''}
+      </span>
     </TextInputButton>
   );
 
