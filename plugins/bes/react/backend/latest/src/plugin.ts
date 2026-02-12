@@ -2,9 +2,7 @@
 import { BackendPlugins } from '@common/types';
 import { Graphql } from './types/index';
 import {
-  InsertOutboundShipmentUnallocatedLineInput,
   OutboundShipmentLineInput,
-  // UpdateOutboundShipmentStatusInput,
   // UpdateOutboundShipmentStatusInput,
 } from '../codegenTypes';
 import { uuidv7 } from 'uuidv7';
@@ -13,8 +11,6 @@ import { format } from 'date-fns/format';
 import { sortAndClassifyBatches } from './utils';
 import {
   insertOutboundShipment,
-  // insertAllocatedLines,
-  // insertUnAllocatedLine,
   // updateOutboundShipment,
   saveOutboundShipmentItemLines,
 } from './query-operations';
@@ -23,7 +19,6 @@ const plugins: BackendPlugins = {
   graphql_query: ({ store_id, input }): Graphql['output'] => {
     const inp = input as Graphql['input'];
     const shipmentId = uuidv7();
-    const unallocatedShipmentId = uuidv7();
 
     const { stores: activeStores } = get_active_stores_on_site();
     if (!activeStores || activeStores.length < 1) {
@@ -79,9 +74,7 @@ const plugins: BackendPlugins = {
 
     const today = format(new Date(), 'yyyy-MM-dd');
     const insertLines: OutboundShipmentLineInput[] = [];
-    let insertUnallocatedLine:
-      | InsertOutboundShipmentUnallocatedLineInput
-      | undefined = undefined;
+    let placeHolderQuantity = 0;
     let totalUnitsSupplied = 0;
 
     for (let i = 0; i < unexpiredBatches.length; i++) {
@@ -154,18 +147,10 @@ const plugins: BackendPlugins = {
     // If still unfully allocated, create placeholder for rest of items
 
     if (totalUnitsSupplied < inp.quantity) {
-      log({ t: 'here in not fully allocated' });
-      const unallocatedShipmentLineId = uuidv7();
-      insertUnallocatedLine = {
-        id: unallocatedShipmentLineId,
-        invoiceId: unallocatedShipmentId,
-        itemId: foundItem.id,
-        quantity: inp.quantity - totalUnitsSupplied,
-      };
+      placeHolderQuantity = inp.quantity - totalUnitsSupplied;
     }
 
     log({ t: 'insertLines', insertLines });
-    log({ t: 'unallocatedLine', insertUnallocatedLine });
 
     // eslint-disable-next-line prefer-const
     let errText = `Failed to issue the stock for item code: ${foundItem.msupplyUniversalCode}, quantity: ${inp.quantity}, customer: ${customer.name},`;
@@ -181,15 +166,11 @@ const plugins: BackendPlugins = {
 
       if (insertOBSErr) return insertOBSErr;
 
-      const placeHolderQty = !insertUnallocatedLine
-        ? 0
-        : insertUnallocatedLine.quantity;
-
       const { error: saveError } = saveOutboundShipmentItemLines(
         issuingStoreId,
         shipmentId,
         foundItem.id,
-        placeHolderQty,
+        placeHolderQuantity,
         insertLines,
         errText
       );
