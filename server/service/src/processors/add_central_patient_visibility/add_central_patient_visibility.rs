@@ -93,7 +93,7 @@ impl Processor for AddPatientVisibilityForCentral {
         }
 
         let central_store_ids = ActiveStoresOnSite::get(&ctx.connection)
-            .map_err(|err| ProcessorError::GetActiveStoresOnSiteError(err))?
+            .map_err(ProcessorError::GetActiveStoresOnSiteError)?
             .store_ids();
 
         let patient_visible_on_central = nsj_repo

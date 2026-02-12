@@ -46,7 +46,7 @@ mod query {
             .unwrap();
 
         assert_eq!(result.sensor_row.id, "sensor_is_active");
-        assert_eq!(result.sensor_row.is_active, true);
+        assert!(result.sensor_row.is_active);
     }
 
     #[actix_rt::test]

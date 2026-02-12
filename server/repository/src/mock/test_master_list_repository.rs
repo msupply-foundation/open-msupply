@@ -68,8 +68,8 @@ pub fn mock_test_master_list_store1() -> StoreRow {
 // For name 1 and 2
 pub fn mock_test_master_list_name_filter1() -> FullMockMasterList {
     let id = "mock_test_master_list_name_filter1".to_string();
-    let join1 = format!("{}1", id);
-    let join2 = format!("{}2", id);
+    let join1 = format!("{id}1");
+    let join2 = format!("{id}2");
 
     FullMockMasterList {
         master_list: MasterListRow {
@@ -99,8 +99,8 @@ pub fn mock_test_master_list_name_filter1() -> FullMockMasterList {
 // For name 2 and 3
 pub fn mock_test_master_list_name_filter2() -> FullMockMasterList {
     let id = "mock_test_master_list_name_filter2".to_string();
-    let join1 = format!("{}1", id);
-    let join2 = format!("{}2", id);
+    let join1 = format!("{id}1");
+    let join2 = format!("{id}2");
 
     FullMockMasterList {
         master_list: MasterListRow {
@@ -130,8 +130,8 @@ pub fn mock_test_master_list_name_filter2() -> FullMockMasterList {
 // For name 1 and 3
 pub fn mock_test_master_list_name_filter3() -> FullMockMasterList {
     let id = "mock_test_master_list_name_filter3".to_string();
-    let join1 = format!("{}1", id);
-    let join2 = format!("{}2", id);
+    let join1 = format!("{id}1");
+    let join2 = format!("{id}2");
 
     FullMockMasterList {
         master_list: MasterListRow {

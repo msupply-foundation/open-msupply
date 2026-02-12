@@ -32,14 +32,6 @@ pub struct NameSortInput {
 }
 
 #[derive(InputObject, Clone)]
-pub struct EqualFilterNameRowTypeInput {
-    pub equal_to: Option<NameNodeType>,
-    pub equal_any: Option<Vec<NameNodeType>>,
-    pub not_equal_to: Option<NameNodeType>,
-    pub not_equal_all: Option<Vec<NameNodeType>>,
-}
-
-#[derive(InputObject, Clone)]
 pub struct NameFilterInput {
     pub id: Option<EqualFilterStringInput>,
     /// Filter by name
@@ -169,7 +161,7 @@ impl NameFilterInput {
             is_store,
             is_visible,
             is_system_name: is_system_name.or(Some(false)),
-            r#type: r#type.map(|t| map_filter!(t, |r| NameType::from(r))),
+            r#type: r#type.map(|t| map_filter!(t, NameType::from)),
             phone: phone.map(StringFilter::from),
             address1: address1.map(StringFilter::from),
             address2: address2.map(StringFilter::from),

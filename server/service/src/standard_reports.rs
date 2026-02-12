@@ -66,7 +66,7 @@ impl StandardReports {
             let set_active = match &existing_report {
                 Some(report) => report.report_row.is_active,
                 None => {
-                    report_versions.len() == 0
+                    report_versions.is_empty()
                         || report_versions.iter().any(|r| r.report_row.is_active)
                 }
             };

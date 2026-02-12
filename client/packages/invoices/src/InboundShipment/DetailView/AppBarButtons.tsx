@@ -7,12 +7,13 @@ import {
   usePluginProvider,
   useAuthContext,
   ReportContext,
+  useNotification,
 } from '@openmsupply-client/common';
 import { useInbound } from '../api';
 import { ReportSelector } from '@openmsupply-client/system';
 import { AddButton } from './AddButton';
-import { AddFromScannerButton } from '../../OutboundShipment/DetailView/AddFromScannerButton';
 import { ScannedBarcode } from '../../types';
+import { AddFromScannerButton } from '../../OutboundShipment/DetailView/AddFromScannerButton';
 
 interface AppBarButtonProps {
   onAddItem: (scannedBarcode?: ScannedBarcode) => void;
@@ -33,6 +34,8 @@ export const AppBarButtonsComponent = ({
     queryParams: { sortBy },
   } = useUrlQueryParams();
   const { plugins } = usePluginProvider();
+  const {} = useNotification();
+
   const disableInternalOrderButton =
     !store?.preferences.manuallyLinkInternalOrderToInboundShipment ||
     !!data?.linkedShipment ||
@@ -50,7 +53,7 @@ export const AppBarButtonsComponent = ({
           disableAddFromMasterListButton={!!data?.linkedShipment}
           disableAddFromInternalOrderButton={disableInternalOrderButton}
         />
-        <AddFromScannerButton onAddItem={onAddItem} disabled={isDisabled} />
+        <AddFromScannerButton disabled={isDisabled} />
         {data && (
           <>
             {plugins.inboundShipmentAppBar?.map((Plugin, index) => (

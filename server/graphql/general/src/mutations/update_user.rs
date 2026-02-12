@@ -59,7 +59,7 @@ pub async fn update_user(ctx: &Context<'_>) -> Result<UpdateResponse> {
     let user = match SyncUser::update_user(service_provider, auth_data, &user.user_id).await {
         Ok(user) => user,
         Err(error) => {
-            let formatted_error = format!("{:#?}", error);
+            let formatted_error = format!("{error:#?}");
             let graphql_error = match error {
                 LoginError::FetchUserError(FetchUserError::ConnectionError(_)) => {
                     return Ok(UpdateResponse::Error(UpdateUserError {

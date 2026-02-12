@@ -110,7 +110,7 @@ impl ContactTraceFilterInput {
             last_name: last_name.map(StringFilter::from),
             patient_id: patient_id.map(EqualFilter::from),
             program_context_id: None,
-            gender: gender.map(|t| map_filter!(t, |g| GenderType::from(g))),
+            gender: gender.map(|t| map_filter!(t, GenderType::from)),
             date_of_birth: date_of_birth.map(DateFilter::from),
         }
     }
