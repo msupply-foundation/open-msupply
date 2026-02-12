@@ -1,5 +1,5 @@
 import { useQueryClient, useMutation } from '@openmsupply-client/common';
-import { useInboundId } from '../document/useInbound';
+import { useInboundId } from '../utils/useInboundId';
 import { useInboundApi } from '../utils/useInboundApi';
 import { InboundFragment } from '../../operations.generated';
 import { INBOUND, INBOUND_LINE } from '../document/keys';

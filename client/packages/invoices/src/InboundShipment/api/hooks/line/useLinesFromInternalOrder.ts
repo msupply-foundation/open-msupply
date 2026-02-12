@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@openmsupply-client/common';
 import { useInboundApi } from '../utils/useInboundApi';
-import { useInboundId } from '../document/useInbound';
+import { useInboundId } from '../utils/useInboundId';
 import { INBOUND, INBOUND_LINE } from '../document/keys';
 
 export const useLinesFromInternalOrder = () => {
