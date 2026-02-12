@@ -3,8 +3,8 @@ import { BackendPlugins } from '@common/types';
 import { Graphql } from './types/index';
 import {
   InsertOutboundShipmentUnallocatedLineInput,
-  InsertOutboundShipmentLineInput,
-  UpdateOutboundShipmentStatusInput,
+  OutboundShipmentLineInput,
+  // UpdateOutboundShipmentStatusInput,
   // UpdateOutboundShipmentStatusInput,
 } from '../codegenTypes';
 import { uuidv7 } from 'uuidv7';
@@ -13,9 +13,10 @@ import { format } from 'date-fns/format';
 import { sortAndClassifyBatches } from './utils';
 import {
   insertOutboundShipment,
-  insertAllocatedLines,
-  insertUnAllocatedLine,
-  updateOutboundShipment,
+  // insertAllocatedLines,
+  // insertUnAllocatedLine,
+  // updateOutboundShipment,
+  saveOutboundShipmentItemLines,
 } from './query-operations';
 
 const plugins: BackendPlugins = {
@@ -77,7 +78,7 @@ const plugins: BackendPlugins = {
     // Determine if FEFO unexpired can fullfil entire order
 
     const today = format(new Date(), 'yyyy-MM-dd');
-    const insertLines: InsertOutboundShipmentLineInput[] = [];
+    const insertLines: OutboundShipmentLineInput[] = [];
     let insertUnallocatedLine:
       | InsertOutboundShipmentUnallocatedLineInput
       | undefined = undefined;
@@ -100,7 +101,6 @@ const plugins: BackendPlugins = {
 
           insertLines.push({
             id: shipmentLineId,
-            invoiceId: shipmentId,
             stockLineId: batch.id,
             numberOfPacks: packsToSupply,
           });
@@ -109,7 +109,6 @@ const plugins: BackendPlugins = {
           totalUnitsSupplied += batch.availableNumberOfPacks * batch.packSize;
           insertLines.push({
             id: shipmentLineId,
-            invoiceId: shipmentId,
             stockLineId: batch.id,
             numberOfPacks: batch.availableNumberOfPacks,
           });
@@ -135,7 +134,6 @@ const plugins: BackendPlugins = {
           log({ t: 'here in expired and unitsInBatch > inp.q' });
           insertLines.push({
             id: shipmentLineId,
-            invoiceId: shipmentId,
             stockLineId: batch.id,
             numberOfPacks: packsToSupply,
           });
@@ -146,7 +144,6 @@ const plugins: BackendPlugins = {
 
           insertLines.push({
             id: shipmentLineId,
-            invoiceId: shipmentId,
             stockLineId: batch.id,
             numberOfPacks: batch.availableNumberOfPacks,
           });
@@ -184,42 +181,20 @@ const plugins: BackendPlugins = {
 
       if (insertOBSErr) return insertOBSErr;
 
-      const { error: insertAllocatedLinesErr } = insertAllocatedLines(
+      const placeHolderQty = !insertUnallocatedLine
+        ? 0
+        : insertUnallocatedLine.quantity;
+
+      const { error: saveError } = saveOutboundShipmentItemLines(
         issuingStoreId,
         shipmentId,
+        foundItem.id,
+        placeHolderQty,
         insertLines,
         errText
       );
 
-      if (insertAllocatedLinesErr) return insertAllocatedLinesErr;
-
-      const { error: updateAllocatedErr } = updateOutboundShipment(
-        issuingStoreId,
-        shipmentId,
-        UpdateOutboundShipmentStatusInput.Shipped,
-        errText
-      );
-
-      if (updateAllocatedErr) return updateAllocatedErr;
-    }
-
-    // Insert unallocated line
-    if (insertUnallocatedLine) {
-      const { error: insertUnallocatedOBSErr } = insertOutboundShipment(
-        unallocatedShipmentId,
-        issuingStoreId,
-        customer.id,
-        errText
-      );
-      if (insertUnallocatedOBSErr) return insertUnallocatedOBSErr;
-
-      const { error: insertUnllocatedLineErr } = insertUnAllocatedLine(
-        issuingStoreId,
-        unallocatedShipmentId,
-        insertUnallocatedLine,
-        errText
-      );
-      if (insertUnllocatedLineErr) return insertUnllocatedLineErr;
+      if (saveError) return saveError;
     }
 
     return {
