@@ -4,7 +4,7 @@ import {
   useTranslation,
   noOtherVariants,
 } from '@openmsupply-client/common';
-import { useInboundId } from '../document/useInbound';
+import { useInboundId } from '../utils/useInboundId';
 import { useInboundApi } from '../utils/useInboundApi';
 import { DraftInboundLine } from '../../../../types';
 import { INBOUND, INBOUND_LINE } from '../document/keys';

@@ -1,4 +1,3 @@
-import { useInbound } from './useInbound';
 import { useInboundsAll } from './useInboundsAll';
 import { useUpdateInboundServiceTax } from './useInboundUpdateServiceTax';
 import {
@@ -10,7 +9,6 @@ import { useInboundList } from './useInboundList';
 import { useInboundShipment } from './useInboundShipment';
 
 export const Document = {
-  useInbound,
   useInboundsAll,
   useUpdateInboundServiceTax,
   useListInternalOrders,

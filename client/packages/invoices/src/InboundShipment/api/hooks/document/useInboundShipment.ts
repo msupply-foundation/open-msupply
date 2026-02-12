@@ -2,10 +2,10 @@ import {
   RecordPatch,
   UpdateInboundShipmentInput,
   useMutation,
-  useParams,
   useQuery,
   usePatchState,
 } from '@openmsupply-client/common';
+import { useInboundId } from '../utils/useInboundId';
 import {
   InboundFragment,
   InboundRowFragment,
@@ -17,11 +17,6 @@ import { isInboundDisabled } from '@openmsupply-client/invoices/src/utils';
 import { inboundParsers } from '../../api';
 import { useInboundDelete } from './useInboundDelete';
 import { useMemo } from 'react';
-
-export const useInboundId = () => {
-  const { invoiceId = '' } = useParams();
-  return invoiceId;
-};
 
 export const useInboundShipment = (id?: string) => {
   const paramInvoiceId = useInboundId();
