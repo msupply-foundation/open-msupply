@@ -303,7 +303,7 @@ fn generate_response_requisition_lines(
     request_requisition: &RequisitionRow,
 ) -> Result<Vec<RequisitionLineRow>, RepositoryError> {
     let request_lines = get_lines_for_requisition(connection, &request_requisition.id)?;
-    let populate_price_per_unit = get_indicative_price_pref(connection)?;
+    let populate_price_per_unit = get_indicative_price_pref(connection, &response_requisition.store_id)?;
     let price_list = if populate_price_per_unit {
         Some(get_pricing_for_items(
             connection,
@@ -660,7 +660,7 @@ mod test {
             id: "preference_on".to_string(),
             key: PrefKey::ShowIndicativePriceInRequisitions.to_string(),
             value: "true".to_string(),
-            store_id: None,
+            store_id: Some("store_a".to_string()),
         };
 
         let (_, connection, _, _) = setup_all_with_data(
