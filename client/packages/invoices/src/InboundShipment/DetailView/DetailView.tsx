@@ -42,6 +42,8 @@ import { InboundShipmentLineErrorProvider } from '../context/inboundShipmentLine
 import { InboundShipmentDetailTabs } from './types';
 import { useInboundLines } from '../api/hooks/line/useInboundLines';
 import { useInboundShipmentColumns } from './columns';
+import { ScanInputModal } from './ScanInputModal';
+import { MobileToolbar } from './MobileToolbar';
 
 type InboundLineItem = InboundLineFragment['item'];
 
@@ -234,7 +236,7 @@ const DetailViewInner = () => {
             }}
           />
 
-          <Toolbar />
+          {isExtraSmallScreen ? <MobileToolbar /> : <Toolbar />}
 
           <DetailTabs tabs={tabs} />
 
@@ -246,6 +248,8 @@ const DetailViewInner = () => {
             />
           )}
           <SidePanel />
+
+          <ScanInputModal lines={lines ?? []} invoiceId={data?.id ?? ''} />
 
           {isOpen && (
             <InboundLineEdit

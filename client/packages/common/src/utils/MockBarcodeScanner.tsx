@@ -15,12 +15,12 @@ export const useMockScanner = (enabled: boolean) => {
     if (resolveRef.current) {
       resolveRef.current(inputValue);
       resolveRef.current = null;
-      setInputValue('');
     }
     if (scanHandler.current) {
       scanHandler.current(inputValue);
     }
     setIsScanning(false);
+    setInputValue('');
   };
 
   const startListening = async (handler: (barcode: string) => void) => {
