@@ -4,14 +4,16 @@ import {
   useTranslation,
   useConfirmationModal,
 } from '@openmsupply-client/common';
-import {
-  useInboundFields,
-  useIsInboundHoldable,
-} from '../../api/hooks/utils';
+import { useInboundShipment } from '../../api';
+import { useIsInboundHoldable } from '../../api/hooks/utils';
 
 export const OnHoldButtonComponent = memo(() => {
   const t = useTranslation();
-  const { onHold, update } = useInboundFields('onHold');
+  const {
+    query: { data },
+    update: { update },
+  } = useInboundShipment();
+  const onHold = data?.onHold ?? false;
   const isHoldable = useIsInboundHoldable();
   const getConfirmation = useConfirmationModal({
     message: onHold

@@ -8,18 +8,19 @@ import {
   PanelRow,
   useFormatDateTime,
 } from '@openmsupply-client/common';
-import { useInboundFields } from '../../api/hooks/utils';
+import { useInboundShipment } from '../../api';
 import { ShippingMethodSearchInput } from '@openmsupply-client/system';
 
 export const TransportSectionComponent: FC = () => {
   const t = useTranslation();
-  const { transportReference, expectedDeliveryDate, shippingMethod } =
-    useInboundFields([
-      'transportReference',
-      'expectedDeliveryDate',
-      'shippingMethod',
-    ]);
+  const {
+    query: { data, loading },
+  } = useInboundShipment();
   const { localisedDate } = useFormatDateTime();
+
+  if (loading || !data) return null;
+
+  const { transportReference, expectedDeliveryDate, shippingMethod } = data;
 
   // Both transportReference and expectedDeliveryDatetime are read-only and are
   // created during the Inbound Shipment transfer process.

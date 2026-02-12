@@ -10,7 +10,8 @@ import { CreateDraft } from '../../DetailView/modals/utils';
 import { useDeleteInboundLines } from './line/useDeleteInboundLines';
 import { mapErrorToMessageAndSetContext } from './mapErrorToMessageAndSetContext';
 import { ScannedBatchData } from '../../DetailView';
-import { useInboundFields, useSaveInboundLines } from './utils';
+import { useInboundShipment } from './document/useInboundShipment';
+import { useSaveInboundLines } from './utils';
 import { useInboundLines } from '.';
 
 export type PatchDraftLineInput = Partial<DraftInboundLine> & { id: string };
@@ -24,7 +25,10 @@ export const useDraftInboundLines = (
 
   const [draftLines, setDraftLines] = useState<DraftInboundLine[]>([]);
 
-  const { id } = useInboundFields('id');
+  const {
+    query: { data },
+  } = useInboundShipment();
+  const id = data?.id ?? '';
   const { data: lines } = useInboundLines(itemId ?? '');
   const { mutateAsync, isLoading } = useSaveInboundLines();
   const { mutateAsync: deleteMutation } = useDeleteInboundLines();

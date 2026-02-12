@@ -13,12 +13,15 @@ import {
   UNDEFINED_STRING_VALUE,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
-import { useInboundFields } from '../../api/hooks/utils';
+import { useInboundShipment } from '../../api';
 
 export const RelatedDocumentsSectionComponent = () => {
   const t = useTranslation();
   const { localisedDate: d } = useFormatDateTime();
-  const { requisition } = useInboundFields('requisition');
+  const {
+    query: { data },
+  } = useInboundShipment();
+  const requisition = data?.requisition;
 
   const orderedFromDifferentStore = !!requisition?.createdFromRequisitionId;
   let tooltip = '';

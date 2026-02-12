@@ -37,10 +37,13 @@ import { InboundLineEdit } from './modals/InboundLineEdit';
 import { InboundItem, ScannedBarcode } from '../../types';
 import { InboundLineFragment, useInboundShipment } from '../api';
 import { SupplierReturnEditModal } from '../../Returns';
-import { canReturnInboundLines, isInboundPlaceholderRow } from '../../utils';
+import {
+  canReturnInboundLines,
+  isInboundPlaceholderRow,
+  isA,
+} from '../../utils';
 import { InboundShipmentLineErrorProvider } from '../context/inboundShipmentLineError';
 import { InboundShipmentDetailTabs } from './types';
-import { useInboundLines } from '../api/hooks/line/useInboundLines';
 import { useInboundShipmentColumns } from './columns';
 import { ScanInputModal } from './ScanInputModal';
 
@@ -64,7 +67,6 @@ const DetailViewInner = () => {
   const navigate = useNavigate();
   const { info } = useNotification();
   const { urlQuery, updateQuery } = useUrlQuery();
-  const { data: lines } = useInboundLines();
 
   const uploadDocumentController = useToggle();
   const { onOpen, onClose, mode, entity, isOpen } = useEditModal<
@@ -84,6 +86,13 @@ const DetailViewInner = () => {
     isDisabled,
     invalidateQuery,
   } = useInboundShipment();
+
+  const lines = React.useMemo(() => {
+    if (!data) return [];
+    const forListView = (line: InboundLineFragment) =>
+      isA.stockInLine(line) || isInboundPlaceholderRow(line);
+    return data.lines.nodes.filter(forListView);
+  }, [data]);
   const { data: vvmStatuses } = useVvmStatusesEnabled();
   const hasItemVariantsEnabled = useIsItemVariantsEnabled();
   const simplifiedTabletView = useSimplifiedTabletUI();

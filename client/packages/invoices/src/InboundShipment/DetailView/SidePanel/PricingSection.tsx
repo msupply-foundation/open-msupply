@@ -20,40 +20,32 @@ import {
   Divider,
 } from '@openmsupply-client/common';
 import { useInboundShipment } from '../../api';
-import {
-  useInboundFields,
-  useInboundServiceLines,
-  useUpdateInboundServiceTax,
-} from '../../api/hooks/utils';
+import { useUpdateInboundServiceTax } from '../../api/hooks/utils';
 import { InboundServiceLineEdit } from '../modals';
+import { isA } from '@openmsupply-client/invoices/src/utils';
 import { CurrencyModal, CurrencyRowFragment } from '@openmsupply-client/system';
 
 export const PricingSectionComponent = () => {
   const t = useTranslation();
-  const { isDisabled } = useInboundShipment();
   const serviceLineModal = useToggle(false);
   const { c } = useCurrency();
-
   const {
-    pricing,
-    lines,
-    taxPercentage,
-    currency,
-    update,
-    otherParty,
-    currencyRate,
-  } = useInboundFields([
-    'pricing',
-    'lines',
-    'taxPercentage',
-    'currency',
-    'otherParty',
-    'currencyRate',
-  ]);
-  const { data: serviceLines } = useInboundServiceLines();
+    isDisabled,
+    query: { data, loading },
+    update: { update },
+  } = useInboundShipment();
+
   const { mutateAsync: updateTax } = useUpdateInboundServiceTax();
-  const { c: foreignCurrency } = useCurrency(currency?.code as Currencies);
+  const { c: foreignCurrency } = useCurrency(
+    data?.currency?.code as Currencies
+  );
   const { store } = useAuthContext();
+
+  if (loading || !data) return null;
+
+  const { pricing, lines, taxPercentage, currency, otherParty, currencyRate } =
+    data;
+  const serviceLines = lines.nodes.filter(isA.serviceLine);
   const isHomeCurrency = store?.homeCurrencyCode === currency?.code;
 
   const tax = PricingUtils.effectiveTax(
