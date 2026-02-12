@@ -92,3 +92,11 @@ export type ItemsQueryVariables = Types.Exact<{
 
 
 export type ItemsQuery = { __typename?: 'Queries', items: { __typename: 'ItemConnector', totalCount: number, nodes: Array<{ __typename?: 'ItemNode', id: string, code: string, msupplyUniversalCode: string, name: string, availableStockOnHand: number, availableBatches: { __typename?: 'StockLineConnector', nodes: Array<{ __typename?: 'StockLineNode', id: string, expiryDate?: any | null, batch?: string | null, availableNumberOfPacks: number, packSize: number }> } }> } };
+
+export type SaveOutboundShipmentItemLinesMutationVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  input: Types.SaveOutboundShipmentLinesInput;
+}>;
+
+
+export type SaveOutboundShipmentItemLinesMutation = { __typename?: 'Mutations', saveOutboundShipmentItemLines: { __typename?: 'InvoiceNode', id: string } };

@@ -1,7 +1,8 @@
 import namesQueryText from './graphql/customer.graphql';
 import itemsQueryText from './graphql/items.graphql';
-import outboundShipmentMutationText from './graphql/batchOutboundShipment.graphql';
+import batchOutboundShipmentMutationText from './graphql/batchOutboundShipment.graphql';
 import insertOutboundShipmentLineText from './graphql/insertOutboundShipmentUnallocatedLine.graphql';
+import saveOutboundShipmentItemLines from './graphql/saveOutboundShipmentItemLines.graphql';
 import {
   BatchOutboundShipmentMutation,
   BatchOutboundShipmentMutationVariables,
@@ -11,7 +12,9 @@ import {
   NamesQueryVariables,
   InsertOutboundShipmentUnallocatedLineMutation,
   InsertOutboundShipmentUnallocatedLineMutationVariables,
+  SaveOutboundShipmentItemLinesMutation,
 } from './generated-types/graphql';
+import { MutationsSaveOutboundShipmentItemLinesArgs } from './../codegenTypes';
 import { Graphql } from './types';
 
 export const customerQuery = (
@@ -72,7 +75,7 @@ export const batchOutboundShipmentQuery = (
   variables: BatchOutboundShipmentMutationVariables
 ): BatchOutboundShipmentMutation => {
   return use_graphql({
-    query: outboundShipmentMutationText,
+    query: batchOutboundShipmentMutationText,
     variables,
   }) as BatchOutboundShipmentMutation;
 };
@@ -98,11 +101,20 @@ export const batchDeleteOutboundShipmentQuery = (
   };
   try {
     use_graphql({
-      query: outboundShipmentMutationText,
+      query: batchOutboundShipmentMutationText,
       variables,
     }) as BatchOutboundShipmentMutation;
   } catch (error) {
     // just log if we fail to delete
     log({ t: 'deleteOutboundShipmentError', error });
   }
+};
+
+export const saveOutboundShipmentLineItemsMutation = (
+  variables: MutationsSaveOutboundShipmentItemLinesArgs
+): SaveOutboundShipmentItemLinesMutation => {
+  return use_graphql({
+    query: saveOutboundShipmentItemLines,
+    variables,
+  }) as SaveOutboundShipmentItemLinesMutation;
 };
