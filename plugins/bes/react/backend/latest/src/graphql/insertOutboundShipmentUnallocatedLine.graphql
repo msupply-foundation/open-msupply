@@ -1,0 +1,20 @@
+mutation InsertOutbounndShipmentUnallocatedLine(
+  $storeId: String!
+  $input: InsertOutboundShipmentLineInput!
+) {
+  insertOutboundShipmentUnallocatedLine(
+    input: { id: "", invoiceId: "", itemId: "", quantity: 10 }
+    storeId: ""
+  ) {
+    ... on InsertOutboundShipmentUnallocatedLineError {
+      __typename
+      error {
+        description
+      }
+    }
+    ... on InvoiceLineNode {
+      __typename
+      id
+    }
+  }
+}

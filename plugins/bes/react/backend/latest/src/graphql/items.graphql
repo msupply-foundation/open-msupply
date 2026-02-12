@@ -9,9 +9,14 @@ query Items($storeId: String!, $filter: ItemFilterInput) {
         msupplyUniversalCode
         name
         availableStockOnHand(storeId: $storeId)
-        stats(storeId: $storeId) {
-          availableStockOnHand
-          averageMonthlyConsumption
+        availableBatches(storeId: $storeId) {
+          nodes {
+            id
+            expiryDate
+            batch
+            availableNumberOfPacks
+            packSize
+          }
         }
       }
     }

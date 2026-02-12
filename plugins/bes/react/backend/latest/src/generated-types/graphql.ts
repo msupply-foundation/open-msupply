@@ -16,6 +16,17 @@ export type BatchOutboundShipmentMutation = { __typename?: 'Mutations', batchOut
             | { __typename?: 'DatabaseError', description: string }
             | { __typename?: 'RecordNotFound', description: string }
            }
+       }> | null, insertOutboundShipmentLines?: Array<{ __typename?: 'InsertOutboundShipmentLineResponseWithId', id: string, response:
+        | { __typename: 'InsertOutboundShipmentLineError', error:
+            | { __typename?: 'CannotEditInvoice', description: string }
+            | { __typename?: 'ForeignKeyError', description: string }
+            | { __typename?: 'LocationIsOnHold', description: string }
+            | { __typename?: 'LocationNotFound', description: string }
+            | { __typename?: 'NotEnoughStockForReduction', description: string }
+            | { __typename?: 'StockLineAlreadyExistsInInvoice', description: string }
+            | { __typename?: 'StockLineIsOnHold', description: string }
+           }
+        | { __typename: 'InvoiceLineNode', id: string, itemCode: string, numberOfPacks: number }
        }> | null, insertOutboundShipmentUnallocatedLines?: Array<{ __typename?: 'InsertOutboundShipmentUnallocatedLineResponseWithId', id: string, response:
         | { __typename: 'InsertOutboundShipmentUnallocatedLineError', error:
             | { __typename?: 'ForeignKeyError', description: string }
@@ -59,10 +70,25 @@ export type NamesQueryVariables = Types.Exact<{
 
 export type NamesQuery = { __typename?: 'Queries', names: { __typename: 'NameConnector', nodes: Array<{ __typename?: 'NameNode', id: string, name: string, isCustomer: boolean }> } };
 
+export type InsertOutbounndShipmentUnallocatedLineMutationVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  input: Types.InsertOutboundShipmentLineInput;
+}>;
+
+
+export type InsertOutbounndShipmentUnallocatedLineMutation = { __typename?: 'Mutations', insertOutboundShipmentUnallocatedLine:
+    | { __typename: 'InsertOutboundShipmentUnallocatedLineError', error:
+        | { __typename?: 'ForeignKeyError', description: string }
+        | { __typename?: 'UnallocatedLineForItemAlreadyExists', description: string }
+        | { __typename?: 'UnallocatedLinesOnlyEditableInNewInvoice', description: string }
+       }
+    | { __typename: 'InvoiceLineNode', id: string }
+   };
+
 export type ItemsQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
   filter?: Types.InputMaybe<Types.ItemFilterInput>;
 }>;
 
 
-export type ItemsQuery = { __typename?: 'Queries', items: { __typename: 'ItemConnector', totalCount: number, nodes: Array<{ __typename?: 'ItemNode', id: string, code: string, msupplyUniversalCode: string, name: string, availableStockOnHand: number, stats: { __typename?: 'ItemStatsNode', availableStockOnHand: number, averageMonthlyConsumption: number } }> } };
+export type ItemsQuery = { __typename?: 'Queries', items: { __typename: 'ItemConnector', totalCount: number, nodes: Array<{ __typename?: 'ItemNode', id: string, code: string, msupplyUniversalCode: string, name: string, availableStockOnHand: number, availableBatches: { __typename?: 'StockLineConnector', nodes: Array<{ __typename?: 'StockLineNode', id: string, expiryDate?: any | null, batch?: string | null, availableNumberOfPacks: number, packSize: number }> } }> } };

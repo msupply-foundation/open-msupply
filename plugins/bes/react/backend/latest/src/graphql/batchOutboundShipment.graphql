@@ -1,4 +1,7 @@
-mutation BatchOutboundShipment($storeId: String!, $input: BatchOutboundShipmentInput!) {
+mutation BatchOutboundShipment(
+  $storeId: String!
+  $input: BatchOutboundShipmentInput!
+) {
   batchOutboundShipment(storeId: $storeId, input: $input) {
     insertOutboundShipments {
       id
@@ -18,6 +21,23 @@ mutation BatchOutboundShipment($storeId: String!, $input: BatchOutboundShipmentI
           error {
             description
           }
+        }
+      }
+    }
+    insertOutboundShipmentLines {
+      id
+      response {
+        ... on InsertOutboundShipmentLineError {
+          __typename
+          error {
+            description
+          }
+        }
+        ... on InvoiceLineNode {
+          __typename
+          id
+          itemCode
+          numberOfPacks
         }
       }
     }

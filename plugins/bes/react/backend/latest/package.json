@@ -27,6 +27,7 @@
     "webpack-cli": "^5.0.1"
   },
   "dependencies": {
+    "date-fns": "^4.1.0",
     "uuidv7": "^1.0.0"
   }
 }
