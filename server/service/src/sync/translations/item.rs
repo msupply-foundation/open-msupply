@@ -2,8 +2,8 @@ use chrono::Utc;
 use repository::{
     item_category::{ItemCategoryFilter, ItemCategoryRepository},
     item_category_row::ItemCategoryJoinRow,
-    ChangelogRow, ChangelogTableName, EqualFilter, ItemRow, ItemRowDelete, ItemRowRepository,
-    ItemType, StorageConnection, SyncBufferRow, VENCategory,
+    ChangelogRow, ChangelogTableName, EqualFilter, ItemLinkRowRepository, ItemRow, ItemRowDelete,
+    ItemRowRepository, ItemType, StorageConnection, SyncBufferRow, VENCategory,
 };
 use serde::{Deserialize, Serialize};
 
@@ -264,7 +264,7 @@ fn translate_item_category_join(
     if let Some(category_id) = &data.category_ID {
         let item_category_join_row = ItemCategoryJoinRow {
             id: format!("{}-{}", data.ID.clone(), category_id.clone()),
-            item_id: data.ID.clone(),
+            item_link_id: data.ID.clone(),
             category_id: category_id.clone(),
             deleted_datetime: None,
         };
