@@ -1,17 +1,19 @@
 import React from 'react';
 import {
   AppBarButtonsPortal,
+  AddFromScannerButton,
   Grid,
   useDetailPanel,
   useUrlQueryParams,
   usePluginProvider,
   useAuthContext,
   ReportContext,
+  useNotification,
+  useIsExtraSmallScreen,
 } from '@openmsupply-client/common';
 import { useInbound } from '../api';
 import { ReportSelector } from '@openmsupply-client/system';
 import { AddButton } from './AddButton';
-import { AddFromScannerButton } from '../../OutboundShipment/DetailView/AddFromScannerButton';
 import { ScannedBarcode } from '../../types';
 
 interface AppBarButtonProps {
@@ -33,6 +35,20 @@ export const AppBarButtonsComponent = ({
     queryParams: { sortBy },
   } = useUrlQueryParams();
   const { plugins } = usePluginProvider();
+  const {} = useNotification();
+
+  const isExtraSmallScreen = useIsExtraSmallScreen();
+
+  if (isExtraSmallScreen) {
+    // On mobile, we don't have mobile ui for line by line editing or reports
+    // We just want to show the scan button for mobile users to use the scanner approach.
+    return (
+      <AppBarButtonsPortal>
+        <AddFromScannerButton disabled={isDisabled} />
+      </AppBarButtonsPortal>
+    );
+  }
+
   const disableInternalOrderButton =
     !store?.preferences.manuallyLinkInternalOrderToInboundShipment ||
     !!data?.linkedShipment ||
@@ -50,7 +66,7 @@ export const AppBarButtonsComponent = ({
           disableAddFromMasterListButton={!!data?.linkedShipment}
           disableAddFromInternalOrderButton={disableInternalOrderButton}
         />
-        <AddFromScannerButton onAddItem={onAddItem} disabled={isDisabled} />
+        <AddFromScannerButton disabled={isDisabled} />
         {data && (
           <>
             {plugins.inboundShipmentAppBar?.map((Plugin, index) => (

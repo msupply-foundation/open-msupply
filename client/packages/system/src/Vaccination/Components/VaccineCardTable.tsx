@@ -9,7 +9,7 @@ import {
   ColumnDef,
   ColumnType,
 } from '@openmsupply-client/common';
-import { StatusCellNew } from '@openmsupply-client/common';
+import { StatusCell } from '@openmsupply-client/common';
 import {
   VaccinationCardFragment,
   VaccinationCardItemFragment,
@@ -74,6 +74,13 @@ export const VaccineCardTable = ({
     const index = data?.items.findIndex(item => item.id === row.id) ?? 0;
     return row.minAgeMonths === data?.items?.[index - 1]?.minAgeMonths;
   };
+  const isAgeSameAsNextRow = (row: VaccinationCardItemFragment) => {
+    const index = data?.items.findIndex(item => item.id === row.id) ?? 0;
+    return (
+      data?.items?.length === index ||
+      row.minAgeMonths === data?.items?.[index + 1]?.minAgeMonths
+    );
+  };
 
   const columns = useMemo(
     (): ColumnDef<VaccinationCardItemFragment>[] => [
@@ -88,7 +95,7 @@ export const VaccineCardTable = ({
           sx: {
             fontWeight: 'bold',
             paddingLeft: 2,
-            ...(isAgeSameAsPreviousRow(row.original)
+            ...(isAgeSameAsNextRow(row.original)
               ? { borderBottom: 'none' }
               : {}),
           },
@@ -107,23 +114,23 @@ export const VaccineCardTable = ({
         header: t('label.status'),
         size: 140,
         Cell: ({ cell }) => (
-          <StatusCellNew
+          <StatusCell
             cell={cell}
             statusMap={{
               [VaccinationCardItemNodeStatus.Given]: {
-                color: theme.palette.vaccinationStatus.given,
+                colour: theme.palette.vaccinationStatus.given,
                 label: t('label.status-given'),
               },
               [VaccinationCardItemNodeStatus.NotGiven]: {
-                color: theme.palette.vaccinationStatus.notGiven,
+                colour: theme.palette.vaccinationStatus.notGiven,
                 label: t('label.status-not-given'),
               },
               [VaccinationCardItemNodeStatus.Pending]: {
-                color: theme.palette.vaccinationStatus.pending,
+                colour: theme.palette.vaccinationStatus.pending,
                 label: t('label.status-pending'),
               },
               [VaccinationCardItemNodeStatus.Late]: {
-                color: theme.palette.vaccinationStatus.late,
+                colour: theme.palette.vaccinationStatus.late,
                 label: t('label.status-late'),
               },
             }}

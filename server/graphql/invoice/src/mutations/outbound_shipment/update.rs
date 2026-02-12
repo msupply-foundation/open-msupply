@@ -38,6 +38,7 @@ pub struct UpdateInput {
     currency_id: Option<String>,
     currency_rate: Option<f64>,
     expected_delivery_date: Option<NullableUpdateInput<NaiveDate>>,
+    shipping_method_id: Option<NullableUpdateInput<String>>,
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
@@ -120,6 +121,7 @@ impl UpdateInput {
             currency_id,
             currency_rate,
             expected_delivery_date,
+            shipping_method_id,
         } = self;
 
         ServiceInput {
@@ -137,6 +139,7 @@ impl UpdateInput {
             currency_rate,
             expected_delivery_date: expected_delivery_date
                 .map(|d| NullableUpdate { value: d.value }),
+            shipping_method_id: shipping_method_id.map(|d| NullableUpdate { value: d.value }),
         }
     }
 }
@@ -191,6 +194,7 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         ServiceError::NotAnOutboundShipment => BadUserInput(formatted_error),
         ServiceError::NotThisStoreInvoice => BadUserInput(formatted_error),
         ServiceError::OtherPartyDoesNotExist => BadUserInput(formatted_error),
+        ServiceError::ShippingMethodDoesNotExist => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
         ServiceError::InvoiceLineHasNoStockLine(_) => InternalError(formatted_error),
         ServiceError::UpdatedInvoiceDoesNotExist => InternalError(formatted_error),

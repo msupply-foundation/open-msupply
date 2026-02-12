@@ -3,7 +3,6 @@ use chrono::{DateTime, Utc};
 use graphql_asset::types::AssetConnector;
 use graphql_core::generic_filters::StringFilterInput;
 use graphql_core::loader::AssetByLocationLoader;
-use graphql_core::simple_generic_errors::NodeError;
 use graphql_core::standard_graphql_error::StandardGraphqlError;
 use graphql_core::ContextExt;
 use graphql_core::{generic_filters::EqualFilterStringInput, loader::LocationByIdLoader};
@@ -73,6 +72,7 @@ pub enum SensorNodeType {
     BlueMaestro,
     Laird,
     Berlinger,
+    LogTag,
 }
 
 #[Object]
@@ -191,12 +191,6 @@ impl SensorNode {
 #[derive(Union)]
 pub enum SensorsResponse {
     Response(SensorConnector),
-}
-
-#[derive(Union)]
-pub enum SensorResponse {
-    Error(NodeError),
-    Response(SensorNode),
 }
 
 impl SensorNode {

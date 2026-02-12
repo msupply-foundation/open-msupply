@@ -6,6 +6,9 @@ import {
   Formatter,
   usePreferences,
   useIntlUtils,
+  CheckCell,
+  ExpiryDateCell,
+  NumberInputCell,
 } from '@openmsupply-client/common';
 import {
   DraftItem,
@@ -13,8 +16,6 @@ import {
   AllocateInType,
   packsToQuantity,
 } from '../../StockOut';
-import { NumberInputCell } from '@openmsupply-client/common/src/ui/layout/tables/material-react-table/components/NumberInputCell';
-import { ExpiryDateCell } from '@openmsupply-client/common/src/ui/layout/tables/material-react-table/components/ExpiryDateCell';
 
 export const usePrescriptionLineEditColumns = ({
   allocate,
@@ -109,6 +110,14 @@ export const usePrescriptionLineEditColumns = ({
             disabled={getIsDisabled(row.original)}
           />
         ),
+      },
+      {
+        id: 'onHold',
+        header: t('label.on-hold'),
+        size: 30,
+        defaultHideOnMobile: true,
+        accessorFn: row => row.stockLineOnHold || row.location?.onHold,
+        Cell: CheckCell,
       },
     ];
   }, [unit, allocate, getIsDisabled]);

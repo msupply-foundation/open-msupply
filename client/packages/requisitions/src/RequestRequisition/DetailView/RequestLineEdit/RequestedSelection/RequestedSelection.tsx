@@ -140,8 +140,11 @@ export const RequestedSelection = ({
           />
           {displayVaccinesInDoses && !!value && (
             <DosesCaption
-              value={value}
-              representation={representation}
+              value={
+                representation === Representation.PACKS
+                  ? value * (defaultPackSize ?? 1)
+                  : value
+              }
               dosesPerUnit={dosesPerUnit}
               displayVaccinesInDoses={displayVaccinesInDoses}
             />
@@ -171,6 +174,7 @@ export const RequestedSelection = ({
                 },
               },
             }}
+            disabled={disabled}
           />
         </Box>
       </Box>

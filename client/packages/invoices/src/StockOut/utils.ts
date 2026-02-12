@@ -164,20 +164,41 @@ export const issue = (
   };
   return newDraftLines;
 };
-export const canAllocate = (line: DraftStockOutLineFragment): boolean =>
-  !line.stockLineOnHold && !line.location?.onHold && line.availablePacks > 0;
+
+export const showLines = (line: DraftStockOutLineFragment): boolean => {
+  const isOnHold = line.stockLineOnHold || line.location?.onHold;
+
+  // If on hold, can only be in allocatable set if there are already packs allocated
+  if (isOnHold) {
+    return line.numberOfPacks > 0 && line.availablePacks > 0;
+  }
+
+  // If not on hold, can allocate if there are available packs
+  return line.availablePacks > 0;
+};
 
 export const canAutoAllocate = (
   line: DraftStockOutLineFragment,
+  expiryThresholdDays: number,
   requiredPackSize?: number
-) =>
-  canAllocate(line) &&
-  // shouldn't auto-allocate expired lines
-  !(!!line.expiryDate && DateUtils.isExpired(new Date(line.expiryDate))) &&
-  // should not be able to auto-allocate lines with unusable VVM status
-  !line.vvmStatus?.unusable &&
-  // if pack size is specified, should match the line's pack size
-  (!requiredPackSize || line.packSize === requiredPackSize);
+) => {
+  const lastAllowableDate = line.expiryDate
+    ? DateUtils.addDays(new Date(line.expiryDate), -expiryThresholdDays)
+    : undefined;
+
+  return (
+    showLines(line) &&
+    // should not auto-allocate from on-hold lines
+    !line.stockLineOnHold &&
+    !line.location?.onHold &&
+    // shouldn't auto-allocate expired lines
+    !(!!lastAllowableDate && DateUtils.isExpired(lastAllowableDate)) &&
+    // should not be able to auto-allocate lines with unusable VVM status
+    !line.vvmStatus?.unusable &&
+    // if pack size is specified, should match the line's pack size
+    (!requiredPackSize || line.packSize === requiredPackSize)
+  );
+};
 
 export const scannedBatchFilter = (
   allLines: DraftStockOutLineFragment[],

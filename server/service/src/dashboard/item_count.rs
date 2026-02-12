@@ -1,12 +1,15 @@
 use crate::{
     item::get_items_with_consumption,
     item_stats::{get_item_stats, ItemStats},
-    preference::{NumberOfMonthsThresholdToShowLowStockAlertsForProducts, Preference},
+    preference::{
+        NumberOfMonthsThresholdToShowLowStockAlertsForProducts,
+        NumberOfMonthsThresholdToShowOverStockAlertsForProducts, Preference,
+    },
     service_provider::ServiceContext,
     PluginOrRepositoryError,
 };
 
-use repository::{EqualFilter, ItemFilter, ItemRepository, RepositoryError};
+use repository::{ItemFilter, ItemRepository, RepositoryError};
 
 pub struct ItemCounts {
     pub total: i64,
@@ -15,6 +18,7 @@ pub struct ItemCounts {
     pub more_than_six_months_stock: i64,
     pub out_of_stock_products: i64,
     pub products_at_risk_of_being_out_of_stock: i64,
+    pub products_overstocked: i64,
 }
 
 pub trait ItemCountServiceTrait: Send + Sync {
@@ -31,47 +35,39 @@ pub trait ItemCountServiceTrait: Send + Sync {
     }
 
     fn get_no_stock_count(&self, item_stats: &Vec<ItemStats>) -> i64 {
-        let no_stock_count = item_stats
+        item_stats
             .iter()
             .filter(|i| i.total_stock_on_hand == 0.0)
-            .count() as i64;
-
-        return no_stock_count;
+            .count() as i64
     }
 
     fn get_low_stock_count(&self, item_stats: &Vec<ItemStats>, low_stock_threshold: i32) -> i64 {
-        let low_stock_count = item_stats
+        item_stats
             .iter()
-            .filter(|&i| (i.average_monthly_consumption > 0.0)) // exclude items with 0 amc from count, because we assume that means there's no consumption data so we cannot tell how many months of stock there might be.
+            .filter(|&i| i.average_monthly_consumption > 0.0) // exclude items with 0 amc from count, because we assume that means there's no consumption data so we cannot tell how many months of stock there might be.
             .map(|i| i.total_stock_on_hand / i.average_monthly_consumption)
             .filter(|months_of_stock| *months_of_stock < low_stock_threshold as f64)
-            .count() as i64;
-
-        return low_stock_count;
+            .count() as i64
     }
 
     fn get_more_than_six_months_stock_count(&self, item_stats: &Vec<ItemStats>) -> i64 {
-        let more_than_six_mos_count = item_stats
+        item_stats
             .iter()
-            .filter(|&i| (i.average_monthly_consumption > 0.0)) // exclude items with 0 amc from count, because we assume that means there's no consumption data so we cannot tell how many months of stock there might be.
+            .filter(|&i| i.average_monthly_consumption > 0.0) // exclude items with 0 amc from count, because we assume that means there's no consumption data so we cannot tell how many months of stock there might be.
             .map(|i| i.total_stock_on_hand / i.average_monthly_consumption)
             .filter(|months_of_stock| *months_of_stock > 6.0)
-            .count() as i64;
-
-        return more_than_six_mos_count;
+            .count() as i64
     }
 
     fn get_out_of_stock_products_count(
         &self,
         ctx: &ServiceContext,
         store_id: &str,
-        item_ids: Vec<String>,
+        item_filter: ItemFilter,
     ) -> Result<i64, PluginOrRepositoryError> {
         let items_with_consumption_set = get_items_with_consumption(
             &ctx.connection,
-            ItemFilter::new()
-                .id(EqualFilter::equal_any(item_ids))
-                .has_stock_on_hand(false),
+            item_filter.has_stock_on_hand(false),
             store_id,
         )?;
 
@@ -93,6 +89,21 @@ pub trait ItemCountServiceTrait: Send + Sync {
             })
             .count() as i64
     }
+
+    fn get_products_overstocked_count(
+        &self,
+        item_stats: &Vec<ItemStats>,
+        threshold_months: i32,
+    ) -> i64 {
+        item_stats
+            .iter()
+            .filter(|i| {
+                i.average_monthly_consumption > 0.0
+                    && (i.total_stock_on_hand / i.average_monthly_consumption)
+                        > threshold_months as f64
+            })
+            .count() as i64
+    }
 }
 
 pub struct ItemServiceCount {}
@@ -104,12 +115,11 @@ impl ItemCountServiceTrait for ItemServiceCount {
         store_id: &str,
         low_stock_threshold: i32,
     ) -> Result<ItemCounts, PluginOrRepositoryError> {
-        let visible_or_on_hand_items = ItemRepository::new(&ctx.connection).query_by_filter(
-            ItemFilter::new().visible_or_on_hand(true).is_active(true),
-            Some(store_id.to_string()),
-        )?;
+        let item_filter = ItemFilter::new().is_active(true).visible_or_on_hand(true);
+        let visible_or_on_hand_items = ItemRepository::new(&ctx.connection)
+            .query_by_filter(item_filter.clone(), Some(store_id.to_string()))?;
 
-        let total_count = *&visible_or_on_hand_items.len() as i64;
+        let total_count = visible_or_on_hand_items.len() as i64;
 
         let item_ids: Vec<String> = visible_or_on_hand_items
             .into_iter()
@@ -118,17 +128,26 @@ impl ItemCountServiceTrait for ItemServiceCount {
 
         let item_stats = get_item_stats(&ctx.connection, store_id, None, item_ids.clone(), None)?;
 
-        let no_stock = Self::get_no_stock_count(&self, &item_stats);
+        let no_stock = Self::get_no_stock_count(self, &item_stats);
 
-        let low_stock = Self::get_low_stock_count(&self, &item_stats, low_stock_threshold);
+        let low_stock = Self::get_low_stock_count(self, &item_stats, low_stock_threshold);
 
         let more_than_six_months_stock =
-            Self::get_more_than_six_months_stock_count(&self, &item_stats);
+            Self::get_more_than_six_months_stock_count(self, &item_stats);
 
         let out_of_stock_products =
-            self.get_out_of_stock_products_count(ctx, store_id, item_ids.clone())?;
+            self.get_out_of_stock_products_count(ctx, store_id, item_filter)?;
 
         let show_low_stock_alerts = NumberOfMonthsThresholdToShowLowStockAlertsForProducts
+            .load(&ctx.connection, Some(store_id.to_string()))
+            .map_err(|e| {
+                PluginOrRepositoryError::RepositoryError(RepositoryError::DBError {
+                    msg: format!("Failed to load preference: {e}"),
+                    extra: Default::default(),
+                })
+            })?;
+
+        let show_over_stock_alerts = NumberOfMonthsThresholdToShowOverStockAlertsForProducts
             .load(&ctx.connection, Some(store_id.to_string()))
             .map_err(|e| {
                 PluginOrRepositoryError::RepositoryError(RepositoryError::DBError {
@@ -140,6 +159,9 @@ impl ItemCountServiceTrait for ItemServiceCount {
         let products_at_risk_of_being_out_of_stock = self
             .get_products_at_risk_of_being_out_of_stock_count(&item_stats, show_low_stock_alerts);
 
+        let products_overstocked =
+            self.get_products_overstocked_count(&item_stats, show_over_stock_alerts);
+
         Ok(ItemCounts {
             total: total_count,
             no_stock,
@@ -147,6 +169,7 @@ impl ItemCountServiceTrait for ItemServiceCount {
             more_than_six_months_stock,
             out_of_stock_products,
             products_at_risk_of_being_out_of_stock,
+            products_overstocked,
         })
     }
 }
@@ -156,7 +179,8 @@ mod item_count_service_test {
 
     use repository::{
         mock::{common::FullMockMasterList, mock_store_b, MockData, MockDataInserts},
-        ItemRow, ItemType, MasterListLineRow, MasterListNameJoinRow, MasterListRow, StockLineRow,
+        EqualFilter, ItemFilter, ItemRow, ItemType, MasterListLineRow, MasterListNameJoinRow,
+        MasterListRow, StockLineRow,
     };
 
     use crate::{
@@ -367,7 +391,11 @@ mod item_count_service_test {
         ];
 
         let result = ItemServiceCount {}
-            .get_out_of_stock_products_count(&service_context, &mock_store_b().id, item_ids)
+            .get_out_of_stock_products_count(
+                &service_context,
+                &mock_store_b().id,
+                ItemFilter::new().id(EqualFilter::equal_any(item_ids)),
+            )
             .unwrap();
 
         println!("result {:?}", result);

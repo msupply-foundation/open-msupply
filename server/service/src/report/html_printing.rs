@@ -42,7 +42,7 @@ pub fn html_to_pdf(
     };
     fs::create_dir_all(&temp_dir)?;
 
-    let document_name = format!("{}.html", document_id);
+    let document_name = format!("{document_id}.html");
     let temp_html_doc_path = temp_dir.join(document_name);
     fs::write(&temp_html_doc_path, document)?;
 

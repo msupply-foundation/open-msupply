@@ -118,7 +118,7 @@ fn validate(
             master_list
                 .order_types
                 .iter()
-                .find(|order_type| (order_type.id == input.program_order_type_id))
+                .find(|order_type| order_type.id == input.program_order_type_id)
                 .map(|order_type| (master_list, order_type))
         })
         .ok_or(OutError::ProgramOrderTypeDoesNotExist)?;
@@ -320,6 +320,8 @@ fn generate_lines(
                 expiring_units: 0.0,
                 days_out_of_stock: 0.0,
                 option_id: None,
+                available_volume: None,
+                location_type_id: None,
             }
         })
         .collect();

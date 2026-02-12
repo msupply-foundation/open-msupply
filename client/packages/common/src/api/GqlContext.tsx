@@ -1,17 +1,11 @@
-import React, {
-  FC,
-  useMemo,
-  useCallback,
-  PropsWithChildren,
-  useRef,
-} from 'react';
+import React, { FC, PropsWithChildren, useRef } from 'react';
 import {
   GraphQLClient,
   RequestDocument,
   RequestOptions,
   Variables,
 } from 'graphql-request';
-import { AuthError } from '../authentication/AuthContext';
+import { AuthError, getAuthCookie } from '../authentication/AuthContext';
 import { LocalStorage } from '../localStorage';
 import { DefinitionNode, DocumentNode, OperationDefinitionNode } from 'graphql';
 import { RequestConfig } from 'graphql-request/build/esm/types';
@@ -89,12 +83,10 @@ const shouldIgnoreQuery = (definitionNode: DefinitionNode) => {
   return ignoredQueries.indexOf(operationNode.name?.value ?? '') !== -1;
 };
 
-const shouldSaveRequestTime = (documentNode?: DocumentNode) => {
-  return documentNode && !documentNode.definitions.some(shouldIgnoreQuery);
-};
+const shouldSaveRequestTime = (documentNode?: DocumentNode) =>
+  documentNode && !documentNode?.definitions?.some(shouldIgnoreQuery);
 
 class GQLClient extends GraphQLClient {
-  private client: GraphQLClient;
   private emptyData: object;
   private skipRequest: SkipRequest;
   private lastRequestTime: Date;
@@ -105,7 +97,6 @@ class GQLClient extends GraphQLClient {
     skipRequest?: SkipRequest
   ) {
     super(url, options);
-    this.client = new GraphQLClient(url, options);
     this.emptyData = {};
     this.skipRequest = skipRequest || (() => false);
     this.lastRequestTime = new Date();
@@ -117,7 +108,11 @@ class GQLClient extends GraphQLClient {
     requestHeaders?: RequestInit['headers']
   ): Promise<T> {
     const options = documentOrOptions as RequestOptions<Variables>;
-    const document = (documentOrOptions as DocumentNode) || options.document;
+    const document = (
+      typeof documentOrOptions !== 'string' && 'document' in documentOrOptions
+        ? options.document
+        : documentOrOptions
+    ) as DocumentNode;
 
     if (this.skipRequest(document)) {
       return new Promise(() => this.emptyData);
@@ -125,9 +120,10 @@ class GQLClient extends GraphQLClient {
 
     if (shouldSaveRequestTime(document)) this.lastRequestTime = new Date();
 
+    super.setHeader('Authorization', `Bearer ${getAuthCookie().token}`);
     const response = options.document
-      ? this.client.request(options)
-      : this.client.request(
+      ? super.request(options)
+      : super.request(
           documentOrOptions as RequestDocument,
           variables,
           requestHeaders
@@ -148,12 +144,6 @@ class GQLClient extends GraphQLClient {
     );
   }
 
-  public setHeaders = (headers: HeadersInit): GraphQLClient =>
-    this.client.setHeaders(headers);
-  public setHeader = (key: string, value: string): GraphQLClient =>
-    this.client.setHeader(key, value);
-  public setEndpoint = (value: string): GraphQLClient =>
-    this.client.setEndpoint(value);
   public setSkipRequest = (skipRequest: SkipRequest) =>
     (this.skipRequest = skipRequest);
   public getLastRequestTime = () => this.lastRequestTime;
@@ -161,7 +151,6 @@ class GQLClient extends GraphQLClient {
 
 interface GqlControl {
   client: GQLClient;
-  setHeader: (header: string, value: string) => void;
   setUrl: (url: string) => void;
   setSkipRequest: (skipRequest: SkipRequest) => void;
 }
@@ -183,40 +172,25 @@ export const GqlProvider: FC<PropsWithChildren<ApiProviderProps>> = ({
   skipRequest,
   children,
 }) => {
-  const client = useRef(
+  const clientRef = useRef(
     new GQLClient(url, { credentials: 'include' }, skipRequest)
-  ).current;
-
-  const setUrl = useCallback(
-    (newUrl: string) => {
-      client.setEndpoint(newUrl);
-    },
-    [client]
   );
 
-  const setHeader = useCallback(
-    (key: string, value: string) => {
-      client.setHeader(key, value);
-    },
-    [client]
-  );
+  const setSkipRequest = (
+    skipRequest: (documentNode: DocumentNode) => boolean
+  ) => {
+    clientRef.current.setSkipRequest(skipRequest);
+  };
 
-  const setSkipRequest = useCallback(
-    (skipRequest: (documentNode: DocumentNode) => boolean) => {
-      client.setSkipRequest(skipRequest);
-    },
-    [client]
-  );
+  const setUrl = (url: string) => {
+    clientRef.current.setEndpoint(url);
+  };
 
-  const val = useMemo(
-    () => ({
-      client,
-      setUrl,
-      setHeader,
-      setSkipRequest,
-    }),
-    [client, setUrl, setHeader, setSkipRequest]
-  );
+  const val = {
+    setSkipRequest,
+    setUrl,
+    client: clientRef.current,
+  };
 
   return <Provider value={val}>{children}</Provider>;
 };

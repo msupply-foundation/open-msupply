@@ -22,9 +22,11 @@ interface ResponseNumInputRowProps {
   endAdornmentOverride?: string;
   unitName?: string | null;
   label: string;
+  disabled?: boolean;
   disabledOverride?: boolean;
   sx?: SxProps<Theme>;
   overrideDoseDisplay?: boolean;
+  roundUp?: boolean;
 }
 
 export const ResponseNumInputRow = ({
@@ -35,11 +37,13 @@ export const ResponseNumInputRow = ({
   defaultPackSize,
   dosesPerUnit = 1,
   endAdornmentOverride,
+  disabled,
   disabledOverride,
   displayVaccinesInDoses = false,
   overrideDoseDisplay,
   unitName,
   sx,
+  roundUp,
 }: ResponseNumInputRowProps) => {
   const t = useTranslation();
   const { getPlural } = useIntlUtils();
@@ -78,10 +82,8 @@ export const ResponseNumInputRow = ({
     displayVaccinesInDoses && !!value && !overrideDoseDisplay ? (
       <DosesCaption
         value={value}
-        representation={representation}
         dosesPerUnit={dosesPerUnit}
         displayVaccinesInDoses={displayVaccinesInDoses}
-        defaultPackSize={defaultPackSize}
       />
     ) : null;
 
@@ -91,9 +93,11 @@ export const ResponseNumInputRow = ({
       onChange={handleChange}
       endAdornment={endAdornment}
       label={label}
+      disabled={disabled}
       disabledOverride={disabledOverride}
       sx={sx}
       dosesCaption={dosesCaption}
+      roundUp={roundUp}
     />
   );
 };

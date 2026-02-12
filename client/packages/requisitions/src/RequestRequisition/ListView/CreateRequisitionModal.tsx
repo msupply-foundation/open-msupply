@@ -18,7 +18,7 @@ import {
 } from './ProgramRequisitionOptions';
 import { NewRequisitionType } from '../../types';
 
-interface NewGeneralRequisition {
+export interface NewGeneralRequisition {
   type: NewRequisitionType.General;
   name: NameRowFragment;
 }
@@ -40,11 +40,14 @@ export const CreateRequisitionModal = ({
   const { data: programSettings, isLoading } =
     useRequest.utils.programSettings();
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: false });
+  const noSuppliers = programSettings?.every(
+    setting => setting.suppliers.length === 0
+  );
 
   const InnerComponent = () => {
     if (isLoading) return <BasicSpinner />;
 
-    if (programSettings && programSettings.length > 0)
+    if (programSettings && !noSuppliers)
       return (
         <ModalTabs
           tabs={[

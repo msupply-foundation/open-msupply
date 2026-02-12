@@ -39,7 +39,7 @@ export const Footer = ({ data }: { data: RnRFormQuery }) => {
         } else {
           await saveAllLines();
           await finalise();
-          success(t('label.finalised'))();
+          success(t('status.finalised'))();
         }
       } catch (e) {
         error((e as Error).message)();
@@ -76,8 +76,8 @@ export const Footer = ({ data }: { data: RnRFormQuery }) => {
                 variant={'ok'}
                 customLabel={
                   data.status === RnRFormNodeStatus.Finalised
-                    ? t('label.finalised')
-                    : t('label.finalise')
+                    ? t('status.finalised')
+                    : t('status.finalise')
                 }
               />
             </Box>

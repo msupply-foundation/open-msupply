@@ -8,16 +8,19 @@ import {
   TextWithTooltipCell,
   AssetLogStatusNodeType,
   useUrlQuery,
+  StatusCell,
 } from '@openmsupply-client/common';
 import {
   mapIdNameToOptions,
   useAssetCategories,
   useAssetTypes,
 } from '@openmsupply-client/system';
-
-import { Status } from '../Components';
 import { AssetRowFragment } from '../api/operations.generated';
-import { CCE_CLASS_ID } from '../utils';
+import {
+  CCE_CLASS_ID,
+  fullStatusColourMap,
+  getEquipmentStatusTranslation,
+} from '../utils';
 
 export const useAssetColumns = () => {
   const t = useTranslation();
@@ -88,35 +91,17 @@ export const useAssetColumns = () => {
         id: 'functionalStatus',
         header: t('label.functional-status'),
         accessorFn: row => row.statusLog?.status,
-        Cell: ({ row }) => <Status status={row.original.statusLog?.status} />,
+        Cell: ({ cell }) => (
+          <StatusCell cell={cell} statusMap={fullStatusColourMap(t)} />
+        ),
         enableColumnFilter: true,
         filterVariant: 'select',
-        filterSelectOptions: [
-          {
-            label: t('status.decommissioned'),
-            value: AssetLogStatusNodeType.Decommissioned,
-          },
-          {
-            label: t('status.functioning'),
-            value: AssetLogStatusNodeType.Functioning,
-          },
-          {
-            label: t('status.functioning-but-needs-attention'),
-            value: AssetLogStatusNodeType.FunctioningButNeedsAttention,
-          },
-          {
-            label: t('status.not-functioning'),
-            value: AssetLogStatusNodeType.NotFunctioning,
-          },
-          {
-            label: t('status.not-in-use'),
-            value: AssetLogStatusNodeType.NotInUse,
-          },
-          {
-            label: t('status.unserviceable'),
-            value: AssetLogStatusNodeType.Unserviceable,
-          },
-        ],
+        filterSelectOptions: Object.values(AssetLogStatusNodeType).map(
+          status => ({
+            label: getEquipmentStatusTranslation(t, status),
+            value: status,
+          })
+        ),
       },
       {
         id: 'serialNumber',

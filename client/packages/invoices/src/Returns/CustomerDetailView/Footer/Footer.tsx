@@ -1,4 +1,4 @@
-import React, { FC, memo } from 'react';
+import React, { memo } from 'react';
 import {
   Box,
   ButtonWithIcon,
@@ -11,14 +11,15 @@ import {
   Action,
   DeleteIcon,
   ActionsFooter,
+  usePreferences,
 } from '@openmsupply-client/common';
 import {
   getStatusTranslator,
-  customerReturnStatuses,
   manualCustomerReturnStatuses,
   inboundStatuses,
+  customerReturnStatuses,
 } from '../../../utils';
-import { CustomerReturnFragment, useReturns } from '../../api';
+import { CustomerReturnFragment, CustomerReturnLineFragment, useReturns } from '../../api';
 import { StatusChangeButton } from './StatusChangeButton';
 import { OnHoldButton } from './OnHoldButton';
 
@@ -54,16 +55,23 @@ const createStatusLog = (invoice: CustomerReturnFragment) => {
   return statusLog;
 };
 
-export const FooterComponent: FC = () => {
+export const FooterComponent = ({
+  selectedRows,
+  resetRowSelection,
+}: {
+  selectedRows: CustomerReturnLineFragment[];
+  resetRowSelection: () => void;
+}) => {
   const t = useTranslation();
+  const { invoiceStatusOptions } = usePreferences();
+  const { navigateUpOne } = useBreadcrumbs();
   const { data } = useReturns.document.customerReturn();
   const { id } = data ?? { id: '' };
-  const { navigateUpOne } = useBreadcrumbs();
-  const { confirmAndDelete } = useReturns.lines.deleteSelectedCustomerLines({
+
+  const confirmAndDelete = useReturns.lines.deleteSelectedCustomerLines({
     returnId: id,
-  });
-  const { selectedIds } = useReturns.lines.deleteSelectedCustomerLines({
-    returnId: id,
+    selectedRows,
+    resetRowSelection,
   });
 
   const isManuallyCreated = !data?.linkedShipment?.id;
@@ -76,17 +84,26 @@ export const FooterComponent: FC = () => {
     },
   ];
 
+  const statuses = isManuallyCreated
+    ? manualCustomerReturnStatuses.filter(status =>
+        invoiceStatusOptions?.includes(status)
+      )
+    : customerReturnStatuses.filter(status =>
+        invoiceStatusOptions?.includes(status)
+      );
+
   return (
     <AppFooterPortal
       Content={
         <>
-          {selectedIds.length !== 0 && (
+          {selectedRows.length !== 0 && (
             <ActionsFooter
               actions={actions}
-              selectedRowCount={selectedIds.length}
+              selectedRowCount={selectedRows.length}
+              resetRowSelection={resetRowSelection}
             />
           )}
-          {data && selectedIds.length === 0 && (
+          {data && selectedRows.length === 0 && (
             <Box
               gap={2}
               display="flex"
@@ -96,11 +113,7 @@ export const FooterComponent: FC = () => {
             >
               <OnHoldButton />
               <StatusCrumbs
-                statuses={
-                  isManuallyCreated
-                    ? manualCustomerReturnStatuses
-                    : customerReturnStatuses
-                }
+                statuses={statuses}
                 statusLog={createStatusLog(data)}
                 statusFormatter={getStatusTranslator(t)}
               />

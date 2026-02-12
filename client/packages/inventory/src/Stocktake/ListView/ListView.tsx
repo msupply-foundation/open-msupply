@@ -13,8 +13,9 @@ import {
   MaterialTable,
 } from '@openmsupply-client/common';
 import { AppBarButtons } from './AppBarButtons';
-import { getStocktakeTranslator, isStocktakeDisabled } from '../../utils';
+import { getStatusTranslation, isStocktakeDisabled } from '../../utils';
 import { StocktakeRowFragment } from '../api/operations.generated';
+import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
 import { useStocktake } from '../api/hooks/useStocktake';
 import { useStocktakeList } from '../api/hooks/useStocktakeList';
@@ -43,7 +44,6 @@ export const ListView = () => {
     create: { create, isCreating },
   } = useStocktake();
 
-  const statusTranslator = getStocktakeTranslator(t);
   const description = t('stocktake.description-template', {
     username: user ? user.name : 'unknown user',
     date: localisedDate(new Date()),
@@ -64,7 +64,7 @@ export const ListView = () => {
         accessorFn: row =>
           row.isLocked
             ? t('label.stocktake-on-hold')
-            : statusTranslator(row.status),
+            : t(getStatusTranslation(row.status)),
         enableColumnFilter: true,
         filterVariant: 'select',
         filterSelectOptions: [
@@ -137,6 +137,7 @@ export const ListView = () => {
 
   return (
     <>
+      <Toolbar />
       <AppBarButtons
         description={description}
         onCreate={create}
