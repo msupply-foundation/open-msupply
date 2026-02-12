@@ -100,14 +100,18 @@ export const AddFromScannerButton = ({
     [isListening]
   );
 
-  if (!isEnabled) return null;
+  const tooltipTitle = !isEnabled
+    ? t('error.no-scanner-available')
+    : !isConnected
+    ? t('error.scanner-not-connected')
+    : '';
 
   return (
-    <Tooltip title={isConnected ? '' : t('error.scanner-not-connected')}>
+    <Tooltip title={tooltipTitle}>
       <Box>
         <ButtonWithIcon
           ref={buttonRef}
-          disabled={disabled || !isConnected}
+          disabled={disabled || !isConnected || !isEnabled}
           onClick={handleClick}
           Icon={<ScanIcon />}
           label={label}

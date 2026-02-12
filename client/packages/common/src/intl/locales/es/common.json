@@ -396,6 +396,7 @@
   "error.return-not-found": "Devolución no encontrada",
   "error.rnr-not-found": "Formulario R&R no encontrado",
   "error.scanner-not-connected": "El escáner no está conectado. Ve a la sección Administrador > Dispositivos para conectar el escáner.",
+  "error.no-scanner-available": "No hay escáner disponible. Ve a la sección Administrador > Dispositivos para habilitar un escáner.",
   "error.server-failed-to-start": "¡Error! El servidor no se pudo iniciar",
   "error.server-not-found": "Estamos teniendo problemas para encontrar un servidor de Open mSupply",
   "error.shipment-not-found": "Envío no encontrado",

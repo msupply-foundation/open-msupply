@@ -482,6 +482,7 @@
   "error.rnr-has-errors": "Não é possível finalizar o formulário R&R enquanto algumas linhas tiverem erros. Você será levado à primeira linha com erro",
   "error.rnr-not-found": "Formulário R&R não encontrado",
   "error.scanner-not-connected": "Escaneador não está conectado. Veja a sessão Admin > Dispositivos para conectar o scanner.",
+  "error.no-scanner-available": "Nenhum escaneador disponível. Veja a sessão Admin > Dispositivos para habilitar um scanner.",
   "error.server-failed-to-start": "Erro! O servidor falhou ao iniciar",
   "error.server-not-found": "Encontramos um problema ao buscar um servidor Open mSupply",
   "error.shipment-not-found": "Envio não encontrado",

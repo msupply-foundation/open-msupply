@@ -492,6 +492,7 @@
   "error.rnr-has-errors": "Cannot finalise the R&R form while some lines have errors. You will be taken to the first error line",
   "error.rnr-not-found": "R&R Form not found",
   "error.scanner-not-connected": "Scanner is not connected. See the Admin > Devices section to connect a scanner.",
+  "error.no-scanner-available": "No scanner available. See the Admin > Devices section to enable a scanner.",
   "error.server-failed-to-start": "Error! The server failed to start",
   "error.server-not-found": "We are having a problem finding an Open mSupply server",
   "error.shipment-not-found": "Shipment not found",

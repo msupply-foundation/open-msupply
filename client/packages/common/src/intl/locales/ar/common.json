@@ -347,6 +347,7 @@
   "error.return-not-found": "الإرجاع غير موجود",
   "error.rnr-not-found": "نماذج التقارير وطلبات الشراء غير موجودة",
   "error.scanner-not-connected": "الماسح الضوئي غير متصل. اطلع على قسم المسؤول > قسم الأجهزة لتوصيل ماسح ضوئي.",
+  "error.no-scanner-available": "لا يوجد ماسح ضوئي متاح. اطلع على قسم المسؤول > قسم الأجهزة لتمكين ماسح ضوئي.",
   "error.server-failed-to-start": "خطأ! فشل الخادم في بدء التشغيل",
   "error.server-not-found": "نواجه مشكلة في العثور على خادم Open mSupply",
   "error.shipment-not-found": "لم يتم العثور على التسليم",

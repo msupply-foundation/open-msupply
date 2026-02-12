@@ -489,6 +489,7 @@
   "error.rnr-has-errors": "Impossible de finaliser le formulaire R&R s'il ya des erreurs sur certaines lignes. Vous allez être redirigé vers la première ligne d'erreur",
   "error.rnr-not-found": "Formulaire R&R introuvable",
   "error.scanner-not-connected": "Le lecteur n'est pas connecté. Voir le menu Admin > Appareils pour connecter un lecteur.",
+  "error.no-scanner-available": "Aucun lecteur disponible. Voir le menu Admin > Appareils pour activer un lecteur.",
   "error.server-failed-to-start": "Erreur ! Le serveur n'a pas pu démarrer",
   "error.server-not-found": "Nous rencontrons un problème pour trouver un serveur Open mSupply",
   "error.shipment-not-found": "Livraison introuvable",
