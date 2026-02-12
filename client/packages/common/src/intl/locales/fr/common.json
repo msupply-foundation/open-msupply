@@ -2334,6 +2334,7 @@
   "replenishment": "Approvisionnement",
   "report-code.encounters": "Visites",
   "report-code.expiring-items": "Articles en fin de validité",
+  "report-code.inventory_adjustments": "Ajustements de stock",
   "report-code.inbound": "Livraison entrante",
   "report-code.internal-order": "Commande interne",
   "report-code.item-usage": "Consommation des articles",
