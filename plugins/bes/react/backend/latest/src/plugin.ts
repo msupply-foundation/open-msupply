@@ -89,8 +89,9 @@ const plugins: BackendPlugins = {
 
     const today = format(new Date(), 'yyyy-MM-dd');
     const insertLines: InsertOutboundShipmentLineInput[] = [];
-    const insertUnallocatedLines: InsertOutboundShipmentUnallocatedLineInput[] =
-      [];
+    let insertUnallocatedLine:
+      | InsertOutboundShipmentUnallocatedLineInput
+      | undefined = undefined;
     let totalUnitsSupplied = 0;
 
     for (let i = 0; i < unexpiredBatches.length; i++) {
@@ -167,17 +168,16 @@ const plugins: BackendPlugins = {
     if (totalUnitsSupplied < inp.quantity) {
       log({ t: 'here in not fully allocated' });
       const shipmentLineId = uuidv7();
-      const placeHolderQuantity = inp.quantity - totalUnitsSupplied;
-      insertUnallocatedLines.push({
+      insertUnallocatedLine = {
         id: shipmentLineId,
         invoiceId: shipmentId,
         itemId: foundItem.id,
-        quantity: placeHolderQuantity,
-      });
+        quantity: inp.quantity - totalUnitsSupplied,
+      };
     }
 
     log({ t: 'insertLines', insertLines });
-    log({ t: 'unallocatedLines', insertUnallocatedLines });
+    log({ t: 'unallocatedLine', insertUnallocatedLine });
 
     // Insert outbound shipment
     const insertInput: BatchOutboundShipmentMutationVariables = {
@@ -275,16 +275,14 @@ const plugins: BackendPlugins = {
 
     // Insert unallocated line
 
-    if (insertUnallocatedLines.length > 0) {
+    if (insertUnallocatedLine) {
       const insertLineInput: InsertOutbounndShipmentUnallocatedLineMutationVariables =
         {
           storeId: issuingStoreId,
-          input: {
-            id: insertUnallocatedLines[0].id,
-            invoiceId: shipmentId,
-            itemId: insertUnallocatedLines[0].itemId,
-            quantity: insertUnallocatedLines[0].quantity,
-          },
+          id: insertUnallocatedLine.id,
+          invoiceId: shipmentId,
+          itemId: insertUnallocatedLine.itemId,
+          quantity: insertUnallocatedLine.quantity,
         };
 
       try {
@@ -319,17 +317,15 @@ const plugins: BackendPlugins = {
     }
 
     // Allocate the outbound shipment lines
-    if (insertUnallocatedLines.length > 0) {
-      const shipmentLineIds = insertUnallocatedLines.map(line => {
-        return line.id;
-      });
-
+    if (insertUnallocatedLine) {
       try {
         const allocateOutboundShipmentInput: BatchOutboundShipmentMutationVariables =
           {
             storeId: issuingStoreId,
             input: {
-              allocatedOutboundShipmentUnallocatedLines: shipmentLineIds,
+              allocatedOutboundShipmentUnallocatedLines: [
+                insertUnallocatedLine.id,
+              ],
             },
           };
 
