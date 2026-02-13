@@ -22,14 +22,14 @@ const plugins: BackendPlugins = {
     if (!inp.customerCode) {
       return {
         success: false,
-        message: 'param "customerCode" is empty or invalid',
+        message: "param 'customerCode' is empty or invalid",
       };
     }
 
     if (!inp.universalCode) {
       return {
         success: false,
-        message: 'param "universalCode" is empty or invalid',
+        message: "param 'universalCode' is empty or invalid",
       };
     }
 
@@ -80,7 +80,7 @@ const plugins: BackendPlugins = {
     if (inp.numberOfUnits === 0) {
       return {
         success: false,
-        message: 'param "numberOfUnits" is 0 or invalid',
+        message: "param 'numberOfUnits' is 0 or invalid",
       };
     }
 
