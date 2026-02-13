@@ -52,7 +52,7 @@ const plugins: BackendPlugins = {
 
     const { result: itemsQueryResult, itemsError } = itemsQuery({
       storeId: issuingStoreId,
-      filter: { code: { equalTo: inp.universalCode }, hasStockOnHand: true }, // TODO: change to 'universalCode. Version of OMS doesn't have it
+      filter: { code: { equalTo: inp.universalCode } }, // TODO: change to universalCode. Version of OMS doesn't have it
     });
 
     if (itemsError) return itemsError;
