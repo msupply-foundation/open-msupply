@@ -15,7 +15,7 @@ import {
 } from './query-operations';
 
 const plugins: BackendPlugins = {
-  graphql_query: ({ store_id, input }): Graphql['output'] => {
+  graphql_query: ({ input }): Graphql['output'] => {
     const inp = input as Graphql['input'];
     const shipmentId = uuidv7();
 
@@ -25,9 +25,9 @@ const plugins: BackendPlugins = {
     }
 
     // Take first store
-    // const issuingStore = activeStores[0];
+    const issuingStore = activeStores[0];
     // For testing only, TODO: remove on last commit
-    const issuingStore = activeStores.find(s => s.store_row.id === store_id);
+    // const issuingStore = activeStores.find(s => s.store_row.id === store_id);
 
     if (!issuingStore) {
       return { success: false, message: 'No store found' };
