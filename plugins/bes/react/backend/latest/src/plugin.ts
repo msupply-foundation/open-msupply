@@ -63,6 +63,13 @@ const plugins: BackendPlugins = {
       };
     }
 
+    if (inp.quantity === 0) {
+      return {
+        success: false,
+        message: '0 quantity given',
+      };
+    }
+
     const foundItem = itemsQueryResult.items.nodes[0];
 
     const { nullExpiryBatches, unexpiredBatches, expiredBatches } =
