@@ -75,7 +75,6 @@ const plugins: BackendPlugins = {
     let placeHolderQuantity = 0;
     let totalUnitsSupplied = 0;
     const unexpiredAndNullBatches = [...nullExpiryBatches, ...unexpiredBatches];
-    log(unexpiredAndNullBatches);
 
     for (let i = 0; i < unexpiredAndNullBatches.length; i++) {
       const batch = unexpiredAndNullBatches[i];
@@ -144,8 +143,6 @@ const plugins: BackendPlugins = {
     if (totalUnitsSupplied < inp.quantity) {
       placeHolderQuantity = inp.quantity - totalUnitsSupplied;
     }
-
-    log({ t: 'insertLines', insertLines });
 
     // eslint-disable-next-line prefer-const
     let errText = `Failed to issue the stock for item code: ${foundItem.msupplyUniversalCode}, quantity: ${inp.quantity}, customer: ${customer.name},`;

@@ -146,8 +146,6 @@ export const insertUnAllocatedLine = (
     const insertUnallocatedLineResult =
       insertOutboundShipmentLineQuery(insertLineInput);
 
-    log({ t: 'insertResult', insertUnallocatedLineResult });
-
     if (!insertUnallocatedLineResult.insertOutboundShipmentUnallocatedLine) {
       errText += ` error: no lines returned in response`;
       throw Error(errText);
