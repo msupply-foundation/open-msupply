@@ -43,7 +43,7 @@ export const MultiChoice = <T extends string>({
   const validateInvoiceStatusChange = (
     newValue: T[],
     optionValue: T,
-    checked: boolean
+    isChecking: boolean
   ): boolean => {
     // Only validate for InvoiceStatusOptions preference
     if (preferenceKey !== PreferenceKey.InvoiceStatusOptions) {
@@ -56,7 +56,7 @@ export const MultiChoice = <T extends string>({
 
     // If unchecking either Delivered or Received
     if (
-      !checked &&
+      !isChecking &&
       (changedStatus === InvoiceNodeStatus.Delivered ||
         changedStatus === InvoiceNodeStatus.Received)
     ) {
@@ -74,13 +74,13 @@ export const MultiChoice = <T extends string>({
     return true;
   };
 
-  const handleChange = (optionValue: T, checked: boolean) => {
-    const newValue = checked
+  const handleChange = (optionValue: T, isChecking: boolean) => {
+    const newValue = isChecking
       ? [...value, optionValue]
       : value.filter(v => v !== optionValue);
 
     // Validate the change before applying
-    if (!validateInvoiceStatusChange(newValue, optionValue, checked)) {
+    if (!validateInvoiceStatusChange(newValue, optionValue, isChecking)) {
       return;
     }
 
