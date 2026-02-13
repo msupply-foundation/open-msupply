@@ -1,0 +1,41 @@
+<style>
+	{% include "style.css" %}</style>
+
+<div class="container">
+	<table>
+		<thead>
+			<tr class="heading">
+				<th>{{t(k="label.code", f="Code")}}</th>
+				<th>{{t(k="report.item-name", f="Item name")}}</th>
+				<th>{{t(k="label.batch", f="Batch")}}</th>
+				<th>{{t(k="label.expiry", f="Expiry")}}</th>
+				<th>{{t(k="label.location", f="Location")}}</th>
+				<th>{{t(k="label.snapshot-num-of-packs",f="Snapshot Packs")}}</th>
+				<th>{{t(k="label.counted-num-of-packs",f="Counted Packs")}}</th>
+				<th>{{t(k="label.adjustments",f="Adjustments")}}</th>
+				<th>{{t(k="label.reason",f="Reason")}}</th>
+			</tr>
+		</thead>
+		<tbody>
+			{% for line in data.lines %}
+				<tr>
+					<td>{{ line.item.code }}</td>
+					<td>{{ line.item.name }}</td>
+					<td>{{ line.batch | default(value='-') }}</td>
+					<td>
+						{% if line.expiryDate %}
+							{{ line.expiryDate | date(format="%d/%m/%Y") }}
+						{% else %}
+							-
+						{% endif %}
+					</td>
+					<td>{{ line.location.code | default(value='-') }}</td>
+					<td style="text-align: right">{{ line.snapshotPacks | default(value='-') }}</td>
+					<td style="text-align: right">{{ line.countedPacks | default(value='-') }}</td>
+					<td style="text-align: right">{{ line.adjustmentPacks }}</td>
+					<td>{{ line.inventoryAdjustmentReason.reason | default(value='') }}</td>
+				</tr>
+			{% endfor %}
+		</tbody>
+	</table>
+</div>
