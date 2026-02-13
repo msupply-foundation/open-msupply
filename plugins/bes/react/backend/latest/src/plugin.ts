@@ -81,15 +81,16 @@ const plugins: BackendPlugins = {
       const batch = unexpiredBatches[i];
       const shipmentLineId = uuidv7();
       const unitsInBatch = batch.availableNumberOfPacks * batch.packSize;
+      const unitsStillRequired = inp.quantity - totalUnitsSupplied;
 
       if (unitsInBatch === 0) continue;
 
       if (totalUnitsSupplied >= inp.quantity) break;
 
       if (batch.expiryDate >= today) {
-        log({ t: 'batch expiry is greater than today' });
-        if (unitsInBatch > inp.quantity) {
-          const packsToSupply = Math.ceil(inp.quantity / batch.packSize);
+        if (unitsInBatch > unitsStillRequired) {
+          const packsToSupply = Math.floor(unitsStillRequired / batch.packSize); // have to round down or get ReductionBelowZero error
+
           totalUnitsSupplied += packsToSupply * batch.packSize;
 
           insertLines.push({
@@ -115,16 +116,15 @@ const plugins: BackendPlugins = {
       const batch = expiredBatches[j];
       const shipmentLineId = uuidv7();
       const unitsInBatch = batch.availableNumberOfPacks / batch.packSize;
+      const unitsStillRequired = inp.quantity - totalUnitsSupplied;
 
       if (totalUnitsSupplied >= inp.quantity) break;
       if (batch.availableNumberOfPacks === 0) continue;
 
       if (batch.expiryDate < today) {
-        log(batch);
-        if (unitsInBatch > inp.quantity) {
-          const packsToSupply = inp.quantity / batch.packSize;
+        if (unitsInBatch > unitsStillRequired) {
+          const packsToSupply = Math.floor(unitsStillRequired / batch.packSize);
           totalUnitsSupplied += packsToSupply * batch.packSize;
-          log({ t: 'here in expired and unitsInBatch > inp.q' });
           insertLines.push({
             id: shipmentLineId,
             stockLineId: batch.id,
@@ -132,7 +132,6 @@ const plugins: BackendPlugins = {
           });
           break;
         } else {
-          log({ t: 'here in expired and unitsInBatch < inp.q' });
           totalUnitsSupplied += batch.availableNumberOfPacks * batch.packSize;
 
           insertLines.push({
