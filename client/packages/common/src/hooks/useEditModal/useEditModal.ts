@@ -27,14 +27,14 @@ export const useEditModal = <T>(): EditModalState<T> => {
       setMode(entity ? ModalMode.Update : ModalMode.Create);
       toggleOn();
     },
-    [toggleOn]
+    [toggleOn, setEntity, setMode]
   );
 
   const onClose = useCallback(() => {
     setMode(null);
     setEntity(null);
     toggleOff();
-  }, [toggleOff]);
+  }, [toggleOff, setMode, setEntity]);
 
   return {
     onOpen,

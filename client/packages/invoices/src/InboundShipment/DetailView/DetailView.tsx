@@ -65,9 +65,11 @@ const DetailViewInner = () => {
   const { info } = useNotification();
   const { urlQuery, updateQuery } = useUrlQuery();
   const { data: lines } = useInboundLines();
-
-  const uploadDocumentController = useToggle();
-  const { toggleOn: toggleUploadModal } = uploadDocumentController;
+  const {
+    toggleOn: toggleUploadModal,
+    isOn: isUploadModalOpen,
+    toggleOff: toggleCloseUploadModal,
+  } = useToggle();
 
   const { onOpen, onClose, mode, entity, isOpen } = useEditModal<
     InboundLineItem | ScannedItem
@@ -292,8 +294,8 @@ const DetailViewInner = () => {
           )}
 
           <UploadDocumentModal
-            isOn={uploadDocumentController.isOn}
-            toggleOff={uploadDocumentController.toggleOff}
+            isOn={isUploadModalOpen}
+            toggleOff={toggleCloseUploadModal}
             recordId={data.id}
             tableName="invoice"
             invalidateQueries={invalidateQuery}
