@@ -51,8 +51,11 @@ export const DetailView = () => {
 
   const { data, isLoading, invalidateQueries } = useRequest.document.get();
   const isDisabled = useRequest.utils.isDisabled();
-  const uploadDocumentController = useToggle();
-  const { toggleOn: toggleUploadModal } = uploadDocumentController;
+  const {
+    toggleOn: toggleUploadModal,
+    isOn: isUploadModalOpen,
+    toggleOff: toggleCloseUploadModal,
+  } = useToggle();
   const { data: programIndicators, isLoading: isProgramIndicatorsLoading } =
     useRequest.document.indicators(
       store?.nameId ?? '',
@@ -99,7 +102,7 @@ export const DetailView = () => {
     setCustomBreadcrumbs({ 1: data?.requisitionNumber.toString() ?? '' });
   }, [setCustomBreadcrumbs, data?.requisitionNumber]);
 
-  const onAddItem = useCallback(() => onOpen(), [onOpen]);
+  const onAddItem = () => onOpen();
   const onOpenUploadModal = useCallback(() => {
     toggleUploadModal();
     const currentTab = urlQuery['tab'] ?? InternalOrderDetailTabs.Details;
@@ -239,10 +242,10 @@ export const DetailView = () => {
         />
       )}
 
-      {uploadDocumentController.isOn && (
+      {isUploadModalOpen && (
         <UploadDocumentModal
-          isOn={uploadDocumentController.isOn}
-          toggleOff={uploadDocumentController.toggleOff}
+          isOn={isUploadModalOpen}
+          toggleOff={toggleCloseUploadModal}
           recordId={data?.id ?? ''}
           tableName="requisition"
           invalidateQueries={invalidateQueries}

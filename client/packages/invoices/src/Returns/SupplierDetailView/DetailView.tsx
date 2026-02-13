@@ -38,7 +38,7 @@ export const SupplierReturnsDetailView = () => {
   const { setCustomBreadcrumbs } = useBreadcrumbs();
   const navigate = useNavigate();
 
-  const onAddItem = useCallback(() => onOpen(), [onOpen]);
+  const onAddItem = () => onOpen();
 
   useEffect(() => {
     setCustomBreadcrumbs({ 1: data?.invoiceNumber.toString() ?? '' });
