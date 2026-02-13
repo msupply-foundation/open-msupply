@@ -94,7 +94,7 @@ mod tests {
     use crate::db_diesel::requisition_line_row::requisition_line;
     use crate::frontend_plugin_row;
     use crate::{
-        migrations::{v2_15_00::V2_15_00, v2_16_00::V2_16_00},
+        migrations::{v2_16_00::V2_16_00, v2_17_00::V2_17_00},
         test_db::*,
     };
     use diesel::{sql_query, ExpressionMethods, QueryDsl, RunQueryDsl};
@@ -162,8 +162,8 @@ mod tests {
 
     #[actix_rt::test]
     async fn test_add_forecasting_fields_migration() {
-        let previous_version = V2_15_00.version();
-        let version = V2_16_00.version();
+        let previous_version = V2_16_00.version();
+        let version = V2_17_00.version();
 
         let SetupResult { connection, .. } = setup_test(SetupOption {
             db_name: &format!("migration_forecasting_{version}"),
