@@ -16,6 +16,7 @@ export interface NumberFilterDefinition extends FilterDefinitionCommon {
   minValue?: number;
   maxValue?: number;
   decimalLimit?: number;
+  wide?: boolean;
 }
 
 export const NumberFilter: FC<{ filterDefinition: NumberFilterDefinition }> = ({
@@ -28,6 +29,7 @@ export const NumberFilter: FC<{ filterDefinition: NumberFilterDefinition }> = ({
     minValue = -Infinity,
     maxValue = Infinity,
     decimalLimit,
+    wide = false,
   } = filterDefinition;
   const { urlQuery, updateQuery } = useUrlQuery();
   const urlValue = urlQuery[urlParameter] as number;
@@ -59,7 +61,7 @@ export const NumberFilter: FC<{ filterDefinition: NumberFilterDefinition }> = ({
   return (
     <NumericTextInput
       label={name}
-      width={FILTER_WIDTH / 2}
+      width={wide ? FILTER_WIDTH : FILTER_WIDTH / 2}
       sx={FilterLabelSx}
       onChange={handleChange}
       value={value}
