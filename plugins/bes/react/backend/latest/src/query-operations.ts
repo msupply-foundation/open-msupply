@@ -256,8 +256,8 @@ export const saveOutboundShipmentItemLines = (
       throw Error(errText);
     }
 
-    if (!result.saveOutboundShipmentItemLines) {
-      errText += ` error: operation failed :(`;
+    if (!result.saveOutboundShipmentItemLines.id) {
+      errText += ` error: operation failed, no id returned :(`;
       throw Error(errText);
     }
     return { error: undefined };
