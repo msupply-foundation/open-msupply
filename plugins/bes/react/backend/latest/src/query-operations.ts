@@ -160,7 +160,7 @@ export const insertUnAllocatedLine = (
     }
     return { error: undefined };
   } catch (error) {
-    // batchDeleteOutboundShipmentQuery(issuingStoreId, shipmentId);
+    batchDeleteOutboundShipmentQuery(issuingStoreId, shipmentId);
     return {
       error: {
         success: false,
@@ -262,7 +262,7 @@ export const saveOutboundShipmentItemLines = (
     }
     return { error: undefined };
   } catch (error) {
-    // batchDeleteOutboundShipmentQuery(issuingStoreId, shipmentId);
+    batchDeleteOutboundShipmentQuery(issuingStoreId, shipmentId);
     return {
       error: {
         success: false,
