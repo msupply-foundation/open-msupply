@@ -2,12 +2,16 @@ import { format } from 'date-fns/format';
 import { endOfDay } from 'date-fns';
 
 type Batch = {
-  __typename?: 'StockLineNode' | undefined;
   id: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   expiryDate?: any;
-  batch?: string | null | undefined;
+  batch?: string | null;
   availableNumberOfPacks: number;
   packSize: number;
+  onHold: boolean;
+  location?: {
+    onHold: boolean;
+  } | null;
 };
 
 type SortBatchesType = {
@@ -24,7 +28,8 @@ export const sortAndClassifyBatches = (batches: Batch[]): SortBatchesType => {
   });
 
   const validBatches = batches.filter(b => {
-    if (!b.expiryDate) return false;
+    if (b.location && b.location.onHold) return false;
+    if (!b.expiryDate || b.onHold) return false;
     return b;
   });
 

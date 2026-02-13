@@ -3,16 +3,17 @@ import { BackendPlugins } from '@common/types';
 import { Graphql } from './types/index';
 import {
   OutboundShipmentLineInput,
+  UpdateOutboundShipmentStatusInput,
   // UpdateOutboundShipmentStatusInput,
 } from '../codegenTypes';
 import { uuidv7 } from 'uuidv7';
 import { customerQuery, itemsQuery } from './queries';
-import { format } from 'date-fns/format';
 import { sortAndClassifyBatches } from './utils';
 import {
   insertOutboundShipment,
   // updateOutboundShipment,
   saveOutboundShipmentItemLines,
+  updateOutboundShipment,
 } from './query-operations';
 
 const plugins: BackendPlugins = {
@@ -66,19 +67,18 @@ const plugins: BackendPlugins = {
 
     const foundItem = itemsQueryResult.items.nodes[0];
 
-    const { unexpiredBatches, expiredBatches } = sortAndClassifyBatches(
-      foundItem.availableBatches.nodes
-    );
+    const { nullExpiryBatches, unexpiredBatches, expiredBatches } =
+      sortAndClassifyBatches(foundItem.availableBatches.nodes);
 
     // Determine if FEFO unexpired can fullfil entire order
-
-    const today = format(new Date(), 'yyyy-MM-dd');
     const insertLines: OutboundShipmentLineInput[] = [];
     let placeHolderQuantity = 0;
     let totalUnitsSupplied = 0;
+    const unexpiredAndNullBatches = [...nullExpiryBatches, ...unexpiredBatches];
+    log(unexpiredAndNullBatches);
 
-    for (let i = 0; i < unexpiredBatches.length; i++) {
-      const batch = unexpiredBatches[i];
+    for (let i = 0; i < unexpiredAndNullBatches.length; i++) {
+      const batch = unexpiredAndNullBatches[i];
       const shipmentLineId = uuidv7();
       const unitsInBatch = batch.availableNumberOfPacks * batch.packSize;
       const unitsStillRequired = inp.quantity - totalUnitsSupplied;
@@ -87,26 +87,24 @@ const plugins: BackendPlugins = {
 
       if (totalUnitsSupplied >= inp.quantity) break;
 
-      if (batch.expiryDate >= today) {
-        if (unitsInBatch > unitsStillRequired) {
-          const packsToSupply = Math.floor(unitsStillRequired / batch.packSize); // have to round down or get ReductionBelowZero error
+      if (unitsInBatch > unitsStillRequired) {
+        const packsToSupply = Math.ceil(unitsStillRequired / batch.packSize); // have to round down or get ReductionBelowZero error
 
-          totalUnitsSupplied += packsToSupply * batch.packSize;
+        totalUnitsSupplied += packsToSupply * batch.packSize;
 
-          insertLines.push({
-            id: shipmentLineId,
-            stockLineId: batch.id,
-            numberOfPacks: packsToSupply,
-          });
-          break;
-        } else {
-          totalUnitsSupplied += batch.availableNumberOfPacks * batch.packSize;
-          insertLines.push({
-            id: shipmentLineId,
-            stockLineId: batch.id,
-            numberOfPacks: batch.availableNumberOfPacks,
-          });
-        }
+        insertLines.push({
+          id: shipmentLineId,
+          stockLineId: batch.id,
+          numberOfPacks: packsToSupply,
+        });
+        break;
+      } else {
+        totalUnitsSupplied += batch.availableNumberOfPacks * batch.packSize;
+        insertLines.push({
+          id: shipmentLineId,
+          stockLineId: batch.id,
+          numberOfPacks: batch.availableNumberOfPacks,
+        });
       }
     }
 
@@ -121,25 +119,23 @@ const plugins: BackendPlugins = {
       if (totalUnitsSupplied >= inp.quantity) break;
       if (batch.availableNumberOfPacks === 0) continue;
 
-      if (batch.expiryDate < today) {
-        if (unitsInBatch > unitsStillRequired) {
-          const packsToSupply = Math.floor(unitsStillRequired / batch.packSize);
-          totalUnitsSupplied += packsToSupply * batch.packSize;
-          insertLines.push({
-            id: shipmentLineId,
-            stockLineId: batch.id,
-            numberOfPacks: packsToSupply,
-          });
-          break;
-        } else {
-          totalUnitsSupplied += batch.availableNumberOfPacks * batch.packSize;
+      if (unitsInBatch > unitsStillRequired) {
+        const packsToSupply = Math.ceil(unitsStillRequired / batch.packSize);
+        totalUnitsSupplied += packsToSupply * batch.packSize;
+        insertLines.push({
+          id: shipmentLineId,
+          stockLineId: batch.id,
+          numberOfPacks: packsToSupply,
+        });
+        break;
+      } else {
+        totalUnitsSupplied += batch.availableNumberOfPacks * batch.packSize;
 
-          insertLines.push({
-            id: shipmentLineId,
-            stockLineId: batch.id,
-            numberOfPacks: batch.availableNumberOfPacks,
-          });
-        }
+        insertLines.push({
+          id: shipmentLineId,
+          stockLineId: batch.id,
+          numberOfPacks: batch.availableNumberOfPacks,
+        });
       }
     }
 
@@ -154,7 +150,7 @@ const plugins: BackendPlugins = {
     // eslint-disable-next-line prefer-const
     let errText = `Failed to issue the stock for item code: ${foundItem.msupplyUniversalCode}, quantity: ${inp.quantity}, customer: ${customer.name},`;
 
-    // Insert allocated line
+    // Insert lines
     if (insertLines.length > 0) {
       const { error: insertOBSErr } = insertOutboundShipment(
         shipmentId,
@@ -175,6 +171,18 @@ const plugins: BackendPlugins = {
       );
 
       if (saveError) return saveError;
+    }
+
+    // Update to shipped if no placeholders
+    if (placeHolderQuantity === 0) {
+      const { error: updateError } = updateOutboundShipment(
+        issuingStoreId,
+        shipmentId,
+        UpdateOutboundShipmentStatusInput.Shipped,
+        errText
+      );
+
+      if (updateError) return updateError;
     }
 
     return {

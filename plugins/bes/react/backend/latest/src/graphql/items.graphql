@@ -16,6 +16,10 @@ query Items($storeId: String!, $filter: ItemFilterInput) {
             batch
             availableNumberOfPacks
             packSize
+            onHold
+            location {
+              onHold
+            }
           }
         }
       }
