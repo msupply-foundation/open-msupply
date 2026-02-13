@@ -11,9 +11,10 @@ import {
   Box,
   TypedTFunction,
   LocaleKey,
+  useNotification,
 } from '@openmsupply-client/common';
 import { FnUtils, ScanResult, useBarcodeScannerContext } from '@common/utils';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useOutbound } from '../../OutboundShipment/api';
 import { BarcodeNode, InvoiceLineNodeType } from '@common/types';
 import {
@@ -63,15 +64,17 @@ const defaultDraftState: FormDraftState = {
 export const ScanInputModal = ({ lines, invoiceId }: ScanInputModalProps) => {
   const t = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
+  const { Modal } = useDialog({ isOpen });
 
   const [barcodeData, setBarcodeData] = useState<BarcodeNode | null>(null);
   const [draftState, setDraftState] =
     useState<FormDraftState>(defaultDraftState);
+  const [errorMessage, setErrorMessage] = useState<string | undefined>();
+
+  const { success } = useNotification();
+  const quantityInputRef = useRef<HTMLInputElement>(null); // Used to focus the quantity input once we have an item selected
 
   const { saveSingleLine } = useDraftInboundLines(barcodeData?.itemId);
-
-  const { Modal } = useDialog({ isOpen });
-
   const { mutateAsync: getBarcode } = useOutbound.utils.barcode();
   const { mutateAsync: saveBarcode } = useOutbound.utils.barcodeInsert();
 
@@ -82,12 +85,115 @@ export const ScanInputModal = ({ lines, invoiceId }: ScanInputModalProps) => {
       line.packSize === draftState.packSize
   );
 
+  // Focus quantity input (if item is selected)
+  useEffect(() => {
+    if (draftState.itemId && quantityInputRef.current) {
+      // Small delay to ensure the input is rendered and ready
+      setTimeout(() => {
+        quantityInputRef.current?.focus();
+      }, 100);
+    }
+  }, [draftState.itemId]);
+
+  // Shared function to save the current line
+  const saveCurrentLine = useCallback(
+    async (shouldReopen: boolean = false) => {
+      const updatedLine: Partial<DraftInboundLine> = {
+        type: InvoiceLineNodeType.StockIn,
+        batch: draftState.batch.trim(),
+        expiryDate: draftState.expiryDate
+          ? draftState.expiryDate.toISOString().substring(0, 10)
+          : null,
+        packSize: draftState.packSize,
+        numberOfPacks: (existingLine?.numberOfPacks || 0) + draftState.quantity,
+        item: {
+          id: draftState.itemId || '',
+        } as ItemStockOnHandFragment,
+      };
+
+      if (existingLine) {
+        updatedLine.id = existingLine.id;
+        updatedLine.isUpdated = true;
+      } else {
+        updatedLine.id = FnUtils.generateUUID();
+        updatedLine.isCreated = true;
+        updatedLine.invoiceId = invoiceId;
+        updatedLine.sellPricePerPack = 0;
+        updatedLine.costPricePerPack = 0;
+      }
+
+      await saveSingleLine(updatedLine);
+
+      success(t('messages.inbound-shipment-line-saved'))();
+
+      if (draftState.saveNewBarcode && draftState.gtin && draftState.itemId) {
+        await saveBarcode({
+          input: {
+            gtin: draftState.gtin,
+            itemId: draftState.itemId,
+            packSize: draftState.packSize,
+          },
+        });
+      }
+
+      setDraftState(defaultDraftState);
+      setBarcodeData(null);
+      setErrorMessage(undefined);
+
+      if (shouldReopen) {
+        // Keep modal open for next scan
+        setIsOpen(true);
+      } else {
+        setIsOpen(false);
+      }
+    },
+    [
+      draftState,
+      existingLine,
+      invoiceId,
+      saveSingleLine,
+      saveBarcode,
+      success,
+      t,
+    ]
+  );
+
   const handleScan = useCallback(
     async (barcode: ScanResult) => {
+      // Check if a new GTIN is scanned while we already have one
+      // We treat even the same GTIN as a new one, becase they might be scanning a bunch of the same product and want the modal to auto-save and reset for each one
+      if (isOpen && draftState.gtin && barcode.gtin) {
+        // New GTIN scanned - validate and auto-save current line
+        setErrorMessage(undefined);
+
+        if (!draftState.itemId) {
+          setErrorMessage(t('error.barcode-scanner-save-no-item-selected'));
+          return;
+        }
+
+        if (draftState.quantity <= 0) {
+          setErrorMessage(t('error.barcode-scanner-save-no-quantity-entered'));
+          return;
+        }
+
+        // Valid state - save current line
+        try {
+          await saveCurrentLine(true);
+          // After successful save, process the new scan
+        } catch (error) {
+          console.error(
+            'Error auto-saving draft invoice line on new GTIN scan',
+            error
+          );
+          return;
+        }
+      }
+
       if (!isOpen) {
         setIsOpen(true);
       }
 
+      setErrorMessage(undefined);
       const { content, gtin, batch, expiryDate, packSize, quantity } = barcode;
 
       // Perform async lookup first if needed
@@ -142,7 +248,7 @@ export const ScanInputModal = ({ lines, invoiceId }: ScanInputModalProps) => {
         return newState;
       });
     },
-    [isOpen, getBarcode]
+    [isOpen, getBarcode, draftState, t, saveCurrentLine]
   );
 
   // Register the scan handler so it runs on scan events when context is
@@ -157,56 +263,15 @@ export const ScanInputModal = ({ lines, invoiceId }: ScanInputModalProps) => {
     }));
   };
 
-  const message: Message = getMessage(barcodeData, draftState, existingLine, t);
+  const message: Message = errorMessage
+    ? { type: 'error', text: errorMessage }
+    : getMessage(barcodeData, draftState, existingLine, t);
 
   const canSubmit =
     (!!draftState.itemId || !!barcodeData) && draftState.quantity > 0;
 
   const handleSubmit = async () => {
-    const updatedLine: Partial<DraftInboundLine> = {
-      type: InvoiceLineNodeType.StockIn,
-      batch: draftState.batch.trim(),
-      expiryDate: draftState.expiryDate
-        ? draftState.expiryDate.toISOString().substring(0, 10)
-        : null,
-      packSize: draftState.packSize,
-      numberOfPacks: (existingLine?.numberOfPacks || 0) + draftState.quantity,
-      item: {
-        // Only the Item ID is actually required for the mutation, but it's
-        // expecting the full ItemStockOnHandFragment type anyway, hence the
-        // `as` cast
-        id: draftState.itemId || '',
-      } as ItemStockOnHandFragment,
-    };
-
-    if (existingLine) {
-      updatedLine.id = existingLine.id;
-      updatedLine.isUpdated = true;
-    } else {
-      // New line
-      updatedLine.id = FnUtils.generateUUID();
-      updatedLine.isCreated = true;
-      updatedLine.invoiceId = invoiceId;
-      updatedLine.sellPricePerPack = 0;
-      updatedLine.costPricePerPack = 0;
-    }
-
-    await saveSingleLine(updatedLine);
-
-    if (draftState.saveNewBarcode && draftState.gtin && draftState.itemId) {
-      // Save new barcode to database
-      await saveBarcode({
-        input: {
-          gtin: draftState.gtin,
-          itemId: draftState.itemId,
-          packSize: draftState.packSize,
-        },
-      });
-    }
-
-    setDraftState(defaultDraftState);
-    setBarcodeData(null);
-    setIsOpen(false);
+    await saveCurrentLine(false);
   };
 
   return (
@@ -227,6 +292,7 @@ export const ScanInputModal = ({ lines, invoiceId }: ScanInputModalProps) => {
           onClick={() => {
             setDraftState(defaultDraftState);
             setBarcodeData(null);
+            setErrorMessage(undefined);
             setIsOpen(false);
           }}
         />
@@ -234,7 +300,10 @@ export const ScanInputModal = ({ lines, invoiceId }: ScanInputModalProps) => {
     >
       <Box display="flex" flexDirection="column" gap={1}>
         <Typography>
-          <strong>{t('label.barcode')}:</strong> {draftState.barcodeContent}
+          <strong>{t('label.barcode')}:</strong>{' '}
+          {draftState.barcodeContent.length > 10
+            ? `${draftState.barcodeContent.slice(0, 10)}...`
+            : draftState.barcodeContent}
         </Typography>
         {draftState.gtin && (
           <Typography>
@@ -297,6 +366,7 @@ export const ScanInputModal = ({ lines, invoiceId }: ScanInputModalProps) => {
           label={t('label.quantity')}
           Input={
             <NumericTextInput
+              inputRef={quantityInputRef}
               value={draftState.quantity ?? ''}
               onChange={value =>
                 setDraftState(current => ({ ...current, quantity: value || 1 }))
@@ -342,7 +412,7 @@ const getMessage = (
 
   if (!existingLine)
     return {
-      type: 'warning',
+      type: 'info',
       text: t('messages.batch-not-found'),
     };
 
