@@ -33,11 +33,25 @@ const TableCard = <T extends MRT_RowData>({
               ? flexRender(cell.column.columnDef.Cell, cell.getContext())
               : cell.renderValue();
             return (
-              <Box key={cell.id} display="flex" justifyContent="space-between">
+              <Box
+                key={cell.id}
+                display="flex"
+                justifyContent="space-between"
+                gap={1}
+                alignItems="flex-start"
+              >
                 <Typography color="text.secondary">
                   {flexRender(cell.column.columnDef.header, cell.getContext())}
                 </Typography>
-                <Box>{content as React.ReactNode}</Box>
+                <Box
+                  sx={{
+                    textAlign: 'end',
+                    maxWidth: '65%',
+                    wordBreak: 'break-word',
+                  }}
+                >
+                  {content as React.ReactNode}
+                </Box>
               </Box>
             );
           })}
