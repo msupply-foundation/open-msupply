@@ -30,7 +30,7 @@ export const Toolbar = () => {
         placeholder={t('placeholder.enter-code-or-name')}
         value={filterString ?? ''}
         onChange={newValue => {
-            filter.onChangeStringFilterRule('codeOrName', 'like', newValue);
+          filter.onChangeStringFilterRule('codeOrName', 'like', newValue);
         }}
       />
     </AppBarContentPortal>

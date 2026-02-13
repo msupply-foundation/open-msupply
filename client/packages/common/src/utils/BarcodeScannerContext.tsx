@@ -20,9 +20,9 @@ import { Capacitor } from '@capacitor/core';
 import { GlobalStyles } from '@mui/material';
 import { useNotification } from '../hooks/useNotification';
 import { useTranslation } from '@common/intl';
-import { Gs1Barcode, parseBarcode } from 'gs1-barcode-parser-mod';
 import { Formatter } from './formatters';
 import { BarcodeScanner, ScannerType } from '@openmsupply-client/common';
+import { Gs1Barcode, BarcodeUtils } from './barcode';
 import { useMockScanner } from './MockBarcodeScanner';
 import { HoneywellScanner } from '@common/hooks';
 
@@ -75,29 +75,17 @@ const BarcodeScannerContext = createContext<BarcodeScannerControl>(
 
 const { Provider } = BarcodeScannerContext;
 
-const getIndex = (digit: number, data: number[]) => {
-  const index = data.indexOf(digit);
-  return index === -1 ? undefined : index;
-};
-
-export const parseBarcodeData = (data: number[] | undefined) => {
-  if (!data || data.length < 5) return undefined;
-  // the scanner is returning \x00 and \x22 characters when in continuous mode
-  // these need to be stripped out to prevent issues when parsing the barcode
-  const synchronousIdleIndex = getIndex(22, data);
-  const trimmedData = data.slice(4, synchronousIdleIndex);
-  const zeroIndex = getIndex(0, trimmedData);
-
-  return trimmedData
-    .slice(0, zeroIndex)
-    .reduce((barcode, curr) => barcode + String.fromCharCode(curr), '');
-};
-
 export const parseResult = (content?: string): ScanResult => {
   if (!content) return {};
 
   try {
-    const gs1 = parseBarcode(content);
+    const gs1 = BarcodeUtils.parseGS1Barcode(content);
+
+    // If no items were parsed, treat as raw barcode
+    if (!gs1.parsedCodeItems || gs1.parsedCodeItems.length === 0) {
+      return { content };
+    }
+
     const gtin = gs1?.parsedCodeItems?.find(item => item.ai === '01')
       ?.data as string;
     const batch = gs1?.parsedCodeItems?.find(item => item.ai === '10')
@@ -257,7 +245,7 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
           const barcodePromise = new Promise<string | undefined>(
             async resolve => {
               electronNativeAPI.onBarcodeScan((_event, data) =>
-                resolve(parseBarcodeData(data))
+                resolve(BarcodeUtils.parseBarcodeFromBytes(data))
               );
             }
           );
@@ -405,7 +393,7 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
         const { startBarcodeScan } = electronNativeAPI;
         await startBarcodeScan();
         electronNativeAPI.onBarcodeScan((_event, data) => {
-          const barcode = parseBarcodeData(data);
+          const barcode = BarcodeUtils.parseBarcodeFromBytes(data);
           if (callbackRef.current) {
             callbackRef.current(parseResult(barcode));
           } else {
@@ -554,7 +542,7 @@ export const useBarcodeScannerContext = (
       // console.log('Registering barcode scan callback');
       barcodeScannerControl.registerCallback(callback);
     }
-  }, [callback]);
+  }, [barcodeScannerControl, callback]);
 
   return barcodeScannerControl;
 };
