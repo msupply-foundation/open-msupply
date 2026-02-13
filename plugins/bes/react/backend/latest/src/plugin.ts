@@ -145,28 +145,25 @@ const plugins: BackendPlugins = {
     // eslint-disable-next-line prefer-const
     let errText = `Failed to issue the stock for item code: ${foundItem.msupplyUniversalCode}, quantity: ${inp.quantity}, customer: ${customer.name},`;
 
-    // Insert lines
-    if (insertLines.length > 0) {
-      const { error: insertOBSErr } = insertOutboundShipment(
-        shipmentId,
-        issuingStoreId,
-        customer.id,
-        errText
-      );
+    const { error: insertOBSErr } = insertOutboundShipment(
+      shipmentId,
+      issuingStoreId,
+      customer.id,
+      errText
+    );
 
-      if (insertOBSErr) return insertOBSErr;
+    if (insertOBSErr) return insertOBSErr;
 
-      const { error: saveError } = saveOutboundShipmentItemLines(
-        issuingStoreId,
-        shipmentId,
-        foundItem.id,
-        placeHolderQuantity,
-        insertLines,
-        errText
-      );
+    const { error: saveError } = saveOutboundShipmentItemLines(
+      issuingStoreId,
+      shipmentId,
+      foundItem.id,
+      placeHolderQuantity,
+      insertLines,
+      errText
+    );
 
-      if (saveError) return saveError;
-    }
+    if (saveError) return saveError;
 
     // Update to shipped if no placeholders
     if (placeHolderQuantity === 0) {
