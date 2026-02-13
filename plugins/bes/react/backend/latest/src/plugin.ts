@@ -19,6 +19,20 @@ const plugins: BackendPlugins = {
     const inp = input as Graphql['input'];
     const shipmentId = uuidv7();
 
+    if (!inp.customerCode) {
+      return {
+        success: false,
+        message: 'param "customerCode" is empty or invalid',
+      };
+    }
+
+    if (!inp.universalCode) {
+      return {
+        success: false,
+        message: 'param "universalCode" is empty or invalid',
+      };
+    }
+
     const { stores: activeStores } = get_active_stores_on_site();
     if (!activeStores || activeStores.length < 1) {
       return { success: false, message: 'No active stores found' };
@@ -66,7 +80,7 @@ const plugins: BackendPlugins = {
     if (inp.numberOfUnits === 0) {
       return {
         success: false,
-        message: '0 numberOfUnits given',
+        message: 'param "numberOfUnits" is 0 or invalid',
       };
     }
 
