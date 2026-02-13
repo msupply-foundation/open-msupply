@@ -15,7 +15,7 @@ import {
 } from './query-operations';
 
 const plugins: BackendPlugins = {
-  graphql_query: ({ input }): Graphql['output'] => {
+  graphql_query: ({ store_id, input }): Graphql['output'] => {
     const inp = input as Graphql['input'];
     const shipmentId = uuidv7();
 
@@ -25,9 +25,9 @@ const plugins: BackendPlugins = {
     }
 
     // Take first store
-    const issuingStore = activeStores[0];
+    // const issuingStore = activeStores[0];
     // For testing only, TODO: remove on last commit
-    // const issuingStore = activeStores.find(s => s.store_row.id === store_id);
+    const issuingStore = activeStores.find(s => s.store_row.id === store_id);
 
     if (!issuingStore) {
       return { success: false, message: 'No store found' };
@@ -37,14 +37,14 @@ const plugins: BackendPlugins = {
 
     const { result: customerQueryResult, customerError } = customerQuery({
       storeId: issuingStoreId,
-      filter: inp.customerFilter,
+      filter: { code: { equalTo: inp.customerCode } },
     });
 
     if (customerError) return customerError;
     if (!customerQueryResult) {
       return {
         success: false,
-        message: `Error getting customer with filter of: ${inp.customerFilter}`,
+        message: `Error getting customer with code: ${inp.customerCode}. (codes are case sensitive)`,
       };
     }
 
@@ -52,21 +52,21 @@ const plugins: BackendPlugins = {
 
     const { result: itemsQueryResult, itemsError } = itemsQuery({
       storeId: issuingStoreId,
-      filter: inp.itemFilter,
+      filter: { code: { equalTo: inp.universalCode }, hasStockOnHand: true }, // TODO: change to 'universalCode. Version of OMS doesn't have it
     });
 
     if (itemsError) return itemsError;
     if (!itemsQueryResult) {
       return {
         success: false,
-        message: `Error getting item with filter of: ${inp.itemFilter}`,
+        message: `Error getting item with universalCode of: ${inp.universalCode}`,
       };
     }
 
-    if (inp.quantity === 0) {
+    if (inp.numberOfUnits === 0) {
       return {
         success: false,
-        message: '0 quantity given',
+        message: '0 numberOfUnits given',
       };
     }
 
@@ -85,11 +85,11 @@ const plugins: BackendPlugins = {
       const batch = unexpiredAndNullBatches[i];
       const shipmentLineId = uuidv7();
       const unitsInBatch = batch.availableNumberOfPacks * batch.packSize;
-      const unitsStillRequired = inp.quantity - totalUnitsSupplied;
+      const unitsStillRequired = inp.numberOfUnits - totalUnitsSupplied;
 
       if (unitsInBatch === 0) continue;
 
-      if (totalUnitsSupplied >= inp.quantity) break;
+      if (totalUnitsSupplied >= inp.numberOfUnits) break;
 
       if (unitsInBatch > unitsStillRequired) {
         const packsToSupply = Math.ceil(unitsStillRequired / batch.packSize); // have to round down or get ReductionBelowZero error
@@ -118,9 +118,9 @@ const plugins: BackendPlugins = {
       const batch = expiredBatches[j];
       const shipmentLineId = uuidv7();
       const unitsInBatch = batch.availableNumberOfPacks / batch.packSize;
-      const unitsStillRequired = inp.quantity - totalUnitsSupplied;
+      const unitsStillRequired = inp.numberOfUnits - totalUnitsSupplied;
 
-      if (totalUnitsSupplied >= inp.quantity) break;
+      if (totalUnitsSupplied >= inp.numberOfUnits) break;
       if (batch.availableNumberOfPacks === 0) continue;
 
       if (unitsInBatch > unitsStillRequired) {
@@ -145,12 +145,12 @@ const plugins: BackendPlugins = {
 
     // If still unfully allocated, create placeholder for rest of items
 
-    if (totalUnitsSupplied < inp.quantity) {
-      placeHolderQuantity = inp.quantity - totalUnitsSupplied;
+    if (totalUnitsSupplied < inp.numberOfUnits) {
+      placeHolderQuantity = inp.numberOfUnits - totalUnitsSupplied;
     }
 
     // eslint-disable-next-line prefer-const
-    let errText = `Failed to issue the stock for item code: ${foundItem.msupplyUniversalCode}, quantity: ${inp.quantity}, customer: ${customer.name},`;
+    let errText = `Failed to issue the stock for item code: ${foundItem.msupplyUniversalCode}, quantity: ${inp.numberOfUnits}, customer: ${customer.name},`;
 
     const { error: insertOBSErr } = insertOutboundShipment(
       shipmentId,

@@ -29,7 +29,7 @@ export const customerQuery = (
       return {
         customerError: {
           success: false,
-          message: `No customer found for filter: ${JSON.stringify(variables.filter)}`,
+          message: `No customer found with code: ${variables.filter?.code?.equalTo} (codes are case sensitive)`,
         },
       };
     }
@@ -56,7 +56,7 @@ export const itemsQuery = (
       return {
         itemsError: {
           success: false,
-          message: `No items found for items filter: ${JSON.stringify(variables.filter)}`,
+          message: `No item found for universalCode: ${variables.filter?.code?.equalTo}`,
         },
       };
     }
