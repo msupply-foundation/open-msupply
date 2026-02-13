@@ -182,7 +182,7 @@ const plugins: BackendPlugins = {
 
     return {
       success: true,
-      message: `Issued stock for store: ${customer.name}, item: ${foundItem.msupplyUniversalCode}, quantity: ${totalUnitsSupplied}`,
+      message: `Issued stock for store: ${customer.name}, item: ${foundItem.msupplyUniversalCode}, quantity allocated: ${totalUnitsSupplied}, quantity on placeholder: ${placeHolderQuantity}`,
     };
   },
 };
