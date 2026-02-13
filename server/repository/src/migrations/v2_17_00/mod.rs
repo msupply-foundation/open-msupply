@@ -3,10 +3,10 @@ use crate::StorageConnection;
 
 mod item_category_join_add_item_link_id;
 
-pub(crate) struct V2_16_00;
-impl Migration for V2_16_00 {
+pub(crate) struct V2_17_00;
+impl Migration for V2_17_00 {
     fn version(&self) -> Version {
-        Version::from_str("2.16.0")
+        Version::from_str("2.17.0")
     }
 
     fn migrate(&self, _connection: &StorageConnection) -> anyhow::Result<()> {
@@ -24,8 +24,8 @@ mod test {
     async fn migration_2_17_00() {
         use crate::migrations::*;
         use crate::test_db::*;
-        use v2_15_00::V2_16_00;
-        use v2_16_00::V2_17_00;
+        use v2_16_00::V2_16_00;
+        use v2_17_00::V2_17_00;
 
         let previous_version = V2_16_00.version();
         let version = V2_17_00.version();
