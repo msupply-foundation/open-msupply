@@ -39,6 +39,11 @@ export const ListView = () => {
   } = useUrlQueryParams({
     initialSort: { key: 'createdDatetime', dir: 'desc' },
     filters: [
+      {
+        key: 'requisitionNumber',
+        condition: 'equalTo',
+        isNumber: true,
+      },
       { key: 'otherPartyName' },
       { key: 'status', condition: 'equalTo' },
       { key: 'createdDatetime', condition: 'between' },

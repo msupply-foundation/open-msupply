@@ -43,6 +43,12 @@ export const Toolbar = ({ filter }: ToolbarProps) => {
                 placeholder: t('placeholder.search-by-name'),
               },
               {
+                type: 'number',
+                name: t('label.invoice-number'),
+                urlParameter: 'invoiceNumber',
+                wide: true,
+              },
+              {
                 type: 'enum',
                 name: t('label.status'),
                 urlParameter: 'status',
