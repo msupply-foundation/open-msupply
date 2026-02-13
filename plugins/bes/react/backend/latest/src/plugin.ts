@@ -4,14 +4,12 @@ import { Graphql } from './types/index';
 import {
   OutboundShipmentLineInput,
   UpdateOutboundShipmentStatusInput,
-  // UpdateOutboundShipmentStatusInput,
 } from '../codegenTypes';
 import { uuidv7 } from 'uuidv7';
 import { customerQuery, itemsQuery } from './queries';
 import { sortAndClassifyBatches } from './utils';
 import {
   insertOutboundShipment,
-  // updateOutboundShipment,
   saveOutboundShipmentItemLines,
   updateOutboundShipment,
 } from './query-operations';
