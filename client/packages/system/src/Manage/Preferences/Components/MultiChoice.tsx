@@ -10,6 +10,8 @@ import {
   PreferenceKey,
   TypedTFunction,
   groupBy,
+  useNotification,
+  useTranslation,
 } from '@openmsupply-client/common';
 import { getInvoiceStatusTranslator } from '@openmsupply-client/invoices';
 
@@ -25,6 +27,7 @@ interface MultiChoiceProps<T extends string> {
   value: T[];
   onChange: (newValues: T[]) => void;
   disabled?: boolean;
+  preferenceKey?: PreferenceKey;
 }
 
 export const MultiChoice = <T extends string>({
@@ -32,11 +35,55 @@ export const MultiChoice = <T extends string>({
   onChange,
   disabled,
   options,
+  preferenceKey,
 }: MultiChoiceProps<T>) => {
+  const t = useTranslation();
+  const { error } = useNotification();
+
+  const validateInvoiceStatusChange = (
+    newValue: T[],
+    optionValue: T,
+    checked: boolean
+  ): boolean => {
+    // Only validate for InvoiceStatusOptions preference
+    if (preferenceKey !== PreferenceKey.InvoiceStatusOptions) {
+      return true;
+    }
+
+    // Cast to InvoiceNodeStatus for type-safe checking
+    const newStatuses = newValue as unknown as InvoiceNodeStatus[];
+    const changedStatus = optionValue as unknown as InvoiceNodeStatus;
+
+    // If unchecking either Delivered or Received
+    if (
+      !checked &&
+      (changedStatus === InvoiceNodeStatus.Delivered ||
+        changedStatus === InvoiceNodeStatus.Received)
+    ) {
+      // Check if this would result in both being unchecked
+      const hasDelivered = newStatuses.includes(InvoiceNodeStatus.Delivered);
+      const hasReceived = newStatuses.includes(InvoiceNodeStatus.Received);
+
+      // If neither Delivered nor Received would be checked, prevent the change
+      if (!hasDelivered && !hasReceived) {
+        error(t('error.invoice-status-inbound-requires-delivered-or-received'))();
+        return false;
+      }
+    }
+
+    return true;
+  };
+
   const handleChange = (optionValue: T, checked: boolean) => {
     const newValue = checked
       ? [...value, optionValue]
       : value.filter(v => v !== optionValue);
+
+    // Validate the change before applying
+    if (!validateInvoiceStatusChange(newValue, optionValue, checked)) {
+      return;
+    }
+
     onChange(newValue);
   };
 
