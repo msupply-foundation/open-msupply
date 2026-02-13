@@ -7,11 +7,10 @@ import {
   MenuItem,
   Typography,
 } from '@mui/material';
-import ViewColumnIcon from '@mui/icons-material/ViewColumn';
 import { IconButton, useConfirmationModal } from '@common/components';
 import { useTranslation } from '@common/intl';
 import { MRT_DensityState, MRT_TableInstance } from 'material-react-table';
-import { RefreshIcon, SettingsIcon } from '@common/icons';
+import { RefreshIcon, SettingsIcon, EyeIcon } from '@common/icons';
 import {
   useColumnDensity,
   useColumnOrder,
@@ -79,7 +78,7 @@ export const SettingsMenu = ({
   return (
     <>
       <IconButton
-        icon={<SettingsIcon />}
+        icon={<SettingsIcon fontSize="small" />}
         onClick={e => setAnchorEl(e.currentTarget)}
         label={t('settings')}
       />
@@ -130,7 +129,7 @@ export const SettingsMenu = ({
             }}
           >
             <ListItemIcon>
-              <ViewColumnIcon />
+              <EyeIcon fontSize="small" />
             </ListItemIcon>
             <ListItemText>{t('label.show-all-columns')}</ListItemText>
           </MenuItem>
@@ -175,7 +174,7 @@ export const SettingsMenu = ({
             }}
           >
             <ListItemIcon>
-              <RefreshIcon color={'error'} />
+              <RefreshIcon fontSize="small" color={'error'} />
             </ListItemIcon>
             <ListItemText
               sx={{
