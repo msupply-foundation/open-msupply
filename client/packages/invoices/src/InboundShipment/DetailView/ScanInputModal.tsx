@@ -179,7 +179,6 @@ export const ScanInputModal = ({ lines, invoiceId }: ScanInputModalProps) => {
         // Valid state - save current line
         try {
           await saveCurrentLine(true);
-          // After successful save, process the new scan
         } catch (error) {
           console.error(
             'Error auto-saving draft invoice line on new GTIN scan',
@@ -192,6 +191,7 @@ export const ScanInputModal = ({ lines, invoiceId }: ScanInputModalProps) => {
         }
       }
 
+      // After successful save, process the new scan
       if (!isOpen) {
         setIsOpen(true);
       }
@@ -256,7 +256,7 @@ export const ScanInputModal = ({ lines, invoiceId }: ScanInputModalProps) => {
 
   // Register the scan handler so it runs on scan events when context is
   // listening
-  let { mockScannerEnabled } = useBarcodeScannerContext(handleScan);
+  const { mockScannerEnabled } = useBarcodeScannerContext(handleScan);
 
   const onChangeItem = (item: ItemStockOnHandFragment | null) => {
     setDraftState(current => ({
@@ -274,7 +274,14 @@ export const ScanInputModal = ({ lines, invoiceId }: ScanInputModalProps) => {
     (!!draftState.itemId || !!barcodeData) && draftState.quantity > 0;
 
   const handleSubmit = async () => {
-    await saveCurrentLine(false);
+    try {
+      await saveCurrentLine(false);
+    } catch (error) {
+      console.error('Error saving draft invoice line', error);
+      setErrorMessage(
+        t('error.barcode-scanner-auto-save-failed') + ' ' + error
+      );
+    }
   };
 
   return (
