@@ -185,6 +185,7 @@ export const ScanInputModal = ({ lines, invoiceId }: ScanInputModalProps) => {
             'Error auto-saving draft invoice line on new GTIN scan',
             error
           );
+          setErrorMessage(t('error.barcode-scanner-auto-save-failed'));
           return;
         }
       }
