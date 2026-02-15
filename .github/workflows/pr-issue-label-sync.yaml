@@ -19,6 +19,7 @@ jobs:
                   pullRequest(number: $number) {
                     id
                     body
+                    baseRefName
                     labels (first: 100){
                       nodes {
                         id
@@ -26,6 +27,7 @@ jobs:
                     }
                     closingIssuesReferences(first: 1) {
                       nodes {
+                        number
                         labels(first: 100) {
                           nodes {
                             id
@@ -50,10 +52,12 @@ jobs:
             const pullRequest = pullRequestResult.repository.pullRequest
 
             let issue = pullRequest.closingIssuesReferences.nodes[0]
+            let issueNumber = issue?.number
+            const hasAutomaticLink = !!issue
 
             if (!issue) {
               const regex = new RegExp(/#(\d+)/);
-              const issueNumber = Number(pullRequest.body.match(regex)[1])
+              issueNumber = Number(pullRequest.body.match(regex)[1])
 
               if  (!issueNumber) {
                 throw new Error('No associated issue found for this pull request. Not even in the body!')
@@ -125,3 +129,18 @@ jobs:
               labelIds,
               milestoneId
             })
+
+            // Link the PR to the issue by adding a comment if not automatically linked
+            // This creates a cross-reference in the Development sidebar
+            // PRs targeting non-default branches don't get automatically linked
+            if (issueNumber && !hasAutomaticLink) {
+              core.info(`Creating cross-reference link to issue #${issueNumber} (PR targets non-default branch: ${pullRequest.baseRefName})`)
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: `Linked to #${issueNumber}`
+              })
+            } else if (hasAutomaticLink) {
+              core.info(`PR already automatically linked to issue #${issueNumber}`)
+            }
