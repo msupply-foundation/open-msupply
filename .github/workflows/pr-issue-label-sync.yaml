@@ -16,6 +16,9 @@ jobs:
             const pullRequestResult = await github.graphql(`
               query($owner: String!, $repo: String!, $number: Int!) {
                 repository(name: $repo, owner: $owner) {
+                  defaultBranchRef {
+                    name
+                  }
                   pullRequest(number: $number) {
                     id
                     body
@@ -49,7 +52,10 @@ jobs:
 
             core.debug(pullRequestResult)
 
-            const pullRequest = pullRequestResult.repository.pullRequest
+            const repository = pullRequestResult.repository
+            const defaultBranch = repository.defaultBranchRef.name
+            const pullRequest = repository.pullRequest
+            const isTargetingDefaultBranch = pullRequest.baseRefName === defaultBranch
 
             let issue = pullRequest.closingIssuesReferences.nodes[0]
             let issueNumber = issue?.number
@@ -57,7 +63,8 @@ jobs:
 
             if (!issue) {
               const regex = new RegExp(/#(\d+)/);
-              issueNumber = Number(pullRequest.body.match(regex)[1])
+              const match = pullRequest.body.match(regex)
+              issueNumber = match ? Number(match[1]) : null
 
               if  (!issueNumber) {
                 throw new Error('No associated issue found for this pull request. Not even in the body!')
@@ -132,9 +139,9 @@ jobs:
 
             // Link the PR to the issue by adding a comment if not automatically linked
             // This creates a cross-reference in the Development sidebar
-            // PRs targeting non-default branches don't get automatically linked
-            if (issueNumber && !hasAutomaticLink) {
-              core.info(`Creating cross-reference link to issue #${issueNumber} (PR targets non-default branch: ${pullRequest.baseRefName})`)
+            // PRs targeting non-default branches don't get automatically linked by GitHub
+            if (issueNumber && !hasAutomaticLink && !isTargetingDefaultBranch) {
+              core.info(`Creating cross-reference link to issue #${issueNumber} (PR targets ${pullRequest.baseRefName}, default is ${defaultBranch})`)
               await github.rest.issues.createComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
@@ -142,5 +149,7 @@ jobs:
                 body: `Linked to #${issueNumber}`
               })
             } else if (hasAutomaticLink) {
-              core.info(`PR already automatically linked to issue #${issueNumber}`)
+              core.info(`PR already automatically linked to issue #${issueNumber} (targets default branch: ${defaultBranch})`)
+            } else if (isTargetingDefaultBranch) {
+              core.info(`PR targets default branch (${defaultBranch}), automatic linking should work`)
             }
