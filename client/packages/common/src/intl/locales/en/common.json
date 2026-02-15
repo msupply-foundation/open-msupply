@@ -2303,7 +2303,7 @@
   "preference.genderOptions": "Gender options",
   "preference.inboundShipmentAutoVerify": "Automatically verify inbound shipments",
   "preference.invoiceStatusOptions": "Invoice status options",
-  "preference.isGaps": "Enable Gaps",
+  "preference.isGaps": "Enable GAPS",
   "preference.itemMarginOverridesSupplierMargin": "Item margin overrides supplier margin",
   "preference.manageVaccinesInDoses": "Manage vaccines in doses",
   "preference.manageVvmStatusForStock": "Manage VVM status for stock",
