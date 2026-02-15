@@ -359,6 +359,9 @@ export const ScanInputModal = ({ lines, invoiceId }: ScanInputModalProps) => {
               onChange={value =>
                 setDraftState(current => ({ ...current, packSize: value || 1 }))
               }
+              // If a pack size is associated with a particular GTIN, it should
+              // not change
+              disabled={!!barcodeData?.packSize}
             />
           }
         />
