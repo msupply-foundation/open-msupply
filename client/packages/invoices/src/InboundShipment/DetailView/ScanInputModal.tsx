@@ -161,7 +161,7 @@ export const ScanInputModal = ({ lines, invoiceId }: ScanInputModalProps) => {
   const handleScan = useCallback(
     async (barcode: ScanResult) => {
       // Check if a new GTIN is scanned while we already have one
-      // We treat even the same GTIN as a new one, becase they might be scanning a bunch of the same product and want the modal to auto-save and reset for each one
+      // We treat even the same GTIN as a new one, because they might be scanning a bunch of the same product and want the modal to auto-save and reset for each one
       if (isOpen && draftState.gtin && barcode.gtin) {
         // New GTIN scanned - validate and auto-save current line
         setErrorMessage(undefined);
