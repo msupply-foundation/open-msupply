@@ -6,7 +6,6 @@ import {
   Formatter,
   useIntlUtils,
   useFormatNumber,
-  NumUtils,
   IconButton,
   DeleteIcon,
   DateUtils,
@@ -31,13 +30,14 @@ import {
   CampaignOrProgramCell,
   CurrencyRowFragment,
   DonorSearchInput,
-  getVolumePerPackFromVariant,
+  ItemRowFragment,
   ItemVariantInput,
   LocationRowFragment,
   LocationSearchInput,
   VVMStatusSearchInput,
 } from '@openmsupply-client/system';
 import { PatchDraftLineInput } from '../../../api';
+import { useFieldUtils } from './sharedFieldUtils';
 
 interface InboundBatchedItemsProps {
   lines: DraftInboundLine[];
@@ -47,7 +47,7 @@ interface InboundBatchedItemsProps {
   isExternalSupplier?: boolean;
   hasItemVariantsEnabled?: boolean;
   hasVvmStatusesEnabled?: boolean;
-  item?: DraftInboundLine['item'] | null;
+  item?: ItemRowFragment | null;
   setPackRoundingMessage?: (value: React.SetStateAction<string>) => void;
   restrictedToLocationTypeId?: string | null;
   isSmallScreen?: boolean;
@@ -82,6 +82,8 @@ export const InboundItems = ({
   );
   const pluralisedUnitName = getPlural(unitName, 2);
   const showForeignCurrency = isExternalSupplier && !!store?.preferences.issueInForeignCurrency;
+  
+  const fieldUtils = useFieldUtils({ item: item || null, setPackRoundingMessage, format, t: t as any });
   return (
     <Box>
       {lines.map((line, index) => (
@@ -152,12 +154,7 @@ export const InboundItems = ({
                   itemId={line.item.id}
                   width="100%"
                   onChange={(itemVariant) => {
-                    updateDraftLine({
-                      id: line.id,
-                      itemVariantId: itemVariant?.id,
-                      itemVariant,
-                      volumePerPack: getVolumePerPackFromVariant({ packSize: line.packSize, itemVariant }),
-                    });
+                    fieldUtils.handleItemVariantChange(line, itemVariant, updateDraftLine);
                   }}
                 />
               </Box>
@@ -220,16 +217,7 @@ export const InboundItems = ({
                   value={line.packSize || 0}
                   onChange={(value: number | undefined) => {
                     if (value !== undefined) {
-                      const shouldClearSellPrice =
-                        item?.defaultPackSize !== line.packSize &&
-                        item?.itemStoreProperties?.defaultSellPricePerPack ===
-                          line.sellPricePerPack;
-                      updateDraftLine({
-                        volumePerPack: getVolumePerPackFromVariant(line) ?? 0,
-                        sellPricePerPack: shouldClearSellPrice ? 0 : line.sellPricePerPack,
-                        packSize: value,
-                        id: line.id,
-                      });
+                      fieldUtils.handlePackSizeChange(line, value, updateDraftLine);
                     }
                   }}
                   disabled={isDisabled}
@@ -246,24 +234,17 @@ export const InboundItems = ({
                   fullWidth
                   value={line.numberOfPacks}
                   onChange={(value: number | undefined) => {
-                    const { packSize } = line;
-                    if (packSize !== undefined && value !== undefined) {
-                      const packToUnits = packSize * value;
-                      setPackRoundingMessage?.('');
-                      updateDraftLine({
-                        unitsPerPack: packToUnits,
-                        id: line.id,
-                        numberOfPacks: value,
-                      });
+                    if (value !== undefined) {
+                      fieldUtils.handleNumberOfPacksChange(line, value, updateDraftLine);
                     }
                   }}
                   disabled={isDisabled}
-                  min={1}
+                  min={0}
                 />
               </Box>
             </Box>   
       
-            {!displayInDoses && (
+            {displayInDoses && (
               <Box sx={{ flex: isSmallScreen ? 1 : 0.5, minWidth: 150 }}>
                 <Box>
                   <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
@@ -271,7 +252,7 @@ export const InboundItems = ({
                   </Typography>
                   <BasicTextInput
                     fullWidth
-                    value={format((line.numberOfPacks * line.packSize) * line.item.doses)}
+                    value={fieldUtils.calculateDoseQuantity(line, format)}
                     disabled
                   />
                 </Box>
@@ -284,28 +265,10 @@ export const InboundItems = ({
                 </Typography>
                 <NumericTextInput
                   fullWidth
-                  value={line.numberOfPacks * line.packSize}
+                  value={fieldUtils.calculateUnitsPerPack(line)}
                   onChange={(value: number | undefined) => {
-                    const { packSize, unitsPerPack } = line;
-                    if (packSize !== undefined && unitsPerPack !== undefined && value !== undefined) {
-                      const unitToPacks = value / packSize;
-                      const roundedPacks = Math.ceil(unitToPacks);
-                      const actualUnits = roundedPacks * packSize;
-                      if (roundedPacks === unitToPacks || roundedPacks === 0) {
-                        setPackRoundingMessage?.('');
-                      } else {
-                        setPackRoundingMessage?.(
-                          t('messages.under-allocated', {
-                            receivedQuantity: format(NumUtils.round(value, 2)), // round the display value to 2dp
-                            quantity: format(actualUnits),
-                          })
-                        );
-                      }
-                      updateDraftLine({
-                        unitsPerPack: actualUnits,
-                        numberOfPacks: roundedPacks,
-                        id: line.id,
-                      });
+                    if (value !== undefined) {
+                      fieldUtils.handleUnitsPerPackChange(line, value, updateDraftLine);
                     }
                   }}
                   disabled={isDisabled}
@@ -365,7 +328,7 @@ export const InboundItems = ({
                   <Typography component="span" fontWeight="bold">
                     {t('label.fc-cost-price', { currency: currency.code })}
                   </Typography>{' '}
-                  {format(line.costPricePerPack / currency.rate)}
+                  {format(fieldUtils.calculateForeignCurrencyCostPrice(line, currency) || 0)}
                 </Typography>
               </Box>
             )}  
@@ -390,7 +353,7 @@ export const InboundItems = ({
                   <Typography component="span" fontWeight="bold">
                     {t('label.fc-sell-price', { currency: currency.code })}
                   </Typography>{' '}
-                  {format(line.sellPricePerPack / currency.rate)}
+                  {format(fieldUtils.calculateForeignCurrencySellPrice(line, currency) || 0)}
                 </Typography>
               </Box>
             )}   
@@ -400,7 +363,7 @@ export const InboundItems = ({
                   {t('label.line-total')}
                 </Typography>
                 <Typography variant="h6" color="textSecondary">
-                  {format(line.costPricePerPack * line.numberOfPacks)}
+                  {format(fieldUtils.calculateLineTotal(line))}
                 </Typography>
               </Box>
             </Box> 
@@ -414,7 +377,7 @@ export const InboundItems = ({
                     <Typography component="span" fontWeight="bold">
                       {t('label.fc-line-total', { currency: currency.code })}
                     </Typography>{' '}
-                    {format((line.costPricePerPack * line.numberOfPacks) / currency.rate)}
+                    {format(fieldUtils.calculateForeignCurrencyLineTotal(line, currency) || 0)}
                   </Typography>
                 </Box>
               </Box>
