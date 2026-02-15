@@ -2235,6 +2235,7 @@
   "messages.no-matching-barcode-but-gtin-found": "Unknown GTIN. Select an item to associate with this GTIN, which will be saved for future scans.",
   "error.barcode-scanner-save-no-item-selected": "No item selected. Please select an item before scanning a new product.",
   "error.barcode-scanner-save-no-quantity-entered": "Quantity must be greater than 0 before scanning a new product.",
+  "error.barcode-scanner-auto-save-failed": "Unable to auto save line, please try again.",
   "messages.inbound-shipment-line-saved": "Saved 🥳",
   "messages.unsaved-outbound-vvm-status": "VVM status will not be saved for lines with no allocated quantity. Click OK again to continue with unsaved changes.",
   "messages.updated-new-vaccine-course": "Successfully updated vaccine course",

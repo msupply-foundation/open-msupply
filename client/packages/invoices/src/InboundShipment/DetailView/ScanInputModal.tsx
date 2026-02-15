@@ -185,7 +185,9 @@ export const ScanInputModal = ({ lines, invoiceId }: ScanInputModalProps) => {
             'Error auto-saving draft invoice line on new GTIN scan',
             error
           );
-          setErrorMessage(t('error.barcode-scanner-auto-save-failed'));
+          setErrorMessage(
+            t('error.barcode-scanner-auto-save-failed') + ' ' + error
+          );
           return;
         }
       }
@@ -254,7 +256,7 @@ export const ScanInputModal = ({ lines, invoiceId }: ScanInputModalProps) => {
 
   // Register the scan handler so it runs on scan events when context is
   // listening
-  useBarcodeScannerContext(handleScan);
+  let { mockScannerEnabled } = useBarcodeScannerContext(handleScan);
 
   const onChangeItem = (item: ItemStockOnHandFragment | null) => {
     setDraftState(current => ({
@@ -300,17 +302,21 @@ export const ScanInputModal = ({ lines, invoiceId }: ScanInputModalProps) => {
       }
     >
       <Box display="flex" flexDirection="column" gap={1}>
-        <Typography>
-          <strong>{t('label.barcode')}:</strong>{' '}
-          {draftState.barcodeContent.length > 10
-            ? `${draftState.barcodeContent.slice(0, 10)}...`
-            : draftState.barcodeContent}
-        </Typography>
-        {draftState.gtin && (
+        {/* only show raw barcode content in mock scanner mode for testing purposes */}
+        {mockScannerEnabled && (
+          <Typography>
+            <strong>{t('label.barcode')}:</strong>{' '}
+            {draftState.barcodeContent.length > 10
+              ? `${draftState.barcodeContent.slice(0, 10)}...`
+              : draftState.barcodeContent}
+          </Typography>
+        )}
+        {draftState.gtin && mockScannerEnabled && (
           <Typography>
             <strong>{t('label.gtin')}:</strong> {draftState.gtin}
           </Typography>
         )}
+
         <Alert severity={message.type}>{message.text}</Alert>
         <InputWithLabelRow
           label={t('label.item')}
