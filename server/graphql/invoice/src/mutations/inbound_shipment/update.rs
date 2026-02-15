@@ -49,7 +49,7 @@ pub struct UpdateInput {
     pub currency_id: Option<String>,
     pub currency_rate: Option<f64>,
     pub default_donor: Option<UpdateDonorInput>,
-    pub created_datetime: Option<NaiveDate>,
+    pub delivered_datetime: Option<NaiveDate>,
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
@@ -119,7 +119,7 @@ impl UpdateInput {
             currency_id,
             currency_rate,
             default_donor,
-            created_datetime,
+            delivered_datetime,
         } = self;
 
         ServiceInput {
@@ -139,7 +139,7 @@ impl UpdateInput {
                 donor_id: donor.donor_id,
                 apply_to_lines: donor.apply_to_lines.to_domain(),
             }),
-            created_datetime,
+            delivered_datetime,
         }
     }
 }
@@ -548,7 +548,7 @@ mod test {
                     currency_id: None,
                     currency_rate: None,
                     default_donor: None,
-                    created_datetime: None,
+                    delivered_datetime: None,
                 }
             );
             Ok(Invoice {

@@ -82,16 +82,16 @@ const inboundParsers = {
       | RecordPatch<InboundFragment>
       | RecordPatch<InboundRowFragment>
       | {
-        id: string;
-        defaultDonorUpdate: UpdateDonorInput;
-      }
+          id: string;
+          defaultDonorUpdate: UpdateDonorInput;
+        }
   ): UpdateInboundShipmentInput => {
     return {
       id: patch.id,
       colour: 'colour' in patch ? patch.colour : undefined,
       comment: 'comment' in patch ? patch.comment : undefined,
-      createdDatetime:
-        'createdDatetime' in patch ? patch.createdDatetime : undefined,
+      deliveredDatetime:
+        'deliveredDatetime' in patch ? patch.deliveredDatetime : undefined,
       status: inboundParsers.toStatus(patch),
       onHold: 'onHold' in patch ? patch.onHold : undefined,
       otherPartyId: 'otherParty' in patch ? patch.otherParty?.id : undefined,

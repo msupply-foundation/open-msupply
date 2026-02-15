@@ -50,7 +50,7 @@ export const useInboundShipmentColumns = (
   return useMemo((): ColumnDef<Groupable<InboundLineFragment>>[] => {
     return [
       {
-        accessorKey: 'comment',
+        accessorKey: 'note',
         pin: 'left',
         header: t('label.comment'),
         columnType: ColumnType.Comment,
@@ -66,11 +66,6 @@ export const useInboundShipmentColumns = (
           getLinesFromRow(row).some(
             r => getError(r)?.__typename === 'LineLinkedToTransferredInvoice'
           ),
-      },
-      {
-        accessorKey: 'note',
-        header: t('label.comment'),
-        columnType: ColumnType.Comment,
       },
       {
         accessorKey: 'itemName',
@@ -165,14 +160,6 @@ export const useInboundShipmentColumns = (
         },
         size: 120,
         includeColumn: !external,
-      },
-      {
-        id: 'itemUnit',
-        accessorKey: 'item.unitName',
-        header: t('label.unit-name'),
-        enableColumnFilter: true,
-        filterVariant: 'select',
-        defaultHideOnMobile: true,
       },
       {
         accessorKey: 'status',
