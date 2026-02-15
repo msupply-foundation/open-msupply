@@ -75,11 +75,30 @@ export const ScanInputModal = ({ lines, invoiceId }: ScanInputModalProps) => {
   const { mutateAsync: getBarcode } = useOutbound.utils.barcode();
   const { mutateAsync: saveBarcode } = useOutbound.utils.barcodeInsert();
 
-  const existingLine = lines.find(
-    line =>
-      line.batch === draftState.batch &&
-      line.item.id === draftState.itemId &&
-      line.packSize === draftState.packSize
+  // Helper to update state and pull in expiry date from matching line
+  // - Need to add "manufacturer/manufactureDate" to this when support those
+  const updateStateWithLineMatch = useCallback(
+    (updates: Partial<FormDraftState>) => {
+      setDraftState(current => {
+        const newState = { ...current, ...updates };
+
+        // Find matching line based on updated values
+        const matchingLine = lines.find(
+          line =>
+            line.batch === newState.batch &&
+            line.item.id === newState.itemId &&
+            line.packSize === newState.packSize
+        );
+
+        // If we found a matching line with an expiry date and we don't already have one, use it
+        if (matchingLine?.expiryDate && !newState.expiryDate) {
+          newState.expiryDate = new Date(matchingLine.expiryDate);
+        }
+
+        return newState;
+      });
+    },
+    [lines]
   );
 
   const handleScan = useCallback(
@@ -150,12 +169,18 @@ export const ScanInputModal = ({ lines, invoiceId }: ScanInputModalProps) => {
   useBarcodeScannerContext(handleScan);
 
   const onChangeItem = (item: ItemStockOnHandFragment | null) => {
-    setDraftState(current => ({
-      ...current,
+    updateStateWithLineMatch({
       itemId: item?.id || null,
       packSize: barcodeData?.packSize || item?.defaultPackSize || 1,
-    }));
+    });
   };
+
+  const existingLine = lines.find(
+    line =>
+      line.batch === draftState.batch &&
+      line.item.id === draftState.itemId &&
+      line.packSize === draftState.packSize
+  );
 
   const message: Message = getMessage(barcodeData, draftState, existingLine, t);
 
@@ -262,12 +287,9 @@ export const ScanInputModal = ({ lines, invoiceId }: ScanInputModalProps) => {
           Input={
             <BasicTextInput
               value={draftState.batch ?? ''}
-              onChange={e =>
-                setDraftState(current => ({
-                  ...current,
-                  batch: e.target.value,
-                }))
-              }
+              onChange={e => {
+                updateStateWithLineMatch({ batch: e.target.value });
+              }}
             />
           }
         />
@@ -288,7 +310,7 @@ export const ScanInputModal = ({ lines, invoiceId }: ScanInputModalProps) => {
             <NumericTextInput
               value={draftState.packSize ?? ''}
               onChange={value =>
-                setDraftState(current => ({ ...current, packSize: value || 1 }))
+                updateStateWithLineMatch({ packSize: value || 1 })
               }
             />
           }
