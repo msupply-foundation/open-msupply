@@ -46,8 +46,8 @@ export const Toolbar = () => {
   const isDisabled = useInbound.utils.isDisabled();
   const { data: shipment } = useInbound.document.get();
 
-  const { createdDatetime, otherParty, theirReference, purchaseOrder, update } = useInbound.document.fields([
-    'createdDatetime',
+  const { deliveredDatetime, otherParty, theirReference, purchaseOrder, update } = useInbound.document.fields([
+    'deliveredDatetime',
     'otherParty',
     'theirReference',
     'purchaseOrder',
@@ -137,13 +137,13 @@ export const Toolbar = () => {
             </Grid>
             <Grid>
               <InputWithLabelRow
-                label={t('label.created-datetime')}
+                label={t('label.delivered-date')}
                 Input={
                   <DateTimePickerInput
-                    value={DateUtils.getDateOrNull(createdDatetime)}
+                    value={DateUtils.getDateOrNull(deliveredDatetime)}
                     onChange={date =>
                       update({
-                        createdDatetime: Formatter.naiveDate(date) ?? undefined,
+                        deliveredDatetime: Formatter.naiveDate(date) ?? undefined,
                       })
                     }
                   />

@@ -74,8 +74,8 @@ pub fn validate(
         return Err(CannotIssueForeignCurrencyForInternalSuppliers);
     }
 
-    // Created datetime check
-    if patch.created_datetime.is_some() {
+    // Delivered datetime check
+    if patch.delivered_datetime.is_some() {
         if invoice.purchase_order_id.is_none() {
             return Err(CanOnlyChangeDateOfExternalInboundShipments);
         }

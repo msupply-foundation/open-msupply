@@ -15,7 +15,6 @@ import {
   useTranslation,
   CircleIcon,
   MessageSquareIcon,
-  Tooltip,
 } from '@openmsupply-client/common';
 
 import { ColumnDef } from './types';
@@ -139,11 +138,7 @@ export const useGetColumnTypeDefaults = () => {
           enableResizing: false,
           enableColumnActions: false,
           // Comment popover is pretty narrow, show icon rather than full label
-          Header: () => (
-            <Tooltip title={t('label.comment')} placement="top">
-              <MessageSquareIcon fontSize="small" />
-            </Tooltip>
-          ),
+          Header: () => <MessageSquareIcon fontSize="small" />,
           Cell: ({ cell, row }) => {
             if ('subRows' in row.original) {
               // Don't show comment icon for grouped rows
@@ -172,13 +167,15 @@ export const useGetColumnTypeDefaults = () => {
           size: 130,
           Cell: ({ cell }: { cell: MRT_Cell<T> }) => {
             const value = cell.getValue();
-            return <>
-              <NumericTextDisplay
-                value={typeof value === 'number' ? value : undefined}
-                defaultValue={UNDEFINED_STRING_VALUE}
-              />
-              %
-            </>;
+            return (
+              <>
+                <NumericTextDisplay
+                  value={typeof value === 'number' ? value : undefined}
+                  defaultValue={UNDEFINED_STRING_VALUE}
+                />
+                %
+              </>
+            );
           },
         };
 
