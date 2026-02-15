@@ -86,8 +86,15 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
         ...internalColumnMenuItems,
       ];
     },
+    // Use column header as action button tooltip
+    muiColumnActionsButtonProps: ({ column }) => {
+      const { header } = column.columnDef as ColumnDef<T>;
+      return {
+        title: header,
+      };
+    },
 
-    // Add reset state button to toolbar
+    // Add grouping toggle and settings menu to toolbar
     renderToolbarInternalActions: ({ table }) => (
       <>
         {toggleGrouped && !isMobile && (
