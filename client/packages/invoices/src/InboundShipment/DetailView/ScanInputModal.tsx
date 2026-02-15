@@ -14,7 +14,7 @@ import {
   useNotification,
 } from '@openmsupply-client/common';
 import { FnUtils, ScanResult, useBarcodeScannerContext } from '@common/utils';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { useOutbound } from '../../OutboundShipment/api';
 import { BarcodeNode, InvoiceLineNodeType } from '@common/types';
 import {
@@ -72,7 +72,6 @@ export const ScanInputModal = ({ lines, invoiceId }: ScanInputModalProps) => {
   const [errorMessage, setErrorMessage] = useState<string | undefined>();
 
   const { success } = useNotification();
-  const quantityInputRef = useRef<HTMLInputElement>(null); // Used to focus the quantity input once we have an item selected
 
   const { saveSingleLine } = useDraftInboundLines(barcodeData?.itemId);
   const { mutateAsync: getBarcode } = useOutbound.utils.barcode();
@@ -85,15 +84,15 @@ export const ScanInputModal = ({ lines, invoiceId }: ScanInputModalProps) => {
       line.packSize === draftState.packSize
   );
 
-  // Focus quantity input (if item is selected)
-  useEffect(() => {
-    if (draftState.itemId && quantityInputRef.current) {
-      // Small delay to ensure the input is rendered and ready
-      setTimeout(() => {
-        quantityInputRef.current?.focus();
-      }, 100);
-    }
-  }, [draftState.itemId]);
+  // Callback ref to focus quantity input when item is selected
+  const quantityInputRef = useCallback(
+    (node: HTMLInputElement | null) => {
+      if (node && draftState.itemId) {
+        node.focus();
+      }
+    },
+    [draftState.itemId]
+  );
 
   // Shared function to save the current line
   const saveCurrentLine = useCallback(
