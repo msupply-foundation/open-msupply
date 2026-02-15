@@ -149,7 +149,7 @@ jobs:
                 body: `Linked to #${issueNumber}`
               })
             } else if (hasAutomaticLink) {
-              core.info(`PR already automatically linked to issue #${issueNumber} (targets default branch: ${defaultBranch})`)
-            } else if (isTargetingDefaultBranch) {
-              core.info(`PR targets default branch (${defaultBranch}), automatic linking should work`)
+              core.info(`PR already automatically linked to issue #${issueNumber}`)
+            } else if (issueNumber && isTargetingDefaultBranch) {
+              core.info(`PR targets default branch (${defaultBranch}) but no automatic link found - this is unexpected`)
             }
