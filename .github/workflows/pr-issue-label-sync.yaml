@@ -134,19 +134,23 @@ jobs:
             if (issueNumber) {
               const closingKeywords = ['close', 'closes', 'closed', 'fix', 'fixes', 'fixed', 'resolve', 'resolves', 'resolved'];
               const hasClosingKeyword = closingKeywords.some(keyword => {
-                const pattern = new RegExp(`\\b${keyword}\\s+#${issueNumber}\\b`, 'i');
+                const pattern = new RegExp(`\\b${keyword}\\s*#${issueNumber}\\b`, 'i');
                 return pattern.test(pullRequest.body || '');
               });
 
               if (!hasClosingKeyword) {
                 core.info(`Adding closing keyword to link PR to issue #${issueNumber}`)
-                const newBody = (pullRequest.body || '') + `\n\nFixes #${issueNumber}`;
-                await github.rest.pulls.update({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  pull_number: context.issue.number,
-                  body: newBody
-                });
+                const linkText = `\n\nFixes #${issueNumber}`;
+                // Check if we already added this exact link
+                if (!(pullRequest.body || '').includes(linkText.trim())) {
+                  const newBody = (pullRequest.body || '') + linkText;
+                  await github.rest.pulls.update({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    pull_number: context.issue.number,
+                    body: newBody
+                  });
+                }
               } else {
                 core.info(`PR already has closing keyword for issue #${issueNumber}`)
               }
