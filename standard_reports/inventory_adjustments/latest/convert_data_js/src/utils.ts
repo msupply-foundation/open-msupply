@@ -57,7 +57,7 @@ const calculateAdjustmentPacks = (
   numberOfPacks: number | null,
   isFromStocktake: boolean,
   snapshotPacks: number | null,
-  countedPacks: number | null
+  countedPacks: number | null,
 ): number => {
   let adjustment: number;
 
@@ -69,13 +69,15 @@ const calculateAdjustmentPacks = (
       invoiceType === InvoiceNodeType.InventoryAddition ? packs : -packs;
   }
 
-  return adjustment;
+  const rounded = Math.round(adjustment * 100) / 100; // Round to 2 decimal places
+
+  return rounded === 0 ? 0 : rounded;
 };
 
 // Generates adjustment lines with invoice and stocktake context
 const getAdjustmentLines = (
   invoices: InvoiceNode[],
-  stocktakes: StocktakeNode[]
+  stocktakes: StocktakeNode[],
 ): AdjustmentLineNode[] => {
   const { invoiceToStocktake, stockLineToStocktakeLine } =
     buildStocktakeMaps(stocktakes);
@@ -92,7 +94,7 @@ const getAdjustmentLines = (
 
       // Get corresponding stocktake line if from stocktake
       const stocktakeLine = stockLineToStocktakeLine.get(
-        line.stockLine?.id ?? ""
+        line.stockLine?.id ?? "",
       );
       const snapshotPacks =
         isFromStocktake && stocktakeLine
@@ -119,7 +121,7 @@ const getAdjustmentLines = (
           line.numberOfPacks,
           isFromStocktake,
           snapshotPacks,
-          countedPacks
+          countedPacks,
         ),
       });
     }
@@ -131,7 +133,7 @@ const getAdjustmentLines = (
 const applyFilter = <T>(
   include: boolean,
   filterValue: T | null | undefined,
-  filterFn: (value: NonNullable<T>) => boolean
+  filterFn: (value: NonNullable<T>) => boolean,
 ): boolean => {
   if (!include || filterValue == null) return include;
   return filterFn(filterValue as NonNullable<T>);
@@ -139,32 +141,32 @@ const applyFilter = <T>(
 
 const shouldIncludeLine = (
   line: AdjustmentLineNode,
-  filters: Filters
+  filters: Filters,
 ): boolean => {
   let include = true;
 
   include = applyFilter(include, filters.itemCodeOrName, (value) =>
-    filterByItemCodeOrName(line, value)
+    filterByItemCodeOrName(line, value),
   );
 
   include = applyFilter(include, filters.masterListId, (value) =>
-    filterByMasterListId(line, value)
+    filterByMasterListId(line, value),
   );
 
   include = applyFilter(include, filters.locationId, (value) =>
-    filterByLocationId(line, value)
+    filterByLocationId(line, value),
   );
 
   include = applyFilter(include, filters.adjustmentType, (value) =>
-    filterByAdjustmentType(line, value as AdjustmentType)
+    filterByAdjustmentType(line, value as AdjustmentType),
   );
 
   include = applyFilter(include, filters.reasonOptionId, (value) =>
-    filterByReasonOptionId(line, value)
+    filterByReasonOptionId(line, value),
   );
 
   include = applyFilter(include, filters.adjustmentSource, (value) =>
-    filterByAdjustmentSource(line, value as AdjustmentSource)
+    filterByAdjustmentSource(line, value as AdjustmentSource),
   );
 
   if (filters.showZeroedLines !== undefined) {
@@ -177,7 +179,7 @@ const shouldIncludeLine = (
 // Apply all filters to lines
 const applyFilters = (
   lines: AdjustmentLineNode[],
-  filters: Filters
+  filters: Filters,
 ): AdjustmentLineNode[] => {
   if (!lines?.length) return [];
   return lines.filter((line) => shouldIncludeLine(line, filters));
@@ -187,7 +189,7 @@ const applyFilters = (
 export const processLines = (
   invoices: InvoiceNode[],
   stocktakes: StocktakeNode[],
-  filters: Filters
+  filters: Filters,
 ): AdjustmentLineNode[] => {
   if (!invoices?.length) return [];
 
@@ -196,6 +198,6 @@ export const processLines = (
   return sortByKey(
     filteredLines,
     filters.sort as SortKey,
-    filters.dir as SortDirection
+    filters.dir as SortDirection,
   );
 };
