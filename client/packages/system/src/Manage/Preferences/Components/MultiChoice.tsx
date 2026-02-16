@@ -15,11 +15,19 @@ import {
 } from '@openmsupply-client/common';
 import { getInvoiceStatusTranslator } from '@openmsupply-client/invoices';
 
+type ValidationFunction<T extends string> = (
+  newValue: T[],
+  changedValue: T,
+  isChecking: boolean,
+  errorCallback: (message: string) => void
+) => boolean;
+
 interface MultiChoice<T extends string> {
   value: T;
   label: string;
   group?: string;
   disabled?: boolean;
+  validate?: ValidationFunction<T>;
 }
 
 interface MultiChoiceProps<T extends string> {
@@ -27,7 +35,6 @@ interface MultiChoiceProps<T extends string> {
   value: T[];
   onChange: (newValues: T[]) => void;
   disabled?: boolean;
-  preferenceKey?: PreferenceKey;
 }
 
 export const MultiChoice = <T extends string>({
@@ -35,62 +42,26 @@ export const MultiChoice = <T extends string>({
   onChange,
   disabled,
   options,
-  preferenceKey,
 }: MultiChoiceProps<T>) => {
   const t = useTranslation();
   const { error } = useNotification();
 
-  const isInvoiceNodeStatus = (value: string): value is InvoiceNodeStatus => {
-    return Object.values(InvoiceNodeStatus).includes(value as InvoiceNodeStatus);
-  };
-
-  const validateInvoiceStatusChange = (
-    newValue: T[],
-    optionValue: T,
-    isChecking: boolean
-  ): boolean => {
-    // Only validate for InvoiceStatusOptions preference
-    if (preferenceKey !== PreferenceKey.InvoiceStatusOptions) {
-      return true;
-    }
-
-    // Type guard to ensure we're working with InvoiceNodeStatus values
-    if (!isInvoiceNodeStatus(optionValue)) {
-      return true;
-    }
-
-    // If unchecking either Delivered or Received
-    if (
-      !isChecking &&
-      (optionValue === InvoiceNodeStatus.Delivered ||
-        optionValue === InvoiceNodeStatus.Received)
-    ) {
-      // Check if this would result in both being unchecked
-      const hasDelivered = newValue.some(
-        v => isInvoiceNodeStatus(v) && v === InvoiceNodeStatus.Delivered
-      );
-      const hasReceived = newValue.some(
-        v => isInvoiceNodeStatus(v) && v === InvoiceNodeStatus.Received
-      );
-
-      // If neither Delivered nor Received would be checked, prevent the change
-      if (!hasDelivered && !hasReceived) {
-        error(t('error.invoice-status-inbound-requires-delivered-or-received'))();
-        return false;
-      }
-    }
-
-    return true;
-  };
-
-  const handleChange = (optionValue: T, isChecking: boolean) => {
+  const handleChange = (option: MultiChoice<T>, isChecking: boolean) => {
     const newValue = isChecking
-      ? [...value, optionValue]
-      : value.filter(v => v !== optionValue);
+      ? [...value, option.value]
+      : value.filter(v => v !== option.value);
 
-    // Validate the change before applying
-    if (!validateInvoiceStatusChange(newValue, optionValue, isChecking)) {
-      return;
+    // Run validation if provided
+    if (option.validate) {
+      const isValid = option.validate(
+        newValue,
+        option.value,
+        isChecking,
+        message => error(t(message as LocaleKey))()
+      );
+      if (!isValid) {
+        return;
+      }
     }
 
     onChange(newValue);
@@ -124,7 +95,7 @@ export const MultiChoice = <T extends string>({
                 <Checkbox
                   disabled={disabled || option.disabled}
                   checked={value.includes(option.value)}
-                  onChange={e => handleChange(option.value, e.target.checked)}
+                  onChange={e => handleChange(option, e.target.checked)}
                 />
               }
               labelWidth={'150px'}
@@ -160,6 +131,31 @@ export const getMultiChoiceOptions = (
         }));
 
     case PreferenceKey.InvoiceStatusOptions:
+      // Validation function for inbound shipment statuses
+      const validateInboundStatus: ValidationFunction<InvoiceNodeStatus> = (
+        newValue,
+        changedValue,
+        isChecking,
+        errorCallback
+      ) => {
+        // Only validate when unchecking Delivered or Received
+        if (
+          !isChecking &&
+          (changedValue === InvoiceNodeStatus.Delivered ||
+            changedValue === InvoiceNodeStatus.Received)
+        ) {
+          const hasDelivered = newValue.includes(InvoiceNodeStatus.Delivered);
+          const hasReceived = newValue.includes(InvoiceNodeStatus.Received);
+
+          // Prevent unchecking if it would leave neither status enabled
+          if (!hasDelivered && !hasReceived) {
+            errorCallback('error.invoice-status-inbound-requires-delivered-or-received');
+            return false;
+          }
+        }
+        return true;
+      };
+
       const options: MultiChoice<InvoiceNodeStatus>[] = [];
 
       outboundStatuses.forEach(({ status, disabled }) => {
@@ -177,6 +173,12 @@ export const getMultiChoiceOptions = (
           label: getInvoiceStatusTranslator(t)(status),
           group: `${t('label.inbound-shipment')} / ${t('customer-return')}`,
           disabled,
+          // Add validation only for Delivered and Received statuses
+          validate:
+            status === InvoiceNodeStatus.Delivered ||
+            status === InvoiceNodeStatus.Received
+              ? validateInboundStatus
+              : undefined,
         });
       });
 
