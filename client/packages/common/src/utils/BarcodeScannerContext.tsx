@@ -66,6 +66,7 @@ interface BarcodeScannerControl {
   setMockScannerEnabled: (enabled: boolean) => void;
   supportsContinuousScanning: boolean;
   registerCallback: (callback: ScanCallback) => void;
+  revertCallback: () => void;
   handleScanResult: (barcode: ScanResult) => void;
 }
 
@@ -136,6 +137,7 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
     useState<boolean>(false);
   const { error } = useNotification();
   const callbackRef = useRef<ScanCallback | null>(null);
+  const previousCallbackRef = useRef<ScanCallback | null>(null);
   const { electronNativeAPI } = window;
   const [scanner, setScanner] = useState<BarcodeScanner | null>(null);
   const [localScannerType, setLocalScannerType] =
@@ -367,8 +369,9 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
             return;
           }
           if (data && 'barcode' in data) {
-            if (callbackRef.current) {
-              callbackRef.current(parseResult(data.barcode));
+            const currentCallback = callbackRef.current;
+            if (currentCallback) {
+              currentCallback(parseResult(data.barcode));
             } else {
               console.error(
                 'No scan callback registered to handle barcode:',
@@ -394,8 +397,9 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
         await startBarcodeScan();
         electronNativeAPI.onBarcodeScan((_event, data) => {
           const barcode = BarcodeUtils.parseBarcodeFromBytes(data);
-          if (callbackRef.current) {
-            callbackRef.current(parseResult(barcode));
+          const currentCallback = callbackRef.current;
+          if (currentCallback) {
+            currentCallback(parseResult(barcode));
           } else {
             console.error(
               'No scan callback registered to handle barcode:',
@@ -418,8 +422,9 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
       setIsListening(true);
       const scanHandler = async (barcode: string) => {
         const result = parseResult(barcode);
-        if (callbackRef.current) {
-          callbackRef.current(result);
+        const currentCallback = callbackRef.current;
+        if (currentCallback) {
+          currentCallback(result);
         } else {
           console.error(
             'No scan callback registered to handle barcode:',
@@ -479,11 +484,18 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
       setMockScannerEnabled,
       supportsContinuousScanning:
         hasHoneywellScanner || hasElectronApi || mockScannerEnabled,
-      registerCallback: (callback: ScanCallback) =>
-        (callbackRef.current = callback),
+      registerCallback: (callback: ScanCallback) => {
+        previousCallbackRef.current = callbackRef.current;
+        callbackRef.current = callback;
+      },
+      revertCallback: () => {
+        callbackRef.current = previousCallbackRef.current;
+        previousCallbackRef.current = null;
+      },
       handleScanResult: (barcode: ScanResult) => {
-        if (callbackRef.current) {
-          callbackRef.current(barcode);
+        const currentCallback = callbackRef.current;
+        if (currentCallback) {
+          currentCallback(barcode);
         } else {
           console.error(
             'No scan callback registered to handle barcode:',

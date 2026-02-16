@@ -12,7 +12,6 @@ import {
   ButtonWithIcon,
   PlusCircleIcon,
   useBarcodeScannerContext,
-  ScanResult,
   Alert,
 } from '@openmsupply-client/common';
 import { InboundLineEditForm } from './InboundLineEditForm';
@@ -85,11 +84,17 @@ export const InboundLineEdit = ({
     setCurrentItem(item);
   }, [item]);
 
-  // Temporarily suppress new scanning while edit modal is open. Once this
-  // closes, the Scan modal automatically re-registers its handler
-  useBarcodeScannerContext(() => setShowScanWarning(() => true));
-
-  // console.log('handleScanResult', handleScanResult);
+  // Temporarily suppress scanning while edit modal is open. Once this
+  // closes (component unmounts), the callback is reverted to allow scanning
+  // again.
+  const { revertCallback } = useBarcodeScannerContext(() =>
+    setShowScanWarning(() => true)
+  );
+  useEffect(() => {
+    return () => {
+      revertCallback();
+    };
+  }, []);
 
   const tableContent = simplifiedTabletView ? (
     <>
