@@ -16,13 +16,9 @@ jobs:
             const pullRequestResult = await github.graphql(`
               query($owner: String!, $repo: String!, $number: Int!) {
                 repository(name: $repo, owner: $owner) {
-                  defaultBranchRef {
-                    name
-                  }
                   pullRequest(number: $number) {
                     id
                     body
-                    baseRefName
                     labels (first: 100){
                       nodes {
                         id
@@ -52,14 +48,10 @@ jobs:
 
             core.debug(pullRequestResult)
 
-            const repository = pullRequestResult.repository
-            const defaultBranch = repository.defaultBranchRef.name
-            const pullRequest = repository.pullRequest
-            const isTargetingDefaultBranch = pullRequest.baseRefName === defaultBranch
+            const pullRequest = pullRequestResult.repository.pullRequest
 
             let issue = pullRequest.closingIssuesReferences.nodes[0]
             let issueNumber = issue?.number
-            const hasAutomaticLink = !!issue
 
             if (!issue) {
               const regex = new RegExp(/#(\d+)/);
@@ -137,19 +129,25 @@ jobs:
               milestoneId
             })
 
-            // Link the PR to the issue by adding a comment if not automatically linked
-            // This creates a cross-reference in the Development sidebar
-            // PRs targeting non-default branches don't get automatically linked by GitHub
-            if (issueNumber && !hasAutomaticLink && !isTargetingDefaultBranch) {
-              core.info(`Creating cross-reference link to issue #${issueNumber} (PR targets ${pullRequest.baseRefName}, default is ${defaultBranch})`)
-              await github.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: context.issue.number,
-                body: `Linked to #${issueNumber}`
-              })
-            } else if (hasAutomaticLink) {
-              core.info(`PR already automatically linked to issue #${issueNumber}`)
-            } else if (issueNumber && isTargetingDefaultBranch) {
-              core.info(`PR targets default branch (${defaultBranch}) but no automatic link found - this is unexpected`)
+            // Link the PR to the issue by ensuring PR body has proper closing keywords
+            // This makes the link appear in the Development sidebar
+            if (issueNumber) {
+              const closingKeywords = ['close', 'closes', 'closed', 'fix', 'fixes', 'fixed', 'resolve', 'resolves', 'resolved'];
+              const hasClosingKeyword = closingKeywords.some(keyword => {
+                const pattern = new RegExp(`\\b${keyword}\\s+#${issueNumber}\\b`, 'i');
+                return pattern.test(pullRequest.body || '');
+              });
+
+              if (!hasClosingKeyword) {
+                core.info(`Adding closing keyword to link PR to issue #${issueNumber}`)
+                const newBody = (pullRequest.body || '') + `\n\nFixes #${issueNumber}`;
+                await github.rest.pulls.update({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  pull_number: context.issue.number,
+                  body: newBody
+                });
+              } else {
+                core.info(`PR already has closing keyword for issue #${issueNumber}`)
+              }
             }
