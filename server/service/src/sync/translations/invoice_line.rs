@@ -49,8 +49,6 @@ pub struct TransLineRowOmsFields {
     pub program_id: Option<String>,
     #[serde(default)]
     pub status: Option<String>,
-    #[serde(default)]
-    pub rejected_number_of_packs: Option<f64>,
 }
 
 #[allow(non_snake_case)]
@@ -296,7 +294,6 @@ impl SyncTranslation for InvoiceLineTranslation {
             campaign_id,
             program_id,
             status,
-            rejected_number_of_packs,
         } = oms_fields.unwrap_or_default();
 
         let result = InvoiceLineRow {
@@ -316,7 +313,7 @@ impl SyncTranslation for InvoiceLineTranslation {
             total_after_tax,
             tax_percentage,
             r#type: line_type,
-            number_of_packs: rejected_number_of_packs.unwrap_or(number_of_packs),
+            number_of_packs,
             prescribed_quantity,
             note,
             foreign_currency_price_before_tax,
@@ -405,11 +402,6 @@ impl SyncTranslation for InvoiceLineTranslation {
             ..
         } = invoice_line;
 
-        let rejected_invoice_line = matches!(
-            status,
-            Some(InvoiceLineStatus::Rejected) | Some(InvoiceLineStatus::Pending)
-        );
-
         let oms_fields = Some(TransLineRowOmsFields {
             campaign_id,
             program_id,
@@ -418,12 +410,6 @@ impl SyncTranslation for InvoiceLineTranslation {
                 Some(InvoiceLineStatus::Passed) => Some("PASSED".to_string()),
                 Some(InvoiceLineStatus::Rejected) => Some("REJECTED".to_string()),
                 None => None,
-            },
-            // When translating to legacy we don't want to send number_of_packs if the line was rejected as mSupply doesn't understand the concept. Save the actual number of packs here so it can be retrieved when syncing back to omSupply.
-            rejected_number_of_packs: if rejected_invoice_line {
-                Some(number_of_packs)
-            } else {
-                None
             },
         });
 
@@ -440,11 +426,7 @@ impl SyncTranslation for InvoiceLineTranslation {
             cost_price_per_pack,
             sell_price_per_pack,
             r#type: to_legacy_invoice_line_type(&r#type),
-            number_of_packs: if rejected_invoice_line {
-                0.0
-            } else {
-                number_of_packs
-            },
+            number_of_packs,
             prescribed_quantity,
             note,
             item_code: Some(item_code),

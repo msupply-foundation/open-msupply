@@ -2,8 +2,8 @@ use chrono::{NaiveDateTime, Utc};
 
 use repository::vvm_status::vvm_status_log_row::VVMStatusLogRow;
 use repository::{
-    EqualFilter, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineType, LocationMovementRow,
-    Name, RepositoryError,
+    EqualFilter, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineStatus, InvoiceLineType,
+    LocationMovementRow, Name, RepositoryError,
 };
 use repository::{
     InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow, InvoiceStatus, StockLineRow,
@@ -352,6 +352,12 @@ pub fn generate_lines_and_stock_lines(
 
     for invoice_line in lines.into_iter() {
         if invoice_line.number_of_packs <= 0.0 {
+            continue;
+        }
+        if matches!(
+            invoice_line.status,
+            Some(InvoiceLineStatus::Rejected | InvoiceLineStatus::Pending)
+        ) {
             continue;
         }
         let mut line = invoice_line.clone();
