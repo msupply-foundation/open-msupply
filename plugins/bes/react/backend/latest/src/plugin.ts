@@ -55,11 +55,11 @@ const plugins: BackendPlugins = {
 
     if (inp.invoiceId) {
       shipmentId = inp.invoiceId;
-      const { uuidError } = checkOutboundShipmentExistsQuery({
+      const { invoiceIdError } = checkOutboundShipmentExistsQuery({
         storeId: issuingStoreId,
         id: inp.invoiceId,
       });
-      if (uuidError) return uuidError;
+      if (invoiceIdError) return invoiceIdError;
     }
 
     const { result: customerQueryResult, customerError } = customerQuery({
@@ -79,18 +79,18 @@ const plugins: BackendPlugins = {
 
     const { result: itemsQueryResult, itemsError } = itemsQuery({
       storeId: issuingStoreId,
-      filter: { universalCode: { equalTo: inp.universalCode } },
+      filter: { universalCode: { equalTo: inp.items[0].universalCode } },
     });
 
     if (itemsError) return itemsError;
     if (!itemsQueryResult) {
       return {
         success: false,
-        message: `Error getting item with universalCode of: ${inp.universalCode}`,
+        message: `Error getting item with universalCode of: ${inp.items[0].universalCode}`,
       };
     }
 
-    if (inp.numberOfUnits === 0) {
+    if (inp.items[0].numberOfUnits === 0) {
       return {
         success: false,
         message: "param 'numberOfUnits' is 0 or invalid",
@@ -112,11 +112,12 @@ const plugins: BackendPlugins = {
       const batch = unexpiredAndNullBatches[i];
       const shipmentLineId = uuidv7();
       const unitsInBatch = batch.availableNumberOfPacks * batch.packSize;
-      const unitsStillRequired = inp.numberOfUnits - totalUnitsSupplied;
+      const unitsStillRequired =
+        inp.items[0].numberOfUnits - totalUnitsSupplied;
 
       if (unitsInBatch === 0) continue;
 
-      if (totalUnitsSupplied >= inp.numberOfUnits) break;
+      if (totalUnitsSupplied >= inp.items[0].numberOfUnits) break;
 
       if (unitsInBatch > unitsStillRequired) {
         const packsToSupply = Math.ceil(unitsStillRequired / batch.packSize); // have to round down or get ReductionBelowZero error
@@ -145,9 +146,10 @@ const plugins: BackendPlugins = {
       const batch = expiredBatches[j];
       const shipmentLineId = uuidv7();
       const unitsInBatch = batch.availableNumberOfPacks / batch.packSize;
-      const unitsStillRequired = inp.numberOfUnits - totalUnitsSupplied;
+      const unitsStillRequired =
+        inp.items[0].numberOfUnits - totalUnitsSupplied;
 
-      if (totalUnitsSupplied >= inp.numberOfUnits) break;
+      if (totalUnitsSupplied >= inp.items[0].numberOfUnits) break;
       if (batch.availableNumberOfPacks === 0) continue;
 
       if (unitsInBatch > unitsStillRequired) {
@@ -172,12 +174,12 @@ const plugins: BackendPlugins = {
 
     // If still unfully allocated, create placeholder for rest of items
 
-    if (totalUnitsSupplied < inp.numberOfUnits) {
-      placeHolderQuantity = inp.numberOfUnits - totalUnitsSupplied;
+    if (totalUnitsSupplied < inp.items[0].numberOfUnits) {
+      placeHolderQuantity = inp.items[0].numberOfUnits - totalUnitsSupplied;
     }
 
     // eslint-disable-next-line prefer-const
-    let errText = `Failed to issue the stock for item code: ${foundItem.msupplyUniversalCode}, quantity: ${inp.numberOfUnits}, customer: ${customer.name},`;
+    let errText = `Failed to issue the stock for item code: ${foundItem.msupplyUniversalCode}, quantity: ${inp.items[0].numberOfUnits}, customer: ${customer.name},`;
 
     const { error: insertOBSErr } = insertOutboundShipment(
       shipmentId,

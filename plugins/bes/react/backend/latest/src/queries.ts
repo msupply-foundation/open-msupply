@@ -124,7 +124,7 @@ export const saveOutboundShipmentLineItemsMutation = (
 
 export const checkOutboundShipmentExistsQuery = (
   variables: CheckInvoiceExistsQueryVariables
-): { uuidError?: Graphql['output'] } => {
+): { invoiceIdError?: Graphql['output'] } => {
   try {
     const result = use_graphql({
       query: checkOutboundShipmentExistsText,
@@ -133,18 +133,27 @@ export const checkOutboundShipmentExistsQuery = (
 
     if (result.invoice.__typename === 'InvoiceNode' && result.invoice.id) {
       return {
-        uuidError: {
+        invoiceIdError: {
           success: false,
-          message: `UUID ${variables.id} already exists`,
+          message: `InvoiceId - ${variables.id} already exists`,
         },
       };
     }
-    return { uuidError: undefined };
+
+    if (result.invoice.__typename === 'NodeError') {
+      return {
+        invoiceIdError: {
+          success: false,
+          message: `Error checking UUID exists for invoiceId. id: ${variables.id}, error: ${result.invoice.error.description}`,
+        },
+      };
+    }
+    return { invoiceIdError: undefined };
   } catch (error) {
     return {
-      uuidError: {
+      invoiceIdError: {
         success: false,
-        message: `Error checking UUID exists. error: ${error}`,
+        message: `Error checking UUID exists for invoiceId. error: ${error}`,
       },
     };
   }

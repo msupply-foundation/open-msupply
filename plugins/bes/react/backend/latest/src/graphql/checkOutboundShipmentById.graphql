@@ -7,6 +7,7 @@ query checkInvoiceExists($storeId: String!, $id: String!) {
       }
     }
     ... on InvoiceNode {
+      __typename
       id
       invoiceNumber
     }
