@@ -11,8 +11,11 @@ export interface FieldUtilsProps {
   t: (key: string, options?: any) => string;
 }
 
-export const useFieldUtils = ({ setPackRoundingMessage, format, t }: FieldUtilsProps) => {
-  
+export const useFieldUtils = ({
+  setPackRoundingMessage,
+  format,
+  t,
+}: FieldUtilsProps) => {
   const handlePackSizeChange = (
     line: DraftInboundLine,
     value: number,
@@ -92,21 +95,30 @@ export const useFieldUtils = ({ setPackRoundingMessage, format, t }: FieldUtilsP
     });
   };
 
-  const calculateForeignCurrencyCostPrice = (line: DraftInboundLine, currency: any): number | undefined => {
+  const calculateForeignCurrencyCostPrice = (
+    line: DraftInboundLine,
+    currency: any
+  ): number | undefined => {
     if (currency) {
       return line.costPricePerPack / currency.rate;
     }
     return undefined;
   };
 
-  const calculateForeignCurrencySellPrice = (line: DraftInboundLine, currency: any): number | undefined => {
+  const calculateForeignCurrencySellPrice = (
+    line: DraftInboundLine,
+    currency: any
+  ): number | undefined => {
     if (currency) {
       return line.sellPricePerPack / currency.rate;
     }
     return undefined;
   };
 
-  const calculateForeignCurrencyLineTotal = (line: DraftInboundLine, currency: any): number | undefined => {
+  const calculateForeignCurrencyLineTotal = (
+    line: DraftInboundLine,
+    currency: any
+  ): number | undefined => {
     if (currency) {
       return (line.costPricePerPack * line.numberOfPacks) / currency.rate;
     }
@@ -117,7 +129,10 @@ export const useFieldUtils = ({ setPackRoundingMessage, format, t }: FieldUtilsP
     return line.costPricePerPack * line.numberOfPacks;
   };
 
-  const calculateDoseQuantity = (line: DraftInboundLine, format: (value: number) => string) => {
+  const calculateDoseQuantity = (
+    line: DraftInboundLine,
+    format: (value: number) => string
+  ) => {
     const total = line.numberOfPacks * line.packSize;
     return format(total * line.item.doses);
   };

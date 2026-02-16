@@ -7,8 +7,6 @@ import {
   useDialog,
   useNotification,
   ModalMode,
-  useSimplifiedTabletUI,
-  Box,
   ButtonWithIcon,
   PlusCircleIcon,
 } from '@openmsupply-client/common';
@@ -18,11 +16,11 @@ import {
   CurrencyRowFragment,
   ItemRowFragment,
 } from '@openmsupply-client/system';
-import { QuantityTable } from './TabTables';
 import { isInboundPlaceholderRow } from '../../../../utils';
 import { ScannedBatchData } from '../../DetailView';
 import { useNextItem } from '../../../../useNextItem';
 import { AccordionLayout } from './AccordionLayout';
+
 type InboundLineItem = InboundLineFragment['item'];
 interface InboundLineEditProps {
   item: InboundLineItem | null;
@@ -74,50 +72,10 @@ export const InboundLineEdit = ({
     // should be able to save with `0` lines if they're from a transfer
     l => !l.linkedInvoiceId && isInboundPlaceholderRow(l)
   );
-  const simplifiedTabletView = useSimplifiedTabletUI();
 
   useEffect(() => {
     setCurrentItem(item);
   }, [item]);
-
-  const tableContent = simplifiedTabletView ? (
-    <>
-      <QuantityTable
-        isDisabled={isDisabled}
-        lines={draftLines}
-        updateDraftLine={updateDraftLine}
-        removeDraftLine={removeDraftLine}
-        item={currentItem}
-        hasItemVariantsEnabled={hasItemVariantsEnabled}
-        hasVvmStatusesEnabled={hasVvmStatusesEnabled}
-      />
-      <Box flex={1} justifyContent="flex-start" display="flex" margin={3}>
-        <ButtonWithIcon
-          disabled={isDisabled}
-          color="primary"
-          variant="outlined"
-          onClick={addDraftLine}
-          label={`${t('label.add-batch')} (+)`}
-          Icon={<PlusCircleIcon />}
-        />
-      </Box>
-    </>
-  ) : (
-    <Box sx={{ mt: 10 }}>
-      <AccordionLayout
-        draftLines={draftLines}
-        addDraftLine={addDraftLine}
-        updateDraftLine={updateDraftLine}
-        removeDraftLine={removeDraftLine}
-        isDisabled={isDisabled}
-        currency={currency}
-        isExternalSupplier={isExternalSupplier}
-        item={currentItem}
-        hasItemVariantsEnabled={hasItemVariantsEnabled}
-        hasVvmStatusesEnabled={!!hasVvmStatusesEnabled}
-      />
-    </Box>
-  );
 
   return (
     <Modal
@@ -169,8 +127,19 @@ export const InboundLineEdit = ({
             item={currentItem}
             onChangeItem={setCurrentItem}
           />
-          <Divider margin={5} />
-          {tableContent}
+          <Divider margin={10} />
+          <AccordionLayout
+            draftLines={draftLines}
+            addDraftLine={addDraftLine}
+            updateDraftLine={updateDraftLine}
+            removeDraftLine={removeDraftLine}
+            isDisabled={isDisabled}
+            currency={currency}
+            isExternalSupplier={isExternalSupplier}
+            item={currentItem}
+            hasItemVariantsEnabled={hasItemVariantsEnabled}
+            hasVvmStatusesEnabled={!!hasVvmStatusesEnabled}
+          />
         </>
       )}
     </Modal>

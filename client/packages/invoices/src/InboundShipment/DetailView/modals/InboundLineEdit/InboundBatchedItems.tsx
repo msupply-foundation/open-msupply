@@ -74,406 +74,640 @@ export const InboundItems = ({
   const { store } = useAuthContext();
   const { getPlural } = useIntlUtils();
   const { format } = useFormatNumber();
-  const { manageVaccinesInDoses, allowTrackingOfStockByDonor } = usePreferences();
+  const { manageVaccinesInDoses, allowTrackingOfStockByDonor } =
+    usePreferences();
 
   const displayInDoses = manageVaccinesInDoses && !!item?.isVaccine;
   const unitName = Formatter.sentenceCase(
     item?.unitName ? item.unitName : t('label.unit')
   );
   const pluralisedUnitName = getPlural(unitName, 2);
-  const showForeignCurrency = isExternalSupplier && !!store?.preferences.issueInForeignCurrency;
-  
-  const fieldUtils = useFieldUtils({ item: item || null, setPackRoundingMessage, format, t: t as any });
+  const showForeignCurrency =
+    isExternalSupplier && !!store?.preferences.issueInForeignCurrency;
+
+  const fieldUtils = useFieldUtils({
+    item: item || null,
+    setPackRoundingMessage,
+    format,
+    t: t as any,
+  });
   return (
+    // stops the parent flex from effecting the accordions
     <Box>
       {lines.map((line, index) => (
-    <Accordion key={line.id} defaultExpanded={index === 0}>
-      <AccordionSummary expandIcon={<ChevronDownIcon />}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
-          <Typography variant="h6">
-            <IconButton
-              label={t('button.delete')}
-              onClick={() => removeDraftLine(line.id)}
-              icon={<DeleteIcon fontSize="small" />}
-            />
-            {`${t('label.batch')}: ${line.batch}`}
-          </Typography>
-          <Typography variant="h6">
-            {t('label.units-received', { unit: pluralisedUnitName })}: {line.numberOfPacks * line.packSize}
-          </Typography>
-        </Box>
-      </AccordionSummary>
-      <AccordionDetails>
-        <Paper elevation={1} sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>
-          <Box sx={{ display: 'flex', gap: 2, flexDirection: isSmallScreen ? 'column' : 'row' }}>
-            <Box sx={{ minWidth: isSmallScreen ? 'auto' : '150px', display: 'flex', alignItems: 'center', gap: 1 }}>
-              <InfoIcon color="action" fontSize="small" />
-              <Typography variant="body2" color="textSecondary">
-                {t('label.quantities')}
+        <Accordion key={line.id} defaultExpanded={index === 0}>
+          <AccordionSummary expandIcon={<ChevronDownIcon />}>
+            <Box
+              sx={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                width: '100%',
+              }}
+            >
+              <Typography variant="h6">
+                <IconButton
+                  label={t('button.delete')}
+                  onClick={() => removeDraftLine(line.id)}
+                  icon={<DeleteIcon fontSize="small" />}
+                />
+                {`${t('label.batch')}: ${line.batch}`}
+              </Typography>
+              <Typography variant="h6">
+                {t('label.units-received', { unit: pluralisedUnitName })}:{' '}
+                {line.numberOfPacks * line.packSize}
               </Typography>
             </Box>
-            <Box sx={{ flex: 1 }}>
-              <Grid container spacing={2}>
-            <Box sx={{ flex: isSmallScreen ? 1 : 0.5, minWidth: 150 }}>
-                <Box>
-              <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
-                {t('label.batch')}
-              </Typography>
-              <BasicTextInput
-                fullWidth
-                value={line.batch || ''}
-                onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-                  updateDraftLine({ id: line.id, batch: event.target.value });
+          </AccordionSummary>
+          <AccordionDetails>
+            <Paper
+              elevation={1}
+              sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: 1 }}
+            >
+              <Box
+                sx={{
+                  display: 'flex',
+                  gap: 2,
+                  flexDirection: isSmallScreen ? 'column' : 'row',
                 }}
-                disabled={isDisabled}
-                autoFocus={index === 0}
-              /></Box>
-            </Box>
-            <Box sx={{ flex: isSmallScreen ? 1 : 0.5, minWidth: 150 }}>
-              <Box>
-                <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
-                  {t('label.expiry-date')}
-                </Typography>
-              <ExpiryDateInput
-                value={DateUtils.getDateOrNull(line.expiryDate)}
-                onChange={(date) => {
-                  updateDraftLine({ id: line.id, expiryDate: Formatter.naiveDate(date) });
+              >
+                <Box
+                  sx={{
+                    minWidth: isSmallScreen ? 'auto' : '150px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1,
+                  }}
+                >
+                  <InfoIcon color="action" fontSize="small" />
+                  <Typography variant="body2" color="textSecondary">
+                    {t('label.quantities')}
+                  </Typography>
+                </Box>
+                <Box sx={{ flex: 1 }}>
+                  <Grid container spacing={2}>
+                    <Box sx={{ flex: isSmallScreen ? 1 : 0.5, minWidth: 150 }}>
+                      <Box>
+                        <Typography
+                          variant="body2"
+                          color="textSecondary"
+                          sx={{ mb: 1 }}
+                        >
+                          {t('label.batch')}
+                        </Typography>
+                        <BasicTextInput
+                          fullWidth
+                          value={line.batch || ''}
+                          onChange={(
+                            event: React.ChangeEvent<HTMLInputElement>
+                          ) => {
+                            updateDraftLine({
+                              id: line.id,
+                              batch: event.target.value,
+                            });
+                          }}
+                          disabled={isDisabled}
+                          autoFocus={index === 0}
+                        />
+                      </Box>
+                    </Box>
+                    <Box sx={{ flex: isSmallScreen ? 1 : 0.5, minWidth: 150 }}>
+                      <Box>
+                        <Typography
+                          variant="body2"
+                          color="textSecondary"
+                          sx={{ mb: 1 }}
+                        >
+                          {t('label.expiry-date')}
+                        </Typography>
+                        <ExpiryDateInput
+                          value={DateUtils.getDateOrNull(line.expiryDate)}
+                          onChange={date => {
+                            updateDraftLine({
+                              id: line.id,
+                              expiryDate: Formatter.naiveDate(date),
+                            });
+                          }}
+                          disabled={isDisabled}
+                        />
+                      </Box>
+                    </Box>
+                    {hasItemVariantsEnabled && (
+                      <Box
+                        sx={{ flex: isSmallScreen ? 1 : 0.5, minWidth: 150 }}
+                      >
+                        <Box>
+                          <Typography
+                            variant="body2"
+                            color="textSecondary"
+                            sx={{ mb: 1 }}
+                          >
+                            {t('label.item-variant')}
+                          </Typography>
+                          <ItemVariantInput
+                            disabled={isDisabled}
+                            selectedId={line.itemVariant?.id}
+                            itemId={line.item.id}
+                            width="100%"
+                            onChange={itemVariant => {
+                              fieldUtils.handleItemVariantChange(
+                                line,
+                                itemVariant,
+                                updateDraftLine
+                              );
+                            }}
+                          />
+                        </Box>
+                      </Box>
+                    )}
+                    {hasVvmStatusesEnabled && item?.isVaccine && (
+                      <Box
+                        sx={{ flex: isSmallScreen ? 1 : 0.5, minWidth: 150 }}
+                      >
+                        <Box>
+                          <Typography
+                            variant="body2"
+                            color="textSecondary"
+                            sx={{ mb: 1 }}
+                          >
+                            {t('label.vvm-status')}
+                          </Typography>
+                          <VVMStatusSearchInput
+                            disabled={isDisabled}
+                            selected={line.vvmStatus ?? null}
+                            onChange={vvmStatus => {
+                              updateDraftLine({ id: line.id, vvmStatus });
+                            }}
+                            useDefault={!line.stockLine}
+                          />
+                        </Box>
+                      </Box>
+                    )}
+                    <Box sx={{ flex: isSmallScreen ? 1 : 0.5, minWidth: 150 }}>
+                      <Box>
+                        <Typography
+                          variant="body2"
+                          color="textSecondary"
+                          sx={{ mb: 1 }}
+                        >
+                          {t('label.shipped-pack-size')}
+                        </Typography>
+                        <NumericTextInput
+                          fullWidth
+                          value={line.shippedPackSize || 0}
+                          onChange={(value: number | undefined) => {
+                            updateDraftLine({
+                              shippedPackSize: value,
+                              id: line.id,
+                            });
+                          }}
+                          disabled={isDisabled}
+                        />
+                      </Box>
+                    </Box>
+                    <Box sx={{ flex: isSmallScreen ? 1 : 0.5, minWidth: 150 }}>
+                      <Box>
+                        <Typography
+                          variant="body2"
+                          color="textSecondary"
+                          sx={{ mb: 1 }}
+                        >
+                          {t('label.shipped-number-of-packs')}
+                        </Typography>
+                        <NumericTextInput
+                          fullWidth
+                          value={line.shippedNumberOfPacks || 0}
+                          onChange={(value: number | undefined) => {
+                            updateDraftLine({
+                              shippedNumberOfPacks: value,
+                              id: line.id,
+                            });
+                          }}
+                          disabled={isDisabled}
+                        />
+                      </Box>
+                    </Box>
+                    <Box sx={{ flex: isSmallScreen ? 1 : 0.5, minWidth: 150 }}>
+                      <Box>
+                        <Typography
+                          variant="body2"
+                          color="textSecondary"
+                          sx={{ mb: 1 }}
+                        >
+                          {t('label.received-pack-size')}
+                        </Typography>
+                        <NumericTextInput
+                          fullWidth
+                          value={line.packSize || 0}
+                          onChange={(value: number | undefined) => {
+                            if (value !== undefined) {
+                              fieldUtils.handlePackSizeChange(
+                                line,
+                                value,
+                                updateDraftLine
+                              );
+                            }
+                          }}
+                          disabled={isDisabled}
+                          min={1}
+                        />
+                      </Box>
+                    </Box>
+                    <Box sx={{ flex: isSmallScreen ? 1 : 0.5, minWidth: 150 }}>
+                      <Box>
+                        <Typography
+                          variant="body2"
+                          color="textSecondary"
+                          sx={{ mb: 1 }}
+                        >
+                          {t('label.packs-received')}
+                        </Typography>
+                        <NumericTextInput
+                          fullWidth
+                          value={line.numberOfPacks}
+                          onChange={(value: number | undefined) => {
+                            if (value !== undefined) {
+                              fieldUtils.handleNumberOfPacksChange(
+                                line,
+                                value,
+                                updateDraftLine
+                              );
+                            }
+                          }}
+                          disabled={isDisabled}
+                          min={0}
+                        />
+                      </Box>
+                    </Box>
+
+                    {displayInDoses && (
+                      <Box
+                        sx={{ flex: isSmallScreen ? 1 : 0.5, minWidth: 150 }}
+                      >
+                        <Box>
+                          <Typography
+                            variant="body2"
+                            color="textSecondary"
+                            sx={{ mb: 1 }}
+                          >
+                            {t('label.doses-received')}
+                          </Typography>
+                          <BasicTextInput
+                            fullWidth
+                            value={fieldUtils.calculateDoseQuantity(
+                              line,
+                              format
+                            )}
+                            disabled
+                          />
+                        </Box>
+                      </Box>
+                    )}
+                    <Box sx={{ flex: isSmallScreen ? 1 : 0.5, minWidth: 150 }}>
+                      <Box>
+                        <Typography
+                          variant="body2"
+                          color="textSecondary"
+                          sx={{ mb: 1 }}
+                        >
+                          {t('label.units-received', {
+                            unit: pluralisedUnitName,
+                          })}
+                        </Typography>
+                        <NumericTextInput
+                          fullWidth
+                          value={fieldUtils.calculateUnitsPerPack(line)}
+                          onChange={(value: number | undefined) => {
+                            if (value !== undefined) {
+                              fieldUtils.handleUnitsPerPackChange(
+                                line,
+                                value,
+                                updateDraftLine
+                              );
+                            }
+                          }}
+                          disabled={isDisabled}
+                          min={0}
+                        />
+                      </Box>
+                    </Box>
+                    <Box sx={{ flex: isSmallScreen ? 1 : 0.5, minWidth: 150 }}>
+                      <Box>
+                        <Typography
+                          variant="body2"
+                          color="textSecondary"
+                          sx={{ mb: 1 }}
+                        >
+                          {t('label.volume-per-pack')}
+                        </Typography>
+                        <NumericTextInput
+                          fullWidth
+                          value={line.volumePerPack || 0}
+                          onChange={(value: number | undefined) => {
+                            updateDraftLine({
+                              volumePerPack: value,
+                              id: line.id,
+                            });
+                          }}
+                          disabled={isDisabled}
+                        />
+                      </Box>
+                    </Box>
+                  </Grid>
+                </Box>
+              </Box>
+            </Paper>
+            <Paper
+              elevation={1}
+              sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: 1 }}
+            >
+              <Box
+                sx={{
+                  display: 'flex',
+                  gap: 2,
+                  flexDirection: isSmallScreen ? 'column' : 'row',
                 }}
-                disabled={isDisabled}
-              /></Box>
-            </Box>
-            {hasItemVariantsEnabled && (
-            <Box sx={{ flex: isSmallScreen ? 1 : 0.5, minWidth: 150 }}>
-              <Box>
-                <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
-                  {t('label.item-variant')}
-                </Typography>
-                <ItemVariantInput
-                  disabled={isDisabled}
-                  selectedId={line.itemVariant?.id}
-                  itemId={line.item.id}
-                  width="100%"
-                  onChange={(itemVariant) => {
-                    fieldUtils.handleItemVariantChange(line, itemVariant, updateDraftLine);
+              >
+                <Box
+                  sx={{
+                    minWidth: isSmallScreen ? 'auto' : '150px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1,
                   }}
-                />
-              </Box>
-            </Box>
-            )}   
-            {hasVvmStatusesEnabled && item?.isVaccine && (
-              <Box sx={{ flex: isSmallScreen ? 1 : 0.5, minWidth: 150 }}>
-                <Box>
-                  <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
-                    {t('label.vvm-status')}
-                  </Typography>
-                  <VVMStatusSearchInput
-                    disabled={isDisabled}
-                    selected={line.vvmStatus ?? null}
-                    onChange={(vvmStatus) => {
-                      updateDraftLine({ id: line.id, vvmStatus });
-                    }}
-                    useDefault={!line.stockLine}
-                  />
-                </Box>
-              </Box>
-            )}  
-            <Box sx={{ flex: isSmallScreen ? 1 : 0.5, minWidth: 150 }}>
-              <Box>
-                <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
-                  {t('label.shipped-pack-size')}
-                </Typography>
-                <NumericTextInput
-                  fullWidth
-                  value={line.shippedPackSize || 0}
-                  onChange={(value: number | undefined) => {
-                    updateDraftLine({ shippedPackSize: value, id: line.id });
-                  }}
-                  disabled={isDisabled}
-                />
-              </Box>
-            </Box>    
-            <Box sx={{ flex: isSmallScreen ? 1 : 0.5, minWidth: 150 }}>
-              <Box>
-                <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
-                  {t('label.shipped-number-of-packs')}
-                </Typography>
-                <NumericTextInput
-                  fullWidth
-                  value={line.shippedNumberOfPacks || 0}
-                  onChange={(value: number | undefined) => {
-                    updateDraftLine({ shippedNumberOfPacks: value, id: line.id });
-                  }}
-                  disabled={isDisabled}
-                />
-              </Box>
-            </Box>   
-            <Box sx={{ flex: isSmallScreen ? 1 : 0.5, minWidth: 150 }}>
-              <Box>
-                <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
-                  {t('label.received-pack-size')}
-                </Typography>
-                <NumericTextInput
-                  fullWidth
-                  value={line.packSize || 0}
-                  onChange={(value: number | undefined) => {
-                    if (value !== undefined) {
-                      fieldUtils.handlePackSizeChange(line, value, updateDraftLine);
-                    }
-                  }}
-                  disabled={isDisabled}
-                  min={1}
-                />
-              </Box>
-            </Box> 
-            <Box sx={{ flex: isSmallScreen ? 1 : 0.5, minWidth: 150 }}>
-              <Box>
-                <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
-                  {t('label.packs-received')}
-                </Typography>
-                <NumericTextInput
-                  fullWidth
-                  value={line.numberOfPacks}
-                  onChange={(value: number | undefined) => {
-                    if (value !== undefined) {
-                      fieldUtils.handleNumberOfPacksChange(line, value, updateDraftLine);
-                    }
-                  }}
-                  disabled={isDisabled}
-                  min={0}
-                />
-              </Box>
-            </Box>   
-      
-            {displayInDoses && (
-              <Box sx={{ flex: isSmallScreen ? 1 : 0.5, minWidth: 150 }}>
-                <Box>
-                  <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
-                    {t('label.doses-received')}
-                  </Typography>
-                  <BasicTextInput
-                    fullWidth
-                    value={fieldUtils.calculateDoseQuantity(line, format)}
-                    disabled
-                  />
-                </Box>
-              </Box>
-            )}  
-            <Box sx={{ flex: isSmallScreen ? 1 : 0.5, minWidth: 150 }}>
-              <Box>
-                <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
-                  {t('label.units-received', { unit: pluralisedUnitName })}
-                </Typography>
-                <NumericTextInput
-                  fullWidth
-                  value={fieldUtils.calculateUnitsPerPack(line)}
-                  onChange={(value: number | undefined) => {
-                    if (value !== undefined) {
-                      fieldUtils.handleUnitsPerPackChange(line, value, updateDraftLine);
-                    }
-                  }}
-                  disabled={isDisabled}
-                  min={0}
-                />
-              </Box>
-            </Box>   
-            <Box sx={{ flex: isSmallScreen ? 1 : 0.5, minWidth: 150 }}>
-              <Box>
-                <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
-                  {t('label.volume-per-pack')}
-                </Typography>
-                <NumericTextInput
-                  fullWidth
-                  value={line.volumePerPack || 0}
-                  onChange={(value: number | undefined) => {
-                    updateDraftLine({ volumePerPack: value, id: line.id });
-                  }}
-                  disabled={isDisabled}
-                />
-              </Box>
-            </Box>          
-              </Grid>
-            </Box>
-          </Box>
-        </Paper>
-        <Paper elevation={1} sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>
-          <Box sx={{ display: 'flex', gap: 2, flexDirection: isSmallScreen ? 'column' : 'row' }}>
-            <Box sx={{ minWidth: isSmallScreen ? 'auto' : '150px', display: 'flex', alignItems: 'center', gap: 1 }}>
-              <TruckIcon color="action" fontSize="small" />
-              <Typography variant="body2" color="textSecondary">
-                {t('label.pricing')}
-              </Typography>
-            </Box>
-            <Box sx={{ flex: 1 }}>
-              <Grid container spacing={2}>
-            <Box sx={{ flex: isSmallScreen ? 1 : 0.5, minWidth: 150 }}>
-              <Box>
-                <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
-                  {t('label.pack-cost-price')}
-                </Typography>
-                <CurrencyInput
-                  // label={t('label.pack-cost-price')}
-                  value={line.costPricePerPack || 0}
-                  onChangeNumber={(value: number) => {
-                    updateDraftLine({ id: line.id, costPricePerPack: value });
-                  }}
-                  disabled={isDisabled}
-                  width="100%"
-                />
-              </Box>
-            </Box>
- 
-            {showForeignCurrency && currency && (
-              <Box sx={{ flex: isSmallScreen ? 1 : 0.5, minWidth: 150 }}>
-                <Typography variant="body2" color="textSecondary">
-                  <Typography component="span" fontWeight="bold">
-                    {t('label.fc-cost-price', { currency: currency.code })}
-                  </Typography>{' '}
-                  {format(fieldUtils.calculateForeignCurrencyCostPrice(line, currency) || 0)}
-                </Typography>
-              </Box>
-            )}  
-            <Box sx={{ flex: isSmallScreen ? 1 : 0.5, minWidth: 150 }}>
-              <Box>
-                <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
-                  {t('label.pack-sell-price')}
-                </Typography>
-                <CurrencyInput
-                  value={line.sellPricePerPack || 0}
-                  onChangeNumber={(value: number) => {
-                    updateDraftLine({ id: line.id, sellPricePerPack: value });
-                  }}
-                  disabled={isDisabled}
-                  width="100%"
-                />
-              </Box>
-            </Box>   
-            {showForeignCurrency && currency && (
-              <Box sx={{ flex: isSmallScreen ? 1 : 0.5, minWidth: 150 }}>
-                <Typography variant="body2" color="textSecondary">
-                  <Typography component="span" fontWeight="bold">
-                    {t('label.fc-sell-price', { currency: currency.code })}
-                  </Typography>{' '}
-                  {format(fieldUtils.calculateForeignCurrencySellPrice(line, currency) || 0)}
-                </Typography>
-              </Box>
-            )}   
-            <Box sx={{ flex: isSmallScreen ? 1 : 0.5, minWidth: 150 }}>
-              <Box>
-                <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
-                  {t('label.line-total')}
-                </Typography>
-                <Typography variant="h6" color="textSecondary">
-                  {format(fieldUtils.calculateLineTotal(line))}
-                </Typography>
-              </Box>
-            </Box> 
-            {showForeignCurrency && currency && (
-              <Box sx={{ flex: isSmallScreen ? 1 : 0.5, minWidth: 150 }}>
-                <Box>
-                  <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
-                    {t('label.fc-line-total', { currency: currency.code })}
-                  </Typography>
-                  <Typography variant="h6" color="primary">
-                    <Typography component="span" fontWeight="bold">
-                      {t('label.fc-line-total', { currency: currency.code })}
-                    </Typography>{' '}
-                    {format(fieldUtils.calculateForeignCurrencyLineTotal(line, currency) || 0)}
+                >
+                  <TruckIcon color="action" fontSize="small" />
+                  <Typography variant="body2" color="textSecondary">
+                    {t('label.pricing')}
                   </Typography>
                 </Box>
-              </Box>
-            )}             
-              </Grid>
-            </Box>
-          </Box>
-        </Paper>
-        <Paper elevation={1} sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>
-          <Box sx={{ display: 'flex', gap: 2, flexDirection: isSmallScreen ? 'column' : 'row' }}>
-            <Box sx={{ minWidth: isSmallScreen ? 'auto' : '150px', display: 'flex', alignItems: 'center', gap: 1 }}>
-              <InvoiceIcon color="action" fontSize="small" />
-              <Typography variant="body2" color="textSecondary">
-                {t('heading.other')}
-              </Typography>
-            </Box>
-            <Box sx={{ flex: 1 }}>
-              <Grid container spacing={2}>
-            <Box sx={{ flex: isSmallScreen ? 1 : 0.5, minWidth: 150 }}>
-              <Box>
-                <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
-                  {t('label.location')}
-                </Typography>
-                <LocationSearchInput
-                  onChange={(value: LocationRowFragment | null) => {
-                    updateDraftLine({ id: line.id, location: value });
-                  }}
-                  selectedLocation={(line.location as LocationRowFragment) ?? null}
-                  volumeRequired={line.volumePerPack * line.numberOfPacks}
-                  restrictedToLocationTypeId={restrictedToLocationTypeId}
-                  disabled={isDisabled}
-                  fullWidth
-                />
-              </Box>
-            </Box>
-            <Box sx={{ flex: isSmallScreen ? 1 : 0.5, minWidth: 150 }}>
-              <Box>
-                <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
-                  {t('label.stocktake-comment')}
-                </Typography>
-                <BasicTextInput
-                  fullWidth
-                  value={line.note || ''}
-                  onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-                    updateDraftLine({ id: line.id, note: event.target.value });
-                  }}
-                  disabled={isDisabled ?? false}
-                  multiline
-                />
-              </Box>
-            </Box> 
-            {allowTrackingOfStockByDonor && (
-              <Box sx={{ flex: isSmallScreen ? 1 : 0.5, minWidth: 150 }}>
-                <Box>
-                  <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
-                    {t('label.donor')}
-                  </Typography>
-                  <DonorSearchInput
-                    donorId={line.donor?.id || null}
-                    onChange={(donor) =>
-                      updateDraftLine({
-                        id: line.id,
-                        donor,
-                      })
-                    }
-                    disabled={isDisabled ?? false}
-                    fullWidth
-                    clearable
-                  />
+                <Box sx={{ flex: 1 }}>
+                  <Grid container spacing={2}>
+                    <Box sx={{ flex: isSmallScreen ? 1 : 0.5, minWidth: 150 }}>
+                      <Box>
+                        <Typography
+                          variant="body2"
+                          color="textSecondary"
+                          sx={{ mb: 1 }}
+                        >
+                          {t('label.pack-cost-price')}
+                        </Typography>
+                        <CurrencyInput
+                          // label={t('label.pack-cost-price')}
+                          value={line.costPricePerPack || 0}
+                          onChangeNumber={(value: number) => {
+                            updateDraftLine({
+                              id: line.id,
+                              costPricePerPack: value,
+                            });
+                          }}
+                          disabled={isDisabled}
+                          width="100%"
+                        />
+                      </Box>
+                    </Box>
+
+                    {showForeignCurrency && currency && (
+                      <Box
+                        sx={{ flex: isSmallScreen ? 1 : 0.5, minWidth: 150 }}
+                      >
+                        <Typography variant="body2" color="textSecondary">
+                          <Typography component="span" fontWeight="bold">
+                            {t('label.fc-cost-price', {
+                              currency: currency.code,
+                            })}
+                          </Typography>{' '}
+                          {format(
+                            fieldUtils.calculateForeignCurrencyCostPrice(
+                              line,
+                              currency
+                            ) || 0
+                          )}
+                        </Typography>
+                      </Box>
+                    )}
+                    <Box sx={{ flex: isSmallScreen ? 1 : 0.5, minWidth: 150 }}>
+                      <Box>
+                        <Typography
+                          variant="body2"
+                          color="textSecondary"
+                          sx={{ mb: 1 }}
+                        >
+                          {t('label.pack-sell-price')}
+                        </Typography>
+                        <CurrencyInput
+                          value={line.sellPricePerPack || 0}
+                          onChangeNumber={(value: number) => {
+                            updateDraftLine({
+                              id: line.id,
+                              sellPricePerPack: value,
+                            });
+                          }}
+                          disabled={isDisabled}
+                          width="100%"
+                        />
+                      </Box>
+                    </Box>
+                    {showForeignCurrency && currency && (
+                      <Box
+                        sx={{ flex: isSmallScreen ? 1 : 0.5, minWidth: 150 }}
+                      >
+                        <Typography variant="body2" color="textSecondary">
+                          <Typography component="span" fontWeight="bold">
+                            {t('label.fc-sell-price', {
+                              currency: currency.code,
+                            })}
+                          </Typography>{' '}
+                          {format(
+                            fieldUtils.calculateForeignCurrencySellPrice(
+                              line,
+                              currency
+                            ) || 0
+                          )}
+                        </Typography>
+                      </Box>
+                    )}
+                    <Box sx={{ flex: isSmallScreen ? 1 : 0.5, minWidth: 150 }}>
+                      <Box>
+                        <Typography
+                          variant="body2"
+                          color="textSecondary"
+                          sx={{ mb: 1 }}
+                        >
+                          {t('label.line-total')}
+                        </Typography>
+                        <Typography variant="h6" color="textSecondary">
+                          {format(fieldUtils.calculateLineTotal(line))}
+                        </Typography>
+                      </Box>
+                    </Box>
+                    {showForeignCurrency && currency && (
+                      <Box
+                        sx={{ flex: isSmallScreen ? 1 : 0.5, minWidth: 150 }}
+                      >
+                        <Box>
+                          <Typography
+                            variant="body2"
+                            color="textSecondary"
+                            sx={{ mb: 1 }}
+                          >
+                            {t('label.fc-line-total', {
+                              currency: currency.code,
+                            })}
+                          </Typography>
+                          <Typography variant="h6" color="primary">
+                            <Typography component="span" fontWeight="bold">
+                              {t('label.fc-line-total', {
+                                currency: currency.code,
+                              })}
+                            </Typography>{' '}
+                            {format(
+                              fieldUtils.calculateForeignCurrencyLineTotal(
+                                line,
+                                currency
+                              ) || 0
+                            )}
+                          </Typography>
+                        </Box>
+                      </Box>
+                    )}
+                  </Grid>
                 </Box>
               </Box>
-            )}   
-            <Box sx={{ flex: isSmallScreen ? 1 : 0.5, minWidth: 150 }}>
-              <Box>
-                <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
-                  {t('label.campaign')}
-                </Typography>
-                <CampaignOrProgramCell
-                  row={line}
-                  updateFn={(patch) =>
-                    updateDraftLine({
-                      id: line.id,
-                      ...patch,
-                    })
-                  }
-                  disabled={isDisabled ?? false}
-                />
+            </Paper>
+            <Paper
+              elevation={1}
+              sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: 1 }}
+            >
+              <Box
+                sx={{
+                  display: 'flex',
+                  gap: 2,
+                  flexDirection: isSmallScreen ? 'column' : 'row',
+                }}
+              >
+                <Box
+                  sx={{
+                    minWidth: isSmallScreen ? 'auto' : '150px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1,
+                  }}
+                >
+                  <InvoiceIcon color="action" fontSize="small" />
+                  <Typography variant="body2" color="textSecondary">
+                    {t('heading.other')}
+                  </Typography>
+                </Box>
+                <Box sx={{ flex: 1 }}>
+                  <Grid container spacing={2}>
+                    <Box sx={{ flex: isSmallScreen ? 1 : 0.5, minWidth: 150 }}>
+                      <Box>
+                        <Typography
+                          variant="body2"
+                          color="textSecondary"
+                          sx={{ mb: 1 }}
+                        >
+                          {t('label.location')}
+                        </Typography>
+                        <LocationSearchInput
+                          onChange={(value: LocationRowFragment | null) => {
+                            updateDraftLine({ id: line.id, location: value });
+                          }}
+                          selectedLocation={
+                            (line.location as LocationRowFragment) ?? null
+                          }
+                          volumeRequired={
+                            line.volumePerPack * line.numberOfPacks
+                          }
+                          restrictedToLocationTypeId={
+                            restrictedToLocationTypeId
+                          }
+                          disabled={isDisabled}
+                          fullWidth
+                        />
+                      </Box>
+                    </Box>
+                    <Box sx={{ flex: isSmallScreen ? 1 : 0.5, minWidth: 150 }}>
+                      <Box>
+                        <Typography
+                          variant="body2"
+                          color="textSecondary"
+                          sx={{ mb: 1 }}
+                        >
+                          {t('label.stocktake-comment')}
+                        </Typography>
+                        <BasicTextInput
+                          fullWidth
+                          value={line.note || ''}
+                          onChange={(
+                            event: React.ChangeEvent<HTMLInputElement>
+                          ) => {
+                            updateDraftLine({
+                              id: line.id,
+                              note: event.target.value,
+                            });
+                          }}
+                          disabled={isDisabled ?? false}
+                          multiline
+                        />
+                      </Box>
+                    </Box>
+                    {allowTrackingOfStockByDonor && (
+                      <Box
+                        sx={{ flex: isSmallScreen ? 1 : 0.5, minWidth: 150 }}
+                      >
+                        <Box>
+                          <Typography
+                            variant="body2"
+                            color="textSecondary"
+                            sx={{ mb: 1 }}
+                          >
+                            {t('label.donor')}
+                          </Typography>
+                          <DonorSearchInput
+                            donorId={line.donor?.id || null}
+                            onChange={donor =>
+                              updateDraftLine({
+                                id: line.id,
+                                donor,
+                              })
+                            }
+                            disabled={isDisabled ?? false}
+                            fullWidth
+                            clearable
+                          />
+                        </Box>
+                      </Box>
+                    )}
+                    <Box sx={{ flex: isSmallScreen ? 1 : 0.5, minWidth: 150 }}>
+                      <Box>
+                        <Typography
+                          variant="body2"
+                          color="textSecondary"
+                          sx={{ mb: 1 }}
+                        >
+                          {t('label.campaign')}
+                        </Typography>
+                        <CampaignOrProgramCell
+                          row={line}
+                          updateFn={patch =>
+                            updateDraftLine({
+                              id: line.id,
+                              ...patch,
+                            })
+                          }
+                          disabled={isDisabled ?? false}
+                        />
+                      </Box>
+                    </Box>
+                  </Grid>
+                </Box>
               </Box>
-            </Box>
-              </Grid>
-            </Box>
-          </Box>
-        </Paper>
-      </AccordionDetails>
-    </Accordion>
-  ))}
-  </Box>
+            </Paper>
+          </AccordionDetails>
+        </Accordion>
+      ))}
+    </Box>
   );
 };

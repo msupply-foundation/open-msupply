@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import {
-  Box,
   PlusCircleIcon,
   useTranslation,
   ButtonWithIcon,
@@ -8,16 +7,15 @@ import {
   useMediaQuery,
   Alert,
   Breakpoints,
+  Box,
 } from '@openmsupply-client/common';
 import { DraftInboundLine } from '../../../../types';
 import {
-  CurrencyRowFragment,  ItemRowFragment,
-
+  CurrencyRowFragment,
+  ItemRowFragment,
 } from '@openmsupply-client/system';
 import { PatchDraftLineInput } from '../../../api';
 import { InboundItems } from './InboundBatchedItems';
-
-
 
 interface AccordionLayoutProps {
   addDraftLine: () => void;
@@ -44,31 +42,26 @@ export const AccordionLayout = ({
   hasItemVariantsEnabled,
   hasVvmStatusesEnabled,
 }: AccordionLayoutProps) => {
- const t = useTranslation();
+  const t = useTranslation();
   const theme = useAppTheme();
   const isSmallScreen = useMediaQuery(theme.breakpoints.down(Breakpoints.md));
-  const [packRoundingMessage, setPackRoundingMessage] = useState<string>(
-    () => ''
-  );
+  const [packRoundingMessage, setPackRoundingMessage] = useState<string>('');
 
   if (!item) return null;
   return (
-    <Box>
-      <Box flex={1} display="flex" justifyContent="space-between">
-        <Box flex={1} />
-        <Box flex={1} justifyContent="flex-end" display="flex">
-          <ButtonWithIcon
-            disabled={isDisabled}
-            color="primary"
-            variant="outlined"
-            onClick={() => {
-              addDraftLine();
-              setPackRoundingMessage?.('');
-            }}
-            label={`${t('label.add-batch')} (+)`}
-            Icon={<PlusCircleIcon />}
-          />
-        </Box>
+    <Box display="flex" flexDirection="column" gap={2}>
+      <Box display="flex" justifyContent="flex-end">
+        <ButtonWithIcon
+          disabled={isDisabled}
+          color="primary"
+          variant="outlined"
+          onClick={() => {
+            addDraftLine();
+            setPackRoundingMessage?.('');
+          }}
+          label={`${t('label.add-batch')} (+)`}
+          Icon={<PlusCircleIcon />}
+        />
       </Box>
 
       {packRoundingMessage && (
