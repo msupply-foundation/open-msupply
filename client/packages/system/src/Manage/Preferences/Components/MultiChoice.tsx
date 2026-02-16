@@ -40,6 +40,10 @@ export const MultiChoice = <T extends string>({
   const t = useTranslation();
   const { error } = useNotification();
 
+  const isInvoiceNodeStatus = (value: string): value is InvoiceNodeStatus => {
+    return Object.values(InvoiceNodeStatus).includes(value as InvoiceNodeStatus);
+  };
+
   const validateInvoiceStatusChange = (
     newValue: T[],
     optionValue: T,
@@ -50,19 +54,24 @@ export const MultiChoice = <T extends string>({
       return true;
     }
 
-    // Cast to InvoiceNodeStatus for type-safe checking
-    const newStatuses = newValue as unknown as InvoiceNodeStatus[];
-    const changedStatus = optionValue as unknown as InvoiceNodeStatus;
+    // Type guard to ensure we're working with InvoiceNodeStatus values
+    if (!isInvoiceNodeStatus(optionValue)) {
+      return true;
+    }
 
     // If unchecking either Delivered or Received
     if (
       !isChecking &&
-      (changedStatus === InvoiceNodeStatus.Delivered ||
-        changedStatus === InvoiceNodeStatus.Received)
+      (optionValue === InvoiceNodeStatus.Delivered ||
+        optionValue === InvoiceNodeStatus.Received)
     ) {
       // Check if this would result in both being unchecked
-      const hasDelivered = newStatuses.includes(InvoiceNodeStatus.Delivered);
-      const hasReceived = newStatuses.includes(InvoiceNodeStatus.Received);
+      const hasDelivered = newValue.some(
+        v => isInvoiceNodeStatus(v) && v === InvoiceNodeStatus.Delivered
+      );
+      const hasReceived = newValue.some(
+        v => isInvoiceNodeStatus(v) && v === InvoiceNodeStatus.Received
+      );
 
       // If neither Delivered nor Received would be checked, prevent the change
       if (!hasDelivered && !hasReceived) {
