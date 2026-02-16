@@ -97,6 +97,14 @@ export const Login = () => {
       };
     }
 
+    // Treat failed to fetch error as a connection error as this is the most likely cause, and provides a more helpful message to the user
+    if (error?.detail?.includes('Failed to fetch')) {
+      return {
+        error: t('error.connection-error'),
+        hint: t('error.connection-error-hint'),
+      };
+    }
+
     return {
       error: t('error.authentication-error'),
     };
