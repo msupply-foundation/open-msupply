@@ -62,6 +62,20 @@ export type BatchOutboundShipmentMutation = { __typename?: 'Mutations', batchOut
         | { __typename: 'DeleteResponse', id: string }
        }> | null } };
 
+export type CheckInvoiceExistsQueryVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  id: Types.Scalars['String']['input'];
+}>;
+
+
+export type CheckInvoiceExistsQuery = { __typename?: 'Queries', invoice:
+    | { __typename?: 'InvoiceNode', id: string, invoiceNumber: number }
+    | { __typename: 'NodeError', error:
+        | { __typename?: 'DatabaseError', description: string }
+        | { __typename?: 'RecordNotFound', description: string }
+       }
+   };
+
 export type NamesQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
   filter?: Types.InputMaybe<Types.NameFilterInput>;

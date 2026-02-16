@@ -3,6 +3,7 @@ import itemsQueryText from './graphql/items.graphql';
 import batchOutboundShipmentMutationText from './graphql/batchOutboundShipment.graphql';
 import insertOutboundShipmentLineText from './graphql/insertOutboundShipmentUnallocatedLine.graphql';
 import saveOutboundShipmentItemLines from './graphql/saveOutboundShipmentItemLines.graphql';
+import checkOutboundShipmentExistsText from './graphql/checkOutboundShipmentById.graphql';
 import {
   BatchOutboundShipmentMutation,
   BatchOutboundShipmentMutationVariables,
@@ -13,6 +14,8 @@ import {
   InsertOutboundShipmentUnallocatedLineMutation,
   InsertOutboundShipmentUnallocatedLineMutationVariables,
   SaveOutboundShipmentItemLinesMutation,
+  CheckInvoiceExistsQueryVariables,
+  CheckInvoiceExistsQuery,
 } from './generated-types/graphql';
 import { MutationsSaveOutboundShipmentItemLinesArgs } from './../codegenTypes';
 import { Graphql } from './types';
@@ -117,4 +120,32 @@ export const saveOutboundShipmentLineItemsMutation = (
     query: saveOutboundShipmentItemLines,
     variables,
   }) as SaveOutboundShipmentItemLinesMutation;
+};
+
+export const checkOutboundShipmentExistsQuery = (
+  variables: CheckInvoiceExistsQueryVariables
+): { uuidError?: Graphql['output'] } => {
+  try {
+    const result = use_graphql({
+      query: checkOutboundShipmentExistsText,
+      variables,
+    }) as CheckInvoiceExistsQuery;
+
+    if (result.invoice.__typename === 'InvoiceNode' && result.invoice.id) {
+      return {
+        uuidError: {
+          success: false,
+          message: `UUID ${variables.id} already exists`,
+        },
+      };
+    }
+    return { uuidError: undefined };
+  } catch (error) {
+    return {
+      uuidError: {
+        success: false,
+        message: `Error checking UUID exists. error: ${error}`,
+      },
+    };
+  }
 };

@@ -6,7 +6,11 @@ import {
   UpdateOutboundShipmentStatusInput,
 } from '../codegenTypes';
 import { uuidv7 } from 'uuidv7';
-import { customerQuery, itemsQuery } from './queries';
+import {
+  customerQuery,
+  itemsQuery,
+  checkOutboundShipmentExistsQuery,
+} from './queries';
 import { sortAndClassifyBatches } from './utils';
 import {
   insertOutboundShipment,
@@ -17,7 +21,7 @@ import {
 const plugins: BackendPlugins = {
   graphql_query: ({ store_id, input }): Graphql['output'] => {
     const inp = input as Graphql['input'];
-    const shipmentId = uuidv7();
+    let shipmentId = uuidv7();
 
     if (!inp.customerCode) {
       return {
@@ -26,10 +30,10 @@ const plugins: BackendPlugins = {
       };
     }
 
-    if (!inp.universalCode) {
+    if (!inp.items || inp.items.length < 1) {
       return {
         success: false,
-        message: "param 'universalCode' is empty or invalid",
+        message: "param 'items' is empty or invalid",
       };
     }
 
@@ -48,6 +52,15 @@ const plugins: BackendPlugins = {
     }
 
     const issuingStoreId = issuingStore.store_row.id;
+
+    if (inp.invoiceId) {
+      shipmentId = inp.invoiceId;
+      const { uuidError } = checkOutboundShipmentExistsQuery({
+        storeId: issuingStoreId,
+        id: inp.invoiceId,
+      });
+      if (uuidError) return uuidError;
+    }
 
     const { result: customerQueryResult, customerError } = customerQuery({
       storeId: issuingStoreId,

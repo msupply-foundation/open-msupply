@@ -1,0 +1,14 @@
+query checkInvoiceExists($storeId: String!, $id: String!) {
+  invoice(id: $id, storeId: $storeId) {
+    ... on NodeError {
+      __typename
+      error {
+        description
+      }
+    }
+    ... on InvoiceNode {
+      id
+      invoiceNumber
+    }
+  }
+}
