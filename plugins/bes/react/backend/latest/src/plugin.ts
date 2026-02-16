@@ -66,7 +66,7 @@ const plugins: BackendPlugins = {
 
     const { result: itemsQueryResult, itemsError } = itemsQuery({
       storeId: issuingStoreId,
-      filter: { code: { equalTo: inp.universalCode } }, // TODO: change to universalCode. Version of OMS doesn't have it
+      filter: { universalCode: { equalTo: inp.universalCode } },
     });
 
     if (itemsError) return itemsError;
