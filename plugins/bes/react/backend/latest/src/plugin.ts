@@ -225,7 +225,7 @@ const plugins: BackendPlugins = {
         foundItem.id,
         placeHolderQuantity,
         insertLines,
-        errText
+        `Customer code: ${inp.customerCode}, Issuing Store: ${customer.name}, universal code: ${item.universalCode}`
       );
 
       if (saveError) {
@@ -251,7 +251,7 @@ const plugins: BackendPlugins = {
         issuingStoreId,
         shipmentId,
         UpdateOutboundShipmentStatusInput.Shipped,
-        errText
+        `Customer code: ${inp.customerCode}, Issuing Store: ${customer.name}`
       );
 
       if (updateError) {
