@@ -1,4 +1,11 @@
-import { Paper, Popover, Typography, Box, Button } from '@mui/material';
+import {
+  Paper,
+  Popover,
+  Typography,
+  Box,
+  Button,
+  useTheme,
+} from '@mui/material';
 import React, { FC } from 'react';
 import { CircleIcon } from '@common/icons';
 import { BasicTextInput } from '../../inputs';
@@ -58,6 +65,7 @@ export const ColorMenu: FC<ColorMenuProps> = ({
   const t = useTranslation();
   const [customColor, setCustomColor] = React.useState('');
   const [hexError, setHexError] = React.useState(false);
+  const theme = useTheme();
 
   // Update internal state when customColorValue prop changes (e.g., when popover opens)
   React.useEffect(() => {
@@ -168,6 +176,7 @@ export const ColorMenu: FC<ColorMenuProps> = ({
               <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
                 <Box sx={{ flex: 1 }}>
                   <BasicTextInput
+                    autoFocus
                     value={customColor}
                     onChange={handleCustomColorChange}
                     placeholder="#RRGGBB"
@@ -178,6 +187,11 @@ export const ColorMenu: FC<ColorMenuProps> = ({
                         : t('message.colour-enter-hex')
                     }
                     fullWidth
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') {
+                        setTimeout(handleCustomColorClick, 300); // Delay to allow state update before click handler runs
+                      }
+                    }}
                   />
                 </Box>
                 <CircleIcon
@@ -187,7 +201,7 @@ export const ColorMenu: FC<ColorMenuProps> = ({
                   htmlColor={
                     customColor.trim() !== '' && !hexError
                       ? normalizeHexColor(customColor)
-                      : '#cccccc'
+                      : theme.palette.gray.main
                   }
                   sx={{
                     width: '40px',
@@ -223,7 +237,7 @@ export const ColorMenu: FC<ColorMenuProps> = ({
                   }}
                   sx={{ textTransform: 'none' }}
                 >
-                  {t('button.clear')}
+                  {t('button.reset')}
                 </Button>
               </Box>
             )}

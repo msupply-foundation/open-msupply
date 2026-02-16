@@ -1,9 +1,14 @@
 import React, { useState } from 'react';
-import { ColorMenu, Color, Box } from '@openmsupply-client/common';
+import {
+  ColorMenu,
+  Color,
+  Box,
+  Tooltip,
+  useTranslation,
+} from '@openmsupply-client/common';
 import { IconButton } from '@mui/material';
 import { CircleIcon } from '@common/icons';
-
-const DEFAULT_COLOR = '#004fc4';
+import { useTheme } from '@common/styles';
 
 interface ColorPickerPreferenceProps {
   value: string;
@@ -18,6 +23,8 @@ export const ColorPickerPreference: React.FC<ColorPickerPreferenceProps> = ({
 }) => {
   const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
   const [customColor, setCustomColor] = useState('');
+  const theme = useTheme();
+  const t = useTranslation();
 
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     if (!disabled) {
@@ -50,25 +57,22 @@ export const ColorPickerPreference: React.FC<ColorPickerPreferenceProps> = ({
         customColorValue={customColor}
         onClear={handleClear}
       />
-      <IconButton
-        onClick={handleClick}
-        disabled={disabled}
-        aria-label="select color"
-        sx={{
-          width: 40,
-          height: 40,
-          border: '2px solid',
-          borderColor: 'divider',
-          '&:hover': {
-            borderColor: 'primary.main',
-          },
-        }}
-      >
-        <CircleIcon
-          htmlColor={value || DEFAULT_COLOR}
-          sx={{ width: 28, height: 28 }}
-        />
-      </IconButton>
+      <Tooltip title={t('button.select-a-color')}>
+        <IconButton
+          onClick={handleClick}
+          disabled={disabled}
+          aria-label="select color"
+          sx={{
+            width: 40,
+            height: 40,
+          }}
+        >
+          <CircleIcon
+            htmlColor={value || theme.palette.gray.main}
+            sx={{ width: 24, height: 24 }}
+          />
+        </IconButton>
+      </Tooltip>
     </Box>
   );
 };
