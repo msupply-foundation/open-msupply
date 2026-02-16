@@ -11,6 +11,9 @@ import {
   Box,
   ButtonWithIcon,
   PlusCircleIcon,
+  useBarcodeScannerContext,
+  ScanResult,
+  Alert,
 } from '@openmsupply-client/common';
 import { InboundLineEditForm } from './InboundLineEditForm';
 import { InboundLineFragment, useDraftInboundLines } from '../../../api';
@@ -59,6 +62,7 @@ export const InboundLineEdit = ({
     getSortedItems,
     currentItem?.id ?? ''
   );
+  const [showScanWarning, setShowScanWarning] = useState(false);
 
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
   const {
@@ -80,6 +84,12 @@ export const InboundLineEdit = ({
   useEffect(() => {
     setCurrentItem(item);
   }, [item]);
+
+  // Temporarily suppress new scanning while edit modal is open. Once this
+  // closes, the Scan modal automatically re-registers its handler
+  useBarcodeScannerContext(() => setShowScanWarning(() => true));
+
+  // console.log('handleScanResult', handleScanResult);
 
   const tableContent = simplifiedTabletView ? (
     <>
@@ -168,6 +178,11 @@ export const InboundLineEdit = ({
             item={currentItem}
             onChangeItem={setCurrentItem}
           />
+          {showScanWarning && (
+            <Alert severity="warning">
+              {t('warning.no-scanning-while-line-editing')}
+            </Alert>
+          )}
           <Divider margin={5} />
           {tableContent}
         </>
