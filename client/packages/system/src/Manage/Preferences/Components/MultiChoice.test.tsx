@@ -1,13 +1,11 @@
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import {
   MultiChoice,
-  getMultiChoiceOptions,
 } from './MultiChoice';
 import {
   InvoiceNodeStatus,
-  PreferenceKey,
   TestingProvider,
 } from '@openmsupply-client/common';
 
@@ -21,7 +19,7 @@ jest.mock('@openmsupply-client/common', () => ({
   useTranslation: () => (key: string) => key,
 }));
 
-describe('MultiChoice - Invoice Status Options Validation', () => {
+describe('MultiChoice - Validation via Option Definitions', () => {
   const mockOnChange = jest.fn();
 
   beforeEach(() => {
@@ -29,17 +27,42 @@ describe('MultiChoice - Invoice Status Options Validation', () => {
     mockOnChange.mockClear();
   });
 
+  // Validation function for testing
+  const validateInboundStatus = (
+    newValue: InvoiceNodeStatus[],
+    changedValue: InvoiceNodeStatus,
+    isChecking: boolean,
+    errorCallback: (message: string) => void
+  ): boolean => {
+    if (
+      !isChecking &&
+      (changedValue === InvoiceNodeStatus.Delivered ||
+        changedValue === InvoiceNodeStatus.Received)
+    ) {
+      const hasDelivered = newValue.includes(InvoiceNodeStatus.Delivered);
+      const hasReceived = newValue.includes(InvoiceNodeStatus.Received);
+
+      if (!hasDelivered && !hasReceived) {
+        errorCallback('error.invoice-status-inbound-requires-delivered-or-received');
+        return false;
+      }
+    }
+    return true;
+  };
+
   it('should allow unchecking Delivered when Received is still checked', () => {
     const options = [
       {
         value: InvoiceNodeStatus.Delivered,
         label: 'Delivered',
         group: 'Inbound',
+        validate: validateInboundStatus,
       },
       {
         value: InvoiceNodeStatus.Received,
         label: 'Received',
         group: 'Inbound',
+        validate: validateInboundStatus,
       },
     ];
 
@@ -49,7 +72,6 @@ describe('MultiChoice - Invoice Status Options Validation', () => {
           options={options}
           value={[InvoiceNodeStatus.Delivered, InvoiceNodeStatus.Received]}
           onChange={mockOnChange}
-          preferenceKey={PreferenceKey.InvoiceStatusOptions}
         />
       </TestingProvider>
     );
@@ -71,11 +93,13 @@ describe('MultiChoice - Invoice Status Options Validation', () => {
         value: InvoiceNodeStatus.Delivered,
         label: 'Delivered',
         group: 'Inbound',
+        validate: validateInboundStatus,
       },
       {
         value: InvoiceNodeStatus.Received,
         label: 'Received',
         group: 'Inbound',
+        validate: validateInboundStatus,
       },
     ];
 
@@ -85,7 +109,6 @@ describe('MultiChoice - Invoice Status Options Validation', () => {
           options={options}
           value={[InvoiceNodeStatus.Delivered]}
           onChange={mockOnChange}
-          preferenceKey={PreferenceKey.InvoiceStatusOptions}
         />
       </TestingProvider>
     );
@@ -109,11 +132,13 @@ describe('MultiChoice - Invoice Status Options Validation', () => {
         value: InvoiceNodeStatus.Delivered,
         label: 'Delivered',
         group: 'Inbound',
+        validate: validateInboundStatus,
       },
       {
         value: InvoiceNodeStatus.Received,
         label: 'Received',
         group: 'Inbound',
+        validate: validateInboundStatus,
       },
     ];
 
@@ -123,7 +148,6 @@ describe('MultiChoice - Invoice Status Options Validation', () => {
           options={options}
           value={[InvoiceNodeStatus.Received]}
           onChange={mockOnChange}
-          preferenceKey={PreferenceKey.InvoiceStatusOptions}
         />
       </TestingProvider>
     );
@@ -147,6 +171,7 @@ describe('MultiChoice - Invoice Status Options Validation', () => {
         value: InvoiceNodeStatus.Delivered,
         label: 'Delivered',
         group: 'Inbound',
+        validate: validateInboundStatus,
       },
     ];
 
@@ -156,7 +181,6 @@ describe('MultiChoice - Invoice Status Options Validation', () => {
           options={options}
           value={[]}
           onChange={mockOnChange}
-          preferenceKey={PreferenceKey.InvoiceStatusOptions}
         />
       </TestingProvider>
     );
@@ -172,7 +196,7 @@ describe('MultiChoice - Invoice Status Options Validation', () => {
     expect(mockError).not.toHaveBeenCalled();
   });
 
-  it('should not validate for non-InvoiceStatusOptions preferences', () => {
+  it('should not validate for options without validation function', () => {
     const options = [
       {
         value: 'option1',
@@ -186,7 +210,6 @@ describe('MultiChoice - Invoice Status Options Validation', () => {
           options={options}
           value={['option1']}
           onChange={mockOnChange}
-          preferenceKey={PreferenceKey.GenderOptions}
         />
       </TestingProvider>
     );
@@ -197,7 +220,7 @@ describe('MultiChoice - Invoice Status Options Validation', () => {
     ) as HTMLInputElement;
     fireEvent.click(checkbox);
 
-    // Should allow unchecking without validation for non-InvoiceStatusOptions
+    // Should allow unchecking without validation
     expect(mockOnChange).toHaveBeenCalledWith([]);
     expect(mockError).not.toHaveBeenCalled();
   });
