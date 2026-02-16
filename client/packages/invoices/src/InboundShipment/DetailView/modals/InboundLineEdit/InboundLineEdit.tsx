@@ -14,7 +14,6 @@ import {
 } from '@openmsupply-client/common';
 import { InboundLineEditForm } from './InboundLineEditForm';
 import { InboundLineFragment, useDraftInboundLines } from '../../../api';
-import { TabLayout } from './TabLayout';
 import {
   CurrencyRowFragment,
   ItemRowFragment,
@@ -23,7 +22,7 @@ import { QuantityTable } from './TabTables';
 import { isInboundPlaceholderRow } from '../../../../utils';
 import { ScannedBatchData } from '../../DetailView';
 import { useNextItem } from '../../../../useNextItem';
-
+import { AccordionLayout } from './AccordionLayout';
 type InboundLineItem = InboundLineFragment['item'];
 interface InboundLineEditProps {
   item: InboundLineItem | null;
@@ -104,18 +103,20 @@ export const InboundLineEdit = ({
       </Box>
     </>
   ) : (
-    <TabLayout
-      draftLines={draftLines}
-      addDraftLine={addDraftLine}
-      updateDraftLine={updateDraftLine}
-      removeDraftLine={removeDraftLine}
-      isDisabled={isDisabled}
-      currency={currency}
-      isExternalSupplier={isExternalSupplier}
-      item={currentItem}
-      hasItemVariantsEnabled={hasItemVariantsEnabled}
-      hasVvmStatusesEnabled={!!hasVvmStatusesEnabled}
-    />
+    <Box sx={{ mt: 10 }}>
+      <AccordionLayout
+        draftLines={draftLines}
+        addDraftLine={addDraftLine}
+        updateDraftLine={updateDraftLine}
+        removeDraftLine={removeDraftLine}
+        isDisabled={isDisabled}
+        currency={currency}
+        isExternalSupplier={isExternalSupplier}
+        item={currentItem}
+        hasItemVariantsEnabled={hasItemVariantsEnabled}
+        hasVvmStatusesEnabled={!!hasVvmStatusesEnabled}
+      />
+    </Box>
   );
 
   return (
