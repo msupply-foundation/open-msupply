@@ -88,7 +88,7 @@ export const batchOutboundShipmentQuery = (
   }) as BatchOutboundShipmentMutation;
 };
 
-export const batchDeleteOutboundShipmentQuery = (
+export const batchDeleteOutboundShipmentMutation = (
   storeId: string,
   shipmentId: string
 ): undefined => {

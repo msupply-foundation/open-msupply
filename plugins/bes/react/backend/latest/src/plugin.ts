@@ -10,7 +10,7 @@ import {
   customerQuery,
   itemsQuery,
   checkOutboundShipmentExistsQuery,
-  batchDeleteOutboundShipmentQuery,
+  batchDeleteOutboundShipmentMutation,
 } from './queries';
 import { sortAndClassifyBatches } from './utils';
 import {
@@ -262,7 +262,7 @@ const plugins: BackendPlugins = {
     }
 
     if (rollbackOperation) {
-      batchDeleteOutboundShipmentQuery(issuingStoreId, shipmentId);
+      batchDeleteOutboundShipmentMutation(issuingStoreId, shipmentId);
       return {
         success: false,
         message: `Failed to issued stock from store code: ${issuingStore.store_row.code}, for customer: ${customer.name}, invoiceId: ${shipmentId}, items count: ${itemsResponses.length}. Operation has been rolled back.`,

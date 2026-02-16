@@ -6,7 +6,7 @@ import {
 } from '../codegenTypes';
 import {
   batchOutboundShipmentQuery,
-  batchDeleteOutboundShipmentQuery,
+  batchDeleteOutboundShipmentMutation,
   saveOutboundShipmentLineItemsMutation,
 } from './queries';
 import { Graphql } from './types/index';
@@ -64,7 +64,7 @@ export const insertOutboundShipment = (
 
     return { error: undefined };
   } catch (error) {
-    batchDeleteOutboundShipmentQuery(issuingStoreId, shipmentId);
+    batchDeleteOutboundShipmentMutation(issuingStoreId, shipmentId);
     return {
       error: {
         success: false,
