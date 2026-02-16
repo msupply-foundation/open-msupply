@@ -12,6 +12,8 @@ import {
   TypedTFunction,
   LocaleKey,
   useNotification,
+  LoadingButton,
+  CheckIcon,
 } from '@openmsupply-client/common';
 import { FnUtils, ScanResult, useBarcodeScannerContext } from '@common/utils';
 import React, { useCallback, useState } from 'react';
@@ -73,9 +75,39 @@ export const ScanInputModal = ({ lines, invoiceId }: ScanInputModalProps) => {
 
   const { success } = useNotification();
 
-  const { saveSingleLine } = useDraftInboundLines(barcodeData?.itemId);
-  const { mutateAsync: getBarcode } = useOutbound.utils.barcode();
-  const { mutateAsync: saveBarcode } = useOutbound.utils.barcodeInsert();
+  const { saveSingleLine, isLoading: isSavingLine } = useDraftInboundLines(
+    barcodeData?.itemId
+  );
+  const { mutateAsync: getBarcode, isLoading: isFetchingBarcode } =
+    useOutbound.utils.barcode();
+  const { mutateAsync: saveBarcode, isLoading: isSavingBarcode } =
+    useOutbound.utils.barcodeInsert();
+
+  // Helper to update state and pull in expiry date from matching line
+  // - Need to add "manufacturer/manufactureDate" to this when support those
+  const updateStateWithLineMatch = useCallback(
+    (updates: Partial<FormDraftState>) => {
+      setDraftState(current => {
+        const newState = { ...current, ...updates };
+
+        // Find matching line based on updated values
+        const matchingLine = lines.find(
+          line =>
+            line.batch === newState.batch &&
+            line.item.id === newState.itemId &&
+            line.packSize === newState.packSize
+        );
+
+        // If we found a matching line with an expiry date and we don't already have one, use it
+        if (matchingLine?.expiryDate && !newState.expiryDate) {
+          newState.expiryDate = new Date(matchingLine.expiryDate);
+        }
+
+        return newState;
+      });
+    },
+    [lines]
+  );
 
   const existingLine = lines.find(
     line =>
@@ -258,14 +290,13 @@ export const ScanInputModal = ({ lines, invoiceId }: ScanInputModalProps) => {
   const { mockScannerEnabled } = useBarcodeScannerContext(handleScan);
 
   const onChangeItem = (item: ItemStockOnHandFragment | null) => {
-    setDraftState(current => ({
-      ...current,
+    updateStateWithLineMatch({
       itemId: item?.id || null,
       packSize: barcodeData?.packSize || item?.defaultPackSize || 1,
-    }));
+    });
   };
 
-  const message: Message = errorMessage
+  const message: Message | null = errorMessage
     ? { type: 'error', text: errorMessage }
     : getMessage(barcodeData, draftState, existingLine, t);
 
@@ -283,15 +314,21 @@ export const ScanInputModal = ({ lines, invoiceId }: ScanInputModalProps) => {
     }
   };
 
+  const isLoading = isFetchingBarcode || isSavingLine || isSavingBarcode;
+
   return (
     <Modal
       title={t('heading.scan-product')}
       width={500}
       disableEnforceFocus // Prevents input block in Mock barcode scanner element
       okButton={
-        <DialogButton
-          variant="ok"
+        <LoadingButton
+          startIcon={<CheckIcon />}
+          color="secondary"
+          variant="contained"
+          isLoading={isLoading}
           disabled={!canSubmit}
+          label={t('button.ok')}
           onClick={handleSubmit}
         />
       }
@@ -323,13 +360,15 @@ export const ScanInputModal = ({ lines, invoiceId }: ScanInputModalProps) => {
           </Typography>
         )}
 
-        <Alert severity={message.type}>{message.text}</Alert>
+        {message && !isLoading && (
+          <Alert severity={message.type}>{message.text}</Alert>
+        )}
         <InputWithLabelRow
           label={t('label.item')}
           Input={
             <StockItemSearchInput
               autoFocus={!barcodeData}
-              disabled={!!barcodeData}
+              disabled={!!barcodeData || isLoading}
               currentItemId={barcodeData?.itemId || draftState.itemId || null}
               onChange={newItem => onChangeItem(newItem)}
               // A scanned-in item will only have an ID, not a full item object,
@@ -344,12 +383,10 @@ export const ScanInputModal = ({ lines, invoiceId }: ScanInputModalProps) => {
           Input={
             <BasicTextInput
               value={draftState.batch ?? ''}
-              onChange={e =>
-                setDraftState(current => ({
-                  ...current,
-                  batch: e.target.value,
-                }))
-              }
+              disabled={isLoading}
+              onChange={e => {
+                updateStateWithLineMatch({ batch: e.target.value });
+              }}
             />
           }
         />
@@ -358,6 +395,7 @@ export const ScanInputModal = ({ lines, invoiceId }: ScanInputModalProps) => {
           Input={
             <DatePicker
               value={draftState.expiryDate}
+              disabled={isLoading}
               onChange={value =>
                 setDraftState(current => ({ ...current, expiryDate: value }))
               }
@@ -370,11 +408,11 @@ export const ScanInputModal = ({ lines, invoiceId }: ScanInputModalProps) => {
             <NumericTextInput
               value={draftState.packSize ?? ''}
               onChange={value =>
-                setDraftState(current => ({ ...current, packSize: value || 1 }))
+                updateStateWithLineMatch({ packSize: value || 1 })
               }
               // If a pack size is associated with a particular GTIN, it should
               // not change
-              disabled={!!barcodeData?.packSize}
+              disabled={!!barcodeData?.packSize || isLoading}
             />
           }
         />
@@ -384,6 +422,7 @@ export const ScanInputModal = ({ lines, invoiceId }: ScanInputModalProps) => {
             <NumericTextInput
               inputRef={quantityInputRef}
               value={draftState.quantity ?? ''}
+              disabled={isLoading}
               onChange={value =>
                 setDraftState(current => ({ ...current, quantity: value || 1 }))
               }
@@ -412,8 +451,7 @@ const getMessage = (
   draftState: FormDraftState,
   existingLine: InboundLineFragment | undefined,
   t: TypedTFunction<LocaleKey>
-): Message => {
-  //
+): Message | null => {
   if (!barcodeData && !draftState.gtin && !draftState.itemId)
     return {
       type: 'error',
