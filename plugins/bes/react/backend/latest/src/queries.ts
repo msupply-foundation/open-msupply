@@ -18,7 +18,7 @@ import {
   CheckInvoiceExistsQuery,
 } from './generated-types/graphql';
 import { MutationsSaveOutboundShipmentItemLinesArgs } from './../codegenTypes';
-import { Graphql } from './types';
+import { Graphql, ItemsEndpointResponse } from './types';
 
 export const customerQuery = (
   variables: NamesQueryVariables
@@ -33,6 +33,7 @@ export const customerQuery = (
         customerError: {
           success: false,
           message: `No customer found with code: ${variables.filter?.code?.equalTo} (codes are case sensitive)`,
+          items: [],
         },
       };
     }
@@ -42,24 +43,30 @@ export const customerQuery = (
       customerError: {
         success: false,
         message: `Error getting customer: ${error}`,
+        items: [],
       },
     };
   }
 };
 
 export const itemsQuery = (
-  variables: ItemsQueryVariables
-): { result?: ItemsQuery; itemsError?: Graphql['output'] } => {
+  storeId: string,
+  universalCode: string
+): { result?: ItemsQuery; itemsError?: ItemsEndpointResponse } => {
   try {
     const result = use_graphql({
       query: itemsQueryText,
-      variables,
+      variables: {
+        storeId,
+        filter: { universalCode: { equalTo: universalCode } },
+      } as ItemsQueryVariables,
     }) as ItemsQuery;
     if (!result || result.items.totalCount < 1) {
       return {
         itemsError: {
+          universalCode,
           success: false,
-          message: `No item found for universalCode: ${variables.filter?.code?.equalTo}`,
+          message: `No item found for universalCode: ${universalCode}`,
         },
       };
     }
@@ -67,6 +74,7 @@ export const itemsQuery = (
   } catch (error) {
     return {
       itemsError: {
+        universalCode,
         success: false,
         message: `Error getting items: ${error}`,
       },
@@ -135,25 +143,19 @@ export const checkOutboundShipmentExistsQuery = (
       return {
         invoiceIdError: {
           success: false,
-          message: `InvoiceId - ${variables.id} already exists`,
+          message: `InvoiceId - ${variables.id} already exists. Shipment No.: ${result.invoice.invoiceNumber}`,
+          items: [],
         },
       };
     }
 
-    if (result.invoice.__typename === 'NodeError') {
-      return {
-        invoiceIdError: {
-          success: false,
-          message: `Error checking UUID exists for invoiceId. id: ${variables.id}, error: ${result.invoice.error.description}`,
-        },
-      };
-    }
     return { invoiceIdError: undefined };
   } catch (error) {
     return {
       invoiceIdError: {
         success: false,
         message: `Error checking UUID exists for invoiceId. error: ${error}`,
+        items: [],
       },
     };
   }

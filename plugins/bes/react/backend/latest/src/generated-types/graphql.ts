@@ -70,10 +70,7 @@ export type CheckInvoiceExistsQueryVariables = Types.Exact<{
 
 export type CheckInvoiceExistsQuery = { __typename?: 'Queries', invoice:
     | { __typename: 'InvoiceNode', id: string, invoiceNumber: number }
-    | { __typename: 'NodeError', error:
-        | { __typename?: 'DatabaseError', description: string }
-        | { __typename?: 'RecordNotFound', description: string }
-       }
+    | { __typename?: 'NodeError' }
    };
 
 export type NamesQueryVariables = Types.Exact<{

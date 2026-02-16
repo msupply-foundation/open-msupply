@@ -11,9 +11,16 @@ export type IssueStockEndpointInput = {
   items: EndpointItems[];
 };
 
+export type ItemsEndpointResponse = {
+  universalCode: string;
+  success: boolean;
+  message: string;
+};
+
 export type IssueStockEndpointResponse = {
   success: boolean;
   message: string;
+  items: ItemsEndpointResponse[];
 };
 
 export type Graphql = {
