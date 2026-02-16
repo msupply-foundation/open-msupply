@@ -38,7 +38,11 @@ export const FooterComponent = ({
     selectedRows,
     deleteAction,
     canDelete: selectedRows.every(
-      ({ status }) => status === InvoiceNodeStatus.New
+      ({ status }) =>
+        status === InvoiceNodeStatus.New ||
+        status === InvoiceNodeStatus.Shipped ||
+        status === InvoiceNodeStatus.Delivered ||
+        status === InvoiceNodeStatus.Received
     ),
     messages: {
       confirmMessage: t('messages.confirm-delete-shipments', {

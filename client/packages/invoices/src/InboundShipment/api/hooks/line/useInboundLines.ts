@@ -23,7 +23,9 @@ export const useInboundLines = (itemId?: string) => {
   const selectLines = useCallback(
     (invoice: InboundFragment) => {
       const forListView = (line: InboundLineFragment) =>
-        isA.stockInLine(line) || isInboundPlaceholderRow(line);
+        isA.stockInLine(line) ||
+        isInboundPlaceholderRow(line) ||
+        isA.placeholderLine(line); // for rejected lines
       return itemId
         ? invoice.lines.nodes.filter(({ item }) => itemId === item.id)
         : invoice.lines.nodes.filter(forListView);
