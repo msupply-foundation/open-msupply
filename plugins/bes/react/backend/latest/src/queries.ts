@@ -1,7 +1,6 @@
 import namesQueryText from './graphql/customer.graphql';
 import itemsQueryText from './graphql/items.graphql';
 import batchOutboundShipmentMutationText from './graphql/batchOutboundShipment.graphql';
-import insertOutboundShipmentLineText from './graphql/insertOutboundShipmentUnallocatedLine.graphql';
 import saveOutboundShipmentItemLines from './graphql/saveOutboundShipmentItemLines.graphql';
 import checkOutboundShipmentExistsText from './graphql/checkOutboundShipmentById.graphql';
 import {
@@ -11,8 +10,6 @@ import {
   ItemsQueryVariables,
   NamesQuery,
   NamesQueryVariables,
-  InsertOutboundShipmentUnallocatedLineMutation,
-  InsertOutboundShipmentUnallocatedLineMutationVariables,
   SaveOutboundShipmentItemLinesMutation,
   CheckInvoiceExistsQueryVariables,
   CheckInvoiceExistsQuery,
@@ -89,15 +86,6 @@ export const batchOutboundShipmentQuery = (
     query: batchOutboundShipmentMutationText,
     variables,
   }) as BatchOutboundShipmentMutation;
-};
-
-export const insertOutboundShipmentLineQuery = (
-  variables: InsertOutboundShipmentUnallocatedLineMutationVariables
-): InsertOutboundShipmentUnallocatedLineMutation => {
-  return use_graphql({
-    query: insertOutboundShipmentLineText,
-    variables,
-  }) as InsertOutboundShipmentUnallocatedLineMutation;
 };
 
 export const batchDeleteOutboundShipmentQuery = (

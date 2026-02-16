@@ -1,10 +1,5 @@
+import { BatchOutboundShipmentMutationVariables } from './generated-types/graphql';
 import {
-  BatchOutboundShipmentMutationVariables,
-  // InsertOutboundShipmentUnallocatedLineMutationVariables,
-} from './generated-types/graphql';
-import {
-  // InsertOutboundShipmentUnallocatedLineInput,
-  // InsertOutboundShipmentLineInput,
   UpdateOutboundShipmentStatusInput,
   OutboundShipmentLineInput,
   MutationsSaveOutboundShipmentItemLinesArgs,
@@ -12,7 +7,6 @@ import {
 import {
   batchOutboundShipmentQuery,
   batchDeleteOutboundShipmentQuery,
-  // insertOutboundShipmentLineQuery,
   saveOutboundShipmentLineItemsMutation,
 } from './queries';
 import { Graphql } from './types/index';
@@ -80,96 +74,6 @@ export const insertOutboundShipment = (
     };
   }
 };
-
-// export const insertAllocatedLines = (
-//   issuingStoreId: string,
-//   shipmentId: string,
-//   lines: InsertOutboundShipmentLineInput[],
-//   errText: string
-// ): OperationsResponse => {
-//   const insertLineInput: BatchOutboundShipmentMutationVariables = {
-//     storeId: issuingStoreId,
-//     input: {
-//       insertOutboundShipmentLines: [...lines],
-//     },
-//   };
-
-//   try {
-//     const insertLineResult = batchOutboundShipmentQuery(insertLineInput);
-
-//     if (
-//       !insertLineResult.batchOutboundShipment.insertOutboundShipmentLines ||
-//       insertLineResult.batchOutboundShipment.insertOutboundShipmentLines
-//         .length < 1
-//     ) {
-//       errText += ` error: no lines returned in response`;
-//       throw Error(errText);
-//     }
-
-//     if (
-//       insertLineResult.batchOutboundShipment.insertOutboundShipmentLines[0]
-//         .response.__typename === 'InsertOutboundShipmentLineError'
-//     ) {
-//       errText += ` error: ${insertLineResult.batchOutboundShipment.insertOutboundShipmentLines[0].response.error.description}`;
-//       throw Error(errText);
-//     }
-
-//     return { error: undefined };
-//   } catch (error) {
-//     // batchDeleteOutboundShipmentQuery(issuingStoreId, shipmentId);
-//     return {
-//       error: {
-//         success: false,
-//         message: `Insert allocated line failed. ${error}`,
-//       },
-//     };
-//   }
-// };
-
-// export const insertUnAllocatedLine = (
-//   issuingStoreId: string,
-//   shipmentId: string,
-//   line: InsertOutboundShipmentUnallocatedLineInput,
-//   errText: string
-// ): OperationsResponse => {
-//   const insertLineInput: InsertOutboundShipmentUnallocatedLineMutationVariables =
-//     {
-//       storeId: issuingStoreId,
-//       input: {
-//         id: line.id,
-//         invoiceId: shipmentId,
-//         itemId: line.itemId,
-//         quantity: line.quantity,
-//       },
-//     };
-
-//   try {
-//     const insertUnallocatedLineResult =
-//       insertOutboundShipmentLineQuery(insertLineInput);
-
-//     if (!insertUnallocatedLineResult.insertOutboundShipmentUnallocatedLine) {
-//       errText += ` error: no lines returned in response`;
-//       throw Error(errText);
-//     }
-
-//     if (
-//       insertUnallocatedLineResult.insertOutboundShipmentUnallocatedLine
-//         .__typename === 'InsertOutboundShipmentUnallocatedLineError'
-//     ) {
-//       errText += ` error: ${insertUnallocatedLineResult.insertOutboundShipmentUnallocatedLine.error.description}`;
-//       throw Error(errText);
-//     }
-//     return { error: undefined };
-//   } catch (error) {
-//     batchDeleteOutboundShipmentQuery(issuingStoreId, shipmentId);
-//     return {
-//       error: {
-//         success: false,
-//         message: `Unallocated line insert failed. ${error}`,
-//       },
-//     };
-//   }
-// };
 
 export const updateOutboundShipment = (
   issuingStoreId: string,

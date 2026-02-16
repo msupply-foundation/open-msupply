@@ -81,21 +81,6 @@ export type NamesQueryVariables = Types.Exact<{
 
 export type NamesQuery = { __typename?: 'Queries', names: { __typename: 'NameConnector', nodes: Array<{ __typename?: 'NameNode', id: string, name: string, isCustomer: boolean }> } };
 
-export type InsertOutboundShipmentUnallocatedLineMutationVariables = Types.Exact<{
-  storeId: Types.Scalars['String']['input'];
-  input: Types.InsertOutboundShipmentUnallocatedLineInput;
-}>;
-
-
-export type InsertOutboundShipmentUnallocatedLineMutation = { __typename?: 'Mutations', insertOutboundShipmentUnallocatedLine:
-    | { __typename: 'InsertOutboundShipmentUnallocatedLineError', error:
-        | { __typename?: 'ForeignKeyError', description: string }
-        | { __typename?: 'UnallocatedLineForItemAlreadyExists', description: string }
-        | { __typename?: 'UnallocatedLinesOnlyEditableInNewInvoice', description: string }
-       }
-    | { __typename: 'InvoiceLineNode', id: string }
-   };
-
 export type ItemsQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
   filter?: Types.InputMaybe<Types.ItemFilterInput>;
