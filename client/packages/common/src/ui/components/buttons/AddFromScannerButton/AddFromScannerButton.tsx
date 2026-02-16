@@ -8,6 +8,8 @@ import {
   useRegisterActions,
   Tooltip,
   Box,
+  ScannerInstallState,
+  ScannerInstalling,
 } from '@openmsupply-client/common';
 
 interface AddFromScannerButtonProps {
@@ -40,6 +42,8 @@ export const AddFromScannerButton = ({
     isListening,
     scan,
     stopScan,
+    scannerInstallState,
+    installProgress,
     startListening,
     supportsContinuousScanning,
     handleScanResult,
@@ -107,6 +111,16 @@ export const AddFromScannerButton = ({
   );
 
   if (!isEnabled) return null;
+
+  // Show loading indicator while scanner is being detected/connected
+  if (scannerInstallState === ScannerInstallState.Installing) {
+    return (
+      <ScannerInstalling
+        progress={installProgress}
+        state={scannerInstallState}
+      />
+    );
+  }
 
   return (
     <Tooltip title={isConnected ? '' : t('error.scanner-not-connected')}>

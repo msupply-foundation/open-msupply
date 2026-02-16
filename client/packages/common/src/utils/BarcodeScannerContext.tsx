@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import React, {
   createContext,
   useMemo,
@@ -27,7 +28,7 @@ import { useMockScanner } from './MockBarcodeScanner';
 import { HoneywellScanner } from '@common/hooks';
 
 const SCAN_TIMEOUT_IN_MS = 50000;
-const INSTALL_TIMEOUT_IN_MS = 30000;
+const INSTALL_TIMEOUT_IN_MS = 60000;
 const MOCK_SCANNER_STORAGE_KEY = 'barcode_scanner_mock_enabled';
 
 export enum AvailableScannerType {
@@ -67,6 +68,17 @@ interface BarcodeScannerControl {
   supportsContinuousScanning: boolean;
   registerCallback: (callback: ScanCallback) => void;
   handleScanResult: (barcode: ScanResult) => void;
+  scannerInstallState: ScannerInstallState;
+  installProgress: number;
+}
+
+export enum ScannerInstallState {
+  Unknown = 'unknown',
+  Checking = 'checking',
+  Installing = 'installing',
+  Installed = 'installed',
+  Failed = 'failed',
+  Cancelled = 'cancelled',
 }
 
 const BarcodeScannerContext = createContext<BarcodeScannerControl>(
@@ -134,7 +146,10 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
   const [isListening, setIsListening] = useState(false);
   const [hasHoneywellScanner, setHasHoneywellScanner] =
     useState<boolean>(false);
-  const { error } = useNotification();
+  const [scannerInstallState, setScannerInstallState] =
+    useState<ScannerInstallState>(ScannerInstallState.Unknown);
+  const [installProgress, setInstallProgress] = useState<number>(0);
+  const { error, info } = useNotification();
   const callbackRef = useRef<ScanCallback | null>(null);
   const { electronNativeAPI } = window;
   const [scanner, setScanner] = useState<BarcodeScanner | null>(null);
@@ -193,43 +208,99 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
 
   const isEnabled = availableScanners.length > 0;
 
-  const googleBarcodeScannerAvailable = () =>
-    new Promise<boolean>(async resolve => {
-      const handleScannerInstall = (
-        event: GoogleBarcodeScannerModuleInstallProgressEvent
-      ) => {
-        switch (event.state) {
-          case GoogleBarcodeScannerModuleInstallState.COMPLETED:
-            BarcodeScannerPlugin.removeAllListeners();
+  const googleBarcodeScannerAvailable = useCallback(
+    () =>
+      new Promise<boolean>(async (resolve, reject) => {
+        try {
+          setScannerInstallState(ScannerInstallState.Checking);
+
+          const handleScannerInstall = (
+            event: GoogleBarcodeScannerModuleInstallProgressEvent
+          ) => {
+            console.log('Google Barcode Scanner install state:', event.state);
+
+            // Update progress directly from the event if available
+            if (!!event.progress) {
+              setInstallProgress(event.progress);
+            }
+
+            switch (event.state) {
+              case GoogleBarcodeScannerModuleInstallState.COMPLETED:
+                setScannerInstallState(ScannerInstallState.Installed);
+                setInstallProgress(100);
+                BarcodeScannerPlugin.removeAllListeners();
+                resolve(true);
+                break;
+              case GoogleBarcodeScannerModuleInstallState.FAILED:
+                setScannerInstallState(ScannerInstallState.Failed);
+                BarcodeScannerPlugin.removeAllListeners();
+                resolve(false);
+                break;
+              case GoogleBarcodeScannerModuleInstallState.CANCELED:
+                setScannerInstallState(ScannerInstallState.Cancelled);
+                BarcodeScannerPlugin.removeAllListeners();
+                resolve(false);
+                break;
+              case GoogleBarcodeScannerModuleInstallState.PENDING:
+                setScannerInstallState(ScannerInstallState.Installing);
+                info(t('messages.scanner-installation-pending'))();
+                break;
+              case GoogleBarcodeScannerModuleInstallState.DOWNLOADING:
+                setScannerInstallState(ScannerInstallState.Installing);
+                // Show info snack only once, not on every progress update
+                if (event.progress === 0 || !event.progress) {
+                  info(t('messages.scanner-downloading'))();
+                }
+                break;
+              case GoogleBarcodeScannerModuleInstallState.INSTALLING:
+                setScannerInstallState(ScannerInstallState.Installing);
+                info(t('messages.scanner-installing'))();
+                break;
+              case GoogleBarcodeScannerModuleInstallState.DOWNLOAD_PAUSED:
+                setScannerInstallState(ScannerInstallState.Installing);
+                info(t('messages.scanner-download-paused'))();
+                break;
+              default:
+                break;
+            }
+          };
+
+          const { available } =
+            await BarcodeScannerPlugin.isGoogleBarcodeScannerModuleAvailable();
+
+          if (available) {
+            setScannerInstallState(ScannerInstallState.Installed);
+            setInstallProgress(100);
             resolve(true);
-            break;
-          case GoogleBarcodeScannerModuleInstallState.FAILED:
-          case GoogleBarcodeScannerModuleInstallState.CANCELED:
-            BarcodeScannerPlugin.removeAllListeners();
-            resolve(false);
-            break;
-          default:
-            break;
+            return;
+          }
+
+          console.log('Installing Google Barcode Scanner module...');
+          setScannerInstallState(ScannerInstallState.Installing);
+          info(t('messages.scanner-installation-starting'))();
+
+          await BarcodeScannerPlugin.addListener(
+            'googleBarcodeScannerModuleInstallProgress',
+            handleScannerInstall
+          );
+          await BarcodeScannerPlugin.installGoogleBarcodeScannerModule();
+        } catch (e) {
+          console.error(
+            'Error checking/installing Google Barcode Scanner module:',
+            e
+          );
+          setScannerInstallState(ScannerInstallState.Failed);
+          setInstallProgress(0);
+          reject(e);
         }
-      };
-
-      const { available } =
-        await BarcodeScannerPlugin.isGoogleBarcodeScannerModuleAvailable();
-
-      if (available) {
-        resolve(true);
-        return;
-      }
-
-      await BarcodeScannerPlugin.addListener(
-        'googleBarcodeScannerModuleInstallProgress',
-        handleScannerInstall
-      );
-      await BarcodeScannerPlugin.installGoogleBarcodeScannerModule();
-    });
+      }),
+    [t, info]
+  );
 
   const scanBarcode = useCallback(
-    async (formats?: BarcodeFormat[]) => {
+    async (formats?: BarcodeFormat[], retryCount = 0) => {
+      const MAX_RETRIES = 2;
+
       switch (true) {
         case mockScannerEnabled:
           const mockBarcode = await MockScanner.scan();
@@ -253,30 +324,54 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
           return barcode;
 
         case hasCameraBarcodeScanner:
-          const installTimeoutPromise = new Promise<undefined>((_, reject) =>
-            setTimeout(reject, INSTALL_TIMEOUT_IN_MS, 'Install timed out')
-          );
-          const isInstalled = await Promise.race([
-            installTimeoutPromise,
-            googleBarcodeScannerAvailable(),
-          ]);
-
-          if (!isInstalled) {
-            throw new Error(
-              t('error.unable-to-scan-barcode', { error: 'Not installed' })
+          try {
+            const installTimeoutPromise = new Promise<undefined>((_, reject) =>
+              setTimeout(() => {
+                setScannerInstallState(ScannerInstallState.Failed);
+                reject(new Error('Installation timeout'));
+              }, INSTALL_TIMEOUT_IN_MS)
             );
-          }
 
-          // Hide the app to show camera view
-          setHideApp(true);
-          const { barcodes } = await BarcodeScannerPlugin.scan({
-            autoZoom: true,
-            formats,
-          });
-          setHideApp(false);
+            const isInstalled = await Promise.race([
+              installTimeoutPromise,
+              googleBarcodeScannerAvailable(),
+            ]).catch(async err => {
+              // Retry logic for installation failures
+              if (retryCount < MAX_RETRIES) {
+                console.log(
+                  `Retrying scanner installation (attempt ${retryCount + 1}/${MAX_RETRIES})...`
+                );
+                await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2 seconds before retry
+                return scanBarcode(formats, retryCount + 1);
+              }
+              throw err;
+            });
 
-          if (barcodes && barcodes.length > 0 && barcodes[0]) {
-            return barcodes[0].rawValue;
+            if (!isInstalled) {
+              throw new Error(
+                t('error.unable-to-scan-barcode', { error: 'Not installed' })
+              );
+            }
+
+            // Hide the app to show camera view
+            setHideApp(true);
+            const { barcodes } = await BarcodeScannerPlugin.scan({
+              autoZoom: true,
+              formats,
+            });
+            setHideApp(false);
+
+            console.log('Scan result:', barcodes);
+
+            if (barcodes && barcodes.length > 0 && barcodes[0]) {
+              return barcodes[0].rawValue;
+            }
+
+            return '';
+          } catch (e) {
+            setHideApp(false);
+            console.error('Error during camera scan:', e);
+            throw e;
           }
       }
 
@@ -288,6 +383,7 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
       hasElectronApi,
       electronNativeAPI,
       hasCameraBarcodeScanner,
+      googleBarcodeScannerAvailable,
       t,
     ]
   );
@@ -331,20 +427,38 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
       try {
         const barcode = await scanBarcode(formats);
         result = parseResult(barcode);
+
+        // Reset install state on successful scan
+        if (scannerInstallState === ScannerInstallState.Failed) {
+          setScannerInstallState(ScannerInstallState.Installed);
+        }
       } catch (e) {
         const msg = (e as Error)?.message || '';
-        if (!msg.includes('canceled')) {
-          error(t('error.unable-to-read-barcode'))();
-          console.error(e);
+        console.error('Scan error:', msg, e);
+
+        if (!msg.toLowerCase().includes('cancel')) {
+          if (
+            msg.includes('Installation timeout') ||
+            msg.includes('Install timed out')
+          ) {
+            error(t('error.scanner-installation-timeout'))();
+          } else if (msg.includes('installation failed')) {
+            error(t('error.scanner-installation-failed'))();
+          } else if (msg.includes('not installed')) {
+            error(t('error.scanner-not-installed'))();
+          } else {
+            error(t('error.unable-to-read-barcode'))();
+          }
         }
       } finally {
         await stopScan();
         setHideApp(false);
+        setInstallProgress(0);
       }
 
       return result;
     },
-    [scanBarcode, error, t, stopScan]
+    [scanBarcode, error, t, stopScan, scannerInstallState]
   );
 
   const startListening = useCallback(async () => {
@@ -491,6 +605,8 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
           );
         }
       },
+      scannerInstallState,
+      installProgress,
     }),
     [
       isEnabled,
@@ -505,6 +621,8 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
       isListening,
       hasHoneywellScanner,
       hasElectronApi,
+      scannerInstallState,
+      installProgress,
     ]
   );
 

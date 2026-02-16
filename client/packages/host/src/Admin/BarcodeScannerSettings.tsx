@@ -14,6 +14,8 @@ import {
   LocaleKey,
   BarcodeScanner,
   RouteBuilder,
+  ScannerInstallState,
+  ScannerInstalling,
 } from '@openmsupply-client/common';
 import { useTranslation } from '@common/intl';
 import { Setting } from './Setting';
@@ -105,6 +107,8 @@ export const BarcodeScannerSettings = () => {
     scannerType,
     setScannerType,
     setScanner: setBarcodeScanner,
+    scannerInstallState,
+    installProgress,
     mockScannerEnabled,
     setMockScannerEnabled,
   } = useBarcodeScannerContext();
@@ -147,6 +151,16 @@ export const BarcodeScannerSettings = () => {
   useEffect(() => {
     electronNativeAPI?.linkedBarcodeScannerDevice().then(setElectronScanner);
   }, [electronNativeAPI, scannerType]);
+
+  // Show loading indicator while scanner is being detected/connected
+  if (scannerInstallState === ScannerInstallState.Installing) {
+    return (
+      <ScannerInstalling
+        progress={installProgress}
+        state={scannerInstallState}
+      />
+    );
+  }
 
   return (
     <>

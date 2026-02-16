@@ -26,6 +26,8 @@ import {
   Alert,
   RouteBuilder,
   Link,
+  ScannerInstallState,
+  ScannerInstalling,
 } from '@openmsupply-client/common';
 import { DraftStockLine, StockLineRowFragment } from '../api';
 import { LocationSearchInput } from '../../Location/Components/LocationSearchInput';
@@ -67,8 +69,14 @@ export const StockLineForm = ({
 
   const preferences = usePreferences();
 
-  const { isConnected, isEnabled, isListening, scan } =
-    useBarcodeScannerContext();
+  const {
+    isConnected,
+    isEnabled,
+    isListening,
+    scan,
+    scannerInstallState,
+    installProgress,
+  } = useBarcodeScannerContext();
   const showItemVariantsInput = useIsItemVariantsEnabled();
   const { plugins } = usePluginProvider();
 
@@ -137,6 +145,16 @@ export const StockLineForm = ({
     restrictedLocationTypeId,
     [draft]
   );
+
+  // Show loading indicator while scanner is being detected/connected
+  if (scannerInstallState === ScannerInstallState.Installing) {
+    return (
+      <ScannerInstalling
+        progress={installProgress}
+        state={scannerInstallState}
+      />
+    );
+  }
 
   return (
     <DetailContainer>

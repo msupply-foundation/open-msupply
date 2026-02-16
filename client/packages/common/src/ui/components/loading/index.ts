@@ -5,3 +5,4 @@ export * from './BouncingGuy';
 export * from './Pulse';
 export * from './RandomLoader';
 export * from './InlineProgress';
+export * from './ScannerInstalling';
