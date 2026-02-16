@@ -1411,6 +1411,7 @@
   "label.requested-quantity": "Requested",
   "label.requisition": "Requisition",
   "label.requisition-general": "General",
+  "label.requisition-number": "Requisition number",
   "label.requisition-program": "Program",
   "label.reset-table-defaults": "Reset table to default display",
   "label.revert-existing-transaction": "Revert existing stock transaction",

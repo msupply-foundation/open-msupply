@@ -28,6 +28,12 @@ export const Toolbar = () => {
               placeholder: t('placeholder.search-by-name'),
             },
             {
+              type: 'number',
+              name: t('label.requisition-number'),
+              urlParameter: 'requisitionNumber',
+              wide: true,
+            },
+            {
               type: 'enum',
               name: t('label.status'),
               urlParameter: 'status',
