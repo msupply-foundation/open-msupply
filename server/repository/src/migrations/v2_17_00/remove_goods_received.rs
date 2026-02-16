@@ -19,7 +19,7 @@ impl MigrationFragment for Migrate {
             "#
         )?;
 
-        // Rename Permissions
+        // Rename permissions
         if cfg!(feature = "postgres") {
             sql!(
                 connection,
@@ -44,6 +44,11 @@ impl MigrationFragment for Migrate {
         sql!(
             connection,
             r#"
+                DELETE FROM activity_log WHERE type IN (
+                    'GOODS_RECEIVED_CREATED',
+                    'GOODS_RECEIVED_DELETED',
+                    'GOODS_RECEIVED_STATUS_FINALISED'
+                );
                 DELETE FROM number WHERE type = 'GOODS_RECEIVED' or type like 'GOODSRECEIVEDLINE_%';
                 DELETE FROM changelog WHERE table_name IN (
                     'goods_received_line',
@@ -60,14 +65,24 @@ impl MigrationFragment for Migrate {
                 r#"
                     DROP TYPE goods_received_status;
                     DROP TYPE goods_received_line_status;
-                "#
-            )?;
-            sql!(
-                connection,
-                r#"
                     DROP TYPE number_type; -- Not used any more as now a string is used
                 "#
             )?;
+
+            // To remove these variants we'd need to create new enums without the goods received variants and this was decided against.
+            // sql!(
+            //     connection,
+            //     r#"
+            //         ALTER TYPE activity_log_type DROP VALUE 'GOODS_RECEIVED_CREATED';
+            //         ALTER TYPE activity_log_type DROP VALUE 'GOODS_RECEIVED_DELETED';
+            //         ALTER TYPE activity_log_type DROP VALUE 'GOODS_RECEIVED_STATUS_FINALISED';
+            //         ALTER TYPE number_type DROP VALUE 'GOODS_RECEIVED_LINE';
+            //         ALTER TYPE number_type DROP VALUE 'GOODS_RECEIVED';
+            //         ALTER TYPE changelog_table_name DROP VALUE 'goods_received_line';
+            //         ALTER TYPE changelog_table_name DROP VALUE 'goods_received';
+            //         ALTER TYPE context_type DROP VALUE 'GOODS_RECEIVED';
+            //     "#
+            // )?;
         }
 
         Ok(())
