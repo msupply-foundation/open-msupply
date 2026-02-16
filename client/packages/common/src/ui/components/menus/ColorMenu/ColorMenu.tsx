@@ -1,4 +1,4 @@
-import { Paper, Popover, Typography, Box } from '@mui/material';
+import { Paper, Popover, Typography, Box, Button } from '@mui/material';
 import React, { FC } from 'react';
 import { CircleIcon } from '@common/icons';
 import { BasicTextInput } from '../../inputs';
@@ -16,6 +16,7 @@ interface ColorMenuProps {
   onClose: () => void;
   allowCustom?: boolean;
   customColorValue?: string;
+  onClear?: () => void;
 }
 
 const defaultColors = [
@@ -52,6 +53,7 @@ export const ColorMenu: FC<ColorMenuProps> = ({
   onClick,
   allowCustom = false,
   customColorValue = '',
+  onClear,
 }) => {
   const t = useTranslation();
   const [customColor, setCustomColor] = React.useState('');
@@ -209,6 +211,22 @@ export const ColorMenu: FC<ColorMenuProps> = ({
                 />
               </Box>
             </Box>
+            {onClear && (
+              <Box sx={{ width: '100%', mt: 1 }}>
+                <Button
+                  variant="outlined"
+                  size="small"
+                  fullWidth
+                  onClick={() => {
+                    onClear();
+                    onClose();
+                  }}
+                  sx={{ textTransform: 'none' }}
+                >
+                  {t('button.clear')}
+                </Button>
+              </Box>
+            )}
           </>
         ) : (
           colorCircles

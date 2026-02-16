@@ -36,6 +36,10 @@ export const ColorPickerPreference: React.FC<ColorPickerPreferenceProps> = ({
     handleClose();
   };
 
+  const handleClear = () => {
+    onChange('');
+  };
+
   return (
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
       <ColorMenu
@@ -44,6 +48,7 @@ export const ColorPickerPreference: React.FC<ColorPickerPreferenceProps> = ({
         onClick={handleColorSelect}
         allowCustom={true}
         customColorValue={customColor}
+        onClear={handleClear}
       />
       <IconButton
         onClick={handleClick}
