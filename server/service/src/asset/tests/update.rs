@@ -9,7 +9,7 @@ mod query {
     use crate::{
         asset::{
             insert::InsertAsset,
-            update::{UpdateAsset, UpdateAssetError},
+            update::{UpdateAsset},
         },
         service_provider::ServiceProvider,
         NullableUpdate,
