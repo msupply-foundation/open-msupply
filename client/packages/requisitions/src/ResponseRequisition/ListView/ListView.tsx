@@ -11,6 +11,7 @@ import {
   usePaginatedMaterialTable,
   MaterialTable,
   ColumnType,
+  BasicSpinner,
 } from '@openmsupply-client/common';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
@@ -59,7 +60,8 @@ export const ListView = () => {
     ],
   });
   const queryParams = { ...filter, sortBy, page, first, offset };
-  const { data, isError, isFetching } = useResponse.document.list(queryParams);
+  const { data, isError, isFetching, isLoading } =
+    useResponse.document.list(queryParams);
   const { authoriseResponseRequisitions } = useResponse.utils.preferences();
   const program =
     data?.nodes.some(row => row.programName) ||
@@ -154,7 +156,7 @@ export const ListView = () => {
         includeColumn: authoriseResponseRequisitions,
       },
     ],
-    []
+    [t, program, authoriseResponseRequisitions, onUpdate]
   );
 
   const { table, selectedRows } = usePaginatedMaterialTable({
@@ -174,13 +176,34 @@ export const ListView = () => {
     ),
   });
 
-  return (
-    <>
-      <Toolbar />
+  // Memoize toolbar and app bar buttons to prevent re-render during sync
+  const toolbarComponent = useMemo(() => <Toolbar />, []);
+
+  const appBarComponent = useMemo(
+    () => (
       <AppBarButtons
         requisitionModalController={requisitionModalController}
         createOrderModalController={createOrderModalController}
       />
+    ),
+    [requisitionModalController, createOrderModalController]
+  );
+
+  // Show spinner on initial load only
+  if (isLoading && !data) {
+    return (
+      <>
+        {toolbarComponent}
+        {appBarComponent}
+        <BasicSpinner messageKey="loading" />
+      </>
+    );
+  }
+
+  return (
+    <>
+      {toolbarComponent}
+      {appBarComponent}
       <MaterialTable table={table} />
       <Footer
         selectedRows={selectedRows as ResponseFragment[]}
