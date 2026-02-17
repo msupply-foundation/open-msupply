@@ -2648,5 +2648,6 @@
   "button.scanning": "Scanning…",
   "button.listening-for-scans": "Ready to scan…",
   "label.listening": "Listening for scans",
-  "label.enter-barcode": "Enter barcode"
+  "label.enter-barcode": "Enter barcode",
+  "messages.scan-disabled-warning": "Unable to scan, please close the item edit window modal to continue"
 }

@@ -34,6 +34,7 @@ interface Message {
 interface ScanInputModalProps {
   lines: InboundLineFragment[];
   invoiceId: string;
+  shouldOpen?: boolean;
 }
 
 interface FormDraftState {
@@ -63,9 +64,14 @@ const defaultDraftState: FormDraftState = {
   barcodeContent: '',
 };
 
-export const ScanInputModal = ({ lines, invoiceId }: ScanInputModalProps) => {
+export const ScanInputModal = ({
+  lines,
+  invoiceId,
+  shouldOpen = false,
+}: ScanInputModalProps) => {
   const t = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
+  const { warning } = useNotification();
   const { Modal } = useDialog({ isOpen });
 
   const [barcodeData, setBarcodeData] = useState<BarcodeNode | null>(null);
@@ -191,6 +197,14 @@ export const ScanInputModal = ({ lines, invoiceId }: ScanInputModalProps) => {
 
   const handleScan = useCallback(
     async (barcode: ScanResult) => {
+      if (!shouldOpen) {
+        console.warn(
+          'Scan received but shouldOpen is false, not opening modal to show scan result'
+        );
+        warning(t('messages.scan-disabled-warning'))();
+        return;
+      }
+
       // Check if a new GTIN is scanned while we already have one
       // We treat even the same GTIN as a new one, because they might be scanning a bunch of the same product and want the modal to auto-save and reset for each one
       if (isOpen && draftState.gtin && barcode.gtin) {
@@ -282,7 +296,7 @@ export const ScanInputModal = ({ lines, invoiceId }: ScanInputModalProps) => {
         return newState;
       });
     },
-    [isOpen, getBarcode, draftState, t, saveCurrentLine]
+    [isOpen, shouldOpen, getBarcode, draftState, t, saveCurrentLine]
   );
 
   // Register the scan handler so it runs on scan events when context is
