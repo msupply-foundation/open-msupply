@@ -9,7 +9,7 @@ mod query {
     use crate::{
         asset::{
             insert::InsertAsset,
-            update::{UpdateAsset},
+            update::{UpdateAsset, UpdateAssetError},
         },
         service_provider::ServiceProvider,
         NullableUpdate,
@@ -63,10 +63,10 @@ mod query {
             )
             .unwrap();
 
-        // 2. Check we CAN update the asset to use a serial number that already exists
-        // (duplicate serial numbers are allowed to support CSV imports and sync from remote sites)
-        let updated_asset = service
-            .update_asset(
+        // 2. Check we CANNOT update the asset to use a serial number that already exists on another asset
+        // This prevents creating new duplicates via updates
+        assert_eq!(
+            service.update_asset(
                 &ctx,
                 UpdateAsset {
                     id: id.clone(),
@@ -75,9 +75,9 @@ mod query {
                     }),
                     ..Default::default()
                 },
-            )
-            .unwrap();
-        assert_eq!(updated_asset.serial_number, mock_asset_a().serial_number);
+            ).err().unwrap(),
+            UpdateAssetError::SerialNumberAlreadyExists
+        );
 
         // 3. Check we can update the asset to use a serial number that doesn't already exist
         let updated_asset = service
@@ -219,10 +219,11 @@ mod query {
 
         assert_eq!(asset_location_ids, empty_vec);
 
-        // 10. Check that an asset with a serial number can be updated without changing the serial number
-        // This ensures that the serial number validation doesn't block updates when the serial number isn't changing
+        // 10. Test scenario with duplicate serial numbers (simulating CSV import/sync)
+        // mock_asset_a() already exists in the database with serial_number_a
+        // Create another asset and then manually update its serial to match
         let id3 = "test_id_3".to_string();
-        let duplicate_serial = "duplicate_serial".to_string();
+        let id4 = "test_id_4".to_string();
         
         let _asset_3 = service
             .insert_asset(
@@ -230,28 +231,93 @@ mod query {
                 InsertAsset {
                     id: id3.clone(),
                     store_id: Some(mock_store_a().id),
-                    notes: Some("asset with serial".to_string()),
+                    notes: Some("asset 3".to_string()),
                     asset_number: Some("test_asset_number_3".to_string()),
-                    serial_number: Some(duplicate_serial.clone()),
+                    serial_number: Some("unique_serial_3".to_string()),
                     catalogue_item_id: Some("189ef51c-d232-4da7-b090-ca3a53d31f58".to_string()),
                     ..Default::default()
                 },
             )
             .unwrap();
 
-        // Update the asset without changing the serial number (just updating notes)
+        let _asset_4 = service
+            .insert_asset(
+                &ctx,
+                InsertAsset {
+                    id: id4.clone(),
+                    store_id: Some(mock_store_a().id),
+                    notes: Some("asset 4".to_string()),
+                    asset_number: Some("test_asset_number_4".to_string()),
+                    serial_number: Some("duplicate_test_serial".to_string()),
+                    catalogue_item_id: Some("189ef51c-d232-4da7-b090-ca3a53d31f58".to_string()),
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+
+        // Manually create a duplicate by updating asset_4's serial in the database directly
+        // This simulates a duplicate that came via CSV import or sync
+        let mut asset_4_row = repository::assets::asset_row::AssetRowRepository::new(&connection)
+            .find_one_by_id(&id4)
+            .unwrap()
+            .unwrap();
+        asset_4_row.serial_number = Some("duplicate_test_serial".to_string());
+        
+        // First update asset_3 to have the same serial number directly in DB
+        let mut asset_3_row = repository::assets::asset_row::AssetRowRepository::new(&connection)
+            .find_one_by_id(&id3)
+            .unwrap()
+            .unwrap();
+        asset_3_row.serial_number = Some("duplicate_test_serial".to_string());
+        repository::assets::asset_row::AssetRowRepository::new(&connection)
+            .upsert_one(&asset_3_row, None)
+            .unwrap();
+
+        // 11. Check that we CAN update other fields when serial number is already duplicated
+        // (not changing the serial number itself)
         let updated_asset_3 = service
             .update_asset(
                 &ctx,
                 UpdateAsset {
                     id: id3.clone(),
-                    notes: Some("updated notes".to_string()),
+                    notes: Some("updated notes for duplicate".to_string()),
                     ..Default::default()
                 },
             )
             .unwrap();
         
-        assert_eq!(updated_asset_3.notes, Some("updated notes".to_string()));
-        assert_eq!(updated_asset_3.serial_number, Some(duplicate_serial.clone()));
+        assert_eq!(updated_asset_3.notes, Some("updated notes for duplicate".to_string()));
+        assert_eq!(updated_asset_3.serial_number, Some("duplicate_test_serial".to_string()));
+
+        // 12. Check that we CAN fix duplication by changing serial to a unique one
+        let updated_asset_3 = service
+            .update_asset(
+                &ctx,
+                UpdateAsset {
+                    id: id3.clone(),
+                    serial_number: Some(NullableUpdate {
+                        value: Some("fixed_unique_serial".to_string()),
+                    }),
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+        
+        assert_eq!(updated_asset_3.serial_number, Some("fixed_unique_serial".to_string()));
+
+        // 13. Check that we CANNOT change serial to one that exists on another asset
+        assert_eq!(
+            service.update_asset(
+                &ctx,
+                UpdateAsset {
+                    id: id4.clone(),
+                    serial_number: Some(NullableUpdate {
+                        value: Some("fixed_unique_serial".to_string()), // This now exists on id3
+                    }),
+                    ..Default::default()
+                },
+            ).err().unwrap(),
+            UpdateAssetError::SerialNumberAlreadyExists
+        );
     }
 }
