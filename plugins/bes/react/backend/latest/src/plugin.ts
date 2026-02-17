@@ -153,7 +153,6 @@ const plugins: BackendPlugins = {
 
       for (let i = 0; i < unexpiredAndNullBatches.length; i++) {
         const batch = unexpiredAndNullBatches[i];
-        const shipmentLineId = uuidv7();
         const unitsInBatch = batch.availableNumberOfPacks * batch.packSize;
         const unitsStillRequired = item.numberOfUnits - totalUnitsSupplied;
 
@@ -161,9 +160,10 @@ const plugins: BackendPlugins = {
 
         if (totalUnitsSupplied >= item.numberOfUnits) break;
 
-        if (unitsInBatch > unitsStillRequired) {
-          const packsToSupply = Math.ceil(unitsStillRequired / batch.packSize); // have to round down or get ReductionBelowZero error
+        const shipmentLineId = uuidv7();
 
+        if (unitsInBatch > unitsStillRequired) {
+          const packsToSupply = Math.ceil(unitsStillRequired / batch.packSize); // have to round up or get ReductionBelowZero error
           totalUnitsSupplied += packsToSupply * batch.packSize;
 
           insertLines.push({
@@ -183,34 +183,25 @@ const plugins: BackendPlugins = {
       }
 
       // Determine if LEFO expired can fullfill rest of order
-
       for (let j = 0; j < expiredBatches.length; j++) {
+        if (totalUnitsSupplied >= item.numberOfUnits) break;
         const batch = expiredBatches[j];
-        const shipmentLineId = uuidv7();
+        if (batch.availableNumberOfPacks === 0) continue;
         const unitsInBatch = batch.availableNumberOfPacks * batch.packSize;
         const unitsStillRequired = item.numberOfUnits - totalUnitsSupplied;
 
-        if (totalUnitsSupplied >= item.numberOfUnits) break;
-        if (batch.availableNumberOfPacks === 0) continue;
-
+        let numberOfPacks = 0;
         if (unitsInBatch > unitsStillRequired) {
-          const packsToSupply = Math.ceil(unitsStillRequired / batch.packSize);
-          totalUnitsSupplied += packsToSupply * batch.packSize;
-          insertLines.push({
-            id: shipmentLineId,
-            stockLineId: batch.id,
-            numberOfPacks: packsToSupply,
-          });
-          break;
+          numberOfPacks = Math.ceil(unitsStillRequired / batch.packSize);
         } else {
-          totalUnitsSupplied += batch.availableNumberOfPacks * batch.packSize;
-
-          insertLines.push({
-            id: shipmentLineId,
-            stockLineId: batch.id,
-            numberOfPacks: batch.availableNumberOfPacks,
-          });
+          numberOfPacks = batch.availableNumberOfPacks;
         }
+        totalUnitsSupplied += numberOfPacks * batch.packSize;
+        insertLines.push({
+          id: uuidv7(),
+          stockLineId: batch.id,
+          numberOfPacks,
+        });
       }
 
       // If still not fully allocated, create placeholder for rest of items
