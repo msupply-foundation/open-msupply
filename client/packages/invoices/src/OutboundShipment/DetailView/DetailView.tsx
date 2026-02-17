@@ -34,6 +34,7 @@ import { canReturnOutboundLines } from '../../utils';
 import { OutboundLineEdit, OutboundOpenedWith } from './OutboundLineEdit';
 import { useOutboundLines } from '../api';
 import { useOutboundColumns } from './columns';
+import { ScanInputModal } from './ScanInputModal';
 
 export const DetailView = () => {
   const t = useTranslation();
@@ -128,7 +129,7 @@ export const DetailView = () => {
         if (!acc.find(i => i.id === item.id)) acc.push(item);
         return acc;
       }, []),
-    []
+    [table]
   );
 
   if (isLoading) return <DetailViewSkeleton hasGroupBy={true} hasHold={true} />;
@@ -180,6 +181,8 @@ export const DetailView = () => {
         resetRowSelection={table.resetRowSelection}
       />
       <SidePanel />
+
+      <ScanInputModal onAddItem={onAddItem} />
     </>
   ) : (
     <AlertModal
