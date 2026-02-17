@@ -31,6 +31,7 @@ export const AddButton: React.FC<AddButtonProps> = ({
   const t = useTranslation();
   const { urlQuery, updateQuery } = useUrlQuery();
   // const { showContactTracing } = usePreferences(); // Temporarily disabled: Contact tracing causes app crashes
+  const showContactTracing = false;
   const currentUrlTab = urlQuery['tab'];
   const { createNewPatient } = usePatientStore();
   const { setModal: selectModal, reset } = usePatientModalStore();
@@ -54,13 +55,12 @@ export const AddButton: React.FC<AddButtonProps> = ({
           isDisabled: disableEncounterButton,
         }
       );
-      // Temporarily disabled: Contact tracing causes app crashes
-      // if (showContactTracing) {
-      //   baseOptions.push({
-      //     value: PatientModal.ContactTraceSearch,
-      //     label: t('button.add-contact-trace'),
-      //   });
-      // }
+      if (showContactTracing) {
+        baseOptions.push({
+          value: PatientModal.ContactTraceSearch,
+          label: t('button.add-contact-trace'),
+        });
+      }
     }
 
     if (insuranceProvidersData?.length > 0) {
@@ -76,7 +76,7 @@ export const AddButton: React.FC<AddButtonProps> = ({
     t,
     store,
     insuranceProvidersData,
-    // showContactTracing, // Temporarily disabled: Contact tracing causes app crashes
+    showContactTracing,
   ]);
 
   const [selectedOption, setSelectedOption] = useState<
@@ -87,8 +87,7 @@ export const AddButton: React.FC<AddButtonProps> = ({
     [PatientTabValue.Programs]: PatientModal.ProgramSearch,
     [PatientTabValue.Vaccinations]: PatientModal.ProgramSearch,
     [PatientTabValue.Encounters]: PatientModal.Encounter,
-    // Temporarily disabled: Contact tracing causes app crashes
-    // [PatientTabValue.ContactTracing]: PatientModal.ContactTraceSearch,
+    [PatientTabValue.ContactTracing]: PatientModal.ContactTraceSearch,
     [PatientTabValue.Insurance]: PatientModal.Insurance,
   };
 

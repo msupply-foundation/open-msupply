@@ -5,7 +5,7 @@ import {
   EncounterSortFieldInput,
   ProgramEnrolmentSortFieldInput,
   useAuthContext,
-  // ContactTraceSortFieldInput, // Temporarily disabled: Contact tracing causes app crashes
+  ContactTraceSortFieldInput,
   TabDefinition,
   // usePreferences, // Temporarily disabled: Contact tracing causes app crashes
 } from '@openmsupply-client/common';
@@ -21,8 +21,7 @@ import {
   usePatientStore,
   useProgramEnrolments,
 } from '@openmsupply-client/programs';
-import { CreateContactTraceModal } from '../ContactTrace';
-// import { ContactTraceListView } from '../ContactTrace'; // Temporarily disabled: Contact tracing causes app crashes
+import { ContactTraceListView, CreateContactTraceModal } from '../ContactTrace';
 
 import { VaccinationCardsListView } from '../VaccinationCard/ListView';
 import { InsuranceListView, InsuranceModal } from '../Insurance';
@@ -51,6 +50,7 @@ export const PatientView = () => {
   const [isDirtyPatient, setIsDirtyPatient] = useState(false);
   const { store, storeId } = useAuthContext();
   // const { showContactTracing } = usePreferences(); // Temporarily disabled: Contact tracing causes app crashes
+  const showContactTracing = false;
 
   const {
     query: { data: insuranceProvidersData },
@@ -106,18 +106,17 @@ export const PatientView = () => {
   if (store?.preferences.omProgramModule) {
     tabs.push(...programTabs);
 
-    // Temporarily disabled: Contact tracing tab causes app crashes
     // Only if program module enabled, add contact tracing tab if global pref is enabled
-    // if (showContactTracing) {
-    //   tabs.push({
-    //     Component: <ContactTraceListView />,
-    //     value: PatientTabValue.ContactTracing,
-    //     sort: {
-    //       key: ContactTraceSortFieldInput.Datetime,
-    //       dir: 'desc' as 'desc' | 'asc',
-    //     },
-    //   });
-    // }
+    if (showContactTracing) {
+      tabs.push({
+        Component: <ContactTraceListView />,
+        value: PatientTabValue.ContactTracing,
+        sort: {
+          key: ContactTraceSortFieldInput.Datetime,
+          dir: 'desc' as 'desc' | 'asc',
+        },
+      });
+    }
   }
 
   // Display insurance tab only if insurance providers are available and the patient is saved
