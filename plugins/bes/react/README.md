@@ -107,7 +107,7 @@ API will return "success" : false, a message, and items: [], in the following sc
 
 - No active stores are found to dispatch items from
 - No customer retrieved from "customerCode" input param
-- An exisiting UUID is given for "invoiceId" input param
+- An existing UUID is given for "invoiceId" input param
 
 API will return "success: false", a message, and items: [...item results]
 
