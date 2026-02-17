@@ -7,18 +7,11 @@ import {
   RequisitionNodeStatus,
 } from '@openmsupply-client/common';
 
-export const Toolbar = () => {
+const ToolbarComponent = () => {
   const t = useTranslation();
 
   return (
-    <AppBarContentPortal
-      sx={{
-        paddingBottom: '16px',
-        flex: 1,
-        justifyContent: 'space-between',
-        display: 'flex',
-      }}
-    >
+    <AppBarContentPortal>
       <Box display="flex" gap={1}>
         <FilterMenu
           filters={[
@@ -62,3 +55,5 @@ export const Toolbar = () => {
     </AppBarContentPortal>
   );
 };
+
+export const Toolbar = React.memo(ToolbarComponent);
