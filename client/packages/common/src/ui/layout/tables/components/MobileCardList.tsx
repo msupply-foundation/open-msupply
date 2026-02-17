@@ -1,21 +1,32 @@
 import { Box, Card, CardContent, Stack, Typography } from '@mui/material';
 import {
-  flexRender,
   MRT_Row,
   MRT_RowData,
+  MRT_TableBodyCellValue,
   MRT_TableInstance,
   MRT_TopToolbar,
 } from 'material-react-table';
 
 import React from 'react';
 
-const TableCard = <T extends MRT_RowData>({
+const DefaultCard = <T extends MRT_RowData>({
+  table,
   row,
-  onClick,
-}: {
-  row: MRT_Row<T>;
-  onClick?: React.MouseEventHandler<HTMLDivElement>;
-}) => {
+}: CustomCardProps<T>) => {
+  const rowProps =
+    typeof table.options.muiTableBodyRowProps === 'function'
+      ? ((
+          table.options.muiTableBodyRowProps as
+            | ((args: {
+                row: typeof row;
+                table: typeof table;
+              }) => React.HTMLProps<HTMLDivElement>)
+            | undefined
+        )?.({ row, table }) ?? {})
+      : (table.options.muiTableBodyRowProps ?? {});
+
+  const onClick = rowProps.onClick;
+
   const cells = row.getVisibleCells();
 
   return (
@@ -29,9 +40,6 @@ const TableCard = <T extends MRT_RowData>({
             // Don't show "Select" checkbox in mobile card view
             if (cell.column.id === 'mrt-row-select') return null;
 
-            const content = cell.column.columnDef.Cell
-              ? flexRender(cell.column.columnDef.Cell, cell.getContext())
-              : cell.renderValue();
             return (
               <Box
                 key={cell.id}
@@ -41,7 +49,7 @@ const TableCard = <T extends MRT_RowData>({
                 alignItems="flex-start"
               >
                 <Typography color="text.secondary">
-                  {flexRender(cell.column.columnDef.header, cell.getContext())}
+                  {cell.column.columnDef.header}
                 </Typography>
                 <Box
                   sx={{
@@ -50,7 +58,7 @@ const TableCard = <T extends MRT_RowData>({
                     wordBreak: 'break-word',
                   }}
                 >
-                  {content as React.ReactNode}
+                  <MRT_TableBodyCellValue table={table} cell={cell} />
                 </Box>
               </Box>
             );
@@ -61,33 +69,32 @@ const TableCard = <T extends MRT_RowData>({
   );
 };
 
+export type CustomCardProps<T extends MRT_RowData> = {
+  table: MRT_TableInstance<T>;
+  row: MRT_Row<T>;
+};
+
 export const MobileCardList = <T extends MRT_RowData>({
   table,
+  CustomCard,
 }: {
   table: MRT_TableInstance<T>;
+  CustomCard?: (props: CustomCardProps<T>) => React.JSX.Element;
 }) => {
   return (
-    <>
-      <Stack spacing={2} sx={{ width: '100%', alignItems: 'center', mx: 2 }}>
+    <Stack spacing={2} sx={{ width: '100%', alignItems: 'center' }}>
+      <Box
+        sx={{
+          width: table.options.renderTopToolbarCustomActions && '100%',
+        }}
+      >
         <MRT_TopToolbar table={table} />
-        {table.getRowModel().rows.map(row => {
-          const rowProps =
-            typeof table.options.muiTableBodyRowProps === 'function'
-              ? ((
-                  table.options.muiTableBodyRowProps as
-                    | ((args: {
-                        row: typeof row;
-                        table: typeof table;
-                      }) => React.HTMLProps<HTMLDivElement>)
-                    | undefined
-                )?.({ row, table }) ?? {})
-              : (table.options.muiTableBodyRowProps ?? {});
-
-          const onClick = rowProps.onClick;
-
-          return <TableCard key={row.id} row={row} onClick={onClick} />;
-        })}
-      </Stack>
-    </>
+      </Box>
+      <Box>
+        {table
+          .getRowModel()
+          .rows.map(row => (CustomCard ?? DefaultCard)({ table, row }))}
+      </Box>
+    </Stack>
   );
 };

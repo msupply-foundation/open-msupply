@@ -7,8 +7,11 @@ import {
   useDialog,
   useNotification,
   ModalMode,
+  MobileCardList,
+  Alert,
   ButtonWithIcon,
   PlusCircleIcon,
+  useNonPaginatedMaterialTable,
 } from '@openmsupply-client/common';
 import { InboundLineEditForm } from './InboundLineEditForm';
 import { InboundLineFragment, useDraftInboundLines } from '../../../api';
@@ -19,7 +22,9 @@ import {
 import { isInboundPlaceholderRow } from '../../../../utils';
 import { ScannedBatchData } from '../../DetailView';
 import { useNextItem } from '../../../../useNextItem';
-import { AccordionLayout } from './AccordionLayout';
+import { useAccordionCard } from './AccordionCard';
+import { DraftInboundLine } from '../../../../types';
+import { useInboundLineEditColumns } from './columns';
 
 type InboundLineItem = InboundLineFragment['item'];
 interface InboundLineEditProps {
@@ -56,6 +61,7 @@ export const InboundLineEdit = ({
     getSortedItems,
     currentItem?.id ?? ''
   );
+  const [packRoundingMessage, setPackRoundingMessage] = useState<string>('');
 
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
   const {
@@ -76,6 +82,39 @@ export const InboundLineEdit = ({
   useEffect(() => {
     setCurrentItem(item);
   }, [item]);
+
+  const columns = useInboundLineEditColumns({
+    updateDraftLine,
+    removeDraftLine,
+    isDisabled,
+    hasItemVariantsEnabled,
+    hasVvmStatusesEnabled,
+    item,
+    setPackRoundingMessage,
+    currency,
+    isExternalSupplier,
+  });
+
+  const AccordionCard = useAccordionCard();
+  const { table } = useNonPaginatedMaterialTable<DraftInboundLine>({
+    tableId: 'inbound-line-quantity',
+    columns,
+    data: draftLines,
+    enableRowSelection: false,
+    getIsRestrictedRow: isDisabled ? () => true : undefined,
+    renderTopToolbarCustomActions: () => (
+      <ButtonWithIcon
+        disabled={isDisabled}
+        color="primary"
+        variant="outlined"
+        onClick={addDraftLine}
+        label={`${t('label.add-batch')} (+)`}
+        Icon={<PlusCircleIcon />}
+      />
+    ),
+    renderDetailPanel: AccordionCard,
+    isMobile: true,
+  });
 
   return (
     <Modal
@@ -127,19 +166,16 @@ export const InboundLineEdit = ({
             item={currentItem}
             onChangeItem={setCurrentItem}
           />
+
           <Divider margin={10} />
-          <AccordionLayout
-            draftLines={draftLines}
-            addDraftLine={addDraftLine}
-            updateDraftLine={updateDraftLine}
-            removeDraftLine={removeDraftLine}
-            isDisabled={isDisabled}
-            currency={currency}
-            isExternalSupplier={isExternalSupplier}
-            item={currentItem}
-            hasItemVariantsEnabled={hasItemVariantsEnabled}
-            hasVvmStatusesEnabled={!!hasVvmStatusesEnabled}
-          />
+
+          {packRoundingMessage && (
+            <Alert severity="warning" style={{ marginBottom: 2 }}>
+              {packRoundingMessage}
+            </Alert>
+          )}
+
+          <MobileCardList table={table} CustomCard={AccordionCard} />
         </>
       )}
     </Modal>

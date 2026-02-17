@@ -131,7 +131,7 @@ const DetailViewInner = () => {
     grouping: { enabled: true },
     isLoading: false,
     initialSort: { key: 'itemName', dir: 'asc' },
-    onRowClick: !isDisabled && !isExtraSmallScreen ? onRowClick : undefined,
+    onRowClick: !isDisabled ? onRowClick : undefined,
     getIsPlaceholderRow: row => !!isInboundPlaceholderRow(row),
     noDataElement: (
       <NothingHere

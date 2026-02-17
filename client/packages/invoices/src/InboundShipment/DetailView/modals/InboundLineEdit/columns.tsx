@@ -1,25 +1,22 @@
 import React, { useMemo } from 'react';
 import {
-  useAuthContext,
   useTranslation,
-  usePreferences,
   Formatter,
-  useIntlUtils,
-  useFormatNumber,
   NumUtils,
   IconButton,
   DeleteIcon,
   ColumnDef,
-  useSimpleMaterialTable,
-  MaterialTable,
   ColumnType,
   DateUtils,
   ExpiryDateInput,
   TextInputCell,
   NumberInputCell,
+  useFormatNumber,
   CurrencyInputCell,
+  useAuthContext,
+  usePreferences,
+  useIntlUtils,
 } from '@openmsupply-client/common';
-import { DraftInboundLine } from '../../../../types';
 import {
   CampaignOrProgramCell,
   CurrencyRowFragment,
@@ -31,39 +28,36 @@ import {
   LocationSearchInput,
   VVMStatusSearchInput,
 } from '@openmsupply-client/system';
+import { DraftInboundLine } from '../../../../types';
 import { PatchDraftLineInput } from '../../../api';
 
-interface TableProps {
-  lines: DraftInboundLine[];
-  updateDraftLine: (patch: PatchDraftLineInput) => void;
-  isDisabled?: boolean;
-  currency?: CurrencyRowFragment | null;
-  isExternalSupplier?: boolean;
-  hasItemVariantsEnabled?: boolean;
-  hasVvmStatusesEnabled?: boolean;
-  item?: ItemRowFragment | null;
-  setPackRoundingMessage?: (value: React.SetStateAction<string>) => void;
-  restrictedToLocationTypeId?: string | null;
-}
-
-interface QuantityTableProps extends TableProps {
-  removeDraftLine: (id: string) => void;
-}
-
-export const QuantityTable = ({
-  lines,
+export const useInboundLineEditColumns = ({
   updateDraftLine,
   removeDraftLine,
-  isDisabled = false,
+  isDisabled,
   hasItemVariantsEnabled,
   hasVvmStatusesEnabled,
   item,
   setPackRoundingMessage,
-}: QuantityTableProps) => {
+  currency,
+  isExternalSupplier,
+}: {
+  updateDraftLine: (patch: PatchDraftLineInput) => void;
+  removeDraftLine: (id: string) => void;
+  isDisabled?: boolean;
+  hasItemVariantsEnabled?: boolean;
+  hasVvmStatusesEnabled?: boolean;
+  item?: ItemRowFragment | null;
+  setPackRoundingMessage?: (value: React.SetStateAction<string>) => void;
+  currency?: CurrencyRowFragment | null;
+  isExternalSupplier?: boolean;
+}) => {
   const t = useTranslation();
-  const { getPlural } = useIntlUtils();
   const { format } = useFormatNumber();
-  const { manageVaccinesInDoses } = usePreferences();
+  const { store } = useAuthContext();
+  const { allowTrackingOfStockByDonor, manageVaccinesInDoses } =
+    usePreferences();
+  const { getPlural } = useIntlUtils();
 
   const displayInDoses = manageVaccinesInDoses && !!item?.isVaccine;
   const unitName = Formatter.sentenceCase(
@@ -71,8 +65,8 @@ export const QuantityTable = ({
   );
   const pluralisedUnitName = getPlural(unitName, 2);
 
-  const columns = useMemo(() => {
-    const cols: ColumnDef<DraftInboundLine>[] = [
+  const columns = useMemo(
+    (): ColumnDef<DraftInboundLine>[] => [
       {
         accessorKey: 'batch',
         header: t('label.batch'),
@@ -322,78 +316,6 @@ export const QuantityTable = ({
         ),
       },
       {
-        id: 'delete',
-        header: '',
-        size: 50,
-        Cell: ({ row }) => (
-          <IconButton
-            label={t('button.delete')}
-            onClick={() => removeDraftLine(row.original.id)}
-            icon={<DeleteIcon fontSize="small" />}
-          />
-        ),
-      },
-    ];
-    return cols;
-  }, [
-    isDisabled,
-    updateDraftLine,
-    setPackRoundingMessage,
-    format,
-    unitName,
-    pluralisedUnitName,
-    displayInDoses,
-    hasItemVariantsEnabled,
-    hasVvmStatusesEnabled,
-    isDisabled,
-    item?.isVaccine,
-    pluralisedUnitName,
-    removeDraftLine,
-    setPackRoundingMessage,
-    updateDraftLine,
-  ]);
-
-  const table = useSimpleMaterialTable<DraftInboundLine>({
-    tableId: 'inbound-line-quantity',
-    columns,
-    data: lines,
-    getIsRestrictedRow: isDisabled ? () => true : undefined,
-  });
-
-  return <MaterialTable table={table} />;
-};
-
-export const PricingTableComponent = ({
-  lines,
-  updateDraftLine,
-  isDisabled = false,
-  currency,
-  isExternalSupplier,
-}: TableProps) => {
-  const t = useTranslation();
-  const { store } = useAuthContext();
-
-  const columns = useMemo(() => {
-    const cols: ColumnDef<DraftInboundLine>[] = [
-      {
-        accessorKey: 'batch',
-        header: t('label.batch'),
-        size: 100,
-        accessorFn: row => row.batch || '',
-      },
-      {
-        accessorKey: 'packSize',
-        header: t('label.pack-size'),
-        size: 100,
-        columnType: ColumnType.Number,
-      },
-      {
-        accessorKey: 'numberOfPacks',
-        header: t('label.num-packs'),
-        size: 100,
-        columnType: ColumnType.Number,
-      },
-      {
         accessorKey: 'costPricePerPack',
         header: t('label.pack-cost-price'),
         Cell: ({ cell, row }) => (
@@ -466,39 +388,6 @@ export const PricingTableComponent = ({
         includeColumn:
           isExternalSupplier && !!store?.preferences.issueInForeignCurrency,
       },
-    ];
-    return cols;
-  }, [isDisabled, updateDraftLine]);
-
-  const table = useSimpleMaterialTable<DraftInboundLine>({
-    tableId: 'inbound-line-pricing',
-    columns,
-    data: lines,
-    getIsRestrictedRow: isDisabled ? () => true : undefined,
-  });
-
-  return <MaterialTable table={table} />;
-};
-
-export const PricingTable = React.memo(PricingTableComponent);
-
-export const LocationTableComponent = ({
-  lines,
-  updateDraftLine,
-  isDisabled,
-  restrictedToLocationTypeId,
-}: TableProps) => {
-  const t = useTranslation();
-  const { allowTrackingOfStockByDonor } = usePreferences();
-
-  const columns = useMemo(() => {
-    const cols: ColumnDef<DraftInboundLine>[] = [
-      {
-        accessorKey: 'batch',
-        header: t('label.batch'),
-        size: 100,
-        accessorFn: row => row.batch || '',
-      },
       {
         id: 'location',
         header: t('label.location'),
@@ -511,27 +400,11 @@ export const LocationTableComponent = ({
               disabled={isDisabled ?? false}
               selectedLocation={(row.location as LocationRowFragment) ?? null}
               volumeRequired={row.volumePerPack * row.numberOfPacks}
-              restrictedToLocationTypeId={restrictedToLocationTypeId}
+              restrictedToLocationTypeId={item?.restrictedLocationTypeId}
               fullWidth
             />
           );
         },
-      },
-
-      {
-        accessorKey: 'note',
-        header: t('label.stocktake-comment'),
-        size: 200,
-        Cell: ({ cell, row }) => (
-          <TextInputCell
-            cell={cell}
-            updateFn={value =>
-              updateDraftLine({ id: row.original.id, note: value })
-            }
-            disabled={isDisabled ?? false}
-          />
-        ),
-        defaultHideOnMobile: true,
       },
       {
         id: 'donor',
@@ -565,23 +438,47 @@ export const LocationTableComponent = ({
           />
         ),
       },
-    ];
-    return cols;
-  }, [
-    allowTrackingOfStockByDonor,
-    isDisabled,
-    restrictedToLocationTypeId,
-    updateDraftLine,
-  ]);
+      {
+        accessorKey: 'note',
+        header: t('label.stocktake-comment'),
+        size: 200,
+        Cell: ({ cell, row }) => (
+          <TextInputCell
+            cell={cell}
+            updateFn={value =>
+              updateDraftLine({ id: row.original.id, note: value })
+            }
+            disabled={isDisabled ?? false}
+          />
+        ),
+        defaultHideOnMobile: true,
+      },
+      {
+        id: 'delete',
+        header: '',
+        size: 50,
+        Cell: ({ row }) => (
+          <IconButton
+            label={t('button.delete')}
+            onClick={() => removeDraftLine(row.original.id)}
+            icon={<DeleteIcon fontSize="small" />}
+          />
+        ),
+        enableHiding: false,
+      },
+    ],
+    [
+      isDisabled,
+      updateDraftLine,
+      setPackRoundingMessage,
+      pluralisedUnitName,
+      displayInDoses,
+      hasItemVariantsEnabled,
+      hasVvmStatusesEnabled,
+      item?.isVaccine,
+      // TODO: fill out rest of dependencies
+    ]
+  );
 
-  const table = useSimpleMaterialTable<DraftInboundLine>({
-    tableId: 'inbound-line-location',
-    columns,
-    data: lines,
-    getIsRestrictedRow: isDisabled ? () => true : undefined,
-  });
-
-  return <MaterialTable table={table} />;
+  return columns;
 };
-
-export const LocationTable = React.memo(LocationTableComponent);
