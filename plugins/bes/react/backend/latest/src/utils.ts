@@ -1,5 +1,6 @@
 import { format } from 'date-fns/format';
 import { endOfDay } from 'date-fns';
+import { EndpointItems } from './types';
 
 type Batch = {
   id: string;
@@ -67,3 +68,20 @@ export const fixWeirdNumberAsIntBug = (num: number | string): number => {
 
   return num;
 };
+
+export function aggregateItemsByUniversalCode(items: EndpointItems[]) {
+  return items.reduce<Array<EndpointItems>>((acc, item) => {
+    const existing = acc.find(x => x.universalCode === item.universalCode);
+
+    if (existing) {
+      existing.numberOfUnits += item.numberOfUnits;
+    } else {
+      acc.push({
+        universalCode: item.universalCode,
+        numberOfUnits: item.numberOfUnits,
+      });
+    }
+
+    return acc;
+  }, []);
+}

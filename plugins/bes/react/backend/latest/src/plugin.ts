@@ -12,7 +12,7 @@ import {
   checkOutboundShipmentExistsQuery,
   batchDeleteOutboundShipmentMutation,
 } from './queries';
-import { sortAndClassifyBatches } from './utils';
+import { sortAndClassifyBatches, aggregateItemsByUniversalCode } from './utils';
 import {
   insertOutboundShipment,
   saveOutboundShipmentItemLines,
@@ -95,12 +95,13 @@ const plugins: BackendPlugins = {
 
     // ******************************** Iterate over all items *********************
 
+    const aggregatedItems = aggregateItemsByUniversalCode(inp.items);
     const itemsResponses: ItemsEndpointResponse[] = [];
     let updateToShipped = true;
     let rollbackOperation = false;
 
-    for (let itemIter = 0; itemIter < inp.items.length; itemIter++) {
-      const item = inp.items[itemIter];
+    for (let itemIter = 0; itemIter < aggregatedItems.length; itemIter++) {
+      const item = aggregatedItems[itemIter];
 
       if (item.numberOfUnits === 0) {
         itemsResponses.push({
@@ -238,10 +239,12 @@ const plugins: BackendPlugins = {
         rollbackOperation = true;
       }
 
+      let insertMsg = `Inserted universalCode: ${item.universalCode}, Number of units requested: ${item.numberOfUnits}, `;
+      insertMsg += `Allocated Units: ${totalUnitsSupplied}, Placeholder Units: ${placeHolderQuantity}`;
       itemsResponses.push({
         universalCode: item.universalCode,
         success: true,
-        message: `Inserted universalCode: ${item.universalCode}, Number of units requested: ${item.numberOfUnits}, Allocated Units: ${totalUnitsSupplied}, Placeholder Units: ${placeHolderQuantity}`,
+        message: insertMsg,
       });
     }
 
@@ -263,16 +266,22 @@ const plugins: BackendPlugins = {
 
     if (rollbackOperation) {
       batchDeleteOutboundShipmentMutation(issuingStoreId, shipmentId);
+      let errMsg = `Failed to issued stock from store code: ${issuingStore.store_row.code}, for customer: ${customer.name}, `;
+      errMsg += `invoiceId: ${shipmentId}, items given count: ${inp.items.length}, `;
+      errMsg += `aggregated items count: ${aggregatedItems.length}. Operation has been rolled back.`;
       return {
         success: false,
-        message: `Failed to issued stock from store code: ${issuingStore.store_row.code}, for customer: ${customer.name}, invoiceId: ${shipmentId}, items count: ${itemsResponses.length}. Operation has been rolled back.`,
+        message: errMsg,
         items: itemsResponses,
       };
     }
 
+    let successMsg = `Issued stock from store code: ${issuingStore.store_row.code}, for customer: ${customer.name}, `;
+    successMsg += `invoiceId: ${shipmentId}, items given count: ${inp.items.length}, `;
+    successMsg += `aggregated items count: ${aggregatedItems.length}.`;
     return {
       success: true,
-      message: `Issued stock from store code: ${issuingStore.store_row.code}, for customer: ${customer.name}, invoiceId: ${shipmentId}, items count: ${itemsResponses.length}`,
+      message: successMsg,
       items: itemsResponses,
     };
   },
