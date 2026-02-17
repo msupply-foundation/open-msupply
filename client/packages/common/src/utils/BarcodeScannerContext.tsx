@@ -301,6 +301,12 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
     async (formats?: BarcodeFormat[], retryCount = 0) => {
       const MAX_RETRIES = 2;
 
+      console.log('🔍 scanBarcode called, scanner type:', {
+        mockScannerEnabled,
+        hasElectronApi,
+        hasCameraBarcodeScanner,
+      });
+
       switch (true) {
         case mockScannerEnabled:
           const mockBarcode = await MockScanner.scan();
@@ -325,6 +331,8 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
 
         case hasCameraBarcodeScanner:
           try {
+            console.log('📷 Starting camera barcode scanner...');
+
             const installTimeoutPromise = new Promise<undefined>((_, reject) =>
               setTimeout(() => {
                 setScannerInstallState(ScannerInstallState.Failed);
@@ -332,6 +340,9 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
               }, INSTALL_TIMEOUT_IN_MS)
             );
 
+            console.log(
+              '⏳ Checking if Google Barcode Scanner is available...'
+            );
             const isInstalled = await Promise.race([
               installTimeoutPromise,
               googleBarcodeScannerAvailable(),
@@ -347,11 +358,15 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
               throw err;
             });
 
+            console.log('✅ Scanner installed:', isInstalled);
+
             if (!isInstalled) {
               throw new Error(
                 t('error.unable-to-scan-barcode', { error: 'Not installed' })
               );
             }
+
+            console.log('🎥 Opening camera for scanning...');
 
             // Hide the app to show camera view
             setHideApp(true);
@@ -364,9 +379,11 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
             console.log('Scan result:', barcodes);
 
             if (barcodes && barcodes.length > 0 && barcodes[0]) {
+              console.log('✅ Barcode found:', barcodes[0].rawValue);
               return barcodes[0].rawValue;
             }
 
+            console.log('❌ No barcode detected');
             return '';
           } catch (e) {
             setHideApp(false);
@@ -375,6 +392,7 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
           }
       }
 
+      console.log('⚠️ No scanner available, returning empty string');
       return '';
     },
     [
@@ -422,12 +440,15 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
 
   const scan = useCallback(
     async (formats?: BarcodeFormat[]) => {
+      console.log('🎯 scan() called');
       let result: ScanResult = {};
 
       try {
         const barcode = await scanBarcode(formats);
+        console.log('📦 Barcode received from scanBarcode:', barcode);
         result = parseResult(barcode);
 
+        console.log('📋 Parsed result:', result);
         // Reset install state on successful scan
         if (scannerInstallState === ScannerInstallState.Failed) {
           setScannerInstallState(ScannerInstallState.Installed);
@@ -456,6 +477,7 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
         setInstallProgress(0);
       }
 
+      console.log('🔚 scan() returning result:', result);
       return result;
     },
     [scanBarcode, error, t, stopScan, scannerInstallState]
