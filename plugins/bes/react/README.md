@@ -11,7 +11,7 @@ TODO:
 3. ~~Better error handling and error messages. Handle edge cases.~~
 4. Testing
 5. ~~Improve Readme~~
-6. Exchange BatchOutboundShipment with UpdateOutboundShipment (for readability)
+6. ~~Exchange BatchOutboundShipment with UpdateOutboundShipment (for readability)~~ leaving as is
 
 ### Installation
 
@@ -56,19 +56,36 @@ request structure
 ```jsonc
 {
   "input": {
+    "invoiceId": "UUID", // Optional.  If no value given, a random UUID will be assigned to Outbound Shipment
     "customerCode": "string", // string for customerCode
-    "universalCode": "AR33197", // string for universalCode search
-    "numberOfUnits": 60,
+    "items": [
+      {
+        "universalCode": "AR33197", // string for universalCode search
+        "numberOfUnits": 60,
+      },
+    ],
   },
 }
 ```
 
 response structure
 
-```json
+```jsonc
 {
-  "message": "Issued stock for store: Kamo Regional Warehouse, item: AR33197, quantity allocated: 50, quantity on placeholder: 30",
-  "success": true
+  "message": "Failed to issued stock from store code: Kopu, for customer: Adamawa State Cold Store, invoiceId: 012578f4-5277-4b69-a9bc-dd7cb8b6f4d0333, items count: 2. Operation has been rolled back.",
+  "success": false,
+  "items": [
+    {
+      "message": "Inserted universalCode: 041011, Number of units requested: 500, Allocated Units: 100, Placeholder Units: 400",
+      "success": true,
+      "universalCode": "041011",
+    },
+    {
+      "message": "No item found for universalCode: 0300634",
+      "success": false,
+      "universalCode": "0300634",
+    },
+  ],
 }
 ```
 
@@ -86,21 +103,18 @@ query GraphqlPlugin($input: JSON!) {
 
 ### error responses
 
-Currently api will return "success" : false, and a message in the following scenarios :
+API will return "success" : false, a message, and items: [], in the following scenarios :
 
 - No active stores are found to dispatch items from
 - No customer retrieved from "customerCode" input param
+- An exisiting UUID is given for "invoiceId" input param
+
+API will return "success: false", a message, and items: [...item results]
+
 - No item retrieved from "universalCode" input param
 - Invalid or empty parameters are passed
 
-If api should fail during the attempt of inserting the Outbound Shipment, or any of the lines, api will return `"success": false, with a "message": "error message text"` attempting to describe error that has occurred. <b>If an error occurs at any of these stages, entire Outbound Shipment is rolled back.</b> example:
-
-```jsonc
-{
-  "message": "Insert order failed. Failed to issue the stock for item code: 12345, quantity: 10, customer: Customer Name, error: no insert lines returned",
-  "success": true,
-}
-```
+If all item lines were successfully either allocated, or had a placeholder inserted, "success: true", message: "...", items: [...item results] will be returned.
 
 ## Frontend Plugin Functionality
 
