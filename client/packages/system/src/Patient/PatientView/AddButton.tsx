@@ -6,7 +6,7 @@ import {
   PlusCircleIcon,
   useUrlQuery,
   UserStoreNodeFragment,
-  usePreferences,
+  // usePreferences, // Temporarily disabled: Contact tracing causes app crashes
 } from '@openmsupply-client/common';
 import {
   PatientModal,
@@ -30,7 +30,7 @@ export const AddButton: React.FC<AddButtonProps> = ({
 }) => {
   const t = useTranslation();
   const { urlQuery, updateQuery } = useUrlQuery();
-  const { showContactTracing } = usePreferences();
+  // const { showContactTracing } = usePreferences(); // Temporarily disabled: Contact tracing causes app crashes
   const currentUrlTab = urlQuery['tab'];
   const { createNewPatient } = usePatientStore();
   const { setModal: selectModal, reset } = usePatientModalStore();
@@ -54,12 +54,13 @@ export const AddButton: React.FC<AddButtonProps> = ({
           isDisabled: disableEncounterButton,
         }
       );
-      if (showContactTracing) {
-        baseOptions.push({
-          value: PatientModal.ContactTraceSearch,
-          label: t('button.add-contact-trace'),
-        });
-      }
+      // Temporarily disabled: Contact tracing causes app crashes
+      // if (showContactTracing) {
+      //   baseOptions.push({
+      //     value: PatientModal.ContactTraceSearch,
+      //     label: t('button.add-contact-trace'),
+      //   });
+      // }
     }
 
     if (insuranceProvidersData?.length > 0) {
@@ -75,7 +76,7 @@ export const AddButton: React.FC<AddButtonProps> = ({
     t,
     store,
     insuranceProvidersData,
-    showContactTracing,
+    // showContactTracing, // Temporarily disabled: Contact tracing causes app crashes
   ]);
 
   const [selectedOption, setSelectedOption] = useState<
@@ -86,7 +87,8 @@ export const AddButton: React.FC<AddButtonProps> = ({
     [PatientTabValue.Programs]: PatientModal.ProgramSearch,
     [PatientTabValue.Vaccinations]: PatientModal.ProgramSearch,
     [PatientTabValue.Encounters]: PatientModal.Encounter,
-    [PatientTabValue.ContactTracing]: PatientModal.ContactTraceSearch,
+    // Temporarily disabled: Contact tracing causes app crashes
+    // [PatientTabValue.ContactTracing]: PatientModal.ContactTraceSearch,
     [PatientTabValue.Insurance]: PatientModal.Insurance,
   };
 
