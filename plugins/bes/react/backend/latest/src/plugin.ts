@@ -187,7 +187,7 @@ const plugins: BackendPlugins = {
       for (let j = 0; j < expiredBatches.length; j++) {
         const batch = expiredBatches[j];
         const shipmentLineId = uuidv7();
-        const unitsInBatch = batch.availableNumberOfPacks / batch.packSize;
+        const unitsInBatch = batch.availableNumberOfPacks * batch.packSize;
         const unitsStillRequired = item.numberOfUnits - totalUnitsSupplied;
 
         if (totalUnitsSupplied >= item.numberOfUnits) break;
