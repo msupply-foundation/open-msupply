@@ -424,7 +424,7 @@ export const ScanInputModal = ({ lines, invoiceId }: ScanInputModalProps) => {
               value={draftState.quantity ?? ''}
               disabled={isLoading}
               onChange={value =>
-                setDraftState(current => ({ ...current, quantity: value || 1 }))
+                setDraftState(current => ({ ...current, quantity: value ?? 0 }))
               }
             />
           }
