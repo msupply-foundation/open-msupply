@@ -1,6 +1,8 @@
 use super::{version::Version, Migration, MigrationFragment};
 use crate::StorageConnection;
 
+mod remove_goods_received;
+
 pub(crate) struct V2_17_00;
 impl Migration for V2_17_00 {
     fn version(&self) -> Version {
@@ -12,9 +14,7 @@ impl Migration for V2_17_00 {
     }
 
     fn migrate_fragments(&self) -> Vec<Box<dyn MigrationFragment>> {
-        vec![
-            // Add migration fragments here
-        ]
+        vec![Box::new(remove_goods_received::Migrate)]
     }
 }
 
