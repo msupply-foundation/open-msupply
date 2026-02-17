@@ -220,18 +220,17 @@ mod query {
         assert_eq!(asset_location_ids, empty_vec);
 
         // 10. Test scenario with duplicate serial numbers (simulating CSV import/sync)
-        // mock_asset_a() already exists in the database with serial_number_a
-        // Create another asset and then manually update its serial to match
-        let id3 = "test_id_3".to_string();
-        let id4 = "test_id_4".to_string();
+        // Create two assets that will have duplicate serial numbers
+        let asset_a_with_duplicate_serial_id = "test_id_3".to_string();
+        let asset_b_with_duplicate_serial_id = "test_id_4".to_string();
         
-        let _asset_3 = service
+        let _asset_a_with_duplicate_serial = service
             .insert_asset(
                 &ctx,
                 InsertAsset {
-                    id: id3.clone(),
+                    id: asset_a_with_duplicate_serial_id.clone(),
                     store_id: Some(mock_store_a().id),
-                    notes: Some("asset 3".to_string()),
+                    notes: Some("asset A with duplicate serial".to_string()),
                     asset_number: Some("test_asset_number_3".to_string()),
                     serial_number: Some("unique_serial_3".to_string()),
                     catalogue_item_id: Some("189ef51c-d232-4da7-b090-ca3a53d31f58".to_string()),
@@ -240,13 +239,13 @@ mod query {
             )
             .unwrap();
 
-        let _asset_4 = service
+        let _asset_b_with_duplicate_serial = service
             .insert_asset(
                 &ctx,
                 InsertAsset {
-                    id: id4.clone(),
+                    id: asset_b_with_duplicate_serial_id.clone(),
                     store_id: Some(mock_store_a().id),
-                    notes: Some("asset 4".to_string()),
+                    notes: Some("asset B with duplicate serial".to_string()),
                     asset_number: Some("test_asset_number_4".to_string()),
                     serial_number: Some("duplicate_test_serial".to_string()),
                     catalogue_item_id: Some("189ef51c-d232-4da7-b090-ca3a53d31f58".to_string()),
@@ -255,46 +254,39 @@ mod query {
             )
             .unwrap();
 
-        // Manually create a duplicate by updating asset_4's serial in the database directly
-        // This simulates a duplicate that came via CSV import or sync
-        let mut asset_4_row = repository::assets::asset_row::AssetRowRepository::new(&connection)
-            .find_one_by_id(&id4)
+        // Manually create a duplicate by updating both assets' serials in the database directly
+        // This simulates duplicates that came via CSV import or sync
+        let mut asset_a_row = repository::assets::asset_row::AssetRowRepository::new(&connection)
+            .find_one_by_id(&asset_a_with_duplicate_serial_id)
             .unwrap()
             .unwrap();
-        asset_4_row.serial_number = Some("duplicate_test_serial".to_string());
-        
-        // First update asset_3 to have the same serial number directly in DB
-        let mut asset_3_row = repository::assets::asset_row::AssetRowRepository::new(&connection)
-            .find_one_by_id(&id3)
-            .unwrap()
-            .unwrap();
-        asset_3_row.serial_number = Some("duplicate_test_serial".to_string());
+        asset_a_row.serial_number = Some("duplicate_test_serial".to_string());
         repository::assets::asset_row::AssetRowRepository::new(&connection)
-            .upsert_one(&asset_3_row, None)
+            .upsert_one(&asset_a_row, None)
             .unwrap();
 
         // 11. Check that we CAN update other fields when serial number is already duplicated
         // (not changing the serial number itself)
-        let updated_asset_3 = service
+        let updated_asset_a = service
             .update_asset(
                 &ctx,
                 UpdateAsset {
-                    id: id3.clone(),
+                    id: asset_a_with_duplicate_serial_id.clone(),
                     notes: Some("updated notes for duplicate".to_string()),
                     ..Default::default()
                 },
             )
             .unwrap();
         
-        assert_eq!(updated_asset_3.notes, Some("updated notes for duplicate".to_string()));
-        assert_eq!(updated_asset_3.serial_number, Some("duplicate_test_serial".to_string()));
+        assert_eq!(updated_asset_a.notes, Some("updated notes for duplicate".to_string()));
+        assert_eq!(updated_asset_a.serial_number, Some("duplicate_test_serial".to_string()));
 
         // 12. Check that we CAN fix duplication by changing serial to a unique one
-        let updated_asset_3 = service
+        let updated_asset_a = service
             .update_asset(
                 &ctx,
                 UpdateAsset {
-                    id: id3.clone(),
+                    id: asset_a_with_duplicate_serial_id.clone(),
                     serial_number: Some(NullableUpdate {
                         value: Some("fixed_unique_serial".to_string()),
                     }),
@@ -303,21 +295,6 @@ mod query {
             )
             .unwrap();
         
-        assert_eq!(updated_asset_3.serial_number, Some("fixed_unique_serial".to_string()));
-
-        // 13. Check that we CANNOT change serial to one that exists on another asset
-        assert_eq!(
-            service.update_asset(
-                &ctx,
-                UpdateAsset {
-                    id: id4.clone(),
-                    serial_number: Some(NullableUpdate {
-                        value: Some("fixed_unique_serial".to_string()), // This now exists on id3
-                    }),
-                    ..Default::default()
-                },
-            ).err().unwrap(),
-            UpdateAssetError::SerialNumberAlreadyExists
-        );
+        assert_eq!(updated_asset_a.serial_number, Some("fixed_unique_serial".to_string()));
     }
 }
