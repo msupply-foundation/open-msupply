@@ -212,7 +212,7 @@ const plugins: BackendPlugins = {
         }
       }
 
-      // If still unfully allocated, create placeholder for rest of items
+      // If still not fully allocated, create placeholder for rest of items
 
       if (totalUnitsSupplied < item.numberOfUnits) {
         placeHolderQuantity = item.numberOfUnits - totalUnitsSupplied;
