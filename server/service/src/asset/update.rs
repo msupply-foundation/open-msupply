@@ -13,10 +13,9 @@ use crate::{
 use chrono::{NaiveDate, Utc};
 use repository::{
     assets::{
-        asset::{AssetFilter, AssetRepository},
         asset_row::{AssetRow, AssetRowRepository},
     },
-    ActivityLogType, EqualFilter, RepositoryError, StorageConnection, StringFilter,
+    ActivityLogType, RepositoryError, StorageConnection,
 };
 
 #[derive(PartialEq, Debug)]
@@ -94,21 +93,8 @@ pub fn validate(
         None => return Err(UpdateAssetError::AssetDoesNotExist),
     };
 
-    // Check the serial number is unique (if present)
-    if let Some(serial_number) = &input.serial_number {
-        if let Some(serial_number) = &serial_number.value {
-            if AssetRepository::new(connection)
-                .query_one(
-                    AssetFilter::new()
-                        .id(EqualFilter::not_equal_to(asset_row.id.to_string()))
-                        .serial_number(StringFilter::equal_to(serial_number)),
-                )?
-                .is_some()
-            {
-                return Err(UpdateAssetError::SerialNumberAlreadyExists);
-            }
-        }
-    }
+    // Serial number uniqueness check is not enforced on update to allow for duplicate serial numbers
+    // that may have been imported via CSV or sync from remote sites
 
     // Check asset number is unique (on this site)
     if let Some(asset_number) = &input.asset_number {
