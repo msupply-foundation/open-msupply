@@ -159,7 +159,7 @@ where
         Ok(None)
     }
 
-    fn assert_upserted(&self, con: &StorageConnection) {
+    fn assert_upserted(&self, _: &StorageConnection) {
         todo!()
     }
 }

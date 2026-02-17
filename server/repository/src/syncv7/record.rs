@@ -1,5 +1,4 @@
 use crate::{RepositoryError, StorageConnection};
-use serde::{de::DeserializeOwned, Serialize};
 
 pub trait Record
 where

@@ -1,5 +1,5 @@
 use super::{unit_row::unit::dsl::*, StorageConnection};
-use crate::{repository_error::RepositoryError, syncv7::*, Delete, Upsert};
+use crate::{repository_error::RepositoryError, syncv7::*, Delete};
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 

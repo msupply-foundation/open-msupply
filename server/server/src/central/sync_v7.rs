@@ -1,15 +1,11 @@
-use std::fmt::Display;
-
-use actix_multipart::form::{tempfile::TempFile, MultipartForm};
 use actix_web::{
     dev::HttpServiceFactory,
-    http::header::{ContentDisposition, DispositionParam, DispositionType},
-    post, put,
+    post,
     web::{self, Data, Json},
-    HttpRequest, Responder, ResponseError,
+    Responder,
 };
 
-use service::{service_provider::ServiceProvider, sync::sync_on_central_v7, sync_v7::sync::ApiV7};
+use service::{service_provider::ServiceProvider, sync::sync_on_central_v7, sync_v7::sync::api_v7};
 
 pub fn sync_on_central() -> impl HttpServiceFactory {
     web::scope("sync_v7")
@@ -20,7 +16,7 @@ pub fn sync_on_central() -> impl HttpServiceFactory {
 
 #[post("/pull")]
 async fn pull(
-    request: Json<ApiV7::Pull::Request>,
+    request: Json<api_v7::pull::Request>,
     service_provider: Data<ServiceProvider>,
 ) -> actix_web::Result<impl Responder> {
     Ok(web::Json(
@@ -30,7 +26,7 @@ async fn pull(
 
 #[post("/push")]
 async fn push(
-    request: Json<ApiV7::Push::Request>,
+    request: Json<api_v7::push::Request>,
     service_provider: Data<ServiceProvider>,
 ) -> actix_web::Result<impl Responder> {
     Ok(web::Json(
@@ -40,7 +36,7 @@ async fn push(
 
 #[post("/site_status")]
 async fn site_status(
-    request: Json<ApiV7::Status::Request>,
+    request: Json<api_v7::status::Request>,
     service_provider: Data<ServiceProvider>,
 ) -> actix_web::Result<impl Responder> {
     Ok(web::Json(

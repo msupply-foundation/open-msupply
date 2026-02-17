@@ -111,6 +111,14 @@ impl<'a> SyncBufferV7Repository<'a> {
         if let Some(filter) = filter {
             query = query.filter(filter.to_boxed());
         }
+
+        // Debug diesel query
+        //
+        println!(
+            "{}",
+            diesel::debug_query::<crate::DBType, _>(&query).to_string()
+        );
+
         let results = query.load(self.connection.lock().connection())?;
         Ok(results)
     }

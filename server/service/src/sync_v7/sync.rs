@@ -40,17 +40,34 @@ impl SyncBatchV7 {
         limit: i64,
     ) -> Result<(Self, /* total */ i64), SyncError> {
         let total = if let Some(total) = previous_total {
+            println!("SPEED TEST Using previous total: {}", total);
             total
         } else {
-            get_total_changelogs_fast(connection, filter.clone(), cursor)?
+            let start = SystemTime::now();
+            let total = get_total_changelogs_fast(connection, filter.clone(), cursor)?;
+            println!(
+                "SPEED TEST Total changelogs count time in seconds: {:?}",
+                start.elapsed().unwrap_or_default().as_secs_f64()
+            );
+            total
         };
 
+        let start = SystemTime::now();
         let changelogs = get_changelogs_fast(connection, filter, CursorAndLimit { cursor, limit })?;
+        println!(
+            "SPEED TEST getting changelogs time in seconds: {:?}",
+            start.elapsed().unwrap_or_default().as_secs_f64()
+        );
 
+        let start = SystemTime::now();
         let records = changelogs
             .into_iter()
             .map(|changelog| prepare(connection, changelog))
             .collect::<Result<Vec<_>, _>>()?;
+        println!(
+            "SPEED TEST preparing: {:?}",
+            start.elapsed().unwrap_or_default().as_secs_f64()
+        );
 
         let site_id = get_current_site_id(connection)?;
 
@@ -65,7 +82,7 @@ impl SyncBatchV7 {
     }
 }
 
-pub mod ApiV7 {
+pub mod api_v7 {
     use super::*;
     use serde::{Deserialize, Serialize};
     #[derive(Serialize, Deserialize)]
@@ -85,7 +102,7 @@ pub mod ApiV7 {
 
     pub type Response<O: DeserializeOwned> = Result<O, SyncError>;
 
-    pub mod Push {
+    pub mod push {
         use super::*;
         pub type Response = super::Response<i64>;
         pub type Input = SyncBatchV7;
@@ -99,7 +116,7 @@ pub mod ApiV7 {
         }
     }
 
-    pub mod Pull {
+    pub mod pull {
         use super::*;
         use repository::changelog;
         pub type Response = super::Response<SyncBatchV7>;
@@ -121,7 +138,7 @@ pub mod ApiV7 {
         }
     }
 
-    pub mod Status {
+    pub mod status {
         use super::*;
         #[derive(Serialize, Deserialize)]
         pub struct Output {
@@ -231,9 +248,9 @@ impl SyncApiV7 {
 
         let url = url.join("central/sync_v7/").unwrap().join(route).unwrap();
 
-        let request = ApiV7::Request {
+        let request = api_v7::Request {
             input,
-            common: ApiV7::Common {
+            common: api_v7::Common {
                 version,
                 username,
                 password,
@@ -247,8 +264,8 @@ impl SyncApiV7 {
 
         let res = response_or_err(result, url).await;
         let error = match res {
-            Ok(ApiV7::Response::Ok(output)) => return Ok(output),
-            Ok(ApiV7::Response::Err(error)) => error,
+            Ok(api_v7::Response::Ok(output)) => return Ok(output),
+            Ok(api_v7::Response::Err(error)) => error,
             Err(error) => error,
         };
 
@@ -382,13 +399,14 @@ impl<'a> SyncV7<'a> {
         loop {
             let cursor = cursor_controller.get(self.connection)? as i64;
 
+            let start = SystemTime::now();
             let SyncBatchV7 {
                 remaining,
                 records,
                 from_site_id,
             } = self
                 .sync_api_v7
-                .pull(ApiV7::Pull::Input {
+                .pull(api_v7::pull::Input {
                     cursor,
                     batch_size: self.batch_size as u32,
                     is_initialising,
@@ -396,6 +414,11 @@ impl<'a> SyncV7<'a> {
                     filter: None,
                 })
                 .await?;
+
+            println!(
+                "SPEED TEST pulling batch time in seconds: {:?}",
+                start.elapsed().unwrap_or_default().as_secs_f64()
+            );
 
             if records.len() < self.batch_size as usize {
                 previous_total = None;
@@ -407,6 +430,7 @@ impl<'a> SyncV7<'a> {
             logger.progress(remaining + records.len() as i64)?;
             let last_cursor = records.last().map(|r| r.cursor);
 
+            let start = SystemTime::now();
             let sync_buffer_rows = records
                 .into_iter()
                 .map(|r| SyncBufferV7Row {
@@ -414,12 +438,21 @@ impl<'a> SyncV7<'a> {
                     ..r.record
                 })
                 .collect::<Vec<_>>();
+            println!(
+                "SPEED TEST preparing batch time in seconds: {:?}",
+                start.elapsed().unwrap_or_default().as_secs_f64()
+            );
 
+            let start = SystemTime::now();
             self.connection
                 .transaction_sync(|t_con| {
                     SyncBufferV7Repository::new(t_con).upsert_many(&sync_buffer_rows)
                 })
                 .map_err(|e| e.to_inner_error())?;
+            println!(
+                "SPEED TEST inserting batch time in seconds: {:?}",
+                start.elapsed().unwrap_or_default().as_secs_f64()
+            );
 
             // Update cursor only if record for that cursor has been pushed/processed
             if let Some(last_pushed_cursor_id) = last_cursor {

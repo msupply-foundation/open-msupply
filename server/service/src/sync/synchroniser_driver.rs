@@ -1,6 +1,6 @@
 use std::{future::Future, sync::Arc};
 
-use crate::sync::{self, is_initialised};
+use crate::sync::is_initialised;
 use crate::sync_v7::sync::sync_v7;
 use crate::{service_provider::ServiceProvider, sync::CentralServerConfig};
 

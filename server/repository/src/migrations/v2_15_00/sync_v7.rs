@@ -67,4 +67,4 @@ impl MigrationFragment for Migrate {
 }
 // cargo run -- --config-path ./configuration/central.yam
 // yarn start -- -- --env API_HOST='http://localhost:8002' --port 3005
-//insert into site (id, username, password_sha256) values (18, "test", "d74ff0ee8da3b9806b18c877dbf29bbde50b5bd8e4dad7a3a725000feb82e8f1")
+//insert into site (id, username, password_sha256) values (2, 'test', 'd74ff0ee8da3b9806b18c877dbf29bbde50b5bd8e4dad7a3a725000feb82e8f1')

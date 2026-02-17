@@ -418,11 +418,7 @@ pub fn integrate_and_translate_sync_buffer(
         ))
     };
 
-    let result = connection
-        .transaction_sync(integrate_and_translate)
-        .map_err::<RepositoryError, _>(|e| e.to_inner_error())?;
-
-    Ok(result)
+    Ok(integrate_and_translate(connection)?)
 }
 
 #[cfg(test)]

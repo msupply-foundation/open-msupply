@@ -16,7 +16,7 @@ use crate::{
     service_provider::{ServiceContext, ServiceProvider},
     sync::{ActiveStoresOnSite, CentralServerConfig, GetCurrentSiteIdError},
     sync_v7::{
-        sync::{ApiV7, SyncBatchV7},
+        sync::{api_v7, SyncBatchV7},
         validate_translate_integrate::{validate_translate_integrate, SyncContext},
     },
 };
@@ -27,12 +27,15 @@ static MAX_VERSION: u32 = 5;
 /// Send Records to a remote open-mSupply Server
 pub async fn pull(
     service_provider: &ServiceProvider,
-    request: ApiV7::Pull::Request,
-) -> ApiV7::Pull::Response {
-    let (_, ctx) = validate(service_provider, request.common)?;
+    request: api_v7::pull::Request,
+) -> api_v7::pull::Response {
+    use repository::changelog::Condition;
+    let (site_id, ctx) = validate(service_provider, request.common)?;
 
-    let filter =
-        Site::current_site(&ctx.connection)?.all_data_for_site(request.input.is_initialising);
+    let filter = Condition::And(vec![
+        Site::SiteId(site_id).all_data_for_site(request.input.is_initialising),
+        request.input.filter.unwrap_or(Condition::True()),
+    ]);
 
     let (batch, _) = SyncBatchV7::generate(
         &ctx.connection,
@@ -47,13 +50,13 @@ pub async fn pull(
 
 fn validate(
     service_provider: &ServiceProvider,
-    common: ApiV7::Common,
+    common: api_v7::Common,
 ) -> Result<(i32, ServiceContext), SyncError> {
     if !CentralServerConfig::is_central_server() {
         return Err(SyncError::NotACentralServer);
     }
     let ctx = service_provider.basic_context()?;
-    // TODO check username/password
+
     let site_id = validate_site_credentials(&ctx.connection, &common.username, &common.password)?
         .ok_or(SyncError::Authentication)?;
 
@@ -86,8 +89,8 @@ fn validate_site_credentials(
 /// Receive Records from a remote open-mSupply Server
 pub async fn push(
     service_provider: Arc<ServiceProvider>,
-    request: ApiV7::Push::Request,
-) -> ApiV7::Push::Response {
+    request: api_v7::push::Request,
+) -> api_v7::push::Response {
     let (site_id, ctx) = validate(&service_provider, request.common)?;
 
     let SyncBatchV7 {
@@ -126,15 +129,15 @@ pub async fn push(
 
 pub async fn site_status(
     service_provider: &ServiceProvider,
-    request: ApiV7::Status::Request,
-) -> ApiV7::Status::Response {
+    request: api_v7::status::Request,
+) -> api_v7::status::Response {
     let (site_id, ctx) = validate(&service_provider, request.common)?;
 
     let central_site_id = KeyValueStoreRepository::new(&ctx.connection)
         .get_i32(repository::KeyType::SettingsSyncSiteId)?
         .ok_or(SyncError::Other("Site id not set on central".to_string()))?;
 
-    Ok(ApiV7::Status::Output {
+    Ok(api_v7::status::Output {
         central_site_id,
         site_id,
     })

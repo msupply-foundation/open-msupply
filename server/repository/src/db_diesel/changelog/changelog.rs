@@ -322,13 +322,11 @@ impl<'a> ChangelogRepository<'a> {
             let query = create_filtered_query(earliest, filter)
                 .order(changelog_deduped::dsl::cursor.asc())
                 .limit(limit.into());
-
             // // Debug diesel query
             // println!(
             //     "{}",
             //     diesel::debug_query::<crate::DBType, _>(&query).to_string()
-            // );
-
+            // )
             let result: Vec<ChangelogJoin> = query.load(locked_con.connection())?;
             Ok(result.into_iter().map(ChangelogRow::from_join).collect())
         })?;
@@ -850,7 +848,22 @@ mod test {
     }
 }
 
+// Should really be in changelogv7
+
 use crate::dynamic_query::*;
+
+table! {
+    changelog_deduped_fast (cursor) {
+        cursor -> BigInt,
+        table_name ->  Text,
+        record_id -> Text,
+        row_action -> crate::db_diesel::changelog::RowActionTypeMapping,
+        name_link_id -> Nullable<Text>,
+        store_id -> Nullable<Text>,
+        is_sync_update -> Bool,
+        source_site_id -> Nullable<Integer>,
+    }
+}
 
 diesel::alias!(store as transfer_stores: TransferStores,store as name_join_stores: NameJoinStores);
 
@@ -931,36 +944,6 @@ pub struct CursorAndLimit {
     pub cursor: i64,
     pub limit: i64,
 }
-
-// pub fn get_total_and_changelogs(
-//     connection: &StorageConnection,
-//     filter: Condition::Inner,
-
-//     CursorAndLimit { cursor, limit }: CursorAndLimit,
-// ) -> Result<(i64, Vec<ChangelogRow>), RepositoryError> {
-//     let filter = Condition::And(vec![filter, Condition::cursor::greater_then(cursor)]);
-//     let select_query = query().filter(filter.clone().to_boxed());
-
-//     let select_query = select_query
-//         .select(changelog_deduped::all_columns)
-//         .limit(limit);
-
-//     // Debug diesel query
-//     println!(
-//         "{}",
-//         diesel::debug_query::<DBType, _>(&select_query).to_string()
-//     );
-
-//     let changelogs: Vec<ChangelogRow> =
-//         select_query.load::<ChangelogRow>(connection.lock().connection())?;
-
-//     let total_query = query().filter(filter.to_boxed());
-//     let total: i64 = total_query
-//         .count()
-//         .get_result(connection.lock().connection())?;
-
-//     Ok((total, changelogs))
-// }
 
 pub enum Site {
     SiteId(i32),
@@ -1111,22 +1094,10 @@ impl ChangelogRow {
     }
 }
 
-table! {
-    changelog_deduped_fast (cursor) {
-        cursor -> BigInt,
-        table_name ->  Text,
-        record_id -> Text,
-        row_action -> crate::db_diesel::changelog::RowActionTypeMapping,
-        name_link_id -> Nullable<Text>,
-        store_id -> Nullable<Text>,
-        is_sync_update -> Bool,
-        source_site_id -> Nullable<Integer>,
-    }
-}
-
 pub struct Logs<FH, SQ> {
     pub filter: FH,
     pub select_query: SQ,
+    pub is_total: bool,
 }
 
 impl<FH: 'static, SQ: 'static> diesel::query_builder::QueryId for Logs<FH, SQ> {
@@ -1157,45 +1128,44 @@ impl<FH: QueryFragment<DBType> + 'static, SQ: QueryFragment<DBType> + 'static>
 
 impl<FH: QueryFragment<DBType>, SQ: QueryFragment<DBType>> QueryFragment<DBType> for Logs<FH, SQ> {
     fn walk_ast<'b>(&'b self, mut out: AstPass<'_, 'b, DBType>) -> QueryResult<()> {
-        out.push_sql(
+        let changelog_deduped_fast = if self.is_total {
             r#"
-WITH changelog_deduped_fast AS (
-    SELECT *
-    FROM (
-            SELECT cursor,
-                table_name,
-                record_id,
-                row_action,
-                changelog.name_link_id,
-                store_id,
-                is_sync_update,
-                source_site_id,
-                ROW_NUMBER() OVER (
-                    PARTITION BY record_id
-                    ORDER BY cursor DESC
-                ) AS rn
-            FROM changelog
-            WHERE record_id in 
-                (
-        "#,
-        );
+changelog_partition AS (
+SELECT *,
+    ROW_NUMBER() OVER (
+        PARTITION BY record_id
+        ORDER BY cursor DESC
+    ) AS rn
+FROM changelog where record_id IN (SELECT record_id FROM changelog_filtered)
+),
+changelog_deduped_fast AS (
+SELECT * FROM changelog_partition WHERE rn = 1
+)
+            "#
+        } else {
+            r#"
+max_cursors AS 
+(SELECT record_id, max(cursor) AS cursor FROM changelog_filtered GROUP BY record_id),
+changelog_deduped_fast AS (
+SELECT * FROM changelog WHERE cursor in (SELECT cursor FROM max_cursors)
+)
+            "#
+        };
 
+        out.push_sql("WITH changelog_filtered AS (");
         self.filter.walk_ast(out.reborrow())?;
-
-        out.push_sql(
+        out.push_sql(&format!(
             r#"
-                )
-            )
-    WHERE rn = 1)
-    SELECT * FROM (
-        "#,
-        );
+),       
+{changelog_deduped_fast}
+SELECT * FROM ("#
+        ));
 
         self.select_query.walk_ast(out.reborrow())?;
 
         out.push_sql(
             r#"
-    )
+)
         "#,
         );
 
@@ -1211,9 +1181,8 @@ pub fn get_changelogs_fast(
     let filter = Condition::And(vec![filter, Condition::cursor::greater_then(cursor)]);
 
     let select_query = Logs {
-        filter: query()
-            .filter(filter.to_boxed())
-            .select(changelog::record_id),
+        is_total: false,
+        filter: query().filter(filter.to_boxed()),
         select_query: changelog_deduped_fast::table
             .order_by(changelog_deduped_fast::cursor.asc())
             .limit(limit),
@@ -1225,8 +1194,7 @@ pub fn get_changelogs_fast(
         diesel::debug_query::<DBType, _>(&select_query).to_string()
     );
 
-    let changelogs: Vec<ChangelogRow> =
-        select_query.load::<ChangelogRow>(connection.lock().connection())?;
+    let changelogs = select_query.load(connection.lock().connection())?;
 
     Ok(changelogs)
 }
@@ -1239,17 +1207,16 @@ pub fn get_total_changelogs_fast(
     let filter = Condition::And(vec![filter, Condition::cursor::greater_then(cursor)]);
 
     let total_query = Logs {
-        filter: query()
-            .filter(filter.clone().to_boxed())
-            .select(changelog::record_id),
+        is_total: true,
+        filter: query().filter(filter.to_boxed()),
         select_query: changelog_deduped_fast::table.count(),
     };
 
     // Debug diesel query
-    println!(
-        "\n{}\n",
-        diesel::debug_query::<DBType, _>(&total_query).to_string()
-    );
+    // println!(
+    //     "\n{}\n",
+    //     diesel::debug_query::<DBType, _>(&total_query).to_string()
+    // );
 
     let total: i64 = total_query.get_result(connection.lock().connection())?;
 

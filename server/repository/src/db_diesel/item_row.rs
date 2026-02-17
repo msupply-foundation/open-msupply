@@ -1,4 +1,4 @@
-use crate::{syncv7::*, Delete, Upsert};
+use crate::{syncv7::*, Delete};
 
 use super::{
     clinician_link_row::clinician_link, item_link_row::item_link, item_row::item::dsl::*,

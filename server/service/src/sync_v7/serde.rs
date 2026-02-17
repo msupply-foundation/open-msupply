@@ -1,5 +1,5 @@
 use repository::{
-    syncv7::{translators, SyncRecordSerializeError, Upsert},
+    syncv7::{translators, SyncRecordSerializeError},
     ChangelogTableName, StorageConnection,
 };
 

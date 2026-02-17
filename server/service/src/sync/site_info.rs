@@ -11,7 +11,7 @@ use crate::{
         settings::{SyncSettings, SYNC_V5_VERSION},
         CentralServerConfig,
     },
-    sync_v7::sync::{ApiV7, SyncApiV7, VERSION},
+    sync_v7::sync::{api_v7, SyncApiV7, VERSION},
 };
 
 use super::api::{SyncApiError, SyncApiV5CreatingError};
@@ -39,7 +39,7 @@ impl std::fmt::Debug for RequestAndSetSiteInfoError {
 
 pub enum SiteInfo {
     V5(SiteInfoV5),
-    V7(ApiV7::Status::Output),
+    V7(api_v7::status::Output),
 }
 
 #[async_trait]

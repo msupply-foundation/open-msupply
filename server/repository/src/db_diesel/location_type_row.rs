@@ -1,6 +1,6 @@
 use super::StorageConnection;
 
-use crate::{repository_error::RepositoryError, Upsert};
+use crate::repository_error::RepositoryError;
 
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};

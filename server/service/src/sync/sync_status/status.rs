@@ -1,7 +1,7 @@
 use chrono::{NaiveDateTime, Utc};
 use repository::{
     dynamic_query::FilterBuilder, ChangelogRepository, DatetimeFilter, EqualFilter, KeyType,
-    Pagination, RepositoryError, Sort, SyncLog, SyncLogFilter, SyncLogRepository, SyncLogRow,
+    Pagination, RepositoryError, Sort, SyncLogFilter, SyncLogRepository, SyncLogRow,
     SyncLogSortField, SyncLogV7Repository, SyncLogV7Row,
 };
 

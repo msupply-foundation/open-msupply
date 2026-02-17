@@ -156,6 +156,15 @@ macro_rules! create_condition {
                 Inner::Or(conditions)
             }
 
+            pub fn True() -> Inner {
+                Inner::True
+            }
+
+            pub fn False() -> Inner {
+                Inner::False
+            }
+
+
             type BoxedCondition = Box<dyn BoxableExpression<$source, crate::DBType, SqlType = diesel::sql_types::Nullable<diesel::sql_types::Bool>>>;
 
             impl Inner {

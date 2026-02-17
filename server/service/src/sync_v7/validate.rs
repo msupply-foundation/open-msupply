@@ -20,7 +20,7 @@ pub enum ValidationError {
     CentralRecordEditsOnCentralOnly,
 }
 
-pub fn validate_on_remote(
+pub(crate) fn validate_on_remote(
     sync_buffer_row: &SyncBufferV7Row,
     upsert: &Box<dyn Upsert>,
     active_on_site: &ActiveStoresOnSite,
@@ -59,7 +59,8 @@ pub fn validate_on_remote(
 
     Ok(())
 }
-pub fn validate_on_central(
+
+pub(crate) fn validate_on_central(
     sync_buffer_row: &SyncBufferV7Row,
     upsert: &Box<dyn Upsert>,
     active_on_site: &ActiveStoresOnSite,

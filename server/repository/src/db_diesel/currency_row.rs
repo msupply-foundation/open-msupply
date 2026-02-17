@@ -1,9 +1,8 @@
 use super::StorageConnection;
 use crate::syncv7::*;
-use crate::{impl_record, ChangeLogInsertRowV7, Delete, Upsert};
+use crate::{impl_record, Delete};
 
 use crate::repository_error::RepositoryError;
-use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
 
 use chrono::NaiveDate;
 use diesel::prelude::*;

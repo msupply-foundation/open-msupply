@@ -13,7 +13,7 @@ use repository::{
 };
 use thiserror::Error;
 
-pub enum SyncContext {
+pub(crate) enum SyncContext {
     Central {
         active_stores: ActiveStoresOnSite,
     },
@@ -66,7 +66,7 @@ pub fn validate_translate_integrate<'a>(
 ) -> Result<(), RepositoryError> {
     use sync_buffer_v7::Condition as C;
 
-    // TODO this is too hacky
+    // TODO this is too hacky, prefer active store cache
     let mut sync_context = sync_context;
 
     let filter = sync_buffer_filter
@@ -97,7 +97,7 @@ pub fn validate_translate_integrate<'a>(
 
             if let Some(logger) = logger.as_mut() {
                 if total / PROGRESS_INTERVAL <= last_progress {
-                    logger.progress(total);
+                    logger.progress(total)?;
                     last_progress -= 1;
                 }
             }

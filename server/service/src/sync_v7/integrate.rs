@@ -1,9 +1,4 @@
-use std::{cmp::Ordering, collections::HashMap};
-
-use repository::{
-    syncv7::{translators, Upsert},
-    ChangelogTableName, RepositoryError, StorageConnection, SyncBufferV7Row,
-};
+use repository::{syncv7::Upsert, RepositoryError, StorageConnection, SyncBufferV7Row};
 
 pub(crate) fn integrate(
     connection: &StorageConnection,
