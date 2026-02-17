@@ -44,7 +44,7 @@ export const usePrescriptionLineEditColumns = ({
       {
         accessorKey: 'batch',
         header: t('label.batch'),
-        size: 100,
+        size: 90,
       },
       {
         accessorKey: 'expiryDate',
@@ -73,7 +73,7 @@ export const usePrescriptionLineEditColumns = ({
         accessorKey: 'packSize',
         header: t('label.pack-size'),
         columnType: ColumnType.Number,
-        size: 90,
+        size: 80,
         includeColumn: !item?.isVaccine,
       },
       {
@@ -82,7 +82,7 @@ export const usePrescriptionLineEditColumns = ({
           unit: pluralisedUnitName,
         }),
         accessorFn: row => (row.inStorePacks ?? 0) * (row.packSize ?? 1),
-        size: 120,
+        size: 100,
         columnType: ColumnType.Number,
       },
       {
@@ -90,12 +90,12 @@ export const usePrescriptionLineEditColumns = ({
         header: t('label.units-available', { unit: pluralisedUnitName }),
         accessorFn: row => (row.availablePacks ?? 0) * (row.packSize ?? 1),
         columnType: ColumnType.Number,
-        size: 120,
+        size: 100,
       },
       {
         accessorKey: 'unitQuantity',
         header: t('label.units-issued', { unit: pluralisedUnitName }),
-        size: 120,
+        size: 100,
         columnType: ColumnType.Number,
         accessorFn: row =>
           packsToQuantity(AllocateInType.Units, row.numberOfPacks, row),
@@ -114,7 +114,7 @@ export const usePrescriptionLineEditColumns = ({
       {
         id: 'onHold',
         header: t('label.on-hold'),
-        size: 30,
+        size: 50,
         defaultHideOnMobile: true,
         accessorFn: row => row.stockLineOnHold || row.location?.onHold,
         Cell: CheckCell,
