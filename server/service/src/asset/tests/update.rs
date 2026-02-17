@@ -63,20 +63,21 @@ mod query {
             )
             .unwrap();
 
-        // 2. Check we can't update the asset to use a serial number that already exists
-        assert_eq!(
-            service.update_asset(
+        // 2. Check we CAN update the asset to use a serial number that already exists
+        // (duplicate serial numbers are allowed to support CSV imports and sync from remote sites)
+        let updated_asset = service
+            .update_asset(
                 &ctx,
                 UpdateAsset {
                     id: id.clone(),
                     serial_number: Some(NullableUpdate {
-                        value: mock_asset_a().serial_number
+                        value: mock_asset_a().serial_number.clone(),
                     }),
                     ..Default::default()
-                }
-            ),
-            Err(UpdateAssetError::SerialNumberAlreadyExists)
-        );
+                },
+            )
+            .unwrap();
+        assert_eq!(updated_asset.serial_number, mock_asset_a().serial_number);
 
         // 3. Check we can update the asset to use a serial number that doesn't already exist
         let updated_asset = service
@@ -217,5 +218,40 @@ mod query {
         let empty_vec: Vec<String> = [].to_vec();
 
         assert_eq!(asset_location_ids, empty_vec);
+
+        // 10. Check that an asset with a serial number can be updated without changing the serial number
+        // This ensures that the serial number validation doesn't block updates when the serial number isn't changing
+        let id3 = "test_id_3".to_string();
+        let duplicate_serial = "duplicate_serial".to_string();
+        
+        let _asset_3 = service
+            .insert_asset(
+                &ctx,
+                InsertAsset {
+                    id: id3.clone(),
+                    store_id: Some(mock_store_a().id),
+                    notes: Some("asset with serial".to_string()),
+                    asset_number: Some("test_asset_number_3".to_string()),
+                    serial_number: Some(duplicate_serial.clone()),
+                    catalogue_item_id: Some("189ef51c-d232-4da7-b090-ca3a53d31f58".to_string()),
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+
+        // Update the asset without changing the serial number (just updating notes)
+        let updated_asset_3 = service
+            .update_asset(
+                &ctx,
+                UpdateAsset {
+                    id: id3.clone(),
+                    notes: Some("updated notes".to_string()),
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+        
+        assert_eq!(updated_asset_3.notes, Some("updated notes".to_string()));
+        assert_eq!(updated_asset_3.serial_number, Some(duplicate_serial.clone()));
     }
 }
