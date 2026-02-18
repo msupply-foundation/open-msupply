@@ -1,11 +1,14 @@
-import { useQueryClient, useMutation } from '@openmsupply-client/common';
-import { useInboundId } from '../utils/useInboundId';
+import {
+  useQueryClient,
+  useMutation,
+  useParams,
+} from '@openmsupply-client/common';
 import { useInboundApi } from '../utils/useInboundApi';
 import { InboundFragment } from '../../operations.generated';
 import { INBOUND, INBOUND_LINE } from '../document/keys';
 
 export const useDeleteInboundLines = () => {
-  const inboundId = useInboundId();
+  const { invoiceId: inboundId = '' } = useParams();
   const queryClient = useQueryClient();
   const api = useInboundApi();
   const queryKey = [INBOUND, INBOUND_LINE, inboundId];
