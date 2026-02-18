@@ -155,7 +155,8 @@ export const isOutboundDisabled = (
 };
 
 /** Returns true if the inbound shipment cannot be edited */
-export const isInboundDisabled = (inbound: InboundRowFragment): boolean => {
+export const isInboundDisabled = (inbound?: InboundRowFragment): boolean => {
+  if (!inbound) return true;
   const isManuallyCreated = !inbound.linkedShipment?.id;
   if (isManuallyCreated) {
     return inbound.status === InvoiceNodeStatus.Verified;

@@ -27,7 +27,7 @@ export const useInboundShipment = (id?: string) => {
   const { data, isLoading: loading, error } = useGetById(invoiceId);
   const { queryClient } = useInboundGraphQL();
 
-  const isDisabled = data ? isInboundDisabled(data) : false;
+  const isDisabled = isInboundDisabled(data);
 
   const rows = useMemo(() => {
     const lines = data?.lines?.nodes ?? [];
