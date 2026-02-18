@@ -141,7 +141,6 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
   children,
 }) => {
   const t = useTranslation();
-  // When we use the camera barcode scanner, we need to hide the app in the background
   const [hideApp, setHideApp] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [hasHoneywellScanner, setHasHoneywellScanner] =
@@ -149,7 +148,7 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
   const [scannerInstallState, setScannerInstallState] =
     useState<ScannerInstallState>(ScannerInstallState.Unknown);
   const [installProgress, setInstallProgress] = useState<number>(0);
-  const { error, info } = useNotification();
+  const { error } = useNotification();
   const callbackRef = useRef<ScanCallback | null>(null);
   const { electronNativeAPI } = window;
   const [scanner, setScanner] = useState<BarcodeScanner | null>(null);
@@ -173,7 +172,6 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
     Capacitor.isPluginAvailable('BarcodeScanner') &&
     Capacitor.isNativePlatform();
   const hasElectronApi = !!electronNativeAPI;
-
   const hasHoneywellScannerPlugin =
     Capacitor.isPluginAvailable('HoneywellScanner') &&
     Capacitor.isNativePlatform();
@@ -195,7 +193,7 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
     const scanners: AvailableScannerType[] = [];
     if (mockScannerEnabled) scanners.push(AvailableScannerType.Mock);
     if (hasCameraBarcodeScanner && !hasHoneywellScanner)
-      scanners.push(AvailableScannerType.Camera); // Camera scanner is not available on Honeywell devices. Disabled camera scanner if honeywell is available.
+      scanners.push(AvailableScannerType.Camera);
     if (hasElectronApi) scanners.push(AvailableScannerType.ElectronUSB);
     if (hasHoneywellScanner) scanners.push(AvailableScannerType.Honeywell);
     return scanners;
@@ -217,8 +215,6 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
           const handleScannerInstall = (
             event: GoogleBarcodeScannerModuleInstallProgressEvent
           ) => {
-            console.log('Google Barcode Scanner install state:', event.state);
-
             // Update progress directly from the event if available
             if (!!event.progress) {
               setInstallProgress(event.progress);
@@ -233,32 +229,21 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
                 break;
               case GoogleBarcodeScannerModuleInstallState.FAILED:
                 setScannerInstallState(ScannerInstallState.Failed);
+                setInstallProgress(0);
                 BarcodeScannerPlugin.removeAllListeners();
                 resolve(false);
                 break;
               case GoogleBarcodeScannerModuleInstallState.CANCELED:
                 setScannerInstallState(ScannerInstallState.Cancelled);
+                setInstallProgress(0);
                 BarcodeScannerPlugin.removeAllListeners();
                 resolve(false);
                 break;
               case GoogleBarcodeScannerModuleInstallState.PENDING:
-                setScannerInstallState(ScannerInstallState.Installing);
-                info(t('messages.scanner-installation-pending'))();
-                break;
               case GoogleBarcodeScannerModuleInstallState.DOWNLOADING:
-                setScannerInstallState(ScannerInstallState.Installing);
-                // Show info snack only once, not on every progress update
-                if (event.progress === 0 || !event.progress) {
-                  info(t('messages.scanner-downloading'))();
-                }
-                break;
               case GoogleBarcodeScannerModuleInstallState.INSTALLING:
-                setScannerInstallState(ScannerInstallState.Installing);
-                info(t('messages.scanner-installing'))();
-                break;
               case GoogleBarcodeScannerModuleInstallState.DOWNLOAD_PAUSED:
                 setScannerInstallState(ScannerInstallState.Installing);
-                info(t('messages.scanner-download-paused'))();
                 break;
               default:
                 break;
@@ -275,14 +260,13 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
             return;
           }
 
-          console.log('Installing Google Barcode Scanner module...');
           setScannerInstallState(ScannerInstallState.Installing);
-          info(t('messages.scanner-installation-starting'))();
 
           await BarcodeScannerPlugin.addListener(
             'googleBarcodeScannerModuleInstallProgress',
             handleScannerInstall
           );
+
           await BarcodeScannerPlugin.installGoogleBarcodeScannerModule();
         } catch (e) {
           console.error(
@@ -294,23 +278,14 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
           reject(e);
         }
       }),
-    [t, info]
+    []
   );
 
   const scanBarcode = useCallback(
-    async (formats?: BarcodeFormat[], retryCount = 0) => {
-      const MAX_RETRIES = 2;
-
-      console.log('🔍 scanBarcode called, scanner type:', {
-        mockScannerEnabled,
-        hasElectronApi,
-        hasCameraBarcodeScanner,
-      });
-
+    async (formats?: BarcodeFormat[]) => {
       switch (true) {
         case mockScannerEnabled:
-          const mockBarcode = await MockScanner.scan();
-          return mockBarcode;
+          return await MockScanner.scan();
 
         case hasElectronApi:
           const timeoutPromise = new Promise<undefined>((_, reject) =>
@@ -326,39 +301,21 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
               );
             }
           );
-          const barcode = await Promise.race([timeoutPromise, barcodePromise]);
-          return barcode;
+          return await Promise.race([timeoutPromise, barcodePromise]);
 
         case hasCameraBarcodeScanner:
           try {
-            console.log('📷 Starting camera barcode scanner...');
-
-            const installTimeoutPromise = new Promise<undefined>((_, reject) =>
+            const installTimeoutPromise = new Promise<boolean>((_, reject) =>
               setTimeout(() => {
                 setScannerInstallState(ScannerInstallState.Failed);
                 reject(new Error('Installation timeout'));
               }, INSTALL_TIMEOUT_IN_MS)
             );
 
-            console.log(
-              '⏳ Checking if Google Barcode Scanner is available...'
-            );
             const isInstalled = await Promise.race([
               installTimeoutPromise,
               googleBarcodeScannerAvailable(),
-            ]).catch(async err => {
-              // Retry logic for installation failures
-              if (retryCount < MAX_RETRIES) {
-                console.log(
-                  `Retrying scanner installation (attempt ${retryCount + 1}/${MAX_RETRIES})...`
-                );
-                await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2 seconds before retry
-                return scanBarcode(formats, retryCount + 1);
-              }
-              throw err;
-            });
-
-            console.log('✅ Scanner installed:', isInstalled);
+            ]);
 
             if (!isInstalled) {
               throw new Error(
@@ -366,9 +323,6 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
               );
             }
 
-            console.log('🎥 Opening camera for scanning...');
-
-            // Hide the app to show camera view
             setHideApp(true);
             const { barcodes } = await BarcodeScannerPlugin.scan({
               autoZoom: true,
@@ -376,23 +330,17 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
             });
             setHideApp(false);
 
-            console.log('Scan result:', barcodes);
-
             if (barcodes && barcodes.length > 0 && barcodes[0]) {
-              console.log('✅ Barcode found:', barcodes[0].rawValue);
               return barcodes[0].rawValue;
             }
 
-            console.log('❌ No barcode detected');
             return '';
           } catch (e) {
             setHideApp(false);
-            console.error('Error during camera scan:', e);
             throw e;
           }
       }
 
-      console.log('⚠️ No scanner available, returning empty string');
       return '';
     },
     [
@@ -409,6 +357,7 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
   const stopScan = useCallback(async () => {
     setHideApp(false);
     setIsListening(false);
+
     if (mockScannerEnabled) {
       await MockScanner.stopListening();
     }
@@ -440,15 +389,12 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
 
   const scan = useCallback(
     async (formats?: BarcodeFormat[]) => {
-      console.log('🎯 scan() called');
       let result: ScanResult = {};
 
       try {
         const barcode = await scanBarcode(formats);
-        console.log('📦 Barcode received from scanBarcode:', barcode);
         result = parseResult(barcode);
 
-        console.log('📋 Parsed result:', result);
         // Reset install state on successful scan
         if (scannerInstallState === ScannerInstallState.Failed) {
           setScannerInstallState(ScannerInstallState.Installed);
@@ -457,6 +403,7 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
         const msg = (e as Error)?.message || '';
         console.error('Scan error:', msg, e);
 
+        // Don't show error for user cancellation
         if (!msg.toLowerCase().includes('cancel')) {
           if (
             msg.includes('Installation timeout') ||
@@ -477,7 +424,6 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
         setInstallProgress(0);
       }
 
-      console.log('🔚 scan() returning result:', result);
       return result;
     },
     [scanBarcode, error, t, stopScan, scannerInstallState]
@@ -546,10 +492,6 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
       }
     }
 
-    if (hasCameraBarcodeScanner) {
-      // Don't start camera scanning on listening, wait for explicit scan() call
-    }
-
     if (mockScannerEnabled) {
       setIsListening(true);
       const scanHandler = async (barcode: string) => {
@@ -571,7 +513,6 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
     t,
     hasElectronApi,
     electronNativeAPI,
-    hasCameraBarcodeScanner,
     mockScannerEnabled,
     MockScanner,
   ]);
@@ -587,7 +528,7 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
     },
     [electronNativeAPI]
   );
-  // calling this outside of a useEffect so that it will detect when a new scanner is added
+
   useEffect(() => {
     electronNativeAPI?.linkedBarcodeScannerDevice().then(setScanner);
     electronNativeAPI?.getScannerType().then(setLocalScannerType);
@@ -679,7 +620,6 @@ export const useBarcodeScannerContext = (
 
   useEffect(() => {
     if (callback) {
-      // console.log('Registering barcode scan callback');
       barcodeScannerControl.registerCallback(callback);
     }
   }, [barcodeScannerControl, callback]);
