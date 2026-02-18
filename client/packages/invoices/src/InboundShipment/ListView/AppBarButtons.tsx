@@ -35,6 +35,9 @@ export const AppBarButtons = ({
   const navigate = useNavigate();
   const { store } = useAuthContext();
   const [name, setName] = useState<NameRowFragment | null>(null);
+  const [selectedSupplierId, setSelectedSupplierId] = useState<string | null>(
+    null
+  );
 
   const {
     create: { create: onCreate },
@@ -47,6 +50,10 @@ export const AppBarButtons = ({
   });
   const manuallyLinkInternalOrder =
     store?.preferences.manuallyLinkInternalOrderToInboundShipment;
+
+  const { refetch: refetchInternalOrders } = useListInternalOrders(
+    selectedSupplierId || ''
+  );
 
   const createInvoice = async (nameId: string, requisitionId?: string) => {
     const invoiceId = await onCreate({
@@ -72,8 +79,8 @@ export const AppBarButtons = ({
       return;
     }
 
-    const { refetch } = useListInternalOrders(row.id);
-    const { data } = await refetch();
+    setSelectedSupplierId(row.id);
+    const { data } = await refetchInternalOrders();
 
     if (data?.totalCount === 0) {
       createInvoice(row.id);
