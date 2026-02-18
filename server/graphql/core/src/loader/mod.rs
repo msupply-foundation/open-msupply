@@ -134,8 +134,10 @@ pub use vvm_status::*;
 pub use vvm_status_log::*;
 pub use warning::*;
 
+/// Helper function to get unique ids from a list of inputs. Could be replaced with Itertools' unique if we wanted to add that as a dependency, but this is simple enough for now.
 pub fn unique_ids<T: Eq + std::hash::Hash + Clone, I: IntoIterator<Item = T>>(inputs: I) -> Vec<T> {
     use std::iter::FromIterator;
+    // Using HashSet to get unique values, then converting back to Vec
     std::collections::HashSet::<T>::from_iter(inputs)
         .into_iter()
         .collect()
@@ -156,5 +158,23 @@ impl RequisitionAndItemId {
             requisition_id: requisition_id.to_string(),
             item_id: item_id.to_string(),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_unique_ids() {
+        let input = vec!["a", "b", "a", "c", "b"];
+        let mut expected = vec!["a", "b", "c"];
+        let mut unique = unique_ids(input);
+
+        // Need to sort as HashSet orders elements arbitrarily
+        expected.sort();
+        unique.sort();
+
+        assert_eq!(unique, expected);
     }
 }
