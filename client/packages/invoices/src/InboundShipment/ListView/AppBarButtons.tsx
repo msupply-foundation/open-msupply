@@ -17,11 +17,8 @@ import {
   NameRowFragment,
   SupplierSearchModal,
 } from '@openmsupply-client/system';
-import { useInboundShipment } from '../api';
-import {
-  useInboundsAll,
-  useListInternalOrdersPromise,
-} from '../api/hooks/utils';
+import { useInboundList, useInboundShipment } from '../api';
+import { useListInternalOrdersPromise } from '../api/hooks/utils';
 import { inboundsToCsv } from '../../utils';
 import { LinkInternalOrderModal } from './LinkInternalOrderModal';
 
@@ -42,10 +39,11 @@ export const AppBarButtons = ({
   const {
     create: { create: onCreate },
   } = useInboundShipment();
-  const { isLoading, fetchAsync } = useInboundsAll({
-    key: 'createdDateTime',
-    direction: 'desc',
-    isDesc: true,
+  const {
+    query: { isFetching, refetch },
+  } = useInboundList({
+    sortBy: { key: 'createdDateTime', direction: 'desc' },
+    filterBy: null,
   });
   const { mutateAsync: fetchInternalOrders } = useListInternalOrdersPromise();
   const manuallyLinkInternalOrder =
@@ -86,7 +84,7 @@ export const AppBarButtons = ({
   };
 
   const getCsvData = async () => {
-    const data = await fetchAsync();
+    const { data } = await refetch();
     return data?.nodes?.length ? inboundsToCsv(data.nodes, t) : null;
   };
 
@@ -102,7 +100,7 @@ export const AppBarButtons = ({
           <ExportSelector
             getCsvData={getCsvData}
             filename={t('filename.inbounds')}
-            isLoading={isLoading}
+            isLoading={isFetching}
           />
         )}
       </Grid>
