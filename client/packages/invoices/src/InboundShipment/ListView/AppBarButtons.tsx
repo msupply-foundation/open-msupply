@@ -18,7 +18,7 @@ import {
   SupplierSearchModal,
 } from '@openmsupply-client/system';
 import { useInboundList, useInboundShipment } from '../api';
-import { useListInternalOrdersPromise } from '../api/hooks/utils';
+import { useListInternalOrders } from '../api/hooks/utils';
 import { inboundsToCsv } from '../../utils';
 import { LinkInternalOrderModal } from './LinkInternalOrderModal';
 
@@ -45,7 +45,6 @@ export const AppBarButtons = ({
     sortBy: { key: 'createdDateTime', direction: 'desc' },
     filterBy: null,
   });
-  const { mutateAsync: fetchInternalOrders } = useListInternalOrdersPromise();
   const manuallyLinkInternalOrder =
     store?.preferences.manuallyLinkInternalOrderToInboundShipment;
 
@@ -73,9 +72,10 @@ export const AppBarButtons = ({
       return;
     }
 
-    const data = await fetchInternalOrders(row.id);
+    const { refetch } = useListInternalOrders(row.id);
+    const { data } = await refetch();
 
-    if (data?.internalOrders.totalCount === 0) {
+    if (data?.totalCount === 0) {
       createInvoice(row.id);
     } else {
       setName(row);
