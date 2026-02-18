@@ -82,7 +82,7 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
   const [hasSavedState, setHasSavedState] = useState<boolean>(getSavedState(tableId) !== undefined);
   const density = useColumnDensity(tableId, setHasSavedState);
   const columnSizing = useColumnSizing(tableId, setHasSavedState);
-  const columnVisibility = useColumnVisibility(tableId, setHasSavedState, columns);
+  const columnVisibility = useColumnVisibility(tableId, setHasSavedState, columns, isMobile);
   const columnPinning = useColumnPinning(
     tableId,
     setHasSavedState,

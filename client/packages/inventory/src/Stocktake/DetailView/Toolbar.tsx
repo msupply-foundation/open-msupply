@@ -11,8 +11,10 @@ import {
   TypedTFunction,
   LocaleKey,
   FieldUpdateMutation,
+  SearchBar,
 } from '@openmsupply-client/common';
 import { StocktakeFragment, useStocktakeOld } from '../api';
+import { useStocktakeRows } from '../api/hooks/line/useStocktakeRows';
 
 export const Toolbar = () => {
   const isDisabled = useStocktakeOld.utils.isDisabled();
@@ -27,6 +29,8 @@ export const Toolbar = () => {
   const infoMessage = isLocked
     ? t('messages.on-hold-stock-take')
     : t('messages.finalised-stock-take');
+
+  const { itemFilter, setItemFilter } = useStocktakeRows();
 
   return (
     <AppBarContentPortal sx={{ display: 'flex', flex: 1, marginBottom: 1 }}>
@@ -49,16 +53,32 @@ export const Toolbar = () => {
             />
           </Grid>
         ) : (
-          <Grid display="flex" flex={1} flexDirection="column" gap={1}>
-            <InformationFields
-              isDisabled={isDisabled}
-              descriptionBuffer={descriptionBuffer}
-              setDescriptionBuffer={setDescriptionBuffer}
-              update={update}
-              t={t}
-              infoMessage={infoMessage}
-            />
-          </Grid>
+          <>
+            <Grid display="flex" flex={1} flexDirection="column" gap={1}>
+              <InformationFields
+                isDisabled={isDisabled}
+                descriptionBuffer={descriptionBuffer}
+                setDescriptionBuffer={setDescriptionBuffer}
+                update={update}
+                t={t}
+                infoMessage={infoMessage}
+              />
+            </Grid>
+            <Grid
+              display="flex"
+              gap={1}
+              justifyContent="flex-end"
+              alignItems="center"
+            >
+              <SearchBar
+                placeholder={t('placeholder.filter-items')}
+                value={itemFilter}
+                onChange={newValue => {
+                  setItemFilter(newValue);
+                }}
+              />
+            </Grid>
+          </>
         )}
       </Grid>
     </AppBarContentPortal>

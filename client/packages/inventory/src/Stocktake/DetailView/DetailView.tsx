@@ -62,6 +62,7 @@ const DetailViewInner = () => {
       onRowClick: row => onOpen(row.item),
       grouping: { field: 'item.code' },
       initialSort: { key: 'itemName', dir: 'asc' },
+      manualFiltering: true,
       getIsPlaceholderRow: row =>
         isUncounted(row.original) ||
         // Also mark parent rows as placeholder if any of its children are uncounted

@@ -42,6 +42,7 @@ import { InboundShipmentDetailTabs } from './types';
 import { useInboundLines } from '../api/hooks/line/useInboundLines';
 import { useInboundShipmentColumns } from './columns';
 import { ScanInputModal } from './ScanInputModal';
+import { MobileToolbar } from './MobileToolbar';
 
 type InboundLineItem = InboundLineFragment['item'];
 
@@ -127,7 +128,7 @@ const DetailViewInner = () => {
     grouping: { field: 'item.code' },
     isLoading: false,
     initialSort: { key: 'itemName', dir: 'asc' },
-    onRowClick: !isDisabled ? onRowClick : undefined,
+    onRowClick: !isDisabled && !isExtraSmallScreen ? onRowClick : undefined,
     getIsPlaceholderRow: row => isInboundPlaceholderRow(row.original),
     noDataElement: (
       <NothingHere
@@ -232,7 +233,7 @@ const DetailViewInner = () => {
             }}
           />
 
-          <Toolbar />
+          {isExtraSmallScreen ? <MobileToolbar /> : <Toolbar />}
 
           <DetailTabs tabs={tabs} />
 
@@ -245,7 +246,11 @@ const DetailViewInner = () => {
           )}
           <SidePanel />
 
-          <ScanInputModal lines={lines ?? []} invoiceId={data?.id ?? ''} />
+          <ScanInputModal
+            lines={lines ?? []}
+            invoiceId={data?.id ?? ''}
+            shouldOpen={!isOpen}
+          />
 
           {isOpen && (
             <InboundLineEdit

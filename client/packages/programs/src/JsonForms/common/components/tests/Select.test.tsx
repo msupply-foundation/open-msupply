@@ -46,6 +46,7 @@ describe('getDisplayOptions', () => {
       sortByVvmStatusThenExpiry: true,
       useSimplifiedMobileUi: true,
       orderInPacks: true,
+      showIndicativePriceInRequisitions: true,
     } as PreferencesNode;
     const options = {
       preferenceKey: PreferenceKey.GenderOptions,
