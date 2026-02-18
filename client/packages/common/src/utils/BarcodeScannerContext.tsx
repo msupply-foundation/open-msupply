@@ -215,7 +215,6 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
           const handleScannerInstall = (
             event: GoogleBarcodeScannerModuleInstallProgressEvent
           ) => {
-            // Update progress directly from the event if available
             if (!!event.progress) {
               setInstallProgress(event.progress);
             }
