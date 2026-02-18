@@ -179,8 +179,8 @@ export const isInboundDisabled = (inbound?: InboundRowFragment): boolean => {
 };
 
 /** Returns true if the inbound shipment can be put on hold */
-export const isInboundHoldable = (inbound: InboundRowFragment): boolean =>
-  inbound.status !== InvoiceNodeStatus.Verified;
+export const isInboundHoldable = (inbound?: InboundRowFragment): boolean =>
+  inbound ? inbound.status !== InvoiceNodeStatus.Verified : true;
 
 export const isCustomerReturnDisabled = (
   customerReturn: CustomerReturnRowFragment
