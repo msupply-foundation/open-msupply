@@ -56,6 +56,21 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
     onConfirm: resetTableState,
   });
 
+  // shared between the table body and head to ensure consistent padding
+  const padding = (
+    density: 'compact' | 'comfortable' | 'spacious',
+    columnSize?: number
+  ) =>
+    density === 'compact'
+      ? '0.2rem 0.5rem'
+      : density === 'comfortable'
+        ? columnSize && columnSize < 100
+          ? '0.35rem 0.25rem' // Reduce the padding when column is narrow
+          : '0.35rem 0.5rem'
+        : columnSize && columnSize < 100
+          ? '0.8rem 0.6rem'
+          : '0.8rem';
+
   return {
     // Add description to column menu
     renderColumnActionsMenuItems: ({ internalColumnMenuItems, column }) => {
@@ -153,6 +168,15 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
         verticalAlign: 'bottom',
         justifyContent: 'space-between',
         opacity: 1,
+        padding: padding(table.getState().density, column.getSize()),
+        // needed to get resize handle to show in the right place (idk why it's hard coded in MRT)
+        paddingRight: column.getCanResize()
+          ? table.getState().density === 'compact'
+            ? '8px'
+            : table.getState().density === 'comfortable'
+              ? '16px'
+              : '24px'
+          : undefined,
         '& .MuiTableSortLabel-root': {
           display: column.getIsSorted() ? undefined : 'none',
         },
@@ -175,16 +199,6 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
           // Date picker should never need to be wider than 170px
           '& .MuiPickersTextField-root': { width: '170px' },
         },
-        button:
-          column.id === 'mrt-row-expand'
-            ? {
-                rotate: table.getIsAllRowsExpanded()
-                  ? '180deg'
-                  : !table.getIsSomeRowsExpanded()
-                    ? '-90deg'
-                    : undefined,
-              }
-            : undefined,
         // For Filter inputs -- add additional classes for other filter types as
         // required
         '& .MuiInputBase-input, & .MuiPickersInputBase-root': {
@@ -247,71 +261,64 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
       };
     },
 
-    muiTableBodyCellProps: ({ row, column, table }) => {
-      const columnWidth = column.getSize();
-      return {
-        sx: {
-          fontSize: table.getState().density === 'compact' ? '0.90em' : '1em',
-          fontWeight: 400,
-          opacity: 1,
-          color: getIsPlaceholderRow(row)
-            ? 'secondary.light'
-            : getIsRestrictedRow(row)
-              ? 'gray.main'
+    muiTableBodyCellProps: ({ row, column, table }) => ({
+      sx: {
+        fontSize: table.getState().density === 'compact' ? '0.90em' : '1em',
+        fontWeight: 400,
+        opacity: 1,
+        color: getIsPlaceholderRow(row)
+          ? 'secondary.light'
+          : getIsRestrictedRow(row)
+            ? 'gray.main'
+            : undefined,
+
+        padding: padding(table.getState().density, column.getSize()),
+
+        // Indent "sub-rows" when expanded
+        paddingLeft:
+          !row.getIsGrouped() && table.getState().grouping?.length
+            ? '2em'
+            : // Little bit of extra padding for first column, unless it's the "Select" checkbox column
+              column.getIndex() === 0 && column.id !== 'mrt-row-select'
+              ? '1em'
               : undefined,
+        backgroundColor:
+          column.getIsPinned() || row.getIsSelected()
+            ? // Remove transparency from pinned backgrounds
+              'rgba(252, 252, 252, 1)'
+            : undefined,
 
-          ...(column.id === 'mrt-row-expand' && {
-            // The expand chevron is rotated incorrectly by default (in terms of
-            // consistency with other Accordion/Expando UI elements in the app)
-            button: {
-              rotate: row.getIsExpanded() ? '180deg' : '-90deg',
-              // Height and padding affect the density of the row
-              padding: 0,
-              height: 'unset',
-            },
-            // Hide the icon when there's nothing to expand
-            '& button.Mui-disabled': {
-              color: !row.getCanExpand() ? 'transparent' : undefined,
-            },
-          }),
-          minHeight: table.getState().density === 'compact' ? '32px' : '40px',
-          padding:
-            table.getState().density === 'spacious'
-              ? '0.7rem'
-              : table.getState().density === 'comfortable'
-                ? columnWidth > 100
-                  ? '0.35rem 0.5rem'
-                  : // Reduce the padding when column is narrow
-                    '0.35rem 0.25rem'
-                : undefined, // default for "compact",
+        ...((column.columnDef as ColumnDef<T>).getIsError?.(row.original)
+          ? {
+              border: '2px solid',
+              borderColor: 'error.main',
+              borderRadius: '8px',
+            }
+          : {
+              borderBottom: '1px solid',
+              borderColor: 'border',
+            }),
+      },
+    }),
 
-          // Indent "sub-rows" when expanded
-          paddingLeft:
-            !row.getIsGrouped() && table.getState().grouping?.length
-              ? '2em'
-              : // Little bit of extra padding for first column, unless it's the "Select" checkbox column
-                column.getIndex() === 0 && column.id !== 'mrt-row-select'
-                ? '1em'
-                : undefined,
-          backgroundColor:
-            column.getIsPinned() || row.getIsSelected()
-              ? // Remove transparency from pinned backgrounds
-                'rgba(252, 252, 252, 1)'
-              : undefined,
+    muiExpandButtonProps: ({ row }) => ({
+      sx: {
+        display: row.getCanExpand() ? 'flex' : 'none',
+        transform: row.getIsExpanded() ? 'rotate(180deg)' : 'rotate(-90deg)',
+        transition: 'transform 0.2s',
+      },
+    }),
 
-          ...((column.columnDef as ColumnDef<T>).getIsError?.(row.original)
-            ? {
-                border: '2px solid',
-                borderColor: 'error.main',
-                borderRadius: '8px',
-              }
-            : {
-                borderBottom: '1px solid',
-                borderColor: 'border',
-              }),
-        },
-      };
-    },
+    muiExpandAllButtonProps: ({ table }) => ({
+      sx: {
+        transform: table.getIsAllRowsExpanded()
+          ? 'rotate(180deg)'
+          : !table.getIsSomeRowsExpanded()
+            ? 'rotate(-90deg)'
+            : undefined,
+        transition: 'transform 0.2s',
+      },
+    }),
 
     muiSelectAllCheckboxProps: {
       color: 'outline',
