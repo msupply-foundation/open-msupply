@@ -70,9 +70,12 @@ export const ForecastQuantityColumn: ColumnDef<RequestLineFragment> = {
     </QueryClientProviderProxy>
   ),
   id: 'forecast-quantity',
-  header: 'Niveau de stock cible en unités (prévision démographique)', // plugin.forecasting.forecast-amount (can't translate in plugins yet...)
+  // header: 'Niveau de stock cible en unités (prévision démographique)', // plugin.forecasting.forecast-amount (can't translate in plugins yet...)
+  header: 'Target stock (population)', // plugin.forecasting.forecast-amount (can't translate in plugins yet...)
+  // description:
+  // 'Le niveau de stock cible calculé selon les prévisions démographiques', // 'plugin.forecasting.forecast-amount-description',
   description:
-    'Le niveau de stock cible calculé selon les prévisions démographiques', // 'plugin.forecasting.forecast-amount-description',
+    'The target stock level for this item, calculated using the population served by this store',
   enableSorting: false,
   columnIndex: 10,
   defaultHideOnMobile: true,
