@@ -11,7 +11,14 @@ const ToolbarComponent = () => {
   const t = useTranslation();
 
   return (
-    <AppBarContentPortal>
+    <AppBarContentPortal
+      sx={{
+        paddingBottom: '16px',
+        flex: 1,
+        justifyContent: 'space-between',
+        display: 'flex',
+      }}
+    >
       <Box display="flex" gap={1}>
         <FilterMenu
           filters={[
