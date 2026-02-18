@@ -226,8 +226,9 @@ export const getInboundStockLines = (
   lines.filter(line => isA.stockInLine(line) || isInboundPlaceholderRow(line));
 
 export const isInboundStatusChangeDisabled = (
-  inbound: InboundFragment | CustomerReturnFragment
+  inbound?: InboundFragment | CustomerReturnFragment
 ): boolean => {
+  if (!inbound) return true;
   if (inbound.onHold) return true;
 
   const isManuallyCreated = !inbound.linkedShipment?.id;

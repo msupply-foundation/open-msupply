@@ -21,7 +21,6 @@ import {
   getStatusTranslator,
 } from '../../../utils';
 import { InboundLineFragment, useInboundShipment } from '../../api';
-import { useIsStatusChangeDisabled } from '../../api/hooks/utils';
 
 const getStatusOptions = (
   currentStatus: InvoiceNodeStatus,
@@ -82,27 +81,19 @@ const getStatusOptions = (
   return options;
 };
 
-const useStatusChangeButton = () => {
-  const {
-    query: { data, loading },
-    update: { update },
-  } = useInboundShipment();
-
-  return { data, loading, update };
-};
-
 const StatusChangeButtonContent = ({
   data,
   update,
+  isStatusChangeDisabled,
 }: {
   data: NonNullable<ReturnType<typeof useInboundShipment>['query']['data']>;
   update: ReturnType<typeof useInboundShipment>['update']['update'];
+  isStatusChangeDisabled: boolean;
 }) => {
   const t = useTranslation();
   const { invoiceStatusOptions } = usePreferences();
   const { success, error } = useNotification();
   const { userHasPermission } = useAuthContext();
-  const isStatusChangeDisabled = useIsStatusChangeDisabled();
 
   const { status, onHold, linkedShipment, lines } = data;
   const isManuallyCreated = !linkedShipment?.id;
@@ -215,9 +206,19 @@ export const validateEmptyInvoice = (lines: {
 };
 
 export const StatusChangeButton = () => {
-  const { data, loading, update } = useStatusChangeButton();
+  const {
+    query: { data, loading },
+    update: { update },
+    isStatusChangeDisabled,
+  } = useInboundShipment();
 
   if (loading || !data) return null;
 
-  return <StatusChangeButtonContent data={data} update={update} />;
+  return (
+    <StatusChangeButtonContent
+      data={data}
+      update={update}
+      isStatusChangeDisabled={isStatusChangeDisabled}
+    />
+  );
 };
