@@ -13,7 +13,10 @@ import {
 } from '../../operations.generated';
 import { useInboundGraphQL } from '../../useInboundGraphQL';
 import { INBOUND, INBOUND_LINE } from './keys';
-import { isInboundDisabled } from '@openmsupply-client/invoices/src/utils';
+import {
+  isInboundDisabled,
+  isInboundHoldable,
+} from '@openmsupply-client/invoices/src/utils';
 import { inboundParsers } from '../../api';
 import { useInboundDelete } from './useInboundDelete';
 import { useMemo } from 'react';
@@ -26,7 +29,7 @@ export const useInboundShipment = (id?: string) => {
 
   const { data, isLoading: loading, error } = useGetById(invoiceId);
   const { queryClient } = useInboundGraphQL();
-
+  const isHoldable = isInboundHoldable(data);
   const isDisabled = isInboundDisabled(data);
 
   const rows = useMemo(() => {
@@ -96,6 +99,7 @@ export const useInboundShipment = (id?: string) => {
   return {
     query: { data, loading, error },
     isDisabled,
+    isHoldable,
     update: { update, isUpdating, updateError },
     create: { create, isCreating, createError },
     delete: { deleteInbound, isDeleting, deleteError },

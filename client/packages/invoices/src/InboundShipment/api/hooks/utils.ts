@@ -15,5 +15,4 @@ export { useZeroInboundLinesQuantity } from './line/useZeroInboundLinesQuantity'
 
 export { useAddFromMasterList } from './utils/useAddFromMasterList';
 export { useInboundApi } from './utils/useInboundApi';
-export { useIsInboundHoldable } from './utils/useIsInboundHoldable';
 export { useIsStatusChangeDisabled } from './utils/useIsStatusChangeDisabled';
