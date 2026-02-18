@@ -33,9 +33,9 @@ impl Loader<ItemsStockOnHandLoaderInput> for ItemsStockOnHandLoader {
         let service_context = self.service_provider.basic_context()?;
 
         let item_ids =
-            super::unique_ids(store_and_item_id.iter().map(|input| input.item_id.clone()));
+            util::dedup_iter(store_and_item_id.iter().map(|input| input.item_id.clone()));
         let store_ids =
-            super::unique_ids(store_and_item_id.iter().map(|input| input.store_id.clone()));
+            util::dedup_iter(store_and_item_id.iter().map(|input| input.store_id.clone()));
 
         let filter = StockOnHandFilter {
             item_id: Some(EqualFilter::equal_any(item_ids)),

@@ -22,7 +22,7 @@ impl Loader<RequisitionAndItemId> for RequisitionLineSupplyStatusLoader {
     ) -> Result<HashMap<RequisitionAndItemId, Self::Value>, Self::Error> {
         let service_context = self.service_provider.basic_context()?;
 
-        let requisition_ids = super::unique_ids(
+        let requisition_ids = util::dedup_iter(
             requisition_and_item_id
                 .iter()
                 .map(|input| input.requisition_id.clone()),

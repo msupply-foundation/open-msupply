@@ -78,7 +78,7 @@ impl Loader<StockLineByItemAndStoreIdLoaderInput> for StockLineByItemAndStoreIdL
         };
 
         let item_ids =
-            super::unique_ids(item_and_store_ids.iter().map(|input| input.item_id.clone()));
+            util::dedup_iter(item_and_store_ids.iter().map(|input| input.item_id.clone()));
 
         let result = repo.query_by_filter(
             StockLineFilter::new()
