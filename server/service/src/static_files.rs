@@ -60,6 +60,8 @@ impl StaticFileService {
             Some(file_dir) => PathBuf::from_str(file_dir)?.join(STATIC_FILE_DIR),
             None => std::env::current_dir()?.join(STATIC_FILE_DIR),
         };
+        // Create the directory recursively if it doesn't exist
+        std::fs::create_dir_all(&file_dir)?;
         Ok(StaticFileService {
             dir: file_dir,
             max_lifetime_millis: 60 * 60 * 1000, // 1 hours
@@ -272,6 +274,30 @@ mod test {
     use super::StaticFileService;
 
     const TEST_DIR: &str = "test_static_files";
+
+    #[test]
+    fn test_static_file_service_creates_directory() {
+        let test_base_dir = "test_base_dir_creation";
+        let test_base_path = std::env::current_dir().unwrap().join(test_base_dir);
+        
+        // Clean up if exists
+        if fs::metadata(&test_base_path).is_ok() {
+            fs::remove_dir_all(&test_base_path).unwrap();
+        }
+        
+        // Directory should not exist before creating service
+        assert!(fs::metadata(&test_base_path).is_err());
+        
+        // Create service with non-existent base directory
+        let service = StaticFileService::new(&Some(test_base_dir.to_string())).unwrap();
+        
+        // Directory should now exist
+        assert!(fs::metadata(&service.dir).is_ok());
+        assert!(service.dir.to_string_lossy().contains("static_files"));
+        
+        // Clean up
+        fs::remove_dir_all(&test_base_path).unwrap();
+    }
 
     #[test]
     fn test_static_file_storage() {
