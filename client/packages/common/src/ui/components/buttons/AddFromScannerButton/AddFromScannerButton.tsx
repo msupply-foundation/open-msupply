@@ -68,16 +68,10 @@ export const AddFromScannerButton = ({
       } else {
         // One-off scan
         try {
-          console.log('🔘 AddFromScannerButton: Starting one-off scan');
           const result = await scan();
-          console.log(
-            '🔘 AddFromScannerButton: Scan completed with result:',
-            result
-          );
-          console.log('🔘 AddFromScannerButton: Calling handleScanResult');
+          handleScanResult(result);
           handleScanResult(result);
         } catch (e) {
-          console.error('🔘 AddFromScannerButton: Error during scan:', e);
           error(t('error.unable-to-start-scanning', { error: e }))();
         }
       }
