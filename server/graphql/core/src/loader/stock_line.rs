@@ -7,8 +7,6 @@ use async_graphql::dataloader::*;
 use async_graphql::*;
 use std::collections::HashMap;
 
-use super::IdPair;
-
 pub struct StockLineByLocationIdLoader {
     pub connection_manager: StorageConnectionManager,
 }
@@ -48,15 +46,16 @@ pub struct StockLineByItemAndStoreIdLoader {
     pub connection_manager: StorageConnectionManager,
 }
 
-#[derive(Clone)]
-pub struct EmptyPayload;
-pub type StockLineByItemAndStoreIdLoaderInput = IdPair<EmptyPayload>;
+#[derive(Clone, PartialEq, Eq, Hash)]
+pub struct StockLineByItemAndStoreIdLoaderInput {
+    pub store_id: String,
+    pub item_id: String,
+}
 impl StockLineByItemAndStoreIdLoaderInput {
     pub fn new(store_id: &str, item_id: &str) -> Self {
         StockLineByItemAndStoreIdLoaderInput {
-            primary_id: store_id.to_string(),
-            secondary_id: item_id.to_string(),
-            payload: EmptyPayload {},
+            store_id: store_id.to_string(),
+            item_id: item_id.to_string(),
         }
     }
 }
@@ -73,16 +72,17 @@ impl Loader<StockLineByItemAndStoreIdLoaderInput> for StockLineByItemAndStoreIdL
         let repo = StockLineRepository::new(&connection);
 
         let store_id = if let Some(item_and_store_ids) = item_and_store_ids.first() {
-            &item_and_store_ids.primary_id
+            &item_and_store_ids.store_id
         } else {
             return Ok(HashMap::new());
         };
 
+        let item_ids =
+            super::unique_ids(item_and_store_ids.iter().map(|input| input.item_id.clone()));
+
         let result = repo.query_by_filter(
             StockLineFilter::new()
-                .item_id(EqualFilter::equal_any(IdPair::get_all_secondary_ids(
-                    item_and_store_ids,
-                )))
+                .item_id(EqualFilter::equal_any(item_ids))
                 .store_id(EqualFilter::equal_to(store_id.to_string()))
                 .has_packs_in_store(true),
             None,
