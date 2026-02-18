@@ -63,8 +63,7 @@ mod query {
             )
             .unwrap();
 
-        // 2. Check we CANNOT update the asset to use a serial number that already exists on another asset
-        // This prevents creating new duplicates via updates
+        // 2. Check we can't update the serial number to one that already exists on another asset
         assert_eq!(
             service.update_asset(
                 &ctx,
@@ -75,8 +74,8 @@ mod query {
                     }),
                     ..Default::default()
                 },
-            ).err().unwrap(),
-            UpdateAssetError::SerialNumberAlreadyExists
+            ),
+            Err(UpdateAssetError::SerialNumberAlreadyExists)
         );
 
         // 3. Check we can update the asset to use a serial number that doesn't already exist
@@ -223,7 +222,7 @@ mod query {
         // Create two assets that will have duplicate serial numbers
         let asset_a_with_duplicate_serial_id = "test_id_3".to_string();
         let asset_b_with_duplicate_serial_id = "test_id_4".to_string();
-        
+
         let _asset_a_with_duplicate_serial = service
             .insert_asset(
                 &ctx,
@@ -277,9 +276,15 @@ mod query {
                 },
             )
             .unwrap();
-        
-        assert_eq!(updated_asset_a.notes, Some("updated notes for duplicate".to_string()));
-        assert_eq!(updated_asset_a.serial_number, Some("duplicate_test_serial".to_string()));
+
+        assert_eq!(
+            updated_asset_a.notes,
+            Some("updated notes for duplicate".to_string())
+        );
+        assert_eq!(
+            updated_asset_a.serial_number,
+            Some("duplicate_test_serial".to_string())
+        );
 
         // 12. Check that we CAN fix duplication by changing serial to a unique one
         let updated_asset_a = service
@@ -294,7 +299,10 @@ mod query {
                 },
             )
             .unwrap();
-        
-        assert_eq!(updated_asset_a.serial_number, Some("fixed_unique_serial".to_string()));
+
+        assert_eq!(
+            updated_asset_a.serial_number,
+            Some("fixed_unique_serial".to_string())
+        );
     }
 }
