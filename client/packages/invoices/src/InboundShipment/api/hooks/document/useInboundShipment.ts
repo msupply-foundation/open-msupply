@@ -4,8 +4,8 @@ import {
   useMutation,
   useQuery,
   usePatchState,
+  useParams,
 } from '@openmsupply-client/common';
-import { useInboundId } from '../utils/useInboundId';
 import {
   InboundFragment,
   InboundRowFragment,
@@ -19,7 +19,7 @@ import { useInboundDelete } from './useInboundDelete';
 import { useMemo } from 'react';
 
 export const useInboundShipment = (id?: string) => {
-  const paramInvoiceId = useInboundId();
+  const { invoiceId: paramInvoiceId = '' } = useParams();
 
   // If an id is passed in, use that. Otherwise use the invoice id from the URL
   const invoiceId = !id ? paramInvoiceId : id;

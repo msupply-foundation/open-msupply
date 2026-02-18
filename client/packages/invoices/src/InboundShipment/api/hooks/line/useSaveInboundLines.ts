@@ -3,8 +3,8 @@ import {
   useMutation,
   useTranslation,
   noOtherVariants,
+  useParams,
 } from '@openmsupply-client/common';
-import { useInboundId } from '../utils/useInboundId';
 import { useInboundApi } from '../utils/useInboundApi';
 import { DraftInboundLine } from '../../../../types';
 import { INBOUND, INBOUND_LINE } from '../document/keys';
@@ -12,7 +12,7 @@ import { INBOUND, INBOUND_LINE } from '../document/keys';
 export const useSaveInboundLines = () => {
   const t = useTranslation();
   const queryClient = useQueryClient();
-  const invoiceId = useInboundId();
+  const { invoiceId = '' } = useParams();
   const api = useInboundApi();
 
   return useMutation(
