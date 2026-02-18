@@ -33,7 +33,6 @@ import {
   useInboundDeleteSelectedLines,
   useZeroInboundLinesQuantity,
   useSaveInboundLines,
-  useIsInboundDisabled,
 } from '../../api/hooks/utils';
 import { OnHoldButton } from './OnHoldButton';
 import { StatusChangeButton } from './StatusChangeButton';
@@ -93,6 +92,7 @@ export const FooterComponent = ({
 
   const {
     query: { data },
+    isDisabled,
   } = useInboundShipment();
   const onDelete = useInboundDeleteSelectedLines(
     selectedRows,
@@ -103,7 +103,6 @@ export const FooterComponent = ({
     resetRowSelection
   );
   const { mutateAsync } = useSaveInboundLines();
-  const isDisabled = useIsInboundDisabled();
   const isManuallyCreated = !data?.linkedShipment?.id;
 
   const handleCampaignClick = () => {
