@@ -226,17 +226,19 @@ impl<'a> StockLineRepository<'a> {
                 apply_string_filter!(query, search, stock_line::batch);
 
                 // Store id must be passed to filter
-                if let (Some(item_code_or_name), Some(store_id)) =
-                    (item_code_or_name, &query_store_id)
-                {
-                    let item_filter = ItemFilter {
-                        code_or_name: search_for_item.or(Some(item_code_or_name)),
-                        ..ItemFilter::new().is_visible(true).is_active(true)
-                    };
-                    let item_query =
-                        ItemRepository::create_filtered_query(store_id.clone(), Some(item_filter));
+                if let Some(store_id) = &query_store_id {
+                    if search_for_item.is_some() || item_code_or_name.is_some() {
+                        let item_filter = ItemFilter {
+                            code_or_name: search_for_item.or(item_code_or_name),
+                            ..ItemFilter::new().is_visible(true).is_active(true)
+                        };
+                        let item_query = ItemRepository::create_filtered_query(
+                            store_id.clone(),
+                            Some(item_filter),
+                        );
 
-                    query = query.or_filter(item::id.eq_any(item_query.select(item::id)));
+                        query = query.or_filter(item::id.eq_any(item_query.select(item::id)));
+                    }
                 }
             }
 
