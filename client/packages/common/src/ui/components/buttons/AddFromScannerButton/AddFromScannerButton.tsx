@@ -70,7 +70,6 @@ export const AddFromScannerButton = ({
         try {
           const result = await scan();
           handleScanResult(result);
-          handleScanResult(result);
         } catch (e) {
           error(t('error.unable-to-start-scanning', { error: e }))();
         }
