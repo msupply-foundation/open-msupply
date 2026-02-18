@@ -1,9 +1,6 @@
 // Re-export less commonly used hooks that were previously nested in useInbound
 export { useUpdateInboundServiceTax } from './document/useInboundUpdateServiceTax';
-export {
-  useListInternalOrders,
-  useListInternalOrdersPromise,
-} from './document/useListInternalOrders';
+export { useListInternalOrders } from './document/useListInternalOrders';
 export { useListInternalOrderLines } from './document/useListInternalOrderLines';
 
 export { useLinesFromInternalOrder } from './line/useLinesFromInternalOrder';
