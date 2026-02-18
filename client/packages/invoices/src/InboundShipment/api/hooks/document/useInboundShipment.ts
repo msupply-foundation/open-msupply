@@ -16,6 +16,7 @@ import { INBOUND, INBOUND_LINE } from './keys';
 import {
   isInboundDisabled,
   isInboundHoldable,
+  isInboundStatusChangeDisabled,
 } from '@openmsupply-client/invoices/src/utils';
 import { inboundParsers } from '../../api';
 import { useInboundDelete } from './useInboundDelete';
@@ -31,6 +32,7 @@ export const useInboundShipment = (id?: string) => {
   const { queryClient } = useInboundGraphQL();
   const isHoldable = isInboundHoldable(data);
   const isDisabled = isInboundDisabled(data);
+  const isStatusChangeDisabled = isInboundStatusChangeDisabled(data);
 
   const rows = useMemo(() => {
     const lines = data?.lines?.nodes ?? [];
@@ -100,6 +102,7 @@ export const useInboundShipment = (id?: string) => {
     query: { data, loading, error },
     isDisabled,
     isHoldable,
+    isStatusChangeDisabled,
     update: { update, isUpdating, updateError },
     create: { create, isCreating, createError },
     delete: { deleteInbound, isDeleting, deleteError },
