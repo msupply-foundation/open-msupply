@@ -36,7 +36,7 @@ impl Loader<RequisitionIndicatorInfoLoaderInput> for RequisitionIndicatorInfoLoa
     ) -> Result<HashMap<RequisitionIndicatorInfoLoaderInput, Self::Value>, Self::Error> {
         let service_context = self.service_provider.basic_context()?;
 
-        let line_ids = super::unique_ids(loader_inputs.iter().map(|input| input.line_id.clone()));
+        let line_ids = util::dedup_iter(loader_inputs.iter().map(|input| input.line_id.clone()));
 
         let Some(RequisitionIndicatorInfoLoaderInput {
             store_id,
