@@ -11,10 +11,9 @@ import { ColumnDef } from '../types';
 
 export const useColumnOrder = <T extends MRT_RowData>(
   tableId: string,
-  setHasSavedState: (hasSavedState: boolean) => void,
   columns: ColumnDef<T>[],
   enableRowSelection: MRT_TableOptions<T>['enableRowSelection'],
-  enableExpanding: MRT_TableOptions<T>['enableExpanding'],
+  enableExpanding: MRT_TableOptions<T>['enableExpanding']
 ) => {
   const initial = useMemo(() => {
     for (const col of columns) {
@@ -40,6 +39,9 @@ export const useColumnOrder = <T extends MRT_RowData>(
 
   const [state, setState] = useState<MRT_ColumnOrderState>(
     getSavedState(tableId)?.columnOrder ?? initial
+  );
+  const [hasSavedState, setHasSavedState] = useState(
+    !!getSavedState(tableId)?.columnOrder
   );
 
   // If initial state changes (due to plugin column loading, for example) and no
@@ -76,5 +78,7 @@ export const useColumnOrder = <T extends MRT_RowData>(
     initial,
     state: state ?? initial,
     update,
+    hasSavedState,
+    resetHasSavedState: () => setHasSavedState(false),
   };
 };

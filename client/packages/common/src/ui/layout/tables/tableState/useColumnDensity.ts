@@ -6,11 +6,14 @@ import {
 } from 'material-react-table';
 import { getSavedState, updateSavedState, differentOrUndefined } from './utils';
 
-export const useColumnDensity = (tableId: string, setHasSavedState: (hasSavedState: boolean) => void) => {
+export const useColumnDensity = (tableId: string) => {
   const initial: MRT_DensityState = 'comfortable';
 
   const [state, setState] = useState<MRT_DensityState>(
     getSavedState(tableId)?.density ?? initial
+  );
+  const [hasSavedState, setHasSavedState] = useState(
+    !!getSavedState(tableId)?.density
   );
 
   const update = useCallback<
@@ -35,5 +38,7 @@ export const useColumnDensity = (tableId: string, setHasSavedState: (hasSavedSta
     initial,
     state,
     update,
+    hasSavedState,
+    resetHasSavedState: () => setHasSavedState(false),
   };
 };

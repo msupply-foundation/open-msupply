@@ -4,7 +4,6 @@ import {
   MRT_RowData,
   MRT_ShowHideColumnsButton,
   MRT_TableOptions,
-  MRT_ToggleDensePaddingButton,
   MRT_ToggleFiltersButton,
   MRT_ToggleFullScreenButton,
 } from 'material-react-table';
@@ -14,17 +13,28 @@ import {
   CheckboxIndeterminateIcon,
   CollapseIcon,
   ExpandIcon,
-  RefreshIcon,
 } from '@common/icons';
 import { MenuItem, Typography, alpha } from '@mui/material';
 import { ColumnDef } from './types';
-import { IconButton, useConfirmationModal } from '@common/components';
+import { IconButton } from '@common/components';
 import { useTranslation } from '@common/intl';
 import { EnvUtils } from '@common/utils';
+import { SettingsMenu } from './components/SettingsMenu';
+import {
+  useColumnDensity,
+  useColumnOrder,
+  useColumnPinning,
+  useColumnSizing,
+  useColumnVisibility,
+} from './tableState';
 
 export const useTableDisplayOptions = <T extends MRT_RowData>({
+  density,
+  columnSizing,
+  columnVisibility,
+  columnPinning,
+  columnOrder,
   resetTableState,
-  hasSavedState,
   onRowClick,
   isGrouped,
   toggleGrouped,
@@ -34,8 +44,12 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
   muiTableBodyRowProps = {},
   isMobile = false,
 }: {
+  density: ReturnType<typeof useColumnDensity>;
+  columnSizing: ReturnType<typeof useColumnSizing>;
+  columnVisibility: ReturnType<typeof useColumnVisibility>;
+  columnPinning: ReturnType<typeof useColumnPinning>;
+  columnOrder: ReturnType<typeof useColumnOrder>;
   resetTableState: () => void;
-  hasSavedState: boolean;
   onRowClick?: (row: T, isCtrlClick: boolean) => void;
   isGrouped: boolean;
   hasColumnFilters: boolean;
@@ -49,12 +63,6 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
   muiTableBodyRowProps?: MRT_TableOptions<T>['muiTableBodyRowProps'];
 }): Partial<MRT_TableOptions<T>> => {
   const t = useTranslation();
-
-  const getConfirmation = useConfirmationModal({
-    title: t('heading.are-you-sure'),
-    message: t('messages.reset-table-defaults'),
-    onConfirm: resetTableState,
-  });
 
   // shared between the table body and head to ensure consistent padding
   const padding = (
@@ -94,8 +102,15 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
         ...internalColumnMenuItems,
       ];
     },
+    // Use column header as action button tooltip
+    muiColumnActionsButtonProps: ({ column }) => {
+      const { header } = column.columnDef as ColumnDef<T>;
+      return {
+        title: header,
+      };
+    },
 
-    // Add reset state button to toolbar
+    // Add grouping toggle and settings menu to toolbar
     renderToolbarInternalActions: ({ table }) => (
       <>
         {toggleGrouped && !isMobile && (
@@ -106,19 +121,19 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
             sx={iconButtonProps}
           />
         )}
-        {hasColumnFilters && !isMobile && (
-          <MRT_ToggleFiltersButton table={table} />
-        )}
-        {!isMobile && <MRT_ToggleDensePaddingButton table={table} />}
+        {/* Hiding filter options within the table, hasColumnFilters is hardcoded to false for now */}
+        {hasColumnFilters && <MRT_ToggleFiltersButton table={table} />}
         <MRT_ShowHideColumnsButton table={table} />
-        <IconButton
-          icon={<RefreshIcon />}
-          onClick={() => getConfirmation()}
-          label={t('label.reset-table-defaults')}
-          disabled={!hasSavedState}
-          sx={iconButtonProps}
-        />
         {!isMobile && <MRT_ToggleFullScreenButton table={table} />}
+        <SettingsMenu
+          table={table}
+          density={density}
+          columnSizing={columnSizing}
+          columnVisibility={columnVisibility}
+          columnPinning={columnPinning}
+          columnOrder={columnOrder}
+          resetTableState={resetTableState}
+        />
       </>
     ),
 

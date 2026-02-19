@@ -7,11 +7,14 @@ import {
 import { getSavedState, updateSavedState, differentOrUndefined } from './utils';
 import { useDebounceCallback } from '@common/hooks';
 
-export const useColumnSizing = (tableId: string, setHasSavedState: (hasSavedState: boolean) => void) => {
+export const useColumnSizing = (tableId: string) => {
   const initial = { 'mrt-row-expand': 40 };
 
   const [state, setState] = useState<MRT_ColumnSizingState>(
     getSavedState(tableId)?.columnSizing ?? initial
+  );
+  const [hasSavedState, setHasSavedState] = useState(
+    !!getSavedState(tableId)?.columnSizing
   );
 
   const debouncedUpdateSavedState = useDebounceCallback(
@@ -46,5 +49,7 @@ export const useColumnSizing = (tableId: string, setHasSavedState: (hasSavedStat
     initial,
     state,
     update,
+    hasSavedState,
+    resetHasSavedState: () => setHasSavedState(false),
   };
 };

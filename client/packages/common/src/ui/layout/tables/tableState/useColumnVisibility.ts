@@ -10,7 +10,6 @@ import { useSimplifiedTabletUI } from '@common/hooks';
 
 export const useColumnVisibility = <T extends MRT_RowData>(
   tableId: string,
-  setHasSavedState: (hasSavedState: boolean) => void,
   columns: ColumnDef<T>[],
   isMobile?: boolean
 ) => {
@@ -31,6 +30,9 @@ export const useColumnVisibility = <T extends MRT_RowData>(
 
   const [state, setState] = useState<MRT_VisibilityState>(
     getSavedState(tableId)?.columnVisibility ?? initial
+  );
+  const [hasSavedState, setHasSavedState] = useState(
+    !!getSavedState(tableId)?.columnVisibility
   );
 
   // If initial state changes (due to simplified mobile view turning on/off)
@@ -67,5 +69,7 @@ export const useColumnVisibility = <T extends MRT_RowData>(
     initial,
     state,
     update,
+    hasSavedState,
+    resetHasSavedState: () => setHasSavedState(false),
   };
 };

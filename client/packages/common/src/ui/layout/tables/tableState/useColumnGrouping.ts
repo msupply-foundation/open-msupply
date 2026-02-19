@@ -4,7 +4,6 @@ import { MRT_RowData, MRT_TableOptions } from 'material-react-table';
 
 export const useColumnGrouping = (
   tableId: string,
-  setHasSavedState: (hasSavedState: boolean) => void,
   groupingInput?: {
     field: string;
     groupedByDefault?: boolean;
@@ -28,7 +27,6 @@ export const useColumnGrouping = (
         
         const savedGrouping = newGrouping.length ? newGrouping : undefined;
         updateSavedState(tableId, { grouping: savedGrouping });
-        if (savedGrouping) setHasSavedState(true);
         return newGrouping;
       }),
     []
@@ -37,7 +35,6 @@ export const useColumnGrouping = (
   const toggle = useCallback(
     () =>
       setState(prev => {
-        setHasSavedState(true);
         if (prev.length || groupingInput === undefined) {
           updateSavedState(tableId, { grouping: [] });
           return [];
