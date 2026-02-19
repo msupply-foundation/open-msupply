@@ -7,7 +7,7 @@ import {
   useAuthContext,
   ContactTraceSortFieldInput,
   TabDefinition,
-  // usePreferences, // Temporarily disabled: Contact tracing causes app crashes
+  usePreferences,
 } from '@openmsupply-client/common';
 import { usePatient } from '../api';
 import { AppBarButtons } from './AppBarButtons';
@@ -49,9 +49,7 @@ export const PatientView = () => {
   const { data: currentPatient } = usePatient.document.get(patientId);
   const [isDirtyPatient, setIsDirtyPatient] = useState(false);
   const { store, storeId } = useAuthContext();
-  // const { showContactTracing } = usePreferences(); // Temporarily disabled: Contact tracing causes app crashes
-  const showContactTracing = false;
-
+  const { showContactTracing } = usePreferences();
   const {
     query: { data: insuranceProvidersData },
   } = useInsuranceProviders();
