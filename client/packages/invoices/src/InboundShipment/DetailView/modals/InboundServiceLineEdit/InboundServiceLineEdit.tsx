@@ -11,7 +11,7 @@ import {
   MaterialTable,
   useSimpleMaterialTable,
 } from '@openmsupply-client/common';
-import { useInbound } from '../../../api';
+import { useInboundShipment } from '../../../api';
 import { useDraftServiceLines } from './useDraftServiceLines';
 import { useItem } from '@openmsupply-client/system';
 import { useServiceLineColumns } from '@openmsupply-client/invoices/src/OutboundShipment/DetailView/OutboundServiceLineEdit/useServiceLineColumns';
@@ -28,7 +28,7 @@ export const InboundServiceLineEdit = ({
   const t = useTranslation();
   const { error } = useNotification();
   const { Modal } = useDialog({ isOpen, onClose });
-  const isDisabled = useInbound.utils.isDisabled();
+  const { isDisabled } = useInboundShipment();
   const { lines, update, add, save, isLoading } = useDraftServiceLines();
   const columns = useServiceLineColumns(update);
   const {
