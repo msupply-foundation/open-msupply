@@ -6,7 +6,7 @@ import {
   PlusCircleIcon,
   useUrlQuery,
   UserStoreNodeFragment,
-  // usePreferences, // Temporarily disabled: Contact tracing causes app crashes
+  usePreferences,
 } from '@openmsupply-client/common';
 import {
   PatientModal,
@@ -30,8 +30,7 @@ export const AddButton: React.FC<AddButtonProps> = ({
 }) => {
   const t = useTranslation();
   const { urlQuery, updateQuery } = useUrlQuery();
-  // const { showContactTracing } = usePreferences(); // Temporarily disabled: Contact tracing causes app crashes
-  const showContactTracing = false;
+  const { showContactTracing } = usePreferences();
   const currentUrlTab = urlQuery['tab'];
   const { createNewPatient } = usePatientStore();
   const { setModal: selectModal, reset } = usePatientModalStore();
