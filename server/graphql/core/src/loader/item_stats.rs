@@ -1,6 +1,5 @@
 use crate::standard_graphql_error::StandardGraphqlError;
 
-use super::IdPair;
 use actix_web::web::Data;
 use async_graphql::dataloader::*;
 use chrono::NaiveDate;
@@ -14,13 +13,17 @@ pub struct ItemsStatsForItemLoader {
 
 #[derive(Clone, PartialEq, Eq, Hash)]
 pub struct ItemStatsLoaderInputPayload {
+    // OrderedFloat is used to provide a total ordering for f64, which allows it to be used in Hash/Eq
     pub amc_lookback_months: Option<OrderedFloat<f64>>,
     pub period_end: Option<NaiveDate>,
 }
 
 #[derive(Clone, PartialEq, Eq, Hash)]
-// Newtype wrapper to provide custom Hash/Eq that includes payload
-pub struct ItemStatsLoaderInput(IdPair<ItemStatsLoaderInputPayload>);
+pub struct ItemStatsLoaderInput {
+    pub store_id: String,
+    pub item_id: String,
+    pub payload: ItemStatsLoaderInputPayload,
+}
 
 impl ItemStatsLoaderInput {
     pub fn new(
@@ -29,14 +32,14 @@ impl ItemStatsLoaderInput {
         amc_lookback_months: Option<f64>,
         period_end: Option<chrono::NaiveDate>,
     ) -> Self {
-        ItemStatsLoaderInput(IdPair {
-            primary_id: store_id.to_string(),
-            secondary_id: item_id.to_string(),
+        ItemStatsLoaderInput {
+            store_id: store_id.to_string(),
+            item_id: item_id.to_string(),
             payload: ItemStatsLoaderInputPayload {
                 amc_lookback_months: amc_lookback_months.map(OrderedFloat),
                 period_end,
             },
-        })
+        }
     }
 }
 
@@ -52,10 +55,10 @@ impl Loader<ItemStatsLoaderInput> for ItemsStatsForItemLoader {
 
         // Validate all same store
         let store_id = match loader_inputs.first() {
-            Some(input) => &input.0.primary_id,
+            Some(input) => &input.store_id,
             None => return Ok(HashMap::new()),
         };
-        if loader_inputs.iter().any(|i| &i.0.primary_id != store_id) {
+        if loader_inputs.iter().any(|i| &i.store_id != store_id) {
             return Err(StandardGraphqlError::BadUserInput(
                 "Cannot batch item stats across multiple stores".to_string(),
             )
@@ -67,9 +70,9 @@ impl Loader<ItemStatsLoaderInput> for ItemsStatsForItemLoader {
 
         // Group by payload -> Vec<item_id>
         for input in loader_inputs {
-            map.entry(input.0.payload.clone())
+            map.entry(input.payload.clone())
                 .or_default()
-                .push(input.0.secondary_id.clone());
+                .push(input.item_id.clone());
         }
 
         let mut out = HashMap::<ItemStatsLoaderInput, Self::Value>::new();
@@ -81,7 +84,7 @@ impl Loader<ItemStatsLoaderInput> for ItemsStatsForItemLoader {
                 .get_item_stats(
                     &service_context,
                     &store_id,
-                    payload.amc_lookback_months.map(|v| v.into_inner()),
+                    payload.amc_lookback_months.map(|f| f.into_inner()),
                     item_ids,
                     payload.period_end,
                 )
@@ -92,7 +95,7 @@ impl Loader<ItemStatsLoaderInput> for ItemsStatsForItemLoader {
                     ItemStatsLoaderInput::new(
                         &store_id,
                         &item_stat.item_id,
-                        payload.amc_lookback_months.map(|v| v.into_inner()),
+                        payload.amc_lookback_months.map(|f| f.into_inner()),
                         payload.period_end,
                     ),
                     item_stat,
