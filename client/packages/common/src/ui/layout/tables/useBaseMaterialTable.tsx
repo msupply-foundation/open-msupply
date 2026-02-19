@@ -86,7 +86,6 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
   const columnPinning = useColumnPinning(
     tableId,
     columns,
-    !!enableRowSelection
   );
   const grouping = useColumnGrouping(tableId, groupingInput);
   const columnOrder = useColumnOrder(
@@ -124,6 +123,7 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
   const hasColumnFilters = false;
 
   const displayOptions = useTableDisplayOptions({
+    tableId,
     density,
     columnSizing,
     columnVisibility,
