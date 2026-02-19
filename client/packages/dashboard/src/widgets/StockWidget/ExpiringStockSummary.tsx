@@ -93,7 +93,7 @@ export const ExpiringStockSummary = ({
           link: RouteBuilder.create(AppRoute.Inventory)
             .addPart(AppRoute.Stock)
             .addQuery({
-              expiryDate: getBatchesExpiryDateRange(30, 90),
+              expiryDate: getBatchesExpiryDateRange(30, 89),
             })
             .build(),
           statContext: `${panelContext}-batches-expiring-between-days`,
