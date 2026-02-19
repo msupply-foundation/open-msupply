@@ -59,7 +59,7 @@ export const CreatePatientSlider = ({
 
   return (
     <SlidePanel
-      title="New Patient"
+      title={t('label.new-patient')}
       width="100%"
       open={open}
       okButton={
