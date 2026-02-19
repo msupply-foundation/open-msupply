@@ -27,11 +27,7 @@ export const useOutboundColumns = () => {
         pin: 'left',
         enableColumnFilter: true,
         enableSorting: true,
-        Footer: ({ table }) => {
-          const rows = table.getFilteredRowModel().rows;
-          if (!rows.length) return null;
-          return t('label.total');
-        },
+        Footer: t('label.total'),
       },
       {
         accessorKey: 'itemName',
@@ -200,21 +196,21 @@ export const useOutboundColumns = () => {
           }
         },
         Footer: ({ table }) => {
-          const rows = table.getFilteredRowModel().rows;
-          if (!rows.length) return null;
-          const totalVolume = rows.reduce((sum, row) => {
-            const rowVolume = row.original.subRows
-              ? row.original.subRows.reduce(
-                  (subSum, subRow) =>
-                    subSum +
-                    (subRow.stockLine?.volumePerPack ?? 0) *
-                      subRow.numberOfPacks,
-                  0
-                )
-              : (row.original.stockLine?.volumePerPack ?? 0) *
-                row.original.numberOfPacks;
-            return sum + rowVolume;
-          }, 0);
+          const totalVolume = table
+            .getFilteredRowModel()
+            .rows.reduce((sum, row) => {
+              const rowVolume = row.original.subRows
+                ? row.original.subRows.reduce(
+                    (subSum, subRow) =>
+                      subSum +
+                      (subRow.stockLine?.volumePerPack ?? 0) *
+                        subRow.numberOfPacks,
+                    0
+                  )
+                : (row.original.stockLine?.volumePerPack ?? 0) *
+                  row.original.numberOfPacks;
+              return sum + rowVolume;
+            }, 0);
           return (
             <Box
               sx={{
