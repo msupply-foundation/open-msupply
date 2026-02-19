@@ -7,17 +7,16 @@ use std::collections::HashMap;
 
 use crate::standard_graphql_error::StandardGraphqlError;
 
-use super::IdPair;
-
-#[derive(Clone)]
-pub struct EmptyPayload;
-pub type ClinicianLoaderInput = IdPair<EmptyPayload>;
+#[derive(Clone, PartialEq, Eq, Debug, Hash)]
+pub struct ClinicianLoaderInput {
+    pub store_id: String,
+    pub clinician_id: String,
+}
 impl ClinicianLoaderInput {
     pub fn new(store_id: &str, clinician_id: &str) -> Self {
         ClinicianLoaderInput {
-            primary_id: store_id.to_string(),
-            secondary_id: clinician_id.to_string(),
-            payload: EmptyPayload {},
+            store_id: store_id.to_string(),
+            clinician_id: clinician_id.to_string(),
         }
     }
 }
@@ -38,8 +37,8 @@ impl Loader<ClinicianLoaderInput> for ClinicianLoader {
         // store_id -> Vec of clinician_id
         let mut store_map = HashMap::<String, Vec<String>>::new();
         for item in ids_with_store_id {
-            let entry = store_map.entry(item.primary_id.clone()).or_default();
-            entry.push(item.secondary_id.clone())
+            let entry = store_map.entry(item.store_id.clone()).or_default();
+            entry.push(item.clinician_id.clone())
         }
         let mut output = HashMap::<ClinicianLoaderInput, Self::Value>::new();
         for (store_id, clinician_ids) in store_map {
