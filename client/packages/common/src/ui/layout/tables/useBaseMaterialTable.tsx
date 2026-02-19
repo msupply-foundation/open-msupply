@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   MRT_Row,
   MRT_RowData,
@@ -20,7 +20,7 @@ import {
   useColumnPinning,
   useColumnGrouping,
 } from './tableState';
-import { clearSavedState, getSavedState } from './tableState/utils';
+import { clearSavedState } from './tableState/utils';
 import { DataError, NothingHere } from '@common/components';
 
 export interface BaseTableConfig<T extends MRT_RowData> extends Omit<
@@ -80,27 +80,17 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
   );
   const { sorting, onSortingChange } = useUrlSortManagement(initialSort);
 
-  const [hasSavedState, setHasSavedState] = useState<boolean>(
-    getSavedState(tableId) !== undefined
-  );
-  const density = useColumnDensity(tableId, setHasSavedState);
-  const columnSizing = useColumnSizing(tableId, setHasSavedState);
-  const columnVisibility = useColumnVisibility(
-    tableId,
-    setHasSavedState,
-    columns,
-    isMobile
-  );
+  const density = useColumnDensity(tableId);
+  const columnSizing = useColumnSizing(tableId);
+  const columnVisibility = useColumnVisibility(tableId, columns, isMobile);
   const columnPinning = useColumnPinning(
     tableId,
-    setHasSavedState,
     columns,
     !!enableRowSelection
   );
-  const grouping = useColumnGrouping(tableId, setHasSavedState, groupingInput);
+  const grouping = useColumnGrouping(tableId, groupingInput);
   const columnOrder = useColumnOrder(
     tableId,
-    setHasSavedState,
     columns,
     enableRowSelection,
     !!grouping.state.length
@@ -128,21 +118,22 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
 
     // Density doesn't have a `reset` function
     table.setDensity(density.initial);
-
-    // Reset saved state flag
-    setHasSavedState(false);
   };
 
   // hiding all table filter related options for now
   const hasColumnFilters = false;
 
   const displayOptions = useTableDisplayOptions({
-    isGrouped: !!grouping.state.length,
-    hasColumnFilters,
-    toggleGrouped: grouping.enabled ? grouping.toggle : undefined,
+    density,
+    columnSizing,
+    columnVisibility,
+    columnPinning,
+    columnOrder,
     resetTableState,
-    hasSavedState,
+    hasColumnFilters,
     onRowClick,
+    isGrouped: !!grouping.state.length,
+    toggleGrouped: grouping.enabled ? grouping.toggle : undefined,
     getIsPlaceholderRow,
     getIsRestrictedRow,
     muiTableBodyRowProps,

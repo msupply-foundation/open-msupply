@@ -9,7 +9,6 @@ import { ColumnDef } from '../types';
 
 export const useColumnPinning = <T extends MRT_RowData>(
   tableId: string,
-  setHasSavedState: (hasSavedState: boolean) => void,
   columns: ColumnDef<T>[],
   rowSelectionEnabled: boolean
 ) => {
@@ -28,6 +27,9 @@ export const useColumnPinning = <T extends MRT_RowData>(
 
   const [state, setState] = useState<MRT_ColumnPinningState>(
     getSavedState(tableId)?.columnPinning ?? initial
+  );
+  const [hasSavedState, setHasSavedState] = useState(
+    !!getSavedState(tableId)?.columnPinning
   );
 
   const update = useCallback<
@@ -68,5 +70,7 @@ export const useColumnPinning = <T extends MRT_RowData>(
     initial,
     state,
     update,
+    hasSavedState,
+    resetHasSavedState: () => setHasSavedState(false),
   };
 };
