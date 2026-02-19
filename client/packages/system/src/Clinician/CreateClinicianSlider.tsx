@@ -1,5 +1,6 @@
 import React from 'react';
 import {
+  Box,
   DialogButton,
   LoadingButton,
   SaveIcon,
@@ -51,9 +52,9 @@ export const CreateClinicianSlider = ({
       }
       cancelButton={<DialogButton variant="cancel" onClick={() => onClose()} />}
     >
-      <div style={{ display: 'flex', justifyContent: 'center' }}>
+      <Box display="flex" justifyContent="center">
         <CreateClinicianForm draft={draft} updateDraft={updateDraft} />
-      </div>
+      </Box>
     </SlidePanel>
   );
 };
