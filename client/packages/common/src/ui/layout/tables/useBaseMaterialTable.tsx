@@ -5,6 +5,7 @@ import {
   MRT_TableOptions,
   useMaterialReactTable,
 } from 'material-react-table';
+import { Row } from '@tanstack/table-core';
 import { useIntlUtils, useTranslation } from '@common/intl';
 import { ColumnDef } from './types';
 import { useMaterialTableColumns } from './useMaterialTableColumns';
@@ -79,10 +80,17 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
   );
   const { sorting, onSortingChange } = useUrlSortManagement(initialSort);
 
-  const [hasSavedState, setHasSavedState] = useState<boolean>(getSavedState(tableId) !== undefined);
+  const [hasSavedState, setHasSavedState] = useState<boolean>(
+    getSavedState(tableId) !== undefined
+  );
   const density = useColumnDensity(tableId, setHasSavedState);
   const columnSizing = useColumnSizing(tableId, setHasSavedState);
-  const columnVisibility = useColumnVisibility(tableId, setHasSavedState, columns, isMobile);
+  const columnVisibility = useColumnVisibility(
+    tableId,
+    setHasSavedState,
+    columns,
+    isMobile
+  );
   const columnPinning = useColumnPinning(
     tableId,
     setHasSavedState,
@@ -173,7 +181,30 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
     // Grouping options
     enableGrouping: true,
     groupedColumnMode: false,
+
+    // These options are needed to stop groups with only 1 child being expandable - we only want groups to be expandable if they have multiple children
     getRowCanExpand: row => row.getLeafRows().length > 1,
+    getExpandedRowModel: table => () => {
+      const rowModel = table.getPreExpandedRowModel();
+
+      const expandedRows: Row<T>[] = [];
+
+      const handleRow = (row: Row<T>) => {
+        expandedRows.push(row);
+
+        if (row.subRows?.length > 1 && row.getIsExpanded()) {
+          row.subRows.forEach(handleRow);
+        }
+      };
+
+      rowModel.rows.forEach(handleRow);
+
+      return {
+        rows: expandedRows,
+        flatRows: rowModel.flatRows,
+        rowsById: rowModel.rowsById,
+      };
+    },
 
     // Disable selection Toolbar, we use our own custom footer for this
     positionToolbarAlertBanner: 'none',
