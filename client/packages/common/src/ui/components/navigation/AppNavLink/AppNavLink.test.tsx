@@ -86,6 +86,7 @@ describe('AppNavLink', () => {
                   to="/outbound-shipment"
                   icon={<TruckIcon />}
                   text="Distribution"
+                  isParent={true}
                 />
               </Box>
             }
