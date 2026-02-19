@@ -109,13 +109,6 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
     isGrouped
   );
 
-  const hasSavedState =
-    density.hasSavedState ||
-    columnSizing.hasSavedState ||
-    columnPinning.hasSavedState ||
-    columnVisibility.hasSavedState ||
-    columnOrder.hasSavedState;
-
   const resetTableState = () => {
     clearSavedState(tableId);
 
@@ -151,12 +144,16 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
   const hasColumnFilters = false;
 
   const displayOptions = useTableDisplayOptions({
-    isGrouped,
-    hasColumnFilters,
-    toggleGrouped: grouping?.enabled ? toggleGrouped : undefined,
+    density,
+    columnSizing,
+    columnVisibility,
+    columnPinning,
+    columnOrder,
     resetTableState,
-    hasSavedState,
+    hasColumnFilters,
     onRowClick,
+    isGrouped,
+    toggleGrouped: grouping?.enabled ? toggleGrouped : undefined,
     getIsPlaceholderRow,
     getIsRestrictedRow,
     muiTableBodyRowProps,
