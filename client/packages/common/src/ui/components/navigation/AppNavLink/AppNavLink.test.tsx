@@ -32,7 +32,6 @@ describe('AppNavLink', () => {
                   to="/outbound-shipment"
                   icon={<TruckIcon />}
                   text="Distribution"
-                  end={false}
                 />
               </Box>
             }
@@ -60,7 +59,6 @@ describe('AppNavLink', () => {
                   to="/outbound-shipment"
                   icon={<TruckIcon />}
                   text="Distribution"
-                  end={false}
                 />
               </Box>
             }
@@ -88,8 +86,6 @@ describe('AppNavLink', () => {
                   to="/outbound-shipment"
                   icon={<TruckIcon />}
                   text="Distribution"
-                  end={false}
-                  inactive
                 />
               </Box>
             }
