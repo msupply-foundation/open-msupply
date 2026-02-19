@@ -32,16 +32,12 @@ export const useColumnOrder = <T extends MRT_RowData>(
       columns,
       state: {},
       enableRowSelection, // adds `mrt-row-select`
-      enableExpanding, // adds `mrt-row-expand`
-      positionExpandColumn: 'first', // this is the default, but needs to be explicitly set here
+      enableExpanding, // adds `mrt-expand`
     } as MRT_StatefulTableOptions<MRT_RowData>);
   }, [columns, enableRowSelection, enableExpanding]);
 
   const [state, setState] = useState<MRT_ColumnOrderState>(
     getSavedState(tableId)?.columnOrder ?? initial
-  );
-  const [hasSavedState, setHasSavedState] = useState(
-    !!getSavedState(tableId)?.columnOrder
   );
 
   // If initial state changes (due to plugin column loading, for example) and no
@@ -49,7 +45,7 @@ export const useColumnOrder = <T extends MRT_RowData>(
   // default
   useEffect(() => {
     if (!getSavedState(tableId)?.columnOrder) setState(initial);
-  }, [initial]);
+  }, [initial, enableExpanding]);
 
   const update = useCallback<
     NonNullable<MRT_TableOptions<MRT_RowData>['onColumnOrderChange']>
@@ -61,14 +57,10 @@ export const useColumnOrder = <T extends MRT_RowData>(
             ? updaterOrValue(prev)
             : updaterOrValue;
 
-        const savedColumnOrder = differentOrUndefined(
-          newColumnOrder,
-          state ?? initial
-        );
         updateSavedState(tableId, {
-          columnOrder: savedColumnOrder,
+          columnOrder: differentOrUndefined(newColumnOrder, initial),
         });
-        if (savedColumnOrder) setHasSavedState(true);
+
         return newColumnOrder;
       }),
     [initial, state]
@@ -78,7 +70,5 @@ export const useColumnOrder = <T extends MRT_RowData>(
     initial,
     state: state ?? initial,
     update,
-    hasSavedState,
-    resetHasSavedState: () => setHasSavedState(false),
   };
 };

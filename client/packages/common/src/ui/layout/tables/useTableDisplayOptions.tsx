@@ -29,6 +29,7 @@ import {
 } from './tableState';
 
 export const useTableDisplayOptions = <T extends MRT_RowData>({
+  tableId,
   density,
   columnSizing,
   columnVisibility,
@@ -44,6 +45,7 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
   muiTableBodyRowProps = {},
   isMobile = false,
 }: {
+  tableId: string;
   density: ReturnType<typeof useColumnDensity>;
   columnSizing: ReturnType<typeof useColumnSizing>;
   columnVisibility: ReturnType<typeof useColumnVisibility>;
@@ -127,6 +129,7 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
         {!isMobile && <MRT_ToggleFullScreenButton table={table} />}
         <SettingsMenu
           table={table}
+          tableId={tableId}
           density={density}
           columnSizing={columnSizing}
           columnVisibility={columnVisibility}
@@ -356,6 +359,16 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
       'mrt-row-select': {
         size: 50,
         enablePinning: false, // Can't (un-)pin the selection column
+        muiTableHeadCellProps: {
+          align: 'center',
+        },
+        muiTableBodyCellProps: {
+          align: 'center',
+        },
+      },
+      'mrt-row-expand': {
+        size: 50,
+        enablePinning: false, // Can't (un-)pin the expand column
         muiTableHeadCellProps: {
           align: 'center',
         },

@@ -37,6 +37,7 @@ export const updateSavedState = (
 
   // Remove any keys with undefined values
   const mergedState = pickBy({ ...savedData, ...newState });
+  console.log('Saving state for table', tableId, mergedState);
 
   // No change, nothing to do
   if (isEqual(mergedState, savedData)) return;

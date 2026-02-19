@@ -31,9 +31,6 @@ export const useColumnVisibility = <T extends MRT_RowData>(
   const [state, setState] = useState<MRT_VisibilityState>(
     getSavedState(tableId)?.columnVisibility ?? initial
   );
-  const [hasSavedState, setHasSavedState] = useState(
-    !!getSavedState(tableId)?.columnVisibility
-  );
 
   // If initial state changes (due to simplified mobile view turning on/off)
   // And no custom visibility has been saved
@@ -52,14 +49,10 @@ export const useColumnVisibility = <T extends MRT_RowData>(
             ? updaterOrValue(prev)
             : updaterOrValue;
 
-        const savedColumnVisibility = differentOrUndefined(
-          newColumnVisibility,
-          initial
-        );
         updateSavedState(tableId, {
-          columnVisibility: savedColumnVisibility,
+          columnVisibility: differentOrUndefined(newColumnVisibility, initial),
         });
-        if (savedColumnVisibility) setHasSavedState(true);
+
         return newColumnVisibility;
       }),
     [initial]
@@ -69,7 +62,5 @@ export const useColumnVisibility = <T extends MRT_RowData>(
     initial,
     state,
     update,
-    hasSavedState,
-    resetHasSavedState: () => setHasSavedState(false),
   };
 };

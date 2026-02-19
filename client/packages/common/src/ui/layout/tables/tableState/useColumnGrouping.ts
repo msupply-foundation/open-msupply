@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { getSavedState, updateSavedState } from './utils';
+import { differentOrUndefined, getSavedState, updateSavedState } from './utils';
 import { MRT_RowData, MRT_TableOptions } from 'material-react-table';
 
 export const useColumnGrouping = (
@@ -7,7 +7,7 @@ export const useColumnGrouping = (
   groupingInput?: {
     field: string;
     groupedByDefault?: boolean;
-  },
+  }
 ) => {
   const initial = groupingInput?.groupedByDefault ? [groupingInput.field] : [];
 
@@ -24,22 +24,24 @@ export const useColumnGrouping = (
           typeof updaterOrValue === 'function'
             ? updaterOrValue(prev)
             : updaterOrValue;
-        
-        const savedGrouping = newGrouping.length ? newGrouping : undefined;
-        updateSavedState(tableId, { grouping: savedGrouping });
+
+        updateSavedState(tableId, {
+          grouping: differentOrUndefined(newGrouping, initial),
+        });
+
         return newGrouping;
       }),
     []
-  )
+  );
 
   const toggle = useCallback(
     () =>
       setState(prev => {
         if (prev.length || groupingInput === undefined) {
-          updateSavedState(tableId, { grouping: [] });
+          update([]);
           return [];
         } else {
-          updateSavedState(tableId, { grouping: [groupingInput.field] });
+          update([groupingInput.field]);
           return [groupingInput.field];
         }
       }),
