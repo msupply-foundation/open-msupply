@@ -155,6 +155,7 @@ export const EditPreference = ({
               options={options}
               value={value}
               onChange={handleChange}
+              preferenceKey={preference.key}
             />
           }
           isLast={isLast}
