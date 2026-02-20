@@ -1,6 +1,6 @@
 {
   "is_custom": false,
-  "version": "2.16.0",
+  "version": "2.17.0",
   "code": "picklist-invoice-with-logo",
   "context": "OUTBOUND_SHIPMENT",
   "name": "Pick List",

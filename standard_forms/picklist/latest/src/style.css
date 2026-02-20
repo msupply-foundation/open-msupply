@@ -62,7 +62,9 @@ body > table {
 
 .body_section {
   width: 100%;
+  font-family: Tahoma;
   border-collapse: collapse;
+  table-layout: fixed;
 }
 
 .body_column_label th {
@@ -73,6 +75,19 @@ body > table {
 .body_value td {
   font-family: Tahoma;
   font-size: 8pt;
+  padding: 4px;
+}
+
+.line_number, .quantity, .pack, .expiry {
+    text-align: right;
+    font-family: Tahoma;
+    font-size: 8pt;
+}
+
+.location_code, .item_name, .batch, .unit {
+    text-align: left;
+    font-family: Tahoma;
+    font-size: 8pt
 }
 
 .footer {
@@ -90,4 +105,8 @@ body > table {
 
 .footer p {
     margin: 20px 0;
+}
+
+.batch-wrap {
+    word-break: break-word;
 }
