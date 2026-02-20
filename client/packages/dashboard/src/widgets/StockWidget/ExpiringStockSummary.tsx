@@ -93,7 +93,7 @@ export const ExpiringStockSummary = ({
           link: RouteBuilder.create(AppRoute.Inventory)
             .addPart(AppRoute.Stock)
             .addQuery({
-              expiryDate: getBatchesExpiryDateRange(30, 89), // Note this is between 30 and 90 days to exclude the 90th day we only use 89. This aligns with he backend filter `expiring_in_next_three_months` server/graphql/general/src/queries/stock_counts.rs
+              expiryDate: getBatchesExpiryDateRange(30, 89), // Note this is between 30 and 90 days to exclude the 90th day we only use 89. This aligns with the backend filter `expiring_in_next_three_months` server/graphql/general/src/queries/stock_counts.rs
             })
             .build(),
           statContext: `${panelContext}-batches-expiring-between-days`,
