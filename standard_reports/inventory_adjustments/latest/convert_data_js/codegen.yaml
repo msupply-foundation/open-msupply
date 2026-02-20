@@ -1,0 +1,25 @@
+overwrite: true
+# Server must be running and initialised
+schema: "http://localhost:9000/graphql"
+documents:
+  - ../**/*.graphql
+generates:
+  ./src/generated-types/graphql.ts:
+    preset: import-types
+    presetConfig:
+      # Because we are using typescript-operations only, some pre requisite types are missing, those are usually generated with typescript plugin
+      # Would need to update codegenTypes if new scalars are added, do this by adding typescript plugin below (uncomment), generating and coping first few lines to codegenTypes
+      # This is relative to ./src/generated-types/graphql.ts
+      typesPath: "../../codegenTypes"
+    plugins:
+      # - typescript
+      - typescript-operations
+    config:
+      preResolveTypes: true
+      flattenGeneratedTypes: true
+      onlyOperationTypes: true
+      printFieldsOnNewLines: true
+      scalars:
+        DateTime: string
+        NaiveDate: string
+        NaiveDateTime: string

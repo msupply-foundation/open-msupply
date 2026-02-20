@@ -23,8 +23,8 @@ import {
   isInboundDisabled,
   isInboundListItemDisabled,
 } from '../../utils';
-import { useInbound, InboundRowFragment } from '../api';
 import { Toolbar } from './Toolbar';
+import { InboundRowFragment, useInboundList, useInboundShipment } from '../api';
 import { Footer } from './Footer';
 
 export const InboundListView = () => {
@@ -67,10 +67,13 @@ const InboundShipments: React.FC<{
   internalModalController: ToggleState;
   external?: boolean;
 }> = ({ internalModalController, external = false }) => {
+  const {
+    update: { update },
+  } = useInboundShipment();
+
   const t = useTranslation();
   const navigate = useNavigate();
   const { invoiceStatusOptions } = usePreferences();
-  const { mutate: onUpdate } = useInbound.document.update();
 
   const isExtraSmallScreen = useIsExtraSmallScreen();
 
@@ -80,7 +83,7 @@ const InboundShipments: React.FC<{
   } = useUrlQueryParams({
     initialSort: { key: 'invoiceNumber', dir: 'desc' },
     ...(isExtraSmallScreen && {
-      initialFilter: [{ id: 'status', value: 'NEW,DELIVERED,RECEIVED' }],
+      initialFilter: [{ id: 'status', value: 'NEW,DELIVERED' }],
     }),
     filters: [
       { key: 'invoiceNumber', condition: 'equalTo', isNumber: true },
@@ -105,7 +108,9 @@ const InboundShipments: React.FC<{
     },
   };
 
-  const { data, isFetching } = useInbound.document.list(listParams);
+  const {
+    query: { data, isFetching },
+  } = useInboundList(listParams);
   const statuses = inboundStatuses.filter(status =>
     invoiceStatusOptions?.includes(status)
   );
@@ -119,7 +124,7 @@ const InboundShipments: React.FC<{
         enableColumnFilter: true,
         Cell: ({ row }) => (
           <NameAndColorSetterCell
-            onColorChange={onUpdate}
+            onColorChange={update}
             getIsDisabled={isInboundDisabled}
             row={row.original}
           />
@@ -214,11 +219,14 @@ const InboundShipments: React.FC<{
 
   return (
     <>
-      <Toolbar filter={filter} />
       {isExtraSmallScreen ? (
+        // We don't want to show any app bar button on mobile list view
         <MobileCardList table={table} />
       ) : (
-        <MaterialTable table={table} />
+        <>
+          <Toolbar filter={filter} />
+          <MaterialTable table={table} />
+        </>
       )}
       <Footer
         selectedRows={selectedRows}
