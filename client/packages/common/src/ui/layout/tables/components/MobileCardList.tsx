@@ -33,11 +33,25 @@ const TableCard = <T extends MRT_RowData>({
               ? flexRender(cell.column.columnDef.Cell, cell.getContext())
               : cell.renderValue();
             return (
-              <Box key={cell.id} display="flex" justifyContent="space-between">
+              <Box
+                key={cell.id}
+                display="flex"
+                justifyContent="space-between"
+                gap={1}
+                alignItems="flex-start"
+              >
                 <Typography color="text.secondary">
                   {flexRender(cell.column.columnDef.header, cell.getContext())}
                 </Typography>
-                <Box>{content as React.ReactNode}</Box>
+                <Box
+                  sx={{
+                    textAlign: 'end',
+                    maxWidth: '65%',
+                    wordBreak: 'break-word',
+                  }}
+                >
+                  {content as React.ReactNode}
+                </Box>
               </Box>
             );
           })}
@@ -54,7 +68,7 @@ export const MobileCardList = <T extends MRT_RowData>({
 }) => {
   return (
     <>
-      <Stack spacing={2} sx={{ width: '100%', alignItems: 'center', m: 2 }}>
+      <Stack spacing={2} sx={{ width: '100%', alignItems: 'center', mx: 2 }}>
         <MRT_TopToolbar table={table} />
         {table.getRowModel().rows.map(row => {
           const rowProps =

@@ -60,6 +60,12 @@ export const Toolbar = ({ filter }: ToolbarProps) => {
                 placeholder: t('placeholder.search-by-name'),
               },
               {
+                type: 'number',
+                name: t('label.invoice-number'),
+                urlParameter: 'invoiceNumber',
+                wide: true,
+              },
+              {
                 type: 'group',
                 name: t('label.created-datetime'),
                 elements: [

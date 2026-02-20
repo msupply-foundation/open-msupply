@@ -8,8 +8,7 @@ import {
   usePathnameIncludes,
   MaterialTable,
   usePaginatedMaterialTable,
-  MobileCardList,
-  useIsExtraSmallScreen
+  useIsExtraSmallScreen,
 } from '@openmsupply-client/common';
 import { useAssets } from '../api';
 import { AppBarButtons } from './AppBarButtons';
@@ -20,6 +19,7 @@ import { AppRoute } from '@openmsupply-client/config';
 import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
 import { useAssetColumns } from './columns';
+import { CardListView } from '../../Mobile/Equipment/CardListView';
 
 export const EquipmentListView = () => {
   const t = useTranslation();
@@ -58,16 +58,16 @@ export const EquipmentListView = () => {
 
   return (
     <>
-      <Toolbar />
-      <AppBarButtons
-        importModalController={importModalController}
-        modalController={modalController}
-      />
-      {isExtraSmallScreen ? (
-        <MobileCardList table={table} />
-      ) : (
-        <MaterialTable table={table} />
+      {!isExtraSmallScreen && (
+        <>
+          <Toolbar />
+          <AppBarButtons
+            importModalController={importModalController}
+            modalController={modalController}
+          />
+        </>
       )}
+      {isExtraSmallScreen ? <CardListView /> : <MaterialTable table={table} />}
 
       <Footer
         selectedRows={selectedRows}

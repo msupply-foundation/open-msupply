@@ -177,6 +177,7 @@ export const QuantityTable = ({
               updateDraftLine({ shippedPackSize: value, id: row.original.id });
             }}
             disabled={isDisabled}
+            min={1}
           />
         ),
         defaultHideOnMobile: true,
@@ -195,7 +196,7 @@ export const QuantityTable = ({
               });
             }}
             disabled={isDisabled}
-            min={1}
+            min={0}
           />
         ),
       },

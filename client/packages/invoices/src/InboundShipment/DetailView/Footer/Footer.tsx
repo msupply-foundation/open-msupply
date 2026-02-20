@@ -17,6 +17,7 @@ import {
   useEditModal,
   useNotification,
   usePreferences,
+  useIsExtraSmallScreen,
 } from '@openmsupply-client/common';
 import { ChangeCampaignOrProgramConfirmationModal } from '@openmsupply-client/system';
 import {
@@ -24,10 +25,18 @@ import {
   inboundStatuses,
   manualInboundStatuses,
 } from '../../../utils';
-import { InboundFragment, InboundLineFragment, useInbound } from '../../api';
-import { StatusChangeButton } from './StatusChangeButton';
+import {
+  InboundFragment,
+  InboundLineFragment,
+  useInboundShipment,
+} from '../../api';
+import {
+  useInboundDeleteSelectedLines,
+  useZeroInboundLinesQuantity,
+  useSaveInboundLines,
+} from '../../api/hooks/utils';
 import { OnHoldButton } from './OnHoldButton';
-import { useIsInboundDisabled } from '../../api/hooks/utils/useIsInboundDisabled';
+import { StatusChangeButton } from './StatusChangeButton';
 
 const createStatusLog = (invoice: InboundFragment) => {
   const statusIdx = inboundStatuses.findIndex(s => invoice.status === s);
@@ -81,18 +90,21 @@ export const FooterComponent = ({
   const { info } = useNotification();
   const changeCampaignOrProgramModal = useEditModal();
   const { invoiceStatusOptions } = usePreferences();
+  const isExtraSmallScreen = useIsExtraSmallScreen();
 
-  const { data } = useInbound.document.get();
-  const onDelete = useInbound.lines.deleteSelected(
+  const {
+    query: { data },
+    isDisabled,
+  } = useInboundShipment();
+  const onDelete = useInboundDeleteSelectedLines(
     selectedRows,
     resetRowSelection
   );
-  const onZeroQuantities = useInbound.lines.zeroQuantities(
+  const onZeroQuantities = useZeroInboundLinesQuantity(
     selectedRows,
     resetRowSelection
   );
-  const { mutateAsync } = useInbound.lines.save();
-  const isDisabled = useIsInboundDisabled();
+  const { mutateAsync } = useSaveInboundLines();
   const isManuallyCreated = !data?.linkedShipment?.id;
 
   const handleCampaignClick = () => {
@@ -155,8 +167,7 @@ export const FooterComponent = ({
               alignItems="center"
               height={64}
             >
-              <OnHoldButton />
-
+              {!isExtraSmallScreen && <OnHoldButton />}
               <StatusCrumbs
                 statuses={statuses}
                 statusLog={createStatusLog(data)}

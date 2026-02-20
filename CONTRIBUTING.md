@@ -32,7 +32,10 @@ We're using the ticket number to start the branch name, and dropping the `#` bec
 
 ### Get the test suite running
 
-Make sure you're using a recent version of rust and nodejs.
+Toolchains:
+
+- Rust toolchain is pinned via `server/rust-toolchain.toml` (see `server/README.md#dependencies` for system dependencies and setup).
+- Client Node version is pinned via `client/.nvmrc` (`nvm use` from `client/`; see `client/README.md`).
 
 To get started, have a look at the [readme](README.md)
 
@@ -74,6 +77,12 @@ yarn start
 # Option 2: run client against the demo server API (no Rust required)
 cd ./client
 yarn start-remote
+
+# Option 3: run full stack locally without legacy mSupply (initialise from bundled reference data)
+cd ./server
+cargo run --bin remote_server_cli -- initialise-from-export -n reference1
+cd ..
+yarn start
 ```
 
 This will compile the React app and launch a browser on <http://localhost:3003>. We're using mostly chrome and firefox.. but you be you!
@@ -82,6 +91,8 @@ You can log in using:
 
 *User*: developer
 *Password*: password
+
+Note: `initialise-from-export` currently emits a large number of warnings (see #10241), but should still create a usable local database. Login credentials are printed in the CLI output and are also listed in `server/data/reference1/users.txt`.
 
 ### Get the style right
 
