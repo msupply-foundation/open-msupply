@@ -131,24 +131,25 @@ const DetailViewInner = () => {
 
   const columns = useInboundShipmentColumns();
 
-  const { table, selectedRows } = useNonPaginatedMaterialTable<InboundLineFragment>({
-    tableId: 'inbound-shipment-detail-view',
-    columns,
-    data: lines,
-    grouping: { field: 'item.code' },
-    isLoading: false,
-    initialSort: { key: 'itemName', dir: 'asc' },
-    onRowClick: !isDisabled && !isExtraSmallScreen ? onRowClick : undefined,
-    getIsPlaceholderRow: row => isInboundPlaceholderRow(row.original),
-    noDataElement: (
-      <NothingHere
-        body={t('error.no-inbound-items')}
-        onCreate={isDisabled ? undefined : () => onAddItem()}
-        buttonText={t('button.add-item')}
-      />
-    ),
-    isMobile: isExtraSmallScreen,
-  });
+  const { table, selectedRows } =
+    useNonPaginatedMaterialTable<InboundLineFragment>({
+      tableId: 'inbound-shipment-detail-view',
+      columns,
+      data: lines,
+      grouping: { field: 'item.code' },
+      isLoading: false,
+      initialSort: { key: 'itemName', dir: 'asc' },
+      onRowClick: !isDisabled && !isExtraSmallScreen ? onRowClick : undefined,
+      getIsPlaceholderRow: row => isInboundPlaceholderRow(row.original),
+      noDataElement: (
+        <NothingHere
+          body={t('error.no-inbound-items')}
+          onCreate={isDisabled ? undefined : () => onAddItem()}
+          buttonText={t('button.add-item')}
+        />
+      ),
+      isMobile: isExtraSmallScreen,
+    });
 
   const onReturn = async () => {
     if (!data || !canReturnInboundLines(data)) {

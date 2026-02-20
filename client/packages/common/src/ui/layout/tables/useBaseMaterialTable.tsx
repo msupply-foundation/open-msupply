@@ -83,10 +83,7 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
   const density = useColumnDensity(tableId);
   const columnSizing = useColumnSizing(tableId);
   const columnVisibility = useColumnVisibility(tableId, columns, isMobile);
-  const columnPinning = useColumnPinning(
-    tableId,
-    columns,
-  );
+  const columnPinning = useColumnPinning(tableId, columns);
   const grouping = useColumnGrouping(tableId, groupingInput);
   const columnOrder = useColumnOrder(
     tableId,
@@ -178,10 +175,11 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
     getExpandedRowModel: table => () => {
       const rowModel = table.getPreExpandedRowModel();
 
-      const expandedRows: Row<T>[] = [];
+      // Rows should contain all visible rows, including group rows and their children (if expanded)
+      const rows: Row<T>[] = [];
 
       const handleRow = (row: Row<T>) => {
-        expandedRows.push(row);
+        rows.push(row);
 
         if (row.subRows?.length > 1 && row.getIsExpanded()) {
           row.subRows.forEach(handleRow);
@@ -190,9 +188,21 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
 
       rowModel.rows.forEach(handleRow);
 
+      // We can't pass rowModel.flatRows directly as for some reason rows come in duplicated when there's grouping and no sorting applied
+      // I think this is a bug in tanstack table
+      const flatRows: Row<T>[] = [];
+
+      const seenRowIds = new Set<string>();
+      rowModel.flatRows.forEach(row => {
+        if (!seenRowIds.has(row.id)) {
+          flatRows.push(row);
+          seenRowIds.add(row.id);
+        }
+      });
+
       return {
-        rows: expandedRows,
-        flatRows: rowModel.flatRows,
+        rows,
+        flatRows,
         rowsById: rowModel.rowsById,
       };
     },
@@ -201,8 +211,6 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
     positionToolbarAlertBanner: 'none',
 
     manualFiltering,
-    onColumnFiltersChange,
-    onSortingChange,
 
     filterFromLeafRows: true,
 
@@ -226,6 +234,8 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
       grouping: grouping.state,
       ...state,
     },
+    onColumnFiltersChange,
+    onSortingChange,
     onDensityChange: density.update,
     onColumnSizingChange: columnSizing.update,
     onColumnVisibilityChange: columnVisibility.update,
