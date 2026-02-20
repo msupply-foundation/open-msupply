@@ -155,7 +155,8 @@ export const isOutboundDisabled = (
 };
 
 /** Returns true if the inbound shipment cannot be edited */
-export const isInboundDisabled = (inbound: InboundRowFragment): boolean => {
+export const isInboundDisabled = (inbound?: InboundRowFragment): boolean => {
+  if (!inbound) return true;
   const isManuallyCreated = !inbound.linkedShipment?.id;
   if (isManuallyCreated) {
     return inbound.status === InvoiceNodeStatus.Verified;
@@ -178,8 +179,8 @@ export const isInboundDisabled = (inbound: InboundRowFragment): boolean => {
 };
 
 /** Returns true if the inbound shipment can be put on hold */
-export const isInboundHoldable = (inbound: InboundRowFragment): boolean =>
-  inbound.status !== InvoiceNodeStatus.Verified;
+export const isInboundHoldable = (inbound?: InboundRowFragment): boolean =>
+  inbound ? inbound.status !== InvoiceNodeStatus.Verified : true;
 
 export const isCustomerReturnDisabled = (
   customerReturn: CustomerReturnRowFragment
@@ -219,9 +220,15 @@ export const isInboundPlaceholderRow = (row: InboundLineFragment): boolean =>
   row.numberOfPacks === 0 &&
   !row.shippedNumberOfPacks;
 
+export const getInboundStockLines = (
+  lines: InboundLineFragment[]
+): InboundLineFragment[] =>
+  lines.filter(line => isA.stockInLine(line) || isInboundPlaceholderRow(line));
+
 export const isInboundStatusChangeDisabled = (
-  inbound: InboundFragment | CustomerReturnFragment
+  inbound?: InboundFragment | CustomerReturnFragment
 ): boolean => {
+  if (!inbound) return true;
   if (inbound.onHold) return true;
 
   const isManuallyCreated = !inbound.linkedShipment?.id;
@@ -281,6 +288,9 @@ export const canDeletePrescription = (
 ): boolean =>
   invoice.status === InvoiceNodeStatus.New ||
   invoice.status === InvoiceNodeStatus.Picked;
+
+export const canDeleteInbound = (inbound: InboundRowFragment): boolean =>
+  inbound.status === InvoiceNodeStatus.New;
 
 export const canReturnInboundLines = (inbound: InboundFragment): boolean =>
   inbound.status === InvoiceNodeStatus.Delivered ||

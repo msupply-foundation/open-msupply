@@ -11,6 +11,7 @@ import {
   Box,
   TypedTFunction,
   LocaleKey,
+  useNotification,
 } from '@openmsupply-client/common';
 import { FnUtils, ScanResult, useBarcodeScannerContext } from '@common/utils';
 import React, { useCallback, useState } from 'react';
@@ -31,6 +32,7 @@ interface Message {
 interface ScanInputModalProps {
   lines: InboundLineFragment[];
   invoiceId: string;
+  shouldOpen?: boolean;
 }
 
 interface FormDraftState {
@@ -60,9 +62,14 @@ const defaultDraftState: FormDraftState = {
   barcodeContent: '',
 };
 
-export const ScanInputModal = ({ lines, invoiceId }: ScanInputModalProps) => {
+export const ScanInputModal = ({
+  lines,
+  invoiceId,
+  shouldOpen = false,
+}: ScanInputModalProps) => {
   const t = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
+  const { warning } = useNotification();
 
   const [barcodeData, setBarcodeData] = useState<BarcodeNode | null>(null);
   const [draftState, setDraftState] =
@@ -84,6 +91,14 @@ export const ScanInputModal = ({ lines, invoiceId }: ScanInputModalProps) => {
 
   const handleScan = useCallback(
     async (barcode: ScanResult) => {
+      if (!shouldOpen) {
+        console.warn(
+          'Scan received but shouldOpen is false, not opening modal to show scan result'
+        );
+        warning(t('messages.scan-disabled-warning'))();
+        return;
+      }
+
       if (!isOpen) {
         setIsOpen(true);
       }
@@ -142,7 +157,7 @@ export const ScanInputModal = ({ lines, invoiceId }: ScanInputModalProps) => {
         return newState;
       });
     },
-    [isOpen, getBarcode]
+    [isOpen, shouldOpen, getBarcode]
   );
 
   // Register the scan handler so it runs on scan events when context is

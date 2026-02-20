@@ -37,6 +37,11 @@ export const ListView = () => {
       dir: 'desc',
     },
     filters: [
+      {
+        key: 'requisitionNumber',
+        condition: 'equalTo',
+        isNumber: true,
+      },
       { key: 'comment' },
       { key: 'otherPartyName' },
       {

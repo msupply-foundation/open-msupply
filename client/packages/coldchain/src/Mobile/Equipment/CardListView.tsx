@@ -14,12 +14,12 @@ import {
   InlineSpinner,
   StatusChip,
   LocaleKey,
+  AddFromScannerButton,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { Box, Typography, Card, CardContent } from '@mui/material';
 import { useAssets } from '../../Equipment/api';
 import { SimpleLabelDisplay } from '../Components/SimpleLabelDisplay';
-import { AddFromScannerButton } from '../../Equipment/ListView/AddFromScannerButton';
 import { CreateAssetModal } from '../../Equipment/ListView/CreateAssetModal';
 import { ImportFridgeTag } from '../../common/ImportFridgeTag';
 import { statusColourMap } from '../../Equipment/utils';
