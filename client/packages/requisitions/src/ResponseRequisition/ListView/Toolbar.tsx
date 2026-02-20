@@ -7,7 +7,7 @@ import {
   RequisitionNodeStatus,
 } from '@openmsupply-client/common';
 
-export const Toolbar = () => {
+const ToolbarComponent = () => {
   const t = useTranslation();
 
   return (
@@ -62,3 +62,5 @@ export const Toolbar = () => {
     </AppBarContentPortal>
   );
 };
+
+export const Toolbar = React.memo(ToolbarComponent);
