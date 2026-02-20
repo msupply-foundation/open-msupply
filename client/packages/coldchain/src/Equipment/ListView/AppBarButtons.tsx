@@ -17,6 +17,7 @@ import {
   useAuthContext,
   useConfirmationModal,
   AssetLogStatusNodeType,
+  AddFromScannerButton,
   FnUtils,
   useBarcodeScannerContext,
 } from '@openmsupply-client/common';
@@ -24,7 +25,6 @@ import { ExportSelector } from '@openmsupply-client/system';
 import { AppRoute } from '@openmsupply-client/config';
 import { useAssets } from '../api';
 import { assetsToCsv } from '../utils';
-import { AddFromScannerButton } from '@openmsupply-client/invoices/src/OutboundShipment/DetailView/AddFromScannerButton';
 import { useAssetProperties } from '@openmsupply-client/system';
 import { DraftAsset } from '../types';
 

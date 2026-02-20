@@ -56,7 +56,6 @@ pub struct UpsertPreferencesInput {
     pub gender_options: Option<Vec<GenderTypeNode>>,
     pub prevent_transfers_months_before_initialisation: Option<i32>,
     pub show_contact_tracing: Option<bool>,
-    pub show_indicative_price_in_requisitions: Option<bool>,
     pub sync_records_display_threshold: Option<i32>,
     pub warning_for_excess_request: Option<bool>,
     pub adjust_for_number_of_days_out_of_stock: Option<bool>,
@@ -89,6 +88,7 @@ pub struct UpsertPreferencesInput {
     pub warn_when_missing_recent_stocktake: Option<Vec<WarnWhenMissingRecentStocktakeInput>>,
     pub store_custom_colour: Option<Vec<StringStorePrefInput>>,
     pub invoice_status_options: Option<Vec<InvoiceStatusOptionsInput>>,
+    pub show_indicative_price_in_requisitions: Option<Vec<BoolStorePrefInput>>,
 }
 
 pub fn upsert_preferences(
@@ -126,7 +126,6 @@ impl UpsertPreferencesInput {
             show_contact_tracing,
             sync_records_display_threshold,
             warning_for_excess_request,
-            show_indicative_price_in_requisitions,
             adjust_for_number_of_days_out_of_stock,
             days_in_month,
             expired_stock_prevent_issue,
@@ -153,6 +152,7 @@ impl UpsertPreferencesInput {
             warn_when_missing_recent_stocktake,
             store_custom_colour,
             invoice_status_options,
+            show_indicative_price_in_requisitions,
         } = self;
 
         UpsertPreferences {
@@ -169,7 +169,6 @@ impl UpsertPreferencesInput {
             show_contact_tracing: *show_contact_tracing,
             sync_records_display_threshold: *sync_records_display_threshold,
             warning_for_excess_request: *warning_for_excess_request,
-            show_indicative_price_in_requisitions: *show_indicative_price_in_requisitions,
             adjust_for_number_of_days_out_of_stock: *adjust_for_number_of_days_out_of_stock,
             days_in_month: *days_in_month,
             expired_stock_prevent_issue: *expired_stock_prevent_issue,
@@ -238,6 +237,9 @@ impl UpsertPreferencesInput {
                 .as_ref()
                 .map(|i| i.iter().map(|i| i.to_domain()).collect()),
             invoice_status_options: invoice_status_options
+                .as_ref()
+                .map(|i| i.iter().map(|i| i.to_domain()).collect()),
+            show_indicative_price_in_requisitions: show_indicative_price_in_requisitions
                 .as_ref()
                 .map(|i| i.iter().map(|i| i.to_domain()).collect()),
         }
