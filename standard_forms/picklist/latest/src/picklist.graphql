@@ -7,35 +7,14 @@ query InvoiceQuery(
     ... on InvoiceNode {
       id
       otherPartyId
-      comment
-      status
       invoiceNumber
-      theirReference
       createdDatetime
-      pickedDatetime
-      shippedDatetime
-      deliveredDatetime
-      allocatedDatetime
       otherPartyName
-      type
-      pricing {
-        serviceTotalAfterTax
-        serviceTotalBeforeTax
-        stockTotalAfterTax
-        stockTotalBeforeTax
-        taxPercentage
-        totalAfterTax
-        totalBeforeTax
-      }
       otherParty(storeId: $storeId) {
-        name
         id
         code
         address1
         address2
-      }
-      user {
-        username
       }
     }
     ... on NodeError {
@@ -53,10 +32,8 @@ query InvoiceQuery(
     ... on InvoiceLineConnector {
       nodes {
         id
-        itemId
         itemCode
         itemName
-        locationName
         item {
           unitName
         }
@@ -65,17 +42,6 @@ query InvoiceQuery(
         batch
         numberOfPacks
         packSize
-        sellPricePerPack
-        costPricePerPack
-        pricing {
-          serviceTotalAfterTax
-          serviceTotalBeforeTax
-          stockTotalAfterTax
-          stockTotalBeforeTax
-          taxPercentage
-          totalAfterTax
-          totalBeforeTax
-        }
         location {
           code
         }
@@ -84,7 +50,6 @@ query InvoiceQuery(
   }
   store(id: $storeId) {
     ... on StoreNode {
-      code
       storeName
       logo
       id
@@ -92,7 +57,6 @@ query InvoiceQuery(
         address1
         address2
         email
-        name
         phone
       }
     }
