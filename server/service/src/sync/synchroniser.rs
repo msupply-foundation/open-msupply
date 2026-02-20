@@ -292,9 +292,9 @@ impl Synchroniser {
         )
         .map_err(SyncError::IntegrationError)?;
 
-        warn!("Upsert Integration result: {upserts:?}");
-        warn!("Delete Integration result: {deletes:?}");
-        warn!("Merge Integration result: {merges:?}");
+        upserts.log("Upsert");
+        deletes.log("Delete");
+        merges.log("Merge");
 
         logger.done_step(SyncStep::Integrate)?;
 

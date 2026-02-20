@@ -71,7 +71,6 @@ pub struct PreferenceProvider {
     // Global preferences
     pub allow_tracking_of_stock_by_donor: AllowTrackingOfStockByDonor,
     pub authorise_purchase_order: AuthorisePurchaseOrder,
-    pub show_indicative_price_in_requisitions: ShowIndicativePriceInRequisitions,
     pub custom_translations: CustomTranslations,
     pub gender_options: GenderOptions,
     pub prevent_transfers_months_before_initialisation: PreventTransfersMonthsBeforeInitialisation,
@@ -110,6 +109,7 @@ pub struct PreferenceProvider {
     pub warn_when_missing_recent_stocktake: WarnWhenMissingRecentStocktake,
     pub store_custom_colour: StoreCustomColour,
     pub invoice_status_options: InvoiceStatusOptions,
+    pub show_indicative_price_in_requisitions: ShowIndicativePriceInRequisitions,
 }
 
 pub fn get_preference_provider() -> PreferenceProvider {
@@ -117,7 +117,6 @@ pub fn get_preference_provider() -> PreferenceProvider {
         // Global preferences
         allow_tracking_of_stock_by_donor: AllowTrackingOfStockByDonor,
         authorise_purchase_order: AuthorisePurchaseOrder,
-        show_indicative_price_in_requisitions: ShowIndicativePriceInRequisitions,
         custom_translations: CustomTranslations,
         gender_options: GenderOptions,
         show_contact_tracing: ShowContactTracing,
@@ -156,5 +155,6 @@ pub fn get_preference_provider() -> PreferenceProvider {
         store_custom_colour: StoreCustomColour,
         warn_when_missing_recent_stocktake: WarnWhenMissingRecentStocktake,
         invoice_status_options: InvoiceStatusOptions,
+        show_indicative_price_in_requisitions: ShowIndicativePriceInRequisitions,
     }
 }
