@@ -4,39 +4,39 @@
 
 <table class="body_section">
     <thead>
-        <tr class="body_column_label" style="text-align: left;">
-            <th style="text-align: left;">{{t(k="label.line-number", f="Line")}}</th>
-            <th style="text-align: left;">{{t(k="label.location", f="Location")}}</th>
-            <th style="text-align: left;">{{t(k="label.code", f="Code")}}</th>
-            <th style="text-align: left;">{{t(k="report.item-name", f="Item name")}}</th>
-            <th style="text-align: left;">{{t(k="label.unit", f="Units")}}</th>
-            <th style="text-align: left;">{{t(k="label.quantity", f="Quantity")}}</th>
-            <th style="text-align: left;">{{t(k="report.issued", f="Issued")}}</th>
-            <th style="text-align: left;">{{t(k="label.checked", f="Checked")}}</th>
-            <th style="text-align: left;">{{t(k="label.pack", f="Pack")}}</th>
-            <th style="text-align: left; width: 5%;">{{t(k="label.batch", f="Batch")}}</th>
-            <th style="text-align: left;">{{t(k="label.expiry", f="Expiry")}}</th>
-            <th style="text-align: left;">{{t(k="label.box", f="Box")}}</th>
+        <tr class="body_column_label">
+            <th class="line_number" style="width: 4%;">{{t(k="label.line-number", f="Line")}}</th>
+            <th class="location_code" style="width: 6%;">{{t(k="label.location", f="Location")}}</th>
+            <th class="location_code" style="width: 6%;">{{t(k="label.code", f="Code")}}</th>
+            <th class="item_name" style="width: 24%;">{{t(k="report.item-name", f="Item name")}}</th>
+            <th class="unit" style="width: 6%;">{{t(k="label.unit", f="Units")}}</th>
+            <th class="quantity" style="width: 7%;">{{t(k="label.quantity", f="Quantity")}}</th>
+            <th style="text-align: left; width: 8%;">{{t(k="report.issued", f="Issued")}}</th>
+            <th style="text-align: left; width: 8%;">{{t(k="label.checked", f="Checked")}}</th>
+            <th class="pack" style="width: 7%;">{{t(k="label.pack", f="Pack")}}</th>
+            <th class="batch" style="width: 8%;">{{t(k="label.batch", f="Batch")}}</th>
+            <th class="expiry" style="width: 8%;">{{t(k="label.expiry", f="Expiry")}}</th>
+            <th style="text-align: left; width: 8%;">{{t(k="label.box", f="Box")}}</th>
         </tr>
     </thead>
     {% for line in data.invoiceLines.nodes -%}
     <tr class="body_value">
-        <td>{{ loop.index }}</td>
-        <td>{{ line.location.code | default(value='') }}</td>
-        <td>{{ line.itemCode }}</td>
-        <td>{{ line.itemName }}</td>
-        <td>{{ line.item.unitName }}</td>
-        <td>{{ line.numberOfPacks }}</td>
-        <td>___________</td>
-        <td>___________</td>
-        <td>{{ line.packSize }}</td>
-        <td>{{ line.batch }}</td>
-        <td>
+        <td class="line_number" style="width: 4%;">{{ loop.index }}</td>
+        <td class="location_code" style="width: 6%;">{{ line.location.code | default(value='') }}</td>
+        <td class="location_code" style="width: 6%;;">{{ line.itemCode }}</td>
+        <td class="item_name" style="width: 24%;;">{{ line.itemName }}</td>
+        <td class="unit" style="width: 6%;">{{ line.item.unitName }}</td>
+        <td class="quantity" style="width: 7%;">{{ line.numberOfPacks }}</td>
+        <td style="width: 8%;">_________________</td>
+        <td style="width: 8%;">_________________</td>
+        <td class="pack" style="width: 7%;">{{ line.packSize }}</td>
+        <td class="batch batch-wrap" style="width: 8%;">{{ line.batch }}</td>
+        <td class="expiry" style="width: 8%;">
             {% if line.expiryDate %}
             {{ line.expiryDate | date(format="%d/%m/%Y") }}
             {% endif %}
         </td>
-        <td>___________</td>
+        <td style="width: 8%;">_________________</td>
     </tr>
     {%- endfor %}
 </table>
