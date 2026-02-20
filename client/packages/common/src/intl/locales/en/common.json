@@ -366,6 +366,7 @@
   "error.is-locked": "Stocktake is locked.",
   "error.item-cannot-be-ordered-on-line": "You cannot update this item because it cannot be ordered. Cancel and delete the line.",
   "error.item-not-found": "Item not found",
+  "error.invoice-status-inbound-requires-delivered-or-received": "At least one of 'Delivered' or 'Received' status must be selected for inbound shipments",
   "error.json-bad-format-with-examples": "Incorrect format. Use: \"{{examples}}\"",
   "error.label-printer-not-configured": "There is no label printer configured. Please see the Settings > Devices section to configure a label printer.",
   "error.line-combination-error": "Item and pack size combination already exists for item code: {{itemCode}}, and pack size: {{requestedPackSize}}",
