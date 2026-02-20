@@ -10,21 +10,23 @@ import { useSimplifiedTabletUI } from '@common/hooks';
 
 export const useColumnVisibility = <T extends MRT_RowData>(
   tableId: string,
-  columns: ColumnDef<T>[]
+  columns: ColumnDef<T>[],
+  isMobile?: boolean
 ) => {
   const simplifiedMobileView = useSimplifiedTabletUI();
 
   const initial = useMemo(() => {
-    const defaultHiddenColumns = simplifiedMobileView
-      ? columns
-          .filter(col => col.defaultHideOnMobile)
-          .map(c => c.id ?? c.accessorKey ?? '')
-      : [];
+    const defaultHiddenColumns =
+      simplifiedMobileView || isMobile
+        ? columns
+            .filter(col => col.defaultHideOnMobile)
+            .map(c => c.id ?? c.accessorKey ?? '')
+        : [];
 
     return Object.fromEntries(
       defaultHiddenColumns.map((columnId: string) => [columnId, false])
     );
-  }, [simplifiedMobileView]);
+  }, [simplifiedMobileView, isMobile]);
 
   const [state, setState] = useState<MRT_VisibilityState>(
     getSavedState(tableId).columnVisibility ?? initial

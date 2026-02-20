@@ -25,7 +25,7 @@ import {
   RequisitionNodeStatus,
   UserPermission,
 } from '@common/types';
-import { useInbound } from '@openmsupply-client/invoices';
+import { useInboundShipment } from '@openmsupply-client/invoices';
 import { SupplierSearchModal } from '@openmsupply-client/system';
 import { AppRoute } from '@openmsupply-client/config';
 import { useDashboardPanels } from '../hooks';
@@ -74,7 +74,9 @@ export const ReplenishmentWidget = ({
     )}${RANGE_SPLIT_CHAR}${customDate(endOfWeek, urlQueryDateTime)}`;
   };
 
-  const { mutateAsync: onCreate } = useInbound.document.insert();
+  const {
+    create: { create: onCreate },
+  } = useInboundShipment();
   const onError = (e: unknown) => {
     const message = (e as Error).message ?? '';
     const errorSnack = errorNotification(
@@ -170,20 +172,20 @@ export const ReplenishmentWidget = ({
           onClose={modalControl.toggleOff}
           onChange={async ({ id: otherPartyId }) => {
             modalControl.toggleOff();
-            await onCreate(
-              {
+            try {
+              const invoiceId = await onCreate({
                 id: FnUtils.generateUUID(),
                 otherPartyId,
-              },
-              { onError }
-            ).then(invoiceId => {
+              });
               navigate(
                 RouteBuilder.create(AppRoute.Replenishment)
                   .addPart(AppRoute.InboundShipment)
                   .addPart(invoiceId)
                   .build()
               );
-            });
+            } catch (e) {
+              onError(e);
+            }
           }}
         />
       ) : null}

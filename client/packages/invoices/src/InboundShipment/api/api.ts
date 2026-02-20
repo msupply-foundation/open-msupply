@@ -39,7 +39,7 @@ export type ListParams = {
   filterBy: FilterBy | null;
 };
 
-const inboundParsers = {
+export const inboundParsers = {
   toStatus: (
     patch: RecordPatch<InboundFragment> | RecordPatch<InboundRowFragment>
   ): UpdateInboundShipmentStatusInput | undefined => {
