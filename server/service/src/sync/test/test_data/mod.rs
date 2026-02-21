@@ -262,58 +262,43 @@ pub(crate) fn get_all_push_test_records() -> Vec<TestSyncOutgoingRecord> {
     test_records
 }
 
-/// Records that the remote site pushes TO central (PushToOmSupplyCentral or PushToLegacyCentral).
-/// Use this in the PUSH direction tests.
-pub(crate) fn get_all_v6_push_records() -> Vec<TestSyncOutgoingRecord> {
+pub(crate) fn get_all_sync_v6_records() -> Vec<TestSyncOutgoingRecord> {
     let mut test_records = Vec::new();
 
-    // Central records that are also pushed to central (via PushToLegacyCentral or PushToOmSupplyCentral)
-    test_records.append(&mut asset_type::test_v6_central_push_records()); // PushToLegacyCentral (default)
-    test_records.append(&mut name_oms_fields::test_v6_central_push_records()); // PushToOmSupplyCentral + PullFromOmSupplyCentral
-    test_records.append(&mut om_report::test_v6_central_push_records()); // PushToLegacyCentral (default)
-
-    // Remote records that push to central (PushToOmSupplyCentral)
-    test_records.append(&mut asset::test_v6_records());
-    test_records.append(&mut asset_internal_location::test_v6_records());
-    test_records.append(&mut asset_log::test_v6_records());
-    test_records.append(&mut sync_file_reference::test_v6_records());
-    test_records.append(&mut rnr_form::test_v6_records());
-    test_records.append(&mut rnr_form_line::test_v6_records());
-    test_records.append(&mut vaccination::test_v6_records());
-    test_records.append(&mut system_log::test_v6_records());
-    test_records.append(&mut contact_form::test_v6_records());
-    test_records.append(&mut plugin_data::test_v6_push_records());
-
-    test_records
-}
-
-/// Records that central pushes TO the remote site (PullFromOmSupplyCentral).
-/// These are received by the remote site during a pull from central.
-/// Use this in the central-push direction tests.
-pub(crate) fn get_all_v6_central_push_records() -> Vec<TestSyncOutgoingRecord> {
-    let mut test_records = Vec::new();
-
-    // Central records pushed FROM central TO remote (PullFromOmSupplyCentral)
+    // Central
     test_records.append(&mut asset_class::test_v6_central_push_records());
     test_records.append(&mut asset_category::test_v6_central_push_records());
+    test_records.append(&mut asset_type::test_v6_central_push_records());
     test_records.append(&mut asset_catalogue_item::test_v6_central_push_records());
-    test_records.append(&mut vaccine_course::test_v6_records()); // PushToOmSupplyCentral explicitly returns false
-    test_records.append(&mut vaccine_course_item::test_v6_records()); // PushToOmSupplyCentral explicitly returns false
+    test_records.append(&mut vaccine_course::test_v6_records());
+    test_records.append(&mut vaccine_course_item::test_v6_records());
+    test_records.append(&mut name_oms_fields::test_v6_central_push_records());
     test_records.append(&mut item_variant::test_v6_central_push_records());
     test_records.append(&mut packaging_variant::test_v6_central_push_records());
     test_records.append(&mut property::test_v6_central_push_records());
     test_records.append(&mut backend_plugin::test_v6_push_records());
+    test_records.append(&mut om_report::test_v6_central_push_records());
     test_records.append(&mut om_form_schema::test_v6_central_push_records());
     test_records.append(&mut frontend_plugin::test_v6_push_records());
     test_records.append(&mut preference::test_v6_central_push_records());
     test_records.append(&mut campaign::test_v6_central_push_records());
 
-    // Remote records that are pulled from central (PullFromOmSupplyCentral)
+    // Remote
+    test_records.append(&mut asset::test_v6_records());
+    test_records.append(&mut asset_internal_location::test_v6_records());
+    test_records.append(&mut asset_log::test_v6_records());
     test_records.append(&mut asset_log_reason::test_v6_records());
+    test_records.append(&mut sync_file_reference::test_v6_records());
     test_records.append(&mut asset_property::test_v6_central_push_records());
     test_records.append(&mut name_property::test_v6_central_push_records());
+    test_records.append(&mut rnr_form::test_v6_records());
+    test_records.append(&mut rnr_form_line::test_v6_records());
     test_records.append(&mut demographic::test_v6_records());
-    test_records.append(&mut vaccine_course_dose::test_v6_records()); // PushToOmSupplyCentral explicitly returns false
+    test_records.append(&mut vaccine_course_dose::test_v6_records());
+    test_records.append(&mut vaccination::test_v6_records());
+    test_records.append(&mut system_log::test_v6_records());
+    test_records.append(&mut contact_form::test_v6_records());
+    test_records.append(&mut plugin_data::test_v6_push_records());
 
     test_records
 }
