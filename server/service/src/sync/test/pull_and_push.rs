@@ -11,7 +11,7 @@ use crate::sync::{
     synchroniser::integrate_and_translate_sync_buffer,
     test::{
         check_test_records_against_database, extract_sync_buffer_rows,
-        test_data::{get_all_push_test_records, get_all_sync_v6_records},
+        test_data::{get_all_push_test_records, get_all_v6_push_records},
         TestSyncOutgoingRecord,
     },
     translations::{
@@ -72,7 +72,7 @@ async fn test_sync_pull_and_push() {
     check_test_records_against_database(&connection, test_records).await;
 
     // PUSH UPSERT
-    let mut test_records = vec![get_all_push_test_records(), get_all_sync_v6_records()]
+    let mut test_records = vec![get_all_push_test_records(), get_all_v6_push_records()]
         .into_iter()
         .flatten()
         .collect::<Vec<TestSyncOutgoingRecord>>();
@@ -91,7 +91,6 @@ async fn test_sync_pull_and_push() {
         changelogs.clone(),
         vec![
             ToSyncRecordTranslationType::PushToLegacyCentral,
-            ToSyncRecordTranslationType::PullFromOmSupplyCentral,
             ToSyncRecordTranslationType::PushToOmSupplyCentral,
         ],
     )
