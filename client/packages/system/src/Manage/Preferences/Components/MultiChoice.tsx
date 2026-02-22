@@ -10,6 +10,8 @@ import {
   PreferenceKey,
   TypedTFunction,
   groupBy,
+  useNotification,
+  useTranslation,
 } from '@openmsupply-client/common';
 import { getInvoiceStatusTranslator } from '@openmsupply-client/invoices';
 
@@ -25,6 +27,7 @@ interface MultiChoiceProps<T extends string> {
   value: T[];
   onChange: (newValues: T[]) => void;
   disabled?: boolean;
+  preferenceKey?: PreferenceKey;
 }
 
 export const MultiChoice = <T extends string>({
@@ -32,11 +35,64 @@ export const MultiChoice = <T extends string>({
   onChange,
   disabled,
   options,
+  preferenceKey,
 }: MultiChoiceProps<T>) => {
-  const handleChange = (optionValue: T, checked: boolean) => {
-    const newValue = checked
+  const t = useTranslation();
+  const { error } = useNotification();
+
+  const isInvoiceNodeStatus = (value: string): value is InvoiceNodeStatus => {
+    return Object.values(InvoiceNodeStatus).includes(value as InvoiceNodeStatus);
+  };
+
+  const validateInvoiceStatusChange = (
+    newValue: T[],
+    optionValue: T,
+    isChecking: boolean
+  ): boolean => {
+    // Only validate for InvoiceStatusOptions preference
+    if (preferenceKey !== PreferenceKey.InvoiceStatusOptions) {
+      return true;
+    }
+
+    // Type guard to ensure we're working with InvoiceNodeStatus values
+    if (!isInvoiceNodeStatus(optionValue)) {
+      return true;
+    }
+
+    // If unchecking either Delivered or Received
+    if (
+      !isChecking &&
+      (optionValue === InvoiceNodeStatus.Delivered ||
+        optionValue === InvoiceNodeStatus.Received)
+    ) {
+      // Check if this would result in both being unchecked
+      const hasDelivered = newValue.some(
+        v => isInvoiceNodeStatus(v) && v === InvoiceNodeStatus.Delivered
+      );
+      const hasReceived = newValue.some(
+        v => isInvoiceNodeStatus(v) && v === InvoiceNodeStatus.Received
+      );
+
+      // If neither Delivered nor Received would be checked, prevent the change
+      if (!hasDelivered && !hasReceived) {
+        error(t('error.invoice-status-inbound-requires-delivered-or-received'))();
+        return false;
+      }
+    }
+
+    return true;
+  };
+
+  const handleChange = (optionValue: T, isChecking: boolean) => {
+    const newValue = isChecking
       ? [...value, optionValue]
       : value.filter(v => v !== optionValue);
+
+    // Validate the change before applying
+    if (!validateInvoiceStatusChange(newValue, optionValue, isChecking)) {
+      return;
+    }
+
     onChange(newValue);
   };
 

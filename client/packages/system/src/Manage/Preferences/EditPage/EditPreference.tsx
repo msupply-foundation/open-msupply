@@ -22,6 +22,7 @@ import { MultiChoice, getMultiChoiceOptions } from '../Components/MultiChoice';
 import { EditCustomTranslations } from '../Components/CustomTranslations/CustomTranslationsModal';
 import { EditWarningWhenMissingRecentStocktakeData } from '../Components/EditWarningWhenMissingRecentStocktakeData';
 import { PreferenceLabelRow } from './PreferenceLabelRow';
+import { ColorPickerPreference } from '../Components/ColorPickerPreference';
 
 interface EditPreferenceProps {
   preference: PreferenceDescriptionNode;
@@ -140,6 +141,24 @@ export const EditPreference = ({
         />
       );
 
+    case PreferenceValueNodeType.Colour:
+      if (!isString(preference.value)) {
+        return t('error.something-wrong');
+      }
+      return (
+        <PreferenceLabelRow
+          label={preferenceLabel}
+          Input={
+            <ColorPickerPreference
+              value={value}
+              onChange={handleChange}
+              disabled={disabled}
+            />
+          }
+          isLast={isLast}
+        />
+      );
+
     case PreferenceValueNodeType.MultiChoice:
       if (!Array.isArray(value)) {
         return t('error.something-wrong');
@@ -155,6 +174,7 @@ export const EditPreference = ({
               options={options}
               value={value}
               onChange={handleChange}
+              preferenceKey={preference.key}
             />
           }
           isLast={isLast}

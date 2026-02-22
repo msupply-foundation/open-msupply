@@ -21,17 +21,19 @@ import {
   isInboundDisabled,
   isInboundListItemDisabled,
 } from '../../utils';
-import { useInbound, InboundRowFragment } from '../api';
 import { Toolbar } from './Toolbar';
+import { InboundRowFragment, useInboundList, useInboundShipment } from '../api';
 import { Footer } from './Footer';
 
 export const InboundListView = () => {
+  const {
+    update: { update },
+  } = useInboundShipment();
   const t = useTranslation();
   const navigate = useNavigate();
   const { invoiceStatusOptions } = usePreferences();
   const invoiceModalController = useToggle();
   const linkRequestModalController = useToggle();
-  const { mutate: onUpdate } = useInbound.document.update();
 
   const isExtraSmallScreen = useIsExtraSmallScreen();
 
@@ -61,7 +63,9 @@ export const InboundListView = () => {
     filterBy,
   };
 
-  const { data, isFetching } = useInbound.document.list(listParams);
+  const {
+    query: { data, isFetching },
+  } = useInboundList(listParams);
   const statuses = inboundStatuses.filter(status =>
     invoiceStatusOptions?.includes(status)
   );
@@ -75,7 +79,7 @@ export const InboundListView = () => {
         enableColumnFilter: true,
         Cell: ({ row }) => (
           <NameAndColorSetterCell
-            onColorChange={onUpdate}
+            onColorChange={update}
             getIsDisabled={isInboundDisabled}
             row={row.original}
           />
@@ -164,12 +168,12 @@ export const InboundListView = () => {
 
   return (
     <>
-      <Toolbar filter={filter} />
       {isExtraSmallScreen ? (
         // We don't want to show any app bar button on mobile list view
         <MobileCardList table={table} />
       ) : (
         <>
+          <Toolbar filter={filter} />
           <AppBarButtons
             invoiceModalController={invoiceModalController}
             linkRequestModalController={linkRequestModalController}
