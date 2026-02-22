@@ -68,7 +68,6 @@ const DetailViewInner = () => {
   const navigate = useNavigate();
   const { info } = useNotification();
   const { urlQuery, updateQuery } = useUrlQuery();
-  const { data: lines } = useInboundLines();
   const {
     toggleOn: toggleUploadModal,
     isOn: isUploadModalOpen,
