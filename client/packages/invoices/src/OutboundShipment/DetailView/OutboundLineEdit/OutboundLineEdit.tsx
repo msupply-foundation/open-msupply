@@ -168,6 +168,7 @@ export const OutboundLineEdit = ({
           itemId={itemId}
           onChangeItem={setItemId}
           disabled={mode === ModalMode.Update}
+          openedWithBarcode={!!asBarcodeOrNull(openedWith)}
         />
 
         {itemId && (
