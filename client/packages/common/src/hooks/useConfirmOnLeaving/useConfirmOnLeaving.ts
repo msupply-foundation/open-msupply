@@ -94,8 +94,12 @@ export const useBlockNavigation = () => {
       customConfirmation
         ? customConfirmation(blocker.proceed)
         : showConfirmation({
-            onConfirm: blocker.proceed,
+            onConfirm: () => {
+              if (blocker.state === 'blocked') blocker.proceed();
+            },
           });
+    } else {
+      // ideally we would close the modal here if the blocker is no longer active but useConfirmationModal doesn't currently support this
     }
   }, [blocker]);
 };
@@ -132,9 +136,10 @@ interface BlockNavigationControl {
     options?: BlockerOptions
   ) => void;
   clearKey: (key: string) => void;
+  clearAll: () => void;
 }
 
-const useBlockNavigationState = create<BlockNavigationControl>(set => {
+export const useBlockNavigationState = create<BlockNavigationControl>(set => {
   return {
     blocking: new Map(),
     setBlocking: (key, blocking, options) => {
@@ -156,6 +161,12 @@ const useBlockNavigationState = create<BlockNavigationControl>(set => {
           blocking: blockingState,
         };
       });
+    },
+    clearAll: () => {
+      set(state => ({
+        ...state,
+        blocking: new Map(),
+      }));
     },
   };
 });

@@ -1,4 +1,4 @@
-import { useToggle } from '@common/hooks';
+import { useBlockNavigationState, useToggle } from '@common/hooks';
 import { AppRoute } from '@openmsupply-client/config';
 import React, { useEffect } from 'react';
 import {
@@ -21,11 +21,19 @@ export const ErrorAlert = () => {
   const t = useTranslation();
   const location = useLocation();
   const [error, , removeError] = useLocalStorage('/error/auth');
+  const { clearAll: clearAllBlockers } = useBlockNavigationState();
 
   useEffect(() => {
     if (!!error) toggleOn();
     return () => toggleOff();
   }, [error, toggleOff, toggleOn]);
+
+  useEffect(() => {
+    if (isOn) {
+      // clear blockers to ensure the user can navigate to the login page, otherwise they will be stuck on the error modal
+      clearAllBlockers();
+    }
+  }, [isOn, clearAllBlockers]);
 
   // no need to alert if you are on the login screen
   if (
