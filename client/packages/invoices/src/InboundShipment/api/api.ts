@@ -38,7 +38,7 @@ export type ListParams = {
   filterBy: FilterBy | null;
 };
 
-const inboundParsers = {
+export const inboundParsers = {
   toStatus: (
     patch: RecordPatch<InboundFragment> | RecordPatch<InboundRowFragment>
   ): UpdateInboundShipmentStatusInput | undefined => {
@@ -81,9 +81,9 @@ const inboundParsers = {
       | RecordPatch<InboundFragment>
       | RecordPatch<InboundRowFragment>
       | {
-          id: string;
-          defaultDonorUpdate: UpdateDonorInput;
-        }
+        id: string;
+        defaultDonorUpdate: UpdateDonorInput;
+      }
   ): UpdateInboundShipmentInput => {
     return {
       id: patch.id,
