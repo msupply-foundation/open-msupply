@@ -19,7 +19,7 @@ interface ConfirmationModalProps {
   buttonLabel?: string | undefined;
   cancelButtonLabel?: string | undefined;
   otherButtons?: Array<React.ReactNode>;
-  placeCancelButtonLast?: boolean;
+  placeCancelButtonFirst?: boolean;
 }
 
 const iconLookup = {
@@ -41,7 +41,7 @@ export const ConfirmationModal = ({
   buttonLabel,
   cancelButtonLabel,
   otherButtons,
-  placeCancelButtonLast = false,
+  placeCancelButtonFirst = false,
 }: ConfirmationModalProps) => {
   const [loading, setLoading] = useState(false);
   const Icon = iconLookup[iconType];
@@ -88,9 +88,10 @@ export const ConfirmationModal = ({
           flex={1}
           display="flex"
         >
+          {placeCancelButtonFirst && cancelButton}
           {otherButtons &&
             otherButtons.map((button, idx) => <Grid key={idx}>{button}</Grid>)}
-          {!placeCancelButtonLast && cancelButton}
+          {!placeCancelButtonFirst && cancelButton}
           <Grid>
             <LoadingButton
               autoFocus
@@ -108,7 +109,6 @@ export const ConfirmationModal = ({
               label={buttonLabel ? buttonLabel : t('button.ok')}
             />
           </Grid>
-          {placeCancelButtonLast && cancelButton}
         </Grid>
       </Grid>
     </BasicModal>

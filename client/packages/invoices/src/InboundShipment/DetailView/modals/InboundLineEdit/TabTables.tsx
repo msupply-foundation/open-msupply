@@ -169,7 +169,7 @@ export const QuantityTable = ({
       {
         accessorKey: 'shippedPackSize',
         header: t('label.shipped-pack-size'),
-        size: 100,
+        size: 120,
         Cell: ({ row, cell }) => (
           <NumberInputCell
             cell={cell}
@@ -203,7 +203,7 @@ export const QuantityTable = ({
       {
         accessorKey: 'packSize',
         header: t('label.received-pack-size'),
-        size: 100,
+        size: 120,
         Cell: ({ row, cell }) => (
           <NumberInputCell
             cell={cell}
@@ -216,7 +216,11 @@ export const QuantityTable = ({
                   line.sellPricePerPack;
 
               updateDraftLine({
-                volumePerPack: getVolumePerPackFromVariant(line) ?? 0,
+                volumePerPack:
+                  getVolumePerPackFromVariant({
+                    itemVariant: line.itemVariant,
+                    packSize: value,
+                  }) ?? 0,
                 sellPricePerPack: shouldClearSellPrice
                   ? 0
                   : line.sellPricePerPack,
@@ -259,7 +263,7 @@ export const QuantityTable = ({
         header: t('label.units-received', {
           unit: pluralisedUnitName,
         }),
-        size: 100,
+        size: 120,
         defaultHideOnMobile: true,
         accessorFn: row => {
           return row.numberOfPacks * row.packSize;
@@ -309,7 +313,7 @@ export const QuantityTable = ({
       {
         accessorKey: 'volumePerPack',
         header: t('label.volume-per-pack'),
-        size: 100,
+        size: 140,
         Cell: ({ row, cell }) => (
           <NumberInputCell
             cell={cell}

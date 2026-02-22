@@ -86,6 +86,12 @@ repositories {
     }
 }
 
+// Exclude the unbundled Play Services barcode scanning dependency
+// to avoid conflicts with the bundled version
+configurations.all {
+    exclude group: 'com.google.android.gms', module: 'play-services-mlkit-barcode-scanning'
+}
+
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
     implementation(name: 'HoneywellScanner', ext: 'aar')
@@ -98,6 +104,10 @@ dependencies {
     androidTestImplementation "androidx.test.espresso:espresso-core:$androidxEspressoCoreVersion"
     implementation project(':capacitor-cordova-android-plugins')
     implementation "com.google.android.gms:play-services-location:$playServicesLocationVersion"
+    
+    // Use bundled MLKit barcode scanning instead of unbundled Play Services version
+    // This bundles the model with the app, avoiding runtime downloads
+    implementation 'com.google.mlkit:barcode-scanning:17.3.0'
 }
 
 apply from: 'capacitor.build.gradle'

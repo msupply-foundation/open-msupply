@@ -2642,6 +2642,5 @@
   "warning.high-number-records-to-sync": "Un grand nombre d'entrées sont en cours de synchronisation. Cela peut prendre plus de temps que d'habitude.",
   "warning.insufficient-recent-stocktake-items": "Vous n'avez pas effectué d'inventaire contenant au moins {{ minItems }} articles au cours des {{maxAge}} derniers jours. Vos niveaux de stock peuvent ne pas être exacts. Êtes-vous sûr de vouloir continuer ?",
   "warning.manual-store-requisition": "Attention - La saisie d'une réquisition client pour un dépôt peut entraîner des doublons si ce dépôt soumet aussi une commande interne.",
-  "warning.nothing-to-supply": "La quantité demandée à été fournie !",
-  "warning.requested-exceeds-suggested": "La quantité demandée est supérieure à la quantité suggérée"
+  "warning.nothing-to-supply": "La quantité demandée à été fournie !"
 }
