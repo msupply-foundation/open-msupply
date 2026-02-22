@@ -272,8 +272,8 @@ export const QuantityTable = ({
           <NumberInputCell
             cell={cell}
             updateFn={(value: number) => {
-              const { packSize, unitsPerPack } = row.original;
-              if (packSize !== undefined && unitsPerPack !== undefined) {
+              const { packSize } = row.original;
+              if (packSize !== undefined) {
                 const unitToPacks = value / packSize;
                 const roundedPacks = Math.ceil(unitToPacks);
                 const actualUnits = roundedPacks * packSize;
