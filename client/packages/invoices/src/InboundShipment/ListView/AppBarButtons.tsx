@@ -17,7 +17,8 @@ import {
   NameRowFragment,
   SupplierSearchModal,
 } from '@openmsupply-client/system';
-import { useInbound } from '../api';
+import { useInboundList, useInboundShipment } from '../api';
+import { useListInternalOrders } from '../api/hooks/utils';
 import { inboundsToCsv } from '../../utils';
 import { LinkInternalOrderModal } from './LinkInternalOrderModal';
 
@@ -34,17 +35,25 @@ export const AppBarButtons = ({
   const navigate = useNavigate();
   const { store } = useAuthContext();
   const [name, setName] = useState<NameRowFragment | null>(null);
+  const [selectedSupplierId, setSelectedSupplierId] = useState<string | null>(
+    null
+  );
 
-  const { mutateAsync: onCreate } = useInbound.document.insert();
-  const { isLoading, fetchAsync } = useInbound.document.listAll({
-    key: 'createdDateTime',
-    direction: 'desc',
-    isDesc: true,
+  const {
+    create: { create: onCreate },
+  } = useInboundShipment();
+  const {
+    query: { isFetching, refetch },
+  } = useInboundList({
+    sortBy: { key: 'createdDateTime', direction: 'desc' },
+    filterBy: null,
   });
-  const { mutateAsync: fetchInternalOrders } =
-    useInbound.document.listInternalOrdersPromise();
   const manuallyLinkInternalOrder =
     store?.preferences.manuallyLinkInternalOrderToInboundShipment;
+
+  const { refetch: refetchInternalOrders } = useListInternalOrders(
+    selectedSupplierId || ''
+  );
 
   const createInvoice = async (nameId: string, requisitionId?: string) => {
     const invoiceId = await onCreate({
@@ -70,9 +79,10 @@ export const AppBarButtons = ({
       return;
     }
 
-    const data = await fetchInternalOrders(row.id);
+    setSelectedSupplierId(row.id);
+    const { data } = await refetchInternalOrders();
 
-    if (data?.internalOrders.totalCount === 0) {
+    if (data?.totalCount === 0) {
       createInvoice(row.id);
     } else {
       setName(row);
@@ -81,7 +91,7 @@ export const AppBarButtons = ({
   };
 
   const getCsvData = async () => {
-    const data = await fetchAsync();
+    const { data } = await refetch();
     return data?.nodes?.length ? inboundsToCsv(data.nodes, t) : null;
   };
 
@@ -97,7 +107,7 @@ export const AppBarButtons = ({
           <ExportSelector
             getCsvData={getCsvData}
             filename={t('filename.inbounds')}
-            isLoading={isLoading}
+            isLoading={isFetching}
           />
         )}
       </Grid>

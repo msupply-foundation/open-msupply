@@ -62,6 +62,7 @@ export const ItemVariantsTab = ({
               variant={v}
               onOpen={onOpen}
               itemId={item.id}
+              isVaccine={item.isVaccine}
             />
           ))
         )}
@@ -74,10 +75,12 @@ const ItemVariant = ({
   variant,
   itemId,
   onOpen,
+  isVaccine,
 }: {
   itemId: string;
   variant: ItemVariantFragment;
   onOpen: (variant?: ItemVariantFragment) => void;
+  isVaccine: boolean;
 }) => {
   const t = useTranslation();
   const confirmAndDelete = useDeleteItemVariant({ itemId });
@@ -122,7 +125,7 @@ const ItemVariant = ({
         </Box>
       </Box>
 
-      <ItemVariantForm variant={variant} />
+      <ItemVariantForm variant={variant} isVaccine={isVaccine} />
       <BundledItemVariants variant={variant} />
     </Box>
   );
