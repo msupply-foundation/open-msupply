@@ -94,7 +94,7 @@ pub enum InsertLocationErrorInterface {
 
 fn map_error(error: ServiceError) -> Result<InsertLocationErrorInterface> {
     use StandardGraphqlError::*;
-    let formatted_error = format!("{:#?}", error);
+    let formatted_error = format!("{error:#?}");
 
     let graphql_error = match error {
         // Standard Graphql Errors

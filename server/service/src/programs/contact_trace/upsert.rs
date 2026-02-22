@@ -223,7 +223,7 @@ fn validate(
     };
 
     let contact_trace_data = validate_contact_trace_schema(input).map_err(|err| {
-        UpsertContactTraceError::InvalidDataSchema(format!("Invalid contact trace data: {}", err))
+        UpsertContactTraceError::InvalidDataSchema(format!("Invalid contact trace data: {err}"))
     })?;
     if let Some(patient_id) = contact_trace_data
         .contact

@@ -94,7 +94,7 @@ pub fn chart(
 
 fn map_error(error: ServiceError) -> Result<ChartErrorInterface> {
     use StandardGraphqlError::*;
-    let formatted_error = format!("{:#?}", error);
+    let formatted_error = format!("{error:#?}");
 
     let graphql_error = match error {
         // Structured Errors
@@ -115,7 +115,6 @@ impl ConsumptionOptionsInput {
         default_amc_lookback_months: f64,
         from: Option<Self>,
     ) -> ConsumptionHistoryOptions {
-        let default_amc_lookback_months = default_amc_lookback_months as f64;
         let default_number_of_datapoints = 3;
 
         from.map(

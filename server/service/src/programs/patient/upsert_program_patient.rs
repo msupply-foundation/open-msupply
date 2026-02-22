@@ -165,7 +165,7 @@ fn validate_patient_schema(
     // If the patient data uses a derived patient schema, the derived schema is validated in the
     // document service.
     let patient: SchemaPatient = serde_json::from_value(input.data.clone()).map_err(|err| {
-        UpdateProgramPatientError::InvalidDataSchema(format!("Invalid patient data: {}", err))
+        UpdateProgramPatientError::InvalidDataSchema(format!("Invalid patient data: {err}"))
     })?;
     Ok(patient)
 }

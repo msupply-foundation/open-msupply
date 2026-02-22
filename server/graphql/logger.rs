@@ -114,7 +114,7 @@ impl Extension for LoggerExtension {
                     if variables.is_empty() {
                        "".to_string()
                     } else {
-                        format!(" - variables: {:?}", serde_json::to_value(&variables).unwrap_or_else(|_| serde_json::Value::Null))
+                        format!(" - variables: {:?}", serde_json::to_value(&variables).unwrap_or(serde_json::Value::Null))
                     }
                 );
             }

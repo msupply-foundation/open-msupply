@@ -161,7 +161,7 @@ fn map_response(from: Result<PurchaseOrderLine, ServiceError>) -> Result<UpdateR
 }
 
 fn map_error(error: ServiceError) -> Result<UpdateResponse> {
-    let formatted_error = format!("{:#?}", error);
+    let formatted_error = format!("{error:#?}");
 
     let graphql_error = match error {
         ServiceError::PurchaseOrderLineNotFound => {

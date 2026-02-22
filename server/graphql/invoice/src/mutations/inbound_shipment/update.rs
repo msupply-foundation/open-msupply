@@ -151,8 +151,8 @@ pub fn map_response(from: Result<Invoice, ServiceError>) -> Result<UpdateRespons
 
 fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
     use StandardGraphqlError::*;
-    let formatted_error = format!("{:#?}", error);
-    log::error!("Error updating inbound shipment: {}", formatted_error);
+    let formatted_error = format!("{error:#?}");
+    log::error!("Error updating inbound shipment: {formatted_error}");
 
     let graphql_error = match error {
         // Structured Errors

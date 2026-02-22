@@ -38,6 +38,7 @@ mod v2_13_01;
 mod v2_14_00;
 mod v2_15_00;
 mod v2_16_00;
+mod v2_17_00;
 mod version;
 mod views;
 
@@ -144,6 +145,7 @@ pub fn migrate(
         Box::new(v2_14_00::V2_14_00),
         Box::new(v2_15_00::V2_15_00),
         Box::new(v2_16_00::V2_16_00),
+        Box::new(v2_17_00::V2_17_00),
     ];
 
     // Check if the database has been initialised, if not run the base sql to kick start the process
@@ -232,10 +234,7 @@ pub fn migrate(
                 })?;
 
             migration_result.push((
-                format!(
-                    "Running one time database migration {}",
-                    migration_version.to_string()
-                ),
+                format!("Running one time database migration {}", migration_version),
                 Utc::now().naive_utc(),
             ));
 
@@ -268,7 +267,7 @@ pub fn migrate(
     }
 
     migration_result.push((
-        format!("Migrations finished to version {}", to_version.to_string()),
+        format!("Migrations finished to version {}", to_version),
         Utc::now().naive_utc(),
     ));
 
@@ -291,7 +290,7 @@ pub fn migrate(
     set_database_version(connection, &to_version)?;
 
     migration_result.push((
-        format!("Views recreated for {}", to_version.to_string()),
+        format!("Views recreated for {}", to_version),
         Utc::now().naive_utc(),
     ));
 

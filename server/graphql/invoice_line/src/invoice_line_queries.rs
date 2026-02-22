@@ -61,15 +61,15 @@ impl From<InvoiceLineFilterInput> for InvoiceLineFilter {
             item_id: f.item_id.map(EqualFilter::from),
             r#type: f
                 .r#type
-                .map(|t| map_filter!(t, |r| InvoiceLineType::from(r))),
+                .map(|t| map_filter!(t, InvoiceLineType::from)),
             requisition_id: f.requisition_id.map(EqualFilter::from),
             number_of_packs: f.number_of_packs.map(|t| map_filter!(t, f64::from)),
             invoice_type: f
                 .invoice_type
-                .map(|t| map_filter!(t, |i| InvoiceType::from(i))),
+                .map(|t| map_filter!(t, InvoiceType::from)),
             invoice_status: f
                 .invoice_status
-                .map(|t| map_filter!(t, |i| InvoiceStatus::from(i))),
+                .map(|t| map_filter!(t, InvoiceStatus::from)),
             stock_line_id: f.stock_line_id.map(EqualFilter::from),
             verified_datetime: f.verified_datetime.map(DatetimeFilter::from),
             reason_option: f
@@ -164,7 +164,7 @@ pub fn invoice_lines(
         ))
     } else {
         let err = invoice_lines.unwrap_err();
-        let formatted_error = format!("{:#?}", err);
+        let formatted_error = format!("{err:#?}");
         let graphql_error = match err {
             GetInvoiceLinesError::DatabaseError(err) => err.into(),
             GetInvoiceLinesError::InvalidStore => {
@@ -208,8 +208,8 @@ pub fn draft_outbound_lines(
         })
     } else {
         let err = result.unwrap_err();
-        let formatted_error = format!("{:#?}", err);
-        log::error!("Draft outbound lines generation error: {}", formatted_error);
+        let formatted_error = format!("{err:#?}");
+        log::error!("Draft outbound lines generation error: {formatted_error}");
         Err(list_error_to_gql_err(err))
     }
 }
