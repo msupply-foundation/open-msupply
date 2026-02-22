@@ -3,7 +3,7 @@ name: Bundle size diff - Build
 on:
   pull_request:
     paths:
-      - "client/**"
+      - 'client/**'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
@@ -27,7 +27,7 @@ jobs:
       - name: Use Node.js (.nvmrc)
         uses: actions/setup-node@v1
         with:
-          node-version: "${{ steps.nvm.outputs.NVMRC }}"
+          node-version: '${{ steps.nvm.outputs.NVMRC }}'
 
       - name: Install dependencies
         run: cd ./client && rm -rf node_modules && yarn install --frozen-lockfile
@@ -57,7 +57,7 @@ jobs:
       - name: Use Node.js (.nvmrc)
         uses: actions/setup-node@v1
         with:
-          node-version: "${{ steps.nvm.outputs.NVMRC }}"
+          node-version: '${{ steps.nvm.outputs.NVMRC }}'
 
       - name: Install dependencies
         run: cd ./client && rm -rf node_modules && yarn install --frozen-lockfile
@@ -96,21 +96,19 @@ jobs:
         id: get-diff
         uses: NejcZdovc/bundle-size-diff@v1
         with:
-          base_path: "./base/stats.json"
-          pr_path: "./pr/stats.json"
+          base_path: './base/stats.json'
+          pr_path: './pr/stats.json'
 
       - name: Save comparison data
         run: |
           echo "${{ github.event.pull_request.number }}" > pr_number
           cat > result.txt << 'EOF'
-          📊 **Bundle Size Comparison**
-          
-          | Metric | Value |
-          |--------|-------|
-          | Base Size | ${{ steps.get-diff.outputs.base_file_string }} |
-          | PR Size | ${{ steps.get-diff.outputs.pr_file_string }} |
-          | Difference | ${{ steps.get-diff.outputs.diff_file_string }} |
-          | Change | ${{ steps.get-diff.outputs.percent }}% |
+          ## Bundle size difference
+          Comparing this PR to `main`
+
+          |Old size      | New size     | Diff                     |
+          |:------------ |:-------------|:-------------------------|
+          |${{ steps.get-diff.outputs.base_file_string }}         |${{ steps.get-diff.outputs.pr_file_string }}         | ${{ steps.get-diff.outputs.diff_file_string }} (${{ steps.get-diff.outputs.percent }}%) |          
           EOF
 
       - name: Upload comparison artifact

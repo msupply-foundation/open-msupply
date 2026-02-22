@@ -1,6 +1,7 @@
 import React, { useCallback } from 'react';
 import {
   AppBarButtonsPortal,
+  AddFromScannerButton,
   ButtonWithIcon,
   PlusCircleIcon,
   Grid,
@@ -15,7 +16,6 @@ import {
 import { useOutbound } from '../api';
 import { ReportSelector } from '@openmsupply-client/system';
 import { AddFromMasterListButton } from './AddFromMasterListButton';
-import { AddFromScannerButton } from './AddFromScannerButton';
 import { ScannedBarcode } from '../../types';
 
 interface AppBarButtonProps {
