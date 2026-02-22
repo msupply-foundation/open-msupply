@@ -139,7 +139,7 @@ impl Test for ConfigTest {
     async fn run(&self, test_data: &mut TestData) -> Result<String> {
         test_data.server_config = Some(
             configuration::get_configuration(configuration::ConfigArgs { config_path: None })
-                .map_err(|err| anyhow!("Failed to load config: {:?}", err))?,
+                .map_err(|err| anyhow!("Failed to load config: {err:?}"))?,
         );
         Ok("Successfully loaded configuration".to_string())
     }
@@ -157,16 +157,16 @@ impl Test for PingTest {
 
         let url = get_url(config)?;
 
-        info!("Pinging server at: {}", url.to_string());
+        info!("Pinging server at: {}", url);
 
         let response = reqwest::get(url)
             .await
-            .map_err(|err| anyhow!("Ping test: Failed to get response: {:?}", err))?;
+            .map_err(|err| anyhow!("Ping test: Failed to get response: {err:?}"))?;
 
         if response.status().is_success() {
             Ok("Successfully pinged server".to_string())
         } else {
-            Err(anyhow!("Failed to ping server: {:?}", response))
+            Err(anyhow!("Failed to ping server: {response:?}"))
         }
     }
 }
@@ -183,8 +183,8 @@ impl Test for DatabaseTest {
 
         info!(
             "Testing database {} on server: {}",
-            config.database.database_name.to_string(),
-            config.database.host.to_string()
+            config.database.database_name,
+            config.database.host
         );
 
         let connection_manager = get_storage_connection_manager(&config.database);
@@ -216,8 +216,8 @@ impl Test for LoginTest {
         let sync_settings = get_sync_settings(config)?;
 
         info!("Testing login at url: {}", sync_settings.url);
-        info!("    Username: {}", username);
-        info!("    Password: {}", password);
+        info!("    Username: {username}");
+        info!("    Password: {password}");
 
         let client = Client::new();
         let login_api = LoginApiV4::new(client, Url::parse(&sync_settings.url)?);
@@ -232,7 +232,7 @@ impl Test for LoginTest {
         let _info = login_api
             .login(login_input)
             .await
-            .map_err(|err| anyhow!("Failed to login: {:?}", err))?;
+            .map_err(|err| anyhow!("Failed to login: {err:?}"))?;
 
         Ok("Successfully logged in".to_string())
     }
@@ -254,7 +254,7 @@ impl Test for SyncTest {
 
         let hardware_id = app_data_service
             .get_hardware_id()
-            .map_err(|err| anyhow!("Failed to get hardware ID from app data service: {:?}", err))?;
+            .map_err(|err| anyhow!("Failed to get hardware ID from app data service: {err:?}"))?;
 
         info!("Testing sync at url: {}", v5_settings.url);
         info!("    Username: {}", v5_settings.username);
@@ -273,7 +273,7 @@ impl Test for SyncTest {
         let _status = sync_api_v5
             .get_site_status()
             .await
-            .map_err(|err| anyhow!("Failed to get site status from sync API V5: {:?}", err))?;
+            .map_err(|err| anyhow!("Failed to get site status from sync API V5: {err:?}"))?;
 
         test_data.sync_api_v5 = Some(sync_api_v5);
 
@@ -302,7 +302,7 @@ impl Test for SyncV6Test {
         let url = sync_v5
             .url
             .join("/sync/v5/site")
-            .map_err(|err| anyhow!("Failed to join URL: {:?}", err))?;
+            .map_err(|err| anyhow!("Failed to join URL: {err:?}"))?;
 
         let config = test_data
             .server_config
@@ -320,23 +320,23 @@ impl Test for SyncV6Test {
             .basic_auth(&v5_settings.username, Some(&v5_settings.password_sha256))
             .send()
             .await
-            .map_err(|err| anyhow!("Failed to send request: {:?}", err))?;
+            .map_err(|err| anyhow!("Failed to send request: {err:?}"))?;
 
         let info_v5: SiteInfoV5 = response
             .json()
             .await
-            .map_err(|err| anyhow!("Failed to parse response: {:?}", err))?;
+            .map_err(|err| anyhow!("Failed to parse response: {err:?}"))?;
 
         let v6_url = Url::parse(&info_v5.central_server_url)
-            .map_err(|err| anyhow!("Failed to parse URL: {:?}", err))?;
+            .map_err(|err| anyhow!("Failed to parse URL: {err:?}"))?;
 
         let sync_v6 = SyncApiV6::new(v6_url.as_str(), &sync_v5.settings, 1)
-            .map_err(|err| anyhow!("Failed to create sync API V6: {:?}", err))?;
+            .map_err(|err| anyhow!("Failed to create sync API V6: {err:?}"))?;
 
         let _status = sync_v6
             .get_site_status()
             .await
-            .map_err(|err| anyhow!("Failed to get site status from sync API V6: {:?}", err))?;
+            .map_err(|err| anyhow!("Failed to get site status from sync API V6: {err:?}"))?;
 
         Ok("Successfully connected to sync server V6".to_string())
     }
@@ -363,7 +363,7 @@ impl Test for MailConnectionTest {
             Err(EmailServiceError::NotConfigured) => {
                 Ok("No mail settings found in configuration. Mail setup is only required on OMS Central server.".to_string())
             }
-            Err(err) => Err(anyhow!("Failed to connect to mail server: {:?}", err)),
+            Err(err) => Err(anyhow!("Failed to connect to mail server: {err:?}")),
         }
     }
 }
@@ -480,13 +480,13 @@ impl TestState {
                         egui::Image::new(egui::include_image!("assets/help_outline.png"))
                             .max_width(20.0),
                     );
-                    ui.label(format!("Waiting to start {} test", name));
+                    ui.label(format!("Waiting to start {name} test"));
                 });
             }
             TestState::Running => {
                 ui.horizontal_wrapped(|ui| {
                     ui.add(egui::widgets::Spinner::default());
-                    ui.label(format!("Running {} test", name));
+                    ui.label(format!("Running {name} test"));
                 });
             }
             TestState::Success(msg) => {
@@ -518,11 +518,9 @@ fn get_url(config: &service::settings::Settings) -> Result<Url> {
         false => "https",
     };
 
-    let url = Url::parse(&format!("{}://{}/", scheme, address)).map_err(|err| {
+    let url = Url::parse(&format!("{scheme}://{address}/")).map_err(|err| {
         anyhow!(
-            "Failed to parse URL from server address: {} - {:?}",
-            address,
-            err
+            "Failed to parse URL from server address: {address} - {err:?}"
         )
     })?;
 

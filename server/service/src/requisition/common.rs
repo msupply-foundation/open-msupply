@@ -182,11 +182,12 @@ pub fn check_master_list_for_store(
 
 pub(crate) fn get_indicative_price_pref(
     connection: &StorageConnection,
+    store_id: &str,
 ) -> Result<bool, RepositoryError> {
     ShowIndicativePriceInRequisitions {}
-        .load(connection, None)
+        .load(connection, Some(store_id.to_string()))
         .map_err(|e| RepositoryError::DBError {
-            msg: "Could not load showIndicativePriceInRequisitions global preference".to_string(),
+            msg: "Could not load showIndicativePriceInRequisitions store preference".to_string(),
             extra: e.to_string(),
         })
 }

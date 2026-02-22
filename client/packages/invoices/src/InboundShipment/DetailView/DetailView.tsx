@@ -35,13 +35,18 @@ import { AppBarButtons } from './AppBarButtons';
 import { SidePanel } from './SidePanel';
 import { InboundLineEdit } from './modals/InboundLineEdit';
 import { InboundItem, ScannedBarcode } from '../../types';
-import { useInbound, InboundLineFragment } from '../api';
+import { InboundLineFragment, useInboundShipment } from '../api';
 import { SupplierReturnEditModal } from '../../Returns';
-import { canReturnInboundLines, isInboundPlaceholderRow } from '../../utils';
+import {
+  canReturnInboundLines,
+  getInboundStockLines,
+  isInboundPlaceholderRow,
+} from '../../utils';
 import { InboundShipmentLineErrorProvider } from '../context/inboundShipmentLineError';
 import { InboundShipmentDetailTabs } from './types';
-import { useInboundLines } from '../api/hooks/line/useInboundLines';
 import { useInboundShipmentColumns } from './columns';
+import { ScanInputModal } from './ScanInputModal';
+import { MobileToolbar } from './MobileToolbar';
 
 type InboundLineItem = InboundLineFragment['item'];
 
@@ -63,7 +68,6 @@ const DetailViewInner = () => {
   const navigate = useNavigate();
   const { info } = useNotification();
   const { urlQuery, updateQuery } = useUrlQuery();
-  const { data: lines } = useInboundLines();
 
   const uploadDocumentController = useToggle();
   const { onOpen, onClose, mode, entity, isOpen } = useEditModal<
@@ -78,9 +82,17 @@ const DetailViewInner = () => {
     setMode,
   } = useEditModal<string[]>();
 
-  const { data, isLoading, invalidateQuery } = useInbound.document.get();
+  const {
+    query: { data, loading },
+    isDisabled,
+    invalidateQuery,
+  } = useInboundShipment();
+
+  const lines = React.useMemo(() => {
+    if (!data) return [];
+    return getInboundStockLines(data.lines.nodes);
+  }, [data]);
   const { data: vvmStatuses } = useVvmStatusesEnabled();
-  const isDisabled = useInbound.utils.isDisabled();
   const hasItemVariantsEnabled = useIsItemVariantsEnabled();
   const simplifiedTabletView = useSimplifiedTabletUI();
 
@@ -129,7 +141,7 @@ const DetailViewInner = () => {
     grouping: { enabled: true },
     isLoading: false,
     initialSort: { key: 'itemName', dir: 'asc' },
-    onRowClick: !isDisabled ? onRowClick : undefined,
+    onRowClick: !isDisabled && !isExtraSmallScreen ? onRowClick : undefined,
     getIsPlaceholderRow: row => !!isInboundPlaceholderRow(row),
     noDataElement: (
       <NothingHere
@@ -189,7 +201,7 @@ const DetailViewInner = () => {
     []
   );
 
-  if (isLoading) return <DetailViewSkeleton hasGroupBy={true} hasHold={true} />;
+  if (loading) return <DetailViewSkeleton hasGroupBy={true} hasHold={true} />;
 
   const tabs = [
     {
@@ -234,7 +246,7 @@ const DetailViewInner = () => {
             }}
           />
 
-          <Toolbar />
+          {isExtraSmallScreen ? <MobileToolbar /> : <Toolbar />}
 
           <DetailTabs tabs={tabs} />
 
@@ -246,6 +258,12 @@ const DetailViewInner = () => {
             />
           )}
           <SidePanel />
+
+          <ScanInputModal
+            lines={lines ?? []}
+            invoiceId={data?.id ?? ''}
+            shouldOpen={!isOpen}
+          />
 
           {isOpen && (
             <InboundLineEdit

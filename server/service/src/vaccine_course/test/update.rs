@@ -108,7 +108,7 @@ mod query {
         let result = service.update_vaccine_course(&context, update).unwrap();
         assert_eq!(result.name, "new_name");
         assert_eq!(result.demographic_id, Some(mock_demographic_a().id));
-        assert_eq!(result.can_skip_dose, true);
+        assert!(result.can_skip_dose);
 
         // Check there are two items for the vaccine_course
         let item_repo = VaccineCourseItemRepository::new(&context.connection);

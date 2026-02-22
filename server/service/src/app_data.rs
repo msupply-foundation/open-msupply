@@ -25,7 +25,8 @@ pub trait AppDataServiceTrait: Send + Sync {
         Ok(get_hardware_id())
     }
     fn set_hardware_id(&self, hardware_id: String) -> Result<(), Error> {
-        Ok(set_hardware_id(hardware_id))
+        set_hardware_id(hardware_id);
+        Ok(())
     }
 }
 

@@ -26,10 +26,10 @@ async fn scheduled_task_runner(service_provider: Arc<ServiceProvider>, interval_
             match send_emails {
                 Ok(num) => {
                     if num > 0 {
-                        log::info!("Sent {} queued emails", num);
+                        log::info!("Sent {num} queued emails");
                     }
                 }
-                Err(error) => log::error!("Error sending queued emails: {:?}", error),
+                Err(error) => log::error!("Error sending queued emails: {error:?}"),
             };
         }
     }
