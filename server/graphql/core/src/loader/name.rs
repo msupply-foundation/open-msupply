@@ -53,7 +53,7 @@ impl Loader<NameByIdLoaderInput> for NameByIdLoader {
                     Some(NameFilter::new().id(EqualFilter::equal_any(names))),
                     None,
                 )
-                .map_err(|err| StandardGraphqlError::InternalError(format!("{:?}", err)))?;
+                .map_err(|err| StandardGraphqlError::InternalError(format!("{err:?}")))?;
             for name in names.rows {
                 output.insert(NameByIdLoaderInput::new(&store_id, &name.name_row.id), name);
             }
@@ -110,7 +110,7 @@ impl Loader<NameByNameLinkIdLoaderInput> for NameByNameLinkIdLoader {
                     Some(NameFilter::new().name_link_id(StringFilter::equal_any(name_link_ids))),
                     None,
                 )
-                .map_err(|err| StandardGraphqlError::InternalError(format!("{:?}", err)))?;
+                .map_err(|err| StandardGraphqlError::InternalError(format!("{err:?}")))?;
             for name in names.rows {
                 output.insert(
                     NameByNameLinkIdLoaderInput::new(&store_id, &name.name_link_row.id),

@@ -186,8 +186,7 @@ fn json_validator(
     let compiled = match validator_for(&schema.json_schema) {
         Ok(v) => Ok(v),
         Err(err) => Err(DocumentInsertError::InternalError(format!(
-            "Invalid json schema: {}",
-            err
+            "Invalid json schema: {err}"
         ))),
     }?;
     Ok(Some(compiled))
@@ -196,7 +195,7 @@ fn json_validator(
 fn validate_json(validator: &Validator, data: &serde_json::Value) -> Result<(), String> {
     validator
         .validate(data)
-        .map_err(|error| format!("Invalid json data: {:?}", error))
+        .map_err(|error| format!("Invalid json data: {error:?}"))
 }
 
 // Returns Some invalid parent or None
