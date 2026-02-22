@@ -16,6 +16,7 @@ import {
   mergeCellProps,
   Tooltip,
   useGetColumnTypeDefaults,
+  useTranslation,
 } from '@openmsupply-client/common';
 
 import { ColumnDef } from './types';
@@ -23,6 +24,7 @@ import { ColumnDef } from './types';
 export const useMaterialTableColumns = <T extends MRT_RowData>(
   omsColumns: ColumnDef<T>[]
 ) => {
+  const t = useTranslation();
   const getColumnTypeDefaults = useGetColumnTypeDefaults();
 
   const tableDefinition = useMemo(() => {
@@ -99,7 +101,7 @@ export const useMaterialTableColumns = <T extends MRT_RowData>(
             <>
               {props.cell.getValue() === '[multiple]'
                 ? // show '[multiple]' if the aggregation function returned it
-                  '[multiple]'
+                  t('multiple')
                 : // otherwise render the cell using the column's Cell renderer
                   // would be nice to replace this with an internal MRT component but the most suitable one (MRT_TableBodyCellValue) causes an infinite loop
                   (
