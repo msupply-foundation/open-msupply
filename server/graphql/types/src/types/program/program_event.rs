@@ -87,8 +87,7 @@ impl ProgramEventNode {
                 patient,
             })
             .ok_or(Error::new(format!(
-                "Failed to load patient: {}",
-                patient_id
+                "Failed to load patient: {patient_id}"
             )))?;
 
         Ok(Some(result))
@@ -137,8 +136,7 @@ impl ProgramEventNode {
                 document,
             })
             .ok_or(Error::new(format!(
-                "Failed to load document: {}",
-                document_name
+                "Failed to load document: {document_name}"
             )))?;
 
         Ok(Some(result))

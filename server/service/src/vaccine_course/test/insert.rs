@@ -153,7 +153,7 @@ mod query {
             .unwrap();
 
         assert_eq!(result.demographic_id, Some(mock_demographic_a().id));
-        assert_eq!(result.can_skip_dose, true);
+        assert!(result.can_skip_dose);
 
         // Check there are two items for the vaccine_course
         let item_repo = VaccineCourseItemRepository::new(&context.connection);

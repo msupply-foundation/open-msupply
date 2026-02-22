@@ -2,6 +2,7 @@ use super::{version::Version, Migration, MigrationFragment};
 use crate::StorageConnection;
 
 mod add_forecasting_fields_to_requisition_line;
+mod item_category_join_add_item_link_id;
 
 pub(crate) struct V2_17_00;
 impl Migration for V2_17_00 {
@@ -14,9 +15,10 @@ impl Migration for V2_17_00 {
     }
 
     fn migrate_fragments(&self) -> Vec<Box<dyn MigrationFragment>> {
-        vec![Box::new(
-            add_forecasting_fields_to_requisition_line::Migrate,
-        )]
+        vec![
+            Box::new(add_forecasting_fields_to_requisition_line::Migrate),
+            Box::new(item_category_join_add_item_link_id::Migrate),
+        ]
     }
 }
 

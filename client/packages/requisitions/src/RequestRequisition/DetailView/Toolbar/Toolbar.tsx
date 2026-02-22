@@ -12,12 +12,14 @@ import {
   useConfirmationModal,
   usePreferences,
   NameNodeType,
+  SearchBar,
 } from '@openmsupply-client/common';
 import {
   CustomerSearchInput,
   InternalSupplierSearchInput,
 } from '@openmsupply-client/system';
 import { useHideOverStocked, useRequest } from '../../api';
+import { useRequestLines } from '../../api/hooks/line/useRequestLines';
 
 const MONTHS = [1, 2, 3, 4, 5, 6];
 
@@ -26,6 +28,8 @@ export const Toolbar = () => {
   const t = useTranslation();
   const isDisabled = useRequest.utils.isDisabled();
   const isProgram = useRequest.utils.isProgram();
+  const { itemFilter, setItemFilter } = useRequestLines();
+
   const {
     minMonthsOfStock,
     maxMonthsOfStock,
@@ -122,7 +126,14 @@ export const Toolbar = () => {
             </Alert>
           )}
         </Grid>
-        <Grid display="flex" flex={1} flexDirection="column" gap={1}>
+        <Grid
+          display="flex"
+          flex={1}
+          flexDirection="column"
+          gap={1}
+          justifyContent="flex-end"
+          alignItems="flex-end"
+        >
           <InputWithLabelRow
             label={t('label.min-months-of-stock')}
             labelWidth={'350px'}
@@ -200,16 +211,22 @@ export const Toolbar = () => {
             alignItems="flex-end"
             justifyContent="flex-end"
           >
-            <Grid>
-              <Switch
-                label={t('label.hide-stock-over-minimum')}
-                onChange={toggle}
-                checked={on}
-                color="secondary"
-                size="small"
-                labelSx={{ margin: '5px 0' }}
-              />
-            </Grid>
+            <Switch
+              label={t('label.hide-stock-over-minimum')}
+              onChange={toggle}
+              checked={on}
+              color="secondary"
+              size="small"
+              labelSx={{ margin: '5px 0' }}
+            />
+            <SearchBar
+              placeholder={t('placeholder.filter-items')}
+              value={itemFilter}
+              onChange={newValue => {
+                setItemFilter(newValue);
+              }}
+              debounceTime={0}
+            />
           </Grid>
         </Grid>
       </Grid>

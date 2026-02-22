@@ -578,7 +578,7 @@ async fn run_server_and_sync(
     omsupply_central_port: u16,
 ) -> Result<(), SyncError> {
     let sync_settings = SyncSettings {
-        url: format!("http://127.0.0.1:{}", msupply_central_port),
+        url: format!("http://127.0.0.1:{msupply_central_port}"),
         username: "".to_string(),
         password_sha256: "".to_string(),
         interval_seconds: 100000,

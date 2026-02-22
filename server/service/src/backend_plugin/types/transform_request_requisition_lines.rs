@@ -40,7 +40,7 @@ pub trait Trait: Send + Sync {
 
 impl self::Trait for PluginInstance {
     fn call(&self, input: Input) -> PluginResult<Output> {
-        Ok(call_plugin(input, plugin_type(), self)?)
+        call_plugin(input, plugin_type(), self)
     }
 }
 

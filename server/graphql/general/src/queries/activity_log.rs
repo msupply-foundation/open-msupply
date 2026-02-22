@@ -100,7 +100,7 @@ impl ActivityLogFilterInput {
 
         ActivityLogFilter {
             id: id.map(EqualFilter::from),
-            r#type: r#type.map(|t| map_filter!(t, |r| ActivityLogType::from(r))),
+            r#type: r#type.map(|t| map_filter!(t, ActivityLogType::from)),
             user_id: user_id.map(EqualFilter::from),
             store_id: store_id.map(EqualFilter::from),
             record_id: record_id.map(EqualFilter::from),

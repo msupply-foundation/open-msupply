@@ -162,7 +162,7 @@ pub fn system_log_entry(
             format!(
                 "{} - {} - {}",
                 context,
-                log_type.to_string(),
+                log_type,
                 format_error(&error)
             )
         }

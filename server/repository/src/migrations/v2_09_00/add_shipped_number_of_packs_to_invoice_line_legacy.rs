@@ -65,7 +65,7 @@ impl MigrationFragment for Migrate {
                         .filter(sync_buffer::record_id.eq(&id))
                         .set(sync_buffer::integration_error.eq(e.to_string()))
                         .execute(connection.lock().connection())?;
-                    println!("Error parsing legacy row for ID {}: {}", id, e);
+                    println!("Error parsing legacy row for ID {id}: {e}");
                     // Skip rows with parsing errors
                     continue;
                 }
@@ -120,16 +120,15 @@ mod tests {
     ) {
         execute_sql_with_error(
             connection,
-            sql_query(&format!(
+            sql_query(format!(
                 r#"
                     INSERT INTO invoice_line (
                         id, invoice_id, item_link_id, item_name, item_code, pack_size, number_of_packs, cost_price_per_pack, sell_price_per_pack, total_before_tax, total_after_tax, type
                     )
                     VALUES (
-                        '{}', 'invoice_id', 'item_id', 'Test Item', 'ITEM1', 1.0, 10.0, 10.0, 15.0, 100.0, 100.0, 'STOCK_OUT'
+                        '{id}', 'invoice_id', 'item_id', 'Test Item', 'ITEM1', 1.0, 10.0, 10.0, 15.0, 100.0, 100.0, 'STOCK_OUT'
                     );
-                "#,
-                id
+                "#
             ))
         ).unwrap();
     }
@@ -139,15 +138,14 @@ mod tests {
         invoice_line_id: &str,
         non_id_data: &str,
     ) {
-        let sync_data = format!(r#"{{"id": "{}", {}}}"#, invoice_line_id, non_id_data);
+        let sync_data = format!(r#"{{"id": "{invoice_line_id}", {non_id_data}}}"#);
         execute_sql_with_error(
             connection,
             sql_query(format!(
                 r#"
                     INSERT INTO sync_buffer (record_id, received_datetime, table_name, action, data) 
-                    VALUES ('{}', $1, 'trans_line', 'UPSERT', '{}');
-                "#,
-                invoice_line_id, sync_data
+                    VALUES ('{invoice_line_id}', $1, 'trans_line', 'UPSERT', '{sync_data}');
+                "#
             ))
             .bind::<Timestamp, _>(chrono::Utc::now().naive_utc()),
         )
@@ -162,8 +160,7 @@ mod tests {
 
         let SetupResult { connection, .. } = setup_test(SetupOption {
             db_name: &format!(
-                "test_sync_ship_num_of_packs_to_exist_invoice_lines{}",
-                version
+                "test_sync_ship_num_of_packs_to_exist_invoice_lines{version}"
             ),
             version: Some(previous_version.clone()),
             ..Default::default()

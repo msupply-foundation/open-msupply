@@ -19,7 +19,7 @@ pub fn generate_plugin_typescript_types(path: PathBuf, skip_prettify: bool) -> R
             "--write",
             "./**/*.ts",
         ]))
-        .map_err(|e| anyhow!("Failed to run prettier: {}", e))?;
+        .map_err(|e| anyhow!("Failed to run prettier: {e}"))?;
 
         info!("Formatting finished...");
     }

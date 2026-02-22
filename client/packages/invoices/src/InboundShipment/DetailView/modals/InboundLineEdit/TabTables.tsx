@@ -177,6 +177,7 @@ export const QuantityTable = ({
               updateDraftLine({ shippedPackSize: value, id: row.original.id });
             }}
             disabled={isDisabled}
+            min={1}
           />
         ),
         defaultHideOnMobile: true,
@@ -195,7 +196,7 @@ export const QuantityTable = ({
               });
             }}
             disabled={isDisabled}
-            min={1}
+            min={0}
           />
         ),
       },
@@ -254,16 +255,6 @@ export const QuantityTable = ({
         ),
       },
       {
-        accessorKey: 'doseQuantity',
-        header: t('label.doses-received'),
-        size: 100,
-        includeColumn: displayInDoses,
-        accessorFn: row => {
-          const total = row.numberOfPacks * row.packSize;
-          return format(total * row.item.doses);
-        },
-      },
-      {
         accessorKey: 'unitsPerPack',
         header: t('label.units-received', {
           unit: pluralisedUnitName,
@@ -304,6 +295,16 @@ export const QuantityTable = ({
             min={0}
           />
         ),
+      },
+      {
+        accessorKey: 'doseQuantity',
+        header: t('label.doses-received'),
+        size: 100,
+        includeColumn: displayInDoses,
+        accessorFn: row => {
+          const total = row.numberOfPacks * row.packSize;
+          return format(total * row.item.doses);
+        },
       },
       {
         accessorKey: 'volumePerPack',
