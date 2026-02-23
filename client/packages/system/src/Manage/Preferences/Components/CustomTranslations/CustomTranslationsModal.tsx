@@ -6,7 +6,7 @@ import {
     UploadFile,
     ConfirmationModal,
 } from '@common/components';
-import { EditIcon, SaveIcon, DownloadIcon, DeleteIcon } from '@common/icons';
+import { EditIcon, UploadIcon, SaveIcon, DownloadIcon, DeleteIcon } from '@common/icons';
 import { useIntlUtils, useTranslation } from '@common/intl';
 import { useDialog, useNotification, useToggle } from '@common/hooks';
 import { Box } from '@mui/material';
@@ -186,11 +186,11 @@ export const CustomTranslationsModal = ({
                         <ButtonWithIcon
                             label={t('button.import')}
                             onClick={() => setShowUploadModal(true)}
-                            Icon={<EditIcon />}
+                            Icon={<UploadIcon />}
                             disabled={loading}
                         />
                         <ButtonWithIcon
-                            label={t('button.download')}
+                            label={t('button.export')}
                             onClick={downloadTranslations}
                             Icon={<DownloadIcon />}
                             disabled={loading}
