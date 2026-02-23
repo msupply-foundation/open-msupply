@@ -32,7 +32,7 @@ export const useColumnOrder = <T extends MRT_RowData>(
       columns,
       state: {},
       enableRowSelection, // adds `mrt-row-select`
-      enableExpanding, // adds `mrt-expand`
+      enableExpanding, // adds `mrt-row-expand`
     } as MRT_StatefulTableOptions<MRT_RowData>);
   }, [columns, enableRowSelection, enableExpanding]);
 
