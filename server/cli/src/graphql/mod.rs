@@ -9,8 +9,8 @@ use serde::{de::DeserializeOwned, Deserialize, Serialize};
 
 #[derive(Debug)]
 pub struct Api {
-    url: Url,
-    token: String,
+    pub(crate) url: Url,
+    pub(crate) token: String,
 }
 
 #[allow(dead_code)]

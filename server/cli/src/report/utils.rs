@@ -1,5 +1,4 @@
 use base64::{prelude::BASE64_STANDARD, Engine};
-use report_builder::{build::build_report_definition, BuildArgs};
 use repository::{schema_from_row, ContextType, FormSchemaRow, RepositoryError};
 use service::{
     report::definition::ConvertDataType,
@@ -7,6 +6,12 @@ use service::{
 };
 use std::{ffi::OsStr, fs, path::PathBuf, process::Command};
 use thiserror::Error as ThisError;
+
+use super::build::{build_report_definition, BuildArgs};
+use crate::{
+    helpers::{run_command_with_error, CommandError},
+    YARN_COMMAND,
+};
 
 #[derive(ThisError, Debug)]
 pub enum ReportError {
@@ -50,8 +55,6 @@ pub enum ReportError {
 
 use ReportError as Error;
 
-use crate::{helpers::{run_command_with_error, CommandError}, YARN_COMMAND};
-
 pub fn generate_reports_recursive(
     reports_data: &mut ReportsData,
     ignore_paths: &Vec<&OsStr>,
@@ -92,8 +95,6 @@ fn process_report(reports_data: &mut ReportsData, path: &PathBuf) -> Result<(), 
 }
 
 pub fn generate_report_data(path: &PathBuf) -> Result<ReportData, Error> {
-    // install esbuild depedencies
-    // read manifest file
     let manifest_file = fs::File::open(path.join("report-manifest.json"))
         .map_err(|e| Error::CannotOpenManifestFile(path.clone(), e))?;
 
@@ -190,7 +191,6 @@ fn generate_convert_data(path: &PathBuf, manifest: &Manifest) -> Result<Option<S
     };
 
     let convert_dir = path.join(convert_data);
-    // Yarn install, use lock file bit it should be git ignored
     run_command_with_error(
         Command::new(YARN_COMMAND)
             .args(["install", "--cwd"])

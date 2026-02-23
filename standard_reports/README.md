@@ -220,7 +220,7 @@ Optional fields in the manifest json are marked as '// optional'
     // GraphQL file query name with extension
     "gql": "query.graphql",
     // optional
-    // vec of sql query file names without extension. report_builder will parse both postgres.sql, sqlite.sql, and agnostic .sql file type extensions.
+    // vec of sql query file names without extension.  CLI commands will parse both postgres.sql, sqlite.sql, and agnostic .sql file type extensions.
     "sql": ["thisMonthConsumption", "lastMonthConsumption"]
   },
   // optional

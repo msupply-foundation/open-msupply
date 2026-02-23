@@ -421,7 +421,6 @@ server
 │  │  │  ├─ [data type]_queries.rs
 │  │  │  └─ mutations
 │  │  └─ test_output
-├─ report_builder
 ├─ repository
 │  ├─ migrations
 │  ├─ src
