@@ -1,5 +1,5 @@
 use base64::{prelude::BASE64_STANDARD, Engine};
-use repository::{schema_from_row, ContextType, FormSchemaRow, RepositoryError};
+use repository::{schema_from_row, FormSchemaRow, RepositoryError};
 use service::{
     report::definition::ConvertDataType,
     standard_reports::{ReportData, ReportsData},
@@ -7,7 +7,7 @@ use service::{
 use std::{ffi::OsStr, fs, path::PathBuf, process::Command};
 use thiserror::Error as ThisError;
 
-use super::build::{build_report_definition, BuildArgs};
+use super::build::{build_report_definition, Manifest};
 use crate::{
     helpers::{run_command_with_error, CommandError},
     YARN_COMMAND,
@@ -102,11 +102,16 @@ pub fn generate_report_data(path: &PathBuf) -> Result<ReportData, Error> {
         .map_err(|e| Error::CannotReadManifestFile(path.clone(), e))?;
 
     let convert_data = generate_convert_data(path, &manifest)?;
-    let code = manifest.code;
 
+    let mut report_definition = build_report_definition(&manifest, &path.join("src"))
+        .map_err(|e| Error::FailedToBuildReport(path.clone(), e))?;
+
+    report_definition.index.convert_data = convert_data;
+    report_definition.index.convert_data_type = manifest.convert_data_type;
+
+    let code = manifest.code;
     let version = manifest.version;
     let id_version = str::replace(&version, ".", "_");
-
     let context = manifest.context;
     let report_name = manifest.name;
     let is_custom = manifest.is_custom;
@@ -121,26 +126,6 @@ pub fn generate_report_data(path: &PathBuf) -> Result<ReportData, Error> {
         .arguments
         .and_then(|a| a.ui)
         .map(|ui| path.join(ui));
-    let graphql_query = manifest.queries.clone().and_then(|q| q.gql);
-    let sql_queries = manifest.queries.clone().and_then(|q| q.sql);
-    let query_default = manifest.query_default;
-
-    let args = BuildArgs {
-        dir: path.join("src"),
-        output: Some(path.join("generated").join("built_report.json")),
-        template: "template.html".to_string(),
-        header: manifest.header,
-        footer: manifest.footer,
-        query_gql: graphql_query,
-        query_default,
-        query_sql: sql_queries,
-    };
-
-    let mut report_definition =
-        build_report_definition(&args).map_err(|e| Error::FailedToBuildReport(path.clone(), e))?;
-
-    report_definition.index.convert_data = convert_data;
-    report_definition.index.convert_data_type = manifest.convert_data_type;
 
     let form_schema_json = match (arguments_path, arguments_ui_path) {
         (Some(_), None) | (None, Some(_)) => {
@@ -209,44 +194,4 @@ fn generate_convert_data(path: &PathBuf, manifest: &Manifest) -> Result<Option<S
         });
 
     Ok(Some(BASE64_STANDARD.encode(fs::read(bundle_path).unwrap())))
-}
-
-#[derive(serde::Deserialize, Clone)]
-pub struct Manifest {
-    pub is_custom: bool,
-    pub version: String,
-    pub code: String,
-    pub context: ContextType,
-    pub sub_context: Option<String>,
-    pub name: String,
-    pub header: Option<String>,
-    pub footer: Option<String>,
-    pub queries: Option<ManifestQueries>,
-    pub default_query: Option<String>,
-    pub arguments: Option<Arguments>,
-    pub test_arguments: Option<TestReportArguments>,
-    pub convert_data: Option<String>,
-    #[serde(default)]
-    pub convert_data_type: ConvertDataType,
-    pub query_default: Option<String>,
-    pub excel_template: Option<String>,
-}
-
-#[derive(serde::Deserialize, Clone)]
-pub struct ManifestQueries {
-    pub gql: Option<String>,
-    pub sql: Option<Vec<String>>,
-}
-
-#[derive(serde::Deserialize, Clone)]
-pub struct Arguments {
-    pub schema: Option<String>,
-    pub ui: Option<String>,
-}
-
-#[derive(serde::Deserialize, Clone)]
-pub struct TestReportArguments {
-    pub arguments: Option<String>,
-    pub reference_data: Option<String>,
-    pub data_id: Option<String>,
 }

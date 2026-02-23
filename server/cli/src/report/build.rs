@@ -1,7 +1,8 @@
 use anyhow::Result;
+use repository::ContextType;
 use service::report::definition::{
-    DefaultQuery, GraphQlQuery, Manifest, ReportDefinition, ReportDefinitionEntry,
-    ReportDefinitionIndex, ReportOutputType, SQLQuery, TeraTemplate,
+    ConvertDataType, DefaultQuery, GraphQlQuery, Manifest as DefinitionManifest, ReportDefinition,
+    ReportDefinitionEntry, ReportDefinitionIndex, ReportOutputType, SQLQuery, TeraTemplate,
 };
 use std::{
     collections::HashMap,
@@ -9,38 +10,46 @@ use std::{
     path::{Path, PathBuf},
 };
 
-#[derive(clap::Args)]
-pub struct BuildArgs {
-    /// Project directory name
-    #[clap(short, long)]
-    pub dir: PathBuf,
-    /// output path
-    #[clap(short, long)]
-    pub output: Option<PathBuf>,
-    /// Main template name
-    #[clap(long)]
-    pub template: String,
-    #[clap(long)]
-    pub header: Option<String>,
-    #[clap(long)]
-    pub footer: Option<String>,
+const TEMPLATE_FILENAME: &str = "template.html";
 
-    /// Name of the file containing a graphql query
-    #[clap(long)]
-    pub query_gql: Option<String>,
-    /// Default query type, one of: "invoice" | "stocktake" | "requisition",
-    #[clap(long)]
+#[derive(serde::Deserialize, Clone)]
+pub struct Manifest {
+    pub is_custom: bool,
+    pub version: String,
+    pub code: String,
+    pub context: ContextType,
+    pub sub_context: Option<String>,
+    pub name: String,
+    pub header: Option<String>,
+    pub footer: Option<String>,
+    pub queries: Option<ManifestQueries>,
+    pub default_query: Option<String>,
+    pub arguments: Option<Arguments>,
+    pub test_arguments: Option<TestReportArguments>,
+    pub convert_data: Option<String>,
+    #[serde(default)]
+    pub convert_data_type: ConvertDataType,
     pub query_default: Option<String>,
-    /// SQL query name.
-    /// This argument requires that there is either
-    /// - a single {query_sql}.sql file (for both Sqlite and Postgres)
-    /// - a {query_sql}.sqlite.sql file and a {query_sql}.postgres.sql file
-    ///
-    /// The query result is put in the data object under `data.{query_sql}`.
-    /// Thus, the user has to take care that the query name {query_sql} does not conflict with a
-    /// GraphQL query since otherwise data from the GraphQL query might get overwritten.
-    #[clap(long, value_parser, value_delimiter = ' ')]
-    pub query_sql: Option<Vec<String>>,
+    pub excel_template: Option<String>,
+}
+
+#[derive(serde::Deserialize, Clone)]
+pub struct ManifestQueries {
+    pub gql: Option<String>,
+    pub sql: Option<Vec<String>>,
+}
+
+#[derive(serde::Deserialize, Clone)]
+pub struct Arguments {
+    pub schema: Option<String>,
+    pub ui: Option<String>,
+}
+
+#[derive(serde::Deserialize, Clone)]
+pub struct TestReportArguments {
+    pub arguments: Option<String>,
+    pub reference_data: Option<String>,
+    pub data_id: Option<String>,
 }
 
 fn find_project_files(dir: &Path) -> anyhow::Result<HashMap<String, PathBuf>> {
@@ -77,10 +86,10 @@ fn parse_default_query(input: &str) -> anyhow::Result<DefaultQuery> {
 
 /// Returns query name and SQLQuery
 fn extract_sql_entry(
-    args: &BuildArgs,
+    manifest: &Manifest,
     files: &mut HashMap<String, PathBuf>,
 ) -> Result<Vec<SQLQuery>> {
-    let Some(sql_queries) = &args.query_sql else {
+    let Some(sql_queries) = manifest.queries.as_ref().and_then(|q| q.sql.as_ref()) else {
         return Ok(vec![]);
     };
     let result: Result<Vec<_>> = sql_queries
@@ -125,9 +134,9 @@ fn extract_sql_entry(
     result
 }
 
-fn make_report(args: &BuildArgs, mut files: HashMap<String, PathBuf>) -> Result<ReportDefinition> {
+fn make_report(manifest: &Manifest, mut files: HashMap<String, PathBuf>) -> Result<ReportDefinition> {
     let mut index = ReportDefinitionIndex {
-        template: Some(args.template.clone()),
+        template: Some(TEMPLATE_FILENAME.to_string()),
         header: None,
         footer: None,
         query: vec![],
@@ -138,12 +147,12 @@ fn make_report(args: &BuildArgs, mut files: HashMap<String, PathBuf>) -> Result<
 
     // main template
     let template_file = files
-        .remove(&args.template)
+        .remove(TEMPLATE_FILENAME)
         .ok_or(anyhow::Error::msg("Template file does not exist"))?;
     let data = fs::read_to_string(template_file)
         .map_err(|err| anyhow::Error::msg(format!("Failed to load template file: {}", err)))?;
     entries.insert(
-        args.template.clone(),
+        TEMPLATE_FILENAME.to_string(),
         ReportDefinitionEntry::TeraTemplate(TeraTemplate {
             output: ReportOutputType::Html,
             template: data,
@@ -151,7 +160,7 @@ fn make_report(args: &BuildArgs, mut files: HashMap<String, PathBuf>) -> Result<
     );
 
     // header
-    if let Some(header) = &args.header {
+    if let Some(header) = &manifest.header {
         let file_path = files
             .remove(header)
             .ok_or(anyhow::Error::msg("Header file does not exist"))?;
@@ -168,7 +177,7 @@ fn make_report(args: &BuildArgs, mut files: HashMap<String, PathBuf>) -> Result<
     }
 
     // footer
-    if let Some(footer) = &args.footer {
+    if let Some(footer) = &manifest.footer {
         let file_path = files
             .remove(footer)
             .ok_or(anyhow::Error::msg("Footer file does not exist"))?;
@@ -185,19 +194,20 @@ fn make_report(args: &BuildArgs, mut files: HashMap<String, PathBuf>) -> Result<
     }
 
     // query
-    let query_specified = args.query_gql.is_some()
-        || args.query_default.is_some()
-        || !args
-            .query_sql
-            .as_ref()
-            .map(|it| it.is_empty())
-            .unwrap_or(false);
+    let query_gql = manifest.queries.as_ref().and_then(|q| q.gql.as_ref());
+    let has_sql = manifest
+        .queries
+        .as_ref()
+        .and_then(|q| q.sql.as_ref())
+        .map(|s| !s.is_empty())
+        .unwrap_or(false);
+    let query_specified = query_gql.is_some() || manifest.query_default.is_some() || has_sql;
     if !query_specified {
         return Err(anyhow::Error::msg(
-            "No query specified, e.g. --query-gql or --query-default or --query-sql",
+            "No query specified, e.g. gql, query_default, or sql in report-manifest.json",
         ));
     }
-    if let Some(query_gql) = &args.query_gql {
+    if let Some(query_gql) = query_gql {
         let file_path = files
             .remove(query_gql)
             .ok_or(anyhow::Error::msg("GraphQl query file does not exist"))?;
@@ -211,14 +221,14 @@ fn make_report(args: &BuildArgs, mut files: HashMap<String, PathBuf>) -> Result<
                 variables: None,
             }),
         );
-    } else if let Some(query_default) = &args.query_default {
+    } else if let Some(query_default) = &manifest.query_default {
         index.query.push("query_default".to_string());
         entries.insert(
             "query_default".to_string(),
             ReportDefinitionEntry::DefaultQuery(parse_default_query(query_default)?),
         );
     }
-    for sql_query in extract_sql_entry(args, &mut files)? {
+    for sql_query in extract_sql_entry(manifest, &mut files)? {
         index.query.push(sql_query.name.clone());
         entries.insert(
             sql_query.name.clone(),
@@ -249,10 +259,17 @@ fn make_report(args: &BuildArgs, mut files: HashMap<String, PathBuf>) -> Result<
         } else if name.ends_with(".json") {
             let name = name.strip_suffix(".json").unwrap();
             if name == "manifest" {
-                let manifest: Manifest = serde_json::from_str(&data).map_err(|err| {
-                    anyhow::Error::msg(format!("Failed to parse report-manifest.json: {}", err))
-                })?;
-                (name.to_string(), ReportDefinitionEntry::Manifest(manifest))
+                let definition_manifest: DefinitionManifest =
+                    serde_json::from_str(&data).map_err(|err| {
+                        anyhow::Error::msg(format!(
+                            "Failed to parse report-manifest.json: {}",
+                            err
+                        ))
+                    })?;
+                (
+                    name.to_string(),
+                    ReportDefinitionEntry::Manifest(definition_manifest),
+                )
             } else {
                 // add data as json
                 let data = serde_json::from_str(&data).map_err(|err| {
@@ -273,29 +290,8 @@ fn make_report(args: &BuildArgs, mut files: HashMap<String, PathBuf>) -> Result<
     Ok(ReportDefinition { index, entries })
 }
 
-pub fn build(args: BuildArgs) -> anyhow::Result<()> {
-    let definition = build_report_definition(&args)?;
-    let output_path = args
-        .output
-        .unwrap_or(PathBuf::new().join("generated").join("output.json"));
-    fs::create_dir_all(output_path.parent().ok_or(anyhow::Error::msg(format!(
-        "Invalid output path: {:?}",
-        output_path
-    )))?)?;
-
-    fs::write(&output_path, serde_json::to_string_pretty(&definition)?).map_err(|_| {
-        anyhow::Error::msg(format!(
-            "Failed to write to {:?}. Does output dir exist?",
-            output_path
-        ))
-    })?;
-
-    Ok(())
-}
-
-pub fn build_report_definition(args: &BuildArgs) -> anyhow::Result<ReportDefinition> {
-    let project_dir = Path::new(&args.dir);
-    let files = find_project_files(project_dir)?;
-    let definition = make_report(args, files)?;
+pub fn build_report_definition(manifest: &Manifest, src_dir: &Path) -> anyhow::Result<ReportDefinition> {
+    let files = find_project_files(src_dir)?;
+    let definition = make_report(manifest, files)?;
     Ok(definition)
 }
