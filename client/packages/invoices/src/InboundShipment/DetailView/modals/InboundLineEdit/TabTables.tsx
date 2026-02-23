@@ -247,7 +247,7 @@ export const QuantityTable = ({
                 const packToUnits = packSize * value;
                 setPackRoundingMessage?.('');
                 updateDraftLine({
-                  unitsPerPack: packToUnits,
+                  receivedNumberOfUnits: packToUnits,
                   id: row.original.id,
                   numberOfPacks: value,
                 });
@@ -259,7 +259,7 @@ export const QuantityTable = ({
         ),
       },
       {
-        accessorKey: 'unitsPerPack',
+        accessorKey: 'receivedNumberOfUnits',
         header: t('label.units-received', {
           unit: pluralisedUnitName,
         }),
@@ -288,7 +288,7 @@ export const QuantityTable = ({
                   );
                 }
                 updateDraftLine({
-                  unitsPerPack: actualUnits,
+                  receivedNumberOfUnits: actualUnits,
                   numberOfPacks: roundedPacks,
                   id: row.original.id,
                 });
