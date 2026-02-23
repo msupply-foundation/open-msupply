@@ -40,6 +40,7 @@ export interface SplitButtonProps<T> {
   openFrom?: PopoverOrigin['vertical'];
   isLoadingType?: boolean;
   isLoading?: boolean;
+  shouldShrink?: boolean;
 }
 
 export const SplitButton = <T,>({
@@ -57,6 +58,7 @@ export const SplitButton = <T,>({
   openFrom = 'top',
   isLoadingType = false,
   isLoading = false,
+  shouldShrink,
 }: SplitButtonProps<T>) => {
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const buttonLabel = staticLabel ?? selectedOption.label;
@@ -102,9 +104,14 @@ export const SplitButton = <T,>({
               isLoading={isLoading}
               startIcon={icon}
               {...sharedButtonProps}
+              shouldShrink={shouldShrink}
             />
           ) : (
-            <ButtonWithIcon Icon={icon} {...sharedButtonProps} />
+            <ButtonWithIcon
+              Icon={icon}
+              {...sharedButtonProps}
+              shouldShrink={shouldShrink}
+            />
           )}
 
           <ShrinkableBaseButton

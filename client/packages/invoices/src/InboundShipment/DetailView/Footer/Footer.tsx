@@ -175,14 +175,16 @@ export const FooterComponent = ({
               />
 
               <Box flex={1} display="flex" justifyContent="flex-end" gap={2}>
-                <ButtonWithIcon
-                  shrinkThreshold="lg"
-                  Icon={<XCircleIcon />}
-                  label={t('button.close')}
-                  color="secondary"
-                  sx={{ fontSize: '12px' }}
-                  onClick={() => navigateUpOne()}
-                />
+                {!isExtraSmallScreen && (
+                  <ButtonWithIcon
+                    shrinkThreshold="lg"
+                    Icon={<XCircleIcon />}
+                    label={t('button.close')}
+                    color="secondary"
+                    sx={{ fontSize: '12px' }}
+                    onClick={() => navigateUpOne()}
+                  />
+                )}
 
                 <StatusChangeButton />
               </Box>

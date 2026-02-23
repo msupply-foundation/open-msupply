@@ -181,6 +181,7 @@ const StatusChangeButtonContent = ({
 
   return (
     <SplitButton
+      shouldShrink={false}
       options={options}
       selectedOption={selectedOption}
       onSelectOption={setSelectedOption}
