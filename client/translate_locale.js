@@ -1,5 +1,6 @@
 const fs = require('fs/promises');
 const path = require('path');
+const readline = require('readline/promises');
 
 const root = './packages/common/src/intl/locales';
 const [outputLocale, modeArg] = process.argv.slice(2);
@@ -24,6 +25,39 @@ const outputDir = path.join(root, outputLocale);
 const placeholderRegex = /(\{\{[^{}]+\}\}|\$t\([^\)]+\))/g;
 
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+const confirmProceed = async () => {
+  if (!process.stdin.isTTY || !process.stdout.isTTY) {
+    throw new Error(
+      'Interactive confirmation requires a TTY terminal. Please run this script in an interactive shell.'
+    );
+  }
+
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+  });
+
+  const warning = [
+    '',
+    '*********************************** WARNING! ***********************************',
+    'This should only be used to create a draft translation for a new language',
+    'or to temporarily fill in some gaps until translations can be properly reviewed.',
+    'It is NOT intended for updating existing translations, if the target text ',
+    'has changed since translation this should be handled by the translation team.',
+    '********************************************************************************',
+    '',
+    'Type "ok" to continue: ',
+  ].join('\n');
+
+  const answer = await rl.question(warning);
+  rl.close();
+
+  if (answer.trim().toLowerCase() !== 'ok') {
+    console.log('Aborted by user. No files were changed.');
+    process.exit(0);
+  }
+};
 
 const maskPlaceholders = text => {
   const tokens = [];
@@ -108,6 +142,8 @@ const translateText = async text => {
 };
 
 const main = async () => {
+  await confirmProceed();
+
   const sourceJsonFiles = await listJsonFiles(sourceDir);
   let totalChangedCount = 0;
   let filesProcessed = 0;
