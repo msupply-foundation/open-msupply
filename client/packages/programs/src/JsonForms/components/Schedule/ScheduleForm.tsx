@@ -1,68 +1,105 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { rankWith, ControlProps, uiTypeIs } from '@jsonforms/core';
 import { useJsonForms, withJsonFormsControlProps } from '@jsonforms/react';
 import {
   Autocomplete,
   Box,
   DetailInputWithLabelRow,
-  extractProperty,
-  AutocompleteWithPagination,
-  Formatter,
+  PeriodNode,
+  PeriodScheduleNode,
+  DateTimePickerInput,
 } from '@openmsupply-client/common';
 import { DefaultFormRowSx, FORM_LABEL_WIDTH } from '../../common';
 import { ProgramFragment, useProgramList } from '../../../api';
-import { usePeriodList } from '../../../api/hooks/usePeriodList';
-import { PeriodFragment } from '@openmsupply-client/requisitions';
+import { useSchedulesAndPeriods } from 'packages/requisitions/src';
 
 export const scheduleFormTester = rankWith(10, uiTypeIs('ScheduleForm'));
 
+interface FormState {
+  program: ProgramFragment | null;
+  schedule: PeriodScheduleNode | null;
+  period: PeriodNode | null;
+  after: Date | null;
+  before: Date | null;
+}
+
 const UIComponent = (props: ControlProps) => {
-  const { path, handleChange } = props;
-  const [form, setForm] = useState({
-    program: null as ProgramFragment | null,
-    period: null as PeriodFragment | null,
+  const { handleChange } = props;
+  const [form, setForm] = useState<FormState>({
+    program: null,
+    schedule: null,
+    period: null,
+    after: null,
+    before: null,
   });
 
   const { core } = useJsonForms();
 
-  const onProgramChange = async (program: ProgramFragment | null) => {
-    setForm(prevForm => ({ ...prevForm, program, period: null }));
-
-    // const elmisCode = program?.elmisCode ?? undefined;
-
-    handleChange(`${path}.programId`, program?.id);
+  const onProgramChange = (program: ProgramFragment | null) => {
+    setForm({
+      program,
+      schedule: null,
+      period: null,
+      after: null,
+      before: null,
+    });
+    handleChange('programId', program?.id);
+    handleChange('scheduleId', undefined);
+    handleChange('periodId', undefined);
+    handleChange('after', undefined);
+    handleChange('before', undefined);
   };
 
-  const onPeriodChange = async (period: PeriodFragment | null) => {
-    setForm(prevForm => ({ ...prevForm, period }));
-    if (period === null) {
-      handleChange(path, undefined);
-      handleChange('before', undefined);
-    } else {
-      handleChange(`${path}.periodId`, period.id);
-      // } else {
-      //   // date range so we can use it if no period id is saved
-      //   // use PeriodSearch in arguments_ui with scope as "#/properties/after" to autofill the date range if period is selected
-      //   handleChange(path, new Date(period.startDate).toISOString());
-      //   const endOfDay = new Date(period.endDate);
-      //   endOfDay.setHours(24, 59, 59, 999);
-      //   handleChange('before', endOfDay.toISOString());
-      //   handleChange('periodId', period.id);
-      // }
-    }
+  const onScheduleChange = (schedule: PeriodScheduleNode | null) => {
+    setForm(prev => ({
+      ...prev,
+      schedule,
+      period: null,
+      after: null,
+      before: null,
+    }));
+    handleChange('scheduleId', schedule?.id);
+    handleChange('periodId', undefined);
+    handleChange('after', undefined);
+    handleChange('before', undefined);
+  };
+
+  const onPeriodChange = (period: PeriodNode | null) => {
+    const after = period ? new Date(period.startDate) : null;
+    const before = period ? new Date(period.endDate) : null;
+
+    setForm(prev => ({ ...prev, period, after, before }));
+    handleChange('periodId', period?.id);
+    handleChange('after', after?.toISOString());
+    handleChange('before', before?.toISOString());
+  };
+
+  const onAfterChange = (date: Date | null) => {
+    setForm(prev => ({ ...prev, after: date }));
+    handleChange('after', date?.toISOString());
+  };
+
+  const onBeforeChange = (date: Date | null) => {
+    setForm(prev => ({ ...prev, before: date }));
+    handleChange('before', date?.toISOString());
   };
 
   return (
     <Box>
-      <ProgramFilter
-        data={core?.data}
-        form={form}
-        handleChange={onProgramChange}
+      <ProgramFilter form={form} handleChange={onProgramChange} />
+      <ScheduleFilter form={form} handleChange={onScheduleChange} />
+      <PeriodFilter form={form} handleChange={onPeriodChange} />
+      <DateFilter
+        label={'After'}
+        value={form.after}
+        onChange={onAfterChange}
+        maxDate={form.before ?? undefined}
       />
-      <PeriodFilter
-        data={core?.data}
-        form={form}
-        handleChange={onPeriodChange}
+      <DateFilter
+        label={'Before'}
+        value={form.before}
+        onChange={onBeforeChange}
+        minDate={form.after ?? undefined}
       />
     </Box>
   );
@@ -77,30 +114,16 @@ const UIComponentWrapper = (props: ControlProps) => {
 
 export const ScheduleForm = withJsonFormsControlProps(UIComponentWrapper);
 
-interface FilterProps {
-  data: any;
-  form: {
-    program: ProgramFragment | null;
-    period: PeriodFragment | null;
-  };
-  handleChange: (value: any) => void;
+interface FilterProps<T> {
+  form: FormState;
+  handleChange: (value: T | null) => void;
 }
 
-const ProgramFilter = ({ data, form, handleChange }: FilterProps) => {
+const ProgramFilter = ({
+  form,
+  handleChange,
+}: FilterProps<ProgramFragment>) => {
   const { data: programData, isLoading } = useProgramList();
-
-  const programId = extractProperty(data, 'programId');
-  const program = data?.program;
-
-  if (programId && !program) {
-    const program = programData?.nodes.find(
-      program => program.id === data.program.id
-    );
-    if (program) {
-      handleChange(program);
-    }
-  }
-
   const programs = programData?.nodes ?? [];
 
   return (
@@ -141,46 +164,42 @@ const ProgramFilter = ({ data, form, handleChange }: FilterProps) => {
   );
 };
 
-const PeriodFilter = ({ data, form, handleChange }: FilterProps) => {
-  const period = data.period;
+const ScheduleFilter = ({
+  form,
+  handleChange,
+}: FilterProps<PeriodScheduleNode>) => {
+  const { data, isLoading } = useSchedulesAndPeriods(form.program?.id ?? '');
+  const schedules = data?.nodes ?? [];
 
-  const RECORDS_PER_PAGE = 15;
-  const today = new Date();
-
-  const {
-    data: periodData,
-    isFetching,
-    fetchNextPage,
-    isRefetching,
-  } = usePeriodList(
-    RECORDS_PER_PAGE,
-    data?.program?.id,
-    data?.program?.id ?? true,
-    {
-      startDate: {
-        beforeOrEqualTo: Formatter.naiveDate(today),
-      },
-    }
-  );
-  const periodId = extractProperty(data, 'periodId');
-
-  useMemo(() => {
-    if (periodId && !period) {
-      const period = periodData?.pages
-        ?.find(page => page.data.nodes.some(period => period.id === periodId))
-        ?.data.nodes.find(period => period.id === periodId);
-      if (period) {
-        handleChange(period.id);
+  return (
+    <DetailInputWithLabelRow
+      sx={DefaultFormRowSx}
+      label="Schedule"
+      labelWidthPercentage={FORM_LABEL_WIDTH}
+      inputAlignment={'start'}
+      Input={
+        <Autocomplete
+          fullWidth
+          loading={isLoading}
+          options={schedules}
+          optionKey="name"
+          onChange={(_, option) => handleChange(option)}
+          value={
+            form.schedule
+              ? { label: form.schedule.name ?? '', ...form.schedule }
+              : null
+          }
+          isOptionEqualToValue={(option, value) => option.id === value.id}
+          disabled={!form.program}
+          // clearable={props.uischema.options?.['clearable'] ?? false}
+        />
       }
-    }
-    if (isRefetching) {
-      handleChange(null);
-    }
-  }, [periodId, period, data, isRefetching]);
+    />
+  );
+};
 
-  const pageNumber = data?.pages?.length
-    ? (data.pages[data.pages.length - 1]?.pageNumber ?? 0)
-    : 0;
+const PeriodFilter = ({ form, handleChange }: FilterProps<PeriodNode>) => {
+  const periods = (form.schedule?.periods ?? []).map(s => s.period);
 
   return (
     <DetailInputWithLabelRow
@@ -189,13 +208,9 @@ const PeriodFilter = ({ data, form, handleChange }: FilterProps) => {
       labelWidthPercentage={FORM_LABEL_WIDTH}
       inputAlignment={'start'}
       Input={
-        <AutocompleteWithPagination
-          width={'100%'}
-          pages={periodData?.pages ?? []}
-          pageNumber={pageNumber}
-          rowsPerPage={RECORDS_PER_PAGE}
-          totalRows={periodData?.pages?.[0]?.data.totalCount ?? 0}
-          loading={isFetching}
+        <Autocomplete
+          fullWidth
+          options={periods}
           optionKey="name"
           onChange={(_, option) => handleChange(option)}
           // onInputChange={(
@@ -214,12 +229,40 @@ const PeriodFilter = ({ data, form, handleChange }: FilterProps) => {
               : null
           }
           isOptionEqualToValue={(option, value) => option.id === value.id}
-          // clearable={props.uischema.options?.['clearable'] ?? false}
-          disabled={!form.program} // is this duplicated?
-          onPageChange={pageNumber => fetchNextPage({ pageParam: pageNumber })}
-          paginationDebounce={300}
+          disabled={!form.schedule}
         />
       }
     />
   );
 };
+
+interface DateFilterProps {
+  label: string;
+  value: Date | null;
+  onChange: (date: Date | null) => void;
+  minDate?: Date;
+  maxDate?: Date;
+}
+
+const DateFilter = ({
+  label,
+  value,
+  onChange,
+  minDate,
+  maxDate,
+}: DateFilterProps) => (
+  <DetailInputWithLabelRow
+    sx={DefaultFormRowSx}
+    label={label}
+    labelWidthPercentage={FORM_LABEL_WIDTH}
+    inputAlignment={'start'}
+    Input={
+      <DateTimePickerInput
+        value={value}
+        onChange={onChange}
+        minDate={minDate}
+        maxDate={maxDate}
+      />
+    }
+  />
+);
