@@ -84,6 +84,24 @@ export const Toolbar = ({ filter }: ToolbarProps) => {
                 ],
               },
               {
+                type: 'group',
+                name: t('label.delivered-datetime'),
+                elements: [
+                  {
+                    type: 'dateTime',
+                    name: t('label.from-delivered-datetime'),
+                    urlParameter: 'deliveredDatetime',
+                    range: 'from',
+                  },
+                  {
+                    type: 'dateTime',
+                    name: t('label.to-delivered-datetime'),
+                    urlParameter: 'deliveredDatetime',
+                    range: 'to',
+                  },
+                ],
+              },
+              {
                 type: 'text',
                 name: t('label.reference'),
                 urlParameter: 'theirReference',
