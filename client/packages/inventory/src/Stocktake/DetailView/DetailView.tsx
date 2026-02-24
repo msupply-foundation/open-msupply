@@ -74,6 +74,7 @@ const DetailViewInner = () => {
     onRowClick: row => onOpen(row.item),
     grouping: { enabled: true, groupedByDefault: false },
     initialSort: { key: 'itemName', dir: 'asc' },
+    manualFiltering: true,
     getIsPlaceholderRow,
     noDataElement: (
       <NothingHere
