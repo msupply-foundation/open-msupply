@@ -1,17 +1,22 @@
-import React from "react";
+import React from 'react';
 import {
   BufferedNumericTextInput,
   DetailContainer,
   InputWithLabelRow,
   Stack,
-  useTranslation
-} from "@openmsupply-client/common";
-import { useInbound } from "../../api";
-import { CurrencyAutocomplete } from "@openmsupply-client/system";
+  useTranslation,
+} from '@openmsupply-client/common';
+import { CurrencyAutocomplete } from '@openmsupply-client/system';
+import { useInboundShipment } from '../../api';
 
 export const CurrencyTab = () => {
   const t = useTranslation();
-  const { currencyRate, purchaseOrder, update } = useInbound.document.fields(['currencyRate', 'purchaseOrder']);
+  const {
+    query: { data },
+    update: { update },
+  } = useInboundShipment();
+  const purchaseOrder = data?.purchaseOrder;
+  const currencyRate = data?.currencyRate;
 
   return (
     <DetailContainer>
@@ -28,7 +33,7 @@ export const CurrencyTab = () => {
             Input={
               <CurrencyAutocomplete
                 currencyId={purchaseOrder?.currency?.id}
-                onChange={() => { }}
+                onChange={() => {}}
                 width={150}
                 disabled
               />
@@ -39,7 +44,7 @@ export const CurrencyTab = () => {
             Input={
               <BufferedNumericTextInput
                 value={currencyRate}
-                onChange={(currencyRate) => update({ currencyRate })}
+                onChange={currencyRate => update({ currencyRate })}
               />
             }
           />
@@ -76,7 +81,7 @@ export const CurrencyTab = () => {
             Input={
               <CurrencyAutocomplete
                 currencyId={''}
-                onChange={() => { }}
+                onChange={() => {}}
                 width={150}
               />
             }
@@ -85,4 +90,4 @@ export const CurrencyTab = () => {
       </Stack>
     </DetailContainer>
   );
-}
+};
