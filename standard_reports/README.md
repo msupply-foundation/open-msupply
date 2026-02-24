@@ -114,6 +114,56 @@ cargo build
 cargo run
 ```
 
+### Using Docker
+
+As an alternative to building the Rust server locally, the omSupply Docker image can be used to run CLI commands. This is available from `v2.16.0-dev` onwards.
+
+From the root of your custom reports repository:
+
+#### Build Reports
+
+```bash
+docker run --rm --platform linux/amd64 \
+  -v "$(pwd)/.":/reports \
+  msupplyfoundation/omsupply:v2.16.0-dev \
+  build-reports -p /reports/clients/my-client/my-custom-report
+```
+
+This generates the report bundle at `clients/my-client/my-custom-report/generated/reports.json`.
+
+#### Show Report
+
+Showing a report requires a running omSupply server with a database. Start the server pointing at your local database:
+
+```bash
+docker run \
+  -v "/path/to/database":/database \
+  -v "/path/to/app_data":/usr/src/omsupply/server/app_data \
+  -e APP__SERVER__OVERRIDE_IS_CENTRAL_SERVER=true \
+  --platform linux/amd64 \
+  -p 8000:8000 \
+  msupplyfoundation/omsupply:<tag>
+```
+
+Install your built report bundle via the UI (Manage → Reports → Upload). Then open the network tab in the browser to capture the `data_id`, `store_id`, `arguments` values from the API request made when generating the report. Use these to populate your `test-config.json` (see `test-config.example.json`), and set `output_filename` to `/reports/my-report` so the output is written into the mounted volume. When using docker in macos, make sure to also change `localhost` to `host.docker.internal`, for `url` `in test-config.json`.
+
+Then run `show-report` to repeatedly regenerate the report as you iterate:
+
+```bash
+docker run --platform linux/amd64 --rm \
+  -v "$(pwd)/.":/reports \
+  msupplyfoundation/omsupply:v2.16.0-dev \
+  show-report \
+  -p /reports/clients/my-client/my-custom-report/latest \
+  --config /reports/clients/my-client/my-custom-report \
+  --format html
+```
+
+`-p` -> directory containing report-manifest.json
+`--config` -> directory containing test-config.json
+
+The output file (`my-report.html` or `my-report.xlsx`) will appear in the current directory. On macOS use `open my-report.html` to view it in the browser.
+
 #### Report IDs
 
 Report IDs are generated in a standardised way in the format of `<report-code>_<report-version>_<is-custom-boolean>`.
@@ -151,6 +201,14 @@ A custom test-config.json file can be used to render with specific arguments by 
 The test config is used to manually populate the parameters of the graphql query which would typically be inferred by OMS in actual use.
 For example, a standard form of an inbound shipment would use the context of the UI to know the invoice id.
 Test config can manually configure the id for rapid report editing and generation without the need to manually build and upsert, or contriving the OMS front end to render the report.
+
+### Upsert Report
+
+`upsert-report --path <path-to-report-dir-containing-report-manifest.json> --overwrite (optional)`
+
+Builds a single report from source files and upserts it directly to the database in one step, without needing to generate an intermediate JSON file.
+
+This is useful when developing a custom report and wanting to quickly iterate — build and install the report in one command. Pass `--overwrite` to update an existing report.
 
 ### Toggle Report
 

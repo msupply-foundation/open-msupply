@@ -1,8 +1,7 @@
-use anyhow::anyhow;
 use log::info;
 use repository::{
-    get_storage_connection_manager, schema_from_row, ContextType, EqualFilter, FormSchemaRow,
-    FormSchemaRowRepository, ReportFilter, ReportRepository, ReportRow, ReportRowRepository,
+    get_storage_connection_manager, EqualFilter, ReportFilter, ReportRepository,
+    ReportRowRepository,
 };
 use service::{
     settings::Settings,
@@ -35,37 +34,13 @@ pub struct TestConfig {
 
 #[derive(clap::Args)]
 pub struct UpsertReportArgs {
-    /// Report id (any user defined id)
+    /// Path to the report source directory (containing report-manifest.json)
     #[clap(short, long)]
-    pub id: String,
+    pub path: PathBuf,
 
-    /// Path to the report
-    #[clap(short, long)]
-    pub report_path: PathBuf,
-
-    /// Path to the arguments json form schema
-    #[clap(long)]
-    pub arguments_path: Option<PathBuf>,
-
-    /// Path to the arguments json form UI schema
-    #[clap(long)]
-    pub arguments_ui_path: Option<PathBuf>,
-
-    /// Path to the excel template
-    #[clap(long)]
-    pub excel_template_path: Option<PathBuf>,
-
-    /// Report name
-    #[clap(short, long)]
-    pub name: String,
-
-    /// Report type/context
-    #[clap(short, long)]
-    pub context: ContextType,
-
-    /// Report sub context
-    #[clap(short, long)]
-    pub sub_context: Option<String>,
+    /// Overwrite any pre-existing report
+    #[clap(short, long, action = clap::ArgAction::SetTrue)]
+    pub overwrite: bool,
 }
 
 #[derive(clap::Args)]
@@ -167,65 +142,20 @@ pub fn upsert_reports(
 }
 
 pub fn upsert_report(args: UpsertReportArgs, settings: &Settings) -> anyhow::Result<()> {
-    let UpsertReportArgs {
-        id,
-        report_path,
-        arguments_path,
-        arguments_ui_path,
-        excel_template_path,
-        name,
-        context,
-        sub_context,
-    } = args;
+    let UpsertReportArgs { path, overwrite } = args;
+
+    let report_data = generate_report_data(&path)?;
 
     let connection_manager = get_storage_connection_manager(&settings.database);
     let con = connection_manager.connection()?;
 
-    let filter = ReportFilter::new().id(EqualFilter::equal_to(id.to_string()));
-    let existing_report = ReportRepository::new(&con).query_by_filter(filter)?.pop();
-
-    let argument_schema_id =
-        existing_report.and_then(|r| r.argument_schema.as_ref().map(|r| r.id.clone()));
-
-    let form_schema_json = match (arguments_path, arguments_ui_path) {
-        (Some(_), None) | (None, Some(_)) => {
-            return Err(anyhow!(
-                "When arguments path are specified both paths must be present"
-            ))
-        }
-        (Some(arguments_path), Some(arguments_ui_path)) => {
-            Some(schema_from_row(FormSchemaRow {
-                id: argument_schema_id.unwrap_or(format!("for_report_{}", id)),
-                r#type: "reportArgument".to_string(),
-                json_schema: fs::read_to_string(arguments_path)?,
-                ui_schema: fs::read_to_string(arguments_ui_path)?,
-            })?)
-        }
-        (None, None) => None,
-    };
-
-    if let Some(form_schema_json) = &form_schema_json {
-        FormSchemaRowRepository::new(&con).upsert_one(form_schema_json)?;
-    }
-
-    let excel_template_buffer = excel_template_path
-        .map(|path| fs::read(&path))
-        .transpose()?;
-
-    ReportRowRepository::new(&con).upsert_one(&ReportRow {
-        id: id.clone(),
-        name,
-        template: fs::read_to_string(report_path)?,
-        context,
-        sub_context,
-        argument_schema_id: form_schema_json.map(|r| r.id.clone()),
-        comment: None,
-        is_custom: true,
-        version: "1.0".to_string(),
-        code: id,
-        is_active: true,
-        excel_template_buffer,
-    })?;
+    StandardReports::upsert_reports(
+        ReportsData {
+            reports: vec![report_data],
+        },
+        &con,
+        overwrite,
+    )?;
 
     info!("Report upserted");
     Ok(())
@@ -257,14 +187,11 @@ pub async fn show_report(args: ShowReportArgs) -> anyhow::Result<()> {
         Path::new("../standard_reports").to_path_buf()
     };
 
-    let test_config_file =
-        fs::File::open(test_config_path.join("test-config.json")).map_err(|e| {
-            ReportError::CannotOpenTestConfigFile(test_config_path.to_path_buf(), e)
-        })?;
-    let test_config: TestConfig =
-        serde_json::from_reader(test_config_file).map_err(|e| {
-            ReportError::CannotReadTestConfigFile(test_config_path.clone().to_path_buf(), e)
-        })?;
+    let test_config_file = fs::File::open(test_config_path.join("test-config.json"))
+        .map_err(|e| ReportError::CannotOpenTestConfigFile(test_config_path.to_path_buf(), e))?;
+    let test_config: TestConfig = serde_json::from_reader(test_config_file).map_err(|e| {
+        ReportError::CannotReadTestConfigFile(test_config_path.clone().to_path_buf(), e)
+    })?;
 
     let config = Config {
         url: test_config.url,

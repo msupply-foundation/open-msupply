@@ -446,9 +446,6 @@ async fn main() -> anyhow::Result<()> {
         Action::UpsertReports { path, overwrite } => {
             upsert_reports(path, overwrite, &settings)?;
         }
-        // TODO fix these inputs. Should extract these fields from the report manifest
-        // also not necessarily custom / version 1.0 etc.
-        // Command currently unsafe.
         Action::UpsertReport(args) => {
             upsert_report(args, &settings)?;
         }
