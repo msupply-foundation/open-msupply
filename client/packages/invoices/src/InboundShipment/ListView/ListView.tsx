@@ -52,6 +52,10 @@ export const InboundListView = () => {
         key: 'createdDatetime',
         condition: 'between',
       },
+      {
+        key: 'deliveredDatetime',
+        condition: 'between',
+      },
       { key: 'status', condition: 'equalAny' },
       { key: 'theirReference' },
     ],
