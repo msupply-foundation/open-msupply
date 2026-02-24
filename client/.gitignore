@@ -29,3 +29,4 @@ android/.idea
 /build/*
 !/build/.npmkeep
 *.keystore
+package-lock.json
