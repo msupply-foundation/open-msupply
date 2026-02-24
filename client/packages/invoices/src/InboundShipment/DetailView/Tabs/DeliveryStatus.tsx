@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useMemo } from 'react';
 import {
   ColumnDef,
   ColumnType,
@@ -7,29 +7,36 @@ import {
   MaterialTable,
   StatusCell,
   useNonPaginatedMaterialTable,
-  useTranslation
+  useTranslation,
 } from '@openmsupply-client/common';
-import { InboundLineFragment, useInbound } from "../../api";
-import { useInvoiceLineStatusMap } from "..";
+import { InboundLineFragment, useInboundShipment } from '../../api';
+import { useInvoiceLineStatusMap } from '..';
 
-export const DeliveryTab = ({ showLineStatus }: { showLineStatus: boolean }) => {
+export const DeliveryTab = ({
+  showLineStatus,
+}: {
+  showLineStatus: boolean;
+}) => {
   const t = useTranslation();
-  const { data, isLoading } = useInbound.document.get();
+  const {
+    query: { data, loading: isLoading },
+  } = useInboundShipment();
   const statusMap = useInvoiceLineStatusMap();
 
   const previousDeliveries = (row: InboundLineFragment) => {
     const received = row.purchaseOrderLine?.receivedNumberOfUnits ?? 0;
-    return data?.status === InvoiceNodeStatus.Received || data?.status === InvoiceNodeStatus.Verified
-      ? received - (row.numberOfPacks * row.packSize)
+    return data?.status === InvoiceNodeStatus.Received ||
+      data?.status === InvoiceNodeStatus.Verified
+      ? received - row.numberOfPacks * row.packSize
       : received;
-  }
+  };
 
   const inTransit = (row: InboundLineFragment) => {
     const inTransit = row.purchaseOrderLine?.inTransitNumberOfUnits ?? 0;
     return data?.status === InvoiceNodeStatus.Delivered
-      ? inTransit - (row.numberOfPacks * row.packSize)
+      ? inTransit - row.numberOfPacks * row.packSize
       : inTransit;
-  }
+  };
 
   const columns = useMemo(
     (): ColumnDef<Groupable<InboundLineFragment>>[] => [
@@ -79,29 +86,38 @@ export const DeliveryTab = ({ showLineStatus }: { showLineStatus: boolean }) => 
       },
       {
         id: 'poQuantity',
-        accessorFn: row => row.purchaseOrderLine?.adjustedNumberOfUnits ?? row.purchaseOrderLine?.requestedNumberOfUnits,
+        accessorFn: row =>
+          row.purchaseOrderLine?.adjustedNumberOfUnits ??
+          row.purchaseOrderLine?.requestedNumberOfUnits,
         header: t('label.po-quantity'),
         columnType: ColumnType.Number,
       },
       {
         id: 'remainingToDeliver',
-        accessorFn: row => (row.purchaseOrderLine?.adjustedNumberOfUnits ?? row.purchaseOrderLine?.requestedNumberOfUnits ?? 0) - (row.purchaseOrderLine?.receivedNumberOfUnits ?? 0) - (row.purchaseOrderLine?.inTransitNumberOfUnits ?? 0),
+        accessorFn: row =>
+          (row.purchaseOrderLine?.adjustedNumberOfUnits ??
+            row.purchaseOrderLine?.requestedNumberOfUnits ??
+            0) -
+          (row.purchaseOrderLine?.receivedNumberOfUnits ?? 0) -
+          (row.purchaseOrderLine?.inTransitNumberOfUnits ?? 0),
         header: t('label.remaining'),
         description: t('description.remaining-to-deliver'),
         columnType: ColumnType.Number,
-      }
+      },
     ],
     [inTransit, previousDeliveries, statusMap]
   );
 
-  const { table } = useNonPaginatedMaterialTable<Groupable<InboundLineFragment>>({
-    tableId: "inbound-shipment-delivery-tab-table",
+  const { table } = useNonPaginatedMaterialTable<
+    Groupable<InboundLineFragment>
+  >({
+    tableId: 'inbound-shipment-delivery-tab-table',
     data: data?.lines.nodes,
     columns,
     isLoading,
     grouping: { enabled: true },
     enableRowSelection: false,
-  })
+  });
 
   return <MaterialTable table={table} />;
-}
+};
