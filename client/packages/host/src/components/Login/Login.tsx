@@ -15,7 +15,7 @@ import { LoginLayout } from './LoginLayout';
 import { SiteInfo } from '../SiteInfo';
 import { useHost } from '../../api';
 
-export const Login = () => {
+export const Login = ({ fullSize = true }: { fullSize?: boolean }) => {
   const t = useTranslation();
   const { setPageTitle } = useHostContext();
   const hashInput = {
@@ -34,7 +34,7 @@ export const Login = () => {
     onLogin,
     error,
     siteName,
-  } = useLoginForm(passwordRef);
+  } = useLoginForm(passwordRef, fullSize);
   const [timeoutRemaining, setTimeoutRemaining] = useState(
     error?.timeoutRemaining ?? 0
   );
@@ -131,8 +131,10 @@ export const Login = () => {
   }, [displaySettings]);
 
   useEffect(() => {
-    setPageTitle(`${t('app.login')} | ${t('app')} `);
-    LocalStorage.removeItem('/error/auth');
+    if (fullSize) {
+      setPageTitle(`${t('app.login')} | ${t('app')} `);
+      LocalStorage.removeItem('/error/auth');
+    }
   }, [setPageTitle, t]);
 
   return (
@@ -195,6 +197,7 @@ export const Login = () => {
         if (isValid) await onLogin();
       }}
       SiteInfo={<SiteInfo siteName={siteName} />}
+      fullSize={fullSize}
     />
   );
 };
