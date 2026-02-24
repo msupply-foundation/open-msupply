@@ -66,6 +66,35 @@ export const Toolbar = ({ filter }: ToolbarProps) => {
                 wide: true,
               },
               {
+                type: 'enum',
+                name: t('label.status'),
+                urlParameter: 'status',
+                options: [
+                  { label: t('label.new'), value: InvoiceNodeStatus.New },
+                  {
+                    label: t('label.shipped'),
+                    value: InvoiceNodeStatus.Shipped,
+                  },
+                  {
+                    label: t('label.delivered'),
+                    value: InvoiceNodeStatus.Delivered,
+                  },
+                  {
+                    label: t('label.received'),
+                    value: InvoiceNodeStatus.Received,
+                  },
+                  {
+                    label: t('label.verified'),
+                    value: InvoiceNodeStatus.Verified,
+                  },
+                ],
+              },
+              {
+                type: 'text',
+                name: t('label.reference'),
+                urlParameter: 'theirReference',
+              },
+              {
                 type: 'group',
                 name: t('label.created-datetime'),
                 elements: [
@@ -98,35 +127,6 @@ export const Toolbar = ({ filter }: ToolbarProps) => {
                     name: t('label.to-delivered-datetime'),
                     urlParameter: 'deliveredDatetime',
                     range: 'to',
-                  },
-                ],
-              },
-              {
-                type: 'text',
-                name: t('label.reference'),
-                urlParameter: 'theirReference',
-              },
-              {
-                type: 'enum',
-                name: t('label.status'),
-                urlParameter: 'status',
-                options: [
-                  { label: t('label.new'), value: InvoiceNodeStatus.New },
-                  {
-                    label: t('label.shipped'),
-                    value: InvoiceNodeStatus.Shipped,
-                  },
-                  {
-                    label: t('label.delivered'),
-                    value: InvoiceNodeStatus.Delivered,
-                  },
-                  {
-                    label: t('label.received'),
-                    value: InvoiceNodeStatus.Received,
-                  },
-                  {
-                    label: t('label.verified'),
-                    value: InvoiceNodeStatus.Verified,
                   },
                 ],
               },
