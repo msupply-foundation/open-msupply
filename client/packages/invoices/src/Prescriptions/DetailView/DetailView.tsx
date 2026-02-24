@@ -85,7 +85,7 @@ export const PrescriptionDetailView = () => {
     getIsPlaceholderRow: isPrescriptionPlaceholderRow,
     noDataElement: (
       <NothingHere
-        body={t('error.no-items')}
+        body={t('error.no-prescription-items')}
         onCreate={isDisabled ? undefined : () => onAddItem()}
         buttonText={t('button.add-item')}
       />
