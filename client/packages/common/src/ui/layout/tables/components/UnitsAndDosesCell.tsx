@@ -33,7 +33,7 @@ export const UnitsAndDosesCell = <T extends MRT_RowData>({
 
   // Doses should always be a whole number, round if fractional packs are giving
   // us funky decimals
-  const doseCount = format(item.doses ?? 0 * (value ?? 0), {
+  const doseCount = format((item.doses ?? 1) * (value ?? 0), {
     maximumFractionDigits: 0,
   });
 

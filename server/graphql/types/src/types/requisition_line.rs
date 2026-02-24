@@ -1,14 +1,11 @@
+use super::{InvoiceLineConnector, ItemNode, ItemStatsNode, ReasonOptionNode};
+use crate::types::LocationTypeNode;
 use async_graphql::*;
 use chrono::NaiveDate;
 use dataloader::DataLoader;
-use repository::{
-    requisition_row::{RequisitionRow, RequisitionType},
-    ItemRow, RequisitionLine, RequisitionLineRow,
-};
-use service::{item_stats::ItemStats, usize_to_u32};
-
 use graphql_core::{
     loader::{
+        AvailableVolumeOnRequisitionLoader, AvailableVolumeOnRequisitionLoaderInput,
         InvoiceLineForRequisitionLine, ItemLoader, ItemStatsLoaderInput, ItemsStatsForItemLoader,
         LinkedRequisitionLineLoader, ReasonOptionLoader, RequisitionAndItemId,
         RequisitionLineSupplyStatusLoader,
@@ -16,8 +13,11 @@ use graphql_core::{
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
-
-use super::{InvoiceLineConnector, ItemNode, ItemStatsNode, ReasonOptionNode};
+use repository::{
+    requisition_row::{RequisitionRow, RequisitionType},
+    ItemRow, RequisitionLine, RequisitionLineRow,
+};
+use service::{item_stats::ItemStats, usize_to_u32};
 
 #[derive(PartialEq, Debug)]
 pub struct RequisitionLineNode {
@@ -28,6 +28,13 @@ pub struct RequisitionLineNode {
 pub struct RequisitionLineConnector {
     total_count: u32,
     nodes: Vec<RequisitionLineNode>,
+}
+
+#[derive(PartialEq, Debug, SimpleObject)]
+pub struct AvailableVolumeAtLocationTypeNode {
+    location_type: LocationTypeNode,
+    available_volume: f64,
+    item_volume_per_unit: f64,
 }
 
 #[Object]
@@ -298,6 +305,35 @@ impl RequisitionLineNode {
     pub async fn requisition_id(&self) -> &String {
         &self.requisition_row().id
     }
+
+    pub async fn available_volume_at_location_type(
+        &self,
+        ctx: &Context<'_>,
+    ) -> Option<AvailableVolumeAtLocationTypeNode> {
+        let loader = ctx.get_loader::<DataLoader<AvailableVolumeOnRequisitionLoader>>();
+
+        let result_option = loader
+            .load_one(AvailableVolumeOnRequisitionLoaderInput::new(
+                &self.row().requisition_id,
+                &self.item_row().id,
+            ))
+            .await
+            .ok()
+            .flatten();
+
+        if let Some((Some(location_type_row), available_volume, item_volume_per_unit)) =
+            result_option
+        {
+            let location_type = LocationTypeNode::from_domain(location_type_row);
+            return Some(AvailableVolumeAtLocationTypeNode::new(
+                location_type,
+                available_volume,
+                item_volume_per_unit,
+            ));
+        }
+
+        None
+    }
 }
 
 impl RequisitionLineNode {
@@ -327,6 +363,20 @@ impl RequisitionLineNode {
     }
     pub fn item_row(&self) -> &ItemRow {
         &self.requisition_line.item_row
+    }
+}
+
+impl AvailableVolumeAtLocationTypeNode {
+    pub fn new(
+        location_type: LocationTypeNode,
+        available_volume: f64,
+        item_volume_per_unit: f64,
+    ) -> Self {
+        AvailableVolumeAtLocationTypeNode {
+            location_type,
+            available_volume,
+            item_volume_per_unit,
+        }
     }
 }
 
@@ -365,7 +415,6 @@ mod test {
                         requisition_line_row: TestData::line_to_supply_q5(),
                         requisition_row: TestData::requisition(),
                         item_row: mock_item_a(),
-                        ..Default::default()
                     },
                 }
             }
@@ -376,7 +425,6 @@ mod test {
                         requisition_line_row: TestData::line_to_supply_q2(),
                         requisition_row: TestData::requisition(),
                         item_row: mock_item_b(),
-                        ..Default::default()
                     },
                 }
             }
@@ -387,7 +435,6 @@ mod test {
                         requisition_line_row: TestData::line_to_supply_q1(),
                         requisition_row: TestData::requisition(),
                         item_row: mock_item_c(),
-                        ..Default::default()
                     },
                 }
             }
@@ -398,7 +445,6 @@ mod test {
                         requisition_line_row: TestData::line_to_supply_q0(),
                         requisition_row: TestData::requisition(),
                         item_row: mock_item_d(),
-                        ..Default::default()
                     },
                 }
             }

@@ -230,7 +230,7 @@ mod test {
         let repo = ActivityLogRowRepository::new(&connection);
         // Try upsert all variants, confirm that diesel enums match postgres
         for option_type in ActivityLogType::iter() {
-            let id = format!("{:?}", option_type);
+            let id = format!("{option_type:?}");
             let result = repo.insert_one(&ActivityLogRow {
                 id: id.clone(),
                 r#type: option_type,

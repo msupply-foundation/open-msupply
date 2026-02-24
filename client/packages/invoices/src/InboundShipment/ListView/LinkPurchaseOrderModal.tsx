@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { InboundShipmentPurchaseOrderLineFragment, useInbound } from '../api';
+import { InboundShipmentPurchaseOrderLineFragment } from '../api';
 import {
   useWindowDimensions,
   useTranslation,
@@ -12,11 +12,15 @@ import {
   useNonPaginatedMaterialTable,
 } from '@openmsupply-client/common';
 import { MRT_RowSelectionState } from 'material-react-table';
+import { useListSentPurchaseOrders } from '../api/hooks/document/useListSentPurchaseOrders';
 
 interface LinkInternalOrderModalProps {
   isOpen: boolean;
   onClose: () => void;
-  handlePurchaseOrderSelected: (purchaseOrder: InboundShipmentPurchaseOrderLineFragment, addLinesFromPurchaseOrder: boolean) => void;
+  handlePurchaseOrderSelected: (
+    purchaseOrder: InboundShipmentPurchaseOrderLineFragment,
+    addLinesFromPurchaseOrder: boolean
+  ) => void;
 }
 
 export const LinkPurchaseOrderModal = ({
@@ -29,9 +33,9 @@ export const LinkPurchaseOrderModal = ({
   const { Modal } = useDialog({ isOpen, onClose });
 
   const filterBy = {
-    status: { equalTo: PurchaseOrderNodeStatus.Sent }
+    status: { equalTo: PurchaseOrderNodeStatus.Sent },
   };
-  const { data, isLoading } = useInbound.document.listSentPurchaseOrders(filterBy);
+  const { data, isLoading } = useListSentPurchaseOrders(filterBy);
 
   const columns = useMemo(
     (): ColumnDef<InboundShipmentPurchaseOrderLineFragment>[] => [
@@ -66,21 +70,22 @@ export const LinkPurchaseOrderModal = ({
 
   const [rowSelection, setRowSelection] = useState<MRT_RowSelectionState>({});
 
-  const { table, selectedRows } = useNonPaginatedMaterialTable<InboundShipmentPurchaseOrderLineFragment>({
-    tableId: 'link-internal-order-to-inbound',
-    columns,
-    data: data?.nodes,
-    enableMultiRowSelection: false,
-    getRowId: row => row.id,
-    muiTableBodyRowProps: ({ row }) => ({
-      // add onClick to row to select upon clicking anywhere in the row
-      onClick: row.getToggleSelectedHandler(),
-      sx: { cursor: 'pointer' },
-    }),
-    onRowSelectionChange: setRowSelection,
-    state: { rowSelection },
-    isLoading,
-  });
+  const { table, selectedRows } =
+    useNonPaginatedMaterialTable<InboundShipmentPurchaseOrderLineFragment>({
+      tableId: 'link-internal-order-to-inbound',
+      columns,
+      data: data?.nodes,
+      enableMultiRowSelection: false,
+      getRowId: row => row.id,
+      muiTableBodyRowProps: ({ row }) => ({
+        // add onClick to row to select upon clicking anywhere in the row
+        onClick: row.getToggleSelectedHandler(),
+        sx: { cursor: 'pointer' },
+      }),
+      onRowSelectionChange: setRowSelection,
+      state: { rowSelection },
+      isLoading,
+    });
 
   const onClick = (addLines: boolean) => {
     handlePurchaseOrderSelected(
@@ -88,7 +93,7 @@ export const LinkPurchaseOrderModal = ({
       addLines
     );
     setRowSelection({});
-  }
+  };
 
   const disabled = selectedRows.length == 0;
 
@@ -97,18 +102,22 @@ export const LinkPurchaseOrderModal = ({
       title={t('heading.link-purchase-order')}
       width={width * 0.7}
       height={height * 0.8}
-      okButton={<DialogButton
-        variant="next"
-        onClick={() => onClick(false)}
-        customLabel={t('button.add-with-no-lines')}
-        disabled={disabled}
-      />}
-      nextButton={<DialogButton
-        variant="next"
-        onClick={() => onClick(true)}
-        customLabel={t('button.add-with-all-lines')}
-        disabled={disabled}
-      />}
+      okButton={
+        <DialogButton
+          variant="next"
+          onClick={() => onClick(false)}
+          customLabel={t('button.add-with-no-lines')}
+          disabled={disabled}
+        />
+      }
+      nextButton={
+        <DialogButton
+          variant="next"
+          onClick={() => onClick(true)}
+          customLabel={t('button.add-with-all-lines')}
+          disabled={disabled}
+        />
+      }
       cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
     >
       <MaterialTable table={table} />

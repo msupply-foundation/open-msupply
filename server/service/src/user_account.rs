@@ -98,7 +98,7 @@ impl<'a> UserAccountService<'a> {
                         Err(TransactionError::Inner(
                             err @ RepositoryError::ForeignKeyViolation(_),
                         )) => {
-                            warn!("Failed to insert store permissions({}): {:?}", err, store);
+                            warn!("Failed to insert store permissions({err}): {store:?}");
                             Ok(())
                         }
                         Err(err) => Err(RepositoryError::from(err)),
@@ -114,7 +114,7 @@ impl<'a> UserAccountService<'a> {
     pub fn hash_password(password: &str) -> Result<String, BcryptError> {
         let hashed_password = hash(password, DEFAULT_COST);
         if let Err(err) = &hashed_password {
-            error!("create_user: Failed to hash password. {:#?}", err);
+            error!("create_user: Failed to hash password. {err:#?}");
         }
         hashed_password
     }
@@ -197,7 +197,7 @@ impl<'a> UserAccountService<'a> {
 
         // verify password
         let valid = verify(password, &user.hashed_password).map_err(|err| {
-            error!("verify_password: {}", err);
+            error!("verify_password: {err}");
             VerifyPasswordError::InvalidCredentialsBackend(err)
         })?;
         if !valid {

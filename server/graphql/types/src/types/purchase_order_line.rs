@@ -157,7 +157,7 @@ impl PurchaseOrderLineNode {
 impl PurchaseOrderLineNode {
     pub fn from_domain(purchase_order_line: PurchaseOrderLine) -> PurchaseOrderLineNode {
         PurchaseOrderLineNode {
-            purchase_order_line: purchase_order_line,
+            purchase_order_line,
         }
     }
 }

@@ -636,7 +636,7 @@ mod report_to_excel_test {
         assert_eq!(
             res.first()
                 .unwrap()
-                .into_iter()
+                .iter()
                 .map(|e| inner_text(*e))
                 .collect::<Vec<&str>>(),
             vec!["Row One Cell One", "Row One Cell Two"],
@@ -973,7 +973,7 @@ mod report_to_excel_test {
         book.set_sheet_name(0, "test").unwrap();
         let sheet = book.get_sheet_by_name_mut("test").unwrap();
 
-        let coords = vec![(1_u32, 1_u32), (2_u32, 1_u32), (3_u32, 1_u32)];
+        let coords = [(1_u32, 1_u32), (2_u32, 1_u32), (3_u32, 1_u32)];
         for (coord, td) in coords.iter().zip(tds.by_ref()) {
             let cell = sheet.get_cell_mut(*coord);
             cell.set_value(inner_text(td));

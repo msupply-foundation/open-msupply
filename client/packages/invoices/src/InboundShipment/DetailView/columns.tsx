@@ -14,7 +14,10 @@ import { isInboundPlaceholderRow } from '../../utils';
 import { InboundLineFragment } from '../api';
 import { useInvoiceLineStatusMap } from '..';
 
-export const useInboundShipmentColumns = (external: boolean, showLineStatus: boolean) => {
+export const useInboundShipmentColumns = (
+  external: boolean,
+  showLineStatus: boolean
+) => {
   const t = useTranslation();
   const {
     manageVaccinesInDoses,
@@ -27,9 +30,16 @@ export const useInboundShipmentColumns = (external: boolean, showLineStatus: boo
   return useMemo((): ColumnDef<Groupable<InboundLineFragment>>[] => {
     return [
       {
+        accessorKey: 'note',
+        pin: 'left',
+        header: t('label.comment'),
+        columnType: ColumnType.Comment,
+        defaultHideOnMobile: true,
+      },
+      {
         accessorKey: 'item.code',
         header: t('label.code'),
-        size: 120,
+        size: 90,
         pin: 'left',
         enableColumnFilter: true,
         enableSorting: true,
@@ -37,11 +47,6 @@ export const useInboundShipmentColumns = (external: boolean, showLineStatus: boo
           getLinesFromRow(row).some(
             r => getError(r)?.__typename === 'LineLinkedToTransferredInvoice'
           ),
-      },
-      {
-        accessorKey: 'note',
-        header: t('label.comment'),
-        columnType: ColumnType.Comment,
       },
       {
         accessorKey: 'itemName',
@@ -54,15 +59,15 @@ export const useInboundShipmentColumns = (external: boolean, showLineStatus: boo
         accessorKey: 'batch',
         header: t('label.batch'),
         enableSorting: true,
+        size: 100,
         enableColumnFilter: true,
-        defaultHideOnMobile: true,
       },
       {
         id: 'expiryDate',
         accessorFn: row => (row.expiryDate ? new Date(row.expiryDate) : null),
         header: t('label.expiry-date'),
         columnType: ColumnType.Date,
-        defaultHideOnMobile: true,
+        size: 120,
         enableColumnFilter: true,
         enableSorting: true,
       },
@@ -82,15 +87,22 @@ export const useInboundShipmentColumns = (external: boolean, showLineStatus: boo
         enableColumnFilter: true,
         enableSorting: true,
         defaultHideOnMobile: true,
-        includeColumn: !external,
+      },
+      {
+        id: 'itemUnit',
+        accessorKey: 'item.unitName',
+        header: t('label.unit-name'),
+        size: 100,
+        enableColumnFilter: true,
+        filterVariant: 'select',
+        defaultHideOnMobile: true,
       },
       {
         accessorKey: 'packSize',
         header: t('label.pack-size'),
         columnType: ColumnType.Number,
-        defaultHideOnMobile: true,
         enableSorting: true,
-        size: 100,
+        size: 90,
       },
       {
         id: 'itemDoses',
@@ -126,13 +138,6 @@ export const useInboundShipmentColumns = (external: boolean, showLineStatus: boo
         },
         size: 120,
         includeColumn: !external,
-      },
-      {
-        accessorKey: 'item.unitName',
-        header: t('label.unit-name'),
-        enableColumnFilter: true,
-        filterVariant: 'select',
-        defaultHideOnMobile: true,
       },
       {
         accessorKey: 'status',
@@ -221,8 +226,11 @@ export const useInboundShipmentColumns = (external: boolean, showLineStatus: boo
     showLineStatus,
     getError,
     manageVaccinesInDoses,
+    t,
     manageVvmStatusForStock,
+    manageVaccinesInDoses,
     allowTrackingOfStockByDonor,
     statusMap,
+    getError,
   ]);
 };

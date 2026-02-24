@@ -81,8 +81,8 @@ pub(crate) fn generate(
     update_invoice.currency_id = patch.currency_id.or(update_invoice.currency_id);
     update_invoice.currency_rate = patch.currency_rate.unwrap_or(update_invoice.currency_rate);
 
-    if let Some(created_datetime) = patch.created_datetime {
-        update_invoice.created_datetime = NaiveDateTime::from(created_datetime);
+    if let Some(delivered_datetime) = patch.delivered_datetime {
+        update_invoice.delivered_datetime = Some(NaiveDateTime::from(delivered_datetime));
     }
 
     let batches_to_update = if should_create_batches {
@@ -323,10 +323,7 @@ fn changed_status(
     status: Option<UpdateInboundShipmentStatus>,
     existing_status: &InvoiceStatus,
 ) -> Option<UpdateInboundShipmentStatus> {
-    let new_status = match status {
-        Some(status) => status,
-        None => return None, // Status is not changing
-    };
+    let new_status = status?;
 
     if &new_status.full_status() == existing_status {
         // The invoice already has this status, there's nothing to do.

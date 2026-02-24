@@ -742,6 +742,13 @@ export type AuthTokenErrorInterface = {
 
 export type AuthTokenResponse = AuthToken | AuthTokenError;
 
+export type AvailableVolumeAtLocationTypeNode = {
+  __typename: 'AvailableVolumeAtLocationTypeNode';
+  availableVolume: Scalars['Float']['output'];
+  itemVolumePerUnit: Scalars['Float']['output'];
+  locationType: LocationTypeNode;
+};
+
 export type BarcodeNode = {
   __typename: 'BarcodeNode';
   gtin: Scalars['String']['output'];
@@ -4672,6 +4679,7 @@ export type ItemNode = {
   itemStoreProperties?: Maybe<ItemStorePropertiesNode>;
   margin: Scalars['Float']['output'];
   masterLists?: Maybe<Array<MasterListNode>>;
+  /** @deprecated Since 2.16.0. Use universalCode instead */
   msupplyUniversalCode: Scalars['String']['output'];
   msupplyUniversalName: Scalars['String']['output'];
   name: Scalars['String']['output'];
@@ -6646,6 +6654,7 @@ export enum PreferenceNodeType {
 
 export enum PreferenceValueNodeType {
   Boolean = 'BOOLEAN',
+  Colour = 'COLOUR',
   CustomTranslations = 'CUSTOM_TRANSLATIONS',
   Integer = 'INTEGER',
   MultiChoice = 'MULTI_CHOICE',
@@ -8452,6 +8461,7 @@ export type RequisitionLineNode = {
   approvalComment?: Maybe<Scalars['String']['output']>;
   approvedQuantity: Scalars['Float']['output'];
   availableStockOnHand: Scalars['Float']['output'];
+  availableVolumeAtLocationType?: Maybe<AvailableVolumeAtLocationTypeNode>;
   averageMonthlyConsumption: Scalars['Float']['output'];
   comment?: Maybe<Scalars['String']['output']>;
   daysOutOfStock: Scalars['Float']['output'];
@@ -9894,10 +9904,10 @@ export type UpdateInboundShipmentErrorInterface = {
 export type UpdateInboundShipmentInput = {
   colour?: InputMaybe<Scalars['String']['input']>;
   comment?: InputMaybe<Scalars['String']['input']>;
-  createdDatetime?: InputMaybe<Scalars['NaiveDate']['input']>;
   currencyId?: InputMaybe<Scalars['String']['input']>;
   currencyRate?: InputMaybe<Scalars['Float']['input']>;
   defaultDonor?: InputMaybe<UpdateDonorInput>;
+  deliveredDatetime?: InputMaybe<Scalars['NaiveDate']['input']>;
   id: Scalars['String']['input'];
   onHold?: InputMaybe<Scalars['Boolean']['input']>;
   otherPartyId?: InputMaybe<Scalars['String']['input']>;
@@ -10944,7 +10954,7 @@ export type UpsertPreferencesInput = {
     Array<BoolStorePrefInput>
   >;
   showContactTracing?: InputMaybe<Scalars['Boolean']['input']>;
-  showIndicativePriceInRequisitions?: InputMaybe<Scalars['Boolean']['input']>;
+  showIndicativePriceInRequisitions?: InputMaybe<Array<BoolStorePrefInput>>;
   sortByVvmStatusThenExpiry?: InputMaybe<Array<BoolStorePrefInput>>;
   storeCustomColour?: InputMaybe<Array<StringStorePrefInput>>;
   syncRecordsDisplayThreshold?: InputMaybe<Scalars['Int']['input']>;
