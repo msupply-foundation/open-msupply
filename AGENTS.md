@@ -143,7 +143,7 @@ The server hosts the compiled client app and exposes the GraphQL API at `/graphq
 - snake_case for variables/functions, PascalCase for types
 - rustfmt defaults (4-space indentation)
 - Error handling: `Result<T, E>` with `thiserror`
-- Allowed clippy lints: `large_enum_variant`, `too_many_arguments`, `enum_variant_names`, `module_inception`, `wrong_self_convention`
+- Allowed clippy lints (non-exhaustive): `large_enum_variant`, `too_many_arguments`, `enum_variant_names`, `module_inception`, `wrong_self_convention`
 
 ## Key Configuration
 
