@@ -84,6 +84,11 @@ export const Toolbar = ({ filter }: ToolbarProps) => {
                 ],
               },
               {
+                type: 'text',
+                name: t('label.reference'),
+                urlParameter: 'theirReference',
+              },
+              {
                 type: 'enum',
                 name: t('label.status'),
                 urlParameter: 'status',
