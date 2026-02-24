@@ -10,7 +10,6 @@ mod add_universal_code_to_item;
 mod add_version_to_plugins;
 mod available_volume_on_requisition_line_and_volume_per_pack_on_item;
 mod invoice_line_add_status;
-mod remove_goods_received;
 
 pub(crate) struct V2_16_00;
 impl Migration for V2_16_00 {
@@ -33,7 +32,6 @@ impl Migration for V2_16_00 {
             Box::new(add_universal_code_to_item::Migrate),
             Box::new(add_comments_required_to_asset_log_reason::Migrate),
             Box::new(invoice_line_add_status::Migrate),
-            Box::new(remove_goods_received::Migrate),
         ]
     }
 }
