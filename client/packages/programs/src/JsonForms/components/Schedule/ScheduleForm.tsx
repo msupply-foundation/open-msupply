@@ -34,6 +34,37 @@ const UIComponent = (props: ControlProps) => {
   });
 
   const { core } = useJsonForms();
+  const { programId, scheduleId, periodId, after, before } = core?.data ?? {};
+
+  const { data: programData, isLoading: programsLoading } = useProgramList();
+  const { data: scheduleData, isLoading: schedulesLoading } =
+    useSchedulesAndPeriods(programId ?? '');
+
+  const programs = programData?.nodes ?? [];
+  const schedules = scheduleData?.nodes ?? [];
+  const periods = form.schedule?.periods.map(s => s.period) ?? [];
+
+  // resaturate state
+  if (programId && !form.program) {
+    const program = programs.find(p => p.id === programId);
+    if (program) setForm(prev => ({ ...prev, program }));
+  }
+
+  if (scheduleId && !form.schedule) {
+    const schedule = schedules.find(s => s.id === scheduleId);
+    if (schedule) {
+      const period = schedule.periods
+        .map(s => s.period)
+        .find(p => p.id === periodId);
+      setForm(prev => ({
+        ...prev,
+        schedule,
+        period: period ?? null,
+        after: after ? new Date(after) : null,
+        before: before ? new Date(before) : null,
+      }));
+    }
+  }
 
   const onProgramChange = (program: ProgramFragment | null) => {
     setForm({
@@ -86,9 +117,23 @@ const UIComponent = (props: ControlProps) => {
 
   return (
     <Box>
-      <ProgramFilter form={form} handleChange={onProgramChange} />
-      <ScheduleFilter form={form} handleChange={onScheduleChange} />
-      <PeriodFilter form={form} handleChange={onPeriodChange} />
+      <ProgramFilter
+        form={form}
+        options={programs}
+        loading={programsLoading}
+        handleChange={onProgramChange}
+      />
+      <ScheduleFilter
+        form={form}
+        options={schedules}
+        loading={schedulesLoading}
+        handleChange={onScheduleChange}
+      />
+      <PeriodFilter
+        form={form}
+        options={periods}
+        handleChange={onPeriodChange}
+      />
       <DateFilter
         label={'After'}
         value={form.after}
@@ -116,125 +161,118 @@ export const ScheduleForm = withJsonFormsControlProps(UIComponentWrapper);
 
 interface FilterProps<T> {
   form: FormState;
+  options: T[];
+  loading?: boolean;
   handleChange: (value: T | null) => void;
 }
 
 const ProgramFilter = ({
   form,
+  options,
+  loading,
   handleChange,
-}: FilterProps<ProgramFragment>) => {
-  const { data: programData, isLoading } = useProgramList();
-  const programs = programData?.nodes ?? [];
-
-  return (
-    <DetailInputWithLabelRow
-      sx={DefaultFormRowSx}
-      label={'Program'}
-      labelWidthPercentage={FORM_LABEL_WIDTH}
-      inputAlignment={'start'}
-      Input={
-        <Autocomplete
-          fullWidth
-          loading={isLoading}
-          options={programs}
-          optionKey="name"
-          // onChange={(_, option) => {
-          //   handleChange(programs.find(p => p.id === option?.id) || null);
-          // }}
-          onChange={(_, option) => handleChange(option)}
-          // onInputChange={(
-          //   _event: React.SyntheticEvent<Element, Event>,
-          //   _value: string,
-          //   reason: string
-          // ) => {
-          //   if (reason === CLEAR) {
-          //     onChange(null);
-          //   }
-          // }}
-          value={
-            form.program
-              ? { label: form.program.name ?? '', ...form.program }
-              : null
-          }
-          isOptionEqualToValue={(option, value) => option.id === value.id}
-          // clearable={props.uischema.options?.['clearable'] ?? false}
-        />
-      }
-    />
-  );
-};
+}: FilterProps<ProgramFragment>) => (
+  <DetailInputWithLabelRow
+    sx={DefaultFormRowSx}
+    label={'Program'}
+    labelWidthPercentage={FORM_LABEL_WIDTH}
+    inputAlignment={'start'}
+    Input={
+      <Autocomplete
+        fullWidth
+        loading={loading}
+        options={options}
+        optionKey="name"
+        // onChange={(_, option) => {
+        //   handleChange(programs.find(p => p.id === option?.id) || null);
+        // }}
+        onChange={(_, option) => handleChange(option)}
+        // onInputChange={(
+        //   _event: React.SyntheticEvent<Element, Event>,
+        //   _value: string,
+        //   reason: string
+        // ) => {
+        //   if (reason === CLEAR) {
+        //     onChange(null);
+        //   }
+        // }}
+        value={
+          form.program
+            ? { label: form.program.name ?? '', ...form.program }
+            : null
+        }
+        isOptionEqualToValue={(option, value) => option.id === value.id}
+        // clearable={props.uischema.options?.['clearable'] ?? false}
+      />
+    }
+  />
+);
 
 const ScheduleFilter = ({
   form,
+  options,
+  loading,
   handleChange,
-}: FilterProps<PeriodScheduleNode>) => {
-  const { data, isLoading } = useSchedulesAndPeriods(form.program?.id ?? '');
-  const schedules = data?.nodes ?? [];
+}: FilterProps<PeriodScheduleNode>) => (
+  <DetailInputWithLabelRow
+    sx={DefaultFormRowSx}
+    label={'Schedule'}
+    labelWidthPercentage={FORM_LABEL_WIDTH}
+    inputAlignment={'start'}
+    Input={
+      <Autocomplete
+        fullWidth
+        loading={loading}
+        options={options}
+        optionKey="name"
+        onChange={(_, option) => handleChange(option)}
+        value={
+          form.schedule
+            ? { label: form.schedule.name ?? '', ...form.schedule }
+            : null
+        }
+        isOptionEqualToValue={(option, value) => option.id === value.id}
+        disabled={!form.program}
+        // clearable={props.uischema.options?.['clearable'] ?? false}
+      />
+    }
+  />
+);
 
-  return (
-    <DetailInputWithLabelRow
-      sx={DefaultFormRowSx}
-      label="Schedule"
-      labelWidthPercentage={FORM_LABEL_WIDTH}
-      inputAlignment={'start'}
-      Input={
-        <Autocomplete
-          fullWidth
-          loading={isLoading}
-          options={schedules}
-          optionKey="name"
-          onChange={(_, option) => handleChange(option)}
-          value={
-            form.schedule
-              ? { label: form.schedule.name ?? '', ...form.schedule }
-              : null
-          }
-          isOptionEqualToValue={(option, value) => option.id === value.id}
-          disabled={!form.program}
-          // clearable={props.uischema.options?.['clearable'] ?? false}
-        />
-      }
-    />
-  );
-};
-
-const PeriodFilter = ({ form, handleChange }: FilterProps<PeriodNode>) => {
-  const periods = (form.schedule?.periods ?? []).map(s => s.period);
-
-  return (
-    <DetailInputWithLabelRow
-      sx={DefaultFormRowSx}
-      label={'Period'}
-      labelWidthPercentage={FORM_LABEL_WIDTH}
-      inputAlignment={'start'}
-      Input={
-        <Autocomplete
-          fullWidth
-          options={periods}
-          optionKey="name"
-          onChange={(_, option) => handleChange(option)}
-          // onInputChange={(
-          //   _event: React.SyntheticEvent<Element, Event>,
-          //   _value: string,
-          //   reason: string
-          // ) => {
-          //   if (reason === CLEAR) {
-          //     onChange(null);
-          //   }
-          // }}
-          getOptionLabel={option => option.name}
-          value={
-            form.period
-              ? { label: form.period.name ?? '', ...form.period }
-              : null
-          }
-          isOptionEqualToValue={(option, value) => option.id === value.id}
-          disabled={!form.schedule}
-        />
-      }
-    />
-  );
-};
+const PeriodFilter = ({
+  form,
+  options,
+  handleChange,
+}: FilterProps<PeriodNode>) => (
+  <DetailInputWithLabelRow
+    sx={DefaultFormRowSx}
+    label={'Period'}
+    labelWidthPercentage={FORM_LABEL_WIDTH}
+    inputAlignment={'start'}
+    Input={
+      <Autocomplete
+        fullWidth
+        options={options}
+        optionKey="name"
+        onChange={(_, option) => handleChange(option)}
+        // onInputChange={(
+        //   _event: React.SyntheticEvent<Element, Event>,
+        //   _value: string,
+        //   reason: string
+        // ) => {
+        //   if (reason === CLEAR) {
+        //     onChange(null);
+        //   }
+        // }}
+        value={
+          form.period ? { label: form.period.name ?? '', ...form.period } : null
+        }
+        isOptionEqualToValue={(option, value) => option.id === value.id}
+        disabled={!form.schedule}
+      />
+    }
+  />
+);
 
 interface DateFilterProps {
   label: string;
