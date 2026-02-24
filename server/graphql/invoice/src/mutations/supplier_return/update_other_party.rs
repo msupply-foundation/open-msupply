@@ -90,7 +90,7 @@ pub fn map_response(from: Result<Invoice, ServiceError>) -> Result<UpdateOtherPa
 
 fn map_error(error: ServiceError) -> Result<UpdateReturnOtherPartyErrorInterface> {
     use StandardGraphqlError::*;
-    let formatted_error = format!("{:#?}", error);
+    let formatted_error = format!("{error:#?}");
 
     let graphql_error = match error {
         ServiceError::InvoiceDoesNotExist => {

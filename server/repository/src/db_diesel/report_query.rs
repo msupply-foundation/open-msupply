@@ -104,7 +104,7 @@ use crate::database_settings::DatabaseSettings;
 impl From<rusqlite::Error> for RepositoryError {
     fn from(value: rusqlite::Error) -> Self {
         RepositoryError::DBError {
-            msg: format!("{}", value),
+            msg: format!("{value}"),
             extra: "".to_string(),
         }
     }

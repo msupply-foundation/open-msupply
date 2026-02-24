@@ -121,7 +121,7 @@ fn generate(
         None,
     )?;
 
-    let populate_price_per_unit = get_indicative_price_pref(&ctx.connection)?;
+    let populate_price_per_unit = get_indicative_price_pref(&ctx.connection, &ctx.store_id)?;
     let price_list = if populate_price_per_unit {
         Some(get_pricing_for_items(
             &ctx.connection,
@@ -169,6 +169,8 @@ fn generate(
                 comment: None,
                 approved_quantity: 0.0,
                 approval_comment: None,
+                available_volume: None,
+                location_type_id: None,
             }
         })
         .collect();

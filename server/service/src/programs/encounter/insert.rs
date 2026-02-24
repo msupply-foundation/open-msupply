@@ -204,7 +204,7 @@ fn validate(
     };
 
     let encounter = validate_encounter_schema(&input.data).map_err(|err| {
-        InsertEncounterError::InvalidDataSchema(format!("Invalid program data: {}", err))
+        InsertEncounterError::InvalidDataSchema(format!("Invalid program data: {err}"))
     })?;
 
     let clinician_row = if let Some(clinician_id) = encounter

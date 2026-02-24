@@ -12,8 +12,11 @@ import {
   InvoiceNodeStatus,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
-import { getInvoiceStatusTranslator, useInbound } from '@openmsupply-client/invoices/src';
-import { InboundRowFragment } from '@openmsupply-client/invoices/src/InboundShipment/api';
+import { getInvoiceStatusTranslator } from '@openmsupply-client/invoices/src';
+import {
+  InboundRowFragment,
+  useInboundList,
+} from '@openmsupply-client/invoices/src/InboundShipment/api';
 
 export const InboundShipments = () => {
   const t = useTranslation();
@@ -23,10 +26,16 @@ export const InboundShipments = () => {
   const queryParams = {
     first: 100,
     offset: 0,
-    filterBy: { purchaseOrderId: { equalTo: purchaseOrderId || '' }, type: { equalTo: 'INBOUND' } },
+    filterBy: {
+      purchaseOrderId: { equalTo: purchaseOrderId || '' },
+      type: { equalTo: 'INBOUND' },
+    },
     sortBy: { key: 'number', direction: 'desc' as 'asc' | 'desc' },
-  }
-  const { data, isFetching } = useInbound.document.list(queryParams);
+  };
+
+  const {
+    query: { data, isFetching },
+  } = useInboundList(queryParams);
 
   const columns = useMemo(
     (): ColumnDef<InboundRowFragment>[] => [
@@ -48,12 +57,10 @@ export const InboundShipments = () => {
         size: 120,
         accessorFn: row => getInvoiceStatusTranslator(t)(row.status),
         filterVariant: 'select',
-        filterSelectOptions: Object.values(InvoiceNodeStatus).map(
-          status => ({
-            value: status,
-            label: getInvoiceStatusTranslator(t)(status),
-          })
-        ),
+        filterSelectOptions: Object.values(InvoiceNodeStatus).map(status => ({
+          value: status,
+          label: getInvoiceStatusTranslator(t)(status),
+        })),
         enableSorting: true,
         enableColumnFilter: true,
       },
@@ -95,7 +102,9 @@ export const InboundShipments = () => {
     data: data?.nodes,
     initialSort: { key: 'createdDatetime', dir: 'desc' },
     enableRowSelection: false,
-    noDataElement: <NothingHere body={t('error.no-inbound-shipments-linked')} />,
+    noDataElement: (
+      <NothingHere body={t('error.no-inbound-shipments-linked')} />
+    ),
   });
 
   return <MaterialTable table={table} />;

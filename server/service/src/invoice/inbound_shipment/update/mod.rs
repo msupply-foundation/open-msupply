@@ -53,7 +53,7 @@ pub struct UpdateInboundShipment {
     pub currency_id: Option<String>,
     pub currency_rate: Option<f64>,
     pub default_donor: Option<UpdateDefaultDonor>,
-    pub created_datetime: Option<NaiveDate>,
+    pub delivered_datetime: Option<NaiveDate>,
 }
 
 type OutError = UpdateInboundShipmentError;
@@ -1231,6 +1231,6 @@ mod test {
             .unwrap();
         result.sort_by(|a, b| a.id.cmp(&b.id));
 
-        assert!(result.iter().all(|line| line.donor_link_id == None));
+        assert!(result.iter().all(|line| line.donor_link_id.is_none()));
     }
 }

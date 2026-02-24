@@ -116,7 +116,7 @@ pub async fn login(ctx: &Context<'_>, username: &str, password: &str) -> Result<
     {
         Ok(pair) => pair,
         Err(error) => {
-            let formatted_error = format!("{:#?}", error);
+            let formatted_error = format!("{error:#?}");
             let graphql_error = match error {
                 LoginError::LoginFailure(LoginFailure::InvalidCredentials) => {
                     return Ok(AuthTokenResponse::Error(AuthTokenError {
@@ -188,8 +188,7 @@ pub fn set_refresh_token_cookie(
     ctx.insert_http_header(
         SET_COOKIE,
         format!(
-            "refresh_token={}; Max-Age={}{}; HttpOnly; SameSite=Strict",
-            refresh_token, max_age, secure
+            "refresh_token={refresh_token}; Max-Age={max_age}{secure}; HttpOnly; SameSite=Strict"
         ),
     );
 }

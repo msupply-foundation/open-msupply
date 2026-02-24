@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   ModalRow,
   ModalLabel,
@@ -11,7 +11,8 @@ import {
   ItemStockOnHandFragment,
   StockItemSearchInput,
 } from '@openmsupply-client/system';
-import { useInbound } from '../../../api';
+import { useInboundShipment } from '../../../api/hooks/document/useInboundShipment';
+import { isA } from '../../../../utils';
 import { usePurchaseOrder } from '@openmsupply-client/purchasing/src/purchase_order/api'
 
 interface InboundLineEditProps {
@@ -26,10 +27,16 @@ export const InboundLineEditForm = ({
   onChangeItem,
 }: InboundLineEditProps) => {
   const t = useTranslation();
-  const { data: items } = useInbound.lines.items();
-  const { purchaseOrder } = useInbound.document.fields('purchaseOrder');
+  const {
+    query: { data },
+  } = useInboundShipment();
+  const purchaseOrder = data?.purchaseOrder;
 
-  const existingItemIds = items?.map(line => line.itemId);
+  const existingItemIds = useMemo(() => {
+    if (!data) return [];
+    const stockLines = data.lines.nodes.filter(isA.stockInLine);
+    return [...new Set(stockLines.map(line => line.item.id))];
+  }, [data]);
 
   const { query } = usePurchaseOrder(purchaseOrder?.id);
   const filter = {

@@ -17,7 +17,7 @@ import {
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { SupplierSearchInput } from '@openmsupply-client/system';
-import { InboundRowFragment, useInbound } from '../api';
+import { InboundRowFragment, useInboundShipment } from '../api';
 
 const InboundInfoPanel = ({
   shipment,
@@ -43,25 +43,20 @@ const InboundInfoPanel = ({
 export const Toolbar = () => {
   const t = useTranslation();
 
-  const isDisabled = useInbound.utils.isDisabled();
-  const { data: shipment } = useInbound.document.get();
+  const {
+    query: { data: shipment },
+    isDisabled,
+    update: { update },
+  } = useInboundShipment();
 
-  const { createdDatetime, otherParty, theirReference, purchaseOrder, update } = useInbound.document.fields([
-    'createdDatetime',
-    'otherParty',
-    'theirReference',
-    'purchaseOrder',
-  ]);
+  const { deliveredDatetime, otherParty, theirReference, purchaseOrder } =
+    shipment || {};
 
   const isTransfer = !!shipment?.linkedShipment?.id;
 
   return (
     <AppBarContentPortal sx={{ display: 'flex', flex: 1, marginBottom: 1 }}>
-      <Grid
-        container
-        spacing={2}
-        width="100%"
-      >
+      <Grid container spacing={2} width="100%">
         <Grid>
           <Box display="flex" flexDirection="column" gap={1}>
             {otherParty && (
@@ -114,12 +109,14 @@ export const Toolbar = () => {
               <Box display="flex" flex={1} flexDirection="column" gap={1}>
                 <InputWithLabelRow
                   label={t('label.purchase-order-number')}
-                  Input={<Link
-                    to={RouteBuilder.create(AppRoute.Replenishment)
-                      .addPart(AppRoute.PurchaseOrder)
-                      .addPart(purchaseOrder?.id ?? '')
-                      .build()}
-                  >{`#${purchaseOrder?.number}`}</Link>}
+                  Input={
+                    <Link
+                      to={RouteBuilder.create(AppRoute.Replenishment)
+                        .addPart(AppRoute.PurchaseOrder)
+                        .addPart(purchaseOrder?.id ?? '')
+                        .build()}
+                    >{`#${purchaseOrder?.number}`}</Link>
+                  }
                   sx={{
                     width: 200,
                     height: 35,
@@ -137,13 +134,14 @@ export const Toolbar = () => {
             </Grid>
             <Grid>
               <InputWithLabelRow
-                label={t('label.created-datetime')}
+                label={t('label.delivered-date')}
                 Input={
                   <DateTimePickerInput
-                    value={DateUtils.getDateOrNull(createdDatetime)}
+                    value={DateUtils.getDateOrNull(deliveredDatetime)}
                     onChange={date =>
                       update({
-                        createdDatetime: Formatter.naiveDate(date) ?? undefined,
+                        deliveredDatetime:
+                          Formatter.naiveDate(date) ?? undefined,
                       })
                     }
                   />
