@@ -7,7 +7,7 @@ use crate::{
     diesel_macros::{
         apply_equal_filter, apply_sort_no_case, apply_string_filter, apply_string_or_filter,
     },
-    name_link, name_oms_fields_alias,
+    name_oms_fields_alias,
     repository_error::RepositoryError,
     EqualFilter, NameOmsFieldsRow, NameRowType, Pagination, Sort, StringFilter,
 };
@@ -54,7 +54,6 @@ pub struct NameFilter {
     pub email: Option<StringFilter>,
 
     pub code_or_name: Option<StringFilter>,
-    pub name_link_id: Option<EqualFilter<String>>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -191,7 +190,6 @@ impl<'a> NameRepository<'a> {
                 email,
                 code_or_name,
                 supplying_store_id,
-                name_link_id,
             } = f;
 
             // or filter need to be applied before and filters
@@ -248,13 +246,6 @@ impl<'a> NameRepository<'a> {
                 Some(false) => query.filter(store::id.is_null()),
                 None => query,
             };
-
-            if name_link_id.is_some() {
-                let mut inner_query = name_link::table.into_boxed();
-                apply_equal_filter!(inner_query, name_link_id, name_link::id);
-
-                query = query.filter(name::id.eq_any(inner_query.select(name_link::name_id)));
-            }
         };
 
         // Only return active (not deleted) names
@@ -360,11 +351,6 @@ impl NameFilter {
 
     pub fn supplying_store_id(mut self, filter: EqualFilter<String>) -> Self {
         self.supplying_store_id = Some(filter);
-        self
-    }
-
-    pub fn name_link_id(mut self, filter: EqualFilter<String>) -> Self {
-        self.name_link_id = Some(filter);
         self
     }
 }
