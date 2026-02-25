@@ -74,7 +74,7 @@ impl From<TemperatureBreachFilterInput> for TemperatureBreachFilter {
             unacknowledged: f.unacknowledged,
             r#type: f
                 .r#type
-                .map(|t| map_filter!(t, |r| TemperatureBreachType::from(r))),
+                .map(|t| map_filter!(t, TemperatureBreachType::from)),
             id: f.id.map(EqualFilter::from),
             start_datetime: f.start_datetime.map(DatetimeFilter::from),
             end_datetime: f.end_datetime.map(DatetimeFilter::from),

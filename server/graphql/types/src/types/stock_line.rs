@@ -203,7 +203,7 @@ impl StockLineNode {
             .await?;
 
         Ok(result
-            .map(|order_types| ProgramOrderTypeNode::from_vec(order_types))
+            .map(ProgramOrderTypeNode::from_vec)
             .unwrap_or_default())
     }
 

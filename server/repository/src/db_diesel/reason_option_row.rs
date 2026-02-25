@@ -137,7 +137,7 @@ mod test {
         let repo = ReasonOptionRowRepository::new(&connection);
         // Try upsert all variants, confirm that diesel enums match postgres
         for option_type in ReasonOptionType::iter() {
-            let id = format!("{:?}", option_type);
+            let id = format!("{option_type:?}");
             let result = repo.upsert_one(&ReasonOptionRow {
                 id: id.clone(),
                 r#type: option_type,
