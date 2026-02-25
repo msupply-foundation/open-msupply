@@ -1,5 +1,5 @@
 use crate::{
-    db_diesel::{item_link_row::item_link, item_row::item, name_link_row::name_link, purchase_order_row::purchase_order},
+    db_diesel::{item_link_row::item_link, item_row::item, purchase_order_row::purchase_order},
     diesel_macros::define_linked_tables, Delete, PurchaseOrderRowRepository, Upsert,
 };
 use crate::{
@@ -49,7 +49,6 @@ joinable!(purchase_order_line -> purchase_order (purchase_order_id));
 allow_tables_to_appear_in_same_query!(purchase_order_line, item_link);
 allow_tables_to_appear_in_same_query!(purchase_order_line, item);
 allow_tables_to_appear_in_same_query!(purchase_order_line, purchase_order);
-allow_tables_to_appear_in_same_query!(purchase_order_line, name_link);
 
 #[derive(
     Clone, Queryable, Debug, Serialize, Deserialize, Default, PartialEq,
