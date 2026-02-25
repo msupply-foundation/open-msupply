@@ -560,6 +560,7 @@ export type AssetLogReasonMutationsInsertAssetLogReasonArgs = {
 export type AssetLogReasonNode = {
   __typename: 'AssetLogReasonNode';
   assetLogStatus: AssetLogStatusNodeType;
+  commentsRequired: Scalars['Boolean']['output'];
   id: Scalars['String']['output'];
   reason: Scalars['String']['output'];
 };
@@ -743,6 +744,13 @@ export type AuthTokenErrorInterface = {
 };
 
 export type AuthTokenResponse = AuthToken | AuthTokenError;
+
+export type AvailableVolumeAtLocationTypeNode = {
+  __typename: 'AvailableVolumeAtLocationTypeNode';
+  availableVolume: Scalars['Float']['output'];
+  itemVolumePerUnit: Scalars['Float']['output'];
+  locationType: LocationTypeNode;
+};
 
 export type BarcodeNode = {
   __typename: 'BarcodeNode';
@@ -3305,6 +3313,7 @@ export type InsertAssetLogReasonErrorInterface = {
 
 export type InsertAssetLogReasonInput = {
   assetLogStatus: AssetLogStatusNodeType;
+  commentsRequired: Scalars['Boolean']['input'];
   id: Scalars['String']['input'];
   reason: Scalars['String']['input'];
 };
@@ -4831,6 +4840,7 @@ export type ItemFilterInput = {
   name?: InputMaybe<StringFilterInput>;
   productsAtRiskOfBeingOutOfStock?: InputMaybe<Scalars['Boolean']['input']>;
   type?: InputMaybe<EqualFilterItemTypeInput>;
+  universalCode?: InputMaybe<StringFilterInput>;
   withRecentConsumption?: InputMaybe<Scalars['Boolean']['input']>;
 };
 
@@ -4887,6 +4897,7 @@ export type ItemNode = {
   itemStoreProperties?: Maybe<ItemStorePropertiesNode>;
   margin: Scalars['Float']['output'];
   masterLists?: Maybe<Array<MasterListNode>>;
+  /** @deprecated Since 2.16.0. Use universalCode instead */
   msupplyUniversalCode: Scalars['String']['output'];
   msupplyUniversalName: Scalars['String']['output'];
   name: Scalars['String']['output'];
@@ -4898,6 +4909,7 @@ export type ItemNode = {
   strength?: Maybe<Scalars['String']['output']>;
   type: ItemNodeType;
   unitName?: Maybe<Scalars['String']['output']>;
+  universalCode: Scalars['String']['output'];
   userField4: Scalars['Boolean']['output'];
   variants: Array<ItemVariantNode>;
   venCategory: VenCategoryType;
@@ -6913,6 +6925,7 @@ export enum PreferenceNodeType {
 
 export enum PreferenceValueNodeType {
   Boolean = 'BOOLEAN',
+  Colour = 'COLOUR',
   CustomTranslations = 'CUSTOM_TRANSLATIONS',
   Integer = 'INTEGER',
   MultiChoice = 'MULTI_CHOICE',
@@ -8764,6 +8777,7 @@ export type RequisitionLineNode = {
   approvalComment?: Maybe<Scalars['String']['output']>;
   approvedQuantity: Scalars['Float']['output'];
   availableStockOnHand: Scalars['Float']['output'];
+  availableVolumeAtLocationType?: Maybe<AvailableVolumeAtLocationTypeNode>;
   averageMonthlyConsumption: Scalars['Float']['output'];
   comment?: Maybe<Scalars['String']['output']>;
   daysOutOfStock: Scalars['Float']['output'];
@@ -11308,7 +11322,7 @@ export type UpsertPreferencesInput = {
     Array<BoolStorePrefInput>
   >;
   showContactTracing?: InputMaybe<Scalars['Boolean']['input']>;
-  showIndicativePriceInRequisitions?: InputMaybe<Scalars['Boolean']['input']>;
+  showIndicativePriceInRequisitions?: InputMaybe<Array<BoolStorePrefInput>>;
   sortByVvmStatusThenExpiry?: InputMaybe<Array<BoolStorePrefInput>>;
   storeCustomColour?: InputMaybe<Array<StringStorePrefInput>>;
   syncRecordsDisplayThreshold?: InputMaybe<Scalars['Int']['input']>;

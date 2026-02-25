@@ -48,6 +48,7 @@ export interface ModalProps {
   deleteButton?: JSX.Element;
   disableOkKeyBinding?: boolean;
   enableAutocomplete?: boolean;
+  disableEnforceFocus?: boolean;
 }
 
 export interface DialogProps {
@@ -161,6 +162,7 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
     enableAutocomplete,
     sx = {},
     deleteButton,
+    disableEnforceFocus = false,
   }: ModalProps) => {
     const t = useTranslation();
     // The slide animation is triggered by cloning the next button and wrapping the passed
@@ -237,6 +239,7 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
         TransitionComponent={Transition}
         disableEscapeKeyDown={false}
         fullScreen={defaultFullscreen}
+        disableEnforceFocus={disableEnforceFocus}
       >
         {defaultFullscreen && (
           <IconButton

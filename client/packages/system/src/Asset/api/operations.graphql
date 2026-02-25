@@ -48,6 +48,7 @@ fragment AssetLogReason on AssetLogReasonNode {
   id
   assetLogStatus
   reason
+  commentsRequired
 }
 
 query assetCatalogueItems(

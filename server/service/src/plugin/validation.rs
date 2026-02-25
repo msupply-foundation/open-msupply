@@ -72,8 +72,7 @@ impl ValidatedPluginBucket {
             return Ok(plugin.clone());
         }
         Err(anyhow::Error::msg(format!(
-            "Failed to validate plugin: {:?}",
-            path
+            "Failed to validate plugin: {path:?}"
         )))
     }
 
@@ -284,7 +283,7 @@ fn verify_rsa_signature(
         match VerifyingKey::<Sha256>::new(public_key).verify(manifest, &signature) {
             Ok(_) => true,
             Err(err) => {
-                log::warn!("Failed to validate plugin: {}", err);
+                log::warn!("Failed to validate plugin: {err}");
                 false
             }
         },

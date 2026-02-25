@@ -111,7 +111,7 @@ fn sensor_add_log_if_new(
             temperature_breach_id: None,
         };
         TemperatureLogRowRepository::new(connection).upsert_one(&new_temperature_log)?;
-        log::info!("Added sensor log {:?} ", new_temperature_log);
+        log::info!("Added sensor log {new_temperature_log:?} ");
         Ok(())
     }
 }
@@ -141,7 +141,7 @@ fn sensor_add_breach_if_new(
                 duration_milliseconds: temperature_breach.duration.num_milliseconds() as i32,
                 ..existing_breach_row
             };
-            log::info!("Updating breach {:?} ", breach);
+            log::info!("Updating breach {breach:?} ");
             breach
         }
         None => {
@@ -160,7 +160,7 @@ fn sensor_add_breach_if_new(
                 threshold_maximum: breach_config.maximum_temperature,
                 comment: None,
             };
-            log::info!("Added breach {:?} ", breach);
+            log::info!("Added breach {breach:?} ");
             breach
         }
     };
@@ -233,8 +233,7 @@ fn sensor_add_breach_config_if_new(
     TemperatureBreachConfigRowRepository::new(connection)
         .upsert_one(&new_temperature_breach_config)?;
     log::info!(
-        "Added sensor breach config {:?} ",
-        new_temperature_breach_config
+        "Added sensor breach config {new_temperature_breach_config:?} "
     );
     Ok(())
 }
@@ -267,7 +266,7 @@ fn sensor_add_if_new(
         r#type: get_sensor_type(&temperature_sensor.sensor_type),
     };
     SensorRowRepository::new(connection).upsert_one(&new_sensor)?;
-    log::info!("Added sensor {:?} ", new_sensor);
+    log::info!("Added sensor {new_sensor:?} ");
     Ok(Some(new_sensor.id))
 }
 
@@ -297,9 +296,7 @@ fn resolve_localtime(timestamp: &NaiveDateTime, context: &str) -> Option<NaiveDa
     match Local.from_local_datetime(timestamp) {
         LocalResult::None => {
             log::error!(
-                "Cannot convert to local timestamp ({}) - {}",
-                context,
-                timestamp
+                "Cannot convert to local timestamp ({context}) - {timestamp}"
             );
             None
         }
@@ -312,10 +309,7 @@ fn convert_from_localtime(
     sensor: &temperature_sensor::Sensor,
 ) -> Result<temperature_sensor::Sensor, ReadSensorError> {
     // map logs
-    let logs_mapped: Option<Vec<temperature_sensor::TemperatureLog>> = match sensor.clone().logs {
-        None => None,
-        Some(logs) => Some(
-            logs.into_iter()
+    let logs_mapped: Option<Vec<temperature_sensor::TemperatureLog>> = sensor.clone().logs.map(|logs| logs.into_iter()
                 .filter(|log| resolve_localtime(&log.timestamp, "Temperature log").is_some())
                 .map(
                     |temperature_sensor::TemperatureLog {
@@ -330,15 +324,10 @@ fn convert_from_localtime(
                         }
                     },
                 )
-                .collect::<Vec<_>>(),
-        ),
-    };
+                .collect::<Vec<_>>());
     // map temperature breaches
     let breaches_mapped: Option<Vec<temperature_sensor::TemperatureBreach>> =
-        match sensor.clone().breaches {
-            None => None,
-            Some(breaches) => Some(
-                breaches
+        sensor.clone().breaches.map(|breaches| breaches
                     .into_iter()
                     .map(
                         |temperature_sensor::TemperatureBreach {
@@ -361,9 +350,7 @@ fn convert_from_localtime(
                             }
                         },
                     )
-                    .collect::<Vec<_>>(),
-            ),
-        };
+                    .collect::<Vec<_>>());
     // convert last connected timestamp
     let last_connected_timestamp_converted = match sensor.last_connected_timestamp {
         None => None,

@@ -8,17 +8,16 @@ use repository::{Name, NameFilter};
 
 use crate::standard_graphql_error::StandardGraphqlError;
 
-use super::IdPair;
-
-#[derive(Clone)]
-pub struct EmptyPayload;
-pub type NameByIdLoaderInput = IdPair<EmptyPayload>;
+#[derive(Clone, PartialEq, Eq, Debug, Hash)]
+pub struct NameByIdLoaderInput {
+    pub store_id: String,
+    pub name_id: String,
+}
 impl NameByIdLoaderInput {
     pub fn new(store_id: &str, name_id: &str) -> Self {
         NameByIdLoaderInput {
-            primary_id: store_id.to_string(),
-            secondary_id: name_id.to_string(),
-            payload: EmptyPayload {},
+            store_id: store_id.to_string(),
+            name_id: name_id.to_string(),
         }
     }
 }
@@ -39,8 +38,8 @@ impl Loader<NameByIdLoaderInput> for NameByIdLoader {
         // store_id -> Vec of name_id
         let mut store_name_map = HashMap::<String, Vec<String>>::new();
         for item in ids_with_store_id {
-            let entry = store_name_map.entry(item.primary_id.clone()).or_default();
-            entry.push(item.secondary_id.clone())
+            let entry = store_name_map.entry(item.store_id.clone()).or_default();
+            entry.push(item.name_id.clone())
         }
         let mut output = HashMap::<NameByIdLoaderInput, Self::Value>::new();
         for (store_id, names) in store_name_map {
@@ -54,7 +53,7 @@ impl Loader<NameByIdLoaderInput> for NameByIdLoader {
                     Some(NameFilter::new().id(EqualFilter::equal_any(names))),
                     None,
                 )
-                .map_err(|err| StandardGraphqlError::InternalError(format!("{:?}", err)))?;
+                .map_err(|err| StandardGraphqlError::InternalError(format!("{err:?}")))?;
             for name in names.rows {
                 output.insert(NameByIdLoaderInput::new(&store_id, &name.name_row.id), name);
             }

@@ -18,8 +18,7 @@ pub(crate) fn update_program_enrolment_row(
     let enrolment_datetime = DateTime::parse_from_rfc3339(&program.enrolment_datetime)
         .map_err(|err| {
             UpsertProgramEnrolmentError::InternalError(format!(
-                "Invalid enrolment datetime format: {}",
-                err
+                "Invalid enrolment datetime format: {err}"
             ))
         })?
         .naive_utc();

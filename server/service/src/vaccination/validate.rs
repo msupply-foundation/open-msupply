@@ -136,5 +136,5 @@ pub fn get_related_vaccinations(
             .program_enrolment_id(EqualFilter::equal_to(program_enrolment_id.to_string())),
     )?;
 
-    return Ok((previous_vaccination, next_vaccination));
+    Ok((previous_vaccination, next_vaccination))
 }

@@ -123,7 +123,7 @@ impl From<EncounterFilterInput> for EncounterFilter {
             start_datetime: f.start_datetime.map(DatetimeFilter::from),
             status: f
                 .status
-                .map(|s| map_filter!(s, |status| EncounterStatus::from(status))),
+                .map(|s| map_filter!(s, EncounterStatus::from)),
             end_datetime: f.end_datetime.map(DatetimeFilter::from),
             clinician_id: f.clinician_id.map(EqualFilter::from),
             document_type: f.r#type.map(EqualFilter::from),

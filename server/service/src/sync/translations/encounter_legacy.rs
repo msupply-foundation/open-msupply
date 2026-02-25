@@ -101,7 +101,7 @@ impl SyncTranslation for EncounterLegacyTranslation {
                 .map(|dt| dt.and_utc().to_rfc3339()),
             status: encounter_row
                 .status
-                .map(|s| format!("{:?}", s).to_uppercase()),
+                .map(|s| format!("{s:?}").to_uppercase()),
             prescriber_ID: encounter_row.clinician_link_id,
             store_ID: encounter_row.store_id,
         };

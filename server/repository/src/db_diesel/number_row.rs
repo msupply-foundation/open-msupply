@@ -60,14 +60,14 @@ impl fmt::Display for NumberRowType {
             NumberRowType::Prescription => write!(f, "PRESCRIPTION"),
             NumberRowType::SupplierReturn => write!(f, "SUPPLIER_RETURN"),
             NumberRowType::CustomerReturn => write!(f, "CUSTOMER_RETURN"),
-            NumberRowType::Program(custom_string) => write!(f, "PROGRAM_{}", custom_string),
+            NumberRowType::Program(custom_string) => write!(f, "PROGRAM_{custom_string}"),
             NumberRowType::PurchaseOrder => write!(f, "PURCHASE_ORDER"),
             NumberRowType::GoodsReceived => write!(f, "GOODS_RECEIVED"),
             NumberRowType::PurchaseOrderLine(custom_string) => {
-                write!(f, "PURCHASEORDERLINE_{}", custom_string) // Since we split this on _ we can't use that in the main part of the name
+                write!(f, "PURCHASEORDERLINE_{custom_string}") // Since we split this on _ we can't use that in the main part of the name
             }
             NumberRowType::GoodsReceivedLine(custom_string) => {
-                write!(f, "GOODSRECEIVEDLINE_{}", custom_string) // Since we split this on _ we can't use that in the main part of the name
+                write!(f, "GOODSRECEIVEDLINE_{custom_string}") // Since we split this on _ we can't use that in the main part of the name
             }
         }
     }

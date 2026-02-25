@@ -19,13 +19,13 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Read .nvmrc
-        run: echo "##[set-output name=NVMRC;]$(cat ./client/.nvmrc)"
+        run: echo "NVMRC=$(cat ./client/.nvmrc)" >> "$GITHUB_OUTPUT"
         id: nvm
 
-      - name: Use Node.js (.nvmrc)
+      - name: Set Up Node JS
         uses: actions/setup-node@v4
         with:
-          node-version: '${{ steps.nvm.outputs.NVMRC }}'
+          node-version: "${{ steps.nvm.outputs.NVMRC }}"
 
       - name: Install Dependencies
         run: |

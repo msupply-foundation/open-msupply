@@ -276,12 +276,12 @@ mod test {
             assert_eq!(result.approval_status, row.approval_status);
         }
 
-        assert_eq!(ApprovalStatusType::Approved.is_approved(), true);
-        assert_eq!(ApprovalStatusType::ApprovedByAnother.is_approved(), true);
-        assert_eq!(ApprovalStatusType::AutoApproved.is_approved(), true);
-        assert_eq!(ApprovalStatusType::Denied.is_approved(), false);
-        assert_eq!(ApprovalStatusType::DeniedByAnother.is_approved(), false);
-        assert_eq!(ApprovalStatusType::Pending.is_approved(), false);
-        assert_eq!(ApprovalStatusType::None.is_approved(), false);
+        assert!(ApprovalStatusType::Approved.is_approved());
+        assert!(ApprovalStatusType::ApprovedByAnother.is_approved());
+        assert!(ApprovalStatusType::AutoApproved.is_approved());
+        assert!(!ApprovalStatusType::Denied.is_approved());
+        assert!(!ApprovalStatusType::DeniedByAnother.is_approved());
+        assert!(!ApprovalStatusType::Pending.is_approved());
+        assert!(!ApprovalStatusType::None.is_approved());
     }
 }

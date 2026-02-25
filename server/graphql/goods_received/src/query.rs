@@ -111,7 +111,7 @@ pub fn get_goods_received_list(
         .goods_received_service
         .get_goods_received_list(
             &service_context,
-            &store_id,
+            store_id,
             page.map(PaginationOption::from),
             filter.map(|filter| filter.to_domain()),
             sort.and_then(|mut sort_list| sort_list.pop())

@@ -164,7 +164,7 @@ mod test {
                     ..Default::default()
                 }],
                 invoice_lines: vec![InvoiceLineRow {
-                    id: format!("{}line", invoice_id),
+                    id: format!("{invoice_id}line"),
                     invoice_id: invoice_id.clone(),
                     item_link_id: mock_item_a().id,
                     r#type: InvoiceLineType::StockOut,

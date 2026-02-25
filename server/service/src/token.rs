@@ -144,14 +144,14 @@ impl<'a> TokenService<'a> {
             refresh_token_valid_for_sec,
         )
         .map_err(|err| {
-            error!("jwt_token: {}", err);
+            error!("jwt_token: {err}");
             JWTIssuingError::CanNotCreateToken(err)
         })?;
 
         // add tokens to bucket
         let mut token_bucket = self.token_bucket.write().map_err(|e| {
-            error!("{}", e);
-            JWTIssuingError::ConcurrencyLockError(anyhow!("jwt_token: {}", e))
+            error!("{e}");
+            JWTIssuingError::ConcurrencyLockError(anyhow!("jwt_token: {e}"))
         })?;
         token_bucket.put(user_id, password, &pair.token, pair.expiry_date);
         token_bucket.put(user_id, password, &pair.refresh, pair.refresh_expiry_date);
@@ -194,14 +194,14 @@ impl<'a> TokenService<'a> {
             refresh_token_valid_for,
         )
         .map_err(|err| {
-            error!("{}", err);
+            error!("{err}");
             JWTRefreshError::FailedToCreateNewToken(err)
         })?;
 
         // Check token is still in the list of valid tokens
         let mut token_bucket = self.token_bucket.write().map_err(|e| {
-            error!("{}", e);
-            JWTRefreshError::ConcurrencyLockError(anyhow!("refresh_token: {}", e))
+            error!("{e}");
+            JWTRefreshError::ConcurrencyLockError(anyhow!("refresh_token: {e}"))
         })?;
         if self.validate_token_bucket && !token_bucket.contains(&user_id, refresh_token) {
             return Err(JWTRefreshError::TokenInvalided);
@@ -245,15 +245,15 @@ impl<'a> TokenService<'a> {
             }
             jsonwebtoken::errors::ErrorKind::InvalidAudience => JWTValidationError::NotAnApiToken,
             _ => {
-                error!("verify_token: {}", err);
+                error!("verify_token: {err}");
                 JWTValidationError::InvalidToken(err)
             }
         })?;
 
         // Check token is still in the list of valid tokens
         let token_bucket = self.token_bucket.read().map_err(|e| {
-            error!("verify_token: {}", e);
-            JWTValidationError::ConcurrencyLockError(anyhow!("verify_token: {}", e))
+            error!("verify_token: {e}");
+            JWTValidationError::ConcurrencyLockError(anyhow!("verify_token: {e}"))
         })?;
         if self.validate_token_bucket && !token_bucket.contains(&decoded.claims.sub, token) {
             return Err(JWTValidationError::TokenInvalidated);
@@ -264,8 +264,8 @@ impl<'a> TokenService<'a> {
     /// Log a user out of all sessions
     pub fn logout(&mut self, user_id: &str) -> Result<(), JWTLogoutError> {
         let mut token_bucket = self.token_bucket.write().map_err(|e| {
-            error!("logout: {}", e);
-            JWTLogoutError::ConcurrencyLockError(anyhow!("logout: {}", e))
+            error!("logout: {e}");
+            JWTLogoutError::ConcurrencyLockError(anyhow!("logout: {e}"))
         })?;
         token_bucket.clear(user_id);
         Ok(())

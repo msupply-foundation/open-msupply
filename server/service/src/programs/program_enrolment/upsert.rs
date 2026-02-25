@@ -195,7 +195,7 @@ fn validate(
     };
 
     let program_enrolment_json = validate_program_schema(input).map_err(|err| {
-        UpsertProgramEnrolmentError::InvalidDataSchema(format!("Invalid program data: {}", err))
+        UpsertProgramEnrolmentError::InvalidDataSchema(format!("Invalid program data: {err}"))
     })?;
 
     if input.parent.is_none()

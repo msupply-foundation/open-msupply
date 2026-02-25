@@ -523,12 +523,12 @@ mod test {
                     program_requisition_settings_id: order_type3
                         .program_requisition_settings_id
                         .clone(),
-                    max_mos: order_type3.max_mos.clone(),
-                    max_items_in_emergency_order: order_type3.max_items_in_emergency_order.clone(),
+                    max_mos: order_type3.max_mos,
+                    max_items_in_emergency_order: order_type3.max_items_in_emergency_order,
                     id: order_type3.id.clone(),
-                    is_emergency: order_type3.is_emergency.clone(),
-                    max_order_per_period: order_type3.max_order_per_period.clone(),
-                    threshold_mos: order_type3.threshold_mos.clone(),
+                    is_emergency: order_type3.is_emergency,
+                    max_order_per_period: order_type3.max_order_per_period,
+                    threshold_mos: order_type3.threshold_mos,
                     // renders empty vec for available periods
                     available_periods: vec![],
                 }],

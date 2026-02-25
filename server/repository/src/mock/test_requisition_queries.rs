@@ -52,8 +52,8 @@ pub fn mock_request_draft_requisition_all_fields_updated() -> FullMockRequisitio
 
 pub fn mock_request_draft_requisition_all_fields() -> FullMockRequisition {
     let requisition_id = "mock_request_draft_requisition_all_fields".to_string();
-    let line1_id = format!("{}1", requisition_id);
-    let line2_id = format!("{}2", requisition_id);
+    let line1_id = format!("{requisition_id}1");
+    let line2_id = format!("{requisition_id}2");
     FullMockRequisition {
         requisition: RequisitionRow {
             id: requisition_id.clone(),
@@ -116,7 +116,7 @@ pub fn mock_request_draft_requisition_all_fields() -> FullMockRequisition {
 
 pub fn mock_response_draft_requisition_all_fields() -> FullMockRequisition {
     let requisition_id = "mock_response_draft_requisition_all_fields".to_string();
-    let line1_id = format!("{}1", requisition_id);
+    let line1_id = format!("{requisition_id}1");
     FullMockRequisition {
         requisition: RequisitionRow {
             id: requisition_id.clone(),
@@ -164,8 +164,8 @@ pub fn mock_response_draft_requisition_all_fields() -> FullMockRequisition {
 
 pub fn mock_invoice1_linked_to_requisition() -> FullMockInvoice {
     let invoice_id = "mock_invoice1_linked_to_requisition".to_string();
-    let line1_id = format!("{}1", invoice_id);
-    let line2_id = format!("{}2", invoice_id);
+    let line1_id = format!("{invoice_id}1");
+    let line2_id = format!("{invoice_id}2");
 
     FullMockInvoice {
         invoice: InvoiceRow {
@@ -267,7 +267,7 @@ pub fn mock_invoice1_linked_to_requisition() -> FullMockInvoice {
 
 pub fn mock_invoice2_linked_to_requisition() -> FullMockInvoice {
     let invoice_id = "mock_invoice2_linked_to_requisition".to_string();
-    let line1_id = format!("{}1", invoice_id);
+    let line1_id = format!("{invoice_id}1");
 
     FullMockInvoice {
         invoice: InvoiceRow {
@@ -328,7 +328,7 @@ pub fn mock_invoice2_linked_to_requisition() -> FullMockInvoice {
 
 pub fn mock_invoice3_linked_to_requisition() -> FullMockInvoice {
     let invoice_id = "mock_invoice3_linked_to_requisition".to_string();
-    let line1_id = format!("{}1", invoice_id);
+    let line1_id = format!("{invoice_id}1");
 
     FullMockInvoice {
         invoice: InvoiceRow {

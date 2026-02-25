@@ -52,9 +52,9 @@ export const StockItemSearchInput = ({
   const fullFilter: ItemFilterInput = useMemo(() => {
     const result: ItemFilterInput = { ...filter, ...apiFilter };
     if (itemCategoryName) result['categoryName'] = itemCategoryName;
-    // For now, we are filtering items by "master_list", as they have the same ID
-    // as their equivalent program. In the future, this may change, so we can add
-    // another filter specifically for programs if required.
+    // For now, we are filtering items by "master_list", as they have the same
+    // ID as their equivalent program. In the future, this may change, so we can
+    // add another filter specifically for programs if required.
     if (programId) result['masterListId'] = { equalTo: programId };
     return result;
   }, [filter, apiFilter, itemCategoryName, programId]);

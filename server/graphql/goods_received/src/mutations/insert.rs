@@ -65,7 +65,7 @@ fn map_response(from: Result<GoodsReceivedRow, ServiceError>) -> Result<InsertRe
 }
 
 fn map_error(error: ServiceError) -> Result<InsertResponse> {
-    let formatted_error = format!("{:#?}", error);
+    let formatted_error = format!("{error:#?}");
 
     let graphql_error = match error {
         ServiceError::PurchaseOrderDoesNotExist | ServiceError::GoodsReceivedAlreadyExists => {

@@ -6,6 +6,7 @@ mod asset_location;
 mod asset_log_reason;
 mod asset_status_log;
 mod asset_type;
+mod available_volume_on_requisition;
 mod bundled_item;
 mod campaign;
 mod clinician;
@@ -65,8 +66,6 @@ mod vvm_status;
 mod vvm_status_log;
 mod warning;
 
-use std::{collections::HashSet, hash::Hasher};
-
 pub use asset::*;
 pub use asset_catalogue_item::*;
 pub use asset_category::*;
@@ -75,6 +74,7 @@ pub use asset_location::*;
 pub use asset_log_reason::*;
 pub use asset_status_log::*;
 pub use asset_type::*;
+pub use available_volume_on_requisition::*;
 pub use bundled_item::*;
 pub use campaign::*;
 pub use clinician::*;
@@ -134,75 +134,20 @@ pub use vvm_status::*;
 pub use vvm_status_log::*;
 pub use warning::*;
 
-#[derive(Debug, Clone)]
-/// Sometimes loaders need to take an extra parameter, like store_id or requisition_id
-/// And in some cases even further parameter is required (lookback date for ItemStats)
-/// New types can be defined for each loader based on it's needs, but to make it easier
-/// to add new complex loader inputs generic IdPair is used (don't need to impl (Hash, Eq, PartialEq)
-/// also helper methods are provided to extract unique ids from &[IdPair] that is passed to load method
-/// See StockLineByItemAndStoreIdLoaderInput for payload example
-pub struct IdPair<T>
-where
-    T: Clone,
-{
-    pub primary_id: String,
-    pub secondary_id: String,
-    pub payload: T,
-}
-
-impl<T: Clone> IdPair<T> {
-    pub fn get_all_secondary_ids(id_pairs: &[IdPair<T>]) -> Vec<String> {
-        id_pairs
-            .iter()
-            .map(|id_pair| id_pair.secondary_id.clone())
-            .collect()
-    }
-
-    fn extract_unique_ids(id_pairs: &[IdPair<T>]) -> (Vec<String>, Vec<String>) {
-        let mut primary_ids: HashSet<String> = HashSet::new();
-        let mut seconday_ids: HashSet<String> = HashSet::new();
-
-        for IdPair {
-            primary_id,
-            secondary_id,
-            ..
-        } in id_pairs
-        {
-            primary_ids.insert(primary_id.clone());
-            seconday_ids.insert(secondary_id.clone());
-        }
-
-        (
-            primary_ids.into_iter().collect(),
-            seconday_ids.into_iter().collect(),
-        )
-    }
-}
-
-impl<T: Clone> PartialEq for IdPair<T> {
-    fn eq(&self, other: &Self) -> bool {
-        self.primary_id == other.primary_id && self.secondary_id == other.secondary_id
-    }
-}
-
-impl<T: Clone> Eq for IdPair<T> {}
-
-impl<T: Clone> std::hash::Hash for IdPair<T> {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        format!("{}{}", self.primary_id, self.secondary_id).hash(state);
-    }
-}
-
 #[derive(Clone)]
 // Using struct instead of () to avoid conflicting new implementations
 pub struct EmptyPayload;
-pub type RequisitionAndItemId = IdPair<EmptyPayload>;
+
+#[derive(Clone, PartialEq, Eq, Debug, Hash)]
+pub struct RequisitionAndItemId {
+    pub requisition_id: String,
+    pub item_id: String,
+}
 impl RequisitionAndItemId {
     pub fn new(requisition_id: &str, item_id: &str) -> Self {
         RequisitionAndItemId {
-            primary_id: requisition_id.to_string(),
-            secondary_id: item_id.to_string(),
-            payload: EmptyPayload {},
+            requisition_id: requisition_id.to_string(),
+            item_id: item_id.to_string(),
         }
     }
 }
