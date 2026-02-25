@@ -5,7 +5,7 @@ import {
   FlatButton,
   PaperPopoverSection,
   useAuthContext,
-  usePaperClickPopover,
+  usePaperPopover,
   useTranslation,
   useNavigate,
   useUserDetails,
@@ -22,7 +22,7 @@ import { PropsWithChildrenOnly } from '@common/types';
 export const UserDetails: FC<PropsWithChildrenOnly> = ({ children }) => {
   const { logout, user, token } = useAuthContext();
   const navigate = useNavigate();
-  const { hide, PaperClickPopover } = usePaperClickPopover();
+  const { hide, PaperPopover } = usePaperPopover();
   const { isLoading } = useUserDetails(token);
   const t = useTranslation();
   const { getLocalisedFullName } = useIntlUtils();
@@ -57,8 +57,12 @@ export const UserDetails: FC<PropsWithChildrenOnly> = ({ children }) => {
   );
 
   return user ? (
-    <PaperClickPopover
-      placement="top"
+    <PaperPopover
+      mode="click"
+      placement={{
+        vertical: 'top',
+        horizontal: 'center',
+      }}
       Content={
         <PaperPopoverSection
           label={getLocalisedFullName(user.firstName, user.lastName)}
@@ -141,7 +145,7 @@ export const UserDetails: FC<PropsWithChildrenOnly> = ({ children }) => {
       }
     >
       {children}
-    </PaperClickPopover>
+    </PaperPopover>
   ) : (
     <></>
   );

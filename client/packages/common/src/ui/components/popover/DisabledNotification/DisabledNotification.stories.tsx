@@ -1,14 +1,12 @@
 import React from 'react';
 import { StoryFn } from '@storybook/react';
 import Box from '@mui/material/Box';
-import { BasePopover } from '../BasePopover';
 import { BaseButton } from '../../buttons';
 import { useDisabledNotificationPopover } from './useDisabledNotificationPopover';
 import { useDisabledNotificationToast } from './useDisabledNotificationToast';
 
 export default {
   title: 'Popover/DisabledNotification',
-  component: BasePopover,
 };
 
 const Example: StoryFn = () => {
