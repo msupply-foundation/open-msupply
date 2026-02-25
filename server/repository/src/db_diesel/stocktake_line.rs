@@ -5,10 +5,7 @@ use super::{
     StockLineRow, StocktakeLineRow, StorageConnection,
 };
 
-use diesel::{
-    dsl::{Eq, InnerJoin, IntoBoxed, LeftJoin, LeftJoinOn, Nullable},
-    prelude::*,
-};
+use diesel::{dsl::IntoBoxed, prelude::*};
 
 use crate::{
     diesel_macros::{
@@ -176,13 +173,7 @@ impl<'a> StocktakeLineRepository<'a> {
     }
 
     pub fn create_filtered_query(filter: Option<StocktakeLineFilter>) -> BoxedStocktakeLineQuery {
-        let mut query = stocktake_line::table
-            .inner_join(item_link::table.inner_join(item::table))
-            .left_join(stock_line::table)
-            .left_join(location::table)
-            .left_join(name::table.on(stocktake_line::donor_id.eq(name::id.nullable())))
-            .left_join(reason_option::table)
-            .into_boxed();
+        let mut query = query().into_boxed();
 
         if let Some(f) = filter {
             apply_equal_filter!(query, f.id, stocktake_line::id);
@@ -196,24 +187,17 @@ impl<'a> StocktakeLineRepository<'a> {
     }
 }
 
-type BoxedStocktakeLineQuery = IntoBoxed<
-    'static,
-    LeftJoin<
-        LeftJoinOn<
-            LeftJoin<
-                LeftJoin<
-                    InnerJoin<stocktake_line::table, InnerJoin<item_link::table, item::table>>,
-                    stock_line::table,
-                >,
-                location::table,
-            >,
-            name::table,
-            Eq<stocktake_line::donor_id, Nullable<name::id>>,
-        >,
-        reason_option::table,
-    >,
-    DBType,
->;
+#[diesel::dsl::auto_type]
+fn query() -> _ {
+    stocktake_line::table
+        .inner_join(item_link::table.inner_join(item::table))
+        .left_join(stock_line::table)
+        .left_join(location::table)
+        .left_join(name::table.on(stocktake_line::donor_id.eq(name::id.nullable())))
+        .left_join(reason_option::table)
+}
+
+type BoxedStocktakeLineQuery = IntoBoxed<'static, query, DBType>;
 
 fn to_domain(
     (line, (_, item), stock_line, location, donor, reason_option): StocktakeLineJoin,

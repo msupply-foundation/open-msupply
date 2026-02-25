@@ -11,16 +11,12 @@ use crate::{
     db_diesel::program_enrolment_row::program_enrolment,
     diesel_macros::{apply_date_time_filter, apply_equal_filter, apply_sort, apply_string_filter},
     latest_document, ClinicianLinkRow, ClinicianRow, DBType, DatetimeFilter, EncounterRow,
-    EncounterStatus, EqualFilter, NameRow, Pagination, PatientFilter,
-    PatientRepository, ProgramEnrolmentFilter, ProgramEnrolmentRepository, ProgramRow,
-    RepositoryError, Sort, StringFilter,
+    EncounterStatus, EqualFilter, NameRow, Pagination, PatientFilter, PatientRepository,
+    ProgramEnrolmentFilter, ProgramEnrolmentRepository, ProgramRow, RepositoryError, Sort,
+    StringFilter,
 };
 
-use diesel::{
-    dsl::{Eq, InnerJoinOn, IntoBoxed},
-    helper_types::{InnerJoin, LeftJoin},
-    prelude::*,
-};
+use diesel::{dsl::IntoBoxed, prelude::*};
 
 #[derive(Clone, Default)]
 pub struct EncounterFilter {
@@ -153,25 +149,18 @@ fn to_domain((encounter_row, program_row, name_row, clinician): EncounterJoin) -
 
 pub type EncounterSort = Sort<EncounterSortField>;
 
-type BoxedEncounterQuery = IntoBoxed<
-    'static,
-    LeftJoin<
-        InnerJoinOn<
-            InnerJoin<encounter::table, program::table>,
-            name::table,
-            Eq<encounter::patient_id, name::id>,
-        >,
-        InnerJoin<clinician_link::table, clinician::table>,
-    >,
-    DBType,
->;
-
-fn create_filtered_query(filter: Option<EncounterFilter>) -> BoxedEncounterQuery {
-    let mut query = encounter::table
+#[diesel::dsl::auto_type]
+fn query() -> _ {
+    encounter::table
         .inner_join(program::table)
         .inner_join(name::table.on(encounter::patient_id.eq(name::id)))
         .left_join(clinician_link::table.inner_join(clinician::table))
-        .into_boxed();
+}
+
+type BoxedEncounterQuery = IntoBoxed<'static, query, DBType>;
+
+fn create_filtered_query(filter: Option<EncounterFilter>) -> BoxedEncounterQuery {
+    let mut query = query().into_boxed();
 
     if let Some(f) = filter {
         let EncounterFilter {
