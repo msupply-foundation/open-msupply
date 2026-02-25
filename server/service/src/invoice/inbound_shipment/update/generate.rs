@@ -73,8 +73,6 @@ pub(crate) fn generate(
 
     if let Some(other_party) = other_party_option {
         update_invoice.name_store_id = other_party.store_id().map(|id| id.to_string());
-        // Assigning name_row id as name_link is ok, input name_row should always an active name
-        // - only querying needs to go via link table
         update_invoice.name_id = other_party.name_row.id;
     }
 

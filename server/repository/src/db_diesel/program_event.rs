@@ -10,11 +10,7 @@ use crate::{
     Sort, StringFilter,
 };
 
-use diesel::{
-    dsl::IntoBoxed,
-    helper_types::LeftJoin,
-    prelude::*,
-};
+use diesel::{dsl::IntoBoxed, prelude::*};
 
 #[derive(Clone, Default)]
 pub struct ProgramEventFilter {
@@ -155,18 +151,17 @@ pub struct ProgramEvent {
     pub name_row: Option<NameRow>,
 }
 
-type BoxedProgramEventQuery = IntoBoxed<
-    'static,
-    LeftJoin<program_event::table, name::table>,
-    DBType,
->;
+#[diesel::dsl::auto_type]
+fn query() -> _ {
+    program_event::table.left_join(name::table)
+}
+
+type BoxedProgramEventQuery = IntoBoxed<'static, query, DBType>;
 
 fn create_filtered_query(
     filter: Option<ProgramEventFilter>,
 ) -> BoxedProgramEventQuery {
-    let mut query = program_event::table
-        .left_join(name::table)
-        .into_boxed();
+    let mut query = query().into_boxed();
     query = apply_program_event_filters!(query, filter.clone());
     apply_patient_id_filters!(query, filter)
 }

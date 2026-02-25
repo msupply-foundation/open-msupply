@@ -39,12 +39,10 @@ joinable!(item_variant_with_links -> name_link (manufacturer_link_id));
 allow_tables_to_appear_in_same_query!(item_variant, item_link);
 allow_tables_to_appear_in_same_query!(item_variant, item);
 allow_tables_to_appear_in_same_query!(item_variant, user_account);
-allow_tables_to_appear_in_same_query!(item_variant, name_link);
 allow_tables_to_appear_in_same_query!(item_variant, name);
 allow_tables_to_appear_in_same_query!(item_variant, location_type);
 allow_tables_to_appear_in_same_query!(item_variant, barcode);
 allow_tables_to_appear_in_same_query!(item_variant, location);
-allow_tables_to_appear_in_same_query!(item_variant_with_links, name_link);
 
 #[derive(Clone, Queryable, Debug, PartialEq, Default, Serialize, Deserialize)]
 #[diesel(table_name = item_variant)]

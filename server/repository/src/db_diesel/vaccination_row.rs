@@ -51,6 +51,7 @@ define_linked_tables! {
 joinable!(vaccination -> clinician_link (clinician_link_id));
 joinable!(vaccination -> item_link (item_link_id));
 joinable!(vaccination -> vaccine_course_dose (vaccine_course_dose_id));
+joinable!(vaccination -> name (facility_name_id));
 
 allow_tables_to_appear_in_same_query!(vaccination, name);
 allow_tables_to_appear_in_same_query!(vaccination, clinician_link);
@@ -129,7 +130,7 @@ impl<'a> VaccinationRowRepository<'a> {
             record_id: row.id,
             row_action: action,
             store_id: None,
-            name_link_id: Some(row.patient_id),
+            name_id: Some(row.patient_id),
         };
 
         ChangelogRepository::new(self.connection).insert(&row)

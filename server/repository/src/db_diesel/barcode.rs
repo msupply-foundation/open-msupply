@@ -1,10 +1,7 @@
 use super::{
     barcode_row::barcode, name_row::name, BarcodeRow, DBType, NameRow, StorageConnection,
 };
-use diesel::{
-    helper_types::{IntoBoxed, LeftJoin},
-    prelude::*,
-};
+use diesel::{dsl::IntoBoxed, prelude::*};
 
 use crate::{
     diesel_macros::{apply_equal_filter, apply_sort_no_case},
@@ -36,11 +33,12 @@ pub enum BarcodeSortField {
 pub type BarcodeSort = Sort<BarcodeSortField>;
 type BarcodeJoin = (BarcodeRow, Option<NameRow>);
 
-type BoxedBarcodeQuery = IntoBoxed<
-    'static,
-    LeftJoin<barcode::table, name::table>,
-    DBType,
->;
+#[diesel::dsl::auto_type]
+fn query() -> _ {
+    barcode::table.left_join(name::table)
+}
+
+type BoxedBarcodeQuery = IntoBoxed<'static, query, DBType>;
 
 pub struct BarcodeRepository<'a> {
     connection: &'a StorageConnection,
@@ -94,9 +92,7 @@ impl<'a> BarcodeRepository<'a> {
 fn create_filtered_query(
     filter: Option<BarcodeFilter>,
 ) -> BoxedBarcodeQuery {
-    let mut query = barcode::table
-        .left_join(name::table)
-        .into_boxed();
+    let mut query = query().into_boxed();
 
     if let Some(filter) = filter {
         apply_equal_filter!(query, filter.id, barcode::id);

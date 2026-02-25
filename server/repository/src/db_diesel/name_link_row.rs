@@ -1,4 +1,4 @@
-use super::{location_type_row::location_type, name_link_row::name_link::dsl::*, name_row::name};
+use super::{name_link_row::name_link::dsl::*, name_row::name};
 
 use crate::{RepositoryError, StorageConnection, Upsert};
 
@@ -11,7 +11,6 @@ table! {
     }
 }
 joinable!(name_link -> name (name_id));
-allow_tables_to_appear_in_same_query!(name_link, location_type);
 
 #[derive(Queryable, Insertable, Clone, Debug, PartialEq, AsChangeset, Eq, Default)]
 #[diesel(table_name = name_link)]
@@ -69,13 +68,6 @@ impl<'a> NameLinkRowRepository<'a> {
     pub fn find_many_by_name_id(&self, name: &str) -> Result<Vec<NameLinkRow>, RepositoryError> {
         let result = name_link
             .filter(name_id.eq(name))
-            .load::<NameLinkRow>(self.connection.lock().connection())?;
-        Ok(result)
-    }
-
-    pub fn find_all_by_id(&self, ids: Vec<String>) -> Result<Vec<NameLinkRow>, RepositoryError> {
-        let result = name_link
-            .filter(name_link::id.eq_any(ids))
             .load::<NameLinkRow>(self.connection.lock().connection())?;
         Ok(result)
     }

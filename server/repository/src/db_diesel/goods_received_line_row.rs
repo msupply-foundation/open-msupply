@@ -47,7 +47,6 @@ joinable!(goods_received_line_with_links -> name_link (manufacturer_link_id));
 allow_tables_to_appear_in_same_query!(goods_received_line, item_link);
 allow_tables_to_appear_in_same_query!(goods_received_line, item);
 allow_tables_to_appear_in_same_query!(goods_received_line, goods_received);
-allow_tables_to_appear_in_same_query!(goods_received_line_with_links, name_link);
 
 #[derive(Clone, Queryable, Debug, Serialize, Deserialize, Default, PartialEq)]
 #[diesel(table_name = goods_received_line)]
@@ -126,7 +125,7 @@ impl<'a> GoodsReceivedLineRowRepository<'a> {
             record_id: row.id,
             row_action: action,
             store_id: Some(store_id),
-            name_link_id: None,
+            name_id: None,
         };
         ChangelogRepository::new(self.connection).insert(&row)
     }

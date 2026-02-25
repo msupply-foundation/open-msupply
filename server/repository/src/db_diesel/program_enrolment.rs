@@ -11,7 +11,7 @@ use crate::{
     StringFilter,
 };
 
-use diesel::{dsl::{Eq, InnerJoinOn, IntoBoxed}, helper_types::InnerJoin, prelude::*};
+use diesel::{dsl::IntoBoxed, prelude::*};
 
 #[derive(Clone, Default)]
 pub struct ProgramEnrolmentFilter {
@@ -108,15 +108,14 @@ pub struct ProgramEnrolment {
 
 pub type ProgramEnrolmentSort = Sort<ProgramEnrolmentSortField>;
 
-type BoxedProgramEnrolmentQuery = IntoBoxed<
-    'static,
-    InnerJoinOn<
-        InnerJoin<program_enrolment::table, program::table>,
-        name::table,
-        Eq<program_enrolment::patient_id, name::id>,
-    >,
-    DBType,
->;
+#[diesel::dsl::auto_type]
+fn query() -> _ {
+    program_enrolment::table
+        .inner_join(program::table)
+        .inner_join(name::table.on(program_enrolment::patient_id.eq(name::id)))
+}
+
+type BoxedProgramEnrolmentQuery = IntoBoxed<'static, query, DBType>;
 
 pub struct ProgramEnrolmentRepository<'a> {
     connection: &'a StorageConnection,
@@ -191,10 +190,7 @@ impl<'a> ProgramEnrolmentRepository<'a> {
     pub fn create_filtered_query(
         filter: Option<ProgramEnrolmentFilter>,
     ) -> BoxedProgramEnrolmentQuery {
-        let mut query = program_enrolment::table
-            .inner_join(program::table)
-            .inner_join(name::table.on(program_enrolment::patient_id.eq(name::id)))
-            .into_boxed();
+        let mut query = query().into_boxed();
 
         if let Some(ProgramEnrolmentFilter {
             id,

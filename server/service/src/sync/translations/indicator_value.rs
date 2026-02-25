@@ -59,7 +59,7 @@ impl SyncTranslation for IndicatorValue {
             store_id,
             value,
         } = serde_json::from_str::<LegacyIndicatorValue>(&sync_record.data)?;
-        let customer_name_link_id = StoreRepository::new(connection)
+        let customer_name_id = StoreRepository::new(connection)
             .query_one(StoreFilter::new().id(EqualFilter::equal_to(customer_store_id.to_string())))?
             .ok_or(anyhow::anyhow!(
                 "The store record for facility_ID/customer_store_id could not be found! {customer_store_id}"
@@ -69,7 +69,7 @@ impl SyncTranslation for IndicatorValue {
 
         Ok(PullTranslateResult::upsert(IndicatorValueRow {
             id,
-            customer_name_id: customer_name_link_id,
+            customer_name_id,
             store_id,
             period_id,
             indicator_line_id,
@@ -95,7 +95,7 @@ impl SyncTranslation for IndicatorValue {
 
         let IndicatorValueRow {
             id,
-            customer_name_id: customer_name_link_id,
+            customer_name_id,
             store_id,
             period_id,
             indicator_line_id,
@@ -104,9 +104,9 @@ impl SyncTranslation for IndicatorValue {
         } = indicator_value.indicator_value_row;
 
         let customer_store_id = StoreRepository::new(connection)
-            .query_one(StoreFilter::new().name_id(EqualFilter::equal_to(customer_name_link_id.to_string())))?
+            .query_one(StoreFilter::new().name_id(EqualFilter::equal_to(customer_name_id.to_string())))?
             .ok_or(anyhow::anyhow!(
-                "The store record for customer_name_link_id could not be found! {customer_name_link_id}"
+                "The store record for customer_name_id could not be found! {customer_name_id}"
             ))?
             .store_row
             .id;
