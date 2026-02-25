@@ -137,13 +137,13 @@ const UIComponent = (props: ControlProps) => {
         handleChange={onPeriodChange}
       />
       <DateFilter
-        label={t('label.start-date')}
+        label={t('label.from-date')}
         value={form.after}
         handleChange={date => onDateChange('after', date)}
         maxDate={form.before ?? undefined}
       />
       <DateFilter
-        label={t('label.end-date')}
+        label={t('label.to-date')}
         value={form.before}
         handleChange={date => onDateChange('before', date)}
         minDate={form.after ?? undefined}
