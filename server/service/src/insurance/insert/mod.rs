@@ -38,7 +38,7 @@ impl From<SingleRecordError> for InsertInsuranceError {
 #[derive(PartialEq, Debug, Clone, Default)]
 pub struct InsertInsurance {
     pub id: String,
-    pub name_link_id: String,
+    pub name_id: String,
     pub insurance_provider_id: String,
     pub policy_number_person: String,
     pub policy_number_family: String,

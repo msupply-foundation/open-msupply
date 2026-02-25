@@ -34,7 +34,7 @@ impl SyncRecordTester for PatientNameAndStoreAndNameStoreJoinTester {
 
         let store_row = StoreRow {
             id: uuid(),
-            name_link_id: facility_name_row.id.clone(),
+            name_id: facility_name_row.id.clone(),
             code: small_uuid(),
             site_id: new_site_properties.site_id as i32,
             logo: None,
@@ -74,14 +74,14 @@ impl SyncRecordTester for PatientNameAndStoreAndNameStoreJoinTester {
 
         let patient_name_store_join_row = NameStoreJoinRow {
             id: uuid(),
-            name_link_id: patient_name_row.id.clone(),
+            name_id: patient_name_row.id.clone(),
             store_id: store_row.id.clone(),
             name_is_customer: true,
             name_is_supplier: false,
         };
         let patient_name_store_join_json = json!({
             "ID": patient_name_store_join_row.id,
-            "name_ID": patient_name_store_join_row.name_link_id,
+            "name_ID": patient_name_store_join_row.name_id,
             "store_ID": patient_name_store_join_row.store_id
         });
 

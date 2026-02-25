@@ -4,8 +4,7 @@ use crate::sync::CentralServerConfig;
 
 use super::{PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType};
 use repository::{
-    ChangelogRow, ChangelogTableName, EncounterRowRepository, NameLinkRowRepository,
-    StorageConnection,
+    ChangelogRow, ChangelogTableName, EncounterRowRepository, StorageConnection,
 };
 
 /*
@@ -78,22 +77,12 @@ impl SyncTranslation for EncounterLegacyTranslation {
                 changelog.record_id
             )))?;
 
-        let name_link_repo = NameLinkRowRepository::new(connection);
-
-        let patient_name_id = name_link_repo
-            .find_one_by_id(&encounter_row.patient_id)?
-            .ok_or(anyhow::Error::msg(format!(
-                "Patient name link ({}) not found",
-                encounter_row.patient_id
-            )))?
-            .id;
-
         let legacy_row = LegacyEncounterRow {
             ID: encounter_row.id,
             document_type: encounter_row.document_type,
             document_name: encounter_row.document_name,
             program_ID: encounter_row.program_id,
-            name_ID: patient_name_id,
+            name_ID: encounter_row.patient_id,
             created_datetime: encounter_row.created_datetime.and_utc().to_rfc3339(),
             start_datetime: encounter_row.start_datetime.and_utc().to_rfc3339(),
             end_datetime: encounter_row
