@@ -71,7 +71,7 @@ impl<'a> AssetInternalLocationRowRepository<'a> {
             record_id: row.id.clone(),
             row_action: action,
             store_id: store_id_location.or_else(|| store_id_asset),
-            name_link_id: None,
+            name_id: None,
         };
 
         ChangelogRepository::new(self.connection).insert(&row)

@@ -40,7 +40,7 @@ define_linked_tables! {
         comment -> Nullable<Text>,
         reference -> Nullable<Text>,
         currency_id -> Nullable<Text>,
-        foreign_exchange_rate -> Double,
+        foreign_exchange_rate -> Nullable<Double>,
         shipping_method -> Nullable<Text>,
         sent_datetime -> Nullable<Timestamp>,
         contract_signed_date -> Nullable<Date>,
@@ -92,7 +92,7 @@ pub struct PurchaseOrderRow {
     pub comment: Option<String>,
     pub reference: Option<String>,
     pub currency_id: Option<String>,
-    pub foreign_exchange_rate: f64,
+    pub foreign_exchange_rate: Option<f64>,
     pub shipping_method: Option<String>,
     pub sent_datetime: Option<NaiveDateTime>,
     pub contract_signed_date: Option<NaiveDate>,
@@ -158,7 +158,7 @@ impl<'a> PurchaseOrderRowRepository<'a> {
             record_id: row.id,
             row_action: action,
             store_id: Some(row.store_id),
-            name_link_id: None,
+            name_id: None,
         };
 
         ChangelogRepository::new(self.connection).insert(&row)
@@ -264,7 +264,7 @@ mod test {
                 store_id: mock_store_a().id.clone(),
                 created_datetime: chrono::Utc::now().naive_utc(),
                 purchase_order_number: po_number,
-                foreign_exchange_rate: 1.00,
+
                 ..Default::default()
             };
             po_number += 1;

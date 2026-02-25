@@ -74,7 +74,7 @@ impl<'a> AssetLogReasonRowRepository<'a> {
             record_id: asset_log_id,
             row_action: action,
             store_id: None,
-            name_link_id: None,
+            name_id: None,
         };
 
         ChangelogRepository::new(self.connection).insert(&row)
