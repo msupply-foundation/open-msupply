@@ -1,5 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
-import { useInbound } from '.';
+import { useCallback, useEffect, useState, useMemo } from 'react';
 import {
   useConfirmOnLeaving,
   useNotification,
@@ -11,6 +10,9 @@ import { CreateDraft } from '../../DetailView/modals/utils';
 import { useDeleteInboundLines } from './line/useDeleteInboundLines';
 import { mapErrorToMessageAndSetContext } from './mapErrorToMessageAndSetContext';
 import { ScannedBatchData } from '../../DetailView';
+import { useInboundShipment } from './document/useInboundShipment';
+import { useSaveInboundLines } from './utils';
+import { getInboundStockLines } from '../../../utils';
 
 export type PatchDraftLineInput = Partial<DraftInboundLine> & { id: string };
 
@@ -23,9 +25,20 @@ export const useDraftInboundLines = (
 
   const [draftLines, setDraftLines] = useState<DraftInboundLine[]>([]);
 
-  const { id } = useInbound.document.fields('id');
-  const { data: lines } = useInbound.lines.list(itemId ?? '');
-  const { mutateAsync, isLoading } = useInbound.lines.save();
+  const {
+    query: { data },
+  } = useInboundShipment();
+  const id = data?.id ?? '';
+
+  // Derive lines from the same data source, filtering by itemId if provided
+  const lines = useMemo(() => {
+    if (!data) return undefined;
+    return itemId
+      ? data.lines.nodes.filter(({ item }) => itemId === item.id)
+      : getInboundStockLines(data.lines.nodes);
+  }, [data, itemId]);
+
+  const { mutateAsync, isLoading } = useSaveInboundLines();
   const { mutateAsync: deleteMutation } = useDeleteInboundLines();
 
   const { isDirty, setIsDirty } = useConfirmOnLeaving(

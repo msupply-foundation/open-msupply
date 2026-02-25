@@ -84,6 +84,6 @@ fn to_standard_error<I>(input: I, error: Error) -> Error
 where
     I: std::fmt::Debug,
 {
-    let input_string = format!("{:#?}", input);
+    let input_string = format!("{input:#?}");
     error.extend_with(|_, e| e.set("input", input_string))
 }

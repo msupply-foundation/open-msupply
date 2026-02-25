@@ -108,9 +108,9 @@ pub fn map_response(
 fn map_error(error: SaveGoodsReceivedLinesError) -> Result<SaveGoodsReceivedLineResponse> {
     use SaveGoodsReceivedLinesError::*;
 
-    let formatted_error = format!("{:#?}", error);
+    let formatted_error = format!("{error:#?}");
 
-    log::error!("Error saving goods received lines: {}", formatted_error);
+    log::error!("Error saving goods received lines: {formatted_error}");
 
     let graph_error = match error {
         LineInsertError { .. }

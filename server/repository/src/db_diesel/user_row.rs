@@ -158,7 +158,7 @@ mod test {
         let repo = UserAccountRowRepository::new(&connection);
         // Try upsert all variants of Language, confirm that diesel enums match postgres
         for variant in LanguageType::iter() {
-            let id = format!("{:?}", variant);
+            let id = format!("{variant:?}");
             let result = repo.insert_one(&UserAccountRow {
                 id: id.clone(),
                 language: variant.clone(),

@@ -85,7 +85,7 @@ pub fn map_response(from: Result<String, ServiceError>) -> Result<DeleteResponse
 
 fn map_error(error: ServiceError) -> Result<DeleteErrorInterface> {
     use StandardGraphqlError::*;
-    let formatted_error = format!("{:#?}", error);
+    let formatted_error = format!("{error:#?}");
 
     let graphql_error = match error {
         // Structured Errors

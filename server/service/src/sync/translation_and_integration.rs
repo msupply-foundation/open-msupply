@@ -119,7 +119,7 @@ impl<'a> TranslationAndIntegration<'a> {
                         ignored = true;
                         self.sync_buffer.record_integration_error(
                             sync_record,
-                            &anyhow::anyhow!("Ignored: {}", ignore_message),
+                            &anyhow::anyhow!("Ignored: {ignore_message}"),
                         )?;
                         result.insert_error(&sync_record.table_name);
 
@@ -161,7 +161,7 @@ impl<'a> TranslationAndIntegration<'a> {
                 }
                 // Record database_error in sync buffer and in result
                 Err(database_error) => {
-                    let error = anyhow::anyhow!("{:?}", database_error);
+                    let error = anyhow::anyhow!("{database_error:?}");
                     self.sync_buffer
                         .record_integration_error(sync_record, &error)?;
                     result.insert_error(&sync_record.table_name);
@@ -245,6 +245,28 @@ pub(crate) fn integrate(
 impl TranslationAndIntegrationResults {
     fn new() -> TranslationAndIntegrationResults {
         Default::default()
+    }
+
+    pub(crate) fn log(&self, operation_name: &str) {
+        let has_results = !self.0.is_empty()
+            && self
+                .0
+                .values()
+                .any(|result| result.integrated_count > 0 || result.errors_count > 0);
+        if has_results {
+            for (table_name, result) in &self.0 {
+                if result.errors_count > 0 {
+                    log::warn!("{operation_name} Integration result for {table_name}: {result:?}");
+                } else {
+                    log::info!("{operation_name} Integration result for {table_name}: {result:?}");
+                }
+            }
+        } else {
+            log::debug!(
+                "{operation_name} Integration result: No records integrated or errored {:?}",
+                self.0
+            );
+        }
     }
 
     fn insert_error(&mut self, table_name: &str) {

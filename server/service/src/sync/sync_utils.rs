@@ -23,6 +23,6 @@ pub fn map_name_link_id_to_name_id(
 
     let name_id = name_row
         .map(|row| row.name_id)
-        .ok_or_else(|| RepositoryError::NotFound)?;
+        .ok_or(RepositoryError::NotFound)?;
     Ok(name_id)
 }

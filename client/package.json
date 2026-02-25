@@ -73,6 +73,7 @@
     "@types/recharts": "^1.8.23",
     "@typescript-eslint/eslint-plugin": "^7.15.0",
     "@typescript-eslint/parser": "^7.15.0",
+    "@welldone-software/why-did-you-render": "^10.0.1",
     "babel-jest": "^29.6.2",
     "babel-loader": "^9.1.2",
     "babel-preset-react-app": "^10.0.1",

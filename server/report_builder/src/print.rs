@@ -87,8 +87,7 @@ fn token_request(url: Url, config: &Config) -> anyhow::Result<String> {
     let auth_token = &result.data["authToken"];
     if auth_token["__typename"] != "AuthToken" {
         return Err(anyhow::Error::msg(format!(
-            "Failed to authenticate: {:?}",
-            result
+            "Failed to authenticate: {result:?}"
         )));
     }
     Ok(auth_token["token"].as_str().unwrap().to_string())
@@ -118,8 +117,7 @@ fn fetch_store_id(url: Url, token: &str, store_name: &str) -> anyhow::Result<Str
         .and_then(|s| s.as_str());
     let Some(store_id) = store_id else {
         return Err(anyhow::Error::msg(format!(
-            "Can't find store: {:?}\n{:#?}",
-            store_name, gql_result
+            "Can't find store: {store_name:?}\n{gql_result:#?}"
         )));
     };
 
@@ -159,8 +157,7 @@ fn generate_request(
     let result = &gql_result.data["generateReportDefinition"];
     if result["__typename"] != "PrintReportNode" {
         return Err(anyhow::Error::msg(format!(
-            "Failed to generate report: status={:?}  {:#?}",
-            status, gql_result
+            "Failed to generate report: status={status:?}  {gql_result:#?}"
         )));
     }
 
@@ -199,15 +196,14 @@ fn fetch_file(
             let parent_dir = Path::new(output_filename)
                 .parent()
                 .ok_or(anyhow::Error::msg(format!(
-                    "Invalid output path: {:?}",
-                    output_filename
+                    "Invalid output path: {output_filename:?}"
                 )))?;
             fs::create_dir_all(parent_dir)?;
             output_filename.to_string()
         }
         None => filename,
     };
-    println!("> Write report to: {}", output_filename);
+    println!("> Write report to: {output_filename}");
     fs::write(&output_filename, result.bytes()?)?;
     Ok(output_filename)
 }
@@ -236,29 +232,29 @@ pub fn generate_report(
     excel_template_file: Option<String>,
 ) -> anyhow::Result<()> {
     let arguments = if let Some(arguments_file) = arguments_file {
-        println!("> Load arguments from: {}", arguments_file);
+        println!("> Load arguments from: {arguments_file}");
         let report_data = fs::read_to_string(arguments_file)
-            .map_err(|err| anyhow::Error::msg(format!("Failed to load argument file: {}", err)))?;
+            .map_err(|err| anyhow::Error::msg(format!("Failed to load argument file: {err}")))?;
         Some(serde_json::from_str(&report_data)?)
     } else {
         None
     };
 
-    println!("> Load report data from: {}", report_file);
+    println!("> Load report data from: {report_file}");
     let report_data = fs::read_to_string(report_file).map_err(|err| {
-        anyhow::Error::msg(format!("Failed to load report definition file: {}", err))
+        anyhow::Error::msg(format!("Failed to load report definition file: {err}"))
     })?;
     let report: serde_json::Value = serde_json::from_str(&report_data).map_err(|err| {
-        anyhow::Error::msg(format!("Failed to parse report definition file: {}", err))
+        anyhow::Error::msg(format!("Failed to parse report definition file: {err}"))
     })?;
 
-    println!("> Load remote server config from: {}", config_path);
+    println!("> Load remote server config from: {config_path}");
     let config_data = fs::read_to_string(config_path)
-        .map_err(|err| anyhow::Error::msg(format!("Failed to load config file: {}", err)))?;
+        .map_err(|err| anyhow::Error::msg(format!("Failed to load config file: {err}")))?;
     let config: Config = serde_yaml::from_str(&config_data)
-        .map_err(|err| anyhow::Error::msg(format!("Failed to parse config file: {}", err)))?;
+        .map_err(|err| anyhow::Error::msg(format!("Failed to parse config file: {err}")))?;
 
-    let excel_template_buffer = excel_template_file.map(|path| fs::read(path)).transpose()?;
+    let excel_template_buffer = excel_template_file.map(fs::read).transpose()?;
 
     let inner_data = ReportGenerateData {
         report,
@@ -291,16 +287,15 @@ pub fn generate_report_inner(input: ReportGenerateData) -> anyhow::Result<()> {
     } = input;
 
     let base_url = Url::parse(&config.url)
-        .map_err(|err| anyhow::Error::msg(format!("Invalid base url: {}", err)))?;
+        .map_err(|err| anyhow::Error::msg(format!("Invalid base url: {err}")))?;
     let gql_url = base_url.join("graphql")?;
     let files_url = base_url.join("files")?;
 
-    println!("> User graphql endpoint: {}", gql_url);
+    println!("> User graphql endpoint: {gql_url}");
     println!("> Authenticate with remote server");
     let token = token_request(gql_url.clone(), &config).map_err(|err| {
         anyhow::Error::msg(format!(
-            "Failed to authenticate with remote server: {}",
-            err
+            "Failed to authenticate with remote server: {err}"
         ))
     })?;
 
@@ -333,9 +328,9 @@ pub fn generate_report_inner(input: ReportGenerateData) -> anyhow::Result<()> {
         format,
         excel_template_buffer,
     )
-    .map_err(|err| anyhow::Error::msg(format!("Failed to fetch report data: {}", err)))?;
+    .map_err(|err| anyhow::Error::msg(format!("Failed to fetch report data: {err}")))?;
 
-    println!("> Download report from {}", files_url);
+    println!("> Download report from {files_url}");
     fetch_file(files_url, &token, &file_id, &output_filename)?;
 
     Ok(())
