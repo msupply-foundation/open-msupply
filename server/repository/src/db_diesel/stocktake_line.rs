@@ -193,7 +193,7 @@ fn query() -> _ {
         .inner_join(item_link::table.inner_join(item::table))
         .left_join(stock_line::table)
         .left_join(location::table)
-        .left_join(name::table.on(stocktake_line::donor_id.eq(name::id.nullable())))
+        .left_join(name::table)
         .left_join(reason_option::table)
 }
 

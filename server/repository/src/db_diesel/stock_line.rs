@@ -281,7 +281,7 @@ fn query() -> _ {
         .inner_join(item_link::table.inner_join(item::table))
         .left_join(item_variant::table)
         .left_join(location::table)
-        .left_join(name::table.on(stock_line::supplier_id.eq(name::id.nullable())))
+        .left_join(name::table)
         .left_join(barcode::table)
         .left_join(vvm_status::table)
 }
