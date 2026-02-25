@@ -1,6 +1,6 @@
 use super::{
     campaign_row::campaign, item_link_row::item_link, item_variant::item_variant_row::item_variant,
-    location_row::location, name_link_row::name_link, name_row::name, store_row::store,
+    location_row::location, name_row::name, store_row::store,
     StorageConnection,
 };
 
