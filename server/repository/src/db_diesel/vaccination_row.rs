@@ -129,7 +129,7 @@ impl<'a> VaccinationRowRepository<'a> {
             record_id: row.id,
             row_action: action,
             store_id: None,
-            name_link_id: Some(row.patient_id),
+            name_id: Some(row.patient_id),
         };
 
         ChangelogRepository::new(self.connection).insert(&row)

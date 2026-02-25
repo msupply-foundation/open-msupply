@@ -122,7 +122,7 @@ impl<'a> ReportRowRepository<'a> {
             record_id: uid.to_string(),
             row_action: action,
             store_id: None,
-            name_link_id: None,
+            name_id: None,
         };
         ChangelogRepository::new(self.connection).insert(&row)
     }
