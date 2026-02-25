@@ -41,14 +41,18 @@ pub fn validate(
             },
         )?;
 
-        // If changing to Received, verify no pending lines
+        // All pending lines must be resolved (accepted or rejected) before the invoice can be
+        // received or verified, otherwise stock would be created for lines that haven't been
+        // reviewed yet.
         use UpdateInboundShipmentStatus::*;
         if matches!(patch.status, Some(Received | Verified)) {
             check_no_pending_lines(&invoice.id, connection)?;
         }
     }
 
-    // Delivered datetime check
+    // Delivered datetime is only editable for external inbound shipments (those created from a
+    // purchase order). It must not be in the future and must not be after the received datetime,
+    // as the goods can't have been delivered after they were received.
     if let Some(delivered_datetime) = patch.delivered_datetime {
         if invoice.purchase_order_id.is_none() {
             return Err(CanOnlyChangeDateOfExternalInboundShipments);

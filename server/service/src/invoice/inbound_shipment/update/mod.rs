@@ -237,8 +237,9 @@ mod test {
         test_db::setup_all_with_data,
         vvm_status::vvm_status_log::{VVMStatusLogFilter, VVMStatusLogRepository},
         ActivityLogRowRepository, ActivityLogType, EqualFilter, InvoiceLineFilter, InvoiceLineRow,
-        InvoiceLineRowRepository, InvoiceLineType, InvoiceRow, InvoiceRowRepository, InvoiceStatus,
-        NameRow, NameStoreJoinRow, StockLineRowRepository,
+        InvoiceLineRowRepository, InvoiceLineStatus, InvoiceLineType, InvoiceRow,
+        InvoiceRowRepository, InvoiceStatus, InvoiceType, NameRow, NameStoreJoinRow,
+        StockLineRowRepository,
     };
 
     use crate::{
@@ -1233,5 +1234,212 @@ mod test {
         result.sort_by(|a, b| a.id.cmp(&b.id));
 
         assert!(result.iter().all(|line| line.donor_link_id.is_none()));
+    }
+
+    #[actix_rt::test]
+    async fn update_inbound_shipment_cannot_receive_with_pending_lines() {
+        fn delivered_invoice() -> InvoiceRow {
+            InvoiceRow {
+                id: "delivered_invoice_with_pending".to_string(),
+                name_link_id: mock_name_a().id,
+                store_id: mock_store_a().id,
+                r#type: InvoiceType::InboundShipment,
+                status: InvoiceStatus::Delivered,
+                ..Default::default()
+            }
+        }
+
+        fn pending_line() -> InvoiceLineRow {
+            InvoiceLineRow {
+                id: "pending_line".to_string(),
+                invoice_id: delivered_invoice().id,
+                item_link_id: mock_item_a().id,
+                r#type: InvoiceLineType::StockIn,
+                pack_size: 1.0,
+                number_of_packs: 10.0,
+                status: Some(InvoiceLineStatus::Pending),
+                ..Default::default()
+            }
+        }
+
+        fn passed_line() -> InvoiceLineRow {
+            InvoiceLineRow {
+                id: "passed_line_on_pending_invoice".to_string(),
+                invoice_id: delivered_invoice().id,
+                item_link_id: mock_item_a().id,
+                r#type: InvoiceLineType::StockIn,
+                pack_size: 1.0,
+                number_of_packs: 5.0,
+                status: Some(InvoiceLineStatus::Passed),
+                ..Default::default()
+            }
+        }
+
+        let (_, _, connection_manager, _) = setup_all_with_data(
+            "update_inbound_cannot_receive_pending",
+            MockDataInserts::all(),
+            MockData {
+                invoices: vec![delivered_invoice()],
+                invoice_lines: vec![pending_line(), passed_line()],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_a().id, mock_user_account_a().id)
+            .unwrap();
+        let service = service_provider.invoice_service;
+
+        // Cannot receive when there are still pending lines
+        assert_eq!(
+            service.update_inbound_shipment(
+                &context,
+                UpdateInboundShipment {
+                    id: delivered_invoice().id,
+                    status: Some(UpdateInboundShipmentStatus::Received),
+                    ..Default::default()
+                }
+            ),
+            Err(ServiceError::CannotReceiveWithPendingLines)
+        );
+
+        // Cannot verify when there are still pending lines
+        assert_eq!(
+            service.update_inbound_shipment(
+                &context,
+                UpdateInboundShipment {
+                    id: delivered_invoice().id,
+                    status: Some(UpdateInboundShipmentStatus::Verified),
+                    ..Default::default()
+                }
+            ),
+            Err(ServiceError::CannotReceiveWithPendingLines)
+        );
+    }
+
+    #[actix_rt::test]
+    async fn update_inbound_shipment_rejected_lines_no_stock() {
+        fn delivered_invoice() -> InvoiceRow {
+            InvoiceRow {
+                id: "delivered_invoice_line_status".to_string(),
+                name_link_id: mock_name_a().id,
+                store_id: mock_store_a().id,
+                r#type: InvoiceType::InboundShipment,
+                status: InvoiceStatus::Delivered,
+                ..Default::default()
+            }
+        }
+
+        fn passed_line() -> InvoiceLineRow {
+            InvoiceLineRow {
+                id: "status_test_passed_line".to_string(),
+                invoice_id: delivered_invoice().id,
+                item_link_id: mock_item_a().id,
+                r#type: InvoiceLineType::StockIn,
+                pack_size: 1.0,
+                number_of_packs: 10.0,
+                status: Some(InvoiceLineStatus::Passed),
+                ..Default::default()
+            }
+        }
+
+        fn rejected_line() -> InvoiceLineRow {
+            InvoiceLineRow {
+                id: "status_test_rejected_line".to_string(),
+                invoice_id: delivered_invoice().id,
+                item_link_id: mock_item_a().id,
+                r#type: InvoiceLineType::StockIn,
+                pack_size: 1.0,
+                number_of_packs: 5.0,
+                status: Some(InvoiceLineStatus::Rejected),
+                ..Default::default()
+            }
+        }
+
+        fn no_status_line() -> InvoiceLineRow {
+            InvoiceLineRow {
+                id: "status_test_no_status_line".to_string(),
+                invoice_id: delivered_invoice().id,
+                item_link_id: mock_item_a().id,
+                r#type: InvoiceLineType::StockIn,
+                pack_size: 1.0,
+                number_of_packs: 3.0,
+                status: None,
+                ..Default::default()
+            }
+        }
+
+        let (_, connection, connection_manager, _) = setup_all_with_data(
+            "inbound_rejected_lines_no_stock",
+            MockDataInserts::all(),
+            MockData {
+                invoices: vec![delivered_invoice()],
+                invoice_lines: vec![passed_line(), rejected_line(), no_status_line()],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_a().id, mock_user_account_a().id)
+            .unwrap();
+        let service = service_provider.invoice_service;
+
+        // Transition to Received - should succeed since no pending lines
+        service
+            .update_inbound_shipment(
+                &context,
+                UpdateInboundShipment {
+                    id: delivered_invoice().id,
+                    status: Some(UpdateInboundShipmentStatus::Received),
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+
+        // Passed line should have a stock line created
+        let passed = InvoiceLineRowRepository::new(&connection)
+            .find_one_by_id(&passed_line().id)
+            .unwrap()
+            .unwrap();
+        assert!(
+            passed.stock_line_id.is_some(),
+            "Passed line should have a stock line"
+        );
+        let passed_stock = StockLineRowRepository::new(&connection)
+            .find_one_by_id(&passed.stock_line_id.unwrap())
+            .unwrap()
+            .unwrap();
+        assert_eq!(passed_stock.total_number_of_packs, 10.0);
+        assert_eq!(passed_stock.available_number_of_packs, 10.0);
+
+        // No-status line should also have a stock line (backwards compatible)
+        let no_status = InvoiceLineRowRepository::new(&connection)
+            .find_one_by_id(&no_status_line().id)
+            .unwrap()
+            .unwrap();
+        assert!(
+            no_status.stock_line_id.is_some(),
+            "No-status line should have a stock line"
+        );
+        let no_status_stock = StockLineRowRepository::new(&connection)
+            .find_one_by_id(&no_status.stock_line_id.unwrap())
+            .unwrap()
+            .unwrap();
+        assert_eq!(no_status_stock.total_number_of_packs, 3.0);
+        assert_eq!(no_status_stock.available_number_of_packs, 3.0);
+
+        // Rejected line should NOT have a stock line
+        let rejected = InvoiceLineRowRepository::new(&connection)
+            .find_one_by_id(&rejected_line().id)
+            .unwrap()
+            .unwrap();
+        assert_eq!(
+            rejected.stock_line_id, None,
+            "Rejected line should NOT have a stock line"
+        );
     }
 }
