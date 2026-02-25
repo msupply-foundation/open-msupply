@@ -8,6 +8,7 @@ import {
 } from 'material-react-table';
 import { getSavedState, updateSavedState, differentOrUndefined } from './utils';
 import { ColumnDef } from '../types';
+import { useGlobalTableDefaults } from './useGlobalTableConfig';
 
 export const useColumnOrder = <T extends MRT_RowData>(
   tableId: string,
@@ -15,6 +16,7 @@ export const useColumnOrder = <T extends MRT_RowData>(
   enableRowSelection: MRT_TableOptions<T>['enableRowSelection'],
   isGrouped: boolean
 ) => {
+  const globalDefaults = useGlobalTableDefaults(tableId);
   const initial = useMemo(() => {
     for (const col of columns) {
       // if column has a custom columnIndex, remove it from its current position
@@ -38,7 +40,7 @@ export const useColumnOrder = <T extends MRT_RowData>(
   }, [isGrouped, columns]);
 
   const [state, setState] = useState<MRT_ColumnOrderState>(
-    getSavedState(tableId).columnOrder ?? initial
+    getSavedState(tableId).columnOrder ?? globalDefaults?.columnOrder ?? initial
   );
   const [hasSavedState, setHasSavedState] = useState(
     !!getSavedState(tableId).columnOrder
@@ -48,7 +50,8 @@ export const useColumnOrder = <T extends MRT_RowData>(
   // custom column order has been saved, update the column order to the new
   // default
   useEffect(() => {
-    if (!getSavedState(tableId).columnOrder) setState(initial);
+    if (!getSavedState(tableId).columnOrder)
+      setState(globalDefaults?.columnOrder ?? initial);
   }, [initial]);
 
   const update = useCallback<

@@ -28,6 +28,7 @@ pub enum PrefKey {
     ExpiredStockIssueThreshold,
     ItemMarginOverridesSupplierMargin,
     IsGaps,
+    GlobalTableConfigs,
 
     // Store preferences
     ManageVaccinesInDoses,

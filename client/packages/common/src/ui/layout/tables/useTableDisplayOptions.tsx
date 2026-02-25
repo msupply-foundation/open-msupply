@@ -42,6 +42,7 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
   getIsRestrictedRow = () => false,
   muiTableBodyRowProps = {},
   isMobile = false,
+  onSaveAsGlobalDefault,
 }: {
   density: ReturnType<typeof useColumnDensity>;
   columnSizing: ReturnType<typeof useColumnSizing>;
@@ -56,6 +57,7 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
   getIsPlaceholderRow?: (row: T) => boolean;
   getIsRestrictedRow?: (row: T) => boolean;
   isMobile?: boolean;
+  onSaveAsGlobalDefault?: () => void;
 
   // This object is merged with the default row props in muiTableBodyRowProps
   // below. We can do the same for other muiTable props if needed in future.
@@ -117,6 +119,7 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
           columnPinning={columnPinning}
           columnOrder={columnOrder}
           resetTableState={resetTableState}
+          onSaveAsGlobalDefault={onSaveAsGlobalDefault}
         />
       </>
     ),

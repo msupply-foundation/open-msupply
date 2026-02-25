@@ -6,12 +6,14 @@ import {
 } from 'material-react-table';
 import { getSavedState, updateSavedState, differentOrUndefined } from './utils';
 import { ColumnDef } from '../types';
+import { useGlobalTableDefaults } from './useGlobalTableConfig';
 
 export const useColumnPinning = <T extends MRT_RowData>(
   tableId: string,
   columns: ColumnDef<T>[],
   rowSelectionEnabled: boolean
 ) => {
+  const globalDefaults = useGlobalTableDefaults(tableId);
   const initial = useMemo(() => {
     const columnId = (column: ColumnDef<T>): string =>
       column.id ?? column.accessorKey ?? '';
@@ -26,7 +28,9 @@ export const useColumnPinning = <T extends MRT_RowData>(
   }, []);
 
   const [state, setState] = useState<MRT_ColumnPinningState>(
-    getSavedState(tableId).columnPinning ?? initial
+    getSavedState(tableId).columnPinning ??
+      globalDefaults?.columnPinning ??
+      initial
   );
 
   const [hasSavedState, setHasSavedState] = useState(
