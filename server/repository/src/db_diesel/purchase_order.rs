@@ -11,11 +11,7 @@ use crate::purchase_order_row::{
 
 use crate::{name_link, DateFilter, DatetimeFilter, EqualFilter, Pagination, Sort, StringFilter};
 use diesel::query_dsl::QueryDsl;
-use diesel::{
-    dsl::{IntoBoxed, LeftJoin},
-    prelude::*,
-    RunQueryDsl,
-};
+use diesel::{dsl::IntoBoxed, prelude::*, RunQueryDsl};
 
 #[derive(PartialEq, Debug, Clone, Default)]
 pub struct PurchaseOrder {
@@ -108,9 +104,7 @@ impl<'a> PurchaseOrderRepository<'a> {
     }
 
     pub fn create_filtered_query(filter: Option<PurchaseOrderFilter>) -> BoxedPurchaseOrderQuery {
-        let mut query = purchase_order::table
-            .left_join(purchase_order_stats::table)
-            .into_boxed();
+        let mut query = query().into_boxed();
 
         if let Some(f) = filter {
             let PurchaseOrderFilter {
@@ -160,8 +154,12 @@ fn to_domain((purchase_order, purchase_order_stats): PurchaseOrderJoin) -> Purch
     }
 }
 
-type BoxedPurchaseOrderQuery =
-    IntoBoxed<'static, LeftJoin<purchase_order::table, purchase_order_stats::table>, DBType>;
+#[diesel::dsl::auto_type]
+fn query() -> _ {
+    purchase_order::table.left_join(purchase_order_stats::table)
+}
+
+type BoxedPurchaseOrderQuery = IntoBoxed<'static, query, DBType>;
 
 impl PurchaseOrderFilter {
     pub fn new() -> PurchaseOrderFilter {

@@ -22,10 +22,7 @@ use crate::{
     MasterListLineRepository, NameRow, Pagination, Sort, StringFilter,
 };
 
-use diesel::{
-    dsl::{Eq, InnerJoin, IntoBoxed, LeftJoin, LeftJoinOn, Nullable},
-    prelude::*,
-};
+use diesel::{dsl::IntoBoxed, prelude::*};
 
 #[derive(Debug, PartialEq, Clone, Default)]
 pub struct StockLine {
@@ -187,14 +184,7 @@ impl<'a> StockLineRepository<'a> {
         filter: Option<StockLineFilter>,
         query_store_id: Option<String>,
     ) -> BoxedStockLineQuery {
-        let mut query = stock_line::table
-            .inner_join(item_link::table.inner_join(item::table))
-            .left_join(item_variant::table)
-            .left_join(location::table)
-            .left_join(name::table.on(stock_line::supplier_id.eq(name::id.nullable())))
-            .left_join(barcode::table)
-            .left_join(vvm_status::table)
-            .into_boxed();
+        let mut query = query().into_boxed();
 
         if let Some(f) = filter {
             let StockLineFilter {
@@ -285,27 +275,18 @@ impl<'a> StockLineRepository<'a> {
     }
 }
 
-type BoxedStockLineQuery = IntoBoxed<
-    'static,
-    LeftJoin<
-        LeftJoin<
-            LeftJoinOn<
-                LeftJoin<
-                    LeftJoin<
-                        InnerJoin<stock_line::table, InnerJoin<item_link::table, item::table>>,
-                        item_variant::table,
-                    >,
-                    location::table,
-                >,
-                name::table,
-                Eq<stock_line::supplier_id, Nullable<name::id>>,
-            >,
-            barcode::table,
-        >,
-        vvm_status::table,
-    >,
-    DBType,
->;
+#[diesel::dsl::auto_type]
+fn query() -> _ {
+    stock_line::table
+        .inner_join(item_link::table.inner_join(item::table))
+        .left_join(item_variant::table)
+        .left_join(location::table)
+        .left_join(name::table.on(stock_line::supplier_id.eq(name::id.nullable())))
+        .left_join(barcode::table)
+        .left_join(vvm_status::table)
+}
+
+type BoxedStockLineQuery = IntoBoxed<'static, query, DBType>;
 
 fn to_domain(
     (
