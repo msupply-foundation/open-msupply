@@ -118,20 +118,22 @@ const UIComponent = (props: ControlProps) => {
   return (
     <Box>
       <ProgramFilter
-        form={form}
+        value={form.program}
         options={programs}
         loading={programsLoading}
         handleChange={onProgramChange}
       />
       <ScheduleFilter
-        form={form}
+        value={form.schedule}
         options={schedules}
         loading={schedulesLoading}
+        disabled={!form.program}
         handleChange={onScheduleChange}
       />
       <PeriodFilter
-        form={form}
+        value={form.period}
         options={periods}
+        disabled={!form.schedule}
         handleChange={onPeriodChange}
       />
       <DateFilter
@@ -160,14 +162,15 @@ const UIComponentWrapper = (props: ControlProps) => {
 export const ScheduleForm = withJsonFormsControlProps(UIComponentWrapper);
 
 interface FilterProps<T> {
-  form: FormState;
+  value: T | null;
   options: T[];
   loading?: boolean;
+  disabled?: boolean;
   handleChange: (value: T | null) => void;
 }
 
 const ProgramFilter = ({
-  form,
+  value,
   options,
   loading,
   handleChange,
@@ -196,11 +199,7 @@ const ProgramFilter = ({
         //     onChange(null);
         //   }
         // }}
-        value={
-          form.program
-            ? { label: form.program.name ?? '', ...form.program }
-            : null
-        }
+        value={value ? { label: value.name ?? '', ...value } : null}
         isOptionEqualToValue={(option, value) => option.id === value.id}
         // clearable={props.uischema.options?.['clearable'] ?? false}
       />
@@ -209,9 +208,10 @@ const ProgramFilter = ({
 );
 
 const ScheduleFilter = ({
-  form,
+  value,
   options,
   loading,
+  disabled,
   handleChange,
 }: FilterProps<PeriodScheduleNode>) => (
   <DetailInputWithLabelRow
@@ -226,13 +226,9 @@ const ScheduleFilter = ({
         options={options}
         optionKey="name"
         onChange={(_, option) => handleChange(option)}
-        value={
-          form.schedule
-            ? { label: form.schedule.name ?? '', ...form.schedule }
-            : null
-        }
+        value={value ? { label: value.name ?? '', ...value } : null}
         isOptionEqualToValue={(option, value) => option.id === value.id}
-        disabled={!form.program}
+        disabled={disabled}
         // clearable={props.uischema.options?.['clearable'] ?? false}
       />
     }
@@ -240,8 +236,9 @@ const ScheduleFilter = ({
 );
 
 const PeriodFilter = ({
-  form,
+  value,
   options,
+  disabled,
   handleChange,
 }: FilterProps<PeriodNode>) => (
   <DetailInputWithLabelRow
@@ -264,11 +261,9 @@ const PeriodFilter = ({
         //     onChange(null);
         //   }
         // }}
-        value={
-          form.period ? { label: form.period.name ?? '', ...form.period } : null
-        }
+        value={value ? { label: value.name ?? '', ...value } : null}
         isOptionEqualToValue={(option, value) => option.id === value.id}
-        disabled={!form.schedule}
+        disabled={disabled}
       />
     }
   />
