@@ -233,7 +233,7 @@ fn get_vaccination_with_updated_base_fields(
         item_link_id,
 
         comment,
-        facility_name_id: facility_name_link_id,
+        facility_name_id,
         facility_free_text,
         clinician_link_id,
     } = existing_vaccination;
@@ -264,7 +264,7 @@ fn get_vaccination_with_updated_base_fields(
         },
         facility_name_id: match update_input.facility_name_id {
             Some(NullableUpdate { value }) => value,
-            None => facility_name_link_id,
+            None => facility_name_id,
         },
         facility_free_text: match update_input.facility_free_text {
             Some(NullableUpdate { value }) => value,

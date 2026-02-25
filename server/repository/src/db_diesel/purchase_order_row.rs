@@ -1,7 +1,8 @@
 use crate::{
-    db_diesel::{item_link_row::item_link, item_row::item},
-    diesel_macros::define_linked_tables, ChangeLogInsertRow, ChangelogRepository,
-    ChangelogTableName, Delete, RepositoryError, RowActionType, StorageConnection, Upsert,
+    db_diesel::{item_link_row::item_link, item_row::item, name_link_row::name_link},
+    diesel_macros::define_linked_tables,
+    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, Delete, RepositoryError,
+    RowActionType, StorageConnection, Upsert,
 };
 use chrono::{NaiveDate, NaiveDateTime};
 use diesel::{dsl::max, prelude::*};
@@ -76,9 +77,7 @@ allow_tables_to_appear_in_same_query!(purchase_order_stats, purchase_order);
 allow_tables_to_appear_in_same_query!(purchase_order, item_link);
 allow_tables_to_appear_in_same_query!(purchase_order, item);
 
-#[derive(
-    Clone, Queryable, Debug, Serialize, Deserialize, Default, PartialEq,
-)]
+#[derive(Clone, Queryable, Debug, Serialize, Deserialize, Default, PartialEq)]
 #[diesel(table_name = purchase_order)]
 pub struct PurchaseOrderRow {
     pub id: String,

@@ -12,13 +12,13 @@ use util::uuid::uuid;
 
 pub fn generate(
     connection: &StorageConnection,
-    supplier_name_link: String,
+    supplier_name_id: String,
     goods_received: GoodsReceivedRow,
     line_map: Vec<(GoodsReceivedLineRow, PurchaseOrderLineRow)>,
 ) -> Result<(InsertInboundShipment, Vec<InsertStockInLine>), CreateGoodsReceivedShipmentError> {
     let shipment_input = InsertInboundShipment {
         id: uuid(),
-        other_party_id: supplier_name_link,
+        other_party_id: supplier_name_id,
         their_reference: goods_received.supplier_reference.clone(),
         goods_received_id: Some(goods_received.id),
         requisition_id: None,

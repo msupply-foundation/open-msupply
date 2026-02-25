@@ -124,7 +124,7 @@ fn query() -> _ {
         .left_join(clinician_link::table.inner_join(clinician::table))
         .left_join(item_link::table.inner_join(item::table))
         .inner_join(vaccine_course_dose::table)
-        .left_join(name::table.on(vaccination::facility_name_id.eq(name::id.nullable())))
+        .left_join(name::table)
 }
 
 type BoxedVaccinationQuery = IntoBoxed<'static, query, DBType>;
