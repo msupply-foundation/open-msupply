@@ -9,7 +9,7 @@ pub struct GenerateInput {
 pub fn generate(GenerateInput { insert_input }: GenerateInput) -> NameInsuranceJoinRow {
     let InsertInsurance {
         id,
-        name_link_id,
+        name_id,
         insurance_provider_id,
         policy_number_family,
         policy_number_person,
@@ -27,7 +27,7 @@ pub fn generate(GenerateInput { insert_input }: GenerateInput) -> NameInsuranceJ
 
     NameInsuranceJoinRow {
         id,
-        name_id: name_link_id,
+        name_id,
         insurance_provider_id,
         policy_number,
         policy_number_family: Some(policy_number_family),

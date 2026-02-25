@@ -1,6 +1,7 @@
 use super::{
     campaign_row::campaign, item_link_row::item_link, item_variant::item_variant_row::item_variant,
-    location_row::location, name_link_row::name_link, store_row::store, StorageConnection,
+    location_row::location, name_row::name, store_row::store,
+    StorageConnection,
 };
 
 use crate::{
@@ -55,9 +56,9 @@ joinable!(stock_line -> location (location_id));
 joinable!(stock_line -> barcode (barcode_id));
 joinable!(stock_line -> vvm_status (vvm_status_id));
 joinable!(stock_line -> campaign (campaign_id));
+joinable!(stock_line -> name (supplier_id));
 allow_tables_to_appear_in_same_query!(stock_line, item_link);
 allow_tables_to_appear_in_same_query!(stock_line, item_variant);
-allow_tables_to_appear_in_same_query!(stock_line, name_link);
 
 #[derive(Clone, Queryable, Debug, PartialEq, Default, Serialize, Deserialize)]
 #[diesel(table_name = stock_line)]
@@ -111,7 +112,7 @@ impl<'a> StockLineRowRepository<'a> {
             record_id: row.id.clone(),
             row_action: action,
             store_id: Some(row.store_id.clone()),
-            name_link_id: None,
+            name_id: None,
         };
 
         ChangelogRepository::new(self.connection).insert(&row)

@@ -16,7 +16,7 @@ use crate::{
 use crate::{DatetimeFilter, EqualFilter, Pagination, Sort, StringFilter};
 
 use diesel::{
-    dsl::{InnerJoin, IntoBoxed, LeftJoin},
+    dsl::IntoBoxed,
     prelude::*,
 };
 
@@ -206,21 +206,18 @@ fn to_domain((invoice_row, name_row, store_row, clinician_link_join): InvoiceJoi
     }
 }
 
-type BoxedInvoiceQuery = IntoBoxed<
-    'static,
-    LeftJoin<
-        InnerJoin<InnerJoin<invoice::table, name::table>, store::table>,
-        InnerJoin<clinician_link::table, clinician::table>,
-    >,
-    DBType,
->;
-
-fn create_filtered_query(filter: Option<InvoiceFilter>) -> BoxedInvoiceQuery {
-    let mut query = invoice::table
+#[diesel::dsl::auto_type]
+fn query() -> _ {
+    invoice::table
         .inner_join(name::table)
         .inner_join(store::table)
         .left_join(clinician_link::table.inner_join(clinician::table))
-        .into_boxed();
+}
+
+type BoxedInvoiceQuery = IntoBoxed<'static, query, DBType>;
+
+fn create_filtered_query(filter: Option<InvoiceFilter>) -> BoxedInvoiceQuery {
+    let mut query = query().into_boxed();
 
     if let Some(f) = filter {
         let InvoiceFilter {

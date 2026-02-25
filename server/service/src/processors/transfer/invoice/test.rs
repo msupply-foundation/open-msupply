@@ -295,7 +295,7 @@ async fn invoice_transfers() {
     };
 }
 
-/// Checking behavior when a request requisition name_link_id is that of a merged name. Response requisition for the merged name store should be generated regardless.
+/// Checking behavior when a request requisition name_id is that of a merged name. Response requisition for the merged name store should be generated regardless.
 #[tokio::test(flavor = "multi_thread", worker_threads = 3)]
 async fn invoice_transfers_with_merged_name() {
     let site_id = 25;

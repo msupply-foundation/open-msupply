@@ -1,6 +1,6 @@
 use super::{
     campaign_row::campaign, invoice_line_row::invoice_line::dsl::*, invoice_row::invoice,
-    item_link_row::item_link, location_row::location, name_link_row::name_link,
+    item_link_row::item_link, location_row::location,
     reason_option_row::reason_option, stock_line_row::stock_line,
     vvm_status::vvm_status_row::vvm_status, StorageConnection,
 };
@@ -70,7 +70,6 @@ joinable!(invoice_line -> reason_option (reason_option_id));
 joinable!(invoice_line -> campaign (campaign_id));
 
 allow_tables_to_appear_in_same_query!(invoice_line, item_link);
-allow_tables_to_appear_in_same_query!(invoice_line, name_link);
 allow_tables_to_appear_in_same_query!(invoice_line, reason_option);
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Default)]
@@ -152,7 +151,7 @@ impl<'a> InvoiceLineRowRepository<'a> {
             record_id: row.id.clone(),
             row_action: action,
             store_id: Some(invoice.store_id.clone()),
-            name_link_id: Some(invoice.name_id.clone()),
+            name_id: Some(invoice.name_id.clone()),
         };
 
         ChangelogRepository::new(self.connection).insert(&row)

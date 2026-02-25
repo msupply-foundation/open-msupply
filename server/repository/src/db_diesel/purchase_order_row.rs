@@ -1,7 +1,8 @@
 use crate::{
-    db_diesel::{item_link_row::item_link, item_row::item, name_link_row::name_link},
-    diesel_macros::define_linked_tables, ChangeLogInsertRow, ChangelogRepository,
-    ChangelogTableName, Delete, RepositoryError, RowActionType, StorageConnection, Upsert,
+    db_diesel::{item_link_row::item_link, item_row::item},
+    diesel_macros::define_linked_tables,
+    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, Delete, RepositoryError,
+    RowActionType, StorageConnection, Upsert,
 };
 use chrono::{NaiveDate, NaiveDateTime};
 use diesel::{dsl::max, prelude::*};
@@ -40,7 +41,7 @@ define_linked_tables! {
         comment -> Nullable<Text>,
         reference -> Nullable<Text>,
         currency_id -> Nullable<Text>,
-        foreign_exchange_rate -> Double,
+        foreign_exchange_rate -> Nullable<Double>,
         shipping_method -> Nullable<Text>,
         sent_datetime -> Nullable<Timestamp>,
         contract_signed_date -> Nullable<Date>,
@@ -75,11 +76,8 @@ joinable!(purchase_order -> purchase_order_stats (id));
 allow_tables_to_appear_in_same_query!(purchase_order_stats, purchase_order);
 allow_tables_to_appear_in_same_query!(purchase_order, item_link);
 allow_tables_to_appear_in_same_query!(purchase_order, item);
-allow_tables_to_appear_in_same_query!(purchase_order, name_link);
 
-#[derive(
-    Clone, Queryable, Debug, Serialize, Deserialize, Default, PartialEq,
-)]
+#[derive(Clone, Queryable, Debug, Serialize, Deserialize, Default, PartialEq)]
 #[diesel(table_name = purchase_order)]
 pub struct PurchaseOrderRow {
     pub id: String,
@@ -93,7 +91,7 @@ pub struct PurchaseOrderRow {
     pub comment: Option<String>,
     pub reference: Option<String>,
     pub currency_id: Option<String>,
-    pub foreign_exchange_rate: f64,
+    pub foreign_exchange_rate: Option<f64>,
     pub shipping_method: Option<String>,
     pub sent_datetime: Option<NaiveDateTime>,
     pub contract_signed_date: Option<NaiveDate>,
@@ -159,7 +157,7 @@ impl<'a> PurchaseOrderRowRepository<'a> {
             record_id: row.id,
             row_action: action,
             store_id: Some(row.store_id),
-            name_link_id: None,
+            name_id: None,
         };
 
         ChangelogRepository::new(self.connection).insert(&row)
@@ -265,7 +263,7 @@ mod test {
                 store_id: mock_store_a().id.clone(),
                 created_datetime: chrono::Utc::now().naive_utc(),
                 purchase_order_number: po_number,
-                foreign_exchange_rate: 1.00,
+
                 ..Default::default()
             };
             po_number += 1;
