@@ -188,7 +188,6 @@ export const SettingsMenu = ({
           <MenuItem
             disabled={!hasSavedState}
             onClick={() => {
-              table.resetColumnOrder();
               getConfirmation();
               setAnchorEl(null);
             }}
