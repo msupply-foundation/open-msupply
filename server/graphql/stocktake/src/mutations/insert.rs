@@ -71,7 +71,7 @@ pub fn map_response(from: Result<Stocktake, ServiceError>) -> Result<InsertRespo
         ))),
         Err(error) => {
             use StandardGraphqlError::*;
-            let formatted_error = format!("{:#?}", error);
+            let formatted_error = format!("{error:#?}");
 
             let graphql_error = match error {
                 ServiceError::InvalidStore => BadUserInput(formatted_error),

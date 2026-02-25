@@ -46,6 +46,10 @@ pub struct LegacyItemRow {
     category_ID: Option<String>,
     #[serde(deserialize_with = "empty_str_as_option_string")]
     restricted_location_type_ID: Option<String>,
+    volume_per_pack: f64,
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    #[serde(rename = "universalcodes_code")]
+    universal_code: Option<String>,
 }
 
 fn to_item_type(type_of: LegacyItemType) -> ItemType {
@@ -138,6 +142,8 @@ impl SyncTranslation for ItemTranslation {
             ven_category: to_ven_category(data.VEN_category),
             vaccine_doses: data.doses,
             restricted_location_type_id: data.restricted_location_type_ID,
+            volume_per_pack: data.volume_per_pack,
+            universal_code: data.universal_code,
         };
 
         integration_operations.push(IntegrationOperation::upsert(item_row));
@@ -195,6 +201,8 @@ impl SyncTranslation for ItemTranslation {
             ven_category,
             vaccine_doses,
             restricted_location_type_id,
+            volume_per_pack,
+            universal_code,
         } = item;
 
         let legacy_row = LegacyItemRow {
@@ -213,6 +221,8 @@ impl SyncTranslation for ItemTranslation {
             // build out the syncing back and forth of categories to OG!
             category_ID: None,
             restricted_location_type_ID: restricted_location_type_id,
+            volume_per_pack,
+            universal_code,
         };
 
         let json_record = serde_json::to_value(legacy_row)?;
@@ -254,7 +264,7 @@ fn translate_item_category_join(
     if let Some(category_id) = &data.category_ID {
         let item_category_join_row = ItemCategoryJoinRow {
             id: format!("{}-{}", data.ID.clone(), category_id.clone()),
-            item_id: data.ID.clone(),
+            item_link_id: data.ID.clone(),
             category_id: category_id.clone(),
             deleted_datetime: None,
         };

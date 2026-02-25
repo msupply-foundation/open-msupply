@@ -25,7 +25,7 @@ import {
 import { CreateOrderModal } from './CreateOrderModal';
 import { NewProgramRequisition } from './ProgramRequisitionOptions';
 
-export const AppBarButtons = ({
+const AppBarButtonsComponent = ({
   requisitionModalController,
   createOrderModalController,
 }: {
@@ -162,3 +162,5 @@ export const AppBarButtons = ({
     </AppBarButtonsPortal>
   );
 };
+
+export const AppBarButtons = React.memo(AppBarButtonsComponent);

@@ -100,7 +100,7 @@ impl CursorController {
         let json_value = self.get_dynamic_json(connection)?;
 
         let cursor = json_value[cursor_id].as_u64().unwrap_or(0);
-        Ok(cursor as u64)
+        Ok(cursor)
     }
 }
 
@@ -113,7 +113,7 @@ mod test {
     #[actix_rt::test]
     async fn dynamic_cursor_test() {
         let SetupResult { connection, .. } = setup_test(SetupOption {
-            db_name: &format!("dynamic_cursor_test"),
+            db_name: "dynamic_cursor_test",
             ..Default::default()
         })
         .await;

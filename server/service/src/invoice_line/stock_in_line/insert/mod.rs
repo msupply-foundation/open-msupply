@@ -651,7 +651,7 @@ mod test {
         let expected_vvm_log = VVMStatusLogRow {
             id: log.id.clone(),
             status_id: mock_vvm_status_a().id,
-            created_datetime: log.created_datetime.clone(),
+            created_datetime: log.created_datetime,
             stock_line_id: log.stock_line_id.clone(),
             comment: None,
             created_by: "user_account_a".to_string(),

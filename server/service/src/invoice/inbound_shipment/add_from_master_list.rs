@@ -206,11 +206,11 @@ mod test {
     async fn add_from_master_list_success() {
         fn master_list() -> FullMockMasterList {
             let id = "master_list".to_string();
-            let join1 = format!("{}1", id);
-            let line1 = format!("{}1", id);
-            let line2 = format!("{}2", id);
-            let line3 = format!("{}3", id);
-            let line4 = format!("{}4", id);
+            let join1 = format!("{id}1");
+            let line1 = format!("{id}1");
+            let line2 = format!("{id}2");
+            let line3 = format!("{id}3");
+            let line4 = format!("{id}4");
 
             FullMockMasterList {
                 master_list: MasterListRow {

@@ -49,6 +49,7 @@ pub struct InsertAssetLogReasonInput {
     pub id: String,
     pub asset_log_status: AssetLogStatusNodeType,
     pub reason: String,
+    pub comments_required: bool,
 }
 impl From<InsertAssetLogReasonInput> for InsertAssetLogReason {
     fn from(
@@ -56,12 +57,14 @@ impl From<InsertAssetLogReasonInput> for InsertAssetLogReason {
             id,
             asset_log_status,
             reason,
+            comments_required,
         }: InsertAssetLogReasonInput,
     ) -> Self {
         InsertAssetLogReason {
             id,
             asset_log_status: asset_log_status.into(),
             reason,
+            comments_required,
         }
     }
 }
@@ -88,7 +91,7 @@ pub enum InsertAssetLogReasonErrorInterface {
 
 fn map_error(error: ServiceError) -> Result<InsertAssetLogReasonErrorInterface> {
     use StandardGraphqlError::*;
-    let formatted_error = format!("{:?}", error);
+    let formatted_error = format!("{error:?}");
 
     let graphql_error = match error {
         ServiceError::AssetLogReasonAlreadyExists => BadUserInput(formatted_error),
@@ -171,6 +174,7 @@ mod test {
                 "id": "n/a",
                 "assetLogStatus": "FUNCTIONING",
                 "reason": "reason",
+                "commentsRequired": false,
             }
         }));
 

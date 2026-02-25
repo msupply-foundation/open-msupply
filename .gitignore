@@ -3,6 +3,7 @@
 # common location for local config file containing connection credentials
 server/report_builder/config.yaml
 .vscode/*
+!.vscode/extensions.json
 
 # Temp export files
 server/data
@@ -10,6 +11,7 @@ server/data
 
 
 standard_reports/test-config.json
+client/dist
 
 # IDEs
 .idea/

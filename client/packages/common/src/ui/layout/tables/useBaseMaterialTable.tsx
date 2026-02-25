@@ -20,10 +20,12 @@ import {
   useIsGrouped,
 } from './tableState';
 import { clearSavedState } from './tableState/utils';
-import { NothingHere } from '@common/components';
+import { DataError, NothingHere } from '@common/components';
 
-export interface BaseTableConfig<T extends MRT_RowData>
-  extends Omit<MRT_TableOptions<T>, 'data'> {
+export interface BaseTableConfig<T extends MRT_RowData> extends Omit<
+  MRT_TableOptions<T>,
+  'data'
+> {
   tableId: string; // key for local storage
   data: T[] | undefined;
   onRowClick?: (row: T, isCtrlClick: boolean) => void;
@@ -44,6 +46,7 @@ export interface BaseTableConfig<T extends MRT_RowData>
   noUrlFiltering?: boolean;
   initialSort?: { key: string; dir: 'asc' | 'desc' };
   noDataElement?: React.ReactNode;
+  isMobile?: boolean;
 }
 
 export const useBaseMaterialTable = <T extends MRT_RowData>({
@@ -57,13 +60,14 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
   columns: omsColumns,
   data,
   grouping,
-  enableRowSelection = true,
   enableColumnResizing = true,
   manualFiltering = false,
   noUrlFiltering = false,
   initialSort,
   noDataElement,
   muiTableBodyRowProps,
+  isMobile,
+  enableRowSelection = true,
   ...tableOptions
 }: BaseTableConfig<T>) => {
   const t = useTranslation();
@@ -92,7 +96,7 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
 
   const density = useColumnDensity(tableId);
   const columnSizing = useColumnSizing(tableId);
-  const columnVisibility = useColumnVisibility(tableId, columns);
+  const columnVisibility = useColumnVisibility(tableId, columns, isMobile);
   const columnPinning = useColumnPinning(
     tableId,
     columns,
@@ -104,13 +108,6 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
     enableRowSelection,
     isGrouped
   );
-
-  const hasSavedState =
-    density.hasSavedState ||
-    columnSizing.hasSavedState ||
-    columnPinning.hasSavedState ||
-    columnVisibility.hasSavedState ||
-    columnOrder.hasSavedState;
 
   const resetTableState = () => {
     clearSavedState(tableId);
@@ -143,18 +140,24 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
     columnOrder.resetHasSavedState();
   };
 
-  const hasColumnFilters = columns.some(col => col.enableColumnFilter);
+  // hiding all table filter related options for now
+  const hasColumnFilters = false;
 
   const displayOptions = useTableDisplayOptions({
-    isGrouped,
-    hasColumnFilters,
-    toggleGrouped: grouping?.enabled ? toggleGrouped : undefined,
+    density,
+    columnSizing,
+    columnVisibility,
+    columnPinning,
+    columnOrder,
     resetTableState,
-    hasSavedState,
+    hasColumnFilters,
     onRowClick,
+    isGrouped,
+    toggleGrouped: grouping?.enabled ? toggleGrouped : undefined,
     getIsPlaceholderRow,
     getIsRestrictedRow,
     muiTableBodyRowProps,
+    isMobile,
   });
 
   const table = useMaterialReactTable<T>({
@@ -168,6 +171,7 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
     layoutMode: 'grid',
     enableColumnResizing,
 
+    enableColumnFilters: false, // hide all column filters in the column menu
     enableColumnPinning: true,
     enableColumnOrdering: true,
     enableColumnDragging: false,
@@ -223,7 +227,7 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
       isLoading ? (
         <></>
       ) : isError ? (
-        <ErrorState />
+        <DataError error={t('error.unable-to-load-data')} />
       ) : (
         (noDataElement ?? <NothingHere />)
       ),
@@ -233,9 +237,4 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
   });
 
   return table;
-};
-
-const ErrorState = () => {
-  const t = useTranslation();
-  return <NothingHere body={t('error.unable-to-load-data')} isError />;
 };

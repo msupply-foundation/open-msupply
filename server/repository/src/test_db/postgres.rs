@@ -11,7 +11,7 @@ use crate::{
     migrations::{migrate, Version},
     mock::{all_mock_data, insert_all_mock_data, MockDataCollection, MockDataInserts},
     test_db::constants::{
-        env_msupply_no_test_db_template, find_workspace_root, TEMPLATE_MARKER_FILE, TEST_OUTPUT_DIR,
+        env_msupply_no_test_db_template, find_workspace_root, TEMPLATE_MARKER_FILE_POSTGRES, TEST_OUTPUT_DIR,
     },
     DBConnection, StorageConnectionManager,
 };
@@ -146,19 +146,18 @@ pub(crate) async fn setup_with_version(
         .join("repository")
         .join(TEST_OUTPUT_DIR);
 
-    // use file lock for template operations, as cargo nextest runs crate tests in parallel
-    // this requires a file lock instead of thread synchronisation
-    let _fs_lock = lock_file(test_output_dir.clone(), "___template.lock".to_string())
-        .expect("Failed to acquire template fs lock");
-
     {
+        // Checking marker files and template creation should be globally locked.
+        let _fs_lock = lock_file(test_output_dir.clone(), "___template.lock".to_string())
+            .expect("Failed to acquire template fs lock");
+
         let existing_templates: Vec<String> = pg_database::table
             .select(pg_database::dsl::datname)
             .filter(pg_database::dsl::datname.ilike("___template_%"))
             .load(&mut root_connection)
             .unwrap();
 
-        let marker_path = test_output_dir.join(TEMPLATE_MARKER_FILE).to_path_buf();
+        let marker_path = test_output_dir.join(TEMPLATE_MARKER_FILE_POSTGRES).to_path_buf();
         let marker_exists = marker_path.exists();
 
         // if test_output_dir doesn't exist or if the marker exist, refresh the cache

@@ -169,7 +169,7 @@ export const QuantityTable = ({
       {
         accessorKey: 'shippedPackSize',
         header: t('label.shipped-pack-size'),
-        size: 100,
+        size: 120,
         Cell: ({ row, cell }) => (
           <NumberInputCell
             cell={cell}
@@ -177,6 +177,7 @@ export const QuantityTable = ({
               updateDraftLine({ shippedPackSize: value, id: row.original.id });
             }}
             disabled={isDisabled}
+            min={1}
           />
         ),
         defaultHideOnMobile: true,
@@ -195,14 +196,14 @@ export const QuantityTable = ({
               });
             }}
             disabled={isDisabled}
-            min={1}
+            min={0}
           />
         ),
       },
       {
         accessorKey: 'packSize',
         header: t('label.received-pack-size'),
-        size: 100,
+        size: 120,
         Cell: ({ row, cell }) => (
           <NumberInputCell
             cell={cell}
@@ -215,7 +216,11 @@ export const QuantityTable = ({
                   line.sellPricePerPack;
 
               updateDraftLine({
-                volumePerPack: getVolumePerPackFromVariant(line) ?? 0,
+                volumePerPack:
+                  getVolumePerPackFromVariant({
+                    itemVariant: line.itemVariant,
+                    packSize: value,
+                  }) ?? 0,
                 sellPricePerPack: shouldClearSellPrice
                   ? 0
                   : line.sellPricePerPack,
@@ -254,21 +259,11 @@ export const QuantityTable = ({
         ),
       },
       {
-        accessorKey: 'doseQuantity',
-        header: t('label.doses-received'),
-        size: 100,
-        includeColumn: displayInDoses,
-        accessorFn: row => {
-          const total = row.numberOfPacks * row.packSize;
-          return format(total * row.item.doses);
-        },
-      },
-      {
         accessorKey: 'unitsPerPack',
         header: t('label.units-received', {
           unit: pluralisedUnitName,
         }),
-        size: 100,
+        size: 120,
         defaultHideOnMobile: true,
         accessorFn: row => {
           return row.numberOfPacks * row.packSize;
@@ -306,9 +301,19 @@ export const QuantityTable = ({
         ),
       },
       {
+        accessorKey: 'doseQuantity',
+        header: t('label.doses-received'),
+        size: 100,
+        includeColumn: displayInDoses,
+        accessorFn: row => {
+          const total = row.numberOfPacks * row.packSize;
+          return format(total * row.item.doses);
+        },
+      },
+      {
         accessorKey: 'volumePerPack',
         header: t('label.volume-per-pack'),
-        size: 100,
+        size: 140,
         Cell: ({ row, cell }) => (
           <NumberInputCell
             cell={cell}

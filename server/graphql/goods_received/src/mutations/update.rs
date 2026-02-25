@@ -132,7 +132,7 @@ fn map_response(from: Result<GoodsReceivedRow, ServiceError>) -> Result<UpdateRe
 }
 
 fn map_error(error: ServiceError) -> Result<UpdateResponse> {
-    let formatted_error = format!("{:#?}", error);
+    let formatted_error = format!("{error:#?}");
 
     let graphql_error = match error {
         ServiceError::ErrorCreatingShipment(

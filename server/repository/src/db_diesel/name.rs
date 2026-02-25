@@ -452,9 +452,9 @@ mod tests {
         let mut queries = Vec::new();
         for index in 0..200 {
             rows.push(NameRow {
-                id: format!("id{:05}", index),
-                name: format!("name{}", index),
-                code: format!("code{}", index),
+                id: format!("id{index:05}"),
+                name: format!("name{index}"),
+                code: format!("code{index}"),
                 is_customer: true,
                 is_supplier: true,
                 ..Default::default()
@@ -462,9 +462,9 @@ mod tests {
 
             queries.push(Name {
                 name_row: NameRow {
-                    id: format!("id{:05}", index),
-                    name: format!("name{}", index),
-                    code: format!("code{}", index),
+                    id: format!("id{index:05}"),
+                    name: format!("name{index}"),
+                    code: format!("code{index}"),
                     is_customer: true,
                     is_supplier: true,
                     ..Default::default()

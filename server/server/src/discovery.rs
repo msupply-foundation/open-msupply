@@ -21,28 +21,28 @@ pub(crate) fn start_discovery(protocol: Protocol, port: u16, hardware_id: String
         // To avoid crashing the server, we catch the panic here and log the error.
         // Longer term, we should fix the unwrap in the Astro DNS code.
         let result = panic::catch_unwind(|| {
-            let registration_result = DNSServiceBuilder::new(SERVICE_NAME, port)
-                .with_txt_record(text_record.clone())
-                .with_name(NAME)
-                .register();
+            
 
             // This code is to test the panic handling. Uncomment the following lines to test.
             // let x: Option<String> = None;
             // let _y = x.unwrap();
-            registration_result
+            DNSServiceBuilder::new(SERVICE_NAME, port)
+                .with_txt_record(text_record.clone())
+                .with_name(NAME)
+                .register()
         });
 
         let registration_result = match result {
             Ok(r) => r,
             Err(e) => {
-                log::error!("Panic registering discovery: {:?}", e);
+                log::error!("Panic registering discovery: {e:?}");
                 return;
             }
         };
 
         match registration_result {
             Ok(_service_handle) => futures::future::pending::<()>().await,
-            Err(e) => log::error!("Error registering discovery: {:?}", e),
+            Err(e) => log::error!("Error registering discovery: {e:?}"),
         }
     });
 }

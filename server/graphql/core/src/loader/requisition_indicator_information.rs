@@ -1,4 +1,3 @@
-use super::IdPair;
 use actix_web::web::Data;
 use async_graphql::dataloader::*;
 use service::{
@@ -11,18 +10,18 @@ pub struct RequisitionIndicatorInfoLoader {
     pub service_provider: Data<ServiceProvider>,
 }
 
-pub type RequisitionIndicatorInfoLoaderInputPayload = String;
-pub type RequisitionIndicatorInfoLoaderInput = IdPair<RequisitionIndicatorInfoLoaderInputPayload>;
+#[derive(Clone, PartialEq, Eq, Debug, Hash)]
+pub struct RequisitionIndicatorInfoLoaderInput {
+    pub line_id: String,
+    pub store_id: String,
+    pub period_id: String,
+}
 impl RequisitionIndicatorInfoLoaderInput {
-    pub fn new(
-        line_id: &str,
-        store_id: &str,
-        payload: RequisitionIndicatorInfoLoaderInputPayload,
-    ) -> Self {
+    pub fn new(line_id: &str, store_id: &str, period_id: &str) -> Self {
         RequisitionIndicatorInfoLoaderInput {
-            primary_id: line_id.to_string(),
-            secondary_id: store_id.to_string(),
-            payload,
+            line_id: line_id.to_string(),
+            store_id: store_id.to_string(),
+            period_id: period_id.to_string(),
         }
     }
 }
@@ -37,11 +36,11 @@ impl Loader<RequisitionIndicatorInfoLoaderInput> for RequisitionIndicatorInfoLoa
     ) -> Result<HashMap<RequisitionIndicatorInfoLoaderInput, Self::Value>, Self::Error> {
         let service_context = self.service_provider.basic_context()?;
 
-        let (line_ids, _) = IdPair::extract_unique_ids(loader_inputs);
+        let line_ids = util::dedup_iter(loader_inputs.iter().map(|input| input.line_id.clone()));
 
-        let Some(IdPair {
-            secondary_id: store_id,
-            payload: period_id,
+        let Some(RequisitionIndicatorInfoLoaderInput {
+            store_id,
+            period_id,
             ..
         }) = loader_inputs.first()
         else {
@@ -51,7 +50,7 @@ impl Loader<RequisitionIndicatorInfoLoaderInput> for RequisitionIndicatorInfoLoa
         let indicator_info_rows = self
             .service_provider
             .requisition_service
-            .get_indicator_information(&service_context, line_ids, &store_id, &period_id)?;
+            .get_indicator_information(&service_context, line_ids, store_id, period_id)?;
 
         let mut result: HashMap<_, Self::Value> = HashMap::new();
 
@@ -60,7 +59,7 @@ impl Loader<RequisitionIndicatorInfoLoaderInput> for RequisitionIndicatorInfoLoa
                 .entry(RequisitionIndicatorInfoLoaderInput::new(
                     &indicator_info.indicator_line_id,
                     store_id,
-                    period_id.to_string(),
+                    period_id,
                 ))
                 .or_default()
                 .push(indicator_info);

@@ -24,11 +24,6 @@ pub enum InsertResponse {
     Response(BarcodeNode),
 }
 
-#[derive(SimpleObject)]
-pub struct InsertBarcodeError {
-    pub error: String,
-}
-
 impl BarcodeInput {
     pub fn to_domain(&self) -> service::barcode::BarcodeInput {
         service::barcode::BarcodeInput {
@@ -66,7 +61,7 @@ pub fn map_response(from: Result<Barcode, ServiceError>) -> Result<InsertRespons
         Ok(result) => Ok(InsertResponse::Response(BarcodeNode::from_domain(result))),
         Err(error) => {
             use StandardGraphqlError::*;
-            let formatted_error = format!("{:#?}", error);
+            let formatted_error = format!("{error:#?}");
 
             let graphql_error = match error {
                 ServiceError::InternalError(err) => InternalError(err),

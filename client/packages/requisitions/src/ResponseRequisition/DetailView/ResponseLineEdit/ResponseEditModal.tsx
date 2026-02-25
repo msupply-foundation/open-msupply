@@ -10,6 +10,7 @@ import {
   UserStoreNodeFragment,
   Representation,
   RepresentationValue,
+  RequisitionNodeStatus,
 } from '@openmsupply-client/common';
 import { ItemWithStatsFragment } from '@openmsupply-client/system';
 import { ResponseFragment, useResponse } from '../../api';
@@ -103,8 +104,10 @@ export const ResponseLineEditModal = ({
   };
 
   const onSave = async () => {
-    const success = await handleSave();
-    if (!success) return false;
+    if (requisition.status !== RequisitionNodeStatus.Finalised) {
+      const success = await handleSave();
+      if (!success) return false;
+    }
     if (mode === ModalMode.Update && next) setCurrentItem(next);
     else if (mode === ModalMode.Create) setCurrentItem(undefined);
     else onClose();
@@ -122,6 +125,9 @@ export const ResponseLineEditModal = ({
   }, [draft?.isCreated]);
 
   const { data } = useResponse.line.stats(!draft?.isCreated, draft?.id);
+  const itemVolume =
+    (draft?.availableVolumeAtLocationType?.itemVolumePerUnit ?? 0) *
+    (draft?.supplyQuantity ?? 0);
 
   const tabs = [
     {
@@ -154,6 +160,8 @@ export const ResponseLineEditModal = ({
           averageMonthlyConsumption={
             data?.requestStoreStats.averageMonthlyConsumption ?? 0
           }
+          availableVolumeAtLocationType={draft?.availableVolumeAtLocationType}
+          itemVolume={itemVolume}
         />
       ),
       value: 'label.customer',
@@ -181,8 +189,12 @@ export const ResponseLineEditModal = ({
           variant="ok"
           disabled={!currentItem || isEditingSupply}
           onClick={async () => {
-            const success = await handleSave();
-            if (success) onClose();
+            if (requisition.status === RequisitionNodeStatus.Finalised) {
+              onClose();
+            } else {
+              const success = await handleSave();
+              if (success) onClose();
+            }
           }}
         />
       }

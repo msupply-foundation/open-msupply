@@ -89,7 +89,7 @@ impl Version {
             return self.major < app_version.major;
         }
         // When major equals
-        return self.minor <= app_version.minor;
+        self.minor <= app_version.minor
     }
 }
 
