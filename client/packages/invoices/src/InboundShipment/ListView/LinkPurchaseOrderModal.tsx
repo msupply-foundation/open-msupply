@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import { InboundShipmentPurchaseOrderLineFragment } from '../api';
 import {
   useWindowDimensions,
@@ -11,7 +11,6 @@ import {
   PurchaseOrderNodeStatus,
   useNonPaginatedMaterialTable,
 } from '@openmsupply-client/common';
-import { MRT_RowSelectionState } from 'material-react-table';
 import { useListSentPurchaseOrders } from '../api/hooks/document/useListSentPurchaseOrders';
 
 interface LinkInternalOrderModalProps {
@@ -61,14 +60,11 @@ export const LinkPurchaseOrderModal = ({
         accessorKey: 'comment',
         header: t('label.comment'),
         columnType: ColumnType.Comment,
-        enableColumnFilter: false,
         size: 80,
       },
     ],
     []
   );
-
-  const [rowSelection, setRowSelection] = useState<MRT_RowSelectionState>({});
 
   const { table, selectedRows } =
     useNonPaginatedMaterialTable<InboundShipmentPurchaseOrderLineFragment>({
@@ -84,8 +80,7 @@ export const LinkPurchaseOrderModal = ({
         onClick: row.getToggleSelectedHandler(),
         sx: { cursor: 'pointer' },
       }),
-      onRowSelectionChange: setRowSelection,
-      state: { rowSelection, showColumnFilters: true },
+      state: { showColumnFilters: true },
       isLoading,
     });
 
@@ -94,7 +89,7 @@ export const LinkPurchaseOrderModal = ({
       selectedRows[0] as InboundShipmentPurchaseOrderLineFragment,
       addLines
     );
-    setRowSelection({});
+    table.resetRowSelection();
   };
 
   const disabled = selectedRows.length == 0;
