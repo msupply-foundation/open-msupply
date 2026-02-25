@@ -32,7 +32,8 @@
     "i18n-missing": "i18n-unused display-missed",
     "eslint": "lerna run --scope @openmsupply-client/* eslint",
     "prettier": "prettier --check 'packages/*/src/**/*.{js,jsx,ts,tsx,json,css,scss,md}'",
-    "lint-and-format": "yarn re-compile && yarn prettier || true && yarn eslint"
+    "lint-and-format": "yarn re-compile && yarn prettier || true && yarn eslint",
+    "translate": "node translate_locale"
   },
   "workspaces": {
     "packages": [
