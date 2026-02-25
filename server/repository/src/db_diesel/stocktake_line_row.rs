@@ -1,5 +1,5 @@
 use super::{
-    item_link_row::item_link, location_row::location, name_link_row::name_link,
+    item_link_row::item_link, location_row::location,
     reason_option_row::reason_option, stock_line_row::stock_line, stocktake_row::stocktake,
     StorageConnection,
 };
@@ -55,7 +55,6 @@ joinable!(stocktake_line -> stocktake (stocktake_id));
 joinable!(stocktake_line -> stock_line (stock_line_id));
 joinable!(stocktake_line -> reason_option (reason_option_id));
 allow_tables_to_appear_in_same_query!(stocktake_line, item_link);
-allow_tables_to_appear_in_same_query!(stocktake_line, name_link);
 allow_tables_to_appear_in_same_query!(stocktake_line, reason_option);
 
 #[derive(Clone, Queryable, Debug, PartialEq, Default)]
