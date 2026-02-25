@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { rankWith, ControlProps, uiTypeIs } from '@jsonforms/core';
 import { z } from 'zod';
 import {
@@ -77,15 +77,19 @@ const UIComponent = (props: ControlProps) => {
         handleChange(path, period.id);
       } else {
         // date range so we can use it if no period id is saved
-        // use PeriodSearch in arguments_ui with scope as "#/properties/after" to autofill the date range if period is selected
         handleChange(path, new Date(period.startDate).toISOString());
         const endOfDay = new Date(period.endDate);
         endOfDay.setHours(24, 59, 59, 999);
         handleChange('before', endOfDay.toISOString());
-        handleChange('periodId', period.id);
       }
     }
   };
+
+  useEffect(() => {
+    if (options?.findByProgram) {
+      onChange(null);
+    }
+  }, [programId]);
 
   return (
     <DetailInputWithLabelRow
