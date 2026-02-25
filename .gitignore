@@ -8,11 +8,11 @@ server/report_builder/config.yaml
 server/data
 .gitmodules
 
-node_modules
-
-
 standard_reports/test-config.json
 client/dist
+
+#JS
+node_modules
 
 # IDEs
 .idea/
@@ -28,6 +28,3 @@ client/dist
 !.yarn/sdks
 !.yarn/versions
 .pnp.*
-
-# Claude
-.claude
