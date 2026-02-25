@@ -247,7 +247,7 @@ export const QuantityTable = ({
                 const packToUnits = packSize * value;
                 setPackRoundingMessage?.('');
                 updateDraftLine({
-                  unitsPerPack: packToUnits,
+                  receivedNumberOfUnits: packToUnits,
                   id: row.original.id,
                   numberOfPacks: value,
                 });
@@ -259,7 +259,7 @@ export const QuantityTable = ({
         ),
       },
       {
-        accessorKey: 'unitsPerPack',
+        accessorKey: 'receivedNumberOfUnits',
         header: t('label.units-received', {
           unit: pluralisedUnitName,
         }),
@@ -272,8 +272,8 @@ export const QuantityTable = ({
           <NumberInputCell
             cell={cell}
             updateFn={(value: number) => {
-              const { packSize, unitsPerPack } = row.original;
-              if (packSize !== undefined && unitsPerPack !== undefined) {
+              const { packSize } = row.original;
+              if (packSize !== undefined) {
                 const unitToPacks = value / packSize;
                 const roundedPacks = Math.ceil(unitToPacks);
                 const actualUnits = roundedPacks * packSize;
@@ -288,7 +288,7 @@ export const QuantityTable = ({
                   );
                 }
                 updateDraftLine({
-                  unitsPerPack: actualUnits,
+                  receivedNumberOfUnits: actualUnits,
                   numberOfPacks: roundedPacks,
                   id: row.original.id,
                 });
@@ -415,6 +415,7 @@ export const PricingTableComponent = ({
         header: t('label.fc-cost-price', {
           currency: currency?.code,
         }),
+        columnType: ColumnType.Currency,
         size: 100,
         accessorFn: row => {
           if (currency) {
@@ -441,6 +442,7 @@ export const PricingTableComponent = ({
       {
         id: 'foreignCurrencySellPricePerPack',
         header: t('label.fc-sell-price'),
+        columnType: ColumnType.Currency,
         size: 100,
         accessorFn: row => {
           if (currency) {
@@ -454,12 +456,14 @@ export const PricingTableComponent = ({
       {
         accessorKey: 'lineTotal',
         header: t('label.line-total'),
+        columnType: ColumnType.Currency,
         size: 100,
         accessorFn: row => row.costPricePerPack * row.numberOfPacks,
       },
       {
         id: 'foreignCurrencyLineTotal',
         header: t('label.fc-line-total'),
+        columnType: ColumnType.Currency,
         size: 100,
         accessorFn: row => {
           if (currency) {
