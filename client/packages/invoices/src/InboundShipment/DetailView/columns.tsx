@@ -243,6 +243,7 @@ export const useInboundShipmentColumns = (
     ];
   }, [
     external,
+    showLineStatus,
     t,
     manageVvmStatusForStock,
     manageVaccinesInDoses,
