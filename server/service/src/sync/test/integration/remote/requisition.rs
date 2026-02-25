@@ -24,7 +24,7 @@ impl SyncRecordTester for RequisitionRecordTester {
             store_id: store_id.to_string(),
             user_id: None,
             requisition_number: 456,
-            name_link_id: uuid(),
+            name_id: uuid(),
             r#type: RequisitionType::Request,
             status: RequisitionStatus::Draft,
             created_datetime: NaiveDate::from_ymd_opt(2022, 03, 23)

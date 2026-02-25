@@ -2,8 +2,8 @@ use chrono::Utc;
 use repository::{
     vvm_status::vvm_status_log_row::VVMStatusLogRow, CurrencyFilter, CurrencyRepository,
     EqualFilter, InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineType,
-    InvoiceRow, MasterList, MasterListFilter, MasterListRepository, NameLinkRowRepository,
-    RepositoryError, StockLineRow, StorageConnection,
+    InvoiceRow, MasterList, MasterListFilter, MasterListRepository, RepositoryError,
+    StockLineRow, StorageConnection,
 };
 use util::uuid::uuid;
 
@@ -66,19 +66,15 @@ pub struct AddToShipmentFromMasterListInput {
     pub master_list_id: String,
 }
 
-pub fn check_master_list_for_name_link_id(
+pub fn check_master_list_for_name_id(
     connection: &StorageConnection,
-    name_link_id: &str,
+    name_id: &str,
     master_list_id: &str,
 ) -> Result<Option<MasterList>, RepositoryError> {
-    let Some(name_link) = NameLinkRowRepository::new(connection).find_one_by_id(name_link_id)?
-    else {
-        return Ok(None);
-    };
     let mut rows = MasterListRepository::new(connection).query_by_filter(
         MasterListFilter::new()
             .id(EqualFilter::equal_to(master_list_id.to_string()))
-            .exists_for_name_id(EqualFilter::equal_to(name_link.name_id.to_string())),
+            .exists_for_name_id(EqualFilter::equal_to(name_id.to_string())),
     )?;
     Ok(rows.pop())
 }

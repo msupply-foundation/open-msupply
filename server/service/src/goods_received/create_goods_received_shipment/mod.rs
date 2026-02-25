@@ -45,11 +45,11 @@ pub fn create_goods_received_shipment(
     let invoice = ctx
         .connection
         .transaction_sync(|connection| {
-            let (supplier_name_link, goods_received, line_map) =
+            let (supplier_name_id, goods_received, line_map) =
                 validate(connection, &ctx.store_id, &input)?;
 
             let (invoice, invoice_lines) =
-                generate(connection, supplier_name_link, goods_received, line_map)?;
+                generate(connection, supplier_name_id, goods_received, line_map)?;
 
             let result = insert_inbound_shipment(ctx, invoice.clone())
                 .map_err(|error| OutError::InboundShipmentError(error))?;
