@@ -113,14 +113,15 @@ const UIComponent = (props: ControlProps) => {
 
   return (
     <Box>
-      <ProgramFilter
+      <AutocompleteFilter
         label={t('label.program')}
         value={form.program}
         options={programs}
         loading={programsLoading}
+        clearable={false}
         handleChange={onProgramChange}
       />
-      <ScheduleFilter
+      <AutocompleteFilter
         label={t('label.schedule')}
         value={form.schedule}
         options={schedules}
@@ -128,7 +129,7 @@ const UIComponent = (props: ControlProps) => {
         disabled={!form.program}
         handleChange={onScheduleChange}
       />
-      <PeriodFilter
+      <AutocompleteFilter
         label={t('label.period')}
         value={form.period}
         options={periods}
@@ -160,22 +161,25 @@ const UIComponentWrapper = (props: ControlProps) => {
 
 export const ScheduleForm = withJsonFormsControlProps(UIComponentWrapper);
 
-interface FilterProps<T> {
+interface AutocompleteFilterProps<T> {
   label: string;
   value: T | null;
   options: T[];
   loading?: boolean;
   disabled?: boolean;
+  clearable?: boolean;
   handleChange: (value: T | null) => void;
 }
 
-const ProgramFilter = ({
+const AutocompleteFilter = <T extends { id: string; name: string }>({
   label,
   value,
   options,
   loading,
+  disabled,
+  clearable,
   handleChange,
-}: FilterProps<ProgramFragment>) => (
+}: AutocompleteFilterProps<T>) => (
   <DetailInputWithLabelRow
     sx={DefaultFormRowSx}
     label={label}
@@ -189,62 +193,9 @@ const ProgramFilter = ({
         optionKey="name"
         onChange={(_, option) => handleChange(option)}
         value={value ? { label: value.name ?? '', ...value } : null}
-        isOptionEqualToValue={(option, value) => option.id === value.id}
-        clearable={false}
-      />
-    }
-  />
-);
-
-const ScheduleFilter = ({
-  label,
-  value,
-  options,
-  loading,
-  disabled,
-  handleChange,
-}: FilterProps<PeriodScheduleNode>) => (
-  <DetailInputWithLabelRow
-    sx={DefaultFormRowSx}
-    label={label}
-    labelWidthPercentage={FORM_LABEL_WIDTH}
-    inputAlignment={'start'}
-    Input={
-      <Autocomplete
-        fullWidth
-        loading={loading}
-        options={options}
-        optionKey="name"
-        onChange={(_, option) => handleChange(option)}
-        value={value ? { label: value.name ?? '', ...value } : null}
-        isOptionEqualToValue={(option, value) => option.id === value.id}
+        isOptionEqualToValue={(option, v) => option.id === v.id}
         disabled={disabled}
-      />
-    }
-  />
-);
-
-const PeriodFilter = ({
-  label,
-  value,
-  options,
-  disabled,
-  handleChange,
-}: FilterProps<PeriodNode>) => (
-  <DetailInputWithLabelRow
-    sx={DefaultFormRowSx}
-    label={label}
-    labelWidthPercentage={FORM_LABEL_WIDTH}
-    inputAlignment={'start'}
-    Input={
-      <Autocomplete
-        fullWidth
-        options={options}
-        optionKey="name"
-        onChange={(_, option) => handleChange(option)}
-        value={value ? { label: value.name ?? '', ...value } : null}
-        isOptionEqualToValue={(option, value) => option.id === value.id}
-        disabled={disabled}
+        clearable={clearable}
       />
     }
   />
