@@ -1,6 +1,10 @@
 use crate::{
-    db_diesel::{item_link_row::item_link, item_row::item, name_link_row::name_link, purchase_order_row::purchase_order},
-    diesel_macros::define_linked_tables, Delete, PurchaseOrderRowRepository, Upsert,
+    db_diesel::{
+        item_link_row::item_link, item_row::item, name_link_row::name_link,
+        purchase_order_row::purchase_order,
+    },
+    diesel_macros::define_linked_tables,
+    Delete, PurchaseOrderRowRepository, Upsert,
 };
 use crate::{
     ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RepositoryError, RowActionType,
@@ -51,9 +55,7 @@ allow_tables_to_appear_in_same_query!(purchase_order_line, item);
 allow_tables_to_appear_in_same_query!(purchase_order_line, purchase_order);
 allow_tables_to_appear_in_same_query!(purchase_order_line, name_link);
 
-#[derive(
-    Clone, Queryable, Debug, Serialize, Deserialize, Default, PartialEq,
-)]
+#[derive(Clone, Queryable, Debug, Serialize, Deserialize, Default, PartialEq)]
 #[diesel(table_name = purchase_order_line)]
 pub struct PurchaseOrderLineRow {
     pub id: String,
@@ -150,7 +152,8 @@ impl<'a> PurchaseOrderLineRowRepository<'a> {
         };
 
         diesel::delete(
-            purchase_order_line_with_links::table.filter(purchase_order_line_with_links::id.eq(purchase_order_line_id)),
+            purchase_order_line_with_links::table
+                .filter(purchase_order_line_with_links::id.eq(purchase_order_line_id)),
         )
         .execute(self.connection.lock().connection())?;
         Ok(Some(change_log_id))
@@ -262,7 +265,7 @@ mod tests {
             store_id: mock_store_a().id.clone(),
             created_datetime: chrono::Utc::now().naive_utc(),
             purchase_order_number: 1,
-            foreign_exchange_rate: 1.00,
+
             ..Default::default()
         };
 
