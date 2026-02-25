@@ -6,12 +6,16 @@ import {
 } from 'material-react-table';
 import { getSavedState, updateSavedState, differentOrUndefined } from './utils';
 import { useDebounceCallback } from '@common/hooks';
+import { useGlobalTableDefaults } from './useGlobalTableConfig';
 
 export const useColumnSizing = (tableId: string) => {
+  const globalDefaults = useGlobalTableDefaults(tableId);
   const initial = { 'mrt-row-expand': 40 };
 
   const [state, setState] = useState<MRT_ColumnSizingState>(
-    getSavedState(tableId).columnSizing ?? initial
+    getSavedState(tableId).columnSizing ??
+      globalDefaults?.columnSizing ??
+      initial
   );
   const [hasSavedState, setHasSavedState] = useState(
     !!getSavedState(tableId).columnSizing

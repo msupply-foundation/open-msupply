@@ -10,7 +10,7 @@ import {
 import { IconButton, useConfirmationModal } from '@common/components';
 import { useTranslation } from '@common/intl';
 import { MRT_DensityState, MRT_TableInstance } from 'material-react-table';
-import { RefreshIcon, SettingsIcon, EyeIcon } from '@common/icons';
+import { RefreshIcon, SaveIcon, SettingsIcon, EyeIcon } from '@common/icons';
 import {
   useColumnDensity,
   useColumnOrder,
@@ -34,6 +34,7 @@ export const SettingsMenu = ({
   columnPinning,
   columnOrder,
   resetTableState,
+  onSaveAsGlobalDefault,
 }: {
   table: MRT_TableInstance<any>;
   density: ReturnType<typeof useColumnDensity>;
@@ -42,6 +43,7 @@ export const SettingsMenu = ({
   columnPinning: ReturnType<typeof useColumnPinning>;
   columnOrder: ReturnType<typeof useColumnOrder>;
   resetTableState: () => void;
+  onSaveAsGlobalDefault?: () => void;
 }) => {
   const t = useTranslation();
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
@@ -164,6 +166,24 @@ export const SettingsMenu = ({
             <ListItemIcon>{densityIcon()}</ListItemIcon>
             <ListItemText> {t('label.toggle-density')}</ListItemText>
           </MenuItem>
+          {onSaveAsGlobalDefault && (
+            <>
+              <Divider />
+              <MenuItem
+                onClick={() => {
+                  onSaveAsGlobalDefault();
+                  setAnchorEl(null);
+                }}
+              >
+                <ListItemIcon>
+                  <SaveIcon fontSize="small" />
+                </ListItemIcon>
+                <ListItemText>
+                  {t('label.save-table-config-as-global-default')}
+                </ListItemText>
+              </MenuItem>
+            </>
+          )}
           <Divider />
           <MenuItem
             disabled={!hasSavedState}

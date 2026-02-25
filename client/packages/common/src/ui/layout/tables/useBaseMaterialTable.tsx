@@ -18,9 +18,15 @@ import {
   useColumnVisibility,
   useColumnPinning,
   useIsGrouped,
+  useSaveGlobalTableConfig,
 } from './tableState';
-import { clearSavedState } from './tableState/utils';
+import { clearSavedState, ManagedTableState } from './tableState/utils';
 import { DataError, NothingHere } from '@common/components';
+import {
+  useIsCentralServerApi,
+  useAuthContext,
+  UserPermission,
+} from '@openmsupply-client/common';
 
 export interface BaseTableConfig<T extends MRT_RowData> extends Omit<
   MRT_TableOptions<T>,
@@ -73,6 +79,11 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
   const t = useTranslation();
   const { getTableLocalisations } = useIntlUtils();
   const localization = getTableLocalisations();
+  const isCentralServer = useIsCentralServerApi();
+  const { userHasPermission } = useAuthContext();
+  const canEditGlobalDefaults =
+    isCentralServer && userHasPermission(UserPermission.EditCentralData);
+  const { saveGlobalTableConfig } = useSaveGlobalTableConfig();
 
   const { columns } = useMaterialTableColumns(omsColumns);
 
@@ -143,6 +154,20 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
   // hiding all table filter related options for now
   const hasColumnFilters = false;
 
+  const onSaveAsGlobalDefault = canEditGlobalDefaults
+    ? () => {
+        const currentState: ManagedTableState = {
+          density: density.state,
+          columnVisibility: columnVisibility.state,
+          columnPinning: columnPinning.state,
+          columnOrder: columnOrder.state,
+          columnSizing: columnSizing.state,
+          isGrouped,
+        };
+        saveGlobalTableConfig(tableId, currentState);
+      }
+    : undefined;
+
   const displayOptions = useTableDisplayOptions({
     density,
     columnSizing,
@@ -158,6 +183,7 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
     getIsRestrictedRow,
     muiTableBodyRowProps,
     isMobile,
+    onSaveAsGlobalDefault,
   });
 
   const table = useMaterialReactTable<T>({

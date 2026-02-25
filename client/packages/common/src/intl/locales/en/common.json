@@ -1445,6 +1445,7 @@
   "label.rows-per-page": "Rows per page:",
   "label.rtmd": "mSupply",
   "label.save-log": "Save log to file",
+  "label.save-table-config-as-global-default": "Save table config as global default",
   "label.schedule": "Schedule",
   "label.schedule-next-encounter": "Schedule next encounter",
   "label.search-results": "Search results",
