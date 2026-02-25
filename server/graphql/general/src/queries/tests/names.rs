@@ -188,7 +188,6 @@ mod graphql {
                 is_donor,
                 code_or_name: _,
                 supplying_store_id: _,
-                name_link_id: _,
             } = filter.unwrap();
 
             assert_eq!(
