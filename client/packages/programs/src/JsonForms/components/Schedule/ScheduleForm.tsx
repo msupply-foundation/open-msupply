@@ -44,7 +44,6 @@ const UIComponent = (props: ControlProps) => {
   const schedules = scheduleData?.nodes ?? [];
   const periods = form.schedule?.periods.map(s => s.period) ?? [];
 
-  // resaturate state
   if (programId && !form.program) {
     const program = programs.find(p => p.id === programId);
     if (program) setForm(prev => ({ ...prev, program }));
@@ -105,14 +104,9 @@ const UIComponent = (props: ControlProps) => {
     handleChange('before', before?.toISOString());
   };
 
-  const onAfterChange = (date: Date | null) => {
-    setForm(prev => ({ ...prev, after: date }));
-    handleChange('after', date?.toISOString());
-  };
-
-  const onBeforeChange = (date: Date | null) => {
-    setForm(prev => ({ ...prev, before: date }));
-    handleChange('before', date?.toISOString());
+  const onDateChange = (path: 'after' | 'before', date: Date | null) => {
+    setForm(prev => ({ ...prev, [path]: date }));
+    handleChange(path, date?.toISOString());
   };
 
   return (
@@ -139,13 +133,13 @@ const UIComponent = (props: ControlProps) => {
       <DateFilter
         label={'After'}
         value={form.after}
-        onChange={onAfterChange}
+        handleChange={date => onDateChange('after', date)}
         maxDate={form.before ?? undefined}
       />
       <DateFilter
         label={'Before'}
         value={form.before}
-        onChange={onBeforeChange}
+        handleChange={date => onDateChange('before', date)}
         minDate={form.after ?? undefined}
       />
     </Box>
@@ -272,7 +266,7 @@ const PeriodFilter = ({
 interface DateFilterProps {
   label: string;
   value: Date | null;
-  onChange: (date: Date | null) => void;
+  handleChange: (date: Date | null) => void;
   minDate?: Date;
   maxDate?: Date;
 }
@@ -280,7 +274,7 @@ interface DateFilterProps {
 const DateFilter = ({
   label,
   value,
-  onChange,
+  handleChange,
   minDate,
   maxDate,
 }: DateFilterProps) => (
@@ -292,7 +286,7 @@ const DateFilter = ({
     Input={
       <DateTimePickerInput
         value={value}
-        onChange={onChange}
+        onChange={handleChange}
         minDate={minDate}
         maxDate={maxDate}
       />
