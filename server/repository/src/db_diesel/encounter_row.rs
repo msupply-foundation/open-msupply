@@ -99,7 +99,7 @@ impl<'a> EncounterRowRepository<'a> {
             record_id: row.id,
             row_action: action,
             store_id: row.store_id,
-            name_link_id: Some(row.patient_id),
+            name_id: Some(row.patient_id),
         };
 
         ChangelogRepository::new(self.connection).insert(&changelog_row)

@@ -123,7 +123,7 @@ impl<'a> PurchaseOrderLineRowRepository<'a> {
             record_id: row.id.clone(),
             row_action: action,
             store_id: Some(purchase_order.store_id.clone()),
-            name_link_id: None,
+            name_id: None,
         };
 
         let purchase_order_row = ChangeLogInsertRow {
@@ -131,7 +131,7 @@ impl<'a> PurchaseOrderLineRowRepository<'a> {
             record_id: purchase_order.id,
             row_action: RowActionType::Upsert,
             store_id: Some(purchase_order.store_id),
-            name_link_id: None,
+            name_id: None,
         };
 
         let _ = ChangelogRepository::new(self.connection).insert(&row);
