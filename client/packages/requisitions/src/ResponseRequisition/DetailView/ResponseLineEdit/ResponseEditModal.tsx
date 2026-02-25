@@ -18,7 +18,7 @@ import { ResponseLineEdit } from './ResponseLineEdit';
 import { useDraftRequisitionLine, useNextResponseLine } from './hooks';
 import { ResponseStoreStats } from '../ResponseStats/ResponseStoreStats';
 import { RequestStoreStats } from '../ResponseStats/RequestStoreStats';
-import { shouldDeleteLine } from 'packages/requisitions/src/utils';
+import { shouldDeleteLine } from '@openmsupply-client/requisitions/src/utils';
 
 interface ResponseLineEditModalProps {
   requisition: ResponseFragment;

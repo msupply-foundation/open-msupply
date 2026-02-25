@@ -12,7 +12,7 @@ import {
 } from '@openmsupply-client/common';
 import { DefaultFormRowSx, FORM_LABEL_WIDTH } from '../common';
 import { ProgramFragment, useProgramList } from '../../api';
-import { useSchedulesAndPeriods } from 'packages/requisitions/src';
+import { useSchedulesAndPeriods } from '@openmsupply-client/requisitions/src';
 
 export const scheduleFormTester = rankWith(10, uiTypeIs('ScheduleForm'));
 
