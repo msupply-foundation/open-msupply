@@ -19,6 +19,7 @@ import {
   useColumnPinning,
   useIsGrouped,
   useSaveGlobalTableConfig,
+  useGlobalTableDefaults,
 } from './tableState';
 import { clearSavedState, ManagedTableState } from './tableState/utils';
 import { DataError, NothingHere } from '@common/components';
@@ -84,6 +85,7 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
   const canEditGlobalDefaults =
     isCentralServer && userHasPermission(UserPermission.EditCentralData);
   const { saveGlobalTableConfig } = useSaveGlobalTableConfig();
+  const globalDefaults = useGlobalTableDefaults(tableId);
 
   const { columns } = useMaterialTableColumns(omsColumns);
 
@@ -149,6 +151,19 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
     columnPinning.resetHasSavedState();
     columnVisibility.resetHasSavedState();
     columnOrder.resetHasSavedState();
+
+    // If global defaults exist, apply them on top of the hard-coded defaults
+    if (globalDefaults) {
+      if (globalDefaults.density) table.setDensity(globalDefaults.density);
+      if (globalDefaults.columnSizing)
+        table.setColumnSizing(globalDefaults.columnSizing);
+      if (globalDefaults.columnVisibility)
+        table.setColumnVisibility(globalDefaults.columnVisibility);
+      if (globalDefaults.columnPinning)
+        table.setColumnPinning(globalDefaults.columnPinning);
+      if (globalDefaults.columnOrder)
+        table.setColumnOrder(globalDefaults.columnOrder);
+    }
   };
 
   // hiding all table filter related options for now
