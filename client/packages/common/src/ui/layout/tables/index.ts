@@ -29,6 +29,7 @@ export * from './utils';
 export * from './types';
 export * from './useGetColumnDefDefaults';
 export * from './components';
+export * from './cards';
 
 // Re-exporting so all imports come from common folder
 export { MaterialReactTable as MaterialTable } from 'material-react-table';

@@ -13,6 +13,8 @@ import {
   useAppTheme,
   useMediaQuery,
   Alert,
+  useViewMode,
+  ViewToggle,
 } from '@openmsupply-client/common';
 import { DraftInboundLine } from '../../../../types';
 import { InboundLineEditPanel } from './InboundLineEditPanel';
@@ -22,6 +24,7 @@ import {
   ItemRowFragment,
 } from '@openmsupply-client/system';
 import { PatchDraftLineInput } from '../../../api';
+import { CardView } from './CardView';
 
 interface TabLayoutProps {
   addDraftLine: () => void;
@@ -61,8 +64,58 @@ export const TabLayout = ({
   const [packRoundingMessage, setPackRoundingMessage] = useState<string>(
     () => ''
   );
+  const { viewMode, setViewMode } = useViewMode('table');
 
   if (!item) return null;
+
+  const isTableView = viewMode === 'table';
+
+  if (!isTableView) {
+    return (
+      <>
+        <Box flex={1} display="flex" justifyContent="space-between">
+          <Box flex={1} display="flex" alignItems="center">
+            <ViewToggle currentView={viewMode} onToggle={setViewMode} />
+          </Box>
+          <Box flex={1} />
+          <Box flex={1} justifyContent="flex-end" display="flex">
+            <ButtonWithIcon
+              disabled={isDisabled}
+              color="primary"
+              variant="outlined"
+              onClick={() => {
+                addDraftLine();
+              }}
+              label={`${t('label.add-batch')} (+)`}
+              Icon={<PlusCircleIcon />}
+            />
+          </Box>
+        </Box>
+        <Box
+          sx={{
+            marginTop: 2,
+            borderWidth: 1,
+            borderStyle: 'solid',
+            borderColor: 'divider',
+            borderRadius: '20px',
+            overflow: 'hidden',
+          }}
+        >
+          <CardView
+            draftLines={draftLines}
+            updateDraftLine={updateDraftLine}
+            removeDraftLine={removeDraftLine}
+            isDisabled={isDisabled}
+            currency={currency}
+            isExternalSupplier={isExternalSupplier}
+            item={item}
+            hasItemVariantsEnabled={hasItemVariantsEnabled}
+            hasVvmStatusesEnabled={hasVvmStatusesEnabled}
+          />
+        </Box>
+      </>
+    );
+  }
 
   return (
     <TabContext value={currentTab}>
@@ -74,7 +127,9 @@ export const TabLayout = ({
       />
 
       <Box flex={1} display="flex" justifyContent="space-between">
-        <Box flex={1} />
+        <Box flex={1} display="flex" alignItems="center">
+          <ViewToggle currentView={viewMode} onToggle={setViewMode} />
+        </Box>
         <Box flex={1}>
           <TabList
             value={currentTab}
