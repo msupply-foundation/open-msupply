@@ -61,7 +61,7 @@ export const LinkPurchaseOrderModal = ({
         accessorKey: 'comment',
         header: t('label.comment'),
         columnType: ColumnType.Comment,
-        enableColumnFilter: true,
+        enableColumnFilter: false,
         size: 80,
       },
     ],
@@ -76,6 +76,8 @@ export const LinkPurchaseOrderModal = ({
       columns,
       data: data?.nodes,
       enableMultiRowSelection: false,
+      enableColumnFilters: true,
+      noUrlFiltering: true,
       getRowId: row => row.id,
       muiTableBodyRowProps: ({ row }) => ({
         // add onClick to row to select upon clicking anywhere in the row
@@ -83,7 +85,7 @@ export const LinkPurchaseOrderModal = ({
         sx: { cursor: 'pointer' },
       }),
       onRowSelectionChange: setRowSelection,
-      state: { rowSelection },
+      state: { rowSelection, showColumnFilters: true },
       isLoading,
     });
 
