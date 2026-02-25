@@ -7,11 +7,7 @@ use crate::{
     DBType, EqualFilter, ItemLinkRow, ItemRow, LocationTypeRow, NameRow, Pagination, Sort,
     StorageConnection, StringFilter,
 };
-use diesel::{
-    dsl::{IntoBoxed, LeftJoin},
-    helper_types::InnerJoin,
-    prelude::*,
-};
+use diesel::{dsl::IntoBoxed, prelude::*};
 
 #[derive(Debug, PartialEq, Clone, Default)]
 pub struct ItemVariant {
@@ -34,17 +30,15 @@ type ItemVariantJoin = (
     Option<LocationTypeRow>,
 );
 
-type BoxedItemVariantQuery = IntoBoxed<
-    'static,
-    LeftJoin<
-        InnerJoin<
-            LeftJoin<item_variant::table, name::table>,
-            InnerJoin<item_link::table, item::table>,
-        >,
-        location_type::table,
-    >,
-    DBType,
->;
+#[diesel::dsl::auto_type]
+fn query() -> _ {
+    item_variant::table
+        .left_join(name::table)
+        .inner_join(item_link::table.inner_join(item::table))
+        .left_join(location_type::table)
+}
+
+type BoxedItemVariantQuery = IntoBoxed<'static, query, DBType>;
 
 #[derive(Clone, Default)]
 pub struct ItemVariantFilter {
@@ -153,11 +147,7 @@ fn to_domain(
 fn create_filtered_query(
     filter: Option<ItemVariantFilter>,
 ) -> BoxedItemVariantQuery {
-    let mut query = item_variant::table
-        .left_join(name::table)
-        .inner_join(item_link::table.inner_join(item::table))
-        .left_join(location_type::table)
-        .into_boxed();
+    let mut query = query().into_boxed();
     // Exclude any deleted items
     query = query.filter(item_variant::deleted_datetime.is_null());
 
