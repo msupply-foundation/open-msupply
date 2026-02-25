@@ -65,7 +65,6 @@ const UIComponent = (props: ControlProps) => {
     handleChange(path, programId);
     handleChange('elmisCode', elmisCode);
     handleChange('fetchAllPrograms', fetchAllPrograms);
-    handleChange('periodId', null);
   };
 
   if (programId && !program) {
