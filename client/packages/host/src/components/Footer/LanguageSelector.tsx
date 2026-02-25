@@ -3,7 +3,7 @@ import {
   Box,
   FlatButton,
   PaperPopoverSection,
-  usePaperClickPopover,
+  usePaperPopover,
   useTranslation,
   useNavigate,
 } from '@openmsupply-client/common';
@@ -13,7 +13,7 @@ import { PropsWithChildrenOnly } from '@common/types';
 
 export const LanguageSelector: FC<PropsWithChildrenOnly> = ({ children }) => {
   const navigate = useNavigate();
-  const { hide, PaperClickPopover } = usePaperClickPopover();
+  const { hide, PaperPopover } = usePaperPopover();
   const t = useTranslation();
   const username = useUserName();
 
@@ -43,9 +43,12 @@ export const LanguageSelector: FC<PropsWithChildrenOnly> = ({ children }) => {
     />
   ));
   return (
-    <PaperClickPopover
-      className="language-selector"
-      placement="top"
+    <PaperPopover
+      mode="click"
+      placement={{
+        vertical: 'top',
+        horizontal: 'center',
+      }}
       width={300}
       Content={
         <PaperPopoverSection label={t('select-language')}>
@@ -61,6 +64,6 @@ export const LanguageSelector: FC<PropsWithChildrenOnly> = ({ children }) => {
       }
     >
       {children}
-    </PaperClickPopover>
+    </PaperPopover>
   );
 };
