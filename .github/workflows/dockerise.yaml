@@ -23,8 +23,11 @@ jobs:
         with:
           node-version: "${{ steps.nvm.outputs.NVMRC }}"
 
+      - name: Enable Corepack
+        run: corepack enable
+
       - name: Install dependencies
-        run: cd ./client && rm -rf node_modules && yarn install --frozen-lockfile
+        run: yarn install --immutable
 
       - name: Build client
         run: NODE_OPTIONS="--max_old_space_size=4096" cd ./client && yarn build

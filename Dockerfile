@@ -37,15 +37,16 @@ FROM base as dev
 RUN apt-get update && apt-get install -y curl rsync && \
     curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
     apt-get install -y nodejs && \
-    npm install -g yarn && \
+    corepack enable && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /usr/src/omsupply
+COPY package.json yarn.lock .yarnrc.yml ./
 COPY client client
-COPY package.json .
+COPY standard_forms standard_forms
+COPY standard_reports standard_reports
 
-WORKDIR /usr/src/omsupply/client
-RUN yarn && yarn cache clean
+RUN yarn install --immutable
 
 RUN echo 'export NODE_OPTIONS="--max-old-space-size=8192"' >> ~/.bashrc
 

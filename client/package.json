@@ -5,15 +5,15 @@
   "sideEffects": false,
   "private": true,
   "scripts": {
-    "start-local": "lerna run --scope @openmsupply-client/* --parallel start-local -- --env $1 _",
-    "start-remote": "lerna run --scope @openmsupply-client/* --parallel start-remote -- --env $1 _",
+    "start-local": "lerna run --scope '@openmsupply-client/*' --parallel start-local -- --env ${1:-} _",
+    "start-remote": "lerna run --scope '@openmsupply-client/*' --parallel start-remote -- --env ${1:-} _",
     "start": "yarn start-local",
-    "build": "lerna run --scope @openmsupply-client/* build",
-    "build-stats": "lerna run --scope @openmsupply-client/* build-stats",
-    "build-plugins": "lerna run --scope @openmsupply-client/* build-plugin",
-    "serve": "lerna run --scope @openmsupply-client/* --parallel serve",
+    "build": "lerna run --scope '@openmsupply-client/*' build",
+    "build-stats": "lerna run --scope '@openmsupply-client/*' build-stats",
+    "build-plugins": "lerna run --scope '@openmsupply-client/*' build-plugin",
+    "serve": "lerna run --scope '@openmsupply-client/*' --parallel serve",
     "re-compile": "tsc --project packages/host/tsconfig.json --noEmit",
-    "compile-full": "lerna run --scope @openmsupply-client/* --parallel tsc",
+    "compile-full": "lerna run --scope '@openmsupply-client/*' --parallel tsc",
     "test": "jest --config ./jest.config.js --maxWorkers=50% --env=jsdom --testPathIgnorePatterns codegen.test.ts",
     "test:codegen": "jest --config ./jest.config.js codegen.test.ts",
     "storybook": "storybook dev -p 6006",
@@ -30,15 +30,13 @@
     "i18n-unused-display": "i18n-unused display-unused",
     "i18n-unused-remove": "i18n-unused remove-unused",
     "i18n-missing": "i18n-unused display-missed",
-    "eslint": "lerna run --scope @openmsupply-client/* eslint",
+    "eslint": "lerna run --scope '@openmsupply-client/*' eslint",
     "prettier": "prettier --check 'packages/*/src/**/*.{js,jsx,ts,tsx,json,css,scss,md}'",
     "lint-and-format": "yarn re-compile && yarn prettier || true && yarn eslint"
   },
-  "workspaces": {
-    "packages": [
-      "packages/*"
-    ]
-  },
+  "workspaces": [
+    "packages/*"
+  ],
   "devDependencies": {
     "@babel/core": "^7.21.3",
     "@babel/preset-flow": "^7.21.4",

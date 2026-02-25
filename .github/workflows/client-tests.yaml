@@ -30,11 +30,11 @@ jobs:
         with:
           node-version: '${{ steps.nvm.outputs.NVMRC }}'
 
+      - name: Enable Corepack
+        run: corepack enable
+
       - name: Install dependencies
-        run: |
-          cd ./client && rm -rf node_modules && yarn install --frozen-lockfile
-          cd ./../standard_reports && rm -rf node_modules && yarn install --frozen-lockfile
-          cd ./../standard_forms && rm -rf node_modules && yarn install --frozen-lockfile
+        run: yarn install --immutable
 
       - name: Run tests
         run: cd ./client && yarn test
