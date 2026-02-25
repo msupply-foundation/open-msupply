@@ -45,7 +45,7 @@ pub fn generate(
         item_row,
         existing_invoice_row.clone(),
         external_inbound_shipment_lines_must_be_authorised,
-    ); // include vvm status here
+    );
 
     // Check if the stock line already exists, if it does we may need to update it rather than replacing it
     let old_stock_line = match &input.stock_line_id {
@@ -155,6 +155,7 @@ fn generate_line(
     InvoiceRow {
         tax_percentage,
         default_donor_link_id: default_donor_id,
+        purchase_order_id,
         ..
     }: InvoiceRow,
     external_inbound_shipment_lines_must_be_authorised: bool,
@@ -163,7 +164,11 @@ fn generate_line(
     let total_after_tax = calculate_total_after_tax(total_before_tax, tax_percentage);
     // default to invoice_row donor_id if none supplied on insert
     let donor_id = donor_id.or(default_donor_id);
-    let status = match external_inbound_shipment_lines_must_be_authorised {
+
+    // set to pending for external inbound shipments when the preference is enabled
+    let add_status =
+        purchase_order_id.is_some() && external_inbound_shipment_lines_must_be_authorised;
+    let status = match add_status {
         true => Some(InvoiceLineStatus::Pending),
         false => None,
     };

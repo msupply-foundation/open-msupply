@@ -81,6 +81,7 @@ pub(crate) fn generate(
     update_invoice.currency_id = patch.currency_id.or(update_invoice.currency_id);
     update_invoice.currency_rate = patch.currency_rate.unwrap_or(update_invoice.currency_rate);
 
+    // Already validated in validate
     if let Some(delivered_datetime) = patch.delivered_datetime {
         update_invoice.delivered_datetime = Some(NaiveDateTime::from(delivered_datetime));
     }
@@ -354,6 +355,7 @@ pub fn generate_lines_and_stock_lines(
         if invoice_line.number_of_packs <= 0.0 {
             continue;
         }
+        // Rejected and pending lines should not create stock entries
         if matches!(
             invoice_line.status,
             Some(InvoiceLineStatus::Rejected | InvoiceLineStatus::Pending)
