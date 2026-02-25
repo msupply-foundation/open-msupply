@@ -33,7 +33,6 @@ joinable!(barcode -> invoice_line (id));
 joinable!(barcode -> name (manufacturer_id));
 joinable!(barcode_with_links -> name_link (manufacturer_link_id));
 allow_tables_to_appear_in_same_query!(barcode, item_link);
-allow_tables_to_appear_in_same_query!(barcode_with_links, name_link);
 
 #[derive(Clone, Queryable, Debug, PartialEq, Default)]
 #[diesel(table_name = barcode)]

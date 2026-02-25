@@ -56,7 +56,6 @@ joinable!(stocktake_line -> stock_line (stock_line_id));
 joinable!(stocktake_line -> reason_option (reason_option_id));
 joinable!(stocktake_line -> name (donor_id));
 allow_tables_to_appear_in_same_query!(stocktake_line, item_link);
-allow_tables_to_appear_in_same_query!(stocktake_line, name_link);
 allow_tables_to_appear_in_same_query!(stocktake_line, reason_option);
 
 #[derive(Clone, Queryable, Debug, PartialEq, Default)]

@@ -1,4 +1,4 @@
-use super::{name_link_row::name_link, StorageConnection};
+use super::StorageConnection;
 
 use crate::{
     clinician_link, ClinicianLinkRow, ClinicianLinkRowRepository, GenderType, RepositoryError,
@@ -46,7 +46,6 @@ pub struct ClinicianRow {
 }
 
 allow_tables_to_appear_in_same_query!(clinician, clinician_link);
-allow_tables_to_appear_in_same_query!(clinician, name_link);
 
 fn insert_or_ignore_clinician_link(
     connection: &StorageConnection,

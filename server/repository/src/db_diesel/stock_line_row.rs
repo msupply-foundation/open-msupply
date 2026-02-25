@@ -59,7 +59,6 @@ joinable!(stock_line -> campaign (campaign_id));
 joinable!(stock_line -> name (supplier_id));
 allow_tables_to_appear_in_same_query!(stock_line, item_link);
 allow_tables_to_appear_in_same_query!(stock_line, item_variant);
-allow_tables_to_appear_in_same_query!(stock_line, name_link);
 
 #[derive(Clone, Queryable, Debug, PartialEq, Default, Serialize, Deserialize)]
 #[diesel(table_name = stock_line)]
