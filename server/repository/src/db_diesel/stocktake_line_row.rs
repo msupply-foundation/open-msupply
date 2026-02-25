@@ -1,7 +1,7 @@
 use super::{
     item_link_row::item_link, location_row::location, name_link_row::name_link,
-    reason_option_row::reason_option, stock_line_row::stock_line, stocktake_row::stocktake,
-    StorageConnection,
+    name_row::name, reason_option_row::reason_option, stock_line_row::stock_line,
+    stocktake_row::stocktake, StorageConnection,
 };
 
 use crate::diesel_macros::define_linked_tables;
@@ -54,6 +54,7 @@ joinable!(stocktake_line -> location (location_id));
 joinable!(stocktake_line -> stocktake (stocktake_id));
 joinable!(stocktake_line -> stock_line (stock_line_id));
 joinable!(stocktake_line -> reason_option (reason_option_id));
+joinable!(stocktake_line -> name (donor_id));
 allow_tables_to_appear_in_same_query!(stocktake_line, item_link);
 allow_tables_to_appear_in_same_query!(stocktake_line, name_link);
 allow_tables_to_appear_in_same_query!(stocktake_line, reason_option);
