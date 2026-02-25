@@ -85,15 +85,15 @@ Regardless if one or many reports are built, the generated JSON file will be an 
 
 ### Upsert Reports
 
-`upsert-reports --path <optional-directory-path/generated/reports.json> --overwrite (optional)`
+`upsert-reports --path <optional-exact-path-to-reports.json> --overwrite (optional)`
 
-Takes the generated JSON from the `build-reports` process and upserts it to the database, making reports available in the client application.
+Takes the compiled `ReportsData` JSON file produced by `build-reports` and upserts all reports within it to the database, making them available in the client application.
 
 **What it does**
-This command reads the JSON array created by `build-reports` and adds those reports to your database. The path you specify here should point to the generated JSON file created in the previous build step - this will be located in a `generated/` subdirectory.
+This command reads the compiled JSON file (a `ReportsData` array) created by `build-reports` and adds those reports to your database. The `--path` argument must be the **exact path to the compiled JSON file** — not a directory. This file is located in the `generated/` subdirectory of wherever `build-reports` was run.
 
 - If you built with `--path ~/custom-reports`, the generated file will be at `~/custom-reports/generated/reports.json`
-- If you built standard reports (no path), it defaults to `reports/generated/standard-reports.json` and no path is required in this step
+- If you built standard reports (no path), it defaults to uploading both `../standard_reports/generated/standard_reports.json` and `../standard_forms/generated/standard_forms.json` and no path is required in this step
 
 This command will upsert if the `-o` or `--overwrite` flag is passed.
 If no overwrite flag is passed, it will default to insert.
