@@ -145,8 +145,8 @@ mod test {
         test_db::{setup_all, setup_all_with_data},
         vvm_status::vvm_status_log::{VVMStatusLogFilter, VVMStatusLogRepository},
         EqualFilter, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRow,
-        InvoiceLineRowRepository, InvoiceLineType, InvoiceRow, InvoiceStatus, InvoiceType,
-        StorePreferenceRow, StorePreferenceRowRepository,
+        InvoiceLineRowRepository, InvoiceLineStatus, InvoiceLineType, InvoiceRow, InvoiceStatus,
+        InvoiceType, StorePreferenceRow, StorePreferenceRowRepository,
     };
 
     use crate::{
@@ -544,5 +544,94 @@ mod test {
         let stock_line = invoice_line.stock_line_option.clone().unwrap();
         assert_eq!(stock_line.volume_per_pack, 10.0);
         assert_eq!(stock_line.total_volume, 150.0);
+    }
+
+    #[actix_rt::test]
+    async fn update_stock_in_line_cannot_change_status_of_received_invoice() {
+        fn received_inbound() -> InvoiceRow {
+            InvoiceRow {
+                id: "received_inbound_for_line_status".to_string(),
+                store_id: mock_store_b().id,
+                name_link_id: mock_name_store_b().id,
+                r#type: InvoiceType::InboundShipment,
+                status: InvoiceStatus::Received,
+                ..Default::default()
+            }
+        }
+
+        fn passed_line() -> InvoiceLineRow {
+            InvoiceLineRow {
+                id: "received_inbound_passed_line".to_string(),
+                invoice_id: received_inbound().id,
+                item_link_id: mock_item_a().id,
+                r#type: InvoiceLineType::StockIn,
+                status: Some(InvoiceLineStatus::Passed),
+                number_of_packs: 10.0,
+                pack_size: 1.0,
+                ..Default::default()
+            }
+        }
+
+        let (_, _, connection_manager, _) = setup_all_with_data(
+            "update_stock_in_line_status_errors",
+            MockDataInserts::all(),
+            MockData {
+                invoices: vec![received_inbound()],
+                invoice_lines: vec![passed_line()],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_b().id, mock_user_account_a().id)
+            .unwrap();
+
+        // Cannot change line status to Rejected once invoice is Received
+        assert_eq!(
+            update_stock_in_line(
+                &context,
+                UpdateStockInLine {
+                    id: passed_line().id,
+                    r#type: StockInType::InboundShipment,
+                    status: Some(NullableUpdate {
+                        value: Some(InvoiceLineStatus::Rejected),
+                    }),
+                    ..Default::default()
+                },
+            ),
+            Err(ServiceError::CannotChangeLineStatusOfReceivedInvoice)
+        );
+
+        // Cannot change line status to Pending once invoice is Received
+        assert_eq!(
+            update_stock_in_line(
+                &context,
+                UpdateStockInLine {
+                    id: passed_line().id,
+                    r#type: StockInType::InboundShipment,
+                    status: Some(NullableUpdate {
+                        value: Some(InvoiceLineStatus::Pending),
+                    }),
+                    ..Default::default()
+                },
+            ),
+            Err(ServiceError::CannotChangeLineStatusOfReceivedInvoice)
+        );
+
+        // Setting the same status should NOT trigger the error (no actual change)
+        assert!(update_stock_in_line(
+            &context,
+            UpdateStockInLine {
+                id: passed_line().id,
+                r#type: StockInType::InboundShipment,
+                status: Some(NullableUpdate {
+                    value: Some(InvoiceLineStatus::Passed),
+                }),
+                ..Default::default()
+            },
+        )
+        .is_ok());
     }
 }

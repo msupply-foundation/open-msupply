@@ -2,8 +2,8 @@ use chrono::{NaiveDateTime, Utc};
 
 use repository::vvm_status::vvm_status_log_row::VVMStatusLogRow;
 use repository::{
-    EqualFilter, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineType, LocationMovementRow,
-    Name, RepositoryError,
+    EqualFilter, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineStatus, InvoiceLineType,
+    LocationMovementRow, Name, RepositoryError,
 };
 use repository::{
     InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow, InvoiceStatus, StockLineRow,
@@ -83,7 +83,6 @@ pub(crate) fn generate(
 
     // Already validated in validate
     if let Some(delivered_datetime) = patch.delivered_datetime {
-        log::info!("Setting delivered datetime to: {}", delivered_datetime);
         update_invoice.delivered_datetime = Some(NaiveDateTime::from(delivered_datetime));
     }
 
@@ -354,6 +353,10 @@ pub fn generate_lines_and_stock_lines(
 
     for invoice_line in lines.into_iter() {
         if invoice_line.number_of_packs <= 0.0 {
+            continue;
+        }
+        // Rejected lines should not create stock entries
+        if invoice_line.status == Some(InvoiceLineStatus::Rejected) {
             continue;
         }
         let mut line = invoice_line.clone();
