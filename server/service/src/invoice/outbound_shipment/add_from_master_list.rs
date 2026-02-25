@@ -1,4 +1,4 @@
-use crate::invoice::common::check_master_list_for_name_link_id;
+use crate::invoice::common::check_master_list_for_name_id;
 use crate::invoice::common::get_lines_for_invoice;
 use crate::invoice::common::AddToShipmentFromMasterListInput as ServiceInput;
 use crate::{invoice::check_invoice_exists, service_provider::ServiceContext};
@@ -81,7 +81,7 @@ fn validate(
         return Err(OutError::NotAnOutboundShipment);
     }
 
-    check_master_list_for_name_link_id(
+    check_master_list_for_name_id(
         connection,
         &invoice_row.name_id,
         &input.master_list_id,

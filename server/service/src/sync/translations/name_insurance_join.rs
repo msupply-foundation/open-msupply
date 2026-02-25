@@ -143,7 +143,7 @@ impl SyncTranslation for NameInsuranceJoinTranslation {
     ) -> Result<super::PushTranslateResult, anyhow::Error> {
         let NameInsuranceJoinRow {
             id,
-            name_id: name_link_id,
+            name_id,
             insurance_provider_id,
             policy_number_person,
             policy_number_family,
@@ -171,7 +171,7 @@ impl SyncTranslation for NameInsuranceJoinTranslation {
 
         let legacy_row = LegacyNameInsuranceJoinRow {
             ID: id,
-            nameID: name_link_id,
+            nameID: name_id,
             insuranceProviderID: insurance_provider_id,
             discountRate: discount_percentage,
             enteredByID: entered_by_id,
