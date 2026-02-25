@@ -8,7 +8,6 @@ import {
   ErrorWithDetails,
   Formatter,
   IconButton,
-  Popover,
   RouteBuilder,
   SnowflakeIcon,
   SunIcon,
@@ -26,6 +25,7 @@ import {
   TemperatureBreachFragment,
   useTemperatureBreach,
 } from '../../../Monitoring/api/TemperatureBreach';
+import { Popover } from '@mui/material';
 
 interface BreachPopperProps {
   breachDot: BreachDot;
