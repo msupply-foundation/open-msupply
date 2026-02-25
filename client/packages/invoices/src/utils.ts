@@ -295,10 +295,7 @@ export const canDeletePrescription = (
   invoice.status === InvoiceNodeStatus.Picked;
 
 export const canDeleteInbound = (inbound: InboundRowFragment): boolean =>
-  inbound.status === InvoiceNodeStatus.New ||
-  inbound.status === InvoiceNodeStatus.Shipped ||
-  inbound.status === InvoiceNodeStatus.Delivered ||
-  inbound.status === InvoiceNodeStatus.Received;
+  inbound.status === InvoiceNodeStatus.New;
 
 export const canReturnInboundLines = (inbound: InboundFragment): boolean =>
   inbound.status === InvoiceNodeStatus.Delivered ||
