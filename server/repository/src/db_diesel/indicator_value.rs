@@ -140,7 +140,7 @@ fn to_domain((indicator_value_row, name_row): IndicatorValueJoin) -> IndicatorVa
 
 #[diesel::dsl::auto_type]
 fn query() -> _ {
-    indicator_value::table.inner_join(name::table.on(indicator_value::customer_name_id.eq(name::id)))
+    indicator_value::table.inner_join(name::table)
 }
 
 type BoxedIndicatorQuery = IntoBoxed<'static, query, DBType>;
