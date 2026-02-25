@@ -8,6 +8,7 @@ import {
   PeriodNode,
   PeriodScheduleNode,
   DateTimePickerInput,
+  useTranslation,
 } from '@openmsupply-client/common';
 import { DefaultFormRowSx, FORM_LABEL_WIDTH } from '../../common';
 import { ProgramFragment, useProgramList } from '../../../api';
@@ -24,6 +25,7 @@ interface FormState {
 }
 
 const UIComponent = (props: ControlProps) => {
+  const t = useTranslation();
   const { handleChange } = props;
   const [form, setForm] = useState<FormState>({
     program: null,
@@ -112,12 +114,14 @@ const UIComponent = (props: ControlProps) => {
   return (
     <Box>
       <ProgramFilter
+        label={t('label.program')}
         value={form.program}
         options={programs}
         loading={programsLoading}
         handleChange={onProgramChange}
       />
       <ScheduleFilter
+        label={t('label.schedule')}
         value={form.schedule}
         options={schedules}
         loading={schedulesLoading}
@@ -125,19 +129,20 @@ const UIComponent = (props: ControlProps) => {
         handleChange={onScheduleChange}
       />
       <PeriodFilter
+        label={t('label.period')}
         value={form.period}
         options={periods}
         disabled={!form.schedule}
         handleChange={onPeriodChange}
       />
       <DateFilter
-        label={'After'}
+        label={t('label.start-date')}
         value={form.after}
         handleChange={date => onDateChange('after', date)}
         maxDate={form.before ?? undefined}
       />
       <DateFilter
-        label={'Before'}
+        label={t('label.end-date')}
         value={form.before}
         handleChange={date => onDateChange('before', date)}
         minDate={form.after ?? undefined}
@@ -156,6 +161,7 @@ const UIComponentWrapper = (props: ControlProps) => {
 export const ScheduleForm = withJsonFormsControlProps(UIComponentWrapper);
 
 interface FilterProps<T> {
+  label: string;
   value: T | null;
   options: T[];
   loading?: boolean;
@@ -164,6 +170,7 @@ interface FilterProps<T> {
 }
 
 const ProgramFilter = ({
+  label,
   value,
   options,
   loading,
@@ -171,7 +178,7 @@ const ProgramFilter = ({
 }: FilterProps<ProgramFragment>) => (
   <DetailInputWithLabelRow
     sx={DefaultFormRowSx}
-    label={'Program'}
+    label={label}
     labelWidthPercentage={FORM_LABEL_WIDTH}
     inputAlignment={'start'}
     Input={
@@ -180,28 +187,17 @@ const ProgramFilter = ({
         loading={loading}
         options={options}
         optionKey="name"
-        // onChange={(_, option) => {
-        //   handleChange(programs.find(p => p.id === option?.id) || null);
-        // }}
         onChange={(_, option) => handleChange(option)}
-        // onInputChange={(
-        //   _event: React.SyntheticEvent<Element, Event>,
-        //   _value: string,
-        //   reason: string
-        // ) => {
-        //   if (reason === CLEAR) {
-        //     onChange(null);
-        //   }
-        // }}
         value={value ? { label: value.name ?? '', ...value } : null}
         isOptionEqualToValue={(option, value) => option.id === value.id}
-        // clearable={props.uischema.options?.['clearable'] ?? false}
+        clearable={false}
       />
     }
   />
 );
 
 const ScheduleFilter = ({
+  label,
   value,
   options,
   loading,
@@ -210,7 +206,7 @@ const ScheduleFilter = ({
 }: FilterProps<PeriodScheduleNode>) => (
   <DetailInputWithLabelRow
     sx={DefaultFormRowSx}
-    label={'Schedule'}
+    label={label}
     labelWidthPercentage={FORM_LABEL_WIDTH}
     inputAlignment={'start'}
     Input={
@@ -223,13 +219,13 @@ const ScheduleFilter = ({
         value={value ? { label: value.name ?? '', ...value } : null}
         isOptionEqualToValue={(option, value) => option.id === value.id}
         disabled={disabled}
-        // clearable={props.uischema.options?.['clearable'] ?? false}
       />
     }
   />
 );
 
 const PeriodFilter = ({
+  label,
   value,
   options,
   disabled,
@@ -237,7 +233,7 @@ const PeriodFilter = ({
 }: FilterProps<PeriodNode>) => (
   <DetailInputWithLabelRow
     sx={DefaultFormRowSx}
-    label={'Period'}
+    label={label}
     labelWidthPercentage={FORM_LABEL_WIDTH}
     inputAlignment={'start'}
     Input={
@@ -246,15 +242,6 @@ const PeriodFilter = ({
         options={options}
         optionKey="name"
         onChange={(_, option) => handleChange(option)}
-        // onInputChange={(
-        //   _event: React.SyntheticEvent<Element, Event>,
-        //   _value: string,
-        //   reason: string
-        // ) => {
-        //   if (reason === CLEAR) {
-        //     onChange(null);
-        //   }
-        // }}
         value={value ? { label: value.name ?? '', ...value } : null}
         isOptionEqualToValue={(option, value) => option.id === value.id}
         disabled={disabled}
@@ -289,6 +276,7 @@ const DateFilter = ({
         onChange={handleChange}
         minDate={minDate}
         maxDate={maxDate}
+        actions={['accept']}
       />
     }
   />
