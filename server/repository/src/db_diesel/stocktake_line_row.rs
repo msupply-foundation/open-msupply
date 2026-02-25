@@ -1,6 +1,6 @@
 use super::{
-    item_link_row::item_link, location_row::location, name_link_row::name_link,
-    name_row::name, reason_option_row::reason_option, stock_line_row::stock_line,
+    item_link_row::item_link, location_row::location, name_row::name,
+    reason_option_row::reason_option, stock_line_row::stock_line,
     stocktake_row::stocktake, StorageConnection,
 };
 

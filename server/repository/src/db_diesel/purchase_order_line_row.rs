@@ -1,7 +1,6 @@
 use crate::{
     db_diesel::{
-        item_link_row::item_link, item_row::item, name_link_row::name_link,
-        purchase_order_row::purchase_order,
+        item_link_row::item_link, item_row::item, purchase_order_row::purchase_order,
     },
     diesel_macros::define_linked_tables,
     Delete, PurchaseOrderRowRepository, Upsert,

@@ -1,5 +1,5 @@
 use crate::{
-    db_diesel::{item_link_row::item_link, item_row::item, name_link_row::name_link},
+    db_diesel::{item_link_row::item_link, item_row::item},
     diesel_macros::define_linked_tables,
     ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, Delete, RepositoryError,
     RowActionType, StorageConnection, Upsert,
