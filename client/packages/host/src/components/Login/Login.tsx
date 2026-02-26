@@ -5,6 +5,7 @@ import {
   useInterval,
   LoadingButton,
   useHostContext,
+  useAuthContext,
   LocalStorage,
   useFormatDateTime,
   BoxedErrorWithDetails,
@@ -18,6 +19,7 @@ import { useHost } from '../../api';
 export const Login = ({ fullSize = true }: { fullSize?: boolean }) => {
   const t = useTranslation();
   const { setPageTitle } = useHostContext();
+  const { logout } = useAuthContext();
   const hashInput = {
     logo: LocalStorage.getItem('/theme/logohash') ?? '',
     theme: LocalStorage.getItem('/theme/customhash') ?? '',
@@ -132,10 +134,12 @@ export const Login = ({ fullSize = true }: { fullSize?: boolean }) => {
 
   useEffect(() => {
     if (fullSize) {
+      logout();
       setPageTitle(`${t('app.login')} | ${t('app')} `);
       LocalStorage.removeItem('/error/auth');
     }
-  }, [setPageTitle, t]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [setPageTitle, t, fullSize]);
 
   return (
     <LoginLayout
