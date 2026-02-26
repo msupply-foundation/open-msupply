@@ -338,7 +338,7 @@ export const ResponseLineEdit = ({
               {...commonProps}
             />
             <ResponseNumInputRow
-              label={t('label.months-of-stock')}
+              label={t('label.customer-months-of-stock')}
               value={mos() ?? 0}
               disabledOverride={true}
               endAdornmentOverride={t('label.months')}

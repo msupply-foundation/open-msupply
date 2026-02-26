@@ -15,7 +15,7 @@ export const getLeftPanel = (
       value: draft?.itemStats.availableStockOnHand,
     },
     {
-      label: t('label.amc/amd'),
+      label: t('label.amc'),
       value: draft?.itemStats.averageMonthlyConsumption,
     },
   ];
