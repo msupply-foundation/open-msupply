@@ -2229,6 +2229,7 @@
   "messages.delete-all-translations-confirm": "Are you sure you want to delete all custom translations?",
   "messages.deleted": "Deleted",
   "messages.download-first-warning": "⚠️ Please download your current translations first to ensure you don't lose them.",
+  "messages.import-replaces-warning": "WARNING: importing translations will replace all the existing custom translations, please download first to avoid losing data.",
   "messages.imported": "Imported",
   "messages.save-encounter-as-visited": "Save encounter as Visited?",
   "messages.saved": "Saved",

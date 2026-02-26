@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import {
+  Alert,
   ButtonWithIcon,
   DialogButton,
   LoadingButton,
@@ -273,6 +274,9 @@ const CustomTranslationsUploadModal = ({
         height="100%"
         gap={2}
       >
+        <Alert severity="warning" sx={{ width: '100%' }}>
+          {t('messages.import-replaces-warning')}
+        </Alert>
         <UploadFile
           onUpload={setSelectedFiles}
           color="secondary"
