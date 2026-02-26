@@ -1,6 +1,7 @@
 import { test, expect, Page } from '@playwright/test';
 import * as fs from 'fs';
 import * as path from 'path';
+import { login } from '../helpers/login';
 
 // Note: right now this test primarily just takes screenshots, it doesn't correctly test functionality...
 
@@ -10,23 +11,6 @@ const screenshotDir = path.join(__dirname, '../screenshots');
 // Ensure screenshot directory exists
 if (!fs.existsSync(screenshotDir)) {
   fs.mkdirSync(screenshotDir, { recursive: true });
-}
-
-async function login(page: Page) {
-  await page.goto('/', { waitUntil: 'networkidle' });
-  await page.waitForTimeout(500);
-
-  const usernameInput = page.locator('input[type="text"]').first();
-  await usernameInput.fill('admin');
-
-  const passwordInput = page.locator('input[type="password"]').first();
-  await passwordInput.fill('pass');
-
-  const loginButton = page.locator('button:has-text("Log in")').first();
-  await loginButton.click();
-
-  await page.waitForURL(/manage|dashboard/, { timeout: 10000 });
-  await page.waitForTimeout(1000);
 }
 
 async function navigateToPreferences(page: Page) {
