@@ -47,23 +47,24 @@ export const SupplierReturnsDetailView = () => {
   const isDisabled = useReturns.utils.supplierIsDisabled();
   const columns = useSupplierReturnColumns();
 
-  const { table, selectedRows } =
-    useNonPaginatedMaterialTable<Groupable<SupplierReturnLineFragment>>({
-      tableId: 'supplier-return-detail',
-      onRowClick: row => onOpen(row.itemId),
-      columns,
-      isLoading,
-      data: lines,
-      grouping: { enabled: true },
-      enableRowSelection: !isDisabled,
-      noDataElement: (
-        <NothingHere
-          body={t('error.no-outbound-items')}
-          onCreate={isDisabled ? undefined : () => onAddItem()}
-          buttonText={t('button.add-item')}
-        />
-      ),
-    });
+  const { table, selectedRows } = useNonPaginatedMaterialTable<
+    Groupable<SupplierReturnLineFragment>
+  >({
+    tableId: 'supplier-return-detail',
+    onRowClick: row => onOpen(row.itemId),
+    columns,
+    isLoading,
+    data: lines,
+    grouping: { enabled: true },
+    enableRowSelection: !isDisabled,
+    noDataElement: (
+      <NothingHere
+        body={t('error.no-outbound-items')}
+        onCreate={isDisabled ? undefined : () => onAddItem()}
+        buttonText={t('button.add-item')}
+      />
+    ),
+  });
 
   const tabs = [
     {

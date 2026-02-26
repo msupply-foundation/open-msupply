@@ -1,4 +1,3 @@
-use crate::loader::IdPair;
 use actix_web::web::Data;
 use async_graphql::dataloader::Loader;
 use async_graphql::*;
@@ -9,15 +8,16 @@ use service::{
 };
 use std::collections::HashMap;
 
-#[derive(Clone, Debug)]
-pub struct EmptyPayload;
-pub type AvailableVolumeOnRequisitionLoaderInput = IdPair<EmptyPayload>;
+#[derive(Clone, PartialEq, Eq, Debug, Hash)]
+pub struct AvailableVolumeOnRequisitionLoaderInput {
+    requisition_id: String,
+    item_id: String,
+}
 impl AvailableVolumeOnRequisitionLoaderInput {
     pub fn new(requisition_id: &str, item_id: &str) -> Self {
         AvailableVolumeOnRequisitionLoaderInput {
-            primary_id: requisition_id.to_string(),
-            secondary_id: item_id.to_string(),
-            payload: EmptyPayload {},
+            requisition_id: requisition_id.to_string(),
+            item_id: item_id.to_string(),
         }
     }
 }
@@ -38,14 +38,14 @@ impl Loader<AvailableVolumeOnRequisitionLoaderInput> for AvailableVolumeOnRequis
 
         let requisition_id =
             if let Some(requisition_and_item_ids) = requisition_and_item_ids.first() {
-                &requisition_and_item_ids.primary_id
+                &requisition_and_item_ids.requisition_id
             } else {
                 return Ok(HashMap::new());
             };
 
         let item_ids: Vec<String> = requisition_and_item_ids
             .iter()
-            .map(|input| input.secondary_id.clone())
+            .map(|input| input.item_id.clone())
             .collect();
 
         let available_volumes =
@@ -57,7 +57,7 @@ impl Loader<AvailableVolumeOnRequisitionLoaderInput> for AvailableVolumeOnRequis
         >::new();
 
         for input in requisition_and_item_ids.iter() {
-            let item_id = &input.secondary_id;
+            let item_id = &input.item_id;
 
             if let Some(volume_info) = available_volumes.get(item_id) {
                 output.insert(

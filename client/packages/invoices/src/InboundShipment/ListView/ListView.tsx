@@ -52,7 +52,12 @@ export const InboundListView = () => {
         key: 'createdDatetime',
         condition: 'between',
       },
+      {
+        key: 'deliveredDatetime',
+        condition: 'between',
+      },
       { key: 'status', condition: 'equalAny' },
+      { key: 'theirReference' },
     ],
   });
 
@@ -134,6 +139,7 @@ export const InboundListView = () => {
         accessorKey: 'theirReference',
         size: 225,
         defaultHideOnMobile: true,
+        enableColumnFilter: true,
         enableSorting: true,
       },
       {
