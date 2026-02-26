@@ -6,11 +6,11 @@ import {
   UploadFile,
   ConfirmationModal,
 } from '@common/components';
+import { Box, Typography} from '@openmsupply-client/common';
 
 import { SaveIcon, DownloadIcon, DeleteIcon, EditIcon, UploadIcon } from '@common/icons';
 import { useIntlUtils, useTranslation } from '@common/intl';
 import { useDialog, useNotification, useToggle } from '@common/hooks';
-import { Box } from '@mui/material';
 import { mapTranslationsToArray, mapTranslationsToObject } from './helpers';
 import { TranslationsTable } from './TranslationsInputTable';
 
@@ -244,6 +244,7 @@ const CustomTranslationsUploadModal = ({
   onClose: () => void;
 }) => {
   const t = useTranslation();
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const { Modal } = useDialog({
     isOpen: true,
     onClose,
@@ -256,13 +257,32 @@ const CustomTranslationsUploadModal = ({
       width={800}
       height={500}
       cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
+      okButton={
+        <DialogButton
+          variant="ok"
+          disabled={selectedFiles.length === 0}
+          onClick={() => onUpload(selectedFiles)}
+        />
+      }
     >
-      <Box display="flex" justifyContent="center" alignItems="center" height="100%">
+      <Box
+        display="flex"
+        flexDirection="column"
+        justifyContent="center"
+        alignItems="center"
+        height="100%"
+        gap={2}
+      >
         <UploadFile
-          onUpload={onUpload}
+          onUpload={setSelectedFiles}
           color="secondary"
           accept={{ 'application/json': ['.json'] }}
         />
+        {selectedFiles.length > 0 && (
+          <Typography color="textSecondary">
+            {selectedFiles[0]?.name}
+          </Typography>
+        )}
       </Box>
     </Modal>
   );
