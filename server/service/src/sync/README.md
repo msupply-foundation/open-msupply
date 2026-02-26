@@ -53,6 +53,106 @@ When records are received they are first placed in a [SyncBuffer](https://github
 
 [SyncLogger](https://github.com/msupply-foundation/open-msupply/blob/bc83acbb3cd51fe3375ac01135c6eb880a793936/server/service/src/sync/sync_status/logger.rs#L35) will record each step's completion and progress, storing it in a database. Any blocking errors (like connection problems), will be recorded by SyncLogger.
 
+## Sync Buffer
+
+### What it is
+
+The `sync_buffer` table is a staging queue for incoming sync records. When this site
+receives data from the central server or from another remote site, those records are
+written into `sync_buffer` immediately and intact. A separate integration step then
+reads them out, translates them into the local schema, and writes them to their final
+tables.
+
+This two-phase design keeps the receive step simple and fast (just write JSON into a
+table) and lets the integration step fail safely on individual records without losing
+any data.
+
+### Schema
+
+| Field | Type | Description |
+|---|---|---|
+| `record_id` | TEXT (PK) | The ID of the record on the remote site. For `MERGE` actions a fresh UUID is generated locally to avoid colliding with an existing `UPSERT` row for the same record. |
+| `table_name` | TEXT | Which table the record belongs to — e.g. `invoice`, `item`, `name`. Matches the values used in the `changelog` table. |
+| `action` | Enum | One of `UPSERT`, `DELETE`, or `MERGE`. |
+| `data` | TEXT | The full record payload as a JSON string. For `DELETE` records this is an empty object `{}`. |
+| `received_datetime` | Timestamp | Set to the current UTC time at the moment of insertion. Records the exact time this site first received the data. |
+| `integration_datetime` | Timestamp (nullable) | Set when the record has been processed, whether successfully or not. `NULL` means the record has not been processed yet and will be picked up in the next integration run. |
+| `integration_error` | TEXT (nullable) | If processing failed, the error message is stored here. `NULL` on success. |
+| `source_site_id` | INTEGER (nullable) | The numeric ID of the remote site that sent this record. `NULL` for records that came from the central server. |
+
+### How records get into sync_buffer
+
+Two pull paths, both writing through `SyncBufferRowRepository::upsert_many()`:
+
+**Central data** (`central_data_synchroniser.rs`): The local site polls the central
+server with `sync_api_v5.get_central_records()`. The API returns a batch of
+`CommonSyncRecord` objects. Each is converted to a `SyncBufferRow` via
+`CommonSyncRecord::to_buffer_row()` (in `api/common_records.rs`), which sets
+`received_datetime = Utc::now()` and leaves `integration_datetime` and
+`integration_error` as `NULL`. The batch is then bulk-inserted.
+
+**Remote data** (`remote_data_synchroniser.rs`): The central server pushes a
+`RemoteSyncBatchV5` containing records from other remote sites. The same conversion
+runs, but `source_site_id` is populated with the originating site's ID so the system
+knows not to re-broadcast those records back to that site later.
+
+### How records are integrated into the database
+
+Integration is orchestrated by `integrate_and_translate_sync_buffer()` in
+`synchroniser.rs`. It runs after every successful pull and proceeds as follows:
+
+**1. Fetch unprocessed records** — `get_ordered_sync_buffer_records()` queries rows
+where `integration_datetime IS NULL` — everything not yet processed. Records are
+returned in three separate ordered groups: upserts in dependency order, deletes in
+reverse dependency order, and merges in dependency order.
+
+**2. Resolve dependency order** — each translator declares which tables it depends on
+via `pull_dependencies()`. For example, the `item` translator declares a dependency
+on `unit`, so units are always integrated before items. A topological sort
+(`pull_integration_order()`) across all translators produces the correct sequence,
+preserving referential integrity even when a batch contains both parent and child
+records.
+
+**3. Match a translator and deserialise** — `all_translators()` returns every known
+translator (one per table type). For each `sync_buffer` row, the system finds the
+translator whose `table_names()` matches `sync_buffer.table_name`. That translator's
+`try_translate_from_*_sync_record()` method deserialises the JSON `data` field into
+the appropriate Rust struct and returns an `IntegrationOperation` (Upsert or Delete).
+If no translator matches, an error is recorded on the row and processing continues.
+
+**4. Write to the target table** — `integrate()` (in `translation_and_integration.rs`)
+executes the operation through the same repository layer used by normal application
+code — `upsert_one()` or `delete()` on the relevant row repository. On PostgreSQL
+each record is wrapped in a savepoint so a failure on one record does not roll back
+the entire batch. On SQLite savepoints are skipped.
+
+**5. Mark the result** — after each record is processed:
+
+- **Success** → `integration_datetime = NOW()`, `integration_error = NULL`
+- **Failure** → `integration_datetime = NOW()`, `integration_error = <error message>`
+
+Once `integration_datetime` is set the record is excluded from all future processing
+runs. There is no automatic retry; a failed record requires manual investigation.
+
+**6. Update the changelog** — for every successful integration,
+`ChangelogRepository::set_source_site_id_and_is_sync_update()` is called on the
+changelog entry created by the repository write in step 4. This marks the entry with
+`is_sync_update = true` and records the originating site, so the outgoing sync queue
+does not re-send that change back to where it came from.
+
+### Key files
+
+| File | Purpose |
+|---|---|
+| `server/repository/src/db_diesel/sync_buffer.rs` | `SyncBufferRow` struct, `SyncAction` enum, `SyncBufferRowRepository` CRUD |
+| `server/service/src/sync/sync_buffer.rs` | Service helpers: `record_successful_integration`, `record_integration_error`, `get_ordered_sync_buffer_records` |
+| `server/service/src/sync/api/common_records.rs` | `CommonSyncRecord::to_buffer_row` — converts the incoming API payload to a `SyncBufferRow` |
+| `server/service/src/sync/central_data_synchroniser.rs` | Pulls records from the central server and writes them to `sync_buffer` |
+| `server/service/src/sync/remote_data_synchroniser.rs` | Receives records pushed from remote sites and writes them to `sync_buffer` |
+| `server/service/src/sync/synchroniser.rs` | `integrate_and_translate_sync_buffer` — top-level integration orchestration |
+| `server/service/src/sync/translation_and_integration.rs` | Per-record translate → integrate loop, error handling, savepoint management |
+| `server/service/src/sync/translations/mod.rs` | `SyncTranslation` trait, `all_translators()` registry, `pull_integration_order()` topological sort |
+
 ## Translations
 
 [SyncTranslator](https://github.com/msupply-foundation/open-msupply/blob/bc83acbb3cd51fe3375ac01135c6eb880a793936/server/service/src/sync/translations/mod.rs#L236) trait is implemented for any given translation. Implementation of this trait should specify every detail of a sync operation for a particular record, including pull dependencies, matching table name, matching ChangeLog variant and instructions on how to translate a JSON version to upsertable/deletable data type. There are times where one JSON sync record will result in a number of upsert and delete operations, therefore the interface for translation methods return arrays of operations (see [program requisition settings translation](https://github.com/msupply-foundation/open-msupply/blob/bc83acbb3cd51fe3375ac01135c6eb880a793936/server/service/src/sync/translations/program_requisition_settings.rs#L121)).
