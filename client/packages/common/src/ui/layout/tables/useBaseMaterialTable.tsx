@@ -145,7 +145,7 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
 
     if (resetDefaults?.columnOrder)
       table.setColumnOrder(resetDefaults.columnOrder);
-    // else: column order state resets directly from clearing local storage
+    else table.resetColumnOrder();
 
     resetGrouped();
 
