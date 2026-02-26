@@ -4,6 +4,7 @@ use crate::invoice::{
     inbound_shipment::UpdateInboundShipmentStatus, InvoiceRowStatusError,
 };
 use crate::validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors};
+use chrono::{NaiveDateTime, Utc};
 use repository::{
     InvoiceLineRowRepository, InvoiceLineStatus, InvoiceRow, InvoiceType, Name, StorageConnection,
 };
@@ -40,11 +41,32 @@ pub fn validate(
             },
         )?;
 
-        // If changing to Received, verify no pending lines
+        // All pending lines must be resolved (accepted or rejected) before the invoice can be
+        // received or verified, otherwise stock would be created for lines that haven't been
+        // reviewed yet.
         use UpdateInboundShipmentStatus::*;
-        // Do I need to worry about skipping over Received here?
         if matches!(patch.status, Some(Received | Verified)) {
             check_no_pending_lines(&invoice.id, connection)?;
+        }
+    }
+
+    // Delivered datetime is only editable for external inbound shipments (those created from a
+    // purchase order). It must not be in the future and must not be after the received datetime,
+    // as the goods can't have been delivered after they were received.
+    if let Some(delivered_datetime) = patch.delivered_datetime {
+        if invoice.purchase_order_id.is_none() {
+            return Err(CanOnlyChangeDateOfExternalInboundShipments);
+        }
+
+        let delivered_datetime = NaiveDateTime::from(delivered_datetime);
+        if delivered_datetime > Utc::now().naive_utc() {
+            return Err(CannotSetDeliveredDateInFuture);
+        }
+
+        if let Some(received_datetime) = invoice.received_datetime {
+            if delivered_datetime > received_datetime {
+                return Err(CannotPutDeliveredDateAfterReceivedDate);
+            }
         }
     }
 
@@ -74,12 +96,7 @@ pub fn validate(
         return Err(CannotIssueForeignCurrencyForInternalSuppliers);
     }
 
-    // Delivered datetime check
-    if patch.delivered_datetime.is_some() {
-        if invoice.purchase_order_id.is_none() {
-            return Err(CanOnlyChangeDateOfExternalInboundShipments);
-        }
-    }
+    // Don't put validation here, there is an early return above
 
     Ok((invoice, Some(other_party), status_changed))
 }

@@ -100,8 +100,14 @@ pub fn validate(
         }
     }
 
-    if input.status.as_ref().is_some_and(|s| s.value != line_row.status) {
+    if input
+        .status
+        .as_ref()
+        .is_some_and(|s| s.value != line_row.status)
+    {
         use repository::InvoiceStatus::*;
+        // Verified is already excluded by check_invoice_is_editable (invoice is no longer editable once verified).
+        // Can't change line status once invoice is received as stock lines may have already been allocated so rejecting a line at that point could cause issues with stock management.
         if invoice.status == Received {
             return Err(CannotChangeLineStatusOfReceivedInvoice);
         }

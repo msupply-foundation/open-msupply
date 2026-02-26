@@ -144,6 +144,13 @@ export const Toolbar = () => {
                           Formatter.naiveDate(date) ?? undefined,
                       })
                     }
+                    // Max now or received date, whichever is earlier
+                    maxDate={
+                      shipment?.receivedDatetime
+                        ? (DateUtils.getDateOrNull(shipment.receivedDatetime) ??
+                          new Date())
+                        : new Date()
+                    }
                   />
                 }
               />
