@@ -7,6 +7,7 @@ server/report_builder/config.yaml
 # Temp export files
 server/data
 .gitmodules
+node_modules/
 
 
 standard_reports/test-config.json
@@ -14,3 +15,4 @@ client/dist
 
 # IDEs
 .idea/
+
