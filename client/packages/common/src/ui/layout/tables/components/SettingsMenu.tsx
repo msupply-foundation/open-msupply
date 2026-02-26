@@ -18,6 +18,7 @@ import {
   useColumnSizing,
   useColumnVisibility,
 } from '../tableState';
+import { ManagedTableState } from '../tableState/utils';
 // MRT uses these icons - match the column menu items/table default icons until icon library + table icons are updated
 import PushPinIcon from '@mui/icons-material/PushPin';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
@@ -35,6 +36,7 @@ export const SettingsMenu = ({
   columnOrder,
   resetTableState,
   onSaveAsGlobalDefault,
+  globalDefaults,
 }: {
   table: MRT_TableInstance<any>;
   density: ReturnType<typeof useColumnDensity>;
@@ -44,6 +46,7 @@ export const SettingsMenu = ({
   columnOrder: ReturnType<typeof useColumnOrder>;
   resetTableState: () => void;
   onSaveAsGlobalDefault?: () => void;
+  globalDefaults?: ManagedTableState;
 }) => {
   const t = useTranslation();
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
@@ -112,7 +115,9 @@ export const SettingsMenu = ({
           <MenuItem
             disabled={!columnOrder.hasSavedState}
             onClick={() => {
-              table.resetColumnOrder();
+              if (globalDefaults?.columnOrder)
+                table.setColumnOrder(globalDefaults.columnOrder);
+              else table.resetColumnOrder();
               columnOrder.resetHasSavedState();
               setAnchorEl(null);
             }}
@@ -125,7 +130,9 @@ export const SettingsMenu = ({
           <MenuItem
             disabled={!columnVisibility.hasSavedState}
             onClick={() => {
-              table.resetColumnVisibility();
+              if (globalDefaults?.columnVisibility)
+                table.setColumnVisibility(globalDefaults.columnVisibility);
+              else table.resetColumnVisibility();
               columnVisibility.resetHasSavedState();
               setAnchorEl(null);
             }}
@@ -138,7 +145,9 @@ export const SettingsMenu = ({
           <MenuItem
             disabled={!columnSizing.hasSavedState}
             onClick={() => {
-              table.resetColumnSizing();
+              if (globalDefaults?.columnSizing)
+                table.setColumnSizing(globalDefaults.columnSizing);
+              else table.resetColumnSizing();
               columnSizing.resetHasSavedState();
               setAnchorEl(null);
             }}
@@ -151,7 +160,9 @@ export const SettingsMenu = ({
           <MenuItem
             disabled={!columnPinning.hasSavedState}
             onClick={() => {
-              table.resetColumnPinning();
+              if (globalDefaults?.columnPinning)
+                table.setColumnPinning(globalDefaults.columnPinning);
+              else table.resetColumnPinning();
               columnPinning.resetHasSavedState();
               setAnchorEl(null);
             }}
