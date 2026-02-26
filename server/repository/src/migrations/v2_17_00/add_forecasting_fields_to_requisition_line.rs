@@ -76,6 +76,18 @@ impl MigrationFragment for Migrate {
         sql!(
             connection,
             r#"
+                DELETE FROM changelog
+                WHERE table_name = 'plugin_data'
+                AND record_id IN (SELECT id FROM plugin_data WHERE plugin_code IN ('forecasting_plugins'));
+
+                DELETE FROM changelog
+                WHERE table_name = 'backend_plugin'
+                AND record_id IN (SELECT id FROM backend_plugin WHERE code IN ('forecasting_plugins'));
+
+                DELETE FROM changelog
+                WHERE table_name = 'frontend_plugin'
+                AND record_id IN (SELECT id FROM frontend_plugin WHERE code IN ('forecasting_plugins'));
+
                 DELETE FROM plugin_data WHERE plugin_code IN ('forecasting_plugins');
                 DELETE FROM backend_plugin WHERE code IN ('forecasting_plugins');
                 DELETE FROM frontend_plugin WHERE code IN ('forecasting_plugins');
@@ -90,12 +102,14 @@ impl MigrationFragment for Migrate {
 mod tests {
     use super::*;
     use crate::db_diesel::backend_plugin_row::backend_plugin;
+    use crate::db_diesel::changelog::changelog;
     use crate::db_diesel::plugin_data_row::plugin_data;
     use crate::db_diesel::requisition_line_row::requisition_line;
     use crate::frontend_plugin_row;
     use crate::{
         migrations::{v2_16_00::V2_16_00, v2_17_00::V2_17_00},
         test_db::*,
+        ChangelogTableName,
     };
     use diesel::{sql_query, ExpressionMethods, QueryDsl, RunQueryDsl};
     use util::uuid::uuid;
@@ -274,5 +288,21 @@ mod tests {
             .get_result(connection.lock().connection())
             .unwrap();
         assert_eq!(remaining_frontend_plugin_count, 0);
+
+        let backend_plugin_changelog_count_after: i64 = changelog::changelog::table
+            .filter(changelog::changelog::table_name.eq(ChangelogTableName::BackendPlugin))
+            .filter(changelog::changelog::record_id.eq("forecasting_plugin_id"))
+            .count()
+            .get_result(connection.lock().connection())
+            .unwrap();
+        assert_eq!(backend_plugin_changelog_count_after, 0);
+
+        let frontend_plugin_changelog_count_after: i64 = changelog::changelog::table
+            .filter(changelog::changelog::table_name.eq(ChangelogTableName::FrontendPlugin))
+            .filter(changelog::changelog::record_id.eq("forecasting_frontend_plugin_id"))
+            .count()
+            .get_result(connection.lock().connection())
+            .unwrap();
+        assert_eq!(frontend_plugin_changelog_count_after, 0);
     }
 }
