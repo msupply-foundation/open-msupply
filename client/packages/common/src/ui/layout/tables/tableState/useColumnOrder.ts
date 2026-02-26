@@ -64,17 +64,14 @@ export const useColumnOrder = <T extends MRT_RowData>(
             ? updaterOrValue(prev)
             : updaterOrValue;
 
-        const savedColumnOrder = differentOrUndefined(
-          newColumnOrder,
-          state ?? initial
-        );
+        const savedColumnOrder = differentOrUndefined(newColumnOrder, initial);
         updateSavedState(tableId, {
           columnOrder: savedColumnOrder,
         });
         if (savedColumnOrder) setHasSavedState(true);
         return newColumnOrder;
       }),
-    [initial, state]
+    [initial]
   );
 
   return {

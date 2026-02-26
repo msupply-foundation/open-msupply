@@ -59,7 +59,7 @@ export const SettingsMenu = ({
     columnVisibility.hasSavedState ||
     columnOrder.hasSavedState;
 
-  const getConfirmation = useConfirmationModal({
+  const getResetConfirmation = useConfirmationModal({
     title: t('heading.are-you-sure'),
     message: t('messages.reset-table-defaults'),
     onConfirm: resetTableState,
@@ -199,7 +199,7 @@ export const SettingsMenu = ({
           <MenuItem
             disabled={!hasSavedState}
             onClick={() => {
-              getConfirmation();
+              getResetConfirmation();
               setAnchorEl(null);
             }}
           >
