@@ -8,6 +8,7 @@ impl ViewMigrationFragment for ViewMigration {
         sql!(
             connection,
             r#"
+                DROP VIEW IF EXISTS document_view;
                 DROP VIEW IF EXISTS name_store_join_view;
                 DROP VIEW IF EXISTS store_view;
                 DROP VIEW IF EXISTS name_tag_join_view;
@@ -41,6 +42,11 @@ impl ViewMigrationFragment for ViewMigration {
         sql!(
             connection,
             r#"
+                CREATE VIEW document_view AS
+                SELECT document.*, name_link.name_id as owner_name_id
+                FROM document
+                LEFT JOIN name_link ON document.owner_name_link_id = name_link.id;
+
                 CREATE VIEW name_store_join_view AS
                 SELECT
                     name_store_join.*,

@@ -9,7 +9,7 @@ use crate::purchase_order_row::{
     PurchaseOrderRow, PurchaseOrderStatsRow, PurchaseOrderStatus,
 };
 
-use crate::{name_link, DateFilter, DatetimeFilter, EqualFilter, Pagination, Sort, StringFilter};
+use crate::{DateFilter, DatetimeFilter, EqualFilter, Pagination, Sort, StringFilter};
 use diesel::query_dsl::QueryDsl;
 use diesel::{dsl::IntoBoxed, prelude::*, RunQueryDsl};
 
@@ -121,10 +121,7 @@ impl<'a> PurchaseOrderRepository<'a> {
             apply_equal_filter!(query, store_id, purchase_order::store_id);
             apply_equal_filter!(query, status, purchase_order::status);
             if let Some(supplier_string) = supplier {
-                let mut sub_query = name_link::table
-                    .inner_join(name::table)
-                    .select(name::id)
-                    .into_boxed();
+                let mut sub_query = name::table.select(name::id).into_boxed();
                 apply_string_filter!(sub_query, Some(supplier_string), name::name_);
 
                 query = query.filter(purchase_order::supplier_name_id.eq_any(sub_query));
