@@ -19,6 +19,7 @@ import { IconButton } from '@common/components';
 import { useTranslation } from '@common/intl';
 import { EnvUtils } from '@common/utils';
 import { SettingsMenu } from './components/SettingsMenu';
+import { ManagedTableState } from './tableState/utils';
 import {
   useColumnDensity,
   useColumnOrder,
@@ -43,6 +44,7 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
   muiTableBodyRowProps = {},
   isMobile = false,
   onSaveAsGlobalDefault,
+  globalDefaults,
 }: {
   density: ReturnType<typeof useColumnDensity>;
   columnSizing: ReturnType<typeof useColumnSizing>;
@@ -58,6 +60,7 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
   getIsRestrictedRow?: (row: T) => boolean;
   isMobile?: boolean;
   onSaveAsGlobalDefault?: () => void;
+  globalDefaults?: ManagedTableState;
 
   // This object is merged with the default row props in muiTableBodyRowProps
   // below. We can do the same for other muiTable props if needed in future.
@@ -120,6 +123,7 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
           columnOrder={columnOrder}
           resetTableState={resetTableState}
           onSaveAsGlobalDefault={onSaveAsGlobalDefault}
+          globalDefaults={globalDefaults}
         />
       </>
     ),

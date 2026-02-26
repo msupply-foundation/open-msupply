@@ -125,25 +125,35 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
   const resetTableState = () => {
     clearSavedState(tableId);
 
-    // We have to call each of these reset fns, as MRT's general
+    // We have to call each of these reset/set fns, as MRT's general
     // reset function doesn't fire the onChange handlers (needed to trigger our
     // state handlers).
     // Seeing as local storage has already been cleared,
-    // these shouldn't trigger additional local storage updates
-    table.resetColumnPinning();
-    table.resetColumnSizing();
-    resetGrouped();
+    // these shouldn't trigger additional local storage updates.
+    // If global defaults exist, apply them instead of resetting to hard-coded
+    // defaults.
+    if (globalDefaults?.columnPinning)
+      table.setColumnPinning(globalDefaults.columnPinning);
+    else table.resetColumnPinning();
 
-    // column order doesn't need resetting - state reset directly from clearing
-    // local storage
+    if (globalDefaults?.columnSizing)
+      table.setColumnSizing(globalDefaults.columnSizing);
+    else table.resetColumnSizing();
+
+    if (globalDefaults?.columnOrder)
+      table.setColumnOrder(globalDefaults.columnOrder);
+    // else: column order state resets directly from clearing local storage
+
+    resetGrouped();
 
     // Visibility `initial` could change if prefs have come on/screen size
     // changed so reset to latest initial value rather than default initial
     // mount state
-    table.setColumnVisibility(columnVisibility.initial);
+    table.setColumnVisibility(
+      globalDefaults?.columnVisibility ?? columnVisibility.initial
+    );
 
-    // Density doesn't have a `reset` function
-    table.setDensity(density.initial);
+    table.setDensity(globalDefaults?.density ?? density.initial);
 
     // Reset the flags for each state slice too
     density.resetHasSavedState();
@@ -151,19 +161,6 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
     columnPinning.resetHasSavedState();
     columnVisibility.resetHasSavedState();
     columnOrder.resetHasSavedState();
-
-    // If global defaults exist, apply them on top of the hard-coded defaults
-    if (globalDefaults) {
-      if (globalDefaults.density) table.setDensity(globalDefaults.density);
-      if (globalDefaults.columnSizing)
-        table.setColumnSizing(globalDefaults.columnSizing);
-      if (globalDefaults.columnVisibility)
-        table.setColumnVisibility(globalDefaults.columnVisibility);
-      if (globalDefaults.columnPinning)
-        table.setColumnPinning(globalDefaults.columnPinning);
-      if (globalDefaults.columnOrder)
-        table.setColumnOrder(globalDefaults.columnOrder);
-    }
   };
 
   // hiding all table filter related options for now
@@ -199,6 +196,7 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
     muiTableBodyRowProps,
     isMobile,
     onSaveAsGlobalDefault,
+    globalDefaults,
   });
 
   const table = useMaterialReactTable<T>({
