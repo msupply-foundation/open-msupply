@@ -46,7 +46,9 @@ export const useSaveGlobalTableConfig = () => {
     }) => {
       const currentConfigs =
         (globalTableConfigs as Record<string, ManagedTableState>) ?? {};
-      const updatedConfigs = { ...currentConfigs, [tableId]: state };
+      const { [tableId]: _, ...rest } = currentConfigs;
+      const isEmpty = Object.keys(state).length === 0;
+      const updatedConfigs = isEmpty ? rest : { ...rest, [tableId]: state };
 
       const result = await sdk.saveGlobalTableConfigs({
         storeId,
