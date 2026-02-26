@@ -5,6 +5,8 @@ import {
   useAuthContext,
   useGql,
 } from '@openmsupply-client/common';
+import { useNotification } from '@common/hooks';
+import { useTranslation } from '@common/intl';
 import { getSdk } from '../../../../authentication/api/operations.generated';
 import { ManagedTableState } from './utils';
 import { usePreferences } from '../../../../authentication/api/hooks/usePreferences';
@@ -35,6 +37,8 @@ export const useSaveGlobalTableConfig = () => {
   const sdk = getSdk(client);
   const queryClient = useQueryClient();
   const { globalTableConfigs } = usePreferences();
+  const t = useTranslation();
+  const { success, error } = useNotification();
 
   const { mutateAsync } = useMutation(
     async ({
@@ -59,6 +63,10 @@ export const useSaveGlobalTableConfig = () => {
     {
       onSuccess: () => {
         queryClient.invalidateQueries(PREFERENCES_QUERY_KEY);
+        success(t('messages.global-table-config-saved'))();
+      },
+      onError: () => {
+        error(t('error.global-table-config-save-failed'))();
       },
     }
   );
