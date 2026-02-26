@@ -86,6 +86,9 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
     isCentralServer && userHasPermission(UserPermission.EditCentralData);
   const { saveGlobalTableConfig } = useSaveGlobalTableConfig();
   const globalDefaults = useGlobalTableDefaults(tableId);
+  // Admins reset to hard-coded defaults so they can undo their global config;
+  // non-admins reset to global defaults.
+  const resetDefaults = canEditGlobalDefaults ? undefined : globalDefaults;
 
   const { columns } = useMaterialTableColumns(omsColumns);
 
@@ -130,18 +133,18 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
     // state handlers).
     // Seeing as local storage has already been cleared,
     // these shouldn't trigger additional local storage updates.
-    // If global defaults exist, apply them instead of resetting to hard-coded
-    // defaults.
-    if (globalDefaults?.columnPinning)
-      table.setColumnPinning(globalDefaults.columnPinning);
+    // If global defaults exist (and user is not admin), apply them instead of
+    // resetting to hard-coded defaults.
+    if (resetDefaults?.columnPinning)
+      table.setColumnPinning(resetDefaults.columnPinning);
     else table.resetColumnPinning();
 
-    if (globalDefaults?.columnSizing)
-      table.setColumnSizing(globalDefaults.columnSizing);
+    if (resetDefaults?.columnSizing)
+      table.setColumnSizing(resetDefaults.columnSizing);
     else table.resetColumnSizing();
 
-    if (globalDefaults?.columnOrder)
-      table.setColumnOrder(globalDefaults.columnOrder);
+    if (resetDefaults?.columnOrder)
+      table.setColumnOrder(resetDefaults.columnOrder);
     // else: column order state resets directly from clearing local storage
 
     resetGrouped();
@@ -150,10 +153,10 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
     // changed so reset to latest initial value rather than default initial
     // mount state
     table.setColumnVisibility(
-      globalDefaults?.columnVisibility ?? columnVisibility.initial
+      resetDefaults?.columnVisibility ?? columnVisibility.initial
     );
 
-    table.setDensity(globalDefaults?.density ?? density.initial);
+    table.setDensity(resetDefaults?.density ?? density.initial);
 
     // Reset the flags for each state slice too
     density.resetHasSavedState();
@@ -196,7 +199,7 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
     muiTableBodyRowProps,
     isMobile,
     onSaveAsGlobalDefault,
-    globalDefaults,
+    globalDefaults: resetDefaults,
   });
 
   const table = useMaterialReactTable<T>({
