@@ -21,7 +21,7 @@ import {
   useSaveGlobalTableConfig,
   useGlobalTableDefaults,
 } from './tableState';
-import { clearSavedState, ManagedTableState } from './tableState/utils';
+import { clearSavedState, getSavedState } from './tableState/utils';
 import { DataError, NothingHere } from '@common/components';
 import {
   useIsCentralServerApi,
@@ -170,17 +170,7 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
   const hasColumnFilters = false;
 
   const onSaveAsGlobalDefault = canEditGlobalDefaults
-    ? () => {
-        const currentState: ManagedTableState = {
-          density: density.state,
-          columnVisibility: columnVisibility.state,
-          columnPinning: columnPinning.state,
-          columnOrder: columnOrder.state,
-          columnSizing: columnSizing.state,
-          isGrouped,
-        };
-        saveGlobalTableConfig(tableId, currentState);
-      }
+    ? () => saveGlobalTableConfig(tableId, getSavedState(tableId))
     : undefined;
 
   const displayOptions = useTableDisplayOptions({
