@@ -296,7 +296,10 @@ impl<'a> ItemRepository<'a> {
                 // has been merged, we only need to find by the category of the
                 // kept item, not the one that was "deleted"
                 let item_ids_for_category_id = item_category_join::table
-                    .select(item_category_join::item_id)
+                    .inner_join(
+                        item_link::table.on(item_link::id.eq(item_category_join::item_link_id)),
+                    )
+                    .select(item_link::item_id)
                     .filter(item_category_join::category_id.eq(category_id.clone()))
                     .into_boxed();
 
@@ -305,10 +308,13 @@ impl<'a> ItemRepository<'a> {
 
             if let Some(category_name) = category_name {
                 let item_ids_for_category_name = item_category_join::table
-                    .select(item_category_join::item_id)
+                    .inner_join(
+                        item_link::table.on(item_link::id.eq(item_category_join::item_link_id)),
+                    )
                     .inner_join(
                         category::table.on(category::id.eq(item_category_join::category_id)),
                     )
+                    .select(item_link::item_id)
                     .filter(category::name.eq(category_name.clone()))
                     .into_boxed();
 

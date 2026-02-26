@@ -32,17 +32,15 @@ export const ColdChainNav: FC<ColdChainNavProps> = ({ store }) => {
     >
       <AppNavLink
         visible={visible}
-        end={false}
+        isParent
         to={AppRoute.Coldchain}
         icon={<ThermometerIcon color="primary" fontSize="small" />}
         text={t('cold-chain')}
-        inactive
       />
       <Collapse in={isExtraSmallScreen ? isExtraSmallScreen : isActive}>
         <List>
           <AppNavLink
             visible={visible}
-            end
             to={RouteBuilder.create(AppRoute.Coldchain)
               .addPart(AppRoute.Equipment)
               .build()}
@@ -52,7 +50,6 @@ export const ColdChainNav: FC<ColdChainNavProps> = ({ store }) => {
             <>
               <AppNavLink
                 visible={visible}
-                end
                 to={RouteBuilder.create(AppRoute.Coldchain)
                   .addPart(AppRoute.Monitoring)
                   .build()}
@@ -60,7 +57,6 @@ export const ColdChainNav: FC<ColdChainNavProps> = ({ store }) => {
               />
               <AppNavLink
                 visible={visible}
-                end
                 to={RouteBuilder.create(AppRoute.Coldchain)
                   .addPart(AppRoute.Sensors)
                   .build()}

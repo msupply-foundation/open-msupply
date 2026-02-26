@@ -4,7 +4,7 @@ use async_graphql::{
 use graphql_core::{
     generic_filters::EqualFilterStringInput,
     loader::{
-        IndicatorValueLoader, IndicatorValueLoaderInput, IndicatorValuePayload, ProgramByIdLoader,
+        IndicatorValueLoader, IndicatorValueLoaderInput, ProgramByIdLoader,
         RequisitionIndicatorInfoLoader, RequisitionIndicatorInfoLoaderInput,
     },
     ContextExt,
@@ -138,7 +138,7 @@ impl IndicatorLineNode {
             .load_one(RequisitionIndicatorInfoLoaderInput::new(
                 &self.line.line.id,
                 &store_id,
-                period_id,
+                &period_id,
             ))
             .await?;
 
@@ -230,17 +230,13 @@ impl IndicatorColumnNode {
         customer_name_id: String,
     ) -> Result<Option<IndicatorValueNode>, Error> {
         let loader = ctx.get_loader::<DataLoader<IndicatorValueLoader>>();
-        let payload = IndicatorValuePayload {
-            period_id,
-            store_id,
-            customer_name_id,
-        };
-
         let result = loader
             .load_one(IndicatorValueLoaderInput::new(
                 &self.line_id,
                 &self.column.id,
-                payload,
+                &period_id,
+                &store_id,
+                &customer_name_id,
             ))
             .await?;
 
