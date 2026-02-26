@@ -16,3 +16,4 @@ client/dist
 # IDEs
 .idea/
 
+.claude/settings.local.json
