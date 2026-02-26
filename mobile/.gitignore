@@ -4,8 +4,6 @@ npm-debug.log
 yarn-error.log
 
 # React Native generated
-android/
-ios/
 .bundle/
 
 # Build
