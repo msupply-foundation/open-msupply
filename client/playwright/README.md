@@ -1,5 +1,19 @@
 # Playwright E2E Tests
 
+## About Playwright
+
+[Playwright](https://playwright.dev) is an open-source end-to-end testing framework by Microsoft. It supports testing across Chromium, Firefox, and WebKit browsers, and can run tests headlessly or with a visible browser. Key capabilities include:
+
+- **Cross-browser testing** — run the same tests across all major browsers
+- **Auto-waiting** — automatically waits for elements to be ready before interacting
+- **Screenshots & videos** — capture screenshots or record video on test failure
+- **Network interception** — mock or inspect API requests during tests
+- **Parallel execution** — run tests concurrently to reduce overall run time
+
+For full documentation, see [playwright.dev](https://playwright.dev).
+
+## Overview
+
 In the future this folder will contain various End-to-end tests (testing frontend and backend interactively) for Open mSupply.
 Currently the only test does the  custom translation import/export workflow on the central server and takes screenshots.
 
