@@ -67,8 +67,12 @@ const DetailViewInner = () => {
   const navigate = useNavigate();
   const { info } = useNotification();
   const { urlQuery, updateQuery } = useUrlQuery();
+  const {
+    toggleOn: toggleUploadModal,
+    isOn: isUploadModalOpen,
+    toggleOff: toggleCloseUploadModal,
+  } = useToggle();
 
-  const uploadDocumentController = useToggle();
   const { onOpen, onClose, mode, entity, isOpen } = useEditModal<
     InboundLineItem | ScannedItem
   >();
@@ -105,29 +109,38 @@ const DetailViewInner = () => {
     [onOpen]
   );
 
-  const onAddItem: (scannedBarcode?: ScannedBarcode) => void = openWith => {
-    // Unless we're acquiring a scanned barcode, just open the modal as normal,
-    // with no pre-filled line data
-    if (
-      (openWith as ScannedBarcode & { __typename: string })?.__typename !==
-        'BarcodeNode' ||
-      !openWith?.itemId
-    ) {
-      onOpen();
-      setMode(ModalMode.Create);
-      return;
-    }
+  const onAddItem = useCallback(
+    (openWith?: ScannedBarcode) => {
+      // Unless we're acquiring a scanned barcode, just open the modal as normal,
+      // with no pre-filled line data
+      if (
+        (openWith as ScannedBarcode & { __typename: string })?.__typename !==
+          'BarcodeNode' ||
+        !openWith?.itemId
+      ) {
+        onOpen();
+        setMode(ModalMode.Create);
+        return;
+      }
 
-    const { itemId, expiryDate, batch } = openWith;
-    onOpen({
-      id: itemId ?? '',
-      batch,
-      expiryDate,
-    });
-    // Mode set to "Update" when using scanned item, which prevents the "Item"
-    // selector from being changed
-    setMode(ModalMode.Update);
-  };
+      // Mode set to "Update" when using scanned item, which prevents the "Item"
+      // selector from being changed
+      const { itemId, expiryDate, batch } = openWith;
+      onOpen({
+        id: itemId ?? '',
+        batch,
+        expiryDate,
+      });
+      setMode(ModalMode.Update);
+    },
+    [onOpen, setMode]
+  );
+
+  const openUploadModal = useCallback(() => {
+    toggleUploadModal();
+    if (urlQuery['tab'] !== InboundShipmentDetailTabs.Documents)
+      updateQuery({ tab: InboundShipmentDetailTabs.Documents });
+  }, [toggleUploadModal, urlQuery, updateQuery]);
 
   const columns = useInboundShipmentColumns();
 
@@ -151,7 +164,7 @@ const DetailViewInner = () => {
       isMobile: isExtraSmallScreen,
     });
 
-  const onReturn = async () => {
+  const onReturn = useCallback(async () => {
     if (!data || !canReturnInboundLines(data)) {
       const cantReturnSnack = info(
         t('messages.cant-return-shipment-replenishment')
@@ -178,7 +191,7 @@ const DetailViewInner = () => {
 
     onOpenReturns(selectedStockLineIds);
     setMode(ModalMode.Create);
-  };
+  }, [data, selectedRows, info, onOpenReturns, setMode]);
 
   useEffect(() => {
     setCustomBreadcrumbs({ 1: data?.invoiceNumber.toString() ?? '' });
@@ -216,7 +229,7 @@ const DetailViewInner = () => {
           documents={data?.documents.nodes ?? []}
           recordId={data?.id ?? ''}
           tableName="invoice"
-          openUploadModal={uploadDocumentController.toggleOn}
+          openUploadModal={toggleUploadModal}
           invalidateQueries={invalidateQuery}
         />
       ),
@@ -237,11 +250,7 @@ const DetailViewInner = () => {
           <AppBarButtons
             onAddItem={onAddItem}
             simplifiedTabletView={simplifiedTabletView}
-            openUploadModal={() => {
-              uploadDocumentController.toggleOn();
-              if (tab !== InboundShipmentDetailTabs.Documents)
-                updateQuery({ tab: InboundShipmentDetailTabs.Documents });
-            }}
+            openUploadModal={openUploadModal}
           />
 
           {isExtraSmallScreen ? <MobileToolbar /> : <Toolbar />}
@@ -298,8 +307,8 @@ const DetailViewInner = () => {
           )}
 
           <UploadDocumentModal
-            isOn={uploadDocumentController.isOn}
-            toggleOff={uploadDocumentController.toggleOff}
+            isOn={isUploadModalOpen}
+            toggleOff={toggleCloseUploadModal}
             recordId={data.id}
             tableName="invoice"
             invalidateQueries={invalidateQuery}

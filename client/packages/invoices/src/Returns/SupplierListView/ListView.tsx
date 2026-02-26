@@ -38,7 +38,7 @@ export const SupplierReturnListView = () => {
     ],
   });
   const navigate = useNavigate();
-  const modalController = useToggle();
+  const { toggleOff, isOn, toggleOn } = useToggle();
   const { info } = useNotification();
   const { disableManualReturns } = usePreferences();
 
@@ -58,7 +58,7 @@ export const SupplierReturnListView = () => {
 
   const openModal = useCallbackWithPermission(
     UserPermission.SupplierReturnMutate,
-    modalController.toggleOn
+    toggleOn
   );
 
   const handleClick = (): void => {
@@ -154,7 +154,11 @@ export const SupplierReturnListView = () => {
   return (
     <>
       <Toolbar />
-      <AppBarButtons modalController={modalController} onNew={handleClick} />
+      <AppBarButtons
+        onNew={handleClick}
+        isOpen={isOn}
+        onCloseModal={toggleOff}
+      />
       <MaterialTable table={table} />
       <Footer
         selectedRows={selectedRows}

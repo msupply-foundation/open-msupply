@@ -185,7 +185,8 @@ export const PatientResultsTab: FC<
       },
       {
         id: 'gender',
-        accessorFn: row => row.gender ? t(getGenderTranslationKey(row.gender)) : '',
+        accessorFn: row =>
+          row.gender ? t(getGenderTranslationKey(row.gender)) : '',
         header: t('label.gender'),
       },
       {
@@ -210,7 +211,9 @@ export const PatientResultsTab: FC<
     data,
     columns,
     onRowClick: handleRowClick,
-    noDataElement: t('messages.no-matching-patients'),
+    noDataElement: (
+      <Box paddingTop={3}>{t('messages.no-matching-patients')}</Box>
+    ),
   });
 
   if (!active) {
