@@ -142,22 +142,16 @@ pub async fn start_server(
     let log_level = log_service.get_log_level(&service_context).ok().flatten();
 
     if settings.logging.is_some() {
-        log_service
-            .set_log_directory(
-                &service_context,
-                settings.logging.clone().unwrap().directory,
-            )
-            .unwrap();
+        log_service.set_log_directory(
+            &service_context,
+            settings.logging.clone().unwrap().directory,
+        );
 
-        log_service
-            .set_log_file_name(&service_context, settings.logging.clone().unwrap().filename)
-            .unwrap();
+        log_service.set_log_file_name(&service_context, settings.logging.clone().unwrap().filename);
     }
 
     if log_level.is_none() && settings.logging.is_some() {
-        log_service
-            .update_log_level(&service_context, settings.logging.clone().unwrap().level)
-            .unwrap();
+        log_service.update_log_level(&service_context, settings.logging.clone().unwrap().level);
     }
 
     // SET HARDWARE UUID

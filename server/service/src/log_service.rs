@@ -76,11 +76,7 @@ pub trait LogServiceTrait: Send + Sync {
         Ok(level)
     }
 
-    fn update_log_level(
-        &self,
-        ctx: &ServiceContext,
-        log_level: Level,
-    ) -> Result<(), RepositoryError> {
+    fn update_log_level(&self, ctx: &ServiceContext, log_level: Level) {
         let key_value_store = KeyValueStoreRepository::new(&ctx.connection);
 
         let log_level = match log_level {
@@ -97,8 +93,6 @@ pub trait LogServiceTrait: Send + Sync {
             );
         }
         simple_log::update_log_level(log_level).expect("Couldn't update log level");
-
-        Ok(())
     }
 
     fn get_log_directory(&self, ctx: &ServiceContext) -> Result<String, RepositoryError> {
@@ -109,11 +103,7 @@ pub trait LogServiceTrait: Send + Sync {
         Ok(log_directory.unwrap_or(Default::default()))
     }
 
-    fn set_log_directory(
-        &self,
-        ctx: &ServiceContext,
-        log_directory: Option<String>,
-    ) -> Result<(), RepositoryError> {
+    fn set_log_directory(&self, ctx: &ServiceContext, log_directory: Option<String>) {
         let key_value_store = KeyValueStoreRepository::new(&ctx.connection);
 
         if let Err(e) = key_value_store.set_string(KeyType::LogDirectory, log_directory) {
@@ -121,8 +111,6 @@ pub trait LogServiceTrait: Send + Sync {
                 "Failed to persist log directory setting — storing in-memory — will be persisted on next run: {e:?}"
             );
         }
-
-        Ok(())
     }
 
     fn get_log_file_name(&self, ctx: &ServiceContext) -> Result<String, RepositoryError> {
@@ -133,11 +121,7 @@ pub trait LogServiceTrait: Send + Sync {
         Ok(log_file_name.unwrap_or(Default::default()))
     }
 
-    fn set_log_file_name(
-        &self,
-        ctx: &ServiceContext,
-        log_file_name: Option<String>,
-    ) -> Result<(), RepositoryError> {
+    fn set_log_file_name(&self, ctx: &ServiceContext, log_file_name: Option<String>) {
         let key_value_store = KeyValueStoreRepository::new(&ctx.connection);
 
         if let Err(e) = key_value_store.set_string(KeyType::LogFileName, log_file_name) {
@@ -145,8 +129,6 @@ pub trait LogServiceTrait: Send + Sync {
                 "Failed to persist log file name setting — storing in-memory — will be persisted on next run: {e:?}"
             );
         }
-
-        Ok(())
     }
 }
 

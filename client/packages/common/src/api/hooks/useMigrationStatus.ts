@@ -3,13 +3,11 @@ import { getSdk } from '../operations.generated';
 
 /**
  * Hook to query database migration status from the server.
- * @param refetchInterval - Interval in ms to refetch, or false to disable polling
- * @param suspense - true to enable react suspense mode, false otherwise
- * @returns Query result with migration status (inProgress and version)
+ * @param refetchInterval - Interval in ms to refetch, or 0 to disable polling
+ * @returns inProgress boolean indicating if migrations are still in progress. Defaults to true while loading.
  */
 export const useMigrationStatus = (
-  refetchInterval: number | false = false,
-  suspense = false
+  refetchInterval: number = 0,
 ) => {
   const { client } = useGql();
   const sdk = getSdk(client);
@@ -21,9 +19,9 @@ export const useMigrationStatus = (
     },
     {
       refetchInterval,
-      suspense,
+      suspense: true,
     }
   );
 
-  return result;
+  return result.data?.inProgress ?? true;
 };

@@ -25,6 +25,7 @@ use service::service_provider::ServiceProvider;
 use loader::LoaderRegistry;
 use service::settings::Settings;
 use tokio::sync::mpsc::Sender;
+use tokio::sync::RwLock;
 
 /// Performs a query to ourself, e.g. the report endpoint can query
 #[async_trait::async_trait]
@@ -45,6 +46,7 @@ pub trait ContextExt {
     fn get_settings(&self) -> &Settings;
     fn get_validated_plugins(&self) -> &Mutex<ValidatedPluginBucket>;
     fn restart_switch(&self) -> Sender<bool>;
+    fn get_operational_status(&self) -> &RwLock<OperationalStatus>;
 }
 
 impl<'a> ContextExt for Context<'a> {
@@ -89,6 +91,10 @@ impl<'a> ContextExt for Context<'a> {
 
     fn restart_switch(&self) -> Sender<bool> {
         self.data_unchecked::<Data<Sender<bool>>>().as_ref().clone()
+    }
+
+    fn get_operational_status(&self) -> &RwLock<OperationalStatus> {
+        self.data_unchecked::<Data<RwLock<OperationalStatus>>>()
     }
 }
 

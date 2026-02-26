@@ -12,9 +12,9 @@ export const MigrationInfoProvider: React.FC<React.PropsWithChildren> = ({
   const [isComplete, setIsComplete] = useState(false);
 
   // Poll every second until migrations are complete, then stop polling
-  const migrationData = useMigrationStatus(isComplete ? 0 : 1000, true);
+  const inProgress = useMigrationStatus(isComplete ? 0 : 1000);
 
-  if (migrationData?.data?.inProgress) {
+  if (inProgress) {
     // Migrations are in progress - show migration message
     return (
       <Box
@@ -26,9 +26,7 @@ export const MigrationInfoProvider: React.FC<React.PropsWithChildren> = ({
         gap={2}
       >
         <RandomLoader />
-        <MigrationStatusIndicator
-          version={migrationData.data.version ?? undefined}
-        />
+        <MigrationStatusIndicator />
       </Box>
     );
   }
