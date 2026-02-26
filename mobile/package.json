@@ -20,7 +20,7 @@
     "react-native": "0.76.0",
     "react-native-keychain": "^8.2.0",
     "react-native-safe-area-context": "^4.14.0",
-    "react-native-screens": "^4.4.0",
+    "react-native-screens": "3.35.0",
     "react-native-vision-camera": "^4.6.0",
     "react-native-zeroconf": "^0.13.8",
     "uuid": "^10.0.0"
