@@ -1,6 +1,7 @@
 # Playwright E2E Tests
 
-End-to-end tests for Open mSupply, currently covering the translation import/export workflow on the central server.
+In the future this folder will contain various End-to-end tests (testing frontend and backend interactively) for Open mSupply.
+Currently the only test does the  custom translation import/export workflow on the central server and takes screenshots.
 
 ## Prerequisites
 
