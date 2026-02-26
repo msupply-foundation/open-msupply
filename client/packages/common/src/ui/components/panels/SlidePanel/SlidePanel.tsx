@@ -36,7 +36,7 @@ export const SlidePanel = ({
   children,
   okButton,
   cancelButton,
-  width = 400,
+  width = '100%',
   preventClickAway = true,
 }: SlidePanelProps) => {
   const panel = (

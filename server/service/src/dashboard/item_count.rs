@@ -117,7 +117,7 @@ impl ItemCountServiceTrait for ItemServiceCount {
     ) -> Result<ItemCounts, PluginOrRepositoryError> {
         let item_filter = ItemFilter::new().is_active(true).visible_or_on_hand(true);
         let visible_or_on_hand_items = ItemRepository::new(&ctx.connection)
-            .query_by_filter(item_filter.clone(), Some(store_id.to_string()))?;
+            .query_by_filter(item_filter, Some(store_id.to_string()))?;
 
         let total_count = visible_or_on_hand_items.len() as i64;
 
@@ -135,8 +135,11 @@ impl ItemCountServiceTrait for ItemServiceCount {
         let more_than_six_months_stock =
             Self::get_more_than_six_months_stock_count(self, &item_stats);
 
-        let out_of_stock_products =
-            self.get_out_of_stock_products_count(ctx, store_id, item_filter)?;
+        let out_of_stock_products = self.get_out_of_stock_products_count(
+            ctx,
+            store_id,
+            ItemFilter::new().is_active(true).has_stock_on_hand(false),
+        )?;
 
         let show_low_stock_alerts = NumberOfMonthsThresholdToShowLowStockAlertsForProducts
             .load(&ctx.connection, Some(store_id.to_string()))

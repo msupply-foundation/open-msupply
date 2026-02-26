@@ -59,8 +59,8 @@ export const CreatePatientSlider = ({
 
   return (
     <SlidePanel
-      title=""
-      width={1000}
+      title={t('label.new-patient')}
+      width="100%"
       open={open}
       okButton={
         currentTab === Tabs.Patient ? (
@@ -99,7 +99,7 @@ export const CreatePatientSlider = ({
         />
       }
       onClose={() => {
-        onClose(), setCurrentTab(Tabs.Form);
+        (onClose(), setCurrentTab(Tabs.Form));
       }}
     >
       <DetailContainer>
