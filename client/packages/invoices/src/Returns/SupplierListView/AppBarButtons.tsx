@@ -6,7 +6,6 @@ import {
   ButtonWithIcon,
   Grid,
   useTranslation,
-  ToggleState,
   useNotification,
   FnUtils,
   RouteBuilder,
@@ -20,12 +19,14 @@ import { useReturns } from '../api';
 import { supplierReturnsToCsv } from '../../utils';
 
 interface AppBarButtonsProps {
-  modalController: ToggleState;
+  isOpen: boolean;
+  onCloseModal: () => void;
   onNew: () => void;
 }
 
 export const AppBarButtonsComponent = ({
-  modalController,
+  isOpen,
+  onCloseModal,
   onNew,
 }: AppBarButtonsProps) => {
   const t = useTranslation();
@@ -59,10 +60,10 @@ export const AppBarButtonsComponent = ({
         />
       </Grid>
       <SupplierSearchModal
-        open={modalController.isOn}
-        onClose={modalController.toggleOff}
+        open={isOpen}
+        onClose={onCloseModal}
         onChange={async name => {
-          modalController.toggleOff();
+          onCloseModal();
           try {
             await onCreate({
               id: FnUtils.generateUUID(),

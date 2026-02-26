@@ -105,7 +105,7 @@ export const AppBarButtons: FC<{
         onCancel={() => {
           setConfirmationState(false);
         }}
-        placeCancelButtonLast={true}
+        placeCancelButtonFirst={true}
         otherButtons={[
           <DialogButton
             key="go-to-stocktakes"
