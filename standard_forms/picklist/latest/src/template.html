@@ -27,8 +27,12 @@
         <td class="item_name" style="width: 24%;;">{{ line.itemName }}</td>
         <td class="unit" style="width: 6%;">{{ line.item.unitName }}</td>
         <td class="quantity" style="width: 7%;">{{ line.numberOfPacks }}</td>
-        <td style="width: 8%;">_________________</td>
-        <td style="width: 8%;">_________________</td>
+        <td class="blank-line-cell" style="width: 8%;">
+			<div class="blank-line"></div>
+		</td>
+		<td class="blank-line-cell" style="width: 8%;">
+			<div class="blank-line"></div>
+		</td>
         <td class="pack" style="width: 7%;">{{ line.packSize }}</td>
         <td class="batch batch-wrap" style="width: 8%;">{{ line.batch }}</td>
         <td class="expiry" style="width: 8%;">
@@ -36,7 +40,12 @@
             {{ line.expiryDate | date(format="%d/%m/%Y") }}
             {% endif %}
         </td>
-        <td style="width: 8%;">_________________</td>
+       <td class="blank-line-cell" style="width: 8%;">
+				<div class="blank-line"></div>
+			</td>
+		<td class="blank-line-cell" style="width: 8%;">
+			<div class="blank-line"></div>
+		</td>
     </tr>
     {%- endfor %}
 </table>

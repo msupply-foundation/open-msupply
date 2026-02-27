@@ -110,3 +110,18 @@ body > table {
 .batch-wrap {
     word-break: break-word;
 }
+
+.blank-line {
+  border-bottom: 1px solid black;
+  width: 100%;
+  margin-top: 8px;
+}
+
+td.blank-line-cell {
+  padding: 4px 4px 4px 0;
+  vertical-align: bottom;
+}
+
+td.blank-line-cell:last-child {
+  padding: 4px 0;
+}
