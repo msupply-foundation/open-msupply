@@ -248,12 +248,6 @@ pub async fn start_server(
     let ledger_fix_task = ledger_fix_driver.run(service_provider.clone().into_inner());
     let file_sync_task = file_sync_driver.run(service_provider.clone().into_inner());
 
-    // Scheduled tasks
-    let scheduled_task_handle = spawn_scheduled_task_runner(
-        service_provider.clone().into_inner(),
-        settings.mail.clone().map(|m| m.interval).unwrap_or(60),
-    );
-
     let closure_settings = settings.clone();
     let closure_service_provider = service_provider.clone();
     let closure_schema = graphql_schema.clone();
@@ -306,6 +300,7 @@ pub async fn start_server(
     }
 
     info!("Run DB migrations...");
+    // start database migrations
     let (version, messages) = match migrate(&connection, None) {
         Ok(result) => result,
         Err(e) => {
@@ -316,6 +311,8 @@ pub async fn start_server(
 
     add_migration_results_to_system_log(&connection, messages).unwrap();
     info!("Run DB migrations...done");
+
+    StandardReports::load_reports(&connection_manager.connection().unwrap(), false).unwrap();
 
     // Log the server starting message with the startup timestamp
     let status_log = StatusLog(&connection);
@@ -415,7 +412,11 @@ pub async fn start_server(
         settings.server.port, version
     ); // Upsert standard reports
 
-    StandardReports::load_reports(&connection_manager.connection().unwrap(), false).unwrap();
+    // Scheduled tasks
+    let scheduled_task_handle = spawn_scheduled_task_runner(
+        service_provider.clone().into_inner(),
+        settings.mail.clone().map(|m| m.interval).unwrap_or(60),
+    );
 
     tokio::select! {
         // TODO log error in ctrl_c and None in off_switch
