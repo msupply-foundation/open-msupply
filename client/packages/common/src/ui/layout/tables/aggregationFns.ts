@@ -1,5 +1,5 @@
 import { MRT_RowData } from "material-react-table";
-import { Row } from "@tanstack/table-core"; // MRT_Row doesn't work, is this fine?
+import { Row } from "@tanstack/table-core";
 
 export const weightedAverage = <T extends MRT_RowData & { packSize?: number; numberOfPacks?: number }>(
   columnId: string,
