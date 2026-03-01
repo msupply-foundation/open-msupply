@@ -231,7 +231,7 @@ enum Action {
         #[clap(short, long)]
         password: Option<String>,
         /// Log level for the tests, by default set to off to avoid noisy console logging
-        #[clap(long, default_value = "off")]
+        #[clap(short, default_value = "off")]
         log_level: log::LevelFilter,
     },
     #[cfg(feature = "integration_test")]
@@ -803,7 +803,6 @@ async fn main() -> anyhow::Result<()> {
                 credentials,
             };
             let tests = all_tests();
-            let mut any_failed = false;
             let current_log_level = log::max_level();
             // Set log level, defaults to off to suppress noise
             log::set_max_level(log_level);
@@ -815,7 +814,6 @@ async fn main() -> anyhow::Result<()> {
                     Ok(msg) => println!("{} {}: {}", "[PASS]".green(), test.name(), msg),
                     Err(err) => {
                         println!("{} {}: {}", "[FAIL]".red(), test.name(), err);
-                        any_failed = true;
                     }
                 }
             }

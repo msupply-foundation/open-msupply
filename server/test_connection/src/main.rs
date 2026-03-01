@@ -5,6 +5,10 @@ use std::rc::Rc;
 slint::include_modules!();
 
 pub fn main() -> Result<(), slint::PlatformError> {
+    // On Windows, open GL is not available in remote connections; force software rendering for the test app to ensure it runs in all environments
+    #[cfg(target_os = "windows")]
+    std::env::set_var("SLINT_BACKEND", "winit-software");
+
     let app = App::new()?;
 
     // Populate the test list with all tests in pending state
@@ -95,7 +99,12 @@ fn run_tests(username: String, password: String, app_weak: slint::Weak<App>) {
 }
 
 /// Schedule a test-row state update on the Slint event loop.
-fn set_test_state(app_weak: &slint::Weak<App>, index: usize, status: &'static str, message: String) {
+fn set_test_state(
+    app_weak: &slint::Weak<App>,
+    index: usize,
+    status: &'static str,
+    message: String,
+) {
     let app_weak = app_weak.clone();
     app_weak
         .upgrade_in_event_loop(move |app| {
