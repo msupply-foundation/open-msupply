@@ -19,12 +19,12 @@ export const getTemperatureLogQueries = (sdk: Sdk, storeId: string) => ({
     list:
       ({ first, offset, sortBy, filterBy }: ListParams) =>
       async () => {
+        const sortKeyMap: Record<string, TemperatureLogSortFieldInput> = {
+          datetime: TemperatureLogSortFieldInput.Datetime,
+          temperature: TemperatureLogSortFieldInput.Temperature,
+        };
         const key =
-          sortBy.key === 'endDatetime' ||
-          sortBy.key === 'startDatetime' ||
-          sortBy.key === ''
-            ? TemperatureLogSortFieldInput.Datetime
-            : (sortBy.key as TemperatureLogSortFieldInput);
+          sortKeyMap[sortBy.key] ?? TemperatureLogSortFieldInput.Datetime;
 
         // to make query compatible with breach tab filters we move the type filter into temperatureBreach.type
         const { type: typeFilterBy, ...noTypeFilterBy } = filterBy || {};
