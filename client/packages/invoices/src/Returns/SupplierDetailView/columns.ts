@@ -2,7 +2,7 @@ import {
   ColumnDef,
   useTranslation,
   ColumnType,
-  weightedAverage,
+  weightedAverageByPacks,
 } from '@openmsupply-client/common';
 import { SupplierReturnLineFragment } from '../api';
 import { useMemo } from 'react';
@@ -67,9 +67,9 @@ export const useSupplierReturnColumns = () => {
       },
       {
         accessorKey: 'costPricePerPack',
-        header: t('label.unit-price'),
+        header: t('label.pack-cost-price'),
         columnType: ColumnType.Currency,
-        aggregationFn: weightedAverage,
+        aggregationFn: weightedAverageByPacks(),
         enableSorting: true,
       },
       {

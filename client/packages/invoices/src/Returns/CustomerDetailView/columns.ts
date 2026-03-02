@@ -3,7 +3,7 @@ import {
   ColumnDef,
   useTranslation,
   ColumnType,
-  weightedAverage,
+  weightedAverageByPacks,
 } from '@openmsupply-client/common';
 import { CustomerReturnLineFragment } from '../api';
 
@@ -67,9 +67,9 @@ export const useCustomerReturnColumns = () => {
       },
       {
         accessorKey: 'sellPricePerPack',
-        header: t('label.unit-sell-price'),
+        header: t('label.pack-sell-price'),
         columnType: ColumnType.Currency,
-        aggregationFn: weightedAverage,
+        aggregationFn: weightedAverageByPacks(),
         enableSorting: true,
       },
       {

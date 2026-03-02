@@ -4,7 +4,7 @@ import {
   useTranslation,
   ColumnDef,
   ColumnType,
-  weightedAverage,
+  weightedAverageByUnits,
 } from '@openmsupply-client/common';
 import { useInboundShipmentLineErrorContext } from '../context/inboundShipmentLineError';
 import { useMemo } from 'react';
@@ -143,7 +143,7 @@ export const useInboundShipmentColumns = () => {
         header: t('label.cost-per-unit'),
         columnType: ColumnType.Currency,
         defaultHideOnMobile: true,
-        aggregationFn: weightedAverage,
+        aggregationFn: weightedAverageByUnits(),
         size: 100,
       },
       {
