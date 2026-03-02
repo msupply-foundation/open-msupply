@@ -1627,6 +1627,7 @@ export type CustomerReturnInput = {
   customerReturnLines: Array<CustomerReturnLineInput>;
   id: Scalars['String']['input'];
   outboundShipmentId?: InputMaybe<Scalars['String']['input']>;
+  theirReference?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type CustomerReturnLineInput = {

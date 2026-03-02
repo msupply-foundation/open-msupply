@@ -92,7 +92,12 @@ const InboundShipments: React.FC<{
         key: 'createdDatetime',
         condition: 'between',
       },
+      {
+        key: 'deliveredDatetime',
+        condition: 'between',
+      },
       { key: 'status', condition: 'equalAny' },
+      { key: 'theirReference' },
     ],
   });
 
@@ -185,6 +190,7 @@ const InboundShipments: React.FC<{
         accessorKey: 'theirReference',
         size: 225,
         defaultHideOnMobile: true,
+        enableColumnFilter: true,
         enableSorting: true,
       },
       {

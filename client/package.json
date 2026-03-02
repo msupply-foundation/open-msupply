@@ -32,7 +32,8 @@
     "i18n-missing": "i18n-unused display-missed",
     "eslint": "lerna run --scope @openmsupply-client/* eslint",
     "prettier": "prettier --check 'packages/*/src/**/*.{js,jsx,ts,tsx,json,css,scss,md}'",
-    "lint-and-format": "yarn re-compile && yarn prettier || true && yarn eslint"
+    "lint-and-format": "yarn re-compile && yarn prettier || true && yarn eslint",
+    "translate": "node translate_locale"
   },
   "workspaces": {
     "packages": [
@@ -73,6 +74,7 @@
     "@types/recharts": "^1.8.23",
     "@typescript-eslint/eslint-plugin": "^7.15.0",
     "@typescript-eslint/parser": "^7.15.0",
+    "@welldone-software/why-did-you-render": "^10.0.1",
     "babel-jest": "^29.6.2",
     "babel-loader": "^9.1.2",
     "babel-preset-react-app": "^10.0.1",
