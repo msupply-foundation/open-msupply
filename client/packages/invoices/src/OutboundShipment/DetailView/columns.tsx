@@ -6,7 +6,7 @@ import {
   ColumnDef,
   ColumnType,
   Box,
-  weightedAverage,
+  weightedAverageByUnits,
 } from '@openmsupply-client/common';
 import { StockOutLineFragment } from '../../StockOut';
 
@@ -133,7 +133,7 @@ export const useOutboundColumns = () => {
           if (isDefaultPlaceholderRow(row)) return undefined;
           return (row.sellPricePerPack ?? 0) / row.packSize;
         },
-        aggregationFn: weightedAverage,
+        aggregationFn: weightedAverageByUnits(),
       },
       {
         id: 'total',

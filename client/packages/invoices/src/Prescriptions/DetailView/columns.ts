@@ -4,7 +4,7 @@ import {
   usePreferences,
   ColumnDef,
   ColumnType,
-  weightedAverage,
+  weightedAverageByUnits,
 } from '@openmsupply-client/common';
 import { PrescriptionLineFragment } from '../api/operations.generated';
 import { useMemo } from 'react';
@@ -138,7 +138,7 @@ export const usePrescriptionColumn = () => {
           if (isPrescriptionPlaceholderRow(rowData)) return undefined;
           return (rowData.sellPricePerPack ?? 0) / rowData.packSize;
         },
-        aggregationFn: weightedAverage,
+        aggregationFn: weightedAverageByUnits(),
         size: 100,
       },
       {
