@@ -14,7 +14,8 @@ use crate::{
 };
 use repository::{
     vvm_status::vvm_status_log_row::VVMStatusLogRow, InvoiceLine, InvoiceLineRow,
-    InvoiceLineStatus, InvoiceRow, ItemRow, RepositoryError, StockLineRow, StorageConnection,
+    InvoiceLineStatus, InvoiceLineType, InvoiceRow, ItemRow, RepositoryError, StockLineRow,
+    StorageConnection,
 };
 
 use super::UpdateStockInLine;
@@ -191,7 +192,21 @@ fn generate_line(
 
     update_line.vvm_status_id = vvm_status_id.or(update_line.vvm_status_id);
 
-    update_line.status = status.map(|s| s.value).unwrap_or(update_line.status);
+    if let Some(status) = status {
+        use InvoiceLineStatus::*;
+        match status.value {
+            // When a line is rejected it's converted to unallocated stock.
+            Some(Rejected) => {
+                update_line.r#type = InvoiceLineType::UnallocatedStock;
+            }
+            // If a line used to be rejected but is now pending or passed, it needs to be converted back to a stock in line.
+            Some(Pending | Passed) => {
+                update_line.r#type = InvoiceLineType::StockIn;
+            }
+            None => {}
+        }
+        update_line.status = status.value;
+    }
 
     if let Some(item) = new_item_option {
         update_line.item_link_id = item.id;

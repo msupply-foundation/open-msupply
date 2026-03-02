@@ -33,7 +33,7 @@ impl ViewMigrationFragment for ViewMigration {
                                 JOIN item_link il_item_link on il_item_link.id = il.item_link_id
                         ) on i.id = il.invoice_id
                             AND il_item_link.id = pol_item_link.id
-                            AND il.type = 'STOCK_IN'
+                            AND il.type = 'STOCK_IN' -- doesn't count any rejected lines as they will have been converted to unallocated stock lines
                             AND i.status in ('SHIPPED', 'DELIVERED', 'RECEIVED', 'VERIFIED') -- count all statuses after shipped
                 GROUP BY
                     pol.id;
