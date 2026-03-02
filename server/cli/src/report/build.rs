@@ -195,18 +195,6 @@ fn make_report(manifest: &Manifest, mut files: HashMap<String, PathBuf>) -> Resu
 
     // query
     let query_gql = manifest.queries.as_ref().and_then(|q| q.gql.as_ref());
-    let has_sql = manifest
-        .queries
-        .as_ref()
-        .and_then(|q| q.sql.as_ref())
-        .map(|s| !s.is_empty())
-        .unwrap_or(false);
-    let query_specified = query_gql.is_some() || manifest.query_default.is_some() || has_sql;
-    if !query_specified {
-        return Err(anyhow::Error::msg(
-            "No query specified, e.g. gql, query_default, or sql in report-manifest.json",
-        ));
-    }
     if let Some(query_gql) = query_gql {
         let file_path = files
             .remove(query_gql)
