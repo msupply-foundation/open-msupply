@@ -17,6 +17,7 @@ import {
   useNavigate,
   useTheme,
   useTranslation,
+  MuiPopover,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { BreachDot } from './types';
@@ -25,7 +26,6 @@ import {
   TemperatureBreachFragment,
   useTemperatureBreach,
 } from '../../../Monitoring/api/TemperatureBreach';
-import { Popover } from '@mui/material';
 
 interface BreachPopperProps {
   breachDot: BreachDot;
@@ -48,7 +48,7 @@ export const BreachPopover = ({ breachDot, onClose }: BreachPopperProps) => {
   const breach = data?.nodes?.[0] ?? null;
 
   return (
-    <Popover
+    <MuiPopover
       open={true}
       anchorEl={{ nodeType: 1, getBoundingClientRect: () => position }}
       anchorOrigin={{
@@ -58,7 +58,7 @@ export const BreachPopover = ({ breachDot, onClose }: BreachPopperProps) => {
       slotProps={{ paper: { sx: { borderRadius: 4 } } }}
     >
       <Content isLoading={isLoading} breach={breach} onClose={onClose} />
-    </Popover>
+    </MuiPopover>
   );
 };
 
