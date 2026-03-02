@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef } from 'react';
 import {
   useAuthContext,
   useTranslation,
@@ -12,12 +12,15 @@ import {
   ColumnDef,
   useSimpleMaterialTable,
   MaterialTable,
+  Box,
   ColumnType,
   DateUtils,
   ExpiryDateInput,
   TextInputCell,
   NumberInputCell,
   CurrencyInputCell,
+  CardList,
+  ViewMode,
 } from '@openmsupply-client/common';
 import { DraftInboundLine } from '../../../../types';
 import {
@@ -63,6 +66,8 @@ export const QuantityTable = ({
   const t = useTranslation();
   const { getPlural } = useIntlUtils();
   const { format } = useFormatNumber();
+  const formatRef = useRef(format);
+  formatRef.current = format;
   const { manageVaccinesInDoses } = usePreferences();
 
   const displayInDoses = manageVaccinesInDoses && !!item?.isVaccine;
@@ -282,8 +287,8 @@ export const QuantityTable = ({
                 } else {
                   setPackRoundingMessage?.(
                     t('messages.under-allocated', {
-                      receivedQuantity: format(NumUtils.round(value, 2)), // round the display value to 2dp
-                      quantity: format(actualUnits),
+                      receivedQuantity: formatRef.current(NumUtils.round(value, 2)), // round the display value to 2dp
+                      quantity: formatRef.current(actualUnits),
                     })
                   );
                 }
@@ -307,7 +312,7 @@ export const QuantityTable = ({
         includeColumn: displayInDoses,
         accessorFn: row => {
           const total = row.numberOfPacks * row.packSize;
-          return format(total * row.item.doses);
+          return formatRef.current(total * row.item.doses);
         },
       },
       {
@@ -339,22 +344,18 @@ export const QuantityTable = ({
       },
     ];
     return cols;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     isDisabled,
     updateDraftLine,
     setPackRoundingMessage,
-    format,
     unitName,
     pluralisedUnitName,
     displayInDoses,
     hasItemVariantsEnabled,
     hasVvmStatusesEnabled,
-    isDisabled,
     item?.isVaccine,
-    pluralisedUnitName,
     removeDraftLine,
-    setPackRoundingMessage,
-    updateDraftLine,
   ]);
 
   const table = useSimpleMaterialTable<DraftInboundLine>({
@@ -369,6 +370,8 @@ export const QuantityTable = ({
 
 interface InboundLineEditTableProps extends TableProps {
   removeDraftLine: (id: string) => void;
+  viewMode?: ViewMode;
+  lastCardRef?: React.RefObject<HTMLDivElement>;
 }
 
 export const InboundLineEditTable = ({
@@ -383,10 +386,14 @@ export const InboundLineEditTable = ({
   item,
   setPackRoundingMessage,
   restrictedToLocationTypeId,
+  viewMode = 'table',
+  lastCardRef,
 }: InboundLineEditTableProps) => {
   const t = useTranslation();
   const { getPlural } = useIntlUtils();
   const { format } = useFormatNumber();
+  const formatRef = useRef(format);
+  formatRef.current = format;
   const { store } = useAuthContext();
   const { manageVaccinesInDoses, allowTrackingOfStockByDonor } =
     usePreferences();
@@ -620,8 +627,8 @@ export const InboundLineEditTable = ({
                 } else {
                   setPackRoundingMessage?.(
                     t('messages.under-allocated', {
-                      receivedQuantity: format(NumUtils.round(value, 2)),
-                      quantity: format(actualUnits),
+                      receivedQuantity: formatRef.current(NumUtils.round(value, 2)),
+                      quantity: formatRef.current(actualUnits),
                     })
                   );
                 }
@@ -646,7 +653,7 @@ export const InboundLineEditTable = ({
         includeColumn: displayInDoses,
         accessorFn: row => {
           const total = row.numberOfPacks * row.packSize;
-          return format(total * row.item.doses);
+          return formatRef.current(total * row.item.doses);
         },
       },
       {
@@ -835,11 +842,11 @@ export const InboundLineEditTable = ({
       },
     ];
     return cols;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     allowTrackingOfStockByDonor,
     currency,
     displayInDoses,
-    format,
     hasItemVariantsEnabled,
     hasVvmStatusesEnabled,
     isDisabled,
@@ -861,5 +868,14 @@ export const InboundLineEditTable = ({
     getIsRestrictedRow: isDisabled ? () => true : undefined,
   });
 
-  return <MaterialTable table={table} />;
+  return (
+    <>
+      <Box sx={{ display: viewMode === 'card' ? 'none' : undefined }}>
+        <MaterialTable table={table} />
+      </Box>
+      {viewMode === 'card' && (
+        <CardList table={table} lastItemRef={lastCardRef} />
+      )}
+    </>
+  );
 };

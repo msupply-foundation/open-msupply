@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Alert,
   Divider,
@@ -16,6 +16,8 @@ import {
   Breakpoints,
   useAppTheme,
   useMediaQuery,
+  useViewMode,
+  ViewModeToggle,
 } from '@openmsupply-client/common';
 import { InboundLineEditForm } from './InboundLineEditForm';
 import { InboundLineFragment, useDraftInboundLines } from '../../../api';
@@ -83,10 +85,27 @@ export const InboundLineEdit = ({
   const theme = useAppTheme();
   const isMediumScreen = useMediaQuery(theme.breakpoints.down(Breakpoints.lg));
   const [packRoundingMessage, setPackRoundingMessage] = useState('');
+  const { viewMode, setViewMode } = useViewMode('inbound-line-edit');
+  const lastCardRef = useRef<HTMLDivElement>(null);
+  const prevLineCount = useRef(draftLines.length);
 
   useEffect(() => {
     setCurrentItem(item);
   }, [item]);
+
+  useEffect(() => {
+    if (
+      draftLines.length > prevLineCount.current &&
+      lastCardRef.current &&
+      viewMode === 'card'
+    ) {
+      lastCardRef.current.scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest',
+      });
+    }
+    prevLineCount.current = draftLines.length;
+  }, [draftLines.length, viewMode]);
 
   const tableContent = simplifiedTabletView ? (
     <>
@@ -112,7 +131,17 @@ export const InboundLineEdit = ({
     </>
   ) : (
     <>
-      <Box flex={1} display="flex" justifyContent="flex-end">
+      <Box
+        flex={1}
+        display="flex"
+        justifyContent="flex-end"
+        alignItems="center"
+        gap={1}
+      >
+        <ViewModeToggle
+          viewMode={viewMode}
+          onViewModeChange={setViewMode}
+        />
         <ButtonWithIcon
           disabled={isDisabled}
           color="primary"
@@ -129,10 +158,12 @@ export const InboundLineEdit = ({
         sx={{
           height: isMediumScreen ? 300 : 400,
           marginTop: 2,
-          borderWidth: 1,
-          borderStyle: 'solid',
-          borderColor: 'divider',
-          borderRadius: '20px',
+          ...(viewMode === 'table' && {
+            borderWidth: 1,
+            borderStyle: 'solid',
+            borderColor: 'divider',
+            borderRadius: '20px',
+          }),
         }}
       >
         <Box width="100%">
@@ -155,6 +186,8 @@ export const InboundLineEdit = ({
             restrictedToLocationTypeId={
               currentItem?.restrictedLocationTypeId
             }
+            viewMode={viewMode}
+            lastCardRef={lastCardRef}
           />
         </Box>
       </TableContainer>
