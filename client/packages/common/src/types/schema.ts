@@ -5411,6 +5411,12 @@ export type MaxOrdersReachedForPeriod =
       description: Scalars['String']['output'];
     };
 
+export type MigrationStatusNode = {
+  __typename: 'MigrationStatusNode';
+  inProgress: Scalars['Boolean']['output'];
+  version?: Maybe<Scalars['String']['output']>;
+};
+
 export type MissingCredentials = UpdateUserErrorInterface & {
   __typename: 'MissingCredentials';
   description: Scalars['String']['output'];
@@ -7620,6 +7626,8 @@ export type Queries = {
   /** Query omSupply "master_lists" entries */
   masterLists: MasterListsResponse;
   me: UserResponse;
+  /** Available without authorisation in all states (Operational, Initialisation and MigratingDatabase) */
+  migrationStatus: MigrationStatusNode;
   nameProperties: NamePropertyResponse;
   /** Query omSupply "name" entries */
   names: NamesResponse;
