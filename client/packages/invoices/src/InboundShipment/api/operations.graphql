@@ -21,6 +21,7 @@ fragment InboundLine on InvoiceLineNode {
   itemVariantId
   linkedInvoiceId
   volumePerPack
+  status
 
   donor(storeId: $storeId) {
     id
@@ -206,6 +207,12 @@ fragment Inbound on InvoiceNode {
     id
     method
   }
+
+  purchaseOrder {
+    id
+    number
+    reference
+  }
 }
 
 fragment InboundRow on InvoiceNode {
@@ -334,6 +341,10 @@ mutation updateInboundShipment(
           description
         }
         ... on CannotChangeStatusOfInvoiceOnHold {
+          __typename
+          description
+        }
+        ... on CannotReceiveWithPendingLines {
           __typename
           description
         }
@@ -488,6 +499,10 @@ mutation upsertInboundShipment(
               description
             }
             ... on CannotChangeStatusOfInvoiceOnHold {
+              __typename
+              description
+            }
+            ... on CannotReceiveWithPendingLines {
               __typename
               description
             }
