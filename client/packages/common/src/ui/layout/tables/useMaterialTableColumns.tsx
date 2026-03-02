@@ -112,6 +112,7 @@ export const useMaterialTableColumns = <T extends MRT_RowData>(
           AggregatedCell: DefaultAggregationCell,
           PlaceholderCell: DefaultAggregationCell,
           ...columnDefaults,
+          enableGrouping: false, // removes the "group by" option from the column menu
           enableSorting: col.enableSorting ?? false,
           enableColumnFilter: col.enableColumnFilter ?? false,
           ...col,
@@ -119,7 +120,7 @@ export const useMaterialTableColumns = <T extends MRT_RowData>(
       });
 
     return { columns };
-  }, [omsColumns]);
+  }, [getColumnTypeDefaults, omsColumns, t]);
 
   return tableDefinition;
 };
