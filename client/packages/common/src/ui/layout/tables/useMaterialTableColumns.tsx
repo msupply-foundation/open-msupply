@@ -7,13 +7,14 @@ import React, { useMemo } from 'react';
 import {
   MRT_Column,
   MRT_RowData,
-  MRT_AggregationFn,
   MRT_Cell,
   MRT_Row,
   MRT_TableInstance,
 } from 'material-react-table';
 import {
+  defaultAggregationFn,
   mergeCellProps,
+  multipleKeys,
   Tooltip,
   useGetColumnTypeDefaults,
   useTranslation,
@@ -72,19 +73,7 @@ export const useMaterialTableColumns = <T extends MRT_RowData>(
           };
         }
 
-        const defaultAggregationFn: MRT_AggregationFn<T> = (
-          columnId,
-          _leafRows,
-          childRows
-        ) => {
-          // if all child rows have the same value, return that value, otherwise return '[multiple]'
-          const firstValue = childRows[0]?.getValue(columnId);
-          if (childRows.every(row => row.getValue(columnId) === firstValue)) {
-            return firstValue;
-          }
-          return '[multiple]';
-        };
-
+        // Default aggregation cell that shows '[multiple]' if there are multiple values, otherwise renders as normal cell
         const DefaultAggregationCell = (props: {
           cell: MRT_Cell<T, unknown>;
           column: MRT_Column<T, unknown>;
@@ -99,7 +88,7 @@ export const useMaterialTableColumns = <T extends MRT_RowData>(
           };
           return (
             <>
-              {props.cell.getValue() === '[multiple]'
+              {props.cell.getValue() === multipleKeys
                 ? // show '[multiple]' if the aggregation function returned it
                   t('multiple')
                 : // otherwise render the cell using the column's Cell renderer
