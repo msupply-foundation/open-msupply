@@ -51,7 +51,7 @@ pub fn generate_empty_invoice_lines(
                     shipped_number_of_packs: None,
                     volume_per_pack: 0.0,
                     shipped_pack_size: None,
-                    status: None, // TODO: Set status based on authorisation config
+                    status: None, // we know it's an internal order due to add_from_master_list validation, so we can leave status as None
                 });
             }
             Ok(None) => {}

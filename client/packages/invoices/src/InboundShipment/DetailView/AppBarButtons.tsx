@@ -65,7 +65,7 @@ export const AppBarButtonsComponent = ({
           requisitionId={data?.requisition?.id ?? ''}
           invoice={data}
           disable={isDisabled}
-          disableAddFromMasterListButton={!!data?.linkedShipment}
+          disableAddFromMasterListButton={!!data?.linkedShipment || !!data?.purchaseOrder}
           disableAddFromInternalOrderButton={disableInternalOrderButton}
         />
         <AddFromScannerButton disabled={isDisabled} />
