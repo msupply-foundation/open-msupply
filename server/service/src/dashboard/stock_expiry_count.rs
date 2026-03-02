@@ -35,7 +35,7 @@ impl StockExpiryCountServiceTrait for StockExpiryServiceCount {
                         after_or_equal_to: from_date,
                     })
                     .store_id(EqualFilter::equal_to(store_id.to_string()))
-                    .is_available(true),
+                    .has_packs_in_store(true),
             ),
             None,
         )
@@ -112,7 +112,7 @@ mod stock_count_test {
         let expired_stock_a: StockLineRow = {
             let mut updated = expired_stock_a();
             updated.available_number_of_packs = 0.0;
-            updated.total_number_of_packs = 20.0;
+            updated.total_number_of_packs = 0.0;
             updated
         };
 

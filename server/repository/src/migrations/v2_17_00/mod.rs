@@ -4,6 +4,7 @@ use crate::StorageConnection;
 mod remove_goods_received;
 mod add_purchase_order_id_to_invoice;
 mod invoice_line_add_status;
+mod item_category_join_add_item_link_id;
 
 pub(crate) struct V2_17_00;
 impl Migration for V2_17_00 {
@@ -19,6 +20,7 @@ impl Migration for V2_17_00 {
         vec![Box::new(remove_goods_received::Migrate),
             Box::new(add_purchase_order_id_to_invoice::Migrate),
             Box::new(invoice_line_add_status::Migrate),
+            Box::new(item_category_join_add_item_link_id::Migrate),
         ]
     }
 }
@@ -42,6 +44,7 @@ mod test {
         })
         .await;
 
+        // Run this migration
         migrate(&connection, Some(version.clone())).unwrap();
         assert_eq!(get_database_version(&connection), version);
     }
