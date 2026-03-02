@@ -37,6 +37,10 @@ export type ColumnDef<T extends MRT_RowData> = MRT_ColumnDef<T> & {
 
   /** Customise the default index of the column. Used by plugins. */
   columnIndex?: number;
+
+  /** Logical grouping for the column (e.g. 'quantities', 'pricing', 'other').
+   * Used for organising columns in combined table views. */
+  columnGroup?: string;
 };
 
 /** Use when you have `groupByField` enabled, to allow for typing of `subRows` */
