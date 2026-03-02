@@ -1,8 +1,7 @@
 use crate::invoice::inbound_shipment::InsertInboundShipmentError;
 use crate::preference::{ExternalInboundShipmentLinesMustBeAuthorised, Preference};
 use repository::{
-    EqualFilter, InvoiceFilter, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineStatus,
-    InvoiceLineType, InvoiceRepository, InvoiceStatus, PurchaseOrderLineFilter,
+    EqualFilter, InvoiceLineStatus, InvoiceLineType, PurchaseOrderLineFilter,
     PurchaseOrderLineRepository,
 };
 use repository::{InvoiceLineRow, InvoiceLineRowRepository, StorageConnection};
@@ -17,29 +16,12 @@ pub fn add_from_purchase_order(
     let purchase_order_id = purchase_order_id
         .ok_or(InsertInboundShipmentError::AddLinesFromPurchaseOrderWithoutPurchaseOrder)?;
 
-    // Used to remove already delivered stock from the default quantity
-    let sent_invoices_with_same_purchase_order = InvoiceRepository::new(connection)
-        .query_by_filter(
-            InvoiceFilter::new()
-                .purchase_order_id(EqualFilter::equal_to(purchase_order_id.clone()))
-                .status(EqualFilter::equal_any(vec![
-                    InvoiceStatus::Shipped,
-                    InvoiceStatus::Delivered,
-                    InvoiceStatus::Received,
-                    InvoiceStatus::Verified,
-                ])),
-        )?
-        .into_iter()
-        .map(|invoice| invoice.invoice_row.id)
-        .collect::<Vec<_>>();
-
     let purchase_order_lines = PurchaseOrderLineRepository::new(connection).query_by_filter(
         PurchaseOrderLineFilter::new()
             .purchase_order_id(EqualFilter::equal_to(purchase_order_id.clone())),
     )?;
 
     let invoice_line_row_repository = InvoiceLineRowRepository::new(connection);
-    let invoice_line_repository = InvoiceLineRepository::new(connection);
 
     // Set status based on authorisation config
     let external_inbound_shipment_lines_must_be_authorised =
@@ -55,28 +37,16 @@ pub fn add_from_purchase_order(
     // Create invoice lines for each purchase order line
     for purchase_order_line in purchase_order_lines {
         let item = purchase_order_line.item_row;
+        let purchase_order_line_stats = purchase_order_line.purchase_order_line_stats_row;
         let purchase_order_line = purchase_order_line.purchase_order_line_row;
 
-        // TODO: use the new view added in #10349 instead of querying invoice lines directly
-        let already_shipped_lines = invoice_line_repository.query_by_filter(
-            InvoiceLineFilter::new()
-                .invoice_id(EqualFilter::equal_any(
-                    sent_invoices_with_same_purchase_order.clone(),
-                ))
-                .item_id(EqualFilter::equal_to(item.id.clone())) // Shouldn't need to worry about item merging here as both queries join on name_id in the repository layer
-                .r#type(EqualFilter::equal_to(InvoiceLineType::StockIn)), // Unauthorised Lines will have InvoiceLineType::NonStock
-        )?;
-
+        let purchase_order_number_of_units = purchase_order_line
+            .adjusted_number_of_units
+            .unwrap_or(purchase_order_line.requested_number_of_units);
+        let shipped_number_of_units = purchase_order_line_stats.shipped_number_of_units;
         let pack_size = purchase_order_line.requested_pack_size;
-        let quantity = pack_size * purchase_order_line.requested_number_of_units
-            - already_shipped_lines
-                .into_iter()
-                .map(|invoice_line| {
-                    invoice_line.invoice_line_row.pack_size
-                        * invoice_line.invoice_line_row.number_of_packs
-                })
-                .sum::<f64>()
-                .max(0.0);
+        let number_of_packs =
+            (purchase_order_number_of_units - shipped_number_of_units) / pack_size;
 
         invoice_line_row_repository.upsert_one(&InvoiceLineRow {
             id: uuid(),
@@ -91,13 +61,11 @@ pub fn add_from_purchase_order(
             pack_size: pack_size,
             cost_price_per_pack: purchase_order_line.price_per_pack_after_discount,
             sell_price_per_pack: purchase_order_line.price_per_pack_after_discount,
-            total_before_tax: purchase_order_line.price_per_pack_after_discount * quantity
-                / pack_size,
-            total_after_tax: purchase_order_line.price_per_pack_after_discount * quantity
-                / pack_size,
+            total_before_tax: purchase_order_line.price_per_pack_after_discount * number_of_packs,
+            total_after_tax: purchase_order_line.price_per_pack_after_discount * number_of_packs,
             tax_percentage: None,
             r#type: InvoiceLineType::StockIn,
-            number_of_packs: quantity / pack_size,
+            number_of_packs,
             prescribed_quantity: None,
             note: None,
             foreign_currency_price_before_tax: None,
@@ -108,7 +76,7 @@ pub fn add_from_purchase_order(
             reason_option_id: None,
             campaign_id: None,
             program_id: None,
-            shipped_number_of_packs: Some(quantity / pack_size),
+            shipped_number_of_packs: Some(number_of_packs),
             volume_per_pack: 0.0,
             shipped_pack_size: Some(pack_size),
             status: status.clone(),
