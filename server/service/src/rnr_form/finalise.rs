@@ -182,20 +182,27 @@ fn generate(
 
     let rnr_form_line_and_requisition_lines = rnr_form_lines
         .into_iter()
-        .map(
+        .filter_map(
             |RnRFormLine {
                  rnr_form_line_row,
                  item_row,
                  requisition_line_row: _,
              }| {
+                let requested_quantity = rnr_form_line_row
+                    .entered_requested_quantity
+                    .unwrap_or(rnr_form_line_row.calculated_requested_quantity);
+
+                // Skip lines with zero (or negative) requested quantity - they should not appear in the internal order
+                if requested_quantity <= 0.0 {
+                    return None;
+                }
+
                 let requisition_line = RequisitionLineRow {
                     id: uuid(),
                     requisition_id: requisition_row.id.clone(),
                     item_link_id: rnr_form_line_row.item_link_id.clone(),
                     item_name: item_row.name,
-                    requested_quantity: rnr_form_line_row
-                        .entered_requested_quantity
-                        .unwrap_or(rnr_form_line_row.calculated_requested_quantity),
+                    requested_quantity,
                     suggested_quantity: rnr_form_line_row.maximum_quantity,
                     supply_quantity: 0.0,
                     available_stock_on_hand: rnr_form_line_row.final_balance,
@@ -224,7 +231,7 @@ fn generate(
                 };
 
                 // Also return rnr_form_line_id, so we can update the rnr form line with the requisition line id
-                (rnr_form_line_row.id, requisition_line)
+                Some((rnr_form_line_row.id, requisition_line))
             },
         )
         .collect();
