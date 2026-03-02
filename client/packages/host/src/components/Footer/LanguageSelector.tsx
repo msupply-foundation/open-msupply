@@ -1,9 +1,9 @@
-import React, { FC } from 'react';
+import React, { FC, useState } from 'react';
 import {
   Box,
   FlatButton,
+  PaperPopover,
   PaperPopoverSection,
-  usePaperPopover,
   useTranslation,
   useNavigate,
 } from '@openmsupply-client/common';
@@ -13,7 +13,7 @@ import { PropsWithChildrenOnly } from '@common/types';
 
 export const LanguageSelector: FC<PropsWithChildrenOnly> = ({ children }) => {
   const navigate = useNavigate();
-  const { hide, PaperPopover } = usePaperPopover();
+  const [popoverAnchor, setPopoverAnchor] = useState<HTMLElement | null>(null);
   const t = useTranslation();
   const username = useUserName();
 
@@ -28,7 +28,7 @@ export const LanguageSelector: FC<PropsWithChildrenOnly> = ({ children }) => {
       onClick={() => {
         changeLanguage(l.value);
         setUserLocale(username, l.value as SupportedLocales);
-        hide();
+        setPopoverAnchor(null);
         navigate(0);
       }}
       key={l.value}
@@ -49,6 +49,8 @@ export const LanguageSelector: FC<PropsWithChildrenOnly> = ({ children }) => {
         vertical: 'top',
         horizontal: 'center',
       }}
+      anchorEl={popoverAnchor}
+      onAnchorElChange={setPopoverAnchor}
       width={300}
       Content={
         <PaperPopoverSection label={t('select-language')}>

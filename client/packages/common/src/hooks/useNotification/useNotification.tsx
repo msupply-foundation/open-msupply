@@ -2,7 +2,7 @@ import React from 'react';
 import { IconButton, Typography } from '@mui/material';
 import { CloseIcon, InfoIcon } from '../../ui/icons';
 import { OptionsObject, SnackbarKey, useSnackbar } from 'notistack';
-import { PaperPopoverSection, usePaperPopover } from '@common/components';
+import { PaperPopover, PaperPopoverSection } from '@common/components';
 import { useTranslation } from '@common/intl';
 
 interface NotificationHook {
@@ -15,7 +15,6 @@ interface NotificationHook {
 
 export const useNotification = (): NotificationHook => {
   const t = useTranslation();
-  const { PaperPopover } = usePaperPopover();
   const { closeSnackbar, enqueueSnackbar } = useSnackbar();
 
   const action = (key: SnackbarKey) => (

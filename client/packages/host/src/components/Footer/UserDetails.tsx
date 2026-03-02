@@ -1,11 +1,11 @@
-import React, { FC } from 'react';
+import React, { FC, useState } from 'react';
 import {
   Box,
   CircularProgress,
   FlatButton,
+  PaperPopover,
   PaperPopoverSection,
   useAuthContext,
-  usePaperPopover,
   useTranslation,
   useNavigate,
   useUserDetails,
@@ -22,7 +22,7 @@ import { PropsWithChildrenOnly } from '@common/types';
 export const UserDetails: FC<PropsWithChildrenOnly> = ({ children }) => {
   const { logout, user, token } = useAuthContext();
   const navigate = useNavigate();
-  const { hide, PaperPopover } = usePaperPopover();
+  const [popoverAnchor, setPopoverAnchor] = useState<HTMLElement | null>(null);
   const { isLoading } = useUserDetails(token);
   const t = useTranslation();
   const { getLocalisedFullName } = useIntlUtils();
@@ -44,7 +44,7 @@ export const UserDetails: FC<PropsWithChildrenOnly> = ({ children }) => {
       startIcon={<PowerIcon fontSize="small" color="primary" />}
       label={t('logout')}
       onClick={async () => {
-        hide();
+        setPopoverAnchor(null);
         showConfirmation();
       }}
       sx={{
@@ -63,6 +63,8 @@ export const UserDetails: FC<PropsWithChildrenOnly> = ({ children }) => {
         vertical: 'top',
         horizontal: 'center',
       }}
+      anchorEl={popoverAnchor}
+      onAnchorElChange={setPopoverAnchor}
       Content={
         <PaperPopoverSection
           label={getLocalisedFullName(user.firstName, user.lastName)}
