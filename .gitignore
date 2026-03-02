@@ -17,3 +17,4 @@ client/dist
 
 # IDEs
 .idea/
+.claude/*.local.json
