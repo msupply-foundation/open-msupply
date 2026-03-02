@@ -271,7 +271,7 @@ export const QuantityTable = ({
         Cell: ({ row, cell }) => (
           <NumberInputCell
             cell={cell}
-            debounceTime={300}
+            debounceTime={500}
             updateFn={(value: number) => {
               const { packSize } = row.original;
               if (packSize !== undefined) {
