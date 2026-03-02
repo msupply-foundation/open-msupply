@@ -20,7 +20,9 @@ export const getTemperatureLogQueries = (sdk: Sdk, storeId: string) => ({
       ({ first, offset, sortBy, filterBy }: ListParams) =>
       async () => {
         const key =
-          sortBy.key === 'endDatetime' || sortBy.key === ''
+          sortBy.key === 'endDatetime' ||
+          sortBy.key === 'startDatetime' ||
+          sortBy.key === ''
             ? TemperatureLogSortFieldInput.Datetime
             : (sortBy.key as TemperatureLogSortFieldInput);
 
