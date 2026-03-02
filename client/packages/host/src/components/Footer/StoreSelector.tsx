@@ -1,4 +1,4 @@
-import React, { FC, useState, useMemo, useRef } from 'react';
+import React, { FC, useState, useMemo } from 'react';
 import {
   Box,
   CircularProgress,
@@ -10,7 +10,6 @@ import {
   useUserDetails,
   BasicTextInput,
   useRootNavigationPath,
-  PopoverActions,
   PaperPopover,
 } from '@openmsupply-client/common';
 import { PropsWithChildrenOnly, UserStoreNodeFragment } from '@common/types';
@@ -20,10 +19,7 @@ export const StoreSelector: FC<PropsWithChildrenOnly> = ({ children }) => {
   const navigate = useNavigate();
   const { store, setStore, token } = useAuthContext();
   const { data, isLoading } = useUserDetails(token);
-  const popoverActions = useRef<PopoverActions>({
-    show: () => {},
-    hide: () => {},
-  });
+  const [popoverAnchor, setPopoverAnchor] = useState<HTMLElement | null>(null);
 
   const rootNavigationPath = useRootNavigationPath();
 
@@ -63,7 +59,7 @@ export const StoreSelector: FC<PropsWithChildrenOnly> = ({ children }) => {
       disabled={s.id === store.id || !!s.isDisabled}
       onClick={async () => {
         await setStore(s);
-        popoverActions.current.hide();
+        setPopoverAnchor(null);
         navigate(rootNavigationPath);
       }}
       key={s.id}
@@ -78,7 +74,8 @@ export const StoreSelector: FC<PropsWithChildrenOnly> = ({ children }) => {
         vertical: 'top',
         horizontal: 'right',
       }}
-      actions={popoverActions}
+      anchorEl={popoverAnchor}
+      onAnchorElChange={setPopoverAnchor}
       width={400}
       Content={
         <PaperPopoverSection label={t('select-store')}>

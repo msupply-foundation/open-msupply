@@ -1,32 +1,5 @@
-import React, {
-  FC,
-  PropsWithChildren,
-  useImperativeHandle,
-  useRef,
-} from 'react';
+import React, { PropsWithChildren } from 'react';
 import { Box, PaperProps, Popover, PopoverOrigin } from '@mui/material';
-
-export const usePaperPopover = () => {
-  const actions = useRef<PopoverActions>({
-    show: () => {},
-    hide: () => {},
-  });
-
-  const PaperPopoverInternal: FC<PropsWithChildren<PopoverProps>> = props => (
-    <PaperPopover {...props} actions={actions} />
-  );
-
-  return {
-    PaperPopover: PaperPopoverInternal,
-    show: actions.current.show,
-    hide: actions.current.hide,
-  };
-};
-
-export interface PopoverActions {
-  show: (event: React.MouseEvent<HTMLElement>) => void;
-  hide: () => void;
-}
 
 export interface PopoverProps {
   mode: 'hover' | 'click';
@@ -35,7 +8,8 @@ export interface PopoverProps {
   paperProps?: PaperProps;
   width?: number;
   height?: number;
-  actions?: React.MutableRefObject<PopoverActions>;
+  anchorEl?: HTMLElement | null;
+  onAnchorElChange?: (anchorEl: HTMLElement | null) => void;
 }
 
 export const PaperPopover: React.FC<PropsWithChildren<PopoverProps>> = ({
@@ -46,34 +20,25 @@ export const PaperPopover: React.FC<PropsWithChildren<PopoverProps>> = ({
   paperProps,
   width,
   height,
-  actions,
+  anchorEl: anchorElProp,
+  onAnchorElChange,
 }) => {
-  const [anchorEl, setAnchorEl] = React.useState<HTMLElement | null>(null);
+  const [internalAnchorEl, setInternalAnchorEl] =
+    React.useState<HTMLElement | null>(null);
 
-  // Could be made to show the popup at the mouse position instead of the element if needed:
-  // const getBoundingClientRect = () =>
-  //   ({
-  //     top: e.clientY,
-  //     left: e.clientX,
-  //     bottom: e.clientY,
-  //     right: e.clientX,
-  //     width: 25,
-  //     height: 25,
-  //   }) as DOMRect;
+  const isControlled = anchorElProp !== undefined;
+  const anchorEl = isControlled ? anchorElProp : internalAnchorEl;
+  const open = Boolean(anchorEl);
+
   const handlePopoverShow = (event: React.MouseEvent<HTMLElement>) => {
-    setAnchorEl(event.currentTarget);
+    if (!isControlled) setInternalAnchorEl(event.currentTarget);
+    onAnchorElChange?.(event.currentTarget);
   };
 
   const handlePopoverHide = () => {
-    setAnchorEl(null);
+    if (!isControlled) setInternalAnchorEl(null);
+    onAnchorElChange?.(null);
   };
-
-  useImperativeHandle(actions, () => ({
-    show: handlePopoverShow,
-    hide: handlePopoverHide,
-  }));
-
-  const open = Boolean(anchorEl);
 
   return (
     <>
