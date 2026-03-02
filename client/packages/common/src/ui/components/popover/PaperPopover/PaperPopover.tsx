@@ -72,7 +72,7 @@ export const PaperPopover: React.FC<PropsWithChildren<PopoverProps>> = ({
               height: height ? `${height}px` : 'auto',
               width: width ? `${width}px` : 'auto',
               borderRadius: '16px',
-              transform: getTranslation(placement),
+              ...getMargin(placement),
               ...paperProps?.style,
             },
           },
@@ -108,12 +108,8 @@ const getTransformOrigin = (placement: PopoverOrigin): PopoverOrigin => ({
         ? 'left'
         : 'center',
 });
-const getTranslation = (placement: PopoverOrigin) => {
-  const y =
-    placement.vertical === 'top'
-      ? '-8px'
-      : placement.vertical === 'bottom'
-        ? '8px'
-        : '0';
-  return `translateY(${y})`;
+const getMargin = (placement: PopoverOrigin): React.CSSProperties => {
+  if (placement.vertical === 'top') return { marginTop: '-8px' };
+  if (placement.vertical === 'bottom') return { marginTop: '8px' };
+  return {};
 };
