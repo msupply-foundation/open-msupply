@@ -107,9 +107,9 @@ pub async fn start_server(
     }
 
     // CREATE BASE DIRECTORY IF IT DOESN'T EXIST
-    let base_dir = settings.server.base_dir.clone().unwrap_or(".".to_string());
+    let base_dir = &settings.server.base_dir;
     info!("Creating base directory if needed: {}", base_dir);
-    std::fs::create_dir_all(&base_dir)?;
+    std::fs::create_dir_all(base_dir)?;
 
     // INITIALISE DATABASE AND CONNECTION
     let connection_manager = get_storage_connection_manager(&settings.database);
