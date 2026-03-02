@@ -55,7 +55,6 @@ export const CustomTranslationsModal = ({
   onClose: () => void;
 }) => {
   const t = useTranslation();
-  const defaultTranslation = useTranslation('common');
   const { invalidateCustomTranslations } = useIntlUtils();
   const { success, error } = useNotification();
 
@@ -64,7 +63,7 @@ export const CustomTranslationsModal = ({
   const [loading, setLoading] = useState(false);
   const [showValidationErrors, setShowValidationErrors] = useState(false);
   const [translations, setTranslations] = useState(
-    mapTranslationsToArray(value, defaultTranslation)
+    mapTranslationsToArray(value, t)
   );
 
   const saveAndClose = async () => {
