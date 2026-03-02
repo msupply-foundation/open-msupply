@@ -85,7 +85,6 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
     // Add description to column menu
     renderColumnActionsMenuItems: ({ internalColumnMenuItems, column }) => {
       const { description, header } = column.columnDef as ColumnDef<T>; // MRT doesn't support typing custom column props, but we know it will be here
-      internalColumnMenuItems.splice(3, 1); // remove the group by option
 
       return [
         <MenuItem
