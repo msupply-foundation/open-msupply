@@ -4,3 +4,4 @@ export * from './useColumnPinning';
 export * from './useColumnSizing';
 export * from './useColumnVisibility';
 export * from './useIsGrouped';
+export * from './useViewMode';
