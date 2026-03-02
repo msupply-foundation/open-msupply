@@ -47,6 +47,7 @@ pub fn insert_inbound_shipment(
             if input.insert_lines_from_purchase_order {
                 add_from_purchase_order(
                     connection,
+                    &ctx.store_id,
                     new_invoice.id.clone(),
                     input.purchase_order_id,
                 )?;

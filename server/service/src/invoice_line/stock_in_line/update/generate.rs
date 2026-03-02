@@ -13,8 +13,8 @@ use crate::{
     store_preference::get_store_preferences,
 };
 use repository::{
-    vvm_status::vvm_status_log_row::VVMStatusLogRow, InvoiceLine, InvoiceLineRow, InvoiceRow,
-    ItemRow, RepositoryError, StockLineRow, StorageConnection,
+    vvm_status::vvm_status_log_row::VVMStatusLogRow, InvoiceLine, InvoiceLineRow,
+    InvoiceLineStatus, InvoiceRow, ItemRow, RepositoryError, StockLineRow, StorageConnection,
 };
 
 use super::UpdateStockInLine;
@@ -52,7 +52,13 @@ pub fn generate(
         update_line = convert_invoice_line_to_single_pack(update_line);
     }
 
+    // Only update stock when the invoice status has reached a status that effect stock and the line
+    // hasn't be rejected. The current logic makes it so lines can't be rejected after being accepted as
+    // in that case the stock could have already been assigned so it mightn't be possible to then
+    // remove the stock line. This does mean that new lines added when received will be stuck in pending
+    // and can't go into stock.
     let (upsert_batch_option, vvm_status_log_option) = if should_update_stock(&existing_invoice_row)
+        && matches!(update_line.status, None | Some(InvoiceLineStatus::Passed))
     {
         // There will be a batch_to_delete_id if the item has changed
         // If item has changed, we want a new stock line, otherwise keep existing
@@ -145,6 +151,7 @@ fn generate_line(
         id: _,
         item_id: _,
         r#type: _,
+        status,
     }: UpdateStockInLine,
     current_line: InvoiceLineRow,
     new_item_option: Option<ItemRow>,
@@ -183,6 +190,8 @@ fn generate_line(
         .unwrap_or(update_line.donor_link_id);
 
     update_line.vvm_status_id = vvm_status_id.or(update_line.vvm_status_id);
+
+    update_line.status = status.map(|s| s.value).unwrap_or(update_line.status);
 
     if let Some(item) = new_item_option {
         update_line.item_link_id = item.id;

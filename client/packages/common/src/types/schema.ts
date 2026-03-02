@@ -1220,6 +1220,12 @@ export type CannotIssueInForeignCurrency = UpdateErrorInterface &
     description: Scalars['String']['output'];
   };
 
+export type CannotReceiveWithPendingLines =
+  UpdateInboundShipmentErrorInterface & {
+    __typename: 'CannotReceiveWithPendingLines';
+    description: Scalars['String']['output'];
+  };
+
 export type CannotReverseInvoiceStatus = UpdateErrorInterface &
   UpdateInboundShipmentErrorInterface &
   UpdatePrescriptionErrorInterface & {
@@ -4322,6 +4328,7 @@ export type InvoiceLineNode = {
   sellPricePerPack: Scalars['Float']['output'];
   shippedNumberOfPacks?: Maybe<Scalars['Float']['output']>;
   shippedPackSize?: Maybe<Scalars['Float']['output']>;
+  status?: Maybe<InvoiceLineStatusType>;
   stockLine?: Maybe<StockLineNode>;
   taxPercentage?: Maybe<Scalars['Float']['output']>;
   totalAfterTax: Scalars['Float']['output'];
@@ -4365,6 +4372,12 @@ export type InvoiceLineSortInput = {
   /** Sort query result by `key` */
   key: InvoiceLineSortFieldInput;
 };
+
+export enum InvoiceLineStatusType {
+  Passed = 'PASSED',
+  Pending = 'PENDING',
+  Rejected = 'REJECTED',
+}
 
 export type InvoiceLinesResponse = InvoiceLineConnector;
 
@@ -9891,6 +9904,7 @@ export type UpdateInboundShipmentInput = {
   currencyId?: InputMaybe<Scalars['String']['input']>;
   currencyRate?: InputMaybe<Scalars['Float']['input']>;
   defaultDonor?: InputMaybe<UpdateDonorInput>;
+  deliveredDatetime?: InputMaybe<Scalars['NaiveDate']['input']>;
   id: Scalars['String']['input'];
   onHold?: InputMaybe<Scalars['Boolean']['input']>;
   otherPartyId?: InputMaybe<Scalars['String']['input']>;
@@ -9925,6 +9939,7 @@ export type UpdateInboundShipmentLineInput = {
   sellPricePerPack?: InputMaybe<Scalars['Float']['input']>;
   shippedNumberOfPacks?: InputMaybe<Scalars['Float']['input']>;
   shippedPackSize?: InputMaybe<Scalars['Float']['input']>;
+  status?: InputMaybe<InvoiceLineStatusType>;
   tax?: InputMaybe<TaxInput>;
   totalBeforeTax?: InputMaybe<Scalars['Float']['input']>;
   volumePerPack?: InputMaybe<Scalars['Float']['input']>;
@@ -11013,6 +11028,9 @@ export enum UserPermission {
   DocumentMutate = 'DOCUMENT_MUTATE',
   DocumentQuery = 'DOCUMENT_QUERY',
   EditCentralData = 'EDIT_CENTRAL_DATA',
+  InboundShipmentExternalAuthorise = 'INBOUND_SHIPMENT_EXTERNAL_AUTHORISE',
+  InboundShipmentExternalMutate = 'INBOUND_SHIPMENT_EXTERNAL_MUTATE',
+  InboundShipmentExternalQuery = 'INBOUND_SHIPMENT_EXTERNAL_QUERY',
   InboundShipmentMutate = 'INBOUND_SHIPMENT_MUTATE',
   InboundShipmentQuery = 'INBOUND_SHIPMENT_QUERY',
   InboundShipmentVerify = 'INBOUND_SHIPMENT_VERIFY',

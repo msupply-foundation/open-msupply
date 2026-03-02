@@ -8,11 +8,13 @@ use crate::{
         convert_invoice_line_to_single_pack, generate_batch, should_update_stock, StockInType,
         StockLineInput,
     },
+    preference::{ExternalInboundShipmentLinesMustBeAuthorised, Preference},
     store_preference::get_store_preferences,
 };
 use repository::{
-    vvm_status::vvm_status_log_row::VVMStatusLogRow, BarcodeRow, InvoiceLineRow, InvoiceLineType,
-    InvoiceRow, ItemRow, RepositoryError, StockLineRow, StockLineRowRepository, StorageConnection,
+    vvm_status::vvm_status_log_row::VVMStatusLogRow, BarcodeRow, InvoiceLineRow, InvoiceLineStatus,
+    InvoiceLineType, InvoiceRow, ItemRow, RepositoryError, StockLineRow, StockLineRowRepository,
+    StorageConnection,
 };
 
 use super::InsertStockInLine;
@@ -33,8 +35,17 @@ pub fn generate(
     existing_invoice_row: InvoiceRow,
 ) -> Result<GenerateResult, RepositoryError> {
     let store_preferences = get_store_preferences(connection, &existing_invoice_row.store_id)?;
+    let external_inbound_shipment_lines_must_be_authorised =
+        ExternalInboundShipmentLinesMustBeAuthorised
+            .load(connection, Some(existing_invoice_row.store_id.clone()))
+            .unwrap_or(false);
 
-    let mut new_line = generate_line(input.clone(), item_row, existing_invoice_row.clone()); // include vvm status here
+    let mut new_line = generate_line(
+        input.clone(),
+        item_row,
+        existing_invoice_row.clone(),
+        external_inbound_shipment_lines_must_be_authorised,
+    );
 
     // Check if the stock line already exists, if it does we may need to update it rather than replacing it
     let old_stock_line = match &input.stock_line_id {
@@ -142,13 +153,23 @@ fn generate_line(
     InvoiceRow {
         tax_percentage,
         default_donor_link_id: default_donor_id,
+        purchase_order_id,
         ..
     }: InvoiceRow,
+    external_inbound_shipment_lines_must_be_authorised: bool,
 ) -> InvoiceLineRow {
     let total_before_tax = total_before_tax.unwrap_or(cost_price_per_pack * number_of_packs);
     let total_after_tax = calculate_total_after_tax(total_before_tax, tax_percentage);
     // default to invoice_row donor_id if none supplied on insert
     let donor_id = donor_id.or(default_donor_id);
+
+    // set to pending for external inbound shipments when the preference is enabled
+    let add_status =
+        purchase_order_id.is_some() && external_inbound_shipment_lines_must_be_authorised;
+    let status = match add_status {
+        true => Some(InvoiceLineStatus::Pending),
+        false => None,
+    };
 
     InvoiceLineRow {
         id,
@@ -181,7 +202,7 @@ fn generate_line(
         linked_invoice_id: None,
         prescribed_quantity: None,
         reason_option_id: None,
-        status: None,
+        status,
     }
 }
 

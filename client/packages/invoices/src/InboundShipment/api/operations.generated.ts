@@ -26,6 +26,7 @@ export type InboundLineFragment = {
   itemVariantId?: string | null;
   linkedInvoiceId?: string | null;
   volumePerPack: number;
+  status?: Types.InvoiceLineStatusType | null;
   donor?: { __typename: 'NameNode'; id: string; name: string } | null;
   program?: { __typename: 'ProgramNode'; id: string; name: string } | null;
   campaign?: { __typename: 'CampaignNode'; id: string; name: string } | null;
@@ -154,6 +155,7 @@ export type InboundFragment = {
       itemVariantId?: string | null;
       linkedInvoiceId?: string | null;
       volumePerPack: number;
+      status?: Types.InvoiceLineStatusType | null;
       donor?: { __typename: 'NameNode'; id: string; name: string } | null;
       program?: { __typename: 'ProgramNode'; id: string; name: string } | null;
       campaign?: {
@@ -265,6 +267,12 @@ export type InboundFragment = {
     __typename: 'ShippingMethodNode';
     id: string;
     method: string;
+  } | null;
+  purchaseOrder?: {
+    __typename: 'PurchaseOrderNode';
+    id: string;
+    number: number;
+    reference?: string | null;
   } | null;
 };
 
@@ -431,6 +439,7 @@ export type InvoiceQuery = {
             itemVariantId?: string | null;
             linkedInvoiceId?: string | null;
             volumePerPack: number;
+            status?: Types.InvoiceLineStatusType | null;
             donor?: { __typename: 'NameNode'; id: string; name: string } | null;
             program?: {
               __typename: 'ProgramNode';
@@ -546,6 +555,12 @@ export type InvoiceQuery = {
           __typename: 'ShippingMethodNode';
           id: string;
           method: string;
+        } | null;
+        purchaseOrder?: {
+          __typename: 'PurchaseOrderNode';
+          id: string;
+          number: number;
+          reference?: string | null;
         } | null;
       }
     | {
@@ -635,6 +650,7 @@ export type InboundByNumberQuery = {
             itemVariantId?: string | null;
             linkedInvoiceId?: string | null;
             volumePerPack: number;
+            status?: Types.InvoiceLineStatusType | null;
             donor?: { __typename: 'NameNode'; id: string; name: string } | null;
             program?: {
               __typename: 'ProgramNode';
@@ -751,6 +767,12 @@ export type InboundByNumberQuery = {
           id: string;
           method: string;
         } | null;
+        purchaseOrder?: {
+          __typename: 'PurchaseOrderNode';
+          id: string;
+          number: number;
+          reference?: string | null;
+        } | null;
       }
     | {
         __typename: 'NodeError';
@@ -782,6 +804,7 @@ export type UpdateInboundShipmentMutation = {
             }
           | { __typename: 'CannotEditInvoice'; description: string }
           | { __typename: 'CannotIssueInForeignCurrency'; description: string }
+          | { __typename: 'CannotReceiveWithPendingLines'; description: string }
           | { __typename: 'CannotReverseInvoiceStatus'; description: string }
           | { __typename: 'OtherPartyNotASupplier'; description: string }
           | { __typename: 'OtherPartyNotVisible'; description: string }
@@ -905,6 +928,10 @@ export type UpsertInboundShipmentMutation = {
               | { __typename: 'CannotEditInvoice'; description: string }
               | {
                   __typename: 'CannotIssueInForeignCurrency';
+                  description: string;
+                }
+              | {
+                  __typename: 'CannotReceiveWithPendingLines';
                   description: string;
                 }
               | {
@@ -1246,6 +1273,7 @@ export const InboundLineFragmentDoc = gql`
     itemVariantId
     linkedInvoiceId
     volumePerPack
+    status
     donor(storeId: $storeId) {
       id
       name
@@ -1412,6 +1440,11 @@ export const InboundFragmentDoc = gql`
     shippingMethod {
       id
       method
+    }
+    purchaseOrder {
+      id
+      number
+      reference
     }
   }
   ${InboundLineFragmentDoc}
@@ -1610,6 +1643,10 @@ export const UpdateInboundShipmentDocument = gql`
             __typename
             description
           }
+          ... on CannotReceiveWithPendingLines {
+            __typename
+            description
+          }
           ... on CannotEditInvoice {
             __typename
             description
@@ -1761,6 +1798,10 @@ export const UpsertInboundShipmentDocument = gql`
                 description
               }
               ... on CannotChangeStatusOfInvoiceOnHold {
+                __typename
+                description
+              }
+              ... on CannotReceiveWithPendingLines {
                 __typename
                 description
               }

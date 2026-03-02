@@ -82,14 +82,16 @@ export const inboundParsers = {
       | RecordPatch<InboundFragment>
       | RecordPatch<InboundRowFragment>
       | {
-        id: string;
-        defaultDonorUpdate: UpdateDonorInput;
-      }
+          id: string;
+          defaultDonorUpdate: UpdateDonorInput;
+        }
   ): UpdateInboundShipmentInput => {
     return {
       id: patch.id,
       colour: 'colour' in patch ? patch.colour : undefined,
       comment: 'comment' in patch ? patch.comment : undefined,
+      deliveredDatetime:
+        'deliveredDatetime' in patch ? patch.deliveredDatetime : undefined,
       status: inboundParsers.toStatus(patch),
       onHold: 'onHold' in patch ? patch.onHold : undefined,
       otherPartyId: 'otherParty' in patch ? patch.otherParty?.id : undefined,
@@ -162,6 +164,7 @@ export const inboundParsers = {
     shippedNumberOfPacks: line.shippedNumberOfPacks ?? null,
     volumePerPack: line.volumePerPack ?? null,
     shippedPackSize: line.shippedPackSize ?? null,
+    status: line.status ?? null,
   }),
   toDeleteLine: (line: { id: string }): DeleteInboundShipmentLineInput => {
     return { id: line.id };
