@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
 export interface UrlQueryObject {
@@ -53,22 +53,35 @@ interface useUrlQueryProps {
   skipParse?: string[];
 }
 
+// Module-level variable to track pending search params across all useUrlQuery
+// instances. This prevents race conditions when multiple updateQuery calls
+// happen before the URL is committed by the data router.
+let pendingSearchParams: string | null = null;
+
 export const useUrlQuery = ({ skipParse }: useUrlQueryProps = {}) => {
   const [searchParams, setSearchParams] = useSearchParams();
 
+  // Clear pending state when committed searchParams arrive
+  useEffect(() => {
+    pendingSearchParams = null;
+  }, [searchParams]);
+
   return useMemo(() => {
     const updateQuery = (values: UrlQueryObject, overwrite = false) => {
-      // We use this rather than searchParams as this function uses a stale
-      // version of searchParams (closure from when the hook was first called)
-      const urlSearchParams = new URLSearchParams(window.location.search);
+      // Use pending params if a previous update hasn't been committed yet,
+      // otherwise read from the actual URL
+      const urlSearchParams = new URLSearchParams(
+        pendingSearchParams ?? window.location.search
+      );
 
       const newQueryObject = overwrite
         ? {}
         : Object.fromEntries(urlSearchParams.entries());
 
       Object.entries(values).forEach(([key, value]) => {
-        if (!value) delete newQueryObject[key];
-        else {
+        if (!value && value !== 0) {
+          delete newQueryObject[key];
+        } else {
           if (typeof value === 'object' && ('from' in value || 'to' in value)) {
             const range = parseRangeString(newQueryObject[key]) as RangeObject<
               string | number
@@ -84,6 +97,9 @@ export const useUrlQuery = ({ skipParse }: useUrlQueryProps = {}) => {
         }
       });
 
+      // Track the pending search params so subsequent calls see them
+      pendingSearchParams =
+        '?' + new URLSearchParams(newQueryObject).toString();
       setSearchParams(newQueryObject, { replace: true });
     };
 
