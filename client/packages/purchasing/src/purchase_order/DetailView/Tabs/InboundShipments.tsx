@@ -10,6 +10,7 @@ import {
   useNonPaginatedMaterialTable,
   MaterialTable,
   InvoiceNodeStatus,
+  NumUtils,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { getInvoiceStatusTranslator } from '@openmsupply-client/invoices/src';
@@ -24,7 +25,7 @@ export const InboundShipments = () => {
   const navigate = useNavigate();
 
   const queryParams = {
-    first: 100,
+    first: NumUtils.MAX_SAFE_API_INTEGER,
     offset: 0,
     filterBy: {
       purchaseOrderId: { equalTo: purchaseOrderId || '' },
@@ -83,7 +84,7 @@ export const InboundShipments = () => {
         size: 100,
       },
     ],
-    []
+    [t]
   );
 
   const handleRowClick = (row: InboundRowFragment) => {
