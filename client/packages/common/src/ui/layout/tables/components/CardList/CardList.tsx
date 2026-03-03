@@ -10,11 +10,13 @@ import { CardListItem } from './CardListItem';
 interface CardListProps<T extends MRT_RowData> {
   table: MRT_TableInstance<T>;
   lastItemRef?: React.RefObject<HTMLDivElement>;
+  groupIcons?: Record<string, React.ReactNode>;
 }
 
 export const CardList = <T extends MRT_RowData>({
   table,
   lastItemRef,
+  groupIcons,
 }: CardListProps<T>) => {
   const rows = table.getRowModel().rows;
 
@@ -25,6 +27,7 @@ export const CardList = <T extends MRT_RowData>({
           key={row.id}
           row={row}
           cardRef={index === rows.length - 1 ? lastItemRef : undefined}
+          groupIcons={groupIcons}
         />
       ))}
       <MRT_ShowHideColumnsButton table={table} />

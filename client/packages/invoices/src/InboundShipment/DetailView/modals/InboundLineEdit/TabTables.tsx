@@ -21,6 +21,9 @@ import {
   CurrencyInputCell,
   CardList,
   ViewMode,
+  StockIcon,
+  InvoiceIcon,
+  SlidersIcon,
 } from '@openmsupply-client/common';
 import { DraftInboundLine } from '../../../../types';
 import {
@@ -882,7 +885,15 @@ export const InboundLineEditTable = ({
         <MaterialTable table={table} />
       </Box>
       {viewMode === 'card' && (
-        <CardList table={table} lastItemRef={lastCardRef} />
+        <CardList
+          table={table}
+          lastItemRef={lastCardRef}
+          groupIcons={{
+            quantities: <StockIcon />,
+            pricing: <InvoiceIcon />,
+            other: <SlidersIcon />,
+          }}
+        />
       )}
     </>
   );

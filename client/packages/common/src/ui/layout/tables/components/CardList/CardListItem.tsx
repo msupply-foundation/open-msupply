@@ -13,6 +13,7 @@ import { CardListFieldGroup } from './CardListFieldGroup';
 interface CardListItemProps<T extends MRT_RowData> {
   row: MRT_Row<T>;
   cardRef?: React.Ref<HTMLDivElement>;
+  groupIcons?: Record<string, React.ReactNode>;
 }
 
 const isActionCell = <T extends MRT_RowData>(
@@ -37,6 +38,7 @@ const getCellContent = <T extends MRT_RowData>(cell: MRT_Cell<T, unknown>) =>
 export const CardListItem = <T extends MRT_RowData>({
   row,
   cardRef,
+  groupIcons,
 }: CardListItemProps<T>) => {
   const cells = row.getVisibleCells();
 
@@ -122,6 +124,7 @@ export const CardListItem = <T extends MRT_RowData>({
           <CardListFieldGroup
             key={groupName ?? `ungrouped-${groupIndex}`}
             groupName={groupName}
+            groupIcon={groupName ? groupIcons?.[groupName] : undefined}
           >
             {groupCells.map(cell => (
               <CardListField
