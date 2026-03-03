@@ -75,7 +75,7 @@ const useGetList = (queryParams?: ReportListParams) => {
         },
         key: isEnumValue(ReportSortFieldInput, sortBy.key)
           ? sortBy.key
-          : ReportSortFieldInput.Name,
+          : ReportSortFieldInput.Code,
         desc: sortBy.isDesc,
         storeId,
         userLanguage: language,
