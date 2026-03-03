@@ -2,6 +2,7 @@ use super::{version::Version, Migration, MigrationFragment};
 use crate::StorageConnection;
 
 mod item_category_join_add_item_link_id;
+mod requisition_add_original_customer_link_id;
 
 pub(crate) struct V2_17_00;
 impl Migration for V2_17_00 {
@@ -14,7 +15,10 @@ impl Migration for V2_17_00 {
     }
 
     fn migrate_fragments(&self) -> Vec<Box<dyn MigrationFragment>> {
-        vec![Box::new(item_category_join_add_item_link_id::Migrate)]
+        vec![
+            Box::new(item_category_join_add_item_link_id::Migrate),
+            Box::new(requisition_add_original_customer_link_id::Migrate),
+        ]
     }
 }
 

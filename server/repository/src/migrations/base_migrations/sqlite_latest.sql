@@ -145,7 +145,7 @@ CREATE TABLE requisition (
     max_months_of_stock  DOUBLE PRECISION NOT NULL,
     min_months_of_stock DOUBLE PRECISION NOT NULL,
     linked_requisition_id TEXT
-, status NOT NULL DEFAULT 'DRAFT', type NOT NULL DEFAULT 'REQUEST', approval_status TEXT, is_sync_update BOOLEAN NOT NULL DEFAULT FALSE, program_id TEXT, period_id TEXT REFERENCES period(id), order_type TEXT, name_link_id TEXT NOT NULL REFERENCES name_link (id) DEFAULT 'temp_for_migration', is_emergency BOOLEAN NOT NULL DEFAULT FALSE, created_from_requisition_id TEXT, original_customer_id TEXT REFERENCES name(id));
+, status NOT NULL DEFAULT 'DRAFT', type NOT NULL DEFAULT 'REQUEST', approval_status TEXT, is_sync_update BOOLEAN NOT NULL DEFAULT FALSE, program_id TEXT, period_id TEXT REFERENCES period(id), order_type TEXT, name_link_id TEXT NOT NULL REFERENCES name_link (id) DEFAULT 'temp_for_migration', is_emergency BOOLEAN NOT NULL DEFAULT FALSE, created_from_requisition_id TEXT, original_customer_link_id TEXT REFERENCES name_link(id));
 CREATE TABLE requisition_line (
     id TEXT NOT NULL PRIMARY KEY,
     requisition_id TEXT NOT NULL REFERENCES requisition (id),
