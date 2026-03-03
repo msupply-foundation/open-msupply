@@ -61,9 +61,7 @@ pub async fn add_patient_name_store_join(
 
     create_patient_name_store_join(&ctx.connection, &store_id, &name_id, Some(id))?;
 
-    info!(
-        "Created name_store_join for patient {name_id} and store {store_id}"
-    );
+    info!("Created name_store_join for patient {name_id} and store {store_id}");
 
     Ok(())
 }
