@@ -1,5 +1,5 @@
 import React from 'react';
-import { Stack } from '@mui/material';
+import { Stack, useMediaQuery } from '@mui/material';
 import {
   MRT_RowData,
   MRT_ShowHideColumnsButton,
@@ -19,9 +19,12 @@ export const CardList = <T extends MRT_RowData>({
   groupIcons,
 }: CardListProps<T>) => {
   const rows = table.getRowModel().rows;
+  const isLandscape = useMediaQuery(
+    '(orientation: landscape) and (max-height: 800px)'
+  );
 
   return (
-    <Stack spacing={1.5} sx={{ width: '100%' }}>
+    <Stack spacing={isLandscape ? 1 : 1.5} sx={{ width: '100%' }}>
       {rows.map((row, index) => (
         <CardListItem
           key={row.id}
