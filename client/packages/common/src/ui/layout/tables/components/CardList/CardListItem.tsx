@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Card, CardContent, useMediaQuery } from '@mui/material';
+import { Box, Card, CardContent, Typography, useMediaQuery } from '@mui/material';
 import {
   flexRender,
   MRT_Cell,
@@ -23,11 +23,11 @@ const isActionCell = <T extends MRT_RowData>(
   return !colDef.header || colDef.pin === 'right';
 };
 
-const isHeaderCell = <T extends MRT_RowData>(
+const isSummaryCell = <T extends MRT_RowData>(
   cell: MRT_Cell<T, unknown>
 ): boolean => {
   const colDef = cell.column.columnDef as ColumnDef<T>;
-  return colDef.pin === 'left';
+  return !!colDef.cardSummary;
 };
 
 const getCellContent = <T extends MRT_RowData>(cell: MRT_Cell<T, unknown>) =>
@@ -46,7 +46,7 @@ export const CardListItem = <T extends MRT_RowData>({
   const cells = row.getVisibleCells();
 
   const actionCells: MRT_Cell<T, unknown>[] = [];
-  const headerCells: MRT_Cell<T, unknown>[] = [];
+  const summaryCells: MRT_Cell<T, unknown>[] = [];
   const dataCells: MRT_Cell<T, unknown>[] = [];
 
   for (const cell of cells) {
@@ -59,9 +59,11 @@ export const CardListItem = <T extends MRT_RowData>({
 
     if (isActionCell(cell)) {
       actionCells.push(cell);
-    } else if (isHeaderCell(cell)) {
-      headerCells.push(cell);
     } else {
+      // Summary cells go into both the heading AND their group
+      if (isSummaryCell(cell)) {
+        summaryCells.push(cell);
+      }
       dataCells.push(cell);
     }
   }
@@ -95,13 +97,14 @@ export const CardListItem = <T extends MRT_RowData>({
           '&:last-child': { pb: isLandscape ? 0.5 : 1 },
         }}
       >
-        {/* Title row: pinned-left fields + action buttons */}
-        {(headerCells.length > 0 || actionCells.length > 0) && (
+        {/* Heading row: summary values + action buttons */}
+        {(summaryCells.length > 0 || actionCells.length > 0) && (
           <Box
             display="flex"
             alignItems="center"
-            gap={1}
+            gap={1.5}
             mb={groups.length > 0 ? 0.5 : 0}
+            py={0.5}
             sx={{
               position: 'sticky',
               top: 0,
@@ -109,16 +112,29 @@ export const CardListItem = <T extends MRT_RowData>({
               backgroundColor: 'background.paper',
             }}
           >
-            {headerCells.map(cell => (
-              <CardListField
+            {summaryCells.map(cell => (
+              <Box
                 key={cell.id}
-                label={flexRender(
-                  cell.column.columnDef.header,
-                  cell.getContext()
-                )}
+                display="flex"
+                alignItems="center"
+                gap={0.5}
+                minWidth={0}
               >
-                {getCellContent(cell) as React.ReactNode}
-              </CardListField>
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  fontWeight={600}
+                  whiteSpace="nowrap"
+                >
+                  {flexRender(
+                    cell.column.columnDef.header,
+                    cell.getContext()
+                  )}
+                </Typography>
+                <Typography variant="subtitle2" fontWeight={700} noWrap>
+                  {cell.renderValue() as React.ReactNode}
+                </Typography>
+              </Box>
             ))}
             <Box flex={1} />
             {actionCells.map(cell => (

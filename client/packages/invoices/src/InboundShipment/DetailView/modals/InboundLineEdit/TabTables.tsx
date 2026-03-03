@@ -24,6 +24,7 @@ import {
   StockIcon,
   InvoiceIcon,
   SlidersIcon,
+  EditIcon,
 } from '@openmsupply-client/common';
 import { DraftInboundLine } from '../../../../types';
 import {
@@ -409,13 +410,13 @@ export const InboundLineEditTable = ({
 
   const columns = useMemo(() => {
     const cols: ColumnDef<DraftInboundLine>[] = [
-      // --- Quantities columns ---
+      // --- General columns ---
       {
         accessorKey: 'batch',
         header: t('label.batch'),
         size: 100,
-        columnGroup: 'quantities',
-        pin: 'left',
+        columnGroup: 'general',
+        cardSummary: true,
         Cell: ({ row, cell }) => (
           <TextInputCell
             cell={cell}
@@ -431,7 +432,7 @@ export const InboundLineEditTable = ({
         header: t('label.expiry-date'),
         size: 150,
         columnType: ColumnType.Date,
-        columnGroup: 'quantities',
+        columnGroup: 'general',
         accessorFn: row => DateUtils.getDateOrNull(row.expiryDate),
         Cell: ({ cell, row }) => {
           const value = cell.getValue<Date | null>();
@@ -449,6 +450,7 @@ export const InboundLineEditTable = ({
           );
         },
       },
+      // --- Quantities columns ---
       {
         id: 'itemVariant',
         header: t('label.item-variant'),
@@ -585,6 +587,7 @@ export const InboundLineEditTable = ({
         header: t('label.packs-received'),
         size: 100,
         columnGroup: 'quantities',
+        cardSummary: true,
         Cell: ({ row, cell }) => (
           <NumberInputCell
             cell={cell}
@@ -767,11 +770,10 @@ export const InboundLineEditTable = ({
         includeColumn:
           isExternalSupplier && !!store?.preferences.issueInForeignCurrency,
       },
-      // --- Other columns ---
       {
         id: 'location',
         header: t('label.location'),
-        columnGroup: 'other',
+        columnGroup: 'general',
         Cell: ({ row: { original: row } }) => {
           return (
             <LocationSearchInput
@@ -787,6 +789,7 @@ export const InboundLineEditTable = ({
           );
         },
       },
+      // --- Other columns ---
       {
         accessorKey: 'note',
         header: t('label.stocktake-comment'),
@@ -889,6 +892,7 @@ export const InboundLineEditTable = ({
           table={table}
           lastItemRef={lastCardRef}
           groupIcons={{
+            general: <EditIcon />,
             quantities: <StockIcon />,
             pricing: <InvoiceIcon />,
             other: <SlidersIcon />,

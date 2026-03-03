@@ -41,6 +41,10 @@ export type ColumnDef<T extends MRT_RowData> = MRT_ColumnDef<T> & {
   /** Logical grouping for the column (e.g. 'quantities', 'pricing', 'other').
    * Used for organising columns in combined table views. */
   columnGroup?: string;
+
+  /** Show this column's value as read-only summary text in the card heading.
+   * The column still appears as an editable field in its group. */
+  cardSummary?: boolean;
 };
 
 /** Use when you have `groupByField` enabled, to allow for typing of `subRows` */
