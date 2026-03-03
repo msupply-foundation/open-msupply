@@ -1,4 +1,3 @@
-use crate::loader::IdPair;
 use actix_web::web::Data;
 use async_graphql::dataloader::*;
 use async_graphql::*;
@@ -37,15 +36,16 @@ impl Loader<String> for ProgramByIdLoader {
     }
 }
 
-#[derive(Clone, Debug)]
-pub struct EmptyPayload;
-pub type ProgramsByItemIdLoaderInput = IdPair<EmptyPayload>;
+#[derive(Clone, PartialEq, Eq, Debug, Hash)]
+pub struct ProgramsByItemIdLoaderInput {
+    pub store_id: String,
+    pub item_id: String,
+}
 impl ProgramsByItemIdLoaderInput {
     pub fn new(store_id: &str, item_id: &str) -> Self {
         ProgramsByItemIdLoaderInput {
-            primary_id: store_id.to_string(),
-            secondary_id: item_id.to_string(),
-            payload: EmptyPayload {},
+            store_id: store_id.to_string(),
+            item_id: item_id.to_string(),
         }
     }
 }
@@ -66,8 +66,8 @@ impl Loader<ProgramsByItemIdLoaderInput> for ProgramsByItemIdLoader {
 
         let mut store_item_map = HashMap::<String, Vec<String>>::new();
         for item in ids_with_store_id {
-            let entry = store_item_map.entry(item.primary_id.clone()).or_default();
-            entry.push(item.secondary_id.clone())
+            let entry = store_item_map.entry(item.store_id.clone()).or_default();
+            entry.push(item.item_id.clone())
         }
         let mut output = HashMap::<ProgramsByItemIdLoaderInput, Self::Value>::new();
 
@@ -80,9 +80,8 @@ impl Loader<ProgramsByItemIdLoaderInput> for ProgramsByItemIdLoader {
                 )?;
 
                 let entry = output.entry(ProgramsByItemIdLoaderInput {
-                    primary_id: store_id.clone(),
-                    secondary_id: item_id,
-                    payload: EmptyPayload {},
+                    store_id: store_id.clone(),
+                    item_id,
                 });
 
                 entry.or_default().extend(program);

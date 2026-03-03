@@ -361,8 +361,11 @@ pub fn generate_lines_and_stock_lines(
         if invoice_line.number_of_packs <= 0.0 {
             continue;
         }
-        // Rejected lines should not create stock entries
-        if invoice_line.status == Some(InvoiceLineStatus::Rejected) {
+        // Rejected and pending lines should not create stock entries
+        if matches!(
+            invoice_line.status,
+            Some(InvoiceLineStatus::Rejected | InvoiceLineStatus::Pending)
+        ) {
             continue;
         }
         let mut line = invoice_line.clone();

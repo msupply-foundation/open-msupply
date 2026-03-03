@@ -71,42 +71,44 @@ pub fn generate(
 
     let barcode_option = generate_barcode(&input, connection)?;
 
-    let (batch_option, vvm_status_log) =
-        if should_upsert_batch(&input.r#type, &existing_invoice_row) {
-            let batch = generate_batch(
-                connection,
-                new_line.clone(),
-                StockLineInput {
-                    stock_line_id: input.stock_line_id.clone(),
-                    store_id: existing_invoice_row.store_id.clone(),
-                    supplier_link_id: existing_invoice_row.name_link_id.clone(),
-                    on_hold: input.stock_on_hold,
-                    barcode_id: barcode_option.clone().map(|b| b.id.clone()),
-                    overwrite_stock_levels: should_overwrite_stock_levels,
-                },
-            )?;
+    let (batch_option, vvm_status_log) = if should_upsert_batch(&input.r#type, &existing_invoice_row)
+        // when this is true, new lines are created with pending status and shouldn't update stock
+        && !external_inbound_shipment_lines_must_be_authorised
+    {
+        let batch = generate_batch(
+            connection,
+            new_line.clone(),
+            StockLineInput {
+                stock_line_id: input.stock_line_id.clone(),
+                store_id: existing_invoice_row.store_id.clone(),
+                supplier_link_id: existing_invoice_row.name_link_id.clone(),
+                on_hold: input.stock_on_hold,
+                barcode_id: barcode_option.clone().map(|b| b.id.clone()),
+                overwrite_stock_levels: should_overwrite_stock_levels,
+            },
+        )?;
 
-            // If a new stock line has been created, update the stock_line_id on the invoice line
-            new_line.stock_line_id = Some(batch.id.clone());
+        // If a new stock line has been created, update the stock_line_id on the invoice line
+        new_line.stock_line_id = Some(batch.id.clone());
 
-            let vvm_status_log = if let Some(vvm_status_id) = input.vvm_status_id {
-                Some(generate_vvm_status_log(GenerateVVMStatusLogInput {
-                    id: None,
-                    store_id: existing_invoice_row.store_id.clone(),
-                    created_by: user_id.to_string(),
-                    vvm_status_id,
-                    stock_line_id: batch.id.clone(),
-                    invoice_line_id: new_line.id.clone(),
-                    comment: None,
-                }))
-            } else {
-                None
-            };
-
-            (Some(batch), vvm_status_log)
+        let vvm_status_log = if let Some(vvm_status_id) = input.vvm_status_id {
+            Some(generate_vvm_status_log(GenerateVVMStatusLogInput {
+                id: None,
+                store_id: existing_invoice_row.store_id.clone(),
+                created_by: user_id.to_string(),
+                vvm_status_id,
+                stock_line_id: batch.id.clone(),
+                invoice_line_id: new_line.id.clone(),
+                comment: None,
+            }))
         } else {
-            (None, None)
+            None
         };
+
+        (Some(batch), vvm_status_log)
+    } else {
+        (None, None)
+    };
 
     Ok(GenerateResult {
         invoice: generate_invoice_user_id_update(user_id, existing_invoice_row),

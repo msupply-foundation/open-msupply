@@ -51,7 +51,11 @@ export const DetailView = () => {
 
   const { data, isLoading, invalidateQueries } = useRequest.document.get();
   const isDisabled = useRequest.utils.isDisabled();
-  const uploadDocumentController = useToggle();
+  const {
+    toggleOn: toggleUploadModal,
+    isOn: isUploadModalOpen,
+    toggleOff: toggleCloseUploadModal,
+  } = useToggle();
   const { data: programIndicators, isLoading: isProgramIndicatorsLoading } =
     useRequest.document.indicators(
       store?.nameId ?? '',
@@ -60,7 +64,6 @@ export const DetailView = () => {
       !!data
     );
   const { urlQuery, updateQuery } = useUrlQuery();
-  const tab = urlQuery['tab'] ?? InternalOrderDetailTabs.Details;
 
   const deletableDocumentIds = useMemo(() => {
     if (data?.status === RequisitionNodeStatus.Finalised) {
@@ -100,12 +103,13 @@ export const DetailView = () => {
   }, [setCustomBreadcrumbs, data?.requisitionNumber]);
 
   const onAddItem = () => onOpen();
-  const onOpenUploadModal = () => {
-    uploadDocumentController.toggleOn();
-    if (tab !== InternalOrderDetailTabs.Documents) {
+  const onOpenUploadModal = useCallback(() => {
+    toggleUploadModal();
+    const currentTab = urlQuery['tab'] ?? InternalOrderDetailTabs.Details;
+    if (currentTab !== InternalOrderDetailTabs.Documents) {
       updateQuery({ tab: InternalOrderDetailTabs.Documents });
     }
-  };
+  }, [toggleUploadModal, urlQuery, updateQuery]);
 
   const { lines, itemFilter, isError, isFetching } = useRequest.line.list();
   const { on } = useHideOverStocked();
@@ -238,10 +242,10 @@ export const DetailView = () => {
         />
       )}
 
-      {uploadDocumentController.isOn && (
+      {isUploadModalOpen && (
         <UploadDocumentModal
-          isOn={uploadDocumentController.isOn}
-          toggleOff={uploadDocumentController.toggleOff}
+          isOn={isUploadModalOpen}
+          toggleOff={toggleCloseUploadModal}
           recordId={data?.id ?? ''}
           tableName="requisition"
           invalidateQueries={invalidateQueries}

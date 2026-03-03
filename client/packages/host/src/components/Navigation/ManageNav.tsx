@@ -29,17 +29,15 @@ export const ManageNav = ({ store }: { store?: UserStoreNodeFragment }) => {
     <AppNavSection isActive={isActive} to={AppRoute.Manage}>
       <AppNavLink
         visible={isCentralServer}
-        end={false}
+        isParent
         to={AppRoute.Manage}
         icon={<SlidersIcon color="primary" fontSize="small" />}
         text={t('manage')}
-        inactive
       />
       <Collapse in={isActive}>
         <List>
           <AppNavLink
             visible={isCentralServer}
-            end
             to={RouteBuilder.create(AppRoute.Manage)
               .addPart(AppRoute.Stores)
               .build()}
@@ -47,14 +45,12 @@ export const ManageNav = ({ store }: { store?: UserStoreNodeFragment }) => {
           />
           <AppNavLink
             visible={isCentralServer && vaccineModuleEnabled}
-            end
             to={RouteBuilder.create(AppRoute.Manage)
               .addPart(AppRoute.IndicatorsDemographics)
               .build()}
             text={t('indicators-demographics')}
           />
           <AppNavLink
-            end
             to={RouteBuilder.create(AppRoute.Manage)
               .addPart(AppRoute.GlobalPreferences)
               .build()}
@@ -62,7 +58,6 @@ export const ManageNav = ({ store }: { store?: UserStoreNodeFragment }) => {
           />
           <AppNavLink
             visible={isCentralServer && vaccineModuleEnabled}
-            end
             to={RouteBuilder.create(AppRoute.Manage)
               .addPart(AppRoute.Equipment)
               .build()}
@@ -70,7 +65,6 @@ export const ManageNav = ({ store }: { store?: UserStoreNodeFragment }) => {
           />
           <AppNavLink
             visible={isCentralServer}
-            end
             to={RouteBuilder.create(AppRoute.Manage)
               .addPart(AppRoute.Campaigns)
               .build()}
@@ -78,7 +72,6 @@ export const ManageNav = ({ store }: { store?: UserStoreNodeFragment }) => {
           />
           <AppNavLink
             visible={isCentralServer && isServerAdmin}
-            end
             to={RouteBuilder.create(AppRoute.Manage)
               .addPart(AppRoute.Reports)
               .build()}

@@ -32,17 +32,15 @@ export const ReplenishmentNav = ({
   return (
     <AppNavSection isActive={isActive} to={AppRoute.Replenishment}>
       <AppNavLink
-        end={false}
         to={AppRoute.Replenishment}
         icon={<SuppliersIcon color="primary" fontSize="small" />}
         text={t('replenishment')}
-        inactive
+        isParent
       />
       <Collapse in={isActive}>
         <List>
           <AppNavLink
             visible={useProcurement && !isExtraSmallScreen}
-            end
             to={RouteBuilder.create(AppRoute.Replenishment)
               .addPart(AppRoute.PurchaseOrder)
               .build()}
@@ -50,7 +48,6 @@ export const ReplenishmentNav = ({
           />
           <AppNavLink
             visible={!isExtraSmallScreen}
-            end
             to={RouteBuilder.create(AppRoute.Replenishment)
               .addPart(AppRoute.InternalOrder)
               .build()}
@@ -64,7 +61,6 @@ export const ReplenishmentNav = ({
           />
           <AppNavLink
             visible={!isExtraSmallScreen}
-            end
             to={RouteBuilder.create(AppRoute.Replenishment)
               .addPart(AppRoute.SupplierReturn)
               .build()}
@@ -72,7 +68,6 @@ export const ReplenishmentNav = ({
           />
           <AppNavLink
             visible={rnrVisible && !isExtraSmallScreen}
-            end
             to={RouteBuilder.create(AppRoute.Replenishment)
               .addPart(AppRoute.RnRForms)
               .build()}

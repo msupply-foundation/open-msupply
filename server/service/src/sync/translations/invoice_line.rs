@@ -7,8 +7,8 @@ use crate::sync::translations::{
 use chrono::NaiveDate;
 use repository::{
     ChangelogRow, ChangelogTableName, EqualFilter, InvoiceLine, InvoiceLineFilter,
-    InvoiceLineRepository, InvoiceLineRow, InvoiceLineRowDelete, InvoiceLineType,
-    InvoiceRowRepository, InvoiceType, ItemRowRepository, StockLineRowRepository,
+    InvoiceLineRepository, InvoiceLineRow, InvoiceLineRowDelete, InvoiceLineStatus,
+    InvoiceLineType, InvoiceRowRepository, InvoiceType, ItemRowRepository, StockLineRowRepository,
     StorageConnection, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
@@ -406,9 +406,9 @@ impl SyncTranslation for InvoiceLineTranslation {
             campaign_id,
             program_id,
             status: match status {
-                Some(repository::InvoiceLineStatus::Pending) => Some("PENDING".to_string()),
-                Some(repository::InvoiceLineStatus::Passed) => Some("PASSED".to_string()),
-                Some(repository::InvoiceLineStatus::Rejected) => Some("REJECTED".to_string()),
+                Some(InvoiceLineStatus::Pending) => Some("PENDING".to_string()),
+                Some(InvoiceLineStatus::Passed) => Some("PASSED".to_string()),
+                Some(InvoiceLineStatus::Rejected) => Some("REJECTED".to_string()),
                 None => None,
             },
         });
