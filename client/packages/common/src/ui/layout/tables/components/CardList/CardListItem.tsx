@@ -91,6 +91,12 @@ export const CardListItem = <T extends MRT_RowData>({
             alignItems="center"
             gap={1}
             mb={groups.length > 0 ? 0.5 : 0}
+            sx={{
+              position: 'sticky',
+              top: 0,
+              zIndex: 1,
+              backgroundColor: 'background.paper',
+            }}
           >
             {headerCells.map(cell => (
               <CardListField
