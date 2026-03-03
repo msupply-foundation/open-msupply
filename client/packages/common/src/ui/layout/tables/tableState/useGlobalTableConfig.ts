@@ -50,6 +50,9 @@ export const useSaveGlobalTableConfig = () => {
     }) => {
       const currentConfigs =
         (globalTableConfigs as Record<string, ManagedTableState>) ?? {};
+      // If the new state is empty, remove the entry for this tableId to avoid
+      // saving empty objects in the database, and therefore clean configs in
+      // localStorage
       const { [tableId]: _, ...rest } = currentConfigs;
       const isEmpty = Object.keys(state).length === 0;
       const updatedConfigs = isEmpty ? rest : { ...rest, [tableId]: state };
@@ -65,8 +68,9 @@ export const useSaveGlobalTableConfig = () => {
         queryClient.invalidateQueries(PREFERENCES_QUERY_KEY);
         success(t('messages.global-table-config-saved'))();
       },
-      onError: () => {
+      onError: err => {
         error(t('error.global-table-config-save-failed'))();
+        console.error('Error saving global table config:', err);
       },
     }
   );
