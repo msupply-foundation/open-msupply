@@ -2,19 +2,23 @@ use repository::{
     ContextType, EqualFilter, FormSchemaJson, FormSchemaRowRepository, ReportFilter,
     ReportMetaDataRow, ReportRepository, ReportRow, ReportRowRepository, StorageConnection,
 };
-use rust_embed::RustEmbed;
 use thiserror::Error;
 
 use crate::report::definition::ReportDefinition;
 use log::info;
 use serde::{Deserialize, Serialize};
 
+#[cfg(feature = "embedded-reports")]
+use rust_embed::RustEmbed;
+
+#[cfg(feature = "embedded-reports")]
 #[derive(RustEmbed)]
 // Relative to server/Cargo.toml
 #[folder = "../../standard_reports/generated"]
 #[exclude = "*.DS_Store"]
 pub struct EmbeddedStandardReports;
 
+#[cfg(feature = "embedded-reports")]
 #[derive(RustEmbed)]
 // Relative to server/Cargo.toml
 #[folder = "../../standard_forms/generated"]
@@ -31,21 +35,29 @@ pub struct StandardReports;
 impl StandardReports {
     // Load embedded reports
     pub fn load_reports(con: &StorageConnection, overwrite: bool) -> Result<(), anyhow::Error> {
-        info!("upserting standard reports...");
-        for file in EmbeddedStandardReports::iter() {
-            if let Some(content) = EmbeddedStandardReports::get(&file) {
-                let json_data = content.data;
-                let reports_data: ReportsData = serde_json::from_slice(&json_data)?;
-                StandardReports::upsert_reports(reports_data, con, overwrite)?;
+        #[cfg(feature = "embedded-reports")]
+        {
+            info!("upserting standard reports...");
+            for file in EmbeddedStandardReports::iter() {
+                if let Some(content) = EmbeddedStandardReports::get(&file) {
+                    let json_data = content.data;
+                    let reports_data: ReportsData = serde_json::from_slice(&json_data)?;
+                    StandardReports::upsert_reports(reports_data, con, overwrite)?;
+                }
+            }
+            info!("upserting standard forms...");
+            for file in EmbeddedStandardForms::iter() {
+                if let Some(content) = EmbeddedStandardForms::get(&file) {
+                    let json_data = content.data;
+                    let reports_data: ReportsData = serde_json::from_slice(&json_data)?;
+                    StandardReports::upsert_reports(reports_data, con, overwrite)?;
+                }
             }
         }
-        info!("upserting standard forms...");
-        for file in EmbeddedStandardForms::iter() {
-            if let Some(content) = EmbeddedStandardForms::get(&file) {
-                let json_data = content.data;
-                let reports_data: ReportsData = serde_json::from_slice(&json_data)?;
-                StandardReports::upsert_reports(reports_data, con, overwrite)?;
-            }
+        #[cfg(not(feature = "embedded-reports"))]
+        {
+            let _ = (con, overwrite);
+            info!("embedded-reports feature is disabled, skipping standard report loading");
         }
         Ok(())
     }

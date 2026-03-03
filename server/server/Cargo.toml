@@ -19,7 +19,7 @@ name = "remote_server"
 graphql = { path = "../graphql" }
 graphql_core = { path = "../graphql/core" }
 repository = { path = "../repository" }
-service = { path = "../service" }
+service = { path = "../service", default-features = false }
 util = { path = "../util" }
 
 machine-uid = { version = "0.5.1", optional = true }
@@ -62,10 +62,12 @@ winres = "0.1"
 astro-dnssd = { version = "0.3.4" }
 
 [features]
-default = ["sqlite", "dep:machine-uid"]
-sqlite = ["repository/sqlite"]
-postgres = ["repository/postgres"]
-android = ["repository/sqlite"]
+default = ["sqlite", "machine-uid", "embedded-reports"]
+machine-uid = ["dep:machine-uid"]
+sqlite = ["repository/sqlite", "service/sqlite"]
+postgres = ["repository/postgres", "service/postgres"]
+android = ["repository/sqlite", "service/sqlite"]
+embedded-reports = ["service/embedded-reports"]
 
 [lints]
 workspace = true

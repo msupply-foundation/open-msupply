@@ -88,6 +88,7 @@ integration_test = ["repository/integration_test"]
 sqlite = ["repository/sqlite"]
 postgres = ["repository/postgres"]
 email-tests = []
+embedded-reports = []
 
 [lints]
 workspace = true

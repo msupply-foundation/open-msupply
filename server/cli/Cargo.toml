@@ -19,7 +19,7 @@ name = "test_connection"
 
 repository = { path = "../repository" }
 util = { path = "../util" }
-service = { path = "../service" }
+service = { path = "../service", default-features = false }
 server = { path = "../server" }
 graphql = { path = "../graphql" }
 report_builder = { path = "../report_builder" }
@@ -53,7 +53,8 @@ serde_yml = "0.0.12"
 actix-rt = { workspace = true }
 
 [features]
-default = ["sqlite"]
-sqlite = ["server/sqlite"]
-postgres = ["server/postgres"]
+default = ["sqlite", "embedded-reports"]
+sqlite = ["server/sqlite", "service/sqlite"]
+postgres = ["server/postgres", "service/postgres"]
 integration_test = []
+embedded-reports = ["server/embedded-reports"]
