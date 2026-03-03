@@ -1,6 +1,6 @@
 use crate::db_diesel::{DBBackendConnection, StorageConnectionManager};
 use diesel::{
-    connection::{ SimpleConnection},
+    connection::SimpleConnection,
     r2d2::{ConnectionManager, Pool},
 };
 use log::info;
@@ -194,7 +194,7 @@ pub fn get_storage_connection_manager(settings: &DatabaseSettings) -> StorageCon
 pub fn get_storage_connection_manager(settings: &DatabaseSettings) -> StorageConnectionManager {
     info!("Connecting to database '{}'", settings.database_path());
     let db_path = settings.database_path();
-      let connection_manager = ConnectionManager::<DBBackendConnection>::new(db_path);
+    let connection_manager = ConnectionManager::<DBBackendConnection>::new(db_path);
     let pool = Pool::builder()
         .connection_customizer(Box::new(SqliteConnectionOptions {
             busy_timeout_ms: Some(SQLITE_LOCKWAIT_MS),

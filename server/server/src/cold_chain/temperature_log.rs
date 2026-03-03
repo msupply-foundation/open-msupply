@@ -146,9 +146,7 @@ fn upsert_temperature_log(
                 service_provider
                     .cold_chain_service
                     .insert_temperature_breach(ctx, breach)
-                    .map_err(|e| {
-                        anyhow::anyhow!("Unable to insert temperature breach {e:?}")
-                    })?;
+                    .map_err(|e| anyhow::anyhow!("Unable to insert temperature breach {e:?}"))?;
             }
             Err(e) => {
                 return Err(anyhow::anyhow!(

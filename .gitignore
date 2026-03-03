@@ -8,9 +8,13 @@ server/report_builder/config.yaml
 server/data
 .gitmodules
 
+# Claude
+# `claude -w "feature-name"` will create "/.claude/worktrees/feature-name" for your worktree. Back at root though, git picks up this whole directory copy of the repo!
+worktrees
 
 standard_reports/test-config.json
 client/dist
 
 # IDEs
 .idea/
+.claude/*.local.json

@@ -185,7 +185,8 @@ mod tests {
         // Query by id
         let packaging_variant = PackagingVariantRepository::new(&storage_connection)
             .query_one(
-                PackagingVariantFilter::new().id(EqualFilter::equal_to(packaging_variant_id.to_string())),
+                PackagingVariantFilter::new()
+                    .id(EqualFilter::equal_to(packaging_variant_id.to_string())),
             )
             .unwrap()
             .unwrap();
