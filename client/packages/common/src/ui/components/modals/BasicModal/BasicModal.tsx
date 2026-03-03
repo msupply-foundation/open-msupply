@@ -27,7 +27,7 @@ export const BasicModal = ({
         sx: {
           borderRadius: fullScreen ? undefined : '20px',
           minHeight: `${height}px`,
-          minWidth: `${width}px`,
+          minWidth: `min(${width}px, calc(100vw - 64px))`,
           direction: isRtl ? 'rtl' : 'ltr',
           ...sx,
         },

@@ -156,14 +156,20 @@ export const InboundLineEdit = ({
       </Box>
       <TableContainer
         sx={{
-          height: isMediumScreen ? 300 : 400,
           marginTop: 2,
-          ...(viewMode === 'table' && {
-            borderWidth: 1,
-            borderStyle: 'solid',
-            borderColor: 'divider',
-            borderRadius: '20px',
-          }),
+          ...(viewMode === 'table'
+            ? {
+                height: isMediumScreen ? 300 : 400,
+                borderWidth: 1,
+                borderStyle: 'solid',
+                borderColor: 'divider',
+                borderRadius: '20px',
+              }
+            : {
+                height: 'calc(100vh - 400px)',
+                minHeight: 150,
+                overflow: 'auto',
+              }),
         }}
       >
         <Box width="100%">
