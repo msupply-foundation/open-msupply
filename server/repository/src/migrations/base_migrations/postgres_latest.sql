@@ -2305,7 +2305,7 @@ CREATE TABLE public.requisition (
     name_link_id text DEFAULT 'temp_for_migration'::text NOT NULL,
     is_emergency boolean DEFAULT false NOT NULL,
     created_from_requisition_id text,
-    original_customer_link_id text
+    original_customer_id text
 );
 
 
@@ -7083,11 +7083,11 @@ ALTER TABLE ONLY public.requisition
 
 
 --
--- Name: requisition requisition_original_customer_link_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: requisition requisition_original_customer_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.requisition
-    ADD CONSTRAINT requisition_original_customer_link_id_fkey FOREIGN KEY (original_customer_link_id) REFERENCES public.name_link(id);
+    ADD CONSTRAINT requisition_original_customer_id_fkey FOREIGN KEY (original_customer_id) REFERENCES public.name(id);
 
 
 --
