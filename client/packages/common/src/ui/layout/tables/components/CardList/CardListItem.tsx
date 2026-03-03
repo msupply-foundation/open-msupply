@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Card, CardContent } from '@mui/material';
+import { Box, Card, CardContent, useMediaQuery } from '@mui/material';
 import {
   flexRender,
   MRT_Cell,
@@ -40,6 +40,9 @@ export const CardListItem = <T extends MRT_RowData>({
   cardRef,
   groupIcons,
 }: CardListItemProps<T>) => {
+  const isLandscape = useMediaQuery(
+    '(orientation: landscape) and (max-height: 800px)'
+  );
   const cells = row.getVisibleCells();
 
   const actionCells: MRT_Cell<T, unknown>[] = [];
@@ -85,7 +88,13 @@ export const CardListItem = <T extends MRT_RowData>({
       variant="outlined"
       sx={{ overflow: 'visible', position: 'relative' }}
     >
-      <CardContent sx={{ py: 1, '&:last-child': { pb: 1 } }}>
+      <CardContent
+        sx={{
+          py: isLandscape ? 0.5 : 1,
+          px: isLandscape ? 1.5 : 2,
+          '&:last-child': { pb: isLandscape ? 0.5 : 1 },
+        }}
+      >
         {/* Title row: pinned-left fields + action buttons */}
         {(headerCells.length > 0 || actionCells.length > 0) && (
           <Box
