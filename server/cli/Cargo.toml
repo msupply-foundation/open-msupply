@@ -11,10 +11,6 @@ doctest = false
 path = "src/cli.rs"
 name = "remote_server_cli"
 
-[[bin]]
-path = "src/test_connection.rs"
-name = "test_connection"
-
 [dependencies]
 
 repository = { path = "../repository" }
