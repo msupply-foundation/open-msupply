@@ -166,7 +166,7 @@ export const DetailView = () => {
           outboundShipmentLineIds={outboundShipmentLineIds || []}
           customerId={data.otherPartyId}
           modalMode={returnModalMode}
-          outboundShipmentId={data.id}
+          outboundShipment={data}
           onCreate={table.resetRowSelection}
           isNewReturn
         />

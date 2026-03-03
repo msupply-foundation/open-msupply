@@ -20,7 +20,7 @@ pub fn crawl_and_translate(
                     },
                     user_language,
                 )?
-            } ;
+            };
             Ok(())
         }
         Value::Array(array) => {

@@ -102,9 +102,7 @@ impl Certificates {
                         Err(e) => {
                             warn!("Error generating self signed certificates: {e}");
                             error!("No certificates found");
-                            return Err(std::io::Error::other(
-                                "Certificate required",
-                            ));
+                            return Err(std::io::Error::other("Certificate required"));
                         }
                     };
                     Some(load_certs_rustls(cert_files).expect("Invalid self signed certificates"))

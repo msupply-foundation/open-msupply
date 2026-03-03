@@ -51,7 +51,8 @@ pub struct UpsertPreferences {
         Option<Vec<StorePrefUpdate<i32>>>,
     pub first_threshold_for_expiring_items: Option<Vec<StorePrefUpdate<i32>>>,
     pub second_threshold_for_expiring_items: Option<Vec<StorePrefUpdate<i32>>>,
-    pub warn_when_missing_recent_stocktake: Option<Vec<StorePrefUpdate<WarnWhenMissingRecentStocktakeData>>>,
+    pub warn_when_missing_recent_stocktake:
+        Option<Vec<StorePrefUpdate<WarnWhenMissingRecentStocktakeData>>>,
     pub store_custom_colour: Option<Vec<StorePrefUpdate<String>>>,
     pub invoice_status_options: Option<Vec<StorePrefUpdate<Vec<InvoiceStatus>>>>,
     pub show_indicative_price_in_requisitions: Option<Vec<StorePrefUpdate<bool>>>,
@@ -97,7 +98,7 @@ pub fn upsert_preferences(
             number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products_input,
         number_of_months_threshold_to_show_low_stock_alerts_for_products:
             number_of_months_threshold_to_show_low_stock_alerts_for_products_input,
-            number_of_months_threshold_to_show_over_stock_alerts_for_products:
+        number_of_months_threshold_to_show_over_stock_alerts_for_products:
             number_of_months_threshold_to_show_over_stock_alerts_for_products_input,
         first_threshold_for_expiring_items: first_threshold_for_expiring_items_input,
         second_threshold_for_expiring_items: second_threshold_for_expiring_items_input,

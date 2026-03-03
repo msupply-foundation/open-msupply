@@ -101,7 +101,8 @@ fn check_stock_lines_reduced_to_zero(
             {
                 let stock_line = StockLineRepository::new(connection)
                     .query_by_filter(
-                        StockLineFilter::new().id(EqualFilter::equal_to(stock_line_row.id.to_string())),
+                        StockLineFilter::new()
+                            .id(EqualFilter::equal_to(stock_line_row.id.to_string())),
                         None,
                     )?
                     .pop()
