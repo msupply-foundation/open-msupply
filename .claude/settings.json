@@ -12,7 +12,6 @@
       "Bash(cargo clippy*)",
       "Bash(cargo fmt*)",
       "Bash(cargo run --bin remote_server_cli*)",
-      "Bash(yarn install*)",
       "Bash(yarn test*)",
       "Bash(yarn build*)",
       "Bash(yarn start*)",
@@ -33,10 +32,6 @@
       "Bash(git pull*)",
       "Bash(git add*)",
       "Bash(git commit*)",
-      "Bash(git push*)",
-      "Bash(git stash*)",
-      "Bash(git merge*)",
-      "Bash(git rebase*)",
       "Bash(ls *)"
     ],
     "deny": []
