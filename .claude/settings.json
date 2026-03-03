@@ -2,5 +2,43 @@
   "enabledPlugins": {
     "rust-analyzer-lsp@claude-plugins-official": true,
     "typescript-lsp@claude-plugins-official": true
+  },
+  "permissions": {
+    "allow": [
+      "Bash(cargo build*)",
+      "Bash(cargo test*)",
+      "Bash(cargo nextest*)",
+      "Bash(cargo check*)",
+      "Bash(cargo clippy*)",
+      "Bash(cargo fmt*)",
+      "Bash(cargo run --bin remote_server_cli*)",
+      "Bash(yarn install*)",
+      "Bash(yarn test*)",
+      "Bash(yarn build*)",
+      "Bash(yarn start*)",
+      "Bash(yarn generate*)",
+      "Bash(yarn re-compile*)",
+      "Bash(yarn compile-full*)",
+      "Bash(yarn eslint*)",
+      "Bash(yarn prettier*)",
+      "Bash(yarn lint-and-format*)",
+      "Bash(yarn gql-codegen*)",
+      "Bash(git status*)",
+      "Bash(git log*)",
+      "Bash(git diff*)",
+      "Bash(git branch*)",
+      "Bash(git checkout*)",
+      "Bash(git switch*)",
+      "Bash(git fetch*)",
+      "Bash(git pull*)",
+      "Bash(git add*)",
+      "Bash(git commit*)",
+      "Bash(git push*)",
+      "Bash(git stash*)",
+      "Bash(git merge*)",
+      "Bash(git rebase*)",
+      "Bash(ls *)"
+    ],
+    "deny": []
   }
 }
