@@ -3,7 +3,7 @@ import {
   ColumnDef,
   ColumnType,
   MaterialTable,
-  MobileCardList,
+  CardList,
   NothingHere,
   TextWithTooltipCell,
   useIsExtraSmallScreen,
@@ -103,7 +103,7 @@ export const ContentArea = ({
   });
 
   return isExtraSmallScreen ? (
-    <MobileCardList table={table} />
+    <CardList table={table} />
   ) : (
     <MaterialTable table={table} />
   );

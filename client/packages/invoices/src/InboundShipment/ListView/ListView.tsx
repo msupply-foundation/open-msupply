@@ -12,7 +12,7 @@ import {
   NameAndColorSetterCell,
   usePreferences,
   useIsExtraSmallScreen,
-  MobileCardList,
+  CardList,
 } from '@openmsupply-client/common';
 import { AppBarButtons } from './AppBarButtons';
 import {
@@ -176,7 +176,7 @@ export const InboundListView = () => {
     <>
       {isExtraSmallScreen ? (
         // We don't want to show any app bar button on mobile list view
-        <MobileCardList table={table} />
+        <CardList table={table} />
       ) : (
         <>
           <Toolbar filter={filter} />

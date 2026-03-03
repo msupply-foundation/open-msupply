@@ -9,7 +9,7 @@ import {
   ColumnDef,
   ColumnType,
   useIsExtraSmallScreen,
-  MobileCardList,
+  CardList,
 } from '@openmsupply-client/common';
 import { useGoodsReceivedList } from '../api';
 import { GoodsReceivedRowFragment } from '../api/operations.generated';
@@ -105,7 +105,7 @@ export const GoodsReceivedListView = () => {
       <Toolbar />
       <AppBarButtons />
       {isExtraSmallScreen ? (
-        <MobileCardList table={table} />
+        <CardList table={table} />
       ) : (
         <MaterialTable table={table} />
       )}

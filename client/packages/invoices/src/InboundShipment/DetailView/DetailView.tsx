@@ -18,7 +18,7 @@ import {
   NothingHere,
   MaterialTable,
   useIsExtraSmallScreen,
-  MobileCardList,
+  CardList,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import {
@@ -219,7 +219,7 @@ const DetailViewInner = () => {
   const tabs = [
     {
       Component: isExtraSmallScreen ? (
-        <MobileCardList table={table} />
+        <CardList table={table} />
       ) : (
         <MaterialTable table={table} />
       ),
