@@ -15,6 +15,8 @@ import {
   MobileCardList,
   DetailTabs,
   ToggleState,
+  useAuthContext,
+  UserPermission,
 } from '@openmsupply-client/common';
 import { AppBarButtons } from './AppBarButtons';
 import {
@@ -29,26 +31,47 @@ import { Footer } from './Footer';
 
 export const InboundListView = () => {
   const t = useTranslation();
+  const { userHasPermission } = useAuthContext();
   const internalModalController = useToggle();
   const externalModalController = useToggle();
   const linkRequestModalController = useToggle();
 
+  const hasExternalInboundPermission =
+    userHasPermission(UserPermission.InboundShipmentExternalQuery) ||
+    userHasPermission(UserPermission.InboundShipmentExternalMutate) ||
+    userHasPermission(UserPermission.InboundShipmentExternalAuthorise);
+
+  const hasInboundShipmentPermission =
+    userHasPermission(UserPermission.InboundShipmentQuery) ||
+    userHasPermission(UserPermission.InboundShipmentMutate) ||
+    userHasPermission(UserPermission.InboundShipmentVerify);
+
   const tabs = [
-    {
-      Component: (
-        <InboundShipments internalModalController={internalModalController} />
-      ),
-      value: t('label.internal'),
-    },
-    {
-      Component: (
-        <InboundShipments
-          internalModalController={internalModalController}
-          external
-        />
-      ),
-      value: t('label.external'),
-    },
+    ...(hasInboundShipmentPermission
+      ? [
+          {
+            Component: (
+              <InboundShipments
+                internalModalController={internalModalController}
+              />
+            ),
+            value: t('label.internal'),
+          },
+        ]
+      : []),
+    ...(hasExternalInboundPermission
+      ? [
+          {
+            Component: (
+              <InboundShipments
+                internalModalController={internalModalController}
+                external
+              />
+            ),
+            value: t('label.external'),
+          },
+        ]
+      : []),
   ];
 
   return (

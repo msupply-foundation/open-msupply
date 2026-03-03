@@ -11,6 +11,8 @@ import {
   UserStoreNodeFragment,
   usePreferences,
   useIsExtraSmallScreen,
+  useAuthContext,
+  UserPermission,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { useNestedNav } from './useNestedNav';
@@ -28,6 +30,15 @@ export const ReplenishmentNav = ({
   const { useProcurementFunctionality } = usePreferences();
   const useProcurement = useProcurementFunctionality;
   const isExtraSmallScreen = useIsExtraSmallScreen();
+  const { userHasPermission } = useAuthContext();
+
+  const hasInboundShipmentPermission =
+    userHasPermission(UserPermission.InboundShipmentQuery) ||
+    userHasPermission(UserPermission.InboundShipmentMutate) ||
+    userHasPermission(UserPermission.InboundShipmentVerify) ||
+    userHasPermission(UserPermission.InboundShipmentExternalQuery) ||
+    userHasPermission(UserPermission.InboundShipmentExternalMutate) ||
+    userHasPermission(UserPermission.InboundShipmentExternalAuthorise);
 
   return (
     <AppNavSection isActive={isActive} to={AppRoute.Replenishment}>
@@ -54,6 +65,7 @@ export const ReplenishmentNav = ({
             text={t('internal-order')}
           />
           <AppNavLink
+            visible={hasInboundShipmentPermission}
             to={RouteBuilder.create(AppRoute.Replenishment)
               .addPart(AppRoute.InboundShipment)
               .build()}
