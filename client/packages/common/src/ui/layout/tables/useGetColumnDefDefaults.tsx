@@ -15,6 +15,7 @@ import {
   useTranslation,
   CircleIcon,
   MessageSquareIcon,
+  Tooltip,
 } from '@openmsupply-client/common';
 
 import { ColumnDef } from './types';
@@ -138,7 +139,11 @@ export const useGetColumnTypeDefaults = () => {
           enableResizing: false,
           enableColumnActions: false,
           // Comment popover is pretty narrow, show icon rather than full label
-          Header: () => <MessageSquareIcon fontSize="small" />,
+          Header: () => (
+            <Tooltip title={t('label.comment')} placement="top">
+              <MessageSquareIcon fontSize="small" />
+            </Tooltip>
+          ),
           Cell: ({ cell, row }) => {
             if ('subRows' in row.original) {
               // Don't show comment icon for grouped rows

@@ -413,11 +413,11 @@ fn report_filter_method(reports: Vec<ReportMetaData>, app_version: Version) -> V
         .filter(|r| r.version.is_compatible_by_major_and_minor(&app_version))
         .collect();
 
-    let mut codes: Vec<String> = reports_with_compatible_versions
-        .iter()
-        .map(|r| r.code.clone())
-        .collect();
-    codes.dedup();
+    let codes = util::dedup_iter(
+        reports_with_compatible_versions
+            .iter()
+            .map(|r| r.code.clone()),
+    );
 
     let mut reports_to_show: Vec<String> = vec![];
     for code in codes {
