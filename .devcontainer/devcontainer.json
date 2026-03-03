@@ -1,0 +1,67 @@
+{
+  "name": "Sandbox",
+  "image": "debian:bookworm",
+  "features": {
+    "ghcr.io/devcontainers/features/rust:1": {
+      "version": "1.88"
+    },
+    "ghcr.io/devcontainers/features/node:1": {},
+    "ghcr.io/w3cj/devcontainer-features/firewall:latest": {
+      // don't run services on your host that could lead to a prompt injection
+      // (services on your host are available in the container)
+      "hosts": "host.docker.internal",
+      "allAiProviders": true,
+      "cratesIoRegistry": true,
+      "githubIps": true,
+      "githubDomains": true,
+      "npmRegistry": true,
+      "vscodeMarketplace": true
+    },
+    "ghcr.io/meaningful-ooo/devcontainer-features/fish:2": {}
+  },
+  "forwardPorts": [
+    3003,
+    8000
+  ],
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        // AI
+        "anthropic.claude-code",
+        // Rust
+        "rust-lang.rust-analyzer",
+        "vadimcn.vscode-lldb",
+        "tamasfe.even-better-toml",
+        // TypeScript/React
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        // GraphQL
+        "graphql.vscode-graphql",
+        "graphql.vscode-graphql-syntax",
+        // General
+        "streetsidesoftware.code-spell-checker",
+        "github.vscode-pull-request-github"
+      ],
+      "settings": {
+        "claudeCode.allowDangerouslySkipPermissions": true,
+        // Required for skip permissions with root user
+        "claudeCode.environmentVariables": [
+          {
+            "name": "IS_SANDBOX",
+            "value": "1"
+          }
+        ]
+      }
+    }
+  },
+  "mounts": [
+    "source=claude-code-config-${devcontainerId},target=/root/.claude,type=volume"
+  ],
+  "containerEnv": {
+    "CLAUDE_CONFIG_DIR": "/root/.claude"
+  },
+  "onCreateCommand": {
+    "install-deps": "apt update && apt install -y libpq-dev nmap iputils-ping",
+    "machine-id": "echo ${devcontainerId} > /etc/machine-id"
+  }
+}
