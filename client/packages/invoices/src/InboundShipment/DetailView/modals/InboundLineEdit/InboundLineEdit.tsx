@@ -166,7 +166,7 @@ export const InboundLineEdit = ({
                 borderRadius: '20px',
               }
             : {
-                height: 'calc(100vh - 400px)',
+                height: 'calc(100vh - 300px)',
                 minHeight: 150,
                 overflow: 'auto',
               }),
