@@ -14,6 +14,9 @@ interface CardListItemProps<T extends MRT_RowData> {
   row: MRT_Row<T>;
   cardRef?: React.Ref<HTMLDivElement>;
   groupIcons?: Record<string, React.ReactNode>;
+  onClick?: React.MouseEventHandler<HTMLDivElement>;
+  /** When true, renders horizontal label:value rows (simple mobile layout) */
+  simpleLayout?: boolean;
 }
 
 const isActionCell = <T extends MRT_RowData>(
@@ -39,6 +42,8 @@ export const CardListItem = <T extends MRT_RowData>({
   row,
   cardRef,
   groupIcons,
+  onClick,
+  simpleLayout,
 }: CardListItemProps<T>) => {
   const isLandscape = useMediaQuery(
     '(orientation: landscape) and (max-height: 800px)'
@@ -88,7 +93,12 @@ export const CardListItem = <T extends MRT_RowData>({
     <Card
       ref={cardRef}
       variant="outlined"
-      sx={{ overflow: 'visible', position: 'relative' }}
+      onClick={onClick}
+      sx={{
+        overflow: 'visible',
+        position: 'relative',
+        cursor: onClick ? 'pointer' : undefined,
+      }}
     >
       <CardContent
         sx={{
@@ -144,26 +154,52 @@ export const CardListItem = <T extends MRT_RowData>({
             ))}
           </Box>
         )}
-        {/* Grouped data fields */}
-        {groups.map(({ groupName, cells: groupCells }, groupIndex) => (
-          <CardListFieldGroup
-            key={groupName ?? `ungrouped-${groupIndex}`}
-            groupName={groupName}
-            groupIcon={groupName ? groupIcons?.[groupName] : undefined}
-          >
-            {groupCells.map(cell => (
-              <CardListField
+        {/* Data fields */}
+        {simpleLayout
+          ? dataCells.map(cell => (
+              <Box
                 key={cell.id}
-                label={flexRender(
-                  cell.column.columnDef.header,
-                  cell.getContext()
-                )}
+                display="flex"
+                justifyContent="space-between"
+                gap={1}
+                alignItems="flex-start"
               >
-                {getCellContent(cell) as React.ReactNode}
-              </CardListField>
+                <Typography color="text.secondary">
+                  {flexRender(
+                    cell.column.columnDef.header,
+                    cell.getContext()
+                  )}
+                </Typography>
+                <Box
+                  sx={{
+                    textAlign: 'end',
+                    maxWidth: '65%',
+                    wordBreak: 'break-word',
+                  }}
+                >
+                  {getCellContent(cell) as React.ReactNode}
+                </Box>
+              </Box>
+            ))
+          : groups.map(({ groupName, cells: groupCells }, groupIndex) => (
+              <CardListFieldGroup
+                key={groupName ?? `ungrouped-${groupIndex}`}
+                groupName={groupName}
+                groupIcon={groupName ? groupIcons?.[groupName] : undefined}
+              >
+                {groupCells.map(cell => (
+                  <CardListField
+                    key={cell.id}
+                    label={flexRender(
+                      cell.column.columnDef.header,
+                      cell.getContext()
+                    )}
+                  >
+                    {getCellContent(cell) as React.ReactNode}
+                  </CardListField>
+                ))}
+              </CardListFieldGroup>
             ))}
-          </CardListFieldGroup>
-        ))}
       </CardContent>
     </Card>
   );
