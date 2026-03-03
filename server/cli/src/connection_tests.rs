@@ -324,9 +324,8 @@ pub fn get_url(config: &service::settings::Settings) -> Result<Url> {
         false => "https",
     };
 
-    let url = Url::parse(&format!("{scheme}://{address}/")).map_err(|err| {
-        anyhow!("Failed to parse URL from server address: {address} - {err:?}")
-    })?;
+    let url = Url::parse(&format!("{scheme}://{address}/"))
+        .map_err(|err| anyhow!("Failed to parse URL from server address: {address} - {err:?}"))?;
 
     Ok(url)
 }
@@ -343,9 +342,7 @@ pub fn get_sync_settings(config: &service::settings::Settings) -> Result<SyncSet
     let service_context = service_provider.basic_context().unwrap();
 
     let yaml_sync_settings = config.sync.clone();
-    let database_sync_settings = service_provider
-        .settings
-        .sync_settings(&service_context);
+    let database_sync_settings = service_provider.settings.sync_settings(&service_context);
 
     let settings = match (yaml_sync_settings, database_sync_settings) {
         (Some(yaml), Ok(Some(database))) => {

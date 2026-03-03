@@ -171,8 +171,6 @@ pub(crate) mod test {
             ..single_historic_negative_balance.clone()
         };
 
-        
-
         MockData {
             stock_lines: vec![
                 single_historic_negative_balance.clone(),
