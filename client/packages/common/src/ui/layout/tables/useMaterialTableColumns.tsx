@@ -120,7 +120,7 @@ export const useMaterialTableColumns = <T extends MRT_RowData>(
       });
 
     return { columns };
-  }, [getColumnTypeDefaults, omsColumns, t]);
+  }, [omsColumns]);
 
   return tableDefinition;
 };
