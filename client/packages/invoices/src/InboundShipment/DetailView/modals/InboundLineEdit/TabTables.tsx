@@ -692,7 +692,6 @@ export const InboundLineEditTable = ({
         header: t('label.fc-cost-price', {
           currency: currency?.code,
         }),
-        columnType: ColumnType.Currency,
         size: 100,
         columnGroup: 'pricing',
         accessorFn: row => {
@@ -701,6 +700,9 @@ export const InboundLineEditTable = ({
           }
           return undefined;
         },
+        Cell: ({ cell }) => (
+          <CurrencyInputCell cell={cell} disabled updateFn={() => {}} />
+        ),
         includeColumn:
           isExternalSupplier && !!store?.preferences.issueInForeignCurrency,
       },
@@ -721,7 +723,6 @@ export const InboundLineEditTable = ({
       {
         id: 'foreignCurrencySellPricePerPack',
         header: t('label.fc-sell-price'),
-        columnType: ColumnType.Currency,
         size: 100,
         columnGroup: 'pricing',
         accessorFn: row => {
@@ -730,21 +731,25 @@ export const InboundLineEditTable = ({
           }
           return undefined;
         },
+        Cell: ({ cell }) => (
+          <CurrencyInputCell cell={cell} disabled updateFn={() => {}} />
+        ),
         includeColumn:
           isExternalSupplier && !!store?.preferences.issueInForeignCurrency,
       },
       {
         accessorKey: 'lineTotal',
         header: t('label.line-total'),
-        columnType: ColumnType.Currency,
         size: 100,
         columnGroup: 'pricing',
         accessorFn: row => row.costPricePerPack * row.numberOfPacks,
+        Cell: ({ cell }) => (
+          <CurrencyInputCell cell={cell} disabled updateFn={() => {}} />
+        ),
       },
       {
         id: 'foreignCurrencyLineTotal',
         header: t('label.fc-line-total'),
-        columnType: ColumnType.Currency,
         size: 100,
         columnGroup: 'pricing',
         accessorFn: row => {
@@ -753,6 +758,9 @@ export const InboundLineEditTable = ({
           }
           return undefined;
         },
+        Cell: ({ cell }) => (
+          <CurrencyInputCell cell={cell} disabled updateFn={() => {}} />
+        ),
         includeColumn:
           isExternalSupplier && !!store?.preferences.issueInForeignCurrency,
       },
