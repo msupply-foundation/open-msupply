@@ -94,8 +94,6 @@ pub(crate) mod test {
             ..Default::default()
         };
 
-        
-
         MockData {
             stock_lines: vec![
                 positive_running_balance_fix.clone(),

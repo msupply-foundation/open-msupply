@@ -716,13 +716,13 @@ async fn main() -> anyhow::Result<()> {
                 .map_err(|e| ReportError::FailedToGenerateReport(path, e))?;
 
             let generated_file_path = current_dir()?.join(&output_name);
-#[cfg(windows)]
+            #[cfg(windows)]
             Command::new("cmd")
-                .args(["/C","start"])
+                .args(["/C", "start"])
                 .arg(generated_file_path.clone())
                 .status()
                 .expect(&format!("failed to open file {:?}", generated_file_path));
-#[cfg(not(windows))]
+            #[cfg(not(windows))]
             Command::new("open")
                 .arg(generated_file_path.clone())
                 .status()

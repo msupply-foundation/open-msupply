@@ -156,7 +156,6 @@ mod test {
         },
         service_provider::{ServiceContext, ServiceProvider},
     };
-    
 
     use crate::RequisitionMutations;
 
