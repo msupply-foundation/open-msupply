@@ -183,8 +183,7 @@ impl Test for DatabaseTest {
 
         info!(
             "Testing database {} on server: {}",
-            config.database.database_name,
-            config.database.host
+            config.database.database_name, config.database.host
         );
 
         let connection_manager = get_storage_connection_manager(&config.database);
@@ -518,11 +517,8 @@ fn get_url(config: &service::settings::Settings) -> Result<Url> {
         false => "https",
     };
 
-    let url = Url::parse(&format!("{scheme}://{address}/")).map_err(|err| {
-        anyhow!(
-            "Failed to parse URL from server address: {address} - {err:?}"
-        )
-    })?;
+    let url = Url::parse(&format!("{scheme}://{address}/"))
+        .map_err(|err| anyhow!("Failed to parse URL from server address: {address} - {err:?}"))?;
 
     Ok(url)
 }

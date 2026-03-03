@@ -19,7 +19,8 @@ use thiserror::Error as ThisError;
 use util::format_error;
 
 use crate::{
-    queries_mutations::INSTALL_PLUGINS, run_command_with_error, Api, ApiError, CommandError, YARN_COMMAND,
+    queries_mutations::INSTALL_PLUGINS, run_command_with_error, Api, ApiError, CommandError,
+    YARN_COMMAND,
 };
 
 #[derive(ThisError, Debug)]
@@ -145,7 +146,11 @@ fn generate_bundle_recursive(
     manifest_name: &OsStr,
     path: &PathBuf,
 ) -> Result<(), Error> {
-    if ignore_paths.iter().find(|p| Some(**p) == path.file_name()).is_some() {
+    if ignore_paths
+        .iter()
+        .find(|p| Some(**p) == path.file_name())
+        .is_some()
+    {
         return Ok(());
     }
 

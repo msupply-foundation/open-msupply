@@ -55,8 +55,7 @@ pub fn create_goods_received_shipment(
                 .map_err(OutError::InboundShipmentError)?;
 
             for line in invoice_lines {
-                insert_stock_in_line(ctx, line)
-                    .map_err(OutError::StockInLineError)?;
+                insert_stock_in_line(ctx, line).map_err(OutError::StockInLineError)?;
             }
 
             activity_log_entry(
