@@ -89,8 +89,8 @@ export const OutstandingLinesListView = () => {
         columnType: ColumnType.Number,
       },
       {
-        header: t('label.received-units'),
-        accessorKey: 'receivedNumberOfUnits',
+        header: t('label.shipped-units'),
+        accessorKey: 'shippedNumberOfUnits',
         columnType: ColumnType.Number,
       },
       {
@@ -99,8 +99,8 @@ export const OutstandingLinesListView = () => {
         columnType: ColumnType.Number,
         accessorFn: row => {
           const adjusted = row?.adjustedNumberOfUnits ?? 0;
-          const received = row?.receivedNumberOfUnits ?? 0;
-          return adjusted - received;
+          const shipped = row?.shippedNumberOfUnits ?? 0;
+          return adjusted - shipped;
         },
       },
     ],

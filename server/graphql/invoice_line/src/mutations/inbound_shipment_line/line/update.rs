@@ -6,9 +6,9 @@ use graphql_core::simple_generic_errors::{
 };
 use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::ContextExt;
-use graphql_types::types::InvoiceLineNode;
+use graphql_types::types::{InvoiceLineNode, InvoiceLineStatusType};
 
-use repository::InvoiceLine;
+use repository::{InvoiceLine, InvoiceLineStatus};
 use service::auth::{Resource, ResourceAccessRequest};
 use service::invoice_line::stock_in_line::{
     StockInType, UpdateStockInLine as ServiceInput, UpdateStockInLineError as ServiceError,
@@ -41,6 +41,7 @@ pub struct UpdateInput {
     pub shipped_number_of_packs: Option<f64>,
     pub volume_per_pack: Option<f64>,
     pub shipped_pack_size: Option<f64>,
+    pub status: Option<Option<InvoiceLineStatusType>>,
 }
 
 #[derive(SimpleObject)]
@@ -115,6 +116,7 @@ impl UpdateInput {
             shipped_number_of_packs,
             volume_per_pack,
             shipped_pack_size,
+            status,
         } = self;
 
         ServiceInput {
@@ -153,6 +155,9 @@ impl UpdateInput {
             shipped_number_of_packs,
             volume_per_pack,
             shipped_pack_size,
+            status: status.map(|status| NullableUpdate {
+                value: status.map(|s| InvoiceLineStatus::from(s)),
+            }),
         }
     }
 }
@@ -183,6 +188,11 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
             )))
         }
         ServiceError::CannotEditFinalised => {
+            return Ok(UpdateErrorInterface::CannotEditInvoice(
+                CannotEditInvoice {},
+            ))
+        }
+        ServiceError::CannotChangeLineStatusOfReceivedInvoice => {
             return Ok(UpdateErrorInterface::CannotEditInvoice(
                 CannotEditInvoice {},
             ))

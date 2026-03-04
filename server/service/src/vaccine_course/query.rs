@@ -9,7 +9,6 @@ use repository::{
 };
 
 use crate::{get_pagination_or_default, i64_to_u32, ListError, ListResult, SingleRecordError};
- 
 
 pub fn get_vaccine_courses(
     connection: &StorageConnection,
@@ -32,8 +31,8 @@ pub fn get_vaccine_course(
 ) -> Result<VaccineCourseRow, SingleRecordError> {
     let repository = VaccineCourseRepository::new(connection);
 
-    let mut result =
-        repository.query_by_filter(VaccineCourseFilter::new().id(EqualFilter::equal_to(id.to_string())))?;
+    let mut result = repository
+        .query_by_filter(VaccineCourseFilter::new().id(EqualFilter::equal_to(id.to_string())))?;
 
     if let Some(record) = result.pop() {
         Ok(record)

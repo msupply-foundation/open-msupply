@@ -19,6 +19,7 @@ pub struct InsertInput {
     pub id: String,
     pub customer_id: String,
     pub outbound_shipment_id: Option<String>,
+    pub their_reference: Option<String>,
     pub customer_return_lines: Vec<CustomerReturnLineInput>,
 }
 
@@ -124,6 +125,7 @@ impl InsertInput {
             id,
             customer_id,
             outbound_shipment_id,
+            their_reference,
             customer_return_lines,
         }: InsertInput = self;
 
@@ -131,6 +133,7 @@ impl InsertInput {
             id,
             other_party_id: customer_id,
             outbound_shipment_id,
+            their_reference,
             customer_return_lines: customer_return_lines
                 .into_iter()
                 .map(|line| line.to_domain())

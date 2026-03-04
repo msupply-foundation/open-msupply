@@ -92,9 +92,6 @@ pub enum ActivityLogNodeType {
     ItemVariantUpdateVVMType,
     VVMStatusLogUpdated,
     VolumePerPackChanged,
-    GoodsReceivedCreated,
-    GoodsReceivedDeleted,
-    GoodsReceivedStatusFinalised,
     // Purchase Orders
     PurchaseOrderCreated,
     PurchaseOrderRequestApproval,
