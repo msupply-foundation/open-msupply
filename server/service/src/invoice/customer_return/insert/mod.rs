@@ -27,6 +27,7 @@ pub struct InsertCustomerReturn {
     pub other_party_id: String,
     pub is_patient_return: bool,
     pub outbound_shipment_id: Option<String>,
+    pub their_reference: Option<String>,
     pub customer_return_lines: Vec<CustomerReturnLineInput>,
 }
 

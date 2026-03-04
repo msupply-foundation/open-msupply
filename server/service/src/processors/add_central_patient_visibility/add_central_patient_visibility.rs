@@ -70,7 +70,8 @@ impl Processor for AddPatientVisibilityForCentral {
                 );
                 let name_store_join = nsj_repo
                     .query_by_filter(
-                        NameStoreJoinFilter::new().id(EqualFilter::equal_to(changelog.record_id.to_string())),
+                        NameStoreJoinFilter::new()
+                            .id(EqualFilter::equal_to(changelog.record_id.to_string())),
                     )?
                     .pop()
                     .ok_or(ProcessorError::RecordNotFound(
