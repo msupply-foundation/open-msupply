@@ -93,6 +93,7 @@ export const InboundLineEdit = ({
     setCurrentItem(item);
   }, [item]);
 
+  // Auto-scroll to the newly added card
   useEffect(() => {
     if (
       draftLines.length > prevLineCount.current &&
@@ -138,10 +139,7 @@ export const InboundLineEdit = ({
         alignItems="center"
         gap={1}
       >
-        <ViewModeToggle
-          viewMode={viewMode}
-          onViewModeChange={setViewMode}
-        />
+        <ViewModeToggle viewMode={viewMode} onViewModeChange={setViewMode} />
         <ButtonWithIcon
           disabled={isDisabled}
           color="primary"
@@ -166,7 +164,9 @@ export const InboundLineEdit = ({
                 borderRadius: '20px',
               }
             : {
+                height: 'calc(100vh - 300px)',
                 minHeight: 150,
+                overflow: 'auto',
               }),
         }}
       >
@@ -187,9 +187,7 @@ export const InboundLineEdit = ({
             hasItemVariantsEnabled={hasItemVariantsEnabled}
             hasVvmStatusesEnabled={hasVvmStatusesEnabled}
             setPackRoundingMessage={setPackRoundingMessage}
-            restrictedToLocationTypeId={
-              currentItem?.restrictedLocationTypeId
-            }
+            restrictedToLocationTypeId={currentItem?.restrictedLocationTypeId}
             viewMode={viewMode}
             lastCardRef={lastCardRef}
           />
