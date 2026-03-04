@@ -14,7 +14,6 @@ import {
   useUrlQuery,
   useToggle,
   useNonPaginatedMaterialTable,
-  Groupable,
   NothingHere,
   MaterialTable,
   useIsExtraSmallScreen,
@@ -145,26 +144,25 @@ const DetailViewInner = () => {
 
   const columns = useInboundShipmentColumns();
 
-  const { table, selectedRows } = useNonPaginatedMaterialTable<
-    Groupable<InboundLineFragment>
-  >({
-    tableId: 'inbound-shipment-detail-view',
-    columns,
-    data: lines,
-    grouping: { enabled: true },
-    isLoading: false,
-    initialSort: { key: 'itemName', dir: 'asc' },
-    onRowClick: !isDisabled && !isExtraSmallScreen ? onRowClick : undefined,
-    getIsPlaceholderRow: row => !!isInboundPlaceholderRow(row),
-    noDataElement: (
-      <NothingHere
-        body={t('error.no-inbound-items')}
-        onCreate={isDisabled ? undefined : () => onAddItem()}
-        buttonText={t('button.add-item')}
-      />
-    ),
-    isMobile: isExtraSmallScreen,
-  });
+  const { table, selectedRows } =
+    useNonPaginatedMaterialTable<InboundLineFragment>({
+      tableId: 'inbound-shipment-detail-view',
+      columns,
+      data: lines,
+      grouping: { field: 'item.code' },
+      isLoading: false,
+      initialSort: { key: 'itemName', dir: 'asc' },
+      onRowClick: !isDisabled && !isExtraSmallScreen ? onRowClick : undefined,
+      getIsPlaceholderRow: row => isInboundPlaceholderRow(row.original),
+      noDataElement: (
+        <NothingHere
+          body={t('error.no-inbound-items')}
+          onCreate={isDisabled ? undefined : () => onAddItem()}
+          buttonText={t('button.add-item')}
+        />
+      ),
+      isMobile: isExtraSmallScreen,
+    });
 
   const onReturn = useCallback(async () => {
     if (!data || !canReturnInboundLines(data)) {

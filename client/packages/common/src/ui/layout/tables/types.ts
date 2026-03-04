@@ -39,12 +39,6 @@ export type ColumnDef<T extends MRT_RowData> = MRT_ColumnDef<T> & {
   columnIndex?: number;
 };
 
-/** Use when you have `groupByField` enabled, to allow for typing of `subRows` */
-export type Groupable<T extends MRT_RowData> = T & {
-  isSubRow?: boolean;
-  subRows?: T[];
-};
-
 export type DefaultCellProps<T extends MRT_RowData> = Parameters<
   NonNullable<ColumnDef<T>['Cell']>
 >[0];

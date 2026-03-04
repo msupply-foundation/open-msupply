@@ -92,7 +92,7 @@ export const ContentArea = ({
     data: lines,
     enableRowSelection: !isDisabled,
     onRowClick: onRowClick ?? undefined,
-    getIsPlaceholderRow: row => row.numberOfPacksReceived === 0,
+    getIsPlaceholderRow: row => row.original.numberOfPacksReceived === 0,
     noDataElement: (
       <NothingHere
         body={t('error.no-purchase-order-items')}
