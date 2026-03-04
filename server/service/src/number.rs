@@ -1,5 +1,4 @@
 use repository::{
-    goods_received_row::GoodsReceivedRowRepository, GoodsReceivedLineRowRepository,
     InvoiceRowRepository, InvoiceType, NumberRowRepository, NumberRowType,
     PurchaseOrderLineRowRepository, PurchaseOrderRowRepository, RepositoryError,
     RequisitionRowRepository, RequisitionType, StocktakeRowRepository, StorageConnection,
@@ -49,15 +48,9 @@ pub fn next_number(
                 .find_max_invoice_number(InvoiceType::SupplierReturn, store_id)?,
             NumberRowType::PurchaseOrder => PurchaseOrderRowRepository::new(connection_tx)
                 .find_max_purchase_order_number(store_id)?,
-            NumberRowType::GoodsReceived => GoodsReceivedRowRepository::new(connection_tx)
-                .find_max_goods_received_number(store_id)?,
             NumberRowType::PurchaseOrderLine(purchase_order_id) => {
                 PurchaseOrderLineRowRepository::new(connection_tx)
                     .find_max_purchase_order_line_number(purchase_order_id)?
-            }
-            NumberRowType::GoodsReceivedLine(goods_received_id) => {
-                GoodsReceivedLineRowRepository::new(connection_tx)
-                    .find_max_goods_received_line_number(goods_received_id)?
             }
             NumberRowType::Program(_) => {
                 let next_number =

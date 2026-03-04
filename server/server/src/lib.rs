@@ -106,6 +106,11 @@ pub async fn start_server(
         CentralServerConfig::set_is_central_server_on_startup();
     }
 
+    // CREATE BASE DIRECTORY IF IT DOESN'T EXIST
+    let base_dir = &settings.server.base_dir;
+    info!("Creating base directory if needed: {}", base_dir);
+    std::fs::create_dir_all(base_dir)?;
+
     // INITIALISE DATABASE AND CONNECTION
     let connection_manager = get_storage_connection_manager(&settings.database);
 

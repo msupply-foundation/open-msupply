@@ -18,10 +18,7 @@ use service::{
 use crate::authentication::validate_cookie_auth;
 
 pub fn get_default_directory(settings: &Settings) -> TempFileConfig {
-    match settings.server.base_dir.as_ref() {
-        Some(base_dir) => TempFileConfig::default().directory(base_dir),
-        None => TempFileConfig::default(),
-    }
+    TempFileConfig::default().directory(&settings.server.base_dir)
 }
 
 pub fn config_upload(cfg: &mut web::ServiceConfig) {

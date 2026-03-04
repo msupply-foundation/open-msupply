@@ -7,6 +7,7 @@ server/report_builder/config.yaml
 # Temp export files
 server/data
 .gitmodules
+node_modules/
 
 standard_reports/test-config.json
 client/dist
@@ -17,4 +18,4 @@ client/dist
 ## Claude
 # `claude -w "feature-name"` will create "/.claude/worktrees/feature-name" for your worktree. Back at root though, git picks up this whole directory copy of the repo!
 worktrees
-*.local.json
+.claude/*.local.json
