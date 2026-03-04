@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   Alert,
   ButtonWithIcon,
@@ -7,13 +7,19 @@ import {
   UploadFile,
   ConfirmationModal,
 } from '@common/components';
-import { Box, Typography} from '@openmsupply-client/common';
+import { Box, Select, Typography } from '@openmsupply-client/common';
 
 import { SaveIcon, DownloadIcon, DeleteIcon, EditIcon, UploadIcon } from '@common/icons';
 import { useIntlUtils, useTranslation } from '@common/intl';
 import { useDialog, useNotification, useToggle } from '@common/hooks';
-import { mapTranslationsToArray, mapTranslationsToObject } from './helpers';
+import {
+  mapTranslationsToArray,
+  mapTranslationsToObject,
+  Translation,
+} from './helpers';
 import { TranslationsTable } from './TranslationsInputTable';
+
+type ImportMode = 'replace' | 'keep-existing' | 'overwrite';
 
 export const EditCustomTranslations = ({
   value,
@@ -88,7 +94,7 @@ export const CustomTranslationsModal = ({
     URL.revokeObjectURL(url);
   };
 
-  const handleUploadTranslations = (files: File[]) => {
+  const handleUploadTranslations = (files: File[], importMode: ImportMode) => {
     if (files.length === 0) return;
 
     const file = files[0]!;
@@ -120,12 +126,43 @@ export const CustomTranslationsModal = ({
           return;
         }
 
-        // Map the imported translations
+        const importedData = parsed as Record<string, string>;
         const importedArray = mapTranslationsToArray(
-          parsed as Record<string, string>,
+          importedData,
           defaultTranslation
         );
-        setTranslations(importedArray);
+
+        switch (importMode) {
+          case 'replace':
+            setTranslations(importedArray);
+            break;
+          case 'keep-existing': {
+            const existingKeys = new Set(translations.map(tr => tr.key));
+            const newOnly = importedArray.filter(
+              tr => !existingKeys.has(tr.key)
+            );
+            setTranslations([...translations, ...newOnly]);
+            break;
+          }
+          case 'overwrite': {
+            const importedByKey = new Map(
+              importedArray.map(tr => [tr.key, tr])
+            );
+            const merged: Translation[] = translations.map(tr =>
+              importedByKey.has(tr.key)
+                ? { ...tr, custom: importedByKey.get(tr.key)!.custom }
+                : tr
+            );
+            // Add any imported keys that weren't in the existing set
+            const existingKeys = new Set(translations.map(tr => tr.key));
+            const brandNew = importedArray.filter(
+              tr => !existingKeys.has(tr.key)
+            );
+            setTranslations([...merged, ...brandNew]);
+            break;
+          }
+        }
+
         success(t('messages.translations-loaded'))();
       } catch {
         error(t('error.invalid-json'))();
@@ -215,8 +252,8 @@ export const CustomTranslationsModal = ({
 
       {showUploadModal && (
         <CustomTranslationsUploadModal
-          onUpload={(files) => {
-            handleUploadTranslations(files);
+          onUpload={(files, importMode) => {
+            handleUploadTranslations(files, importMode);
             setShowUploadModal(false);
           }}
           onClose={() => setShowUploadModal(false)}
@@ -237,32 +274,57 @@ export const CustomTranslationsModal = ({
   );
 };
 
+const IMPORT_MODE_WARNING: Record<ImportMode, string> = {
+  replace: 'messages.import-mode-replace-warning',
+  'keep-existing': 'messages.import-mode-keep-existing-warning',
+  overwrite: 'messages.import-mode-overwrite-warning',
+};
+
 const CustomTranslationsUploadModal = ({
   onUpload,
   onClose,
 }: {
-  onUpload: (files: File[]) => void;
+  onUpload: (files: File[], importMode: ImportMode) => void;
   onClose: () => void;
 }) => {
   const t = useTranslation();
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [importMode, setImportMode] = useState<ImportMode>('keep-existing');
   const { Modal } = useDialog({
     isOpen: true,
     onClose,
     disableBackdrop: true,
   });
 
+  const importModeOptions = useMemo(
+    () => [
+      {
+        label: t('label.import-mode-keep-existing'),
+        value: 'keep-existing' as const,
+      },
+      {
+        label: t('label.import-mode-overwrite'),
+        value: 'overwrite' as const,
+      },
+      {
+        label: t('label.import-mode-replace'),
+        value: 'replace' as const,
+      },
+    ],
+    [t]
+  );
+
   return (
     <Modal
       title={t('label.import-translations')}
       width={800}
-      height={500}
+      height={550}
       cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
       okButton={
         <DialogButton
           variant="ok"
           disabled={selectedFiles.length === 0}
-          onClick={() => onUpload(selectedFiles)}
+          onClick={() => onUpload(selectedFiles, importMode)}
         />
       }
     >
@@ -274,9 +336,28 @@ const CustomTranslationsUploadModal = ({
         height="100%"
         gap={2}
       >
-        <Alert severity="warning" sx={{ width: '100%' }}>
-          {t('messages.import-replaces-warning')}
+        <Alert
+          severity={importMode === 'replace' ? 'warning' : 'info'}
+          sx={{ width: '100%' }}
+        >
+          {t(IMPORT_MODE_WARNING[importMode])}
         </Alert>
+        <Box
+          display="flex"
+          alignItems="center"
+          gap={1}
+          sx={{ width: '100%' }}
+        >
+          <Typography sx={{ whiteSpace: 'nowrap' }}>
+            {t('label.import-mode')}:
+          </Typography>
+          <Select
+            value={importMode}
+            onChange={e => setImportMode(e.target.value as ImportMode)}
+            options={importModeOptions}
+            sx={{ flex: 1 }}
+          />
+        </Box>
         <UploadFile
           onUpload={setSelectedFiles}
           color="secondary"
