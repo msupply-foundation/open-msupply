@@ -5,7 +5,9 @@ import {
   LIST_KEY,
   SortBy,
   useInfiniteQuery,
+  useMutation,
   useQuery,
+  useUrlQueryParams,
 } from '@openmsupply-client/common';
 import { useAssetGraphQL } from '../useAssetGraphQL';
 import { ASSET } from './keys';
@@ -91,6 +93,29 @@ export const useInfiniteAssets = ({
     queryFn,
   });
   return infiniteQuery;
+};
+
+export const useAssetCatalogueListAll = () => {
+  const { queryParams } = useUrlQueryParams();
+  const { assetApi } = useAssetGraphQL();
+
+  const result = useMutation({
+    mutationFn: async () => {
+      const { sortBy, filterBy } = queryParams ?? {};
+      const query = await assetApi.assetCatalogueItems({
+        key: toSortField(sortBy),
+        desc: sortBy?.isDesc,
+        filter: filterBy,
+      });
+      const { nodes, totalCount } = query?.assetCatalogueItems;
+      return { nodes, totalCount };
+    },
+  });
+
+  return {
+    ...result,
+    fetchAsync: result.mutateAsync,
+  };
 };
 
 const toSortField = (sortBy?: SortBy<AssetCatalogueItemFragment>) => {
