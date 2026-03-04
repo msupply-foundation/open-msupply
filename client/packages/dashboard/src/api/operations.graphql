@@ -24,6 +24,30 @@ query inboundCounts($storeId: String!) {
   }
 }
 
+query inboundInternalCounts($storeId: String!) {
+  invoiceCounts(storeId: $storeId) {
+    inboundInternal {
+      created {
+        today
+        thisWeek
+      }
+      notDelivered
+    }
+  }
+}
+
+query inboundExternalCounts($storeId: String!) {
+  invoiceCounts(storeId: $storeId) {
+    inboundExternal {
+      created {
+        today
+        thisWeek
+      }
+      notDelivered
+    }
+  }
+}
+
 query outboundCounts($storeId: String!) {
   invoiceCounts(storeId: $storeId) {
     outbound {

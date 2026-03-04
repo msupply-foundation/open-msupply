@@ -2,13 +2,13 @@ import { useQuery } from '@openmsupply-client/common';
 import { DASHBOARD, INBOUND } from './keys';
 import { useApi } from './useApi';
 
-export const useInboundCounts = () => {
+export const useInboundInternalCounts = () => {
   const { storeId, api } = useApi();
 
   const { data, ...rest } = useQuery(
-    [DASHBOARD, INBOUND, storeId],
+    [DASHBOARD, INBOUND, 'internal', storeId],
     () =>
-      api.inboundCounts({
+      api.inboundInternalCounts({
         storeId,
       }),
     {
@@ -16,14 +16,14 @@ export const useInboundCounts = () => {
     }
   );
 
-  if (!data?.invoiceCounts?.inbound) {
+  if (!data?.invoiceCounts?.inboundInternal) {
     return { stats: undefined, ...rest };
   }
 
   const stats = {
-    today: data.invoiceCounts.inbound.created.today,
-    thisWeek: data.invoiceCounts.inbound.created.thisWeek,
-    notDelivered: data.invoiceCounts.inbound.notDelivered,
+    today: data.invoiceCounts.inboundInternal.created.today,
+    thisWeek: data.invoiceCounts.inboundInternal.created.thisWeek,
+    notDelivered: data.invoiceCounts.inboundInternal.notDelivered,
   };
 
   return { stats, ...rest };

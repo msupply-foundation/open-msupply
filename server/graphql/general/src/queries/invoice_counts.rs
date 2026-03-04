@@ -18,26 +18,40 @@ fn do_invoice_count(
     range: &CountTimeRange,
     timezone_offset: &FixedOffset,
     store_id: &str,
+    is_external: Option<bool>,
 ) -> Result<i64> {
     let service_provider = ctx.service_provider();
     let service_ctx = service_provider.context(store_id.to_string(), "".to_string())?;
     let service = &service_provider.invoice_count_service;
-    let count = service
-        .invoices_count(
-            &service_ctx,
-            store_id,
-            invoice_type,
-            invoice_status,
-            range,
-            &Utc::now(),
-            timezone_offset,
-        )
-        .map_err(|err| match err {
-            InvoiceCountError::RepositoryError(err) => StandardGraphqlError::from(err),
-            InvoiceCountError::BadTimezoneOffset => {
-                StandardGraphqlError::BadUserInput("Invalid timezone offset".to_string())
-            }
-        })?;
+    let count = match is_external {
+        None => service
+            .invoices_count(
+                &service_ctx,
+                store_id,
+                invoice_type,
+                invoice_status,
+                range,
+                &Utc::now(),
+                timezone_offset,
+            ),
+        Some(is_external) => service
+            .invoices_count_by_external(
+                &service_ctx,
+                store_id,
+                invoice_type,
+                invoice_status,
+                range,
+                &Utc::now(),
+                timezone_offset,
+                is_external,
+            ),
+    }
+    .map_err(|err| match err {
+        InvoiceCountError::RepositoryError(err) => StandardGraphqlError::from(err),
+        InvoiceCountError::BadTimezoneOffset => {
+            StandardGraphqlError::BadUserInput("Invalid timezone offset".to_string())
+        }
+    })?;
 
     Ok(count)
 }
@@ -47,6 +61,7 @@ pub struct InvoiceCountsSummary {
     invoice_status: InvoiceStatus,
     timezone_offset: FixedOffset,
     store_id: String,
+    is_external: Option<bool>,
 }
 
 #[Object]
@@ -59,6 +74,7 @@ impl InvoiceCountsSummary {
             &CountTimeRange::Today,
             &self.timezone_offset,
             &self.store_id,
+            self.is_external,
         )
     }
 
@@ -70,6 +86,7 @@ impl InvoiceCountsSummary {
             &CountTimeRange::ThisWeek,
             &self.timezone_offset,
             &self.store_id,
+            self.is_external,
         )
     }
 }
@@ -87,6 +104,7 @@ impl OutboundInvoiceCounts {
             invoice_status: InvoiceStatus::New,
             timezone_offset: self.timezone_offset,
             store_id: self.store_id.clone(),
+            is_external: None,
         }
     }
 
@@ -113,6 +131,8 @@ impl OutboundInvoiceCounts {
 pub struct InboundInvoiceCounts {
     timezone_offset: FixedOffset,
     store_id: String,
+    /// None = all inbound, Some(false) = internal only, Some(true) = external only
+    is_external: Option<bool>,
 }
 
 #[Object]
@@ -123,6 +143,7 @@ impl InboundInvoiceCounts {
             invoice_status: InvoiceStatus::New,
             timezone_offset: self.timezone_offset,
             store_id: self.store_id.clone(),
+            is_external: self.is_external,
         }
     }
 
@@ -135,13 +156,21 @@ impl InboundInvoiceCounts {
         })?;
         let service = &service_provider.invoice_count_service;
 
-        let not_delivered: i64 = service
-            .inbound_invoices_not_delivered_count(&service_ctx, &self.store_id)
-            .map_err(|_| Error {
-                message: "InternalError".to_string(),
-                source: None,
-                extensions: None,
-            })?;
+        let not_delivered: i64 = match self.is_external {
+            None => service
+                .inbound_invoices_not_delivered_count(&service_ctx, &self.store_id),
+            Some(is_external) => service
+                .inbound_invoices_not_delivered_count_by_external(
+                    &service_ctx,
+                    &self.store_id,
+                    is_external,
+                ),
+        }
+        .map_err(|_| Error {
+            message: "InternalError".to_string(),
+            source: None,
+            extensions: None,
+        })?;
 
         Ok(not_delivered)
     }
@@ -161,10 +190,30 @@ impl InvoiceCounts {
         }
     }
 
+    /// All inbound shipments (internal + external)
     async fn inbound(&self) -> InboundInvoiceCounts {
         InboundInvoiceCounts {
             timezone_offset: self.timezone_offset,
             store_id: self.store_id.clone(),
+            is_external: None,
+        }
+    }
+
+    /// Internal inbound shipments only (no purchase order)
+    async fn inbound_internal(&self) -> InboundInvoiceCounts {
+        InboundInvoiceCounts {
+            timezone_offset: self.timezone_offset,
+            store_id: self.store_id.clone(),
+            is_external: Some(false),
+        }
+    }
+
+    /// External inbound shipments only (linked to a purchase order)
+    async fn inbound_external(&self) -> InboundInvoiceCounts {
+        InboundInvoiceCounts {
+            timezone_offset: self.timezone_offset,
+            store_id: self.store_id.clone(),
+            is_external: Some(true),
         }
     }
 }
