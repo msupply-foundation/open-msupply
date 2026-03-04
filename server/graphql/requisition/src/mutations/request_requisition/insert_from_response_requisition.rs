@@ -13,6 +13,13 @@ use service::{
     },
 };
 
+#[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
+#[graphql(remote = "service::requisition::request_requisition::InsertFromResponseStatus")]
+pub enum InsertFromResponseStatusInput {
+    Draft,
+    Sent,
+}
+
 #[derive(InputObject)]
 #[graphql(name = "InsertFromResponseRequisitionInput")]
 pub struct InsertFromResponseRequisitionInput {
@@ -20,6 +27,7 @@ pub struct InsertFromResponseRequisitionInput {
     pub response_requisition_id: String,
     pub other_party_id: String,
     pub comment: Option<String>,
+    pub status: Option<InsertFromResponseStatusInput>,
 }
 
 #[derive(Interface)]
@@ -112,6 +120,7 @@ impl InsertFromResponseRequisitionInput {
             response_requisition_id,
             other_party_id,
             comment,
+            status,
         } = self;
 
         InsertFromResponseRequisition {
@@ -119,6 +128,7 @@ impl InsertFromResponseRequisitionInput {
             response_requisition_id,
             other_party_id,
             comment,
+            status: status.map(Into::into),
         }
     }
 }
@@ -302,6 +312,7 @@ mod test {
                     response_requisition_id: "req1".to_string(),
                     other_party_id: "other party input".to_string(),
                     comment: Some("comment input".to_string()),
+                    status: None,
                 }
             );
             Ok(Requisition {
