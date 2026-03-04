@@ -159,12 +159,7 @@ pub fn system_log_entry(
 
     let message = match message {
         SystemLogMessage::Error(error, context) => {
-            format!(
-                "{} - {} - {}",
-                context,
-                log_type,
-                format_error(&error)
-            )
+            format!("{} - {} - {}", context, log_type, format_error(&error))
         }
         SystemLogMessage::Message(msg) => msg.to_string(),
     };

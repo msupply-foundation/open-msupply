@@ -9,11 +9,13 @@ server/data
 .gitmodules
 node_modules/
 
+# Claude
+# `claude -w "feature-name"` will create "/.claude/worktrees/feature-name" for your worktree. Back at root though, git picks up this whole directory copy of the repo!
+worktrees
 
 standard_reports/test-config.json
 client/dist
 
 # IDEs
 .idea/
-
-.claude/settings.local.json
+.claude/*.local.json

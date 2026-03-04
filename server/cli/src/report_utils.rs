@@ -50,7 +50,10 @@ pub enum ReportError {
 
 use ReportError as Error;
 
-use crate::{helpers::{run_command_with_error, CommandError}, YARN_COMMAND};
+use crate::{
+    helpers::{run_command_with_error, CommandError},
+    YARN_COMMAND,
+};
 
 pub fn generate_reports_recursive(
     reports_data: &mut ReportsData,
@@ -198,8 +201,12 @@ fn generate_convert_data(path: &PathBuf, manifest: &Manifest) -> Result<Option<S
     )
     .map_err(|e| Error::FailedToYarnInstall(convert_dir.clone(), e))?;
 
-    run_command_with_error(Command::new(YARN_COMMAND).arg("build").current_dir(&convert_dir))
-        .map_err(|e| Error::FailedToBuildConvertData(convert_dir.clone(), e))?;
+    run_command_with_error(
+        Command::new(YARN_COMMAND)
+            .arg("build")
+            .current_dir(&convert_dir),
+    )
+    .map_err(|e| Error::FailedToBuildConvertData(convert_dir.clone(), e))?;
 
     let bundle_path: PathBuf = convert_dir
         .join("dist")

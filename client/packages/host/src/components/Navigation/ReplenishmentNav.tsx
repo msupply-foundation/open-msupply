@@ -9,7 +9,6 @@ import {
   AppNavLink,
   AppNavSection,
   UserStoreNodeFragment,
-  useIsCentralServerApi,
   usePreferences,
   useIsExtraSmallScreen,
 } from '@openmsupply-client/common';
@@ -26,9 +25,8 @@ export const ReplenishmentNav = ({
   );
   const t = useTranslation();
   const rnrVisible = store?.preferences.omProgramModule;
-  const isCentralServer = useIsCentralServerApi();
   const { useProcurementFunctionality } = usePreferences();
-  const useProcurement = isCentralServer && useProcurementFunctionality;
+  const useProcurement = useProcurementFunctionality;
   const isExtraSmallScreen = useIsExtraSmallScreen();
 
   return (
@@ -47,13 +45,6 @@ export const ReplenishmentNav = ({
               .addPart(AppRoute.PurchaseOrder)
               .build()}
             text={t('purchase-order')}
-          />
-          <AppNavLink
-            visible={useProcurement}
-            to={RouteBuilder.create(AppRoute.Replenishment)
-              .addPart(AppRoute.GoodsReceived)
-              .build()}
-            text={t('goods-received')}
           />
           <AppNavLink
             visible={!isExtraSmallScreen}
