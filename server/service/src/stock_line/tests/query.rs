@@ -52,7 +52,7 @@ mod query {
             .unwrap();
 
         assert_eq!(result.stock_line_row.id, "stock_line_on_hold");
-        assert_eq!(result.stock_line_row.on_hold, true);
+        assert!(result.stock_line_row.on_hold);
     }
 
     #[actix_rt::test]

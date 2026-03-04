@@ -26,7 +26,6 @@ pub struct UpsertPreferences {
     pub days_in_month: Option<f64>,
     pub expired_stock_prevent_issue: Option<bool>,
     pub expired_stock_issue_threshold: Option<i32>,
-    pub show_indicative_price_in_requisitions:Option<bool>,
     pub item_margin_overrides_supplier_margin: Option<bool>,
     pub is_gaps: Option<bool>,
     pub display_population_based_forecasting: Option<bool>,
@@ -51,9 +50,11 @@ pub struct UpsertPreferences {
         Option<Vec<StorePrefUpdate<i32>>>,
     pub first_threshold_for_expiring_items: Option<Vec<StorePrefUpdate<i32>>>,
     pub second_threshold_for_expiring_items: Option<Vec<StorePrefUpdate<i32>>>,
-    pub warn_when_missing_recent_stocktake: Option<Vec<StorePrefUpdate<WarnWhenMissingRecentStocktakeData>>>,
+    pub warn_when_missing_recent_stocktake:
+        Option<Vec<StorePrefUpdate<WarnWhenMissingRecentStocktakeData>>>,
     pub store_custom_colour: Option<Vec<StorePrefUpdate<String>>>,
     pub invoice_status_options: Option<Vec<StorePrefUpdate<Vec<InvoiceStatus>>>>,
+    pub show_indicative_price_in_requisitions: Option<Vec<StorePrefUpdate<bool>>>,
 }
 
 pub fn upsert_preferences(
@@ -73,7 +74,6 @@ pub fn upsert_preferences(
         days_in_month: days_in_month_input,
         expired_stock_prevent_issue: expired_stock_prevent_issue_input,
         expired_stock_issue_threshold: expired_stock_issue_threshold_input,
-        show_indicative_price_in_requisitions: show_indicative_price_in_requisitions_input,
         item_margin_overrides_supplier_margin: item_margin_overrides_supplier_margin_input,
         is_gaps: is_gaps_input,
         display_population_based_forecasting: display_population_based_forecasting_input,
@@ -97,13 +97,14 @@ pub fn upsert_preferences(
             number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products_input,
         number_of_months_threshold_to_show_low_stock_alerts_for_products:
             number_of_months_threshold_to_show_low_stock_alerts_for_products_input,
-            number_of_months_threshold_to_show_over_stock_alerts_for_products:
+        number_of_months_threshold_to_show_over_stock_alerts_for_products:
             number_of_months_threshold_to_show_over_stock_alerts_for_products_input,
         first_threshold_for_expiring_items: first_threshold_for_expiring_items_input,
         second_threshold_for_expiring_items: second_threshold_for_expiring_items_input,
         warn_when_missing_recent_stocktake: warn_when_missing_recent_stocktake_input,
         store_custom_colour: store_custom_colour_input,
         invoice_status_options: invoice_status_options_input,
+        show_indicative_price_in_requisitions: show_indicative_price_in_requisitions_input,
     }: UpsertPreferences,
 ) -> Result<(), UpsertPreferenceError> {
     let PreferenceProvider {
@@ -120,7 +121,6 @@ pub fn upsert_preferences(
         days_in_month,
         expired_stock_prevent_issue,
         expired_stock_issue_threshold,
-        show_indicative_price_in_requisitions,
         item_margin_overrides_supplier_margin,
         is_gaps,
         display_population_based_forecasting,
@@ -146,6 +146,7 @@ pub fn upsert_preferences(
         warn_when_missing_recent_stocktake,
         store_custom_colour,
         invoice_status_options,
+        show_indicative_price_in_requisitions,
     }: PreferenceProvider = get_preference_provider();
 
     ctx.connection
@@ -200,10 +201,6 @@ pub fn upsert_preferences(
             
             if let Some(input) = expired_stock_issue_threshold_input {
                 expired_stock_issue_threshold.upsert(connection, input, None)?;
-            }
-           
-            if let Some(input) = show_indicative_price_in_requisitions_input {
-                show_indicative_price_in_requisitions.upsert(connection, input, None)?;
             }
 
             if let Some(input) = is_gaps_input { 
@@ -325,6 +322,10 @@ pub fn upsert_preferences(
 
             if let Some(input) = invoice_status_options_input {
                 upsert_store_input(connection, invoice_status_options, input)?;
+            }
+
+            if let Some(input) = show_indicative_price_in_requisitions_input {
+                upsert_store_input(connection, show_indicative_price_in_requisitions, input)?;
             }
 
             Ok(())

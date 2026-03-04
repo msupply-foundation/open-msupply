@@ -39,7 +39,7 @@ impl PluginProcessor {
 impl Processor for PluginProcessor {
     // Description and cursor type is plugin code
     fn get_description(&self) -> String {
-        format!("Plugin processor for {}", (&self.0).code)
+        format!("Plugin processor for {}", self.0.code)
     }
 
     fn cursor_type(&self) -> CursorType {

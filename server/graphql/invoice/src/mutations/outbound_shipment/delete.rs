@@ -64,7 +64,7 @@ pub enum DeleteErrorInterface {
 
 fn map_error(error: ServiceError) -> Result<DeleteErrorInterface> {
     use StandardGraphqlError::*;
-    let formatted_error = format!("{:#?}", error);
+    let formatted_error = format!("{error:#?}");
 
     let graphql_error = match error {
         // Structured Errors
@@ -95,7 +95,6 @@ mod graphql {
     use repository::mock::{MockData, MockDataInserts};
     use repository::{InvoiceRow, InvoiceRowRepository, InvoiceStatus, InvoiceType};
     use serde_json::json;
-    
 
     use crate::{InvoiceMutations, InvoiceQueries};
 

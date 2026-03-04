@@ -1225,6 +1225,6 @@ mod test {
             .unwrap();
         result.sort_by(|a, b| a.id.cmp(&b.id));
 
-        assert!(result.iter().all(|line| line.donor_link_id == None));
+        assert!(result.iter().all(|line| line.donor_link_id.is_none()));
     }
 }

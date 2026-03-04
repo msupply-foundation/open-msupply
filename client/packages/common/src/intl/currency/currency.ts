@@ -111,7 +111,8 @@ export type Currencies =
   | 'KMF'
   | 'XAF'
   | 'XOF'
-  | 'STN';
+  | 'STN'
+  | 'AFN';
 
 export const currencyOptions = (locale: string, code?: Currencies) => {
   switch (code) {
@@ -239,6 +240,16 @@ export const currencyOptions = (locale: string, code?: Currencies) => {
         ...getSeparatorAndDecimal(locale),
         ...getPatterns(locale),
         symbol: 'Db',
+        precision: 2,
+        format,
+      };
+    }    
+    case 'AFN': {
+      return {
+        // separator: "," decimal = "."
+        ...getSeparatorAndDecimal(locale),
+        ...getPatterns(locale),
+        symbol: '؋',
         precision: 2,
         format,
       };

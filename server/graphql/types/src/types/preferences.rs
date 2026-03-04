@@ -309,4 +309,5 @@ pub enum PreferenceValueNodeType {
     CustomTranslations, // Specific type for CustomTranslations preference
     WarnWhenMissingRecentStocktakeData,
     String,
+    Colour,
 }

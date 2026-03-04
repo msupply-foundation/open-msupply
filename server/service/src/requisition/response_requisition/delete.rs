@@ -46,7 +46,8 @@ pub fn delete_response_requisition(
             validate(connection, &ctx.store_id, &input)?;
 
             let lines = RequisitionLineRepository::new(connection).query_by_filter(
-                RequisitionLineFilter::new().requisition_id(EqualFilter::equal_to(input.id.to_string())),
+                RequisitionLineFilter::new()
+                    .requisition_id(EqualFilter::equal_to(input.id.to_string())),
             )?;
             for line in lines {
                 delete_response_requisition_line(

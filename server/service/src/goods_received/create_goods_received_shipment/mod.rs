@@ -52,11 +52,10 @@ pub fn create_goods_received_shipment(
                 generate(connection, supplier_name_link, goods_received, line_map)?;
 
             let result = insert_inbound_shipment(ctx, invoice.clone())
-                .map_err(|error| OutError::InboundShipmentError(error))?;
+                .map_err(OutError::InboundShipmentError)?;
 
             for line in invoice_lines {
-                insert_stock_in_line(ctx, line)
-                    .map_err(|error| OutError::StockInLineError(error))?;
+                insert_stock_in_line(ctx, line).map_err(OutError::StockInLineError)?;
             }
 
             activity_log_entry(

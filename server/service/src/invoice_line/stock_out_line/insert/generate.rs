@@ -69,8 +69,7 @@ pub fn generate(
                 invoice_line_id: new_line.id.clone(),
                 comment: Some(format!(
                     "Updated from {} #{}",
-                    invoice.r#type.to_string(),
-                    invoice.invoice_number
+                    invoice.r#type, invoice.invoice_number
                 )),
             }))
         } else {

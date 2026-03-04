@@ -57,8 +57,9 @@ impl StandardReports {
     ) -> Result<Vec<ReportMetaDataRow>, anyhow::Error> {
         let mut upserted_reports: Vec<ReportMetaDataRow> = vec![];
         for report in reports_data.reports {
-            let report_versions = ReportRepository::new(con)
-                .query_by_filter(ReportFilter::new().code(EqualFilter::equal_to(report.code.to_owned())))?;
+            let report_versions = ReportRepository::new(con).query_by_filter(
+                ReportFilter::new().code(EqualFilter::equal_to(report.code.to_owned())),
+            )?;
 
             let existing_report = report_versions
                 .iter()
@@ -66,7 +67,7 @@ impl StandardReports {
             let set_active = match &existing_report {
                 Some(report) => report.report_row.is_active,
                 None => {
-                    report_versions.len() == 0
+                    report_versions.is_empty()
                         || report_versions.iter().any(|r| r.report_row.is_active)
                 }
             };

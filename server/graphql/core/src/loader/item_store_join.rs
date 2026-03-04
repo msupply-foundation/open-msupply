@@ -6,21 +6,20 @@ use repository::{
     StorageConnectionManager,
 };
 
-use crate::loader::IdPair;
-
 pub struct ItemStoreJoinLoader {
     pub connection_manager: StorageConnectionManager,
 }
 
-#[derive(Clone)]
-pub struct EmptyPayload;
-pub type ItemStoreJoinLoaderInput = IdPair<EmptyPayload>;
+#[derive(Clone, PartialEq, Eq, Debug, Hash)]
+pub struct ItemStoreJoinLoaderInput {
+    pub store_id: String,
+    pub item_id: String,
+}
 impl ItemStoreJoinLoaderInput {
     pub fn new(store_id: &str, item_id: &str) -> Self {
         ItemStoreJoinLoaderInput {
-            primary_id: store_id.to_string(),
-            secondary_id: item_id.to_string(),
-            payload: EmptyPayload {},
+            store_id: store_id.to_string(),
+            item_id: item_id.to_string(),
         }
     }
 }
@@ -38,8 +37,8 @@ impl Loader<ItemStoreJoinLoaderInput> for ItemStoreJoinLoader {
         let mut result_map = HashMap::new();
 
         for loader_input in loader_inputs {
-            let store_id = &loader_input.primary_id;
-            let item_id = &loader_input.secondary_id;
+            let store_id = &loader_input.store_id;
+            let item_id = &loader_input.item_id;
 
             let result = ItemStoreJoinRowRepository::new(&connection)
                 .find_one_by_item_and_store_id(item_id, store_id)?;

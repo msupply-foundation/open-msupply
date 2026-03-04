@@ -110,8 +110,7 @@ impl SyncTranslation for VaccinationLegacyTranslation {
         let patient_name_id = name_link_repo
             .find_one_by_id(&patient_link_id)?
             .ok_or(anyhow::Error::msg(format!(
-                "Patient name link ({}) not found",
-                patient_link_id
+                "Patient name link ({patient_link_id}) not found"
             )))?
             .id;
 
@@ -226,13 +225,10 @@ mod tests {
 
         // Shouldn't translate if not a central server
         test_util_set_is_central_server(false);
-        assert_eq!(
-            translator.should_translate_to_sync_record(
-                &changelog_row,
-                &ToSyncRecordTranslationType::PushToLegacyCentral
-            ),
-            false
-        );
+        assert!(!translator.should_translate_to_sync_record(
+            &changelog_row,
+            &ToSyncRecordTranslationType::PushToLegacyCentral
+        ));
 
         // Should translate if a central server
         test_util_set_is_central_server(true);

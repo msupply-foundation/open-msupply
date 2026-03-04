@@ -20,8 +20,6 @@ pub fn crawl_and_translate(
                     },
                     user_language,
                 )?
-            } else {
-                ()
             };
             Ok(())
         }

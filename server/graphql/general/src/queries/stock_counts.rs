@@ -49,9 +49,9 @@ impl StockCounts {
         let store_id = self.store_id.clone();
 
         let first_threshold =
-            FirstThresholdForExpiringItems.load(&connection, Some(store_id.clone()))?;
+            FirstThresholdForExpiringItems.load(connection, Some(store_id.clone()))?;
         let second_threshold =
-            SecondThresholdForExpiringItems.load(&connection, Some(store_id.clone()))?;
+            SecondThresholdForExpiringItems.load(connection, Some(store_id.clone()))?;
 
         let today = Utc::now().with_timezone(&self.timezone_offset).date_naive();
         let from_date = today + Duration::days(first_threshold as i64);
