@@ -61,7 +61,7 @@
     "CLAUDE_CONFIG_DIR": "/root/.claude"
   },
   "onCreateCommand": {
-    "install-deps": "apt update && apt install -y libpq-dev nmap iputils-ping lsof",
+    "install-tools": "apt update && apt install -y libpq-dev gh nmap iputils-ping lsof",
     "machine-id": "echo ${devcontainerId} > /etc/machine-id"
   }
 }
