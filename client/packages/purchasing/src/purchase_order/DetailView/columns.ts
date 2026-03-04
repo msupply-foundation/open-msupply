@@ -61,7 +61,7 @@ export const usePurchaseOrderColumns = () => {
       },
       {
         accessorKey: 'requestedNumberOfUnits',
-        header: t('label.requested-quantity'),
+        header: t('label.requested-units'),
         columnType: ColumnType.Number,
       },
       {
