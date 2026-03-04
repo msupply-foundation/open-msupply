@@ -1,9 +1,6 @@
-extern crate machine_uid;
 use anyhow::{anyhow, Result};
 use async_trait::async_trait;
-use clap::Parser;
-use egui::Color32;
-use log::*;
+use log::info;
 use repository::{get_storage_connection_manager, migrations::Version};
 use reqwest::{Client, Url};
 use serde::{Deserialize, Serialize};
@@ -20,122 +17,40 @@ use service::{
         settings::SyncSettings,
     },
 };
-use tokio::sync::mpsc;
 
-const GUI_WIDTH: f32 = 600.0;
-const GUI_HEIGHT: f32 = 400.0;
-
-#[derive(Parser, Debug)]
-struct Args {
-    #[arg(short, long)]
-    username: Option<String>,
-    #[arg(short, long)]
-    password: Option<String>,
+pub struct TestCredentials {
+    pub username: String,
+    pub password: String,
 }
 
-#[tokio::main]
-async fn main() {
-    simple_logger::init_with_level(Level::Info).unwrap();
-
-    let args = Args::parse();
-    let gui = args.username.is_none();
-
-    let (gui_tx, gui_rc) = mpsc::channel(10);
-
-    if gui {
-        let options = eframe::NativeOptions {
-            viewport: egui::ViewportBuilder::default().with_inner_size([GUI_WIDTH, GUI_HEIGHT]),
-            ..Default::default()
-        };
-
-        eframe::run_native(
-            "OMS - Test Connections",
-            options,
-            Box::new(|cc| {
-                egui_extras::install_image_loaders(&cc.egui_ctx); // This gives us image support
-                Box::new(Gui::new(gui_rc))
-            }),
-        )
-        .unwrap();
-
-        let gui_state = GuiState::new(
-            args.username.unwrap_or("".to_string()),
-            args.password.unwrap_or("".to_string()),
-        );
-
-        gui_tx.send(gui_state.clone()).await.unwrap();
-        return;
-    } else {
-        let test_task: tokio::task::JoinHandle<()> = tokio::spawn(perform_tests(gui_tx, args, gui));
-        test_task.await.unwrap();
-    }
-}
-
-async fn perform_tests(gui_tx: mpsc::Sender<GuiState>, args: Args, gui: bool) {
-    let mut test_data = TestData {
-        server_config: None,
-        sync_api_v5: None,
-        args,
-    };
-
-    let tests: Vec<Box<dyn Test + Send>> = vec![
-        Box::new(ConfigTest),
-        Box::new(PingTest),
-        Box::new(DatabaseTest),
-        Box::new(LoginTest),
-        Box::new(SyncTest),
-        Box::new(SyncV6Test),
-        Box::new(MailConnectionTest),
-    ];
-
-    let mut gui_state = GuiState::new(
-        test_data.args.username.clone().unwrap_or("".to_string()),
-        test_data.args.password.clone().unwrap_or("".to_string()),
-    );
-
-    for i in 0..tests.len() {
-        if gui {
-            gui_state.tests[i].1 = TestState::Running;
-            gui_tx.send(gui_state.clone()).await.unwrap();
-        }
-
-        let result = tests[i].run(&mut test_data).await;
-        match &result {
-            Ok(msg) => {
-                info!("{} test passed: {}", gui_state.tests[i].0, msg);
-            }
-            Err(msg) => {
-                error!("{} test failed: {}", gui_state.tests[i].0, msg);
-            }
-        }
-
-        if gui {
-            gui_state.tests[i].1 = match result {
-                Ok(msg) => TestState::Success(msg),
-                Err(msg) => TestState::Failure(msg.to_string()),
-            };
-            gui_tx.send(gui_state.clone()).await.unwrap();
-        }
-    }
-
-    info!("All tests completed");
-}
-
-struct TestData {
-    server_config: Option<service::settings::Settings>,
-    sync_api_v5: Option<SyncApiV5>,
-    args: Args,
+pub struct TestData {
+    pub server_config: Option<service::settings::Settings>,
+    pub sync_api_v5: Option<SyncApiV5>,
+    pub credentials: TestCredentials,
 }
 
 #[async_trait]
-trait Test {
+pub trait Test {
+    fn name(&self) -> &str;
     async fn run(&self, test_data: &mut TestData) -> Result<String>;
 }
 
-struct ConfigTest;
+#[derive(Clone, Debug)]
+pub enum TestState {
+    Pending,
+    Running,
+    Success(String),
+    Failure(String),
+}
+
+pub struct ConfigTest;
 
 #[async_trait]
 impl Test for ConfigTest {
+    fn name(&self) -> &str {
+        "Config"
+    }
+
     async fn run(&self, test_data: &mut TestData) -> Result<String> {
         test_data.server_config = Some(
             configuration::get_configuration(configuration::ConfigArgs { config_path: None })
@@ -145,10 +60,14 @@ impl Test for ConfigTest {
     }
 }
 
-struct PingTest;
+pub struct PingTest;
 
 #[async_trait]
 impl Test for PingTest {
+    fn name(&self) -> &str {
+        "Ping"
+    }
+
     async fn run(&self, test_data: &mut TestData) -> Result<String> {
         let config = test_data
             .server_config
@@ -171,10 +90,14 @@ impl Test for PingTest {
     }
 }
 
-struct DatabaseTest;
+pub struct DatabaseTest;
 
 #[async_trait]
 impl Test for DatabaseTest {
+    fn name(&self) -> &str {
+        "Database"
+    }
+
     async fn run(&self, test_data: &mut TestData) -> Result<String> {
         let config = test_data
             .server_config
@@ -200,18 +123,22 @@ impl Test for DatabaseTest {
     }
 }
 
-struct LoginTest;
+pub struct LoginTest;
 
 #[async_trait]
 impl Test for LoginTest {
+    fn name(&self) -> &str {
+        "Login"
+    }
+
     async fn run(&self, test_data: &mut TestData) -> Result<String> {
         let config = test_data
             .server_config
             .as_ref()
             .ok_or(anyhow!("No config loaded".to_string()))?;
 
-        let username = test_data.args.username.clone().unwrap_or("".to_string());
-        let password = test_data.args.password.clone().unwrap_or("".to_string());
+        let username = test_data.credentials.username.clone();
+        let password = test_data.credentials.password.clone();
         let sync_settings = get_sync_settings(config)?;
 
         info!("Testing login at url: {}", sync_settings.url);
@@ -237,10 +164,14 @@ impl Test for LoginTest {
     }
 }
 
-struct SyncTest;
+pub struct SyncTest;
 
 #[async_trait]
 impl Test for SyncTest {
+    fn name(&self) -> &str {
+        "Sync V5"
+    }
+
     async fn run(&self, test_data: &mut TestData) -> Result<String> {
         let config = test_data
             .server_config
@@ -283,15 +214,19 @@ impl Test for SyncTest {
 #[derive(Debug, Deserialize, Serialize)]
 pub struct SiteInfoV5 {
     #[serde(rename = "omSupplyCentralServerUrl")]
-    central_server_url: String,
+    pub central_server_url: String,
     #[serde(rename = "isOmSupplyCentralServer")]
-    is_central_server: bool,
+    pub is_central_server: bool,
 }
 
-struct SyncV6Test;
+pub struct SyncV6Test;
 
 #[async_trait]
 impl Test for SyncV6Test {
+    fn name(&self) -> &str {
+        "Sync V6"
+    }
+
     async fn run(&self, test_data: &mut TestData) -> Result<String> {
         let sync_v5 = test_data
             .sync_api_v5
@@ -341,10 +276,14 @@ impl Test for SyncV6Test {
     }
 }
 
-struct MailConnectionTest;
+pub struct MailConnectionTest;
 
 #[async_trait]
 impl Test for MailConnectionTest {
+    fn name(&self) -> &str {
+        "Mail connection"
+    }
+
     async fn run(&self, test_data: &mut TestData) -> Result<String> {
         let config = test_data
             .server_config
@@ -358,159 +297,27 @@ impl Test for MailConnectionTest {
         match email_service.test_connection() {
             Ok(true) => Ok("Successfully connected to mail server".to_string()),
             Ok(false) => Err(anyhow!("Failed to connect to mail server")),
-
-            Err(EmailServiceError::NotConfigured) => {
-                Ok("No mail settings found in configuration. Mail setup is only required on OMS Central server.".to_string())
-            }
+            Err(EmailServiceError::NotConfigured) => Ok(
+                "No mail settings found in configuration. Mail setup is only required on OMS Central server.".to_string(),
+            ),
             Err(err) => Err(anyhow!("Failed to connect to mail server: {err:?}")),
         }
     }
 }
 
-#[derive(Clone, Default)]
-struct GuiState {
-    tests: Vec<(String, TestState)>,
-    username: String,
-    password: String,
+pub fn all_tests() -> Vec<Box<dyn Test + Send>> {
+    vec![
+        Box::new(ConfigTest),
+        Box::new(PingTest),
+        Box::new(DatabaseTest),
+        Box::new(LoginTest),
+        Box::new(SyncTest),
+        Box::new(SyncV6Test),
+        Box::new(MailConnectionTest),
+    ]
 }
 
-impl GuiState {
-    fn new(username: String, password: String) -> Self {
-        Self {
-            tests: vec![
-                ("Config".to_string(), TestState::Pending),
-                ("Ping".to_string(), TestState::Pending),
-                ("Database".to_string(), TestState::Pending),
-                ("Login".to_string(), TestState::Pending),
-                ("Sync V5".to_string(), TestState::Pending),
-                ("Sync V6".to_string(), TestState::Pending),
-                ("Mail connection".to_string(), TestState::Pending),
-            ],
-            username,
-            password,
-        }
-    }
-}
-
-struct Gui {
-    gui_rc: mpsc::Receiver<GuiState>,
-    state: GuiState,
-}
-
-impl Gui {
-    fn new(gui_rc: mpsc::Receiver<GuiState>) -> Self {
-        Self {
-            gui_rc,
-            state: GuiState::default(),
-        }
-    }
-}
-
-impl eframe::App for Gui {
-    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        egui::CentralPanel::default().show(ctx, |ui| {
-            ui.heading("Open mSupply environment check");
-            ui.with_layout(egui::Layout::left_to_right(egui::Align::TOP), |ui| {
-                ui.label("Username");
-                let _username_response =
-                    ui.add(egui::TextEdit::singleline(&mut self.state.username));
-            });
-            ui.with_layout(egui::Layout::left_to_right(egui::Align::TOP), |ui| {
-                ui.label("Password");
-                let _response = ui.add(egui::TextEdit::singleline(&mut self.state.password));
-            });
-            let start_button = egui::Button::new("Start").fill(Color32::LIGHT_GREEN);
-            ui.with_layout(egui::Layout::top_down(egui::Align::Center), {
-                |ui| {
-                    if ui.add(start_button).clicked() {
-                        let (gui_tx, gui_rc) = mpsc::channel(10);
-                        self.gui_rc = gui_rc;
-                        let _ = tokio::spawn(perform_tests(
-                            gui_tx,
-                            Args {
-                                username: Some(self.state.username.clone()),
-                                password: Some(self.state.password.clone()),
-                            },
-                            true,
-                        ));
-                    }
-                }
-            });
-
-            ui.separator();
-
-            egui::ScrollArea::vertical()
-                .max_height(GUI_HEIGHT - 90.0)
-                .show(ui, |ui| {
-                    for (test_name, test_state) in &self.state.tests {
-                        test_state.display(ui, test_name);
-                    }
-                });
-
-            ui.with_layout(egui::Layout::bottom_up(egui::Align::Center), |ui| {
-                let close_button = egui::Button::new("Close").fill(Color32::LIGHT_RED);
-
-                if ui.add(close_button).clicked() {
-                    std::process::exit(0);
-                }
-            });
-
-            if let Ok(gui_state) = self.gui_rc.try_recv() {
-                self.state = gui_state;
-            }
-        });
-    }
-}
-
-#[derive(Clone, Debug)]
-enum TestState {
-    Pending,
-    Running,
-    Success(String),
-    Failure(String),
-}
-
-impl TestState {
-    fn display(&self, ui: &mut egui::Ui, name: &str) {
-        match &self {
-            TestState::Pending => {
-                ui.horizontal_wrapped(|ui| {
-                    ui.add(
-                        egui::Image::new(egui::include_image!("assets/help_outline.png"))
-                            .max_width(20.0),
-                    );
-                    ui.label(format!("Waiting to start {name} test"));
-                });
-            }
-            TestState::Running => {
-                ui.horizontal_wrapped(|ui| {
-                    ui.add(egui::widgets::Spinner::default());
-                    ui.label(format!("Running {name} test"));
-                });
-            }
-            TestState::Success(msg) => {
-                ui.horizontal_wrapped(|ui| {
-                    ui.add(
-                        egui::Image::new(egui::include_image!("assets/check_outline.png"))
-                            .max_width(20.0),
-                    );
-                    ui.label(msg);
-                });
-            }
-            TestState::Failure(msg) => {
-                ui.horizontal_wrapped(|ui| {
-                    ui.add(
-                        egui::Image::new(egui::include_image!("assets/error_circle.png"))
-                            .max_width(20.0),
-                    );
-                    ui.colored_label(egui::Color32::RED, msg);
-                });
-            }
-        }
-    }
-}
-
-fn get_url(config: &service::settings::Settings) -> Result<Url> {
+pub fn get_url(config: &service::settings::Settings) -> Result<Url> {
     let address = config.server.address().replace("0.0.0.0", "localhost");
     let scheme = match config.server.danger_allow_http | is_develop() {
         true => "http",
@@ -523,7 +330,7 @@ fn get_url(config: &service::settings::Settings) -> Result<Url> {
     Ok(url)
 }
 
-fn get_sync_settings(config: &service::settings::Settings) -> Result<SyncSettings> {
+pub fn get_sync_settings(config: &service::settings::Settings) -> Result<SyncSettings> {
     let machine_uid = machine_uid::get().expect("Failed to query OS for hardware id");
     let connection_manager = get_storage_connection_manager(&config.database);
     let service_provider = ServiceProvider::new(connection_manager.clone());
@@ -535,21 +342,18 @@ fn get_sync_settings(config: &service::settings::Settings) -> Result<SyncSetting
     let service_context = service_provider.basic_context().unwrap();
 
     let yaml_sync_settings = config.sync.clone();
-    let database_sync_settings = service_provider
-        .settings
-        .sync_settings(&service_context)
-        .unwrap();
+    let database_sync_settings = service_provider.settings.sync_settings(&service_context);
 
     let settings = match (yaml_sync_settings, database_sync_settings) {
-        (Some(yaml), Some(database)) => {
+        (Some(yaml), Ok(Some(database))) => {
             if database.core_site_details_changed(&yaml) {
                 info!("Sync settings in configurations don't match database");
             }
             database
         }
-        (Some(yaml), None) => yaml,
-        (None, Some(database)) => database,
-        (None, None) => return Err(anyhow!("No sync settings in config")),
+        (Some(yaml), _) => yaml,
+        (None, Ok(Some(database))) => database,
+        (None, _) => return Err(anyhow!("No sync settings in config")),
     };
 
     Ok(settings)
