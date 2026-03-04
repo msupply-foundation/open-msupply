@@ -75,6 +75,35 @@ export const extractVariables = (str?: string): string[] => {
   return matches.map(m => m.slice(2, -2).trim()).filter(v => v.length > 0);
 };
 
+export type ImportMode = 'replace' | 'keep-existing' | 'overwrite';
+
+export const mergeTranslations = (
+  existing: Translation[],
+  imported: Translation[],
+  mode: ImportMode
+): Translation[] => {
+  switch (mode) {
+    case 'replace':
+      return imported;
+    case 'keep-existing': {
+      const existingKeys = new Set(existing.map(tr => tr.key));
+      const newOnly = imported.filter(tr => !existingKeys.has(tr.key));
+      return [...existing, ...newOnly];
+    }
+    case 'overwrite': {
+      const importedByKey = new Map(imported.map(tr => [tr.key, tr]));
+      const merged = existing.map(tr =>
+        importedByKey.has(tr.key)
+          ? { ...tr, custom: importedByKey.get(tr.key)!.custom }
+          : tr
+      );
+      const existingKeys = new Set(existing.map(tr => tr.key));
+      const brandNew = imported.filter(tr => !existingKeys.has(tr.key));
+      return [...merged, ...brandNew];
+    }
+  }
+};
+
 export const checkInvalidVariables = (input: Partial<Translation>): boolean => {
   // Check for invalid bracket pairs first
   if (hasInvalidBrackets(input.custom)) return true;

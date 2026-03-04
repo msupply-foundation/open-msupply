@@ -15,11 +15,10 @@ import { useDialog, useNotification, useToggle } from '@common/hooks';
 import {
   mapTranslationsToArray,
   mapTranslationsToObject,
-  Translation,
+  mergeTranslations,
+  ImportMode,
 } from './helpers';
 import { TranslationsTable } from './TranslationsInputTable';
-
-type ImportMode = 'replace' | 'keep-existing' | 'overwrite';
 
 export const EditCustomTranslations = ({
   value,
@@ -132,36 +131,9 @@ export const CustomTranslationsModal = ({
           defaultTranslation
         );
 
-        switch (importMode) {
-          case 'replace':
-            setTranslations(importedArray);
-            break;
-          case 'keep-existing': {
-            const existingKeys = new Set(translations.map(tr => tr.key));
-            const newOnly = importedArray.filter(
-              tr => !existingKeys.has(tr.key)
-            );
-            setTranslations([...translations, ...newOnly]);
-            break;
-          }
-          case 'overwrite': {
-            const importedByKey = new Map(
-              importedArray.map(tr => [tr.key, tr])
-            );
-            const merged: Translation[] = translations.map(tr =>
-              importedByKey.has(tr.key)
-                ? { ...tr, custom: importedByKey.get(tr.key)!.custom }
-                : tr
-            );
-            // Add any imported keys that weren't in the existing set
-            const existingKeys = new Set(translations.map(tr => tr.key));
-            const brandNew = importedArray.filter(
-              tr => !existingKeys.has(tr.key)
-            );
-            setTranslations([...merged, ...brandNew]);
-            break;
-          }
-        }
+        setTranslations(
+          mergeTranslations(translations, importedArray, importMode)
+        );
 
         success(t('messages.translations-loaded'))();
       } catch {
