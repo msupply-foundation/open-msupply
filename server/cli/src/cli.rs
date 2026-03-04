@@ -2,6 +2,7 @@ use anyhow::anyhow;
 use async_graphql::EmptySubscription;
 use chrono::Utc;
 use clap::{ArgAction, Parser};
+use colored::Colorize;
 use graphql::{Mutations, OperationalSchema, Queries};
 use log::info;
 
@@ -47,10 +48,10 @@ use backup::*;
 #[cfg(feature = "integration_test")]
 use cli::LoadTest;
 use cli::{
-    generate_and_install_plugin_bundle, generate_plugin_bundle, generate_plugin_typescript_types,
-    generate_report_data, generate_reports_recursive, install_plugin_bundle,
-    GenerateAndInstallPluginBundle, GeneratePluginBundle, InstallPluginBundle,
-    RefreshDatesRepository, ReportError,
+    all_tests, generate_and_install_plugin_bundle, generate_plugin_bundle,
+    generate_plugin_typescript_types, generate_report_data, generate_reports_recursive,
+    install_plugin_bundle, GenerateAndInstallPluginBundle, GeneratePluginBundle,
+    InstallPluginBundle, RefreshDatesRepository, ReportError, TestCredentials, TestData,
 };
 
 const DATA_EXPORT_FOLDER: &str = "data";
@@ -221,6 +222,18 @@ enum Action {
         #[clap(short, long, action = ArgAction::SetTrue, conflicts_with="enable")]
         disable: bool,
     },
+    /// Test connectivity to configured services (config, database, ping, sync, mail)
+    TestConnection {
+        /// Username for the login test
+        #[clap(short, long)]
+        username: Option<String>,
+        /// Password for the login test
+        #[clap(short, long)]
+        password: Option<String>,
+        /// Log level for the tests, by default set to off to avoid noisy console logging
+        #[clap(short, default_value = "off")]
+        log_level: log::LevelFilter,
+    },
     #[cfg(feature = "integration_test")]
     LoadTest(LoadTest),
     GeneratePluginTypescriptTypes {
@@ -293,7 +306,7 @@ async fn initialise_from_central(
         };
         LoginService::login(&service_provider, &auth_data, input.clone(), 0)
             .await
-            .map_err(|_| anyhow!("Cannot login with user {:?}", input))?;
+            .map_err(|_| anyhow!("Cannot login with user {input:?}"))?;
     }
     info!("Initialisation finished");
     Ok((service_provider, service_context))
@@ -396,7 +409,7 @@ async fn main() -> anyhow::Result<()> {
             info!("Saving export");
             let (folder, export_file, users_file) = export_paths(&name);
             if fs::create_dir(&folder).is_err() {
-                info!("Export directory already exists, replacing {:#?}", folder)
+                info!("Export directory already exists, replacing {folder:#?}")
             };
             fs::write(export_file, data_string)?;
             fs::write(users_file, users)?;
@@ -447,7 +460,7 @@ async fn main() -> anyhow::Result<()> {
                 info!("Refreshing dates");
                 let result = RefreshDatesRepository::new(&ctx.connection)
                     .refresh_dates(Utc::now().naive_utc())?;
-                info!("Refresh data result: {:#?}", result);
+                info!("Refresh data result: {result:#?}");
             }
 
             info!("Disabling sync");
@@ -489,7 +502,7 @@ async fn main() -> anyhow::Result<()> {
                 service.disable_sync(&ctx)?;
             }
 
-            info!("Refresh data result: {:#?}", result);
+            info!("Refresh data result: {result:#?}");
         }
         Action::SignPlugin { path, key, cert } => sign_plugin(&path, &key, &cert)?,
         Action::BuildReports { path } => {
@@ -524,15 +537,13 @@ async fn main() -> anyhow::Result<()> {
                 let output_path = base_dir.join("generated").join(output_name);
 
                 fs::create_dir_all(output_path.parent().ok_or(anyhow::Error::msg(format!(
-                    "Invalid output path: {:?}",
-                    output_path
+                    "Invalid output path: {output_path:?}"
                 )))?)?;
 
                 fs::write(&output_path, serde_json::to_string_pretty(&reports_data)?).map_err(
                     |_| {
                         anyhow::Error::msg(format!(
-                            "Failed to write to {:?}. Does output dir exist?",
-                            output_path
+                            "Failed to write to {output_path:?}. Does output dir exist?"
                         ))
                     },
                 )?;
@@ -602,7 +613,7 @@ async fn main() -> anyhow::Result<()> {
                 }
                 (Some(arguments_path), Some(arguments_ui_path)) => {
                     Some(schema_from_row(FormSchemaRow {
-                        id: argument_schema_id.unwrap_or(format!("for_report_{}", id)),
+                        id: argument_schema_id.unwrap_or(format!("for_report_{id}")),
                         r#type: "reportArgument".to_string(),
                         json_schema: fs::read_to_string(arguments_path)?,
                         ui_schema: fs::read_to_string(arguments_ui_path)?,
@@ -702,7 +713,7 @@ async fn main() -> anyhow::Result<()> {
 
             let report_generate_data = ReportGenerateData {
                 report: report_json,
-                config: config,
+                config,
                 store_id: Some(test_config.store_id),
                 store_name: None,
                 output_filename: Some(output_name.clone()),
@@ -715,20 +726,20 @@ async fn main() -> anyhow::Result<()> {
             // spawn blocking used to prevent the following error: "Cannot drop a runtime in a context where blocking is not allowed"
             spawn_blocking(|| generate_report_inner(report_generate_data))
                 .await?
-                .map_err(|e| ReportError::FailedToGenerateReport(path, e.into()))?;
+                .map_err(|e| ReportError::FailedToGenerateReport(path, e))?;
 
             let generated_file_path = current_dir()?.join(&output_name);
-#[cfg(windows)]
+            #[cfg(windows)]
             Command::new("cmd")
-                .args(["/C","start"])
+                .args(["/C", "start"])
                 .arg(generated_file_path.clone())
                 .status()
                 .expect(&format!("failed to open file {:?}", generated_file_path));
-#[cfg(not(windows))]
+            #[cfg(not(windows))]
             Command::new("open")
                 .arg(generated_file_path.clone())
                 .status()
-                .expect(&format!("failed to open file {:?}", generated_file_path));
+                .unwrap_or_else(|_| panic!("{}", "failed to open file {generated_file_path:?}"));
         }
         Action::ToggleReport {
             code,
@@ -740,11 +751,8 @@ async fn main() -> anyhow::Result<()> {
             let con = connection_manager.connection()?;
 
             let mut filter = ReportFilter::new().code(EqualFilter::equal_to(code.to_owned()));
-            match is_custom {
-                Some(value) => {
-                    filter = filter.is_custom(value);
-                }
-                None => {}
+            if let Some(value) = is_custom {
+                filter = filter.is_custom(value);
             }
 
             let report_list = ReportRepository::new(&con).query_by_filter(filter)?;
@@ -779,6 +787,38 @@ async fn main() -> anyhow::Result<()> {
             skip_prettify,
         } => {
             generate_plugin_typescript_types(path, skip_prettify)?;
+        }
+        Action::TestConnection {
+            username,
+            password,
+            log_level,
+        } => {
+            let credentials = TestCredentials {
+                username: username.unwrap_or_default(),
+                password: password.unwrap_or_default(),
+            };
+            let mut test_data = TestData {
+                server_config: None,
+                sync_api_v5: None,
+                credentials,
+            };
+            let tests = all_tests();
+            let current_log_level = log::max_level();
+            // Set log level, defaults to off to suppress noise
+            log::set_max_level(log_level);
+
+            for test in &tests {
+                println!();
+                println!("Running {} test...", test.name());
+                match test.run(&mut test_data).await {
+                    Ok(msg) => println!("{} {}: {}", "[PASS]".green(), test.name(), msg),
+                    Err(err) => {
+                        println!("{} {}: {}", "[FAIL]".red(), test.name(), err);
+                    }
+                }
+            }
+
+            log::set_max_level(current_log_level);
         }
         #[cfg(feature = "integration_test")]
         Action::LoadTest(LoadTest {

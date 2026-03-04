@@ -34,7 +34,7 @@ pub fn map_response(from: Result<String, ServiceError>) -> Result<DeleteResponse
     let result = match from {
         Ok(id) => DeleteResponse::Response(GenericDeleteResponse(id)),
         Err(error) => {
-            let formatted_error = format!("{:#?}", error);
+            let formatted_error = format!("{error:#?}");
             let graphql_error = match error {
                 ServiceError::GoodsReceivedDoesNotExist
                 | ServiceError::NotThisStoreGoodsReceived

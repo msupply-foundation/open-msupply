@@ -120,7 +120,7 @@ export const StockLineForm = ({
 
     const doses = QuantityUtils.packsToDoses(numPacks, {
       packSize: draft.packSize,
-      dosesPerUnit: draft.item.dosesPerUnit,
+      dosesPerUnit: draft.item.doses,
     });
 
     return {
@@ -313,7 +313,13 @@ export const StockLineForm = ({
                 <StyledInputRow
                   label={t('label.barcode')}
                   Input={
-                    <Box style={{ width: 162 }}>
+                    <Box
+                      display="flex"
+                      flexDirection="row"
+                      alignItems="center"
+                      gap={1}
+                      style={{ width: 162 }}
+                    >
                       <BufferedTextInput
                         value={draft.barcode ?? ''}
                         onChange={e => onUpdate({ barcode: e.target.value })}

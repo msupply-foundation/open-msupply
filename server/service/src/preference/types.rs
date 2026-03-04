@@ -71,6 +71,7 @@ pub enum PreferenceValueType {
     CustomTranslations,
     WarnWhenMissingRecentStocktakeData,
     String,
+    Colour,
     // MultilineString,
     // Add scalar or custom value types here - mapped to frontend renderers
 }

@@ -147,20 +147,19 @@ impl From<RepositoryError> for InsertVaccinationError {
 
 impl From<InsertPrescriptionError> for InsertVaccinationError {
     fn from(error: InsertPrescriptionError) -> Self {
-        InsertVaccinationError::InternalError(format!("Could not create prescription: {:?}", error))
+        InsertVaccinationError::InternalError(format!("Could not create prescription: {error:?}"))
     }
 }
 impl From<InsertStockOutLineError> for InsertVaccinationError {
     fn from(error: InsertStockOutLineError) -> Self {
         InsertVaccinationError::InternalError(format!(
-            "Could not create prescription line: {:?}",
-            error
+            "Could not create prescription line: {error:?}"
         ))
     }
 }
 impl From<UpdatePrescriptionError> for InsertVaccinationError {
     fn from(error: UpdatePrescriptionError) -> Self {
-        InsertVaccinationError::InternalError(format!("Could not update prescription: {:?}", error))
+        InsertVaccinationError::InternalError(format!("Could not update prescription: {error:?}"))
     }
 }
 
@@ -176,13 +175,14 @@ fn create_missing_not_given_vaccinations(
 
     // Get all doses for this vaccine course
     let all_course_doses = VaccineCourseDoseRepository::new(connection).query_by_filter(
-        VaccineCourseDoseFilter::new().vaccine_course_id(EqualFilter::equal_to(vaccine_course_id.to_string())),
+        VaccineCourseDoseFilter::new()
+            .vaccine_course_id(EqualFilter::equal_to(vaccine_course_id.to_string())),
     )?;
 
     // Find the current dose index
     let current_dose_index = all_course_doses
         .iter()
-        .position(|v| &v.vaccine_course_dose_row.id == current_vaccine_course_dose_id)
+        .position(|v| v.vaccine_course_dose_row.id == current_vaccine_course_dose_id)
         .unwrap_or(0);
 
     // Create "Not given" vaccinations for all previous doses that don't have vaccinations
@@ -194,7 +194,9 @@ fn create_missing_not_given_vaccinations(
         // Check if vaccination already exists for this dose
         let existing_vaccination = VaccinationRepository::new(connection).query_one(
             VaccinationFilter::new()
-                .vaccine_course_dose_id(EqualFilter::equal_to(dose.vaccine_course_dose_row.id.to_string()))
+                .vaccine_course_dose_id(EqualFilter::equal_to(
+                    dose.vaccine_course_dose_row.id.to_string(),
+                ))
                 .program_enrolment_id(EqualFilter::equal_to(program_enrolment.id.to_string())),
         )?;
 

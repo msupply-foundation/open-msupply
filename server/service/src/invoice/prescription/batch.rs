@@ -67,8 +67,8 @@ pub fn batch_prescription(
             let mutations_processor = BatchMutationsProcessor::new(ctx);
 
             // Insert Prescription
-            let (has_errors, result) = mutations_processor
-                .do_mutations(input.insert_prescription, insert_prescription);
+            let (has_errors, result) =
+                mutations_processor.do_mutations(input.insert_prescription, insert_prescription);
             results.insert_prescription = result;
             if has_errors && !continue_on_error {
                 return Err(WithDBError::err(results));

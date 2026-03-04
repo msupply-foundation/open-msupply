@@ -72,8 +72,9 @@ const DetailViewInner = () => {
     isLoading: rowsLoading,
     data: lines,
     onRowClick: row => onOpen(row.item),
-    grouping: { enabled: true, groupedByDefault: true },
+    grouping: { enabled: true, groupedByDefault: false },
     initialSort: { key: 'itemName', dir: 'asc' },
+    manualFiltering: true,
     getIsPlaceholderRow,
     noDataElement: (
       <NothingHere

@@ -135,7 +135,6 @@ export const ClinicianSearchInput = ({
           <CreateClinicianSlider
             draft={draft}
             updateDraft={updateDraft}
-            width={500}
             open={editorOpen}
             onClose={handleClinicianClose}
             confirmAndSave={confirmAndSave}

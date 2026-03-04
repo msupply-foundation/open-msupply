@@ -5,6 +5,7 @@ import {
   useInterval,
   LoadingButton,
   useHostContext,
+  useAuthContext,
   LocalStorage,
   useFormatDateTime,
   BoxedErrorWithDetails,
@@ -15,9 +16,10 @@ import { LoginLayout } from './LoginLayout';
 import { SiteInfo } from '../SiteInfo';
 import { useHost } from '../../api';
 
-export const Login = () => {
+export const Login = ({ fullSize = true }: { fullSize?: boolean }) => {
   const t = useTranslation();
   const { setPageTitle } = useHostContext();
+  const { logout } = useAuthContext();
   const hashInput = {
     logo: LocalStorage.getItem('/theme/logohash') ?? '',
     theme: LocalStorage.getItem('/theme/customhash') ?? '',
@@ -34,7 +36,7 @@ export const Login = () => {
     onLogin,
     error,
     siteName,
-  } = useLoginForm(passwordRef);
+  } = useLoginForm(passwordRef, fullSize);
   const [timeoutRemaining, setTimeoutRemaining] = useState(
     error?.timeoutRemaining ?? 0
   );
@@ -97,6 +99,17 @@ export const Login = () => {
       };
     }
 
+    // Treat failed to fetch error as a connection error as this is the most likely cause, and provides a more helpful message to the user
+    if (
+      error?.detail?.includes('Failed to fetch') || // Chrome
+      error?.detail?.includes('NetworkError') // Firefox
+    ) {
+      return {
+        error: t('error.connection-error'),
+        hint: t('error.connection-error-hint'),
+      };
+    }
+
     return {
       error: t('error.authentication-error'),
     };
@@ -120,9 +133,13 @@ export const Login = () => {
   }, [displaySettings]);
 
   useEffect(() => {
-    setPageTitle(`${t('app.login')} | ${t('app')} `);
-    LocalStorage.removeItem('/error/auth');
-  }, [setPageTitle, t]);
+    if (fullSize) {
+      logout();
+      setPageTitle(`${t('app.login')} | ${t('app')} `);
+      LocalStorage.removeItem('/error/auth');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [setPageTitle, t, fullSize]);
 
   return (
     <LoginLayout
@@ -184,6 +201,7 @@ export const Login = () => {
         if (isValid) await onLogin();
       }}
       SiteInfo={<SiteInfo siteName={siteName} />}
+      fullSize={fullSize}
     />
   );
 };

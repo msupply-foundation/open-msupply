@@ -4,7 +4,7 @@ use rustls::ServerConfig;
 use service::settings::{is_develop, ServerSettings};
 use std::{
     fmt::Display,
-    io::{BufReader, ErrorKind, Write},
+    io::{BufReader, Write},
     path::PathBuf,
 };
 
@@ -100,12 +100,9 @@ impl Certificates {
                     let cert_files = match Self::generate_certs(&cert_path) {
                         Ok(cert_files) => cert_files,
                         Err(e) => {
-                            warn!("Error generating self signed certificates: {}", e);
+                            warn!("Error generating self signed certificates: {e}");
                             error!("No certificates found");
-                            return Err(std::io::Error::new(
-                                ErrorKind::Other,
-                                "Certificate required",
-                            ));
+                            return Err(std::io::Error::other("Certificate required"));
                         }
                     };
                     Some(load_certs_rustls(cert_files).expect("Invalid self signed certificates"))

@@ -1632,6 +1632,7 @@ export type CustomerReturnInput = {
   customerReturnLines: Array<CustomerReturnLineInput>;
   id: Scalars['String']['input'];
   outboundShipmentId?: InputMaybe<Scalars['String']['input']>;
+  theirReference?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type CustomerReturnLineInput = {
@@ -6926,6 +6927,7 @@ export enum PreferenceNodeType {
 
 export enum PreferenceValueNodeType {
   Boolean = 'BOOLEAN',
+  Colour = 'COLOUR',
   CustomTranslations = 'CUSTOM_TRANSLATIONS',
   Integer = 'INTEGER',
   MultiChoice = 'MULTI_CHOICE',
@@ -11327,7 +11329,7 @@ export type UpsertPreferencesInput = {
     Array<BoolStorePrefInput>
   >;
   showContactTracing?: InputMaybe<Scalars['Boolean']['input']>;
-  showIndicativePriceInRequisitions?: InputMaybe<Scalars['Boolean']['input']>;
+  showIndicativePriceInRequisitions?: InputMaybe<Array<BoolStorePrefInput>>;
   sortByVvmStatusThenExpiry?: InputMaybe<Array<BoolStorePrefInput>>;
   storeCustomColour?: InputMaybe<Array<StringStorePrefInput>>;
   syncRecordsDisplayThreshold?: InputMaybe<Scalars['Int']['input']>;

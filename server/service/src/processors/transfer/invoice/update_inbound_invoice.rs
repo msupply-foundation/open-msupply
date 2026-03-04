@@ -246,7 +246,7 @@ mod test {
             .unwrap();
 
         UpdateInboundInvoiceProcessor {}
-            .try_process_record(&ctx, &processor_input)
+            .try_process_record(ctx, &processor_input)
             .unwrap();
 
         let invoice = get_invoice_row(&ctx.connection, second_half_row.id.to_string());
@@ -256,15 +256,15 @@ mod test {
             "The transfer should remain Picked if the first half is still Picked"
         );
 
-        match processor_input.operation {
-            Operation::Upsert {
-                ref mut invoice, ..
-            } => invoice.invoice_row.status = InvoiceStatus::Shipped,
-            _ => (),
+        if let Operation::Upsert {
+            ref mut invoice, ..
+        } = processor_input.operation
+        {
+            invoice.invoice_row.status = InvoiceStatus::Shipped
         }
 
         UpdateInboundInvoiceProcessor {}
-            .try_process_record(&ctx, &processor_input)
+            .try_process_record(ctx, &processor_input)
             .unwrap();
 
         let invoice = get_invoice_row(&ctx.connection, second_half_row.id.to_string());
@@ -282,11 +282,11 @@ mod test {
             store_id: Some("store_a".to_string()),
         };
 
-        match processor_input.operation {
-            Operation::Upsert {
-                ref mut invoice, ..
-            } => invoice.invoice_row.status = InvoiceStatus::Picked,
-            _ => (),
+        if let Operation::Upsert {
+            ref mut invoice, ..
+        } = processor_input.operation
+        {
+            invoice.invoice_row.status = InvoiceStatus::Picked
         }
 
         let (_, _, connection_manager, _) = setup_all_with_data(
@@ -305,7 +305,7 @@ mod test {
             .unwrap();
 
         UpdateInboundInvoiceProcessor {}
-            .try_process_record(&ctx, &processor_input)
+            .try_process_record(ctx, &processor_input)
             .unwrap();
         let invoice = get_invoice_row(&ctx.connection, second_half_row.id.to_string());
         assert_eq!(
@@ -314,15 +314,15 @@ mod test {
             "The transfer should remain Picked if the first half is still Picked"
         );
 
-        match processor_input.operation {
-            Operation::Upsert {
-                ref mut invoice, ..
-            } => invoice.invoice_row.status = InvoiceStatus::Shipped,
-            _ => (),
+        if let Operation::Upsert {
+            ref mut invoice, ..
+        } = processor_input.operation
+        {
+            invoice.invoice_row.status = InvoiceStatus::Shipped
         }
 
         UpdateInboundInvoiceProcessor {}
-            .try_process_record(&ctx, &processor_input)
+            .try_process_record(ctx, &processor_input)
             .unwrap();
 
         let invoice = get_invoice_row(&ctx.connection, second_half_row.id.to_string());

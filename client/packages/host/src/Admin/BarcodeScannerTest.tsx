@@ -32,7 +32,20 @@ export const BarcodeScannerTest = () => {
     stopScan,
     scan,
     supportsContinuousScanning,
-  } = useBarcodeScannerContext();
+  } = useBarcodeScannerContext((result, err) => {
+    if (err) {
+      setError(`${t('messages.scanning-error')}: ${err}`);
+      return;
+    }
+    setScanResults(prev => [
+      {
+        text: result.content || '',
+        timestamp: new Date(),
+        parsed: result,
+      },
+      ...prev,
+    ]);
+  });
 
   useEffect(() => {
     // Auto-start scanning for Honeywell and Manual when page loads
@@ -52,20 +65,7 @@ export const BarcodeScannerTest = () => {
 
   const handleStartScanning = async () => {
     try {
-      await startListening((result, err) => {
-        if (err) {
-          setError(`${t('messages.scanning-error')}: ${err}`);
-          return;
-        }
-        setScanResults(prev => [
-          {
-            text: result.content || '',
-            timestamp: new Date(),
-            parsed: result,
-          },
-          ...prev,
-        ]);
-      });
+      await startListening();
     } catch (e) {
       console.error('Error starting scanner listening:', e);
       const errorMsg = (e as Error)?.message || t('messages.unknown-error');
@@ -241,10 +241,10 @@ export const BarcodeScannerTest = () => {
                                 {result.parsed.quantity}
                               </Typography>
                             )}
-                            {result.parsed.packsize && (
+                            {result.parsed.packSize && (
                               <Typography variant="body2" sx={{ mb: 0.5 }}>
                                 <strong>{t('label.pack-size')}:</strong>{' '}
-                                {result.parsed.packsize}
+                                {result.parsed.packSize}
                               </Typography>
                             )}
                           </Box>

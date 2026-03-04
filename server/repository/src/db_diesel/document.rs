@@ -382,12 +382,12 @@ fn to_document(join: DocumentJoin) -> Result<Document, RepositoryError> {
     let parents: Vec<String> =
         serde_json::from_str(&parent_ids).map_err(|err| RepositoryError::DBError {
             msg: "Invalid parents data".to_string(),
-            extra: format!("{}", err),
+            extra: format!("{err}"),
         })?;
     let data: serde_json::Value =
         serde_json::from_str(&data).map_err(|err| RepositoryError::DBError {
             msg: "Invalid data".to_string(),
-            extra: format!("{}", err),
+            extra: format!("{err}"),
         })?;
 
     let document = Document {
@@ -412,11 +412,11 @@ impl Document {
         let parents =
             serde_json::to_string(&self.parent_ids).map_err(|err| RepositoryError::DBError {
                 msg: "Can't serialize parents".to_string(),
-                extra: format!("{}", err),
+                extra: format!("{err}"),
             })?;
         let data = serde_json::to_string(&self.data).map_err(|err| RepositoryError::DBError {
             msg: "Can't serialize data".to_string(),
-            extra: format!("{}", err),
+            extra: format!("{err}"),
         })?;
         Ok(DocumentRow {
             id: self.id.to_string(),
