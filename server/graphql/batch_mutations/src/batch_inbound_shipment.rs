@@ -1,8 +1,9 @@
 use async_graphql::*;
-use graphql_core::standard_graphql_error::validate_auth;
+use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::ContextExt;
 use graphql_invoice::mutations::inbound_shipment;
 use graphql_invoice_line::mutations::inbound_shipment_line;
+use repository::InvoiceRowRepository;
 use service::auth::Resource;
 use service::auth::ResourceAccessRequest;
 use service::invoice::inbound_shipment::*;
@@ -122,15 +123,85 @@ pub struct BatchInput {
 }
 
 pub fn batch(ctx: &Context<'_>, store_id: &str, input: BatchInput) -> Result<BatchResponse> {
-    let user = validate_auth(
-        ctx,
-        &ResourceAccessRequest {
-            resource: Resource::MutateInboundShipment,
-            store_id: Some(store_id.to_string()),
-        },
-    )?;
-
     let service_provider = ctx.service_provider();
+
+    // Determine if this batch involves external or internal shipments
+    let has_external_insert = input
+        .insert_inbound_shipments
+        .as_ref()
+        .map(|inserts| inserts.iter().any(|i| i.purchase_order_id.is_some()))
+        .unwrap_or(false);
+
+    let mut has_external_existing = false;
+    let mut has_internal_existing = false;
+
+    // Check update/delete targets to determine if they're external
+    let existing_ids: Vec<&str> = input
+        .update_inbound_shipments
+        .as_ref()
+        .map(|u| u.iter().map(|i| i.id.as_str()).collect::<Vec<_>>())
+        .unwrap_or_default()
+        .into_iter()
+        .chain(
+            input
+                .delete_inbound_shipments
+                .as_ref()
+                .map(|d| d.iter().map(|i| i.id.as_str()).collect::<Vec<_>>())
+                .unwrap_or_default(),
+        )
+        .collect();
+
+    if !existing_ids.is_empty() {
+        let basic_ctx = service_provider.basic_context()?;
+        let repo = InvoiceRowRepository::new(&basic_ctx.connection);
+        for id in &existing_ids {
+            let invoice_row = repo
+                .find_one_by_id(id)
+                .map_err(|e| StandardGraphqlError::InternalError(format!("{e:#?}")).extend())?;
+            match invoice_row
+                .as_ref()
+                .and_then(|r| r.purchase_order_id.as_ref())
+            {
+                Some(_) => has_external_existing = true,
+                None => has_internal_existing = true,
+            }
+        }
+    }
+
+    let needs_internal = has_internal_existing
+        || input
+            .insert_inbound_shipments
+            .as_ref()
+            .map(|inserts| inserts.iter().any(|i| i.purchase_order_id.is_none()))
+            .unwrap_or(false)
+        || (existing_ids.is_empty()
+            && !has_external_insert
+            && (input.insert_inbound_shipment_lines.is_some()
+                || input.update_inbound_shipment_lines.is_some()
+                || input.delete_inbound_shipment_lines.is_some()));
+    let needs_external = has_external_existing || has_external_insert;
+
+    let mut user = None;
+    if needs_internal || (!needs_internal && !needs_external) {
+        user = Some(validate_auth(
+            ctx,
+            &ResourceAccessRequest {
+                resource: Resource::MutateInboundShipment,
+                store_id: Some(store_id.to_string()),
+            },
+        )?);
+    }
+    if needs_external {
+        user = Some(validate_auth(
+            ctx,
+            &ResourceAccessRequest {
+                resource: Resource::MutateInboundShipmentExternal,
+                store_id: Some(store_id.to_string()),
+            },
+        )?);
+    }
+
+    let user = user.expect("At least one permission check must have passed");
     let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
 
     let response = service_provider

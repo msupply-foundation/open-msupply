@@ -13,7 +13,7 @@ use graphql_core::simple_generic_errors::{CannotReverseInvoiceStatus, RecordNotF
 use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::ContextExt;
 use graphql_types::types::InvoiceNode;
-use repository::Invoice;
+use repository::{Invoice, InvoiceRowRepository};
 use service::auth::{Resource, ResourceAccessRequest};
 use service::invoice::inbound_shipment::{
     ApplyDonorToInvoiceLines, UpdateDefaultDonor, UpdateInboundShipment as ServiceInput,
@@ -73,15 +73,25 @@ pub enum UpdateResponse {
 }
 
 pub fn update(ctx: &Context<'_>, store_id: &str, input: UpdateInput) -> Result<UpdateResponse> {
+    let service_provider = ctx.service_provider();
+    let basic_ctx = service_provider.basic_context()?;
+    let invoice_row = InvoiceRowRepository::new(&basic_ctx.connection)
+        .find_one_by_id(&input.id)
+        .map_err(|e| StandardGraphqlError::InternalError(format!("{e:#?}")).extend())?;
+    let resource = match invoice_row
+        .as_ref()
+        .and_then(|r| r.purchase_order_id.as_ref())
+    {
+        Some(_) => Resource::MutateInboundShipmentExternal,
+        None => Resource::MutateInboundShipment,
+    };
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::MutateInboundShipment,
+            resource,
             store_id: Some(store_id.to_string()),
         },
     )?;
-
-    let service_provider = ctx.service_provider();
     let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
 
     map_response(

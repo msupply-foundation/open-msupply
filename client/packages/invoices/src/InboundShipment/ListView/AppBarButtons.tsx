@@ -13,6 +13,7 @@ import {
   useUrlQuery,
   SplitButtonOption,
   SplitButton,
+  UserPermission,
 } from '@openmsupply-client/common';
 import { ExportSelector } from '@openmsupply-client/system';
 import {
@@ -177,29 +178,51 @@ export const AddButton = ({
 }) => {
   const t = useTranslation();
   const currentTab = useUrlQuery().urlQuery['tab'];
+  const { userHasPermission } = useAuthContext();
 
-  const options: [SplitButtonOption<string>, SplitButtonOption<string>] = [
-    {
-      value: 'new-shipment',
-      label: t('button.new-shipment'),
-    },
-    {
-      value: 'new-external-shipment',
-      label: t('button.new-external-shipment'),
-    },
+  const hasInternalPermission = userHasPermission(
+    UserPermission.InboundShipmentMutate
+  );
+  const hasExternalPermission = userHasPermission(
+    UserPermission.InboundShipmentExternalMutate
+  );
+
+  const allOptions: SplitButtonOption<string>[] = [
+    ...(hasInternalPermission
+      ? [
+          {
+            value: 'new-shipment',
+            label: t('button.new-shipment'),
+          },
+        ]
+      : []),
+    ...(hasExternalPermission
+      ? [
+          {
+            value: 'new-external-shipment',
+            label: t('button.new-external-shipment'),
+          },
+        ]
+      : []),
   ];
 
   const [selectedOption, setSelectedOption] = useState<
     SplitButtonOption<string>
-  >(options[0]);
+  >(allOptions[0] ?? { value: '', label: '' });
 
   useEffect(() => {
-    if (currentTab === t('label.external')) {
-      setSelectedOption(options[1]);
-    } else {
-      setSelectedOption(options[0]);
+    if (currentTab === t('label.external') && hasExternalPermission) {
+      const externalOption = allOptions.find(
+        o => o.value === 'new-external-shipment'
+      );
+      if (externalOption) setSelectedOption(externalOption);
+    } else if (hasInternalPermission) {
+      const internalOption = allOptions.find(o => o.value === 'new-shipment');
+      if (internalOption) setSelectedOption(internalOption);
     }
   }, [currentTab]);
+
+  if (allOptions.length === 0) return null;
 
   const handleOptionSelection = (option: SplitButtonOption<string>) => {
     switch (option.value) {
@@ -221,7 +244,7 @@ export const AddButton = ({
     <>
       <SplitButton
         color="primary"
-        options={options}
+        options={allOptions}
         selectedOption={selectedOption}
         onSelectOption={onSelectOption}
         onClick={handleOptionSelection}

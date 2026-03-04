@@ -165,8 +165,12 @@ const StatusChangeButtonContent = ({
     t('messages.pending-lines')
   );
 
+  const isExternal = !!data.purchaseOrder;
   const onVerify = () => {
-    if (userHasPermission(UserPermission.InboundShipmentVerify)) {
+    const requiredPermission = isExternal
+      ? UserPermission.InboundShipmentExternalAuthorise
+      : UserPermission.InboundShipmentVerify;
+    if (userHasPermission(requiredPermission)) {
       getConfirmation();
     } else {
       permissionDeniedNotification();
