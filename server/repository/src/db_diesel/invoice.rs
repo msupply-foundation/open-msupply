@@ -56,7 +56,7 @@ pub struct InvoiceFilter {
     pub stock_line_id: Option<String>,
     pub is_program_invoice: Option<bool>,
     pub is_cancellation: Option<bool>,
-    pub goods_received_id: Option<EqualFilter<String>>,
+    pub purchase_order_id: Option<EqualFilter<String>>,
     pub program_id: Option<EqualFilter<String>>,
 }
 
@@ -254,7 +254,7 @@ fn create_filtered_query(filter: Option<InvoiceFilter>) -> BoxedInvoiceQuery {
             stock_line_id,
             is_program_invoice,
             is_cancellation,
-            goods_received_id,
+            purchase_order_id,
             program_id,
         } = f;
 
@@ -265,7 +265,7 @@ fn create_filtered_query(filter: Option<InvoiceFilter>) -> BoxedInvoiceQuery {
         apply_equal_filter!(query, store_id, invoice::store_id);
         apply_string_filter!(query, their_reference, invoice::their_reference);
         apply_equal_filter!(query, requisition_id, invoice::requisition_id);
-        apply_equal_filter!(query, goods_received_id, invoice::goods_received_id);
+        apply_equal_filter!(query, purchase_order_id, invoice::purchase_order_id);
         apply_string_filter!(query, comment, invoice::comment);
         apply_equal_filter!(query, linked_invoice_id, invoice::linked_invoice_id);
         apply_equal_filter!(query, user_id, invoice::user_id);
@@ -486,8 +486,8 @@ impl InvoiceFilter {
         self
     }
 
-    pub fn goods_received_id(mut self, filter: EqualFilter<String>) -> Self {
-        self.goods_received_id = Some(filter);
+    pub fn purchase_order_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.purchase_order_id = Some(filter);
         self
     }
 }

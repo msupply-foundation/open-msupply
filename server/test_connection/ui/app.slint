@@ -1,0 +1,233 @@
+import { Button, LineEdit, ScrollView } from "std-widgets.slint";
+
+export struct TestEntry {
+    name: string,
+    // "pending" | "running" | "success" | "failure"
+    status: string,
+    message: string,
+}
+
+// Animated spinner: cycles through braille arc characters.
+// rotation-angle only works on Image/Text in Slint, so we use a Text glyph.
+component Spinner inherits Text {
+    // ⣾ ⣽ ⣻ ⢿ ⡿ ⣟ ⣯ ⣷  — 8-frame braille spinner
+    property <int> frame: 0;
+
+    Timer {
+        interval: 80ms;
+        running: true;
+        triggered => {
+            root.frame = mod(root.frame + 1, 8);
+        }
+    }
+
+    text: root.frame == 0 ? "⣾"
+        : root.frame == 1 ? "⣽"
+        : root.frame == 2 ? "⣻"
+        : root.frame == 3 ? "⢿"
+        : root.frame == 4 ? "⡿"
+        : root.frame == 5 ? "⣟"
+        : root.frame == 6 ? "⣯"
+        : "⣷";
+
+    color: #6366f1;
+    font-size: 18px;
+    width: 22px;
+    height: 22px;
+    horizontal-alignment: center;
+    vertical-alignment: center;
+}
+
+// Filled circle with a centred glyph
+component CircleIcon inherits Rectangle {
+    in property <color> fill;
+    in property <string> glyph;
+
+    width: 22px;
+    height: 22px;
+    border-radius: 11px;
+    background: fill;
+
+    Text {
+        text: glyph;
+        color: #ffffff;
+        font-size: 13px;
+        font-weight: 700;
+        horizontal-alignment: center;
+        vertical-alignment: center;
+    }
+}
+
+// One row in the test list
+component TestRow inherits Rectangle {
+    in property <string> test-name;
+    in property <string> status;
+    in property <string> message;
+
+    border-radius: 6px;
+    background: status == "failure" ? #fef2f2
+              : status == "success" ? #f0fdf4
+              : status == "running"  ? #f5f3ff
+              : transparent;
+
+    HorizontalLayout {
+        padding: 10px;
+        spacing: 12px;
+        alignment: start;
+
+        // Status icon — exactly one is shown at a time
+        VerticalLayout {
+            alignment: center;
+            width: 22px;
+
+            if root.status == "pending": Rectangle {
+                width: 22px;
+                height: 22px;
+                border-radius: 11px;
+                background: #d1d5db;
+            }
+            if root.status == "running": Spinner {}
+            if root.status == "success": CircleIcon { fill: #22c55e; glyph: "✓"; }
+            if root.status == "failure": CircleIcon { fill: #ef4444; glyph: "✗"; }
+        }
+
+        // Name + optional error message
+        VerticalLayout {
+            spacing: 4px;
+            alignment: center;
+
+            Text {
+                text: root.test-name;
+                font-size: 14px;
+                font-weight: 600;
+                color: #111827;
+                vertical-alignment: center;
+            }
+
+            if root.message != "": Text {
+                text: root.message;
+                font-size: 12px;
+                color: root.status == "failure" ? #dc2626 : #6b7280;
+                wrap: word-wrap;
+            }
+        }
+    }
+}
+
+export component App inherits Window {
+    title: "Open mSupply — Connection Tester";
+    icon: @image-url("./oms.ico");
+    preferred-width: 660px;
+    preferred-height: 560px;
+    min-width: 480px;
+    min-height: 380px;
+    background: #f1f5f9;
+
+    in-out property <string> username: "";
+    in-out property <string> password: "";
+    in-out property <[TestEntry]> tests: [];
+    in-out property <bool> running: false;
+
+    callback start-tests(string, string);
+
+    VerticalLayout {
+        padding: 24px;
+        spacing: 16px;
+
+        // ── Header ──────────────────────────────────────────────────
+        Text {
+            text: "Open mSupply Connection Tester";
+            font-size: 20px;
+            font-weight: 700;
+            color: #0f172a;
+        }
+
+        // ── Credential card ─────────────────────────────────────────
+        Rectangle {
+            border-radius: 10px;
+            background: #ffffff;
+            drop-shadow-blur: 4px;
+            drop-shadow-color: #00000018;
+
+            VerticalLayout {
+                padding: 20px;
+                spacing: 14px;
+
+                HorizontalLayout {
+                    spacing: 12px;
+
+                    Text {
+                        text: "Username";
+                        vertical-alignment: center;
+                        min-width: 80px;
+                        font-size: 14px;
+                        color: #374151;
+                    }
+                    username-edit := LineEdit {
+                        text <=> root.username;
+                        placeholder-text: "Enter username";
+                        enabled: !root.running;
+                        // Enter on username moves focus to password
+                        accepted => { password-edit.focus(); }
+                    }
+                }
+
+                HorizontalLayout {
+                    spacing: 12px;
+
+                    Text {
+                        text: "Password";
+                        vertical-alignment: center;
+                        min-width: 80px;
+                        font-size: 14px;
+                        color: #374151;
+                    }
+                    password-edit := LineEdit {
+                        text <=> root.password;
+                        input-type: InputType.password;
+                        placeholder-text: "Enter password";
+                        enabled: !root.running;
+                        // Enter on password submits
+                        accepted => {
+                            if !root.running { root.start-tests(root.username, root.password); }
+                        }
+                    }
+                }
+
+                HorizontalLayout {
+                    alignment: end;
+                    Button {
+                        text: root.running ? "Running…" : "Start";
+                        enabled: !root.running;
+                        primary: true;
+                        clicked => {
+                            root.start-tests(root.username, root.password);
+                        }
+                    }
+                }
+            }
+        }
+
+        // ── Test list card ──────────────────────────────────────────
+        if root.tests.length > 0: Rectangle {
+            border-radius: 10px;
+            background: #ffffff;
+            drop-shadow-blur: 4px;
+            drop-shadow-color: #00000018;
+            vertical-stretch: 1;
+
+            ScrollView {
+                VerticalLayout {
+                    padding: 10px;
+                    spacing: 4px;
+
+                    for test in root.tests: TestRow {
+                        test-name: test.name;
+                        status: test.status;
+                        message: test.message;
+                    }
+                }
+            }
+        }
+    }
+}

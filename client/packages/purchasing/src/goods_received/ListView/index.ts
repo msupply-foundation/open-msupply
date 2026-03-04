@@ -1,1 +1,0 @@
-export { GoodsReceivedListView } from './ListView';

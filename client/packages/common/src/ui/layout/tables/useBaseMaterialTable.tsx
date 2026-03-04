@@ -1,13 +1,14 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import {
+  MRT_Row,
   MRT_RowData,
   MRT_TableOptions,
   useMaterialReactTable,
 } from 'material-react-table';
+import { Row } from '@tanstack/table-core';
 import { useIntlUtils, useTranslation } from '@common/intl';
 import { ColumnDef } from './types';
 import { useMaterialTableColumns } from './useMaterialTableColumns';
-import { getGroupedRows } from './utils';
 import { useTableFiltering } from './useTableFiltering';
 import { useTableDisplayOptions } from './useTableDisplayOptions';
 import { useUrlSortManagement } from './useUrlSortManagement';
@@ -17,9 +18,9 @@ import {
   useColumnSizing,
   useColumnVisibility,
   useColumnPinning,
-  useIsGrouped,
   useSaveGlobalTableConfig,
   useGlobalTableDefaults,
+  useColumnGrouping,
 } from './tableState';
 import { clearSavedState, getSavedState } from './tableState/utils';
 import { DataError, NothingHere } from '@common/components';
@@ -38,15 +39,11 @@ export interface BaseTableConfig<T extends MRT_RowData> extends Omit<
   onRowClick?: (row: T, isCtrlClick: boolean) => void;
   isLoading?: boolean;
   isError?: boolean;
-  getIsPlaceholderRow?: (row: T) => boolean;
+  getIsPlaceholderRow?: (row: MRT_Row<T>) => boolean;
   /** Whether row should be greyed out - still potentially clickable */
-  getIsRestrictedRow?: (row: T) => boolean;
+  getIsRestrictedRow?: (row: MRT_Row<T>) => boolean;
   grouping?: {
-    /** Defaults to false */
-    enabled: boolean;
-    /** Defaults to 'itemName' */
-    field?: string;
-    /** Defaults to false */
+    field: string;
     groupedByDefault?: boolean;
   };
   columns: ColumnDef<T>[];
@@ -66,7 +63,7 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
   getIsRestrictedRow,
   columns: omsColumns,
   data,
-  grouping,
+  grouping: groupingInput,
   enableColumnResizing = true,
   manualFiltering = false,
   noUrlFiltering = false,
@@ -99,30 +96,16 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
   );
   const { sorting, onSortingChange } = useUrlSortManagement(initialSort);
 
-  const { isGrouped, toggleGrouped, resetGrouped } = useIsGrouped(
-    tableId,
-    grouping?.groupedByDefault
-  );
-
-  const processedData = useMemo(
-    () =>
-      getGroupedRows(isGrouped, data ?? [], grouping?.field ?? 'itemName', t),
-    [data, isGrouped, t]
-  );
-
   const density = useColumnDensity(tableId);
   const columnSizing = useColumnSizing(tableId);
   const columnVisibility = useColumnVisibility(tableId, columns, isMobile);
-  const columnPinning = useColumnPinning(
-    tableId,
-    columns,
-    !!enableRowSelection
-  );
+  const columnPinning = useColumnPinning(tableId, columns);
+  const grouping = useColumnGrouping(tableId, groupingInput);
   const columnOrder = useColumnOrder(
     tableId,
     columns,
     enableRowSelection,
-    isGrouped
+    !!grouping.state.length
   );
 
   const resetTableState = () => {
@@ -132,12 +115,10 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
     // reset function doesn't fire the onChange handlers (needed to trigger our
     // state handlers).
     // Seeing as local storage has already been cleared,
-    // these shouldn't trigger additional local storage updates.
-    // If global defaults exist (and user is not admin), apply them instead of
-    // resetting to hard-coded defaults.
-    if (resetDefaults?.columnPinning)
-      table.setColumnPinning(resetDefaults.columnPinning);
-    else table.resetColumnPinning();
+    // these shouldn't trigger additional local storage updates
+    table.resetColumnPinning();
+    table.resetColumnSizing();
+    table.resetGrouping();
 
     if (resetDefaults?.columnSizing)
       table.setColumnSizing(resetDefaults.columnSizing);
@@ -147,7 +128,7 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
       table.setColumnOrder(resetDefaults.columnOrder);
     else table.resetColumnOrder();
 
-    resetGrouped();
+    table.resetGrouping();
 
     // Visibility `initial` could change if prefs have come on/screen size
     // changed so reset to latest initial value rather than default initial
@@ -156,24 +137,19 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
       resetDefaults?.columnVisibility ?? columnVisibility.initial
     );
 
-    table.setDensity(resetDefaults?.density ?? density.initial);
-
-    // Reset the flags for each state slice too
-    density.resetHasSavedState();
-    columnSizing.resetHasSavedState();
-    columnPinning.resetHasSavedState();
-    columnVisibility.resetHasSavedState();
-    columnOrder.resetHasSavedState();
+    // Density doesn't have a `reset` function
+    table.setDensity(density.initial);
   };
 
   // hiding all table filter related options for now
   const hasColumnFilters = false;
 
   const onSaveAsGlobalDefault = canEditGlobalDefaults
-    ? () => saveGlobalTableConfig(tableId, getSavedState(tableId))
+    ? () => saveGlobalTableConfig(tableId, getSavedState(tableId) ?? {})
     : undefined;
 
   const displayOptions = useTableDisplayOptions({
+    tableId,
     density,
     columnSizing,
     columnVisibility,
@@ -182,8 +158,8 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
     resetTableState,
     hasColumnFilters,
     onRowClick,
-    isGrouped,
-    toggleGrouped: grouping?.enabled ? toggleGrouped : undefined,
+    isGrouped: !!grouping.state.length,
+    toggleGrouped: grouping.enabled ? grouping.toggle : undefined,
     getIsPlaceholderRow,
     getIsRestrictedRow,
     muiTableBodyRowProps,
@@ -197,7 +173,7 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
 
     localization,
 
-    data: processedData,
+    data: data ?? [],
     enablePagination: false,
 
     layoutMode: 'grid',
@@ -220,14 +196,52 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
 
     // Disable bottom footer - use OMS custom action footer instead
     enableBottomToolbar: false,
-    enableExpanding: isGrouped,
+
+    // Grouping options
+    enableGrouping: true,
+    groupedColumnMode: false,
+
+    // These options are needed to stop groups with only 1 child being expandable - we only want groups to be expandable if they have multiple children
+    getRowCanExpand: row => row.getLeafRows().length > 1,
+    getExpandedRowModel: table => () => {
+      const rowModel = table.getPreExpandedRowModel();
+
+      // Rows should contain all visible rows, including group rows and their children (if expanded)
+      const rows: Row<T>[] = [];
+
+      const handleRow = (row: Row<T>) => {
+        rows.push(row);
+
+        if (row.subRows?.length > 1 && row.getIsExpanded()) {
+          row.subRows.forEach(handleRow);
+        }
+      };
+
+      rowModel.rows.forEach(handleRow);
+
+      // We can't pass rowModel.flatRows directly as for some reason rows come in duplicated when there's grouping and no sorting applied
+      // I think this is a bug in tanstack table
+      const flatRows: Row<T>[] = [];
+
+      const seenRowIds = new Set<string>();
+      rowModel.flatRows.forEach(row => {
+        if (!seenRowIds.has(row.id)) {
+          flatRows.push(row);
+          seenRowIds.add(row.id);
+        }
+      });
+
+      return {
+        rows,
+        flatRows,
+        rowsById: rowModel.rowsById,
+      };
+    },
 
     // Disable selection Toolbar, we use our own custom footer for this
     positionToolbarAlertBanner: 'none',
 
     manualFiltering,
-    onColumnFiltersChange,
-    onSortingChange,
 
     filterFromLeafRows: true,
 
@@ -237,6 +251,7 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
       columnVisibility: columnVisibility.initial,
       columnPinning: columnPinning.initial,
       columnOrder: columnOrder.initial,
+      grouping: grouping.initial,
     },
     state: {
       showLoadingOverlay: isLoading,
@@ -247,13 +262,17 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
       columnVisibility: columnVisibility.state,
       columnPinning: columnPinning.state,
       columnOrder: columnOrder.state,
+      grouping: grouping.state,
       ...state,
     },
+    onColumnFiltersChange,
+    onSortingChange,
     onDensityChange: density.update,
     onColumnSizingChange: columnSizing.update,
     onColumnVisibilityChange: columnVisibility.update,
     onColumnPinningChange: columnPinning.update,
     onColumnOrderChange: columnOrder.update,
+    onGroupingChange: grouping.update,
 
     renderEmptyRowsFallback: () =>
       isLoading ? (

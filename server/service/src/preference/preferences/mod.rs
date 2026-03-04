@@ -24,14 +24,14 @@ pub mod show_indicative_price_in_requisitions;
 pub use show_indicative_price_in_requisitions::*;
 pub mod prevent_transfers_months_before_initialisation;
 pub use prevent_transfers_months_before_initialisation::*;
-pub mod authorise_goods_received;
-pub use authorise_goods_received::*;
 pub mod use_procurement_functionality;
 pub use use_procurement_functionality::*;
 pub mod disable_manual_returns;
 pub use disable_manual_returns::*;
 pub mod requisition_auto_finalise;
 pub use requisition_auto_finalise::*;
+pub mod external_inbound_shipment_lines_must_be_authorised;
+pub use external_inbound_shipment_lines_must_be_authorised::*;
 pub mod inbound_shipment_auto_verify;
 pub use inbound_shipment_auto_verify::*;
 pub mod warning_for_excess_request;
@@ -72,7 +72,6 @@ pub use global_table_configs::*;
 pub struct PreferenceProvider {
     // Global preferences
     pub allow_tracking_of_stock_by_donor: AllowTrackingOfStockByDonor,
-    pub authorise_goods_received: AuthoriseGoodsReceived,
     pub authorise_purchase_order: AuthorisePurchaseOrder,
     pub custom_translations: CustomTranslations,
     pub gender_options: GenderOptions,
@@ -100,6 +99,8 @@ pub struct PreferenceProvider {
     pub disable_manual_returns: DisableManualReturns,
     pub can_create_internal_order_from_a_requisition: CanCreateInternalOrderFromARequisition,
     pub select_destination_store_for_an_internal_order: SelectDestinationStoreForAnInternalOrder,
+    pub external_inbound_shipment_lines_must_be_authorised:
+        ExternalInboundShipmentLinesMustBeAuthorised,
     pub number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products:
         NumberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts,
     pub number_of_months_threshold_to_show_low_stock_alerts_for_products:
@@ -118,7 +119,6 @@ pub fn get_preference_provider() -> PreferenceProvider {
     PreferenceProvider {
         // Global preferences
         allow_tracking_of_stock_by_donor: AllowTrackingOfStockByDonor,
-        authorise_goods_received: AuthoriseGoodsReceived,
         authorise_purchase_order: AuthorisePurchaseOrder,
         custom_translations: CustomTranslations,
         gender_options: GenderOptions,
@@ -146,6 +146,8 @@ pub fn get_preference_provider() -> PreferenceProvider {
         inbound_shipment_auto_verify: InboundShipmentAutoVerify,
         can_create_internal_order_from_a_requisition: CanCreateInternalOrderFromARequisition,
         select_destination_store_for_an_internal_order: SelectDestinationStoreForAnInternalOrder,
+        external_inbound_shipment_lines_must_be_authorised:
+            ExternalInboundShipmentLinesMustBeAuthorised,
         number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products:
             NumberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts,
         number_of_months_threshold_to_show_low_stock_alerts_for_products:
