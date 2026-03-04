@@ -15,6 +15,7 @@ import {
 interface UploadDragAndDropProps {
   accept?: Accept;
   color?: 'primary' | 'secondary' | 'gray';
+  maxFiles?: number;
   maxSize?: number;
   onUpload: <T extends File>(files: T[]) => void;
 }
@@ -22,6 +23,7 @@ interface UploadDragAndDropProps {
 export const UploadDragAndDrop = ({
   accept,
   color = 'secondary',
+  maxFiles,
   onUpload,
 }: UploadDragAndDropProps) => {
   const t = useTranslation();
@@ -58,6 +60,7 @@ export const UploadDragAndDrop = ({
       <Dropzone
         onDrop={acceptedFiles => onUpload(acceptedFiles)}
         accept={accept}
+        maxFiles={maxFiles}
       >
         {({ getRootProps, getInputProps }) => (
           <div {...getRootProps()}>
