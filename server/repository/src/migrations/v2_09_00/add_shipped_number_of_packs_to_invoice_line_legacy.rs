@@ -159,9 +159,7 @@ mod tests {
         let version = V2_09_00.version();
 
         let SetupResult { connection, .. } = setup_test(SetupOption {
-            db_name: &format!(
-                "test_sync_ship_num_of_packs_to_exist_invoice_lines{version}"
-            ),
+            db_name: &format!("test_sync_ship_num_of_packs_to_exist_invoice_lines{version}"),
             version: Some(previous_version.clone()),
             ..Default::default()
         })

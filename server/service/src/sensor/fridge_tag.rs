@@ -232,9 +232,7 @@ fn sensor_add_breach_config_if_new(
 
     TemperatureBreachConfigRowRepository::new(connection)
         .upsert_one(&new_temperature_breach_config)?;
-    log::info!(
-        "Added sensor breach config {new_temperature_breach_config:?} "
-    );
+    log::info!("Added sensor breach config {new_temperature_breach_config:?} ");
     Ok(())
 }
 
@@ -295,9 +293,7 @@ fn resolve_localtime(timestamp: &NaiveDateTime, context: &str) -> Option<NaiveDa
     // We also need to handle the case where the time is ambiguous e.g. there can be 2 different 2am times in the same day due to daylight saving
     match Local.from_local_datetime(timestamp) {
         LocalResult::None => {
-            log::error!(
-                "Cannot convert to local timestamp ({context}) - {timestamp}"
-            );
+            log::error!("Cannot convert to local timestamp ({context}) - {timestamp}");
             None
         }
         LocalResult::Single(r) => Some(r.naive_utc()),
@@ -309,7 +305,9 @@ fn convert_from_localtime(
     sensor: &temperature_sensor::Sensor,
 ) -> Result<temperature_sensor::Sensor, ReadSensorError> {
     // map logs
-    let logs_mapped: Option<Vec<temperature_sensor::TemperatureLog>> = sensor.clone().logs.map(|logs| logs.into_iter()
+    let logs_mapped: Option<Vec<temperature_sensor::TemperatureLog>> =
+        sensor.clone().logs.map(|logs| {
+            logs.into_iter()
                 .filter(|log| resolve_localtime(&log.timestamp, "Temperature log").is_some())
                 .map(
                     |temperature_sensor::TemperatureLog {
@@ -324,33 +322,36 @@ fn convert_from_localtime(
                         }
                     },
                 )
-                .collect::<Vec<_>>());
+                .collect::<Vec<_>>()
+        });
     // map temperature breaches
     let breaches_mapped: Option<Vec<temperature_sensor::TemperatureBreach>> =
-        sensor.clone().breaches.map(|breaches| breaches
-                    .into_iter()
-                    .map(
-                        |temperature_sensor::TemperatureBreach {
-                             breach_type,
-                             start_timestamp,
-                             end_timestamp,
-                             duration,
-                             acknowledged,
-                         }| {
-                            let local_start = resolve_localtime(&start_timestamp, "Breach start")
-                                .unwrap_or(start_timestamp);
-                            let local_end = resolve_localtime(&end_timestamp, "Breach end")
-                                .unwrap_or(end_timestamp);
-                            temperature_sensor::TemperatureBreach {
-                                breach_type,
-                                start_timestamp: local_start,
-                                end_timestamp: local_end,
-                                duration,
-                                acknowledged,
-                            }
-                        },
-                    )
-                    .collect::<Vec<_>>());
+        sensor.clone().breaches.map(|breaches| {
+            breaches
+                .into_iter()
+                .map(
+                    |temperature_sensor::TemperatureBreach {
+                         breach_type,
+                         start_timestamp,
+                         end_timestamp,
+                         duration,
+                         acknowledged,
+                     }| {
+                        let local_start = resolve_localtime(&start_timestamp, "Breach start")
+                            .unwrap_or(start_timestamp);
+                        let local_end = resolve_localtime(&end_timestamp, "Breach end")
+                            .unwrap_or(end_timestamp);
+                        temperature_sensor::TemperatureBreach {
+                            breach_type,
+                            start_timestamp: local_start,
+                            end_timestamp: local_end,
+                            duration,
+                            acknowledged,
+                        }
+                    },
+                )
+                .collect::<Vec<_>>()
+        });
     // convert last connected timestamp
     let last_connected_timestamp_converted = match sensor.last_connected_timestamp {
         None => None,
