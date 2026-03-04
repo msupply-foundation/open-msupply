@@ -17,7 +17,7 @@ export const UploadFile = ({
   files,
   color = 'secondary',
   accept,
-  multiple,
+  multiple = false,
 }: UploadFileProps) => {
   const isNative = Capacitor.isNativePlatform();
   // Convert Accept type to a string for the native file input

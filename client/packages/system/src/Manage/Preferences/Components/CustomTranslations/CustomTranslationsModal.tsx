@@ -281,7 +281,6 @@ const CustomTranslationsUploadModal = ({
           onUpload={setSelectedFiles}
           color="secondary"
           accept={{ 'application/json': ['.json'] }}
-          multiple={false}
         />
         {selectedFiles.length > 0 && (
           <Typography color="textSecondary">
