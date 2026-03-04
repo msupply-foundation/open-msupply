@@ -6879,6 +6879,7 @@ export enum PreferenceKey {
   CustomTranslations = 'customTranslations',
   DaysInMonth = 'daysInMonth',
   DisableManualReturns = 'disableManualReturns',
+  DisplayPopulationBasedForecasting = 'displayPopulationBasedForecasting',
   ExpiredStockIssueThreshold = 'expiredStockIssueThreshold',
   ExpiredStockPreventIssue = 'expiredStockPreventIssue',
   FirstThresholdForExpiringItems = 'firstThresholdForExpiringItems',
@@ -6944,6 +6945,7 @@ export type PreferencesNode = {
   customTranslations: Scalars['JSONObject']['output'];
   daysInMonth: Scalars['Float']['output'];
   disableManualReturns: Scalars['Boolean']['output'];
+  displayPopulationBasedForecasting: Scalars['Boolean']['output'];
   expiredStockIssueThreshold: Scalars['Int']['output'];
   expiredStockPreventIssue: Scalars['Boolean']['output'];
   firstThresholdForExpiringItems: Scalars['Int']['output'];
@@ -8783,6 +8785,8 @@ export type RequisitionLineNode = {
   comment?: Maybe<Scalars['String']['output']>;
   daysOutOfStock: Scalars['Float']['output'];
   expiringUnits: Scalars['Float']['output'];
+  forecastTotalDoses?: Maybe<Scalars['Float']['output']>;
+  forecastTotalUnits?: Maybe<Scalars['Float']['output']>;
   id: Scalars['String']['output'];
   /** InboundShipment lines linked to requisitions line */
   inboundShipmentLines: InvoiceLineConnector;
@@ -8821,6 +8825,7 @@ export type RequisitionLineNode = {
   suggestedQuantity: Scalars['Float']['output'];
   /** Quantity to be supplied in the next shipment, only used in response requisition */
   supplyQuantity: Scalars['Float']['output'];
+  vaccineCourses?: Maybe<Scalars['String']['output']>;
 };
 
 export type RequisitionLineNodeItemStatsArgs = {
@@ -11294,6 +11299,7 @@ export type UpsertPreferencesInput = {
   customTranslations?: InputMaybe<Scalars['JSONObject']['input']>;
   daysInMonth?: InputMaybe<Scalars['Float']['input']>;
   disableManualReturns?: InputMaybe<Array<BoolStorePrefInput>>;
+  displayPopulationBasedForecasting?: InputMaybe<Scalars['Boolean']['input']>;
   expiredStockIssueThreshold?: InputMaybe<Scalars['Int']['input']>;
   expiredStockPreventIssue?: InputMaybe<Scalars['Boolean']['input']>;
   firstThresholdForExpiringItems?: InputMaybe<Array<IntegerStorePrefInput>>;
