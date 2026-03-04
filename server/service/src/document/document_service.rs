@@ -10,7 +10,6 @@ use crate::{
 };
 
 use super::raw_document::RawDocument;
- 
 
 #[derive(Debug, PartialEq)]
 pub enum DocumentInsertError {

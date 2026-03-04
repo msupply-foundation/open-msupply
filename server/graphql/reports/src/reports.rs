@@ -301,9 +301,7 @@ impl ReportFilterInput {
         ReportFilter {
             id: self.id.map(EqualFilter::from),
             name: self.name.map(StringFilter::from),
-            context: self
-                .context
-                .map(|t| map_filter!(t, ContextType::from)),
+            context: self.context.map(|t| map_filter!(t, ContextType::from)),
             sub_context: self.sub_context.map(EqualFilter::from),
             code: None,
             is_custom: None,

@@ -132,8 +132,8 @@ pub fn batch_outbound_shipment(
             let mutations_processor = BatchMutationsProcessor::new(ctx);
             // Insert Shipment
 
-            let (has_errors, result) = mutations_processor
-                .do_mutations(input.insert_shipment, insert_outbound_shipment);
+            let (has_errors, result) =
+                mutations_processor.do_mutations(input.insert_shipment, insert_outbound_shipment);
             results.insert_shipment = result;
             if has_errors && !continue_on_error {
                 return Err(WithDBError::err(results));

@@ -18,7 +18,9 @@ pub fn validate(
     user_has_auth_permission: Option<bool>,
 ) -> Result<(PurchaseOrder, Option<PurchaseOrderStatus>), UpdatePurchaseOrderError> {
     let purchase_order = PurchaseOrderRepository::new(connection)
-        .query_by_filter(PurchaseOrderFilter::new().id(EqualFilter::equal_to(input.id.to_string())))?
+        .query_by_filter(
+            PurchaseOrderFilter::new().id(EqualFilter::equal_to(input.id.to_string())),
+        )?
         .pop()
         .ok_or(UpdatePurchaseOrderError::PurchaseOrderDoesNotExist)?;
 
@@ -64,8 +66,9 @@ pub fn validate(
     }
 
     let purchase_order_lines = PurchaseOrderLineRepository::new(connection).query_by_filter(
-        PurchaseOrderLineFilter::new()
-            .purchase_order_id(EqualFilter::equal_to(purchase_order.purchase_order_row.id.to_string())),
+        PurchaseOrderLineFilter::new().purchase_order_id(EqualFilter::equal_to(
+            purchase_order.purchase_order_row.id.to_string(),
+        )),
     )?;
 
     // Only wanna check if status has been updated

@@ -41,7 +41,8 @@ pub fn update_indicator_value(
 
             IndicatorValueRepository::new(connection)
                 .query_one(
-                    IndicatorValueFilter::new().id(EqualFilter::equal_to(updated_row.id.to_string())),
+                    IndicatorValueFilter::new()
+                        .id(EqualFilter::equal_to(updated_row.id.to_string())),
                 )
                 .map_err(OutError::DatabaseError)?
                 .ok_or(OutError::IndicatorValueDoesNotExist)
@@ -64,14 +65,16 @@ fn validate(
     }
 
     let indicator_line = IndicatorLineRepository::new(connection)
-        .query_by_filter(IndicatorLineFilter::new().id(EqualFilter::equal_to(indicator_value_row.indicator_line_id.to_string())))?
+        .query_by_filter(IndicatorLineFilter::new().id(EqualFilter::equal_to(
+            indicator_value_row.indicator_line_id.to_string(),
+        )))?
         .pop()
         .ok_or(OutError::IndicatorLineDoesNotExist)?;
 
     let indicator_column = IndicatorColumnRepository::new(connection)
-        .query_by_filter(
-            IndicatorColumnFilter::new().id(EqualFilter::equal_to(indicator_value_row.indicator_column_id.to_string())),
-        )?
+        .query_by_filter(IndicatorColumnFilter::new().id(EqualFilter::equal_to(
+            indicator_value_row.indicator_column_id.to_string(),
+        )))?
         .pop()
         .ok_or(OutError::IndicatorColumnDoesNotExist)?;
 
