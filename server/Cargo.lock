@@ -10654,7 +10654,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "test-connection"
+name = "test_connection"
 version = "0.1.0"
 dependencies = [
  "cli",
