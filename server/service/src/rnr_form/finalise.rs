@@ -192,8 +192,8 @@ fn generate(
                     .entered_requested_quantity
                     .unwrap_or(rnr_form_line_row.calculated_requested_quantity);
 
-                // Skip lines with zero (or negative) requested quantity - they should not appear in the internal order
-                if requested_quantity <= 0.0 {
+                // Skip lines with zero requested quantity - they should not appear in the internal order
+                if requested_quantity == 0.0 {
                     return None;
                 }
 
