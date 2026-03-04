@@ -151,6 +151,7 @@ export type CustomerReturnLineFragment = {
   expiryDate?: string | null;
   numberOfPacks: number;
   packSize: number;
+  sellPricePerPack: number;
   volumePerPack: number;
   item: {
     __typename: 'ItemNode';
@@ -564,6 +565,7 @@ export type CustomerReturnByNumberQuery = {
             expiryDate?: string | null;
             numberOfPacks: number;
             packSize: number;
+            sellPricePerPack: number;
             volumePerPack: number;
             item: {
               __typename: 'ItemNode';
@@ -641,6 +643,7 @@ export type CustomerReturnByIdQuery = {
             expiryDate?: string | null;
             numberOfPacks: number;
             packSize: number;
+            sellPricePerPack: number;
             volumePerPack: number;
             item: {
               __typename: 'ItemNode';
@@ -983,6 +986,7 @@ export const CustomerReturnLineFragmentDoc = gql`
     expiryDate
     numberOfPacks
     packSize
+    sellPricePerPack
     item {
       __typename
       id

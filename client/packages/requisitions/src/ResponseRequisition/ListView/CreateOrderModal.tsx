@@ -1,6 +1,5 @@
 import React, { useMemo } from 'react';
 import {
-  ColumnAlign,
   useWindowDimensions,
   useTranslation,
   useDialog,
@@ -46,32 +45,29 @@ export const CreateOrderModal = ({
     },
   });
 
-  const columns = useMemo(() => {
-    const cols: ColumnDef<ResponseRowFragment>[] = [
+  const columns = useMemo(
+    (): ColumnDef<ResponseRowFragment>[] => [
       {
         accessorKey: 'requisitionNumber',
         header: t('label.number'),
+        columnType: ColumnType.Number,
         size: 80,
-        align: ColumnAlign.Right,
       },
       {
         accessorKey: 'otherPartyName',
         header: t('label.customer'),
         size: 200,
-        accessorFn: row => row.otherPartyName || '',
       },
       {
         accessorKey: 'createdDatetime',
         header: t('label.created-datetime'),
         size: 120,
-        align: ColumnAlign.Right,
         columnType: ColumnType.Date,
       },
       {
         accessorKey: 'programName',
         header: t('label.program'),
         size: 200,
-        accessorFn: row => row.programName || '',
       },
       {
         accessorKey: 'theirReference',
@@ -88,10 +84,9 @@ export const CreateOrderModal = ({
         header: t('label.comment'),
         columnType: ColumnType.Comment,
       },
-    ];
-    return cols;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    ],
+    []
+  );
 
   const { table } = useNonPaginatedMaterialTable<ResponseRowFragment>({
     tableId: 'create-order-from-requisition',

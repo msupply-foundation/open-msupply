@@ -1,4 +1,4 @@
-import React, { FC, memo } from 'react';
+import React, { memo } from 'react';
 import {
   Grid,
   DetailPanelSection,
@@ -12,19 +12,38 @@ import {
   Formatter,
 } from '@openmsupply-client/common';
 import { useOutbound } from '../../api';
+import { ShippingMethodSearchInput } from '@openmsupply-client/system';
 
-export const TransportSectionComponent: FC = () => {
+export const TransportSectionComponent = () => {
   const t = useTranslation();
   const isDisabled = useOutbound.utils.isDisabled();
-  const { transportReference, expectedDeliveryDate, update } =
-    useOutbound.document.fields(['transportReference', 'expectedDeliveryDate']);
+  const { transportReference, expectedDeliveryDate, shippingMethod, update } =
+    useOutbound.document.fields([
+      'transportReference',
+      'expectedDeliveryDate',
+      'shippingMethod',
+    ]);
   const [referenceBuffer, setReferenceBuffer] = useBufferState(
     transportReference ?? ''
   );
+  const [shippingMethodBuffer, setShippingMethodBuffer] =
+    useBufferState(shippingMethod);
 
   return (
     <DetailPanelSection title={t('heading.transport-details')}>
       <Grid container gap={0.5} key="transport-details">
+        <PanelRow>
+          <PanelLabel>{t('label.shipping-method')}</PanelLabel>
+          <ShippingMethodSearchInput
+            value={shippingMethodBuffer}
+            onChange={shippingMethod => {
+              setShippingMethodBuffer(shippingMethod);
+              update({ shippingMethod });
+            }}
+            width={250}
+            disabled={isDisabled}
+          />
+        </PanelRow>
         <PanelRow>
           <PanelLabel>{t('label.expected-delivery-date')}</PanelLabel>
           <DateTimePickerInput
@@ -44,7 +63,7 @@ export const TransportSectionComponent: FC = () => {
             }}
             textFieldSx={{
               backgroundColor: 'white',
-              width: 170,
+              width: 250,
             }}
             actions={['cancel', 'accept', 'clear']}
           />
@@ -62,7 +81,7 @@ export const TransportSectionComponent: FC = () => {
               input: {
                 style: {
                   backgroundColor: 'white',
-                  width: 170,
+                  width: 250,
                 },
               },
             }}

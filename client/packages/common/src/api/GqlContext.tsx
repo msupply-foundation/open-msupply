@@ -87,7 +87,6 @@ const shouldSaveRequestTime = (documentNode?: DocumentNode) =>
   documentNode && !documentNode?.definitions?.some(shouldIgnoreQuery);
 
 class GQLClient extends GraphQLClient {
-  private client: GraphQLClient;
   private emptyData: object;
   private skipRequest: SkipRequest;
   private lastRequestTime: Date;
@@ -98,7 +97,6 @@ class GQLClient extends GraphQLClient {
     skipRequest?: SkipRequest
   ) {
     super(url, options);
-    this.client = new GraphQLClient(url, options);
     this.emptyData = {};
     this.skipRequest = skipRequest || (() => false);
     this.lastRequestTime = new Date();
@@ -124,8 +122,8 @@ class GQLClient extends GraphQLClient {
 
     super.setHeader('Authorization', `Bearer ${getAuthCookie().token}`);
     const response = options.document
-      ? this.client.request(options)
-      : this.client.request(
+      ? super.request(options)
+      : super.request(
           documentOrOptions as RequestDocument,
           variables,
           requestHeaders
@@ -146,12 +144,6 @@ class GQLClient extends GraphQLClient {
     );
   }
 
-  public setHeaders = (headers: HeadersInit): GraphQLClient =>
-    this.client.setHeaders(headers);
-  public setHeader = (key: string, value: string): GraphQLClient =>
-    this.client.setHeader(key, value);
-  public setEndpoint = (value: string): GraphQLClient =>
-    this.client.setEndpoint(value);
   public setSkipRequest = (skipRequest: SkipRequest) =>
     (this.skipRequest = skipRequest);
   public getLastRequestTime = () => this.lastRequestTime;

@@ -37,7 +37,7 @@ const UIComponent = (props: ControlProps) => {
     Options,
     uischema.options
   );
-  const error = !!errors || !!zErrors;
+  const error = !!zErrors || !!errors;
 
   if (!props.visible) {
     return null;

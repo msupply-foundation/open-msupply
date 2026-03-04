@@ -136,6 +136,8 @@ export const AuthProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
       id: cookie.user?.id ?? '',
       name: cookie.user?.name ?? '',
       permissions,
+      email: cookie.user?.email,
+      jobTitle: cookie.user?.jobTitle,
     };
     const newCookie = { ...cookie, store, user };
     setAuthCookie(newCookie);

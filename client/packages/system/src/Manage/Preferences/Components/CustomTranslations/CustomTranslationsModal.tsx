@@ -9,17 +9,15 @@ import { useIntlUtils, useTranslation } from '@common/intl';
 import { useDialog, useNotification, useToggle } from '@common/hooks';
 import { mapTranslationsToArray, mapTranslationsToObject } from './helpers';
 import { TranslationsTable } from './TranslationsInputTable';
-import {
-  createTableStore,
-  TableProvider,
-} from '@openmsupply-client/common/src';
 
 export const EditCustomTranslations = ({
   value,
   update,
+  disabled,
 }: {
   value: Record<string, string>;
   update: (value: Record<string, string>) => Promise<boolean>;
+  disabled: boolean;
 }) => {
   const t = useTranslation();
   const isOpen = useToggle();
@@ -34,6 +32,7 @@ export const EditCustomTranslations = ({
         label={t('button.edit')}
         onClick={isOpen.toggleOn}
         Icon={<EditIcon />}
+        disabled={disabled}
       />
       {isOpen.isOn && (
         <CustomTranslationsModal
@@ -108,13 +107,11 @@ export const CustomTranslationsModal = ({
           />
         }
       >
-        <TableProvider createStore={createTableStore}>
-          <TranslationsTable
-            translations={translations}
-            setTranslations={setTranslations}
-            showValidationErrors={showValidationErrors}
-          />
-        </TableProvider>
+        <TranslationsTable
+          translations={translations}
+          setTranslations={setTranslations}
+          showValidationErrors={showValidationErrors}
+        />
       </Modal>
     </>
   );

@@ -345,6 +345,8 @@ fn generate_response_requisition_lines(
                 days_out_of_stock,
                 option_id,
                 price_per_unit,
+                available_volume,
+                location_type_id,
             },
         item_row: ItemRow { id: item_id, .. },
         requisition_row: _,
@@ -384,6 +386,8 @@ fn generate_response_requisition_lines(
             expiring_units,
             days_out_of_stock,
             option_id,
+            available_volume,
+            location_type_id,
             // Default
             supply_quantity: 0.0,
             approved_quantity: 0.0,

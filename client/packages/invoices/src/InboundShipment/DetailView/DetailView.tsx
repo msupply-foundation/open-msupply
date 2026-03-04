@@ -17,6 +17,8 @@ import {
   Groupable,
   NothingHere,
   MaterialTable,
+  useIsExtraSmallScreen,
+  MobileCardList,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import {
@@ -40,6 +42,8 @@ import { InboundShipmentLineErrorProvider } from '../context/inboundShipmentLine
 import { InboundShipmentDetailTabs } from './types';
 import { useInboundLines } from '../api/hooks/line/useInboundLines';
 import { useInboundShipmentColumns } from './columns';
+import { ScanInputModal } from './ScanInputModal';
+import { MobileToolbar } from './MobileToolbar';
 
 type InboundLineItem = InboundLineFragment['item'];
 
@@ -81,6 +85,8 @@ const DetailViewInner = () => {
   const isDisabled = useInbound.utils.isDisabled();
   const hasItemVariantsEnabled = useIsItemVariantsEnabled();
   const simplifiedTabletView = useSimplifiedTabletUI();
+
+  const isExtraSmallScreen = useIsExtraSmallScreen();
 
   const onRowClick = React.useCallback(
     (line: InboundItem | InboundLineFragment) => {
@@ -125,7 +131,7 @@ const DetailViewInner = () => {
     grouping: { enabled: true },
     isLoading: false,
     initialSort: { key: 'itemName', dir: 'asc' },
-    onRowClick: !isDisabled ? onRowClick : undefined,
+    onRowClick: !isDisabled && !isExtraSmallScreen ? onRowClick : undefined,
     getIsPlaceholderRow: row => !!isInboundPlaceholderRow(row),
     noDataElement: (
       <NothingHere
@@ -134,6 +140,7 @@ const DetailViewInner = () => {
         buttonText={t('button.add-item')}
       />
     ),
+    isMobile: isExtraSmallScreen,
   });
 
   const onReturn = async () => {
@@ -188,7 +195,11 @@ const DetailViewInner = () => {
 
   const tabs = [
     {
-      Component: <MaterialTable table={table} />,
+      Component: isExtraSmallScreen ? (
+        <MobileCardList table={table} />
+      ) : (
+        <MaterialTable table={table} />
+      ),
       value: InboundShipmentDetailTabs.Details,
     },
     {
@@ -225,7 +236,7 @@ const DetailViewInner = () => {
             }}
           />
 
-          <Toolbar />
+          {isExtraSmallScreen ? <MobileToolbar /> : <Toolbar />}
 
           <DetailTabs tabs={tabs} />
 
@@ -237,6 +248,12 @@ const DetailViewInner = () => {
             />
           )}
           <SidePanel />
+
+          <ScanInputModal
+            lines={lines ?? []}
+            invoiceId={data?.id ?? ''}
+            shouldOpen={!isOpen}
+          />
 
           {isOpen && (
             <InboundLineEdit

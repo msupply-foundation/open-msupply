@@ -14,7 +14,13 @@ import { DASHBOARD, ITEMS } from '../../api/hooks/keys';
 
 const LOW_MOS_THRESHOLD = 3;
 
-export const StockLevelsSummary = () => {
+interface StockLevelsSummaryProps {
+  panelContext: string;
+}
+
+export const StockLevelsSummary = ({
+  panelContext,
+}: StockLevelsSummaryProps) => {
   const t = useTranslation();
   const formatNumber = useFormatNumber();
   const queryClient = useQueryClient();
@@ -38,6 +44,7 @@ export const StockLevelsSummary = () => {
       isError={isError}
       isLoading={isLoading}
       title={t('heading.stock-levels')}
+      panelContext={panelContext}
       stats={[
         {
           label: t('label.total-items', {
@@ -47,6 +54,7 @@ export const StockLevelsSummary = () => {
           link: RouteBuilder.create(AppRoute.Catalogue)
             .addPart(AppRoute.Items)
             .build(),
+          statContext: `${panelContext}-total-items`,
         },
         {
           label: t('label.items-no-stock', {
@@ -59,6 +67,7 @@ export const StockLevelsSummary = () => {
               stockStatus: 'outOfStock',
             })
             .build(),
+          statContext: `${panelContext}-items-no-stock`,
         },
         {
           label: t('label.low-stock-items', {
@@ -71,6 +80,7 @@ export const StockLevelsSummary = () => {
               maxMonthsOfStock: 3,
             })
             .build(),
+          statContext: `${panelContext}-low-stock-items`,
         },
         ...(overStockAlert
           ? [
@@ -85,6 +95,7 @@ export const StockLevelsSummary = () => {
                     minMonthsOfStock: overStockAlert,
                   })
                   .build(),
+                statContext: `${panelContext}-overstocked-products`,
               },
             ]
           : []),
@@ -99,6 +110,7 @@ export const StockLevelsSummary = () => {
               minMonthsOfStock: 6,
             })
             .build(),
+          statContext: `${panelContext}-over-six-months-stock`,
         },
         ...(outOfStockProducts
           ? [
@@ -113,6 +125,7 @@ export const StockLevelsSummary = () => {
                     stockStatus: 'outOfStockWithRecentConsumption',
                   })
                   .build(),
+                statContext: `${panelContext}-out-of-stock-products`,
               },
             ]
           : []),
@@ -133,6 +146,7 @@ export const StockLevelsSummary = () => {
                     productsAtRiskOfBeingOutOfStock: true,
                   })
                   .build(),
+                statContext: `${panelContext}-products-at-risk-of-stockout`,
               },
             ]
           : []),

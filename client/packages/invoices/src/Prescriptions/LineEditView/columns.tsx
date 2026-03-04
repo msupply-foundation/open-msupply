@@ -6,6 +6,9 @@ import {
   Formatter,
   usePreferences,
   useIntlUtils,
+  CheckCell,
+  ExpiryDateCell,
+  NumberInputCell,
 } from '@openmsupply-client/common';
 import {
   DraftItem,
@@ -13,8 +16,6 @@ import {
   AllocateInType,
   packsToQuantity,
 } from '../../StockOut';
-import { NumberInputCell } from '@openmsupply-client/common/src/ui/layout/tables/material-react-table/components/NumberInputCell';
-import { ExpiryDateCell } from '@openmsupply-client/common/src/ui/layout/tables/material-react-table/components/ExpiryDateCell';
 
 export const usePrescriptionLineEditColumns = ({
   allocate,
@@ -43,7 +44,7 @@ export const usePrescriptionLineEditColumns = ({
       {
         accessorKey: 'batch',
         header: t('label.batch'),
-        size: 100,
+        size: 90,
       },
       {
         accessorKey: 'expiryDate',
@@ -72,7 +73,7 @@ export const usePrescriptionLineEditColumns = ({
         accessorKey: 'packSize',
         header: t('label.pack-size'),
         columnType: ColumnType.Number,
-        size: 90,
+        size: 80,
         includeColumn: !item?.isVaccine,
       },
       {
@@ -81,7 +82,7 @@ export const usePrescriptionLineEditColumns = ({
           unit: pluralisedUnitName,
         }),
         accessorFn: row => (row.inStorePacks ?? 0) * (row.packSize ?? 1),
-        size: 120,
+        size: 100,
         columnType: ColumnType.Number,
       },
       {
@@ -89,12 +90,12 @@ export const usePrescriptionLineEditColumns = ({
         header: t('label.units-available', { unit: pluralisedUnitName }),
         accessorFn: row => (row.availablePacks ?? 0) * (row.packSize ?? 1),
         columnType: ColumnType.Number,
-        size: 120,
+        size: 100,
       },
       {
         accessorKey: 'unitQuantity',
         header: t('label.units-issued', { unit: pluralisedUnitName }),
-        size: 120,
+        size: 100,
         columnType: ColumnType.Number,
         accessorFn: row =>
           packsToQuantity(AllocateInType.Units, row.numberOfPacks, row),
@@ -109,6 +110,14 @@ export const usePrescriptionLineEditColumns = ({
             disabled={getIsDisabled(row.original)}
           />
         ),
+      },
+      {
+        id: 'onHold',
+        header: t('label.on-hold'),
+        size: 50,
+        defaultHideOnMobile: true,
+        accessorFn: row => row.stockLineOnHold || row.location?.onHold,
+        Cell: CheckCell,
       },
     ];
   }, [unit, allocate, getIsDisabled]);

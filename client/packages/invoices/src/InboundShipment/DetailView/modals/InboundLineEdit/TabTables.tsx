@@ -15,11 +15,10 @@ import {
   ColumnType,
   DateUtils,
   ExpiryDateInput,
+  TextInputCell,
+  NumberInputCell,
+  CurrencyInputCell,
 } from '@openmsupply-client/common';
-// Need to be re-exported when Legacy cells are removed
-import { TextInputCell } from '@openmsupply-client/common/src/ui/layout/tables/material-react-table/components/TextInputCell';
-import { NumberInputCell } from '@openmsupply-client/common/src/ui/layout/tables/material-react-table/components/NumberInputCell';
-import { CurrencyInputCell } from '@openmsupply-client/common/src/ui/layout/tables/material-react-table/components/CurrencyInputCell';
 import { DraftInboundLine } from '../../../../types';
 import {
   CampaignOrProgramCell,
@@ -170,7 +169,7 @@ export const QuantityTable = ({
       {
         accessorKey: 'shippedPackSize',
         header: t('label.shipped-pack-size'),
-        size: 100,
+        size: 120,
         Cell: ({ row, cell }) => (
           <NumberInputCell
             cell={cell}
@@ -178,6 +177,7 @@ export const QuantityTable = ({
               updateDraftLine({ shippedPackSize: value, id: row.original.id });
             }}
             disabled={isDisabled}
+            min={1}
           />
         ),
         defaultHideOnMobile: true,
@@ -196,14 +196,14 @@ export const QuantityTable = ({
               });
             }}
             disabled={isDisabled}
-            min={1}
+            min={0}
           />
         ),
       },
       {
         accessorKey: 'packSize',
         header: t('label.received-pack-size'),
-        size: 100,
+        size: 120,
         Cell: ({ row, cell }) => (
           <NumberInputCell
             cell={cell}
@@ -216,7 +216,11 @@ export const QuantityTable = ({
                   line.sellPricePerPack;
 
               updateDraftLine({
-                volumePerPack: getVolumePerPackFromVariant(line) ?? 0,
+                volumePerPack:
+                  getVolumePerPackFromVariant({
+                    itemVariant: line.itemVariant,
+                    packSize: value,
+                  }) ?? 0,
                 sellPricePerPack: shouldClearSellPrice
                   ? 0
                   : line.sellPricePerPack,
@@ -243,7 +247,7 @@ export const QuantityTable = ({
                 const packToUnits = packSize * value;
                 setPackRoundingMessage?.('');
                 updateDraftLine({
-                  unitsPerPack: packToUnits,
+                  receivedNumberOfUnits: packToUnits,
                   id: row.original.id,
                   numberOfPacks: value,
                 });
@@ -255,11 +259,11 @@ export const QuantityTable = ({
         ),
       },
       {
-        accessorKey: 'unitsPerPack',
+        accessorKey: 'receivedNumberOfUnits',
         header: t('label.units-received', {
           unit: pluralisedUnitName,
         }),
-        size: 100,
+        size: 120,
         defaultHideOnMobile: true,
         accessorFn: row => {
           return row.numberOfPacks * row.packSize;
@@ -267,9 +271,10 @@ export const QuantityTable = ({
         Cell: ({ row, cell }) => (
           <NumberInputCell
             cell={cell}
+            debounceTime={500}
             updateFn={(value: number) => {
-              const { packSize, unitsPerPack } = row.original;
-              if (packSize !== undefined && unitsPerPack !== undefined) {
+              const { packSize } = row.original;
+              if (packSize !== undefined) {
                 const unitToPacks = value / packSize;
                 const roundedPacks = Math.ceil(unitToPacks);
                 const actualUnits = roundedPacks * packSize;
@@ -284,7 +289,7 @@ export const QuantityTable = ({
                   );
                 }
                 updateDraftLine({
-                  unitsPerPack: actualUnits,
+                  receivedNumberOfUnits: actualUnits,
                   numberOfPacks: roundedPacks,
                   id: row.original.id,
                 });
@@ -309,7 +314,7 @@ export const QuantityTable = ({
       {
         accessorKey: 'volumePerPack',
         header: t('label.volume-per-pack'),
-        size: 100,
+        size: 140,
         Cell: ({ row, cell }) => (
           <NumberInputCell
             cell={cell}

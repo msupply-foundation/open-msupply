@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { rankWith, ControlProps, uiTypeIs } from '@jsonforms/core';
 import {
   Autocomplete,
+  CLEAR,
   DetailInputWithLabelRow,
   extractProperty,
   Typography,
@@ -110,7 +111,7 @@ const UIComponent = (props: ControlProps) => {
             _value: string,
             reason: string
           ) => {
-            if (reason === 'clear') {
+            if (reason === CLEAR) {
               onChange(null);
             }
           }}

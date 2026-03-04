@@ -56,6 +56,7 @@ export type StockOutLineFragment = {
     costPricePerPack: number;
     packSize: number;
     expiryDate?: string | null;
+    volumePerPack: number;
     item: {
       __typename: 'ItemNode';
       name: string;
@@ -81,6 +82,7 @@ export type DraftStockOutLineFragment = {
   dosesPerUnit: number;
   itemVariantId?: string | null;
   vvmStatusId?: string | null;
+  volumePerPack?: number | null;
   location?: {
     __typename: 'LocationNode';
     id: string;
@@ -146,6 +148,7 @@ export type GetOutboundEditLinesQuery = {
       dosesPerUnit: number;
       itemVariantId?: string | null;
       vvmStatusId?: string | null;
+      volumePerPack?: number | null;
       location?: {
         __typename: 'LocationNode';
         id: string;
@@ -230,6 +233,7 @@ export const StockOutLineFragmentDoc = gql`
         isVaccine
         doses
       }
+      volumePerPack
     }
   }
 `;
@@ -275,6 +279,7 @@ export const DraftStockOutLineFragmentDoc = gql`
       name
       id
     }
+    volumePerPack
   }
 `;
 export const GetOutboundEditLinesDocument = gql`

@@ -13,7 +13,8 @@ const BACKEND_PLUGIN: (&str, &str) = (
         "bundle_base64": "bundle_base64",
         "code": "code",
         "types": ["average_monthly_consumption"],
-        "variant_type": "BOA_JS"
+        "variant_type": "BOA_JS",
+        "version": "1.0.0"
     }"#,
 );
 
@@ -24,6 +25,7 @@ fn backend_plugin() -> BackendPluginRow {
         bundle_base64: "bundle_base64".to_string(),
         types: PluginTypes(vec![PluginType::AverageMonthlyConsumption]),
         variant_type: PluginVariantType::BoaJs,
+        version: "1.0.0".to_string(),
     }
 }
 

@@ -7,7 +7,7 @@ import {
   RequisitionNodeStatus,
 } from '@openmsupply-client/common';
 
-export const Toolbar = () => {
+const ToolbarComponent = () => {
   const t = useTranslation();
 
   return (
@@ -27,6 +27,12 @@ export const Toolbar = () => {
               name: t('label.name'),
               urlParameter: 'otherPartyName',
               placeholder: t('placeholder.search-by-name'),
+            },
+            {
+              type: 'number',
+              name: t('label.requisition-number'),
+              urlParameter: 'requisitionNumber',
+              wide: true,
             },
             {
               type: 'enum',
@@ -56,3 +62,5 @@ export const Toolbar = () => {
     </AppBarContentPortal>
   );
 };
+
+export const Toolbar = React.memo(ToolbarComponent);

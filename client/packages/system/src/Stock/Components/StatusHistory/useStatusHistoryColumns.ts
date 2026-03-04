@@ -1,57 +1,58 @@
 import {
-  ColumnFormat,
-  useColumns,
+  ColumnDef,
+  ColumnType,
   useFormatDateTime,
+  useTranslation,
 } from '@openmsupply-client/common';
 import { VvmStatusLogRowFragment } from '../../api';
+import { useMemo } from 'react';
 
 export const useStatusHistoryColumns = () => {
+  const t = useTranslation();
   const { localisedTime } = useFormatDateTime();
 
-  const columns = useColumns<VvmStatusLogRowFragment>([
-    {
-      key: 'Date',
-      label: 'label.date',
-      accessor: ({ rowData }) => rowData?.createdDatetime,
-      format: ColumnFormat.Date,
-      sortable: false,
-    },
-    {
-      key: 'time',
-      label: 'label.time',
-      accessor: ({ rowData }) => localisedTime(rowData?.createdDatetime),
-      sortable: false,
-    },
-    {
-      key: 'vvm-status',
-      label: 'label.vvm-status',
-      accessor: ({ rowData }) => rowData?.status?.description,
-      sortable: false,
-    },
-    {
-      key: 'level',
-      label: 'label.distribution-priority',
-      accessor: ({ rowData }) => rowData?.status?.priority,
-    },
-    {
-      key: 'entered-by',
-      label: 'label.entered-by',
-      accessor: ({ rowData }) => {
-        if (!rowData?.user) return '';
-        const { firstName, lastName, username } = rowData.user;
-        const enteredBy =
-          firstName && lastName ? `${firstName} ${lastName}` : username;
-        return enteredBy;
+  const columns = useMemo(
+    (): ColumnDef<VvmStatusLogRowFragment>[] => [
+      {
+        id: 'date',
+        accessorFn: row => row?.createdDatetime,
+        header: t('label.date'),
+        columnType: ColumnType.Date,
       },
-      sortable: false,
-    },
-    {
-      key: 'comment',
-      label: 'label.comment',
-      accessor: ({ rowData }) => rowData?.comment,
-      sortable: false,
-    },
-  ]);
+      {
+        id: 'time',
+        accessorFn: row => localisedTime(row?.createdDatetime),
+        header: t('label.time'),
+      },
+      {
+        id: 'vvm-status',
+        accessorFn: row => row?.status?.description,
+        header: t('label.vvm-status'),
+      },
+      {
+        id: 'level',
+        accessorFn: row => row?.status?.priority,
+        header: t('label.distribution-priority'),
+      },
+      {
+        id: 'entered-by',
+        accessorFn: row => {
+          if (!row?.user) return '';
+          const { firstName, lastName, username } = row.user;
+          const enteredBy =
+            firstName && lastName ? `${firstName} ${lastName}` : username;
+          return enteredBy;
+        },
+        header: t('label.entered-by'),
+      },
+      {
+        id: 'comment',
+        accessorFn: row => row?.comment,
+        header: t('label.comment'),
+      },
+    ],
+    []
+  );
 
-  return { columns };
+  return columns;
 };

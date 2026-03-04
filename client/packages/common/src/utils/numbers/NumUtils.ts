@@ -1,6 +1,17 @@
 const constrain = (value: number, min: number, max: number) =>
   Math.min(Math.max(value, min), max);
 
+// Treat floating point rounding noise as zero, so values like `4.40000000000006`
+// don't incorrectly display as having extra decimals.
+const isNearlyInteger = (value: number): boolean => {
+  if (!Number.isFinite(value)) return false;
+
+  const rounded = Math.round(value);
+  const delta = Math.abs(value - rounded);
+  const tolerance = Math.max(1e-8, Number.EPSILON * Math.abs(value) * 10);
+  return delta < tolerance;
+};
+
 export const NumUtils = {
   constrain,
   isPositive: (num: number): boolean => {
@@ -34,15 +45,21 @@ export const NumUtils = {
    * errors e.g. 2.05 * 100 = 204.99999999999997 so using 1000 for a more reliable result...
    */
   hasMoreThanTwoDp: (value: number): boolean => {
-    return ((value * 1000) / 10) % 1 !== 0;
+    return NumUtils.hasMoreThanDp(value, 2);
   },
   /**
    * Checks if precision is greater than provided dp.
    */
   hasMoreThanDp: (value: number, dp: number): boolean => {
-    // if (dp === 0) return false;
-    const multiplier = 10 ** (dp + 1);
-    return ((value * multiplier) / 10) % 1 !== 0;
+    if (dp === Infinity) return false;
+    if (!Number.isFinite(value)) return false;
+
+    const multiplier = 10 ** dp;
+    // For very large values, `value * multiplier` can lose the fractional part due to IEEE-754
+    // precision limits (e.g. `1e15 + 0.12` becomes `1e15 + 0.125`). Only inspect the fraction.
+    const abs = Math.abs(value);
+    const fraction = abs - Math.trunc(abs);
+    return !isNearlyInteger(fraction * multiplier);
   },
   /**
    * This constant should be used for values that are potentially send to a backend API that expects

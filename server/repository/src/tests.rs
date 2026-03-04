@@ -1080,7 +1080,6 @@ mod repository_test {
         assert_eq!(result, Some(true));
     }
 
-    #[cfg(not(feature = "memory"))]
     #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
     async fn test_tx_deadlock() {
         use crate::{ItemRow, RepositoryError, TransactionError};
@@ -1088,12 +1087,6 @@ mod repository_test {
 
         let (_, _, connection_manager, _) =
             test_db::setup_all("tx_deadlock", MockDataInserts::none()).await;
-
-        // Note: this test is disabled when running tests using in 'memory' sqlite.
-        // When running in memory sqlite uses a shared cache and returns an SQLITE_LOCKED response when two threads try to write using the shared cache concurrently
-        // https://sqlite.org/rescode.html#locked
-        // We are relying on busy_timeout handler to manage the SQLITE_BUSY response code in this test and there's no equivalent available for shared cache connections (SQLITE_LOCKED).
-        // If we were to use shared cache in production, we'd probably need to use a mutex (or similar) to protect the database connection.
 
         /*
             Issue Description...

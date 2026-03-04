@@ -11,6 +11,8 @@ import {
   MaterialTable,
   NameAndColorSetterCell,
   usePreferences,
+  useIsExtraSmallScreen,
+  MobileCardList,
 } from '@openmsupply-client/common';
 import { AppBarButtons } from './AppBarButtons';
 import {
@@ -31,11 +33,16 @@ export const InboundListView = () => {
   const linkRequestModalController = useToggle();
   const { mutate: onUpdate } = useInbound.document.update();
 
+  const isExtraSmallScreen = useIsExtraSmallScreen();
+
   const {
     filter,
     queryParams: { first, offset, sortBy, filterBy },
   } = useUrlQueryParams({
     initialSort: { key: 'invoiceNumber', dir: 'desc' },
+    ...(isExtraSmallScreen && {
+      initialFilter: [{ id: 'status', value: 'NEW,DELIVERED' }],
+    }),
     filters: [
       { key: 'invoiceNumber', condition: 'equalTo', isNumber: true },
       { key: 'otherPartyName' },
@@ -43,7 +50,7 @@ export const InboundListView = () => {
         key: 'createdDatetime',
         condition: 'between',
       },
-      { key: 'status', condition: 'equalTo' },
+      { key: 'status', condition: 'equalAny' },
     ],
   });
 
@@ -151,17 +158,25 @@ export const InboundListView = () => {
           onCreate={invoiceModalController.toggleOn}
         />
       ),
+      isMobile: isExtraSmallScreen,
     }
   );
 
   return (
     <>
-      <Toolbar filter={filter} />
-      <AppBarButtons
-        invoiceModalController={invoiceModalController}
-        linkRequestModalController={linkRequestModalController}
-      />
-      <MaterialTable table={table} />
+      {isExtraSmallScreen ? (
+        // We don't want to show any app bar button on mobile list view
+        <MobileCardList table={table} />
+      ) : (
+        <>
+          <Toolbar filter={filter} />
+          <AppBarButtons
+            invoiceModalController={invoiceModalController}
+            linkRequestModalController={linkRequestModalController}
+          />
+          <MaterialTable table={table} />
+        </>
+      )}
       <Footer
         selectedRows={selectedRows}
         resetRowSelection={table.resetRowSelection}

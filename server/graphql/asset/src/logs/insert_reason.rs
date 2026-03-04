@@ -49,6 +49,7 @@ pub struct InsertAssetLogReasonInput {
     pub id: String,
     pub asset_log_status: AssetLogStatusNodeType,
     pub reason: String,
+    pub comments_required: bool,
 }
 impl From<InsertAssetLogReasonInput> for InsertAssetLogReason {
     fn from(
@@ -56,12 +57,14 @@ impl From<InsertAssetLogReasonInput> for InsertAssetLogReason {
             id,
             asset_log_status,
             reason,
+            comments_required,
         }: InsertAssetLogReasonInput,
     ) -> Self {
         InsertAssetLogReason {
             id,
             asset_log_status: asset_log_status.into(),
             reason,
+            comments_required,
         }
     }
 }
@@ -171,6 +174,7 @@ mod test {
                 "id": "n/a",
                 "assetLogStatus": "FUNCTIONING",
                 "reason": "reason",
+                "commentsRequired": false,
             }
         }));
 

@@ -10,3 +10,6 @@ server/data
 
 standard_reports/test-config.json
 client/dist
+
+# IDEs
+.idea/

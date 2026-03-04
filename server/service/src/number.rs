@@ -92,7 +92,6 @@ mod test {
         TransactionError,
     };
 
-    #[cfg(not(feature = "memory"))]
     const TEST_SLEEP_TIME: u64 = 100;
     const MAX_CONCURRENCY: u64 = 10;
 
@@ -207,16 +206,16 @@ mod test {
         assert_eq!(result, 1);
     }
 
-    /// Note: this test is disabled when running tests using in 'memory' sqlite.
-    /// When running in memory sqlite uses a shared cache and returns an SQLITE_LOCKED response
+    /// When running in memory mode sqlite uses a shared cache and returns an SQLITE_LOCKED response
     /// when two threads try to write using the shared cache concurrently
     /// https://sqlite.org/rescode.html#locked
     /// We are relying on busy_timeout handler to manage the SQLITE_BUSY response code in this
     /// test and there's no equivalent available for shared cache connections (SQLITE_LOCKED).
     /// If we were to use shared cache in production, we'd probably need to use a mutex (or
     /// similar) to protect the database connection.
+    ///
+    /// Note: memory mode is not currently supported for sqlite
     #[actix_rt::test]
-    #[cfg(not(feature = "memory"))]
     async fn test_concurrent_next_number() {
         let (_, _, connection_manager, _) = test_db::setup_all(
             "test_concurrent_numbers",
@@ -297,7 +296,6 @@ mod test {
             // To run this test use something like `RUN_CONCURRENT_TESTS=true cargo test --package service --lib -- number::test::test_highly_concurrent_next_number --exact --nocapture`
 
             // Performance M1 Macbook Pro (postgres in docker)
-            // --features=memory 0.13s
             // --features=postgres 0.62s
             // --features=sqlite 0.14s
 

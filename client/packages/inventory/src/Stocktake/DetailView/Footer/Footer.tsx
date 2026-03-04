@@ -13,7 +13,7 @@ import {
   ActionsFooter,
   useNotification,
 } from '@openmsupply-client/common';
-import { stocktakeStatuses, getStocktakeTranslator } from '../../../utils';
+import { stocktakeStatuses, getStatusTranslation } from '../../../utils';
 import {
   StocktakeFragment,
   StocktakeLineFragment,
@@ -125,7 +125,7 @@ export const Footer = ({
               <StatusCrumbs
                 statuses={stocktakeStatuses}
                 statusLog={createStatusLog(stocktake)}
-                statusFormatter={getStocktakeTranslator(t)}
+                statusFormatter={status => t(getStatusTranslation(status))}
               />
 
               <Box flex={1} display="flex" justifyContent="flex-end" gap={2}>

@@ -1555,11 +1555,11 @@ export type UpdateVaccineCourseMutation = {
         | {
             __typename: 'UpdateVaccineCourseError';
             error:
-              | { __typename: 'DatabaseError'; description: string }
               | {
                   __typename: 'RecordProgramCombinationAlreadyExists';
                   description: string;
-                };
+                }
+              | { __typename: 'VaccineDosesInUse'; description: string };
           }
         | {
             __typename: 'VaccineCourseNode';
@@ -1608,7 +1608,10 @@ export type DeleteVaccineCourseMutation = {
       __typename: 'VaccineCourseMutations';
       deleteVaccineCourse:
         | { __typename: 'DeleteResponse'; id: string }
-        | { __typename: 'DeleteVaccineCourseError' };
+        | {
+            __typename: 'DeleteVaccineCourseError';
+            error: { __typename: 'VaccineCourseInUse'; description: string };
+          };
     };
   };
 };
@@ -2436,6 +2439,14 @@ export const InsertVaccineCourseDocument = gql`
           ... on InsertVaccineCourseError {
             __typename
             error {
+              ... on RecordAlreadyExist {
+                __typename
+                description
+              }
+              ... on RecordProgramCombinationAlreadyExists {
+                __typename
+                description
+              }
               description
             }
           }
@@ -2461,6 +2472,14 @@ export const UpdateVaccineCourseDocument = gql`
           ... on UpdateVaccineCourseError {
             __typename
             error {
+              ... on VaccineDosesInUse {
+                __typename
+                description
+              }
+              ... on RecordProgramCombinationAlreadyExists {
+                __typename
+                description
+              }
               description
             }
           }
@@ -2478,6 +2497,16 @@ export const DeleteVaccineCourseDocument = gql`
           ... on DeleteResponse {
             __typename
             id
+          }
+          ... on DeleteVaccineCourseError {
+            __typename
+            error {
+              description
+              ... on VaccineCourseInUse {
+                __typename
+                description
+              }
+            }
           }
         }
       }

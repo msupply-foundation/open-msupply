@@ -30,7 +30,7 @@ impl PackageJsonAsset {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone)]
 pub struct Version {
     pub major: i16,
     pub minor: i16,
@@ -80,25 +80,54 @@ impl Version {
             pre_release: extra.map(String::from),
         }
     }
+
+    // If "self" (plugin/report etc..) major and minor below or equal to app_version
+    // it is compatible with that app_version. We rely on report/plugin upgrade to fix
+    // compatibility issues rather then max app_version compatibiilty for self.
+    pub fn is_compatible_by_major_and_minor(&self, app_version: &Version) -> bool {
+        if self.major != app_version.major {
+            return self.major < app_version.major;
+        }
+        // When major equals
+        return self.minor <= app_version.minor;
+    }
+}
+
+impl Ord for Version {
+    fn cmp(&self, other: &Self) -> Ordering {
+        if self.major != other.major {
+            return self.major.cmp(&other.major);
+        }
+
+        if self.minor != other.minor {
+            return self.minor.cmp(&other.minor);
+        }
+
+        if self.patch != other.patch {
+            return self.patch.cmp(&other.patch);
+        }
+
+        Ordering::Equal
+
+        // pre release version (RC or TEST etc), are not compared
+    }
 }
 
 impl PartialOrd for Version {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        if self.major != other.major {
-            return Some(self.major.cmp(&other.major));
-        }
+        Some(self.cmp(other))
+    }
+}
 
-        if self.minor != other.minor {
-            return Some(self.minor.cmp(&other.minor));
-        }
+impl Eq for Version {}
 
-        if self.patch != other.patch {
-            return Some(self.patch.cmp(&other.patch));
-        }
+impl PartialEq for Version {
+    fn eq(&self, other: &Self) -> bool {
+        self.major == other.major && self.minor == other.minor && self.patch == other.patch
+    }
 
-        Some(Ordering::Equal)
-
-        // pre release version (RC or TEST etc), are not compared
+    fn ne(&self, other: &Self) -> bool {
+        !self.eq(other)
     }
 }
 
@@ -166,6 +195,9 @@ mod test {
         assert!(Version::from_str("12.10.03") < Version::from_str("12.11.02"));
         assert!(Version::from_str("10.11.01") < Version::from_str("10.11.2"));
 
-        assert!(Version::from_str("10.11.01-RC1") >= Version::from_str("10.11.1-RC2"));
+        assert_eq!(
+            Version::from_str("10.11.01-RC1"),
+            Version::from_str("10.11.1-RC2")
+        );
     }
 }

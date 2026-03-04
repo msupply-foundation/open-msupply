@@ -1,20 +1,18 @@
 import React, { useState, useEffect } from 'react';
 
 import {
-  Breakpoints,
   CloseIcon,
   DateUtils,
   Grid,
   LoadingButton,
   RadioIcon,
   Typography,
-  useAppTheme,
   useAuthContext,
   useFormatDateTime,
   useNativeClient,
   useQueryClient,
   useTranslation,
-  useMediaQuery,
+  useIsExtraSmallScreen,
   useIntlUtils,
   Box,
   CheckCircleIcon,
@@ -22,6 +20,7 @@ import {
   RouteBuilder,
   useNavigate,
   UserPermission,
+  useAppTheme,
 } from '@openmsupply-client/common';
 import { mapSyncError, useSync } from '@openmsupply-client/system';
 import { SyncProgress } from '../SyncProgress';
@@ -112,11 +111,9 @@ export const SyncModal = ({ onCancel, open, width = 800 }: SyncModalProps) => {
   const t = useTranslation();
   const navigate = useNavigate();
   const { userHasPermission } = useAuthContext();
-  const { localisedTime, localisedDate } = useFormatDateTime();
   const theme = useAppTheme();
-  const isExtraSmallScreen = useMediaQuery(
-    theme.breakpoints.down(Breakpoints.sm)
-  );
+  const { localisedTime, localisedDate } = useFormatDateTime();
+  const isExtraSmallScreen = useIsExtraSmallScreen();
 
   const {
     syncStatus,
@@ -279,6 +276,11 @@ export const SyncModal = ({ onCancel, open, width = 800 }: SyncModalProps) => {
               color: theme.palette.common.white,
               fontSize: '14px',
               minWidth: '130px',
+              // the text 'Sync Now' is being split over two lines on phones which is messing up the layout
+              // this is a quick and dirty fix
+              [theme.breakpoints.down('sm')]: {
+                fontSize: '12px',
+              },
             })}
           />
           {userHasPermission(UserPermission.ServerAdmin) && (

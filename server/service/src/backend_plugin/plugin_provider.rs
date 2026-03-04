@@ -2,7 +2,10 @@ use std::sync::{Arc, RwLock};
 
 use base64::{prelude::BASE64_STANDARD, Engine};
 
-use repository::{BackendPluginRow, FrontendPluginRow, PluginType, PluginTypes, PluginVariantType};
+use repository::{
+    migrations::Version, BackendPluginRow, FrontendPluginRow, PluginType, PluginTypes,
+    PluginVariantType,
+};
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use thiserror::Error;
 
@@ -16,6 +19,7 @@ pub struct PluginError {
     variant: PluginErrorVariant,
 }
 
+#[derive(Clone)]
 pub struct Plugin {
     types: PluginTypes,
     instance: Arc<PluginInstance>,
@@ -32,6 +36,7 @@ pub enum PluginInstanceVariant {
 pub struct PluginInstance {
     pub code: String,
     variant: PluginInstanceVariant,
+    pub version: Version,
 }
 
 pub type PluginResult<T> = Result<T, PluginError>;
@@ -42,7 +47,7 @@ pub enum PluginErrorVariant {
     BoaJs(#[from] BoaJsError),
 }
 
-pub static PLUGINS: RwLock<Vec<Plugin>> = RwLock::new(Vec::new());
+static PLUGINS: RwLock<Vec<Plugin>> = RwLock::new(Vec::new());
 
 fn plugin_type_to_string(r#type: PluginType) -> String {
     serde_json::to_string(&r#type).unwrap().replace("\"", "")
@@ -91,6 +96,14 @@ impl PluginInstance {
     pub fn get_all(r#type: PluginType) -> Vec<Arc<PluginInstance>> {
         let plugins = PLUGINS.read().unwrap();
 
+        for plugin in plugins.iter() {
+            log::info!(
+                "Plugin loaded: {} (version {})",
+                plugin.instance.code,
+                plugin.instance.version
+            );
+        }
+
         plugins
             .iter()
             .filter(|p| p.has_type(&r#type))
@@ -113,15 +126,36 @@ impl PluginInstance {
             variant_type,
             types,
             code,
+            version,
             ..
         }: BackendPluginRow,
     ) {
-        let plugin_bundle = BASE64_STANDARD.decode(bundle_base64).unwrap();
+        let version = Version::from_str(&version);
+        let app_version = Version::from_package_json();
 
+        // Skip if not compatible
+        if !version.is_compatible_by_major_and_minor(&app_version) {
+            return;
+        }
+
+        // Get existing plugin with same code in the plugin provider
+        {
+            let plugins = PLUGINS.read().unwrap();
+            if let Some(existing_plugin) = (*plugins).iter().find(|p| p.instance.code == code) {
+                if existing_plugin.instance.version > version {
+                    // Existing plugin is higher version, skip (still install if same version)
+                    return;
+                }
+            }
+        } // Drop read lock
+
+        // Prepare plugin bundle
+        let plugin_bundle = BASE64_STANDARD.decode(bundle_base64).unwrap();
         let plugin = match variant_type {
             PluginVariantType::BoaJs => PluginInstance {
                 code: code.clone(),
                 variant: PluginInstanceVariant::BoaJs(plugin_bundle),
+                version,
             },
         };
 
@@ -129,10 +163,9 @@ impl PluginInstance {
 
         let mut plugins = PLUGINS.write().unwrap();
 
-        // Remove all plugins with this code
-        (*plugins).retain(|Plugin { instance, .. }| instance.code != code);
+        // Remove existing plugins of older versions with same code
+        (*plugins).retain(|p| p.instance.code != code);
 
-        // Add plugin with this code
         (*plugins).push(Plugin { types, instance });
     }
 }

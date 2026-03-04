@@ -50,7 +50,7 @@ pub enum ReportError {
 
 use ReportError as Error;
 
-use crate::helpers::{run_command_with_error, CommandError};
+use crate::{helpers::{run_command_with_error, CommandError}, YARN_COMMAND};
 
 pub fn generate_reports_recursive(
     reports_data: &mut ReportsData,
@@ -192,13 +192,13 @@ fn generate_convert_data(path: &PathBuf, manifest: &Manifest) -> Result<Option<S
     let convert_dir = path.join(convert_data);
     // Yarn install, use lock file bit it should be git ignored
     run_command_with_error(
-        Command::new("yarn")
+        Command::new(YARN_COMMAND)
             .args(["install", "--cwd"])
             .arg(&convert_dir),
     )
     .map_err(|e| Error::FailedToYarnInstall(convert_dir.clone(), e))?;
 
-    run_command_with_error(Command::new("yarn").arg("build").current_dir(&convert_dir))
+    run_command_with_error(Command::new(YARN_COMMAND).arg("build").current_dir(&convert_dir))
         .map_err(|e| Error::FailedToBuildConvertData(convert_dir.clone(), e))?;
 
     let bundle_path: PathBuf = convert_dir

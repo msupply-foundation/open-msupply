@@ -1,1 +1,0 @@
-CREATE COLLATION NOCASE (provider = icu, locale = pg_catalog."default", deterministic = false);

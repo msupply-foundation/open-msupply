@@ -48,25 +48,28 @@ impl self::Trait for PluginInstance {
 impl PluginInstance {
     pub(crate) fn transform_request_requisition_lines(
         context: Context,
-        lines: Vec<RequisitionLineRow>,
+        mut lines: Vec<RequisitionLineRow>,
         requisition: &RequisitionRow,
     ) -> PluginResult<(Vec<RequisitionLineRow>, Vec<PluginDataRow>)> {
-        let Some(plugin) = PluginInstance::get_one(plugin_type()) else {
-            return Ok((lines, Vec::new()));
-        };
+        let plugins = PluginInstance::get_all(plugin_type());
 
-        let result = Trait::call(
-            &(*plugin),
-            Input {
-                context,
-                requisition: requisition.clone(),
-                lines,
-            },
-        )?;
+        let mut plugin_data: Vec<PluginDataRow> = Vec::new();
+        for plugin in plugins {
+            let result = Trait::call(
+                &(*plugin),
+                Input {
+                    context: context.clone(),
+                    requisition: requisition.clone(),
+                    lines,
+                },
+            )?;
+            lines = result.transformed_lines;
+            plugin_data.extend(result.plugin_data.unwrap_or_default());
+        }
 
         Ok((
-            result.transformed_lines,
-            result.plugin_data.unwrap_or_default(),
+            lines,
+            plugin_data,
         ))
     }
 }
