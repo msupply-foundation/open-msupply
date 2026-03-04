@@ -329,7 +329,7 @@ export const ResponseLineEdit = ({
         {!!requisition.linkedRequisition || showExtraFields ? (
           <>
             <ResponseNumInputRow
-              label={t('label.amc/amd')}
+              label={t('label.customer-amc/amd')}
               value={draft?.averageMonthlyConsumption}
               onChange={value => update({ averageMonthlyConsumption: value })}
               sx={{
