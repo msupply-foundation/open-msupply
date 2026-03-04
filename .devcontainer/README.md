@@ -18,7 +18,7 @@ This directory contains configuration for a VS Code dev container, providing an 
 
 ## Connecting to services on your host machine
 
-The container runs in an isolated network. Services running on your host (PostgreSQL, mSupply server, etc.) are not reachable via `localhost` — use `host.docker.internal` instead.
+The container runs in an isolated network. Services running on your host (PostgreSQL, mSupply server, etc.) are not reachable via `localhost` — use `host.docker.internal` instead. Any service on your host can be accessed so don't run anything that could lead to prompt injection.
 
 ### `server/configuration/local.yaml`
 
