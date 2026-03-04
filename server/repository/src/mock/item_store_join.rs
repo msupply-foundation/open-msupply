@@ -11,6 +11,7 @@ pub fn mock_item_a_join_store_a() -> ItemStoreJoinRow {
         default_sell_price_per_pack: 100.0,
         ignore_for_orders: false,
         margin: 15.0,
+        default_location_id: None,
     }
 }
 
@@ -22,6 +23,7 @@ pub fn mock_item_query_test1_join_store_() -> ItemStoreJoinRow {
         default_sell_price_per_pack: 50.0,
         ignore_for_orders: false,
         margin: 10.0,
+        default_location_id: None,
     }
 }
 
