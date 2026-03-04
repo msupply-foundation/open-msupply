@@ -159,16 +159,14 @@ export const InboundLineEdit = ({
           marginTop: 2,
           ...(viewMode === 'table'
             ? {
-                height: isMediumScreen ? 300 : 400,
+                maxHeight: isMediumScreen ? 300 : 400,
                 borderWidth: 1,
                 borderStyle: 'solid',
                 borderColor: 'divider',
                 borderRadius: '20px',
               }
             : {
-                height: 'calc(100vh - 300px)',
                 minHeight: 150,
-                overflow: 'auto',
               }),
         }}
       >
