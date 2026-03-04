@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import {
   useEditModal,
   DetailViewSkeleton,
@@ -17,6 +17,9 @@ import {
   Groupable,
   NothingHere,
   MaterialTable,
+  InvoiceLineStatusType,
+  Formatter,
+  useAppTheme,
   useIsExtraSmallScreen,
   MobileCardList,
 } from '@openmsupply-client/common';
@@ -45,6 +48,9 @@ import {
 import { InboundShipmentLineErrorProvider } from '../context/inboundShipmentLineError';
 import { InboundShipmentDetailTabs } from './types';
 import { useInboundShipmentColumns } from './columns';
+import { FinancialTab } from './Tabs/Financial';
+import { CurrencyTab } from './Tabs/Currency';
+import { DeliveryTab } from './Tabs/DeliveryStatus';
 import { ScanInputModal } from './ScanInputModal';
 import { MobileToolbar } from './MobileToolbar';
 
@@ -227,6 +233,20 @@ const DetailViewInner = () => {
       ),
       value: InboundShipmentDetailTabs.Details,
     },
+    ...external ? [
+      {
+        Component: <FinancialTab />,
+        value: InboundShipmentDetailTabs.Financial,
+      },
+      {
+        Component: <CurrencyTab />,
+        value: InboundShipmentDetailTabs.Currency,
+      },
+      {
+        Component: <DeliveryTab showLineStatus={showLineStatus} />,
+        value: InboundShipmentDetailTabs.Delivery,
+      },
+    ] : [],
     {
       Component: (
         <DocumentsTable
@@ -335,6 +355,24 @@ const DetailViewInner = () => {
       )}
     </React.Suspense>
   );
+};
+
+export const useInvoiceLineStatusMap = () => {
+  const theme = useAppTheme();
+  return useMemo(() => ({
+    [InvoiceLineStatusType.Passed]: {
+      label: Formatter.enumCase(InvoiceLineStatusType.Passed),
+      colour: theme.palette.invoiceLineStatus.passed,
+    },
+    [InvoiceLineStatusType.Pending]: {
+      label: Formatter.enumCase(InvoiceLineStatusType.Pending),
+      colour: theme.palette.invoiceLineStatus.pending,
+    },
+    [InvoiceLineStatusType.Rejected]: {
+      label: Formatter.enumCase(InvoiceLineStatusType.Rejected),
+      colour: theme.palette.invoiceLineStatus.rejected,
+    },
+  }), [theme]);
 };
 
 export const DetailView = () => {

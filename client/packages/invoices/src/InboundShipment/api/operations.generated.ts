@@ -90,6 +90,15 @@ export type InboundLineFragment = {
       volumePerUnit?: number | null;
     }>;
   } | null;
+  purchaseOrderLine?: {
+    __typename: 'PurchaseOrderLineNode';
+    adjustedNumberOfUnits?: number | null;
+    shippedNumberOfUnits: number;
+    inTransitNumberOfUnits: number;
+    receivedNumberOfUnits: number;
+    requestedNumberOfUnits: number;
+    pricePerPackAfterDiscount: number;
+  } | null;
 };
 
 export type InboundFragment = {
@@ -223,6 +232,15 @@ export type InboundFragment = {
           volumePerUnit?: number | null;
         }>;
       } | null;
+      purchaseOrderLine?: {
+        __typename: 'PurchaseOrderLineNode';
+        adjustedNumberOfUnits?: number | null;
+        shippedNumberOfUnits: number;
+        inTransitNumberOfUnits: number;
+        receivedNumberOfUnits: number;
+        requestedNumberOfUnits: number;
+        pricePerPackAfterDiscount: number;
+      } | null;
     }>;
   };
   otherParty: {
@@ -273,6 +291,13 @@ export type InboundFragment = {
     id: string;
     number: number;
     reference?: string | null;
+    currency?: {
+      __typename: 'CurrencyNode';
+      id: string;
+      code: string;
+      rate: number;
+      isHomeCurrency: boolean;
+    } | null;
   } | null;
 };
 
@@ -511,6 +536,15 @@ export type InvoiceQuery = {
                 volumePerUnit?: number | null;
               }>;
             } | null;
+            purchaseOrderLine?: {
+              __typename: 'PurchaseOrderLineNode';
+              adjustedNumberOfUnits?: number | null;
+              shippedNumberOfUnits: number;
+              inTransitNumberOfUnits: number;
+              receivedNumberOfUnits: number;
+              requestedNumberOfUnits: number;
+              pricePerPackAfterDiscount: number;
+            } | null;
           }>;
         };
         otherParty: {
@@ -561,6 +595,13 @@ export type InvoiceQuery = {
           id: string;
           number: number;
           reference?: string | null;
+          currency?: {
+            __typename: 'CurrencyNode';
+            id: string;
+            code: string;
+            rate: number;
+            isHomeCurrency: boolean;
+          } | null;
         } | null;
       }
     | {
@@ -722,6 +763,15 @@ export type InboundByNumberQuery = {
                 volumePerUnit?: number | null;
               }>;
             } | null;
+            purchaseOrderLine?: {
+              __typename: 'PurchaseOrderLineNode';
+              adjustedNumberOfUnits?: number | null;
+              shippedNumberOfUnits: number;
+              inTransitNumberOfUnits: number;
+              receivedNumberOfUnits: number;
+              requestedNumberOfUnits: number;
+              pricePerPackAfterDiscount: number;
+            } | null;
           }>;
         };
         otherParty: {
@@ -772,6 +822,13 @@ export type InboundByNumberQuery = {
           id: string;
           number: number;
           reference?: string | null;
+          currency?: {
+            __typename: 'CurrencyNode';
+            id: string;
+            code: string;
+            rate: number;
+            isHomeCurrency: boolean;
+          } | null;
         } | null;
       }
     | {
@@ -1344,6 +1401,15 @@ export const InboundLineFragmentDoc = gql`
         volumePerUnit
       }
     }
+    purchaseOrderLine {
+      __typename
+      adjustedNumberOfUnits
+      shippedNumberOfUnits
+      inTransitNumberOfUnits
+      receivedNumberOfUnits
+      requestedNumberOfUnits
+      pricePerPackAfterDiscount
+    }
   }
 `;
 export const InboundFragmentDoc = gql`
@@ -1445,6 +1511,12 @@ export const InboundFragmentDoc = gql`
       id
       number
       reference
+      currency {
+        id
+        code
+        rate
+        isHomeCurrency
+      }
     }
   }
   ${InboundLineFragmentDoc}

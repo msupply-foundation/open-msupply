@@ -8,44 +8,24 @@ import {
   Groupable,
   ColumnType,
   StatusCell,
-  InvoiceLineStatusType,
-  Formatter,
-  useAppTheme,
 } from '@openmsupply-client/common';
 import { useInboundShipmentLineErrorContext } from '../context/inboundShipmentLineError';
 import { isInboundPlaceholderRow } from '../../utils';
 import { InboundLineFragment } from '../api';
+import { useInvoiceLineStatusMap } from '..';
 
 export const useInboundShipmentColumns = (
   external: boolean,
   showLineStatus: boolean
 ) => {
   const t = useTranslation();
-  const theme = useAppTheme();
   const {
     manageVaccinesInDoses,
     allowTrackingOfStockByDonor,
     manageVvmStatusForStock,
   } = usePreferences();
   const { getError } = useInboundShipmentLineErrorContext();
-
-  const statusMap = useMemo(
-    () => ({
-      [InvoiceLineStatusType.Passed]: {
-        label: Formatter.enumCase(InvoiceLineStatusType.Passed),
-        colour: theme.palette.invoiceLineStatus.passed,
-      },
-      [InvoiceLineStatusType.Pending]: {
-        label: Formatter.enumCase(InvoiceLineStatusType.Pending),
-        colour: theme.palette.invoiceLineStatus.pending,
-      },
-      [InvoiceLineStatusType.Rejected]: {
-        label: Formatter.enumCase(InvoiceLineStatusType.Rejected),
-        colour: theme.palette.invoiceLineStatus.rejected,
-      },
-    }),
-    [theme]
-  );
+  const statusMap = useInvoiceLineStatusMap();
 
   return useMemo((): ColumnDef<Groupable<InboundLineFragment>>[] => {
     return [
@@ -244,10 +224,13 @@ export const useInboundShipmentColumns = (
   }, [
     external,
     showLineStatus,
+    getError,
+    manageVaccinesInDoses,
     t,
     manageVvmStatusForStock,
     manageVaccinesInDoses,
     allowTrackingOfStockByDonor,
+    statusMap,
     getError,
   ]);
 };

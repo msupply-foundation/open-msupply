@@ -5,6 +5,7 @@ use super::{
     vvm_status::vvm_status_row::vvm_status, StorageConnection,
 };
 
+use crate::item_row::item;
 use crate::repository_error::RepositoryError;
 use crate::{
     ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, InvoiceRowRepository,
@@ -65,6 +66,22 @@ allow_tables_to_appear_in_same_query!(invoice_line, item_link);
 allow_tables_to_appear_in_same_query!(invoice_line, name_link);
 allow_tables_to_appear_in_same_query!(invoice_line, reason_option);
 
+table! {
+    invoice_line_stats (invoice_line_id) {
+        invoice_line_id -> Text,
+        purchase_order_line_id -> Nullable<Text>,
+    }
+}
+
+joinable!(invoice_line -> invoice_line_stats (id));
+allow_tables_to_appear_in_same_query!(invoice_line_stats, invoice_line);
+allow_tables_to_appear_in_same_query!(invoice_line_stats, invoice);
+allow_tables_to_appear_in_same_query!(invoice_line_stats, location);
+allow_tables_to_appear_in_same_query!(invoice_line_stats, stock_line);
+allow_tables_to_appear_in_same_query!(invoice_line_stats, reason_option);
+allow_tables_to_appear_in_same_query!(invoice_line_stats, item_link);
+allow_tables_to_appear_in_same_query!(invoice_line_stats, item);
+
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Default)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum InvoiceLineType {
@@ -121,6 +138,13 @@ pub struct InvoiceLineRow {
     pub volume_per_pack: f64,
     pub shipped_pack_size: Option<f64>,
     pub status: Option<InvoiceLineStatus>,
+}
+
+#[derive(Clone, Insertable, Queryable, Debug, PartialEq, Default)]
+#[diesel(table_name = invoice_line_stats)]
+pub struct InvoiceLineStatsRow {
+    pub invoice_line_id: String,
+    pub purchase_order_line_id: Option<String>,
 }
 
 pub struct InvoiceLineRowRepository<'a> {

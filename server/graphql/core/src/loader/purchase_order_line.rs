@@ -51,3 +51,40 @@ impl Loader<String> for PurchaseOrderLinesByPurchaseOrderIdLoader {
         Ok(result)
     }
 }
+
+pub struct PurchaseOrderLineByIdLoader {
+    pub service_provider: Data<ServiceProvider>,
+}
+
+impl Loader<String> for PurchaseOrderLineByIdLoader {
+    type Value = PurchaseOrderLine;
+    type Error = async_graphql::Error;
+
+    async fn load(
+        &self,
+        purchase_order_line_ids: &[String],
+    ) -> Result<HashMap<String, Self::Value>, Self::Error> {
+        let service_context = self.service_provider.basic_context()?;
+
+        let filter = PurchaseOrderLineFilter::new().id(EqualFilter::equal_any(
+            purchase_order_line_ids.iter().map(String::clone).collect(),
+        ));
+
+        let purchase_order_lines = self
+            .service_provider
+            .purchase_order_line_service
+            .get_purchase_order_lines(&service_context, None, None, Some(filter), None)
+            .map_err(StandardGraphqlError::from_list_error)?;
+
+        Ok(purchase_order_lines
+            .rows
+            .into_iter()
+            .map(|purchase_order_line| {
+                (
+                    purchase_order_line.purchase_order_line_row.id.clone(),
+                    purchase_order_line,
+                )
+            })
+            .collect())
+    }
+}

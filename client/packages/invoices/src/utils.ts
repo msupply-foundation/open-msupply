@@ -48,6 +48,7 @@ export const inboundStatuses: InvoiceNodeStatus[] = [
 
 export const manualInboundStatuses: InvoiceNodeStatus[] = [
   InvoiceNodeStatus.New,
+  InvoiceNodeStatus.Shipped,
   InvoiceNodeStatus.Delivered,
   InvoiceNodeStatus.Received,
   InvoiceNodeStatus.Verified,
