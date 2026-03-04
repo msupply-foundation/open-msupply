@@ -410,7 +410,10 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
         PermissionDSL::And(vec![
             PermissionDSL::HasStoreAccess,
             PermissionDSL::HasPermission(PermissionType::OutboundShipmentQuery),
-            PermissionDSL::HasPermission(PermissionType::InboundShipmentQuery),
+            PermissionDSL::Any(vec![
+                PermissionDSL::HasPermission(PermissionType::InboundShipmentQuery),
+                PermissionDSL::HasPermission(PermissionType::InboundShipmentExternalQuery),
+            ]),
             PermissionDSL::HasPermission(PermissionType::PrescriptionQuery),
             PermissionDSL::HasPermission(PermissionType::SupplierReturnQuery),
             PermissionDSL::HasPermission(PermissionType::CustomerReturnQuery),
@@ -421,7 +424,10 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
         PermissionDSL::And(vec![
             PermissionDSL::HasStoreAccess,
             PermissionDSL::HasPermission(PermissionType::OutboundShipmentQuery),
-            PermissionDSL::HasPermission(PermissionType::InboundShipmentQuery),
+            PermissionDSL::Any(vec![
+                PermissionDSL::HasPermission(PermissionType::InboundShipmentQuery),
+                PermissionDSL::HasPermission(PermissionType::InboundShipmentExternalQuery),
+            ]),
         ]),
     );
     // outbound shipment
@@ -445,6 +451,28 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
         PermissionDSL::And(vec![
             PermissionDSL::HasStoreAccess,
             PermissionDSL::HasPermission(PermissionType::InboundShipmentVerify),
+        ]),
+    );
+    // inbound shipment external
+    map.insert(
+        Resource::QueryInboundShipmentExternal,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::InboundShipmentExternalQuery),
+        ]),
+    );
+    map.insert(
+        Resource::MutateInboundShipmentExternal,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::InboundShipmentExternalMutate),
+        ]),
+    );
+    map.insert(
+        Resource::AuthoriseInboundShipmentExternal,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::InboundShipmentExternalAuthorise),
         ]),
     );
     // Supplier return
