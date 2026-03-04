@@ -29,7 +29,11 @@ import { useInboundShipment } from '@openmsupply-client/invoices';
 import { SupplierSearchModal } from '@openmsupply-client/system';
 import { AppRoute } from '@openmsupply-client/config';
 import { useDashboardPanels } from '../hooks';
-import { useInboundCounts, useInternalOrderCounts } from '../api';
+import {
+  useInboundInternalCounts,
+  useInboundExternalCounts,
+  useInternalOrderCounts,
+} from '../api';
 
 export const ReplenishmentWidget = ({
   widgetContext,
@@ -42,10 +46,22 @@ export const ReplenishmentWidget = ({
   const formatNumber = useFormatNumber();
   const { userHasPermission } = useAuthContext();
   const navigate = useNavigate();
-  const inbound = useInboundCounts();
+  const inboundInternal = useInboundInternalCounts();
+  const inboundExternal = useInboundExternalCounts();
   const internalOrder = useInternalOrderCounts();
 
-  const inboundShipmentsPanelContext = `${widgetContext}-inbound-shipments`;
+  const hasInternalPermission =
+    userHasPermission(UserPermission.InboundShipmentQuery) ||
+    userHasPermission(UserPermission.InboundShipmentMutate) ||
+    userHasPermission(UserPermission.InboundShipmentVerify);
+
+  const hasExternalPermission =
+    userHasPermission(UserPermission.InboundShipmentExternalQuery) ||
+    userHasPermission(UserPermission.InboundShipmentExternalMutate) ||
+    userHasPermission(UserPermission.InboundShipmentExternalAuthorise);
+
+  const inboundInternalPanelContext = `${widgetContext}-inbound-shipments-internal`;
+  const inboundExternalPanelContext = `${widgetContext}-inbound-shipments-external`;
   const internalOrdersPanelContext = `${widgetContext}-internal-orders`;
 
   const { customDate, urlQueryDateTime } = useFormatDateTime();
@@ -93,51 +109,117 @@ export const ReplenishmentWidget = ({
     modalControl.toggleOn();
   };
 
+  const internalTab = t('label.internal');
+  const externalTab = t('label.external');
+
   const corePanels = [
-    <StatsPanel
-      key={inboundShipmentsPanelContext}
-      error={inbound.error as ApiException}
-      isError={inbound.isError}
-      isLoading={inbound.isLoading}
-      title={t('inbound-shipment')}
-      panelContext={inboundShipmentsPanelContext}
-      stats={[
-        {
-          label: t('label.today'),
-          value: formatNumber.round(inbound.stats?.today),
-          link: RouteBuilder.create(AppRoute.Replenishment)
-            .addPart(AppRoute.InboundShipment)
-            .addQuery({
-              createdDatetime: getTodayUrlQuery(),
-            })
-            .build(),
-          statContext: `${inboundShipmentsPanelContext}-today`,
-        },
-        {
-          label: t('label.this-week'),
-          value: formatNumber.round(inbound.stats?.thisWeek),
-          link: RouteBuilder.create(AppRoute.Replenishment)
-            .addPart(AppRoute.InboundShipment)
-            .addQuery({
-              createdDatetime: getThisWeekUrlQuery(),
-            })
-            .build(),
-          statContext: `${inboundShipmentsPanelContext}-this-week`,
-        },
-        {
-          label: t('label.inbound-not-delivered'),
-          value: formatNumber.round(inbound.stats?.notDelivered),
-          link: RouteBuilder.create(AppRoute.Replenishment)
-            .addPart(AppRoute.InboundShipment)
-            .addQuery({ status: InvoiceNodeStatus.Shipped })
-            .build(),
-          statContext: `${inboundShipmentsPanelContext}-not-delivered`,
-        },
-      ]}
-      link={RouteBuilder.create(AppRoute.Replenishment)
-        .addPart(AppRoute.InboundShipment)
-        .build()}
-    />,
+    ...(hasInternalPermission
+      ? [
+          <StatsPanel
+            key={inboundInternalPanelContext}
+            error={inboundInternal.error as ApiException}
+            isError={inboundInternal.isError}
+            isLoading={inboundInternal.isLoading}
+            title={t('inbound-shipment')}
+            panelContext={inboundInternalPanelContext}
+            stats={[
+              {
+                label: t('label.today'),
+                value: formatNumber.round(inboundInternal.stats?.today),
+                link: RouteBuilder.create(AppRoute.Replenishment)
+                  .addPart(AppRoute.InboundShipment)
+                  .addQuery({
+                    createdDatetime: getTodayUrlQuery(),
+                    tab: internalTab,
+                  })
+                  .build(),
+                statContext: `${inboundInternalPanelContext}-today`,
+              },
+              {
+                label: t('label.this-week'),
+                value: formatNumber.round(inboundInternal.stats?.thisWeek),
+                link: RouteBuilder.create(AppRoute.Replenishment)
+                  .addPart(AppRoute.InboundShipment)
+                  .addQuery({
+                    createdDatetime: getThisWeekUrlQuery(),
+                    tab: internalTab,
+                  })
+                  .build(),
+                statContext: `${inboundInternalPanelContext}-this-week`,
+              },
+              {
+                label: t('label.inbound-not-delivered'),
+                value: formatNumber.round(inboundInternal.stats?.notDelivered),
+                link: RouteBuilder.create(AppRoute.Replenishment)
+                  .addPart(AppRoute.InboundShipment)
+                  .addQuery({
+                    status: InvoiceNodeStatus.Shipped,
+                    tab: internalTab,
+                  })
+                  .build(),
+                statContext: `${inboundInternalPanelContext}-not-delivered`,
+              },
+            ]}
+            link={RouteBuilder.create(AppRoute.Replenishment)
+              .addPart(AppRoute.InboundShipment)
+              .build()}
+          />,
+        ]
+      : []),
+    ...(hasExternalPermission
+      ? [
+          <StatsPanel
+            key={inboundExternalPanelContext}
+            error={inboundExternal.error as ApiException}
+            isError={inboundExternal.isError}
+            isLoading={inboundExternal.isLoading}
+            title={t('inbound-shipment-external')}
+            panelContext={inboundExternalPanelContext}
+            stats={[
+              {
+                label: t('label.today'),
+                value: formatNumber.round(inboundExternal.stats?.today),
+                link: RouteBuilder.create(AppRoute.Replenishment)
+                  .addPart(AppRoute.InboundShipment)
+                  .addQuery({
+                    createdDatetime: getTodayUrlQuery(),
+                    tab: externalTab,
+                  })
+                  .build(),
+                statContext: `${inboundExternalPanelContext}-today`,
+              },
+              {
+                label: t('label.this-week'),
+                value: formatNumber.round(inboundExternal.stats?.thisWeek),
+                link: RouteBuilder.create(AppRoute.Replenishment)
+                  .addPart(AppRoute.InboundShipment)
+                  .addQuery({
+                    createdDatetime: getThisWeekUrlQuery(),
+                    tab: externalTab,
+                  })
+                  .build(),
+                statContext: `${inboundExternalPanelContext}-this-week`,
+              },
+              {
+                label: t('label.inbound-not-delivered'),
+                value: formatNumber.round(inboundExternal.stats?.notDelivered),
+                link: RouteBuilder.create(AppRoute.Replenishment)
+                  .addPart(AppRoute.InboundShipment)
+                  .addQuery({
+                    status: InvoiceNodeStatus.Shipped,
+                    tab: externalTab,
+                  })
+                  .build(),
+                statContext: `${inboundExternalPanelContext}-not-delivered`,
+              },
+            ]}
+            link={RouteBuilder.create(AppRoute.Replenishment)
+              .addPart(AppRoute.InboundShipment)
+              .addQuery({ tab: externalTab })
+              .build()}
+          />,
+        ]
+      : []),
     <StatsPanel
       key={internalOrdersPanelContext}
       error={internalOrder.error as ApiException}

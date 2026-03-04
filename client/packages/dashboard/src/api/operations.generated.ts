@@ -45,6 +45,46 @@ export type InboundCountsQuery = {
   };
 };
 
+export type InboundInternalCountsQueryVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+}>;
+
+export type InboundInternalCountsQuery = {
+  __typename: 'Queries';
+  invoiceCounts: {
+    __typename: 'InvoiceCounts';
+    inboundInternal: {
+      __typename: 'InboundInvoiceCounts';
+      notDelivered: number;
+      created: {
+        __typename: 'InvoiceCountsSummary';
+        today: number;
+        thisWeek: number;
+      };
+    };
+  };
+};
+
+export type InboundExternalCountsQueryVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+}>;
+
+export type InboundExternalCountsQuery = {
+  __typename: 'Queries';
+  invoiceCounts: {
+    __typename: 'InvoiceCounts';
+    inboundExternal: {
+      __typename: 'InboundInvoiceCounts';
+      notDelivered: number;
+      created: {
+        __typename: 'InvoiceCountsSummary';
+        today: number;
+        thisWeek: number;
+      };
+    };
+  };
+};
+
 export type OutboundCountsQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
 }>;
@@ -120,6 +160,32 @@ export const InboundCountsDocument = gql`
   query inboundCounts($storeId: String!) {
     invoiceCounts(storeId: $storeId) {
       inbound {
+        created {
+          today
+          thisWeek
+        }
+        notDelivered
+      }
+    }
+  }
+`;
+export const InboundInternalCountsDocument = gql`
+  query inboundInternalCounts($storeId: String!) {
+    invoiceCounts(storeId: $storeId) {
+      inboundInternal {
+        created {
+          today
+          thisWeek
+        }
+        notDelivered
+      }
+    }
+  }
+`;
+export const InboundExternalCountsDocument = gql`
+  query inboundExternalCounts($storeId: String!) {
+    invoiceCounts(storeId: $storeId) {
+      inboundExternal {
         created {
           today
           thisWeek
@@ -221,6 +287,42 @@ export function getSdk(
             signal,
           }),
         'inboundCounts',
+        'query',
+        variables
+      );
+    },
+    inboundInternalCounts(
+      variables: InboundInternalCountsQueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<InboundInternalCountsQuery> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<InboundInternalCountsQuery>({
+            document: InboundInternalCountsDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'inboundInternalCounts',
+        'query',
+        variables
+      );
+    },
+    inboundExternalCounts(
+      variables: InboundExternalCountsQueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<InboundExternalCountsQuery> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<InboundExternalCountsQuery>({
+            document: InboundExternalCountsDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'inboundExternalCounts',
         'query',
         variables
       );
