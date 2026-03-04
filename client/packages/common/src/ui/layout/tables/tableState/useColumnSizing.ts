@@ -9,25 +9,20 @@ import { useDebounceCallback } from '@common/hooks';
 import { useGlobalTableDefaults } from './useGlobalTableConfig';
 
 export const useColumnSizing = (tableId: string) => {
+  const initial = {};
   const globalDefaults = useGlobalTableDefaults(tableId);
-  const initial = { 'mrt-row-expand': 40 };
 
   const [state, setState] = useState<MRT_ColumnSizingState>(
-    getSavedState(tableId).columnSizing ??
+    getSavedState(tableId)?.columnSizing ??
       globalDefaults?.columnSizing ??
       initial
-  );
-  const [hasSavedState, setHasSavedState] = useState(
-    !!getSavedState(tableId).columnSizing
   );
 
   const debouncedUpdateSavedState = useDebounceCallback(
     (newState: MRT_ColumnSizingState) => {
-      const savedColumnSizing = differentOrUndefined(newState, initial);
       updateSavedState(tableId, {
-        columnSizing: savedColumnSizing,
+        columnSizing: differentOrUndefined(newState, initial),
       });
-      if (savedColumnSizing) setHasSavedState(true);
     },
     [],
     500
@@ -53,7 +48,5 @@ export const useColumnSizing = (tableId: string) => {
     initial,
     state,
     update,
-    hasSavedState,
-    resetHasSavedState: () => setHasSavedState(false),
   };
 };

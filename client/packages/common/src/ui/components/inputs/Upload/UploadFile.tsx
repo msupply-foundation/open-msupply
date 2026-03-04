@@ -1,5 +1,6 @@
 import React from 'react';
 import { Capacitor } from '@capacitor/core';
+import { Accept } from 'react-dropzone';
 import { UploadButton } from './UploadButton';
 import { UploadDragAndDrop } from './UploadDragAndDrop';
 
@@ -7,17 +8,25 @@ interface UploadFileProps {
   onUpload: (files: File[]) => void;
   files?: File[];
   color?: 'primary' | 'secondary' | 'gray';
+  accept?: Accept;
 }
 
 export const UploadFile = ({
   onUpload,
   files,
   color = 'secondary',
+  accept,
 }: UploadFileProps) => {
   const isNative = Capacitor.isNativePlatform();
+  // Convert Accept type to a string for the native file input
+  const acceptString = accept
+    ? Object.entries(accept)
+        .flatMap(([mime, exts]) => [mime, ...exts])
+        .join(',')
+    : undefined;
   return isNative ? (
-    <UploadButton onUpload={onUpload} files={files} />
+    <UploadButton onUpload={onUpload} files={files} accept={acceptString} />
   ) : (
-    <UploadDragAndDrop onUpload={onUpload} color={color} />
+    <UploadDragAndDrop onUpload={onUpload} color={color} accept={accept} />
   );
 };

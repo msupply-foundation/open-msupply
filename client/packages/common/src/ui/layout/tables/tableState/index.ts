@@ -4,4 +4,4 @@ export * from './useColumnPinning';
 export * from './useColumnSizing';
 export * from './useColumnVisibility';
 export * from './useGlobalTableConfig';
-export * from './useIsGrouped';
+export * from './useColumnGrouping';
