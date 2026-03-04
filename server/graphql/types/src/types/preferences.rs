@@ -34,10 +34,6 @@ impl PreferencesNode {
         self.load_preference(&self.preferences.authorise_purchase_order)
     }
 
-    pub async fn authorise_goods_received(&self) -> Result<bool> {
-        self.load_preference(&self.preferences.authorise_goods_received)
-    }
-
     pub async fn custom_translations(&self) -> Result<BTreeMap<String, String>> {
         self.load_preference(&self.preferences.custom_translations)
     }
@@ -250,7 +246,6 @@ impl PreferenceDescriptionNode {
 pub enum PreferenceKey {
     // Global preferences
     AllowTrackingOfStockByDonor,
-    AuthoriseGoodsReceived,
     AuthorisePurchaseOrder,
     CustomTranslations,
     GenderOptions,
@@ -276,6 +271,7 @@ pub enum PreferenceKey {
     WarningForExcessRequest,
     CanCreateInternalOrderFromARequisition,
     SelectDestinationStoreForAnInternalOrder,
+    ExternalInboundShipmentLinesMustBeAuthorised,
     NumberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts,
     NumberOfMonthsThresholdToShowLowStockAlertsForProducts,
     NumberOfMonthsThresholdToShowOverStockAlertsForProducts,

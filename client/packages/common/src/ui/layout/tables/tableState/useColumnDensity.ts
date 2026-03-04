@@ -10,10 +10,10 @@ export const useColumnDensity = (tableId: string) => {
   const initial: MRT_DensityState = 'comfortable';
 
   const [state, setState] = useState<MRT_DensityState>(
-    getSavedState(tableId).density ?? initial
+    getSavedState(tableId)?.density ?? initial
   );
   const [hasSavedState, setHasSavedState] = useState(
-    !!getSavedState(tableId).density
+    !!getSavedState(tableId)?.density
   );
 
   const update = useCallback<
