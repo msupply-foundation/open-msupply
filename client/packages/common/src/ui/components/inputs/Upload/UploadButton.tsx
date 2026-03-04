@@ -13,7 +13,7 @@ interface UploadButtonProps {
   customLabel?: string;
   icon?: ReactNode;
   accept?: string;
-  multiple?: boolean;
+  multiple: boolean;
 }
 
 export const UploadButton = ({
@@ -57,7 +57,7 @@ export const UploadButton = ({
         id={elementId}
         type="file"
         accept={accept}
-        multiple={multiple ?? true}
+        multiple={multiple}
         onChange={handleFileChange}
         style={{ display: 'none' }}
       ></input>

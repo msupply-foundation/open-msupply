@@ -15,8 +15,7 @@ import {
 interface UploadDragAndDropProps {
   accept?: Accept;
   color?: 'primary' | 'secondary' | 'gray';
-  multiple?: boolean;
-  maxSize?: number;
+  multiple: boolean;
   onUpload: <T extends File>(files: T[]) => void;
 }
 
