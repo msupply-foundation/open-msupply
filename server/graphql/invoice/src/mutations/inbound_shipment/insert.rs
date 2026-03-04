@@ -38,10 +38,15 @@ pub enum InsertResponse {
 }
 
 pub fn insert(ctx: &Context<'_>, store_id: &str, input: InsertInput) -> Result<InsertResponse> {
+    let resource = if input.purchase_order_id.is_some() {
+        Resource::MutateInboundShipmentExternal
+    } else {
+        Resource::MutateInboundShipment
+    };
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::MutateInboundShipment,
+            resource,
             store_id: Some(store_id.to_string()),
         },
     )?;
