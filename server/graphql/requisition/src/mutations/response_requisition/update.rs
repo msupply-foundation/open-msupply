@@ -182,7 +182,6 @@ mod test {
         },
         service_provider::{ServiceContext, ServiceProvider},
     };
-    
 
     type UpdateLineMethod = dyn Fn(ServiceInput) -> Result<Requisition, ServiceError> + Sync + Send;
 

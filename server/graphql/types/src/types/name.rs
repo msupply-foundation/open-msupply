@@ -1,12 +1,13 @@
+use super::{patient::GenderTypeNode, StoreNode};
+use crate::types::CurrencyNode;
 use async_graphql::{dataloader::DataLoader, *};
 use chrono::{DateTime, NaiveDate, Utc};
-use repository::{Name, NameRow, NameRowType, NameType, Store, StoreRow};
 use graphql_core::{
-    ContextExt, loader::CurrencyByIdLoader, simple_generic_errors::NodeError, standard_graphql_error::StandardGraphqlError
+    loader::CurrencyByIdLoader, simple_generic_errors::NodeError,
+    standard_graphql_error::StandardGraphqlError, ContextExt,
 };
+use repository::{Name, NameRow, NameRowType, NameType, Store, StoreRow};
 use serde::Serialize;
-use crate::types::CurrencyNode;
-use super::{patient::GenderTypeNode, StoreNode};
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")] // only needed to be comparable in tests

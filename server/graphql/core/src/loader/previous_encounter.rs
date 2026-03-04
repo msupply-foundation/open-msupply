@@ -47,7 +47,8 @@ impl Loader<PreviousEncounterLoaderInput> for PreviousEncounterLoader {
                         desc: Some(true),
                     }),
                 )?
-                .first().cloned();
+                .first()
+                .cloned();
 
             if let Some(encounter) = encounter {
                 out.insert(input.clone(), encounter);

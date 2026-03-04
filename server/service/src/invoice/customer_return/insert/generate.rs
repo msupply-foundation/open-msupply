@@ -20,6 +20,7 @@ pub fn generate(
         id: invoice_id,
         other_party_id,
         outbound_shipment_id,
+        their_reference,
         customer_return_lines,
         is_patient_return: _,
     }: InsertCustomerReturn,
@@ -55,7 +56,7 @@ pub fn generate(
         on_hold: false,
         colour: None,
         comment: None,
-        their_reference: None,
+        their_reference,
         tax_percentage: None,
         transport_reference: None,
         allocated_datetime: None,
@@ -77,7 +78,7 @@ pub fn generate(
         is_cancellation: false,
         expected_delivery_date: None,
         default_donor_link_id: None,
-        goods_received_id: None,
+        purchase_order_id: None,
         shipping_method_id: None,
     };
 

@@ -20,7 +20,7 @@ import { AppRoute } from '@openmsupply-client/config';
 import { PropsWithChildrenOnly } from '@common/types';
 
 export const UserDetails: FC<PropsWithChildrenOnly> = ({ children }) => {
-  const { logout, user, token } = useAuthContext();
+  const { user, token } = useAuthContext();
   const navigate = useNavigate();
   const { hide, PaperClickPopover } = usePaperClickPopover();
   const { isLoading } = useUserDetails(token);
@@ -30,7 +30,6 @@ export const UserDetails: FC<PropsWithChildrenOnly> = ({ children }) => {
 
   const handleLogout = () => {
     navigate(RouteBuilder.create(AppRoute.Login).build());
-    logout();
   };
 
   const showConfirmation = useConfirmationModal({
