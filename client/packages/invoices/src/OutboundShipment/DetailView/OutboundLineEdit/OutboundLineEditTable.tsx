@@ -123,7 +123,7 @@ export const OutboundLineEditTable = ({
     tableId: 'outbound-line-edit',
     columns,
     data: lines,
-    getIsRestrictedRow: row => getIsDisabled(row),
+    getIsRestrictedRow: row => getIsDisabled(row.original),
     bottomToolbarContent: (
       <Box
         sx={{
