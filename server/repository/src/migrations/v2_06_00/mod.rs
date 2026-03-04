@@ -16,6 +16,7 @@ mod add_name_next_of_kin_name;
 mod add_program_deleted_datetime;
 mod add_program_id_on_stocktake;
 mod add_program_id_to_invoice;
+mod add_report_is_active;
 mod add_report_sync;
 mod backend_plugins;
 mod frontend_plugins;
@@ -25,7 +26,6 @@ mod prescribed_quantity_store_pref;
 mod printer_create_table;
 mod reinitialise_reports;
 mod report_add_prescription_context;
-mod add_report_is_active;
 mod report_fix_prescriptions_report_code;
 
 pub(crate) struct V2_06_00;

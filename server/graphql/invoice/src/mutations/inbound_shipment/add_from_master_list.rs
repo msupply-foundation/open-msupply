@@ -88,6 +88,7 @@ fn map_error(error: ServiceError) -> Result<DeleteErrorInterface> {
         // Standard Graphql Errors
         ServiceError::NotThisStoreShipment => BadUserInput(formatted_error),
         ServiceError::NotAnInboundShipment => BadUserInput(formatted_error),
+        ServiceError::NotAnInternalInboundShipment => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
     };
 
@@ -114,7 +115,6 @@ mod test {
         },
         service_provider::{ServiceContext, ServiceProvider},
     };
-    
 
     type DeleteLineMethod =
         dyn Fn(ServiceInput) -> Result<Vec<InvoiceLine>, ServiceError> + Sync + Send;

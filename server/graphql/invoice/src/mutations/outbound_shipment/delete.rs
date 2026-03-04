@@ -95,7 +95,6 @@ mod graphql {
     use repository::mock::{MockData, MockDataInserts};
     use repository::{InvoiceRow, InvoiceRowRepository, InvoiceStatus, InvoiceType};
     use serde_json::json;
-    
 
     use crate::{InvoiceMutations, InvoiceQueries};
 

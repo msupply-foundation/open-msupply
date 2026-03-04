@@ -165,7 +165,7 @@ export const ListView = () => {
     isError,
     isLoading: isFetching,
     onRowClick: row => navigate(String(row.id)),
-    getIsRestrictedRow: isResponseDisabled,
+    getIsRestrictedRow: row => isResponseDisabled(row.original),
     noDataElement: (
       <NothingHere
         body={t('error.no-requisitions')}

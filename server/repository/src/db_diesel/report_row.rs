@@ -33,7 +33,6 @@ pub enum ContextType {
     Prescription,
     InternalOrder,
     PurchaseOrder,
-    GoodsReceived,
     SupplierReturn,
     CustomerReturn,
 }

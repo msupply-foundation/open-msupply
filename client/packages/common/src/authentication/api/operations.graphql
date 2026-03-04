@@ -189,7 +189,6 @@ query preferences($storeId: String!) {
   preferences(storeId: $storeId) {
     adjustForNumberOfDaysOutOfStock
     allowTrackingOfStockByDonor
-    authoriseGoodsReceived
     authorisePurchaseOrder
     canCreateInternalOrderFromARequisition
     customTranslations

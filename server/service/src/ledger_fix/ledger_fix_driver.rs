@@ -105,9 +105,7 @@ async fn ledger_fix(service_provider: Arc<ServiceProvider>) {
                     &ctx.connection,
                     SystemLogType::LedgerFixError,
                     &e,
-                    &format!(
-                        "Error fixing stock line {stock_line_id}, {operation_log}"
-                    ),
+                    &format!("Error fixing stock line {stock_line_id}, {operation_log}"),
                 )
                 .unwrap();
             }

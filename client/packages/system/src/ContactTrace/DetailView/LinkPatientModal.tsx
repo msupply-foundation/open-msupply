@@ -152,7 +152,7 @@ const ModalContent: FC<ModalContentProps> = ({
     columns,
     data: matchingPatients,
     onRowClick: row => setLinkedPatientId(row.id),
-    getIsPlaceholderRow: row => row.id === linkedPatientId,
+    getIsPlaceholderRow: row => row.original.id === linkedPatientId,
     noDataElement: searchEnabled
       ? t('messages.no-matching-patients-for-contact-trace')
       : t('messages.patient-data-required-for-search'),

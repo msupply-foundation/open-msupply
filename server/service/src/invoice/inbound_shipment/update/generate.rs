@@ -1,9 +1,9 @@
-use chrono::Utc;
+use chrono::{NaiveDateTime, Utc};
 
 use repository::vvm_status::vvm_status_log_row::VVMStatusLogRow;
 use repository::{
-    EqualFilter, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineType, LocationMovementRow,
-    Name, RepositoryError,
+    EqualFilter, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineStatus, InvoiceLineType,
+    LocationMovementRow, Name, RepositoryError,
 };
 use repository::{
     InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow, InvoiceStatus, StockLineRow,
@@ -80,6 +80,11 @@ pub(crate) fn generate(
 
     update_invoice.currency_id = patch.currency_id.or(update_invoice.currency_id);
     update_invoice.currency_rate = patch.currency_rate.unwrap_or(update_invoice.currency_rate);
+
+    // Already validated in validate
+    if let Some(delivered_datetime) = patch.delivered_datetime {
+        update_invoice.delivered_datetime = Some(NaiveDateTime::from(delivered_datetime));
+    }
 
     let batches_to_update = if should_create_batches {
         Some(generate_lines_and_stock_lines(
@@ -348,6 +353,13 @@ pub fn generate_lines_and_stock_lines(
 
     for invoice_line in lines.into_iter() {
         if invoice_line.number_of_packs <= 0.0 {
+            continue;
+        }
+        // Rejected and pending lines should not create stock entries
+        if matches!(
+            invoice_line.status,
+            Some(InvoiceLineStatus::Rejected | InvoiceLineStatus::Pending)
+        ) {
             continue;
         }
         let mut line = invoice_line.clone();
