@@ -1,9 +1,11 @@
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
 import {
+  Box,
   ColumnDef,
   ColumnType,
   getLinesFromRow,
   TextWithTooltipCell,
+  useFormatCurrency,
   useTranslation,
 } from '@openmsupply-client/common';
 import { PurchaseOrderLineFragment } from '../api';
@@ -11,6 +13,7 @@ import { usePurchaseOrderLineErrorContext } from '../context';
 
 export const usePurchaseOrderColumns = () => {
   const t = useTranslation();
+  const formatCurrency = useFormatCurrency();
   const { getError } = usePurchaseOrderLineErrorContext();
 
   return useMemo((): ColumnDef<PurchaseOrderLineFragment>[] => {
@@ -32,6 +35,7 @@ export const usePurchaseOrderColumns = () => {
           ),
         enableColumnFilter: true,
         enableSorting: true,
+        Footer: t('label.total'),
       },
       {
         accessorKey: 'item.name',
@@ -96,6 +100,28 @@ export const usePurchaseOrderColumns = () => {
             row.adjustedNumberOfUnits ?? row.requestedNumberOfUnits ?? 0;
           const packSize = row.requestedPackSize || 1;
           return (row.pricePerPackAfterDiscount ?? 0) * (units / packSize);
+        },
+        Footer: ({ table }) => {
+          const total = table
+            .getFilteredRowModel()
+            .rows.reduce((sum, row) => {
+              const { original } = row;
+              const units =
+                original.adjustedNumberOfUnits ??
+                original.requestedNumberOfUnits ??
+                0;
+              const packSize = original.requestedPackSize || 1;
+              return (
+                sum +
+                (original.pricePerPackAfterDiscount ?? 0) *
+                  (units / packSize)
+              );
+            }, 0);
+          return (
+            <Box sx={{ textAlign: 'right', width: '100%' }}>
+              {formatCurrency(total)}
+            </Box>
+          );
         },
       },
       {
