@@ -1,6 +1,6 @@
 use repository::system_log_row::SystemLogType;
 use repository::{RepositoryError, StorageConnection};
-use std::sync::Arc;
+use std::{sync::Arc, time::Duration};
 use thiserror::Error;
 use tokio::sync::mpsc::{self, Receiver, Sender};
 use tokio::sync::oneshot;
@@ -23,12 +23,14 @@ mod general_processor;
 mod load_plugin;
 mod plugin_processor;
 mod requisition_auto_finalise;
+mod schedule_plugin;
 pub use general_processor::ProcessorType;
 #[cfg(test)]
 mod test_helpers;
 pub(crate) mod transfer;
 
 const CHANNEL_BUFFER_SIZE: usize = 30;
+const SCHEDULE_PLUGIN_POLL_SECS: u64 = 60;
 
 #[derive(Clone)]
 pub struct ProcessorsTrigger {
@@ -94,6 +96,24 @@ impl Processors {
             mut await_process_queue,
         } = self;
 
+        tokio::spawn(async {
+            let mut runner = schedule_plugin::SchedulePluginRunner::new();
+            let mut interval =
+                tokio::time::interval(Duration::from_secs(SCHEDULE_PLUGIN_POLL_SECS));
+            loop {
+                interval.tick().await;
+                match std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| runner.run())) {
+                    Ok(Ok(())) => log::info!("Schedule plugin runner complete"),
+                    Ok(Err(error)) => {
+                        log::error!("Error running schedule plugins: {error:?}");
+                    }
+                    Err(panic) => {
+                        log::error!("Schedule plugin runner panicked: {panic:?}");
+                    }
+                }
+            }
+        });
+
         tokio::spawn(async move {
             loop {
                 // See test below for reasoning behind biased, even though there is no foreseen use case where
@@ -129,9 +149,7 @@ impl Processors {
 impl ProcessorsTrigger {
     pub(crate) fn trigger_requisition_transfer_processors(&self) {
         if let Err(error) = self.requisition_transfer.try_send(()) {
-            log::error!(
-                "Problem triggering requisition transfer processor {error:#?}"
-            )
+            log::error!("Problem triggering requisition transfer processor {error:#?}")
         }
     }
 
@@ -155,15 +173,11 @@ impl ProcessorsTrigger {
     pub async fn await_events_processed(&self) {
         let (sender, receiver) = oneshot::channel();
         if let Err(error) = self.await_process_queue.try_send(sender) {
-            log::error!(
-                "Problem sending the await_events_processed queue {error:#?}"
-            );
+            log::error!("Problem sending the await_events_processed queue {error:#?}");
         }
 
         if let Err(error) = receiver.await {
-            log::error!(
-                "Problem receiving the await_events_processed response {error:#?}"
-            );
+            log::error!("Problem receiving the await_events_processed response {error:#?}");
         }
     }
 
