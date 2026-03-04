@@ -1,6 +1,6 @@
 # Dev Container
 
-This directory contains configuration for a VS Code dev container, providing an isolated development environment with all required dependencies pre-installed and a strict firewall to try avoid prompt injection.
+This directory contains configuration for a VS Code dev container, providing an isolated development environment with all required dependencies pre-installed and a strict firewall to try avoid prompt injection. Make sure to confirm the firewall is installed correctly when the container starts up (can try `ping google.com` to check).
 
 ## What's included
 
