@@ -34,12 +34,17 @@ pub struct ServerSettings {
     /// Sets the allowed origin for cors requests
     pub cors_origins: Vec<String>,
     /// Directory where the server stores its data, e.g. sqlite DB file or certs
-    pub base_dir: Option<String>,
+    #[serde(default = "default_base_dir")]
+    pub base_dir: String,
     /// Option to set the machine id of the device for an OS that isn't supported by machine_uid
     pub machine_uid: Option<String>,
     // Option to set server mode as central server, should only be used in testing, demo and development
     #[serde(default)]
     pub override_is_central_server: bool,
+}
+
+fn default_base_dir() -> String {
+    "app_data".to_string()
 }
 
 impl ServerSettings {
