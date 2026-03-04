@@ -158,7 +158,7 @@ fn derive_file_paths(config_file: Option<PathBuf>) -> Result<ConfigFilePaths, Se
         None => ConfigFilePaths {
             base: get_configuration_base_file()?,
             app: get_configuration_app_file()?,
-        }
+        },
     };
 
     Ok(file_paths)

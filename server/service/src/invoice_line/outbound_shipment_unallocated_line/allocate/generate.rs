@@ -251,7 +251,9 @@ fn get_sorted_available_stock_lines(
     sort_by_vvm: bool,
 ) -> Result<Vec<StockLine>, RepositoryError> {
     let filter = StockLineFilter::new()
-        .item_id(EqualFilter::equal_to(unallocated_line.item_row.id.to_string()))
+        .item_id(EqualFilter::equal_to(
+            unallocated_line.item_row.id.to_string(),
+        ))
         .store_id(EqualFilter::equal_to(store_id.to_string()))
         .is_available(true);
 
@@ -273,8 +275,12 @@ fn get_allocated_lines(
 ) -> Result<Vec<InvoiceLine>, RepositoryError> {
     InvoiceLineRepository::new(connection).query_by_filter(
         InvoiceLineFilter::new()
-            .item_id(EqualFilter::equal_to(unallocated_line.item_row.id.to_string()))
-            .invoice_id(EqualFilter::equal_to(unallocated_line.invoice_line_row.invoice_id.to_string()))
+            .item_id(EqualFilter::equal_to(
+                unallocated_line.item_row.id.to_string(),
+            ))
+            .invoice_id(EqualFilter::equal_to(
+                unallocated_line.invoice_line_row.invoice_id.to_string(),
+            ))
             .r#type(InvoiceLineType::StockOut.equal_to()),
     )
 }

@@ -121,8 +121,6 @@ pub(crate) mod test {
             ..Default::default()
         };
 
-        
-
         MockData {
             stock_lines: vec![
                 oms_stock_line.clone(),

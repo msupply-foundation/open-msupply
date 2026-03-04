@@ -264,7 +264,11 @@ mod test {
 
         let line_repo = InvoiceLineRepository::new(&context.connection);
 
-        let filter = InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(mock_prescription_unallocated_invoice_line().invoice_id.to_string()));
+        let filter = InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(
+            mock_prescription_unallocated_invoice_line()
+                .invoice_id
+                .to_string(),
+        ));
         let line_count = line_repo.count(Some(filter.clone())).unwrap();
         assert_eq!(line_count, 1);
 

@@ -12,7 +12,6 @@ pub fn calculate_sell_price(
     };
 
     // Apply discount if available
-    
 
     match default_pricing.discount_percentage {
         Some(discount_percentage) => sell_price_per_pack * (1.0 - discount_percentage / 100.0),

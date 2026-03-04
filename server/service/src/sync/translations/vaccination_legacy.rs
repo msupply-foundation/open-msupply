@@ -225,12 +225,10 @@ mod tests {
 
         // Shouldn't translate if not a central server
         test_util_set_is_central_server(false);
-        assert!(
-            !translator.should_translate_to_sync_record(
-                &changelog_row,
-                &ToSyncRecordTranslationType::PushToLegacyCentral
-            )
-        );
+        assert!(!translator.should_translate_to_sync_record(
+            &changelog_row,
+            &ToSyncRecordTranslationType::PushToLegacyCentral
+        ));
 
         // Should translate if a central server
         test_util_set_is_central_server(true);
