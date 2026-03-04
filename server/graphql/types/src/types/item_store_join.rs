@@ -23,6 +23,10 @@ impl ItemStorePropertiesNode {
     pub async fn margin(&self) -> f64 {
         self.item_store_properties.margin
     }
+
+    pub async fn default_location_id(&self) -> &Option<String> {
+        &self.item_store_properties.default_location_id
+    }
 }
 
 impl ItemStorePropertiesNode {
