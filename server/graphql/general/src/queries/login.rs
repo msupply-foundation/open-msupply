@@ -55,7 +55,6 @@ impl CentralSyncRequired {
     }
 }
 
-
 pub struct AccountBlocked {
     pub timeout_remaining: u64,
 }
@@ -132,7 +131,7 @@ pub async fn login(ctx: &Context<'_>, username: &str, password: &str) -> Result<
                 }
                 LoginError::MSupplyCentralNotReached => {
                     return Ok(AuthTokenResponse::Error(AuthTokenError {
-                        error: AuthTokenErrorInterface::CentralSyncRequired(CentralSyncRequired)
+                        error: AuthTokenErrorInterface::CentralSyncRequired(CentralSyncRequired),
                     }))
                 }
                 LoginError::LoginFailure(LoginFailure::NoSiteAccess) => {

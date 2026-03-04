@@ -306,7 +306,6 @@ mod test {
         };
 
         // Use make_movements to create days where the item is out of stock
-        
 
         MockData {
             stock_lines: vec![test_stock_line.clone()],
