@@ -68,7 +68,7 @@
     "CLAUDE_CONFIG_DIR": "/home/vscode/.claude"
   },
   "onCreateCommand": {
-    "install-tools": "sudo apt update && sudo apt install -y libpq-dev gh nmap iputils-ping lsof",
+    "install-tools": "sudo apt update && sudo apt install -y libpq-dev gh nmap iputils-ping lsof git-filter-repo",
     "machine-id": "sudo sh -c 'echo ${devcontainerId} > /etc/machine-id'"
   },
   // restrict sudo to only what's needed after install-time commands finish,
@@ -78,5 +78,7 @@
   "postStartCommand": "sudo /usr/local/bin/firewall-or-die.sh",
   // drop CAP_NET_RAW (raw sockets can bypass iptables OUTPUT rules)
   // keep NET_ADMIN - required for iptables management by the firewall feature
-  "runArgs": ["--cap-drop=NET_RAW"]
+  "runArgs": [
+    "--cap-drop=NET_RAW"
+  ]
 }
