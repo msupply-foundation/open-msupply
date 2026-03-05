@@ -28,6 +28,7 @@ pub struct UpsertPreferences {
     pub item_margin_overrides_supplier_margin: Option<bool>,
 
     pub is_gaps: Option<bool>,
+    pub global_table_configs: Option<serde_json::Value>,
 
     // Store preferences
     pub manage_vaccines_in_doses: Option<Vec<StorePrefUpdate<bool>>>,
@@ -75,6 +76,7 @@ pub fn upsert_preferences(
         expired_stock_issue_threshold: expired_stock_issue_threshold_input,
         item_margin_overrides_supplier_margin: item_margin_overrides_supplier_margin_input,
         is_gaps: is_gaps_input,
+        global_table_configs: global_table_configs_input,
 
         // Store preferences
         manage_vaccines_in_doses: manage_vaccines_in_doses_input,
@@ -121,6 +123,7 @@ pub fn upsert_preferences(
         expired_stock_issue_threshold,
         item_margin_overrides_supplier_margin,
         is_gaps,
+        global_table_configs,
 
         // Store preferences
         manage_vaccines_in_doses,
@@ -203,6 +206,10 @@ pub fn upsert_preferences(
             
             if let Some(input) = item_margin_overrides_supplier_margin_input {
                 item_margin_overrides_supplier_margin.upsert(connection, input, None)?;
+            }
+
+            if let Some(input) = global_table_configs_input {
+                global_table_configs.upsert(connection, input, None)?;
             }
 
             // Store preferences, input could be array of store IDs and values - iterate and insert...

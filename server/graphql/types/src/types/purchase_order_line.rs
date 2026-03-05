@@ -100,7 +100,7 @@ impl PurchaseOrderLineNode {
     ) -> Result<Option<NameNode>> {
         let loader = ctx.get_loader::<DataLoader<NameByIdLoader>>();
 
-        let Some(manufacturer_id) = &self.row().manufacturer_link_id else {
+        let Some(manufacturer_id) = &self.row().manufacturer_id else {
             return Ok(None);
         };
 

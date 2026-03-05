@@ -506,16 +506,13 @@ export function getSdk(
   return {
     demographics(
       variables: DemographicsQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<DemographicsQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<DemographicsQuery>({
-            document: DemographicsDocument,
-            variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
+          client.request<DemographicsQuery>(DemographicsDocument, variables, {
+            ...requestHeaders,
+            ...wrappedRequestHeaders,
           }),
         'demographics',
         'query',
@@ -524,17 +521,15 @@ export function getSdk(
     },
     demographicIndicators(
       variables: DemographicIndicatorsQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<DemographicIndicatorsQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<DemographicIndicatorsQuery>({
-            document: DemographicIndicatorsDocument,
+          client.request<DemographicIndicatorsQuery>(
+            DemographicIndicatorsDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'demographicIndicators',
         'query',
         variables
@@ -542,17 +537,15 @@ export function getSdk(
     },
     demographicProjections(
       variables: DemographicProjectionsQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<DemographicProjectionsQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<DemographicProjectionsQuery>({
-            document: DemographicProjectionsDocument,
+          client.request<DemographicProjectionsQuery>(
+            DemographicProjectionsDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'demographicProjections',
         'query',
         variables
@@ -560,17 +553,15 @@ export function getSdk(
     },
     demographicProjectionsByBaseYear(
       variables: DemographicProjectionsByBaseYearQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<DemographicProjectionsByBaseYearQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<DemographicProjectionsByBaseYearQuery>({
-            document: DemographicProjectionsByBaseYearDocument,
+          client.request<DemographicProjectionsByBaseYearQuery>(
+            DemographicProjectionsByBaseYearDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'demographicProjectionsByBaseYear',
         'query',
         variables
@@ -578,17 +569,15 @@ export function getSdk(
     },
     demographicIndicatorById(
       variables: DemographicIndicatorByIdQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<DemographicIndicatorByIdQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<DemographicIndicatorByIdQuery>({
-            document: DemographicIndicatorByIdDocument,
+          client.request<DemographicIndicatorByIdQuery>(
+            DemographicIndicatorByIdDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'demographicIndicatorById',
         'query',
         variables
@@ -596,17 +585,15 @@ export function getSdk(
     },
     insertDemographicIndicator(
       variables: InsertDemographicIndicatorMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<InsertDemographicIndicatorMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<InsertDemographicIndicatorMutation>({
-            document: InsertDemographicIndicatorDocument,
+          client.request<InsertDemographicIndicatorMutation>(
+            InsertDemographicIndicatorDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'insertDemographicIndicator',
         'mutation',
         variables
@@ -614,17 +601,15 @@ export function getSdk(
     },
     insertDemographicProjection(
       variables: InsertDemographicProjectionMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<InsertDemographicProjectionMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<InsertDemographicProjectionMutation>({
-            document: InsertDemographicProjectionDocument,
+          client.request<InsertDemographicProjectionMutation>(
+            InsertDemographicProjectionDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'insertDemographicProjection',
         'mutation',
         variables
@@ -632,17 +617,15 @@ export function getSdk(
     },
     updateDemographicIndicator(
       variables: UpdateDemographicIndicatorMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<UpdateDemographicIndicatorMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<UpdateDemographicIndicatorMutation>({
-            document: UpdateDemographicIndicatorDocument,
+          client.request<UpdateDemographicIndicatorMutation>(
+            UpdateDemographicIndicatorDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'updateDemographicIndicator',
         'mutation',
         variables
@@ -650,17 +633,15 @@ export function getSdk(
     },
     updateDemographicProjection(
       variables: UpdateDemographicProjectionMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<UpdateDemographicProjectionMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<UpdateDemographicProjectionMutation>({
-            document: UpdateDemographicProjectionDocument,
+          client.request<UpdateDemographicProjectionMutation>(
+            UpdateDemographicProjectionDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'updateDemographicProjection',
         'mutation',
         variables

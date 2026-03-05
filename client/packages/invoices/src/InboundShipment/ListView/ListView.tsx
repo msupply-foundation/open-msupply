@@ -214,7 +214,7 @@ const InboundShipments: React.FC<{
       data: data?.nodes ?? [],
       totalCount: data?.totalCount ?? 0,
       initialSort: { key: 'invoiceNumber', dir: 'desc' },
-      getIsRestrictedRow: isInboundListItemDisabled,
+      getIsRestrictedRow: row => isInboundListItemDisabled(row.original),
       noDataElement: (
         <NothingHere
           body={t('error.no-inbound-shipments')}

@@ -2,6 +2,7 @@ use anyhow::anyhow;
 use async_graphql::EmptySubscription;
 use chrono::Utc;
 use clap::{ArgAction, Parser};
+use colored::Colorize;
 use graphql::{Mutations, OperationalSchema, Queries};
 use log::info;
 
@@ -47,10 +48,10 @@ use backup::*;
 #[cfg(feature = "integration_test")]
 use cli::LoadTest;
 use cli::{
-    generate_and_install_plugin_bundle, generate_plugin_bundle, generate_plugin_typescript_types,
-    generate_report_data, generate_reports_recursive, install_plugin_bundle,
-    GenerateAndInstallPluginBundle, GeneratePluginBundle, InstallPluginBundle,
-    RefreshDatesRepository, ReportError,
+    all_tests, generate_and_install_plugin_bundle, generate_plugin_bundle,
+    generate_plugin_typescript_types, generate_report_data, generate_reports_recursive,
+    install_plugin_bundle, GenerateAndInstallPluginBundle, GeneratePluginBundle,
+    InstallPluginBundle, RefreshDatesRepository, ReportError, TestCredentials, TestData,
 };
 
 const DATA_EXPORT_FOLDER: &str = "data";
@@ -220,6 +221,18 @@ enum Action {
         /// Set is_enabled to false
         #[clap(short, long, action = ArgAction::SetTrue, conflicts_with="enable")]
         disable: bool,
+    },
+    /// Test connectivity to configured services (config, database, ping, sync, mail)
+    TestConnection {
+        /// Username for the login test
+        #[clap(short, long)]
+        username: Option<String>,
+        /// Password for the login test
+        #[clap(short, long)]
+        password: Option<String>,
+        /// Log level for the tests, by default set to off to avoid noisy console logging
+        #[clap(short, default_value = "off")]
+        log_level: log::LevelFilter,
     },
     #[cfg(feature = "integration_test")]
     LoadTest(LoadTest),
@@ -774,6 +787,38 @@ async fn main() -> anyhow::Result<()> {
             skip_prettify,
         } => {
             generate_plugin_typescript_types(path, skip_prettify)?;
+        }
+        Action::TestConnection {
+            username,
+            password,
+            log_level,
+        } => {
+            let credentials = TestCredentials {
+                username: username.unwrap_or_default(),
+                password: password.unwrap_or_default(),
+            };
+            let mut test_data = TestData {
+                server_config: None,
+                sync_api_v5: None,
+                credentials,
+            };
+            let tests = all_tests();
+            let current_log_level = log::max_level();
+            // Set log level, defaults to off to suppress noise
+            log::set_max_level(log_level);
+
+            for test in &tests {
+                println!();
+                println!("Running {} test...", test.name());
+                match test.run(&mut test_data).await {
+                    Ok(msg) => println!("{} {}: {}", "[PASS]".green(), test.name(), msg),
+                    Err(err) => {
+                        println!("{} {}: {}", "[FAIL]".red(), test.name(), err);
+                    }
+                }
+            }
+
+            log::set_max_level(current_log_level);
         }
         #[cfg(feature = "integration_test")]
         Action::LoadTest(LoadTest {

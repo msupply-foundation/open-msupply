@@ -100,7 +100,7 @@ impl SyncRecordTester for StocktakeRecordTester {
         // STEP 2 - mutate
         let invoice_row = InvoiceRow {
             id: uuid(),
-            name_link_id: new_site_properties.name_id.clone(),
+            name_id: new_site_properties.name_id.clone(),
             store_id: store_id.clone(),
             name_store_id: Some(store_id.clone()),
             tax_percentage: Some(0.0),

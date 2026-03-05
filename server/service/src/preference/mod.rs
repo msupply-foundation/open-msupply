@@ -40,6 +40,7 @@ pub trait PreferenceServiceTrait: Sync + Send {
             show_indicative_price_in_requisitions,
             item_margin_overrides_supplier_margin,
             is_gaps,
+            global_table_configs: _, // Not included in preference descriptions UI
 
             // Store preferences
             manage_vaccines_in_doses,

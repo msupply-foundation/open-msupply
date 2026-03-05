@@ -376,15 +376,27 @@ cargo run --bin remote_server_cli -- restore -b D2024_08_22T05_05_16 -s
 
 This tool is mostly intended for support, to confirm everything is configured correctly. It checks things like the database connection, and connecting to central servers for sync.
 
-You can run the `test_connection` tool with:
+You can run the tool in either the cli mode or as a GUI. The postgreSQL and SQLite versions of each are shown below.
+
+## CLI
 
 ```bash
-cargo run --bin test_connection --username [user] --password [pass]
+cargo run --bin remote_server_cli -- test-connection -u username -p password
 ```
 
-or build and run the binary. pass in `--features postgres` to run the postgres version.
+When running the cli command, normal debug level logging to console is suppressed as this can get verbose. If you want to view all the log info, you can specify an `-l` parameter and specify the debug level:
 
-There is a command line output, or a GUI will open if you do not supply a username parameter.
+```bash
+cargo run --bin remote_server_cli -- test-connection -u username -p password -l info
+```
+
+## GUI
+
+```bash
+cargo run --bin test_connection
+```
+
+or build and run the binary. Pass in `--features postgres` to run the postgres version.
 
 # [Backup and Restore](cli/src/backup/README.md)
 
