@@ -18,7 +18,7 @@ export const useAssetInsert = () => {
   };
 
   const invalidateQueries = () => queryClient.invalidateQueries({
-    queryKey: ASSET
+    queryKey: [ASSET]
   });
 
   const mutation = useMutation({

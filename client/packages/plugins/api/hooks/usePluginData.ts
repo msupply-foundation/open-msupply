@@ -68,7 +68,7 @@ export const usePluginData = ({
   } = useMutation({
     mutationFn: insertMutation,
     onSuccess: () => {
-      queryClient.invalidateQueries([PLUGIN_DATA, pluginCode, ...queryKey]);
+      queryClient.invalidateQueries({ queryKey: [PLUGIN_DATA, pluginCode, ...queryKey] });
     },
   });
 
@@ -94,7 +94,7 @@ export const usePluginData = ({
   } = useMutation({
     mutationFn: updateMutation,
     onSuccess: () => {
-      queryClient.invalidateQueries([PLUGIN_DATA, pluginCode, ...queryKey]);
+      queryClient.invalidateQueries({ queryKey: [PLUGIN_DATA, pluginCode, ...queryKey] });
     },
   });
 

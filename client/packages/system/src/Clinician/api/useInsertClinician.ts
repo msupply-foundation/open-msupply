@@ -33,7 +33,7 @@ export const useInsertClinician = () => {
     mutationFn,
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: CLINICIAN
+        queryKey: [CLINICIAN]
       });
     },
   });

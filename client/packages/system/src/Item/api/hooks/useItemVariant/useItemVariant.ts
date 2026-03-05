@@ -130,7 +130,7 @@ const useUpsert = ({ itemId }: { itemId: string }) => {
         queryKey: keys.detail(itemId)
       });
       queryClient.invalidateQueries({
-        queryKey: ITEM_VARIANTS
+        queryKey: [ITEM_VARIANTS]
       });
     },
   });

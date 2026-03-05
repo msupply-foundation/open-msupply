@@ -42,7 +42,7 @@ export const StockLevelsSummary = ({
 
   return (
     <StatsPanel
-      error={error as ApiException}
+      error={error as unknown as ApiException}
       isError={isError}
       isLoading={isLoading}
       title={t('heading.stock-levels')}

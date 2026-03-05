@@ -3,7 +3,7 @@ import { DraftClinician } from '.';
 import { useInsertClinician } from './api/useInsertClinician';
 
 export const useCreateClinician = () => {
-  const { isLoading, mutateAsync } = useInsertClinician();
+  const { isPending: isLoading, mutateAsync } = useInsertClinician();
 
   const [clinician, setClinician] = useState<DraftClinician>({
     firstName: '',

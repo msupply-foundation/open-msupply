@@ -23,7 +23,7 @@ interface RnRFormDraft {
 }
 
 export const useCreateRnRForm = () => {
-  const { mutateAsync, isLoading, error } = useCreate();
+  const { mutateAsync, isPending: isLoading, error } = useCreate();
   const [draft, setDraft] = useState<RnRFormDraft>({
     supplier: null,
     program: null,

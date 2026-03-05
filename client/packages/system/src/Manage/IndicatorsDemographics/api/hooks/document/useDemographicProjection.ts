@@ -11,7 +11,7 @@ export const useDemographicProjection = (baseYear: number) => {
 
       return (
         result ?? {
-          __typename: 'DemographicProjectionNode',
+          __typename: 'DemographicProjectionNode' as const,
           baseYear: baseYear,
           id: '',
           year1: 0,
