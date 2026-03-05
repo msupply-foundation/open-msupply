@@ -1430,7 +1430,6 @@
   "messages.notification-breach-detected": "تم العثور على خرق في درجة الحرارة! منذ {{time}}",
   "messages.notification-excursion-detected": "تم اكتشاف انحراف في درجة الحرارة! منذ {{time}}",
   "messages.off-hold-confirmation": "سيؤدي ذلك إلى إعادة تمكين تغييرات الحالة",
-  "messages.on-hold": "لا يمكن تغيير الحالة لأن الفاتورة قيد الانتظار",
   "messages.on-hold-confirmation": "سيؤدي ذلك إلى منع أي تغييرات أخرى في الحالة حتى يتم إزالة الحجز",
   "messages.on-hold-description": "سيمنع ذلك من إجراء المزيد من التغييرات على جرد المخزون حتى يتم فتح القفل.",
   "messages.on-hold-stock-take": "جرد المخزون هذا معلق ولا يمكن تعديله",
