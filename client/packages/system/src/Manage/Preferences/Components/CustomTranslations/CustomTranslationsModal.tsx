@@ -149,7 +149,7 @@ export const CustomTranslationsModal = ({
     setTranslations([]);
   };
 
-  const saveAndClose = async () => {
+  const save = async (shouldClose = false) => {
     const hasInvalidTranslations = translations.some(tr => tr.isInvalid);
     if (hasInvalidTranslations) {
       setShowValidationErrors(true);
@@ -167,7 +167,7 @@ export const CustomTranslationsModal = ({
     if (successfulSave) {
       invalidateCustomTranslations();
       success(t('messages.saved'))();
-      onClose();
+      if (shouldClose) onClose();
     } else {
       error(t('error.failed-to-save-translations'))();
     }
@@ -180,11 +180,21 @@ export const CustomTranslationsModal = ({
         width={1200}
         height={900}
         cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
+        saveButton={
+          <LoadingButton
+            isLoading={loading}
+            onClick={() => save(false)}
+            label={t('button.save')}
+            startIcon={<SaveIcon />}
+            variant="outlined"
+            color="secondary"
+          />
+        }
         okButton={
           <LoadingButton
             isLoading={loading}
-            onClick={saveAndClose}
-            label={t('button.save')}
+            onClick={() => save(true)}
+            label={t('button.save-and-close')}
             startIcon={<SaveIcon />}
             variant="contained"
             color="secondary"
