@@ -69,7 +69,7 @@ mod test {
         let po = PurchaseOrderRow {
             id: purchase_order_id.to_string(),
             store_id: mock_store_a().id,
-            supplier_name_link_id: mock_name_c().id,
+            supplier_name_id: mock_name_c().id,
             created_datetime: chrono::Utc::now().naive_utc(),
             status: repository::PurchaseOrderStatus::New,
             purchase_order_number: 1,

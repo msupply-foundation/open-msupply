@@ -142,17 +142,15 @@ export function getSdk(
   return {
     allReportVersions(
       variables: AllReportVersionsQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<AllReportVersionsQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<AllReportVersionsQuery>({
-            document: AllReportVersionsDocument,
+          client.request<AllReportVersionsQuery>(
+            AllReportVersionsDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'allReportVersions',
         'query',
         variables
@@ -160,17 +158,15 @@ export function getSdk(
     },
     installUploadedReports(
       variables: InstallUploadedReportsMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<InstallUploadedReportsMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<InstallUploadedReportsMutation>({
-            document: InstallUploadedReportsDocument,
+          client.request<InstallUploadedReportsMutation>(
+            InstallUploadedReportsDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'installUploadedReports',
         'mutation',
         variables

@@ -378,6 +378,217 @@ macro_rules! apply_sort_asc_nulls_first {
     }};
 }
 
+/// Generates table definitions and repository methods for the entity linking abstraction pattern.
+///
+/// This macro automates the creation of:
+/// 1. **Core table** definition (with `link_id` columns for database storage)
+/// 2. **View table** definition (with resolved `id` columns for queries)
+/// 3. **Repository `_upsert` method** that translates between resolved IDs and link IDs
+///
+/// # Entity Linking Pattern
+///
+/// The pattern hides internal `*_link_id` columns from the public API, exposing only resolved IDs.
+/// - Database tables store `name_link_id` (reference to name_link table)
+/// - Views join with name_link to resolve `name_link_id` → `name_id`
+/// - Row structs use `name_id` for clean public API
+/// - Repository methods translate back to `name_link_id` when writing
+///
+/// # Syntax
+///
+/// ```rust,ignore
+/// define_linked_tables!(
+///     view: <view_table_name> = "<view_sql_name>",
+///     core: <core_table_name> = "<core_sql_name>",
+///     struct: <StructName>,
+///     repo: <RepositoryName>,
+///     shared: {
+///         field1 -> Type1,
+///         field2 -> Type2,
+///         #[attribute] field3 -> Type3,  // Attributes supported
+///         // ... other fields
+///     },
+///     links: {
+///         link_id -> resolved_id,
+///     }
+/// );
+/// ```
+///
+/// # Implicit Behavior
+///
+/// **The `id` field is automatically added** - you don't need to specify it in the `shared` section.
+/// The macro always includes `id -> Text` as the first field in both core and view tables.
+///
+/// # Special Case: `type_` Field
+///
+/// The macro automatically handles Rust keywords like `type`:
+/// - In the table schema: use `type_` with `#[sql_name = "type"]` attribute
+/// - In the Row struct: the field must be `r#type` (raw identifier)
+/// - The macro's `@field_access` helper automatically translates between them
+///
+/// This works transparently - just declare `type_` in your `shared` section with the
+/// `#[sql_name = "type"]` attribute, and the macro handles the `r#type` mapping.
+///
+/// # Example: Invoice Table
+///
+/// **Input:**
+/// ```rust,ignore
+/// define_linked_tables!(
+///     view: invoice = "invoice_view",
+///     core: invoice_with_links = "invoice",
+///     struct: InvoiceRow,
+///     repo: InvoiceRowRepository,
+///     shared: {
+///         store_id -> Text,
+///         #[sql_name = "type"] type_ -> InvoiceTypeMapping,
+///         status -> InvoiceStatusMapping,
+///         on_hold -> Bool,
+///         comment -> Nullable<Text>,
+///     },
+///     links: {
+///         name_link_id -> name_id,
+///     }
+/// );
+/// ```
+///
+/// **Generated Output:**
+/// ```rust,ignore
+/// // Core table - used for INSERT/UPDATE operations
+/// table! {
+///     #[sql_name = "invoice"]
+///     invoice_with_links (id) {
+///         id -> Text,                    // Implicit - added automatically
+///         store_id -> Text,
+///         #[sql_name = "type"] type_ -> InvoiceTypeMapping,
+///         status -> InvoiceStatusMapping,
+///         on_hold -> Bool,
+///         comment -> Nullable<Text>,
+///         name_link_id -> Text,          // From links section
+///     }
+/// }
+///
+/// // View table - used for SELECT queries
+/// table! {
+///     #[sql_name = "invoice_view"]
+///     invoice (id) {
+///         id -> Text,                    // Implicit - added automatically
+///         store_id -> Text,
+///         #[sql_name = "type"] type_ -> InvoiceTypeMapping,
+///         status -> InvoiceStatusMapping,
+///         on_hold -> Bool,
+///         comment -> Nullable<Text>,
+///         name_id -> Text,               // Resolved from name_link_id
+///     }
+/// }
+///
+/// // Generated repository method
+/// impl<'a> InvoiceRowRepository<'a> {
+///     pub fn _upsert(&self, record: &InvoiceRow) -> Result<(), RepositoryError> {
+///         // Automatically handles:
+///         // - Writing to core table (invoice_with_links)
+///         // - Translating name_id -> name_link_id
+///         // - Special case: record.r#type -> table.type_
+///         // - INSERT with ON CONFLICT DO UPDATE logic
+///     }
+/// }
+/// ```
+///
+/// # Usage in Repository
+///
+/// After macro invocation, implement `upsert_one` that calls the generated `_upsert`:
+///
+/// ```rust,ignore
+/// impl<'a> InvoiceRowRepository<'a> {
+///     pub fn upsert_one(&self, row: &InvoiceRow) -> Result<i64, RepositoryError> {
+///         self._upsert(row)?;
+///         self.insert_changelog(row, RowActionType::Upsert)
+///     }
+/// }
+/// ```
+macro_rules! define_linked_tables {
+
+    // Helper rule for field access - handles special case for type_
+    (@field_access $table:ident, type_, $record:ident) => {
+        $table::type_.eq(&$record.r#type)
+    };
+    (@field_access $table:ident, $field:ident, $record:ident) => {
+        $table::$field.eq(&$record.$field)
+    };
+
+    (
+        view: $view_table:ident = $view_sql_name:literal,
+        core: $core_table:ident = $core_sql_name:literal,
+        struct: $struct_name:ident,
+        repo: $repo_name:ident,
+        shared: {
+            $(
+                $(#[$attr:meta])?
+                $field:ident -> $field_type:ty
+            ),* $(,)?
+        },
+        links: {
+            $(
+                $link_id:ident -> $resolved_id:ident
+            ),* $(,)?
+        } $(,)?
+        optional_links: {
+            $(
+                $opt_link_id:ident -> $opt_resolved_id:ident
+            ),* $(,)?
+        }
+    ) => {
+        // Core table with link IDs
+        table! {
+            #[sql_name = $core_sql_name]
+            $core_table (id) {
+                id -> Text,
+                $(
+                    $(#[$attr])?
+                    $field -> $field_type,
+                )*
+                $($link_id -> Text,)*
+                $($opt_link_id -> Nullable<Text>,)*
+            }
+        }
+
+        // View table with resolved IDs
+        table! {
+            #[sql_name = $view_sql_name]
+            $view_table (id) {
+                id -> Text,
+                $(
+                    $(#[$attr])?
+                    $field -> $field_type,
+                )*
+                $($resolved_id -> Text,)*
+                $($opt_resolved_id -> Nullable<Text>,)*
+            }
+        }
+
+        // Generate upsert method on repository
+        impl<'a> $repo_name<'a> {
+            pub fn _upsert(&self, record: &$struct_name) -> Result<(), crate::RepositoryError> {
+                diesel::insert_into($core_table::table)
+                    .values((
+                        $core_table::id.eq(&record.id),
+                        $(define_linked_tables!(@field_access $core_table, $field, record),)*
+                        $($core_table::$link_id.eq(&record.$resolved_id),)*
+                        $($core_table::$opt_link_id.eq(&record.$opt_resolved_id.as_ref()),)*
+                    ))
+                    .on_conflict($core_table::id)
+                    .do_update()
+                    .set((
+                        $(define_linked_tables!(@field_access $core_table, $field, record),)*
+                        $($core_table::$link_id.eq(&record.$resolved_id),)*
+                        $($core_table::$opt_link_id.eq(&record.$opt_resolved_id.as_ref()),)*
+                    ))
+                    .execute(self.connection.lock().connection())?;
+
+                Ok(())
+            }
+        }
+    };
+}
+
 pub(crate) use apply_date_filter;
 pub(crate) use apply_date_time_filter;
 pub(crate) use apply_equal_filter;
@@ -389,3 +600,4 @@ pub(crate) use apply_sort_no_case;
 pub(crate) use apply_string_filter;
 pub(crate) use apply_string_filter_method;
 pub(crate) use apply_string_or_filter;
+pub(crate) use define_linked_tables;

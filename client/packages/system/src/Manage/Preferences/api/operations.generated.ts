@@ -101,17 +101,15 @@ export function getSdk(
   return {
     adminPreferenceList(
       variables: AdminPreferenceListQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<AdminPreferenceListQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<AdminPreferenceListQuery>({
-            document: AdminPreferenceListDocument,
+          client.request<AdminPreferenceListQuery>(
+            AdminPreferenceListDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'adminPreferenceList',
         'query',
         variables
@@ -119,17 +117,15 @@ export function getSdk(
     },
     upsertPreferences(
       variables: UpsertPreferencesMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<UpsertPreferencesMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<UpsertPreferencesMutation>({
-            document: UpsertPreferencesDocument,
+          client.request<UpsertPreferencesMutation>(
+            UpsertPreferencesDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'upsertPreferences',
         'mutation',
         variables
