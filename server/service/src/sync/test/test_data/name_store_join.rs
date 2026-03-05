@@ -27,7 +27,7 @@ fn name_store_join_1_pull_record() -> TestSyncIncomingRecord {
         NameStoreJoinRow {
             id: NAME_STORE_JOIN_1.0.to_string(),
             store_id: "store_a".to_string(),
-            name_link_id: "name_store_c".to_string(),
+            name_id: "name_store_c".to_string(),
             name_is_customer: false,
             name_is_supplier: true,
         },
@@ -65,7 +65,7 @@ fn name_store_join_2_pull_record() -> TestSyncIncomingRecord {
         NameStoreJoinRow {
             id: NAME_STORE_JOIN_2.0.to_string(),
             store_id: "store_b".to_string(),
-            name_link_id: "name_store_a".to_string(),
+            name_id: "name_store_a".to_string(),
             name_is_customer: false,
             name_is_supplier: true,
         },

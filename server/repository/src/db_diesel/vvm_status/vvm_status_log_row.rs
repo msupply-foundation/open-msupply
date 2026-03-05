@@ -102,7 +102,7 @@ impl<'a> VVMStatusLogRowRepository<'a> {
             record_id: row.id.to_string(),
             row_action: action,
             store_id: Some(row.store_id.clone()),
-            name_link_id: None,
+            name_id: None,
         };
 
         ChangelogRepository::new(self.connection).insert(&row)
