@@ -70,17 +70,15 @@ export function getSdk(
   return {
     frontendPluginMetadata(
       variables?: FrontendPluginMetadataQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<FrontendPluginMetadataQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<FrontendPluginMetadataQuery>({
-            document: FrontendPluginMetadataDocument,
+          client.request<FrontendPluginMetadataQuery>(
+            FrontendPluginMetadataDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'frontendPluginMetadata',
         'query',
         variables
@@ -88,17 +86,15 @@ export function getSdk(
     },
     pluginGraphqlQuery(
       variables: PluginGraphqlQueryQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<PluginGraphqlQueryQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<PluginGraphqlQueryQuery>({
-            document: PluginGraphqlQueryDocument,
+          client.request<PluginGraphqlQueryQuery>(
+            PluginGraphqlQueryDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'pluginGraphqlQuery',
         'query',
         variables

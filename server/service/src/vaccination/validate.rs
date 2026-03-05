@@ -36,7 +36,7 @@ pub fn check_program_enrolment_exists(
         .query_by_filter(
             ProgramEnrolmentFilter::new()
                 .program_id(EqualFilter::equal_to(encounter.program_id.to_string()))
-                .patient_id(EqualFilter::equal_to(encounter.patient_link_id.to_string())),
+                .patient_id(EqualFilter::equal_to(encounter.patient_id.to_string())),
         )?
         .pop();
 

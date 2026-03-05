@@ -124,7 +124,7 @@ mod test {
         fn not_a_customer_join() -> NameStoreJoinRow {
             NameStoreJoinRow {
                 id: "not_a_customer_join".to_string(),
-                name_link_id: not_a_customer().id,
+                name_id: not_a_customer().id,
                 store_id: mock_store_b().id,
                 name_is_customer: false,
                 ..Default::default()
@@ -237,7 +237,7 @@ mod test {
         fn invoice() -> InvoiceRow {
             InvoiceRow {
                 id: "test_invoice_pricing".to_string(),
-                name_link_id: mock_name_a().id,
+                name_id: mock_name_a().id,
                 store_id: mock_store_c().id,
                 r#type: InvoiceType::OutboundShipment,
                 status: InvoiceStatus::Picked,
@@ -279,7 +279,7 @@ mod test {
         fn customer_join() -> NameStoreJoinRow {
             NameStoreJoinRow {
                 id: "customer_join".to_string(),
-                name_link_id: customer().id,
+                name_id: customer().id,
                 store_id: mock_store_c().id,
                 name_is_customer: true,
                 ..Default::default()
@@ -338,8 +338,8 @@ mod test {
             updated_invoice.invoice_row
         );
         assert_ne!(
-            updated_invoice.invoice_row.name_link_id,
-            invoice().name_link_id
+            updated_invoice.invoice_row.name_id,
+            invoice().name_id
         );
         assert_eq!(
             updated_lines,

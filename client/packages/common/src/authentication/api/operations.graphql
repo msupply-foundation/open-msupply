@@ -224,5 +224,19 @@ query preferences($storeId: String!) {
     itemMarginOverridesSupplierMargin
     showIndicativePriceInRequisitions
     isGaps
+    globalTableConfigs
+  }
+}
+
+mutation saveGlobalTableConfigs(
+  $storeId: String!
+  $input: UpsertPreferencesInput!
+) {
+  centralServer {
+    preferences {
+      upsertPreferences(storeId: $storeId, input: $input) {
+        ok
+      }
+    }
   }
 }

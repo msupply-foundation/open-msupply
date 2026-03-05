@@ -180,7 +180,7 @@ mod test {
         fn not_a_supplier_join() -> NameStoreJoinRow {
             NameStoreJoinRow {
                 id: "not_a_supplier_join".to_string(),
-                name_link_id: not_a_supplier().id,
+                name_id: not_a_supplier().id,
                 store_id: mock_store_a().id,
                 name_is_supplier: false,
                 ..Default::default()
@@ -191,7 +191,7 @@ mod test {
             InvoiceRow {
                 id: "verified_return".to_string(),
                 store_id: mock_store_a().id,
-                name_link_id: mock_name_store_a().id,
+                name_id: mock_name_store_a().id,
                 currency_id: Some(currency_a().id),
                 r#type: InvoiceType::CustomerReturn,
                 status: InvoiceStatus::Verified,
@@ -202,7 +202,7 @@ mod test {
             InvoiceRow {
                 id: "on_hold_return".to_string(),
                 store_id: mock_store_a().id,
-                name_link_id: mock_name_store_a().id,
+                name_id: mock_name_store_a().id,
                 currency_id: Some(currency_a().id),
                 r#type: InvoiceType::CustomerReturn,
                 status: InvoiceStatus::New,

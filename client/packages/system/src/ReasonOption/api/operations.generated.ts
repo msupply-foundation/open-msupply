@@ -85,16 +85,13 @@ export function getSdk(
   return {
     reasonOptions(
       variables?: ReasonOptionsQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<ReasonOptionsQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<ReasonOptionsQuery>({
-            document: ReasonOptionsDocument,
-            variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
+          client.request<ReasonOptionsQuery>(ReasonOptionsDocument, variables, {
+            ...requestHeaders,
+            ...wrappedRequestHeaders,
           }),
         'reasonOptions',
         'query',

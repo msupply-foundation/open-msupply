@@ -10,7 +10,7 @@ import {
 import { IconButton, useConfirmationModal } from '@common/components';
 import { useTranslation } from '@common/intl';
 import { MRT_DensityState, MRT_TableInstance } from 'material-react-table';
-import { RefreshIcon, SettingsIcon, EyeIcon } from '@common/icons';
+import { RefreshIcon, SaveIcon, SettingsIcon, EyeIcon } from '@common/icons';
 import {
   useColumnDensity,
   useColumnOrder,
@@ -18,6 +18,7 @@ import {
   useColumnSizing,
   useColumnVisibility,
 } from '../tableState';
+import { ManagedTableState } from '../tableState/utils';
 // MRT uses these icons - match the column menu items/table default icons until icon library + table icons are updated
 import PushPinIcon from '@mui/icons-material/PushPin';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
@@ -25,36 +26,44 @@ import DensityLargeIcon from '@mui/icons-material/DensityLarge';
 import DensityMediumIcon from '@mui/icons-material/DensityMedium';
 import DensitySmallIcon from '@mui/icons-material/DensitySmall';
 import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
+import { getSavedState } from '../tableState/utils';
 
 export const SettingsMenu = ({
   table,
+  tableId,
   density,
   columnSizing,
   columnVisibility,
   columnPinning,
   columnOrder,
   resetTableState,
+  onSaveAsGlobalDefault,
+  globalDefaults,
 }: {
   table: MRT_TableInstance<any>;
+  tableId: string;
   density: ReturnType<typeof useColumnDensity>;
   columnSizing: ReturnType<typeof useColumnSizing>;
   columnVisibility: ReturnType<typeof useColumnVisibility>;
   columnPinning: ReturnType<typeof useColumnPinning>;
   columnOrder: ReturnType<typeof useColumnOrder>;
   resetTableState: () => void;
+  onSaveAsGlobalDefault?: () => void;
+  globalDefaults?: ManagedTableState;
 }) => {
   const t = useTranslation();
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const open = !!anchorEl;
 
-  const hasSavedState =
-    density.hasSavedState ||
-    columnSizing.hasSavedState ||
-    columnPinning.hasSavedState ||
-    columnVisibility.hasSavedState ||
-    columnOrder.hasSavedState;
+  const state = getSavedState(tableId);
+  const hasAnySavedState =
+    !!state?.density ||
+    !!state?.columnSizing ||
+    !!state?.columnPinning ||
+    !!state?.columnVisibility ||
+    !!state?.columnOrder;
 
-  const getConfirmation = useConfirmationModal({
+  const getResetConfirmation = useConfirmationModal({
     title: t('heading.are-you-sure'),
     message: t('messages.reset-table-defaults'),
     onConfirm: resetTableState,
@@ -108,10 +117,12 @@ export const SettingsMenu = ({
         </MenuItem>
         <>
           <MenuItem
-            disabled={!columnOrder.hasSavedState}
+            disabled={!state?.columnOrder}
             onClick={() => {
-              table.resetColumnOrder();
-              columnOrder.resetHasSavedState();
+              if (globalDefaults?.columnOrder)
+                table.setColumnOrder(globalDefaults.columnOrder);
+              else table.resetColumnOrder();
+              columnOrder.update(columnOrder.initial);
               setAnchorEl(null);
             }}
           >
@@ -121,10 +132,12 @@ export const SettingsMenu = ({
             <ListItemText>{t('label.reset-column-order')}</ListItemText>
           </MenuItem>
           <MenuItem
-            disabled={!columnVisibility.hasSavedState}
+            disabled={!state?.columnVisibility}
             onClick={() => {
-              table.resetColumnVisibility();
-              columnVisibility.resetHasSavedState();
+              if (globalDefaults?.columnVisibility)
+                table.setColumnVisibility(globalDefaults.columnVisibility);
+              else table.resetColumnVisibility();
+              columnVisibility.update(columnVisibility.initial);
               setAnchorEl(null);
             }}
           >
@@ -134,10 +147,12 @@ export const SettingsMenu = ({
             <ListItemText>{t('label.show-all-columns')}</ListItemText>
           </MenuItem>
           <MenuItem
-            disabled={!columnSizing.hasSavedState}
+            disabled={!state?.columnSizing}
             onClick={() => {
-              table.resetColumnSizing();
-              columnSizing.resetHasSavedState();
+              if (globalDefaults?.columnSizing)
+                table.setColumnSizing(globalDefaults.columnSizing);
+              else table.resetColumnSizing();
+              columnSizing.update(columnSizing.initial);
               setAnchorEl(null);
             }}
           >
@@ -147,10 +162,12 @@ export const SettingsMenu = ({
             <ListItemText>{t('label.reset-column-sizes')}</ListItemText>
           </MenuItem>
           <MenuItem
-            disabled={!columnPinning.hasSavedState}
+            disabled={!state?.columnPinning}
             onClick={() => {
-              table.resetColumnPinning();
-              columnPinning.resetHasSavedState();
+              if (globalDefaults?.columnPinning)
+                table.setColumnPinning(globalDefaults.columnPinning);
+              else table.resetColumnPinning();
+              columnPinning.update(columnPinning.initial);
               setAnchorEl(null);
             }}
           >
@@ -164,12 +181,29 @@ export const SettingsMenu = ({
             <ListItemIcon>{densityIcon()}</ListItemIcon>
             <ListItemText> {t('label.toggle-density')}</ListItemText>
           </MenuItem>
+          {onSaveAsGlobalDefault && (
+            <>
+              <Divider />
+              <MenuItem
+                onClick={() => {
+                  onSaveAsGlobalDefault();
+                  setAnchorEl(null);
+                }}
+              >
+                <ListItemIcon>
+                  <SaveIcon fontSize="small" />
+                </ListItemIcon>
+                <ListItemText>
+                  {t('label.save-table-config-as-global-default')}
+                </ListItemText>
+              </MenuItem>
+            </>
+          )}
           <Divider />
           <MenuItem
-            disabled={!hasSavedState}
+            disabled={!hasAnySavedState}
             onClick={() => {
-              table.resetColumnOrder();
-              getConfirmation();
+              getResetConfirmation();
               setAnchorEl(null);
             }}
           >
