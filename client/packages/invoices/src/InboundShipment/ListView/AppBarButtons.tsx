@@ -11,6 +11,7 @@ import {
   RouteBuilder,
   useAuthContext,
   useUrlQuery,
+  useNotification,
   SplitButtonOption,
   SplitButton,
 } from '@openmsupply-client/common';
@@ -43,6 +44,7 @@ export const AppBarButtons = ({
   const t = useTranslation();
   const navigate = useNavigate();
   const { store } = useAuthContext();
+  const { error: errorNotification } = useNotification();
   const [name, setName] = useState<NameRowFragment | null>(null);
   const [selectedSupplierId, setSelectedSupplierId] = useState<string | null>(
     null
@@ -70,20 +72,26 @@ export const AppBarButtons = ({
     purchaseOrderId?: string,
     insertLinesFromPurchaseOrder?: boolean
   ) => {
-    const invoiceId = await onCreate({
-      id: FnUtils.generateUUID(),
-      otherPartyId: nameId,
-      requisitionId,
-      purchaseOrderId,
-      insertLinesFromPurchaseOrder,
-    });
+    try {
+      const invoiceId = await onCreate({
+        id: FnUtils.generateUUID(),
+        otherPartyId: nameId,
+        requisitionId,
+        purchaseOrderId,
+        insertLinesFromPurchaseOrder,
+      });
 
-    navigate(
-      RouteBuilder.create(AppRoute.Replenishment)
-        .addPart(AppRoute.InboundShipment)
-        .addPart(invoiceId)
-        .build()
-    );
+      navigate(
+        RouteBuilder.create(AppRoute.Replenishment)
+          .addPart(AppRoute.InboundShipment)
+          .addPart(invoiceId)
+          .build()
+      );
+    } catch (e) {
+      errorNotification(
+        'Failed to create invoice! ' + (e as Error).message
+      )();
+    }
   };
 
   const handleSupplierSelected = async (
