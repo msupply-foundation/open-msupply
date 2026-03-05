@@ -64,12 +64,11 @@ export interface ScannerDriver {
    */
   stop(): Promise<void>;
 
-  /**
-   * Optional React element to render (e.g. MockScanner's input dialog).
-   * Most drivers return null.
-   */
-  renderUI?(): React.ReactNode;
 }
+
+// Note: renderUI() was removed from the interface. MockScanner's input dialog
+// is rendered directly in the provider, and camera hideApp styling is managed
+// via a setHideApp callback passed to the CameraScannerDriver.
 ```
 
 ## Driver Implementations
