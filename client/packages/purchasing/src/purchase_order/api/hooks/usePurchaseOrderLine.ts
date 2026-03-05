@@ -14,7 +14,7 @@ import { PurchaseOrderLineFragment } from '../operations.generated';
 
 export type DraftPurchaseOrderLine = Omit<
   PurchaseOrderLineFragment,
-  '__typename'
+  '__typename' | 'shippedNumberOfUnits'
 > & {
   purchaseOrderId: string;
   itemId: string;
@@ -63,7 +63,6 @@ const defaultPurchaseOrderLine: DraftPurchaseOrderLine = {
   // These values not actually saved to DB
   numberOfPacks: 0,
   requestedNumberOfPacks: 0,
-  receivedNumberOfUnits: 0,
 };
 
 export function usePurchaseOrderLine(id?: string | null) {

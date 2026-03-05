@@ -12,6 +12,7 @@ interface UploadButtonProps {
   files?: File[];
   customLabel?: string;
   icon?: ReactNode;
+  accept?: string;
 }
 
 export const UploadButton = ({
@@ -19,6 +20,7 @@ export const UploadButton = ({
   files,
   customLabel,
   icon,
+  accept,
 }: UploadButtonProps) => {
   const t = useTranslation();
   const elementId = FnUtils.generateUUID();
@@ -52,6 +54,7 @@ export const UploadButton = ({
       <input
         id={elementId}
         type="file"
+        accept={accept}
         onChange={handleFileChange}
         style={{ display: 'none' }}
       ></input>

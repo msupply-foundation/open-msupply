@@ -117,12 +117,12 @@ mod tests {
         assert!(result.contains(&"B".to_string()));
 
         // equal_to: prevent query excluded id
-        let result = repository
-            .query_by_filter(
-                InvoiceFilter::new()
-                    .user_id(EqualFilter::equal_to(excluded_id.to_string()).restrict_results(&allowed)),
-            )
-            .unwrap();
+        let result =
+            repository
+                .query_by_filter(InvoiceFilter::new().user_id(
+                    EqualFilter::equal_to(excluded_id.to_string()).restrict_results(&allowed),
+                ))
+                .unwrap();
         assert!(result.is_empty());
         // equal_to: allow query allowed id
         let result = repository
@@ -202,8 +202,7 @@ mod tests {
         // is_null
         let result = repository
             .query_by_filter(
-                InvoiceFilter::new()
-                    .user_id(EqualFilter::is_null(true).restrict_results(&allowed)),
+                InvoiceFilter::new().user_id(EqualFilter::is_null(true).restrict_results(&allowed)),
             )
             .unwrap()
             .into_iter()

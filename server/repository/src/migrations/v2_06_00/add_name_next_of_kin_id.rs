@@ -49,9 +49,8 @@ impl MigrationFragment for Migrate {
             .load::<(String, String)>(connection.lock().connection())?;
 
         for (name_id, data) in sync_buffer_rows {
-            let legacy_row = serde_json::from_str::<LegacyNameRow>(&data).with_context(|| {
-                format!("Error parsing sync data for name: {name_id} {data}")
-            })?;
+            let legacy_row = serde_json::from_str::<LegacyNameRow>(&data)
+                .with_context(|| format!("Error parsing sync data for name: {name_id} {data}"))?;
             diesel::update(name::table)
                 .filter(name::id.eq(name_id))
                 .set(name::next_of_kin_id.eq(legacy_row.next_of_kin_id))

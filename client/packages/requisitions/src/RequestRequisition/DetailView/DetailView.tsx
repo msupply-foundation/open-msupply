@@ -124,7 +124,7 @@ export const DetailView = () => {
     data: lines,
     isLoading: isFetching,
     isError,
-    getIsPlaceholderRow: isRequestLinePlaceholderRow,
+    getIsPlaceholderRow: row => isRequestLinePlaceholderRow(row.original),
     onRowClick,
     initialSort: { key: 'itemName', dir: 'asc' },
     manualFiltering: true,

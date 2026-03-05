@@ -352,7 +352,7 @@ impl DraftStockOutLine {
             doses_per_unit: line.item_row.vaccine_doses,
             campaign_id,
             program_id,
-            volume_per_pack
+            volume_per_pack,
         })
     }
 }

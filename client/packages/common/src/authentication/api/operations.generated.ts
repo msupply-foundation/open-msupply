@@ -239,7 +239,6 @@ export type PreferencesQuery = {
     __typename: 'PreferencesNode';
     adjustForNumberOfDaysOutOfStock: boolean;
     allowTrackingOfStockByDonor: boolean;
-    authoriseGoodsReceived: boolean;
     authorisePurchaseOrder: boolean;
     canCreateInternalOrderFromARequisition: boolean;
     customTranslations: any;
@@ -482,7 +481,6 @@ export const PreferencesDocument = gql`
     preferences(storeId: $storeId) {
       adjustForNumberOfDaysOutOfStock
       allowTrackingOfStockByDonor
-      authoriseGoodsReceived
       authorisePurchaseOrder
       canCreateInternalOrderFromARequisition
       customTranslations

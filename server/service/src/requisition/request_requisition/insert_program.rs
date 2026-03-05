@@ -233,7 +233,8 @@ fn generate(
 
     let program_item_ids: Vec<String> = MasterListLineRepository::new(connection)
         .query_by_filter(
-            MasterListLineFilter::new().master_list_id(EqualFilter::equal_to(master_list_id.to_string())),
+            MasterListLineFilter::new()
+                .master_list_id(EqualFilter::equal_to(master_list_id.to_string())),
             None,
         )?
         .into_iter()
@@ -257,7 +258,9 @@ fn generate(
         connection,
         Pagination::all(),
         None,
-        Some(ProgramIndicatorFilter::new().program_id(EqualFilter::equal_to(program.id.to_string()))),
+        Some(
+            ProgramIndicatorFilter::new().program_id(EqualFilter::equal_to(program.id.to_string())),
+        ),
     )?;
 
     let customer_name_id = StoreRepository::new(connection)
@@ -521,7 +524,8 @@ mod test_insert {
             .unwrap();
         let requisition_lines = RequisitionLineRepository::new(&connection)
             .query_by_filter(
-                RequisitionLineFilter::new().requisition_id(EqualFilter::equal_to(new_row.id.to_string())),
+                RequisitionLineFilter::new()
+                    .requisition_id(EqualFilter::equal_to(new_row.id.to_string())),
             )
             .unwrap();
 
