@@ -385,6 +385,7 @@ async fn invoice_transfers_with_merged_name() {
         default_sell_price_per_pack: 15.0,
         ignore_for_orders: false,
         margin: 10.0,
+        default_location_id: None,
     };
 
     let ServiceTestContext {
