@@ -9,7 +9,7 @@ import {
   useNavigate,
   useTranslation,
 } from '@openmsupply-client/common';
-import { BarIcon, InvoiceIcon, TruckIcon } from '@common/icons';
+import { BarIcon, InvoiceIcon, SuppliersIcon, TruckIcon } from '@common/icons';
 import {
   useReportList,
   ReportRowFragment,
@@ -97,6 +97,13 @@ export const ListView = () => {
           reports={categorisedReports.distribution}
           onReportClick={onReportClick}
           hasReports={!!categorisedReports.distribution.length}
+        />
+        <ReportWidget
+          title={t('replenishment')}
+          Icon={SuppliersIcon}
+          reports={categorisedReports.replenishment}
+          onReportClick={onReportClick}
+          hasReports={!!categorisedReports.replenishment.length}
         />
         <ReportWidget
           title={t('label.programs')}
