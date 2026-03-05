@@ -8,8 +8,6 @@ import {
   SplitButtonOption,
   useConfirmationModal,
   useDisabledNotificationToast,
-  UserPermission,
-  useAuthContext,
   usePreferences,
 } from '@openmsupply-client/common';
 import {
@@ -93,8 +91,6 @@ const StatusChangeButtonContent = ({
   const t = useTranslation();
   const { invoiceStatusOptions } = usePreferences();
   const { success, error } = useNotification();
-  const { userHasPermission } = useAuthContext();
-
   const { status, onHold, linkedShipment, lines } = data;
   const isManuallyCreated = !linkedShipment?.id;
 
@@ -157,24 +153,12 @@ const StatusChangeButtonContent = ({
     t('messages.on-hold')
   );
 
-  const permissionDeniedNotification = useDisabledNotificationToast(
-    t('auth.permission-denied')
-  );
-
   const pendingLinesNotification = useDisabledNotificationToast(
     t('messages.pending-lines')
   );
 
-  const isExternal = !!data.purchaseOrder;
   const onVerify = () => {
-    const requiredPermission = isExternal
-      ? UserPermission.InboundShipmentExternalAuthorise
-      : UserPermission.InboundShipmentVerify;
-    if (userHasPermission(requiredPermission)) {
-      getConfirmation();
-    } else {
-      permissionDeniedNotification();
-    }
+    getConfirmation();
   };
 
   if (!selectedOption) return null;

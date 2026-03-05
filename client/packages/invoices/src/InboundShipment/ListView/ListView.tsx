@@ -15,8 +15,6 @@ import {
   MobileCardList,
   DetailTabs,
   ToggleState,
-  useAuthContext,
-  UserPermission,
 } from '@openmsupply-client/common';
 import { AppBarButtons } from './AppBarButtons';
 import {
@@ -34,44 +32,25 @@ export const InboundListView = () => {
   const internalModalController = useToggle();
   const externalModalController = useToggle();
   const linkRequestModalController = useToggle();
-  const { userHasPermission } = useAuthContext();
-
-  const hasInternalPermission =
-    userHasPermission(UserPermission.InboundShipmentQuery) ||
-    userHasPermission(UserPermission.InboundShipmentMutate) ||
-    userHasPermission(UserPermission.InboundShipmentVerify);
-
-  const hasExternalPermission =
-    userHasPermission(UserPermission.InboundShipmentExternalQuery) ||
-    userHasPermission(UserPermission.InboundShipmentExternalMutate) ||
-    userHasPermission(UserPermission.InboundShipmentExternalAuthorise);
 
   const tabs = [
-    ...(hasInternalPermission
-      ? [
-          {
-            Component: (
-              <InboundShipments
-                internalModalController={internalModalController}
-              />
-            ),
-            value: t('label.internal'),
-          },
-        ]
-      : []),
-    ...(hasExternalPermission
-      ? [
-          {
-            Component: (
-              <InboundShipments
-                internalModalController={internalModalController}
-                external
-              />
-            ),
-            value: t('label.external'),
-          },
-        ]
-      : []),
+    {
+      Component: (
+        <InboundShipments
+          internalModalController={internalModalController}
+        />
+      ),
+      value: t('label.internal'),
+    },
+    {
+      Component: (
+        <InboundShipments
+          internalModalController={internalModalController}
+          external
+        />
+      ),
+      value: t('label.external'),
+    },
   ];
 
   return (
