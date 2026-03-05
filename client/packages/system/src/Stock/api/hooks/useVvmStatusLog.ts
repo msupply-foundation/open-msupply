@@ -9,13 +9,13 @@ import { useMutation } from '@openmsupply-client/common';
 export const useVvmStatusLog = () => {
   const {
     mutateAsync: createMutation,
-    isLoading: isCreating,
+    isPending: isCreating,
     error: createError,
   } = useCreate();
 
   const {
     mutateAsync: updateMutation,
-    isLoading: isUpdating,
+    isPending: isUpdating,
     error: updateError,
   } = useUpdate();
 

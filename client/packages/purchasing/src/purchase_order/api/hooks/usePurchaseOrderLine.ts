@@ -108,7 +108,7 @@ export function usePurchaseOrderLine(id?: string | null) {
   // CREATE
   const {
     mutateAsync: createMutation,
-    isLoading: isCreating,
+    isPending: isCreating,
     error: createError,
   } = useCreate();
 
@@ -140,7 +140,7 @@ export function usePurchaseOrderLine(id?: string | null) {
   // UPDATE
   const {
     updatePurchaseOrderLine,
-    isLoading: isUpdating,
+    isPending: isUpdating,
     error: updateError,
     updatePurchaseOrderLineThrowError,
   } = useUpdate();
@@ -185,7 +185,7 @@ export function usePurchaseOrderLine(id?: string | null) {
   // DELETE
   const {
     mutateAsync: deleteMutation,
-    isLoading: isDeletingLines,
+    isPending: isDeletingLines,
     error: deleteError,
   } = useDeleteLines();
 

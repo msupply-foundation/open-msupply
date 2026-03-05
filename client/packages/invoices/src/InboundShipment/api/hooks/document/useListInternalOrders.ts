@@ -1,4 +1,4 @@
-import { useQuery } from '@openmsupply-client/common';
+import { useQuery, keepPreviousData } from '@openmsupply-client/common';
 import { useInboundApi } from '../utils/useInboundApi';
 
 const MILLISECONDS_PER_MINUTE = 60 * 1000;
@@ -13,7 +13,7 @@ export const useListInternalOrders = (otherPartyId: string) => {
     queryFn: () => api.get.listInternalOrders(otherPartyId),
     gcTime: POLLING_INTERVAL_MS,
     staleTime: STALE_TIME_MS,
-    keepPreviousData: true,
+    placeholderData: keepPreviousData,
     enabled: !!otherPartyId
   });
 

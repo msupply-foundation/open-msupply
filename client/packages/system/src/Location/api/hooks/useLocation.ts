@@ -12,14 +12,14 @@ export const useLocation = () => {
   // CREATE
   const {
     mutateAsync: createMutation,
-    isLoading: isCreating,
+    isPending: isCreating,
     error: createError,
   } = useCreateLocation();
 
   // UPDATE
   const {
     mutateAsync: update,
-    isLoading: isUpdating,
+    isPending: isUpdating,
     error: updateError,
   } = useUpdateLocation();
 

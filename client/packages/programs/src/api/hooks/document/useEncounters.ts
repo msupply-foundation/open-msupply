@@ -1,4 +1,4 @@
-import { useQuery } from '@openmsupply-client/common';
+import { useQuery, keepPreviousData } from '@openmsupply-client/common';
 import { EncounterListParams, useEncounterApi } from '../utils/useEncounterApi';
 
 export const useEncounters = (params: EncounterListParams) => {
@@ -6,7 +6,7 @@ export const useEncounters = (params: EncounterListParams) => {
   return useQuery({
     queryKey: api.keys.paramList(params),
     queryFn: () => api.list(params),
-    keepPreviousData: true,
+    placeholderData: keepPreviousData,
     enabled: !!params?.sortBy?.key
   });
 };

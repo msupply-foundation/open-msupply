@@ -1,4 +1,4 @@
-import { useQuery } from '@openmsupply-client/common';
+import { useQuery, keepPreviousData } from '@openmsupply-client/common';
 import { useRequestApi } from '../utils/useRequestApi';
 import { ListParams } from '../../api';
 
@@ -12,7 +12,7 @@ export const useRequests = (
     ...useQuery({
       queryKey: api.keys.paramList(queryParams),
       queryFn: () => api.get.list(queryParams),
-      keepPreviousData: true,
+      placeholderData: keepPreviousData,
       ...options
     }),
   };

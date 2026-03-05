@@ -42,7 +42,7 @@ export const PrescriptionLineEditView = () => {
 
   const {
     mutateAsync: savePrescriptionItemLineData,
-    isLoading: isSavingLines,
+    isPending: isSavingLines,
   } = useSavePrescriptionItemLineData(invoiceId);
 
   const {

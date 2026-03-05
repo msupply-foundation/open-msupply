@@ -45,7 +45,7 @@ export const useInboundShipment = (id?: string) => {
 
   const {
     mutateAsync: updateMutation,
-    isLoading: isUpdating,
+    isPending: isUpdating,
     error: updateError,
   } = useUpdate();
 
@@ -68,7 +68,7 @@ export const useInboundShipment = (id?: string) => {
   // CREATE
   const {
     mutateAsync: createMutation,
-    isLoading: isCreating,
+    isPending: isCreating,
     error: createError,
   } = useCreate();
 
@@ -83,7 +83,7 @@ export const useInboundShipment = (id?: string) => {
   // DELETE
   const {
     mutateAsync: deleteMutation,
-    isLoading: isDeleting,
+    isPending: isDeleting,
     error: deleteError,
   } = useInboundDelete();
 

@@ -6,6 +6,7 @@ import {
   SortBy,
   useQuery,
   useMutation,
+  keepPreviousData,
   LIST_KEY,
   CampaignFilterInput,
   CampaignSortFieldInput,
@@ -49,7 +50,7 @@ export const useCampaigns = (queryParams?: ListParams) => {
   // UPSERT
   const {
     mutateAsync: upsertMutation,
-    isLoading: isUpserting,
+    isPending: isUpserting,
     error: upsertError,
   } = useUpsertCampaign();
 
@@ -64,7 +65,7 @@ export const useCampaigns = (queryParams?: ListParams) => {
   // DELETE
   const {
     mutateAsync: deleteMutation,
-    isLoading: isDeleting,
+    isPending: isDeleting,
     error: deleteError,
   } = useDeleteCampaign();
 
@@ -97,7 +98,7 @@ const useGetList = (queryParams?: ListParams) => {
   const query = useQuery({
     queryKey,
     queryFn,
-    keepPreviousData: true,
+    placeholderData: keepPreviousData,
   });
   return query;
 };

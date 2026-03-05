@@ -18,6 +18,7 @@ export {
   useQuery,
   UseQueryResult,
   QueryClient,
+  keepPreviousData,
 } from '@tanstack/react-query';
 
 export {

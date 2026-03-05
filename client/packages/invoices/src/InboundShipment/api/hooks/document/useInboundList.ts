@@ -5,6 +5,7 @@ import {
   SortBy,
   useQuery,
   useMutation,
+  keepPreviousData,
 } from '@openmsupply-client/common';
 import { useInboundGraphQL } from '../../useInboundGraphQL';
 import { LIST, INBOUND } from './keys';
@@ -69,12 +70,12 @@ export const useInboundList = (queryParams?: ListParams) => {
   const { data, isLoading, isError, isFetching, refetch } = useQuery({
     queryKey,
     queryFn,
-    keepPreviousData: true,
+    placeholderData: keepPreviousData,
   });
 
   const {
     mutateAsync: deleteMutation,
-    isLoading: isDeleting,
+    isPending: isDeleting,
     error: deleteError,
   } = useDelete();
 

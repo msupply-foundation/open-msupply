@@ -1,4 +1,4 @@
-import { useQuery, useUrlQueryParams } from '@openmsupply-client/common';
+import { useQuery, keepPreviousData, useUrlQueryParams } from '@openmsupply-client/common';
 import { useNameApi } from '../utils/useNameApi';
 
 export const useNames = (type: 'customer' | 'supplier') => {
@@ -18,7 +18,7 @@ export const useNames = (type: 'customer' | 'supplier') => {
           type,
         }),
 
-      keepPreviousData: true
+      placeholderData: keepPreviousData
     }),
   };
 };

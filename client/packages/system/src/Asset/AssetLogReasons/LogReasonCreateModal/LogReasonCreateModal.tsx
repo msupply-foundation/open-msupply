@@ -68,7 +68,7 @@ const useDraftLogReason = (
     draft: logReason,
     onUpdate,
     onSave,
-    isLoading: isCreating,
+    isPending: isCreating,
   };
 };
 

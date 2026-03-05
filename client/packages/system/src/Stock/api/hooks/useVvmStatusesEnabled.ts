@@ -16,7 +16,7 @@ export function useVvmStatusesEnabled() {
   };
 
   const { data, isLoading } = useQuery({
-    queryKey: VVM_STATUSES_CONFIGURED,
+    queryKey: [VVM_STATUSES_CONFIGURED],
     queryFn,
     refetchOnMount: true,
   });

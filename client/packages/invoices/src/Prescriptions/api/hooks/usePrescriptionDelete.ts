@@ -9,7 +9,7 @@ import { PrescriptionRowFragment } from '../operations.generated';
 export const usePrescriptionDelete = () => {
   const {
     mutateAsync: deleteMutation,
-    isLoading: isDeleting,
+    isPending: isDeleting,
     error: deleteError,
   } = useDelete();
 

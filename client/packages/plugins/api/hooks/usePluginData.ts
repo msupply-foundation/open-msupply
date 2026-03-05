@@ -63,7 +63,7 @@ export const usePluginData = ({
 
   const {
     mutateAsync: create,
-    isLoading: isCreating,
+    isPending: isCreating,
     isError: createError,
   } = useMutation({
     mutationFn: insertMutation,
@@ -89,7 +89,7 @@ export const usePluginData = ({
 
   const {
     mutateAsync: update,
-    isLoading: isUpdating,
+    isPending: isUpdating,
     isError: updateError,
   } = useMutation({
     mutationFn: updateMutation,

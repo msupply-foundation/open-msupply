@@ -1,4 +1,4 @@
-import { useMutation, useQuery } from '@openmsupply-client/common';
+import { useMutation, useQuery, keepPreviousData } from '@openmsupply-client/common';
 import { ListParams } from '../../api';
 import { usePatientApi } from '../utils/usePatientApi';
 
@@ -23,6 +23,6 @@ export const usePatients = (query: ListParams, enabled?: boolean) => {
     queryKey: api.keys.paramList(query),
     queryFn: () => api.get.list(query),
     enabled,
-    keepPreviousData: true
+    placeholderData: keepPreviousData
   });
 };

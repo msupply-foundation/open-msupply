@@ -5,6 +5,7 @@ import {
   StocktakeSortFieldInput,
   useMutation,
   useQuery,
+  keepPreviousData,
 } from '@openmsupply-client/common';
 import { STOCKTAKE } from './keys';
 import { useStocktakeGraphQL } from '../useStocktakeGraphQL';
@@ -68,7 +69,7 @@ const useGet = (queryParams: StocktakesParams) => {
     return { nodes, totalCount };
   };
 
-  const query = useQuery({ queryKey, queryFn, keepPreviousData: true });
+  const query = useQuery({ queryKey, queryFn, placeholderData: keepPreviousData });
   return query;
 };
 

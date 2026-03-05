@@ -53,7 +53,7 @@ export const usePurchaseOrder = (id?: string) => {
   // UPDATE
   const {
     mutateAsync: updateMutation,
-    isLoading: isUpdating,
+    isPending: isUpdating,
     error: updateError,
   } = useUpdate();
 
@@ -76,7 +76,7 @@ export const usePurchaseOrder = (id?: string) => {
   // CREATE
   const {
     mutateAsync: createMutation,
-    isLoading: isCreating,
+    isPending: isCreating,
     error: createError,
   } = useCreate();
 
@@ -86,7 +86,7 @@ export const usePurchaseOrder = (id?: string) => {
     return result;
   };
 
-  const { addFromMasterList, isLoading: isAdding } = useAddFromMasterList();
+  const { addFromMasterList, isPending: isAdding } = useAddFromMasterList();
 
   return {
     query: { data, isFetching, isError, isLoading },

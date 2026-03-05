@@ -2,6 +2,7 @@ import {
   ProgramEnrolmentSortFieldInput,
   useMutation,
   useQuery,
+  keepPreviousData,
 } from '@openmsupply-client/common';
 import { ProgramEnrolmentListParams } from '../../api';
 import { useProgramEnrolmentApi } from '../utils/useProgramEnrolmentApi';
@@ -57,6 +58,6 @@ export const useProgramEnrolments = (input: ProgramEnrolmentListParams) => {
         totalCount: programs.totalCount,
       })),
 
-    keepPreviousData: true
+    placeholderData: keepPreviousData
   });
 };

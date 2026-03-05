@@ -9,14 +9,14 @@ export const useAssetLogReason = () => {
   // CREATE
   const {
     mutateAsync: createMutation,
-    isLoading: isCreating,
+    isPending: isCreating,
     error: createError,
   } = useCreateAssetLogReason();
 
   // DELETE
   const {
     mutateAsync: deleteMutation,
-    isLoading: isDeleting,
+    isPending: isDeleting,
     error: deleteError,
   } = useDeleteAssetLogReason();
 

@@ -23,7 +23,7 @@ export const useRnRForm = ({ rnrFormId }: { rnrFormId: string }) => {
 
   const {
     mutateAsync: finalise,
-    isLoading: isFinalising,
+    isPending: isFinalising,
     error: finaliseError,
   } = useFinalise(rnrFormId);
 

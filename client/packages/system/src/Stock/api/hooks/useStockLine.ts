@@ -57,12 +57,12 @@ export function useStockLine(id?: string) {
   const { data, isLoading, error } = useGet(id ?? '');
   const {
     mutateAsync: createMutation,
-    isLoading: isCreating,
+    isPending: isCreating,
     error: createError,
   } = useCreate();
   const {
     mutateAsync: updateMutation,
-    isLoading: isUpdating,
+    isPending: isUpdating,
     error: updateError,
   } = useUpdate(id ?? '');
 

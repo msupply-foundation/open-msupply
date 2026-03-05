@@ -34,7 +34,7 @@ export const usePrescriptionLines = (id?: string) => {
   // SAVE LINES
   const {
     mutateAsync: updateMutation,
-    isLoading: isSavingLines,
+    isPending: isSavingLines,
     error: saveLineError,
   } = useSaveLines(data?.id ?? '', data?.id ?? '');
 
@@ -54,7 +54,7 @@ export const usePrescriptionLines = (id?: string) => {
   // DELETE LINES
   const {
     mutateAsync: deleteMutation,
-    isLoading: isDeletingLines,
+    isPending: isDeletingLines,
     error: deleteLinesError,
   } = useDeleteLines(data?.id ?? '');
 

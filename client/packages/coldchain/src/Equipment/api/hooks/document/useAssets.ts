@@ -3,6 +3,7 @@ import {
   useCentralServerCallback,
   usePathnameIncludes,
   useQuery,
+  keepPreviousData,
   useUrlQueryParams,
 } from '@openmsupply-client/common';
 import { useAssetApi } from '../utils/useAssetApi';
@@ -34,6 +35,6 @@ export const useAssets = () => {
   return useQuery({
     queryKey: api.keys.paramList(queryParams),
     queryFn: () => api.get.list(queryParams, storeCodeFilter, isColdChain),
-    keepPreviousData: true
+    placeholderData: keepPreviousData
   });
 };
