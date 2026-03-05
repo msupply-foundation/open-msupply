@@ -18,7 +18,7 @@ export {
   useQuery,
   UseQueryResult,
   QueryClient,
-} from 'react-query';
+} from '@tanstack/react-query';
 
 export {
   matchPath,
