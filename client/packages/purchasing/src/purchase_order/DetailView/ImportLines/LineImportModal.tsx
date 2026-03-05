@@ -32,7 +32,7 @@ import { importPurchaseOrderLinesToCSVWithErrors } from '../utils';
 
 export type ImportRow = Omit<
   PurchaseOrderLineFragment,
-  '__typename' | 'item' | 'lineNumber'
+  '__typename' | 'item' | 'lineNumber' | 'shippedNumberOfUnits'
 > & {
   itemCode: string;
   discountPercentage: number;

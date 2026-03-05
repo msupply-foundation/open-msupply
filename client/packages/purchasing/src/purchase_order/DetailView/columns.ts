@@ -70,9 +70,8 @@ export const usePurchaseOrderColumns = () => {
         columnType: ColumnType.Number,
       },
       {
-        // TODO: Goods received calculation
-        accessorKey: 'totalReceived',
-        header: t('label.total-received'),
+        accessorKey: 'shippedNumberOfUnits',
+        header: t('label.shipped-units'),
         columnType: ColumnType.Number,
       },
       {

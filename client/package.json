@@ -31,7 +31,7 @@
     "start-local": "lerna run --scope @openmsupply-client/* --parallel start-local -- --env $1 _",
     "start-remote": "lerna run --scope @openmsupply-client/* --parallel start-remote -- --env $1 _",
     "storybook": "storybook dev -p 6006",
-    "test": "jest --config ./jest.config.js --maxWorkers=50% --env=jsdom --testPathIgnorePatterns codegen.test.ts",
+    "test": "jest --config ./jest.config.js --maxWorkers=50% --env=jsdom --testPathIgnorePatterns codegen.test.ts --testPathIgnorePatterns playwright",
     "test:codegen": "jest --config ./jest.config.js codegen.test.ts",
     "translate": "node translate_locale"
   },
