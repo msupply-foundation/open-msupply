@@ -14,7 +14,6 @@ pub struct StorePrefUpdate<T> {
 pub struct UpsertPreferences {
     // Global preferences
     pub allow_tracking_of_stock_by_donor: Option<bool>,
-    pub authorise_goods_received: Option<bool>,
     pub authorise_purchase_order: Option<bool>,
     pub custom_translations: Option<BTreeMap<String, String>>,
     pub gender_options: Option<Vec<GenderType>>,
@@ -42,6 +41,7 @@ pub struct UpsertPreferences {
     pub inbound_shipment_auto_verify: Option<Vec<StorePrefUpdate<bool>>>,
     pub can_create_internal_order_from_a_requisition: Option<Vec<StorePrefUpdate<bool>>>,
     pub select_destination_store_for_an_internal_order: Option<Vec<StorePrefUpdate<bool>>>,
+    pub external_inbound_shipment_lines_must_be_authorised: Option<Vec<StorePrefUpdate<bool>>>,
     pub number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products:
         Option<Vec<StorePrefUpdate<i32>>>,
     pub number_of_months_threshold_to_show_low_stock_alerts_for_products:
@@ -50,7 +50,8 @@ pub struct UpsertPreferences {
         Option<Vec<StorePrefUpdate<i32>>>,
     pub first_threshold_for_expiring_items: Option<Vec<StorePrefUpdate<i32>>>,
     pub second_threshold_for_expiring_items: Option<Vec<StorePrefUpdate<i32>>>,
-    pub warn_when_missing_recent_stocktake: Option<Vec<StorePrefUpdate<WarnWhenMissingRecentStocktakeData>>>,
+    pub warn_when_missing_recent_stocktake:
+        Option<Vec<StorePrefUpdate<WarnWhenMissingRecentStocktakeData>>>,
     pub store_custom_colour: Option<Vec<StorePrefUpdate<String>>>,
     pub invoice_status_options: Option<Vec<StorePrefUpdate<Vec<InvoiceStatus>>>>,
     pub show_indicative_price_in_requisitions: Option<Vec<StorePrefUpdate<bool>>>,
@@ -61,7 +62,6 @@ pub fn upsert_preferences(
     UpsertPreferences {
         // Global preferences
         allow_tracking_of_stock_by_donor: allow_tracking_of_stock_by_donor_input,
-        authorise_goods_received: authorise_goods_received_input,
         authorise_purchase_order: authorise_purchase_order_input,
         custom_translations: custom_translations_input,
         gender_options: gender_options_input,
@@ -80,7 +80,7 @@ pub fn upsert_preferences(
         manage_vaccines_in_doses: manage_vaccines_in_doses_input,
         manage_vvm_status_for_stock: manage_vvm_status_for_stock_input,
         order_in_packs: order_in_packs_input,
-        use_procurement_functionality: show_purchase_orders_and_goods_received_input,
+        use_procurement_functionality: show_purchase_orders_input,
         sort_by_vvm_status_then_expiry: sort_by_vvm_status_then_expiry_input,
         use_simplified_mobile_ui: use_simplified_mobile_ui_input,
         disable_manual_returns: disable_manual_returns_input,
@@ -91,11 +91,12 @@ pub fn upsert_preferences(
             can_create_internal_order_from_a_requisition_input,
         select_destination_store_for_an_internal_order:
             select_destination_store_for_an_internal_order_input,
+        external_inbound_shipment_lines_must_be_authorised: external_inbound_shipment_lines_must_be_authorised_input,
         number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products:
             number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products_input,
         number_of_months_threshold_to_show_low_stock_alerts_for_products:
             number_of_months_threshold_to_show_low_stock_alerts_for_products_input,
-            number_of_months_threshold_to_show_over_stock_alerts_for_products:
+        number_of_months_threshold_to_show_over_stock_alerts_for_products:
             number_of_months_threshold_to_show_over_stock_alerts_for_products_input,
         first_threshold_for_expiring_items: first_threshold_for_expiring_items_input,
         second_threshold_for_expiring_items: second_threshold_for_expiring_items_input,
@@ -108,7 +109,6 @@ pub fn upsert_preferences(
     let PreferenceProvider {
         // Global preferences
         allow_tracking_of_stock_by_donor,
-        authorise_goods_received,
         authorise_purchase_order,
         custom_translations,
         gender_options,
@@ -143,6 +143,7 @@ pub fn upsert_preferences(
         warn_when_missing_recent_stocktake,
         store_custom_colour,
         invoice_status_options,
+        external_inbound_shipment_lines_must_be_authorised,
         show_indicative_price_in_requisitions,
     }: PreferenceProvider = get_preference_provider();
 
@@ -151,10 +152,6 @@ pub fn upsert_preferences(
             // Global preferences
             if let Some(input) = allow_tracking_of_stock_by_donor_input {
                 allow_tracking_of_stock_by_donor.upsert(connection, input, None)?;
-            }
-
-            if let Some(input) = authorise_goods_received_input {
-                authorise_goods_received.upsert(connection, input, None)?;
             }
 
             if let Some(input) = authorise_purchase_order_input {
@@ -221,7 +218,7 @@ pub fn upsert_preferences(
                 upsert_store_input(connection, order_in_packs, inputs)?;
             }
 
-            if let Some(inputs) = show_purchase_orders_and_goods_received_input {
+            if let Some(inputs) = show_purchase_orders_input {
                 upsert_store_input(connection, use_procurement_functionality, inputs)?;
             }
 
@@ -261,8 +258,12 @@ pub fn upsert_preferences(
                 )?;
             }
 
+            if let Some(input) = external_inbound_shipment_lines_must_be_authorised_input {
+                upsert_store_input(connection, external_inbound_shipment_lines_must_be_authorised, input)?;
+            }
+
             if let Some(input) = number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products_input {
-                           upsert_store_input(
+                upsert_store_input(
                     connection,
                     number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products,
                     input,
@@ -270,7 +271,7 @@ pub fn upsert_preferences(
             }
 
              if let Some(input) = number_of_months_threshold_to_show_low_stock_alerts_for_products_input {
-                           upsert_store_input(
+                upsert_store_input(
                     connection,
                     number_of_months_threshold_to_show_low_stock_alerts_for_products,
                     input,
@@ -278,7 +279,7 @@ pub fn upsert_preferences(
             }
 
             if let Some(input) = number_of_months_threshold_to_show_over_stock_alerts_for_products_input {
-                           upsert_store_input(
+                upsert_store_input(
                     connection,
                     number_of_months_threshold_to_show_over_stock_alerts_for_products,
                     input,
@@ -286,7 +287,7 @@ pub fn upsert_preferences(
             }
             
             if let Some(input) = first_threshold_for_expiring_items_input {
-                           upsert_store_input(
+                upsert_store_input(
                     connection,
                     first_threshold_for_expiring_items,
                     input,
@@ -294,7 +295,7 @@ pub fn upsert_preferences(
             }
 
             if let Some(input) = second_threshold_for_expiring_items_input {
-                           upsert_store_input(
+                upsert_store_input(
                     connection,
                     second_threshold_for_expiring_items,
                     input,
@@ -302,7 +303,7 @@ pub fn upsert_preferences(
             }
 
             if let Some(input) = warn_when_missing_recent_stocktake_input {
-                           upsert_store_input(
+                upsert_store_input(
                     connection,
                     warn_when_missing_recent_stocktake,
                     input,

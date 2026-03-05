@@ -294,9 +294,7 @@ pub fn generate_report_inner(input: ReportGenerateData) -> anyhow::Result<()> {
     println!("> User graphql endpoint: {gql_url}");
     println!("> Authenticate with remote server");
     let token = token_request(gql_url.clone(), &config).map_err(|err| {
-        anyhow::Error::msg(format!(
-            "Failed to authenticate with remote server: {err}"
-        ))
+        anyhow::Error::msg(format!("Failed to authenticate with remote server: {err}"))
     })?;
 
     let store_id = if let Some(store_id) = store_id {

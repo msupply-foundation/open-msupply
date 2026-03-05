@@ -117,7 +117,7 @@ export const TranslationsTable = ({
     tableId: 'custom-translations-input-table',
     data: translations,
     columns,
-    getIsPlaceholderRow: row => row.isNew ?? false,
+    getIsPlaceholderRow: row => row.original.isNew ?? false,
     noDataElement: <NothingHere body={t('message.add-a-translation')} />,
   });
 

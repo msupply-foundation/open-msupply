@@ -257,8 +257,11 @@ mod test {
         );
 
         if let Operation::Upsert {
-                ref mut invoice, ..
-            } = processor_input.operation { invoice.invoice_row.status = InvoiceStatus::Shipped }
+            ref mut invoice, ..
+        } = processor_input.operation
+        {
+            invoice.invoice_row.status = InvoiceStatus::Shipped
+        }
 
         UpdateInboundInvoiceProcessor {}
             .try_process_record(ctx, &processor_input)
@@ -280,8 +283,11 @@ mod test {
         };
 
         if let Operation::Upsert {
-                ref mut invoice, ..
-            } = processor_input.operation { invoice.invoice_row.status = InvoiceStatus::Picked }
+            ref mut invoice, ..
+        } = processor_input.operation
+        {
+            invoice.invoice_row.status = InvoiceStatus::Picked
+        }
 
         let (_, _, connection_manager, _) = setup_all_with_data(
             "test_update_inbound_invoice_auto_finalise_on",
@@ -309,8 +315,11 @@ mod test {
         );
 
         if let Operation::Upsert {
-                ref mut invoice, ..
-            } = processor_input.operation { invoice.invoice_row.status = InvoiceStatus::Shipped }
+            ref mut invoice, ..
+        } = processor_input.operation
+        {
+            invoice.invoice_row.status = InvoiceStatus::Shipped
+        }
 
         UpdateInboundInvoiceProcessor {}
             .try_process_record(ctx, &processor_input)

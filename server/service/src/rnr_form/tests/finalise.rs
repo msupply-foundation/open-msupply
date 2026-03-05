@@ -156,7 +156,15 @@ mod finalise {
         // Check the internal order (requisition) has been created
 
         let requisition = RequisitionRepository::new(&context.connection)
-            .query_one(RequisitionFilter::new().id(EqualFilter::equal_to(updated_row.linked_requisition_id.as_ref().unwrap().to_owned())))
+            .query_one(
+                RequisitionFilter::new().id(EqualFilter::equal_to(
+                    updated_row
+                        .linked_requisition_id
+                        .as_ref()
+                        .unwrap()
+                        .to_owned(),
+                )),
+            )
             .unwrap()
             .unwrap();
 
@@ -174,12 +182,12 @@ mod finalise {
         assert_eq!(requisition.requisition_row.store_id, mock_store_a().id);
 
         // Check the same number of lines in the internal order as the RnR form
-        let requisition_lines = RequisitionLineRepository::new(&context.connection)
-            .query_by_filter(
-                RequisitionLineFilter::new()
-                    .requisition_id(EqualFilter::equal_to(requisition.requisition_row.id.to_string())),
-            )
-            .unwrap();
+        let requisition_lines =
+            RequisitionLineRepository::new(&context.connection)
+                .query_by_filter(RequisitionLineFilter::new().requisition_id(
+                    EqualFilter::equal_to(requisition.requisition_row.id.to_string()),
+                ))
+                .unwrap();
 
         assert_eq!(requisition_lines.len(), 3); // 1 from rnr_form mock data, plus 2 (above)
 

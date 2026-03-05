@@ -71,7 +71,7 @@ export const RnRFormListView = () => {
     isLoading,
     isError,
     onRowClick: row => navigate(row.id),
-    getIsRestrictedRow: isRnRFormDisabled,
+    getIsRestrictedRow: row => isRnRFormDisabled(row.original),
     enableRowSelection: row => !isRnRFormDisabled(row.original),
     noDataElement: <NothingHere body={t('error.no-rnr-forms')} onCreate={onOpen} />,
   });

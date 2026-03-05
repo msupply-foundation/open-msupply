@@ -49,6 +49,12 @@ export const useDraftInboundLines = (
   } = useItem(itemId ?? '');
 
   useEffect(() => {
+    // Don't overwrite the user's in-progress edits with a background refetch
+    // from React Query (e.g. triggered by window focus). isDirty is cleared by
+    // saveLines before the modal closes, so the effect still runs correctly
+    // after a successful save.
+    if (isDirty) return;
+
     if (lines && item) {
       const drafts = lines.map(line =>
         CreateDraft.stockInLine({
@@ -75,7 +81,7 @@ export const useDraftInboundLines = (
     } else {
       setDraftLines([]);
     }
-  }, [lines, item, id]);
+  }, [lines, item, id, isDirty]);
 
   const addDraftLine = () => {
     if (item) {
