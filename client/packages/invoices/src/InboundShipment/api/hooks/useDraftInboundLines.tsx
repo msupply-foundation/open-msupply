@@ -83,7 +83,7 @@ export const useDraftInboundLines = (
     }
   }, [lines, item, id, isDirty]);
 
-  const addDraftLine = () => {
+  const addDraftLine = useCallback(() => {
     if (item) {
       const newLine = CreateDraft.stockInLine({
         item,
@@ -92,7 +92,7 @@ export const useDraftInboundLines = (
       setIsDirty(true);
       setDraftLines(draftLines => [...draftLines, newLine]);
     }
-  };
+  }, [item, id, setIsDirty]);
 
   const updateDraftLine = useCallback(
     (patch: PatchDraftLineInput) => {
@@ -111,27 +111,24 @@ export const useDraftInboundLines = (
     [setDraftLines, setIsDirty]
   );
 
-  const removeDraftLine = (lineId: string) => {
-    const batch = draftLines.find(line => line.id === lineId);
-    if (!batch) return;
-    if (batch.isCreated) {
-      setDraftLines(draftLines => {
-        const newLines = draftLines.filter(line => line.id !== lineId);
+  const removeDraftLine = useCallback((lineId: string) => {
+    setDraftLines(currentLines => {
+      const batch = currentLines.find(line => line.id === lineId);
+      if (!batch) return currentLines;
+      if (batch.isCreated) {
+        const newLines = currentLines.filter(line => line.id !== lineId);
         if (newLines.length === 0 && item) {
           return [CreateDraft.stockInLine({ item, invoiceId: id })];
         }
         return newLines;
-      });
-    } else {
-      setDraftLines(draftLines => {
-        const updatedLines = draftLines.map(line =>
+      } else {
+        setIsDirty(true);
+        return currentLines.map(line =>
           line.id === lineId ? { ...line, isDeleted: true } : line
         );
-        setIsDirty(true);
-        return updatedLines;
-      });
-    }
-  };
+      }
+    });
+  }, [item, id, setIsDirty]);
 
   const saveLines = async () => {
     if (isDirty) {
