@@ -10,14 +10,14 @@ import type { PluginDataFilter } from './PluginDataFilter';
 import type { PluginDataRow } from './PluginDataRow';
 import type { ProcessorInput } from './ProcessorInput';
 import type { ProcessorOutput } from './ProcessorOutput';
+import type { ScheduleInput } from './ScheduleInput';
+import type { ScheduleOutput } from './ScheduleOutput';
 import type { StorePreferenceRow } from './StorePreferenceRow';
 import type { TransformRequestRequisitionLineInput } from './TransformRequestRequisitionLineInput';
 import type { TransformRequestRequisitionLineOutput } from './TransformRequestRequisitionLineOutput';
 import type { UseGraphqlInput } from './UseGraphqlInput';
 import type { UseRepositoryInput } from './UseRepositoryInput';
 import type { UseRepositoryOutput } from './UseRepositoryOutput';
-import type { ScheduleInput } from './ScheduleInput';
-import type { ScheduleOutput } from './ScheduleOutput';
 
 export type PluginTypes = {
   average_monthly_consumption: Function<
