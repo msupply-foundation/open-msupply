@@ -38,5 +38,8 @@ export const usePluginGraphql = <I extends JsonValue, O extends JsonValue>(
 ) => {
   const queryFn = useQueryMethod<I, O>(pluginCode, input);
 
-  return useQuery(cacheKey, queryFn);
+  return useQuery({
+    queryKey: cacheKey,
+    queryFn: queryFn
+  });
 };

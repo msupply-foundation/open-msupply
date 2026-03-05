@@ -21,7 +21,9 @@ export const useAssetDelete = () => {
   } = useMutation({
     mutationFn,
     onSuccess: () => {
-      queryClient.invalidateQueries([ASSET]);
+      queryClient.invalidateQueries({
+        queryKey: [ASSET]
+      });
     },
   });
 

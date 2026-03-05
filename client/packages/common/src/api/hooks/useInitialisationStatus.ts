@@ -8,16 +8,15 @@ export const useInitialisationStatus = (
   const { client } = useGql();
   const sdk = getSdk(client);
 
-  return useQuery(
-    'initialisationStatus',
-    async () => {
+  return useQuery({
+    queryKey: ['initialisationStatus'],
+
+    queryFn: async () => {
       const result = await sdk.initialisationStatus();
       return result?.initialisationStatus;
     },
-    {
-      cacheTime: 0,
-      suspense: shouldSuspend,
-      refetchInterval,
-    }
-  );
+
+    gcTime: 0,
+    refetchInterval
+  });
 };

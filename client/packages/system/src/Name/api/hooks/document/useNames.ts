@@ -7,18 +7,18 @@ export const useNames = (type: 'customer' | 'supplier') => {
   });
   const api = useNameApi();
   return {
-    ...useQuery(
-      api.keys.paramList(queryParams),
-      () =>
+    ...useQuery({
+      queryKey: api.keys.paramList(queryParams),
+
+      queryFn: () =>
         api.get.list({
           first: queryParams.first,
           offset: queryParams.offset,
           sortBy: queryParams.sortBy,
           type,
         }),
-      {
-        keepPreviousData: true,
-      }
-    ),
+
+      keepPreviousData: true
+    }),
   };
 };

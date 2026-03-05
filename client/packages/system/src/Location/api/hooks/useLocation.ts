@@ -55,7 +55,9 @@ const useCreateLocation = () => {
   return useMutation({
     mutationFn,
     onSuccess: () => {
-      queryClient.invalidateQueries([LOCATION]);
+      queryClient.invalidateQueries({
+        queryKey: [LOCATION]
+      });
     },
     onError: e => {
       console.error(e);
@@ -85,7 +87,9 @@ const useUpdateLocation = () => {
   return useMutation({
     mutationFn,
     onSuccess: () => {
-      queryClient.invalidateQueries([LOCATION]);
+      queryClient.invalidateQueries({
+        queryKey: [LOCATION]
+      });
     },
     onError: e => {
       console.error(e);
@@ -107,7 +111,9 @@ const useDeleteLocation = () => {
   const { mutateAsync: deleteMutation } = useMutation({
     mutationFn,
     onSuccess: () => {
-      queryClient.invalidateQueries([LOCATION]);
+      queryClient.invalidateQueries({
+        queryKey: [LOCATION]
+      });
     },
   });
 

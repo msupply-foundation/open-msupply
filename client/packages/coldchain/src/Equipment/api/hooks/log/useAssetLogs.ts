@@ -3,5 +3,8 @@ import { useAssetApi } from '../utils/useAssetApi';
 
 export const useAssetLogs = (assetId: string) => {
   const api = useAssetApi();
-  return useQuery(api.keys.logs(assetId), () => api.get.logs(assetId));
+  return useQuery({
+    queryKey: api.keys.logs(assetId),
+    queryFn: () => api.get.logs(assetId)
+  });
 };

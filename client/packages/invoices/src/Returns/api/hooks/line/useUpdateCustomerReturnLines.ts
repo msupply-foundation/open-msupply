@@ -10,8 +10,12 @@ export const useUpdateCustomerReturnLines = () => {
   const api = useReturnsApi();
   const { invoiceId = '' } = useParams();
 
-  return useMutation(api.updateCustomerReturnLines, {
+  return useMutation({
+    mutationFn: api.updateCustomerReturnLines,
+
     onSuccess: () =>
-      queryClient.invalidateQueries(api.keys.customerDetail(invoiceId)),
+      queryClient.invalidateQueries({
+        queryKey: api.keys.customerDetail(invoiceId)
+      })
   });
 };

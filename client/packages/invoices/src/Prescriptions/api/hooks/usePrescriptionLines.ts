@@ -154,12 +154,16 @@ const useSaveLines = (id: string, invoiceId: string) => {
   return useMutation({
     mutationFn,
     onSuccess: () => {
-      queryClient.invalidateQueries([
-        PRESCRIPTION,
-        PRESCRIPTION_LINE,
-        invoiceId,
-      ]);
-      queryClient.invalidateQueries([HISTORICAL_STOCK_LINES]);
+      queryClient.invalidateQueries({
+        queryKey: [
+          PRESCRIPTION,
+          PRESCRIPTION_LINE,
+          invoiceId,
+        ]
+      });
+      queryClient.invalidateQueries({
+        queryKey: [HISTORICAL_STOCK_LINES]
+      });
     },
   });
 };
@@ -181,12 +185,16 @@ const useDeleteLines = (invocieId: string) => {
   return useMutation({
     mutationFn,
     onSuccess: () => {
-      queryClient.invalidateQueries([
-        PRESCRIPTION,
-        PRESCRIPTION_LINE,
-        invocieId,
-      ]);
-      queryClient.invalidateQueries([HISTORICAL_STOCK_LINES]);
+      queryClient.invalidateQueries({
+        queryKey: [
+          PRESCRIPTION,
+          PRESCRIPTION_LINE,
+          invocieId,
+        ]
+      });
+      queryClient.invalidateQueries({
+        queryKey: [HISTORICAL_STOCK_LINES]
+      });
     },
   });
 };

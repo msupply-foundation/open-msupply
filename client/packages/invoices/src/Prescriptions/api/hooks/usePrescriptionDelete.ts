@@ -42,6 +42,8 @@ export const useDelete = () => {
 
   return useMutation({
     mutationFn,
-    onSuccess: () => queryClient.invalidateQueries([LIST]),
+    onSuccess: () => queryClient.invalidateQueries({
+      queryKey: [LIST]
+    }),
   });
 };

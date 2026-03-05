@@ -13,7 +13,9 @@ export const useDeleteRnRForm = () => {
       return response;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries([RNR_FORM, LIST]);
+      queryClient.invalidateQueries({
+        queryKey: [RNR_FORM, LIST]
+      });
     },
   });
 

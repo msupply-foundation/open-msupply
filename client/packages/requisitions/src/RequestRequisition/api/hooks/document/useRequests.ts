@@ -9,13 +9,11 @@ export const useRequests = (
   const api = useRequestApi();
 
   return {
-    ...useQuery(
-      api.keys.paramList(queryParams),
-      () => api.get.list(queryParams),
-      {
-        keepPreviousData: true,
-        ...options,
-      }
-    ),
+    ...useQuery({
+      queryKey: api.keys.paramList(queryParams),
+      queryFn: () => api.get.list(queryParams),
+      keepPreviousData: true,
+      ...options
+    }),
   };
 };

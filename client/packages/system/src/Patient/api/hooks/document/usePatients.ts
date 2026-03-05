@@ -5,20 +5,24 @@ import { usePatientApi } from '../utils/usePatientApi';
 export const usePatientsPromise = () => {
   const api = usePatientApi();
 
-  return useMutation(async (query: ListParams) => {
-    const patients = await api.get.list(query);
+  return useMutation({
+    mutationFn: async (query: ListParams) => {
+      const patients = await api.get.list(query);
 
-    return {
-      patients,
-    };
+      return {
+        patients,
+      };
+    }
   });
 };
 
 export const usePatients = (query: ListParams, enabled?: boolean) => {
   const api = usePatientApi();
 
-  return useQuery(api.keys.paramList(query), () => api.get.list(query), {
+  return useQuery({
+    queryKey: api.keys.paramList(query),
+    queryFn: () => api.get.list(query),
     enabled,
-    keepPreviousData: true,
+    keepPreviousData: true
   });
 };

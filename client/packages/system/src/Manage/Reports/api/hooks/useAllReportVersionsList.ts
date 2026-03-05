@@ -124,7 +124,9 @@ const useInstallUploadedReports = () => {
 
   const mutation = useMutation({
     mutationFn,
-    onSuccess: () => queryClient.invalidateQueries([ALLREPORTVERSIONS]),
+    onSuccess: () => queryClient.invalidateQueries({
+      queryKey: [ALLREPORTVERSIONS]
+    }),
     onError: e => console.error(e),
   });
 

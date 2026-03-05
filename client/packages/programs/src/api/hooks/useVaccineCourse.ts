@@ -175,7 +175,9 @@ const useCreate = () => {
 
   return useMutation({
     mutationFn,
-    onSuccess: () => queryClient.invalidateQueries([VACCINE]),
+    onSuccess: () => queryClient.invalidateQueries({
+      queryKey: [VACCINE]
+    }),
   });
 };
 
@@ -228,6 +230,8 @@ const useUpdate = () => {
 
   return useMutation({
     mutationFn,
-    onSuccess: () => queryClient.invalidateQueries([VACCINE]),
+    onSuccess: () => queryClient.invalidateQueries({
+      queryKey: [VACCINE]
+    }),
   });
 };

@@ -102,7 +102,9 @@ const useDelete = () => {
   const { mutateAsync: deleteMutation } = useMutation({
     mutationFn,
     onSuccess: () => {
-      queryClient.invalidateQueries([STOCKTAKE]);
+      queryClient.invalidateQueries({
+        queryKey: [STOCKTAKE]
+      });
     },
   });
 

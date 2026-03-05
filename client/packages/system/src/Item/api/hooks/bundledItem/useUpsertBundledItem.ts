@@ -59,7 +59,9 @@ export function useUpsertBundledItem({
       throw new Error(t('error.failed-to-save-bundled-item'));
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(keys.detail(principalVariant.itemId));
+      queryClient.invalidateQueries({
+        queryKey: keys.detail(principalVariant.itemId)
+      });
     },
   });
 

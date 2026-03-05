@@ -5,12 +5,10 @@ export const useOutbounds = (queryParams: ListParams) => {
   const api = useOutboundApi();
 
   return {
-    ...useQuery(
-      api.keys.paramList(queryParams),
-      () => api.get.list(queryParams),
-      {
-        keepPreviousData: true,
-      }
-    ),
+    ...useQuery({
+      queryKey: api.keys.paramList(queryParams),
+      queryFn: () => api.get.list(queryParams),
+      keepPreviousData: true
+    }),
   };
 };

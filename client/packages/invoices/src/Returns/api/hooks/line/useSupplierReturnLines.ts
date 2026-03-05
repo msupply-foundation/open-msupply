@@ -8,9 +8,12 @@ export const useSupplierReturnLines = (
 ) => {
   const api = useReturnsApi();
 
-  const { data } = useQuery(api.keys.generatedSupplierLines(itemId), () =>
-    api.get.supplierReturnLines(stockLineIds, itemId, returnId)
-  );
+  const { data } = useQuery({
+    queryKey: api.keys.generatedSupplierLines(itemId),
+
+    queryFn: () =>
+      api.get.supplierReturnLines(stockLineIds, itemId, returnId)
+  });
 
   return data;
 };

@@ -145,7 +145,9 @@ const useUpsertCampaign = () => {
   return useMutation({
     mutationFn,
     onSuccess: () => {
-      queryClient.invalidateQueries([CAMPAIGN]);
+      queryClient.invalidateQueries({
+        queryKey: [CAMPAIGN]
+      });
     },
     onError: e => {
       console.error(e);
@@ -172,7 +174,9 @@ const useDeleteCampaign = () => {
   return useMutation({
     mutationFn,
     onSuccess: () => {
-      queryClient.invalidateQueries([CAMPAIGN]);
+      queryClient.invalidateQueries({
+        queryKey: [CAMPAIGN]
+      });
     },
     onError: e => {
       console.error(e);

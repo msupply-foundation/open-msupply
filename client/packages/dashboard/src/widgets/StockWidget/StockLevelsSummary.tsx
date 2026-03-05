@@ -34,7 +34,9 @@ export const StockLevelsSummary = ({
   const { stats, error, isLoading, isError } = useItemCounts(LOW_MOS_THRESHOLD);
 
   useEffect(() => {
-    queryClient.invalidateQueries([DASHBOARD, ITEMS]);
+    queryClient.invalidateQueries({
+      queryKey: [DASHBOARD, ITEMS]
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [outOfStockProducts, lowStockAlert, overStockAlert]);
 

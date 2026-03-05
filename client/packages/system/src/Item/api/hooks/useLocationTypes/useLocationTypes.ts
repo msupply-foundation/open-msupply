@@ -6,5 +6,8 @@ export const useLocationTypes = () => {
 
   const locationTypesKey = 'locationTypes';
 
-  return useQuery(locationTypesKey, () => api.locationTypes({ storeId }));
+  return useQuery({
+    queryKey: locationTypesKey,
+    queryFn: () => api.locationTypes({ storeId })
+  });
 };

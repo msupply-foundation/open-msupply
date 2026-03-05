@@ -31,9 +31,9 @@ export const useAssets = () => {
   const storeCodeFilter = isCentralServer ? undefined : store?.code;
 
   const api = useAssetApi();
-  return useQuery(
-    api.keys.paramList(queryParams),
-    () => api.get.list(queryParams, storeCodeFilter, isColdChain),
-    { keepPreviousData: true }
-  );
+  return useQuery({
+    queryKey: api.keys.paramList(queryParams),
+    queryFn: () => api.get.list(queryParams, storeCodeFilter, isColdChain),
+    keepPreviousData: true
+  });
 };

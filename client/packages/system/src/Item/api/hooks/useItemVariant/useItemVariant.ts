@@ -126,8 +126,12 @@ const useUpsert = ({ itemId }: { itemId: string }) => {
   return useMutation({
     mutationFn,
     onSuccess: () => {
-      queryClient.invalidateQueries(keys.detail(itemId));
-      queryClient.invalidateQueries(ITEM_VARIANTS);
+      queryClient.invalidateQueries({
+        queryKey: keys.detail(itemId)
+      });
+      queryClient.invalidateQueries({
+        queryKey: ITEM_VARIANTS
+      });
     },
   });
 };

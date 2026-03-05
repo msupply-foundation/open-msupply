@@ -5,7 +5,9 @@ import { useClinicianApi } from '../utils/useClinicianApi';
 export const useClinicians = (params: ClinicianListParams) => {
   const api = useClinicianApi();
 
-  return useQuery(api.keys.list(params), () => api.clinicians(params), {
-    keepPreviousData: true,
+  return useQuery({
+    queryKey: api.keys.list(params),
+    queryFn: () => api.clinicians(params),
+    keepPreviousData: true
   });
 };

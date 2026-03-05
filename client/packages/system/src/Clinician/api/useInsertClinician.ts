@@ -32,7 +32,9 @@ export const useInsertClinician = () => {
   return useMutation({
     mutationFn,
     onSuccess: () => {
-      queryClient.invalidateQueries(CLINICIAN);
+      queryClient.invalidateQueries({
+        queryKey: CLINICIAN
+      });
     },
   });
 };

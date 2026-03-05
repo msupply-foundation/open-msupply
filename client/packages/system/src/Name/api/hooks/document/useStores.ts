@@ -8,11 +8,9 @@ export const useStores = () => {
     filters: [{ key: 'codeOrName' }],
   });
 
-  return useQuery(
-    api.keys.storesList(queryParams),
-    () => api.get.stores(queryParams),
-    {
-      keepPreviousData: true,
-    }
-  );
+  return useQuery({
+    queryKey: api.keys.storesList(queryParams),
+    queryFn: () => api.get.stores(queryParams),
+    keepPreviousData: true
+  });
 };

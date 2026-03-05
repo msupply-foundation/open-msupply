@@ -159,7 +159,9 @@ const useUpdate = (id: string) => {
   return useMutation({
     mutationFn,
     onSuccess: () => {
-      queryClient.invalidateQueries([PRESCRIPTION]);
+      queryClient.invalidateQueries({
+        queryKey: [PRESCRIPTION]
+      });
     },
   });
 };
@@ -187,6 +189,8 @@ const useCreate = () => {
 
   return useMutation({
     mutationFn,
-    onSuccess: () => queryClient.invalidateQueries([PRESCRIPTION]),
+    onSuccess: () => queryClient.invalidateQueries({
+      queryKey: [PRESCRIPTION]
+    }),
   });
 };

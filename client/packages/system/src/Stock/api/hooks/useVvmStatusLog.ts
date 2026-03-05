@@ -37,7 +37,9 @@ const useCreate = () => {
 
   return useMutation({
     mutationFn,
-    onSuccess: () => queryClient.invalidateQueries([STOCK_LINE]),
+    onSuccess: () => queryClient.invalidateQueries({
+      queryKey: [STOCK_LINE]
+    }),
   });
 };
 
@@ -53,6 +55,8 @@ const useUpdate = () => {
 
   return useMutation({
     mutationFn,
-    onSuccess: () => queryClient.invalidateQueries([STOCK_LINE]),
+    onSuccess: () => queryClient.invalidateQueries({
+      queryKey: [STOCK_LINE]
+    }),
   });
 };

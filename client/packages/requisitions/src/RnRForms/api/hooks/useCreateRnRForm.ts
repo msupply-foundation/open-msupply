@@ -112,7 +112,9 @@ const useCreate = () => {
     mutationFn,
     onSuccess: () =>
       // All forms need to be re-fetched to include the new one
-      queryClient.invalidateQueries([RNR_FORM]),
+      queryClient.invalidateQueries({
+        queryKey: [RNR_FORM]
+      }),
   });
 };
 

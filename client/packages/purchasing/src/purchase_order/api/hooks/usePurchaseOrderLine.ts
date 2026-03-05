@@ -275,14 +275,18 @@ const useCreate = () => {
 
   return useMutation({
     mutationFn,
-    onSuccess: () => queryClient.invalidateQueries([PURCHASE_ORDER]),
+    onSuccess: () => queryClient.invalidateQueries({
+      queryKey: [PURCHASE_ORDER]
+    }),
   });
 };
 
 const useUpdate = () => {
   const t = useTranslation();
   const { purchaseOrderApi, storeId, queryClient } = usePurchaseOrderGraphQL();
-  const mutationState = useMutation(purchaseOrderApi.updatePurchaseOrderLine);
+  const mutationState = useMutation({
+    mutationFn: purchaseOrderApi.updatePurchaseOrderLine
+  });
 
   const updatePurchaseOrderLine = async (
     input: UpdatePurchaseOrderLineInput
@@ -326,7 +330,9 @@ const useUpdate = () => {
 
         return { success: false, error: errorMessage };
       }
-      queryClient.invalidateQueries([PURCHASE_ORDER]);
+      queryClient.invalidateQueries({
+        queryKey: [PURCHASE_ORDER]
+      });
       return { success: true };
     } catch (e) {
       console.error('Error updating purchase order line:', e);
@@ -364,7 +370,9 @@ const useDeleteLines = () => {
   return useMutation({
     mutationFn,
     onSuccess: () => {
-      queryClient.invalidateQueries([PURCHASE_ORDER]);
+      queryClient.invalidateQueries({
+        queryKey: [PURCHASE_ORDER]
+      });
     },
   });
 };

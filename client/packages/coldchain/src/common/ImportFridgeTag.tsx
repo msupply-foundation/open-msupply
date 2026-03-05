@@ -81,9 +81,15 @@ export const ImportFridgeTag = ({
       success(t('messages.fridge-tag-import-successful', resultJson))();
 
       // forces a refetch of logs, breach, chart data and sensors
-      queryClient.invalidateQueries(breachApi.keys.base());
-      queryClient.invalidateQueries(logApi.keys.base());
-      queryClient.invalidateQueries([SENSOR]);
+      queryClient.invalidateQueries({
+        queryKey: breachApi.keys.base()
+      });
+      queryClient.invalidateQueries({
+        queryKey: logApi.keys.base()
+      });
+      queryClient.invalidateQueries({
+        queryKey: [SENSOR]
+      });
 
       // if the user is on mobile - redirect to monitoring page
       if (isExtraSmallScreen) {

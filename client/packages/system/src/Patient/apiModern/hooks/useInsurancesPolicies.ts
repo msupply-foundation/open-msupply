@@ -138,7 +138,9 @@ const useCreate = () => {
 
   return useMutation({
     mutationFn,
-    onSuccess: () => queryClient.invalidateQueries([INSURANCE_POLICIES]),
+    onSuccess: () => queryClient.invalidateQueries({
+      queryKey: [INSURANCE_POLICIES]
+    }),
   });
 };
 
@@ -176,6 +178,8 @@ const useUpdate = () => {
 
   return useMutation({
     mutationFn,
-    onSuccess: () => queryClient.invalidateQueries([INSURANCE_POLICIES]),
+    onSuccess: () => queryClient.invalidateQueries({
+      queryKey: [INSURANCE_POLICIES]
+    }),
   });
 };

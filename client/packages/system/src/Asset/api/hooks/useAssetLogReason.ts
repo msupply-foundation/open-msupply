@@ -48,7 +48,9 @@ const useCreateAssetLogReason = () => {
   return useMutation({
     mutationFn,
     onSuccess: () => {
-      queryClient.invalidateQueries([ASSET]);
+      queryClient.invalidateQueries({
+        queryKey: [ASSET]
+      });
     },
     onError: e => {
       console.error(e);
@@ -70,7 +72,9 @@ const useDeleteAssetLogReason = () => {
   return useMutation({
     mutationFn,
     onSuccess: () => {
-      queryClient.invalidateQueries([ASSET]);
+      queryClient.invalidateQueries({
+        queryKey: [ASSET]
+      });
     },
     onError: e => {
       console.error(e);
