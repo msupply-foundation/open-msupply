@@ -245,7 +245,9 @@ impl ProgramEnrolmentNode {
             .map(EncounterFilter::from)
             .unwrap_or_default()
             .patient_id(EqualFilter::equal_to(self.patient_row().id.to_string()))
-            .context_id(EqualFilter::equal_to(self.program_row().context_id.to_string()));
+            .context_id(EqualFilter::equal_to(
+                self.program_row().context_id.to_string(),
+            ));
 
         let entries = ctx
             .service_provider()

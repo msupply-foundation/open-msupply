@@ -107,7 +107,9 @@ pub(crate) async fn setup_with_version(
 
                 // delete marker after all template DBs to ensure we deleted all DBs, e.g. if
                 // this loop is interrupted by user
-                if file_name == TEMPLATE_MARKER_FILE_SQLITE || file_name == TEMPLATE_MARKER_FILE_POSTGRES {
+                if file_name == TEMPLATE_MARKER_FILE_SQLITE
+                    || file_name == TEMPLATE_MARKER_FILE_POSTGRES
+                {
                     continue;
                 }
 

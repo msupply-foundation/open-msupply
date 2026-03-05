@@ -86,9 +86,7 @@ impl ProgramEventNode {
                 allowed_ctx: self.allowed_ctx.clone(),
                 patient,
             })
-            .ok_or(Error::new(format!(
-                "Failed to load patient: {patient_id}"
-            )))?;
+            .ok_or(Error::new(format!("Failed to load patient: {patient_id}")))?;
 
         Ok(Some(result))
     }

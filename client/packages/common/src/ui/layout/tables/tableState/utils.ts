@@ -18,9 +18,10 @@ export interface ManagedTableState {
   columnSizing?: MRT_ColumnSizingState;
   isGrouped?: boolean;
   viewMode?: ViewMode;
+  grouping?: string[];
 }
 
-export const getSavedState = (tableId: string): ManagedTableState => {
+export const getSavedState = (tableId: string): ManagedTableState | undefined => {
   const savedString = localStorage.getItem(
     `@openmsupply-client/tables/${tableId}`
   );
@@ -30,8 +31,6 @@ export const getSavedState = (tableId: string): ManagedTableState => {
       return JSON.parse(savedString);
     } catch {}
   }
-
-  return {};
 };
 
 export const updateSavedState = (
