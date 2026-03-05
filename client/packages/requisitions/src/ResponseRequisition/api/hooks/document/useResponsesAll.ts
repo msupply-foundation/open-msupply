@@ -7,12 +7,7 @@ export const useResponsesAll = (sortBy: SortBy<ResponseRowFragment>) => {
 
   return {
     ...useMutation({
-      mutationFn: api.keys.sortedList(sortBy),
-
-      ...() =>
-        api.get.listAll({
-          sortBy,
-        })
+      mutationFn: () => api.get.listAll({ sortBy }),
     }),
   };
 };

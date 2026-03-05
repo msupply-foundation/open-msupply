@@ -173,7 +173,7 @@ const useAddFromMasterList = () => {
   });
 
   const mutationState = useMutation({
-    mutationFn: purchaseOrderApi.addToPurchaseOrderFromMasterList,
+    mutationFn: (vars: Parameters<typeof purchaseOrderApi.addToPurchaseOrderFromMasterList>[0]) => purchaseOrderApi.addToPurchaseOrderFromMasterList(vars),
 
     onSuccess: () => queryClient.invalidateQueries({
       queryKey: [PURCHASE_ORDER]

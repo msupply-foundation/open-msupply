@@ -63,7 +63,7 @@ export const useConfigureNameProperties = () => {
     },
 
     onSuccess: () => queryClient.invalidateQueries({
-      queryKey: NAME_PROPERTIES_KEY
+      queryKey: [NAME_PROPERTIES_KEY]
     })
   });
 };
@@ -77,7 +77,7 @@ export const useConfigureCustomProperties = () => {
       api.configureNameProperties(customProperties),
 
     onSuccess: () => queryClient.invalidateQueries({
-      queryKey: NAME_PROPERTIES_KEY
+      queryKey: [NAME_PROPERTIES_KEY]
     })
   });
 };

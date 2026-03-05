@@ -285,7 +285,7 @@ const useUpdate = () => {
   const t = useTranslation();
   const { purchaseOrderApi, storeId, queryClient } = usePurchaseOrderGraphQL();
   const mutationState = useMutation({
-    mutationFn: purchaseOrderApi.updatePurchaseOrderLine
+    mutationFn: (vars: Parameters<typeof purchaseOrderApi.updatePurchaseOrderLine>[0]) => purchaseOrderApi.updatePurchaseOrderLine(vars)
   });
 
   const updatePurchaseOrderLine = async (

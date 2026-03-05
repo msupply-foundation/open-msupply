@@ -11,7 +11,6 @@ export const useResponseLineStatsData = (
     queryFn: () => api.get.stats(requisitionLineId ?? ''),
     refetchOnMount: false,
     gcTime: 0,
-    onError: () => {},
     enabled: !!requisitionLineId && enabled
   });
 };

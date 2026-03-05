@@ -5,10 +5,7 @@ export const useAssetsAll = () => {
   const { queryParams } = useUrlQueryParams();
   const api = useAssetApi();
   const result = useMutation({
-    mutationFn: api.keys.sortedList(queryParams?.sortBy),
-
-    ...() =>
-      api.get.listAll(queryParams)
+    mutationFn: () => api.get.listAll(queryParams),
   });
 
   return {

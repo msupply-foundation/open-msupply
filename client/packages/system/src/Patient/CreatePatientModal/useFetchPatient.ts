@@ -29,7 +29,7 @@ export const useFetchPatient = () => {
   const { mutateAsync: manualSync } = useSync.sync.manualSync();
   const { mutateAsync: getSyncStatus } = useSync.utils.mutateSyncStatus();
 
-  const hasErroredDuringSync = useRef<boolean>();
+  const hasErroredDuringSync = useRef(false);
 
   const pollTillSynced = useCallback(async () => {
     while (true) {

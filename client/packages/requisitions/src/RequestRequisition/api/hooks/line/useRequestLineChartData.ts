@@ -8,6 +8,5 @@ export const useRequestLineChartData = (requisitionLineId: string) => {
     queryFn: () => api.get.lineChartData(requisitionLineId),
     refetchOnMount: false,
     gcTime: 0,
-    onError: () => {}
   });
 };

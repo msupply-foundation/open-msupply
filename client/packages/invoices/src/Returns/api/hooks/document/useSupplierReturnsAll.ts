@@ -7,10 +7,7 @@ export const useSupplierReturnsAll = (
 ) => {
   const api = useReturnsApi();
   const result = useMutation({
-    mutationFn: api.keys.supplierSortedList(sortBy),
-
-    ...() =>
-      api.get.listAllSupplier(sortBy)
+    mutationFn: () => api.get.listAllSupplier(sortBy),
   });
   return {
     ...result,

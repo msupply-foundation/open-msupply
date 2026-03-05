@@ -5,8 +5,7 @@ import { useStocktakeApi } from '../utils/useStocktakeApi';
 export const useStocktakesAll = (sortBy: SortBy<StocktakeRowFragment>) => {
   const api = useStocktakeApi();
   const result = useMutation({
-    mutationFn: api.keys.sortedList(sortBy),
-    ...api.get.listAll({ sortBy })
+    mutationFn: api.get.listAll({ sortBy }),
   });
 
   return {

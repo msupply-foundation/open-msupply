@@ -5,12 +5,7 @@ import { OutboundRowFragment } from './../../operations.generated';
 export const useOutboundsAll = (sortBy: SortBy<OutboundRowFragment>) => {
   const api = useOutboundApi();
   const result = useMutation({
-    mutationFn: api.keys.sortedList(sortBy),
-
-    ...() =>
-      api.get.listAll({
-        sortBy,
-      })
+    mutationFn: () => api.get.listAll({ sortBy }),
   });
   return {
     ...result,

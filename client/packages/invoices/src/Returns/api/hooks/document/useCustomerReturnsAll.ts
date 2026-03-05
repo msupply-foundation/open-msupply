@@ -7,10 +7,7 @@ export const useCustomerReturnsAll = (
 ) => {
   const api = useReturnsApi();
   const result = useMutation({
-    mutationFn: api.keys.customerSortedList(sortBy),
-
-    ...() =>
-      api.get.listAllCustomer(sortBy)
+    mutationFn: () => api.get.listAllCustomer(sortBy),
   });
   return {
     ...result,

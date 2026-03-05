@@ -87,7 +87,7 @@ const useDraftLocation = (
     onUpdate,
     onChangeLocation,
     onSave,
-    isPending: isUpdating || isCreating,
+    isLoading: isUpdating || isCreating,
   };
 };
 

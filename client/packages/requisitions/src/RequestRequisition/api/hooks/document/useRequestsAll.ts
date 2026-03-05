@@ -5,10 +5,7 @@ import { useRequestApi } from '../utils/useRequestApi';
 export const useRequestsAll = (sortBy: SortBy<RequestRowFragment>) => {
   const api = useRequestApi();
   const result = useMutation({
-    mutationFn: api.keys.sortedList(sortBy),
-
-    ...() =>
-      api.get.listAll({ sortBy })
+    mutationFn: () => api.get.listAll({ sortBy }),
   });
   return {
     ...result,

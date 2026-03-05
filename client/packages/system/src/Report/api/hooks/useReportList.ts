@@ -86,9 +86,5 @@ export const useReportList = ({
   return useQuery({
     queryKey,
     queryFn,
-    onError: (e: Error) => {
-      if (/HasPermission\(Report\)/.test(e.message)) return null;
-      return [];
-    },
   });
 };
