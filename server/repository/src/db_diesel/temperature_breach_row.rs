@@ -118,6 +118,18 @@ impl<'a> TemperatureBreachRowRepository<'a> {
             .filter(temperature_breach::id.eq_any(ids))
             .load(self.connection.lock().connection())?)
     }
+
+    pub fn update_location_id_by_sensor_id(
+        &self,
+        sensor_id: &str,
+        location_id: &str,
+    ) -> Result<(), RepositoryError> {
+        diesel::update(temperature_breach::table)
+            .filter(temperature_breach::sensor_id.eq(sensor_id))
+            .set(temperature_breach::location_id.eq(Some(location_id)))
+            .execute(self.connection.lock().connection())?;
+        Ok(())
+    }
 }
 
 impl Upsert for TemperatureBreachRow {
