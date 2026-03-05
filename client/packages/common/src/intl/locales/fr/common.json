@@ -2193,7 +2193,6 @@
   "messages.notification-breach-detected": "Dépassement de température détecté ! Il y a {{time}}",
   "messages.notification-excursion-detected": "Un écart de température a été détecté ! Il y a {{time}}",
   "messages.off-hold-confirmation": "Cela permettra de réactiver les changements de statut",
-  "messages.on-hold": "Impossible de modifier le statut car la facture est en attente",
   "messages.on-hold-confirmation": "Cela empêchera tout changement de statut jusqu'au déverrouillage",
   "messages.on-hold-description": "Cela empêchera les changements de cet inventaire jusqu'au déverrouillage.",
   "messages.on-hold-stock-take": "Cet inventaire est bloqué et ne peut être modifié",

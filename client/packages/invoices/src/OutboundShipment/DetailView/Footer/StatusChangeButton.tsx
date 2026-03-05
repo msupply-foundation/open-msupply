@@ -185,7 +185,7 @@ export const StatusChangeButton = () => {
   );
 
   const onHoldNotification = useDisabledNotificationToast(
-    t('messages.on-hold')
+    t('messages.on-hold-outbound')
   );
 
   if (!selectedOption) return null;
