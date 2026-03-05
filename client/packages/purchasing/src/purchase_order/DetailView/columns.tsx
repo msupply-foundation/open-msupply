@@ -10,11 +10,13 @@ import {
 } from '@openmsupply-client/common';
 import { PurchaseOrderLineFragment } from '../api';
 import { usePurchaseOrderLineErrorContext } from '../context';
+import { getPurchaseOrderLineStatusTranslator } from '../../utils';
 
 export const usePurchaseOrderColumns = () => {
   const t = useTranslation();
   const formatCurrency = useFormatCurrency();
   const { getError } = usePurchaseOrderLineErrorContext();
+  const lineStatusTranslator = getPurchaseOrderLineStatusTranslator(t);
 
   return useMemo((): ColumnDef<PurchaseOrderLineFragment>[] => {
     return [
@@ -23,6 +25,13 @@ export const usePurchaseOrderColumns = () => {
         header: t('label.line-number'),
         columnType: ColumnType.Number,
         size: 60,
+        enableSorting: true,
+      },
+      {
+        accessorKey: 'status',
+        header: t('label.status'),
+        size: 100,
+        accessorFn: row => lineStatusTranslator(row.status),
         enableSorting: true,
       },
       {
@@ -136,5 +145,5 @@ export const usePurchaseOrderColumns = () => {
       },
     ];
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [getError]);
+  }, [getError, lineStatusTranslator]);
 };
