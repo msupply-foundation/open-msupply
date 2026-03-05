@@ -28,7 +28,7 @@ pub fn delete_inbound_shipment(
     let invoice_id = ctx
         .connection
         .transaction_sync(|connection| {
-            validate(connection, &input, &ctx.store_id)?;
+            validate(connection, &input, &ctx.store_id, &ctx.user_id)?;
 
             let lines = get_lines_for_invoice(connection, &input.id)?;
             for line in lines {
@@ -70,6 +70,7 @@ pub enum DeleteInboundShipmentError {
     NotAnInboundShipment,
     NotThisStoreInvoice,
     CannotEditFinalised,
+    AuthorisationDenied,
     LineDeleteError {
         line_id: String,
         error: DeleteStockInLineError,

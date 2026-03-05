@@ -67,7 +67,7 @@ pub fn update_inbound_shipment(
         .transaction_sync(|connection| {
             log::info!("updating inbound shipment with id: {}", patch.id);
             let (invoice, other_party, status_changed) =
-                validate(connection, store_id.unwrap_or(&ctx.store_id), &patch)?;
+                validate(connection, store_id.unwrap_or(&ctx.store_id), &ctx.user_id, &patch)?;
             let GenerateResult {
                 batches_to_update,
                 update_invoice,
@@ -182,6 +182,8 @@ pub enum UpdateInboundShipmentError {
     OtherPartyDoesNotExist,
     OtherPartyNotVisible,
     OtherPartyNotASupplier,
+    // Permission
+    AuthorisationDenied,
     // Internal
     DatabaseError(RepositoryError),
     UpdatedInvoiceDoesNotExist,
