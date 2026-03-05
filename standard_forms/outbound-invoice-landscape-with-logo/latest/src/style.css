@@ -108,7 +108,7 @@ hr {
   font-family: Tahoma;
   font-size: 8pt;
   counter-increment: page;
-  content: "Page " counter(page);
+  content: counter(page);
 }
 
 .batch-wrap {
