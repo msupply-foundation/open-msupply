@@ -47,6 +47,7 @@ export const OutstandingLinesListView = () => {
         accessorFn: row => row?.purchaseOrder?.number,
         enableSorting: true,
         columnType: ColumnType.Number,
+        size: 90,
       },
       {
         header: t('label.purchase-order-reference'),
@@ -61,6 +62,7 @@ export const OutstandingLinesListView = () => {
         header: t('label.supplier-code'),
         accessorKey: 'supplierCode',
         accessorFn: row => row?.purchaseOrder?.supplier?.code,
+        size: 100,
       },
       {
         header: t('label.supplier-name'),
@@ -77,26 +79,31 @@ export const OutstandingLinesListView = () => {
         header: t('label.purchase-order-confirmed'),
         accessorKey: 'purchaseOrder.confirmedDatetime',
         columnType: ColumnType.Date,
+        size: 100,
       },
       {
         header: t('label.expected-delivery-date'),
         accessorKey: 'purchaseOrder.expectedDeliveryDate',
         columnType: ColumnType.Date,
+        size: 100,
       },
       {
         header: t('label.adjusted-units-expected'),
         accessorKey: 'adjustedNumberOfUnits',
         columnType: ColumnType.Number,
+        size: 90,
       },
       {
         header: t('label.shipped-units'),
         accessorKey: 'shippedNumberOfUnits',
         columnType: ColumnType.Number,
+        size: 90,
       },
       {
         header: t('label.outstanding-units'),
         accessorKey: 'outstandingQuantity',
         columnType: ColumnType.Number,
+        size: 90,
         accessorFn: row => {
           const adjusted = row?.adjustedNumberOfUnits ?? 0;
           const shipped = row?.shippedNumberOfUnits ?? 0;
