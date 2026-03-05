@@ -123,6 +123,12 @@ export const PurchaseOrderListView = () => {
         size: 90,
       },
       {
+        header: t('label.total-cost'),
+        accessorKey: 'orderTotalAfterDiscount',
+        columnType: ColumnType.Currency,
+        defaultHideOnMobile: true,
+      },
+      {
         header: t('label.lines'),
         accessorFn: row => row.lines?.totalCount ?? 0,
         size: 80,

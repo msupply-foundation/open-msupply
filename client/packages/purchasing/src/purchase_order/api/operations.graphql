@@ -17,6 +17,7 @@ fragment PurchaseOrderRow on PurchaseOrderNode {
     totalCount
   }
   comment
+  orderTotalAfterDiscount
 }
 
 fragment PurchaseOrder on PurchaseOrderNode {
