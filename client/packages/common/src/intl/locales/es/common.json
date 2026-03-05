@@ -1558,7 +1558,6 @@
   "messages.notification-breach-detected": "¡Se ha detectado una violación de temperatura! Hace {{time}}",
   "messages.notification-excursion-detected": "¡Se ha detectado una excursión de temperatura! Hace {{time}}",
   "messages.off-hold-confirmation": "Esto habilitará nuevamente los cambios de estado",
-  "messages.on-hold": "No se puede cambiar el estado porque la factura está en espera",
   "messages.on-hold-confirmation": "Esto evitará cualquier cambio adicional de estado hasta que se retire la retención",
   "messages.on-hold-description": "Esto evitará cambios adicionales en el recuento de existencias hasta que se desbloquee.",
   "messages.on-hold-stock-take": "Este inventario está en espera y no se puede editar",
