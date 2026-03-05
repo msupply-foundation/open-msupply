@@ -18,3 +18,6 @@ pub use self::add_from_master_list::*;
 
 mod add_from_purchase_order;
 pub use self::add_from_purchase_order::*;
+
+mod permission;
+pub use self::permission::check_inbound_shipment_mutation_permission;

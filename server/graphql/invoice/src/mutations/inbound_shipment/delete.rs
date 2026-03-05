@@ -6,7 +6,6 @@ use graphql_core::standard_graphql_error::StandardGraphqlError;
 use graphql_core::ContextExt;
 use graphql_types::generic_errors::CannotDeleteInvoiceWithLines;
 use graphql_types::types::DeleteResponse as GenericDeleteResponse;
-use repository::InvoiceRowRepository;
 use service::auth::Resource;
 use service::auth::ResourceAccessRequest;
 use service::invoice::inbound_shipment::{
@@ -34,21 +33,10 @@ pub enum DeleteResponse {
 
 pub fn delete(ctx: &Context<'_>, store_id: &str, input: DeleteInput) -> Result<DeleteResponse> {
     let service_provider = ctx.service_provider();
-    let basic_ctx = service_provider.basic_context()?;
-    let invoice_row = InvoiceRowRepository::new(&basic_ctx.connection)
-        .find_one_by_id(&input.id)
-        .map_err(|e| StandardGraphqlError::InternalError(format!("{e:#?}")).extend())?;
-    let resource = match invoice_row
-        .as_ref()
-        .and_then(|r| r.purchase_order_id.as_ref())
-    {
-        Some(_) => Resource::MutateInboundShipmentExternal,
-        None => Resource::MutateInboundShipment,
-    };
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource,
+            resource: Resource::MutateInboundShipment,
             store_id: Some(store_id.to_string()),
         },
     )?;
@@ -105,6 +93,7 @@ fn map_error(error: ServiceError) -> Result<DeleteErrorInterface> {
         // Standard Graphql Errors
         ServiceError::NotAnInboundShipment => BadUserInput(formatted_error),
         ServiceError::NotThisStoreInvoice => BadUserInput(formatted_error),
+        ServiceError::AuthorisationDenied => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
         ServiceError::LineDeleteError { .. } => InternalError(formatted_error),
     };
