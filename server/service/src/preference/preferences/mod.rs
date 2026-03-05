@@ -66,6 +66,8 @@ pub mod item_margin_overrides_supplier_margin;
 pub use item_margin_overrides_supplier_margin::*;
 pub mod is_gaps;
 pub use is_gaps::*;
+pub mod global_table_configs;
+pub use global_table_configs::*;
 
 pub struct PreferenceProvider {
     // Global preferences
@@ -83,6 +85,7 @@ pub struct PreferenceProvider {
     pub expired_stock_issue_threshold: ExpiredStockIssueThreshold,
     pub item_margin_overrides_supplier_margin: ItemMarginOverridesSupplierMargin,
     pub is_gaps: IsGaps,
+    pub global_table_configs: GlobalTableConfigs,
 
     // Store preferences
     pub manage_vaccines_in_doses: ManageVaccinesInDoses,
@@ -129,6 +132,7 @@ pub fn get_preference_provider() -> PreferenceProvider {
         expired_stock_issue_threshold: ExpiredStockIssueThreshold,
         item_margin_overrides_supplier_margin: ItemMarginOverridesSupplierMargin,
         is_gaps: IsGaps,
+        global_table_configs: GlobalTableConfigs,
 
         // Store preferences
         manage_vaccines_in_doses: ManageVaccinesInDoses,
