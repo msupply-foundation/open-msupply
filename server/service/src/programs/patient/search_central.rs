@@ -221,9 +221,7 @@ pub async fn add_patient_to_oms_central(
         .await
         .map_err(AddPatientToCentralError::CentralPatientRequestError)?;
 
-    info!(
-        "Created name_store_join for patient {name_id} and central store {central_store_id}"
-    );
+    info!("Created name_store_join for patient {name_id} and central store {central_store_id}");
 
     // TODO: possibly should check is not pre-initialisation here?
     service_provider.sync_trigger.trigger(None);

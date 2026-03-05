@@ -1055,7 +1055,8 @@ mod report_filter_test {
         assert_eq!(result.len(), 1);
         let mut report = reports
             .clone()
-            .into_iter().find(|r| r.id == result.clone().into_iter().next().unwrap())
+            .into_iter()
+            .find(|r| r.id == result.clone().into_iter().next().unwrap())
             .unwrap();
         assert_eq!(report.version, Version::from_str("2.3.5"));
 
@@ -1064,7 +1065,8 @@ mod report_filter_test {
         assert_eq!(result.len(), 1);
         report = reports
             .clone()
-            .into_iter().find(|r| r.id == result.clone().into_iter().next().unwrap())
+            .into_iter()
+            .find(|r| r.id == result.clone().into_iter().next().unwrap())
             .unwrap();
         assert_eq!(report.version, Version::from_str("2.3.5"));
 
@@ -1073,7 +1075,8 @@ mod report_filter_test {
         assert_eq!(result.len(), 1);
         report = reports
             .clone()
-            .into_iter().find(|r| r.id == result.clone().into_iter().next().unwrap())
+            .into_iter()
+            .find(|r| r.id == result.clone().into_iter().next().unwrap())
             .unwrap();
         assert_eq!(report.version, Version::from_str("2.8.3"));
 
@@ -1082,7 +1085,8 @@ mod report_filter_test {
         assert_eq!(result.len(), 1);
         report = reports
             .clone()
-            .into_iter().find(|r| r.id == result.clone().into_iter().next().unwrap())
+            .into_iter()
+            .find(|r| r.id == result.clone().into_iter().next().unwrap())
             .unwrap();
         assert_eq!(report.version, Version::from_str("3.0.1"));
 
@@ -1091,7 +1095,8 @@ mod report_filter_test {
         assert_eq!(result.len(), 1);
         report = reports
             .clone()
-            .into_iter().find(|r| r.id == result.clone().into_iter().next().unwrap())
+            .into_iter()
+            .find(|r| r.id == result.clone().into_iter().next().unwrap())
             .unwrap();
         assert_eq!(report.version, Version::from_str("3.5.1"));
     }
@@ -1120,7 +1125,8 @@ mod report_filter_test {
         assert_eq!(result.len(), 1);
         let mut report = reports
             .clone()
-            .into_iter().find(|r| r.id == result.clone().into_iter().next().unwrap())
+            .into_iter()
+            .find(|r| r.id == result.clone().into_iter().next().unwrap())
             .unwrap();
         assert_eq!(report.version, Version::from_str("2.3.0"));
 
@@ -1129,7 +1135,8 @@ mod report_filter_test {
         assert_eq!(result.len(), 1);
         report = reports
             .clone()
-            .into_iter().find(|r| r.id == result.clone().into_iter().next().unwrap())
+            .into_iter()
+            .find(|r| r.id == result.clone().into_iter().next().unwrap())
             .unwrap();
         assert_eq!(report.version, Version::from_str("2.3.0"));
 
@@ -1138,7 +1145,8 @@ mod report_filter_test {
         assert_eq!(result.len(), 1);
         report = reports
             .clone()
-            .into_iter().find(|r| r.id == result.clone().into_iter().next().unwrap())
+            .into_iter()
+            .find(|r| r.id == result.clone().into_iter().next().unwrap())
             .unwrap();
         assert_eq!(report.version, Version::from_str("2.8.2"));
 
@@ -1147,7 +1155,8 @@ mod report_filter_test {
         assert_eq!(result.len(), 1);
         report = reports
             .clone()
-            .into_iter().find(|r| r.id == result.clone().into_iter().next().unwrap())
+            .into_iter()
+            .find(|r| r.id == result.clone().into_iter().next().unwrap())
             .unwrap();
         assert_eq!(report.version, Version::from_str("2.8.2"));
 
@@ -1156,7 +1165,8 @@ mod report_filter_test {
         assert_eq!(result.len(), 1);
         report = reports
             .clone()
-            .into_iter().find(|r| r.id == result.clone().into_iter().next().unwrap())
+            .into_iter()
+            .find(|r| r.id == result.clone().into_iter().next().unwrap())
             .unwrap();
         assert_eq!(report.version, Version::from_str("2.8.2"));
     }
