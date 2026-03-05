@@ -55,7 +55,7 @@ define_linked_tables! {
         insurance_discount_percentage -> Nullable<Double>,
         is_cancellation -> Bool,
         expected_delivery_date -> Nullable<Date>,
-        goods_received_id -> Nullable<Text>,
+        purchase_order_id -> Nullable<Text>,
         shipping_method_id -> Nullable<Text>,
     },
     links:{
@@ -151,7 +151,7 @@ pub struct InvoiceRow {
     pub insurance_discount_percentage: Option<f64>,
     pub is_cancellation: bool,
     pub expected_delivery_date: Option<NaiveDate>,
-    pub goods_received_id: Option<String>,
+    pub purchase_order_id: Option<String>,
     pub shipping_method_id: Option<String>,
     // Resolved from name_link - must be last to match view column order
     pub name_id: String,

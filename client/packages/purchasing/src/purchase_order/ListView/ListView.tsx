@@ -148,7 +148,7 @@ export const PurchaseOrderListView = () => {
       data: data?.nodes ?? [],
       totalCount: data?.totalCount ?? 0,
       initialSort: { key: 'number', dir: 'desc' },
-      getIsRestrictedRow: isPurchaseOrderDisabled,
+      getIsRestrictedRow: row => isPurchaseOrderDisabled(row.original),
       noDataElement: (
         <NothingHere
           body={t('error.no-purchase-orders')}

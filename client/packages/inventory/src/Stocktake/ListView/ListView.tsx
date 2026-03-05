@@ -106,7 +106,7 @@ export const ListView = () => {
       columns,
       data: data?.nodes,
       totalCount: data?.totalCount ?? 0,
-      getIsRestrictedRow: isStocktakeDisabled,
+      getIsRestrictedRow: row => isStocktakeDisabled(row.original),
       noDataElement: (
         <NothingHere
           body={t('error.no-stocktakes')}

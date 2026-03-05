@@ -13,6 +13,8 @@ import {
   usePreferences,
   useIsExtraSmallScreen,
   MobileCardList,
+  DetailTabs,
+  ToggleState,
 } from '@openmsupply-client/common';
 import { AppBarButtons } from './AppBarButtons';
 import {
@@ -26,14 +28,52 @@ import { InboundRowFragment, useInboundList, useInboundShipment } from '../api';
 import { Footer } from './Footer';
 
 export const InboundListView = () => {
+  const t = useTranslation();
+  const internalModalController = useToggle();
+  const externalModalController = useToggle();
+  const linkRequestModalController = useToggle();
+
+  const tabs = [
+    {
+      Component: (
+        <InboundShipments internalModalController={internalModalController} />
+      ),
+      value: t('label.internal'),
+    },
+    {
+      Component: (
+        <InboundShipments
+          internalModalController={internalModalController}
+          external
+        />
+      ),
+      value: t('label.external'),
+    },
+  ];
+
+  return (
+    <>
+      <AppBarButtons
+        internalModalController={internalModalController}
+        externalModalController={externalModalController}
+        linkRequestModalController={linkRequestModalController}
+      />
+      <DetailTabs tabs={tabs} overwriteQuery={false} restoreTabQuery={false} />
+    </>
+  );
+};
+
+const InboundShipments: React.FC<{
+  internalModalController: ToggleState;
+  external?: boolean;
+}> = ({ internalModalController, external = false }) => {
   const {
     update: { update },
   } = useInboundShipment();
+
   const t = useTranslation();
   const navigate = useNavigate();
   const { invoiceStatusOptions } = usePreferences();
-  const invoiceModalController = useToggle();
-  const linkRequestModalController = useToggle();
 
   const isExtraSmallScreen = useIsExtraSmallScreen();
 
@@ -52,7 +92,12 @@ export const InboundListView = () => {
         key: 'createdDatetime',
         condition: 'between',
       },
+      {
+        key: 'deliveredDatetime',
+        condition: 'between',
+      },
       { key: 'status', condition: 'equalAny' },
+      { key: 'theirReference' },
     ],
   });
 
@@ -60,7 +105,12 @@ export const InboundListView = () => {
     sortBy,
     first,
     offset,
-    filterBy,
+    filterBy: {
+      ...filterBy,
+      purchaseOrderId: external
+        ? { notEqualTo: '' } // Removes results where purchaseOrderId is null
+        : { equalAnyOrNull: '' }, // Only gives results where purchaseOrderId is null
+    },
   };
 
   const {
@@ -108,6 +158,12 @@ export const InboundListView = () => {
         enableSorting: true,
       },
       {
+        header: t('label.purchase-order-number'),
+        accessorKey: 'purchaseOrder.number',
+        columnType: ColumnType.Number,
+        includeColumn: external,
+      },
+      {
         header: t('label.created'),
         accessorKey: 'createdDatetime',
         columnType: ColumnType.Date,
@@ -134,6 +190,7 @@ export const InboundListView = () => {
         accessorKey: 'theirReference',
         size: 225,
         defaultHideOnMobile: true,
+        enableColumnFilter: true,
         enableSorting: true,
       },
       {
@@ -155,11 +212,11 @@ export const InboundListView = () => {
       data: data?.nodes ?? [],
       totalCount: data?.totalCount ?? 0,
       initialSort: { key: 'invoiceNumber', dir: 'desc' },
-      getIsRestrictedRow: isInboundListItemDisabled,
+      getIsRestrictedRow: row => isInboundListItemDisabled(row.original),
       noDataElement: (
         <NothingHere
           body={t('error.no-inbound-shipments')}
-          onCreate={invoiceModalController.toggleOn}
+          onCreate={internalModalController.toggleOn}
         />
       ),
       isMobile: isExtraSmallScreen,
@@ -174,10 +231,6 @@ export const InboundListView = () => {
       ) : (
         <>
           <Toolbar filter={filter} />
-          <AppBarButtons
-            invoiceModalController={invoiceModalController}
-            linkRequestModalController={linkRequestModalController}
-          />
           <MaterialTable table={table} />
         </>
       )}

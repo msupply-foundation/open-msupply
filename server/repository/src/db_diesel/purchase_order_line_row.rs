@@ -14,6 +14,20 @@ use diesel::{dsl::max, prelude::*};
 use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
 
+table! {
+    purchase_order_line_stats (purchase_order_line_id) {
+        purchase_order_line_id -> Text,
+        shipped_number_of_units -> Double,
+    }
+}
+
+#[derive(Clone, Insertable, Queryable, Debug, PartialEq, Default)]
+#[diesel(table_name = purchase_order_line_stats)]
+pub struct PurchaseOrderLineStatsRow {
+    pub purchase_order_line_id: String,
+    pub shipped_number_of_units: f64,
+}
+
 define_linked_tables! {
     view: purchase_order_line = "purchase_order_line_view",
     core: purchase_order_line_with_links = "purchase_order_line",
@@ -28,7 +42,6 @@ define_linked_tables! {
         requested_pack_size -> Double,
         requested_number_of_units -> Double,
         adjusted_number_of_units -> Nullable<Double>,
-        received_number_of_units -> Double,
         requested_delivery_date -> Nullable<Date>,
         expected_delivery_date -> Nullable<Date>,
         stock_on_hand_in_units -> Double,
@@ -47,11 +60,16 @@ define_linked_tables! {
     }
 }
 
+joinable!(purchase_order_line -> purchase_order_line_stats (id));
 joinable!(purchase_order_line -> item_link (item_link_id));
 joinable!(purchase_order_line -> purchase_order (purchase_order_id));
+allow_tables_to_appear_in_same_query!(purchase_order_line, purchase_order_line_stats);
 allow_tables_to_appear_in_same_query!(purchase_order_line, item_link);
 allow_tables_to_appear_in_same_query!(purchase_order_line, item);
 allow_tables_to_appear_in_same_query!(purchase_order_line, purchase_order);
+allow_tables_to_appear_in_same_query!(purchase_order_line_stats, item_link);
+allow_tables_to_appear_in_same_query!(purchase_order_line_stats, item);
+allow_tables_to_appear_in_same_query!(purchase_order_line_stats, purchase_order);
 
 #[derive(Clone, Queryable, Debug, Serialize, Deserialize, Default, PartialEq)]
 #[diesel(table_name = purchase_order_line)]
@@ -65,7 +83,6 @@ pub struct PurchaseOrderLineRow {
     pub requested_pack_size: f64,
     pub requested_number_of_units: f64,
     pub adjusted_number_of_units: Option<f64>,
-    pub received_number_of_units: f64,
     pub requested_delivery_date: Option<NaiveDate>,
     pub expected_delivery_date: Option<NaiveDate>,
     pub stock_on_hand_in_units: f64,

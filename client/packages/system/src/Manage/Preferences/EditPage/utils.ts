@@ -10,7 +10,6 @@ export const PREFERENCE_GROUP_CONFIG: Partial<
     PreferenceKey.AdjustForNumberOfDaysOutOfStock,
   ],
   'label.procurement': [
-    PreferenceKey.AuthoriseGoodsReceived,
     PreferenceKey.AuthorisePurchaseOrder,
   ],
   'label.expired-stock': [

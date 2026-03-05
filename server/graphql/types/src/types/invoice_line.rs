@@ -32,6 +32,16 @@ pub enum InvoiceLineNodeType {
     Service,
 }
 
+#[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")] // only needed to be comparable in tests
+#[graphql(remote = "repository::db_diesel::invoice_line_row
+    ::InvoiceLineStatus")]
+pub enum InvoiceLineStatusType {
+    Pending,
+    Passed,
+    Rejected,
+}
+
 pub struct InvoiceLineNode {
     invoice_line: InvoiceLine,
 }
@@ -287,6 +297,13 @@ impl InvoiceLineNode {
 
     pub async fn volume_per_pack(&self) -> f64 {
         self.row().volume_per_pack
+    }
+
+    pub async fn status(&self) -> Option<InvoiceLineStatusType> {
+        self.row()
+            .status
+            .as_ref()
+            .map(|status| InvoiceLineStatusType::from(status.clone()))
     }
 }
 

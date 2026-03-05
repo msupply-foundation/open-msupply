@@ -96,5 +96,6 @@ members = [
   "graphql/types",
   "graphql/vaccine_course",
   "cli",
+  "test_connection",
   "windows",
 ]

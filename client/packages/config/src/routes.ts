@@ -69,7 +69,6 @@ export enum AppRoute {
   RnRForms = 'r-and-r-forms',
 
   PageNotFound = 'page-not-found',
-  GoodsReceived = 'goods-received',
   PurchaseOrderOutstandingLines = 'outstanding-lines',
 }
 
