@@ -3478,13 +3478,20 @@ export type InsertFromResponseRequisitionErrorInterface = {
 export type InsertFromResponseRequisitionInput = {
   comment?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
+  originalCustomerId?: InputMaybe<Scalars['String']['input']>;
   otherPartyId: Scalars['String']['input'];
   responseRequisitionId: Scalars['String']['input'];
+  status?: InputMaybe<InsertFromResponseStatusInput>;
 };
 
 export type InsertFromResponseRequisitionResponse =
   | InsertFromResponseRequisitionError
   | RequisitionNode;
+
+export enum InsertFromResponseStatusInput {
+  Draft = 'DRAFT',
+  Sent = 'SENT',
+}
 
 export type InsertGoodsReceivedInput = {
   id: Scalars['String']['input'];
