@@ -154,13 +154,17 @@ export const useLogin = (
       },
     };
 
-    const userLocale = getUserLocale(username);
-    if (userLocale === undefined) {
-      changeLanguage(getLocaleCode(userDetails?.language as LanguageTypeNode));
+    if (token) {
+      const userLocale = getUserLocale(username);
+      if (userLocale === undefined) {
+        changeLanguage(
+          getLocaleCode(userDetails?.language as LanguageTypeNode)
+        );
+      }
+      upsertMostRecentCredential(username, store);
+      setAuthCookie(authCookie);
+      setCookie(authCookie);
     }
-    upsertMostRecentCredential(username, store);
-    setAuthCookie(authCookie);
-    setCookie(authCookie);
     setLoginError(!!token, !!store);
     setSkipRequest(
       () => LocalStorage.getItem('/error/auth') === AuthError.NoStoreAssigned

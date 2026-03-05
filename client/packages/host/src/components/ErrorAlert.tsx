@@ -2,7 +2,9 @@ import { useToggle } from '@common/hooks';
 import { AppRoute } from '@openmsupply-client/config';
 import React, { useEffect } from 'react';
 import {
+  AlertIcon,
   AuthError,
+  Grid,
   LocalStorage,
   Location,
   RouteBuilder,
@@ -11,8 +13,9 @@ import {
   useLocation,
   useNavigate,
 } from '@openmsupply-client/common';
-import { AlertModal, Typography } from '@common/components';
+import { AlertModal, BasicModal, Typography } from '@common/components';
 import { LocaleKey, TypedTFunction, useTranslation } from '@common/intl';
+import { Login } from './Login';
 
 // primarily used to display an error message when the user is not logged in
 export const ErrorAlert = () => {
@@ -62,7 +65,32 @@ export const ErrorAlert = () => {
   const translatedError = translateErrorMessage(error, t);
   if (!translatedError) return null;
 
-  return (
+  return error === AuthError.Unauthenticated || error === AuthError.Timeout ? (
+    // if the user is unauthenticated or timed out, show a modal with the login form
+    <BasicModal open={isOn} width={400} height={150}>
+      <Grid padding={4} container gap={1} flexDirection="column">
+        <Grid container gap={1}>
+          <Grid>
+            <AlertIcon color="primary" />
+          </Grid>
+          <Grid>
+            <Typography
+              id="transition-modal-title"
+              variant="h6"
+              component="span"
+            >
+              {translatedError.title}
+            </Typography>
+          </Grid>
+        </Grid>
+        <Grid style={{ whiteSpace: 'pre-line' }}>
+          {translatedError.message}
+        </Grid>
+        <Login fullSize={false} />
+      </Grid>
+    </BasicModal>
+  ) : (
+    // for other errors, show a simple alert modal with the error message
     <AlertModal
       important
       open={isOn}

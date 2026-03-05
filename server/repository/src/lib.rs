@@ -21,7 +21,6 @@ mod tests;
 
 define_sql_function!(fn lower(x: Text) -> Text);
 
-
 use std::fmt::Debug as DebugTrait;
 pub trait Delete: DebugTrait {
     fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError>;

@@ -110,7 +110,7 @@ const BatchTable = ({
     data,
     columns,
     onRowClick: row => getRemainingDoses(row) >= 1 && setStockLine(row),
-    getIsRestrictedRow: row => getRemainingDoses(row) < 1,
+    getIsRestrictedRow: row => getRemainingDoses(row.original) < 1,
     noDataElement: t('messages.no-stock-available'),
   });
 

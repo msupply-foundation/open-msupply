@@ -9,7 +9,6 @@ import {
   AppNavLink,
   AppNavSection,
   UserStoreNodeFragment,
-  useIsCentralServerApi,
   usePreferences,
   useIsExtraSmallScreen,
 } from '@openmsupply-client/common';
@@ -26,41 +25,29 @@ export const ReplenishmentNav = ({
   );
   const t = useTranslation();
   const rnrVisible = store?.preferences.omProgramModule;
-  const isCentralServer = useIsCentralServerApi();
   const { useProcurementFunctionality } = usePreferences();
-  const useProcurement = isCentralServer && useProcurementFunctionality;
+  const useProcurement = useProcurementFunctionality;
   const isExtraSmallScreen = useIsExtraSmallScreen();
 
   return (
     <AppNavSection isActive={isActive} to={AppRoute.Replenishment}>
       <AppNavLink
-        end={false}
         to={AppRoute.Replenishment}
         icon={<SuppliersIcon color="primary" fontSize="small" />}
         text={t('replenishment')}
-        inactive
+        isParent
       />
       <Collapse in={isActive}>
         <List>
           <AppNavLink
             visible={useProcurement && !isExtraSmallScreen}
-            end
             to={RouteBuilder.create(AppRoute.Replenishment)
               .addPart(AppRoute.PurchaseOrder)
               .build()}
             text={t('purchase-order')}
           />
           <AppNavLink
-            visible={useProcurement}
-            end
-            to={RouteBuilder.create(AppRoute.Replenishment)
-              .addPart(AppRoute.GoodsReceived)
-              .build()}
-            text={t('goods-received')}
-          />
-          <AppNavLink
             visible={!isExtraSmallScreen}
-            end
             to={RouteBuilder.create(AppRoute.Replenishment)
               .addPart(AppRoute.InternalOrder)
               .build()}
@@ -74,7 +61,6 @@ export const ReplenishmentNav = ({
           />
           <AppNavLink
             visible={!isExtraSmallScreen}
-            end
             to={RouteBuilder.create(AppRoute.Replenishment)
               .addPart(AppRoute.SupplierReturn)
               .build()}
@@ -82,7 +68,6 @@ export const ReplenishmentNav = ({
           />
           <AppNavLink
             visible={rnrVisible && !isExtraSmallScreen}
-            end
             to={RouteBuilder.create(AppRoute.Replenishment)
               .addPart(AppRoute.RnRForms)
               .build()}

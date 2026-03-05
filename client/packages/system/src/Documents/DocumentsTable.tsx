@@ -64,6 +64,7 @@ export const DocumentsTable = ({
         <NothingHere
           body={t('messages.no-documents-uploaded')}
           onCreate={openUploadModal}
+          buttonText={t('button.upload-a-new-one')}
         />
       ),
     });

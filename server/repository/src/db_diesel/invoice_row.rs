@@ -53,7 +53,7 @@ table! {
         is_cancellation -> Bool,
         expected_delivery_date -> Nullable<Date>,
         default_donor_link_id -> Nullable<Text>,
-        goods_received_id -> Nullable<Text>,
+        purchase_order_id -> Nullable<Text>,
         shipping_method_id -> Nullable<Text>,
     }
 }
@@ -146,7 +146,7 @@ pub struct InvoiceRow {
     pub is_cancellation: bool,
     pub expected_delivery_date: Option<NaiveDate>,
     pub default_donor_link_id: Option<String>,
-    pub goods_received_id: Option<String>,
+    pub purchase_order_id: Option<String>,
     pub shipping_method_id: Option<String>,
 }
 

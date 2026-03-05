@@ -65,8 +65,7 @@ pub fn generate(
                 invoice_line_id: new_line.id.clone(),
                 comment: Some(format!(
                     "Updated from {} #{}",
-                    invoice.r#type,
-                    invoice.invoice_number
+                    invoice.r#type, invoice.invoice_number
                 )),
             }))
         } else {
@@ -197,6 +196,7 @@ fn generate_line(
         shipped_pack_size,
         reason_option_id: None,
         linked_invoice_id: None,
+        status: None,
     };
 
     if let Some(number_of_packs) = input.number_of_packs {
