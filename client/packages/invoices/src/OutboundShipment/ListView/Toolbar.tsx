@@ -52,6 +52,7 @@ export const Toolbar = ({ filter }: ToolbarProps) => {
                 type: 'enum',
                 name: t('label.status'),
                 urlParameter: 'status',
+                isMultiSelect: true,
                 options: [
                   { label: t('label.new'), value: InvoiceNodeStatus.New },
                   {

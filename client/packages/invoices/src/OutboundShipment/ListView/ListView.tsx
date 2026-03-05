@@ -78,7 +78,7 @@ export const OutboundShipmentListView = () => {
         size: 140,
         enableSorting: true,
         enableColumnFilter: true,
-        filterVariant: 'select',
+        filterVariant: 'multi-select',
         filterSelectOptions: statuses.map(status => ({
           value: status,
           label: getStatusTranslator(t)(status),
