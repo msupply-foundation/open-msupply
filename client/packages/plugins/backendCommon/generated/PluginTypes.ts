@@ -16,6 +16,8 @@ import type { TransformRequestRequisitionLineOutput } from './TransformRequestRe
 import type { UseGraphqlInput } from './UseGraphqlInput';
 import type { UseRepositoryInput } from './UseRepositoryInput';
 import type { UseRepositoryOutput } from './UseRepositoryOutput';
+import type { ScheduleInput } from './ScheduleInput';
+import type { ScheduleOutput } from './ScheduleOutput';
 
 export type PluginTypes = {
   average_monthly_consumption: Function<
@@ -29,6 +31,7 @@ export type PluginTypes = {
   get_consumption: Function<GetConsumptionInput, { [key in string]?: number }>;
   graphql_query: Function<GraphqlQueryInput, JsonValue>;
   processor: Function<ProcessorInput, ProcessorOutput>;
+  schedule: Function<ScheduleInput, ScheduleOutput>;
   get_store_preferences: StorePreferenceRow;
   get_plugin_data: Function<PluginDataFilter, Array<PluginDataRow>>;
   use_repository: Function<UseRepositoryInput, UseRepositoryOutput>;
