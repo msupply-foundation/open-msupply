@@ -551,7 +551,7 @@ mod test {
             InvoiceRow {
                 id: "received_inbound_for_line_status".to_string(),
                 store_id: mock_store_b().id,
-                name_link_id: mock_name_store_b().id,
+                name_id: mock_name_store_b().id,
                 r#type: InvoiceType::InboundShipment,
                 status: InvoiceStatus::Received,
                 ..Default::default()
