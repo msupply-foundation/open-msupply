@@ -1241,7 +1241,7 @@ mod test {
         fn delivered_invoice() -> InvoiceRow {
             InvoiceRow {
                 id: "delivered_invoice_with_pending".to_string(),
-                name_link_id: mock_name_a().id,
+                name_id: mock_name_a().id,
                 store_id: mock_store_a().id,
                 r#type: InvoiceType::InboundShipment,
                 status: InvoiceStatus::Delivered,
@@ -1324,7 +1324,7 @@ mod test {
         fn delivered_invoice() -> InvoiceRow {
             InvoiceRow {
                 id: "delivered_invoice_line_status".to_string(),
-                name_link_id: mock_name_a().id,
+                name_id: mock_name_a().id,
                 store_id: mock_store_a().id,
                 r#type: InvoiceType::InboundShipment,
                 status: InvoiceStatus::Delivered,
