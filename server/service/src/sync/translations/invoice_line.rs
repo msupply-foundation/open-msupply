@@ -325,6 +325,7 @@ impl SyncTranslation for InvoiceLineTranslation {
             shipped_number_of_packs,
             volume_per_pack,
             shipped_pack_size,
+            manufacture_date: None,
             status: match status.as_deref() {
                 Some("PENDING") => Some(repository::InvoiceLineStatus::Pending),
                 Some("PASSED") => Some(repository::InvoiceLineStatus::Passed),
@@ -395,6 +396,7 @@ impl SyncTranslation for InvoiceLineTranslation {
                     volume_per_pack,
                     shipped_pack_size,
                     status,
+                    manufacture_date: _,
                 },
             item_row,
             ..

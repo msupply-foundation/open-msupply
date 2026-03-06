@@ -159,6 +159,7 @@ impl SyncTranslation for StockLineTranslation {
             vvm_status_id,
             campaign_id,
             program_id,
+            manufacture_date: None,
             total_volume,
             volume_per_pack,
         };
@@ -204,6 +205,7 @@ impl SyncTranslation for StockLineTranslation {
                     vvm_status_id,
                     campaign_id,
                     program_id,
+                    manufacture_date: _,
                     total_volume,
                     volume_per_pack,
                 },

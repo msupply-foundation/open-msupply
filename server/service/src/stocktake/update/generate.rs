@@ -201,6 +201,7 @@ fn generate_stock_in_out_or_update(
             program_id,
             note: stocktake_line_row.note,
             item_variant_id,
+            manufacture_date: None,
             // From existing stock line
             stock_line_id: Some(stock_line_row.id),
             item_id: item.id.clone(),
@@ -402,6 +403,7 @@ fn generate_new_stock_line(
         volume_per_pack: Some(stocktake_line.line.volume_per_pack),
         program_id: stocktake_line_row.program_id.clone(),
         campaign_id: stocktake_line_row.campaign_id.clone(),
+        manufacture_date: None,
         // Default
         stock_on_hold: false,
         barcode: None,

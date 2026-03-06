@@ -153,6 +153,7 @@ fn generate_stocktake_lines(
                          on_hold: _,
                          available_number_of_packs: _,
                          barcode_id: _,
+                         manufacture_date: _,
                          total_volume: _,
                      },
                  item_row,
@@ -353,6 +354,7 @@ fn generate_lines_from_item_ids(
                     on_hold: _,
                     available_number_of_packs: _,
                     barcode_id: _,
+                    manufacture_date: _,
                     total_volume: _,
                 } = line.stock_line_row;
 
