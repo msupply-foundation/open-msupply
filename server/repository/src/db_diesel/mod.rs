@@ -48,7 +48,6 @@ mod filter_sort_pagination;
 pub mod form_schema;
 mod form_schema_row;
 pub mod frontend_plugin_row;
-mod frontend_plugin_row;
 pub mod indicator_column;
 mod indicator_column_row;
 pub mod indicator_line;

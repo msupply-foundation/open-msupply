@@ -9,8 +9,8 @@ use crate::{
     },
     name_oms_fields_alias,
     repository_error::RepositoryError,
-    EqualFilter, NameLinkRow, NameOmsFields, NameOmsFieldsRow, NameRowType, Pagination, Sort,
-    StoreFilter, StoreRepository, StringFilter,
+    EqualFilter, NameOmsFieldsRow, NameRowType, Pagination, Sort, StoreFilter, StoreRepository,
+    StringFilter,
 };
 
 use diesel::{dsl::IntoBoxed, prelude::*};
@@ -55,6 +55,7 @@ pub struct NameFilter {
     pub email: Option<StringFilter>,
 
     pub code_or_name: Option<StringFilter>,
+    pub store: Option<StoreFilter>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -191,6 +192,7 @@ impl<'a> NameRepository<'a> {
                 email,
                 code_or_name,
                 supplying_store_id,
+                store,
             } = f;
 
             // or filter need to be applied before and filters
@@ -357,6 +359,11 @@ impl NameFilter {
 
     pub fn supplying_store_id(mut self, filter: EqualFilter<String>) -> Self {
         self.supplying_store_id = Some(filter);
+        self
+    }
+
+    pub fn store(mut self, filter: StoreFilter) -> Self {
+        self.store = Some(filter);
         self
     }
 }

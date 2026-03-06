@@ -168,6 +168,7 @@ impl NameFilterInput {
             country: country.map(StringFilter::from),
             email: email.map(StringFilter::from),
             supplying_store_id: supplying_store_id.map(EqualFilter::from),
+            store: None,
         }
     }
 }
