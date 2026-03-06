@@ -68,7 +68,7 @@ export const StoreSearchInput = ({
       value={value ? { label: value.storeName, ...value } : null}
       isOptionEqualToValue={(option, value) => option.id === value.id}
       paginationDebounce={DEBOUNCE_TIMEOUT}
-      onPageChange={pageNumber => fetchNextPage({ pageParam: pageNumber })}
+      onPageChange={() => fetchNextPage()}
       inputValue={input}
       inputProps={{
         onChange: e => {

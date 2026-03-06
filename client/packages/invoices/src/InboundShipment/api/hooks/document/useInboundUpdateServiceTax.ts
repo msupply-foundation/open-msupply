@@ -4,9 +4,13 @@ import { useInboundApi } from '../utils/useInboundApi';
 export const useUpdateInboundServiceTax = () => {
   const queryClient = useQueryClient();
   const api = useInboundApi();
-  return useMutation(api.updateServiceTax, {
+  return useMutation({
+    mutationFn: api.updateServiceTax,
+
     onSuccess: () => {
-      queryClient.invalidateQueries(api.keys.base());
-    },
+      queryClient.invalidateQueries({
+        queryKey: api.keys.base()
+      });
+    }
   });
 };

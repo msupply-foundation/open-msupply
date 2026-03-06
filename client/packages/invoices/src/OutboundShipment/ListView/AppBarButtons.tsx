@@ -25,7 +25,7 @@ export const AppBarButtonsComponent: FC<{
   const { error } = useNotification();
   const { mutateAsync: onCreate } = useOutbound.document.insert();
   const t = useTranslation();
-  const { fetchAsync, isLoading } = useOutbound.document.listAll({
+  const { fetchAsync, isPending: isLoading } = useOutbound.document.listAll({
     key: 'createdDateTime',
     direction: 'desc',
     isDesc: true,

@@ -15,13 +15,17 @@ export const useOutboundDeleteRows = (
   const t = useTranslation();
   const queryClient = useQueryClient();
   const api = useOutboundApi();
-  const { mutateAsync } = useMutation(api.delete);
+  const { mutateAsync } = useMutation({
+    mutationFn: api.delete
+  });
 
   const deleteAction = async () => {
     await mutateAsync(rowsToDelete)
       .then(() => {
         resetRowSelection();
-        queryClient.invalidateQueries(api.keys.base());
+        queryClient.invalidateQueries({
+          queryKey: api.keys.base()
+        });
       })
       .catch(err => {
         throw err;

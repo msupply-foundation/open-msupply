@@ -50,7 +50,7 @@ interface QuantityTableProps extends TableProps {
   removeDraftLine: (id: string) => void;
 }
 
-export const QuantityTable = ({
+const QuantityTableComponent = ({
   lines,
   updateDraftLine,
   removeDraftLine,
@@ -350,12 +350,8 @@ export const QuantityTable = ({
     displayInDoses,
     hasItemVariantsEnabled,
     hasVvmStatusesEnabled,
-    isDisabled,
     item?.isVaccine,
-    pluralisedUnitName,
     removeDraftLine,
-    setPackRoundingMessage,
-    updateDraftLine,
   ]);
 
   const table = useSimpleMaterialTable<DraftInboundLine>({
@@ -367,6 +363,8 @@ export const QuantityTable = ({
 
   return <MaterialTable table={table} />;
 };
+
+export const QuantityTable = React.memo(QuantityTableComponent);
 
 export const PricingTableComponent = ({
   lines,

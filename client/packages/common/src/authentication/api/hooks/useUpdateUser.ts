@@ -8,7 +8,8 @@ export const useUpdateUser = () => {
   const api = useAuthApi();
   const queryClient = useQueryClient();
 
-  return useMutation(api.get.updateUser, {
-    onSettled: () => queryClient.invalidateQueries(api.keys.userSync()),
+  return useMutation({
+    mutationFn: api.get.updateUser,
+    onSettled: () => queryClient.invalidateQueries({ queryKey: api.keys.userSync() }),
   });
 };

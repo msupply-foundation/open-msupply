@@ -12,10 +12,10 @@ export const useInfiniteAssets = ({ rowsPerPage }: InfiniteAssetProps) => {
   const api = useAssetApi();
   const { queryParams } = useUrlQueryParams();
 
-  return useInfiniteQuery(
-    api.keys.paramList(queryParams),
-    async ({ pageParam }) => {
-      const pageNumber = Number(pageParam ?? 0);
+  return useInfiniteQuery({
+    queryKey: api.keys.paramList(queryParams),
+    queryFn: async ({ pageParam }) => {
+      const pageNumber = Number(pageParam);
 
       const data = await api.get.list({
         ...queryParams,
@@ -28,14 +28,10 @@ export const useInfiniteAssets = ({ rowsPerPage }: InfiniteAssetProps) => {
         pageNumber,
       };
     },
-    {
-      getNextPageParam: lastPage => {
-        // Stop fetching if we got fewer items than requested
-        if (lastPage.data?.nodes?.length === rowsPerPage) {
-          return lastPage.pageNumber + 1;
-        }
-        return undefined;
-      },
-    }
-  );
+    initialPageParam: 0,
+    getNextPageParam: lastPage =>
+      (lastPage.pageNumber + 1) * rowsPerPage < (lastPage.data?.totalCount ?? 0)
+        ? lastPage.pageNumber + 1
+        : undefined,
+  });
 };

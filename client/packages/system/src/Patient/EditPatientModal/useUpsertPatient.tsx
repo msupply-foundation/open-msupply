@@ -217,7 +217,9 @@ export const useUpsertPatient = (
     try {
       const savedDocument = await saveData();
       setCreateNewPatient(undefined);
-      queryClient.invalidateQueries([PRESCRIPTION]);
+      queryClient.invalidateQueries({
+        queryKey: [PRESCRIPTION]
+      });
       if (savedDocument) {
         setDocumentName(savedDocument.name);
       }

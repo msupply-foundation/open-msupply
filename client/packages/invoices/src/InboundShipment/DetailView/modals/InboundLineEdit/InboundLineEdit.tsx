@@ -66,7 +66,7 @@ export const InboundLineEdit = ({
     addDraftLine,
     updateDraftLine,
     removeDraftLine,
-    isLoading,
+    isPending: isLoading,
     saveLines,
   } = useDraftInboundLines(currentItem?.id, scannedBatchData);
   const okNextDisabled =

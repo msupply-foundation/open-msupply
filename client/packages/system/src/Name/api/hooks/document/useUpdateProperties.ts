@@ -5,7 +5,11 @@ export const useUpdateProperties = (nameId: string) => {
   const api = useNameApi();
   const queryClient = useQueryClient();
 
-  return useMutation(api.updateNameProperties, {
-    onSuccess: () => queryClient.invalidateQueries(api.keys.detail(nameId)),
+  return useMutation({
+    mutationFn: api.updateNameProperties,
+
+    onSuccess: () => queryClient.invalidateQueries({
+      queryKey: api.keys.detail(nameId)
+    })
   });
 };

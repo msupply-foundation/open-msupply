@@ -62,13 +62,13 @@ export const useVaccineCourse = (id?: string) => {
     usePatchState<DraftVaccineCourse>(data ?? {});
   const {
     mutateAsync: createMutation,
-    isLoading: isCreating,
+    isPending: isCreating,
     error: createError,
   } = useCreate();
 
   const {
     mutateAsync: updateMutation,
-    isLoading: isUpdating,
+    isPending: isUpdating,
     error: updateError,
   } = useUpdate();
 
@@ -175,7 +175,9 @@ const useCreate = () => {
 
   return useMutation({
     mutationFn,
-    onSuccess: () => queryClient.invalidateQueries([VACCINE]),
+    onSuccess: () => queryClient.invalidateQueries({
+      queryKey: [VACCINE]
+    }),
   });
 };
 
@@ -228,6 +230,8 @@ const useUpdate = () => {
 
   return useMutation({
     mutationFn,
-    onSuccess: () => queryClient.invalidateQueries([VACCINE]),
+    onSuccess: () => queryClient.invalidateQueries({
+      queryKey: [VACCINE]
+    }),
   });
 };

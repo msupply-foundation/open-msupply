@@ -108,7 +108,7 @@ export function usePurchaseOrderLine(id?: string | null) {
   // CREATE
   const {
     mutateAsync: createMutation,
-    isLoading: isCreating,
+    isPending: isCreating,
     error: createError,
   } = useCreate();
 
@@ -140,7 +140,7 @@ export function usePurchaseOrderLine(id?: string | null) {
   // UPDATE
   const {
     updatePurchaseOrderLine,
-    isLoading: isUpdating,
+    isPending: isUpdating,
     error: updateError,
     updatePurchaseOrderLineThrowError,
   } = useUpdate();
@@ -185,7 +185,7 @@ export function usePurchaseOrderLine(id?: string | null) {
   // DELETE
   const {
     mutateAsync: deleteMutation,
-    isLoading: isDeletingLines,
+    isPending: isDeletingLines,
     error: deleteError,
   } = useDeleteLines();
 
@@ -275,14 +275,18 @@ const useCreate = () => {
 
   return useMutation({
     mutationFn,
-    onSuccess: () => queryClient.invalidateQueries([PURCHASE_ORDER]),
+    onSuccess: () => queryClient.invalidateQueries({
+      queryKey: [PURCHASE_ORDER]
+    }),
   });
 };
 
 const useUpdate = () => {
   const t = useTranslation();
   const { purchaseOrderApi, storeId, queryClient } = usePurchaseOrderGraphQL();
-  const mutationState = useMutation(purchaseOrderApi.updatePurchaseOrderLine);
+  const mutationState = useMutation({
+    mutationFn: (vars: Parameters<typeof purchaseOrderApi.updatePurchaseOrderLine>[0]) => purchaseOrderApi.updatePurchaseOrderLine(vars)
+  });
 
   const updatePurchaseOrderLine = async (
     input: UpdatePurchaseOrderLineInput
@@ -326,7 +330,9 @@ const useUpdate = () => {
 
         return { success: false, error: errorMessage };
       }
-      queryClient.invalidateQueries([PURCHASE_ORDER]);
+      queryClient.invalidateQueries({
+        queryKey: [PURCHASE_ORDER]
+      });
       return { success: true };
     } catch (e) {
       console.error('Error updating purchase order line:', e);
@@ -364,7 +370,9 @@ const useDeleteLines = () => {
   return useMutation({
     mutationFn,
     onSuccess: () => {
-      queryClient.invalidateQueries([PURCHASE_ORDER]);
+      queryClient.invalidateQueries({
+        queryKey: [PURCHASE_ORDER]
+      });
     },
   });
 };

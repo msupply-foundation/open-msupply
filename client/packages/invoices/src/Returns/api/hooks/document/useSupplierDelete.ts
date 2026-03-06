@@ -5,7 +5,11 @@ export const useSupplierReturnDelete = () => {
   const queryClient = useQueryClient();
   const api = useReturnsApi();
 
-  return useMutation(api.deleteSupplier, {
-    onSuccess: () => queryClient.invalidateQueries(api.keys.base()),
+  return useMutation({
+    mutationFn: api.deleteSupplier,
+
+    onSuccess: () => queryClient.invalidateQueries({
+      queryKey: api.keys.base()
+    })
   });
 };

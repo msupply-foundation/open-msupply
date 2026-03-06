@@ -44,7 +44,7 @@ export const usePreviousNextIndicatorLine = (
 export const useDraftIndicatorValue = (
   indicatorValue: IndicatorValueFragment
 ) => {
-  const { mutateAsync, isLoading } = useRequest.document.updateIndicatorValue();
+  const { mutateAsync, isPending: isLoading } = useRequest.document.updateIndicatorValue();
   const { error } = useNotification();
   const [draft, setDraft] = useState<IndicatorValueFragment>(indicatorValue);
   const save = useDebounceCallback(

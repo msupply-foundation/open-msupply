@@ -96,7 +96,7 @@ export const ReplenishmentWidget = ({
   const corePanels = [
     <StatsPanel
       key={inboundShipmentsPanelContext}
-      error={inbound.error as ApiException}
+      error={inbound.error as unknown as ApiException}
       isError={inbound.isError}
       isLoading={inbound.isLoading}
       title={t('inbound-shipment')}
@@ -140,7 +140,7 @@ export const ReplenishmentWidget = ({
     />,
     <StatsPanel
       key={internalOrdersPanelContext}
-      error={internalOrder.error as ApiException}
+      error={internalOrder.error as unknown as ApiException}
       isError={internalOrder.isError}
       isLoading={internalOrder.isLoading}
       title={t('internal-order')}

@@ -3,7 +3,10 @@ import { useHostApi } from '../utils/useHostApi';
 
 export const useDisplaySettings = (input: DisplaySettingsHash) => {
   const api = useHostApi();
-  return useQuery(api.keys.displaySettings(), async () =>
-    api.get.displaySettings(input)
-  );
+  return useQuery({
+    queryKey: api.keys.displaySettings(),
+
+    queryFn: async () =>
+      api.get.displaySettings(input)
+  });
 };

@@ -9,14 +9,14 @@ export const useAssetLogReason = () => {
   // CREATE
   const {
     mutateAsync: createMutation,
-    isLoading: isCreating,
+    isPending: isCreating,
     error: createError,
   } = useCreateAssetLogReason();
 
   // DELETE
   const {
     mutateAsync: deleteMutation,
-    isLoading: isDeleting,
+    isPending: isDeleting,
     error: deleteError,
   } = useDeleteAssetLogReason();
 
@@ -48,7 +48,9 @@ const useCreateAssetLogReason = () => {
   return useMutation({
     mutationFn,
     onSuccess: () => {
-      queryClient.invalidateQueries([ASSET]);
+      queryClient.invalidateQueries({
+        queryKey: [ASSET]
+      });
     },
     onError: e => {
       console.error(e);
@@ -70,7 +72,9 @@ const useDeleteAssetLogReason = () => {
   return useMutation({
     mutationFn,
     onSuccess: () => {
-      queryClient.invalidateQueries([ASSET]);
+      queryClient.invalidateQueries({
+        queryKey: [ASSET]
+      });
     },
     onError: e => {
       console.error(e);
