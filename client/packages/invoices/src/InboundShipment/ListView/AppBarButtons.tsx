@@ -11,6 +11,7 @@ import {
   RouteBuilder,
   useAuthContext,
   useUrlQuery,
+  useNotification,
   SplitButtonOption,
   SplitButton,
 } from '@openmsupply-client/common';
@@ -43,6 +44,7 @@ export const AppBarButtons = ({
   const t = useTranslation();
   const navigate = useNavigate();
   const { store } = useAuthContext();
+  const { error: errorNotification } = useNotification();
   const [name, setName] = useState<NameRowFragment | null>(null);
   const [selectedSupplierId, setSelectedSupplierId] = useState<string | null>(
     null
@@ -70,20 +72,26 @@ export const AppBarButtons = ({
     purchaseOrderId?: string,
     insertLinesFromPurchaseOrder?: boolean
   ) => {
-    const invoiceId = await onCreate({
-      id: FnUtils.generateUUID(),
-      otherPartyId: nameId,
-      requisitionId,
-      purchaseOrderId,
-      insertLinesFromPurchaseOrder,
-    });
+    try {
+      const invoiceId = await onCreate({
+        id: FnUtils.generateUUID(),
+        otherPartyId: nameId,
+        requisitionId,
+        purchaseOrderId,
+        insertLinesFromPurchaseOrder,
+      });
 
-    navigate(
-      RouteBuilder.create(AppRoute.Replenishment)
-        .addPart(AppRoute.InboundShipment)
-        .addPart(invoiceId)
-        .build()
-    );
+      navigate(
+        RouteBuilder.create(AppRoute.Replenishment)
+          .addPart(AppRoute.InboundShipment)
+          .addPart(invoiceId)
+          .build()
+      );
+    } catch (e) {
+      errorNotification(
+        'Failed to create invoice! ' + (e as Error).message
+      )();
+    }
   };
 
   const handleSupplierSelected = async (
@@ -178,7 +186,7 @@ export const AddButton = ({
   const t = useTranslation();
   const currentTab = useUrlQuery().urlQuery['tab'];
 
-  const options: [SplitButtonOption<string>, SplitButtonOption<string>] = [
+  const allOptions: SplitButtonOption<string>[] = [
     {
       value: 'new-shipment',
       label: t('button.new-shipment'),
@@ -191,13 +199,17 @@ export const AddButton = ({
 
   const [selectedOption, setSelectedOption] = useState<
     SplitButtonOption<string>
-  >(options[0]);
+  >(allOptions[0] ?? { value: '', label: '' });
 
   useEffect(() => {
     if (currentTab === t('label.external')) {
-      setSelectedOption(options[1]);
+      const externalOption = allOptions.find(
+        o => o.value === 'new-external-shipment'
+      );
+      if (externalOption) setSelectedOption(externalOption);
     } else {
-      setSelectedOption(options[0]);
+      const internalOption = allOptions.find(o => o.value === 'new-shipment');
+      if (internalOption) setSelectedOption(internalOption);
     }
   }, [currentTab]);
 
@@ -221,7 +233,7 @@ export const AddButton = ({
     <>
       <SplitButton
         color="primary"
-        options={options}
+        options={allOptions}
         selectedOption={selectedOption}
         onSelectOption={onSelectOption}
         onClick={handleOptionSelection}

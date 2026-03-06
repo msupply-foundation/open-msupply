@@ -36,7 +36,9 @@ export const InboundListView = () => {
   const tabs = [
     {
       Component: (
-        <InboundShipments internalModalController={internalModalController} />
+        <InboundShipments
+          internalModalController={internalModalController}
+        />
       ),
       value: t('label.internal'),
     },

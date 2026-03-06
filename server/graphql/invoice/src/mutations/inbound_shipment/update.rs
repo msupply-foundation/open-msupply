@@ -73,6 +73,7 @@ pub enum UpdateResponse {
 }
 
 pub fn update(ctx: &Context<'_>, store_id: &str, input: UpdateInput) -> Result<UpdateResponse> {
+    let service_provider = ctx.service_provider();
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
@@ -80,8 +81,6 @@ pub fn update(ctx: &Context<'_>, store_id: &str, input: UpdateInput) -> Result<U
             store_id: Some(store_id.to_string()),
         },
     )?;
-
-    let service_provider = ctx.service_provider();
     let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
 
     map_response(
@@ -208,7 +207,8 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         | ServiceError::OtherPartyDoesNotExist
         | ServiceError::CanOnlyChangeDateOfExternalInboundShipments
         | ServiceError::CannotPutDeliveredDateAfterReceivedDate
-        | ServiceError::CannotSetDeliveredDateInFuture => BadUserInput(formatted_error),
+        | ServiceError::CannotSetDeliveredDateInFuture
+        | ServiceError::AuthorisationDenied => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
         ServiceError::UpdatedInvoiceDoesNotExist => InternalError(formatted_error),
     };
