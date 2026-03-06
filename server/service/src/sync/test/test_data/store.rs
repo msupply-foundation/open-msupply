@@ -55,7 +55,7 @@ fn store_1() -> TestSyncIncomingRecord {
         STORE_1,
         StoreRow {
             id: STORE_1.0.to_string(),
-            name_link_id: "1FB32324AF8049248D929CFB35F255BA".to_string(),
+            name_id: "1FB32324AF8049248D929CFB35F255BA".to_string(),
             code: "GEN".to_string(),
             site_id: 1,
             logo: Some("No logo".to_string()),

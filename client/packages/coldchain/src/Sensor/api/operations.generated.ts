@@ -283,16 +283,13 @@ export function getSdk(
   return {
     sensors(
       variables: SensorsQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<SensorsQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<SensorsQuery>({
-            document: SensorsDocument,
-            variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
+          client.request<SensorsQuery>(SensorsDocument, variables, {
+            ...requestHeaders,
+            ...wrappedRequestHeaders,
           }),
         'sensors',
         'query',
@@ -301,17 +298,15 @@ export function getSdk(
     },
     updateSensor(
       variables: UpdateSensorMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<UpdateSensorMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<UpdateSensorMutation>({
-            document: UpdateSensorDocument,
+          client.request<UpdateSensorMutation>(
+            UpdateSensorDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'updateSensor',
         'mutation',
         variables
