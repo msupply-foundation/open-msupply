@@ -122,7 +122,7 @@ export const CustomTranslationsModal = ({
         // Map the imported translations
         const importedArray = mapTranslationsToArray(
           parsed as Record<string, string>,
-          defaultTranslation
+          t
         );
         setTranslations(importedArray);
         success(t('messages.translations-loaded'))();
