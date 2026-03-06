@@ -6,6 +6,7 @@ import {
   TemperatureLogFilterInput,
   TemperatureLogSortFieldInput,
 } from '@common/types';
+import { isEnumValue } from '@common/utils';
 
 export type ListParams = {
   first: number;
@@ -19,10 +20,9 @@ export const getTemperatureLogQueries = (sdk: Sdk, storeId: string) => ({
     list:
       ({ first, offset, sortBy, filterBy }: ListParams) =>
       async () => {
-        const key =
-          sortBy.key === 'endDatetime' || sortBy.key === ''
-            ? TemperatureLogSortFieldInput.Datetime
-            : (sortBy.key as TemperatureLogSortFieldInput);
+        const key = isEnumValue(TemperatureLogSortFieldInput, sortBy.key)
+          ? sortBy.key
+          : TemperatureLogSortFieldInput.Datetime;
 
         // to make query compatible with breach tab filters we move the type filter into temperatureBreach.type
         const { type: typeFilterBy, ...noTypeFilterBy } = filterBy || {};

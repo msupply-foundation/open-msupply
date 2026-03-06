@@ -26,7 +26,6 @@ pub trait PreferenceServiceTrait: Sync + Send {
         let PreferenceProvider {
             // Global preferences
             allow_tracking_of_stock_by_donor,
-            authorise_goods_received,
             authorise_purchase_order,
             custom_translations,
             gender_options,
@@ -41,6 +40,7 @@ pub trait PreferenceServiceTrait: Sync + Send {
             show_indicative_price_in_requisitions,
             item_margin_overrides_supplier_margin,
             is_gaps,
+            global_table_configs: _, // Not included in preference descriptions UI
 
             // Store preferences
             manage_vaccines_in_doses,
@@ -54,6 +54,7 @@ pub trait PreferenceServiceTrait: Sync + Send {
             inbound_shipment_auto_verify,
             can_create_internal_order_from_a_requisition,
             select_destination_store_for_an_internal_order,
+            external_inbound_shipment_lines_must_be_authorised,
             number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products,
             number_of_months_threshold_to_show_low_stock_alerts_for_products,
             number_of_months_threshold_to_show_over_stock_alerts_for_products,
@@ -74,7 +75,6 @@ pub trait PreferenceServiceTrait: Sync + Send {
 
         // Global preferences
         append_if_type(allow_tracking_of_stock_by_donor, &mut prefs, &input)?;
-        append_if_type(authorise_goods_received, &mut prefs, &input)?;
         append_if_type(authorise_purchase_order, &mut prefs, &input)?;
         append_if_type(custom_translations, &mut prefs, &input)?;
         append_if_type(gender_options, &mut prefs, &input)?;
@@ -111,6 +111,11 @@ pub trait PreferenceServiceTrait: Sync + Send {
         )?;
         append_if_type(
             select_destination_store_for_an_internal_order,
+            &mut prefs,
+            &input,
+        )?;
+        append_if_type(
+            external_inbound_shipment_lines_must_be_authorised,
             &mut prefs,
             &input,
         )?;

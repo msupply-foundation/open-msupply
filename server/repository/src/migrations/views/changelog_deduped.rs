@@ -30,6 +30,7 @@ impl ViewMigrationFragment for ViewMigration {
         c.record_id,
         c.row_action,
         c.name_link_id,
+        name_link.name_id,
         c.store_id,
         c.is_sync_update,
         c.source_site_id
@@ -42,6 +43,7 @@ impl ViewMigrationFragment for ViewMigration {
         ON c.record_id = grouped.record_id 
         AND (c.store_id = grouped.store_id OR (c.store_id IS NULL AND grouped.store_id IS NULL))
         AND c.cursor = grouped.max_cursor
+    LEFT JOIN name_link ON c.name_link_id = name_link.id
     ORDER BY c.cursor;            "#
         )?;
 

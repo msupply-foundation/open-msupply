@@ -4,7 +4,6 @@ import {
   useTranslation,
   PurchaseOrderNodeStatus,
   PurchaseOrderLineStatusNode,
-  GoodsReceivedNodeStatus,
   Formatter,
 } from '@openmsupply-client/common';
 import {
@@ -54,14 +53,6 @@ const deliveryStatusTranslation: Record<DeliveryStatus, LocaleKey> = {
   FULLY_DELIVERED: 'label.fully-delivered',
 };
 
-const goodsReceivedStatusTranslation: Record<
-  GoodsReceivedNodeStatus,
-  LocaleKey
-> = {
-  NEW: 'label.new',
-  FINALISED: 'label.finalised',
-};
-
 export const getPurchaseOrderStatusTranslator =
   (t: ReturnType<typeof useTranslation>) =>
   (currentStatus: PurchaseOrderNodeStatus): string => {
@@ -77,16 +68,6 @@ export const getDeliveryStatusTranslator =
     return t(
       deliveryStatusTranslation[currentStatus] ??
         deliveryStatusTranslation[DeliveryStatus.NotDelivered]
-    );
-  };
-
-export const getGoodsReceivedStatusTranslator =
-  (t: ReturnType<typeof useTranslation>) =>
-  (currentStatus: unknown): string => {
-    const status = currentStatus as GoodsReceivedNodeStatus;
-    return t(
-      goodsReceivedStatusTranslation[status] ??
-        goodsReceivedStatusTranslation[GoodsReceivedNodeStatus.New]
     );
   };
 
@@ -150,12 +131,6 @@ export const isFieldDisabled = (
   return groupForField.includes(status);
 };
 
-export const isGoodsReceivedEditable = (
-  status: GoodsReceivedNodeStatus
-): boolean => {
-  return status !== GoodsReceivedNodeStatus.Finalised;
-};
-
 export const purchaseOrderToCsv = (
   t: TypedTFunction<LocaleKey>,
   purchaseOrder: PurchaseOrderRowFragment[]
@@ -203,7 +178,7 @@ export const outstandingLinesToCsv = (
     t('label.purchase-order-confirmed'),
     t('label.expected-delivery-date'),
     t('label.adjusted-units-expected'),
-    t('label.received-units'),
+    t('label.shipped-units'),
     t('label.outstanding-units'),
   ];
 
@@ -217,8 +192,8 @@ export const outstandingLinesToCsv = (
     Formatter.csvDateString(node.purchaseOrder?.confirmedDatetime),
     Formatter.csvDateString(node.expectedDeliveryDate),
     node.adjustedNumberOfUnits,
-    node.receivedNumberOfUnits,
-    (node.adjustedNumberOfUnits ?? 0) - (node.receivedNumberOfUnits ?? 0),
+    node.shippedNumberOfUnits,
+    (node.adjustedNumberOfUnits ?? 0) - (node.shippedNumberOfUnits ?? 0),
   ]);
 
   return Formatter.csv({ fields, data });

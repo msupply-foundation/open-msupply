@@ -61,8 +61,6 @@ fn get_timestamp_fields() -> Vec<TableAndFieldName> {
         ("purchase_order", "created_datetime"),
         ("purchase_order", "confirmed_datetime"),
         ("purchase_order", "sent_datetime"),
-        ("goods_received", "created_datetime"),
-        ("goods_received", "finalised_datetime"),
         ("purchase_order", "request_approval_datetime"),
         ("purchase_order", "finalised_datetime"),
     ]
@@ -144,8 +142,6 @@ fn get_date_fields() -> Vec<TableAndFieldName> {
         ("purchase_order_line", "expected_delivery_date"),
         ("purchase_order", "contract_signed_date"),
         ("purchase_order", "advance_paid_date"),
-        ("goods_received", "received_date"),
-        ("goods_received_line", "expiry_date"),
     ]
     .iter()
     .map(|(table_name, field_name)| TableAndFieldName {
@@ -408,7 +404,7 @@ mod tests {
         fn invoice1() -> InvoiceRow {
             InvoiceRow {
                 id: "invoice1".to_string(),
-                name_link_id: mock_name_a().id,
+                name_id: mock_name_a().id,
                 store_id: mock_store_a().id,
                 created_datetime: NaiveDate::from_ymd_opt(2021, 1, 1)
                     .unwrap()
@@ -421,7 +417,7 @@ mod tests {
         fn invoice2() -> InvoiceRow {
             InvoiceRow {
                 id: "invoice2".to_string(),
-                name_link_id: mock_name_a().id,
+                name_id: mock_name_a().id,
                 store_id: mock_store_a().id,
                 created_datetime: NaiveDate::from_ymd_opt(2021, 2, 1)
                     .unwrap()
