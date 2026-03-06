@@ -8,6 +8,7 @@ import {
   ComposedChart,
   Legend,
   Line,
+  ResponsiveContainer,
   Typography,
   XAxis,
   YAxis,
@@ -60,9 +61,10 @@ export const StockEvolution = ({ id }: StockEvolutionProps) => {
       </Box>
       <Box>
         {data.stockEvolution.nodes.length === 0 ? (
-          <Typography width={450}>{t('error.no-data')}</Typography>
+          <Typography>{t('error.no-data')}</Typography>
         ) : (
-          <ComposedChart width={450} height={255} data={stockEvolution}>
+          <ResponsiveContainer width="100%" height={255}>
+          <ComposedChart data={stockEvolution}>
             <CartesianGrid vertical={false} />
             <XAxis
               dataKey="date"
@@ -132,6 +134,7 @@ export const StockEvolution = ({ id }: StockEvolutionProps) => {
               strokeDasharray="4"
             />
           </ComposedChart>
+          </ResponsiveContainer>
         )}
       </Box>
     </Box>

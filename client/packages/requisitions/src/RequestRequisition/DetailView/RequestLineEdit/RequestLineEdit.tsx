@@ -339,10 +339,14 @@ export const RequestLineEdit = ({
             }}
           >
             {isInfoVisible(CONSUMPTION_HISTORY_INFO) && (
-              <ConsumptionHistory id={line.id} />
+              <Box sx={{ flex: 1, minWidth: 0, width: '100%' }}>
+                <ConsumptionHistory id={line.id} />
+              </Box>
             )}
             {isInfoVisible(STOCK_EVOLUTION_INFO) && (
-              <StockEvolution id={line.id} />
+              <Box sx={{ flex: 1, minWidth: 0, width: '100%' }}>
+                <StockEvolution id={line.id} />
+              </Box>
             )}
           </Box>
         </Box>

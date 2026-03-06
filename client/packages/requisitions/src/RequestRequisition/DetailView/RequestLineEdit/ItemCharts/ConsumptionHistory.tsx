@@ -8,6 +8,7 @@ import {
   ComposedChart,
   Legend,
   Line,
+  ResponsiveContainer,
   Typography,
   XAxis,
   YAxis,
@@ -95,9 +96,10 @@ export const ConsumptionHistory = ({ id }: ConsumptionHistoryProps) => {
       </Box>
       <Box>
         {data.consumptionHistory.nodes?.length === 0 ? (
-          <Typography width={450}>{t('error.no-data')}</Typography>
+          <Typography>{t('error.no-data')}</Typography>
         ) : (
-          <ComposedChart width={450} height={255} data={consumptionHistory}>
+          <ResponsiveContainer width="100%" height={255}>
+          <ComposedChart data={consumptionHistory}>
             <CartesianGrid vertical={false} />
             <XAxis
               dataKey="date"
@@ -152,6 +154,7 @@ export const ConsumptionHistory = ({ id }: ConsumptionHistoryProps) => {
               strokeWidth={2}
             />
           </ComposedChart>
+          </ResponsiveContainer>
         )}
       </Box>
     </Box>

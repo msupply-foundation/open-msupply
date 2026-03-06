@@ -29,9 +29,11 @@ export const ModalGridLayout = ({
         {Top}
       </Grid>
       <Grid size={12} container spacing={2}>
-        <Grid size={showExtraFields ? 4 : 6}>{Left}</Grid>
-        <Grid size={showExtraFields ? 4 : 6}>{Middle}</Grid>
-        {showExtraFields && <Grid size={4}>{Right}</Grid>}
+        <Grid size={{ xs: 12, md: showExtraFields ? 4 : 6 }}>{Left}</Grid>
+        <Grid size={{ xs: 12, md: showExtraFields ? 4 : 6 }}>{Middle}</Grid>
+        {showExtraFields && (
+          <Grid size={{ xs: 12, md: 4 }}>{Right}</Grid>
+        )}
       </Grid>
     </Grid>
   );

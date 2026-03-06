@@ -154,6 +154,7 @@ export const RequestLineEditModal = ({
       }
       height={800}
       width={1200}
+      sx={{ maxWidth: 1200, minWidth: 'unset', width: '95vw' }}
     >
       {isLoading ? (
         <BasicSpinner />

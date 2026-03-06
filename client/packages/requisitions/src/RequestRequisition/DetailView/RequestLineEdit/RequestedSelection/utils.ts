@@ -50,3 +50,17 @@ export const getUpdatedRequest = (
     ? { requestedQuantity, reason: null }
     : { requestedQuantity };
 };
+
+// Dose conversion helpers
+export const getDosesFromUnits = (
+  units: number,
+  dosesPerUnit: number
+): number => units * dosesPerUnit;
+
+export const getUnitsFromDoses = (
+  doses: number,
+  dosesPerUnit: number
+): number => {
+  if (dosesPerUnit === 0) return 0;
+  return Math.ceil(doses / dosesPerUnit);
+};

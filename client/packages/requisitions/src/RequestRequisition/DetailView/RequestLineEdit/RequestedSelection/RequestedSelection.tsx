@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   Box,
-  DosesCaption,
   NumericTextInput,
   Select,
   Typography,
@@ -11,7 +10,12 @@ import {
   Representation,
   RepresentationValue,
 } from '@openmsupply-client/common';
-import { getCurrentValue, getUpdatedRequest } from './utils';
+import {
+  getCurrentValue,
+  getUpdatedRequest,
+  getDosesFromUnits,
+  getUnitsFromDoses,
+} from './utils';
 import { DraftRequestLine } from '../hooks';
 
 interface Option {
@@ -61,9 +65,25 @@ export const RequestedSelection = ({
   );
   const [value, setValue] = useState(currentValue);
 
+  // Compute the current dose value from units
+  const currentDoseValue = useMemo((): number => {
+    const units =
+      representation === Representation.PACKS
+        ? value * (defaultPackSize ?? 1)
+        : value;
+    return getDosesFromUnits(units, dosesPerUnit);
+  }, [value, representation, defaultPackSize, dosesPerUnit]);
+
+  const [doseValue, setDoseValue] = useState(currentDoseValue);
+
   useEffect(() => {
     setValue(currentValue);
   }, [draft?.id, representation]);
+
+  // Keep dose value in sync when the unit value changes
+  useEffect(() => {
+    setDoseValue(currentDoseValue);
+  }, [currentDoseValue]);
 
   const options = useMemo((): Option[] => {
     const displayValue = value === 1 ? 1 : 2;
@@ -98,6 +118,61 @@ export const RequestedSelection = ({
     debouncedUpdate(newValue);
   };
 
+  const debouncedDoseUpdate = useDebounceCallback(
+    (doses?: number) => {
+      const units = getUnitsFromDoses(doses ?? 0, dosesPerUnit);
+      // Auto-correct: compute consistent dose value from rounded-up units
+      const correctedDoses = getDosesFromUnits(units, dosesPerUnit);
+      setDoseValue(correctedDoses);
+
+      // Convert units to the current representation for the update
+      const valueInRepresentation =
+        representation === Representation.PACKS
+          ? units / (defaultPackSize ?? 1)
+          : units;
+      setValue(Math.ceil(valueInRepresentation));
+
+      const updatedRequest = getUpdatedRequest(
+        Math.ceil(valueInRepresentation),
+        representation,
+        defaultPackSize,
+        draft?.suggestedQuantity
+      );
+      update(updatedRequest);
+      setIsEditingRequested(false);
+    },
+    [representation, defaultPackSize, dosesPerUnit, update]
+  );
+
+  const handleDoseChange = (newDoseValue?: number) => {
+    setIsEditingRequested(true);
+    setDoseValue(newDoseValue ?? 0);
+    debouncedDoseUpdate(newDoseValue);
+  };
+
+  const showDoseInput = displayVaccinesInDoses && dosesPerUnit > 0;
+
+  const inputSx = {
+    '& .MuiInputBase-input': {
+      p: '3px 4px',
+      backgroundColor: (theme: any) =>
+        disabled
+          ? theme.palette.background.toolbar
+          : theme.palette.background.white,
+    },
+  };
+
+  const inputSlotProps = {
+    input: {
+      sx: {
+        background: (theme: any) =>
+          disabled
+            ? theme.palette.background.toolbar
+            : theme.palette.background.white,
+      },
+    },
+  };
+
   return (
     <Box
       sx={{
@@ -118,37 +193,9 @@ export const RequestedSelection = ({
             disabled={disabled}
             onChange={handleValueChange}
             onBlur={() => setIsEditingRequested(false)}
-            slotProps={{
-              input: {
-                sx: {
-                  background: theme =>
-                    disabled
-                      ? theme.palette.background.toolbar
-                      : theme.palette.background.white,
-                },
-              },
-            }}
-            sx={{
-              '& .MuiInputBase-input': {
-                p: '3px 4px',
-                backgroundColor: theme =>
-                  disabled
-                    ? theme.palette.background.toolbar
-                    : theme.palette.background.white,
-              },
-            }}
+            slotProps={inputSlotProps}
+            sx={inputSx}
           />
-          {displayVaccinesInDoses && !!value && (
-            <DosesCaption
-              value={
-                representation === Representation.PACKS
-                  ? value * (defaultPackSize ?? 1)
-                  : value
-              }
-              dosesPerUnit={dosesPerUnit}
-              displayVaccinesInDoses={displayVaccinesInDoses}
-            />
-          )}
         </Box>
         <Box flex={1}>
           <Select
@@ -178,6 +225,34 @@ export const RequestedSelection = ({
           />
         </Box>
       </Box>
+      {showDoseInput && (
+        <>
+          <Box display="flex" flexDirection="row" gap={1} mt={1}>
+            <Box display="flex" flexDirection="column" flex={1}>
+              <NumericTextInput
+                fullWidth
+                min={0}
+                value={doseValue}
+                disabled={disabled}
+                onChange={handleDoseChange}
+                onBlur={() => setIsEditingRequested(false)}
+                slotProps={inputSlotProps}
+                sx={inputSx}
+              />
+            </Box>
+            <Box
+              flex={1}
+              display="flex"
+              alignItems="center"
+              sx={{ pl: 1 }}
+            >
+              <Typography variant="body1">
+                {t('label.doses').toLowerCase()}
+              </Typography>
+            </Box>
+          </Box>
+        </>
+      )}
     </Box>
   );
 };
