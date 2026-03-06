@@ -141,7 +141,7 @@ mod test {
         RequisitionRow {
             id: "new_request_requisition".to_string(),
             store_id: mock_store_a().id,
-            name_link_id: mock_name_b().id,
+            name_id: mock_name_b().id,
             r#type: RequisitionType::Request,
             status: RequisitionStatus::New,
             ..Default::default()
@@ -152,7 +152,7 @@ mod test {
         RequisitionRow {
             id: "program_requisition".to_string(),
             store_id: mock_store_a().id,
-            name_link_id: mock_name_b().id,
+            name_id: mock_name_b().id,
             r#type: RequisitionType::Response,
             status: RequisitionStatus::New,
             program_id: Some(mock_program_a().id),

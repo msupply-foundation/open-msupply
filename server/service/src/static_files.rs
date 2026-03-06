@@ -55,11 +55,8 @@ pub struct StaticFileService {
     pub max_lifetime_millis: u64,
 }
 impl StaticFileService {
-    pub fn new(base_dir: &Option<String>) -> anyhow::Result<Self> {
-        let file_dir = match base_dir {
-            Some(file_dir) => PathBuf::from_str(file_dir)?.join(STATIC_FILE_DIR),
-            None => std::env::current_dir()?.join(STATIC_FILE_DIR),
-        };
+    pub fn new(base_dir: &str) -> anyhow::Result<Self> {
+        let file_dir = PathBuf::from_str(base_dir)?.join(STATIC_FILE_DIR);
         Ok(StaticFileService {
             dir: file_dir,
             max_lifetime_millis: 60 * 60 * 1000, // 1 hours
@@ -97,7 +94,7 @@ impl StaticFileService {
     /// use std::io::Write;
     /// use std::fs::File;
     ///
-    /// let static_file_service = StaticFileService::new(&Some("/tmp/".to_string())).unwrap();
+    /// let static_file_service = StaticFileService::new("/tmp/").unwrap();
     ///
     /// let static_file = static_file_service.reserve_file("test.txt", StaticFileCategory::Temporary).unwrap();
     /// let mut file = File::create(static_file.path).unwrap();
@@ -275,7 +272,7 @@ mod test {
 
     #[test]
     fn test_static_file_storage() {
-        let mut service = StaticFileService::new(&None).unwrap();
+        let mut service = StaticFileService::new(".").unwrap();
         service.dir = PathBuf::from_str(TEST_DIR).unwrap();
         service.max_lifetime_millis = 100;
         let test_dir = std::env::current_dir().unwrap().join(TEST_DIR);

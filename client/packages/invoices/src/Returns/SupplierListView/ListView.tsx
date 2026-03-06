@@ -141,7 +141,7 @@ export const SupplierReturnListView = () => {
     totalCount: data?.totalCount ?? 0,
     isLoading: isFetching,
     isError,
-    getIsRestrictedRow: isOutboundDisabled,
+    getIsRestrictedRow: row => isOutboundDisabled(row.original),
     onRowClick: r => navigate(r.id),
     noDataElement: (
       <NothingHere

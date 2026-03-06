@@ -1,9 +1,4 @@
-use super::{
-    name_link_row::{name_link, NameLinkRow},
-    name_row::name,
-    store_row::store,
-    NameRow, StorageConnection, StoreRow,
-};
+use super::{name_row::name, store_row::store, NameRow, StorageConnection, StoreRow};
 
 use crate::{
     diesel_macros::{
@@ -12,7 +7,6 @@ use crate::{
     DBType, EqualFilter, Pagination, RepositoryError, Sort, StringFilter,
 };
 
-use diesel::dsl::InnerJoin;
 use diesel::{dsl::IntoBoxed, prelude::*};
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
@@ -43,7 +37,7 @@ pub enum StoreSortField {
 
 pub type StoreSort = Sort<StoreSortField>;
 
-pub type StoreJoin = (StoreRow, (NameLinkRow, NameRow));
+pub type StoreJoin = (StoreRow, NameRow);
 
 impl StoreFilter {
     pub fn new() -> StoreFilter {
@@ -175,10 +169,45 @@ impl<'a> StoreRepository<'a> {
     }
 }
 
-type BoxedStoreQuery =
-    IntoBoxed<'static, InnerJoin<store::table, InnerJoin<name_link::table, name::table>>, DBType>;
+#[diesel::dsl::auto_type]
+fn query() -> _ {
+    store::table.inner_join(name::table)
+}
 
-fn to_domain((store_row, (_, name_row)): StoreJoin) -> Store {
+type BoxedStoreQuery = IntoBoxed<'static, query, DBType>;
+
+fn create_filtered_query(filter: Option<StoreFilter>) -> BoxedStoreQuery {
+    let mut query = query().into_boxed();
+
+    if let Some(f) = filter {
+        let StoreFilter {
+            id,
+            code,
+            name_id,
+            name,
+            name_code,
+            site_id,
+            code_or_name,
+        } = f;
+
+        // or filter need to be applied before and filters
+        if code_or_name.is_some() {
+            apply_string_filter!(query, code_or_name.clone(), store::code);
+            apply_string_or_filter!(query, code_or_name, name::name_);
+        }
+
+        apply_equal_filter!(query, id, store::id);
+        apply_string_filter!(query, code, store::code);
+        apply_equal_filter!(query, name_id, store::name_id);
+        apply_string_filter!(query, name, name::name_);
+        apply_string_filter!(query, name_code, name::code);
+        apply_equal_filter!(query, site_id, store::site_id);
+    }
+
+    query
+}
+
+fn to_domain((store_row, name_row): StoreJoin) -> Store {
     Store {
         store_row,
         name_row,

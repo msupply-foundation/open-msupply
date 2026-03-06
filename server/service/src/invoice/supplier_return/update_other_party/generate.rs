@@ -32,7 +32,7 @@ pub fn generate(
 
     let mut new_invoice = InvoiceRow {
         id: uuid(),
-        name_link_id: input_other_party_id.unwrap_or(existing_invoice.name_link_id.clone()),
+        name_id: input_other_party_id.unwrap_or(existing_invoice.name_id.clone()),
         linked_invoice_id: None,
         ..old_invoice.clone()
     };
@@ -54,7 +54,7 @@ pub fn generate(
 
     if let Some(other_party) = other_party_option {
         new_invoice.name_store_id = other_party.store_id().map(|id| id.to_string());
-        new_invoice.name_link_id = other_party.name_row.id;
+        new_invoice.name_id = other_party.name_row.id;
     }
 
     let new_activity_log = ActivityLogRepository::new(connection)

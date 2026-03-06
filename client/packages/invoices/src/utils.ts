@@ -223,7 +223,12 @@ export const isInboundPlaceholderRow = (row: InboundLineFragment): boolean =>
 export const getInboundStockLines = (
   lines: InboundLineFragment[]
 ): InboundLineFragment[] =>
-  lines.filter(line => isA.stockInLine(line) || isInboundPlaceholderRow(line));
+  lines.filter(
+    line =>
+      isA.stockInLine(line) ||
+      isInboundPlaceholderRow(line) ||
+      isA.placeholderLine(line) // for rejected lines
+  );
 
 export const isInboundStatusChangeDisabled = (
   inbound?: InboundFragment | CustomerReturnFragment

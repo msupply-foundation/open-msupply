@@ -28,7 +28,7 @@ async fn assigns_requisition_number_to_response_requisitions() {
 
     let response_store = StoreRow {
         id: uuid(),
-        name_link_id: response_store_name.id.clone(),
+        name_id: response_store_name.id.clone(),
         site_id,
         ..Default::default()
     };
@@ -58,7 +58,7 @@ async fn assigns_requisition_number_to_response_requisitions() {
     let response = RequisitionRow {
         id: uuid(),
         requisition_number: -1,
-        name_link_id: request_name.id,
+        name_id: request_name.id,
         store_id: response_store.id,
         r#type: RequisitionType::Response,
         ..Default::default()
