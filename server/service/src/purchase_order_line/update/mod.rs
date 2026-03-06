@@ -72,9 +72,17 @@ pub fn update_purchase_order_line(
             let mut updated_input = input.clone();
             let mut line_status_changed_to_new = false;
 
-            if input.adjusted_number_of_units
-                != current_purchase_order_line.adjusted_number_of_units
-            {
+            let adjusted_units_changed = match input.adjusted_number_of_units {
+                // Only consider it changed if explicitly provided and different
+                Some(_) => {
+                    input.adjusted_number_of_units
+                        != current_purchase_order_line.adjusted_number_of_units
+                }
+                // Not provided in input, no change
+                None => false,
+            };
+
+            if adjusted_units_changed {
                 let purchase_order = PurchaseOrderRowRepository::new(connection)
                     .find_one_by_id(&purchase_order_id)?
                     .ok_or(UpdatePurchaseOrderLineInputError::PurchaseOrderDoesNotExist)?;
