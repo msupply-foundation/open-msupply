@@ -9,45 +9,30 @@ import React, {
   useContext,
 } from 'react';
 import { PropsWithChildrenOnly } from '@common/types';
-import {
-  BarcodeFormat,
-  BarcodeScanner as BarcodeScannerPlugin,
-  GoogleBarcodeScannerModuleInstallProgressEvent,
-  GoogleBarcodeScannerModuleInstallState,
-} from '@capacitor-mlkit/barcode-scanning';
+import { BarcodeFormat } from '@capacitor-mlkit/barcode-scanning';
 
 import { Capacitor } from '@capacitor/core';
 import { GlobalStyles } from '@mui/material';
 import { useNotification } from '../hooks/useNotification';
 import { useTranslation } from '@common/intl';
-import { Formatter } from './formatters';
 import { BarcodeScanner, ScannerType } from '@openmsupply-client/common';
-import { Gs1Barcode, BarcodeUtils } from './barcode';
 import { useMockScanner } from './MockBarcodeScanner';
 import { HoneywellScanner } from '@common/hooks';
+import { parseResult, ScanResult } from './barcode/parseResult';
+import {
+  AvailableScannerType,
+  ScannerDriver,
+  createMockScannerDriver,
+  createCameraScannerDriver,
+  createElectronUSBScannerDriver,
+  createHoneywellScannerDriver,
+} from './barcode/scanners';
 
-const SCAN_TIMEOUT_IN_MS = 50000;
-const INSTALL_TIMEOUT_IN_MS = 30000;
+// Re-export for backward compatibility
+export { parseResult, AvailableScannerType };
+export type { ScanResult };
+
 const MOCK_SCANNER_STORAGE_KEY = 'barcode_scanner_mock_enabled';
-
-export enum AvailableScannerType {
-  Mock = 'mock',
-  Camera = 'camera',
-  ElectronUSB = 'electron_usb',
-  Honeywell = 'honeywell',
-}
-
-export interface ScanResult {
-  content?: string; // Raw barcode content
-  gs1?: Gs1Barcode; // Full GS1 barcode object
-  gs1string?: string;
-  gtin?: string;
-  batch?: string;
-  expiryDate?: string | null;
-  manufactureDate?: string | null;
-  packSize?: number;
-  quantity?: number;
-}
 
 export type ScanCallback = (result: ScanResult, err?: unknown) => void;
 
@@ -74,56 +59,6 @@ const BarcodeScannerContext = createContext<BarcodeScannerControl>(
 );
 
 const { Provider } = BarcodeScannerContext;
-
-export const parseResult = (content?: string): ScanResult => {
-  if (!content) return {};
-
-  try {
-    const gs1 = BarcodeUtils.parseGS1Barcode(content);
-
-    // If no items were parsed, treat as raw barcode
-    if (!gs1.parsedCodeItems || gs1.parsedCodeItems.length === 0) {
-      return { content };
-    }
-
-    const gtin = gs1?.parsedCodeItems?.find(item => item.ai === '01')
-      ?.data as string;
-    const batch = gs1?.parsedCodeItems?.find(item => item.ai === '10')
-      ?.data as string;
-    const expiryString = gs1?.parsedCodeItems?.find(item => item.ai === '17')
-      ?.data as Date;
-    const manufactureDateString = gs1?.parsedCodeItems?.find(
-      (item: { ai: string }) => item.ai === '11'
-    )?.data as Date;
-    const quantity =
-      Number(
-        gs1?.parsedCodeItems?.find((item: { ai: string }) => item.ai === '30')
-          ?.data
-      ) || undefined;
-    const packSize =
-      Number(
-        gs1?.parsedCodeItems?.find((item: { ai: string }) => item.ai === '37')
-          ?.data
-      ) || undefined;
-
-    return {
-      content,
-      gs1,
-      gs1string: gs1?.toString(),
-      gtin,
-      batch,
-      expiryDate: expiryString ? Formatter.naiveDate(expiryString) : undefined,
-      manufactureDate: manufactureDateString
-        ? Formatter.naiveDate(manufactureDateString)
-        : undefined,
-      quantity,
-      packSize,
-    };
-  } catch (e) {
-    console.error(`Error parsing barcode ${content}:`, e);
-    return { content };
-  }
-};
 
 export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
   children,
@@ -176,153 +111,74 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
     }
   }, [hasHoneywellScannerPlugin]);
 
-  const availableScanners: AvailableScannerType[] = useMemo(() => {
-    const scanners: AvailableScannerType[] = [];
-    if (mockScannerEnabled) scanners.push(AvailableScannerType.Mock);
-    if (hasCameraBarcodeScanner && !hasHoneywellScanner)
-      scanners.push(AvailableScannerType.Camera); // Camera scanner is not available on Honeywell devices. Disabled camera scanner if honeywell is available.
-    if (hasElectronApi) scanners.push(AvailableScannerType.ElectronUSB);
-    if (hasHoneywellScanner) scanners.push(AvailableScannerType.Honeywell);
-    return scanners;
+  // Build scanner drivers for each available scanner type
+  const drivers: ScannerDriver[] = useMemo(() => {
+    const result: ScannerDriver[] = [];
+
+    if (mockScannerEnabled) {
+      result.push(createMockScannerDriver(mockScannerEnabled, MockScanner));
+    }
+    if (hasCameraBarcodeScanner && !hasHoneywellScanner) {
+      // Camera scanner is not available on Honeywell devices
+      result.push(
+        createCameraScannerDriver(
+          setHideApp,
+          t('error.unable-to-scan-barcode', { error: 'Not installed' })
+        )
+      );
+    }
+    if (hasElectronApi) {
+      result.push(
+        createElectronUSBScannerDriver(
+          electronNativeAPI,
+          !!scanner?.connected
+        )
+      );
+    }
+    if (hasHoneywellScanner) {
+      result.push(
+        createHoneywellScannerDriver(HoneywellScanner, msg => {
+          console.error('Honeywell scanning error:', msg);
+          error(t('error.unable-to-read-barcode'))();
+        })
+      );
+    }
+
+    return result;
   }, [
     mockScannerEnabled,
+    MockScanner,
     hasCameraBarcodeScanner,
-    hasElectronApi,
     hasHoneywellScanner,
+    hasElectronApi,
+    electronNativeAPI,
+    scanner?.connected,
+    t,
+    error,
   ]);
 
-  const isEnabled = availableScanners.length > 0;
-
-  const googleBarcodeScannerAvailable = () =>
-    new Promise<boolean>(async resolve => {
-      const handleScannerInstall = (
-        event: GoogleBarcodeScannerModuleInstallProgressEvent
-      ) => {
-        switch (event.state) {
-          case GoogleBarcodeScannerModuleInstallState.COMPLETED:
-            BarcodeScannerPlugin.removeAllListeners();
-            resolve(true);
-            break;
-          case GoogleBarcodeScannerModuleInstallState.FAILED:
-          case GoogleBarcodeScannerModuleInstallState.CANCELED:
-            BarcodeScannerPlugin.removeAllListeners();
-            resolve(false);
-            break;
-          default:
-            break;
-        }
-      };
-
-      const { available } =
-        await BarcodeScannerPlugin.isGoogleBarcodeScannerModuleAvailable();
-
-      if (available) {
-        resolve(true);
-        return;
-      }
-
-      await BarcodeScannerPlugin.addListener(
-        'googleBarcodeScannerModuleInstallProgress',
-        handleScannerInstall
-      );
-      await BarcodeScannerPlugin.installGoogleBarcodeScannerModule();
-    });
+  const availableScanners = useMemo(
+    () => drivers.map(d => d.type),
+    [drivers]
+  );
+  const isEnabled = drivers.length > 0;
 
   const scanBarcode = useCallback(
     async (formats?: BarcodeFormat[]) => {
-      switch (true) {
-        case mockScannerEnabled:
-          const mockBarcode = await MockScanner.scan();
-          return mockBarcode;
-
-        case hasElectronApi:
-          const timeoutPromise = new Promise<undefined>((_, reject) =>
-            setTimeout(reject, SCAN_TIMEOUT_IN_MS, 'Scan timed out')
-          );
-          const { startBarcodeScan } = electronNativeAPI;
-          await startBarcodeScan();
-
-          const barcodePromise = new Promise<string | undefined>(
-            async resolve => {
-              electronNativeAPI.onBarcodeScan((_event, data) =>
-                resolve(BarcodeUtils.parseBarcodeFromBytes(data))
-              );
-            }
-          );
-          const barcode = await Promise.race([timeoutPromise, barcodePromise]);
-          return barcode;
-
-        case hasCameraBarcodeScanner:
-          const installTimeoutPromise = new Promise<undefined>((_, reject) =>
-            setTimeout(reject, INSTALL_TIMEOUT_IN_MS, 'Install timed out')
-          );
-          const isInstalled = await Promise.race([
-            installTimeoutPromise,
-            googleBarcodeScannerAvailable(),
-          ]);
-
-          if (!isInstalled) {
-            throw new Error(
-              t('error.unable-to-scan-barcode', { error: 'Not installed' })
-            );
-          }
-
-          // Hide the app to show camera view
-          setHideApp(true);
-          const { barcodes } = await BarcodeScannerPlugin.scan({
-            autoZoom: true,
-            formats,
-          });
-          setHideApp(false);
-
-          if (barcodes && barcodes.length > 0 && barcodes[0]) {
-            return barcodes[0].rawValue;
-          }
+      // Use the first available driver for one-off scanning
+      for (const driver of drivers) {
+        return driver.scan(formats);
       }
-
       return '';
     },
-    [
-      mockScannerEnabled,
-      MockScanner,
-      hasElectronApi,
-      electronNativeAPI,
-      hasCameraBarcodeScanner,
-      t,
-    ]
+    [drivers]
   );
 
   const stopScan = useCallback(async () => {
     setHideApp(false);
     setIsListening(false);
-    if (mockScannerEnabled) {
-      await MockScanner.stopListening();
-    }
-
-    if (hasElectronApi) {
-      await electronNativeAPI.stopBarcodeScan();
-    }
-
-    if (hasCameraBarcodeScanner) {
-      await BarcodeScannerPlugin.removeAllListeners();
-      await BarcodeScannerPlugin.stopScan();
-    }
-
-    if (hasHoneywellScanner) {
-      try {
-        await HoneywellScanner.release();
-      } catch (error) {
-        console.error('Error releasing Honeywell scanner:', error);
-      }
-    }
-  }, [
-    mockScannerEnabled,
-    MockScanner,
-    hasElectronApi,
-    electronNativeAPI,
-    hasCameraBarcodeScanner,
-    hasHoneywellScanner,
-  ]);
+    await Promise.all(drivers.map(d => d.stop()));
+  }, [drivers]);
 
   const scan = useCallback(
     async (formats?: BarcodeFormat[]) => {
@@ -354,91 +210,31 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
        All available scanner types will be started if possible.
     */
 
-    if (hasHoneywellScanner) {
-      try {
-        setIsListening(true);
-
-        // Set up listener (automatically claims the scanner)
-        await HoneywellScanner.listen({}, (data, err) => {
-          if (err) {
-            console.error('Honeywell scanning error:', err);
-            // I think we can ignore errors here for now as they seem to happen regularly
-            //              error(t('error.unable-to-read-barcode'))();
-            return;
-          }
-          if (data && 'barcode' in data) {
-            if (callbackRef.current) {
-              callbackRef.current(parseResult(data.barcode));
-            } else {
-              console.error(
-                'No scan callback registered to handle barcode:',
-                data.barcode
-              );
-            }
-          } else if (data && 'error' in data) {
-            console.error('Honeywell scanning error:', data.error);
-            error(t('error.unable-to-read-barcode'))();
-          }
-        });
-      } catch (e) {
-        console.error('Error starting Honeywell listening:', e);
-        setIsListening(false);
-        error(t('error.unable-to-read-barcode'))();
+    const onBarcode = (barcode: string) => {
+      const result = parseResult(barcode);
+      if (callbackRef.current) {
+        callbackRef.current(result);
+      } else {
+        console.error(
+          'No scan callback registered to handle barcode:',
+          barcode
+        );
       }
-    }
+    };
 
-    if (hasElectronApi) {
-      setIsListening(true);
-      try {
-        const { startBarcodeScan } = electronNativeAPI;
-        await startBarcodeScan();
-        electronNativeAPI.onBarcodeScan((_event, data) => {
-          const barcode = BarcodeUtils.parseBarcodeFromBytes(data);
-          if (callbackRef.current) {
-            callbackRef.current(parseResult(barcode));
-          } else {
-            console.error(
-              'No scan callback registered to handle barcode:',
-              barcode
-            );
-          }
-        });
-      } catch (e) {
-        setIsListening(false);
-        console.error('Error starting Electron scanner listening:', e);
-        throw e;
-      }
-    }
-
-    if (hasCameraBarcodeScanner) {
-      // Don't start camera scanning on listening, wait for explicit scan() call
-    }
-
-    if (mockScannerEnabled) {
-      setIsListening(true);
-      const scanHandler = async (barcode: string) => {
-        const result = parseResult(barcode);
-        if (callbackRef.current) {
-          callbackRef.current(result);
-        } else {
-          console.error(
-            'No scan callback registered to handle barcode:',
-            result
-          );
+    for (const driver of drivers) {
+      if (driver.supportsContinuousScanning) {
+        try {
+          setIsListening(true);
+          await driver.startListening(onBarcode);
+        } catch (e) {
+          setIsListening(false);
+          console.error(`Error starting ${driver.type} listening:`, e);
+          error(t('error.unable-to-read-barcode'))();
         }
-      };
-      await MockScanner.startListening(scanHandler);
+      }
     }
-  }, [
-    hasHoneywellScanner,
-    error,
-    t,
-    hasElectronApi,
-    electronNativeAPI,
-    hasCameraBarcodeScanner,
-    mockScannerEnabled,
-    MockScanner,
-  ]);
+  }, [drivers, error, t]);
 
   const setScannerType = useCallback(
     (type: ScannerType) => {
@@ -460,13 +256,7 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
   const val = useMemo(
     () => ({
       isEnabled,
-      // Capacitor.isNativePlatform returns true if running on android or ios
-      // and we use the camera for scanning currently, no need to check for
-      // a physical device to be connected
-      isConnected:
-        mockScannerEnabled ||
-        !!scanner?.connected ||
-        Capacitor.isNativePlatform(),
+      isConnected: drivers.some(d => d.isConnected),
       isListening,
       setScanner,
       scan,
@@ -477,8 +267,9 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
       availableScanners,
       mockScannerEnabled,
       setMockScannerEnabled,
-      supportsContinuousScanning:
-        hasHoneywellScanner || hasElectronApi || mockScannerEnabled,
+      supportsContinuousScanning: drivers.some(
+        d => d.supportsContinuousScanning
+      ),
       registerCallback: (callback: ScanCallback) =>
         (callbackRef.current = callback),
       handleScanResult: (barcode: ScanResult) => {
@@ -501,10 +292,8 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
       availableScanners,
       mockScannerEnabled,
       localScannerType,
-      scanner,
       isListening,
-      hasHoneywellScanner,
-      hasElectronApi,
+      drivers,
     ]
   );
 
@@ -539,7 +328,6 @@ export const useBarcodeScannerContext = (
 
   useEffect(() => {
     if (callback) {
-      // console.log('Registering barcode scan callback');
       barcodeScannerControl.registerCallback(callback);
     }
   }, [barcodeScannerControl, callback]);
