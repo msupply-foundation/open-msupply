@@ -16,6 +16,7 @@ pub enum PluginType {
     GraphqlQuery,
     // TODO backwards compatibility ? When integrating this one via sync
     Processor,
+    Schedule,
 }
 
 #[derive(Clone, PartialEq, Eq, Debug, Default, Serialize, Deserialize)]

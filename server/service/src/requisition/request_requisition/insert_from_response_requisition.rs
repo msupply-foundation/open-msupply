@@ -20,6 +20,12 @@ use crate::{
     validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors},
 };
 
+#[derive(Debug, PartialEq, Clone)]
+pub enum InsertFromResponseStatus {
+    Draft,
+    Sent,
+}
+
 #[derive(Debug, PartialEq)]
 pub enum InsertFromResponseRequisitionError {
     RequisitionAlreadyExists,
@@ -42,6 +48,7 @@ pub struct InsertFromResponseRequisition {
     pub response_requisition_id: String,
     pub other_party_id: String,
     pub comment: Option<String>,
+    pub status: Option<InsertFromResponseStatus>,
 }
 
 pub fn insert_from_response_requisition(
@@ -126,6 +133,7 @@ fn generate(
         response_requisition_id,
         other_party_id,
         comment,
+        status,
     }: &InsertFromResponseRequisition,
 ) -> Result<GenerateResult, InsertFromResponseRequisitionError> {
     let connection = &ctx.connection;
@@ -146,7 +154,11 @@ fn generate(
         name_id: other_party_id.clone(),
         store_id: ctx.store_id.clone(),
         r#type: RequisitionType::Request,
-        status: RequisitionStatus::Draft,
+        status: match status {
+            Some(InsertFromResponseStatus::Draft) => RequisitionStatus::Draft,
+            Some(InsertFromResponseStatus::Sent) => RequisitionStatus::Sent,
+            None => RequisitionStatus::Draft,
+        },
         created_datetime: Utc::now().naive_utc(),
         comment: comment.clone(),
         max_months_of_stock: response_requisition.max_months_of_stock,
@@ -288,6 +300,7 @@ mod test_insert_from_response_requisition {
                     response_requisition_id: response_requisition.requisition.id.clone(),
                     other_party_id: mock_name_store_c().id,
                     comment: Some("Test comment".to_string()),
+                    status: None,
                 },
             )
             .unwrap();
