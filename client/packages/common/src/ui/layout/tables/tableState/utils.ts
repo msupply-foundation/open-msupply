@@ -17,6 +17,7 @@ export interface ManagedTableState {
   columnOrder?: MRT_ColumnOrderState;
   columnSizing?: MRT_ColumnSizingState;
   grouping?: string[];
+  viewMode?: ViewMode;
 }
 
 export const getSavedState = (tableId: string): ManagedTableState | undefined => {
