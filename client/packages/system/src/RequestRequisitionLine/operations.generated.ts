@@ -430,17 +430,15 @@ export function getSdk(
   return {
     OnlyHereToAvoidUnusedWarnings(
       variables?: OnlyHereToAvoidUnusedWarningsQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<OnlyHereToAvoidUnusedWarningsQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<OnlyHereToAvoidUnusedWarningsQuery>({
-            document: OnlyHereToAvoidUnusedWarningsDocument,
+          client.request<OnlyHereToAvoidUnusedWarningsQuery>(
+            OnlyHereToAvoidUnusedWarningsDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'OnlyHereToAvoidUnusedWarnings',
         'query',
         variables
