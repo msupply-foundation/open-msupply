@@ -15,4 +15,5 @@ export * from './RequiredNumberInputCell';
 export * from './UnitsAndDosesCell';
 export * from './StatusCell';
 export * from './ChipTableCell';
-export * from './MobileCardList';
+export * from './CardList';
+export * from './ViewModeToggle';

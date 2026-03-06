@@ -31,5 +31,8 @@ export * from './types';
 export * from './useGetColumnDefDefaults';
 export * from './components';
 
+export { useViewMode } from './tableState/useViewMode';
+export type { ViewMode } from './tableState/utils';
+
 // Re-exporting so all imports come from common folder
 export { MaterialReactTable as MaterialTable } from 'material-react-table';

@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
+  Alert,
   Divider,
   useTranslation,
   BasicSpinner,
@@ -11,15 +12,20 @@ import {
   Box,
   ButtonWithIcon,
   PlusCircleIcon,
+  TableContainer,
+  Breakpoints,
+  useAppTheme,
+  useMediaQuery,
+  useViewMode,
+  ViewModeToggle,
 } from '@openmsupply-client/common';
 import { InboundLineEditForm } from './InboundLineEditForm';
 import { InboundLineFragment, useDraftInboundLines } from '../../../api';
-import { TabLayout } from './TabLayout';
 import {
   CurrencyRowFragment,
   ItemRowFragment,
 } from '@openmsupply-client/system';
-import { QuantityTable } from './TabTables';
+import { InboundLineEditTable, QuantityTable } from './TabTables';
 import { isInboundPlaceholderRow } from '../../../../utils';
 import { ScannedBatchData } from '../../DetailView';
 import { useNextItem } from '../../../../useNextItem';
@@ -76,10 +82,31 @@ export const InboundLineEdit = ({
     l => !l.linkedInvoiceId && isInboundPlaceholderRow(l)
   );
   const simplifiedTabletView = useSimplifiedTabletUI();
+  const theme = useAppTheme();
+  const isMediumScreen = useMediaQuery(theme.breakpoints.down(Breakpoints.lg));
+  const [packRoundingMessage, setPackRoundingMessage] = useState('');
+  const { viewMode, setViewMode } = useViewMode('inbound-line-edit');
+  const lastCardRef = useRef<HTMLDivElement>(null);
+  const prevLineCount = useRef(draftLines.length);
 
   useEffect(() => {
     setCurrentItem(item);
   }, [item]);
+
+  // Auto-scroll to the newly added card
+  useEffect(() => {
+    if (
+      draftLines.length > prevLineCount.current &&
+      lastCardRef.current &&
+      viewMode === 'card'
+    ) {
+      lastCardRef.current.scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest',
+      });
+    }
+    prevLineCount.current = draftLines.length;
+  }, [draftLines.length, viewMode]);
 
   const tableContent = simplifiedTabletView ? (
     <>
@@ -104,18 +131,69 @@ export const InboundLineEdit = ({
       </Box>
     </>
   ) : (
-    <TabLayout
-      draftLines={draftLines}
-      addDraftLine={addDraftLine}
-      updateDraftLine={updateDraftLine}
-      removeDraftLine={removeDraftLine}
-      isDisabled={isDisabled}
-      currency={currency}
-      isExternalSupplier={isExternalSupplier}
-      item={currentItem}
-      hasItemVariantsEnabled={hasItemVariantsEnabled}
-      hasVvmStatusesEnabled={!!hasVvmStatusesEnabled}
-    />
+    <>
+      <Box
+        flex={1}
+        display="flex"
+        justifyContent="flex-end"
+        alignItems="center"
+        gap={1}
+      >
+        <ViewModeToggle viewMode={viewMode} onViewModeChange={setViewMode} />
+        <ButtonWithIcon
+          disabled={isDisabled}
+          color="primary"
+          variant="outlined"
+          onClick={() => {
+            addDraftLine();
+            setPackRoundingMessage('');
+          }}
+          label={`${t('label.add-batch')} (+)`}
+          Icon={<PlusCircleIcon />}
+        />
+      </Box>
+      <TableContainer
+        sx={{
+          marginTop: 2,
+          ...(viewMode === 'table'
+            ? {
+                maxHeight: isMediumScreen ? 300 : 400,
+                borderWidth: 1,
+                borderStyle: 'solid',
+                borderColor: 'divider',
+                borderRadius: '20px',
+              }
+            : {
+                height: 'calc(100vh - 300px)',
+                minHeight: 150,
+                overflow: 'auto',
+              }),
+        }}
+      >
+        <Box width="100%">
+          {packRoundingMessage && (
+            <Alert severity="warning" style={{ marginBottom: 2 }}>
+              {packRoundingMessage}
+            </Alert>
+          )}
+          <InboundLineEditTable
+            lines={draftLines}
+            updateDraftLine={updateDraftLine}
+            removeDraftLine={removeDraftLine}
+            isDisabled={isDisabled}
+            currency={currency}
+            isExternalSupplier={isExternalSupplier}
+            item={currentItem}
+            hasItemVariantsEnabled={hasItemVariantsEnabled}
+            hasVvmStatusesEnabled={hasVvmStatusesEnabled}
+            setPackRoundingMessage={setPackRoundingMessage}
+            restrictedToLocationTypeId={currentItem?.restrictedLocationTypeId}
+            viewMode={viewMode}
+            lastCardRef={lastCardRef}
+          />
+        </Box>
+      </TableContainer>
+    </>
   );
 
   return (

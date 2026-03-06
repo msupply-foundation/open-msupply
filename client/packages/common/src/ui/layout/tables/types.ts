@@ -37,6 +37,14 @@ export type ColumnDef<T extends MRT_RowData> = MRT_ColumnDef<T> & {
 
   /** Customise the default index of the column. Used by plugins. */
   columnIndex?: number;
+
+  /** Logical grouping for the column (e.g. 'quantities', 'pricing', 'other').
+   * Used for organising columns in combined table views. */
+  columnGroup?: string;
+
+  /** Show this column's value as read-only summary text in the card heading.
+   * The column still appears as an editable field in its group. */
+  cardSummary?: boolean;
 };
 
 export type DefaultCellProps<T extends MRT_RowData> = Parameters<
