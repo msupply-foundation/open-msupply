@@ -3,6 +3,7 @@ import {
   TypedTFunction,
   useTranslation,
   PurchaseOrderNodeStatus,
+  PurchaseOrderLineStatusNode,
   Formatter,
 } from '@openmsupply-client/common';
 import {
@@ -21,6 +22,24 @@ const purchaseOrderStatusTranslation: Record<
   SENT: 'label.sent',
   FINALISED: 'label.finalised',
 };
+
+const purchaseOrderLineStatusTranslation: Record<
+  PurchaseOrderLineStatusNode,
+  LocaleKey
+> = {
+  NEW: 'label.new',
+  SENT: 'label.sent',
+  CLOSED: 'label.closed',
+};
+
+export const getPurchaseOrderLineStatusTranslator =
+  (t: ReturnType<typeof useTranslation>) =>
+  (currentStatus: PurchaseOrderLineStatusNode): string => {
+    return t(
+      purchaseOrderLineStatusTranslation[currentStatus] ??
+        purchaseOrderLineStatusTranslation[PurchaseOrderLineStatusNode.New]
+    );
+  };
 
 export enum DeliveryStatus {
   NotDelivered = 'NOT_DELIVERED',
