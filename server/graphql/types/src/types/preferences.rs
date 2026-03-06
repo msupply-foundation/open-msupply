@@ -86,6 +86,10 @@ impl PreferencesNode {
         self.load_preference(&self.preferences.is_gaps)
     }
 
+    pub async fn display_population_based_forecasting(&self) -> Result<bool> {
+        self.load_preference(&self.preferences.display_population_based_forecasting)
+    }
+
     pub async fn global_table_configs(&self) -> Result<serde_json::Value> {
         self.load_preference(&self.preferences.global_table_configs)
     }
@@ -262,6 +266,7 @@ pub enum PreferenceKey {
     ExpiredStockIssueThreshold,
     ItemMarginOverridesSupplierMargin,
     IsGaps,
+    DisplayPopulationBasedForecasting,
     GlobalTableConfigs,
     // Store preferences
     ManageVaccinesInDoses,

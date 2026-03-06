@@ -63,6 +63,7 @@ pub struct UpsertPreferencesInput {
     pub expired_stock_issue_threshold: Option<i32>,
     pub item_margin_overrides_supplier_margin: Option<bool>,
     pub is_gaps: Option<bool>,
+    pub display_population_based_forecasting: Option<bool>,
     pub global_table_configs: Option<serde_json::Value>,
 
     // Store preferences
@@ -132,6 +133,7 @@ impl UpsertPreferencesInput {
             expired_stock_issue_threshold,
             item_margin_overrides_supplier_margin,
             is_gaps,
+            display_population_based_forecasting,
             global_table_configs,
             // Store preferences
             manage_vaccines_in_doses,
@@ -175,8 +177,9 @@ impl UpsertPreferencesInput {
             expired_stock_prevent_issue: *expired_stock_prevent_issue,
             expired_stock_issue_threshold: *expired_stock_issue_threshold,
             item_margin_overrides_supplier_margin: *item_margin_overrides_supplier_margin,
-
             is_gaps: *is_gaps,
+            display_population_based_forecasting: *display_population_based_forecasting,
+
             global_table_configs: global_table_configs.clone(),
             // Store preferences
             manage_vaccines_in_doses: manage_vaccines_in_doses
