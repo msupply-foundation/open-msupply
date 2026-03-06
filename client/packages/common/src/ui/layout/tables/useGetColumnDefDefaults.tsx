@@ -172,13 +172,15 @@ export const useGetColumnTypeDefaults = () => {
           size: 130,
           Cell: ({ cell }: { cell: MRT_Cell<T> }) => {
             const value = cell.getValue();
-            return <>
-              <NumericTextDisplay
-                value={typeof value === 'number' ? value : undefined}
-                defaultValue={UNDEFINED_STRING_VALUE}
-              />
-              %
-            </>;
+            return (
+              <>
+                <NumericTextDisplay
+                  value={typeof value === 'number' ? value : undefined}
+                  defaultValue={UNDEFINED_STRING_VALUE}
+                />
+                %
+              </>
+            );
           },
         };
 

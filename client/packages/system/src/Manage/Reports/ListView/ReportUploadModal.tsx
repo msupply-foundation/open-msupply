@@ -93,7 +93,7 @@ export const ReportUploadModal = ({
             justifyContent: 'center',
           }}
         >
-          <UploadFile onUpload={onUpload} files={draft.files} />
+          <UploadFile onUpload={onUpload} files={draft.files} multiple />
         </Box>
         <Box sx={{ display: 'flex', width: '300px' }}>
           <FileList

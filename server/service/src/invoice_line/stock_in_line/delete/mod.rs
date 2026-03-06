@@ -117,7 +117,7 @@ mod test {
             InvoiceRow {
                 id: "verified_return".to_string(),
                 store_id: mock_store_b().id,
-                name_link_id: mock_name_store_b().id,
+                name_id: mock_name_store_b().id,
                 r#type: InvoiceType::CustomerReturn,
                 status: InvoiceStatus::Verified,
                 ..Default::default()
