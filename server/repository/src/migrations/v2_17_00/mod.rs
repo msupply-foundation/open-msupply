@@ -5,6 +5,7 @@ mod remove_goods_received;
 mod add_purchase_order_id_to_invoice;
 mod invoice_line_add_status;
 mod item_category_join_add_item_link_id;
+mod add_manufacture_date_to_stock_and_invoice_lines;
 
 pub(crate) struct V2_17_00;
 impl Migration for V2_17_00 {
@@ -21,6 +22,7 @@ impl Migration for V2_17_00 {
             Box::new(add_purchase_order_id_to_invoice::Migrate),
             Box::new(invoice_line_add_status::Migrate),
             Box::new(item_category_join_add_item_link_id::Migrate),
+            Box::new(add_manufacture_date_to_stock_and_invoice_lines::Migrate),
         ]
     }
 }
