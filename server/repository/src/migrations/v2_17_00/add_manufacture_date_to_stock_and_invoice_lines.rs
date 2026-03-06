@@ -13,6 +13,7 @@ impl MigrationFragment for Migrate {
             r#"
                 ALTER TABLE invoice_line ADD COLUMN manufacture_date DATE;
                 ALTER TABLE stock_line ADD COLUMN manufacture_date DATE;
+                ALTER TABLE stocktake_line ADD COLUMN manufacture_date DATE;
             "#
         )?;
 
