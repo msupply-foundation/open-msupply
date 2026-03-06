@@ -58,6 +58,7 @@ pub fn add_from_purchase_order(
             location_id: None,
             batch: None,
             expiry_date: None,
+            manufacture_date: None,
             pack_size: pack_size,
             cost_price_per_pack: purchase_order_line.price_per_pack_after_discount,
             sell_price_per_pack: purchase_order_line.price_per_pack_after_discount,
