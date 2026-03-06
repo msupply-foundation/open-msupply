@@ -334,6 +334,17 @@ impl RequisitionLineNode {
 
         None
     }
+
+    // Population-based forecasting fields
+    pub async fn forecast_total_doses(&self) -> &Option<f64> {
+        &self.row().forecast_total_doses
+    }
+    pub async fn forecast_total_units(&self) -> &Option<f64> {
+        &self.row().forecast_total_units
+    }
+    pub async fn vaccine_courses(&self) -> &Option<String> {
+        &self.row().vaccine_courses
+    }
 }
 
 impl RequisitionLineNode {
