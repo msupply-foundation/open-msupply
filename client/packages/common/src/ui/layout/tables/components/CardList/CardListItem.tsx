@@ -120,6 +120,13 @@ export const CardListItem = <T extends MRT_RowData>({
               top: 0,
               zIndex: 1,
               backgroundColor: 'background.paper',
+              borderTop: '1px solid',
+              borderColor: 'divider',
+              borderRadius: '4px 4px 0 0',
+              mx: isLandscape ? -1.5 : -2,
+              px: isLandscape ? 1.5 : 2,
+              mt: isLandscape ? -0.5 : -1,
+              pt: isLandscape ? 1 : 1.5,
             }}
           >
             {summaryCells.map(cell => (
