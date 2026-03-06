@@ -351,6 +351,7 @@
   "error.failed-to-save-supply-level": "Failed to save supply level",
   "error.failed-to-save-translations": "Failed to save translations",
   "error.failed-to-save-vaccination": "Failed to save vaccination!",
+  "error.failed-to-save-patient": "Failed to save patient",
   "error.failed-to-save-vaccine-course": "Failed to save vaccine course",
   "error.fetch-notifications": "Unable to display cold chain notifications",
   "error.field-must-be-specified": "{{field}} must be specified",
