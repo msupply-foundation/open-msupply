@@ -31,8 +31,6 @@ pub(super) enum BackupError {
     CannotCreateBackupFolder(#[source] io::Error, PathBuf),
     #[error("Problem create folder at path: {1}")]
     CannotCreateBaseDirFolder(#[source] io::Error, PathBuf),
-    #[error("base_dir must be configured in configuration files")]
-    BaseDirNotSet,
     #[error("Invalid path specified: {0}")]
     InvalidPath(String),
     #[error("Problem copying folder, from: {0} to {1}")]
@@ -102,13 +100,8 @@ fn get_dirs_from_settings(settings: &Settings) -> Result<DirSettings, BackupErro
 }
 
 fn get_base_dir(settings: &Settings) -> Result<PathBuf, BackupError> {
-    let base_dir = settings
-        .server
-        .base_dir
-        .as_ref()
-        .map(|dir| PathBuf::from_str(dir).map_err(|_| BackupError::InvalidPath(dir.to_string())))
-        .transpose()?
-        .ok_or(BackupError::BaseDirNotSet)?;
+    let base_dir = PathBuf::from_str(&settings.server.base_dir)
+        .map_err(|_| BackupError::InvalidPath(settings.server.base_dir.clone()))?;
 
     // Create the app base directory if it does not exist
     if !base_dir.exists() {

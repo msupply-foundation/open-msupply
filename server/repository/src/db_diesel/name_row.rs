@@ -78,7 +78,6 @@ allow_tables_to_appear_in_same_query!(name, location_type);
 allow_tables_to_appear_in_same_query!(name, currency);
 // for names query
 allow_tables_to_appear_in_same_query!(name_oms_fields, item_link);
-allow_tables_to_appear_in_same_query!(name_oms_fields, name_link);
 allow_tables_to_appear_in_same_query!(name_oms_fields, store);
 allow_tables_to_appear_in_same_query!(name_oms_fields, name_store_join);
 // for programs query

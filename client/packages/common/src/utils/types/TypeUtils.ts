@@ -38,3 +38,10 @@ export const typedEntries = <T extends object>(obj: T) =>
   Object.entries(obj) as {
     [K in keyof T]: [K, T[K]];
   }[keyof T][];
+
+/** Type guard that checks if a string is a valid value of a string enum.
+ *  Useful for safely narrowing untrusted input without `as` casts. */
+export const isEnumValue = <T extends Record<string, string>>(
+  enumObj: T,
+  value: string
+): value is T[keyof T] => (Object.values(enumObj) as string[]).includes(value);

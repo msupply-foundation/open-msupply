@@ -248,7 +248,7 @@ mod test {
                 sell_price_per_pack: 0.0,
                 total_number_of_packs: 20.0,
                 on_hold: false,
-                supplier_link_id: Some("name_store_b".to_string()),
+                supplier_id: Some("name_store_b".to_string()),
                 ..Default::default()
             }
         }
@@ -620,10 +620,10 @@ mod test {
         );
         assert_eq!(stock_line.note, stocktake_line.note);
         assert_eq!(
-            stock_line.supplier_link_id.unwrap(),
+            stock_line.supplier_id.unwrap(),
             INVENTORY_ADJUSTMENT_NAME_CODE.to_string()
         );
-        assert_eq!(stock_line.donor_link_id, stocktake_line.donor_link_id);
+        assert_eq!(stock_line.donor_id, stocktake_line.donor_id);
 
         // assert stocktake_line has been updated
         let updated_stocktake_line = StocktakeLineRowRepository::new(&context.connection)
@@ -652,8 +652,8 @@ mod test {
             .unwrap();
         let stock_line = stocktake_line[0].stock_line.clone().unwrap();
         assert_eq!(
-            stock_line.supplier_link_id,
-            mock_stock_line_b().supplier_link_id
+            stock_line.supplier_id,
+            mock_stock_line_b().supplier_id
         );
 
         // success - prunes uncounted lines
@@ -744,7 +744,7 @@ mod test {
             .pop()
             .unwrap();
         assert_eq!(
-            stocktake_line.stock_line.as_ref().unwrap().donor_link_id,
+            stocktake_line.stock_line.as_ref().unwrap().donor_id,
             Some(mock_donor_b().id.clone())
         );
         assert_eq!(

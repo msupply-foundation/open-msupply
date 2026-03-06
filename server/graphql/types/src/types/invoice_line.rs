@@ -9,8 +9,8 @@ use chrono::NaiveDate;
 use dataloader::DataLoader;
 use graphql_core::{
     loader::{
-        CampaignByIdLoader, ItemLoader, ItemVariantByItemVariantIdLoader, NameByNameLinkIdLoader,
-        NameByNameLinkIdLoaderInput, ProgramByIdLoader, ReasonOptionLoader, StockLineByIdLoader,
+        CampaignByIdLoader, ItemLoader, ItemVariantByItemVariantIdLoader, NameByIdLoader,
+        NameByIdLoaderInput, ProgramByIdLoader, ReasonOptionLoader, StockLineByIdLoader,
         VVMStatusByIdLoader,
     },
     simple_generic_errors::NodeError,
@@ -30,6 +30,16 @@ pub enum InvoiceLineNodeType {
     StockOut,
     UnallocatedStock,
     Service,
+}
+
+#[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")] // only needed to be comparable in tests
+#[graphql(remote = "repository::db_diesel::invoice_line_row
+    ::InvoiceLineStatus")]
+pub enum InvoiceLineStatusType {
+    Pending,
+    Passed,
+    Rejected,
 }
 
 pub struct InvoiceLineNode {
@@ -217,13 +227,13 @@ impl InvoiceLineNode {
     }
 
     pub async fn donor(&self, ctx: &Context<'_>, store_id: String) -> Result<Option<NameNode>> {
-        let donor_link_id = match &self.row().donor_link_id {
+        let donor_id = match &self.row().donor_id {
             None => return Ok(None),
-            Some(donor_link_id) => donor_link_id,
+            Some(donor_id) => donor_id,
         };
-        let loader = ctx.get_loader::<DataLoader<NameByNameLinkIdLoader>>();
+        let loader = ctx.get_loader::<DataLoader<NameByIdLoader>>();
         let result = loader
-            .load_one(NameByNameLinkIdLoaderInput::new(&store_id, donor_link_id))
+            .load_one(NameByIdLoaderInput::new(&store_id, donor_id))
             .await?;
 
         Ok(result.map(NameNode::from_domain))
@@ -287,6 +297,13 @@ impl InvoiceLineNode {
 
     pub async fn volume_per_pack(&self) -> f64 {
         self.row().volume_per_pack
+    }
+
+    pub async fn status(&self) -> Option<InvoiceLineStatusType> {
+        self.row()
+            .status
+            .as_ref()
+            .map(|status| InvoiceLineStatusType::from(status.clone()))
     }
 }
 

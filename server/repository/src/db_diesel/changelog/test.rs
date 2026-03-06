@@ -338,7 +338,10 @@ fn test_changelog_name_and_store_id<T, F>(
         .changelogs(
             0,
             20,
-            Some(ChangelogFilter::new().record_id(EqualFilter::equal_to(record.record_id.to_string()))),
+            Some(
+                ChangelogFilter::new()
+                    .record_id(EqualFilter::equal_to(record.record_id.to_string())),
+            ),
         )
         .unwrap();
 
@@ -367,7 +370,7 @@ async fn test_changelog_name_and_store_id_in_trigger() {
     fn store() -> StoreRow {
         StoreRow {
             id: "store".to_string(),
-            name_link_id: name().id,
+            name_id: name().id,
             ..Default::default()
         }
     }
@@ -384,7 +387,7 @@ async fn test_changelog_name_and_store_id_in_trigger() {
     fn invoice() -> InvoiceRow {
         InvoiceRow {
             id: "invoice".to_string(),
-            name_link_id: name().id,
+            name_id: name().id,
             store_id: store().id,
             currency_id: Some(currency().id),
             ..Default::default()
@@ -403,7 +406,7 @@ async fn test_changelog_name_and_store_id_in_trigger() {
     fn requisition() -> RequisitionRow {
         RequisitionRow {
             id: "requisition".to_string(),
-            name_link_id: name().id,
+            name_id: name().id,
             store_id: store().id,
             ..Default::default()
         }
@@ -441,7 +444,7 @@ async fn test_changelog_name_and_store_id_in_trigger() {
         TestRecord {
             record: invoice_line(),
             record_id: invoice_line().id,
-            name_id: invoice().name_link_id,
+            name_id: invoice().name_id,
             store_id: invoice().store_id,
         },
         RowActionType::Upsert,
@@ -457,7 +460,7 @@ async fn test_changelog_name_and_store_id_in_trigger() {
         TestRecord {
             record: invoice_line(),
             record_id: invoice_line().id,
-            name_id: invoice().name_link_id,
+            name_id: invoice().name_id,
             store_id: invoice().store_id,
         },
         RowActionType::Upsert,
@@ -475,7 +478,7 @@ async fn test_changelog_name_and_store_id_in_trigger() {
         TestRecord {
             record: invoice_line(),
             record_id: invoice_line().id,
-            name_id: invoice().name_link_id,
+            name_id: invoice().name_id,
             store_id: invoice().store_id,
         },
         RowActionType::Delete,
@@ -493,7 +496,7 @@ async fn test_changelog_name_and_store_id_in_trigger() {
         TestRecord {
             record: invoice(),
             record_id: invoice().id,
-            name_id: invoice().name_link_id,
+            name_id: invoice().name_id,
             store_id: invoice().store_id,
         },
         RowActionType::Upsert,
@@ -509,7 +512,7 @@ async fn test_changelog_name_and_store_id_in_trigger() {
         TestRecord {
             record: invoice(),
             record_id: invoice().id,
-            name_id: invoice().name_link_id,
+            name_id: invoice().name_id,
             store_id: invoice().store_id,
         },
         RowActionType::Upsert,
@@ -525,7 +528,7 @@ async fn test_changelog_name_and_store_id_in_trigger() {
         TestRecord {
             record: invoice(),
             record_id: invoice().id,
-            name_id: invoice().name_link_id,
+            name_id: invoice().name_id,
             store_id: invoice().store_id,
         },
         RowActionType::Delete,
@@ -541,7 +544,7 @@ async fn test_changelog_name_and_store_id_in_trigger() {
         TestRecord {
             record: requisition_line(),
             record_id: requisition_line().id,
-            name_id: requisition().name_link_id,
+            name_id: requisition().name_id,
             store_id: requisition().store_id,
         },
         RowActionType::Upsert,
@@ -557,7 +560,7 @@ async fn test_changelog_name_and_store_id_in_trigger() {
         TestRecord {
             record: requisition_line(),
             record_id: requisition_line().id,
-            name_id: requisition().name_link_id,
+            name_id: requisition().name_id,
             store_id: requisition().store_id,
         },
         RowActionType::Upsert,
@@ -575,7 +578,7 @@ async fn test_changelog_name_and_store_id_in_trigger() {
         TestRecord {
             record: requisition_line(),
             record_id: requisition_line().id,
-            name_id: requisition().name_link_id,
+            name_id: requisition().name_id,
             store_id: requisition().store_id,
         },
         RowActionType::Delete,
@@ -593,7 +596,7 @@ async fn test_changelog_name_and_store_id_in_trigger() {
         TestRecord {
             record: requisition(),
             record_id: requisition().id,
-            name_id: requisition().name_link_id,
+            name_id: requisition().name_id,
             store_id: requisition().store_id,
         },
         RowActionType::Upsert,
@@ -609,7 +612,7 @@ async fn test_changelog_name_and_store_id_in_trigger() {
         TestRecord {
             record: requisition(),
             record_id: requisition().id,
-            name_id: requisition().name_link_id,
+            name_id: requisition().name_id,
             store_id: requisition().store_id,
         },
         RowActionType::Upsert,
@@ -627,7 +630,7 @@ async fn test_changelog_name_and_store_id_in_trigger() {
         TestRecord {
             record: requisition(),
             record_id: requisition().id,
-            name_id: requisition().name_link_id,
+            name_id: requisition().name_id,
             store_id: requisition().store_id,
         },
         RowActionType::Delete,
@@ -731,7 +734,7 @@ async fn test_changelog_outgoing_patient_sync_records() {
     // create a vaccination record from store B (site 2) for patient2
     let vaccination = VaccinationRow {
         id: "mock_vax_id".to_string(),
-        patient_link_id: "patient2".to_string(),
+        patient_id: "patient2".to_string(),
         store_id: "store_b".to_string(),
         vaccine_course_dose_id: "vaccine_course_a_dose_a".to_string(),
         user_id: "user_account_a".to_string(),
