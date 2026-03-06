@@ -937,6 +937,8 @@
   "label.custom": "Custom",
   "label.custom-age-label": "Custom age label",
   "label.customer": "Customer",
+  "label.customer-amc/amd": "Customer AMC/AMD",
+  "label.customer-months-of-stock": "Customer MOS",
   "label.customer-name": "Customer Name",
   "label.customer-ref": "Customer Reference",
   "label.customer-soh": "Their avail. stock",
