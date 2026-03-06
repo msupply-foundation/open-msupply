@@ -1,14 +1,12 @@
 @media print{
     @page {
-        size: A4 landscape 
+        size: A4 landscape;
+        @bottom-right {
+            font-family: Tahoma;
+            font-size: 8pt;
+            content: counter(page);
+        }
     }
-}
-
-@page {
-    font-family: Tahoma;
-    font-size: 8pt;
-    counter-increment: page;
-    content: "Page " counter(page);
 }
 
 .logo {
