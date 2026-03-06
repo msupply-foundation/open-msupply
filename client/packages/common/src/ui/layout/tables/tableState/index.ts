@@ -5,3 +5,4 @@ export * from './useColumnSizing';
 export * from './useColumnVisibility';
 export * from './useGlobalTableConfig';
 export * from './useColumnGrouping';
+export * from './useViewMode';
