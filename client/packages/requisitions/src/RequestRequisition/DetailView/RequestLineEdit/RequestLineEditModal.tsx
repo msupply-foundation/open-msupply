@@ -86,7 +86,7 @@ export const RequestLineEditModal = ({
     onClose();
   };
 
-  const { Modal } = useDialog({ onClose: onCancel, isOpen });
+  const { Modal } = useDialog({ onClose: onCancel, isOpen, fullScreen: true });
 
   const onChangeItem = (item: ItemWithStatsFragment) => {
     if (mode === ModalMode.Create) {
@@ -152,8 +152,6 @@ export const RequestLineEditModal = ({
           }}
         />
       }
-      height={800}
-      sx={{ maxWidth: 1200, minWidth: 'unset', width: 'calc(100vw - 64px)' }}
     >
       {isLoading ? (
         <BasicSpinner />

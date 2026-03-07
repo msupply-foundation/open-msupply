@@ -58,6 +58,7 @@ export interface DialogProps {
   disableBackdrop?: boolean;
   disableEscapeKey?: boolean;
   disableMobileFullScreen?: boolean;
+  fullScreen?: boolean;
   isSidePanelModal?: boolean;
 }
 
@@ -121,6 +122,7 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
     disableBackdrop = true,
     disableEscapeKey = false,
     disableMobileFullScreen = false,
+    fullScreen: fullScreenProp = false,
   } = dialogProps ?? {};
   const [open, setOpen] = React.useState(false);
   const showDialog = useCallback(() => setOpen(true), []);
@@ -227,7 +229,8 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
       width: width ? Math.min(window.innerWidth - 50, width) : undefined,
     };
 
-    const defaultFullscreen = isAndroid && !disableMobileFullScreen;
+    const defaultFullscreen =
+      fullScreenProp || (isAndroid && !disableMobileFullScreen);
 
     return (
       <BasicModal
