@@ -238,6 +238,7 @@ fn generate_barcode(
                     gtin: gtin.clone(),
                     item_id: input.item_id.clone(),
                     pack_size: Some(input.pack_size),
+                    manufacture_date: input.manufacture_date,
                 },
             )?;
 

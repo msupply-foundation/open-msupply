@@ -44,6 +44,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
                 manufacturer_id: Some("name_a".to_string()),
                 pack_size: Some(1.0),
                 parent_id: None,
+                manufacture_date: None,
             },
         ),
         TestSyncIncomingRecord::new_pull_upsert(
@@ -56,6 +57,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
                 manufacturer_id: Some("name_a".to_string()),
                 pack_size: Some(1.0),
                 parent_id: None,
+                manufacture_date: None,
             },
         ),
     ]

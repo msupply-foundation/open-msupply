@@ -71,6 +71,7 @@ impl SyncTranslation for BarcodeTranslation {
             manufacturer_id: manufacturer_id,
             pack_size,
             parent_id,
+            manufacture_date: None,
         };
 
         Ok(PullTranslateResult::upsert(result))
@@ -90,6 +91,7 @@ impl SyncTranslation for BarcodeTranslation {
                     manufacturer_id: _,
                     pack_size,
                     parent_id,
+                    manufacture_date: _,
                 },
             manufacturer_name_row,
         } = BarcodeRepository::new(connection)

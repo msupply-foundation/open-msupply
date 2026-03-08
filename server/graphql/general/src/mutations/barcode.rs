@@ -1,5 +1,5 @@
 use async_graphql::*;
-
+use chrono::NaiveDate;
 use graphql_core::{
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
@@ -16,6 +16,7 @@ pub struct BarcodeInput {
     pub gtin: String,
     pub item_id: String,
     pub pack_size: Option<f64>,
+    pub manufacture_date: Option<NaiveDate>,
 }
 
 #[derive(Union)]
@@ -30,6 +31,7 @@ impl BarcodeInput {
             gtin: self.gtin.clone(),
             item_id: self.item_id.clone(),
             pack_size: self.pack_size,
+            manufacture_date: self.manufacture_date,
         }
     }
 }
