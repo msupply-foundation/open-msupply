@@ -1,4 +1,4 @@
-import { parseResult } from './BarcodeScannerContext';
+import { parseResult } from './barcode/parseResult';
 import { BarcodeUtils } from './barcode/BarcodeUtils';
 
 describe('barcode parsing', () => {
