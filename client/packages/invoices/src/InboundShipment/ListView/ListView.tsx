@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import {
   useNavigate,
   useTranslation,
@@ -15,6 +15,9 @@ import {
   MobileCardList,
   DetailTabs,
   ToggleState,
+  useAuthContext,
+  useDisabledNotificationToast,
+  UserPermission,
 } from '@openmsupply-client/common';
 import { AppBarButtons } from './AppBarButtons';
 import {
@@ -75,7 +78,20 @@ const InboundShipments: React.FC<{
 
   const t = useTranslation();
   const navigate = useNavigate();
+  const { userHasPermission } = useAuthContext();
+  const showDisabledNotification = useDisabledNotificationToast();
   const { invoiceStatusOptions } = usePreferences();
+
+  const queryPermission = external
+    ? UserPermission.InboundShipmentExternalQuery
+    : UserPermission.InboundShipmentQuery;
+  const hasViewPermission = userHasPermission(queryPermission);
+
+  useEffect(() => {
+    if (!hasViewPermission) {
+      showDisabledNotification();
+    }
+  }, [hasViewPermission]);
 
   const isExtraSmallScreen = useIsExtraSmallScreen();
 
@@ -211,8 +227,8 @@ const InboundShipments: React.FC<{
       isLoading: isFetching,
       onRowClick: row => navigate(row.id),
       columns,
-      data: data?.nodes ?? [],
-      totalCount: data?.totalCount ?? 0,
+      data: hasViewPermission ? (data?.nodes ?? []) : [],
+      totalCount: hasViewPermission ? (data?.totalCount ?? 0) : 0,
       initialSort: { key: 'invoiceNumber', dir: 'desc' },
       getIsRestrictedRow: row => isInboundListItemDisabled(row.original),
       noDataElement: (
