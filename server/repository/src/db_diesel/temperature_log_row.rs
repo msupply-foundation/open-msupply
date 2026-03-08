@@ -83,6 +83,18 @@ impl<'a> TemperatureLogRowRepository<'a> {
         Ok(())
     }
 
+    pub fn update_location_id_by_sensor_id(
+        &self,
+        sensor_id: &str,
+        location_id: &str,
+    ) -> Result<(), RepositoryError> {
+        diesel::update(temperature_log::table)
+            .filter(temperature_log::sensor_id.eq(sensor_id))
+            .set(temperature_log::location_id.eq(Some(location_id)))
+            .execute(self.connection.lock().connection())?;
+        Ok(())
+    }
+
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<TemperatureLogRow>, RepositoryError> {
         let result = temperature_log::table
             .filter(temperature_log::id.eq(id))
