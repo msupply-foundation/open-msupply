@@ -7,6 +7,7 @@ import {
   RANGE_SPLIT_CHAR,
   RouteBuilder,
   StatsPanel,
+  useCallbackWithPermission,
   useNavigate,
   useNotification,
   useToggle,
@@ -22,6 +23,7 @@ import {
   ApiException,
   InvoiceNodeStatus,
   RequisitionNodeStatus,
+  UserPermission,
 } from '@common/types';
 import { useInboundShipment } from '@openmsupply-client/invoices';
 import { SupplierSearchModal } from '@openmsupply-client/system';
@@ -87,10 +89,10 @@ export const ReplenishmentWidget = ({
     );
     errorSnack();
   };
-
-  const handleClick = () => {
-    modalControl.toggleOn();
-  };
+  const handleClick = useCallbackWithPermission(
+    UserPermission.InboundShipmentMutate,
+    modalControl.toggleOn
+  );
 
   const internalTab = t('label.internal');
   const externalTab = t('label.external');

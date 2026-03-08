@@ -11,10 +11,13 @@ import {
   RouteBuilder,
   useAuthContext,
   useUrlQuery,
+  useCallbackWithPermission,
   useNotification,
+  UserPermission,
   SplitButtonOption,
   SplitButton,
 } from '@openmsupply-client/common';
+
 import { ExportSelector } from '@openmsupply-client/system';
 import {
   NameRowFragment,
@@ -88,9 +91,7 @@ export const AppBarButtons = ({
           .build()
       );
     } catch (e) {
-      errorNotification(
-        'Failed to create invoice! ' + (e as Error).message
-      )();
+      errorNotification('Failed to create invoice! ' + (e as Error).message)();
     }
   };
 
@@ -186,6 +187,16 @@ export const AddButton = ({
   const t = useTranslation();
   const currentTab = useUrlQuery().urlQuery['tab'];
 
+  const handleNewShipment = useCallbackWithPermission(
+    UserPermission.InboundShipmentMutate,
+    onNewShipment
+  );
+
+  const handleNewShipmentExternal = useCallbackWithPermission(
+    UserPermission.InboundShipmentExternalMutate,
+    onNewShipmentExternal
+  );
+
   const allOptions: SplitButtonOption<string>[] = [
     {
       value: 'new-shipment',
@@ -216,10 +227,10 @@ export const AddButton = ({
   const handleOptionSelection = (option: SplitButtonOption<string>) => {
     switch (option.value) {
       case 'new-shipment':
-        onNewShipment();
+        handleNewShipment();
         break;
       case 'new-external-shipment':
-        onNewShipmentExternal();
+        handleNewShipmentExternal();
         break;
     }
   };
