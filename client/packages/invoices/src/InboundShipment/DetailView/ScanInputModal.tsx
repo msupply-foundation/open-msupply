@@ -43,7 +43,7 @@ interface FormDraftState {
   expiryDate: Date | null;
   packSize: number;
   quantity: number;
-  //   manufacturerDate: Date | null;
+  manufactureDate: Date | null;
   isNewLine: boolean;
   gtin: string | null;
   saveNewBarcode: boolean;
@@ -58,6 +58,7 @@ const defaultDraftState: FormDraftState = {
   expiryDate: null,
   packSize: 1,
   quantity: 0,
+  manufactureDate: null,
   gtin: null,
   saveNewBarcode: false,
   isNewLine: true,
@@ -89,14 +90,14 @@ export const ScanInputModal = ({
   const { mutateAsync: saveBarcode, isLoading: isSavingBarcode } =
     useOutbound.utils.barcodeInsert();
 
-  // Helper to update state and pull in expiry date from matching line
-  // - Need to add "manufacturer/manufactureDate" to this when support those
+  // Helper to update state and pull in expiry/manufacture date from matching line
   const updateStateWithLineMatch = useCallback(
     (updates: Partial<FormDraftState>) => {
       setDraftState(current => {
         const newState = { ...current, ...updates };
 
         // Find matching line based on updated values
+        // Note: not checking against manufacturer date for now
         const matchingLine = lines.find(
           line =>
             line.batch === newState.batch &&
@@ -107,6 +108,11 @@ export const ScanInputModal = ({
         // If we found a matching line with an expiry date and we don't already have one, use it
         if (matchingLine?.expiryDate && !newState.expiryDate) {
           newState.expiryDate = new Date(matchingLine.expiryDate);
+        }
+
+        // Same for manufacture date
+        if (matchingLine?.manufactureDate && !newState.manufactureDate) {
+          newState.manufactureDate = new Date(matchingLine.manufactureDate);
         }
 
         return newState;
@@ -141,6 +147,9 @@ export const ScanInputModal = ({
         expiryDate: draftState.expiryDate
           ? draftState.expiryDate.toISOString().substring(0, 10)
           : null,
+        manufactureDate: draftState.manufactureDate
+          ? draftState.manufactureDate.toISOString().substring(0, 10)
+          : null,
         packSize: draftState.packSize,
         numberOfPacks: (existingLine?.numberOfPacks || 0) + draftState.quantity,
         item: {
@@ -169,6 +178,9 @@ export const ScanInputModal = ({
             gtin: draftState.gtin,
             itemId: draftState.itemId,
             packSize: draftState.packSize,
+            manufactureDate: draftState.manufactureDate
+              ? draftState.manufactureDate.toISOString().substring(0, 10)
+              : null,
           },
         });
       }
@@ -282,6 +294,10 @@ export const ScanInputModal = ({
             newState.itemId = dbBarcodeData.itemId;
             if (dbBarcodeData.packSize)
               newState.packSize = dbBarcodeData.packSize;
+            if (dbBarcodeData.manufactureDate)
+              newState.manufactureDate = new Date(
+                dbBarcodeData.manufactureDate
+              );
             newState.gtin = dbBarcodeData.gtin;
           }
         }
@@ -443,18 +459,23 @@ export const ScanInputModal = ({
             />
           }
         />
-        {/* TO-DO: Manufacture Date */}
-        {/* <InputWithLabelRow
-        label={t('label.quantity')}
-        Input={
-          <NumericTextInput
-            value={draftState.quantity ?? ''}
-            onChange={value =>
-              setDraftState(current => ({ ...current, quantity: value || 1 }))
-            }
-          />
-        }
-      /> */}
+        <InputWithLabelRow
+          label={t('label.manufacture-date')}
+          Input={
+            <DatePicker
+              value={draftState.manufactureDate}
+              // If a manufacture date is associated with a particular GTIN, it
+              // should not change
+              disabled={!!barcodeData?.manufactureDate || isLoading}
+              onChange={value =>
+                setDraftState(current => ({
+                  ...current,
+                  manufactureDate: value,
+                }))
+              }
+            />
+          }
+        />
       </Box>
     </Modal>
   );

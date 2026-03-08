@@ -14,6 +14,7 @@ impl MigrationFragment for Migrate {
                 ALTER TABLE invoice_line ADD COLUMN manufacture_date DATE;
                 ALTER TABLE stock_line ADD COLUMN manufacture_date DATE;
                 ALTER TABLE stocktake_line ADD COLUMN manufacture_date DATE;
+                ALTER TABLE barcode ADD COLUMN manufacture_date DATE;
             "#
         )?;
 

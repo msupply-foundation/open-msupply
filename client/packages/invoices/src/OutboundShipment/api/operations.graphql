@@ -133,6 +133,7 @@ fragment Barcode on BarcodeNode {
   id
   itemId
   packSize
+  manufactureDate
   gtin
 }
 

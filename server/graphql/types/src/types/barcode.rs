@@ -1,4 +1,5 @@
 use async_graphql::*;
+use chrono::NaiveDate;
 use graphql_core::simple_generic_errors::InternalError;
 use repository::{barcode::Barcode, BarcodeRow};
 use service::ListResult;
@@ -37,6 +38,10 @@ impl BarcodeNode {
 
     pub async fn pack_size(&self) -> Option<f64> {
         self.row().pack_size
+    }
+
+    pub async fn manufacture_date(&self) -> Option<NaiveDate> {
+        self.row().manufacture_date
     }
 
     pub async fn parent_id(&self) -> Option<String> {

@@ -1,3 +1,4 @@
+use chrono::NaiveDate;
 use repository::{
     barcode::{Barcode, BarcodeFilter, BarcodeRepository, BarcodeSort},
     BarcodeRow, BarcodeRowRepository, EqualFilter, PaginationOption, RepositoryError,
@@ -20,6 +21,7 @@ pub struct BarcodeInput {
     pub gtin: String,
     pub item_id: String,
     pub pack_size: Option<f64>,
+    pub manufacture_date: Option<NaiveDate>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -118,6 +120,7 @@ pub(crate) fn generate(
     Ok(BarcodeRow {
         item_id: input.item_id,
         pack_size: input.pack_size.or(new_barcode.pack_size),
+        manufacture_date: input.manufacture_date.or(new_barcode.manufacture_date),
         ..new_barcode
     })
 }

@@ -203,6 +203,7 @@ fn generate(
                 gtin: gtin.clone(),
                 item_id: existing_line.item_row.id,
                 pack_size: Some(existing.pack_size),
+                manufacture_date: None,
             },
         )?),
         None => None,

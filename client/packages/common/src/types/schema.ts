@@ -754,6 +754,7 @@ export type BarcodeNode = {
   gtin: Scalars['String']['output'];
   id: Scalars['String']['output'];
   itemId: Scalars['String']['output'];
+  manufactureDate?: Maybe<Scalars['NaiveDate']['output']>;
   manufacturerId?: Maybe<Scalars['String']['output']>;
   packSize?: Maybe<Scalars['Float']['output']>;
   parentId?: Maybe<Scalars['String']['output']>;
@@ -3155,6 +3156,7 @@ export type InsertAssetResponse = AssetNode | InsertAssetError;
 export type InsertBarcodeInput = {
   gtin: Scalars['String']['input'];
   itemId: Scalars['String']['input'];
+  manufactureDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   packSize?: InputMaybe<Scalars['Float']['input']>;
 };
 
