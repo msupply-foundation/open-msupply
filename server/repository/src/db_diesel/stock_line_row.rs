@@ -46,6 +46,7 @@ define_linked_tables! {
     optional_links: {
         supplier_link_id -> supplier_id,
         donor_link_id -> donor_id,
+        manufacturer_link_id -> manufacturer_id,
     }
 }
 
@@ -86,6 +87,7 @@ pub struct StockLineRow {
     // Resolved from name_link - must be last to match view column order
     pub supplier_id: Option<String>,
     pub donor_id: Option<String>,
+    pub manufacturer_id: Option<String>,
 }
 
 pub struct StockLineRowRepository<'a> {
