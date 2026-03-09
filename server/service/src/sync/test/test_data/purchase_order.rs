@@ -111,7 +111,7 @@ fn purchase_order_1_pull_record() -> TestSyncIncomingRecord {
             donor_id: Some("donor_a".to_string()),
             reference: Some("test reference".to_string()),
             currency_id: Some("currency_a".to_string()),
-            foreign_exchange_rate: Some(1.6),
+            foreign_exchange_rate: 1.6,
             shipping_method: Some("sea".to_string()),
             sent_datetime: Some(
                 NaiveDate::from_ymd_opt(2025, 1, 15)
@@ -316,7 +316,7 @@ fn purchase_order_2_migration_pull_record() -> TestSyncIncomingRecord {
             donor_id: None,
             reference: None,
             currency_id: Some("currency_a".to_string()),
-            foreign_exchange_rate: Some(1.0),
+            foreign_exchange_rate: 1.0,
             shipping_method: None,
             sent_datetime: Some(
                 NaiveDate::from_ymd_opt(2021, 3, 15)
@@ -451,7 +451,7 @@ fn purchase_order_3_empty_string_pull_record() -> TestSyncIncomingRecord {
             donor_id: None,
             reference: None,
             currency_id: None,
-            foreign_exchange_rate: Some(1.0),
+            foreign_exchange_rate: 1.0,
             shipping_method: None,
             sent_datetime: None,
             contract_signed_date: None,
@@ -570,7 +570,7 @@ fn purchase_order_4_empty_object_pull_record() -> TestSyncIncomingRecord {
             donor_id: None,
             reference: None,
             currency_id: None,
-            foreign_exchange_rate: Some(1.0),
+            foreign_exchange_rate: 1.0,
             shipping_method: None,
             sent_datetime: None,
             contract_signed_date: None,
@@ -676,7 +676,7 @@ fn purchase_order_5_null_pull_record() -> TestSyncIncomingRecord {
             supplier_name_id: "name_store_b".to_string(),
             purchase_order_number: 1,
             status: PurchaseOrderStatus::New,
-            foreign_exchange_rate: Some(1.0),
+            foreign_exchange_rate: 1.0,
             created_datetime: NaiveDate::from_ymd_opt(2020, 1, 22)
                 .unwrap()
                 .and_hms_opt(0, 0, 0)
@@ -767,7 +767,7 @@ fn purchase_order_6_no_fields_pull_record() -> TestSyncIncomingRecord {
             supplier_name_id: "name_store_b".to_string(),
             purchase_order_number: 1,
             status: PurchaseOrderStatus::New,
-            foreign_exchange_rate: Some(1.0),
+            foreign_exchange_rate: 1.0,
             created_datetime: NaiveDate::from_ymd_opt(2020, 1, 22)
                 .unwrap()
                 .and_hms_opt(0, 0, 0)

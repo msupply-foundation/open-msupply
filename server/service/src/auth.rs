@@ -162,10 +162,10 @@ pub enum Resource {
     QueryPurchaseOrder,
     MutatePurchaseOrder,
     AuthorisePurchaseOrder,
-    // Goods Received
-    MutateGoodsReceived,
-    QueryGoodsReceived,
-    AuthoriseGoodsReceived,
+    // Inbound Shipment External
+    MutateInboundShipmentExternal,
+    QueryInboundShipmentExternal,
+    AuthoriseInboundShipmentExternal,
 }
 
 fn all_permissions() -> HashMap<Resource, PermissionDSL> {
@@ -727,8 +727,11 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
     map.insert(Resource::PluginGraphql, PermissionDSL::HasStoreAccess);
 
     // vvm status - queries only need authentication
-    map.insert(Resource::QueryVvmStatus, PermissionDSL::NoPermissionRequired);
-    
+    map.insert(
+        Resource::QueryVvmStatus,
+        PermissionDSL::NoPermissionRequired,
+    );
+
     // vvm status - mutations need permission
     map.insert(
         Resource::MutateVvmStatus,
@@ -761,28 +764,6 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
         PermissionDSL::And(vec![
             PermissionDSL::HasStoreAccess,
             PermissionDSL::HasPermission(PermissionType::PurchaseOrderAuthorise),
-        ]),
-    );
-
-    map.insert(
-        Resource::QueryGoodsReceived,
-        PermissionDSL::And(vec![
-            PermissionDSL::HasStoreAccess,
-            PermissionDSL::HasPermission(PermissionType::GoodsReceivedQuery),
-        ]),
-    );
-    map.insert(
-        Resource::MutateGoodsReceived,
-        PermissionDSL::And(vec![
-            PermissionDSL::HasStoreAccess,
-            PermissionDSL::HasPermission(PermissionType::GoodsReceivedMutate),
-        ]),
-    );
-    map.insert(
-        Resource::AuthoriseGoodsReceived,
-        PermissionDSL::And(vec![
-            PermissionDSL::HasStoreAccess,
-            PermissionDSL::HasPermission(PermissionType::GoodsReceivedAuthorise),
         ]),
     );
 

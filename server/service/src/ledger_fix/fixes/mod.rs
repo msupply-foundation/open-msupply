@@ -110,8 +110,7 @@ fn create_inventory_adjustment(
     adjustment: f64,
     stock_line_id: &str,
 ) -> Result<(), LedgerFixError> {
-    let Some(stock_line) =
-        StockLineRowRepository::new(connection).find_one_by_id(stock_line_id)?
+    let Some(stock_line) = StockLineRowRepository::new(connection).find_one_by_id(stock_line_id)?
     else {
         return LedgerFixError::other("Stock line not found");
     };
@@ -251,8 +250,6 @@ mod tests {
         // mSupply mobile
         assert!(!is_omsupply_uuid("8b050f904b1011f0ba48e743cf9b07a9"));
         // omSupply
-        assert!(
-            is_omsupply_uuid("0197bfbf-90ef-71e0-b929-589da7c29507")
-        );
+        assert!(is_omsupply_uuid("0197bfbf-90ef-71e0-b929-589da7c29507"));
     }
 }

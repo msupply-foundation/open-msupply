@@ -4,12 +4,12 @@ import {
   LocaleKey,
   NamePropertyNode,
   PropertyNode,
-  useTranslationExistsInLocale,
   useTranslation,
   MaterialTable,
   useNonPaginatedMaterialTable,
   ColumnDef,
   TextWithTooltipCell,
+  useTranslationAdvanced,
 } from '@openmsupply-client/common';
 import { ImportRow } from './PropertiesImportModal';
 
@@ -23,6 +23,7 @@ export const ImportReviewTable: FC<ImportReviewTableProps> = ({
   properties,
 }) => {
   const t = useTranslation();
+  const { i18n } = useTranslationAdvanced();
 
   // Could filter here for only properties that are used in import
   const propertyNodes: PropertyNode[] | undefined = properties
@@ -54,9 +55,7 @@ export const ImportReviewTable: FC<ImportReviewTableProps> = ({
         size: 150,
         Cell: TextWithTooltipCell,
         Header: () => {
-          const labelExistsInLocale = useTranslationExistsInLocale(
-            property.name
-          );
+          const labelExistsInLocale = i18n.exists(property.name);
           const header = labelExistsInLocale
             ? t(property.name as LocaleKey, { defaultValue: property.name })
             : property.name;

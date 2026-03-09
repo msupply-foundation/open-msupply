@@ -69,7 +69,7 @@ export type PurchaseOrderFragment = {
       requestedPackSize: number;
       requestedDeliveryDate?: string | null;
       requestedNumberOfUnits: number;
-      receivedNumberOfUnits: number;
+      shippedNumberOfUnits: number;
       adjustedNumberOfUnits?: number | null;
       pricePerPackAfterDiscount: number;
       pricePerPackBeforeDiscount: number;
@@ -149,7 +149,7 @@ export type PurchaseOrderLineFragment = {
   requestedPackSize: number;
   requestedDeliveryDate?: string | null;
   requestedNumberOfUnits: number;
-  receivedNumberOfUnits: number;
+  shippedNumberOfUnits: number;
   adjustedNumberOfUnits?: number | null;
   pricePerPackAfterDiscount: number;
   pricePerPackBeforeDiscount: number;
@@ -284,7 +284,7 @@ export type PurchaseOrderByIdQuery = {
             requestedPackSize: number;
             requestedDeliveryDate?: string | null;
             requestedNumberOfUnits: number;
-            receivedNumberOfUnits: number;
+            shippedNumberOfUnits: number;
             adjustedNumberOfUnits?: number | null;
             pricePerPackAfterDiscount: number;
             pricePerPackBeforeDiscount: number;
@@ -450,7 +450,7 @@ export type PurchaseOrderLinesQuery = {
       requestedPackSize: number;
       requestedDeliveryDate?: string | null;
       requestedNumberOfUnits: number;
-      receivedNumberOfUnits: number;
+      shippedNumberOfUnits: number;
       adjustedNumberOfUnits?: number | null;
       pricePerPackAfterDiscount: number;
       pricePerPackBeforeDiscount: number;
@@ -522,7 +522,7 @@ export type PurchaseOrderLineQuery = {
       requestedPackSize: number;
       requestedDeliveryDate?: string | null;
       requestedNumberOfUnits: number;
-      receivedNumberOfUnits: number;
+      shippedNumberOfUnits: number;
       adjustedNumberOfUnits?: number | null;
       pricePerPackAfterDiscount: number;
       pricePerPackBeforeDiscount: number;
@@ -724,7 +724,7 @@ export const PurchaseOrderLineFragmentDoc = gql`
     requestedPackSize
     requestedDeliveryDate
     requestedNumberOfUnits
-    receivedNumberOfUnits
+    shippedNumberOfUnits
     adjustedNumberOfUnits
     pricePerPackAfterDiscount
     pricePerPackBeforeDiscount

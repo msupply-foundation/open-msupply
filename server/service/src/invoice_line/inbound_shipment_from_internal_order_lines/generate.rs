@@ -95,5 +95,6 @@ fn generate_line(
         shipped_number_of_packs: None,
         volume_per_pack: 0.0,
         shipped_pack_size: None,
+        status: None,
     }
 }

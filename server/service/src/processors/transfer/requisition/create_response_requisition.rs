@@ -303,7 +303,8 @@ fn generate_response_requisition_lines(
     request_requisition: &RequisitionRow,
 ) -> Result<Vec<RequisitionLineRow>, RepositoryError> {
     let request_lines = get_lines_for_requisition(connection, &request_requisition.id)?;
-    let populate_price_per_unit = get_indicative_price_pref(connection, &response_requisition.store_id)?;
+    let populate_price_per_unit =
+        get_indicative_price_pref(connection, &response_requisition.store_id)?;
     let price_list = if populate_price_per_unit {
         Some(get_pricing_for_items(
             connection,
@@ -347,6 +348,9 @@ fn generate_response_requisition_lines(
                 price_per_unit,
                 available_volume,
                 location_type_id,
+                forecast_total_doses,
+                forecast_total_units,
+                vaccine_courses,
             },
         item_row: ItemRow { id: item_id, .. },
         requisition_row: _,
@@ -388,11 +392,14 @@ fn generate_response_requisition_lines(
             option_id,
             available_volume,
             location_type_id,
+            price_per_unit,
+            forecast_total_units,
+            forecast_total_doses,
+            vaccine_courses,
             // Default
             supply_quantity: 0.0,
             approved_quantity: 0.0,
             approval_comment: None,
-            price_per_unit,
         });
     }
 

@@ -79,7 +79,7 @@ pub fn generate(
         is_cancellation: false,
         expected_delivery_date: None,
         default_donor_id: None,
-        goods_received_id: None,
+        purchase_order_id: None,
         shipping_method_id: None,
     };
 
@@ -135,6 +135,7 @@ pub fn generate_invoice_lines(
             shipped_number_of_packs: None,
             volume_per_pack: 0.0,
             shipped_pack_size: None,
+            status: None,
         });
     }
 

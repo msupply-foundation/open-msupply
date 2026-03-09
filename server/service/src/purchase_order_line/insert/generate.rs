@@ -52,7 +52,6 @@ pub fn generate(
         comment,
         status: PurchaseOrderLineStatus::New,
         adjusted_number_of_units: None,
-        received_number_of_units: 0.0,
         stock_on_hand_in_units: 0.0,
     })
 }

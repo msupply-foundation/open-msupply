@@ -55,9 +55,7 @@ impl MigrationFragment for Migrate {
             let parsed_sync_data: Value = match serde_json::from_str(&sync_data) {
                 Ok(value) => value,
                 Err(err) => {
-                    println!(
-                        "Error parsing sync data for stock line {stock_line_id}: {err}"
-                    );
+                    println!("Error parsing sync data for stock line {stock_line_id}: {err}");
                     continue;
                 }
             };
@@ -100,9 +98,7 @@ impl MigrationFragment for Migrate {
             let parsed_sync_data: Value = match serde_json::from_str(&sync_data) {
                 Ok(value) => value,
                 Err(err) => {
-                    println!(
-                        "Error parsing sync data for invoice line {invoice_line_id}: {err}"
-                    );
+                    println!("Error parsing sync data for invoice line {invoice_line_id}: {err}");
                     continue;
                 }
             };
@@ -190,9 +186,8 @@ mod tests {
         donor_id: &str,
         batch: &str,
     ) {
-        let sync_data = format!(
-            r#"{{"id": "{stock_line_id}", "donor_id": "{donor_id}", "batch": "{batch}"}}"#
-        );
+        let sync_data =
+            format!(r#"{{"id": "{stock_line_id}", "donor_id": "{donor_id}", "batch": "{batch}"}}"#);
         execute_sql_with_error(
             connection,
             sql_query(format!(
@@ -228,9 +223,7 @@ mod tests {
         invoice_line_id: &str,
         donor_id: &str,
     ) {
-        let sync_data = format!(
-            r#"{{"id": "{invoice_line_id}", "donor_id": "{donor_id}"}}"#
-        );
+        let sync_data = format!(r#"{{"id": "{invoice_line_id}", "donor_id": "{donor_id}"}}"#);
         execute_sql_with_error(
             connection,
             sql_query(format!(

@@ -38,7 +38,8 @@ impl Processor for QueueContactEmailProcessor {
         changelog: &ChangelogRow,
     ) -> Result<Option<String>, ProcessorError> {
         let connection = &ctx.connection;
-        let filter = ContactFormFilter::new().id(EqualFilter::equal_to(changelog.record_id.to_string()));
+        let filter =
+            ContactFormFilter::new().id(EqualFilter::equal_to(changelog.record_id.to_string()));
 
         let contact_form = ContactFormRepository::new(connection)
             .query_one(filter)

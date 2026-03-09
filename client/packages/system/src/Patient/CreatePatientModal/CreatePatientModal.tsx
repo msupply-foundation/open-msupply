@@ -6,6 +6,7 @@ import {
   DialogButton,
   useDialog,
   useTranslation,
+  useNotification,
   BasicSpinner,
   DetailTab,
   SaveIcon,
@@ -30,6 +31,7 @@ export const CreatePatientModal = ({
   onSelectPatient: onSelect,
 }: CreatePatientModal) => {
   const t = useTranslation();
+  const { error } = useNotification();
 
   const { Modal } = useDialog({ isOpen: open, onClose });
 
@@ -69,9 +71,13 @@ export const CreatePatientModal = ({
             color="secondary"
             label={t('button.save')}
             startIcon={<SaveIcon />}
-            onClick={() => {
-              handleSave();
-              onCreate();
+            onClick={async () => {
+              try {
+                await handleSave();
+                onCreate();
+              } catch (e) {
+                error(t('error.failed-to-save-patient'))();
+              }
             }}
             isLoading={isSaving}
             disabled={!isDirty || isSaving || !!validationError}
