@@ -1414,13 +1414,16 @@ export function getSdk(
   return {
     stockLines(
       variables: StockLinesQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<StockLinesQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<StockLinesQuery>(StockLinesDocument, variables, {
-            ...requestHeaders,
-            ...wrappedRequestHeaders,
+          client.request<StockLinesQuery>({
+            document: StockLinesDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
           }),
         'stockLines',
         'query',
@@ -1429,13 +1432,16 @@ export function getSdk(
     },
     stockLine(
       variables: StockLineQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<StockLineQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<StockLineQuery>(StockLineDocument, variables, {
-            ...requestHeaders,
-            ...wrappedRequestHeaders,
+          client.request<StockLineQuery>({
+            document: StockLineDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
           }),
         'stockLine',
         'query',
@@ -1444,15 +1450,17 @@ export function getSdk(
     },
     stockLinesCount(
       variables: StockLinesCountQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<StockLinesCountQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<StockLinesCountQuery>(
-            StockLinesCountDocument,
+          client.request<StockLinesCountQuery>({
+            document: StockLinesCountDocument,
             variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
         'stockLinesCount',
         'query',
         variables
@@ -1460,13 +1468,16 @@ export function getSdk(
     },
     ledger(
       variables: LedgerQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<LedgerQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<LedgerQuery>(LedgerDocument, variables, {
-            ...requestHeaders,
-            ...wrappedRequestHeaders,
+          client.request<LedgerQuery>({
+            document: LedgerDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
           }),
         'ledger',
         'query',
@@ -1475,15 +1486,17 @@ export function getSdk(
     },
     updateStockLine(
       variables: UpdateStockLineMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<UpdateStockLineMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<UpdateStockLineMutation>(
-            UpdateStockLineDocument,
+          client.request<UpdateStockLineMutation>({
+            document: UpdateStockLineDocument,
             variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
         'updateStockLine',
         'mutation',
         variables
@@ -1491,13 +1504,16 @@ export function getSdk(
     },
     repack(
       variables: RepackQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<RepackQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<RepackQuery>(RepackDocument, variables, {
-            ...requestHeaders,
-            ...wrappedRequestHeaders,
+          client.request<RepackQuery>({
+            document: RepackDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
           }),
         'repack',
         'query',
@@ -1506,15 +1522,17 @@ export function getSdk(
     },
     repacksByStockLine(
       variables: RepacksByStockLineQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<RepacksByStockLineQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<RepacksByStockLineQuery>(
-            RepacksByStockLineDocument,
+          client.request<RepacksByStockLineQuery>({
+            document: RepacksByStockLineDocument,
             variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
         'repacksByStockLine',
         'query',
         variables
@@ -1522,13 +1540,16 @@ export function getSdk(
     },
     vvmStatus(
       variables: VvmStatusQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<VvmStatusQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<VvmStatusQuery>(VvmStatusDocument, variables, {
-            ...requestHeaders,
-            ...wrappedRequestHeaders,
+          client.request<VvmStatusQuery>({
+            document: VvmStatusDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
           }),
         'vvmStatus',
         'query',
@@ -1537,15 +1558,17 @@ export function getSdk(
     },
     insertRepack(
       variables: InsertRepackMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<InsertRepackMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<InsertRepackMutation>(
-            InsertRepackDocument,
+          client.request<InsertRepackMutation>({
+            document: InsertRepackDocument,
             variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
         'insertRepack',
         'mutation',
         variables
@@ -1553,15 +1576,17 @@ export function getSdk(
     },
     createInventoryAdjustment(
       variables: CreateInventoryAdjustmentMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<CreateInventoryAdjustmentMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<CreateInventoryAdjustmentMutation>(
-            CreateInventoryAdjustmentDocument,
+          client.request<CreateInventoryAdjustmentMutation>({
+            document: CreateInventoryAdjustmentDocument,
             variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
         'createInventoryAdjustment',
         'mutation',
         variables
@@ -1569,15 +1594,17 @@ export function getSdk(
     },
     insertStockLine(
       variables: InsertStockLineMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<InsertStockLineMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<InsertStockLineMutation>(
-            InsertStockLineDocument,
+          client.request<InsertStockLineMutation>({
+            document: InsertStockLineDocument,
             variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
         'insertStockLine',
         'mutation',
         variables
@@ -1585,15 +1612,17 @@ export function getSdk(
     },
     activeVvmStatuses(
       variables: ActiveVvmStatusesQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<ActiveVvmStatusesQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<ActiveVvmStatusesQuery>(
-            ActiveVvmStatusesDocument,
+          client.request<ActiveVvmStatusesQuery>({
+            document: ActiveVvmStatusesDocument,
             variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
         'activeVvmStatuses',
         'query',
         variables
@@ -1601,15 +1630,17 @@ export function getSdk(
     },
     insertVvmStatusLog(
       variables: InsertVvmStatusLogMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<InsertVvmStatusLogMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<InsertVvmStatusLogMutation>(
-            InsertVvmStatusLogDocument,
+          client.request<InsertVvmStatusLogMutation>({
+            document: InsertVvmStatusLogDocument,
             variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
         'insertVvmStatusLog',
         'mutation',
         variables
@@ -1617,15 +1648,17 @@ export function getSdk(
     },
     updateVvmStatusLog(
       variables: UpdateVvmStatusLogMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<UpdateVvmStatusLogMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<UpdateVvmStatusLogMutation>(
-            UpdateVvmStatusLogDocument,
+          client.request<UpdateVvmStatusLogMutation>({
+            document: UpdateVvmStatusLogDocument,
             variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
         'updateVvmStatusLog',
         'mutation',
         variables
