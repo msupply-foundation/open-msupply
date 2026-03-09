@@ -78,6 +78,10 @@ pub struct LegacyStocktakeLineRow {
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub vvm_status_id: Option<String>,
     pub volume_per_pack: f64,
+    #[serde(rename = "manufacturer_ID")]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    #[serde(default)]
+    pub manufacturer_id: Option<String>,
     #[serde(default)]
     #[serde(deserialize_with = "object_fields_as_option")]
     pub oms_fields: Option<LegacyStocktakeLineRowOmsFields>,
@@ -138,6 +142,7 @@ impl SyncTranslation for StocktakeLineTranslation {
             donor_id,
             vvm_status_id,
             volume_per_pack,
+            manufacturer_id,
             oms_fields,
         } = serde_json::from_str::<LegacyStocktakeLineRow>(&sync_record.data)?;
 
@@ -189,6 +194,7 @@ impl SyncTranslation for StocktakeLineTranslation {
             note,
             item_variant_id,
             donor_id: donor_id,
+            manufacturer_id,
             reason_option_id,
             vvm_status_id,
             volume_per_pack,
@@ -235,6 +241,7 @@ impl SyncTranslation for StocktakeLineTranslation {
                     note,
                     item_variant_id,
                     donor_id,
+                    manufacturer_id: manufacturer_link_id,
                     reason_option_id,
                     vvm_status_id,
                     volume_per_pack,
@@ -277,6 +284,7 @@ impl SyncTranslation for StocktakeLineTranslation {
             donor_id,
             vvm_status_id,
             volume_per_pack,
+            manufacturer_id: manufacturer_link_id,
             oms_fields,
         };
 
